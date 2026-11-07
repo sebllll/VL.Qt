@@ -13,6 +13,10 @@ Prerequisites, first build, scripts and tests are described in [docs/development
 - Keep pull requests focused and describe what changed and how you verified it.
 - Do not rename or remove a node or pin in one step: mark it `Obsolete` first, as described in [docs/versioning.md](docs/versioning.md).
 
+## Issues and versions
+
+Pick the form that fits when you open an issue: bug report, feature request or task. Maintainers triage it with a type, an area and a milestone. Milestones are version numbers: `1.0` blocks the first stable release, `2.0` holds urgent work that does not block it, `3.0` holds distant features. Until 1.0 the package stays at 0.9.x with fixes only. After 1.0, versions follow [Semantic Versioning](https://semver.org): renamed or removed nodes, pins and categories break users' patches and therefore come only with a major version.
+
 ## License and CLA
 
 Contributions are licensed under the [MIT License](LICENSE). Before your first pull request can be merged, you sign the [Contributor License Agreement](CLA.md) once by commenting in the pull request; the CLA bot explains how.

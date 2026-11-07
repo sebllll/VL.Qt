@@ -14,6 +14,17 @@ body:
     attributes:
       label: Proposal
       description: How could it work in a patch (node, pins, defaults)? Qt Quick or QML references are welcome.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Where the change would live. Leave on "Not sure" if you do not know.
+      options:
+        - Not sure
+        - Native layer (QtNative, rendering, input)
+        - C# library (nodes, elements, reconciler)
+        - Help patches
+        - Build, CI, tooling
   - type: textarea
     id: alternatives
     attributes:
