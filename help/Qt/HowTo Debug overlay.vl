@@ -219,7 +219,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="KdNnFRIBXuDL7DxtpYlSXp" Bounds="85,85,900,84" ShowValueBox="true" isIOBox="true" Value="Debug overlay: every element has a Debug pin that draws its layout on top of the scene; the Renderer's Debug pin turns it on for the whole window. Layout, size and hit-testing stay unchanged.&#xD;&#xA;- Turquoise = frame, magenta = origin, yellow = anchor, green = baseline/ascent, red = descent, orange = implicit size, orange dashed = children bounds, translucent = padding, hatched = spacing.">
+          <Pad Id="KdNnFRIBXuDL7DxtpYlSXp" Bounds="85,85,900,84" ShowValueBox="true" isIOBox="true" Value="Debug overlay: every element has a Debug pin that draws its layout on top of the scene; the Renderer's optional Debug pin (right-click the node to show it) turns it on for the whole window. Layout, size and hit-testing stay unchanged.&#xD;&#xA;- Turquoise = frame, magenta = origin, yellow = anchor, green = baseline/ascent, red = descent, orange = implicit size, orange dashed = children bounds, translucent = padding, hatched = spacing.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
