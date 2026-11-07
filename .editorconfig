@@ -1,0 +1,18 @@
+root = true
+
+# Line endings are normalized by .gitattributes. BOM rule follows VL.StandardLibs:
+# .cs and .vl with UTF-8 BOM, everything else without.
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+
+[*.{cs,vl}]
+charset = utf-8-bom
+
+[*.vl]
+end_of_line = crlf
+
+[*.cs]
+indent_style = space
+indent_size = 4

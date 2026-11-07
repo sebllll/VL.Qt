@@ -1,0 +1,8 @@
+module VLQt
+import QtQuick.Controls.Basic auto
+Button 6.0 Button.qml
+Slider 6.0 Slider.qml
+CheckBox 6.0 CheckBox.qml
+Switch 6.0 Switch.qml
+SpinBox 6.0 SpinBox.qml
+TextField 6.0 TextField.qml

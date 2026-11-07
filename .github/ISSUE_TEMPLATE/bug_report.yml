@@ -1,0 +1,42 @@
+name: Bug report
+description: Something does not work as documented.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: Steps, or the help patch (`help/Qt/HowTo …`) you started from and what you changed. A minimal patch attached to the issue helps most.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: VL.Qt and vvvv version
+      description: The VL.Qt package version (or commit) and the vvvv gamma version.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows x64
+        - Windows arm64
+        - Linux x64
+        - Linux arm64
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: Messages from vvvv's log window (Qt messages are forwarded there), screenshots, or a crash dump.
+      render: text

@@ -1,0 +1,12 @@
+# Line endings: git normalizes all text files to LF in the repository,
+# whatever the editor (vvvv, VS, Claude) writes. Encoding/BOM: see .editorconfig.
+* text=auto eol=lf
+# vvvv saves patches and export settings (help/*.props) with CRLF; check them out that way so saving does not dirty the tree.
+*.vl text eol=crlf
+help/**/*.props text eol=crlf
+# Shell scripts run in WSL/Linux and must keep LF line endings.
+*.sh text eol=lf
+# Linker version script, read by ld in WSL from Windows checkouts.
+*.map text eol=lf
+# Bundled fallback font (#427).
+*.ttf binary

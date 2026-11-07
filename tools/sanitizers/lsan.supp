@@ -1,0 +1,8 @@
+# LSan suppressions for tools/test-linux.sh --sanitize asan (#365). Only proven foreign noise (Qt, Mesa, .NET runtime,
+# libc), every entry with a comment why. Never suppress frames from libvlqt.so.
+# .NET runtime allocations are not listed here (libcoreclr.so is in almost every stack, it would hide QtNative leaks):
+# tools/sanitizers/lsan-filter.py sorts them out by the allocating frame instead.
+
+# Qt: QOpenGLContext::makeCurrent on a thread that is no QThread keeps a QGuiGLThreadContext in thread-local storage
+# that is only freed with Qt's thread data (8 bytes, render thread of QtNative; allocating frames all in QtGui).
+leak:QOpenGLContextPrivate::setCurrentContext

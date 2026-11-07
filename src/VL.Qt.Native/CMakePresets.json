@@ -1,0 +1,97 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "dev-win-arm64",
+      "displayName": "Dev win-arm64 (local Qt)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/../../build/win-arm64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_PREFIX_PATH": "C:/Qt/6.12.0/msvc2022_arm64",
+        "VLQT_RID": "win-arm64"
+      }
+    },
+    {
+      "name": "dev-linux-x64",
+      "displayName": "Dev linux-x64 (Qt from tools/setup-qt.sh)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/../../build/linux-x64",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_PREFIX_PATH": "$env{HOME}/Qt/6.12.0/gcc_64",
+        "VLQT_RID": "linux-x64"
+      }
+    },
+    {
+      "name": "dev-linux-arm64",
+      "displayName": "Dev linux-arm64 (Qt from tools/setup-qt.sh)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/../../build/linux-arm64",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_PREFIX_PATH": "$env{HOME}/Qt/6.12.0/gcc_arm64",
+        "VLQT_RID": "linux-arm64"
+      }
+    },
+    {
+      "name": "linux-x64-asan",
+      "displayName": "linux-x64 ASan (QtNative only, tools/test-linux.sh --sanitize asan)",
+      "inherits": "dev-linux-x64",
+      "binaryDir": "${sourceDir}/../../build/linux-x64-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+        "VLQT_SANITIZE": "address",
+        "VLQT_OUT_DIR": "${sourceDir}/../../build/linux-x64-asan/native"
+      }
+    },
+    {
+      "name": "linux-x64-tsan",
+      "displayName": "linux-x64 TSan (QtNative only, tools/test-linux.sh --sanitize tsan)",
+      "inherits": "dev-linux-x64",
+      "binaryDir": "${sourceDir}/../../build/linux-x64-tsan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+        "VLQT_SANITIZE": "thread",
+        "VLQT_OUT_DIR": "${sourceDir}/../../build/linux-x64-tsan/native"
+      }
+    },
+    {
+      "name": "linux-arm64-asan",
+      "displayName": "linux-arm64 ASan (QtNative only, tools/test-linux.sh --sanitize asan)",
+      "inherits": "dev-linux-arm64",
+      "binaryDir": "${sourceDir}/../../build/linux-arm64-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+        "VLQT_SANITIZE": "address",
+        "VLQT_OUT_DIR": "${sourceDir}/../../build/linux-arm64-asan/native"
+      }
+    },
+    {
+      "name": "linux-arm64-tsan",
+      "displayName": "linux-arm64 TSan (QtNative only, tools/test-linux.sh --sanitize tsan)",
+      "inherits": "dev-linux-arm64",
+      "binaryDir": "${sourceDir}/../../build/linux-arm64-tsan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+        "VLQT_SANITIZE": "thread",
+        "VLQT_OUT_DIR": "${sourceDir}/../../build/linux-arm64-tsan/native"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "dev-win-arm64", "configurePreset": "dev-win-arm64" },
+    { "name": "dev-linux-x64", "configurePreset": "dev-linux-x64" },
+    { "name": "dev-linux-arm64", "configurePreset": "dev-linux-arm64" },
+    { "name": "linux-x64-asan", "configurePreset": "linux-x64-asan" },
+    { "name": "linux-x64-tsan", "configurePreset": "linux-x64-tsan" },
+    { "name": "linux-arm64-asan", "configurePreset": "linux-arm64-asan" },
+    { "name": "linux-arm64-tsan", "configurePreset": "linux-arm64-tsan" }
+  ]
+}

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question about using vvvv
+    url: https://forum.vvvv.org
+    about: For general vvvv questions, ask in the vvvv forum.

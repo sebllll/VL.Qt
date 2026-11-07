@@ -1,0 +1,190 @@
+﻿using System;
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using Stride.Core.Mathematics;
+using VL.Lib.Mathematics;
+using VL.Qt;
+using VL.Qt.Elements;
+using Color = System.Drawing.Color;
+using Rectangle = VL.Qt.Elements.Rectangle;
+using RectangleF = Stride.Core.Mathematics.RectangleF;
+
+// End-to-end path of plan 04e: element tree → Reconciler → CommandWriter → real QtNative.
+// Grabs go to <outDir>/04_reconciler*.png. Element values are units (Space DIPTopLeft, 1 unit = 100 DIP);
+// the expected pixel positions below are logical pixels (DIP).
+static class ReconcilerTest
+{
+    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
+    static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
+    static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
+    static bool IsBlue(Color c) => c.B > 200 && c.R < 40 && c.G < 40;
+    static bool IsYellow(Color c) => c.R > 200 && c.G > 200 && c.B < 40;
+    static bool IsBg(Color c) => Math.Abs(c.R - 0x20) < 8 && Math.Abs(c.G - 0x20) < 8 && Math.Abs(c.B - 0x20) < 8;
+
+    static readonly Color4 Red = new(1, 0, 0, 1), Green = new(0, 1, 0, 1), Blue = new(0, 0, 1, 1), Yellow = new(1, 1, 0, 1);
+
+    // Column at (1, 1) units, 2 x 4 units, padding 0.1, spacing 0.2, Left. The children have no position
+    // (Transform identity, the layout places them): only their size goes to Qt.
+    static Column Scene(Element c0, Element c1, Element? c2) => new()
+    {
+        Size = new Vector2(2, 4), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(1, 1, 0),
+        Padding = 0.1f,
+        Spacing = 0.2f,
+        Children = c2 is null ? ImmutableArray.Create(c0, c1) : ImmutableArray.Create(c0, c1, c2),
+    };
+
+    static Rectangle R(float w, float h, Color4 fill) => new() { Size = new Vector2(w, h), Anchor = RectangleAnchor.TopLeft, Fill = fill };
+
+    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    {
+        var w = Native.vlqt_window_create(800, 600, "VL.Qt reconciler test");
+        check(w != IntPtr.Zero, "04e: window_create");
+        Native.vlqt_window_show(w);
+        var cmd = new CommandWriter();
+        var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
+
+        // One renderer frame: Reset, Update, apply (skipped when the reconciler wrote nothing, like Renderer).
+        int Frame(Element? root, string what, bool clear = false)
+        {
+            cmd.Reset();
+            if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
+            rec.Update(root, Space.DIPTopLeft);
+            int count = cmd.Count - (clear ? 1 : 0);
+            if (cmd.Length > 0)
+            {
+                var rc = Native.Apply(w, cmd.EndFrame());
+                check(rc == 0, $"04e: apply {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            }
+            pump(3);
+            return count;
+        }
+
+        // Frame 1: whole tree. Expected DIP: children at x 110 (padding 10), red 100x50 at y 110..160,
+        // green 150x50 at y 180..230, blue 50x50 at y 250..300.
+        var red = R(1, 0.5f, Red);
+        var green = R(1.5f, 0.5f, Green);
+        var blue = R(0.5f, 0.5f, Blue);
+        var scene = Scene(red, green, blue);
+        int n = Frame(scene, "column with 3 rectangles", clear: true);
+        check(n > 0 && rec.Root is not null && rec.Root.Children.Count == 3, $"04e: first frame creates the tree ({n} commands)");
+        using (var a = grab(w, Path.Combine(outDir, "04_reconciler.png")))
+        {
+            check(IsRed(Px(a, 150, 135)) && IsGreen(Px(a, 240, 205)) && IsBlue(Px(a, 135, 275)),
+                $"04e: 3 rectangles stacked in the column ({Px(a, 150, 135)}, {Px(a, 240, 205)}, {Px(a, 135, 275)})");
+            check(IsRed(Px(a, 111, 111)) && IsRed(Px(a, 208, 158)) && IsBg(Px(a, 105, 105)) && IsBg(Px(a, 212, 135)),
+                $"04e: red at (110,110)..(210,160) DIP = column (1,1) units + padding ({Px(a, 105, 105)})");
+            check(IsBg(Px(a, 150, 170)) && IsBg(Px(a, 150, 240)), "04e: spacing 0.2 units = 20 DIP gaps");
+            check(IsGreen(Px(a, 258, 228)) && IsBg(Px(a, 262, 205)) && IsBg(Px(a, 165, 275)) && IsBg(Px(a, 135, 305)),
+                "04e: children keep their size (green 150 DIP wide, blue 50x50)");
+            check(IsBg(Px(a, 310, 310)) && IsBg(Px(a, 350, 350)), "04e: children without position stay in the column cell");
+        }
+
+        // Same tree again (reference-equal): no commands.
+        n = Frame(scene, "unchanged tree");
+        check(n == 0, $"04e: unchanged tree → 0 commands ({n})");
+
+        // New tree, one fill changed: exactly 1 SET.
+        var yellow = R(1, 0.5f, Yellow);
+        scene = Scene(yellow, green, blue);
+        n = Frame(scene, "one fill changed");
+        check(n == 1, $"04e: one property changed → 1 command ({n})");
+        // Green gets taller: the column moves blue down (green 180..280, blue 300..350).
+        var tallGreen = R(1.5f, 1, Green);
+        scene = Scene(yellow, tallGreen, blue);
+        n = Frame(scene, "green taller");
+        check(n == 1, $"04e: child size changed → 1 command ({n})");
+        using (var a = grab(w, Path.Combine(outDir, "04_reconciler_update.png")))
+        {
+            check(IsYellow(Px(a, 150, 135)), $"04e: red → yellow ({Px(a, 150, 135)})");
+            check(IsGreen(Px(a, 240, 270)) && IsBlue(Px(a, 135, 325)) && IsBg(Px(a, 135, 290)),
+                $"04e: column re-stacks after size change ({Px(a, 240, 270)}, {Px(a, 135, 325)})");
+        }
+
+        // Remove the last child: 1 DESTROY.
+        scene = Scene(yellow, tallGreen, null);
+        n = Frame(scene, "remove last child");
+        check(n == 1 && rec.Root!.Children.Count == 2, $"04e: last child removed → 1 command ({n})");
+        // Clear (renderer dispose): 1 DESTROY for the column.
+        cmd.Reset();
+        rec.Clear();
+        n = cmd.Count;
+        var rcClear = Native.Apply(w, cmd.EndFrame());
+        pump(3);
+        check(n == 1 && rcClear == 0, $"04e: Clear → 1 DESTROY ({n}, rc {rcClear})");
+        using (var a = grab(w, Path.Combine(outDir, "04_reconciler_clear.png")))
+            check(IsBg(Px(a, 150, 135)) && IsBg(Px(a, 240, 205)), "04e: scene empty after Clear");
+
+        Perf(w, check, pump);
+        Native.vlqt_window_destroy(w);
+    }
+
+    // Steady state through the real QtNative: 1000 rectangles, one color change per frame.
+    // Limits are generous (#71); the measured values go to the log.
+    static void Perf(IntPtr w, Action<bool, string> check, Action<int> pump)
+    {
+        const int N = 1000, Frames = 1000;
+        var cmd = new CommandWriter();
+        var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
+        var children = new Element[N];
+        for (int i = 0; i < N; i++)
+            children[i] = new Rectangle { Size = new Vector2(0.15f, 0.15f), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(i % 40 * 0.2f, i / 40 * 0.2f, 0), Fill = Color4.White };
+        var changed = (Element[])children.Clone();
+        changed[N / 2] = new Rectangle { Size = children[N / 2].Size, Anchor = children[N / 2].Anchor, Transform = children[N / 2].Transform, Fill = new Color4(1, 0, 0, 1) };
+        var a = new Group { Anchor = RectangleAnchor.TopLeft, Children = ImmutableArray.Create(children) };
+        var b = new Group { Anchor = RectangleAnchor.TopLeft, Children = ImmutableArray.Create(changed) };
+
+        var t = Stopwatch.StartNew();
+        rec.Update(a, Space.DIPTopLeft);
+        double createReconcileMs = t.Elapsed.TotalMilliseconds;
+        int createCommands = cmd.Count;
+        t.Restart();
+        var rc = Native.Apply(w, cmd.EndFrame());
+        double createApplyMs = t.Elapsed.TotalMilliseconds;
+        check(rc == 0, $"04e perf: apply 1000 rectangles ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        pump(2);
+
+        int errors = 0;
+        void Step(int i)
+        {
+            cmd.Reset();
+            rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
+            if (Native.Apply(w, cmd.EndFrame()) != 0) errors++;
+        }
+        for (int i = 0; i < 100; i++) Step(i); // warm-up
+
+        var reconcileMs = new double[Frames];
+        var applyMs = new double[Frames];
+        int commands = 0;
+        long alloc0 = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < Frames; i++)
+        {
+            long t0 = Stopwatch.GetTimestamp();
+            cmd.Reset();
+            rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
+            var buf = cmd.EndFrame();
+            long t1 = Stopwatch.GetTimestamp();
+            if (Native.Apply(w, buf) != 0) errors++;
+            reconcileMs[i] = Stopwatch.GetElapsedTime(t0, t1).TotalMilliseconds;
+            applyMs[i] = Stopwatch.GetElapsedTime(t1).TotalMilliseconds;
+            commands += cmd.Count;
+        }
+        long alloc = GC.GetAllocatedBytesForCurrentThread() - alloc0;
+        pump(2);
+        Array.Sort(reconcileMs);
+        Array.Sort(applyMs);
+        Console.WriteLine($"INFO 04e first frame 1000 rectangles: reconcile {createReconcileMs:F2} ms ({createCommands} commands), apply {createApplyMs:F2} ms");
+        Console.WriteLine($"INFO 04e steady state 1000 rectangles, 1 change/frame: reconcile+write median {reconcileMs[Frames / 2]:F4} ms " +
+            $"(p99 {reconcileMs[Frames * 99 / 100]:F4}, max {reconcileMs[^1]:F4}), apply median {applyMs[Frames / 2]:F4} ms " +
+            $"(p99 {applyMs[Frames * 99 / 100]:F4}, max {applyMs[^1]:F4}), {alloc} bytes allocated in {Frames} frames");
+        check(errors == 0 && commands == Frames, $"04e perf: 1 command per frame, no apply errors ({commands}, {errors})");
+        PerfLimits.Below(check, reconcileMs[Frames / 2], 1.0, $"04e perf: reconcile+write median < 1 ms ({reconcileMs[Frames / 2]:F4} ms)");
+        PerfLimits.Below(check, applyMs[Frames / 2], 1.0, $"04e perf: apply median < 1 ms ({applyMs[Frames / 2]:F4} ms)");
+        check(alloc < 1024, $"04e perf: {Frames} frames reconcile + apply allocate < 1 KB ({alloc} bytes)");
+
+        cmd.Reset();
+        rec.Clear();
+        check(Native.Apply(w, cmd.EndFrame()) == 0, "04e perf: Clear");
+    }
+}

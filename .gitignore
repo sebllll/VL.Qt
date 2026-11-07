@@ -1,0 +1,19 @@
+build/
+runtimes/
+lib/
+bin/
+obj/
+.vs/
+Export/
+
+# aqtinstall writes its log into the working directory (tools/setup-qt.ps1)
+aqtinstall.log
+
+ExportQT/
+
+# CodeAlta (tasks, plans, scratch)
+.alta/
+
+# Python
+__pycache__/
+tests/profiling/assets/gen/

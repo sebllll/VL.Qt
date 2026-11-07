@@ -1,0 +1,11 @@
+#!/bin/sh
+# Repo encoding rule (UTF-8 BOM for .cs/.vl, none elsewhere): fixes the staged files before the commit.
+# Enable once per clone: git config core.hooksPath .githooks
+root=$(git rev-parse --show-toplevel) || exit 1
+for py in python python3 py; do
+    if "$py" -c "" >/dev/null 2>&1; then
+        exec "$py" -I "$root/tools/fix-encoding.py" --staged
+    fi
+done
+echo "pre-commit: Python not found, skipping the encoding check (run: python tools/fix-encoding.py --all)" >&2
+exit 0

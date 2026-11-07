@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>VL.Qt.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="NUnit" Version="4.*" />
+    <PackageReference Include="NUnit3TestAdapter" Version="5.*" />
+  </ItemGroup>
+
+  <!-- Test host needs the real assemblies at runtime (VL.Qt's references are compile-only). -->
+  <ItemGroup>
+    <PackageReference Include="VL.Core" Version="$(VvvvVersion)" />
+    <PackageReference Include="Stride.Core.Mathematics" Version="$(StrideMathematicsVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VL.Qt\VL.Qt.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,32 @@
+name: public-check
+
+# Public repo only (github.repository == 'sebllll/VL.Qt'): no private file and no internal content may be tracked
+# (tools/check-public.py: paths from tools/private-paths.txt + generic content patterns). A separate workflow because
+# build.yml skips docs-only changes (paths-ignore), and these are exactly the ones that must be checked. Cheap, so
+# draft PRs run it too.
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  public-check:
+    name: public check (no private files or content)
+    if: github.repository == 'sebllll/VL.Qt'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check tracked paths and content
+        run: python3 tools/check-public.py

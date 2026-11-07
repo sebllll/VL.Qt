@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest a new element, pin or behavior.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to achieve?
+      description: Describe the use case rather than the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: How could it work in a patch (node, pins, defaults)? Qt Quick or QML references are welcome.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: What do you do today, and what did you consider?

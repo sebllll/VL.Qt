@@ -1,0 +1,442 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="LZgKhJuC133uwVh4Xd327x" LanguageVersion="2026.8.0-0278-g8b85ba4511" Version="0.128">
+  <NugetDependency Id="NT4ILsseKJWvuZQjsnZTAO" Location="VL.CoreLib" />
+  <DocumentDependency Id="jGPUb5f2dNt8m3jWgwUELw" Location="../../VL.Qt.vl" />
+  <Patch Id="rfWq0RgHyBPpzUiuyWYEwK">
+    <Canvas Id="EKRvPMOsFeLfdKqrtQ5VjX" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,180" Id="Sm9imzndKJJbk5v668vMWP">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="5hg3mMrPmSiNtJIrgCX9IT">
+        <Canvas Id="LX9Qfslinueurn3KHUKDAr" CanvasType="Group">
+          <Pad Id="0415Mxu07clrWuJoZCu179" Bounds="85,16,620,52" ShowValueBox="true" isIOBox="true" Value="How To Blur an Image with a Control Mask">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="EDtznfq2pkYpns6VxnJITT" Bounds="85,85,830,170" ShowValueBox="true" isIOBox="true" Value="Blur an image by a different amount at every pixel, controlled by a grayscale mask:&#xD;&#xA;- Mask: a second QtImage (LoadImage). Black keeps the pixel sharp, white blurs it with Radius; grays in between blur proportionally. The mask is stretched over the picture.&#xD;&#xA;- Two passes: a Gaussian blur is separable. Pass 1 blurs horizontally (direction 1, 0), pass 2 takes the result of pass 1 and blurs vertically (direction 0, 1). Both ShaderEffects run the same Fragment Code with the same radius, size and mask.&#xD;&#xA;- Radius: the blur radius in DIP where the mask is white. The shader always takes the same number of samples (the step between them grows with the radius), so the cost does not depend on the radius.&#xD;&#xA;- size: the size of the picture in DIP (units x 100), so the shader can turn the radius into texture coordinates.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="fapE9ZMaHA97FeR38SU6bM" Bounds="85,270,831,139" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Fragment Code is the text of shaders/blur_mask.frag next to this patch. One String pad feeds both passes; edit it live, errors show up at the Error pin of the ShaderEffect.&#xD;&#xA;- With a mask the blur is an approximation: the radius is read at the pixel that is drawn, in both passes. It is invisible for smooth masks, hard mask edges with a large radius can show a faint halo.&#xD;&#xA;- Radius 0 or a black mask returns the original pixel. Large radii are sampled coarsely, very fine detail then looks slightly stepped.&#xD;&#xA;- Every pass is a separate layer. Changing Radius or the mask re-renders both passes, the picture itself is rendered once.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="DMRYQcvp25z6TyOBdQ4wBP" Bounds="203,470,845,35" ShowValueBox="true" isIOBox="true" Value="1  Two QtImages: the picture and the mask (black = sharp, white = Radius). The mask only drives the blur, it is not drawn.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="8QL5I3HnWd7rJnz1V0pa72" Comment="Path" Bounds="142,520,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-blur-source.png">
+            <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Path" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="8ZTsXrR8Np2JxlIeqqLT1K" Comment="Path" Bounds="814,510,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-blur-mask.png">
+            <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Path" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="140,560,66,19" Id="TStuV7OQ4FrYxU3MhOcJO8">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="LoadImage" />
+            </p:NodeReference>
+            <Pin Id="F32gLEc7L88ACxZeS6SQas" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="sBaN86e54Asrib8ctBtveU" Name="Path" Kind="InputPin" />
+            <Pin Id="7O3JhFehiDKtUPJ7bGOEfB" Name="Mipmaps" Kind="InputPin" DefaultValue="False" />
+            <Pin Id="BkYfethGcemgVNTXPRVg2G" Name="Image" Kind="OutputPin" />
+            <Pin Id="eLDcBwRIQS5mkOr7vB3jFD" Name="Error" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="812,550,66,19" Id="4FOI5YkqoksrHfarwTW7VJ">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="LoadImage" />
+            </p:NodeReference>
+            <Pin Id="KJvd85PbKUUiNnHrd0J17C" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="m7tutMfmSKSTs9ChoAZz3C" Name="Path" Kind="InputPin" />
+            <Pin Id="muIxOjVm0zXwYqoXoi15Q7" Name="Mipmaps" Kind="InputPin" DefaultValue="False" />
+            <Pin Id="pzoPz6FuPoExI1cN3YXpLR" Name="Image" Kind="OutputPin" />
+            <Pin Id="t01HgLXKAsf08xlMV7Jx90" Name="Error" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="100,660,65,19" Id="MVXArB8CWhVOQRuvJMiPvi">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Image" />
+            </p:NodeReference>
+            <Pin Id="2zpHy4AVivUy0OEJ2WD5qU" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Suyk2j4CpGxT8jrYOLnGKp" Name="Size" Kind="InputPin" />
+            <Pin Id="hIQOcdc4mlYFUkh59RUBXS" Name="Transform" Kind="InputPin" />
+            <Pin Id="HlVptIFWKdcz1GKOqlhI97" Name="Anchor" Kind="InputPin" IsHidden="true" />
+            <Pin Id="jMXiOvRHO3QS3idA5ZGkFK" Name="Image" Kind="InputPin" />
+            <Pin Id="ok8G9bO6CtkQ3yf1M3FtDc" Name="Fill Mode" Kind="InputPin" DefaultValue="Fit" />
+            <Pin Id="5NqUkb2K1fi6kvTgcam0WO" Name="Output" Kind="OutputPin" />
+            <Pin Id="hV8m3R4yF3zkRevdO8jO7N" Name="Smooth" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FNSZ8BNvEbBukTJ8eU4kOR" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LN55LJ2So86j3RLZMaiiOs" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="EktULCwhSCWHk2phqILeDO" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="uZHM2bQftLZIEbu0fhN800" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="CA1Oed28o9BD3PTxkDOrkz" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="e0OHY789IJ7yyPJv91kzW7" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="pw15brCOnK8jhTnKEuMm6s" Name="Effect" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="5vyKwjqXDOCFUHByy1qlqD" Bounds="214,549,340,38" ShowValueBox="true" isIOBox="true" Value="The picture is 6.3 x 4.2 units (1 unit = 100 DIP). The Multiply turns that into DIP for the size uniform of the shader.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">7</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="xY9CVgmwEzr43hXchdW8yV" Comment="Size" Bounds="715,600,35,28" ShowValueBox="true" isIOBox="true" Value="6.3, 4.2">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="713,690,25,19" Id="uSLoCXFmXWpvj4acXgHGn2">
+            <p:NodeReference LastCategoryFullName="Math" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="OperationCallFlag" Name="*" />
+            </p:NodeReference>
+            <Pin Id="BHn5FboTP8n4haK8XHSvVJ" Name="Input" Kind="InputPin" />
+            <Pin Id="1a2TqcJVB0S0XdcDcIpsia" Name="Input 2" Kind="InputPin" DefaultValue="100, 100" />
+            <Pin Id="np3xz2wuTiNaALe3MZCSjE" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="jD2xZWlQBIfTnncaWoj0Oe" Bounds="122,692,340,38" ShowValueBox="true" isIOBox="true" Value="Fragment Code: one String pad for both passes (same text as shaders/blur_mask.frag).">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">7</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="dAA5T07uWxH5hp0AZpB7xm" Comment="Fragment Code" Bounds="122,760,201,113" ShowValueBox="true" isIOBox="true" Value="#version 440&#xD;&#xA;// Gaussian blur controlled by a grayscale mask (ShaderEffect, #487).&#xD;&#xA;// Black in `mask` = sharp, white = `radius` pixels (in the pixels of the layer of Input).&#xD;&#xA;//&#xD;&#xA;// Separable on purpose: one shader for both passes, `direction` (1,0) = horizontal, (0,1) = vertical. Chain two&#xD;&#xA;// ShaderEffects (pass 1: Input = the image element, pass 2: Input = pass 1, same uniforms, same mask). A Gaussian is&#xD;&#xA;// separable, so the cost is 2 x (2*TAPS+1) texture fetches per pixel instead of (2*TAPS+1)^2 for a single 2D pass.&#xD;&#xA;// With a mask the result is approximate (the radius is read at the destination pixel in both passes, &quot;gather&quot;&#xD;&#xA;// variant), which is invisible for smooth masks.&#xD;&#xA;//&#xD;&#xA;// Fixed number of taps: the step between taps scales with the local radius (step = r / TAPS), so the cost does not&#xD;&#xA;// grow with the radius; the kernel always covers +-3 sigma (sigma = r / 3), the weights are therefore constant and&#xD;&#xA;// normalized. Large radii get a coarser sampling (bilinear filtering of the layer smooths it).&#xD;&#xA;// Radius 0 (black mask or radius 0) returns the original pixel. Premultiplied in and out, times qt_Opacity.&#xD;&#xA;//&#xD;&#xA;// `size` = pixel size of the layer of Input (textureSize() is not available in ESSL 100 / GLSL 120, which qsb also bakes).&#xD;&#xA;// Uniform block (std140): qt_Matrix 0, qt_Opacity 64, radius 68, size 72 (vec2), direction 80 (vec2).&#xD;&#xA;// Bake: qsb --glsl &quot;100 es,120,150&quot; --hlsl 50 --msl 12 -o blur_mask.frag.qsb blur_mask.frag&#xD;&#xA;layout(location = 0) in vec2 qt_TexCoord0;&#xD;&#xA;layout(location = 0) out vec4 fragColor;&#xD;&#xA;layout(std140, binding = 0) uniform buf {&#xD;&#xA;    mat4 qt_Matrix;&#xD;&#xA;    float qt_Opacity;&#xD;&#xA;    float radius;     // maximum radius in pixels (mask = 1)&#xD;&#xA;    vec2 size;        // pixel size of the source layer&#xD;&#xA;    vec2 direction;   // (1, 0) horizontal pass, (0, 1) vertical pass&#xD;&#xA;};&#xD;&#xA;layout(binding = 1) uniform sampler2D source;&#xD;&#xA;layout(binding = 2) uniform sampler2D mask;&#xD;&#xA;&#xD;&#xA;const int TAPS = 12; // per side&#xD;&#xA;&#xD;&#xA;void main()&#xD;&#xA;{&#xD;&#xA;    vec2 uv = qt_TexCoord0;&#xD;&#xA;    vec4 center = texture(source, uv);&#xD;&#xA;    float r = radius * texture(mask, uv).r;&#xD;&#xA;    if (r &lt; 0.5)&#xD;&#xA;    {&#xD;&#xA;        fragColor = center * qt_Opacity;&#xD;&#xA;        return;&#xD;&#xA;    }&#xD;&#xA;    vec2 stepUv = direction * (r / float(TAPS)) / size;&#xD;&#xA;    vec4 sum = center;&#xD;&#xA;    float wsum = 1.0;&#xD;&#xA;    for (int i = 1; i &lt;= TAPS; i++)&#xD;&#xA;    {&#xD;&#xA;        float x = float(i) * (3.0 / float(TAPS)); // distance in sigmas&#xD;&#xA;        float w = exp(-0.5 * x * x);&#xD;&#xA;        vec2 o = stepUv * float(i);&#xD;&#xA;        sum += w * (texture(source, clamp(uv + o, 0.0, 1.0)) + texture(source, clamp(uv - o, 0.0, 1.0)));&#xD;&#xA;        wsum += 2.0 * w;&#xD;&#xA;    }&#xD;&#xA;    fragColor = sum / wsum * qt_Opacity;&#xD;&#xA;}&#xD;&#xA;">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="160,970,52,19" Id="tU8CEvFQfIU2sAu7O16pkS">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
+              </CategoryReference>
+              <Choice Kind="OperationCallFlag" Name="Vector2" />
+            </p:NodeReference>
+            <Pin Id="MK6PPJ0V9DmTp91YWq2f52" Name="Name" Kind="InputPin" DefaultValue="direction" />
+            <Pin Id="e31ILW2macOpqEmgAaih2u" Name="Value" Kind="InputPin" DefaultValue="1, 0" />
+            <Pin Id="eNJbW0PMaCZMhgVkK07EYs" Name="Result" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="586,935,39,19" Id="si8aeg9G1s6TfDYcJlFILJ">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
+              </CategoryReference>
+              <Choice Kind="OperationCallFlag" Name="Float" />
+            </p:NodeReference>
+            <Pin Id="0OFEEYQUDIJ6fMCoKKqcY5" Name="Name" Kind="InputPin" DefaultValue="radius" />
+            <Pin Id="I0hohBdDRvCaVrSyS2X5vp" Name="Value" Kind="InputPin" />
+            <Pin Id="f6fnTgqMKJg13ItnonylXX" Name="Result" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="666,935,52,19" Id="6AGzQ00roBBS9KBYEyI0Ej">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
+              </CategoryReference>
+              <Choice Kind="OperationCallFlag" Name="Vector2" />
+            </p:NodeReference>
+            <Pin Id="hQiJBCIqqADvzMMrHs4YOX" Name="Name" Kind="InputPin" DefaultValue="size" />
+            <Pin Id="oTD6zgfnJDXRHmHNDCXwMo" Name="Value" Kind="InputPin" />
+            <Pin Id="mvWLE9g79MkMH0kexqRUzM" Name="Result" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="773,935,44,19" Id="mwru8m0dwId0ho53ZI3eql">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
+              </CategoryReference>
+              <Choice Kind="OperationCallFlag" Name="Image" />
+            </p:NodeReference>
+            <Pin Id="MJkYyzgGGbyVBDnXNrXqIA" Name="Name" Kind="InputPin" DefaultValue="mask" />
+            <Pin Id="eE7TdLLNEQ8YM1smQStZE2" Name="Image" Kind="InputPin" />
+            <Pin Id="2ngdV5njbubzVYHTILYa5o" Name="Result" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="160,1190,52,19" Id="PvQxveNTcAoEuwivuzroap">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
+              </CategoryReference>
+              <Choice Kind="OperationCallFlag" Name="Vector2" />
+            </p:NodeReference>
+            <Pin Id="0WSjiV5GtkYMmsLNaw8lVK" Name="Name" Kind="InputPin" DefaultValue="direction" />
+            <Pin Id="wK1PeioRpSBcwgEKqIbSop" Name="Value" Kind="InputPin" DefaultValue="0, 1" />
+            <Pin Id="rmkIxDKnPJC3YiZqpk19f0" Name="Result" Kind="OutputPin" />
+          </Node>
+          <Pad Id="1wsuN7ON4ZZkRagju5HHN9" Comment="" Bounds="622,900,35,15" ShowValueBox="true" isIOBox="true" Value="24">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="160,1050,65,19" Id="aoiJmyfJv2O4svkiGgHj5n">
+            <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.Collections.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="RecordType" Name="Spread" NeedsToBeDirectParent="true" />
+              <Choice Kind="OperationCallFlag" Name="Cons" />
+            </p:NodeReference>
+            <Pin Id="DlCB7i0GEXpk4uISwxjCuG" Name="Input" Kind="StateInputPin" />
+            <Pin Id="3OOyqe0PpdnIF17GWeuDPn" Name="Input 2" Kind="StateInputPin" />
+            <Pin Id="UXE0gBg2uTxLOAxV52J0TU" Name="Input 3" Kind="StateInputPin" />
+            <Pin Id="lqCHDnJo5QW8U8kIRBls1E" Name="Input 4" Kind="StateInputPin" />
+            <Pin Id="IScmmDb0BIfBUhoDQxzRvf" Name="Result" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="160,1280,65,19" Id="q5tFuy5Z76ZwButjcZcyga">
+            <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.Collections.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="RecordType" Name="Spread" NeedsToBeDirectParent="true" />
+              <Choice Kind="OperationCallFlag" Name="Cons" />
+            </p:NodeReference>
+            <Pin Id="cM4ReYFbzSe9SAQdkKytWt" Name="Input" Kind="StateInputPin" />
+            <Pin Id="SDLaHND7AVQ84434vHBkQt" Name="Input 2" Kind="StateInputPin" />
+            <Pin Id="IeysgtphsGNbouTFtXjjpx" Name="Input 3" Kind="StateInputPin" />
+            <Pin Id="yuWbhrFHkfnEzaEQ1Xadx8" Name="Input 4" Kind="StateInputPin" />
+            <Pin Id="cp4G5JSL4LswJrREmiKA2r" Name="Result" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="100,1090,125,19" Id="cvVhGE0eycXcWjvGqq06Vq">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
+            </p:NodeReference>
+            <Pin Id="eubIJ6I7FseO4SeRDOKKhA" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KesmiCjrdNMmJgcyMOeJ9d" Name="Input" Kind="InputPin" />
+            <Pin Id="RC0DiSx7XluWeO5B4auy9D" Name="Fragment Code" Kind="InputPin" />
+            <Pin Id="oM7b0x2EXYsWPkZezha659" Name="Fragment Shader" Kind="InputPin" />
+            <Pin Id="A0f5YyUgkvdCpq0JNJ8F36" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
+            <Pin Id="dNsCWNp9DSgktKeWcUkWAB" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KINZJkWiCkLbv7MPKejNjF" Name="Uniforms" Kind="InputPin" />
+            <Pin Id="OgP7kjmWIxVqN4elLD4uNH" Name="Blending" Kind="InputPin" />
+            <Pin Id="GtOCRz7WjThcCevs8cBOpQ" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TE3mmVnSs3BLc1jj9qRbV6" Name="Size" Kind="InputPin" />
+            <Pin Id="pFpzVjBEQex0WOleJrFnbH" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="SswPreCOiC5Dxh7MBdj1CV" Name="Transform" Kind="InputPin" />
+            <Pin Id="U0IQX9ogyitKSDuAfy2Fp1" Name="Anchor" Kind="InputPin" IsHidden="true" />
+            <Pin Id="YQNhDYufBc1sbTIpV8ipei" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="NmFMMyPuOLlWvvTCmrgs1M" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="tTexyvxLjGKbcdzkUp3anZ" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="xlMSkMwk5kgZMLtLLNWVoc" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="figR0I7ppnmKMEA4ZANOa5" Name="Output" Kind="OutputPin" />
+            <Pin Id="BNyje1SHkHcnNTGZPcxnU2" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="LbBvQBluUNg6M0CEmNM83T" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="Ku5PotIpueS2mwSGvDmDuo" Name="Error" Kind="OutputPin" />
+            <Pin Id="Du2dPqpvavQbtuFVYmg9zB" Name="Effect" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Node Bounds="100,1340,125,19" Id="tXJgee3WOIrz0UAFPMxaD5">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
+            </p:NodeReference>
+            <Pin Id="bUrSuC9i7GZ6cPQJaueXLl" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="E1GBVlNgogRWs2YM7UlB6H" Name="Input" Kind="InputPin" />
+            <Pin Id="ZnRIuXoVORwMcucWSAdQjS" Name="Fragment Code" Kind="InputPin" />
+            <Pin Id="EHb8d6sZkRPLzLAVm2Wo4W" Name="Fragment Shader" Kind="InputPin" />
+            <Pin Id="hzsVSDBLKSshmqN9cDJVEO" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
+            <Pin Id="CrSU5kFo5e7WlhnL60Yv4J" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
+            <Pin Id="xjQNioCF9lM91eGDtaYnP6" Name="Uniforms" Kind="InputPin" />
+            <Pin Id="NiHnMG9QpAohrkfGEMNHx6" Name="Blending" Kind="InputPin" DefaultValue="True" />
+            <Pin Id="fJUPk83hw6UvZVRzDD8AMV" Name="Mesh Resolution" Kind="InputPin" IsHidden="true">
+              <p:DefaultValue r:IsNull="true" />
+            </Pin>
+            <Pin Id="Mfs6i6QNwpxocGch2f4AXU" Name="Size" Kind="InputPin" />
+            <Pin Id="XeL12cn1OanyzDON12I33n" Name="Auto Size" Kind="InputPin" DefaultValue="True" IsHidden="true" />
+            <Pin Id="BEHVl2gV819LsNK9ShCxSG" Name="Transform" Kind="InputPin" />
+            <Pin Id="JDKrUlYUTzv97piPrJ2v67" Name="Anchor" Kind="InputPin" DefaultValue="TopLeft" IsHidden="true" />
+            <Pin Id="4ppEarDoepocMFllvtsP73" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="hr8A9J71dzfgPIhtZ56Haf" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ycBbRAW4ka2PRDFAOShAkK" Name="Debug" Kind="InputPin" DefaultValue="False" IsHidden="true" />
+            <Pin Id="ZKZXyKGyTfsmaKSUfLrhpg" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="rT4eEG26mOAllaYRn9hxHs" Name="Output" Kind="OutputPin" />
+            <Pin Id="x8xn1JMXGdOatankytW2wP" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="l5ujx6ztnEPpKWsWWST4fz" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="N0spNcytyJ9bu6xlvLPZDj" Name="Error" Kind="OutputPin" />
+            <Pin Id="fpo7MY2ChJmIdzdBHJ7rOW" Name="Effect" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="e7tQMuVWpWsJbEGF7EbFKH" Bounds="253,1283,533,60" ShowValueBox="true" isIOBox="true" Value="Pass 1 blurs horizontally, pass 2 vertically. Pass 2 takes the Output of pass 1 as its Input; &#xD;&#xA;&#xD;&#xA;the Fragment Code, radius, size and mask are the same, only direction differs.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="kB0Eh9xdGem2YDlDyRVC71" Comment="Title" Bounds="182,1410,200,19" ShowValueBox="true" isIOBox="true" Value="HowTo Blur an Image with a Control Mask">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="100,1440,145,19" Id="hFROIz3ub5PEZWGfp8GLFf">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="gvILfxkHRHZCqE7Sb4AXic" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="EsPKhm31lOtTKgpU9gB2SK" Name="Bounds" Kind="InputPin" DefaultValue="1199, 277, 666, 454" IsHidden="true" />
+            <Pin Id="FVhP7B2o1sEyK9fVlBCLZS" Name="V Sync" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KRwz73ukSJxcdMKWTyz0Zn" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ChQLOmaFWN9fiupq1tu2Xo" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="u8hKr41cCfGkz5jKBHQoBI" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="U7I1ZcXybPlklyvCXlsx1Q" Name="Input" Kind="InputPin" />
+            <Pin Id="J3ysA1R2GfTycvqA03m8ux" Name="Space" Kind="InputPin" />
+            <Pin Id="JfD3KsCWsY9qgUcApLEMkC" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="3ovF06QM0Z6ucgKZptGfzm" Name="Enabled" Kind="InputPin" />
+            <Pin Id="DcNIKcnB1k9ebQ9Czl1WbY" Name="Title" Kind="InputPin" />
+            <Pin Id="Yib7KTNZgOcpYAjEV8WZCq" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="qrDBEy6gY83ja8GmlC1kAn" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="Jzg3m5IZHNm7Nw7JKeBJyB" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="LDOlfYES0AFQSWOxvai4J4" Name="Error" Kind="OutputPin" />
+            <Pin Id="waIafqU6FqWAHhJqiEBkkZ" Name="Borderless" Kind="InputPin" />
+            <Pin Id="TrvF1JcastjuB6Zuw1rkqK" Name="Fullscreen" Kind="InputPin" />
+            <Pin Id="NrpKXO4rDVsJW6DbpbNZYW" Name="Debug" Kind="InputPin" />
+          </Node>
+          <Pad Id="GmqevCTYCZ6NRk45jgqnSG" Comment="" Bounds="735,660,41,28" ShowValueBox="true" isIOBox="true" Value="100, 100">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="LmYVNs3OuV2McHE1UB0DlM" Comment="" Bounds="162,904,49,15" ShowValueBox="true" isIOBox="true" Value="direction">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="QHCIWzI98r9PqGwlWMZuio" Comment="" Bounds="209,935,35,28" ShowValueBox="true" isIOBox="true" Value="1, 0">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="T032oiM1WdZOwiHcLZ4TwV" Comment="" Bounds="588,869,37,15" ShowValueBox="true" isIOBox="true" Value="radius">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="DhaPPNU2JxRME49AussvcX" Comment="" Bounds="668,869,35,15" ShowValueBox="true" isIOBox="true" Value="size">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="Qlw1lhFVXCjLG1zDdyVogQ" Comment="" Bounds="775,869,35,15" ShowValueBox="true" isIOBox="true" Value="mask">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="TVfzeveNC0WORAAjO7cf1r" Comment="" Bounds="162,1124,49,15" ShowValueBox="true" isIOBox="true" Value="direction">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="P6HkMKtYN6yPqJwgX2z3hO" Comment="" Bounds="209,1155,35,28" ShowValueBox="true" isIOBox="true" Value="0, 1">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <ControlPoint Id="VmYePqDTYHfP6F7RK01Q14" Bounds="81,805" />
+          <ControlPoint Id="U3ESWz6TqzeLNiQTL2NPbU" Bounds="81,1305" />
+          <Pad Id="NfsvwIMnufHLWuWcgu23vt" Bounds="838,943,154,19" ShowValueBox="true" isIOBox="true" Value="shared set of parameters">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+        </Canvas>
+        <Link Id="owOgooQowEx32V0HwlIIjW" Ids="8QL5I3HnWd7rJnz1V0pa72,sBaN86e54Asrib8ctBtveU" />
+        <Link Id="4wFbU4cFc1gIexxmE34Vkq" Ids="8ZTsXrR8Np2JxlIeqqLT1K,m7tutMfmSKSTs9ChoAZz3C" />
+        <Link Id="LRY5xzU9ysUDL7mToyXoow" Ids="BkYfethGcemgVNTXPRVg2G,jMXiOvRHO3QS3idA5ZGkFK" />
+        <Link Id="kEf5eoUGG2HiltmMMCvdBh" Ids="xY9CVgmwEzr43hXchdW8yV,Suyk2j4CpGxT8jrYOLnGKp" />
+        <Link Id="WRh1jAMZDFWyVgzUB2SvFg" Ids="xY9CVgmwEzr43hXchdW8yV,BHn5FboTP8n4haK8XHSvVJ" />
+        <Link Id="OwOtECyUlBpGcNamrPo9Lv" Ids="1wsuN7ON4ZZkRagju5HHN9,I0hohBdDRvCaVrSyS2X5vp" />
+        <Link Id="LLOfWBNMT1nRkBFSmJfbJV" Ids="np3xz2wuTiNaALe3MZCSjE,oTD6zgfnJDXRHmHNDCXwMo" />
+        <Link Id="3KdHHAgTgWhSUs7tQ9dP1C" Ids="pzoPz6FuPoExI1cN3YXpLR,eE7TdLLNEQ8YM1smQStZE2" />
+        <Link Id="nSge8FOJn0lnnsGPCGAC58" Ids="eNJbW0PMaCZMhgVkK07EYs,DlCB7i0GEXpk4uISwxjCuG" />
+        <Link Id="52eB5h0FJ02V75m7kGJSgN" Ids="f6fnTgqMKJg13ItnonylXX,3OOyqe0PpdnIF17GWeuDPn" />
+        <Link Id="Urxbng5efztXTzTvJjfoW5" Ids="mvWLE9g79MkMH0kexqRUzM,UXE0gBg2uTxLOAxV52J0TU" />
+        <Link Id="a6uKW1K4mRUQTHITFJPGSZ" Ids="2ngdV5njbubzVYHTILYa5o,lqCHDnJo5QW8U8kIRBls1E" />
+        <Link Id="2Pa6HEHu16yfe3jKAXyeDJ" Ids="5NqUkb2K1fi6kvTgcam0WO,KesmiCjrdNMmJgcyMOeJ9d" />
+        <Link Id="bN0y2fqmFwsfA4dGDUJ5gk" Ids="dAA5T07uWxH5hp0AZpB7xm,RC0DiSx7XluWeO5B4auy9D" />
+        <Link Id="XBOxOEu8Zx9PKqRrwtAeS6" Ids="dAA5T07uWxH5hp0AZpB7xm,VmYePqDTYHfP6F7RK01Q14,U3ESWz6TqzeLNiQTL2NPbU,ZnRIuXoVORwMcucWSAdQjS" />
+        <Link Id="uQDw5EJMhtsKxyH8cF8sRW" Ids="IScmmDb0BIfBUhoDQxzRvf,KINZJkWiCkLbv7MPKejNjF" />
+        <Link Id="c23Rtdcl26QHgljYVrjnSP" Ids="cp4G5JSL4LswJrREmiKA2r,xjQNioCF9lM91eGDtaYnP6" />
+        <Link Id="r8iUCO6i23n4hBapH9enKL" Ids="figR0I7ppnmKMEA4ZANOa5,E1GBVlNgogRWs2YM7UlB6H" />
+        <Link Id="4tIBNur6jI0hjMSW5rkOeQ" Ids="rT4eEG26mOAllaYRn9hxHs,U7I1ZcXybPlklyvCXlsx1Q" />
+        <Link Id="Ky7wCDCwrUQqVC3rdWXnbU" Ids="kB0Eh9xdGem2YDlDyRVC71,DcNIKcnB1k9ebQ9Czl1WbY" />
+        <Patch Id="u8x7cnELiFaznDERqG8O0q" Name="Create" />
+        <Patch Id="FU51Bd1o7WZilJqwybOtWi" Name="Update" />
+        <ProcessDefinition Id="2JhuSQcTpZ6Y9ShsZvzhcK">
+          <Fragment Id="5eDiSfK6CTnuqGhdqZ1ZcB" Patch="u8x7cnELiFaznDERqG8O0q" Enabled="true" />
+          <Fragment Id="VGIcIftfXEoOtJ1mVlJceM" Patch="FU51Bd1o7WZilJqwybOtWi" Enabled="true" />
+        </ProcessDefinition>
+        <Link Id="CYBF2WWTgsQPQLiMG2v8bP" Ids="GmqevCTYCZ6NRk45jgqnSG,1a2TqcJVB0S0XdcDcIpsia" />
+        <Link Id="Pxw9FxbI5NyMV0LVVx3gVz" Ids="LmYVNs3OuV2McHE1UB0DlM,MK6PPJ0V9DmTp91YWq2f52" />
+        <Link Id="PPfb0QH5vFnLAWVgzzPVc6" Ids="QHCIWzI98r9PqGwlWMZuio,e31ILW2macOpqEmgAaih2u" />
+        <Link Id="IvGo49BkDYhP0XwrTVyGcv" Ids="T032oiM1WdZOwiHcLZ4TwV,0OFEEYQUDIJ6fMCoKKqcY5" />
+        <Link Id="AcBfptRojDYNHDInalU3MN" Ids="DhaPPNU2JxRME49AussvcX,hQiJBCIqqADvzMMrHs4YOX" />
+        <Link Id="QhCVhszhlmTP0fxlTxla0k" Ids="Qlw1lhFVXCjLG1zDdyVogQ,MJkYyzgGGbyVBDnXNrXqIA" />
+        <Link Id="Cfme03fOZRhNmBUeRoG6z9" Ids="TVfzeveNC0WORAAjO7cf1r,0WSjiV5GtkYMmsLNaw8lVK" />
+        <Link Id="K9on9y3igDxO2N2DwwnTaG" Ids="P6HkMKtYN6yPqJwgX2z3hO,wK1PeioRpSBcwgEKqIbSop" />
+        <Link Id="StlnmQm3WaBMvMQ89O2iFF" Ids="rmkIxDKnPJC3YiZqpk19f0,cM4ReYFbzSe9SAQdkKytWt" />
+        <Link Id="QRA8Nt4V7o2Ld53yWSTqOH" Ids="f6fnTgqMKJg13ItnonylXX,SDLaHND7AVQ84434vHBkQt" />
+        <Link Id="Jrrv6XEwUZNMJ9oFeAKq4A" Ids="mvWLE9g79MkMH0kexqRUzM,IeysgtphsGNbouTFtXjjpx" />
+        <Link Id="RfyJCNEk4gvPELwvass3QV" Ids="2ngdV5njbubzVYHTILYa5o,yuWbhrFHkfnEzaEQ1Xadx8" />
+      </Patch>
+    </Node>
+  </Patch>
+</Document>

@@ -1,0 +1,90 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Platform-neutral (L1a): no WinForms; Windows-only code (WindowPlacement) is guarded by OperatingSystem.IsWindows(). -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>VL.Qt</RootNamespace>
+    <OutputPath>..\..\lib\net10.0\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <!-- F5 in VS (Properties/launchSettings.json): starts vvvv with this repo as source package, like tools/start-vvvv.ps1.
+       vvvv: $(VVVV_DIR), else the last C:\vvvv\vvvv_gamma_*-win-<host arch>. The package repo is a junction under
+       %LOCALAPPDATA%\VL.Qt-dev\<repo path> (same key as start-vvvv.ps1), created after each build inside VS. -->
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <VvvvArch Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">arm64</VvvvArch>
+    <VvvvArch Condition="'$(VvvvArch)' == ''">x64</VvvvArch>
+    <VvvvDir>$(VVVV_DIR)</VvvvDir>
+    <_VvvvDirs Condition="'$(VvvvDir)' == '' And Exists('C:\vvvv')">$([System.IO.Directory]::GetDirectories('C:\vvvv', 'vvvv_gamma_*-win-$(VvvvArch)'))</_VvvvDirs>
+    <VvvvDir Condition="'$(VvvvDir)' == '' And '$(_VvvvDirs)' != ''">$(_VvvvDirs.Substring($([MSBuild]::Add($(_VvvvDirs.LastIndexOf(';')), 1))))</VvvvDir>
+    <VvvvExe>$(VvvvDir)\vvvv.exe</VvvvExe>
+    <_VlQtRepoDir>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..').TrimEnd('\'))</_VlQtRepoDir>
+    <VvvvPackageRepo>$(LOCALAPPDATA)\VL.Qt-dev\$([System.Text.RegularExpressions.Regex]::Replace('$(_VlQtRepoDir)', '[:\\/ ]', '_').Trim('_'))</VvvvPackageRepo>
+  </PropertyGroup>
+
+  <Target Name="PrepareVvvvPackageRepo" AfterTargets="Build" Condition="'$(BuildingInsideVisualStudio)' == 'true' And $([MSBuild]::IsOSPlatform('Windows'))">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(_VlQtRepoDir)\tools\start-vvvv.ps1&quot; -PrepareOnly" StandardOutputImportance="low" />
+  </Target>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="VL.Qt.Tests" />
+    <InternalsVisibleTo Include="VL.Qt.Probe" />
+    <InternalsVisibleTo Include="VL.Qt.SmokeTest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="VL.Core" Version="$(VvvvVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Stride.Core.Mathematics" Version="$(StrideMathematicsVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="$(LoggingAbstractionsVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="System.Reactive" Version="$(SystemReactiveVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Repo: lib/net10.0/VL.Qt.dll + runtimes/<rid>/native; Native.cs resolves ../../runtimes (see package layout below). -->
+
+  <!-- NuGet package (vvvv source-package layout). CI: download the native-<rid> artifacts into <repo>/runtimes/<rid>/native,
+       then `dotnet pack -c Release -p:Version=...`. Layout: VL.Qt.vl, VL.Qt.HDE.vl (editor-only tooltip viewers), VL.Qt.vl.targets, lib/net10.0/VL.Qt.dll (the .vl references
+       ./lib/net10.0/VL.Qt.dll; packman/dotnet only accept lib/<tfm>), help/, qt/<rid>/** (= repo runtimes/<rid>/native/**),
+       buildTransitive/VL.Qt.targets, LICENSES/, LICENSES.md.
+       The Qt tree must not go to runtimes/<rid>/native: NuGet treats every file there as a native asset and copies it flat
+       into an app referencing the package (NETSDK1152, many qmldir with the same name, #315). qt/<rid>/ is no NuGet asset
+       folder; buildTransitive/VL.Qt.targets copies it with its structure to runtimes/<rid>/native in the app output. -->
+  <PropertyGroup>
+    <PackageId>VL.Qt</PackageId>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <Authors>VL.Qt contributors</Authors>
+    <Copyright>Copyright (c) 2026 @sebllll (@schnellebuntebilder)</Copyright>
+    <Description>Qt 6 (Qt Quick) for vvvv gamma: 2D content such as motion, typography and layout. Ships the Qt runtime (LGPL-3.0, dynamically linked).</Description>
+    <PackageTags>vvvv;vl;qt;qml</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/sebllll/VL.Qt</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/sebllll/VL.Qt</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <!-- The assembly goes to lib/net10.0/ via the explicit item below (the build output already lives there). -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5100;NU5101;NU5128</NoWarn>
+    <RepoRoot>$([MSBuild]::EnsureTrailingSlash('$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..'))'))</RepoRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(RepoRoot)lib\net10.0\VL.Qt.dll;$(RepoRoot)lib\net10.0\VL.Qt.pdb;$(RepoRoot)lib\net10.0\VL.Qt.xml" Pack="true" PackagePath="lib\net10.0\" Visible="false" />
+    <None Include="$(RepoRoot)VL.Qt.vl;$(RepoRoot)VL.Qt.HDE.vl;$(RepoRoot)VL.Qt.vl.targets;$(RepoRoot)LICENSES.md" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(RepoRoot)help\**" Pack="true" PackagePath="help\" Visible="false" />
+    <None Include="$(RepoRoot)LICENSES\**" Pack="true" PackagePath="LICENSES\" Visible="false" />
+    <None Include="nuget\README.md;nuget\icon.png" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(RepoRoot)LICENSE" Pack="true" PackagePath="" Visible="false" />
+    <None Include="buildTransitive\VL.Qt.targets;buildTransitive\VL.Qt.Shaders.targets" Pack="true" PackagePath="buildTransitive\" />
+    <!-- runtimes/<rid>/native/** -> qt/<rid>/** (see above); one line per RID (same RIDs as build.yml) -->
+    <None Include="$(RepoRoot)runtimes\win-x64\native\**" Pack="true" PackagePath="qt\win-x64\" Visible="false" />
+    <None Include="$(RepoRoot)runtimes\win-arm64\native\**" Pack="true" PackagePath="qt\win-arm64\" Visible="false" />
+    <None Include="$(RepoRoot)runtimes\linux-x64\native\**" Pack="true" PackagePath="qt\linux-x64\" Visible="false" />
+    <None Include="$(RepoRoot)runtimes\linux-arm64\native\**" Pack="true" PackagePath="qt\linux-arm64\" Visible="false" />
+  </ItemGroup>
+</Project>

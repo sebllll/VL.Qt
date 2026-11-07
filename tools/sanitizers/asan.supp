@@ -1,0 +1,4 @@
+# ASan suppressions for tools/test-linux.sh --sanitize asan (#365). Only proven foreign noise (Qt, Mesa, .NET runtime,
+# libc), every entry with a comment why. Never suppress frames from libvlqt.so.
+# Only QtNative is instrumented, so ASan errors come from QtNative code or from interceptors (memcpy/free ...).
+# Currently empty: resources + image-resource ran without ASan error (2026-10-24, linux-arm64, WSLg llvmpipe).

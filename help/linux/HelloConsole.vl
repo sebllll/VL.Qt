@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="O2t5YSKaPp5GqvBftH8eq2" LanguageVersion="2026.8.0-0156-g7259116c8c" Version="0.128">
+  <NugetDependency Id="O7XfVwgfLg2pH5xmdDfJFC" Location="VL.CoreLib" />
+  <Patch Id="NN5srKCcMbCpjQ9g6LspH3">
+    <Canvas Id="KhgymfLdxUYv0kCpacLFRo" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="Zrc9Bs44z9ODwzOytwuE7K">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="T3muvONPX2OEEgI9PdXzFm">
+        <Canvas Id="Rb2grtW50RnDlBtxbU6vyp" CanvasType="Group">
+          <Pad Id="Jj8beR2Ra4gDVPWw85Vj44" Bounds="100,60,520,45" ShowValueBox="true" isIOBox="true" Value="Linux spike L0a (no VL.Qt): FrameCounter -&gt; WriteLine [System.Console]. KeepAppAlive [System] in the top-level patch keeps the exported console app running; without it the app ends after the first frame.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">14</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="PHQ6EmnYyOGYHA728YVJ2e" Comment="Count" Bounds="102,140,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Boolean" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="100,200,81,19" Id="Ojta0PMzp9tPPm3adwpmQN">
+            <p:NodeReference LastCategoryFullName="Animation.FrameBased" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="FrameCounter" />
+            </p:NodeReference>
+            <Pin Id="KzfeFcLNehsd5FSG4oLnHH" Name="Count" Kind="ApplyPin" />
+            <Pin Id="IRwB1s8moDe0UQEwz1iMkA" Name="Reset" Kind="ApplyPin" />
+            <Pin Id="Hb4ucAVweS4rQ7dapMTLpe" Name="Value" Kind="OutputPin" />
+          </Node>
+          <Pad Id="KdYn3eB3A2XpmsCXcdsot8" Comment="Apply" Bounds="142,240,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Boolean" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="100,300,58,19" Id="IzJZaPKGfaADLemRlDNIWg">
+            <p:NodeReference LastCategoryFullName="System.Console" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="OperationCallFlag" Name="WriteLine" />
+            </p:NodeReference>
+            <Pin Id="CDFrPN8jK5Q2nahIOjWX7r" Name="Value" Kind="InputPin" />
+            <Pin Id="YnId7yJ7yIcmH2NLxEo1Wd" Name="Apply" Kind="InputPin" />
+          </Node>
+          <Pad Id="S2W8hDAqeki2XqI5okdPN6" Comment="Is Alive" Bounds="402,240,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Boolean" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="400,300,85,19" Id="C68m7vle8GAsFlLvfFgdVq">
+            <p:NodeReference LastCategoryFullName="System" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="System" NeedsToBeDirectParent="true" />
+              <Choice Kind="ProcessAppFlag" Name="KeepAppAlive" />
+            </p:NodeReference>
+            <Pin Id="OVzLLJAs5tDGuT0C1FCGnL" Name="Is Alive" Kind="InputPin" />
+          </Node>
+        </Canvas>
+        <Patch Id="CQ4QR0mOkcqUKtB6FpYezj" Name="Create" />
+        <Patch Id="ZVBeUhqZYMgxqGX1a6LxqP" Name="Update" />
+        <ProcessDefinition Id="KyNrvYZbR1iv8UIkXCuAhI">
+          <Fragment Id="AqXCiePOAZy0zp45degheM" Patch="CQ4QR0mOkcqUKtB6FpYezj" Enabled="true" />
+          <Fragment Id="EhVJ5B8HfbFNlGyBNS3dxr" Patch="ZVBeUhqZYMgxqGX1a6LxqP" Enabled="true" />
+        </ProcessDefinition>
+        <Link Id="X9JbhRZAYql9sego5kIgFC" Ids="PHQ6EmnYyOGYHA728YVJ2e,KzfeFcLNehsd5FSG4oLnHH" />
+        <Link Id="RbAEpfozLWq5Kpww41X8u7" Ids="Hb4ucAVweS4rQ7dapMTLpe,CDFrPN8jK5Q2nahIOjWX7r" />
+        <Link Id="RuUyblOavP6LOB18jhIHyY" Ids="KdYn3eB3A2XpmsCXcdsot8,YnId7yJ7yIcmH2NLxEo1Wd" />
+        <Link Id="ENnTgbDruTBtwvrRz9ZLTx" Ids="S2W8hDAqeki2XqI5okdPN6,OVzLLJAs5tDGuT0C1FCGnL" />
+      </Patch>
+    </Node>
+  </Patch>
+</Document>

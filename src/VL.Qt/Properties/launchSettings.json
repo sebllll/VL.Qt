@@ -1,0 +1,23 @@
+{
+  "profiles": {
+    "vvvv: HowTo Draw a Rectangle": {
+      "commandName": "Executable",
+      "executablePath": "$(VvvvExe)",
+      "commandLineArgs": "\"$(_VlQtRepoDir)\\help\\Qt\\HowTo Draw a Rectangle.vl\" --package-repositories \"$(VvvvPackageRepo)\"",
+      "workingDirectory": "$(VvvvDir)"
+    },
+    "vvvv: HowTo Draw a Rectangle (C# + C++)": {
+      "commandName": "Executable",
+      "executablePath": "$(VvvvExe)",
+      "commandLineArgs": "\"$(_VlQtRepoDir)\\help\\Qt\\HowTo Draw a Rectangle.vl\" --package-repositories \"$(VvvvPackageRepo)\"",
+      "workingDirectory": "$(VvvvDir)",
+      "nativeDebugging": true
+    },
+    "vvvv (empty)": {
+      "commandName": "Executable",
+      "executablePath": "$(VvvvExe)",
+      "commandLineArgs": "--package-repositories \"$(VvvvPackageRepo)\"",
+      "workingDirectory": "$(VvvvDir)"
+    }
+  }
+}

@@ -1,0 +1,523 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="3vjDPM4tZF0UwHQVADy9CC" LanguageVersion="2026.8.0-0156-g7259116c8c" Version="0.128">
+  <NugetDependency Id="3t9XdNusUpmnZLd9Xg7eXY" Location="VL.CoreLib" />
+  <PlatformDependency Id="1OxwEZiNcpZEPKMAGSvks3" Location="./lib/net10.0/VL.Qt.dll" IsForward="true" />
+  <NodeFactoryDependency Id="Qs8hNf4dRw2LkP7vTzX3mB" Location="VL.Qt.Shaders" IsForward="true" />
+  <Patch Id="0L9C6OMQ9lhs9P66XsHdeD">
+    <Canvas Id="5407ucZp0njith5yMzpxgY" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory">
+      <Canvas Id="Qc7ElmTs4Kp2Vx9RbN1aHd" Name="Elements" Position="300,100" DefaultCategory="Qt.Elements" CanvasType="FullCategory" />
+      <Canvas Id="Qc7WdgTs8Mq3Yz5LcP2bJf" Name="Widgets" Position="450,100" DefaultCategory="Qt.Widgets" CanvasType="FullCategory" />
+      <Canvas Id="Qc7IntTs6Nr4Wa7KdQ3cLg" Name="Interaction" Position="600,100" DefaultCategory="Qt.Interaction" CanvasType="FullCategory" />
+      <Canvas Id="GGObaJyh0KlXJveTGVfbXH" Name="Style" Position="750,100" DefaultCategory="Qt.Style" CanvasType="FullCategory">
+        <Node Name="Dark" Bounds="100,100,380,1018" Id="c6VEEkxdon5lyQdbXi017S">
+          <p:NodeReference LastCategoryFullName="Primitive" LastDependency="Builtin">
+            <Choice Kind="OperationDefinition" Name="Operation" />
+          </p:NodeReference>
+          <Patch Id="Z3qi16f7PrSMziQQESAUw9">
+            <Pad Id="rz5mJ0ysuuzhVylu4SQKaK" Bounds="120,130,420,34" ShowValueBox="true" isIOBox="true" Value="Dark preset: neutral greys close to the base style, blue accent. Open it to copy it as a template.">
+              <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="String" />
+              </p:TypeAnnotation>
+              <p:ValueBoxSettings>
+                <p:fontsize p:Type="Int32">9</p:fontsize>
+                <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+              </p:ValueBoxSettings>
+            </Pad>
+            <Node Bounds="120,369,145,19" Id="tLqO012tZCZoISd42JWDsV">
+              <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="Colors" />
+              </p:NodeReference>
+              <Pin Id="JDXpVDJrT88tb8JekF3YgZ" Name="Input" Kind="InputPin" />
+              <Pin Id="atzvjpyWMsEaBVjzOyCKAI" Name="Frame" Kind="InputPin" />
+              <Pin Id="tcMxPtxFOzKD8Y40dNCXrO" Name="Border" Kind="InputPin" />
+              <Pin Id="pypGCqlMgzU5qG8RsruFyB" Name="Text" Kind="InputPin" />
+              <Pin Id="0rLwYfsb4yPvK1igBQVBxW" Name="Indicator" Kind="InputPin" />
+              <Pin Id="ywaYIgr1QsMjRRQN4Gnr4N" Name="Track" Kind="InputPin" />
+              <Pin Id="ueNhOj1lAeEYbTL08wD6C4" Name="Track Fill" Kind="InputPin" />
+              <Pin Id="Y2z4sjbtoaiNqrocaaINky" Name="State" Kind="InputPin" />
+              <Pin Id="T4nT5thFV7YP9Mchu6bDVD" Name="Output" Kind="OutputPin" />
+            </Node>
+            <Pad Id="fhvWnvmvnkPiP6UNIsXi5M" Comment="Frame" Bounds="142,189,136,15" ShowValueBox="true" isIOBox="true" Value="0.2, 0.2, 0.2, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="FYsvWxaT8gumCvtyY8uQZF" Comment="Border" Bounds="162,219,136,15" ShowValueBox="true" isIOBox="true" Value="0.302, 0.302, 0.302, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="jfellbYtMiptTgtDogVwzd" Comment="Text" Bounds="182,249,136,15" ShowValueBox="true" isIOBox="true" Value="0.902, 0.902, 0.902, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="qCXBZ1icoxQhzmz7tsc95Z" Comment="Indicator" Bounds="202,279,136,15" ShowValueBox="true" isIOBox="true" Value="0.6275, 0.6275, 0.6275, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="QSYQAfinXzTdp6DkHphmPU" Comment="Track" Bounds="222,309,136,15" ShowValueBox="true" isIOBox="true" Value="0.149, 0.149, 0.149, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="k4b6QY49NMjf3vAynkl9yS" Comment="Track Fill" Bounds="242,339,136,15" ShowValueBox="true" isIOBox="true" Value="0.2392, 0.6078, 0.9137, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Node Bounds="120,533,145,19" Id="PLlYk5ebyo0eTZ3dNpn9oE">
+              <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="Colors" />
+              </p:NodeReference>
+              <Pin Id="jzS9qDASfrW7Ye19kw3jQW" Name="Input" Kind="InputPin" />
+              <Pin Id="bxlxLuOng2iZNRN3L5x9Mb" Name="Frame" Kind="InputPin" />
+              <Pin Id="1JGnBAKLAvpc9djQdzyc9M" Name="Border" Kind="InputPin" />
+              <Pin Id="JyPCpDuuSuU9vJNZqeZyts" Name="Text" Kind="InputPin" />
+              <Pin Id="yUfJibxIPMHLnD6WwZqUeX" Name="Indicator" Kind="InputPin" />
+              <Pin Id="ROJRBpFGvf8c47Beh9guTK" Name="Track" Kind="InputPin" />
+              <Pin Id="TxpqKqgTt1csPBHySzyn8l" Name="Track Fill" Kind="InputPin" />
+              <Pin Id="nU7OgLfdId1zIbcRQ6iZMp" Name="State" Kind="InputPin" DefaultValue="Hovered" />
+              <Pin Id="g94NYy60Ag5EaY4ByJ3bjn" Name="Output" Kind="OutputPin" />
+            </Node>
+            <Pad Id="6bjGeLzG2fzc4DlnnXOP6k" Comment="Frame" Bounds="142,413,136,15" ShowValueBox="true" isIOBox="true" Value="0.251, 0.251, 0.251, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="AOfqcDFGalpsHWEk5iu3He" Comment="Border" Bounds="162,443,136,15" ShowValueBox="true" isIOBox="true" Value="0.4157, 0.4157, 0.4157, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="vW3THIh3St39GJbOAnHk25" Comment="Indicator" Bounds="202,473,136,15" ShowValueBox="true" isIOBox="true" Value="0.8157, 0.8157, 0.8157, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="UyMNLBxj7dN5h0Voih4q7G" Comment="Track Fill" Bounds="242,503,136,15" ShowValueBox="true" isIOBox="true" Value="0.3529, 0.6824, 0.9412, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Node Bounds="120,667,145,19" Id="9KtGw12aCqHgJfQkPttaKs">
+              <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="Colors" />
+              </p:NodeReference>
+              <Pin Id="s8RwJdP8lnLEh75PPidE0U" Name="Input" Kind="InputPin" />
+              <Pin Id="sqythlMouZqqgUJ5tedAih" Name="Frame" Kind="InputPin" />
+              <Pin Id="EaJ1MpC4FhUhFQfsbaIn7i" Name="Border" Kind="InputPin" />
+              <Pin Id="M73h7L4TmbWo3zXMFFuE6u" Name="Text" Kind="InputPin" />
+              <Pin Id="KYHrZ6Dd5BHrwElvWS2Lzd" Name="Indicator" Kind="InputPin" />
+              <Pin Id="L77jdGtzJdzzjQeSkzVh8r" Name="Track" Kind="InputPin" />
+              <Pin Id="i9jxCydsLOgTPY9whqQSwV" Name="Track Fill" Kind="InputPin" />
+              <Pin Id="KWPimoEyoCGXHSi41cTn6s" Name="State" Kind="InputPin" DefaultValue="Pressed" />
+              <Pin Id="LC3Q5Sz4oo12UOpx0bHUK1" Name="Output" Kind="OutputPin" />
+            </Node>
+            <Pad Id="Jzen7YFOVzdVME9pZ2SCgO" Comment="Frame" Bounds="142,577,136,15" ShowValueBox="true" isIOBox="true" Value="0.1569, 0.1569, 0.1569, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="xDRYPBKRnc5MYI7ZoeG3Kx" Comment="Border" Bounds="162,607,136,15" ShowValueBox="true" isIOBox="true" Value="0.3529, 0.3529, 0.3529, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="toMuzFKoNUYL7yGukqbWSk" Comment="Indicator" Bounds="202,637,136,15" ShowValueBox="true" isIOBox="true" Value="1, 1, 1, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Node Bounds="120,741,145,19" Id="EIccR11kgPyifjXU2b1o4O">
+              <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="Colors" />
+              </p:NodeReference>
+              <Pin Id="KdNMO9a2lfYcLUZKaENh1K" Name="Input" Kind="InputPin" />
+              <Pin Id="PLSDLtjdUdrRfwOdAy8KOW" Name="Frame" Kind="InputPin" />
+              <Pin Id="ysjgB9UfjhiXECcBoUD1FX" Name="Border" Kind="InputPin" />
+              <Pin Id="5F8EoUp8yGcmQZfhUgGG0R" Name="Text" Kind="InputPin" />
+              <Pin Id="Wzai2mrAsC9n0E064lGC0L" Name="Indicator" Kind="InputPin" />
+              <Pin Id="6AWTEHLosxgtfgSYJdqGuL" Name="Track" Kind="InputPin" />
+              <Pin Id="lJGZ8DoSl2572BaOifwMGz" Name="Track Fill" Kind="InputPin" />
+              <Pin Id="QPfBeZfzJEY0mxlGwJHbgs" Name="State" Kind="InputPin" DefaultValue="Checked" />
+              <Pin Id="qtEWVGHwRyqETGj99hkru8" Name="Output" Kind="OutputPin" />
+            </Node>
+            <Pad Id="Tap2AE835hvTywyg4C605a" Comment="Indicator" Bounds="202,711,136,15" ShowValueBox="true" isIOBox="true" Value="0.902, 0.902, 0.902, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Node Bounds="120,965,145,19" Id="V1z9JPHkWgJuK590Qr1PCd">
+              <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="Colors" />
+              </p:NodeReference>
+              <Pin Id="8ZP2yfKm4syE9CFV6C6EVC" Name="Input" Kind="InputPin" />
+              <Pin Id="fiq9JhF76nTGnHD1cd8dPx" Name="Frame" Kind="InputPin" />
+              <Pin Id="Zs2oHr3nGjIbjBstMo1Tkb" Name="Border" Kind="InputPin" />
+              <Pin Id="JbiB0TZ5XfYjg6FtTtPSce" Name="Text" Kind="InputPin" />
+              <Pin Id="OaWy3DQ36jsVClmNFQzvlY" Name="Indicator" Kind="InputPin" />
+              <Pin Id="C0J8SYo7M7bvh2rp9VvPb5" Name="Track" Kind="InputPin" />
+              <Pin Id="GhDTTbLV7Ig43l34clbbrU" Name="Track Fill" Kind="InputPin" />
+              <Pin Id="tzB9IK5Pzgu3ehMEigUYi2" Name="State" Kind="InputPin" DefaultValue="Disabled" />
+              <Pin Id="IyCmviq3SwmycA5ZR52CBE" Name="Output" Kind="OutputPin" />
+            </Node>
+            <Pad Id="FT91Kp7PZSGtxFRhrSrKvQ" Comment="Frame" Bounds="142,785,136,15" ShowValueBox="true" isIOBox="true" Value="0.1686, 0.1686, 0.1686, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="YOuotxkaMwq3lrbPce3077" Comment="Border" Bounds="162,815,136,15" ShowValueBox="true" isIOBox="true" Value="0.2196, 0.2196, 0.2196, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="6S5jEYidnYwNPyjBROY9l7" Comment="Text" Bounds="182,845,136,15" ShowValueBox="true" isIOBox="true" Value="0.4314, 0.4314, 0.4314, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="i2zPD1e8f9Y6j3EuVjTQbV" Comment="Indicator" Bounds="202,875,136,15" ShowValueBox="true" isIOBox="true" Value="0.3333, 0.3333, 0.3333, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="pgkFCEfbw7NOAdS1lfEEWe" Comment="Track" Bounds="222,905,136,15" ShowValueBox="true" isIOBox="true" Value="0.1373, 0.1373, 0.1373, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="LKDKvpMfUaFbyoWl0SrLfw" Comment="Track Fill" Bounds="242,935,136,15" ShowValueBox="true" isIOBox="true" Value="0.2275, 0.3098, 0.3882, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Node Bounds="120,1039,145,19" Id="Gm4Le2Mq2CaewntYdw2GEa">
+              <p:NodeReference LastCategoryFullName="Qt.Style.Frame" LastDependency="VL.Qt.dll">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="Frame" />
+              </p:NodeReference>
+              <Pin Id="6FNGqvBaTi10xO3lQ14bmi" Name="Input" Kind="InputPin" />
+              <Pin Id="YSmoO0vByuo30OsxbbVgxR" Name="Radius" Kind="InputPin" />
+              <Pin Id="7ClAX6qrXEXHkpHfvbqeog" Name="Border Width" Kind="InputPin" />
+              <Pin Id="CyHdNN0A96qXT3bVFJ1zgt" Name="Padding X" Kind="InputPin" />
+              <Pin Id="yHHHqg72Hc3egmx4mJYL5b" Name="Padding Y" Kind="InputPin" />
+              <Pin Id="mtCBqz76jibi4ZfqasfAA0" Name="Min Width" Kind="InputPin" />
+              <Pin Id="OrMrAHM27DDt59kQObudgC" Name="Min Height" Kind="InputPin" />
+              <Pin Id="NIeHQ9Rns98o0f9TXHf0ub" Name="State" Kind="InputPin" />
+              <Pin Id="S1T2IHqNy054vl2LKUK8rN" Name="Output" Kind="OutputPin" />
+            </Node>
+            <Pad Id="7tN1DFhR4ZUFNIs0Hr2Jyu" Comment="Radius" Bounds="142,1009,35,15" ShowValueBox="true" isIOBox="true" Value="3">
+              <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="Float32" />
+              </p:TypeAnnotation>
+            </Pad>
+            <ControlPoint Id="Q50QTSdzJ2gUd3bEl3WcgG" Bounds="122,1088" />
+            <Pin Id="QfTcS4DTdHqn595jK5yKS2" Name="Output" Kind="OutputPin" Bounds="122,1088" />
+            <Link Id="tN3yC3Z6bHR2B0ox5xWd2N" Ids="fhvWnvmvnkPiP6UNIsXi5M,atzvjpyWMsEaBVjzOyCKAI" />
+            <Link Id="IeWhpDKGCMiNJrXdJdxqVM" Ids="FYsvWxaT8gumCvtyY8uQZF,tcMxPtxFOzKD8Y40dNCXrO" />
+            <Link Id="PfLSwRoYrK31PfT45iVzmx" Ids="jfellbYtMiptTgtDogVwzd,pypGCqlMgzU5qG8RsruFyB" />
+            <Link Id="g5G3bPr6VNE0z44ediAQi7" Ids="qCXBZ1icoxQhzmz7tsc95Z,0rLwYfsb4yPvK1igBQVBxW" />
+            <Link Id="MybNS8gRqqKfZYUvS19h3H" Ids="QSYQAfinXzTdp6DkHphmPU,ywaYIgr1QsMjRRQN4Gnr4N" />
+            <Link Id="GRrLFLpT8x4zn4QfsJ7MyA" Ids="k4b6QY49NMjf3vAynkl9yS,ueNhOj1lAeEYbTL08wD6C4" />
+            <Link Id="fKGwv9om3w9I05sWKn3LEK" Ids="6bjGeLzG2fzc4DlnnXOP6k,bxlxLuOng2iZNRN3L5x9Mb" />
+            <Link Id="OWYAvE2V0ZdRPirZMx8Msk" Ids="AOfqcDFGalpsHWEk5iu3He,1JGnBAKLAvpc9djQdzyc9M" />
+            <Link Id="LnFV1DhurFSw8o0f5ObXOw" Ids="vW3THIh3St39GJbOAnHk25,yUfJibxIPMHLnD6WwZqUeX" />
+            <Link Id="RRDwyb0y28n80F1bRhCWs9" Ids="UyMNLBxj7dN5h0Voih4q7G,TxpqKqgTt1csPBHySzyn8l" />
+            <Link Id="ETXDWzGNs4rsotI18AEmOH" Ids="T4nT5thFV7YP9Mchu6bDVD,jzS9qDASfrW7Ye19kw3jQW" />
+            <Link Id="5pyQ2C2bO31F1W7e1MWj5W" Ids="Jzen7YFOVzdVME9pZ2SCgO,sqythlMouZqqgUJ5tedAih" />
+            <Link Id="miv28oVW5YEWAXnPh75e4J" Ids="xDRYPBKRnc5MYI7ZoeG3Kx,EaJ1MpC4FhUhFQfsbaIn7i" />
+            <Link Id="Jtzg5Cf6X15pS9AMnU981A" Ids="toMuzFKoNUYL7yGukqbWSk,KYHrZ6Dd5BHrwElvWS2Lzd" />
+            <Link Id="bcLMEZ654T2u9Z0JqybWVT" Ids="g94NYy60Ag5EaY4ByJ3bjn,s8RwJdP8lnLEh75PPidE0U" />
+            <Link Id="6Ph9YqjOTSOMLMYlYuwylJ" Ids="Tap2AE835hvTywyg4C605a,Wzai2mrAsC9n0E064lGC0L" />
+            <Link Id="mlsaCfCh2sAg1Li5X1UfCY" Ids="LC3Q5Sz4oo12UOpx0bHUK1,KdNMO9a2lfYcLUZKaENh1K" />
+            <Link Id="M5LvHLTPjAeI7ceR7DJ9uK" Ids="FT91Kp7PZSGtxFRhrSrKvQ,fiq9JhF76nTGnHD1cd8dPx" />
+            <Link Id="HwCiweYRz6nCkLIZCsCJ5m" Ids="YOuotxkaMwq3lrbPce3077,Zs2oHr3nGjIbjBstMo1Tkb" />
+            <Link Id="Dn39LojsLSxBFYlZgHcjyP" Ids="6S5jEYidnYwNPyjBROY9l7,JbiB0TZ5XfYjg6FtTtPSce" />
+            <Link Id="bCtc8aX8enpwwSD2wrmTOJ" Ids="i2zPD1e8f9Y6j3EuVjTQbV,OaWy3DQ36jsVClmNFQzvlY" />
+            <Link Id="F1G6dMgWxZ9g9IWXs8IS4l" Ids="pgkFCEfbw7NOAdS1lfEEWe,C0J8SYo7M7bvh2rp9VvPb5" />
+            <Link Id="0sRRJX1BDT7ZrHj369vBUd" Ids="LKDKvpMfUaFbyoWl0SrLfw,GhDTTbLV7Ig43l34clbbrU" />
+            <Link Id="GmwY3Pg1dXdyIkP47BfHak" Ids="qtEWVGHwRyqETGj99hkru8,8ZP2yfKm4syE9CFV6C6EVC" />
+            <Link Id="JHYOd1z8hc11v6yjlYGvoN" Ids="7tN1DFhR4ZUFNIs0Hr2Jyu,YSmoO0vByuo30OsxbbVgxR" />
+            <Link Id="llo3WHujul419WyMqz0eBL" Ids="IyCmviq3SwmycA5ZR52CBE,6FNGqvBaTi10xO3lQ14bmi" />
+            <Link Id="UvVRMUDySrQri6GeHF8CYk" Ids="S1T2IHqNy054vl2LKUK8rN,Q50QTSdzJ2gUd3bEl3WcgG" />
+            <Link Id="sWhtNy7LMLDyvLOdvgqBg2" Ids="Q50QTSdzJ2gUd3bEl3WcgG,QfTcS4DTdHqn595jK5yKS2" IsHidden="true" />
+          </Patch>
+        </Node>
+        <Node Name="Light" Bounds="520,100,380,1048" Id="dEmN4pUokC8AvcmozuMuKr">
+          <p:NodeReference LastCategoryFullName="Primitive" LastDependency="Builtin">
+            <Choice Kind="OperationDefinition" Name="Operation" />
+          </p:NodeReference>
+          <Patch Id="0C2gELeCISkLqQ19RnNV9S">
+            <Pad Id="QIFcSY9NgjJdcjn42nNKyz" Bounds="540,130,420,34" ShowValueBox="true" isIOBox="true" Value="Light preset: light frames, dark text, blue accent. Open it to copy it as a template.">
+              <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="String" />
+              </p:TypeAnnotation>
+              <p:ValueBoxSettings>
+                <p:fontsize p:Type="Int32">9</p:fontsize>
+                <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+              </p:ValueBoxSettings>
+            </Pad>
+            <Node Bounds="540,369,145,19" Id="WX7E3cnhcEDlYUsmiM0fWC">
+              <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="Colors" />
+              </p:NodeReference>
+              <Pin Id="uT2yvsmT3qYvxNNx3Y9Pi6" Name="Input" Kind="InputPin" />
+              <Pin Id="DraEm7z2fdsEK0fnSosnIp" Name="Frame" Kind="InputPin" />
+              <Pin Id="Ig3Bu2txnn1ELLfPYZJnE8" Name="Border" Kind="InputPin" />
+              <Pin Id="oLEieiiw7jcBmmBHf4ZzO3" Name="Text" Kind="InputPin" />
+              <Pin Id="0srPIpGfXG7wMK6liSqJzF" Name="Indicator" Kind="InputPin" />
+              <Pin Id="gWg9m8lSbU58REkQGUSCiM" Name="Track" Kind="InputPin" />
+              <Pin Id="NCG4Yg20au28aQtYGkhVg1" Name="Track Fill" Kind="InputPin" />
+              <Pin Id="AZKw05NQh0qgj2dbxgxhmq" Name="State" Kind="InputPin" />
+              <Pin Id="hTKsiCHYXF4d0k8CbRi4LV" Name="Output" Kind="OutputPin" />
+            </Node>
+            <Pad Id="Oz2fpx9tNEVvzzo13z5uRl" Comment="Frame" Bounds="562,189,136,15" ShowValueBox="true" isIOBox="true" Value="0.9608, 0.9608, 0.9608, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="rSJdiWZJVmY0X7Lio1Pslm" Comment="Border" Bounds="582,219,136,15" ShowValueBox="true" isIOBox="true" Value="0.7412, 0.7412, 0.7412, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="azo9J0oULOlxMLPiCaFT9g" Comment="Text" Bounds="602,249,136,15" ShowValueBox="true" isIOBox="true" Value="0.1216, 0.1216, 0.1216, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="RgNPKECwU11OKdSyttSczi" Comment="Indicator" Bounds="622,279,136,15" ShowValueBox="true" isIOBox="true" Value="0.3608, 0.3608, 0.3608, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="slfAVlgJwB44UD7XLI2HAO" Comment="Track" Bounds="642,309,136,15" ShowValueBox="true" isIOBox="true" Value="0.851, 0.851, 0.851, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="8bTveFEB09LbM38xls4qPK" Comment="Track Fill" Bounds="662,339,136,15" ShowValueBox="true" isIOBox="true" Value="0.1843, 0.498, 0.8392, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Node Bounds="540,533,145,19" Id="uAdikM233bxFIOnayzdPrw">
+              <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="Colors" />
+              </p:NodeReference>
+              <Pin Id="KhxfnCo8R7QAceQ9vE9ii9" Name="Input" Kind="InputPin" />
+              <Pin Id="V3BxPvIuCYEzUPXTRGvRkk" Name="Frame" Kind="InputPin" />
+              <Pin Id="RjHh8wsEAmIq2v573rdKWo" Name="Border" Kind="InputPin" />
+              <Pin Id="VQdFd0m9Qiyk9W3NF5r9PS" Name="Text" Kind="InputPin" />
+              <Pin Id="MZVemiV8u2jKz98ZvwYLnY" Name="Indicator" Kind="InputPin" />
+              <Pin Id="pwmAPLuA9SyhBP9mVYlOhY" Name="Track" Kind="InputPin" />
+              <Pin Id="LIrWAioIGGE98p9pd4JIPn" Name="Track Fill" Kind="InputPin" />
+              <Pin Id="Urczjob5rM3tXveZA0wEma" Name="State" Kind="InputPin" DefaultValue="Hovered" />
+              <Pin Id="GGs8U2W8nJHxD2hUuGH2vK" Name="Output" Kind="OutputPin" />
+            </Node>
+            <Pad Id="B3RT5oPZWkwhvPfT4RI4tJ" Comment="Frame" Bounds="562,413,136,15" ShowValueBox="true" isIOBox="true" Value="0.9176, 0.9176, 0.9176, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="8rJz7YZSqYIcbbjVyvk6d3" Comment="Border" Bounds="582,443,136,15" ShowValueBox="true" isIOBox="true" Value="0.5608, 0.5608, 0.5608, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="rkQTfcSq2GTNIbvJciq5gO" Comment="Indicator" Bounds="622,473,136,15" ShowValueBox="true" isIOBox="true" Value="0.2392, 0.2392, 0.2392, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="4a8ARfc3ynUVkaVtkMNR08" Comment="Track Fill" Bounds="662,503,136,15" ShowValueBox="true" isIOBox="true" Value="0.2902, 0.5765, 0.8902, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Node Bounds="540,667,145,19" Id="GxRGqeOyQyNzF7K8E8kF3R">
+              <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="Colors" />
+              </p:NodeReference>
+              <Pin Id="08dhGIeo0IXEct9m5pJLXv" Name="Input" Kind="InputPin" />
+              <Pin Id="J3zwG9108jZie6ef7uAQba" Name="Frame" Kind="InputPin" />
+              <Pin Id="sB4TBqmDoVeyGJsRmdiJPw" Name="Border" Kind="InputPin" />
+              <Pin Id="9YhH5jA1zhaJASyVavT0K0" Name="Text" Kind="InputPin" />
+              <Pin Id="q5Wrf5Dh3UDpsXghnQ5aiC" Name="Indicator" Kind="InputPin" />
+              <Pin Id="2pcwtu6IG60w7jEeckCOkG" Name="Track" Kind="InputPin" />
+              <Pin Id="WhC5OSnVrRPnOANfwzlMYQ" Name="Track Fill" Kind="InputPin" />
+              <Pin Id="wNwSPfmtsCQybJXRXJbdsy" Name="State" Kind="InputPin" DefaultValue="Pressed" />
+              <Pin Id="9ySmtzH5fnY3nuoOWZIEWR" Name="Output" Kind="OutputPin" />
+            </Node>
+            <Pad Id="zHs48IKLoQCLktjJe3NQ0k" Comment="Frame" Bounds="562,577,136,15" ShowValueBox="true" isIOBox="true" Value="0.8549, 0.8549, 0.8549, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="cb7MReBofQ4ZdMAaK47TLY" Comment="Border" Bounds="582,607,136,15" ShowValueBox="true" isIOBox="true" Value="0.4784, 0.4784, 0.4784, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="sgLGBuCOeyCmypxuhluqqu" Comment="Indicator" Bounds="622,637,136,15" ShowValueBox="true" isIOBox="true" Value="0.1216, 0.1216, 0.1216, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Node Bounds="540,771,145,19" Id="HpsQp1OYq2HzaDByBFX4oL">
+              <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="Colors" />
+              </p:NodeReference>
+              <Pin Id="C5winFXCBOI7uxD3cvk4kC" Name="Input" Kind="InputPin" />
+              <Pin Id="fHJ5rDPP5OZ7Zeg9Wzi8KD" Name="Frame" Kind="InputPin" />
+              <Pin Id="uf1aYtC8euPKwPoOLHctsH" Name="Border" Kind="InputPin" />
+              <Pin Id="XwmjjuLqVIvsCYxUhOdyJC" Name="Text" Kind="InputPin" />
+              <Pin Id="2EDwj3j9rZyapaUttIFwMr" Name="Indicator" Kind="InputPin" />
+              <Pin Id="fUHxshTXY9wNnSfY8gvE5a" Name="Track" Kind="InputPin" />
+              <Pin Id="Rg1GJCX9MtJ9hqM3kO4EHy" Name="Track Fill" Kind="InputPin" />
+              <Pin Id="ChGcETDHWMkJ4nrzbwVLSR" Name="State" Kind="InputPin" DefaultValue="Checked" />
+              <Pin Id="w6sCCRYn9EdzUsJYPq4Jr3" Name="Output" Kind="OutputPin" />
+            </Node>
+            <Pad Id="xybbEizX6vASnFAPi5BuUo" Comment="Indicator" Bounds="622,711,136,15" ShowValueBox="true" isIOBox="true" Value="1, 1, 1, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="nriljgO40TjHuMgxj2p0I1" Comment="Track" Bounds="642,741,136,15" ShowValueBox="true" isIOBox="true" Value="0.1843, 0.498, 0.8392, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Node Bounds="540,995,145,19" Id="oioQRdldFFdFLTUmSLkRt4">
+              <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="Colors" />
+              </p:NodeReference>
+              <Pin Id="MpqwdDPzPneS8yJfZ1wfv5" Name="Input" Kind="InputPin" />
+              <Pin Id="qB9zdDStsAUugiCTjgxStR" Name="Frame" Kind="InputPin" />
+              <Pin Id="0suttzOG4P7yzobku3giu8" Name="Border" Kind="InputPin" />
+              <Pin Id="QgayHFVxEddgep4KEm9Vcj" Name="Text" Kind="InputPin" />
+              <Pin Id="NbS0kmh0t2cPgjZ2mhKjwx" Name="Indicator" Kind="InputPin" />
+              <Pin Id="lV29OM7jjPncxsErveYGUF" Name="Track" Kind="InputPin" />
+              <Pin Id="0mQTfV9p91TO7j3kexiHaF" Name="Track Fill" Kind="InputPin" />
+              <Pin Id="gT95ImHBCnaqqhbARS9a3p" Name="State" Kind="InputPin" DefaultValue="Disabled" />
+              <Pin Id="RhUMcSc1rIucUW075gNFgH" Name="Output" Kind="OutputPin" />
+            </Node>
+            <Pad Id="JqdCwOS7ANuEYXEhfyh3OZ" Comment="Frame" Bounds="562,815,136,15" ShowValueBox="true" isIOBox="true" Value="0.9373, 0.9373, 0.9373, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="0q856Ej6WkhEOexAaT19jV" Comment="Border" Bounds="582,845,136,15" ShowValueBox="true" isIOBox="true" Value="0.8392, 0.8392, 0.8392, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="mKykjwZDPTF8nMci70Xkr9" Comment="Text" Bounds="602,875,136,15" ShowValueBox="true" isIOBox="true" Value="0.6275, 0.6275, 0.6275, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="JJZHa4qNojTMxlnyam3tz3" Comment="Indicator" Bounds="622,905,136,15" ShowValueBox="true" isIOBox="true" Value="0.7098, 0.7098, 0.7098, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="7JnTzExc1JsDIoSKNi64aj" Comment="Track" Bounds="642,935,136,15" ShowValueBox="true" isIOBox="true" Value="0.902, 0.902, 0.902, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Pad Id="2rd2k4wYbQhqB2xQ7Hocnz" Comment="Track Fill" Bounds="662,965,136,15" ShowValueBox="true" isIOBox="true" Value="0.6627, 0.7686, 0.8902, 1">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
+            <Node Bounds="540,1069,145,19" Id="Kymsga0pVnt7qsGWc4Phqc">
+              <p:NodeReference LastCategoryFullName="Qt.Style.Frame" LastDependency="VL.Qt.dll">
+                <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                <Choice Kind="OperationCallFlag" Name="Frame" />
+              </p:NodeReference>
+              <Pin Id="uLtOxRB2JX9PELNWHzO8k7" Name="Input" Kind="InputPin" />
+              <Pin Id="xY7xAlWrOSFQTRxEPqpMzZ" Name="Radius" Kind="InputPin" />
+              <Pin Id="r6omuqyh9ud2WwLPFBHVCq" Name="Border Width" Kind="InputPin" />
+              <Pin Id="MWGUCbDpPNVMz40WSdVPmy" Name="Padding X" Kind="InputPin" />
+              <Pin Id="jkrCh2K5tcrIyXWoOlPfG9" Name="Padding Y" Kind="InputPin" />
+              <Pin Id="m1ZHrevHNLphtyGil35c4K" Name="Min Width" Kind="InputPin" />
+              <Pin Id="SJt8OhpWU4eVHXL7S7gAAE" Name="Min Height" Kind="InputPin" />
+              <Pin Id="Q4VkBy1KxJ8fD8yb2eYiog" Name="State" Kind="InputPin" />
+              <Pin Id="1BFwpcg4zQi058bh4iRG7s" Name="Output" Kind="OutputPin" />
+            </Node>
+            <Pad Id="319jQH48alRN8bx6ICgliK" Comment="Radius" Bounds="562,1039,35,15" ShowValueBox="true" isIOBox="true" Value="4">
+              <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+                <Choice Kind="TypeFlag" Name="Float32" />
+              </p:TypeAnnotation>
+            </Pad>
+            <ControlPoint Id="9ICM56CxeiN4LgCJ0V2c2X" Bounds="542,1118" />
+            <Pin Id="DrKYrNnaVq6eoQrDAEEJgp" Name="Output" Kind="OutputPin" Bounds="542,1118" />
+            <Link Id="ZfaVmw6n4PWeiXPuQbglU5" Ids="Oz2fpx9tNEVvzzo13z5uRl,DraEm7z2fdsEK0fnSosnIp" />
+            <Link Id="dZjZxoBN38h3W2pA5q4HWA" Ids="rSJdiWZJVmY0X7Lio1Pslm,Ig3Bu2txnn1ELLfPYZJnE8" />
+            <Link Id="fyHUmyWI6sZuFdonvoGVGH" Ids="azo9J0oULOlxMLPiCaFT9g,oLEieiiw7jcBmmBHf4ZzO3" />
+            <Link Id="lAkd9EHMFnGo5ttx9ITQ7o" Ids="RgNPKECwU11OKdSyttSczi,0srPIpGfXG7wMK6liSqJzF" />
+            <Link Id="tH8PTMOK2ZwqApgfPrTaFj" Ids="slfAVlgJwB44UD7XLI2HAO,gWg9m8lSbU58REkQGUSCiM" />
+            <Link Id="KEQmph079TGzqrYZh0U99p" Ids="8bTveFEB09LbM38xls4qPK,NCG4Yg20au28aQtYGkhVg1" />
+            <Link Id="g86QXwLhAwr7TYbQJmjstu" Ids="B3RT5oPZWkwhvPfT4RI4tJ,V3BxPvIuCYEzUPXTRGvRkk" />
+            <Link Id="8kxp4HGGBIdMmowtlYSb6I" Ids="8rJz7YZSqYIcbbjVyvk6d3,RjHh8wsEAmIq2v573rdKWo" />
+            <Link Id="xahC2PiQhb4XclCY2U8Az7" Ids="rkQTfcSq2GTNIbvJciq5gO,MZVemiV8u2jKz98ZvwYLnY" />
+            <Link Id="u4HV7WUEv4jsWJOfX3wLqW" Ids="4a8ARfc3ynUVkaVtkMNR08,LIrWAioIGGE98p9pd4JIPn" />
+            <Link Id="KgBtE5wklHhVAX2B6qztYN" Ids="hTKsiCHYXF4d0k8CbRi4LV,KhxfnCo8R7QAceQ9vE9ii9" />
+            <Link Id="tIONBdbkgsm72tz8tRCtzs" Ids="zHs48IKLoQCLktjJe3NQ0k,J3zwG9108jZie6ef7uAQba" />
+            <Link Id="Yoa0zTq3PxTCnEAk5ZCWgx" Ids="cb7MReBofQ4ZdMAaK47TLY,sB4TBqmDoVeyGJsRmdiJPw" />
+            <Link Id="I71PlHJo7QQXOsbbX6tSvC" Ids="sgLGBuCOeyCmypxuhluqqu,q5Wrf5Dh3UDpsXghnQ5aiC" />
+            <Link Id="1GrYZ9ZNRWXJF1mwEDHnb6" Ids="GGs8U2W8nJHxD2hUuGH2vK,08dhGIeo0IXEct9m5pJLXv" />
+            <Link Id="eou49dj4Dwoug1xf5XfPGt" Ids="xybbEizX6vASnFAPi5BuUo,2EDwj3j9rZyapaUttIFwMr" />
+            <Link Id="GLzwbw5kMIz6hsTTESjx8f" Ids="nriljgO40TjHuMgxj2p0I1,fUHxshTXY9wNnSfY8gvE5a" />
+            <Link Id="chGw3uLL1MO25BDAXYnf2O" Ids="9ySmtzH5fnY3nuoOWZIEWR,C5winFXCBOI7uxD3cvk4kC" />
+            <Link Id="OjNtSH78GIyjANq6aagq83" Ids="JqdCwOS7ANuEYXEhfyh3OZ,qB9zdDStsAUugiCTjgxStR" />
+            <Link Id="8ZT87vyyJww4ReAO6DKuls" Ids="0q856Ej6WkhEOexAaT19jV,0suttzOG4P7yzobku3giu8" />
+            <Link Id="CNthLeKrOWkgAQkDuRy9ch" Ids="mKykjwZDPTF8nMci70Xkr9,QgayHFVxEddgep4KEm9Vcj" />
+            <Link Id="NSW1PvZcxNb3tQqNlI3GN9" Ids="JJZHa4qNojTMxlnyam3tz3,NbS0kmh0t2cPgjZ2mhKjwx" />
+            <Link Id="FzjUj683RxO2NZEG0hb93f" Ids="7JnTzExc1JsDIoSKNi64aj,lV29OM7jjPncxsErveYGUF" />
+            <Link Id="1CkFunWSs2RLKsi3KWCRP9" Ids="2rd2k4wYbQhqB2xQ7Hocnz,0mQTfV9p91TO7j3kexiHaF" />
+            <Link Id="Wo9eoLr9AHzpc0JZa5W2W8" Ids="w6sCCRYn9EdzUsJYPq4Jr3,MpqwdDPzPneS8yJfZ1wfv5" />
+            <Link Id="KL1NbAGoItTLRNADglGy1F" Ids="319jQH48alRN8bx6ICgliK,xY7xAlWrOSFQTRxEPqpMzZ" />
+            <Link Id="U6NmFmvAaPB50OyhQ4MCDt" Ids="RhUMcSc1rIucUW075gNFgH,uLtOxRB2JX9PELNWHzO8k7" />
+            <Link Id="yeITFhxuh4inf9khRpLNT3" Ids="1BFwpcg4zQi058bh4iRG7s,9ICM56CxeiN4LgCJ0V2c2X" />
+            <Link Id="cWP4fE8WvpAITnL8LhbfN8" Ids="9ICM56CxeiN4LgCJ0V2c2X,DrKYrNnaVq6eoQrDAEEJgp" IsHidden="true" />
+          </Patch>
+        </Node>
+      </Canvas>
+    </Canvas>
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="4gJ7oJCgsHEaKAHWXg2t2K">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="0WmwuMqa5qUOonx8QUjWqI">
+        <Canvas Id="355zBqG2bGfZ0tJnnfVQhm" CanvasType="Group" />
+        <Patch Id="3eDJUjReJZb9PJM9XLoHn7" Name="Create" />
+        <Patch Id="5iW7Y6nRrxU6duVh3XER8k" Name="Update" />
+        <ProcessDefinition Id="4qzPv0FYs9gK70B5w4MIV6">
+          <Fragment Id="56JheQo1fiTdD4DeSCveP5" Patch="3eDJUjReJZb9PJM9XLoHn7" Enabled="true" />
+          <Fragment Id="7PwYZjWee19GHxUnqZAuJR" Patch="5iW7Y6nRrxU6duVh3XER8k" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+</Document>

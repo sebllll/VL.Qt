@@ -1,0 +1,63 @@
+#version 440
+// Radial (rotational) blur of the input element (builtin:radial_blur): arcs around center. Needs an Input. Two passes (see sampleCount).
+// Box blur over a rotation of +-angle/2 around center (centred on the pixel, the picture does not shift). texelSize in pixels.
+// Uniform block (std140): qt_Matrix 0, qt_Opacity 64, center 72, angle 80, texelSize 88.
+layout(location = 0) in vec2 qt_TexCoord0;
+layout(location = 0) out vec4 fragColor;
+layout(std140, binding = 0) uniform buf {
+    mat4 qt_Matrix;
+    float qt_Opacity;
+    vec2 center;     // rotation center, 0..1 of the effect area (0.5, 0.5 = middle)
+    float angle;     // total rotation of the blur in degrees (clockwise on screen); 0 = off
+    vec2 texelSize;  // 1 / width, 1 / height of the source in pixels (DIP size x dpr, as the layer is created)
+};
+layout(binding = 1) uniform sampler2D source;
+
+const int maxSamples = 64;
+
+// Sample count for a blur line of `len` pixels: one sample per pixel, 2..maxSamples, equal weights, taken at the middle of
+// their slots, so the result does not step when the count changes while the length is animated.
+// Beyond maxSamples pixels the samples are further than one pixel apart and show as copies: that is why the effect is always
+// two passes of this shader. Pass 2 reads the output of pass 1 with the length divided by maxSamples (= the sample spacing
+// of pass 1 once the cap is reached): a box of one spacing fills the gaps exactly, up to maxSamples^2 effective samples.
+// Where pass 1 does not hit the cap, pass 2 blurs by less than one pixel, so it is practically the identity.
+int sampleCount(float len)
+{
+    return clamp(int(ceil(len)), 2, maxSamples);
+}
+
+// Bilinear sample of the premultiplied source, done by hand: the layers are sampled nearest (not smooth), and a nearest
+// sample every pixel or less would hit some texels twice and skip others, which shows as hatching. Outside the item it is
+// transparent.
+vec4 fetch(vec2 uv)
+{
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0)
+        return vec4(0.0);
+    vec2 p = uv / texelSize - 0.5;
+    vec2 i = floor(p);
+    vec2 f = p - i;
+    vec2 c = (i + 0.5) * texelSize;
+    return mix(mix(texture(source, c), texture(source, c + vec2(texelSize.x, 0.0)), f.x),
+               mix(texture(source, c + vec2(0.0, texelSize.y)), texture(source, c + texelSize), f.x), f.y);
+}
+
+void main()
+{
+    vec2 uv = qt_TexCoord0;
+    vec2 qd = (uv - center) / texelSize;  // offset from center in pixels: rotate there, so the arcs stay round on any aspect
+    float rad = radians(abs(angle));
+    float arc = sqrt(dot(qd, qd)) * rad;  // arc length at this pixel in pixels
+    if (arc < 0.1) {
+        fragColor = fetch(uv) * qt_Opacity;
+        return;
+    }
+    int n = sampleCount(arc);
+    vec4 sum = vec4(0.0);
+    for (int i = 0; i < n; ++i) {
+        float t = (float(i) + 0.5) / float(n) - 0.5;
+        float s = sin(rad * t), c = cos(rad * t);
+        vec2 r = vec2(c * qd.x - s * qd.y, s * qd.x + c * qd.y);
+        sum += fetch(center + r * texelSize);
+    }
+    fragColor = sum / float(n) * qt_Opacity;
+}

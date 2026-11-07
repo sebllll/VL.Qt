@@ -1,0 +1,93 @@
+# Sanitizer stress run (img08, #365): resource-stress scenario of the SmokeTest against a libvlqt.so built with
+# AddressSanitizer / ThreadSanitizer (presets linux-x64-asan / linux-x64-tsan). Finds races, use-after-free and leaks in
+# QtNative's resource manager that the normal tests do not reach. Build: tools/build-native.sh --sanitize (docs/development.md).
+#
+# When: NOT part of every PR. Trigger it by hand (Actions > sanitizers > Run workflow, inputs seconds/seed) before a
+# release or after changes to src/VL.Qt.Native/resources*, threading or lifecycle code. The pull_request trigger only
+# fires for changes to tools/sanitizers/** and this file (not for draft PRs). No schedule (costs minutes every day).
+# Cost: 2 jobs (asan, tsan) on ubuntu-24.04 x64, about 15-25 min each with a Qt cache hit (QtNative built twice: normal for the
+# Qt bundle + sanitized; TSan runs 5-15x slower). timeout 40 min. Only x64 (arm64 sanitizer runs are done locally).
+# Reproduce locally (WSL/Linux, Qt + .NET installed, see tools/setup-wsl.sh):
+#   tools/test-linux.sh --sanitize asan --software -- --only resource-stress --stress-seconds 60 [--stress-seed <n>]
+# The seed of a run is logged ("repeat with --stress-seed N") and is in the uploaded smoke.out on failure.
+name: sanitizers
+
+on:
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: 'Stress duration in seconds (per sanitizer)'
+        required: false
+        default: '60'
+      seed:
+        description: 'Random seed (empty = random, logged in the output)'
+        required: false
+        default: ''
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review] # ready_for_review: drafts are skipped, so run on ready
+    paths:
+      - 'tools/sanitizers/**'
+      - '.github/workflows/sanitizers.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  sanitize:
+    name: ${{ matrix.san }} (linux-x64)
+    # Draft PRs do not run (same rule as build.yml); workflow_dispatch always.
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        san: [asan, tsan]
+    env:
+      QT_VERSION: '6.12.0'
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+      # Inputs via env, not interpolated into the script (empty on pull_request: defaults below).
+      STRESS_SECONDS: ${{ inputs.seconds || '60' }}
+      STRESS_SEED: ${{ inputs.seed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Same setup as the linux job in build.yml (toolchain + Qt runtime deps, .NET, Qt cache with the same key).
+      - name: apt packages
+        run: tools/setup-wsl.sh --no-dotnet
+
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache Qt
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/Qt
+          key: qt-${{ env.QT_VERSION }}-linux-x64-v2
+
+      - name: Qt (aqtinstall)
+        run: tools/setup-qt.sh --rid linux-x64
+
+      # Builds + deploys the normal QtNative (Qt bundle), builds the sanitized QtNative, swaps it into a copy of the SmokeTest
+      # output and runs resource-stress under the sanitizer runtime (LD_PRELOAD; TSan with setarch -R). Exit != 0 on a
+      # sanitizer finding (ASan error, QtNative leak, TSan report outside suppressions) or SmokeTest failure.
+      - name: Stress (${{ matrix.san }}, software backend)
+        run: |
+          args=(--only resource-stress --stress-seconds "$STRESS_SECONDS")
+          [ -z "$STRESS_SEED" ] || args+=(--stress-seed "$STRESS_SEED")
+          tools/test-linux.sh --rid linux-x64 --sanitize ${{ matrix.san }} --software -- "${args[@]}"
+
+      - name: Sanitizer reports + logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sanitizer-${{ matrix.san }}-logs
+          path: build/test-linux-linux-x64
+          if-no-files-found: ignore
+          retention-days: 3

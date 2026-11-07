@@ -1,0 +1,43 @@
+name: cla
+
+# CLA check for pull requests, active only in the public repository (inactive in forks and in the private repo).
+# Documented usage of contributor-assistant/github-action: triggers issue_comment and pull_request_target, the
+# action reads the PR through the API and never checks out or runs PR code.
+#
+# Setup in the public repo (once):
+#  - Create the branch `cla-signatures` with a file signatures/cla.json containing {"signedContributors": []}
+#    (an orphan branch; the action needs the branch and, in the first run, the file to exist).
+#  - Branch protection for develop and main: require the status check "CLA Assistant" (job name below).
+#  - Opt-outs for CONTRIBUTORS.md: see CONTRIBUTING.md (signatures/optout.txt on the same branch).
+# The sign phrase and the recheck comment are the defaults of the action; keep them in sync with CLA.md.
+on:
+  issue_comment:
+    types: [created]
+  pull_request_target:
+    types: [opened, closed, synchronize]
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  cla:
+    name: CLA Assistant
+    runs-on: ubuntu-latest
+    if: github.repository == 'sebllll/VL.Qt'
+    steps:
+      - name: CLA Assistant
+        if: github.event_name == 'pull_request_target' || (github.event.issue.pull_request && (github.event.comment.body == 'recheck' || github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA'))
+        # v2.6.1
+        uses: contributor-assistant/github-action@ca4a40a7d1004f18d9960b404b97e5f30a505a08
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          path-to-signatures: signatures/cla.json
+          path-to-document: https://github.com/sebllll/VL.Qt/blob/develop/CLA.md
+          branch: cla-signatures
+          # Exact logins (no wildcards: the action matches wildcard patterns unanchored).
+          allowlist: sebllll,dependabot[bot],github-actions[bot]
+          lock-pullrequest-aftermerge: false

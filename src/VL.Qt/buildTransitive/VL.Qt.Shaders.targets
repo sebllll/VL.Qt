@@ -1,0 +1,31 @@
+<Project>
+
+  <!-- Shader nodes from files (#488) are resolved by the node factory at runtime, in the exported app, too: it looks for
+       qtshaders/ next to the exe (#506). This target copies qtshaders/** next to the exported document there.
+       The document path comes from the exe project vvvv generates (<None Include="<document>.pc">, present even if the
+       .pc does not exist): this project if it is the exe (NuGet dependency), else the exe being built, whose project
+       directory is MSBuildStartupDirectory (VL.Qt.vl.csproj in the export of the repo sources, see VL.Qt.vl.targets).
+       Only the qtshaders/ of the exported document; those of other documents and packages are not copied. -->
+  <Target Name="VLQtAddShaders" BeforeTargets="AssignTargetPaths">
+    <ItemGroup>
+      <_VLQtExeProject Include="$(MSBuildProjectFullPath)" Condition="'$(OutputType)' != 'Library'" />
+      <_VLQtExeProject Include="$(MSBuildStartupDirectory)\*.csproj" Condition="'$(OutputType)' == 'Library'" />
+    </ItemGroup>
+    <PropertyGroup Condition="'@(_VLQtExeProject)' != ''">
+      <_VLQtDocument>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('%(_VLQtExeProject.FullPath)')), '&lt;None Include=&quot;([^&quot;]+)\.pc&quot;').Groups[1].Value)</_VLQtDocument>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(_VLQtDocument)' != ''">
+      <_VLQtShadersDir>$([System.IO.Path]::GetDirectoryName('$(_VLQtDocument)'))\qtshaders\</_VLQtShadersDir>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(_VLQtShadersDir)' != '' And Exists('$(_VLQtShadersDir)')">
+      <_VLQtShaderFile Include="$(_VLQtShadersDir)**\*" />
+      <None Include="@(_VLQtShaderFile)">
+        <Link>qtshaders\%(_VLQtShaderFile.RecursiveDir)%(_VLQtShaderFile.Filename)%(_VLQtShaderFile.Extension)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <Visible>false</Visible>
+      </None>
+    </ItemGroup>
+  </Target>
+
+</Project>

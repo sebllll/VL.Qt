@@ -1,0 +1,202 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" Id="kWHhnvqgsIRGTalxMCB3CR" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+  <NugetDependency Id="1ppu5vXXvDQXfQOkxo3b7n" Location="VL.CoreLib" />
+  <DocumentDependency Id="NX4iKPYg34EpTdqZvCrTxW" Location="../../VL.Qt.vl" />
+  <Patch Id="ieWuw5iFCgq2rNEdRW8ILn">
+    <Canvas Id="buA5uKvHnTU0mNzebo6AkO" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <Node Name="Application" Bounds="100,180" Id="VMglRPPTh4srgwAaUF67hP">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="fJEfEDHXmQrOLzhJSH57m2">
+        <Canvas Id="nXyI7eUKSgGAfhkFJPvfbB" CanvasType="Group">
+          <Pad Id="7xY5wFDel6EixeF8SLTeyl" Bounds="85,16,405,52" ShowValueBox="true" isIOBox="true" Value="How To Displace an Element">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="CdXl2JvMta5xOQlunYx5Z7" Bounds="85,85,830,84" ShowValueBox="true" isIOBox="true" Value="Displace (Qt.Effects) shifts the pixels of an element by a displacement map, which is itself an element:&#xD;&#xA;- Map: any element, here a ShaderEffect. Its red channel moves the pixels in x, green in y, 0.5 = no shift; the alpha of the map scales the shift.&#xD;&#xA;- Displacement: the largest shift in units (a map value of 0 or 1 moves the pixels by this).&#xD;&#xA;- The map is stretched over the element, also behind a Blur (outside the element the edge of the map continues), it is not drawn itself and does not count for layout.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="40mPKGcVkIMbl8iyOzpN2H" Bounds="85,184,830,84" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Without a Map the chain passes on unchanged.&#xD;&#xA;- Size the map element like the element it displaces, the position does not matter.&#xD;&#xA;- The map can be animated like any element (a ShaderEffect with a Time uniform, a Video, ...).">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="400,1008,125,19" Id="KubJEyBJWcVSnLrzGv37Ox">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
+            </p:NodeReference>
+            <Pin Id="9TDMRD9l3R5leIbpKZFcoq" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="qFUKS5jUMA48AQDGwEpiux" Name="Input" Kind="InputPin" />
+            <Pin Id="nDpjAhiV7zHDKzckyqZQic" Name="Fragment Code" Kind="InputPin" />
+            <Pin Id="8ezj1sAOyjOvS1lHZVYSsp" Name="Fragment Shader" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Tfvh4SjHzCFp2fp6zYEGVC" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
+            <Pin Id="lubdPzMRQgdCuIt8MBAlkG" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
+            <Pin Id="HdJWZRFK5WYoMwrffYZzIO" Name="Uniforms" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ffxNFdJCTOEt0sftL4b0K9" Name="Blending" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Ukqxu8SdnpC2MNfvddqsHc" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
+            <Pin Id="CwaWLXqE9IsvzOUduL74hS" Name="Size" Kind="InputPin" />
+            <Pin Id="fayUI33VjnAsUK8XO8c5Rx" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="C3f4NMp2ouPDPsQXbEGERW" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="WsIy2auJe1BDl8AbWZ7uPY" Name="Anchor" Kind="InputPin" IsHidden="true" />
+            <Pin Id="fPHxQ2MoYA0fdyqaRpnWHQ" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VMvAgG8iL6UxA4sYh8wT3w" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="zknxGsTqe0hfH0cBF13bR8" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="mMS9GFRqfqiiD04BZ8KMz1" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="3cp5ODhTI0hIJHbuiTUubR" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="fFPIYvzJJLM8U5y2GkeJGj" Name="Output" Kind="OutputPin" />
+            <Pin Id="F0szW5tNEgb8ZmZEuY1acY" Name="Error" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="EpbkEDHYi3dhpptLgNA8g2" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="a6xsI77ce3YsutR52j14ye" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+          </Node>
+          <Node Bounds="380,1107,45,19" Id="4fVfm4XeBt8RAbgiDOpyYV">
+            <p:NodeReference LastCategoryFullName="Qt.Effects" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Effects" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Displace" />
+            </p:NodeReference>
+            <Pin Id="4ZxkjPiOZrPYAkEsZxFp3G" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ocOPjdb5LEhlLQpGcDhGhS" Name="Input" Kind="InputPin" />
+            <Pin Id="6v9Ph8WzcpsRTWtxconmav" Name="Map" Kind="InputPin" />
+            <Pin Id="M3SYwVBMbLHjgb1VkSCGNo" Name="Displacement" Kind="InputPin" DefaultValue="0.2" />
+            <Pin Id="hrLSPfmhcskyt9ShezHqZ6" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="120,1249,105,19" Id="xj7SmnI3CkK9KncGX79Yqe">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Text" />
+            </p:NodeReference>
+            <Pin Id="iIQjaONNknZh9VnF7uBvei" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="vgVWqW46aLiLhVkE7eetq5" Name="Size" Kind="InputPin" />
+            <Pin Id="JPbfLlZV4JaXMNYsijzQYH" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="qATNj2wZry9JMAIzpnSwsk" Name="Anchor" Kind="InputPin" IsHidden="true" />
+            <Pin Id="w0pjY65Zsq4X5evksiO09n" Name="Text" Kind="InputPin" DefaultValue="VL.Qt" />
+            <Pin Id="rOySfVUs76CXuGjCTpg0JF" Name="Font Family" Kind="InputPin" IsHidden="true" />
+            <Pin Id="gDQQMASPgtgWH2CprvYcyN" Name="Font Size" Kind="InputPin" DefaultValue="1.1" />
+            <Pin Id="gA9bGYQUD14y6b6QZft2II" Name="Weight" Kind="InputPin" DefaultValue="Bold" IsHidden="true" />
+            <Pin Id="0tPBSQ2Q3F3Ndjnna1buKi" Name="Italic" Kind="InputPin" IsHidden="true" />
+            <Pin Id="CIymScRGgqhK2oBkneICzV" Name="Color" Kind="InputPin" DefaultValue="0.95, 0.93, 0.9, 1" />
+            <Pin Id="wBFwkuNq8LKX3BtVEx1hJA" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" IsHidden="true" />
+            <Pin Id="3A8mclLzXdOhFLtMm3eNac" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" IsHidden="true" />
+            <Pin Id="zGhlG8BB9s79xfaxhuP547" Name="Wrap" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Qg29pGrslrZ6V9cw7HnAyh" Name="Elide" Kind="InputPin" IsHidden="true" />
+            <Pin Id="J4Uc5hBapokXwW9Qq52l03" Name="Line Height" Kind="InputPin" IsHidden="true" />
+            <Pin Id="PJ3I6bYDxBPj74nLW13FVa" Name="Letter Spacing" Kind="InputPin" IsHidden="true" />
+            <Pin Id="7nAxUPWX0cxb7VUPwLrvl6" Name="Autofit" Kind="InputPin" IsHidden="true" />
+            <Pin Id="D95g2u0pogNVG7IiQBTBh5" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="5GygYicGQWQ1NmH63L9P1I" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="aEw9AxMZqD2MdaTZ5CQWL4" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="z2DkskQKJ3EN52B0G33oM0" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="6nihoMVAyStj1T6i53AjUZ" Name="Effect" Kind="InputPin" />
+            <Pin Id="yjw9UyA3JqTNPlAcuImMK5" Name="Output" Kind="OutputPin" />
+            <Pin Id="B3qdVW4mhnN2YVdQQj04dr" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="al58hc5W3sseVWE6TcyT4A" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="9mkJiwZl0VlnQyW1YyST3r" Comment="Size" Bounds="502,935,35,28" ShowValueBox="true" isIOBox="true" Value="5.2, 2.4">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="HdqHhsjGn8Oh1O6gTxF8Is" Comment="Fragment Code" Bounds="422,690,440,200" ShowValueBox="true" isIOBox="true" Value="#version 440&#xD;&#xA;layout(location = 0) in vec2 qt_TexCoord0;&#xD;&#xA;layout(location = 0) out vec4 fragColor;&#xD;&#xA;&#xD;&#xA;layout(std140, binding = 0) uniform buf {&#xD;&#xA;    mat4 qt_Matrix;&#xD;&#xA;    float qt_Opacity;&#xD;&#xA;};&#xD;&#xA;&#xD;&#xA;void main()&#xD;&#xA;{&#xD;&#xA;    vec2 uv = qt_TexCoord0;&#xD;&#xA;    // red moves x, green moves y, 0.5 = no shift&#xD;&#xA;    float x = 0.5 + 0.5 * sin(uv.y * 40.0);&#xD;&#xA;    float y = 0.5 + 0.5 * sin(uv.x * 25.0);&#xD;&#xA;    fragColor = vec4(x, y, 0.0, 1.0) * qt_Opacity; // premultiplied&#xD;&#xA;}">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="RCzxX3IIbPJx0B5WCOTm3S" Comment="Displacement" Bounds="422,1077,35,15" ShowValueBox="true" isIOBox="true" Value="0.2">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="6OhUzQwaLoyLLfBy7yeTnj" Comment="Size" Bounds="122,1176,35,28" ShowValueBox="true" isIOBox="true" Value="5.2, 2.4">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="seoXhFE4GlnbGeleHMisBt" Bounds="460,623,300,27" ShowValueBox="true" isIOBox="true" Value="The map: red = x shift, green = y shift (waves).">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="100,1442,145,19" Id="jrjv5axlQkuNh3gWzgXc4Z">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="F7vAVId7xrQNTZjBezyb09" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="itMZffFYOoiimMuQ5Av16N" Name="Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="tmHnFmrMlU4ddJs0LeVGqc" Name="V Sync" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ILzdVUDdkbsK45B2cuTb07" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DbJcHAbjAXXdiTNLeZJJA8" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="tbCfFeTbv7fRVQyhGvzyms" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="iNFoKX68Bm5BYoDcuAgojb" Name="Input" Kind="InputPin" />
+            <Pin Id="NjxXcrG8UxnjOXP2pqcXI5" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FTGYFbbUJJN9SchozUffTD" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="ARiX47Ga75TFJiVx3boaKM" Name="Enabled" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Tuquy5S6YbfieM3KbhMAxi" Name="Title" Kind="InputPin" />
+            <Pin Id="92aMPn8Me4n6UPfUUx2i69" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="xphDVp3mK1mDhfNvNZOKPv" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="0uFr7jlGW2rUVHoCzqsl9B" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="tKVYD3ecoERgOgnwwVWfXw" Name="Error" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="7S0CbfhvFw6r8w3XhuDRvy" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="5ZZG2JhkB4RmlQJyMpafYD" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="QOl1fcQxFx00kZG7DFAIxD" Name="Debug" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="T0nvWiU4fTmMFyW8KJwIZK" Comment="Title" Bounds="182,1378,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Displace an Element">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="uhkN5bXUXHVzJp4oxCVNwb" Comment="Clear Color" Bounds="142,1318,136,15" ShowValueBox="true" isIOBox="true" Value="0.06, 0.07, 0.1, 1">
+            <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="RGBA" />
+            </p:TypeAnnotation>
+          </Pad>
+        </Canvas>
+        <Link Id="36LF7g49lNKn0LIHuLyatZ" Ids="fFPIYvzJJLM8U5y2GkeJGj,6v9Ph8WzcpsRTWtxconmav" />
+        <Link Id="8tcfjHtb8yzQzTyxfQqpiz" Ids="hrLSPfmhcskyt9ShezHqZ6,6nihoMVAyStj1T6i53AjUZ" />
+        <Link Id="sTE9jp03tMNnKCBzyZSVYX" Ids="9mkJiwZl0VlnQyW1YyST3r,CwaWLXqE9IsvzOUduL74hS" />
+        <Link Id="kleVSOARXK84fvKCYsO6Vx" Ids="HdqHhsjGn8Oh1O6gTxF8Is,nDpjAhiV7zHDKzckyqZQic" />
+        <Link Id="JyqlubpFnbjfAPVkHjoQut" Ids="RCzxX3IIbPJx0B5WCOTm3S,M3SYwVBMbLHjgb1VkSCGNo" />
+        <Link Id="JL8vCGSl9MMcH7nfPUrDgK" Ids="6OhUzQwaLoyLLfBy7yeTnj,vgVWqW46aLiLhVkE7eetq5" />
+        <Link Id="VDp5RfXbqh2OG40mR7b9ED" Ids="yjw9UyA3JqTNPlAcuImMK5,iNFoKX68Bm5BYoDcuAgojb" />
+        <Link Id="K8hmM93bW0mjnGRmJOCaut" Ids="T0nvWiU4fTmMFyW8KJwIZK,Tuquy5S6YbfieM3KbhMAxi" />
+        <Link Id="KdHh1gK5I9TDPtj6853SmV" Ids="uhkN5bXUXHVzJp4oxCVNwb,FTGYFbbUJJN9SchozUffTD" />
+        <Patch Id="adYpTZAbOKEwgfGbgA135L" Name="Create" />
+        <Patch Id="lstEuRvvwiADGKeeGYDd5q" Name="Update" />
+        <ProcessDefinition Id="jFRddU10URmV8UPowG4la9">
+          <Fragment Id="pVvGJt2460gwSaPDXsfCZ2" Patch="adYpTZAbOKEwgfGbgA135L" Enabled="true" />
+          <Fragment Id="sJwPyuJa5HUTJI4ijKMLfr" Patch="lstEuRvvwiADGKeeGYDd5q" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+</Document>

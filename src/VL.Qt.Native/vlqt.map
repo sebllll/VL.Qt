@@ -1,0 +1,7 @@
+/* Linux export list of libvlqt.so: only the C ABI of vlqt.h. */
+{
+  global:
+    vlqt_*;
+  local:
+    *;
+};

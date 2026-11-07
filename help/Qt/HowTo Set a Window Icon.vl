@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="hua8vdtQ0T7UliPdDRVd13" LanguageVersion="2026.8.0-0228-gbf75e01f81" Version="0.128">
+  <NugetDependency Id="AXh4VRnnfztZ53173RFU9A" Location="VL.CoreLib" />
+  <DocumentDependency Id="9DBifPwuqbJyBTXr1EBHUd" Location="../../VL.Qt.vl" />
+  <Patch Id="dD28xudZ8uDWzoOIiRe2As">
+    <Canvas Id="a4gg3i8949lrAVE31UDtlt" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="Qp6j8s13DImd91oD73v2EZ">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="AHtL1yw5RpOwe0KcRqPjqA">
+        <Canvas Id="XKqD2Dqon1N3xCQW7hOSvq" CanvasType="Group">
+          <Pad Id="LjbD46E7vddepGibPoG4m4" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Set a Window Icon">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="DwtJfBV7tnlOHZdOUSILaq" Bounds="85,85,830,149" ShowValueBox="true" isIOBox="true" Value="Window Settings [Qt] sets the icon of the Renderer window (title bar, taskbar, Alt-Tab):&#xD;&#xA;- Connect its Output to the Window pin of Renderer [Qt]. Without it, the window shows the built-in default icon.&#xD;&#xA;- Icon: .ico, .png, .svg or anything Qt reads; a relative path is relative to this patch. Changes apply live, without recreating the window. No value (or an empty path) shows the default icon again.&#xD;&#xA;- A file that cannot be loaded keeps the default icon and shows a warning at Renderer [Qt] (Error output).&#xD;&#xA;- Title, Borderless, Fullscreen and Bounds are optional pins of the same node; a value that is set there wins over the matching pin of Renderer [Qt].">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="luRThQEyxFfVIYOjcxmKcE" Bounds="85,260,830,115" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Bounds in Window Settings only apply when the window is created; Save Bounds and Client Bounds stay on Renderer [Qt].&#xD;&#xA;- Exported apps: the default icon is built in and needs no file next to the exe. The icon of the .exe file itself is set in the vvvv export settings.&#xD;&#xA;- Linux (Wayland): the compositor takes the icon from the app id and the .desktop file, not from the window.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="YKQ6Jo2uBVY2X1yPolktMP" Comment="Icon" Bounds="262,415,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-window-icon.png">
+            <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Path" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="260,465,88,19" Id="dFrUhhyp70LPYksaP2g6Ja">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="WindowSettings" />
+            </p:NodeReference>
+            <Pin Id="9ZXKPbOoT7w9iTjhheW0nm" Name="Icon" Kind="InputPin" />
+            <Pin Id="7tW0z1OeryW93mel38zj7v" Name="Title" Kind="InputPin" IsHidden="true" />
+            <Pin Id="7U5wqBOKheF94gxEk4BbTR" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="SnsIkG2VzxFJek7wqy5yP0" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MPzliTWPhEcsDFTL87jfo8" Name="Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="uqo7oy4fj6KxugPNYasxkS" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="100,445,65,19" Id="IFl7OjCZhKzx3FpVRyeU1V">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Rectangle" />
+            </p:NodeReference>
+            <Pin Id="ZB9UQz3mWBYlY1FtGiKjd4" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="fz0R6G6Cua7GPq3XOaPTSA" Name="Size" Kind="InputPin" DefaultValue="3, 2" />
+            <Pin Id="pXbnQ63TNBtBqPfKCXoK8e" Name="Transform" Kind="InputPin" />
+            <Pin Id="xVh2B5925olAmgQlw3SGL2" Name="Anchor" Kind="InputPin" DefaultValue="TopLeft" IsHidden="true" />
+            <Pin Id="kWS6B53kSjLKO7OdwvRdGM" Name="Fill" Kind="InputPin" DefaultValue="0.12, 0.43, 0.9, 1" />
+            <Pin Id="d0YXeQGWb3gGQU7TzTqHXT" Name="Radius" Kind="InputPin" IsHidden="true" />
+            <Pin Id="bfXuy9VJtb2X2EIzqgHG6X" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VvGKPydt0Rc2b0oNwksbSf" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ebyrAeAMLlUCProOIKmjpo" Name="Output" Kind="OutputPin" />
+            <Pin Id="MExrzGZrLPP1ezB8bfBqSX" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DRcWAqlrkOhGG5Nzxtepca" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="aNcNcxUNjdMqP57MV0wAQp" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="N6LJJFHLq6lTC8iyzql0w5" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="AaYYIKKetVXn85kPx7Kjmn" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="dfs5yxjQQtWG9QUzpn0SFv" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="hvzHJqDkJTI8UQPW3g35lx" Name="Effect" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Node Bounds="100,581,165,19" Id="KPSImDvS09qtXpFAMxKX8O">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="No6iJmyrnISV3YZD6e4AbL" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="jNvPEFDldBmCO5Siy7ddRW" Name="Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="xt5o6Gudlp88xrpMhoBrqh" Name="V Sync" Kind="InputPin" IsHidden="true" />
+            <Pin Id="weeQfchVjxR5S3ag0JginC" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="BhtMCavnhgmwWgaBF2AmG6" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="SV8lBOBp2Kk73g3viLIjNC" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="kkIUc6xuLZvW9DoALH0BFG" Name="Input" Kind="InputPin" />
+            <Pin Id="sDCU1wHuX5AyjkqLfvGP5i" Name="Space" Kind="InputPin" />
+            <Pin Id="mMBInTjKL1Odc6fss81CX7" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="H52CJKWj8Vg9mVkn5hf9nH" Name="Enabled" Kind="InputPin" />
+            <Pin Id="V4oP1b7DSkMxxEfGx2qHkb" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="Cc8GOtCoKE4efsGv0FVz6j" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="B4jnxnB93Moq9eegMlYD7g" Name="Title" Kind="InputPin" />
+            <Pin Id="KbbaPa1S4nPiu6e3HoXOhv" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="ypQKBxgqy1CjBsbxhO6j1j" Name="Error" Kind="OutputPin" />
+            <Pin Id="syEQ4ZcHEPBNVAoz3BNdPp" Name="Borderless" Kind="InputPin" />
+            <Pin Id="eOD6kwHCAmo2B4C0DtBgCz" Name="Fullscreen" Kind="InputPin" />
+            <Pin Id="SAGado2pY9YxRIyzFdC0NC" Name="Debug" Kind="InputPin" />
+            <Pin Id="16Un0354JEGKYEhwcoB6do" Name="Window" Kind="InputPin" />
+          </Node>
+          <Pad Id="knPN6khlOJ0w64d9aOsezS" Comment="Title" Bounds="182,518,136,18" ShowValueBox="true" isIOBox="true" Value="HowTo Set a Window Icon">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+        </Canvas>
+        <Link Id="lRq3R44zxWYKDx6Ew9AlYV" Ids="YKQ6Jo2uBVY2X1yPolktMP,9ZXKPbOoT7w9iTjhheW0nm" />
+        <Link Id="aPX7xnqsScpq9mzTLhDFxN" Ids="ebyrAeAMLlUCProOIKmjpo,kkIUc6xuLZvW9DoALH0BFG" />
+        <Link Id="vn4mp6Gpo3IkB7E9R8rJHd" Ids="knPN6khlOJ0w64d9aOsezS,B4jnxnB93Moq9eegMlYD7g" />
+        <Patch Id="hLWjKymBRhDPPSHXDRcxIo" Name="Create" />
+        <Patch Id="p8API1NMbg5FIsvEkvuNUQ" Name="Update" />
+        <ProcessDefinition Id="ftdtM4MBKQjvmMwholIRFv">
+          <Fragment Id="hVgrn7dXzzyAfrnrz4bfge" Patch="hLWjKymBRhDPPSHXDRcxIo" Enabled="true" />
+          <Fragment Id="VVmGIpIeLm37vaXCPVD2nW" Patch="p8API1NMbg5FIsvEkvuNUQ" Enabled="true" />
+        </ProcessDefinition>
+        <Link Id="DQVNCbiejIAPaoYv1jvBww" Ids="uqo7oy4fj6KxugPNYasxkS,16Un0354JEGKYEhwcoB6do" />
+      </Patch>
+    </Node>
+  </Patch>
+</Document>

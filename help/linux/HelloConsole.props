@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <VLAssetBehavior>RelativeToOutput</VLAssetBehavior>
+    <VLCleanBuildDirectory>True</VLCleanBuildDirectory>
+    <VLIgnoreCompileErrors>False</VLIgnoreCompileErrors>
+    <VLIgnoreUnhandledExceptions>False</VLIgnoreUnhandledExceptions>
+    <OutputType>Exe</OutputType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <VLExportPath>C:\VL\VL.QT\Export</VLExportPath>
+  </PropertyGroup>
+</Project>

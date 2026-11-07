@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="Q7mRv2KdX9pLs4NwT8yBc1" LanguageVersion="2026.8.0-0156-g7259116c8c" Version="0.128">
+  <NugetDependency Id="Hn3Vq8LrW2xKp5MdZ7tYa4" Location="VL.CoreLib" />
+  <DocumentDependency Id="Fb6Ty1NcR9wQm3LsK8pVd2" Location="../../../VL.Qt.vl" />
+  <Patch Id="Jx4Pw7MbS2vLq9RnD5tKc8">
+    <Canvas Id="Ld8Qn3XwP6sKv1MtB9rYf5" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <Node Name="Application" Bounds="100,100" Id="Wr2Kb9TsN5xPq7LmC3vDg6">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="Mt5Lc8QvR1wNs4KpX7bFh2">
+        <Canvas Id="Pv9Xs2KnT6mLq3RbW8cGj4" CanvasType="Group">
+          <Pad Id="Nc1Rw6LpV9tKs2QmX5dHk7" Bounds="100,60,560,29" ShowValueBox="true" isIOBox="true" Value="07b test: unconnected Rectangle [Qt] → Renderer [Qt] shows a white 100×100 DIP square at 0,0">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">14</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="100,200,145,19" Id="Ks7Tq4NwX1pLv8RcM2fJm3">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <Choice Kind="ProcessAppFlag" Name="Rectangle" />
+            </p:NodeReference>
+            <Pin Id="Rb3Mw8KsQ5vLn1TxP9gNq6" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Tq6Ns1LvW4xKp9RmC2hSr8" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="100,300,340,19" Id="Vx2Pr5MtK8wNq3LsB6jTt1">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="Xm9Ks4QwR7vLt2NpD5kWv3" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Zc5Lt8NvP1xKs6RqF9mYx7" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Bn8Qw3KrT6vMp1LsG4nAz2" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Dp1Rs6LxW9tNq4KmH7pCb5" Name="Input" Kind="InputPin" />
+            <Pin Id="Gs4Tv9MnQ2wLr7KpJ1qEd8" Name="Is Visible" Kind="OutputPin" />
+            <Pin Id="Jv7Wq2NsR5xKt8LmL3rGf4" Name="Error" Kind="OutputPin" />
+          </Node>
+          <Pad Id="Lw3Xr8KpS1vNq6TmN9sHh2" Comment="Is Visible" Bounds="100,350,35,35" ShowValueBox="true" isIOBox="true">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Boolean" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="Np6Ys1LqT4wKr9MxQ2tJk5" Comment="Error" Bounds="200,350,420,60" ShowValueBox="true" isIOBox="true">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+        </Canvas>
+        <Link Id="Qr9Zt4MwV7xNs2KpS5vLm8" Ids="Tq6Ns1LvW4xKp9RmC2hSr8,Dp1Rs6LxW9tNq4KmH7pCb5" />
+        <Link Id="St2Bv7NxW1pLq5RmT8wNn3" Ids="Gs4Tv9MnQ2wLr7KpJ1qEd8,Lw3Xr8KpS1vNq6TmN9sHh2" />
+        <Link Id="Uv5Cw1PqX4sKt8LnV2xPp6" Ids="Jv7Wq2NsR5xKt8LmL3rGf4,Np6Ys1LqT4wKr9MxQ2tJk5" />
+        <Patch Id="Wx8Dx4QrY7vLs1MpW5yRr9" Name="Create" />
+        <Patch Id="Yz1Fy7RsZ2wNt4KqX8zTs4" Name="Update" />
+        <ProcessDefinition Id="Ab4Gz2StA5xMv7LrY1aVu7">
+          <Fragment Id="Cd7Ha5TuB8yNw2KsZ4bXw1" Patch="Wx8Dx4QrY7vLs1MpW5yRr9" Enabled="true" />
+          <Fragment Id="Ef1Jb8UvC2zPx5LtA7cZy4" Patch="Yz1Fy7RsZ2wNt4KqX8zTs4" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+</Document>

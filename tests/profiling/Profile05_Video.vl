@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="GMGewOvmlxmDkpt20xY3QC" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+  <NugetDependency Id="GJLQRGsRxmxLYoV6j4ilYr" Location="VL.CoreLib" />
+  <DocumentDependency Id="GuTS0Jxu1NDTFgjRYC2QMt" Location="../../VL.Qt.vl" />
+  <Patch Id="Gl1sy7eVWz5BPI0FCdywj9">
+<Canvas Id="GkT9H7TP0ZHSXQCabhcUhJ" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+<Node Name="Application" Bounds="100,100" Id="GjXNHPIECoHB7G0uq213cC">
+<p:NodeReference>
+<Choice Kind="ContainerDefinition" Name="Process" />
+<CategoryReference Kind="Category" Name="Primitive" />
+</p:NodeReference>
+<Patch Id="FwwusWJ1GNCGE2Q7lmky7o">
+<Canvas Id="Gbh1QmUqrCHJxCs8HSwhao" CanvasType="Group">
+<Pad Id="Gg8JbH7ZaOVTuVtLuCvwwv" Bounds="85,16,640,60" ShowValueBox="true" isIOBox="true" Value="Profile 05 - Video (issue #557): Video [Qt] plays assets/qt-help-video.mp4 in a loop (Qt MediaPlayer, FFmpeg backend), 12.8 x 7.2 units = 1280x720 DIP.&#xD;&#xA;No overlays, runs until the process ends.">
+<p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+<Choice Kind="TypeFlag" Name="String" />
+</p:TypeAnnotation>
+<p:ValueBoxSettings>
+<p:fontsize p:Type="Int32">9</p:fontsize>
+<p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+</p:ValueBoxSettings>
+</Pad>
+<Node Bounds="100,200,165,19" Id="FuYwEMst4ocUdIgXRgcL0J">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Video" />
+            </p:NodeReference>
+            <Pin Id="GDEut6vU3u6NRdUwUF3tHR" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FhosAb5PX0nQ2woI3Qx1Z1" Name="Size" Kind="InputPin" DefaultValue="12.8, 7.2" />
+            <Pin Id="GPfcbHFEGzYDQeXU2cNFFi" Name="Transform" Kind="InputPin" />
+            <Pin Id="FfWqRg6TLCfS7RY6Qhb1Zg" Name="Anchor" Kind="InputPin" />
+            <Pin Id="F1vH0cPUujJCAreZhLmSsq" Name="Path" Kind="InputPin" />
+            <Pin Id="Fvouo0Bw2QaUTY4eftpZhj" Name="Output" Kind="OutputPin" />
+            <Pin Id="GjbnchjTz5qVDUEU02TOM6" Name="Play" Kind="InputPin" />
+            <Pin Id="GPnFMWvAVgOD8wGpOKNbKr" Name="Loop" Kind="InputPin" />
+            <Pin Id="GdOoFOmnIZyHPutAEM1OFC" Name="Rate" Kind="InputPin" />
+            <Pin Id="Fw7oYt2DlrVUs0FwO5pWAx" Name="Volume" Kind="InputPin" />
+            <Pin Id="Fn9ipnxPJHAFa1o0M2zPya" Name="Fill Mode" Kind="InputPin" />
+            <Pin Id="GqMjwyqnYeqPLlaisaIaYN" Name="Opacity" Kind="InputPin" />
+            <Pin Id="GCJNHQ0GgCnSKVicXgIOCN" Name="Position" Kind="OutputPin" />
+            <Pin Id="Gp4Tsh338RTSf2GSffk065" Name="Duration" Kind="OutputPin" />
+            <Pin Id="Gt5GSCrLsJeF5JVszpjbXc" Name="Scene Bounds" Kind="OutputPin" />
+          </Node>
+<Pad Id="F2fGUHqNqb8SZoFJ22wFLJ" Comment="Path" Bounds="142,166,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-video.mp4">
+<p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
+<Choice Kind="TypeFlag" Name="Path" />
+</p:TypeAnnotation>
+</Pad>
+<Node Bounds="100,270,145,19" Id="FyBRNwSaJZxPJhP5uNfuts">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="GKSWqf8JD9eUA5uFulohGg" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FpDGY6VWiDtQkWgZXJXGVd" Name="Bounds" Kind="InputPin" DefaultValue="100, 100, 1280, 720" IsHidden="true" />
+            <Pin Id="GodL8DaZZloRQ8VzoUNIFt" Name="V Sync" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GUrgwnb3O6kULnrBd5kYoO" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GjjRTnd4CEJQtf0KGyGFLv" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GZ9MT0dALuwUMSx6fjOyYm" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GHOFlkDWRAvEWy8lT6yo6a" Name="Input" Kind="InputPin" />
+            <Pin Id="FvkxTyC3ptSOqloLAQ6y5r" Name="Space" Kind="InputPin" />
+            <Pin Id="FhZ85BjFDekItZSErwQnME" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="FtA4jU9NIqqSqXsAHspfCU" Name="Enabled" Kind="InputPin" />
+            <Pin Id="F4GRV8ZpXqnUItXLoZ6qs7" Name="Title" Kind="InputPin" />
+            <Pin Id="GybqsFVwlWPHGLtfWVxIp2" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="GjkMILk7sjOGcidfMfuGI8" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="Fgcmydp1PdWGQmT6tNsIPP" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="FyuUxxEHG28VYNTUoNVTbF" Name="Error" Kind="OutputPin" />
+            <Pin Id="GNawaFGnSpaCe9Y1LxciUv" Name="Borderless" Kind="InputPin" />
+            <Pin Id="GVWXEMSU0f5InoblsB9SDh" Name="Fullscreen" Kind="InputPin" />
+            <Pin Id="Foz01t06yCfMEvuvOCViwI" Name="Debug" Kind="InputPin" />
+          </Node>
+<Node Bounds="300,270,79,19" Id="GPc0bM2rYtNUnG8yiWpEqp">
+            <p:NodeReference LastCategoryFullName="System" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="KeepAppAlive" />
+            </p:NodeReference>
+            <Pin Id="GNvjUP7onrvCqLTmAuKm8I" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="G1sZG6oKaxZHIyalZeyivw" Name="Is Alive" Kind="InputPin" DefaultValue="True" />
+          </Node>
+</Canvas>
+<Link Id="Foi10pqVh7fBit7jH9v3Mq" Ids="F2fGUHqNqb8SZoFJ22wFLJ,F1vH0cPUujJCAreZhLmSsq" />
+<Link Id="Gjy0OUauqnuIXZoPjXLwaR" Ids="Fvouo0Bw2QaUTY4eftpZhj,GHOFlkDWRAvEWy8lT6yo6a" />
+<Patch Id="GwBKhnKlopENU48wgy4lne" Name="Create" />
+<Patch Id="GkT1u9CWBDyJsflwQzCoug" Name="Update" />
+<ProcessDefinition Id="GTHcrqarBUQIU1Rl3wcx1K">
+<Fragment Id="Gjckd2hHubWBOhB7GtKJri" Patch="GwBKhnKlopENU48wgy4lne" Enabled="true" />
+<Fragment Id="F9dPrgcgYg5CMClETAMZ33" Patch="GkT1u9CWBDyJsflwQzCoug" Enabled="true" />
+</ProcessDefinition>
+</Patch>
+</Node>
+</Patch>
+</Document>

@@ -1,0 +1,191 @@
+﻿using System;
+using System.Buffers.Binary;
+using System.Linq;
+using NUnit.Framework;
+using Stride.Core.Mathematics;
+using VL.Lib.Mathematics;
+using VL.Qt.Elements;
+using VL.Qt.Nodes;
+using P = VL.Qt.Protocol.Prop;
+using Path = VL.Lib.IO.Path;
+
+namespace VL.Qt.Tests
+{
+    /// <summary>Video element + node (#115): defaults, property diff, clamping, EV_MEDIA back channel.</summary>
+    public class VideoNodeTests
+    {
+        static readonly IDisposable NoWarning = new Nop();
+        sealed class Nop : IDisposable { public void Dispose() { } }
+
+        VideoNode _node = null!;
+
+        [SetUp]
+        public void SetUp() => _node = new VideoNode(_ => NoWarning);
+
+        [TearDown]
+        public void TearDown() => _node.Dispose();
+
+        // Pin defaults as declared on Update.
+        Element Update(string? path = null, bool play = true, bool loop = true, bool keepLast = true, float rate = 1, float volume = 1,
+            VideoFillMode fill = VideoFillMode.Fit) => Update(out _, out _, path, play, loop, keepLast, rate, volume, fill);
+
+        Element Update(out float position, out float duration, string? path = null, bool play = true, bool loop = true, bool keepLast = true,
+            float rate = 1, float volume = 1, VideoFillMode fill = VideoFillMode.Fit)
+            => _node.Update(new Vector2(1.6f, 0.9f), default, RectangleAnchor.Center, path is null ? Path.Default : new Path(path),
+                play, loop, keepLast, rate, volume, fill, 1, false, false, null, null, out position, out duration,
+                out _, out _);
+
+        static byte[] ErrorRecord(uint handle, string text)
+        {
+            var t = System.Text.Encoding.UTF8.GetBytes(text);
+            var b = new byte[(12 + t.Length + 3) & ~3];
+            BinaryPrimitives.WriteUInt16LittleEndian(b, Protocol.Ev.Error);
+            BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(2), (ushort)(8 + t.Length));
+            BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), handle);
+            t.CopyTo(b, 12);
+            return b;
+        }
+
+        static byte[] MediaRecord(uint handle, float position, float duration)
+        {
+            var b = new byte[20];
+            BinaryPrimitives.WriteUInt16LittleEndian(b, Protocol.Ev.Media);
+            BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(2), 16);
+            BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), handle);
+            BinaryPrimitives.WriteSingleLittleEndian(b.AsSpan(12), position);
+            BinaryPrimitives.WriteSingleLittleEndian(b.AsSpan(16), duration);
+            return b;
+        }
+
+        [Test]
+        public void ElementDefaults_MatchQt()
+        {
+            var v = new Video();
+            Assert.That(v.Type, Is.EqualTo(ElementType.Video));
+            Assert.That((ushort)v.Type, Is.EqualTo(Protocol.Type.Video));
+            Assert.That(v.Playing, Is.False);
+            Assert.That(v.Loop, Is.False);
+            Assert.That(v.KeepLastFrame, Is.False);
+            Assert.That(v.Rate, Is.EqualTo(1f));
+            Assert.That(v.Volume, Is.EqualTo(1f));
+            Assert.That(v.FillMode, Is.EqualTo(VideoFillMode.Fit));
+            Assert.That((int)VideoFillMode.Crop, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Node_Describes_Video_WithSink()
+        {
+            var v = (Video)Update("c:/a.mp4", rate: 2, volume: 0.5f, fill: VideoFillMode.Crop);
+            Assert.That(v.Path.Value, Is.EqualTo("c:/a.mp4"));
+            Assert.That(v.Playing && v.Loop && v.KeepLastFrame, Is.True);
+            Assert.That(((Video)Update("c:/a.mp4", keepLast: false)).KeepLastFrame, Is.False);
+            Assert.That(v.Rate, Is.EqualTo(2f));
+            Assert.That(v.Volume, Is.EqualTo(0.5f));
+            Assert.That(v.FillMode, Is.EqualTo(VideoFillMode.Crop));
+            Assert.That(v.Sink.Sink, Is.SameAs(_node.Core.Sink));
+        }
+
+        [Test]
+        public void Node_UnchangedInputs_SameInstance_NoAllocation()
+        {
+            var a = Update("c:/a.mp4");
+            Assert.That(Update(new string("c:/a.mp4".AsSpan())), Is.SameAs(a));
+            Assert.That(Update("c:/b.mp4"), Is.Not.SameAs(a));
+            for (int i = 0; i < 100; i++) Update(out _, out _, "c:/b.mp4");
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            var path = new Path("c:/b.mp4");
+            for (int i = 0; i < 1000; i++)
+                _node.Update(new Vector2(1.6f, 0.9f), default, RectangleAnchor.Center, path, true, true, true, 1, 1, VideoFillMode.Fit,
+                    1, false, false, null, null, out _, out _, out _, out _);
+            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.LessThan(100));
+        }
+
+        [Test]
+        public void Diff_Create_SendsNonDefaults_PlayingLast()
+        {
+            var sink = new RecordingSink();
+            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            rec.Update(new Video { Path = new Path("c:/a.mp4"), Playing = true, Loop = true, KeepLastFrame = true, Rate = 0.5f, Volume = 0.25f, FillMode = VideoFillMode.Stretch }, Space.DIPTopLeft);
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[]
+            {
+                $"SET 1 {P.Source} string(c:/a.mp4)",
+                $"SET 1 {P.FillMode} i32(0)",
+                $"SET 1 {P.Loop} bool(1)",
+                $"SET 1 {P.KeepLastFrame} bool(1)",
+                $"SET 1 {P.PlaybackRate} f32(0.5)",
+                $"SET 1 {P.Volume} f32(0.25)",
+                $"SET 1 {P.Playing} bool(1)",
+            }));
+            Assert.That(sink.Commands[0], Is.EqualTo($"CREATE 1 {Protocol.Type.Video}"));
+
+            sink.Clear();
+            rec.Update(new Video(), Space.DIPTopLeft);
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[]
+            {
+                $"SET 1 {P.Source} string()",
+                $"SET 1 {P.FillMode} i32(1)",
+                $"SET 1 {P.Loop} bool(0)",
+                $"SET 1 {P.KeepLastFrame} bool(0)",
+                $"SET 1 {P.PlaybackRate} f32(1)",
+                $"SET 1 {P.Volume} f32(1)",
+                $"SET 1 {P.Playing} bool(0)",
+            }));
+        }
+
+        [Test]
+        public void Diff_ClampsRateAndVolume()
+        {
+            var sink = new RecordingSink();
+            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            rec.Update(new Video { Rate = -1, Volume = 3 }, Space.DIPTopLeft);
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 {P.PlaybackRate} f32(0.01)" }), "volume 3 clamps to the default 1");
+            sink.Clear();
+            rec.Update(new Video { Rate = 0, Volume = float.NaN }, Space.DIPTopLeft);
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 {P.Volume} f32(0)" }), "rate 0 = still MinRate");
+            sink.Clear();
+            rec.Update(new Video { Rate = float.PositiveInfinity, Volume = -1 }, Space.DIPTopLeft);
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 {P.PlaybackRate} f32(1)" }));
+        }
+
+        [Test]
+        public void MediaEvent_ReachesNodeOutputs_DefaultZero()
+        {
+            var sink = new RecordingSink();
+            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            rec.Update(Update(out var pos, out var dur, "c:/a.mp4"), Space.DIPTopLeft);
+            Assert.That(pos, Is.EqualTo(0f));
+            Assert.That(dur, Is.EqualTo(0f), "defined default until loaded");
+
+            var bind = sink.OfOp("BIND").Single().Split(' ');
+            uint handle = uint.Parse(bind[2]);
+            var res = rec.Sinks.Dispatch(MediaRecord(handle, 0.5f, 2f));
+            Assert.That(res.Applied, Is.EqualTo(1));
+            Update(out pos, out dur, "c:/a.mp4");
+            Assert.That(pos, Is.EqualTo(0.5f), "seconds, not converted to units");
+            Assert.That(dur, Is.EqualTo(2f));
+
+            // Too short payload is ignored.
+            var shortRec = MediaRecord(handle, 1, 1)[..16];
+            BinaryPrimitives.WriteUInt16LittleEndian(shortRec.AsSpan(2), 12);
+            Assert.That(rec.Sinks.Dispatch(shortRec).Ignored, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ErrorEvent_ShownAtNode_UntilCleared()
+        {
+            var sink = new RecordingSink();
+            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            rec.Update(Update("c:/missing.mp4"), Space.DIPTopLeft);
+            Assert.That(_node.Core.Error, Is.Null);
+
+            uint handle = uint.Parse(sink.OfOp("BIND").Single().Split(' ')[2]);
+            rec.Sinks.Dispatch(ErrorRecord(handle, "Could not open file (c:/missing.mp4)"));
+            Update("c:/missing.mp4");
+            Assert.That(_node.Core.Error, Is.EqualTo("Could not open file (c:/missing.mp4)"));
+
+            rec.Sinks.Dispatch(ErrorRecord(handle, ""));
+            Update("c:/missing.mp4");
+            Assert.That(_node.Core.Error, Is.Null);
+        }
+    }
+}

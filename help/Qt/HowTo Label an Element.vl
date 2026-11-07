@@ -1,0 +1,251 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" Id="fdRjkegd5jkmFCmKtUyYPY" LanguageVersion="2026.8.0-0156-g7259116c8c" Version="0.128">
+  <NugetDependency Id="JTLmL8sdS9csBwBBEeDVEh" Location="VL.CoreLib" />
+  <DocumentDependency Id="kRzZllzVS41ikqox4MiA1X" Location="../../VL.Qt.vl" />
+  <Patch Id="2N7EHi3daMJFX12v4qXL2Y">
+    <Canvas Id="pSh2s9Qb8aT6dpROosDFXR" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <Node Name="Application" Bounds="100,125" Id="dr8wb2bFdbrtyI4IdGsDar">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="QaY5qDtmrcF3r5148Q1lFh">
+        <Canvas Id="YhjFRteQc0MSe9esiVp7WQ" CanvasType="Group">
+          <Pad Id="SU1xjL6e9sIcrVg6naNoez" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Label an Element">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="hmUZnh5nUopk2OYZkhGWMl" Bounds="85,85,830,122" ShowValueBox="true" isIOBox="true" Value="Labeled puts a text label next to (or above) any element, for ImGui-style panels. It takes any element (here Slider, Toggle, Input (Int), TextInput and Button) and a Text:&#xD;&#xA;- Label Width is the width of the label box: one IOBox on all Labeled nodes keeps the elements aligned.&#xD;&#xA;- Label Position puts the label Left of the element (default) or on Top.&#xD;&#xA;- Spacing is the gap between label and element.&#xD;&#xA;- Labeled is built from a Text and a Row/Column, so its Output goes into a Column like any other element.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="Prt4HWTMvY7lxeJAjUHqXg" Comment="Label Width" Bounds="100,267,35,15" ShowValueBox="true" isIOBox="true" Value="1.2">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="SjhAJdeCuTSkP7P2gVcv1V" Comment="Channel" Bounds="120,337,35,15" ShowValueBox="true" isIOBox="true" Value="0.3">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="100,417,45,19" Id="v7cAPTS4lqgvPqatXoRfbB">
+            <p:NodeReference LastCategoryFullName="Qt.Widgets" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Slider" />
+            </p:NodeReference>
+            <Pin Id="pwHZSTkXm5Np5plIjCEXX0" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="3Faw49D1gz7to3wbYa5pYg" Name="Channel" Kind="InputPin" />
+            <Pin Id="EMT53jKm5CqMjtotzJJBRC" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="100,507,45,19" Id="7GudI1Klhre002Wvcij2zB">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Labeled" />
+            </p:NodeReference>
+            <Pin Id="B63OIAhvUpypaOPvAqyOGY" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="uFMgY2bPaOMMM9nJn4Z5sS" Name="Element" Kind="InputPin" />
+            <Pin Id="qyUOkziJzOXD3dJbDMp5kF" Name="Text" Kind="InputPin" DefaultValue="Volume" />
+            <Pin Id="VJSNohXMDNCzij3uj8SqW6" Name="Label Width" Kind="InputPin" />
+            <Pin Id="2wwhHixgTEXpBOvnPnTPkG" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="kKY8OdmzC7lMXUVaXDNGA8" Comment="Channel" Bounds="440,337,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Boolean" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="420,417,45,19" Id="13MXE384mL3NqdQKDKvGRD">
+            <p:NodeReference LastCategoryFullName="Qt.Widgets" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Toggle" />
+            </p:NodeReference>
+            <Pin Id="ubE8Y4AxKJxFKYSoiFybAE" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="EMtD5P5ID5WDifwplxTmcF" Name="Channel" Kind="InputPin" />
+            <Pin Id="gATsFrsJxr9ZEjPUGwWWO6" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="420,507,45,19" Id="YjhEPfmEojsvfzvFaJ47C2">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Labeled" />
+            </p:NodeReference>
+            <Pin Id="bBDICrg4Hlr1YnrjskMPAm" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LW2XoEU7lJ1yPJB3tPPozs" Name="Element" Kind="InputPin" />
+            <Pin Id="XhpUAnREZbh56u8Vlk1EBO" Name="Text" Kind="InputPin" DefaultValue="Enabled" />
+            <Pin Id="a7k39TupkLKa1vt9fN0CqL" Name="Label Width" Kind="InputPin" />
+            <Pin Id="mcvHZTRrxxPSlOrBidyub9" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="oruuKnTdARWAwMOPQOatXx" Comment="Channel" Bounds="760,337,35,15" ShowValueBox="true" isIOBox="true" Value="4">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Integer32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="740,417,45,19" Id="0R1EoZIf4m6I4fSBOcFCcq">
+            <p:NodeReference LastCategoryFullName="Qt.Widgets" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Input (Int)" />
+            </p:NodeReference>
+            <Pin Id="InTKsodU8mXaVrT6sEXYgd" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ip3SU7TiqLmIIrap92CsPc" Name="Channel" Kind="InputPin" />
+            <Pin Id="fepIg6mfNiqVYjGQe8J00Z" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="740,507,45,19" Id="3DKzIpBrry8MLOI7PVmsnc">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Labeled" />
+            </p:NodeReference>
+            <Pin Id="pOhKaFlm0YadP5HMBoBUjV" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ZXiKjhR5YrbdZ19fGkb3Pj" Name="Element" Kind="InputPin" />
+            <Pin Id="6RtLIC5mEQa46L7f9ibcnC" Name="Text" Kind="InputPin" DefaultValue="Voices" />
+            <Pin Id="ltKSqwhmRGPQjBevO9LL8E" Name="Label Width" Kind="InputPin" />
+            <Pin Id="UDMELkpbkpKwXwq2KwIj3A" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="3zKTZRLsjvwW6SJ0JtDgRt" Comment="Channel" Bounds="1080,337,50,15" ShowValueBox="true" isIOBox="true" Value="Hello">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="1060,417,45,19" Id="NoL4arxzgjUwCI42xlSFEc">
+            <p:NodeReference LastCategoryFullName="Qt.Widgets" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="TextInput" />
+            </p:NodeReference>
+            <Pin Id="yo6S6x2WWdDHIPSFebeV5V" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FfTRPBX1pscANXk2GEdq0P" Name="Channel" Kind="InputPin" />
+            <Pin Id="GgPXnPyH8G1WLNWnPqUHRc" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="1060,507,65,19" Id="esk6meBqf4dHMMuLThMqXl">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Labeled" />
+            </p:NodeReference>
+            <Pin Id="8cXl43mmT8dZIB55F30jPW" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="pYsBkGv5bSE4Kygt0EmQ25" Name="Element" Kind="InputPin" />
+            <Pin Id="ouuN9e15IQQa4vv5huTBVX" Name="Text" Kind="InputPin" DefaultValue="Name" />
+            <Pin Id="QNMBpkqRLXQW00GkY8XhpM" Name="Label Width" Kind="InputPin" />
+            <Pin Id="tU1u7bvtFLabQYRbOYsmsD" Name="Label Position" Kind="InputPin" DefaultValue="Top" />
+            <Pin Id="OOb638GpY1DlM6y2txPSNE" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="1380,417,45,19" Id="3WU9PevTFCCCWZdZhFQMwp">
+            <p:NodeReference LastCategoryFullName="Qt.Widgets" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Button" />
+            </p:NodeReference>
+            <Pin Id="ZTZF4g3VtBqnOHg0rrft31" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GoPNvr315pqPFX4p4cVQk9" Name="Text" Kind="InputPin" DefaultValue="Reset" />
+            <Pin Id="NIovZwhnA2BtczBDGWoUsx" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="1380,507,45,19" Id="f7GrXb7eLATmLlQUzKBF7X">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Labeled" />
+            </p:NodeReference>
+            <Pin Id="TeSLwBBB50KpvCrU59ARuJ" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="NhxrzzItbibd68DmQw30Yn" Name="Element" Kind="InputPin" />
+            <Pin Id="y33bqOp1NvaDOSzN2tqfCQ" Name="Text" Kind="InputPin" DefaultValue="Reset" />
+            <Pin Id="inIwZmSgJ3mxZhTKpqj39T" Name="Label Width" Kind="InputPin" />
+            <Pin Id="99V6aTbrym5alOXGnKHiTj" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="100,637,125,19" Id="JgYDGiene0w5NFIfpoY94j">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Column" />
+            </p:NodeReference>
+            <Pin Id="l78Gy8Qrf7Nk4EBPQyxuk8" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ZXxxgtkcCi0acyPT49aMJC" Name="Input" Kind="InputPin" />
+            <Pin Id="RArdHLNToGrpbMbDVnUoZY" Name="Input 2" Kind="InputPin" />
+            <Pin Id="WX36x76lnzHoPGsHDMeQJw" Name="Input 3" Kind="InputPin" />
+            <Pin Id="4qDCudaY1aceuAopTeWyGw" Name="Input 4" Kind="InputPin" />
+            <Pin Id="JwBCoSqD8tuom9f9gRl4lH" Name="Input 5" Kind="InputPin" />
+            <Pin Id="hF3uUDt0daTWyfn1Y18Pjf" Name="Output" Kind="OutputPin" />
+            <Pin Id="wsQ56eETApTMeO4Sf6Oitm" Name="Spacing" Kind="InputPin" DefaultValue="0.12" />
+            <Pin Id="pjjscTkwVdWpDFcUO5erpW" Name="Padding" Kind="InputPin" DefaultValue="0.15" />
+          </Node>
+          <Node Bounds="100,717,45,19" Id="XdvarDOxyXCZa156irAaEf">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="MRT0j8uWuvDVGGHG50OtMS" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="4bUBjFWe7doniN0WzuC7B0" Name="Bounds" Kind="InputPin" DefaultValue="1500, 200, 460, 560" IsHidden="true" />
+            <Pin Id="zfsKSGFGwegkZRQHJDLWNh" Name="Title" Kind="InputPin" DefaultValue="HowTo Label an Element" />
+            <Pin Id="PD5ausDVKsSU6aZFABStNK" Name="Input" Kind="InputPin" />
+            <Pin Id="ITL1nI3cdlgEb6Pm1hQ9zl" Name="Error" Kind="OutputPin" />
+          </Node>
+        </Canvas>
+        <Link Id="qttA6sEE3TzuwtKd8fbmY6" Ids="SjhAJdeCuTSkP7P2gVcv1V,3Faw49D1gz7to3wbYa5pYg" />
+        <Link Id="eP5I3AFuOfZAvNKbaqP8Bf" Ids="EMT53jKm5CqMjtotzJJBRC,uFMgY2bPaOMMM9nJn4Z5sS" />
+        <Link Id="iKLBlevT5Q1PqocIiwSlYl" Ids="Prt4HWTMvY7lxeJAjUHqXg,VJSNohXMDNCzij3uj8SqW6" />
+        <Link Id="WkyjbjxUxzpVppfv6juJth" Ids="kKY8OdmzC7lMXUVaXDNGA8,EMtD5P5ID5WDifwplxTmcF" />
+        <Link Id="wt4JLdsmKvSLWJMtD9S7Xk" Ids="gATsFrsJxr9ZEjPUGwWWO6,LW2XoEU7lJ1yPJB3tPPozs" />
+        <Link Id="MsFMNwdsSf75tEEbxAafuM" Ids="Prt4HWTMvY7lxeJAjUHqXg,a7k39TupkLKa1vt9fN0CqL" />
+        <Link Id="CIASo1V4l8VB6d0JDKDOMi" Ids="oruuKnTdARWAwMOPQOatXx,ip3SU7TiqLmIIrap92CsPc" />
+        <Link Id="1vfmSqoHc0Ksr4XK5Hhtoq" Ids="fepIg6mfNiqVYjGQe8J00Z,ZXiKjhR5YrbdZ19fGkb3Pj" />
+        <Link Id="xllTcKsppBQVXryfFO4hHN" Ids="Prt4HWTMvY7lxeJAjUHqXg,ltKSqwhmRGPQjBevO9LL8E" />
+        <Link Id="hlj6pvDnNM0cC89RzPfz1W" Ids="3zKTZRLsjvwW6SJ0JtDgRt,FfTRPBX1pscANXk2GEdq0P" />
+        <Link Id="Gvp3P3PfpA7knwlvbfoePD" Ids="GgPXnPyH8G1WLNWnPqUHRc,pYsBkGv5bSE4Kygt0EmQ25" />
+        <Link Id="amV5lJczSe2p8PDGYSQ8tG" Ids="Prt4HWTMvY7lxeJAjUHqXg,QNMBpkqRLXQW00GkY8XhpM" />
+        <Link Id="jddnRftrlosxnl5hEn8FOn" Ids="NIovZwhnA2BtczBDGWoUsx,NhxrzzItbibd68DmQw30Yn" />
+        <Link Id="DmkYymsJ8tCvbUBzwXtheV" Ids="Prt4HWTMvY7lxeJAjUHqXg,inIwZmSgJ3mxZhTKpqj39T" />
+        <Link Id="2jmpj6ws4isueLcUdfhYj6" Ids="2wwhHixgTEXpBOvnPnTPkG,ZXxxgtkcCi0acyPT49aMJC" />
+        <Link Id="NlhIhhmR7Yk3XG3qCz5I4K" Ids="mcvHZTRrxxPSlOrBidyub9,RArdHLNToGrpbMbDVnUoZY" />
+        <Link Id="GAOaKF4MvUiTOaw1p9mvwa" Ids="UDMELkpbkpKwXwq2KwIj3A,WX36x76lnzHoPGsHDMeQJw" />
+        <Link Id="XH1iYxJccOd4mbCfNuSJil" Ids="OOb638GpY1DlM6y2txPSNE,4qDCudaY1aceuAopTeWyGw" />
+        <Link Id="3jfmFp5yZeYJKwYzcuvLXJ" Ids="99V6aTbrym5alOXGnKHiTj,JwBCoSqD8tuom9f9gRl4lH" />
+        <Link Id="DgWkVnmCsgI9uvuhYIGBue" Ids="hF3uUDt0daTWyfn1Y18Pjf,PD5ausDVKsSU6aZFABStNK" />
+        <Patch Id="xuLYe2HVWuERcGKOZj5ER3" Name="Create" />
+        <Patch Id="VJ8Q9mh7lBhVkQhD9CbtPK" Name="Update" />
+        <ProcessDefinition Id="xHD92se7qTetXJiPZB1LBA">
+          <Fragment Id="jXV5MPGFacrCNeXvPbur8T" Patch="xuLYe2HVWuERcGKOZj5ER3" Enabled="true" />
+          <Fragment Id="5R8fqVcUVNR4ionRFPJwAQ" Patch="VJ8Q9mh7lBhVkQhD9CbtPK" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+</Document>

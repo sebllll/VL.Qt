@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <!-- Compile-time vvvv version (NuGet VL.Core from the vvvv feed). A vvvv update changes only this line
+         (plus the three versions below if vvvv ships newer ones). -->
+    <VvvvVersion>2026.8.0-0156-g7259116c8c</VvvvVersion>
+    <StrideMathematicsVersion>4.3.0.2507</StrideMathematicsVersion>
+    <SystemReactiveVersion>6.1.0</SystemReactiveVersion>
+    <LoggingAbstractionsVersion>10.0.10</LoggingAbstractionsVersion>
+  </PropertyGroup>
+</Project>

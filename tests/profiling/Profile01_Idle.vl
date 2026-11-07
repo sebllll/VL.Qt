@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" Id="a4sktsTznOhD8nZvBU4kb0" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+  <NugetDependency Id="pa4b7VZEg8vm5zG1pQD4zD" Location="VL.CoreLib" />
+  <DocumentDependency Id="Jc6n01TjjklFTVCi3FPSxG" Location="../../VL.Qt.vl" />
+  <Patch Id="9Ze5zlSJbhs51sOtVHGegn">
+    <Canvas Id="pvZRYWb6CQ3VyV8UObXkdr" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <Node Name="Application" Bounds="100,100" Id="jOaPtkEIw76xT1vbyvhJBg">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="f0EjAOxaiHN5JazcSojdFF">
+        <Canvas Id="cYevXq6skR8oJSg6yX1c0i" CanvasType="Group">
+          <Pad Id="bGgRJ4X2N2IOqzG3mMQXWl" Bounds="85,16,560,52" ShowValueBox="true" isIOBox="true" Value="Profile 01 Idle">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="zbh5XUirYiJe3DBcGFQGpP" Bounds="85,85,640,70" ShowValueBox="true" isIOBox="true" Value="Profiling baseline (#557): an empty Renderer [Qt], fixed 1280x720 DIP window, no content.&#xD;&#xA;- Measures the base load of the frame loop, pump and scenegraph without any element.&#xD;&#xA;- Runs until the process is ended.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="100,195,145,19" Id="jY237eCsYKsQBH50v4qFT1">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="Xwx7bYM97KinEPgEbWNbnF" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="lX0WCxY7ur2D6S9HHSZeac" Name="Bounds" Kind="InputPin" DefaultValue="100, 100, 1280, 720" IsHidden="true" />
+            <Pin Id="vRAlWU0dA8hrER5XKQyzUR" Name="V Sync" Kind="InputPin" IsHidden="true" />
+            <Pin Id="RBLu2nMmalIMoqBYgiSL02" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="BYZvUsitfC2AtOQFwJfQX6" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="qexZkP2ZaGO6aiNzi820vn" Name="Save Bounds" Kind="InputPin" DefaultValue="False" IsHidden="true" />
+            <Pin Id="Jjm9kAS8fSHdIS9g8ERBPa" Name="Input" Kind="InputPin" />
+            <Pin Id="51zBOqGzhm6bStD99NgeUI" Name="Space" Kind="InputPin" />
+            <Pin Id="8zIbWmsoLaTETAXBCWcTVS" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="IycyKvBt8UToynf7lMakld" Name="Enabled" Kind="InputPin" />
+            <Pin Id="agRnHyqPiTdUQWRo38lQHu" Name="Title" Kind="InputPin" DefaultValue="Profile01 Idle" />
+            <Pin Id="Yjqp2GiXlqsN3O6EIq15Hh" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="mT0XTOeWYGyfrk0UuRuZLU" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="6e63peNA0zbbE4fLx5YSWh" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="CBWQvEjrYJojNh3R62isNh" Name="Error" Kind="OutputPin" />
+            <Pin Id="5DsTXk854AxkdWZXLinS0D" Name="Borderless" Kind="InputPin" />
+            <Pin Id="5dbW2hawQ8651w2Jnvq7FU" Name="Fullscreen" Kind="InputPin" />
+            <Pin Id="vpYqPm4e5XV1DW6CCNGTBg" Name="Debug" Kind="InputPin" />
+          </Node>
+        </Canvas>
+        <Patch Id="LFgeY1utPZurnQmJDExgMA" Name="Create" />
+        <Patch Id="cCcSp3SS32MfxX3PHVWbra" Name="Update" />
+        <ProcessDefinition Id="qjnxwMi1eaLTAUTC8SCctP">
+          <Fragment Id="KDpEDHvYzh7SPqWXJMycWD" Patch="LFgeY1utPZurnQmJDExgMA" Enabled="true" />
+          <Fragment Id="9cmSOoo1x8bap7twQq49CW" Patch="cCcSp3SS32MfxX3PHVWbra" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+</Document>

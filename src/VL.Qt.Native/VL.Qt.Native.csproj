@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.Build.NoTargets/3.7.56">
+  <!-- Wrapper so QtNative builds as part of src/VL.Qt.slnx (VS and `dotnet build`): runs tools/build-native.ps1
+       (CMake/Ninja + windeployqt into runtimes/<NativeRid>/native). Not referenced by any project; the solution orders it
+       before VL.Qt. CI and the tools scripts call build-native.ps1 directly. C++ IntelliSense: open this folder in VS
+       (CMake) or VS Code, the Ninja build writes build/<rid>/compile_commands.json. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <NativeRid Condition="'$(NativeRid)' == '' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">win-arm64</NativeRid>
+    <NativeRid Condition="'$(NativeRid)' == ''">win-x64</NativeRid>
+    <RepoRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..'))</RepoRoot>
+    <!-- VS would otherwise skip the build when no C# input changed; NativeBuild below has its own Inputs/Outputs. -->
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <NativeInput Include="**\*" Exclude="bin\**;obj\**;*.csproj;*.user" />
+  </ItemGroup>
+
+  <!-- Skipped when vlqt.dll is newer than all sources; Rebuild always runs (NativeClean deletes vlqt.dll). -->
+  <Target Name="NativeBuild" AfterTargets="Build" Condition="$([MSBuild]::IsOSPlatform('Windows'))"
+          Inputs="@(NativeInput);$(RepoRoot)tools\build-native.ps1" Outputs="$(RepoRoot)runtimes\$(NativeRid)\native\vlqt.dll">
+    <!-- Windows PowerShell: pwsh is often not on the PATH of VS. Output low (windeployqt lists every file);
+         compiler errors are still reported as errors. -->
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(RepoRoot)tools\build-native.ps1&quot; -Rid $(NativeRid)" StandardOutputImportance="low" />
+    <!-- A build that relinks an unchanged vlqt.dll leaves its timestamp; touch it so the next build is skipped. -->
+    <Touch Files="$(RepoRoot)runtimes\$(NativeRid)\native\vlqt.dll" />
+  </Target>
+
+  <Target Name="NativeClean" AfterTargets="Clean" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <Delete Files="$(RepoRoot)runtimes\$(NativeRid)\native\vlqt.dll" />
+  </Target>
+
+  <Target Name="NativeBuildSkipped" AfterTargets="Build" Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
+    <Message Importance="high" Text="VL.Qt.Native: on Linux build QtNative with tools/build-native.sh (+ tools/deploy-linux.sh)." />
+  </Target>
+</Project>

@@ -1,0 +1,242 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="Y4qyKBSkbT9XvG8qfaZETi" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+  <NugetDependency Id="BaryUcHEvM70DEDcalzKhZ" Location="VL.CoreLib" />
+  <DocumentDependency Id="DkuMKmaYhbJGS57z4L1WaM" Location="../../VL.Qt.vl" />
+  <Patch Id="9zGpyE7FuDcJ1LQXVDBUzL">
+    <Canvas Id="ro1Pyn1RsU5VcW9I9vKiEk" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="VRmLdxMFW9dA8d7kzXROfO">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="826deypMtv4IBngolxw04c">
+        <Canvas Id="Qm9GhcNf67Fnq8OyJ3QYzG" CanvasType="Group">
+          <Pad Id="mSX04wXBJ16Ju2dEk6xdnM" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Draw a Rectangle">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="AaEeQRhuFUVyWxbFVDYwkZ" Bounds="85,85,830,98" ShowValueBox="true" isIOBox="true" Value="Rectangle [Qt] draws a filled rectangle with optional rounded corners and a stroke:&#xD;&#xA;- Size = width and height in units (1 unit = 100 DIP). A Rectangle with width or height 0 is not drawn.&#xD;&#xA;- Position, rotation and scale come only from Transform. The Anchor is the point of the rectangle that sits at the origin and the pivot of Transform: TopLeft (orange) puts the top left corner on the Translation, Center (default, blue) centers the rectangle on it.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="HxusiYHE4jqjxvV3LCTLHr" Comment="Fill" Bounds="162,221,136,19" ShowValueBox="true" isIOBox="true" Value="0.9, 0.35, 0.1, 1">
+            <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="RGBA" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="QShXkzMHf7T3kUidV4Ln7F" Comment="Radius" Bounds="182,255,50,19" ShowValueBox="true" isIOBox="true" Value="0.3">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="kNfwhk0mxGjzpobH7U2nTE" Comment="Stroke Color" Bounds="202,289,136,19" ShowValueBox="true" isIOBox="true" Value="1, 1, 1, 1">
+            <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="RGBA" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="LHzS74957Pk03qhmcTcHFo" Comment="Stroke Width" Bounds="222,323,50,19" ShowValueBox="true" isIOBox="true" Value="0.05">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="100,599,205,19" Id="dOzeH7ln5PVLvTjZ1MGRV1">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Rectangle" />
+            </p:NodeReference>
+            <Pin Id="tCuOmBytOTjv40uooMNn7G" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Tf0XyEsKkTURITaWvKDu2I" Name="Size" Kind="InputPin" />
+            <Pin Id="DZzfFtqNA9lOIFD1BsT3hC" Name="Transform" Kind="InputPin" />
+            <Pin Id="wsyNWzC3p6hGHoqNiLWFp4" Name="Anchor" Kind="InputPin" DefaultValue="TopLeft" />
+            <Pin Id="5UCXKithrYwqguUDZMuo1M" Name="Fill" Kind="InputPin" />
+            <Pin Id="pkPZka6ZbWJkDYiWDbMKZm" Name="Radius" Kind="InputPin" />
+            <Pin Id="RrrXPlXFTnMTBGw2SLEVK0" Name="Stroke Color" Kind="InputPin" />
+            <Pin Id="eu5PhSB5A7cTccYC44XHN0" Name="Stroke Width" Kind="InputPin" />
+            <Pin Id="ArxHn0SY9q1W5QS8t2N1BN" Name="Output" Kind="OutputPin" />
+            <Pin Id="iWiErrGD8MwA47sUIcsWmm" Name="Opacity" Kind="InputPin" />
+            <Pin Id="SjkRc3S9NRdN0msmmakEkV" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="mttSxen0rwkmG3hpVIgHJg" Name="Scene Bounds" Kind="OutputPin" />
+            <Pin Id="UhHqXnOxfGdOhUlg4L1FCL" Name="Clip" Kind="InputPin" DefaultValue="False" IsHidden="true" />
+            <Pin Id="ViclazdWxTjNDbi2istUDt" Name="Debug" Kind="InputPin" />
+            <Pin Id="SIY9J8IPRPYLbh0NmLLisK" Name="Interaction" Kind="InputPin" />
+            <Pin Id="TgJXTNDDJesQFU2492XunQ" Name="Effect" Kind="InputPin" />
+          </Node>
+          <Node Bounds="100,850,145,19" Id="WHfqg0jaSujZQ0XjUjPKcj">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="SfHO8xaOWoDUM4SDvcNcTU" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="P36dBeM7poENosJ31c50TV" Name="Bounds" Kind="InputPin" DefaultValue="1912, 280, 1143, 949" IsHidden="true" />
+            <Pin Id="JVbXtphUCE9Pt6FartOK21" Name="V Sync" Kind="InputPin" IsHidden="true" />
+            <Pin Id="O6YLzjo0yTjOdSzxi0MaL4" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TtUzNAom8eFQIVkw6i98Lo" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="J77Q6y3UFyMLzgpIvy8mwt" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="QrSQJiiKoWjErfBGJYoPts" Name="Input" Kind="InputPin" />
+            <Pin Id="tlEfZCVQVetjzxkIgVcHQh" Name="Space" Kind="InputPin" />
+            <Pin Id="M42soAYK3rIl7FDsQeU0we" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="qRqNMCbkcBn49dSN6a1BaV" Name="Enabled" Kind="InputPin" />
+            <Pin Id="TgDkSILEcDLL0tiLeAUmqv" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="u0vnFAOTK847OaOXqAcTR3" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="EpZ6nNsahdQ26aboluWbRr" Name="Title" Kind="InputPin" />
+            <Pin Id="Rxj5id6tiIyNdlpLfl0Vbw" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="xso0B6OZsvdwSjbyyriCtW" Name="Error" Kind="OutputPin" />
+            <Pin Id="CpWRSCEcBA5X2d44Tjfl1G" Name="Borderless" Kind="InputPin" />
+            <Pin Id="z0Bz3PefIrZO4zLqwQMMvs" Name="Fullscreen" Kind="InputPin" />
+            <Pin Id="8RBnDdg9WTejO4bEKNI6Xl" Name="Debug" Kind="InputPin" />
+          </Node>
+          <Pad Id="s2QZfgCrTwXnmI7c1rkfzK" Comment="Title" Bounds="182,787,136,18" ShowValueBox="true" isIOBox="true" Value="HowTo Draw a Rectangle">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="499,300,65,19" Id="reUuryxufb42ZZDsZQJdUk">
+            <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="LFO" />
+            </p:NodeReference>
+            <Pin Id="ym3VkWlzfaV3c7ha9vLZaG" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Sb0iVZsj7fRMF7q2OOrn6R" Name="Clock" Kind="InputPin" IsHidden="true" />
+            <Pin Id="IK9xQxG3J2DNXnp3F1WE3E" Name="New Clock" Kind="InputPin" IsHidden="true" />
+            <Pin Id="EqK1xj32AFmuWgM7T0BoFX" Name="Period" Kind="InputPin" DefaultValue="4" />
+            <Pin Id="EEWBKpOP6FwDVhVQ2LySIV" Name="Phase" Kind="OutputPin" />
+            <Pin Id="QPjBAWuvkvxMX67lrRTC2X" Name="Pause" Kind="InputPin" />
+            <Pin Id="BD6nKTPDLPGL62JMo72gdP" Name="Reset" Kind="InputPin" />
+            <Pin Id="UyGS0gzJt0MMwgsBpQbXH6" Name="On New Cycle" Kind="OutputPin" />
+            <Pin Id="Pz6hMIR5mxDMZ68rsnKT7C" Name="Cycles" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="449,380,80,19" Id="4JSXBj8NbnVEE0N7BEZInU">
+            <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="OperationCallFlag" Name="TransformSRT" />
+              <CategoryReference Kind="Category" Name="Transform" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="2D" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+            </p:NodeReference>
+            <Pin Id="EM8FJvlUvkP7vVts8O0TUA" Name="Input" Kind="InputPin" />
+            <Pin Id="9VCEAxnvXap2Sz8u1C75Rj" Name="Scaling" Kind="InputPin" />
+            <Pin Id="8T0lUEM6xsCzHMQTbP63bn" Name="Rotation" Kind="InputPin" DefaultValue="0" />
+            <Pin Id="vAPYVWPlZjzzYfXPFcig9K" Name="Translation" Kind="InputPin" />
+            <Pin Id="HinoWg7P6Oae5Bi8TaCB9Q" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="zHE2zwHnHldc9uJ4h8Cr1B" Comment="Position" Bounds="612,321,35,28" ShowValueBox="true" isIOBox="true" Value="5.93, 2.05">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="YER9AeJto2Y3l9V6zud84G" Comment="Size" Bounds="429,267,35,28" ShowValueBox="true" isIOBox="true" Value="2, 1.5">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="427,599,205,19" Id="mI0rhX99vTW207YHMlh37N">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Rectangle" />
+            </p:NodeReference>
+            <Pin Id="8Ic5yN1H1Dh7HyOcz8BTYr" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="rdhRZfAgFJyuwKJ42XVqlF" Name="Size" Kind="InputPin" />
+            <Pin Id="jo0u2WxH61sHx8sI5VgQer" Name="Transform" Kind="InputPin" />
+            <Pin Id="mYqLARYXg2OzjLSGQyvbe1" Name="Anchor" Kind="InputPin" DefaultValue="Center" />
+            <Pin Id="BcJi4IthZpnxohIlcE64X3" Name="Fill" Kind="InputPin" DefaultValue="0.2, 0.7, 1, 0.7" />
+            <Pin Id="kz5imtNwJN047us0Ur81nO" Name="Radius" Kind="InputPin" />
+            <Pin Id="99xHcrQ8lKL6Kr5opBdbVA" Name="Stroke Color" Kind="InputPin" />
+            <Pin Id="vfvQv1bKIPscpLpdcKHQlL" Name="Stroke Width" Kind="InputPin" />
+            <Pin Id="W5p8Yd9ugMDp1IvsVTVIYO" Name="Output" Kind="OutputPin" />
+            <Pin Id="b2xRk9wLVCdsMMEdDuW0wT" Name="Opacity" Kind="InputPin" />
+            <Pin Id="EdFfwPI5hrBMvKgB2gXcCQ" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="M9Nqf5dA57YnhQ97ZmpVDd" Name="Scene Bounds" Kind="OutputPin" />
+            <Pin Id="PErPXBhl1KDM53Z27KFthb" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FlGfRlTW70gNHB5a4kLAU9" Name="Debug" Kind="InputPin" DefaultValue="False" />
+            <Pin Id="K39qXgQ6AaOMhjtZCOlse6" Name="Interaction" Kind="InputPin" />
+            <Pin Id="Mh9Wo67l8Y7QcuuQEXHSKn" Name="Effect" Kind="InputPin" />
+          </Node>
+          <Node Bounds="100,690,655,19" Id="TvcP1bu9ygwa9VqKRUzxOX">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Group" />
+            </p:NodeReference>
+            <Pin Id="Ny0s8l68ufYEsrn49d266v" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="C5UrpIZL1zbix6irEC9jDU" Name="Input" Kind="InputPin" />
+            <Pin Id="TEPY2BhQKBp7a4H9b4d02w" Name="Input 2" Kind="InputPin" />
+            <Pin Id="qahfMm8GHN2qtVEW1aSO7m" Name="Output" Kind="OutputPin" />
+            <Pin Id="EK29bm7eqWNL3Er5Op0Chx" Name="Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="D01USEb9KdDywv4XMXTkpW" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="0dYeiF1X1MfUqhsEN7Grnz" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="u3fGEAEcW0PHDWSjdk2WuM" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="Lfeb3hoAwzR3aQuO0iksT2" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="lPUJFzIaQBLwJu6Osyeyxj" Name="Anchor" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ywORqsS1sxd2YP90eF0n0I" Name="Opacity" Kind="InputPin" DefaultValue="1" IsHidden="true" />
+            <Pin Id="l9JLi50I8usHuoxzQcakuk" Name="Clip" Kind="InputPin" DefaultValue="False" IsHidden="true" />
+            <Pin Id="vQ93ftL4hJivc3W45mVrIv" Name="Debug" Kind="InputPin" DefaultValue="False" IsHidden="true" />
+            <Pin Id="3vFebmloHD4fA7GX6wO3Xo" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Y8FsODAPXtukuddWJpBEpF" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="cw1T84vJigH3Q8yRBoR5bQ" Name="Style" Kind="InputPin" />
+          </Node>
+          <Pad Id="VryotI6UOkZLBgs6VymRyD" Comment="Anchor" Bounds="142,370,93,15" ShowValueBox="true" isIOBox="true" Value="TopLeft">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="RectangleAnchor" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="B26fgAiiVvGQYabDnsFF76" Comment="Debug" Bounds="589,491,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="R9ShHMA0tzVQOwqBdRiNJx" Comment="Phase" Bounds="501,340,35,15" ShowValueBox="true" isIOBox="true" />
+        </Canvas>
+        <Link Id="P0vTiDlkx8Kl6lovMshcT5" Ids="HxusiYHE4jqjxvV3LCTLHr,5UCXKithrYwqguUDZMuo1M" />
+        <Link Id="xcR8g6bqx88PuyttkELf01" Ids="QShXkzMHf7T3kUidV4Ln7F,pkPZka6ZbWJkDYiWDbMKZm" />
+        <Link Id="159lbnLgfjDRQ0vsCoAiZK" Ids="kNfwhk0mxGjzpobH7U2nTE,RrrXPlXFTnMTBGw2SLEVK0" />
+        <Link Id="heM2iap1m57QcFYZolfPo2" Ids="LHzS74957Pk03qhmcTcHFo,eu5PhSB5A7cTccYC44XHN0" />
+        <Link Id="hEQFLDQBlQFgm1iM7bOwVd" Ids="s2QZfgCrTwXnmI7c1rkfzK,EpZ6nNsahdQ26aboluWbRr" />
+        <Link Id="P2pkDuD7a1iNtRAd5rBZys" Ids="HinoWg7P6Oae5Bi8TaCB9Q,DZzfFtqNA9lOIFD1BsT3hC" />
+        <Link Id="5qeTVfYsFeBnZyBjJwd6z8" Ids="YER9AeJto2Y3l9V6zud84G,Tf0XyEsKkTURITaWvKDu2I" />
+        <Link Id="nLpKEj0M97BE51PWoMyOZ2" Ids="YER9AeJto2Y3l9V6zud84G,rdhRZfAgFJyuwKJ42XVqlF" />
+        <Link Id="7fhphIqxpAE0rZ6KDl0nYN" Ids="ArxHn0SY9q1W5QS8t2N1BN,C5UrpIZL1zbix6irEC9jDU" />
+        <Link Id="iyWXI1EzIDAE0oqlbeAwQd" Ids="W5p8Yd9ugMDp1IvsVTVIYO,TEPY2BhQKBp7a4H9b4d02w" />
+        <Link Id="miIVP0XLYh1AdpT1K1w2I3" Ids="qahfMm8GHN2qtVEW1aSO7m,QrSQJiiKoWjErfBGJYoPts" />
+        <Patch Id="3C0yzuLRG5gsj5krClKboZ" Name="Create" />
+        <Patch Id="9Jj8JbtPPnmjMiikGB0jaB" Name="Update" />
+        <ProcessDefinition Id="DJ61rzplgSnoUmew7xloa6">
+          <Fragment Id="1IWjzg1KxSbAurYMsphOOv" Patch="3C0yzuLRG5gsj5krClKboZ" Enabled="true" />
+          <Fragment Id="I5cpPCNSKxro9InQ3XKTbT" Patch="9Jj8JbtPPnmjMiikGB0jaB" Enabled="true" />
+        </ProcessDefinition>
+        <Link Id="CykT9Q3PAKmOcV6p4lNG6q" Ids="zHE2zwHnHldc9uJ4h8Cr1B,vAPYVWPlZjzzYfXPFcig9K" />
+        <Link Id="Fd65TgD61PzORyuXUhTsYn" Ids="VryotI6UOkZLBgs6VymRyD,wsyNWzC3p6hGHoqNiLWFp4" />
+        <Link Id="CbuergRfg5cMPQiF8lDhXi" Ids="HinoWg7P6Oae5Bi8TaCB9Q,jo0u2WxH61sHx8sI5VgQer" />
+        <Link Id="FPbVh5mNpdFO2EtsSxCrUp" Ids="B26fgAiiVvGQYabDnsFF76,FlGfRlTW70gNHB5a4kLAU9" />
+        <Link Id="SPdlqTIyeygMRboqlSvH5B" Ids="EEWBKpOP6FwDVhVQ2LySIV,R9ShHMA0tzVQOwqBdRiNJx" />
+        <Link Id="BnhDHHnscJ4LYzi461tgt5" Ids="R9ShHMA0tzVQOwqBdRiNJx,8T0lUEM6xsCzHMQTbP63bn" />
+        <Link Id="VRHf9iUGMOdLOSBIVVBlub" Ids="B26fgAiiVvGQYabDnsFF76,ViclazdWxTjNDbi2istUDt" />
+      </Patch>
+    </Node>
+  </Patch>
+</Document>

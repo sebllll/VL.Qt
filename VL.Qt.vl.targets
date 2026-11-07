@@ -1,0 +1,65 @@
+<Project>
+
+  <!-- Imported by the vvvv exporter into the generated library project VL.Qt.vl.csproj (next to VL.Qt.vl):
+       copy QtNative, Qt DLLs, plugins and qml/ beside the exported exe. Native.cs looks in runtimes/<rid>/native.
+
+       Only the runtimes of the exe's RID are copied. $(RuntimeIdentifier) is empty here (only the exe project
+       has it, ProjectReferences to RID-agnostic libraries do not get it), so the RID is resolved in order:
+         1. $(VLQtRuntimeIdentifier)  explicit override
+         2. $(RuntimeIdentifier)      if the build passes it as global property (e.g. dotnet publish -r)
+         3. the RID restored for the exe being built (<exe>/obj/project.assets.json, the exe is the project
+            referencing this one), see below
+         4. none found or ambiguous: copy all RIDs.
+       Keep the RID path resolution only here, in buildTransitive/VL.Qt.targets and in Native.cs (see docs/decisions/qtnative-deployment.md).
+
+       Layouts: repo sources keep the runtime in runtimes/<rid>/native (copied below). The NuGet package keeps it in
+       qt/<rid>/ (#315); should this file be imported from an unpacked package, the package's buildTransitive/VL.Qt.targets
+       copies it, with the RID found here. A PackageReference (vvvv export with a NuGet dependency) imports only that file. -->
+  <PropertyGroup Condition="Exists('$(MSBuildThisFileDirectory)buildTransitive\VL.Qt.targets')">
+    <VLQtAddPackageRuntimesDependsOn>VLQtAddRuntimes</VLQtAddPackageRuntimesDependsOn>
+  </PropertyGroup>
+  <Import Project="$(MSBuildThisFileDirectory)buildTransitive\VL.Qt.targets" Condition="Exists('$(MSBuildThisFileDirectory)buildTransitive\VL.Qt.targets')" />
+  <!-- qtshaders/ next to the exported document (#506); in the package buildTransitive/VL.Qt.targets imports it. -->
+  <Import Project="$(MSBuildThisFileDirectory)src\VL.Qt\buildTransitive\VL.Qt.Shaders.targets" Condition="Exists('$(MSBuildThisFileDirectory)src\VL.Qt\buildTransitive\VL.Qt.Shaders.targets')" />
+
+  <Target Name="VLQtAddRuntimes" BeforeTargets="AssignTargetPaths">
+    <PropertyGroup>
+      <_VLQtRid>$(VLQtRuntimeIdentifier)</_VLQtRid>
+      <_VLQtRid Condition="'$(_VLQtRid)' == ''">$(RuntimeIdentifier)</_VLQtRid>
+    </PropertyGroup>
+
+    <!-- The export folder (Exports\src) is shared by several apps, so several exes may reference this project.
+         MSBuildStartupDirectory is the project directory of the exe being built (checked with vvvvc), so look
+         there first; otherwise scan all siblings. If those name different RIDs, stay ambiguous (all RIDs). -->
+    <ItemGroup Condition="'$(_VLQtRid)' == ''">
+      <_VLQtAssets Include="$(MSBuildStartupDirectory)\obj\project.assets.json" Condition="Exists('$(MSBuildStartupDirectory)\obj\project.assets.json')" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(_VLQtRid)' == '' And '@(_VLQtAssets)' == ''">
+      <_VLQtAssets Include="$(MSBuildProjectDirectory)\..\*\obj\project.assets.json" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(_VLQtRid)' == ''">
+      <!-- only the exe(s) that reference this project, not this project itself -->
+      <_VLQtExeAssets Include="@(_VLQtAssets)"
+                      Condition="'%(FullPath)' != '$(MSBuildProjectExtensionsPath)project.assets.json' And $([System.IO.File]::ReadAllText('%(FullPath)').Contains('$(MSBuildProjectName).csproj'))" />
+      <_VLQtExeRid Include="$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('%(_VLQtExeAssets.FullPath)')), '&quot;net[0-9.]+[^&quot;/]*/([A-Za-z0-9.\-]+)&quot;\s*:\s*\{').Groups[1].Value)"
+                   Condition="'@(_VLQtExeAssets)' != ''" />
+    </ItemGroup>
+    <PropertyGroup Condition="'$(_VLQtRid)' == '' And '@(_VLQtExeRid->Distinct()->Count())' == '1'">
+      <_VLQtRid>@(_VLQtExeRid->Distinct())</_VLQtRid>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <_VLQtRuntimesSubdir Condition="'$(_VLQtRid)' != ''">$(_VLQtRid)\</_VLQtRuntimesSubdir>
+      <VLQtRuntimeIdentifier Condition="'$(VLQtRuntimeIdentifier)' == ''">$(_VLQtRid)</VLQtRuntimeIdentifier>
+    </PropertyGroup>
+    <ItemGroup>
+      <_VLQtFile Include="$(MSBuildThisFileDirectory)runtimes\$(_VLQtRuntimesSubdir)**\*.*" />
+      <Content Include="@(_VLQtFile)">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <Link>runtimes\$(_VLQtRuntimesSubdir)%(RecursiveDir)%(Filename)%(Extension)</Link>
+        <Visible>false</Visible>
+      </Content>
+    </ItemGroup>
+  </Target>
+
+</Project>

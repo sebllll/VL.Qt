@@ -1,0 +1,36 @@
+<Project>
+
+  <!-- Packed as buildTransitive/VL.Qt.targets (src/VL.Qt/VL.Qt.csproj). NuGet imports it into every project that references
+       the VL.Qt package, e.g. the exe project of a vvvv export with a NuGet dependency on VL.Qt (#315). There the package is
+       no project and VL.Qt.vl.targets is not imported.
+
+       The package keeps the Qt runtime (QtNative, Qt libraries, plugins/, qml/) in qt/<rid>/ instead of runtimes/<rid>/native:
+       NuGet would treat every file there as a native asset and copy it flat into the output (NETSDK1152 for the many qmldir).
+       This target copies qt/<rid>/** with its structure to runtimes/<rid>/native/ in the output and publish folder,
+       where Native.cs looks first. Only the project's RID is copied; without a RID all RIDs (framework-dependent, any OS). -->
+  <Target Name="VLQtAddPackageRuntimes" BeforeTargets="AssignTargetPaths" DependsOnTargets="$(VLQtAddPackageRuntimesDependsOn)">
+    <PropertyGroup>
+      <_VLQtPackageQtDir>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', 'qt'))</_VLQtPackageQtDir>
+      <_VLQtPackageRid>$(VLQtRuntimeIdentifier)</_VLQtPackageRid>
+      <_VLQtPackageRid Condition="'$(_VLQtPackageRid)' == ''">$(RuntimeIdentifier)</_VLQtPackageRid>
+    </PropertyGroup>
+    <ItemGroup>
+      <_VLQtPackageFile Include="$(_VLQtPackageQtDir)$(_VLQtPackageRid)\**\*" Condition="'$(_VLQtPackageRid)' != ''" Rid="$(_VLQtPackageRid)" />
+      <_VLQtPackageFile Include="$(_VLQtPackageQtDir)win-x64\**\*" Condition="'$(_VLQtPackageRid)' == ''" Rid="win-x64" />
+      <_VLQtPackageFile Include="$(_VLQtPackageQtDir)win-arm64\**\*" Condition="'$(_VLQtPackageRid)' == ''" Rid="win-arm64" />
+      <_VLQtPackageFile Include="$(_VLQtPackageQtDir)linux-x64\**\*" Condition="'$(_VLQtPackageRid)' == ''" Rid="linux-x64" />
+      <_VLQtPackageFile Include="$(_VLQtPackageQtDir)linux-arm64\**\*" Condition="'$(_VLQtPackageRid)' == ''" Rid="linux-arm64" />
+      <None Include="@(_VLQtPackageFile)">
+        <Link>runtimes\%(_VLQtPackageFile.Rid)\native\%(_VLQtPackageFile.RecursiveDir)%(_VLQtPackageFile.Filename)%(_VLQtPackageFile.Extension)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <Visible>false</Visible>
+      </None>
+    </ItemGroup>
+    <Warning Condition="'@(_VLQtPackageFile)' == ''"
+             Text="VL.Qt: no Qt runtime for '$(_VLQtPackageRid)' in $(_VLQtPackageQtDir). The app will not find vlqt." />
+  </Target>
+
+  <Import Project="$(MSBuildThisFileDirectory)VL.Qt.Shaders.targets" />
+
+</Project>
