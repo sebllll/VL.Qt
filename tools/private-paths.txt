@@ -13,7 +13,8 @@
 #   No mode flag = both. Exit 0 = clean, 1 = findings (one line each: path:line: reason), 2 = usage error.
 plan/
 docs-internal/
-CLAUDE.md
+# Personal Claude Code additions (CLAUDE.md itself is public and only imports AGENTS.md).
+CLAUDE.local.md
 .claude/
 .alta/
 tools/issue-triage.ps1
