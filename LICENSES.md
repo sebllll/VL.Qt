@@ -55,7 +55,7 @@ Qt® is a registered trademark of The Qt Company Ltd. and its subsidiaries. VL.Q
 - VL.Qt does not use the Qt logo, does not use "Qt" in a company name or domain name, and does not claim to be an official Qt product.
 - If The Qt Company objects to the name, VL.Qt is renamed. Questions go to the General Counsel of The Qt Company (<legal@qt-project.org>, see section 5 of the guidelines).
 
-This is a reading of the guidelines, not legal advice. The guidelines do not mention names of third-party libraries such as `VL.Qt` explicitly, and they can change. Before the 1.0 release, ask The Qt Company or someone with licensing experience to confirm the name (tracked in the issue "Licensing notices").
+This is our reading of the guidelines, not legal advice. The guidelines do not mention names of third-party libraries such as `VL.Qt` explicitly, and they can change. Other open source projects use "Qt" in their names in the same way (for example PyQt and QtPy), and we accept the remaining risk: if The Qt Company or a court objects, the name is changed.
 
 ## License texts
 
