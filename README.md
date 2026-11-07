@@ -210,6 +210,7 @@ The index with a one-line description per page is in [docs/README.md](docs/READM
 - [Tooltips](docs/tooltips.md): previews in the vvvv editor
 - [Diagnostics](docs/diagnostics.md): overlays, logging, GPU device loss
 - [Profiling](docs/profiling.md): repeatable CPU measurements
+- [Versioning](docs/versioning.md): version numbers, API, obsolete and experimental nodes
 - [Architecture](docs/architecture.md): how the element tree reaches Qt, QtNative
 - [Development](docs/development.md): build from source, scripts, tests, workflows
 

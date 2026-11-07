@@ -11,6 +11,7 @@ Prerequisites, first build, scripts and tests are described in [docs/development
 - Branch from `develop` and open your pull request against `develop`. `main` only receives releases.
 - Open the pull request as a draft (`gh pr create --base develop --draft`) and mark it ready when the work is complete and `tools/build.ps1 -Test` passes locally. Every push to a pull request that is not a draft starts the CI.
 - Keep pull requests focused and describe what changed and how you verified it.
+- Do not rename or remove a node or pin in one step: mark it `Obsolete` first, as described in [docs/versioning.md](docs/versioning.md).
 
 ## License and CLA
 
