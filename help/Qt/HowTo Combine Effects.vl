@@ -304,9 +304,9 @@
             <Pin Id="faqrV5JOK5ytbcX98LIwWu" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="d5J8PLHP2Qdq6fHBAc4sTB" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="RvY6uwgpQhQbT1Qozk4Ye2" Name="Error" Kind="OutputPin" />
-            <Pin Id="SXBUeYmKRjRH7XU6360mrZ" Name="Borderless" Kind="InputPin" />
-            <Pin Id="OQ5V5vtFKP1iFMlQCB1ntF" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="VKQ2NvA59RUffOoSR8KB9G" Name="Debug" Kind="InputPin" />
+            <Pin Id="SXBUeYmKRjRH7XU6360mrZ" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="OQ5V5vtFKP1iFMlQCB1ntF" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VKQ2NvA59RUffOoSR8KB9G" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="LOwlrHJPYnELQT1RJoCOMl" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="zwyH6JWnKFcs0YdyoKda8G" Comment="Title" Bounds="182,995,190,21" ShowValueBox="true" isIOBox="true" Value="HowTo Combine Effects">

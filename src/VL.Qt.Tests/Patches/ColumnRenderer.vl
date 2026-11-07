@@ -27,7 +27,7 @@
               <Choice Kind="ProcessAppFlag" Name="Rectangle" />
             </p:NodeReference>
             <Pin Id="lAS6sNgH3FGUXHWs8DBGMW" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="WqflhWf0pf5sfqZg2MLg1S" Name="Fill" Kind="InputPin" DefaultValue="1, 0, 0, 1" />
+            <Pin Id="WqflhWf0pf5sfqZg2MLg1S" Name="Color" Kind="InputPin" DefaultValue="1, 0, 0, 1" />
             <Pin Id="AAYgwXpPW8XYKTIRB4RzNo" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="260,150,145,19" Id="TdWRQYFQtxxcJmLGfgvSTY">
@@ -37,7 +37,7 @@
               <Choice Kind="ProcessAppFlag" Name="Rectangle" />
             </p:NodeReference>
             <Pin Id="rl1Qdk6Cn9SkO6A206vA3H" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="piE7xMiYPOE2JGftr8MucI" Name="Fill" Kind="InputPin" DefaultValue="0, 1, 0, 1" />
+            <Pin Id="piE7xMiYPOE2JGftr8MucI" Name="Color" Kind="InputPin" DefaultValue="0, 1, 0, 1" />
             <Pin Id="lJcDwwXYkVET6wW6ZrLJZZ" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="420,150,145,19" Id="TKLuhXEl4Eytwqci5rIp5A">
@@ -47,7 +47,7 @@
               <Choice Kind="ProcessAppFlag" Name="Rectangle" />
             </p:NodeReference>
             <Pin Id="CRwaZ2Og9nfNUXfwYr4viD" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="vR7joDyUnZLhjDa7yl4R6G" Name="Fill" Kind="InputPin" DefaultValue="0, 0, 1, 1" />
+            <Pin Id="vR7joDyUnZLhjDa7yl4R6G" Name="Color" Kind="InputPin" DefaultValue="0, 0, 1, 1" />
             <Pin Id="Zj9FXdzxYqHBgdjyjpH1Ux" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="100,230,325,19" Id="6ceKDQH5SVEAtxV3S69Oi6">

@@ -115,9 +115,9 @@
             <Pin Id="TQJc15KTbG6PkcgNftO3vB" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="HpFH97H1FhPOD7S8qxmsaU" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="VjQa3pC11SXsjGMwGxuoRO" Name="Error" Kind="OutputPin" />
-            <Pin Id="MnDS4W03T432I0Q4Uk9yGK" Name="Borderless" Kind="InputPin" />
-            <Pin Id="wPOrOHhoulHsufTi95624c" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="Po7wNvQ6fy1HEQ2YwDYn5Q" Name="Debug" Kind="InputPin" />
+            <Pin Id="MnDS4W03T432I0Q4Uk9yGK" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="wPOrOHhoulHsufTi95624c" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Po7wNvQ6fy1HEQ2YwDYn5Q" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="qE0lZM9QdJAT28FqBqAiPr" Comment="Title" Bounds="182,800,149,19" ShowValueBox="true" isIOBox="true" Value="HowTo Use an IImage">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">

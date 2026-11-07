@@ -259,7 +259,7 @@
             <Pin Id="A0f5YyUgkvdCpq0JNJ8F36" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="dNsCWNp9DSgktKeWcUkWAB" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="KINZJkWiCkLbv7MPKejNjF" Name="Uniforms" Kind="InputPin" />
-            <Pin Id="OgP7kjmWIxVqN4elLD4uNH" Name="Blending" Kind="InputPin" />
+            <Pin Id="OgP7kjmWIxVqN4elLD4uNH" Name="Blending" Kind="InputPin" IsHidden="true" />
             <Pin Id="GtOCRz7WjThcCevs8cBOpQ" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
             <Pin Id="TE3mmVnSs3BLc1jj9qRbV6" Name="Size" Kind="InputPin" />
             <Pin Id="pFpzVjBEQex0WOleJrFnbH" Name="Auto Size" Kind="InputPin" IsHidden="true" />
@@ -342,9 +342,9 @@
             <Pin Id="qrDBEy6gY83ja8GmlC1kAn" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="Jzg3m5IZHNm7Nw7JKeBJyB" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="LDOlfYES0AFQSWOxvai4J4" Name="Error" Kind="OutputPin" />
-            <Pin Id="waIafqU6FqWAHhJqiEBkkZ" Name="Borderless" Kind="InputPin" />
-            <Pin Id="TrvF1JcastjuB6Zuw1rkqK" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="NrpKXO4rDVsJW6DbpbNZYW" Name="Debug" Kind="InputPin" />
+            <Pin Id="waIafqU6FqWAHhJqiEBkkZ" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TrvF1JcastjuB6Zuw1rkqK" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="NrpKXO4rDVsJW6DbpbNZYW" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="GmqevCTYCZ6NRk45jgqnSG" Comment="" Bounds="735,660,41,28" ShowValueBox="true" isIOBox="true" Value="100, 100">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">

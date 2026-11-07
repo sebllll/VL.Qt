@@ -136,9 +136,9 @@
             <Pin Id="R0IcQ9kiBwhoaLFcCCAjLY" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="PiJkzDgmb0aL1L3tg1yWo8" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="IzeaKCBh066ahdZFk8GJzW" Name="Error" Kind="OutputPin" />
-            <Pin Id="9q7NryclX6Ol1DzTp4xeTV" Name="Borderless" Kind="InputPin" />
-            <Pin Id="A7WY2NM9o4BHY3lyDGnzxY" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="aaNqAMpbpdvX7VosIlBny8" Name="Debug" Kind="InputPin" />
+            <Pin Id="9q7NryclX6Ol1DzTp4xeTV" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="A7WY2NM9o4BHY3lyDGnzxY" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="aaNqAMpbpdvX7VosIlBny8" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="Hhuq5wD5fEIGxz3ndOIrdM" Comment="Title" Bounds="182,702,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Show a VL.Video player in Qt">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">

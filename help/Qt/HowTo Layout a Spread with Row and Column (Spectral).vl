@@ -98,7 +98,7 @@
                 <Pin Id="UnfJfoiJN6bEavezrqE1SF" Name="Size" Kind="InputPin" />
                 <Pin Id="SDzPL7LqQsiNo1tz1CoRte" Name="Transform" Kind="InputPin" />
                 <Pin Id="SgMSOU7RyBbOSVxQpTpw80" Name="Anchor" Kind="InputPin" />
-                <Pin Id="olKCYJqDNUHNabGl7D0EvK" Name="Fill" Kind="InputPin" />
+                <Pin Id="olKCYJqDNUHNabGl7D0EvK" Name="Color" Kind="InputPin" />
                 <Pin Id="pIXYYoVGZ1FnMOvq90RP7P" Name="Radius" Kind="InputPin" DefaultValue="0.05" />
                 <Pin Id="rmQZUT9SHb74075mIedjqn" Name="Output" Kind="OutputPin" />
                 <Pin Id="PMR7nUsNfC9PT00ppzCEeE" Name="Stroke Color" Kind="InputPin" />
@@ -159,7 +159,7 @@
                 <Pin Id="oPc0TGROxEYOa7jVqaBxda" Name="Size" Kind="InputPin" />
                 <Pin Id="HAkz2Zfg8KWLZ2HPKZZ0fG" Name="Transform" Kind="InputPin" />
                 <Pin Id="G3W439koNIILQJ6FOUG3NT" Name="Anchor" Kind="InputPin" />
-                <Pin Id="ExaAE03pDhldly6ozZK1Xu" Name="Fill" Kind="InputPin" />
+                <Pin Id="ExaAE03pDhldly6ozZK1Xu" Name="Color" Kind="InputPin" />
                 <Pin Id="nY7g6nMwNu7SnunSJpzMy9" Name="Radius" Kind="InputPin" DefaultValue="0.05" />
                 <Pin Id="7ZMQMX6UwyGQh3MIaQgdqH" Name="Output" Kind="OutputPin" />
                 <Pin Id="TSQkjLSANGiLL7RJKwSitI" Name="Stroke Color" Kind="InputPin" />
@@ -174,7 +174,7 @@
               </Node>
             </Patch>
           </Node>
-          <Pad Id="Ns6vGDSp3tVNVSb2T9vtDK" Comment="Anchor" Bounds="320,790,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
+          <Pad Id="Ns6vGDSp3tVNVSb2T9vtDK" Comment="Anchor" Bounds="300,790,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RectangleAnchor" />
             </p:TypeAnnotation>
@@ -190,7 +190,7 @@
             <Pin Id="UIslBoAW4HOKaCHYD5EDoO" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="aq11520iwvUZHGGcy81dvd" Name="Children" Kind="InputPin" />
             <Pin Id="covb8enk997lEB1UFUQ987" Name="Output" Kind="OutputPin" />
-            <Pin Id="PeLxfvTx2PZWdpDUHe8Wsq" Name="Size" Kind="InputPin" />
+            <Pin Id="PeLxfvTx2PZWdpDUHe8Wsq" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="Pi9YABoQmLiNFouk36Dudf" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="SNbHu9cgbbFDPRGrarMmfw" Name="Transform" Kind="InputPin" />
             <Pin Id="J2u1lodMVLcLHIW5YsuPc8" Name="Anchor" Kind="InputPin" />
@@ -205,7 +205,7 @@
             <Pin Id="EIHVVmOUK1KLGwidIWwhUk" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="KWx1DR7usZoOweIghHw46j" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="E3EOMmKFXl8OB5L1YCiXg8" Comment="Anchor" Bounds="1120,745,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
+          <Pad Id="E3EOMmKFXl8OB5L1YCiXg8" Comment="Anchor" Bounds="1100,745,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RectangleAnchor" />
             </p:TypeAnnotation>
@@ -221,7 +221,7 @@
             <Pin Id="IYWLebmv6i43dkszAC7m2b" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="SdzBH2QtXFgyZEvSDWd71d" Name="Children" Kind="InputPin" />
             <Pin Id="4cJpliS69k31IwAPt0QVn3" Name="Output" Kind="OutputPin" />
-            <Pin Id="x1tgaPrPpAf8Oopt5KacGP" Name="Size" Kind="InputPin" />
+            <Pin Id="x1tgaPrPpAf8Oopt5KacGP" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="Og2mNrCf6zBP8LOLLYP0Fh" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="11SIS6S9Hogl0cUlyR3V6v" Name="Transform" Kind="InputPin" />
             <Pin Id="OuG6uLWoRHOP98ph8yfXAq" Name="Anchor" Kind="InputPin" />
@@ -290,9 +290,9 @@
             <Pin Id="KpNx3y3wgDeOiJkmyfthAd" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="VESefEIDe6VNHPJEvLOXZS" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="4rxH1pM5EWaOl42w3fNG2x" Name="Error" Kind="OutputPin" />
-            <Pin Id="vkhk8xHC7PyPoWrHszfaFy" Name="Borderless" Kind="InputPin" />
-            <Pin Id="0ixPiC33RtTKalwwY4I3kG" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="iyPmJb1oCaEWUuM49EH4Be" Name="Debug" Kind="InputPin" />
+            <Pin Id="vkhk8xHC7PyPoWrHszfaFy" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="0ixPiC33RtTKalwwY4I3kG" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="iyPmJb1oCaEWUuM49EH4Be" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="qhdtiQDtpQUapLavP3SM0g" Comment="Position" Bounds="217,672,35,28" ShowValueBox="true" isIOBox="true" Value="2.45, 1.2">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
@@ -328,12 +328,12 @@
             <Pin Id="o4ol5iY4cVdnen2Jnt5j5E" Name="Translation" Kind="InputPin" />
             <Pin Id="h05p5a9OQ6tfyISHtYGRtI" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="4z9C6GGTKICir3f2bWVLC0" Comment="Spacing" Bounds="162,750,35,15" ShowValueBox="true" isIOBox="true" Value="0.1">
+          <Pad Id="4z9C6GGTKICir3f2bWVLC0" Comment="Spacing" Bounds="142,750,35,15" ShowValueBox="true" isIOBox="true" Value="0.1">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="p6fMr92gSZ9TD4wYvoJt19" Comment="Child Alignment" Bounds="182,805,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
+          <Pad Id="p6fMr92gSZ9TD4wYvoJt19" Comment="Child Alignment" Bounds="162,805,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
             <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="VerticalAlignment" />
             </p:TypeAnnotation>
@@ -372,7 +372,7 @@
             <Pin Id="XQvCLLQaNGSUzdwjgEUnEu" Name="Translation" Kind="InputPin" />
             <Pin Id="edevhsASGxabE6vJDd1nsr" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="74YLRZg2G8H78ZO6OCpwXG" Comment="Child Alignment" Bounds="982,750,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
+          <Pad Id="74YLRZg2G8H78ZO6OCpwXG" Comment="Child Alignment" Bounds="962,750,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
             <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="HorizontalAlignment" />
             </p:TypeAnnotation>

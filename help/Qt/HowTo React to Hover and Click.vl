@@ -63,9 +63,9 @@
             <Pin Id="JdgnjBoAmQ2PmOQanK6Bap" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="A17uG5dux0pMtuzGxvOkF8" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="hTncOFMAyZ8u8PDOLZ34kO" Name="Error" Kind="OutputPin" />
-            <Pin Id="Z66pyx7JDPzo6387gPinsE" Name="Borderless" Kind="InputPin" />
-            <Pin Id="hdjGpJvMumdLkYMLXkBxB4" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="6lTNFBhME1A6I6VgG4TTXt" Name="Debug" Kind="InputPin" />
+            <Pin Id="Z66pyx7JDPzo6387gPinsE" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="hdjGpJvMumdLkYMLXkBxB4" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="6lTNFBhME1A6I6VgG4TTXt" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="S0Ci2GKR3VURIswvVUCUno" Comment="Clear Color" Bounds="142,1361,136,15" ShowValueBox="true" isIOBox="true" Value="0.1, 0.1, 0.12, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
@@ -130,7 +130,7 @@
             <Pin Id="ETBdA6NRDoHOM60lVDBrBS" Name="Size" Kind="InputPin" />
             <Pin Id="TBr5ZIZjgW1LExxAtgvnYw" Name="Transform" Kind="InputPin" />
             <Pin Id="Mvfu8WgcBDpPKRtncKWxLp" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="BwjlfFAmQnpLEpJ3a9eanx" Name="Fill" Kind="InputPin" />
+            <Pin Id="BwjlfFAmQnpLEpJ3a9eanx" Name="Color" Kind="InputPin" />
             <Pin Id="G3fVzz3lUgKQWSZXe0QG32" Name="Radius" Kind="InputPin" DefaultValue="0.34" />
             <Pin Id="RehGram3iTDQD7BeIkUdXV" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="L0gD4u3I6SPMjP7Sh7dhbR" Name="Stroke Width" Kind="InputPin" DefaultValue="0.04" />
@@ -193,7 +193,7 @@
             <Pin Id="UTdASc0lfsNOIXZp7GlD1L" Name="Size" Kind="InputPin" />
             <Pin Id="OIZ82jMSxhuPwuBjEdDXUu" Name="Transform" Kind="InputPin" />
             <Pin Id="O6Z2JrVr93nLOp2QXvPGVh" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="UvUijARKAoaNYO1F6Jm0dR" Name="Fill" Kind="InputPin" />
+            <Pin Id="UvUijARKAoaNYO1F6Jm0dR" Name="Color" Kind="InputPin" />
             <Pin Id="CwRL3IHWq8UMWUGWbI6P8x" Name="Radius" Kind="InputPin" DefaultValue="0.24" />
             <Pin Id="RFqVQeDrhJDNucZe62olI9" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="HQWWh3cwhRAQXInLoJY4tn" Name="Stroke Width" Kind="InputPin" />
@@ -211,7 +211,7 @@
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="UIXhuKiRkzAP0yn5vvdfGd" Comment="Anchor" Bounds="100,1190,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
+          <Pad Id="UIXhuKiRkzAP0yn5vvdfGd" Comment="Anchor" Bounds="80,1190,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RectangleAnchor" />
             </p:TypeAnnotation>
@@ -224,7 +224,7 @@
             <Pin Id="BzA008etVUeMvVwfAMwKeu" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="HV5yBnR4s9cL4dzKsdUJXK" Name="Input" Kind="InputPin" />
             <Pin Id="UXNGNxjXwxUPiUIMhPzcRY" Name="Input 2" Kind="InputPin" />
-            <Pin Id="HPeyHyzTAqJPqk1A8tl4IN" Name="Size" Kind="InputPin" />
+            <Pin Id="HPeyHyzTAqJPqk1A8tl4IN" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="CIiSryvSVARPX95VJrr5O9" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="JAKmFtPdfuALQzLBUjcMT9" Name="Transform" Kind="InputPin" />
             <Pin Id="OSXYGpPTcVFQNnBPXz49U0" Name="Anchor" Kind="InputPin" />
@@ -240,7 +240,7 @@
             <Pin Id="RqfqI7z9gYPLgLrJbL4Skp" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="OVw637LxsMhO7U7LDgTZ31" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="OXJ1emx95cuMlHsbFygW1h" Comment="Debug" Bounds="202,1155,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+          <Pad Id="OXJ1emx95cuMlHsbFygW1h" Comment="Debug" Bounds="182,1155,35,35" ShowValueBox="true" isIOBox="true" Value="True">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -284,7 +284,7 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="SKNDnbw5V9dNebap6QmRU6" Comment="Spacing" Bounds="182,1126,35,15" ShowValueBox="true" isIOBox="true" Value="0.21">
+          <Pad Id="SKNDnbw5V9dNebap6QmRU6" Comment="Spacing" Bounds="162,1126,35,15" ShowValueBox="true" isIOBox="true" Value="0.21">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>

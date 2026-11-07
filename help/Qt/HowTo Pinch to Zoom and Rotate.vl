@@ -274,9 +274,9 @@
             <Pin Id="A2Bj77NZlRJqPg3r2EFfEb" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="iVeuB21DkQHcD5RYwhOZG7" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="UdyGKprkaWrglwJnA9kw09" Name="Error" Kind="OutputPin" />
-            <Pin Id="8bWzj9wMbNu693k3XctxyF" Name="Borderless" Kind="InputPin" />
-            <Pin Id="W4ntfnhKCKyenSjapfF8RX" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="bF1XaSjKJMWKsU19u5CrFC" Name="Debug" Kind="InputPin" />
+            <Pin Id="8bWzj9wMbNu693k3XctxyF" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="W4ntfnhKCKyenSjapfF8RX" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="bF1XaSjKJMWKsU19u5CrFC" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="tB76lauHLHALKwT1MkZqro" Comment="Clear Color" Bounds="142,1195,136,15" ShowValueBox="true" isIOBox="true" Value="0.1, 0.1, 0.12, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">

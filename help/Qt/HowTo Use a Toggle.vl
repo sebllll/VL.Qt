@@ -118,7 +118,7 @@
             <Pin Id="UqDW0xlGmuBcGFjlxMxV6L" Name="Input" Kind="InputPin" />
             <Pin Id="hsDkA8OU7cHC9AEGOFCgDu" Name="Input 2" Kind="InputPin" />
             <Pin Id="XKJcW7jjNX6CiDhsehPWWl" Name="Output" Kind="OutputPin" />
-            <Pin Id="P6AHHjynXVInAiWSZ1qxT5" Name="Size" Kind="InputPin" />
+            <Pin Id="P6AHHjynXVInAiWSZ1qxT5" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="BsF0jy52ZOaPsFZrjaWDS9" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="Kj1JNl7wbCOOyaK5YP7PfT" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="SVkYoyiQILYPRwmQeQUZ8b" Name="Anchor" Kind="InputPin" IsHidden="true" />
@@ -152,9 +152,9 @@
             <Pin Id="DHRRZooRiIRMK3dTn7fBeL" Name="Clear Color" Kind="InputPin" />
             <Pin Id="SfWbs33ktTDQcGaBirEyuo" Name="Enabled" Kind="InputPin" />
             <Pin Id="AWIukKrBh6XD4nil8Jm49D" Name="Title" Kind="InputPin" DefaultValue="HowTo Use a Toggle" />
-            <Pin Id="SUQmAXVPIqGPDspWIEPaJv" Name="Borderless" Kind="InputPin" />
-            <Pin Id="InH8faoiZ1lLqKwDIOdCIx" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="LJJBqJZfpNMNCMNcBaHysl" Name="Debug" Kind="InputPin" />
+            <Pin Id="SUQmAXVPIqGPDspWIEPaJv" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="InH8faoiZ1lLqKwDIOdCIx" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LJJBqJZfpNMNCMNcBaHysl" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="jDT7tWjlKpfKbX4GQJW4k1" Comment="Error" Bounds="82,861,240,19" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">

@@ -84,9 +84,9 @@
             <Pin Id="Ls8ANjBLWJmPwT157TktPu" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="3J0ccvpXBK9uMym82JuAqZ" Name="Error" Kind="OutputPin" />
             <Pin Id="t3Vl8AH3vnofJUBJy80c7D" Name="Title" Kind="InputPin" />
-            <Pin Id="ydEEjQHzmZ9DXwDfD5lkl2" Name="Borderless" Kind="InputPin" />
-            <Pin Id="DcHkFIGOvN9FV9yPeQibN6" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="JR4cesmYmunExnkn9L9VGZ" Name="Debug" Kind="InputPin" />
+            <Pin Id="ydEEjQHzmZ9DXwDfD5lkl2" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DcHkFIGOvN9FV9yPeQibN6" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="JR4cesmYmunExnkn9L9VGZ" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="ql509DtE9usfN6JIAH14sK" Comment="Title" Bounds="182,834,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Play a Video">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">

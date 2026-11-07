@@ -63,9 +63,9 @@
             <Pin Id="CBYKRNqjwsOdjrqCBr6SI9" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="AmbcGkW6IjkM9X7O0Ifhh6" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="c8kVNPaalXsZ1oNMkemB3m" Name="Error" Kind="OutputPin" />
-            <Pin Id="cncdUR53XBJnuIRGYoRjml" Name="Borderless" Kind="InputPin" />
-            <Pin Id="VSj1HIIC58Km11dtNmFNrH" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="tNXnd1McsjYtLT1sKw1D6B" Name="Debug" Kind="InputPin" />
+            <Pin Id="cncdUR53XBJnuIRGYoRjml" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VSj1HIIC58Km11dtNmFNrH" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="tNXnd1McsjYtLT1sKw1D6B" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="100,1047,145,19" Id="7o2EOZlyCeG6Fr9VQE1zye">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.vl">
@@ -76,7 +76,7 @@
             <Pin Id="C6ol05KtuffWzLsk9JmwOw" Name="Size" Kind="InputPin" />
             <Pin Id="ZJSaVHKsNWRa8cNqoI0Bew" Name="Transform" Kind="InputPin" />
             <Pin Id="FEVMiUIAwQsP8uTwDOQsRV" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="5RP10P2t69bZwlSIQacW4D" Name="Fill" Kind="InputPin" />
+            <Pin Id="5RP10P2t69bZwlSIQacW4D" Name="Color" Kind="InputPin" />
             <Pin Id="l8AU7fGnQIfMqPzAlu2DwY" Name="Radius" Kind="InputPin" />
             <Pin Id="b2Ieq8YmSRDAw3THxvRvKX" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="2Ac7RmTweIbWyq8FMXs3x4" Name="Stroke Width" Kind="InputPin" />

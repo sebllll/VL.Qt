@@ -165,7 +165,7 @@
             <Pin Id="rjRgEJWxD3cWyovbwSARh0" Name="Input" Kind="InputPin" />
             <Pin Id="50XtMFTKg4ukZi5hbh5jfE" Name="Input 2" Kind="InputPin" />
             <Pin Id="wPXKMjZGCLkhT456B8rfmb" Name="Input 3" Kind="InputPin" />
-            <Pin Id="baYqsCg4IXvk7s61bqmb03" Name="Size" Kind="InputPin" />
+            <Pin Id="baYqsCg4IXvk7s61bqmb03" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="1ihu3mzBLvmJ8MiYGGKcCx" Name="Output" Kind="OutputPin" />
             <Pin Id="Gb2aUnmGBQUOxWTIZcm8Pc" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="AN8RVnKscb0P8kT2iasKyf" Name="Transform" Kind="InputPin" IsHidden="true" />
@@ -202,9 +202,9 @@
             <Pin Id="UtPJvR5RZC6MVbuzm4SK4T" Name="Clear Color" Kind="InputPin" />
             <Pin Id="DWYMC2sT9q8PGbUMqfvDt6" Name="Enabled" Kind="InputPin" />
             <Pin Id="txU8gt4VYuZpUY42bqCFuX" Name="Title" Kind="InputPin" DefaultValue="HowTo Use Input (Int)" />
-            <Pin Id="KfZK5GKu9TEPD4RefZAHZe" Name="Borderless" Kind="InputPin" />
-            <Pin Id="BhE95CPQbguQawP0lroxsc" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="ByhBn81ePxSMrHYyrUEMTp" Name="Debug" Kind="InputPin" />
+            <Pin Id="KfZK5GKu9TEPD4RefZAHZe" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="BhE95CPQbguQawP0lroxsc" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ByhBn81ePxSMrHYyrUEMTp" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="VCGvclFelSYQOYtvK9CgMz" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="262,780,85,19" Id="G9tqeDgvercdvPjG9yYkA8">
@@ -356,7 +356,7 @@
             <Pin Id="p1tePg1x9L1enUb34BTKgN" Name="Input" Kind="InputPin" />
             <Pin Id="0dg8UJxaATtKW6VW83nTsh" Name="Input 2" Kind="InputPin" />
             <Pin Id="YaKJDu5qv0D7sSHiM80jBx" Name="Output" Kind="OutputPin" />
-            <Pin Id="KIdRsfxL1pn6fN2AG31wXt" Name="Size" Kind="InputPin" />
+            <Pin Id="KIdRsfxL1pn6fN2AG31wXt" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="esHirhLahW1d9pkncghV0D" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="2HMCYgQxtxeNgdUxy6FSEn" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="9KmI0PWrM7wcXSd56ZS4yP" Name="Anchor" Kind="InputPin" IsHidden="true" />

@@ -91,9 +91,9 @@
             <Pin Id="13MnLmFViVJ0PIoxLqXR2I" Name="Title" Kind="InputPin" />
             <Pin Id="F30pM32esWwMH8HIR1eJ1k" Name="Perf" Kind="OutputPin" />
             <Pin Id="3a7O7vwhNRWASjznI32QFX" Name="Error" Kind="OutputPin" />
-            <Pin Id="uXcm2kCXTLclKb2zzEnekC" Name="Borderless" Kind="InputPin" />
-            <Pin Id="TGyrht4uTw8EIMtlma3CuL" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="C3LyOVX5R4BTgeNdW4vnP1" Name="Debug" Kind="InputPin" />
+            <Pin Id="uXcm2kCXTLclKb2zzEnekC" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TGyrht4uTw8EIMtlma3CuL" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="C3LyOVX5R4BTgeNdW4vnP1" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="3rmKtndyuODDGpjZZNszWz" Comment="Error" Bounds="102,2022,420,60" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
