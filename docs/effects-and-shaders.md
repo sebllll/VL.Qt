@@ -49,15 +49,15 @@ Help patches: `HowTo Chain Effects`, `HowTo Mask an Element`, `HowTo Add a Glow`
 
 ## Shaders
 
-Own fragment shaders (optionally with a vertex shader) are written in Qt's GLSL (version 440, the dialect Qt's `qsb` tool expects). There are two ways to use them:
+Own fragment shaders (optionally with a vertex shader) are written in Qt's GLSL (version 440, the dialect Qt's `qsb` tool expects). There are two ways to use them; the first one is the normal way:
 
-**ShaderEffect node:** the shader code goes into the `Fragment Code` string pin, or `Fragment Shader` points to a pre-baked `.qsb` file. VL.Qt bakes it in a worker; while a new version is baking or has errors, the last working one keeps drawing. Compile errors show at the `Error` output with their line number. Uniforms are matched by name, an element or Group on `Input` becomes the `source` texture.
+**Shader nodes from files (normal way):** every `.frag` file in a `qtshaders/` folder becomes a node with one pin per uniform (see [Shader nodes from files](#shader-nodes-from-files)).
 
-**Shader nodes from files:** every `.frag` file in a `qtshaders/` folder becomes a node (see below).
+**ShaderEffect node (runtime variant):** for shader code that is built, generated or loaded at runtime, which a file cannot cover. The node is marked advanced, so it only shows in the node browser with the advanced filter. The shader code goes into the `Fragment Code` string pin, or `Fragment Shader` points to a pre-baked `.qsb` file. VL.Qt bakes it in a worker; while a new version is baking or has errors, the last working one keeps drawing. Compile errors show at the `Error` output with their line number. Uniforms come from the nodes in `Qt.Elements.Uniform` (also advanced, except `Sampler`) and are matched by name, an element or Group on `Input` becomes the `source` texture.
 
 ### Sampler node
 
-`Qt.Elements.Uniform` has a `Sampler` node that sets how a shader reads a texture. `Filter` (Linear, Point), `Mip Filter` (None, Point, Linear; also renders the sampled element's layer with mipmaps), `Address U` / `Address V` (Clamp, Wrap, Mirror). Connect it to `Input Sampler` of a ShaderEffect or shader node, the `Sampler` pin of the `Texture` / `Image` uniform nodes, the sampler pin next to an image pin of a shader node, `Layer Sampler` of Blend or `Map Sampler` of Displace. Without a Sampler an element's layer is read Nearest, Clamp, without mipmaps. A float layer format and anisotropic filtering are not available (limits of Qt). Help patch: `HowTo Set a Sampler`.
+`Qt.Elements.Uniform` has a `Sampler` node that sets how a shader reads a texture. `Filter` (Linear, Point), `Mip Filter` (None, Point, Linear; also renders the sampled element's layer with mipmaps), `Address U` / `Address V` (Clamp, Wrap, Mirror). Connect it to `Input Sampler` of a shader node or a ShaderEffect, the `Sampler` pin of the `Texture` / `Image` uniform nodes, the sampler pin next to an image pin of a shader node, `Layer Sampler` of Blend or `Map Sampler` of Displace. Without a Sampler an element's layer is read Nearest, Clamp, without mipmaps. A float layer format and anisotropic filtering are not available (limits of Qt). Help patch: `HowTo Set a Sampler`.
 
 ### Shader nodes from files
 
@@ -120,4 +120,4 @@ The full, commented templates are `help/Qt/qtshaders/RGBSplit.frag` (filter) and
 - **Export:** the `qtshaders/` folder next to the exported patch is copied next to the exe automatically, and the exported app bakes the shaders at runtime like the editor does. Only that folder is copied: shader files that live next to other documents or in other packages have to be copied by hand.
 - **Limitations:** exported apps bake shaders at runtime (no pre-baked `.qsb` shipped for `.frag` nodes), the editor keeps no pipeline cache, and uniform arrays are not supported.
 
-Help patches: `HowTo Write a ShaderEffect`, `HowTo Create Shader Nodes from Files`, `HowTo Blur an Image with a Control Mask`, `HowTo Set a Sampler`. See [Help patches](help-patches.md).
+Help patches: `HowTo Create Shader Nodes from Files`, `HowTo Write a ShaderEffect` (runtime variant), `HowTo Blur an Image with a Control Mask`, `HowTo Set a Sampler`. See [Help patches](help-patches.md).
