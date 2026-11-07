@@ -1,6 +1,6 @@
 name: cla
 
-# CLA check for pull requests, active only in the public repository (inactive in forks and in the private repo).
+# CLA check for pull requests, active only in the public repository (inactive in forks and while the repository is private).
 # Documented usage of contributor-assistant/github-action: triggers issue_comment and pull_request_target, the
 # action reads the PR through the API and never checks out or runs PR code.
 #
@@ -26,7 +26,8 @@ jobs:
   cla:
     name: CLA Assistant
     runs-on: ubuntu-latest
-    if: github.repository == 'sebllll/VL.Qt'
+    # Public repo only; forks have no cla-signatures branch, hence the name as well.
+    if: github.repository == 'sebllll/VL.Qt' && github.event.repository.private == false
     steps:
       - name: CLA Assistant
         if: github.event_name == 'pull_request_target' || (github.event.issue.pull_request && (github.event.comment.body == 'recheck' || github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA'))
