@@ -42,7 +42,7 @@
             <Pin Id="Hw1Rect4Kq7Lm2Np5Rs8Tb" Name="Bounds" Kind="InputPin" DefaultValue="4, 3, 6, 3" />
             <Pin Id="ChgCFQ2A4LlNldMaVXv2gU" Name="Transform" Kind="InputPin" />
             <Pin Id="MJw1kj265TbP3UQdcbqL48" Name="Pivot" Kind="InputPin" />
-            <Pin Id="Hw1Rect4Kq7Lm2Np5Rs8Tc" Name="Fill" Kind="InputPin" DefaultValue="0.9, 0.33930004, 0.09900004, 1" />
+            <Pin Id="Hw1Rect4Kq7Lm2Np5Rs8Tc" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.33930004, 0.09900004, 1" />
             <Pin Id="Hw1Rect4Kq7Lm2Np5Rs8Td" Name="Radius" Kind="InputPin" DefaultValue="0.3" />
             <Pin Id="Hw1Rect4Kq7Lm2Np5Rs8Te" Name="Output" Kind="OutputPin" />
             <Pin Id="HpjtXkjlMaLO3N1nwrrgCF" Name="Stroke Color" Kind="InputPin" />

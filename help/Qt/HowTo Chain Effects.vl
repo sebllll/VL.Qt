@@ -133,7 +133,7 @@
             <Pin Id="yeE6RsXcNOPmeMjvqPVStN" Name="Size" Kind="InputPin" />
             <Pin Id="KiaEdFrRgSnRFsTHsDDDXh" Name="Transform" Kind="InputPin" />
             <Pin Id="SDhvVOsi0TvNceIVydsHeo" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="5Jmtf7EbsDe0G9Cryn687n" Name="Fill" Kind="InputPin" />
+            <Pin Id="5Jmtf7EbsDe0G9Cryn687n" Name="Color" Kind="InputPin" />
             <Pin Id="eLfjVHq8xiM0OGr4hTxoF5" Name="Radius" Kind="InputPin" />
             <Pin Id="4Fzbka8FRCztUjAwyuh1va" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="uWv1zh87mTa5Vsqxezy3Le" Name="Stroke Width" Kind="InputPin" />
@@ -235,9 +235,9 @@
             <Pin Id="9FLw91GqK8ks0n8SoFkh8O" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="D8ATZcBmJ1qLPHQSXKAMae" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="XfFYSJYgOuwgz7z54VfB4P" Name="Error" Kind="OutputPin" />
-            <Pin Id="bxntqB5IGky4Oo8DiIMWSW" Name="Borderless" Kind="InputPin" />
-            <Pin Id="MPcwLuHj31CQJVukDCSXqL" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="oivDP4SpGmrtWT01NjUjpU" Name="Debug" Kind="InputPin" />
+            <Pin Id="bxntqB5IGky4Oo8DiIMWSW" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MPcwLuHj31CQJVukDCSXqL" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="oivDP4SpGmrtWT01NjUjpU" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="OSg5ApYzTTOkq2BEDbN2AH" Comment="Title" Bounds="215,1131,127,21" ShowValueBox="true" isIOBox="true" Value="HowTo Chain Effects">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">

@@ -33,7 +33,7 @@ namespace VL.Qt.Nodes
         /// <param name="radius">Radius; the circle takes 2 × Radius in width and height. 0 = not drawn. The position comes from Transform and Anchor (default TopLeft: the corner of the bounding square; Center: the circle's center at the origin).</param>
         /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
         /// <param name="anchor">Point of the element that lies at the origin of its parent space (default TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size; Transform rotates/scales around it. Inside Row/Column only the pivot of Transform.</param>
-        /// <param name="fill">Fill color.</param>
+        /// <param name="color">Fill color.</param>
         /// <param name="strokeColor">Border color.</param>
         /// <param name="strokeWidth">Border width, 0 = no border.</param>
         /// <param name="opacity">Opacity of the element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
@@ -49,7 +49,7 @@ namespace VL.Qt.Nodes
             [DefaultValue(0.5f)] float radius,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
-            [DefaultValue("1, 1, 1, 1")] Color4 fill,
+            [DefaultValue("1, 1, 1, 1")] Color4 color,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue("0, 0, 0, 1")] Color4 strokeColor,
             [Pin(Visibility = PinVisibility.Optional)] float strokeWidth,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float opacity,
@@ -63,7 +63,7 @@ namespace VL.Qt.Nodes
             var r = Math.Max(radius, 0f);
             var element = _node.Describe(
                 new CommonInputs(new Vector2(2 * r, 2 * r), transform, anchor, opacity, clip, debug, interaction, effect),
-                new RectangleNode.Props(fill, r, strokeColor, strokeWidth));
+                new RectangleNode.Props(color, r, strokeColor, strokeWidth));
             _node.ReadOutputs(out measuredSize, out sceneBounds);
             return element;
         }

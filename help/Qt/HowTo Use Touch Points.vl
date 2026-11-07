@@ -65,7 +65,7 @@
             <Pin Id="9ZdTAdlWkit9t3DlopIbXd" Name="Size" Kind="InputPin" DefaultValue="10, 7" />
             <Pin Id="Y2V6NPYmUxuNViz0Hq64SA" Name="Transform" Kind="InputPin" />
             <Pin Id="c6avaAAsaeyVxLlf83HDsb" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="czYhQbZFcZfQSNSXIL4A8R" Name="Fill" Kind="InputPin" DefaultValue="0.18, 0.2, 0.26, 1" />
+            <Pin Id="czYhQbZFcZfQSNSXIL4A8R" Name="Color" Kind="InputPin" DefaultValue="0.18, 0.2, 0.26, 1" />
             <Pin Id="uvTMrmfNUwqAGULjS9187h" Name="Radius" Kind="InputPin" />
             <Pin Id="rnEDlENF8W9aUtLsRj8cYz" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="bBtd2JMJWpuIev4nkBU7i4" Name="Stroke Width" Kind="InputPin" />
@@ -116,7 +116,7 @@
                 <Pin Id="cWuWOaqzb1rwAJQMd9zkGD" Name="Node Context" Kind="InputPin" IsHidden="true" />
                 <Pin Id="r5rnKOpls818bnA3iJwokL" Name="Transform" Kind="InputPin" />
                 <Pin Id="JOOAdvfrXUPj0EIchklmYE" Name="Anchor" Kind="InputPin" />
-                <Pin Id="JdwW9VTSYojA1J1vchFQJc" Name="Fill" Kind="InputPin" DefaultValue="1, 0.5, 0, 1" />
+                <Pin Id="JdwW9VTSYojA1J1vchFQJc" Name="Color" Kind="InputPin" DefaultValue="1, 0.5, 0, 1" />
                 <Pin Id="jqDRu7Pz8Ga2dWYlWVaQV0" Name="Radius" Kind="InputPin" DefaultValue="0.45" />
                 <Pin Id="pQkoezemLVb3t5hCKbuhmk" Name="Stroke Color" Kind="InputPin" />
                 <Pin Id="4kjoMKyAvUUn8T1S93aARB" Name="Stroke Width" Kind="InputPin" />
@@ -251,9 +251,9 @@
             <Pin Id="GyN0a72bIPZbqADLyqRmkh" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="m3G28AZcGuiGTZNqN2x7mp" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="2TheKiFEITq0hR6eoKm0aQ" Name="Error" Kind="OutputPin" />
-            <Pin Id="qEFIhNbrk8Xt2klYpBNos0" Name="Borderless" Kind="InputPin" />
-            <Pin Id="UmSNSDP3WueWln9mbSTUKA" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="4i2RdMn2mKeFBrO6ld41Au" Name="Debug" Kind="InputPin" />
+            <Pin Id="qEFIhNbrk8Xt2klYpBNos0" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="UmSNSDP3WueWln9mbSTUKA" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="4i2RdMn2mKeFBrO6ld41Au" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="tSDNiaAl7ygaiuzNTaxKWq" Comment="Clear Color" Bounds="122,1137,136,15" ShowValueBox="true" isIOBox="true" Value="0.1, 0.1, 0.12, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">

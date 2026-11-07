@@ -66,7 +66,7 @@
             <Pin Id="Tf0XyEsKkTURITaWvKDu2I" Name="Size" Kind="InputPin" />
             <Pin Id="DZzfFtqNA9lOIFD1BsT3hC" Name="Transform" Kind="InputPin" />
             <Pin Id="wsyNWzC3p6hGHoqNiLWFp4" Name="Anchor" Kind="InputPin" DefaultValue="TopLeft" />
-            <Pin Id="5UCXKithrYwqguUDZMuo1M" Name="Fill" Kind="InputPin" />
+            <Pin Id="5UCXKithrYwqguUDZMuo1M" Name="Color" Kind="InputPin" />
             <Pin Id="pkPZka6ZbWJkDYiWDbMKZm" Name="Radius" Kind="InputPin" />
             <Pin Id="RrrXPlXFTnMTBGw2SLEVK0" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="eu5PhSB5A7cTccYC44XHN0" Name="Stroke Width" Kind="InputPin" />
@@ -99,9 +99,9 @@
             <Pin Id="EpZ6nNsahdQ26aboluWbRr" Name="Title" Kind="InputPin" />
             <Pin Id="Rxj5id6tiIyNdlpLfl0Vbw" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="xso0B6OZsvdwSjbyyriCtW" Name="Error" Kind="OutputPin" />
-            <Pin Id="CpWRSCEcBA5X2d44Tjfl1G" Name="Borderless" Kind="InputPin" />
-            <Pin Id="z0Bz3PefIrZO4zLqwQMMvs" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="8RBnDdg9WTejO4bEKNI6Xl" Name="Debug" Kind="InputPin" />
+            <Pin Id="CpWRSCEcBA5X2d44Tjfl1G" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="z0Bz3PefIrZO4zLqwQMMvs" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="8RBnDdg9WTejO4bEKNI6Xl" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="s2QZfgCrTwXnmI7c1rkfzK" Comment="Title" Bounds="182,787,136,18" ShowValueBox="true" isIOBox="true" Value="HowTo Draw a Rectangle">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
@@ -159,7 +159,7 @@
             <Pin Id="rdhRZfAgFJyuwKJ42XVqlF" Name="Size" Kind="InputPin" />
             <Pin Id="jo0u2WxH61sHx8sI5VgQer" Name="Transform" Kind="InputPin" />
             <Pin Id="mYqLARYXg2OzjLSGQyvbe1" Name="Anchor" Kind="InputPin" DefaultValue="Center" />
-            <Pin Id="BcJi4IthZpnxohIlcE64X3" Name="Fill" Kind="InputPin" DefaultValue="0.2, 0.7, 1, 0.7" />
+            <Pin Id="BcJi4IthZpnxohIlcE64X3" Name="Color" Kind="InputPin" DefaultValue="0.2, 0.7, 1, 0.7" />
             <Pin Id="kz5imtNwJN047us0Ur81nO" Name="Radius" Kind="InputPin" />
             <Pin Id="99xHcrQ8lKL6Kr5opBdbVA" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="vfvQv1bKIPscpLpdcKHQlL" Name="Stroke Width" Kind="InputPin" />

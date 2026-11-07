@@ -147,9 +147,9 @@
             <Pin Id="PjBmXGnUpcsYiSbluij6Se" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="oAibQ6l6XWvc7Bad4dRQNW" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="MzEOC6eQYN7ioiKbBDqfn2" Name="Error" Kind="OutputPin" />
-            <Pin Id="KJqYbxVFpUdYcFHqKFjS9i" Name="Borderless" Kind="InputPin" />
-            <Pin Id="ftM91WVIRbO6VeKiL4bfkA" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="LM7Scut5RyVZ50pFwcEn62" Name="Debug" Kind="InputPin" />
+            <Pin Id="KJqYbxVFpUdYcFHqKFjS9i" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ftM91WVIRbO6VeKiL4bfkA" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LM7Scut5RyVZ50pFwcEn62" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="P7gjka8Pr6HOcf2AlrsVtU" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="22RfM5vO9VII7JYBVAQw5F" Comment="Fragment Code" Bounds="142,650,592,164" ShowValueBox="true" isIOBox="true" Value="#version 440&#xD;&#xA;layout(location = 0) in vec2 qt_TexCoord0;&#xD;&#xA;layout(location = 0) out vec4 fragColor;&#xD;&#xA;layout(std140, binding = 0) uniform buf { mat4 qt_Matrix; float qt_Opacity; };&#xD;&#xA;layout(binding = 1) uniform sampler2D source;&#xD;&#xA;void main() {&#xD;&#xA;    // zoom 6x into the middle of the input: the filter of the sampler decides how the magnified pixels look&#xD;&#xA;    vec2 uv = vec2(0.5) + (qt_TexCoord0 - vec2(0.5)) / 6.0;&#xD;&#xA;    fragColor = texture(source, uv) * qt_Opacity;&#xD;&#xA;}&#xD;&#xA;">

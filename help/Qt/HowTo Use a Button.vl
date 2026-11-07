@@ -69,9 +69,9 @@
             <Pin Id="Haq8vmkp1zhL3BK6Ijao1H" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="CylRfDjHhxROwqCzhtyDsE" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="hTncOFMAyZ8u8PDOLZ34kO" Name="Error" Kind="OutputPin" />
-            <Pin Id="Z66pyx7JDPzo6387gPinsE" Name="Borderless" Kind="InputPin" />
-            <Pin Id="hdjGpJvMumdLkYMLXkBxB4" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="6lTNFBhME1A6I6VgG4TTXt" Name="Debug" Kind="InputPin" />
+            <Pin Id="Z66pyx7JDPzo6387gPinsE" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="hdjGpJvMumdLkYMLXkBxB4" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="6lTNFBhME1A6I6VgG4TTXt" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="371,471,53,19" Id="nJSrzEpUNgePOdsBtb4Km4">
             <p:NodeReference LastCategoryFullName="Reactive" LastDependency="VL.CoreLib.vl">

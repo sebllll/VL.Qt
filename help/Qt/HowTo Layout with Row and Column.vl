@@ -45,7 +45,7 @@
             <Pin Id="XaBTEjiokddsybC8AJpyrf" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="fHQ7BGL4Pshq7BiWWcObpN" Name="Size" Kind="InputPin" />
             <Pin Id="Q3lxkoe6fqMLhe2ww3cQYc" Name="Transform" Kind="InputPin" />
-            <Pin Id="NWlsTW5xLQuqTtn8sh8eai" Name="Fill" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
+            <Pin Id="NWlsTW5xLQuqTtn8sh8eai" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
             <Pin Id="j4Wjx6BxjqXeqYSjMyWVKM" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
             <Pin Id="mZLDQTt44K3lqkbNbLqlun" Name="Output" Kind="OutputPin" />
             <Pin Id="GjMUVmHE2kjYaowt204L6A" Name="Scene Bounds" Kind="OutputPin" />
@@ -64,7 +64,7 @@
             <Pin Id="FZSjLb2fWxSHIqmNdkQ7Nt" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="obWeJc4IzHOe3HW1gYmekw" Name="Size" Kind="InputPin" />
             <Pin Id="RzYEAqUqcVLLEApgwdQyrc" Name="Transform" Kind="InputPin" />
-            <Pin Id="jnSTsOazTjBthBJUVwLDOk" Name="Fill" Kind="InputPin" DefaultValue="0.2, 0.6, 0.9, 1" />
+            <Pin Id="jnSTsOazTjBthBJUVwLDOk" Name="Color" Kind="InputPin" DefaultValue="0.2, 0.6, 0.9, 1" />
             <Pin Id="mtf53IV9emnuPq7HXdzuaP" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
             <Pin Id="PgG84TvaJThBlzSD9Xgo7n" Name="Output" Kind="OutputPin" />
             <Pin Id="eS05tXhrZwbrxOeYrDc8e3" Name="Scene Bounds" Kind="OutputPin" />
@@ -83,7 +83,7 @@
             <Pin Id="7u06n4FplqolMAf32mrOmy" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Fg6pSYuLqwidZ3mHmYEjfQ" Name="Size" Kind="InputPin" />
             <Pin Id="B0YjzPvDoOSM2CkL8qpcGc" Name="Transform" Kind="InputPin" />
-            <Pin Id="qZQoxmJzkHvMdOpgaRLKRe" Name="Fill" Kind="InputPin" DefaultValue="0.3, 0.8, 0.4, 1" />
+            <Pin Id="qZQoxmJzkHvMdOpgaRLKRe" Name="Color" Kind="InputPin" DefaultValue="0.3, 0.8, 0.4, 1" />
             <Pin Id="a6WHImeDbT8ib9DABIzo1W" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
             <Pin Id="tHEvWFhllLniKPiPNpzADb" Name="Output" Kind="OutputPin" />
             <Pin Id="rlhN0zQ1IPlnYZYX4D9zre" Name="Scene Bounds" Kind="OutputPin" />
@@ -91,7 +91,7 @@
             <Pin Id="o4KlQ3Ma56PDn6Fse4l4Py" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="eBcodA8bFquqTZ1Css49Cb" Name="Opacity" Kind="InputPin" />
           </Node>
-          <Pad Id="UL7MDdZkRKAPnmvz5pVpdZ" Comment="Anchor" Bounds="100,849,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
+          <Pad Id="UL7MDdZkRKAPnmvz5pVpdZ" Comment="Anchor" Bounds="80,849,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RectangleAnchor" />
             </p:TypeAnnotation>
@@ -108,7 +108,7 @@
             <Pin Id="n6ZGAIa838DO21S9kJUZTL" Name="Input" Kind="InputPin" />
             <Pin Id="wEOQZnWayRkkbFNvVxyeQe" Name="Input 2" Kind="InputPin" />
             <Pin Id="iqYVp1Yvc9gXQep4cPs9L1" Name="Input 3" Kind="InputPin" />
-            <Pin Id="GEEvFeWkKI6bCICjK4nqqW" Name="Size" Kind="InputPin" />
+            <Pin Id="GEEvFeWkKI6bCICjK4nqqW" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="LIboTJ7ezK3fklfjb6VgiN" Name="Transform" Kind="InputPin" />
             <Pin Id="NGmLW2FtRkjPEnLU6Dtz5v" Name="Anchor" Kind="InputPin" />
             <Pin Id="0pmE6KU4EY8sBSQ5yQAaSJ" Name="Spacing" Kind="InputPin" DefaultValue="0.2" />
@@ -163,7 +163,7 @@
             <Pin Id="3zA0eKkGb10Prh2wXDiY1G" Name="Opacity" Kind="InputPin" />
             <Pin Id="TFAnwUIVCToEXIu6fYhSpZ" Name="Scene Bounds" Kind="OutputPin" />
           </Node>
-          <Pad Id="AqAaRwXOKHmNeHi1QUXAsL" Comment="Anchor" Bounds="100,1722,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
+          <Pad Id="AqAaRwXOKHmNeHi1QUXAsL" Comment="Anchor" Bounds="80,1722,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RectangleAnchor" />
             </p:TypeAnnotation>
@@ -180,7 +180,7 @@
             <Pin Id="pqkAUVEmWtMQoxTM4lmBbY" Name="Input" Kind="InputPin" />
             <Pin Id="vmrGh0bUnIz1ihMvgM5or9" Name="Input 2" Kind="InputPin" />
             <Pin Id="e2CbZvorBDKXKCwlyF4jWB" Name="Input 3" Kind="InputPin" />
-            <Pin Id="EnKlypc1nC6x4HceBGPIvI" Name="Size" Kind="InputPin" />
+            <Pin Id="EnKlypc1nC6x4HceBGPIvI" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="QD2DnO83Bpeh9SwtFxPvbX" Name="Transform" Kind="InputPin" />
             <Pin Id="PfdTLte5vX7QHO9SSlMCcB" Name="Anchor" Kind="InputPin" />
             <Pin Id="JBxGgn8iA2ecAfiDtPzJMb" Name="Spacing" Kind="InputPin" DefaultValue="0.3" />
@@ -203,9 +203,9 @@
             <Pin Id="aU6oKqWhiHY0ynZeQPiUAP" Name="Title" Kind="InputPin" />
             <Pin Id="R4X6gug3DjzOTjVZe1pJAz" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="n3Itn1IF6KgYnU2hcz2ghd" Name="Error" Kind="OutputPin" />
-            <Pin Id="CRwsG97rWhGI9NBw9WLgiz" Name="Borderless" Kind="InputPin" />
-            <Pin Id="DVHAtuU3hWJE0kpX3tIHMe" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="Sp4At14J98HdDqk2D9KZLR" Name="Debug" Kind="InputPin" />
+            <Pin Id="CRwsG97rWhGI9NBw9WLgiz" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DVHAtuU3hWJE0kpX3tIHMe" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Sp4At14J98HdDqk2D9KZLR" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="xpPwLOkAC289fwCd0MUaim" Comment="Clear Color" Bounds="142,1816,136,15" ShowValueBox="true" isIOBox="true" Value="0.95, 0.95, 0.95, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">

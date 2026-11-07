@@ -113,7 +113,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] string? vertexCode,
             [Pin(Visibility = PinVisibility.Optional)] Path? vertexShader,
             Spread<Uniform>? uniforms,
-            [DefaultValue(true)] bool blending,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool blending,
             [Pin(Visibility = PinVisibility.Optional)] Optional<Int2> meshResolution,
             [DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,

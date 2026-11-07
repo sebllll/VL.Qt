@@ -185,7 +185,7 @@
               <Pin Id="dOmIKWsHYdpj64CuSLZyG5" Name="Size" Kind="InputPin" />
               <Pin Id="lUAmH72z1JZqXfDpudutq2" Name="Transform" Kind="InputPin" />
               <Pin Id="fjCrlvFGvaTpYHe8e7s8Xp" Name="Anchor" Kind="InputPin" />
-              <Pin Id="qrT4DIG3nsJUJkPRgJdqH7" Name="Fill" Kind="InputPin" />
+              <Pin Id="qrT4DIG3nsJUJkPRgJdqH7" Name="Color" Kind="InputPin" />
               <Pin Id="QxtGW6DzkVc9qlnmiCC119" Name="Radius" Kind="InputPin" />
               <Pin Id="DD72MTvwvCTjg5yqU6TVkq" Name="Stroke Color" Kind="InputPin" />
               <Pin Id="ZnpELfCl6nh9derkh5KATZ" Name="Stroke Width" Kind="InputPin" />
@@ -322,7 +322,7 @@
               <Pin Id="KtUGa8VH0q0OyZptS915gx" Name="Radius" Kind="InputPin" />
               <Pin Id="Q22zB6fbISuOsniyQx0kt0" Name="Transform" Kind="InputPin" />
               <Pin Id="S5YgDKaMXdrMXUs6bkXsoC" Name="Anchor" Kind="InputPin" DefaultValue="Center" />
-              <Pin Id="GXuoSmejg2yOLHgfyl9JcM" Name="Fill" Kind="InputPin" />
+              <Pin Id="GXuoSmejg2yOLHgfyl9JcM" Name="Color" Kind="InputPin" />
               <Pin Id="Tx77LCBUYGCL7YMhKoLY4x" Name="Stroke Color" Kind="InputPin" />
               <Pin Id="Hk5vZwZdimdOS25bGD55t5" Name="Stroke Width" Kind="InputPin" />
               <Pin Id="UOgbSuWFZm8MdvjXVb9rCj" Name="Opacity" Kind="InputPin" />
@@ -955,9 +955,9 @@
             <Pin Id="5zvqJDqfFDXZWYHYskxewP" Name="Clear Color" Kind="InputPin" />
             <Pin Id="73wj3IsZKzgeWighxYkVGD" Name="Enabled" Kind="InputPin" />
             <Pin Id="kYAXWbDivr3nNxuzHa0ENQ" Name="Title" Kind="InputPin" />
-            <Pin Id="9YoOBGlz5JTwyaQZFdmZOI" Name="Borderless" Kind="InputPin" />
-            <Pin Id="xwo5AtPDxTQ9GyfNNt4mnq" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="W14dp03tx5CxGpua5mqOpk" Name="Debug" Kind="InputPin" />
+            <Pin Id="9YoOBGlz5JTwyaQZFdmZOI" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="xwo5AtPDxTQ9GyfNNt4mnq" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="W14dp03tx5CxGpua5mqOpk" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="6dObeW32O4EgJ6nrkvARFd" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="Fsxo5wJvlX7Tf2KjnHV51K" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="NlBy8UYhXMPOrea1yb4TgU" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
