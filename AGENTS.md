@@ -141,8 +141,8 @@ In-app overlays, logging and device loss: [docs/diagnostics.md](docs/diagnostics
 Use the issue forms in `.github/ISSUE_TEMPLATE/` (bug report, feature request, task). Every issue gets labels and a milestone when it is created or triaged:
 
 - Type (exactly one): `bug`, `enhancement`, `documentation` or `question` (a spike or a decision).
-- Area (at least one): `area:native`, `area:csharp`, `area:patch` or `area:ci`. An issue that touches native and C# gets both labels.
+- Area (at least one): `area:native`, `area:csharp`, `area:patch` or `area:ci`. An issue that touches native and C# gets both labels. Repository-wide documentation (README, licensing, contributing) needs no area.
 - Topic (at most one, where one fits): `topic:effects`, `topic:images`, `topic:video`, `topic:styles`, `topic:input`, `topic:linux` or `topic:performance`.
-- Extra when needed: `manual-check` (needs a human to look at it in vvvv), `ready`, `good first issue`, `help wanted`. `perf` only triggers the perf workflow on a pull request.
+- Extra when needed: `manual-check` (needs a human to look at it in vvvv), `ready`, `good first issue`, `help wanted`.
 - Milestone: version numbers only. `1.0` blocks the release, `2.0` is urgent but does not block it, `3.0` holds distant features and ideas without a date. Until 1.0 is released the package stays at 0.9.x and every issue that has to be done goes into `1.0`.
 - Do not invent new labels or milestones. Close issues that will not be done as "not planned", duplicates as "duplicate".
