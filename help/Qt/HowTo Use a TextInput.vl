@@ -168,7 +168,7 @@
             <Pin Id="L8TbkEbt32ixBlYXOeEGnP" Name="Input 2" Kind="InputPin" />
             <Pin Id="UGoKlVFjmmAa84T0cRqhdz" Name="Input 3" Kind="InputPin" />
             <Pin Id="e4vH3B9aBh3sf3ypILrblF" Name="Output" Kind="OutputPin" />
-            <Pin Id="sZtnk5FCd9LBamXu92sYNJ" Name="Size" Kind="InputPin" />
+            <Pin Id="sZtnk5FCd9LBamXu92sYNJ" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="BRbYUeAM5GUMhOieiAi5bU" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="OJWaDGMTK9vLMJmUBu3zPz" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="UmIdKb0rnI2PInFROEDDpR" Name="Anchor" Kind="InputPin" IsHidden="true" />
@@ -202,9 +202,9 @@
             <Pin Id="VzRjZBDRG9eQPX0IT3adMP" Name="Clear Color" Kind="InputPin" />
             <Pin Id="QsDDcKz2hUzMeOkqztIqRR" Name="Enabled" Kind="InputPin" />
             <Pin Id="9dpsduUIURe6quoPz6GMs0" Name="Title" Kind="InputPin" DefaultValue="HowTo Use a TextInput" />
-            <Pin Id="GuesAIkg6VKOXF57GYFBvw" Name="Borderless" Kind="InputPin" />
-            <Pin Id="MuNXhwBNFsoLgwvAZ4LDuh" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="FKDTOwwnepfPktNoyCJjLV" Name="Debug" Kind="InputPin" />
+            <Pin Id="GuesAIkg6VKOXF57GYFBvw" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MuNXhwBNFsoLgwvAZ4LDuh" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FKDTOwwnepfPktNoyCJjLV" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="TGOHPVzxVt4gP2ydmLDRKM" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Use a TextInput">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">

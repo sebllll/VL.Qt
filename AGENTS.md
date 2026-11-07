@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for coding agents and contributors working on VL.Qt. The conventions are tool-neutral: any agent or person can follow them.
+Instructions for coding agents and contributors working on VL.Qt. The conventions are tool-neutral: any agent or person can follow them. `CLAUDE.md` only imports this file for Claude Code; personal additions go in `CLAUDE.local.md`, which stays out of this repository.
 
 ## What this repo is
 
@@ -79,7 +79,10 @@ The reference is the code written by the vvvv team in [VL.StandardLibs](https://
 
 **Nodes**
 - A node is a `[ProcessNode]` class with a constructor taking a hidden `NodeContext` (`[Pin(Visibility = PinVisibility.Hidden)]`) and one `Update(...)` method; it implements `IDisposable`.
-- Outputs via `[return: Pin(Name = "Output")]` or `out` parameters, no tuples. Pin defaults as C# parameter defaults or `[DefaultValue]`; optional pins with `[Pin(Visibility = PinVisibility.Optional)]`.
+- Outputs via `[return: Pin(Name = "Output")]` or `out` parameters, no tuples. Optional pins with `[Pin(Visibility = PinVisibility.Optional)]`.
+- Set every default explicitly, as a C# parameter default or `[DefaultValue]`; for structs use the type/string form, e.g. `[DefaultValue(typeof(Int2), "1920, 1080")]`. A pin without one gets the type's default, which is rarely what the help patch needs.
+- Pin names come from the C# names. Add `[Pin(Name = "...")]` where that would get the spelling, spacing or an acronym wrong, and when renaming a C# parameter of an existing pin (a changed pin name breaks patches).
+- The assembly imports its public types with `[assembly: ImportAsIs]` (`src/VL.Qt/Renderer.cs`). What the node browser shows is controlled with `[Smell(SymbolSmell.Hidden)]` or `[Smell(SymbolSmell.Advanced)]` on the narrowest symbol, not with C# accessibility alone; never hide a type that the pins of a visible node use. A node or pin is renamed or removed only after `[Smell(SymbolSmell.Obsolete)]`, unstable nodes get `[Smell(SymbolSmell.Experimental)]`; the rules are in [docs/versioning.md](docs/versioning.md). `ShaderNodeFactory` stays a node factory: its node set comes from the shader files in `qtshaders/` folders found at runtime.
 - Change detection instead of rebuilding every frame: compare the input with the remembered state and rebuild only on change. Allocate nothing per frame in hot paths.
 - Disposables through `SerialDisposable` / `CompositeDisposable` / `Disposable.Create`; pairs like begin/end or push/pop through `using` or `try/finally`.
 - Locks only on a private `syncRoot` object, short bodies. Never call `GC.*`.
@@ -90,12 +93,14 @@ The reference is the code written by the vvvv team in [VL.StandardLibs](https://
 - Log only through the vvvv logger (from the `NodeContext` or `QtApp`: `nodeContext.GetLogger()` / `appHost.LoggerFactory`), so everything, including Qt messages forwarded from QtNative, ends up in vvvv's log window. No `Console.*` or `Debug.Write` in the library. For log files while debugging see the help patch `HowTo Configure logging providers`.
 
 **Documentation**
-- `/// <summary>` (English, one sentence in the style "Returns true if …") on every node and every non-trivial pin: it becomes the node help in vvvv. Document `Update` pins with `<param name>`.
+- `/// <summary>` (English, one sentence in the style "Returns true if …") on every node and every non-trivial pin: it becomes the node help in vvvv. Document `Update` pins with `<param name>` (also the `out` pins; the name must match the C# parameter) and the return pin with `<returns>`. `Summary` in `[ProcessNode]` does not replace the pin documentation.
 - Inline comments in English, short, above the line, explaining why. `// TODO: sentence.` for open points.
 
 ## Line endings and encoding
 
-- Everything is LF in the repository. `.gitattributes` enforces it; do not convert line endings by hand and do not commit EOL-only fixes. Checked out, `.vl` and `help/**/*.props` have CRLF (that is how vvvv saves them), everything else LF.
+- Everything is LF in the repository. `.gitattributes` enforces it; do not convert line endings by hand and do not commit EOL-only fixes. Checked out, `.vl` and `help/**/*.props` have CRLF (that is how vvvv saves them), `*.bat`/`*.cmd` CRLF (for `cmd.exe`), everything else LF. Write new `.bat`/`.cmd` files with CRLF: they run from disk before git normalizes them.
+- Multi-line verbatim or raw string literals in C# get the line ending of the file. Do not compare them, or checked-in expected-output files, byte for byte with generated text; normalize line endings first.
+- Do not change the BOM or trailing whitespace of lines you do not edit.
 - UTF-8 **with BOM** only for `.cs` and `.vl`; all other files **without** BOM. `.editorconfig` covers VS, Rider and VS Code.
 - If a diff shows whole files as changed, the cause is EOL or BOM: `git add --renormalize .` or the script below, do not rewrite content.
 
@@ -133,9 +138,11 @@ In-app overlays, logging and device loss: [docs/diagnostics.md](docs/diagnostics
 
 ## Issues
 
-Every issue gets a type label, an area label and, where one fits, a milestone (set them when you create the issue):
+Use the issue forms in `.github/ISSUE_TEMPLATE/` (bug report, feature request, task). Every issue gets labels and a milestone when it is created or triaged:
 
-- Type: `bug`, `enhancement`, `documentation` or `question`.
-- Area: `area:native`, `area:csharp`, `area:native+csharp`, `area:vvvv-patch` or `area:ci`.
-- Extra when needed: `manual-check` (needs a human to look at it in vvvv), `ready`.
-- Use milestones instead of release labels; do not invent new labels or milestones.
+- Type (exactly one): `bug`, `enhancement`, `documentation` or `question` (a spike or a decision).
+- Area (at least one): `area:native`, `area:csharp`, `area:patch` or `area:ci`. An issue that touches native and C# gets both labels. Repository-wide documentation (README, licensing, contributing) needs no area.
+- Topic (at most one, where one fits): `topic:effects`, `topic:images`, `topic:video`, `topic:styles`, `topic:input`, `topic:linux` or `topic:performance`.
+- Extra when needed: `manual-check` (needs a human to look at it in vvvv), `ready`, `good first issue`, `help wanted`.
+- Milestone: version numbers only. `1.0` blocks the release, `2.0` is urgent but does not block it, `3.0` holds distant features and ideas without a date. Until 1.0 is released the package stays at 0.9.x and every issue that has to be done goes into `1.0`.
+- Do not invent new labels or milestones. Close issues that will not be done as "not planned", duplicates as "duplicate".

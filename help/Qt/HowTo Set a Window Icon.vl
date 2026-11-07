@@ -72,7 +72,7 @@
             <Pin Id="fz0R6G6Cua7GPq3XOaPTSA" Name="Size" Kind="InputPin" DefaultValue="3, 2" />
             <Pin Id="pXbnQ63TNBtBqPfKCXoK8e" Name="Transform" Kind="InputPin" />
             <Pin Id="xVh2B5925olAmgQlw3SGL2" Name="Anchor" Kind="InputPin" DefaultValue="TopLeft" IsHidden="true" />
-            <Pin Id="kWS6B53kSjLKO7OdwvRdGM" Name="Fill" Kind="InputPin" DefaultValue="0.12, 0.43, 0.9, 1" />
+            <Pin Id="kWS6B53kSjLKO7OdwvRdGM" Name="Color" Kind="InputPin" DefaultValue="0.12, 0.43, 0.9, 1" />
             <Pin Id="d0YXeQGWb3gGQU7TzTqHXT" Name="Radius" Kind="InputPin" IsHidden="true" />
             <Pin Id="bfXuy9VJtb2X2EIzqgHG6X" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="VvGKPydt0Rc2b0oNwksbSf" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -105,9 +105,9 @@
             <Pin Id="B4jnxnB93Moq9eegMlYD7g" Name="Title" Kind="InputPin" />
             <Pin Id="KbbaPa1S4nPiu6e3HoXOhv" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="ypQKBxgqy1CjBsbxhO6j1j" Name="Error" Kind="OutputPin" />
-            <Pin Id="syEQ4ZcHEPBNVAoz3BNdPp" Name="Borderless" Kind="InputPin" />
-            <Pin Id="eOD6kwHCAmo2B4C0DtBgCz" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="SAGado2pY9YxRIyzFdC0NC" Name="Debug" Kind="InputPin" />
+            <Pin Id="syEQ4ZcHEPBNVAoz3BNdPp" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="eOD6kwHCAmo2B4C0DtBgCz" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="SAGado2pY9YxRIyzFdC0NC" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="16Un0354JEGKYEhwcoB6do" Name="Window" Kind="InputPin" />
           </Node>
           <Pad Id="knPN6khlOJ0w64d9aOsezS" Comment="Title" Bounds="182,518,136,18" ShowValueBox="true" isIOBox="true" Value="HowTo Set a Window Icon">

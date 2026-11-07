@@ -182,9 +182,9 @@
             <Pin Id="U7oe1wNWqku5Nr50DjqG96" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="BXUVhyFs8YUOQWO4KU8YfF" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="EnLqNGpuxcmlzkO7rRu5yk" Name="Error" Kind="OutputPin" />
-            <Pin Id="YYqhXHdO2x93CJHLS45gqI" Name="Borderless" Kind="InputPin" />
-            <Pin Id="O2zVZxqyxKjxvWfColNV9d" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="s0HqtO93L7Q5uUaVcojsNO" Name="Debug" Kind="InputPin" />
+            <Pin Id="YYqhXHdO2x93CJHLS45gqI" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="O2zVZxqyxKjxvWfColNV9d" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="s0HqtO93L7Q5uUaVcojsNO" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="BAGx5diFoNPcbdaKwtgHwI" Comment="Title" Bounds="152,956,160,19" ShowValueBox="true" isIOBox="true" Value="HowTo Preload Images">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">

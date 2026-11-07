@@ -63,7 +63,7 @@
             <Pin Id="mQ9Ge9RYZ2JNM2ZzwGVkXl" Name="Size" Kind="InputPin" />
             <Pin Id="UhlD9niyBfsTTGYYGGtZL2" Name="Transform" Kind="InputPin" />
             <Pin Id="e3gT7hg4NboP64D5sX2SrW" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="hKCBHKTihFCW8WVyElRltT" Name="Fill" Kind="InputPin" />
+            <Pin Id="hKCBHKTihFCW8WVyElRltT" Name="Color" Kind="InputPin" />
             <Pin Id="Jx8kgs8TTJSSDCshlF58sw" Name="Radius" Kind="InputPin" />
             <Pin Id="fxktKmyYY92NXGq4xf9fLd" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="jaIBGJjUm74BKsCb1h6kBo" Name="Stroke Width" Kind="InputPin" />
@@ -164,9 +164,9 @@
             <Pin Id="uQJaU8bFnGEQcdWJWyFgYk" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="LnjFndOWmULMUEdv29fGGK" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="yxusHptDSmuuTAxl6tzgBX" Name="Error" Kind="OutputPin" />
-            <Pin Id="LnAKikHsWrM1rAv5OZJGMU" Name="Borderless" Kind="InputPin" />
-            <Pin Id="20Ff07RLTjMdCA806ehkGw" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="jrefOn8cbiUN7pmUHPwGxe" Name="Debug" Kind="InputPin" />
+            <Pin Id="LnAKikHsWrM1rAv5OZJGMU" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="20Ff07RLTjMdCA806ehkGw" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="jrefOn8cbiUN7pmUHPwGxe" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="447,850,100,19" Id="LVtgeACV4QWdLofebkC6Ho">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">

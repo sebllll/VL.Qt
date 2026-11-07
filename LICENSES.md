@@ -46,7 +46,16 @@ These notes point out two topics that the licenses above do not settle for you. 
 
 ## Trademarks
 
-Qt is a registered trademark of The Qt Company Ltd. and its subsidiaries. VL.Qt is an independent open source project. It is not affiliated with, sponsored or endorsed by The Qt Company. All other trademarks belong to their respective owners.
+Qt® is a registered trademark of The Qt Company Ltd. and its subsidiaries. VL.Qt is an independent open source project. It is not affiliated with, sponsored or endorsed by The Qt Company. All other trademarks belong to their respective owners.
+
+**Decision on the name "VL.Qt".** The name follows the vvvv convention `VL.<Technology>` (like `VL.Skia` or `VL.Stride`) and says that the package brings Qt to vvvv. It is a tool made for use with Qt, which the [Qt trademark guidelines](https://www.qt.io/trademark/) (section 1.6, "tools created for use with Qt") treat as fair use as long as the name does not suggest sponsorship or endorsement. We keep the name on these conditions:
+
+- The notice above stays in `LICENSES.md`, in the "License" section of `README.md` and in [LICENSES/Qt-NOTICE.md](LICENSES/Qt-NOTICE.md).
+- Qt is always written "Qt", never "QT", and never as a possessive, plural or verb.
+- VL.Qt does not use the Qt logo, does not use "Qt" in a company name or domain name, and does not claim to be an official Qt product.
+- If The Qt Company objects to the name, VL.Qt is renamed. Questions go to the General Counsel of The Qt Company (<legal@qt-project.org>, see section 5 of the guidelines).
+
+This is our reading of the guidelines, not legal advice. The guidelines do not mention names of third-party libraries such as `VL.Qt` explicitly, and they can change. Other open source projects use "Qt" in their names in the same way (for example PyQt and QtPy), and we accept the remaining risk: if The Qt Company or a court objects, the name is changed.
 
 ## License texts
 

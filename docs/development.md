@@ -107,17 +107,16 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 |---|---|
 | `fix-encoding.py` | Checks/repairs the BOM: files, `--all`, `--staged` (used by the git hook), `--check` to only report. See [Encoding and git hook](#encoding-and-git-hook). |
 | `vl-pad-layout.py` | Lays out IOBoxes around Qt nodes in `.vl` files (`--check` first on hand-edited patches). |
-| `check-public.py`, `test-check-public.py` | Checks that no internal files or content reach the public repository, and its test. See [Public repository check](#public-repository-check). |
 
 ## CI
 
 The workflows are in `.github/workflows/` (`build.yml`, `public-check.yml`; `sanitizers.yml` runs by hand). Every action is pinned to a full commit SHA with the version as a comment, Dependabot keeps the pins current.
 
-The public repository (`sebllll/VL.Qt`) differs from a private copy in a few places, all keyed on `github.repository`. GitHub compares these strings case-insensitively, so a copy must not be named `VL.Qt` in any casing (for example `VL.QT`), or it behaves like the public repository:
+The repository `sebllll/VL.Qt` differs from forks and private copies in a few places. What costs minutes or publishes something is keyed on the repository being public (`github.event.repository.private == false`), so it stays off while the repository is private; the CLA and contributor workflows also check the name `sebllll/VL.Qt` (GitHub compares it case-insensitively):
 
-- The hosted runners are free there, so the `win-arm64` and `linux-arm64` entries also run on pull requests. Elsewhere they run only on tags and on a plain `workflow_dispatch`.
-- The workflow `public-check.yml` runs `python3 tools/check-public.py` on every pull request and push to `develop` and `main` (no path filter, so docs-only changes are checked too). It fails if a file listed in `tools/private-paths.txt` is tracked or a text file has internal content (local user paths, machine names, private hosts).
-- The `release` job runs in the GitHub environment `release`. If the environment secret `NUGET_API_KEY` is set, it also pushes the `.nupkg` to nuget.org; without the secret that step is skipped.
+- The hosted runners are free for public repositories, so the `win-arm64` and `linux-arm64` entries also run on pull requests. Elsewhere they run only on tags and on a plain `workflow_dispatch`.
+- The workflow `public-check.yml` (keyed on the name only, so it runs while the repository is private too) fails on every pull request and push to `develop` and `main` if a file of a maintainer-only working directory (plans, internal notes, local agent settings) is tracked. Its job is a required status check.
+- The `release` job runs in the GitHub environment `release`. If the repository is public and the environment secret `NUGET_API_KEY` is set, it also pushes the `.nupkg` to nuget.org; without the secret that step is skipped.
 - Pull requests use `pull_request` (not `pull_request_target`); their jobs get no secrets and only `contents: read`.
 
 ## Encoding and git hook
@@ -138,24 +137,6 @@ python tools/fix-encoding.py --check --all     # only report, exit 1 on a wrong 
 ```
 
 If a diff shows whole files as changed, the cause is line endings or BOM: run `git add --renormalize .` or the script, do not rewrite the content.
-
-## Public repository check
-
-`tools/check-public.py` keeps internal files and content out of the public repository. It reads the tree through git, so nothing is checked out:
-
-```sh
-python tools/check-public.py                    # files tracked in the index, both checks
-python tools/check-public.py --rev <commit>     # the tree of a commit
-python tools/check-public.py --paths            # only: files listed in tools/private-paths.txt
-python tools/check-public.py --content          # only: internal content in text files
-```
-
-- `--paths` fails if a tracked file matches a pattern in `tools/private-paths.txt` (gitignore-style).
-- `--content` looks for absolute local user paths (`C:\Users\<name>`, `/home/<name>`, `/Users/<name>`), Windows machine and UNC paths, `.local`/`.lan` host names and private IP addresses in URLs. Binary files and `LICENSES/` are skipped. `--private-patterns <file>` adds regexes (one per line, optionally followed by a TAB and the globs of paths where the pattern is allowed); without the option, the default pattern file is used if it exists (it is private, see the private path list `tools/private-paths.txt`, so the public repository does not have it).
-- A line that contains the text `check-public: allow` is skipped by all content patterns, generic and private (for test fixtures and mentions that cannot be avoided). Put it in a comment on that line.
-- Each finding is one line `path:line: reason`; the exit code is 0 (clean), 1 (findings) or 2 (usage error). CI runs the check on the public repository (`public-check.yml`).
-
-The hook `.githooks/pre-push` runs the check for pushes to a remote named `upstream` (the tree of every pushed ref) and blocks the push on findings; other remotes are not checked. It needs Python on the `PATH` and blocks the push to `upstream` without it. It checks the tip of each ref, not the commits in between. `python tools/test-check-public.py` is the test.
 
 ## Project layout
 

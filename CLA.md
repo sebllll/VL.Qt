@@ -15,6 +15,8 @@ You accept this agreement by signing it in a pull request as described in [How t
 
 "Project" means VL.Qt, the software in the repository `sebllll/VL.Qt` and its distributions.
 
+If You are a minor, Your parent or legal guardian must also agree to this agreement, as far as the law that applies to You requires it.
+
 ## Definitions
 
 "Contribution" means any original work of authorship, including any modifications or additions to existing work, that You intentionally submit to the Project for inclusion, for example as a pull request. "Submit" means any form of electronic or written communication sent to the Project or its repository. Communication that You conspicuously mark or designate in writing as "Not a Contribution" is excluded.
@@ -24,6 +26,8 @@ You accept this agreement by signing it in a pull request as described in [How t
 ## 1. Grant of copyright license
 
 You grant to the Maintainer, and to recipients of software distributed by the Maintainer, a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce, prepare derivative works of, publicly display, publicly perform, sublicense, and distribute Your Contributions and such derivative works.
+
+If moral rights apply to Your Contributions, You waive them, to the maximum extent permitted by law, and agree not to assert them against the Maintainer, its successors, or recipients of software distributed by the Maintainer.
 
 ## 2. Contributions are licensed under the MIT License
 
@@ -47,6 +51,8 @@ You represent that:
 4. You are not expected to provide support for Your Contributions, except to the extent You desire to provide support. You may provide support for free, for a fee, or not at all. Unless required by applicable law or agreed to in writing, You provide Your Contributions on an "AS IS" basis, without warranties or conditions of any kind, either express or implied, including, without limitation, any warranties or conditions of title, non-infringement, merchantability, or fitness for a particular purpose.
 5. You will notify the Maintainer if You become aware of any circumstance that makes any of the above representations inaccurate.
 
+To the maximum extent permitted by applicable law, neither You nor the Maintainer is liable for any loss of profits, loss of anticipated savings, loss of data, or indirect, special, incidental, consequential, or exemplary damages arising out of this agreement, regardless of the legal theory on which the claim is based.
+
 ## 5. Naming in CONTRIBUTORS.md
 
 If at least one of Your Contributions is merged into the Project, Your GitHub name is listed in [CONTRIBUTORS.md](CONTRIBUTORS.md), with a link to Your GitHub profile. The list is updated automatically. Only authors of merged Contributions are listed, not people who reported issues or tested.
@@ -63,4 +69,10 @@ The bot records Your GitHub user name and the date of Your comment in a signatur
 
 ## 7. General
 
-This agreement is the entire agreement between You and the Maintainer about Your Contributions. The Maintainer may transfer its rights and obligations under this agreement to a successor without further signatures from You. If a provision of this agreement is invalid, the remaining provisions stay in force.
+- This agreement is the entire agreement between You and the Maintainer about Your Contributions.
+- The Maintainer is not obliged to use Your Contributions in the Project and may decide which Contributions to include.
+- Any rights in Your Contributions that are not expressly granted in this agreement remain with You.
+- The Maintainer may transfer its rights and obligations under this agreement to a successor without further signatures from You. The successor is bound by this agreement.
+- This agreement is governed by the laws of the Federal Republic of Germany. The United Nations Convention on Contracts for the International Sale of Goods (CISG) does not apply.
+- If a party does not enforce a provision of this agreement in one situation, this is not a waiver of that provision for the future.
+- If a provision of this agreement is invalid or unenforceable, the remaining provisions stay in force, and the invalid provision is replaced, as far as possible, by a valid one that comes closest to its meaning.

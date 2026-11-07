@@ -98,9 +98,9 @@
             <Pin Id="HbueMYHQhojLpBOwZSRt3F" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="KNH2jQKcXmxNuNWhJYDqcs" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="c0t9rA9vSSiM22XKpX8JSX" Name="Error" Kind="OutputPin" />
-            <Pin Id="ORhpIgYhhB1mKpHmJojKEq" Name="Borderless" Kind="InputPin" />
-            <Pin Id="fNKaDPZG7s9pq38dDhUhgk" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="wRspT1hEVJXWoUFHhUKNV7" Name="Debug" Kind="InputPin" />
+            <Pin Id="ORhpIgYhhB1mKpHmJojKEq" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="fNKaDPZG7s9pq38dDhUhgk" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="wRspT1hEVJXWoUFHhUKNV7" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="LhLdP17LQVlNJoTq1dAUB6" Comment="Title" Bounds="176,577,100,19" ShowValueBox="true" isIOBox="true" Value="HowTo Draw Text">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">

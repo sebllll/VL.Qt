@@ -1,14 +1,19 @@
 name: contributors
 
-# Regenerates CONTRIBUTORS.md after every push to develop or main, active only in the public repository.
-# Signers of the CLA (signatures/cla.json on the branch cla-signatures) with at least one merged pull request are
-# listed; logins in signatures/optout.txt on the same branch are left out. Commits only if the file changed.
-# The push uses the github-actions bot: branch protection must allow it to push to develop and main (bypass list).
-# A push with GITHUB_TOKEN does not start further workflow runs.
+# Regenerates CONTRIBUTORS.md on the branch cla-signatures after every push to develop or main, active only in the
+# public repository. Signers of the CLA (signatures/cla.json on that branch) with at least one merged pull request
+# are listed; logins in signatures/optout.txt on the same branch are left out. The list lives on cla-signatures
+# because develop and main only take pull requests (ruleset); cla-signatures only forbids deletion and force pushes.
+# After editing optout.txt, run this workflow by hand (workflow_dispatch): pushes to cla-signatures start nothing.
 on:
   push:
     branches: [develop, main]
-    paths-ignore: ['CONTRIBUTORS.md']
+  workflow_dispatch:
+
+# One run at a time; the CLA action may still commit signatures in between, hence the rebase on push.
+concurrency:
+  group: contributors
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -17,34 +22,38 @@ permissions:
 jobs:
   contributors:
     runs-on: ubuntu-latest
-    if: github.repository == 'sebllll/VL.Qt'
+    timeout-minutes: 5
+    # Public repo only (needs the cla-signatures branch); not in forks, not while the repository is private.
+    if: github.repository == 'sebllll/VL.Qt' && github.event.repository.private == false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          path: project
 
-      - name: Read signatures and merged pull requests
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: cla-signatures
+          path: signatures-branch
+
+      - name: List authors of merged pull requests
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p "$RUNNER_TEMP/contrib"
-          git fetch origin cla-signatures
-          git show origin/cla-signatures:signatures/cla.json > "$RUNNER_TEMP/contrib/cla.json"
-          git show origin/cla-signatures:signatures/optout.txt > "$RUNNER_TEMP/contrib/optout.txt" 2>/dev/null || : > "$RUNNER_TEMP/contrib/optout.txt"
-          gh pr list --state merged --limit 5000 --json author --jq '.[].author.login' > "$RUNNER_TEMP/contrib/merged.txt"
+        run: gh pr list -R "$GITHUB_REPOSITORY" --state merged --limit 5000 --json author --jq '.[].author.login' > "$RUNNER_TEMP/merged.txt"
 
       - name: Write CONTRIBUTORS.md
+        working-directory: signatures-branch
         run: >
-          python3 tools/update-contributors.py
-          --signatures "$RUNNER_TEMP/contrib/cla.json"
-          --merged "$RUNNER_TEMP/contrib/merged.txt"
-          --optout "$RUNNER_TEMP/contrib/optout.txt"
+          python3 ../project/tools/update-contributors.py
+          --signatures signatures/cla.json
+          --merged "$RUNNER_TEMP/merged.txt"
+          --optout signatures/optout.txt
           --include sebllll
           --out CONTRIBUTORS.md
 
-      - name: Commit if changed
+      - name: Commit and push if changed
+        working-directory: signatures-branch
         run: |
-          if git diff --quiet -- CONTRIBUTORS.md; then
+          if [ -z "$(git status --porcelain -- CONTRIBUTORS.md)" ]; then
             echo "CONTRIBUTORS.md unchanged"
             exit 0
           fi
@@ -52,4 +61,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add CONTRIBUTORS.md
           git commit -m "Update CONTRIBUTORS.md"
-          git push
+          for attempt in 1 2 3; do
+            git push origin HEAD:cla-signatures && exit 0
+            git pull --rebase origin cla-signatures
+          done
+          exit 1

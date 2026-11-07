@@ -66,7 +66,7 @@
             <Pin Id="b3Sh9kuWLCcrYnXMlpaQIB" Name="Size" Kind="InputPin" />
             <Pin Id="giq8WJfGkIREdjj8DfDqh1" Name="Transform" Kind="InputPin" />
             <Pin Id="Iy87I94fJLKMRsEjOKcZyL" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="8a2A1VbarPnZGNcbLnkWYw" Name="Fill" Kind="InputPin" />
+            <Pin Id="8a2A1VbarPnZGNcbLnkWYw" Name="Color" Kind="InputPin" />
             <Pin Id="PhcCN4nPKEop6NZt7sBdeA" Name="Radius" Kind="InputPin" />
             <Pin Id="cICA2llS931GbgCtFBipWA" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="A4N0mQ51qB811e7jTvT9UX" Name="Stroke Width" Kind="InputPin" />
@@ -99,9 +99,9 @@
             <Pin Id="aozNwuLlblwjlQkmAliQdl" Name="Client Bounds" Kind="OutputPin" />
             <Pin Id="iKfPar5K07SS6iwWOhAScz" Name="Title" Kind="InputPin" />
             <Pin Id="erbKudsE8lfRd3VeZG4ZOw" Name="Error" Kind="OutputPin" />
-            <Pin Id="koDz919UXzrtw1AP1SO6ZX" Name="Borderless" Kind="InputPin" />
-            <Pin Id="WVuQ55Uh7Jd6pg18Z4m2Z8" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="ouIoT95WI3za1XyEr0YM3h" Name="Debug" Kind="InputPin" />
+            <Pin Id="koDz919UXzrtw1AP1SO6ZX" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="WVuQ55Uh7Jd6pg18Z4m2Z8" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ouIoT95WI3za1XyEr0YM3h" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="kwlPCq0SQnBEk4aU4YjMQE" Comment="Title" Bounds="272,615,193,15" ShowValueBox="true" isIOBox="true" Value="HowTo Read the Window Bounds">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">

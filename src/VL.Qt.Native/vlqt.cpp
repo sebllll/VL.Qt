@@ -8,6 +8,7 @@
 #include "shader_resource.h"
 #include "shadereffectitem.h"
 #include "snapshot_resource.h"
+#include "threadname.h"
 #include "vlstyle.h"
 
 #include <QtCore/QAbstractAnimation>
@@ -712,6 +713,8 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         static int argc = 1;
         static char* argv[] = {const_cast<char*>("vvvv"), nullptr};
         g_app = new QGuiApplication(argc, argv);
+        // The calling thread is the Qt GUI thread from here on (#11).
+        vlqt::nameGuiThreadIfUnnamed("vlqt-gui");
         QGuiApplication::setQuitOnLastWindowClosed(false);
         emitLog(1, "vlqt.app", "QPA platform: " + QGuiApplication::platformName().toUtf8());
 #ifndef _WIN32

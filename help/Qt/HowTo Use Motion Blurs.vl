@@ -192,9 +192,9 @@
             <Pin Id="z7sxo1xy8QXsKTP1RaECLp" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="wI73AOqoPLoLnlk7QUckXI" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="dLumJBgexGdc3sGdnJUIle" Name="Error" Kind="OutputPin" />
-            <Pin Id="eCGXPUqytgR7Y11avLbGGE" Name="Borderless" Kind="InputPin" />
-            <Pin Id="ZnxlckCj759MV8TiyeTUfR" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="4k32AWsettv7y3LPIHJJTM" Name="Debug" Kind="InputPin" />
+            <Pin Id="eCGXPUqytgR7Y11avLbGGE" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ZnxlckCj759MV8TiyeTUfR" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="4k32AWsettv7y3LPIHJJTM" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="SYYkpPB9Wm3NgTj16b8Vtf" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="WmZFA9w8Hd5xO28Y7ZHXPR" Comment="Title" Bounds="202,706,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Use Motion Blurs">

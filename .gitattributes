@@ -6,6 +6,9 @@
 help/**/*.props text eol=crlf
 # Shell scripts run in WSL/Linux and must keep LF line endings.
 *.sh text eol=lf
+# cmd.exe needs CRLF in batch files (labels and goto can break with LF).
+*.bat text eol=crlf
+*.cmd text eol=crlf
 # Linker version script, read by ld in WSL from Windows checkouts.
 *.map text eol=lf
 # Bundled fallback font (#427).

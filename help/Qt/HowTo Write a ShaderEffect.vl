@@ -110,7 +110,7 @@
             <Pin Id="UDULOI0sCirLcNRjP6SW0N" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="K3Kg7YZA9ADPzguGwFhVnP" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="FSGUIRBnTvRaQQ2ZK7v8Fs" Name="Uniforms" Kind="InputPin" />
-            <Pin Id="qMDLuTkPsRP7KpC6yIZLRZ" Name="Blending" Kind="InputPin" />
+            <Pin Id="qMDLuTkPsRP7KpC6yIZLRZ" Name="Blending" Kind="InputPin" IsHidden="true" />
             <Pin Id="OnnyRej6owmQAUOxsccbKD" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
             <Pin Id="HdIZjx6P4hMfSfRFdO9XlG" Name="Size" Kind="InputPin" />
             <Pin Id="KukRgc1XIOrLCRo2X8ZEzW" Name="Auto Size" Kind="InputPin" IsHidden="true" />
@@ -220,7 +220,7 @@
             <Pin Id="XiHFxV5vUQ9h83L1Lsn6Me" Name="Size" Kind="InputPin" DefaultValue="2.4, 1.3" />
             <Pin Id="91dEFTKdgeSXtlYWeIGGup" Name="Transform" Kind="InputPin" />
             <Pin Id="CFb9Pc0j1jONVKY35wSndN" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="4rEIfpiA1y7YKwU8F30rMi" Name="Fill" Kind="InputPin" DefaultValue="0.95, 0.5, 0.1, 1" />
+            <Pin Id="4rEIfpiA1y7YKwU8F30rMi" Name="Color" Kind="InputPin" DefaultValue="0.95, 0.5, 0.1, 1" />
             <Pin Id="PrQqQlToTDh8lnm2WwyKG2" Name="Radius" Kind="InputPin" DefaultValue="0.25" />
             <Pin Id="l4qQOnvdks4eQPqb8gzu69" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="5bhnCYVz9o9DW60r2mRthc" Name="Stroke Width" Kind="InputPin" />
@@ -248,7 +248,7 @@
             <Pin Id="C9crKjzlOFrLV0Nn74FgUq" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="NI4r8YkGp2EPzZswv31xzp" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="Odj5dOast6Ifs7CgSy743z" Name="Uniforms" Kind="InputPin" />
-            <Pin Id="Nz8m2vzCrxDCQ3HMNowmkc" Name="Blending" Kind="InputPin" />
+            <Pin Id="Nz8m2vzCrxDCQ3HMNowmkc" Name="Blending" Kind="InputPin" IsHidden="true" />
             <Pin Id="E5o1qfBiEQ3P05exOPBOT0" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
             <Pin Id="lI8RJoinqWs6m4gE444cRY" Name="Size" Kind="InputPin" />
             <Pin Id="H3IR7khXqvfNlj0kltLBg7" Name="Auto Size" Kind="InputPin" IsHidden="true" />
@@ -369,9 +369,9 @@
             <Pin Id="ZKZOYeqOc2xYNxdn93SJRX" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="TjumFDnHZPsNV319g094V7" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="E6FQD6dnjZxwSqWc4Ai31i" Name="Error" Kind="OutputPin" />
-            <Pin Id="yhhMnR7k9f3F1YO7MDBqPj" Name="Borderless" Kind="InputPin" />
-            <Pin Id="MMmqq0tkfLIQ0VBtaeLAKL" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="eiJzqVkYPD1hHXh7myaPdo" Name="Debug" Kind="InputPin" />
+            <Pin Id="yhhMnR7k9f3F1YO7MDBqPj" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MMmqq0tkfLIQ0VBtaeLAKL" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="eiJzqVkYPD1hHXh7myaPdo" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="w6deaqIn4PNUqohJtFcOjX" Comment="Title" Bounds="182,1576,200,19" ShowValueBox="true" isIOBox="true" Value="HowTo Write a ShaderEffect">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
@@ -516,7 +516,7 @@
             <Pin Id="mx41x4kWnE1DxqGXTqDDYE" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="SOsdJ7Us4anAPGlB8jnhg2" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="y8pp6K3RSBv8tQ8vSNV11t" Name="Uniforms" Kind="InputPin" />
-            <Pin Id="URidrGiAX2bZIdGoCqL7HP" Name="Blending" Kind="InputPin" />
+            <Pin Id="URidrGiAX2bZIdGoCqL7HP" Name="Blending" Kind="InputPin" IsHidden="true" />
             <Pin Id="FFJtT7gk8KUa0mxRrreq32" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
             <Pin Id="pwnKwdsxXmLt12K9I0i4M2" Name="Size" Kind="InputPin" DefaultValue="4, 1.4" />
             <Pin Id="VwUDtP2c13JyTtgeED3epZ" Name="Auto Size" Kind="InputPin" IsHidden="true" />
@@ -601,7 +601,7 @@
             <Pin Id="7twJ4pcxck9bQo7mDWiFCU" Name="Size" Kind="InputPin" DefaultValue="1.2, 0.8" />
             <Pin Id="wicl8xkbdJlbQr4PhuhFTF" Name="Transform" Kind="InputPin" />
             <Pin Id="8zUoIfC3atuHUlDQBjxJQL" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="DcDkDQFLjZXkcGJ4TBRvLp" Name="Fill" Kind="InputPin" DefaultValue="0.95, 0.5, 0.1, 1" />
+            <Pin Id="DcDkDQFLjZXkcGJ4TBRvLp" Name="Color" Kind="InputPin" DefaultValue="0.95, 0.5, 0.1, 1" />
             <Pin Id="0tK5MA7nP6TL1sdAk3pNfI" Name="Radius" Kind="InputPin" DefaultValue="0.15" />
             <Pin Id="R7pC7ZwJ8LEd17FEOAa3IK" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="FNgcMi08Y7IuMCfPGmb8JR" Name="Stroke Width" Kind="InputPin" />
@@ -668,7 +668,7 @@
             <Pin Id="UHrI8FXR3yDLL3VmW0moKu" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="TvMg0bltuFEigUnR4Vslam" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="aYT2YRKmCGJBHHwQjrGM5C" Name="Uniforms" Kind="InputPin" />
-            <Pin Id="WnhosXG4fejfak3zy9qnr1" Name="Blending" Kind="InputPin" />
+            <Pin Id="WnhosXG4fejfak3zy9qnr1" Name="Blending" Kind="InputPin" IsHidden="true" />
             <Pin Id="ncKNBtjD1Wf19N0zJjFMu5" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
             <Pin Id="DJaplSM9OHgWz6M4DIVl7N" Name="Size" Kind="InputPin" />
             <Pin Id="I3ZOlNSo0CO7PmJdn1VaJu" Name="Auto Size" Kind="InputPin" IsHidden="true" />

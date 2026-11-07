@@ -14,3 +14,4 @@
 ## Checklist
 
 - [ ] I have read CONTRIBUTING.md
+- [ ] The linked issue has a milestone (maintainers)

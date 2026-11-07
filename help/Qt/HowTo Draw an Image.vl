@@ -99,9 +99,9 @@
             <Pin Id="TQJc15KTbG6PkcgNftO3vB" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="QGNYfHCk3viLnAJHB583Tp" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="VjQa3pC11SXsjGMwGxuoRO" Name="Error" Kind="OutputPin" />
-            <Pin Id="MnDS4W03T432I0Q4Uk9yGK" Name="Borderless" Kind="InputPin" />
-            <Pin Id="wPOrOHhoulHsufTi95624c" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="Po7wNvQ6fy1HEQ2YwDYn5Q" Name="Debug" Kind="InputPin" />
+            <Pin Id="MnDS4W03T432I0Q4Uk9yGK" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="wPOrOHhoulHsufTi95624c" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Po7wNvQ6fy1HEQ2YwDYn5Q" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="R8o9I8DUiuHQL0NHfOwZx3" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="qE0lZM9QdJAT28FqBqAiPr" Comment="Title" Bounds="182,639,115,17" ShowValueBox="true" isIOBox="true" Value="HowTo Draw an Image">

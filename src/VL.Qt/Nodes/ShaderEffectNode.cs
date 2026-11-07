@@ -17,12 +17,13 @@ namespace VL.Qt.Nodes
     /// wins over the text. Fragment shader, optionally a vertex shader. Uniforms are matched by
     /// name with the shader's uniform block (which starts with mat4 qt_Matrix and float qt_Opacity, like in Qt's
     /// ShaderEffect). Lengths in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP).
+    /// The normal way to write an effect is a shader file in a qtshaders/ folder (it becomes a node of its own); use ShaderEffect for shader code that is built or loaded at runtime.
     /// </summary>
     // The node owns the shader resources (path -> vlqt_res_load_shader, ids in ShaderEffect.FragmentShaderId/
     // VertexShaderId); the reconciler sends the properties and the uniform diff (SET_UNIFORMS), only on change.
     // "builtin:<name>" (a shader shipped with VL.Qt) reaches QtNative as such; vvvv resolves a Path IOBox against the document directory, so
     // ResourceClient.TryGetBuiltinShader also accepts "C:\dir\builtin:<name>" and normalizes it.
-    [ProcessNode(Name = "ShaderEffect", Category = Categories.Elements)]
+    [ProcessNode(Name = "ShaderEffect", Category = Categories.Elements), Smell(SymbolSmell.Advanced)]
     public sealed class ShaderEffectNode : IDisposable
     {
         internal readonly record struct Props(
@@ -113,7 +114,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] string? vertexCode,
             [Pin(Visibility = PinVisibility.Optional)] Path? vertexShader,
             Spread<Uniform>? uniforms,
-            [DefaultValue(true)] bool blending,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool blending,
             [Pin(Visibility = PinVisibility.Optional)] Optional<Int2> meshResolution,
             [DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,

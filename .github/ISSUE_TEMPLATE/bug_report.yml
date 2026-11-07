@@ -34,6 +34,17 @@ body:
         - Linux arm64
     validations:
       required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Where you suspect the cause. Leave on "Not sure" if you do not know.
+      options:
+        - Not sure
+        - Native layer (QtNative, rendering, input)
+        - C# library (nodes, elements, reconciler)
+        - Help patches
+        - Build, CI, tooling
   - type: textarea
     id: logs
     attributes:

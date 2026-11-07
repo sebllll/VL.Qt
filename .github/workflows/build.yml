@@ -4,7 +4,7 @@ name: build
 # win-x64 only and builds/tests, no .nupkg); draft PRs and docs/help-only changes do not run. No build on the merge
 # push (the PR already ran the same code). Branches: work PRs go to develop, main only gets releases (PR develop -> main,
 # then tag v*).
-# Public repo (github.repository == 'sebllll/VL.Qt'): the hosted runners are free there, so the arm64 entries (win-arm64,
+# Public repo (github.event.repository.private == false): the hosted runners are free there, so the arm64 entries (win-arm64,
 # linux-arm64) also run on PRs. The rest is the same; see docs/development.md.
 # Tag v* = everything (all 4 RIDs win-x64/win-arm64/linux-x64/linux-arm64, tests, SmokeTest, one .nupkg VL.Qt with all
 # RIDs, release). workflow_dispatch = like a tag, without release (the way to get a .nupkg from develop or main on demand); with
@@ -56,7 +56,7 @@ jobs:
         include: >-
           ${{ fromJSON((github.event_name == 'push'
           || (github.event_name == 'workflow_dispatch' && inputs.sabotage == 'none')
-          || (github.event_name == 'pull_request' && github.repository == 'sebllll/VL.Qt'))
+          || (github.event_name == 'pull_request' && github.event.repository.private == false))
           && '[{"rid":"win-x64","os":"windows-2022"},{"rid":"win-arm64","os":"windows-11-arm"}]'
           || '[{"rid":"win-x64","os":"windows-2022"}]') }}
     env:
@@ -123,7 +123,7 @@ jobs:
         include: >-
           ${{ fromJSON((github.event_name == 'push'
           || (github.event_name == 'workflow_dispatch' && inputs.sabotage == 'none')
-          || (github.event_name == 'pull_request' && github.repository == 'sebllll/VL.Qt'))
+          || (github.event_name == 'pull_request' && github.event.repository.private == false))
           && '[{"rid":"linux-x64","os":"ubuntu-24.04"},{"rid":"linux-arm64","os":"ubuntu-24.04-arm"}]'
           || '[{"rid":"linux-x64","os":"ubuntu-24.04"}]') }}
     env:
@@ -467,7 +467,7 @@ jobs:
 
       # nuget.org push: only in the public repo and only if the environment secret is set (skipped otherwise).
       - name: Push to nuget.org
-        if: github.repository == 'sebllll/VL.Qt' && env.HAS_NUGET_KEY == 'true'
+        if: github.event.repository.private == false && env.HAS_NUGET_KEY == 'true'
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: dotnet nuget push nupkg/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate

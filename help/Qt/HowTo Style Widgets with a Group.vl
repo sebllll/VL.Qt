@@ -263,9 +263,9 @@
             <Pin Id="rOZSoaaifB1Q4nRBy9MQmv" Name="Clear Color" Kind="InputPin" />
             <Pin Id="TXXIZhOL2WiVQRpMjE4VCz" Name="Enabled" Kind="InputPin" />
             <Pin Id="knjp7ErllbkxorzIVONXPu" Name="Title" Kind="InputPin" />
-            <Pin Id="TumncDLo4Ix2OcGNqDpjL1" Name="Borderless" Kind="InputPin" />
-            <Pin Id="TJnEcVG6574T7HnE0dS1AO" Name="Fullscreen" Kind="InputPin" />
-            <Pin Id="uDdD6rzt8Je8HzHBnyOwGU" Name="Debug" Kind="InputPin" />
+            <Pin Id="TumncDLo4Ix2OcGNqDpjL1" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TJnEcVG6574T7HnE0dS1AO" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="uDdD6rzt8Je8HzHBnyOwGU" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="NQO13BuWq7ENGLLpAUC3ht" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="PLFOD1VJHxeMMlTxBVCLaU" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="gbcrS4cLqLaoLm38U7xSc9" Name="Error" Kind="OutputPin" />
