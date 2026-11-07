@@ -1,9 +1,8 @@
 name: public-check
 
-# Public repo only (github.repository == 'sebllll/VL.Qt'): no private file and no internal content may be tracked
-# (tools/check-public.py: paths from tools/private-paths.txt + generic content patterns). A separate workflow because
-# build.yml skips docs-only changes (paths-ignore), and these are exactly the ones that must be checked. Cheap, so
-# draft PRs run it too.
+# Fails if a file of a maintainer-only working directory is tracked (plans, internal notes, local agent settings).
+# Cheap and without a path filter, so docs-only changes and draft PRs are checked too. The job name is a required
+# status check of the ruleset for develop and main; keep it.
 on:
   push:
     branches: [develop, main]
@@ -23,10 +22,12 @@ jobs:
     if: github.repository == 'sebllll/VL.Qt'
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Check tracked paths and content
-        run: python3 tools/check-public.py
+      - name: Check tracked paths
+        run: |
+          if git ls-files | grep -E '^(plan|docs-internal|\.claude|\.alta)/|^CLAUDE\.local\.md$'; then
+            echo "::error::These files belong to a private working directory and must not be tracked."
+            exit 1
+          fi
