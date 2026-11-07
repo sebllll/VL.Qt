@@ -4,10 +4,12 @@ name: cla
 # Documented usage of contributor-assistant/github-action: triggers issue_comment and pull_request_target, the
 # action reads the PR through the API and never checks out or runs PR code.
 #
-# Setup in the public repo (once):
-#  - Create the branch `cla-signatures` with a file signatures/cla.json containing {"signedContributors": []}
-#    (an orphan branch; the action needs the branch and, in the first run, the file to exist).
-#  - Branch protection for develop and main: require the status check "CLA Assistant" (job name below).
+# Setup in the public repo:
+#  - The orphan branch `cla-signatures` holds signatures/cla.json, signatures/optout.txt and the generated
+#    CONTRIBUTORS.md (contributors.yml). Its own ruleset only forbids deletion and force pushes, so this action
+#    and contributors.yml can push to it.
+#  - When the repository goes public: add the required status check "CLA Assistant" (job name below) to the
+#    ruleset for develop and main. Not before: the job does not run while the repository is private.
 #  - Opt-outs for CONTRIBUTORS.md: see CONTRIBUTING.md (signatures/optout.txt on the same branch).
 # The sign phrase and the recheck comment are the defaults of the action; keep them in sync with CLA.md.
 on:
