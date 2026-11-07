@@ -48,3 +48,14 @@ To compare with another renderer, build the same scenario as a patch with the ot
 - Runs on different machines, refresh rates or vvvv/Qt versions are not directly comparable. Compare runs from the same machine.
 - Do not launch the program through Ultra (`ultra profile -- <exe>`): the window is then never shown, Qt renders nothing, and the profile misses the whole render side.
 - "GUI thread" is vvvv's update, the Qt events, the scene graph sync and the render (VL.Qt uses Qt's `basic` render loop on that thread). Sync and render are split by function name and don't add up to the whole thread.
+
+## Thread names
+
+QtNative names its threads, so they are easy to find in a profile, a thread dump or the debugger (Windows: thread description, Linux: thread name; the same names, at most 15 characters):
+
+| Name | Thread |
+|---|---|
+| `vlqt-gui` | The Qt GUI thread: the thread that creates the `QGuiApplication` (`vlqt_app_init`), i.e. the thread of the host (the vvvv main thread, the main thread of the SmokeTest). It is named only while it has no name yet, a name the host gave it stays. |
+| `vlqt-res-0` … `vlqt-res-3` | The decode workers of the resource manager (images, shaders; their number is `VLQT_RES_WORKERS`, at most 16). |
+
+Qt's own threads keep their names (`QQmlThread`, `QFFmpeg::StreamDecoder0` …). Tools that read thread descriptions (WinDbg and cdb, Visual Studio, ETW-based profilers) show the names instead of "Thread (id)"; on Linux they are the `comm` of the thread (`ps -L`, `top -H`, gdb `info threads`).
