@@ -5,6 +5,7 @@
 #include "protocol.h"
 #include "shader_resource.h"
 #include "snapshot_resource.h"
+#include "threadname.h"
 #include "vlqt.h"
 
 #include <QtCore/QByteArray>
@@ -14,6 +15,7 @@
 #include <algorithm>
 #include <chrono>
 #include <condition_variable>
+#include <cstdio>
 #include <cstring>
 #include <deque>
 #include <mutex>
@@ -975,13 +977,16 @@ private:
             n = std::clamp(int(std::thread::hardware_concurrency()) - 1, 1, 4);
         n = std::min(n, 16);
         for (int i = 0; i < n; i++)
-            m_threads.emplace_back([this] { workerLoop(); });
+            m_threads.emplace_back([this, i] { workerLoop(i); });
         qCInfo(lcRes, "%d resource worker(s) started", n);
     }
 
     // Worker thread: only m_jobs / m_results under the mutex, decode on pure data without it. Never logs.
-    void workerLoop()
+    void workerLoop(int index)
     {
+        char name[16];
+        std::snprintf(name, sizeof name, "vlqt-res-%d", index);
+        vlqt::setCurrentThreadName(name);
         std::unique_lock lock(m_mutex);
         for (;;) {
             m_jobCv.wait(lock, [this] { return m_stop || !m_jobs.empty(); });
