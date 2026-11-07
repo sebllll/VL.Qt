@@ -113,11 +113,11 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 
 The workflows are in `.github/workflows/` (`build.yml`, `public-check.yml`; `sanitizers.yml` runs by hand). Every action is pinned to a full commit SHA with the version as a comment, Dependabot keeps the pins current.
 
-The public repository (`sebllll/VL.Qt`) differs from a private copy in a few places, all keyed on `github.repository`. GitHub compares these strings case-insensitively, so a copy must not be named `VL.Qt` in any casing (for example `VL.QT`), or it behaves like the public repository:
+The repository `sebllll/VL.Qt` differs from forks and private copies in a few places. What costs minutes or publishes something is keyed on the repository being public (`github.event.repository.private == false`), so it stays off while the repository is private; the CLA and contributor workflows also check the name `sebllll/VL.Qt` (GitHub compares it case-insensitively):
 
-- The hosted runners are free there, so the `win-arm64` and `linux-arm64` entries also run on pull requests. Elsewhere they run only on tags and on a plain `workflow_dispatch`.
-- The workflow `public-check.yml` runs `python3 tools/check-public.py` on every pull request and push to `develop` and `main` (no path filter, so docs-only changes are checked too). It fails if a file listed in `tools/private-paths.txt` is tracked or a text file has internal content (local user paths, machine names, private hosts).
-- The `release` job runs in the GitHub environment `release`. If the environment secret `NUGET_API_KEY` is set, it also pushes the `.nupkg` to nuget.org; without the secret that step is skipped.
+- The hosted runners are free for public repositories, so the `win-arm64` and `linux-arm64` entries also run on pull requests. Elsewhere they run only on tags and on a plain `workflow_dispatch`.
+- The workflow `public-check.yml` (keyed on the name only, so it runs while the repository is private too) runs `python3 tools/check-public.py` on every pull request and push to `develop` and `main` (no path filter, so docs-only changes are checked too). It fails if a file listed in `tools/private-paths.txt` is tracked or a text file has internal content (local user paths, machine names, private hosts).
+- The `release` job runs in the GitHub environment `release`. If the repository is public and the environment secret `NUGET_API_KEY` is set, it also pushes the `.nupkg` to nuget.org; without the secret that step is skipped.
 - Pull requests use `pull_request` (not `pull_request_target`); their jobs get no secrets and only `contents: read`.
 
 ## Encoding and git hook

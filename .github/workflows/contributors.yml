@@ -17,7 +17,8 @@ permissions:
 jobs:
   contributors:
     runs-on: ubuntu-latest
-    if: github.repository == 'sebllll/VL.Qt'
+    # Public repo only (needs the cla-signatures branch); not in forks, not while the repository is private.
+    if: github.repository == 'sebllll/VL.Qt' && github.event.repository.private == false
     steps:
       - uses: actions/checkout@v4
         with:
