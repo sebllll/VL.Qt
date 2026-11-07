@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Writes CONTRIBUTORS.md from the CLA signatures and the merged pull requests.
 
+The file lives on the branch cla-signatures next to the signatures: the workflow contributors.yml writes it
+there, because develop and main only take pull requests.
+
 A login is listed if it signed the CLA (signatures/cla.json of the contributor-assistant action),
 has at least one merged pull request and is not on the opt-out list. Logins passed with
 --include are always listed (the maintainer, who never signs).
@@ -24,11 +27,13 @@ import json
 import sys
 from pathlib import Path
 
+# The list lives on the branch cla-signatures, so links into the project are absolute.
+DOCS = "https://github.com/sebllll/VL.Qt/blob/develop/"
 HEADER = (
     "# Contributors\n"
     "\n"
-    "People who contributed code to VL.Qt. The list is generated automatically from the signed [CLA](CLA.md) "
-    "and the merged pull requests of this repository (see [CONTRIBUTING.md](CONTRIBUTING.md)); "
+    f"People who contributed code to VL.Qt. The list is generated automatically from the signed [CLA]({DOCS}CLA.md) "
+    f"and the merged pull requests of this repository (see [CONTRIBUTING.md]({DOCS}CONTRIBUTING.md)); "
     "please do not edit it by hand.\n"
     "\n"
 )

@@ -1,5 +1,3 @@
 # Contributors
 
-People who contributed code to VL.Qt. The list is generated automatically from the signed [CLA](CLA.md) and the merged pull requests of this repository (see [CONTRIBUTING.md](CONTRIBUTING.md)); please do not edit it by hand.
-
-- [@sebllll](https://github.com/sebllll)
+The list of people who contributed code to VL.Qt is generated automatically and kept on the branch `cla-signatures`: **[CONTRIBUTORS.md](https://github.com/sebllll/VL.Qt/blob/cla-signatures/CONTRIBUTORS.md)**. How it is made and how to opt out: [CONTRIBUTING.md](CONTRIBUTING.md#license-and-cla).
