@@ -72,7 +72,7 @@ namespace VL.Qt.Nodes
         [return: Pin(Name = "Output")]
         public Element Update(
             [Pin(Name = "Input", PinGroupKind = PinGroupKind.Collection, PinGroupDefaultCount = 2)] Spread<IElement?> children,
-            [DefaultValue("1, 1")] Vector2 size,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
             [Pin(Visibility = PinVisibility.Optional)] Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,

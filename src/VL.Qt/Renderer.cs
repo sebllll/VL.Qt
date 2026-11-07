@@ -129,9 +129,9 @@ namespace VL.Qt
             [DefaultValue("0.1254902, 0.1254902, 0.1254902, 1")] Color4 clearColor,
             [DefaultValue(true)] bool enabled,
             [DefaultValue("VL.Qt")] string title,
-            bool borderless,
-            bool fullscreen,
-            bool debug,
+            [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(false)] bool borderless,
+            [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(false)] bool fullscreen,
+            [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(false)] bool debug,
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] WindowSettings? window)
         {
             Debug.Assert(_app.IsQtThread, "VL.Qt must be used from the thread that created the QGuiApplication");

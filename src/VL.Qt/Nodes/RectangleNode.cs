@@ -18,7 +18,7 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Rectangle", Category = Categories.Elements)]
     public sealed class RectangleNode : IDisposable
     {
-        internal readonly record struct Props(Color4 Fill, float Radius, Color4 StrokeColor, float StrokeWidth);
+        internal readonly record struct Props(Color4 Color, float Radius, Color4 StrokeColor, float StrokeWidth);
 
         readonly ElementNode<Rectangle, Props> _node;
 
@@ -40,7 +40,7 @@ namespace VL.Qt.Nodes
                 Interaction = c.Interaction,
                 Effect = c.Effect,
                 Sink = slot,
-                Fill = p.Fill,
+                Fill = p.Color,
                 Radius = p.Radius,
                 StrokeColor = p.StrokeColor,
                 StrokeWidth = p.StrokeWidth,
@@ -52,7 +52,7 @@ namespace VL.Qt.Nodes
         /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor.</param>
         /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
         /// <param name="anchor">Point of the element that lies at the origin of its parent space (default TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size; Transform rotates/scales around it. Inside Row/Column only the pivot of Transform.</param>
-        /// <param name="fill">Fill color.</param>
+        /// <param name="color">Fill color.</param>
         /// <param name="radius">Corner radius.</param>
         /// <param name="strokeColor">Border color.</param>
         /// <param name="strokeWidth">Border width, 0 = no border.</param>
@@ -72,7 +72,7 @@ namespace VL.Qt.Nodes
             [DefaultValue("1, 1")] Vector2 size,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
-            [DefaultValue("1, 1, 1, 1")] Color4 fill,
+            [DefaultValue("1, 1, 1, 1")] Color4 color,
             [Pin(Visibility = PinVisibility.Optional)] float radius,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue("0, 0, 0, 1")] Color4 strokeColor,
             [Pin(Visibility = PinVisibility.Optional)] float strokeWidth,
@@ -86,7 +86,7 @@ namespace VL.Qt.Nodes
         {
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(fill, radius, strokeColor, strokeWidth));
+                new Props(color, radius, strokeColor, strokeWidth));
             _node.ReadOutputs(out measuredSize, out sceneBounds);
             return element;
         }
