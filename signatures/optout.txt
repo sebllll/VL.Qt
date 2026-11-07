@@ -1,0 +1,1 @@
+# GitHub logins left out of CONTRIBUTORS.md, one per line (see CONTRIBUTING.md on develop).
