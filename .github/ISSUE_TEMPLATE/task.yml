@@ -1,0 +1,56 @@
+name: Task
+description: A planned piece of work, a spike or a documentation fix (mostly for maintainers and contributors who already know the code).
+body:
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: The reason and the evidence, such as a file and line, a failing command or a measurement.
+    validations:
+      required: true
+  - type: textarea
+    id: todo
+    attributes:
+      label: What to do
+      description: A checklist of the steps (`- [ ] …`). For a spike, state the question it answers.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where
+      description: Files, folders and the pages under `docs/` that describe the area.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: How to tell that it is done, such as the help patch, test or measurement that has to pass.
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      description: A maintainer sets the matching label when triaging the issue.
+      options:
+        - enhancement
+        - bug
+        - documentation
+        - question (spike or decision)
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Native layer (QtNative, rendering, input)
+        - C# library (nodes, elements, reconciler)
+        - Help patches
+        - Build, CI, tooling
+    validations:
+      required: true
