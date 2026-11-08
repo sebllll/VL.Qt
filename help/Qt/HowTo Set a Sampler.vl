@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="udvuEJm6OnGFpb18v6tPji" Bounds="85,85,830,79" ShowValueBox="true" isIOBox="true" Value="A Sampler (Qt.Elements.Uniform) says how a shader reads a texture: Filter (Linear smooth / Point hard pixels), Mip Filter, and Address U / V (Clamp, Wrap, Mirror) for what lies outside 0..1. Connect it to the Sampler pin of a texture input: Input Sampler of a ShaderEffect, the Sampler pin of the Texture and Image uniform nodes, the image pins of shader nodes, Layer Sampler of Blend, Map Sampler of Displace. Here the shader zooms 6x into the Text: with Filter Point the magnified pixels stay hard, change Filter to Linear to see them smooth.">
+          <Pad Id="udvuEJm6OnGFpb18v6tPji" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Sampler [Qt.Elements.Uniform]&#xD;&#xA;- Filter: Linear (smooth) or Point (hard pixels)&#xD;&#xA;- Mip Filter&#xD;&#xA;- Address U / V: Clamp, Wrap, Mirror&#xD;&#xA;- Here: the shader zooms 6x into the Text, switch Filter">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="o7JtDLNF0Ta71FHnhUffoH" Bounds="85,195,837,143" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Without a Sampler an element is read as its layer is: Nearest, Clamp, no mipmaps. A connected Sampler sets all of its fields (defaults: Linear, Clamp, None).&#xD;&#xA;- Mip Filter other than None renders the sampled element's layer with mipmaps (+33 % memory, a mip pass per frame): needed to minify without aliasing. An image needs mipmaps from LoadImage.&#xD;&#xA;- Changing a Sampler at runtime rebuilds nothing. Layer format (16 bit float) and anisotropy are not available: Qt cannot resolve its MSAA layers into float textures and QSGTexture has no anisotropy.">
+          <Pad Id="o7JtDLNF0Ta71FHnhUffoH" Bounds="85,1064,830,190" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A Sampler says how a shader reads a texture. Address U / V decide what lies outside 0..1. With Filter Point the magnified pixels stay hard, with Linear they are smooth.&#xD;&#xA;- Connect it to the Sampler pin of a texture input: Input Sampler of a ShaderEffect, the Sampler pin of the Texture and Image uniform nodes, the image pins of shader nodes, Layer Sampler of Blend, Map Sampler of Displace.&#xD;&#xA;- Without a Sampler an element is read as its layer is: Nearest, Clamp, no mipmaps. A connected Sampler sets all of its fields (defaults: Linear, Clamp, None).&#xD;&#xA;- Mip Filter other than None renders the sampled element's layer with mipmaps (+33 % memory, a mip pass per frame): needed to minify without aliasing. An image needs mipmaps from LoadImage.&#xD;&#xA;- Changing a Sampler at runtime rebuilds nothing. Layer format (16 bit float) and anisotropy are not available: Qt cannot resolve its MSAA layers into float textures and QSGTexture has no anisotropy.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

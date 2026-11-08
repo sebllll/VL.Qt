@@ -20,7 +20,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="8tGz6iMRaSfMkXaPuoSSEh" Bounds="85,85,830,84" ShowValueBox="true" isIOBox="true" Value="Blend (Qt.Effects) blends a layer, which is itself an element, over the element it is attached to, like the blend modes of an image editor:&#xD;&#xA;- Layer: any element (here a Text). It sits on the size of the element, also behind a Blur, and is not drawn itself.&#xD;&#xA;- Mode: Normal, Multiply, Screen, Overlay, Add, Subtract, Difference, Darken, Lighten, Soft Light, Hard Light, Color Dodge, Color Burn.&#xD;&#xA;- Opacity: strength of the layer, 0 = element only.">
+          <Pad Id="8tGz6iMRaSfMkXaPuoSSEh" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Blend [Qt.Effects]&#xD;&#xA;- Layer: any element (here a Text) blended over the base&#xD;&#xA;- Mode: Multiply, Screen, Overlay, Add, Difference, ...&#xD;&#xA;- Opacity: strength of the layer, 0 = element only">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -29,7 +29,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="8ORukDTXYkPSrUzOZhHDlx" Bounds="85,200,830,84" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Blend is an effect: connect it to the Effect pin of the base element. The base is the element with the effects before Blend.&#xD;&#xA;- Where the base is transparent the layer shows unblended, so use an opaque base (here a Rectangle). Where the layer is transparent the base stays unchanged.&#xD;&#xA;- Blend is a shader effect: it ends a run of Blur/DropShadow/... nodes and costs a layer of its own.">
+          <Pad Id="8ORukDTXYkPSrUzOZhHDlx" Bounds="85,769,830,142" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Blend works like the blend modes of an image editor. Modes: Normal, Multiply, Screen, Overlay, Add, Subtract, Difference, Darken, Lighten, Soft Light, Hard Light, Color Dodge, Color Burn.&#xD;&#xA;- The Layer sits on the size of the element, also behind a Blur, and is not drawn itself.&#xD;&#xA;- Blend is an effect: connect it to the Effect pin of the base element. The base is the element with the effects before Blend.&#xD;&#xA;- Where the base is transparent the layer shows unblended, so use an opaque base (here a Rectangle). Where the layer is transparent the base stays unchanged.&#xD;&#xA;- Blend is a shader effect: it ends a run of Blur/DropShadow/... nodes and costs a layer of its own.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

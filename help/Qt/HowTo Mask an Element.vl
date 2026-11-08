@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="nPFYhvmuTtiLOfYczUJ4zI" Bounds="85,85,830,122" ShowValueBox="true" isIOBox="true" Value="Mask uses an element as alpha mask for the element it is attached to, e.g. a Text as window onto a Rectangle:&#xD;&#xA;- Connect the mask element (here a Text) to the Mask pin; it is not drawn by itself.&#xD;&#xA;- The mask lies in the coordinates of the parent like a sibling: it masks exactly where it would be drawn as an element in the same Group; moving the masked element leaves the window in place.&#xD;&#xA;- Inverted shows the element where the mask is transparent.&#xD;&#xA;- Mask is an effect node and chains with other effects (see HowTo Chain Effects).">
+          <Pad Id="nPFYhvmuTtiLOfYczUJ4zI" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Mask [Qt.Effects]&#xD;&#xA;- Mask: element used as alpha mask (here a Text), not drawn by itself&#xD;&#xA;- Inverted: show the element where the mask is transparent&#xD;&#xA;- Threshold Min / Max, Spread at Min / Max (optional): soften the edge&#xD;&#xA;- Chains with other effects on the Effect pin">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="Kdztgacm06EMXQdYG6INyN" Bounds="85,222,830,65" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Threshold Min / Max and Spread (optional pins of Mask) soften the edge of the mask.&#xD;&#xA;- A slow LFO moves the text across the rectangle and shows the window travelling.">
+          <Pad Id="Kdztgacm06EMXQdYG6INyN" Bounds="85,1091,830,110" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Mask uses an element as alpha mask for the element it is attached to, e.g. a Text as window onto a Rectangle.&#xD;&#xA;- The mask lies in the coordinates of the parent like a sibling: it masks exactly where it would be drawn as an element in the same Group; moving the masked element leaves the window in place.&#xD;&#xA;- A slow LFO moves the text across the rectangle and shows the window travelling.&#xD;&#xA;- See also: HowTo Chain Effects.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

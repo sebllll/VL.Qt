@@ -20,7 +20,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="CdXl2JvMta5xOQlunYx5Z7" Bounds="85,85,830,84" ShowValueBox="true" isIOBox="true" Value="Displace (Qt.Effects) shifts the pixels of an element by a displacement map, which is itself an element:&#xD;&#xA;- Map: any element, here a ShaderEffect. Its red channel moves the pixels in x, green in y, 0.5 = no shift; the alpha of the map scales the shift.&#xD;&#xA;- Displacement: the largest shift in units (a map value of 0 or 1 moves the pixels by this).&#xD;&#xA;- The map is stretched over the element, also behind a Blur (outside the element the edge of the map continues), it is not drawn itself and does not count for layout.">
+          <Pad Id="CdXl2JvMta5xOQlunYx5Z7" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Displace [Qt.Effects]&#xD;&#xA;- Map: any element (here a ShaderEffect) as displacement map&#xD;&#xA;- Map: red moves the pixels in x, green in y, 0.5 = no shift&#xD;&#xA;- Displacement: largest shift in units">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -29,7 +29,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="40mPKGcVkIMbl8iyOzpN2H" Bounds="85,184,830,84" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Without a Map the chain passes on unchanged.&#xD;&#xA;- Size the map element like the element it displaces, the position does not matter.&#xD;&#xA;- The map can be animated like any element (a ShaderEffect with a Time uniform, a Video, ...).">
+          <Pad Id="40mPKGcVkIMbl8iyOzpN2H" Bounds="85,1511,830,142" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Displace shifts the pixels of an element by a displacement map, which is itself an element. The alpha of the map scales the shift; a map value of 0 or 1 moves the pixels by Displacement.&#xD;&#xA;- The map is stretched over the element, also behind a Blur (outside the element the edge of the map continues). It is not drawn itself and does not count for layout.&#xD;&#xA;- Without a Map the chain passes on unchanged.&#xD;&#xA;- Size the map element like the element it displaces, the position does not matter.&#xD;&#xA;- The map can be animated like any element (a ShaderEffect with a Time uniform, a Video, ...).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

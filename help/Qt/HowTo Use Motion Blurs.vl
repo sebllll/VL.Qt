@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="uvkqdtgHiOUtjHX2ZaXMrt" Bounds="85,85,830,103" ShowValueBox="true" isIOBox="true" Value="DirectionalBlur, ZoomBlur and RadialBlur (Qt.Effects) smear the element like a long exposure. They attach to the Effect pin:&#xD;&#xA;- DirectionalBlur: along a line. Angle in degrees (0 = horizontal, clockwise), Length in units.&#xD;&#xA;- ZoomBlur: streaks along rays from Center (0..1 of the element area), growing from nothing at Center to Length at the farthest corner.&#xD;&#xA;- RadialBlur: arcs around Center, Angle is the total rotation in degrees.&#xD;&#xA;- The picture does not shift: the blur is centred on every pixel. Two passes keep long blurs clean.">
+          <Pad Id="uvkqdtgHiOUtjHX2ZaXMrt" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="DirectionalBlur, ZoomBlur, RadialBlur [Qt.Effects]&#xD;&#xA;- DirectionalBlur: Angle (degrees, 0 = horizontal, clockwise), Length&#xD;&#xA;- ZoomBlur: Center (0..1 of the element area), Length&#xD;&#xA;- RadialBlur: Center, Angle (total rotation in degrees), Padding (optional)&#xD;&#xA;- Attach to the Effect pin">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="ySq2JcV5oo8EyQUkt1Msgk" Bounds="85,203,829,120" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The effect area grows with the blur. RadialBlur cannot know how far the farthest point is from Center: give it room with the optional Padding pin if the arcs are cut.&#xD;&#xA;- For a motion look, animate Length or Angle (for example with an LFO) and watch the Perf overlay of the Renderer: the blurs run at 60 fps on a Text in 1080p.">
+          <Pad Id="ySq2JcV5oo8EyQUkt1Msgk" Bounds="85,809,830,158" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The blurs smear the element like a long exposure. The picture does not shift: the blur is centred on every pixel. Two passes keep long blurs clean.&#xD;&#xA;- Length is in units. ZoomBlur streaks along rays from Center, growing from nothing at Center to Length at the farthest corner. RadialBlur draws arcs around Center.&#xD;&#xA;- The effect area grows with the blur. RadialBlur cannot know how far the farthest point is from Center: give it room with Padding if the arcs are cut.&#xD;&#xA;- For a motion look, animate Length or Angle (for example with an LFO) and watch the Perf overlay of the Renderer: the blurs run at 60 fps on a Text in 1080p.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

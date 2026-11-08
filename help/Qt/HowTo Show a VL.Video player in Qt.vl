@@ -26,7 +26,16 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="uG1IuLb4PMkHJtRyf1bf6d" Bounds="85,85,830,88" ShowValueBox="true" isIOBox="true" Value="VideoSourceToQtImage [Qt] shows any video source of VL.Video (VideoPlayer, VideoIn, ...) in the Image element:&#xD;&#xA;- Every new frame is copied from CPU memory into one QtImage; the image keeps its identity while only its content changes.&#xD;&#xA;- Frame-accurate control (Play, Seek, Rate, Loop) comes from the VL.Video player, not from Qt.&#xD;&#xA;- Fallback is shown until the first frame arrives. Prefer Push grabs frames on a thread of its own as they arrive.">
+          <Pad Id="uG1IuLb4PMkHJtRyf1bf6d" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="VideoSourceToQtImage [Qt]&#xD;&#xA;- Input: video source of VL.Video (VideoPlayer, VideoIn, ...)&#xD;&#xA;- Fallback: QtImage shown until the first frame arrives&#xD;&#xA;- Prefer Push, Error">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="F5XU9xTBcE9AMXfwiPf3QU" Bounds="85,835,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Every new frame is copied from CPU memory into one QtImage; the image keeps its identity while only its content changes.&#xD;&#xA;- Frame-accurate control (Play, Seek, Rate, Loop) comes from the VL.Video player, not from Qt.&#xD;&#xA;- Prefer Push grabs frames on a thread of its own as they arrive.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

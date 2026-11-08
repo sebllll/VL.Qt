@@ -25,7 +25,16 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="zeQlIkMmxprqR7DEPIFej8" Bounds="85,85,830,190" ShowValueBox="true" isIOBox="true" Value="Image [Qt] draws a QtImage into its Size:&#xD;&#xA;- LoadImage [Qt] loads the file (PNG, JPG, ...) once. One QtImage can be used by any number of Image elements.&#xD;&#xA;- Fill Mode: Stretch, Fit (keep aspect), Crop (keep aspect, fill) or Tile.&#xD;&#xA;- Path is relative to this patch.&#xD;&#xA;- An Image with width or height 0 is not drawn; Measured Size reports the natural size of the image in units once loaded.&#xD;&#xA;- Stable 60 fps: load images in advance or async, never synchronously in the running frame.&#xD;&#xA;- See also: HowTo Preload Images, HowTo Use an IImage, HowTo Take a Snapshot.">
+          <Pad Id="zeQlIkMmxprqR7DEPIFej8" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Image [Qt], LoadImage [Qt]&#xD;&#xA;- LoadImage: Path (relative to this patch)&#xD;&#xA;- Image: Image, Size, Fill Mode (Stretch, Fit, Crop, Tile)&#xD;&#xA;- Measured Size: natural size of the image">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="csSWj9DxQSYgDMFMbGBKxN" Bounds="85,772,830,110" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- One QtImage from LoadImage can be used by any number of Image elements. LoadImage loads the file (PNG, JPG, ...) once.&#xD;&#xA;- Fit keeps the aspect, Crop keeps the aspect and fills the Size.&#xD;&#xA;- An Image with width or height 0 is not drawn. Measured Size reports the natural size of the image in units once loaded.&#xD;&#xA;- Stable 60 fps: load images in advance or async, never synchronously in the running frame.&#xD;&#xA;- See also: HowTo Preload Images, HowTo Use an IImage, HowTo Take a Snapshot.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
