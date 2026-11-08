@@ -37,7 +37,7 @@ Every element node and the `Renderer [Qt]` have a `Debug` pin. On an element it 
 
 <img src="images/debug-overlay.png" width="640" alt="Debug overlay: frames, origins, anchors, padding, Row/Column spacing, text baseline">
 
-The legend is also in the `Debug` pin's tooltip. See `help/Qt/HowTo Debug overlay.vl`.
+The legend is also in the `Debug` pin's tooltip. See `help/Qt/HowTo Debug Overlay.vl`.
 
 ## Logging and errors
 

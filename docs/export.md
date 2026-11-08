@@ -3,7 +3,7 @@
 Export a patch with vvvvc via the helper script (builds into `build/vvvvc` by default):
 
 ```powershell
-tools/vvvvc.ps1 -File "help/Qt/Demo Typo Motion.vl" -Out build/export
+tools/vvvvc.ps1 -File help/HelloWorld.vl -Out build/export
 ```
 
 - The export bundles the Qt runtime next to the executable, only for the runtime identifier (RID) of the exported app.

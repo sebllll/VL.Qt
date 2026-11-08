@@ -9,7 +9,7 @@
 // The head above (comments before the first code line) holds the node's annotations: category and summary.
 // A summary goes on in the following comment lines until the next blank line.
 // The padding line is the space around the element (DIP) that the shader may draw into when it is used as a node of an
-// effect chain (Qt.Effects, see HowTo Chain Shader Effects): the shifted colors reach beyond the element.
+// effect chain (Qt.Effects, see HowTo Chain Effects): the shifted colors reach beyond the element.
 //
 // Every uniform below becomes an input pin ("amount" -> "Amount"), in the order of this file.
 // Annotations are // comments directly above the uniform or at the end of its line:

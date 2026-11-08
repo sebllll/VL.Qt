@@ -60,7 +60,8 @@ Rules for help patches:
 - Put an IOBox on a pin only if its value differs from the default and says something in the help patch. An IOBox at a pin is the same to the node as an attached value or channel. Example: an IOBox at `Interaction` makes the element opaque to input, so never put one there.
 - Animate (LFO) only where it serves the element (motion demos); otherwise use fixed values.
 - Layout: compact regions, content stacked top to bottom in data-flow order, IOBoxes as a staircase above (inputs) and below (outputs) their node. Choose defaults so the effect is visible.
-- Each patch has a title and a short bullet description of what it shows.
+- Text scheme: title (size 25), directly below ONE terse feature field (headline plus 3 to 5 short bullets), then the content, the longer notes in one `Notes:` comment at the very bottom. Details and example: [docs/help-patches.md](docs/help-patches.md).
+- Every patch under `help/` is listed in `help/Help.xml` (Help Browser topics); add, rename or delete the line together with the patch.
 - Background: [vvvv gray book](https://thegraybook.vvvv.org) for the patching conventions.
 
 `help/*.props` (export settings) are tracked and written by vvvv; do not edit them by hand.

@@ -16,21 +16,21 @@
       </p:NodeReference>
       <Patch Id="1dUuKu1rK4PizsAs43K9DP">
         <Canvas Id="0zDRqyNgfZguIkapJLIIgZ" CanvasType="Group">
-          <Pad Id="7YghL8IiSMAftdeBWfISke" Bounds="100,60,520,29" ShowValueBox="true" isIOBox="true" Value="VL.Qt hello world: Rectangle [Qt] + Text [Qt] → Group [Qt] → Renderer [Qt] (800 x 600 DIP window = 8 x 6 units, origin top left)">
+          <Pad Id="7YghL8IiSMAftdeBWfISke" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Minimal VL.Qt patch for a Linux console export&#xD;&#xA;- Rectangle [Qt] and Text [Qt] in a Group [Qt], shown by Renderer [Qt]&#xD;&#xA;- KeepAppAlive: a console app otherwise ends after the first frame&#xD;&#xA;- Bound To Document: closing the window ends the app&#xD;&#xA;- Settings in HelloWorldLinux.props, see docs/linux.md">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
             <p:ValueBoxSettings>
-              <p:fontsize p:Type="Int32">14</p:fontsize>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="2AkAjjlOojg8Lnh2RYccug" Comment="Title" Bounds="230,345,100,19" ShowValueBox="true" isIOBox="true" Value="VL.Qt">
+          <Pad Id="2AkAjjlOojg8Lnh2RYccug" Comment="Title" Bounds="230,424,100,19" ShowValueBox="true" isIOBox="true" Value="VL.Qt">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="83,140,205,19" Id="Hw1Rect4Kq7Lm2Np5Rs8Tv1">
+          <Node Bounds="83,219,205,19" Id="Hw1Rect4Kq7Lm2Np5Rs8Tv1">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -52,7 +52,7 @@
             <Pin Id="AajnPtXrhdINGdGWlsAEfe" Name="Measured Size" Kind="OutputPin" />
             <Pin Id="Hu5vlUIf8GYP2OijDHk9f0" Name="Scene Bounds" Kind="OutputPin" />
           </Node>
-          <Node Bounds="300,150,385,19" Id="Hw2Text4Kq7Lm2Np5Rs8Tv1">
+          <Node Bounds="300,229,385,19" Id="Hw2Text4Kq7Lm2Np5Rs8Tv1">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -83,7 +83,7 @@
             <Pin Id="T3adtInVAoUPwIueE2CVck" Name="Measured Size" Kind="OutputPin" />
             <Pin Id="E4cOft4JmJuOaqsP1vrhOF" Name="Scene Bounds" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,230,185,19" Id="Hw3Grp4Kq7Lm2Np5Rs8Tv1">
+          <Node Bounds="100,309,185,19" Id="Hw3Grp4Kq7Lm2Np5Rs8Tv1">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -104,7 +104,7 @@
             <Pin Id="C2kA8Bnr5zWLfIJ1JGW74X" Name="Measured Size" Kind="OutputPin" />
             <Pin Id="RMwqVNmCaQONhP7kYeuKaP" Name="Scene Bounds" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,395,340,19" Id="2XcXrM8GiFyTb6i8gob3j0">
+          <Node Bounds="100,474,340,19" Id="2XcXrM8GiFyTb6i8gob3j0">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -122,7 +122,7 @@
             <Pin Id="F30pM32esWwMH8HIR1eJ1k" Name="Perf" Kind="OutputPin" />
             <Pin Id="3a7O7vwhNRWASjznI32QFX" Name="Error" Kind="OutputPin" />
           </Node>
-          <Pad Id="Bd2DcQt7Lk4Mn9Pq3Rs6Tv" Comment="Bound To Document" Bounds="60,330,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+          <Pad Id="Bd2DcQt7Lk4Mn9Pq3Rs6Tv" Comment="Bound To Document" Bounds="60,409,35,35" ShowValueBox="true" isIOBox="true" Value="True">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -130,22 +130,22 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="3dnYhQu4JSHH9S9xhcwel0" Comment="Is Visible" Bounds="100,450,35,35" ShowValueBox="true" isIOBox="true">
+          <Pad Id="3dnYhQu4JSHH9S9xhcwel0" Comment="Is Visible" Bounds="100,529,35,35" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="3rmKtndyuODDGpjZZNszWz" Comment="Error" Bounds="200,450,420,60" ShowValueBox="true" isIOBox="true">
+          <Pad Id="3rmKtndyuODDGpjZZNszWz" Comment="Error" Bounds="200,529,420,60" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="Tpw5oLqqPK1MFTMHWBbMS2" Comment="Clear Color" Bounds="291,260,136,15" ShowValueBox="true" isIOBox="true" Value="0, 0, 0, 1">
+          <Pad Id="Tpw5oLqqPK1MFTMHWBbMS2" Comment="Clear Color" Bounds="291,339,136,15" ShowValueBox="true" isIOBox="true" Value="0, 0, 0, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="626,221,79,19" Id="ANygPkSNPdGM0spEjk2D0n">
+          <Node Bounds="626,300,79,19" Id="ANygPkSNPdGM0spEjk2D0n">
             <p:NodeReference LastCategoryFullName="System" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="KeepAppAlive" />
@@ -153,6 +153,15 @@
             <Pin Id="OeW6sgsg8S4N83VO4scs2Z" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="QKxlXYCUK7WPMMJECaiYfQ" Name="Is Alive" Kind="InputPin" />
           </Node>
+          <Pad Id="prjgzrrTrXLfhtA5FllrKe" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="Hello World (Linux)">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
         </Canvas>
         <Link Id="2unrhXiSQBiTxXzML8QyO9" Ids="2AkAjjlOojg8Lnh2RYccug,13MnLmFViVJ0PIoxLqXR2I" />
         <Link Id="Bd2LnkQt7Lk4Mn9Pq3Rs6Tw" Ids="Bd2DcQt7Lk4Mn9Pq3Rs6Tv,MkOwES2CySSQa2PuHBDGvN" />
