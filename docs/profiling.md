@@ -49,6 +49,21 @@ To compare with another renderer, build the same scenario as a patch with the ot
 - Do not launch the program through Ultra (`ultra profile -- <exe>`): the window is then never shown, Qt renders nothing, and the profile misses the whole render side.
 - "GUI thread" is vvvv's update, the Qt events, the scene graph sync and the render (VL.Qt uses Qt's `basic` render loop on that thread). Sync and render are split by function name and don't add up to the whole thread.
 
+## Measurement path (#20)
+
+`Measured Size` and `Scene Bounds` of every bound element come from the poll (`collectMeasurements`, `src/VL.Qt.Native/events.cpp`). Since #20 it reads the geometry only of elements whose geometry changed since the last poll (x/y, size, implicit size, parent, Matrix4x4, anchor, Group frame) and of everything below them; a static scene reads none. Media, error, clicks and user values are read only for element types that have them.
+
+Measured without a profiler by the SmokeTest (`tools/build.ps1 -Test -Only measure`, lines `INFO 20` in `build/smoke/stdout.log`): N bound `Rectangle` in one Group, median of 201 polls, Stopwatch around `vlqt_window_poll`, items measured per poll from `vlqt_test_measure_count`. win-x64, Release.
+
+| Scene | Before: poll | Before: measured/poll | After: poll | After: measured/poll |
+|---|---|---|---|---|
+| 500 static | 0.044 ms | 500 | 0.004 ms | 0 |
+| 2000 static | 0.183 ms | 2000 | 0.017 ms | 0 |
+| 500, one moving | 0.042 ms | 500 | 0.001 ms | 1 |
+| 2000, one moving | 0.186 ms | 2000 | 0.002 ms | 1 |
+
+What remains in the static rows is not the measurement: when Qt did not render in a pump (nothing changed), the poll first runs `Scene::polish` over all elements (#215), which is linear in the element count. In the "one moving" rows Qt rendered, so the poll skips it. A change of an ancestor still measures its whole subtree, as it must (all of it moved).
+
 ## Thread names
 
 QtNative names its threads, so they are easy to find in a profile, a thread dump or the debugger (Windows: thread description, Linux: thread name; the same names, at most 15 characters):

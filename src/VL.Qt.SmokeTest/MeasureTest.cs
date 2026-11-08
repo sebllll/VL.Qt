@@ -2,6 +2,7 @@
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using VL.Qt;
 
 // Back channel EV_MEASURED / EV_SCENE_BOUNDS (plan 06b). Values are DIP (logical pixels), the C# SinkRegistry
@@ -235,6 +236,78 @@ static class MeasureTest
         Console.WriteLine($"INFO 06b poll 1000 bound items: unchanged median {idle[50]:F3} ms (max {idle[^1]:F3}), " +
             $"all bounds changed median {moved[50]:F3} ms (max {moved[^1]:F3})");
         PerfLimits.Below(check, idle[50], 0.2, $"06b: change check < 0.2 ms / 1000 items (median {idle[50]:F3} ms)");
+        Native.vlqt_window_destroy(w);
+
+        foreach (int count in new[] { 500, 2000 })
+            RunStaticCost(check, pump, count);
+    }
+
+    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
+    static extern int vlqt_test_measure_count(IntPtr w);
+
+    // #20: cost of the measurement path for a static scene of count bound rectangles (flat in one Group, like the
+    // Elements500/2000 profile scenarios), and with one of them moving. Poll time = Stopwatch around vlqt_window_poll.
+    static void RunStaticCost(Action<bool, string> check, Action<int> pump, int count)
+    {
+        var w = Native.vlqt_window_create(800, 600, $"VL.Qt measure cost {count}");
+        check(w != IntPtr.Zero, $"20: window_create ({count})");
+        Native.vlqt_window_show(w);
+        var cmd = new CommandWriter();
+        var buf = new byte[1 << 20];
+        const uint group = 1;
+        cmd.Create(group, Protocol.Type.Item);
+        cmd.Reparent(group, 0, 0);
+        for (uint i = 0; i < count; i++)
+        {
+            uint id = 10 + i;
+            cmd.Create(id, Protocol.Type.Rectangle);
+            cmd.SetPlace(id, i % 50 * 16, i / 50 * 14, 12, 10);
+            cmd.Reparent(id, group, i);
+            cmd.Bind(id, id, 0);
+        }
+        var rc = Native.Apply(w, cmd.EndFrame());
+        check(rc == 0, $"20: {count} bound rectangles ({rc})");
+        cmd.Reset();
+        pump(2);
+        int first = Native.Poll(w, buf);
+        var firstRecs = Parse(buf.AsSpan(0, Math.Max(first, 0)), check);
+        int measured = firstRecs.FindAll(x => x.Event == Protocol.Ev.Measured).Count;
+        int bounds = firstRecs.FindAll(x => x.Event == Protocol.Ev.SceneBounds).Count;
+        check(measured == count && bounds == count, $"20: {count} bound items -> MEASURED + SCENE_BOUNDS each on the first poll ({measured}, {bounds})");
+        check(vlqt_test_measure_count(w) == count, $"20: first poll measures all {count} items ({vlqt_test_measure_count(w)})");
+
+        const int frames = 201;
+        var idle = new double[frames];
+        int idleMeasured = 0;
+        for (int f = 0; f < frames; f++)
+        {
+            pump(1);
+            var t = Stopwatch.StartNew();
+            int n = Native.Poll(w, buf);
+            idle[f] = t.Elapsed.TotalMilliseconds;
+            idleMeasured = Math.Max(idleMeasured, vlqt_test_measure_count(w));
+            if (n != 0) { check(false, $"20: static poll returned {n} bytes ({count})"); break; }
+        }
+        var one = new double[frames];
+        int oneMeasured = 0;
+        for (int f = 0; f < frames; f++)
+        {
+            cmd.SetPlace(10, 1 + f % 2, 0, 12, 10); // starts at x 0 -> every frame moves
+            Native.Apply(w, cmd.EndFrame());
+            cmd.Reset();
+            pump(1);
+            var t = Stopwatch.StartNew();
+            int n = Native.Poll(w, buf);
+            one[f] = t.Elapsed.TotalMilliseconds;
+            oneMeasured = Math.Max(oneMeasured, vlqt_test_measure_count(w));
+            if (n != 28) { check(false, $"20: one moved -> one SCENE_BOUNDS, got {n} bytes ({count})"); break; }
+        }
+        Array.Sort(idle);
+        Array.Sort(one);
+        Console.WriteLine($"INFO 20 poll {count} bound rectangles: static median {idle[frames / 2]:F4} ms (max {idle[^1]:F4}), " +
+            $"measured/frame max {idleMeasured}; one moving median {one[frames / 2]:F4} ms (max {one[^1]:F4}), measured/frame max {oneMeasured}");
+        check(idleMeasured == 0, $"20: static scene of {count} -> no item measured ({idleMeasured} per frame)");
+        check(oneMeasured == 1, $"20: one of {count} moving -> only it measured ({oneMeasured} per frame)");
         Native.vlqt_window_destroy(w);
     }
 }

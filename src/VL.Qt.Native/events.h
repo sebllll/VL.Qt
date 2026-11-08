@@ -10,7 +10,12 @@
  * property vlqtError, see elements.cpp: Image could not be loaded, Video player error) additionally report
  *   EV_ERROR        (UTF-8 text, no terminator)  on change; empty = error cleared. Nothing is sent while there
  *                   is no error (initial state = no error) (#273)
- * A new
+ * Measure on change (#20): MEASURED / SCENE_BOUNDS are read only for items whose geometry changed since the last
+ * poll, and for everything below them (an ancestor's move moves the subtree in the scene). A change is the item's
+ * x/y, width/height, implicit size or parent (Qt signals, watchGeometry), its Matrix4x4, anchor or Group frame
+ * (marked by Elements, Qt has no public signal for these; markGeometry), CREATE and a new handle. Attached masks go
+ * with their element (they lie in its coordinates, not below it). A static scene reads no geometry at all; media,
+ * error, clicks and user values are still read every poll, but only for types that have them. A new
  * handle (sink change) forgets the sent state, so the new sink gets the current values right away. The poll
  * record index is always 0 here: one item = one binding, the C# side resolves handle -> sink slot (incl. the
  * slot index); index is an offset relative to that slot, reserved for items serving several slots.
@@ -279,8 +284,14 @@ void destroyHandler(Scene& scene, quint32 handlerId);
 
 /* Queues EV_MEASURED / EV_SCENE_BOUNDS / EV_MEDIA / EV_ERROR / Button EV_CLICK / EV_VALUE for every bound item whose value changed
  * and the events of the bound input handlers. Called by Scene::poll, i.e. after processEvents (polish/layout done)
- * when the host polls once per frame. */
+ * when the host polls once per frame. Geometry only of the items marked since the last poll and their subtrees (#20). */
 void collectMeasurements(Scene& scene);
+/* Measure on change (#20): connects the geometry signals of a new node's item to markGeometry (elements.h) and marks
+ * it once. Called by Scene::create after Elements::initGeometry. */
+void watchGeometry(Scene& scene, quint32 id, Node& node);
+/* Adds the node to the ones whose media/error/clicks/user value the poll reads (Node::polled or an effect chain), once.
+ * Called by watchGeometry and after SET_EFFECT_CHAIN. */
+void listPolled(Scene& scene, Node& node);
 
 /* Connects the window's geometry/state signals to Scene::geometryDirty (called by the Scene ctor). */
 void watchWindowGeometry(Scene& scene);

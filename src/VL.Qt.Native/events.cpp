@@ -1,5 +1,6 @@
 #include "events.h"
 #include "commands.h"
+#include "effectchain.h"
 #include "touch.h"
 
 #include <QtCore/QByteArray>
@@ -359,6 +360,7 @@ void bindNode(Scene& scene, Node& node, quint32 handle)
 {
     if (node.sink != handle) {
         node.sent = SentState{}; // new sink (or unbind): the next poll sends the current values again
+        markGeometry(*node.xf);  // ... measured once more, unchanged or not (#20)
         scene.elements.takeClicks(node); // Button clicks not yet polled belonged to the old sink
         QVariant dropped;
         scene.elements.takeUserValue(node, dropped); // same for a user change of a value input (#210)
@@ -791,34 +793,136 @@ void pushValue(Scene& scene, quint32 sink, const QVariant& v)
 
 } // namespace
 
+namespace {
+
+/* EV_MEASURED / EV_SCENE_BOUNDS of one bound node, each only on change. */
+void measureGeometry(Scene& scene, Node& n)
+{
+    ++scene.measuredLastPoll;
+    SentState& s = n.sent;
+    const QQuickItem* item = n.item;
+
+    const float m[2] = {float(item->implicitWidth()), float(item->implicitHeight())};
+    if (!s.hasMeasured || m[0] != s.measured[0] || m[1] != s.measured[1]) {
+        s.measured[0] = m[0];
+        s.measured[1] = m[1];
+        s.hasMeasured = true;
+        scene.pushEvent(VLQT_EV_MEASURED, n.sink, 0, m, quint16(sizeof m));
+    }
+
+    // Item geometry (frame, #469: an auto-sized Group may start in negative coordinates), not boundingRect():
+    // QQuickText overrides that with the painted text rect.
+    const QRectF r = item->mapRectToScene(n.xf ? itemFrame(*n.xf, item) : QRectF(0, 0, item->width(), item->height()));
+    const float b[4] = {float(r.x()), float(r.y()), float(r.width()), float(r.height())};
+    if (!s.hasBounds || b[0] != s.bounds[0] || b[1] != s.bounds[1] || b[2] != s.bounds[2] || b[3] != s.bounds[3]) {
+        for (int i = 0; i < 4; ++i)
+            s.bounds[i] = b[i];
+        s.hasBounds = true;
+        scene.pushEvent(VLQT_EV_SCENE_BOUNDS, n.sink, 0, b, quint16(sizeof b));
+    }
+}
+
+/* Visits the queued nodes and every item below them once per poll: an ancestor's change moves the whole subtree in the
+ * scene. Attached masks (effect chain) lie in their element's coordinates without being its children (mask frame,
+ * Elements::updateMaskFrame): they go with the element. */
+void collectGeometry(Scene& scene)
+{
+    scene.measuredLastPoll = 0;
+    if (scene.measureQueue.empty())
+        return;
+    if (++scene.measureStamp == 0) // wrapped: 0 is the stamp of nodes never visited
+        ++scene.measureStamp;
+    const quint32 stamp = scene.measureStamp;
+    std::vector<QQuickItem*>& stack = scene.measureStack;
+    for (const quint32 id : scene.measureQueue) {
+        const auto it = scene.nodes.find(id);
+        if (it == scene.nodes.end())
+            continue; // destroyed since
+        it->second.xf->measureQueued = false;
+        stack.push_back(it->second.item);
+        while (!stack.empty()) {
+            QQuickItem* item = stack.back();
+            stack.pop_back();
+            if (const auto idIt = scene.ids.find(item); idIt != scene.ids.end()) {
+                Node& n = scene.nodes.find(idIt->second)->second;
+                if (n.measuredStamp == stamp)
+                    continue; // visited with its subtree already
+                n.measuredStamp = stamp;
+                if (n.sink != 0)
+                    measureGeometry(scene, n);
+                if (n.effectChain)
+                    for (const EffectChain::Link& l : n.effectChain->links)
+                        if (l.mask)
+                            stack.push_back(l.mask);
+            }
+            const QList<QQuickItem*> children = item->childItems(); // shared copy; const: no detach, no allocation
+            for (QQuickItem* c : children)
+                stack.push_back(c);
+        }
+    }
+    scene.measureQueue.clear();
+}
+
+} // namespace
+
+void markGeometry(TransformState& s)
+{
+    if (!s.scene || s.measureQueued)
+        return;
+    s.measureQueued = true;
+    s.scene->measureQueue.push_back(s.id);
+}
+
+void watchGeometry(Scene& scene, quint32 id, Node& node)
+{
+    TransformState& s = *node.xf;
+    s.scene = &scene;
+    s.id = id;
+    // Width/height: the size connection of Elements::initGeometry marks. Context = the item: the connections end with it.
+    auto mark = [xf = node.xf] { markGeometry(*xf); };
+    QQuickItem* item = node.item;
+    QObject::connect(item, &QQuickItem::xChanged, item, mark);
+    QObject::connect(item, &QQuickItem::yChanged, item, mark);
+    QObject::connect(item, &QQuickItem::implicitWidthChanged, item, mark);
+    QObject::connect(item, &QQuickItem::implicitHeightChanged, item, mark);
+    QObject::connect(item, &QQuickItem::parentChanged, item, mark); // REPARENT, parked (mask, texture), unparented
+    markGeometry(s);
+    listPolled(scene, node);
+}
+
+void listPolled(Scene& scene, Node& node)
+{
+    if (node.pollListed || (!node.polled && !node.effectChain))
+        return;
+    node.pollListed = true;
+    scene.pollIds.push_back(node.xf->id);
+}
+
 void collectMeasurements(Scene& scene)
 {
-    for (auto& kv : scene.nodes) {
-        Node& n = kv.second;
+    collectGeometry(scene);
+    // Only the nodes with state to read (types with media/error/clicks/user value, effect chains): a scene of plain
+    // elements costs nothing here. Entries of destroyed nodes, of a chain gone and second entries of a reused id go.
+    if (++scene.pollStamp == 0)
+        ++scene.pollStamp;
+    std::vector<quint32>& ids = scene.pollIds;
+    for (size_t i = 0; i < ids.size();) {
+        const auto it = scene.nodes.find(ids[i]);
+        // A chain gone with its error still shown stays one more poll: it sends the cleared EV_ERROR.
+        if (it == scene.nodes.end() || it->second.polledStamp == scene.pollStamp
+            || (!it->second.polled && !it->second.effectChain && it->second.sent.error.isEmpty())) {
+            if (it != scene.nodes.end() && it->second.polledStamp != scene.pollStamp)
+                it->second.pollListed = false; // chain gone: listPolled adds it again with the next one
+            ids[i] = ids.back();
+            ids.pop_back();
+            continue;
+        }
+        ++i;
+        Node& n = it->second;
+        n.polledStamp = scene.pollStamp;
         if (n.sink == 0)
             continue;
         SentState& s = n.sent;
-        const QQuickItem* item = n.item;
-
-        const float m[2] = {float(item->implicitWidth()), float(item->implicitHeight())};
-        if (!s.hasMeasured || m[0] != s.measured[0] || m[1] != s.measured[1]) {
-            s.measured[0] = m[0];
-            s.measured[1] = m[1];
-            s.hasMeasured = true;
-            scene.pushEvent(VLQT_EV_MEASURED, n.sink, 0, m, quint16(sizeof m));
-        }
-
-        // Item geometry (frame, #469: an auto-sized Group may start in negative coordinates), not boundingRect():
-        // QQuickText overrides that with the painted text rect.
-        const QRectF r = item->mapRectToScene(n.xf ? itemFrame(*n.xf, item) : QRectF(0, 0, item->width(), item->height()));
-        const float b[4] = {float(r.x()), float(r.y()), float(r.width()), float(r.height())};
-        if (!s.hasBounds || b[0] != s.bounds[0] || b[1] != s.bounds[1] || b[2] != s.bounds[2] || b[3] != s.bounds[3]) {
-            for (int i = 0; i < 4; ++i)
-                s.bounds[i] = b[i];
-            s.hasBounds = true;
-            scene.pushEvent(VLQT_EV_SCENE_BOUNDS, n.sink, 0, b, quint16(sizeof b));
-        }
-
         float md[2];
         if (scene.elements.readMedia(n, md) && (!s.hasMedia || md[0] != s.media[0] || md[1] != s.media[1])) {
             s.media[0] = md[0];
