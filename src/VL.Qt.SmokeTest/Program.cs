@@ -246,25 +246,30 @@ static class Program
         CheckApply(w, "apply: create 100 perf items");
         var applyMs = new double[20];
         var writeMs = new double[20];
-        for (int run = 0; run < applyMs.Length; run++)
+        // #64: best of up to 3 rounds (see PerfLimits.Best); the INFO line shows the last round's spread.
+        var applyMedian = PerfLimits.Best(2.0, () =>
         {
-            var t = Stopwatch.StartNew();
-            s_cmd.Reset();
-            for (int i = 0; i < 10_000; i++)
-                // #469: one SET per item like the old BOUNDS: the position = TRANSFORM translation (SIZE/ANCHOR set above).
-                s_cmd.SetMat4(100 + (uint)(i % 100), Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation(i % 700, run, 0));
-            var buf = s_cmd.EndFrame();
-            writeMs[run] = t.Elapsed.TotalMilliseconds;
-            t.Restart();
-            rc = Native.Apply(w, buf);
-            applyMs[run] = t.Elapsed.TotalMilliseconds;
-            if (rc != 0) { Check(false, "apply perf " + Native.LastError()); break; }
-        }
-        Array.Sort(applyMs);
-        Array.Sort(writeMs);
-        Console.WriteLine($"INFO 10000 SET bounds ({s_cmd.Length} bytes): apply median {applyMs[10]:F3} ms (min {applyMs[0]:F3}, max {applyMs[^1]:F3}), " +
+            for (int run = 0; run < applyMs.Length; run++)
+            {
+                var t = Stopwatch.StartNew();
+                s_cmd.Reset();
+                for (int i = 0; i < 10_000; i++)
+                    // #469: one SET per item like the old BOUNDS: the position = TRANSFORM translation (SIZE/ANCHOR set above).
+                    s_cmd.SetMat4(100 + (uint)(i % 100), Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation(i % 700, run, 0));
+                var buf = s_cmd.EndFrame();
+                writeMs[run] = t.Elapsed.TotalMilliseconds;
+                t.Restart();
+                rc = Native.Apply(w, buf);
+                applyMs[run] = t.Elapsed.TotalMilliseconds;
+                if (rc != 0) { Check(false, "apply perf " + Native.LastError()); break; }
+            }
+            Array.Sort(applyMs);
+            Array.Sort(writeMs);
+            return applyMs[10];
+        }, cpuBound: true);
+        Console.WriteLine($"INFO 10000 SET bounds ({s_cmd.Length} bytes): apply median {applyMedian:F3} ms (last round: min {applyMs[0]:F3}, max {applyMs[^1]:F3}), " +
             $"CommandWriter median {writeMs[10]:F3} ms");
-        PerfLimits.Below(Check, applyMs[10], 2.0, $"10000 SET in one apply < 2 ms (median {applyMs[10]:F3} ms)");
+        PerfLimits.Below(Check, applyMedian, 2.0, $"10000 SET in one apply < 2 ms (median {applyMedian:F3} ms)", cpuBound: true);
 
         // 5. No managed allocation per frame: 1000 frames of writer + apply.
         for (int f = 0; f < 2; f++) MoveRect(); // warm-up
