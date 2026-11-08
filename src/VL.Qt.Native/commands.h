@@ -36,8 +36,11 @@ struct Scene {
      * the queue; returns bytes written, -required if cap is too small (events stay queued). */
     int poll(unsigned char* out, int cap);
     /* Runs pending polish (layouts/positioners) of all scene items without a render, so poll measures current
-     * geometry also when Qt did not render this pump (#215). Items without pending polish only check a flag. */
+     * geometry also when Qt did not render this pump (#215). Skipped when nothing changed since the last poll
+     * (#71): no apply, no marked geometry, no window geometry change and no polish request pending in the window. */
     void polish();
+    /* Set by apply, cleared by poll: the next polish must run (#71). */
+    bool appliedSincePoll = true;
 
     /* Appends one record u16 event, u16 len, u32 handle, u32 index, payload (padded to 4);
      * len = 8 + payloadLen (handle + index + payload, without padding). */

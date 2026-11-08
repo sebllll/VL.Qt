@@ -245,7 +245,115 @@ static class MeasureTest
 
         foreach (int count in new[] { 500, 2000 })
             RunStaticCost(check, pump, count);
+        RunPolishWithoutRender(check, pump);
         RunEffectGroups(check, pump);
+    }
+
+    // #71: a poll after a pump without a render polishes the scene itself (#215), but only when something changed
+    // since the last poll. An apply between two polls without a pump in between (Qt did not render) must still give
+    // the new layout: Row after a Button text change (implicit size), Column after a spacing change, Text measure.
+    // The next poll without a change reports nothing, and the following render agrees with the polished layout.
+    static void RunPolishWithoutRender(Action<bool, string> check, Action<int> pump)
+    {
+        var w = Native.vlqt_window_create(800, 600, "VL.Qt measure polish without render");
+        check(w != IntPtr.Zero, "71: window_create");
+        Native.vlqt_window_show(w);
+        var cmd = new CommandWriter();
+        var buf = new byte[1 << 16];
+        void Apply(string what)
+        {
+            var rc = Native.Apply(w, cmd.EndFrame());
+            check(rc == 0, $"71: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            cmd.Reset();
+        }
+        List<Rec> Poll()
+        {
+            int n = Native.Poll(w, buf);
+            check(n >= 0, $"71: poll ({n})");
+            var recs = Parse(buf.AsSpan(0, Math.Max(n, 0)), check);
+            recs.RemoveAll(r => r.Event == Protocol.Ev.WindowGeometry);
+            return recs;
+        }
+        static Rec? Find(List<Rec> recs, ushort ev, uint handle)
+        {
+            Rec? found = null;
+            foreach (var r in recs)
+                if (r.Event == ev && r.Handle == handle) found = r;
+            return found;
+        }
+        static string S(Rec? r) => r is { } x ? string.Join(", ", x.V) : "none";
+
+        const uint RowId = 1, Btn = 2, RowRect = 3, ColId = 4, ColRect0 = 5, ColRect1 = 6, Txt = 7;
+        cmd.Create(RowId, Protocol.Type.Row);
+        cmd.SetPlace(RowId, 100, 100, 0, 0);
+        cmd.SetF32(RowId, Protocol.Prop.Spacing, 10);
+        cmd.Reparent(RowId, 0, 0);
+        cmd.Create(Btn, Protocol.Type.Button);
+        VL.Qt.Styles.BaseStyle.Write(cmd, Btn);
+        cmd.SetPlace(Btn, 0, 0, 0, 0);
+        cmd.SetString(Btn, Protocol.Prop.Text, "A");
+        cmd.Reparent(Btn, RowId, 0);
+        cmd.Create(RowRect, Protocol.Type.Rectangle);
+        cmd.SetPlace(RowRect, 0, 0, 30, 20);
+        cmd.Reparent(RowRect, RowId, 1);
+        cmd.Bind(RowRect, RowRect, 0);
+        cmd.Create(ColId, Protocol.Type.Column);
+        cmd.SetPlace(ColId, 100, 300, 0, 0);
+        cmd.SetF32(ColId, Protocol.Prop.Spacing, 10);
+        cmd.Reparent(ColId, 0, 1);
+        cmd.Create(ColRect0, Protocol.Type.Rectangle);
+        cmd.SetPlace(ColRect0, 0, 0, 40, 20);
+        cmd.Reparent(ColRect0, ColId, 0);
+        cmd.Create(ColRect1, Protocol.Type.Rectangle);
+        cmd.SetPlace(ColRect1, 0, 0, 40, 20);
+        cmd.Reparent(ColRect1, ColId, 1);
+        cmd.Bind(ColRect1, ColRect1, 0);
+        cmd.Create(Txt, Protocol.Type.Text);
+        cmd.SetPlace(Txt, 400, 100, 300, 60);
+        cmd.SetString(Txt, Protocol.Prop.Text, "Hi");
+        cmd.SetF32(Txt, Protocol.Prop.FontSize, 40);
+        cmd.Reparent(Txt, 0, 2);
+        cmd.Bind(Txt, Txt, 0);
+        Apply("scene");
+        pump(2);
+        var recs = Poll();
+        var rowRect0 = Find(recs, Protocol.Ev.SceneBounds, RowRect);
+        var colRect0 = Find(recs, Protocol.Ev.SceneBounds, ColRect1);
+        var text0 = Find(recs, Protocol.Ev.Measured, Txt);
+        check(rowRect0 is { } a && a.V[0] > 110 && colRect0 is { } c && c.V[1] == 330 && text0 is { } t && t.V[0] > 0,
+            $"71: first values (Row child {S(rowRect0)}, Column child {S(colRect0)}, Text {S(text0)})");
+        bool stable = true;
+        for (int f = 0; f < 3; f++) { pump(1); stable &= Poll().Count == 0; }
+        check(stable, "71: static scene -> no records (Qt does not render)");
+
+        // From here no pump between apply and poll: the last pump did not render, so the poll polishes.
+        cmd.SetString(Btn, Protocol.Prop.Text, "A much longer label");
+        Apply("button text");
+        recs = Poll();
+        var rowRect1 = Find(recs, Protocol.Ev.SceneBounds, RowRect);
+        check(rowRect1 is { } b && rowRect0 is { } a0 && b.V[0] > a0.V[0] + 20 && b.V[1] == a0.V[1],
+            $"71: Button text change, no render -> Row moves the next child ({S(rowRect0)} -> {S(rowRect1)})");
+        check(Poll().Count == 0, "71: next poll without a change -> no records");
+
+        cmd.SetF32(ColId, Protocol.Prop.Spacing, 30);
+        Apply("column spacing");
+        recs = Poll();
+        var colRect1 = Find(recs, Protocol.Ev.SceneBounds, ColRect1);
+        check(colRect1 is { } d && d.V[1] == 350, $"71: Column spacing change, no render -> child moves to y 350 ({S(colRect1)})");
+        check(Poll().Count == 0, "71: next poll without a change -> no records");
+
+        cmd.SetString(Txt, Protocol.Prop.Text, "Hello World");
+        Apply("text");
+        recs = Poll();
+        var text1 = Find(recs, Protocol.Ev.Measured, Txt);
+        check(text1 is { } e && text0 is { } t0 && e.V[0] > t0.V[0], $"71: Text change, no render -> new MEASURED ({S(text0)} -> {S(text1)})");
+        check(Poll().Count == 0, "71: next poll without a change -> no records");
+
+        // Qt renders the changes now: its own polish gives the same layout, so nothing is reported again.
+        pump(2);
+        recs = Poll();
+        check(recs.Count == 0, $"71: render after the polished polls -> same layout, no records ({recs.Count} records)");
+        Native.vlqt_window_destroy(w);
     }
 
     // #20 review: an element inside a Group with an effect chain, and inside a Group used as ShaderEffect Input (frame

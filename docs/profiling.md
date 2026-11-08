@@ -62,7 +62,16 @@ Measured without a profiler by the SmokeTest (`tools/build.ps1 -Test -Only measu
 | 500, one moving | 0.042 ms | 500 | 0.001 ms | 1 |
 | 2000, one moving | 0.186 ms | 2000 | 0.002 ms | 1 |
 
-What remains in the static rows is not the measurement: when Qt did not render in a pump (nothing changed), the poll first runs `Scene::polish` over all elements (#215), which is linear in the element count. In the "one moving" rows Qt rendered, so the poll skips it. A change of an ancestor still measures its whole subtree, as it must (all of it moved).
+What remained in the static rows after #20 was not the measurement: when Qt did not render in a pump (nothing changed), the poll first ran `Scene::polish` over all elements (#215), which is linear in the element count. In the "one moving" rows Qt rendered, so the poll skips it. A change of an ancestor still measures its whole subtree, as it must (all of it moved).
+
+Since #71 `Scene::polish` returns at once when nothing changed since the last poll: no apply, no marked geometry, no window geometry change and no polish request pending in the window (`itemsToPolish`, where Row/Column, Text implicit size and Group frames register until Qt polishes them in a render). Same measurement, static scenes only (the "one moving" rows did not run it before either):
+
+| Scene | Before #71: poll | After #71: poll |
+|---|---|---|
+| 500 static | 0.0039 ms | 0.0001 ms |
+| 2000 static | 0.0171 ms | 0.0001 ms |
+
+The SmokeTest `measure` checks that a poll without a render right after an apply still reports the new layout (Button text in a Row, Column spacing, Text measure) and that the next render agrees with it.
 
 ## Thread names
 
