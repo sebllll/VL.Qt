@@ -136,6 +136,8 @@ Scene::~Scene()
 {
     // Items have no QObject parent (only parentItem), so every tracked item is deleted explicitly.
     // Effects are detached from their sources first (arbitrary deletion order below).
+    for (auto& kv : nodes)
+        kv.second.xf->scene = nullptr; // the unparenting and deletes below emit geometry signals (#20)
     for (auto& kv : nodes) {
         elements.clearEffectSource(kv.second);
         if (kv.second.type == VLQT_TYPE_VIDEO) // #130, see destroySubtree
@@ -313,7 +315,9 @@ int Scene::create(quint32 id, quint16 type, std::string& err)
         return ApplyInvalid;
     Node& node = nodes[id] = Node{item, type, 0, 0, nullptr};
     elements.initGeometry(node); // anchor placement, follows size changes (#469)
+    node.polled = elements.pollsState(type);
     ids[item] = id;
+    watchGeometry(*this, id, node); // measure on change (#20)
     return ApplyOk;
 }
 
@@ -357,6 +361,7 @@ void Scene::destroySubtree(QQuickItem* item)
                 elements.clearEffectSource(kv.second);
     if (node.debug)
         --elements.debugCount;
+    node.xf->scene = nullptr; // its connections may outlive the node (retired item): no more queue entries (#20)
     nodes.erase(it->second);
     ids.erase(it);
     if (!wasSource) {
@@ -919,6 +924,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
             u.refItem = tex.item;
         }
     const int rc = elements.setEffectChain(host, chain, masks, err);
+    listPolled(*this, host); // a chain reports its content errors (EV_ERROR, #489)
     const std::vector<QQuickItem*> after = elements.effectMasks(host);
     for (QQuickItem* m : before)
         if (std::find(after.begin(), after.end(), m) == after.end())

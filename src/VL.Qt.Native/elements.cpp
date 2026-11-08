@@ -473,6 +473,7 @@ public:
             if (placed)
                 placed(); // anchor placement and pivot change with the frame kind
             syncEffectFrame(); // the frame kind changes even if origin and size stay
+            markGeometry(*xf);
         }
         invalidate();
     }
@@ -536,6 +537,7 @@ protected:
             syncEffectFrame();
             if (placed)
                 placed();
+            markGeometry(*xf); // the frame moved inside the item: no x/y/size signal for that (#20)
         }
     }
 
@@ -1005,6 +1007,17 @@ quint32 Elements::takeClicks(const Node& node)
     return c > 0 ? quint32(c) : 0;
 }
 
+bool Elements::pollsState(quint16 type) const
+{
+    if (type == VLQT_TYPE_VIDEO)
+        return true;
+    const auto it = types.find(type);
+    if (it == types.end())
+        return false;
+    const TypeCache& c = it->second;
+    return c.error.isValid() || c.clicks.isValid() || (c.userCount.isValid() && c.userValue.isValid());
+}
+
 bool Elements::takeUserValue(const Node& node, QVariant& out)
 {
     const auto it = types.find(node.type);
@@ -1226,6 +1239,7 @@ void Elements::initGeometry(Node& node)
     auto update = [xf = node.xf, item = node.item]() {
         placeItem(*xf, item);
         writeMatrix(*xf, item);
+        markGeometry(*xf); // size and frame changed (#20)
     };
     QObject::connect(node.item, &QQuickItem::widthChanged, node.item, update);
     QObject::connect(node.item, &QQuickItem::heightChanged, node.item, update);
@@ -1292,6 +1306,7 @@ bool Elements::writeTransform(Node& node, std::string& err)
     setMatrixValue(node.transform, pivoted(*node.xf, node.item));
     updateMaskFrame(node);
     pokeGroup(node.item);
+    markGeometry(*node.xf); // Qt has no public signal for a transform change (#20)
     return true;
 }
 
@@ -1308,6 +1323,7 @@ bool Elements::setAnchor(Node& node, float fx, float fy, std::string& err)
         setMatrixValue(node.transform, pivoted(*node.xf, node.item));
     updateMaskFrame(node);
     pokeGroup(node.item);
+    markGeometry(*node.xf); // matrix pivot or Group frame (Auto Size off) moved, maybe without an x/y change (#20)
     return true;
 }
 bool Elements::setEffectSource(Node& effect, const ResolvedProp& rp, QQuickItem* source, std::string& err)

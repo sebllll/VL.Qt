@@ -2,6 +2,7 @@
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using VL.Qt;
 
 // Back channel EV_MEASURED / EV_SCENE_BOUNDS (plan 06b). Values are DIP (logical pixels), the C# SinkRegistry
@@ -240,6 +241,164 @@ static class MeasureTest
         Console.WriteLine($"INFO 06b poll 1000 bound items: unchanged median {idleMedian:F3} ms (last round max {idle[^1]:F3}), " +
             $"all bounds changed median {moved[50]:F3} ms (max {moved[^1]:F3})");
         PerfLimits.Below(check, idleMedian, 0.2, $"06b: change check < 0.2 ms / 1000 items (median {idleMedian:F3} ms)", cpuBound: true);
+        Native.vlqt_window_destroy(w);
+
+        foreach (int count in new[] { 500, 2000 })
+            RunStaticCost(check, pump, count);
+        RunEffectGroups(check, pump);
+    }
+
+    // #20 review: an element inside a Group with an effect chain, and inside a Group used as ShaderEffect Input (frame
+    // proxy under the root, #486), still reports new SCENE_BOUNDS when the Group moves (TRANSFORM: translation = x/y
+    // path, scale = Matrix4x4 path) or the ShaderEffect holding the Group moves.
+    static void RunEffectGroups(Action<bool, string> check, Action<int> pump)
+    {
+        check = Program.NeedsRhi(check, "ShaderEffect/effect chain need a QRhi scenegraph");
+        Native.vlqt_res_create(Protocol.ResKind.Shader, out var wave);
+        Native.vlqt_res_load_shader(wave, "builtin:wave", Protocol.ShaderStage.Fragment);
+        check(Native.vlqt_res_wait(wave, 10000) == Protocol.ResState.Ready, "20: shader builtin:wave Ready");
+        var w = Native.vlqt_window_create(800, 600, "VL.Qt measure effect groups");
+        check(w != IntPtr.Zero, "20: window_create (effect groups)");
+        Native.vlqt_window_show(w);
+        var cmd = new CommandWriter();
+        var buf = new byte[1 << 16];
+        void Apply(string what)
+        {
+            var rc = Native.Apply(w, cmd.EndFrame());
+            check(rc == 0, $"20: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            cmd.Reset();
+        }
+        Rec? Bounds(uint handle)
+        {
+            int n = Native.Poll(w, buf);
+            Rec? found = null;
+            foreach (var r in Parse(buf.AsSpan(0, Math.Max(n, 0)), check))
+                if (r.Event == Protocol.Ev.SceneBounds && r.Handle == handle) found = r;
+            return found;
+        }
+        static string S(Rec? r) => r is { } x ? string.Join(", ", x.V) : "none";
+
+        const uint ChainGroup = 1, ChainRect = 2, Fx = 3, InputGroup = 4, InputRect = 5;
+        cmd.Create(ChainGroup, Protocol.Type.Item);
+        cmd.Reparent(ChainGroup, 0, 0);
+        cmd.Create(ChainRect, Protocol.Type.Rectangle);
+        cmd.SetPlace(ChainRect, 10, 10, 20, 20);
+        cmd.Reparent(ChainRect, ChainGroup, 0);
+        cmd.Bind(ChainRect, ChainRect, 0);
+        cmd.BeginEffectChain(ChainGroup);
+        cmd.BeginMultiLink();
+        cmd.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
+        cmd.EffectF32(Protocol.Prop.EffectBlur, 0.5f);
+        cmd.EndLink();
+        cmd.EndEffectChain();
+
+        cmd.Create(Fx, Protocol.Type.ShaderEffect);
+        cmd.SetPlace(Fx, 300, 50, 10, 10);
+        cmd.SetU64(Fx, Protocol.Prop.FragmentShader, wave);
+        cmd.Reparent(Fx, 0, 1);
+        cmd.Create(InputGroup, Protocol.Type.Item);
+        cmd.Reparent(InputGroup, Fx, 0);
+        cmd.Create(InputRect, Protocol.Type.Rectangle);
+        cmd.SetPlace(InputRect, 10, 10, 20, 20);
+        cmd.Reparent(InputRect, InputGroup, 0);
+        cmd.Bind(InputRect, InputRect, 0);
+        cmd.SetRef(Fx, Protocol.Prop.Source, InputGroup);
+        cmd.BeginUniforms(Fx, Protocol.UniformSet.Clear);
+        cmd.UniformF32("time", 0);
+        cmd.UniformF32("amplitude", 0);
+        cmd.UniformF32("frequency", 2);
+        cmd.EndUniforms();
+        Apply("effect groups");
+        pump(3);
+        Native.Poll(w, buf); // first values
+
+        void Move(uint group, uint rect, Stride.Core.Mathematics.Matrix m, string what, Func<float[], bool> expect)
+        {
+            cmd.SetMat4(group, Protocol.Prop.Transform, m);
+            Apply(what);
+            pump(2);
+            var b = Bounds(rect);
+            check(b is { } x && expect(x.V), $"20: {what} -> new SCENE_BOUNDS of the element inside ({S(b)})");
+        }
+        var t = Stride.Core.Mathematics.Matrix.Translation(100, 50, 0);
+        var s = Stride.Core.Mathematics.Matrix.Scaling(2, 2, 1);
+        Move(ChainGroup, ChainRect, t, "Group with effect chain translated", v => v[0] == 110 && v[1] == 60 && v[2] == 20);
+        Move(ChainGroup, ChainRect, s, "Group with effect chain scaled", v => v[0] == 20 && v[1] == 20 && v[2] == 40);
+        Move(InputGroup, InputRect, t, "Group as ShaderEffect Input translated", v => v[2] == 20 && v[0] > 100);
+        var before = Bounds(InputRect);
+        Move(InputGroup, InputRect, s, "Group as ShaderEffect Input scaled", v => v[2] == 40);
+        Move(Fx, InputRect, Stride.Core.Mathematics.Matrix.Translation(320, 70, 0), "ShaderEffect holding the Group translated", v => v[2] == 40);
+        check(before == null, $"20: no bounds without a change ({S(before)})");
+        Native.vlqt_window_destroy(w);
+        Native.vlqt_res_release(wave);
+    }
+
+    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
+    static extern int vlqt_test_measure_count(IntPtr w);
+
+    // #20: cost of the measurement path for a static scene of count bound rectangles (flat in one Group, like the
+    // Elements500/2000 profile scenarios), and with one of them moving. Poll time = Stopwatch around vlqt_window_poll.
+    static void RunStaticCost(Action<bool, string> check, Action<int> pump, int count)
+    {
+        var w = Native.vlqt_window_create(800, 600, $"VL.Qt measure cost {count}");
+        check(w != IntPtr.Zero, $"20: window_create ({count})");
+        Native.vlqt_window_show(w);
+        var cmd = new CommandWriter();
+        var buf = new byte[1 << 20];
+        const uint group = 1;
+        cmd.Create(group, Protocol.Type.Item);
+        cmd.Reparent(group, 0, 0);
+        for (uint i = 0; i < count; i++)
+        {
+            uint id = 10 + i;
+            cmd.Create(id, Protocol.Type.Rectangle);
+            cmd.SetPlace(id, i % 50 * 16, i / 50 * 14, 12, 10);
+            cmd.Reparent(id, group, i);
+            cmd.Bind(id, id, 0);
+        }
+        var rc = Native.Apply(w, cmd.EndFrame());
+        check(rc == 0, $"20: {count} bound rectangles ({rc})");
+        cmd.Reset();
+        pump(2);
+        int first = Native.Poll(w, buf);
+        var firstRecs = Parse(buf.AsSpan(0, Math.Max(first, 0)), check);
+        int measured = firstRecs.FindAll(x => x.Event == Protocol.Ev.Measured).Count;
+        int bounds = firstRecs.FindAll(x => x.Event == Protocol.Ev.SceneBounds).Count;
+        check(measured == count && bounds == count, $"20: {count} bound items -> MEASURED + SCENE_BOUNDS each on the first poll ({measured}, {bounds})");
+        check(vlqt_test_measure_count(w) == count, $"20: first poll measures all {count} items ({vlqt_test_measure_count(w)})");
+
+        const int frames = 201;
+        var idle = new double[frames];
+        int idleMeasured = 0;
+        for (int f = 0; f < frames; f++)
+        {
+            pump(1);
+            var t = Stopwatch.StartNew();
+            int n = Native.Poll(w, buf);
+            idle[f] = t.Elapsed.TotalMilliseconds;
+            idleMeasured = Math.Max(idleMeasured, vlqt_test_measure_count(w));
+            if (n != 0) { check(false, $"20: static poll returned {n} bytes ({count})"); break; }
+        }
+        var one = new double[frames];
+        int oneMeasured = 0;
+        for (int f = 0; f < frames; f++)
+        {
+            cmd.SetPlace(10, 1 + f % 2, 0, 12, 10); // starts at x 0 -> every frame moves
+            Native.Apply(w, cmd.EndFrame());
+            cmd.Reset();
+            pump(1);
+            var t = Stopwatch.StartNew();
+            int n = Native.Poll(w, buf);
+            one[f] = t.Elapsed.TotalMilliseconds;
+            oneMeasured = Math.Max(oneMeasured, vlqt_test_measure_count(w));
+            if (n != 28) { check(false, $"20: one moved -> one SCENE_BOUNDS, got {n} bytes ({count})"); break; }
+        }
+        Array.Sort(idle);
+        Array.Sort(one);
+        Console.WriteLine($"INFO 20 poll {count} bound rectangles: static median {idle[frames / 2]:F4} ms (max {idle[^1]:F4}), " +
+            $"measured/frame max {idleMeasured}; one moving median {one[frames / 2]:F4} ms (max {one[^1]:F4}), measured/frame max {oneMeasured}");
+        check(idleMeasured == 0, $"20: static scene of {count} -> no item measured ({idleMeasured} per frame)");
+        check(oneMeasured == 1, $"20: one of {count} moving -> only it measured ({oneMeasured} per frame)");
         Native.vlqt_window_destroy(w);
     }
 }

@@ -315,6 +315,9 @@ VLQT_API int   vlqt_test_send_wheel(void* w, float x, float y, int dx, int dy);
 /* TEST ONLY: number of pointer handlers (QQuickPointerHandler children) of item id (input handlers, #319);
  * -1 null window, -4 unknown id. */
 VLQT_API int   vlqt_test_handler_count(void* w, unsigned int id);
+/* TEST ONLY (#20): number of bound items whose geometry (EV_MEASURED / EV_SCENE_BOUNDS) the last poll of the window
+ * read; a static scene reads none. -1 null window. */
+VLQT_API int   vlqt_test_measure_count(void* w);
 /* TEST ONLY (#244): busy-waits ms inside one phase of the window's next rendered frame (0 events, 1 sync, 2 render,
  * 3 present) to check that the F5 timeline attributes a spike. 0 = ok, -1 null window. */
 VLQT_API int   vlqt_test_perf_spike(void* w, int phase, float ms);
