@@ -22,7 +22,7 @@ Nodes feeding an input pin of a Qt node (e.g. a Reactive Channel on a channel pi
 their pads with them. Idempotent: a second run changes nothing (regression check: tools/test-vl-pad-layout.py).
 Writes UTF-8 with BOM and CRLF like vvvv. --check only prints what would change and exits with 1 if anything would.
 """
-import glob, os, random, re, string, sys
+import collections, glob, os, random, re, string, sys
 import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -460,22 +460,23 @@ def process_patch(patch, specs, add, animate=()):
 
     # other nodes feeding an input pin of a Qt node (e.g. a Reactive Channel on a channel pin), and the nodes upstream of
     # them, keep the offset to that Qt node they were placed at, their pads with them; they get no row of their own
+    # breadth first over all Qt nodes at once: a node feeding a Qt node directly stays with that one, even if it also
+    # feeds another node further down (e.g. a Channel on an Is Hovered pin whose value also drives an If)
     feeders = {}
-    for n in plan:
-        todo = [n]
-        while todo:
-            m = todo.pop()
-            for pin in m.findall('Pin'):
-                if pin.get('Kind') != 'InputPin':
+    todo = collections.deque((n, n) for n in plan)
+    while todo:
+        m, n = todo.popleft()
+        for pin in m.findall('Pin'):
+            if pin.get('Kind') != 'InputPin':
+                continue
+            for x in peers.get(pin.get('Id'), []):
+                f = pin_owner.get(x)
+                if f is None or f in feeders or f in plan or f in chain_nodes or node_type(f) is not None:
                     continue
-                for x in peers.get(pin.get('Id'), []):
-                    f = pin_owner.get(x)
-                    if f is None or f in feeders or f in plan or f in chain_nodes or node_type(f) is not None:
-                        continue
-                    if any(e is not f and e.get('Bounds') for e in f.iter()):
-                        continue  # regions keep their row (the row move takes their content along)
-                    feeders[f] = n
-                    todo.append(f)
+                if any(e is not f and e.get('Bounds') for e in f.iter()):
+                    continue  # regions keep their row (the row move takes their content along)
+                feeders[f] = n
+                todo.append((f, n))
     for f, q in feeders.items():
         qx, qy, _, _ = bounds(q)
         f_pins = {mp.get('Id') for mp in f.findall('Pin')}
@@ -511,7 +512,11 @@ def process_patch(patch, specs, add, animate=()):
 
     free = [p for pid, p in pads.items() if pid not in rel]
     nodes = [n for n in nodes if n not in chain_nodes]
-    floor = max((bounds(p)[1] + bounds(p)[3] for p in free if bounds(p)[1] < min((bounds(n)[1] for n in nodes), default=0)), default=None)
+    # header = free pads (title, description) above everything that belongs to a node, its staircases included; notes in
+    # between stay where they are and are not part of the header (else the first run moves the nodes below them and
+    # the second run counts them as header)
+    content_top = min((bounds(n)[1] + extent(n)[0] for n in nodes), default=0)
+    floor = max((bounds(p)[1] + bounds(p)[3] for p in free if bounds(p)[1] < content_top), default=None)
     ordered = sorted(nodes, key=lambda n: (bounds(n)[1], bounds(n)[0]))
     rows = []
     for n in ordered:
