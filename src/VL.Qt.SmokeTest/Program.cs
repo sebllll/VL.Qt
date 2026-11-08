@@ -379,6 +379,7 @@ static class Program
         if (Selected("qtimage")) QtImageTest.Run(outDir, Check, Pump, Grab); // QtImage nodes → ResourceClient → QtNative, one image in 100 elements, release queue (#362).
         if (Selected("snapshot")) SnapshotTest.Run(outDir, Check, Pump, Grab); // Snapshot node via ResourceClient and QtNative: pixels vs window grab, latency, error paths, hitches (#363).
         if (Selected("tooltip")) TooltipTest.Run(outDir, Check, Pump, Grab); // Tooltip previews: window change count (static scene, property, hover, video), snapshot_fit sizes, errors (#544).
+        if (Selected("font")) FontTest.Run(outDir, Check, Pump, Grab, () => s_log.ToString()); // App fonts (#15, LoadFont): shared per file, refs, removal at the end of the pump, errors, Text with the loaded family, one-time warning for a missing family.
         if (Selected("group-frame")) GroupFrameTest.Run(outDir, Check, Pump, Grab); // Group frame in negative coordinates: snapshot = whole frame, effect layer unclipped (#475).
         // Last: leaves two VSync windows open on purpose (process end with open windows on the shared device).
         if (Selected("shared-device")) SharedDeviceTest.Run(Check, Pump); // One D3D11 device for all windows + upload QRhi (#358).

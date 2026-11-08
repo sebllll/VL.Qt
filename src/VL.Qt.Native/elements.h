@@ -294,6 +294,9 @@ bool writeQml(QQuickItem* item, const ResolvedProp& rp, const QVariant& v, std::
 /* Read-modify-write of a QFont property (rp.prop = "font"). */
 template <class F>
 bool modifyFont(QObject* item, const ResolvedProp& rp, F&& f, std::string& err);
+/* #15: warns once per requested family (log category vlqt.font) when Qt does not have it and substitutes another font.
+ * Empty family and families already checked: nothing. Qt GUI thread only (the apply path). */
+void warnMissingFontFamily(const QString& family);
 
 } // namespace vlqt
 
