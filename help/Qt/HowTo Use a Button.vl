@@ -169,7 +169,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="wtvdxmdjkxBs5VwBVtpimu" Bounds="85,85,830,65" ShowValueBox="true" isIOBox="true" Value="A Button reports a click when the mouse is released over it (like Qt clicked). Two ways to react:&#xD;&#xA;- The Bang output (true for one frame per click, here counted).&#xD;&#xA;- The Is Clicked channel pin (a Reactive Channel of Unit; its value shows as a bang).">
+          <Pad Id="wtvdxmdjkxBs5VwBVtpimu" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Button [Qt]&#xD;&#xA;- Bang: true for one frame per click (here counted)&#xD;&#xA;- Is Clicked: channel pin, a Reactive Channel of Unit (shows as a bang)&#xD;&#xA;- Enabled, Auto Repeat, Auto Size">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -178,7 +178,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="dGla7uN4vRQZihlDnDYwBp" Bounds="85,165,843,65" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;Enabled = false greys the button out and blocks clicks. Auto Repeat repeats the click while the button is held down. Auto Size takes the size from the text (Size is ignored while it is on; the position comes from Transform and Anchor).">
+          <Pad Id="dGla7uN4vRQZihlDnDYwBp" Bounds="85,1089,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A click is reported when the mouse is released over the button (like Qt clicked).&#xD;&#xA;- Enabled = false greys the button out and blocks clicks. Auto Repeat repeats the click while the button is held down.&#xD;&#xA;- Auto Size takes the size from the text: Size is ignored while it is on, the position comes from Transform and Anchor.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

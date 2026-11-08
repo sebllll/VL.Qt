@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="8rESQedUStPKR0CsTy4Qwb" Bounds="85,85,900,84" ShowValueBox="true" isIOBox="true" Value="Performance: Renderer [Qt] Perf (PerfStats) into:&#xD;&#xA;- PerfStats (Split) for frame/pump/sync/render/present/GPU.&#xD;&#xA;- (Split Percentiles), (Split Counters), (Split Host) and (Split Gc) for budget, percentiles, counters, vvvv/wait/apply/reconcile time and .NET GC.">
+          <Pad Id="8rESQedUStPKR0CsTy4Qwb" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Renderer [Qt]: Perf (PerfStats)&#xD;&#xA;- PerfStats (Split): frame, pump, sync, render, present, GPU&#xD;&#xA;- (Split Percentiles), (Split Counters): budget, percentiles, counters&#xD;&#xA;- (Split Host): vvvv, wait, apply, reconcile time; (Split Gc): .NET GC">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="8DwkNhFdnXsiVpzz63FfkC" Bounds="85,184,840,46" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;Same values as the F5 overlay. Averages over about 1 s, Max = worst pump.">
+          <Pad Id="8DwkNhFdnXsiVpzz63FfkC" Bounds="85,2517,830,62" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Same values as the F5 overlay.&#xD;&#xA;- Averages over about 1 s, Max = worst pump.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

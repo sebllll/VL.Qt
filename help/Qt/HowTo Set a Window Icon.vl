@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="DwtJfBV7tnlOHZdOUSILaq" Bounds="85,85,830,149" ShowValueBox="true" isIOBox="true" Value="Window Settings [Qt] sets the icon of the Renderer window (title bar, taskbar, Alt-Tab):&#xD;&#xA;- Connect its Output to the Window pin of Renderer [Qt]. Without it, the window shows the built-in default icon.&#xD;&#xA;- Icon: .ico, .png, .svg or anything Qt reads; a relative path is relative to this patch. Changes apply live, without recreating the window. No value (or an empty path) shows the default icon again.&#xD;&#xA;- A file that cannot be loaded keeps the default icon and shows a warning at Renderer [Qt] (Error output).&#xD;&#xA;- Title, Borderless, Fullscreen and Bounds are optional pins of the same node; a value that is set there wins over the matching pin of Renderer [Qt].">
+          <Pad Id="DwtJfBV7tnlOHZdOUSILaq" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Window Settings [Qt]: icon of the Renderer window (title bar, taskbar, Alt-Tab)&#xD;&#xA;- Output to the Window pin of Renderer [Qt]&#xD;&#xA;- Icon: .ico, .png, .svg or anything Qt reads, relative to this patch&#xD;&#xA;- Title, Borderless, Fullscreen, Bounds: optional pins, win over Renderer [Qt]">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="luRThQEyxFfVIYOjcxmKcE" Bounds="85,260,830,115" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Bounds in Window Settings only apply when the window is created; Save Bounds and Client Bounds stay on Renderer [Qt].&#xD;&#xA;- Exported apps: the default icon is built in and needs no file next to the exe. The icon of the .exe file itself is set in the vvvv export settings.&#xD;&#xA;- Linux (Wayland): the compositor takes the icon from the app id and the .desktop file, not from the window.">
+          <Pad Id="luRThQEyxFfVIYOjcxmKcE" Bounds="85,630,830,142" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Without Window Settings the window shows the built-in default icon; no value (or an empty path) shows it again. Changes apply live, without recreating the window.&#xD;&#xA;- A file that cannot be loaded keeps the default icon and shows a warning at Renderer [Qt] (Error output).&#xD;&#xA;- Bounds in Window Settings only apply when the window is created; Save Bounds and Client Bounds stay on Renderer [Qt].&#xD;&#xA;- Exported apps: the default icon is built in and needs no file next to the exe. The icon of the .exe file itself is set in the vvvv export settings.&#xD;&#xA;- Linux (Wayland): the compositor takes the icon from the app id and the .desktop file, not from the window.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

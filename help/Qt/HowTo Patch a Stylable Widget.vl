@@ -732,7 +732,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="4xhC4rt1ND5Osgq52q74mt" Bounds="85,85,830,200" ShowValueBox="true" isIOBox="true" Value="A self-made widget reads the style of its surroundings by implementing IStylable (Qt.Style). The class XYSlider (see its definition) is built from primitives: a frame, a knob (Circle) and a text showing the value.&#xD;&#xA;- IStylable: connect the widget to a Group, Row or Column like any element. The container calls Build with the style resolved at that position (base style, then every Group on the way) and shows the returned element.&#xD;&#xA;- Build runs every frame, after the patch was updated. Element nodes inside return the same element while nothing changes, so the scene stays untouched.&#xD;&#xA;- The getters (ResolveState, GetColors, GetFrame, GetText) return resolved values, also without a Style: then they come from the base style.&#xD;&#xA;- Bounds, Radius and the value Channel are pins of XYSlider. The Button next to each slider is the built-in one for comparison.">
+          <Pad Id="4xhC4rt1ND5Osgq52q74mt" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="IStylable (Qt.Style): a self-made widget that reads the style of its surroundings&#xD;&#xA;- XYSlider (see its definition): frame, knob (Circle) and value text&#xD;&#xA;- Group, Row or Column calls Build with the style resolved at that position&#xD;&#xA;- Getters: ResolveState, GetColors, GetFrame, GetText&#xD;&#xA;- Pins of XYSlider: Bounds, Radius and the value Channel">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -741,7 +741,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="FKsR01Qzh371EkTIbAUe20" Bounds="85,300,830,85" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;The slider sits in two Groups with different presets (Dark, Light). The Style pin of the Group is all it takes: the slider has no Style pin of its own. Hover and drag it to see the state colors change like the built-in Button.&#xD;&#xA;The left slider is bound to a Channel, the Value IOBox shows the value you drag.">
+          <Pad Id="FKsR01Qzh371EkTIbAUe20" Bounds="85,1175,830,174" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The container calls Build with the style resolved at its position (base style, then every Group on the way) and shows the returned element.&#xD;&#xA;- Build runs every frame, after the patch was updated. Element nodes inside return the same element while nothing changes, so the scene stays untouched.&#xD;&#xA;- The getters return resolved values, also without a Style: then they come from the base style.&#xD;&#xA;- The slider sits in two Groups with different presets (Dark, Light). The Style pin of the Group is all it takes: the slider has no Style pin of its own. Hover and drag it to see the state colors change like the built-in Button.&#xD;&#xA;- The left slider is bound to a Channel, the Value IOBox shows the value you drag. The Button next to each slider is the built-in one for comparison.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
