@@ -77,8 +77,15 @@ static class PerfOverlayTest
         check(Native.Apply(w, cmd.EndFrame()) == 0, "perfoverlay: scene");
         Native.vlqt_window_show(w);
         int frame = 0;
+        // #17: pumps whose loop step took longer than the smallest host spike (150 ms) are host stalls (parallel builds,
+        // other sessions): such a step reports a vvvv time above the injected 180-190 ms spikes and takes over the timeline's
+        // peaks. The checks that read the peaks use these to tell "machine overloaded" from "regression".
+        const float stallMs = 150;
+        var bigStalls = new List<int>();
+        bool StallsWithin(int pumps) => bigStalls.Any(f => frame - f < pumps);
         // Moving rect: every pump renders a frame. Real time passes so the text (4 Hz) and frame intervals update.
-        void Run(int frames)
+        // spikeMs > 0: a sync spike of that length in every pump (minimum load, the real pump of this scene takes < 1 ms).
+        void Run(int frames, float spikeMs = 0)
         {
             long lastEnd = 0;
             for (int i = 0; i < frames; i++, frame++)
@@ -86,8 +93,10 @@ static class PerfOverlayTest
                 cmd.Reset();
                 cmd.SetPlace(1, 500 + 100 * MathF.Sin(frame * 0.1f), 400, 100, 60);
                 var t0 = Stopwatch.GetTimestamp();
+                if (lastEnd != 0 && Stopwatch.GetElapsedTime(lastEnd, t0).TotalMilliseconds > stallMs) bigStalls.Add(frame);
                 Native.Apply(w, cmd.EndFrame());
                 var apply = (float)Stopwatch.GetElapsedTime(t0).TotalMilliseconds;
+                if (spikeMs > 0) vlqt_test_perf_spike(w, PhaseSync, spikeMs);
                 pump(1);
                 // Host values like QtApp reports them (#245), so the Summary shows its apply/GC rows. vvvv (#260): the
                 // time between pumps stands in for the patch update, so the F2 graph shows its vvvv line (#265).
@@ -133,12 +142,22 @@ static class PerfOverlayTest
         // each attributed to its own segment, not to a Qt phase.
         // On a loaded machine a stalled loop step reports a vvvv time of ~90 ms itself (time between pumps, see Run):
         // spikes of ~190 ms stay above it, and a stall that still takes a peak leaves the ring before the retry.
+        // With heavier load (several times more busy processes than cores) stalls of seconds happen and take the peaks in
+        // every try: when the 240-pump ring of the last try holds such a stall (a step > 150 ms), the host is too loaded
+        // to read the peaks and the check is SKIPPED, not failed. Without stalls the same failure is a regression (#17).
         void HostSpike(Native.vlqt_host_frame f) { Run(1); Native.vlqt_window_report_host_frame(w, f); Run(3); }
-        Retry(check, "perfoverlay: host spikes attributed to vvvv/GC/apply in the timeline", () =>
+        const string hostSpikeCheck = "perfoverlay: host spikes attributed to vvvv/GC/apply in the timeline";
+        var hostSpikesOverloaded = false;
+        Retry((ok, detail) =>
+        {
+            if (!ok && hostSpikesOverloaded) Console.WriteLine($"SKIP {hostSpikeCheck}: host too loaded, loop steps > {stallMs:F0} ms in the last 240 pumps ({detail})");
+            else check(ok, detail);
+        }, hostSpikeCheck, () =>
         {
             HostSpike(new Native.vlqt_host_frame { vvvv = 190, ops = 1 });
             HostSpike(new Native.vlqt_host_frame { vvvv = 186, gc_pause = 185, gc0 = 1, ops = 1 });
             HostSpike(new Native.vlqt_host_frame { apply = 180, vvvv = 0.5f, ops = 1 });
+            hostSpikesOverloaded = StallsWithin(240); // read before the Run(250) below pushes them out of the window
             var tl = PageText(w, Timeline);
             var peaks = string.Join(" | ", tl.Split('\n').SkipWhile(l => !l.StartsWith("peaks")).Take(3).Select(l => l.Trim()));
             var ok = peaks.Contains("vvvv 190.00") && peaks.Contains("GC 185.00") && peaks.Contains("apply 180.00") && tl.Contains("F7 vvvv/GC/apply on");
@@ -155,8 +174,15 @@ static class PerfOverlayTest
         check(PageText(w, Timeline).Contains("F7 vvvv/GC/apply on"), "perfoverlay: F7 again shows them");
         Run(20); // all 3 spikes stay in the summary window (60 pumps)
         var sum = PageText(w, Summary);
-        check(Line(sum, "vvvv").Contains("190.00") && System.Text.RegularExpressions.Regex.IsMatch(sum, @"Qt pump \d+% of frame, vvvv \d+%"),
-            $"perfoverlay: summary vvvv row + share ({Line(sum, "vvvv")}; {Line(sum, "fps")})");
+        // The row shows the peak of the 60-pump window: a host stall above the 190 ms spike (see above) replaces it.
+        var sumOk = Line(sum, "vvvv").Contains("190.00") && System.Text.RegularExpressions.Regex.IsMatch(sum, @"Qt pump \d+% of frame, vvvv \d+%");
+        var sumDetail = $"perfoverlay: summary vvvv row + share ({Line(sum, "vvvv")}; {Line(sum, "fps")})";
+        if (!sumOk && StallsWithin(60)) Console.WriteLine($"SKIP {sumDetail}: host too loaded, loop steps > {stallMs:F0} ms in the last 60 pumps");
+        else check(sumOk, sumDetail);
+        // #17: a fresh spike in the last pump instead of the one from ~90 pumps ago (the stats window is shorter): which
+        // other pump of the window was above 12 ms depended on the machine (page renders, stalls).
+        vlqt_test_perf_spike(w, PhaseRender, 14);
+        Run(1);
         Native.vlqt_window_get_perf_stats(w, out var st);
         check(st.pump_max >= 12, $"perfoverlay: stats see the spike (pump max {st.pump_max:F1})");
         using (var a = grab(w, Path.Combine(outDir, $"perf_f5_summary{sw}.png")))
@@ -227,10 +253,15 @@ static class PerfOverlayTest
         // #246: the F2 meter draws its lines also on the software backend (there as an image, QSGGeometryNode is not drawn).
         // The line follows the pump times: a grab in a quiet moment can show fewer pixels (and the grab itself renders),
         // so the pixel count gets a few tries with fresh frames in between (#379).
+        // #17: the pump of this scene takes ~0.5 ms on a fast machine, then the orange line lies on the GPU/frame lines
+        // (drawn later, on top) at the bottom of the graph and fewer than 40 px stay orange. Every pump therefore gets a
+        // sync spike of 8 ms, so the line runs clearly above the baseline (~20 % of the graph height) over the whole 240-pump
+        // ring (filled once before the grab) and the 40 px (~14 % of the 282 columns) mean a continuous line, as intended.
         Native.vlqt_window_set_overlay(w, 1);
+        Run(250, 8);
         Retry(check, "perfoverlay: F2 meter draws the pump line", () =>
         {
-            Run(20);
+            Run(20, 8);
             using var a = grab(w, Path.Combine(outDir, $"perf_f2_meter{sw}.png"));
             int line = 0;
             for (int y = 26; y < 76; y++)
