@@ -47,16 +47,28 @@ static class MotionBlurTest
     // Mean second difference of Lit along paths in the direction of the blur (one physical pixel apart): near 0 for a smooth
     // profile, high for a comb of copies or noise. Paths: directional = rows, zoom = rays from the centre, radial = circles
     // around it, in the long cells (centre x = 400, text from x = 410).
+    // The path is sampled bilinearly between pixels: with the nearest pixel, a circle or a slanted ray zigzags across the
+    // pixel grid, and where it runs along a glyph edge (the arcs of the radial blur) that zigzag alone gives a second
+    // difference as large as the copies, in both images, so the gain of pass 2 drowned in it at 1 pixel per DIP.
     static double Rough(Bitmap a, uint row)
     {
-        var step = 1 / (a.Width / 800.0); // 1 physical pixel in DIP
+        var scale = a.Width / 800.0; // physical pixels per DIP
+        var step = 1 / scale; // 1 physical pixel in DIP
         var cx = 400.0;
         var cy = CellY(row) + CellH / 2;
         double sum = 0;
         int n = 0;
+        double LitAt(double x, double y)
+        {
+            double px = x * scale - 0.5, py = y * scale - 0.5;
+            int i = (int)Math.Floor(px), j = (int)Math.Floor(py);
+            double fx = px - i, fy = py - j;
+            double L(int u, int v) => Lit(a.GetPixel(Math.Clamp(u, 0, a.Width - 1), Math.Clamp(v, 0, a.Height - 1)));
+            return (L(i, j) * (1 - fx) + L(i + 1, j) * fx) * (1 - fy) + (L(i, j + 1) * (1 - fx) + L(i + 1, j + 1) * fx) * fy;
+        }
         void Along(Func<double, (double X, double Y)> path, double t0, double t1, double dt)
         {
-            double Value(double t) { var (x, y) = path(t); return Lit(Px(a, (float)x, (float)y)); }
+            double Value(double t) { var (x, y) = path(t); return LitAt(x, y); }
             double v0 = Value(t0), v1 = Value(t0 + dt);
             for (var t = t0 + 2 * dt; t < t1; t += dt)
             {
@@ -294,7 +306,8 @@ static class MotionBlurTest
             {
                 var two = Rough(a, row);
                 Console.WriteLine($"INFO motion-blur: row {row} long: second difference single pass {rough[row]:F4}, two passes {two:F4}");
-                // zoom and radial keep the real structure of the glyphs along the path (arcs, edges), so the gain is smaller
+                // zoom and radial keep the real structure of the glyphs along the path (arcs, edges), and at 1 pixel per DIP
+                // the inner radii stay below 64 pixels of arc (no gaps for pass 2 to fill), so the gain is smaller
                 var factor = row == Dir ? 3.0 : 1.25;
                 gpu(two < rough[row] / factor, $"438: row {row} long: two passes at least {factor}x as smooth as one ({rough[row]:F4} -> {two:F4})");
             }
