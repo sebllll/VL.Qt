@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="FwHJ1yB0m6HUP91oS6gFXK" Bounds="85,85,830,84" ShowValueBox="true" isIOBox="true" Value="Pinch reports a two-finger gesture on the element, all counted from the start of the gesture:&#xD;&#xA;- Scale is a factor: 1 at the start, 2 = fingers twice as far apart.&#xD;&#xA;- Rotation is in cycles: 1 = 360 degrees, clockwise positive.&#xD;&#xA;- Translation is the movement of the fingers' centre in units.">
+          <Pad Id="FwHJ1yB0m6HUP91oS6gFXK" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Pinch [Qt]: two-finger gesture on the element&#xD;&#xA;- Scale: factor, 1 at the start (2 = fingers twice as far apart)&#xD;&#xA;- Rotation: in cycles (1 = 360 degrees), clockwise positive&#xD;&#xA;- Translation: movement of the fingers' centre in units&#xD;&#xA;- Is Active: true while the gesture runs">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GaBfqkcwk3KNjEEXTtTxAo" Bounds="85,184,840,65" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;Pinch only reports, it moves nothing: the patch applies the values itself. The channels keep their last value after the gesture, which is why the live values are only used while Is Active is true.">
+          <Pad Id="GaBfqkcwk3KNjEEXTtTxAo" Bounds="85,1428,830,110" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- All values are counted from the start of the gesture.&#xD;&#xA;- Pinch only reports, it moves nothing: the patch applies the values itself. The channels keep their last value after the gesture, which is why the live values are only used while Is Active is true.&#xD;&#xA;- When Is Active falls (TogEdge, Down Edge) the S+H stores the result, so the image stays where the fingers left it and the next gesture continues from there (FrameDelay closes the loop).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,7 +43,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GkYCvKLfhXeQR1vDZQX03q" Bounds="700,718,460,103" ShowValueBox="true" isIOBox="true" Value="Here the Transform of the image is the committed transform combined with the live values while Is Active is true; when Is Active falls (TogEdge, Down Edge) the S+H stores the result, so the image stays where the fingers left it and the next gesture continues from there (FrameDelay closes the loop).">
+          <Pad Id="GkYCvKLfhXeQR1vDZQX03q" Bounds="700,718,460,46" ShowValueBox="true" isIOBox="true" Value="Transform of the image = committed transform combined with the live values while Is Active is true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

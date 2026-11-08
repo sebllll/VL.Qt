@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="yZVkqeCH20DeJxWsbwD7R1" Bounds="85,85,830,103" ShowValueBox="true" isIOBox="true" Value="The same element can hang at several places of one tree. Every place is drawn, and all places share the element:&#xD;&#xA;- Connect the Output of one element to several Groups (or Row, Column). Each place is drawn at the position of its parent.&#xD;&#xA;- State outputs (Measured Size, Scene Bounds) and the error come from the first place, events (e.g. Click of a Button) from every place.&#xD;&#xA;- To find out which place was touched, give the Group around each place its own Interaction (here Hover); an Interaction on the shared element itself is only active at the first place.">
+          <Pad Id="yZVkqeCH20DeJxWsbwD7R1" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Reuse an Element: one element at several places of the tree&#xD;&#xA;- Output of one element to several Groups (or Row, Column)&#xD;&#xA;- Each place is drawn at the position of its parent&#xD;&#xA;- Interaction on the Group around each place (here Hover) tells the places apart">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="8YuIf5hCSkjKX9fEhb8qzb" Bounds="85,203,830,84" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Video: only the first place plays, the others stay empty (warning at the node).&#xD;&#xA;- An element in more than one Renderer is only shown by the first Renderer (warning).&#xD;&#xA;- An Interaction directly at the reused element works at the first place only (warning).">
+          <Pad Id="8YuIf5hCSkjKX9fEhb8qzb" Bounds="85,1188,830,94" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- State outputs (Measured Size, Scene Bounds) and the error come from the first place, events (e.g. Click of a Button) from every place.&#xD;&#xA;- An Interaction directly at the reused element works at the first place only (warning).&#xD;&#xA;- Video: only the first place plays, the others stay empty (warning at the node).&#xD;&#xA;- An element in more than one Renderer is only shown by the first Renderer (warning).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
