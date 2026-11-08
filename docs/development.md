@@ -59,6 +59,8 @@ dotnet run --project src/VL.Qt.SmokeTest -c Release -- --all
 tools/vvvvc.ps1 -File help/HelloWorld.vl
 ```
 
+Timing checks of the SmokeTest (`perfoverlay`) tell a busy machine from a regression: a check that reads peaks or long frames prints `SKIP ... host too loaded` instead of failing when the loop of the test itself stalled (a step over 150 ms for the peak checks, more than 20 % of the steps over 1.5 frame budgets for the idle check). Such a SKIP is not a pass: repeat the run on a quieter machine.
+
 For the Linux runtime see [Linux](linux.md#building-the-linux-runtime-from-source).
 
 ## Scripts
