@@ -92,3 +92,7 @@ tools/test-linux.sh --skip-native   # optional: SmokeTest + unit tests
 ```
 
 The RID follows the WSL architecture (`linux-x64` or `linux-arm64`). After that, an export from Windows with this RID includes the Linux runtime. The Linux scripts are listed in [Development](development.md#scripts).
+
+### Timing checks on slower machines
+
+The time limits of the SmokeTest (e.g. 10 000 SETs in one apply < 2 ms) were set on a current Windows x64 desktop CPU. On Linux the SmokeTest first runs a short calibration loop and prints `INFO perf calibration: ... CPU-bound limits x<f>`: the three purely CPU-bound limits (10 000 SET in one apply, in `apply` and in the core checks, and the idle change check of `measure`) are multiplied by that factor (1 on a fast core, at most 3). A measurement above the limit is repeated up to three times before it counts, so a late clock-up or a woken process does not fail the run; a real regression stays above the limit in every round and still fails. `VLQT_PERF_FACTOR` / `--perf-factor` set the factor by hand and switch the calibration off (`VLQT_PERF_FACTOR=0.5` shows that the checks bite). Details of the other limits: `--perf-warn-only`, `src/VL.Qt.SmokeTest/PerfLimits.cs`.

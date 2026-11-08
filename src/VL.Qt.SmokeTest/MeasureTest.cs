@@ -212,14 +212,20 @@ static class MeasureTest
         check(first == 1000 * (20 + 28), $"06b: 1000 bound items -> 2000 records on the first poll ({first} bytes)");
         var idle = new double[101];
         var moved = new double[101];
-        for (int f = 0; f < idle.Length; f++)
+        // #64: best of up to 3 rounds of the idle polls (see PerfLimits.Best); the moved polls run once.
+        var idleMedian = PerfLimits.Best(0.2, () =>
         {
-            pump(1);
-            var t = Stopwatch.StartNew();
-            int n = Native.Poll(w, buf);
-            idle[f] = t.Elapsed.TotalMilliseconds;
-            if (n != 0) { check(false, $"06b: idle poll returned {n}"); break; }
-        }
+            for (int f = 0; f < idle.Length; f++)
+            {
+                pump(1);
+                var t = Stopwatch.StartNew();
+                int n = Native.Poll(w, buf);
+                idle[f] = t.Elapsed.TotalMilliseconds;
+                if (n != 0) { check(false, $"06b: idle poll returned {n}"); break; }
+            }
+            Array.Sort(idle);
+            return idle[50];
+        }, cpuBound: true);
         for (int f = 0; f < moved.Length; f++)
         {
             cmd.SetPlace(ColId, 1 - f % 2, 0, 0, 0); // starts at x 0 -> every frame moves
@@ -230,11 +236,10 @@ static class MeasureTest
             moved[f] = t.Elapsed.TotalMilliseconds;
             if (n != 1000 * 28) { check(false, $"06b: moved poll returned {n}, expected {1000 * 28}"); break; }
         }
-        Array.Sort(idle);
         Array.Sort(moved);
-        Console.WriteLine($"INFO 06b poll 1000 bound items: unchanged median {idle[50]:F3} ms (max {idle[^1]:F3}), " +
+        Console.WriteLine($"INFO 06b poll 1000 bound items: unchanged median {idleMedian:F3} ms (last round max {idle[^1]:F3}), " +
             $"all bounds changed median {moved[50]:F3} ms (max {moved[^1]:F3})");
-        PerfLimits.Below(check, idle[50], 0.2, $"06b: change check < 0.2 ms / 1000 items (median {idle[50]:F3} ms)");
+        PerfLimits.Below(check, idleMedian, 0.2, $"06b: change check < 0.2 ms / 1000 items (median {idleMedian:F3} ms)", cpuBound: true);
         Native.vlqt_window_destroy(w);
     }
 }
