@@ -9,7 +9,7 @@ namespace VL.Qt
 {
     /// <summary>
     /// A window (renderer) that takes part in the global pump. Called on the Qt thread, once per vvvv frame,
-    /// after all node updates.
+    /// after all node updates; only <see cref="PollInput"/> runs at the frame start, before them (#24).
     /// </summary>
     internal interface IQtFrameParticipant
     {
@@ -24,6 +24,12 @@ namespace VL.Qt
 
         /// <summary>After Qt processed its events (and rendered): poll the window, read perf, handle close requests.</summary>
         void AfterEvents();
+
+        /// <summary>
+        /// #24: at the start of the vvvv frame, after Qt delivered the queued input (<see cref="Native.vlqt_app_deliver_input"/>):
+        /// poll the window into the sinks, so the node updates of this frame see it. Nothing is rendered or applied.
+        /// </summary>
+        void PollInput() { }
 
         /// <summary>
         /// #245: after <see cref="AfterEvents"/>, the host values of this pump for the window's native PerfMonitor. QtApp fills
@@ -52,6 +58,12 @@ namespace VL.Qt
         /// </summary>
         void PumpFrame(IQtFrameParticipant[] participants, double driverSeconds, double budgetMs, long vvvvStart, HostFrameHistory history);
 
+        /// <summary>
+        /// #24: start of the vvvv frame: Qt delivers the input queued since the last pump (without rendering), then every
+        /// participant polls it (<see cref="IQtFrameParticipant.PollInput"/>).
+        /// </summary>
+        void DeliverInput(IQtFrameParticipant[] participants) { }
+
         /// <summary>Bookkeeping for [vlqt.stats]: participants (+registered / -unregistered) and live pumps.</summary>
         void OnParticipantsChanged(int delta);
         void OnPumpChanged(int delta);
@@ -66,6 +78,10 @@ namespace VL.Qt
     /// pump) from waiting (previous pump end → frame start). Without a tick for this frame (the first frame: the renderer
     /// creates the pump inside the update; clocks without ticks) the clock's own update time
     /// (<see cref="FrameFinishedMessage.FrameDuration"/>) is the fallback, else 0 = unknown.
+    /// </para>
+    /// <para>
+    /// #24: the tick also delivers the input that arrived since the last pump (<see cref="IQtPumpTarget.DeliverInput"/>),
+    /// so it reaches the patch in this frame instead of the next one. The frame end (apply, render, poll) stays as it is.
     /// </para>
     /// <para>
     /// Lives as a service of the app host (<see cref="ForApp"/>) and is disposed with it. F8/F5 replaces the app host and its
@@ -116,6 +132,9 @@ namespace VL.Qt
 
         public int ParticipantCount => _participants.Length;
         public bool IsDisposed => _disposed;
+
+        /// <summary>#24: deliver and poll input at the frame start (default). False = only at the frame end (SmokeTest: latency before).</summary>
+        internal bool DeliverInputAtFrameStart { get; set; } = true;
 
         public void Register(IQtFrameParticipant participant)
         {
@@ -178,8 +197,13 @@ namespace VL.Qt
             _target.PumpFrame(_participants, seconds + _offset, budgetMs, vvvvStart, _history);
         }
 
-        /// <summary>vvvv frame start (#260); also called directly by tests.</summary>
-        internal void Tick() => _frameStart = Stopwatch.GetTimestamp();
+        /// <summary>vvvv frame start (#260): remembers the time and delivers the input (#24); also called directly by tests.</summary>
+        internal void Tick()
+        {
+            _frameStart = Stopwatch.GetTimestamp();
+            if (DeliverInputAtFrameStart && _participants.Length > 0)
+                _target.DeliverInput(_participants);
+        }
 
         void IObserver<FrameFinishedMessage>.OnNext(FrameFinishedMessage message) => Frame(message.Time.Seconds, message.FrameDuration.Seconds);
 
@@ -440,6 +464,27 @@ namespace VL.Qt
             if (now - _statsStartTicks >= StatsIntervalMs)
                 LogStats(now);
         }
+
+        /// <summary>
+        /// #24: start of a vvvv frame. Qt delivers the queued input of all windows without rendering (QtNative closes the
+        /// update gate), then the participants of the pumping app poll it into their sinks. Events of another app's windows
+        /// stay in their window's buffer until that app polls. Not inside a pump (QtNative ignores the call there).
+        /// </summary>
+        public void DeliverInput(IQtFrameParticipant[] participants)
+        {
+            // Wrong thread: PumpFrame of this frame logs it once.
+            if (!IsQtThread)
+                return;
+            LastDeliveredInput = Native.vlqt_app_deliver_input();
+            for (int i = 0; i < participants.Length; i++)
+            {
+                try { participants[i].PollInput(); }
+                catch (Exception e) { LogParticipantError(e, nameof(IQtFrameParticipant.PollInput)); }
+            }
+        }
+
+        /// <summary>Queued window system events of the last <see cref="DeliverInput"/> (SmokeTest), -1 = error.</summary>
+        internal int LastDeliveredInput { get; private set; }
 
         /// <summary>Fills <see cref="_windows"/> with QtNative windows of the participants (#314), returns the count.</summary>
         int CollectWindows(IQtFrameParticipant[] participants)

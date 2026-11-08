@@ -124,6 +124,12 @@ VLQT_API void        vlqt_app_process_events(void);
 /* #314: like vlqt_app_process_events, but only the given windows (those of one vvvv app) may render in this pump.
  * Update requests of other windows stay pending until their own app's pump. windows NULL = all windows. */
 VLQT_API void        vlqt_app_process_events_for(void* const* windows, int count);
+/* #24: delivers the window system events Qt has queued (input of all windows, also geometry and close) without
+ * rendering: update requests stay pending and an Expose is deferred, both render in the next pump. Call at the start
+ * of the host frame, then vlqt_window_poll, so input that arrived between two frames reaches the host in this frame.
+ * Main thread only, outside vlqt_app_process_events (a call from inside the pump does nothing). Returns the number of
+ * queued events it delivered (0 = none), -1 = app not initialized. */
+VLQT_API int         vlqt_app_deliver_input(void);
 VLQT_API int         vlqt_driver_advance(double seconds);
 VLQT_API const char* vlqt_last_error(void);
 
@@ -308,6 +314,11 @@ VLQT_API int   vlqt_test_send_mouse(void* w, int type, float x, float y);
  * VLQT_TEST_SYNTHETIC_INPUT). Several ids = multitouch. 0 = ok, -1 null window, -2 unknown type, PRESS of an active id
  * or MOVE/RELEASE of an inactive one. */
 VLQT_API int   vlqt_test_send_touch(void* w, int type, int id, float x, float y);
+/* TEST ONLY (#24): like vlqt_test_send_mouse / vlqt_test_send_touch (PRESS, MOVE, RELEASE), but queued like platform
+ * input (QWindowSystemInterface, asynchronous): delivered by vlqt_app_deliver_input or the next pump. The events come
+ * from test devices and pass VLQT_TEST_SYNTHETIC_INPUT. 0 = ok, -1 null window, -2 unknown type or touch id state. */
+VLQT_API int   vlqt_test_queue_mouse(void* w, int type, float x, float y);
+VLQT_API int   vlqt_test_queue_touch(void* w, int type, int id, float x, float y);
 /* TEST ONLY (#320): synthetic wheel input, not for production use. Sends a QWheelEvent at x/y (window logical pixels)
  * with angleDelta (dx, dy) in eighths of a degree (120 = one notch) via QCoreApplication::sendEvent (synchronous, not
  * spontaneous: passes VLQT_TEST_SYNTHETIC_INPUT). 0 = ok, -1 null window. */

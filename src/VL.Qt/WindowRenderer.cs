@@ -272,6 +272,17 @@ namespace VL.Qt
             }
         }
 
+        /// <summary>
+        /// #24: frame start, after QtNative delivered the queued input: events into the sinks, so the element nodes see them
+        /// in this frame. The frame end (<see cref="AfterEvents"/>) polls again; each event is in exactly one of both polls.
+        /// </summary>
+        public void PollInput()
+        {
+            if (_disposed || _window == IntPtr.Zero)
+                return;
+            PollEvents(frameStart: true);
+        }
+
         /// <summary>#245: adds ops/reconcile of this window to the host frame and reports it to the native PerfMonitor.</summary>
         public void ReportHostFrame(Native.vlqt_host_frame frame)
         {
@@ -290,8 +301,9 @@ namespace VL.Qt
             return !_disposed && _window != IntPtr.Zero && Native.vlqt_window_get_perf_sample(_window, out sample) == 0;
         }
 
-        // Events and measured values into the sinks (read by the element nodes in the next Update).
-        void PollEvents()
+        // Events and measured values into the sinks (read by the element nodes in the next Update). The frame start poll
+        // (#24) only sets a poll error: one from the frame end stays visible to the node updates of the next frame.
+        void PollEvents(bool frameStart = false)
         {
             int n = Native.Poll(_window, _poll);
             if (n < -1)
@@ -307,7 +319,8 @@ namespace VL.Qt
             }
             if (n == 0)
             {
-                _pollError = "";
+                if (!frameStart)
+                    _pollError = "";
                 return;
             }
             var events = new ReadOnlySpan<byte>(_poll, 0, n);
@@ -318,7 +331,10 @@ namespace VL.Qt
             }
             // Window records (handle 0) count as ignored there.
             var result = _reconciler.Sinks.Dispatch(events);
-            _pollError = result.Error is { } e ? "poll: " + e : "";
+            if (result.Error is { } e)
+                _pollError = "poll: " + e;
+            else if (!frameStart)
+                _pollError = "";
         }
 
         /// <summary>Switches one <see cref="Protocol.WindowMode"/> bit live (vlqt_window_set_mode).</summary>
