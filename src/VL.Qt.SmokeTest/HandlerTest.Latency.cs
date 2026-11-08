@@ -90,7 +90,13 @@ static partial class HandlerTest
         var before = MeasureLatency(app, check, atFrameStart: false, out var recsBefore);
         var after = MeasureLatency(app, check, atFrameStart: true, out var recsAfter);
         Console.WriteLine($"INFO input-latency: frames from the frame start after the input to the node update that sees it (mouse press, release, touch press, move, release): before {string.Join(",", before)}, now {string.Join(",", after)}");
-        check(Array.TrueForAll(before, l => l == 1), $"input-latency: before #24 the patch sees queued input one frame later ({string.Join(",", before)})");
+        // Before #24 the touch move (index 3) waits for the render: Qt Quick holds it back and requests an update. Windows
+        // delivers that update request within the same pump; Linux (QPlatformWindow::requestUpdate: a timer of one refresh
+        // interval, ~16 ms) delivers it after this test's next pump (2 ms apart), so the move may take two frames there.
+        var beforeOk = true;
+        for (int i = 0; i < before.Length; i++)
+            beforeOk &= before[i] == 1 || (i == 3 && before[i] == 2 && !OperatingSystem.IsWindows());
+        check(beforeOk, $"input-latency: before #24 the patch sees queued input one frame later, the touch move up to two on Linux ({string.Join(",", before)})");
         check(Array.TrueForAll(after, l => l == 0), $"input-latency: input reaches the patch in the frame it arrived before ({string.Join(",", after)})");
         // Nothing twice, nothing lost: the sinks get the same records in the same order as with the poll at the frame end only.
         check(Dump(recsBefore) == Dump(recsAfter), $"input-latency: same records as before #24 (before: {Dump(recsBefore)} | now: {Dump(recsAfter)})");
