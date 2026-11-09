@@ -77,7 +77,7 @@ On a real Linux machine it is the same: copy the folder, install the packages an
 
 ## Fonts
 
-VL.Qt sets no font family, so Qt takes the system default via fontconfig (DejaVu Sans on Ubuntu/WSL). Install a font package on the target, e.g. `sudo apt install fontconfig fonts-dejavu-core`. A minimal or kiosk system without any font would render all text as empty boxes (tofu): in that case VL.Qt logs a warning (category `vlqt.font`) and falls back to the DejaVu Sans Regular in the bundle (`fonts/DejaVuSans.ttf`, only used when no system font exists). Other fonts used by your content still have to be installed on the target.
+VL.Qt sets no font family, so Qt takes the system default via fontconfig (DejaVu Sans on Ubuntu/WSL). Install a font package on the target, e.g. `sudo apt install fontconfig fonts-dejavu-core`. A minimal or kiosk system without any font would render all text as empty boxes (tofu): in that case VL.Qt logs a warning (category `vlqt.font`) and falls back to the DejaVu Sans Regular in the bundle (`fonts/DejaVuSans.ttf`, only used when no system font exists). Other fonts used by your content have to be installed on the target, or shipped with the export: put the files in a `fonts/` folder next to the patch and load them with `LoadFont`, see [Exporting an app](export.md#fonts). `fonts/` is copied next to the executable and works the same on Linux. Without the font, Qt substitutes another one and VL.Qt logs the missing family once (category `vlqt.font`). Check the license of a font before shipping it.
 
 ## Building the Linux runtime from source
 

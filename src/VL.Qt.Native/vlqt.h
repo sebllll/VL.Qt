@@ -349,6 +349,19 @@ VLQT_API long long vlqt_window_change_count(void* w);
  * 0 / -7 (wrong kind, w NULL, maxEdgePx <= 0) / -9. */
 VLQT_API int   vlqt_res_snapshot_fit(unsigned long long id, void* w, unsigned elementId, int maxEdgePx);
 
+/* App fonts (#15, LoadFont node): font files for Text/Style FontFamily without installing them. Qt GUI thread only (the
+ * vvvv main thread, after vlqt_app_init); other threads get -1. One QFontDatabase registration per file (canonical path
+ * + size + last-modified), shared and reference counted: every successful add takes one reference, release drops it.
+ * An entry without references is removed at the end of the pump (vlqt_app_process_events) unless it was added again in
+ * between; texts naming a removed family fall back to a substitute at their next layout.
+ * add: 0 = registered or shared, *outHandle != 0, families = NUL-terminated, '\n'-separated family names of the file
+ * (truncated to familiesCap; a .ttc can hold several); -1 = error (vlqt_last_error: app not initialized, wrong thread,
+ * file not found, not a font). release: 0 / -1 wrong thread / -9 unknown handle or no reference left. */
+VLQT_API int   vlqt_font_add(const char* utf8Path, unsigned long long* outHandle, char* families, int familiesCap);
+VLQT_API int   vlqt_font_release(unsigned long long handle);
+/* TEST ONLY: references of a font handle, 0 = removal pending (end of pump), -9 = removed or unknown. */
+VLQT_API int   vlqt_test_font_refs(unsigned long long handle);
+
 #ifdef __cplusplus
 }
 #endif

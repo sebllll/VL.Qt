@@ -397,6 +397,29 @@ namespace VL.Qt
         public static int ResReadPreview(ulong id, Span<byte> dst, out vlqt_pixel_desc desc)
             => vlqt_res_read_preview(id, ref MemoryMarshal.GetReference(dst), dst.Length, out desc);
 
+        // App fonts (#15, LoadFont node): Qt GUI thread (vvvv main thread) only, reference counted per file in QtNative.
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_font_add([MarshalAs(UnmanagedType.LPUTF8Str)] string path, out ulong handle, ref byte families, int familiesCap);
+        /// <summary>Drops one reference of a font handle; the font is removed at the end of the pump when none is left. 0 / -1 wrong thread / -9.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_font_release(ulong handle);
+        /// <summary>Test: references of a font handle, 0 = removal pending, -9 = removed or unknown.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_font_refs(ulong handle);
+
+        /// <summary>
+        /// Registers a font file (or shares its registration) and takes one reference: 0 with the handle and the family
+        /// names of the file ('\n'-separated), -1 on error (<see cref="LastError"/>).
+        /// </summary>
+        public static int FontAdd(string path, out ulong handle, out string families)
+        {
+            Span<byte> buffer = stackalloc byte[1024];
+            var rc = vlqt_font_add(path, out handle, ref MemoryMarshal.GetReference(buffer), buffer.Length);
+            var length = buffer.IndexOf((byte)0);
+            families = rc == 0 && length > 0 ? System.Text.Encoding.UTF8.GetString(buffer[..length]) : string.Empty;
+            return rc;
+        }
+
         public static int ResPoll(Span<byte> @out) => vlqt_res_poll(ref MemoryMarshal.GetReference(@out), @out.Length);
         public static int ResList(Span<vlqt_res_info> @out) => vlqt_res_list(ref MemoryMarshal.GetReference(@out), @out.Length);
 

@@ -6,8 +6,11 @@
 
 #include <QtCore/QFileInfo>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QSet>
 #include <QtCore/QUrl>
 #include <QtGui/QColor>
+#include <QtGui/QFontDatabase>
+#include <QtGui/QFontInfo>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QMatrix4x4>
 #include <QtQml/QQmlComponent>
@@ -28,8 +31,29 @@
 #include <cstring>
 
 Q_LOGGING_CATEGORY(lcElements, "vlqt.elements")
+Q_LOGGING_CATEGORY(lcFont, "vlqt.font")
 
 namespace vlqt {
+
+// The family names of Text and Style are free strings; Qt silently takes another font for one it does not know (empty
+// boxes on a Linux without fonts), so the log says it once per name. hasFamily covers installed and app fonts
+// (LoadFont); QFontInfo catches names Qt maps itself (aliases, generic families like "Sans Serif").
+void warnMissingFontFamily(const QString& family)
+{
+    if (family.isEmpty())
+        return;
+    static QSet<QString> checked; // GUI thread only, one entry per name ever set
+    if (checked.contains(family))
+        return;
+    checked.insert(family);
+    if (QFontDatabase::hasFamily(family))
+        return;
+    const QString actual = QFontInfo(QFont(family)).family();
+    if (actual.compare(family, Qt::CaseInsensitive) == 0)
+        return;
+    qCWarning(lcFont, "Font family '%s' not found, Qt uses '%s' instead. Install it on this system or load the file with LoadFont.",
+              qPrintable(family), qPrintable(actual));
+}
 namespace {
 
 QColor toColor(const float* f) { return QColor::fromRgbF(f[0], f[1], f[2], f[3]); }
@@ -214,6 +238,8 @@ bool setFontFamily(Elements&, Node& n, const ResolvedProp& rp, const Value& v, s
 {
     // Empty = default family (QGuiApplication font, like a fresh Text).
     const QString family = v.utf8.isEmpty() ? QGuiApplication::font().family() : toQString(v);
+    if (!v.utf8.isEmpty())
+        warnMissingFontFamily(family);
     return modifyFont(n.item, rp, [&](QFont& f) { f.setFamily(family); }, err);
 }
 
