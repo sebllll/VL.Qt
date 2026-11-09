@@ -8,6 +8,7 @@
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtQuick/private/qquickwindow_p.h> // itemsToPolish (#71)
 
 #include <algorithm>
 #include <cstring>
@@ -180,6 +181,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
     // Former effect sources destroyed in an earlier apply: the frame in between has polished the effects onto
     // their new sources, so nothing refers to them any more (see destroySubtree).
     deleteRetired();
+    appliedSincePoll = true; // also a failed apply may have applied its first commands
     if (len < 0 || (len > 0 && !buf)) {
         err = "invalid buffer (null or negative length)";
         return ApplyBadLength;
@@ -937,6 +939,14 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
 
 void Scene::polish()
 {
+    // Nothing changed since the last poll (#71): ensurePolished calls updatePolish unconditionally, so the passes
+    // below cost a call per element although nothing moves. A change after the last poll shows as an apply, a marked
+    // geometry (events.h) or a window resize; a layout that has to follow a child (Row/Column, Text implicit size,
+    // Group frame) requests polish() and is in the window's itemsToPolish until Qt polishes it in a render, so a
+    // layout that needs the passes of another poll is not skipped either. Private API, check on Qt updates.
+    if (!appliedSincePoll && measureQueue.empty() && !geometryDirty
+        && QQuickWindowPrivate::get(window)->itemsToPolish.isEmpty())
+        return;
     // Two passes: a parent's polish (e.g. Column positions, Row auto size) can change its children's size and
     // with that their layouts, and vice versa; the render's polish loop repeats the same way.
     for (int pass = 0; pass < 2; ++pass)
@@ -948,6 +958,7 @@ void Scene::polish()
 int Scene::poll(unsigned char* out, int cap)
 {
     deleteRetired(); // poll runs after processEvents: the effects have moved off retired sources
+    appliedSincePoll = false; // polish (if Qt did not render) ran before this poll
     collectWindowGeometry(*this);
     collectMeasurements(*this);
     const int n = int(events.size());
