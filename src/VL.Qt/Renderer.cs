@@ -250,6 +250,21 @@ namespace VL.Qt
             return !_disposed && _view != null && _view.TryGetLastSample(out sample);
         }
 
+        void IQtFrameParticipant.PollInput()
+        {
+            if (_disposed)
+                return;
+            try
+            {
+                _view?.PollInput();
+                _errors.Clear(nameof(IQtFrameParticipant.PollInput));
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                _errors.Report(e, nameof(IQtFrameParticipant.PollInput));
+            }
+        }
+
         void IQtFrameParticipant.AfterEvents()
         {
             if (_disposed)

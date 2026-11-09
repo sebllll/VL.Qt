@@ -22,6 +22,8 @@ vvvv's `IFrameClock` is the single time source:
 
 ```
 per vvvv frame:
+  0. frame start (clock tick): vlqt_app_deliver_input(): Qt delivers the queued input without rendering,
+     each renderer polls it into its sinks
   1. Reconciler.Update(element tree)
   2. vlqt_driver_advance(clock.Time)
   3. vlqt_app_process_events(): Qt handles input and renders each changed window (at most once)
@@ -54,7 +56,9 @@ per vvvv frame:
 4. `SinkRegistry` maps handles to `ElementSink` slots
 5. The channels of the interaction nodes (e.g. Hover: Is Hovered, Position; Button: Is Clicked) and the element outputs (Measured Size, Scene Bounds) update
 
-Events arrive one frame late, because they are read after the frame has rendered.
+Input reaches the patch in the frame after it arrived, not one later: at the frame start (`IFrameClock` tick) QtNative delivers the window system events Qt has queued since the last pump (`vlqt_app_deliver_input`), and every renderer polls before the node updates. Nothing renders there: update requests stay with the update gate, an Expose waits for the pump, and touch moves that Qt Quick holds back until the next render are handed over. The poll at the frame end still collects what the pump itself produces (layout: Measured Size, Scene Bounds; input that arrived during the frame), which the patch reads in the next frame.
+
+On Windows vvvv's message loop hands mouse, touch and pen messages to Qt between two frames. On Linux Qt reads the X11 or Wayland events inside the pump, so there input still arrives one frame later.
 
 ## Reusing elements
 

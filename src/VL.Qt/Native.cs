@@ -174,6 +174,12 @@ namespace VL.Qt
         /// <summary>#314: only <paramref name="windows"/>[0..count) may render in this pump (the windows of one vvvv app).</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void vlqt_app_process_events_for(IntPtr[] windows, int count);
+        /// <summary>
+        /// #24: delivers the queued window system events (input) without rendering, at the start of the host frame.
+        /// Number of delivered events, -1 = app not initialized.
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_app_deliver_input();
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_driver_advance(double seconds);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -266,6 +272,12 @@ namespace VL.Qt
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_send_touch(IntPtr w, int type, int id, float x, float y);
+        /// <summary>TEST ONLY (#24): mouse event (Move, Press, Release) queued like platform input, delivered later. 0 = ok.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_queue_mouse(IntPtr w, int type, float x, float y);
+        /// <summary>TEST ONLY (#24): touch point event queued like platform input, delivered later. 0 = ok, -2 unknown type or id state.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_queue_touch(IntPtr w, int type, int id, float x, float y);
         /// <summary>
         /// TEST ONLY: QRhi of window w (IntPtr.Zero = the upload QRhi on the shared device) and its native device
         /// (ID3D11Device* on D3D11). 0 = ok, -2 no QRhi yet.

@@ -295,6 +295,7 @@ static class Program
 
         // Global pump with simulated FrameClock: 2 windows, 120 frames, stress (02b).
         if (Selected("pump")) PumpTest.Run(Check);
+        if (Selected("input-latency")) HandlerTest.RunInputLatency(Check); // Input at the frame start: one frame earlier, nothing twice or lost, lifecycle (#24).
         if (Selected("perfstats")) PerfStatsTest.Run(Check, Pump); // Percentiles, counters, last sample, budget (#243).
         if (Selected("perfoverlay")) PerfOverlayTest.Run(outDir, Check, Pump, Grab); // F5 pages, keys, spike in the timeline (#244).
         // Rectangle: color, radius, border; 1000-rect performance (05b).
