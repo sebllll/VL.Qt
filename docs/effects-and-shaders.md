@@ -116,6 +116,7 @@ The full, commented templates are `help/Qt/qtshaders/RGBSplit.frag` (filter) and
 
 - The output is premultiplied alpha: multiply all four channels by `qt_Opacity`.
 - The nodes appear once the `qtshaders` folder exists next to the saved patch.
+- Do not name a uniform or sampler like a GLSL builtin (`length`, `distance`, `texture`, ...): the OpenGL translation (Linux) renames it and then never sets it. The node shows a warning on every backend.
 - Two `.frag` files with the same name in one `qtshaders` tree give an error at both nodes. A `.vert` without a `.frag` makes no node.
 - **Export:** the `qtshaders/` folder next to the exported patch is copied next to the exe automatically, and the exported app bakes the shaders at runtime like the editor does. Only that folder is copied: shader files that live next to other documents or in other packages have to be copied by hand.
 - **Limitations:** exported apps bake shaders at runtime (no pre-baked `.qsb` shipped for `.frag` nodes), the editor keeps no pipeline cache, and uniform arrays are not supported.

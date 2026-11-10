@@ -221,7 +221,7 @@ public:
         return true;
     }
 
-    void updateSampledImage(RenderState&, int binding, QSGTexture** texture, QSGMaterial* newMaterial,
+    void updateSampledImage(RenderState& state, int binding, QSGTexture** texture, QSGMaterial* newMaterial,
         QSGMaterial*) override
     {
         auto* m = static_cast<EffectMaterial*>(newMaterial);
@@ -235,6 +235,9 @@ public:
             v->configure(t, st);
             t = v.get();
         }
+        // Uploads a texture made from a QImage (the CPU copy of an image resource without a shared device, Linux):
+        // without it rhiTexture() stays null and Qt binds a transparent dummy (#77). No-op for layers and wrappers.
+        t->commitTextureOperations(state.rhi(), state.resourceUpdateBatch());
         *texture = t;
     }
 

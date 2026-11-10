@@ -126,6 +126,53 @@ std::string checkReflection(const QShader& s)
     return {};
 }
 
+// Uniform block members and samplers the GLSL translation renamed (#77): SPIRV-Cross renames a name that collides with a
+// GLSL builtin or keyword (`length`, `texture`, ...), but the reflection keeps the original, and the OpenGL backend
+// of QRhi looks uniforms and samplers up by the reflected name: the renamed one is never set (stays 0 / transparent).
+// Checks the first GLSL variant of s; none = nothing to check. Empty = fine, else a warning text.
+std::string glslRenames(const QShader& s, const std::string& where)
+{
+    QByteArray code;
+    for (const QShaderKey& k : s.availableShaders()) {
+        if (k.source() == QShader::GlslShader && k.sourceVariant() == QShader::StandardShader) {
+            code = s.shader(k).shader();
+            break;
+        }
+    }
+    if (code.isEmpty())
+        return {};
+    const QString glsl = QString::fromUtf8(code);
+    QStringList renamed;
+    const QShaderDescription d = s.description();
+    for (const auto& b : d.uniformBlocks()) {
+        // GLSL 120/150: "struct buf { ... };", 330 / ES 300: "uniform buf { ... } _67;"
+        const QRegularExpression block(QStringLiteral("\\b(?:struct|uniform)\\s+%1\\s*\\{([^}]*)\\}")
+                .arg(QRegularExpression::escape(QString::fromUtf8(b.blockName))));
+        const auto m = block.match(glsl);
+        if (!m.hasMatch())
+            continue;
+        const QString members = m.captured(1);
+        for (const auto& mem : b.members) {
+            const QRegularExpression decl(QStringLiteral("\\b%1\\s*[;\\[]")
+                    .arg(QRegularExpression::escape(QString::fromUtf8(mem.name))));
+            if (!decl.match(members).hasMatch())
+                renamed << QString::fromUtf8(mem.name);
+        }
+    }
+    for (const auto& smp : d.combinedImageSamplers()) {
+        const QRegularExpression decl(QStringLiteral("\\bsampler2D\\s+%1\\s*[;\\[]")
+                .arg(QRegularExpression::escape(QString::fromUtf8(smp.name))));
+        if (!decl.match(glsl).hasMatch())
+            renamed << QString::fromUtf8(smp.name);
+    }
+    if (renamed.isEmpty())
+        return {};
+    const bool one = renamed.size() == 1;
+    return std::string(one ? "uniform '" : "uniforms '") + renamed.join(QStringLiteral("', '")).toStdString()
+        + (one ? "' is" : "' are") + " named like a GLSL builtin and renamed in the OpenGL code: on OpenGL (Linux) "
+        + (one ? "it is" : "they are") + " never set. Rename " + (one ? "it" : "them") + where;
+}
+
 // --- runtime bake (#483) ----------------------------------------------------------------------------------------------
 
 // Targets QShaderBaker generates: only the shader language of the process backend (main thread, at loadSource).
@@ -181,6 +228,7 @@ struct CacheEntry
     QByteArray key;
     QShader shader;
     std::string error;
+    std::string warning; // glslRenames
 };
 constexpr size_t kMaxCache = 64;
 std::mutex s_cacheMutex;
@@ -192,7 +240,7 @@ QByteArray cacheKey(int stage, int source, const QByteArray& code)
         + QCryptographicHash::hash(code, QCryptographicHash::Sha1).toHex();
 }
 
-bool cacheFind(const QByteArray& key, QShader& shader, std::string& error)
+bool cacheFind(const QByteArray& key, QShader& shader, std::string& error, std::string& warning)
 {
     std::lock_guard lock(s_cacheMutex);
     for (auto it = s_cache.begin(); it != s_cache.end(); ++it) {
@@ -202,13 +250,14 @@ bool cacheFind(const QByteArray& key, QShader& shader, std::string& error)
         s_cache.erase(it);
         shader = e.shader;
         error = e.error;
+        warning = e.warning;
         s_cache.push_back(std::move(e));
         return true;
     }
     return false;
 }
 
-void cacheStore(const QByteArray& key, const QShader& shader, const std::string& error)
+void cacheStore(const QByteArray& key, const QShader& shader, const std::string& error, const std::string& warning)
 {
     std::lock_guard lock(s_cacheMutex);
     for (auto it = s_cache.begin(); it != s_cache.end(); ++it) {
@@ -217,7 +266,7 @@ void cacheStore(const QByteArray& key, const QShader& shader, const std::string&
             break;
         }
     }
-    s_cache.push_back({key, shader, error});
+    s_cache.push_back({key, shader, error, warning});
     while (s_cache.size() > kMaxCache)
         s_cache.pop_front();
 }
@@ -268,6 +317,7 @@ public:
         if (std::string e = checkShader(s, w.m_stage, w.m_source, false, where); !e.empty())
             return e;
         w.m_shader = s;
+        w.m_warning = glslRenames(s, where);
         return {};
     }
 
@@ -276,8 +326,8 @@ public:
     {
         const QByteArray key = cacheKey(w.m_stage, w.m_source, w.m_code);
         QShader s;
-        std::string err;
-        if (cacheFind(key, s, err)) {
+        std::string err, warning;
+        if (cacheFind(key, s, err, warning)) {
             qCDebug(lcShader, "%s: bake cache hit", qPrintable(w.m_path));
         } else {
             if (w.cancel.load())
@@ -297,16 +347,39 @@ public:
             }
             if (w.cancel.load())
                 return "cancelled";
+            const std::string where = " (" + w.m_path.toStdString() + ")";
             if (err.empty())
-                err = checkShader(s, w.m_stage, w.m_source, true, " (" + w.m_path.toStdString() + ")");
+                err = checkShader(s, w.m_stage, w.m_source, true, where);
             if (!err.empty())
                 s = QShader();
-            cacheStore(key, s, err);
+            else if (w.cancel.load())
+                return "cancelled";
+            else
+                warning = glslRenames(w.m_source == QShader::GlslShader ? s : glslCheckBake(w), where);
+            cacheStore(key, s, err, warning);
         }
         if (!err.empty())
             return err;
         w.m_shader = s;
+        w.m_warning = std::move(warning);
         return {};
+    }
+
+    // Another backend than OpenGL: a GLSL 150 translation only for glslRenames (the patch may be exported to Linux).
+    // A failure here is no error (the shader works on this backend), there is just nothing to check.
+    static QShader glslCheckBake(const ShaderResource& w)
+    {
+        std::lock_guard lock(s_bakeMutex);
+        QShaderBaker baker;
+        baker.setSourceString(w.m_code, w.m_stage == VLQT_SHADER_STAGE_VERTEX ? QShader::VertexStage : QShader::FragmentStage);
+        baker.setGeneratedShaderVariants({QShader::StandardShader});
+        baker.setGeneratedShaders({QShaderBaker::GeneratedShader(QShader::GlslShader, QShaderVersion(150))});
+        return baker.bake();
+    }
+
+    std::string takeWarning(Work& work) override
+    {
+        return std::move(static_cast<ShaderResource&>(work).m_warning);
     }
 
     int64_t upload(Work&, int64_t, bool& done, std::string&) override

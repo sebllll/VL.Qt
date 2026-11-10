@@ -1,14 +1,15 @@
 #version 440
 // Directional (linear motion) blur of the input element (builtin:directional_blur). Needs an Input. Two passes (see sampleCount).
 // Box blur along a line through each pixel, centred on it (the picture does not shift). Lengths in DIP, texelSize in pixels.
-// Uniform block (std140): qt_Matrix 0, qt_Opacity 64, angle 68, length 72, texelSize 80, dpr 88.
+// Uniform block (std140): qt_Matrix 0, qt_Opacity 64, angle 68, blurLength 72, texelSize 80, dpr 88.
+// Not named `length`: the GLSL translation renames a member called like a GLSL builtin, the GL backend would not set it (#77).
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
     float angle;     // direction of the blur in degrees, 0 = horizontal, increases clockwise on screen
-    float length;    // length of the blur line in DIP (total, centred on the pixel), 0 = off
+    float blurLength; // length of the blur line in DIP (total, centred on the pixel), 0 = off
     vec2 texelSize;  // 1 / width, 1 / height of the source in pixels (DIP size x dpr, as the layer is created)
     float dpr;       // device pixels per DIP (1 if unset)
 };
@@ -45,7 +46,7 @@ vec4 fetch(vec2 uv)
 void main()
 {
     vec2 uv = qt_TexCoord0;
-    float len = abs(length) * max(dpr, 1.0);  // pixels
+    float len = abs(blurLength) * max(dpr, 1.0);  // pixels
     if (len < 0.1) {
         fragColor = fetch(uv) * qt_Opacity;
         return;
