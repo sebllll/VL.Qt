@@ -10,7 +10,9 @@ tools/vvvvc.ps1 -File "help/Qt/Demo Typo Motion.vl" -Out build/export
 - Export settings live in the `*.props` files next to the patches (`help/*.props`).
 - A `qtshaders/` folder next to the exported patch is copied along (see [Effects and shaders](effects-and-shaders.md#shader-nodes-from-files)).
 - A `fonts/` folder next to the exported patch is copied along as well (see [Fonts](#fonts)).
-- For a Linux export (console app with a Qt-owned window) see [Linux](linux.md).
+- vvvvc exports self-contained by default (the .NET runtime is part of the export folder); `--self-contained false` makes a smaller framework-dependent export that needs the .NET 10 runtime on the target.
+- A `.props` next to the patch wins over the command-line arguments `--rid` and `--output-type`. Patches without one (all of `help/Qt/`) get them from the command line, e.g. for Linux arm64: `tools/vvvvc.ps1 -File "help/Qt/HowTo Draw a Rectangle.vl" -Out build/export-linux-arm64 --rid linux-arm64 --output-type Exe --asset-behavior RelativeToOutput`.
+- For a Linux export (console app with a Qt-owned window, needs a `KeepAppAlive` in the patch) see [Linux](linux.md).
 
 ## Fonts
 
