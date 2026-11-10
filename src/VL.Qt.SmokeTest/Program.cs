@@ -140,6 +140,13 @@ static class Program
         SetEnv("QT_QUICK_CONTROLS_HOVER_ENABLED", "1");
         // Linux: the GL renderer/version line (qt.rhi.general) needs QSG_INFO; used to recognize Mesa GL (#214).
         if (!OperatingSystem.IsWindows() && Environment.GetEnvironmentVariable("QSG_INFO") == null) SetEnv("QSG_INFO", "1");
+        // "--tearing [--windows N] [--interval 0|1] [--fullscreen] [--pump-hz N] [--seconds N]": manual swap/tearing
+        // scenario (#90), not part of --all; returns before the normal scenarios (and before an outDir is derived from args).
+        if (args.Contains("--tearing"))
+        {
+            Check(Native.vlqt_app_init(Native.NativeDir, s_logFn) == 0, "app_init " + Native.LastError());
+            return s_failures.Count == 0 ? TearingTest.Run(args) : 1;
+        }
         // Drift check protocol.h <-> Protocol.cs (no Qt needed). "--drift [protocol.h]" runs only this.
         bool driftOnly = args.Length > 0 && args[0] == "--drift";
         var drift = ProtocolDrift.Run(driftOnly && args.Length > 1 ? args[1] : ProtocolDrift.DefaultHeaderPath);
