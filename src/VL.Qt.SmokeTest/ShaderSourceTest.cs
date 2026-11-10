@@ -82,6 +82,12 @@ static class ShaderSourceTest
             var e = resEvents.FindLast(r => r.Id == id && r.Ev == Protocol.ResEv.Error);
             return e == null ? "" : Encoding.UTF8.GetString(e.Payload);
         }
+        string ResWarning(ulong id)
+        {
+            ResError(id); // polls
+            var e = resEvents.FindLast(r => r.Id == id && r.Ev == Protocol.ResEv.Warning);
+            return e == null ? "" : Encoding.UTF8.GetString(e.Payload);
+        }
         // Loads GLSL text; returns the id, the state after the wait, the time of the call itself and of call + wait.
         ulong Source(string code, out int state, out double callMs, out double totalMs)
         {
@@ -104,6 +110,16 @@ static class ShaderSourceTest
         check(sGreen == Protocol.ResState.Ready && sWave == Protocol.ResState.Ready && sTemplate == Protocol.ResState.Ready,
             $"483: GLSL texts (solid, wave.frag, default template) bake -> Ready ({sGreen}, {sWave}, {sTemplate}; {ResError(green)}{ResError(waveShader)}{ResError(template)})");
         check(ResError(template).Length == 0 && ResError(waveShader).Length == 0, "483: no bake error for the default template and wave.frag");
+
+        // #77: a uniform named like a GLSL builtin is renamed in the OpenGL code, where it is never set: Ready plus a warning
+        // (on every backend: another one checks an extra GLSL translation), none for ordinary names.
+        var builtinName = Source(SolidSource("length, 0.0, 0.0").Replace("float qt_Opacity;\n", "float qt_Opacity;\n    float length;\n"),
+            out var sBuiltinName, out _, out _);
+        var builtinWarning = ResWarning(builtinName);
+        check(sBuiltinName == Protocol.ResState.Ready && builtinWarning.Contains("'length'"),
+            $"77: uniform 'length' -> Ready with a rename warning ({sBuiltinName}, '{builtinWarning}' {ResError(builtinName)})");
+        check(ResWarning(template).Length == 0 && ResWarning(waveShader).Length == 0 && ResWarning(green).Length == 0,
+            $"77: no rename warning for ordinary names ({ResWarning(template)}{ResWarning(waveShader)}{ResWarning(green)})");
         check(callGreen < 250, $"483: the load call returns at once, the bake runs in the worker (call {callGreen:F1} ms of {bakeGreen:F1} ms)");
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt shader source test");

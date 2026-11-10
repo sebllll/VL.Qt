@@ -2,14 +2,15 @@
 // Zoom blur of the input element (builtin:zoom_blur): streaks along rays from center. Needs an Input. Two passes (see sampleCount).
 // Box blur between uv scaled by 1 - k/2 and 1 + k/2 around center (centred on the pixel, the picture does not shift).
 // Lengths in DIP, texelSize in pixels.
-// Uniform block (std140): qt_Matrix 0, qt_Opacity 64, center 72, length 80, texelSize 88, dpr 96.
+// Uniform block (std140): qt_Matrix 0, qt_Opacity 64, center 72, blurLength 80, texelSize 88, dpr 96.
+// Not named `length`: the GLSL translation renames a member called like a GLSL builtin, the GL backend would not set it (#77).
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
     vec2 center;     // zoom center, 0..1 of the effect area (0.5, 0.5 = middle)
-    float length;    // streak length in DIP at the farthest corner of the area; grows linearly from 0 at center. 0 = off
+    float blurLength; // streak length in DIP at the farthest corner of the area; grows linearly from 0 at center. 0 = off
     vec2 texelSize;  // 1 / width, 1 / height of the source in pixels (DIP size x dpr, as the layer is created)
     float dpr;       // device pixels per DIP (1 if unset)
 };
@@ -50,10 +51,10 @@ void main()
     vec2 uv = qt_TexCoord0;
     vec2 q = uv - center;
     vec2 qd = q / texelSize;  // offset from center in pixels
-    // distance of the farthest corner in pixels: there the streak is exactly `length` DIP
+    // distance of the farthest corner in pixels: there the streak is exactly `blurLength` DIP
     float rMax = max(max(dist(center / texelSize), dist((vec2(1.0, 0.0) - center) / texelSize)),
                      max(dist((vec2(0.0, 1.0) - center) / texelSize), dist((vec2(1.0) - center) / texelSize)));
-    float k = abs(length) * max(dpr, 1.0) / max(rMax, 1.0);   // relative zoom range of the streak
+    float k = abs(blurLength) * max(dpr, 1.0) / max(rMax, 1.0);   // relative zoom range of the streak
     float local = dist(qd) * k;                               // streak length at this pixel in pixels
     if (local < 0.1) {
         fragColor = fetch(uv) * qt_Opacity;

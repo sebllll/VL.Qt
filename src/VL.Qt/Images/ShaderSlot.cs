@@ -34,12 +34,19 @@ namespace VL.Qt
         /// <summary>The resource, null without path (tests, status).</summary>
         public ImageResource? Resource => _resource;
 
-        /// <summary>Why the shader is not usable ("Fragment shader: ..."), empty if it is loading, ready or not set. Cached, no allocation while unchanged.</summary>
+        /// <summary>
+        /// Why the shader is not (fully) usable ("Fragment shader: ..."): the load error, or for a Ready shader the warning of
+        /// QtNative (a uniform the OpenGL backend never sets, #77). Empty if it is loading, fine or not set. Cached, no
+        /// allocation while unchanged.
+        /// </summary>
         public string Error
         {
             get
             {
-                var text = _createError.Length > 0 ? _createError : _resource is { State: QtImageState.Failed } r ? r.Error : string.Empty;
+                var text = _createError.Length > 0 ? _createError
+                    : _resource is { State: QtImageState.Failed } r ? r.Error
+                    : _resource is { State: QtImageState.Ready } ready ? ready.Warning
+                    : string.Empty;
                 if (text.Length == 0)
                     return string.Empty;
                 if (text != _errorSource)

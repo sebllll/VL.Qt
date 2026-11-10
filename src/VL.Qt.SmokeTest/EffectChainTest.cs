@@ -221,7 +221,8 @@ static class EffectChainTest
         check(cRow.layers == 0, $"effect-chain: Row child effect removed -> no layer ({cRow})");
 
         // 7) Mask node with a Text element at a position: window there (mask lies in the parent's coordinates, like a sibling).
-        // Red 300 x 200 at (200, 200); text mask "MASK" at (220, 220), glyphs ~225..435 x 245..310: red only there.
+        // Red 300 x 200 at (200, 200); text mask "MASK" at (220, 220), glyphs ~225..435 x 245..310 (to ~450 with the wider
+        // DejaVu Sans of Linux): red only there.
         Element Masked(Element? m)
             => Rect(rectM, red, new RectangleF(2, 2, 3, 2), m is null ? null : mask.Update(null, m, 0, 0, 1, 0, false), out _);
         Frame(Masked(Text(maskText, "MASK", new RectangleF(2.2f, 2.2f, 2, 1), 0.8f, null)), "mask");
@@ -233,7 +234,7 @@ static class EffectChainTest
                 {
                     var c = Px(a, x, y);
                     bool isRed = c.R > 200 && c.G < 60 && c.B < 60;
-                    bool inBox = x >= 215 && x < 440 && y >= 215 && y < 330;
+                    bool inBox = x >= 215 && x < 470 && y >= 215 && y < 330;
                     if (isRed && inBox) inside++;
                     else if (isRed) outside++;
                 }

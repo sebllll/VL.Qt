@@ -73,7 +73,7 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 |---|---|
 | `build.ps1` | Builds everything: QtNative + Qt deploy, then `dotnet build src/VL.Qt`. `-Test` adds unit tests and the SmokeTest (log and grabs in `build/smoke/`), `-Only <scenario,...>` limits the SmokeTest, `-Patch <doc.vl>` compile-checks a patch with vvvvc. `-SkipNative` for C#-only changes, `-Configuration Debug`, `-ForceDeploy`. Exit 0 = all steps passed, a summary lists each step. |
 | `start-vvvv.ps1` | Starts vvvv with VL.Qt from this repo. `-Build` builds first, `-Help "Draw Text"` opens `help/Qt/HowTo Draw Text.vl`, `-Patch <file>` any patch, `-PrepareOnly` only sets up the package repository. |
-| `vvvvc.ps1` | Compiles or exports a patch with vvvvc (vvvv's command-line compiler). `-File <doc.vl>` (default `help/HelloWorld.vl`), `-Out <dir>` (default `build/vvvvc`), further arguments go to vvvvc. Exit 0 = no build errors. |
+| `vvvvc.ps1` | Compiles or exports a patch with vvvvc (vvvv's command-line compiler). `-File <doc.vl>` (default `help/HelloWorld.vl`, a test patch of the repo that is not in the NuGet package; use a `help/Qt/` patch with a package), `-Out <dir>` (default `build/vvvvc`), further arguments go to vvvvc. Exit 0 = no build errors. |
 | `start-vvvv-with-nupkg.ps1` / `.cmd` | Starts vvvv with a packed `VL.Qt.*.nupkg` without installing it, e.g. to test a release. Takes the newest nupkg next to the script or from `-NupkgDir`; `-Help`, `-Patch` like above. The `.cmd` is for double-clicking. |
 
 **Native build and Qt**

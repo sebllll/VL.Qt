@@ -220,7 +220,7 @@ static class ReadmeImagesTest
                     const float L = 14;
                     var pad = (L / 2 + L / 64) * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [directional], pad, 0, pad, 0, L * s, "length");
+                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [directional], pad, 0, pad, 0, L * s, "blurLength");
                     cmd.UniformF32("angle", 0);
                     cmd.EndLink();
                     cmd.EndEffectChain();
@@ -231,7 +231,7 @@ static class ReadmeImagesTest
                     const float L = 40;
                     var pad = L * 0.6f * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [zoom], pad, pad, pad, pad, L * s, "length");
+                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [zoom], pad, pad, pad, pad, L * s, "blurLength");
                     cmd.UniformVec2("center", 0.5f, 0.5f);
                     cmd.EndLink();
                     cmd.EndEffectChain();

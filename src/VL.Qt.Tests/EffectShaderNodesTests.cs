@@ -78,7 +78,7 @@ namespace VL.Qt.Tests
             var link = Link(node.Update(null, 0f, Unit(64)));
             Assert.That(link.Template, Is.EqualTo(Protocol.EffectTemplate.TwoPass));
             Assert.That(link.ShaderIds, Has.Length.EqualTo(1));
-            Assert.That(link.StrengthUniform, Is.EqualTo("length"));
+            Assert.That(link.StrengthUniform, Is.EqualTo("blurLength"));
             Assert.That(link.Strength, Is.EqualTo(64f).Within(1e-3));
             Assert.That(link.Padding, Is.EqualTo(new RectangleF(33, 0, 33, 0)), "L / 2 + L / 64, horizontal");
             Assert.That(link.Uniforms.Single().Name, Is.EqualTo("angle"));
@@ -93,7 +93,7 @@ namespace VL.Qt.Tests
         {
             using var zoom = new ZoomBlurNode(_client);
             var z = Link(zoom.Update(null, new Vector2(0.5f, 0.5f), Unit(100)));
-            Assert.That(z.StrengthUniform, Is.EqualTo("length"));
+            Assert.That(z.StrengthUniform, Is.EqualTo("blurLength"));
             Assert.That(z.Strength, Is.EqualTo(100f).Within(1e-3));
             Assert.That(z.Padding, Is.EqualTo(new RectangleF(60, 60, 60, 60)));
             Assert.That(z.Uniforms.Single().Name, Is.EqualTo("center"));

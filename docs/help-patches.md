@@ -78,6 +78,8 @@ See [Diagnostics](diagnostics.md).
 
 ## Minimal patches for exports
 
-- `help/HelloWorld.vl` — Windows
-- `help/HelloWorldLinux.vl` — Linux console export, see [Linux](linux.md)
-- `help/linux/HelloConsole.vl` — console export without VL.Qt
+These test patches live in the repository only; the NuGet package contains neither `help/HelloWorld*` nor `help/linux/`. With the package, export one of the `help/Qt/` patches instead (for Linux with a `KeepAppAlive` added, see [Linux](linux.md)).
+
+- `help/HelloWorld.vl` — Windows (repo only)
+- `help/HelloWorldLinux.vl` — Linux console export, see [Linux](linux.md) (repo only)
+- `help/linux/HelloConsole.vl` — console export without VL.Qt (repo only)
