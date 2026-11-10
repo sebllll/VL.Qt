@@ -103,7 +103,9 @@ static class BorderlessTest
         var r2 = new WindowRenderer(new SceneRegistry(), title2, small, mode: Protocol.WindowMode.Borderless);
         var g5 = Shown(r2, title2);
         var c5 = Client(title2);
-        check(g5 is { } a5 && Close(a5.Bounds, small), $"233: created borderless at Bounds, 100x60 ({g5?.Bounds} vs {small})");
+        check(g5 is { } s5 && s5.Bounds.Width == small.Width && s5.Bounds.Height == small.Height, $"233: created borderless: size 100x60 ({g5?.Bounds} vs {small})");
+        // The position is the window manager's call under WSLg/xcb (SKIP there, see Program.PositionByWindowManager).
+        Program.PositionByWindowManager(check)(g5 is { } a5 && Close(a5.Bounds, small), $"233: created borderless at Bounds ({g5?.Bounds} vs {small})");
         if (c5 is { } p5)
             check(Math.Abs(p5.X - small.X) <= 1 && Math.Abs(p5.Y - small.Y) <= 1, $"233: created borderless: client top-left = Bounds position ({p5})");
         r2.Dispose();
