@@ -125,10 +125,13 @@ The repository `sebllll/VL.Qt` differs from forks and private copies in a few pl
 
 One-time setup by a maintainer (repository settings):
 
-- [ ] Environment `release` (Settings > Environments): required reviewer, deployment branches and tags limited to `v*`.
+- [ ] Environment `release` (Settings > Environments): deployment branches and tags limited to `v*`. A required reviewer is optional: the tag ruleset below already decides who can release.
 - [ ] nuget.org Trusted Publishing policy (nuget.org > account > Trusted Publishing): repository owner `sebllll`, repository `VL.Qt`, workflow file `build.yml`, environment `release`, scope push for the package `VL.Qt`. A policy for a private repository is only active for a few days until its first successful push binds it to the repository; if it expired, create it again.
 - [ ] Environment variable `NUGET_USER` in `release` (not a secret): the nuget.org profile name that owns the policy.
-- [ ] Rulesets for `develop` and `main` with the required check `public check (no private files or content)`.
+- [ ] Rulesets (Settings > Rules > Rulesets):
+  - `develop` and `main`: pull request required, no deletion or force push, required check `public check (no private files or content)`.
+  - `main` only: restrict updates, bypass for the role Repository admin in pull requests only. Others with write access can open pull requests to `main` but not merge them.
+  - Tags `refs/tags/v*`: restrict creation, update and deletion, bypass for the role Repository admin. Only admins can start a release. This is the actual protection: a tag runs `build.yml` as it is in the tagged commit, so the job `release-gate` alone does not stop a tag on a branch with a changed workflow.
 
 Per release:
 
@@ -136,7 +139,7 @@ Per release:
 - [ ] Open the PR `develop` -> `main` and merge it with a merge commit (no squash).
 - [ ] Tag the merge commit on `main`: `git tag v<version>` (for example `v1.0.0`, `v1.1.0-rc.1`) and `git push origin v<version>`. The tag name is the package version.
 - [ ] The tag starts `build.yml` with all four RIDs. Check the job `pack`: the step "Verify package" prints the package size (limit 250 MB), the `qt/<rid>/` layout and the nuspec metadata (id, version, license, repository).
-- [ ] Approve the deployment to `release` when GitHub asks. The job `release` creates the GitHub release with the `.nupkg` and pushes it to nuget.org.
+- [ ] The job `release` creates the GitHub release with the `.nupkg` and pushes it to nuget.org (approve the deployment first if the environment has a required reviewer).
 - [ ] Without `NUGET_USER` (or in a fork) the push is skipped with a notice instead of an error. A failed login means the policy does not match (repository, workflow file, environment) or has expired. Fallback: push by hand with `dotnet nuget push <file> -s https://api.nuget.org/v3/index.json -k <key>` and a short-lived API key.
 - [ ] A tag on a commit that is not on `main` builds and tests but does not release (warning in the job `release-gate`). Delete the tag and tag the right commit.
 - [ ] After publishing: check the package on nuget.org and install it with `tools/start-vvvv-with-nupkg.ps1`.
