@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
             var padY = EffectPadding.Ceil(half * MathF.Abs(MathF.Sin(a)));
             return new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
                 new[] { Uniform.Float("angle", p.Angle) }.ToSpread(),
-                new RectangleF(padX, padY, padX, padY), length, "length");
+                new RectangleF(padX, padY, padX, padY), length, "blurLength");
         };
 
         readonly BuiltinShaderLink<Props> _link;

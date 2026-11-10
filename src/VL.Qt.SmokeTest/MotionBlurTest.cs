@@ -129,13 +129,13 @@ static class MotionBlurTest
             if (row == Dir)
             {
                 cmd.UniformF32("angle", angle);
-                cmd.UniformF32("length", amount);
+                cmd.UniformF32("blurLength", amount);
                 cmd.UniformF32("dpr", dpr);
             }
             else if (row == Zoom)
             {
                 cmd.UniformVec2("center", 0.5f, 0.5f);
-                cmd.UniformF32("length", amount);
+                cmd.UniformF32("blurLength", amount);
                 cmd.UniformF32("dpr", dpr);
             }
             else
@@ -206,6 +206,9 @@ static class MotionBlurTest
         float X(int col, float dx) => CellX(col) + CellW / 2 + dx;
         float Y(uint row, float dy) => CellY(row) + CellH / 2 + dy;
 
+        // Rotation / zoom centre: compared with the unblurred picture below (the text may reach the centre, its width depends
+        // on the system font).
+        Color zoomCentre, radialCentre;
         using (var a = grab(w, Path.Combine(outDir, "motion-blur_all.png")))
         {
             // The shape itself (cell centre + 100..160, +-25) stays bright (box blur centred on the pixel); the large radial blur
@@ -227,7 +230,7 @@ static class MotionBlurTest
             gpu(zoomMean is > 0.05 and < 0.5, $"438: zoom large (60): streak beyond the shape end ({zoomMean:F3})");
             // radial streaks only: above the shape the zoom blur stays dark
             gpu(IsBg(Px(a, X(1, 130), Y(Zoom, -50))), $"438: zoom: nothing smeared sideways ({Px(a, X(1, 130), Y(Zoom, -50))})");
-            gpu(IsBg(Px(a, X(1, 0), Y(Zoom, 0))), "438: zoom: centre unchanged");
+            zoomCentre = Px(a, X(1, 0), Y(Zoom, 0));
 
             // Radial: 20 DIP above / below the shape (cell centre + 130, -45 / +45): large (40 deg, +-20 deg ~ +-47 DIP at
             // radius 140) lights it, small (4 deg) not.
@@ -235,7 +238,7 @@ static class MotionBlurTest
                 $"438: radial small: no smear next to the shape ({Px(a, X(0, 130), Y(Radial, -45))})");
             gpu(Lit(Px(a, X(1, 130), Y(Radial, -45))) > 0.1 && Lit(Px(a, X(1, 130), Y(Radial, 45))) > 0.1,
                 $"438: radial large: arcs reach above and below the shape ({Px(a, X(1, 130), Y(Radial, -45))}, {Px(a, X(1, 130), Y(Radial, 45))})");
-            gpu(IsBg(Px(a, X(1, 0), Y(Radial, 0))), "438: radial: centre unchanged");
+            radialCentre = Px(a, X(1, 0), Y(Radial, 0));
             // along the ray the radial blur does not smear: beyond the shape end it stays dark
             gpu(IsBg(Px(a, X(1, 180), Y(Radial, 0))), $"438: radial: nothing smeared along the ray ({Px(a, X(1, 180), Y(Radial, 0))})");
         }
@@ -247,9 +250,17 @@ static class MotionBlurTest
         CheckApply("amount 0");
         pump(4);
         using (var a = grab(w, Path.Combine(outDir, "motion-blur_zero.png")))
+        {
             foreach (var row in new[] { Dir, Zoom, Radial })
                 gpu(IsBg(Px(a, X(1, 95), Y(row, 0))) && IsWhite(Px(a, X(1, 105), Y(row, 0))),
                     $"438: row {row}: amount 0 = unblurred edge ({Px(a, X(1, 95), Y(row, 0))} | {Px(a, X(1, 105), Y(row, 0))})");
+            // the large zoom / radial blur leaves its centre as it is
+            static bool Same(Color p, Color q) => Math.Abs(p.R - q.R) < 8 && Math.Abs(p.G - q.G) < 8 && Math.Abs(p.B - q.B) < 8;
+            var zoomZero = Px(a, X(1, 0), Y(Zoom, 0));
+            var radialZero = Px(a, X(1, 0), Y(Radial, 0));
+            gpu(Same(zoomCentre, zoomZero), $"438: zoom: centre unchanged ({zoomCentre} vs {zoomZero} unblurred)");
+            gpu(Same(radialCentre, radialZero), $"438: radial: centre unchanged ({radialCentre} vs {radialZero} unblurred)");
+        }
 
         // Animated directional length: block mean 10 DIP beside the shape, 1 DIP steps over 40..52 (sample count 20..26) grows
         // smoothly, no step (a count change must not show).

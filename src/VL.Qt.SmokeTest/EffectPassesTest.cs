@@ -170,10 +170,10 @@ static class EffectPassesTest
         void Directional(CommandWriter c, ushort template, float pad)
         {
             var two = template == Protocol.EffectTemplate.TwoPass;
-            c.BeginShaderLink(template, [blur], pad, 0, pad, 0, two ? L : 0, two ? "length" : "");
+            c.BeginShaderLink(template, [blur], pad, 0, pad, 0, two ? L : 0, two ? "blurLength" : "");
             c.UniformF32("angle", 0);
             if (!two)
-                c.UniformF32("length", L);
+                c.UniformF32("blurLength", L);
             c.EndLink();
         }
         void Chain(uint id, params Action<CommandWriter>[] links)
