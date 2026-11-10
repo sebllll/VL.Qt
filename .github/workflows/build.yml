@@ -289,12 +289,15 @@ jobs:
           # Package layout (#315): lib/net10.0/ (packman/dotnet ignore a flat lib/), Qt runtime in qt/<rid>/ (NuGet would
           # flatten runtimes/<rid>/native into the app), buildTransitive/VL.Qt.targets copies it into the app.
           $need = @('VL.Qt.vl', 'VL.Qt.vl.targets', 'LICENSES.md', 'lib/net10.0/VL.Qt.dll', 'buildTransitive/VL.Qt.targets', 'buildTransitive/VL.Qt.Shaders.targets',
-                    'help/HelloWorld.vl', 'LICENSES/LGPL-3.0.txt')
+                    'help/Qt/HowTo Draw a Rectangle.vl', 'LICENSES/LGPL-3.0.txt')
           foreach ($rid in $rids) { $need += $qtNative[$rid] | ForEach-Object { "qt/$rid/$_" } }
           $missing = $need | Where-Object { $_ -notin $names }
           if ($missing) { throw "missing in package: $($missing -join ', ')" }
           $bad = @($names | Where-Object { $_ -like 'runtimes/*' -or $_ -like 'lib/VL.Qt.*' })
           if ($bad) { throw "NuGet asset folders must stay empty (#315): $($bad | Select-Object -First 5)" }
+          # The test patches of the repo (help/HelloWorld*, help/linux/) must not ship.
+          $hello = @($names | Where-Object { $_ -like 'help/HelloWorld*' -or $_ -like 'help/linux/*' })
+          if ($hello) { throw "test patches in the package: $($hello -join ', ')" }
           # Metadata from the nuspec (nuget.org needs id, version, license; repository links the package to the source).
           $nuspecEntry = $names | Where-Object { $_ -like '*.nuspec' -and $_ -notlike '*/*' } | Select-Object -First 1
           if (-not $nuspecEntry) { throw 'no .nuspec in the package' }
