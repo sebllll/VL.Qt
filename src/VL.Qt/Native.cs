@@ -174,6 +174,12 @@ namespace VL.Qt
         /// <summary>#314: only <paramref name="windows"/>[0..count) may render in this pump (the windows of one vvvv app).</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void vlqt_app_process_events_for(IntPtr[] windows, int count);
+        /// <summary>
+        /// #24: delivers the queued window system events (input) without rendering, at the start of the host frame.
+        /// Number of delivered events, -1 = app not initialized.
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_app_deliver_input();
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_driver_advance(double seconds);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -266,6 +272,12 @@ namespace VL.Qt
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_send_touch(IntPtr w, int type, int id, float x, float y);
+        /// <summary>TEST ONLY (#24): mouse event (Move, Press, Release) queued like platform input, delivered later. 0 = ok.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_queue_mouse(IntPtr w, int type, float x, float y);
+        /// <summary>TEST ONLY (#24): touch point event queued like platform input, delivered later. 0 = ok, -2 unknown type or id state.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_queue_touch(IntPtr w, int type, int id, float x, float y);
         /// <summary>
         /// TEST ONLY: QRhi of window w (IntPtr.Zero = the upload QRhi on the shared device) and its native device
         /// (ID3D11Device* on D3D11). 0 = ok, -2 no QRhi yet.
@@ -396,6 +408,29 @@ namespace VL.Qt
         /// <summary>Tooltip preview of an image loaded with <see cref="Protocol.Img.Preview"/> (BGRA8 premultiplied, &lt;= 256 px, #546): bytes written, -required (desc set), -7 none, -9.</summary>
         public static int ResReadPreview(ulong id, Span<byte> dst, out vlqt_pixel_desc desc)
             => vlqt_res_read_preview(id, ref MemoryMarshal.GetReference(dst), dst.Length, out desc);
+
+        // App fonts (#15, LoadFont node): Qt GUI thread (vvvv main thread) only, reference counted per file in QtNative.
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_font_add([MarshalAs(UnmanagedType.LPUTF8Str)] string path, out ulong handle, ref byte families, int familiesCap);
+        /// <summary>Drops one reference of a font handle; the font is removed at the end of the pump when none is left. 0 / -1 wrong thread / -9.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_font_release(ulong handle);
+        /// <summary>Test: references of a font handle, 0 = removal pending, -9 = removed or unknown.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_font_refs(ulong handle);
+
+        /// <summary>
+        /// Registers a font file (or shares its registration) and takes one reference: 0 with the handle and the family
+        /// names of the file ('\n'-separated), -1 on error (<see cref="LastError"/>).
+        /// </summary>
+        public static int FontAdd(string path, out ulong handle, out string families)
+        {
+            Span<byte> buffer = stackalloc byte[1024];
+            var rc = vlqt_font_add(path, out handle, ref MemoryMarshal.GetReference(buffer), buffer.Length);
+            var length = buffer.IndexOf((byte)0);
+            families = rc == 0 && length > 0 ? System.Text.Encoding.UTF8.GetString(buffer[..length]) : string.Empty;
+            return rc;
+        }
 
         public static int ResPoll(Span<byte> @out) => vlqt_res_poll(ref MemoryMarshal.GetReference(@out), @out.Length);
         public static int ResList(Span<vlqt_res_info> @out) => vlqt_res_list(ref MemoryMarshal.GetReference(@out), @out.Length);

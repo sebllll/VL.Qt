@@ -19,6 +19,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QPointer>
+#include <QtCore/QThread>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QIcon>
@@ -39,6 +40,8 @@
 // Dirty item list of a window (change count, #544): private API, check on Qt updates.
 #include <QtQuick/private/qquickitem_p.h>
 #include <QtQuick/private/qquickwindow_p.h>
+// Touch moves held back until the next render (#24, vlqt_app_deliver_input): private API, check on Qt updates.
+#include <QtQuick/private/qquickdeliveryagent_p_p.h>
 
 #ifdef _WIN32
 #define NOMINMAX
@@ -55,6 +58,8 @@
 #include <QtGui/private/qeventpoint_p.h>
 #include <QtGui/private/qpointingdevice_p.h>
 #include <QtGui/qpa/qwindowsysteminterface.h>
+// vlqt_app_deliver_input (#24): QWindowSystemInterface::flushWindowSystemEvents. TEST ONLY: native positions of queued input.
+#include <QtGui/private/qhighdpiscaling_p.h>
 
 #include <string>
 #include <utility>
@@ -356,6 +361,21 @@ public:
         }
         s_inPump = false;
     }
+    static bool inPump() { return s_inPump; }
+    // #24: input delivered at the host frame start (vlqt_app_deliver_input) renders nothing: update requests are
+    // swallowed as outside every pump, and an Expose is deferred to the next pump as well.
+    static void beginDelivery() { s_delivering = true; }
+    static void endDelivery() { s_delivering = false; }
+    // Qt Quick compresses touch moves and delivers the last one right before the next render (flushFrameSynchronousEvents).
+    // The delivery at the frame start renders nothing, so it hands them over itself; the render finds none left.
+    static void deliverDelayedTouch()
+    {
+        for (size_t i = 0; i < s_gates.size(); i++) {
+            QQuickDeliveryAgentPrivate* agent = QQuickWindowPrivate::get(s_gates[i]->m_window)->deliveryAgentPrivate();
+            if (agent && agent->delayedTouch)
+                agent->deliverDelayedTouchEvent();
+        }
+    }
 protected:
     bool eventFilter(QObject* o, QEvent* e) override
     {
@@ -366,10 +386,11 @@ protected:
             }
             m_pending = false;
         } else if (e->type() == QEvent::Expose && m_window->isExposed()
-                   && (s_inPump ? m_blocked || m_rendered : !m_everRendered)) {
+                   && (s_inPump ? m_blocked || m_rendered : s_delivering || !m_everRendered)) {
             // Re-expose after this pump's render (XWayland sends two Expose on show) and the initial Expose outside
             // the pump (Windows: on show) render once in the pump instead (#214). Later Expose outside the pump
-            // (live resize in Windows' modal size loop) still renders directly; un-expose always passes.
+            // (live resize in Windows' modal size loop) still renders directly, except during the input delivery of
+            // the frame start (#24); un-expose always passes.
             m_pending = true;
             return true;
         }
@@ -447,20 +468,31 @@ private:
     bool m_pending = false, m_rendered = false, m_everRendered = false;
     bool m_blocked = false; // this pump belongs to another app (#314)
     static inline bool s_inPump = false;
+    static inline bool s_delivering = false; // vlqt_app_deliver_input (#24)
     static inline std::vector<UpdateGate*> s_gates;
 };
 
 // TEST ONLY: with VLQT_TEST_SYNTHETIC_INPUT=1 (read per window at create, SmokeTest) the window drops spontaneous
 // (OS) pointer/hover events, so a real cursor resting over a test window cannot change hover/press state; input
-// from vlqt_test_send_mouse (sendEvent, not spontaneous) passes.
+// from vlqt_test_send_mouse (sendEvent, not spontaneous) passes, and so does queued input of the test devices
+// (vlqt_test_queue_mouse / _touch, spontaneous like platform input, #24).
+constexpr qint64 testTouchSystemId = 0x766c7174;
+constexpr qint64 testMouseSystemId = 0x766c716d;
 class SystemInputFilter : public QObject
 {
 public:
     using QObject::QObject;
 protected:
+    static bool fromTestDevice(QEvent* e)
+    {
+        if (!e->isPointerEvent())
+            return false;
+        const QPointingDevice* d = static_cast<QPointerEvent*>(e)->pointingDevice();
+        return d && (d->systemId() == testTouchSystemId || d->systemId() == testMouseSystemId);
+    }
     bool eventFilter(QObject* o, QEvent* e) override
     {
-        if (e->spontaneous()) {
+        if (e->spontaneous() && !fromTestDevice(e)) {
             switch (e->type()) {
             case QEvent::MouseMove: case QEvent::MouseButtonPress: case QEvent::MouseButtonRelease:
             case QEvent::MouseButtonDblClick: case QEvent::HoverEnter: case QEvent::HoverMove:
@@ -501,6 +533,8 @@ struct Window {
     Qt::MouseButtons testButtons = Qt::NoButton; // vlqt_test_send_mouse: buttons held between test events
     QElapsedTimer testClock;                     // vlqt_test_send_mouse / _touch: event timestamps
     std::vector<std::pair<int, QPointF>> testTouch; // vlqt_test_send_touch: active points (id, window DIP)
+    Qt::MouseButtons testQueuedButtons = Qt::NoButton;    // vlqt_test_queue_mouse (#24)
+    std::vector<std::pair<int, QPointF>> testQueuedTouch; // vlqt_test_queue_touch (#24): active points (id, window DIP)
     unsigned mode = 0;                           // vlqt_window_set_mode: requested vlqt_window_mode bits
     // #234: geometry before fullscreen (DIP, frame position like vlqt_window_create_at), restored when leaving it
     bool fsSaved = false;
@@ -656,6 +690,47 @@ void placeWindow(QQuickWindow* win, float x, float y, int width, int height)
         win->setFramePosition(pos);
 }
 
+// App fonts (#15, LoadFont node). One entry per font file, shared by every LoadFont node that names it.
+// Thread: QFontDatabase app fonts and every text layout belong to the Qt GUI thread, which is the vvvv main thread
+// (vlqt_app_init, basic render loop, no render thread). Adding there means the next layout in the same pump already
+// sees the family, so no queue to another thread is needed; calls from other threads are rejected.
+// Key: canonical path + size + last-modified time. Qt reads the file when it is registered; a later change on disk is
+// not watched, but the next add after a change (path edit, app restart) registers the new version as its own entry.
+// A deleted file keeps working until its entry is removed.
+// Removal: refs 0 only marks the entry; fontsEndFrame removes it at the end of the pump if nobody took it again, so a
+// path swap between nodes, a node re-created by a live edit or an app restart (F8) does not remove and re-add the font.
+// Texts still naming a removed family keep their glyphs until their next layout, then Qt substitutes another font.
+// The QGuiApplication is never deleted, so fonts still registered at shutdown stay with the process.
+struct FontEntry {
+    QString key;
+    int qtId = -1;
+    int refs = 0;
+    QByteArray families; // '\n'-separated, UTF-8
+};
+std::vector<std::pair<unsigned long long, FontEntry>> g_fonts; // few entries: linear search
+unsigned long long g_nextFontHandle = 1;
+
+FontEntry* findFont(unsigned long long handle)
+{
+    for (auto& [h, e] : g_fonts)
+        if (h == handle)
+            return &e;
+    return nullptr;
+}
+
+void fontsEndFrame()
+{
+    for (auto it = g_fonts.begin(); it != g_fonts.end();) {
+        if (it->second.refs > 0) {
+            ++it;
+            continue;
+        }
+        QFontDatabase::removeApplicationFont(it->second.qtId);
+        emitLog(0, "vlqt.font", "Font removed: " + it->second.families);
+        it = g_fonts.erase(it);
+    }
+}
+
 } // namespace
 
 extern "C" {
@@ -768,6 +843,7 @@ VLQT_API void vlqt_app_process_events_for(void* const* windows, int count)
         QCoreApplication::processEvents(QEventLoop::AllEvents);
         UpdateGate::endPump();
         vlqt::res::endFrame(); // frees resources without references, never in a worker
+        fontsEndFrame();       // app fonts without references (#15)
         vlqt::device::checkLost();
         const float ms = float(t.nsecsElapsed() / 1e6);
         if (!windows)
@@ -777,6 +853,32 @@ VLQT_API void vlqt_app_process_events_for(void* const* windows, int count)
                 if (perf)
                     perf->endPump(ms);
         return 0;
+    });
+}
+
+VLQT_API int vlqt_app_deliver_input(void)
+{
+    return guarded([&]() -> int {
+        if (!g_app) {
+            setError("app not initialized");
+            return -1;
+        }
+        // From inside the pump (a host callback in processEvents) the pump itself delivers.
+        if (UpdateGate::inPump())
+            return 0;
+        // Windows: vvvv's message loop between two frames has run Qt's window procedure, which queued the input here
+        // (or already delivered it on Qt's posted-events message). Delivery goes to the target window of each event;
+        // events of a destroyed window are dropped by Qt (QPointer), so the window list of the pump is not needed.
+        const int queued = QWindowSystemInterface::windowSystemEventsQueued();
+        struct Delivery {
+            Delivery() { UpdateGate::beginDelivery(); }
+            ~Delivery() { UpdateGate::endDelivery(); }
+        } delivery;
+        if (queued > 0)
+            QWindowSystemInterface::flushWindowSystemEvents(QEventLoop::AllEvents);
+        // Also touch moves that the message loop between two frames already delivered to Qt Quick.
+        UpdateGate::deliverDelayedTouch();
+        return queued;
     });
 }
 
@@ -1416,7 +1518,7 @@ static const QPointingDevice* testTouchDevice()
 {
     static QPointer<QPointingDevice> s_device;
     if (!s_device) {
-        s_device = new QPointingDevice(QStringLiteral("vlqt test touchscreen"), 0x766c7174, QInputDevice::DeviceType::TouchScreen,
+        s_device = new QPointingDevice(QStringLiteral("vlqt test touchscreen"), testTouchSystemId, QInputDevice::DeviceType::TouchScreen,
             QPointingDevice::PointerType::Finger, QInputDevice::Capability::Position | QInputDevice::Capability::Area, 10, 0,
             QString(), QPointingDeviceUniqueId(), QCoreApplication::instance());
         QWindowSystemInterface::registerInputDevice(s_device);
@@ -1484,6 +1586,113 @@ VLQT_API int vlqt_test_send_touch(void* p, int type, int id, float x, float y)
             QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device))->removePointById(id);
         }
         return 0;
+    });
+}
+
+// TEST ONLY: one mouse for vlqt_test_queue_mouse (#24), registered once like the touchscreen.
+static const QPointingDevice* testMouseDevice()
+{
+    static QPointer<QPointingDevice> s_device;
+    if (!s_device) {
+        s_device = new QPointingDevice(QStringLiteral("vlqt test mouse"), testMouseSystemId, QInputDevice::DeviceType::Mouse,
+            QPointingDevice::PointerType::Generic, QInputDevice::Capability::Position | QInputDevice::Capability::Hover, 1, 3,
+            QString(), QPointingDeviceUniqueId(), QCoreApplication::instance());
+        QWindowSystemInterface::registerInputDevice(s_device);
+    }
+    return s_device;
+}
+
+VLQT_API int vlqt_test_queue_mouse(void* p, int type, float x, float y)
+{
+    return guarded([&]() -> int {
+        auto* w = static_cast<Window*>(p);
+        if (!w) {
+            setError("test_queue_mouse: null window");
+            return -1;
+        }
+        QEvent::Type t;
+        Qt::MouseButton button = Qt::NoButton;
+        Qt::MouseButtons buttons = w->testQueuedButtons;
+        switch (type) {
+        case VLQT_MOUSE_MOVE: t = QEvent::MouseMove; break;
+        case VLQT_MOUSE_PRESS: t = QEvent::MouseButtonPress; button = Qt::LeftButton; buttons |= Qt::LeftButton; break;
+        case VLQT_MOUSE_RELEASE: t = QEvent::MouseButtonRelease; button = Qt::LeftButton; buttons &= ~Qt::LeftButton; break;
+        default:
+            setError("test_queue_mouse: unknown type " + std::to_string(type));
+            return -2;
+        }
+        w->testQueuedButtons = buttons;
+        if (!w->testClock.isValid())
+            w->testClock.start();
+        const QPointF local(x, y);
+        // Native pixels, like the platform plugin hands them over (QWindowSystemInterface scales them back).
+        QWindowSystemInterface::handleMouseEvent<QWindowSystemInterface::AsynchronousDelivery>(w->window,
+            ulong(w->testClock.elapsed()) + 1, testMouseDevice(), QHighDpi::toNativeLocalPosition(local, w->window),
+            QHighDpi::toNativeGlobalPosition(QPointF(w->window->mapToGlobal(local)), w->window), buttons, button, t);
+        return 0;
+    });
+}
+
+VLQT_API int vlqt_test_queue_touch(void* p, int type, int id, float x, float y)
+{
+    return guarded([&]() -> int {
+        auto* w = static_cast<Window*>(p);
+        if (!w) {
+            setError("test_queue_touch: null window");
+            return -1;
+        }
+        auto& active = w->testQueuedTouch;
+        auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
+        const bool known = it != active.end();
+        QEventPoint::State state;
+        switch (type) {
+        case VLQT_TOUCH_PRESS: state = QEventPoint::State::Pressed; break;
+        case VLQT_TOUCH_MOVE: state = QEventPoint::State::Updated; break;
+        case VLQT_TOUCH_RELEASE: state = QEventPoint::State::Released; break;
+        default:
+            setError("test_queue_touch: unknown type " + std::to_string(type));
+            return -2;
+        }
+        if (known == (type == VLQT_TOUCH_PRESS)) {
+            setError("test_queue_touch: point " + std::to_string(id) + (known ? " is already pressed" : " is not pressed"));
+            return -2;
+        }
+        const QPointF pos(x, y);
+        if (known)
+            it->second = pos;
+        else
+            active.emplace_back(id, pos);
+        if (!w->testClock.isValid())
+            w->testClock.start();
+        // The complete touch state like a touchscreen driver: every active point, the changed one with its state.
+        // QGuiApplication registers and forgets the points at the device itself (not the sendEvent path).
+        QList<QWindowSystemInterface::TouchPoint> points;
+        for (const auto& a : active) {
+            QWindowSystemInterface::TouchPoint tp;
+            tp.id = a.first;
+            tp.state = a.first == id ? state : QEventPoint::State::Stationary;
+            const QPointF global = QHighDpi::toNativeGlobalPosition(QPointF(w->window->mapToGlobal(a.second)), w->window);
+            tp.area = QRectF(global - QPointF(2, 2), QSizeF(4, 4));
+            tp.pressure = tp.state == QEventPoint::State::Released ? 0 : 1;
+            points.append(tp);
+        }
+        QWindowSystemInterface::handleTouchEvent<QWindowSystemInterface::AsynchronousDelivery>(w->window,
+            ulong(w->testClock.elapsed()) + 1, testTouchDevice(), points);
+        if (type == VLQT_TOUCH_RELEASE)
+            active.erase(std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; }));
+        return 0;
+    });
+}
+
+VLQT_API int vlqt_test_measure_count(void* p)
+{
+    return guarded([&]() -> int {
+        auto* w = static_cast<Window*>(p);
+        if (!w) {
+            setError("test_measure_count: null window");
+            return -1;
+        }
+        return w->scene->measuredLastPoll;
     });
 }
 
@@ -1742,6 +1951,95 @@ VLQT_API int vlqt_res_snapshot_fit(unsigned long long id, void* p, unsigned elem
         }
         return vlqt::res::snap::startFit(id, *w->scene, elementId, maxEdgePx);
     });
+}
+
+VLQT_API int vlqt_font_add(const char* utf8Path, unsigned long long* outHandle, char* families, int familiesCap)
+{
+    return guarded([&]() -> int {
+        if (outHandle)
+            *outHandle = 0;
+        if (families && familiesCap > 0)
+            families[0] = 0;
+        if (!g_app) {
+            setError("font_add: app not initialized");
+            return -1;
+        }
+        if (QThread::currentThread() != g_app->thread()) {
+            setError("font_add: not on the Qt GUI thread (the vvvv main thread)");
+            return -1;
+        }
+        if (!utf8Path || !outHandle) {
+            setError("font_add: null argument");
+            return -1;
+        }
+        const QFileInfo info(QString::fromUtf8(utf8Path));
+        if (!info.isFile()) {
+            setErrorQ(QStringLiteral("font file not found: %1").arg(info.filePath()));
+            return -1;
+        }
+        QString key = info.canonicalFilePath();
+#ifdef _WIN32
+        key = key.toLower(); // NTFS paths are case-insensitive
+#endif
+        key += QStringLiteral("|%1|%2").arg(info.size()).arg(info.lastModified().toMSecsSinceEpoch());
+        unsigned long long handle = 0;
+        FontEntry* entry = nullptr;
+        for (auto& [h, e] : g_fonts)
+            if (e.key == key) {
+                handle = h;
+                entry = &e;
+                break;
+            }
+        if (!entry) {
+            const int id = QFontDatabase::addApplicationFont(info.filePath());
+            const QStringList names = id < 0 ? QStringList() : QFontDatabase::applicationFontFamilies(id);
+            if (names.isEmpty()) {
+                if (id >= 0)
+                    QFontDatabase::removeApplicationFont(id);
+                setErrorQ(QStringLiteral("not a font file Qt can read: %1").arg(info.filePath()));
+                return -1;
+            }
+            FontEntry e;
+            e.key = key;
+            e.qtId = id;
+            e.families = names.join(QLatin1Char('\n')).toUtf8();
+            handle = g_nextFontHandle++;
+            g_fonts.emplace_back(handle, std::move(e));
+            entry = &g_fonts.back().second;
+            emitLog(1, "vlqt.font", "Font registered: " + entry->families + " (" + info.filePath().toUtf8() + ")");
+        }
+        entry->refs++;
+        *outHandle = handle;
+        if (families && familiesCap > 0) {
+            const int n = std::min(int(entry->families.size()), familiesCap - 1);
+            std::memcpy(families, entry->families.constData(), size_t(n));
+            families[n] = 0;
+        }
+        return 0;
+    });
+}
+
+VLQT_API int vlqt_font_release(unsigned long long handle)
+{
+    return guarded([&]() -> int {
+        if (g_app && QThread::currentThread() != g_app->thread()) {
+            setError("font_release: not on the Qt GUI thread (the vvvv main thread)");
+            return -1;
+        }
+        FontEntry* e = findFont(handle);
+        if (!e || e->refs <= 0) {
+            setError("font_release: unknown handle " + std::to_string(handle));
+            return -9;
+        }
+        e->refs--; // removed at the end of the pump if still 0 (fontsEndFrame)
+        return 0;
+    });
+}
+
+VLQT_API int vlqt_test_font_refs(unsigned long long handle)
+{
+    const FontEntry* e = findFont(handle);
+    return e ? e->refs : -9;
 }
 
 } // extern "C"

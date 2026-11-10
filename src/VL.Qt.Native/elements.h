@@ -76,7 +76,16 @@ struct TransformState {
                                 // the item (and so the children) stays at the origin
     QObject* matrix = nullptr;  // = Node::transform (child of the item), null while TRANSFORM is a pure x/y translation
                                 // folded into x/y (placeItem in elements.cpp) and there was no drag offset
+    // Measure on change (#20, events.h "Measure on change"): the scene and id of the node, set by watchGeometry, null
+    // once the node is erased or the scene goes; queued = the id is in Scene::measureQueue.
+    Scene* scene = nullptr;
+    quint32 id = 0;
+    bool measureQueued = false;
 };
+
+/* The geometry of the node changed (frame, matrix, anchor, ...): queues it for the next poll, which measures it and its
+ * subtree (events.cpp). Cheap and idempotent until that poll; no-op once the node is gone. */
+void markGeometry(TransformState& s);
 
 /* The item's frame (#469): (ox, oy, width, height) in item coordinates, i.e. (0, 0, w, h) except for an auto-sized
  * Group whose children reach left of / above its origin, and (-fx * w, -fy * h, w, h) for a Group with AUTO_SIZE off
@@ -111,6 +120,10 @@ struct Node {
     float size[2] = {0, 0};      // last SIZE (w, h), so AUTO_SIZE can re-apply it
     quint32 transformEpoch = 0;  // counts SET TRANSFORM: a running drag re-bases its offset on 0 after one (#209)
     bool debug = false;          // DEBUG: drawn by the window's debug overlay (debug.h), counted in Elements::debugCount
+    bool polled = false;         // Elements::pollsState: the poll reads media/error/clicks/user value of this type
+    bool pollListed = false;     // its id is in Scene::pollIds (listPolled, events.h)
+    quint32 measuredStamp = 0;   // Scene::measureStamp of the last poll that visited it (one visit per poll, #20)
+    quint32 polledStamp = 0;     // Scene::pollStamp of the last poll that read its state
 };
 
 /* The element type takes AUTO_SIZE (containers, Button, value inputs, ShaderEffect with Input), see applySize. */
@@ -228,6 +241,9 @@ public:
      * bool or string) if there was one since the last call (QML vlqtUserCount, reset to 0); false otherwise and for
      * other types. See "Value inputs" in elements.cpp. */
     bool takeUserValue(const Node& node, QVariant& out);
+    /* The type has state the poll reads every frame (VIDEO media, vlqtError, vlqtClicks, vlqtUserCount); resolved once
+     * the first item of the type exists (Elements::create). */
+    bool pollsState(quint16 type) const;
 
     /* Number of live nodes with DEBUG on (set by the DEBUG setter, decremented by the Scene when such a node goes);
      * the Scene shows the debug overlay while it is > 0 or the window-wide switch is on. */
@@ -278,6 +294,9 @@ bool writeQml(QQuickItem* item, const ResolvedProp& rp, const QVariant& v, std::
 /* Read-modify-write of a QFont property (rp.prop = "font"). */
 template <class F>
 bool modifyFont(QObject* item, const ResolvedProp& rp, F&& f, std::string& err);
+/* #15: warns once per requested family (log category vlqt.font) when Qt does not have it and substitutes another font.
+ * Empty family and families already checked: nothing. Qt GUI thread only (the apply path). */
+void warnMissingFontFamily(const QString& family);
 
 } // namespace vlqt
 

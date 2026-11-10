@@ -124,6 +124,12 @@ VLQT_API void        vlqt_app_process_events(void);
 /* #314: like vlqt_app_process_events, but only the given windows (those of one vvvv app) may render in this pump.
  * Update requests of other windows stay pending until their own app's pump. windows NULL = all windows. */
 VLQT_API void        vlqt_app_process_events_for(void* const* windows, int count);
+/* #24: delivers the window system events Qt has queued (input of all windows, also geometry and close) without
+ * rendering: update requests stay pending and an Expose is deferred, both render in the next pump. Call at the start
+ * of the host frame, then vlqt_window_poll, so input that arrived between two frames reaches the host in this frame.
+ * Main thread only, outside vlqt_app_process_events (a call from inside the pump does nothing). Returns the number of
+ * queued events it delivered (0 = none), -1 = app not initialized. */
+VLQT_API int         vlqt_app_deliver_input(void);
 VLQT_API int         vlqt_driver_advance(double seconds);
 VLQT_API const char* vlqt_last_error(void);
 
@@ -308,6 +314,11 @@ VLQT_API int   vlqt_test_send_mouse(void* w, int type, float x, float y);
  * VLQT_TEST_SYNTHETIC_INPUT). Several ids = multitouch. 0 = ok, -1 null window, -2 unknown type, PRESS of an active id
  * or MOVE/RELEASE of an inactive one. */
 VLQT_API int   vlqt_test_send_touch(void* w, int type, int id, float x, float y);
+/* TEST ONLY (#24): like vlqt_test_send_mouse / vlqt_test_send_touch (PRESS, MOVE, RELEASE), but queued like platform
+ * input (QWindowSystemInterface, asynchronous): delivered by vlqt_app_deliver_input or the next pump. The events come
+ * from test devices and pass VLQT_TEST_SYNTHETIC_INPUT. 0 = ok, -1 null window, -2 unknown type or touch id state. */
+VLQT_API int   vlqt_test_queue_mouse(void* w, int type, float x, float y);
+VLQT_API int   vlqt_test_queue_touch(void* w, int type, int id, float x, float y);
 /* TEST ONLY (#320): synthetic wheel input, not for production use. Sends a QWheelEvent at x/y (window logical pixels)
  * with angleDelta (dx, dy) in eighths of a degree (120 = one notch) via QCoreApplication::sendEvent (synchronous, not
  * spontaneous: passes VLQT_TEST_SYNTHETIC_INPUT). 0 = ok, -1 null window. */
@@ -315,6 +326,9 @@ VLQT_API int   vlqt_test_send_wheel(void* w, float x, float y, int dx, int dy);
 /* TEST ONLY: number of pointer handlers (QQuickPointerHandler children) of item id (input handlers, #319);
  * -1 null window, -4 unknown id. */
 VLQT_API int   vlqt_test_handler_count(void* w, unsigned int id);
+/* TEST ONLY (#20): number of bound items whose geometry (EV_MEASURED / EV_SCENE_BOUNDS) the last poll of the window
+ * read; a static scene reads none. -1 null window. */
+VLQT_API int   vlqt_test_measure_count(void* w);
 /* TEST ONLY (#244): busy-waits ms inside one phase of the window's next rendered frame (0 events, 1 sync, 2 render,
  * 3 present) to check that the F5 timeline attributes a spike. 0 = ok, -1 null window. */
 VLQT_API int   vlqt_test_perf_spike(void* w, int phase, float ms);
@@ -345,6 +359,19 @@ VLQT_API long long vlqt_window_change_count(void* w);
  * element at 256 gives 256 x 128, a 100 x 50 one gives 100 x 50. Same resource rules and errors as vlqt_res_snapshot.
  * 0 / -7 (wrong kind, w NULL, maxEdgePx <= 0) / -9. */
 VLQT_API int   vlqt_res_snapshot_fit(unsigned long long id, void* w, unsigned elementId, int maxEdgePx);
+
+/* App fonts (#15, LoadFont node): font files for Text/Style FontFamily without installing them. Qt GUI thread only (the
+ * vvvv main thread, after vlqt_app_init); other threads get -1. One QFontDatabase registration per file (canonical path
+ * + size + last-modified), shared and reference counted: every successful add takes one reference, release drops it.
+ * An entry without references is removed at the end of the pump (vlqt_app_process_events) unless it was added again in
+ * between; texts naming a removed family fall back to a substitute at their next layout.
+ * add: 0 = registered or shared, *outHandle != 0, families = NUL-terminated, '\n'-separated family names of the file
+ * (truncated to familiesCap; a .ttc can hold several); -1 = error (vlqt_last_error: app not initialized, wrong thread,
+ * file not found, not a font). release: 0 / -1 wrong thread / -9 unknown handle or no reference left. */
+VLQT_API int   vlqt_font_add(const char* utf8Path, unsigned long long* outHandle, char* families, int familiesCap);
+VLQT_API int   vlqt_font_release(unsigned long long handle);
+/* TEST ONLY: references of a font handle, 0 = removal pending (end of pump), -9 = removed or unknown. */
+VLQT_API int   vlqt_test_font_refs(unsigned long long handle);
 
 #ifdef __cplusplus
 }

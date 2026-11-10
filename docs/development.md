@@ -59,6 +59,8 @@ dotnet run --project src/VL.Qt.SmokeTest -c Release -- --all
 tools/vvvvc.ps1 -File help/HelloWorld.vl
 ```
 
+Timing checks of the SmokeTest (`perfoverlay`) tell a busy machine from a regression: a check that reads peaks or long frames prints `SKIP ... host too loaded` instead of failing when the loop of the test itself stalled (a step over 150 ms for the peak checks, more than 20 % of the steps over 1.5 frame budgets for the idle check). Such a SKIP is not a pass: repeat the run on a quieter machine.
+
 For the Linux runtime see [Linux](linux.md#building-the-linux-runtime-from-source).
 
 ## Scripts
@@ -112,12 +114,32 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 
 The workflows are in `.github/workflows/` (`build.yml`, `public-check.yml`; `sanitizers.yml` runs by hand). Every action is pinned to a full commit SHA with the version as a comment, Dependabot keeps the pins current.
 
-The repository `sebllll/VL.Qt` differs from forks and private copies in a few places. What costs minutes or publishes something is keyed on the repository being public (`github.event.repository.private == false`), so it stays off while the repository is private; the CLA and contributor workflows also check the name `sebllll/VL.Qt` (GitHub compares it case-insensitively):
+The repository `sebllll/VL.Qt` differs from forks and private copies in a few places. What costs minutes is keyed on the repository being public (`github.event.repository.private == false`), so it stays off while the repository is private; the nuget.org push, the CLA and the contributor workflows check the name `sebllll/VL.Qt` (GitHub compares it case-insensitively):
 
 - The hosted runners are free for public repositories, so the `win-arm64` and `linux-arm64` entries also run on pull requests. Elsewhere they run only on tags and on a plain `workflow_dispatch`.
 - The workflow `public-check.yml` (keyed on the name only, so it runs while the repository is private too) fails on every pull request and push to `develop` and `main` if a file of a maintainer-only working directory (plans, internal notes, local agent settings) is tracked. Its job is a required status check.
-- The `release` job runs in the GitHub environment `release`. If the repository is public and the environment secret `NUGET_API_KEY` is set, it also pushes the `.nupkg` to nuget.org; without the secret that step is skipped.
+- The `release` job runs only for a `v*` tag whose commit is on `main` (job `release-gate`), in the GitHub environment `release`. In `sebllll/VL.Qt` with the environment variable `NUGET_USER` set, it also pushes the `.nupkg` to nuget.org through Trusted Publishing (no stored API key); elsewhere or without the variable that step is skipped with a notice. See [Release](#release).
 - Pull requests use `pull_request` (not `pull_request_target`); their jobs get no secrets and only `contents: read`.
+
+## Release
+
+One-time setup by a maintainer (repository settings):
+
+- [ ] Environment `release` (Settings > Environments): required reviewer, deployment branches and tags limited to `v*`.
+- [ ] nuget.org Trusted Publishing policy (nuget.org > account > Trusted Publishing): repository owner `sebllll`, repository `VL.Qt`, workflow file `build.yml`, environment `release`, scope push for the package `VL.Qt`. A policy for a private repository is only active for a few days until its first successful push binds it to the repository; if it expired, create it again.
+- [ ] Environment variable `NUGET_USER` in `release` (not a secret): the nuget.org profile name that owns the policy.
+- [ ] Rulesets for `develop` and `main` with the required check `public check (no private files or content)`.
+
+Per release:
+
+- [ ] Everything for the release is merged into `develop`; `tools/build.ps1 -Test` and the CI on `develop` are green.
+- [ ] Open the PR `develop` -> `main` and merge it with a merge commit (no squash).
+- [ ] Tag the merge commit on `main`: `git tag v<version>` (for example `v1.0.0`, `v1.1.0-rc.1`) and `git push origin v<version>`. The tag name is the package version.
+- [ ] The tag starts `build.yml` with all four RIDs. Check the job `pack`: the step "Verify package" prints the package size (limit 250 MB), the `qt/<rid>/` layout and the nuspec metadata (id, version, license, repository).
+- [ ] Approve the deployment to `release` when GitHub asks. The job `release` creates the GitHub release with the `.nupkg` and pushes it to nuget.org.
+- [ ] Without `NUGET_USER` (or in a fork) the push is skipped with a notice instead of an error. A failed login means the policy does not match (repository, workflow file, environment) or has expired. Fallback: push by hand with `dotnet nuget push <file> -s https://api.nuget.org/v3/index.json -k <key>` and a short-lived API key.
+- [ ] A tag on a commit that is not on `main` builds and tests but does not release (warning in the job `release-gate`). Delete the tag and tag the right commit.
+- [ ] After publishing: check the package on nuget.org and install it with `tools/start-vvvv-with-nupkg.ps1`.
 
 ## Encoding and git hook
 

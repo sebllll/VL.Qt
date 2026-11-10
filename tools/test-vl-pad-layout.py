@@ -3,7 +3,8 @@
 Usage: python tools/test-vl-pad-layout.py [<file.vl> ...]   (default: all help/Qt/*.vl)
 
 Lays out every patch twice in memory (the files are not touched) and fails if the second run still changes something.
-Also checks that nodes feeding a channel pin of a Qt node (Reactive Channel) keep their offset to that node.
+Also checks that a node feeding a channel pin of a Qt node (Reactive Channel) keeps its offset to that node; one that feeds
+several Qt nodes can follow only one of them, so one of them must keep the offset.
 Exit code 0 = ok.
 """
 import glob, importlib.util, os, sys
@@ -44,7 +45,10 @@ def main():
         raw = open(f, 'rb').read()
         first, once = tool.layout(raw, specs)
         second, twice = tool.layout(once, specs)
-        moved = {k: (v, channel_offsets(once).get(k)) for k, v in channel_offsets(raw).items() if channel_offsets(once).get(k) != v}
+        after = channel_offsets(once)
+        before = channel_offsets(raw)
+        kept = {src for (src, dst), v in before.items() if after.get((src, dst)) == v}
+        moved = {k: (v, after.get(k)) for k, v in before.items() if k[0] not in kept}
         name = os.path.basename(f)
         if second or twice != once:
             failed.append(f'{name}: second run still changes {second} element(s)')

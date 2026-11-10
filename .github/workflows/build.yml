@@ -267,9 +267,11 @@ jobs:
         if: env.FULL == 'true'
         run: dotnet pack src/VL.Qt -c Release --no-build -v q -nologo -p:Version=${{ steps.ver.outputs.version }} -o build/pack
 
-      - name: Verify package (layout + size)
+      - name: Verify package (layout, size, metadata)
         if: env.FULL == 'true'
         shell: pwsh
+        env:
+          PKG_VERSION: ${{ steps.ver.outputs.version }}
         run: |
           $pkg = Get-ChildItem build/pack -Filter *.nupkg | Select-Object -First 1
           if (-not $pkg) { throw 'no .nupkg produced' }
@@ -293,6 +295,22 @@ jobs:
           if ($missing) { throw "missing in package: $($missing -join ', ')" }
           $bad = @($names | Where-Object { $_ -like 'runtimes/*' -or $_ -like 'lib/VL.Qt.*' })
           if ($bad) { throw "NuGet asset folders must stay empty (#315): $($bad | Select-Object -First 5)" }
+          # Metadata from the nuspec (nuget.org needs id, version, license; repository links the package to the source).
+          $nuspecEntry = $names | Where-Object { $_ -like '*.nuspec' -and $_ -notlike '*/*' } | Select-Object -First 1
+          if (-not $nuspecEntry) { throw 'no .nuspec in the package' }
+          $zip = [IO.Compression.ZipFile]::OpenRead($pkg.FullName)
+          try {
+            $reader = [IO.StreamReader]::new($zip.GetEntry($nuspecEntry).Open())
+            try { [xml]$nuspec = $reader.ReadToEnd() } finally { $reader.Dispose() }
+          } finally { $zip.Dispose() }
+          $meta = $nuspec.package.metadata
+          $problems = @()
+          if ($meta.id -ne 'VL.Qt') { $problems += "id is '$($meta.id)', expected VL.Qt" }
+          if ($meta.version -ne $env:PKG_VERSION) { $problems += "version is '$($meta.version)', expected $env:PKG_VERSION" }
+          if (-not $meta.license -and -not $meta.licenseUrl) { $problems += 'license missing' }
+          if (-not $meta.repository.url) { $problems += 'repository url missing' }
+          if ($problems) { throw "nuspec metadata: $($problems -join '; ')" }
+          "nuspec: id {0}, version {1}, license {2}, repository {3}" -f $meta.id, $meta.version, $meta.license.InnerText, $meta.repository.url
           # Size per RID: sum of the entries under qt/<rid>/ (zipped = compressed, unpacked = uncompressed).
           foreach ($rid in $rids) {
             $e = @($entries | Where-Object FullName -like "qt/$rid/*")
@@ -393,7 +411,8 @@ jobs:
           Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Windows Error Reporting' -Name Disabled -Value 1 -Type DWord
           $sw = [Diagnostics.Stopwatch]::StartNew()
           $p = Start-Process $exe.FullName -ArgumentList 'smoke-out/grabs' -NoNewWindow -PassThru -RedirectStandardOutput smoke-out/stdout.log -RedirectStandardError smoke-out/stderr.log
-          if (-not $p.WaitForExit(180000)) { $p.Kill($true); throw 'SmokeTest timeout (3 min)' }
+          # 5 min: the run takes ~150-175 s on the hosted runner, 3 min was too tight (#65 hit it with 0 FAIL).
+          if (-not $p.WaitForExit(300000)) { $p.Kill($true); throw 'SmokeTest timeout (5 min)' }
           $p.WaitForExit()
           $out = Get-Content smoke-out/stdout.log
           "SmokeTest exit code {0}, {1:N0} s, {2} PASS, {3} FAIL" -f $p.ExitCode, $sw.Elapsed.TotalSeconds,
@@ -441,19 +460,46 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
-  release:
-    name: release asset (tag v*)
+  # Releases only come from main: the tag commit must be an ancestor of origin/main (PR develop -> main, then the tag).
+  # A tag on any other commit still builds and tests (pack), but publishes nothing.
+  release-gate:
+    name: release gate (tag on main)
     needs: [pack, smoke]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Protected environment: the NuGet API key lives here as an environment secret (NUGET_API_KEY), never in PR jobs.
+    outputs:
+      on-main: ${{ steps.check.outputs.on-main }}
+    steps:
+      # Full history: merge-base needs the commits between the tag and the tip of main.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Tag commit is on main
+        id: check
+        run: |
+          git fetch --no-tags origin main
+          if git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "on-main=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "on-main=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::$GITHUB_REF_NAME ($GITHUB_SHA) is not on main: no release, no nuget.org push. Releases are tagged on main only."
+          fi
+
+  release:
+    name: release asset (tag v*)
+    needs: [release-gate]
+    if: startsWith(github.ref, 'refs/tags/v') && needs.release-gate.outputs.on-main == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Protected environment: the nuget.org Trusted Publishing policy is bound to build.yml in this environment, and the
+    # variable NUGET_USER (nuget.org profile name) lives here. PR jobs never get id-token.
     environment: release
     permissions:
       contents: write
-    env:
-      # Only the information "is the key set", so the secret itself reaches the push step only.
-      HAS_NUGET_KEY: ${{ secrets.NUGET_API_KEY != '' }}
+      id-token: write
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -465,9 +511,32 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" nupkg/*.nupkg --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
 
-      # nuget.org push: only in the public repo and only if the environment secret is set (skipped otherwise).
-      - name: Push to nuget.org
-        if: github.event.repository.private == false && env.HAS_NUGET_KEY == 'true'
+      # nuget.org push with Trusted Publishing (OIDC, no stored API key). Only sebllll/VL.Qt publishes (the policy on
+      # nuget.org is bound to it; forks and private copies would fail the login), and only if NUGET_USER is set;
+      # otherwise a notice, no failure. Keyed on the name, not on public: releases go to nuget.org while it is private.
+      - name: Check nuget.org push
+        id: nuget
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          IS_MAIN_REPO: ${{ github.repository == 'sebllll/VL.Qt' }}
+          NUGET_USER: ${{ vars.NUGET_USER }}
+        run: |
+          if [ "$IS_MAIN_REPO" != 'true' ]; then
+            echo "::notice::Not pushed to nuget.org: only sebllll/VL.Qt publishes the package."
+          elif [ -z "$NUGET_USER" ]; then
+            echo "::notice::Not pushed to nuget.org: variable NUGET_USER is not set in the environment release (see docs/development.md, Release)."
+          else
+            echo "push=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: nuget.org login (Trusted Publishing)
+        id: nuget-login
+        if: steps.nuget.outputs.push == 'true'
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Push to nuget.org
+        if: steps.nuget.outputs.push == 'true'
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
         run: dotnet nuget push nupkg/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate

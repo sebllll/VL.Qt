@@ -8,6 +8,7 @@
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtQuick/private/qquickwindow_p.h> // itemsToPolish (#71)
 
 #include <algorithm>
 #include <cstring>
@@ -136,6 +137,8 @@ Scene::~Scene()
 {
     // Items have no QObject parent (only parentItem), so every tracked item is deleted explicitly.
     // Effects are detached from their sources first (arbitrary deletion order below).
+    for (auto& kv : nodes)
+        kv.second.xf->scene = nullptr; // the unparenting and deletes below emit geometry signals (#20)
     for (auto& kv : nodes) {
         elements.clearEffectSource(kv.second);
         if (kv.second.type == VLQT_TYPE_VIDEO) // #130, see destroySubtree
@@ -178,6 +181,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
     // Former effect sources destroyed in an earlier apply: the frame in between has polished the effects onto
     // their new sources, so nothing refers to them any more (see destroySubtree).
     deleteRetired();
+    appliedSincePoll = true; // also a failed apply may have applied its first commands
     if (len < 0 || (len > 0 && !buf)) {
         err = "invalid buffer (null or negative length)";
         return ApplyBadLength;
@@ -313,7 +317,9 @@ int Scene::create(quint32 id, quint16 type, std::string& err)
         return ApplyInvalid;
     Node& node = nodes[id] = Node{item, type, 0, 0, nullptr};
     elements.initGeometry(node); // anchor placement, follows size changes (#469)
+    node.polled = elements.pollsState(type);
     ids[item] = id;
+    watchGeometry(*this, id, node); // measure on change (#20)
     return ApplyOk;
 }
 
@@ -357,6 +363,7 @@ void Scene::destroySubtree(QQuickItem* item)
                 elements.clearEffectSource(kv.second);
     if (node.debug)
         --elements.debugCount;
+    node.xf->scene = nullptr; // its connections may outlive the node (retired item): no more queue entries (#20)
     nodes.erase(it->second);
     ids.erase(it);
     if (!wasSource) {
@@ -919,6 +926,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
             u.refItem = tex.item;
         }
     const int rc = elements.setEffectChain(host, chain, masks, err);
+    listPolled(*this, host); // a chain reports its content errors (EV_ERROR, #489)
     const std::vector<QQuickItem*> after = elements.effectMasks(host);
     for (QQuickItem* m : before)
         if (std::find(after.begin(), after.end(), m) == after.end())
@@ -931,6 +939,14 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
 
 void Scene::polish()
 {
+    // Nothing changed since the last poll (#71): ensurePolished calls updatePolish unconditionally, so the passes
+    // below cost a call per element although nothing moves. A change after the last poll shows as an apply, a marked
+    // geometry (events.h) or a window resize; a layout that has to follow a child (Row/Column, Text implicit size,
+    // Group frame) requests polish() and is in the window's itemsToPolish until Qt polishes it in a render, so a
+    // layout that needs the passes of another poll is not skipped either. Private API, check on Qt updates.
+    if (!appliedSincePoll && measureQueue.empty() && !geometryDirty
+        && QQuickWindowPrivate::get(window)->itemsToPolish.isEmpty())
+        return;
     // Two passes: a parent's polish (e.g. Column positions, Row auto size) can change its children's size and
     // with that their layouts, and vice versa; the render's polish loop repeats the same way.
     for (int pass = 0; pass < 2; ++pass)
@@ -942,6 +958,7 @@ void Scene::polish()
 int Scene::poll(unsigned char* out, int cap)
 {
     deleteRetired(); // poll runs after processEvents: the effects have moved off retired sources
+    appliedSincePoll = false; // polish (if Qt did not render) ran before this poll
     collectWindowGeometry(*this);
     collectMeasurements(*this);
     const int n = int(events.size());

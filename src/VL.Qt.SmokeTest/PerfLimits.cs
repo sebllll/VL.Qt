@@ -10,9 +10,21 @@ using System.Runtime.InteropServices;
 //   --perf-factor <x>        same as the env var (flag wins).
 // Defaults without env/flag (#132): factor 1.5 on arm64 (limits were set on x64; arm64 laptops land ~1.2x above),
 // warn-only while a debugger is attached. VLQT_PERF_WARN_ONLY=0 forces hard failures even then.
+// CPU-bound micro limits (Below(..., cpuBound: true), #64): the limits were set on a current Windows x64 desktop CPU. On Linux
+// a short calibration loop measures the core speed (CpuFactor, 1 on a fast core, at most MaxCpuFactor) and scales only these
+// limits, so an old CPU does not fail them while a real regression (several times the calibrated time) still does.
+// VLQT_PERF_FACTOR / --perf-factor set the factor by hand: no calibration then.
 static class PerfLimits
 {
     public const double Arm64Factor = 1.5;
+
+    // Calibration loop time (ms, best of several) of the reference core the CPU-bound limits were set for, and the cap of CpuFactor.
+    const double CalibrationReferenceMs = 6.8; // ~5 GHz-class core: the loop is a dependent chain (8 cycles per step), its time follows the clock
+    public const double MaxCpuFactor = 3.0;
+
+    static bool s_factorSet;
+    static double? s_cpuFactor;
+    static uint s_sink;
 
     public static double Factor { get; private set; } = 1.0;
     public static bool WarnOnly { get; private set; }
@@ -24,7 +36,7 @@ static class PerfLimits
         string? why = null;
         if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64) { Factor = Arm64Factor; why = "arm64 default"; }
         var env = Environment.GetEnvironmentVariable("VLQT_PERF_FACTOR");
-        if (!string.IsNullOrWhiteSpace(env) && double.TryParse(env, NumberStyles.Float, CultureInfo.InvariantCulture, out var f) && f > 0) { Factor = f; why = null; }
+        if (!string.IsNullOrWhiteSpace(env) && double.TryParse(env, NumberStyles.Float, CultureInfo.InvariantCulture, out var f) && f > 0) { Factor = f; why = null; s_factorSet = true; }
         var warn = Environment.GetEnvironmentVariable("VLQT_PERF_WARN_ONLY");
         if (!string.IsNullOrEmpty(warn)) WarnOnly = warn != "0";
         else if (Debugger.IsAttached) { WarnOnly = true; why = (why == null ? "" : why + ", ") + "debugger attached"; }
@@ -34,7 +46,7 @@ static class PerfLimits
         {
             if (args[i] == "--perf-warn-only") WarnOnly = true;
             else if (args[i] == "--perf-factor" && i + 1 < args.Length
-                && double.TryParse(args[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out var af) && af > 0) { Factor = af; i++; why = null; }
+                && double.TryParse(args[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out var af) && af > 0) { Factor = af; i++; why = null; s_factorSet = true; }
             else rest.Add(args[i]);
         }
         if (Factor != 1.0 || WarnOnly)
@@ -42,12 +54,52 @@ static class PerfLimits
         return rest.ToArray();
     }
 
-    // value must stay below limit * Factor (same unit, usually ms).
-    public static void Below(Action<bool, string> check, double value, double limit, string what)
+    // Speed of this machine's core relative to the reference core (>= 1, <= MaxCpuFactor); 1 on Windows and macOS and when the
+    // factor was set by hand. Measured once, on first use (Linux only).
+    public static double CpuFactor => s_cpuFactor ??= MeasureCpuFactor();
+
+    static double MeasureCpuFactor()
     {
-        bool ok = value < limit * Factor;
-        var fx = Factor.ToString(CultureInfo.InvariantCulture);
-        if (ok || !WarnOnly) { check(ok, what + (Factor != 1.0 ? $" [limit x{fx}]" : "")); return; }
+        if (!OperatingSystem.IsLinux() || s_factorSet) return 1.0;
+        // Scalar integer work with dependent stores into a small buffer, like writing and applying a command buffer; no SIMD.
+        var buf = new uint[16384];
+        uint x = 0x9E3779B9;
+        var best = double.MaxValue;
+        for (int rep = 0; rep < 9; rep++)
+        {
+            var t = Stopwatch.GetTimestamp();
+            for (int i = 0; i < 4_000_000; i++)
+            {
+                x ^= x << 13; x ^= x >> 17; x ^= x << 5;
+                buf[x & 16383] += x;
+            }
+            best = Math.Min(best, Stopwatch.GetElapsedTime(t).TotalMilliseconds);
+        }
+        s_sink = buf[x & 16383]; // keeps the loop from being optimized away
+        var f = Math.Clamp(best / CalibrationReferenceMs, 1.0, MaxCpuFactor);
+        Console.WriteLine($"INFO perf calibration: reference loop {best:F2} ms (reference core {CalibrationReferenceMs:F2} ms), CPU-bound limits x{f.ToString("F2", CultureInfo.InvariantCulture)}");
+        return f;
+    }
+
+    // Noise vs regression (#64): a median can land above the limit when the core clocks up late or another process wakes up
+    // (one round ~ +45 %). Measures up to `rounds` times, stops at the first round within the limit and returns the best
+    // value: a real regression is systematic and stays above the limit in every round.
+    public static double Best(double limit, Func<double> measure, int rounds = 3, bool cpuBound = false)
+    {
+        var scale = Factor * (cpuBound ? CpuFactor : 1.0);
+        var best = double.MaxValue;
+        for (int r = 0; r < rounds && !(best < limit * scale); r++)
+            best = Math.Min(best, measure());
+        return best;
+    }
+
+    // value must stay below limit * Factor (same unit, usually ms). cpuBound: the limit also scales with the speed of the core (CpuFactor).
+    public static void Below(Action<bool, string> check, double value, double limit, string what, bool cpuBound = false)
+    {
+        var scale = Factor * (cpuBound ? CpuFactor : 1.0);
+        bool ok = value < limit * scale;
+        var fx = scale.ToString("0.##", CultureInfo.InvariantCulture);
+        if (ok || !WarnOnly) { check(ok, what + (scale != 1.0 ? $" [limit x{fx}]" : "")); return; }
         Warnings++;
         Console.WriteLine($"WARN {what} [limit x{fx} exceeded, warn-only]");
     }

@@ -12,6 +12,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 class QObject;
 class QQmlEngine;
@@ -35,8 +36,11 @@ struct Scene {
      * the queue; returns bytes written, -required if cap is too small (events stay queued). */
     int poll(unsigned char* out, int cap);
     /* Runs pending polish (layouts/positioners) of all scene items without a render, so poll measures current
-     * geometry also when Qt did not render this pump (#215). Items without pending polish only check a flag. */
+     * geometry also when Qt did not render this pump (#215). Skipped when nothing changed since the last poll
+     * (#71): no apply, no marked geometry, no window geometry change and no polish request pending in the window. */
     void polish();
+    /* Set by apply, cleared by poll: the next polish must run (#71). */
+    bool appliedSincePoll = true;
 
     /* Appends one record u16 event, u16 len, u32 handle, u32 index, payload (padded to 4);
      * len = 8 + payloadLen (handle + index + payload, without padding). */
@@ -65,6 +69,17 @@ struct Scene {
      * geometry and Qt has no signal for them, so a moved framePosition() also queues a record (#232). */
     QPoint reportedFramePos;
     QObject geometryWatch;
+    /* Measure on change (#20, events.h): ids whose geometry changed since the last poll (markGeometry, no duplicates
+     * until the poll), the walk stack and poll stamp of collectMeasurements (capacity reused, no per-frame allocation),
+     * and the number of bound items whose geometry the last poll read (vlqt_test_measure_count). */
+    std::vector<quint32> measureQueue;
+    std::vector<QQuickItem*> measureStack;
+    quint32 measureStamp = 0;
+    int measuredLastPoll = 0;
+    /* Ids of the nodes whose media/error/clicks/user value the poll reads (listPolled, events.h); entries of destroyed
+     * nodes drop out in the next poll. pollStamp skips a second entry of a reused id. */
+    std::vector<quint32> pollIds;
+    quint32 pollStamp = 0;
 
     /* Details of the last apply (#92/#275): rc 0 = it succeeded. id = object id the bad command addresses (0 = none:
      * CLEAR_COLOR, RESET, truncated header, root), prop = property of a bad SET (else 0), reason = message without
