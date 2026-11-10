@@ -274,7 +274,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="uG6B3ZHhomi58CcI8Z41BY" Bounds="85,85,830,103" ShowValueBox="true" isIOBox="true" Value="Input (Int) is a number field with +/- buttons:&#xD;&#xA;- Channel binds the value: a plain value or an IOBox on the pin is the start value and sets the value from the patch, the user writes back into the channel.&#xD;&#xA;- Value is the current value, Bang is true for one frame when the user changed it.&#xD;&#xA;- Without Min and Max the full int range applies, or the Min/Max attributes of the channel if it has any.">
+          <Pad Id="uG6B3ZHhomi58CcI8Z41BY" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="Input (Int) [Qt]&#xD;&#xA;- Number field with +/- buttons&#xD;&#xA;- Channel: binds the value, the user writes back&#xD;&#xA;- Min, Max: default is the full int range, or the Min/Max attributes of the channel&#xD;&#xA;- Value: current value; Bang: true for one frame when the user changed it">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -283,7 +283,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="wexoLSl6gDNzIvacn77pEl" Bounds="85,203,843,103" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;A typed value goes out on Enter (the field keeps the focus) or when the field loses focus, e.g. by a click or tap anywhere else in the window; Esc discards it and leaves the field; +/-, the arrow keys and the mouse wheel change it at once. If the patch and the user change the value in the same frame, the user wins. Labels are not part of the input: wrap it in a Labeled element (here a Column stacks the Labeled inputs).">
+          <Pad Id="wexoLSl6gDNzIvacn77pEl" Bounds="85,1209,830,126" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A plain value or an IOBox on Channel is the start value and sets the value from the patch.&#xD;&#xA;- A typed value goes out on Enter (the field keeps the focus) or when the field loses focus, e.g. by a click or tap anywhere else in the window; Esc discards it and leaves the field.&#xD;&#xA;- +/-, the arrow keys and the mouse wheel change the value at once. If the patch and the user change it in the same frame, the user wins.&#xD;&#xA;- Labels are not part of the input: wrap it in a Labeled element (here a Column stacks the Labeled inputs).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

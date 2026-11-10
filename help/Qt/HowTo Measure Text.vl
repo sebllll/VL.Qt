@@ -25,7 +25,16 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="4VkMDhuym0j675MQEs1C5W" Bounds="85,85,641,84" ShowValueBox="true" isIOBox="true" Value="Measured Size of a Text [Qt] is the size of the laid-out text in units:&#xD;&#xA;- Qt reports it one frame late (0, 0 on the first frame).&#xD;&#xA;- Here it sizes a Rectangle behind the text, so the box always fits the text.&#xD;&#xA;- Edit the text or Size to see it follow.">
+          <Pad Id="4VkMDhuym0j675MQEs1C5W" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Text [Qt]: Measured Size&#xD;&#xA;- Measured Size is the size of the laid-out text in units&#xD;&#xA;- Here it sizes a Rectangle behind the text, the box always fits&#xD;&#xA;- Edit the text or Size to see it follow">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="40quoWht6jsxAyCWNnryCj" Bounds="85,1199,830,46" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Qt reports Measured Size one frame late (0, 0 on the first frame).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

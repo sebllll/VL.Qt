@@ -25,7 +25,16 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="pLc1wWTEKrwi60Q2sLyRRC" Bounds="85,85,830,103" ShowValueBox="true" isIOBox="true" Value="Video [Qt] plays a video file (FFmpeg backend) with its sound on the default audio device:&#xD;&#xA;- Play starts/pauses, Loop repeats (switched off while playing, the current run ends, then it stops).&#xD;&#xA;- Rate = speed, Volume 0..1.&#xD;&#xA;- Position and Duration are in seconds.&#xD;&#xA;- Path is relative to this patch.">
+          <Pad Id="pLc1wWTEKrwi60Q2sLyRRC" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Video [Qt]&#xD;&#xA;- Path, Play, Loop&#xD;&#xA;- Rate (speed), Volume (0..1)&#xD;&#xA;- Position, Duration (seconds)">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="SCki2fXud4LrxUlRMeJQht" Bounds="85,982,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Video plays a video file (FFmpeg backend) with its sound on the default audio device.&#xD;&#xA;- Play starts/pauses. Loop repeats; switched off while playing, the current run ends, then it stops.&#xD;&#xA;- Path is relative to this patch.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

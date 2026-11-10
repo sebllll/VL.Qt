@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="AaEeQRhuFUVyWxbFVDYwkZ" Bounds="85,85,830,98" ShowValueBox="true" isIOBox="true" Value="Rectangle [Qt] draws a filled rectangle with optional rounded corners and a stroke:&#xD;&#xA;- Size = width and height in units (1 unit = 100 DIP). A Rectangle with width or height 0 is not drawn.&#xD;&#xA;- Position, rotation and scale come only from Transform. The Anchor is the point of the rectangle that sits at the origin and the pivot of Transform: TopLeft (orange) puts the top left corner on the Translation, Center (default, blue) centers the rectangle on it.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+          <Pad Id="AaEeQRhuFUVyWxbFVDYwkZ" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Rectangle [Qt]&#xD;&#xA;- Size, Radius, Color&#xD;&#xA;- Stroke Color and Stroke Width&#xD;&#xA;- Anchor: Center or TopLeft&#xD;&#xA;- Position and rotation via Transform">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -211,6 +211,15 @@
             </p:ValueBoxSettings>
           </Pad>
           <Pad Id="R9ShHMA0tzVQOwqBdRiNJx" Comment="Phase" Bounds="501,340,35,15" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="fIdqmY17U1Rufrfs2n0ByD" Bounds="85,919,830,94" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Size is width and height in units (1 unit = 100 DIP). A Rectangle with width or height 0 is not drawn.&#xD;&#xA;- Position, rotation and scale come only from Transform. The Anchor is the point of the rectangle that sits at the origin and the pivot of Transform: TopLeft (orange) puts the top left corner on the Translation, Center (default, blue) centers the rectangle on it.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
         </Canvas>
         <Link Id="P0vTiDlkx8Kl6lovMshcT5" Ids="HxusiYHE4jqjxvV3LCTLHr,5UCXKithrYwqguUDZMuo1M" />
         <Link Id="xcR8g6bqx88PuyttkELf01" Ids="QShXkzMHf7T3kUidV4Ln7F,pkPZka6ZbWJkDYiWDbMKZm" />

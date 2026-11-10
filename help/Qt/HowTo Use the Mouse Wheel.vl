@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="5E3KMYGJtOpZukOpTvolty" Bounds="85,85,830,84" ShowValueBox="true" isIOBox="true" Value="Wheel counts the mouse wheel over the element in notches (one notch = 1, trackpads give fractions):&#xD;&#xA;- Value is an accumulated channel: Wheel adds the motion to its current value.&#xD;&#xA;- Delta is the motion of the last frame.&#xD;&#xA;The chain is Wheel -&gt; Interaction pin of the rectangle; the order does not matter.">
+          <Pad Id="5E3KMYGJtOpZukOpTvolty" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Wheel [Qt]&#xD;&#xA;- Counts the mouse wheel over the element in notches (trackpads give fractions)&#xD;&#xA;- Value: accumulated channel, Wheel adds the motion to it&#xD;&#xA;- Delta: motion of the last frame&#xD;&#xA;- Chain: Wheel -&gt; Interaction pin of the rectangle">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="sRzL8ru8AbmPkcb21WWGHa" Bounds="85,184,840,46" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;Without an Interaction node an element is transparent for input. Scroll over the rectangle.">
+          <Pad Id="sRzL8ru8AbmPkcb21WWGHa" Bounds="85,1215,830,62" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Without an Interaction node an element is transparent for input. Scroll over the rectangle.&#xD;&#xA;- The order of the chain does not matter.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="tzAl7ZhOyfD0at2oYItYkx" Bounds="85,85,830,65" ShowValueBox="true" isIOBox="true" Value="Styles are set on a Group and inherited by the widgets inside it:&#xD;&#xA;- Light (Qt.Style) at the Style pin of the Group styles the Buttons, the Slider and the Toggles.&#xD;&#xA;- A widget's own Style pin overrides field by field: the right Button sets only its frame color with Colors, everything else still comes from the Group.">
+          <Pad Id="tzAl7ZhOyfD0at2oYItYkx" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Style [Qt.Style] at the Style pin of a Group&#xD;&#xA;- Light (Qt.Style) styles the Buttons, the Slider and the Toggles inside it&#xD;&#xA;- A widget's own Style pin overrides field by field (right Button: frame color only)">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

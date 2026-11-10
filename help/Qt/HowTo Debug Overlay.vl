@@ -210,7 +210,7 @@
       </p:NodeReference>
       <Patch Id="826deypMtv4IBngolxw04c">
         <Canvas Id="zwZcXB9n9uZANbYGfpnr4k" CanvasType="Group">
-          <Pad Id="isAjIhKtJ0RlgLKOmxgJTe" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Debug overlay">
+          <Pad Id="isAjIhKtJ0RlgLKOmxgJTe" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Debug Overlay">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -219,7 +219,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="KdNnFRIBXuDL7DxtpYlSXp" Bounds="85,85,900,84" ShowValueBox="true" isIOBox="true" Value="Debug overlay: every element has a Debug pin that draws its layout on top of the scene; the Renderer's optional Debug pin (right-click the node to show it) turns it on for the whole window. Layout, size and hit-testing stay unchanged.&#xD;&#xA;- Turquoise = frame, magenta = origin, yellow = anchor, green = baseline/ascent, red = descent, orange = implicit size, orange dashed = children bounds, translucent = padding, hatched = spacing.">
+          <Pad Id="KdNnFRIBXuDL7DxtpYlSXp" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Debug overlay&#xD;&#xA;- Debug pin of an element: only this element&#xD;&#xA;- Debug pin of the Renderer (optional): the whole window&#xD;&#xA;- Layout, size and hit-testing stay unchanged&#xD;&#xA;- Shows frame, origin, anchor, baseline, padding, spacing">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -228,7 +228,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="fKtHF4vUCsMehGAkWvj7FA" Bounds="85,184,840,65" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;F5 in the window cycles the stats pages; the last one, Resources, lists the live resources (images) with state, size, refs and age, failed or stuck ones first, plus upload queue and budget.">
+          <Pad Id="fKtHF4vUCsMehGAkWvj7FA" Bounds="85,1168,830,110" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The Renderer's Debug pin is optional: right-click the node to show it.&#xD;&#xA;- Legend: turquoise = frame, magenta = origin, yellow = anchor, green = baseline/ascent, red = descent, orange = implicit size, orange dashed = children bounds, translucent = padding, hatched = spacing.&#xD;&#xA;- F5 in the window cycles the stats pages; the last one, Resources, lists the live resources (images) with state, size, refs and age, failed or stuck ones first, plus upload queue and budget.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -237,7 +237,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="100,960,125,19" Id="al8msFQ1589HlzDrfBqwAZ">
+          <Node Bounds="100,890,125,19" Id="al8msFQ1589HlzDrfBqwAZ">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -264,7 +264,7 @@
             <Pin Id="UHINoc0AKYgTlkmkCAQIX4" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="RZOfyLrhMcGMD9gWcPjFKi" Name="Interaction" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="518,960,265,19" Id="FsocSdYZDNLQJFCajd3VlT">
+          <Node Bounds="518,890,265,19" Id="FsocSdYZDNLQJFCajd3VlT">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -297,7 +297,7 @@
             <Pin Id="rrgp8bsew3DYb0FiNncSS4" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="IytrtC0z3yjMfn0irDdci6" Name="Interaction" Kind="InputPin" />
           </Node>
-          <Node Bounds="1000,349,66,19" Id="oDMVtKi4gWUKbJMAXxOuDe">
+          <Node Bounds="1000,279,66,19" Id="oDMVtKi4gWUKbJMAXxOuDe">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LoadImage" />
@@ -308,12 +308,12 @@
             <Pin Id="Vnzx1T7Xk0j2XjyqwJxEdd" Name="Image" Kind="OutputPin" />
             <Pin Id="R67netI4KRfl2bxUcmlp00" Name="Error" Kind="OutputPin" />
           </Node>
-          <Pad Id="QiI0xf61bCJMJ6yJK9nXpG" Comment="Anchor" Bounds="940,935,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
+          <Pad Id="QiI0xf61bCJMJ6yJK9nXpG" Comment="Anchor" Bounds="940,865,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RectangleAnchor" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="940,960,145,19" Id="FBpmO9nmLhIIeexdy36a1Z">
+          <Node Bounds="940,890,145,19" Id="FBpmO9nmLhIIeexdy36a1Z">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -336,7 +336,7 @@
             <Pin Id="PkB1Nv2MjCZEE7NUyDFNrJ" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="OFUXSND2tj6NrtakBfOMdc" Name="Interaction" Kind="InputPin" />
           </Node>
-          <Node Bounds="100,1100,1677,19" Id="QTRHNNWnHTbvAAAqMFx6xJ">
+          <Node Bounds="100,1030,1677,19" Id="QTRHNNWnHTbvAAAqMFx6xJ">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -360,7 +360,7 @@
             <Pin Id="T05koceRcUrNkgwt1JaMCM" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="KHJDcXtWPyuOHPTxA6ixIS" Name="Style" Kind="InputPin" />
           </Node>
-          <Node Bounds="962,896,80,19" Id="1qYQt7GIP7PG65joPho37H">
+          <Node Bounds="962,826,80,19" Id="1qYQt7GIP7PG65joPho37H">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -374,7 +374,7 @@
             <Pin Id="aS0JgKwVI5DvSdbw6wd6Zs" Name="Translation" Kind="InputPin" />
             <Pin Id="HFz6QGf4IKzzZHBjPeBvJC" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,1169,145,19" Id="9p73FK24HH15PVtiAs6ggp">
+          <Node Bounds="100,1099,145,19" Id="9p73FK24HH15PVtiAs6ggp">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -397,7 +397,7 @@
             <Pin Id="BXzhIxeC6I8OuRzVgmECOW" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="DUCCe9zMif4WFT6bX1Ddu4" Name="Error" Kind="OutputPin" />
           </Node>
-          <Pad Id="pYwy7QHj9s80CxjfgD1gEj" Comment="Debug" Bounds="103,418,93,55" ShowValueBox="true" isIOBox="true" Value="True">
+          <Pad Id="pYwy7QHj9s80CxjfgD1gEj" Comment="Debug" Bounds="103,348,93,55" ShowValueBox="true" isIOBox="true" Value="True">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -405,27 +405,27 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="d1XJhp285m4aF9G0J2FUXm" Comment="Position" Bounds="164,598,35,28" ShowValueBox="true" isIOBox="true" Value="0.5, 0.5">
+          <Pad Id="d1XJhp285m4aF9G0J2FUXm" Comment="Position" Bounds="164,528,35,28" ShowValueBox="true" isIOBox="true" Value="0.5, 0.5">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="znR4OHqkIQclfQVE74Tllq" Comment="Size" Bounds="162,887,35,28" ShowValueBox="true" isIOBox="true" Value="1, 1">
+          <Pad Id="znR4OHqkIQclfQVE74Tllq" Comment="Size" Bounds="162,817,35,28" ShowValueBox="true" isIOBox="true" Value="1, 1">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="OI7B56B7J1ebkUh1YB9UIh" Comment="Spacing" Bounds="182,930,35,15" ShowValueBox="true" isIOBox="true" Value="0.4">
+          <Pad Id="OI7B56B7J1ebkUh1YB9UIh" Comment="Spacing" Bounds="182,860,35,15" ShowValueBox="true" isIOBox="true" Value="0.4">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="PSTHEwljMPRJWLYx0kEv7W" Comment="Padding" Bounds="202,864,35,15" ShowValueBox="true" isIOBox="true" Value="0.5">
+          <Pad Id="PSTHEwljMPRJWLYx0kEv7W" Comment="Padding" Bounds="202,794,35,15" ShowValueBox="true" isIOBox="true" Value="0.5">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="pNBJjxHKf9vpYlgazfkQUY" Comment="Debug" Bounds="222,904,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+          <Pad Id="pNBJjxHKf9vpYlgazfkQUY" Comment="Debug" Bounds="222,834,35,35" ShowValueBox="true" isIOBox="true" Value="True">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -433,27 +433,27 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="yUTJhzp6jmzcjtDF9ASbb3" Comment="Position" Bounds="602,787,35,28" ShowValueBox="true" isIOBox="true" Value="5, 0.5">
+          <Pad Id="yUTJhzp6jmzcjtDF9ASbb3" Comment="Position" Bounds="602,717,35,28" ShowValueBox="true" isIOBox="true" Value="5, 0.5">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="IGoY7rlzASjICYjuEDBmfS" Comment="Size" Bounds="520,744,35,28" ShowValueBox="true" isIOBox="true" Value="6, 2">
+          <Pad Id="IGoY7rlzASjICYjuEDBmfS" Comment="Size" Bounds="520,674,35,28" ShowValueBox="true" isIOBox="true" Value="6, 2">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="TpaAvVDs69pe94ADzKukn4" Comment="Text" Bounds="560,836,240,19" ShowValueBox="true" isIOBox="true" Value="Debug">
+          <Pad Id="TpaAvVDs69pe94ADzKukn4" Comment="Text" Bounds="560,766,240,19" ShowValueBox="true" isIOBox="true" Value="Debug">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="R63XP9yurUTqBSuMII3hqr" Comment="Font Size" Bounds="600,900,35,15" ShowValueBox="true" isIOBox="true" Value="0.9">
+          <Pad Id="R63XP9yurUTqBSuMII3hqr" Comment="Font Size" Bounds="600,830,35,15" ShowValueBox="true" isIOBox="true" Value="0.9">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="M1DdZ0facaFPgTvK7GzMIS" Comment="Debug" Bounds="760,904,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+          <Pad Id="M1DdZ0facaFPgTvK7GzMIS" Comment="Debug" Bounds="760,834,35,35" ShowValueBox="true" isIOBox="true" Value="True">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -461,17 +461,17 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GMKYMrd5GRuswOLNunYwYI" Comment="Position" Bounds="1024,881,35,28" ShowValueBox="true" isIOBox="true" Value="7.5, 5">
+          <Pad Id="GMKYMrd5GRuswOLNunYwYI" Comment="Position" Bounds="1024,811,35,28" ShowValueBox="true" isIOBox="true" Value="7.5, 5">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="x7zr2svVGeHN6evsz4BDtS" Comment="Size" Bounds="942,838,35,28" ShowValueBox="true" isIOBox="true" Value="3, 2">
+          <Pad Id="x7zr2svVGeHN6evsz4BDtS" Comment="Size" Bounds="942,768,35,28" ShowValueBox="true" isIOBox="true" Value="3, 2">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="SHHkm2jQQPvhkDEdVoySTU" Comment="Debug" Bounds="1062,914,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+          <Pad Id="SHHkm2jQQPvhkDEdVoySTU" Comment="Debug" Bounds="1062,844,35,35" ShowValueBox="true" isIOBox="true" Value="True">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -479,7 +479,7 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="clt0q6zlRCs9nM7gcQkApW" Comment="Debug" Bounds="1356,1029,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+          <Pad Id="clt0q6zlRCs9nM7gcQkApW" Comment="Debug" Bounds="1356,959,35,35" ShowValueBox="true" isIOBox="true" Value="True">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -487,13 +487,13 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="Tkr8XpibaYpLrzVASDkuK5" Comment="Path" Bounds="1002,289,140,15" ShowValueBox="true" isIOBox="true" Value="assets\qt-help-image.png">
+          <Pad Id="Tkr8XpibaYpLrzVASDkuK5" Comment="Path" Bounds="1002,219,140,15" ShowValueBox="true" isIOBox="true" Value="assets\qt-help-image.png">
             <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="100,496,75,19" Id="SzBOCTqulFsM220MeIQhXE">
-            <p:NodeReference LastCategoryFullName="Main" LastDependency="HowTo Debug overlay.vl">
+          <Node Bounds="100,426,75,19" Id="SzBOCTqulFsM220MeIQhXE">
+            <p:NodeReference LastCategoryFullName="Main" LastDependency="HowTo Debug Overlay.vl">
               <Choice Kind="ProcessNode" Name="Columns" />
             </p:NodeReference>
             <Pin Id="KNQDXvRH5I7MQaO64eYxus" Name="Output" Kind="OutputPin" />
@@ -504,7 +504,7 @@
           </Node>
           <ControlPoint Id="A2WuOx080PXK9eYyWVMJ73" Bounds="119,430" />
           <ControlPoint Id="AKxI6e3Pn9pMrTioI6Q93e" Bounds="137,437" />
-          <Node Bounds="100,930,65,19" Id="BynM0pRO5ST3D4bXWtbhlj">
+          <Node Bounds="100,860,65,19" Id="BynM0pRO5ST3D4bXWtbhlj">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -518,7 +518,7 @@
             <Pin Id="Da9n0dq4qszpEeoYGeZGXz" Name="Translation" Kind="InputPin" />
             <Pin Id="c7B7YVgH8zdEmFbfbzcpUr" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="540,802,65,19" Id="i2P98FFAG7JBTZSSEHzSsQ">
+          <Node Bounds="540,732,65,19" Id="i2P98FFAG7JBTZSSEHzSsQ">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />

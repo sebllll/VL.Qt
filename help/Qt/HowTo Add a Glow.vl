@@ -20,7 +20,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="4jnEl2gvzJirbe13CqhjLw" Bounds="85,85,830,84" ShowValueBox="true" isIOBox="true" Value="Glow and InnerShadow (Qt.Effects) light an element from its own alpha. They attach to the Effect pin like Blur or DropShadow:&#xD;&#xA;- Glow: a blurred, tinted copy of the element behind it (or on top with Additive). Radius is how far it reaches, Spread makes it denser, Intensity above 1 glows brighter.&#xD;&#xA;- InnerShadow: the shadow falls inside the element, from the left and top edge with a positive Offset (like CSS inset).&#xD;&#xA;- Radius, Offset and the other lengths are in units of the renderer's space. The radius can be animated smoothly up to several hundred DIP; the cost hardly depends on it.">
+          <Pad Id="4jnEl2gvzJirbe13CqhjLw" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Glow, InnerShadow [Qt.Effects]&#xD;&#xA;- Glow: Color, Radius, Spread, Intensity, Additive (optional pins)&#xD;&#xA;- InnerShadow: Color, Radius, Offset, Spread, Intensity (optional pins)&#xD;&#xA;- Attach to the Effect pin like Blur or DropShadow">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -29,7 +29,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="bnNxuY9KYPFuCJas2D88VW" Bounds="85,184,830,84" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Both nodes grow the effect area by 1.5 x Radius, so the glow is not cut off at the element.&#xD;&#xA;- Optional pins (show them in the node): Glow Additive, InnerShadow Spread and Intensity.&#xD;&#xA;- Glow and InnerShadow end a run of Blur, DropShadow, ColorAdjust, Colorize and Mask nodes: such a run is merged into one layer, a shader effect costs one of its own.">
+          <Pad Id="bnNxuY9KYPFuCJas2D88VW" Bounds="85,888,830,174" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Both light an element from its own alpha.&#xD;&#xA;- Glow is a blurred, tinted copy of the element behind it (or on top with Additive). Radius is how far it reaches, Spread makes it denser, Intensity above 1 glows brighter.&#xD;&#xA;- InnerShadow: the shadow falls inside the element, from the left and top edge with a positive Offset (like CSS inset).&#xD;&#xA;- Radius, Offset and the other lengths are in units of the renderer's space. The radius can be animated smoothly up to several hundred DIP; the cost hardly depends on it.&#xD;&#xA;- Both nodes grow the effect area by 1.5 x Radius, so the glow is not cut off at the element.&#xD;&#xA;- Glow and InnerShadow end a run of Blur, DropShadow, ColorAdjust, Colorize and Mask nodes: such a run is merged into one layer, a shader effect costs one of its own.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

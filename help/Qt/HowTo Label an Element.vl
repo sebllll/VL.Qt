@@ -20,8 +20,17 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="hmUZnh5nUopk2OYZkhGWMl" Bounds="85,85,830,122" ShowValueBox="true" isIOBox="true" Value="Labeled puts a text label next to (or above) any element, for ImGui-style panels. It takes any element (here Slider, Toggle, Input (Int), TextInput and Button) and a Text:&#xD;&#xA;- Label Width is the width of the label box: one IOBox on all Labeled nodes keeps the elements aligned.&#xD;&#xA;- Label Position puts the label Left of the element (default) or on Top.&#xD;&#xA;- Spacing is the gap between label and element.&#xD;&#xA;- Labeled is built from a Text and a Row/Column, so its Output goes into a Column like any other element.">
+          <Pad Id="hmUZnh5nUopk2OYZkhGWMl" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Labeled [Qt]&#xD;&#xA;- Text label next to (or above) any element, for ImGui-style panels&#xD;&#xA;- Label Width: width of the label box&#xD;&#xA;- Label Position: Left (default) or Top&#xD;&#xA;- Spacing: gap between label and element">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="4JSFEqRauIaODRO4x4AIDK" Bounds="85,786,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Here Labeled takes Slider, Toggle, Input (Int), TextInput and Button, each with a Text.&#xD;&#xA;- One IOBox on Label Width of all Labeled nodes keeps the elements aligned.&#xD;&#xA;- Labeled is built from a Text and a Row/Column, so its Output goes into a Column like any other element.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
             <p:ValueBoxSettings>

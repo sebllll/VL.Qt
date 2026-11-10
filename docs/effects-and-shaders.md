@@ -43,9 +43,9 @@ Every filter shader from a `qtshaders/` folder (one with a `sampler2D source`, s
 
 <img src="images/effect-chain.png" width="820" alt="The text VL.Qt: Blur, RGBSplit, DropShadow on the left, DropShadow, RGBSplit, Blur on the right; the shadow is split and blurred in the second picture">
 
-A shader that draws beyond the element (a blur, a shifted copy) declares its room with `// @padding` in the file head, in DIP: one number or `left, top, right, bottom`; without it the shader stays inside the element. The help patch `HowTo Chain Shader Effects` builds the two chains above.
+A shader that draws beyond the element (a blur, a shifted copy) declares its room with `// @padding` in the file head, in DIP: one number or `left, top, right, bottom`; without it the shader stays inside the element. The help patch `HowTo Chain Effects` builds the two chains above.
 
-Help patches: `HowTo Chain Effects`, `HowTo Mask an Element`, `HowTo Add a Glow`, `HowTo Use Motion Blurs`, `HowTo Displace an Element`, `HowTo Blend Elements`, `HowTo Chain Shader Effects`, `HowTo Combine Effects`. See [Help patches](help-patches.md).
+Help patches: `HowTo Chain Effects`, `HowTo Mask an Element`, `HowTo Add a Glow`, `HowTo Use Motion Blurs`, `HowTo Displace an Element`, `HowTo Blend Elements`. See [Help patches](help-patches.md).
 
 ## Shaders
 

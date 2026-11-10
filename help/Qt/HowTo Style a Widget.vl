@@ -16,7 +16,7 @@
       </p:NodeReference>
       <Patch Id="k2pRyfiDNziiBV7BLKTAbZ">
         <Canvas Id="oUxTSSjR9U64TukoygfCIt" CanvasType="Group">
-          <Pad Id="cbte2WyOJKFca6Ysd9sqYQ" Bounds="85,36,485,53" ShowValueBox="true" isIOBox="true" Value="How To Style a Widget">
+          <Pad Id="cbte2WyOJKFca6Ysd9sqYQ" Bounds="85,16,485,53" ShowValueBox="true" isIOBox="true" Value="How To Style a Widget">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="VE6OkQFa6gWC44Hk1Yp6qd" Bounds="85,105,831,90" ShowValueBox="true" isIOBox="true" Value="The Style pin of a widget takes a Style (Qt.Style), built by chaining style nodes. Each node adds to the style before it:&#xD;&#xA;- Left: Colors (Frame, Text), Frame (Radius) and Text (Font Size) are chained into the Style pin of the Button.&#xD;&#xA;- Middle: the State pin of Colors limits values to one state (Normal, Hovered, Pressed). Pins without value stay unset and inherit.&#xD;&#xA;- Right: a single setter like Radius (Qt.Style.Frame) is the quick override.">
+          <Pad Id="VE6OkQFa6gWC44Hk1Yp6qd" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Style [Qt.Style] at the Style pin of a widget&#xD;&#xA;- Style nodes are chained, each adds to the style before it&#xD;&#xA;- Colors (Frame, Text), Frame (Radius), Text (Font Size)&#xD;&#xA;- Colors State: Normal, Hovered or Pressed&#xD;&#xA;- Radius (Qt.Style.Frame): one field only, quick override">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="AzNM4cPFxzUduJfHkHYlYs" Bounds="85,205,832,66" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The Style pin of a Group is inherited by the widgets inside it, see HowTo Style Widgets with a Group.&#xD;&#xA;- Hover and press need the Interaction pin of the Button unconnected (the default).">
+          <Pad Id="AzNM4cPFxzUduJfHkHYlYs" Bounds="85,934,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Pins without a value stay unset and inherit.&#xD;&#xA;- The Style pin of a Group is inherited by the widgets inside it, see HowTo Style Widgets with a Group.&#xD;&#xA;- Hover and press need the Interaction pin of the Button unconnected (the default).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="ws1meObkpYoVnfx0XuR5Hj" Bounds="85,85,830,84" ShowValueBox="true" isIOBox="true" Value="Renderer [Qt] Client Bounds = current client area of the window in DIP:&#xD;&#xA;- Position = client top-left on the desktop, size = client size (without frame and title bar).&#xD;&#xA;- Follows moving and resizing the window, maximized, fullscreen and borderless.">
+          <Pad Id="ws1meObkpYoVnfx0XuR5Hj" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Renderer [Qt]: Client Bounds&#xD;&#xA;- Current client area of the window in DIP&#xD;&#xA;- Position: client top-left on the desktop; size: without frame and title bar&#xD;&#xA;- Follows moving, resizing, maximized, fullscreen and borderless">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

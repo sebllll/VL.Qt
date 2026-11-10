@@ -537,7 +537,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="G1bp29IQm44FOUOXrvwb27" Bounds="85,85,1045,123" ShowValueBox="true" isIOBox="true" Value="Drag moves an element with mouse, touch or pen:&#xD;&#xA;- Connect Drag to the Interaction pin of the element, or chain it with other interaction nodes.&#xD;&#xA;- With Moves Element on (default) the element follows the drag by itself, no patching needed: the drag adds an offset to the position from the Transform pin or from the layout, in the parent's space.&#xD;&#xA;- Is Dragging and Delta report the drag, the Scene Bounds output of the element shows where it really is.&#xD;&#xA;- Five cases, try them in the renderer window with mouse and, if you have one, touch.">
+          <Pad Id="G1bp29IQm44FOUOXrvwb27" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="Drag [Qt]: moves an element with mouse, touch or pen&#xD;&#xA;- Interaction pin of the element, or chained with other interaction nodes&#xD;&#xA;- Moves Element (default on): the element follows the drag by itself&#xD;&#xA;- Is Dragging and Delta report the drag&#xD;&#xA;- Axis, Minimum and Maximum limit the drag&#xD;&#xA;- Scene Bounds of the element shows where it really is">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -546,7 +546,16 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="F4gW8Kcn349SmmXlRpq90Z" Bounds="85,205,595,97" ShowValueBox="true" isIOBox="true" Value="1  Default drag (blue): drag the rectangle around, it follows by itself. A changed Transform pin puts the element back to the position of the pin, so change Position here while it is dragged away and a new drag starts from there. After a restart the pin value applies again: nothing is written back into the patch. Scene Bounds shows the actual position. Values of Is Dragging arrive one frame later.">
+          <Pad Id="Obb0XpQiRVhamytIEiF3Rf" Bounds="85,2887,830,270" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Moves Element adds an offset to the position from the Transform pin or from the layout, in the parent's space. Try the five cases in the renderer window with mouse and, if you have one, touch.&#xD;&#xA;- 1: A changed Transform pin puts the element back to the position of the pin: change Position while it is dragged away and a new drag starts from there. After a restart the pin value applies again, nothing is written back into the patch. Values of Is Dragging arrive one frame later.&#xD;&#xA;- 2: Of nested elements the innermost takes the drag: the knob slides, the rest of the panel moves the whole panel. The knob drags on one axis (Horizontal) and is limited by Minimum and Maximum, relative to its position from the Transform pin (here 0 to 2.8 units); a drag mostly along the other axis is left to the panel. Delta of the knob is the slider value. A Group has no area of its own: with Auto Size off and size 0 there is nothing to grab, so here the Size is set; with Auto Size on it measures its children.&#xD;&#xA;- 3: The space in the Row stays reserved and the other children do not move. The same works for a Column and for Groups.&#xD;&#xA;- 4: A changed Transform pin resets the drag every frame, so the animation always wins. This is the usual vvvv pattern, nothing is written back. Scene Bounds follows the animation.&#xD;&#xA;- 5: Delta is the movement of the running drag in the parent's space, after Axis and limits. It stays after the release until the next drag starts. Use it to move something else or to drive a value.&#xD;&#xA;- The Group at the bottom collects the five cases for the Renderer (Space DIPTopLeft, 1 unit = 100 DIP, window 1000 x 700 DIP).">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="F4gW8Kcn349SmmXlRpq90Z" Bounds="85,205,595,30" ShowValueBox="true" isIOBox="true" Value="1  Default drag (blue): the rectangle follows by itself">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -555,7 +564,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GCZ17HA0TLVQU7535lHwwU" Bounds="196,661,455,202" ShowValueBox="true" isIOBox="true" Value="2  Panel with a slider (orange knob in a grey panel): the Group has a Drag and the knob inside has its own Drag. Of nested elements the innermost one takes the drag, so the knob slides, the rest of the panel moves the whole panel. The knob drags on one axis (Horizontal) and is limited by Minimum and Maximum, relative to its position from the Transform pin (here 0 to 2.8 units); a drag mostly along the other axis is left to the panel. Delta of the knob is the slider value. A Group has no area of its own: with Auto Size off and size 0 there is nothing to grab, so here the Size is set; with Auto Size on it measures its children.">
+          <Pad Id="GCZ17HA0TLVQU7535lHwwU" Bounds="196,661,455,46" ShowValueBox="true" isIOBox="true" Value="2  Panel with a slider (orange knob in a grey panel): the Group has a Drag and the knob has its own Drag; Delta of the knob is the slider value">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -564,7 +573,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GMEnI0xQB9VOVOzaCSRrLB" Bounds="329,1370,604,71" ShowValueBox="true" isIOBox="true" Value="3  Child of a Row (pink, in the middle): it moves on top of its place in the layout, the space in the Row stays reserved and the other children do not move. The same works for a Column and for Groups.">
+          <Pad Id="GMEnI0xQB9VOVOzaCSRrLB" Bounds="329,1370,604,30" ShowValueBox="true" isIOBox="true" Value="3  Child of a Row (pink, in the middle): moves on top of its place in the layout">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -573,7 +582,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GbYEHHoRvLRUUSuHnIOjZy" Bounds="391,2092,574,98" ShowValueBox="true" isIOBox="true" Value="4  Animated position (purple): the position comes from an LFO. A changed Transform pin resets the drag every frame, so the animation always wins and the element does not follow the mouse. This is the usual vvvv pattern, nothing is written back. Scene Bounds follows the animation.">
+          <Pad Id="GbYEHHoRvLRUUSuHnIOjZy" Bounds="391,2092,574,30" ShowValueBox="true" isIOBox="true" Value="4  Animated position (purple): the position comes from an LFO, the animation wins">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -582,7 +591,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="F7UUvqg2TuAEAWjZUuSQL4" Bounds="359,2450,629,89" ShowValueBox="true" isIOBox="true" Value="5  Moves Element off (teal): the element stays where it is, Drag only reports. Is Dragging is true while dragging, Delta is the movement of the running drag in the parent's space, after Axis and limits. It stays after the release until the next drag starts. Use it to move something else or to drive a value.">
+          <Pad Id="F7UUvqg2TuAEAWjZUuSQL4" Bounds="359,2450,629,30" ShowValueBox="true" isIOBox="true" Value="5  Moves Element off (teal): the element stays, Drag only reports Is Dragging and Delta">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -591,7 +600,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GX4mf9I5cYVUufEPOiyAIf" Bounds="374,2807,816,51" ShowValueBox="true" isIOBox="true" Value="The Group at the bottom collects the five cases for the Renderer (Space DIPTopLeft, 1 unit = 100 DIP, window 1000 x 700 DIP).">
+          <Pad Id="GX4mf9I5cYVUufEPOiyAIf" Bounds="374,2807,816,30" ShowValueBox="true" isIOBox="true" Value="The Group at the bottom collects the five cases for the Renderer.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

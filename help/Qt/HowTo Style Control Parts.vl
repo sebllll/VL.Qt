@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="fJBd0Kh8oOOL8dKLzdocJ2" Bounds="85,85,900,103" ShowValueBox="true" isIOBox="true" Value="Control-specific parts of a Style, shown at Slider and Toggle:&#xD;&#xA;- Indicator: the part that moves or marks - Slider handle, Switch knob, Checkbox check mark.&#xD;&#xA;- Track: the groove of a Slider or the lane of a Switch; Track Fill is its filled part (the value, or on).&#xD;&#xA;- Colors sets the colors of these parts, Indicator and Track set their size, thickness and radius.&#xD;&#xA;- There is no Style per control type: to style Sliders and Toggles differently, put them in separate Groups (or set Style at the widget).">
+          <Pad Id="fJBd0Kh8oOOL8dKLzdocJ2" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Control parts of a Style, shown at Slider and Toggle&#xD;&#xA;- Indicator: Slider handle, Switch knob, Checkbox check mark&#xD;&#xA;- Track: Slider groove, Switch lane; Track Fill is its filled part&#xD;&#xA;- Colors: colors of these parts; Indicator, Track: size and radius&#xD;&#xA;- Not per control type: separate Groups, or Style at the widget">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="isAjIhKtJ0RlgLKOmxgJTe" Bounds="85,205,900,65" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Merge (Qt.Style) lays Input 2 over Input field by field and state by state, so a preset can be the base for a few overrides.&#xD;&#xA;- The outer Group has no Style of its own; each inner Group brings its own.">
+          <Pad Id="isAjIhKtJ0RlgLKOmxgJTe" Bounds="85,1227,830,110" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Track Fill is the value of a Slider, or the on-state of a Switch.&#xD;&#xA;- There is no Style per control type: to style Sliders and Toggles differently, put them in separate Groups (or set Style at the widget).&#xD;&#xA;- Merge (Qt.Style) lays Input 2 over Input field by field and state by state, so a preset can be the base for a few overrides.&#xD;&#xA;- The outer Group has no Style of its own; each inner Group brings its own.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,7 +43,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="KdNnFRIBXuDL7DxtpYlSXp" Bounds="100,300,380,84" ShowValueBox="true" isIOBox="true" Value="1  Slider: Indicator is the handle, Track the groove&#xD;&#xA;- Colors: Indicator, Track, Track Fill (filled part)&#xD;&#xA;- Indicator: size and radius of the handle&#xD;&#xA;- Track: thickness and radius of the groove">
+          <Pad Id="KdNnFRIBXuDL7DxtpYlSXp" Bounds="100,300,380,62" ShowValueBox="true" isIOBox="true" Value="1  Slider: handle and groove&#xD;&#xA;- Colors: Indicator, Track, Track Fill&#xD;&#xA;- Indicator, Track: size, thickness and radius">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -219,7 +219,7 @@
             <Pin Id="2sNVbYAbBHXgwETdIKnT30" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="fK0skBaHmsWWdawFgFSY0l" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="MPcwLuHj31CQJVukDCSXqL" Bounds="583,300,380,84" ShowValueBox="true" isIOBox="true" Value="2  Toggle: Indicator is the knob / the check mark&#xD;&#xA;- Switch: Track is the lane, Track Fill the on-color&#xD;&#xA;- Checkbox: Indicator Size sets the box size&#xD;&#xA;- One style for both Looks">
+          <Pad Id="MPcwLuHj31CQJVukDCSXqL" Bounds="583,300,380,62" ShowValueBox="true" isIOBox="true" Value="2  Toggle: one style for both Looks&#xD;&#xA;- Switch: Track is the lane, Track Fill the on-color&#xD;&#xA;- Checkbox: Indicator Size sets the box size">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

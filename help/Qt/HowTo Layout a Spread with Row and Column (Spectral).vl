@@ -25,8 +25,17 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="FgwyyC6ABJVIE7JPT1SoWM" Bounds="85,85,830,141" ShowValueBox="true" isIOBox="true" Value="Row (Spectral), Column (Spectral) and Group (Spectral) [Qt] take all children as ONE Spread input instead of a pin group - made for ForEach regions:&#xD;&#xA;- Each slice builds one element, the region collects them into a Spread.&#xD;&#xA;- Here every slice of the LinearSpread is one coloured Rectangle; its value sets hue and width (Row) or height (Column).&#xD;&#xA;- Change Count to add or remove children.&#xD;&#xA;- 1 unit = 100 DIP, origin top left.">
+          <Pad Id="FgwyyC6ABJVIE7JPT1SoWM" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Row (Spectral), Column (Spectral), Group (Spectral) [Qt]&#xD;&#xA;- ONE Spread input instead of a pin group, made for ForEach regions&#xD;&#xA;- Each slice builds one element, the region collects them into a Spread&#xD;&#xA;- Here every slice of the LinearSpread is one coloured Rectangle&#xD;&#xA;- Count adds or removes children">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="BM3GFQI2eppoE5iTvzXsXU" Bounds="85,1173,830,62" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The value of a slice sets hue and width (Row) or height (Column).&#xD;&#xA;- 1 unit = 100 DIP, origin top left.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
             <p:ValueBoxSettings>
