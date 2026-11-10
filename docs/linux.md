@@ -1,6 +1,6 @@
 # Linux
 
-Linux x64 and ARM64 are a preview. vvvv exports only console apps on Linux, without Stride/Skia. VL.Qt therefore opens its own Qt window there (kiosk-style). Closing the window or SIGTERM/SIGINT ends the app cleanly (exit code 0, patches are disposed).
+VL.Qt runs on Linux x64 and ARM64. vvvv exports only console apps on Linux, without Stride/Skia. VL.Qt therefore opens its own Qt window there (kiosk-style). Closing the window or SIGTERM/SIGINT ends the app cleanly (exit code 0, patches are disposed).
 
 You export on Windows and run the result on Linux. WSL2 with WSLg (Windows 11) is enough to try it: the Qt window opens on the Windows desktop.
 
@@ -13,11 +13,11 @@ You export on Windows and run the result on Linux. WSL2 with WSLg (Windows 11) i
 - Add a `KeepAppAlive [System]` to the top patch (Application) with `Is Alive` = true. A console app otherwise ends after the first frame, without a window and without a message. This also holds for the `HowTo …` help patches: they have no `KeepAppAlive`, add one to try them on Linux.
 - Set `Bound To Document` on the Renderer to true if closing the window should end the app.
 
-`help/HelloWorldLinux.vl` is such a patch (Rectangle + Text → Group → Renderer, KeepAppAlive).
+`help/HelloWorldLinux.vl` in the repository is such a patch (Rectangle + Text → Group → Renderer, KeepAppAlive). It is a test patch of the repo and is **not part of the NuGet package**; with the package, take any patch of `help/Qt/` (for example `HowTo Draw a Rectangle`), add a `KeepAppAlive` and export that.
 
 ## 2. Export from vvvv
 
-The export needs these settings; vvvv keeps them in a `.props` file next to the patch (`help/HelloWorldLinux.props` is an example):
+The export needs these settings; vvvv keeps them in a `.props` file next to the patch (`help/HelloWorldLinux.props` in the repository is an example):
 
 | Setting | Value |
 |---|---|
@@ -27,13 +27,13 @@ The export needs these settings; vvvv keeps them in a `.props` file next to the 
 
 **In the editor:** open the application exporter from the quad menu, set the values from the table and export.
 
-**From the command line** (the `.props` next to the patch wins over `--rid`):
+**From the command line** (the `.props` next to the patch wins over `--rid`). With the repo sources, the test patch `help/HelloWorldLinux.vl` is exported like this:
 
 ```powershell
 tools/vvvvc.ps1 -File help/HelloWorldLinux.vl -Out build/export-linux
 ```
 
-For a patch without a `.props` (all of `help/Qt/`) pass the settings as arguments:
+For a patch without a `.props` (all of `help/Qt/`, also the patches that ship in the package) pass the settings as arguments:
 
 ```powershell
 tools/vvvvc.ps1 -File "help/Qt/HowTo Draw a Rectangle.vl" -Out build/export-linux-arm64 --rid linux-arm64 --output-type Exe --asset-behavior RelativeToOutput

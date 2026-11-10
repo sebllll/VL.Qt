@@ -76,7 +76,8 @@
   <ItemGroup>
     <None Include="$(RepoRoot)lib\net10.0\VL.Qt.dll;$(RepoRoot)lib\net10.0\VL.Qt.pdb;$(RepoRoot)lib\net10.0\VL.Qt.xml" Pack="true" PackagePath="lib\net10.0\" Visible="false" />
     <None Include="$(RepoRoot)VL.Qt.vl;$(RepoRoot)VL.Qt.HDE.vl;$(RepoRoot)VL.Qt.vl.targets;$(RepoRoot)LICENSES.md" Pack="true" PackagePath="" Visible="false" />
-    <None Include="$(RepoRoot)help\**" Pack="true" PackagePath="help\" Visible="false" />
+    <!-- help/HelloWorld* and help/linux/: test patches of the repo, not shipped -->
+    <None Include="$(RepoRoot)help\**" Exclude="$(RepoRoot)help\HelloWorld*;$(RepoRoot)help\linux\**" Pack="true" PackagePath="help\" Visible="false" />
     <None Include="$(RepoRoot)LICENSES\**" Pack="true" PackagePath="LICENSES\" Visible="false" />
     <None Include="nuget\README.md;nuget\icon.png" Pack="true" PackagePath="" Visible="false" />
     <None Include="$(RepoRoot)LICENSE" Pack="true" PackagePath="" Visible="false" />

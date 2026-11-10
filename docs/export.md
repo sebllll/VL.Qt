@@ -13,6 +13,7 @@ tools/vvvvc.ps1 -File "help/Qt/Demo Typo Motion.vl" -Out build/export
 - vvvvc exports self-contained by default (the .NET runtime is part of the export folder); `--self-contained false` makes a smaller framework-dependent export that needs the .NET 10 runtime on the target.
 - A `.props` next to the patch wins over the command-line arguments `--rid` and `--output-type`. Patches without one (all of `help/Qt/`) get them from the command line, e.g. for Linux arm64: `tools/vvvvc.ps1 -File "help/Qt/HowTo Draw a Rectangle.vl" -Out build/export-linux-arm64 --rid linux-arm64 --output-type Exe --asset-behavior RelativeToOutput`.
 - For a Linux export (console app with a Qt-owned window, needs a `KeepAppAlive` in the patch) see [Linux](linux.md).
+- VL.Qt reports problems (a missing font file in `fonts/`, a Qt error, a font family that is not found) only through the vvvv logger. An exported app shows them only when it has a logging provider, so add one while testing the export (help patch `HowTo Configure logging providers`, see also [Diagnostics](diagnostics.md#logging-and-errors)).
 
 ## Fonts
 

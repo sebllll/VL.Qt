@@ -4,15 +4,16 @@
 [![NuGet](https://img.shields.io/nuget/v/VL.Qt)](https://www.nuget.org/packages/VL.Qt/)
 [![Build](https://img.shields.io/github/actions/workflow/status/sebllll/VL.Qt/build.yml?branch=main)](https://github.com/sebllll/VL.Qt/actions/workflows/build.yml)
 ![Windows](https://img.shields.io/badge/Windows-x64%20%7C%20ARM64-blue)
-![Linux](https://img.shields.io/badge/Linux-x64%20%7C%20ARM64%20(preview)-orange)
+![Linux x64](https://img.shields.io/badge/Linux-x64-blue)
+![Linux ARM64](https://img.shields.io/badge/Linux-ARM64-blue)
 
 Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-programming environment for .NET. You patch a tree of elements (shapes, text, images, video, widgets), VL.Qt hands it to Qt Quick and shows it in a Qt window. Made for 2D motion graphics, typography, layout and interactive UI.
 
 > [!NOTE]
 > **Early release (`0.x`).** The API may still change. Requires **vvvv gamma 8.x (preview)** on .NET 10; vvvv 7.x (.NET 8) is not supported.
-> The output is a Qt window; there is no Stride or Skia layer. Linux is a preview (see [Platforms](#platforms)).
+> The output is a Qt window; there is no Stride or Skia layer. Linux (x64 and ARM64) works as a console export with its own Qt window, tested under WSL2/WSLg so far (see [Platforms](#platforms)).
 
-**Contents:** [Features](#features) · [Getting Started](#getting-started) · [Platforms](#platforms) · [Styles](#styles) · [Images](#images) · [Effects](#effects) · [Shaders](#shaders) · [Tooltips](#tooltips-in-the-vvvv-editor) · [Diagnostics](#diagnostics) · [How It Works](#how-it-works) · [Development](#development) · [Documentation](#documentation) · [Contributing](#contributing) · [License](#license)
+**Contents:** [Features](#features) · [Getting Started](#getting-started) · [Linux via WSL](#try-it-on-linux-through-wsl) · [Platforms](#platforms) · [Styles](#styles) · [Images](#images) · [Effects](#effects) · [Shaders](#shaders) · [Tooltips](#tooltips-in-the-vvvv-editor) · [Diagnostics](#diagnostics) · [How It Works](#how-it-works) · [Development](#development) · [Documentation](#documentation) · [Contributing](#contributing) · [License](#license)
 
 ## Features
 
@@ -70,13 +71,32 @@ The export bundles the Qt runtime next to the executable, only for the runtime i
 |---|---|---|
 | Windows x64 | ✅ | CI-built |
 | Windows ARM64 | ✅ | CI-built on a native arm64 runner |
-| Linux x64 / ARM64 | 🚧 Preview | console export with a Qt-owned window (kiosk-style); no Stride/Skia mixing |
+| Linux x64 | ✅ | console export with a Qt-owned window (kiosk-style); no Stride/Skia mixing; tested under WSL2 with WSLg |
+| Linux ARM64 | ✅ | same as x64; tested under WSL2 with WSLg |
 
 vvvv exports only console apps on Linux, without Stride/Skia. VL.Qt therefore opens its own Qt window there. Closing the window or SIGTERM/SIGINT ends the app cleanly (exit code 0, patches are disposed).
 
 You export on Windows and run the result on Linux; WSL2 with WSLg (Windows 11) is enough to try it, the window opens on the Windows desktop. A minimal or kiosk system needs a font package, otherwise all text renders as empty boxes.
 
+The release test covered WSL2 Ubuntu 24.04 with WSLg on x64 and on arm64. A native X11 or Wayland desktop and a Raspberry Pi (eglfs) are **not tested yet**; what to expect there is in [Other Linux systems](docs/linux.md#other-linux-systems-not-tested).
+
 More: [Linux](docs/linux.md) (prepare the patch, export, WSL setup, fonts, building the Linux runtime).
+
+### Try it on Linux through WSL
+
+The same path for x64 and arm64; use the architecture of the machine that runs WSL. Details and troubleshooting: [Linux](docs/linux.md).
+
+1. **Patch.** In vvvv, open or build a patch that ends in a `Renderer [Qt]` (for example one from `help/Qt/`). Add a `KeepAppAlive [System]` with `Is Alive` = true to the top patch; a console app otherwise ends after the first frame, without a window ([details](docs/linux.md#1-prepare-the-patch)).
+2. **Export for Linux.** Open the application exporter from the quad menu and set `Output type` = `Exe`, `Target framework` = `net10.0`, `Runtime identifier` = `linux-x64` (arm64: `linux-arm64`); then export. The console export does the same: `tools/vvvvc.ps1 -File "<patch>.vl" -Out build/export-linux --rid linux-x64 --output-type Exe --asset-behavior RelativeToOutput` ([details](docs/linux.md#2-export-from-vvvv)). The export is self-contained, so the target needs no .NET.
+3. **Set up WSL once.** In an admin PowerShell: `wsl --install -d Ubuntu-24.04`, restart if asked, create the user. In the Ubuntu shell install the system libraries Qt uses: `bash /mnt/c/<path-to-repo>/tools/setup-wsl.sh --runtime-only`, or the `apt` packages listed in [Linux](docs/linux.md#3-set-up-wsl-once).
+4. **Run it.** Copy the export folder into the Linux file system and start the executable (the name of the patch, without extension):
+
+   ```bash
+   cp -r /mnt/c/<path>/export-linux/<name> ~/ && cd ~/<name>
+   chmod +x <name> && ./<name>
+   ```
+
+   The Qt window opens on the Windows desktop. End it with its close button or `Ctrl+C`.
 
 ## Styles
 
