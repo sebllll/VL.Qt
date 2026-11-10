@@ -63,7 +63,7 @@ Timing checks of the SmokeTest (`perfoverlay`) tell a busy machine from a regres
 
 ### Tearing test pattern (`--tearing`)
 
-A manual scenario, not part of `--all` (#90): N windows, each with a vertical bar sweeping fast across the whole width, so tearing shows as a broken bar. It pumps like the vvvv main loop and prints numbers once per second.
+A manual scenario, not part of `--all`: N windows, each with a vertical bar sweeping fast across the whole width, so tearing shows as a broken bar. It pumps like the vvvv main loop and prints numbers once per second.
 
 ```powershell
 dotnet run --project src/VL.Qt.SmokeTest -c Release -- --tearing --windows 2 --interval 0 --seconds 20
