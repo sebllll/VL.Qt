@@ -32,6 +32,18 @@ static class Program
 
     // WSL with GPU passthrough (WSLg): Present copies to the host compositor (L4e, #214).
     internal static bool Wslg => !OperatingSystem.IsWindows() && System.IO.File.Exists("/dev/dxg");
+    // WSLg with the xcb platform (the default of an export): Weston's X window manager places windows itself.
+    internal static bool WslgXcb => Wslg && Environment.GetEnvironmentVariable("QT_QPA_PLATFORM") is null or "xcb";
+
+    // Check on where a window ends up: under WSLg/xcb the window manager chooses the position of a new window and the
+    // position after leaving fullscreen (e.g. X:0 Y:0 instead of the requested one), so a miss there is a SKIP with
+    // reason instead of a failure. A pass counts everywhere; sizes and every other platform stay strict (#10).
+    internal static Action<bool, string> PositionByWindowManager(Action<bool, string> check) => (ok, what) =>
+    {
+        if (!ok && WslgXcb) Console.WriteLine($"SKIP {what}: position chosen by the WSLg window manager (Weston/XWayland)");
+        else check(ok, what);
+    };
+
     // QRhi OpenGL on Mesa (Linux): GL renderer line from qt.rhi.general, null otherwise.
     internal static string? MesaGl { get; private set; }
 
