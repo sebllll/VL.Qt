@@ -9,6 +9,8 @@
 # offscreen default: QT_QUICK_BACKEND=rhi (OpenGL via GLX, needs an X server, WSLg has one).
 # --software: Qt Quick software backend, no X server/xvfb needed (CI, GPU-less systems); MultiEffect/video pixel checks SKIP.
 # .NET: dotnet from PATH or ~/.dotnet (tools/setup-wsl.sh). Exit 0 = everything green.
+# Window scenarios in a real window (WSLg): tools/test-linux.sh --platform xcb --no-unit -- --only geometry,renderer,visibility,borderless,fullscreen
+#   Hang at exit with the d3d12 driver: the SmokeTest is stopped VLQT_EXIT_GRACE seconds (30) after its last line; VLQT_GPU=software avoids it.
 # --sanitize asan|tsan (#365): additionally builds QtNative with ASan/TSan (build/<rid>-<san>, runtimes/ untouched),
 #   swaps it into a copy of the SmokeTest output and runs the SmokeTest with the sanitizer runtime per LD_PRELOAD
 #   (dotnet is not instrumented). Reports in <out>/<san>.<pid>, suppressions tools/sanitizers/. No dotnet test.
@@ -37,7 +39,7 @@ while [ $# -gt 0 ]; do
         --out) OUT="$2"; shift 2 ;;
         --sanitize) SANITIZE="$2"; shift 2 ;;
         --) shift; SMOKE_ARGS=("$@"); break ;;
-        -h|--help) sed -n '2,15p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -88,7 +90,9 @@ if [ "$SKIP_NATIVE" = 0 ]; then
     "$ROOT/tools/build-native.sh" --rid "$RID" "${QT_ARGS[@]}" > "$OUT/build-native.log" 2>&1 \
         || { tail -20 "$OUT/build-native.log" >&2; exit 1; }
     "$ROOT/tools/deploy-linux.sh" --rid "$RID" "${QT_ARGS[@]}" > "$OUT/deploy-linux.log" 2>&1 \
-        || { tail -20 "$OUT/deploy-linux.log" >&2; exit 1; }
+        || { tail -20 "$OUT/deploy-linux.log" >&2
+             grep -q '=> not found' "$OUT/deploy-linux.log" && echo "Qt needs system libraries that are not installed (the '=> not found' lines above): run tools/setup-wsl.sh" >&2
+             exit 1; }
     tail -1 "$OUT/deploy-linux.log"
     if [ -n "$SANITIZE" ]; then
         step "QtNative with $SANITIZE ($RID)"
@@ -150,9 +154,33 @@ if [ "$SMOKE" = 1 ]; then
         fi
     fi
     set +e
-    # timeout: guards against hangs on exit (known issue L2d, Qualcomm d3d12 driver on arm64 when VLQT_GPU != software)
-    (cd "$SMOKE_DIR" && timeout -k 10 "${VLQT_SMOKE_TIMEOUT:-600}" "${RUN[@]}" dotnet VL.Qt.SmokeTest.dll "$OUT/smoke" "${SMOKE_ARGS[@]}") > "$OUT/smoke.out" 2>&1
+    # timeout: guards against hangs (VLQT_SMOKE_TIMEOUT seconds in total)
+    (cd "$SMOKE_DIR" && exec timeout -k 10 "${VLQT_SMOKE_TIMEOUT:-600}" "${RUN[@]}" dotnet VL.Qt.SmokeTest.dll "$OUT/smoke" "${SMOKE_ARGS[@]}") > "$OUT/smoke.out" 2>&1 &
+    smoke_pid=$!
+    # Known issue (L2d): with Mesa's d3d12 driver under WSLg (Qualcomm arm64, VLQT_GPU != software) the process hangs at
+    # exit after the last check. When the result line "SMOKE OK|FAILED" is in the log but the process is still there
+    # after VLQT_EXIT_GRACE seconds (30), stop it and take the result from the log instead of waiting for the timeout.
+    final_at=0
+    hung=0
+    while kill -0 "$smoke_pid" 2>/dev/null; do
+        if [ "$final_at" = 0 ] && grep -qE '^SMOKE (OK|FAILED)' "$OUT/smoke.out"; then final_at=$((SECONDS + 1)); fi
+        if [ "$final_at" != 0 ] && [ $((SECONDS + 1 - final_at)) -ge "${VLQT_EXIT_GRACE:-30}" ]; then
+            hung=1
+            kill -TERM "$smoke_pid" 2>/dev/null
+            sleep 5
+            kill -KILL "$smoke_pid" 2>/dev/null
+            break
+        fi
+        sleep 1
+    done
+    wait "$smoke_pid" 2>/dev/null
     rc=$?
+    if [ "$hung" = 1 ]; then
+        echo "WARN SmokeTest finished but did not exit (hang at exit, known with the d3d12 driver under WSLg); result taken from the log. Workaround: VLQT_GPU=software" >&2
+        if grep -qE '^SMOKE OK' "$OUT/smoke.out"; then rc=0; else rc=1; fi
+    elif [ "$rc" = 124 ] || [ "$rc" = 137 ]; then
+        echo "WARN SmokeTest hung and was stopped after ${VLQT_SMOKE_TIMEOUT:-600} s. Under WSLg try VLQT_GPU=software (d3d12 driver hang)." >&2
+    fi
     set -e
     if [ -n "$SANITIZE" ]; then
         reports=("$OUT/$SANITIZE".*)
