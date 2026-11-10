@@ -25,7 +25,16 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="ACdHNqPnI0UvfUJ31lDv59" Bounds="85,77,830,84" ShowValueBox="true" isIOBox="true" Value="Group [Qt] holds several elements and moves, fades or clips them together:&#xD;&#xA;- Transform, Opacity and Clip of the Group act on all children (Opacity 0 hides them, their input stays).&#xD;&#xA;- Auto Size (default on) makes the Group as big as its children; Size is then ignored; the position comes from Transform (Anchor TopLeft: the origin of the Group is the origin of its children).&#xD;&#xA;- Add inputs with Ctrl+Plus on the node.">
+          <Pad Id="ACdHNqPnI0UvfUJ31lDv59" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Group [Qt]&#xD;&#xA;- Children move, fade and clip together: Transform, Opacity, Clip&#xD;&#xA;- Auto Size (default on) fits the Group to its children&#xD;&#xA;- More inputs with Ctrl+Plus on the node">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="UcMKhHxn8YtMSwABS0dMN0" Bounds="85,982,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Opacity 0 hides the children, their input stays.&#xD;&#xA;- With Auto Size on, Size is ignored and the position comes from Transform (Anchor TopLeft: the origin of the Group is the origin of its children).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

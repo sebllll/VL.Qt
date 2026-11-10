@@ -215,7 +215,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="vEzKwlC5CfjgXyrqpEstsk" Bounds="85,85,830,122" ShowValueBox="true" isIOBox="true" Value="TextInput: a single-line text field, bound to a channel:&#xD;&#xA;- Channel binds the text: a plain value or an IOBox on the pin (here &quot;Hello&quot;) is the start value and sets the text from the patch; the user writes back into the channel.&#xD;&#xA;- The typed text is committed on Enter or when the field loses focus, and only when it changed.&#xD;&#xA;- Placeholder is shown while the field is empty, Editable off makes the field read-only.&#xD;&#xA;- Value is the current text, Bang is true for one frame when the user committed a change.">
+          <Pad Id="vEzKwlC5CfjgXyrqpEstsk" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="TextInput [Qt]&#xD;&#xA;- Channel: binds the text, the user writes back (IOBox &quot;Hello&quot; = start value)&#xD;&#xA;- Placeholder: shown while the field is empty&#xD;&#xA;- Editable: off makes the field read-only&#xD;&#xA;- Value: current text; Bang: true for one frame when the user committed a change">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -224,7 +224,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="qTVlRuzTzIyLcpV733uB7k" Bounds="85,222,843,84" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;Enter keeps the focus; a click or tap anywhere else in the window commits and leaves the field, Esc discards the edit and leaves it. Setting the channel from the patch while the user is typing replaces what was typed. Labels come from a Labeled element around each text field (here a Column stacks the Labeled fields).">
+          <Pad Id="qTVlRuzTzIyLcpV733uB7k" Bounds="85,1009,830,110" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A plain value or an IOBox on Channel is the start value and sets the text from the patch.&#xD;&#xA;- The typed text is committed on Enter or when the field loses focus, and only when it changed.&#xD;&#xA;- Enter keeps the focus; a click or tap anywhere else in the window commits and leaves the field, Esc discards the edit and leaves it.&#xD;&#xA;- Setting the channel from the patch while the user is typing replaces what was typed.&#xD;&#xA;- Labels come from a Labeled element around each text field (here a Column stacks the Labeled fields).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

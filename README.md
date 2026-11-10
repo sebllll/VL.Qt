@@ -60,7 +60,7 @@ The help patches in `help/Qt/` show one topic each; open them from the Help Brow
 ### Export a standalone app
 
 ```powershell
-tools/vvvvc.ps1 -File "help/Qt/Demo Typo Motion.vl" -Out build/export
+tools/vvvvc.ps1 -File help/HelloWorld.vl -Out build/export
 ```
 
 The export bundles the Qt runtime next to the executable, only for the runtime identifier of the exported app, and copies a `qtshaders/` folder along. More: [Exporting an app](docs/export.md); for Linux see [Linux](docs/linux.md).
@@ -145,7 +145,7 @@ Your own filter shaders (see [Shaders](#shaders)) appear as nodes of the same ch
 
 <img src="docs/images/effect-chain.png" width="820" alt="The text VL.Qt: Blur, RGBSplit, DropShadow on the left, DropShadow, RGBSplit, Blur on the right; the shadow is split and blurred in the second picture">
 
-Help patches: `HowTo Chain Effects`, `HowTo Mask an Element`, `HowTo Add a Glow`, `HowTo Use Motion Blurs`, `HowTo Displace an Element`, `HowTo Blend Elements`, `HowTo Chain Shader Effects`, `HowTo Combine Effects`.
+Help patches: `HowTo Chain Effects`, `HowTo Mask an Element`, `HowTo Add a Glow`, `HowTo Use Motion Blurs`, `HowTo Displace an Element`, `HowTo Blend Elements`.
 
 More: [Effects](docs/effects-and-shaders.md#effects) (all nodes, mask and padding, [shader effects](docs/effects-and-shaders.md#shader-effects), [shaders in the effect chain](docs/effects-and-shaders.md#shaders-in-the-effect-chain)).
 

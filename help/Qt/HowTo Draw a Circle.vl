@@ -25,7 +25,16 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="zxeYiu8OuHsX0FHuKCccR1" Bounds="85,85,641,64" ShowValueBox="true" isIOBox="true" Value="Circle [Qt] draws a filled circle with an optional stroke:&#xD;&#xA;- Radius in units (1 unit = 100 DIP, origin top left); Radius 0 is not drawn. The position comes from Transform (Translation), the circle is centered on it (Anchor Center).&#xD;&#xA;- Same Fill, Stroke, Opacity and Interaction as Rectangle [Qt]; inside Row/Column the position comes from the layout.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+          <Pad Id="zxeYiu8OuHsX0FHuKCccR1" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Circle [Qt]&#xD;&#xA;- Radius, Fill, Stroke Color and Stroke Width&#xD;&#xA;- Anchor: Center (default) or TopLeft&#xD;&#xA;- Position via Transform (Translation)&#xD;&#xA;- Opacity and Interaction like Rectangle [Qt]">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="gzENIk84NLOARvY33hp2nu" Bounds="85,834,830,94" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Radius is in units (1 unit = 100 DIP, origin top left). A Circle with Radius 0 is not drawn.&#xD;&#xA;- The position comes from Transform (Translation) and the circle is centered on it (Anchor Center). Inside Row/Column the position comes from the layout.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

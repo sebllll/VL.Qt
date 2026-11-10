@@ -25,7 +25,16 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="fJBd0Kh8oOOL8dKLzdocJ2" Bounds="85,85,830,141" ShowValueBox="true" isIOBox="true" Value="Stable 60 fps: load images up front or async, never synchronously in the running frame.&#xD;&#xA;- LoadImage (Async) [Qt] decodes in a worker and uploads over several frames, the frame never blocks. Is Loaded turns true when the image is ready.&#xD;&#xA;- Here a ForEach creates one LoadImage (Async) per path, so all images are preloaded at start. Index picks one with GetSlice - switching is only a pointer change, no stutter.&#xD;&#xA;- Change Index while the window runs; LoadImage [Qt] instead would block the frame while it loads.&#xD;&#xA;- F5 (Debug overlay on the Renderer) shows the image resources: count, state and GPU memory.&#xD;&#xA;- Path is relative to this patch.">
+          <Pad Id="fJBd0Kh8oOOL8dKLzdocJ2" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="LoadImage (Async) [Qt]&#xD;&#xA;- Path, Is Loaded (true when the image is ready)&#xD;&#xA;- ForEach: one LoadImage (Async) per path, all preloaded at start&#xD;&#xA;- Index + GetSlice: switch without stutter">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="28J4W8Bzld2g0hyjgkG1Fi" Bounds="85,1059,830,126" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- LoadImage (Async) decodes in a worker and uploads over several frames, the frame never blocks. LoadImage [Qt] instead would block the frame while it loads.&#xD;&#xA;- Switching with Index is only a pointer change. Change Index while the window runs.&#xD;&#xA;- F5 (Debug overlay on the Renderer) shows the image resources: count, state and GPU memory.&#xD;&#xA;- Stable 60 fps: load images up front or async, never synchronously in the running frame.&#xD;&#xA;- Path is relative to this patch.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

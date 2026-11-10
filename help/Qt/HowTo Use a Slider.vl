@@ -346,7 +346,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="x2y9qnClcjJQI9ImzVTaPl" Bounds="85,85,830,160" ShowValueBox="true" isIOBox="true" Value="Slider: a horizontal or vertical value slider, bound to a channel:&#xD;&#xA;- Channel binds the value: a plain value or an IOBox on the pin (here 0.3) is the start value and sets it from the patch; the user writes back into the channel.&#xD;&#xA;- Dragging delivers the value live, the mouse wheel and the arrow keys step it.&#xD;&#xA;- Min and Max fall back to the Min/Max attributes of the channel, then to 0..1; the user wins when both are set.&#xD;&#xA;- Step 0 means stepless, with a Step the value snaps to multiples of it (here 0..100 in steps of 10).&#xD;&#xA;- Orientation switches to a vertical slider.&#xD;&#xA;- Value is the current value, Bang is true for one frame when the user changed it.">
+          <Pad Id="x2y9qnClcjJQI9ImzVTaPl" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Slider [Qt]&#xD;&#xA;- Channel: binds the value, the user writes back (IOBox 0.3 = start value)&#xD;&#xA;- Min, Max, Step (0 = stepless; here 0..100 in steps of 10)&#xD;&#xA;- Orientation: horizontal or vertical&#xD;&#xA;- Value: current value; Bang: true for one frame when the user changed it">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -355,7 +355,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="i0wCwP2PLJENGGQLLWbIOp" Bounds="85,260,843,46" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;Labels in the renderer come from the Labeled element around each slider.">
+          <Pad Id="i0wCwP2PLJENGGQLLWbIOp" Bounds="85,1568,830,94" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A plain value or an IOBox on Channel is the start value and sets the value from the patch.&#xD;&#xA;- Dragging delivers the value live, the mouse wheel and the arrow keys step it. With a Step the value snaps to multiples of it.&#xD;&#xA;- Min and Max fall back to the Min/Max attributes of the channel, then to 0..1; the user wins when both are set.&#xD;&#xA;- Labels in the renderer come from the Labeled element around each slider.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

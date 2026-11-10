@@ -25,8 +25,17 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="bTIYmXASZsSEVJ1IY6krC1" Bounds="85,85,830,103" ShowValueBox="true" isIOBox="true" Value="Row [Qt] stacks its inputs left to right, Column [Qt] top to bottom:&#xD;&#xA;- Only the Size of a child counts; its position comes from the layout (Transform and Anchor only move or turn it visually).&#xD;&#xA;- Spacing = gap between children, Padding = border around them.&#xD;&#xA;- Auto Size (default on) sizes the container to its content, so Size is not needed; the position comes from Transform.&#xD;&#xA;- 1 unit = 100 DIP, origin top left.">
+          <Pad Id="bTIYmXASZsSEVJ1IY6krC1" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Row [Qt], Column [Qt]&#xD;&#xA;- Row stacks left to right, Column top to bottom&#xD;&#xA;- Spacing: gap between children, Padding: border around them&#xD;&#xA;- Auto Size (default on): the container fits its content&#xD;&#xA;- Position of the container via Transform">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="5C87IjxKNcq4W2eqrdhCDE" Bounds="85,2009,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Only the Size of a child counts; its position comes from the layout (Transform and Anchor only move or turn it visually).&#xD;&#xA;- With Auto Size on, Size is not needed.&#xD;&#xA;- 1 unit = 100 DIP, origin top left.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
             <p:ValueBoxSettings>

@@ -170,7 +170,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="e6ZNsoG4nAVjOBJ2KGkgAr" Bounds="85,85,641,84" ShowValueBox="true" isIOBox="true" Value="Toggle: an on/off input with a Checkbox or Switch look, bound to a channel:&#xD;&#xA;- Channel binds the state: a plain value or an IOBox on the pin (here true) is the start value and sets the state from the patch; the user writes back into the channel.&#xD;&#xA;- Value is the current state, Bang is true for one frame when the user flipped it (a Counter counts the changes).&#xD;&#xA;- Look chooses Checkbox (default) or Switch; the state survives a Look change.">
+          <Pad Id="e6ZNsoG4nAVjOBJ2KGkgAr" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Toggle [Qt]&#xD;&#xA;- Channel: binds the state, the user writes back (IOBox true = start value)&#xD;&#xA;- Value: current state&#xD;&#xA;- Bang: true for one frame when the user flipped it&#xD;&#xA;- Look: Checkbox (default) or Switch">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -179,7 +179,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="J9IBOYBZK3ydysbeadZGeS" Bounds="85,183,843,32" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;Labels are not part of the toggle: wrap it in a Labeled element (here a Column stacks the Labeled toggles).">
+          <Pad Id="J9IBOYBZK3ydysbeadZGeS" Bounds="85,910,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A plain value or an IOBox on Channel is the start value and sets the state from the patch. The state survives a Look change.&#xD;&#xA;- A Counter counts the flips (Bang).&#xD;&#xA;- Labels are not part of the toggle: wrap it in a Labeled element (here a Column stacks the Labeled toggles).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

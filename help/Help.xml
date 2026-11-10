@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Pack>
+	<Topic title="Basics">
+		<VLDocument link="Qt\HowTo Draw a Rectangle.vl" tags="rect box shape" />
+		<VLDocument link="Qt\HowTo Draw a Circle.vl" tags="ellipse shape" />
+		<VLDocument link="Qt\HowTo Group Elements.vl" tags="nest transform" />
+		<VLDocument link="Qt\HowTo Reuse an Element.vl" tags="" />
+	</Topic>
+	<Topic title="Text">
+		<VLDocument link="Qt\HowTo Draw Text.vl" tags="font typography" />
+		<VLDocument link="Qt\HowTo Measure Text.vl" tags="" />
+	</Topic>
+	<Topic title="Layout">
+		<VLDocument link="Qt\HowTo Layout with Row and Column.vl" tags="auto layout stack" />
+		<VLDocument link="Qt\HowTo Layout a Spread with Row and Column (Spectral).vl" tags="spread foreach" />
+		<VLDocument link="Qt\HowTo Label an Element.vl" tags="" />
+	</Topic>
+	<Topic title="Interaction">
+		<VLDocument link="Qt\HowTo React to Hover and Click.vl" tags="mouse" />
+		<VLDocument link="Qt\HowTo Track the Pointer.vl" tags="mouse position" />
+		<VLDocument link="Qt\HowTo Drag an Element.vl" tags="mouse" />
+		<VLDocument link="Qt\HowTo Use the Mouse Wheel.vl" tags="zoom scroll" />
+		<VLDocument link="Qt\HowTo Pinch to Zoom and Rotate.vl" tags="touch gesture" />
+		<VLDocument link="Qt\HowTo Use Touch Points.vl" tags="touch pen finger" />
+		<VLDocument link="Qt\HowTo Stack Interactive Elements.vl" tags="overlap hit" />
+	</Topic>
+	<Topic title="Widgets and Styles">
+		<VLDocument link="Qt\HowTo Use a Button.vl" tags="bang" />
+		<VLDocument link="Qt\HowTo Use a Toggle.vl" tags="checkbox switch" />
+		<VLDocument link="Qt\HowTo Use a Slider.vl" tags="" />
+		<VLDocument link="Qt\HowTo Use a TextInput.vl" tags="" />
+		<VLDocument link="Qt\HowTo Use Input (Int).vl" tags="numberbox" />
+		<VLDocument link="Qt\HowTo Style a Widget.vl" tags="" />
+		<VLDocument link="Qt\HowTo Style Control Parts.vl" tags="" />
+		<VLDocument link="Qt\HowTo Style Widgets with a Group.vl" tags="" />
+		<VLDocument link="Qt\HowTo Patch a Stylable Widget.vl" tags="istylable" />
+	</Topic>
+	<Topic title="Images and Video">
+		<VLDocument link="Qt\HowTo Draw an Image.vl" tags="picture texture" />
+		<VLDocument link="Qt\HowTo Preload Images.vl" tags="async" />
+		<VLDocument link="Qt\HowTo Use an IImage.vl" tags="skia" />
+		<VLDocument link="Qt\HowTo Take a Snapshot.vl" tags="" />
+		<VLDocument link="Qt\HowTo Play a Video.vl" tags="movie" />
+		<VLDocument link="Qt\HowTo Show a VL.Video player in Qt.vl" tags="camera" />
+	</Topic>
+	<Topic title="Effects">
+		<VLDocument link="Qt\HowTo Chain Effects.vl" tags="blur dropshadow coloradjust layer" />
+		<VLDocument link="Qt\HowTo Mask an Element.vl" tags="alpha" />
+		<VLDocument link="Qt\HowTo Add a Glow.vl" tags="innershadow" />
+		<VLDocument link="Qt\HowTo Use Motion Blurs.vl" tags="directional zoom radial" />
+		<VLDocument link="Qt\HowTo Displace an Element.vl" tags="" />
+		<VLDocument link="Qt\HowTo Blend Elements.vl" tags="blend mode" />
+	</Topic>
+	<Topic title="Shaders">
+		<VLDocument link="Qt\HowTo Set a Sampler.vl" tags="filter wrap mip" />
+		<VLDocument link="Qt\HowTo Write a ShaderEffect.vl" tags="glsl frag qsb" />
+		<VLDocument link="Qt\HowTo Create Shader Nodes from Files.vl" tags="qtshaders frag" />
+		<VLDocument link="Qt\HowTo Blur an Image with a Control Mask.vl" tags="" />
+	</Topic>
+	<Topic title="Window and Diagnostics">
+		<VLDocument link="Qt\HowTo Set a Window Icon.vl" tags="title fullscreen" />
+		<VLDocument link="Qt\HowTo Read the Window Bounds.vl" tags="" />
+		<VLDocument link="Qt\HowTo Debug Overlay.vl" tags="debug layout" />
+		<VLDocument link="Qt\HowTo Read Performance.vl" tags="fps timing" />
+	</Topic>
+	<Topic title="Export">
+		<VLDocument link="HelloWorld.vl" tags="vvvvc exe" />
+		<VLDocument link="HelloWorldLinux.vl" tags="vvvvc linux console" />
+		<VLDocument link="linux\HelloConsole.vl" tags="vvvvc linux console" />
+	</Topic>
+</Pack>

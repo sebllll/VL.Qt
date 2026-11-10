@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="FzeV1e5wmBhFUsvqFj4UWa" Bounds="85,85,830,103" ShowValueBox="true" isIOBox="true" Value="Point reports where the pointer is on the element, local to the element in units:&#xD;&#xA;- With Buttons None the mouse counts while it hovers the element (no press needed), so the cyan marker follows the mouse.&#xD;&#xA;- With Buttons Left the orange marker only moves while the left button is down and stays at the last position after the release.">
+          <Pad Id="FzeV1e5wmBhFUsvqFj4UWa" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Point [Qt]&#xD;&#xA;- Position of the pointer, local to the element in units&#xD;&#xA;- Buttons None: follows the mouse while it hovers (cyan marker)&#xD;&#xA;- Buttons Left: moves only while the left button is down (orange marker)">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,16 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="FtJsmxIv8PVSBZvVyxoFAv" Bounds="23,576,178,80" ShowValueBox="true" isIOBox="true" Value="The chain is Point (None) -&gt; Point (Left) -&gt; Interaction pin of the background rectangle; the order does not matter.">
+          <Pad Id="HrdqORDxL3KJQp6utzDos1" Bounds="85,1332,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Point (Left) stays at the last position after the release.&#xD;&#xA;- The order of the Point chain does not matter.&#xD;&#xA;- The markers have no Interaction node: they are transparent for input, the background still gets the mouse.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="FtJsmxIv8PVSBZvVyxoFAv" Bounds="23,576,178,62" ShowValueBox="true" isIOBox="true" Value="Chain: Point (None) -&gt; Point (Left) -&gt; Interaction pin of the background rectangle">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,7 +52,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GMzD55htVFoSMhl3IJzLZf" Bounds="475,1060,300,65" ShowValueBox="true" isIOBox="true" Value="The markers have no Interaction node: they are transparent for input, the background still gets the mouse.">
+          <Pad Id="GMzD55htVFoSMhl3IJzLZf" Bounds="475,1060,300,30" ShowValueBox="true" isIOBox="true" Value="Markers: no Interaction, transparent for input">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

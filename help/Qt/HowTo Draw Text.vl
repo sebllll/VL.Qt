@@ -25,7 +25,16 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="yllokDj7jjnnNdVbMFVjB3" Bounds="85,85,641,103" ShowValueBox="true" isIOBox="true" Value="Text [Qt] draws plain text inside its Size:&#xD;&#xA;- Font Size is the font height in units (0.5 = 50 DIP, rounded to whole DIP).&#xD;&#xA;- Size is the box for alignment and wrapping; a Text with width or height 0 is not drawn. The position comes from Transform, the Anchor says which point of the box sits there.&#xD;&#xA;- Use Wrap to break lines at the width of Size.">
+          <Pad Id="yllokDj7jjnnNdVbMFVjB3" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Text [Qt]&#xD;&#xA;- Font Size in units (0.5 = 50 DIP, rounded to whole DIP)&#xD;&#xA;- Size: the box for alignment and wrapping&#xD;&#xA;- Wrap breaks lines at the width of Size&#xD;&#xA;- Position and Anchor via Transform">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="bE13wDKtNrvKbqO2yFhYsZ" Bounds="85,710,830,62" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A Text with width or height 0 in Size is not drawn.&#xD;&#xA;- The position comes from Transform, the Anchor says which point of the box sits there.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

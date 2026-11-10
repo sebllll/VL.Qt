@@ -26,7 +26,16 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="zeQlIkMmxprqR7DEPIFej8" Bounds="85,85,830,190" ShowValueBox="true" isIOBox="true" Value="ToQtImage [Qt] turns an IImage of vvvv (from Skia, OpenCV, a camera, ...) into a QtImage for the Image element:&#xD;&#xA;- Here Skia reads a file and ToImage [Skia] makes an IImage of the SKImage; ToQtImage copies the pixels at once and uploads them to the GPU within the frame budget, the previous image stays visible until the new one is complete.&#xD;&#xA;- It uploads every time a new IImage arrives (or every frame for volatile images such as a camera), so do not feed it a changing image if it is not needed.&#xD;&#xA;- For files use LoadImage [Qt] or LoadImage (Async) [Qt] instead, see HowTo Draw an Image and HowTo Preload Images.&#xD;&#xA;- Stable 60 fps: load images in advance or asynchronously, never synchronously while the frame is running.&#xD;&#xA;- Error shows why the upload failed, empty otherwise.">
+          <Pad Id="zeQlIkMmxprqR7DEPIFej8" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="ToQtImage [Qt]&#xD;&#xA;- Input: IImage of vvvv (from Skia, OpenCV, a camera, ...)&#xD;&#xA;- Output: QtImage for the Image element&#xD;&#xA;- Error: why the upload failed, empty otherwise&#xD;&#xA;- Here: Skia reads a file, ToImage [Skia] makes the IImage">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="XyMGrKlyedLdl8d1ksr4eH" Bounds="85,904,830,126" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- ToQtImage copies the pixels at once and uploads them to the GPU within the frame budget, the previous image stays visible until the new one is complete.&#xD;&#xA;- It uploads every time a new IImage arrives (or every frame for volatile images such as a camera), so do not feed it a changing image if it is not needed.&#xD;&#xA;- For files use LoadImage [Qt] or LoadImage (Async) [Qt] instead, see HowTo Draw an Image and HowTo Preload Images.&#xD;&#xA;- Stable 60 fps: load images in advance or asynchronously, never synchronously while the frame is running.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
