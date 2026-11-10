@@ -39,7 +39,7 @@ For a patch without a `.props` (all of `help/Qt/`) pass the settings as argument
 tools/vvvvc.ps1 -File "help/Qt/HowTo Draw a Rectangle.vl" -Out build/export-linux-arm64 --rid linux-arm64 --output-type Exe --asset-behavior RelativeToOutput
 ```
 
-The export contains an executable without file extension (`HelloWorldLinux`), its `.dll` files and the Qt runtime in `runtimes/linux-x64/native/` (only for this RID, about 105 MB). vvvvc exports **self-contained** by default: the .NET runtime is inside the folder (about 100 MB more), so the target needs no .NET. With `--self-contained false` the export is framework-dependent and needs the .NET 10 runtime on the target.
+The export contains an executable without file extension (`HelloWorldLinux`), its `.dll` files and the Qt runtime in `runtimes/linux-x64/native/` (only for this RID, about 120 MB on x64). vvvvc exports **self-contained** by default: the .NET runtime is inside the folder (on x64 about 550 MB in total for `HelloWorldLinux`), so the target needs no .NET. With `--self-contained false` the export is framework-dependent (about 130 MB on x64) and needs the .NET 10 runtime on the target.
 
 > [!IMPORTANT]
 > The Qt runtime for Linux has to be inside the VL.Qt package you export with. The release package contains all four RIDs. When you work with VL.Qt from the repo sources, build the Linux runtime first in WSL (see [Building the Linux runtime from source](#building-the-linux-runtime-from-source)), otherwise `runtimes/linux-*` is missing from the export. The export still succeeds in that case; the check is a `runtimes/<rid>/native/` folder in the export (about 45 files).
@@ -109,14 +109,14 @@ VL.Qt sets no font family, so Qt takes the system default via fontconfig (DejaVu
 Needed when you export for Linux from the repo sources (the release package already contains it). In the WSL shell, inside the repo (clone it in WSL, or copy the checkout; the repo is also visible under `/mnt/c/...`, but building in the Linux file system is faster):
 
 ```bash
-tools/setup-wsl.sh          # once: packages + .NET 10 SDK, about 1.5 minutes
-tools/setup-qt.sh           # once: Qt 6.12 for Linux into ~/Qt, about 1.5 minutes, 2 GB
+tools/setup-wsl.sh          # once: packages + .NET 10 SDK, about 1.5 minutes (x64 on a fast line: 40 s)
+tools/setup-qt.sh           # once: Qt 6.12 for Linux into ~/Qt, about 1.5 minutes, 2 GB (x64 on a fast line: 25 s)
 tools/build-native.sh       # libvlqt.so
 tools/deploy-linux.sh       # Qt bundle next to it in runtimes/linux-<arch>/native
-tools/test-linux.sh --skip-native   # optional: SmokeTest + unit tests
+tools/test-linux.sh --software --skip-native   # optional: SmokeTest + unit tests (without --software see Known problems)
 ```
 
-`tools/test-linux.sh` without `--skip-native` runs the build and the bundle step itself (about 1 minute). The RID follows the WSL architecture (`linux-x64` or `linux-arm64`). After that, an export from Windows with this RID includes the Linux runtime. When the repo lives in the WSL file system, copy `runtimes/linux-<arch>` into the `runtimes/` folder of the Windows checkout first. The Linux scripts are listed in [Development](development.md#scripts).
+`tools/test-linux.sh` without `--skip-native` runs the build and the bundle step itself (about 1 minute). The RID follows the WSL architecture (`linux-x64` or `linux-arm64`). After that, an export from Windows with this RID includes the Linux runtime. When the repo lives in the WSL file system, copy `runtimes/linux-<arch>` into the `runtimes/` folder of the Windows checkout first. On x64 building directly in `/mnt/c/<path-to-repo>` also works (QtNative 20 s, bundle 20 s) and needs no copy. The Linux scripts are listed in [Development](development.md#scripts).
 
 ### Testing the window pins under WSLg
 
@@ -127,6 +127,8 @@ tools/test-linux.sh --skip-native --platform xcb --no-unit -- --only geometry,re
 ```
 
 Log and grabbed PNGs are in `build/test-linux-<rid>/xcb/` (`smoke.out`, `smoke/`). On WSL2 Ubuntu 24.04 arm64 (WSLg) `geometry`, `renderer`, `visibility` and the checks of `borderless` and `fullscreen` that do not depend on the window position pass; four checks fail, all about where the compositor puts the window (see [Known problems](#known-problems)).
+
+On x64 the keys were checked in an exported `HelloWorldLinux` under WSLg: `F11` and `Alt+Enter` each switch to fullscreen over the whole screen (3440x1440 on that screen) and back to the original position and size; the app ends with exit code 0 on SIGTERM. The pins and the screen choice with two monitors are not checked yet.
 
 For the window pins that need a person (live `Borderless` toggle, `Fullscreen` screen choice, F11 and Alt+Enter) start an export (see above) and press the keys in its window: F11 or Alt+Enter toggles fullscreen like the `Fullscreen` pin. The live toggles of `Borderless` and `Fullscreen` can be watched in the SmokeTest scenarios (`--only borderless`, `--only fullscreen`, the test windows open on the desktop for a moment); no help patch drives these pins live in an exported Linux app yet, and the editor runs on Windows only.
 
@@ -150,12 +152,13 @@ Run `tools/test-linux.sh` as above on such a system and compare with the failure
 
 | Problem | Cause | Workaround |
 |---|---|---|
-| `tools/test-linux.sh` fails at the bundle step, `libSM.so.6 => not found` / `libICE.so.6 => not found` in `libqxcb.so` | the fresh Ubuntu 24.04 WSL image lacks two X11 libraries that Qt's xcb plugin loads | `tools/setup-wsl.sh` or `sudo apt install libsm6 libice6` |
+| `tools/test-linux.sh` fails at the bundle step, `libSM.so.6 => not found` / `libICE.so.6 => not found` in `libqxcb.so` | the fresh Ubuntu 24.04 WSL image lacks two X11 libraries that Qt's xcb plugin loads | `tools/setup-wsl.sh` or `sudo apt install libsm6 libice6` (not needed on x64: the fresh x64 image runs without them, `libqxcb.so` of the linux-x64 bundle does not depend on them; installing them does no harm) |
 | The export has no `runtimes/<rid>/native/`, the app cannot find Qt | the Linux runtime was not built, or a `.props` next to the patch names another RID (`help/HelloWorldLinux.props`: `linux-x64`) | [Build the runtime](#building-the-linux-runtime-from-source), then check the RID, see [Export from vvvv](#2-export-from-vvvv) |
 | A `HowTo …` patch exported for Linux ends at once without a window | no `KeepAppAlive` in the patch | add `KeepAppAlive [System]` with `Is Alive` = true |
 | The SmokeTest hangs at the end (WSLg, Mesa d3d12, Qualcomm arm64), exit code 124 after 10 minutes | the driver hangs when the process ends; exported apps are not affected (SIGTERM ends them in under a second) | `tools/test-linux.sh` stops the SmokeTest 30 s after its last line and takes the result from the log; `VLQT_GPU=software` avoids the hang (llvmpipe instead of the host GPU) |
 | `--platform wayland` with d3d12 hangs the whole WSL VM | Mesa d3d12 with Wayland under WSLg (#216) | use `--platform xcb` (the default of an export), or `GALLIUM_DRIVER=llvmpipe`; `tools/test-linux.sh` refuses the combination |
-| Under WSLg the SmokeTest fails four window checks: `233: created borderless at Bounds`, `143/234 live: Bounds not written while fullscreen`, `234 on create: off restores position + size`, `143/234 on create: Bounds after the round trip unchanged` (xcb) | WSLg's window manager places the window itself: the position of a new window and the position after leaving fullscreen differ from the requested one (e.g. `X:0 Y:0` instead of `X:180 Y:140`); size and fullscreen itself are right | none needed for patches that do not rely on the window position; open |
+| Under WSLg (x64 and arm64) the SmokeTest fails the same four window checks: `233: created borderless at Bounds`, `143/234 live: Bounds not written while fullscreen`, `234 on create: off restores position + size`, `143/234 on create: Bounds after the round trip unchanged` (xcb) | WSLg's window manager places the window itself: the position of a new window and the position after leaving fullscreen differ from the requested one (e.g. `X:0 Y:0` instead of `X:180 Y:140`); size and fullscreen itself are right | none needed for patches that do not rely on the window position; open |
+| `tools/test-linux.sh` without `--software` fails 12 effect checks on x64 under WSLg, in the default `offscreen` run and with `--platform xcb` (`effect-chain: Mask node text`, `effect-passes`, `487`, `438`; probes read 0, a hitch-rate check `361` failed once as well) | not found. An exported `HowTo Add a Glow` shows the glow correctly in the WSLg window, so the effect itself works; the checks read the effect back from a grab. Not seen with `--software`, where these checks are skipped | run `tools/test-linux.sh --software` (as the CI does) for the full suite; open |
 | Under WSLg's Wayland the SmokeTest reports ten failed checks (`Bounds` position, `Fullscreen` restore, `Borderless` position) | a Wayland client cannot choose its position, the compositor reports its own; after leaving fullscreen the size differs from the requested one (e.g. 494x267 instead of 500x300) | use xcb under WSLg; document, no fix possible in the client |
 | `libEGL warning`, `MESA: error: ZINK: failed to choose pdev` on stderr | Mesa probes drivers without a DRM device (WSL has `/dev/dxg` only) | harmless |
 | All text shows as boxes | no font installed | see [Fonts](#fonts) |

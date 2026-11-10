@@ -10,6 +10,7 @@
 # --software: Qt Quick software backend, no X server/xvfb needed (CI, GPU-less systems); MultiEffect/video pixel checks SKIP.
 # .NET: dotnet from PATH or ~/.dotnet (tools/setup-wsl.sh). Exit 0 = everything green.
 # Window scenarios in a real window (WSLg): tools/test-linux.sh --platform xcb --no-unit -- --only geometry,renderer,visibility,borderless,fullscreen
+#   WSLg x64 without --software: 12 effect pixel checks fail (docs/linux.md#known-problems); the CI runs --software.
 #   Hang at exit with the d3d12 driver: the SmokeTest is stopped VLQT_EXIT_GRACE seconds (30) after its last line; VLQT_GPU=software avoids it.
 # --sanitize asan|tsan (#365): additionally builds QtNative with ASan/TSan (build/<rid>-<san>, runtimes/ untouched),
 #   swaps it into a copy of the SmokeTest output and runs the SmokeTest with the sanitizer runtime per LD_PRELOAD
@@ -39,7 +40,7 @@ while [ $# -gt 0 ]; do
         --out) OUT="$2"; shift 2 ;;
         --sanitize) SANITIZE="$2"; shift 2 ;;
         --) shift; SMOKE_ARGS=("$@"); break ;;
-        -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,18p' "$0"; exit 0 ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
     esac
 done
