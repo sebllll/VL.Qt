@@ -37,7 +37,11 @@ Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-progra
 
 ### Install
 
-Download the package from the [GitHub releases](https://github.com/sebllll/VL.Qt/releases) or build it yourself (see [Development](docs/development.md)). Add `VL.Qt` to your vvvv dependencies.
+VL.Qt is on [nuget.org](https://www.nuget.org/packages/VL.Qt/). In vvvv, open the **References** of your document, switch to **Browse Packs**, search for `VL.Qt` and install it.
+
+<img src="docs/images/install-browse-packs.png" width="480" alt="vvvv References window, Browse Packs, search for vl.qt, the package VL.Qt being installed">
+
+The packages are also attached to the [GitHub releases](https://github.com/sebllll/VL.Qt/releases). To build VL.Qt yourself, see [Development](docs/development.md).
 
 ### First patch
 
