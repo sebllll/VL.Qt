@@ -19,6 +19,8 @@ Press these keys in a Qt window (no modifiers). Both overlays are drawn by QtNat
 | F6 | Freeze the stats (only while the stats are visible, otherwise F6 goes to the scene) |
 | F7 | Timeline: show/hide the host segments (vvvv, GC, apply), only while the stats are visible |
 
+The `present` segment includes the VSync wait when the Renderer's `VSync` pin is on (the default), and is then labelled "present (incl. VSync wait)"; the wait is not counted as Qt work. The System page also shows "allow tearing yes/no" and "refresh N Hz". With several VSync windows the frame rate per window can drop; see the [timing decision](decisions/timing.md).
+
 The same numbers are available in a patch: `Renderer [Qt]` has an optional `Perf` output (`PerfStats`), see `help/Qt/HowTo Read Performance.vl`. `PerfStats (Split)` exposes the frame, pump, sync, render, present and GPU timings; `Split Percentiles`, `Split Counters`, `Split Host` (vvvv, wait, apply, reconcile, ops) and `Split Gc` read the further fields.
 
 ### Overhead of the overlays
@@ -31,7 +33,7 @@ When a pump takes longer than the frame budget, the warning in the vvvv log ends
 
 The replay attributes spikes the same way: `dotnet run --project src/VL.Qt.SmokeTest -c Release -- --replay anim[:frames[:rects]] [outDir] --paced [--loop N] [--load N]` plays a built-in animated scene (moving semi-transparent rectangles plus texts that change every frame) at 60 fps. Every spike above 8 ms goes to its largest phase (apply, advance, events, sync, render, present), and the run ends with a `REPLAY spike attribution` line and the number of pumps whose present took longer than 4 ms. `--load N` keeps N threads busy on the CPU meanwhile.
 
-Result (win-x64, D3D11, flip model, swap interval 0, maximum frame latency 2; 3600 frames per run):
+Result (win-x64, D3D11, flip model, swap interval 0 (`VSync` off, so that present does not wait for the refresh), maximum frame latency 2; 3600 frames per run):
 
 | Run | Pump median | Spikes > 8 ms (steady) | Dominant phase | Present > 4 ms |
 |---|---|---|---|---|
@@ -39,7 +41,7 @@ Result (win-x64, D3D11, flip model, swap interval 0, maximum frame latency 2; 36
 | 4000 rectangles (GPU-heavy) | 4.9 ms | 1 | present (once after the window was shown) | 1 of 3591 pumps |
 | 300 rectangles, every core busy | 0.69 ms | 13 | apply 8, events 4, present 1 (once after show) | 1 of 3591 pumps |
 
-Present does **not** block in steady operation. Outside start-up it stays at 0.1 ms or less, also with a GPU-heavy scene or a fully loaded CPU. The only slow present comes once per window, 10 to 25 frames after it is shown: it takes 10 to 32 ms, and the frame interval of that pump is about 40 ms. The window is then going through its first frames with the compositor (5 replays in a row: once in every round). The spikes under CPU load are in the C# apply and in the Qt event phase (`events`: posted events, polish, animation ticks): the thread was preempted, nothing is waiting on the GPU or the compositor. So a frame latency waitable object, a tearing present or a present outside the pump would not remove them. Look for CPU contention (other processes, too many busy threads) or work in the events phase instead.
+With `VSync` off, present does **not** block in steady operation (with VSync on, it waits for the refresh by design). Outside start-up it stays at 0.1 ms or less, also with a GPU-heavy scene or a fully loaded CPU. The only slow present comes once per window, 10 to 25 frames after it is shown: it takes 10 to 32 ms, and the frame interval of that pump is about 40 ms. The window is then going through its first frames with the compositor (5 replays in a row: once in every round). The spikes under CPU load are in the C# apply and in the Qt event phase (`events`: posted events, polish, animation ticks): the thread was preempted, nothing is waiting on the GPU or the compositor. So a frame latency waitable object, a tearing present or a present outside the pump would not remove them. Look for CPU contention (other processes, too many busy threads) or work in the events phase instead.
 
 ## Debug overlay
 

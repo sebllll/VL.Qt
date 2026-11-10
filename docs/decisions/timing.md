@@ -11,7 +11,7 @@ How time and the frame loop are shared between vvvv and Qt, so that animation, p
 - **`QT_QPA_UPDATE_IDLE_TIME=0`** is set by QtNative. On Windows `requestUpdate()` goes through a timer (default 5 ms); without the setting only about 22 % of the pumps render (about 20 fps at 60 Hz). With it, exactly one swap happens per pump, deterministically.
 - **Pause:** while vvvv is paused nothing fires, so there is neither pump nor `advance()`. The Qt window freezes completely (no repaint, resize or input).
 - **Dragging/pausing a plain `QQuickWindow`:** standstill or stutter is accepted. Windows' modal move/size loop delivers irregular vvvv frames, and a pause has no pump. The yardstick is the behaviour of the Skia/Stride windows, and the form-based window that replaces the plain window behaves like them. Revisit if the form window is worse than a Skia window while dragging.
-- **VSync:** vvvv sets the pace. The Qt window uses swap interval 0 to avoid waiting twice in the `basic` loop. With the `basic` loop and D3D11, `swapInterval(0)` becomes `Present(0)` with allow-tearing, so tearing is accepted.
+- **VSync:** vvvv sets the pace; VSync only prevents tearing. The Renderer's `VSync` pin is on by default (swap interval 1), so a present waits for the display refresh and the pump can take up to one refresh interval. That wait is never counted as Qt work (no slow-frame warning for it) and shows in the F5 overlay as "present (incl. VSync wait)". `VSync` off is the opt-out: swap interval 0, the present never blocks and tearing is allowed (with the `basic` loop and D3D11, `swapInterval(0)` becomes `Present(0)` with allow-tearing). With several VSync windows the frame rate per window can drop; this is open (see Open questions).
 - **No real-time elements.** QML `Timer`, JS `Date` and video run on system time, not on our clock, so they are not offered on the element level. Timing comes from vvvv, and video arrives as a texture from vvvv.
 - **Frame-exact offline capture** comes with the texture output / render control, not with the plain window. The principle then is a fixed time step of the vvvv clock, which the driver follows.
 
@@ -19,8 +19,9 @@ How time and the frame loop are shared between vvvv and Qt, so that animation, p
 - **Restart after idle:** after closing and reopening a window, a new animation starts about one frame (1.5°) off. It is deterministic; observe whether it matters.
 - **Particles:** check whether they depend on the driver once they are needed.
 - **`Animator` types** (`OpacityAnimator`, …) run on the render thread in the `threaded` loop, bypassing our driver. With the `basic` loop or render control on the main thread this is harmless, so the `threaded` loop must not be enabled unchecked.
+- **Several VSync windows:** with several VSync windows the frame rate per window can drop. How to avoid that is not decided yet.
 
 ## Rejected alternatives
 - Keeping Qt animations in sync while scrubbing by seeking (the state lives inside every running animation; fiddly and error-prone).
-- Qt VSync as the clock source (it would block the vvvv main loop).
+- Qt VSync as the clock source: vvvv stays the clock. Qt's swap does not drive the frame loop; with VSync on it only prevents tearing, at the price that the pump can wait up to one refresh interval inside the present.
 - A timer-based substitute pump for dragging/pausing a plain window (effort for a transitional window, and a second path into Qt events outside the order reconciler → advance → render).
