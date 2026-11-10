@@ -23,6 +23,13 @@
 #include <cstring>
 #include <vector>
 
+#ifdef Q_OS_WIN
+#ifndef NOMINMAX
+#define NOMINMAX // windows.h via dxgi: no min/max macros (std::max below)
+#endif
+#include <dxgi1_5.h>
+#endif
+
 Q_LOGGING_CATEGORY(lcGpu, "vlqt.gpu")
 
 QString softwareRendererName(QQuickWindow* window)
@@ -139,6 +146,39 @@ const char* const kGrey = "#909090";
 const char* const kPhaseName[PerfMonitor::PhaseCount] = {"events", "sync", "render", "present"};
 const char* const kPageName[PerfMonitor::PageCount] = {"SUMMARY", "TIMELINE", "SCENE", "SYSTEM", "RESOURCES"};
 
+// #90: the swap chain waits for the vertical blank in Present (no QRhiSwapChain::NoVSync), so the present phase
+// includes that wait. No swap chain (software backend, before the first frame): plain "present".
+bool vsyncWaits(QQuickWindow* window)
+{
+    QRhiSwapChain* sc = window ? window->swapChain() : nullptr;
+    return sc && !(sc->flags() & QRhiSwapChain::NoVSync);
+}
+const char* presentName(bool vsync) { return vsync ? "present (incl. VSync wait)" : "present"; }
+
+#ifdef Q_OS_WIN
+// Same query as QRhiD3D11::create(): IDXGIFactory5::CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING),
+// qtbase v6.12.0 src/gui/rhi/qrhid3d11.cpp:211-219 (supportsAllowTearing). Asked once per process.
+bool dxgiAllowTearingSupported()
+{
+    static const bool supported = [] {
+        bool result = false;
+        IDXGIFactory1* factory = nullptr;
+        if (SUCCEEDED(CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&factory)))) {
+            IDXGIFactory5* factory5 = nullptr;
+            if (SUCCEEDED(factory->QueryInterface(__uuidof(IDXGIFactory5), reinterpret_cast<void**>(&factory5)))) {
+                BOOL allowTearing = FALSE;
+                if (SUCCEEDED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing))))
+                    result = allowTearing != FALSE;
+                factory5->Release();
+            }
+            factory->Release();
+        }
+        return result;
+    }();
+    return supported;
+}
+#endif
+
 float phaseMs(const PerfSample& s, int phase)
 {
     switch (phase) {
@@ -165,7 +205,12 @@ const char* const kHostName[SegQt] = {"vvvv", "GC", "apply"};
 bool s_hostSegments = true;
 
 const Rgb& segColor(int seg) { return seg < SegQt ? kHostColor[seg] : kPhaseColor[seg - SegQt]; }
-const char* segName(int seg) { return seg < SegQt ? kHostName[seg] : kPhaseName[seg - SegQt]; }
+const char* segName(int seg, bool vsync = false)
+{
+    if (seg < SegQt)
+        return kHostName[seg];
+    return seg - SegQt == PerfMonitor::PhasePresent ? presentName(vsync) : kPhaseName[seg - SegQt];
+}
 float segMs(const PerfSample& s, int seg)
 {
     switch (seg) {
@@ -877,8 +922,13 @@ QString PerfMonitor::summaryPage(QString* body) const
         [&](double v) { return onDemand ? kGrey : frameColor(v, budget); });
     pRow("pump", pumpAvg, st.pump_p50, st.pump_p95, st.pump_p99, st.pump_max,
         [&](double v) { return pumpColor(v, budget); });
+    const bool vsync = vsyncWaits(m_window);
     for (int ph = 0; ph < PhaseCount; ph++) {
-        b.t("  ").c(kPhaseColor[ph].html, lab(kPhaseName[ph], L - 2));
+        b.t("  ");
+        if (ph == PhasePresent && vsync) // too long for the name column: the numbers follow on the next line
+            b.c(kPhaseColor[ph].html, presentName(true)).br().t(QString(L, u' '));
+        else
+            b.c(kPhaseColor[ph].html, lab(kPhaseName[ph], L - 2));
         b.c(pumpColor(na ? phSum[ph] / na : 0, budget), num(na ? phSum[ph] / na : 0, W));
         b.t(QString(3 * W, u' ')).c(pumpColor(phMax[ph], budget), num(phMax[ph], W)).br();
     }
@@ -924,9 +974,10 @@ QString PerfMonitor::timelinePage(QString* foot) const
     h.br().c(kGrey, QStringLiteral("%1 pumps, newest right, scale 0-%2 ms   F7 vvvv/GC/apply %3").arg(n)
         .arg(num(PerfTimeline::scaleFor(this), 0, 1), QLatin1String(s_hostSegments ? "on" : "off")));
 
+    const bool vsync = vsyncWaits(m_window);
     Html f;
     for (int seg = firstSeg(); seg < SegCount; seg++)
-        f.c(segColor(seg).html, QStringLiteral("■ ")).t(segName(seg)).t("  ");
+        f.c(segColor(seg).html, QStringLiteral("■ ")).t(segName(seg, vsync)).t("  ");
     f.br().c(kGpuColor.html, "- GPU  ").c(kBudgetColor.html, QStringLiteral("- budget %1 (pump > budget: red)").arg(num(budget, 0)));
     f.t("  ").c(kGrey, "- max").br();
     // Peaks: the 3 largest bars (shown segments) with their dominant segment and age.
@@ -950,7 +1001,7 @@ QString PerfMonitor::timelinePage(QString* foot) const
                 dom = seg;
         const float total = stackMs(s);
         f.t(k == 0 ? "peaks " : "      ").c(pumpColor(total, budget), num(total, 6) + QStringLiteral(" ms"));
-        f.t("  ").c(segColor(dom).html, lab(segName(dom), 8)).t(num(segMs(s, dom), 6));
+        f.t("  ").c(segColor(dom).html, lab(segName(dom, vsync), 8)).t(num(segMs(s, dom), 6));
         f.c(kGrey, QStringLiteral("  %1 pumps ago").arg(n - 1 - peaks[k]));
         if (k < 2 && peaks[k + 1] >= 0)
             f.br();
@@ -1063,7 +1114,7 @@ QString PerfMonitor::systemPage() const
 {
     Html h;
     pageHeader(h, System, m_frozen);
-    constexpr int L = 12;
+    constexpr int L = 14; // "allow tearing" + 1
     QRhi* rhi = m_window->rhi();
     const QSGRendererInterface* ri = m_window->rendererInterface();
     const bool quickSoftware = ri && ri->graphicsApi() == QSGRendererInterface::Software;
@@ -1111,6 +1162,27 @@ QString PerfMonitor::systemPage() const
         if (quickSoftware)
             h.c(kGrey, "  software backend presents via the backing store");
     }
+    // Does Qt call Present with DXGI_PRESENT_ALLOW_TEARING? D3D11 only. QRhiD3D11::beginFrame/endFrame
+    // (qrhid3d11.cpp:1561-1562, v6.12.0) sets it when swapInterval == 0 and the swap chain has
+    // DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING; that flag is set when NoVSync and supportsAllowTearing
+    // (qrhid3d11.cpp:5422-5430) = dxgiAllowTearingSupported() here.
+    h.br().t(lab("allow tearing", L));
+    QRhiSwapChain* tearSc = m_window->swapChain();
+#ifdef Q_OS_WIN
+    if (rhi && rhi->backend() == QRhi::D3D11 && tearSc) {
+        const bool noVsync = tearSc->flags() & QRhiSwapChain::NoVSync;
+        const bool supported = dxgiAllowTearingSupported();
+        const bool tearing = noVsync && supported;
+        h.c(tearing ? kYellow : kGreen, tearing ? "yes" : "no");
+        h.c(kGrey, tearing ? "  Present uses ALLOW_TEARING, frames may tear"
+            : !noVsync ? "  VSync on" : "  not supported by the system, Present(0) in the flip model may still wait");
+    } else {
+        h.c(kGrey, kNa);
+    }
+#else
+    Q_UNUSED(tearSc);
+    h.c(kGrey, kNa);
+#endif
     h.br().t(lab("Qt", L)).t(QString::fromLatin1(qVersion()));
     return h.str();
 }
