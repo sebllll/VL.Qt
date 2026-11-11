@@ -436,16 +436,13 @@ namespace VL.Qt
 
         /// <summary>
         /// Starts a SHADER link: template (<see cref="Protocol.EffectTemplate"/>), shader resource ids by role, padding in DIP,
-        /// strength and the uniform that takes it (TWO_PASS only, else empty). Uniform* entries follow, then <see cref="EndLink"/>.
+        /// and strength (Pyramid: radius). Uniform* entries follow, then <see cref="EndLink"/>.
         /// </summary>
         public void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
-            float paddingRight, float paddingBottom, float strength, ReadOnlySpan<char> strengthUniform)
+            float paddingRight, float paddingBottom, float strength)
         {
-            int nameBytes = Encoding.UTF8.GetByteCount(strengthUniform);
-            if (nameBytes > Protocol.UniformNameMax)
-                throw new ArgumentException($"Strength uniform name must be 0..{Protocol.UniformNameMax} UTF-8 bytes, got {nameBytes}.", nameof(strengthUniform));
             int ids = shaderIds.Length * 8;
-            var head = BeginLink(Protocol.EffectLink.Shader, ShaderLinkFixedSize + ids + Align(nameBytes));
+            var head = BeginLink(Protocol.EffectLink.Shader, ShaderLinkFixedSize + ids);
             WriteU16(head, template);
             WriteU16(head.Slice(2), (ushort)shaderIds.Length);
             for (int i = 0; i < shaderIds.Length; i++)
@@ -453,8 +450,8 @@ namespace VL.Qt
             var rest = head.Slice(4 + ids);
             WriteF32x4(rest, paddingLeft, paddingTop, paddingRight, paddingBottom);
             WriteF32(rest.Slice(16), strength);
-            WriteU16(rest.Slice(20), (ushort)nameBytes);
-            Encoding.UTF8.GetBytes(strengthUniform, rest.Slice(24));
+            // Reserved (formerly the length of the strength uniform name): 0.
+            WriteU16(rest.Slice(20), 0);
         }
 
         /// <summary>Closes the open link: writes its entry count and body length.</summary>

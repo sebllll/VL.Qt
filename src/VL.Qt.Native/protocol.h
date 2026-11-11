@@ -68,18 +68,20 @@
  *     docs/effects-and-shaders.md). Body: u16 template (vlqt_effect_template), u16 shaderCount, u64
  *     shaderIds[shaderCount] (stage FRAGMENT resources; roles per template: SINGLE and TWO_PASS [frag], PYRAMID
  *     [prefilter, composite]; another count -7; pyramid_down/pyramid_up are loaded by QtNative as builtin:), 4 x f32
- *     padding (DIP: left, top, right, bottom, >= 0), f32 strength, u16 strengthNameLen, u16 0, strength name (UTF-8),
- *     padding to 4, then count uniform entries exactly like SET_UNIFORMS (STRING -7, nameLen 0 / > max -7).
- *     strength: SINGLE unused (0); TWO_PASS = effect size L, QtNative sets the uniform named by the strength name to L
- *     in pass 1 and L / 64 in pass 2 (strengthNameLen 1..VLQT_UNIFORM_NAME_MAX, else -7); PYRAMID = radius in DIP
+ *     padding (DIP: left, top, right, bottom, >= 0), f32 strength, u16 0 (reserved, else -7), u16 0,
+ *     then count uniform entries exactly like SET_UNIFORMS (STRING -7, nameLen 0 / > max -7).
+ *     strength: SINGLE / TWO_PASS unused (0); PYRAMID = radius in DIP
  *     (weights from radius and dpr; the step count follows the pixel size of the effect area only, so a radius change
  *     writes weights, a size / dpr change rebuilds the steps). PYRAMID gets the uniform entries in prefilter and
  *     composite alike, each takes the names it declares (a name neither declares is an EV_ERROR line); the composite's
- *     second input is glow or shadow (whichever it declares). SINGLE/PYRAMID: strengthNameLen 0, else -7.
+ *     second input is glow or shadow (whichever it declares).
+ *     passIndex: SINGLE / TWO_PASS write float passIndex into the shader's uniform block if it declares one: 0 in SINGLE and
+ *     pass 1, 1 in pass 2 (a shader that needs a different value per pass derives it, e.g. the motion blurs divide their
+ *     length by their sample cap 64 in pass 2).
  *     Set by QtNative, reserved for C# (an entry of that name is an EV_ERROR line): qt_Matrix, qt_Opacity, source,
  *     texelSize (1 / pixel size of the sampled texture), dpr, weight, elementRect (SINGLE / TWO_PASS: vec4 x, y, w, h of the
  *     ELEMENT's own rectangle in UV of the pass area, 0 = not set; a texture element that must sit on the element, not on
- *     the area grown by earlier links, maps itself with it: Blend layer, Displace map), the TWO_PASS strength name, PYRAMID base, glow,
+ *     the area grown by earlier links, maps itself with it: Blend layer, Displace map), passIndex, PYRAMID base, glow,
  *     shadow. Texture uniforms: REF = an element object of its own that the host never REPARENTs (like a mask, see
  *     below; QtNative parks it hidden and renders it as layer; unknown id -4), U64 = image resource id.
  *     Shader id 0 or not Ready yet: the link passes its input through unchanged; a Failed id keeps the last Ready
@@ -408,13 +410,13 @@ enum vlqt_uniform_set {
 /* Link kinds of SET_EFFECT_CHAIN (u16), #489 */
 enum vlqt_effect_link {
     VLQT_EFFECT_LINK_MULTI = 1, /* one MultiEffect run: EFFECT_* entries */
-    VLQT_EFFECT_LINK_SHADER = 2 /* filter shader link: template, shader ids, padding, strength, uniforms */
+    VLQT_EFFECT_LINK_SHADER = 2 /* filter shader link: template, shader ids, padding, strength (PYRAMID radius), uniforms */
 };
 
 /* Pass templates of a SHADER link (u16), #489, passes: docs/effects-and-shaders.md */
 enum vlqt_effect_template {
     VLQT_EFFECT_TEMPLATE_SINGLE = 1,   /* one pass of the shader over the input */
-    VLQT_EFFECT_TEMPLATE_TWO_PASS = 2, /* the shader twice: strength L, then L / 64 (motion blurs) */
+    VLQT_EFFECT_TEMPLATE_TWO_PASS = 2, /* the shader twice: passIndex 0, then 1 (motion blurs) */
     VLQT_EFFECT_TEMPLATE_PYRAMID = 3   /* prefilter, pyramid_down/up stages, composite (Glow, InnerShadow) */
 };
 

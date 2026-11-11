@@ -252,8 +252,7 @@ namespace VL.Qt
         {
             var sink = _sink;
             var pad = shader.Padding;
-            sink.BeginShaderLink(shader.Template, shader.ShaderIds.AsSpan(), pad.X, pad.Y, pad.Width, pad.Height,
-                shader.Strength, shader.StrengthUniform);
+            sink.BeginShaderLink(shader.Template, shader.ShaderIds.AsSpan(), pad.X, pad.Y, pad.Width, pad.Height, shader.Strength);
             foreach (var u in shader.Uniforms)
             {
                 if (u is null || !UniformWriter.IsValidName(u.Name))

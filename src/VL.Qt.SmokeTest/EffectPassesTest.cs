@@ -159,7 +159,7 @@ static class EffectPassesTest
         }
         void Wave(CommandWriter c, float amplitude = 0.05f, string? extra = null)
         {
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [wave], 20, 20, 20, 20, 0, "");
+            c.BeginShaderLink(Protocol.EffectTemplate.Single, [wave], 20, 20, 20, 20, 0);
             c.UniformF32("time", 0);
             c.UniformF32("amplitude", amplitude);
             c.UniformF32("frequency", 3);
@@ -169,11 +169,9 @@ static class EffectPassesTest
         }
         void Directional(CommandWriter c, ushort template, float pad)
         {
-            var two = template == Protocol.EffectTemplate.TwoPass;
-            c.BeginShaderLink(template, [blur], pad, 0, pad, 0, two ? L : 0, two ? "blurLength" : "");
+            c.BeginShaderLink(template, [blur], pad, 0, pad, 0, 0);
             c.UniformF32("angle", 0);
-            if (!two)
-                c.UniformF32("blurLength", L);
+            c.UniformF32("blurLength", L);
             c.EndLink();
         }
         void Chain(uint id, params Action<CommandWriter>[] links)
@@ -256,24 +254,29 @@ static class EffectPassesTest
         CheckApply("reserved name");
         var err = PollError();
         check(err != null && err.Contains("link 1: uniform 'texelSize' is reserved"), $"effect-passes: reserved name -> EV_ERROR ({err})");
+        // passIndex is set by QtNative (TWO_PASS: 0, then 1), so C# may not send it.
+        Chain(R, Blur, c => Wave(c, 0.05f, "passIndex"));
+        CheckApply("reserved passIndex");
+        err = PollError();
+        check(err != null && err.Contains("link 1: uniform 'passIndex' is reserved"), $"effect-passes: passIndex reserved -> EV_ERROR ({err})");
         Chain(R, c =>
         {
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0, "");
+            c.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
             c.UniformF32("displacement", 30);
-            c.UniformRef("displacementSource", Bad);
+            c.UniformRef("map", Bad);
             c.EndLink();
         });
         CheckApply("REF with a parent");
         err = PollError();
-        check(err != null && err.StartsWith("link 0: uniform 'displacementSource': the texture element has a parent"),
+        check(err != null && err.StartsWith("link 0: uniform 'map': the texture element has a parent"),
             $"effect-passes: REF with a parent -> EV_ERROR ({err})");
 
         // (c) REF texture: Map (red 1 = shift) parked and sampled; R shifts left, Map itself is not drawn.
         Chain(R, c =>
         {
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0, "");
+            c.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
             c.UniformF32("displacement", 30);
-            c.UniformRef("displacementSource", Map);
+            c.UniformRef("map", Map);
             c.EndLink();
         });
         CheckApply("REF texture");
@@ -330,7 +333,7 @@ static class EffectPassesTest
         pump(3);
         Chain(R, c =>
         {
-            c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [wave, wave], 0, 0, 0, 0, 10, "");
+            c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [wave, wave], 0, 0, 0, 0, 10);
             c.EndLink();
         }, c => Wave(c));
         CheckApply("PYRAMID (pass-through) + wave");
@@ -428,7 +431,7 @@ static class EffectPassesTest
         Action<CommandWriter> GlowLink(float radius, float? pad = null, float intensity = 1.5f, string? extra = null) => c =>
         {
             var p = pad ?? MathF.Ceiling(1.5f * radius);
-            c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [glowPre, glowComp], p, p, p, p, radius, "");
+            c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [glowPre, glowComp], p, p, p, p, radius);
             c.UniformColor("color", 0.1f, 0.8f, 1, 1);
             c.UniformF32("spread", 0);
             c.UniformF32("intensity", intensity);
@@ -441,7 +444,7 @@ static class EffectPassesTest
         Action<CommandWriter> ShadowLink(float radius, float ox, float oy) => c =>
         {
             var p = MathF.Ceiling(1.5f * radius);
-            c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [isPre, isComp], p, p, p, p, radius, "");
+            c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [isPre, isComp], p, p, p, p, radius);
             c.UniformVec2("offset", ox / (GW + 2 * p), oy / (GH + 2 * p));
             c.UniformColor("color", 0, 0, 0, 1);
             c.UniformF32("spread", 0);
@@ -569,7 +572,7 @@ static class EffectPassesTest
         Chain(c =>
         {
             var p = MathF.Ceiling(1.5f * 8);
-            c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [isPre, isComp], p, p, p, p, 8, "");
+            c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [isPre, isComp], p, p, p, p, 8);
             c.UniformVec2("offsetDip", 8, 8);
             c.UniformColor("color", 0, 0, 0, 1);
             c.UniformF32("spread", 0);
@@ -592,7 +595,7 @@ static class EffectPassesTest
             c.EndLink();
         }, GlowLink(24), c =>
         {
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [wave], 20, 20, 20, 20, 0, "");
+            c.BeginShaderLink(Protocol.EffectTemplate.Single, [wave], 20, 20, 20, 20, 0);
             c.UniformF32("time", 0);
             c.UniformF32("amplitude", 0.03f);
             c.UniformF32("frequency", 3);

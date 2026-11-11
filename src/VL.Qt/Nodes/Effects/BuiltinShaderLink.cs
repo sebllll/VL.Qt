@@ -8,13 +8,20 @@ namespace VL.Qt.Nodes
 {
     /// <summary>
     /// A link of the Effect chain driven by shaders shipped with VL.Qt (<c>builtin:</c>, #438): template, shader ids,
-    /// padding, strength and uniforms as <see cref="ShaderLink"/> describes them; padding and strength in DIP.
+    /// padding, radius and uniforms as <see cref="ShaderLink"/> describes them; padding and radius in DIP. TwoPass shaders tell
+    /// their passes apart by the float uniform passIndex that QtNative sets (0, then 1).
     /// </summary>
     internal sealed class BuiltinShaderLinkEffect : ShaderLink
     {
+        /// <param name="previous">The link before this one in the chain.</param>
+        /// <param name="template">The pass template (Single, TwoPass, Pyramid).</param>
+        /// <param name="shaderIds">Ids of the built-in shaders the template uses.</param>
+        /// <param name="uniforms">Uniform values sent to the shaders.</param>
+        /// <param name="padding">Space around the element the effect may draw into, in DIP.</param>
+        /// <param name="radius">Pyramid: radius in DIP; Single and TwoPass: unused.</param>
         public BuiltinShaderLinkEffect(Effect? previous, ushort template, ImmutableArray<ulong> shaderIds, Spread<Uniform> uniforms,
-            RectangleF padding, float strength, string? strengthUniform)
-            : base(previous, template, shaderIds, uniforms, padding, strength, strengthUniform)
+            RectangleF padding, float radius = 0f)
+            : base(previous, template, shaderIds, uniforms, padding, radius)
         {
         }
     }

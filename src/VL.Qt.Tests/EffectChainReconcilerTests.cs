@@ -15,7 +15,7 @@ namespace VL.Qt.Tests
         sealed class TestShaderLink : ShaderLink
         {
             public TestShaderLink(Effect? previous, params Uniform[] uniforms)
-                : base(previous, Protocol.EffectTemplate.Single, ImmutableArray.Create(7UL), uniforms.ToSpread(), new RectangleF(1, 2, 3, 4), 10, null)
+                : base(previous, Protocol.EffectTemplate.Single, ImmutableArray.Create(7UL), uniforms.ToSpread(), new RectangleF(1, 2, 3, 4), 10)
             {
             }
         }

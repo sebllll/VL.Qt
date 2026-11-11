@@ -48,10 +48,10 @@ namespace VL.Qt.Nodes
                 new[]
                 {
                     Uniform.Int("mode", (int)p.Mode),
-                    Uniform.Float("opacity", p.Opacity),
-                    Uniform.FromTexture("layerSource", p.Layer, p.LayerSampler),
+                    Uniform.Float("layerOpacity", p.Opacity),
+                    Uniform.FromTexture("layer", p.Layer, p.LayerSampler),
                 }.ToSpread(),
-                default, 0f, null);
+                default);
 
         readonly BuiltinShaderLink<Props> _link;
 

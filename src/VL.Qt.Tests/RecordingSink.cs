@@ -86,7 +86,7 @@ namespace VL.Qt.Tests
         public void UniformSampler(ReadOnlySpan<char> name, ulong packed) => _uniforms.Append($" {name.ToString()}=sampler({packed:x})");
         public void EndUniforms() => Add(_uniforms.ToString());
 
-        // SET_EFFECT_CHAIN is recorded as one line: "CHAIN id | multi prop=value ... | shader template ids pad=(l,t,r,b) strength=x[/name] name=value ...".
+        // SET_EFFECT_CHAIN is recorded as one line: "CHAIN id | multi prop=value ... | shader template ids pad=(l,t,r,b) strength=x name=value ...".
         // Uniform entries of a shader link go through the Uniform* methods into the same builder.
         public void BeginEffectChain(uint id) => _uniforms.Clear().Append($"CHAIN {id}");
         public void BeginMultiLink() => _uniforms.Append(" | multi");
@@ -98,9 +98,8 @@ namespace VL.Qt.Tests
         public void EffectRef(ushort prop, uint refId) => _uniforms.Append($" {prop}=ref({refId})");
 
         public void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
-            float paddingRight, float paddingBottom, float strength, ReadOnlySpan<char> strengthUniform)
-            => _uniforms.Append($" | shader {template} [{string.Join(",", shaderIds.ToArray())}] pad=({F(paddingLeft)},{F(paddingTop)},{F(paddingRight)},{F(paddingBottom)})")
-                .Append(strengthUniform.IsEmpty ? $" strength={F(strength)}" : $" strength={F(strength)}/{strengthUniform.ToString()}");
+            float paddingRight, float paddingBottom, float strength)
+            => _uniforms.Append($" | shader {template} [{string.Join(",", shaderIds.ToArray())}] pad=({F(paddingLeft)},{F(paddingTop)},{F(paddingRight)},{F(paddingBottom)}) strength={F(strength)}");
 
         public void EndLink() { }
         public void EndEffectChain() => Add(_uniforms.ToString());

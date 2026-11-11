@@ -17,15 +17,15 @@ layout(std140, binding = 0) uniform buf {
     vec4 elementRect;    // x, y, w, h of the element in UV of this pass (set by VL.Qt in a chain)
 };
 layout(binding = 1) uniform sampler2D source;
-layout(binding = 2) uniform sampler2D displacementSource;
+layout(binding = 2) uniform sampler2D map;
 
 void main()
 {
     vec2 muv = elementRect.z > 0.0 && elementRect.w > 0.0 ? clamp((qt_TexCoord0 - elementRect.xy) / elementRect.zw, 0.0, 1.0) : qt_TexCoord0;
-    vec4 map = texture(displacementSource, muv);
+    vec4 mapColor = texture(map, muv);
     // the map is premultiplied: recover the straight channels, alpha scales the shift
-    vec2 dir = map.a > 0.0 ? 2.0 * (map.rg / map.a - 0.5) : vec2(0.0);
-    vec2 uv = qt_TexCoord0 + dir * map.a * displacement * (dpr > 0.0 ? dpr : 1.0) * texelSize; // DIP -> pixels -> UV
+    vec2 dir = mapColor.a > 0.0 ? 2.0 * (mapColor.rg / mapColor.a - 0.5) : vec2(0.0);
+    vec2 uv = qt_TexCoord0 + dir * mapColor.a * displacement * (dpr > 0.0 ? dpr : 1.0) * texelSize; // DIP -> pixels -> UV
     // premultiplied source; samples outside the item are transparent
     vec4 c = (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) ? vec4(0.0) : texture(source, uv);
     fragColor = c * qt_Opacity;

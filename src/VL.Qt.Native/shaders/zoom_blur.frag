@@ -2,7 +2,7 @@
 // Zoom blur of the input element (builtin:zoom_blur): streaks along rays from center. Needs an Input. Two passes (see sampleCount).
 // Box blur between uv scaled by 1 - k/2 and 1 + k/2 around center (centred on the pixel, the picture does not shift).
 // Lengths in DIP, texelSize in pixels.
-// Uniform block (std140): qt_Matrix 0, qt_Opacity 64, center 72, blurLength 80, texelSize 88, dpr 96.
+// Uniform block (std140): qt_Matrix 0, qt_Opacity 64, center 72, blurLength 80, texelSize 88, dpr 96, passIndex 100.
 // Not named `length`: the GLSL translation renames a member called like a GLSL builtin, the GL backend would not set it (#77).
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
@@ -13,6 +13,7 @@ layout(std140, binding = 0) uniform buf {
     float blurLength; // streak length in DIP at the farthest corner of the area; grows linearly from 0 at center. 0 = off
     vec2 texelSize;  // 1 / width, 1 / height of the source in pixels (DIP size x dpr, as the layer is created)
     float dpr;       // device pixels per DIP (1 if unset)
+    float passIndex; // set by VL.Qt: 0 in pass 1, 1 in pass 2 (TWO_PASS template)
 };
 layout(binding = 1) uniform sampler2D source;
 
@@ -21,7 +22,7 @@ const int maxSamples = 64;
 // Sample count for a blur line of `len` pixels: one sample per pixel, 2..maxSamples, equal weights, taken at the middle of
 // their slots, so the result does not step when the count changes while the length is animated.
 // Beyond maxSamples pixels the samples are further than one pixel apart and show as copies: that is why the effect is always
-// two passes of this shader. Pass 2 reads the output of pass 1 with the length divided by maxSamples (= the sample spacing
+// two passes of this shader. Pass 2 (passIndex 1) reads the output of pass 1 with the length divided by maxSamples (= the sample spacing
 // of pass 1 once the cap is reached): a box of one spacing fills the gaps exactly, up to maxSamples^2 effective samples.
 // Where pass 1 does not hit the cap, pass 2 blurs by less than one pixel, so it is practically the identity.
 int sampleCount(float len)
@@ -54,7 +55,7 @@ void main()
     // distance of the farthest corner in pixels: there the streak is exactly `blurLength` DIP
     float rMax = max(max(dist(center / texelSize), dist((vec2(1.0, 0.0) - center) / texelSize)),
                      max(dist((vec2(0.0, 1.0) - center) / texelSize), dist((vec2(1.0) - center) / texelSize)));
-    float k = abs(blurLength) * max(dpr, 1.0) / max(rMax, 1.0);   // relative zoom range of the streak
+    float k = abs(blurLength) * max(dpr, 1.0) / (passIndex >= 0.5 ? float(maxSamples) : 1.0) / max(rMax, 1.0);   // relative zoom range of the streak
     float local = dist(qd) * k;                               // streak length at this pixel in pixels
     if (local < 0.1) {
         fragColor = fetch(uv) * qt_Opacity;
