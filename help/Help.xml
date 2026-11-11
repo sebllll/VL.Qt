@@ -62,6 +62,7 @@
 		<VLDocument link="Qt\HowTo Read the Window Bounds.vl" tags="" />
 		<VLDocument link="Qt\HowTo Debug Overlay.vl" tags="debug layout" />
 		<VLDocument link="Qt\HowTo Read Performance.vl" tags="fps timing" />
+		<VLDocument link="Qt\HowTo Avoid Tearing.vl" tags="vsync swap interval frame rate" />
 	</Topic>
 	<Topic title="Export">
 		<VLDocument link="HelloWorld.vl" tags="vvvvc exe" />

@@ -43,12 +43,14 @@ static class PerfOverlayTest
     }
 
     static string Line(string text, string label) => text.Split('\n').FirstOrDefault(l => l.StartsWith(label))?.Trim() ?? "(missing)";
+    // Indented rows (the summary's phases): the page text collapsed the spaces, so StartsWith does not find them.
+    static string LineWith(string text, string part) => text.Split('\n').FirstOrDefault(l => l.Contains(part))?.Trim() ?? "(missing)";
 
     const int KeyF5 = 0x01000034, KeyF6 = 0x01000035, KeyF7 = 0x01000036, Shift = 0x02000000;
     const int Stats = 2, Freeze = 8, PageShift = 4;
     internal const int ResourcesPage = 4;
     const int Summary = 0, Timeline = 1, Scene = 2, SystemPage = 3;
-    const int PhaseSync = 1, PhaseRender = 2;
+    const int PhaseSync = 1, PhaseRender = 2, PhaseVsync = 4;
 
     static int Page(IntPtr w) => ((Native.vlqt_window_get_overlay(w) >> PageShift) & 7) - 1;
     static bool Visible(IntPtr w) => (Native.vlqt_window_get_overlay(w) & Stats) != 0;
@@ -63,6 +65,69 @@ static class PerfOverlayTest
         int n = 0;
         while (n < Attempts) { n++; r = once(); if (r.ok) break; }
         check(r.ok, $"{what} ({r.detail}{(n > 1 ? $"; attempt {n}/{Attempts}" : "")})");
+    }
+
+    // #90: the timeline legend and the summary of a window with VSync (swap interval 1) show the segment "vsync wait" (the
+    // wait in QRhi::beginFrame) next to a plain "present", a spike there lands in vsync wait, and the System page says
+    // VSync on / allow tearing no.
+    static void VSyncWindowLabels(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    {
+        var v = Native.vlqt_window_create_at(float.NaN, float.NaN, 640, 480, "VL.Qt perf overlay VSync", 1);
+        check(v != IntPtr.Zero, "perfoverlay: VSync window created " + (v == IntPtr.Zero ? Native.LastError() : ""));
+        if (v == IntPtr.Zero) return;
+        var cmd = new CommandWriter();
+        cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
+        cmd.Create(1, Protocol.Type.Rectangle);
+        cmd.SetColor(1, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+        cmd.Reparent(1, 0, 0);
+        Native.Apply(v, cmd.EndFrame());
+        Native.vlqt_window_show(v);
+        Native.vlqt_window_set_overlay(v, Stats | ((Summary + 1) << PageShift));
+        for (var i = 0; i < 40; i++)
+        {
+            cmd.Reset();
+            cmd.SetPlace(1, 100 + 50 * MathF.Sin(i * 0.2f), 200, 100, 60);
+            Native.Apply(v, cmd.EndFrame());
+            pump(1);
+        }
+        var sum = PageText(v, Summary);
+        var tl = PageText(v, Timeline);
+        var sys = PageText(v, SystemPage);
+        Console.WriteLine("  vsync window system page: " + sys.Replace("\n", " | "));
+        check(sum.Contains("vsync wait") && tl.Contains("vsync wait") && !sum.Contains("incl.") && !tl.Contains("incl.")
+            && sum.Contains(" present") && tl.Contains("present"),
+            $"perfoverlay: VSync on: 'vsync wait' and plain 'present' in summary and timeline ({LineWith(sum, "vsync wait")} | {LineWith(sum, "present")})");
+        Retry(check, "perfoverlay: VSync on: vsync spike in the vsync wait segment", () =>
+        {
+            if (vlqt_test_perf_spike(v, PhaseVsync, 10) != 0) return (false, "inject failed");
+            cmd.Reset();
+            cmd.SetPlace(1, 120, 200, 100, 60);
+            Native.Apply(v, cmd.EndFrame());
+            // With VSync not every pump renders (the update request comes from Qt's VBlank thread): the sample to read
+            // is the next pump with a frame, messages dispatched in between like vvvv.
+            Native.vlqt_perf_sample s = default;
+            for (var k = 0; k < 10; k++)
+            {
+                pump(1);
+                if (Native.vlqt_window_get_perf_sample(v, out s) == 0 && s.swaps > 0) break;
+                PumpTest.ForeignMessageLoop(2);
+            }
+            var ok = s.vsync >= 10 && s.sync < s.vsync / 2 && s.events < s.vsync / 2 && s.present < s.vsync / 2;
+            if (!ok) pump(20);
+            return (ok, $"pump {s.pump:F1}, events {s.events:F1}, vsync {s.vsync:F1}, sync {s.sync:F1}, render {s.render:F1}, present {s.present:F1}");
+        });
+        // Allow tearing is a D3D11 notion; other backends (Linux GL) show n/a.
+        var tearOn = sys.Contains("backend d3d11", StringComparison.OrdinalIgnoreCase) ? "allow tearing no" : "allow tearing n/a";
+        check(sys.Contains("swap int. 1 VSync on") && Line(sys, "allow tearing").StartsWith(tearOn),
+            $"perfoverlay: VSync on: swap int. 1, {tearOn} ({Line(sys, "swap int.")} | {Line(sys, "allow tearing")} | {Line(sys, "backend")})");
+        foreach (var (page, name) in new[] { (Summary, "summary"), (Timeline, "timeline"), (SystemPage, "system") })
+        {
+            Native.vlqt_window_set_overlay(v, Stats | ((page + 1) << PageShift));
+            pump(3);
+            using var a = grab(v, Path.Combine(outDir, $"perf_f5_{name}_vsync.png"));
+            check(a.Width > 0, $"perfoverlay: {name} grabbed with VSync");
+        }
+        Native.vlqt_window_destroy(v);
     }
 
     public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
@@ -231,6 +296,22 @@ static class PerfOverlayTest
         else
             check(!sys.Contains("adapter n/a") && sys.Contains("swap int. 0 VSync off"),
                 $"perfoverlay: system on QRhi: adapter named, swap interval 0 ({Line(sys, "adapter")} | {Line(sys, "swap int.")})");
+        // #90: allow tearing (D3D11 only, "no" with VSync) and refresh rate sit next to the swap interval; with VSync off the
+        // segments are the same (vsync wait then shows a GPU that is behind).
+        var tear = Line(sys, "allow tearing");
+        var hz = System.Text.RegularExpressions.Regex.IsMatch(Line(sys, "refresh"), @"^refresh \d+(\.\d+)? Hz");
+        check(hz, $"perfoverlay: system refresh rate row ({Line(sys, "refresh")})");
+        if (Program.QuickSoftware || !sys.Contains("backend d3d11", StringComparison.OrdinalIgnoreCase))
+            check(tear.StartsWith("allow tearing n/a"), $"perfoverlay: allow tearing n/a without D3D11 ({tear} | {Line(sys, "backend")})");
+        else
+            check(tear.StartsWith("allow tearing yes") || tear.StartsWith("allow tearing no"), $"perfoverlay: allow tearing yes/no on D3D11 with VSync off ({tear})");
+        var sumOff = PageText(w, Summary);
+        var tlOff0 = PageText(w, Timeline);
+        check(!sumOff.Contains("incl.") && !tlOff0.Contains("incl.") && sumOff.Contains(" present") && tlOff0.Contains("present")
+            && sumOff.Contains("vsync wait") && tlOff0.Contains("vsync wait"),
+            $"perfoverlay: VSync off: 'vsync wait' and plain 'present' in summary and timeline ({LineWith(sumOff, "present")})");
+        if (!Program.QuickSoftware)
+            VSyncWindowLabels(outDir, check, pump, grab);
         vlqt_test_send_key(w, KeyF5, 0);
         Run(2);
         check(Visible(w) && Page(w) == ResourcesPage, $"perfoverlay: F5 -> Resources (page {Page(w)})");

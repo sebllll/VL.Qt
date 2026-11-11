@@ -140,6 +140,13 @@ static class Program
         SetEnv("QT_QUICK_CONTROLS_HOVER_ENABLED", "1");
         // Linux: the GL renderer/version line (qt.rhi.general) needs QSG_INFO; used to recognize Mesa GL (#214).
         if (!OperatingSystem.IsWindows() && Environment.GetEnvironmentVariable("QSG_INFO") == null) SetEnv("QSG_INFO", "1");
+        // "--tearing [--windows N] [--interval 0|1] [--fullscreen] [--pump-hz N] [--seconds N]": manual swap/tearing
+        // scenario (#90), not part of --all; returns before the normal scenarios (and before an outDir is derived from args).
+        if (args.Contains("--tearing"))
+        {
+            Check(Native.vlqt_app_init(Native.NativeDir, s_logFn) == 0, "app_init " + Native.LastError());
+            return s_failures.Count == 0 ? TearingTest.Run(args) : 1;
+        }
         // Drift check protocol.h <-> Protocol.cs (no Qt needed). "--drift [protocol.h]" runs only this.
         bool driftOnly = args.Length > 0 && args[0] == "--drift";
         var drift = ProtocolDrift.Run(driftOnly && args.Length > 1 ? args[1] : ProtocolDrift.DefaultHeaderPath);
@@ -408,8 +415,12 @@ static class Program
 
         Console.WriteLine($"INFO scenarios after the core checks: {scenarios.Elapsed.TotalSeconds:F1} s");
         var log = s_log.ToString();
-        // Present never waits for VSync (the pump must not block); one render per pump is checked in PumpTest 1c (#137).
-        NeedsRhi(Check, "no swap chain")(log.Contains("Swap interval is 0, attempting to disable vsync"), "log: swap interval 0 (no VSync wait in the pump)");
+        // The Qt log line comes from windows with swap interval 0: the native short form vlqt_window_create (most scenarios, so
+        // their pumps never wait for VSync, one render per pump is checked in PumpTest 1c, #137) and the vSync: false window of
+        // RendererTest.RunVSync. WindowRenderer without argument is swap interval 1 (VSync on by default).
+        // A narrow run (--only) has such a window only with the vsync scenario.
+        if (Selected("vsync"))
+            NeedsRhi(Check, "no swap chain")(log.Contains("Swap interval is 0, attempting to disable vsync"), "log: swap interval 0 for the windows without VSync");
         if (OperatingSystem.IsWindows())
             NeedsRhi(Check, "no QRhi")(log.Contains("D3D11") || log.Contains("Direct3D 11") || log.Contains("D3D 11"), "log shows D3D11");
         else if (Environment.GetEnvironmentVariable("VLQT_TEST_QUICK_BACKEND") == "software") // test-linux.sh --software

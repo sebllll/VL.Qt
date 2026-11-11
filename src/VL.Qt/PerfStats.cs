@@ -4,7 +4,9 @@ namespace VL.Qt
 {
     /// <summary>
     /// Timings of a Qt window, averaged over the last ~1 s (max = worst pump in that range). All times in ms.
-    /// Pump is the CPU time Qt takes inside the vvvv frame (events, animation, sync, render, present).
+    /// Pump is the time Qt takes inside the vvvv frame (events, animation, vsync wait, sync, render, present). The vsync wait
+    /// (VsyncMs, the start of the frame) and Present are shown separately: they wait for the display refresh or the GPU,
+    /// which is not Qt work.
     /// GPU is 0 when the backend delivers no timestamps.
     /// </summary>
     public sealed record PerfStats(
@@ -82,6 +84,9 @@ namespace VL.Qt
         public float WaitMs { get; init; }
         public float WaitMsMax { get; init; }
 
+        /// <summary>Start of the frame (QRhi::beginFrame) in ms per frame, average over ~1 s. With VSync this is where Direct3D 11 waits for the display refresh; without VSync it waits there when the GPU is behind. Not Qt work.</summary>
+        public float VsyncMs { get; init; }
+
         // #270: VL imports the primary-constructor parameters as the pins of `Split`, but not the init-only properties above.
         // These explicit operations read them in a patch (PerfStats (Split Percentiles) etc.); `Split` itself is unchanged.
 
@@ -104,6 +109,12 @@ namespace VL.Qt
             pumps = Pumps; overBudget = OverBudget; longFrames = LongFrames; idlePumps = IdlePumps; multiSwaps = MultiSwaps;
             recentPumps = RecentPumps; recentOverBudget = RecentOverBudget; recentLongFrames = RecentLongFrames;
             recentIdlePumps = RecentIdlePumps; recentMultiSwaps = RecentMultiSwaps;
+        }
+
+        /// <summary>The wait at the start of each frame (ms per frame, average over ~1 s): for the display refresh with VSync, for the GPU without.</summary>
+        public void SplitVsync(out float vsyncMs)
+        {
+            vsyncMs = VsyncMs;
         }
 
         /// <summary>The host side of the frame (ms, average/max over ~1 s): vvvv patch update, wait for the next frame, applying commands and reconcile, and commands per frame.</summary>
@@ -140,6 +151,7 @@ namespace VL.Qt
             AllocatedBytesPerFrame = (float)h.alloc_bytes,
             VvvvMs = (float)h.vvvv_ms, VvvvMsMax = (float)h.vvvv_ms_max,
             WaitMs = (float)h.wait_ms, WaitMsMax = (float)h.wait_ms_max,
+            VsyncMs = (float)p.vsync_ms,
         };
     }
 }

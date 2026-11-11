@@ -7,8 +7,9 @@ using VL.Qt;
 /// <summary>
 /// #358 (images package 01): all windows render on one D3D11 device created by QtNative; next to them an upload QRhi on
 /// the same device. Two windows report the same ID3D11Device, closing and reopening one keeps it, GPU timestamps keep
-/// coming per window, and the frame intervals of two VSync windows are printed (compare with VLQT_SHARED_DEVICE=0).
-/// The two VSync windows stay open on purpose: the process must end cleanly with open windows.
+/// coming per window, and the frame intervals of two and of three VSync windows are printed (compare with
+/// VLQT_SHARED_DEVICE=0) and checked: each window at the refresh rate, the host pump within one refresh plus margin.
+/// The three VSync windows stay open on purpose: the process must end cleanly with open windows.
 /// </summary>
 static class SharedDeviceTest
 {
@@ -94,39 +95,79 @@ static class SharedDeviceTest
         Native.vlqt_window_destroy(b);
         pump(2);
 
-        // Frame intervals with two VSync windows, pumped at 60 Hz like the vvvv mainloop. With VSync 1 not every pump
-        // renders, so the intervals between this window's renders are measured here (the stats count consecutive frames).
-        var va = Open("VL.Qt shared device VSync A", 50, 1);
-        var vb = Open("VL.Qt shared device VSync B", 500, 1);
-        pump(30);
-        var sw = Stopwatch.StartNew();
-        var renders = new[] { new List<double>(), new List<double>() };
-        int pumps = 0;
-        while (sw.ElapsedMilliseconds < 5000)
+        // #90: several VSync windows do not halve the frame rate. Pumped like the vvvv main loop: paced at the refresh rate,
+        // and Win32 messages are dispatched between the pumps (Qt's VBlank thread per monitor posts the update requests
+        // there; a pump that dispatches nothing renders a request only one pump later). With VSync 1 not every pump has to
+        // render, so the intervals between this window's renders are measured here (the stats count consecutive frames).
+        // The windows of the last round stay open: process end with open windows (teardown order, device never released).
+        var vsyncWindows = new List<IntPtr>();
+        foreach (var count in new[] { 2, 3 })
         {
-            frame++;
-            Animate(va);
-            Animate(vb);
+            foreach (var w in vsyncWindows) Native.vlqt_window_destroy(w);
+            vsyncWindows.Clear();
+            pump(2);
+            for (int i = 0; i < count; i++)
+                vsyncWindows.Add(Open($"VL.Qt shared device VSync {count}/{(char)('A' + i)}", 50 + 450 * i, 1));
+            pump(30);
+            MeasureVSync(vsyncWindows, check, pump, shared, () => { frame++; foreach (var w in vsyncWindows) Animate(w); });
+        }
+    }
+
+    // animate: moves the content of every window, so each pump has a change to render.
+    static void MeasureVSync(List<IntPtr> windows, Action<bool, string> check, Action<int> pump, bool shared, Action animate)
+    {
+        var n = windows.Count;
+        Native.vlqt_window_get_perf_stats(windows[0], out var st);
+        var budget = st.budget_ms > 0 ? st.budget_ms : 1000.0 / 60;
+        var renders = new List<double>[n];
+        for (int i = 0; i < n; i++) renders[i] = new List<double>();
+        var hostPump = new List<double>();
+        using var timer = PumpTest.HighResTimer();
+        var start = Stopwatch.GetTimestamp();
+        var period = (long)(Stopwatch.Frequency * budget / 1000);
+        var deadline = start;
+        int pumps = 0;
+        double seconds = 0;
+        // 1 s warm-up (first presents), then 5 s measured.
+        while ((seconds = Stopwatch.GetElapsedTime(start).TotalSeconds) < 6)
+        {
+            deadline += period;
+            PumpTest.ForeignMessageLoopUntil(deadline);
+            if (Stopwatch.GetTimestamp() - deadline > period) deadline = Stopwatch.GetTimestamp(); // no catch-up after a stall
+            var h0 = Stopwatch.GetTimestamp();
+            animate();
             pump(1);
+            var hostMs = Stopwatch.GetElapsedTime(h0).TotalMilliseconds;
+            var t = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+            if (t < 1000) continue;
             pumps++;
-            var t = sw.Elapsed.TotalMilliseconds;
-            if (Native.vlqt_window_get_perf_sample(va, out var s0) == 0 && s0.swaps > 0) renders[0].Add(t);
-            if (Native.vlqt_window_get_perf_sample(vb, out var s1) == 0 && s1.swaps > 0) renders[1].Add(t);
-            var next = pumps * 1000.0 / 60;
-            while (sw.Elapsed.TotalMilliseconds < next - 2) Thread.Sleep(1);
-            while (sw.Elapsed.TotalMilliseconds < next) Thread.SpinWait(50);
+            hostPump.Add(hostMs);
+            for (int i = 0; i < n; i++)
+                if (Native.vlqt_window_get_perf_sample(windows[i], out var s) == 0 && s.swaps > 0) renders[i].Add(t);
+        }
+        var measured = seconds - 1;
+        double P(List<double> v, double q)
+        {
+            if (v.Count == 0) return 0;
+            var d = new List<double>(v);
+            d.Sort();
+            return d[Math.Min(d.Count - 1, Math.Max(0, (int)Math.Ceiling(q * d.Count) - 1))];
         }
         string Intervals(List<double> r)
         {
             var d = new List<double>();
             for (int i = 1; i < r.Count; i++) d.Add(r[i] - r[i - 1]);
-            d.Sort();
-            double P(double q) => d.Count == 0 ? 0 : d[Math.Min(d.Count - 1, (int)Math.Ceiling(q * d.Count) - 1)];
-            return $"{r.Count / sw.Elapsed.TotalSeconds:F1} fps, interval p50/p95/p99/max {P(0.5):F1}/{P(0.95):F1}/{P(0.99):F1}/{P(1):F1} ms";
+            return $"{r.Count / measured:F1} fps, interval p50/p95/p99/max {P(d, 0.5):F1}/{P(d, 0.95):F1}/{P(d, 0.99):F1}/{P(d, 1):F1} ms";
         }
-        Console.WriteLine($"INFO 358 VSync 1, two windows, {(shared ? "shared device" : "device per window")}, {pumps / sw.Elapsed.TotalSeconds:F1} pumps/s: " +
-            $"A {Intervals(renders[0])}; B {Intervals(renders[1])}");
-        check(renders[0].Count > 0 && renders[1].Count > 0, "358: VSync windows render");
-        // va/vb stay open: process end with open windows (teardown order, device never released).
+        var refreshHz = 1000.0 / budget;
+        var parts = new List<string>();
+        for (int i = 0; i < n; i++) parts.Add($"{(char)('A' + i)} {Intervals(renders[i])}");
+        Console.WriteLine($"INFO 358 VSync 1, {n} windows, {(shared ? "shared device" : "device per window")}, {pumps / measured:F1} pumps/s, " +
+            $"refresh {refreshHz:F1} Hz, host pump p50/p99 {P(hostPump, 0.5):F2}/{P(hostPump, 0.99):F2} ms: {string.Join("; ", parts)}");
+        var minFps = double.MaxValue;
+        foreach (var r in renders) minFps = Math.Min(minFps, r.Count / measured);
+        check(minFps >= 0.9 * refreshHz, $"90: {n} VSync windows each at >= 0.9 x refresh (min {minFps:F1} fps, refresh {refreshHz:F1} Hz)");
+        var p99 = P(hostPump, 0.99);
+        check(p99 <= 1.5 * budget, $"90: {n} VSync windows: host pump p99 <= 1.5 x budget ({p99:F2} ms, budget {budget:F2} ms)");
     }
 }

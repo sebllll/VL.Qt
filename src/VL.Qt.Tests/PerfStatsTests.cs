@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using System;
+using System.Linq;
+using NUnit.Framework;
 
 namespace VL.Qt.Tests
 {
@@ -86,13 +88,47 @@ namespace VL.Qt.Tests
         [Test]
         public void FormatPhases_ListsWindowsWithSample()
         {
-            var s = new Native.vlqt_perf_sample { sync = 0.5f, render = 1.25f, present = 9f, gpu = 2f, events = 0.5f, swaps = 1 };
+            var s = new Native.vlqt_perf_sample { vsync = 14f, sync = 0.5f, render = 1.25f, present = 0.5f, gpu = 2f, events = 0.5f, swaps = 1 };
             Assert.That(QtApp.FormatPhases(new IQtFrameParticipant[] { new Window(s) }),
-                Is.EqualTo(" · Qt last pump: sync 0.5, render 1.3, present 9.0, gpu 2.0, events 0.5 ms (1 swaps)").Or
-                  .EqualTo(" · Qt last pump: sync 0.5, render 1.2, present 9.0, gpu 2.0, events 0.5 ms (1 swaps)"));
+                Is.EqualTo(" · Qt last pump: vsync wait 14.0, sync 0.5, render 1.3, present 0.5, gpu 2.0, events 0.5 ms (1 swaps)").Or
+                  .EqualTo(" · Qt last pump: vsync wait 14.0, sync 0.5, render 1.2, present 0.5, gpu 2.0, events 0.5 ms (1 swaps)"));
             var two = QtApp.FormatPhases(new IQtFrameParticipant[] { new Window(null), new Window(s), new Plain() });
-            Assert.That(two, Does.StartWith(" · Qt last pump #2: sync 0.5"));
+            Assert.That(two, Does.StartWith(" · Qt last pump #2: vsync wait 14.0, sync 0.5"));
             Assert.That(QtApp.FormatPhases(new IQtFrameParticipant[] { new Plain() }), Is.Empty);
+        }
+
+        [Test]
+        public void SumWaitMs_SumsVsyncAndPresentOfTheWindowsWithSample()
+        {
+            var a = new Native.vlqt_perf_sample { vsync = 12f, present = 0.5f };
+            var b = new Native.vlqt_perf_sample { present = 4f };
+            var c = new Native.vlqt_perf_sample { vsync = 3f, sync = 7f, render = 9f, events = 5f };
+            Assert.That(QtApp.SumWaitMs(new IQtFrameParticipant[] { new Window(a), new Window(null), new Plain(), new Window(b), new Window(c) }), Is.EqualTo(19.5).Within(1e-6));
+            Assert.That(QtApp.SumWaitMs(Array.Empty<IQtFrameParticipant>()), Is.Zero);
+        }
+
+        [Test]
+        public void ExceedsBudget_DoesNotCountTheWait()
+        {
+            // 60 Hz: budget 16.7 ms, threshold 8.35 ms of Qt work.
+            Assert.That(QtApp.ExceedsBudget(20, 0, 16.7), Is.True, "20 ms of work");
+            Assert.That(QtApp.ExceedsBudget(20, 15, 16.7), Is.False, "20 ms pump, 15 ms of it waiting for VSync in beginFrame and Present");
+            Assert.That(QtApp.ExceedsBudget(20, 10, 16.7), Is.True, "10 ms left over");
+            Assert.That(QtApp.ExceedsBudget(5, 30, 16.7), Is.False, "present longer than the pump (stale sample): clamped, no negative work");
+            Assert.That(QtApp.ExceedsBudget(9, 0, 16.7), Is.True);
+            Assert.That(QtApp.ExceedsBudget(8, 0, 16.7), Is.False);
+        }
+
+        [Test]
+        public void VSync_IsOnByDefault()
+        {
+            var window = typeof(WindowRenderer).GetConstructors().Single().GetParameters().Single(p => p.Name == "vSync");
+            Assert.That(window.DefaultValue, Is.True);
+
+            var renderer = typeof(Renderer).GetConstructors().Single().GetParameters().Single(p => p.Name == "vSync");
+            Assert.That(renderer.DefaultValue, Is.True);
+            Assert.That(renderer.GetCustomAttributes(typeof(System.ComponentModel.DefaultValueAttribute), false).Cast<System.ComponentModel.DefaultValueAttribute>().Single().Value,
+                Is.True, "the pin default in vvvv");
         }
 
         [Test]

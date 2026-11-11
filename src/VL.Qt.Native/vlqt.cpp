@@ -1125,7 +1125,7 @@ VLQT_API int vlqt_window_get_perf_sample(void* p, vlqt_perf_sample* out)
             setError("no pump yet");
             return -2;
         }
-        *out = vlqt_perf_sample{s.frame, s.pump, s.sync, s.render, s.present, s.gpu, s.events, s.swaps};
+        *out = vlqt_perf_sample{s.frame, s.pump, s.sync, s.render, s.present, s.gpu, s.events, s.swaps, s.vsync};
         return 0;
     });
 }

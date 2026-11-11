@@ -29,6 +29,7 @@ typedef struct vlqt_perf {
     double gpu_ms, gpu_ms_max;     /* 0 = GPU timestamps unavailable */
     double swaps_per_pump;
     int samples;
+    double vsync_ms;               /* QRhi::beginFrame, see vlqt_perf_sample.vsync (appended, #90) */
 } vlqt_perf;
 
 /* One pump (vlqt_app_process_events) of a window, times in ms (#243). */
@@ -37,8 +38,12 @@ typedef struct vlqt_perf_sample {
     float pump;     /* whole vlqt_app_process_events */
     float sync, render, present; /* frame phases, summed over the swaps of this pump */
     float gpu;      /* QRhi timestamps of the last completed frame, 0 = unavailable */
-    float events;   /* pump - sync - render - present: posted events, input, polish, animations (>= 0) */
+    float events;   /* pump - vsync - sync - render - present: posted events, input, polish, animations (>= 0) */
     int swaps;      /* frames swapped in this pump */
+    /* Appended (#90): beforeFrameBegin -> beforeSynchronizing, summed over the swaps, i.e. QRhi::beginFrame. With VSync
+     * D3D11 waits there for the refresh (frame latency waitable object), not in Present; without VSync it waits there
+     * when the GPU is behind. F5 segment "vsync wait". 0 on the software backend. */
+    float vsync;
 } vlqt_perf_sample;
 
 /* Percentiles over the ring (last up to 240 pumps; frame only over pumps with a swap whose previous pump also had one,
@@ -138,7 +143,11 @@ VLQT_API const char* vlqt_last_error(void);
  *   x, y           outer top-left incl. frame (QWindow::setFramePosition, set before show). x or y NaN/inf =
  *                  centered on the primary screen's working area. A window rect on no screen is centered as well.
  *   width, height  client size (QWindow::resize). < 1 = 600x400.
- *   swapInterval   0 = Present never waits, 1 = VSync. Fixed at creation.
+ *   swapInterval   0 = Present never waits, 1 = VSync. Fixed at creation. Several VSync windows do not halve the frame rate
+ *                  on Windows (D3D11): Qt runs one VBlank thread per monitor (qdxgivsyncservice) that posts the update
+ *                  requests, and each window waits in its own QRhi::beginFrame. Condition: the host dispatches the Win32
+ *                  messages of its thread between the pumps (vvvv does); otherwise a request renders one pump later.
+ *                  Linux not measured yet.
  * Wayland: clients cannot place their windows, the position (and centering) is ignored there, only the size applies. */
 VLQT_API void* vlqt_window_create_at(float x, float y, int width, int height, const char* title, int swapInterval);
 /* Short form: vlqt_window_create_at(NaN, NaN, width, height, title, 0) = centered, no VSync. */
@@ -330,7 +339,7 @@ VLQT_API int   vlqt_test_handler_count(void* w, unsigned int id);
  * read; a static scene reads none. -1 null window. */
 VLQT_API int   vlqt_test_measure_count(void* w);
 /* TEST ONLY (#244): busy-waits ms inside one phase of the window's next rendered frame (0 events, 1 sync, 2 render,
- * 3 present) to check that the F5 timeline attributes a spike. 0 = ok, -1 null window. */
+ * 3 present, 4 vsync wait) to check that the F5 timeline attributes a spike. 0 = ok, -1 null window. */
 VLQT_API int   vlqt_test_perf_spike(void* w, int phase, float ms);
 /* TEST ONLY (#246, #260): plain UTF-8 text of an F5 page (0 Summary, 1 Timeline, 2 Scene, 3 System, 4 Resources; others empty), built on demand, overlay state
  * unchanged. Returns the byte length without NUL; -(length + 1) if cap is too small; -1 null window. */
