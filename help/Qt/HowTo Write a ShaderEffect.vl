@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="UKJguINj35EyiEocwU1VLs" LanguageVersion="2026.8.0-0278-g8b85ba4511" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="UKJguINj35EyiEocwU1VLs" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
   <NugetDependency Id="yISisoA5jniyiW6ThVbTtA" Location="VL.CoreLib" />
   <DocumentDependency Id="JDXKk5ZnEk2NDKBqikqIKH" Location="../../VL.Qt.vl" />
   <Patch Id="VM4tBf8TDXWp9JGtzqpV4f">
@@ -16,7 +16,7 @@
       </p:NodeReference>
       <Patch Id="Dn4LeMcAMCfNfobfVBTRfU">
         <Canvas Id="bAfdzL0v94dqcC5PrhM2Gh" CanvasType="Group">
-          <Pad Id="Hsg2biaLqCOVWEKxQQrucB" Bounds="85,16,420,52" ShowValueBox="true" isIOBox="true" Value="How To Write a ShaderEffect">
+          <Pad Id="Hsg2biaLqCOVWEKxQQrucB" Bounds="85,16,555,52" ShowValueBox="true" isIOBox="true" Value="How To Write a ShaderEffect">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="q0MQbJhwYBlga7aqN9GVeO" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="ShaderEffect [Qt]&#xD;&#xA;- Input: element the shader reads as sampler2D &quot;source&quot;, unconnected = generative&#xD;&#xA;- Fragment Code: GLSL text in the patch (default is a commented template)&#xD;&#xA;- Fragment Shader: Path to a baked .qsb, or builtin:wave / builtin:gradient&#xD;&#xA;- Uniforms: spread of nodes from Qt.Elements.Uniform&#xD;&#xA;- Auto Size (default on), Error">
+          <Pad Id="q0MQbJhwYBlga7aqN9GVeO" Bounds="85,85,572,133" ShowValueBox="true" isIOBox="true" Value="ShaderEffect [Qt]&#xD;&#xA;- Input: element the shader reads as sampler2D &quot;source&quot;, unconnected = generative&#xD;&#xA;- Fragment Code: GLSL text in the patch (default is a commented template)&#xD;&#xA;- Fragment Shader: Path to a baked .qsb, or builtin:wave / builtin:gradient&#xD;&#xA;- Uniforms: spread of nodes from Qt.Elements.Uniform&#xD;&#xA;- Auto Size (default on), Error">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GT7uBkJDVdVgrgRVXuTFjj" Bounds="85,1679,830,366" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The Input is not drawn itself, only the effect output is. Bounds, Transform and Opacity belong on the ShaderEffect, not on its Input; Auto Size takes the size of the Input.&#xD;&#xA;- Fragment Code is baked in the background while you edit; if it has an error, the last working version keeps drawing. It needs no tools: VL.Qt bakes the text itself (Qt Shader Tools).&#xD;&#xA;- Fragment Shader wins over Fragment Code if set. A broken path draws nothing. Vertex Code / Vertex Shader (optional pins) work the same way.&#xD;&#xA;- Uniforms: values by name from the nodes in Qt.Elements.Uniform (Float, Int, Bool, Vector2/3/4, Color, Matrix, Texture, Image), collected in a spread.&#xD;&#xA;- Error shows a GLSL error with its line number, a missing file, a broken .qsb or an unknown / wrongly typed uniform.&#xD;&#xA;- Shader language is GLSL 440, baked with Qt's qsb tool (Qt host tools, not part of VL.Qt): qsb --glsl &quot;100es,120,150&quot; --hlsl 50 --msl 12 -o x.frag.qsb x.frag. qsb is only needed for shaders you bake yourself or ship precompiled.&#xD;&#xA;- Uniform block: layout(std140, binding = 0), qt_Matrix (mat4) and qt_Opacity (float) first, then your members. Member names must match the Uniform node names (case sensitive).&#xD;&#xA;- The Input is layout(binding = 1) uniform sampler2D source; texture coordinates come in as qt_TexCoord0, the result goes to vec4 fragColor (location 0).&#xD;&#xA;- The Input is premultiplied, so the output must be premultiplied too (rgb * alpha). Color uniforms arrive premultiplied as well (rgb * a); Vector4 is passed unchanged.&#xD;&#xA;- shaders/tint.frag next to this patch is the source of the tint example, shaders/tint.frag.qsb is the baked file the node loads.&#xD;&#xA;- builtin:wave needs an Input (uniforms time, amplitude, frequency). builtin:gradient is generative (uniforms time, color).&#xD;&#xA;- Shader files in a qtshaders folder next to the patch become nodes with their own pins, no Uniform nodes needed: see HowTo Create Shader Nodes from Files.">
+          <Pad Id="GT7uBkJDVdVgrgRVXuTFjj" Bounds="85,1239,830,366" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The Input is not drawn itself, only the effect output is. Bounds, Transform and Opacity belong on the ShaderEffect, not on its Input; Auto Size takes the size of the Input.&#xD;&#xA;- Fragment Code is baked in the background while you edit; if it has an error, the last working version keeps drawing. It needs no tools: VL.Qt bakes the text itself (Qt Shader Tools).&#xD;&#xA;- Fragment Shader wins over Fragment Code if set. A broken path draws nothing. Vertex Code / Vertex Shader (optional pins) work the same way.&#xD;&#xA;- Uniforms: values by name from the nodes in Qt.Elements.Uniform (Float, Int, Bool, Vector2/3/4, Color, Matrix, Texture, Image), collected in a spread.&#xD;&#xA;- Error shows a GLSL error with its line number, a missing file, a broken .qsb or an unknown / wrongly typed uniform.&#xD;&#xA;- Shader language is GLSL 440, baked with Qt's qsb tool (Qt host tools, not part of VL.Qt): qsb --glsl &quot;100es,120,150&quot; --hlsl 50 --msl 12 -o x.frag.qsb x.frag. qsb is only needed for shaders you bake yourself or ship precompiled.&#xD;&#xA;- Uniform block: layout(std140, binding = 0), qt_Matrix (mat4) and qt_Opacity (float) first, then your members. Member names must match the Uniform node names (case sensitive).&#xD;&#xA;- The Input is layout(binding = 1) uniform sampler2D source; texture coordinates come in as qt_TexCoord0, the result goes to vec4 fragColor (location 0).&#xD;&#xA;- The Input is premultiplied, so the output must be premultiplied too (rgb * alpha). Color uniforms arrive premultiplied as well (rgb * a); Vector4 is passed unchanged.&#xD;&#xA;- shaders/tint.frag next to this patch is the source of the tint example, shaders/tint.frag.qsb is the baked file the node loads.&#xD;&#xA;- builtin:wave needs an Input (uniforms time, amplitude, frequency). builtin:gradient is generative (uniforms time, color).&#xD;&#xA;- Shader files in a qtshaders folder next to the patch become nodes with their own pins, no Uniform nodes needed: see HowTo Create Shader Nodes from Files.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,7 +43,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="l1SD6nTqokP2TameZsMO4k" Bounds="100,728,480,46" ShowValueBox="true" isIOBox="true" Value="1  builtin:wave on a Text: an LFO drives time (a Motion demo). Amplitude and frequency sit in the Float nodes.">
+          <Pad Id="l1SD6nTqokP2TameZsMO4k" Bounds="100,288,480,46" ShowValueBox="true" isIOBox="true" Value="1  builtin:wave on a Text: an LFO drives time (a Motion demo). Amplitude and frequency sit in the Float nodes.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -52,7 +52,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="YULeqdV6FtmduvfWj96B29" Bounds="620,728,480,46" ShowValueBox="true" isIOBox="true" Value="2  Your own shader: shaders/tint.frag.qsb with a Color and a Float uniform on a Rectangle.">
+          <Pad Id="YULeqdV6FtmduvfWj96B29" Bounds="620,288,480,46" ShowValueBox="true" isIOBox="true" Value="2  Your own shader: shaders/tint.frag.qsb with a Color and a Float uniform on a Rectangle.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -61,7 +61,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="100,961,265,19" Id="FTDYvdzlfU6civkbHjsMvo">
+          <Node Bounds="100,521,265,19" Id="FTDYvdzlfU6civkbHjsMvo">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -95,7 +95,7 @@
             <Pin Id="L9BoMxeNem9LwxeLqkms3F" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="MMQAdauw315QZYN1NpWJrE" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="100,1327,185,19" Id="xIGgQKRZ0BfxyFGiMPw4gb">
+          <Node Bounds="100,887,105,19" Id="xIGgQKRZ0BfxyFGiMPw4gb">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -105,6 +105,7 @@
             </p:NodeReference>
             <Pin Id="b3cAdvWfELb6uym9rW2nxe" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Cu4hAKHRN78tqfUnAYPCLh" Name="Input" Kind="InputPin" />
+            <Pin Id="TXEzdHTExvtN4LkkrHRQYJ" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="NfhI8C0oz0dQBUdlVg2ksE" Name="Fragment Code" Kind="InputPin" />
             <Pin Id="7gLHCeGdjuEL2hVlN71sYm" Name="Fragment Shader" Kind="InputPin" />
             <Pin Id="UDULOI0sCirLcNRjP6SW0N" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
@@ -116,22 +117,22 @@
             <Pin Id="KukRgc1XIOrLCRo2X8ZEzW" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="jxuNZ1ROZMkIVkhIUV8FKu" Name="Transform" Kind="InputPin" />
             <Pin Id="IBMnKm024OyNW7ICvrzNgO" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="FbHHCqFYuj4U9RbETA16hh" Name="Opacity" Kind="InputPin" />
+            <Pin Id="FbHHCqFYuj4U9RbETA16hh" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="NOJSfO4H617MVYKRpnLL65" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="McLCwCvOqJ2LkGsm7dxMN3" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="kdxkzIKIi1hmrOf2azE0tY" Name="Interaction" Kind="InputPin" />
+            <Pin Id="kdxkzIKIi1hmrOf2azE0tY" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="TuUrNJLDiQOHQahTDQ3ptG" Name="Output" Kind="OutputPin" />
             <Pin Id="DyKQR3DsGMQM2chMtQDcO7" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="F8inB2fjTAoNrVZlVyp0V1" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="21Qk9BmvQnQsna6vgayHta" Name="Error" Kind="OutputPin" />
-            <Pin Id="FHB8mR236uuP1D1kEfYoAG" Name="Effect" Kind="InputPin" />
+            <Pin Id="FHB8mR236uuP1D1kEfYoAG" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="Dux0NFpMCZ8KZhyNdtcpN3" Comment="Fragment Shader" Bounds="142,1000,300,19" ShowValueBox="true" isIOBox="true" Value="builtin:wave">
+          <Pad Id="Dux0NFpMCZ8KZhyNdtcpN3" Comment="Fragment Shader" Bounds="142,560,300,19" ShowValueBox="true" isIOBox="true" Value="builtin:wave">
             <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="160,1180,165,19" Id="IkKufkK3r91kj1gbzy1pXp">
+          <Node Bounds="160,740,165,19" Id="IkKufkK3r91kj1gbzy1pXp">
             <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.Collections.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="RecordType" Name="Spread" NeedsToBeDirectParent="true" />
@@ -142,7 +143,7 @@
             <Pin Id="7UM0R09tQS8R7SMmU4G982" Name="Input 3" Kind="StateInputPin" />
             <Pin Id="xm2bWppSZTV8d962Dueogh" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="160,1130,45,19" Id="mSralsJuTVvh5A3Pe4lmlY">
+          <Node Bounds="160,690,45,19" Id="mSralsJuTVvh5A3Pe4lmlY">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -156,7 +157,7 @@
             <Pin Id="JJ0hVSa07XGlpsBSqNgCNe" Name="Value" Kind="InputPin" />
             <Pin Id="hNxPe0YCwGj9WIPe8sNEfV" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="240,1130,45,19" Id="1zIYketZlV4qPwMoWz7Ys7">
+          <Node Bounds="240,690,45,19" Id="1zIYketZlV4qPwMoWz7Ys7">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -170,7 +171,7 @@
             <Pin Id="7XeSTgMVPcZCthKDKfCdml" Name="Value" Kind="InputPin" DefaultValue="0.03" />
             <Pin Id="xzEzf11kPsn0gtfRuXyAQP" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="320,1130,45,19" Id="0xuZlwLptoQwkd4GHPonNH">
+          <Node Bounds="320,690,45,19" Id="0xuZlwLptoQwkd4GHPonNH">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -184,7 +185,7 @@
             <Pin Id="SQcnxAO5FJ8b0EkhfwPb5B" Name="Value" Kind="InputPin" DefaultValue="6" />
             <Pin Id="F1npkhhFUDST7aqd75w1ot" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="180,1085,45,19" Id="5ta4y93Qc8axLOJze68gIA">
+          <Node Bounds="180,645,45,19" Id="5ta4y93Qc8axLOJze68gIA">
             <p:NodeReference LastCategoryFullName="Math" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="*" />
@@ -193,7 +194,7 @@
             <Pin Id="XyqkJUvn8ArQCZ3dTCjlf4" Name="Input 2" Kind="InputPin" DefaultValue="62.8318" />
             <Pin Id="W2y2ngdaAkKEJuO3YmwYDF" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="180,1040,65,19" Id="2bvtMZfWrlXEj6yxIuCqIE">
+          <Node Bounds="180,600,65,19" Id="2bvtMZfWrlXEj6yxIuCqIE">
             <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LFO" />
@@ -208,7 +209,7 @@
             <Pin Id="sQ3lyss2kUOuzoSALEB0si" Name="On New Cycle" Kind="OutputPin" />
             <Pin Id="td3EmR2VU44nC4ZbnjCROp" Name="Cycles" Kind="OutputPin" />
           </Node>
-          <Node Bounds="620,940,165,19" Id="EpyNlXvt42CeeL2VpM3zr8">
+          <Node Bounds="620,500,165,19" Id="EpyNlXvt42CeeL2VpM3zr8">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -233,7 +234,7 @@
             <Pin Id="J69HBAOjcqkMbSXowJ8BgP" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="RJOUsUMTxL5LpEcK9dQjAO" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="620,1327,185,19" Id="0ZZXowb9HQk38hazetA8Af">
+          <Node Bounds="620,887,105,19" Id="0ZZXowb9HQk38hazetA8Af">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -243,6 +244,7 @@
             </p:NodeReference>
             <Pin Id="53lVUFgmohrbSAQynhWFio" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="GtRj50PBLDe41SSbLyKAk4" Name="Input" Kind="InputPin" />
+            <Pin Id="Q87iHGQWCUbP4uGPiJOiKG" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="TnaqikPbU9aOaaQCQfbZC8" Name="Fragment Code" Kind="InputPin" />
             <Pin Id="giElPvh5ffLzRlZWTfTATx" Name="Fragment Shader" Kind="InputPin" />
             <Pin Id="C9crKjzlOFrLV0Nn74FgUq" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
@@ -254,17 +256,17 @@
             <Pin Id="H3IR7khXqvfNlj0kltLBg7" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="LhZy9bQ5GDcwrY7qQ3N8zR" Name="Transform" Kind="InputPin" />
             <Pin Id="PJlwxh7bBBLPfZrdcINhow" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="65vtQp9d8zruOkCenZAqlL" Name="Opacity" Kind="InputPin" />
+            <Pin Id="65vtQp9d8zruOkCenZAqlL" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="Ek0j57db5QwM8N2drv9qkD" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="HWbnqpABGmdMC3fkIuyYMs" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="3I4BgtfjWoDmuKXS5QFmcP" Name="Interaction" Kind="InputPin" />
+            <Pin Id="3I4BgtfjWoDmuKXS5QFmcP" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="MMcw7qWjxZm2R2JckqJ4dV" Name="Output" Kind="OutputPin" />
             <Pin Id="LIo8XuArhQ9PvMDHl2kdMg" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="T3fVqzki7XBLq7iUbDrTyz" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="ZmAV3hFyjVCOYdkMjgRKVS" Name="Error" Kind="OutputPin" />
-            <Pin Id="GV05aIepGz2NoGK6D3QGZ1" Name="Effect" Kind="InputPin" />
+            <Pin Id="GV05aIepGz2NoGK6D3QGZ1" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="680,1180,125,19" Id="PvO1Bl3sj6blpoPm06Tdfh">
+          <Node Bounds="680,740,125,19" Id="PvO1Bl3sj6blpoPm06Tdfh">
             <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.Collections.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="RecordType" Name="Spread" NeedsToBeDirectParent="true" />
@@ -274,7 +276,7 @@
             <Pin Id="hv8yMYTX5l4d4SRcnFDdQD" Name="Input 2" Kind="StateInputPin" />
             <Pin Id="MLGGweiV7hFGNLkRfKvxwh" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="680,1130,45,19" Id="e8tbtSxerFHvwZkZpBKx9O">
+          <Node Bounds="680,690,45,19" Id="e8tbtSxerFHvwZkZpBKx9O">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -288,7 +290,7 @@
             <Pin Id="c2vJ7B4hDa7Y0P9gONdUvp" Name="Value" Kind="InputPin" />
             <Pin Id="zqAT1l28CfcayVY3xcFsO2" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="800,1145,45,19" Id="1tgDlB2gD4Hkht5MWbn0I3">
+          <Node Bounds="800,705,45,19" Id="1tgDlB2gD4Hkht5MWbn0I3">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -302,27 +304,22 @@
             <Pin Id="n4JpaV7rUsfv8CA6tRnxsD" Name="Value" Kind="InputPin" />
             <Pin Id="8loGHGBnr5c8mPtV4W0Ouy" Name="Result" Kind="OutputPin" />
           </Node>
-          <Pad Id="KCyupHjxPXk2uJ7fWbBx7E" Comment="Tint Color" Bounds="695,1065,136,15" ShowValueBox="true" isIOBox="true" Value="0.1, 0.4, 1, 1">
+          <Pad Id="KCyupHjxPXk2uJ7fWbBx7E" Comment="Tint Color" Bounds="695,625,136,15" ShowValueBox="true" isIOBox="true" Value="0.1, 0.4, 1, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="IZN2cp61BtRqB3ycpGCyVp" Comment="Amount" Bounds="815,1122,57,15" ShowValueBox="true" isIOBox="true" Value="0.8">
+          <Pad Id="IZN2cp61BtRqB3ycpGCyVp" Comment="Amount" Bounds="815,682,57,15" ShowValueBox="true" isIOBox="true" Value="0.8">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="8JEENRLUnO2ACIbXFs0VkH" Comment="Fragment Shader" Bounds="662,1002,300,19" ShowValueBox="true" isIOBox="true" Value="shaders/tint.frag.qsb">
+          <Pad Id="8JEENRLUnO2ACIbXFs0VkH" Comment="Fragment Shader" Bounds="662,562,319,16" ShowValueBox="true" isIOBox="true" Value="shaders/tint.frag.qsb">
             <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="eopbK04Ko5WSpetivemJtu" Comment="Error" Bounds="682,1367,300,43" ShowValueBox="true" isIOBox="true" Value="">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
-              <Choice Kind="TypeFlag" Name="String" />
-            </p:TypeAnnotation>
-          </Pad>
-          <Node Bounds="100,1480,1565,19" Id="GFuKVIkSroBix5pRyxd3Y6">
+          <Node Bounds="100,1040,1565,19" Id="GFuKVIkSroBix5pRyxd3Y6">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -349,7 +346,7 @@
             <Pin Id="Na5PEzZhPqyMLTVrshOuLO" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="EByYOXefjl3LrvKg0qges4" Name="Style" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="100,1610,145,19" Id="ruvsfufrw9e05cWtV5ltQQ">
+          <Node Bounds="100,1170,85,19" Id="ruvsfufrw9e05cWtV5ltQQ">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -372,33 +369,34 @@
             <Pin Id="yhhMnR7k9f3F1YO7MDBqPj" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="MMmqq0tkfLIQ0VBtaeLAKL" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="eiJzqVkYPD1hHXh7myaPdo" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="UC1RKHbrDgEOVhe9i20FED" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="w6deaqIn4PNUqohJtFcOjX" Comment="Title" Bounds="182,1576,200,19" ShowValueBox="true" isIOBox="true" Value="HowTo Write a ShaderEffect">
+          <Pad Id="w6deaqIn4PNUqohJtFcOjX" Comment="Title" Bounds="182,1136,200,19" ShowValueBox="true" isIOBox="true" Value="HowTo Write a ShaderEffect">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="RxtyUoZ35mKzaeidoMf6e8" Comment="Clear Color" Bounds="142,1526,136,15" ShowValueBox="true" isIOBox="true" Value="0.92, 0.92, 0.92, 1">
+          <Pad Id="RxtyUoZ35mKzaeidoMf6e8" Comment="Clear Color" Bounds="142,1086,136,15" ShowValueBox="true" isIOBox="true" Value="0.92, 0.92, 0.92, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="Jejdyc3EOiCM8XdMB2xo4X" Comment="Text" Bounds="142,941,35,15" ShowValueBox="true" isIOBox="true" Value="WAVE">
+          <Pad Id="Jejdyc3EOiCM8XdMB2xo4X" Comment="Text" Bounds="142,501,35,15" ShowValueBox="true" isIOBox="true" Value="WAVE">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="U8DPv5IoFTzM3FAB71JkY8" Comment="Name" Bounds="682,1044,149,15" ShowValueBox="true" isIOBox="true" Value="tintColor">
+          <Pad Id="U8DPv5IoFTzM3FAB71JkY8" Comment="Name" Bounds="682,604,149,15" ShowValueBox="true" isIOBox="true" Value="tintColor">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="OzW5pgj73R1P6yfttQH0bW" Comment="Name" Bounds="802,1101,71,15" ShowValueBox="true" isIOBox="true" Value="amount">
+          <Pad Id="OzW5pgj73R1P6yfttQH0bW" Comment="Name" Bounds="802,661,71,15" ShowValueBox="true" isIOBox="true" Value="amount">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="220,1277,80,19" Id="FWlRGh0MmkQrCZSlXeJ6gD">
+          <Node Bounds="200,840,80,19" Id="FWlRGh0MmkQrCZSlXeJ6gD">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -412,7 +410,7 @@
             <Pin Id="6Nh0Pu6etyCpK9w82zmKN9" Name="Translation" Kind="InputPin" DefaultValue="0.3, 0.4" />
             <Pin Id="C3IEZK5RuHXdtiARI4KYbX" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="740,1277,80,19" Id="VmOOhoS7tk4BgyZbxnmVDB">
+          <Node Bounds="720,840,80,19" Id="VmOOhoS7tk4BgyZbxnmVDB">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -426,7 +424,7 @@
             <Pin Id="lGSppbgmpyXBq1SBSRA884" Name="Translation" Kind="InputPin" DefaultValue="4.8, 0.4" />
             <Pin Id="sw5bYXrc5oanWtgOuioC4z" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="HRZKuqfacG0Mow0ooRfhtG" Bounds="1140,728,480,46" ShowValueBox="true" isIOBox="true" Value="3  Write the GLSL in the patch: Fragment Code comes from a String pad, an LFO animates the time uniform. Edit the text while the patch runs.">
+          <Pad Id="HRZKuqfacG0Mow0ooRfhtG" Bounds="1140,288,480,46" ShowValueBox="true" isIOBox="true" Value="3  Write the GLSL in the patch: Fragment Code comes from a String pad, an LFO animates the time uniform. Edit the text while the patch runs.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -435,12 +433,12 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="KhHisq8X7Wh0VYDW3BA1bg" Comment="Fragment Code" Bounds="1162,825,440,200" ShowValueBox="true" isIOBox="true" Value="#version 440&#xD;&#xA;layout(location = 0) in vec2 qt_TexCoord0;&#xD;&#xA;layout(location = 0) out vec4 fragColor;&#xD;&#xA;&#xD;&#xA;layout(std140, binding = 0) uniform buf {&#xD;&#xA;    mat4 qt_Matrix;&#xD;&#xA;    float qt_Opacity;&#xD;&#xA;    float time; // from the Float uniform named time&#xD;&#xA;};&#xD;&#xA;&#xD;&#xA;void main()&#xD;&#xA;{&#xD;&#xA;    vec2 uv = qt_TexCoord0;&#xD;&#xA;    // wavy stripes moving to the right&#xD;&#xA;    float s = 0.5 + 0.5 * sin((uv.x + 0.15 * sin(uv.y * 6.0)) * 24.0 - time * 4.0);&#xD;&#xA;    vec3 rgb = mix(vec3(0.05, 0.1, 0.4), vec3(1.0, 0.5, 0.1), s);&#xD;&#xA;    fragColor = vec4(rgb, 1.0) * qt_Opacity; // premultiplied&#xD;&#xA;}">
+          <Pad Id="KhHisq8X7Wh0VYDW3BA1bg" Comment="Fragment Code" Bounds="1162,385,440,200" ShowValueBox="true" isIOBox="true" Value="#version 440&#xD;&#xA;layout(location = 0) in vec2 qt_TexCoord0;&#xD;&#xA;layout(location = 0) out vec4 fragColor;&#xD;&#xA;&#xD;&#xA;layout(std140, binding = 0) uniform buf {&#xD;&#xA;    mat4 qt_Matrix;&#xD;&#xA;    float qt_Opacity;&#xD;&#xA;    float time; // from the Float uniform named time&#xD;&#xA;};&#xD;&#xA;&#xD;&#xA;void main()&#xD;&#xA;{&#xD;&#xA;    vec2 uv = qt_TexCoord0;&#xD;&#xA;    // wavy stripes moving to the right&#xD;&#xA;    float s = 0.5 + 0.5 * sin((uv.x + 0.15 * sin(uv.y * 6.0)) * 24.0 - time * 4.0);&#xD;&#xA;    vec3 rgb = mix(vec3(0.05, 0.1, 0.4), vec3(1.0, 0.5, 0.1), s);&#xD;&#xA;    fragColor = vec4(rgb, 1.0) * qt_Opacity; // premultiplied&#xD;&#xA;}">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="1220,1040,65,19" Id="D0XOD3aYdaJEHTOmobE2rF">
+          <Node Bounds="1220,600,65,19" Id="D0XOD3aYdaJEHTOmobE2rF">
             <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LFO" />
@@ -455,7 +453,7 @@
             <Pin Id="xsz3QUUZIfKZEi4p2KwNHg" Name="On New Cycle" Kind="OutputPin" />
             <Pin Id="Puiose5XXGAdKHcQinfITg" Name="Cycles" Kind="OutputPin" />
           </Node>
-          <Node Bounds="1220,1085,45,19" Id="DIkQ3ijXhpRQChF97wQqQv">
+          <Node Bounds="1220,645,45,19" Id="DIkQ3ijXhpRQChF97wQqQv">
             <p:NodeReference LastCategoryFullName="Math" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="*" />
@@ -464,7 +462,7 @@
             <Pin Id="qjLE33XvuBJIGSIOcBiwiH" Name="Input 2" Kind="InputPin" DefaultValue="62.8318" />
             <Pin Id="nkhU2AmuSjHhWDr8CQEjhk" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="1200,1130,45,19" Id="kiRyGFUB2ZJeFthIxyumuy">
+          <Node Bounds="1200,690,45,19" Id="kiRyGFUB2ZJeFthIxyumuy">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -478,7 +476,7 @@
             <Pin Id="GpccAgr9B6v64zDTT65F9S" Name="Value" Kind="InputPin" />
             <Pin Id="aiPhYMdLjmtl6YwIdYm42c" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="1200,1180,45,19" Id="fEHQfqkWQxGgQQDBseeS4P">
+          <Node Bounds="1200,740,45,19" Id="fEHQfqkWQxGgQQDBseeS4P">
             <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.Collections.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="RecordType" Name="Spread" NeedsToBeDirectParent="true" />
@@ -487,7 +485,7 @@
             <Pin Id="wf7jgJYXO1VX4UvbKF59NF" Name="Input" Kind="StateInputPin" />
             <Pin Id="TsDZ5sUO7EvybTwyb1m7vF" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="1260,1277,80,19" Id="KBpaCxKVnSPxtoeo2rx1jS">
+          <Node Bounds="1240,840,80,19" Id="KBpaCxKVnSPxtoeo2rx1jS">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -501,7 +499,7 @@
             <Pin Id="nuJT7czKoBOS03C2fQZEZu" Name="Translation" Kind="InputPin" DefaultValue="0.3, 2.2" />
             <Pin Id="wSlWoYdczkcFEpF46JqFyn" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="1140,1327,125,19" Id="h5RYSelhNP6Douh6Xql2Za">
+          <Node Bounds="1140,887,105,19" Id="h5RYSelhNP6Douh6Xql2Za">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -511,6 +509,7 @@
             </p:NodeReference>
             <Pin Id="WMNAN3p97BA782BtFE94Rj" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="7a4EpVtI0LmNq1AcioJYHx" Name="Input" Kind="InputPin" />
+            <Pin Id="PyS2v0kjF0tMOZ4RHgxkXr" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="SOfCTAHvWCxDjhoWu8TV1o" Name="Fragment Code" Kind="InputPin" />
             <Pin Id="IvYCFydxIYA2LmOKzyEqYu" Name="Fragment Shader" Kind="InputPin" />
             <Pin Id="mx41x4kWnE1DxqGXTqDDYE" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
@@ -532,12 +531,12 @@
             <Pin Id="mFeXQkbxYn6skyFfIjGNE8" Name="Error" Kind="OutputPin" />
             <Pin Id="tqx9cK1OvjxAzTQ5Juw0sc" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="jq7XOP6An6u5V3Zu7yJGh1" Comment="Error" Bounds="1262,1367,300,43" ShowValueBox="true" isIOBox="true" Value="">
+          <Pad Id="jq7XOP6An6u5V3Zu7yJGh1" Comment="Error" Bounds="1242,921,300,43" ShowValueBox="true" isIOBox="true" Value="">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="w2ZtbgzCcaD3RKDczXBDOO" Bounds="1262,1415,300,30" ShowValueBox="true" isIOBox="true" Value="Errors (with line number) show up here. The last working version keeps drawing.">
+          <Pad Id="w2ZtbgzCcaD3RKDczXBDOO" Bounds="1242,969,300,30" ShowValueBox="true" isIOBox="true" Value="Errors (with line number) show up here. The last working version keeps drawing.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -546,7 +545,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="qKyQKYNqnecM9ZRgLsj87P" Bounds="1660,728,560,60" ShowValueBox="true" isIOBox="true" Value="4  A Group as source: Text and Rectangle form one input. The Rectangle sits at a negative position (left of and above the Group origin). A Group renders as a whole, its full frame including that part, into the shader.">
+          <Pad Id="qKyQKYNqnecM9ZRgLsj87P" Bounds="1660,288,560,60" ShowValueBox="true" isIOBox="true" Value="4  A Group as source: Text and Rectangle form one input. The Rectangle sits at a negative position (left of and above the Group origin). A Group renders as a whole, its full frame including that part, into the shader.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -555,7 +554,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="1660,1012,265,19" Id="BndvyfNMk84vr6vbI5TO6W">
+          <Node Bounds="1660,572,265,19" Id="BndvyfNMk84vr6vbI5TO6W">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -589,7 +588,7 @@
             <Pin Id="lSJ3Q6ddGmVqaCUkjEDttW" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="d3X28ioZiZqmsGiHdpEwGb" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="1940,1012,165,19" Id="y8IaC5MM2sFJEk22QTj61S">
+          <Node Bounds="1940,572,165,19" Id="y8IaC5MM2sFJEk22QTj61S">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -614,7 +613,7 @@
             <Pin Id="3r3yIbfb2ZYLmYG8gzZfQp" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="inu9oqhDcN16hcEIPUS8y9" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="1960,962,80,19" Id="2dgbpGNr7oGb6sogmlbk41">
+          <Node Bounds="1960,522,80,19" Id="2dgbpGNr7oGb6sogmlbk41">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -628,7 +627,7 @@
             <Pin Id="WMeAbabNrJnRwMPJU9flZK" Name="Translation" Kind="InputPin" DefaultValue="-0.4, -0.3" />
             <Pin Id="EEIKE20NEDZ6tva1xT1jEX" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="1660,1072,285,19" Id="e4Q9Z2G6icHMhyadyKoA2T">
+          <Node Bounds="1660,632,285,19" Id="e4Q9Z2G6icHMhyadyKoA2T">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -653,7 +652,7 @@
             <Pin Id="sCG9L24tRr83y3GGUlysxM" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="pPXVOrhXw9IZW38ybloMgI" Name="Style" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="1660,1327,185,19" Id="nDU1YYIE5foRNB3AhA8hIW">
+          <Node Bounds="1660,887,185,19" Id="nDU1YYIE5foRNB3AhA8hIW">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -663,6 +662,7 @@
             </p:NodeReference>
             <Pin Id="DjTEbLZfwvgmtHp4u5iOyg" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="VSq5y8dQkTiY1Xab7Pkurk" Name="Input" Kind="InputPin" />
+            <Pin Id="NylYnO3ks25PqHHSCaefmK" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="IUE5QMv0CYnNhbjFLRfnO8" Name="Fragment Code" Kind="InputPin" />
             <Pin Id="6jFl0wmqD9k5gl9QqgFAik" Name="Fragment Shader" Kind="InputPin" />
             <Pin Id="UHrI8FXR3yDLL3VmW0moKu" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
@@ -684,7 +684,7 @@
             <Pin Id="JSBkuNaTC1pfMzvBtG1bmM" Name="Error" Kind="OutputPin" />
             <Pin Id="xgG1tlGALq7pfppVZsPHG4" Name="Effect" Kind="InputPin" />
           </Node>
-          <Node Bounds="1780,1197,80,19" Id="Q7NQ1tJV9aZZdgwBb0HYgE">
+          <Node Bounds="1780,757,80,19" Id="Q7NQ1tJV9aZZdgwBb0HYgE">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -698,7 +698,7 @@
             <Pin Id="g79dugiSH6y2H1JjI5OGsn" Name="Translation" Kind="InputPin" DefaultValue="4.8, 2.4" />
             <Pin Id="CJncZZfmPy9hIvP9UXSiPD" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="1720,1197,45,19" Id="1q0z4asOGsaHsDrilSnRRv">
+          <Node Bounds="1720,757,45,19" Id="1q0z4asOGsaHsDrilSnRRv">
             <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.Collections.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="RecordType" Name="Spread" NeedsToBeDirectParent="true" />
@@ -708,7 +708,7 @@
             <Pin Id="lgG6CVPe9d47ORVjk52H7i" Name="Input 2" Kind="StateInputPin" />
             <Pin Id="6j0UP4Nief28H5HwZLMKH2" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="1720,1164,41,19" Id="Rh3NeNoUNQySGfF1G5Hzml">
+          <Node Bounds="1720,724,41,19" Id="Rh3NeNoUNQySGfF1G5Hzml">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -722,7 +722,7 @@
             <Pin Id="IB26WVoPIiGrzpKK0tlEOY" Name="Value" Kind="InputPin" DefaultValue="0.1, 0.4, 1, 1" />
             <Pin Id="rFpWJiT7WrnnfsArpCCmfW" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="1760,1164,39,19" Id="gh0R9byIWgYbFpnwCswMMf">
+          <Node Bounds="1760,724,39,19" Id="gh0R9byIWgYbFpnwCswMMf">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -736,7 +736,7 @@
             <Pin Id="8GQo3Y2eEhx3LlpAZ8BE6R" Name="Value" Kind="InputPin" DefaultValue="0.8" />
             <Pin Id="qT1NshgOH9bgRYu8fZXTKo" Name="Result" Kind="OutputPin" />
           </Node>
-          <Pad Id="6hKw3ippI8Ycjm3fcOlaKY" Comment="Fragment Shader" Bounds="1702,1127,200,19" ShowValueBox="true" isIOBox="true" Value="shaders/tint.frag.qsb">
+          <Pad Id="6hKw3ippI8Ycjm3fcOlaKY" Comment="Fragment Shader" Bounds="1702,687,200,19" ShowValueBox="true" isIOBox="true" Value="shaders/tint.frag.qsb">
             <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
@@ -757,7 +757,6 @@
         <Link Id="PEri0T4JxSucPf21w2ZMSR" Ids="KCyupHjxPXk2uJ7fWbBx7E,c2vJ7B4hDa7Y0P9gONdUvp" />
         <Link Id="d7dCCDkAzFiyE8qnKXutmU" Ids="IZN2cp61BtRqB3ycpGCyVp,n4JpaV7rUsfv8CA6tRnxsD" />
         <Link Id="ssxsJUuzQTNpRXIeesNnkK" Ids="8JEENRLUnO2ACIbXFs0VkH,giElPvh5ffLzRlZWTfTATx" />
-        <Link Id="RkviNlAoOWdCIoGZxzogAG" Ids="ZmAV3hFyjVCOYdkMjgRKVS,eopbK04Ko5WSpetivemJtu" />
         <Link Id="4VaxMFoSmu3xiKUdImHkul" Ids="TuUrNJLDiQOHQahTDQ3ptG,GP9BSLhDNCdMBtHpc1ggDt" />
         <Link Id="w0OA1Pbidr4R2pmOZJH5vM" Ids="MMcw7qWjxZm2R2JckqJ4dV,sZdFA5khYIzPEjui38vNMp" />
         <Link Id="OmgAVplTl8tzFKfjeqZx6s" Ids="CRKs8eR6TXjWiUUNfltjNj,6pI6i12d2g9lvJttLvYb2O" />

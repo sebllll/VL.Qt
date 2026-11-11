@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="OdhVyfWNf4qLzTW7ivKOIZ" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="OdhVyfWNf4qLzTW7ivKOIZ" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
   <NugetDependency Id="KVKidxJ6iTItqBq912ERq7" Location="VL.CoreLib" />
   <DocumentDependency Id="6v3osVzAN6k43FLED5aXKK" Location="../../VL.Qt.vl" />
   <Patch Id="cWFNNBZn9c2FXdJ1eIq6TO">
@@ -49,7 +49,7 @@
             <Pin Id="ExgzZy3tG0ONHsWxqnXg4G" Name="Effect" Kind="InputPin" />
             <Pin Id="SrvvLaHWu0zPT3aZg2ucPo" Name="Style" Kind="InputPin" />
           </Node>
-          <Node Bounds="100,1040,145,19" Id="i32wyAjhVFDgbOf2l4v9Ez">
+          <Node Bounds="100,1040,85,19" Id="i32wyAjhVFDgbOf2l4v9Ez">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -72,6 +72,7 @@
             <Pin Id="Z66pyx7JDPzo6387gPinsE" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="hdjGpJvMumdLkYMLXkBxB4" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="6lTNFBhME1A6I6VgG4TTXt" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FpEQCy0m6trOJJx3HPA0TE" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="371,471,53,19" Id="nJSrzEpUNgePOdsBtb4Km4">
             <p:NodeReference LastCategoryFullName="Reactive" LastDependency="VL.CoreLib.vl">

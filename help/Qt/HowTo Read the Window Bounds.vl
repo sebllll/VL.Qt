@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="DSvFDLTaSpOix7Sn20EYwK" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="DSvFDLTaSpOix7Sn20EYwK" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
   <NugetDependency Id="nev8AalwsUoqPOL6bLHK92" Location="VL.CoreLib" />
   <DocumentDependency Id="MBmvU9R1pQJyO7w7I4Hlul" Location="../../VL.Qt.vl" />
   <Patch Id="nnoFQICv7uJHKDcuPHCQcu">
@@ -34,27 +34,27 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="lQgPgJnJzee0cZYqSBkXdH" Comment="Fill" Bounds="252,400,136,19" ShowValueBox="true" isIOBox="true" Value="0.9, 0.35, 0.1, 1">
+          <Pad Id="lQgPgJnJzee0cZYqSBkXdH" Comment="Fill" Bounds="232,391,136,19" ShowValueBox="true" isIOBox="true" Value="0.9, 0.35, 0.1, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="WA6N4xZhCh5YSmkQ6Nd3wm" Comment="Radius" Bounds="272,434,50,19" ShowValueBox="true" isIOBox="true" Value="0.75">
+          <Pad Id="WA6N4xZhCh5YSmkQ6Nd3wm" Comment="Radius" Bounds="252,425,50,19" ShowValueBox="true" isIOBox="true" Value="0.75">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="umMRarNSkQZW4f4Whml676" Comment="Stroke Color" Bounds="292,468,136,19" ShowValueBox="true" isIOBox="true" Value="1, 1, 1, 1">
+          <Pad Id="umMRarNSkQZW4f4Whml676" Comment="Stroke Color" Bounds="272,459,136,19" ShowValueBox="true" isIOBox="true" Value="1, 1, 1, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="5b9ejAzX8KkLwqaFXGGa32" Comment="Stroke Width" Bounds="312,502,50,19" ShowValueBox="true" isIOBox="true" Value="0.32">
+          <Pad Id="5b9ejAzX8KkLwqaFXGGa32" Comment="Stroke Width" Bounds="292,493,50,19" ShowValueBox="true" isIOBox="true" Value="0.32">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="190,550,185,19" Id="PWsgNaVFbHMCx7SLrs2At4">
+          <Node Bounds="190,550,165,19" Id="PWsgNaVFbHMCx7SLrs2At4">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -79,13 +79,13 @@
             <Pin Id="SYuaa7rFlUxNlwfcuRbmC0" Name="Interaction" Kind="InputPin" />
             <Pin Id="J27oXcxGakILa0rmc1aIeE" Name="Effect" Kind="InputPin" />
           </Node>
-          <Node Bounds="190,678,145,19" Id="yhOm6nK8dJ6njJsWA7njAz">
+          <Node Bounds="190,678,85,19" Id="yhOm6nK8dJ6njJsWA7njAz">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="nhjK6MiwCUKGAUswWn2Zvt" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="BWMUQLCHVit0eMp4lZYrVZ" Name="Bounds" Kind="InputPin" DefaultValue="543, 189, 640, 431" IsHidden="true" />
+            <Pin Id="BWMUQLCHVit0eMp4lZYrVZ" Name="Bounds" Kind="InputPin" DefaultValue="543, 189, 573, 619" IsHidden="true" />
             <Pin Id="KBLrjY0QPEQQZzJvKIxPeH" Name="V Sync" Kind="InputPin" DefaultValue="False" IsHidden="true" />
             <Pin Id="1F8SPIUfqoViXvc0txMDCA" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="NAzPI4MtFEnlhbrQnh2X9s" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
@@ -102,6 +102,7 @@
             <Pin Id="koDz919UXzrtw1AP1SO6ZX" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="WVuQ55Uh7Jd6pg18Z4m2Z8" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="ouIoT95WI3za1XyEr0YM3h" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="CgBexKrRDx3PrdH9wYcYog" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="kwlPCq0SQnBEk4aU4YjMQE" Comment="Title" Bounds="272,615,193,15" ShowValueBox="true" isIOBox="true" Value="HowTo Read the Window Bounds">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="LZgKhJuC133uwVh4Xd327x" LanguageVersion="2026.8.0-0278-g8b85ba4511" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="LZgKhJuC133uwVh4Xd327x" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
   <NugetDependency Id="NT4ILsseKJWvuZQjsnZTAO" Location="VL.CoreLib" />
   <DocumentDependency Id="jGPUb5f2dNt8m3jWgwUELw" Location="../../VL.Qt.vl" />
   <Patch Id="rfWq0RgHyBPpzUiuyWYEwK">
@@ -16,7 +16,7 @@
       </p:NodeReference>
       <Patch Id="5hg3mMrPmSiNtJIrgCX9IT">
         <Canvas Id="LX9Qfslinueurn3KHUKDAr" CanvasType="Group">
-          <Pad Id="0415Mxu07clrWuJoZCu179" Bounds="85,16,620,52" ShowValueBox="true" isIOBox="true" Value="How To Blur an Image with a Control Mask">
+          <Pad Id="0415Mxu07clrWuJoZCu179" Bounds="85,16,753,52" ShowValueBox="true" isIOBox="true" Value="How To Blur an Image with a Control Mask">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="fapE9ZMaHA97FeR38SU6bM" Bounds="85,1509,830,222" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Blur an image by a different amount at every pixel, controlled by a grayscale mask. Grays in between blur proportionally. The mask is stretched over the picture.&#xD;&#xA;- Two passes: a Gaussian blur is separable. Pass 2 takes the result of pass 1. Both ShaderEffects run the same Fragment Code with the same radius, size and mask.&#xD;&#xA;- The shader always takes the same number of samples (the step between them grows with the radius), so the cost does not depend on the radius. size lets it turn the radius into texture coordinates.&#xD;&#xA;- Fragment Code is the text of shaders/blur_mask.frag next to this patch. One String pad feeds both passes; edit it live, errors show up at the Error pin of the ShaderEffect.&#xD;&#xA;- With a mask the blur is an approximation: the radius is read at the pixel that is drawn, in both passes. It is invisible for smooth masks, hard mask edges with a large radius can show a faint halo.&#xD;&#xA;- Radius 0 or a black mask returns the original pixel. Large radii are sampled coarsely, very fine detail then looks slightly stepped.&#xD;&#xA;- Every pass is a separate layer. Changing Radius or the mask re-renders both passes, the picture itself is rendered once.">
+          <Pad Id="fapE9ZMaHA97FeR38SU6bM" Bounds="85,1279,839,262" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Blur an image by a different amount at every pixel, controlled by a grayscale mask. Grays in between blur proportionally. The mask is stretched over the picture.&#xD;&#xA;- Two passes: a Gaussian blur is separable. Pass 2 takes the result of pass 1. Both ShaderEffects run the same Fragment Code with the same radius, size and mask.&#xD;&#xA;- The shader always takes the same number of samples (the step between them grows with the radius), so the cost does not depend on the radius. size lets it turn the radius into texture coordinates.&#xD;&#xA;- Fragment Code is the text of shaders/blur_mask.frag next to this patch. One String pad feeds both passes; edit it live, errors show up at the Error pin of the ShaderEffect.&#xD;&#xA;- With a mask the blur is an approximation: the radius is read at the pixel that is drawn, in both passes. It is invisible for smooth masks, hard mask edges with a large radius can show a faint halo.&#xD;&#xA;- Radius 0 or a black mask returns the original pixel. Large radii are sampled coarsely, very fine detail then looks slightly stepped.&#xD;&#xA;- Every pass is a separate layer. Changing Radius or the mask re-renders both passes, the picture itself is rendered once.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,7 +43,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="DMRYQcvp25z6TyOBdQ4wBP" Bounds="203,470,845,35" ShowValueBox="true" isIOBox="true" Value="1  Two QtImages: the picture and the mask (black = sharp, white = Radius). The mask only drives the blur, it is not drawn.">
+          <Pad Id="DMRYQcvp25z6TyOBdQ4wBP" Bounds="203,240,845,35" ShowValueBox="true" isIOBox="true" Value="1  Two QtImages: the picture and the mask (black = sharp, white = Radius). The mask only drives the blur, it is not drawn.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -52,17 +52,17 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="8QL5I3HnWd7rJnz1V0pa72" Comment="Path" Bounds="142,520,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-blur-source.png">
+          <Pad Id="8QL5I3HnWd7rJnz1V0pa72" Comment="Path" Bounds="142,290,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-blur-source.png">
             <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="8ZTsXrR8Np2JxlIeqqLT1K" Comment="Path" Bounds="814,510,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-blur-mask.png">
+          <Pad Id="8ZTsXrR8Np2JxlIeqqLT1K" Comment="Path" Bounds="814,280,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-blur-mask.png">
             <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="140,560,66,19" Id="TStuV7OQ4FrYxU3MhOcJO8">
+          <Node Bounds="140,330,66,19" Id="TStuV7OQ4FrYxU3MhOcJO8">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LoadImage" />
@@ -73,7 +73,7 @@
             <Pin Id="BkYfethGcemgVNTXPRVg2G" Name="Image" Kind="OutputPin" />
             <Pin Id="eLDcBwRIQS5mkOr7vB3jFD" Name="Error" Kind="OutputPin" />
           </Node>
-          <Node Bounds="812,550,66,19" Id="4FOI5YkqoksrHfarwTW7VJ">
+          <Node Bounds="812,320,66,19" Id="4FOI5YkqoksrHfarwTW7VJ">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LoadImage" />
@@ -84,7 +84,7 @@
             <Pin Id="pzoPz6FuPoExI1cN3YXpLR" Name="Image" Kind="OutputPin" />
             <Pin Id="t01HgLXKAsf08xlMV7Jx90" Name="Error" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,660,65,19" Id="MVXArB8CWhVOQRuvJMiPvi">
+          <Node Bounds="100,430,65,19" Id="MVXArB8CWhVOQRuvJMiPvi">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -108,7 +108,7 @@
             <Pin Id="e0OHY789IJ7yyPJv91kzW7" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="pw15brCOnK8jhTnKEuMm6s" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="5vyKwjqXDOCFUHByy1qlqD" Bounds="214,549,340,38" ShowValueBox="true" isIOBox="true" Value="The picture is 6.3 x 4.2 units (1 unit = 100 DIP). The Multiply turns that into DIP for the size uniform of the shader.">
+          <Pad Id="5vyKwjqXDOCFUHByy1qlqD" Bounds="214,319,340,38" ShowValueBox="true" isIOBox="true" Value="The picture is 6.3 x 4.2 units (1 unit = 100 DIP). The Multiply turns that into DIP for the size uniform of the shader.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -117,12 +117,12 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="xY9CVgmwEzr43hXchdW8yV" Comment="Size" Bounds="715,600,35,28" ShowValueBox="true" isIOBox="true" Value="6.3, 4.2">
+          <Pad Id="xY9CVgmwEzr43hXchdW8yV" Comment="Size" Bounds="715,370,35,28" ShowValueBox="true" isIOBox="true" Value="6.3, 4.2">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="713,690,25,19" Id="uSLoCXFmXWpvj4acXgHGn2">
+          <Node Bounds="713,460,25,19" Id="uSLoCXFmXWpvj4acXgHGn2">
             <p:NodeReference LastCategoryFullName="Math" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="*" />
@@ -131,7 +131,7 @@
             <Pin Id="1a2TqcJVB0S0XdcDcIpsia" Name="Input 2" Kind="InputPin" DefaultValue="100, 100" />
             <Pin Id="np3xz2wuTiNaALe3MZCSjE" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="jD2xZWlQBIfTnncaWoj0Oe" Bounds="122,692,340,38" ShowValueBox="true" isIOBox="true" Value="Fragment Code: one String pad for both passes (same text as shaders/blur_mask.frag).">
+          <Pad Id="jD2xZWlQBIfTnncaWoj0Oe" Bounds="122,462,340,38" ShowValueBox="true" isIOBox="true" Value="Fragment Code: one String pad for both passes (same text as shaders/blur_mask.frag).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -140,12 +140,12 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="dAA5T07uWxH5hp0AZpB7xm" Comment="Fragment Code" Bounds="122,760,201,113" ShowValueBox="true" isIOBox="true" Value="#version 440&#xD;&#xA;// Gaussian blur controlled by a grayscale mask (ShaderEffect, #487).&#xD;&#xA;// Black in `mask` = sharp, white = `radius` pixels (in the pixels of the layer of Input).&#xD;&#xA;//&#xD;&#xA;// Separable on purpose: one shader for both passes, `direction` (1,0) = horizontal, (0,1) = vertical. Chain two&#xD;&#xA;// ShaderEffects (pass 1: Input = the image element, pass 2: Input = pass 1, same uniforms, same mask). A Gaussian is&#xD;&#xA;// separable, so the cost is 2 x (2*TAPS+1) texture fetches per pixel instead of (2*TAPS+1)^2 for a single 2D pass.&#xD;&#xA;// With a mask the result is approximate (the radius is read at the destination pixel in both passes, &quot;gather&quot;&#xD;&#xA;// variant), which is invisible for smooth masks.&#xD;&#xA;//&#xD;&#xA;// Fixed number of taps: the step between taps scales with the local radius (step = r / TAPS), so the cost does not&#xD;&#xA;// grow with the radius; the kernel always covers +-3 sigma (sigma = r / 3), the weights are therefore constant and&#xD;&#xA;// normalized. Large radii get a coarser sampling (bilinear filtering of the layer smooths it).&#xD;&#xA;// Radius 0 (black mask or radius 0) returns the original pixel. Premultiplied in and out, times qt_Opacity.&#xD;&#xA;//&#xD;&#xA;// `size` = pixel size of the layer of Input (textureSize() is not available in ESSL 100 / GLSL 120, which qsb also bakes).&#xD;&#xA;// Uniform block (std140): qt_Matrix 0, qt_Opacity 64, radius 68, size 72 (vec2), direction 80 (vec2).&#xD;&#xA;// Bake: qsb --glsl &quot;100 es,120,150&quot; --hlsl 50 --msl 12 -o blur_mask.frag.qsb blur_mask.frag&#xD;&#xA;layout(location = 0) in vec2 qt_TexCoord0;&#xD;&#xA;layout(location = 0) out vec4 fragColor;&#xD;&#xA;layout(std140, binding = 0) uniform buf {&#xD;&#xA;    mat4 qt_Matrix;&#xD;&#xA;    float qt_Opacity;&#xD;&#xA;    float radius;     // maximum radius in pixels (mask = 1)&#xD;&#xA;    vec2 size;        // pixel size of the source layer&#xD;&#xA;    vec2 direction;   // (1, 0) horizontal pass, (0, 1) vertical pass&#xD;&#xA;};&#xD;&#xA;layout(binding = 1) uniform sampler2D source;&#xD;&#xA;layout(binding = 2) uniform sampler2D mask;&#xD;&#xA;&#xD;&#xA;const int TAPS = 12; // per side&#xD;&#xA;&#xD;&#xA;void main()&#xD;&#xA;{&#xD;&#xA;    vec2 uv = qt_TexCoord0;&#xD;&#xA;    vec4 center = texture(source, uv);&#xD;&#xA;    float r = radius * texture(mask, uv).r;&#xD;&#xA;    if (r &lt; 0.5)&#xD;&#xA;    {&#xD;&#xA;        fragColor = center * qt_Opacity;&#xD;&#xA;        return;&#xD;&#xA;    }&#xD;&#xA;    vec2 stepUv = direction * (r / float(TAPS)) / size;&#xD;&#xA;    vec4 sum = center;&#xD;&#xA;    float wsum = 1.0;&#xD;&#xA;    for (int i = 1; i &lt;= TAPS; i++)&#xD;&#xA;    {&#xD;&#xA;        float x = float(i) * (3.0 / float(TAPS)); // distance in sigmas&#xD;&#xA;        float w = exp(-0.5 * x * x);&#xD;&#xA;        vec2 o = stepUv * float(i);&#xD;&#xA;        sum += w * (texture(source, clamp(uv + o, 0.0, 1.0)) + texture(source, clamp(uv - o, 0.0, 1.0)));&#xD;&#xA;        wsum += 2.0 * w;&#xD;&#xA;    }&#xD;&#xA;    fragColor = sum / wsum * qt_Opacity;&#xD;&#xA;}&#xD;&#xA;">
+          <Pad Id="dAA5T07uWxH5hp0AZpB7xm" Comment="Fragment Code" Bounds="122,530,235,116" ShowValueBox="true" isIOBox="true" Value="#version 440&#xD;&#xA;// Gaussian blur controlled by a grayscale mask (ShaderEffect, #487).&#xD;&#xA;// Black in `mask` = sharp, white = `radius` pixels (in the pixels of the layer of Input).&#xD;&#xA;//&#xD;&#xA;// Separable on purpose: one shader for both passes, `direction` (1,0) = horizontal, (0,1) = vertical. Chain two&#xD;&#xA;// ShaderEffects (pass 1: Input = the image element, pass 2: Input = pass 1, same uniforms, same mask). A Gaussian is&#xD;&#xA;// separable, so the cost is 2 x (2*TAPS+1) texture fetches per pixel instead of (2*TAPS+1)^2 for a single 2D pass.&#xD;&#xA;// With a mask the result is approximate (the radius is read at the destination pixel in both passes, &quot;gather&quot;&#xD;&#xA;// variant), which is invisible for smooth masks.&#xD;&#xA;//&#xD;&#xA;// Fixed number of taps: the step between taps scales with the local radius (step = r / TAPS), so the cost does not&#xD;&#xA;// grow with the radius; the kernel always covers +-3 sigma (sigma = r / 3), the weights are therefore constant and&#xD;&#xA;// normalized. Large radii get a coarser sampling (bilinear filtering of the layer smooths it).&#xD;&#xA;// Radius 0 (black mask or radius 0) returns the original pixel. Premultiplied in and out, times qt_Opacity.&#xD;&#xA;//&#xD;&#xA;// `size` = pixel size of the layer of Input (textureSize() is not available in ESSL 100 / GLSL 120, which qsb also bakes).&#xD;&#xA;// Uniform block (std140): qt_Matrix 0, qt_Opacity 64, radius 68, size 72 (vec2), direction 80 (vec2).&#xD;&#xA;// Bake: qsb --glsl &quot;100 es,120,150&quot; --hlsl 50 --msl 12 -o blur_mask.frag.qsb blur_mask.frag&#xD;&#xA;layout(location = 0) in vec2 qt_TexCoord0;&#xD;&#xA;layout(location = 0) out vec4 fragColor;&#xD;&#xA;layout(std140, binding = 0) uniform buf {&#xD;&#xA;    mat4 qt_Matrix;&#xD;&#xA;    float qt_Opacity;&#xD;&#xA;    float radius;     // maximum radius in pixels (mask = 1)&#xD;&#xA;    vec2 size;        // pixel size of the source layer&#xD;&#xA;    vec2 direction;   // (1, 0) horizontal pass, (0, 1) vertical pass&#xD;&#xA;};&#xD;&#xA;layout(binding = 1) uniform sampler2D source;&#xD;&#xA;layout(binding = 2) uniform sampler2D mask;&#xD;&#xA;&#xD;&#xA;const int TAPS = 12; // per side&#xD;&#xA;&#xD;&#xA;void main()&#xD;&#xA;{&#xD;&#xA;    vec2 uv = qt_TexCoord0;&#xD;&#xA;    vec4 center = texture(source, uv);&#xD;&#xA;    float r = radius * texture(mask, uv).r;&#xD;&#xA;    if (r &lt; 0.5)&#xD;&#xA;    {&#xD;&#xA;        fragColor = center * qt_Opacity;&#xD;&#xA;        return;&#xD;&#xA;    }&#xD;&#xA;    vec2 stepUv = direction * (r / float(TAPS)) / size;&#xD;&#xA;    vec4 sum = center;&#xD;&#xA;    float wsum = 1.0;&#xD;&#xA;    for (int i = 1; i &lt;= TAPS; i++)&#xD;&#xA;    {&#xD;&#xA;        float x = float(i) * (3.0 / float(TAPS)); // distance in sigmas&#xD;&#xA;        float w = exp(-0.5 * x * x);&#xD;&#xA;        vec2 o = stepUv * float(i);&#xD;&#xA;        sum += w * (texture(source, clamp(uv + o, 0.0, 1.0)) + texture(source, clamp(uv - o, 0.0, 1.0)));&#xD;&#xA;        wsum += 2.0 * w;&#xD;&#xA;    }&#xD;&#xA;    fragColor = sum / wsum * qt_Opacity;&#xD;&#xA;}&#xD;&#xA;">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="160,970,52,19" Id="tU8CEvFQfIU2sAu7O16pkS">
+          <Node Bounds="160,740,52,19" Id="tU8CEvFQfIU2sAu7O16pkS">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -159,7 +159,7 @@
             <Pin Id="e31ILW2macOpqEmgAaih2u" Name="Value" Kind="InputPin" DefaultValue="1, 0" />
             <Pin Id="eNJbW0PMaCZMhgVkK07EYs" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="586,935,39,19" Id="si8aeg9G1s6TfDYcJlFILJ">
+          <Node Bounds="586,705,39,19" Id="si8aeg9G1s6TfDYcJlFILJ">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -173,7 +173,7 @@
             <Pin Id="I0hohBdDRvCaVrSyS2X5vp" Name="Value" Kind="InputPin" />
             <Pin Id="f6fnTgqMKJg13ItnonylXX" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="666,935,52,19" Id="6AGzQ00roBBS9KBYEyI0Ej">
+          <Node Bounds="666,705,52,19" Id="6AGzQ00roBBS9KBYEyI0Ej">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -187,7 +187,7 @@
             <Pin Id="oTD6zgfnJDXRHmHNDCXwMo" Name="Value" Kind="InputPin" />
             <Pin Id="mvWLE9g79MkMH0kexqRUzM" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="773,935,44,19" Id="mwru8m0dwId0ho53ZI3eql">
+          <Node Bounds="773,705,44,19" Id="mwru8m0dwId0ho53ZI3eql">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -200,8 +200,9 @@
             <Pin Id="MJkYyzgGGbyVBDnXNrXqIA" Name="Name" Kind="InputPin" DefaultValue="mask" />
             <Pin Id="eE7TdLLNEQ8YM1smQStZE2" Name="Image" Kind="InputPin" />
             <Pin Id="2ngdV5njbubzVYHTILYa5o" Name="Result" Kind="OutputPin" />
+            <Pin Id="HGHLCrNbohRLMuoZvwUcKd" Name="Sampler" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="160,1190,52,19" Id="PvQxveNTcAoEuwivuzroap">
+          <Node Bounds="160,960,52,19" Id="PvQxveNTcAoEuwivuzroap">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -215,12 +216,12 @@
             <Pin Id="wK1PeioRpSBcwgEKqIbSop" Name="Value" Kind="InputPin" DefaultValue="0, 1" />
             <Pin Id="rmkIxDKnPJC3YiZqpk19f0" Name="Result" Kind="OutputPin" />
           </Node>
-          <Pad Id="1wsuN7ON4ZZkRagju5HHN9" Comment="" Bounds="622,900,35,15" ShowValueBox="true" isIOBox="true" Value="24">
+          <Pad Id="1wsuN7ON4ZZkRagju5HHN9" Comment="" Bounds="622,670,35,15" ShowValueBox="true" isIOBox="true" Value="24">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="160,1050,65,19" Id="aoiJmyfJv2O4svkiGgHj5n">
+          <Node Bounds="160,820,65,19" Id="aoiJmyfJv2O4svkiGgHj5n">
             <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.Collections.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="RecordType" Name="Spread" NeedsToBeDirectParent="true" />
@@ -232,7 +233,7 @@
             <Pin Id="lqCHDnJo5QW8U8kIRBls1E" Name="Input 4" Kind="StateInputPin" />
             <Pin Id="IScmmDb0BIfBUhoDQxzRvf" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="160,1280,65,19" Id="q5tFuy5Z76ZwButjcZcyga">
+          <Node Bounds="160,1050,65,19" Id="q5tFuy5Z76ZwButjcZcyga">
             <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.Collections.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="RecordType" Name="Spread" NeedsToBeDirectParent="true" />
@@ -244,7 +245,7 @@
             <Pin Id="yuWbhrFHkfnEzaEQ1Xadx8" Name="Input 4" Kind="StateInputPin" />
             <Pin Id="cp4G5JSL4LswJrREmiKA2r" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,1090,125,19" Id="cvVhGE0eycXcWjvGqq06Vq">
+          <Node Bounds="100,860,125,19" Id="cvVhGE0eycXcWjvGqq06Vq">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -254,6 +255,7 @@
             </p:NodeReference>
             <Pin Id="eubIJ6I7FseO4SeRDOKKhA" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="KesmiCjrdNMmJgcyMOeJ9d" Name="Input" Kind="InputPin" />
+            <Pin Id="ExFd0sx0KbkMKkHttmJXHd" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="RC0DiSx7XluWeO5B4auy9D" Name="Fragment Code" Kind="InputPin" />
             <Pin Id="oM7b0x2EXYsWPkZezha659" Name="Fragment Shader" Kind="InputPin" />
             <Pin Id="A0f5YyUgkvdCpq0JNJ8F36" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
@@ -275,7 +277,7 @@
             <Pin Id="Ku5PotIpueS2mwSGvDmDuo" Name="Error" Kind="OutputPin" />
             <Pin Id="Du2dPqpvavQbtuFVYmg9zB" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="100,1340,125,19" Id="tXJgee3WOIrz0UAFPMxaD5">
+          <Node Bounds="100,1110,125,19" Id="tXJgee3WOIrz0UAFPMxaD5">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -285,6 +287,7 @@
             </p:NodeReference>
             <Pin Id="bUrSuC9i7GZ6cPQJaueXLl" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="E1GBVlNgogRWs2YM7UlB6H" Name="Input" Kind="InputPin" />
+            <Pin Id="Eg99XlIGa5iPTjrlkuo9o4" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="ZnRIuXoVORwMcucWSAdQjS" Name="Fragment Code" Kind="InputPin" />
             <Pin Id="EHb8d6sZkRPLzLAVm2Wo4W" Name="Fragment Shader" Kind="InputPin" />
             <Pin Id="hzsVSDBLKSshmqN9cDJVEO" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
@@ -308,7 +311,7 @@
             <Pin Id="N0spNcytyJ9bu6xlvLPZDj" Name="Error" Kind="OutputPin" />
             <Pin Id="fpo7MY2ChJmIdzdBHJ7rOW" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="e7tQMuVWpWsJbEGF7EbFKH" Bounds="253,1283,533,60" ShowValueBox="true" isIOBox="true" Value="Pass 1 blurs horizontally, pass 2 vertically. Pass 2 takes the Output of pass 1 as its Input; &#xD;&#xA;&#xD;&#xA;the Fragment Code, radius, size and mask are the same, only direction differs.">
+          <Pad Id="e7tQMuVWpWsJbEGF7EbFKH" Bounds="253,1053,533,60" ShowValueBox="true" isIOBox="true" Value="Pass 1 blurs horizontally, pass 2 vertically. Pass 2 takes the Output of pass 1 as its Input; &#xD;&#xA;&#xD;&#xA;the Fragment Code, radius, size and mask are the same, only direction differs.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -317,12 +320,12 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="kB0Eh9xdGem2YDlDyRVC71" Comment="Title" Bounds="182,1410,200,19" ShowValueBox="true" isIOBox="true" Value="HowTo Blur an Image with a Control Mask">
+          <Pad Id="kB0Eh9xdGem2YDlDyRVC71" Comment="Title" Bounds="182,1180,200,19" ShowValueBox="true" isIOBox="true" Value="HowTo Blur an Image with a Control Mask">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="100,1440,145,19" Id="hFROIz3ub5PEZWGfp8GLFf">
+          <Node Bounds="100,1210,85,19" Id="hFROIz3ub5PEZWGfp8GLFf">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -345,50 +348,51 @@
             <Pin Id="waIafqU6FqWAHhJqiEBkkZ" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="TrvF1JcastjuB6Zuw1rkqK" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="NrpKXO4rDVsJW6DbpbNZYW" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="CCeM36Z6eStNyPsBba0tts" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="GmqevCTYCZ6NRk45jgqnSG" Comment="" Bounds="735,660,41,28" ShowValueBox="true" isIOBox="true" Value="100, 100">
+          <Pad Id="GmqevCTYCZ6NRk45jgqnSG" Comment="" Bounds="735,430,41,28" ShowValueBox="true" isIOBox="true" Value="100, 100">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="LmYVNs3OuV2McHE1UB0DlM" Comment="" Bounds="162,904,49,15" ShowValueBox="true" isIOBox="true" Value="direction">
+          <Pad Id="LmYVNs3OuV2McHE1UB0DlM" Comment="" Bounds="162,674,49,15" ShowValueBox="true" isIOBox="true" Value="direction">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="QHCIWzI98r9PqGwlWMZuio" Comment="" Bounds="209,935,35,28" ShowValueBox="true" isIOBox="true" Value="1, 0">
+          <Pad Id="QHCIWzI98r9PqGwlWMZuio" Comment="" Bounds="209,705,35,28" ShowValueBox="true" isIOBox="true" Value="1, 0">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="T032oiM1WdZOwiHcLZ4TwV" Comment="" Bounds="588,869,37,15" ShowValueBox="true" isIOBox="true" Value="radius">
+          <Pad Id="T032oiM1WdZOwiHcLZ4TwV" Comment="" Bounds="588,639,37,15" ShowValueBox="true" isIOBox="true" Value="radius">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="DhaPPNU2JxRME49AussvcX" Comment="" Bounds="668,869,35,15" ShowValueBox="true" isIOBox="true" Value="size">
+          <Pad Id="DhaPPNU2JxRME49AussvcX" Comment="" Bounds="668,639,35,15" ShowValueBox="true" isIOBox="true" Value="size">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="Qlw1lhFVXCjLG1zDdyVogQ" Comment="" Bounds="775,869,35,15" ShowValueBox="true" isIOBox="true" Value="mask">
+          <Pad Id="Qlw1lhFVXCjLG1zDdyVogQ" Comment="" Bounds="775,639,35,15" ShowValueBox="true" isIOBox="true" Value="mask">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="TVfzeveNC0WORAAjO7cf1r" Comment="" Bounds="162,1124,49,15" ShowValueBox="true" isIOBox="true" Value="direction">
+          <Pad Id="TVfzeveNC0WORAAjO7cf1r" Comment="" Bounds="162,894,49,15" ShowValueBox="true" isIOBox="true" Value="direction">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="P6HkMKtYN6yPqJwgX2z3hO" Comment="" Bounds="209,1155,35,28" ShowValueBox="true" isIOBox="true" Value="0, 1">
+          <Pad Id="P6HkMKtYN6yPqJwgX2z3hO" Comment="" Bounds="209,925,35,28" ShowValueBox="true" isIOBox="true" Value="0, 1">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <ControlPoint Id="VmYePqDTYHfP6F7RK01Q14" Bounds="81,805" />
-          <ControlPoint Id="U3ESWz6TqzeLNiQTL2NPbU" Bounds="81,1305" />
-          <Pad Id="NfsvwIMnufHLWuWcgu23vt" Bounds="838,943,154,19" ShowValueBox="true" isIOBox="true" Value="shared set of parameters">
+          <ControlPoint Id="VmYePqDTYHfP6F7RK01Q14" Bounds="81,575" />
+          <ControlPoint Id="U3ESWz6TqzeLNiQTL2NPbU" Bounds="81,1075" />
+          <Pad Id="NfsvwIMnufHLWuWcgu23vt" Bounds="838,713,154,19" ShowValueBox="true" isIOBox="true" Value="shared set of parameters">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
