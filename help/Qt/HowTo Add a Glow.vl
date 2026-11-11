@@ -75,11 +75,11 @@
             <Pin Id="ywhrCziXjxYtudgbEIQGBH" Name="Text" Kind="InputPin" DefaultValue="VL.Qt" />
             <Pin Id="RyCHGD8jXeL1chBdqI5GuW" Name="Font Family" Kind="InputPin" />
             <Pin Id="78NDmKKipSEJ9MuY2CFwku" Name="Font Size" Kind="InputPin" DefaultValue="1.1" />
-            <Pin Id="Vf87YUs47LHBCU3KEAuANF" Name="Weight" Kind="InputPin" DefaultValue="Bold" IsHidden="true" />
+            <Pin Id="Vf87YUs47LHBCU3KEAuANF" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
             <Pin Id="ifTLp0q2VoMF2NGjW2zRKQ" Name="Italic" Kind="InputPin" IsHidden="true" />
             <Pin Id="nyumwZ8P9xiXC9btmAUNJr" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.95, 1, 1" />
-            <Pin Id="NbzIcEdvnYsVpqSOgjPQzW" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" IsHidden="true" />
-            <Pin Id="qdaBXzE8nY7OSdFTPOQ7K3" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" IsHidden="true" />
+            <Pin Id="NbzIcEdvnYsVpqSOgjPQzW" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
+            <Pin Id="qdaBXzE8nY7OSdFTPOQ7K3" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="om06sFTWkMxoTECGIjoQt8" Name="Wrap" Kind="InputPin" IsHidden="true" />
             <Pin Id="BQp9ZcUgL6OZ17xmJYcQks" Name="Elide" Kind="InputPin" IsHidden="true" />
             <Pin Id="W2jzIuuMnwrlmAOLdnp1b0" Name="Line Height" Kind="InputPin" IsHidden="true" />
@@ -150,11 +150,11 @@
             <Pin Id="quf3RVkwVjWc1SRyxDYIKk" Name="Text" Kind="InputPin" DefaultValue="VL.Qt" />
             <Pin Id="AeoTO1x8dubDRzygDV6dmj" Name="Font Family" Kind="InputPin" />
             <Pin Id="V3uk5TGZNW2BnZF866REwI" Name="Font Size" Kind="InputPin" DefaultValue="1.1" />
-            <Pin Id="CCzuRrb3Sm5kt8JDrXWW3a" Name="Weight" Kind="InputPin" DefaultValue="Bold" IsHidden="true" />
+            <Pin Id="CCzuRrb3Sm5kt8JDrXWW3a" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
             <Pin Id="4AIG940xUl53uKmIfEPg6B" Name="Italic" Kind="InputPin" IsHidden="true" />
             <Pin Id="HpEFvHnnsWxNBjojRe2Ooj" Name="Color" Kind="InputPin" DefaultValue="1, 0.66, 0.3, 1" />
-            <Pin Id="YR9YXpTW32KZnd05TNR40O" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" IsHidden="true" />
-            <Pin Id="4oiPKvJhvpVujngMh7s7yK" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" IsHidden="true" />
+            <Pin Id="YR9YXpTW32KZnd05TNR40O" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
+            <Pin Id="4oiPKvJhvpVujngMh7s7yK" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="VFIE5HPWcsrR0F6ZpmlfkE" Name="Wrap" Kind="InputPin" IsHidden="true" />
             <Pin Id="pot9BMXKih9JCY9D43VIkl" Name="Elide" Kind="InputPin" IsHidden="true" />
             <Pin Id="idlpGPeFzAjXml7hTZ766L" Name="Line Height" Kind="InputPin" IsHidden="true" />

@@ -47,16 +47,18 @@ dotnet run --project src/VL.Qt.SmokeTest -c Release -- --drift # protocol.h and 
 
 `tools/vvvvc.ps1 [-File <doc.vl>]` compiles/exports a patch with vvvv's command-line compiler (default `help/HelloWorld.vl`, output in `build/vvvvc/`). Exit code 0 means no build errors. Run `dotnet build src/VL.Qt -c Release` first. The script uses the newest vvvv as described under Setup; on ARM64 it adds a shim `vvvvc.arm64.dll` to the vvvv installation (the 8.0 ARM64 previews ship an x64 `vvvvc.dll`).
 
-The help patches in `help/Qt/` (one `HowTo …` per element) are the test base. When you change a node's pins or behavior, adapt the help patch and compile-check it:
+The help patches in `help/Qt/` (one `HowTo …` per element) are the test base. When you change a node's pins or behavior, adapt the help patch in vvvv, then check and compile-check it:
 
 ```powershell
-python tools/vl-pad-layout.py "help/Qt/HowTo Draw Text.vl" [--animate=Text]
+python tools/vl-patch-check.py "help/Qt/HowTo Draw Text.vl"   # no argument: all help/Qt/*.vl and help/*.vl
 tools/vvvvc.ps1 -File "help/Qt/HowTo Draw Text.vl"
 ```
 
+`tools/vl-patch-check.py` is read-only: it compares the VL.Qt nodes in a patch with their pins in the C# sources (pin catalog `tools/vl_pin_catalog.py`, create pins included) and never moves or deletes anything. Errors (exit code 1): a hidden pin that holds a non-default value or a link (`hidden-non-default`; `--fix` makes such pins visible, its only change), an IOBox on `Interaction` (`forbidden-iobox`), a link to a pin the node no longer has (`missing-pin`). Hint (exit code 0): an input IOBox that holds the pin's default (`default-iobox`). Intended exceptions go into the baseline `help/.padlint.json` (patch, element Id, rule, reason) with `--accept <patch>`; add a short reason to each new entry. `tools/test-vl-patch-check.py` is its regression test.
+
 Rules for help patches:
 
-- Edit `.vl` files (vvvv's XML format) only through vvvv or `tools/vl-pad-layout.py`. Run the tool with `--check` first on patches that were tidied by hand; the options are documented at the top of the script. `tools/test-vl-pad-layout.py` is its regression test.
+- Edit `.vl` files (vvvv's XML format) only through vvvv; the only scripted change is `tools/vl-patch-check.py --fix` (makes hidden pins with a value visible). Layout is manual.
 - Put an IOBox on a pin only if its value differs from the default and says something in the help patch. An IOBox at a pin is the same to the node as an attached value or channel. Example: an IOBox at `Interaction` makes the element opaque to input, so never put one there.
 - Animate (LFO) only where it serves the element (motion demos); otherwise use fixed values.
 - Layout: compact regions, content stacked top to bottom in data-flow order, IOBoxes as a staircase above (inputs) and below (outputs) their node. Choose defaults so the effect is visible.

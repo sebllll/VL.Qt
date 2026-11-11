@@ -1,0 +1,185 @@
+"""Regression test for tools/vl-patch-check.py and tools/vl_pin_catalog.py.
+
+Usage: python tools/test-vl-patch-check.py   (exit code 0 = ok)
+
+Writes small fixture patches (UTF-8 with BOM, CRLF, like vvvv) to a temporary folder and runs the checker on them:
+  - an IOBox on a create pin (V Sync of Renderer) and a hidden Bounds written by Save Bounds: no finding;
+  - a pass-through pad (Measured Size -> Size): no finding, untouched;
+  - a slot pad (SlotId) in a class linked to a pin: no finding, untouched;
+  - an IOBox on Interaction: error;
+  - a hidden pin with a non-default value: error, --fix makes it visible without other byte changes;
+  - a linked pin the node no longer has (renamed): error;
+  - default-iobox hint, --accept into the baseline (reasons kept) and a stale entry.
+"""
+import json, os, subprocess, sys, tempfile
+
+TOOLS = os.path.dirname(os.path.abspath(__file__))
+CHECK = os.path.join(TOOLS, 'vl-patch-check.py')
+sys.path.insert(0, TOOLS)
+import vl_pin_catalog as pc  # noqa: E402
+
+FAILED = []
+
+
+def expect(cond, msg):
+    if not cond:
+        FAILED.append(msg)
+    print(('ok   ' if cond else 'FAIL ') + msg)
+
+
+def node(nid, name, category, pins):
+    pin_xml = ''.join(f'\n        <Pin Id="{pid}" Name="{pname}" Kind="{kind}"{extra} />' for pid, pname, kind, extra in pins)
+    return f'''
+      <Node Bounds="100,100,65,19" Id="{nid}">
+        <p:NodeReference LastCategoryFullName="{category}" LastDependency="VL.Qt.dll">
+          <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+          <Choice Kind="ProcessAppFlag" Name="{name}" />
+        </p:NodeReference>
+        <Pin Id="{nid}ctx" Name="Node Context" Kind="InputPin" IsHidden="true" />{pin_xml}
+      </Node>'''
+
+
+def pad(pid, value=None, comment='Pad', extra=''):
+    v = f' Value="{value}"' if value is not None else ''
+    return f'\n      <Pad Id="{pid}" Comment="{comment}" Bounds="10,10,35,15" ShowValueBox="true" isIOBox="true"{v}{extra} />'
+
+
+def document(canvas, links, inner=''):
+    link_xml = ''.join(f'\n    <Link Id="L{i}" Ids="{a},{b}" />' for i, (a, b) in enumerate(links))
+    text = f'''<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="Doc" LanguageVersion="2025.7.0" Version="0.128">
+  <Patch Id="Root">
+    <Canvas Id="Canvas" DefaultCategory="Main" CanvasType="FullCategory">{canvas}{inner}
+    </Canvas>{link_xml}
+  </Patch>
+</Document>
+'''
+    return b'\xef\xbb\xbf' + text.replace('\n', '\r\n').encode('utf-8')
+
+
+def run(*args):
+    p = subprocess.run([sys.executable, CHECK, *args], capture_output=True, text=True, encoding='utf-8')
+    return p.returncode, p.stdout + p.stderr
+
+
+def lines_with(out, *words):
+    return [line for line in out.splitlines() if all(w in line for w in words)]
+
+
+def test_catalog():
+    catalog = pc.load_catalog()
+    renderer = catalog['Renderer']
+    vsync = pc.find_pin(renderer, 'V Sync')
+    expect(vsync is not None and vsync['create'] and vsync['optional'] and vsync['default'] == 'True',
+           'catalog: V Sync is an optional create pin of Renderer, default True')
+    expect(pc.find_pin(renderer, 'Bounds')['written_by_node'], 'catalog: Renderer Bounds is written by the node')
+    expect(pc.find_pin(renderer, 'Node Context') is None, 'catalog: the hidden NodeContext is skipped')
+    rect = catalog['Rectangle']
+    expect(pc.find_pin(rect, 'Interaction')['forbid_iobox'], 'catalog: Interaction is a forbidden-IOBox pin')
+    expect(pc.find_pin(rect, 'Anchor')['default'] == 'TopLeft', 'catalog: Anchor default from [DefaultValue(typeof, nameof)]')
+    expect(pc.find_pin(rect, 'Output')['direction'] == 'out', 'catalog: return pin Output')
+    expect(pc.find_pin(catalog['Column'], 'Input 3')['group'], 'catalog: Input 3 belongs to the pin group Input')
+    expect('Column (Spectral)' in catalog, 'catalog: node names with parentheses')
+    expect(pc.title_case('vSync') == 'V Sync' and pc.title_case('strokeColor') == 'Stroke Color', 'catalog: title case')
+    expect(pc.is_default('0.5f', dict(default='0.5', type='float')) and pc.is_default(None, dict(default='0, 0', type='Vector2')),
+           'catalog: value comparison')
+
+
+def test_clean(tmp):
+    canvas = (node('R', 'Renderer', 'Qt', [('RBounds', 'Bounds', 'InputPin', ' DefaultValue="10, 20, 300, 200" IsHidden="true"'),
+                                           ('RVSync', 'V Sync', 'InputPin', ''), ('RIn', 'Input', 'InputPin', '')])
+              + pad('PVSync', 'False', 'V Sync')
+              + node('T', 'Text', 'Qt.Elements', [('TMeasured', 'Measured Size', 'OutputPin', ''), ('TOut', 'Output', 'OutputPin', '')])
+              + node('Q', 'Rectangle', 'Qt.Elements', [('QSize', 'Size', 'InputPin', ''), ('QDebug', 'Debug', 'InputPin', ''),
+                                                       ('QOut', 'Output', 'OutputPin', '')])
+              + pad('PMeasured', None, 'Measured Size'))
+    inner = '\n      <Pad Id="PSlot" SlotId="Slot1" Bounds="20,20" />'
+    links = [('PVSync', 'RVSync'), ('TMeasured', 'PMeasured'), ('PMeasured', 'QSize'), ('PSlot', 'QDebug'), ('QOut', 'RIn')]
+    path = os.path.join(tmp, 'clean.vl')
+    raw = document(canvas, links, inner)
+    open(path, 'wb').write(raw)
+    code, out = run(path, f'--baseline={os.path.join(tmp, "base.json")}')
+    expect(code == 0 and '0 error(s), 0 hint(s)' in out, 'clean: VSync create-pin IOBox, Save Bounds, pass-through and slot pad give no finding')
+    code, out = run(path, '--fix', f'--baseline={os.path.join(tmp, "base.json")}')
+    expect(open(path, 'rb').read() == raw, 'clean: --fix leaves pass-through pad and slot pad untouched')
+
+
+def error_patch():
+    canvas = (node('Q', 'Rectangle', 'Qt.Elements', [('QInter', 'Interaction', 'InputPin', ''),
+                                                     ('QRadius', 'Radius', 'InputPin', ' DefaultValue="0.1" IsHidden="true"'),
+                                                     ('QStroke', 'Stroke Width', 'InputPin', ' DefaultValue="0" IsHidden="true"'),
+                                                     ('QFill', 'Fill', 'InputPin', ''), ('QOut', 'Output', 'OutputPin', '')])
+              + pad('PInter', None, 'Interaction') + pad('PFill', '1, 0, 0, 1', 'Fill'))
+    return document(canvas, [('PInter', 'QInter'), ('PFill', 'QFill')])
+
+
+def test_errors(tmp):
+    path = os.path.join(tmp, 'errors.vl')
+    raw = error_patch()
+    open(path, 'wb').write(raw)
+    base = f'--baseline={os.path.join(tmp, "base.json")}'
+    code, out = run(path, base)
+    expect(code == 1, 'errors: exit code 1')
+    expect(len(lines_with(out, 'error forbidden-iobox', 'Rectangle.Interaction', 'PInter')) == 1, 'errors: IOBox on Interaction')
+    expect(len(lines_with(out, 'error hidden-non-default', 'Rectangle.Radius', 'QRadius')) == 1, 'errors: hidden Radius 0.1')
+    expect(not lines_with(out, 'QStroke'), 'errors: hidden pin with its default value is fine')
+    expect(len(lines_with(out, 'error missing-pin', 'Rectangle.Fill', 'QFill')) == 1, 'errors: renamed pin Fill')
+    expect(open(path, 'rb').read() == raw, 'errors: without --fix no file changes')
+    code, out = run(path, '--fix', base)
+    after = open(path, 'rb').read()
+    expected = raw.replace(b'Name="Radius" Kind="InputPin" DefaultValue="0.1" IsHidden="true"',
+                           b'Name="Radius" Kind="InputPin" DefaultValue="0.1"')
+    expect(after == expected and after != raw, '--fix: makes Radius visible, no other byte changes')
+    expect(len(lines_with(out, 'fixed hidden-non-default', 'QRadius')) == 1 and code == 1,
+           '--fix: reports fixed, the other errors stay')
+    code, out = run(path, base)
+    expect(not lines_with(out, 'hidden-non-default'), '--fix: second run finds no hidden pin')
+
+
+def test_baseline(tmp):
+    def patch(with_pad):
+        canvas = node('Q', 'Rectangle', 'Qt.Elements', [('QAnchor', 'Anchor', 'InputPin', ''), ('QSize', 'Size', 'InputPin', '')])
+        canvas += pad('PSize', '2, 1', 'Size')
+        links = [('PSize', 'QSize')]
+        if with_pad:
+            canvas += pad('PAnchor', 'TopLeft', 'Anchor')
+            links.append(('PAnchor', 'QAnchor'))
+        return document(canvas, links)
+    path = os.path.join(tmp, 'baseline.vl')
+    basefile = os.path.join(tmp, 'padlint.json')
+    base = f'--baseline={basefile}'
+    open(path, 'wb').write(patch(True))
+    code, out = run(path, base)
+    expect(code == 0 and len(lines_with(out, 'hint default-iobox', 'Rectangle.Anchor', 'PAnchor')) == 1,
+           'baseline: default-iobox is a hint, exit code 0')
+    expect(not lines_with(out, 'PSize'), 'baseline: an IOBox with a non-default value is fine')
+    code, out = run('--accept', path, base, '--reason=shows the pin')
+    entries = json.load(open(basefile, encoding='utf-8'))['entries']
+    expect(code == 0 and entries == [dict(patch='baseline.vl', id='PAnchor', rule='default-iobox', reason='shows the pin')],
+           '--accept: adds the finding with patch, Id, rule, reason')
+    code, out = run(path, base)
+    expect(code == 0 and not lines_with(out, 'PAnchor'), 'baseline: accepted finding is not reported')
+    data = json.load(open(basefile, encoding='utf-8'))
+    data['entries'][0]['reason'] = 'edited by hand'
+    json.dump(data, open(basefile, 'w', encoding='utf-8'))
+    run('--accept', path, base)
+    entries = json.load(open(basefile, encoding='utf-8'))['entries']
+    expect(entries[0]['reason'] == 'edited by hand', '--accept: keeps existing reasons')
+    open(path, 'wb').write(patch(False))
+    code, out = run(path, base)
+    expect(code == 1 and len(lines_with(out, 'error stale-baseline', 'PAnchor', 'no longer exists')) == 1,
+           'baseline: entry of a removed element is reported as stale')
+
+
+def main():
+    test_catalog()
+    with tempfile.TemporaryDirectory() as tmp:
+        test_clean(tmp)
+        test_errors(tmp)
+        test_baseline(tmp)
+    print(f'{len(FAILED)} failed' if FAILED else 'all passed')
+    return 1 if FAILED else 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

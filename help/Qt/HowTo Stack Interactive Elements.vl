@@ -54,7 +54,7 @@
             <Pin Id="CJpWCdzZvCC9KQx1CIGkTJ" Name="Transform" Kind="InputPin" />
             <Pin Id="Da3SILNkhvKPDL18sz85yZ" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="Amhv7VCpu6IJnlHdxq4XCj" Name="Color" Kind="InputPin" />
-            <Pin Id="rQ0KMZt4ep84P4E8pZlMWh" Name="Radius" Kind="InputPin" DefaultValue="0.1" IsHidden="true" />
+            <Pin Id="rQ0KMZt4ep84P4E8pZlMWh" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
             <Pin Id="YH189480SEMqDp4PqnpBCy" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="206BGCQv8nzI1ukaoo8tgx" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
             <Pin Id="p2MyXbwTLHy24G10XGFJa9" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -89,7 +89,7 @@
             <Pin Id="g5VBytAAH87QbiJunQIvDy" Name="Output" Kind="OutputPin" />
             <Pin Id="jWvAbR39QJUDHl81dirCIg" Name="Tap Count" Kind="InputPin" />
             <Pin Id="m4QoJ2v7eUmNa380ZilivI" Name="Long Pressed" Kind="InputPin" />
-            <Pin Id="55rA8HABkccTD3t8Su3BZL" Name="Buttons" Kind="InputPin" DefaultValue="None" IsHidden="true" />
+            <Pin Id="55rA8HABkccTD3t8Su3BZL" Name="Buttons" Kind="InputPin" DefaultValue="None" />
             <Pin Id="UjmXYvZkF1vDo7dQsTxwtn" Name="Devices" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="419,342,53,19" Id="OOG1JU4iO45zaXQz0n98uO">
@@ -203,7 +203,7 @@
             <Pin Id="MHRHbwWHH3bu33JWmjqYW2" Name="Transform" Kind="InputPin" />
             <Pin Id="CmnyZovmVMQOKZ6sbKDp3l" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="iQZ3214tkjgFfxkAz8TCt7" Name="Color" Kind="InputPin" />
-            <Pin Id="rtbE87WipfAQNdorvVyFYf" Name="Radius" Kind="InputPin" DefaultValue="0.1" IsHidden="true" />
+            <Pin Id="rtbE87WipfAQNdorvVyFYf" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
             <Pin Id="x3ANIq8z2x0GoZuvJSS3O1" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="MYvUk2rQ3oA6b9UByWpnkn" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
             <Pin Id="HLlu8DhyjA6M65zS7i6DJ7" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -238,7 +238,7 @@
             <Pin Id="kiSBRemTwvBHrrvgaXJQNs" Name="Output" Kind="OutputPin" />
             <Pin Id="QZ3Kst29i6QIL4w3TvunDG" Name="Tap Count" Kind="InputPin" />
             <Pin Id="f9R3hiIyNYRg7YmwN9assl" Name="Long Pressed" Kind="InputPin" />
-            <Pin Id="RPJPSVWvWcQy2cfgVofWuT" Name="Buttons" Kind="InputPin" DefaultValue="None" IsHidden="true" />
+            <Pin Id="RPJPSVWvWcQy2cfgVofWuT" Name="Buttons" Kind="InputPin" DefaultValue="None" />
             <Pin Id="VFtgHPcHl6fGjWXXGNmFUw" Name="Devices" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="984,252,53,19" Id="0qT1rOICjjFmDIa1SYT7Xh">

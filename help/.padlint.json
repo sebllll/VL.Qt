@@ -1,0 +1,65 @@
+{
+  "about": "Intended exceptions for tools/vl-patch-check.py: patch (relative to this folder), element Id, rule, reason. Update with: python tools/vl-patch-check.py --accept <patch.vl>",
+  "entries": [
+    {
+      "patch": "HelloWorld.vl",
+      "id": "Bd2DcQt7Lk4Mn9Pq3Rs6Tv",
+      "rule": "default-iobox",
+      "reason": "feature text: closing the window ends the exported app"
+    },
+    {
+      "patch": "HelloWorldLinux.vl",
+      "id": "Bd2DcQt7Lk4Mn9Pq3Rs6Tv",
+      "rule": "default-iobox",
+      "reason": "feature text: closing the window ends the exported app"
+    },
+    {
+      "patch": "Qt/HowTo Avoid Tearing.vl",
+      "id": "FEVfGBk88D9kd0jjyRmnx1",
+      "rule": "default-iobox",
+      "reason": "the topic of the patch: switch V Sync off to see tearing"
+    },
+    {
+      "patch": "Qt/HowTo Draw Text.vl",
+      "id": "CNHe3eXhBsvLYFGU4utHU4",
+      "rule": "default-iobox",
+      "reason": "feature text: Position and Anchor; shows the pin to switch"
+    },
+    {
+      "patch": "Qt/HowTo Draw a Rectangle.vl",
+      "id": "VryotI6UOkZLBgs6VymRyD",
+      "rule": "default-iobox",
+      "reason": "feature text: Anchor Center or TopLeft; shows the pin to switch"
+    },
+    {
+      "patch": "Qt/HowTo Take a Snapshot.vl",
+      "id": "IBj3qi333xdOYB26t4gRZW",
+      "rule": "default-iobox",
+      "reason": "feature text: pixel size = size in DIP * Scale"
+    },
+    {
+      "patch": "Qt/HowTo Track the Pointer.vl",
+      "id": "2UCV6uVWWIB23HhtVYQrGT",
+      "rule": "default-iobox",
+      "reason": "feature text compares Buttons None and Left"
+    },
+    {
+      "patch": "Qt/HowTo Use Motion Blurs.vl",
+      "id": "4R1NMqAXKaPNKPzDpaTN5M",
+      "rule": "default-iobox",
+      "reason": "feature text explains Angle (0 = horizontal)"
+    },
+    {
+      "patch": "Qt/HowTo Use a Button.vl",
+      "id": "L9mDiSRTSfEiVoMtWNnaRd",
+      "rule": "default-iobox",
+      "reason": "feature text lists Auto Size; shows the pin to switch"
+    },
+    {
+      "patch": "Qt/HowTo Use a Button.vl",
+      "id": "UKbSHty5svgQLic3xeHpJg",
+      "rule": "default-iobox",
+      "reason": "feature text lists Auto Repeat; shows the pin to switch"
+    }
+  ]
+}

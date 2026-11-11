@@ -254,7 +254,7 @@
             <Pin Id="WDA1zfR8JCudRsUoOtbZAZ" Name="Input 3" Kind="InputPin" />
             <Pin Id="fjQQfXQLIboNHVehhlWz4y" Name="Size" Kind="InputPin" />
             <Pin Id="N9w2cbI5hq7MoLZHt2UMfu" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="TuT1Y2TYpWZOs9I9Eghd6j" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TuT1Y2TYpWZOs9I9Eghd6j" Name="Transform" Kind="InputPin" />
             <Pin Id="D7aZqeg1sQYOUNDPAcgTpe" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="tsktxapNXuLUjPJ3mamlYo" Name="Spacing" Kind="InputPin" />
             <Pin Id="pto8zcUHk3X2sA9QdMewXh" Name="Padding" Kind="InputPin" />

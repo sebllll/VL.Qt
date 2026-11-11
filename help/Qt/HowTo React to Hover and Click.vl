@@ -303,7 +303,7 @@
             <Pin Id="IFGQfT8tbdcPaalgjztMah" Name="Output" Kind="OutputPin" />
             <Pin Id="VPLm25syH0ALVLvsEEzFhr" Name="Tap Count" Kind="InputPin" />
             <Pin Id="OFAWNq1i7VFNXOQbYsoO8x" Name="Long Pressed" Kind="InputPin" />
-            <Pin Id="EdL56EjU9eEOfwYBFxhb0x" Name="Buttons" Kind="InputPin" DefaultValue="None" IsHidden="true" />
+            <Pin Id="EdL56EjU9eEOfwYBFxhb0x" Name="Buttons" Kind="InputPin" DefaultValue="None" />
             <Pin Id="Q4oS0h4fmiFME1WQD76DFc" Name="Devices" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="1134,589,53,19" Id="TwUcXGLlUzdM3crcpnG40M">
