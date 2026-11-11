@@ -29,6 +29,8 @@ Why things are built the way they are. Each note states the goals, the decision 
 | [decisions/element-catalog-v1.md](decisions/element-catalog-v1.md) | Conventions shared by all elements: geometry pins, coordinate space, colours, image sources and pin design. |
 | [decisions/events.md](decisions/events.md) | How events and measured values travel from Qt back to the element nodes through sinks. |
 | [decisions/qtnative-deployment.md](decisions/qtnative-deployment.md) | How QtNative is built, licensed (LGPL), packaged and located at runtime. |
+| [decisions/qt-bridges.md](decisions/qt-bridges.md) | Qt Bridge for C# compared with VL.Qt: no switch, no redundant features (research in [research/01_qt-bridge-csharp.md](research/01_qt-bridge-csharp.md)). |
+| [decisions/user-qml.md](decisions/user-qml.md) | Loading a user `.qml` file as an element (`QmlElement`, issue #104); background in [topics/user-qml.md](topics/user-qml.md). |
 | [decisions/reconciler-identity.md](decisions/reconciler-identity.md) | How the reconciler decides every frame between updating a Qt object and creating a new one. |
 | [decisions/timing.md](decisions/timing.md) | One shared clock for vvvv and Qt animations through a custom animation driver on `IFrameClock`. |
 | [topics/element-immutability.md](topics/element-immutability.md) | Why elements are immutable descriptions and where Qt-side state deliberately lives outside them. |
