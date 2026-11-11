@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="X7FaocOHn4uAnj9RoGCcA7" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="X7FaocOHn4uAnj9RoGCcA7" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
   <NugetDependency Id="v1cYhfa0DO5bFrbZHcuWdM" Location="VL.CoreLib" />
   <NugetDependency Id="4cMrtW6ZZThFK2R1Qa00Nx" Location="VL.Video" />
   <DocumentDependency Id="MKkW2i4GVQy4NpjrpuWowQ" Location="../../VL.Qt.vl" />
@@ -96,12 +96,12 @@
             <Pin Id="U9J9W8E9UNdt1qTYcuUMJv" Name="Output" Kind="OutputPin" />
             <Pin Id="8crCotBD7ZZjzWBrKWyV9S" Name="Error" Kind="OutputPin" />
           </Node>
-          <Pad Id="cb5QvahEvmAEn2jkyKRART" Comment="Position" Bounds="196,410,35,28" ShowValueBox="true" isIOBox="true" Value="0.5, 0.5">
+          <Pad Id="cb5QvahEvmAEn2jkyKRART" Comment="Position" Bounds="197,200,35,28" ShowValueBox="true" isIOBox="true" Value="0.5, 0.5">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="100,648,165,19" Id="XktJXaXPQzgnX80AK7F4qF">
+          <Node Bounds="100,648,85,19" Id="XktJXaXPQzgnX80AK7F4qF">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -117,15 +117,15 @@
             <Pin Id="Kr8RBY6LC7HYycKYSUxU4C" Name="Fill Mode" Kind="InputPin" DefaultValue="Fit" />
             <Pin Id="cInfauPObE9EDM1FlVpbc5" Name="Output" Kind="OutputPin" />
             <Pin Id="H6txSLt4Fe7Lc7OaMBybqD" Name="Smooth" Kind="InputPin" IsHidden="true" />
-            <Pin Id="HEJwTStqwK6hffJmpCJbuE" Name="Opacity" Kind="InputPin" />
+            <Pin Id="HEJwTStqwK6hffJmpCJbuE" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="BE6kwqnVgiHPr6PeNxvIXd" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="nhXmj0HbsVq8hLGSQTAasG" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="B068QaYc2lSPqbssoX6zY4" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="Fh9QlIO3HcAPG1IlZ6XxyJ" Name="Debug" Kind="InputPin" DefaultValue="False" />
-            <Pin Id="Rfl4JCA8C6s6De4J8xDat4" Name="Interaction" Kind="InputPin" />
-            <Pin Id="MWuPEgTlnyPNY0XsAFMHs7" Name="Effect" Kind="InputPin" />
+            <Pin Id="Rfl4JCA8C6s6De4J8xDat4" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MWuPEgTlnyPNY0XsAFMHs7" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="100,766,145,19" Id="iHt4iV6vg7gopCFOfU5oa8">
+          <Node Bounds="100,766,85,19" Id="iHt4iV6vg7gopCFOfU5oa8">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -148,14 +148,15 @@
             <Pin Id="9q7NryclX6Ol1DzTp4xeTV" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="A7WY2NM9o4BHY3lyDGnzxY" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="aaNqAMpbpdvX7VosIlBny8" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TuU6rXhiooVOMx0S8Zh8Mw" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="Hhuq5wD5fEIGxz3ndOIrdM" Comment="Title" Bounds="182,702,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Show a VL.Video player in Qt">
+          <Pad Id="Hhuq5wD5fEIGxz3ndOIrdM" Comment="Title" Bounds="182,730,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Show a VL.Video player in Qt">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <ControlPoint Id="SYYssQ82jPQNHcSHKYcTci" Bounds="162,562" />
-          <Pad Id="R76QLwLVs02Lxo5zWkF3kV" Comment="Debug" Bounds="222,606,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+          <ControlPoint Id="SYYssQ82jPQNHcSHKYcTci" Bounds="142,547" />
+          <Pad Id="R76QLwLVs02Lxo5zWkF3kV" Comment="Debug" Bounds="182,610,35,35" ShowValueBox="true" isIOBox="true" Value="True">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -163,7 +164,7 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="119,460,80,19" Id="9VoPvNU3GLvnulxyboVpBV">
+          <Node Bounds="120,250,80,19" Id="9VoPvNU3GLvnulxyboVpBV">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -177,7 +178,7 @@
             <Pin Id="vR3opTgucD1z5E0teXD71j" Name="Translation" Kind="InputPin" />
             <Pin Id="kbxCu1UbmOtPzJS28gJJ0r" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="EK7nHp7ofFMMjmcg6AL82L" Comment="Fill Mode" Bounds="182,570,62,15" ShowValueBox="true" isIOBox="true" Value="Fit">
+          <Pad Id="EK7nHp7ofFMMjmcg6AL82L" Comment="Fill Mode" Bounds="162,570,62,15" ShowValueBox="true" isIOBox="true" Value="Fit">
             <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="ImageFillMode" />
             </p:TypeAnnotation>

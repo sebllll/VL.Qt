@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="WvVj0lYM3hX5G8lTQOqPVp" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="WvVj0lYM3hX5G8lTQOqPVp" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
   <NugetDependency Id="7ukvmBcobYjbKbEzjavLfe" Location="VL.CoreLib" />
   <DocumentDependency Id="qIDhJwP67nhufzNWfVAuC5" Location="../../VL.Qt.vl" />
   <Patch Id="mwyu5yMgl9njrKU2JgZ4Vz">
@@ -16,7 +16,7 @@
       </p:NodeReference>
       <Patch Id="PjFnvCTfJerXcJGHpxa9VA">
         <Canvas Id="aXLP4vtoZsQXdQdzxY0Brz" CanvasType="Group">
-          <Pad Id="7LZbbYYQhQtY01AYjARg0j" Bounds="85,16,515,52" ShowValueBox="true" isIOBox="true" Value="How To Stack Interactive Elements">
+          <Pad Id="7LZbbYYQhQtY01AYjARg0j" Bounds="85,16,610,57" ShowValueBox="true" isIOBox="true" Value="How To Stack Interactive Elements">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -44,7 +44,7 @@
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="81,575,185,19" Id="ghvD1VOajHQM3Dm8QEPtrj">
+          <Node Bounds="81,575,65,19" Id="ghvD1VOajHQM3Dm8QEPtrj">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Rectangle" />
@@ -54,17 +54,17 @@
             <Pin Id="CJpWCdzZvCC9KQx1CIGkTJ" Name="Transform" Kind="InputPin" />
             <Pin Id="Da3SILNkhvKPDL18sz85yZ" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="Amhv7VCpu6IJnlHdxq4XCj" Name="Color" Kind="InputPin" />
-            <Pin Id="rQ0KMZt4ep84P4E8pZlMWh" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
-            <Pin Id="YH189480SEMqDp4PqnpBCy" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="206BGCQv8nzI1ukaoo8tgx" Name="Stroke Width" Kind="InputPin" />
-            <Pin Id="p2MyXbwTLHy24G10XGFJa9" Name="Opacity" Kind="InputPin" />
+            <Pin Id="rQ0KMZt4ep84P4E8pZlMWh" Name="Radius" Kind="InputPin" DefaultValue="0.1" IsHidden="true" />
+            <Pin Id="YH189480SEMqDp4PqnpBCy" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="206BGCQv8nzI1ukaoo8tgx" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="p2MyXbwTLHy24G10XGFJa9" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="HKklWT06dsZMXSLjHykmze" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="KGlI8FNgxiSMpzCL6N3UZs" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="HMeqSJcStfkUlRVyYphych" Name="Interaction" Kind="InputPin" />
             <Pin Id="gfn5MVrSmo6cCxS63zhYyn" Name="Output" Kind="OutputPin" />
             <Pin Id="BWXcqyVyi42QLlzOej6uqe" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="uIpraBq9oFbSBoUtnvz5lU" Name="Scene Bounds" Kind="OutputPin" />
-            <Pin Id="GWxuGKqGh15P2qBmanFDDH" Name="Effect" Kind="InputPin" />
+            <Pin Id="uIpraBq9oFbSBoUtnvz5lU" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="GWxuGKqGh15P2qBmanFDDH" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="381,495,43,19" Id="ArQMNl2SBzXi6ciYVi9Uxo">
             <p:NodeReference LastCategoryFullName="Qt.Interaction" LastDependency="VL.Qt.vl">
@@ -118,17 +118,17 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="h1qja1WmzKWnEEChIfvWPv" Comment="Fill" Bounds="165,433,136,15" ShowValueBox="true" isIOBox="true" Value="0.6, 0.2, 0.2, 1">
+          <Pad Id="h1qja1WmzKWnEEChIfvWPv" Comment="Fill" Bounds="145,431,136,15" ShowValueBox="true" isIOBox="true" Value="0.6, 0.2, 0.2, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="kv9wv3yZItsvErThi6viti" Comment="Fill Hovered" Bounds="183,465,136,15" ShowValueBox="true" isIOBox="true" Value="1, 0.35, 0.3, 1">
+          <Pad Id="kv9wv3yZItsvErThi6viti" Comment="Fill Hovered" Bounds="163,463,136,15" ShowValueBox="true" isIOBox="true" Value="1, 0.35, 0.3, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="141,512,45,19" Id="rhmRFMHxbT1kxuHoENdjAU">
+          <Node Bounds="121,510,45,19" Id="rhmRFMHxbT1kxuHoENdjAU">
             <p:NodeReference LastCategoryFullName="Control" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationNode" Name="Switch (Boolean)" />
@@ -183,17 +183,17 @@
               <Choice Kind="TypeFlag" Name="Integer32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="8DTgtHdurlz7x86R9YKf99" Comment="Position" Bounds="851,282,35,28" ShowValueBox="true" isIOBox="true" Value="2, 1.6">
+          <Pad Id="8DTgtHdurlz7x86R9YKf99" Comment="Position" Bounds="847,290,35,28" ShowValueBox="true" isIOBox="true" Value="2, 1.6">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="6Lmt3XRmSW0UW2jDLRKgJi" Comment="Size" Bounds="801,243,35,28" ShowValueBox="true" isIOBox="true" Value="2.6, 2">
+          <Pad Id="6Lmt3XRmSW0UW2jDLRKgJi" Comment="Size" Bounds="797,251,35,28" ShowValueBox="true" isIOBox="true" Value="2.6, 2">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="750,542,225,19" Id="1espfIsaN5IffMD0WfC4KK">
+          <Node Bounds="750,600,65,19" Id="1espfIsaN5IffMD0WfC4KK">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Rectangle" />
@@ -203,19 +203,19 @@
             <Pin Id="MHRHbwWHH3bu33JWmjqYW2" Name="Transform" Kind="InputPin" />
             <Pin Id="CmnyZovmVMQOKZ6sbKDp3l" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="iQZ3214tkjgFfxkAz8TCt7" Name="Color" Kind="InputPin" />
-            <Pin Id="rtbE87WipfAQNdorvVyFYf" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
-            <Pin Id="x3ANIq8z2x0GoZuvJSS3O1" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="MYvUk2rQ3oA6b9UByWpnkn" Name="Stroke Width" Kind="InputPin" />
-            <Pin Id="HLlu8DhyjA6M65zS7i6DJ7" Name="Opacity" Kind="InputPin" />
+            <Pin Id="rtbE87WipfAQNdorvVyFYf" Name="Radius" Kind="InputPin" DefaultValue="0.1" IsHidden="true" />
+            <Pin Id="x3ANIq8z2x0GoZuvJSS3O1" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MYvUk2rQ3oA6b9UByWpnkn" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="HLlu8DhyjA6M65zS7i6DJ7" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="H9YRzMvW6JyPXunVzxjOAz" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="PyUQVR8lLeYPExNvFGX9qF" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="NqPJzPGgqQTk2cndYe3pH1" Name="Interaction" Kind="InputPin" />
             <Pin Id="jp32b78PeATWF85G783642" Name="Output" Kind="OutputPin" />
             <Pin Id="GYPHrNzoguSMCVSRJ9beSf" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="u3HdeUD0ZsprIHsGhGj35X" Name="Scene Bounds" Kind="OutputPin" />
-            <Pin Id="O82hCtld3TLPSLCIixUBQD" Name="Effect" Kind="InputPin" />
+            <Pin Id="u3HdeUD0ZsprIHsGhGj35X" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="O82hCtld3TLPSLCIixUBQD" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="946,462,43,19" Id="KccqcHemE8de7CTxqQTvyu">
+          <Node Bounds="946,500,43,19" Id="KccqcHemE8de7CTxqQTvyu">
             <p:NodeReference LastCategoryFullName="Qt.Interaction" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Hover" />
@@ -225,7 +225,7 @@
             <Pin Id="4uh2Oc52MG4ObOuJgxz9MK" Name="Is Hovered" Kind="InputPin" />
             <Pin Id="Om9UJbvapl83b8mmoHaJOJ" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="946,512,392,19" Id="MGDO0ZfRQmks2UpmDPILKc">
+          <Node Bounds="946,550,392,19" Id="MGDO0ZfRQmks2UpmDPILKc">
             <p:NodeReference LastCategoryFullName="Qt.Interaction" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Interaction" />
@@ -267,17 +267,17 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="dUjFRh6lX1y8XN117xltNU" Comment="Fill" Bounds="845,413,136,15" ShowValueBox="true" isIOBox="true" Value="0.2, 0.3, 0.6, 1">
+          <Pad Id="dUjFRh6lX1y8XN117xltNU" Comment="Fill" Bounds="812,421,136,15" ShowValueBox="true" isIOBox="true" Value="0.2, 0.3, 0.6, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="JQONEl9Y1MFbkAsC1xblTL" Comment="Fill Hovered" Bounds="865,443,136,15" ShowValueBox="true" isIOBox="true" Value="0.3, 0.55, 1, 1">
+          <Pad Id="JQONEl9Y1MFbkAsC1xblTL" Comment="Fill Hovered" Bounds="832,451,136,15" ShowValueBox="true" isIOBox="true" Value="0.3, 0.55, 1, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="823,482,45,19" Id="oaCx9P0beDqtXB4DlzpH3R">
+          <Node Bounds="790,490,45,19" Id="oaCx9P0beDqtXB4DlzpH3R">
             <p:NodeReference LastCategoryFullName="Control" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationNode" Name="Switch (Boolean)" />
@@ -392,7 +392,7 @@
             <Pin Id="DPYjeKs1LqfNlc237j0cG3" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="K9HWQ7I0J8aNIsGUQFqca2" Name="Style" Kind="InputPin" />
           </Node>
-          <Node Bounds="81,922,145,19" Id="YQsjoPnFNAqzXVf32FaSZL">
+          <Node Bounds="81,922,85,19" Id="YQsjoPnFNAqzXVf32FaSZL">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -415,6 +415,7 @@
             <Pin Id="P6jeZCK2NGA9aUDNtY4T8Y" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="ej4DKTzo1PieqfGktet52T" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="RjVlmXTnYMQlE23sAhaDpf" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="IHsV267FE9qNFsQAoDEC7S" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="Hu9Oadwy3GnSCVGee0bgc1" Comment="Title" Bounds="163,873,200,19" ShowValueBox="true" isIOBox="true" Value="HowTo Stack Interactive Elements">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
@@ -435,8 +436,8 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <ControlPoint Id="Q6fedcXEMtkOynG4R7g82c" Bounds="143,439" />
-          <ControlPoint Id="MJkvwNAEE7xQAcNfCKOkAq" Bounds="825,436" />
+          <ControlPoint Id="Q6fedcXEMtkOynG4R7g82c" Bounds="123,437" />
+          <ControlPoint Id="MJkvwNAEE7xQAcNfCKOkAq" Bounds="792,444" />
           <ControlPoint Id="LIFEu9jH4rnMwzSEnkAdAp" Bounds="1142,434" />
           <Node Bounds="101,312,80,19" Id="mclw2RCwtuMcP5RIo9ElLI">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
@@ -452,7 +453,7 @@
             <Pin Id="BLu8716OepIeoTJ4z4ru3C" Name="Translation" Kind="InputPin" />
             <Pin Id="fCQm5arhzaBXyhu3jVCe0N" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="774,322,80,19" Id="LuMvvxjwMEnwPOauwTo7mt">
+          <Node Bounds="770,330,80,19" Id="LuMvvxjwMEnwPOauwTo7mt">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -480,7 +481,7 @@
             <Pin Id="ybWWS7Msb29xYhgg3RqeIb" Name="Translation" Kind="InputPin" />
             <Pin Id="8yTZQlza9YMWup8f4r1nV0" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="gGBvpU3HCwF5pQ8dFHyMY8" Bounds="85,991,830,62" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The topmost element (drawn last, here the blue rectangle) wins in the overlap, so the red rectangle below it gets no hover and no click there.&#xD;&#xA;- An element without an Interaction node (the gray rectangle) is transparent for input: hover and click reach the elements underneath.">
+          <Pad Id="gGBvpU3HCwF5pQ8dFHyMY8" Bounds="85,991,834,91" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The topmost element (drawn last, here the blue rectangle) wins in the overlap, so the red rectangle below it gets no hover and no click there.&#xD;&#xA;- An element without an Interaction node (the gray rectangle) is transparent for input: hover and click reach the elements underneath.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

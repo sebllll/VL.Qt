@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="d4UYETIay2BV6DfVPClogq" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="d4UYETIay2BV6DfVPClogq" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
   <NugetDependency Id="oPchv5V7S82qTdrOJRBRY6" Location="VL.CoreLib" />
   <DocumentDependency Id="HqsP795nf4Gakq5p1Vm8kV" Location="../../VL.Qt.vl" />
   <Patch Id="6um4yvMpy62O6SQ1IEE1HS">
@@ -137,17 +137,17 @@
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="RGHOY32nfr5pyzPCB9t203" Comment="Position" Bounds="167,800,35,28" ShowValueBox="true" isIOBox="true" Value="0.5, 0.5">
+          <Pad Id="RGHOY32nfr5pyzPCB9t203" Comment="Position" Bounds="183,790,35,28" ShowValueBox="true" isIOBox="true" Value="0.5, 0.5">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="9bicBTW5ZE9LFaez7770H2" Comment="Size" Bounds="72,791,35,28" ShowValueBox="true" isIOBox="true" Value="6, 3.6">
+          <Pad Id="9bicBTW5ZE9LFaez7770H2" Comment="Size" Bounds="85,771,35,28" ShowValueBox="true" isIOBox="true" Value="6, 3.6">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="70,884,145,19" Id="zC5T4uUhf7kvmlP7HVDctQ">
+          <Node Bounds="83,880,145,19" Id="zC5T4uUhf7kvmlP7HVDctQ">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -171,7 +171,7 @@
             <Pin Id="hX1ssrKrxqVqmCplppjs46" Name="Interaction" Kind="InputPin" />
             <Pin Id="IWqz7DoKmPEQEB4iXcbFmA" Name="Effect" Kind="InputPin" />
           </Node>
-          <Node Bounds="70,990,145,19" Id="MqXXQ8agOMTNwncxvjcnqc">
+          <Node Bounds="83,970,85,19" Id="MqXXQ8agOMTNwncxvjcnqc">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -194,8 +194,9 @@
             <Pin Id="YYqhXHdO2x93CJHLS45gqI" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="O2zVZxqyxKjxvWfColNV9d" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="s0HqtO93L7Q5uUaVcojsNO" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="JR5xnTCVc7yQD7spmQDOa0" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="BAGx5diFoNPcbdaKwtgHwI" Comment="Title" Bounds="152,956,160,19" ShowValueBox="true" isIOBox="true" Value="HowTo Preload Images">
+          <Pad Id="BAGx5diFoNPcbdaKwtgHwI" Comment="Title" Bounds="165,936,160,19" ShowValueBox="true" isIOBox="true" Value="HowTo Preload Images">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -223,7 +224,7 @@
             <Pin Id="Jnp5Qv4wZmUO5EuodVtFGH" Name="On New Cycle" Kind="OutputPin" />
             <Pin Id="Pj46oKZBevoMQP1UHepkW3" Name="Cycles" Kind="OutputPin" />
           </Node>
-          <Node Bounds="90,830,80,19" Id="pkikwjvGdYH0GBktOmbL4j">
+          <Node Bounds="106,820,80,19" Id="pkikwjvGdYH0GBktOmbL4j">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -237,6 +238,11 @@
             <Pin Id="9fRLNy2shfiFwyEazKknwo" Name="Translation" Kind="InputPin" />
             <Pin Id="nUjTUTQlppCpmFbysuL73s" Name="Output" Kind="OutputPin" />
           </Node>
+          <Pad Id="Qn9HicSyOYsPDL2fujnzJQ" Comment="Fill Mode" Bounds="155,860,62,15" ShowValueBox="true" isIOBox="true" Value="Fit">
+            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+              <Choice Kind="TypeFlag" Name="ImageFillMode" />
+            </p:TypeAnnotation>
+          </Pad>
         </Canvas>
         <Link Id="e3nNyjOq9wMxEhh2FDEEtf" Ids="isAjIhKtJ0RlgLKOmxgJTe,8DwkNhFdnXsiVpzz63FfkC" />
         <Link Id="jgVvVqE1SkHbn88HxjSI6b" Ids="KdNnFRIBXuDL7DxtpYlSXp,zJr4i0B3JrTAwR4y9ojflj" />
@@ -265,6 +271,7 @@
         <Link Id="hF0MZtCynveNY93eFbvKda" Ids="9bicBTW5ZE9LFaez7770H2,wX0t0ZBfdTEmxI6CmuxV5E" />
         <Link Id="oeUdjWDHAiGiV5rIOoPBro" Ids="RGHOY32nfr5pyzPCB9t203,9fRLNy2shfiFwyEazKknwo" />
         <Link Id="tgJVrVr0Fq5LPbkblq1v6H" Ids="nUjTUTQlppCpmFbysuL73s,bOApZOXzcycDeZ6dqmVe5M" />
+        <Link Id="AUNqB11DjDpLI18g1627DF" Ids="Qn9HicSyOYsPDL2fujnzJQ,O88eb0ogET9D9XyYq6B0Fi" />
       </Patch>
     </Node>
   </Patch>
