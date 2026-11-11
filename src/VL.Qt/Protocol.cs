@@ -43,6 +43,13 @@
             /// EndLink(); EndEffectChain().
             /// </summary>
             public const ushort SetEffectChain = 17;
+            /// <summary>
+            /// Properties of a QmlElement's root by name (#104): u32 id, u16 count, u16 flags (0), then count entries
+            /// encoded like <see cref="SetUniforms"/> entries (u16 value type, u16 name length, name, padding, value,
+            /// padding). Only on <see cref="Type.Qml"/> elements (else -6); an unknown name or a failed conversion is an
+            /// <see cref="Ev.Error"/> line, not a failed apply. See protocol.h "QmlElement".
+            /// </summary>
+            public const ushort SetQmlProperties = 18;
         }
 
         /// <summary>Value types of SET (u16).</summary>
@@ -94,6 +101,8 @@
             public const ushort TextField = 15;
             /// <summary>Own item with .qsb shaders, uniforms by name through <see cref="Op.SetUniforms"/> (#437).</summary>
             public const ushort ShaderEffect = 24;
+            /// <summary>Loads a user .qml file; properties by name through <see cref="Op.SetQmlProperties"/>, events <see cref="Ev.QmlProperty"/> and <see cref="Ev.QmlSignal"/> (#104).</summary>
+            public const ushort Qml = 25;
             /// <summary>
             /// Input handlers from 32 (#319): protocol objects attached to an element by REPARENT (index ignored).
             /// </summary>
@@ -252,6 +261,10 @@
             public const ushort Blending = 898;
             /// <summary>ivec2, ShaderEffect: grid subdivisions x, y &gt;= 1 (default 1, 1, #437).</summary>
             public const ushort MeshResolution = 899;
+            /// <summary>string, QmlElement: absolute path of the .qml file, empty = nothing loaded (#104).</summary>
+            public const ushort QmlSource = 928;
+            /// <summary>i32, QmlElement: counter, a new value reloads the same file (cache cleared, properties re-applied) (#104).</summary>
+            public const ushort QmlReload = 929;
         }
 
         /// <summary>
@@ -374,6 +387,10 @@
             public const ushort Pinch = 16;
             /// <summary>User change of a value input: u16 value type (<see cref="Vt"/>), u16 0, value encoded like SET (#210).</summary>
             public const ushort Value = 17;
+            /// <summary>A root property that QML changed (no echo of SET_QML_PROPERTIES): u16 name length, u16 value type, name, padding to 4, value like <see cref="Value"/> (#104).</summary>
+            public const ushort QmlProperty = 18;
+            /// <summary>A root signal: u16 name length, u16 argument count, name, padding to 4, count x (u16 value type, u16 0, value, padding) (#104).</summary>
+            public const ushort QmlSignal = 19;
         }
 
         /// <summary>Flags of EV_WINDOW_GEOMETRY (u32 bit mask).</summary>

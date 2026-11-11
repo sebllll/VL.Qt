@@ -2,6 +2,7 @@
 #include "effectchain.h"
 
 #include "qtimageitem.h"
+#include "qmlitem.h"
 #include "shadereffectitem.h"
 
 #include <QtCore/QFileInfo>
@@ -325,6 +326,9 @@ bool setImageResource(Elements&, Node& n, const ResolvedProp&, const Value& v, s
 // ShaderEffect (#437, protocol.h "ShaderEffect"): ShaderEffectItem (shadereffectitem.h), own QQuickItem with a
 // QSGMaterialShader. SOURCE goes through the effect source bookkeeping (layer, hidden, cleared before deletion).
 QQuickItem* makeShaderEffect() { return new ShaderEffectItem(); }
+
+// QmlElement (#104, protocol.h "QmlElement"): QmlItem (qmlitem.h), own QQuickItem that holds the instance of a user .qml file.
+QQuickItem* makeQml() { return new QmlItem(); }
 
 ShaderEffectItem* shaderItem(Node& n) { return static_cast<ShaderEffectItem*>(n.item); }
 
@@ -903,6 +907,7 @@ const std::unordered_map<quint16, TypeDef>& typeTable()
         {VLQT_TYPE_SLIDER, {VLQT_TYPE_SLIDER, "SLIDER", kSliderQml, sliderProps()}},
         {VLQT_TYPE_TEXT_FIELD, {VLQT_TYPE_TEXT_FIELD, "TEXT_FIELD", kTextFieldQml, textFieldProps()}},
         {VLQT_TYPE_SHADER_EFFECT, {VLQT_TYPE_SHADER_EFFECT, "SHADER_EFFECT", nullptr, shaderEffectProps(), makeShaderEffect}},
+        {VLQT_TYPE_QML, {VLQT_TYPE_QML, "QML", nullptr, {}, makeQml}},
     };
     return t;
 }

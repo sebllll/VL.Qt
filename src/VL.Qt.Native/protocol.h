@@ -32,6 +32,11 @@
  *   SET_EFFECT_CHAIN u32 id, u16 linkCount, u16 flags (0, reserved), then linkCount links in application order, each
  *               u16 kind (vlqt_effect_link), u16 count, u32 bodyLen, body (bodyLen bytes, 4-byte aligned). Every
  *               element type (#489, see "Effect chain" below for the bodies).
+ *   SET_QML_PROPERTIES u32 id, u16 count, u16 flags (0, reserved), then count entries encoded exactly like
+ *               SET_UNIFORMS entries (u16 valueType, u16 nameLen, name, padding to 4, value, padding to 4). Sets
+ *               properties of the root of a user QML file by name (#104, see "QmlElement" below). Only on QML elements
+ *               (VLQT_TYPE_QML), else -6. An unknown name or a failed QVariant conversion does not fail the apply:
+ *               EV_ERROR line of the element.
  * Values: f32, i32, bool (u8), color (4 x f32, straight alpha), rectf (4 x f32: x, y, w, h),
  *         mat4 (16 x f32, row-major like Stride), string (u32 len + UTF-8), ref (u32 id), u64,
  *         vec2/vec3/vec4 (2/3/4 x f32), ivec2 (2 x i32).
@@ -205,6 +210,22 @@
  *   nobody does. An image (U64) keeps what its load made (VLQT_IMG_MIPMAPS): the mip filter needs mipmaps there. Without
  *   the entry nothing changes at the element.
  *
+ * QmlElement (#104, decisions/user-qml.md): VLQT_TYPE_QML loads a user .qml file into the element tree. The element is an
+ * item that holds the instance of the file's root (which must be a QQuickItem, else EV_ERROR). Properties:
+ * QML_SOURCE (string, absolute file path, empty = nothing loaded; compiled from a file: URL so relative imports resolve)
+ * and QML_RELOAD (i32 counter: a new value clears the engine's component cache for the URL and rebuilds the instance,
+ * re-applying every property set so far; the C# side bumps it when the file or its neighbours change). Size: AUTO_SIZE on =
+ * the element takes the root's implicitWidth/implicitHeight, off = SIZE sets width/height of the root. Compile, load and type
+ * errors arrive as EV_ERROR (file:line), empty = cleared.
+ * Patch to QML: SET_QML_PROPERTIES (value types F32/I32/BOOL/STRING/COLOR/VEC2/VEC3/VEC4/RECTF; QVariant converts to the
+ * property's type, an unsupported type or a failed conversion is an EV_ERROR line and the value is ignored).
+ * QML to patch: of the properties and signals declared in the root of the user file (not those inherited from Item),
+ *   EV_QML_PROPERTY: u16 nameLen, u16 valueType, name (UTF-8), padding to 4, value like EV_VALUE; one per property per
+ *               poll (its last value). Not sent when the change came from SET_QML_PROPERTIES (no echo, like EV_VALUE).
+ *   EV_QML_SIGNAL: u16 nameLen, u16 argCount, name, padding to 4, then argCount x (u16 valueType, u16 0, value, padding to
+ *               4). Every emitted signal is kept, in order (cap 256 per poll, then one EV_ERROR line "signals dropped").
+ *               Arguments of unsupported types are sent as their string form (VLQT_VT_STRING).
+ *
  * Pure C header: compiles as C and C++.
  */
 #ifndef VLQT_PROTOCOL_H
@@ -228,7 +249,8 @@ enum vlqt_op {
     VLQT_OP_SET_STYLE = 8, /* resolved widget style, see the head comment (#292) */
     /* 16.. effects package 03 (#437), own block to keep merges with other packages simple */
     VLQT_OP_SET_UNIFORMS = 16, /* ShaderEffect uniforms by name, see the head comment */
-    VLQT_OP_SET_EFFECT_CHAIN = 17 /* Effect chain of an element (#489), see the head comment "Effect chain" */
+    VLQT_OP_SET_EFFECT_CHAIN = 17, /* Effect chain of an element (#489), see the head comment "Effect chain" */
+    VLQT_OP_SET_QML_PROPERTIES = 18 /* properties of a QmlElement's root by name (#104), see the head comment */
 };
 
 /* Value types of SET (u16) */
@@ -267,6 +289,7 @@ enum vlqt_type {
     VLQT_TYPE_SLIDER = 14,    /* QtQuick.Controls Slider: EV_VALUE f32 (#301) */
     VLQT_TYPE_TEXT_FIELD = 15, /* QtQuick.Controls TextField (single line): EV_VALUE string (#301) */
     VLQT_TYPE_SHADER_EFFECT = 24, /* own item with .qsb shaders and uniforms by name (#437), see the head comment */
+    VLQT_TYPE_QML = 25, /* loads a user .qml file, properties by name through SET_QML_PROPERTIES (#104), see "QmlElement" */
     /* Input handlers from 32 (#319): protocol objects attached to an element by REPARENT, see the head comment. */
     VLQT_TYPE_HOVER_HANDLER = 32, /* Qt Quick HoverHandler: EV_HOVER (positions: Point handler, #320) */
     VLQT_TYPE_TAP_HANDLER = 33,   /* TapHandler (ReleaseWithinBounds): EV_PRESS, EV_CLICK, EV_TAP_COUNT, EV_LONG_PRESS (#320) */
@@ -306,7 +329,7 @@ enum vlqt_type {
  * Blocks: 256.. Rectangle, 512.. Text, 544.. Image, 576.. Row/Column, 608.. reserved (MultiEffect element, removed in #459), 640.. size mode of containers (Item/Group, Row, Column, ShaderEffect only, others -> -6),
  * 672.. Video (SOURCE string and FILL_MODE are shared with Image; Image itself has no SOURCE since #361, -6), 704.. Controls: Button (TEXT and AUTO_SIZE are shared: AUTO_SIZE on =
  * implicit size from the text, default on), from 706 value inputs (SpinBox, CheckBox, Switch, Slider, TextField; VALUE/MINIMUM/MAXIMUM/STEP take the value type of the element), 768.. input handlers (#319, only on handler objects, others -> -6), 800.. reserved (RectangularShadow, removed in #459),
- * 832.. Effect chain MULTI keys (not via SET, see the head comment "Effect chain"), 896.. ShaderEffect (#437). */
+ * 832.. Effect chain MULTI keys (not via SET, see the head comment "Effect chain"), 896.. ShaderEffect (#437), 928.. QmlElement (#104). */
 enum vlqt_prop {
     VLQT_PROP_SIZE = 1,       /* vec2 (w, h), see "Geometry" above (#469; was BOUNDS rectf) */
     VLQT_PROP_TRANSFORM = 2,
@@ -392,7 +415,10 @@ enum vlqt_prop {
     VLQT_PROP_FRAGMENT_SHADER = 896,  /* u64 shader resource id (stage FRAGMENT), 0 = none: draws nothing */
     VLQT_PROP_VERTEX_SHADER = 897,    /* u64 shader resource id (stage VERTEX), 0 = Qt's default vertex shader */
     VLQT_PROP_BLENDING = 898,         /* bool, premultiplied alpha blending (default true) */
-    VLQT_PROP_MESH_RESOLUTION = 899   /* ivec2, grid subdivisions x, y >= 1 (default 1, 1) */
+    VLQT_PROP_MESH_RESOLUTION = 899,  /* ivec2, grid subdivisions x, y >= 1 (default 1, 1) */
+    /* 928.. QmlElement (#104), see the head comment "QmlElement" */
+    VLQT_PROP_QML_SOURCE = 928,       /* string, absolute path of the .qml file, empty = nothing loaded */
+    VLQT_PROP_QML_RELOAD = 929        /* i32 counter, a new value reloads the same file (cache cleared, properties re-applied) */
 };
 
 /* BIND flags (u16, bit mask). Elements have no pointer handlers since #320: 1 (INTERACTIVE) and 4 (POINTER) of #208
@@ -481,7 +507,9 @@ enum vlqt_ev {
     VLQT_EV_DRAG = 14, /* 2 x f32 translation of the running drag since the press (parent space, after limits), on change (#209) */
     VLQT_EV_TOUCH_POINTS = 15, /* u32 count + count x (u32 id, f32 x, f32 y, f32 pressure, f32 w, f32 h), on change (#321) */
     VLQT_EV_PINCH = 16, /* 4 x f32 scale, rotation (degrees, clockwise), translation x, y (parent space) while active (#321) */
-    VLQT_EV_VALUE = 17 /* u16 valueType (VLQT_VT_I32/F32/BOOL/STRING), u16 0, value: user change of a value input (#210) */
+    VLQT_EV_VALUE = 17, /* u16 valueType (VLQT_VT_I32/F32/BOOL/STRING), u16 0, value: user change of a value input (#210) */
+    VLQT_EV_QML_PROPERTY = 18, /* u16 nameLen, u16 valueType, name, padding to 4, value like EV_VALUE: a root property QML changed (#104) */
+    VLQT_EV_QML_SIGNAL = 19    /* u16 nameLen, u16 argCount, name, padding to 4, argCount x (u16 valueType, u16 0, value, padding): a root signal (#104) */
 };
 
 /* Flags of EV_WINDOW_GEOMETRY (u32 bit mask) */
