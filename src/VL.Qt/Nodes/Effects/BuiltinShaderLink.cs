@@ -13,6 +13,11 @@ namespace VL.Qt.Nodes
     /// </summary>
     internal sealed class BuiltinShaderLinkEffect : ShaderLink
     {
+        /// <param name="previous">The link before this one in the chain.</param>
+        /// <param name="template">The pass template (Single, TwoPass, Pyramid).</param>
+        /// <param name="shaderIds">Ids of the built-in shaders the template uses.</param>
+        /// <param name="uniforms">Uniform values sent to the shaders.</param>
+        /// <param name="padding">Space around the element the effect may draw into, in DIP.</param>
         /// <param name="radius">Pyramid: radius in DIP; Single and TwoPass: unused.</param>
         public BuiltinShaderLinkEffect(Effect? previous, ushort template, ImmutableArray<ulong> shaderIds, Spread<Uniform> uniforms,
             RectangleF padding, float radius = 0f)
