@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="E373Xr9Wi0tsfvaF35pkuR" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="E373Xr9Wi0tsfvaF35pkuR" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
   <NugetDependency Id="NM9CnLd4Yn24VxcXX3ClB3" Location="VL.CoreLib" />
   <DocumentDependency Id="i7tRbZhj6ai6tjGVwgWkDR" Location="../../VL.Qt.vl" />
   <Patch Id="zfAvP6QTz4v5cLpmYOSaci">
@@ -43,7 +43,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="452,320,45,19" Id="Mv3MUa1jM1tLB4pyyRyMX5">
+          <Node Bounds="657,350,45,19" Id="Mv3MUa1jM1tLB4pyyRyMX5">
             <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LFO" />
@@ -58,7 +58,7 @@
             <Pin Id="31FMdux8KUCERkj9Zhx9Pk" Name="On New Cycle" Kind="OutputPin" />
             <Pin Id="OZAEyXYC8rYWKvsrdNPTZ0" Name="Cycles" Kind="OutputPin" />
           </Node>
-          <Node Bounds="402,460,80,19" Id="vu0oEhOxjvoVdlTCJ4jC3j">
+          <Node Bounds="607,490,80,19" Id="vu0oEhOxjvoVdlTCJ4jC3j">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -69,7 +69,7 @@
             <Pin Id="yhxEykCpZj6R5aDT6mZck7" Name="Translation" Kind="InputPin" />
             <Pin Id="1oe7N3x4ViXC9g77y1bOeC" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="5ds3g9UFCGbHZIibp9foNl" Comment="Position" Bounds="297,371,35,28" ShowValueBox="true" isIOBox="true" Value="0.26, 0.57">
+          <Pad Id="5ds3g9UFCGbHZIibp9foNl" Comment="Position" Bounds="369,371,35,28" ShowValueBox="true" isIOBox="true" Value="2, 1.13">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
@@ -79,12 +79,12 @@
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="M9fsqqKzUXiLdinDPaJ6A8" Comment="Anchor" Bounds="600,555,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
+          <Pad Id="M9fsqqKzUXiLdinDPaJ6A8" Comment="Anchor" Bounds="386,461,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RectangleAnchor" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="380,580,265,19" Id="dOKMgwKOOUcSAaYatTSJa6">
+          <Node Bounds="587,640,205,19" Id="dOKMgwKOOUcSAaYatTSJa6">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -100,7 +100,7 @@
             <Pin Id="hGi4s6AKsrpVfVIs1DNSKo" Name="Font Family" Kind="InputPin" />
             <Pin Id="PymJTxD5JtNEE0tbpvomGI" Name="Font Size" Kind="InputPin" />
             <Pin Id="yLza7wk38puJuFrs4nsdXb" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
-            <Pin Id="kJeM3wCQdHy1CwVWgHo9RV" Name="Italic" Kind="InputPin" />
+            <Pin Id="kJeM3wCQdHy1CwVWgHo9RV" Name="Italic" Kind="InputPin" IsHidden="true" />
             <Pin Id="7jAvQwiRmNN2r01HgV2V7W" Name="Color" Kind="InputPin" />
             <Pin Id="ErYOTO6TiA3gaAXJLhFz9K" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="jA2Yr3NMhy2CSDsUwswzHJ" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" />
@@ -109,26 +109,26 @@
             <Pin Id="SfjcFCYD4xkLuQJhsGpD5c" Name="Line Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="Orc6gJ9fSBIM9476BHyqVK" Name="Letter Spacing" Kind="InputPin" IsHidden="true" />
             <Pin Id="NQ3bSdS8dZlOkKbKhwDmRl" Name="Autofit" Kind="InputPin" IsHidden="true" />
-            <Pin Id="f06vu1M1p9unB569abdqK5" Name="Opacity" Kind="InputPin" />
+            <Pin Id="f06vu1M1p9unB569abdqK5" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="HSUQliyQPBmNzZnamc01af" Name="Clip" Kind="InputPin" IsHidden="true" />
-            <Pin Id="OiQFJZSAOBOP1l81oS3csH" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Ft6IXtINBH0HURByDwcMRw" Name="Interaction" Kind="InputPin" />
-            <Pin Id="C8aReHogAxGzPJ7Kj4m9AF" Name="Effect" Kind="InputPin" />
+            <Pin Id="OiQFJZSAOBOP1l81oS3csH" Name="Debug" Kind="InputPin" DefaultValue="False" IsHidden="true" />
+            <Pin Id="Ft6IXtINBH0HURByDwcMRw" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="C8aReHogAxGzPJ7Kj4m9AF" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="zCXN5LvSHV0fkxuxe0tGlh" Name="Output" Kind="OutputPin" />
             <Pin Id="KDea6LC8qVkOnRthw7aeqW" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="P5sSv07G4AOkHs0GnG5mAl" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="ZdPaRXLujTpwrkcrOg258L" Comment="Text" Bounds="422,520,56,15" ShowValueBox="true" isIOBox="true" Value="MASK">
+          <Pad Id="ZdPaRXLujTpwrkcrOg258L" Comment="Text" Bounds="649,540,56,15" ShowValueBox="true" isIOBox="true" Value="MASK">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="k7L2lua530DtAMq94F8epR" Comment="Font Size" Bounds="462,550,35,15" ShowValueBox="true" isIOBox="true" Value="1.2">
+          <Pad Id="k7L2lua530DtAMq94F8epR" Comment="Font Size" Bounds="689,580,35,15" ShowValueBox="true" isIOBox="true" Value="1.2">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="360,789,45,19" Id="yVcJtOO8lK1oKFTHq7BQRK">
+          <Node Bounds="567,789,45,19" Id="yVcJtOO8lK1oKFTHq7BQRK">
             <p:NodeReference LastCategoryFullName="Qt.Effects.MultiEffect" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="MultiEffect" NeedsToBeDirectParent="true">
@@ -147,7 +147,7 @@
             <Pin Id="7rlbxRZQSw5AbQTSDp2zw5" Name="Inverted" Kind="InputPin" />
             <Pin Id="Oglshr6MUoTRczcMkBmWtj" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="unX6wV6fASVzVN1orHfw88" Comment="Inverted" Bounds="402,762,35,35" ShowValueBox="true" isIOBox="true">
+          <Pad Id="unX6wV6fASVzVN1orHfw88" Comment="Inverted" Bounds="609,762,35,35" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -155,7 +155,7 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="200,829,165,19" Id="wJuZMhc76RpqwmSCb1LChY">
+          <Node Bounds="200,829,372,19" Id="wJuZMhc76RpqwmSCb1LChY">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -166,21 +166,21 @@
             <Pin Id="5d8nFBFUktMLOfjSokiCOz" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="fc2CEmnUxac1N21YGBjseQ" Name="Size" Kind="InputPin" />
             <Pin Id="dGTA4veCaQ90l5UkysaCZK" Name="Transform" Kind="InputPin" />
-            <Pin Id="TEARINci21JQWvMN9WNwxM" Name="Anchor" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TEARINci21JQWvMN9WNwxM" Name="Anchor" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="RwKmEfIuHDBI6O3jz9MNfZ" Name="Color" Kind="InputPin" DefaultValue="0, 0.5019608, 0, 1" />
-            <Pin Id="ZdURvMQtKKA8xEQPit3vH4" Name="Radius" Kind="InputPin" />
-            <Pin Id="Ob2moRVCSfjQLxJL8AxHpK" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="Czqhol94mJVho31qPgmHQq" Name="Stroke Width" Kind="InputPin" />
-            <Pin Id="TFoJDoIKShVG6LKf2AReZC" Name="Opacity" Kind="InputPin" />
+            <Pin Id="ZdURvMQtKKA8xEQPit3vH4" Name="Radius" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Ob2moRVCSfjQLxJL8AxHpK" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Czqhol94mJVho31qPgmHQq" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TFoJDoIKShVG6LKf2AReZC" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="RdCjeBU0jJTMfQ0AGRkMLj" Name="Clip" Kind="InputPin" IsHidden="true" />
-            <Pin Id="VJlUfnNa3KcOwBQmJxXLYW" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="i3GJGT1W8hO9UGgD1RzIk9" Name="Interaction" Kind="InputPin" />
+            <Pin Id="VJlUfnNa3KcOwBQmJxXLYW" Name="Debug" Kind="InputPin" DefaultValue="False" IsHidden="true" />
+            <Pin Id="i3GJGT1W8hO9UGgD1RzIk9" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="9mKEXfixXNdzpdxcaSM9nD" Name="Effect" Kind="InputPin" />
             <Pin Id="thTiB64fN3mKh6U3wkxV1v" Name="Output" Kind="OutputPin" />
             <Pin Id="UQArG6quLyINjkkWsTlPgR" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="ZWVRa0qhpxGVH8wUFc0Mwg" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="200,1022,145,19" Id="q0TEWcXPtPXJTDJrxHH8ri">
+          <Node Bounds="200,1022,85,19" Id="q0TEWcXPtPXJTDJrxHH8ri">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -203,6 +203,7 @@
             <Pin Id="FzNRZvld3AYcfONvXFMzq8" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="D3ab7uKPudANTU1vkfbjnj" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="HX1fw0xBwIRL3JjQMKvoVN" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Si41tKlV3d6L9epgQlcyju" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="GnJXlq8MxVj5l3V26XkHbw" Comment="Clear Color" Bounds="242,898,136,15" ShowValueBox="true" isIOBox="true" Value="0.15, 0.15, 0.18, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
@@ -214,7 +215,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="400,720,48,19" Id="DPoBUD7URsqMbZt4By6RV3">
+          <Node Bounds="607,720,48,19" Id="DPoBUD7URsqMbZt4By6RV3">
             <p:NodeReference LastCategoryFullName="Control" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Control" NeedsToBeDirectParent="true">
@@ -227,14 +228,14 @@
             <Pin Id="LxF59S5P5TsPnr4bPVg65l" Name="Reset" Kind="ApplyPin" />
             <Pin Id="HJZRlx0oD8ZOQ6fAJb0SuA" Name="Value" Kind="OutputPin" />
           </Node>
-          <ControlPoint Id="Cyoc3LnmM3nLBTIynAP2Nu" Bounds="354,453" />
-          <ControlPoint Id="GW8SzY3YQbKLhGBM3Jjgd4" Bounds="354,627" />
-          <Pad Id="ML25bIfo6KINdghYbTWIxi" Comment="Period" Bounds="454,297,35,15" ShowValueBox="true" isIOBox="true" Value="3">
+          <ControlPoint Id="Cyoc3LnmM3nLBTIynAP2Nu" Bounds="829,453" />
+          <ControlPoint Id="GW8SzY3YQbKLhGBM3Jjgd4" Bounds="829,672" />
+          <Pad Id="ML25bIfo6KINdghYbTWIxi" Comment="Period" Bounds="659,327,35,15" ShowValueBox="true" isIOBox="true" Value="3">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="220,760,80,19" Id="lpm34Pa2HuS2xb2H1tU73R">
+          <Node Bounds="292,700,80,19" Id="lpm34Pa2HuS2xb2H1tU73R">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -274,6 +275,7 @@
         <Link Id="CDWDZk6LKbSNumJPUYYrKG" Ids="HJZRlx0oD8ZOQ6fAJb0SuA,unX6wV6fASVzVN1orHfw88" />
         <Link Id="CXaRoT5rB1PLdvr22A5iec" Ids="ML25bIfo6KINdghYbTWIxi,eaRyML8QjEXAJgfPEn5jOa" />
         <Link Id="ASFWj1dhoXqQIB7E7YbkTU" Ids="BaaRQh92fn3hiEbrUKpCUV,EdgjuWa8mRVtLLCWPgEuxq" />
+        <Link Id="MQF23IJwWpvNJUFigClGmz" Ids="M9fsqqKzUXiLdinDPaJ6A8,TEARINci21JQWvMN9WNwxM" />
       </Patch>
     </Node>
   </Patch>
