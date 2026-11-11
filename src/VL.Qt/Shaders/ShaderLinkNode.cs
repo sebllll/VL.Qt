@@ -10,13 +10,13 @@ using VL.Qt.Elements;
 namespace VL.Qt.Shaders
 {
     /// <summary>
-    /// A filter shader file as link of the Effect chain (#489): template Single, one fragment
+    /// A filter shader file as link of the Effect chain (#489): template Single, or TwoPass with @passes 2, one fragment
     /// shader resource owned by the node, the uniform pins as <see cref="ShaderLink.Uniforms"/>, @padding as padding.
     /// </summary>
     internal sealed class ShaderFileLink : ShaderLink
     {
-        public ShaderFileLink(Effect? previous, ulong shaderId, Spread<Uniform> uniforms, RectangleF padding)
-            : base(previous, Protocol.EffectTemplate.Single, ImmutableArray.Create(shaderId), uniforms, padding, 0f, null)
+        public ShaderFileLink(Effect? previous, ushort template, ulong shaderId, Spread<Uniform> uniforms, RectangleF padding)
+            : base(previous, template, ImmutableArray.Create(shaderId), uniforms, padding, 0f)
         {
         }
     }
@@ -77,8 +77,13 @@ namespace VL.Qt.Shaders
         readonly ShaderSlot _fragment;
         readonly NodeErrors? _errors;
         readonly string _fragmentSource;
-        readonly RectangleF _padding;
+        readonly ushort _template;
         readonly ShaderUniforms _uniforms;
+        // @padding <uniform> [factor]: the pin and its factor, null for a fixed padding.
+        readonly IVLPin<float>? _paddingPin;
+        readonly float _paddingFactor;
+        RectangleF _padding;
+        float _paddingSource = float.NaN;
         readonly ValuePin<Effect?> _input = new(null);
         readonly ValuePin<Effect?> _output = new(null);
         readonly ValuePin<string> _error = new(string.Empty);
@@ -98,8 +103,21 @@ namespace VL.Qt.Shaders
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _errors = errors;
             _fragmentSource = layout.FragmentSource;
+            _template = layout.Passes == 2 ? Protocol.EffectTemplate.TwoPass : Protocol.EffectTemplate.Single;
             _padding = layout.Padding;
             _uniforms = new ShaderUniforms(layout.Pins);
+            if (layout.PaddingUniform != null)
+            {
+                for (var i = 0; i < layout.Pins.Length; i++)
+                {
+                    if (layout.Pins[i].Type == ShaderPinType.Float && layout.Pins[i].UniformName == layout.PaddingUniform)
+                    {
+                        _paddingPin = (IVLPin<float>)_uniforms.Pins[i];
+                        _paddingFactor = layout.PaddingFactor;
+                        break;
+                    }
+                }
+            }
         }
 
         /// <summary>Links created so far (tests).</summary>
@@ -129,6 +147,7 @@ namespace VL.Qt.Shaders
             var id = _fragment.Update(null, _fragmentSource);
             var uniforms = _uniforms.Update();
             var input = _input.Value;
+            var paddingChanged = UpdatePadding();
             if (id == 0)
             {
                 _last = null;
@@ -136,9 +155,9 @@ namespace VL.Qt.Shaders
             }
             else
             {
-                if (_last is null || !ReferenceEquals(input, _lastInput) || id != _lastId || !ReferenceEquals(uniforms, _lastUniforms))
+                if (_last is null || !ReferenceEquals(input, _lastInput) || id != _lastId || !ReferenceEquals(uniforms, _lastUniforms) || paddingChanged)
                 {
-                    _last = new ShaderFileLink(input, id, uniforms, _padding);
+                    _last = new ShaderFileLink(input, _template, id, uniforms, _padding);
                     _lastInput = input;
                     _lastId = id;
                     _lastUniforms = uniforms;
@@ -153,6 +172,22 @@ namespace VL.Qt.Shaders
                 _error.Value = error;
                 _errors?.LogOnly(error);
             }
+        }
+
+        /// <summary>Recomputes the padding of <c>@padding &lt;uniform&gt; [factor]</c> (abs(value) * factor, all sides) when the pin value changed; true if it did.</summary>
+        bool UpdatePadding()
+        {
+            if (_paddingPin is null)
+                return false;
+            var value = _paddingPin.Value;
+            if (value.Equals(_paddingSource))
+                return false;
+            _paddingSource = value;
+            var dip = MathF.Abs(value) * _paddingFactor;
+            if (!float.IsFinite(dip))
+                dip = 0f;
+            _padding = new RectangleF(dip, dip, dip, dip);
+            return true;
         }
 
         public void Dispose()

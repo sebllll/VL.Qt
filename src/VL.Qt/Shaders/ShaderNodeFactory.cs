@@ -19,6 +19,7 @@ namespace VL.Qt.Shaders
     /// <param name="Summary">@summary of the file head (node help), null if not given.</param>
     /// <param name="DuplicateError">Error if another .frag with the same file name exists in the same qtshaders/ tree (both paths), else null.</param>
     /// <param name="IsFilter">The .frag declares <c>sampler2D source</c>: besides the element node it gets a link node for the effect chain (<see cref="ShaderNodeFactory.LinkCategory"/>).</param>
+    /// <param name="ChainOnly">The file head has <c>@chainonly</c>: only the link node of a filter is created, no element node.</param>
     internal sealed record ShaderFile(
         string FragmentPath,
         string? VertexPath,
@@ -27,7 +28,8 @@ namespace VL.Qt.Shaders
         string Category,
         string? Summary,
         string? DuplicateError,
-        bool IsFilter = false)
+        bool IsFilter = false,
+        bool ChainOnly = false)
     {
         /// <summary>Name as vvvv shows it: "Glitch (RGB)", or just "Glitch" without variant.</summary>
         public string FullName => Version is null ? Name : $"{Name} ({Version})";
@@ -103,10 +105,11 @@ namespace VL.Qt.Shaders
                     invalidated = invalidated.Merge(FileSystemUtils.WatchDir(shadersPath, includeSubdirectories: true)
                         .Where(IsNewOrDeletedShaderFile)
                         .Select(static e => (object)e));
-                    // A content change that turns a generator into a filter or back adds or removes the link node: the node list again.
+                    // A content change that turns a generator into a filter or back, or adds or removes @chainonly, adds or removes a node: the node list again.
                     foreach (var file in files)
                         invalidated = invalidated.Merge(WatchContent(file)
-                            .Where(_ => ReadIsFilter(file.FragmentPath) is { } isFilter && isFilter != file.IsFilter));
+                            .Where(_ => ReadIsFilter(file.FragmentPath) is { } isFilter
+                                && (isFilter != file.IsFilter || ReadHead(file.FragmentPath).ChainOnly != file.ChainOnly)));
                     return NodeBuilding.NewFactoryImpl(nodes, invalidated);
                 }
                 catch (Exception e) when (e is UnauthorizedAccessException or IOException)
@@ -119,13 +122,16 @@ namespace VL.Qt.Shaders
             return NodeBuilding.NewFactoryImpl(invalidated: invalidated);
         }
 
-        /// <summary>One element node per file, plus the link node of the effect chain for every filter.</summary>
+        /// <summary>One element node per file (none for @chainonly), plus the link node of the effect chain for every filter.</summary>
         internal static ImmutableArray<IVLNodeDescription> CreateDescriptions(IEnumerable<ShaderFile> files, IVLNodeDescriptionFactory factory, ILogger logger)
         {
             var nodes = ImmutableArray.CreateBuilder<IVLNodeDescription>();
             foreach (var file in files)
             {
-                nodes.Add(ShaderNodeDescription.New(factory, file, logger));
+                if (file.ChainOnly && !file.IsFilter)
+                    logger.LogWarning("{Shader}: @chainonly needs 'uniform sampler2D source', so there is no node for this file", file.FragmentPath);
+                if (!file.ChainOnly)
+                    nodes.Add(ShaderNodeDescription.New(factory, file, logger));
                 if (file.IsFilter)
                     nodes.Add(ShaderLinkDescription.New(factory, file, logger));
             }
@@ -167,7 +173,8 @@ namespace VL.Qt.Shaders
                     category,
                     annotations.Summary,
                     duplicateError,
-                    isFilter));
+                    isFilter,
+                    annotations.ChainOnly));
             }
             return result.MoveToImmutable();
         }

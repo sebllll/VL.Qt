@@ -16,7 +16,7 @@ namespace VL.Qt.Nodes
         /// <param name="radius">Pyramid: radius in DIP; Single and TwoPass: unused.</param>
         public BuiltinShaderLinkEffect(Effect? previous, ushort template, ImmutableArray<ulong> shaderIds, Spread<Uniform> uniforms,
             RectangleF padding, float radius = 0f)
-            : base(previous, template, shaderIds, uniforms, padding, radius, null)
+            : base(previous, template, shaderIds, uniforms, padding, radius)
         {
         }
     }

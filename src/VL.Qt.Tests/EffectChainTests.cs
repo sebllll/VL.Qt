@@ -13,8 +13,8 @@ namespace VL.Qt.Tests
     {
         sealed class TestShaderLink : ShaderLink
         {
-            public TestShaderLink(Effect? previous, ushort template = Protocol.EffectTemplate.Single, string? strengthUniform = null)
-                : base(previous, template, ImmutableArray.Create(7UL), null, new RectangleF(1, 2, 3, 4), 10, strengthUniform)
+            public TestShaderLink(Effect? previous, ushort template = Protocol.EffectTemplate.Single)
+                : base(previous, template, ImmutableArray.Create(7UL), null, new RectangleF(1, 2, 3, 4), 10)
             {
             }
         }
@@ -54,7 +54,7 @@ namespace VL.Qt.Tests
                 w.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
                 w.EffectF32(Protocol.Prop.EffectBlur, 0.5f);
                 w.EndLink();
-                w.BeginShaderLink(Protocol.EffectTemplate.TwoPass, new ulong[] { 5 }, 1, 2, 3, 4, 0, default);
+                w.BeginShaderLink(Protocol.EffectTemplate.TwoPass, new ulong[] { 5 }, 1, 2, 3, 4, 0);
                 w.UniformF32("angle", 45);
                 w.EndLink();
                 w.EndEffectChain();
@@ -70,12 +70,12 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void PyramidLinkWithoutStrengthName()
+        public void PyramidLink()
         {
             var hex = Write(w =>
             {
                 w.BeginEffectChain(1);
-                w.BeginShaderLink(Protocol.EffectTemplate.Pyramid, new ulong[] { 11, 12 }, 0, 0, 0, 0, 32, default);
+                w.BeginShaderLink(Protocol.EffectTemplate.Pyramid, new ulong[] { 11, 12 }, 0, 0, 0, 0, 32);
                 w.EndLink();
                 w.EndEffectChain();
             });

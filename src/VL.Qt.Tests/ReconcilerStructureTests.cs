@@ -279,7 +279,7 @@ namespace VL.Qt.Tests
             public void EffectRect(ushort prop, float x, float y, float width, float height) { }
             public void EffectRef(ushort prop, uint refId) { }
             public void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
-                float paddingRight, float paddingBottom, float strength, ReadOnlySpan<char> strengthUniform) { }
+                float paddingRight, float paddingBottom, float strength) { }
             public void EndLink() { }
             public void EndEffectChain() { }
         }

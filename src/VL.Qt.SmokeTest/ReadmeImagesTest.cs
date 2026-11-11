@@ -141,7 +141,7 @@ static class ReadmeImagesTest
         void Split(CommandWriter c, float s)
         {
             var p = splitPad * s;
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [split], p, p, p, p, 0, "");
+            c.BeginShaderLink(Protocol.EffectTemplate.Single, [split], p, p, p, p, 0);
             c.UniformF32("amount", 0.022f);
             c.UniformVec2("direction", 1, 0);
             c.UniformColor("tint", 1, 1, 1, 1);
@@ -182,7 +182,7 @@ static class ReadmeImagesTest
             {
                 var p = MathF.Ceiling(1.5f * radius * s);
                 cmd.BeginEffectChain(text);
-                cmd.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [pre, comp], p, p, p, p, radius * s, "");
+                cmd.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [pre, comp], p, p, p, p, radius * s);
                 uniforms(cmd, p);
                 cmd.EndLink();
                 cmd.EndEffectChain();
@@ -220,7 +220,7 @@ static class ReadmeImagesTest
                     const float L = 14;
                     var pad = (L / 2 + L / 64) * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [directional], pad, 0, pad, 0, 0, "");
+                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [directional], pad, 0, pad, 0, 0);
                     cmd.UniformF32("angle", 0);
                     cmd.UniformF32("blurLength", L * s);
                     cmd.EndLink();
@@ -232,7 +232,7 @@ static class ReadmeImagesTest
                     const float L = 40;
                     var pad = L * 0.6f * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [zoom], pad, pad, pad, pad, 0, "");
+                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [zoom], pad, pad, pad, pad, 0);
                     cmd.UniformVec2("center", 0.5f, 0.5f);
                     cmd.UniformF32("blurLength", L * s);
                     cmd.EndLink();
@@ -243,7 +243,7 @@ static class ReadmeImagesTest
                 {
                     var pad = 30 * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [radial], pad, pad, pad, pad, 0, "");
+                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [radial], pad, pad, pad, pad, 0);
                     cmd.UniformVec2("center", 0.5f, 0.5f);
                     cmd.UniformF32("angle", 8);
                     cmd.EndLink();
@@ -256,7 +256,7 @@ static class ReadmeImagesTest
                     cmd.SetU64(map, Protocol.Prop.FragmentShader, waveMap);
                     cmd.SetPlace(map, 0, 0, TextW * s, TextH * s);
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0, "");
+                    cmd.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
                     cmd.UniformF32("displacement", 7 * s);
                     cmd.UniformRef("displacementSource", map);
                     cmd.EndLink();

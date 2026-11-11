@@ -118,11 +118,11 @@ namespace VL.Qt
 
         /// <summary>
         /// Starts a SHADER link: <paramref name="template"/> = <see cref="Protocol.EffectTemplate"/>, shader resource ids by
-        /// role (Single/TwoPass: fragment; Pyramid: prefilter, composite), padding in DIP, strength (TwoPass: effect size,
-        /// Pyramid: radius in DIP) and for TwoPass the uniform that takes it (else empty). Uniform* entries follow.
+        /// role (Single/TwoPass: fragment; Pyramid: prefilter, composite), padding in DIP and strength (Pyramid: radius in
+        /// DIP, else unused). Uniform* entries follow.
         /// </summary>
         void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
-            float paddingRight, float paddingBottom, float strength, ReadOnlySpan<char> strengthUniform);
+            float paddingRight, float paddingBottom, float strength);
 
         /// <summary>Closes the link started by <see cref="BeginMultiLink"/> or <see cref="BeginShaderLink"/>.</summary>
         void EndLink();

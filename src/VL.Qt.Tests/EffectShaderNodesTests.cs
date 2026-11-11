@@ -35,7 +35,6 @@ namespace VL.Qt.Tests
             Assert.That(link.ShaderIds, Has.Length.EqualTo(2));
             Assert.That(link.ShaderIds.All(id => id != 0), Is.True);
             Assert.That(link.Strength, Is.EqualTo(40f).Within(1e-3));
-            Assert.That(link.StrengthUniform, Is.Empty);
             Assert.That(link.Padding, Is.EqualTo(new RectangleF(60, 60, 60, 60)));
             Assert.That(link.Uniforms.Select(u => u.Name), Is.EquivalentTo(new[] { "color", "spread", "intensity", "additive" }));
             Assert.That(_api.Calls.Count(c => c.StartsWith("create")), Is.EqualTo(2), "two shaders, baked once");
@@ -78,7 +77,6 @@ namespace VL.Qt.Tests
             var link = Link(node.Update(null, 0f, Unit(64)));
             Assert.That(link.Template, Is.EqualTo(Protocol.EffectTemplate.TwoPass));
             Assert.That(link.ShaderIds, Has.Length.EqualTo(1));
-            Assert.That(link.StrengthUniform, Is.Empty, "pass 2 is told by passIndex, set by QtNative");
             Assert.That(link.Uniforms.Select(u => u.Name), Is.EqualTo(new[] { "angle", "blurLength" }));
             Assert.That(link.Uniforms.Single(u => u.Name == "blurLength").Numbers.M11, Is.EqualTo(64f).Within(1e-3));
             Assert.That(link.Padding, Is.EqualTo(new RectangleF(33, 0, 33, 0)), "L / 2 + L / 64, horizontal");
@@ -93,14 +91,12 @@ namespace VL.Qt.Tests
         {
             using var zoom = new ZoomBlurNode(_client);
             var z = Link(zoom.Update(null, new Vector2(0.5f, 0.5f), Unit(100)));
-            Assert.That(z.StrengthUniform, Is.Empty);
             Assert.That(z.Uniforms.Select(u => u.Name), Is.EqualTo(new[] { "center", "blurLength" }));
             Assert.That(z.Uniforms.Single(u => u.Name == "blurLength").Numbers.M11, Is.EqualTo(100f).Within(1e-3));
             Assert.That(z.Padding, Is.EqualTo(new RectangleF(60, 60, 60, 60)));
 
             using var radial = new RadialBlurNode(_client);
             var r = Link(radial.Update(null, new Vector2(0.5f, 0.5f), 12f, Unit(30)));
-            Assert.That(r.StrengthUniform, Is.Empty);
             Assert.That(r.Uniforms.Single(u => u.Name == "angle").Numbers.M11, Is.EqualTo(12f), "degrees are not converted");
             Assert.That(r.Padding, Is.EqualTo(new RectangleF(30, 30, 30, 30)));
         }
