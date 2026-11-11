@@ -1,0 +1,140 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="mcE6k4dZBMuAX4e7hOwsUn" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+  <NugetDependency Id="GhE9mdbtYAqPXd1KsQCF9T" Location="VL.CoreLib" />
+  <DocumentDependency Id="jdiB711ktDCB0LErUx9jGh" Location="../../VL.Qt.vl" />
+  <Patch Id="VQCJKNDIWLzxVIhGscdb7e">
+    <Canvas Id="p0mX7hDlttfAzo8ATtoyM8" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="krkwPsdmD0YmW5pRNibS1p">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="rEBEWSd8ogFSekFqMi0x0m">
+        <Canvas Id="aHqIWKBWX9FasGAGZaczw4" CanvasType="Group">
+          <Pad Id="aJz0dhmTA4neEkVjV8vn0w" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Use Custom Fonts">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="HI59yS5qNZS1XkwznVyZfj" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="LoadFont [Qt]&#xD;&#xA;- Path: font file (TTF, OTF, TTC), relative to this patch&#xD;&#xA;- Family: name for the Font Family pin of Text or Style&#xD;&#xA;- Error: why the file could not be loaded">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="e8ijQKVUKFm3eU02pETRT8" Bounds="85,650,830,235" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- LoadFont registers the file for this app only, nothing is installed. LoadFont nodes with the same file share one registration.&#xD;&#xA;- Path is relative to this patch. The folder fonts/ next to the patch is copied next to the executable on export,&#xD;&#xA;  so the same Path works in the exported app. Keep the folder name and the relative Path.&#xD;&#xA;- License: ship only fonts whose license allows it. DejaVu Sans (here) is free (LICENSES/DejaVu-Fonts.txt); many desktop&#xD;&#xA;  fonts (Segoe UI, Arial, Helvetica ...) may not be shipped with an app.&#xD;&#xA;- A missing or unreadable file shows a warning at the node, Family stays empty and the default font is drawn.&#xD;&#xA;  In an exported app that warning is only visible with a logging provider (see HowTo Configure logging providers).&#xD;&#xA;- A family name that is neither installed nor loaded is logged once, Qt then uses a substitute font.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="D7i6kLhEUwLTSKnHgjCRkO" Comment="Path" Bounds="302,241,300,19" ShowValueBox="true" isIOBox="true" Value="fonts/DejaVuSans.ttf">
+            <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Path" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="300,275,65,19" Id="OgqQsIqXrp1hOxceVkA74X">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="LoadFont" />
+            </p:NodeReference>
+            <Pin Id="2Bt9YWpw64QhfFlflTzNb5" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DABBNc2iPJX7W40cxB2YmM" Name="Path" Kind="InputPin" />
+            <Pin Id="H3gH8mgKVAEB8oYGvcKQ2R" Name="Family" Kind="OutputPin" />
+            <Pin Id="5Q5UBn2fHJtF0hsS1Z7ukc" Name="Error" Kind="OutputPin" />
+          </Node>
+          <Pad Id="DvTyp2IsyXWqe8IBMRCZMV" Comment="Error" Bounds="362,315,330,19" ShowValueBox="true" isIOBox="true" Value="">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="3o8AjCisJa0mt7HlpURgL7" Comment="Family" Bounds="302,349,200,19" ShowValueBox="true" isIOBox="true" Value="">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="FDRUBim6Il7iOxRy0D5tTS" Comment="Size" Bounds="242,373,35,28" ShowValueBox="true" isIOBox="true" Value="5, 0.6">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="SXD3j1Bm3j7OK2SUYsVCp0" Comment="Text" Bounds="282,416,240,19" ShowValueBox="true" isIOBox="true" Value="Hamburgefonstiv 0123">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="ToRdvjXKttxVBo0LJiAxMd" Comment="Font Size" Bounds="322,450,35,15" ShowValueBox="true" isIOBox="true" Value="0.3">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="240,480,105,19" Id="wBf9mxZrzGuL2lLVYMuO1p">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Text" />
+            </p:NodeReference>
+            <Pin Id="dPD2Ba5BER0rG1VeFKHRPa" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="J6t2WYiauERFkSiWkXOc7d" Name="Size" Kind="InputPin" />
+            <Pin Id="dz9h5L3fc7U9QvYkwEB0j3" Name="Transform" Kind="InputPin" />
+            <Pin Id="OBOUjh6Uitd9pF0sJP69uf" Name="Text" Kind="InputPin" />
+            <Pin Id="VIUiduxDWyxzkWbBSK0Wst" Name="Font Family" Kind="InputPin" />
+            <Pin Id="gjgGKMPdgwdbxTjU2pvMq9" Name="Font Size" Kind="InputPin" />
+            <Pin Id="416rue9WzLe0qN36N99IT7" Name="Color" Kind="InputPin" />
+            <Pin Id="iNX6nVxNb6czWWIuHlYRQ3" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="240,560,85,19" Id="Bl9yrA0KwJDCAxF8CCYYe0">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="a0TyuypWFKmaJOq9zONFnT" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MLHWjfeObvcnObUh8zxL7m" Name="Input" Kind="InputPin" />
+            <Pin Id="aGExJ8iG7XwflZpOwI6iqV" Name="Space" Kind="InputPin" />
+            <Pin Id="1iWwQK23Il3fnoSeDEsKu0" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="67Mi3FsLSfWIGG79FcvPZx" Name="Enabled" Kind="InputPin" />
+            <Pin Id="uK9CxfPF4SmV6AChDCDlU7" Name="Title" Kind="InputPin" />
+            <Pin Id="CMLLSKpSqiu5fT3SMlrCvJ" Name="Error" Kind="OutputPin" />
+          </Node>
+          <Pad Id="0yAS6CGSue07rBEgmvRZfe" Comment="Title" Bounds="322,526,140,19" ShowValueBox="true" isIOBox="true" Value="HowTo Use custom fonts">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+        </Canvas>
+        <Link Id="9HI6mhkn0F1N8TrC4OYPqI" Ids="D7i6kLhEUwLTSKnHgjCRkO,DABBNc2iPJX7W40cxB2YmM" />
+        <Link Id="0s6yWfOGqnim6TZ5d66pyo" Ids="5Q5UBn2fHJtF0hsS1Z7ukc,DvTyp2IsyXWqe8IBMRCZMV" />
+        <Link Id="PzJZa9MwcmlytT2xTAXf7p" Ids="H3gH8mgKVAEB8oYGvcKQ2R,3o8AjCisJa0mt7HlpURgL7" />
+        <Link Id="uENReaAlq5KR89RD6wlklE" Ids="H3gH8mgKVAEB8oYGvcKQ2R,VIUiduxDWyxzkWbBSK0Wst" />
+        <Link Id="dttkj5FeYpCcwhF3MwfU1x" Ids="FDRUBim6Il7iOxRy0D5tTS,J6t2WYiauERFkSiWkXOc7d" />
+        <Link Id="2EhiDjaS0eT6KWMyXemWr1" Ids="SXD3j1Bm3j7OK2SUYsVCp0,OBOUjh6Uitd9pF0sJP69uf" />
+        <Link Id="RPq6WTTlsV5VsdAfKnr9Li" Ids="ToRdvjXKttxVBo0LJiAxMd,gjgGKMPdgwdbxTjU2pvMq9" />
+        <Link Id="PgTtyXlsFhlOka7Rz8VJFa" Ids="iNX6nVxNb6czWWIuHlYRQ3,MLHWjfeObvcnObUh8zxL7m" />
+        <Link Id="qyJtMKr3qUl3CpxqRitHJa" Ids="0yAS6CGSue07rBEgmvRZfe,uK9CxfPF4SmV6AChDCDlU7" />
+        <Patch Id="iTW4WTgl1gUlvvpy7dkDWl" Name="Create" />
+        <Patch Id="72JjzUhwPxvnb4MS0V2HkD" Name="Update" />
+        <ProcessDefinition Id="jK38b8nSMtLWexhzJX0wEo">
+          <Fragment Id="WetMP4pXBE9HwBoJsFceUI" Patch="iTW4WTgl1gUlvvpy7dkDWl" Enabled="true" />
+          <Fragment Id="V8ZgGDlKsZ5VK2jKYbd08z" Patch="72JjzUhwPxvnb4MS0V2HkD" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+</Document>

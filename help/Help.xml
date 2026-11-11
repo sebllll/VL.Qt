@@ -8,6 +8,7 @@
 	</Topic>
 	<Topic title="Text">
 		<VLDocument link="Qt\HowTo Draw Text.vl" tags="font typography" />
+		<VLDocument link="Qt\HowTo Use custom fonts.vl" tags="font ttf otf loadfont typography" />
 		<VLDocument link="Qt\HowTo Measure Text.vl" tags="" />
 	</Topic>
 	<Topic title="Layout">
