@@ -116,8 +116,10 @@ static class PerfOverlayTest
             if (!ok) pump(20);
             return (ok, $"pump {s.pump:F1}, events {s.events:F1}, vsync {s.vsync:F1}, sync {s.sync:F1}, render {s.render:F1}, present {s.present:F1}");
         });
-        check(sys.Contains("swap int. 1 VSync on") && Line(sys, "allow tearing").StartsWith("allow tearing no"),
-            $"perfoverlay: VSync on: swap int. 1, allow tearing no ({Line(sys, "swap int.")} | {Line(sys, "allow tearing")})");
+        // Allow tearing is a D3D11 notion; other backends (Linux GL) show n/a.
+        var tearOn = sys.Contains("backend d3d11", StringComparison.OrdinalIgnoreCase) ? "allow tearing no" : "allow tearing n/a";
+        check(sys.Contains("swap int. 1 VSync on") && Line(sys, "allow tearing").StartsWith(tearOn),
+            $"perfoverlay: VSync on: swap int. 1, {tearOn} ({Line(sys, "swap int.")} | {Line(sys, "allow tearing")} | {Line(sys, "backend")})");
         foreach (var (page, name) in new[] { (Summary, "summary"), (Timeline, "timeline"), (SystemPage, "system") })
         {
             Native.vlqt_window_set_overlay(v, Stats | ((page + 1) << PageShift));
