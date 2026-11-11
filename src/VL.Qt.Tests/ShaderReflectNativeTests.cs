@@ -33,7 +33,10 @@ void main() {
 
         // The test output has no runtimes/<rid>/native (the repo's deploy folder is not copied, 128 MB): link it in.
         [OneTimeSetUp]
-        public void LinkNativeDir()
+        public void LinkNativeDir() => LinkNative();
+
+        // Also used by tests that reflect real shaders (EffectTemplateShadersTests); ignores the test without a built vlqt.
+        internal static void LinkNative()
         {
             var rid = (OperatingSystem.IsWindows() ? "win-" : "linux-")
                 + (RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "arm64" : "x64");
