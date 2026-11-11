@@ -143,7 +143,11 @@ VLQT_API const char* vlqt_last_error(void);
  *   x, y           outer top-left incl. frame (QWindow::setFramePosition, set before show). x or y NaN/inf =
  *                  centered on the primary screen's working area. A window rect on no screen is centered as well.
  *   width, height  client size (QWindow::resize). < 1 = 600x400.
- *   swapInterval   0 = Present never waits, 1 = VSync. Fixed at creation.
+ *   swapInterval   0 = Present never waits, 1 = VSync. Fixed at creation. Several VSync windows do not halve the frame rate
+ *                  on Windows (D3D11): Qt runs one VBlank thread per monitor (qdxgivsyncservice) that posts the update
+ *                  requests, and each window waits in its own QRhi::beginFrame. Condition: the host dispatches the Win32
+ *                  messages of its thread between the pumps (vvvv does); otherwise a request renders one pump later.
+ *                  Linux not measured yet.
  * Wayland: clients cannot place their windows, the position (and centering) is ignored there, only the size applies. */
 VLQT_API void* vlqt_window_create_at(float x, float y, int width, int height, const char* title, int swapInterval);
 /* Short form: vlqt_window_create_at(NaN, NaN, width, height, title, 0) = centered, no VSync. */
