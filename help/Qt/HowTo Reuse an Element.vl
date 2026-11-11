@@ -138,7 +138,7 @@
             <Pin Id="m7KkS2NsNNVUSyJmR4MNm4" Name="Input" Kind="InputPin" />
             <Pin Id="9LHlA5sdimb9IVOIAPbY29" Name="Size" Kind="InputPin" />
             <Pin Id="Dg9wwoaUNUsE3WX3uErcPj" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="77NofJaBa23iE71Byt59D7" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="77NofJaBa23iE71Byt59D7" Name="Transform" Kind="InputPin" />
             <Pin Id="tPtmxGGRXjUcCV5rpdmkuh" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="6h1JGvInxMFAs56kQc5Uc4" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="lfJzDdFi7CGhnBSGlw8HUC" Name="Clip" Kind="InputPin" IsHidden="true" />
@@ -201,7 +201,7 @@
             <Pin Id="Aowrdkz1oEj9qkZfInBAEu" Name="Input" Kind="InputPin" />
             <Pin Id="z7RKojosWlLtgUrM8Jd0xK" Name="Size" Kind="InputPin" />
             <Pin Id="g1FdURqGBCTYE2RM8QZ7bz" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="ONUuaOFT5Jhfn83ueViE0l" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ONUuaOFT5Jhfn83ueViE0l" Name="Transform" Kind="InputPin" />
             <Pin Id="jdul8u9N6NWO3ZaCmuAJgi" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="DYpThdf06i9otsDzmXu4QA" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="wLKr8AEe2xdvppoWoLjpqz" Name="Clip" Kind="InputPin" IsHidden="true" />

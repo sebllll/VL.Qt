@@ -268,7 +268,7 @@
             <Pin Id="405stDaI71punuiyuUxMJv" Name="Output" Kind="OutputPin" />
             <Pin Id="VTvsQtKJy7tdJM7HhAvUt9" Name="Size" Kind="InputPin" />
             <Pin Id="Cm22SPafr3GNFbVBADZO4O" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="DQTIz5UTxduMgB6f6b2ErA" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DQTIz5UTxduMgB6f6b2ErA" Name="Transform" Kind="InputPin" />
             <Pin Id="FvJZMxjg9oaMHPms7Gpnnj" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="hJ9uTMH2mZU9CfZvO5h0Ae" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="LJZgkzO8UmcNSC57SsTvfD" Name="Anchor" Kind="InputPin" IsHidden="true" />
