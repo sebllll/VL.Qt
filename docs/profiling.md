@@ -43,7 +43,7 @@ To compare with another renderer, build the same scenario as a patch with the ot
 ## Read the numbers with care
 
 - It measures **CPU only**. GPU time is not in the profile (see `GPU` in the performance overlay).
-- The window runs with VSync at the display refresh rate (the default of the `VSync` pin). Per-frame values assume that rate; a present can wait for the refresh without using CPU.
+- The window runs with VSync at the display refresh rate (the default of the `VSync` pin). Per-frame values assume that rate; a frame can wait for the refresh without using CPU (F5 segment "vsync wait").
 - vvvv's main loop timer busy-waits (`VL.Core.PreciseMainLoopTimer`) and shows up as constant CPU load in every scenario. That is vvvv, not VL.Qt; look at the other threads.
 - Runs on different machines, refresh rates or vvvv/Qt versions are not directly comparable. Compare runs from the same machine.
 - Do not launch the program through Ultra (`ultra profile -- <exe>`): the window is then never shown, Qt renders nothing, and the profile misses the whole render side.

@@ -49,7 +49,7 @@ namespace VL.Qt
         /// <param name="bounds">Initial position and size in DIP, like Bounds on create of VL.Skia/VL.Stride (size = client
         /// size, position = outer top-left), set by QtNative before show. Empty bounds give 600x400 centered; bounds on no
         /// screen are centered (QScreen, all platforms; Wayland ignores the position).</param>
-        /// <param name="vSync">Swap interval 1 (default, no tearing, Present may wait for the refresh) or 0 (Present never waits, tearing possible). Fixed at creation, Qt reads it when the swap chain is created.</param>
+        /// <param name="vSync">Swap interval 1 (default, no tearing, the frame may wait for the refresh) or 0 (Present never waits, tearing possible). Fixed at creation, Qt reads it when the swap chain is created.</param>
         /// <param name="mode"><see cref="Protocol.WindowMode"/> bits set before the first show (e.g. Borderless: no frame
         /// flash); later changes via <see cref="SetMode"/>.</param>
         /// <param name="iconPath">Full path of the window icon, set before the first show (no flash of the default icon);

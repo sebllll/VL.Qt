@@ -45,7 +45,7 @@ per vvvv frame:
 
 1. Each `QQuickWindow` renders directly into its own swap chain: Direct3D 11 on Windows (one device shared by all windows and images), OpenGL on Linux
 2. No `exec()` and no render thread: Qt's `basic` render loop, pumped once per vvvv frame (`vlqt_app_process_events`); each window renders at most once per pump
-3. VSync on by default to avoid tearing, but vvvv's frame clock still controls timing: the present may wait up to one refresh interval inside the pump. The Renderer's `VSync` pin off gives swap interval 0 (never blocks, tearing allowed). See [Timing](decisions/timing.md)
+3. VSync on by default to avoid tearing, but vvvv's frame clock still controls timing: a frame may wait up to one refresh interval inside the pump (at the start of the frame, F5 segment "vsync wait"). The Renderer's `VSync` pin off gives swap interval 0 (never blocks, tearing allowed). See [Timing](decisions/timing.md)
 4. Offscreen textures are only used inside the scene: Effect layers, ShaderEffect sources and Snapshot. There is no texture output to Stride or Skia layers
 
 ## Events

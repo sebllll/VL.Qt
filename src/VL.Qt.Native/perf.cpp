@@ -136,6 +136,7 @@ constexpr Rgb kPhaseColor[PerfMonitor::PhaseCount] = {
     {192, 128, 255, "#c080ff"}, // sync
     {255, 160, 40, "#ffa028"},  // render
     {64, 208, 208, "#40d0d0"},  // present
+    {176, 196, 222, "#b0c4de"}, // vsync wait
 };
 constexpr Rgb kGpuColor{80, 220, 120, "#50dc78"};
 constexpr Rgb kBudgetColor{255, 208, 64, "#ffd040"};
@@ -143,17 +144,12 @@ const char* const kGreen = "#50dc78";
 const char* const kYellow = "#ffd040";
 const char* const kRed = "#ff5050";
 const char* const kGrey = "#909090";
-const char* const kPhaseName[PerfMonitor::PhaseCount] = {"events", "sync", "render", "present"};
+const char* const kPhaseName[PerfMonitor::PhaseCount] = {"events", "sync", "render", "present", "vsync wait"};
+// Frame order of the phases (timeline bottom -> top, summary rows): the vsync wait sits between the events and the
+// sync. The enum keeps vsync last, so the phase numbers of vlqt_test_perf_spike stay.
+constexpr int kPhaseOrder[PerfMonitor::PhaseCount] = {PerfMonitor::PhaseEvents, PerfMonitor::PhaseVsync,
+    PerfMonitor::PhaseSync, PerfMonitor::PhaseRender, PerfMonitor::PhasePresent};
 const char* const kPageName[PerfMonitor::PageCount] = {"SUMMARY", "TIMELINE", "SCENE", "SYSTEM", "RESOURCES"};
-
-// #90: the swap chain waits for the vertical blank in Present (no QRhiSwapChain::NoVSync), so the present phase
-// includes that wait. No swap chain (software backend, before the first frame): plain "present".
-bool vsyncWaits(QQuickWindow* window)
-{
-    QRhiSwapChain* sc = window ? window->swapChain() : nullptr;
-    return sc && !(sc->flags() & QRhiSwapChain::NoVSync);
-}
-const char* presentName(bool vsync) { return vsync ? "present (incl. VSync wait)" : "present"; }
 
 #ifdef Q_OS_WIN
 // Same query as QRhiD3D11::create(): IDXGIFactory5::CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING),
@@ -185,6 +181,7 @@ float phaseMs(const PerfSample& s, int phase)
     case PerfMonitor::PhaseEvents: return s.events;
     case PerfMonitor::PhaseSync: return s.sync;
     case PerfMonitor::PhaseRender: return s.render;
+    case PerfMonitor::PhaseVsync: return s.vsync;
     default: return s.present;
     }
 }
@@ -204,31 +201,26 @@ constexpr Rgb kHostColor[SegQt] = {
 const char* const kHostName[SegQt] = {"vvvv", "GC", "apply"};
 bool s_hostSegments = true;
 
-const Rgb& segColor(int seg) { return seg < SegQt ? kHostColor[seg] : kPhaseColor[seg - SegQt]; }
-const char* segName(int seg, bool vsync = false)
-{
-    if (seg < SegQt)
-        return kHostName[seg];
-    return seg - SegQt == PerfMonitor::PhasePresent ? presentName(vsync) : kPhaseName[seg - SegQt];
-}
+const Rgb& segColor(int seg) { return seg < SegQt ? kHostColor[seg] : kPhaseColor[kPhaseOrder[seg - SegQt]]; }
+const char* segName(int seg) { return seg < SegQt ? kHostName[seg] : kPhaseName[kPhaseOrder[seg - SegQt]]; }
 float segMs(const PerfSample& s, int seg)
 {
     switch (seg) {
     case SegVvvv: return s.hostReported ? std::max(0.f, s.host.vvvv - s.host.gc_pause) : 0;
     case SegGc: return s.hostReported ? s.host.gc_pause : 0;
     case SegApply: return s.hostReported ? s.host.apply : 0;
-    default: return phaseMs(s, seg - SegQt);
+    default: return phaseMs(s, kPhaseOrder[seg - SegQt]);
     }
 }
 // First segment shown (host segments off: the Qt phases only).
 int firstSeg() { return s_hostSegments ? 0 : SegQt; }
-// Bar height: the shown segments; = pump without host segments (events = pump - sync - render - present).
+// Bar height: the shown segments; = pump without host segments (events = pump - vsync - sync - render - present).
 float stackMs(const PerfSample& s)
 {
     float sum = 0;
     for (int seg = firstSeg(); seg < SegQt; seg++)
         sum += segMs(s, seg);
-    return sum + std::max(s.pump, s.events + s.sync + s.render + s.present);
+    return sum + std::max(s.pump, s.events + s.vsync + s.sync + s.render + s.present);
 }
 
 // Pump (Qt's share of a vvvv frame): green < half the budget, yellow < budget, red above.
@@ -312,9 +304,22 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
         Qt::ConnectionType(Qt::DirectConnection | Qt::SingleShotConnection));
     // Basic render loop: all signals arrive on the GUI (vvvv) thread inside processEvents.
     // m_spikePhase >= 0 only after vlqt_test_perf_spike (test hook).
-    connect(window, &QQuickWindow::beforeSynchronizing, this, [this] {
+    // #90 vsync wait: beforeFrameBegin -> beforeSynchronizing. QSGGuiThreadRenderLoop::renderWindow emits
+    // beforeFrameBegin right before QRhi::beginFrame, and syncSceneGraph emits beforeSynchronizing right after it; Qt has
+    // no signal at the end of beginFrame. With D3D11 beginFrame waits on the frame latency waitable object
+    // (qrhid3d11.cpp:1489-1496, v6.12.0, max frame latency 2): with VSync that is where the wait for the refresh lands,
+    // Present(1) itself hardly blocks. Without VSync the same wait shows the GPU being behind. Also in this segment: the
+    // rest of beginFrame (reading back the previous frame's timestamps), prepareSync and the beforeSynchronizing slots
+    // connected before this one (the UpdateGate's dirty check, short). Software backend: no beforeFrameBegin, 0.
+    connect(window, &QQuickWindow::beforeFrameBegin, this, [this] {
         if (m_spikePhase >= 0) spin(PhaseEvents);
+        m_tFrameBegin = nowMs();
+    }, Qt::DirectConnection);
+    connect(window, &QQuickWindow::beforeSynchronizing, this, [this] {
+        if (m_spikePhase >= 0) spin(m_tFrameBegin >= 0 ? PhaseVsync : PhaseEvents);
         m_tSyncBegin = nowMs();
+        if (m_tFrameBegin >= 0)
+            m_cur.vsync += float(m_tSyncBegin - std::exchange(m_tFrameBegin, -1.0));
     }, Qt::DirectConnection);
     connect(window, &QQuickWindow::afterSynchronizing, this, [this] {
         if (m_spikePhase >= 0) spin(PhaseSync);
@@ -369,7 +374,8 @@ void PerfMonitor::endPumpAll(float pumpMs)
 void PerfMonitor::endPump(float pumpMs)
 {
     m_cur.pump = pumpMs;
-    m_cur.events = std::max(0.0f, pumpMs - m_cur.sync - m_cur.render - m_cur.present);
+    m_cur.events = std::max(0.0f, pumpMs - m_cur.vsync - m_cur.sync - m_cur.render - m_cur.present);
+    m_tFrameBegin = -1; // a beginFrame that failed has no sync
     m_counters.add(m_cur, nowMs(), budgetMs());
     m_ring[(m_head + m_count) % kHistory] = m_cur;
     if (m_count < kHistory)
@@ -401,6 +407,7 @@ void PerfMonitor::summary(vlqt_perf* out) const
         out->sync_ms += s.sync / s.swaps;
         out->render_ms += s.render / s.swaps;
         out->present_ms += s.present / s.swaps;
+        out->vsync_ms += s.vsync / s.swaps;
         if (s.gpu > 0) {
             out->gpu_ms += s.gpu;
             out->gpu_ms_max = std::max(out->gpu_ms_max, double(s.gpu));
@@ -419,6 +426,7 @@ void PerfMonitor::summary(vlqt_perf* out) const
         out->sync_ms /= pumpsWithSwap;
         out->render_ms /= pumpsWithSwap;
         out->present_ms /= pumpsWithSwap;
+        out->vsync_ms /= pumpsWithSwap;
     }
     if (frames) {
         out->frame_ms /= frames;
@@ -562,6 +570,7 @@ void perfEval(const vlqt_perf_sample* samples, const double* tMs, int n, double 
         s.sync = v.sync;
         s.render = v.render;
         s.present = v.present;
+        s.vsync = v.vsync;
         s.gpu = v.gpu;
         s.events = v.events;
         s.swaps = v.swaps;
@@ -910,7 +919,7 @@ QString PerfMonitor::summaryPage(QString* body) const
         m_overlay->setProperty("barColor", QColor(QLatin1String(pumpColor(pumpAvg, budget))));
     }
 
-    constexpr int L = 11, W = 8;
+    constexpr int L = 12, W = 8;
     Html b;
     b.c(kGrey, lab("ms", L) + QStringLiteral("avg").rightJustified(W) + QStringLiteral("p50").rightJustified(W)
         + QStringLiteral("p95").rightJustified(W) + QStringLiteral("p99").rightJustified(W) + QStringLiteral("max").rightJustified(W)).br();
@@ -922,13 +931,8 @@ QString PerfMonitor::summaryPage(QString* body) const
         [&](double v) { return onDemand ? kGrey : frameColor(v, budget); });
     pRow("pump", pumpAvg, st.pump_p50, st.pump_p95, st.pump_p99, st.pump_max,
         [&](double v) { return pumpColor(v, budget); });
-    const bool vsync = vsyncWaits(m_window);
-    for (int ph = 0; ph < PhaseCount; ph++) {
-        b.t("  ");
-        if (ph == PhasePresent && vsync) // too long for the name column: the numbers follow on the next line
-            b.c(kPhaseColor[ph].html, presentName(true)).br().t(QString(L, u' '));
-        else
-            b.c(kPhaseColor[ph].html, lab(kPhaseName[ph], L - 2));
+    for (int ph : kPhaseOrder) {
+        b.t("  ").c(kPhaseColor[ph].html, lab(kPhaseName[ph], L - 2));
         b.c(pumpColor(na ? phSum[ph] / na : 0, budget), num(na ? phSum[ph] / na : 0, W));
         b.t(QString(3 * W, u' ')).c(pumpColor(phMax[ph], budget), num(phMax[ph], W)).br();
     }
@@ -974,10 +978,9 @@ QString PerfMonitor::timelinePage(QString* foot) const
     h.br().c(kGrey, QStringLiteral("%1 pumps, newest right, scale 0-%2 ms   F7 vvvv/GC/apply %3").arg(n)
         .arg(num(PerfTimeline::scaleFor(this), 0, 1), QLatin1String(s_hostSegments ? "on" : "off")));
 
-    const bool vsync = vsyncWaits(m_window);
     Html f;
     for (int seg = firstSeg(); seg < SegCount; seg++)
-        f.c(segColor(seg).html, QStringLiteral("■ ")).t(segName(seg, vsync)).t("  ");
+        f.c(segColor(seg).html, QStringLiteral("■ ")).t(segName(seg)).t("  ");
     f.br().c(kGpuColor.html, "- GPU  ").c(kBudgetColor.html, QStringLiteral("- budget %1 (pump > budget: red)").arg(num(budget, 0)));
     f.t("  ").c(kGrey, "- max").br();
     // Peaks: the 3 largest bars (shown segments) with their dominant segment and age.
@@ -1001,7 +1004,7 @@ QString PerfMonitor::timelinePage(QString* foot) const
                 dom = seg;
         const float total = stackMs(s);
         f.t(k == 0 ? "peaks " : "      ").c(pumpColor(total, budget), num(total, 6) + QStringLiteral(" ms"));
-        f.t("  ").c(segColor(dom).html, lab(segName(dom, vsync), 8)).t(num(segMs(s, dom), 6));
+        f.t("  ").c(segColor(dom).html, lab(segName(dom), 10)).t(num(segMs(s, dom), 6));
         f.c(kGrey, QStringLiteral("  %1 pumps ago").arg(n - 1 - peaks[k]));
         if (k < 2 && peaks[k + 1] >= 0)
             f.br();
@@ -1540,7 +1543,7 @@ void PerfTimeline::buildPrims()
         }
     }
     m_back = int(m_prims.size());
-    // Stacked in frame order: [vvvv -> GC -> apply ->] events -> sync -> render -> present (bottom to top).
+    // Stacked in frame order: [vvvv -> GC -> apply ->] events -> vsync wait -> sync -> render -> present (bottom to top).
     const int first = firstSeg();
     for (int i = 0; i < n; i++) {
         const PerfSample& s = m_monitor->viewSample(i);

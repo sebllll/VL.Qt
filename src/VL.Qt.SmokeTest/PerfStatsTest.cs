@@ -68,9 +68,9 @@ static class PerfStatsTest
         Native.vlqt_window_show(w);
         pump(20);
         rc = Native.vlqt_window_get_perf_sample(w, out ls);
-        var phases = ls.events + ls.sync + ls.render + ls.present;
+        var phases = ls.events + ls.vsync + ls.sync + ls.render + ls.present;
         check(rc == 0 && ls.pump > 0 && ls.events >= 0 && phases >= ls.pump - 0.01f,
-            $"perfstats: last sample, events = pump - frame phases (rc {rc}, pump {ls.pump:F2}, events {ls.events:F2}, sync {ls.sync:F2}, render {ls.render:F2}, present {ls.present:F2}, swaps {ls.swaps})");
+            $"perfstats: last sample, events = pump - frame phases (rc {rc}, pump {ls.pump:F2}, events {ls.events:F2}, sync {ls.sync:F2}, render {ls.render:F2}, present {ls.present:F2}, vsync {ls.vsync:F2}, swaps {ls.swaps})");
         rc = Native.vlqt_window_get_perf_stats(w, out st);
         check(rc == 0 && st.budget_ms >= 1 && st.budget_ms <= 1000.0 / 23 && st.pumps >= 20 && st.samples >= 20 && st.pump_max >= st.pump_p50,
             $"perfstats: window stats (rc {rc}, budget {st.budget_ms:F2} ms, pumps {st.pumps}, samples {st.samples}, pump p50 {st.pump_p50:F2} max {st.pump_max:F2})");
