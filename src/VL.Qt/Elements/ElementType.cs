@@ -20,5 +20,6 @@
         Slider = Protocol.Type.Slider,
         TextField = Protocol.Type.TextField,
         ShaderEffect = Protocol.Type.ShaderEffect,
+        Qml = Protocol.Type.Qml,
     }
 }

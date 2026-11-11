@@ -76,6 +76,15 @@ namespace VL.Qt.Elements
         /// <summary>Pending user value for <see cref="Protocol.Vt.String"/>.</summary>
         internal string? PendingString { get; set; }
 
+        /// <summary>QmlElement (#104): last value of each root property that QML changed, by name; null until the first change. Cleared by <see cref="ElementSink.ResetQml"/>.</summary>
+        internal Dictionary<string, object>? QmlProperties { get; set; }
+
+        /// <summary>QmlElement: number of changes written into <see cref="QmlProperties"/> (also by a reset), so a node sees that there is something new.</summary>
+        internal int QmlPropertyUpdates { get; set; }
+
+        /// <summary>QmlElement: signals not yet taken by <see cref="ElementSink.TakeQmlSignals"/>, in order of arrival.</summary>
+        internal List<QmlSignal>? PendingQmlSignals { get; set; }
+
         public string? Warning { get; set; }
 
         /// <summary>Error reported by Qt for the element (e.g. file not found), null if none (#273).</summary>
@@ -188,6 +197,52 @@ namespace VL.Qt.Elements
                 default:
                     return false;
             }
+        }
+
+        /// <summary>Most signals kept for a node that does not take them (QmlElement); further ones are dropped.</summary>
+        internal const int MaxPendingQmlSignals = 4096;
+
+        /// <summary>QmlElement (#104): the last value of each root property that QML changed. The live table: copy it, do not keep it. Null if none yet.</summary>
+        internal Dictionary<string, object>? QmlPropertyValues(int index = 0) => TryGet(index, out var s) ? s.QmlProperties : null;
+
+        /// <summary>QmlElement: number of property changes (and resets) so far; differs from the last call when <see cref="QmlPropertyValues"/> has something new.</summary>
+        internal int QmlPropertyUpdates(int index = 0) => TryGet(index, out var s) ? s.QmlPropertyUpdates : 0;
+
+        /// <summary>Stores a property change reported by QML (EV_QML_PROPERTY): the last value per name counts.</summary>
+        internal void SetQmlProperty(int index, string name, object value)
+        {
+            var s = this[index];
+            (s.QmlProperties ??= new Dictionary<string, object>(StringComparer.Ordinal))[name] = value;
+            unchecked { s.QmlPropertyUpdates++; }
+        }
+
+        /// <summary>Queues a signal of the QML root (EV_QML_SIGNAL); dropped beyond <see cref="MaxPendingQmlSignals"/> (nobody takes them).</summary>
+        internal void AddQmlSignal(int index, QmlSignal signal)
+        {
+            var s = this[index];
+            s.PendingQmlSignals ??= new List<QmlSignal>();
+            if (s.PendingQmlSignals.Count < MaxPendingQmlSignals)
+                s.PendingQmlSignals.Add(signal);
+        }
+
+        /// <summary>QmlElement: takes the signals that arrived since the last call, in order, and resets them. Call once per Update.</summary>
+        internal Spread<QmlSignal> TakeQmlSignals(int index = 0)
+        {
+            if (!TryGet(index, out var s) || s.PendingQmlSignals is not { Count: > 0 } pending)
+                return Spread<QmlSignal>.Empty;
+            var taken = pending.ToSpread();
+            pending.Clear();
+            return taken;
+        }
+
+        /// <summary>QmlElement: forgets the property values and the pending signals (the node reloaded the file or loads another one).</summary>
+        internal void ResetQml(int index = 0)
+        {
+            if (!TryGet(index, out var s))
+                return;
+            s.QmlProperties?.Clear();
+            s.PendingQmlSignals?.Clear();
+            unchecked { s.QmlPropertyUpdates++; }
         }
 
         /// <summary>Tap count of the last tap, 0 before the first tap (Click node).</summary>

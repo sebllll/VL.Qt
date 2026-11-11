@@ -317,6 +317,14 @@ namespace VL.Qt.Elements
                     return true;
                 case Protocol.Ev.Value:
                     return ApplyValue(r.Payload, sink, index);
+                case Protocol.Ev.QmlProperty:
+                    if (!QmlEvents.TryDecodeProperty(r.Payload, out var qmlName, out var qmlValue)) return false;
+                    sink.SetQmlProperty(index, qmlName, qmlValue);
+                    return true;
+                case Protocol.Ev.QmlSignal:
+                    if (!QmlEvents.TryDecodeSignal(r.Payload, out var qmlSignal)) return false;
+                    sink.AddQmlSignal(index, qmlSignal);
+                    return true;
                 case Protocol.Ev.Error:
                     // Sent only on change (allocation is fine); empty = cleared.
                     sink[index].Error = len == 0 ? null : Encoding.UTF8.GetString(r.Payload);
