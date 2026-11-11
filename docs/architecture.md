@@ -33,6 +33,7 @@ per vvvv frame:
 - **Deterministic:** same tree and time, same output
 - **Scrubbing and pause:** no Qt timers or system clocks interfere
 - **Multiple windows:** the same clock drives all renderers
+- **Exception:** a QML `Timer` in a user file (`QmlElement`) runs on wall time. QML animations follow the clock.
 
 ## C# ↔ C++ interop
 
@@ -63,6 +64,10 @@ On Windows vvvv's message loop hands mouse, touch and pen messages to Qt between
 ## Reusing elements
 
 The same element instance can hang at several places of the tree; each place gets its own Qt object, events from all places are merged. Interaction per place goes on a Group around it (see the help patch `HowTo Reuse an Element`). Exceptions: across several renderers and for Video (would decode twice) the first owner wins, with a warning.
+
+## User QML
+
+`QmlElement` (`src/VL.Qt/Elements/Qml*.cs`, native side `src/VL.Qt.Native/qmlitem.{h,cpp}`) is the one place where Qt Quick content that VL.Qt did not build enters the tree. It follows the same path as every element (CREATE, properties, apply) with two additions: `SET_QML_PROPERTIES` sends the entries of the `Properties` dictionary by name (diffed in C#, converted through `QVariant` in QtNative), and the events `EV_QML_PROPERTY` / `EV_QML_SIGNAL` carry the declared properties and signals of the file's root back to the node's sink. The node also owns the file watcher for hot reload (it bumps `QML_RELOAD`). The file is compiled on the per-window `QQmlEngine` from a `file:` URL, the instance lives as a child of the element's item. See [QML files as elements](user-qml.md) and [decisions/user-qml.md](decisions/user-qml.md).
 
 ## Performance
 

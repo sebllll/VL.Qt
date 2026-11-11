@@ -10,6 +10,7 @@ User and contributor documentation. For an overview and installation see the [pr
 | [styles.md](styles.md) | The VLQt base style, the `Style` pin, style nodes, and self-made widgets with `IStylable`. |
 | [images.md](images.md) | `QtImage` as GPU resource, the loader nodes, `ToQtImage`, `Snapshot`, mipmaps and frame budget. |
 | [effects-and-shaders.md](effects-and-shaders.md) | The `Effect` pin and its nodes, ShaderEffect, the `Sampler` node, shader nodes generated from `.frag` files. |
+| [user-qml.md](user-qml.md) | `QmlElement`: load a `.qml` file of your own as an element, properties in, changes and signals out, hot reload, limits. |
 | [tooltips.md](tooltips.md) | Preview images for `Element` and `QtImage` links in the vvvv editor. |
 | [diagnostics.md](diagnostics.md) | Performance overlays (F2/F5), the `Debug` overlay, logging and errors, GPU device loss. |
 | [profiling.md](profiling.md) | Repeatable CPU profiling of test scenarios with Ultra. |
