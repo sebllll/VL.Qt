@@ -172,6 +172,8 @@ public:
     Elements(const Elements&) = delete;
     Elements& operator=(const Elements&) = delete;
 
+    /* The engine of this window (QmlItem compiles the user file on it, #104). */
+    QQmlEngine* qmlEngine() const { return engine; }
     /* Creates an item of the given type (no parent). nullptr + err on failure. */
     QQuickItem* create(const TypeDef& type, std::string& err);
     /* Sets one property; returns an ApplyResult. Unknown properties are logged once per type. */
