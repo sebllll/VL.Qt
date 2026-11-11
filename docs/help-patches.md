@@ -49,6 +49,7 @@ Notes:                                                   (notes, size 9, bottom)
 ## Text
 
 - `HowTo Draw Text` — typography, font families, alignment, wrapping
+- `HowTo Use custom fonts` — `LoadFont` with a font file shipped next to the patch
 - `HowTo Measure Text` — measured size of text
 
 ## Layout
