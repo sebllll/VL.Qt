@@ -64,8 +64,7 @@ struct EffectLinkDesc {
     quint16 templ = 0;              // VLQT_EFFECT_TEMPLATE_*
     std::vector<quint64> shaders;   // shader resource ids by role (SINGLE/TWO_PASS: frag; PYRAMID: prefilter, composite)
     float padding[4] = {};          // DIP: left, top, right, bottom
-    float strength = 0.f;           // TWO_PASS: effect size; PYRAMID: radius in DIP; SINGLE: unused
-    QByteArray strengthUniform;     // TWO_PASS: uniform that gets the effect size (P1) and size / 64 (P2)
+    float strength = 0.f;           // PYRAMID: radius in DIP; SINGLE / TWO_PASS: unused
     std::vector<EffectUniform> uniforms;
 };
 
@@ -107,8 +106,8 @@ struct EffectComponents {
  * SHADER stage (SINGLE, TWO_PASS, PYRAMID): the stage covers its input plus the
  * link's padding; the input's texture covers the same area (the stage sets the sourceRect of the input's layer, or of the
  * element's layer source for the first link, to it), so each pass maps it 1:1 over UV 0..1. SINGLE = fx (ShaderEffectItem,
- * chain pass) samples the input; TWO_PASS = fx (hidden, own layer) with the strength uniform = strength, fx2 samples fx
- * with strength / 64, same table otherwise. PYRAMID (doc 21 "Blur-Pyramide"): fx = composite (draws, source = input,
+ * chain pass) samples the input; TWO_PASS = fx (hidden, own layer) with passIndex = 0, fx2 samples fx
+ * with passIndex = 1, same table otherwise. PYRAMID (doc 21 "Blur-Pyramide"): fx = composite (draws, source = input,
  * glow/shadow = U1 or D1), the passes D1 (prefilter, source = input) .. Dn (pyramid_down) and U(n-1) .. U1 (pyramid_up,
  * base = Dk) are hidden ShaderEffectItems with a layer under the stage, sized p_k / dpr (p_0 = stage x dpr, p_k =
  * ceil(p_(k-1) / 2), n: steps until the smaller side is under 4 px). The step count follows the stage size and dpr only
@@ -140,8 +139,7 @@ public:
         int levels = 0;                     // PYRAMID: n in use (0 = not laid out)
         QSize px;                           // PYRAMID: p_0 of the layout
         qreal dpr = 0;                      // PYRAMID: dpr of the layout
-        float strength = 0.f;               // TWO_PASS: effect size (pass 2 gets strength / 64)
-        QByteArray strengthName;            // TWO_PASS: uniform that takes it
+        float strength = 0.f;               // PYRAMID: radius in DIP
         std::vector<EffectUniform> uniforms; // SHADER: table without the reserved and broken entries
         QStringList problems;               // SHADER: content problems of the link itself (reserved names, refs, ...)
         QString shaderError;                // SHADER: setShader refused the id

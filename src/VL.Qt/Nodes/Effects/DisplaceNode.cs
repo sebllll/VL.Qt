@@ -35,7 +35,7 @@ namespace VL.Qt.Nodes
                     Uniform.Float("displacement", shift),
                     Uniform.FromTexture("displacementSource", p.Map, p.MapSampler),
                 }.ToSpread(),
-                new RectangleF(pad, pad, pad, pad), 0f, null);
+                new RectangleF(pad, pad, pad, pad));
         };
 
         readonly BuiltinShaderLink<Props> _link;

@@ -220,8 +220,9 @@ static class ReadmeImagesTest
                     const float L = 14;
                     var pad = (L / 2 + L / 64) * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [directional], pad, 0, pad, 0, L * s, "blurLength");
+                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [directional], pad, 0, pad, 0, 0, "");
                     cmd.UniformF32("angle", 0);
+                    cmd.UniformF32("blurLength", L * s);
                     cmd.EndLink();
                     cmd.EndEffectChain();
                     break;
@@ -231,8 +232,9 @@ static class ReadmeImagesTest
                     const float L = 40;
                     var pad = L * 0.6f * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [zoom], pad, pad, pad, pad, L * s, "blurLength");
+                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [zoom], pad, pad, pad, pad, 0, "");
                     cmd.UniformVec2("center", 0.5f, 0.5f);
+                    cmd.UniformF32("blurLength", L * s);
                     cmd.EndLink();
                     cmd.EndEffectChain();
                     break;
@@ -241,8 +243,9 @@ static class ReadmeImagesTest
                 {
                     var pad = 30 * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [radial], pad, pad, pad, pad, 8, "angle");
+                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [radial], pad, pad, pad, pad, 0, "");
                     cmd.UniformVec2("center", 0.5f, 0.5f);
+                    cmd.UniformF32("angle", 8);
                     cmd.EndLink();
                     cmd.EndEffectChain();
                     break;

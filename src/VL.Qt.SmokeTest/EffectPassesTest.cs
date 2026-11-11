@@ -169,11 +169,9 @@ static class EffectPassesTest
         }
         void Directional(CommandWriter c, ushort template, float pad)
         {
-            var two = template == Protocol.EffectTemplate.TwoPass;
-            c.BeginShaderLink(template, [blur], pad, 0, pad, 0, two ? L : 0, two ? "blurLength" : "");
+            c.BeginShaderLink(template, [blur], pad, 0, pad, 0, 0, "");
             c.UniformF32("angle", 0);
-            if (!two)
-                c.UniformF32("blurLength", L);
+            c.UniformF32("blurLength", L);
             c.EndLink();
         }
         void Chain(uint id, params Action<CommandWriter>[] links)
@@ -256,6 +254,11 @@ static class EffectPassesTest
         CheckApply("reserved name");
         var err = PollError();
         check(err != null && err.Contains("link 1: uniform 'texelSize' is reserved"), $"effect-passes: reserved name -> EV_ERROR ({err})");
+        // passIndex is set by QtNative (TWO_PASS: 0, then 1), so C# may not send it.
+        Chain(R, Blur, c => Wave(c, 0.05f, "passIndex"));
+        CheckApply("reserved passIndex");
+        err = PollError();
+        check(err != null && err.Contains("link 1: uniform 'passIndex' is reserved"), $"effect-passes: passIndex reserved -> EV_ERROR ({err})");
         Chain(R, c =>
         {
             c.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0, "");

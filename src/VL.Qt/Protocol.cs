@@ -270,7 +270,7 @@
         {
             /// <summary>One MultiEffect run: entries u16 prop (EffectBlurEnabled..EffectMaskInverted), u16 value type, value.</summary>
             public const ushort Multi = 1;
-            /// <summary>Filter shader link: template, shader ids, padding, strength, uniform entries like SET_UNIFORMS.</summary>
+            /// <summary>Filter shader link: template, shader ids, padding, strength (Pyramid radius), uniform entries like SET_UNIFORMS.</summary>
             public const ushort Shader = 2;
         }
 
@@ -279,7 +279,7 @@
         {
             /// <summary>One pass of the shader over the input; shader ids [fragment].</summary>
             public const ushort Single = 1;
-            /// <summary>The shader twice, strength L then L / 64 into the uniform named by the link (motion blurs); [fragment].</summary>
+            /// <summary>The shader twice, float uniform passIndex 0 then 1 (if declared; motion blurs); [fragment].</summary>
             public const ushort TwoPass = 2;
             /// <summary>Prefilter, blur pyramid, composite (Glow, InnerShadow), strength = radius in DIP; [prefilter, composite].</summary>
             public const ushort Pyramid = 3;

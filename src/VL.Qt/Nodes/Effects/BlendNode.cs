@@ -51,7 +51,7 @@ namespace VL.Qt.Nodes
                     Uniform.Float("opacity", p.Opacity),
                     Uniform.FromTexture("layerSource", p.Layer, p.LayerSampler),
                 }.ToSpread(),
-                default, 0f, null);
+                default);
 
         readonly BuiltinShaderLink<Props> _link;
 

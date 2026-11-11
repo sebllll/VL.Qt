@@ -36,7 +36,7 @@ namespace VL.Qt.Nodes
                     Uniform.Float("spread", p.Spread),
                     Uniform.Float("intensity", p.Intensity),
                 }.ToSpread(),
-                new RectangleF(pad, pad, pad, pad), radius, null);
+                new RectangleF(pad, pad, pad, pad), radius);
         };
 
         readonly BuiltinShaderLink<Props> _link;

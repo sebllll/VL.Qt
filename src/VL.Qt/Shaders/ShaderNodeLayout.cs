@@ -42,7 +42,7 @@ namespace VL.Qt.Shaders
         static readonly Regex s_sourceSampler = new(@"\buniform\s+sampler2D\s+source\b", RegexOptions.CultureInvariant);
 
         // Uniforms QtNative sets itself in a SHADER link of the effect chain (protocol.h "Effect chain"); an entry from C# would be an error.
-        static readonly ImmutableHashSet<string> s_chainAutomaticNames = ImmutableHashSet.Create(StringComparer.Ordinal, "texelSize", "dpr", "weight", "elementRect");
+        static readonly ImmutableHashSet<string> s_chainAutomaticNames = ImmutableHashSet.Create(StringComparer.Ordinal, "texelSize", "dpr", "weight", "elementRect", "passIndex");
         static readonly ImmutableHashSet<string> s_chainReservedNames = ImmutableHashSet.Create(StringComparer.Ordinal, "base", "glow", "shadow");
 
         /// <summary>

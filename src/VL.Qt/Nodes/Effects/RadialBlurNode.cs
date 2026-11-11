@@ -27,8 +27,8 @@ namespace VL.Qt.Nodes
         {
             var pad = EffectPadding.Ceil(Math.Max(Geometry.ToQt(p.Padding), 0f));
             return new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
-                new[] { Uniform.Vector2("center", p.Center) }.ToSpread(),
-                new RectangleF(pad, pad, pad, pad), Math.Max(p.Angle, 0f), "angle");
+                new[] { Uniform.Vector2("center", p.Center), Uniform.Float("angle", Math.Max(p.Angle, 0f)) }.ToSpread(),
+                new RectangleF(pad, pad, pad, pad));
         };
 
         readonly BuiltinShaderLink<Props> _link;

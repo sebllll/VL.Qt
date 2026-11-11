@@ -796,20 +796,13 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
                 link.shaders.push_back(rd<quint64>(p + e));
             std::memcpy(link.padding, p + e, sizeof link.padding);
             link.strength = rd<float>(p + e + 16);
-            const int nameLen = rd<quint16>(p + e + 20);
-            const bool twoPass = link.templ == VLQT_EFFECT_TEMPLATE_TWO_PASS;
-            if (twoPass ? nameLen < 1 || nameLen > VLQT_UNIFORM_NAME_MAX : nameLen != 0) {
-                err = at + ": strength name length " + std::to_string(nameLen)
-                    + (twoPass ? " not in 1.." + std::to_string(VLQT_UNIFORM_NAME_MAX) : std::string(", expected 0"));
+            // Reserved u16 (was the strength uniform name length, replaced by passIndex) and u16 0.
+            const int reserved = rd<quint16>(p + e + 20);
+            if (reserved != 0) {
+                err = at + ": reserved field " + std::to_string(reserved) + ", expected 0";
                 return ApplyBadValue;
             }
             e += 24;
-            if (end - e < align4(nameLen)) {
-                err = at + ": strength name exceeds the body";
-                return ApplyBadLength;
-            }
-            link.strengthUniform = QByteArray(reinterpret_cast<const char*>(p + e), nameLen);
-            e += align4(nameLen);
             for (int i = 0; i < count; ++i) {
                 const std::string ue = at + " uniform #" + std::to_string(i);
                 if (end - e < 4) {

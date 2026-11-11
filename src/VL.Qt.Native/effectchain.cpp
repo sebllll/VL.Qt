@@ -224,10 +224,10 @@ void registerTypes()
 }
 
 // Names QtNative sets in a SHADER link (protocol.h "Effect chain"): an entry from C# is an error line.
-bool reservedName(const QByteArray& n, const QByteArray& strengthName)
+bool reservedName(const QByteArray& n)
 {
     return n == "qt_Matrix" || n == "qt_Opacity" || n == "source" || n == "texelSize" || n == "dpr" || n == "weight" || n == "elementRect"
-        || n == "base" || n == "glow" || n == "shadow" || (!strengthName.isEmpty() && n == strengthName);
+        || n == "passIndex" || n == "base" || n == "glow" || n == "shadow";
 }
 
 // Wire layout of a value (like SET) for ShaderEffectItem::setUniform; out holds at least 64 bytes.
@@ -357,10 +357,9 @@ bool EffectChain::apply(const EffectChainDesc& desc, const std::vector<QQuickIte
             l.strength = d.strength >= 0.f ? d.strength : 0.f;
             if (!(d.strength >= 0.f))
                 l.problems << QStringLiteral("strength must not be negative (0 is used)");
-            l.strengthName = d.strengthUniform;
             for (const EffectUniform& u : d.uniforms) {
                 const QString name = QString::fromUtf8(u.name);
-                if (reservedName(u.name, l.strengthName))
+                if (reservedName(u.name))
                     l.problems << QStringLiteral("uniform '%1' is reserved (set by VL.Qt)").arg(name);
                 else if (u.refError)
                     l.problems << QStringLiteral("uniform '%1': %2").arg(name, QString::fromUtf8(u.refError));
@@ -576,24 +575,23 @@ void EffectChain::writeShaderLink(Link& l, const Link* old)
         l.shaderError = old->shaderError;
     }
     // Same names and types as before: values only (no layout rebuild in the passes).
-    bool sameTable = old && old->strengthName == l.strengthName && old->uniforms.size() == l.uniforms.size();
+    bool sameTable = old && old->uniforms.size() == l.uniforms.size();
     for (size_t i = 0; sameTable && i < l.uniforms.size(); ++i)
         sameTable = old->uniforms[i].name == l.uniforms[i].name && old->uniforms[i].value.type == l.uniforms[i].value.type;
     unsigned char value[sizeof(EffectValue::f)];
     for (ShaderEffectItem* p : {p1, p2}) {
         if (p == p2 && !two)
             break;
-        p->setOptionalUniforms({QByteArrayLiteral("elementRect")});
+        p->setOptionalUniforms({QByteArrayLiteral("elementRect"), QByteArrayLiteral("passIndex")});
         p->beginUniforms(!sameTable);
         for (const EffectUniform& u : l.uniforms) {
             wireValue(u.value, value);
             p->setUniform(u.name.constData(), int(u.name.size()), u.value.type, value, u.refItem);
         }
-        if (two) {
-            const float s = p == p1 ? l.strength : l.strength / 64.f; // pass 2: one sample spacing of pass 1 (doc 21)
-            std::memcpy(value, &s, 4);
-            p->setUniform(l.strengthName.constData(), int(l.strengthName.size()), VLQT_VT_F32, value, nullptr);
-        }
+        // passIndex (protocol.h): 0 in pass 1 (and SINGLE), 1 in pass 2 of TWO_PASS; written only if the shader declares it.
+        const float passIndex = p == p2 ? 1.f : 0.f;
+        std::memcpy(value, &passIndex, 4);
+        p->setUniform("passIndex", 9, VLQT_VT_F32, value, nullptr);
         p->endUniforms();
     }
     writeElementRect(l);

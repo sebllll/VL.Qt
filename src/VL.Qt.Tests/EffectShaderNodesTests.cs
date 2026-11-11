@@ -78,10 +78,10 @@ namespace VL.Qt.Tests
             var link = Link(node.Update(null, 0f, Unit(64)));
             Assert.That(link.Template, Is.EqualTo(Protocol.EffectTemplate.TwoPass));
             Assert.That(link.ShaderIds, Has.Length.EqualTo(1));
-            Assert.That(link.StrengthUniform, Is.EqualTo("blurLength"));
-            Assert.That(link.Strength, Is.EqualTo(64f).Within(1e-3));
+            Assert.That(link.StrengthUniform, Is.Empty, "pass 2 is told by passIndex, set by QtNative");
+            Assert.That(link.Uniforms.Select(u => u.Name), Is.EqualTo(new[] { "angle", "blurLength" }));
+            Assert.That(link.Uniforms.Single(u => u.Name == "blurLength").Numbers.M11, Is.EqualTo(64f).Within(1e-3));
             Assert.That(link.Padding, Is.EqualTo(new RectangleF(33, 0, 33, 0)), "L / 2 + L / 64, horizontal");
-            Assert.That(link.Uniforms.Single().Name, Is.EqualTo("angle"));
 
             var vertical = Link(node.Update(null, 90f, Unit(64)));
             Assert.That(vertical.Padding.X, Is.LessThan(1f));
@@ -89,19 +89,19 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void ZoomAndRadialBlur_StrengthUniformsAndPadding()
+        public void ZoomAndRadialBlur_UniformsAndPadding()
         {
             using var zoom = new ZoomBlurNode(_client);
             var z = Link(zoom.Update(null, new Vector2(0.5f, 0.5f), Unit(100)));
-            Assert.That(z.StrengthUniform, Is.EqualTo("blurLength"));
-            Assert.That(z.Strength, Is.EqualTo(100f).Within(1e-3));
+            Assert.That(z.StrengthUniform, Is.Empty);
+            Assert.That(z.Uniforms.Select(u => u.Name), Is.EqualTo(new[] { "center", "blurLength" }));
+            Assert.That(z.Uniforms.Single(u => u.Name == "blurLength").Numbers.M11, Is.EqualTo(100f).Within(1e-3));
             Assert.That(z.Padding, Is.EqualTo(new RectangleF(60, 60, 60, 60)));
-            Assert.That(z.Uniforms.Single().Name, Is.EqualTo("center"));
 
             using var radial = new RadialBlurNode(_client);
             var r = Link(radial.Update(null, new Vector2(0.5f, 0.5f), 12f, Unit(30)));
-            Assert.That(r.StrengthUniform, Is.EqualTo("angle"));
-            Assert.That(r.Strength, Is.EqualTo(12f), "degrees are not converted");
+            Assert.That(r.StrengthUniform, Is.Empty);
+            Assert.That(r.Uniforms.Single(u => u.Name == "angle").Numbers.M11, Is.EqualTo(12f), "degrees are not converted");
             Assert.That(r.Padding, Is.EqualTo(new RectangleF(30, 30, 30, 30)));
         }
 
