@@ -263,12 +263,12 @@ static class EffectPassesTest
         {
             c.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
             c.UniformF32("displacement", 30);
-            c.UniformRef("displacementSource", Bad);
+            c.UniformRef("map", Bad);
             c.EndLink();
         });
         CheckApply("REF with a parent");
         err = PollError();
-        check(err != null && err.StartsWith("link 0: uniform 'displacementSource': the texture element has a parent"),
+        check(err != null && err.StartsWith("link 0: uniform 'map': the texture element has a parent"),
             $"effect-passes: REF with a parent -> EV_ERROR ({err})");
 
         // (c) REF texture: Map (red 1 = shift) parked and sampled; R shifts left, Map itself is not drawn.
@@ -276,7 +276,7 @@ static class EffectPassesTest
         {
             c.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
             c.UniformF32("displacement", 30);
-            c.UniformRef("displacementSource", Map);
+            c.UniformRef("map", Map);
             c.EndLink();
         });
         CheckApply("REF texture");

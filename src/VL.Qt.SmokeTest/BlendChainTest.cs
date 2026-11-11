@@ -56,15 +56,15 @@ static class BlendChainTest
         {
             c.BeginShaderLink(Protocol.EffectTemplate.Single, [blend], 0, 0, 0, 0, 0);
             c.UniformI32("mode", 0);
-            c.UniformF32("opacity", 1);
-            c.UniformRef("layerSource", Layer);
+            c.UniformF32("layerOpacity", 1);
+            c.UniformRef("layer", Layer);
             c.EndLink();
         }
         void Displace(CommandWriter c)
         {
             c.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
             c.UniformF32("displacement", 20);
-            c.UniformRef("displacementSource", Map);
+            c.UniformRef("map", Map);
             c.EndLink();
         }
 

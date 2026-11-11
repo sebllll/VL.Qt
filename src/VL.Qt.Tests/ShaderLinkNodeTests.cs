@@ -530,6 +530,23 @@ void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
             }), "a chainonly generator has no node at all");
         }
 
+        [Test]
+        public void Scan_ChainOnlyCategory_IsTheCategoryOfTheChainNode()
+        {
+            Write("Own.frag", "// @category Qt.Effects.Mine\n// @chainonly\n" + filterSource);
+            Write("Plain.frag", "// @chainonly\n" + filterSource);
+            Write("Both.frag", "// @category Qt.Effects.Mine\n" + filterSource);
+
+            var nodes = ShaderNodeFactory.CreateDescriptions(ShaderNodeFactory.Scan(_dir), new FakeFactory(), NullLogger.Instance);
+            Assert.That(nodes.Select(n => (n.Name, n.Category)), Is.EquivalentTo(new[]
+            {
+                ("Own", "Qt.Effects.Mine"),
+                ("Plain", "Qt.Effects"),
+                ("Both", "Qt.Effects.Mine"),
+                ("Both", "Qt.Effects"),
+            }), "with @chainonly @category moves the chain node, without it only the element node");
+        }
+
         sealed class FakeFactory : IVLNodeDescriptionFactory
         {
             public string Identifier => "Test";

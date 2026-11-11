@@ -68,11 +68,10 @@ namespace VL.Qt.Tests
         // --- the effect chain nodes the factory makes of the templates ---
 
         // Pins of the effect chain node (Input first, the sampler pin of an image second, shown only when needed).
-        // "Opacity 2": the pin name "Opacity" belongs to the fixed pins, the factory numbers a uniform that takes it.
         static readonly (string Template, string[] Pins, bool TwoPass)[] s_nodes =
         {
-            ("ExampleBlend", new[] { "Input", "Layer Source", "Layer Source Sampler", "Mode", "Opacity 2" }, false),
-            ("ExampleDisplace", new[] { "Input", "Displacement Source", "Displacement Source Sampler", "Displacement" }, false),
+            ("ExampleBlend", new[] { "Input", "Layer", "Layer Sampler", "Mode", "Layer Opacity" }, false),
+            ("ExampleDisplace", new[] { "Input", "Map", "Map Sampler", "Displacement" }, false),
             ("ExampleDirectionalBlur", new[] { "Input", "Angle", "Blur Length" }, true),
             ("ExampleZoomBlur", new[] { "Input", "Center", "Blur Length" }, true),
             ("ExampleRadialBlur", new[] { "Input", "Center", "Angle" }, true),
@@ -105,7 +104,8 @@ namespace VL.Qt.Tests
             Assert.That(files.Select(f => f.ChainOnly), Is.All.True);
 
             var nodes = ShaderNodeFactory.CreateDescriptions(files, new FakeNodeFactory(), NullLogger.Instance);
-            Assert.That(nodes.Select(n => (n.Name, n.Category)), Is.EquivalentTo(s_pairs.Select(p => (p.Template, ShaderNodeFactory.LinkCategory))));
+            Assert.That(nodes.Select(n => (n.Name, n.Category)), Is.EquivalentTo(s_pairs.Select(p => (p.Template, "Qt.Effects.Examples"))),
+                "@category of a @chainonly file is the category of its chain node");
         }
 
         [TestCaseSource(nameof(s_nodes))]

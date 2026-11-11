@@ -113,7 +113,7 @@ namespace VL.Qt.Tests
             Assert.That(link.Template, Is.EqualTo(Protocol.EffectTemplate.Single));
             Assert.That(link.Padding, Is.EqualTo(new RectangleF(7, 7, 7, 7)));
             Assert.That(link.Uniforms.Single(u => u.Name == "displacement").Numbers.M11, Is.EqualTo(7f).Within(1e-3));
-            Assert.That(link.Uniforms.Single(u => u.Name == "displacementSource").Texture, Is.SameAs(map));
+            Assert.That(link.Uniforms.Single(u => u.Name == "map").Texture, Is.SameAs(map));
         }
 
         [Test]
@@ -128,8 +128,8 @@ namespace VL.Qt.Tests
             Assert.That(link.Template, Is.EqualTo(Protocol.EffectTemplate.Single));
             Assert.That(link.Padding, Is.EqualTo(default(RectangleF)));
             Assert.That(link.Uniforms.Single(u => u.Name == "mode").Integer, Is.EqualTo((int)BlendMode.SoftLight));
-            Assert.That(link.Uniforms.Single(u => u.Name == "opacity").Numbers.M11, Is.EqualTo(0.5f).Within(1e-3));
-            Assert.That(link.Uniforms.Single(u => u.Name == "layerSource").Texture, Is.SameAs(layer));
+            Assert.That(link.Uniforms.Single(u => u.Name == "layerOpacity").Numbers.M11, Is.EqualTo(0.5f).Within(1e-3));
+            Assert.That(link.Uniforms.Single(u => u.Name == "layer").Texture, Is.SameAs(layer));
         }
 
         [Test]

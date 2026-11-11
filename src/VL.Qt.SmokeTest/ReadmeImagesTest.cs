@@ -258,7 +258,7 @@ static class ReadmeImagesTest
                     cmd.BeginEffectChain(text);
                     cmd.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
                     cmd.UniformF32("displacement", 7 * s);
-                    cmd.UniformRef("displacementSource", map);
+                    cmd.UniformRef("map", map);
                     cmd.EndLink();
                     cmd.EndEffectChain();
                     break;

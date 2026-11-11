@@ -23,7 +23,7 @@ namespace VL.Qt.Shaders
 
     /// <summary>
     /// Node description of the effect chain link of one filter shader file: same name as the element node, category
-    /// <see cref="ShaderNodeFactory.LinkCategory"/>. Same lifecycle as <see cref="ShaderNodeDescription"/> (lazy init, content
+    /// <see cref="ShaderFile.LinkCategory"/>. Same lifecycle as <see cref="ShaderNodeDescription"/> (lazy init, content
     /// change invalidates the node and keeps links on pins with the same name, errors red at the node).
     /// </summary>
     internal static class ShaderLinkDescription
@@ -50,7 +50,7 @@ namespace VL.Qt.Shaders
         public static IVLNodeDescription New(IVLNodeDescriptionFactory factory, ShaderFile file, ILogger logger) =>
             factory.NewNodeDescription(
                 file.FullName,
-                ShaderNodeFactory.LinkCategory,
+                file.LinkCategory,
                 fragmented: false, // like the element node: vvvv calls Update only for non-fragmented descriptions
                 invalidated: ShaderNodeFactory.WatchContent(file),
                 init: context =>
