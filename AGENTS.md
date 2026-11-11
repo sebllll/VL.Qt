@@ -134,6 +134,7 @@ In-app overlays, logging and device loss: [docs/diagnostics.md](docs/diagnostics
 ## Branches and pull requests
 
 - `develop` is the working branch. Branch feature branches from `develop`, open PRs against `develop`, squash-merge.
+- Every change lands through a PR, never by a push to `develop` or `main`. Contributors push their branch to a fork; maintainers push it to this repository, always with remote and branch named (`git push origin HEAD:<kind>/<issue>-<topic>`), since a bare `git push` may go to another remote or branch. Details: [CONTRIBUTING.md](CONTRIBUTING.md).
 - `main` only receives releases: PR `develop` → `main` (merge commit, no squash), then a `v*` tag on `main` (CI builds all RIDs, the `.nupkg` and the release). No feature PRs directly to `main`.
 - Hotfix for a release: branch from `main`, PR against `main`, then merge `main` into `develop`.
 - **Save CI minutes:** every push to a PR that is not a draft starts the Windows CI (QtNative, pack, smoke test). Open PRs as drafts (`gh pr create --base develop --draft`) and keep them drafts while you work. When the work is complete and `tools/build.ps1 -Test` passes locally, run `gh pr ready` (the CI then runs once). If the CI is red afterwards: `gh pr ready --undo`, fix and check locally, `gh pr ready` again. Do not use `workflow_dispatch` as a substitute; it builds every RID and is more expensive.
