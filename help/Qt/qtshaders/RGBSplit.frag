@@ -10,10 +10,10 @@
 // A summary goes on in the following comment lines until the next blank line.
 // The padding line is the space around the element (DIP) that the shader may draw into when it is used as a node of an
 // effect chain (Qt.Effects, see HowTo Chain Effects): the shifted colors reach beyond the element.
-// More file head tags for effect chain nodes (docs/effects-and-shaders.md, Annotations):
-//   @padding <uniform> [factor]   padding from a float uniform instead of a fixed number
-//   @passes 2                     run the shader twice, the pass number is in the uniform passIndex (0, 1)
-//   @chainonly                    only the effect chain node, no element node (templates: Example*.frag)
+// More file head tags for effect chain nodes (docs/effects-and-shaders.md, Annotations), written with a leading @:
+//   padding <uniform> [factor]   padding from a float uniform instead of a fixed number
+//   passes 2                     run the shader twice, the pass number is in the uniform passIndex (0, 1)
+//   chainonly                    only the effect chain node, no element node (templates: Example*.frag)
 //
 // Every uniform below becomes an input pin ("amount" -> "Amount"), in the order of this file.
 // Annotations are // comments directly above the uniform or at the end of its line:
