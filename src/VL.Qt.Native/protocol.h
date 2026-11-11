@@ -217,7 +217,8 @@
  * re-applying every property set so far; the C# side bumps it when the file or its neighbours change). Size: AUTO_SIZE on =
  * the element takes the root's implicitWidth/implicitHeight, off = SIZE sets width/height of the root. Compile, load and type
  * errors arrive as EV_ERROR (file:line), empty = cleared.
- * Patch to QML: SET_QML_PROPERTIES (value types F32/I32/BOOL/STRING/COLOR/VEC2/VEC3/VEC4/RECTF; QVariant converts to the
+ * Patch to QML: SET_QML_PROPERTIES (value types F32/I32/BOOL/STRING/COLOR/VEC2/VEC3/VEC4/RECTF; a STRING value is u32 byte length +
+ * UTF-8, padded to 4, as in SET; QVariant converts to the
  * property's type, an unsupported type or a failed conversion is an EV_ERROR line and the value is ignored).
  * QML to patch: of the properties and signals declared in the root of the user file (not those inherited from Item),
  *   EV_QML_PROPERTY: u16 nameLen, u16 valueType, name (UTF-8), padding to 4, value like EV_VALUE; one per property per
