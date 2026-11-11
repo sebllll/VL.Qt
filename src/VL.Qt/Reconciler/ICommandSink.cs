@@ -86,7 +86,7 @@ namespace VL.Qt
         /// <summary>sampler2D from an image resource id (0 = none).</summary>
         void UniformU64(ReadOnlySpan<char> name, ulong value);
 
-        /// <summary>Sampler state of the sampler2D <paramref name="name"/> (#492, <see cref="SamplerState.Pack"/>).</summary>
+        /// <summary>Sampler state of the sampler2D <paramref name="name"/> (#492, <see cref="Elements.Sampler.Pack"/>).</summary>
         void UniformSampler(ReadOnlySpan<char> name, ulong packed);
 
         /// <summary>Closes the SET_UNIFORMS started by <see cref="BeginUniforms"/> (entry count, payload length).</summary>
