@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using Stride.Core.Mathematics;
@@ -80,6 +81,13 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] Style? style,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
+            => Describe(children, size, autoSize, transform, anchor, opacity, clip, debug, interaction, effect, style, out measuredSize, out sceneBounds);
+
+        /// <summary>Update with the children as any sequence (also used by the Spectral node).</summary>
+        internal Element Describe(
+            IEnumerable<IElement?>? children, Vector2 size, bool autoSize, Matrix transform,
+            RectangleAnchor anchor, float opacity, bool clip, bool debug, Interaction? interaction,
+            Effect? effect, Style? style, out Vector2 measuredSize, out RectangleF sceneBounds)
         {
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),

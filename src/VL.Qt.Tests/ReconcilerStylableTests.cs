@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using NUnit.Framework;
@@ -401,6 +402,66 @@ namespace VL.Qt.Tests
 
             var again = input.Update(Input(null, s, new UnknownElement()));
             Assert.That(again == result, Is.True);
+        }
+
+        [Test]
+        public void ChildrenInput_SpreadOfElement_ReadWithoutRebuild()
+        {
+            // What a Spread<Element> (e.g. a ForEach of Rectangles) gives the Sequence pin of the Spectral nodes.
+            var input = new ChildrenInput();
+            var a = new Rectangle();
+            var b = new Rectangle();
+            var spread = Spread.Create<Element>(a, b);
+
+            var first = input.Update(spread);
+            Assert.That(first, Is.EqualTo(new Element[] { a, b }));
+            Assert.That(input.Update(spread) == first, Is.True, "same spread");
+            Assert.That(input.Update(Spread.Create<Element>(a, b)) == first, Is.True, "new spread, same children");
+            Assert.That(input.Built, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ChildrenInput_SpreadOfStylableType_BecomesStylableElements()
+        {
+            var input = new ChildrenInput();
+            var s = new TestStylable();
+            var result = input.Update(Spread.Create(s));
+
+            Assert.That(result, Has.Length.EqualTo(1));
+            Assert.That(((StylableElement)result[0]).Stylable, Is.SameAs(s));
+            Assert.That(input.Update(Spread.Create(s)) == result, Is.True);
+        }
+
+        [Test]
+        public void ChildrenInput_SpreadOfElementOrStylableType_SteadyStateDoesNotAllocate()
+        {
+            var elements = new ChildrenInput();
+            var stylables = new ChildrenInput();
+            var e = Spread.Create<Element>(new Rectangle(), new Rectangle());
+            var s = Spread.Create(new TestStylable(), new TestStylable());
+            elements.Update(e);
+            stylables.Update(s);
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 100; i++)
+            {
+                elements.Update(e);
+                stylables.Update(s);
+            }
+            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.Zero);
+        }
+
+        [Test]
+        public void ChildrenInput_MutableSequence_ChangeBehindSameInstanceIsSeen()
+        {
+            var input = new ChildrenInput();
+            var a = new Rectangle();
+            var list = new List<IElement?> { a };
+            Assert.That(input.Update(list), Is.EqualTo(new Element[] { a }));
+
+            var b = new Rectangle();
+            list.Add(b);
+            Assert.That(input.Update(list), Is.EqualTo(new Element[] { a, b }));
         }
 
         // 9 ---------------------------------------------------------------
