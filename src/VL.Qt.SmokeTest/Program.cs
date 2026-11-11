@@ -415,8 +415,12 @@ static class Program
 
         Console.WriteLine($"INFO scenarios after the core checks: {scenarios.Elapsed.TotalSeconds:F1} s");
         var log = s_log.ToString();
-        // Present never waits for VSync (the pump must not block); one render per pump is checked in PumpTest 1c (#137).
-        NeedsRhi(Check, "no swap chain")(log.Contains("Swap interval is 0, attempting to disable vsync"), "log: swap interval 0 (no VSync wait in the pump)");
+        // The Qt log line comes from windows with swap interval 0: the native short form vlqt_window_create (most scenarios, so
+        // their pumps never wait for VSync, one render per pump is checked in PumpTest 1c, #137) and the vSync: false window of
+        // RendererTest.RunVSync. WindowRenderer without argument is swap interval 1 (VSync on by default).
+        // A narrow run (--only) has such a window only with the vsync scenario.
+        if (Selected("vsync"))
+            NeedsRhi(Check, "no swap chain")(log.Contains("Swap interval is 0, attempting to disable vsync"), "log: swap interval 0 for the windows without VSync");
         if (OperatingSystem.IsWindows())
             NeedsRhi(Check, "no QRhi")(log.Contains("D3D11") || log.Contains("Direct3D 11") || log.Contains("D3D 11"), "log shows D3D11");
         else if (Environment.GetEnvironmentVariable("VLQT_TEST_QUICK_BACKEND") == "software") // test-linux.sh --software

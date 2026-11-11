@@ -439,14 +439,17 @@ namespace VL.Qt
                 catch (Exception e) { LogParticipantError(e, nameof(IQtFrameParticipant.ReportHostFrame)); }
             }
 
-            // Warn only when Qt eats more than half a vvvv frame; single small spikes are normal.
-            if (ms > budgetMs * 0.5 && now - _lastWarningTicks > WarningIntervalMs)
+            // Warn only when Qt eats more than half a vvvv frame; single small spikes are normal. The time Present waits
+            // (VSync) is not Qt work: the sample is read only after the cheap checks, so a normal frame costs nothing extra.
+            double presentMs = 0;
+            if (ms > budgetMs * 0.5 && now - _lastWarningTicks > WarningIntervalMs
+                && ExceedsBudget(ms, presentMs = SumPresentMs(participants), budgetMs))
             {
                 _lastWarningTicks = now;
                 // Phase breakdown (#140): which part of the pump, and did a .NET GC run meanwhile? Plus the Qt phases of each
                 // window's last pump (#241: is a spike in sync, render, present, gpu or events?).
-                Logger?.LogWarning("Qt frame took {Ms:F1} ms of {Budget:F1} ms, vvvv before it {Vvvv:F1} ms (apply {Apply:F1}, advance {Advance:F1}, processEvents {Process:F1}, after {After:F1}; GC gen0 +{Gc0}, gen1 +{Gc1}, gen2 +{Gc2}, pause {GcPause:F1} ms; alloc {AllocKb:F0} KB/frame){Phases}",
-                    ms, budgetMs, host.vvvv,
+                Logger?.LogWarning("Qt frame took {Ms:F1} ms of {Budget:F1} ms (pump {Pump:F1} ms minus present incl. VSync wait {Present:F1} ms), vvvv before it {Vvvv:F1} ms (apply {Apply:F1}, advance {Advance:F1}, processEvents {Process:F1}, after {After:F1}; GC gen0 +{Gc0}, gen1 +{Gc1}, gen2 +{Gc2}, pause {GcPause:F1} ms; alloc {AllocKb:F0} KB/frame){Phases}",
+                    ms - Math.Min(presentMs, ms), budgetMs, ms, presentMs, host.vvvv,
                     Stopwatch.GetElapsedTime(start, tApplied).TotalMilliseconds,
                     Stopwatch.GetElapsedTime(tApplied, tAdvanced).TotalMilliseconds,
                     Stopwatch.GetElapsedTime(tAdvanced, tProcessed).TotalMilliseconds,
@@ -464,6 +467,32 @@ namespace VL.Qt
             if (now - _statsStartTicks >= StatsIntervalMs)
                 LogStats(now);
         }
+
+        /// <summary>
+        /// Present time of the last pump summed over the windows of the participants (ms, 0 without samples). Present may wait
+        /// for the display refresh (VSync), so it does not count as Qt work. No allocation.
+        /// </summary>
+        internal static double SumPresentMs(IQtFrameParticipant[] participants)
+        {
+            double sum = 0;
+            for (int i = 0; i < participants.Length; i++)
+            {
+                try
+                {
+                    if (participants[i].TryGetLastSample(out var s))
+                        sum += s.present;
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    // Diagnostics only: a failing sample counts as no present time.
+                }
+            }
+            return sum;
+        }
+
+        /// <summary>True if the pump took more than half a frame budget of Qt work, i.e. without the Present time (waiting for VSync).</summary>
+        internal static bool ExceedsBudget(double pumpMs, double presentMs, double budgetMs) =>
+            pumpMs - Math.Min(presentMs, pumpMs) > budgetMs * 0.5;
 
         /// <summary>
         /// #24: start of a vvvv frame. Qt delivers the queued input of all windows without rendering (QtNative closes the

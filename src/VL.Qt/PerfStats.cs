@@ -4,7 +4,8 @@ namespace VL.Qt
 {
     /// <summary>
     /// Timings of a Qt window, averaged over the last ~1 s (max = worst pump in that range). All times in ms.
-    /// Pump is the CPU time Qt takes inside the vvvv frame (events, animation, sync, render, present).
+    /// Pump is the time Qt takes inside the vvvv frame (events, animation, sync, render, present). Present is shown separately:
+    /// with VSync it includes the wait for the display refresh, which is not Qt work.
     /// GPU is 0 when the backend delivers no timestamps.
     /// </summary>
     public sealed record PerfStats(

@@ -49,13 +49,13 @@ namespace VL.Qt
 
         /// <param name="nodeContext">Injected by vvvv.</param>
         /// <param name="bounds">Initial position and size of the window in DIP (on create only, like Bounds of VL.Skia/VL.Stride; a change recreates the node). Size = client size, position = outer top-left. Empty bounds: 600x400 centered on the primary screen; bounds on no screen: centered. Applied before the window is shown, on all platforms (Wayland: size only, the compositor places the window). A node added live or restored by Undo/Redo gets no pin value from vvvv and opens at the default bounds until the next restart.</param>
-        /// <param name="vSync">Wait for the display refresh when presenting (swap interval 1). Default off: the pump must not block, vvvv sets the frame rate; on can sync a window to the monitor but then the frame is blocked by Present. On create only (a change recreates the node, like Bounds).</param>
+        /// <param name="vSync">Synchronize presenting with the display refresh (swap interval 1). On (default): no tearing; Present may wait for the refresh, that wait does not count as Qt work. Off: Present never waits, vvvv alone sets the frame rate, tearing is possible. On create only (a change recreates the node, like Bounds).</param>
         /// <param name="boundToDocument">Closing the window (X) closes the document of this node in the editor (like VL.Skia/VL.Stride) and ends an exported app, even if KeepAppAlive still holds it (unlike VL.Skia/VL.Stride, where the pin only acts in the editor). False: X only closes the window, the app keeps running.</param>
         /// <param name="dialogIfDocumentChanged">Ask to save when closing a changed document via X.</param>
         /// <param name="saveBounds">In the editor, moving or resizing the window writes its geometry to the Bounds pin ~0.5 s after the last change (like VL.Skia/VL.Stride), without recreating the node; save the document to keep it. Skipped while minimized, maximized or fullscreen. Turn off if Bounds is connected (the written value would not be used, it would only mark the document changed). No effect in exported apps.</param>
         public Renderer(NodeContext nodeContext,
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] [DefaultValue(WindowPlacement.DefaultBoundsString)] RectangleF bounds,
-            [Pin(Visibility = VL.Model.PinVisibility.Optional)] bool vSync = false,
+            [Pin(Visibility = VL.Model.PinVisibility.Optional)] [DefaultValue(true)] bool vSync = true,
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] [DefaultValue(true)] bool boundToDocument = true,
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] bool dialogIfDocumentChanged = false,
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] [DefaultValue(true)] bool saveBounds = true)

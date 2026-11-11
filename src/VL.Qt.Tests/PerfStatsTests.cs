@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using System;
+using System.Linq;
+using NUnit.Framework;
 
 namespace VL.Qt.Tests
 {
@@ -93,6 +95,39 @@ namespace VL.Qt.Tests
             var two = QtApp.FormatPhases(new IQtFrameParticipant[] { new Window(null), new Window(s), new Plain() });
             Assert.That(two, Does.StartWith(" · Qt last pump #2: sync 0.5"));
             Assert.That(QtApp.FormatPhases(new IQtFrameParticipant[] { new Plain() }), Is.Empty);
+        }
+
+        [Test]
+        public void SumPresentMs_SumsTheWindowsWithSample()
+        {
+            var a = new Native.vlqt_perf_sample { present = 12.5f };
+            var b = new Native.vlqt_perf_sample { present = 4f };
+            Assert.That(QtApp.SumPresentMs(new IQtFrameParticipant[] { new Window(a), new Window(null), new Plain(), new Window(b) }), Is.EqualTo(16.5).Within(1e-6));
+            Assert.That(QtApp.SumPresentMs(Array.Empty<IQtFrameParticipant>()), Is.Zero);
+        }
+
+        [Test]
+        public void ExceedsBudget_DoesNotCountPresent()
+        {
+            // 60 Hz: budget 16.7 ms, threshold 8.35 ms of Qt work.
+            Assert.That(QtApp.ExceedsBudget(20, 0, 16.7), Is.True, "20 ms of work");
+            Assert.That(QtApp.ExceedsBudget(20, 15, 16.7), Is.False, "20 ms pump, 15 ms of it waiting in Present (VSync)");
+            Assert.That(QtApp.ExceedsBudget(20, 10, 16.7), Is.True, "10 ms left over");
+            Assert.That(QtApp.ExceedsBudget(5, 30, 16.7), Is.False, "present longer than the pump (stale sample): clamped, no negative work");
+            Assert.That(QtApp.ExceedsBudget(9, 0, 16.7), Is.True);
+            Assert.That(QtApp.ExceedsBudget(8, 0, 16.7), Is.False);
+        }
+
+        [Test]
+        public void VSync_IsOnByDefault()
+        {
+            var window = typeof(WindowRenderer).GetConstructors().Single().GetParameters().Single(p => p.Name == "vSync");
+            Assert.That(window.DefaultValue, Is.True);
+
+            var renderer = typeof(Renderer).GetConstructors().Single().GetParameters().Single(p => p.Name == "vSync");
+            Assert.That(renderer.DefaultValue, Is.True);
+            Assert.That(renderer.GetCustomAttributes(typeof(System.ComponentModel.DefaultValueAttribute), false).Cast<System.ComponentModel.DefaultValueAttribute>().Single().Value,
+                Is.True, "the pin default in vvvv");
         }
 
         [Test]
