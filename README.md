@@ -13,7 +13,7 @@ Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-progra
 > **Early release (`0.x`).** The API may still change. Requires **vvvv gamma 8.x (preview)** on .NET 10; vvvv 7.x (.NET 8) is not supported.
 > The output is a Qt window; there is no Stride or Skia layer. Linux (x64 and ARM64) works as a console export with its own Qt window, tested under WSL2/WSLg so far (see [Platforms](#platforms)).
 
-**Contents:** [Features](#features) · [Getting Started](#getting-started) · [Linux via WSL](#try-it-on-linux-through-wsl) · [Platforms](#platforms) · [Styles](#styles) · [Images](#images) · [Effects](#effects) · [Shaders](#shaders) · [Tooltips](#tooltips-in-the-vvvv-editor) · [Diagnostics](#diagnostics) · [How It Works](#how-it-works) · [Development](#development) · [Documentation](#documentation) · [Contributing](#contributing) · [License](#license)
+**Contents:** [Features](#features) · [Getting Started](#getting-started) · [Linux via WSL](#try-it-on-linux-through-wsl) · [Platforms](#platforms) · [Styles](#styles) · [Images](#images) · [Effects](#effects) · [Shaders](#shaders) · [Tooltips](#tooltips-in-the-vvvv-editor) · [Diagnostics](#diagnostics) · [How It Works](#how-it-works) · [Compared to Qt Bridge](#compared-to-qt-bridge-for-c) · [Development](#development) · [Documentation](#documentation) · [Contributing](#contributing) · [License](#license)
 
 ## Features
 
@@ -209,6 +209,20 @@ patch ◄── channels / outputs ◄── EventReader ◄──────�
 vvvv's `IFrameClock` is the single time source, so scrubbing and pausing are deterministic. Qt renders directly into its own window, pumped once per vvvv frame; events come back to the patch as channels.
 
 More: [Architecture](docs/architecture.md) (data flow, timing, interop, rendering, events, reusing elements, performance).
+
+## Compared to Qt Bridge for C#
+
+[Qt Bridge for C#](https://www.qt.io/development/qt-framework/qt-bridges/csharp-gui) (beta, by The Qt Company) and VL.Qt both bring Qt Quick to .NET, but from opposite sides:
+
+| | Qt Bridge for C# | VL.Qt |
+|---|---|---|
+| UI written in | QML files | the vvvv patch (element tree) |
+| C# is | the backend (view models, data models) | what builds the scene |
+| Main loop and time | owned by Qt | owned by vvvv (`IFrameClock`, deterministic) |
+| Glue between C# and Qt | generated at build time, needs a C++ toolchain | prebuilt QtNative, no toolchain needed |
+| Made for | desktop apps with a QML front end | live-patched 2D motion graphics, typography and interactive UI |
+
+The two do not mix in one process: Qt allows one application object per process, and each of them runs it in its own loop. Details: [design note](docs/decisions/qt-bridges.md).
 
 ## Development
 
