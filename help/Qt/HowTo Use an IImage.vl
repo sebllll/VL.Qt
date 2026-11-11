@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="bm40T5NlokNPfmsg9HnXEs" LanguageVersion="2026.8.0-0228-gbf75e01f81" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="bm40T5NlokNPfmsg9HnXEs" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
   <NugetDependency Id="6OVsAvmvdp9zqlqtYHurov" Location="VL.CoreLib" />
   <NugetDependency Id="ZuB05VFvRR6KxH0N01helx" Location="VL.Skia" />
   <DocumentDependency Id="v8jRwppScZnONm5dCUX7Be" Location="../../VL.Qt.vl" />
@@ -35,7 +35,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="XyMGrKlyedLdl8d1ksr4eH" Bounds="85,904,830,126" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- ToQtImage copies the pixels at once and uploads them to the GPU within the frame budget, the previous image stays visible until the new one is complete.&#xD;&#xA;- It uploads every time a new IImage arrives (or every frame for volatile images such as a camera), so do not feed it a changing image if it is not needed.&#xD;&#xA;- For files use LoadImage [Qt] or LoadImage (Async) [Qt] instead, see HowTo Draw an Image and HowTo Preload Images.&#xD;&#xA;- Stable 60 fps: load images in advance or asynchronously, never synchronously while the frame is running.">
+          <Pad Id="XyMGrKlyedLdl8d1ksr4eH" Bounds="85,749,834,150" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- ToQtImage copies the pixels at once and uploads them to the GPU within the frame budget, the previous image stays visible until the new one is complete.&#xD;&#xA;- It uploads every time a new IImage arrives (or every frame for volatile images such as a camera), so do not feed it a changing image if it is not needed.&#xD;&#xA;- For files use LoadImage [Qt] or LoadImage (Async) [Qt] instead, see HowTo Draw an Image and HowTo Preload Images.&#xD;&#xA;- Stable 60 fps: load images in advance or asynchronously, never synchronously while the frame is running.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -44,12 +44,12 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="2gbWxQDEY3QAaCg0cR4v1V" Comment="Path" Bounds="233,351,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-image.png">
+          <Pad Id="2gbWxQDEY3QAaCg0cR4v1V" Comment="Path" Bounds="365,235,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-image.png">
             <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="231,381,75,19" Id="o1zduWqp8ir99NBjMpfi4q">
+          <Node Bounds="363,265,75,19" Id="o1zduWqp8ir99NBjMpfi4q">
             <p:NodeReference LastCategoryFullName="Graphics.Skia.IO" LastDependency="VL.Skia.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="ImageReader" />
@@ -59,7 +59,7 @@
             <Pin Id="cuE5YJHTk4zcy8JqNV4ctD" Name="Load" Kind="InputPin" />
             <Pin Id="0rmcB7BgnTvhCIuZByUoOu" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="231,430,60,26" Id="82VMQ9dGHJS1zaMAeoWR5a">
+          <Node Bounds="363,314,60,26" Id="82VMQ9dGHJS1zaMAeoWR5a">
             <p:NodeReference LastCategoryFullName="Graphics.Skia.Imaging" LastDependency="VL.Skia.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Imaging" NeedsToBeDirectParent="true">
@@ -70,7 +70,7 @@
             <Pin Id="AijjjXNX7ezl89nC09EFTX" Name="Input" Kind="InputPin" />
             <Pin Id="0R7yjr491K4FZswXx4mkci" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="231,480,66,19" Id="7nNduIIJ7NU7mxmMkmnOiJ">
+          <Node Bounds="363,364,66,19" Id="7nNduIIJ7NU7mxmMkmnOiJ">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="ToQtImage" />
@@ -80,7 +80,7 @@
             <Pin Id="IQ5AFX7C0mSDr0fVQl9iVE" Name="Image" Kind="OutputPin" />
             <Pin Id="AITyXQsepDkxKNDveORGZU" Name="Error" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,732,399,19" Id="JzYRI9rRXv2FLZ0m5L37sE">
+          <Node Bounds="100,577,399,19" Id="JzYRI9rRXv2FLZ0m5L37sE">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -96,15 +96,15 @@
             <Pin Id="40ddVdxISRSeYXncorxSGi" Name="Fill Mode" Kind="InputPin" DefaultValue="Fit" />
             <Pin Id="iSw2Ui9RVFv7gvMx11NXf1" Name="Output" Kind="OutputPin" />
             <Pin Id="NVmtVYJWzT8PhQ5CUYOs1x" Name="Smooth" Kind="InputPin" IsHidden="true" />
-            <Pin Id="6uEHsgjyDcbO8OAiQLSVuJ" Name="Opacity" Kind="InputPin" />
+            <Pin Id="6uEHsgjyDcbO8OAiQLSVuJ" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="LTPkyhAtJNGNP68TnzTXxH" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="osSyek707sF4bT3N2mrJnF" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="RJZ9I3X1H0qLy3oN0LvRiR" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="Sin6Hz2GLXBO6kZmJvCavc" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Osp6llMDTsHLSABLrNG0xf" Name="Interaction" Kind="InputPin" />
-            <Pin Id="JMLtxsIA7rxNv1mTMFDkbN" Name="Effect" Kind="InputPin" />
+            <Pin Id="Osp6llMDTsHLSABLrNG0xf" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="JMLtxsIA7rxNv1mTMFDkbN" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="100,835,145,19" Id="aTtMAwtgAZrl0UwSk9kmZE">
+          <Node Bounds="100,680,85,19" Id="aTtMAwtgAZrl0UwSk9kmZE">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -127,24 +127,25 @@
             <Pin Id="MnDS4W03T432I0Q4Uk9yGK" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="wPOrOHhoulHsufTi95624c" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="Po7wNvQ6fy1HEQ2YwDYn5Q" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KwL6NT9fsUPP85ynMKQQoV" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="qE0lZM9QdJAT28FqBqAiPr" Comment="Title" Bounds="182,800,149,19" ShowValueBox="true" isIOBox="true" Value="HowTo Use an IImage">
+          <Pad Id="qE0lZM9QdJAT28FqBqAiPr" Comment="Title" Bounds="182,645,149,19" ShowValueBox="true" isIOBox="true" Value="HowTo Use an IImage">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="4IxheBgZLBeClYmfeqvmnw" Comment="Position" Bounds="102,580,35,28" ShowValueBox="true" isIOBox="true" Value="1, 1">
+          <Pad Id="4IxheBgZLBeClYmfeqvmnw" Comment="Position" Bounds="227,455,35,28" ShowValueBox="true" isIOBox="true" Value="1, 1">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="D2IsVlLqrFLcMphrueli2B" Comment="Size" Bounds="130,630,35,28" ShowValueBox="true" isIOBox="true" Value="4, 3">
+          <Pad Id="D2IsVlLqrFLcMphrueli2B" Comment="Size" Bounds="102,505,35,28" ShowValueBox="true" isIOBox="true" Value="4, 3">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="i7Seu7PhPNIgZqc5b4G3gf" Comment="Error" Bounds="294,520,420,60" ShowValueBox="true" isIOBox="true" />
-          <Node Bounds="100,672,65,19" Id="MwMdsXa1AGMQL1NlH2hOBV">
+          <Pad Id="i7Seu7PhPNIgZqc5b4G3gf" Comment="Error" Bounds="426,404,420,60" ShowValueBox="true" isIOBox="true" />
+          <Node Bounds="231,505,80,19" Id="MwMdsXa1AGMQL1NlH2hOBV">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -158,6 +159,11 @@
             <Pin Id="sg0q3MJzVypsjRNKStXqEv" Name="Translation" Kind="InputPin" />
             <Pin Id="a5S6tKCzKLgTd107FepnW1" Name="Output" Kind="OutputPin" />
           </Node>
+          <Pad Id="Hhq1btI3WbAOIYl2MOvGab" Comment="Fill Mode" Bounds="496,545,62,15" ShowValueBox="true" isIOBox="true" Value="Fit">
+            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+              <Choice Kind="TypeFlag" Name="ImageFillMode" />
+            </p:TypeAnnotation>
+          </Pad>
         </Canvas>
         <Link Id="iXELpc3IWFugull8vscLDm" Ids="qE0lZM9QdJAT28FqBqAiPr,puclwZZK1herSrhtXY3Emv" />
         <Link Id="ljzfvZfOsYe7vWNBTvBrXS" Ids="iSw2Ui9RVFv7gvMx11NXf1,UHMqrPrkERARGpO5iNtlor" />
@@ -175,6 +181,7 @@
         <Link Id="QdAQCRQbvnEWlYjrTpbirp" Ids="D2IsVlLqrFLcMphrueli2B,1xAHt8wT7H6nBlQ56Voc3B" />
         <Link Id="O7ffGqQa7KF4qFy9JBx1R5" Ids="a5S6tKCzKLgTd107FepnW1,pkz5JZRww92LbOyJ0ufhsp" />
         <Link Id="pQI2LnpYCrFlzCfg7ExZUD" Ids="4IxheBgZLBeClYmfeqvmnw,sg0q3MJzVypsjRNKStXqEv" />
+        <Link Id="AOQEOQZlpPbQGYvGt7XaXP" Ids="Hhq1btI3WbAOIYl2MOvGab,40ddVdxISRSeYXncorxSGi" />
       </Patch>
     </Node>
   </Patch>

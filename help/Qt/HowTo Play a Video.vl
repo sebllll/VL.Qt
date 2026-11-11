@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" Id="eGnLBeRTEYkFbAJ5cEeTZC" LanguageVersion="2026.8.0-0156-g7259116c8c" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="eGnLBeRTEYkFbAJ5cEeTZC" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
   <NugetDependency Id="lTz0QP9hameFxp1vB8McV4" Location="VL.CoreLib" />
   <DocumentDependency Id="I2TwE34l0S13cDK25XeHdZ" Location="../../VL.Qt.vl" />
   <Patch Id="Egnz1Q4hsRH0AHlVpbUofc">
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="SCki2fXud4LrxUlRMeJQht" Bounds="85,982,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Video plays a video file (FFmpeg backend) with its sound on the default audio device.&#xD;&#xA;- Play starts/pauses. Loop repeats; switched off while playing, the current run ends, then it stops.&#xD;&#xA;- Path is relative to this patch.">
+          <Pad Id="SCki2fXud4LrxUlRMeJQht" Bounds="85,768,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Video plays a video file (FFmpeg backend) with its sound on the default audio device.&#xD;&#xA;- Play starts/pauses. Loop repeats; switched off while playing, the current run ends, then it stops.&#xD;&#xA;- Path is relative to this patch.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,17 +43,17 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GNVJWO55nXo5fqvU3K3BVm" Comment="Path" Bounds="142,475,504,22" ShowValueBox="true" isIOBox="true" Value="assets\qt-help-video-audio.mp4">
+          <Pad Id="GNVJWO55nXo5fqvU3K3BVm" Comment="Path" Bounds="162,430,504,22" ShowValueBox="true" isIOBox="true" Value="assets\qt-help-video-audio.mp4">
             <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="JfPzo8FCdO3LbbWK12srd5" Comment="Anchor" Bounds="100,592,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
+          <Pad Id="JfPzo8FCdO3LbbWK12srd5" Comment="Anchor" Bounds="142,401,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RectangleAnchor" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="100,617,165,19" Id="ObAYxJPlcxau4uGEeypbtx">
+          <Node Bounds="100,497,185,19" Id="ObAYxJPlcxau4uGEeypbtx">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -69,47 +69,58 @@
             <Pin Id="VqUPCsEKMJfYCD2hrHBLb4" Name="Output" Kind="OutputPin" />
             <Pin Id="dxnr3qPbMPCzxryakd4ph3" Name="Play" Kind="InputPin" />
             <Pin Id="IplH72aigtK4exVvjPpnpr" Name="Loop" Kind="InputPin" />
+            <Pin Id="VSHsNdMlJDvPbE0lNASK7D" Name="Keep Last Frame" Kind="InputPin" IsHidden="true" />
             <Pin Id="4xb8dM8Q3jj0wyJ1UGUdFK" Name="Rate" Kind="InputPin" />
             <Pin Id="4hKJ5R1X4NNjkDmxKU0oZq" Name="Volume" Kind="InputPin" />
             <Pin Id="leOB1l5Rxp0Li4TuiqJidZ" Name="Fill Mode" Kind="InputPin" />
             <Pin Id="t5xvfjlUr0fY694xviBA7H" Name="Opacity" Kind="InputPin" />
             <Pin Id="IGfBlbulOCryOKlRAOomqk" Name="Position" Kind="OutputPin" />
             <Pin Id="pP9csF5SsVqmiOdf0Thdi5" Name="Duration" Kind="OutputPin" />
+            <Pin Id="Gdsfwq6g5jLMA1VyjW07Np" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="vOb3uwDvkaff0ppctOkjhw" Name="Scene Bounds" Kind="OutputPin" />
+            <Pin Id="VQcDwyfY110OA1cJZ5I179" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MyNgyMweknwOuW7ubkkKJR" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="K256rzd0JW4NZAQpGzf5BZ" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LoGQcJMy96zPcN6PpElYQk" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="100,913,145,19" Id="Mt3kOEsbt6R7pMNrprP1wF">
+          <Node Bounds="100,680,85,19" Id="Mt3kOEsbt6R7pMNrprP1wF">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="ujUHDfQpUsmzJZkUVbTQEw" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="OOtFLrLUqHANQovb3wBd22" Name="Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FDzQv5NYPSBM05KnZ0EzlB" Name="V Sync" Kind="InputPin" IsHidden="true" />
             <Pin Id="QUopfFIA1aELqVbcBIx5s7" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="IDNRAmt9VNnObT7tVOBi72" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MOSWr4EbKctOE8bQ4o9abO" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="1RuLbnWnrIUcfsyIhssIiv" Name="Input" Kind="InputPin" />
             <Pin Id="5PQtAQ3HI1JSltFT4AcoKn" Name="Space" Kind="InputPin" />
             <Pin Id="dde6fxNN8AC7soTHq8BfQP" Name="Clear Color" Kind="InputPin" />
             <Pin Id="Cl4PZqpNhiF8cGTEZKi6Jm" Name="Enabled" Kind="InputPin" />
+            <Pin Id="TgdoaKmPYwZLTATfbFolOx" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="Ls8ANjBLWJmPwT157TktPu" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="Cs1BCJ8EiA6QVH4JKdcjGW" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="3J0ccvpXBK9uMym82JuAqZ" Name="Error" Kind="OutputPin" />
             <Pin Id="t3Vl8AH3vnofJUBJy80c7D" Name="Title" Kind="InputPin" />
             <Pin Id="ydEEjQHzmZ9DXwDfD5lkl2" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="DcHkFIGOvN9FV9yPeQibN6" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="JR4cesmYmunExnkn9L9VGZ" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="UA4x1h9LEyHLnmkv1PNo6v" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="ql509DtE9usfN6JIAH14sK" Comment="Title" Bounds="182,834,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Play a Video">
+          <Pad Id="ql509DtE9usfN6JIAH14sK" Comment="Title" Bounds="182,654,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Play a Video">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="8xUirSEMMXEAk0t959prmV" Comment="Volume" Bounds="222,542,35,15" ShowValueBox="true" isIOBox="true" Value="0.2">
+          <Pad Id="8xUirSEMMXEAk0t959prmV" Comment="Volume" Bounds="242,470,35,15" ShowValueBox="true" isIOBox="true" Value="0.2">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="jG8clbeNdIuFKnOeqNcLjY" Comment="Position" Bounds="242,687,35,15" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="7p1rOvCtTOr4r3BSIBqUZl" Comment="Duration" Bounds="382,657,35,15" ShowValueBox="true" isIOBox="true" />
-          <Node Bounds="162,396,65,19" Id="YipbhUp4DCzNfJ9Rwl37pY">
+          <Pad Id="jG8clbeNdIuFKnOeqNcLjY" Comment="Position" Bounds="162,600,35,15" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="7p1rOvCtTOr4r3BSIBqUZl" Comment="Duration" Bounds="222,550,35,15" ShowValueBox="true" isIOBox="true" />
+          <Node Bounds="172,240,65,19" Id="YipbhUp4DCzNfJ9Rwl37pY">
             <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LFO" />
@@ -124,7 +135,7 @@
             <Pin Id="PGmPUdxDEihODgfK9YSaVK" Name="On New Cycle" Kind="OutputPin" />
             <Pin Id="AkKLbjnDZsAO8n3kAYXsHV" Name="Cycles" Kind="OutputPin" />
           </Node>
-          <Node Bounds="122,441,65,19" Id="0yFwzxrnxlU36ewoBm96z9">
+          <Node Bounds="122,330,80,19" Id="0yFwzxrnxlU36ewoBm96z9">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -138,12 +149,12 @@
             <Pin Id="blePxB0S9qmIu0dYvBHFl3" Name="Translation" Kind="InputPin" />
             <Pin Id="JJk7Q3rdQOAw8UfOUFywYM" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="Ra5nME2bKHXwGE4eNVJjzg" Comment="Translation" Bounds="104,288,35,28" ShowValueBox="true" isIOBox="true" Value="1, 1">
+          <Pad Id="Ra5nME2bKHXwGE4eNVJjzg" Comment="Translation" Bounds="199,290,35,28" ShowValueBox="true" isIOBox="true" Value="1, 1">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="B0xEAzL1Vy4eUTpWU0qtpe" Comment="Size" Bounds="124,332,35,28" ShowValueBox="true" isIOBox="true" Value="1, 1">
+          <Pad Id="B0xEAzL1Vy4eUTpWU0qtpe" Comment="Size" Bounds="102,201,35,28" ShowValueBox="true" isIOBox="true" Value="1, 1">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>

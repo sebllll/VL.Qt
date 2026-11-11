@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="hua8vdtQ0T7UliPdDRVd13" LanguageVersion="2026.8.0-0228-gbf75e01f81" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="hua8vdtQ0T7UliPdDRVd13" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
   <NugetDependency Id="AXh4VRnnfztZ53173RFU9A" Location="VL.CoreLib" />
   <DocumentDependency Id="9DBifPwuqbJyBTXr1EBHUd" Location="../../VL.Qt.vl" />
   <Patch Id="dD28xudZ8uDWzoOIiRe2As">
@@ -110,7 +110,7 @@
             <Pin Id="SAGado2pY9YxRIyzFdC0NC" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="16Un0354JEGKYEhwcoB6do" Name="Window" Kind="InputPin" />
           </Node>
-          <Pad Id="knPN6khlOJ0w64d9aOsezS" Comment="Title" Bounds="182,518,136,18" ShowValueBox="true" isIOBox="true" Value="HowTo Set a Window Icon">
+          <Pad Id="knPN6khlOJ0w64d9aOsezS" Comment="Title" Bounds="230,550,136,18" ShowValueBox="true" isIOBox="true" Value="HowTo Set a Window Icon">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

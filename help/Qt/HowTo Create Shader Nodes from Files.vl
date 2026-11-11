@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="sMB38XkTQFGWYerl3V4iqJ" LanguageVersion="2026.8.0-0278-g8b85ba4511" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="sMB38XkTQFGWYerl3V4iqJ" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
   <NugetDependency Id="xg3loqNa8qGji3wC7xSOJO" Location="VL.CoreLib" />
   <DocumentDependency Id="0d9wDN3bn0FISx6baVtyXH" Location="../../VL.Qt.vl" />
   <Patch Id="ioUlsdV5hAGcaf361CACJV">
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="AUNpDXtMTQG7seDJlWy2SC" Bounds="85,1179,830,350" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Subfolders of qtshaders count, too. The node is named like the file: RGBSplit.frag gives the node RGBSplit. A .vert with the same name belongs to it.&#xD;&#xA;- @summary in the file head is the help text of the node. An extra sampler2D becomes an image pin.&#xD;&#xA;- Every other uniform in the uniform block becomes a pin, the camel case name split into words (colorA gives Color A), in the order of the file. Supported: float, vec2, vec3, vec4, int, bool, mat4.&#xD;&#xA;- Annotations are // comments above the uniform or at the end of its line: @min and @max are limits of the pad only (nothing is clamped), @color turns a vec4 into a color (components 0..1), @summary is the help text of the pin.&#xD;&#xA;- Blending, Size, Transform and the hidden pins work like on ShaderEffect.&#xD;&#xA;- The nodes appear when the qtshaders folder exists next to the saved patch. New, renamed or deleted files update the node browser while vvvv runs.&#xD;&#xA;- Save the .frag and the node updates. Pins with the same name keep their links and values. A shader with a compile error shows the error with its line number at the node; the pins of the last valid state stay.&#xD;&#xA;- Unknown annotations and unsupported uniform types (uint, ivec, mat3, arrays) show as warnings at the node, the pin is skipped or takes its default.&#xD;&#xA;- The shader is full Qt GLSL 440, like in the ShaderEffect node (see HowTo Write a ShaderEffect): the uniform block starts with qt_Matrix and qt_Opacity, the output is premultiplied. qtshaders/RGBSplit.frag and Stripes.frag are commented as templates, open them in an editor next to this patch.&#xD;&#xA;- Two .frag files with the same name in one qtshaders tree give an error at both nodes. A .vert without a .frag makes no node.&#xD;&#xA;- A filter (with sampler2D source) also appears as a node in Qt.Effects, same name, with Output and Error: it chains like Blur or DropShadow on the Effect pin of an element. @padding in the file head (DIP) lets it draw beyond the element. See HowTo Chain Shader Effects.">
+          <Pad Id="AUNpDXtMTQG7seDJlWy2SC" Bounds="85,819,830,350" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Subfolders of qtshaders count, too. The node is named like the file: RGBSplit.frag gives the node RGBSplit. A .vert with the same name belongs to it.&#xD;&#xA;- @summary in the file head is the help text of the node. An extra sampler2D becomes an image pin.&#xD;&#xA;- Every other uniform in the uniform block becomes a pin, the camel case name split into words (colorA gives Color A), in the order of the file. Supported: float, vec2, vec3, vec4, int, bool, mat4.&#xD;&#xA;- Annotations are // comments above the uniform or at the end of its line: @min and @max are limits of the pad only (nothing is clamped), @color turns a vec4 into a color (components 0..1), @summary is the help text of the pin.&#xD;&#xA;- Blending, Size, Transform and the hidden pins work like on ShaderEffect.&#xD;&#xA;- The nodes appear when the qtshaders folder exists next to the saved patch. New, renamed or deleted files update the node browser while vvvv runs.&#xD;&#xA;- Save the .frag and the node updates. Pins with the same name keep their links and values. A shader with a compile error shows the error with its line number at the node; the pins of the last valid state stay.&#xD;&#xA;- Unknown annotations and unsupported uniform types (uint, ivec, mat3, arrays) show as warnings at the node, the pin is skipped or takes its default.&#xD;&#xA;- The shader is full Qt GLSL 440, like in the ShaderEffect node (see HowTo Write a ShaderEffect): the uniform block starts with qt_Matrix and qt_Opacity, the output is premultiplied. qtshaders/RGBSplit.frag and Stripes.frag are commented as templates, open them in an editor next to this patch.&#xD;&#xA;- Two .frag files with the same name in one qtshaders tree give an error at both nodes. A .vert without a .frag makes no node.&#xD;&#xA;- A filter (with sampler2D source) also appears as a node in Qt.Effects, same name, with Output and Error: it chains like Blur or DropShadow on the Effect pin of an element. @padding in the file head (DIP) lets it draw beyond the element. See HowTo Chain Shader Effects.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,7 +43,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="ljKxMTIHhjGvhBKa6lMbWK" Bounds="88,632,480,65" ShowValueBox="true" isIOBox="true" Value="1  RGBSplit.frag is a filter: its sampler2D source is the Input pin. Amount has @min/@max, Direction a @default, Tint is a @color, Scanlines a bool.">
+          <Pad Id="ljKxMTIHhjGvhBKa6lMbWK" Bounds="88,272,480,65" ShowValueBox="true" isIOBox="true" Value="1  RGBSplit.frag is a filter: its sampler2D source is the Input pin. Amount has @min/@max, Direction a @default, Tint is a @color, Scanlines a bool.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -52,7 +52,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="t17z7NAocpFCcbVKoUDImD" Bounds="605,632,480,65" ShowValueBox="true" isIOBox="true" Value="2  Stripes.frag is a generator: no Input pin. The Size pin sets its size, an LFO drives Phase, Count and the two colors keep their @default.">
+          <Pad Id="t17z7NAocpFCcbVKoUDImD" Bounds="605,272,480,65" ShowValueBox="true" isIOBox="true" Value="2  Stripes.frag is a generator: no Input pin. The Size pin sets its size, an LFO drives Phase, Count and the two colors keep their @default.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -61,7 +61,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="100,752,265,19" Id="AyNTEJMtpmFsnb9rtGimRO">
+          <Node Bounds="100,392,265,19" Id="AyNTEJMtpmFsnb9rtGimRO">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -95,17 +95,18 @@
             <Pin Id="PzXAbh1x6aGjCmfcUrv9eN" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="CGPnUIxxVZGgeIAuwbFUbS" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="5PgBZ1ClRfFjyTBxlfASYU" Comment="Text" Bounds="142,722,50,15" ShowValueBox="true" isIOBox="true" Value="SPLIT">
+          <Pad Id="5PgBZ1ClRfFjyTBxlfASYU" Comment="Text" Bounds="142,362,50,15" ShowValueBox="true" isIOBox="true" Value="SPLIT">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="100,936,145,19" Id="gHzkAiWRvoG1YePvU3xHGQ">
+          <Node Bounds="100,576,145,19" Id="gHzkAiWRvoG1YePvU3xHGQ">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Examples" LastDependency="VL.Qt.Shaders">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessNode" Name="RGBSplit" />
             </p:NodeReference>
             <Pin Id="iZbJYo7fIrFlvAjAMRbX4A" Name="Input" Kind="InputPin" />
+            <Pin Id="QRKKQ8MKoXqLVw2UuKIwYh" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="qTlSdFlZdqFPOybCTKoPAH" Name="Amount" Kind="InputPin" />
             <Pin Id="SvsKUw6ZcSG36SbIrhnKMF" Name="Direction" Kind="InputPin" DefaultValue="1, 0.25" />
             <Pin Id="OswCGVtmWlF9MBDGeiNhoN" Name="Tint" Kind="InputPin" />
@@ -126,7 +127,7 @@
             <Pin Id="sJPfGQwlp0FdpmpRdHIrCV" Name="Error" Kind="OutputPin" />
             <Pin Id="LNEQ9XPVcjG8EZHv2kkYdK" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="240,902,80,19" Id="07z4GxiAmxGvhvc1DvcSVU">
+          <Node Bounds="240,542,80,19" Id="07z4GxiAmxGvhvc1DvcSVU">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -140,22 +141,23 @@
             <Pin Id="5tSmevYcdQGDT14SU1YZJH" Name="Translation" Kind="InputPin" DefaultValue="0.3, 0.4" />
             <Pin Id="TMH7Mlvk52FRVos7mJCYZK" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="n3j8isxbJyFlanBthUYooC" Comment="Scanlines" Bounds="182,870,35,35" ShowValueBox="true" isIOBox="true" Value="true">
+          <Pad Id="n3j8isxbJyFlanBthUYooC" Comment="Scanlines" Bounds="182,510,35,35" ShowValueBox="true" isIOBox="true" Value="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="O6pTaB0eWtFi9UeXcGU7OT" Comment="Amount" Bounds="122,807,35,15" ShowValueBox="true" isIOBox="true" Value="0.03">
+          <Pad Id="O6pTaB0eWtFi9UeXcGU7OT" Comment="Amount" Bounds="122,447,35,15" ShowValueBox="true" isIOBox="true" Value="0.03">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="620,936,125,19" Id="TQJLYwPt8FGDULmkbi9HEB">
+          <Node Bounds="620,576,145,19" Id="TQJLYwPt8FGDULmkbi9HEB">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.Shaders">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessNode" Name="Stripes" />
             </p:NodeReference>
             <Pin Id="jYml1XiDsPGZTV90PvLzjA" Name="Phase" Kind="InputPin" />
+            <Pin Id="UgyNDgWOCMjNEtyHG4h703" Name="Thickness" Kind="InputPin" />
             <Pin Id="ytQmLw3VHhFM3DnyQ9SHeQ" Name="Count" Kind="InputPin" DefaultValue="8" />
             <Pin Id="76J5xQV7mjGjKxlbIhZ2iL" Name="Color A" Kind="InputPin" />
             <Pin Id="mmXzSXqmhnGbB0ijuIguEL" Name="Color B" Kind="InputPin" />
@@ -175,7 +177,7 @@
             <Pin Id="Ly203Fhn4iGVf3MooY6yZT" Name="Error" Kind="OutputPin" />
             <Pin Id="AxMmPLYJcrFsfeTQH4I8BP" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="620,730,45,19" Id="80KeSmWJYqFfDV1sKCYv5N">
+          <Node Bounds="620,310,45,19" Id="80KeSmWJYqFfDV1sKCYv5N">
             <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LFO" />
@@ -190,7 +192,7 @@
             <Pin Id="czpltHClpxG6A6V1WMJ9QN" Name="On New Cycle" Kind="OutputPin" />
             <Pin Id="4mxFLrJpWoGuJiUzwhkx7H" Name="Cycles" Kind="OutputPin" />
           </Node>
-          <Node Bounds="740,895,80,19" Id="u7JYXdQVNvGtAcNtq9vrqS">
+          <Node Bounds="760,540,80,19" Id="u7JYXdQVNvGtAcNtq9vrqS">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -204,7 +206,7 @@
             <Pin Id="wJ54XZVlMtFrlKNtCxEZ7E" Name="Translation" Kind="InputPin" DefaultValue="4.8, 0.4" />
             <Pin Id="Lc81kneLlsG8Jdzuw81kkI" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,980,525,19" Id="fosm4AFnoUGGw0sd5FLd4R">
+          <Node Bounds="100,620,525,19" Id="fosm4AFnoUGGw0sd5FLd4R">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -229,7 +231,7 @@
             <Pin Id="hMOZvV5oMwF2d8U5yFHviE" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="mNHWOAfBVAGSK1Fh0YYLwV" Name="Style" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="100,1110,145,19" Id="Wxq4KSOW6dGi4h7lGVJt8F">
+          <Node Bounds="100,750,85,19" Id="Wxq4KSOW6dGi4h7lGVJt8F">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -252,45 +254,56 @@
             <Pin Id="vVCvnAjp56FhRWY3iM9ukR" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="U2ISunueD9FK71nRkeTB3K" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="RJoF6XuXG4FgwafsJdfLAN" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="THD89yjCsnJQOVgjjXT4i1" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="dr29XcgA4ZGhOoKLCR0RpP" Comment="Clear Color" Bounds="142,1026,136,15" ShowValueBox="true" isIOBox="true" Value="0.12, 0.12, 0.16, 1">
+          <Pad Id="dr29XcgA4ZGhOoKLCR0RpP" Comment="Clear Color" Bounds="142,666,136,15" ShowValueBox="true" isIOBox="true" Value="0.12, 0.12, 0.16, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="dM6ZylCBzqGMW2Zwe4KZeC" Comment="Title" Bounds="182,1076,200,19" ShowValueBox="true" isIOBox="true" Value="HowTo Create Shader Nodes from Files">
+          <Pad Id="dM6ZylCBzqGMW2Zwe4KZeC" Comment="Title" Bounds="182,716,200,19" ShowValueBox="true" isIOBox="true" Value="HowTo Create Shader Nodes from Files">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="ObiMaVC2RG9MOmrmLYfq27" Comment="Size" Bounds="722,840,35,28" ShowValueBox="true" isIOBox="true" Value="2.4, 1.2">
+          <Pad Id="ObiMaVC2RG9MOmrmLYfq27" Comment="Size" Bounds="742,485,35,28" ShowValueBox="true" isIOBox="true" Value="2.4, 1.2">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="HMaGnMpEEOdO9JNvbBr7sk" Comment="Translation" Bounds="317,855,35,28" ShowValueBox="true" isIOBox="true" Value="0.3, 0.4">
+          <Pad Id="HMaGnMpEEOdO9JNvbBr7sk" Comment="Translation" Bounds="317,495,35,28" ShowValueBox="true" isIOBox="true" Value="0.3, 0.4">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="IwzyWIfl9AONQqXyyvXgNy" Comment="Translation" Bounds="817,855,35,28" ShowValueBox="true" isIOBox="true" Value="3.19, 0.4">
+          <Pad Id="IwzyWIfl9AONQqXyyvXgNy" Comment="Translation" Bounds="837,500,35,28" ShowValueBox="true" isIOBox="true" Value="3.19, 0.4">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="H5lrEYl9vXXMe4g625xmmO" Comment="Direction" Bounds="142,840,35,28" ShowValueBox="true" isIOBox="true" Value="1, 0.25">
+          <Pad Id="H5lrEYl9vXXMe4g625xmmO" Comment="Direction" Bounds="142,480,35,28" ShowValueBox="true" isIOBox="true" Value="1, 0.25">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="M7sxZLkLricLfWRUzTjhkx" Comment="Color A" Bounds="662,770,136,15" ShowValueBox="true" isIOBox="true" Value="1, 0.35, 0.1, 1">
+          <Pad Id="M7sxZLkLricLfWRUzTjhkx" Comment="Color A" Bounds="682,415,136,15" ShowValueBox="true" isIOBox="true" Value="1, 0.35, 0.1, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="HKgD531GqntQEpuFySUa56" Comment="Color B" Bounds="682,800,136,15" ShowValueBox="true" isIOBox="true" Value="0, 0, 0, 0">
+          <Pad Id="HKgD531GqntQEpuFySUa56" Comment="Color B" Bounds="702,445,136,15" ShowValueBox="true" isIOBox="true" Value="0, 0, 0, 0">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="LVybaCAvAlJPvKtYFKeQxP" Comment="Count" Bounds="662,390,35,15" ShowValueBox="true" isIOBox="true" Value="8">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Integer32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="QG0J075r2ZLPlu8e9qMFya" Comment="Thickness" Bounds="642,360,35,15" ShowValueBox="true" isIOBox="true" Value="1">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
         </Canvas>
@@ -318,6 +331,8 @@
         <Link Id="BzXWJYgMtwSN5w25URBDFj" Ids="H5lrEYl9vXXMe4g625xmmO,SvsKUw6ZcSG36SbIrhnKMF" />
         <Link Id="HohoUna9RlwLW9lzBSdlCe" Ids="M7sxZLkLricLfWRUzTjhkx,76J5xQV7mjGjKxlbIhZ2iL" />
         <Link Id="Ms0WltSUC2FM1LjrS1Myo1" Ids="HKgD531GqntQEpuFySUa56,mmXzSXqmhnGbB0ijuIguEL" />
+        <Link Id="Dx2f361fXXALwt8lDzMel8" Ids="LVybaCAvAlJPvKtYFKeQxP,ytQmLw3VHhFM3DnyQ9SHeQ" />
+        <Link Id="KYkGNAQBmWfLw8dG7dLViT" Ids="QG0J075r2ZLPlu8e9qMFya,UgyNDgWOCMjNEtyHG4h703" />
       </Patch>
     </Node>
   </Patch>
