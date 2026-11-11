@@ -32,6 +32,7 @@ namespace VL.Qt
         static readonly Slider s_slider = new();
         static readonly TextField s_textField = new();
         static readonly ShaderEffect s_shaderEffect = new();
+        static readonly QmlElement s_qml = new();
 
         static Element DefaultOf(ElementType type) => type switch
         {
@@ -48,6 +49,7 @@ namespace VL.Qt
             ElementType.Slider => s_slider,
             ElementType.TextField => s_textField,
             ElementType.ShaderEffect => s_shaderEffect,
+            ElementType.Qml => s_qml,
             _ => s_group,
         };
 
@@ -103,10 +105,30 @@ namespace VL.Qt
                     DiffAutoSize(id, ((ShaderEffect)prev).AutoSize, ((ShaderEffect)next).AutoSize);
                     DiffShaderEffect(id, (ShaderEffect)prev, (ShaderEffect)next);
                     break;
+                case ElementType.Qml:
+                    DiffAutoSize(id, ((QmlElement)prev).AutoSize, ((QmlElement)next).AutoSize);
+                    DiffQml(id, (QmlElement)prev, (QmlElement)next);
+                    break;
                 default:
                     DiffAutoSize(id, ((Group)prev).AutoSize, ((Group)next).AutoSize);
                     break;
             }
+        }
+
+        /// <summary>
+        /// QmlElement (#104): Source, the reload counter, then the properties by name: only the entries that changed since the
+        /// previous description. A new Source or Reload sends all of them again (QtNative has a new instance, protocol.h "QmlElement");
+        /// a key that is gone from the dictionary is not reset in QML.
+        /// </summary>
+        void DiffQml(uint id, QmlElement p, QmlElement n)
+        {
+            bool sourceChanged = p.Source != n.Source;
+            if (sourceChanged)
+                _sink.SetString(id, P.QmlSource, n.Source);
+            bool reloaded = p.Reload != n.Reload;
+            if (reloaded)
+                _sink.SetI32(id, P.QmlReload, n.Reload);
+            QmlPropertyWriter.Write(_sink, id, n.Properties, sourceChanged || reloaded ? null : p.Properties);
         }
 
         /// <summary>
