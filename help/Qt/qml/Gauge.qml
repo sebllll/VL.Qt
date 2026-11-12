@@ -21,7 +21,8 @@ Item {
 
     // The percent the bar passed: 25, 50, 75 or 100, in either direction.
     signal milestone(int percent)
-    // The bar reached 100 percent.
+    // The bar reached 100 percent. Fires only when the animated bar really gets there: a Value that
+    // falls again before the bar has caught up (like the LFO ramp in the help patch) never fires it.
     signal full
 
     // Auto Size takes these. Switch Auto Size off and Size sets width and height instead.
