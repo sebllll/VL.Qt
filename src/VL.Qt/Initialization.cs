@@ -19,6 +19,9 @@ namespace VL.Qt
             // Shader nodes from qtshaders/**/*.frag next to documents and in packages (#488).
             Shaders.ShaderNodeFactory.Register(appHost);
 
+            // QML component nodes from qml/**/*.qml next to documents and in packages (#107).
+            Qml.QmlNodeFactory.Register(appHost);
+
             // Qt's pipeline cache in the exported program only (the editor would share one file between runs and patches,
             // #495). Loading vlqt.dll here is enough: the call only stores the path, QtNative itself starts later in QtApp.
             // A missing/broken QtNative must not break the start of an app that references VL.Qt (QtApp reports it at the node).
