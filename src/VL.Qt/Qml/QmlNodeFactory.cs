@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
+using System.Reactive.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using VL.Core;
@@ -56,8 +58,8 @@ namespace VL.Qt.Qml
         const string extension = ".qml";
 
         /// <summary>
-        /// Registers the factory at the app host (to be called from <see cref="Initialization.Configure"/> by T3 of #107, not yet),
-        /// over the app host's NodeFactoryCache like the shader factory.
+        /// Registers the factory at the app host (called from <see cref="Initialization.Configure"/>), over the app host's
+        /// NodeFactoryCache like the shader factory, so the factory (and its file watchers) lives across compilations.
         /// </summary>
         public static void Register(AppHost appHost)
         {
@@ -71,19 +73,119 @@ namespace VL.Qt.Qml
 
         /// <summary>
         /// Nodes of &lt;path&gt;/qml/ (recursive). invalidated: qml/ created/deleted, .qml files added/deleted/renamed. Content
-        /// changes go to the node description (<see cref="WatchSignature"/>) and the running instance (QmlElementNode's watcher).
-        /// Without the folder: empty factory that still watches path for it.
+        /// changes go to the node description (<see cref="WatchSignature(QmlFile, string)"/>) and the running instance
+        /// (QmlElementNode's watcher). Without the folder: empty factory that still watches path for it.
         /// </summary>
         public static NodeBuilding.FactoryImpl ForPath(string path, IVLNodeDescriptionFactory factory, ILogger logger)
-            => throw new NotImplementedException("T3: QML node factory (#107)");
+        {
+            // qml/ created or deleted: the whole factory again.
+            var invalidated = FileSystemUtils.WatchDir(path)
+                .Where(e => e.ChangeType is WatcherChangeTypes.Created or WatcherChangeTypes.Deleted or WatcherChangeTypes.Renamed
+                    && string.Equals(e.Name, FolderName, StringComparison.OrdinalIgnoreCase))
+                .Select(static e => (object)e);
+
+            var qmlPath = Path.Combine(path, FolderName);
+            if (Directory.Exists(qmlPath))
+            {
+                try
+                {
+                    var files = Scan(qmlPath);
+                    foreach (var file in files)
+                    {
+                        if (file.DuplicateError != null)
+                            logger.LogError("{Error}", file.DuplicateError);
+                    }
+                    var nodes = CreateDescriptions(files, factory, logger);
+                    // Files added, deleted or renamed: the node list again (content changes go to the node itself).
+                    invalidated = invalidated.Merge(FileSystemUtils.WatchDir(qmlPath, includeSubdirectories: true)
+                        .Where(IsNewOrDeletedQmlFile)
+                        .Select(static e => (object)e));
+                    // A change of @category or @tags moves the node: name and category of a description are fixed, so the node list again.
+                    foreach (var file in files)
+                        invalidated = invalidated.Merge(WatchContent(file).Where(_ => HeadChanged(file)));
+                    return NodeBuilding.NewFactoryImpl(nodes, invalidated);
+                }
+                catch (Exception e) when (e is UnauthorizedAccessException or IOException)
+                {
+                    // Folder deleted while scanning; the watcher above brings the factory back.
+                    logger.LogWarning(e, "Scanning {Path} failed: {Message}", qmlPath, e.Message);
+                }
+            }
+
+            return NodeBuilding.NewFactoryImpl(invalidated: invalidated);
+        }
 
         /// <summary>One node description per file of <paramref name="files"/>.</summary>
         internal static ImmutableArray<IVLNodeDescription> CreateDescriptions(IEnumerable<QmlFile> files, IVLNodeDescriptionFactory factory, ILogger logger)
-            => throw new NotImplementedException("T3: QML node factory (#107)");
+        {
+            var nodes = ImmutableArray.CreateBuilder<IVLNodeDescription>();
+            foreach (var file in files)
+                nodes.Add(QmlNodeDescription.New(factory, file, logger));
+            return nodes.ToImmutable();
+        }
 
         /// <summary>Scans a qml/ tree: component files only (<see cref="IsComponentFileName"/>), head tags, duplicate file names.</summary>
         public static ImmutableArray<QmlFile> Scan(string qmlPath)
-            => throw new NotImplementedException("T3: QML node factory (#107)");
+            => Scan(qmlPath, static source => QmlDeclarations.ParseHead(source));
+
+        /// <summary>Scan with the head parser of the caller (tests).</summary>
+        internal static ImmutableArray<QmlFile> Scan(string qmlPath, Func<string, QmlFileHead> parseHead)
+        {
+            var paths = Directory.EnumerateFiles(qmlPath, "*" + extension, SearchOption.AllDirectories)
+                .Where(f => IsComponentFileName(Path.GetFileName(f)))
+                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var duplicates = paths
+                .GroupBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() > 1)
+                .ToDictionary(
+                    g => g.Key,
+                    g => $"The QML file name '{g.Key}' exists more than once in {qmlPath}: {string.Join(", ", g)}. Rename one of them.",
+                    StringComparer.OrdinalIgnoreCase);
+
+            var result = ImmutableArray.CreateBuilder<QmlFile>(paths.Count);
+            foreach (var path in paths)
+            {
+                var fileName = Path.GetFileName(path);
+                var (name, version) = GetNodeName(fileName);
+                var head = ReadHead(path, parseHead);
+                duplicates.TryGetValue(fileName, out var duplicateError);
+                result.Add(new QmlFile(path, name, version, CategoryOf(head), head.Summary, TagsOf(head), duplicateError));
+            }
+            return result.MoveToImmutable();
+        }
+
+        static string CategoryOf(QmlFileHead head) => string.IsNullOrWhiteSpace(head.Category) ? DefaultCategory : head.Category.Trim();
+
+        static string TagsOf(QmlFileHead head) => string.Join(",", head.Tags);
+
+        /// <summary>Head tags for the node browser only; a file that cannot be read now gets the defaults (init reports it).</summary>
+        static QmlFileHead ReadHead(string path, Func<string, QmlFileHead> parseHead)
+        {
+            try
+            {
+                return parseHead(File.ReadAllText(path));
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                return QmlFileHead.Empty;
+            }
+        }
+
+        /// <summary>True if @category or @tags of the file on disk differ from the scan (a description cannot change them itself); false if it cannot be read now.</summary>
+        static bool HeadChanged(QmlFile file)
+        {
+            try
+            {
+                var head = QmlDeclarations.ParseHead(File.ReadAllText(file.FilePath));
+                return CategoryOf(head) != file.Category || TagsOf(head) != file.Tags;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                return false;
+            }
+        }
 
         /// <summary>Returns true if <paramref name="fileName"/> is a .qml file whose name starts with an uppercase letter.</summary>
         public static bool IsComponentFileName(string? fileName)
@@ -93,8 +195,18 @@ namespace VL.Qt.Qml
                 && char.IsUpper(name[0]);
 
         /// <summary>Node name and variant from a file name like the shader nodes: "Gauge_Round.qml" → ("Gauge", "Round").</summary>
+        /// <remarks>Further parts are joined with spaces ("Levels_Clamp_Both" → ("Levels", "Clamp Both")); an empty name part keeps the whole name.</remarks>
         public static (string Name, string? Version) GetNodeName(string fileName)
-            => throw new NotImplementedException("T3: QML node factory (#107)");
+        {
+            var name = fileName.EndsWith(extension, StringComparison.OrdinalIgnoreCase)
+                ? fileName[..^extension.Length]
+                : fileName;
+            var parts = name.Split('_', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0 || name.StartsWith('_'))
+                return (name, null);
+            var version = string.Join(' ', parts.Skip(1));
+            return (parts[0], version.Length > 0 ? version : null);
+        }
 
         /// <summary>
         /// Fires when the parsed declaration signature (<see cref="QmlDeclarations.Signature"/>) of <paramref name="file"/> differs
@@ -102,6 +214,62 @@ namespace VL.Qt.Qml
         /// NodeBuilding.WatchDir). The invalidated stream of the node description.
         /// </summary>
         public static IObservable<object> WatchSignature(QmlFile file, string signature)
-            => throw new NotImplementedException("T3: QML node factory (#107)");
+            => WatchSignature(file, () => signature);
+
+        /// <summary>
+        /// <see cref="WatchSignature(QmlFile, string)"/> with the signature taken when an event arrives: a description knows it
+        /// only once its init has run (null until then: nothing to compare, nothing fires).
+        /// </summary>
+        internal static IObservable<object> WatchSignature(QmlFile file, Func<string?> signature)
+            => NodeBuilding.WatchDir(Path.GetDirectoryName(file.FilePath)!)
+                .Where(IsQmlEvent)
+                .Where(_ => signature() is { } known && CurrentSignature(file) is { } current && current != known)
+                .Select(static e => (object)e);
+
+        // Events of the own file only (head tags).
+        static IObservable<FileSystemEventArgs> WatchContent(QmlFile file)
+        {
+            var fileName = Path.GetFileName(file.FilePath);
+            return NodeBuilding.WatchDir(Path.GetDirectoryName(file.FilePath)!)
+                .Where(e => string.Equals(e.Name, fileName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Null if the file cannot be read right now (editors save over a temp file): then nothing is compared, the next event decides.
+        static string? CurrentSignature(QmlFile file)
+        {
+            try
+            {
+                // Load reports an unreadable file as an error message and empty declarations; that must not look like a change.
+                using (File.Open(file.FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                {
+                }
+                return QmlNodeLayout.Load(file, NullLogger.Instance).Declarations.Signature;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                return null;
+            }
+        }
+
+        // Any .qml file of the folder: the file itself or a sibling root type it inherits from.
+        static bool IsQmlEvent(FileSystemEventArgs e)
+            => HasQmlExtension(e.Name) || (e is RenamedEventArgs r && HasQmlExtension(r.OldName));
+
+        static bool HasQmlExtension(string? name) => name != null && name.EndsWith(extension, StringComparison.OrdinalIgnoreCase);
+
+        // Directories have no extension: a created, deleted or renamed folder may hold component files.
+        static bool IsComponentOrFolder(string? name) => name != null && (IsComponentFileName(Path.GetFileName(name)) || Path.GetExtension(name).Length == 0);
+
+        /// <summary>
+        /// Only component files count (a lowercase helper does not make a node; a sibling's content change goes through
+        /// <see cref="WatchSignature(QmlFile, string)"/>), and folders. A rename counts if either name is a component file, so
+        /// "New Text Document.txt" → "Gauge.qml" (Explorer) adds the node.
+        /// </summary>
+        internal static bool IsNewOrDeletedQmlFile(FileSystemEventArgs e) => e.ChangeType switch
+        {
+            WatcherChangeTypes.Created or WatcherChangeTypes.Deleted => IsComponentOrFolder(e.Name),
+            WatcherChangeTypes.Renamed => IsComponentOrFolder(e.Name) || (e is RenamedEventArgs r && IsComponentOrFolder(r.OldName)),
+            _ => false,
+        };
     }
 }
