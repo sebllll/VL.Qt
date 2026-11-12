@@ -1,10 +1,15 @@
 #include "commands.h"
 #include "debug.h"
 #include "effectchain.h"
+#include "qmlitem.h"
 #include "shadereffectitem.h"
 #include "vlstyle.h"
 
+#include <QtCore/QRectF>
 #include <QtGui/QColor>
+#include <QtGui/QVector2D>
+#include <QtGui/QVector3D>
+#include <QtGui/QVector4D>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
@@ -43,6 +48,7 @@ const char* opName(quint16 op)
     case VLQT_OP_SET_STYLE: return "SET_STYLE";
     case VLQT_OP_SET_UNIFORMS: return "SET_UNIFORMS";
     case VLQT_OP_SET_EFFECT_CHAIN: return "SET_EFFECT_CHAIN";
+    case VLQT_OP_SET_QML_PROPERTIES: return "SET_QML_PROPERTIES";
     default: return "?";
     }
 }
@@ -217,7 +223,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                 // Object addressed by the command, for the structured error (#92): first u32 of every op with an id.
                 const bool hasId = op == VLQT_OP_CREATE || op == VLQT_OP_DESTROY || op == VLQT_OP_REPARENT
                     || op == VLQT_OP_SET || op == VLQT_OP_BIND || op == VLQT_OP_SET_STYLE || op == VLQT_OP_SET_UNIFORMS
-                    || op == VLQT_OP_SET_EFFECT_CHAIN;
+                    || op == VLQT_OP_SET_EFFECT_CHAIN || op == VLQT_OP_SET_QML_PROPERTIES;
                 if (hasId && plen >= 4)
                     cmdId = rd<quint32>(p);
                 if (op == VLQT_OP_SET && plen >= 6)
@@ -246,6 +252,9 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                     break;
                 case VLQT_OP_SET_EFFECT_CHAIN:
                     rc = setEffectChain(p, plen, reason);
+                    break;
+                case VLQT_OP_SET_QML_PROPERTIES:
+                    rc = setQmlProperties(p, plen, reason);
                     break;
                 case VLQT_OP_BIND:
                     if (expect(10)) {
@@ -691,6 +700,116 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
     item->endUniforms();
     elements.syncTextureGroups(it->second); // Groups as textures go through their frame proxy (#486)
     item->refreshLayerRequests(true); // their proxies carry the layer mipmaps / format of the samplers (#492)
+    return ApplyOk;
+}
+
+int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
+{
+    // Wire format: protocol.h head comment (entries like SET_UNIFORMS; a STRING value is u32 length + UTF-8). The command is
+    // validated as a whole first; content problems (unknown name, failed conversion, unsupported value type) do not fail
+    // the apply: they are error lines of the element (QmlItem::error, EV_ERROR).
+    if (plen < 8) {
+        err = "payloadLen " + std::to_string(plen) + " too short for SET_QML_PROPERTIES (>= 8)";
+        return ApplyBadLength;
+    }
+    const quint32 id = rd<quint32>(p);
+    auto it = nodes.find(id);
+    if (it == nodes.end()) {
+        if (id == VLQT_ROOT_ID || handlerNodes.count(id)) {
+            err = (id == VLQT_ROOT_ID ? std::string("the window root") : "input handler " + std::to_string(id))
+                + " has no QML properties (QmlElement only)";
+            return ApplyUnknownProperty;
+        }
+        err = "unknown id " + std::to_string(id);
+        return ApplyUnknownId;
+    }
+    if (it->second.type != VLQT_TYPE_QML) {
+        err = "type " + std::to_string(it->second.type) + " has no QML properties (QmlElement only)";
+        return ApplyUnknownProperty;
+    }
+    const int count = rd<quint16>(p + 4);
+    int off = 8;
+    for (int i = 0; i < count; ++i) {
+        if (plen - off < 4) {
+            err = "QML property #" + std::to_string(i) + ": truncated entry";
+            return ApplyBadLength;
+        }
+        const quint16 vt = rd<quint16>(p + off);
+        const int nameLen = rd<quint16>(p + off + 2);
+        const int size = valueSize(vt);
+        if (size < 0) {
+            err = "QML property #" + std::to_string(i) + ": unknown value type " + std::to_string(vt);
+            return ApplyBadValue;
+        }
+        if (nameLen < 1 || nameLen > VLQT_UNIFORM_NAME_MAX) {
+            err = "QML property #" + std::to_string(i) + ": name length " + std::to_string(nameLen) + " not in 1.."
+                + std::to_string(VLQT_UNIFORM_NAME_MAX);
+            return ApplyBadValue;
+        }
+        const int valueOff = off + align4(4 + nameLen);
+        qint64 vlen = size;
+        if (vt == VLQT_VT_STRING) {
+            if (valueOff + 4 > plen) {
+                err = "QML property #" + std::to_string(i) + ": entry exceeds the payload";
+                return ApplyBadLength;
+            }
+            vlen += rd<quint32>(p + valueOff);
+        }
+        const qint64 next = valueOff + ((vlen + (VLQT_COMMAND_ALIGN - 1)) & ~qint64(VLQT_COMMAND_ALIGN - 1));
+        if (next > plen) {
+            err = "QML property #" + std::to_string(i) + ": entry exceeds the payload";
+            return ApplyBadLength;
+        }
+        off = int(next);
+    }
+    if (off != plen) {
+        err = "SET_QML_PROPERTIES: " + std::to_string(plen - off) + " bytes after the last entry";
+        return ApplyBadLength;
+    }
+    auto* item = static_cast<QmlItem*>(it->second.item);
+    off = 8;
+    for (int i = 0; i < count; ++i) {
+        const quint16 vt = rd<quint16>(p + off);
+        const int nameLen = rd<quint16>(p + off + 2);
+        const QString name = QString::fromUtf8(reinterpret_cast<const char*>(p + off + 4), nameLen);
+        const unsigned char* vp = p + off + align4(4 + nameLen);
+        int vlen = valueSize(vt);
+        if (vt == VLQT_VT_STRING)
+            vlen += int(rd<quint32>(vp));
+        off = int(vp - p) + align4(vlen);
+        float f[4] = {};
+        switch (vt) {
+        case VLQT_VT_F32: item->setRootProperty(name, double(rd<float>(vp))); break;
+        case VLQT_VT_I32: item->setRootProperty(name, int(rd<qint32>(vp))); break;
+        case VLQT_VT_BOOL: item->setRootProperty(name, vp[0] != 0); break;
+        case VLQT_VT_STRING:
+            item->setRootProperty(name, QString::fromUtf8(reinterpret_cast<const char*>(vp + 4), qsizetype(rd<quint32>(vp))));
+            break;
+        case VLQT_VT_COLOR:
+            std::memcpy(f, vp, 16);
+            item->setRootProperty(name, QColor::fromRgbF(f[0], f[1], f[2], f[3]));
+            break;
+        case VLQT_VT_RECTF:
+            std::memcpy(f, vp, 16);
+            item->setRootProperty(name, QRectF(f[0], f[1], f[2], f[3]));
+            break;
+        case VLQT_VT_VEC2:
+            std::memcpy(f, vp, 8);
+            item->setRootProperty(name, QVector2D(f[0], f[1]));
+            break;
+        case VLQT_VT_VEC3:
+            std::memcpy(f, vp, 12);
+            item->setRootProperty(name, QVector3D(f[0], f[1], f[2]));
+            break;
+        case VLQT_VT_VEC4:
+            std::memcpy(f, vp, 16);
+            item->setRootProperty(name, QVector4D(f[0], f[1], f[2], f[3]));
+            break;
+        default:
+            item->rejectRootProperty(name, QStringLiteral("value type %1 is not supported for QML properties").arg(vt));
+            break;
+        }
+    }
     return ApplyOk;
 }
 

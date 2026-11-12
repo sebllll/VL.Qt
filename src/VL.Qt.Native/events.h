@@ -26,6 +26,10 @@
  *   EV_VALUE (u16 valueType, u16 0, value like SET)  after a user change since the last poll, with the value of the
  *                   last one, captured when Qt's user-only signal fired (SpinBox valueModified); never for SET (no
  *                   echo). A new handle drops a change not polled yet. Schema and guarantees: protocol.h, elements.cpp.
+ * QmlElement items (#104) additionally report the changes of the properties and signals declared in the root of their QML
+ * file: EV_QML_PROPERTY (the last value of each changed property, never for the patch's own SET_QML_PROPERTIES) and
+ * EV_QML_SIGNAL (every emitted signal, cap 256 per poll, QmlItem in qmlitem.h), formats in protocol.h; their errors (load,
+ * type, rejected properties) arrive as EV_ERROR like those of Image/Video.
  * Elements have no pointer handlers of their own: without an attached input handler an item is transparent for input.
  * BIND flags are ignored for elements (CANCEL_PRESS has no effect since #320, the old Interactive/Pointer flags of
  * #208 are reserved).

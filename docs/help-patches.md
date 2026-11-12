@@ -108,6 +108,12 @@ See [Effects and shaders](effects-and-shaders.md).
 - `HowTo Create Shader Nodes from Files` — `qtshaders/` folder, one node per `.frag`, pins from uniforms
 - `HowTo Blur an Image with a Control Mask` — two chained ShaderEffects (horizontal/vertical blur), a QtImage as mask uniform
 
+## QML
+
+- `HowTo Use a QML file` — `QmlElement` with the sample `QmlElement Example.qml`: properties in by name, changed properties and signals out, hot reload on save
+
+See [QML files as elements](user-qml.md).
+
 ## Window and Diagnostics
 
 - `HowTo Set a Window Icon` — `WindowSettings` node on the `Window` pin of the Renderer: icon, title, frame, fullscreen
