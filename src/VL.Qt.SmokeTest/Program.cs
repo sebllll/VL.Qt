@@ -368,6 +368,7 @@ static class Program
         if (s_only?.Contains("readme-images") == true) ReadmeImagesTest.Run(outDir, Check, Pump, Grab); // README pictures of the Effect chain (#489): chains and single effects -> docs/images/ (only on request).
         if (s_only?.Contains("readme-gallery") == true) ReadmeGalleryTest.Run(outDir, Check, Pump, Grab); // README pictures of styles, layout, images and basic effects -> docs/images/ (only on request).
         if (Selected("shader-effect")) ShaderEffectTest.Run(outDir, Check, Pump, Grab); // ShaderEffect: builtin:wave/gradient, sampler uniforms, mesh, broken paths, uniform errors (#437).
+        if (Selected("qml")) QmlTest.Run(outDir, Check, Pump, Grab); // QmlElement (#104): user .qml, properties both ways without echo, signals, animations on the frame clock, errors, reload, Auto Size.
         if (Selected("shader-source")) ShaderSourceTest.Run(outDir, Check, Pump, Grab); // ShaderEffect Phase 2: GLSL text baked at runtime, line numbers, last good version, cache (#483).
         if (Selected("restart")) RestartTest.Run(outDir, Check, Pump); // #526: quick repeated restarts: window destroyed inside the pump (host callback in processEvents), restarts while a shader text bakes.
         if (Selected("group-shader-source")) GroupShaderSourceTest.Run(outDir, Check, Pump, Grab); // Group as ShaderEffect Input / texture uniform: whole frame incl. negative part, live (#486).
