@@ -96,7 +96,7 @@ VL.Qt ships only the LGPL modules of Qt (see [QtNative deployment](decisions/qtn
 
 ## Out of scope
 
-- Pins generated from the QML file (like the shader nodes from `qtshaders/`): the dictionary is the interface for now.
+- Pins generated from the QML file (like the shader nodes from `qtshaders/`): the dictionary is the interface for now; a node factory is tracked in [#107](https://github.com/sebllll/VL.Qt/issues/107).
 - C# objects or models handed to QML as context properties (the idea of Qt Bridge for C#, see [qt-bridges.md](decisions/qt-bridges.md)).
 - Calling QML functions from the patch.
 - Pointer input inside the QML file (`MouseArea`, handlers) is not part of the design; use the `Interaction` pin on the element. Use signals and properties to carry results back.

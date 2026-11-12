@@ -26,7 +26,8 @@ The issue text of #104 was the design; these points came out differently when it
 
 ## Open
 
-- **Dynamic pins** from the QML file (node factory like `ShaderNodeFactory`), C# objects/models as context properties, calling QML functions: out of scope of #104; revisit when the dictionary form is in use.
+- **Dynamic pins** from the QML file (node factory like `ShaderNodeFactory`): out of scope of #104, tracked in #107 (open questions there: where the pins come from, hot reload with changed pins, input vs. output pins, search paths).
+- **C# objects/models as context properties, calling QML functions**: out of scope of #104; revisit when the dictionary form is in use.
 
 ## Rejected
 
