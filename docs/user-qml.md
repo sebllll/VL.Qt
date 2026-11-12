@@ -195,7 +195,7 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 - **No experimental mark:** `QmlElement` carries `SymbolSmell.Experimental`, but vvvv's node building API has no smell for factory nodes. The generated nodes are experimental all the same.
 - **No pin** for `alias`, `var`, `list<…>`, object types and value types such as `url` or `font` (info message at the node, use `Properties`).
 - Only the **root object** is read, and only a sibling file of the same folder as root type (not an import from another folder or module).
-- The `qml/` folder is searched next to saved documents and in packages, not elsewhere. **Export:** the node only knows the path of the `.qml` file; the `qml/` folder is not copied next to the exported app yet.
+- The `qml/` folder is searched next to saved documents and in packages, not elsewhere. **Export:** the `qml/` folder next to the exported document is copied with its structure next to the exe (like `qtshaders/` and `fonts/`), where the node factory of the exported app finds it. The `qml/` folders of other documents and packages are not copied.
 - A node always represents one file: there is no `File` pin.
 
 ## Licensing of imports
