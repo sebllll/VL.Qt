@@ -184,9 +184,9 @@ namespace VL.Qt.Tests
         {
             static FileSystemEventArgs E(WatcherChangeTypes t, string name) => new(t, "c:\\x", name);
             Assert.That(QmlNodeFactory.IsNewOrDeletedQmlFile(E(WatcherChangeTypes.Created, "Gauge.qml")));
-            Assert.That(QmlNodeFactory.IsNewOrDeletedQmlFile(E(WatcherChangeTypes.Deleted, "sub\\Gauge.qml")));
+            Assert.That(QmlNodeFactory.IsNewOrDeletedQmlFile(E(WatcherChangeTypes.Deleted, Path.Combine("sub", "Gauge.qml"))));
             Assert.That(QmlNodeFactory.IsNewOrDeletedQmlFile(E(WatcherChangeTypes.Created, "sub")), "a folder may hold files");
-            Assert.That(QmlNodeFactory.IsNewOrDeletedQmlFile(E(WatcherChangeTypes.Deleted, "sub\\deeper")));
+            Assert.That(QmlNodeFactory.IsNewOrDeletedQmlFile(E(WatcherChangeTypes.Deleted, Path.Combine("sub", "deeper"))));
             Assert.That(QmlNodeFactory.IsNewOrDeletedQmlFile(E(WatcherChangeTypes.Created, "helper.qml")), Is.False, "lowercase is no node");
             Assert.That(QmlNodeFactory.IsNewOrDeletedQmlFile(E(WatcherChangeTypes.Created, "Gauge.qml~")), Is.False, "editor temp file");
             Assert.That(QmlNodeFactory.IsNewOrDeletedQmlFile(E(WatcherChangeTypes.Created, "Gauge.js")), Is.False);
