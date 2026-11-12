@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="qCqmbHalnV6jTNS8q7SERE" Bounds="85,85,560,98" ShowValueBox="true" isIOBox="true" Value="QML nodes from qml/*.qml&#10;- Folder qml next to this patch: one node per file, Gauge.qml gives the node Gauge&#10;- property = input pin, its literal value = the default (Value, Accent, Label)&#10;- readonly property = output (Percent), signal(int) = Spread (Milestone), signal = bang (Full)&#10;- // lines above a declaration = pin help; @summary, @category, @tags in the file head">
+          <Pad Id="qCqmbHalnV6jTNS8q7SERE" Bounds="85,85,560,98" ShowValueBox="true" isIOBox="true" Value="QML nodes from qml/*.qml&#xA;- Folder qml next to this patch: one node per file, Gauge.qml gives the node Gauge&#xA;- property = input pin, its literal value = the default (Value, Accent, Label)&#xA;- readonly property = output (Percent), signal(int) = Spread (Milestone), signal = bang (Full)&#xA;- // lines above a declaration = pin help; @summary, @category, @tags in the file head">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -102,7 +102,7 @@
             <Pin Id="ISVrECKvvaRLWLaidggaCK" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="b2oUXfiZ4zZUfhrFRg4iXf" Name="Error" Kind="OutputPin" />
           </Node>
-          <Pad Id="KyHrrO3BAPH67JQ0TDZTQk" Bounds="360,436,300,30" ShowValueBox="true" isIOBox="true" Value="Gauge is generated from qml/Gauge.qml next to this patch. Middle click on it opens the file.">
+          <Pad Id="KyHrrO3BAPH67JQ0TDZTQk" Bounds="360,381,302,47" ShowValueBox="true" isIOBox="true" Value="Gauge is generated from qml/Gauge.qml next to this patch. Middle click on it opens the file.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -111,8 +111,8 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="BZsZjAOSzogMYjcfA6QQuT" Comment="Error" Bounds="264,480,300,15" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="TRQT81Svt5TPnwcD8RfB6y" Comment="Full" Bounds="224,510,35,35" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="BZsZjAOSzogMYjcfA6QQuT" Comment="Error" Bounds="262,480,300,15" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="TRQT81Svt5TPnwcD8RfB6y" Comment="Full" Bounds="222,510,35,35" ShowValueBox="true" isIOBox="true" />
           <Pad Id="OG5OglC77JqTDaGM4pFvFU" Comment="Milestone" Bounds="184,560,60,40" ShowValueBox="true" isIOBox="true" />
           <Pad Id="FhXjbQJ5QGJ8pf91KcCVUA" Comment="Percent" Bounds="144,615,35,15" ShowValueBox="true" isIOBox="true" />
           <Pad Id="szLjIgE25en7P9csXmhURG" Comment="Title" Bounds="182,650,220,17" ShowValueBox="true" isIOBox="true" Value="HowTo Create QML Nodes from Files">
@@ -145,7 +145,7 @@
             <Pin Id="pY1ZlPKG9gjp8WbOVd3zBE" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="MQy5plOTJU9jaRLYhqmqfm" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="orztv7n95UUMR6Vmi83jZo" Bounds="85,740,840,250" ShowValueBox="true" isIOBox="true" Value="Notes:&#10;- The nodes appear when the qml folder exists next to the saved patch, or in the qml folder of a package; subfolders count. Only files whose name starts with an uppercase letter become nodes (QML's rule for components): main.qml or helpers are skipped. Middle click on the node opens the file.&#10;- Pins come only from the declarations of the root object: property (input, plus an optional output with the last value QML changed), readonly property (output), signal (output). Types: real, int, bool, string, color, vector2d/3d/4d, rect. The other pins are those of QmlElement (see HowTo Use a QML file).&#10;- A pin sends nothing until its value differs from the declared default: a binding or an initial value in the file stays in charge until you really set the pin.&#10;- Save the .qml and the running element reloads. The pins change only when the declarations change (a new, renamed or retyped property or signal, a default, the comment above it, a head tag); links on pins with the same name stay.&#10;- alias, var, list and object properties get no pin (info at the node). Set them through the hidden Properties pin, the dictionary of QmlElement (plan B).&#10;- A file that does not parse still gives a node: parser messages show at the node, QML errors at Error.&#10;- Export: the qml folder next to the exported patch is copied next to the exe.&#10;- Experimental, like QmlElement.">
+          <Pad Id="orztv7n95UUMR6Vmi83jZo" Bounds="85,740,840,250" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The nodes appear when the qml folder exists next to the saved patch, or in the qml folder of a package; subfolders count. Only files whose name starts with an uppercase letter become nodes (QML's rule for components): main.qml or helpers are skipped. Middle click on the node opens the file.&#xA;- Pins come only from the declarations of the root object: property (input, plus an optional output with the last value QML changed), readonly property (output), signal (output). Types: real, int, bool, string, color, vector2d/3d/4d, rect. The other pins are those of QmlElement (see HowTo Use a QML file).&#xA;- A pin sends nothing until its value differs from the declared default: a binding or an initial value in the file stays in charge until you really set the pin.&#xA;- Save the .qml and the running element reloads. The pins change only when the declarations change (a new, renamed or retyped property or signal, a default, the comment above it, a head tag); links on pins with the same name stay.&#xA;- alias, var, list and object properties get no pin (info at the node). Set them through the hidden Properties pin, the dictionary of QmlElement (plan B).&#xA;- A file that does not parse still gives a node: parser messages show at the node, QML errors at Error.&#xA;- Export: the qml folder next to the exported patch is copied next to the exe.&#xA;- Experimental, like QmlElement.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -154,6 +154,11 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
+          <Pad Id="DIKyjJPnwuOLAngSVXkcPY" Comment="" Bounds="102,350,35,15" ShowValueBox="true" isIOBox="true">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
         </Canvas>
         <Patch Id="o9Bhig5AnRMC9NmL1OYys2" Name="Create" />
         <Patch Id="yLjmRbWLxbMeut4TG6cQto" Name="Update" />
@@ -161,7 +166,6 @@
           <Fragment Id="yQ4Li5tr5tk7HCaP4NltB9" Patch="o9Bhig5AnRMC9NmL1OYys2" Enabled="true" />
           <Fragment Id="EJtrkIhNGIGZcWvwXPDOzJ" Patch="yLjmRbWLxbMeut4TG6cQto" Enabled="true" />
         </ProcessDefinition>
-        <Link Id="rWbuJy86YvZLSEgjH9fvl6" Ids="Q71PpjUhjRfs01cAbASbzT,HsvTr2peVwcSdP9YMTqupv" />
         <Link Id="RhZLnvzVwPquwkfC4duVTi" Ids="7wrTD11BxzWPHkODNeurjd,m8JMnMK5wXsDfie7405Bta" />
         <Link Id="cPtBnxPZRdbRmezbfDE3xN" Ids="tMehSvSan7yvcVXoPGAGor,C6W8RNUGacot4ogFwUPKWQ" />
         <Link Id="U1JPonN1M0twkn2la6yNU0" Ids="uBxrLAbPJHAK1YCeBdkiO2,rdsJnFQtHEOs0BRu9065OL" />
@@ -171,6 +175,8 @@
         <Link Id="NouNvzBFvd2Zpg1MopbYZZ" Ids="cbn2sZb8HlPeFAr70KrAaz,FhXjbQJ5QGJ8pf91KcCVUA" />
         <Link Id="QQUUzF6aSyutZGwojhVWiN" Ids="rLVDQYPwG31mK12VcCsPjf,1Ti6o80mS68gqM2qnJAMYc" />
         <Link Id="UsLsQojwFmKzpF59tDMQKE" Ids="szLjIgE25en7P9csXmhURG,G5rQ2P2juAP3mX4lMGWO0C" />
+        <Link Id="M4CHk7gw2PqPoI2IiNIqpb" Ids="DIKyjJPnwuOLAngSVXkcPY,HsvTr2peVwcSdP9YMTqupv" />
+        <Link Id="PfO6fXbMYf6Ndjebi6gfkw" Ids="Q71PpjUhjRfs01cAbASbzT,DIKyjJPnwuOLAngSVXkcPY" />
       </Patch>
     </Node>
   </Patch>
