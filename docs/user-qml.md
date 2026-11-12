@@ -101,7 +101,7 @@ Experimental: the generated nodes can change like `QmlElement`, although vvvv sh
 - Only files whose name **starts with an uppercase letter**, as QML requires for component files. `main.qml`, `helpers.qml` and so on are ignored without a message.
 - The node name is the file name: `Gauge.qml` → `Gauge`. A `_` splits off a variant, like at the shader nodes: `Gauge_Round.qml` → `Gauge (Round)`.
 - Two files with the same name in one `qml/` tree give an error at both nodes. The nodes appear once the `qml/` folder exists next to the saved patch.
-- The root of the file must be an `Item` or derived from it (as at `QmlElement`). A root type that is another `.qml` file **in the same folder** (`Gauge { … }` with `Gauge.qml` next to it) works: its declarations come first, a redeclaration in the derived file replaces the inherited one.
+- The root of the file must be an `Item` or derived from it (as at `QmlElement`). A root type that is another `.qml` file **in the same folder** (`Gauge { … }` with `Gauge.qml` next to it) works: its declarations come first, a redeclaration in the derived file replaces the inherited one, and a plain assignment `name: value` in the derived root replaces the default of an inherited property. Only a type name that starts with an uppercase letter and has no dot (`Controls.Slider`) is looked up as a sibling file.
 
 ### Which declarations give which pins
 
@@ -118,7 +118,7 @@ Only the declarations of the **root object** count (nested objects and functions
 | `signal name(type a)` | no | `Spread<T>`: the values of the emissions of this frame |
 | `signal name(type a, type b, …)` | no | `Spread<QmlSignal>`: one entry per emission, `Name` and `Arguments` |
 
-The types and their vvvv counterparts are those of [Value types](#value-types): `real`/`double` → `float`, `int`, `bool`, `string`, `color` → `Color4`, `vector2d/3d/4d` → `Vector2/3/4`, `rect` → `RectangleF`. A signal argument of a type without a pin type (`var`, a list, an object) makes the pin a `Spread<object>`, the value arrives as its string form (or whatever supported type it has).
+The types and their vvvv counterparts are those of [Value types](#value-types): `real`/`double` → `float`, `int`, `bool`, `string`, `color` → `Color4`, `vector2d/3d/4d` → `Vector2/3/4`, `rect` → `RectangleF`. A signal argument of a type without a pin type (`var`, a list, an object) makes the pin a `Spread<object>`, the value arrives as its string form (or whatever supported type it has). Both argument spellings work: `signal moved(real x, real y)` and `signal moved(x: real, y: real)`; an argument without a name is called `arg1`, `arg2`, …
 
 The input and the output of one property have **the same name** ("Accent Color" in and out), vvvv tells them apart by their kind. The output starts with the declared default, shows the last value QML changed, and goes back to the default after a reload of the file. A signal output is false/empty in every frame without an emission.
 
@@ -126,8 +126,8 @@ Not given a pin: `property alias`, `var`, `list<…>`, object types (`Item`, `Re
 
 ### Defaults, and when a value is sent
 
-- A **literal initializer** is the default of the pin: numbers, `true`/`false`, strings, colours as `"#rrggbb"` / `"#aarrggbb"` or an SVG colour name (`"tomato"`), and `Qt.rgba`, `Qt.rgb`, `Qt.vector2d/3d/4d`, `Qt.rect` with numeric literal arguments.
-- A **binding** (`property real half: width / 2`), any other expression, or **no initializer** gives the default of the type (0, `false`, empty string, transparent black, …).
+- A **literal initializer** is the default of the pin: numbers (also hex and with a sign; an `int` needs a whole number, a `real` takes an integer too), `true`/`false`, strings (`"…"` or `'…'`), colours as `"#rgb"` / `"#rrggbb"` / `"#aarrggbb"` or a colour name, and `Qt.rgba`, `Qt.rgb`, `Qt.vector2d/3d/4d`, `Qt.rect` with numeric literal arguments. Colour names (`"tomato"`, case does not matter) come from Stride's colour table, with the `grey` spellings of the `gray` names, `transparent` and `rebeccapurple` added; an unknown name or hex form is not a literal. `Qt.rgba`/`Qt.rgb` take 0 to 1 per channel, a value outside that range makes it a binding.
+- A **binding** (`property real half: width / 2`), any other expression (also a literal of another type), or **no initializer** gives the default of the type (0, `false`, empty string, transparent black, …).
 - **Binding rule:** the patch sends a value only **after it differs from the declared default**; from then on every change is sent, also back to the default. Until then the pin is silent, so a binding or an initial value in the file stays alive and is not overwritten by the pin's default. Consequence: a pin that still shows its default does not "hold" that value in QML, it leaves the file in charge.
 - A value is never "reset": setting a pin back to the default sends the default, it does not restore a binding.
 - A `required property` is sent from the first frame on (but see [Limitations](#limitations-of-the-generated-nodes)).
@@ -137,7 +137,7 @@ Not given a pin: `property alias`, `var`, `list<…>`, object types (`Item`, `Re
 - The name comes from the QML name like at the shader pins: `accentColor` → **Accent Color**, `max_value` → **Max Value**.
 - A name taken by a common pin (`Size`, `Opacity`, `Transform`, `Output`, `Error`, `Properties`, …) or by an earlier declaration becomes "Size 2", with a warning at the node.
 - The common pins are exactly those of `QmlElement`: `Size`, `Auto Size`, `Transform`, `Anchor`, `Opacity`, `Clip`, `Debug`, `Interaction`, `Effect`, and the outputs `Output`, `Measured Size`, `Scene Bounds`, `Error`. The property and signal pins come before them.
-- The `//` **comment lines directly above a declaration** are the help of its pins (several lines are joined with spaces). Without a comment the help only says the QML type and name.
+- The `//` **comment lines directly above a declaration** are the help of its pins (several lines are joined with spaces; no blank line or code in between, and an empty `//` line ends the block). Without a comment the help only says the QML type and name.
 
 ```qml
 // @category Qt.Elements.Examples
@@ -163,7 +163,7 @@ This file gives a node `Gauge` with the inputs `Value` (0.25) and `Accent Color`
 
 ### Head tags
 
-`//` comment lines **before the root object** (also between the `import` lines) can carry tags for the node. A tag takes the rest of its line; following comment lines without a tag are appended to it. Unknown tags show at the node.
+`//` comment lines **before the root object** (also between the `import` lines) can carry tags for the node. A tag takes the rest of its line; the comment lines **directly** below it without a tag are appended to it (joined with spaces, at `@tags` as further entries); a blank line, an empty `//` line or code ends it. A tag with an empty value counts as not given. An unknown tag (`@foo`) gives a warning at the node. Comments after the root object starts are not read as tags.
 
 | Tag | Effect |
 |---|---|
@@ -185,7 +185,8 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 
 ### Errors
 
-- A file that does **not parse** (no root object, unbalanced braces) still gets a node with the common pins and the parser messages, so a typo does not drop the node and its links.
+- A file that does **not parse** (no root object, unbalanced braces, unterminated string or comment) still gets a node with the common pins, its head tags and the parser messages, so a typo does not drop the node and its links. It gets no property or signal pins until it parses again.
+- A sibling root type that does not parse or cannot be read is **not** an error of the file: the message is a warning (with the sibling's file name) and its declarations are missing.
 - Parser messages show as messages at the node: errors, then warnings, then one info for the declarations without a pin. The same lines go to the vvvv log.
 - Compile, load and type errors of the QML itself, and values that could not be set, show on the `Error` output as at `QmlElement`.
 
