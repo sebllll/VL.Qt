@@ -28,8 +28,8 @@ namespace VL.Qt.Nodes
             var length = Math.Max(Geometry.ToQt(p.Length), 0f);
             var pad = EffectPadding.Ceil(0.6f * length);
             return new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
-                new[] { Uniform.Vector2("center", p.Center) }.ToSpread(),
-                new RectangleF(pad, pad, pad, pad), length, "blurLength");
+                new[] { Uniform.Vector2("center", p.Center), Uniform.Float("blurLength", length) }.ToSpread(),
+                new RectangleF(pad, pad, pad, pad));
         };
 
         readonly BuiltinShaderLink<Props> _link;

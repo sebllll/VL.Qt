@@ -49,12 +49,12 @@ namespace VL.Qt
         /// <param name="bounds">Initial position and size in DIP, like Bounds on create of VL.Skia/VL.Stride (size = client
         /// size, position = outer top-left), set by QtNative before show. Empty bounds give 600x400 centered; bounds on no
         /// screen are centered (QScreen, all platforms; Wayland ignores the position).</param>
-        /// <param name="vSync">Swap interval 1 instead of 0 (fixed at creation, Qt reads it when the swap chain is created).</param>
+        /// <param name="vSync">Swap interval 1 (default, no tearing, the frame may wait for the refresh) or 0 (Present never waits, tearing possible). Fixed at creation, Qt reads it when the swap chain is created.</param>
         /// <param name="mode"><see cref="Protocol.WindowMode"/> bits set before the first show (e.g. Borderless: no frame
         /// flash); later changes via <see cref="SetMode"/>.</param>
         /// <param name="iconPath">Full path of the window icon, set before the first show (no flash of the default icon);
         /// null = default icon. The result is in <see cref="IconResult"/>, later changes via <see cref="SetIcon"/>.</param>
-        public WindowRenderer(SceneRegistry scene, string? title, RectangleF bounds, bool vSync = false, uint mode = 0, string? iconPath = null)
+        public WindowRenderer(SceneRegistry scene, string? title, RectangleF bounds, bool vSync = true, uint mode = 0, string? iconPath = null)
         {
             _reconciler = new Reconciler(_commands, new IdAllocator(), scene);
             _resync = new ResyncController(_reconciler, ResetInQtNative);

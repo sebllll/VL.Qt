@@ -126,8 +126,8 @@
             <Pin Id="BsF0jy52ZOaPsFZrjaWDS9" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="Kj1JNl7wbCOOyaK5YP7PfT" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="SVkYoyiQILYPRwmQeQUZ8b" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Tdrwy3IXbi3Nf0yx1w95tJ" Name="Spacing" Kind="InputPin" DefaultValue="0.1" IsHidden="true" />
-            <Pin Id="T9dpThghXT4NQzDpF69Geb" Name="Padding" Kind="InputPin" DefaultValue="0.1" IsHidden="true" />
+            <Pin Id="Tdrwy3IXbi3Nf0yx1w95tJ" Name="Spacing" Kind="InputPin" DefaultValue="0.1" />
+            <Pin Id="T9dpThghXT4NQzDpF69Geb" Name="Padding" Kind="InputPin" DefaultValue="0.1" />
             <Pin Id="MV4vZ2K75v0M9FP9a8ApzA" Name="Child Alignment" Kind="InputPin" IsHidden="true" />
             <Pin Id="EsMIEFR0jYcOFUrTBdpu7E" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="CpddsboH7QVOTVhnhQOGkt" Name="Clip" Kind="InputPin" IsHidden="true" />

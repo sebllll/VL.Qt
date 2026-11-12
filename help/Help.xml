@@ -8,6 +8,7 @@
 	</Topic>
 	<Topic title="Text">
 		<VLDocument link="Qt\HowTo Draw Text.vl" tags="font typography" />
+		<VLDocument link="Qt\HowTo Use custom fonts.vl" tags="font ttf otf loadfont typography" />
 		<VLDocument link="Qt\HowTo Measure Text.vl" tags="" />
 	</Topic>
 	<Topic title="Layout">
@@ -57,11 +58,16 @@
 		<VLDocument link="Qt\HowTo Create Shader Nodes from Files.vl" tags="qtshaders frag" />
 		<VLDocument link="Qt\HowTo Blur an Image with a Control Mask.vl" tags="" />
 	</Topic>
+	<Topic title="QML">
+		<VLDocument link="Qt\HowTo Use a QML file.vl" tags="qmlelement qml file hot reload signal property" />
+		<VLDocument link="Qt\HowTo Create QML Nodes from Files.vl" tags="qml node factory pins signal property component" />
+	</Topic>
 	<Topic title="Window and Diagnostics">
 		<VLDocument link="Qt\HowTo Set a Window Icon.vl" tags="title fullscreen" />
 		<VLDocument link="Qt\HowTo Read the Window Bounds.vl" tags="" />
 		<VLDocument link="Qt\HowTo Debug Overlay.vl" tags="debug layout" />
 		<VLDocument link="Qt\HowTo Read Performance.vl" tags="fps timing" />
+		<VLDocument link="Qt\HowTo Avoid Tearing.vl" tags="vsync swap interval frame rate" />
 	</Topic>
 	<Topic title="Export">
 		<VLDocument link="HelloWorld.vl" tags="vvvvc exe" />

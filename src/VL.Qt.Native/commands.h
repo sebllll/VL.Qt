@@ -101,6 +101,7 @@ private:
     int setStyle(const unsigned char* p, int len, std::string& err); // SET_STYLE (vlstyle.h, #292)
     int setUniforms(const unsigned char* p, int len, std::string& err); // SET_UNIFORMS (ShaderEffect, #437)
     int setEffectChain(const unsigned char* p, int len, std::string& err); // SET_EFFECT_CHAIN (#489), effectchain.h
+    int setQmlProperties(const unsigned char* p, int len, std::string& err); // SET_QML_PROPERTIES (QmlElement, #104)
     void reset();
     void destroySubtree(QQuickItem* item);
     void destroyHandlersOf(Node& node);

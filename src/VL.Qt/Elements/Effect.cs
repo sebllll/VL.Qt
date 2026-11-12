@@ -131,7 +131,7 @@ namespace VL.Qt.Elements
     internal abstract class ShaderLink : Effect
     {
         protected ShaderLink(Effect? previous, ushort template, ImmutableArray<ulong> shaderIds, Spread<Uniform>? uniforms,
-            RectangleF padding, float strength, string? strengthUniform)
+            RectangleF padding, float strength)
             : base(previous)
         {
             Template = template;
@@ -139,7 +139,6 @@ namespace VL.Qt.Elements
             Uniforms = uniforms ?? Spread<Uniform>.Empty;
             Padding = padding;
             Strength = strength;
-            StrengthUniform = strengthUniform ?? string.Empty;
         }
 
         /// <summary><see cref="Protocol.EffectTemplate"/>: Single, TwoPass or Pyramid.</summary>
@@ -154,11 +153,8 @@ namespace VL.Qt.Elements
         /// <summary>Extra effect area in DIP: x = left, y = top, width = right, height = bottom.</summary>
         public RectangleF Padding { get; }
 
-        /// <summary>TwoPass: effect size (pass 2 gets it / 64); Pyramid: radius in DIP; Single: unused.</summary>
+        /// <summary>Pyramid: radius in DIP; Single and TwoPass: unused.</summary>
         public float Strength { get; }
-
-        /// <summary>TwoPass: name of the uniform that takes <see cref="Strength"/>; empty otherwise.</summary>
-        public string StrengthUniform { get; }
 
         internal sealed override EffectKind Kind => EffectKind.None;
 

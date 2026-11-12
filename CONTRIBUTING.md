@@ -8,7 +8,12 @@ Prerequisites, first build, scripts and tests are described in [docs/development
 
 ## Branches and pull requests
 
+- Every change goes in through a pull request; nobody pushes to `develop` or `main` directly (a ruleset enforces it).
 - Branch from `develop` and open your pull request against `develop`. `main` only receives releases.
+- Where the branch lives:
+  - Contributors fork the repository, push the branch to their fork and open the pull request from there. The CI of a pull request from a fork starts after a maintainer approves it.
+  - Maintainers push the branch to this repository instead of a fork, with the remote and branch named explicitly (`git push origin HEAD:fix/12-short-topic`). The pull request is the same.
+- Name the branch by kind, issue number and topic: `fix/…`, `feat/…`, `docs/…`.
 - Open the pull request as a draft (`gh pr create --base develop --draft`) and mark it ready when the work is complete and `tools/build.ps1 -Test` passes locally. Every push to a pull request that is not a draft starts the CI.
 - Keep pull requests focused and describe what changed and how you verified it.
 - Do not rename or remove a node or pin in one step: mark it `Obsolete` first, as described in [docs/versioning.md](docs/versioning.md).

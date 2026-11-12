@@ -1,7 +1,8 @@
 # Builds everything needed to test VL.Qt locally: QtNative (+ Qt deploy) and the C# library, optionally tests and a patch.
 # Usage: tools/build.ps1 [-Rid win-arm64|win-x64] [-Configuration Release|Debug] [-SkipNative] [-ForceDeploy]
-#                        [-Test] [-Only <scenario,...>] [-Patch <doc.vl>]
+#                        [-Test] [-Only <scenario,...>] [-SmokeTimeout <s>] [-Patch <doc.vl>]
 #   -Test   unit tests (VL.Qt.Tests) + SmokeTest (log and grabs in build/smoke/); -Only passes --only to the SmokeTest
+#   -SmokeTimeout  seconds before the SmokeTest is killed (default 600; a full run takes about 4 min on win-arm64)
 #   -Patch  compile-checks a patch with vvvvc (tools/vvvvc.ps1), e.g. -Patch "help/Qt/HowTo Draw a Rectangle.vl"
 # Rid defaults to the host architecture (only the Qt of that architecture is installed locally).
 # Exit code 0 = all requested steps passed; the summary at the end lists each step.
@@ -12,6 +13,7 @@ param(
     [switch]$ForceDeploy,
     [switch]$Test,
     [string]$Only,
+    [ValidateRange(1, 86400)] [int]$SmokeTimeout = 600,
     [string]$Patch
 )
 $ErrorActionPreference = 'Stop'
@@ -76,7 +78,15 @@ if ($Test)
         $p = Start-Process $exe.FullName -ArgumentList $smokeArgs -NoNewWindow -PassThru `
             -RedirectStandardOutput "$out\stdout.log" -RedirectStandardError "$out\stderr.log"
         $null = $p.Handle # without the cached handle ExitCode stays empty (Windows PowerShell): a crash counted as PASS (#534)
-        if (-not $p.WaitForExit(300000)) { $p.Kill($true); throw 'timeout (5 min)' }
+        $sw = [Diagnostics.Stopwatch]::StartNew()
+        if (-not $p.WaitForExit($SmokeTimeout * 1000))
+        {
+            $p.Kill($true)
+            $p.WaitForExit()
+            # The last lines show the scenario that was running when the limit hit.
+            Get-Content "$out\stdout.log" -Tail 5 | Write-Host
+            throw ('timeout after {0:N0} s (-SmokeTimeout {1}), see {2}\stdout.log' -f $sw.Elapsed.TotalSeconds, $SmokeTimeout, $out)
+        }
         $p.WaitForExit()
         $log = @(Get-Content "$out\stdout.log")
         $log -match '^(FAIL|WARN|SMOKE) ' | Write-Host

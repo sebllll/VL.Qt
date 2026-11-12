@@ -20,10 +20,10 @@ namespace VL.Qt
     /// </summary>
     internal static class UniformWriter
     {
-        /// <summary>Whether <paramref name="name"/> can be sent (1..<see cref="Protocol.UniformNameMax"/> UTF-8 bytes).</summary>
         /// <summary>Suffix of the table key of a sampler entry: a texture and its sampler share a name, so they need two keys.</summary>
         const char SamplerKey = '\u0001';
 
+        /// <summary>Whether <paramref name="name"/> can be sent (1..<see cref="Protocol.UniformNameMax"/> UTF-8 bytes).</summary>
         public static bool IsValidName(string? name)
             => !string.IsNullOrEmpty(name) && Encoding.UTF8.GetByteCount(name) <= Protocol.UniformNameMax;
 

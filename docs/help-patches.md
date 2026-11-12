@@ -49,6 +49,7 @@ Notes:                                                   (notes, size 9, bottom)
 ## Text
 
 - `HowTo Draw Text` — typography, font families, alignment, wrapping
+- `HowTo Use custom fonts` — `LoadFont` with a font file shipped next to the patch
 - `HowTo Measure Text` — measured size of text
 
 ## Layout
@@ -106,6 +107,12 @@ See [Effects and shaders](effects-and-shaders.md).
 - `HowTo Write a ShaderEffect` — fragment shader as GLSL string or `.qsb` file, uniforms, an element as source texture
 - `HowTo Create Shader Nodes from Files` — `qtshaders/` folder, one node per `.frag`, pins from uniforms
 - `HowTo Blur an Image with a Control Mask` — two chained ShaderEffects (horizontal/vertical blur), a QtImage as mask uniform
+
+## QML
+
+- `HowTo Use a QML file` — `QmlElement` with the sample `QmlElement Example.qml`: properties in by name, changed properties and signals out, hot reload on save
+
+See [QML files as elements](user-qml.md).
 
 ## Window and Diagnostics
 

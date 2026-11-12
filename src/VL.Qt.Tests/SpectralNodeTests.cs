@@ -47,5 +47,27 @@ namespace VL.Qt.Tests
             Assert.That(col.Children, Is.EqualTo(new Element[] { B, A }));
             Assert.That(col.Padding, Is.EqualTo(0.2f));
         }
+
+        [Test]
+        public void SpreadOfElement_IsAccepted()
+        {
+            // A Spread<Element> must link to the children input, not only a Spread<IElement>.
+            var children = Spread.Create<Element>(A, B);
+
+            using var g = new GroupSpectralNode(NoWarning);
+            var group = (Group)g.Update(children, default, true, default, RectangleAnchor.Center, 1, false, false,
+                null, null, null, out _, out _);
+            Assert.That(group.Children, Is.EqualTo(new Element[] { A, B }));
+
+            using var r = new RowSpectralNode(NoWarning);
+            var row = (Row)r.Update(children, default, true, default, RectangleAnchor.Center, 0, 0, VerticalAlignment.Top, 1, false, false,
+                null, null, out _, out _);
+            Assert.That(row.Children, Is.EqualTo(new Element[] { A, B }));
+
+            using var c = new ColumnSpectralNode(NoWarning);
+            var col = (Column)c.Update(children, default, true, default, RectangleAnchor.Center, 0, 0, HorizontalAlignment.Left, 1, false, false,
+                null, null, out _, out _);
+            Assert.That(col.Children, Is.EqualTo(new Element[] { A, B }));
+        }
     }
 }

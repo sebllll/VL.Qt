@@ -2,6 +2,7 @@
 #include "effectchain.h"
 
 #include "qtimageitem.h"
+#include "qmlitem.h"
 #include "shadereffectitem.h"
 
 #include <QtCore/QFileInfo>
@@ -70,6 +71,8 @@ void applySize(Node& n)
 {
     if (n.type == VLQT_TYPE_ITEM)
         setGroupAutoSize(n.item, n.autoSize); // frame origin: extent with Auto Size, (0, 0) with SIZE
+    if (n.type == VLQT_TYPE_QML)
+        static_cast<QmlItem*>(n.item)->setAutoSize(n.autoSize); // root = implicit size of the QML, or this item's SIZE (#104)
     if (isAutoSized(n)) {
         n.item->resetWidth();
         n.item->resetHeight();
@@ -325,6 +328,31 @@ bool setImageResource(Elements&, Node& n, const ResolvedProp&, const Value& v, s
 // ShaderEffect (#437, protocol.h "ShaderEffect"): ShaderEffectItem (shadereffectitem.h), own QQuickItem with a
 // QSGMaterialShader. SOURCE goes through the effect source bookkeeping (layer, hidden, cleared before deletion).
 QQuickItem* makeShaderEffect() { return new ShaderEffectItem(); }
+
+// QmlElement (#104, protocol.h "QmlElement"): QmlItem (qmlitem.h), own QQuickItem that holds the instance of a user .qml file.
+QQuickItem* makeQml() { return new QmlItem(); }
+
+bool setQmlSource(Elements& els, Node& n, const ResolvedProp&, const Value& v, std::string&)
+{
+    static_cast<QmlItem*>(n.item)->setSource(els.qmlEngine(), QString::fromUtf8(v.utf8));
+    applySize(n); // Auto Size / SIZE reach the new root
+    return true;
+}
+
+bool setQmlReload(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&)
+{
+    static_cast<QmlItem*>(n.item)->setReload(v.i);
+    return true;
+}
+
+std::vector<PropDef> qmlProps()
+{
+    return {
+        {VLQT_PROP_QML_SOURCE, VLQT_VT_STRING, setQmlSource, nullptr},
+        {VLQT_PROP_QML_RELOAD, VLQT_VT_I32, setQmlReload, nullptr},
+        {VLQT_PROP_AUTO_SIZE, VLQT_VT_BOOL, setAutoSize, nullptr},
+    };
+}
 
 ShaderEffectItem* shaderItem(Node& n) { return static_cast<ShaderEffectItem*>(n.item); }
 
@@ -903,6 +931,7 @@ const std::unordered_map<quint16, TypeDef>& typeTable()
         {VLQT_TYPE_SLIDER, {VLQT_TYPE_SLIDER, "SLIDER", kSliderQml, sliderProps()}},
         {VLQT_TYPE_TEXT_FIELD, {VLQT_TYPE_TEXT_FIELD, "TEXT_FIELD", kTextFieldQml, textFieldProps()}},
         {VLQT_TYPE_SHADER_EFFECT, {VLQT_TYPE_SHADER_EFFECT, "SHADER_EFFECT", nullptr, shaderEffectProps(), makeShaderEffect}},
+        {VLQT_TYPE_QML, {VLQT_TYPE_QML, "QML", nullptr, qmlProps(), makeQml}},
     };
     return t;
 }
@@ -1229,7 +1258,7 @@ bool takesAutoSize(const Node& n)
     return n.type == VLQT_TYPE_ITEM || n.type == VLQT_TYPE_ROW || n.type == VLQT_TYPE_COLUMN
         || n.type == VLQT_TYPE_BUTTON || n.type == VLQT_TYPE_SPIN_BOX
         || n.type == VLQT_TYPE_CHECK_BOX || n.type == VLQT_TYPE_SWITCH || n.type == VLQT_TYPE_SLIDER
-        || n.type == VLQT_TYPE_TEXT_FIELD
+        || n.type == VLQT_TYPE_TEXT_FIELD || n.type == VLQT_TYPE_QML
         || (n.type == VLQT_TYPE_SHADER_EFFECT && n.effectSource); // implicit size = Input; without Input the SIZE
 }
 

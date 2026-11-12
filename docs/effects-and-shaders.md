@@ -43,7 +43,7 @@ Every filter shader from a `qtshaders/` folder (one with a `sampler2D source`, s
 
 <img src="images/effect-chain.png" width="820" alt="The text VL.Qt: Blur, RGBSplit, DropShadow on the left, DropShadow, RGBSplit, Blur on the right; the shadow is split and blurred in the second picture">
 
-A shader that draws beyond the element (a blur, a shifted copy) declares its room with `// @padding` in the file head, in DIP: one number or `left, top, right, bottom`; without it the shader stays inside the element. The help patch `HowTo Chain Effects` builds the two chains above.
+A shader that draws beyond the element (a blur, a shifted copy) declares its room with `// @padding` in the file head, see [Annotations](#annotations); without it the shader stays inside the element. The help patch `HowTo Chain Effects` builds the two chains above. Shaders that only make sense in the chain, and the templates of the built-in effects, are covered in [Own effects from templates](#own-effects-from-templates).
 
 Help patches: `HowTo Chain Effects`, `HowTo Mask an Element`, `HowTo Add a Glow`, `HowTo Use Motion Blurs`, `HowTo Displace an Element`, `HowTo Blend Elements`. See [Help patches](help-patches.md).
 
@@ -66,7 +66,7 @@ Every `.frag` file in a folder named `qtshaders` next to the patch becomes a nod
 - `RGBSplit.frag` gives the node `RGBSplit`, a `.vert` with the same name belongs to it. Subfolders count too.
 - A `sampler2D source` becomes the `Input` pin: the shader is a filter. Without it, it is a generator without Input pin. Further `sampler2D` become image pins.
 - Uniforms become pins in the order of the file, the name split into words (`pixelSize` → `Pixel Size`). Types: `float`, `vec2`, `vec3`, `vec4`, `int`, `bool`, `mat4`.
-- Annotations as `//` comments: `@category` and `@summary` in the file head; `@default`, `@min`, `@max` (limits of the pad only), `@color` (a `vec4` becomes a color) and `@summary` at a uniform.
+- Annotations as `//` comments, see [Annotations](#annotations): file head tags (`@category`, `@summary`, `@padding`, `@passes`, `@chainonly`) and uniform tags (`@default`, `@min`, `@max`, `@color`, `@summary`).
 - Pins with the same name keep their links and values when the file changes. Compile errors, unknown annotations and unsupported uniform types (`uint`, `ivec`, `mat3`, arrays) show at the node.
 - A filter shader is also a node of the effect chain, see [Shaders in the effect chain](#shaders-in-the-effect-chain).
 
@@ -111,6 +111,51 @@ void main()
 ```
 
 The full, commented templates are `help/Qt/qtshaders/RGBSplit.frag` (filter) and `Stripes.frag` (generator).
+
+### Annotations
+
+Annotations are `//` comments. Unknown tags show at the node.
+
+**File head** (the comments before the first code line):
+
+| Tag | Meaning |
+|---|---|
+| `@category <path>` | node category of the element node; with `@chainonly` the category of the effect chain node (default `Qt.Effects`) |
+| `@summary <text>` | node help; goes on in the following comment lines until the next blank line |
+| `@padding <left, top, right, bottom>` | room around the element in DIP that the shader may draw into as an effect chain node; one number for all four sides, or four numbers. Without it the shader stays inside the element |
+| `@padding <uniform> [factor]` | all four sides = `abs(value of that float uniform pin) * factor` (factor default 1), recomputed when the pin value changes. A uniform that does not exist or is not a `float` is an error at the node |
+| `@passes 1\|2` | `2`: the effect chain node runs the shader twice, the second pass on the result of the first (default 1, other numbers are an error at the node) |
+| `@chainonly` | the file makes only the effect chain node, no element node |
+
+**Uniform** (directly above it or at the end of its line): `@default`, `@min`, `@max` (limits of the pad only), `@color` (a `vec4` becomes a color), `@summary`.
+
+**Names set by VL.Qt** (no pin, an own entry of that name is an error): `qt_Matrix`, `qt_Opacity`, and in the effect chain `source`, `texelSize` (1 / pixel size of the sampled texture), `dpr`, `weight`, `elementRect` and `passIndex`. `base`, `glow` and `shadow` are reserved there too (a uniform of that name gets no pin and a warning). `passIndex` is a `float` that VL.Qt writes into the uniform block if the shader declares it: 0 in a single pass and in pass 1, 1 in pass 2.
+
+### Two-pass effects
+
+A wide blur with a fixed number of samples (the built-in blurs have 64) shows the single samples as copies. With `@passes 2` the same shader runs twice: pass 2 blurs the result of pass 1 again, but only by `length / 64`, which fills the gaps exactly (64 x 64 effective samples). The shader tells the passes apart with `passIndex`:
+
+```glsl
+// @chainonly
+// @passes 2
+// @padding blurLength 0.52
+...
+float len = abs(blurLength) / (passIndex >= 0.5 ? 64.0 : 1.0);
+```
+
+Where pass 1 needs no more than 64 samples, pass 2 blurs by less than a pixel and changes nothing. `@padding` counts for the whole node (both passes together).
+
+### Own effects from templates
+
+The five built-in shader effects stay C# nodes (`Blend`, `Displace`, `DirectionalBlur`, `ZoomBlur`, `RadialBlur`). Their shader code is also in `help/Qt/qtshaders/` as annotated templates, chain-only files in the category `Qt.Effects.Examples`:
+
+`ExampleBlend.frag`, `ExampleDisplace.frag`, `ExampleDirectionalBlur.frag`, `ExampleZoomBlur.frag`, `ExampleRadialBlur.frag`.
+
+To make an effect of your own: copy a file into a `qtshaders/` folder next to your patch, rename it (the file name is the node name), change the code and the annotations. The templates carry the comments that explain `@passes`, `@padding` and the premultiplied alpha. They show up as nodes in `Qt.Effects` next to the built-in ones.
+
+- The code of a template (without comments) is identical to the built-in shader; a unit test keeps them in sync, so change a copy, not the template.
+- A tag cannot express everything the C# node does: `@padding` has one factor for all four sides, so the blur templates use the worst case (e.g. 0.52 times the length on every side) where the built-in node pads x and y separately by the angle. Such approximations are noted in the file.
+- The pins of a template follow its uniform names (`Layer`, `Layer Opacity`, `Map`, ...); the C# nodes keep their own pin names.
 
 ### Notes
 

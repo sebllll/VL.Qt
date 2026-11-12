@@ -22,7 +22,11 @@ namespace VL.Qt.Shaders
     /// <param name="Summary">@summary of the file head, null if not given.</param>
     /// <param name="FragmentSource">Content of the .frag (empty if not readable).</param>
     /// <param name="VertexSource">Content of the .vert, null without .vert.</param>
-    /// <param name="Padding">@padding of the file head in DIP (effect chain node only), zero if not given.</param>
+    /// <param name="Padding">Fixed @padding of the file head in DIP (effect chain node only), zero if not given.</param>
+    /// <param name="Passes">@passes of the file head (effect chain node only): 1 = template Single, 2 = TwoPass.</param>
+    /// <param name="PaddingUniform">Uniform of <c>@padding &lt;uniform&gt; [factor]</c> (effect chain node only), null for a fixed padding; after <see cref="ForChain"/> only a valid float pin.</param>
+    /// <param name="PaddingFactor">Factor of <c>@padding &lt;uniform&gt; [factor]</c>.</param>
+    /// <param name="ChainErrors">Wrong head tags of the effect chain node (red there, see <see cref="ForChain"/>), empty if none.</param>
     internal sealed record ShaderNodeLayout(
         bool HasInput,
         ImmutableArray<ShaderPin> Pins,
@@ -30,7 +34,11 @@ namespace VL.Qt.Shaders
         string? Summary,
         string FragmentSource,
         string? VertexSource,
-        RectangleF Padding = default)
+        RectangleF Padding = default,
+        int Passes = 1,
+        string? PaddingUniform = null,
+        float PaddingFactor = 1f,
+        ImmutableArray<string> ChainErrors = default)
     {
         /// <summary>Pin names a uniform pin must not take (the Input pin and the fixed ShaderEffect pins).</summary>
         public static readonly ImmutableHashSet<string> ReservedPinNames = ImmutableHashSet.Create(
@@ -42,7 +50,7 @@ namespace VL.Qt.Shaders
         static readonly Regex s_sourceSampler = new(@"\buniform\s+sampler2D\s+source\b", RegexOptions.CultureInvariant);
 
         // Uniforms QtNative sets itself in a SHADER link of the effect chain (protocol.h "Effect chain"); an entry from C# would be an error.
-        static readonly ImmutableHashSet<string> s_chainAutomaticNames = ImmutableHashSet.Create(StringComparer.Ordinal, "texelSize", "dpr", "weight", "elementRect");
+        static readonly ImmutableHashSet<string> s_chainAutomaticNames = ImmutableHashSet.Create(StringComparer.Ordinal, "texelSize", "dpr", "weight", "elementRect", "passIndex");
         static readonly ImmutableHashSet<string> s_chainReservedNames = ImmutableHashSet.Create(StringComparer.Ordinal, "base", "glow", "shadow");
 
         /// <summary>
@@ -63,7 +71,8 @@ namespace VL.Qt.Shaders
         /// <summary>
         /// The layout for the effect chain node of the same file: without the uniforms QtNative sets itself (texelSize, dpr,
         /// weight) and the names it reserves (base, glow, shadow, with a warning), plus messages for a file that is no filter
-        /// (any more) and for a .vert, which a chain link does not use.
+        /// (any more) and for a .vert, which a chain link does not use. Errors too: a wrong @passes or @padding tag, and an
+        /// @padding uniform the shader does not have or that is not a float (then <see cref="PaddingUniform"/> is null).
         /// </summary>
         public ShaderNodeLayout ForChain(ILogger logger, string path)
         {
@@ -82,8 +91,28 @@ namespace VL.Qt.Shaders
                 warnings.Add("the vertex shader (.vert) is not used by an effect chain link");
 
             var errors = new List<string>();
-            if (!HasInput && FragmentSource.Length > 0 && !Messages.Any(static m => m.Type == MessageType.Error))
+            if (!ChainErrors.IsDefault)
+                errors.AddRange(ChainErrors);
+            var compiled = !Messages.Any(static m => m.Type == MessageType.Error);
+            if (!HasInput && FragmentSource.Length > 0 && compiled)
                 errors.Add("the shader has no 'uniform sampler2D source' (any more), it is not a filter and cannot be a link of the effect chain");
+
+            var paddingUniform = PaddingUniform;
+            if (paddingUniform != null && compiled)
+            {
+                // The pins the node gets (not the uniforms QtNative sets itself); a shader that does not compile has none and already shows its error.
+                var pin = pins.FirstOrDefault(p => p.Type != ShaderPinType.Sampler && p.UniformName == paddingUniform);
+                if (pin is null)
+                {
+                    errors.Add($"@padding names the uniform '{paddingUniform}', which the shader does not have as an input");
+                    paddingUniform = null;
+                }
+                else if (pin.Type != ShaderPinType.Float)
+                {
+                    errors.Add($"@padding names the uniform '{paddingUniform}', which is not a float");
+                    paddingUniform = null;
+                }
+            }
 
             foreach (var w in warnings)
                 logger.LogWarning("{Shader}: {Warning}", path, w);
@@ -101,7 +130,7 @@ namespace VL.Qt.Shaders
                     messages.Add(m);
             foreach (var w in warnings)
                 messages.Add(new Message(MessageType.Warning, w));
-            return this with { Pins = pins.ToImmutable(), Messages = messages.ToImmutable() };
+            return this with { Pins = pins.ToImmutable(), Messages = messages.ToImmutable(), PaddingUniform = paddingUniform, ChainErrors = ImmutableArray<string>.Empty };
         }
 
         /// <summary>Reads, reflects (<paramref name="reflect"/>, normally <see cref="ShaderReflection.Reflect"/>) and builds the pins of <paramref name="file"/>.</summary>
@@ -158,7 +187,11 @@ namespace VL.Qt.Shaders
             foreach (var w in warnings)
                 logger.LogWarning("{Shader}: {Warning}", file.FragmentPath, w);
 
-            return new ShaderNodeLayout(hasInput, pins, ToMessages(errors, warnings), fragmentAnnotations.Summary, fragmentSource, vertexSource, fragmentAnnotations.Padding);
+            var chainErrors = fragmentAnnotations.Errors.IsDefault
+                ? ImmutableArray<string>.Empty
+                : fragmentAnnotations.Errors.Select(static e => e.ToString()).ToImmutableArray();
+            return new ShaderNodeLayout(hasInput, pins, ToMessages(errors, warnings), fragmentAnnotations.Summary, fragmentSource, vertexSource, fragmentAnnotations.Padding,
+                fragmentAnnotations.Passes, fragmentAnnotations.PaddingUniform, fragmentAnnotations.PaddingFactor, chainErrors);
         }
 
         /// <summary>A uniform whose pin name is taken (by a fixed pin, Input or another uniform) gets a number: "Size 2".</summary>

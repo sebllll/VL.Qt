@@ -282,13 +282,24 @@ namespace VL.Qt
         int _uniformEntries;
 
         /// <summary>Starts a SET_UNIFORMS; entries follow, <see cref="EndUniforms"/> patches count and payload length.</summary>
-        public void BeginUniforms(uint id, ushort flags)
+        public void BeginUniforms(uint id, ushort flags) => BeginEntries(Protocol.Op.SetUniforms, id, flags);
+
+        /// <summary>
+        /// Starts a SET_QML_PROPERTIES (#104); the entries are encoded exactly like those of SET_UNIFORMS, so they are written
+        /// with the Uniform* methods and the command is closed by <see cref="EndUniforms"/> (or <see cref="EndQmlProperties"/>).
+        /// </summary>
+        public void BeginQmlProperties(uint id, ushort flags) => BeginEntries(Protocol.Op.SetQmlProperties, id, flags);
+
+        /// <summary>Closes the SET_QML_PROPERTIES started by <see cref="BeginQmlProperties"/> (entry count, payload length).</summary>
+        public void EndQmlProperties() => EndUniforms();
+
+        void BeginEntries(ushort op, uint id, ushort flags)
         {
             if (_uniformsStart >= 0)
-                throw new InvalidOperationException("SET_UNIFORMS already open, call EndUniforms first.");
+                throw new InvalidOperationException("SET_UNIFORMS or SET_QML_PROPERTIES already open, call EndUniforms first.");
             _uniformsStart = _length;
             _uniformEntries = 0;
-            var p = Begin(Protocol.Op.SetUniforms, UniformFieldsSize);
+            var p = Begin(op, UniformFieldsSize);
             WriteU32(p, id);
             WriteU16(p.Slice(4), 0);
             WriteU16(p.Slice(6), flags);
@@ -321,6 +332,19 @@ namespace VL.Qt
 
         public void UniformColor(ReadOnlySpan<char> name, float r, float g, float b, float a)
             => WriteF32x4(UniformEntry(name, Protocol.Vt.Color, 16), r, g, b, a);
+
+        /// <summary>Entry of value type rect (x, y, width, height) of an open SET_QML_PROPERTIES (#104).</summary>
+        public void QmlRect(ReadOnlySpan<char> name, float x, float y, float width, float height)
+            => WriteF32x4(UniformEntry(name, Protocol.Vt.Rectf, 16), x, y, width, height);
+
+        /// <summary>Entry of value type string (u32 byte length + UTF-8) of an open SET_QML_PROPERTIES (#104).</summary>
+        public void QmlString(ReadOnlySpan<char> name, ReadOnlySpan<char> value)
+        {
+            int byteCount = Encoding.UTF8.GetByteCount(value);
+            var p = UniformEntry(name, Protocol.Vt.String, 4 + byteCount);
+            WriteU32(p, (uint)byteCount);
+            Encoding.UTF8.GetBytes(value, p.Slice(4));
+        }
 
         public void UniformIvec2(ReadOnlySpan<char> name, int x, int y)
         {
@@ -358,7 +382,7 @@ namespace VL.Qt
             {
                 _length = start; // drop the half written command
                 _count--;
-                throw new InvalidOperationException($"SET_UNIFORMS payload exceeds {MaxPayload} bytes.");
+                throw new InvalidOperationException($"SET_UNIFORMS or SET_QML_PROPERTIES payload exceeds {MaxPayload} bytes.");
             }
             WriteU16(new Span<byte>(_buffer, start + 2, 2), (ushort)payload);
             WriteU16(new Span<byte>(_buffer, start + Protocol.HeaderSize + 4, 2), (ushort)_uniformEntries);
@@ -436,16 +460,13 @@ namespace VL.Qt
 
         /// <summary>
         /// Starts a SHADER link: template (<see cref="Protocol.EffectTemplate"/>), shader resource ids by role, padding in DIP,
-        /// strength and the uniform that takes it (TWO_PASS only, else empty). Uniform* entries follow, then <see cref="EndLink"/>.
+        /// and strength (Pyramid: radius). Uniform* entries follow, then <see cref="EndLink"/>.
         /// </summary>
         public void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
-            float paddingRight, float paddingBottom, float strength, ReadOnlySpan<char> strengthUniform)
+            float paddingRight, float paddingBottom, float strength)
         {
-            int nameBytes = Encoding.UTF8.GetByteCount(strengthUniform);
-            if (nameBytes > Protocol.UniformNameMax)
-                throw new ArgumentException($"Strength uniform name must be 0..{Protocol.UniformNameMax} UTF-8 bytes, got {nameBytes}.", nameof(strengthUniform));
             int ids = shaderIds.Length * 8;
-            var head = BeginLink(Protocol.EffectLink.Shader, ShaderLinkFixedSize + ids + Align(nameBytes));
+            var head = BeginLink(Protocol.EffectLink.Shader, ShaderLinkFixedSize + ids);
             WriteU16(head, template);
             WriteU16(head.Slice(2), (ushort)shaderIds.Length);
             for (int i = 0; i < shaderIds.Length; i++)
@@ -453,8 +474,8 @@ namespace VL.Qt
             var rest = head.Slice(4 + ids);
             WriteF32x4(rest, paddingLeft, paddingTop, paddingRight, paddingBottom);
             WriteF32(rest.Slice(16), strength);
-            WriteU16(rest.Slice(20), (ushort)nameBytes);
-            Encoding.UTF8.GetBytes(strengthUniform, rest.Slice(24));
+            // Reserved (formerly the length of the strength uniform name): 0.
+            WriteU16(rest.Slice(20), 0);
         }
 
         /// <summary>Closes the open link: writes its entry count and body length.</summary>

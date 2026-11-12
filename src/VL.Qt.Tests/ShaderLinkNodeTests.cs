@@ -143,7 +143,6 @@ void main() { fragColor = vec4(phase); }
             Assert.That(a.Warnings, Is.Empty);
         }
 
-        [TestCase("// @padding abc")]
         [TestCase("// @padding 1, 2")]
         [TestCase("// @padding 1, 2, 3")]
         [TestCase("// @padding -1")]
@@ -308,6 +307,244 @@ void main() { fragColor = vec4(phase); }
             Assert.That(chain[0], Does.StartWith("multi"));
             Assert.That(chain[1], Does.StartWith($"shader {Protocol.EffectTemplate.Single} [{id}] pad=(4,8,12,16) strength=0"));
             Assert.That(chain[1], Does.Contain("amount=f32(0.5)").And.Contain("map=u64(0)"));
+        }
+
+        // --- @passes, @padding <uniform> [factor], @chainonly ---
+
+        const string blurHead = "// @passes 2\n// @padding blurLength 0.5\n";
+
+        const string blurBody = @"#version 440
+layout(location = 0) in vec2 qt_TexCoord0;
+layout(location = 0) out vec4 fragColor;
+layout(std140, binding = 0) uniform buf {
+    mat4 qt_Matrix;
+    float qt_Opacity;
+    float blurLength; // @default 0
+    vec2 offset;
+    float passIndex;
+    float weight;
+};
+layout(binding = 1) uniform sampler2D source;
+void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
+";
+
+        const string blurReflection = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\nuniform blurLength float 0\nuniform offset vec2 0\nuniform passIndex float 0\nuniform weight float 0\nsampler source 1\n";
+
+        ShaderNodeLayout LoadBlur(string head) =>
+            Load(head + blurBody, blurReflection).ForChain(NullLogger.Instance, "Test.frag");
+
+        static string[] Errors(ShaderNodeLayout layout) =>
+            layout.Messages.Where(m => m.Type == MessageType.Error).Select(m => m.Text).ToArray();
+
+        [Test]
+        public void Passes_DefaultOne_TwoAndOneAreAccepted()
+        {
+            Assert.That(Annotations("// @summary x").Passes, Is.EqualTo(1));
+            var two = Annotations("// @passes 2");
+            Assert.That(two.Passes, Is.EqualTo(2));
+            Assert.That(two.Errors, Is.Empty);
+            Assert.That(Annotations("// @passes 1").Passes, Is.EqualTo(1));
+        }
+
+        [TestCase("// @passes 3")]
+        [TestCase("// @passes 0")]
+        [TestCase("// @passes two")]
+        [TestCase("// @passes ")]
+        public void Passes_Other_IsErrorWithLine(string head)
+        {
+            var a = Annotations("// first line\n" + head);
+            Assert.That(a.Passes, Is.EqualTo(1));
+            var error = a.Errors.Single();
+            Assert.That(error.Line, Is.EqualTo(2));
+            Assert.That(error.Text, Does.StartWith("@passes"));
+        }
+
+        [Test]
+        public void Passes_AtUniform_Warns()
+        {
+            var a = ShaderAnnotations.Parse("#version 440\nlayout(std140, binding = 0) uniform buf {\n    float x; // @passes 2\n};\n");
+            Assert.That(a.Passes, Is.EqualTo(1));
+            Assert.That(a.Warnings.Single().Text, Does.Contain("@passes").And.Contain("file head"));
+        }
+
+        [Test]
+        public void PaddingUniform_FactorDefaultsToOne_FixedFormStays()
+        {
+            var a = Annotations("// @padding blurLength");
+            Assert.That((a.PaddingUniform, a.PaddingFactor), Is.EqualTo(("blurLength", 1f)));
+            Assert.That(a.Padding, Is.EqualTo(RectangleF.Empty));
+            Assert.That(a.Errors, Is.Empty);
+            Assert.That(a.Warnings, Is.Empty);
+
+            var b = Annotations("// @padding blurLength 0.5");
+            Assert.That((b.PaddingUniform, b.PaddingFactor), Is.EqualTo(("blurLength", 0.5f)));
+
+            var fixedPadding = Annotations("// @padding 6");
+            Assert.That(fixedPadding.PaddingUniform, Is.Null);
+            Assert.That(fixedPadding.Padding, Is.EqualTo(new RectangleF(6, 6, 6, 6)));
+        }
+
+        [TestCase("// @padding blurLength abc")]
+        [TestCase("// @padding blurLength -1")]
+        [TestCase("// @padding blurLength 1 2")]
+        public void PaddingUniform_BrokenFactor_IsError(string head)
+        {
+            var a = Annotations("// first line\n" + head);
+            Assert.That(a.PaddingUniform, Is.Null);
+            var error = a.Errors.Single();
+            Assert.That(error.Line, Is.EqualTo(2));
+            Assert.That(error.Text, Does.StartWith("@padding"));
+            Assert.That(a.Warnings, Is.Empty);
+        }
+
+        [Test]
+        public void ChainOnly_IsAFlagOfTheHead()
+        {
+            Assert.That(Annotations("// @chainonly").ChainOnly, Is.True);
+            Assert.That(Annotations("// @summary x").ChainOnly, Is.False);
+            var several = Annotations("// @passes 2 @chainonly");
+            Assert.That((several.Passes, several.ChainOnly), Is.EqualTo((2, true)));
+            var atUniform = ShaderAnnotations.Parse("#version 440\nlayout(std140, binding = 0) uniform buf {\n    float x; // @chainonly\n};\n");
+            Assert.That(atUniform.ChainOnly, Is.False);
+            Assert.That(atUniform.Warnings.Single().Text, Does.Contain("@chainonly").And.Contain("file head"));
+        }
+
+        [Test]
+        public void ForChain_ValidTags_NoErrorAndLayoutCarriesThem()
+        {
+            var chain = LoadBlur(blurHead);
+            Assert.That(Errors(chain), Is.Empty);
+            Assert.That((chain.Passes, chain.PaddingUniform, chain.PaddingFactor), Is.EqualTo((2, "blurLength", 0.5f)));
+            // passIndex and weight are QtNative's, no pins.
+            Assert.That(chain.Pins.Select(p => p.UniformName), Is.EqualTo(new[] { "blurLength", "offset" }));
+        }
+
+        [Test]
+        public void ForChain_BadPassesAndBadPaddingFactor_AreRedAtTheLinkNode()
+        {
+            Assert.That(Errors(LoadBlur("// @passes 3\n")).Single(), Does.Contain("@passes"));
+            var broken = LoadBlur("// @padding blurLength x\n");
+            Assert.That(Errors(broken).Single(), Does.Contain("@padding"));
+            Assert.That(broken.PaddingUniform, Is.Null);
+        }
+
+        [Test]
+        public void ForChain_PaddingUniformUnknownNotFloatOrQtNativeOwned_IsErrorAndNoPadding()
+        {
+            foreach (var (name, expected) in new[] { ("nothing", "does not have"), ("offset", "not a float"), ("weight", "does not have"), ("source", "does not have") })
+            {
+                var chain = LoadBlur($"// @padding {name}\n");
+                Assert.That(Errors(chain).Single(), Does.Contain(name).And.Contain(expected), name);
+                Assert.That(chain.PaddingUniform, Is.Null, name);
+            }
+        }
+
+        [Test]
+        public void ElementNodeLayout_ShowsNoChainErrors()
+        {
+            var layout = Load("// @passes 3\n" + blurBody, blurReflection);
+            Assert.That(Errors(layout), Is.Empty);
+        }
+
+        [Test]
+        public void Update_PassesTwoUsesTwoPassTemplate_DefaultIsSingle()
+        {
+            using var two = new ShaderLinkNodeInstance(_client, LoadBlur("// @passes 2\n"));
+            two.Update();
+            Assert.That(((ShaderLink)Output(two)!).Template, Is.EqualTo(Protocol.EffectTemplate.TwoPass));
+
+            using var one = new ShaderLinkNodeInstance(_client, LoadBlur(""));
+            one.Update();
+            Assert.That(((ShaderLink)Output(one)!).Template, Is.EqualTo(Protocol.EffectTemplate.Single));
+        }
+
+        [Test]
+        public void Update_PaddingFollowsTheUniformAbsTimesFactor_RecomputedOnlyOnChange()
+        {
+            using var instance = new ShaderLinkNodeInstance(_client, LoadBlur(blurHead));
+            var pin = (IVLPin<float>)instance.Uniforms.Pins[0];
+
+            instance.Update();
+            var first = (ShaderLink)Output(instance)!;
+            Assert.That(first.Padding, Is.EqualTo(RectangleF.Empty), "default 0");
+
+            pin.Value = -40f;
+            instance.Update();
+            var second = (ShaderLink)Output(instance)!;
+            Assert.That(second, Is.Not.SameAs(first));
+            Assert.That(second.Padding, Is.EqualTo(new RectangleF(20, 20, 20, 20)), "abs(-40) * 0.5, all sides");
+
+            instance.Update();
+            instance.Update();
+            Assert.That(Output(instance), Is.SameAs(second));
+            Assert.That(instance.Created, Is.EqualTo(2));
+
+            pin.Value = 40f;
+            instance.Update();
+            Assert.That(((ShaderLink)Output(instance)!).Padding, Is.EqualTo(new RectangleF(20, 20, 20, 20)));
+
+            pin.Value = float.NaN;
+            instance.Update();
+            Assert.That(((ShaderLink)Output(instance)!).Padding, Is.EqualTo(RectangleF.Empty), "not finite: no padding");
+        }
+
+        [Test]
+        public void Update_FactorDefaultsToOne_FixedPaddingKeptWithoutUniform()
+        {
+            using var instance = new ShaderLinkNodeInstance(_client, LoadBlur("// @padding blurLength\n"));
+            ((IVLPin<float>)instance.Uniforms.Pins[0]).Value = 7f;
+            instance.Update();
+            Assert.That(((ShaderLink)Output(instance)!).Padding, Is.EqualTo(new RectangleF(7, 7, 7, 7)));
+
+            using var fixedInstance = new ShaderLinkNodeInstance(_client, LoadBlur("// @padding 3\n"));
+            ((IVLPin<float>)fixedInstance.Uniforms.Pins[0]).Value = 7f;
+            fixedInstance.Update();
+            Assert.That(((ShaderLink)Output(fixedInstance)!).Padding, Is.EqualTo(new RectangleF(3, 3, 3, 3)));
+        }
+
+        [Test]
+        public void Update_InvalidPaddingUniform_KeepsZeroPadding()
+        {
+            using var instance = new ShaderLinkNodeInstance(_client, LoadBlur("// @padding offset\n"));
+            instance.Update();
+            Assert.That(((ShaderLink)Output(instance)!).Padding, Is.EqualTo(RectangleF.Empty));
+        }
+
+        [Test]
+        public void Scan_ChainOnlyIsMarked_NodeSetHasOnlyTheLink()
+        {
+            Write("Both.frag", filterSource);
+            Write("Chain.frag", "// @chainonly\n" + filterSource);
+            Write("Gen.frag", "// @chainonly\n" + generatorSource);
+
+            var files = ShaderNodeFactory.Scan(_dir);
+            Assert.That(files.Single(f => f.Name == "Chain").ChainOnly);
+            Assert.That(files.Single(f => f.Name == "Both").ChainOnly, Is.False);
+
+            var nodes = ShaderNodeFactory.CreateDescriptions(files, new FakeFactory(), NullLogger.Instance);
+            Assert.That(nodes.Select(n => (n.Name, n.Category)), Is.EquivalentTo(new[]
+            {
+                ("Both", "Qt.Elements.Shaders"),
+                ("Both", "Qt.Effects"),
+                ("Chain", "Qt.Effects"),
+            }), "a chainonly generator has no node at all");
+        }
+
+        [Test]
+        public void Scan_ChainOnlyCategory_IsTheCategoryOfTheChainNode()
+        {
+            Write("Own.frag", "// @category Qt.Effects.Mine\n// @chainonly\n" + filterSource);
+            Write("Plain.frag", "// @chainonly\n" + filterSource);
+            Write("Both.frag", "// @category Qt.Effects.Mine\n" + filterSource);
+
+            var nodes = ShaderNodeFactory.CreateDescriptions(ShaderNodeFactory.Scan(_dir), new FakeFactory(), NullLogger.Instance);
+            Assert.That(nodes.Select(n => (n.Name, n.Category)), Is.EquivalentTo(new[]
+            {
+                ("Own", "Qt.Effects.Mine"),
+                ("Plain", "Qt.Effects"),
+                ("Both", "Qt.Effects.Mine"),
+                ("Both", "Qt.Effects"),
+            }), "with @chainonly @category moves the chain node, without it only the element node");
         }
 
         sealed class FakeFactory : IVLNodeDescriptionFactory

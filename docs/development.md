@@ -61,6 +61,30 @@ tools/vvvvc.ps1 -File help/HelloWorld.vl
 
 Timing checks of the SmokeTest (`perfoverlay`) tell a busy machine from a regression: a check that reads peaks or long frames prints `SKIP ... host too loaded` instead of failing when the loop of the test itself stalled (a step over 150 ms for the peak checks, more than 20 % of the steps over 1.5 frame budgets for the idle check). Such a SKIP is not a pass: repeat the run on a quieter machine.
 
+### Tearing test pattern (`--tearing`)
+
+A manual scenario, not part of `--all`: N windows, each with a vertical bar sweeping fast across the whole width, so tearing shows as a broken bar. It pumps like the vvvv main loop and prints numbers once per second.
+
+```powershell
+dotnet run --project src/VL.Qt.SmokeTest -c Release -- --tearing --windows 2 --interval 0 --seconds 20
+```
+
+| Argument | Default | Meaning |
+| --- | --- | --- |
+| `--windows N` | 1 | Number of windows (1 to 8), side by side. |
+| `--interval 0\|1` | 1 | Swap interval: 0 = Present never waits, 1 = VSync. |
+| `--fullscreen` | off | Borderless fullscreen; window i on screen i if there is one (Windows), else all on the primary screen. |
+| `--pump-hz N` | 60 | Pump rate (like the vvvv main loop); 0 = as fast as possible. |
+| `--seconds N` | 20 | Duration; 0 = until a window is closed or Ctrl+C. |
+
+Per second and window: `fps` (swaps/s), `present` and `pump` p50/p99 in ms (from `vlqt_perf_sample` of that second's pumps), the refresh rate of the window's screen (`n/a` if unknown), and once per second the `hostpump` p50/p99 (apply, advance and process events of all windows). The first second is warm-up. At the end one line per window over the run without the warm-up:
+
+```
+TEARING SUMMARY win=0 windows=2 interval=1 fullscreen=0 fps=59.9 present_p50=0.36 present_p99=0.73 pump_p50=0.70 pump_p99=1.24 hostpump_p50=0.76 hostpump_p99=1.33 refresh=60.0 display=ok
+```
+
+`pump` is the whole `vlqt_app_process_events`, so it is the same for every window of one run. On Windows the display is kept awake during the run (`SetThreadExecutionState`) and a locked session is detected (`display=ok|locked|unknown`). `TEARING WARNING` lines say when the numbers cannot be trusted: fps about 0, refresh `n/a`, or a locked session. The exit code is 0 after a completed run, 2 for bad arguments.
+
 For the Linux runtime see [Linux](linux.md#building-the-linux-runtime-from-source).
 
 ## Scripts
@@ -71,7 +95,7 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 
 | Script | Use |
 |---|---|
-| `build.ps1` | Builds everything: QtNative + Qt deploy, then `dotnet build src/VL.Qt`. `-Test` adds unit tests and the SmokeTest (log and grabs in `build/smoke/`), `-Only <scenario,...>` limits the SmokeTest, `-Patch <doc.vl>` compile-checks a patch with vvvvc. `-SkipNative` for C#-only changes, `-Configuration Debug`, `-ForceDeploy`. Exit 0 = all steps passed, a summary lists each step. |
+| `build.ps1` | Builds everything: QtNative + Qt deploy, then `dotnet build src/VL.Qt`. `-Test` adds unit tests and the SmokeTest (log and grabs in `build/smoke/`), `-Only <scenario,...>` limits the SmokeTest, `-SmokeTimeout <s>` sets its time limit (default 600 s), `-Patch <doc.vl>` compile-checks a patch with vvvvc. `-SkipNative` for C#-only changes, `-Configuration Debug`, `-ForceDeploy`. Exit 0 = all steps passed, a summary lists each step. |
 | `start-vvvv.ps1` | Starts vvvv with VL.Qt from this repo. `-Build` builds first, `-Help "Draw Text"` opens `help/Qt/HowTo Draw Text.vl`, `-Patch <file>` any patch, `-PrepareOnly` only sets up the package repository. |
 | `vvvvc.ps1` | Compiles or exports a patch with vvvvc (vvvv's command-line compiler). `-File <doc.vl>` (default `help/HelloWorld.vl`, a test patch of the repo that is not in the NuGet package; use a `help/Qt/` patch with a package), `-Out <dir>` (default `build/vvvvc`), further arguments go to vvvvc. Exit 0 = no build errors. |
 | `start-vvvv-with-nupkg.ps1` / `.cmd` | Starts vvvv with a packed `VL.Qt.*.nupkg` without installing it, e.g. to test a release. Takes the newest nupkg next to the script or from `-NupkgDir`; `-Help`, `-Patch` like above. The `.cmd` is for double-clicking. |
@@ -108,7 +132,7 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 | Script | Use |
 |---|---|
 | `fix-encoding.py` | Checks/repairs the BOM: files, `--all`, `--staged` (used by the git hook), `--check` to only report. See [Encoding and git hook](#encoding-and-git-hook). |
-| `vl-pad-layout.py` | Lays out IOBoxes around Qt nodes in `.vl` files (`--check` first on hand-edited patches). |
+| `vl-patch-check.py` | Read-only check of the VL.Qt nodes in `.vl` files against their C# pins (`vl_pin_catalog.py`): hidden pins with a value, IOBoxes on `Interaction`, links to removed pins (errors), IOBoxes at the default value (hints). No argument: all `help/Qt/*.vl` and `help/*.vl`. `--fix` makes hidden pins with a value visible, `--accept <patch>` puts intended exceptions into `help/.padlint.json`. Test: `test-vl-patch-check.py`. |
 
 ## CI
 

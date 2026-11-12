@@ -142,22 +142,34 @@ static class RendererTest
 
     // Is Visible (#93): live from Qt, true from the creation on (no pump needed), false after X/Hide, true again after
     // Show, false after Dispose, true for a new window after a Dispose (node recreated, Undo, F8/F5 with a new registry).
-    /// <summary>VSync pin (#95): a window with swap interval 1 is created and pumped without errors (the pump may wait for the refresh).</summary>
+    /// <summary>
+    /// VSync pin (#95): the default window (no vSync argument = swap interval 1) and the opt-out window (vSync: false = swap
+    /// interval 0) are created and pumped without errors (with VSync the pump may wait for the refresh).
+    /// </summary>
     public static void RunVSync(Action<bool, string> check, Action<int> pump)
     {
-        var r = new WindowRenderer(new SceneRegistry(), "VL.Qt vsync test", new RectangleF(0, 0, 320, 240), vSync: true);
-        check(r.Window != IntPtr.Zero, "95: vSync window created " + r.Error);
+        VSyncWindow(check, pump, "default (VSync on)", "VL.Qt vsync test", null);
+        VSyncWindow(check, pump, "vSync: false (opt-out)", "VL.Qt vsync off test", false);
+    }
+
+    static void VSyncWindow(Action<bool, string> check, Action<int> pump, string what, string title, bool? vSync)
+    {
+        var bounds = new RectangleF(0, 0, 320, 240);
+        var r = vSync is bool v
+            ? new WindowRenderer(new SceneRegistry(), title, bounds, vSync: v)
+            : new WindowRenderer(new SceneRegistry(), title, bounds);
+        check(r.Window != IntPtr.Zero, $"95: {what} window created " + r.Error);
         if (r.Window == IntPtr.Zero)
             return;
         var clear = new Color4(0, 0, 0, 1);
         for (int i = 0; i < 5; i++)
         {
-            r.Update(null, Space.DIPTopLeft, clear, true, "VL.Qt vsync test");
+            r.Update(null, Space.DIPTopLeft, clear, true, title);
             r.ApplyCommands();
             pump(2);
             r.AfterEvents();
         }
-        check(r.IsVisible && r.Error.Length == 0, "95: vSync window visible and pumped without error: " + r.Error);
+        check(r.IsVisible && r.Error.Length == 0, $"95: {what} window visible and pumped without error: " + r.Error);
         r.Dispose();
     }
 

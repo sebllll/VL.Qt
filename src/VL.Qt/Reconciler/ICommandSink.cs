@@ -86,11 +86,29 @@ namespace VL.Qt
         /// <summary>sampler2D from an image resource id (0 = none).</summary>
         void UniformU64(ReadOnlySpan<char> name, ulong value);
 
-        /// <summary>Sampler state of the sampler2D <paramref name="name"/> (#492, <see cref="SamplerState.Pack"/>).</summary>
+        /// <summary>Sampler state of the sampler2D <paramref name="name"/> (#492, <see cref="Elements.Sampler.Pack"/>).</summary>
         void UniformSampler(ReadOnlySpan<char> name, ulong packed);
 
         /// <summary>Closes the SET_UNIFORMS started by <see cref="BeginUniforms"/> (entry count, payload length).</summary>
         void EndUniforms();
+
+        /// <summary>
+        /// SET_QML_PROPERTIES (#104): starts the command for the QmlElement <paramref name="id"/> (flags 0). The entries are encoded
+        /// like those of SET_UNIFORMS and written with the Uniform* methods (<see cref="UniformF32"/>, <see cref="UniformI32"/>,
+        /// <see cref="UniformBool"/>, <see cref="UniformVec2"/>, <see cref="UniformVec3"/>, <see cref="UniformVec4"/>,
+        /// <see cref="UniformColor"/>) and <see cref="QmlRect"/>, then <see cref="EndQmlProperties"/>; no other command in between.
+        /// </summary>
+        /// <remarks>Default members so fakes that predate #104 keep compiling; they fail loudly when a QmlElement is applied.</remarks>
+        void BeginQmlProperties(uint id, ushort flags) => throw new NotSupportedException("SET_QML_PROPERTIES is not supported by this sink.");
+
+        /// <summary>QML entry of value type rect (x, y, width, height); between <see cref="BeginQmlProperties"/> and <see cref="EndQmlProperties"/>.</summary>
+        void QmlRect(ReadOnlySpan<char> name, float x, float y, float width, float height) => throw new NotSupportedException("SET_QML_PROPERTIES is not supported by this sink.");
+
+        /// <summary>QML entry of value type string (u32 length + UTF-8); between <see cref="BeginQmlProperties"/> and <see cref="EndQmlProperties"/>.</summary>
+        void QmlString(ReadOnlySpan<char> name, ReadOnlySpan<char> value) => throw new NotSupportedException("SET_QML_PROPERTIES is not supported by this sink.");
+
+        /// <summary>Closes the SET_QML_PROPERTIES started by <see cref="BeginQmlProperties"/> (entry count, payload length).</summary>
+        void EndQmlProperties() => throw new NotSupportedException("SET_QML_PROPERTIES is not supported by this sink.");
 
         /// <summary>
         /// SET_EFFECT_CHAIN (#489): starts the whole Effect chain of element <paramref name="id"/>. Followed by the links in
@@ -118,11 +136,11 @@ namespace VL.Qt
 
         /// <summary>
         /// Starts a SHADER link: <paramref name="template"/> = <see cref="Protocol.EffectTemplate"/>, shader resource ids by
-        /// role (Single/TwoPass: fragment; Pyramid: prefilter, composite), padding in DIP, strength (TwoPass: effect size,
-        /// Pyramid: radius in DIP) and for TwoPass the uniform that takes it (else empty). Uniform* entries follow.
+        /// role (Single/TwoPass: fragment; Pyramid: prefilter, composite), padding in DIP and strength (Pyramid: radius in
+        /// DIP, else unused). Uniform* entries follow.
         /// </summary>
         void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
-            float paddingRight, float paddingBottom, float strength, ReadOnlySpan<char> strengthUniform);
+            float paddingRight, float paddingBottom, float strength);
 
         /// <summary>Closes the link started by <see cref="BeginMultiLink"/> or <see cref="BeginShaderLink"/>.</summary>
         void EndLink();

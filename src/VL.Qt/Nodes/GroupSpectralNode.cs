@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using Stride.Core.Mathematics;
@@ -30,7 +31,7 @@ namespace VL.Qt.Nodes
         internal GroupNode Inner => _inner;
 
         /// <summary>Describes the group. A new description is only created when an input changes.</summary>
-        /// <param name="children">Spread of child elements; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
+        /// <param name="children">Spread (or any sequence) of child elements, e.g. a Spread of Element or of a self-made widget; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
         /// <param name="size">Size of the element (width, height), only with Auto Size off. The position comes from Transform and Anchor.</param>
         /// <param name="autoSize">On: Size is ignored and the frame is the extent of the children (incl. their Transform) and of the group origin; it is the size, hit area and clip rect of the group. Off: Size counts, also 0.</param>
         /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
@@ -45,7 +46,7 @@ namespace VL.Qt.Nodes
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         [return: Pin(Name = "Output")]
         public Element Update(
-            Spread<IElement?> children,
+            IEnumerable<IElement?> children,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
             [Pin(Visibility = PinVisibility.Optional)] Matrix transform,
@@ -59,7 +60,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            return _inner.Update(children, size, autoSize, transform, anchor, opacity, clip, debug, interaction, effect, style, out measuredSize, out sceneBounds);
+            return _inner.Describe(children, size, autoSize, transform, anchor, opacity, clip, debug, interaction, effect, style, out measuredSize, out sceneBounds);
         }
 
         public void Dispose() => _inner.Dispose();

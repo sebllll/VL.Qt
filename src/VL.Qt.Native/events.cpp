@@ -1,6 +1,7 @@
 #include "events.h"
 #include "commands.h"
 #include "effectchain.h"
+#include "qmlitem.h"
 #include "touch.h"
 
 #include <QtCore/QByteArray>
@@ -791,6 +792,65 @@ void pushValue(Scene& scene, quint32 sink, const QVariant& v)
     scene.pushEvent(VLQT_EV_VALUE, sink, 0, payload.constData(), quint16(payload.size()));
 }
 
+/* QmlElement (#104, protocol.h "QmlElement"): the changes of the root since the last poll as EV_QML_PROPERTY (one per
+ * changed property, its last value) and EV_QML_SIGNAL (every emitted signal, in order). Records are 4-byte aligned inside
+ * (name, value, argument), the poll record is padded by pushEvent; one that would not fit the u16 length is skipped.
+ * Taken (and dropped) also without a sink so that nothing piles up; "signals dropped" is shown by QmlItem::error. */
+constexpr int kMaxEventPayload = 65000;
+
+void pad4(QByteArray& b)
+{
+    while (b.size() % 4)
+        b.append('\0');
+}
+
+void collectQml(Scene& scene, Node& n)
+{
+    auto* item = static_cast<QmlItem*>(n.item);
+    if (!item->hasEvents())
+        return;
+    thread_local std::vector<QmlPropertyEvent> props;
+    thread_local std::vector<QmlSignalEvent> signalEvents;
+    props.clear();
+    signalEvents.clear();
+    bool dropped = false;
+    item->takeEvents(props, signalEvents, dropped);
+    if (n.sink == 0)
+        return;
+    if (dropped)
+        item->noteDropped();
+    QByteArray payload;
+    for (const QmlPropertyEvent& e : props) {
+        payload.clear();
+        const quint16 nameLen = quint16(e.name.size());
+        payload.append(reinterpret_cast<const char*>(&nameLen), 2);
+        payload.append(reinterpret_cast<const char*>(&e.value.type), 2);
+        payload.append(e.name);
+        pad4(payload);
+        payload.append(e.value.bytes);
+        if (payload.size() <= kMaxEventPayload)
+            scene.pushEvent(VLQT_EV_QML_PROPERTY, n.sink, 0, payload.constData(), quint16(payload.size()));
+    }
+    for (const QmlSignalEvent& e : signalEvents) {
+        payload.clear();
+        const quint16 nameLen = quint16(e.name.size());
+        const quint16 argCount = quint16(e.args.size());
+        const quint16 zero = 0;
+        payload.append(reinterpret_cast<const char*>(&nameLen), 2);
+        payload.append(reinterpret_cast<const char*>(&argCount), 2);
+        payload.append(e.name);
+        pad4(payload);
+        for (const QmlWireValue& a : e.args) {
+            payload.append(reinterpret_cast<const char*>(&a.type), 2);
+            payload.append(reinterpret_cast<const char*>(&zero), 2);
+            payload.append(a.bytes);
+            pad4(payload);
+        }
+        if (payload.size() <= kMaxEventPayload)
+            scene.pushEvent(VLQT_EV_QML_SIGNAL, n.sink, 0, payload.constData(), quint16(payload.size()));
+    }
+}
+
 } // namespace
 
 namespace {
@@ -920,6 +980,8 @@ void collectMeasurements(Scene& scene)
         ++i;
         Node& n = it->second;
         n.polledStamp = scene.pollStamp;
+        if (n.type == VLQT_TYPE_QML)
+            collectQml(scene, n); // QML root changes and signals (#104)
         if (n.sink == 0)
             continue;
         SentState& s = n.sent;
@@ -938,6 +1000,8 @@ void collectMeasurements(Scene& scene)
             const QByteArray utf8 = error.toUtf8();
             scene.pushEvent(VLQT_EV_ERROR, n.sink, 0, utf8.constData(), quint16(qMin<qsizetype>(utf8.size(), 4096)));
         }
+        if (n.type == VLQT_TYPE_QML)
+            static_cast<QmlItem*>(n.item)->clearDropNotice(); // "signals dropped" is shown for one poll
 
         // Button (#213): clicked signals, always on (Bang output).
         if (const quint32 bc = scene.elements.takeClicks(n))

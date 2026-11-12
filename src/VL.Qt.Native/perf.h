@@ -32,12 +32,14 @@ struct PerfSample {
     float pump = 0;    // whole processEvents
     float sync = 0;    // beforeSynchronizing -> afterSynchronizing
     float render = 0;  // beforeRendering -> afterRendering (CPU, command recording)
-    float present = 0; // afterRendering -> frameSwapped (endFrame/Present, may block)
+    float present = 0; // afterRendering -> frameSwapped (endFrame/Present)
     float gpu = 0;     // QRhi timestamps of the last completed frame, 0 = unavailable
     int swaps = 0;
-    // pump minus sync/render/present: posted events, input, polish, animation ticks (and, with several windows,
+    // pump minus vsync/sync/render/present: posted events, input, polish, animation ticks (and, with several windows,
     // the other windows' frames). >= 0.
     float events = 0;
+    // beforeFrameBegin -> beforeSynchronizing (QRhi::beginFrame; D3D11 waits there for the refresh with VSync, #90).
+    float vsync = 0;
     // #245: what the host (C#) measured around this pump, reported after it (vlqt_window_report_host_frame).
     vlqt_host_frame host{};
     bool hostReported = false;
@@ -98,8 +100,9 @@ public:
     enum Flags { Meter = 1, Stats = 2, Freeze = 8 };
     enum Page { Summary, Timeline, Scene, System, Resources, PageCount };
     static constexpr int kPageShift = 4;
-    // Phases for injectSpike (test): events = outside sync/render/present but inside the pump.
-    enum Phase { PhaseEvents, PhaseSync, PhaseRender, PhasePresent, PhaseCount };
+    // Phases for injectSpike (test): events = outside vsync/sync/render/present but inside the pump. Vsync is last to
+    // keep the numbers of vlqt_test_perf_spike; the frame order (events, vsync, sync, ...) is kPhaseOrder in perf.cpp.
+    enum Phase { PhaseEvents, PhaseSync, PhaseRender, PhasePresent, PhaseVsync, PhaseCount };
 
     PerfMonitor(QQuickWindow* window, QQmlEngine* engine);
     ~PerfMonitor() override;
@@ -162,7 +165,7 @@ private:
     int m_count = 0;
     PerfSample m_cur;
     PerfCounters m_counters;
-    double m_tSyncBegin = 0, m_tRenderBegin = 0, m_tRenderEnd = 0, m_tLastSwap = -1;
+    double m_tFrameBegin = -1, m_tSyncBegin = 0, m_tRenderBegin = 0, m_tRenderEnd = 0, m_tLastSwap = -1;
     int m_flags = 0;
     QString m_software; // softwareRendererName() after scenegraph init
     bool m_rendererKnown = false; // m_software is valid

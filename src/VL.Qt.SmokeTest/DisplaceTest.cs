@@ -72,7 +72,7 @@ static class DisplaceTest
             cmd.Reparent(id, parent, index);
         }
         uint next = 10;
-        // One effect: Input text + map element (child of the effect, referenced by the displacementSource uniform).
+        // One effect: Input text + map element (child of the effect, referenced by the map uniform).
         void Fx(int cx, int cy, float displacement, bool waveMap, float mr, float mg, float ma)
         {
             var (x, y) = Cell(cx, cy);
@@ -99,7 +99,7 @@ static class DisplaceTest
             cmd.UniformVec2("texelSize", 1 / (CellW * dpr), 1 / (CellH * dpr));
             cmd.UniformF32("dpr", dpr);
             cmd.UniformF32("displacement", displacement);
-            cmd.UniformRef("displacementSource", map);
+            cmd.UniformRef("map", map);
             cmd.EndUniforms();
         }
 

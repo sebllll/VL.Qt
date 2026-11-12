@@ -16,6 +16,7 @@ namespace VL.Qt
             public double fps, frame_ms, frame_ms_max, pump_ms, pump_ms_max;
             public double sync_ms, render_ms, present_ms, gpu_ms, gpu_ms_max, swaps_per_pump;
             public int samples;
+            public double vsync_ms;
         }
 
         /// <summary>One pump of a window (vlqt.h vlqt_perf_sample, #243), ms.</summary>
@@ -24,6 +25,7 @@ namespace VL.Qt
         {
             public float frame, pump, sync, render, present, gpu, events;
             public int swaps;
+            public float vsync;
         }
 
         /// <summary>Percentiles over the ring, counters since start and over the last 10 s, budget (vlqt.h vlqt_perf_stats, #243).</summary>
