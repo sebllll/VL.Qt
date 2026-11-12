@@ -58,6 +58,9 @@
 		<VLDocument link="Qt\HowTo Create Shader Nodes from Files.vl" tags="qtshaders frag" />
 		<VLDocument link="Qt\HowTo Blur an Image with a Control Mask.vl" tags="" />
 	</Topic>
+	<Topic title="QML">
+		<VLDocument link="Qt\HowTo Use a QML file.vl" tags="qmlelement qml file hot reload signal property" />
+	</Topic>
 	<Topic title="Window and Diagnostics">
 		<VLDocument link="Qt\HowTo Set a Window Icon.vl" tags="title fullscreen" />
 		<VLDocument link="Qt\HowTo Read the Window Bounds.vl" tags="" />
