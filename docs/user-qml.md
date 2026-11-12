@@ -2,7 +2,7 @@
 
 `QmlElement` loads a `.qml` file of your own into the element tree. The patch sets properties of the QML root by name, and the properties QML changes and the signals it emits come back as outputs. It is an escape hatch for existing QML components and for things VL.Qt has no element for, not a second UI model: the patch still owns the tree, QML is one leaf (or one subtree) in it.
 
-Experimental (`SymbolSmell.Experimental`): pins and behavior can still change, see [Versioning](versioning.md). Help patch: `HowTo Use a QML file` with the sample `help/Qt/QmlElement Example.qml`. Why it is built this way: [decisions/user-qml.md](decisions/user-qml.md).
+Experimental (`SymbolSmell.Experimental`): pins and behavior can still change, see [Versioning](versioning.md). Help patch: `HowTo Use a QML file` with the sample `help/Qt/QmlElement Example.qml`. To get a node with named pins from a `.qml` file instead of the dictionary, see [Nodes from QML files](#nodes-from-qml-files). Why it is built this way: [decisions/user-qml.md](decisions/user-qml.md).
 
 ## Pins
 
@@ -90,13 +90,121 @@ QML animations (`Behavior`, `NumberAnimation`, `SpringAnimation`, states with tr
 
 A QML **`Timer`** runs on wall time, it does not follow the frame clock. Use animations or drive the time from the patch (a property) where timing must be reproducible.
 
+## Nodes from QML files
+
+Instead of `QmlElement` with a `Properties` dictionary, a `.qml` file can become **a node of its own** with named pins, like the shader nodes from `qtshaders/`. Put the file in a folder named `qml/` next to the saved patch, or in the `qml/` folder of a package (subfolders count), and the node appears in the node browser, category `Qt.Elements.Qml`. Middle click on the node (or right click > Definition > Open) opens the `.qml` in your default editor. Help patch: `HowTo Create QML Nodes from Files` (example files in `help/Qt/qml/`). Tracked in [#107](https://github.com/sebllll/VL.Qt/issues/107), decisions in [decisions/user-qml.md](decisions/user-qml.md).
+
+Experimental: the generated nodes can change like `QmlElement`, although vvvv shows no experimental mark on them (a node factory cannot set one, see [Limitations](#limitations-of-the-generated-nodes)).
+
+### Which files become nodes
+
+- Only files whose name **starts with an uppercase letter**, as QML requires for component files. `main.qml`, `helpers.qml` and so on are ignored without a message.
+- The node name is the file name: `Gauge.qml` → `Gauge`. A `_` splits off a variant, like at the shader nodes: `Gauge_Round.qml` → `Gauge (Round)`.
+- Two files with the same name in one `qml/` tree give an error at both nodes. The nodes appear once the `qml/` folder exists next to the saved patch.
+- The root of the file must be an `Item` or derived from it (as at `QmlElement`). A root type that is another `.qml` file **in the same folder** (`Gauge { … }` with `Gauge.qml` next to it) works: its declarations come first, a redeclaration in the derived file replaces the inherited one.
+
+### Which declarations give which pins
+
+Only the declarations of the **root object** count (nested objects and functions are not read), and only the types `QmlElement` can pass:
+
+| Declaration | Input pin | Output pin |
+|---|---|---|
+| `property <type> name` | yes | the last value QML changed (optional pin) |
+| `property <type> name: <binding>` | yes | same, but **visible** |
+| `readonly property <type> name: …` | no | yes, **visible** |
+| `required property <type> name` | yes, always sent | optional |
+| `default property <type> name` | like `property` | like `property` |
+| `signal name` / `signal name()` | no | `bool`: true in the frame it fired |
+| `signal name(type a)` | no | `Spread<T>`: the values of the emissions of this frame |
+| `signal name(type a, type b, …)` | no | `Spread<QmlSignal>`: one entry per emission, `Name` and `Arguments` |
+
+The types and their vvvv counterparts are those of [Value types](#value-types): `real`/`double` → `float`, `int`, `bool`, `string`, `color` → `Color4`, `vector2d/3d/4d` → `Vector2/3/4`, `rect` → `RectangleF`. A signal argument of a type without a pin type (`var`, a list, an object) makes the pin a `Spread<object>`, the value arrives as its string form (or whatever supported type it has).
+
+The input and the output of one property have **the same name** ("Accent Color" in and out), vvvv tells them apart by their kind. The output starts with the declared default, shows the last value QML changed, and goes back to the default after a reload of the file. A signal output is false/empty in every frame without an emission.
+
+Not given a pin: `property alias`, `var`, `list<…>`, object types (`Item`, `Rectangle`, …) and value types without a counterpart (`url`, `font`, `date`, …). The node lists them in one **info message** (the dot at the node), with their lines. Use the `Properties` pin for them, see below.
+
+### Defaults, and when a value is sent
+
+- A **literal initializer** is the default of the pin: numbers, `true`/`false`, strings, colours as `"#rrggbb"` / `"#aarrggbb"` or an SVG colour name (`"tomato"`), and `Qt.rgba`, `Qt.rgb`, `Qt.vector2d/3d/4d`, `Qt.rect` with numeric literal arguments.
+- A **binding** (`property real half: width / 2`), any other expression, or **no initializer** gives the default of the type (0, `false`, empty string, transparent black, …).
+- **Binding rule:** the patch sends a value only **after it differs from the declared default**; from then on every change is sent, also back to the default. Until then the pin is silent, so a binding or an initial value in the file stays alive and is not overwritten by the pin's default. Consequence: a pin that still shows its default does not "hold" that value in QML, it leaves the file in charge.
+- A value is never "reset": setting a pin back to the default sends the default, it does not restore a binding.
+- A `required property` is sent from the first frame on (but see [Limitations](#limitations-of-the-generated-nodes)).
+
+### Pin names and help
+
+- The name comes from the QML name like at the shader pins: `accentColor` → **Accent Color**, `max_value` → **Max Value**.
+- A name taken by a common pin (`Size`, `Opacity`, `Transform`, `Output`, `Error`, `Properties`, …) or by an earlier declaration becomes "Size 2", with a warning at the node.
+- The common pins are exactly those of `QmlElement`: `Size`, `Auto Size`, `Transform`, `Anchor`, `Opacity`, `Clip`, `Debug`, `Interaction`, `Effect`, and the outputs `Output`, `Measured Size`, `Scene Bounds`, `Error`. The property and signal pins come before them.
+- The `//` **comment lines directly above a declaration** are the help of its pins (several lines are joined with spaces). Without a comment the help only says the QML type and name.
+
+```qml
+// @category Qt.Elements.Examples
+// @summary A round gauge with a needle and a milestone signal.
+// @tags dial, meter
+import QtQuick
+
+Item {
+    // Value in the range 0 to 1.
+    property real value: 0.25
+    // Colour of the needle.
+    property color accentColor: "tomato"
+    // Value as a whole percentage.
+    readonly property int percent: Math.round(value * 100)
+    // Fires when value passes 0.5.
+    signal milestone(int percent)
+    signal tapped
+    // …
+}
+```
+
+This file gives a node `Gauge` with the inputs `Value` (0.25) and `Accent Color` (tomato), the outputs `Percent` (visible, it is readonly), `Milestone` (`Spread<int>`) and `Tapped` (`bool`), and the common pins.
+
+### Head tags
+
+`//` comment lines **before the root object** (also between the `import` lines) can carry tags for the node. A tag takes the rest of its line; following comment lines without a tag are appended to it. Unknown tags show at the node.
+
+| Tag | Effect |
+|---|---|
+| `@category` | Category in the node browser, default `Qt.Elements.Qml`. |
+| `@summary` | Help of the node. |
+| `@tags` | Search words of the node browser, comma separated. |
+
+A change of `@category` or `@tags` moves the node: vvvv builds the node list again.
+
+### The Properties pin (plan B)
+
+The generated node still has the optional `Properties` input (`Dictionary<string, object>`, hidden until you show it), the same as at `QmlElement`, for what gets no pin: an `alias`, a `var`, a list or object property. A pin of the same name wins over a dictionary entry. There is no `Properties` or `Signals` **output**, the typed pins replace them. Values of properties that get no pin do not come back to the patch.
+
+### Hot reload of generated nodes
+
+- Saving the `.qml` file (or a sibling `.qml` of the same folder that it inherits from) reloads the running instance, exactly as at `QmlElement` (see [Hot reload](#hot-reload), with the same limits).
+- The **pins** change only when the **declarations** change: a new, removed, renamed or retyped property or signal, a changed literal default, comment text above a declaration, a head tag. Editing the body of a component (colours, animations, layout inside the root) reloads the QML but does not rebuild the node in the patch.
+- When the pins are rebuilt, vvvv keeps the links on pins that still have the same name.
+
+### Errors
+
+- A file that does **not parse** (no root object, unbalanced braces) still gets a node with the common pins and the parser messages, so a typo does not drop the node and its links.
+- Parser messages show as messages at the node: errors, then warnings, then one info for the declarations without a pin. The same lines go to the vvvv log.
+- Compile, load and type errors of the QML itself, and values that could not be set, show on the `Error` output as at `QmlElement`.
+
+### Limitations of the generated nodes
+
+- **`required property`** fails at creation: QtNative creates the root first and sets the properties afterwards, and Qt refuses a `required property` without a value at that point, although the pin always sends. Give the property a default value instead. Fixing it needs initial properties at creation in QtNative and is not part of #107.
+- **No experimental mark:** `QmlElement` carries `SymbolSmell.Experimental`, but vvvv's node building API has no smell for factory nodes. The generated nodes are experimental all the same.
+- **No pin** for `alias`, `var`, `list<…>`, object types and value types such as `url` or `font` (info message at the node, use `Properties`).
+- Only the **root object** is read, and only a sibling file of the same folder as root type (not an import from another folder or module).
+- The `qml/` folder is searched next to saved documents and in packages, not elsewhere. **Export:** the node only knows the path of the `.qml` file; the `qml/` folder is not copied next to the exported app yet.
+- A node always represents one file: there is no `File` pin.
+
 ## Licensing of imports
 
 VL.Qt ships only the LGPL modules of Qt (see [QtNative deployment](decisions/qtnative-deployment.md)). There is no import filter: an `import` of anything that is not shipped, such as `QtQuick3D`, `QtCharts` or `QtDataVisualization`, fails to load and the message shows on the `Error` output. Qt Quick (`import QtQuick`) and its basic modules are available.
 
 ## Out of scope
 
-- Pins generated from the QML file (like the shader nodes from `qtshaders/`): the dictionary is the interface for now; a node factory is tracked in [#107](https://github.com/sebllll/VL.Qt/issues/107).
+- Pins for what has no type in the table of [Value types](#value-types) (`alias`, `var`, lists, objects): the `Properties` dictionary stays the interface for those, also at the generated nodes.
 - C# objects or models handed to QML as context properties (the idea of Qt Bridge for C#, see [qt-bridges.md](decisions/qt-bridges.md)).
 - Calling QML functions from the patch.
 - Pointer input inside the QML file (`MouseArea`, handlers) is not part of the design; use the `Interaction` pin on the element. Use signals and properties to carry results back.
