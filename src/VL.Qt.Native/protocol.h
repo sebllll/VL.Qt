@@ -213,7 +213,7 @@
  * QmlElement (#104, decisions/user-qml.md): VLQT_TYPE_QML loads a user .qml file into the element tree. The element is an
  * item that holds the instance of the file's root (which must be a QQuickItem, else EV_ERROR). Properties:
  * QML_SOURCE (string, absolute file path, empty = nothing loaded; compiled from a file: URL so relative imports resolve)
- * and QML_RELOAD (i32 counter: a new value clears the engine's component cache for the URL and rebuilds the instance,
+ * and QML_RELOAD (i32 counter, initially 0: a new value clears the engine's component cache for the URL and rebuilds the instance,
  * re-applying every property set so far; the C# side bumps it when the file or its neighbours change). Size: AUTO_SIZE on =
  * the element takes the root's implicitWidth/implicitHeight, off = SIZE sets width/height of the root. Compile, load and type
  * errors arrive as EV_ERROR (file:line), empty = cleared.

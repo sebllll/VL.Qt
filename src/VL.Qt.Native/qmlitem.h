@@ -24,7 +24,6 @@
 #include <QtCore/QVariant>
 #include <QtQuick/QQuickItem>
 
-#include <optional>
 #include <utility>
 #include <vector>
 
@@ -67,8 +66,8 @@ public:
 
     /* QML_SOURCE: absolute path, empty = nothing loaded. Same path again: nothing. */
     void setSource(QQmlEngine* engine, const QString& path);
-    /* QML_RELOAD: a counter value different from the last one rebuilds the instance with a cleared component cache; the
-     * first value only records the counter. */
+    /* QML_RELOAD: a counter value different from the last one (initially 0, the C# default that is never sent) rebuilds the
+     * instance with a cleared component cache when a file is loaded; without a file the value is only recorded. */
     void setReload(qint32 counter);
     /* AUTO_SIZE (see the head comment). */
     void setAutoSize(bool on);
@@ -104,7 +103,7 @@ private:
 
     QQmlEngine* m_engine = nullptr;
     QString m_path;
-    std::optional<qint32> m_reload;
+    qint32 m_reload = 0;           // last QML_RELOAD counter applied (or recorded while nothing was loaded)
     QQuickItem* m_root = nullptr;   // the instance, child item, CppOwnership, deleted by this item
     QmlWatcher* m_watcher = nullptr;
     bool m_auto = true;

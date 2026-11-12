@@ -355,7 +355,8 @@ void QmlItem::setSource(QQmlEngine* engine, const QString& path)
 
 void QmlItem::setReload(qint32 counter)
 {
-    const bool changed = m_reload && *m_reload != counter;
+    // The initial 0 counts as applied, so the first bump (0 -> 1) already reloads.
+    const bool changed = m_reload != counter;
     m_reload = counter;
     if (changed && m_engine && !m_path.isEmpty())
         rebuild(true);
