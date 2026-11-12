@@ -19,7 +19,7 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 // value type in a property and in a bound copy). Files that are edited at run time live in <outDir>/qml/.
 // What it covers: the picture, a property set by the patch is seen and is not echoed, what QML changes itself comes back once
 // per poll (steps, clicks, the Behavior animation of shown), signals with their arguments, animations follow vlqt_driver_advance
-// (not the wall clock), every value type both ways, property errors, compile / load errors (syntax, missing module, root is not
+// (not the wall clock), a Behavior retargeted by a value set every frame follows it (help example, LFO), every value type both ways, property errors, compile / load errors (syntax, missing module, root is not
 // an Item, missing file) and recovery, reload after a file change (also a component next to the file), Auto Size.
 // Grabs go to <outDir>/qml_*.png.
 static class QmlTest
@@ -470,6 +470,47 @@ static class QmlTest
         Flat(Frames(3));
         using (var a = grab(w, System.IO.Path.Combine(outDir, "qml_autosize.png")))
             check(IsGreen(Px(a, 290, 130)) && IsBg(Px(a, 350, 130)) && IsBg(Px(a, 150, 230)), $"104: Auto Size on again: back to the implicit size 200 x 100 ({Px(a, 350, 130)}, {Px(a, 150, 230)})");
+
+        // ---- 7b. a value set every frame (an LFO, help patch "HowTo Use a QML file") ---------------------------------------------
+        // The help example glides its bar with a Behavior: every new value retargets (restarts) the animation. Its start reached
+        // the running animations of Qt only in processEvents, after the clock tick, so an animation restarted every frame was
+        // never advanced and the bar stood still. The bar must follow the LFO with a small lag, every frame.
+        var example = FindFile("help", "Qt", "QmlElement Example.qml");
+        check(example != null, $"104: help example found ({example})");
+        if (example != null)
+        {
+            const uint L = 60, HL = 160;
+            Qml(L, HL, example, 100, 480); // 240 x 56, the bar (22 high) at the bottom: y 514 .. 536
+            SetProps(L, p => p.F32("value", 0));
+            CheckApply("create QmlElement (QmlElement Example.qml) with value 0");
+            Flat(Frames(40));
+            check(Err(HL) == "", $"104: example loads ('{Err(HL)}')");
+            var percent = -1;
+            var lag = new List<float>();
+            var applyFailures = 0;
+            for (int i = 1; i <= 180; i++)
+            {
+                // LFO 0..1 with a period of 4 s (240 frames at 60 fps): its rising part 0 .. 0.75, a new value every frame.
+                var v = i / 240f;
+                SetProps(L, p => p.F32("value", v));
+                if (Expect("SET value") != 0) applyFailures++;
+                if (Props(Frame(), HL, "percent") is { Count: > 0 } l) percent = (int)l[^1];
+                if (i % 30 == 0) lag.Add(v * 100 - percent);
+            }
+            check(applyFailures == 0, $"104: SET value every frame ({applyFailures} failures)");
+            // OutCubic over 400 ms starts at 3x the linear speed: the bar trails a slow LFO by a few percent.
+            check(lag.All(d => d >= 0 && d < 8), $"104: the bar follows an LFO set every frame, lag in percent every 30 frames: {string.Join(", ", lag.Select(d => d.ToString("F1")))}");
+            using (var a = grab(w, System.IO.Path.Combine(outDir, "qml_lfo.png")))
+            {
+                // value 0.75, percent ~73: accent up to x = 100 + 240 * 0.73, track behind it.
+                var accent = Px(a, 100 + (int)(240 * 0.65f), 525);
+                var track = Px(a, 100 + (int)(240 * 0.81f), 525);
+                check(Near(accent, 0xff, 0x7a, 0x3d, 20) && Near(track, 0x2b, 0x2f, 0x3a, 20), $"104: the bar is drawn up to about 73 % (accent {accent}, track {track}, percent {percent})");
+            }
+            cmd.Destroy(L);
+            CheckApply("destroy the LFO example");
+            Flat(Frames(2));
+        }
 
         // ---- 8. destroy ----------------------------------------------------------------------------------------------------------
         foreach (var id in new[] { Q, T, R, O })

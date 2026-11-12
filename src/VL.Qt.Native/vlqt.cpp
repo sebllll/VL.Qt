@@ -917,6 +917,11 @@ VLQT_API int vlqt_driver_advance(double seconds)
             setError("app not initialized");
             return -1;
         }
+        // An animation started since the last tick (in the apply, e.g. a QML Behavior retargeted by a property set every
+        // frame) enters the running list of QAnimationTimer only through a queued startAnimations() call. Without this the
+        // call ran in processEvents after the tick, so an animation restarted every frame was never advanced and stood
+        // still (#104). Delivering the queued calls first gives it this tick, like Qt's own loop does before a vsync tick.
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
         g_driver->setTime(seconds);
         g_driver->advance();
         return 0;
