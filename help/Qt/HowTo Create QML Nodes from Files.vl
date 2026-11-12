@@ -1,0 +1,183 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="dxjDNjVHfOWcfDeXqrPWdN" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+  <NugetDependency Id="Q3n20h5oDDQHJaeVMp9pQh" Location="VL.CoreLib" />
+  <DocumentDependency Id="hdjDjHoTpx5O1XjmynG8Yi" Location="../../VL.Qt.vl" />
+  <Patch Id="4FJak9DZvRuMirev7nN1FN">
+    <Canvas Id="fRy9ZOWLErm3Va0NK97880" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="VTZ1WtY1YYIQDU8sqoOKmW">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="D5zNjaZJR5tGIGpzRZTarF">
+        <Canvas Id="EJDNznN41NFFIriw8ZiFuA" CanvasType="Group">
+          <Pad Id="0RRN3aKFS5EkArKQD9mKIE" Bounds="85,16,640,52" ShowValueBox="true" isIOBox="true" Value="How To Create QML Nodes from Files">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="qCqmbHalnV6jTNS8q7SERE" Bounds="85,85,560,98" ShowValueBox="true" isIOBox="true" Value="QML nodes from qml/*.qml&#xA;- Folder qml next to this patch: one node per file, Gauge.qml gives the node Gauge&#xA;- property = input pin, its literal value = the default (Value, Accent, Label)&#xA;- readonly property = output (Percent), signal(int) = Spread (Milestone), signal = bang (Full)&#xA;- // lines above a declaration = pin help; @summary, @category, @tags in the file head">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="100,250,45,19" Id="srSHSYgLUNPjsiXJZomsAp">
+            <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="LFO" />
+            </p:NodeReference>
+            <Pin Id="o10X7Ai9vjN82LU0etvZEt" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="k9H3AgmwD6DBZtsZwW0Pg3" Name="Clock" Kind="InputPin" IsHidden="true" />
+            <Pin Id="z5FA85PEIRnGB267f5r49d" Name="New Clock" Kind="InputPin" IsHidden="true" />
+            <Pin Id="aYkiZNhoG9IjxjT8k7PsdK" Name="Period" Kind="InputPin" DefaultValue="4" />
+            <Pin Id="Q71PpjUhjRfs01cAbASbzT" Name="Phase" Kind="OutputPin" />
+            <Pin Id="BZfmETxk4rLRhtUKJhwVJU" Name="Pause" Kind="InputPin" />
+            <Pin Id="hvIO05MMwrnDxdfayoyPrO" Name="Reset" Kind="InputPin" />
+            <Pin Id="hlTiJKUMSUQoAcra6TDbQF" Name="On New Cycle" Kind="OutputPin" />
+            <Pin Id="dZIlOTon3mEqHAW4P2S24e" Name="Cycles" Kind="OutputPin" />
+          </Node>
+          <Pad Id="7wrTD11BxzWPHkODNeurjd" Comment="Accent" Bounds="142,300,136,15" ShowValueBox="true" isIOBox="true" Value="0.2, 0.8, 0.7, 1">
+            <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="RGBA" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="tMehSvSan7yvcVXoPGAGor" Comment="Label" Bounds="182,335,60,15" ShowValueBox="true" isIOBox="true" Value="CPU">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="260,385,80,19" Id="2AcLC8dGzUeBpYYQtYV53N">
+            <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="OperationCallFlag" Name="TransformSRT" />
+              <CategoryReference Kind="Category" Name="Transform" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="2D" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+            </p:NodeReference>
+            <Pin Id="CSrt0cwDza0vmd0mg7n9F3" Name="Input" Kind="InputPin" />
+            <Pin Id="IchA3XFUvB3X0iw7H9Z68i" Name="Scaling" Kind="InputPin" DefaultValue="1.5, 1.5" />
+            <Pin Id="qAgEPXhwszRU3afps2NfSL" Name="Rotation" Kind="InputPin" />
+            <Pin Id="czvnSWnX3AfqV6l0PYUFYj" Name="Translation" Kind="InputPin" DefaultValue="0.5, 0.5" />
+            <Pin Id="uBxrLAbPJHAK1YCeBdkiO2" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="100,440,165,19" Id="Lq3UuNyR7K76DaIUfyDrDA">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Qml" LastDependency="VL.Qt.Qml">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessNode" Name="Gauge" />
+            </p:NodeReference>
+            <Pin Id="HsvTr2peVwcSdP9YMTqupv" Name="Value" Kind="InputPin" />
+            <Pin Id="m8JMnMK5wXsDfie7405Bta" Name="Accent" Kind="InputPin" />
+            <Pin Id="C6W8RNUGacot4ogFwUPKWQ" Name="Label" Kind="InputPin" />
+            <Pin Id="jeY08w5O43mT8EQ763VchA" Name="Properties" Kind="InputPin" IsHidden="true" />
+            <Pin Id="cX9uybdU1ZSInGg9HC18Pa" Name="Size" Kind="InputPin" />
+            <Pin Id="6O4I09BDumWVMHf8pBKabf" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="rdsJnFQtHEOs0BRu9065OL" Name="Transform" Kind="InputPin" />
+            <Pin Id="3PjTXqRvjJuN7FwVDMzdmc" Name="Anchor" Kind="InputPin" IsHidden="true" />
+            <Pin Id="nWbedATm2gPPfXLu9M1AMe" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="n80rVTpjVw728zfHpeCjdb" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="dXz2RwYADE97nrZLIr1pnP" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="1CaJ5Fv1D4wLbKEyqptJsW" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Rruegst5jjjefa8eB5CRWN" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="rLVDQYPwG31mK12VcCsPjf" Name="Output" Kind="OutputPin" />
+            <Pin Id="zeEBD2zKIbXkF6a8DchTQZ" Name="Value" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="VmC5OuU9OzljY2trd41uov" Name="Accent" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="rBpQtWcfYq9xikkPTIlz9X" Name="Label" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="cbn2sZb8HlPeFAr70KrAaz" Name="Percent" Kind="OutputPin" />
+            <Pin Id="nv2e1elr7RkuhML7B6Vooj" Name="Milestone" Kind="OutputPin" />
+            <Pin Id="MaViMMK2KzE2d4oegdHDdW" Name="Full" Kind="OutputPin" />
+            <Pin Id="9raA3zeW6OLJ6GOi6IZzVO" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="ISVrECKvvaRLWLaidggaCK" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="b2oUXfiZ4zZUfhrFRg4iXf" Name="Error" Kind="OutputPin" />
+          </Node>
+          <Pad Id="KyHrrO3BAPH67JQ0TDZTQk" Bounds="360,381,302,47" ShowValueBox="true" isIOBox="true" Value="Gauge is generated from qml/Gauge.qml next to this patch. Middle click on it opens the file.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="BZsZjAOSzogMYjcfA6QQuT" Comment="Error" Bounds="262,480,300,15" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="TRQT81Svt5TPnwcD8RfB6y" Comment="Full" Bounds="222,510,35,35" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="OG5OglC77JqTDaGM4pFvFU" Comment="Milestone" Bounds="184,560,60,40" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="FhXjbQJ5QGJ8pf91KcCVUA" Comment="Percent" Bounds="144,615,35,15" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="szLjIgE25en7P9csXmhURG" Comment="Title" Bounds="182,650,220,17" ShowValueBox="true" isIOBox="true" Value="HowTo Create QML Nodes from Files">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="100,685,85,19" Id="OqkoJ5W1g25yeP1LXxckal">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="WQJCYNEk1381OAIGXgLsRq" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="p3rYadCbCbKU35GsaO7N8G" Name="Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="UiBoHftQYHUHgwnBt0yBOS" Name="V Sync" Kind="InputPin" IsHidden="true" />
+            <Pin Id="527TltrTTlBTf930qyipU5" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="6uUo5KO5AoLaO0xB7PNAZV" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="CY9zPHRmlCiKIZQ82VsuZN" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="1Ti6o80mS68gqM2qnJAMYc" Name="Input" Kind="InputPin" />
+            <Pin Id="RZSPXmH9kt1iTFqoMSwvhf" Name="Space" Kind="InputPin" />
+            <Pin Id="WxxTEF9kD2iMo445fROSx7" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="WPD6dm397Co0uVRSLiyn4O" Name="Enabled" Kind="InputPin" />
+            <Pin Id="G5rQ2P2juAP3mX4lMGWO0C" Name="Title" Kind="InputPin" />
+            <Pin Id="lCZA5TumK5jGXzPXKa0b4O" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="azabpgXNlcxGVjFQx4D1az" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="ObQoiylLfqFt2MCNXIoJjV" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="gGebxrJALZjd0FYlgMAB34" Name="Error" Kind="OutputPin" />
+            <Pin Id="pMrHrAZVOVP6QVGcMkoelE" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DvfjVT3c73Jk1NidkMpNC1" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="pY1ZlPKG9gjp8WbOVd3zBE" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MQy5plOTJU9jaRLYhqmqfm" Name="Window" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="orztv7n95UUMR6Vmi83jZo" Bounds="85,740,840,250" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The nodes appear when the qml folder exists next to the saved patch, or in the qml folder of a package; subfolders count. Only files whose name starts with an uppercase letter become nodes (QML's rule for components): main.qml or helpers are skipped. Middle click on the node opens the file.&#xA;- Pins come only from the declarations of the root object: property (input, plus an optional output with the last value QML changed), readonly property (output), signal (output). Types: real, int, bool, string, color, vector2d/3d/4d, rect. The other pins are those of QmlElement (see HowTo Use a QML file).&#xA;- A pin sends nothing until its value differs from the declared default: a binding or an initial value in the file stays in charge until you really set the pin.&#xA;- Save the .qml and the running element reloads. The pins change only when the declarations change (a new, renamed or retyped property or signal, a default, the comment above it, a head tag); links on pins with the same name stay.&#xA;- alias, var, list and object properties get no pin (info at the node). Set them through the hidden Properties pin, the dictionary of QmlElement (plan B).&#xA;- A file that does not parse still gives a node: parser messages show at the node, QML errors at Error.&#xA;- Export: the qml folder next to the exported patch is copied next to the exe.&#xA;- Experimental, like QmlElement.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="DIKyjJPnwuOLAngSVXkcPY" Comment="" Bounds="102,350,35,15" ShowValueBox="true" isIOBox="true">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+        </Canvas>
+        <Patch Id="o9Bhig5AnRMC9NmL1OYys2" Name="Create" />
+        <Patch Id="yLjmRbWLxbMeut4TG6cQto" Name="Update" />
+        <ProcessDefinition Id="TfJMeTFh9lkyRvjrQ9wBDd">
+          <Fragment Id="yQ4Li5tr5tk7HCaP4NltB9" Patch="o9Bhig5AnRMC9NmL1OYys2" Enabled="true" />
+          <Fragment Id="EJtrkIhNGIGZcWvwXPDOzJ" Patch="yLjmRbWLxbMeut4TG6cQto" Enabled="true" />
+        </ProcessDefinition>
+        <Link Id="RhZLnvzVwPquwkfC4duVTi" Ids="7wrTD11BxzWPHkODNeurjd,m8JMnMK5wXsDfie7405Bta" />
+        <Link Id="cPtBnxPZRdbRmezbfDE3xN" Ids="tMehSvSan7yvcVXoPGAGor,C6W8RNUGacot4ogFwUPKWQ" />
+        <Link Id="U1JPonN1M0twkn2la6yNU0" Ids="uBxrLAbPJHAK1YCeBdkiO2,rdsJnFQtHEOs0BRu9065OL" />
+        <Link Id="ZOgJXSSFLk21AhLOSb2q7c" Ids="b2oUXfiZ4zZUfhrFRg4iXf,BZsZjAOSzogMYjcfA6QQuT" />
+        <Link Id="AMPitshzXsEqIOEIbRZmn4" Ids="MaViMMK2KzE2d4oegdHDdW,TRQT81Svt5TPnwcD8RfB6y" />
+        <Link Id="MYQiZITPPO8LlOpRfpCKXO" Ids="nv2e1elr7RkuhML7B6Vooj,OG5OglC77JqTDaGM4pFvFU" />
+        <Link Id="NouNvzBFvd2Zpg1MopbYZZ" Ids="cbn2sZb8HlPeFAr70KrAaz,FhXjbQJ5QGJ8pf91KcCVUA" />
+        <Link Id="QQUUzF6aSyutZGwojhVWiN" Ids="rLVDQYPwG31mK12VcCsPjf,1Ti6o80mS68gqM2qnJAMYc" />
+        <Link Id="UsLsQojwFmKzpF59tDMQKE" Ids="szLjIgE25en7P9csXmhURG,G5rQ2P2juAP3mX4lMGWO0C" />
+        <Link Id="M4CHk7gw2PqPoI2IiNIqpb" Ids="DIKyjJPnwuOLAngSVXkcPY,HsvTr2peVwcSdP9YMTqupv" />
+        <Link Id="PfO6fXbMYf6Ndjebi6gfkw" Ids="Q71PpjUhjRfs01cAbASbzT,DIKyjJPnwuOLAngSVXkcPY" />
+      </Patch>
+    </Node>
+  </Patch>
+</Document>

@@ -3,6 +3,7 @@
   <NugetDependency Id="3t9XdNusUpmnZLd9Xg7eXY" Location="VL.CoreLib" />
   <PlatformDependency Id="1OxwEZiNcpZEPKMAGSvks3" Location="./lib/net10.0/VL.Qt.dll" IsForward="true" />
   <NodeFactoryDependency Id="Qs8hNf4dRw2LkP7vTzX3mB" Location="VL.Qt.Shaders" IsForward="true" />
+  <NodeFactoryDependency Id="6qAfCwrbZ0hQlzlDK8FLAg" Location="VL.Qt.Qml" IsForward="true" />
   <Patch Id="0L9C6OMQ9lhs9P66XsHdeD">
     <Canvas Id="5407ucZp0njith5yMzpxgY" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory">
       <Canvas Id="Qc7ElmTs4Kp2Vx9RbN1aHd" Name="Elements" Position="300,100" DefaultCategory="Qt.Elements" CanvasType="FullCategory" />

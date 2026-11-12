@@ -4,6 +4,7 @@
        paths of Path pins relative to the exe with VLAssetBehavior RelativeToOutput, #15):
          qtshaders/  shader nodes from files (#488), resolved by the node factory in the exported app, too (#506)
          fonts/      font files for the LoadFont node (#15)
+         qml/        .qml files of the generated QML nodes, found by the node factory next to the exe (#107)
        Each target copies <folder>/** next to the exported document, into the same folder name beside the exe.
        The document path comes from the exe project vvvv generates (<None Include="<document>.pc">, present even if the
        .pc does not exist): this project if it is the exe (NuGet dependency), else the exe being built, whose project
@@ -45,6 +46,21 @@
       <_VLQtFontFile Include="$(_VLQtFontsDir)**\*" />
       <None Include="@(_VLQtFontFile)">
         <Link>fonts\%(_VLQtFontFile.RecursiveDir)%(_VLQtFontFile.Filename)%(_VLQtFontFile.Extension)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <Visible>false</Visible>
+      </None>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="VLQtAddQml" BeforeTargets="AssignTargetPaths" DependsOnTargets="VLQtResolveDocument">
+    <PropertyGroup Condition="'$(_VLQtDocumentDir)' != ''">
+      <_VLQtQmlDir>$(_VLQtDocumentDir)qml\</_VLQtQmlDir>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(_VLQtQmlDir)' != '' And Exists('$(_VLQtQmlDir)')">
+      <_VLQtQmlFile Include="$(_VLQtQmlDir)**\*" />
+      <None Include="@(_VLQtQmlFile)">
+        <Link>qml\%(_VLQtQmlFile.RecursiveDir)%(_VLQtQmlFile.Filename)%(_VLQtQmlFile.Extension)</Link>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         <Visible>false</Visible>

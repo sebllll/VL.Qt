@@ -10,7 +10,7 @@ User and contributor documentation. For an overview and installation see the [pr
 | [styles.md](styles.md) | The VLQt base style, the `Style` pin, style nodes, and self-made widgets with `IStylable`. |
 | [images.md](images.md) | `QtImage` as GPU resource, the loader nodes, `ToQtImage`, `Snapshot`, mipmaps and frame budget. |
 | [effects-and-shaders.md](effects-and-shaders.md) | The `Effect` pin and its nodes, ShaderEffect, the `Sampler` node, shader nodes generated from `.frag` files. |
-| [user-qml.md](user-qml.md) | `QmlElement`: load a `.qml` file of your own as an element, properties in, changes and signals out, hot reload, limits. |
+| [user-qml.md](user-qml.md) | `QmlElement`: load a `.qml` file of your own as an element, properties in, changes and signals out, hot reload, limits; nodes with named pins generated from `.qml` files in `qml/` folders. |
 | [tooltips.md](tooltips.md) | Preview images for `Element` and `QtImage` links in the vvvv editor. |
 | [diagnostics.md](diagnostics.md) | Performance overlays (F2/F5), the `Debug` overlay, logging and errors, GPU device loss. |
 | [profiling.md](profiling.md) | Repeatable CPU profiling of test scenarios with Ultra. |
@@ -31,7 +31,7 @@ Why things are built the way they are. Each note states the goals, the decision 
 | [decisions/events.md](decisions/events.md) | How events and measured values travel from Qt back to the element nodes through sinks. |
 | [decisions/qtnative-deployment.md](decisions/qtnative-deployment.md) | How QtNative is built, licensed (LGPL), packaged and located at runtime. |
 | [decisions/qt-bridges.md](decisions/qt-bridges.md) | Qt Bridge for C# compared with VL.Qt: no switch, no redundant features (research in [research/01_qt-bridge-csharp.md](research/01_qt-bridge-csharp.md)). |
-| [decisions/user-qml.md](decisions/user-qml.md) | Loading a user `.qml` file as an element (`QmlElement`, issue #104); background in [topics/user-qml.md](topics/user-qml.md). |
+| [decisions/user-qml.md](decisions/user-qml.md) | Loading a user `.qml` file as an element (`QmlElement`, issue #104) and the QML node factory (#107); background in [topics/user-qml.md](topics/user-qml.md). |
 | [decisions/reconciler-identity.md](decisions/reconciler-identity.md) | How the reconciler decides every frame between updating a Qt object and creating a new one. |
 | [decisions/timing.md](decisions/timing.md) | One shared clock for vvvv and Qt animations through a custom animation driver on `IFrameClock`. |
 | [topics/element-immutability.md](topics/element-immutability.md) | Why elements are immutable descriptions and where Qt-side state deliberately lives outside them. |

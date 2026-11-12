@@ -151,12 +151,20 @@ def save_baseline(path, entries):
         f.write('\n')
 
 
+def rel_or_abs(path, start):
+    """Path relative to start; the absolute path if there is none (other drive on Windows)."""
+    try:
+        return os.path.relpath(os.path.abspath(path), start)
+    except ValueError:
+        return os.path.abspath(path)
+
+
 def patch_key(path, baseline_path):
-    return os.path.relpath(os.path.abspath(path), os.path.dirname(os.path.abspath(baseline_path))).replace(os.sep, '/')
+    return rel_or_abs(path, os.path.dirname(os.path.abspath(baseline_path))).replace(os.sep, '/')
 
 
 def display(path):
-    rel = os.path.relpath(os.path.abspath(path), ROOT)
+    rel = rel_or_abs(path, ROOT)
     return (path if rel.startswith('..') else rel).replace(os.sep, '/')
 
 
