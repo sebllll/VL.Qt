@@ -13,13 +13,13 @@ Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-progra
 > **Early release (`0.x`).** The API may still change. Requires **vvvv gamma 8.x (preview)** on .NET 10; vvvv 7.x (.NET 8) is not supported.
 > The output is a Qt window; there is no Stride or Skia layer. Linux (x64 and ARM64) works as a console export with its own Qt window, tested under WSL2/WSLg so far (see [Platforms](#platforms)).
 
-**Contents:** [Features](#features) · [Getting Started](#getting-started) · [Linux via WSL](#try-it-on-linux-through-wsl) · [Platforms](#platforms) · [Styles](#styles) · [Images](#images) · [Effects](#effects) · [Shaders](#shaders) · [Tooltips](#tooltips-in-the-vvvv-editor) · [Diagnostics](#diagnostics) · [How It Works](#how-it-works) · [Compared to Qt Bridge](#compared-to-qt-bridge-for-c) · [Development](#development) · [Documentation](#documentation) · [Contributing](#contributing) · [License](#license)
+**Contents:** [Features](#features) · [Getting Started](#getting-started) · [Linux via WSL](#try-it-on-linux-through-wsl) · [Platforms](#platforms) · [Styles](#styles) · [Images](#images) · [Effects](#effects) · [Shaders](#shaders) · [QML](#qml) · [Tooltips](#tooltips-in-the-vvvv-editor) · [Diagnostics](#diagnostics) · [How It Works](#how-it-works) · [Compared to Qt Bridge](#compared-to-qt-bridge-for-c) · [Development](#development) · [Documentation](#documentation) · [Contributing](#contributing) · [License](#license)
 
 ## Features
 
 | | |
 |---|---|
-| [**Elements**](docs/help-patches.md#drawing) | Rectangle, Circle, Text, Image, Video, Group, Row, Column, ShaderEffect, Labeled; the same element can be placed several times in the tree |
+| [**Elements**](docs/help-patches.md#drawing) | Rectangle, Circle, Text, Image, Video, Group, Row, Column, ShaderEffect, QmlElement, Labeled; the same element can be placed several times in the tree |
 | [**Layout**](docs/help-patches.md#structure-and-layout) | automatic sizing and spacing with Row/Column, also fed with a spread of elements (Spectral) |
 | [**Widgets**](docs/help-patches.md#widgets-and-styles) | Button, Toggle, Slider, TextInput, Input (Int), with value channels |
 | [**Styles**](docs/styles.md) | own base style VLQt, Style pin on widgets and Group (inherited down the tree), style nodes per part and state, Dark/Light presets, `IStylable` for self-patched widgets |
@@ -28,8 +28,9 @@ Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-progra
 | [**Video**](docs/help-patches.md#drawing) | play/pause, loop, rate, volume |
 | [**Effects**](docs/effects-and-shaders.md#effects) | Effect pin on every element: Blur, DropShadow, ColorAdjust, Colorize and Mask (neighbours merged into one offscreen layer), plus your own filter shaders as chain nodes |
 | [**Shaders**](docs/effects-and-shaders.md#shaders) | ShaderEffect with GLSL in a string pin, baked at runtime; every `.frag` file in a `qtshaders/` folder becomes a node with one pin per uniform |
+| [**QML**](docs/user-qml.md) | QmlElement loads your own `.qml` file into the element tree; every `.qml` file in a `qml/` folder becomes a node with one pin per property and signal (experimental) |
 | [**Animation**](docs/architecture.md#timing-and-animation) | driven by vvvv's `IFrameClock`, so scrubbing and pausing are deterministic |
-| [**Window**](docs/help-patches.md#window-and-diagnostics) | WindowSettings node (Icon, Title, Borderless, Fullscreen, Bounds), Fullscreen (F11 / Alt+Enter), Save Bounds, optional VSync |
+| [**Window**](docs/help-patches.md#window-and-diagnostics) | WindowSettings node (Icon, Title, Borderless, Fullscreen, Bounds), Fullscreen (F11 / Alt+Enter), Save Bounds, VSync on by default (see `HowTo Avoid Tearing`) |
 | [**Tooltips**](docs/tooltips.md) | hovering a link with `Element` or `QtImage` in the vvvv editor shows a preview image (editor only) |
 | [**Diagnostics**](docs/diagnostics.md) | `F2` perfmeter, `F5` stats panel, `Debug` pin for a layout overlay; Qt errors show up at the node and in the vvvv Log window |
 
@@ -92,7 +93,7 @@ The same path for x64 and arm64; use the architecture of the machine that runs W
 
 1. **Patch.** In vvvv, open or build a patch that ends in a `Renderer [Qt]` (for example one from `help/Qt/`). Add a `KeepAppAlive [System]` with `Is Alive` = true to the top patch; a console app otherwise ends after the first frame, without a window ([details](docs/linux.md#1-prepare-the-patch)).
 2. **Export for Linux.** Open the application exporter from the quad menu and set `Output type` = `Exe`, `Target framework` = `net10.0`, `Runtime identifier` = `linux-x64` (arm64: `linux-arm64`); then export. The console export does the same: `tools/vvvvc.ps1 -File "<patch>.vl" -Out build/export-linux --rid linux-x64 --output-type Exe --asset-behavior RelativeToOutput` ([details](docs/linux.md#2-export-from-vvvv)). The export is self-contained, so the target needs no .NET.
-3. **Set up WSL once.** In an admin PowerShell: `wsl --install -d Ubuntu-24.04`, restart if asked, create the user. In the Ubuntu shell install the system libraries Qt uses: `bash /mnt/c/<path-to-repo>/tools/setup-wsl.sh --runtime-only`, or the `apt` packages listed in [Linux](docs/linux.md#3-set-up-wsl-once).
+3. **Set up WSL once.** In an admin PowerShell: `wsl --install -d Ubuntu-24.04`, restart if asked, create the user. In the Ubuntu shell install the system libraries Qt uses: `bash /mnt/c/<path-to-repo>/tools/setup-wsl.sh --runtime-only`, or, on a machine without the repo (only the export folder), the `apt` packages from [Linux](docs/linux.md#3-set-up-wsl-once). Do not skip this step: without these libraries the app aborts with `This application failed to start because no Qt platform plugin could be initialized` (even though `xcb` is listed as available).
 4. **Run it.** Copy the export folder into the Linux file system and start the executable (the name of the patch, without extension):
 
    ```bash
@@ -166,7 +167,22 @@ Comments such as `// @default`, `// @min`, `// @max`, `// @color` and `// @summa
 
 Help patches: `HowTo Write a ShaderEffect`, `HowTo Create Shader Nodes from Files`, `HowTo Set a Sampler`, `HowTo Blur an Image with a Control Mask`.
 
-More: [Shaders](docs/effects-and-shaders.md#shaders) (annotations, the [Sampler node](docs/effects-and-shaders.md#sampler-node), a complete example, export notes).
+The five built-in effects (Blend, Displace, DirectionalBlur, ZoomBlur, RadialBlur) also ship as annotated example shaders in `help/Qt/qtshaders/`: copy one and make an effect of your own.
+
+More: [Shaders](docs/effects-and-shaders.md#shaders) (annotations, the [Sampler node](docs/effects-and-shaders.md#sampler-node), a complete example, [own effects from templates](docs/effects-and-shaders.md#own-effects-from-templates), export notes).
+
+## QML
+
+What VL.Qt has no element for can be written in QML and brought into the tree. Experimental, like the shaders it was modelled on.
+
+- **QmlElement** loads a `.qml` file next to the patch. The patch sets properties of the QML root by name; changed properties and emitted signals come back as outputs. Saving the file reloads it while vvvv runs.
+- **Nodes from `.qml` files:** every file in a folder named `qml` next to the patch whose name starts with an uppercase letter becomes a node. `property` declarations are input pins (the literal value is the default), `readonly property` are outputs, `signal(int)` is a spread of values and a signal without arguments is a bang. `//` lines above a declaration are the pin help, `@summary`, `@category` and `@tags` in the file head describe the node. A middle click on the node opens the file.
+
+<img src="docs/images/qml-node-factory.png" width="820" alt="Help patch 'HowTo Create QML Nodes from Files': the node Gauge generated from Gauge.qml with its pins, the Qt window with the bar and the QML source in VS Code">
+
+Help patches: `HowTo Use a QML file`, `HowTo Create QML Nodes from Files`.
+
+More: [QML files as elements](docs/user-qml.md) (pins, value types, signals, hot reload, [nodes from QML files](docs/user-qml.md#nodes-from-qml-files), limits).
 
 ## Tooltips in the vvvv editor
 
@@ -245,6 +261,7 @@ The index with a one-line description per page is in [docs/README.md](docs/READM
 - [Styles](docs/styles.md): base style, Style pin, style nodes, self-made widgets
 - [Images](docs/images.md): `QtImage`, loaders, Snapshot
 - [Effects and shaders](docs/effects-and-shaders.md): effect chain, custom shaders, `qtshaders/` nodes
+- [QML files](docs/user-qml.md): QmlElement and nodes from `.qml` files
 - [Tooltips](docs/tooltips.md): previews in the vvvv editor
 - [Diagnostics](docs/diagnostics.md): overlays, logging, GPU device loss
 - [Profiling](docs/profiling.md): repeatable CPU measurements

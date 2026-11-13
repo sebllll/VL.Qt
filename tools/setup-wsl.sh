@@ -42,6 +42,9 @@ build_packages=(
     # headers Qt6Gui's CMake config looks for (OpenGL/EGL, Vulkan, xkbcommon)
     libgl-dev libegl-dev libvulkan-dev libxkbcommon-dev mesa-vulkan-drivers
 )
+# Package names that change between Ubuntu releases (libicu74 on 24.04, libicu78 on 26.04): take what apt knows.
+icu_package="$(apt-cache search --names-only '^libicu[0-9]+$' 2>/dev/null | awk '{print $1}' | sort -V | tail -1)"
+runtime_packages=("${runtime_packages[@]/libicu74/${icu_package:-libicu74}}")
 packages=("${runtime_packages[@]}")
 [ "$RUNTIME_ONLY" = 1 ] || packages+=("${build_packages[@]}")
 
