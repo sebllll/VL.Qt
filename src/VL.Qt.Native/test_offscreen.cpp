@@ -8,13 +8,13 @@
 
 #include "device.h"
 
-#include <QtCore/QLoggingCategory>
 #include <rhi/qrhi.h>
 
 #include <d3d11_1.h>
 #include <dxgi1_2.h>
 #include <windows.h>
 
+#include <cstdio>
 #include <cstring>
 
 namespace {
@@ -36,10 +36,12 @@ template <class T> struct ComPtr
     explicit operator bool() const { return p != nullptr; }
 };
 
-// TODO: vlqt_last_error is private to vlqt.cpp (setError); until a shared setter exists the reason goes to the log.
+// Sets vlqt_last_error and returns -1.
 int fail(const char* what, HRESULT hr)
 {
-    qWarning("vlqt_test: %s failed (HRESULT 0x%08lX)", what, static_cast<unsigned long>(hr));
+    char text[160];
+    std::snprintf(text, sizeof text, "vlqt_test: %s failed (HRESULT 0x%08lX)", what, static_cast<unsigned long>(hr));
+    vlqt::offscreen::setError(text);
     return -1;
 }
 

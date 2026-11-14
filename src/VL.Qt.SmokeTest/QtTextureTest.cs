@@ -1,4 +1,9 @@
 ﻿using System;
+#if WINDOWS
+using System.Drawing;
+using System.Drawing.Imaging;
+#endif
+using System.IO;
 using System.Runtime.InteropServices;
 using VL.Qt;
 
@@ -6,16 +11,18 @@ using VL.Qt;
 /// #116 (QtTexture) task 1.7: self-test of the TEST ONLY exports that stand in for Stride's device (vlqt.h): a second
 /// D3D11 device on QtNative's adapter and on WARP, shared textures (B8G8R8A8_TYPELESS, R16G16B16A16_FLOAT) with NT
 /// handles, readback through a staging copy, COM reference counts, and that releasing everything frees the device and
-/// leaves the process handle count where it was. The later scenarios of the offscreen scene build on these probes.
+/// leaves the process handle count where it was. Tasks 1.3/1.4: an offscreen scene bound to a shared texture, rendered
+/// through the fences and read back (<c>qttexture_scene.png</c>); the full matrix is task 1.8.
 /// </summary>
 static class QtTextureTest
 {
     const int B8G8R8A8Typeless = 90;
     const int R16G16B16A16Float = 10;
     const int R8G8B8A8Unorm = 28;
+    const int B8G8R8A8Unorm = 87;
     const int R32G32B32A32Float = 2; // not supported by the readback
 
-    public static void Run(Action<bool, string> check)
+    public static void Run(string outDir, Action<bool, string> check)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -47,6 +54,118 @@ static class QtTextureTest
             RoundTrip(i % 2, check, verbose: false);
         var after = Native.vlqt_test_process_handle_count();
         check(after == baseline, $"116: handle count back at baseline ({baseline} -> {after})");
+
+        OffscreenScene(outDir, check);
+    }
+
+    // Task 1.3/1.4: a scene bound to a B8G8R8A8_TYPELESS texture of the test device, one render through the fences,
+    // readback; an unchanged scene renders nothing; unbind and destroy give back every device reference.
+    static void OffscreenScene(string outDir, Action<bool, string> report)
+    {
+        bool check(bool ok, string what)
+        {
+            report(ok, what);
+            return ok;
+        }
+        const int w = 64, h = 48;
+        const uint rect = 1;
+        // Rectangle (16, 12) .. (48, 36), red, on a transparent clear colour.
+        const int rx = 16, ry = 12, rw = 32, rh = 24;
+
+        if (!check(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "116 scene: create test device"))
+            return;
+        // Device children (textures, views, fences, Qt's scene graph resources) count on their device: compare counts
+        // taken at the same point of the lifetime.
+        Native.vlqt_test_device_info(IntPtr.Zero, out var qtDevice, out _);
+        int QtRefs() => qtDevice != IntPtr.Zero ? Native.vlqt_test_com_ref_count(qtDevice) : -1;
+        int qtRefsBefore = QtRefs();
+        var scene = Native.vlqt_offscreen_create(w, h);
+        if (!check(scene != IntPtr.Zero, "116 scene: offscreen_create " + Native.LastError()))
+        {
+            Native.vlqt_test_d3d11_release_device(device, context);
+            return;
+        }
+        check(Native.vlqt_offscreen_is_bound(scene) == 0, "116 scene: new scene is unbound");
+        check(Native.vlqt_test_offscreen_state(scene, out _, out _, out _) == Protocol.Offscreen.Unbound, "116 scene: state of an unbound scene = unbound");
+
+        var cmd = new CommandWriter();
+        cmd.Reset();
+        cmd.ClearColor(0, 0, 0, 0);
+        cmd.Create(rect, Protocol.Type.Rectangle);
+        cmd.SetPlace(rect, rx, ry, rw, rh);
+        cmd.SetColor(rect, Protocol.Prop.Color, 1, 0, 0, 1);
+        cmd.Reparent(rect, 0, 0);
+        int rc = Native.Apply(scene, cmd.EndFrame());
+        check(rc == 0, $"116 scene: apply rectangle ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+
+        rc = Native.vlqt_test_d3d11_create_shared_texture(device, w, h, B8G8R8A8Typeless, out var texture, out var handle);
+        if (check(rc == 0, "116 scene: create shared texture " + rc))
+        {
+            int deviceRefs = Native.vlqt_test_com_ref_count(device);
+            rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm);
+            check(rc == Protocol.Offscreen.Ok, $"116 scene: bind ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            check(Native.vlqt_offscreen_is_bound(scene) == 1, "116 scene: is_bound after bind");
+
+            rc = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
+            Native.vlqt_test_offscreen_state(scene, out var read1, out var write1, out var renders1);
+            check(rc == 1 && read1 == 1 && write1 == 1 && renders1 == 1,
+                $"116 scene: first render_batch renders once (rc {rc}, read {read1}, write {write1}, renders {renders1}) {(rc < 0 ? Native.LastError() : "")}");
+
+            var pixels = new byte[w * h * 4];
+            int read = Native.TestReadTexture(texture, pixels, out _, out _, out _);
+            check(read == pixels.Length, $"116 scene: read back {read} bytes");
+            // B8G8R8A8: bytes B, G, R, A (premultiplied).
+            string Px(int x, int y) { int i = (y * w + x) * 4; return $"{pixels[i + 2]},{pixels[i + 1]},{pixels[i]},{pixels[i + 3]}"; }
+            check(Px(rx + rw / 2, ry + rh / 2) == "255,0,0,255" && Px(rx + 1, ry + 1) == "255,0,0,255" && Px(rx + rw - 2, ry + rh - 2) == "255,0,0,255",
+                $"116 scene: rectangle red ({Px(rx + rw / 2, ry + rh / 2)}, {Px(rx + 1, ry + 1)}, {Px(rx + rw - 2, ry + rh - 2)})");
+            check(Px(2, 2) == "0,0,0,0" && Px(rx - 2, ry + rh / 2) == "0,0,0,0" && Px(rx + rw + 1, ry + rh / 2) == "0,0,0,0" && Px(w - 1, h - 1) == "0,0,0,0",
+                $"116 scene: rest transparent black ({Px(2, 2)}, {Px(rx - 2, ry + rh / 2)}, {Px(rx + rw + 1, ry + rh / 2)}, {Px(w - 1, h - 1)})");
+            WritePng(Path.Combine(outDir, "qttexture_scene.png"), pixels, w, h);
+
+            rc = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
+            Native.vlqt_test_offscreen_state(scene, out var read2, out var write2, out var renders2);
+            check(rc == 0 && read2 == read1 && write2 == write1 && renders2 == renders1,
+                $"116 scene: unchanged scene renders nothing (rc {rc}, read {read2}, write {write2}, renders {renders2})");
+
+            check(Native.vlqt_offscreen_unbind(scene) == Protocol.Offscreen.Ok && Native.vlqt_offscreen_is_bound(scene) == 0, "116 scene: unbind");
+            check(Native.vlqt_test_offscreen_state(scene, out _, out _, out _) == Protocol.Offscreen.Unbound, "116 scene: state after unbind = unbound");
+            int deviceRefsAfter = Native.vlqt_test_com_ref_count(device);
+            check(deviceRefsAfter == deviceRefs, $"116 scene: test device references back after unbind ({deviceRefs} -> {deviceRefsAfter})");
+            int qtRefsUnbound = QtRefs();
+
+            // A second binding (a just bound scene renders) leaves no reference behind on either device.
+            rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm);
+            int rendered = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
+            Native.vlqt_test_offscreen_state(scene, out var read3, out var write3, out var renders3);
+            check(rc == 0 && rendered == 1 && read3 == 1 && write3 == 1 && renders3 == 1,
+                $"116 scene: bind again renders once, fences from 1 (bind {rc}, rendered {rendered}, read {read3}, write {write3}, renders {renders3})");
+            // The caller may close the handle any time after bind.
+            Native.vlqt_test_close_handle(handle);
+            Native.vlqt_offscreen_unbind(scene);
+            int qtRefsUnbound2 = QtRefs();
+            deviceRefsAfter = Native.vlqt_test_com_ref_count(device);
+            check(qtRefsUnbound > 0 && qtRefsUnbound2 == qtRefsUnbound && deviceRefsAfter == deviceRefs,
+                $"116 scene: second unbind, references unchanged (QtNative {qtRefsUnbound} -> {qtRefsUnbound2}, test device {deviceRefs} -> {deviceRefsAfter})");
+            check(Native.vlqt_test_com_release(texture) == 0, "116 scene: texture released -> 0 references");
+        }
+
+        Native.vlqt_window_destroy(scene);
+        int qtRefsAfter = QtRefs();
+        check(qtRefsBefore > 0 && qtRefsAfter == qtRefsBefore, $"116 scene: QtNative device references back after destroy ({qtRefsBefore} -> {qtRefsAfter})");
+        check(Native.vlqt_test_d3d11_release_device(device, context) == 0, "116 scene: test device freed");
+    }
+
+    // Premultiplied BGRA rows as a PNG, to look at.
+    static void WritePng(string path, byte[] bgra, int w, int h)
+    {
+#if WINDOWS
+        using var bmp = new Bitmap(w, h, PixelFormat.Format32bppPArgb);
+        var data = bmp.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
+        for (int y = 0; y < h; y++)
+            Marshal.Copy(bgra, y * w * 4, data.Scan0 + y * data.Stride, w * 4);
+        bmp.UnlockBits(data);
+        bmp.Save(path, ImageFormat.Png);
+#endif
     }
 
     // Device on the adapter (0 = QtNative's, 1 = WARP), shared textures, readback, ref counts, release everything.
