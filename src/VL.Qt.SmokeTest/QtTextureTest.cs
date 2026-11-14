@@ -15,9 +15,10 @@ using VL.Qt;
 /// through the fences and read back (<c>qttexture_scene.png</c>); the full matrix is task 1.8. Task 1.5: a WARP texture
 /// moves QtNative's device while nothing renders on it, else gives ADAPTER_MISMATCH; a device loss of QtNative's device
 /// unbinds the scenes and a rebind renders again (needs VLQT_TEST_D3D11ON12=1, set for "-Only qttexture"); a scene
-/// keeps a released foreign device alive until unbind.
+/// keeps a released foreign device alive until unbind. Task 1.8 (QtTextureTest.Render.cs, .Leak.cs): pixels against a window
+/// render, premultiplied alpha, formats, a batch of two scenes, the leak test.
 /// </summary>
-static class QtTextureTest
+static partial class QtTextureTest
 {
     const int B8G8R8A8Typeless = 90;
     const int R16G16B16A16Float = 10;
@@ -25,7 +26,7 @@ static class QtTextureTest
     const int B8G8R8A8Unorm = 87;
     const int R32G32B32A32Float = 2; // not supported by the readback
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump)
+    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -60,6 +61,12 @@ static class QtTextureTest
 
         OffscreenScene(outDir, check);
         AdapterAndDeviceLoss(check, pump);
+        // Task 1.8. Order matters: the window comparison goes last (a window renders on QtNative's device, which makes an adapter move impossible).
+        Formats(check);
+        Batch(check);
+        Alpha(outDir, check);
+        Leak(check, pump);
+        WindowMatch(outDir, check, pump, grab);
     }
 
     // A scene of w x h DIP with a red rectangle (16, 12, 32, 24) on a transparent clear colour; null on failure.

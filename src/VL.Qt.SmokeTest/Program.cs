@@ -163,6 +163,14 @@ static class Program
 #if WINDOWS
         // qttexture (#116) uses it for the device loss of a bound offscreen scene; the regular run skips that part.
         if (s_only?.Contains("device-lost") == true || s_only?.Contains("qttexture") == true) SetEnv("VLQT_TEST_D3D11ON12", "1");
+        // qttexture: the leak test reads ReportLiveDeviceObjects of QtNative's device, which needs the debug layer (SDK layers installed).
+        if (s_only?.Contains("qttexture") == true
+            && (File.Exists(Path.Combine(Environment.SystemDirectory, "d3d11sdklayers.dll")) || File.Exists(Path.Combine(Environment.SystemDirectory, "d3d11_3sdklayers.dll"))))
+        {
+            SetEnv("QSG_RHI_DEBUG_LAYER", "1");
+            // QtNative reads it with qgetenv (the C runtime's copy of the environment, which SetEnvironmentVariable does not update).
+            _putenv_s("QSG_RHI_DEBUG_LAYER", "1");
+        }
 #endif
 
         // 1. init (twice: idempotent)
@@ -403,7 +411,7 @@ static class Program
         if (Selected("tooltip")) TooltipTest.Run(outDir, Check, Pump, Grab); // Tooltip previews: window change count (static scene, property, hover, video), snapshot_fit sizes, errors (#544).
         if (Selected("font")) FontTest.Run(outDir, Check, Pump, Grab, () => s_log.ToString()); // App fonts (#15, LoadFont): shared per file, refs, removal at the end of the pump, errors, Text with the loaded family, one-time warning for a missing family.
         if (Selected("group-frame")) GroupFrameTest.Run(outDir, Check, Pump, Grab); // Group frame in negative coordinates: snapshot = whole frame, effect layer unclipped (#475).
-        if (Selected("qttexture")) QtTextureTest.Run(outDir, Check, Pump); // QtTexture (#116): test exports (second D3D11 device, shared textures, readback, ref counts, handle count), offscreen scene bound and rendered through the fences.
+        if (Selected("qttexture")) QtTextureTest.Run(outDir, Check, Pump, Grab); // QtTexture (#116): test exports (second D3D11 device, shared textures, readback, ref counts, handle count), offscreen scene bound and rendered through the fences.
         // Last: leaves two VSync windows open on purpose (process end with open windows on the shared device).
         if (Selected("shared-device")) SharedDeviceTest.Run(Check, Pump); // One D3D11 device for all windows + upload QRhi (#358).
         // Only when named: needs VLQT_TEST_D3D11ON12 from the start (set above). Real device removal + rebuild (#367).
@@ -455,6 +463,7 @@ static class Program
         if (!OperatingSystem.IsWindows() && setenv(name, value, 1) != 0)
             throw new InvalidOperationException($"setenv {name} failed");
     }
+    [DllImport("ucrtbase")] static extern int _putenv_s([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string value);
     [DllImport("libc")] static extern int setenv(string name, string value, int overwrite);
 
     static bool SameImage(Bitmap a, Bitmap b)
