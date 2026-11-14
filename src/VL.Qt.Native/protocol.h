@@ -538,6 +538,23 @@ enum vlqt_device_lost {
     VLQT_DEVICE_LOST_HANG = 2
 };
 
+/* Return codes of the offscreen exports vlqt_offscreen_* and vlqt_test_offscreen_state (vlqt.h, #116 QtTexture), not
+ * part of the command buffer. -1 and -7 as in the rest of vlqt.h; the own codes start at -20 so they never collide
+ * with apply's -1..-8 or the resources' -9. vlqt_offscreen_render_batch returns >= 0 (scenes rendered) on success. */
+enum vlqt_offscreen_result {
+    VLQT_OFFSCREEN_OK = 0,
+    VLQT_OFFSCREEN_NULL_SCENE = -1,          /* null handle, or a window handle that is no offscreen scene */
+    VLQT_OFFSCREEN_BAD_ARGUMENT = -7,        /* null device/handle/context, size out of range or not the texture's */
+    VLQT_OFFSCREEN_UNBOUND = -20,            /* the scene has no texture (vlqt_test_offscreen_state) */
+    VLQT_OFFSCREEN_ADAPTER_MISMATCH = -21,   /* foreign device on another adapter than QtNative's device (warning once) */
+    VLQT_OFFSCREEN_OPEN_FAILED = -22,        /* OpenSharedResource1 failed or the handle is no usable Texture2D */
+    VLQT_OFFSCREEN_FORMAT_UNSUPPORTED = -23, /* rtvFormat not allowed or not compatible with the texture's format */
+    VLQT_OFFSCREEN_FENCE_FAILED = -24,       /* no ID3D11Device5/ID3D11DeviceContext4, or fence create/share/open failed */
+    VLQT_OFFSCREEN_DEVICE_LOST = -25,        /* QtNative's device is lost or being rebuilt: try again next frame */
+    VLQT_OFFSCREEN_NOT_SUPPORTED = -26,      /* no D3D11 (Linux, other graphics API) or not available on a scene */
+    VLQT_OFFSCREEN_NOT_IMPLEMENTED = -27     /* stub of #116 phase 1, removed when all exports are implemented */
+};
+
 /* Mouse event types of the TEST export vlqt_test_send_mouse (vlqt.h), not part of the command buffer. PRESS/RELEASE =
  * left button, *_RIGHT = right button (#320), *_RIGHT_SYSTEM = right button synthesized by the OS from touch (#321). */
 enum vlqt_mouse {

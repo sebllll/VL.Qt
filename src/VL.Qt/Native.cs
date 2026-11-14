@@ -294,6 +294,62 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_device_lost(int mode);
 
+        // Offscreen scenes (#116, QtTexture): main thread only, codes Protocol.Offscreen. The scene handle also works
+        // with vlqt_window_destroy/_apply/_get_apply_error/_poll/_set_debug/_get_perf* (list in vlqt.h).
+        /// <summary>Creates an unbound offscreen scene of width x height DIP; IntPtr.Zero = error. Free with vlqt_window_destroy.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr vlqt_offscreen_create(int width, int height);
+        /// <summary>
+        /// Binds the scene to the texture behind ntHandle (shared NT handle of an ID3D11Texture2D of device, an ID3D11Device*);
+        /// rtvFormat = DXGI_FORMAT of Qt's render target view. The caller may close ntHandle after the call.
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_bind(IntPtr scene, IntPtr device, IntPtr ntHandle, int width, int height, int rtvFormat);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_unbind(IntPtr scene);
+        /// <summary>1 = bound, 0 = unbound (bind again, e.g. after a device loss of QtNative), &lt;0 = error.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_is_bound(IntPtr scene);
+        /// <summary>
+        /// Renders the changed, bound scenes of one host frame, ordered against context (the foreign immediate
+        /// ID3D11DeviceContext*) by fences. Returns the number of scenes rendered, &lt;0 = error.
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_offscreen_render_batch(IntPtr context, in IntPtr scenes, int count, double driverSeconds);
+
+        public static int OffscreenRenderBatch(IntPtr context, ReadOnlySpan<IntPtr> scenes, double driverSeconds)
+            => vlqt_offscreen_render_batch(context, in MemoryMarshal.GetReference(scenes), scenes.Length, driverSeconds);
+
+        // TEST ONLY (#116): a second D3D11 device standing in for Stride's, shared textures and leak probes (vlqt.h).
+        /// <summary>TEST ONLY: D3D11 device + immediate context (one reference each); adapter 0 = QtNative's, 1 = WARP.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_d3d11_create_device(int adapter, out IntPtr device, out IntPtr context);
+        /// <summary>TEST ONLY: releases context and device; returns the references left on the device.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_d3d11_release_device(IntPtr device, IntPtr context);
+        /// <summary>TEST ONLY: shared Texture2D (RT | SR, SHARED | SHARED_NTHANDLE) on device and its NT handle.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_d3d11_create_shared_texture(IntPtr device, int width, int height, int dxgiFormat, out IntPtr texture, out IntPtr ntHandle);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_test_d3d11_read_texture(IntPtr texture, ref byte @out, int cap, out int width, out int height, out int dxgiFormat);
+        /// <summary>TEST ONLY: COM reference count of obj without the probe's own reference.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_com_ref_count(IntPtr obj);
+        /// <summary>TEST ONLY: IUnknown::Release; returns the references left.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_com_release(IntPtr obj);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_close_handle(IntPtr handle);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_process_handle_count();
+        /// <summary>TEST ONLY: last read/write fence values and render count of a bound scene.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_offscreen_state(IntPtr scene, out ulong readFence, out ulong writeFence, out long renders);
+
+        /// <summary>TEST ONLY: texture pixels via a staging copy, rows tightly packed; bytes written, -required, &lt;0 error.</summary>
+        public static int TestReadTexture(IntPtr texture, Span<byte> @out, out int width, out int height, out int dxgiFormat)
+            => vlqt_test_d3d11_read_texture(texture, ref MemoryMarshal.GetReference(@out), @out.Length, out width, out height, out dxgiFormat);
+
         /// <summary>One resource of vlqt_res_list (vlqt.h vlqt_res_info, #359).</summary>
         [StructLayout(LayoutKind.Sequential)]
         public struct vlqt_res_info

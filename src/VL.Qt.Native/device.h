@@ -17,6 +17,11 @@
  * creates a new QRhi on the imported new device. Same QQuickWindow, same HWND, items keep their state. Listeners
  * then re-upload (restored). Test trigger: testLost (vlqt_test_device_lost).
  *
+ * Adapter (#116, QtTexture): the first device goes on the adapter Qt's D3D11 backend would pick. moveTo rebuilds it
+ * on another adapter (that of Stride's device) the same way, but only while no on-screen window renders on it
+ * (canMove): Qt replaces a window's QRhi only after it noticed a loss, so a window on a healthy device would stay on
+ * the old one. The adapter of a move is kept for later rebuilds.
+ *
  * Linux and every non-D3D11 backend: no-op, each window keeps its own device. A shared VkDevice docks here later.
  * VLQT_SHARED_DEVICE=0 (set before process start) also keeps Qt's own device per window (diagnosis, A/B timing).
  */
@@ -45,7 +50,7 @@ void checkLost();
 // generation must not be wrapped in a window's QRhi (resources, QtImageItem). Main thread.
 unsigned generation();
 
-// Rebuild after a loss (see above). Main thread, inside the pump (checkLost).
+// Rebuild after a loss (see above). Main thread: inside the pump (checkLost) or from moveTo.
 void rebuild();
 
 // Called by rebuild on the main thread, in registration order. lost: the old device is gone, free every object of it
@@ -56,6 +61,19 @@ struct Listener
     void (*restored)() = nullptr;
 };
 void addListener(Listener listener);
+
+// LUID of the adapter of a D3D11 device (LowPart | HighPart << 32); 0 for null, another API or on failure.
+unsigned long long adapterLuidOf(void* d3d11Device);
+// LUID of the shared device's adapter, 0 if there is none. Main thread.
+unsigned long long adapterLuid();
+
+// True while the shared device exists and no on-screen QQuickWindow has a QRhi on it (windows not yet exposed and
+// offscreen scenes, QQuickRenderControl, do not count). Main thread.
+bool canMove();
+// Rebuilds the shared device on the adapter with this LUID (as rebuild: listeners lost/restored). Main thread,
+// only while canMove(). Returns true if the shared device now sits on that adapter; false = unchanged (cannot move,
+// unknown adapter) or no shared device afterwards (creation failed, see the log).
+bool moveTo(unsigned long long luid);
 
 // vlqt_test_device_lost backend: mode = vlqt_device_lost (protocol.h). 0 / -2 / -7.
 int testLost(int mode);

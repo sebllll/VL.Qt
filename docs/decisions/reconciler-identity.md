@@ -29,7 +29,7 @@ How comparable systems handle identity:
 
 ## Open questions
 - **Optional `Key` pin** (among siblings only). It would also remove the state jump (hover/pressed) when inserting or reordering. It becomes necessary with Qt-native animations/transitions or enter/exit effects.
-- **Several renderers:** may an element hang in several windows at once (own Qt objects per window), or does it stay with "one scene → texture → several consumers" (see `device-sharing.md`)? Desirable, low priority.
+- **Several renderers:** may an element hang in several windows at once (own Qt objects per window), or does it stay with "one scene → texture → several consumers" (see `render-texture.md`)? Desirable, low priority.
 - **Interaction handlers with multiple occurrences:** merge simultaneous drags/touches on two occurrences of the same interaction, or only honour the first.
 - **A `Mirror` element** (`ShaderEffectSource` with a `sourceItem`): a purely visual live copy without interaction, for reflections and repeats. A complement, not a replacement.
 - Whether elements backing Qt objects that are expensive to build (large texts, images) should be reused despite moving (performance rather than correctness).

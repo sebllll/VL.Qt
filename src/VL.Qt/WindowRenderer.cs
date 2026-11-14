@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
@@ -16,21 +13,14 @@ namespace VL.Qt
     /// </summary>
     internal sealed class WindowRenderer : IDisposable
     {
-        readonly CommandWriter _commands = new CommandWriter();
-        readonly CommandWriter _wipe = new CommandWriter(); // RESET of the resync (#76, #92)
-        readonly List<SinkState> _applyErrorSlots = new(); // slots showing an apply error (#275)
-        readonly Reconciler _reconciler;
-        readonly ResyncController _resync;
+        readonly SceneCore _core;
         IntPtr _window;
-        byte[] _poll = new byte[16 * 1024];
         bool _disposed;
 
-        // Last values sent to QtNative (change detection; a resize by the user is not fought back).
+        // Last title sent to QtNative (change detection; a resize by the user is not fought back).
         string _title;
-        Color4 _clearColor;
-        bool _hasClearColor;
 
-        string _createError = "", _applyError = "", _pollError = "";
+        string _createError = "";
         Native.vlqt_perf _lastPerf;
         bool _perfChanged;
         // #574: percentiles sort two rings in QtNative, so they are recomputed at most every kPercentileIntervalMs
@@ -40,9 +30,6 @@ namespace VL.Qt
         Native.vlqt_host_stats _host;
         long _statsAt = long.MinValue;
         PerfStats _perf = PerfStats.Empty;
-        // Host frame (#245): commands of the last apply, reconcile time since the last report.
-        int _appliedOps;
-        double _reconcileMs;
 
         /// <param name="scene">Duplicate registry of the app (<see cref="SceneRegistry.ForApp"/>).</param>
         /// <param name="title">Initial window title.</param>
@@ -56,13 +43,12 @@ namespace VL.Qt
         /// null = default icon. The result is in <see cref="IconResult"/>, later changes via <see cref="SetIcon"/>.</param>
         public WindowRenderer(SceneRegistry scene, string? title, RectangleF bounds, bool vSync = true, uint mode = 0, string? iconPath = null)
         {
-            _reconciler = new Reconciler(_commands, new IdAllocator(), scene);
-            _resync = new ResyncController(_reconciler, ResetInQtNative);
+            _core = new SceneCore(scene);
             _title = title ?? "";
             // Position and size are set in QtNative before show (#100): no flash at Qt's default position.
             var a = WindowPlacement.FromBounds(bounds);
             _window = Native.vlqt_window_create_at(a.X, a.Y, a.Width, a.Height, _title, vSync ? 1 : 0);
-            _reconciler.Window = _window;
+            _core.Handle = _window;
             if (_window == IntPtr.Zero)
                 _createError = Native.LastError();
             else
@@ -89,7 +75,7 @@ namespace VL.Qt
 
         /// <summary>First of: window creation, last apply, last poll error. Empty if ok.</summary>
         public string Error =>
-            _createError.Length > 0 ? _createError : _applyError.Length > 0 ? _applyError : _pollError;
+            _createError.Length > 0 ? _createError : _core.ApplyError.Length > 0 ? _core.ApplyError : _core.PollError;
 
         /// <summary>
         /// Last window geometry reported by QtNative (EV_WINDOW_GEOMETRY, DIP, Bounds convention: outer top-left + client
@@ -104,13 +90,13 @@ namespace VL.Qt
         /// <summary>Raised in <see cref="AfterEvents"/> when X was clicked (QtNative swallowed the close).</summary>
         public event Action? CloseRequested;
 
-        internal Reconciler Reconciler => _reconciler;
+        internal Reconciler Reconciler => _core.Reconciler;
 
         /// <summary>Command buffer of the next apply (test seam: SmokeTest injects an invalid command, #76).</summary>
-        internal CommandWriter Commands => _commands;
+        internal CommandWriter Commands => _core.Commands;
 
         /// <summary>Number of resyncs after failed applies (#76).</summary>
-        internal int Resyncs => _resync.Resyncs;
+        internal int Resyncs => _core.Resyncs;
 
         /// <summary>Perf of the last pump; a new record only when the values changed.</summary>
         public PerfStats Perf
@@ -155,97 +141,14 @@ namespace VL.Qt
             if (!enabled)
                 return;
 
-            if (!_hasClearColor || clearColor != _clearColor)
-            {
-                _hasClearColor = true;
-                _clearColor = clearColor;
-                _commands.ClearColor(clearColor);
-            }
-            // Appends: the buffer is reset after apply, so commands of a frame without pump go out with the next one.
-            if (_resync.ShouldReconcile(input))
-            {
-                var t0 = Stopwatch.GetTimestamp();
-                _reconciler.Update(input, space);
-                _reconcileMs += Stopwatch.GetElapsedTime(t0).TotalMilliseconds;
-            }
-        }
-
-        int ResetInQtNative()
-        {
-            _wipe.Reset();
-            _wipe.ResetScene();
-            return Native.Apply(_window, _wipe.EndFrame());
+            _core.Update(input, space, clearColor);
         }
 
         public void ApplyCommands()
         {
-            _appliedOps = 0;
-            if (_disposed || _window == IntPtr.Zero || _commands.Length == 0)
+            if (_disposed || _window == IntPtr.Zero)
                 return;
-            _appliedOps = _commands.Count;
-            int rc = Native.Apply(_window, _commands.EndFrame());
-            _commands.Reset();
-            if (rc == 0)
-            {
-                _applyError = "";
-                // Rebuilt or applied normally: the elements' apply errors are over (not while the resync gave up,
-                // then only the clear color went out and the failing input is still there).
-                if (!_resync.GaveUp)
-                    ClearApplyErrors();
-            }
-            else
-                // Before the resync: its RESET overwrites QtNative's last error, Discard drops the bindings.
-                _applyError = ReportApplyError();
-            if (_resync.OnApplyResult(rc))
-                _hasClearColor = false; // QtNative may have lost it with the aborted batch; sent again with the rebuild
-        }
-
-        /// <summary>
-        /// #275: the failing object id (vlqt_window_get_apply_error) resolved to its sink slot shows the error at the
-        /// element node; returns the text for the renderer's Error output, empty if the element took it.
-        /// </summary>
-        string ReportApplyError()
-        {
-            var text = Native.LastError();
-            ClearApplyErrors(); // only the latest failure is shown (the retry after a resync reports it again)
-            if (Native.vlqt_window_get_apply_error(_window, out var e) != 0 || e.id == 0
-                || !_reconciler.Bindings.TryGetValue(e.id, out var slot) || slot.State is not { } state)
-                return text;
-            state.ApplyError = DescribeApplyError(e);
-            if (!_applyErrorSlots.Contains(state))
-                _applyErrorSlots.Add(state);
-            return "";
-        }
-
-        void ClearApplyErrors()
-        {
-            if (_applyErrorSlots.Count == 0)
-                return;
-            foreach (var state in _applyErrorSlots)
-                state.ApplyError = null;
-            _applyErrorSlots.Clear();
-        }
-
-        /// <summary>Element-facing text, e.g. "Qt rejected FillMode: property 545: value 4 not allowed" (allocates; errors only).</summary>
-        internal static string DescribeApplyError(in Native.vlqt_apply_error e)
-        {
-            if (e.op != Protocol.Op.Set)
-            {
-                var reason = e.Reason;
-                // #313: a plugin under a path beyond MAX_PATH is reported as "not found" although it is there.
-                if (reason.Contains("plugin", StringComparison.Ordinal) && reason.Contains("not found", StringComparison.Ordinal) && Native.PathsTooLong)
-                    reason += ". " + Native.PathTooLongHint;
-                return $"Qt rejected {ConstantName(typeof(Protocol.Op), e.op) ?? "command " + e.op}: {reason}";
-            }
-            return $"Qt rejected {ConstantName(typeof(Protocol.Prop), e.prop) ?? "property " + e.prop}: {e.Reason}";
-        }
-
-        static string? ConstantName(Type constants, ushort value)
-        {
-            foreach (var f in constants.GetFields(BindingFlags.Public | BindingFlags.Static))
-                if (f.IsLiteral && f.GetRawConstantValue() is ushort v && v == value)
-                    return f.Name;
-            return null;
+            _core.Apply();
         }
 
         public void AfterEvents()
@@ -288,9 +191,8 @@ namespace VL.Qt
         {
             if (_disposed || _window == IntPtr.Zero)
                 return;
-            frame.ops = _appliedOps;
-            frame.reconcile = (float)_reconcileMs;
-            _reconcileMs = 0;
+            frame.ops = _core.AppliedOps;
+            frame.reconcile = (float)_core.TakeReconcileMs();
             Native.vlqt_window_report_host_frame(_window, frame);
         }
 
@@ -301,40 +203,18 @@ namespace VL.Qt
             return !_disposed && _window != IntPtr.Zero && Native.vlqt_window_get_perf_sample(_window, out sample) == 0;
         }
 
-        // Events and measured values into the sinks (read by the element nodes in the next Update). The frame start poll
-        // (#24) only sets a poll error: one from the frame end stays visible to the node updates of the next frame.
+        // Events and measured values into the sinks (read by the element nodes in the next Update).
         void PollEvents(bool frameStart = false)
         {
-            int n = Native.Poll(_window, _poll);
-            if (n < -1)
-            {
-                // Buffer too small: -n bytes needed, the events stay queued.
-                _poll = new byte[Math.Max(-n, _poll.Length * 2)];
-                n = Native.Poll(_window, _poll);
-            }
-            if (n < 0)
-            {
-                _pollError = "poll: " + Native.LastError();
+            var events = _core.ReadEvents(frameStart);
+            if (events.IsEmpty)
                 return;
-            }
-            if (n == 0)
-            {
-                if (!frameStart)
-                    _pollError = "";
-                return;
-            }
-            var events = new ReadOnlySpan<byte>(_poll, 0, n);
             if (WindowPlacement.TryReadGeometry(events, out var g) && g != Geometry)
             {
                 Geometry = g;
                 GeometryChanged?.Invoke(g);
             }
-            // Window records (handle 0) count as ignored there.
-            var result = _reconciler.Sinks.Dispatch(events);
-            if (result.Error is { } e)
-                _pollError = "poll: " + e;
-            else if (!frameStart)
-                _pollError = "";
+            _core.Dispatch(events, frameStart);
         }
 
         /// <summary>Switches one <see cref="Protocol.WindowMode"/> bit live (vlqt_window_set_mode).</summary>
@@ -373,17 +253,10 @@ namespace VL.Qt
         {
             if (_disposed)
                 return;
-            _reconciler.Clear();
-            _reconciler.Window = IntPtr.Zero;
-            if (_window != IntPtr.Zero)
-            {
-                if (_commands.Length > 0)
-                    Native.Apply(_window, _commands.EndFrame());
-                Native.vlqt_window_destroy(_window);
-                _window = IntPtr.Zero;
-            }
-            _commands.Reset();
-            ClearApplyErrors(); // the element nodes may outlive the window
+            var window = _core.Close();
+            if (window != IntPtr.Zero)
+                Native.vlqt_window_destroy(window);
+            _window = IntPtr.Zero;
             _disposed = true;
         }
     }
