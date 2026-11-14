@@ -1,4 +1,4 @@
-# Builds everything needed to test VL.Qt locally: QtNative (+ Qt deploy) and the C# library, optionally tests and a patch.
+# Builds everything needed to test VL.Qt locally: QtNative (+ Qt deploy), the C# library and VL.Qt.Stride, optionally tests and a patch.
 # Usage: tools/build.ps1 [-Rid win-arm64|win-x64] [-Configuration Release|Debug] [-SkipNative] [-ForceDeploy]
 #                        [-Test] [-Only <scenario,...>] [-SmokeTimeout <s>] [-Patch <doc.vl>]
 #   -Test   unit tests (VL.Qt.Tests) + SmokeTest (log and grabs in build/smoke/); -Only passes --only to the SmokeTest
@@ -56,6 +56,12 @@ if (-not $SkipNative)
 Invoke-Step "VL.Qt ($Configuration)" {
     dotnet build "$repo\src\VL.Qt" -c $Configuration -v q -nologo
     Assert-Exit 'dotnet build'
+}
+
+# Windows only (VL.Stride); the output lands in VL.Qt.Stride\lib\net10.0-windows7.0 (package folder, git-ignored).
+Invoke-Step "VL.Qt.Stride ($Configuration)" {
+    dotnet build "$repo\src\VL.Qt.Stride" -c $Configuration -v q -nologo
+    Assert-Exit 'dotnet build VL.Qt.Stride'
 }
 
 if ($Test)
