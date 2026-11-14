@@ -85,10 +85,11 @@ namespace VL.Qt.Stride
 
         void OnDrawStarted()
         {
-            // Task 3.4 (frame order): compare with the pump's "frame finished" debug line of VL.Qt.
+            // Task 3.4 (frame order): the Qt pump (GetFrameFinished) has already run in this frame if the driver time it set
+            // is not behind this frame's clock. Expected: false (draw start comes first).
             if (_logger.IsEnabled(LogLevel.Debug))
-                _logger.LogDebug("QtTexture: draw start at {Timestamp}, clock {Seconds:F4} s, {Count} scheduled",
-                    Stopwatch.GetTimestamp(), _clock.Time.Seconds, _scheduled.Count);
+                _logger.LogDebug("QtTexture: draw start at {Timestamp}, clock {Seconds:F4} s, pump driver {Driver:F4} s, pump already ran {PumpFirst}, {Count} scheduled",
+                    Stopwatch.GetTimestamp(), _clock.Time.Seconds, _app.DriverSeconds, _app.DriverSeconds >= _clock.Time.Seconds, _scheduled.Count);
             if (_disposed || _scheduled.Count == 0)
                 return;
 
