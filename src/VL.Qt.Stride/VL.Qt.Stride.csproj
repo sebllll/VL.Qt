@@ -40,6 +40,7 @@
     <RepositoryUrl>https://github.com/sebllll/VL.Qt</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/sebllll/VL.Qt</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <!-- The assembly goes to lib/net10.0-windows7.0/ via the explicit item below (the build output already lives there). -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
@@ -53,6 +54,7 @@
     <!-- VL.Qt.Stride.vl and help/ are created in vvvv (task 2.5); packed once they exist. -->
     <None Include="$(PackageRoot)VL.Qt.Stride.vl" Condition="Exists('$(PackageRoot)VL.Qt.Stride.vl')" Pack="true" PackagePath="" Visible="false" />
     <None Include="$(PackageRoot)help\**" Pack="true" PackagePath="help\" Visible="false" />
+    <None Include="$(PackageRoot)README.md" Pack="true" PackagePath="" Visible="false" />
     <None Include="..\VL.Qt\nuget\icon.png" Pack="true" PackagePath="" Visible="false" />
     <None Include="$(RepoRoot)LICENSE" Pack="true" PackagePath="" Visible="false" />
   </ItemGroup>

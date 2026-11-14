@@ -135,6 +135,24 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 | `fix-encoding.py` | Checks/repairs the BOM: files, `--all`, `--staged` (used by the git hook), `--check` to only report. See [Encoding and git hook](#encoding-and-git-hook). |
 | `vl-patch-check.py` | Read-only check of the VL.Qt nodes in `.vl` files against their C# pins (`vl_pin_catalog.py`): hidden pins with a value, IOBoxes on `Interaction`, links to removed pins (errors), IOBoxes at the default value (hints). No argument: all `help/Qt/*.vl` and `help/*.vl`. `--fix` makes hidden pins with a value visible, `--accept <patch>` puts intended exceptions into `help/.padlint.json`. Test: `test-vl-patch-check.py`. |
 
+## Packages
+
+The repository builds two NuGet packages:
+
+| Package | Folder | Content |
+|---|---|---|
+| `VL.Qt` | repo root (`VL.Qt.vl`, `help/`, `src/VL.Qt/`) | the Qt layer and the Qt runtime for Windows and Linux; platform-neutral, no Stride |
+| `VL.Qt.Stride` | `VL.Qt.Stride/` (package folder: `VL.Qt.Stride.vl`, `help/`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Stride/` | Qt scenes rendered into Stride textures, Windows only; depends on `VL.Qt` |
+
+`VL.Qt` never references `VL.Qt.Stride`. The `VL.Qt.Stride.vl` and its help patches are made in vvvv; `lib/` is not tracked by git. Why this layout: [decisions/render-texture.md](decisions/render-texture.md#package-layout-2026-11-14-task-21).
+
+```powershell
+dotnet build src/VL.Qt.Stride -c Release                  # DLL into VL.Qt.Stride/lib/net10.0-windows7.0/
+dotnet pack src/VL.Qt.Stride -c Release -p:Version=1.2.3  # VL.Qt.Stride.1.2.3.nupkg
+```
+
+**Both packages are released with the same version**: pack them with the same `-p:Version`. The `VL.Qt.Stride` package declares its dependency on `VL.Qt` with the version of the project reference, so a different `-p:Version` leaves it pointing at a `VL.Qt` that was not released with it. Packing `VL.Qt` needs the native Qt trees first, see the comment in `src/VL.Qt/VL.Qt.csproj`.
+
 ## CI
 
 The workflows are in `.github/workflows/` (`build.yml`, `public-check.yml`; `sanitizers.yml` runs by hand). Every action is pinned to a full commit SHA with the version as a comment, Dependabot keeps the pins current.
@@ -152,6 +170,7 @@ One-time setup by a maintainer (repository settings):
 
 - [ ] Environment `release` (Settings > Environments): deployment branches and tags limited to `v*`. A required reviewer is optional: the tag ruleset below already decides who can release.
 - [ ] nuget.org Trusted Publishing policy (nuget.org > account > Trusted Publishing): repository owner `sebllll`, repository `VL.Qt`, workflow file `build.yml`, environment `release`, scope push for the package `VL.Qt`. A policy for a private repository is only active for a few days until its first successful push binds it to the repository; if it expired, create it again.
+- [ ] nuget.org Trusted Publishing policy for the second package ID `VL.Qt.Stride`, same settings as above with scope push for `VL.Qt.Stride`. Set it up by hand on nuget.org before the first release that contains the package; nothing in the repository or the CI creates it.
 - [ ] Environment variable `NUGET_USER` in `release` (not a secret): the nuget.org profile name that owns the policy.
 - [ ] Rulesets (Settings > Rules > Rulesets):
   - `develop` and `main`: pull request required, no deletion or force push, required check `public check (no private files or content)`.
@@ -210,6 +229,8 @@ src/VL.Qt.Native/           # QtNative (C++)
 src/VL.Qt.Tests/            # C# unit tests
 src/VL.Qt.SmokeTest/        # native smoke + perf tests
 src/VL.Qt.Probe/            # one Qt window from C# without vvvv
+src/VL.Qt.Stride/           # C# source of the VL.Qt.Stride package (see Packages)
+VL.Qt.Stride/               # its package folder: VL.Qt.Stride.vl, help/, README.md, lib/ (build output)
 help/Qt/                    # help patches + assets
 docs/                       # documentation
 tools/                      # build, export, license and test scripts
