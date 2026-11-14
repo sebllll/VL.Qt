@@ -167,6 +167,9 @@ namespace VL.Qt
         {
             if (_disposed)
                 return;
+            // #116 (task 3.4): frame order against DrawStarted of QtTexture; debug level only, nothing allocated otherwise.
+            if (QtApp.Logger is { } log && log.IsEnabled(LogLevel.Debug))
+                log.LogDebug("VL.Qt: pump at GetFrameFinished {Timestamp}, clock {Seconds:F4} s", Stopwatch.GetTimestamp(), seconds);
 
             // #260: vvvv frame start. A tick from a previous frame never survives (reset per pump); a tick "after" now
             // (other thread, clock skew) is ignored.

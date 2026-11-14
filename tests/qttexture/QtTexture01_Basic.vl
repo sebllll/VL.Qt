@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="ZU0Uv7KLUfhubZOt4Simke" LanguageVersion="2026.8.0-0156-g7259116c8c" Version="0.128">
+  <NugetDependency Id="x34IGSTD3k03sZYPqnBgwZ" Location="VL.CoreLib" />
+  <NugetDependency Id="KR0RtPuLqdFuls85n8uox8" Location="VL.Qt" />
+  <NugetDependency Id="6CjAqqy5QBWACijErU4YeT" Location="VL.Qt.Stride" />
+  <NugetDependency Id="14H04vflWNu1L2OMf3zKWt" Location="VL.Stride" />
+  <Patch Id="Ie7E1s9DnbUPH5vTy2mlTq">
+    <Canvas Id="PerWqO0928lmwoIuAzeuTO" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <Node Name="Application" Bounds="100,100" Id="al1RtwifRNcVhpvDlPzAvs">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="Fw6SNx7FXCbnjcvKrJMA0S">
+        <Canvas Id="ptUuIRTYPPfHmNNIT7FIHQ" CanvasType="Group">
+          <Pad Id="U2Vv6CzytC1dEezvo4xXKL" Bounds="100,60,300,25" ShowValueBox="true" isIOBox="true" Value="QtTexture test">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="7IMvToqYZfrd2LBW2MXvrS" Bounds="100,105,330,40" ShowValueBox="true" isIOBox="true" Value="A Qt rectangle rendered into a Stride texture&#xD;&#xA;- semi-transparent blue over a transparent clear color">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="100,200,85,19" Id="zJKipRpNGsVX2hXPfMviNz">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Rectangle" />
+            </p:NodeReference>
+            <Pin Id="n3BN0NLl9uxYpsGW1F9wdf" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VaYSjhIUKbpAFgfVgbzs6f" Name="Size" Kind="InputPin" />
+            <Pin Id="Kevt390ODCRvlDo2L0Dwln" Name="Color" Kind="InputPin" DefaultValue="0.2, 0.5, 1, 0.5" />
+            <Pin Id="vOhqVfecRux793fQN4MeTN" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="tvQtq5yx3HGQzflUq7FYJ3" Comment="Size" Bounds="102,170,35,15" ShowValueBox="true" isIOBox="true" Value="3, 2">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="100,260,85,19" Id="a0LNEUauQjWH75naHAxmFP">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.Stride.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="QtTexture" />
+            </p:NodeReference>
+            <Pin Id="ai61XYA8ftm8mBDxdnt1tE" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="CWwIGQwJqFjfum1WlfNWvU" Name="Input" Kind="InputPin" />
+            <Pin Id="TZizYuciU3dqZG2k8xoUyQ" Name="Size" Kind="InputPin" DefaultValue="512, 512" />
+            <Pin Id="hhTNfkmv4MlOIOZf6xrXlk" Name="Output" Kind="OutputPin" />
+            <Pin Id="wd3bCx0RB5PJuNWOryAmt5" Name="Error" Kind="OutputPin" />
+          </Node>
+          <Pad Id="elyEOuOIot5P8o00BVfzSq" Comment="Error" Bounds="140,300,200,15" ShowValueBox="true" isIOBox="true">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="100,340,145,19" Id="P0YNi4i53ZdhdzCD89cKE4">
+            <p:NodeReference LastCategoryFullName="Stride.Textures" LastDependency="VL.Stride.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="TextureWindow" />
+            </p:NodeReference>
+            <Pin Id="8rVAoySdsrQzEPrUVKwdWc" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="qCZCqhzDelTrLquoatRhuG" Name="Input" Kind="InputPin" />
+          </Node>
+        </Canvas>
+        <Patch Id="XPUqXCCEKumAMQFppoRRT3" Name="Create" />
+        <Patch Id="htdm7X1LkEh0W1iDQM24P5" Name="Update" />
+        <ProcessDefinition Id="Cq1mT9vXo2YbR4sL7kWn3e">
+          <Fragment Id="Hd8pZ2fQw5NjK0uE6rVy1a" Patch="XPUqXCCEKumAMQFppoRRT3" Enabled="true" />
+          <Fragment Id="Lb3xG7tMs9RcW1hP4oYz6q" Patch="htdm7X1LkEh0W1iDQM24P5" Enabled="true" />
+        </ProcessDefinition>
+        <Link Id="Ru5kN2wJc8VdF3gT0mXq7z" Ids="tvQtq5yx3HGQzflUq7FYJ3,VaYSjhIUKbpAFgfVgbzs6f" />
+        <Link Id="Wp4yB6nHe1QsA9jL2cUt8v" Ids="vOhqVfecRux793fQN4MeTN,CWwIGQwJqFjfum1WlfNWvU" />
+        <Link Id="Gt7mD3kXr0ZbV5qN8hSw2f" Ids="hhTNfkmv4MlOIOZf6xrXlk,qCZCqhzDelTrLquoatRhuG" />
+        <Link Id="Ky2aE9vPj6LcT4uR1nOd5g" Ids="wd3bCx0RB5PJuNWOryAmt5,elyEOuOIot5P8o00BVfzSq" />
+      </Patch>
+    </Node>
+  </Patch>
+</Document>
