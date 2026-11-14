@@ -8,6 +8,7 @@
 #include <QtQuick/QQuickGraphicsDevice>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
+#include <QtQuick/private/qquickwindow_p.h>   // canMove: offscreen windows (renderControl)
 #include <QtQuick/private/qsgrenderloop_p.h> // test only: dropWindowRhisOnRetired
 #include <rhi/qrhi.h>
 
@@ -17,7 +18,7 @@
 #include <d3d11.h>
 #include <d3d11on12.h>
 #include <d3d12.h>
-#include <dxgi1_2.h>
+#include <dxgi1_4.h>
 #endif
 
 namespace vlqt::device {
@@ -47,6 +48,7 @@ struct Retired
 };
 std::vector<Retired> s_retired;
 #endif
+unsigned long long s_requestedLuid = 0; // adapter of moveTo, kept for later rebuilds (chooseAdapter)
 unsigned s_generation = 0;           // generation()
 std::vector<Listener> s_listeners;   // addListener, main thread
 #ifdef Q_OS_WIN
@@ -58,6 +60,24 @@ IDXGIAdapter1* chooseAdapter()
     IDXGIFactory1* factory = nullptr;
     if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&factory))))
         return nullptr;
+    // moveTo: the requested adapter, found by LUID (also WARP, which EnumAdapters1 may not list).
+    if (s_requestedLuid) {
+        IDXGIFactory4* factory4 = nullptr;
+        IDXGIAdapter1* byLuid = nullptr;
+        LUID luid{};
+        luid.LowPart = DWORD(s_requestedLuid & 0xffffffffu);
+        luid.HighPart = LONG(s_requestedLuid >> 32);
+        if (SUCCEEDED(factory->QueryInterface(__uuidof(IDXGIFactory4), reinterpret_cast<void**>(&factory4)))) {
+            factory4->EnumAdapterByLuid(luid, __uuidof(IDXGIAdapter1), reinterpret_cast<void**>(&byLuid));
+            factory4->Release();
+        }
+        if (byLuid) {
+            factory->Release();
+            return byLuid;
+        }
+        qCWarning(lcDevice, "adapter %08lx:%08lx of the last move not found, choosing as at the start",
+            long(luid.HighPart), long(luid.LowPart));
+    }
     const int requested = qEnvironmentVariableIsSet("QT_D3D_ADAPTER_INDEX") ? qEnvironmentVariableIntValue("QT_D3D_ADAPTER_INDEX") : -1;
     const bool software = qEnvironmentVariableIntValue("QSG_RHI_PREFER_SOFTWARE_RENDERER") != 0;
     IDXGIAdapter1* chosen = nullptr;
@@ -325,6 +345,69 @@ void checkLost()
     qCWarning(lcDevice, "shared D3D11 device lost (GetDeviceRemovedReason 0x%08lx), rebuilding device, windows and "
         "resources", long(reason));
     rebuild();
+#endif
+}
+
+unsigned long long adapterLuidOf(void* d3d11Device)
+{
+#ifdef Q_OS_WIN
+    if (!d3d11Device)
+        return 0;
+    IDXGIDevice* dxgi = nullptr;
+    if (FAILED(static_cast<IUnknown*>(d3d11Device)->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(&dxgi))))
+        return 0;
+    IDXGIAdapter* adapter = nullptr;
+    DXGI_ADAPTER_DESC desc{};
+    const bool ok = SUCCEEDED(dxgi->GetAdapter(&adapter)) && SUCCEEDED(adapter->GetDesc(&desc));
+    if (adapter)
+        adapter->Release();
+    dxgi->Release();
+    return ok ? (static_cast<unsigned long long>(static_cast<DWORD>(desc.AdapterLuid.HighPart)) << 32)
+            | desc.AdapterLuid.LowPart : 0;
+#else
+    Q_UNUSED(d3d11Device);
+    return 0;
+#endif
+}
+
+unsigned long long adapterLuid()
+{
+#ifdef Q_OS_WIN
+    return adapterLuidOf(s_dev);
+#else
+    return 0;
+#endif
+}
+
+bool canMove()
+{
+#ifdef Q_OS_WIN
+    if (!s_dev)
+        return false;
+    for (QWindow* w : QGuiApplication::topLevelWindows()) {
+        auto* q = qobject_cast<QQuickWindow*>(w);
+        if (q && !QQuickWindowPrivate::get(q)->renderControl && nativeDevice(q->rhi()) == s_dev)
+            return false;
+    }
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool moveTo(unsigned long long luid)
+{
+#ifdef Q_OS_WIN
+    if (!luid || !canMove())
+        return false;
+    const unsigned long long from = adapterLuid();
+    s_requestedLuid = luid;
+    qCInfo(lcDevice, "moving the shared device from adapter %016llx to %016llx (no window renders on it yet)", from, luid);
+    rebuild();
+    return adapterLuid() == luid;
+#else
+    Q_UNUSED(luid);
+    return false;
 #endif
 }
 

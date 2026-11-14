@@ -2,6 +2,7 @@
 #include "protocol.h"
 #include "vlqt.h"
 
+#include <QtCore/QLoggingCategory>
 #include <QtGui/QGuiApplication>
 #include <QtQuick/QQuickRenderControl>
 #include <QtQuick/QQuickRenderTarget>
@@ -11,10 +12,12 @@
 #include <algorithm>
 #include <cstdio>
 #include <exception>
+#include <vector>
 
 #ifdef _WIN32
 #include "device.h"
 
+#include <QtQuick/private/qquickrendercontrol_p.h>
 #include <QtQuick/private/qquickwindow_p.h>
 
 #ifndef NOMINMAX
@@ -24,8 +27,6 @@
 #include <windows.h>
 #include <wrl/client.h>
 #endif
-
-// TODO: #116 task 1.5 left: the adapter check (LUID) in bind and the device loss of QtNative's device.
 
 namespace vlqt::offscreen {
 
@@ -38,9 +39,12 @@ namespace vlqt::offscreen {
 // with them: readFence = the foreign device is done reading the texture (Qt may write), writeFence = Qt is done
 // writing (the foreign device may read). The values count up from 0 per binding.
 //
-// TODO: Task 1.5 (device loss): device::rebuild finds the scene's QQuickWindow among the top-level windows and hands
-// it the new device; a render control needs renderControl->invalidate() before and initialize() after that, and the
-// binding is dropped (is_bound 0, the caller binds again).
+// Device rebuild (loss, or a move to the foreign adapter in bind): a device::Listener unbinds every scene and drops its
+// scene graph and QRhi (lost); device::rebuild hands the scene's window, which then has no QRhi, the new device like
+// any window not yet exposed; restored initializes the render control again. The caller sees is_bound 0 and binds again.
+//
+// Foreign device: QtNative holds no reference to it of its own; the two fences opened on it do, until unbind. So a
+// bound scene keeps it alive after its owner released it, and unbind or destroy then frees it.
 struct State
 {
     QQuickRenderControl* renderControl = nullptr;
@@ -64,6 +68,16 @@ struct State
 };
 
 namespace {
+
+Q_LOGGING_CATEGORY(lcOffscreen, "vlqt.offscreen")
+
+// Every scene between create and destroy, for the device listener. Main thread.
+std::vector<State*> s_scenes;
+
+#ifdef _WIN32
+void deviceLost();
+void deviceRestored();
+#endif
 
 void* create(int width, int height)
 {
@@ -99,6 +113,14 @@ void* create(int width, int height)
         [state] { state->dirty = true; });
     QObject::connect(state->renderControl, &QQuickRenderControl::renderRequested, state->renderControl,
         [state] { state->dirty = true; });
+#ifdef _WIN32
+    static const bool listening = [] {
+        vlqt::device::addListener({ deviceLost, deviceRestored });
+        return true;
+    }();
+    (void)listening;
+#endif
+    s_scenes.push_back(state);
     return handle;
 }
 
@@ -152,6 +174,55 @@ void unbind(State* s)
     s->bound = false;
 }
 
+// device::Listener lost: the old device goes away. Unbind (render target, opened texture, fences on both sides), then
+// drop scene graph and QRhi as ~QQuickRenderControl does: initialize() reuses an existing QRhi, so a new one on the
+// new device needs resetRhi. The window has no QRhi afterwards; device::rebuild hands it the new device.
+void deviceLost()
+{
+    for (State* s : s_scenes) {
+        const bool wasBound = s->bound;
+        unbind(s);
+        s->renderControl->invalidate();
+        QQuickWindowPrivate* wd = QQuickWindowPrivate::get(s->window);
+        wd->rhi = nullptr;
+        QQuickRenderControlPrivate::get(s->renderControl)->resetRhi(wd->graphicsConfig);
+        s->dirty = true;
+        if (wasBound)
+            qCInfo(lcOffscreen, "offscreen scene %p unbound: QtNative's device is rebuilt, the caller binds again",
+                static_cast<void*>(s));
+    }
+}
+
+// device::Listener restored: a QRhi on the new device (the window got it from device::rebuild).
+void deviceRestored()
+{
+    for (State* s : s_scenes)
+        if (!s->renderControl->initialize())
+            qCWarning(lcOffscreen, "offscreen scene %p: QQuickRenderControl::initialize failed after the device "
+                "rebuild, bind retries it", static_cast<void*>(s));
+}
+
+// The adapters of the foreign device and of QtNative's device differ: move QtNative's device to the foreign adapter
+// if nothing renders on it yet (no on-screen window with a QRhi on it, no other scene bound), else ADAPTER_MISMATCH.
+int matchAdapter(State* s, unsigned long long foreignLuid)
+{
+    const bool otherBound = std::any_of(s_scenes.begin(), s_scenes.end(), [s](const State* o) { return o != s && o->bound; });
+    if (!otherBound && vlqt::device::canMove()) {
+        if (vlqt::device::moveTo(foreignLuid))
+            return VLQT_OFFSCREEN_OK;
+        return fail(VLQT_OFFSCREEN_DEVICE_LOST, "bind: moving QtNative's device to the foreign adapter failed (see the log)");
+    }
+    static bool warned = false;
+    if (!warned) {
+        warned = true;
+        qCWarning(lcOffscreen, "offscreen bind: the foreign device is on adapter %016llx, QtNative's device on %016llx, "
+            "which a Qt window or another offscreen scene already uses. Use one adapter for both (this warning appears once)",
+            foreignLuid, vlqt::device::adapterLuid());
+    }
+    return fail(VLQT_OFFSCREEN_ADAPTER_MISMATCH, "bind: the foreign device is on another adapter than QtNative's device, "
+        "which a Qt window or another offscreen scene already uses");
+}
+
 // The 8-bit render target formats may view a typeless texture of their family.
 bool formatFits(int rtvFormat, DXGI_FORMAT texture)
 {
@@ -194,15 +265,26 @@ int bind(State* s, void* device, void* ntHandle, int width, int height, int rtvF
         return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "bind: size out of range");
     if (!formatFits(rtvFormat, static_cast<DXGI_FORMAT>(rtvFormat)))
         return fail(VLQT_OFFSCREEN_FORMAT_UNSUPPORTED, "bind: rtvFormat is not R8G8B8A8_UNORM, B8G8R8A8_UNORM or R16G16B16A16_FLOAT");
+    auto* foreign = static_cast<ID3D11Device*>(device);
+    const unsigned long long foreignLuid = vlqt::device::adapterLuidOf(foreign);
+    if (!foreignLuid)
+        return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "bind: device is no D3D11 device with a DXGI adapter");
+    // A failed initialize after a device rebuild (deviceRestored) is retried here.
+    if (!s->window->rhi() && s->window->property("_vlqt_shared_device").toBool())
+        s->renderControl->initialize();
     ID3D11Device* qt = qtDevice(s);
     if (!qt)
         return fail(VLQT_OFFSCREEN_DEVICE_LOST, "bind: the scene has no QtNative device");
     if (FAILED(qt->GetDeviceRemovedReason()))
         return fail(VLQT_OFFSCREEN_DEVICE_LOST, "bind: QtNative's device is lost", qt->GetDeviceRemovedReason());
-    auto* foreign = static_cast<ID3D11Device*>(device);
+    if (vlqt::device::adapterLuidOf(qt) != foreignLuid) {
+        if (int rc = matchAdapter(s, foreignLuid); rc != VLQT_OFFSCREEN_OK)
+            return rc;
+        qt = qtDevice(s); // the scene's QRhi is on the moved device now
+        if (!qt)
+            return fail(VLQT_OFFSCREEN_DEVICE_LOST, "bind: the scene has no QtNative device after the move");
+    }
 
-    // TODO: Task 1.5: compare the adapter LUIDs of foreign and qt (ADAPTER_MISMATCH, warning once). Until then a
-    // texture of another adapter fails to open (OPEN_FAILED).
     ComPtr<ID3D11Device1> qt1;
     HRESULT hr = qt->QueryInterface(IID_PPV_ARGS(qt1.GetAddressOf()));
     if (FAILED(hr))
@@ -300,8 +382,9 @@ int renderBatch(void* context, void* const* scenes, int count, double driverSeco
             if (FAILED(hr))
                 return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "render_batch: context is no ID3D11DeviceContext4", hr);
         }
-        // TODO: Task 1.5: drop the bindings and rebuild instead of failing every frame.
-        if (FAILED(qtDevice(s)->GetDeviceRemovedReason()))
+        // Lost but not rebuilt yet: the next pump (device::checkLost) rebuilds and unbinds every scene.
+        ID3D11Device* qt = qtDevice(s);
+        if (!qt || FAILED(qt->GetDeviceRemovedReason()))
             return fail(VLQT_OFFSCREEN_DEVICE_LOST, "render_batch: QtNative's device is lost");
         render(s, foreign.Get());
         rendered++;
@@ -324,6 +407,7 @@ void release(State* state)
 
 void destroy(State* state)
 {
+    s_scenes.erase(std::remove(s_scenes.begin(), s_scenes.end(), state), s_scenes.end());
     delete state->renderControl;
     delete state;
 }

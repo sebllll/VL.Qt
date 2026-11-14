@@ -161,7 +161,8 @@ static class Program
 
         // device-lost (#367): the shared device must be created through D3D11On12 (before the first window/resource).
 #if WINDOWS
-        if (s_only?.Contains("device-lost") == true) SetEnv("VLQT_TEST_D3D11ON12", "1");
+        // qttexture (#116) uses it for the device loss of a bound offscreen scene; the regular run skips that part.
+        if (s_only?.Contains("device-lost") == true || s_only?.Contains("qttexture") == true) SetEnv("VLQT_TEST_D3D11ON12", "1");
 #endif
 
         // 1. init (twice: idempotent)
@@ -402,7 +403,7 @@ static class Program
         if (Selected("tooltip")) TooltipTest.Run(outDir, Check, Pump, Grab); // Tooltip previews: window change count (static scene, property, hover, video), snapshot_fit sizes, errors (#544).
         if (Selected("font")) FontTest.Run(outDir, Check, Pump, Grab, () => s_log.ToString()); // App fonts (#15, LoadFont): shared per file, refs, removal at the end of the pump, errors, Text with the loaded family, one-time warning for a missing family.
         if (Selected("group-frame")) GroupFrameTest.Run(outDir, Check, Pump, Grab); // Group frame in negative coordinates: snapshot = whole frame, effect layer unclipped (#475).
-        if (Selected("qttexture")) QtTextureTest.Run(outDir, Check); // QtTexture (#116): test exports (second D3D11 device, shared textures, readback, ref counts, handle count), offscreen scene bound and rendered through the fences.
+        if (Selected("qttexture")) QtTextureTest.Run(outDir, Check, Pump); // QtTexture (#116): test exports (second D3D11 device, shared textures, readback, ref counts, handle count), offscreen scene bound and rendered through the fences.
         // Last: leaves two VSync windows open on purpose (process end with open windows on the shared device).
         if (Selected("shared-device")) SharedDeviceTest.Run(Check, Pump); // One D3D11 device for all windows + upload QRhi (#358).
         // Only when named: needs VLQT_TEST_D3D11ON12 from the start (set above). Real device removal + rebuild (#367).

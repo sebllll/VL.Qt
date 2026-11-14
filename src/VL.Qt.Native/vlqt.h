@@ -441,8 +441,12 @@ VLQT_API int   vlqt_test_font_refs(unsigned long long handle);
 VLQT_API void* vlqt_offscreen_create(int width, int height);
 /* Binds scene to a texture of a foreign device, replacing an earlier binding (as vlqt_offscreen_unbind first).
  *   device     ID3D11Device* of the foreign device (Stride's). Must be on the adapter of QtNative's shared device
- *              (LUIDs compared); if QtNative has no device yet, it is created there. QtNative keeps no reference
- *              to it beyond the fences it opens on it.
+ *              (LUIDs compared). If it is not and nothing renders on QtNative's device yet (no on-screen window has
+ *              rendered, no other scene is bound), QtNative rebuilds its device on device's adapter, as after a device
+ *              loss (images upload again, every scene is unbound); otherwise ADAPTER_MISMATCH. QtNative keeps no
+ *              reference to device beyond the fences it opens on it: before the owner releases device, the caller
+ *              unbinds (or destroys) every scene bound to it and stops calling vlqt_offscreen_render_batch with its
+ *              context. A scene still bound keeps device alive through the fences until unbind or destroy.
  *   ntHandle   NT handle of an ID3D11Texture2D of device created with SHARED | SHARED_NTHANDLE and RENDER_TARGET;
  *              opened with ID3D11Device1::OpenSharedResource1. QtNative does not close it: the caller may close it
  *              right after the call.
@@ -452,9 +456,10 @@ VLQT_API void* vlqt_offscreen_create(int width, int height);
  *              or of the same format; Qt writes gamma-space, premultiplied values through the UNORM view.
  * Creates the write and read fences (ID3D11Device5::CreateFence, SHARED) on QtNative's device and opens them on
  * device. Errors: NULL_SCENE, BAD_ARGUMENT (null device/handle, size < 1 or above the device limit, size not the
- * texture's), FORMAT_UNSUPPORTED, ADAPTER_MISMATCH (a warning is logged once), OPEN_FAILED, FENCE_FAILED (no
- * ID3D11Device5 / ID3D11DeviceContext4 on one side), DEVICE_LOST (QtNative's device is being rebuilt: try again next
- * frame), NOT_SUPPORTED (not D3D11). On an error the scene is unbound. */
+ * texture's, device without a DXGI adapter), FORMAT_UNSUPPORTED, ADAPTER_MISMATCH (a warning is logged once),
+ * OPEN_FAILED, FENCE_FAILED (no ID3D11Device5 / ID3D11DeviceContext4 on one side), DEVICE_LOST (QtNative's device is
+ * lost or being rebuilt, or the move failed: try again next frame), NOT_SUPPORTED (not D3D11). On an error the scene
+ * is unbound. */
 VLQT_API int   vlqt_offscreen_bind(void* scene, void* device, void* ntHandle, int width, int height, int rtvFormat);
 /* Frees the binding in the order render target -> opened texture -> fences; the scene and its elements stay. OK also
  * when not bound; NULL_SCENE. */

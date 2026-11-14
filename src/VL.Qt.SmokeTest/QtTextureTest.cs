@@ -12,7 +12,10 @@ using VL.Qt;
 /// D3D11 device on QtNative's adapter and on WARP, shared textures (B8G8R8A8_TYPELESS, R16G16B16A16_FLOAT) with NT
 /// handles, readback through a staging copy, COM reference counts, and that releasing everything frees the device and
 /// leaves the process handle count where it was. Tasks 1.3/1.4: an offscreen scene bound to a shared texture, rendered
-/// through the fences and read back (<c>qttexture_scene.png</c>); the full matrix is task 1.8.
+/// through the fences and read back (<c>qttexture_scene.png</c>); the full matrix is task 1.8. Task 1.5: a WARP texture
+/// moves QtNative's device while nothing renders on it, else gives ADAPTER_MISMATCH; a device loss of QtNative's device
+/// unbinds the scenes and a rebind renders again (needs VLQT_TEST_D3D11ON12=1, set for "-Only qttexture"); a scene
+/// keeps a released foreign device alive until unbind.
 /// </summary>
 static class QtTextureTest
 {
@@ -22,7 +25,7 @@ static class QtTextureTest
     const int B8G8R8A8Unorm = 87;
     const int R32G32B32A32Float = 2; // not supported by the readback
 
-    public static void Run(string outDir, Action<bool, string> check)
+    public static void Run(string outDir, Action<bool, string> check, Action<int> pump)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -56,6 +59,147 @@ static class QtTextureTest
         check(after == baseline, $"116: handle count back at baseline ({baseline} -> {after})");
 
         OffscreenScene(outDir, check);
+        AdapterAndDeviceLoss(check, pump);
+    }
+
+    // A scene of w x h DIP with a red rectangle (16, 12, 32, 24) on a transparent clear colour; null on failure.
+    static IntPtr RectScene(int w, int h, Action<bool, string> check, string label)
+    {
+        var scene = Native.vlqt_offscreen_create(w, h);
+        check(scene != IntPtr.Zero, $"{label}: offscreen_create {(scene == IntPtr.Zero ? Native.LastError() : "")}");
+        if (scene == IntPtr.Zero)
+            return scene;
+        var cmd = new CommandWriter();
+        cmd.Reset();
+        cmd.ClearColor(0, 0, 0, 0);
+        cmd.Create(1, Protocol.Type.Rectangle);
+        cmd.SetPlace(1, 16, 12, 32, 24);
+        cmd.SetColor(1, Protocol.Prop.Color, 1, 0, 0, 1);
+        cmd.Reparent(1, 0, 0);
+        int rc = Native.Apply(scene, cmd.EndFrame());
+        check(rc == 0, $"{label}: apply rectangle ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        return scene;
+    }
+
+    // Centre pixel of a B8G8R8A8 texture as "R,G,B,A".
+    static string Centre(IntPtr texture, int w, int h)
+    {
+        var pixels = new byte[w * h * 4];
+        if (Native.TestReadTexture(texture, pixels, out _, out _, out _) != pixels.Length)
+            return "read failed";
+        int i = (h / 2 * w + w / 2) * 4;
+        return $"{pixels[i + 2]},{pixels[i + 1]},{pixels[i]},{pixels[i + 3]}";
+    }
+
+    // Task 1.5: adapter mismatch or move, device loss of QtNative's device, foreign device released while bound.
+    static void AdapterAndDeviceLoss(Action<bool, string> report, Action<int> pump)
+    {
+        bool check(bool ok, string what)
+        {
+            report(ok, what);
+            return ok;
+        }
+        const int w = 64, h = 48;
+        const string red = "255,0,0,255";
+        IntPtr QtDevice() => Native.vlqt_test_device_info(IntPtr.Zero, out var d, out _) == 0 ? d : IntPtr.Zero;
+        string Err(int rc) => rc < 0 ? Native.LastError() : "";
+
+        if (!check(Native.vlqt_test_d3d11_create_device(0, out var hw, out var hwCtx) == 0, "116 adapter: create device on QtNative's adapter"))
+            return;
+        if (!check(Native.vlqt_test_d3d11_create_device(1, out var warp, out var warpCtx) == 0, "116 adapter: create WARP device"))
+        {
+            Native.vlqt_test_d3d11_release_device(hw, hwCtx);
+            return;
+        }
+        Native.vlqt_test_d3d11_create_shared_texture(hw, w, h, B8G8R8A8Typeless, out var hwTex, out var hwHandle);
+        Native.vlqt_test_d3d11_create_shared_texture(warp, w, h, B8G8R8A8Typeless, out var warpTex, out var warpHandle);
+        var a = RectScene(w, h, report, "116 adapter: scene A");
+        var b = RectScene(w, h, report, "116 adapter: scene B");
+        if (hwTex == IntPtr.Zero || warpTex == IntPtr.Zero || a == IntPtr.Zero || b == IntPtr.Zero)
+        {
+            check(false, "116 adapter: setup " + Native.LastError());
+            return;
+        }
+
+        // (i) A WARP texture: QtNative moves its device to WARP while nothing renders on it (no on-screen window has
+        // rendered, no scene bound; so with -Only qttexture), else ADAPTER_MISMATCH.
+        var qtBefore = QtDevice();
+        int rc = Native.vlqt_offscreen_bind(a, warp, warpHandle, w, h, B8G8R8A8Unorm);
+        if (rc == Protocol.Offscreen.Ok)
+        {
+            var qtWarp = QtDevice();
+            check(qtWarp != IntPtr.Zero && qtWarp != qtBefore, $"116 adapter: bind to WARP moved QtNative's device ({qtBefore:X} -> {qtWarp:X})");
+            rc = Native.OffscreenRenderBatch(warpCtx, new[] { a }, 0);
+            check(rc == 1 && Centre(warpTex, w, h) == red, $"116 adapter: scene renders on WARP (rc {rc}, centre {Centre(warpTex, w, h)}) {Err(rc)}");
+            Native.vlqt_offscreen_unbind(a);
+            pump(2); // releases the retired device
+            rc = Native.vlqt_offscreen_bind(a, hw, hwHandle, w, h, B8G8R8A8Unorm);
+            check(rc == 0 && QtDevice() != qtWarp, $"116 adapter: bind to the first adapter moves back ({rc}) {Err(rc)}");
+            pump(2);
+        }
+        else
+        {
+            check(rc == Protocol.Offscreen.AdapterMismatch && Native.vlqt_offscreen_is_bound(a) == 0,
+                $"116 adapter: bind to WARP = ADAPTER_MISMATCH (a window renders on QtNative's device) ({rc}) {Err(rc)}");
+            rc = Native.vlqt_offscreen_bind(a, hw, hwHandle, w, h, B8G8R8A8Unorm);
+            check(rc == 0, $"116 adapter: bind A on QtNative's adapter ({rc}) {Err(rc)}");
+        }
+        rc = Native.OffscreenRenderBatch(hwCtx, new[] { a }, 0);
+        check(rc == 1 && Centre(hwTex, w, h) == red, $"116 adapter: A renders on QtNative's adapter (rc {rc}, centre {Centre(hwTex, w, h)}) {Err(rc)}");
+
+        // A bound: a second scene on WARP must not move the device under it.
+        var qtBound = QtDevice();
+        rc = Native.vlqt_offscreen_bind(b, warp, warpHandle, w, h, B8G8R8A8Unorm);
+        check(rc == Protocol.Offscreen.AdapterMismatch && Native.vlqt_offscreen_is_bound(b) == 0 && Native.vlqt_offscreen_is_bound(a) == 1
+              && QtDevice() == qtBound, $"116 adapter: B on WARP while A is bound = ADAPTER_MISMATCH, A stays bound ({rc})");
+
+        // (ii) Device loss of QtNative's device while A is bound.
+        rc = Native.vlqt_test_device_lost(Protocol.DeviceLost.Remove);
+        if (rc != 0)
+            Console.WriteLine($"INFO 116 device lost: skipped ({rc}, needs VLQT_TEST_D3D11ON12=1: -Only qttexture)");
+        else
+        {
+            rc = Native.OffscreenRenderBatch(hwCtx, new[] { a }, 0);
+            check(rc == Protocol.Offscreen.DeviceLost || rc == 0, $"116 device lost: render_batch before the rebuild = DEVICE_LOST or nothing ({rc})");
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            while (Native.vlqt_offscreen_is_bound(a) != 0 && sw.ElapsedMilliseconds < 5000)
+                pump(1);
+            check(Native.vlqt_offscreen_is_bound(a) == 0, "116 device lost: A unbound by the rebuild");
+            check(QtDevice() != qtBound && QtDevice() != IntPtr.Zero, $"116 device lost: new QtNative device ({qtBound:X} -> {QtDevice():X})");
+            // A new (zeroed) texture: the red must come from a render on the new device, with the scene's elements kept.
+            Native.vlqt_test_d3d11_create_shared_texture(hw, w, h, B8G8R8A8Typeless, out var fresh, out var freshHandle);
+            rc = Native.vlqt_offscreen_bind(a, hw, freshHandle, w, h, B8G8R8A8Unorm);
+            check(rc == 0, $"116 device lost: rebind A ({rc}) {Err(rc)}");
+            rc = Native.OffscreenRenderBatch(hwCtx, new[] { a }, 0);
+            check(rc == 1 && Centre(fresh, w, h) == red, $"116 device lost: A renders again (rc {rc}, centre {Centre(fresh, w, h)}) {Err(rc)}");
+            Native.vlqt_offscreen_unbind(a);
+            Native.vlqt_test_close_handle(freshHandle);
+            Native.vlqt_test_com_release(fresh);
+            pump(2);
+        }
+
+        // (iii) The owner releases the foreign device while B is bound: the fences keep it alive, unbind frees it.
+        if (check(Native.vlqt_test_d3d11_create_device(0, out var gone, out var goneCtx) == 0, "116 foreign release: create device"))
+        {
+            Native.vlqt_test_d3d11_create_shared_texture(gone, w, h, B8G8R8A8Typeless, out var goneTex, out var goneHandle);
+            rc = Native.vlqt_offscreen_bind(b, gone, goneHandle, w, h, B8G8R8A8Unorm);
+            int rendered = Native.OffscreenRenderBatch(goneCtx, new[] { b }, 0);
+            check(rc == 0 && rendered == 1, $"116 foreign release: bind and render B ({rc}, {rendered}) {Err(rc)}");
+            Native.vlqt_test_close_handle(goneHandle);
+            Native.vlqt_test_com_release(goneTex);
+            int left = Native.vlqt_test_d3d11_release_device(gone, goneCtx);
+            check(left > 0, $"116 foreign release: device released by its owner, the bound scene keeps {left} reference(s)");
+            check(Native.vlqt_offscreen_unbind(b) == 0 && Native.vlqt_offscreen_is_bound(b) == 0, "116 foreign release: unbind after the release");
+        }
+
+        Native.vlqt_window_destroy(a);
+        Native.vlqt_window_destroy(b);
+        Native.vlqt_test_close_handle(hwHandle);
+        Native.vlqt_test_close_handle(warpHandle);
+        Native.vlqt_test_com_release(hwTex);
+        Native.vlqt_test_com_release(warpTex);
+        check(Native.vlqt_test_d3d11_release_device(hw, hwCtx) == 0, "116 adapter: device on QtNative's adapter freed");
+        check(Native.vlqt_test_d3d11_release_device(warp, warpCtx) == 0, "116 adapter: WARP device freed");
     }
 
     // Task 1.3/1.4: a scene bound to a B8G8R8A8_TYPELESS texture of the test device, one render through the fences,
