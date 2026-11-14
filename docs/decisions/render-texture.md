@@ -14,7 +14,7 @@ Status: planned (brainstorm 2026-11-14). Work: #116 QtTexture, #117 Clear pin, #
 ## Facts found (2026-11-14)
 - VL.Qt references only `Stride.Core.Mathematics` (runtime excluded), not Stride.Graphics/VL.Stride, and runs on Linux.
 - QtNative creates its own D3D11 device per process (`device.h`), shared by all Qt windows and image uploads; Qt runs the `basic` render loop on the main thread, pumped once per vvvv frame.
-- `device-sharing.md` names Mode 1 (Qt on Stride's device) as the design, but the code went with an own QtNative device. `architecture.md`: no texture output to Stride yet.
+- `device-sharing.md` describes the QtNative device model; before this work it named Mode 1 (Qt on Stride's device) as the design, which the code never followed.
 - Bridges in other vvvv libraries (VL.StandardLibs): `SkiaRenderer [Stride]` and `SkiaTexture` live in VL.Stride.Runtime, not in VL.Skia; `VideoSourceToTexture` in VL.Stride.Runtime, `VideoSourceToSKImage` in VL.Skia, VL.Video stays renderer-free; VL.ImGui is split into the documents/packages `VL.ImGui`, `VL.ImGui.Skia` and `VL.ImGui.Stride`.
 - `SkiaTexture` has two renderers: `DefaultRenderer` (Stride's device, state swap) and `DedicatedRenderer` (own device, shared texture, shared `ID3D11Fence`s for write/read completion, GPU-side wait).
 

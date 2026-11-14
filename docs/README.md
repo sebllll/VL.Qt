@@ -26,7 +26,7 @@ Why things are built the way they are. Each note states the goals, the decision 
 
 | Note | Content |
 |---|---|
-| [decisions/device-sharing.md](decisions/device-sharing.md) | Qt renders on Stride's own D3D11 device instead of a device of its own, and what that means for latency and parallelism. |
+| [decisions/device-sharing.md](decisions/device-sharing.md) | One QtNative D3D11 device per process shared by all windows and images, device loss, and why Qt does not render on Stride's device. |
 | [decisions/element-catalog-v1.md](decisions/element-catalog-v1.md) | Conventions shared by all elements: geometry pins, coordinate space, colours, image sources and pin design. |
 | [decisions/events.md](decisions/events.md) | How events and measured values travel from Qt back to the element nodes through sinks. |
 | [decisions/qtnative-deployment.md](decisions/qtnative-deployment.md) | How QtNative is built, licensed (LGPL), packaged and located at runtime. |
