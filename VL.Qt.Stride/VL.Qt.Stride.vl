@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="gPnRTYRBQlF1sfjJjNqUCV" LanguageVersion="2026.8.0-0156-g7259116c8c" Version="0.128">
+  <NugetDependency Id="nf1DsSrHctGKZLplghG0FI" Location="VL.CoreLib" />
+  <NugetDependency Id="uUC4LEo2dvGqBuqXFcIAeS" Location="VL.Qt" />
+  <NugetDependency Id="CyuBOakb5VGwCPt4EMqGsN" Location="VL.Stride" />
+  <PlatformDependency Id="RjU67aA5fOGz18XeMIUB1E" Location="./lib/net10.0-windows7.0/VL.Qt.Stride.dll" IsForward="true" />
+  <Patch Id="kCdf0tIeWaGBfpN83epx7A">
+    <Canvas Id="aD2Wik7wKgFB0xHDuYCq5D" DefaultCategory="Qt" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="DUwLlKP6rsGgkFf5b8lcjL">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <FullNameCategoryReference ID="Primitive" />
+      </p:NodeReference>
+      <Patch Id="uBIJfaOe3FGoS82kebZO1D">
+        <Canvas Id="3UcXsDSjfYGsiKv1nCVHzP" CanvasType="Group" />
+        <Patch Id="gPgnha2Re5FcrBLMDEYZeU" Name="Create" />
+        <Patch Id="kQtlmOCHG8FIBr5SZoD7BI" Name="Update" />
+        <ProcessDefinition Id="waCyuxdNKsGBsEtfsZ93JJ">
+          <Fragment Id="6Ft44hQIRqF2CLKH8fnISM" Patch="gPgnha2Re5FcrBLMDEYZeU" Enabled="true" />
+          <Fragment Id="CaiXBwNMB9FpTAV81WgDKQ" Patch="kQtlmOCHG8FIBr5SZoD7BI" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+</Document>
