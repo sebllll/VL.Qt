@@ -2,7 +2,8 @@
 # Usage: tools/vvvvc.ps1 [-File help/HelloWorld.vl] [-VvvvDir <install>] [-Out build/vvvvc] [extra vvvvc args]
 # VvvvDir defaults to $env:VVVV_DIR, else the newest C:\vvvv\vvvv_gamma_*-win-<host arch>.
 # Unnamed arguments all go to vvvvc (e.g. `tools/vvvvc.ps1 -File x.vl --rid win-x64 --output-type Exe`).
-# A patch in VL.Qt.Stride/ or depending on VL.Qt.Stride.vl automatically gets the dev package repository of start-vvvv.ps1.
+# A patch in VL.Qt.Stride/ or depending on VL.Qt.Stride.vl automatically gets the dev package repository of start-vvvv.ps1,
+# editable VL.Qt packages and a local feed with both packed (needs tools/build.ps1 first; see the comment below).
 # Note: a .props next to the patch overrides --rid/--output-type (it is imported after the generated settings).
 [CmdletBinding(PositionalBinding = $false)]
 param(
@@ -51,16 +52,49 @@ if ($hostArch -eq 'arm64' -and (Get-Machine $dll) -eq 0x8664) {
 
 # vvvvc needs an absolute document path (relative dependencies fail otherwise).
 $File = (Resolve-Path $File).Path
-# A patch in VL.Qt.Stride/ or one that depends on VL.Qt.Stride.vl finds VL.Qt and VL.Qt.Stride only in the dev package
-# repository of start-vvvv.ps1 (junctions to this repo); patches of VL.Qt alone resolve VL.Qt through their relative
-# DocumentDependency. An explicit --package-repositories wins.
+# A patch in VL.Qt.Stride/ or one that depends on VL.Qt.Stride.vl needs VL.Qt.Stride, which no feed has before the release.
+# vvvv loads VL.Qt and VL.Qt.Stride from source (the dev package repository of start-vvvv.ps1, junctions to this repo),
+# but an export also writes a PackageReference without a version for the package of each assembly. So:
+#  - --package-repositories gives vvvvc the sources of the .vl documents,
+#  - --editable-packages makes the exporter compile them as projects,
+#  - both packages are packed from the build output of this repo into build/vvvvc-feed (version $devVersion, the lowest
+#    version in every feed, so NuGet picks it for the unversioned reference) and added as a package source.
+# Needs the C# build (tools/build.ps1) first. Patches of VL.Qt alone resolve VL.Qt through their relative DocumentDependency.
+# An explicit --package-repositories wins.
 $repoDir = (Resolve-Path "$PSScriptRoot\..").Path
 $needsStride = $File.StartsWith("$repoDir\VL.Qt.Stride\", [StringComparison]::OrdinalIgnoreCase) -or
     ($File -like '*.vl' -and (Select-String -Path $File -SimpleMatch 'VL.Qt.Stride' -Quiet))
 if ($needsStride -and -not ($VvvvcArgs -contains '--package-repositories')) {
+    $devVersion = '0.0.1'
+    $feed = "$repoDir\build\vvvvc-feed"
+    $inputs = @("$repoDir\lib\net10.0\VL.Qt.dll", "$repoDir\VL.Qt.Stride\lib\net10.0-windows7.0\VL.Qt.Stride.dll", "$repoDir\VL.Qt.vl", "$repoDir\VL.Qt.Stride\VL.Qt.Stride.vl")
+    foreach ($i in $inputs) { if (-not (Test-Path $i)) { throw "$i not found: run tools/build.ps1 first" } }
+    $newest = ($inputs + (Get-ChildItem "$repoDir\runtimes" -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object FullName) |
+        ForEach-Object { (Get-Item $_).LastWriteTimeUtc } | Measure-Object -Maximum).Maximum
+    $packages = 'VL.Qt', 'VL.Qt.Stride'
+    $stale = $packages | Where-Object { -not (Test-Path "$feed\$_.$devVersion.nupkg") -or (Get-Item "$feed\$_.$devVersion.nupkg").LastWriteTimeUtc -lt $newest }
+    if ($stale) {
+        Write-Host "Packing VL.Qt and VL.Qt.Stride $devVersion into $feed"
+        New-Item -ItemType Directory -Force $feed | Out-Null
+        foreach ($name in $packages) {
+            # the same version may sit in the global NuGet cache from an earlier pack
+            Remove-Item "$env:USERPROFILE\.nuget\packages\$($name.ToLowerInvariant())\$devVersion" -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        foreach ($name in $packages) {
+            & dotnet pack "$repoDir\src\$name" -c Release --no-build -v q -nologo -p:Version=$devVersion -o $feed | Out-Null
+            if ($LASTEXITCODE) { throw "dotnet pack $name failed ($LASTEXITCODE)" }
+        }
+        # The source package (junction VL.Qt) already copies runtimes/<rid>/native next to the exe (VL.Qt.vl.targets); the
+        # qt/ tree of the package would copy it a second time (NETSDK1152, same files twice in the publish output).
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $zip = [IO.Compression.ZipFile]::Open("$feed\VL.Qt.$devVersion.nupkg", 'Update')
+        try { @($zip.Entries | Where-Object { $_.FullName.StartsWith('qt/') }) | ForEach-Object { $_.Delete() } }
+        finally { $zip.Dispose() }
+    }
     $pkgRepo = (& "$PSScriptRoot\start-vvvv.ps1" -PrepareOnly -RepoDir $repoDir) | Select-Object -Last 1
-    $VvvvcArgs = @($VvvvcArgs) + '--package-repositories', $pkgRepo
+    $VvvvcArgs = @($VvvvcArgs) + '--package-repositories', $pkgRepo, '--editable-packages', 'VL.Qt;VL.Qt.Stride', '--export-package-sources', $feed
 }
+
 New-Item -ItemType Directory -Force $Out | Out-Null
 $Out = (Resolve-Path $Out).Path
 
