@@ -109,7 +109,7 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 | `build-native.ps1` | Builds only QtNative and deploys Qt into `runtimes/<rid>/native` (windeployqt). `-QtDir` for another Qt location, `-ForceDeploy` to redeploy. |
 | `trim-deploy.ps1` | Removes Qt parts VL.Qt never loads from `runtimes/<rid>/native`. Idempotent, `-WhatIf` shows what would go. |
 | `check-licenses.ps1` | Checks that the deployed runtime contains only LGPL-compatible Qt parts (whitelist). Exit 1 on a violation. |
-| `test-nupkg-consumer.ps1` | Consumes a packed nupkg like a vvvv export does and checks the published layout. `-Package <nupkg>`. On Windows it also consumes `VL.Qt.Stride` when its nupkg of the same version lies next to it and contains `VL.Qt.Stride.vl`; otherwise that part is skipped with a message. |
+| `test-nupkg-consumer.ps1` | Consumes a packed nupkg like a vvvv export does and checks the published layout. `-Package <nupkg>`. On Windows RIDs it also consumes `VL.Qt.Stride`: its nupkg of the same version must lie next to it and contain `VL.Qt.Stride.vl`, otherwise the test fails. |
 
 **Linux (run in WSL or on Linux)**
 
@@ -144,7 +144,7 @@ The repository builds two NuGet packages:
 | `VL.Qt` | repo root (`VL.Qt.vl`, `help/`, `src/VL.Qt/`) | the Qt layer and the Qt runtime for Windows and Linux; platform-neutral, no Stride |
 | `VL.Qt.Stride` | `VL.Qt.Stride/` (package folder: `VL.Qt.Stride.vl`, `help/`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Stride/` | Qt scenes rendered into Stride textures, Windows only; depends on `VL.Qt` |
 
-`VL.Qt` never references `VL.Qt.Stride`. The `VL.Qt.Stride.vl` and its help patches are made in vvvv; `lib/` is not tracked by git. Why this layout: [decisions/render-texture.md](decisions/render-texture.md#package-layout-2026-11-14-task-21).
+`VL.Qt` never references `VL.Qt.Stride`. `VL.Qt.Stride.vl` is a minimal package document (dependencies and the assembly, no nodes); its help patches are made in vvvv; `lib/` is not tracked by git. Why this layout: [decisions/render-texture.md](decisions/render-texture.md#package-layout-2026-11-14-task-21).
 
 ```powershell
 dotnet build src/VL.Qt.Stride -c Release                  # DLL into VL.Qt.Stride/lib/net10.0-windows7.0/
@@ -155,7 +155,7 @@ dotnet pack src/VL.Qt.Stride -c Release -p:Version=1.2.3  # VL.Qt.Stride.1.2.3.n
 
 The CI (`build.yml`) builds `VL.Qt.Stride` on the Windows runners and packs it in the job `pack` on every run, so a broken pack shows up on a pull request. The step "Verify package (VL.Qt.Stride)" checks the layout and the nuspec (id, version, the only dependency `VL.Qt` at the same version). A tag or a plain `workflow_dispatch` uploads both `.nupkg` files; the release attaches both to the GitHub release and pushes both to nuget.org (see [Release](#release)).
 
-For vvvv, `tools/start-vvvv.ps1` puts both package folders into its package repository as junctions (`VL.Qt` and `VL.Qt.Stride`), so both are source packages in the dev workflow; `VL.Qt.Stride` has no effect for vvvv before `VL.Qt.Stride.vl` exists.
+For vvvv, `tools/start-vvvv.ps1` puts both package folders into its package repository as junctions (`VL.Qt` and `VL.Qt.Stride`), so both are source packages in the dev workflow.
 
 ## CI
 

@@ -355,7 +355,7 @@ jobs:
             $reader = [IO.StreamReader]::new($zip.GetEntry('VL.Qt.Stride.nuspec').Open())
             try { [xml]$nuspec = $reader.ReadToEnd() } finally { $reader.Dispose() }
           } finally { $zip.Dispose() }
-          $missing = @('lib/net10.0-windows7.0/VL.Qt.Stride.dll', 'icon.png') | Where-Object { $_ -notin $names }
+          $missing = @('lib/net10.0-windows7.0/VL.Qt.Stride.dll', 'VL.Qt.Stride.vl', 'help/Help.xml', 'icon.png') | Where-Object { $_ -notin $names }
           if ($missing) { throw "missing in package: $($missing -join ', ')" }
           $meta = $nuspec.package.metadata
           $problems = @()

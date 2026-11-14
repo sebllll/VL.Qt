@@ -3,7 +3,7 @@
 #   tools\start-vvvv.ps1 -Build                       # vorher QtNative + C# (VL.Qt, VL.Qt.Stride) bauen
 #   tools\start-vvvv.ps1 -Help "Draw a Rectangle"     # HowTo-Patch aus help\ öffnen
 #   tools\start-vvvv.ps1 -Patch help\testpatch.vl     # beliebigen Patch öffnen
-#   tools\start-vvvv.ps1 -PrepareOnly                 # nur das Package-Repo (Junction) anlegen, für F5 in VS
+#   tools\start-vvvv.ps1 -PrepareOnly                 # nur das Package-Repo (Junctions) anlegen und seinen Pfad ausgeben (F5 in VS, vvvvc.ps1)
 # Repo: -RepoDir, sonst der Ordner über diesem Script.
 # vvvv: -VvvvDir, sonst $env:VVVV_DIR, sonst neueste C:\vvvv\vvvv_gamma_*-win-<arch>.
 param(
@@ -46,7 +46,7 @@ $stridePkg = Join-Path $RepoDir 'VL.Qt.Stride'
 New-Item -ItemType Directory -Force $stridePkg | Out-Null
 Set-Junction 'VL.Qt' $RepoDir
 Set-Junction 'VL.Qt.Stride' $stridePkg
-if ($PrepareOnly) { Write-Host "Package-Repo: $pkgRepo"; return }
+if ($PrepareOnly) { $pkgRepo; return }
 
 if (-not $VvvvDir) {
     $VvvvDir = Get-ChildItem 'C:\vvvv' -Directory -Filter "vvvv_gamma_*-win-$arch" |

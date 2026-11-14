@@ -51,8 +51,7 @@
 
   <ItemGroup>
     <None Include="$(PackageRoot)lib\net10.0-windows7.0\VL.Qt.Stride.dll;$(PackageRoot)lib\net10.0-windows7.0\VL.Qt.Stride.pdb;$(PackageRoot)lib\net10.0-windows7.0\VL.Qt.Stride.xml" Pack="true" PackagePath="lib\net10.0-windows7.0\" Visible="false" />
-    <!-- VL.Qt.Stride.vl and help/ are created in vvvv (task 2.5); packed once they exist. -->
-    <None Include="$(PackageRoot)VL.Qt.Stride.vl" Condition="Exists('$(PackageRoot)VL.Qt.Stride.vl')" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(PackageRoot)VL.Qt.Stride.vl" Pack="true" PackagePath="" Visible="false" />
     <None Include="$(PackageRoot)help\**" Pack="true" PackagePath="help\" Visible="false" />
     <None Include="$(PackageRoot)README.md" Pack="true" PackagePath="" Visible="false" />
     <None Include="..\VL.Qt\nuget\icon.png" Pack="true" PackagePath="" Visible="false" />

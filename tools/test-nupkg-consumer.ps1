@@ -2,8 +2,8 @@
 # RuntimeIdentifier set, dotnet publish) and checks the published layout (#315). No vvvv needed, so it runs in CI.
 # Checks: publish succeeds (no NETSDK1152 for the qml tree), VL.Qt.dll next to the exe (lib/net10.0 recognized), the Qt
 # runtime with its structure in runtimes/<rid>/native (QtNative, qml/QtQuick/Controls/qmldir), no qmldir flattened anywhere else.
-# VL.Qt.Stride (Windows only): checked when VL.Qt.Stride.<version>.nupkg lies next to the VL.Qt one and contains VL.Qt.Stride.vl
-# (a net10.0-windows consumer must get VL.Qt.Stride.dll plus VL.Qt through the dependency); otherwise that part is skipped with a message.
+# VL.Qt.Stride (Windows RIDs only): VL.Qt.Stride.<version>.nupkg must lie next to the VL.Qt one and contain VL.Qt.Stride.vl
+# (a net10.0-windows consumer must get VL.Qt.Stride.dll plus VL.Qt through the dependency); otherwise the test fails.
 # Usage: tools/test-nupkg-consumer.ps1 -Package build/pack/VL.Qt.<version>.nupkg [-Rid win-x64] [-Work <dir>]
 #   (a VL.Qt.Stride.<version>.nupkg as -Package is replaced by its VL.Qt sibling)
 # Uses its own NuGet package folder under -Work, so a reused test version never comes from the global cache.
@@ -78,11 +78,11 @@ if ($otherRids) { throw "runtimes of other RIDs in the output: $($otherRids -joi
 
 # VL.Qt.Stride: a windows-TFM consumer; its only dependency (VL.Qt, same version) must come along.
 if ($Rid -notlike 'win-*') { return "VL.Qt.Stride: skipped, Windows only ($Rid)" }
-if (-not (Test-Path $stridePackage)) { return "VL.Qt.Stride: skipped, no $(Split-Path $stridePackage -Leaf) next to the VL.Qt package" }
+if (-not (Test-Path $stridePackage)) { throw "missing $(Split-Path $stridePackage -Leaf) next to the VL.Qt package (pack both with the same -p:Version)" }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [IO.Compression.ZipFile]::OpenRead($stridePackage)
 try { $hasVl = [bool]($zip.Entries | Where-Object FullName -eq 'VL.Qt.Stride.vl') } finally { $zip.Dispose() }
-if (-not $hasVl) { return "VL.Qt.Stride: skipped, $(Split-Path $stridePackage -Leaf) has no VL.Qt.Stride.vl yet (created in vvvv, task 2.5)" }
+if (-not $hasVl) { throw "$(Split-Path $stridePackage -Leaf) has no VL.Qt.Stride.vl" }
 
 $strideProj = New-Item -ItemType Directory -Force "$Work\app-stride"
 Copy-Item "$proj\nuget.config", "$proj\Program.cs" $strideProj

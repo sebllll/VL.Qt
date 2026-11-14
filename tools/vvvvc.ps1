@@ -2,6 +2,7 @@
 # Usage: tools/vvvvc.ps1 [-File help/HelloWorld.vl] [-VvvvDir <install>] [-Out build/vvvvc] [extra vvvvc args]
 # VvvvDir defaults to $env:VVVV_DIR, else the newest C:\vvvv\vvvv_gamma_*-win-<host arch>.
 # Unnamed arguments all go to vvvvc (e.g. `tools/vvvvc.ps1 -File x.vl --rid win-x64 --output-type Exe`).
+# A patch in VL.Qt.Stride/ or depending on VL.Qt.Stride.vl automatically gets the dev package repository of start-vvvv.ps1.
 # Note: a .props next to the patch overrides --rid/--output-type (it is imported after the generated settings).
 [CmdletBinding(PositionalBinding = $false)]
 param(
@@ -50,6 +51,16 @@ if ($hostArch -eq 'arm64' -and (Get-Machine $dll) -eq 0x8664) {
 
 # vvvvc needs an absolute document path (relative dependencies fail otherwise).
 $File = (Resolve-Path $File).Path
+# A patch in VL.Qt.Stride/ or one that depends on VL.Qt.Stride.vl finds VL.Qt and VL.Qt.Stride only in the dev package
+# repository of start-vvvv.ps1 (junctions to this repo); patches of VL.Qt alone resolve VL.Qt through their relative
+# DocumentDependency. An explicit --package-repositories wins.
+$repoDir = (Resolve-Path "$PSScriptRoot\..").Path
+$needsStride = $File.StartsWith("$repoDir\VL.Qt.Stride\", [StringComparison]::OrdinalIgnoreCase) -or
+    ($File -like '*.vl' -and (Select-String -Path $File -SimpleMatch 'VL.Qt.Stride' -Quiet))
+if ($needsStride -and -not ($VvvvcArgs -contains '--package-repositories')) {
+    $pkgRepo = (& "$PSScriptRoot\start-vvvv.ps1" -PrepareOnly -RepoDir $repoDir) | Select-Object -Last 1
+    $VvvvcArgs = @($VvvvcArgs) + '--package-repositories', $pkgRepo
+}
 New-Item -ItemType Directory -Force $Out | Out-Null
 $Out = (Resolve-Path $Out).Path
 
