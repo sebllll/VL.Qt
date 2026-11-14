@@ -3,6 +3,8 @@
 #include "device.h"
 #include "perf.h"
 #include "image_resource.h"
+#include "offscreen.h"
+#include "protocol.h"
 #include "qtimageitem.h"
 #include "resources.h"
 #include "shader_resource.h"
@@ -552,8 +554,12 @@ bool testSyntheticInputOnly()
 }
 #endif
 
+// A window handle (void* of the vlqt_window_* exports): a window, or an offscreen scene (#116, offscreen.cpp) whose
+// QQuickWindow is driven by a QQuickRenderControl. Both share engine, scene, gate and perf; a scene has no input
+// filters (closeFilter etc. stay null) and its own part in offscreen.
 struct Window {
     QQuickWindow* window = nullptr;
+    vlqt::offscreen::State* offscreen = nullptr; // offscreen scene: render control and binding; null for a window
     CloseFilter* closeFilter = nullptr;
     QQmlEngine* engine = nullptr;
     vlqt::Scene* scene = nullptr; // apply/poll
@@ -586,6 +592,13 @@ QWindow* testKeyTarget(Window* w)
         return f;
     QWindowSystemInterface::handleFocusWindowChanged<QWindowSystemInterface::SynchronousDelivery>(w->window, Qt::PopupFocusReason);
     return w->window;
+}
+
+// The test input exports on an offscreen scene (#116): no input in v1 (vlqt.h).
+int notOnScene(const char* function)
+{
+    setError(std::string(function) + ": not supported on an offscreen scene");
+    return VLQT_OFFSCREEN_NOT_SUPPORTED;
 }
 
 template <class F>
@@ -789,6 +802,40 @@ void placeWindow(QQuickWindow* win, float x, float y, int width, int height)
         win->setFramePosition(pos);
 }
 
+// The parts of a window handle that windows and offscreen scenes (#116) share: the QML engine with QtNative's imports.
+QQmlEngine* newEngine()
+{
+    auto* engine = new QQmlEngine();
+    if (!g_nativeDir.isEmpty())
+        engine->addImportPath(g_nativeDir + QStringLiteral("/qml"));
+    return engine;
+}
+
+// ... and, once w->window, w->engine and the window's own event filters exist: GPU timings and pipeline cache, the
+// shared D3D11 device, the scene (apply/poll) and the perf monitor (its event filter, installed last, runs first).
+void initShared(Window* w)
+{
+    // GPU timings for the perf overlay; must be set before the scenegraph initializes.
+    QQuickGraphicsConfiguration cfg = w->window->graphicsConfiguration();
+    cfg.setTimestamps(true);
+    if (!g_pipelineCachePath.isEmpty()) {
+        // Load + save in one file; an unwritable folder only costs the cache (QRhi would fail silently otherwise).
+        const QFileInfo dir(QFileInfo(g_pipelineCachePath).absolutePath());
+        if (dir.isDir() && dir.isWritable()) {
+            cfg.setPipelineCacheLoadFile(g_pipelineCachePath);
+            cfg.setPipelineCacheSaveFile(g_pipelineCachePath);
+        } else {
+            qWarning("pipeline cache: folder of %s is not writable, continuing without cache",
+                qPrintable(g_pipelineCachePath));
+        }
+    }
+    w->window->setGraphicsConfiguration(cfg);
+    vlqt::device::attach(w->window); // one D3D11 device for all windows (#358), before the first expose
+    w->scene = new vlqt::Scene(w->window, w->engine);
+    w->perf = new PerfMonitor(w->window, w->engine);
+    w->perf->setScene(w->scene); // F5 Scene page (#246); perf is deleted before scene
+}
+
 // App fonts (#15, LoadFont node). One entry per font file, shared by every LoadFont node that names it.
 // Thread: QFontDatabase app fonts and every text layout belong to the Qt GUI thread, which is the vvvv main thread
 // (vlqt_app_init, basic render loop, no render thread). Adding there means the next layout in the same pump already
@@ -831,6 +878,41 @@ void fontsEndFrame()
 }
 
 } // namespace
+
+// Offscreen scenes (#116): the window handle part, declared in offscreen.h.
+namespace vlqt::offscreen {
+
+void* createHandle(QQuickWindow* window, State* state)
+{
+    auto* w = new Window();
+    w->offscreen = state;
+    w->engine = newEngine();
+    w->window = window;
+    // Transparent until the first VLQT_OP_CLEAR_COLOR: the QtTexture default (render-texture.md), unlike a window.
+    window->setColor(Qt::transparent);
+    // Change count (vlqt_window_change_count) only: without a platform window a scene gets no UpdateRequest or Expose,
+    // so the gate's event filter is not installed.
+    w->gate = new UpdateGate(window); // child of the window
+    initShared(w);
+    return w;
+}
+
+State* stateOf(void* handle)
+{
+    return handle ? static_cast<Window*>(handle)->offscreen : nullptr;
+}
+
+QQuickWindow* quickWindow(void* handle)
+{
+    return handle ? static_cast<Window*>(handle)->window : nullptr;
+}
+
+void setError(const std::string& message)
+{
+    ::setError(message);
+}
+
+} // namespace vlqt::offscreen
 
 extern "C" {
 
@@ -1027,9 +1109,7 @@ VLQT_API void* vlqt_window_create_at(float x, float y, int width, int height, co
             return -1;
         }
         auto* w = new Window();
-        w->engine = new QQmlEngine();
-        if (!g_nativeDir.isEmpty())
-            w->engine->addImportPath(g_nativeDir + QStringLiteral("/qml"));
+        w->engine = newEngine();
         w->window = new QQuickWindow();
         // Swap interval is read from the requested format when the swap chain is created (first show), so it cannot
         // change afterwards. 0 = Present never waits (default), >0 = VSync.
@@ -1051,25 +1131,7 @@ VLQT_API void* vlqt_window_create_at(float x, float y, int width, int height, co
         w->window->installEventFilter(new FocusRelease(w->window)); // #374, child of the window
         if (testSyntheticInputOnly())
             w->window->installEventFilter(new SystemInputFilter(w->window)); // test only, child of the window
-        // GPU timings for the perf overlay; must be set before the scenegraph initializes.
-        QQuickGraphicsConfiguration cfg = w->window->graphicsConfiguration();
-        cfg.setTimestamps(true);
-        if (!g_pipelineCachePath.isEmpty()) {
-            // Load + save in one file; an unwritable folder only costs the cache (QRhi would fail silently otherwise).
-            const QFileInfo dir(QFileInfo(g_pipelineCachePath).absolutePath());
-            if (dir.isDir() && dir.isWritable()) {
-                cfg.setPipelineCacheLoadFile(g_pipelineCachePath);
-                cfg.setPipelineCacheSaveFile(g_pipelineCachePath);
-            } else {
-                qWarning("pipeline cache: folder of %s is not writable, continuing without cache",
-                    qPrintable(g_pipelineCachePath));
-            }
-        }
-        w->window->setGraphicsConfiguration(cfg);
-        vlqt::device::attach(w->window); // one D3D11 device for all windows (#358), before the first expose
-        w->scene = new vlqt::Scene(w->window, w->engine);
-        w->perf = new PerfMonitor(w->window, w->engine);
-        w->perf->setScene(w->scene); // F5 Scene page (#246); perf is deleted before scene
+        initShared(w);
         result = w;
         return 0;
     });
@@ -1082,10 +1144,15 @@ VLQT_API void vlqt_window_destroy(void* p)
         auto* w = static_cast<Window*>(p);
         if (!w)
             return 0;
+        // A scene unbinds first: its render target and opened texture belong to the QRhi of its render control.
+        if (w->offscreen)
+            vlqt::offscreen::release(w->offscreen);
         delete w->perf;
         delete w->scene;
         delete w->window;
         delete w->engine;
+        if (w->offscreen)
+            vlqt::offscreen::destroy(w->offscreen); // after its QQuickWindow: the render control and its QRhi
         delete w;
         QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         return 0;
@@ -1095,7 +1162,7 @@ VLQT_API void vlqt_window_destroy(void* p)
 VLQT_API void vlqt_window_show(void* p)
 {
     guarded([&]() -> int {
-        if (auto* w = static_cast<Window*>(p)) {
+        if (auto* w = static_cast<Window*>(p); w && !w->offscreen) {
             if (w->mode & VLQT_WINDOW_MODE_FULLSCREEN)
                 w->window->showFullScreen(); // show() = showNormal() would drop the state set before show (#234)
             else
@@ -1113,6 +1180,8 @@ VLQT_API int vlqt_window_set_icon(void* p, const char* utf8Path)
             setError("null window");
             return -1;
         }
+        if (w->offscreen)
+            return 0;
         const QString path = QString::fromUtf8(utf8Path ? utf8Path : "");
         if (path.isEmpty()) {
             w->window->setIcon(defaultIcon());
@@ -1141,7 +1210,8 @@ VLQT_API int vlqt_window_set_title(void* p, const char* title)
             setError("null window");
             return -1;
         }
-        w->window->setTitle(QString::fromUtf8(title ? title : ""));
+        if (!w->offscreen)
+            w->window->setTitle(QString::fromUtf8(title ? title : ""));
         return 0;
     });
 }
@@ -1154,6 +1224,10 @@ VLQT_API int vlqt_window_resize(void* p, int width, int height)
             setError("null window");
             return -1;
         }
+        if (w->offscreen) {
+            setError("resize: an offscreen scene takes its size from vlqt_offscreen_bind");
+            return VLQT_OFFSCREEN_BAD_ARGUMENT;
+        }
         w->window->resize(width, height);
         return 0;
     });
@@ -1162,7 +1236,7 @@ VLQT_API int vlqt_window_resize(void* p, int width, int height)
 VLQT_API void vlqt_window_hide(void* p)
 {
     guarded([&]() -> int {
-        if (auto* w = static_cast<Window*>(p))
+        if (auto* w = static_cast<Window*>(p); w && !w->offscreen)
             w->window->hide();
         return 0;
     });
@@ -1171,7 +1245,7 @@ VLQT_API void vlqt_window_hide(void* p)
 VLQT_API int vlqt_window_take_close_request(void* p)
 {
     auto* w = static_cast<Window*>(p);
-    if (!w || !w->closeFilter->requested)
+    if (!w || !w->closeFilter || !w->closeFilter->requested) // a scene has no close filter
         return 0;
     w->closeFilter->requested = false;
     return 1;
@@ -1180,7 +1254,7 @@ VLQT_API int vlqt_window_take_close_request(void* p)
 VLQT_API int vlqt_window_is_visible(void* p)
 {
     auto* w = static_cast<Window*>(p);
-    return (w && w->window->isVisible()) ? 1 : 0;
+    return (w && !w->offscreen && w->window->isVisible()) ? 1 : 0;
 }
 
 VLQT_API int vlqt_window_grab(void* p, const char* pngPath)
@@ -1191,6 +1265,8 @@ VLQT_API int vlqt_window_grab(void* p, const char* pngPath)
             setError("null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("grab");
         const QImage img = w->window->grabWindow();
         if (img.isNull()) {
             setError("grabWindow returned null image");
@@ -1490,6 +1566,8 @@ VLQT_API int vlqt_window_set_mode(void* p, unsigned int mask, unsigned int value
             setError("null window");
             return -1;
         }
+        if (w->offscreen)
+            return 0;
         mask &= VLQT_WINDOW_MODE_BORDERLESS | VLQT_WINDOW_MODE_FULLSCREEN;
         const unsigned changed = (w->mode ^ value) & mask;
         w->mode = (w->mode & ~mask) | (value & mask);
@@ -1564,6 +1642,8 @@ VLQT_API int vlqt_test_send_mouse(void* p, int type, float x, float y)
             setError("test_send_mouse: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_send_mouse");
         if (type == VLQT_MOUSE_LEAVE) {
             QEvent ev(QEvent::Leave);
             QCoreApplication::sendEvent(w->window, &ev);
@@ -1608,6 +1688,8 @@ VLQT_API int vlqt_test_send_wheel(void* p, float x, float y, int dx, int dy)
             setError("test_send_wheel: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_send_wheel");
         const QPointF local(x, y);
         QWheelEvent ev(local, w->window->mapToGlobal(local), QPoint(), QPoint(dx, dy), w->testButtons, Qt::NoModifier,
             Qt::NoScrollPhase, false);
@@ -1640,6 +1722,8 @@ VLQT_API int vlqt_test_send_touch(void* p, int type, int id, float x, float y)
             setError("test_send_touch: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_send_touch");
         auto& active = w->testTouch;
         auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
         const bool known = it != active.end();
@@ -1716,6 +1800,8 @@ VLQT_API int vlqt_test_queue_mouse(void* p, int type, float x, float y)
             setError("test_queue_mouse: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_queue_mouse");
         QEvent::Type t;
         Qt::MouseButton button = Qt::NoButton;
         Qt::MouseButtons buttons = w->testQueuedButtons;
@@ -1747,6 +1833,8 @@ VLQT_API int vlqt_test_queue_touch(void* p, int type, int id, float x, float y)
             setError("test_queue_touch: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_queue_touch");
         auto& active = w->testQueuedTouch;
         auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
         const bool known = it != active.end();
@@ -1893,6 +1981,8 @@ VLQT_API int vlqt_test_send_key(void* p, int key, int modifiers)
             setError("test_send_key: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_send_key");
         QKeyEvent ev(QEvent::KeyPress, key, Qt::KeyboardModifiers(modifiers));
         QCoreApplication::sendEvent(testKeyTarget(w), &ev);
         return 0;
@@ -1907,6 +1997,8 @@ VLQT_API int vlqt_test_send_key_text(void* p, int key, int modifiers, const char
             setError("test_send_key_text: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_send_key_text");
         const QString t = text ? QString::fromUtf8(text) : QString();
         QKeyEvent press(QEvent::KeyPress, key, Qt::KeyboardModifiers(modifiers), t);
         QCoreApplication::sendEvent(testKeyTarget(w), &press);

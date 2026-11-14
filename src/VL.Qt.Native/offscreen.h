@@ -1,9 +1,39 @@
 // Offscreen scenes (#116, QtTexture): a Qt scene without a native window (QQuickRenderControl) on the shared D3D11
 // device, rendering into a texture of a foreign device (Stride's), ordered by two shared fences. C ABI: the
 // vlqt_offscreen_* exports in vlqt.h; design: docs/decisions/render-texture.md. Main thread only.
+//
+// A scene is a window handle (struct Window of vlqt.cpp) whose QQuickWindow is driven by a QQuickRenderControl:
+// vlqt.cpp owns the parts every handle shares (engine, scene, gate, perf, graphics configuration), this part owns the
+// render control and the binding.
 #pragma once
 
+#include <string>
+
+class QQuickWindow;
+
 namespace vlqt::offscreen {
+
+// The offscreen part of a window handle (offscreen.cpp).
+struct State;
+
+// --- vlqt.cpp ---
+
+// Window handle of a new scene around window, a QQuickWindow of state's render control: QML engine, scene (apply,
+// poll), change count, perf monitor and graphics configuration on the shared device (device::attach), no input
+// filters. The handle owns window and state from here on; vlqt_window_destroy frees them.
+void* createHandle(QQuickWindow* window, State* state);
+// The offscreen part of handle; nullptr for a null handle or a window.
+State* stateOf(void* handle);
+QQuickWindow* quickWindow(void* handle);
+// vlqt_last_error.
+void setError(const std::string& message);
+
+// --- offscreen.cpp, called by vlqt_window_destroy ---
+
+// Before the QQuickWindow is deleted: frees the binding (render target, opened texture, fences).
+void release(State* state);
+// After the QQuickWindow is deleted: deletes the render control (and with it the scene's QRhi) and state.
+void destroy(State* state);
 
 // Backend of vlqt_test_offscreen_state (test_offscreen.cpp): fence values and render count of a bound scene.
 // Out pointers may be null. Returns a vlqt_offscreen_result code (protocol.h).
