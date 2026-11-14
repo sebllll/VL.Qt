@@ -418,6 +418,32 @@
             public const int Hang = 2;
         }
 
+        /// <summary>Return codes of the offscreen exports vlqt_offscreen_* (#116 QtTexture), see protocol.h.</summary>
+        public static class Offscreen
+        {
+            public const int Ok = 0;
+            /// <summary>Null handle, or a window handle that is no offscreen scene.</summary>
+            public const int NullScene = -1;
+            /// <summary>Null device, handle or context, or a size out of range or not the texture's.</summary>
+            public const int BadArgument = -7;
+            /// <summary>The scene has no texture.</summary>
+            public const int Unbound = -20;
+            /// <summary>The foreign device is on another adapter than QtNative's device.</summary>
+            public const int AdapterMismatch = -21;
+            /// <summary>OpenSharedResource1 failed or the handle is no usable Texture2D.</summary>
+            public const int OpenFailed = -22;
+            /// <summary>The render target view format is not allowed or does not fit the texture.</summary>
+            public const int FormatUnsupported = -23;
+            /// <summary>No ID3D11Device5/ID3D11DeviceContext4, or a fence could not be created, shared or opened.</summary>
+            public const int FenceFailed = -24;
+            /// <summary>QtNative's device is lost or being rebuilt; try again next frame.</summary>
+            public const int DeviceLost = -25;
+            /// <summary>No D3D11 (Linux, other graphics API) or not available on an offscreen scene.</summary>
+            public const int NotSupported = -26;
+            /// <summary>Stub of #116 phase 1, removed when all exports are implemented.</summary>
+            public const int NotImplemented = -27;
+        }
+
         /// <summary>Mouse event types of the TEST export vlqt_test_send_mouse, not part of the command buffer.</summary>
         public static class Mouse
         {
