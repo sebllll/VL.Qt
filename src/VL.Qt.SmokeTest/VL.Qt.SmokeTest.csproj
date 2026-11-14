@@ -28,6 +28,7 @@
     <Compile Include="..\VL.Qt\Reconciler\ICommandSink.cs" Link="ICommandSink.cs" />
     <!-- Renderer core (07a): WindowRenderer + reconciler + element model. -->
     <Compile Include="..\VL.Qt\WindowRenderer.cs" Link="WindowRenderer.cs" />
+    <Compile Include="..\VL.Qt\SceneCore.cs" Link="SceneCore.cs" />
     <Compile Include="..\VL.Qt\WindowPlacement.cs" Link="WindowPlacement.cs" />
     <Compile Include="..\VL.Qt\WindowSettings.cs" Link="WindowSettings.cs" />
     <Compile Include="..\VL.Qt\PerfStats.cs" Link="PerfStats.cs" />
