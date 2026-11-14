@@ -96,10 +96,10 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 
 | Script | Use |
 |---|---|
-| `build.ps1` | Builds everything: QtNative + Qt deploy, then `dotnet build src/VL.Qt`. `-Test` adds unit tests and the SmokeTest (log and grabs in `build/smoke/`), `-Only <scenario,...>` limits the SmokeTest, `-SmokeTimeout <s>` sets its time limit (default 600 s), `-Patch <doc.vl>` compile-checks a patch with vvvvc. `-SkipNative` for C#-only changes, `-Configuration Debug`, `-ForceDeploy`. Exit 0 = all steps passed, a summary lists each step. |
-| `start-vvvv.ps1` | Starts vvvv with VL.Qt from this repo. `-Build` builds first, `-Help "Draw Text"` opens `help/Qt/HowTo Draw Text.vl`, `-Patch <file>` any patch, `-PrepareOnly` only sets up the package repository. |
+| `build.ps1` | Builds everything: QtNative + Qt deploy, then `dotnet build src/VL.Qt` and `src/VL.Qt.Stride`. `-Test` adds unit tests and the SmokeTest (log and grabs in `build/smoke/`), `-Only <scenario,...>` limits the SmokeTest, `-SmokeTimeout <s>` sets its time limit (default 600 s), `-Patch <doc.vl>` compile-checks a patch with vvvvc. `-SkipNative` for C#-only changes, `-Configuration Debug`, `-ForceDeploy`. Exit 0 = all steps passed, a summary lists each step. |
+| `start-vvvv.ps1` | Starts vvvv with VL.Qt and VL.Qt.Stride from this repo (two junctions in the package repository). `-Build` builds both first, `-Help "Draw Text"` opens `help/Qt/HowTo Draw Text.vl`, `-Patch <file>` any patch, `-PrepareOnly` only sets up the package repository. |
 | `vvvvc.ps1` | Compiles or exports a patch with vvvvc (vvvv's command-line compiler). `-File <doc.vl>` (default `help/HelloWorld.vl`, a test patch of the repo that is not in the NuGet package; use a `help/Qt/` patch with a package), `-Out <dir>` (default `build/vvvvc`), further arguments go to vvvvc. Exit 0 = no build errors. |
-| `start-vvvv-with-nupkg.ps1` / `.cmd` | Starts vvvv with a packed `VL.Qt.*.nupkg` without installing it, e.g. to test a release. Takes the newest nupkg next to the script or from `-NupkgDir`; `-Help`, `-Patch` like above. The `.cmd` is for double-clicking. |
+| `start-vvvv-with-nupkg.ps1` / `.cmd` | Starts vvvv with a packed `VL.Qt.<version>.nupkg` without installing it, e.g. to test a release; the `VL.Qt.Stride.<version>.nupkg` of the same version next to it is unpacked too. Takes the newest nupkg next to the script or from `-NupkgDir`; `-Help`, `-Patch` like above. The `.cmd` is for double-clicking. |
 
 **Native build and Qt**
 
@@ -109,7 +109,7 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 | `build-native.ps1` | Builds only QtNative and deploys Qt into `runtimes/<rid>/native` (windeployqt). `-QtDir` for another Qt location, `-ForceDeploy` to redeploy. |
 | `trim-deploy.ps1` | Removes Qt parts VL.Qt never loads from `runtimes/<rid>/native`. Idempotent, `-WhatIf` shows what would go. |
 | `check-licenses.ps1` | Checks that the deployed runtime contains only LGPL-compatible Qt parts (whitelist). Exit 1 on a violation. |
-| `test-nupkg-consumer.ps1` | Consumes a packed nupkg like a vvvv export does and checks the published layout. `-Package <nupkg>`. |
+| `test-nupkg-consumer.ps1` | Consumes a packed nupkg like a vvvv export does and checks the published layout. `-Package <nupkg>`. On Windows it also consumes `VL.Qt.Stride` when its nupkg of the same version lies next to it and contains `VL.Qt.Stride.vl`; otherwise that part is skipped with a message. |
 
 **Linux (run in WSL or on Linux)**
 
@@ -151,7 +151,11 @@ dotnet build src/VL.Qt.Stride -c Release                  # DLL into VL.Qt.Strid
 dotnet pack src/VL.Qt.Stride -c Release -p:Version=1.2.3  # VL.Qt.Stride.1.2.3.nupkg
 ```
 
-**Both packages are released with the same version**: pack them with the same `-p:Version`. The `VL.Qt.Stride` package declares its dependency on `VL.Qt` with the version of the project reference, so a different `-p:Version` leaves it pointing at a `VL.Qt` that was not released with it. Packing `VL.Qt` needs the native Qt trees first, see the comment in `src/VL.Qt/VL.Qt.csproj`.
+**Both packages have the same version**: `VersionPrefix` in `Directory.Build.props` for local builds, one `-p:Version` for both in the CI. `VL.Qt.Stride` declares its dependency on `VL.Qt` with the version of the project reference, so packing it with another `-p:Version` than `VL.Qt` points it at a `VL.Qt` that was not released with it. Packing `VL.Qt` needs the native Qt trees first, see the comment in `src/VL.Qt/VL.Qt.csproj`.
+
+The CI (`build.yml`) builds `VL.Qt.Stride` on the Windows runners and packs it in the job `pack` on every run, so a broken pack shows up on a pull request. The step "Verify package (VL.Qt.Stride)" checks the layout and the nuspec (id, version, the only dependency `VL.Qt` at the same version). A tag or a plain `workflow_dispatch` uploads both `.nupkg` files; the release attaches both to the GitHub release and pushes both to nuget.org (see [Release](#release)).
+
+For vvvv, `tools/start-vvvv.ps1` puts both package folders into its package repository as junctions (`VL.Qt` and `VL.Qt.Stride`), so both are source packages in the dev workflow; `VL.Qt.Stride` has no effect for vvvv before `VL.Qt.Stride.vl` exists.
 
 ## CI
 
@@ -161,7 +165,7 @@ The repository `sebllll/VL.Qt` differs from forks and private copies in a few pl
 
 - The hosted runners are free for public repositories, so the `win-arm64` and `linux-arm64` entries also run on pull requests. Elsewhere they run only on tags and on a plain `workflow_dispatch`.
 - The workflow `public-check.yml` (keyed on the name only, so it runs while the repository is private too) fails on every pull request and push to `develop` and `main` if a file of a maintainer-only working directory (plans, internal notes, local agent settings) is tracked. Its job is a required status check.
-- The `release` job runs only for a `v*` tag whose commit is on `main` (job `release-gate`), in the GitHub environment `release`. In `sebllll/VL.Qt` with the environment variable `NUGET_USER` set, it also pushes the `.nupkg` to nuget.org through Trusted Publishing (no stored API key); elsewhere or without the variable that step is skipped with a notice. See [Release](#release).
+- The `release` job runs only for a `v*` tag whose commit is on `main` (job `release-gate`), in the GitHub environment `release`. In `sebllll/VL.Qt` with the environment variable `NUGET_USER` set, it also pushes both `.nupkg` files (`VL.Qt`, `VL.Qt.Stride`) to nuget.org through Trusted Publishing (no stored API key); elsewhere or without the variable that step is skipped with a notice. See [Release](#release).
 - Pull requests use `pull_request` (not `pull_request_target`); their jobs get no secrets and only `contents: read`.
 
 ## Release
@@ -170,7 +174,7 @@ One-time setup by a maintainer (repository settings):
 
 - [ ] Environment `release` (Settings > Environments): deployment branches and tags limited to `v*`. A required reviewer is optional: the tag ruleset below already decides who can release.
 - [ ] nuget.org Trusted Publishing policy (nuget.org > account > Trusted Publishing): repository owner `sebllll`, repository `VL.Qt`, workflow file `build.yml`, environment `release`, scope push for the package `VL.Qt`. A policy for a private repository is only active for a few days until its first successful push binds it to the repository; if it expired, create it again.
-- [ ] nuget.org Trusted Publishing policy for the second package ID `VL.Qt.Stride`, same settings as above with scope push for `VL.Qt.Stride`. Set it up by hand on nuget.org before the first release that contains the package; nothing in the repository or the CI creates it.
+- [ ] nuget.org Trusted Publishing policy for the second package ID `VL.Qt.Stride`, same settings as above with scope push for `VL.Qt.Stride`. Set it up by hand on nuget.org before the first release that contains the package; nothing in the repository or the CI creates it, and without it the push of that package fails.
 - [ ] Environment variable `NUGET_USER` in `release` (not a secret): the nuget.org profile name that owns the policy.
 - [ ] Rulesets (Settings > Rules > Rulesets):
   - `develop` and `main`: pull request required, no deletion or force push, required check `public check (no private files or content)`.
@@ -182,8 +186,8 @@ Per release:
 - [ ] Everything for the release is merged into `develop`; `tools/build.ps1 -Test` and the CI on `develop` are green.
 - [ ] Open the PR `develop` -> `main` and merge it with a merge commit (no squash).
 - [ ] Tag the merge commit on `main`: `git tag v<version>` (for example `v1.0.0`, `v1.1.0-rc.1`) and `git push origin v<version>`. The tag name is the package version.
-- [ ] The tag starts `build.yml` with all four RIDs. Check the job `pack`: the step "Verify package" prints the package size (limit 250 MB), the `qt/<rid>/` layout and the nuspec metadata (id, version, license, repository).
-- [ ] The job `release` creates the GitHub release with the `.nupkg` and pushes it to nuget.org (approve the deployment first if the environment has a required reviewer).
+- [ ] The tag starts `build.yml` with all four RIDs. Check the job `pack`: the step "Verify package" prints the package size (limit 250 MB), the `qt/<rid>/` layout and the nuspec metadata (id, version, license, repository); the step "Verify package (VL.Qt.Stride)" does the same for `VL.Qt.Stride`.
+- [ ] The job `release` creates the GitHub release with both `.nupkg` files and pushes them to nuget.org (approve the deployment first if the environment has a required reviewer).
 - [ ] Without `NUGET_USER` (or in a fork) the push is skipped with a notice instead of an error. A failed login means the policy does not match (repository, workflow file, environment) or has expired. Fallback: push by hand with `dotnet nuget push <file> -s https://api.nuget.org/v3/index.json -k <key>` and a short-lived API key.
 - [ ] A tag on a commit that is not on `main` builds and tests but does not release (warning in the job `release-gate`). Delete the tag and tag the right commit.
 - [ ] After publishing: check the package on nuget.org and install it with `tools/start-vvvv-with-nupkg.ps1`.

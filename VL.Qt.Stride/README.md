@@ -4,7 +4,7 @@ Companion package of [VL.Qt](https://www.nuget.org/packages/VL.Qt/) for Stride i
 
 ## Install
 
-Add `VL.Qt.Stride` to the dependencies of your vvvv patch. It pulls in `VL.Qt` with the same version; Stride (`VL.Stride`) comes with vvvv. The help patches are in the Help Browser under `Qt`.
+Add `VL.Qt.Stride` to the dependencies of your vvvv patch. It pulls in `VL.Qt` with the same version; Stride (`VL.Stride`) comes with vvvv. It is built and released together with `VL.Qt` from the same repository, so the two versions always match. The help patches are in the Help Browser under `Qt`.
 
 ## Documentation
 
