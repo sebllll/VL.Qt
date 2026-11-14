@@ -16,7 +16,7 @@ User and contributor documentation. For an overview and installation see the [pr
 | [profiling.md](profiling.md) | Repeatable CPU profiling of test scenarios with Ultra. |
 | [versioning.md](versioning.md) | Version numbers, what counts as the API, obsolete and experimental nodes. |
 | [architecture.md](architecture.md) | Element tree, reconciler, QtNative, timing, rendering and events. |
-| [development.md](development.md) | Prerequisites, first build, Visual Studio solution, scripts, tests, project layout, typical workflows, encoding and git hook. |
+| [development.md](development.md) | Prerequisites, first build, Visual Studio solution, the two packages (VL.Qt, VL.Qt.Stride), scripts, tests, release, project layout, typical workflows, encoding and git hook. |
 
 For coding agents and contributors, the working conventions (build, tests, code style, branches) are in [AGENTS.md](../AGENTS.md).
 

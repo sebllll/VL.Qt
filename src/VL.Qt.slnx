@@ -4,6 +4,8 @@
     <BuildDependency Project="VL.Qt.Native/VL.Qt.Native.csproj" />
   </Project>
   <Project Path="VL.Qt.Native/VL.Qt.Native.csproj" />
+  <!-- Windows only (VL.Stride); VL.Qt does not reference it. -->
+  <Project Path="VL.Qt.Stride/VL.Qt.Stride.csproj" />
   <Folder Name="/Solution Items/">
     <File Path="../Directory.Build.props" />
     <File Path="../README.md" />

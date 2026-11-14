@@ -42,6 +42,8 @@ VL.Qt is on [nuget.org](https://www.nuget.org/packages/VL.Qt/). In vvvv, open th
 
 <img src="docs/images/install-browse-packs.png" width="820" alt="vvvv References window, Browse Packs: the package VL.Qt, version 0.9.3, with the Add button">
 
+For Stride users there is the companion package `VL.Qt.Stride` (Windows only, depends on `VL.Qt`, same version); see [Development](docs/development.md#packages).
+
 The packages are also attached to the [GitHub releases](https://github.com/sebllll/VL.Qt/releases). To build VL.Qt yourself, see [Development](docs/development.md).
 
 ### First patch

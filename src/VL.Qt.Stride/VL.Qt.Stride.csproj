@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Windows only: VL.Stride targets net10.0-windows. VL.Qt itself stays platform-neutral and free of Stride. -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>VL.Qt.Stride</RootNamespace>
+    <!-- Package folder VL.Qt.Stride/ at the repo root (see docs/decisions/render-texture.md, Package layout). -->
+    <OutputPath>..\..\VL.Qt.Stride\lib\net10.0-windows7.0\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- Audit only direct references: VL.Stride's transitive packages are compile-time only here (runtime excluded) and ship with vvvv. -->
+    <NuGetAuditMode>direct</NuGetAuditMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="VL.Core" Version="$(VvvvVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="VL.Stride" Version="$(VvvvVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- VL.Qt.dll comes from the VL.Qt package at runtime: not copied, not packed. When packing, this reference becomes
+       a NuGet dependency on VL.Qt with the version of the referenced project (same -p:Version for both). -->
+  <ItemGroup>
+    <ProjectReference Include="..\VL.Qt\VL.Qt.csproj" Private="false" />
+  </ItemGroup>
+
+  <!-- NuGet package (vvvv source-package layout): VL.Qt.Stride.vl, lib/net10.0-windows7.0/VL.Qt.Stride.dll, help/.
+       CI: `dotnet pack src/VL.Qt.Stride -c Release -p:Version=...` with the same version as VL.Qt. VL.Stride ships with
+       vvvv, so the only dependency is VL.Qt (all PackageReferences are PrivateAssets="all"). -->
+  <PropertyGroup>
+    <PackageId>VL.Qt.Stride</PackageId>
+    <Authors>VL.Qt contributors</Authors>
+    <Copyright>Copyright (c) 2026 @sebllll (@schnellebuntebilder)</Copyright>
+    <Description>Qt 6 (Qt Quick) scenes of VL.Qt rendered into Stride textures, for vvvv gamma (Windows).</Description>
+    <PackageTags>vvvv;vl;qt;qml;stride</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/sebllll/VL.Qt</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/sebllll/VL.Qt</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <!-- The assembly goes to lib/net10.0-windows7.0/ via the explicit item below (the build output already lives there). -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoWarn>$(NoWarn);NU5100;NU5128</NoWarn>
+    <RepoRoot>$([MSBuild]::EnsureTrailingSlash('$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..'))'))</RepoRoot>
+    <PackageRoot>$(RepoRoot)VL.Qt.Stride\</PackageRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(PackageRoot)lib\net10.0-windows7.0\VL.Qt.Stride.dll;$(PackageRoot)lib\net10.0-windows7.0\VL.Qt.Stride.pdb;$(PackageRoot)lib\net10.0-windows7.0\VL.Qt.Stride.xml" Pack="true" PackagePath="lib\net10.0-windows7.0\" Visible="false" />
+    <None Include="$(PackageRoot)VL.Qt.Stride.vl" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(PackageRoot)help\**" Pack="true" PackagePath="help\" Visible="false" />
+    <None Include="$(PackageRoot)README.md" Pack="true" PackagePath="" Visible="false" />
+    <None Include="..\VL.Qt\nuget\icon.png" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(RepoRoot)LICENSE" Pack="true" PackagePath="" Visible="false" />
+  </ItemGroup>
+</Project>

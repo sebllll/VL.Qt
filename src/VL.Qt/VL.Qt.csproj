@@ -56,7 +56,6 @@
        folder; buildTransitive/VL.Qt.targets copies it with its structure to runtimes/<rid>/native in the app output. -->
   <PropertyGroup>
     <PackageId>VL.Qt</PackageId>
-    <VersionPrefix>0.1.0</VersionPrefix>
     <Authors>VL.Qt contributors</Authors>
     <Copyright>Copyright (c) 2026 @sebllll (@schnellebuntebilder)</Copyright>
     <Description>Qt 6 (Qt Quick) for vvvv gamma: 2D content such as motion, typography and layout. Ships the Qt runtime (LGPL-3.0, dynamically linked).</Description>
