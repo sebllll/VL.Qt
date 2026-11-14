@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 #if WINDOWS
 using System.Drawing;
 #endif
