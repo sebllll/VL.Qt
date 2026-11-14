@@ -25,6 +25,7 @@ Open `src/VL.Qt.slnx` in Visual Studio 2026 (or 2022 from 17.14) or Rider. It co
 |---|---|
 | `VL.Qt.Native` | QtNative (C++); building it calls `tools/build-native.ps1` (CMake + Ninja, Qt deploy) |
 | `VL.Qt` | the C# library (nodes, reconciler, interop); depends on `VL.Qt.Native` |
+| `VL.Qt.Stride` | companion package for Stride (Windows only, references VL.Stride and VL.Qt); builds into the package folder `VL.Qt.Stride/lib/net10.0-windows7.0/`. VL.Qt never references it. |
 | `VL.Qt.Tests` | unit tests (NUnit), run them from the Test Explorer |
 | `VL.Qt.SmokeTest` | drives QtNative without vvvv: rendering, grabs, performance limits, protocol drift |
 | `VL.Qt.Probe` | opens one Qt window from C# without vvvv and grabs a PNG; for platform and loader checks |
