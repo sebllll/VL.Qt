@@ -49,6 +49,18 @@ namespace VL.Qt.Stride
         }
 
         /// <summary>
+        /// Returns the largest width and height of a Texture2D at the device's feature level (D3D11 limits per level;
+        /// the QtNative bind accepts up to 16384).
+        /// </summary>
+        public static int MaxTextureSize(GraphicsDevice device) => device.Features.CurrentProfile switch
+        {
+            < GraphicsProfile.Level_9_3 => 2048,
+            < GraphicsProfile.Level_10_0 => 4096,
+            < GraphicsProfile.Level_11_0 => 8192,
+            _ => 16384,
+        };
+
+        /// <summary>
         /// Creates the texture Qt renders into: shader resource and render target, shared with an NT handle
         /// (D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE). The caller owns it.
         /// </summary>
