@@ -32,7 +32,6 @@
        vvvv, so the only dependency is VL.Qt (all PackageReferences are PrivateAssets="all"). -->
   <PropertyGroup>
     <PackageId>VL.Qt.Stride</PackageId>
-    <VersionPrefix>0.1.0</VersionPrefix>
     <Authors>VL.Qt contributors</Authors>
     <Copyright>Copyright (c) 2026 @sebllll (@schnellebuntebilder)</Copyright>
     <Description>Qt 6 (Qt Quick) scenes of VL.Qt rendered into Stride textures, for vvvv gamma (Windows).</Description>
