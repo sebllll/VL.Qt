@@ -47,7 +47,7 @@ dotnet run --project src/VL.Qt.SmokeTest -c Release -- --drift # protocol.h and 
 
 `tools/vvvvc.ps1 [-File <doc.vl>]` compiles/exports a patch with vvvv's command-line compiler (default `help/HelloWorld.vl`, output in `build/vvvvc/`). Exit code 0 means no build errors. Run `dotnet build src/VL.Qt -c Release` first. The script uses the newest vvvv as described under Setup; on ARM64 it adds a shim `vvvvc.arm64.dll` to the vvvv installation (the 8.0 ARM64 previews ship an x64 `vvvvc.dll`).
 
-The help patches in `help/Qt/` (one `HowTo …` per element) are the test base. When you change a node's pins or behavior, adapt the help patch in vvvv, then check and compile-check it:
+The help patches in `help/Qt/` (one `HowTo …` per element) are the test base. When you change a node's pins or behavior, adapt the help patch, then check and compile-check it:
 
 ```powershell
 python tools/vl-patch-check.py "help/Qt/HowTo Draw Text.vl"   # no argument: all help/Qt/*.vl and help/*.vl
@@ -58,7 +58,7 @@ tools/vvvvc.ps1 -File "help/Qt/HowTo Draw Text.vl"
 
 Rules for help patches:
 
-- Edit `.vl` files (vvvv's XML format) only through vvvv; the only scripted change is `tools/vl-patch-check.py --fix` (makes hidden pins with a value visible). Layout is manual.
+- `.vl` files (vvvv's XML format) may be written in vvvv or directly, by an agent or a script. A direct edit keeps the format as vvvv saves it: a new unique `Id` for every new element, CRLF, UTF-8 with BOM, and the elements, `Id`s and positions it does not change left as they are. Afterwards `tools/vl-patch-check.py` and `tools/vvvvc.ps1 -File` must pass. A help patch written or rearranged directly gets the `manual-check` label until someone has looked at it in vvvv.
 - Put an IOBox on a pin only if its value differs from the default and says something in the help patch. An IOBox at a pin is the same to the node as an attached value or channel. Example: an IOBox at `Interaction` makes the element opaque to input, so never put one there.
 - Animate (LFO) only where it serves the element (motion demos); otherwise use fixed values.
 - Layout: compact regions, content stacked top to bottom in data-flow order, IOBoxes as a staircase above (inputs) and below (outputs) their node. Choose defaults so the effect is visible.
