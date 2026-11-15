@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Stride.Core.Mathematics;
 using Stride.Graphics;
+// VL.Qt.MultisampleCount (the namespace of this file) would win over the one of Stride.Graphics.
+using StrideMultisampleCount = global::Stride.Graphics.MultisampleCount;
 
 namespace VL.Qt.Stride
 {
@@ -40,7 +42,7 @@ namespace VL.Qt.Stride
                     ArraySize = 1,
                     MipLevels = 1,
                     Depth = 1,
-                    MultisampleCount = MultisampleCount.None,
+                    MultisampleCount = StrideMultisampleCount.None,
                     Format = textureFormat,
                     Dimension = TextureDimension.Texture2D,
                     Usage = GraphicsResourceUsage.Default,

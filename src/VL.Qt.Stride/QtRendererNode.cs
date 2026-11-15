@@ -73,7 +73,7 @@ namespace VL.Qt.Stride
         {
             // Size and format come from the last draw: before it nothing renders (render-texture.md, "Timing").
             if (_drawn)
-                _scene.Update(input, _drawSize, _composition.CoreFormat, space, clearColor, true, enabled, debug);
+                _scene.Update(input, _drawSize, _composition.CoreFormat, space, clearColor, true, enabled, debug, MultisampleCount.None);
             error = _scene.Error.Length > 0 ? _scene.Error : _hint;
             return this;
         }
