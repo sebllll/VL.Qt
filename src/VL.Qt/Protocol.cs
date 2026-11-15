@@ -1,4 +1,4 @@
-namespace VL.Qt
+﻿namespace VL.Qt
 {
     /// <summary>
     /// Mirror of src/VL.Qt.Native/protocol.h (the single source of truth). Keep in sync:
@@ -440,8 +440,6 @@ namespace VL.Qt
             public const int DeviceLost = -25;
             /// <summary>No D3D11 (Linux, other graphics API) or not available on an offscreen scene.</summary>
             public const int NotSupported = -26;
-            /// <summary>Stub of #116 phase 1, removed when all exports are implemented.</summary>
-            public const int NotImplemented = -27;
         }
 
         /// <summary>Mouse event types of the TEST export vlqt_test_send_mouse, not part of the command buffer.</summary>

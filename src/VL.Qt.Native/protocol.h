@@ -551,8 +551,7 @@ enum vlqt_offscreen_result {
     VLQT_OFFSCREEN_FORMAT_UNSUPPORTED = -23, /* rtvFormat not allowed or not compatible with the texture's format */
     VLQT_OFFSCREEN_FENCE_FAILED = -24,       /* no ID3D11Device5/ID3D11DeviceContext4, or fence create/share/open failed */
     VLQT_OFFSCREEN_DEVICE_LOST = -25,        /* QtNative's device is lost or being rebuilt: try again next frame */
-    VLQT_OFFSCREEN_NOT_SUPPORTED = -26,      /* no D3D11 (Linux, other graphics API) or not available on a scene */
-    VLQT_OFFSCREEN_NOT_IMPLEMENTED = -27     /* stub of #116 phase 1, removed when all exports are implemented */
+    VLQT_OFFSCREEN_NOT_SUPPORTED = -26       /* no D3D11 (Linux, other graphics API) or not available on a scene */
 };
 
 /* Mouse event types of the TEST export vlqt_test_send_mouse (vlqt.h), not part of the command buffer. PRESS/RELEASE =

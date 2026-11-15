@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using Stride.Core.Mathematics;
+using VL.Lib.IO;
 using VL.Lib.IO.Notifications;
 using VL.Qt.Elements;
 
@@ -21,6 +22,12 @@ namespace VL.Qt
         readonly SceneCore _core;
         IntPtr _scene;
         bool _disposed;
+        // Input state (Notify): vvvv notifications carry the changed mouse button, Qt wants the buttons held after the event;
+        // _keysDown detects auto-repeat (a KeyDown of a key that is already down); _highSurrogate joins the two KeyPress
+        // notifications of a character outside the BMP.
+        int _mouseButtons;
+        readonly bool[] _keysDown = new bool[256];
+        char _highSurrogate;
         string _createError = "", _bindError = "";
 
         /// <param name="scene">Duplicate registry of the app (<see cref="SceneRegistry.ForApp"/>).</param>
@@ -116,11 +123,109 @@ namespace VL.Qt
 
         /// <summary>
         /// Translates a vvvv notification (mouse, touch, keyboard, focus; positions already in texture pixels) into the
-        /// Send* calls below. Main thread. Allocates nothing.
+        /// Send* calls below. Main thread. Allocates nothing. Not translated: <see cref="MouseClickNotification"/> (Qt derives
+        /// clicks and double clicks itself), <see cref="GotFocusNotification"/> (a press gives the scene focus) and gestures.
+        /// Errors of the Send* calls are dropped: a rejected event (e.g. a touch id in the wrong state) must not stop the stream.
         /// </summary>
         public void Notify(INotification notification)
         {
-            // TODO: Translation of #119 task 4 (mouse buttons and Keys to Qt values, KeyPress to SendText, LostFocus to SetFocus(false)).
+            if (_disposed || _scene == IntPtr.Zero)
+                return;
+            switch (notification)
+            {
+                case MouseDownNotification down:
+                    _mouseButtons |= InputMapping.ToQtButtons(down.Buttons);
+                    SendPointer(Protocol.PointerDevice.Mouse, Protocol.Pointer.Press, 0, down.Position, _mouseButtons, InputMapping.ToQtModifiers(down.ModifierKeys));
+                    break;
+                case MouseUpNotification up:
+                    _mouseButtons &= ~InputMapping.ToQtButtons(up.Buttons);
+                    SendPointer(Protocol.PointerDevice.Mouse, Protocol.Pointer.Release, 0, up.Position, _mouseButtons, InputMapping.ToQtModifiers(up.ModifierKeys));
+                    break;
+                case MouseMoveNotification move:
+                    SendPointer(Protocol.PointerDevice.Mouse, Protocol.Pointer.Move, 0, move.Position, _mouseButtons, InputMapping.ToQtModifiers(move.ModifierKeys));
+                    break;
+                case MouseWheelNotification wheel:
+                    SendWheel(wheel.Position, 0, wheel.WheelDelta, InputMapping.ToQtModifiers(wheel.ModifierKeys));
+                    break;
+                case MouseHorizontalWheelNotification hwheel:
+                    SendWheel(hwheel.Position, hwheel.WheelDelta, 0, InputMapping.ToQtModifiers(hwheel.ModifierKeys));
+                    break;
+                case MouseLostNotification lost:
+                    // The mouse left the window: hover ends. Held buttons stay: vvvv still delivers their release.
+                    SendPointer(Protocol.PointerDevice.Mouse, Protocol.Pointer.Leave, 0, lost.Position, _mouseButtons, InputMapping.ToQtModifiers(lost.ModifierKeys));
+                    break;
+                case TouchNotification touch:
+                    SendPointer(Protocol.PointerDevice.Touch, touch.Kind switch
+                    {
+                        TouchNotificationKind.TouchDown => Protocol.Pointer.Press,
+                        TouchNotificationKind.TouchUp => Protocol.Pointer.Release,
+                        _ => Protocol.Pointer.Move,
+                    }, touch.Id, touch.Position, 0, InputMapping.ToQtModifiers(touch.ModifierKeys));
+                    break;
+                case KeyDownNotification keyDown:
+                    SendKeyCode(Protocol.KeyEvent.Press, keyDown);
+                    break;
+                case KeyUpNotification keyUp:
+                    SendKeyCode(Protocol.KeyEvent.Release, keyUp);
+                    break;
+                case KeyPressNotification press:
+                    SendKeyChar(press.KeyChar);
+                    break;
+                case KeyboardLostNotification:
+                    Array.Clear(_keysDown);
+                    _highSurrogate = ' ';
+                    break;
+                case LostFocusNotification:
+                    // The host window lost the focus: unfocus the scene, forget pressed keys.
+                    Array.Clear(_keysDown);
+                    _highSurrogate = ' ';
+                    SetFocus(false);
+                    break;
+            }
+        }
+
+        void SendKeyCode(int type, KeyCodeNotification notification)
+        {
+            var code = notification.KeyCode & Keys.KeyCode;
+            var key = InputMapping.ToQtKey(code);
+            if (key == InputMapping.QtKeyUnknown)
+                return;
+            var modifiers = InputMapping.ToQtModifiers(notification.ModifierKeys);
+            if (InputMapping.IsKeypad(code))
+                modifiers |= InputMapping.QtKeypad;
+            var index = (int)code;
+            var autoRepeat = false;
+            if (index < _keysDown.Length)
+            {
+                autoRepeat = type == Protocol.KeyEvent.Press && _keysDown[index];
+                _keysDown[index] = type == Protocol.KeyEvent.Press;
+            }
+            SendKey(type, key, modifiers, autoRepeat);
+        }
+
+        // KeyPress carries the typed character (layout, shift and dead keys applied). Control characters (Enter, Tab, Backspace,
+        // Ctrl+letter) come as key events already and are not text. A character outside the BMP arrives as two notifications.
+        void SendKeyChar(char c)
+        {
+            if (char.IsHighSurrogate(c))
+            {
+                _highSurrogate = c;
+                return;
+            }
+            if (char.IsLowSurrogate(c))
+            {
+                if (_highSurrogate != ' ')
+                {
+                    Span<char> pair = stackalloc char[2] { _highSurrogate, c };
+                    SendText(pair);
+                }
+                _highSurrogate = ' ';
+                return;
+            }
+            _highSurrogate = ' ';
+            if (char.IsControl(c))
+                return;
+            SendText(new ReadOnlySpan<char>(in c));
         }
 
         /// <summary>Pointer event (<see cref="Protocol.Pointer"/>) of <paramref name="device"/> (<see cref="Protocol.PointerDevice"/>); mouse: <paramref name="buttons"/> = Qt::MouseButtons held after the event; touch/pen: <paramref name="id"/> of the point.</summary>
@@ -183,7 +288,6 @@ namespace VL.Qt
             Protocol.Offscreen.FenceFailed => "Fences for the shared texture could not be created (ID3D11Device5 and ID3D11DeviceContext4 are required)",
             Protocol.Offscreen.DeviceLost => "The graphics device of QtNative is lost or being rebuilt",
             Protocol.Offscreen.NotSupported => "Offscreen scenes need Direct3D 11 (Windows)",
-            Protocol.Offscreen.NotImplemented => "Offscreen scenes are not implemented in this QtNative build",
             _ => $"Offscreen scene error {code}",
         };
 
