@@ -31,6 +31,11 @@ namespace VL.Qt.Elements
         public float Volume { get; init; } = 1;
         /// <summary>Qt VideoOutput default: Fit.</summary>
         public VideoFillMode FillMode { get; init; } = VideoFillMode.Fit;
+        /// <summary>
+        /// Audio tap resource id (#22, Video (VL.Audio) only), 0 = none: Qt's own output plays. A tap turns Qt's output
+        /// off and sends the sound to the tap (protocol.h "Audio tap"). Not a pin of Video [VL.Qt].
+        /// </summary>
+        internal ulong AudioTap { get; init; }
 
         /// <summary>Smallest rate sent to Qt (0 and reverse playback are not supported, use Playing = false to stop).</summary>
         public const float MinRate = 0.01f;

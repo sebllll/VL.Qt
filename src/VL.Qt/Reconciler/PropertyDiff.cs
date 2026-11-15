@@ -327,6 +327,9 @@ namespace VL.Qt
             float pv = Video.ClampVolume(p.Volume), nv = Video.ClampVolume(n.Volume);
             if (pv != nv)
                 _sink.SetF32(id, P.Volume, nv);
+            // Before Playing, so Qt's output is off before the first buffer plays (#22); Video [VL.Qt] keeps 0 and never sends it.
+            if (p.AudioTap != n.AudioTap)
+                _sink.SetU64(id, P.AudioTap, n.AudioTap);
             // Last: QtNative starts playback when Playing arrives (or once the media is loaded).
             if (p.Playing != n.Playing)
                 _sink.SetBool(id, P.Playing, n.Playing);

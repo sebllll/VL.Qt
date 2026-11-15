@@ -1,4 +1,5 @@
 #include "elements.h"
+#include "audio_tap.h"
 #include "effectchain.h"
 
 #include "qtimageitem.h"
@@ -734,6 +735,8 @@ std::vector<PropDef> videoProps()
         {VLQT_PROP_KEEP_LAST_FRAME, VLQT_VT_BOOL, setQmlBool, "keepLastFrame"},
         {VLQT_PROP_PLAYBACK_RATE, VLQT_VT_F32, setQmlPositiveReal, "playbackRate"},
         {VLQT_PROP_VOLUME, VLQT_VT_F32, setVolume, "volume"},
+        // Sound to VL.Audio instead of Qt's output (#22, audio_tap.h)
+        {VLQT_PROP_AUDIO_TAP, VLQT_VT_U64, res::audio::setVideoTap, nullptr},
     };
 }
 

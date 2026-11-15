@@ -175,6 +175,8 @@
             public const ushort PlaybackRate = 674;
             public const ushort Volume = 675;
             public const ushort KeepLastFrame = 676;
+            /// <summary>u64 audio tap resource id (<see cref="ResKind.AudioTap"/>), 0 = none: Qt's own output plays (#22, protocol.h "Audio tap").</summary>
+            public const ushort AudioTap = 677;
             public const ushort Enabled = 704;
             public const ushort AutoRepeat = 705;
             /// <summary>Value of a value input in the element's value type (SpinBox i32, CheckBox/Switch bool, Slider f32, TextField string); never echoed as <see cref="Ev.Value"/>.</summary>
@@ -507,6 +509,20 @@
             public const int Snapshot = 3;
             /// <summary>.qsb shader of one stage (vlqt_res_load_shader), for ShaderEffect (#437).</summary>
             public const int Shader = 4;
+            /// <summary>Sound of a Video as float samples (vlqt_res_audio_tap_init / vlqt_res_read_audio, #22).</summary>
+            public const int AudioTap = 5;
+        }
+
+        /// <summary>Audio tap (#22, protocol.h "Audio tap"): flags of <see cref="Native.vlqt_audio_tap_state.flags"/> and the limits of vlqt_res_audio_tap_init.</summary>
+        public static class AudioTap
+        {
+            /// <summary>A Video element (player) writes into the tap.</summary>
+            public const int Attached = 1;
+            /// <summary>That player is playing (buffers are expected).</summary>
+            public const int Playing = 2;
+            public const int MaxChannels = 8;
+            public const int MinSampleRate = 8000;
+            public const int MaxSampleRate = 384000;
         }
 
         /// <summary>Shader stages of vlqt_res_load_shader (#437).</summary>
