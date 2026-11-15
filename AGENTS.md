@@ -50,7 +50,7 @@ dotnet run --project src/VL.Qt.SmokeTest -c Release -- --drift # protocol.h and 
 The help patches in `help/Qt/` (one `HowTo …` per element) are the test base. When you change a node's pins or behavior, adapt the help patch, then check and compile-check it:
 
 ```powershell
-python tools/vl-patch-check.py "help/Qt/HowTo Draw Text.vl"   # no argument: all help/Qt/*.vl and help/*.vl
+python tools/vl-patch-check.py "help/Qt/HowTo Draw Text.vl"   # no argument: all help/Qt/*.vl, help/*.vl and VL.Qt.Stride/help/*.vl
 tools/vvvvc.ps1 -File "help/Qt/HowTo Draw Text.vl"
 ```
 
