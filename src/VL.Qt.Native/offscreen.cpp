@@ -19,6 +19,7 @@
 #include <QtQuick/QQuickRenderControl>
 #include <QtQuick/QQuickRenderTarget>
 #include <QtQuick/QQuickWindow>
+#include <rhi/qrhi.h>
 #include <QtQuick/QSGRendererInterface>
 // Scene focus (#119): SceneRenderControlPrivate. Private API, check on Qt updates.
 #include <QtQuick/private/qquickrendercontrol_p.h>
@@ -46,6 +47,8 @@
 #endif
 
 namespace vlqt::offscreen {
+
+int g_spikeSamples = 1; // SPIKE #118: sample count of the next bind
 
 // Lifetime: vlqt_offscreen_create -> (bind -> render_batch ... -> unbind)* -> vlqt_window_destroy (release, then
 // destroy after the QQuickWindow). The QRhi of the scene belongs to renderControl and lives on QtNative's shared device
@@ -450,9 +453,12 @@ int bind(State* s, void* device, void* ntHandle, int width, int height, int form
     }
 
     // 1 DIP = 1 texture pixel, also on a high-DPI screen.
+    // SPIKE #118: MSAA through an intermediate multisample texture that Qt resolves into the target at the pass end.
+    const int samples = qMax(1, g_spikeSamples);
+    const QQuickRenderTarget::Flags msaa = samples > 1 ? QQuickRenderTarget::Flag::MultisampleResolve : QQuickRenderTarget::Flags();
     auto target = linearPass.source
-        ? QQuickRenderTarget::fromD3D11Texture(linearPass.source, uint(DXGI_FORMAT_R16G16B16A16_FLOAT), QSize(width, height))
-        : QQuickRenderTarget::fromD3D11Texture(texture.Get(), uint(format), QSize(width, height));
+        ? QQuickRenderTarget::fromD3D11Texture(linearPass.source, uint(DXGI_FORMAT_R16G16B16A16_FLOAT), QSize(width, height), samples, msaa)
+        : QQuickRenderTarget::fromD3D11Texture(texture.Get(), uint(format), QSize(width, height), samples, msaa);
     target.setDevicePixelRatio(1.0);
     s->window->setGeometry(0, 0, width, height);
     s->window->setRenderTarget(target);
@@ -734,6 +740,32 @@ int testState(void* scene, unsigned long long* readFence, unsigned long long* wr
 } // namespace vlqt::offscreen
 
 using namespace vlqt::offscreen;
+
+// SPIKE #118: sample count used by the next vlqt_offscreen_bind.
+VLQT_API void vlqt_spike_offscreen_samples(int samples) { g_spikeSamples = samples; }
+
+// SPIKE #118: bit n set = QRhi of the upload QRhi lists count n; *d3dMask: bit n = D3D11 device has
+// quality levels for count n in dxgiFormat.
+VLQT_API int vlqt_spike_sample_counts(int dxgiFormat, int* d3dMask)
+{
+    QRhi* r = vlqt::device::uploadRhi();
+    if (!r)
+        return -1;
+    int mask = 0;
+    for (int c : r->supportedSampleCounts())
+        if (c < 31)
+            mask |= 1 << c;
+    *d3dMask = 0;
+#ifdef _WIN32
+    if (auto* dev = static_cast<ID3D11Device*>(vlqt::device::nativeDevice(r)))
+        for (UINT c = 1; c <= 16; c *= 2) {
+            UINT q = 0;
+            if (SUCCEEDED(dev->CheckMultisampleQualityLevels(DXGI_FORMAT(dxgiFormat), c, &q)) && q > 0)
+                *d3dMask |= 1 << c;
+        }
+#endif
+    return mask;
+}
 
 namespace {
 

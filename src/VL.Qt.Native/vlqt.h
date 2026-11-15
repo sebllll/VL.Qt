@@ -178,6 +178,11 @@ VLQT_API int   vlqt_window_set_icon(void* w, const char* utf8Path);
  * EV_WINDOW_GEOMETRY reports the resulting state (VLQT_WINDOW_FULLSCREEN). vlqt_window_get_mode = requested modes. */
 VLQT_API int          vlqt_window_set_mode(void* w, unsigned int mask, unsigned int value);
 VLQT_API unsigned int vlqt_window_get_mode(void* w);
+/* SPIKE #118 (MSAA): prototype exports. */
+VLQT_API int vlqt_spike_window_set_samples(void* w, int samples);
+VLQT_API int vlqt_spike_window_samples(void* w);
+VLQT_API int vlqt_spike_sample_counts(int dxgiFormat, int* d3dMask);
+VLQT_API void vlqt_spike_offscreen_samples(int samples);
 VLQT_API int   vlqt_window_grab(void* w, const char* pngPath); /* test */
 
 VLQT_API int   vlqt_window_get_perf(void* w, vlqt_perf* out);
