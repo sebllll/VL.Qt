@@ -25,4 +25,9 @@
     <ProjectReference Include="..\VL.Qt\VL.Qt.csproj" />
   </ItemGroup>
 
+  <!-- VL.Qt.Stride needs Stride; its classes without Stride types are compiled in. -->
+  <ItemGroup>
+    <Compile Include="..\VL.Qt.Stride\NotificationQueue.cs" Link="Stride\NotificationQueue.cs" />
+  </ItemGroup>
+
 </Project>
