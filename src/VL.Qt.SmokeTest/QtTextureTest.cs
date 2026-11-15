@@ -59,7 +59,7 @@ static partial class QtTextureTest
         var after = Native.vlqt_test_process_handle_count();
         check(after == baseline, $"116: handle count back at baseline ({baseline} -> {after})");
 
-        OffscreenScene(outDir, check);
+        OffscreenScene(outDir, check, pump);
         AdapterAndDeviceLoss(check, pump);
         // Task 1.8. Order matters: the window comparison goes last (a window renders on QtNative's device, which makes an adapter move impossible).
         Formats(check);
@@ -211,7 +211,7 @@ static partial class QtTextureTest
 
     // Task 1.3/1.4: a scene bound to a B8G8R8A8_TYPELESS texture of the test device, one render through the fences,
     // readback; an unchanged scene renders nothing; unbind and destroy give back every device reference.
-    static void OffscreenScene(string outDir, Action<bool, string> report)
+    static void OffscreenScene(string outDir, Action<bool, string> report, Action<int> pump)
     {
         bool check(bool ok, string what)
         {
@@ -277,6 +277,7 @@ static partial class QtTextureTest
             Native.vlqt_test_offscreen_state(scene, out var read2, out var write2, out var renders2);
             check(rc == 0 && read2 == read1 && write2 == write1 && renders2 == renders1,
                 $"116 scene: unchanged scene renders nothing (rc {rc}, read {read2}, write {write2}, renders {renders2})");
+            OffscreenSnapshot(scene, rect, rw, rh, context, check, pump);
 
             check(Native.vlqt_offscreen_unbind(scene) == Protocol.Offscreen.Ok && Native.vlqt_offscreen_is_bound(scene) == 0, "116 scene: unbind");
             check(Native.vlqt_test_offscreen_state(scene, out _, out _, out _) == Protocol.Offscreen.Unbound, "116 scene: state after unbind = unbound");
@@ -304,6 +305,45 @@ static partial class QtTextureTest
         int qtRefsAfter = QtRefs();
         check(qtRefsBefore > 0 && qtRefsAfter == qtRefsBefore, $"116 scene: QtNative device references back after destroy ({qtRefsBefore} -> {qtRefsAfter})");
         check(Native.vlqt_test_d3d11_release_device(device, context) == 0, "116 scene: test device freed");
+    }
+
+    // #128: snapshot of an element of a bound offscreen scene that has nothing to render (not dirty). The scene is never
+    // exposed; the grab asks for a frame, the next render_batch renders it and the pump delivers the pixels (red, rw x rh).
+    static void OffscreenSnapshot(IntPtr scene, uint element, int rw, int rh, IntPtr context, Func<bool, string, bool> check, Action<int> pump)
+    {
+        if (!check(Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var id) == 0, "128 snapshot: create resource"))
+            return;
+        int rc = Native.vlqt_res_snapshot(id, scene, element, 1);
+        check(rc == 0, $"128 snapshot: start on the offscreen scene ({rc})");
+        int state = 0, frames = 0, rendered = 0;
+        for (; frames < 120 && state is not (Protocol.ResState.Ready or Protocol.ResState.Failed); frames++)
+        {
+            rendered += Math.Max(0, Native.OffscreenRenderBatch(context, new[] { scene }, 0));
+            pump(1);
+            state = Native.vlqt_res_wait(id, 0);
+        }
+        var error = "";
+        var buf = new byte[64 * 1024];
+        int n = Native.ResPoll(buf);
+        for (int at = 0; at < n;)
+        {
+            var ev = BitConverter.ToUInt16(buf, at);
+            var len = BitConverter.ToUInt16(buf, at + 2);
+            if (ev == Protocol.ResEv.Error && BitConverter.ToUInt64(buf, at + 4) == id)
+                error = System.Text.Encoding.UTF8.GetString(buf, at + 12, len - 8);
+            at += (4 + len + 3) & ~3;
+        }
+        check(state == Protocol.ResState.Ready && rendered >= 1,
+            $"128 snapshot: Ready after {frames} frame(s), {rendered} render(s) (state {state}) {error}");
+        var pixels = new byte[rw * rh * 4];
+        int read = Native.ResReadSnapshot(id, pixels, out var desc);
+        // BGRA8 premultiplied: bytes B, G, R, A.
+        string Px(int x, int y) { int i = (y * rw + x) * 4; return read == pixels.Length ? $"{pixels[i + 2]},{pixels[i + 1]},{pixels[i]},{pixels[i + 3]}" : "-"; }
+        check(read == pixels.Length && desc.width == rw && desc.height == rh && Px(rw / 2, rh / 2) == "255,0,0,255" && Px(0, 0) == "255,0,0,255"
+              && Px(rw - 1, rh - 1) == "255,0,0,255",
+            $"128 snapshot: {desc.width}x{desc.height} red ({read} bytes, {Px(rw / 2, rh / 2)}, {Px(0, 0)}, {Px(rw - 1, rh - 1)})");
+        Native.vlqt_res_release(id);
+        pump(1);
     }
 
     // Premultiplied BGRA rows as a PNG, to look at.

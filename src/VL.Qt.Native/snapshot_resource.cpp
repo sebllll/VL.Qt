@@ -1,6 +1,7 @@
 #include "snapshot_resource.h"
 
 #include "commands.h"
+#include "offscreen.h"
 #include "protocol.h"
 #include "vlqt.h"
 
@@ -12,6 +13,7 @@
 #include <QtQuick/QQuickItemGrabResult>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
+#include <QtGui/private/qwindow_p.h> // grab of an offscreen scene (#128)
 #include <QtQuick/private/qquickshadereffectsource_p.h> // frame grab of a Group (#475)
 
 #include <algorithm>
@@ -20,6 +22,7 @@
 #include <cstring>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace vlqt::res::snap {
@@ -106,6 +109,7 @@ struct Grab
     QPointer<QQuickItem> item;
     QPointer<QQuickItem> frameSource; // hidden ShaderEffectSource over the frame of a Group (frameTarget), or null
     QPointer<QQuickWindow> window;
+    bool offscreen = false; // window is an offscreen scene (#128): never exposed, renders only while bound
     QSize size;
     int64_t startMs = 0;
     int64_t startUs = 0; // for the duration in the overlay (#548)
@@ -214,6 +218,22 @@ QQuickItem* frameTarget(Scene& scene, QQuickItem* item, const QRectF& frame, QSi
     return source;
 }
 
+// grabToImage of source. QQuickItemGrabResult refuses an item whose window is not visible, which the window of an
+// offscreen scene never is (QQuickRenderControl, no native window; render-texture.md). The check is only in Qt's
+// create: the grab itself runs in the scene's next render (render_batch). So the offscreen window counts as visible for
+// this one call, set in QWindowPrivate without show() (show would create a native window). Private API: check on Qt
+// updates; removed when Qt grabs items of a render control window without a visible render window.
+QSharedPointer<QQuickItemGrabResult> grab(QQuickItem* source, QSize request, bool offscreenScene)
+{
+    if (!offscreenScene)
+        return source->grabToImage(request);
+    QWindowPrivate* wd = QWindowPrivate::get(source->window());
+    const bool visible = std::exchange(wd->visible, true);
+    auto result = source->grabToImage(request);
+    wd->visible = visible;
+    return result;
+}
+
 } // namespace
 
 Kind* kind()
@@ -238,6 +258,8 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
     std::string error;
     QRectF frame;
     QQuickItem* item = target(scene, elementId, frame, error);
+    // An offscreen scene (QtTexture) has no native window and is never exposed; it renders in render_batch (#128).
+    const bool offscreenScene = offscreen::isScene(scene.window);
     QSize size;
     if (item) {
         if (maxEdgePx > 0) {
@@ -249,7 +271,7 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
             w = std::min(w, double(maxEdgePx));
             h = std::min(h, double(maxEdgePx));
         }
-        if (!scene.window->isExposed())
+        if (!offscreenScene && !scene.window->isExposed())
             error = "snapshot: the window is not exposed (hidden or minimized)";
         else if (!(w >= 1 && h >= 1))
             error = "snapshot: element " + std::to_string(elementId) + " has no size";
@@ -261,6 +283,10 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
     }
     QSharedPointer<QQuickItemGrabResult> result;
     QQuickItem* frameSource = nullptr;
+    // grabToImage finishes in the next render of the window. render_batch renders only a dirty offscreen scene, so the
+    // grab marks it dirty: the next render_batch renders it also when nothing changed.
+    if (error.empty() && offscreenScene && !offscreen::requestFrame(scene.window))
+        error = "snapshot: the offscreen scene is not bound to a texture (it does not render)";
     if (error.empty()) {
         // grabToImage multiplies the target size with the window's device pixel ratio (300x200 at 1.5 -> 450x300).
         // The contract is pixel size = DIP * scale independent of the DPR (deterministic for export), so ask for
@@ -270,7 +296,7 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
                                                     : size;
         if (frame.topLeft() != QPointF(0, 0))
             frameSource = frameTarget(scene, item, frame, size);
-        result = (frameSource ? frameSource : item)->grabToImage(request);
+        result = grab(frameSource ? frameSource : item, request, offscreenScene);
         if (!result) {
             error = "snapshot: Qt refused the grab of element " + std::to_string(elementId) + " (details in the log)";
             delete frameSource; // never rendered
@@ -297,6 +323,7 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
     g->item = item;
     g->frameSource = frameSource;
     g->window = scene.window;
+    g->offscreen = offscreenScene;
     g->size = size;
     g->startMs = steadyMs();
     g->startUs = steadyUs();
@@ -398,10 +425,14 @@ void endFrame()
             g.done = true;
             continue;
         }
-        if (g.current && !g.window->isExposed())
+        if (g.current && !g.offscreen && !g.window->isExposed())
             failGrab(g, "snapshot: the window is no longer exposed (hidden or minimized during the grab)");
+        // Still bound: keeps asking for the frame until the grab is done (a render clears dirty).
+        else if (g.current && g.offscreen && !offscreen::requestFrame(g.window))
+            failGrab(g, "snapshot: the offscreen scene was unbound during the grab");
         else if (g.current && now - g.startMs > timeoutMs)
-            failGrab(g, "snapshot: no result after " + std::to_string(timeoutMs) + " ms (the window does not render)");
+            failGrab(g, "snapshot: no result after " + std::to_string(timeoutMs) + " ms ("
+                + (g.offscreen ? "the offscreen scene does not render: QtTexture disabled or not drawn)" : "the window does not render)"));
         if (!g.current && now - g.startMs > abandonMs) // given up and Qt still holds it: let it go
             g.done = true;
     }

@@ -412,6 +412,30 @@ void destroy(State* state)
     delete state;
 }
 
+namespace {
+
+State* sceneOf(const QQuickWindow* window)
+{
+    const auto it = std::find_if(s_scenes.begin(), s_scenes.end(), [window](const State* s) { return s->window == window; });
+    return it != s_scenes.end() ? *it : nullptr;
+}
+
+} // namespace
+
+bool isScene(const QQuickWindow* window)
+{
+    return window && sceneOf(window);
+}
+
+bool requestFrame(const QQuickWindow* window)
+{
+    State* s = sceneOf(window);
+    if (!s || !s->bound)
+        return false;
+    s->dirty = true;
+    return true;
+}
+
 int testState(void* scene, unsigned long long* readFence, unsigned long long* writeFence, long long* renders)
 {
     State* s = stateOf(scene);
