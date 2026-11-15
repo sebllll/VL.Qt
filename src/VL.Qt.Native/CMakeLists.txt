@@ -14,7 +14,7 @@ endif()
 set(VLQT_OUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../runtimes/${VLQT_RID}/native" CACHE PATH "Deployment folder")
 cmake_path(NORMAL_PATH VLQT_OUT_DIR)
 
-find_package(Qt6 6.12 REQUIRED COMPONENTS Gui GuiPrivate Qml Quick QuickPrivate QuickControls2 ShaderTools ShaderToolsPrivate)
+find_package(Qt6 6.12 REQUIRED COMPONENTS Gui GuiPrivate Qml Quick QuickPrivate QuickControls2 Multimedia ShaderTools ShaderToolsPrivate)
 qt_standard_project_setup()
 
 add_library(vlqt SHARED vlqt.cpp vlqt.h device.cpp device.h perf.cpp perf.h commands.cpp commands.h effectchain.cpp effectchain.h elements.cpp elements.h events.cpp events.h touch.cpp touch.h debug.cpp debug.h feedback.cpp feedback.h resources.cpp resources.h image_resource.cpp image_resource.h qtimageitem.cpp qtimageitem.h snapshot_resource.cpp snapshot_resource.h audio_tap.cpp audio_tap.h shader_resource.cpp shader_resource.h shadereffectitem.cpp shadereffectitem.h qmlitem.cpp qmlitem.h vlstyle.cpp vlstyle.h offscreen.cpp offscreen.h render_thread.cpp render_thread.h test_offscreen.cpp protocol.h)
@@ -60,7 +60,7 @@ if(VLQT_SANITIZE)
     target_compile_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE} -fno-omit-frame-pointer -g)
     target_link_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE})
 endif()
-target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick Qt6::QuickPrivate Qt6::QuickControls2) # GuiPrivate: QRhi (GPU timestamps); QuickPrivate: QQuickPointerDeviceHandler (touch.h, check on Qt updates); QuickControls2: QQuickStyle
+target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick Qt6::QuickPrivate Qt6::QuickControls2 Qt6::Multimedia) # GuiPrivate: QRhi (GPU timestamps); QuickPrivate: QQuickPointerDeviceHandler (touch.h, check on Qt updates); QuickControls2: QQuickStyle; Multimedia: QAudioBufferOutput of the audio tap (#22, deployed for the Video element anyway)
 # ShaderToolsPrivate: QShaderBaker (runtime bake of ShaderEffect sources, #483). rhi/qshaderbaker.h lies only in the
 # versioned include dir (include/QtShaderTools/<ver>/QtShaderTools), which just the Private target adds (RHI API,
 # limited compatibility guarantees: check on Qt updates). Qt6ShaderTools is deployed next to QtNative.

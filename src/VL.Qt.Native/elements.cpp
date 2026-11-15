@@ -680,6 +680,8 @@ constexpr const char* kVideoQml =
     "  readonly property alias vlqtPosition: player.position\n"
     "  readonly property alias vlqtDuration: player.duration\n"
     "  property string vlqtError: \"\"\n"
+    "  readonly property alias vlqtPlayer: player\n" // audio tap (#22, audio_tap.cpp)
+    "  readonly property alias vlqtOut: out\n"
     VLQT_QML_PATH_FN
     "  function vlqtSync() { if (playing) player.play(); else player.pause(); }\n"
     "  function vlqtRelease() { playing = false; player.stop(); player.source = \"\"; }\n"
