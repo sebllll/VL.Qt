@@ -13,12 +13,12 @@ using IServiceRegistry = global::Stride.Core.IServiceRegistry;
 namespace VL.Qt.Stride
 {
     /// <summary>
-    /// Renders the QtTexture nodes of one app host (service of the <see cref="AppHost"/>, disposed with it): the nodes
+    /// Renders the QtTexture scenes of one app host (service of the <see cref="AppHost"/>, disposed with it): the scenes
     /// schedule themselves in Update; at the start of Stride's draw (a game system with the lowest DrawOrder, after all
     /// updates, before any other system draws) this applies their commands, renders all of them in one native call
     /// (<see cref="OffscreenRenderer.RenderBatch"/>, ordered against Stride's immediate context by fences) and polls
     /// their events. Like SkiaTexture.DefaultRenderer, which hooks the internal VLGame.DrawStarted, raised right before
-    /// the game systems draw. Also tells the nodes when Stride's device is reset or disposed. Main thread only.
+    /// the game systems draw. Also tells the scenes when Stride's device is reset or disposed. Main thread only.
     /// </summary>
     [SupportedOSPlatform("windows")]
     internal sealed class QtTextureRenderer : IDisposable
@@ -29,7 +29,7 @@ namespace VL.Qt.Stride
         readonly ILogger _logger;
         readonly DrawStartSystem _system;
         readonly IGraphicsDeviceService? _deviceService;
-        readonly List<QtTextureNode> _scheduled = new();
+        readonly List<SharedTextureScene> _scheduled = new();
         // Renderers of one batch: reused, so a frame allocates nothing.
         OffscreenRenderer[] _batch = new OffscreenRenderer[8];
         bool _disposed;
@@ -59,8 +59,8 @@ namespace VL.Qt.Stride
         }
 
         /// <summary>
-        /// Raised before Stride resets or disposes its device: the native device and the textures of the nodes are about to
-        /// go, so the nodes release their texture and bind a new one with the next Update.
+        /// Raised before Stride resets or disposes its device: the native device and the textures of the scenes are about to
+        /// go, so the scenes release their texture and bind a new one with the next Update.
         /// </summary>
         public event Action? StrideDeviceGone;
 
@@ -71,15 +71,15 @@ namespace VL.Qt.Stride
         /// <summary>Stride's graphics device, null before the game has one (or after it was disposed).</summary>
         public GraphicsDevice? GraphicsDevice => _game.GraphicsDevice;
 
-        /// <summary>Renders <paramref name="node"/> at the start of the next draw (once, however often it is called).</summary>
-        public void Schedule(QtTextureNode node)
+        /// <summary>Renders <paramref name="scene"/> at the start of the next draw (once, however often it is called).</summary>
+        public void Schedule(SharedTextureScene scene)
         {
-            if (!_disposed && !_scheduled.Contains(node))
-                _scheduled.Add(node);
+            if (!_disposed && !_scheduled.Contains(scene))
+                _scheduled.Add(scene);
         }
 
-        /// <summary>Removes <paramref name="node"/> from the next batch (node disposed).</summary>
-        public void Unschedule(QtTextureNode node) => _scheduled.Remove(node);
+        /// <summary>Removes <paramref name="scene"/> from the next batch (scene disposed).</summary>
+        public void Unschedule(SharedTextureScene scene) => _scheduled.Remove(scene);
 
         void OnDeviceGone(object? sender, EventArgs e) => StrideDeviceGone?.Invoke();
 

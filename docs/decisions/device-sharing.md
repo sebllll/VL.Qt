@@ -22,6 +22,9 @@ How Qt gets onto the GPU next to Stride: QtNative owns one D3D11 device, Stride 
 ### Texture output to Stride
 Stride's device is not Qt's device, so a Qt scene reaches Stride as a texture shared between the two devices; this is `QtTexture` in the companion package `VL.Qt.Stride` (Windows only). Qt renders the scene offscreen on the QtNative device into a shared texture, and shared `ID3D11Fence`s order Qt's write and Stride's read on the GPU (no CPU wait). Details and decisions: [render-texture.md](render-texture.md).
 
+### Stride layer
+Three nodes, three names: `Renderer [Qt]` opens a Qt window, `QtRenderer [Stride]` (category `Stride.Rendering`, package `VL.Qt.Stride`) is a layer inside a Stride render target and outputs no texture, `QtTexture` outputs a texture. The layer uses the same shared texture and fences as `QtTexture`; it only adds the draw into the target. How it composes and why: [render-texture.md](render-texture.md#stride-layer-120-designed-2026-11-15).
+
 ## Open questions
 - Adapter mismatch: can QtNative switch its device to Stride's adapter (reuse `device::rebuild`)? See [render-texture.md](render-texture.md).
 - With a Qt render thread (planned as a separate issue): which objects may live on which thread (`QQuickWindow` on the main thread, RHI on the render thread), and how does that fit the reconciler running on the main thread?
