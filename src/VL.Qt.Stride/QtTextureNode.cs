@@ -58,7 +58,7 @@ namespace VL.Qt.Stride
         /// <param name="size">Size of the texture in pixels (1 DIP = 1 pixel), clamped to 1x1 ... the largest Texture2D of Stride's device (16384 on feature level 11).</param>
         /// <param name="space">Coordinate space of the elements. v1 implements DIPTopLeft only (1 unit = 100 DIP); other values warn and behave like DIPTopLeft.</param>
         /// <param name="clearColor">Background of the texture (straight alpha, premultiplied here). Alpha 0 gives a transparent texture.</param>
-        /// <param name="format">Pixel format of the texture: R8G8B8A8 or B8G8R8A8 (UNorm or SRgb) or R16G16B16A16_Float; other formats give an error. With SRgb Stride samples linear values of what Qt renders in gamma space, like in a Qt window.</param>
+        /// <param name="format">Pixel format of the texture: R8G8B8A8 or B8G8R8A8 (UNorm or SRgb) or R16G16B16A16_Float; other formats give an error. SRgb and Float textures hold linear premultiplied values, UNorm textures the gamma-space values of a Qt window. Half-transparent colours still differ from a Qt window: Stride blends in linear light, a Qt window in gamma space.</param>
         /// <param name="enabled">False freezes the node: no updates of Input, Space, Clear Color, Size or Format, nothing is created or recreated and nothing renders; Output keeps the last content (null if there is none yet).</param>
         /// <param name="inputNotifications">Mouse, touch and keyboard input for the scene (vvvv notifications) with positions in texture pixels, top-left origin. Map a window's input with ToTexturePixels. A press inside the texture gives the scene keyboard focus, a press outside takes it.</param>
         /// <param name="debug">Debug overlay for all elements of the scene (same as the Debug pin of Renderer [Qt]).</param>
@@ -146,7 +146,7 @@ namespace VL.Qt.Stride
                 _textureError = "Stride has no graphics device yet";
                 return;
             }
-            if (!StrideInterop.TryGetFormats(format, out var textureFormat, out var viewFormat, out _))
+            if (!StrideInterop.TryGetTextureFormat(format, out var textureFormat))
             {
                 _textureError = $"{StrideInterop.FormatError} (got {format})";
                 return;
@@ -158,7 +158,7 @@ namespace VL.Qt.Stride
             }
             try
             {
-                _texture = StrideInterop.CreateSharedTexture(device, size, textureFormat, viewFormat);
+                _texture = StrideInterop.CreateSharedTexture(device, size, textureFormat, format);
             }
             catch (Exception e)
             {
@@ -184,13 +184,12 @@ namespace VL.Qt.Stride
         void TryBind()
         {
             _rebindWait = 0;
-            StrideInterop.TryGetFormats(_format, out _, out _, out var rtvFormat);
             try
             {
                 var handle = StrideInterop.CreateNtHandle(_texture!);
                 try
                 {
-                    _lastBindCode = _scene.Bind(StrideInterop.GetNativeDevice(_device!), handle, _size, rtvFormat);
+                    _lastBindCode = _scene.Bind(StrideInterop.GetNativeDevice(_device!), handle, _size, (int)_format);
                 }
                 finally
                 {

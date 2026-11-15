@@ -548,7 +548,7 @@ enum vlqt_offscreen_result {
     VLQT_OFFSCREEN_UNBOUND = -20,            /* the scene has no texture (vlqt_test_offscreen_state) */
     VLQT_OFFSCREEN_ADAPTER_MISMATCH = -21,   /* foreign device on another adapter than QtNative's device (warning once) */
     VLQT_OFFSCREEN_OPEN_FAILED = -22,        /* OpenSharedResource1 failed or the handle is no usable Texture2D */
-    VLQT_OFFSCREEN_FORMAT_UNSUPPORTED = -23, /* rtvFormat not allowed or not compatible with the texture's format */
+    VLQT_OFFSCREEN_FORMAT_UNSUPPORTED = -23, /* format not allowed or not compatible with the texture's format */
     VLQT_OFFSCREEN_FENCE_FAILED = -24,       /* no ID3D11Device5/ID3D11DeviceContext4, or fence create/share/open failed */
     VLQT_OFFSCREEN_DEVICE_LOST = -25,        /* QtNative's device is lost or being rebuilt: try again next frame */
     VLQT_OFFSCREEN_NOT_SUPPORTED = -26       /* no D3D11 (Linux, other graphics API) or not available on a scene */

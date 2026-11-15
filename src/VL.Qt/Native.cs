@@ -301,10 +301,11 @@ namespace VL.Qt
         public static extern IntPtr vlqt_offscreen_create(int width, int height);
         /// <summary>
         /// Binds the scene to the texture behind ntHandle (shared NT handle of an ID3D11Texture2D of device, an ID3D11Device*);
-        /// rtvFormat = DXGI_FORMAT of Qt's render target view. The caller may close ntHandle after the call.
+        /// format = DXGI_FORMAT the caller samples the texture with (SRGB and float: linear values, vlqt.h). The caller may
+        /// close ntHandle after the call.
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_offscreen_bind(IntPtr scene, IntPtr device, IntPtr ntHandle, int width, int height, int rtvFormat);
+        public static extern int vlqt_offscreen_bind(IntPtr scene, IntPtr device, IntPtr ntHandle, int width, int height, int format);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_offscreen_unbind(IntPtr scene);
         /// <summary>1 = bound, 0 = unbound (bind again, e.g. after a device loss of QtNative), &lt;0 = error.</summary>

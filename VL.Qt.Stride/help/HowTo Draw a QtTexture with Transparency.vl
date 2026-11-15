@@ -459,7 +459,7 @@
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="CkRzmIcQuV0LWGvTWW5HlC" Bounds="85,905,840,179" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- QtTexture outputs premultiplied alpha. AlphaBlend expects straight alpha: it multiplies RGB by alpha a second time and makes half-transparent parts too dark. Where straight alpha is needed, unpremultiply the texture first (RGB divided by alpha).&#xD;&#xA;- Opaque colors look the same in both windows. Half-transparent ones differ: Stride blends in linear color space, a Qt window in gamma space.&#xD;&#xA;- Known issue: with the SRgb formats half-transparent parts come out darker than a linear blend should give, because Stride decodes premultiplied gamma values.&#xD;&#xA;- Windows only (Direct3D 11). QtTexture is Experimental: pins and behavior may still change.">
+          <Pad Id="CkRzmIcQuV0LWGvTWW5HlC" Bounds="85,905,840,179" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- QtTexture outputs premultiplied alpha. AlphaBlend expects straight alpha: it multiplies RGB by alpha a second time and makes half-transparent parts too dark. Where straight alpha is needed, unpremultiply the texture first (RGB divided by alpha).&#xD;&#xA;- Opaque colors look the same in both windows. Half-transparent ones differ: Stride blends in linear color space, a Qt window in gamma space.&#xD;&#xA;- Windows only (Direct3D 11). QtTexture is Experimental: pins and behavior may still change.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
