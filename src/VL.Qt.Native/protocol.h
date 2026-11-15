@@ -628,6 +628,7 @@ enum vlqt_img {
  * flight) -> Ready | Failed; a new snapshot on a Ready id keeps it Ready (previous pixels readable) until the new
  * one is done. RES_EV_INFO: u32 width, u32 height, u32 format = 9 (B8G8R8A8, premultiplied), u64 bytes of the CPU
  * copy (width * height * 4); sent before STATE Ready and after each replaced snapshot. Failed with RES_EV_ERROR:
- * element unknown in the window, window not exposed, element or window destroyed during the grab, grab refused. */
+ * element unknown in the window, window not exposed (offscreen scene: not bound), element or window destroyed during
+ * the grab, grab refused. */
 
 #endif /* VLQT_PROTOCOL_H */

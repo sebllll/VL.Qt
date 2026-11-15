@@ -284,8 +284,9 @@ VLQT_API int vlqt_test_res_read_pixels(unsigned long long id, unsigned char* out
  * the window), errors as Failed with RES_EV_ERROR. A snapshot while one is in flight replaces it (only the newest
  * result is kept); vlqt_res_release during a grab drops the result. A snapshot on a Failed id starts over (Failed ->
  * Decoding -> INFO + Ready | Failed), on a Ready id it stays Ready until the new pixels replace the old ones (INFO).
- * A grab never stays in Decoding: element/window destroyed, window no longer exposed or no result within 10 s ->
- * Failed. vlqt_res_wait does not block on a snapshot (returns the current state). 0 / -7 (wrong kind, w NULL,
+ * A grab never stays in Decoding: element/window destroyed, window no longer exposed (offscreen scene, #128: unbound)
+ * or no result within 10 s -> Failed. An offscreen scene must be bound: the grab marks it dirty, so the next
+ * vlqt_offscreen_render_batch that contains it renders it also when nothing changed. vlqt_res_wait does not block on a snapshot (returns the current state). 0 / -7 (wrong kind, w NULL,
  * scale <= 0) / -9; element errors (unknown, not in the window, no size) are Failed + RES_EV_ERROR, rc 0.
  * Qt Quick software backend (QT_QUICK_BACKEND=software, e.g. Linux offscreen): Qt renders the grab into an opaque
  * pixmap, so the pixels have alpha 255 and transparent areas are black (premultiplied colors stay right). */

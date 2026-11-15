@@ -35,6 +35,14 @@ void release(State* state);
 // After the QQuickWindow is deleted: deletes the render control (and with it the scene's QRhi) and state.
 void destroy(State* state);
 
+// --- offscreen.cpp, for snapshots (snapshot_resource.cpp) ---
+
+// True if window is the QQuickWindow of an offscreen scene (never exposed: a snapshot asks for a render instead).
+bool isScene(const QQuickWindow* window);
+// A grab of an element of window's scene finishes in the scene's next render: marks a bound scene dirty, so the next
+// render_batch renders it also when nothing changed. Returns false if the scene is unbound (it does not render).
+bool requestFrame(const QQuickWindow* window);
+
 // Backend of vlqt_test_offscreen_state (test_offscreen.cpp): fence values and render count of a bound scene.
 // Out pointers may be null. Returns a vlqt_offscreen_result code (protocol.h).
 int testState(void* scene, unsigned long long* readFence, unsigned long long* writeFence, long long* renders);
