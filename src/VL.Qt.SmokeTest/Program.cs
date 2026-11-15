@@ -413,6 +413,7 @@ static class Program
         if (Selected("group-frame")) GroupFrameTest.Run(outDir, Check, Pump, Grab); // Group frame in negative coordinates: snapshot = whole frame, effect layer unclipped (#475).
         if (Selected("qttexture")) QtTextureTest.Run(outDir, Check, Pump, Grab); // QtTexture (#116): test exports (second D3D11 device, shared textures, readback, ref counts, handle count), offscreen scene bound and rendered through the fences.
         if (Selected("multirenderer")) MultiRendererTest.Run(outDir, Check, Pump, Grab); // One element tree in a window and an offscreen renderer of one registry: both draw it, state from the primary, hand-over after the window is disposed, Snapshot/TryLocate (#126).
+        if (Selected("QtTextureInput")) QtTextureTest.RunInput(outDir, Check, Pump); // QtTexture input (#119): click, hover, wheel, drag, pinch, pen, Slider, TextInput focus in an offscreen scene, through OffscreenRenderer.Notify/Send*.
         // Last: leaves two VSync windows open on purpose (process end with open windows on the shared device).
         if (Selected("shared-device")) SharedDeviceTest.Run(Check, Pump); // One D3D11 device for all windows + upload QRhi (#358).
         // Only when named: needs VLQT_TEST_D3D11ON12 from the start (set above). Real device removal + rebuild (#367).
