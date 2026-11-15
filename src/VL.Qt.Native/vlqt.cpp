@@ -1915,6 +1915,20 @@ VLQT_API int vlqt_test_queue_touch(void* p, int type, int id, float x, float y)
     });
 }
 
+// TODO: temporary hook of the #117 spike, replaced by the Clear export of task 2.
+VLQT_API int vlqt_test_set_clear(void* p, int on)
+{
+    return guarded([&]() -> int {
+        auto* w = static_cast<Window*>(p);
+        if (!w) {
+            setError("test_set_clear: null window");
+            return -1;
+        }
+        w->scene->setClear(on != 0);
+        return 0;
+    });
+}
+
 VLQT_API int vlqt_test_measure_count(void* p)
 {
     return guarded([&]() -> int {

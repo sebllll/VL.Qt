@@ -1,6 +1,7 @@
 #include "commands.h"
 #include "debug.h"
 #include "effectchain.h"
+#include "feedback.h"
 #include "qmlitem.h"
 #include "shadereffectitem.h"
 #include "vlstyle.h"
@@ -143,6 +144,7 @@ Scene::~Scene()
 {
     // Items have no QObject parent (only parentItem), so every tracked item is deleted explicitly.
     // Effects are detached from their sources first (arbitrary deletion order below).
+    feedback.reset(); // its view is a child of the root
     for (auto& kv : nodes)
         kv.second.xf->scene = nullptr; // the unparenting and deletes below emit geometry signals (#20)
     for (auto& kv : nodes) {
@@ -160,6 +162,15 @@ Scene::~Scene()
     ids.clear();
     delete debug;
     delete root;
+}
+
+void Scene::setClear(bool on)
+{
+    if (on)
+        feedback.reset();
+    else if (!feedback)
+        feedback = std::make_unique<FeedbackLayer>(window, root);
+    window->update();
 }
 
 void Scene::setDebugAll(bool on)

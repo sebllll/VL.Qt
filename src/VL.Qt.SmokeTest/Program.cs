@@ -415,6 +415,7 @@ static class Program
         if (Selected("multirenderer")) MultiRendererTest.Run(outDir, Check, Pump, Grab); // One element tree in a window and an offscreen renderer of one registry: both draw it, state from the primary, hand-over after the window is disposed, Snapshot/TryLocate (#126).
         if (Selected("QtTextureInput")) QtTextureTest.RunInput(outDir, Check, Pump); // QtTexture input (#119): click, hover, wheel, drag, pinch, pen, Slider, TextInput focus in an offscreen scene, through OffscreenRenderer.Notify/Send*.
         // Last: leaves two VSync windows open on purpose (process end with open windows on the shared device).
+        if (Selected("clear-spike")) ClearSpikeTest.Run(outDir, Check, Pump, Grab); // TODO: temporary #117 spike (feedback layer), replaced by ClearPin.
         if (Selected("shared-device")) SharedDeviceTest.Run(Check, Pump); // One D3D11 device for all windows + upload QRhi (#358).
         // Only when named: needs VLQT_TEST_D3D11ON12 from the start (set above). Real device removal + rebuild (#367).
 #if WINDOWS

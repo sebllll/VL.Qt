@@ -10,6 +10,7 @@
 #include <QtCore/QString>
 #include <QtCore/QtTypes>
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -22,6 +23,7 @@ class QQuickWindow;
 namespace vlqt {
 
 class DebugOverlay;
+class FeedbackLayer;
 
 /* One scene per window: id table, bindings, event queue. Root id 0 = an item filling contentItem. */
 struct Scene {
@@ -52,6 +54,11 @@ struct Scene {
     void updateDebug();
     const QQuickItem* debugOverlay() const; // nullptr until first used (perf: skipped in the item count)
     bool debugAll = false;
+
+    /* Clear (#117, feedback.h): false keeps the previous frame through the feedback layer, which exists only while
+     * clear is false; the first frame after switching off starts from the clear colour. */
+    void setClear(bool clear);
+    bool clear() const { return !feedback; }
 
     QQuickWindow* window;
     QQmlEngine* engine;
@@ -110,6 +117,7 @@ private:
     void detachMask(Node& host, QQuickItem* mask);
     void deleteRetired();
     DebugOverlay* debug = nullptr; // child of contentItem, deleted in ~Scene
+    std::unique_ptr<FeedbackLayer> feedback; // Clear off only (#117)
     std::vector<QQuickItem*> retired; // destroyed former effect sources, deleted after the next frame (#123)
 };
 
