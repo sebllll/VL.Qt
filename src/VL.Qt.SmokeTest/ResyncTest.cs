@@ -32,7 +32,7 @@ static class ResyncTest
 
         void Frame(Element? input)
         {
-            r.Update(input, Space.DIPTopLeft, clear, true, "VL.Qt resync test");
+            r.Update(input, Space.DIPTopLeft, clear, true, true, "VL.Qt resync test");
             r.ApplyCommands();
             pump(3);
             r.AfterEvents();
@@ -54,9 +54,9 @@ static class ResyncTest
         // (after it, dropped by QtNative); the mirror already believes both.
         var t2 = Tree(5, 6);
         int redId = (int)r.Reconciler.Root!.Children[0].Id;
-        r.Update(Tree(5, 4), Space.DIPTopLeft, clear, true, "VL.Qt resync test");
+        r.Update(Tree(5, 4), Space.DIPTopLeft, clear, true, true, "VL.Qt resync test");
         r.Commands.SetF32((uint)redId, Protocol.Prop.Color, 1f); // wrong value type for a color property → -7
-        r.Update(t2, Space.DIPTopLeft, clear, true, "VL.Qt resync test");
+        r.Update(t2, Space.DIPTopLeft, clear, true, true, "VL.Qt resync test");
         r.ApplyCommands();
         pump(3);
         r.AfterEvents();
