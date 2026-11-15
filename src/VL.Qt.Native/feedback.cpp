@@ -67,7 +67,7 @@ private:
     bool m_connected = false;
 };
 
-FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root)
+FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root, int samples)
 {
     // Sized to the window, not to the content item: the content item of an offscreen scene (never shown) stays 0 x 0.
     QQuickItem* content = window->contentItem();
@@ -78,6 +78,7 @@ FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root)
     source->setHideSource(true); // the root is drawn only into the source, the window draws the source
     // The view samples the texture as it is: no flip for ShaderEffect texture coordinates.
     source->setTextureMirroring(QQuickShaderEffectSource::NoMirroring);
+    source->setSamples(samples);
     source->setParentItem(content);
     m_source = source;
 

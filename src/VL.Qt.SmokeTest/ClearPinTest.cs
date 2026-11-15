@@ -12,13 +12,13 @@ using VL.Qt.Nodes;
 using Color = System.Drawing.Color;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-// TODO: temporary spike of #117 (Clear pin, task 1), replaced by the ClearPin scenario of task 5. Drives the feedback
+// TODO: spike of #117 (Clear pin, task 1); task 5 turns it into the ClearPin scenario. Drives the feedback
 // layer (src/VL.Qt.Native/feedback.h) through the test hook vlqt_test_set_clear and prints what the decision in
-// docs/decisions/render-texture.md ("Clear pin") is based on. Grabs: <outDir>/clear_spike_*.png.
-static class ClearSpikeTest
+// docs/decisions/render-texture.md ("Clear pin") is based on. Grabs: <outDir>/clear_pin_*.png.
+static class ClearPinTest
 {
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    static extern int vlqt_test_set_clear(IntPtr w, int on);
+    static extern int vlqt_test_set_clear(IntPtr w, int on, int samples);
 
     static Color Px(Bitmap a, int x, int y, int w = 800, int h = 600) => a.GetPixel(x * a.Width / w, y * a.Height / h);
     static bool Near(Color c, int r, int g, int b, int tol = 10) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
@@ -60,12 +60,12 @@ static class ClearSpikeTest
             }
         }
         var w = Native.vlqt_window_create(800, 600, "VL.Qt clear spike");
-        check(w != IntPtr.Zero, "clear-spike: window_create");
+        check(w != IntPtr.Zero, "clear-pin: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var scene = new SceneRegistry();
         var rec = new Reconciler(cmd, new IdAllocator(), scene) { Window = w };
-        string P(string name) => Path.Combine(outDir, $"clear_spike_{name}.png");
+        string P(string name) => Path.Combine(outDir, $"clear_pin_{name}.png");
 
         // Orange 50 x 50 DIP at (x, 100); blurred red rectangle at (300, 400) (effect layer); optional black fade.
         float x = 50;
@@ -90,7 +90,7 @@ static class ClearSpikeTest
             first = false;
             rec.Update(Tree(), Space.DIPTopLeft);
             if (cmd.Length > 0)
-                check(Native.Apply(w, cmd.EndFrame()) == 0, $"clear-spike: apply {Native.LastError()}");
+                check(Native.Apply(w, cmd.EndFrame()) == 0, $"clear-pin: apply {Native.LastError()}");
             Pump(1);
         }
         // Mean GPU / render ms of n frames with the rectangle moving back and forth.
@@ -115,18 +115,18 @@ static class ClearSpikeTest
 
         for (int i = 0; i < 4; i++) Frame();
         var on = Measure(120);
-        Console.WriteLine($"clear-spike: window Clear on: gpu {on.Gpu:F3} ms, render {on.Render:F3} ms, {on.Changes} changes / 120");
+        Console.WriteLine($"clear-pin: window Clear on: gpu {on.Gpu:F3} ms, render {on.Render:F3} ms, {on.Changes} changes / 120");
 
         // 1) Off: the first frame starts from the clear colour (no garbage), the moving rectangle leaves a trail.
         x = 50;
         Frame();
-        check(vlqt_test_set_clear(w, 0) == 0, "clear-spike: set_clear 0");
+        check(vlqt_test_set_clear(w, 0, 0) == 0, "clear-pin: set_clear 0");
         Frame();
         using (var img = grab(w, P("first")))
         {
             int odd = Odd(img);
             check(odd < 20 && IsOrange(Px(img, 75, 125)) && IsBg(Px(img, 600, 300)),
-                $"clear-spike: first frame after Clear off = clear colour + scene ({odd} odd pixels, {Px(img, 75, 125)}, {Px(img, 600, 300)})");
+                $"clear-pin: first frame after Clear off = clear colour + scene ({odd} odd pixels, {Px(img, 75, 125)}, {Px(img, 600, 300)})");
         }
         for (int i = 1; i <= 10; i++)
         {
@@ -136,17 +136,17 @@ static class ClearSpikeTest
         using (var img = grab(w, P("trail")))
         {
             check(IsOrange(Px(img, 75, 125)) && IsOrange(Px(img, 300, 125)) && IsOrange(Px(img, 470, 125)),
-                $"clear-spike: trail of the moving rectangle ({Px(img, 75, 125)}, {Px(img, 300, 125)}, {Px(img, 470, 125)})");
-            check(IsBg(Px(img, 600, 300)) && IsBg(Px(img, 75, 60)), $"clear-spike: background outside the trail ({Px(img, 600, 300)}, {Px(img, 75, 60)})");
-            check(Px(img, 350, 450).R > 150, $"clear-spike: effect layer (blur) drawn with Clear off ({Px(img, 350, 450)})");
-            check(IsBg(Px(img, 75, 475)), $"clear-spike: nothing at the mirrored position ({Px(img, 75, 475)})");
+                $"clear-pin: trail of the moving rectangle ({Px(img, 75, 125)}, {Px(img, 300, 125)}, {Px(img, 470, 125)})");
+            check(IsBg(Px(img, 600, 300)) && IsBg(Px(img, 75, 60)), $"clear-pin: background outside the trail ({Px(img, 600, 300)}, {Px(img, 75, 60)})");
+            check(Px(img, 350, 450).R > 150, $"clear-pin: effect layer (blur) drawn with Clear off ({Px(img, 350, 450)})");
+            check(IsBg(Px(img, 75, 475)), $"clear-pin: nothing at the mirrored position ({Px(img, 75, 475)})");
         }
 
         // 2) Idle: no scene change. Does the recursive live layer keep Qt rendering (continuous frames)?
         long c1 = Native.vlqt_window_change_count(w);
         Pump(30);
         long idle = Native.vlqt_window_change_count(w) - c1;
-        Console.WriteLine($"clear-spike: idle with Clear off: {idle} changes / 30 pumps");
+        Console.WriteLine($"clear-pin: idle with Clear off: {idle} changes / 30 pumps");
 
         // 3) Fade: a full-size black rectangle at 25 % alpha fades old content (premultiplied "over").
         fade = 0.25f;
@@ -154,16 +154,16 @@ static class ClearSpikeTest
         using (var img = grab(w, P("fade")))
         {
             check(Px(img, 75, 125).R < 20 && Px(img, 600, 300).R < 20 && IsOrange(Px(img, 475, 125)),
-                $"clear-spike: fade: old trail and clear colour fade to black, current position stays orange ({Px(img, 75, 125)}, {Px(img, 600, 300)}, {Px(img, 475, 125)})");
+                $"clear-pin: fade: old trail and clear colour fade to black, current position stays orange ({Px(img, 75, 125)}, {Px(img, 600, 300)}, {Px(img, 475, 125)})");
         }
         fade = 0;
         Frame();
 
         // 4) Debug overlay on while moving, then off: its outlines are outside the root, never accumulated.
-        check(Native.vlqt_window_set_debug(w, 1) == 0, "clear-spike: debug on");
+        check(Native.vlqt_window_set_debug(w, 1) == 0, "clear-pin: debug on");
         for (int i = 0; i < 6; i++) { x = 100 + i * 50; Frame(); }
         grab(w, P("debug_on")).Dispose();
-        check(Native.vlqt_window_set_debug(w, 0) == 0, "clear-spike: debug off");
+        check(Native.vlqt_window_set_debug(w, 0) == 0, "clear-pin: debug off");
         Frame();
         Frame();
         grab(w, P("debug_off")).Dispose();
@@ -176,42 +176,102 @@ static class ClearSpikeTest
             Pump(1);
             image = snap.Update(blurred, out ready, out error, 1);
         }
-        check(ready && image != null, $"clear-spike: snapshot ready with Clear off ('{error}')");
+        check(ready && image != null, $"clear-pin: snapshot ready with Clear off ('{error}')");
         if (image != null)
         {
             SnapshotTest.WritePng(image, P("snapshot"));
             var (b, g, r, a) = SnapshotTest.At(image, 50, 50, 100);
-            check(r > 150 && g < 60 && a > 200, $"clear-spike: snapshot shows the element once (B{b} G{g} R{r} A{a})");
+            check(r > 150 && g < 60 && a > 200, $"clear-pin: snapshot shows the element once (B{b} G{g} R{r} A{a})");
         }
         snap.Dispose();
 
         // 6) Resize: the source texture is recreated, the trail is gone, the first frame shows no garbage.
         for (int i = 0; i < 6; i++) { x = 50 + i * 50; Frame(); }
-        check(Native.vlqt_window_resize(w, 700, 500) == 0, "clear-spike: resize");
+        check(Native.vlqt_window_resize(w, 700, 500) == 0, "clear-pin: resize");
         x = 500;
         Frame();
         using (var img = grab(w, P("resize")))
         {
             int odd = Odd(img);
-            check(odd < 40, $"clear-spike: resize: no garbage ({odd} odd pixels)");
-            Console.WriteLine($"clear-spike: after resize: old trail at (75,125) = {Px(img, 75, 125, 700, 500)}");
+            check(odd < 40, $"clear-pin: resize: no garbage ({odd} odd pixels)");
+            Console.WriteLine($"clear-pin: after resize: old trail at (75,125) = {Px(img, 75, 125, 700, 500)}");
         }
-        check(Native.vlqt_window_resize(w, 800, 600) == 0, "clear-spike: resize back");
+        check(Native.vlqt_window_resize(w, 800, 600) == 0, "clear-pin: resize back");
         Frame();
 
         var off = Measure(120);
-        Console.WriteLine($"clear-spike: window Clear off: gpu {off.Gpu:F3} ms, render {off.Render:F3} ms, {off.Changes} changes / 120");
+        Console.WriteLine($"clear-pin: window Clear off: gpu {off.Gpu:F3} ms, render {off.Render:F3} ms, {off.Changes} changes / 120");
 
         // 7) Clear on again: the trail goes at once.
-        check(vlqt_test_set_clear(w, 1) == 0, "clear-spike: set_clear 1");
+        check(vlqt_test_set_clear(w, 1, 0) == 0, "clear-pin: set_clear 1");
         x = 500;
         Frame();
         using (var img = grab(w, P("on_again")))
-            check(IsBg(Px(img, 75, 125)) && IsOrange(Px(img, 525, 125)), $"clear-spike: Clear on removes the trail ({Px(img, 75, 125)}, {Px(img, 525, 125)})");
+            check(IsBg(Px(img, 75, 125)) && IsOrange(Px(img, 525, 125)), $"clear-pin: Clear on removes the trail ({Px(img, 75, 125)}, {Px(img, 525, 125)})");
         var on2 = Measure(120);
-        Console.WriteLine($"clear-spike: window Clear on again: gpu {on2.Gpu:F3} ms, render {on2.Render:F3} ms, {on2.Changes} changes / 120");
+        Console.WriteLine($"clear-pin: window Clear on again: gpu {on2.Gpu:F3} ms, render {on2.Render:F3} ms, {on2.Changes} changes / 120");
 
-        // 8) Cost, interleaved (single runs are noisy): 3 rounds of 120 frames each, Clear on / off, two window sizes. Also
+        // 8) MSAA (#118): windows render with 4 samples, the layer texture has its own count. An opaque full-size black
+        // rectangle under a rotated orange one stops the accumulation, so the edges show only the sampling: pixels
+        // between black and orange along the edges, Clear on vs. the layer with 1 and 4 samples.
+        float angle = 0;
+        Group Msaa()
+        {
+            var bg = new Rectangle { Size = new Vector2(8, 6), Anchor = RectangleAnchor.TopLeft, Fill = new Color4(0, 0, 0, 1) };
+            var rot = new Rectangle { Size = new Vector2(2, 2), Anchor = RectangleAnchor.Center, Transform = Matrix.RotationZ(angle) * Matrix.Translation(4, 3, 0), Fill = new Color4(1, 0.6f, 0, 1) };
+            return new Group { Anchor = RectangleAnchor.TopLeft, Children = [bg, rot] };
+        }
+        void MsaaFrame()
+        {
+            cmd.Reset();
+            rec.Update(Msaa(), Space.DIPTopLeft);
+            if (cmd.Length > 0)
+                check(Native.Apply(w, cmd.EndFrame()) == 0, $"clear-pin: apply {Native.LastError()}");
+            Pump(1);
+        }
+        int Edge(string name)
+        {
+            using var img = grab(w, P(name));
+            // Distinct red values between black and orange: n samples give n - 1 coverage steps, vertex AA many.
+            var values = new HashSet<int>();
+            for (int y = 0; y < img.Height; y += 1)
+                for (int x = 0; x < img.Width; x++)
+                {
+                    var c = img.GetPixel(x, y);
+                    if (c.R > 5 && c.R < 250)
+                        values.Add(c.R);
+                }
+            return values.Count;
+        }
+        angle = 0.5f;
+        var edges = new List<string>();
+        foreach (var (clearOn, samples, name) in new[] { (1, 0, "msaa_clear_on"), (0, 1, "msaa_layer_1"), (0, 2, "msaa_layer_2"), (0, 4, "msaa_layer_4"), (0, 8, "msaa_layer_8"), (0, 0, "msaa_layer_auto") })
+        {
+            vlqt_test_set_clear(w, clearOn, samples);
+            for (int i = 0; i < 4; i++) MsaaFrame();
+            edges.Add($"{name} {Edge(name)}");
+        }
+        Console.WriteLine($"clear-pin: distinct edge values (n samples: n - 1): {string.Join(", ", edges)}");
+        vlqt_test_set_clear(w, 1, 0);
+        Frame();
+
+        // 8b) Cost of the layer's samples at 1920 x 1080: Clear on / layer 1 sample / layer 4 samples, interleaved.
+        Native.vlqt_window_resize(w, 1920, 1080);
+        Frame();
+        var costs = new Dictionary<string, List<double>> { ["on"] = new(), ["layer 1"] = new(), ["layer 4"] = new() };
+        for (int round = 0; round < 3; round++)
+        {
+            vlqt_test_set_clear(w, 1, 0);
+            costs["on"].Add(Measure(120).Gpu);
+            vlqt_test_set_clear(w, 0, 1);
+            costs["layer 1"].Add(Measure(120).Gpu);
+            vlqt_test_set_clear(w, 0, 4);
+            costs["layer 4"].Add(Measure(120).Gpu);
+        }
+        Console.WriteLine("clear-pin: cost 1920x1080 by samples: " + string.Join(", ", costs.Select(kv => $"{kv.Key} {string.Join(" / ", kv.Value.Select(v => v.ToString("F3")))} ms")));
+        vlqt_test_set_clear(w, 1, 0);
+
+        // 9) Cost, interleaved (single runs are noisy): 3 rounds of 120 frames each, Clear on / off, two window sizes. Also
         // toggles and resizes with the layer on and off (a resize after switching on crashed: lambda on the deleted view).
         foreach (var (sw, sh) in new[] { (800, 600), (1920, 1080) })
         {
@@ -221,14 +281,14 @@ static class ClearSpikeTest
             var gpuOff = new List<double>();
             for (int round = 0; round < 3; round++)
             {
-                vlqt_test_set_clear(w, 1);
+                vlqt_test_set_clear(w, 1, 0);
                 gpuOn.Add(Measure(120).Gpu);
-                vlqt_test_set_clear(w, 0);
+                vlqt_test_set_clear(w, 0, 0);
                 gpuOff.Add(Measure(120).Gpu);
             }
-            Console.WriteLine($"clear-spike: cost {sw}x{sh}: gpu Clear on {string.Join(" / ", gpuOn.Select(v => v.ToString("F3")))} ms, off {string.Join(" / ", gpuOff.Select(v => v.ToString("F3")))} ms");
+            Console.WriteLine($"clear-pin: cost {sw}x{sh}: gpu Clear on {string.Join(" / ", gpuOn.Select(v => v.ToString("F3")))} ms, off {string.Join(" / ", gpuOff.Select(v => v.ToString("F3")))} ms");
         }
-        vlqt_test_set_clear(w, 1);
+        vlqt_test_set_clear(w, 1, 0);
 
         cmd.Reset();
         rec.Update(null, Space.DIPTopLeft);
@@ -242,7 +302,7 @@ static class ClearSpikeTest
     static void Offscreen(Action<bool, string> check)
     {
         const int B8G8R8A8Typeless = 90, B8G8R8A8Unorm = 87;
-        if (!check2(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "clear-spike offscreen: test device"))
+        if (!check2(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "clear-pin offscreen: test device"))
             return;
         bool check2(bool ok, string what) { check(ok, what); return ok; }
         int w = 64, h = 48;
@@ -254,7 +314,7 @@ static class ClearSpikeTest
         cmd.SetPlace(1, 0, 4, 8, 8);
         cmd.SetColor(1, Protocol.Prop.Color, 1, 0.6f, 0, 1);
         cmd.Reparent(1, 0, 0);
-        check(Native.Apply(scene, cmd.EndFrame()) == 0, $"clear-spike offscreen: apply {Native.LastError()}");
+        check(Native.Apply(scene, cmd.EndFrame()) == 0, $"clear-pin offscreen: apply {Native.LastError()}");
         IntPtr tex = IntPtr.Zero;
         void Bind(int bw, int bh)
         {
@@ -266,7 +326,7 @@ static class ClearSpikeTest
             Native.vlqt_test_d3d11_create_shared_texture(device, bw, bh, B8G8R8A8Typeless, out tex, out var handle);
             int rc = Native.vlqt_offscreen_bind(scene, device, handle, bw, bh, B8G8R8A8Unorm);
             Native.vlqt_test_close_handle(handle);
-            check(rc == 0, $"clear-spike offscreen: bind {bw}x{bh} ({rc}) {Native.LastError()}");
+            check(rc == 0, $"clear-pin offscreen: bind {bw}x{bh} ({rc}) {Native.LastError()}");
             (w, h) = (bw, bh);
         }
         int Render() => Native.OffscreenRenderBatch(context, new[] { scene }, 0);
@@ -287,12 +347,12 @@ static class ClearSpikeTest
         Bind(64, 48);
         int r0 = Render();
         var pxOn = Read();
-        Console.WriteLine($"clear-spike offscreen: before Clear off: rendered {r0}, box {At(pxOn, 4, 8)}, background {At(pxOn, 40, 30)}");
-        check(vlqt_test_set_clear(scene, 0) == 0, "clear-spike offscreen: set_clear 0");
+        Console.WriteLine($"clear-pin offscreen: before Clear off: rendered {r0}, box {At(pxOn, 4, 8)}, background {At(pxOn, 40, 30)}");
+        check(vlqt_test_set_clear(scene, 0, 0) == 0, "clear-pin offscreen: set_clear 0");
         int first = Render();
         var px0 = Read();
         check(At(px0, 4, 8).R == 255 && At(px0, 40, 30).R == 32 && At(px0, 40, 30).A == 255,
-            $"clear-spike offscreen: first frame after Clear off = clear colour + box (rendered {first}, {At(px0, 4, 8)}, {At(px0, 40, 30)})");
+            $"clear-pin offscreen: first frame after Clear off = clear colour + box (rendered {first}, {At(px0, 4, 8)}, {At(px0, 40, 30)})");
         for (int i = 1; i <= 6; i++)
         {
             Move(i * 8);
@@ -300,11 +360,11 @@ static class ClearSpikeTest
         }
         var px1 = Read();
         check(At(px1, 4, 8).R == 255 && At(px1, 28, 8).R == 255 && At(px1, 52, 8).R == 255 && At(px1, 40, 30).R == 32,
-            $"clear-spike offscreen: trail ({At(px1, 4, 8)}, {At(px1, 28, 8)}, {At(px1, 52, 8)}, background {At(px1, 40, 30)})");
+            $"clear-pin offscreen: trail ({At(px1, 4, 8)}, {At(px1, 28, 8)}, {At(px1, 52, 8)}, background {At(px1, 40, 30)})");
         int idle = 0;
         for (int i = 0; i < 10; i++)
             idle += Render() > 0 ? 1 : 0;
-        Console.WriteLine($"clear-spike offscreen: idle with Clear off: {idle} of 10 batches rendered");
+        Console.WriteLine($"clear-pin offscreen: idle with Clear off: {idle} of 10 batches rendered");
 
         Bind(80, 40);
         Move(60);
@@ -319,13 +379,44 @@ static class ClearSpikeTest
                     odd++;
             }
         check(odd == 0 && At(px2, 4, 8).R == 32 && At(px2, 64, 8).R == 255,
-            $"clear-spike offscreen: rebind with a new size clears once, no garbage ({odd} odd, {At(px2, 4, 8)}, {At(px2, 64, 8)})");
+            $"clear-pin offscreen: rebind with a new size clears once, no garbage ({odd} odd, {At(px2, 4, 8)}, {At(px2, 64, 8)})");
 
-        check(vlqt_test_set_clear(scene, 1) == 0, "clear-spike offscreen: set_clear 1");
+        check(vlqt_test_set_clear(scene, 1, 0) == 0, "clear-pin offscreen: set_clear 1");
         Move(20);
         Render();
         var px3 = Read();
-        check(At(px3, 64, 8).R == 32 && At(px3, 24, 8).R == 255, $"clear-spike offscreen: Clear on removes the trail ({At(px3, 64, 8)}, {At(px3, 24, 8)})");
+        check(At(px3, 64, 8).R == 32 && At(px3, 24, 8).R == 255, $"clear-pin offscreen: Clear on removes the trail ({At(px3, 64, 8)}, {At(px3, 24, 8)})");
+
+        // MSAA: the render target of a scene has 1 sample. A rotated white square on the grey clear colour: distinct
+        // grey values on its edges, Clear on vs. the layer with the default (0) and 4 samples.
+        cmd.Reset();
+        cmd.Create(2, Protocol.Type.Rectangle);
+        cmd.SetPlace(2, 0, 0, 20, 20);
+        cmd.SetColor(2, Protocol.Prop.Color, 1, 1, 1, 1);
+        cmd.SetMat4(2, Protocol.Prop.Transform, Matrix.RotationZ(0.5f) * Matrix.Translation(40, 14, 0));
+        cmd.Reparent(2, 0, 1);
+        check(Native.Apply(scene, cmd.EndFrame()) == 0, $"clear-pin offscreen: apply rotated {Native.LastError()}");
+        int Steps()
+        {
+            var px = Read();
+            var values = new HashSet<int>();
+            for (int y = 0; y < h; y++)
+                for (int x = 32; x < w; x++)
+                {
+                    var c = At(px, x, y);
+                    if (c.R == c.G && c.G == c.B && c.R > 34 && c.R < 253)
+                        values.Add(c.R);
+                }
+            return values.Count;
+        }
+        var steps = new List<string>();
+        foreach (var (clearOn, samples, name) in new[] { (1, 0, "clear on"), (0, 0, "layer default"), (0, 4, "layer 4") })
+        {
+            vlqt_test_set_clear(scene, clearOn, samples);
+            for (int i = 0; i < 3; i++) { Move(20 + i % 2); Render(); }
+            steps.Add($"{name} {Steps()}");
+        }
+        Console.WriteLine($"clear-pin offscreen: distinct edge values (n samples: n - 1): {string.Join(", ", steps)}");
 
         Native.vlqt_offscreen_unbind(scene);
         Native.vlqt_test_com_release(tex);

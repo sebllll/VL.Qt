@@ -164,12 +164,27 @@ Scene::~Scene()
     delete root;
 }
 
-void Scene::setClear(bool on)
+void Scene::setClear(bool clear, int samples)
 {
-    if (on)
-        feedback.reset();
-    else if (!feedback)
-        feedback = std::make_unique<FeedbackLayer>(window, root);
+    if (clear == clearFrames && samples == feedbackSamples)
+        return;
+    clearFrames = clear;
+    feedbackSamples = samples;
+    releaseFeedback();
+    restoreFeedback();
+}
+
+void Scene::releaseFeedback()
+{
+    feedback.reset();
+    window->update();
+}
+
+void Scene::restoreFeedback()
+{
+    if (clearFrames || feedback)
+        return;
+    feedback = std::make_unique<FeedbackLayer>(window, root, feedbackSamples);
     window->update();
 }
 

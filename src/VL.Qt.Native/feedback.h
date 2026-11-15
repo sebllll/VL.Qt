@@ -15,6 +15,11 @@
 // and the window draws the source over the clear colour. The texture starts transparent, so the first frame after
 // switching off (and after a resize, which recreates the texture) starts from the clear colour; premultiplied "over"
 // makes "transparent texture over the clear colour" equal to "clear colour in the texture".
+//
+// Attachment: the vlqt::Scene owns the layer and holds the Clear state; the layer's items belong to one QQuickWindow
+// (source under its content item, view under Scene::root, size from the window's signals, textures in its QRhi). It
+// never moves to another window: Scene::releaseFeedback / restoreFeedback rebuild it from the state when the window
+// is replaced (#118).
 
 #include <QtCore/QPointer>
 #include <QtQuick/QQuickItem>
@@ -27,7 +32,10 @@ namespace vlqt {
 class FeedbackLayer
 {
 public:
-    FeedbackLayer(QQuickWindow* window, QQuickItem* root);
+    /* Builds the layer for window (source under its content item, sized to it) and root. samples: MSAA of the layer
+     * texture; 0 and 1 inherit the sample count of the window's render target (Qt), more than 1 forces it. Qt
+     * resolves a multisampled layer into its sampled texture every frame. */
+    FeedbackLayer(QQuickWindow* window, QQuickItem* root, int samples);
     ~FeedbackLayer();
     FeedbackLayer(const FeedbackLayer&) = delete;
     FeedbackLayer& operator=(const FeedbackLayer&) = delete;
