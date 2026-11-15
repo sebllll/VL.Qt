@@ -186,7 +186,11 @@ More: [Shaders](docs/effects-and-shaders.md#shaders) (annotations, the [Sampler 
 
 **`QtRenderer` or `QtTexture`?** `QtRenderer` (category `Stride.Rendering`, same package) is a Stride layer like `SkiaRenderer`: it draws the element tree into the render target it is connected to, sized to the viewport, and takes the window's mouse, touch and keyboard input. Half-transparent content looks the same as in a Qt window, but you get no texture. Draw it after the 3D scene, into a window or a typeless 8-bit render texture; into any other target (sRGB, float) it still draws, but blends in linear light like `QtTexture` and shows a hint at `Error`. Use `QtTexture` when you need a texture to manipulate, feed to TextureFX or put on a mesh: it blends in linear light, so half-transparent colours differ slightly from a Qt window.
 
-Help patches: `HowTo Render Qt into a Stride Texture`, `HowTo Interact with a QtTexture`, `HowTo Draw a QtTexture with Transparency`, `HowTo Render many QtTextures` (in the Help Browser under `Qt`, package `VL.Qt.Stride`).
+![QtRenderer in a Stride window (top) and the same elements in a Qt window (bottom right)](docs/images/qtrenderer-vs-qt-window.png)
+
+*`HowTo Draw Qt in a Stride Scene`: the `QtRenderer` layer over a 3D scene in the Stride window (top) and the same elements in a Qt window (bottom right); the half-transparent rectangles blend the same way.*
+
+Help patches: `HowTo Draw Qt in a Stride Scene`, `HowTo Render Qt into a Stride Texture`, `HowTo Interact with a QtTexture`, `HowTo Draw a QtTexture with Transparency`, `HowTo Render many QtTextures` (in the Help Browser under `Qt`, package `VL.Qt.Stride`).
 
 More: [Render texture](docs/decisions/render-texture.md) (decisions: device, fences, lifetime, frame timing), [Architecture](docs/architecture.md#rendering).
 
