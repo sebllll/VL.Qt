@@ -11,6 +11,8 @@
 #include <QtQuick/QQuickItem>
 
 #include <array>
+#include <atomic>
+#include <mutex>
 #include <vector>
 
 class QQmlEngine;
@@ -163,8 +165,15 @@ private:
     std::array<PerfSample, kHistory> m_ring{};
     int m_head = 0;   // index of the oldest sample
     int m_count = 0;
-    PerfSample m_cur;
+    PerfSample m_cur; // main thread: endPump fills it from m_done
     PerfCounters m_counters;
+    // Frame signals fire on the GUI thread for a window and on the scene's render thread for an offscreen scene (#116
+    // phase 5), concurrently with endPump. They fill m_pending and the timestamps (only that thread touches them);
+    // afterFrameEnd adds the finished frame to m_done under m_doneLock, and endPump takes m_done. A sample therefore holds
+    // whole frames only: those finished before the pump ended (threaded scenes: usually the previous host frame's).
+    PerfSample m_pending;
+    PerfSample m_done;
+    std::mutex m_doneLock;
     double m_tFrameBegin = -1, m_tSyncBegin = 0, m_tRenderBegin = 0, m_tRenderEnd = 0, m_tLastSwap = -1;
     int m_flags = 0;
     QString m_software; // softwareRendererName() after scenegraph init
@@ -178,8 +187,8 @@ private:
     bool m_frozen = false;
     std::vector<PerfSample> m_frozenRing; // filled while frozen
     mutable std::vector<vlqt::res::Row> m_resRows; // Resources page (#364): reused, no allocation once grown
-    int m_spikePhase = -1;
-    float m_spikeMs = 0;
+    std::atomic<int> m_spikePhase{-1}; // set on the main thread, taken in a frame signal (render thread for a scene)
+    std::atomic<float> m_spikeMs{0};
 
 public:
     // #245: host values (apply/reconcile, ops, .NET GC) of the last completed pump. false = no pump yet.

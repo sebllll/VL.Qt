@@ -218,6 +218,8 @@ VLQT_API int vlqt_test_d3d11_read_texture(void* texture, unsigned char* out, int
     HRESULT hr = device->CreateTexture2D(&stagingDesc, nullptr, staging.put());
     if (FAILED(hr))
         return fail("CreateTexture2D(staging)", hr);
+    // Copy, Map and Unmap as one sequence on a context the render threads may share (device.h).
+    vlqt::device::ContextLock lock(context.p);
     context->CopyResource(staging.p, tex);
     D3D11_MAPPED_SUBRESOURCE mapped;
     // Blocks until the GPU has finished the copy (and everything queued before it).
