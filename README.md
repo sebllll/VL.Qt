@@ -180,7 +180,7 @@ More: [Shaders](docs/effects-and-shaders.md#shaders) (annotations, the [Sampler 
 
 - **Pins:** `Input` (element tree), `Size` (pixels, default 1920×1080; 1 DIP = 1 pixel), `Space`, `Clear Color` (default transparent, so the texture has an alpha channel), `Format` (default `B8G8R8A8_UNorm_SRgb`; 8-bit RGBA/BGRA or `R16G16B16A16_Float`), `Enabled`, `Debug`; outputs `Output` (`Texture`) and `Error`.
 - **GPU only:** no readback to the CPU. Qt renders on its own D3D11 device into a texture shared with Stride's device; shared fences make Stride wait on the GPU until Qt has written. The texture is ready in the same frame, the scene is rendered only when it changed, and several `QtTexture` nodes do not block each other.
-- **Alpha:** the texture is premultiplied; for straight alpha put an unpremultiply TextureFX behind it.
+- **Alpha:** the texture is premultiplied; where straight alpha is expected, unpremultiply it first (RGB divided by alpha); VL.Stride has no TextureFX for that yet.
 - **No input yet:** Interaction nodes inside a `QtTexture` scene stay inert.
 - **Adapter:** QtNative's device must sit on Stride's adapter. It follows Stride's adapter as long as no Qt window renders on it; otherwise the node shows an error and `Output` stays empty.
 
