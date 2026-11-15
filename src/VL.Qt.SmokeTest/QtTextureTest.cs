@@ -347,7 +347,7 @@ static partial class QtTextureTest
     }
 
     // Premultiplied BGRA rows as a PNG, to look at.
-    static void WritePng(string path, byte[] bgra, int w, int h)
+    internal static void WritePng(string path, byte[] bgra, int w, int h)
     {
 #if WINDOWS
         using var bmp = new Bitmap(w, h, PixelFormat.Format32bppPArgb);
