@@ -67,7 +67,7 @@ namespace VL.Qt.Stride
         /// Updates the scene and schedules its render for the next draw; enabled = false freezes it (nothing is created, recreated,
         /// rendered or fed with input; the texture keeps its content). Logs <see cref="Error"/> once per distinct text.
         /// </summary>
-        public void Update(Element? input, Int2 size, PixelFormat format, Space space, Color4 clearColor, bool enabled, bool debug)
+        public void Update(Element? input, Int2 size, PixelFormat format, Space space, Color4 clearColor, bool clear, bool enabled, bool debug)
         {
             _enabled = enabled;
             // The previous frame had no draw (game not drawing): send its commands now, so they do not pile up.
@@ -94,7 +94,7 @@ namespace VL.Qt.Stride
                 UpdateSpaceWarning(space);
             // Qt does not premultiply the clear colour itself (render-texture.md, task 1.8).
             var premultiplied = new Color4(clearColor.R * clearColor.A, clearColor.G * clearColor.A, clearColor.B * clearColor.A, clearColor.A);
-            _scene.Update(input, Geometry.Resolve(space), premultiplied, enabled);
+            _scene.Update(input, Geometry.Resolve(space), premultiplied, clear, enabled);
 
             if (enabled && _texture is not null)
             {

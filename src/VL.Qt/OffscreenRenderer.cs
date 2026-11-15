@@ -90,14 +90,14 @@ namespace VL.Qt
 
         /// <summary>
         /// Writes the commands of this frame (sent by <see cref="ApplyCommands"/>). <paramref name="enabled"/> = false freezes
-        /// the scene: no reconcile and no clear color, the texture keeps the last state. <paramref name="clearColor"/> with
+        /// the scene: no reconcile, clear color or Clear flag, the texture keeps the last state. <paramref name="clearColor"/> with
         /// alpha 0 gives a transparent texture. <paramref name="space"/> must be resolved (<see cref="Geometry.Resolve"/>).
         /// </summary>
-        public void Update(Element? input, Space space, Color4 clearColor, bool enabled)
+        public void Update(Element? input, Space space, Color4 clearColor, bool clear, bool enabled)
         {
             if (_disposed || _scene == IntPtr.Zero || !enabled)
                 return;
-            _core.Update(input, space, clearColor);
+            _core.Update(input, space, clearColor, clear);
         }
 
         /// <summary>Sends the commands written by <see cref="Update"/> to QtNative; call before <see cref="RenderBatch"/>.</summary>

@@ -107,7 +107,8 @@ namespace VL.Qt
         /// <param name="input">Root element (null = empty scene).</param>
         /// <param name="space">Coordinate space of the elements. v1 implements DIPTopLeft only (1 unit = 100 DIP); other values warn and behave like DIPTopLeft.</param>
         /// <param name="clearColor">Background of the window.</param>
-        /// <param name="enabled">False freezes the scene (no updates of Input, Space, Clear Color); the window keeps the last state.</param>
+        /// <param name="clear">True clears the window to Clear Color every frame. False keeps the previous frame and draws the new one over it (trails, smearing, feedback: a semi-transparent full-size rectangle fades the old content). Switchable at runtime without recreating the window. Costs one full-size texture while off, and Qt renders every frame then, also when the scene did not change.</param>
+        /// <param name="enabled">False freezes the scene (no updates of Input, Space, Clear Color, Clear); the window keeps the last state.</param>
         /// <param name="title">Window title (changes at runtime are sent to the window).</param>
         /// <param name="borderless">Window without frame and title bar (Qt::FramelessWindowHint), switchable at runtime without recreating the node. The client area stays where it is, the frame appears or disappears around it. Without a frame the Bounds position (outer top-left) is the client top-left, and windows narrower than the Windows minimum width of a captioned window (~130-150 px) are possible. Save Bounds works as usual. While fullscreen the value is remembered and applied when leaving fullscreen. Windows and Linux (X11); Wayland: the compositor decides (client-side decoration off, server-side decorations may stay).</param>
         /// <param name="isVisible">Whether the Qt window is currently shown (false after closing it with X; recreate the node to reopen).</param>
@@ -127,6 +128,7 @@ namespace VL.Qt
             Element? input,
             [DefaultValue(typeof(Space), nameof(Space.DIPTopLeft))] Space space,
             [DefaultValue("0.1254902, 0.1254902, 0.1254902, 1")] Color4 clearColor,
+            [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(true)] bool clear,
             [DefaultValue(true)] bool enabled,
             [DefaultValue("VL.Qt")] string title,
             [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(false)] bool borderless,
@@ -178,7 +180,7 @@ namespace VL.Qt
             if (enabled)
                 UpdateSpaceWarning(space);
             // Only written here; the pump applies the buffer once per frame (ApplyCommands) after all node updates.
-            _view?.Update(input, Geometry.Resolve(space), clearColor, enabled, title);
+            _view?.Update(input, Geometry.Resolve(space), clearColor, clear, enabled, title);
 
             // Is Visible is live (#93); Perf, Client Bounds and Error reflect the last pump (previous frame).
             isVisible = _view?.IsVisible ?? false;
