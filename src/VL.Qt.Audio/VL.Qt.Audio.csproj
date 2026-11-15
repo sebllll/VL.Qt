@@ -22,6 +22,10 @@
     <PackageReference Include="VL.Audio" Version="$(VlAudioVersion)" ExcludeAssets="runtime" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="VL.Qt.Audio.Tests" />
+  </ItemGroup>
+
   <!-- VL.Qt.dll comes from the VL.Qt package at runtime: not copied, not packed. When packing, this reference becomes
        a NuGet dependency on VL.Qt with the version of the referenced project (same -p:Version for both). -->
   <ItemGroup>

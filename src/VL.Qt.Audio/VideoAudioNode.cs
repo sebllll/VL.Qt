@@ -49,7 +49,7 @@ namespace VL.Qt.Audio
         /// <param name="keepLastFrame">When playback ends (Loop off), the last frame stays visible; otherwise the element is cleared.</param>
         /// <param name="rate">Playback speed (1 = normal). Values below 0.01 are clamped (no reverse playback). The sound follows like tape: its pitch changes with the rate; a change of the rate may glitch once.</param>
         /// <param name="volume">Volume of the sound at Audio, 0..1 (linear, clamped).</param>
-        /// <param name="audioOffset">Delay of the sound against the picture in ms (positive: the sound comes later). Calibrates the latency of display and audio device that VL.Qt cannot know.</param>
+        /// <param name="audioOffset">Delay of the sound against the picture in ms (positive: the sound comes later). Calibrates the latency of display and audio device that VL.Qt cannot know. The sound cannot come earlier than VL.Audio's output latency (buffer + driver) allows; smaller values play as early as possible.</param>
         /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill).</param>
         /// <param name="opacity">Opacity of the element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
         /// <param name="clip">Clip children to the element's size.</param>
@@ -59,7 +59,7 @@ namespace VL.Qt.Audio
         /// <param name="audio">The sound of the video, one signal per channel (stereo), at the sample rate of the VL.Audio engine. Silent without a file, without an audio track and while paused.</param>
         /// <param name="position">Playback position in seconds (0 until loaded; last frame).</param>
         /// <param name="duration">Duration of the media in seconds (0 until loaded or without a file; last frame).</param>
-        /// <param name="syncError">Measured offset of the sound against the picture in ms (Audio Offset included; positive: the sound is late). NaN while the sound is not locked yet. Diagnostics.</param>
+        /// <param name="syncError">Measured offset of the sound against the frame at Qt's video sink in ms (Audio Offset and VL.Audio's output latency included, display latency not; positive: the sound is late). NaN while the sound is not locked yet (start, after a jump, pause or underrun). Diagnostics.</param>
         /// <param name="measuredSize">Natural size of the video, in units (0, 0 until the first frame; last frame).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         /// <returns>The video element.</returns>
@@ -90,13 +90,15 @@ namespace VL.Qt.Audio
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
             UpdateTap();
+            _signal.UpdateOutputLatency();
             _signal.Volume = Video.ClampVolume(volume);
             _signal.AudioOffsetMs = float.IsFinite(audioOffset) ? audioOffset : 0f;
 
-            // Volume goes to the signal; the element keeps Qt's default (its output is off while a tap is set).
+            // Volume goes to the signal; Qt's own output is off while a tap is set. Without a tap (refused) the element is
+            // muted, so the sound never comes out of two places.
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new VideoNode.Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, 1f, fillMode, _tap?.Id ?? 0));
+                new VideoNode.Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, _tap is null ? 0f : 1f, fillMode, _tap?.Id ?? 0));
             _node.ReadOutputs(out measuredSize, out sceneBounds);
             position = _node.Sink.MediaPosition();
             duration = _node.Sink.MediaDuration();
@@ -120,7 +122,6 @@ namespace VL.Qt.Audio
             }
             catch (InvalidOperationException e)
             {
-                // TODO(T5): without a tap Qt's own output plays; decide whether the node should stay silent instead.
                 _failedSampleRate = sampleRate;
                 _errors.Report(e, "Audio tap");
                 return;
