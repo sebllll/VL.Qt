@@ -73,6 +73,32 @@ Since #71 `Scene::polish` returns at once when nothing changed since the last po
 
 The SmokeTest `measure` checks that a poll without a render right after an apply still reports the new layout (Button text in a Row, Column spacing, Text measure) and that the next render agrees with it.
 
+## QtTexture on the render thread (#116)
+
+`QtTexture` scenes render on a Qt render thread (switch and background: [Diagnostics](diagnostics.md#qttexture-render-thread)). The SmokeTest scenario `qttextureperf` measures what that costs the vvvv main thread, without vvvv. It is not part of `--all` (about a minute) and runs alone, because the thread count is fixed at the first scene:
+
+```powershell
+tools/build.ps1 -Test -Only qttextureperf                                      # fresh build, then the scenario
+dotnet run --project src/VL.Qt.SmokeTest -c Release -- --only qttextureperf    # scenario only
+```
+
+The process measures the render thread (`VLQT_OFFSCREEN_THREAD`, default 1 thread) and then starts itself with `VLQT_OFFSCREEN_THREAD=0` for the main thread numbers; set `VLQT_OFFSCREEN_THREAD=0` yourself to run only the latter. Scenes are 1280×720: heavy = 2000 rounded rectangles + 80 texts, light = 100 + 4; 1, 4 and 8 heavy and 8 light scenes. Each frame imitates vvvv + Stride: apply (50 colours, 10 texts and a frame marker change per scene), `render_batch`, 6 ms Stride CPU work, a GPU read of scene 0 (stands in for Stride's draw), then a read of every scene's marker. The log (`INFO qttextureperf …` in `build/smoke/stdout.log`) has per configuration: render_batch per QtTexture, apply, Stride read wait, frame time and the perf sample of scene 0.
+
+- **Checks:** every texture holds the frame's own marker in every frame (same frame, 100 %), and in threaded mode on a hardware adapter the median main-thread time per QtTexture of the heavy scenes stays below 0.5 ms (`PerfLimits` factor applies, 1.5 on arm64). On a software adapter (WARP, CI runners) QtNative waits for the submission on the main thread by design: the scenario runs a shorter matrix, logs the main-thread time and skips that limit; the same-frame check stays.
+- **Main-thread time per QtTexture** is what `render_batch` costs the main thread: polish, the blocking sync (the render thread's `beginFrame` and `sync`, while the items must not change) and the hand-off of the render job. The Qt render itself (about 2.5 ms for a heavy scene here) runs on the render thread, overlapping Stride's frame. The main thread blocks longer only if the render thread is more than one frame behind; the cost then shows as *Stride read wait* (Stride's GPU waits for Qt's write signal), not in the render_batch time. The apply (Update of the scene) stays on the main thread in both modes.
+- **PerfStats of a threaded scene** (`vlqt_window_get_perf*`, the F5 overlay) come from the render thread's signals and are handed to the pump when a frame has ended: a sample shows the frames finished since the previous pump, usually the previous host frame's. `sync` and `render` there are the segments between Qt's signals (synchronizing, `render()` of the scene graph), not the whole render job, so they are smaller than the main-thread time per QtTexture of the main-thread mode (1.1 ms render against 2.5 ms for one heavy scene).
+
+Medians in ms (Snapdragon X Plus 8 cores, Adreno X1-45, Windows 11 ARM64, Qt 6.12, 2026-11-15; two runs, within ±0.1 ms for the main-thread time, ±10 % for the frame time):
+
+| Scenes | main time per QtTexture: render thread / main thread | frame: render thread / main thread | Stride read wait: render thread / main thread |
+|---|---|---|---|
+| 1 heavy | 0.30 / 2.6 | 7.7 / 9.9 | 1.0 / 1.0 |
+| 4 heavy | 0.19 / 2.8 | 12.1 / 19.1 | 4.7 / 1.0 |
+| 8 heavy | 0.17 / 2.8 | 23.9 / 30.6 | 15.2 / 1.0 |
+| 8 light | 0.09 / 0.75 | 8.3 / 13.8 | 0.9 / 1.0 |
+
+With one render thread, 4 and 8 heavy scenes render one after the other (about 2.5 ms each), so the frame is bound by that sum: the main thread is free, but Stride's GPU waits for the last scene (read wait). A pool of 2 threads shortens that for several heavy scenes at the cost of CPU ([Diagnostics](diagnostics.md#qttexture-render-thread)).
+
 ## Thread names
 
 QtNative names its threads, so they are easy to find in a profile, a thread dump or the debugger (Windows: thread description, Linux: thread name; the same names, at most 15 characters):
