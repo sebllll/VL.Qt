@@ -17,7 +17,7 @@
  *   BIND        u32 id, u32 sinkHandle, u16 flags (sinkHandle 0 = unbind)
  *   CLEAR_COLOR color
  *   RESET       (no payload)                 destroys every object of the window (ids free again), like one DESTROY
- *                                            per top-level object; window root and clear color stay (#92)
+ *                                            per top-level object; window root, clear color and clear stay (#92)
  *   SET_STYLE   u32 id, u16 count, u16 flags (vlqt_style_set), then count entries, each 4-byte aligned:
  *               u16 field (vlqt_style_field), u8 state (vlqt_style_state), u8 valueType, value (like SET)
  *               Styles (#292/#293): the resolved style of a widget (Controls types 10..15 only, others -6). QtNative
@@ -26,6 +26,10 @@
  *               laid over the table (diff), with it the table is emptied first (full send). An unset (field, state)
  *               falls back to (field, NORMAL), then to 0 / transparent / "" (= Qt default font family). Unknown field
  *               or state -6, value type not the field's type -7 (like SET). The base style values live only in C#.
+ *   SET_CLEAR   u32 clear                    (#117) 1 = clear every frame to the clear color (the default), 0 = keep
+ *                                            the previous frame and draw the new one over it (feedback layer in the
+ *                                            scene, windows and offscreen scenes alike); the first frame after
+ *                                            switching to 0 and after a resize starts from the clear color
  *   SET_UNIFORMS u32 id, u16 count, u16 flags (vlqt_uniform_set), then count entries, each 4-byte aligned:
  *               u16 valueType, u16 nameLen (1..VLQT_UNIFORM_NAME_MAX), name (UTF-8, no terminator), padding to 4,
  *               value (like SET), padding to 4. ShaderEffect only (#437, see "ShaderEffect" below).
@@ -248,6 +252,7 @@ enum vlqt_op {
     VLQT_OP_CLEAR_COLOR = 6,
     VLQT_OP_RESET = 7,
     VLQT_OP_SET_STYLE = 8, /* resolved widget style, see the head comment (#292) */
+    VLQT_OP_SET_CLEAR = 9, /* Clear pin (#117), see the head comment */
     /* 16.. effects package 03 (#437), own block to keep merges with other packages simple */
     VLQT_OP_SET_UNIFORMS = 16, /* ShaderEffect uniforms by name, see the head comment */
     VLQT_OP_SET_EFFECT_CHAIN = 17, /* Effect chain of an element (#489), see the head comment "Effect chain" */

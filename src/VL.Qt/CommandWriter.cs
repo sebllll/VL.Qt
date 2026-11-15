@@ -104,6 +104,9 @@ namespace VL.Qt
 
         public void ClearColor(in Color4 c) => ClearColor(c.R, c.G, c.B, c.A);
 
+        /// <summary>SET_CLEAR (#117): false keeps the previous frame and draws the new one over it.</summary>
+        public void SetClear(bool clear) => WriteU32(Begin(Protocol.Op.SetClear, 4), clear ? 1u : 0u);
+
         // --- SET, one method per value type ---
 
         public void SetF32(uint id, ushort prop, float value)

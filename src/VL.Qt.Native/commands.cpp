@@ -1,10 +1,12 @@
 #include "commands.h"
 #include "debug.h"
 #include "effectchain.h"
+#include "feedback.h"
 #include "qmlitem.h"
 #include "shadereffectitem.h"
 #include "vlstyle.h"
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QRectF>
 #include <QtGui/QColor>
 #include <QtGui/QVector2D>
@@ -13,11 +15,14 @@
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtQuick/QSGRendererInterface>
 #include <QtQuick/private/qquickwindow_p.h> // itemsToPolish (#71)
 
 #include <algorithm>
 #include <cstring>
 #include <vector>
+
+Q_LOGGING_CATEGORY(lcFeedback, "vlqt.feedback")
 
 namespace vlqt {
 namespace {
@@ -46,6 +51,7 @@ const char* opName(quint16 op)
     case VLQT_OP_CLEAR_COLOR: return "CLEAR_COLOR";
     case VLQT_OP_RESET: return "RESET";
     case VLQT_OP_SET_STYLE: return "SET_STYLE";
+    case VLQT_OP_SET_CLEAR: return "SET_CLEAR";
     case VLQT_OP_SET_UNIFORMS: return "SET_UNIFORMS";
     case VLQT_OP_SET_EFFECT_CHAIN: return "SET_EFFECT_CHAIN";
     case VLQT_OP_SET_QML_PROPERTIES: return "SET_QML_PROPERTIES";
@@ -130,12 +136,13 @@ EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
 Scene::Scene(QQuickWindow* w, QQmlEngine* e)
     : window(w), engine(e), root(new QQuickItem()), elements(e), handlers(e)
 {
-    QQuickItem* content = window->contentItem();
-    root->setParentItem(content);
-    root->setSize(content->size());
+    root->setParentItem(window->contentItem());
+    // Sized to the window, not to the content item: Qt sizes the content item only for a shown window, so the root of
+    // an offscreen scene would stay 0 x 0 (the feedback layer of Clear off draws nothing of an empty item, #117).
+    root->setSize(window->size());
     elements.proxyParent = root; // Group frame proxies of ShaderEffects (#486)
-    QObject::connect(content, &QQuickItem::widthChanged, root, [this, content] { root->setWidth(content->width()); });
-    QObject::connect(content, &QQuickItem::heightChanged, root, [this, content] { root->setHeight(content->height()); });
+    QObject::connect(window, &QWindow::widthChanged, root, [this](int width) { root->setWidth(width); });
+    QObject::connect(window, &QWindow::heightChanged, root, [this](int height) { root->setHeight(height); });
     watchWindowGeometry(*this);
 }
 
@@ -143,6 +150,7 @@ Scene::~Scene()
 {
     // Items have no QObject parent (only parentItem), so every tracked item is deleted explicitly.
     // Effects are detached from their sources first (arbitrary deletion order below).
+    feedback.reset(); // its view is a child of the root
     for (auto& kv : nodes)
         kv.second.xf->scene = nullptr; // the unparenting and deletes below emit geometry signals (#20)
     for (auto& kv : nodes) {
@@ -160,6 +168,39 @@ Scene::~Scene()
     ids.clear();
     delete debug;
     delete root;
+}
+
+void Scene::setClear(bool clear)
+{
+    if (clear == clearFrames)
+        return;
+    clearFrames = clear;
+    releaseFeedback();
+    restoreFeedback();
+}
+
+void Scene::releaseFeedback()
+{
+    feedback.reset();
+    window->update();
+}
+
+void Scene::restoreFeedback()
+{
+    if (clearFrames || feedback)
+        return;
+    // The software backend draws no ShaderEffectSource (the layer would show a black frame): Clear off is ignored there
+    // and the scene renders as with Clear on.
+    QSGRendererInterface* ri = window->rendererInterface();
+    if (ri && ri->graphicsApi() == QSGRendererInterface::Software) {
+        if (!feedbackSoftwareWarned) {
+            feedbackSoftwareWarned = true;
+            qCWarning(lcFeedback, "Clear off needs a QRhi scenegraph; ignored on the Qt Quick software backend");
+        }
+        return;
+    }
+    feedback = std::make_unique<FeedbackLayer>(window, root);
+    window->update();
 }
 
 void Scene::setDebugAll(bool on)
@@ -277,6 +318,10 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                         std::memcpy(f, p, sizeof f);
                         window->setColor(toColor(f));
                     }
+                    break;
+                case VLQT_OP_SET_CLEAR:
+                    if (expect(4))
+                        setClear(rd<quint32>(p) != 0);
                     break;
                 case VLQT_OP_RESET:
                     if (expect(0))

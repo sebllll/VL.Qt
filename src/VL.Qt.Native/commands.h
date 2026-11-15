@@ -10,6 +10,7 @@
 #include <QtCore/QString>
 #include <QtCore/QtTypes>
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -22,6 +23,7 @@ class QQuickWindow;
 namespace vlqt {
 
 class DebugOverlay;
+class FeedbackLayer;
 
 /* One scene per window: id table, bindings, event queue. Root id 0 = an item filling contentItem. */
 struct Scene {
@@ -52,6 +54,19 @@ struct Scene {
     void updateDebug();
     const QQuickItem* debugOverlay() const; // nullptr until first used (perf: skipped in the item count)
     bool debugAll = false;
+
+    /* Clear (#117, feedback.h): false keeps the previous frame through the feedback layer, which exists only while
+     * clear is false; the first frame after switching off starts from the clear colour. Set by VLQT_OP_SET_CLEAR, kept
+     * by RESET. The layer is derived state: clearFrames is the state, the layer is built from it for the current
+     * window. */
+    void setClear(bool clear);
+    bool clear() const { return clearFrames; }
+    /* Before the QQuickWindow is replaced (#118 MSAA change): drops the layer (its source is a child of the old
+     * content item, its textures belong to the old window's QRhi), keeps the state. After the root moved to the new
+     * window (and `window` points to it): rebuilds the layer from the state; the first frame starts from the clear
+     * colour, as after a resize. */
+    void releaseFeedback();
+    void restoreFeedback();
 
     QQuickWindow* window;
     QQmlEngine* engine;
@@ -110,6 +125,9 @@ private:
     void detachMask(Node& host, QQuickItem* mask);
     void deleteRetired();
     DebugOverlay* debug = nullptr; // child of contentItem, deleted in ~Scene
+    std::unique_ptr<FeedbackLayer> feedback; // Clear off only (#117)
+    bool clearFrames = true; // Clear pin state (#117)
+    bool feedbackSoftwareWarned = false; // Clear off ignored on the software backend, logged once per scene
     std::vector<QQuickItem*> retired; // destroyed former effect sources, deleted after the next frame (#123)
 };
 

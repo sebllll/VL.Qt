@@ -82,8 +82,8 @@ static class MultiRendererTest
         void Frame()
         {
             if (windowAlive)
-                window.Update(shifted, Space.DIPTopLeft, clear, true, "VL.Qt multi renderer test");
-            offscreen.Update(content, Space.DIPTopLeft, clear, true);
+                window.Update(shifted, Space.DIPTopLeft, clear, true, true, "VL.Qt multi renderer test");
+            offscreen.Update(content, Space.DIPTopLeft, clear, true, true);
             if (windowAlive)
                 window.ApplyCommands();
             offscreen.ApplyCommands();
@@ -175,7 +175,7 @@ static class MultiRendererTest
         float before = sink[1].MeasuredSize.X;
         void FrameOffscreen(Element tree)
         {
-            offscreen.Update(tree, Space.DIPTopLeft, clear, true);
+            offscreen.Update(tree, Space.DIPTopLeft, clear, true, true);
             offscreen.ApplyCommands();
             OffscreenRenderer.RenderBatch(context, new[] { offscreen }, 0);
             client.BeforeEvents();

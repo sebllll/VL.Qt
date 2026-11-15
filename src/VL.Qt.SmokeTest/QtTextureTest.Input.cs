@@ -130,7 +130,7 @@ static partial class QtTextureTest
         /// <summary>One host frame: update, apply, render batch, pump, poll events.</summary>
         public void Frame()
         {
-            R.Update(Describe(), Space.DIPTopLeft, new Color4(0, 0, 0, 0), true);
+            R.Update(Describe(), Space.DIPTopLeft, new Color4(0, 0, 0, 0), true, true);
             R.ApplyCommands();
             int rc = OffscreenRenderer.RenderBatch(_context, _batch, 0);
             if (rc < 0)

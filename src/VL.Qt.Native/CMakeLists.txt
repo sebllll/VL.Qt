@@ -17,7 +17,7 @@ cmake_path(NORMAL_PATH VLQT_OUT_DIR)
 find_package(Qt6 6.12 REQUIRED COMPONENTS Gui GuiPrivate Qml Quick QuickPrivate QuickControls2 ShaderTools ShaderToolsPrivate)
 qt_standard_project_setup()
 
-add_library(vlqt SHARED vlqt.cpp vlqt.h device.cpp device.h perf.cpp perf.h commands.cpp commands.h effectchain.cpp effectchain.h elements.cpp elements.h events.cpp events.h touch.cpp touch.h debug.cpp debug.h resources.cpp resources.h image_resource.cpp image_resource.h qtimageitem.cpp qtimageitem.h snapshot_resource.cpp snapshot_resource.h shader_resource.cpp shader_resource.h shadereffectitem.cpp shadereffectitem.h qmlitem.cpp qmlitem.h vlstyle.cpp vlstyle.h offscreen.cpp offscreen.h render_thread.cpp render_thread.h test_offscreen.cpp protocol.h)
+add_library(vlqt SHARED vlqt.cpp vlqt.h device.cpp device.h perf.cpp perf.h commands.cpp commands.h effectchain.cpp effectchain.h elements.cpp elements.h events.cpp events.h touch.cpp touch.h debug.cpp debug.h feedback.cpp feedback.h resources.cpp resources.h image_resource.cpp image_resource.h qtimageitem.cpp qtimageitem.h snapshot_resource.cpp snapshot_resource.h shader_resource.cpp shader_resource.h shadereffectitem.cpp shadereffectitem.h qmlitem.cpp qmlitem.h vlstyle.cpp vlstyle.h offscreen.cpp offscreen.h render_thread.cpp render_thread.h test_offscreen.cpp protocol.h)
 target_compile_definitions(vlqt PRIVATE VLQT_BUILD)
 # Base style "VLQt" (#292): Qt Quick Controls style module embedded in QtNative (qrc:/qt/qml/VLQt, on the engine's
 # default import path), nothing to deploy. Plain resources + hand-written qmldir: no qmlcachegen/plugin target; the

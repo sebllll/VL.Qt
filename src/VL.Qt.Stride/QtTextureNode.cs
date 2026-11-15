@@ -37,8 +37,9 @@ namespace VL.Qt.Stride
         /// <param name="size">Size of the texture in pixels (1 DIP = 1 pixel), clamped to 1x1 ... the largest Texture2D of Stride's device (16384 on feature level 11).</param>
         /// <param name="space">Coordinate space of the elements. v1 implements DIPTopLeft only (1 unit = 100 DIP); other values warn and behave like DIPTopLeft.</param>
         /// <param name="clearColor">Background of the texture (straight alpha, premultiplied here). Alpha 0 gives a transparent texture.</param>
+        /// <param name="clear">True clears the texture to Clear Color every frame. False keeps the previous frame and draws the new one over it (trails, smearing, feedback: a semi-transparent full-size rectangle fades the old content). Switchable at runtime without recreating the texture; the first frame after switching off, and after a Size or Format change, starts from Clear Color. Costs one full-size texture while off, and Qt renders every frame then, also when the scene did not change.</param>
         /// <param name="format">Pixel format of the texture: R8G8B8A8 or B8G8R8A8 (UNorm or SRgb) or R16G16B16A16_Float; other formats give an error. SRgb and Float textures hold linear premultiplied values, UNorm textures the gamma-space values of a Qt window. Half-transparent colours still differ from a Qt window: Stride blends in linear light, a Qt window in gamma space.</param>
-        /// <param name="enabled">False freezes the node: no updates of Input, Space, Clear Color, Size or Format, nothing is created or recreated and nothing renders; Output keeps the last content (null if there is none yet).</param>
+        /// <param name="enabled">False freezes the node: no updates of Input, Space, Clear Color, Clear, Size or Format, nothing is created or recreated and nothing renders; Output keeps the last content (null if there is none yet).</param>
         /// <param name="inputNotifications">Mouse, touch and keyboard input for the scene (vvvv notifications) with positions in texture pixels, top-left origin. Map a window's input with ToTexturePixels. A press inside the texture gives the scene keyboard focus, a press outside takes it.</param>
         /// <param name="debug">Debug overlay for all elements of the scene (same as the Debug pin of Renderer [Qt]).</param>
         public void Update(
@@ -49,13 +50,14 @@ namespace VL.Qt.Stride
             [DefaultValue(typeof(Int2), "1920, 1080")] Int2 size,
             [DefaultValue(typeof(Space), nameof(Space.DIPTopLeft))] Space space,
             [DefaultValue("0, 0, 0, 0")] Color4 clearColor,
+            [DefaultValue(true)] bool clear,
             [DefaultValue(typeof(PixelFormat), nameof(PixelFormat.B8G8R8A8_UNorm_SRgb))] PixelFormat format,
             [DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] IObservable<INotification>? inputNotifications,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(false)] bool debug)
         {
             _scene.Input.Subscribe(inputNotifications);
-            _scene.Update(input, size, format, space, clearColor, enabled, debug);
+            _scene.Update(input, size, format, space, clearColor, clear, enabled, debug);
 
             output = _scene.Texture;
             error = _scene.Error;

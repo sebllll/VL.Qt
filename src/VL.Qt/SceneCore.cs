@@ -23,9 +23,11 @@ namespace VL.Qt
         IntPtr _handle;
         byte[] _poll = new byte[16 * 1024];
 
-        // Last clear color sent to QtNative (change detection).
+        // Last clear color and Clear flag sent to QtNative (change detection).
         Color4 _clearColor;
         bool _hasClearColor;
+        bool _clear;
+        bool _hasClear;
 
         string _pollError = "";
         // Host frame (#245): commands of the last apply, reconcile time since the last report.
@@ -67,17 +69,24 @@ namespace VL.Qt
         public int AppliedOps => _appliedOps;
 
         /// <summary>
-        /// Writes the clear color (when it changed) and the commands of this frame (applied by <see cref="Apply"/>).
+        /// Writes the clear color and the Clear flag (when they changed) and the commands of this frame (applied by
+        /// <see cref="Apply"/>). <paramref name="clear"/> = false keeps the previous frame and draws the new one over it.
         /// <paramref name="space"/> must be resolved (<see cref="Geometry.Resolve"/>). Appends: the buffer is reset after
         /// apply, so commands of a frame without apply go out with the next one.
         /// </summary>
-        public void Update(Element? input, Space space, Color4 clearColor)
+        public void Update(Element? input, Space space, Color4 clearColor, bool clear)
         {
             if (!_hasClearColor || clearColor != _clearColor)
             {
                 _hasClearColor = true;
                 _clearColor = clearColor;
                 _commands.ClearColor(clearColor);
+            }
+            if (!_hasClear || clear != _clear)
+            {
+                _hasClear = true;
+                _clear = clear;
+                _commands.SetClear(clear);
             }
             if (_resync.ShouldReconcile(input))
             {
@@ -115,7 +124,11 @@ namespace VL.Qt
                 // Before the resync: its RESET overwrites QtNative's last error, Discard drops the bindings.
                 ApplyError = ReportApplyError();
             if (_resync.OnApplyResult(rc))
-                _hasClearColor = false; // QtNative may have lost it with the aborted batch; sent again with the rebuild
+            {
+                // QtNative may have lost them with the aborted batch (RESET keeps them); sent again with the rebuild.
+                _hasClearColor = false;
+                _hasClear = false;
+            }
         }
 
         /// <summary>Reconcile time since the last call (host frame report, #245).</summary>
