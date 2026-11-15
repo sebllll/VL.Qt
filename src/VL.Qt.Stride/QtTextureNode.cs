@@ -27,6 +27,7 @@ namespace VL.Qt.Stride
         readonly NodeErrors _errors;
         readonly QtTextureRenderer _renderer;
         readonly OffscreenRenderer _scene;
+        readonly NotificationQueue _input = new();
         Texture? _texture;
         GraphicsDevice? _device;
         Int2 _size;
@@ -73,11 +74,17 @@ namespace VL.Qt.Stride
             [Pin(Visibility = PinVisibility.Optional)] IObservable<INotification>? inputNotifications,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(false)] bool debug)
         {
-            // TODO: #119 task 5: subscribe to inputNotifications (re-subscribe on a new instance), queue the notifications
-            // and hand them to _scene.Notify here, before _scene.Update and before the render in DrawStarted.
             // The previous frame had no draw (game not drawing): send its commands now, so they do not pile up.
             if (_scheduled)
                 ApplyCommands();
+
+            // Input acts on the items of the last apply, before this frame's update and before the render in DrawStarted;
+            // a disabled (frozen) scene takes no input.
+            _input.Subscribe(inputNotifications);
+            if (enabled)
+                _input.Drain(_scene);
+            else
+                _input.Clear();
 
             // Disabled: nothing is created, recreated or rebound; the texture keeps its content.
             if (enabled)
@@ -268,6 +275,7 @@ namespace VL.Qt.Stride
             _disposed = true;
             _renderer.StrideDeviceGone -= OnStrideDeviceGone;
             _renderer.Unschedule(this);
+            _input.Dispose();
             // Dispose unbinds first, then frees the scene; the Stride texture last.
             _scene.Dispose();
             _texture?.Dispose();
