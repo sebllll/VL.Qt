@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Qt;
@@ -13,12 +12,18 @@ using Color = System.Drawing.Color;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 // TODO: spike of #117 (Clear pin, task 1); task 5 turns it into the ClearPin scenario. Drives the feedback
-// layer (src/VL.Qt.Native/feedback.h) through the test hook vlqt_test_set_clear and prints what the decision in
+// layer (src/VL.Qt.Native/feedback.h) through the SET_CLEAR command and prints what the decision in
 // docs/decisions/render-texture.md ("Clear pin") is based on. Grabs: <outDir>/clear_pin_*.png.
 static class ClearPinTest
 {
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    static extern int vlqt_test_set_clear(IntPtr w, int on, int samples);
+    // SET_CLEAR in a buffer of its own (the scenario's writer belongs to the reconciler). 0 = ok.
+    static int SetClear(IntPtr w, bool clear)
+    {
+        var cmd = new CommandWriter();
+        cmd.Reset();
+        cmd.SetClear(clear);
+        return Native.Apply(w, cmd.EndFrame());
+    }
 
     static Color Px(Bitmap a, int x, int y, int w = 800, int h = 600) => a.GetPixel(x * a.Width / w, y * a.Height / h);
     static bool Near(Color c, int r, int g, int b, int tol = 10) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
@@ -120,7 +125,7 @@ static class ClearPinTest
         // 1) Off: the first frame starts from the clear colour (no garbage), the moving rectangle leaves a trail.
         x = 50;
         Frame();
-        check(vlqt_test_set_clear(w, 0, 0) == 0, "clear-pin: set_clear 0");
+        check(SetClear(w, false) == 0, "clear-pin: set_clear 0");
         Frame();
         using (var img = grab(w, P("first")))
         {
@@ -203,7 +208,7 @@ static class ClearPinTest
         Console.WriteLine($"clear-pin: window Clear off: gpu {off.Gpu:F3} ms, render {off.Render:F3} ms, {off.Changes} changes / 120");
 
         // 7) Clear on again: the trail goes at once.
-        check(vlqt_test_set_clear(w, 1, 0) == 0, "clear-pin: set_clear 1");
+        check(SetClear(w, true) == 0, "clear-pin: set_clear 1");
         x = 500;
         Frame();
         using (var img = grab(w, P("on_again")))
@@ -211,9 +216,9 @@ static class ClearPinTest
         var on2 = Measure(120);
         Console.WriteLine($"clear-pin: window Clear on again: gpu {on2.Gpu:F3} ms, render {on2.Render:F3} ms, {on2.Changes} changes / 120");
 
-        // 8) MSAA (#118): windows render with 4 samples, the layer texture has its own count. An opaque full-size black
-        // rectangle under a rotated orange one stops the accumulation, so the edges show only the sampling: pixels
-        // between black and orange along the edges, Clear on vs. the layer with 1 and 4 samples.
+        // 8) MSAA (#118): windows render with 4 samples, the layer inherits them. An opaque full-size black rectangle
+        // under a rotated orange one stops the accumulation, so the edges show only the sampling: pixels between black
+        // and orange along the edges, Clear on vs. Clear off.
         float angle = 0;
         Group Msaa()
         {
@@ -245,31 +250,15 @@ static class ClearPinTest
         }
         angle = 0.5f;
         var edges = new List<string>();
-        foreach (var (clearOn, samples, name) in new[] { (1, 0, "msaa_clear_on"), (0, 1, "msaa_layer_1"), (0, 2, "msaa_layer_2"), (0, 4, "msaa_layer_4"), (0, 8, "msaa_layer_8"), (0, 0, "msaa_layer_auto") })
+        foreach (var (clear, name) in new[] { (true, "msaa_clear_on"), (false, "msaa_clear_off") })
         {
-            vlqt_test_set_clear(w, clearOn, samples);
+            SetClear(w, clear);
             for (int i = 0; i < 4; i++) MsaaFrame();
             edges.Add($"{name} {Edge(name)}");
         }
         Console.WriteLine($"clear-pin: distinct edge values (n samples: n - 1): {string.Join(", ", edges)}");
-        vlqt_test_set_clear(w, 1, 0);
+        SetClear(w, true);
         Frame();
-
-        // 8b) Cost of the layer's samples at 1920 x 1080: Clear on / layer 1 sample / layer 4 samples, interleaved.
-        Native.vlqt_window_resize(w, 1920, 1080);
-        Frame();
-        var costs = new Dictionary<string, List<double>> { ["on"] = new(), ["layer 1"] = new(), ["layer 4"] = new() };
-        for (int round = 0; round < 3; round++)
-        {
-            vlqt_test_set_clear(w, 1, 0);
-            costs["on"].Add(Measure(120).Gpu);
-            vlqt_test_set_clear(w, 0, 1);
-            costs["layer 1"].Add(Measure(120).Gpu);
-            vlqt_test_set_clear(w, 0, 4);
-            costs["layer 4"].Add(Measure(120).Gpu);
-        }
-        Console.WriteLine("clear-pin: cost 1920x1080 by samples: " + string.Join(", ", costs.Select(kv => $"{kv.Key} {string.Join(" / ", kv.Value.Select(v => v.ToString("F3")))} ms")));
-        vlqt_test_set_clear(w, 1, 0);
 
         // 9) Cost, interleaved (single runs are noisy): 3 rounds of 120 frames each, Clear on / off, two window sizes. Also
         // toggles and resizes with the layer on and off (a resize after switching on crashed: lambda on the deleted view).
@@ -281,14 +270,14 @@ static class ClearPinTest
             var gpuOff = new List<double>();
             for (int round = 0; round < 3; round++)
             {
-                vlqt_test_set_clear(w, 1, 0);
+                SetClear(w, true);
                 gpuOn.Add(Measure(120).Gpu);
-                vlqt_test_set_clear(w, 0, 0);
+                SetClear(w, false);
                 gpuOff.Add(Measure(120).Gpu);
             }
             Console.WriteLine($"clear-pin: cost {sw}x{sh}: gpu Clear on {string.Join(" / ", gpuOn.Select(v => v.ToString("F3")))} ms, off {string.Join(" / ", gpuOff.Select(v => v.ToString("F3")))} ms");
         }
-        vlqt_test_set_clear(w, 1, 0);
+        SetClear(w, true);
 
         cmd.Reset();
         rec.Update(null, Space.DIPTopLeft);
@@ -348,7 +337,7 @@ static class ClearPinTest
         int r0 = Render();
         var pxOn = Read();
         Console.WriteLine($"clear-pin offscreen: before Clear off: rendered {r0}, box {At(pxOn, 4, 8)}, background {At(pxOn, 40, 30)}");
-        check(vlqt_test_set_clear(scene, 0, 0) == 0, "clear-pin offscreen: set_clear 0");
+        check(SetClear(scene, false) == 0, "clear-pin offscreen: set_clear 0");
         int first = Render();
         var px0 = Read();
         check(At(px0, 4, 8).R == 255 && At(px0, 40, 30).R == 32 && At(px0, 40, 30).A == 255,
@@ -381,14 +370,14 @@ static class ClearPinTest
         check(odd == 0 && At(px2, 4, 8).R == 32 && At(px2, 64, 8).R == 255,
             $"clear-pin offscreen: rebind with a new size clears once, no garbage ({odd} odd, {At(px2, 4, 8)}, {At(px2, 64, 8)})");
 
-        check(vlqt_test_set_clear(scene, 1, 0) == 0, "clear-pin offscreen: set_clear 1");
+        check(SetClear(scene, true) == 0, "clear-pin offscreen: set_clear 1");
         Move(20);
         Render();
         var px3 = Read();
         check(At(px3, 64, 8).R == 32 && At(px3, 24, 8).R == 255, $"clear-pin offscreen: Clear on removes the trail ({At(px3, 64, 8)}, {At(px3, 24, 8)})");
 
-        // MSAA: the render target of a scene has 1 sample. A rotated white square on the grey clear colour: distinct
-        // grey values on its edges, Clear on vs. the layer with the default (0) and 4 samples.
+        // MSAA: the render target of a scene has 1 sample, the layer inherits it. A rotated white square on the grey clear
+        // colour: distinct grey values on its edges, Clear on vs. Clear off.
         cmd.Reset();
         cmd.Create(2, Protocol.Type.Rectangle);
         cmd.SetPlace(2, 0, 0, 20, 20);
@@ -410,9 +399,9 @@ static class ClearPinTest
             return values.Count;
         }
         var steps = new List<string>();
-        foreach (var (clearOn, samples, name) in new[] { (1, 0, "clear on"), (0, 0, "layer default"), (0, 4, "layer 4") })
+        foreach (var (clear, name) in new[] { (true, "clear on"), (false, "clear off") })
         {
-            vlqt_test_set_clear(scene, clearOn, samples);
+            SetClear(scene, clear);
             for (int i = 0; i < 3; i++) { Move(20 + i % 2); Render(); }
             steps.Add($"{name} {Steps()}");
         }

@@ -339,9 +339,6 @@ VLQT_API int   vlqt_test_handler_count(void* w, unsigned int id);
 /* TEST ONLY (#20): number of bound items whose geometry (EV_MEASURED / EV_SCENE_BOUNDS) the last poll of the window
  * read; a static scene reads none. -1 null window. */
 VLQT_API int   vlqt_test_measure_count(void* w);
-/* TEST ONLY (#117 spike): Clear on (1) or off (0, feedback layer) for a window or an offscreen scene; samples = MSAA
- * of the layer, 0 = the target's. TODO: replace by the SET_CLEAR command of #117 task 2. -1 null window. */
-VLQT_API int   vlqt_test_set_clear(void* w, int on, int samples);
 /* TEST ONLY (#244): busy-waits ms inside one phase of the window's next rendered frame (0 events, 1 sync, 2 render,
  * 3 present, 4 vsync wait) to check that the F5 timeline attributes a spike. 0 = ok, -1 null window. */
 VLQT_API int   vlqt_test_perf_spike(void* w, int phase, float ms);

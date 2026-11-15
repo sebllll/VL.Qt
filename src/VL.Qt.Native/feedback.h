@@ -32,10 +32,10 @@ namespace vlqt {
 class FeedbackLayer
 {
 public:
-    /* Builds the layer for window (source under its content item, sized to it) and root. samples: MSAA of the layer
-     * texture; 0 and 1 inherit the sample count of the window's render target (Qt), more than 1 forces it. Qt
-     * resolves a multisampled layer into its sampled texture every frame. */
-    FeedbackLayer(QQuickWindow* window, QQuickItem* root, int samples);
+    /* Builds the layer for window (source under its content item) and root, both sized to the root (Scene sizes the
+     * root to the window). The layer texture inherits the sample count of the window's render target (Qt's default,
+     * samples 0): edges as with Clear on; Qt resolves a multisampled layer into its sampled texture every frame. */
+    FeedbackLayer(QQuickWindow* window, QQuickItem* root);
     ~FeedbackLayer();
     FeedbackLayer(const FeedbackLayer&) = delete;
     FeedbackLayer& operator=(const FeedbackLayer&) = delete;

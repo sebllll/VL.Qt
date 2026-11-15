@@ -28,6 +28,11 @@
             /// <summary>Resolved widget style: u32 id, u16 count, u16 flags (<see cref="StyleSet"/>), entries (#292).</summary>
             public const ushort SetStyle = 8;
             /// <summary>
+            /// Clear pin (#117): u32 clear, 1 = clear every frame (the default), 0 = keep the previous frame and draw the
+            /// new one over it. <see cref="Reset"/> leaves it as it is, like <see cref="ClearColor"/>.
+            /// </summary>
+            public const ushort SetClear = 9;
+            /// <summary>
             /// ShaderEffect uniforms by name (#437): u32 id, u16 count, u16 flags (<see cref="UniformSet"/>), then per
             /// entry (4-byte aligned) u16 value type (<see cref="Vt"/>), u16 name length (1..<see cref="UniformNameMax"/>),
             /// UTF-8 name, padding to 4, value like SET, padding to 4. Diff by name, full send with <see cref="UniformSet.Clear"/>.

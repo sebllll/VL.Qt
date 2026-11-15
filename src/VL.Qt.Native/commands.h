@@ -56,11 +56,10 @@ struct Scene {
     bool debugAll = false;
 
     /* Clear (#117, feedback.h): false keeps the previous frame through the feedback layer, which exists only while
-     * clear is false; the first frame after switching off starts from the clear colour. The layer is derived state:
-     * clearFrames and feedbackSamples are the state, the layer is built from them for the current window.
-     * samples: MSAA of the layer; 0 (and 1) = the sample count of the target, which Qt's layer inherits (window: 4,
-     * offscreen scene: 1), so the edges look as with Clear on. */
-    void setClear(bool clear, int samples = 0);
+     * clear is false; the first frame after switching off starts from the clear colour. Set by VLQT_OP_SET_CLEAR, kept
+     * by RESET. The layer is derived state: clearFrames is the state, the layer is built from it for the current
+     * window. */
+    void setClear(bool clear);
     bool clear() const { return clearFrames; }
     /* Before the QQuickWindow is replaced (#118 MSAA change): drops the layer (its source is a child of the old
      * content item, its textures belong to the old window's QRhi), keeps the state. After the root moved to the new
@@ -127,8 +126,7 @@ private:
     void deleteRetired();
     DebugOverlay* debug = nullptr; // child of contentItem, deleted in ~Scene
     std::unique_ptr<FeedbackLayer> feedback; // Clear off only (#117)
-    bool clearFrames = true;  // Clear pin state (#117)
-    int feedbackSamples = 0;  // MSAA of the layer, 0 = the target's (only the test hook sets another)
+    bool clearFrames = true; // Clear pin state (#117)
     std::vector<QQuickItem*> retired; // destroyed former effect sources, deleted after the next frame (#123)
 };
 

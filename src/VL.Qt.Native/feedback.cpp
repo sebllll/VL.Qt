@@ -67,9 +67,8 @@ private:
     bool m_connected = false;
 };
 
-FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root, int samples)
+FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root)
 {
-    // Sized to the window, not to the content item: the content item of an offscreen scene (never shown) stays 0 x 0.
     QQuickItem* content = window->contentItem();
     auto* source = new QQuickShaderEffectSource();
     source->setSourceItem(root);
@@ -78,28 +77,22 @@ FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root, int samples
     source->setHideSource(true); // the root is drawn only into the source, the window draws the source
     // The view samples the texture as it is: no flip for ShaderEffect texture coordinates.
     source->setTextureMirroring(QQuickShaderEffectSource::NoMirroring);
-    source->setSamples(samples);
     source->setParentItem(content);
     m_source = source;
 
     auto* view = new FeedbackView(root, source);
     m_view = view;
 
-    // The root of an offscreen scene is 0 x 0 too (its elements are not clipped), and a ShaderEffectSource draws
-    // nothing of an empty source item. A window sizes its root to the content item (same size as the window).
-    // TODO: task 3: size the root of an offscreen scene in Scene (like a window), not here.
-    // One connection per item, each with the item as context: the view is deleted at once, the source later.
-    const auto fitSource = [window, source, root] {
-        root->setSize(window->size());
-        source->setSize(window->size());
-    };
-    const auto fitView = [window, view] { view->setSize(window->size()); };
+    // Sized to the root, which Scene sizes to the window (also offscreen, where the content item stays 0 x 0). One
+    // connection per item, each with the item as context: the view is deleted at once, the source later.
+    const auto fitSource = [source, root] { source->setSize(root->size()); };
+    const auto fitView = [view, root] { view->setSize(root->size()); };
     fitSource();
     fitView();
-    QObject::connect(window, &QWindow::widthChanged, source, fitSource);
-    QObject::connect(window, &QWindow::heightChanged, source, fitSource);
-    QObject::connect(window, &QWindow::widthChanged, view, fitView);
-    QObject::connect(window, &QWindow::heightChanged, view, fitView);
+    QObject::connect(root, &QQuickItem::widthChanged, source, fitSource);
+    QObject::connect(root, &QQuickItem::heightChanged, source, fitSource);
+    QObject::connect(root, &QQuickItem::widthChanged, view, fitView);
+    QObject::connect(root, &QQuickItem::heightChanged, view, fitView);
 }
 
 FeedbackLayer::~FeedbackLayer()
@@ -110,8 +103,8 @@ FeedbackLayer::~FeedbackLayer()
         delete m_view.data();
     }
     if (auto* source = static_cast<QQuickShaderEffectSource*>(m_source.data())) {
-        if (source->window())
-            QObject::disconnect(source->window(), nullptr, source, nullptr); // no root resize until deleteLater
+        if (QQuickItem* root = source->sourceItem())
+            QObject::disconnect(root, nullptr, source, nullptr); // no resize until deleteLater
         source->setSourceItem(nullptr); // gives the root back to the main pass (hideSource)
         source->setParentItem(nullptr);
         source->deleteLater(); // its layer is released by the scene graph (render thread)

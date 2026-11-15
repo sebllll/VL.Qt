@@ -47,6 +47,7 @@ const char* opName(quint16 op)
     case VLQT_OP_CLEAR_COLOR: return "CLEAR_COLOR";
     case VLQT_OP_RESET: return "RESET";
     case VLQT_OP_SET_STYLE: return "SET_STYLE";
+    case VLQT_OP_SET_CLEAR: return "SET_CLEAR";
     case VLQT_OP_SET_UNIFORMS: return "SET_UNIFORMS";
     case VLQT_OP_SET_EFFECT_CHAIN: return "SET_EFFECT_CHAIN";
     case VLQT_OP_SET_QML_PROPERTIES: return "SET_QML_PROPERTIES";
@@ -131,12 +132,13 @@ EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
 Scene::Scene(QQuickWindow* w, QQmlEngine* e)
     : window(w), engine(e), root(new QQuickItem()), elements(e), handlers(e)
 {
-    QQuickItem* content = window->contentItem();
-    root->setParentItem(content);
-    root->setSize(content->size());
+    root->setParentItem(window->contentItem());
+    // Sized to the window, not to the content item: Qt sizes the content item only for a shown window, so the root of
+    // an offscreen scene would stay 0 x 0 (the feedback layer of Clear off draws nothing of an empty item, #117).
+    root->setSize(window->size());
     elements.proxyParent = root; // Group frame proxies of ShaderEffects (#486)
-    QObject::connect(content, &QQuickItem::widthChanged, root, [this, content] { root->setWidth(content->width()); });
-    QObject::connect(content, &QQuickItem::heightChanged, root, [this, content] { root->setHeight(content->height()); });
+    QObject::connect(window, &QWindow::widthChanged, root, [this](int width) { root->setWidth(width); });
+    QObject::connect(window, &QWindow::heightChanged, root, [this](int height) { root->setHeight(height); });
     watchWindowGeometry(*this);
 }
 
@@ -164,12 +166,11 @@ Scene::~Scene()
     delete root;
 }
 
-void Scene::setClear(bool clear, int samples)
+void Scene::setClear(bool clear)
 {
-    if (clear == clearFrames && samples == feedbackSamples)
+    if (clear == clearFrames)
         return;
     clearFrames = clear;
-    feedbackSamples = samples;
     releaseFeedback();
     restoreFeedback();
 }
@@ -184,7 +185,7 @@ void Scene::restoreFeedback()
 {
     if (clearFrames || feedback)
         return;
-    feedback = std::make_unique<FeedbackLayer>(window, root, feedbackSamples);
+    feedback = std::make_unique<FeedbackLayer>(window, root);
     window->update();
 }
 
@@ -303,6 +304,10 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                         std::memcpy(f, p, sizeof f);
                         window->setColor(toColor(f));
                     }
+                    break;
+                case VLQT_OP_SET_CLEAR:
+                    if (expect(4))
+                        setClear(rd<quint32>(p) != 0);
                     break;
                 case VLQT_OP_RESET:
                     if (expect(0))
