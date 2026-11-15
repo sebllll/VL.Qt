@@ -291,23 +291,7 @@ private:
         }
     }
 
-    // Clears the focus of the outermost focused item below the root, so the active focus goes to the root. A Control
-    // is a focus scope (SpinBox: the focus sits on its contentItem), clearing only the inner item keeps it inside.
-    void release()
-    {
-        QQuickItem* root = m_window->contentItem();
-        QQuickItem* f = m_window->activeFocusItem();
-        if (!f || f == root)
-            return;
-        QQuickItem* top = f;
-        for (QQuickItem* i = f; i && i != root; i = i->parentItem()) {
-            if (i->hasFocus())
-                top = i;
-        }
-        top->setFocus(false, Qt::OtherFocusReason);
-        if (m_window->activeFocusItem() != root)
-            root->forceActiveFocus(Qt::OtherFocusReason);
-    }
+    void release() { vlqt::offscreen::releaseFocus(m_window); }
     QQuickWindow* m_window;
 };
 
@@ -555,8 +539,8 @@ bool testSyntheticInputOnly()
 #endif
 
 // A window handle (void* of the vlqt_window_* exports): a window, or an offscreen scene (#116, offscreen.cpp) whose
-// QQuickWindow is driven by a QQuickRenderControl. Both share engine, scene, gate and perf; a scene has no input
-// filters (closeFilter etc. stay null) and its own part in offscreen.
+// QQuickWindow is driven by a QQuickRenderControl. Both share engine, scene, gate and perf; a scene has only the
+// FocusRelease input filter (closeFilter etc. stay null) and its own part in offscreen.
 struct Window {
     QQuickWindow* window = nullptr;
     vlqt::offscreen::State* offscreen = nullptr; // offscreen scene: render control and binding; null for a window
@@ -594,7 +578,7 @@ QWindow* testKeyTarget(Window* w)
     return w->window;
 }
 
-// The test input exports on an offscreen scene (#116): no input in v1 (vlqt.h).
+// The test input exports on an offscreen scene (#116): a scene takes input through vlqt_offscreen_send_* (#119).
 int notOnScene(const char* function)
 {
     setError(std::string(function) + ": not supported on an offscreen scene");
@@ -893,8 +877,28 @@ void* createHandle(QQuickWindow* window, State* state)
     // Change count (vlqt_window_change_count) only: without a platform window a scene gets no UpdateRequest or Expose,
     // so the gate's event filter is not installed.
     w->gate = new UpdateGate(window); // child of the window
+    // Input comes from vlqt_offscreen_send_* (#119); Esc and a press outside release the focus as in a window.
+    window->installEventFilter(new FocusRelease(window)); // #374, child of the window
     initShared(w);
     return w;
+}
+
+void releaseFocus(QQuickWindow* window)
+{
+    QQuickItem* root = window->contentItem();
+    QQuickItem* f = window->activeFocusItem();
+    if (!f || f == root)
+        return;
+    // A Control is a focus scope (SpinBox: the focus sits on its contentItem), clearing only the inner item keeps it
+    // inside.
+    QQuickItem* top = f;
+    for (QQuickItem* i = f; i && i != root; i = i->parentItem()) {
+        if (i->hasFocus())
+            top = i;
+    }
+    top->setFocus(false, Qt::OtherFocusReason);
+    if (window->activeFocusItem() != root)
+        root->forceActiveFocus(Qt::OtherFocusReason);
 }
 
 bool sendTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<std::pair<int, QPointF>>& active,

@@ -25,14 +25,18 @@ struct State;
 // --- vlqt.cpp ---
 
 // Window handle of a new scene around window, a QQuickWindow of state's render control: QML engine, scene (apply,
-// poll), change count, perf monitor and graphics configuration on the shared device (device::attach), no input
-// filters. The handle owns window and state from here on; vlqt_window_destroy frees them.
+// poll), change count, perf monitor and graphics configuration on the shared device (device::attach), the
+// FocusRelease filter (#374) and no other input filter. The handle owns window and state from here on;
+// vlqt_window_destroy frees them.
 void* createHandle(QQuickWindow* window, State* state);
 // The offscreen part of handle; nullptr for a null handle or a window.
 State* stateOf(void* handle);
 QQuickWindow* quickWindow(void* handle);
 // vlqt_last_error.
 void setError(const std::string& message);
+// Clears the focus of the outermost focused item below window's root, so the active focus goes to the root: a running
+// edit commits as on any focus loss. Shared by the FocusRelease filter (#374) and the scene's focus loss (#119).
+void releaseFocus(QQuickWindow* window);
 // Injected touch, shared with vlqt_test_send_touch: sends the complete touch state of window after point id of device
 // changed to state (Pressed, Updated or Released) at pos (window DIP), like a touchscreen driver: one QTouchEvent
 // (Begin/Update/End) with every point of active, the others stationary, via QCoreApplication::sendEvent. Updates

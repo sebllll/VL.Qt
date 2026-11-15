@@ -5,6 +5,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QFocusEvent>
 #include <QtGui/QInputMethodEvent>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QMouseEvent>
@@ -17,6 +18,8 @@
 #include <QtQuick/QQuickRenderTarget>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
+// Scene focus (#119): SceneRenderControlPrivate. Private API, check on Qt updates.
+#include <QtQuick/private/qquickrendercontrol_p.h>
 
 #include <algorithm>
 #include <cmath>
@@ -27,7 +30,6 @@
 #ifdef _WIN32
 #include "device.h"
 
-#include <QtQuick/private/qquickrendercontrol_p.h>
 #include <QtQuick/private/qquickwindow_p.h>
 
 #ifndef NOMINMAX
@@ -72,6 +74,8 @@ struct State
     QPointingDevice* mouse = nullptr;
     QPointingDevice* touchscreen = nullptr;
     QPointingDevice* pen = nullptr; // pen points as touch (#351), own ids
+    // The scene has the keyboard focus (FocusIn sent): a scene window never becomes QGuiApplication's focus window.
+    bool focused = false;
     Qt::MouseButtons buttons = Qt::NoButton;          // held after the last mouse event
     std::vector<std::pair<int, QPointF>> touchPoints; // active points (id, DIP) of touchscreen ...
     std::vector<std::pair<int, QPointF>> penPoints;   // ... and of pen
@@ -102,6 +106,30 @@ void deviceLost();
 void deviceRestored();
 #endif
 
+// Keyboard focus of a scene (#119): Qt Quick gives a window's root item the focus, and so its items the active focus,
+// only while QGuiApplication's focus window is that window, its render window
+// (QQuickRenderControlPrivate::isRenderWindow) or none. A scene has no render window, and right after the host window
+// was clicked a Qt window can still be the focus window (its deactivation is queued). So while the scene has the focus
+// (FocusIn sent), it counts the focus window as its render window, as QQuickWidget's render control does for its window.
+class SceneRenderControlPrivate : public QQuickRenderControlPrivate
+{
+public:
+    SceneRenderControlPrivate(QQuickRenderControl* renderControl, const State* state)
+        : QQuickRenderControlPrivate(renderControl), m_state(state) {}
+    bool isRenderWindow(const QWindow* w) override
+    {
+        return (m_state->focused && w && w == QGuiApplication::focusWindow()) || QQuickRenderControlPrivate::isRenderWindow(w);
+    }
+private:
+    const State* m_state;
+};
+
+class SceneRenderControl : public QQuickRenderControl
+{
+public:
+    explicit SceneRenderControl(const State* state) : QQuickRenderControl(*new SceneRenderControlPrivate(this, state)) {}
+};
+
 void* create(int width, int height)
 {
     if (!qGuiApp) {
@@ -114,7 +142,7 @@ void* create(int width, int height)
         return nullptr;
     }
     auto* state = new State();
-    state->renderControl = new QQuickRenderControl();
+    state->renderControl = new SceneRenderControl(state);
     auto* window = new QQuickWindow(state->renderControl);
     state->window = window;
     // 1 DIP = 1 texture pixel; the size until the first bind, which sets the texture's.
@@ -632,10 +660,34 @@ int sendTouchPointer(State* s, bool pen, int type, int id, QPointF pos, Qt::Keyb
         : VLQT_OFFSCREEN_BAD_ARGUMENT;
 }
 
+// FocusIn / FocusOut to the scene's window, as the Qt render control examples do: QQuickWindow gives its content item
+// the focus and the active focus item follows (activeFocusOnPress of TextInput works; SceneRenderControlPrivate).
+// FocusOut alone keeps the active focus item while no window has the focus (Qt keeps it for the window's return), so
+// the focus loss releases it first: a running edit commits. Nothing if unchanged.
+void setFocus(State* s, bool focused, Qt::FocusReason reason)
+{
+    if (s->focused == focused)
+        return;
+    if (!focused)
+        releaseFocus(s->window);
+    // Before the event: SceneRenderControlPrivate reads it while QQuickWindow handles FocusIn.
+    s->focused = focused;
+    QFocusEvent ev(focused ? QEvent::FocusIn : QEvent::FocusOut, reason);
+    QCoreApplication::sendEvent(s->window, &ev);
+}
+
 int sendPointer(State* s, int device, int type, int id, QPointF pos, int buttons, int modifiers)
 {
     const auto mods = Qt::KeyboardModifiers(modifiers);
     const ulong ts = timestamp(s);
+    // Like a window: a press inside the scene focuses it, outside unfocuses it, before the press is delivered (so the
+    // pressed TextInput takes the active focus). An unknown device changes no focus.
+    const bool knownDevice = device == VLQT_POINTER_DEVICE_MOUSE || device == VLQT_POINTER_DEVICE_TOUCH
+        || device == VLQT_POINTER_DEVICE_PEN;
+    if (type == VLQT_POINTER_PRESS && knownDevice) {
+        const QSize size = s->window->size();
+        setFocus(s, pos.x() >= 0 && pos.y() >= 0 && pos.x() < size.width() && pos.y() < size.height(), Qt::MouseFocusReason);
+    }
     switch (device) {
     case VLQT_POINTER_DEVICE_MOUSE:
         return sendMousePointer(s, type, pos, Qt::MouseButtons(buttons), mods, ts);
@@ -661,6 +713,8 @@ int sendKey(State* s, int type, int key, int modifiers, bool autoRepeat)
 {
     if (type != VLQT_KEY_EVENT_PRESS && type != VLQT_KEY_EVENT_RELEASE)
         return badArgument("send_key: type " + std::to_string(type) + " unknown");
+    if (!s->focused)
+        return VLQT_OFFSCREEN_OK; // dropped, like keys of a window without focus
     QKeyEvent ev(type == VLQT_KEY_EVENT_PRESS ? QEvent::KeyPress : QEvent::KeyRelease, key, Qt::KeyboardModifiers(modifiers),
         QString(), autoRepeat);
     QCoreApplication::sendEvent(s->window, &ev);
@@ -673,7 +727,7 @@ int sendText(State* s, const char* utf8, int length)
 {
     if (length < 0 || (!utf8 && length > 0))
         return badArgument("send_text: null text or negative length");
-    if (length == 0)
+    if (length == 0 || !s->focused)
         return VLQT_OFFSCREEN_OK;
     const QString text = QString::fromUtf8(utf8, length);
     QKeyEvent press(QEvent::KeyPress, Qt::Key_unknown, Qt::NoModifier, text);
@@ -800,10 +854,10 @@ VLQT_API int vlqt_offscreen_set_focus(void* scene, int focused)
     State* state = stateOf(scene);
     if (!state)
         return VLQT_OFFSCREEN_NULL_SCENE;
-    // TODO: focus (#119 task 3).
-    (void)focused;
-    setError("offscreen set_focus: not implemented yet (#119)");
-    return VLQT_OFFSCREEN_NOT_IMPLEMENTED;
+    return guardedCode([&] {
+        setFocus(state, focused != 0, Qt::ActiveWindowFocusReason);
+        return VLQT_OFFSCREEN_OK;
+    });
 }
 
 } // extern "C"
