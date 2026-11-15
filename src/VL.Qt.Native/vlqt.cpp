@@ -897,6 +897,66 @@ void* createHandle(QQuickWindow* window, State* state)
     return w;
 }
 
+bool sendTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<std::pair<int, QPointF>>& active,
+    QEventPoint::State state, int id, QPointF pos, ulong timestamp, Qt::KeyboardModifiers modifiers, const char* function)
+{
+    auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
+    const bool known = it != active.end();
+    const bool press = state == QEventPoint::State::Pressed;
+    if (known == press) {
+        ::setError(std::string(function) + ": point " + std::to_string(id) + (known ? " is already pressed" : " is not pressed"));
+        return false;
+    }
+    if (known)
+        it->second = pos;
+    else
+        active.emplace_back(id, pos);
+
+    auto* devicePrivate = QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device));
+    // What QGuiApplication does before delivering a press: the device registers the point. Without it the grabs
+    // of the delivery are not stored ("point is not in activePoints"), the release goes to every handler under the
+    // point and stacked Tap handlers all tap (#320).
+    if (press)
+        devicePrivate->pointById(id);
+    // The complete touch state: every active point, the changed one with its state, the others stationary.
+    QList<QEventPoint> points;
+    for (const auto& a : active) {
+        const QEventPoint::State st = a.first == id ? state : QEventPoint::State::Stationary;
+        QEventPoint ep = QMutableEventPoint::withTimeStamp(timestamp, a.first, st, a.second, a.second, window->mapToGlobal(a.second));
+        QMutableEventPoint::setDevice(ep, device);
+        QMutableEventPoint::setWindow(ep, window);
+        points.append(ep);
+    }
+    const bool release = state == QEventPoint::State::Released;
+    const QEvent::Type t = press && active.size() == 1 ? QEvent::TouchBegin
+        : release && active.size() == 1               ? QEvent::TouchEnd
+                                                      : QEvent::TouchUpdate;
+    QTouchEvent ev(t, device, modifiers, points);
+    ev.setTimestamp(timestamp);
+    QCoreApplication::sendEvent(window, &ev);
+    if (release) {
+        active.erase(std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; }));
+        // What QGuiApplication does after delivering a release: the device forgets the point (and its grabbers).
+        devicePrivate->removePointById(id);
+    }
+    return true;
+}
+
+void cancelTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<std::pair<int, QPointF>>& active,
+    ulong timestamp, Qt::KeyboardModifiers modifiers)
+{
+    if (active.empty())
+        return;
+    // Without points, like the platform's: Qt Quick cancels every grab of the device's active points.
+    QTouchEvent ev(QEvent::TouchCancel, device, modifiers);
+    ev.setTimestamp(timestamp);
+    QCoreApplication::sendEvent(window, &ev);
+    auto* devicePrivate = QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device));
+    for (const auto& a : active)
+        devicePrivate->removePointById(a.first);
+    active.clear();
+}
+
 State* stateOf(void* handle)
 {
     return handle ? static_cast<Window*>(handle)->offscreen : nullptr;
@@ -1724,9 +1784,6 @@ VLQT_API int vlqt_test_send_touch(void* p, int type, int id, float x, float y)
         }
         if (w->offscreen)
             return notOnScene("test_send_touch");
-        auto& active = w->testTouch;
-        auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
-        const bool known = it != active.end();
         QEventPoint::State state;
         switch (type) {
         case VLQT_TOUCH_PRESS: state = QEventPoint::State::Pressed; break;
@@ -1736,46 +1793,13 @@ VLQT_API int vlqt_test_send_touch(void* p, int type, int id, float x, float y)
             setError("test_send_touch: unknown type " + std::to_string(type));
             return -2;
         }
-        if (known == (type == VLQT_TOUCH_PRESS)) {
-            setError("test_send_touch: point " + std::to_string(id) + (known ? " is already pressed" : " is not pressed"));
-            return -2;
-        }
-        const QPointF pos(x, y);
-        if (known)
-            it->second = pos;
-        else
-            active.emplace_back(id, pos);
-
         if (!w->testClock.isValid())
             w->testClock.start();
         const ulong ts = ulong(w->testClock.elapsed()) + 1; // monotonic (TapHandler compares timestamps)
-        const QPointingDevice* device = testTouchDevice();
-        // What QGuiApplication does before delivering a press: the device registers the point. Without it the grabs
-        // of the delivery are not stored ("point is not in activePoints"), the release goes to every handler under the
-        // point and stacked Tap handlers all tap (#320).
-        if (type == VLQT_TOUCH_PRESS)
-            QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device))->pointById(id);
-        // The complete touch state: every active point, the changed one with its state, the others stationary.
-        QList<QEventPoint> points;
-        for (const auto& a : active) {
-            const QEventPoint::State st = a.first == id ? state : QEventPoint::State::Stationary;
-            QEventPoint ep = QMutableEventPoint::withTimeStamp(ts, a.first, st, a.second, a.second, w->window->mapToGlobal(a.second));
-            QMutableEventPoint::setDevice(ep, device);
-            QMutableEventPoint::setWindow(ep, w->window);
-            points.append(ep);
-        }
-        const QEvent::Type t = type == VLQT_TOUCH_PRESS && active.size() == 1 ? QEvent::TouchBegin
-            : type == VLQT_TOUCH_RELEASE && active.size() == 1               ? QEvent::TouchEnd
-                                                                              : QEvent::TouchUpdate;
-        QTouchEvent ev(t, device, Qt::NoModifier, points);
-        ev.setTimestamp(ts);
-        QCoreApplication::sendEvent(w->window, &ev);
-        if (type == VLQT_TOUCH_RELEASE) {
-            active.erase(std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; }));
-            // What QGuiApplication does after delivering a release: the device forgets the point (and its grabbers).
-            QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device))->removePointById(id);
-        }
-        return 0;
+        return vlqt::offscreen::sendTouch(w->window, testTouchDevice(), w->testTouch, state, id, QPointF(x, y), ts,
+                   Qt::NoModifier, "test_send_touch")
+            ? 0
+            : -2;
     });
 }
 

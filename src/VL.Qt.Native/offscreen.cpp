@@ -2,14 +2,24 @@
 #include "protocol.h"
 #include "vlqt.h"
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QInputMethodEvent>
+#include <QtGui/QKeyEvent>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QPointingDevice>
+#include <QtGui/QStyleHints>
+#include <QtGui/QWheelEvent>
+#include <QtGui/qpa/qwindowsysteminterface.h>
+#include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickRenderControl>
 #include <QtQuick/QQuickRenderTarget>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <exception>
 #include <vector>
@@ -57,6 +67,19 @@ struct State
     unsigned long long readValue = 0;  // last value signalled on the read fence
     unsigned long long writeValue = 0; // last value signalled on the write fence
     long long renders = 0;             // renders into the texture since bind
+    // Input (#119). Devices of their own per scene, children of renderControl, created at the first event: point ids
+    // and grabs live in the device, so two scenes fed the same host input (a press lands in both) must not share one.
+    QPointingDevice* mouse = nullptr;
+    QPointingDevice* touchscreen = nullptr;
+    QPointingDevice* pen = nullptr; // pen points as touch (#351), own ids
+    Qt::MouseButtons buttons = Qt::NoButton;          // held after the last mouse event
+    std::vector<std::pair<int, QPointF>> touchPoints; // active points (id, DIP) of touchscreen ...
+    std::vector<std::pair<int, QPointF>> penPoints;   // ... and of pen
+    QElapsedTimer clock;                              // event timestamps
+    // The last press that may start a double click (QGuiApplication's rule); button NoButton after a double click.
+    ulong lastPressTime = 0;
+    QPointF lastPressPos;
+    Qt::MouseButton lastPressButton = Qt::NoButton;
 #ifdef _WIN32
     ID3D11Texture2D* texture = nullptr;        // the foreign texture, opened on QtNative's device
     ID3D11DeviceContext4* qtContext = nullptr; // immediate context of QtNative's device
@@ -471,6 +494,201 @@ int guardedCode(F&& f)
     return VLQT_OFFSCREEN_BAD_ARGUMENT;
 }
 
+// --- Input (#119; vlqt.h, render-texture.md "Input") ---
+// Events go with QCoreApplication::sendEvent to the scene's QQuickWindow, like vlqt_test_send_*: synchronous, so the
+// FocusRelease filter, handlers and vlqt_window_poll see them as window input.
+
+int badArgument(const std::string& what)
+{
+    setError("offscreen " + what);
+    return VLQT_OFFSCREEN_BAD_ARGUMENT;
+}
+
+// Registered once per scene: QWindowSystemInterface lists it for Qt Quick (handler acceptedDevices); deleted with the
+// render control, which unregisters it. The platform's mouse is looked up first, so a scene's mouse never becomes
+// QPointingDevice::primaryPointingDevice().
+QPointingDevice* newDevice(State* s, const char* name, QInputDevice::DeviceType type, QPointingDevice::PointerType pointer,
+    QInputDevice::Capabilities caps, int maxPoints, int buttons)
+{
+    static qint64 s_systemId = 0x766c716f0000; // "vlqo" + counter: unique, not 0 (= "unknown")
+    (void)QPointingDevice::primaryPointingDevice();
+    auto* d = new QPointingDevice(QString::fromLatin1(name), ++s_systemId, type, pointer, caps, maxPoints, buttons,
+        QString(), QPointingDeviceUniqueId(), s->renderControl);
+    QWindowSystemInterface::registerInputDevice(d);
+    return d;
+}
+
+QPointingDevice* mouseOf(State* s)
+{
+    if (!s->mouse)
+        s->mouse = newDevice(s, "vlqt offscreen mouse", QInputDevice::DeviceType::Mouse, QPointingDevice::PointerType::Generic,
+            QInputDevice::Capability::Position | QInputDevice::Capability::Hover | QInputDevice::Capability::Scroll, 1, 5);
+    return s->mouse;
+}
+
+QPointingDevice* touchOf(State* s, bool pen)
+{
+    QPointingDevice*& d = pen ? s->pen : s->touchscreen;
+    if (!d)
+        d = newDevice(s, pen ? "vlqt offscreen pen" : "vlqt offscreen touchscreen", QInputDevice::DeviceType::TouchScreen,
+            pen ? QPointingDevice::PointerType::Pen : QPointingDevice::PointerType::Finger,
+            QInputDevice::Capability::Position | QInputDevice::Capability::Area, 32, 0);
+    return d;
+}
+
+// Monotonic, never 0 (TapHandler compares timestamps).
+ulong timestamp(State* s)
+{
+    if (!s->clock.isValid())
+        s->clock.start();
+    return ulong(s->clock.elapsed()) + 1;
+}
+
+void sendMouse(State* s, QEvent::Type type, QPointF pos, Qt::MouseButton button, Qt::MouseButtons buttons,
+    Qt::KeyboardModifiers modifiers, ulong ts)
+{
+    QQuickWindow* w = s->window;
+    QMouseEvent ev(type, pos, pos, w->mapToGlobal(pos), button, buttons, modifiers, mouseOf(s));
+    ev.setTimestamp(ts);
+    QCoreApplication::sendEvent(w, &ev);
+}
+
+// A press after a press of the same button within the double click interval and distance also sends
+// MouseButtonDblClick, as QGuiApplication does for platform input (sendEvent bypasses it). TapHandler counts taps
+// itself; MouseArea and the text inputs need the event.
+void sendPress(State* s, QPointF pos, Qt::MouseButton button, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers, ulong ts)
+{
+    const QStyleHints* hints = QGuiApplication::styleHints();
+    const QPointF d = pos - s->lastPressPos;
+    const bool doubleClick = button == s->lastPressButton && ts - s->lastPressTime < ulong(hints->mouseDoubleClickInterval())
+        && std::abs(d.x()) + std::abs(d.y()) <= hints->mouseDoubleClickDistance();
+    sendMouse(s, QEvent::MouseButtonPress, pos, button, buttons, modifiers, ts);
+    s->lastPressButton = doubleClick ? Qt::NoButton : button;
+    s->lastPressTime = ts;
+    s->lastPressPos = pos;
+    if (doubleClick)
+        sendMouse(s, QEvent::MouseButtonDblClick, pos, button, buttons, modifiers, ts);
+}
+
+// One event per changed button, lowest first (the host may report several in one call); a press or release without a
+// changed button is an error.
+int sendMousePointer(State* s, int type, QPointF pos, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers, ulong ts)
+{
+    switch (type) {
+    case VLQT_POINTER_MOVE:
+        s->buttons = buttons;
+        sendMouse(s, QEvent::MouseMove, pos, Qt::NoButton, buttons, modifiers, ts);
+        return VLQT_OFFSCREEN_OK;
+    case VLQT_POINTER_LEAVE: {
+        // Hover ends; Qt Quick clears its hover state.
+        QEvent ev(QEvent::Leave);
+        QCoreApplication::sendEvent(s->window, &ev);
+        return VLQT_OFFSCREEN_OK;
+    }
+    case VLQT_POINTER_PRESS:
+    case VLQT_POINTER_RELEASE: {
+        const bool press = type == VLQT_POINTER_PRESS;
+        const Qt::MouseButtons changed = press ? buttons & ~s->buttons : s->buttons & ~buttons;
+        if (changed == Qt::NoButton)
+            return badArgument(std::string("send_pointer: mouse ") + (press ? "press" : "release")
+                + " without a changed button (buttons = the buttons held after the event)");
+        Qt::MouseButtons held = s->buttons;
+        for (unsigned bit = 1; bit != 0 && bit <= unsigned(Qt::MaxMouseButton); bit <<= 1) {
+            const auto button = Qt::MouseButton(bit);
+            if (!changed.testFlag(button))
+                continue;
+            held.setFlag(button, press);
+            s->buttons = held;
+            if (press)
+                sendPress(s, pos, button, held, modifiers, ts);
+            else
+                sendMouse(s, QEvent::MouseButtonRelease, pos, button, held, modifiers, ts);
+        }
+        return VLQT_OFFSCREEN_OK;
+    }
+    default:
+        return badArgument("send_pointer: mouse event type " + std::to_string(type) + " unknown");
+    }
+}
+
+int sendTouchPointer(State* s, bool pen, int type, int id, QPointF pos, Qt::KeyboardModifiers modifiers, ulong ts)
+{
+    QPointingDevice* device = touchOf(s, pen);
+    auto& active = pen ? s->penPoints : s->touchPoints;
+    QEventPoint::State state;
+    switch (type) {
+    case VLQT_POINTER_PRESS: state = QEventPoint::State::Pressed; break;
+    case VLQT_POINTER_MOVE: state = QEventPoint::State::Updated; break;
+    case VLQT_POINTER_RELEASE: state = QEventPoint::State::Released; break;
+    case VLQT_POINTER_CANCEL:
+        cancelTouch(s->window, device, active, ts, modifiers);
+        return VLQT_OFFSCREEN_OK;
+    default:
+        // LEAVE: a touch has no hover.
+        return badArgument("send_pointer: touch/pen event type " + std::to_string(type) + " unknown");
+    }
+    return sendTouch(s->window, device, active, state, id, pos, ts, modifiers, "offscreen send_pointer")
+        ? VLQT_OFFSCREEN_OK
+        : VLQT_OFFSCREEN_BAD_ARGUMENT;
+}
+
+int sendPointer(State* s, int device, int type, int id, QPointF pos, int buttons, int modifiers)
+{
+    const auto mods = Qt::KeyboardModifiers(modifiers);
+    const ulong ts = timestamp(s);
+    switch (device) {
+    case VLQT_POINTER_DEVICE_MOUSE:
+        return sendMousePointer(s, type, pos, Qt::MouseButtons(buttons), mods, ts);
+    case VLQT_POINTER_DEVICE_TOUCH:
+    case VLQT_POINTER_DEVICE_PEN:
+        return sendTouchPointer(s, device == VLQT_POINTER_DEVICE_PEN, type, id, pos, mods, ts);
+    default:
+        return badArgument("send_pointer: device " + std::to_string(device) + " unknown");
+    }
+}
+
+int sendWheel(State* s, QPointF pos, int dx, int dy, int modifiers)
+{
+    QQuickWindow* w = s->window;
+    QWheelEvent ev(pos, w->mapToGlobal(pos), QPoint(), QPoint(dx, dy), s->buttons, Qt::KeyboardModifiers(modifiers),
+        Qt::NoScrollPhase, false, Qt::MouseEventNotSynthesized, mouseOf(s));
+    ev.setTimestamp(timestamp(s));
+    QCoreApplication::sendEvent(w, &ev);
+    return VLQT_OFFSCREEN_OK;
+}
+
+int sendKey(State* s, int type, int key, int modifiers, bool autoRepeat)
+{
+    if (type != VLQT_KEY_EVENT_PRESS && type != VLQT_KEY_EVENT_RELEASE)
+        return badArgument("send_key: type " + std::to_string(type) + " unknown");
+    QKeyEvent ev(type == VLQT_KEY_EVENT_PRESS ? QEvent::KeyPress : QEvent::KeyRelease, key, Qt::KeyboardModifiers(modifiers),
+        QString(), autoRepeat);
+    QCoreApplication::sendEvent(s->window, &ev);
+    return VLQT_OFFSCREEN_OK;
+}
+
+// Like vlqt_test_send_key_text: a key press/release with the text and Qt::Key_unknown. An item that ignores it but
+// takes input method events gets the text as a QInputMethodEvent commit.
+int sendText(State* s, const char* utf8, int length)
+{
+    if (length < 0 || (!utf8 && length > 0))
+        return badArgument("send_text: null text or negative length");
+    if (length == 0)
+        return VLQT_OFFSCREEN_OK;
+    const QString text = QString::fromUtf8(utf8, length);
+    QKeyEvent press(QEvent::KeyPress, Qt::Key_unknown, Qt::NoModifier, text);
+    QCoreApplication::sendEvent(s->window, &press);
+    QKeyEvent release(QEvent::KeyRelease, Qt::Key_unknown, Qt::NoModifier, text);
+    QCoreApplication::sendEvent(s->window, &release);
+    QQuickItem* focus = s->window->activeFocusItem();
+    if (!press.isAccepted() && focus && focus->flags().testFlag(QQuickItem::ItemAcceptsInputMethod)) {
+        QInputMethodEvent commit;
+        commit.setCommitString(text);
+        QCoreApplication::sendEvent(s->window, &commit);
+    }
+    return VLQT_OFFSCREEN_OK;
+}
+
 } // namespace
 
 extern "C" {
@@ -544,48 +762,48 @@ VLQT_API int vlqt_offscreen_render_batch(void* context, void* const* scenes, int
 #endif
 }
 
-// Input (#119): stubs of task 1, filled by the native tasks (vlqt.h, render-texture.md "Input", Contract).
-namespace {
-
-int inputStub(void* scene, const char* what)
-{
-    if (!stateOf(scene))
-        return VLQT_OFFSCREEN_NULL_SCENE;
-    setError(std::string("offscreen ") + what + ": not implemented yet (#119)");
-    return VLQT_OFFSCREEN_NOT_IMPLEMENTED;
-}
-
-} // namespace
-
 VLQT_API int vlqt_offscreen_send_pointer(void* scene, int device, int type, int id, float x, float y, int buttons,
                                          int modifiers)
 {
-    (void)device; (void)type; (void)id; (void)x; (void)y; (void)buttons; (void)modifiers;
-    return inputStub(scene, "send_pointer");
+    State* state = stateOf(scene);
+    if (!state)
+        return VLQT_OFFSCREEN_NULL_SCENE;
+    return guardedCode([&] { return sendPointer(state, device, type, id, QPointF(x, y), buttons, modifiers); });
 }
 
 VLQT_API int vlqt_offscreen_send_wheel(void* scene, float x, float y, int dx, int dy, int modifiers)
 {
-    (void)x; (void)y; (void)dx; (void)dy; (void)modifiers;
-    return inputStub(scene, "send_wheel");
+    State* state = stateOf(scene);
+    if (!state)
+        return VLQT_OFFSCREEN_NULL_SCENE;
+    return guardedCode([&] { return sendWheel(state, QPointF(x, y), dx, dy, modifiers); });
 }
 
 VLQT_API int vlqt_offscreen_send_key(void* scene, int type, int key, int modifiers, int autoRepeat)
 {
-    (void)type; (void)key; (void)modifiers; (void)autoRepeat;
-    return inputStub(scene, "send_key");
+    State* state = stateOf(scene);
+    if (!state)
+        return VLQT_OFFSCREEN_NULL_SCENE;
+    return guardedCode([&] { return sendKey(state, type, key, modifiers, autoRepeat != 0); });
 }
 
 VLQT_API int vlqt_offscreen_send_text(void* scene, const char* utf8, int length)
 {
-    (void)utf8; (void)length;
-    return inputStub(scene, "send_text");
+    State* state = stateOf(scene);
+    if (!state)
+        return VLQT_OFFSCREEN_NULL_SCENE;
+    return guardedCode([&] { return sendText(state, utf8, length); });
 }
 
 VLQT_API int vlqt_offscreen_set_focus(void* scene, int focused)
 {
+    State* state = stateOf(scene);
+    if (!state)
+        return VLQT_OFFSCREEN_NULL_SCENE;
+    // TODO: focus (#119 task 3).
     (void)focused;
-    return inputStub(scene, "set_focus");
+    setError("offscreen set_focus: not implemented yet (#119)");
+    return VLQT_OFFSCREEN_NOT_IMPLEMENTED;
 }
 
 } // extern "C"

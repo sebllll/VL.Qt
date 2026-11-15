@@ -484,8 +484,11 @@ VLQT_API int   vlqt_offscreen_render_batch(void* context, void* const* scenes, i
 /* Input into an offscreen scene (#119; design: docs/decisions/render-texture.md, "Input"). The host maps its input to
  * texture pixels (top-left origin, 1 DIP = 1 pixel; positions outside 0..size are valid: hover ends, a drag goes on) and
  * calls these between two vlqt_offscreen_render_batch calls, before the batch that should show the result. QtNative
- * sends the events with QCoreApplication::sendEvent to the scene's QQuickWindow (synchronous, spontaneous like OS
- * input), so the event pipeline of windows (handlers, vlqt_window_poll, channels) is unchanged; a scene that changes
+ * sends the events with QCoreApplication::sendEvent to the scene's QQuickWindow (synchronous, like vlqt_test_send_*;
+ * not marked spontaneous), so the event pipeline of windows (handlers, vlqt_window_poll, channels) is unchanged. Each
+ * scene has its own mouse, touchscreen and pen QPointingDevice (point ids and grabs live in the device, so a press sent
+ * to two scenes does not cancel the other's grab). QtNative synthesizes MouseButtonDblClick from two presses as
+ * QGuiApplication does; Qt shortcuts (QShortcut) do not see the keys. A scene that changes
  * renders in the next batch. Bound or not does not matter. Main thread. Return codes: OK, NULL_SCENE, BAD_ARGUMENT
  * (unknown type or device, a touch id in the wrong state, null text with length > 0); a key or text event while the
  * scene has no focus is dropped and returns OK.
@@ -496,11 +499,12 @@ VLQT_API int   vlqt_offscreen_render_batch(void* context, void* const* scenes, i
  * press outside the focused element) runs on scenes too. */
 
 /* Pointer event (vlqt_pointer) of device (vlqt_pointer_device) at x/y in texture pixels.
- *   mouse  id ignored; buttons = Qt::MouseButtons held after the event (PRESS/RELEASE: the changed button is the
- *          difference to the previous call), modifiers = Qt::KeyboardModifiers. QMouseEvent; LEAVE sends QEvent::Leave.
- *   touch, pen  id = the point's id (any int, unique while pressed); buttons ignored. QtNative keeps the active points
- *          per scene and sends one QTouchEvent per call with all of them (others stationary) from a touchscreen
- *          QPointingDevice registered once, as vlqt_test_send_touch. Several ids = multitouch. */
+ *   mouse  id ignored; buttons = Qt::MouseButtons held after the event (PRESS/RELEASE: the changed buttons are the
+ *          difference to the previous call, one event each; none changed = BAD_ARGUMENT), modifiers = Qt::KeyboardModifiers. QMouseEvent; LEAVE sends QEvent::Leave.
+ *   touch, pen  id = the point's id (any int, unique per device while pressed); buttons ignored. QtNative keeps the
+ *          active points per scene and device and sends one QTouchEvent per call with all of them (others stationary),
+ *          as vlqt_test_send_touch; pen from a touchscreen device of pointer type Pen. Several ids = multitouch. CANCEL
+ *          cancels every active point of the device (TouchCancel), id ignored; LEAVE is BAD_ARGUMENT for touch/pen. */
 VLQT_API int   vlqt_offscreen_send_pointer(void* scene, int device, int type, int id, float x, float y, int buttons,
                                            int modifiers);
 /* Wheel at x/y (texture pixels): angleDelta dx, dy in eighths of a degree (120 = one notch), modifiers =

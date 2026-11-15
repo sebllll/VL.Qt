@@ -7,8 +7,14 @@
 // render control and the binding.
 #pragma once
 
-#include <string>
+#include <QtCore/QPointF>
+#include <QtGui/QEventPoint>
 
+#include <string>
+#include <utility>
+#include <vector>
+
+class QPointingDevice;
 class QQuickWindow;
 
 namespace vlqt::offscreen {
@@ -27,6 +33,16 @@ State* stateOf(void* handle);
 QQuickWindow* quickWindow(void* handle);
 // vlqt_last_error.
 void setError(const std::string& message);
+// Injected touch, shared with vlqt_test_send_touch: sends the complete touch state of window after point id of device
+// changed to state (Pressed, Updated or Released) at pos (window DIP), like a touchscreen driver: one QTouchEvent
+// (Begin/Update/End) with every point of active, the others stationary, via QCoreApplication::sendEvent. Updates
+// active (id, position) and the device's point registration. False with vlqt_last_error ("<function>: ...") if id is
+// pressed twice or is not pressed.
+bool sendTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<std::pair<int, QPointF>>& active,
+    QEventPoint::State state, int id, QPointF pos, ulong timestamp, Qt::KeyboardModifiers modifiers, const char* function);
+// TouchCancel for every point of active (nothing if empty); the device forgets them, active is emptied.
+void cancelTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<std::pair<int, QPointF>>& active,
+    ulong timestamp, Qt::KeyboardModifiers modifiers);
 
 // --- offscreen.cpp, called by vlqt_window_destroy ---
 
