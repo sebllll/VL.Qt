@@ -1,4 +1,4 @@
-# Startet vvvv mit VL.Qt und VL.Qt.Stride aus diesem Repo als Source-Pakete (Dev-Workflow, kein nupkg).
+# Startet vvvv mit VL.Qt, VL.Qt.Stride und VL.Qt.Audio aus diesem Repo als Source-Pakete (Dev-Workflow, kein nupkg).
 #   tools\start-vvvv.ps1                              # vvvv + VL.Qt aus dem Repo
 #   tools\start-vvvv.ps1 -Build                       # vorher QtNative + C# (VL.Qt, VL.Qt.Stride) bauen
 #   tools\start-vvvv.ps1 -Help "Draw a Rectangle"     # HowTo-Patch aus help\ öffnen
@@ -30,7 +30,7 @@ if ($Build) {
 
 # vvvv erwartet <repo>\<PackageId>\<PackageId>.vl. Der Repo-Ordner heißt evtl. anders (Worktree, VL.QT)
 # und sein Elternordner enthält andere Pakete (C:\vl\VL.StandardLibs) -> eigenes Repo mit Junctions:
-# VL.Qt -> Repo-Wurzel, VL.Qt.Stride -> <repo>\VL.Qt.Stride (Paketordner, VL.Qt.Stride.vl + help + lib).
+# VL.Qt -> Repo-Wurzel, VL.Qt.Stride / VL.Qt.Audio -> <repo>\<Paket> (Paketordner mit .vl + help + lib).
 $key = ($RepoDir -replace '[:\\/ ]', '_').Trim('_')
 $pkgRepo = Join-Path $env:LOCALAPPDATA "VL.Qt-dev\$key"
 function Set-Junction([string]$name, [string]$target) {
@@ -42,10 +42,12 @@ function Set-Junction([string]$name, [string]$target) {
     }
 }
 # der Ordner fehlt vor dem ersten Build (lib/ ist ignoriert, .vl entsteht später); vvvv beachtet ihn erst mit der .vl
-$stridePkg = Join-Path $RepoDir 'VL.Qt.Stride'
-New-Item -ItemType Directory -Force $stridePkg | Out-Null
+foreach ($companion in 'VL.Qt.Stride', 'VL.Qt.Audio') {
+    New-Item -ItemType Directory -Force (Join-Path $RepoDir $companion) | Out-Null
+}
 Set-Junction 'VL.Qt' $RepoDir
-Set-Junction 'VL.Qt.Stride' $stridePkg
+Set-Junction 'VL.Qt.Stride' (Join-Path $RepoDir 'VL.Qt.Stride')
+Set-Junction 'VL.Qt.Audio' (Join-Path $RepoDir 'VL.Qt.Audio')
 if ($PrepareOnly) { $pkgRepo; return }
 
 if (-not $VvvvDir) {

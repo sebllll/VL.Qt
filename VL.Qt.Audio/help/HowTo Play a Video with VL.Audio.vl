@@ -1,0 +1,174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="sKr7sTbtq8Ry0vwleHMonV" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
+  <NugetDependency Id="5CpiVnYfhMT3mQxpLgDgu2" Location="VL.CoreLib" />
+  <NugetDependency Id="R2ZJio4ITqDWkloCPe9VOY" Location="VL.Qt" />
+  <NugetDependency Id="A8sTqYTrKDVIG4u4V4xL5m" Location="VL.Qt.Audio" />
+  <NugetDependency Id="WPPHpFIl5jFlM6ZYIiKwYe" Location="VL.Audio" Version="1.9.21" />
+  <Patch Id="yAo6q3aHOnUgA8eUZwzjtn">
+    <Canvas Id="BTwSZp4VmmpOR2pCJXT8or" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="qJRh0BrtnVxFsii5qpA708">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="WTyN07aXFbp1OvS8TARdBc">
+        <Canvas Id="wvm49RRFANdbXz4IyWqjwQ" CanvasType="Group">
+          <Pad Id="wGEMu8bQJDniYmkJqtZHgI" Bounds="85,16,520,52" ShowValueBox="true" isIOBox="true" Value="How To Play a Video with VL.Audio">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="yCPy2w9f1PUgoPp4dOIupq" Bounds="85,85,640,122" ShowValueBox="true" isIOBox="true" Value="Video (VL.Audio) [Qt.Elements]&#xD;&#xA;- Plays a video; its sound comes out as VL.Audio signals at Audio&#xD;&#xA;- Audio goes to AudioOut like any other audio source, Meter shows its level (mono mix)&#xD;&#xA;- Volume (0..1) acts on the signal&#xD;&#xA;- Sync Error (ms) shows how far the sound is off the picture&#xD;&#xA;- Audio Offset (ms) calibrates it, see Notes">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="100,360,285,19" Id="Fd8wGVxV1fOppB9AyUBXAL">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.Audio.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Video (VL.Audio)" />
+            </p:NodeReference>
+            <Pin Id="LsgOIeYAgFqkTJGqQFATOb" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GnKzyXbPSE9WtIpuOzKOYP" Name="Size" Kind="InputPin" />
+            <Pin Id="QjXh6ayHX8LY2gEnl01EOz" Name="Transform" Kind="InputPin" />
+            <Pin Id="ouPyogTurHIiKTZcwX7qpP" Name="Anchor" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MPn5GTBaCs9Us6PEWVFhwO" Name="Path" Kind="InputPin" />
+            <Pin Id="9shURU7Yqv48gyIrnXqX2f" Name="Output" Kind="OutputPin" />
+            <Pin Id="F9i8DYIM22nIcZbDjZV2gw" Name="Play" Kind="InputPin" />
+            <Pin Id="CoZqMXHoZnzRsSt6r45pQH" Name="Loop" Kind="InputPin" />
+            <Pin Id="kv9vgd0p8g9TIKzn57YAZ2" Name="Keep Last Frame" Kind="InputPin" IsHidden="true" />
+            <Pin Id="RipEzEcfGzpS4CZmjj0e0N" Name="Rate" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Ied7MRsnKYnlqZsPpQLBbJ" Name="Volume" Kind="InputPin" />
+            <Pin Id="BbGHKmrI2J9CTGP6HMWJga" Name="Audio Offset" Kind="InputPin" IsHidden="true" />
+            <Pin Id="cwxZzgpFG2JOJmeoAGrSkP" Name="Fill Mode" Kind="InputPin" />
+            <Pin Id="1uc8wpEPsUWHn4jcehSUiE" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KOdpT4a73nPbTJt5glWnBB" Name="Audio" Kind="OutputPin" />
+            <Pin Id="lOgQIKweTEL3YvSfnYTHdn" Name="Position" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="lLAnyzN0MDnwDqXXCMBJ8V" Name="Duration" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="YTFJ8ni5itmbUQQJWxOenI" Name="Sync Error" Kind="OutputPin" />
+            <Pin Id="5oquSWn6e12aCkER4kGfmN" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="Pgw4d8iZe0WpK8ORFP43pq" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="AsNiI5WzaCLWEYF1Opn2c2" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ehYWuQdPsxYPlwBkTJfNMX" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KsCPeqEHroKFB4T2eNJFob" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="nVUwiK5xuA5Ya3KzUjWmlS" Name="Effect" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="zEDu8aZrOip6AwYFO8wIfP" Comment="Size" Bounds="102,253,35,28" ShowValueBox="true" isIOBox="true" Value="6.4, 3.6">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="rFhZrwUS24trZigRF5Wi9u" Comment="Path" Bounds="195,296,330,19" ShowValueBox="true" isIOBox="true" Value="assets\qt-help-video-audio.mp4">
+            <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Path" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="onqpnDaWA21j2yNa1zRVJc" Comment="Volume" Bounds="335,330,35,15" ShowValueBox="true" isIOBox="true" Value="0.5">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="5d43lJWIQkMmGVJ26Fwb9I" Comment="Sync Error" Bounds="382,400,35,15" ShowValueBox="true" isIOBox="true" />
+          <Node Bounds="310,440,60,19" Id="RscGp6mAgWcG5uSMnsYRy6">
+            <p:NodeReference LastCategoryFullName="Audio.Utils" LastDependency="VL.Audio.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="ToMono" />
+            </p:NodeReference>
+            <Pin Id="kKQGAuSeSwf44gT61iOuhq" Name="Input" Kind="InputPin" />
+            <Pin Id="7UYrKygctj6J5XIIt8J21x" Name="Gain" Kind="InputPin" />
+            <Pin Id="sxrWkQjMP0fPuKF6XOTdi2" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="310,499,42,19" Id="OPf8arCaa9J2dPvflN1hME">
+            <p:NodeReference LastCategoryFullName="Audio.Analysis" LastDependency="VL.Audio.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Meter" />
+            </p:NodeReference>
+            <Pin Id="yYgr7x0mdGuXSEQ80szELx" Name="Input" Kind="InputPin" />
+            <Pin Id="vwno8AFHFdVkpqYhZzMfSd" Name="Level" Kind="OutputPin" />
+            <Pin Id="pkQ0YOvXgLZGx6UISO7962" Name="Level dBs" Kind="OutputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="pGsHYGhniL8BfIAN4jmxxk" Comment="Level" Bounds="312,538,35,15" ShowValueBox="true" isIOBox="true" />
+          <Node Bounds="240,470,60,19" Id="GxSKHWYTrAvoWh2EHIu0V2">
+            <p:NodeReference LastCategoryFullName="Audio.Sink" LastDependency="VL.Audio.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="AudioOut" />
+            </p:NodeReference>
+            <Pin Id="YedSoFvCPOhxZXaYxpJ9yX" Name="Input" Kind="InputPin" />
+            <Pin Id="ThWCVqq4LYPbBqVelCPAvH" Name="Channel Offset" Kind="InputPin" />
+          </Node>
+          <Node Bounds="100,620,85,19" Id="Ub3XIjRsY5mxiCbsVqj85t">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="NaCpZhYZtBAmIRwvy5Wi0E" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="tJsCqr3A5m486iHbpsv9Rl" Name="Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="AhlQYhaGgdE6pi9CmmAm4w" Name="V Sync" Kind="InputPin" IsHidden="true" />
+            <Pin Id="m5UkpTo7ipehBIlBpH9vtB" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="hTa757TyCvIyXSJK8hHtki" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="nUhnFBIhnuWZ9NZtOsptKr" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KDF57HZGihOrGu8jKeGF8t" Name="Input" Kind="InputPin" />
+            <Pin Id="JqOIwDBEJNwd91ANGQqZF3" Name="Space" Kind="InputPin" />
+            <Pin Id="LtVtKIwlru62hcNmxC3sC0" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="aZA0Af1XjQhCmfhUdxZheW" Name="Enabled" Kind="InputPin" />
+            <Pin Id="OQQ86VIuACSFt67ilB42zd" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="DG582Ahs3VXSeNavS3uVXy" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="affhkWclgCtQRvkKRNGQua" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="wjDTirt5rKnYn7RN5n9ehg" Name="Error" Kind="OutputPin" />
+            <Pin Id="3loWeehqHmhwUWDAyvVP3Y" Name="Title" Kind="InputPin" />
+            <Pin Id="0GafEM45YCrJtgYTiZzvXx" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="S6Ar6bq3rbv1cLOMcqauqv" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="yVaCtRzedZdOffFx1Nz9Ip" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="wFN5zPV7gU9wQmmPqQIbFZ" Name="Window" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="NFApfPqEKbd3SWOkm9xz6I" Comment="Title" Bounds="182,586,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Play a Video with VL.Audio">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="1lZWqM4vaWg7Gt2Tj22xHM" Bounds="85,680,830,141" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Same picture as Video [Qt], but the sound only comes out at Audio; Qt's own audio output stays off. Windows only.&#xD;&#xA;- The sound follows the picture. Target: below 5 ms internally, about one video frame end to end.&#xD;&#xA;- Strict frame accuracy cannot be guaranteed with Qt's player; Sync Error shows the measured offset in ms.&#xD;&#xA;- Audio Offset (ms, optional pin, default 0) calibrates display and audio device latency: positive = the sound comes later.&#xD;&#xA;- Rate other than 1 plays like tape: the pitch changes with the rate, and a rate change may glitch once.&#xD;&#xA;- Volume (0..1) scales the signal at Audio. Sync Error is NaN while the sound locks in (start, jump, pause).&#xD;&#xA;- Path is relative to this patch.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+        </Canvas>
+        <Link Id="j7BaL0jpSIIxObtFuwmGyj" Ids="zEDu8aZrOip6AwYFO8wIfP,GnKzyXbPSE9WtIpuOzKOYP" />
+        <Link Id="wrO6hS3jQD63Oht2eTIcVF" Ids="rFhZrwUS24trZigRF5Wi9u,MPn5GTBaCs9Us6PEWVFhwO" />
+        <Link Id="cIVc1otCckCSk7SQC53DY0" Ids="onqpnDaWA21j2yNa1zRVJc,Ied7MRsnKYnlqZsPpQLBbJ" />
+        <Link Id="qLyCLfl70RqEGEOtTsHtF0" Ids="YTFJ8ni5itmbUQQJWxOenI,5d43lJWIQkMmGVJ26Fwb9I" />
+        <Link Id="UFDn43OK3Q4pSUk38104uf" Ids="KOdpT4a73nPbTJt5glWnBB,kKQGAuSeSwf44gT61iOuhq" />
+        <Link Id="0Ts1HUhmNjnKjDzO1hkgmx" Ids="sxrWkQjMP0fPuKF6XOTdi2,yYgr7x0mdGuXSEQ80szELx" />
+        <Link Id="25nTW9KDVIAiDFOPsfvEwy" Ids="vwno8AFHFdVkpqYhZzMfSd,pGsHYGhniL8BfIAN4jmxxk" />
+        <Link Id="zSJLAqO4b56esoXz20Gk4V" Ids="KOdpT4a73nPbTJt5glWnBB,YedSoFvCPOhxZXaYxpJ9yX" />
+        <Link Id="sCcf7kdLEgRtfyhgUmjucy" Ids="9shURU7Yqv48gyIrnXqX2f,KDF57HZGihOrGu8jKeGF8t" />
+        <Link Id="M1edL3JsleJZDuxTLKMBXg" Ids="NFApfPqEKbd3SWOkm9xz6I,3loWeehqHmhwUWDAyvVP3Y" />
+        <Patch Id="ixoy0JeCMBUlYwJCsw4vbw" Name="Create" />
+        <Patch Id="Kz5OGxliU1n5wSaCfDe2Tc" Name="Update" />
+        <ProcessDefinition Id="AgQnPLTbj0qr8naxqgBcdG">
+          <Fragment Id="w4e6jqHR8Xp5macKqzljHT" Patch="ixoy0JeCMBUlYwJCsw4vbw" Enabled="true" />
+          <Fragment Id="zEtc5bU2MByIPkfhKz9XXa" Patch="Kz5OGxliU1n5wSaCfDe2Tc" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+</Document>
