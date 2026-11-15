@@ -27,7 +27,7 @@ namespace VL.Qt.Stride
         readonly NodeErrors _errors;
         readonly QtTextureRenderer _renderer;
         readonly OffscreenRenderer _scene;
-        readonly NotificationQueue _input = new();
+        readonly NotificationQueue _input;
         Texture? _texture;
         GraphicsDevice? _device;
         Int2 _size;
@@ -46,6 +46,7 @@ namespace VL.Qt.Stride
             _errors = new NodeErrors(nodeContext);
             _renderer = QtTextureRenderer.ForApp(nodeContext.AppHost);
             _scene = new OffscreenRenderer(SceneRegistry.ForApp(nodeContext.AppHost), 1920, 1080);
+            _input = new NotificationQueue(_scene.Notify);
             _renderer.StrideDeviceGone += OnStrideDeviceGone;
         }
 
@@ -82,7 +83,7 @@ namespace VL.Qt.Stride
             // a disabled (frozen) scene takes no input.
             _input.Subscribe(inputNotifications);
             if (enabled)
-                _input.Drain(_scene);
+                _input.Drain();
             else
                 _input.Clear();
 

@@ -127,7 +127,10 @@ See [Diagnostics](diagnostics.md).
 
 In `VL.Qt.Stride/help/` (package `VL.Qt.Stride`, Windows only), see [Stride texture](../README.md#stride-texture):
 
-- `HowTo Render Qt into a Stride Texture` — `QtTexture`: a Qt scene (text, shapes) rendered offscreen into a Stride `Texture` with a transparent `Clear Color`, composed over a 3D background; premultiplied alpha, no input yet
+- `HowTo Render Qt into a Stride Texture` — `QtTexture`: a Qt scene (text, shapes) rendered offscreen into a Stride `Texture` with a transparent `Clear Color`, composed over a 3D background with `AlphaBlendPremultiplied`
+- `HowTo Interact with a QtTexture` — `ToTexturePixels` feeds the window input into the scene of a `QtTexture`
+- `HowTo Draw a QtTexture with Transparency` — half-transparent elements over a 3D scene, premultiplied alpha, `Format`, the same scene in a Qt window to compare
+- `HowTo Render many QtTextures` — one `QtTexture` per slice of a `ForEach`, created and disposed with the spread
 
 ## Export
 

@@ -230,13 +230,13 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="180,600,67,19" Id="PUbVpXexkzkLF1x7c9u6Ff">
-            <p:NodeReference LastCategoryFullName="Stride.API.Graphics.BlendStateDescription" LastDependency="VL.Stride.Runtime.TypeForwards.vl">
+          <Node Bounds="180,600,127,19" Id="PUbVpXexkzkLF1x7c9u6Ff">
+            <p:NodeReference LastCategoryFullName="Stride.API.Graphics.BlendStateDescription" LastDependency="VL.Stride.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="ClassType" Name="BlendStateDescription" />
-              <Choice Kind="OperationCallFlag" Name="AlphaBlend" />
+              <Choice Kind="OperationCallFlag" Name="AlphaBlendPremultiplied" />
             </p:NodeReference>
-            <Pin Id="MA29QEYN96rMTHrPEkFbPg" Name="Alpha Blend" Kind="OutputPin" />
+            <Pin Id="MA29QEYN96rMTHrPEkFbPg" Name="Alpha Blend Premultiplied" Kind="OutputPin" />
           </Node>
           <Node Bounds="100,650,145,19" Id="JbiMtKeBOl8PsEKKZWkPEW">
             <p:NodeReference LastCategoryFullName="Stride.Rendering" LastDependency="VL.Stride.Rendering.ShaderFX.vl">
@@ -254,7 +254,7 @@
             <Pin Id="DvkM4Yfk2fWNbent1WC0J1" Name="Rasterizer State" Kind="InputPin" />
             <Pin Id="PswpCitY6bFLoIEzdFywWO" Name="Depth Stencil State" Kind="InputPin" />
           </Node>
-          <Pad Id="B8Y6ciSj2nuO9yGmhCFoYP" Bounds="253,608,361,31" ShowValueBox="true" isIOBox="true" Value="AlphaBlend is a premultiplied blend state: it fits the texture as it is.">
+          <Pad Id="B8Y6ciSj2nuO9yGmhCFoYP" Bounds="313,608,361,31" ShowValueBox="true" isIOBox="true" Value="AlphaBlendPremultiplied: the texture is premultiplied alpha.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -398,7 +398,7 @@
             <Pin Id="GkTAIKj85JoOZN6HphxBl0" Name="Back Buffer" Kind="OutputPin" IsHidden="true" />
             <Pin Id="RJy5ie1FajBLoF51g5Tqe2" Name="Depth Buffer" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="NjtJKKvuC5xOvcQVd2bXL8" Bounds="85,870,840,180" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The texture is premultiplied alpha. Draw it with a premultiplied blend state like AlphaBlend. Where straight alpha is expected, unpremultiply it first (RGB divided by alpha), otherwise the edges get dark fringes.&#xD;&#xA;- Space: only DIPTopLeft for now, 1 unit = 100 DIP, origin at the top left corner of the texture.&#xD;&#xA;- Windows only (Direct3D 11). QtTexture is Experimental: pins and behavior may still change.">
+          <Pad Id="NjtJKKvuC5xOvcQVd2bXL8" Bounds="85,870,840,180" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The texture is premultiplied alpha. Draw it with AlphaBlendPremultiplied (AlphaBlend expects straight alpha and darkens half-transparent parts). Where straight alpha is expected, unpremultiply it first (RGB divided by alpha), otherwise the edges get dark fringes.&#xD;&#xA;- Space: only DIPTopLeft for now, 1 unit = 100 DIP, origin at the top left corner of the texture.&#xD;&#xA;- Windows only (Direct3D 11). QtTexture is Experimental: pins and behavior may still change.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

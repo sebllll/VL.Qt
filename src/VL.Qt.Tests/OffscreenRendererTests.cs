@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using NUnit.Framework;
+using Stride.Core.Mathematics;
 
 namespace VL.Qt.Tests
 {
@@ -45,11 +46,11 @@ namespace VL.Qt.Tests
             {
                 // No scene (stub, or QtNative not started): the error says so, nothing throws.
                 Assert.That(r.Error, Is.Not.Empty);
-                Assert.That(r.Bind(IntPtr.Zero, IntPtr.Zero, new Stride.Core.Mathematics.Int2(64, 32), 28), Is.EqualTo(Protocol.Offscreen.NullScene));
+                Assert.That(r.Bind(IntPtr.Zero, IntPtr.Zero, new Int2(64, 32), 28), Is.EqualTo(Protocol.Offscreen.NullScene));
             }
             else
             {
-                var rc = r.Bind(IntPtr.Zero, IntPtr.Zero, new Stride.Core.Mathematics.Int2(64, 32), 28);
+                var rc = r.Bind(IntPtr.Zero, IntPtr.Zero, new Int2(64, 32), 28);
                 Assert.That(rc, Is.LessThan(0), "no device and no texture: no binding");
                 Assert.That(r.Error, Is.EqualTo(OffscreenRenderer.Describe(rc)));
                 Assert.That(r.IsBound, Is.False);
@@ -58,7 +59,7 @@ namespace VL.Qt.Tests
             r.Dispose();
             Assert.That(r.Scene, Is.EqualTo(IntPtr.Zero));
             Assert.That(r.IsBound, Is.False);
-            Assert.That(r.Bind(IntPtr.Zero, IntPtr.Zero, new Stride.Core.Mathematics.Int2(64, 32), 28), Is.EqualTo(Protocol.Offscreen.NullScene));
+            Assert.That(r.Bind(IntPtr.Zero, IntPtr.Zero, new Int2(64, 32), 28), Is.EqualTo(Protocol.Offscreen.NullScene));
             r.Dispose(); // twice is fine
         }
 

@@ -12,12 +12,24 @@ namespace VL.Qt.Stride
     internal sealed class NotificationQueue : IObserver<INotification>, IDisposable
     {
         readonly object syncRoot = new();
+        readonly Action<INotification> _sink;
         List<INotification> _pending = new();
         List<INotification> _draining = new();
         IObservable<INotification>? _source;
         IDisposable? _subscription;
 
-        /// <summary>Subscribes to <paramref name="source"/>; the same instance again does nothing, another one replaces the subscription and drops what is queued.</summary>
+        /// <param name="sink">Receives the notifications in <see cref="Drain"/>, on the main thread.</param>
+        public NotificationQueue(Action<INotification> sink)
+        {
+            _sink = sink ?? throw new ArgumentNullException(nameof(sink));
+        }
+
+        /// <summary>Subscribes to <paramref name="source"/>; the same instance again does nothing, another one replaces the subscription and keeps what is queued.</summary>
+        /// <remarks>
+        /// A patch that builds its input in every frame (e.g. GetNotifications of VL.Stride, an operation that returns a new
+        /// observable per call) hands a new source to every Update. The notifications that arrived since the last Update
+        /// came from the previous source and are still due: dropping them here lost every click.
+        /// </remarks>
         public void Subscribe(IObservable<INotification>? source)
         {
             if (ReferenceEquals(source, _source))
@@ -25,7 +37,6 @@ namespace VL.Qt.Stride
             _subscription?.Dispose();
             _subscription = null;
             _source = source;
-            Clear();
             _subscription = source?.Subscribe(this);
         }
 
@@ -36,14 +47,14 @@ namespace VL.Qt.Stride
                 _pending.Clear();
         }
 
-        /// <summary>Hands the queued notifications to <paramref name="scene"/> in arrival order.</summary>
-        public void Drain(OffscreenRenderer scene)
+        /// <summary>Hands the queued notifications to the sink in arrival order.</summary>
+        public void Drain()
         {
             lock (syncRoot)
                 (_pending, _draining) = (_draining, _pending);
-            // Not under the lock: Notify calls into QtNative, and the source may emit meanwhile.
+            // Not under the lock: the sink calls into QtNative, and the source may emit meanwhile.
             foreach (var notification in _draining)
-                scene.Notify(notification);
+                _sink(notification);
             _draining.Clear();
         }
 

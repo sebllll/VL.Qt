@@ -196,13 +196,13 @@
   <Pin Id="1lvvxE0ms9DhrFYG1o2Eub" Name="Blend State" Kind="InputPin" />
   <Pin Id="lzDPOZYrivsrfNcBp4K5ae" Name="Output" Kind="OutputPin" />
 </Node>
-<Node Bounds="260,520,67,19" Id="VHhV977ZSJmgTBW7bg4w03">
-<p:NodeReference LastCategoryFullName="Stride.API.Graphics.BlendStateDescription" LastDependency="VL.Stride.Runtime.TypeForwards.vl">
+<Node Bounds="260,520,127,19" Id="VHhV977ZSJmgTBW7bg4w03">
+<p:NodeReference LastCategoryFullName="Stride.API.Graphics.BlendStateDescription" LastDependency="VL.Stride.vl">
   <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
   <CategoryReference Kind="ClassType" Name="BlendStateDescription" />
-  <Choice Kind="OperationCallFlag" Name="AlphaBlend" />
+  <Choice Kind="OperationCallFlag" Name="AlphaBlendPremultiplied" />
   </p:NodeReference>
-  <Pin Id="NnEZdK09DtId3X9Xj2Fer3" Name="Alpha Blend" Kind="OutputPin" />
+  <Pin Id="NnEZdK09DtId3X9Xj2Fer3" Name="Alpha Blend Premultiplied" Kind="OutputPin" />
 </Node>
 <Node Bounds="100,625,165,19" Id="FJXBBxgFEnViFjVf2Pncwd">
 <p:NodeReference LastCategoryFullName="Stride.Rendering" LastDependency="VL.Stride.Engine.vl">
