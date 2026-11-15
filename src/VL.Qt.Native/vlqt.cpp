@@ -77,7 +77,6 @@
 #include <cstring>
 #include <cmath>
 #include <limits>
-#include <optional>
 
 namespace {
 
@@ -488,26 +487,6 @@ private:
     static inline std::vector<UpdateGate*> s_gates;
 };
 
-// Holds the shared device's immediate context (device::ContextLock) from beforeRendering to afterFrameEnd of an
-// on-screen window's frame, so the render threads of offscreen scenes (#116 phase 5) cannot change the context state
-// while QRhi submits this frame (QRhi D3D11 executes its commands in endFrame). The vsync wait in beginFrame stays
-// outside. Main thread (basic loop). grabWindow renders without afterFrameEnd: its caller calls release().
-class FrameLock : public QObject
-{
-public:
-    explicit FrameLock(QQuickWindow* window) : QObject(window)
-    {
-        connect(window, &QQuickWindow::beforeRendering, this, [this] {
-            if (!m_lock)
-                m_lock.emplace();
-        }, Qt::DirectConnection);
-        connect(window, &QQuickWindow::afterFrameEnd, this, &FrameLock::release, Qt::DirectConnection);
-    }
-    void release() { m_lock.reset(); }
-private:
-    std::optional<vlqt::device::ContextLock> m_lock;
-};
-
 // TEST ONLY: with VLQT_TEST_SYNTHETIC_INPUT=1 (read per window at create, SmokeTest) the window drops spontaneous
 // (OS) pointer/hover events, so a real cursor resting over a test window cannot change hover/press state; input
 // from vlqt_test_send_mouse (sendEvent, not spontaneous) passes, and so does queued input of the test devices
@@ -569,7 +548,6 @@ struct Window {
     QQmlEngine* engine = nullptr;
     vlqt::Scene* scene = nullptr; // apply/poll
     UpdateGate* gate = nullptr;
-    FrameLock* frameLock = nullptr; // windows only: a scene's render thread takes the lock itself (offscreen.cpp)
     PerfMonitor* perf = nullptr;
     Qt::MouseButtons testButtons = Qt::NoButton; // vlqt_test_send_mouse: buttons held between test events
     QElapsedTimer testClock;                     // vlqt_test_send_mouse / _touch: event timestamps
@@ -1111,6 +1089,8 @@ VLQT_API void vlqt_app_process_events_for(void* const* windows, int count)
         QCoreApplication::sendPostedEvents();
         QCoreApplication::processEvents(QEventLoop::AllEvents);
         UpdateGate::endPump();
+        // Every window frame of this pump has ended: no lock may outlive it (device.h, lock order).
+        vlqt::device::releaseFrameLocks();
         vlqt::res::endFrame(); // frees resources without references, never in a worker
         fontsEndFrame();       // app fonts without references (#15)
         vlqt::device::checkLost();
@@ -1213,7 +1193,7 @@ VLQT_API void* vlqt_window_create_at(float x, float y, int width, int height, co
         w->window->installEventFilter(w->closeFilter);
         w->gate = new UpdateGate(w->window); // child of the window
         w->window->installEventFilter(w->gate);
-        w->frameLock = new FrameLock(w->window); // child of the window
+        vlqt::device::lockFrames(w->window); // windows only: a scene's render thread locks itself (offscreen.cpp)
         w->window->installEventFilter(new FullscreenKeys(w->window, w));
         w->window->installEventFilter(new FocusRelease(w->window)); // #374, child of the window
         if (testSyntheticInputOnly())
@@ -1359,7 +1339,7 @@ VLQT_API int vlqt_window_grab(void* p, const char* pngPath)
             // The frame of grabWindow ends without afterFrameEnd (QSGGuiThreadRenderLoop::grab).
             vlqt::device::ContextLock lock;
             img = w->window->grabWindow();
-            w->frameLock->release();
+            vlqt::device::releaseFrameLocks();
         }
         if (img.isNull()) {
             setError("grabWindow returned null image");

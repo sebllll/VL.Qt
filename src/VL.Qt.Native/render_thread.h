@@ -12,6 +12,8 @@
  */
 #pragma once
 
+#include "device.h"
+
 #include <QtCore/QObject>
 #include <QtCore/QThread>
 
@@ -50,6 +52,8 @@ public:
             job();
             return;
         }
+        // The job may take the context lock: the waiting main thread must not hold it (device.h, lock order).
+        vlqt::device::releaseFrameLocks();
         std::exception_ptr error;
         QMetaObject::invokeMethod(m_context, [&job, &error] {
             try {

@@ -12,6 +12,8 @@
 #include <QtQuick/private/qsgrenderloop_p.h> // test only: dropWindowRhisOnRetired
 #include <rhi/qrhi.h>
 
+#include <algorithm>
+#include <optional>
 #include <vector>
 
 #ifdef Q_OS_WIN
@@ -51,6 +53,32 @@ std::vector<Retired> s_retired;
 unsigned long long s_requestedLuid = 0; // adapter of moveTo, kept for later rebuilds (chooseAdapter)
 unsigned s_generation = 0;           // generation()
 std::vector<Listener> s_listeners;   // addListener, main thread
+
+// lockFrames: holds the shared context from beforeRendering to afterFrameEnd of an on-screen window's frame (basic
+// loop, main thread); releaseFrameLocks ends every one still held. Child of its window.
+class FrameLock final : public QObject
+{
+public:
+    explicit FrameLock(QQuickWindow* window) : QObject(window)
+    {
+        s_all.push_back(this);
+        connect(window, &QQuickWindow::beforeRendering, this, [this] {
+            if (!m_lock)
+                m_lock.emplace();
+        }, Qt::DirectConnection);
+        connect(window, &QQuickWindow::afterFrameEnd, this, &FrameLock::release, Qt::DirectConnection);
+    }
+    ~FrameLock() override { s_all.erase(std::remove(s_all.begin(), s_all.end(), this), s_all.end()); }
+    void release() { m_lock.reset(); }
+    static void releaseAll()
+    {
+        for (FrameLock* l : s_all)
+            l->release();
+    }
+private:
+    std::optional<ContextLock> m_lock;
+    static inline std::vector<FrameLock*> s_all; // main thread
+};
 #ifdef Q_OS_WIN
 
 // The adapter Qt's D3D11 backend would pick: QT_D3D_ADAPTER_INDEX, with QSG_RHI_PREFER_SOFTWARE_RENDERER the first
@@ -318,6 +346,16 @@ void attach(QQuickWindow* window)
 #endif
 }
 
+void lockFrames(QQuickWindow* window)
+{
+    new FrameLock(window);
+}
+
+void releaseFrameLocks()
+{
+    FrameLock::releaseAll();
+}
+
 QRhi* uploadRhi()
 {
 #ifdef Q_OS_WIN
@@ -431,6 +469,8 @@ void rebuild()
     QElapsedTimer t;
     t.start();
     ID3D11Device* const old = s_dev;
+    // The listeners run blocking render-thread jobs that take the context lock (device.h, lock order).
+    releaseFrameLocks();
 
     // 1. Listeners free every object of the old device (textures, staging, QRhi resources), keep their sources.
     for (const Listener& l : s_listeners)

@@ -38,6 +38,16 @@ namespace vlqt::device {
 // Gives the window the shared device; call before the window is shown. No-op without a shared device.
 void attach(QQuickWindow* window);
 
+// Holds the shared device's immediate context (ContextLock) from beforeRendering to afterFrameEnd of every frame of
+// this on-screen window, so the render threads of offscreen scenes (#116 phase 5) cannot change the context state while
+// QRhi D3D11 submits the frame (in endFrame). The vsync wait in beginFrame stays outside. Main thread, basic loop; not
+// for offscreen scenes (their render thread locks itself).
+void lockFrames(QQuickWindow* window);
+// Ends every window frame lock still held. A frame normally ends it at afterFrameEnd; QQuickWindow::grabWindow renders
+// without that signal. Called after the pump renders, before rebuild's listeners and before a blocking render-thread
+// job (render_thread.h): the main thread must not hold the lock there (lock order, ContextLock). Main thread.
+void releaseFrameLocks();
+
 // Upload QRhi on the shared device, nullptr if there is none (Linux, creation failed, VLQT_SHARED_DEVICE=0). Creates
 // the device if no window did yet (resources before the first window, #360). Main thread.
 QRhi* uploadRhi();
@@ -86,7 +96,7 @@ int testLost(int mode);
 // immediate context with the main thread. The shared device's context is multithread-protected from its creation on
 // (every rebuild too), so single calls need no lock; a sequence whose context state must not interleave with another
 // thread's does (a QRhi frame, Wait + beginFrame, endFrame + Signal + Flush, Map + Unmap). No-op for a null context and
-// on other platforms. Main-thread holders: window frames (vlqt.cpp FrameLock), upload QRhi frames and staging copies
+// on other platforms. Main-thread holders: window frames (lockFrames), upload QRhi frames and staging copies
 // (image_resource.cpp). Lock order: never wait for another thread while holding it, above all never for a blocking
 // render-thread job (RenderThread::call, drain): that job may take the lock too and both threads would wait forever.
 class ContextLock
