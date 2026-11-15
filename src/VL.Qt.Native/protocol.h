@@ -575,6 +575,28 @@ enum vlqt_touch {
     VLQT_TOUCH_RELEASE = 3
 };
 
+/* Pointer events of vlqt_offscreen_send_pointer (vlqt.h, #119 QtTexture input), not part of the command buffer. */
+enum vlqt_pointer {
+    VLQT_POINTER_PRESS = 1,
+    VLQT_POINTER_MOVE = 2,
+    VLQT_POINTER_RELEASE = 3,
+    VLQT_POINTER_LEAVE = 4,  /* the pointer left the texture or its window (hover ends); x/y ignored */
+    VLQT_POINTER_CANCEL = 5  /* touch/pen: the system cancelled the point (TouchCancel) */
+};
+
+/* Pointing devices of vlqt_offscreen_send_pointer (#119). Pen is delivered like touch, as in windows (#351). */
+enum vlqt_pointer_device {
+    VLQT_POINTER_DEVICE_MOUSE = 0,
+    VLQT_POINTER_DEVICE_TOUCH = 1,
+    VLQT_POINTER_DEVICE_PEN = 2
+};
+
+/* Key event types of vlqt_offscreen_send_key (#119). */
+enum vlqt_key_event {
+    VLQT_KEY_EVENT_PRESS = 1,
+    VLQT_KEY_EVENT_RELEASE = 2
+};
+
 /* Resource kinds of vlqt_res_create (int) */
 enum vlqt_res_kind {
     VLQT_RES_KIND_TEST = 1, /* test only: decode sleeps n ms in a worker, upload uses n bytes of budget (vlqt_test_res_start) */

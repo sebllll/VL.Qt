@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Text;
 using Stride.Core.Mathematics;
+using VL.Lib.IO.Notifications;
 using VL.Qt.Elements;
 
 namespace VL.Qt
@@ -107,6 +109,51 @@ namespace VL.Qt
             if (!events.IsEmpty)
                 _core.Dispatch(events, frameStart: false);
         }
+
+        // Input (#119, render-texture.md "Input"): positions in texture pixels (top-left origin, 1 DIP = 1 pixel), call
+        // between two RenderBatch calls; the scene shows the result in the next batch, its events arrive in PollEvents.
+        // Each returns a Protocol.Offscreen code.
+
+        /// <summary>
+        /// Translates a vvvv notification (mouse, touch, keyboard, focus; positions already in texture pixels) into the
+        /// Send* calls below. Main thread. Allocates nothing.
+        /// </summary>
+        public void Notify(INotification notification)
+        {
+            // TODO: Translation of #119 task 4 (mouse buttons and Keys to Qt values, KeyPress to SendText, LostFocus to SetFocus(false)).
+        }
+
+        /// <summary>Pointer event (<see cref="Protocol.Pointer"/>) of <paramref name="device"/> (<see cref="Protocol.PointerDevice"/>); mouse: <paramref name="buttons"/> = Qt::MouseButtons held after the event; touch/pen: <paramref name="id"/> of the point.</summary>
+        public int SendPointer(int device, int type, int id, Vector2 position, int buttons, int modifiers)
+            => _disposed || _scene == IntPtr.Zero ? Protocol.Offscreen.NullScene
+            : Native.vlqt_offscreen_send_pointer(_scene, device, type, id, position.X, position.Y, buttons, modifiers);
+
+        /// <summary>Wheel at <paramref name="position"/>; angle delta in eighths of a degree (120 = one notch).</summary>
+        public int SendWheel(Vector2 position, int dx, int dy, int modifiers)
+            => _disposed || _scene == IntPtr.Zero ? Protocol.Offscreen.NullScene
+            : Native.vlqt_offscreen_send_wheel(_scene, position.X, position.Y, dx, dy, modifiers);
+
+        /// <summary>Key press or release (<see cref="Protocol.KeyEvent"/>) of a Qt::Key, without text.</summary>
+        public int SendKey(int type, int key, int modifiers, bool autoRepeat)
+            => _disposed || _scene == IntPtr.Zero ? Protocol.Offscreen.NullScene
+            : Native.vlqt_offscreen_send_key(_scene, type, key, modifiers, autoRepeat ? 1 : 0);
+
+        /// <summary>Typed text to the focus item (e.g. one character of a KeyPress).</summary>
+        public int SendText(ReadOnlySpan<char> text)
+        {
+            if (_disposed || _scene == IntPtr.Zero)
+                return Protocol.Offscreen.NullScene;
+            if (text.Length > 64)
+                text = text[..64];
+            Span<byte> utf8 = stackalloc byte[64 * 3];
+            var length = Encoding.UTF8.GetBytes(text, utf8);
+            return Native.OffscreenSendText(_scene, utf8[..length]);
+        }
+
+        /// <summary>Gives the scene keyboard focus (FocusIn) or takes it (FocusOut); QtNative also does it on a press inside or outside the texture.</summary>
+        public int SetFocus(bool focused)
+            => _disposed || _scene == IntPtr.Zero ? Protocol.Offscreen.NullScene
+            : Native.vlqt_offscreen_set_focus(_scene, focused ? 1 : 0);
 
         /// <summary>
         /// Renders the changed, bound scenes of <paramref name="renderers"/> in one native call, ordered against

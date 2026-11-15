@@ -544,4 +544,48 @@ VLQT_API int vlqt_offscreen_render_batch(void* context, void* const* scenes, int
 #endif
 }
 
+// Input (#119): stubs of task 1, filled by the native tasks (vlqt.h, render-texture.md "Input", Contract).
+namespace {
+
+int inputStub(void* scene, const char* what)
+{
+    if (!stateOf(scene))
+        return VLQT_OFFSCREEN_NULL_SCENE;
+    setError(std::string("offscreen ") + what + ": not implemented yet (#119)");
+    return VLQT_OFFSCREEN_NOT_IMPLEMENTED;
+}
+
+} // namespace
+
+VLQT_API int vlqt_offscreen_send_pointer(void* scene, int device, int type, int id, float x, float y, int buttons,
+                                         int modifiers)
+{
+    (void)device; (void)type; (void)id; (void)x; (void)y; (void)buttons; (void)modifiers;
+    return inputStub(scene, "send_pointer");
+}
+
+VLQT_API int vlqt_offscreen_send_wheel(void* scene, float x, float y, int dx, int dy, int modifiers)
+{
+    (void)x; (void)y; (void)dx; (void)dy; (void)modifiers;
+    return inputStub(scene, "send_wheel");
+}
+
+VLQT_API int vlqt_offscreen_send_key(void* scene, int type, int key, int modifiers, int autoRepeat)
+{
+    (void)type; (void)key; (void)modifiers; (void)autoRepeat;
+    return inputStub(scene, "send_key");
+}
+
+VLQT_API int vlqt_offscreen_send_text(void* scene, const char* utf8, int length)
+{
+    (void)utf8; (void)length;
+    return inputStub(scene, "send_text");
+}
+
+VLQT_API int vlqt_offscreen_set_focus(void* scene, int focused)
+{
+    (void)focused;
+    return inputStub(scene, "set_focus");
+}
+
 } // extern "C"

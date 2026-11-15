@@ -1,4 +1,4 @@
-﻿namespace VL.Qt
+namespace VL.Qt
 {
     /// <summary>
     /// Mirror of src/VL.Qt.Native/protocol.h (the single source of truth). Keep in sync:
@@ -464,6 +464,33 @@
             public const int Press = 1;
             public const int Move = 2;
             public const int Release = 3;
+        }
+
+        /// <summary>Pointer events of vlqt_offscreen_send_pointer (#119 QtTexture input), not part of the command buffer.</summary>
+        public static class Pointer
+        {
+            public const int Press = 1;
+            public const int Move = 2;
+            public const int Release = 3;
+            /// <summary>The pointer left the texture or its window (hover ends); x/y ignored.</summary>
+            public const int Leave = 4;
+            /// <summary>Touch/pen: the system cancelled the point (TouchCancel).</summary>
+            public const int Cancel = 5;
+        }
+
+        /// <summary>Pointing devices of vlqt_offscreen_send_pointer (#119). Pen is delivered like touch, as in windows (#351).</summary>
+        public static class PointerDevice
+        {
+            public const int Mouse = 0;
+            public const int Touch = 1;
+            public const int Pen = 2;
+        }
+
+        /// <summary>Key event types of vlqt_offscreen_send_key (#119).</summary>
+        public static class KeyEvent
+        {
+            public const int Press = 1;
+            public const int Release = 2;
         }
 
         /// <summary>Resource kinds of vlqt_res_create (#359).</summary>
