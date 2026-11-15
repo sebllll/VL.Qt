@@ -1,6 +1,10 @@
 # VL.Qt.Stride
 
-Companion package of [VL.Qt](https://www.nuget.org/packages/VL.Qt/) for Stride in [vvvv gamma](https://visualprogramming.net): Qt 6 (Qt Quick) scenes built with VL.Qt, rendered into Stride textures. Windows only.
+Companion package of [VL.Qt](https://www.nuget.org/packages/VL.Qt/) for Stride in [vvvv gamma](https://visualprogramming.net): Qt 6 (Qt Quick) scenes built with VL.Qt, rendered into Stride textures. Windows only, experimental.
+
+## What it contains
+
+The node `QtTexture` (category `Qt`): like `Renderer [Qt]`, but without a window; it outputs a Stride `Texture` (premultiplied alpha, GPU only, same frame). Pins, limits (no input yet, same GPU adapter) and the help patch `HowTo Render Qt into a Stride Texture` are described in the [VL.Qt README](https://github.com/sebllll/VL.Qt#stride-texture).
 
 ## Install
 
