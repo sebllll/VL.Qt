@@ -71,13 +71,16 @@ FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root)
 {
     QQuickItem* content = window->contentItem();
     auto* source = new QQuickShaderEffectSource();
+    // In the window before the source item is set: a source without a window takes a window reference on the root
+    // in setSourceItem and another one when it enters the window, but gives back only one (setSourceItem(nullptr)).
+    // The root then keeps the old window and cannot move to a new one (#118 window swap).
+    source->setParentItem(content);
     source->setSourceItem(root);
     source->setRecursive(true);
     source->setLive(true);
     source->setHideSource(true); // the root is drawn only into the source, the window draws the source
     // The view samples the texture as it is: no flip for ShaderEffect texture coordinates.
     source->setTextureMirroring(QQuickShaderEffectSource::NoMirroring);
-    source->setParentItem(content);
     m_source = source;
 
     auto* view = new FeedbackView(root, source);

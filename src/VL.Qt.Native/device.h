@@ -55,6 +55,13 @@ QRhi* uploadRhi();
 // Native device of a QRhi (ID3D11Device* for D3D11), nullptr for other backends.
 void* nativeDevice(QRhi* rhi);
 
+// MSAA sample count for a render target (#118): the highest count not above requested (< 1 = 1) that QRhi lists
+// (supportedSampleCounts; D3D11 hard-codes 1/2/4/8 there) and, on D3D11, that the device has quality levels for in
+// dxgiFormat and in D24_UNORM_S8_UINT (the depth-stencil Qt adds). rhi: the QRhi that will render (a window's, once it
+// has one); null = the upload QRhi; without any QRhi (Linux before the first expose) the list 1/2/4/8. Qt's own clamp
+// only logs a warning, so callers clamp here and report the result. Main thread.
+int clampSamples(int requested, int dxgiFormat, QRhi* rhi);
+
 // Twice per pump (start and end): releases retired devices, notices a removed shared device (warning with
 // GetDeviceRemovedReason) and rebuilds. Cheap, allocates nothing while the device is fine.
 void checkLost();

@@ -29,6 +29,7 @@ namespace VL.Qt
         readonly bool[] _keysDown = new bool[256];
         char _highSurrogate;
         string _createError = "", _bindError = "";
+        int _usedSamples;
 
         /// <param name="scene">Duplicate registry of the app (<see cref="SceneRegistry.ForApp"/>).</param>
         /// <param name="width">Initial scene width in DIP (1 DIP = 1 texture pixel); <see cref="Bind"/> sets the final size.</param>
@@ -54,6 +55,9 @@ namespace VL.Qt
         /// </summary>
         public bool IsBound => !_disposed && _scene != IntPtr.Zero && Native.vlqt_offscreen_is_bound(_scene) == 1;
 
+        /// <summary>MSAA count of the last successful <see cref="Bind"/> (what QtNative used, clamped to the device); 0 while unbound.</summary>
+        public int UsedSamples => _usedSamples;
+
         /// <summary>First of: scene creation, last bind, last apply, last poll error. Empty if ok.</summary>
         public string Error =>
             _createError.Length > 0 ? _createError
@@ -67,14 +71,17 @@ namespace VL.Qt
         /// Binds the scene to a shared texture. <paramref name="device"/> is the foreign ID3D11Device*,
         /// <paramref name="ntHandle"/> the texture's NT handle (the caller may close it afterwards), <paramref name="size"/>
         /// the texture size in pixels, <paramref name="format"/> the DXGI_FORMAT the caller samples the texture with (with an
-        /// SRGB format or R16G16B16A16_FLOAT QtNative writes linear premultiplied values).
+        /// SRGB format or R16G16B16A16_FLOAT QtNative writes linear premultiplied values). <paramref name="samples"/> is the
+        /// MSAA count (<see cref="MultisampleCount.None"/> = 1), clamped to the device; the count used is in <see cref="UsedSamples"/>.
+        /// A different count is a new Bind (after <see cref="Unbind"/>).
         /// Returns a <see cref="Protocol.Offscreen"/> code, 0 = bound; the text of an error is in <see cref="Error"/>.
         /// </summary>
-        public int Bind(IntPtr device, IntPtr ntHandle, Int2 size, int format)
+        public int Bind(IntPtr device, IntPtr ntHandle, Int2 size, int format, MultisampleCount samples = MultisampleCount.None)
         {
             if (_disposed || _scene == IntPtr.Zero)
                 return Protocol.Offscreen.NullScene;
-            int rc = Native.vlqt_offscreen_bind(_scene, device, ntHandle, size.X, size.Y, format);
+            int rc = Native.vlqt_offscreen_bind(_scene, device, ntHandle, size.X, size.Y, format, (int)samples, out var used);
+            _usedSamples = rc == Protocol.Offscreen.Ok ? used : 0;
             _bindError = rc == Protocol.Offscreen.Ok ? "" : Describe(rc);
             return rc;
         }
@@ -86,6 +93,7 @@ namespace VL.Qt
                 return;
             Native.vlqt_offscreen_unbind(_scene);
             _bindError = "";
+            _usedSamples = 0;
         }
 
         /// <summary>

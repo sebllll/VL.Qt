@@ -142,7 +142,7 @@ static partial class QtTextureTest
         // (i) A WARP texture: QtNative moves its device to WARP while nothing renders on it (no on-screen window has
         // rendered, no scene bound; so with -Only qttexture), else ADAPTER_MISMATCH.
         var qtBefore = QtDevice();
-        int rc = Native.vlqt_offscreen_bind(a, warp, warpHandle, w, h, B8G8R8A8Unorm);
+        int rc = Native.vlqt_offscreen_bind(a, warp, warpHandle, w, h, B8G8R8A8Unorm, 1, out _);
         if (rc == Protocol.Offscreen.Ok)
         {
             var qtWarp = QtDevice();
@@ -151,7 +151,7 @@ static partial class QtTextureTest
             check(rc == 1 && Centre(warpTex, w, h) == red, $"116 adapter: scene renders on WARP (rc {rc}, centre {Centre(warpTex, w, h)}) {Err(rc)}");
             Native.vlqt_offscreen_unbind(a);
             pump(2); // releases the retired device
-            rc = Native.vlqt_offscreen_bind(a, hw, hwHandle, w, h, B8G8R8A8Unorm);
+            rc = Native.vlqt_offscreen_bind(a, hw, hwHandle, w, h, B8G8R8A8Unorm, 1, out _);
             check(rc == 0 && QtDevice() != qtWarp, $"116 adapter: bind to the first adapter moves back ({rc}) {Err(rc)}");
             pump(2);
         }
@@ -159,7 +159,7 @@ static partial class QtTextureTest
         {
             check(rc == Protocol.Offscreen.AdapterMismatch && Native.vlqt_offscreen_is_bound(a) == 0,
                 $"116 adapter: bind to WARP = ADAPTER_MISMATCH (a window renders on QtNative's device) ({rc}) {Err(rc)}");
-            rc = Native.vlqt_offscreen_bind(a, hw, hwHandle, w, h, B8G8R8A8Unorm);
+            rc = Native.vlqt_offscreen_bind(a, hw, hwHandle, w, h, B8G8R8A8Unorm, 1, out _);
             check(rc == 0, $"116 adapter: bind A on QtNative's adapter ({rc}) {Err(rc)}");
         }
         rc = Native.OffscreenRenderBatch(hwCtx, new[] { a }, 0);
@@ -167,7 +167,7 @@ static partial class QtTextureTest
 
         // A bound: a second scene on WARP must not move the device under it.
         var qtBound = QtDevice();
-        rc = Native.vlqt_offscreen_bind(b, warp, warpHandle, w, h, B8G8R8A8Unorm);
+        rc = Native.vlqt_offscreen_bind(b, warp, warpHandle, w, h, B8G8R8A8Unorm, 1, out _);
         check(rc == Protocol.Offscreen.AdapterMismatch && Native.vlqt_offscreen_is_bound(b) == 0 && Native.vlqt_offscreen_is_bound(a) == 1
               && QtDevice() == qtBound, $"116 adapter: B on WARP while A is bound = ADAPTER_MISMATCH, A stays bound ({rc})");
 
@@ -186,7 +186,7 @@ static partial class QtTextureTest
             check(QtDevice() != qtBound && QtDevice() != IntPtr.Zero, $"116 device lost: new QtNative device ({qtBound:X} -> {QtDevice():X})");
             // A new (zeroed) texture: the red must come from a render on the new device, with the scene's elements kept.
             Native.vlqt_test_d3d11_create_shared_texture(hw, w, h, B8G8R8A8Typeless, out var fresh, out var freshHandle);
-            rc = Native.vlqt_offscreen_bind(a, hw, freshHandle, w, h, B8G8R8A8Unorm);
+            rc = Native.vlqt_offscreen_bind(a, hw, freshHandle, w, h, B8G8R8A8Unorm, 1, out _);
             check(rc == 0, $"116 device lost: rebind A ({rc}) {Err(rc)}");
             rc = Native.OffscreenRenderBatch(hwCtx, new[] { a }, 0);
             check(rc == 1 && Centre(fresh, w, h) == red, $"116 device lost: A renders again (rc {rc}, centre {Centre(fresh, w, h)}) {Err(rc)}");
@@ -200,7 +200,7 @@ static partial class QtTextureTest
         if (check(Native.vlqt_test_d3d11_create_device(0, out var gone, out var goneCtx) == 0, "116 foreign release: create device"))
         {
             Native.vlqt_test_d3d11_create_shared_texture(gone, w, h, B8G8R8A8Typeless, out var goneTex, out var goneHandle);
-            rc = Native.vlqt_offscreen_bind(b, gone, goneHandle, w, h, B8G8R8A8Unorm);
+            rc = Native.vlqt_offscreen_bind(b, gone, goneHandle, w, h, B8G8R8A8Unorm, 1, out _);
             int rendered = Native.OffscreenRenderBatch(goneCtx, new[] { b }, 0);
             check(rc == 0 && rendered == 1, $"116 foreign release: bind and render B ({rc}, {rendered}) {Err(rc)}");
             Native.vlqt_test_close_handle(goneHandle);
@@ -264,7 +264,7 @@ static partial class QtTextureTest
         if (check(rc == 0, "116 scene: create shared texture " + rc))
         {
             int deviceRefs = Native.vlqt_test_com_ref_count(device);
-            rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm);
+            rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
             check(rc == Protocol.Offscreen.Ok, $"116 scene: bind ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             check(Native.vlqt_offscreen_is_bound(scene) == 1, "116 scene: is_bound after bind");
 
@@ -297,7 +297,7 @@ static partial class QtTextureTest
             int qtRefsUnbound = QtRefs();
 
             // A second binding (a just bound scene renders) leaves no reference behind on either device.
-            rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm);
+            rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
             int rendered = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
             Native.vlqt_test_offscreen_state(scene, out var read3, out var write3, out var renders3);
             check(rc == 0 && rendered == 1 && read3 == 1 && write3 == 1 && renders3 == 1,

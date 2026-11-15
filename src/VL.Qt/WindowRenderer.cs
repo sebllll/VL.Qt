@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Stride.Core.Mathematics;
+using VL.Core;
 using VL.Qt.Elements;
 
 namespace VL.Qt
@@ -41,7 +42,10 @@ namespace VL.Qt
         /// flash); later changes via <see cref="SetMode"/>.</param>
         /// <param name="iconPath">Full path of the window icon, set before the first show (no flash of the default icon);
         /// null = default icon. The result is in <see cref="IconResult"/>, later changes via <see cref="SetIcon"/>.</param>
-        public WindowRenderer(SceneRegistry scene, string? title, RectangleF bounds, bool vSync = true, uint mode = 0, string? iconPath = null)
+        /// <param name="samples">MSAA count set before the first show (no window swap at the first frame, #118); not set =
+        /// QtNative's creation default. The count used is in <see cref="UsedSamples"/>, later changes via <see cref="SetSamples"/>.</param>
+        public WindowRenderer(SceneRegistry scene, string? title, RectangleF bounds, bool vSync = true, uint mode = 0, string? iconPath = null,
+            Optional<MultisampleCount> samples = default)
         {
             _core = new SceneCore(scene);
             _title = title ?? "";
@@ -57,11 +61,19 @@ namespace VL.Qt
                     Native.vlqt_window_set_mode(_window, mode, mode);
                 if (iconPath is not null)
                     SetIcon(iconPath);
+                if (samples.HasValue)
+                    SetSamples(samples.Value);
                 Native.vlqt_window_show(_window);
             }
         }
 
         public IntPtr Window => _window;
+
+        /// <summary>
+        /// MSAA count of the window as of the last <see cref="SetSamples"/> (what QtNative used, clamped to the device),
+        /// 0 until it was set, negative if the last call failed (text in <see cref="Native.LastError"/>).
+        /// </summary>
+        public int UsedSamples { get; private set; }
 
         /// <summary>Result of the last <see cref="SetIcon"/> (vlqt_window_set_icon): 0 ok, -7 not loadable (default icon shown), -1 no window.</summary>
         public int IconResult { get; private set; }
@@ -233,6 +245,18 @@ namespace VL.Qt
         {
             IconResult = _disposed || _window == IntPtr.Zero ? -1 : Native.vlqt_window_set_icon(_window, fullPath);
             return IconResult;
+        }
+
+        /// <summary>
+        /// Sets the MSAA count of the window (vlqt_window_set_samples, #118). QtNative clamps it to the device and, for a
+        /// shown window, swaps the window inside the same handle (some ms, the window is recreated on screen once), so call it
+        /// only when the value changed. Returns <see cref="UsedSamples"/>.
+        /// </summary>
+        public int SetSamples(MultisampleCount samples)
+        {
+            if (!_disposed && _window != IntPtr.Zero)
+                UsedSamples = Native.vlqt_window_set_samples(_window, (int)samples);
+            return UsedSamples;
         }
 
         /// <summary>Debug overlay for all elements live (vlqt_window_set_debug, #280).</summary>

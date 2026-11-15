@@ -42,6 +42,7 @@ namespace VL.Qt.Stride
         /// <param name="enabled">False freezes the node: no updates of Input, Space, Clear Color, Clear, Size or Format, nothing is created or recreated and nothing renders; Output keeps the last content (null if there is none yet).</param>
         /// <param name="inputNotifications">Mouse, touch and keyboard input for the scene (vvvv notifications) with positions in texture pixels, top-left origin. Map a window's input with ToTexturePixels. A press inside the texture gives the scene keyboard focus, a press outside takes it.</param>
         /// <param name="debug">Debug overlay for all elements of the scene (same as the Debug pin of Renderer [Qt]).</param>
+        /// <param name="multisampleCount">Anti-aliasing of the edges (MSAA samples per pixel), resolved into the texture; live. More samples look smoother and cost GPU time and memory (X8 is several times the render time of None in a scene with many shapes); a count the device does not support is lowered to the next supported one, with a warning at the node. A change rebinds the scene to the texture. Effect layers in the scene render without MSAA.</param>
         public void Update(
             out Texture? output,
             out string error,
@@ -54,10 +55,11 @@ namespace VL.Qt.Stride
             [DefaultValue(typeof(PixelFormat), nameof(PixelFormat.B8G8R8A8_UNorm_SRgb))] PixelFormat format,
             [DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] IObservable<INotification>? inputNotifications,
-            [Pin(Visibility = PinVisibility.Optional), DefaultValue(false)] bool debug)
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(false)] bool debug,
+            [Pin(Name = "Multisample Count", Visibility = PinVisibility.Optional), DefaultValue(typeof(MultisampleCount), nameof(MultisampleCount.None))] MultisampleCount multisampleCount)
         {
             _scene.Input.Subscribe(inputNotifications);
-            _scene.Update(input, size, format, space, clearColor, clear, enabled, debug);
+            _scene.Update(input, size, format, space, clearColor, clear, enabled, debug, multisampleCount);
 
             output = _scene.Texture;
             error = _scene.Error;

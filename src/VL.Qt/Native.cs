@@ -249,6 +249,15 @@ namespace VL.Qt
         public static extern int vlqt_window_set_mode(IntPtr w, uint mask, uint value);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern uint vlqt_window_get_mode(IntPtr w);
+        /// <summary>
+        /// Sets the MSAA sample count of the window (#118; &lt; 1 = none), clamped to what the device supports; returns the
+        /// count used (&gt;= 1) or &lt;0 = error. A shown window is replaced inside the same handle (vlqt.h).
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_window_set_samples(IntPtr w, int requested);
+        /// <summary>Sample count of the window's swap chain, or the count it will be created with; 0 = null or offscreen scene.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_window_samples(IntPtr w);
         /// <summary>Applies a command buffer (protocol.h). 0 = ok, &lt;0 = error, see <see cref="LastError"/>.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         static extern int vlqt_window_apply(IntPtr w, in byte buf, int len);
@@ -301,11 +310,12 @@ namespace VL.Qt
         public static extern IntPtr vlqt_offscreen_create(int width, int height);
         /// <summary>
         /// Binds the scene to the texture behind ntHandle (shared NT handle of an ID3D11Texture2D of device, an ID3D11Device*);
-        /// format = DXGI_FORMAT the caller samples the texture with (SRGB and float: linear values, vlqt.h). The caller may
+        /// format = DXGI_FORMAT the caller samples the texture with (SRGB and float: linear values, vlqt.h); samples = MSAA
+        /// count (&lt; 2 = none), clamped, the count used in usedSamples. A change of the count is a new bind. The caller may
         /// close ntHandle after the call.
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_offscreen_bind(IntPtr scene, IntPtr device, IntPtr ntHandle, int width, int height, int format);
+        public static extern int vlqt_offscreen_bind(IntPtr scene, IntPtr device, IntPtr ntHandle, int width, int height, int format, int samples, out int usedSamples);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_offscreen_unbind(IntPtr scene);
         /// <summary>1 = bound, 0 = unbound (bind again, e.g. after a device loss of QtNative), &lt;0 = error.</summary>

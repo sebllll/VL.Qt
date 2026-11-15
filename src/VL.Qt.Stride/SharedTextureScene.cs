@@ -26,12 +26,14 @@ namespace VL.Qt.Stride
         GraphicsDevice? _device;
         Int2 _size;
         PixelFormat _format;
+        MultisampleCount _samples;
         string _textureError = "", _batchError = "";
         // _created: the texture state matches the inputs seen last (also when it is an error); _hasContent: the scene was
         // bound to the current texture once, so it holds content; _lastBindCode: result of the last Bind, 0 = ok.
         bool _created, _hasContent, _scheduled, _enabled, _debug, _disposed;
         int _lastBindCode, _rebindWait;
         IDisposable? _spaceWarning;
+        const string SamplesPhase = "Multisample Count";
 
         public SharedTextureScene(NodeContext nodeContext)
         {
@@ -66,8 +68,10 @@ namespace VL.Qt.Stride
         /// <summary>
         /// Updates the scene and schedules its render for the next draw; enabled = false freezes it (nothing is created, recreated,
         /// rendered or fed with input; the texture keeps its content). Logs <see cref="Error"/> once per distinct text.
+        /// A new <paramref name="samples"/> rebinds the scene to the same texture (QtNative renders with the new MSAA count and
+        /// resolves into the texture); a count the device does not support gives a warning at the node.
         /// </summary>
-        public void Update(Element? input, Int2 size, PixelFormat format, Space space, Color4 clearColor, bool clear, bool enabled, bool debug)
+        public void Update(Element? input, Int2 size, PixelFormat format, Space space, Color4 clearColor, bool clear, bool enabled, bool debug, MultisampleCount samples)
         {
             _enabled = enabled;
             // The previous frame had no draw (game not drawing): send its commands now, so they do not pile up.
@@ -83,7 +87,7 @@ namespace VL.Qt.Stride
 
             // Disabled: nothing is created, recreated or rebound; the texture keeps its content.
             if (enabled)
-                EnsureTexture(size, format);
+                EnsureTexture(size, format, samples);
 
             if (debug != _debug && _scene.Scene != IntPtr.Zero)
             {
@@ -107,7 +111,7 @@ namespace VL.Qt.Stride
 
         // Creates the shared texture and binds the scene when size, format or Stride's device change (a Stride reset releases
         // the texture in OnStrideDeviceGone and clears _created); rebinds it after QtNative unbound the scene.
-        void EnsureTexture(Int2 size, PixelFormat format)
+        void EnsureTexture(Int2 size, PixelFormat format, MultisampleCount samples)
         {
             var device = _renderer.GraphicsDevice;
             var max = device is null ? int.MaxValue : StrideInterop.MaxTextureSize(device);
@@ -115,7 +119,19 @@ namespace VL.Qt.Stride
             if (_created && size == _size && format == _format && device == _device)
             {
                 if (_texture is not null)
-                    RebindIfUnbound();
+                {
+                    if (samples != _samples)
+                    {
+                        // The texture stays, the scene renders into it with the new count (unbind, bind).
+                        _samples = samples;
+                        _scene.Unbind();
+                        TryBind();
+                    }
+                    else
+                        RebindIfUnbound();
+                }
+                else
+                    _samples = samples;
                 return;
             }
 
@@ -123,6 +139,7 @@ namespace VL.Qt.Stride
             _created = true;
             _size = size;
             _format = format;
+            _samples = samples;
             _device = device;
             _textureError = "";
 
@@ -174,7 +191,7 @@ namespace VL.Qt.Stride
                 var handle = StrideInterop.CreateNtHandle(_texture!);
                 try
                 {
-                    _lastBindCode = _scene.Bind(StrideInterop.GetNativeDevice(_device!), handle, _size, (int)_format);
+                    _lastBindCode = _scene.Bind(StrideInterop.GetNativeDevice(_device!), handle, _size, (int)_format, _samples);
                 }
                 finally
                 {
@@ -182,6 +199,7 @@ namespace VL.Qt.Stride
                     StrideInterop.CloseHandle(handle);
                 }
                 _hasContent |= _lastBindCode == Protocol.Offscreen.Ok;
+                ReportSamples();
             }
             catch (Exception e)
             {
@@ -208,6 +226,16 @@ namespace VL.Qt.Stride
             _hasContent = false;
             _lastBindCode = 0;
             _batchError = "";
+        }
+
+        // The count QtNative used is lower than requested (device limit): warning at the node until the next bind fits.
+        void ReportSamples()
+        {
+            var warning = _lastBindCode == Protocol.Offscreen.Ok ? Multisample.ClampWarning(_samples, _scene.UsedSamples) : null;
+            if (warning is not null)
+                _errors.Warn(warning, SamplesPhase);
+            else
+                _errors.Clear(SamplesPhase);
         }
 
         void UpdateSpaceWarning(Space space)

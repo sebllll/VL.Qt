@@ -178,6 +178,24 @@ VLQT_API int   vlqt_window_set_icon(void* w, const char* utf8Path);
  * EV_WINDOW_GEOMETRY reports the resulting state (VLQT_WINDOW_FULLSCREEN). vlqt_window_get_mode = requested modes. */
 VLQT_API int          vlqt_window_set_mode(void* w, unsigned int mask, unsigned int value);
 VLQT_API unsigned int vlqt_window_get_mode(void* w);
+/* MSAA sample count of the window (#118; docs/decisions/render-texture.md, "MSAA"). A window is created with 4 (the
+ * look of every window before #118, clamped like here). requested < 1 counts as 1 (none); QtNative clamps it to the
+ * highest count not above it that QRhi and the device support for the swap chain (D3D11: CheckMultisampleQualityLevels
+ * for R8G8B8A8_UNORM and D24_UNORM_S8_UINT; OpenGL: QRhi::supportedSampleCounts) and returns the count used (>= 1), so
+ * the caller can warn when it is lower. Equal to the current count: nothing happens. A window not shown yet only
+ * changes its format. A shown window cannot change the count of its swap chain (Qt fixes it per QQuickWindow), so
+ * QtNative replaces the QQuickWindow inside the same handle: a new window with the new count, same screen, geometry,
+ * window states, mode, title, icon, colour and overlay; the scene (items, their state, the QML engine) moves to it,
+ * then the old one is deleted. Costs one new QRhi (tens of ms) and a new native window (HWND), which becomes active.
+ * Lost on a change: a snapshot (vlqt_res_snapshot) still in flight fails ("the window was destroyed during the grab",
+ * the next request works), pointer grabs and hover of the old window end, the perf history (F5) restarts, and with
+ * Clear off (#117) the kept frame: the feedback layer is rebuilt for the new window and starts from the clear colour.
+ * Effect layers and snapshots in the window follow its count. -1 null window, VLQT_OFFSCREEN_BAD_ARGUMENT on an
+ * offscreen scene (its count comes from vlqt_offscreen_bind). Main thread. */
+VLQT_API int vlqt_window_set_samples(void* w, int requested);
+/* Sample count of the window: of its swap chain once it has one, else the count it will be created with. 0 = null window
+ * or offscreen scene. */
+VLQT_API int vlqt_window_samples(void* w);
 VLQT_API int   vlqt_window_grab(void* w, const char* pngPath); /* test */
 
 VLQT_API int   vlqt_window_get_perf(void* w, vlqt_perf* out);
@@ -458,13 +476,20 @@ VLQT_API void* vlqt_offscreen_create(int width, int height);
  *              holds premultiplied alpha. UNORM: Qt renders into the texture, gamma-space values as in a Qt window.
  *              SRGB and float: the caller reads linear values; Qt renders into a float texture of QtNative and after
  *              each frame a pass writes a * linear(c) into every pixel (unpremultiply, sRGB decode, premultiply).
+ *   samples    MSAA sample count (#118), < 2 = none. Qt renders into a multisample colour and depth-stencil texture of
+ *              its own and resolves into the texture (or into the float texture of the linear pass) at the end of each
+ *              frame; the texture itself stays single-sample. Clamped to the highest count not above it that QRhi and
+ *              QtNative's device support for the render target format (D3D11 CheckMultisampleQualityLevels). Layers in
+ *              the scene (effects, snapshots) stay single-sample. A change of the count is a new bind.
+ *   usedSamples  out, may be NULL: the count used after the clamp (>= 1 on success, 0 on an error).
  * Creates the write and read fences (ID3D11Device5::CreateFence, SHARED) on QtNative's device and opens them on
  * device. Errors: NULL_SCENE, BAD_ARGUMENT (null device/handle, size < 1 or above the device limit, size not the
  * texture's, device without a DXGI adapter), FORMAT_UNSUPPORTED, ADAPTER_MISMATCH (a warning is logged once),
  * OPEN_FAILED, FENCE_FAILED (no ID3D11Device5 / ID3D11DeviceContext4 on one side), DEVICE_LOST (QtNative's device is
  * lost or being rebuilt, or the move failed: try again next frame), NOT_SUPPORTED (not D3D11). On an error the scene
  * is unbound. */
-VLQT_API int   vlqt_offscreen_bind(void* scene, void* device, void* ntHandle, int width, int height, int format);
+VLQT_API int   vlqt_offscreen_bind(void* scene, void* device, void* ntHandle, int width, int height, int format, int samples,
+                                  int* usedSamples);
 /* Frees the binding in the order render target -> opened texture -> fences; the scene and its elements stay. OK also
  * when not bound; NULL_SCENE. */
 VLQT_API int   vlqt_offscreen_unbind(void* scene);
