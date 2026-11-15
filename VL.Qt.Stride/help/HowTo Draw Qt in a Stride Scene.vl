@@ -50,7 +50,7 @@
             <Pin Id="Jz9mK5ixYYZMGZnlkWqfo8" Name="Translation" Kind="InputPin" DefaultValue="0.6, 0.6" />
             <Pin Id="EWWtwuV5CctNuU1tFbjDbf" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,335,45,19" Id="BjeYou0PQQeQWP9vpGgOJI">
+          <Node Bounds="100,335,61,19" Id="BjeYou0PQQeQWP9vpGgOJI">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -94,7 +94,7 @@
             <Pin Id="NnIdvtCEoxkN7PhNIOH8gv" Name="Translation" Kind="InputPin" DefaultValue="2.2, 1.2" />
             <Pin Id="VBqH5OV7P8IOMvBFOB4xgf" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="310,335,45,19" Id="NLRCH1aql2uPUq4lOYLk0D">
+          <Node Bounds="310,335,61,19" Id="NLRCH1aql2uPUq4lOYLk0D">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -489,6 +489,37 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
+          <Node Bounds="464,790,85,19" Id="VtN0UyXdZ4TQJUKZfOiKQF">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="OFiw9yQqxsoLqHNGsGiKMP" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="OqwQQ0lAlYPPqneuHuk38Y" Name="Bounds" Kind="InputPin" DefaultValue="771, 439, 671, 424" IsHidden="true" />
+            <Pin Id="HKqX4f6buVQL6el3TT1VFa" Name="V Sync" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TZF3AWIIScyOzibzKT7q8M" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="HGnShcPAG3pQNCZEdOiPXc" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="EndakgtguHOMPEFx2mop4i" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Rdj8jQktaZ8MsO64srY1vK" Name="Input" Kind="InputPin" />
+            <Pin Id="Mxp4pybtqeQOnMIYFwK08n" Name="Space" Kind="InputPin" />
+            <Pin Id="FuGRWVGtiN6MFxJJeALuNF" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="JgPqrCKfIpWNQJcH9G5PJ1" Name="Enabled" Kind="InputPin" />
+            <Pin Id="TbOkc8qG83RPiJSogq3q0O" Name="Title" Kind="InputPin" />
+            <Pin Id="SMNzHVpEHhkPHqajdmLqep" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="TIshi0d7L4QPZhaSFbjdOa" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="D4VxMJqUrd1MNi3nbDEdaY" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="VHi7YHmQRKaOPklqt1jmSy" Name="Error" Kind="OutputPin" />
+            <Pin Id="RnHxkGzoAXGM5a98iWcHre" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="HhAfHIFma71LALvnMlGqJQ" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="JsM63fNZn83PjXvKPM2EQr" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="BA32thpxd8kMMZbhtMfjVM" Name="Window" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="PacgDiiVsfeLhm4HxBNewF" Comment="Clear Color" Bounds="178,750,136,15" ShowValueBox="true" isIOBox="true" Value="0.15, 0.5, 0.35, 1">
+            <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="RGBA" />
+            </p:TypeAnnotation>
+          </Pad>
+          <ControlPoint Id="QsSHk5IrZvBNhjAtsfidhd" Bounds="466,628" />
         </Canvas>
         <Patch Id="BSpycoal1xaL4fdWxYrepP" Name="Create" />
         <Patch Id="LzcqE7z2OkxMni0NXdOSNM" Name="Update" />
@@ -519,6 +550,9 @@
         <Link Id="D5MMDfkhJAKPso4jmiL0b4" Ids="GvvO3zoNm6qPeAkZPYbrTE,V3YvqGiUmD0Nx1tAxC77Ix" />
         <Link Id="Vw74QLxW5aTOXcZ2Ep8uiX" Ids="BW6AGSRAL9NLEl6oYF568o,OIdVBGv36M9NrYCRzRtK3x" />
         <Link Id="HrdUFfeDmfMOYVj9GgHWyf" Ids="KcjCWnG1GojPV5x5H1FiHQ,T88r1fEWpyaOvfGXmUDsfK" />
+        <Link Id="FVqm15ayO9XO1MLbDyADH5" Ids="HxNvJo7tckfPRQhFKbt5AV,QsSHk5IrZvBNhjAtsfidhd,Rdj8jQktaZ8MsO64srY1vK" />
+        <Link Id="GJFPjtiOJcSPVBQebyy9iB" Ids="PacgDiiVsfeLhm4HxBNewF,VpfeZzjMvosQdqQfiuedRD" />
+        <Link Id="G7D2qArCTxDLBZhozxliwL" Ids="PacgDiiVsfeLhm4HxBNewF,FuGRWVGtiN6MFxJJeALuNF" />
       </Patch>
     </Node>
   </Patch>
