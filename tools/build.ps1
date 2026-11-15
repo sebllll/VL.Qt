@@ -1,4 +1,4 @@
-# Builds everything needed to test VL.Qt locally: QtNative (+ Qt deploy), the C# library and VL.Qt.Stride, optionally tests and a patch.
+# Builds everything needed to test VL.Qt locally: QtNative (+ Qt deploy), the C# library, VL.Qt.Stride and VL.Qt.Audio, optionally tests and a patch.
 # Usage: tools/build.ps1 [-Rid win-arm64|win-x64] [-Configuration Release|Debug] [-SkipNative] [-ForceDeploy]
 #                        [-Test] [-Only <scenario,...>] [-SmokeTimeout <s>] [-Patch <doc.vl>]
 #   -Test   unit tests (VL.Qt.Tests) + SmokeTest (log and grabs in build/smoke/); -Only passes --only to the SmokeTest.
@@ -63,6 +63,12 @@ Invoke-Step "VL.Qt ($Configuration)" {
 Invoke-Step "VL.Qt.Stride ($Configuration)" {
     dotnet build "$repo\src\VL.Qt.Stride" -c $Configuration -v q -nologo
     Assert-Exit 'dotnet build VL.Qt.Stride'
+}
+
+# Windows only (VL.Audio); the output lands in VL.Qt.Audio\lib\net10.0-windows7.0 (package folder, git-ignored).
+Invoke-Step "VL.Qt.Audio ($Configuration)" {
+    dotnet build "$repo\src\VL.Qt.Audio" -c $Configuration -v q -nologo
+    Assert-Exit 'dotnet build VL.Qt.Audio'
 }
 
 if ($Test)

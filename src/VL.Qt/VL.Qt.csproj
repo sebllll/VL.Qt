@@ -36,6 +36,7 @@
     <InternalsVisibleTo Include="VL.Qt.Probe" />
     <InternalsVisibleTo Include="VL.Qt.SmokeTest" />
     <InternalsVisibleTo Include="VL.Qt.Stride" />
+    <InternalsVisibleTo Include="VL.Qt.Audio" />
   </ItemGroup>
 
   <ItemGroup>
