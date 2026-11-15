@@ -447,15 +447,14 @@ static partial class QtTextureTest
         rig.Frames();
         Counts("touch tap", 1, 1, 0);
 
-        // vvvv has no pen notification: SendPointer with the pen device. QtNative delivers a pen as a touch screen device of
-        // pointer type Pen (#351, render-texture.md "Input"), so the Click node with Devices = Touch Screen takes it and the one
-        // with Devices = Pen (Qt's Stylus, Puck, Airbrush) does not.
+        // vvvv has no pen notification: SendPointer with the pen device. QtNative delivers a pen as a window on Windows gets
+        // one (render-texture.md "Input"): tablet events from a stylus, so only the Click node with Devices = Pen takes it.
         Thread.Sleep(700);
         var p = new Vector2(190, 60);
         check(rig.R.SendPointer(Protocol.PointerDevice.Pen, Protocol.Pointer.Press, 3, p, 0, 0) == Protocol.Offscreen.Ok
               && rig.R.SendPointer(Protocol.PointerDevice.Pen, Protocol.Pointer.Release, 3, p, 0, 0) == Protocol.Offscreen.Ok, "119 devices: pen press and release accepted");
         rig.Frames();
-        Counts("pen tap (a touch screen device of pointer type Pen)", 1, 2, 0);
+        Counts("pen tap (a stylus)", 1, 1, 1);
     }
 
     // Drag of a rectangle: the element follows the mouse (Scene Bounds and pixels), Delta in units.

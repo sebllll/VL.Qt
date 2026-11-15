@@ -11,6 +11,7 @@
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPointingDevice>
 #include <QtGui/QStyleHints>
+#include <QtGui/QTabletEvent>
 #include <QtGui/QWheelEvent>
 #include <QtGui/qpa/qwindowsysteminterface.h>
 #include <QtQuick/QQuickItem>
@@ -73,12 +74,13 @@ struct State
     // and grabs live in the device, so two scenes fed the same host input (a press lands in both) must not share one.
     QPointingDevice* mouse = nullptr;
     QPointingDevice* touchscreen = nullptr;
-    QPointingDevice* pen = nullptr; // pen points as touch (#351), own ids
+    QPointingDevice* pen = nullptr; // a stylus, as Qt's Windows plugin reports a pen (WM_POINTER)
     // The scene has the keyboard focus (FocusIn sent): a scene window never becomes QGuiApplication's focus window.
     bool focused = false;
     Qt::MouseButtons buttons = Qt::NoButton;          // held after the last mouse event
-    std::vector<std::pair<int, QPointF>> touchPoints; // active points (id, DIP) of touchscreen ...
-    std::vector<std::pair<int, QPointF>> penPoints;   // ... and of pen
+    std::vector<std::pair<int, QPointF>> touchPoints; // active points (id, DIP) of touchscreen
+    bool penDown = false;                             // the pen touches (between PRESS and RELEASE)
+    QPointF penPos;                                   // its last position
     QElapsedTimer clock;                              // event timestamps
     // The last press that may start a double click (QGuiApplication's rule); button NoButton after a double click.
     ulong lastPressTime = 0;
@@ -554,14 +556,22 @@ QPointingDevice* mouseOf(State* s)
     return s->mouse;
 }
 
-QPointingDevice* touchOf(State* s, bool pen)
+QPointingDevice* touchscreenOf(State* s)
 {
-    QPointingDevice*& d = pen ? s->pen : s->touchscreen;
-    if (!d)
-        d = newDevice(s, pen ? "vlqt offscreen pen" : "vlqt offscreen touchscreen", QInputDevice::DeviceType::TouchScreen,
-            pen ? QPointingDevice::PointerType::Pen : QPointingDevice::PointerType::Finger,
-            QInputDevice::Capability::Position | QInputDevice::Capability::Area, 32, 0);
-    return d;
+    if (!s->touchscreen)
+        s->touchscreen = newDevice(s, "vlqt offscreen touchscreen", QInputDevice::DeviceType::TouchScreen,
+            QPointingDevice::PointerType::Finger, QInputDevice::Capability::Position | QInputDevice::Capability::Area, 32, 0);
+    return s->touchscreen;
+}
+
+// Like a pen in a window on Windows (Qt 6, WM_POINTER): a stylus of pointer type Pen (Devices = Pen of the
+// Interaction nodes), one point.
+QPointingDevice* penOf(State* s)
+{
+    if (!s->pen)
+        s->pen = newDevice(s, "vlqt offscreen pen", QInputDevice::DeviceType::Stylus, QPointingDevice::PointerType::Pen,
+            QInputDevice::Capability::Position | QInputDevice::Capability::Pressure | QInputDevice::Capability::Hover, 1, 3);
+    return s->pen;
 }
 
 // Monotonic, never 0 (TapHandler compares timestamps).
@@ -572,11 +582,13 @@ ulong timestamp(State* s)
     return ulong(s->clock.elapsed()) + 1;
 }
 
+// device: the scene's mouse, or its pen for a mouse event synthesized from an unaccepted tablet event.
 void sendMouse(State* s, QEvent::Type type, QPointF pos, Qt::MouseButton button, Qt::MouseButtons buttons,
-    Qt::KeyboardModifiers modifiers, ulong ts)
+    Qt::KeyboardModifiers modifiers, ulong ts, const QPointingDevice* device)
 {
     QQuickWindow* w = s->window;
-    QMouseEvent ev(type, pos, pos, w->mapToGlobal(pos), button, buttons, modifiers, mouseOf(s));
+    const auto source = device == s->mouse ? Qt::MouseEventNotSynthesized : Qt::MouseEventSynthesizedByQt;
+    QMouseEvent ev(type, pos, pos, w->mapToGlobal(pos), button, buttons, modifiers, source, device);
     ev.setTimestamp(ts);
     QCoreApplication::sendEvent(w, &ev);
 }
@@ -584,18 +596,19 @@ void sendMouse(State* s, QEvent::Type type, QPointF pos, Qt::MouseButton button,
 // A press after a press of the same button within the double click interval and distance also sends
 // MouseButtonDblClick, as QGuiApplication does for platform input (sendEvent bypasses it). TapHandler counts taps
 // itself; MouseArea and the text inputs need the event.
-void sendPress(State* s, QPointF pos, Qt::MouseButton button, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers, ulong ts)
+void sendPress(State* s, QPointF pos, Qt::MouseButton button, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers, ulong ts,
+    const QPointingDevice* device)
 {
     const QStyleHints* hints = QGuiApplication::styleHints();
     const QPointF d = pos - s->lastPressPos;
     const bool doubleClick = button == s->lastPressButton && ts - s->lastPressTime < ulong(hints->mouseDoubleClickInterval())
         && std::abs(d.x()) + std::abs(d.y()) <= hints->mouseDoubleClickDistance();
-    sendMouse(s, QEvent::MouseButtonPress, pos, button, buttons, modifiers, ts);
+    sendMouse(s, QEvent::MouseButtonPress, pos, button, buttons, modifiers, ts, device);
     s->lastPressButton = doubleClick ? Qt::NoButton : button;
     s->lastPressTime = ts;
     s->lastPressPos = pos;
     if (doubleClick)
-        sendMouse(s, QEvent::MouseButtonDblClick, pos, button, buttons, modifiers, ts);
+        sendMouse(s, QEvent::MouseButtonDblClick, pos, button, buttons, modifiers, ts, device);
 }
 
 // One event per changed button, lowest first (the host may report several in one call); a press or release without a
@@ -605,7 +618,7 @@ int sendMousePointer(State* s, int type, QPointF pos, Qt::MouseButtons buttons, 
     switch (type) {
     case VLQT_POINTER_MOVE:
         s->buttons = buttons;
-        sendMouse(s, QEvent::MouseMove, pos, Qt::NoButton, buttons, modifiers, ts);
+        sendMouse(s, QEvent::MouseMove, pos, Qt::NoButton, buttons, modifiers, ts, mouseOf(s));
         return VLQT_OFFSCREEN_OK;
     case VLQT_POINTER_LEAVE: {
         // Hover ends; Qt Quick clears its hover state.
@@ -628,9 +641,9 @@ int sendMousePointer(State* s, int type, QPointF pos, Qt::MouseButtons buttons, 
             held.setFlag(button, press);
             s->buttons = held;
             if (press)
-                sendPress(s, pos, button, held, modifiers, ts);
+                sendPress(s, pos, button, held, modifiers, ts, mouseOf(s));
             else
-                sendMouse(s, QEvent::MouseButtonRelease, pos, button, held, modifiers, ts);
+                sendMouse(s, QEvent::MouseButtonRelease, pos, button, held, modifiers, ts, mouseOf(s));
         }
         return VLQT_OFFSCREEN_OK;
     }
@@ -639,10 +652,10 @@ int sendMousePointer(State* s, int type, QPointF pos, Qt::MouseButtons buttons, 
     }
 }
 
-int sendTouchPointer(State* s, bool pen, int type, int id, QPointF pos, Qt::KeyboardModifiers modifiers, ulong ts)
+int sendTouchPointer(State* s, int type, int id, QPointF pos, Qt::KeyboardModifiers modifiers, ulong ts)
 {
-    QPointingDevice* device = touchOf(s, pen);
-    auto& active = pen ? s->penPoints : s->touchPoints;
+    QPointingDevice* device = touchscreenOf(s);
+    auto& active = s->touchPoints;
     QEventPoint::State state;
     switch (type) {
     case VLQT_POINTER_PRESS: state = QEventPoint::State::Pressed; break;
@@ -653,11 +666,76 @@ int sendTouchPointer(State* s, bool pen, int type, int id, QPointF pos, Qt::Keyb
         return VLQT_OFFSCREEN_OK;
     default:
         // LEAVE: a touch has no hover.
-        return badArgument("send_pointer: touch/pen event type " + std::to_string(type) + " unknown");
+        return badArgument("send_pointer: touch event type " + std::to_string(type) + " unknown");
     }
     return sendTouch(s->window, device, active, state, id, pos, ts, modifiers, "offscreen send_pointer")
         ? VLQT_OFFSCREEN_OK
         : VLQT_OFFSCREEN_BAD_ARGUMENT;
+}
+
+// A pen as QGuiApplication delivers one from Qt's Windows plugin: a QTabletEvent from the stylus (pointer handlers with
+// Devices = Pen take it, #351); if nobody accepts it, the same as a mouse event synthesized by Qt from the same device
+// (MouseArea, Controls, hover), with double clicks. id is ignored: one pen point. Public API only.
+int sendPenPointer(State* s, int type, QPointF pos, Qt::KeyboardModifiers modifiers, ulong ts)
+{
+    QPointingDevice* pen = penOf(s);
+    QEvent::Type tablet;
+    QEvent::Type mouse;
+    Qt::MouseButton button = Qt::NoButton;
+    switch (type) {
+    case VLQT_POINTER_PRESS:
+        if (s->penDown)
+            return badArgument("send_pointer: the pen is already pressed");
+        tablet = QEvent::TabletPress;
+        mouse = QEvent::MouseButtonPress;
+        button = Qt::LeftButton;
+        s->penDown = true;
+        break;
+    case VLQT_POINTER_MOVE:
+        tablet = QEvent::TabletMove;
+        mouse = QEvent::MouseMove;
+        break;
+    case VLQT_POINTER_RELEASE:
+        if (!s->penDown)
+            return badArgument("send_pointer: the pen is not pressed");
+        tablet = QEvent::TabletRelease;
+        mouse = QEvent::MouseButtonRelease;
+        button = Qt::LeftButton;
+        s->penDown = false;
+        break;
+    case VLQT_POINTER_LEAVE: {
+        // The hovering pen left: as the mouse.
+        QEvent ev(QEvent::Leave);
+        QCoreApplication::sendEvent(s->window, &ev);
+        return VLQT_OFFSCREEN_OK;
+    }
+    case VLQT_POINTER_CANCEL: {
+        // No tablet cancel in Qt: the grabs of the pen point (tablet and synthesized mouse) are dropped, no release.
+        if (s->penDown) {
+            QTabletEvent ev(QEvent::TabletMove, pen, s->penPos, s->window->mapToGlobal(s->penPos), 0, 0, 0, 0, 0, 0,
+                modifiers, Qt::NoButton, Qt::NoButton);
+            ev.setExclusiveGrabber(ev.point(0), nullptr);
+            ev.clearPassiveGrabbers(ev.point(0));
+            s->penDown = false;
+        }
+        return VLQT_OFFSCREEN_OK;
+    }
+    default:
+        return badArgument("send_pointer: pen event type " + std::to_string(type) + " unknown");
+    }
+    s->penPos = pos;
+    const Qt::MouseButtons buttons = s->penDown ? Qt::LeftButton : Qt::NoButton;
+    QTabletEvent ev(tablet, pen, pos, s->window->mapToGlobal(pos), s->penDown ? 1.0 : 0.0, 0, 0, 0, 0, 0, modifiers, button,
+        buttons);
+    ev.setTimestamp(ts);
+    QCoreApplication::sendEvent(s->window, &ev);
+    if (!ev.isAccepted() && QCoreApplication::testAttribute(Qt::AA_SynthesizeMouseForUnhandledTabletEvents)) {
+        if (mouse == QEvent::MouseButtonPress)
+            sendPress(s, pos, button, buttons, modifiers, ts, pen);
+        else
+            sendMouse(s, mouse, pos, button, buttons, modifiers, ts, pen);
+    }
+    return VLQT_OFFSCREEN_OK;
 }
 
 // FocusIn / FocusOut to the scene's window, as the Qt render control examples do: QQuickWindow gives its content item
@@ -692,8 +770,9 @@ int sendPointer(State* s, int device, int type, int id, QPointF pos, int buttons
     case VLQT_POINTER_DEVICE_MOUSE:
         return sendMousePointer(s, type, pos, Qt::MouseButtons(buttons), mods, ts);
     case VLQT_POINTER_DEVICE_TOUCH:
+        return sendTouchPointer(s, type, id, pos, mods, ts);
     case VLQT_POINTER_DEVICE_PEN:
-        return sendTouchPointer(s, device == VLQT_POINTER_DEVICE_PEN, type, id, pos, mods, ts);
+        return sendPenPointer(s, type, pos, mods, ts);
     default:
         return badArgument("send_pointer: device " + std::to_string(device) + " unknown");
     }

@@ -476,7 +476,7 @@
             public const int Cancel = 5;
         }
 
-        /// <summary>Pointing devices of vlqt_offscreen_send_pointer (#119). Pen is delivered like touch, as in windows (#351).</summary>
+        /// <summary>Pointing devices of vlqt_offscreen_send_pointer (#119). Pen is delivered as a stylus, as in a window on Windows.</summary>
         public static class PointerDevice
         {
             public const int Mouse = 0;

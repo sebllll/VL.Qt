@@ -501,10 +501,12 @@ VLQT_API int   vlqt_offscreen_render_batch(void* context, void* const* scenes, i
 /* Pointer event (vlqt_pointer) of device (vlqt_pointer_device) at x/y in texture pixels.
  *   mouse  id ignored; buttons = Qt::MouseButtons held after the event (PRESS/RELEASE: the changed buttons are the
  *          difference to the previous call, one event each; none changed = BAD_ARGUMENT), modifiers = Qt::KeyboardModifiers. QMouseEvent; LEAVE sends QEvent::Leave.
- *   touch, pen  id = the point's id (any int, unique per device while pressed); buttons ignored. QtNative keeps the
- *          active points per scene and device and sends one QTouchEvent per call with all of them (others stationary),
- *          as vlqt_test_send_touch; pen from a touchscreen device of pointer type Pen. Several ids = multitouch. CANCEL
- *          cancels every active point of the device (TouchCancel), id ignored; LEAVE is BAD_ARGUMENT for touch/pen. */
+ *   touch  id = the point's id (any int, unique while pressed); buttons ignored. QtNative keeps the active points per
+ *          scene and sends one QTouchEvent per call with all of them (others stationary), as vlqt_test_send_touch.
+ *          Several ids = multitouch. CANCEL cancels every active point (TouchCancel), id ignored; LEAVE is BAD_ARGUMENT.
+ *   pen    as a window on Windows gets one (WM_POINTER): a QTabletEvent from a stylus (pointer type Pen), and if nobody
+ *          accepts it the same as a mouse event synthesized from the stylus, as QGuiApplication does. id and buttons
+ *          ignored (one point; MOVE without PRESS hovers); CANCEL drops the pen's grabs without a release; LEAVE as mouse. */
 VLQT_API int   vlqt_offscreen_send_pointer(void* scene, int device, int type, int id, float x, float y, int buttons,
                                            int modifiers);
 /* Wheel at x/y (texture pixels): angleDelta dx, dy in eighths of a degree (120 = one notch), modifiers =

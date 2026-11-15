@@ -583,7 +583,7 @@ enum vlqt_pointer {
     VLQT_POINTER_CANCEL = 5  /* touch/pen: the system cancelled the point (TouchCancel) */
 };
 
-/* Pointing devices of vlqt_offscreen_send_pointer (#119). Pen is delivered like touch, as in windows (#351). */
+/* Pointing devices of vlqt_offscreen_send_pointer (#119). Pen is delivered as a stylus, as in a window on Windows. */
 enum vlqt_pointer_device {
     VLQT_POINTER_DEVICE_MOUSE = 0,
     VLQT_POINTER_DEVICE_TOUCH = 1,
