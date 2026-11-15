@@ -73,7 +73,7 @@ On Windows vvvv's message loop hands mouse, touch and pen messages to Qt between
 
 ## Reusing elements
 
-The same element instance can hang at several places of the tree; each place gets its own Qt object, events from all places are merged. Interaction per place goes on a Group around it (see the help patch `HowTo Reuse an Element`). Exceptions: across several renderers and for Video (would decode twice) the first owner wins, with a warning.
+The same element instance can hang at several places of the tree; each place gets its own Qt object, events from all places are merged. Interaction per place goes on a Group around it (see the help patch `HowTo Reuse an Element`). This holds across renderers too (a window and a `QtTexture`): state values come from the first renderer that shows the element. Exception: a Video (would decode twice) is shown once only, app-wide; the first owner wins, the others get a warning.
 
 ## User QML
 

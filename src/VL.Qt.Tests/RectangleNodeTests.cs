@@ -134,29 +134,31 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void Duplicate_WarningAtNode_ClearedWhenResolved()
+        public void SeveralRenderers_NoWarning_SinkWarningShownAtNode()
         {
-            // Shown in two renderers: the second one ignores it (#455: inside one tree it may be used several times).
+            // Several times in one tree (#455) and in two renderers (#126) is fine.
             var scene = new SceneRegistry();
             var rec = new Reconciler(new RecordingSink(), new IdAllocator(), scene);
             var rec2 = new Reconciler(new RecordingSink(), new IdAllocator(), scene);
             var e = Update();
             rec.Update(new Group { Children = ImmutableArray.Create(e, e) }, Space.DIPTopLeft);
-            Assert.That(_node.Core.Warning, Is.Null, "several times in one tree is fine");
             rec2.Update(new Group { Children = ImmutableArray.Create(e) }, Space.DIPTopLeft);
-
             Assert.That(Update(), Is.SameAs(e));
-            Assert.That(_node.Core.Warning, Is.EqualTo(SceneRegistry.DuplicateWarning));
+            Assert.That(_node.Core.Warning, Is.Null);
+            Assert.That(_warnings, Is.EqualTo(0));
+
+            // A warning in the sink slot (e.g. a video duplicate) is shown at the node once and removed with it.
+            _node.Core.Sink[0].Warning = SceneRegistry.VideoDuplicateWarning;
+            Update();
             Assert.That(_warnings, Is.EqualTo(1));
             Update();
             Assert.That(_warnings, Is.EqualTo(1), "added once");
 
-            rec2.Update(new Group(), Space.DIPTopLeft);
+            _node.Core.Sink[0].Warning = null;
             Update();
-            Assert.That(_node.Core.Warning, Is.Null);
             Assert.That(_warnings, Is.EqualTo(0), "removed");
 
-            rec2.Update(new Group { Children = ImmutableArray.Create(e) }, Space.DIPTopLeft);
+            _node.Core.Sink[0].Warning = SceneRegistry.VideoDuplicateWarning;
             Update();
             Assert.That(_warnings, Is.EqualTo(1));
             _node.Dispose();
