@@ -36,6 +36,7 @@
     <Compile Include="..\VL.Qt\PerfStats.cs" Link="PerfStats.cs" />
     <Compile Include="..\VL.Qt\Geometry.cs" Link="Geometry.cs" />
     <Compile Include="..\VL.Qt\Space.cs" Link="Space.cs" />
+    <Compile Include="..\VL.Qt\MultisampleCount.cs" Link="MultisampleCount.cs" />
     <Compile Include="..\VL.Qt\EventReader.cs" Link="EventReader.cs" />
     <Compile Include="..\VL.Qt\Elements\*.cs" Link="Elements\%(Filename)%(Extension)" />
     <Compile Include="..\VL.Qt\Reconciler\*.cs" Exclude="..\VL.Qt\Reconciler\ICommandSink.cs" Link="Reconciler\%(Filename)%(Extension)" />

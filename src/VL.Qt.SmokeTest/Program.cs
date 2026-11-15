@@ -412,7 +412,7 @@ static class Program
         if (Selected("font")) FontTest.Run(outDir, Check, Pump, Grab, () => s_log.ToString()); // App fonts (#15, LoadFont): shared per file, refs, removal at the end of the pump, errors, Text with the loaded family, one-time warning for a missing family.
         if (Selected("group-frame")) GroupFrameTest.Run(outDir, Check, Pump, Grab); // Group frame in negative coordinates: snapshot = whole frame, effect layer unclipped (#475).
         if (Selected("qttexture")) QtTextureTest.Run(outDir, Check, Pump, Grab); // QtTexture (#116): test exports (second D3D11 device, shared textures, readback, ref counts, handle count), offscreen scene bound and rendered through the fences.
-        if (s_only?.Contains("msaaspike") == true) MsaaSpikeTest.Run(outDir, Check, Pump, Grab); // SPIKE #118
+        if (Selected("Msaa")) MsaaTest.Run(outDir, Check, Pump, Grab); // MSAA (#118): edge pixels per sample count in a window and an offscreen scene, live window change, clamp, input after a swap.
         if (Selected("multirenderer")) MultiRendererTest.Run(outDir, Check, Pump, Grab); // One element tree in a window and an offscreen renderer of one registry: both draw it, state from the primary, hand-over after the window is disposed, Snapshot/TryLocate (#126).
         if (Selected("QtTextureInput")) QtTextureTest.RunInput(outDir, Check, Pump); // QtTexture input (#119): click, hover, wheel, drag, pinch, pen, Slider, TextInput focus in an offscreen scene, through OffscreenRenderer.Notify/Send*.
         // Last: leaves two VSync windows open on purpose (process end with open windows on the shared device).
