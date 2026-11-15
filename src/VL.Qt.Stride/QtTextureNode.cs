@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using Stride.Core.Mathematics;
