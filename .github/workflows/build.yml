@@ -452,8 +452,9 @@ jobs:
           Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Windows Error Reporting' -Name Disabled -Value 1 -Type DWord
           $sw = [Diagnostics.Stopwatch]::StartNew()
           $p = Start-Process $exe.FullName -ArgumentList 'smoke-out/grabs' -NoNewWindow -PassThru -RedirectStandardOutput smoke-out/stdout.log -RedirectStandardError smoke-out/stderr.log
-          # 5 min: the run takes ~150-175 s on the hosted runner, 3 min was too tight (#65 hit it with 0 FAIL).
-          if (-not $p.WaitForExit(300000)) { $p.Kill($true); throw 'SmokeTest timeout (5 min)' }
+          # 8 min: the run takes ~265 s on the hosted runner since the QtTexture render-thread checks (#116, software
+          # adapter path); 3 min was too tight before (#65 hit it with 0 FAIL). A hang inside a check fails by the watchdog.
+          if (-not $p.WaitForExit(480000)) { $p.Kill($true); throw 'SmokeTest timeout (8 min)' }
           $p.WaitForExit()
           $out = Get-Content smoke-out/stdout.log
           "SmokeTest exit code {0}, {1:N0} s, {2} PASS, {3} FAIL" -f $p.ExitCode, $sw.Elapsed.TotalSeconds,

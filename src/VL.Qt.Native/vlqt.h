@@ -478,8 +478,20 @@ VLQT_API int   vlqt_offscreen_is_bound(void* scene);
  *   Flush on QtNative's context (without the flush the foreign GPU waits forever); Wait(writeFence, n) on context.
  * An unchanged scene costs no render and no fence signal. NULL entries and unbound scenes are skipped. Returns the
  * number of scenes rendered (>= 0), or BAD_ARGUMENT (null context, null scenes with count > 0, count < 0),
- * DEVICE_LOST, NOT_SUPPORTED. */
+ * DEVICE_LOST, NOT_SUPPORTED.
+ * On a render thread (vlqt_offscreen_set_threaded) the fence order is the same, the work splits: the read signals and
+ * polish run here, then one Flush of context; beginFrame and sync run on the render thread while this call waits;
+ * the Wait(writeFence, n) on context is queued before the render thread signals n; render, endFrame, Signal and Flush
+ * run on the render thread after this call returned. context's GPU waits for Qt's frame, its CPU never does; this
+ * call blocks only while a render thread is still busy with the previous batch. */
 VLQT_API int   vlqt_offscreen_render_batch(void* context, void* const* scenes, int count, double driverSeconds);
+/* Where offscreen scenes render (#116 phase 5; docs/decisions/render-texture.md, "Qt render thread"). threadCount
+ * 0 = on the main thread, inside vlqt_offscreen_render_batch; n = 1 ... 16 = on a pool of n Qt render threads shared by
+ * every scene of the process, a scene assigned round robin at vlqt_offscreen_create. Without this call the environment
+ * variable VLQT_OFFSCREEN_THREAD decides (0 = main thread, n = n threads), unset = 1 render thread. Effective only
+ * before the first vlqt_offscreen_create; afterwards only the count in use returns OK. VLQT_OFFSCREEN_OK,
+ * VLQT_OFFSCREEN_BAD_ARGUMENT (threadCount < 0 or > 16), VLQT_OFFSCREEN_NOT_SUPPORTED (too late; vlqt_last_error). */
+VLQT_API int   vlqt_offscreen_set_threaded(int threadCount);
 
 /* Input into an offscreen scene (#119; design: docs/decisions/render-texture.md, "Input"). The host maps its input to
  * texture pixels (top-left origin, 1 DIP = 1 pixel; positions outside 0..size are valid: hover ends, a drag goes on) and

@@ -1089,6 +1089,8 @@ VLQT_API void vlqt_app_process_events_for(void* const* windows, int count)
         QCoreApplication::sendPostedEvents();
         QCoreApplication::processEvents(QEventLoop::AllEvents);
         UpdateGate::endPump();
+        // Every window frame of this pump has ended: no lock may outlive it (device.h, lock order).
+        vlqt::device::releaseFrameLocks();
         vlqt::res::endFrame(); // frees resources without references, never in a worker
         fontsEndFrame();       // app fonts without references (#15)
         vlqt::device::checkLost();
@@ -1191,6 +1193,7 @@ VLQT_API void* vlqt_window_create_at(float x, float y, int width, int height, co
         w->window->installEventFilter(w->closeFilter);
         w->gate = new UpdateGate(w->window); // child of the window
         w->window->installEventFilter(w->gate);
+        vlqt::device::lockFrames(w->window); // windows only: a scene's render thread locks itself (offscreen.cpp)
         w->window->installEventFilter(new FullscreenKeys(w->window, w));
         w->window->installEventFilter(new FocusRelease(w->window)); // #374, child of the window
         if (testSyntheticInputOnly())
@@ -1331,7 +1334,13 @@ VLQT_API int vlqt_window_grab(void* p, const char* pngPath)
         }
         if (w->offscreen)
             return notOnScene("grab");
-        const QImage img = w->window->grabWindow();
+        QImage img;
+        {
+            // The frame of grabWindow ends without afterFrameEnd (QSGGuiThreadRenderLoop::grab).
+            vlqt::device::ContextLock lock;
+            img = w->window->grabWindow();
+            vlqt::device::releaseFrameLocks();
+        }
         if (img.isNull()) {
             setError("grabWindow returned null image");
             return -2;

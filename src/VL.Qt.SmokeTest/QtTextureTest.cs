@@ -59,14 +59,23 @@ static partial class QtTextureTest
         var after = Native.vlqt_test_process_handle_count();
         check(after == baseline, $"116: handle count back at baseline ({baseline} -> {after})");
 
+        // Before the first scene: QtNative can only move to WARP while no window renders on its device.
+        // The robustness parts wait on the render thread and the GPU: a hang ends the run with a FAIL line (Watchdog).
+        using (new Watchdog("116 warp", 60))
+            WarpRuns(check, pump);
         OffscreenScene(outDir, check, pump);
+        ThreadMode(check);
         AdapterAndDeviceLoss(check, pump);
         // Task 1.8. Order matters: the window comparison goes last (a window renders on QtNative's device, which makes an adapter move impossible).
         Formats(check);
         Batch(check);
         Alpha(outDir, check);
         Leak(check, pump);
+        using (new Watchdog("116 never-signalled", 90))
+            NeverSignalled(check, pump);
         WindowMatch(outDir, check, pump, grab);
+        using (new Watchdog("116 window loss", 90))
+            WindowAndDeviceLoss(outDir, check, pump, grab);
     }
 
     // A scene of w x h DIP with a red rectangle (16, 12, 32, 24) on a transparent clear colour; null on failure.

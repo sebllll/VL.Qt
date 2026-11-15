@@ -1,6 +1,7 @@
 #include "device.h"
 
 #include "protocol.h"
+#include "render_thread.h"
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
@@ -12,10 +13,12 @@
 #include <QtQuick/private/qsgrenderloop_p.h> // test only: dropWindowRhisOnRetired
 #include <rhi/qrhi.h>
 
+#include <algorithm>
+#include <optional>
 #include <vector>
 
 #ifdef Q_OS_WIN
-#include <d3d11.h>
+#include <d3d11_4.h>
 #include <d3d11on12.h>
 #include <d3d12.h>
 #include <dxgi1_4.h>
@@ -51,6 +54,32 @@ std::vector<Retired> s_retired;
 unsigned long long s_requestedLuid = 0; // adapter of moveTo, kept for later rebuilds (chooseAdapter)
 unsigned s_generation = 0;           // generation()
 std::vector<Listener> s_listeners;   // addListener, main thread
+
+// lockFrames: holds the shared context from beforeRendering to afterFrameEnd of an on-screen window's frame (basic
+// loop, main thread); releaseFrameLocks ends every one still held. Child of its window.
+class FrameLock final : public QObject
+{
+public:
+    explicit FrameLock(QQuickWindow* window) : QObject(window)
+    {
+        s_all.push_back(this);
+        connect(window, &QQuickWindow::beforeRendering, this, [this] {
+            if (!m_lock)
+                m_lock.emplace();
+        }, Qt::DirectConnection);
+        connect(window, &QQuickWindow::afterFrameEnd, this, &FrameLock::release, Qt::DirectConnection);
+    }
+    ~FrameLock() override { s_all.erase(std::remove(s_all.begin(), s_all.end(), this), s_all.end()); }
+    void release() { m_lock.reset(); }
+    static void releaseAll()
+    {
+        for (FrameLock* l : s_all)
+            l->release();
+    }
+private:
+    std::optional<ContextLock> m_lock;
+    static inline std::vector<FrameLock*> s_all; // main thread
+};
 #ifdef Q_OS_WIN
 
 // The adapter Qt's D3D11 backend would pick: QT_D3D_ADAPTER_INDEX, with QSG_RHI_PREFER_SOFTWARE_RENDERER the first
@@ -241,6 +270,15 @@ bool ensureDevice()
         return false;
     }
 
+    // The render threads of offscreen scenes use this context too (ContextLock); protection serializes single calls.
+    ID3D11Multithread* multithread = nullptr;
+    if (SUCCEEDED(s_ctx->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread)))) {
+        multithread->SetMultithreadProtected(TRUE);
+        multithread->Release();
+    } else {
+        qCWarning(lcDevice, "the shared device's context has no ID3D11Multithread: offscreen render threads are unsafe");
+    }
+
     QRhiD3D11InitParams params;
     params.enableDebugLayer = (flags & D3D11_CREATE_DEVICE_DEBUG) != 0;
     QRhiD3D11NativeHandles handles;
@@ -307,6 +345,16 @@ void attach(QQuickWindow* window)
 #else
     Q_UNUSED(window);
 #endif
+}
+
+void lockFrames(QQuickWindow* window)
+{
+    new FrameLock(window);
+}
+
+void releaseFrameLocks()
+{
+    FrameLock::releaseAll();
 }
 
 QRhi* uploadRhi()
@@ -422,6 +470,8 @@ void rebuild()
     QElapsedTimer t;
     t.start();
     ID3D11Device* const old = s_dev;
+    // The listeners run blocking render-thread jobs that take the context lock (device.h, lock order).
+    releaseFrameLocks();
 
     // 1. Listeners free every object of the old device (textures, staging, QRhi resources), keep their sources.
     for (const Listener& l : s_listeners)
@@ -495,12 +545,47 @@ int testLost(int mode)
             "(VLQT_TEST_D3D11ON12=1 before the first window or resource)");
         return -2;
     }
+    // The device goes between two frames, not under a render job a render_batch just posted: D3D11On12 then keeps an
+    // acquire of the scene's shared texture in its batch without a fence, and destroying the old device (releaseRetired)
+    // runs it as ID3D12CommandQueue::Wait(nullptr) - an access violation in D3D12Core (T6, 1 in ~10 threaded runs).
+    render_thread::drainAll();
     qCInfo(lcDevice, "test: removing the shared device %p", static_cast<void*>(s_dev));
     dev5->RemoveDevice();
     dev5->Release();
     return 0;
 #else
     return -2;
+#endif
+}
+
+ContextLock::ContextLock()
+#ifdef Q_OS_WIN
+    : ContextLock(s_ctx)
+#endif
+{
+}
+
+ContextLock::ContextLock(void* d3d11Context)
+{
+#ifdef Q_OS_WIN
+    auto* const context = static_cast<ID3D11DeviceContext*>(d3d11Context);
+    ID3D11Multithread* multithread = nullptr;
+    if (context && SUCCEEDED(context->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread)))) {
+        multithread->Enter();
+        m_multithread = multithread;
+    }
+#else
+    Q_UNUSED(d3d11Context);
+#endif
+}
+
+ContextLock::~ContextLock()
+{
+#ifdef Q_OS_WIN
+    if (auto* const multithread = static_cast<ID3D11Multithread*>(m_multithread)) {
+        multithread->Leave();
+        multithread->Release();
+    }
 #endif
 }
 

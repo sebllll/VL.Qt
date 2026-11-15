@@ -422,6 +422,8 @@ static class Program
 #else
         if (s_only?.Contains("device-lost") == true) Console.WriteLine("INFO device-lost: Windows only (D3D11On12), skipped");
 #endif
+        // Only when named (about a minute, run it alone: the render thread count is fixed at the first scene). Main-thread time per QtTexture, same frame, threaded vs main thread (#116 5.4).
+        if (s_only?.Contains("qttextureperf") == true) QtTexturePerfTest.Run(Check, Pump);
         // Only when named (60 s by default, too long for the regular run); before LeaveRunningJobs, which ends with busy workers.
         if (s_only?.Contains("resource-stress") == true) ResourceStressTest.Run(outDir, Check, Pump, () => s_log.ToString(), stressSeconds, stressSeed); // Stress test resource manager, ASan/TSan target (#365).
         if (Selected("resources")) ResourceTest.LeaveRunningJobs(Check, Pump); // After everything: process end with busy workers (#359).
