@@ -60,7 +60,9 @@ static partial class QtTextureTest
         check(after == baseline, $"116: handle count back at baseline ({baseline} -> {after})");
 
         // Before the first scene: QtNative can only move to WARP while no window renders on its device.
-        WarpRuns(check, pump);
+        // The robustness parts wait on the render thread and the GPU: a hang ends the run with a FAIL line (Watchdog).
+        using (new Watchdog("116 warp", 60))
+            WarpRuns(check, pump);
         OffscreenScene(outDir, check, pump);
         ThreadMode(check);
         AdapterAndDeviceLoss(check, pump);
@@ -69,9 +71,11 @@ static partial class QtTextureTest
         Batch(check);
         Alpha(outDir, check);
         Leak(check, pump);
-        NeverSignalled(check, pump);
+        using (new Watchdog("116 never-signalled", 90))
+            NeverSignalled(check, pump);
         WindowMatch(outDir, check, pump, grab);
-        WindowAndDeviceLoss(outDir, check, pump, grab);
+        using (new Watchdog("116 window loss", 90))
+            WindowAndDeviceLoss(outDir, check, pump, grab);
     }
 
     // A scene of w x h DIP with a red rectangle (16, 12, 32, 24) on a transparent clear colour; null on failure.

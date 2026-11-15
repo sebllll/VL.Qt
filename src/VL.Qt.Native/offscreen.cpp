@@ -350,7 +350,10 @@ int createFence(ID3D11Device5* qt, ID3D11Device5* foreign, ComPtr<ID3D11Fence>& 
     return VLQT_OFFSCREEN_OK;
 }
 
-// True if device runs on a software adapter (WARP).
+// True if device runs on a software adapter: the software flag, or the Microsoft Basic Render Driver (WARP, vendor
+// 0x1414, device 0x8c) by its ids. On a GPU-less machine (CI runner) DXGI enumerates the Basic Render Driver as adapter 0,
+// next to the adapter of D3D_DRIVER_TYPE_WARP; a pair on it must take the software path too, else the foreign context's
+// wait before Qt's signal deadlocks (render-texture.md, spike 5.1). Unknown (no adapter): software, the safe path.
 bool isSoftware(ID3D11Device* device)
 {
     ComPtr<IDXGIDevice> dxgi;
@@ -359,8 +362,9 @@ bool isSoftware(ID3D11Device* device)
     DXGI_ADAPTER_DESC1 desc{};
     if (FAILED(device->QueryInterface(IID_PPV_ARGS(dxgi.GetAddressOf()))) || FAILED(dxgi->GetAdapter(adapter.GetAddressOf()))
         || FAILED(adapter.As(&adapter1)) || FAILED(adapter1->GetDesc1(&desc)))
-        return false;
-    return (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) != 0;
+        return true;
+    constexpr UINT microsoftVendor = 0x1414, basicRenderDriver = 0x8c;
+    return (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) != 0 || (desc.VendorId == microsoftVendor && desc.DeviceId == basicRenderDriver);
 }
 
 // Main thread; the device calls are free-threaded. Unbind and initialize run on the render thread (drains it), so no
@@ -445,6 +449,10 @@ int bind(State* s, void* device, void* ntHandle, int width, int height, int rtvF
     s->writeValue = 0;
     s->renders = 0;
     s->software = isSoftware(qt) || isSoftware(foreign);
+    static bool softwareLogged = false;
+    if (s->software && s->thread && !std::exchange(softwareLogged, true))
+        qCInfo(lcOffscreen, "offscreen bind on a software adapter: render_batch waits for the render thread's submission "
+            "(logged once)");
     s->bound = true;
     s->dirty = true;
     return VLQT_OFFSCREEN_OK;

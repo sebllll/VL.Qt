@@ -150,6 +150,8 @@ static class QtTexturePerfTest
         var pixels = new byte[W * H * 4];
         int misses = 0, older = 0, renderFailures = 0;
         var sw = new Stopwatch();
+        // A frame waits on the render thread and the GPU: a hang ends the run with a FAIL line.
+        using var watchdog = new QtTextureTest.Watchdog($"qttextureperf {config.Name}", 120);
         for (int f = 0; f < warmup + frames; f++)
         {
             // The host's pump (before the frame's Update) closes the perf samples: those of the previous frame.

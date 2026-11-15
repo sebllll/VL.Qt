@@ -17,7 +17,7 @@ static partial class QtTextureTest
 {
     // Hang guard for code that waits on the render thread or on the GPU: after the limit the run ends with a FAIL line
     // (a deadlock would otherwise only end at the SmokeTest time limit, without telling where).
-    sealed class Watchdog : IDisposable
+    internal sealed class Watchdog : IDisposable
     {
         readonly Timer _timer;
 
