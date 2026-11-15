@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Pack>
-	<!-- Help patches of VL.Qt.Stride are listed here (Qt topics), see phase 3 of #116. -->
+	<Topic title="Stride">
+		<VLDocument link="HowTo Render Qt into a Stride Texture.vl" tags="qttexture texture stride 3d overlay offscreen" />
+	</Topic>
 </Pack>
