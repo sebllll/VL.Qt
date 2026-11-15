@@ -131,9 +131,9 @@ namespace VL.Qt.Stride
                 _textureError = "Stride has no graphics device yet";
                 return;
             }
-            if (!StrideInterop.TryGetTextureFormat(format, out var textureFormat))
+            if (!TextureFormats.TryGetTextureFormat(format, out var textureFormat))
             {
-                _textureError = $"{StrideInterop.FormatError} (got {format})";
+                _textureError = $"{TextureFormats.FormatError} (got {format})";
                 return;
             }
             if (StrideInterop.GetNativeDevice(device) == IntPtr.Zero)

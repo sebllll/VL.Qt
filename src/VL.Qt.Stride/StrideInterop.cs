@@ -7,33 +7,13 @@ using Stride.Graphics;
 namespace VL.Qt.Stride
 {
     /// <summary>
-    /// The Stride side of a QtTexture: the shared texture, the native pointers QtNative needs and the format mapping
-    /// (docs/decisions/render-texture.md). All D3D11 work on the texture itself (open, fences, render) is in QtNative.
+    /// The Stride side of a QtTexture: the shared texture and the native pointers and formats QtNative and QtRenderer need
+    /// (docs/decisions/render-texture.md; the format mapping is in <see cref="TextureFormats"/>). All D3D11 work on the texture
+    /// itself (open, fences, render) is in QtNative.
     /// </summary>
     [SupportedOSPlatform("windows")]
     internal static class StrideInterop
     {
-        /// <summary>Text of the error for a format that is not allowed.</summary>
-        public const string FormatError = "Format not supported: use R8G8B8A8_UNorm, R8G8B8A8_UNorm_SRgb, B8G8R8A8_UNorm, B8G8R8A8_UNorm_SRgb or R16G16B16A16_Float";
-
-        /// <summary>
-        /// Returns true if <paramref name="format"/> is allowed for a QtTexture, with the format of the texture resource.
-        /// Stride's view and the QtNative bind use <paramref name="format"/> itself (a DXGI_FORMAT; Stride's PixelFormat
-        /// values are the same). 8-bit SRgb textures are typeless: QtNative writes them through an SRgb view, so SRgb and
-        /// float textures hold linear premultiplied values (vlqt_offscreen_bind).
-        /// </summary>
-        public static bool TryGetTextureFormat(PixelFormat format, out PixelFormat textureFormat)
-        {
-            textureFormat = format switch
-            {
-                PixelFormat.R8G8B8A8_UNorm or PixelFormat.B8G8R8A8_UNorm or PixelFormat.R16G16B16A16_Float => format,
-                PixelFormat.R8G8B8A8_UNorm_SRgb => PixelFormat.R8G8B8A8_Typeless,
-                PixelFormat.B8G8R8A8_UNorm_SRgb => PixelFormat.B8G8R8A8_Typeless,
-                _ => PixelFormat.None,
-            };
-            return textureFormat != PixelFormat.None;
-        }
-
         /// <summary>
         /// Returns the largest width and height of a Texture2D at the device's feature level (D3D11 limits per level;
         /// the QtNative bind accepts up to 16384).
@@ -87,6 +67,22 @@ namespace VL.Qt.Stride
             var resource = (SharpDX.Direct3D11.Resource)SharpDXInterop.GetNativeResource(texture);
             using var resource1 = resource.QueryInterface<SharpDX.DXGI.Resource1>();
             return resource1.CreateSharedHandle(null, SharpDX.DXGI.SharedResourceFlags.Read | SharpDX.DXGI.SharedResourceFlags.Write, null);
+        }
+
+        /// <summary>
+        /// Returns the ID3D11Resource* of <paramref name="texture"/> (borrowed; IntPtr.Zero if Stride does not run on Direct3D 11)
+        /// and the format of that resource. Stride hides it: a swap chain back buffer has a UNorm resource and an SRgb view
+        /// (flip model), a typeless texture a typeless resource (as GetResourceFormat in VL.Stride's SkiaRenderer).
+        /// </summary>
+        public static IntPtr GetNativeResource(Texture texture, out PixelFormat resourceFormat)
+        {
+            if (SharpDXInterop.GetNativeResource(texture) is SharpDX.Direct3D11.Texture2D native)
+            {
+                resourceFormat = (PixelFormat)native.Description.Format;
+                return native.NativePointer;
+            }
+            resourceFormat = texture.Format;
+            return IntPtr.Zero;
         }
 
         /// <summary>Returns Stride's ID3D11Device* (borrowed, no reference added), IntPtr.Zero if Stride does not run on Direct3D 11.</summary>
