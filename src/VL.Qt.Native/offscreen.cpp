@@ -41,6 +41,8 @@
 #include <d3d11_4.h>
 #include <windows.h>
 #include <wrl/client.h>
+
+#include "linear_pass.h" // after NOMINMAX: it includes d3d11.h, and with it windows.h
 #endif
 
 namespace vlqt::offscreen {
@@ -99,6 +101,9 @@ struct State
     Qt::MouseButton lastPressButton = Qt::NoButton;
 #ifdef _WIN32
     ID3D11Texture2D* texture = nullptr;        // the foreign texture, opened on QtNative's device
+    // A consumer that samples linear values (SRGB view, float): Qt renders into the pass's source, the pass writes the
+    // texture after each frame. Empty for a UNORM view: Qt renders into the texture itself.
+    vlqt::linear_pass::Pass linearPass;
     ID3D11DeviceContext4* qtContext = nullptr; // immediate context of QtNative's device
     ID3D11Fence* qtRead = nullptr;             // the fences on QtNative's device ...
     ID3D11Fence* qtWrite = nullptr;
@@ -248,6 +253,7 @@ void unbind(State* s)
         // render pass of QRhi binds its own targets, so clearing them here changes nothing for the windows.
         s->qtContext->OMSetRenderTargets(0, nullptr, nullptr);
     }
+    vlqt::linear_pass::release(s->linearPass);
     releaseCom(s->texture);
     releaseCom(s->foreignRead);
     releaseCom(s->foreignWrite);
@@ -317,14 +323,16 @@ int matchAdapter(State* s, unsigned long long foreignLuid)
         "which a Qt window or another offscreen scene already uses");
 }
 
-// The 8-bit render target formats may view a typeless texture of their family.
-bool formatFits(int rtvFormat, DXGI_FORMAT texture)
+// The format the consumer samples (vlqt.h): 8-bit formats may view a typeless texture of their family.
+bool formatFits(int format, DXGI_FORMAT texture)
 {
-    switch (rtvFormat) {
+    switch (format) {
     case DXGI_FORMAT_R8G8B8A8_UNORM:
-        return texture == DXGI_FORMAT_R8G8B8A8_UNORM || texture == DXGI_FORMAT_R8G8B8A8_TYPELESS;
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+        return texture == DXGI_FORMAT(format) || texture == DXGI_FORMAT_R8G8B8A8_TYPELESS;
     case DXGI_FORMAT_B8G8R8A8_UNORM:
-        return texture == DXGI_FORMAT_B8G8R8A8_UNORM || texture == DXGI_FORMAT_B8G8R8A8_TYPELESS;
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        return texture == DXGI_FORMAT(format) || texture == DXGI_FORMAT_B8G8R8A8_TYPELESS;
     case DXGI_FORMAT_R16G16B16A16_FLOAT:
         return texture == DXGI_FORMAT_R16G16B16A16_FLOAT;
     default:
@@ -369,15 +377,15 @@ bool isSoftware(ID3D11Device* device)
 
 // Main thread; the device calls are free-threaded. Unbind and initialize run on the render thread (drains it), so no
 // render of the old binding is in flight when the render target changes.
-int bind(State* s, void* device, void* ntHandle, int width, int height, int rtvFormat)
+int bind(State* s, void* device, void* ntHandle, int width, int height, int format)
 {
     onRenderThread(s, [s] { unbind(s); });
     if (!device || !ntHandle)
         return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "bind: null device or handle");
     if (width < 1 || height < 1 || width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION || height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION)
         return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "bind: size out of range");
-    if (!formatFits(rtvFormat, static_cast<DXGI_FORMAT>(rtvFormat)))
-        return fail(VLQT_OFFSCREEN_FORMAT_UNSUPPORTED, "bind: rtvFormat is not R8G8B8A8_UNORM, B8G8R8A8_UNORM or R16G16B16A16_FLOAT");
+    if (!formatFits(format, static_cast<DXGI_FORMAT>(format)))
+        return fail(VLQT_OFFSCREEN_FORMAT_UNSUPPORTED, "bind: format is not R8G8B8A8_UNORM(_SRGB), B8G8R8A8_UNORM(_SRGB) or R16G16B16A16_FLOAT");
     auto* foreign = static_cast<ID3D11Device*>(device);
     const unsigned long long foreignLuid = vlqt::device::adapterLuidOf(foreign);
     if (!foreignLuid)
@@ -412,8 +420,8 @@ int bind(State* s, void* device, void* ntHandle, int width, int height, int rtvF
         return fail(VLQT_OFFSCREEN_OPEN_FAILED, "bind: the texture is no single-sampled render target");
     if (desc.Width != UINT(width) || desc.Height != UINT(height))
         return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "bind: width/height are not the texture's size");
-    if (!formatFits(rtvFormat, desc.Format))
-        return fail(VLQT_OFFSCREEN_FORMAT_UNSUPPORTED, "bind: rtvFormat does not fit the texture's format");
+    if (!formatFits(format, desc.Format))
+        return fail(VLQT_OFFSCREEN_FORMAT_UNSUPPORTED, "bind: format does not fit the texture's format");
 
     ComPtr<ID3D11Device5> qt5;
     ComPtr<ID3D11Device5> foreign5;
@@ -433,13 +441,24 @@ int bind(State* s, void* device, void* ntHandle, int width, int height, int rtvF
     if (int rc = createFence(qt5.Get(), foreign5.Get(), qtWrite, foreignWrite); rc != VLQT_OFFSCREEN_OK)
         return rc;
 
+    vlqt::linear_pass::Pass linearPass;
+    if (vlqt::linear_pass::isLinear(DXGI_FORMAT(format))) {
+        const char* what = "";
+        if (HRESULT hr = vlqt::linear_pass::create(qt, texture.Get(), DXGI_FORMAT(format), UINT(width), UINT(height), linearPass, what);
+            FAILED(hr))
+            return fail(VLQT_OFFSCREEN_OPEN_FAILED, what, hr);
+    }
+
     // 1 DIP = 1 texture pixel, also on a high-DPI screen.
-    auto target = QQuickRenderTarget::fromD3D11Texture(texture.Get(), uint(rtvFormat), QSize(width, height));
+    auto target = linearPass.source
+        ? QQuickRenderTarget::fromD3D11Texture(linearPass.source, uint(DXGI_FORMAT_R16G16B16A16_FLOAT), QSize(width, height))
+        : QQuickRenderTarget::fromD3D11Texture(texture.Get(), uint(format), QSize(width, height));
     target.setDevicePixelRatio(1.0);
     s->window->setGeometry(0, 0, width, height);
     s->window->setRenderTarget(target);
 
     s->texture = texture.Detach();
+    s->linearPass = linearPass;
     s->qtContext = qtContext.Detach();
     s->qtRead = qtRead.Detach();
     s->qtWrite = qtWrite.Detach();
@@ -474,6 +493,8 @@ void render(State* s, ID3D11DeviceContext4* foreign)
     rc->sync();
     rc->render();
     rc->endFrame();
+    if (s->linearPass.source)
+        vlqt::linear_pass::run(s->qtContext, s->linearPass);
     // TODO: GPU time of the frame: perf.cpp afterRendering reads it only from a swap chain; a scene has
     // renderControl->commandBuffer() (and its QRhi needs EnableTimestamps).
 
@@ -530,6 +551,8 @@ void renderAndSignal(State* s, unsigned long long writeValue)
     } catch (...) {
         qCWarning(lcOffscreen, "offscreen scene %p: endFrame failed", static_cast<void*>(s));
     }
+    if (s->linearPass.source)
+        vlqt::linear_pass::run(s->qtContext, s->linearPass);
     // TODO: GPU time of the frame (as in render).
     s->qtContext->Signal(s->qtWrite, writeValue);
     // Submits the frame and the signal; without it the foreign GPU would wait forever.
@@ -1041,14 +1064,14 @@ VLQT_API void* vlqt_offscreen_create(int width, int height)
     return nullptr;
 }
 
-VLQT_API int vlqt_offscreen_bind(void* scene, void* device, void* ntHandle, int width, int height, int rtvFormat)
+VLQT_API int vlqt_offscreen_bind(void* scene, void* device, void* ntHandle, int width, int height, int format)
 {
     State* state = stateOf(scene);
     if (!state)
         return VLQT_OFFSCREEN_NULL_SCENE;
 #ifdef _WIN32
     return guardedCode([&] {
-        int rc = bind(state, device, ntHandle, width, height, rtvFormat);
+        int rc = bind(state, device, ntHandle, width, height, format);
         if (rc != VLQT_OFFSCREEN_OK)
             onRenderThread(state, [state] { unbind(state); });
         return rc;
@@ -1058,7 +1081,7 @@ VLQT_API int vlqt_offscreen_bind(void* scene, void* device, void* ntHandle, int 
     (void)ntHandle;
     (void)width;
     (void)height;
-    (void)rtvFormat;
+    (void)format;
     setError("offscreen bind: needs Direct3D 11 (Windows)");
     return VLQT_OFFSCREEN_NOT_SUPPORTED;
 #endif

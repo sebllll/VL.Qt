@@ -7,7 +7,8 @@ using VL.Qt;
 
 /// <summary>
 /// #116 task 1.8, part 1: what lands in the texture. Pixels against a window render (a), premultiplied alpha (b),
-/// 8-bit typeless textures with UNORM views, float, unsupported formats (c), two scenes in one batch (e). (d) is covered
+/// 8-bit typeless textures with UNORM and SRGB views, float, unsupported formats (c), two scenes in one batch (e).
+/// SRGB views and float hold linear premultiplied values (QtNative's linear pass). (d) is covered
 /// by OffscreenScene (unchanged scene: no render, no fence signal) and extended in Batch.
 /// </summary>
 static partial class QtTextureTest
@@ -15,13 +16,32 @@ static partial class QtTextureTest
     // A rectangle element: place in DIP = texture pixels, straight (non-premultiplied) colour.
     readonly record struct Box(int X, int Y, int W, int H, float R, float G, float B, float A);
 
-    // A texture format and the format of Qt's render target view on it.
-    readonly record struct Fmt(string Name, int Texture, int Rtv, int Bytes);
+    // A texture format and the format the consumer samples it with (the bind format).
+    readonly record struct Fmt(string Name, int Texture, int View, int Bytes)
+    {
+        // The consumer reads linear values: QtNative writes a * linear(c) (vlqt_offscreen_bind).
+        public bool Linear => View is R8G8B8A8UnormSrgb or B8G8R8A8UnormSrgb or R16G16B16A16Float;
+    }
 
     static readonly Fmt s_bgra = new("B8G8R8A8_TYPELESS/UNORM", B8G8R8A8Typeless, B8G8R8A8Unorm, 4);
     static readonly Fmt s_rgba = new("R8G8B8A8_TYPELESS/UNORM", 27, R8G8B8A8Unorm, 4);
+    static readonly Fmt s_bgraSrgb = new("B8G8R8A8_TYPELESS/UNORM_SRGB", B8G8R8A8Typeless, B8G8R8A8UnormSrgb, 4);
+    static readonly Fmt s_rgbaSrgb = new("R8G8B8A8_TYPELESS/UNORM_SRGB", 27, R8G8B8A8UnormSrgb, 4);
     static readonly Fmt s_float = new("R16G16B16A16_FLOAT", R16G16B16A16Float, R16G16B16A16Float, 8);
-    static readonly Fmt[] s_formats = { s_bgra, s_rgba, s_float };
+    static readonly Fmt[] s_formats = { s_bgra, s_rgba, s_bgraSrgb, s_rgbaSrgb, s_float };
+    // Leak test (here, not in its file: static fields of a partial class initialize per file in an undefined order):
+    // UNORM (Qt renders into the texture), SRGB and float (the linear pass); the last one must be float.
+    static readonly Fmt[] s_leakFormats = { s_bgra, s_bgraSrgb, s_float };
+
+    // sRGB decode of a 0..1 value.
+    static double Decode(double c) => c <= 0.04045 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+
+    // Premultiplied linear colour of a straight gamma-space colour, 0..255 rounded: a * linear(c).
+    static int[] LinearPremultiplied(float r, float g, float b, float a)
+    {
+        int L(float c) => (int)Math.Round(255 * a * Decode(c));
+        return new[] { L(r), L(g), L(b), (int)Math.Round(255 * a) };
+    }
 
     // A scene of w x h DIP with the boxes (element ids 1..n) on a clear colour; IntPtr.Zero on failure.
     static IntPtr NewScene(int w, int h, (float R, float G, float B, float A) clear, Box[] boxes, Action<bool, string> check, string label)
@@ -75,6 +95,16 @@ static partial class QtTextureTest
         return f.Texture == B8G8R8A8Typeless ? new[] { (int)px[i + 2], px[i + 1], px[i], px[i + 3] } : new[] { (int)px[i], px[i + 1], px[i + 2], px[i + 3] };
     }
 
+    // R, G, B, A (0..255, rounded) of pixel x, y as the consumer samples it: an SRGB view decodes the bytes.
+    static int[] Seen(byte[] px, int w, int x, int y, Fmt f)
+    {
+        var c = Rgba(px, w, x, y, f);
+        if (f.View is R8G8B8A8UnormSrgb or B8G8R8A8UnormSrgb)
+            for (int i = 0; i < 3; i++)
+                c[i] = (int)Math.Round(255 * Decode(c[i] / 255.0));
+        return c;
+    }
+
     static bool Near(int[] actual, int[] expected, int tolerance)
     {
         for (int i = 0; i < 4; i++)
@@ -89,7 +119,8 @@ static partial class QtTextureTest
     static bool NewTarget(IntPtr device, int w, int h, int textureFormat, out IntPtr texture, out IntPtr handle)
         => Native.vlqt_test_d3d11_create_shared_texture(device, w, h, textureFormat, out texture, out handle) == 0;
 
-    // (c) The three allowed formats render the same scene; unsupported render target view formats are refused.
+    // (c) The allowed formats render the same scene (UNORM: gamma-space values, SRGB and float: linear values);
+    // unsupported formats are refused.
     static void Formats(Action<bool, string> report)
     {
         bool check(bool ok, string what)
@@ -103,7 +134,8 @@ static partial class QtTextureTest
         // Opaque orange (left), 50 % blue straight alpha (right), transparent between and around.
         var boxes = new[] { new Box(4, 4, 24, 40, 1, 0.5f, 0, 1), new Box(36, 4, 24, 40, 0, 0, 1, 0.5f) };
         var orange = new[] { 255, 128, 0, 255 };
-        var blue = new[] { 0, 0, 128, 128 }; // premultiplied
+        var linearOrange = LinearPremultiplied(1, 0.5f, 0, 1);
+        var blue = new[] { 0, 0, 128, 128 }; // premultiplied; the same in linear light (0 and 1 do not change)
         var clear = new[] { 0, 0, 0, 0 };
         var scene = NewScene(w, h, (0, 0, 0, 0), boxes, report, "116 formats");
         if (scene == IntPtr.Zero)
@@ -112,12 +144,12 @@ static partial class QtTextureTest
             return;
         }
 
-        int[]? floatOrange = null, floatBlue = null, bgraOrange = null, bgraBlue = null;
+        int[]? floatOrange = null, floatBlue = null, srgbOrange = null, srgbBlue = null;
         foreach (var f in s_formats)
         {
             if (!check(NewTarget(device, w, h, f.Texture, out var tex, out var handle), $"116 formats: {f.Name}: create texture"))
                 continue;
-            int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, f.Rtv);
+            int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, f.View);
             Native.vlqt_test_close_handle(handle);
             check(rc == 0, $"116 formats: {f.Name}: bind ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             rc = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
@@ -125,39 +157,41 @@ static partial class QtTextureTest
             var px = Read(tex, w, h, f);
             if (check(px != null, $"116 formats: {f.Name}: read back"))
             {
-                var o = Rgba(px!, w, 14, 24, f);
-                var b = Rgba(px!, w, 48, 24, f);
-                var c1 = Rgba(px!, w, 32, 24, f);
-                var c2 = Rgba(px!, w, 1, 1, f);
-                // 8-bit: rounding of 127.5; float: no quantisation but the same values, compared with the 8-bit result below.
-                check(Near(o, orange, 1) && Near(b, blue, 2), $"116 formats: {f.Name}: orange {Str(o)}, 50 % blue premultiplied {Str(b)}");
+                var o = Seen(px!, w, 14, 24, f);
+                var b = Seen(px!, w, 48, 24, f);
+                var c1 = Seen(px!, w, 32, 24, f);
+                var c2 = Seen(px!, w, 1, 1, f);
+                // 8-bit: rounding of 127.5; float: no quantisation, compared with the 8-bit SRGB result below.
+                check(Near(o, f.Linear ? linearOrange : orange, 1) && Near(b, blue, 2),
+                    $"116 formats: {f.Name}: orange {Str(o)} (expected {Str(f.Linear ? linearOrange : orange)}), 50 % blue premultiplied {Str(b)}");
                 check(Near(c1, clear, 0) && Near(c2, clear, 0), $"116 formats: {f.Name}: clear alpha 0 = transparent black ({Str(c1)}, {Str(c2)})");
-                if (f.Texture == B8G8R8A8Typeless)
-                    (bgraOrange, bgraBlue) = (o, b);
-                else if (f.Texture == R16G16B16A16Float)
+                if (f == s_bgraSrgb)
+                    (srgbOrange, srgbBlue) = (o, b);
+                else if (f == s_float)
                     (floatOrange, floatBlue) = (o, b);
             }
             Native.vlqt_offscreen_unbind(scene);
             Native.vlqt_test_com_release(tex);
         }
-        if (bgraOrange != null && floatOrange != null && bgraBlue != null && floatBlue != null)
-            check(Near(floatOrange, bgraOrange, 2) && Near(floatBlue, bgraBlue, 2),
-                $"116 formats: float matches the 8-bit result (orange {Str(floatOrange)} vs {Str(bgraOrange)}, blue {Str(floatBlue)} vs {Str(bgraBlue)})");
+        if (srgbOrange != null && floatOrange != null && srgbBlue != null && floatBlue != null)
+            check(Near(floatOrange, srgbOrange, 2) && Near(floatBlue, srgbBlue, 2),
+                $"116 formats: float matches the 8-bit SRGB result (orange {Str(floatOrange)} vs {Str(srgbOrange)}, blue {Str(floatBlue)} vs {Str(srgbBlue)})");
 
-        // Refused: not in the list, SRGB view (Qt writes gamma-space values), 10 bit, a view that does not fit the texture.
-        (string Name, int Texture, int Rtv)[] bad =
+        // Refused: not in the list, 10 bit, a view that does not fit the texture.
+        (string Name, int Texture, int View)[] bad =
         {
             ("R32G32B32A32_FLOAT view", R32G32B32A32Float, R32G32B32A32Float),
-            ("B8G8R8A8_UNORM_SRGB view", B8G8R8A8Typeless, 91),
             ("R10G10B10A2_UNORM view", B8G8R8A8Typeless, 24),
             ("8-bit view on a float texture", R16G16B16A16Float, B8G8R8A8Unorm),
+            ("SRGB view on a float texture", R16G16B16A16Float, B8G8R8A8UnormSrgb),
+            ("RGBA SRGB view on a BGRA texture", B8G8R8A8Typeless, R8G8B8A8UnormSrgb),
             ("float view on an 8-bit texture", B8G8R8A8Typeless, R16G16B16A16Float),
         };
-        foreach (var (name, textureFormat, rtv) in bad)
+        foreach (var (name, textureFormat, view) in bad)
         {
             if (!check(NewTarget(device, w, h, textureFormat, out var tex, out var handle), $"116 formats: {name}: create texture"))
                 continue;
-            int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, rtv);
+            int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, view);
             check(rc == Protocol.Offscreen.FormatUnsupported && Native.vlqt_offscreen_is_bound(scene) == 0,
                 $"116 formats: {name} = FORMAT_UNSUPPORTED, scene unbound ({rc}) {(rc < 0 ? Native.LastError() : "")}");
             Native.vlqt_test_close_handle(handle);
@@ -258,12 +292,14 @@ static partial class QtTextureTest
         if (!check(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "116 alpha: create test device"))
             return;
         const int w = 96, h = 64;
-        // Opaque red; 50 % green over its right part and the free space; 25 % blue; all straight alpha.
+        // Opaque red; 50 % green over its right part and the free space; 25 % blue; 50 % orange (a colour that sRGB
+        // decoding changes); all straight alpha.
         var boxes = new[]
         {
             new Box(4, 4, 40, 30, 1, 0, 0, 1),
             new Box(30, 20, 40, 30, 0, 1, 0, 0.5f),
             new Box(66, 4, 26, 40, 0, 0, 1, 0.25f),
+            new Box(4, 40, 22, 20, 1, 0.5f, 0, 0.5f),
         };
         var scene = NewScene(w, h, (0, 0, 0, 0), boxes, report, "116 alpha");
         var clearScene = NewScene(16, 16, (1, 0, 0, 0.5f), Array.Empty<Box>(), report, "116 alpha clear colour");
@@ -294,7 +330,37 @@ static partial class QtTextureTest
             check(Near(green, new[] { 0, 128, 0, 128 }, 2), $"116 alpha: 50 % green is premultiplied (0,128,0,128) ({Str(green)})");
             check(Near(blue, new[] { 0, 0, 64, 64 }, 2), $"116 alpha: 25 % blue is premultiplied (0,0,64,64) ({Str(blue)})");
             check(Near(greenOverRed, new[] { 128, 128, 0, 255 }, 2), $"116 alpha: 50 % green over opaque red = (128,128,0,255) ({Str(greenOverRed)})");
+            var orange = Rgba(px!, w, 14, 50, s_bgra);
+            check(Near(orange, new[] { 128, 64, 0, 128 }, 2), $"116 alpha: 50 % orange is premultiplied in gamma space (128,64,0,128) ({Str(orange)})");
             WriteChecker(Path.Combine(outDir, "qttexture_alpha_checker.png"), px!, w, h);
+        }
+
+        // SRGB view and float: the consumer reads a * linear(c). Opaque pixels and saturated colours (0 and 1) are the
+        // same as through the UNORM view; 50 % orange is not (gamma premultiplied it would read 55,13,0,128 through SRGB).
+        foreach (var f in new[] { s_bgraSrgb, s_float })
+        {
+            if (!check(NewTarget(device, w, h, f.Texture, out var linTex, out var linHandle), $"116 alpha {f.Name}: texture"))
+                continue;
+            rc = Native.vlqt_offscreen_bind(scene, device, linHandle, w, h, f.View);
+            Native.vlqt_test_close_handle(linHandle);
+            check(rc == 0, $"116 alpha {f.Name}: bind ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            rc = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
+            check(rc == 1, $"116 alpha {f.Name}: render ({rc}) {(rc < 0 ? Native.LastError() : "")}");
+            var lp = Read(linTex, w, h, f);
+            if (check(lp != null, $"116 alpha {f.Name}: read back"))
+            {
+                var transparent = Seen(lp!, w, 1, 1, f);
+                var red = Seen(lp!, w, 10, 10, f);
+                var green = Seen(lp!, w, 40, 48, f);
+                var orange = Seen(lp!, w, 14, 50, f);
+                var expected = LinearPremultiplied(1, 0.5f, 0, 0.5f);
+                check(Near(transparent, new[] { 0, 0, 0, 0 }, 0), $"116 alpha {f.Name}: clear alpha 0 = transparent black ({Str(transparent)})");
+                check(Near(red, new[] { 255, 0, 0, 255 }, 0), $"116 alpha {f.Name}: opaque red unchanged ({Str(red)})");
+                check(Near(green, new[] { 0, 128, 0, 128 }, 2), $"116 alpha {f.Name}: 50 % green (0,128,0,128) ({Str(green)})");
+                check(Near(orange, expected, 2), $"116 alpha {f.Name}: 50 % orange = a * linear(c) {Str(expected)} ({Str(orange)})");
+            }
+            Native.vlqt_offscreen_unbind(scene);
+            Native.vlqt_test_com_release(linTex);
         }
 
         // Does Qt premultiply a semi-transparent clear colour itself? QtNative passes (1, 0, 0, 0.5) straight to

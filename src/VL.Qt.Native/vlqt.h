@@ -452,16 +452,19 @@ VLQT_API void* vlqt_offscreen_create(int width, int height);
  *              opened with ID3D11Device1::OpenSharedResource1. QtNative does not close it: the caller may close it
  *              right after the call.
  *   width, height  texture size in pixels (= the scene size from now on); must match the texture.
- *   rtvFormat  DXGI_FORMAT of Qt's render target view: DXGI_FORMAT_R8G8B8A8_UNORM (28), _B8G8R8A8_UNORM (87) or
- *              _R16G16B16A16_FLOAT (10). An 8-bit texture may be typeless (R8G8B8A8_TYPELESS 27 / B8G8R8A8_TYPELESS 90)
- *              or of the same format; Qt writes gamma-space, premultiplied values through the UNORM view.
+ *   format     DXGI_FORMAT the caller samples the texture with: DXGI_FORMAT_R8G8B8A8_UNORM (28), _R8G8B8A8_UNORM_SRGB
+ *              (29), _B8G8R8A8_UNORM (87), _B8G8R8A8_UNORM_SRGB (91) or _R16G16B16A16_FLOAT (10). An 8-bit texture may
+ *              be typeless (R8G8B8A8_TYPELESS 27 / B8G8R8A8_TYPELESS 90) or of the same format. The texture always
+ *              holds premultiplied alpha. UNORM: Qt renders into the texture, gamma-space values as in a Qt window.
+ *              SRGB and float: the caller reads linear values; Qt renders into a float texture of QtNative and after
+ *              each frame a pass writes a * linear(c) into every pixel (unpremultiply, sRGB decode, premultiply).
  * Creates the write and read fences (ID3D11Device5::CreateFence, SHARED) on QtNative's device and opens them on
  * device. Errors: NULL_SCENE, BAD_ARGUMENT (null device/handle, size < 1 or above the device limit, size not the
  * texture's, device without a DXGI adapter), FORMAT_UNSUPPORTED, ADAPTER_MISMATCH (a warning is logged once),
  * OPEN_FAILED, FENCE_FAILED (no ID3D11Device5 / ID3D11DeviceContext4 on one side), DEVICE_LOST (QtNative's device is
  * lost or being rebuilt, or the move failed: try again next frame), NOT_SUPPORTED (not D3D11). On an error the scene
  * is unbound. */
-VLQT_API int   vlqt_offscreen_bind(void* scene, void* device, void* ntHandle, int width, int height, int rtvFormat);
+VLQT_API int   vlqt_offscreen_bind(void* scene, void* device, void* ntHandle, int width, int height, int format);
 /* Frees the binding in the order render target -> opened texture -> fences; the scene and its elements stay. OK also
  * when not bound; NULL_SCENE. */
 VLQT_API int   vlqt_offscreen_unbind(void* scene);

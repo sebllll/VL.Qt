@@ -24,6 +24,8 @@ static partial class QtTextureTest
     const int R16G16B16A16Float = 10;
     const int R8G8B8A8Unorm = 28;
     const int B8G8R8A8Unorm = 87;
+    const int R8G8B8A8UnormSrgb = 29;
+    const int B8G8R8A8UnormSrgb = 91;
     const int R32G32B32A32Float = 2; // not supported by the readback
 
     public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)

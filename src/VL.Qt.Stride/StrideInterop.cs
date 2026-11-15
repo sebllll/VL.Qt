@@ -17,35 +17,21 @@ namespace VL.Qt.Stride
         public const string FormatError = "Format not supported: use R8G8B8A8_UNorm, R8G8B8A8_UNorm_SRgb, B8G8R8A8_UNorm, B8G8R8A8_UNorm_SRgb or R16G16B16A16_Float";
 
         /// <summary>
-        /// Returns true if <paramref name="format"/> is allowed for a QtTexture, with the format of the texture resource,
-        /// of the view Stride gets and of Qt's render target view (a DXGI_FORMAT; Stride's PixelFormat values are the same).
-        /// 8-bit SRgb textures are typeless: Qt writes gamma-space values through the UNorm view, Stride samples the SRgb
-        /// view and gets linear values (like SkiaTexture).
+        /// Returns true if <paramref name="format"/> is allowed for a QtTexture, with the format of the texture resource.
+        /// Stride's view and the QtNative bind use <paramref name="format"/> itself (a DXGI_FORMAT; Stride's PixelFormat
+        /// values are the same). 8-bit SRgb textures are typeless: QtNative writes them through an SRgb view, so SRgb and
+        /// float textures hold linear premultiplied values (vlqt_offscreen_bind).
         /// </summary>
-        public static bool TryGetFormats(PixelFormat format, out PixelFormat textureFormat, out PixelFormat viewFormat, out int rtvFormat)
+        public static bool TryGetTextureFormat(PixelFormat format, out PixelFormat textureFormat)
         {
-            viewFormat = format;
-            switch (format)
+            textureFormat = format switch
             {
-                case PixelFormat.R8G8B8A8_UNorm:
-                case PixelFormat.B8G8R8A8_UNorm:
-                case PixelFormat.R16G16B16A16_Float:
-                    textureFormat = format;
-                    rtvFormat = (int)format;
-                    return true;
-                case PixelFormat.R8G8B8A8_UNorm_SRgb:
-                    textureFormat = PixelFormat.R8G8B8A8_Typeless;
-                    rtvFormat = (int)PixelFormat.R8G8B8A8_UNorm;
-                    return true;
-                case PixelFormat.B8G8R8A8_UNorm_SRgb:
-                    textureFormat = PixelFormat.B8G8R8A8_Typeless;
-                    rtvFormat = (int)PixelFormat.B8G8R8A8_UNorm;
-                    return true;
-                default:
-                    textureFormat = PixelFormat.None;
-                    rtvFormat = 0;
-                    return false;
-            }
+                PixelFormat.R8G8B8A8_UNorm or PixelFormat.B8G8R8A8_UNorm or PixelFormat.R16G16B16A16_Float => format,
+                PixelFormat.R8G8B8A8_UNorm_SRgb => PixelFormat.R8G8B8A8_Typeless,
+                PixelFormat.B8G8R8A8_UNorm_SRgb => PixelFormat.B8G8R8A8_Typeless,
+                _ => PixelFormat.None,
+            };
+            return textureFormat != PixelFormat.None;
         }
 
         /// <summary>

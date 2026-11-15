@@ -66,14 +66,15 @@ namespace VL.Qt
         /// <summary>
         /// Binds the scene to a shared texture. <paramref name="device"/> is the foreign ID3D11Device*,
         /// <paramref name="ntHandle"/> the texture's NT handle (the caller may close it afterwards), <paramref name="size"/>
-        /// the texture size in pixels, <paramref name="rtvFormat"/> the DXGI_FORMAT of Qt's render target view.
+        /// the texture size in pixels, <paramref name="format"/> the DXGI_FORMAT the caller samples the texture with (with an
+        /// SRGB format or R16G16B16A16_FLOAT QtNative writes linear premultiplied values).
         /// Returns a <see cref="Protocol.Offscreen"/> code, 0 = bound; the text of an error is in <see cref="Error"/>.
         /// </summary>
-        public int Bind(IntPtr device, IntPtr ntHandle, Int2 size, int rtvFormat)
+        public int Bind(IntPtr device, IntPtr ntHandle, Int2 size, int format)
         {
             if (_disposed || _scene == IntPtr.Zero)
                 return Protocol.Offscreen.NullScene;
-            int rc = Native.vlqt_offscreen_bind(_scene, device, ntHandle, size.X, size.Y, rtvFormat);
+            int rc = Native.vlqt_offscreen_bind(_scene, device, ntHandle, size.X, size.Y, format);
             _bindError = rc == Protocol.Offscreen.Ok ? "" : Describe(rc);
             return rc;
         }

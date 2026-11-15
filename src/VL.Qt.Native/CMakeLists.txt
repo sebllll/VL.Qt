@@ -67,6 +67,9 @@ target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick 
 target_link_libraries(vlqt PRIVATE Qt6::ShaderTools Qt6::ShaderToolsPrivate)
 if(WIN32)
     target_link_libraries(vlqt PRIVATE d3d11 dxgi) # device.cpp: one D3D11 device per process (#358)
+    # linear_pass.cpp: QtTexture into SRGB and float textures; d3dcompiler_47.dll ships with Windows 10 and up.
+    target_sources(vlqt PRIVATE linear_pass.cpp linear_pass.h)
+    target_link_libraries(vlqt PRIVATE d3dcompiler)
 endif()
 set_target_properties(vlqt PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${VLQT_OUT_DIR}"   # vlqt.dll
