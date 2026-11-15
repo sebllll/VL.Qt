@@ -133,7 +133,7 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 | Script | Use |
 |---|---|
 | `fix-encoding.py` | Checks/repairs the BOM: files, `--all`, `--staged` (used by the git hook), `--check` to only report. See [Encoding and git hook](#encoding-and-git-hook). |
-| `vl-patch-check.py` | Read-only check of the VL.Qt nodes in `.vl` files against their C# pins (`vl_pin_catalog.py`): hidden pins with a value, IOBoxes on `Interaction`, links to removed pins (errors), IOBoxes at the default value (hints). No argument: all `help/Qt/*.vl` and `help/*.vl`. `--fix` makes hidden pins with a value visible, `--accept <patch>` puts intended exceptions into `help/.padlint.json`. Test: `test-vl-patch-check.py`. |
+| `vl-patch-check.py` | Read-only check of the VL.Qt nodes in `.vl` files against their C# pins (`vl_pin_catalog.py`): hidden pins with a value, IOBoxes on `Interaction`, links to removed pins (errors), IOBoxes at the default value (hints). No argument: all `help/Qt/*.vl`, `help/*.vl` and `VL.Qt.Stride/help/*.vl`. `--fix` makes hidden pins with a value visible, `--accept <patch>` puts intended exceptions into `help/.padlint.json`. Test: `test-vl-patch-check.py`. |
 
 ## Packages
 
@@ -144,7 +144,7 @@ The repository builds two NuGet packages:
 | `VL.Qt` | repo root (`VL.Qt.vl`, `help/`, `src/VL.Qt/`) | the Qt layer and the Qt runtime for Windows and Linux; platform-neutral, no Stride |
 | `VL.Qt.Stride` | `VL.Qt.Stride/` (package folder: `VL.Qt.Stride.vl`, `help/`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Stride/` | Qt scenes rendered into Stride textures, Windows only; depends on `VL.Qt` |
 
-`VL.Qt` never references `VL.Qt.Stride`. `VL.Qt.Stride.vl` is a minimal package document (dependencies and the assembly, no nodes); its help patches are made in vvvv; `lib/` is not tracked by git. Why this layout: [decisions/render-texture.md](decisions/render-texture.md#package-layout-2026-11-14-task-21).
+`VL.Qt` never references `VL.Qt.Stride`. `VL.Qt.Stride.vl` is a minimal package document (dependencies and the assembly, no nodes); its help patches may be written in vvvv or directly (see `AGENTS.md`, "Checking patches"); `lib/` is not tracked by git. Why this layout: [decisions/render-texture.md](decisions/render-texture.md#package-layout-2026-11-14-task-21).
 
 ```powershell
 dotnet build src/VL.Qt.Stride -c Release                  # DLL into VL.Qt.Stride/lib/net10.0-windows7.0/

@@ -9,7 +9,9 @@ Writes small fixture patches (UTF-8 with BOM, CRLF, like vvvv) to a temporary fo
   - an IOBox on Interaction: error;
   - a hidden pin with a non-default value: error, --fix makes it visible without other byte changes;
   - a linked pin the node no longer has (renamed): error;
-  - default-iobox hint, --accept into the baseline (reasons kept) and a stale entry.
+  - default-iobox hint, --accept into the baseline (reasons kept) and a stale entry;
+  - QtTexture of VL.Qt.Stride (src/VL.Qt.Stride/*Node.cs): pins in the catalog, no false missing-pin, IOBox on Interaction-like
+    rules and hidden pins work like for the other nodes; the default run (no argument) includes VL.Qt.Stride/help/*.vl.
 """
 import json, os, subprocess, sys, tempfile
 
@@ -83,6 +85,53 @@ def test_catalog():
     expect(pc.title_case('vSync') == 'V Sync' and pc.title_case('strokeColor') == 'Stroke Color', 'catalog: title case')
     expect(pc.is_default('0.5f', dict(default='0.5', type='float')) and pc.is_default(None, dict(default='0, 0', type='Vector2')),
            'catalog: value comparison')
+
+
+def test_stride_catalog():
+    catalog = pc.load_catalog()
+    tex = catalog.get('QtTexture')
+    expect(tex is not None and tex['category'] == 'Qt' and tex['source'] == 'src/VL.Qt.Stride/QtTextureNode.cs',
+           'stride: QtTexture is read from src/VL.Qt.Stride, category Qt')
+    if tex is None:
+        return
+    expect(pc.find_pin(tex, 'Size')['default'] == '1920, 1080', 'stride: Size default from [DefaultValue(typeof(Int2), ...)]')
+    expect(pc.find_pin(tex, 'Format')['default'] == 'B8G8R8A8_UNorm_SRgb', 'stride: Format default from nameof(PixelFormat...)')
+    expect(pc.find_pin(tex, 'Enabled')['default'] == 'True' and pc.find_pin(tex, 'Debug')['optional'],
+           'stride: Enabled default and optional Debug')
+    expect(all(pc.find_pin(tex, n)['direction'] == 'out' for n in ('Output', 'Error', 'Perf')), 'stride: out pins')
+    expect(pc.find_pin(tex, 'Node Context') is None, 'stride: the hidden NodeContext is skipped')
+
+
+def test_stride_patch(tmp):
+    canvas = (node('T', 'QtTexture', 'Qt', [('TInput', 'Input', 'InputPin', ''), ('TSize', 'Size', 'InputPin', ''),
+                                            ('TFormat', 'Format', 'InputPin', ''), ('TEnabled', 'Enabled', 'InputPin', ' IsHidden="true"'),
+                                            ('TOutput', 'Output', 'OutputPin', ''), ('TError', 'Error', 'OutputPin', '')])
+              + pad('PSize', '1280, 720', 'Size') + pad('PFormat', 'B8G8R8A8_UNorm_SRgb', 'Format') + pad('POut', None, 'Output'))
+    links = [('PSize', 'TSize'), ('PFormat', 'TFormat'), ('TOutput', 'POut')]
+    path = os.path.join(tmp, 'stride.vl')
+    open(path, 'wb').write(document(canvas, links))
+    code, out = run(path, f'--baseline={os.path.join(tmp, "base.json")}')
+    expect(code == 0 and not lines_with(out, 'missing-pin') and not lines_with(out, 'PSize'),
+           'stride: QtTexture pins give no false missing-pin, a non-default Size IOBox is fine')
+    expect(len(lines_with(out, 'hint default-iobox', 'QtTexture.Format', 'PFormat')) == 1,
+           'stride: IOBox at the default Format is a hint')
+    renamed = document(canvas.replace('Name="Size"', 'Name="Texture Size"'), links)
+    open(path, 'wb').write(renamed)
+    code, out = run(path, f'--baseline={os.path.join(tmp, "base.json")}')
+    expect(code == 1 and len(lines_with(out, 'error missing-pin', 'QtTexture.Texture Size', 'TSize')) == 1,
+           'stride: a link to a pin QtTexture does not have is an error')
+
+
+def test_default_run():
+    code, out = run()
+    expect(code == 0, 'default run: exit code 0')
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('vl_patch_check', CHECK)
+    checker = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(checker)
+    n = len(checker.expand([]))
+    expect('VL.Qt.Stride/help/*.vl' in checker.DEFAULT_PATCHES and f'{n} patch(es)' in out,
+           f'default run: VL.Qt.Stride/help/*.vl is one of the default patterns ({n} patches checked)')
 
 
 def test_clean(tmp):
@@ -173,10 +222,13 @@ def test_baseline(tmp):
 
 def main():
     test_catalog()
+    test_stride_catalog()
+    test_default_run()
     with tempfile.TemporaryDirectory() as tmp:
         test_clean(tmp)
         test_errors(tmp)
         test_baseline(tmp)
+        test_stride_patch(tmp)
     print(f'{len(FAILED)} failed' if FAILED else 'all passed')
     return 1 if FAILED else 0
 

@@ -11,9 +11,9 @@ Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-progra
 
 > [!NOTE]
 > **Early release (`0.x`).** The API may still change. Requires **vvvv gamma 8.x (preview)** on .NET 10; vvvv 7.x (.NET 8) is not supported.
-> The output is a Qt window; there is no Stride or Skia layer. Linux (x64 and ARM64) works as a console export with its own Qt window, tested under WSL2/WSLg so far (see [Platforms](#platforms)).
+> The output is a Qt window, or a Stride texture with `QtTexture` from the companion package `VL.Qt.Stride` (Windows only, experimental); there is no Skia layer. Linux (x64 and ARM64) works as a console export with its own Qt window, tested under WSL2/WSLg so far (see [Platforms](#platforms)).
 
-**Contents:** [Features](#features) · [Getting Started](#getting-started) · [Linux via WSL](#try-it-on-linux-through-wsl) · [Platforms](#platforms) · [Styles](#styles) · [Images](#images) · [Effects](#effects) · [Shaders](#shaders) · [QML](#qml) · [Tooltips](#tooltips-in-the-vvvv-editor) · [Diagnostics](#diagnostics) · [How It Works](#how-it-works) · [Compared to Qt Bridge](#compared-to-qt-bridge-for-c) · [Development](#development) · [Documentation](#documentation) · [Contributing](#contributing) · [License](#license)
+**Contents:** [Features](#features) · [Getting Started](#getting-started) · [Linux via WSL](#try-it-on-linux-through-wsl) · [Platforms](#platforms) · [Styles](#styles) · [Images](#images) · [Effects](#effects) · [Shaders](#shaders) · [Stride texture](#stride-texture) · [QML](#qml) · [Tooltips](#tooltips-in-the-vvvv-editor) · [Diagnostics](#diagnostics) · [How It Works](#how-it-works) · [Compared to Qt Bridge](#compared-to-qt-bridge-for-c) · [Development](#development) · [Documentation](#documentation) · [Contributing](#contributing) · [License](#license)
 
 ## Features
 
@@ -28,6 +28,7 @@ Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-progra
 | [**Video**](docs/help-patches.md#drawing) | play/pause, loop, rate, volume |
 | [**Effects**](docs/effects-and-shaders.md#effects) | Effect pin on every element: Blur, DropShadow, ColorAdjust, Colorize and Mask (neighbours merged into one offscreen layer), plus your own filter shaders as chain nodes |
 | [**Shaders**](docs/effects-and-shaders.md#shaders) | ShaderEffect with GLSL in a string pin, baked at runtime; every `.frag` file in a `qtshaders/` folder becomes a node with one pin per uniform |
+| [**Stride texture**](#stride-texture) | `QtTexture` (package `VL.Qt.Stride`, Windows only, experimental) renders an element tree offscreen into a Stride `Texture`, on the GPU, in the same frame |
 | [**QML**](docs/user-qml.md) | QmlElement loads your own `.qml` file into the element tree; every `.qml` file in a `qml/` folder becomes a node with one pin per property and signal (experimental) |
 | [**Animation**](docs/architecture.md#timing-and-animation) | driven by vvvv's `IFrameClock`, so scrubbing and pausing are deterministic |
 | [**Window**](docs/help-patches.md#window-and-diagnostics) | WindowSettings node (Icon, Title, Borderless, Fullscreen, Bounds), Fullscreen (F11 / Alt+Enter), Save Bounds, VSync on by default (see `HowTo Avoid Tearing`) |
@@ -42,7 +43,7 @@ VL.Qt is on [nuget.org](https://www.nuget.org/packages/VL.Qt/). In vvvv, open th
 
 <img src="docs/images/install-browse-packs.png" width="820" alt="vvvv References window, Browse Packs: the package VL.Qt, version 0.9.3, with the Add button">
 
-For Stride users there is the companion package `VL.Qt.Stride` (Windows only, depends on `VL.Qt`, same version); see [Development](docs/development.md#packages).
+For Stride users there is the companion package `VL.Qt.Stride` (Windows only, depends on `VL.Qt`, same version) with the `QtTexture` node, see [Stride texture](#stride-texture). Both packages are built from this repository, see [Development](docs/development.md#packages).
 
 The packages are also attached to the [GitHub releases](https://github.com/sebllll/VL.Qt/releases). To build VL.Qt yourself, see [Development](docs/development.md).
 
@@ -173,6 +174,20 @@ The five built-in effects (Blend, Displace, DirectionalBlur, ZoomBlur, RadialBlu
 
 More: [Shaders](docs/effects-and-shaders.md#shaders) (annotations, the [Sampler node](docs/effects-and-shaders.md#sampler-node), a complete example, [own effects from templates](docs/effects-and-shaders.md#own-effects-from-templates), export notes).
 
+## Stride texture
+
+`QtTexture` (category `Qt`, package `VL.Qt.Stride`) works like `Renderer [Qt]`, but opens no window: it renders the element tree offscreen and outputs a Stride `Texture` that you draw, mix or feed to TextureFX like any other texture. **Windows only and experimental** (the pins may still change).
+
+- **Pins:** `Input` (element tree), `Size` (pixels, default 1920×1080; 1 DIP = 1 pixel), `Space`, `Clear Color` (default transparent, so the texture has an alpha channel), `Format` (default `B8G8R8A8_UNorm_SRgb`; 8-bit RGBA/BGRA or `R16G16B16A16_Float`), `Enabled`, `Debug`; outputs `Output` (`Texture`) and `Error`.
+- **GPU only:** no readback to the CPU. Qt renders on its own D3D11 device into a texture shared with Stride's device; shared fences make Stride wait on the GPU until Qt has written. The texture is ready in the same frame, the scene is rendered only when it changed, and several `QtTexture` nodes do not block each other.
+- **Alpha:** the texture is premultiplied; where straight alpha is expected, unpremultiply it first (RGB divided by alpha); VL.Stride has no TextureFX for that yet.
+- **No input yet:** Interaction nodes inside a `QtTexture` scene stay inert.
+- **Adapter:** QtNative's device must sit on Stride's adapter. It follows Stride's adapter as long as no Qt window renders on it; otherwise the node shows an error and `Output` stays empty.
+
+Help patch: `HowTo Render Qt into a Stride Texture` (in the Help Browser under `Qt`, package `VL.Qt.Stride`).
+
+More: [Render texture](docs/decisions/render-texture.md) (decisions: device, fences, lifetime, frame timing), [Architecture](docs/architecture.md#rendering).
+
 ## QML
 
 What VL.Qt has no element for can be written in QML and brought into the tree. Experimental, like the shaders it was modelled on.
@@ -224,7 +239,7 @@ patch ──► Element tree ──► Reconciler ──► CommandWriter ──
 patch ◄── channels / outputs ◄── EventReader ◄─────── events ◄────┘
 ```
 
-vvvv's `IFrameClock` is the single time source, so scrubbing and pausing are deterministic. Qt renders directly into its own window, pumped once per vvvv frame; events come back to the patch as channels.
+vvvv's `IFrameClock` is the single time source, so scrubbing and pausing are deterministic. Qt renders directly into its own window, pumped once per vvvv frame, or with `QtTexture` offscreen into a Stride texture; events come back to the patch as channels.
 
 More: [Architecture](docs/architecture.md) (data flow, timing, interop, rendering, events, reusing elements, performance).
 
@@ -263,6 +278,7 @@ The index with a one-line description per page is in [docs/README.md](docs/READM
 - [Styles](docs/styles.md): base style, Style pin, style nodes, self-made widgets
 - [Images](docs/images.md): `QtImage`, loaders, Snapshot
 - [Effects and shaders](docs/effects-and-shaders.md): effect chain, custom shaders, `qtshaders/` nodes
+- [Render texture](docs/decisions/render-texture.md): `QtTexture` for Stride, design notes
 - [QML files](docs/user-qml.md): QmlElement and nodes from `.qml` files
 - [Tooltips](docs/tooltips.md): previews in the vvvv editor
 - [Diagnostics](docs/diagnostics.md): overlays, logging, GPU device loss

@@ -1,6 +1,6 @@
 # Render Texture: Qt Scene into a Stride Texture2D
 
-Status: planned (brainstorm 2026-11-14). Work: #116 QtTexture, #117 Clear pin, #118 MSAA, #119 QtTexture interaction, #120 QtRenderer [Stride]. Decision log for the node that renders a Qt scene offscreen and outputs a Stride `Texture`. Reference implementation: `SkiaTexture` in VL.Stride (`VL.Stride.Runtime/src/SkiaTexture*.cs`).
+Status: phases 1-3 implemented (QtNative offscreen scene #123, package `VL.Qt.Stride` #122, `QtTexture` node #125); phase 4 help patch and docs #127; phase 5 Qt render thread open. Decided in the brainstorm of 2026-11-14. Work: #116 QtTexture, #117 Clear pin, #118 MSAA, #119 QtTexture interaction, #120 QtRenderer [Stride]. Decision log for the node that renders a Qt scene offscreen and outputs a Stride `Texture`. Reference implementation: `SkiaTexture` in VL.Stride (`VL.Stride.Runtime/src/SkiaTexture*.cs`).
 
 ## Requirements (set by the user, 2026-11-14)
 - Used like `Renderer [Qt]`, but opens no window; outputs a Stride `Texture` (Texture2D).
