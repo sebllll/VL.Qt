@@ -51,7 +51,11 @@ static class ClearPinTest
     public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
     {
         Window(outDir, check, pump, grab);
-        Offscreen(outDir, check);
+        // Offscreen scenes need Direct3D 11 (QRhi), as in SharedDeviceTest.
+        if (!OperatingSystem.IsWindows() || Program.QuickSoftware)
+            Console.WriteLine("SKIP clear-pin offscreen: offscreen scenes need Direct3D 11");
+        else
+            Offscreen(outDir, check);
     }
 
     static void Window(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
@@ -142,6 +146,10 @@ static class ClearPinTest
         long idleBase = Native.vlqt_window_change_count(w) - c0;
         check(idleBase == 0, $"clear-pin: idle with Clear on renders nothing ({idleBase} changes / 30 pumps)");
 
+        // Checks of the feedback layer: QtNative ignores Clear off on the software backend (no ShaderEffectSource there),
+        // the frame then renders as with Clear on; the checks without "layer" hold on both backends.
+        var layer = Program.NeedsRhi(check, "Clear off needs a QRhi scenegraph");
+
         // 1) Off: the first frame starts from the clear colour (no garbage), the moving rectangle leaves a trail.
         x = 50;
         Frame();
@@ -160,10 +168,12 @@ static class ClearPinTest
         }
         using (var img = grab(w, P("trail")))
         {
-            check(IsOrange(Px(img, 75, 125)) && IsOrange(Px(img, 300, 125)) && IsOrange(Px(img, 470, 125)),
+            check(IsOrange(Px(img, 475, 125)) && IsBg(Px(img, 600, 300)),
+                $"clear-pin: Clear off does not blank the frame ({Px(img, 475, 125)}, {Px(img, 600, 300)})");
+            layer(IsOrange(Px(img, 75, 125)) && IsOrange(Px(img, 300, 125)) && IsOrange(Px(img, 470, 125)),
                 $"clear-pin: trail of the moving rectangle ({Px(img, 75, 125)}, {Px(img, 300, 125)}, {Px(img, 470, 125)})");
             check(IsBg(Px(img, 600, 300)) && IsBg(Px(img, 75, 60)), $"clear-pin: background outside the trail ({Px(img, 600, 300)}, {Px(img, 75, 60)})");
-            check(Px(img, 350, 450).R > 150, $"clear-pin: effect layer (blur) drawn with Clear off ({Px(img, 350, 450)})");
+            layer(Px(img, 350, 450).R > 150, $"clear-pin: effect layer (blur) drawn with Clear off ({Px(img, 350, 450)})");
             check(IsBg(Px(img, 75, 475)), $"clear-pin: nothing at the mirrored position ({Px(img, 75, 475)})");
         }
 
@@ -173,14 +183,14 @@ static class ClearPinTest
         long idle = Native.vlqt_window_change_count(w) - c1;
         Console.WriteLine($"clear-pin: idle with Clear off: {idle} changes / 30 pumps");
         // The recursive layer requests frames itself: a fade keeps fading without a scene change (as Skia/Stride with Clear off).
-        check(idle > 0, $"clear-pin: Clear off keeps rendering without a scene change ({idle} changes / 30 pumps)");
+        layer(idle > 0, $"clear-pin: Clear off keeps rendering without a scene change ({idle} changes / 30 pumps)");
 
         // 3) Fade: a full-size black rectangle at 25 % alpha fades old content (premultiplied "over").
         fade = 0.25f;
         for (int i = 0; i < 30; i++) Frame();
         using (var img = grab(w, P("fade")))
         {
-            check(Px(img, 75, 125).R < 20 && Px(img, 600, 300).R < 20 && IsOrange(Px(img, 475, 125)),
+            layer(Px(img, 75, 125).R < 20 && Px(img, 600, 300).R < 20 && IsOrange(Px(img, 475, 125)),
                 $"clear-pin: fade: old trail and clear colour fade to black, current position stays orange ({Px(img, 75, 125)}, {Px(img, 600, 300)}, {Px(img, 475, 125)})");
         }
         fade = 0;
@@ -208,7 +218,7 @@ static class ClearPinTest
         {
             SnapshotTest.WritePng(image, P("snapshot"));
             var (b, g, r, a) = SnapshotTest.At(image, 50, 50, 100);
-            check(r > 150 && g < 60 && a > 200, $"clear-pin: snapshot shows the element once (B{b} G{g} R{r} A{a})");
+            layer(r > 150 && g < 60 && a > 200, $"clear-pin: snapshot shows the element once (B{b} G{g} R{r} A{a})");
         }
         snap.Dispose();
 
@@ -230,7 +240,7 @@ static class ClearPinTest
         x = 575;
         Frame();
         using (var img = grab(w, P("resize_after")))
-            check(IsOrange(Px(img, 525, 125, 700, 500)) && IsOrange(Px(img, 600, 125, 700, 500)) && IsBg(Px(img, 75, 125, 700, 500)),
+            layer(IsOrange(Px(img, 525, 125, 700, 500)) && IsOrange(Px(img, 600, 125, 700, 500)) && IsBg(Px(img, 75, 125, 700, 500)),
                 $"clear-pin: trail accumulates again after the resize ({Px(img, 525, 125, 700, 500)}, {Px(img, 600, 125, 700, 500)})");
         check(Native.vlqt_window_resize(w, 800, 600) == 0, "clear-pin: resize back");
         Frame();
@@ -299,7 +309,7 @@ static class ClearPinTest
             edges.Add($"{name} {n}");
         }
         Console.WriteLine($"clear-pin: distinct edge values (n samples: n - 1): {string.Join(", ", edges)}");
-        check(edgeValues[0] > 0 && edgeValues[0] == edgeValues[1], $"clear-pin: window MSAA edges with Clear off as with Clear on ({edgeValues[0]} vs {edgeValues[1]} distinct values)");
+        layer(edgeValues[0] > 0 && edgeValues[0] == edgeValues[1], $"clear-pin: window MSAA edges with Clear off as with Clear on ({edgeValues[0]} vs {edgeValues[1]} distinct values)");
         SetClear(w, true);
         Frame();
 

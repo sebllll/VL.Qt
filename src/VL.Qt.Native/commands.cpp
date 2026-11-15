@@ -6,6 +6,7 @@
 #include "shadereffectitem.h"
 #include "vlstyle.h"
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QRectF>
 #include <QtGui/QColor>
 #include <QtGui/QVector2D>
@@ -14,11 +15,14 @@
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtQuick/QSGRendererInterface>
 #include <QtQuick/private/qquickwindow_p.h> // itemsToPolish (#71)
 
 #include <algorithm>
 #include <cstring>
 #include <vector>
+
+Q_LOGGING_CATEGORY(lcFeedback, "vlqt.feedback")
 
 namespace vlqt {
 namespace {
@@ -185,6 +189,16 @@ void Scene::restoreFeedback()
 {
     if (clearFrames || feedback)
         return;
+    // The software backend draws no ShaderEffectSource (the layer would show a black frame): Clear off is ignored there
+    // and the scene renders as with Clear on.
+    QSGRendererInterface* ri = window->rendererInterface();
+    if (ri && ri->graphicsApi() == QSGRendererInterface::Software) {
+        if (!feedbackSoftwareWarned) {
+            feedbackSoftwareWarned = true;
+            qCWarning(lcFeedback, "Clear off needs a QRhi scenegraph; ignored on the Qt Quick software backend");
+        }
+        return;
+    }
     feedback = std::make_unique<FeedbackLayer>(window, root);
     window->update();
 }

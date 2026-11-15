@@ -127,6 +127,7 @@ private:
     DebugOverlay* debug = nullptr; // child of contentItem, deleted in ~Scene
     std::unique_ptr<FeedbackLayer> feedback; // Clear off only (#117)
     bool clearFrames = true; // Clear pin state (#117)
+    bool feedbackSoftwareWarned = false; // Clear off ignored on the software backend, logged once per scene
     std::vector<QQuickItem*> retired; // destroyed former effect sources, deleted after the next frame (#123)
 };
 
