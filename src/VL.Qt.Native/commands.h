@@ -32,6 +32,11 @@ struct Scene {
     Scene(const Scene&) = delete;
     Scene& operator=(const Scene&) = delete;
 
+    /* Window swap (#118, vlqt_window_set_samples): the root item moves to window's content item (size follow and
+     * window-geometry watch reconnected, EV_WINDOW_GEOMETRY queued), the debug overlay is rebuilt there. Items, nodes,
+     * bindings and the engine stay. Call before the old window is deleted (it owns the old debug overlay). */
+    void moveToWindow(QQuickWindow* newWindow);
+
     /* Applies all commands; stops at the first bad one (earlier ones stay applied). err names index + reason. */
     int apply(const unsigned char* buf, int len, std::string& err);
     /* Queues changed measured values of bound items (events.h), then copies queued events into out and clears
@@ -118,6 +123,8 @@ private:
     int setEffectChain(const unsigned char* p, int len, std::string& err); // SET_EFFECT_CHAIN (#489), effectchain.h
     int setQmlProperties(const unsigned char* p, int len, std::string& err); // SET_QML_PROPERTIES (QmlElement, #104)
     void reset();
+    /* root under window's content item, size follow, window-geometry watch (constructor, moveToWindow). */
+    void attachRoot();
     void destroySubtree(QQuickItem* item);
     void destroyHandlersOf(Node& node);
     /* Detaches mask from the link of host's chain that uses it (DESTROY of the mask); the mask stays parked hidden

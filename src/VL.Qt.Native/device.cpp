@@ -380,6 +380,35 @@ void* nativeDevice(QRhi* rhi)
     return nullptr;
 }
 
+int clampSamples(int requested, int dxgiFormat, QRhi* rhi)
+{
+    if (requested <= 1)
+        return 1;
+    if (!rhi)
+        rhi = uploadRhi();
+    const QList<int> counts = rhi ? rhi->supportedSampleCounts() : QList<int>{1, 2, 4, 8};
+#ifdef Q_OS_WIN
+    auto* dev = static_cast<ID3D11Device*>(nativeDevice(rhi));
+    const auto supports = [dev](int format, int count) {
+        UINT levels = 0;
+        return SUCCEEDED(dev->CheckMultisampleQualityLevels(DXGI_FORMAT(format), UINT(count), &levels)) && levels > 0;
+    };
+#else
+    Q_UNUSED(dxgiFormat);
+#endif
+    int best = 1;
+    for (int c : counts) {
+        if (c <= best || c > requested)
+            continue;
+#ifdef Q_OS_WIN
+        if (dev && (!supports(dxgiFormat, c) || !supports(DXGI_FORMAT_D24_UNORM_S8_UINT, c)))
+            continue;
+#endif
+        best = c;
+    }
+    return best;
+}
+
 void checkLost()
 {
 #ifdef Q_OS_WIN

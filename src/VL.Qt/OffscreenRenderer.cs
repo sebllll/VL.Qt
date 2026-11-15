@@ -74,7 +74,8 @@ namespace VL.Qt
         {
             if (_disposed || _scene == IntPtr.Zero)
                 return Protocol.Offscreen.NullScene;
-            int rc = Native.vlqt_offscreen_bind(_scene, device, ntHandle, size.X, size.Y, format);
+            // TODO: MSAA count from the QtTexture node (#118 task 5); 1 = none.
+            int rc = Native.vlqt_offscreen_bind(_scene, device, ntHandle, size.X, size.Y, format, 1, out _);
             _bindError = rc == Protocol.Offscreen.Ok ? "" : Describe(rc);
             return rc;
         }

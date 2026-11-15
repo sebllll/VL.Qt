@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -6,28 +7,27 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using Stride.Core.Mathematics;
 using VL.Qt;
 
 /// <summary>
-/// SPIKE #118 (MSAA), not part of --all: <c>--only msaaspike</c>. Live change of a window's sample count (destroy/show),
-/// edge pixels per count in a window and in an offscreen scene (UNORM, SRGB view, float through the linear pass),
-/// supported counts, rough cost per count.
+/// #118 (MSAA), not part of --all: <c>--only msaaspike</c>. Live change of a window's sample count (window swap), clamp,
+/// real Win32 key input and focus after a swap, edge pixels per count in a window and in an offscreen scene (UNORM, SRGB
+/// view, float through the linear pass), rough cost per count. The scenario Msaa (task 6) replaces it.
 /// </summary>
 static class MsaaSpikeTest
 {
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)] static extern int vlqt_spike_window_set_samples(IntPtr w, int samples);
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)] static extern int vlqt_spike_window_samples(IntPtr w);
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)] static extern int vlqt_spike_sample_counts(int dxgiFormat, out int d3dMask);
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)] static extern void vlqt_spike_offscreen_samples(int samples);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindowW(string? cls, string title);
     [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr hwnd, out RECT r);
+    [DllImport("user32.dll")] static extern bool PostMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll")] static extern IntPtr SendMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll")] static extern uint MapVirtualKeyW(uint code, uint mapType);
+    [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
     [StructLayout(LayoutKind.Sequential)] struct RECT { public int L, T, R, B; public override string ToString() => $"{L},{T},{R},{B}"; }
 
     const int W = 400, H = 300;
     const string Title = "VL.Qt MSAA spike";
-
-    static string Mask(int m) => string.Join("/", Enumerable.Range(0, 31).Where(i => (m & (1 << i)) != 0));
 
     // Thin bar + rotated square, white on black: hard edges without AA.
     static void Scene(CommandWriter cmd)
@@ -70,14 +70,25 @@ static class MsaaSpikeTest
 
     public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
     {
-        Console.WriteLine($"INFO msaaspike: upload QRhi counts {Mask(vlqt_spike_sample_counts(87, out var d3d))}, D3D11 B8G8R8A8_UNORM {Mask(d3d)}");
-        vlqt_spike_sample_counts(28, out d3d); Console.WriteLine($"INFO msaaspike: D3D11 R8G8B8A8_UNORM {Mask(d3d)}");
-        vlqt_spike_sample_counts(10, out d3d); Console.WriteLine($"INFO msaaspike: D3D11 R16G16B16A16_FLOAT {Mask(d3d)}");
-        vlqt_spike_sample_counts(45, out d3d); Console.WriteLine($"INFO msaaspike: D3D11 D24_UNORM_S8_UINT {Mask(d3d)}");
+        ClampPart(check);
         WindowPart(outDir, check, pump, grab);
+        InputPart(check, pump);
         OffscreenPart(outDir, check);
         WindowPerf(check, pump);
         OffscreenPerf(check);
+    }
+
+    // Clamp and the format-only path: a window not shown yet changes its format, no swap.
+    static void ClampPart(Action<bool, string> check)
+    {
+        var w = Native.vlqt_window_create(W, H, Title + " clamp");
+        int r16 = Native.vlqt_window_set_samples(w, 16), r3 = Native.vlqt_window_set_samples(w, 3), r0 = Native.vlqt_window_set_samples(w, 0);
+        Console.WriteLine($"INFO msaaspike: hidden window set 16 -> {r16}, 3 -> {r3}, 0 -> {r0}, samples {Native.vlqt_window_samples(w)}");
+        check(r16 is > 1 and <= 8 && r3 == 2 && r0 == 1 && Native.vlqt_window_samples(w) == 1, $"msaaspike: window clamp (16 -> {r16}, 3 -> {r3}, 0 -> {r0})");
+        Native.vlqt_window_destroy(w);
+        var scene = Native.vlqt_offscreen_create(W, H);
+        check(Native.vlqt_window_set_samples(scene, 4) < 0 && Native.vlqt_window_samples(scene) == 0, "msaaspike: set_samples refused on an offscreen scene");
+        Native.vlqt_window_destroy(scene);
     }
 
     static void WindowPart(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
@@ -105,24 +116,31 @@ static class MsaaSpikeTest
         pump(5);
         var hwnd = FindWindowW(null, Title);
         GetWindowRect(hwnd, out var rect0);
-        Console.WriteLine($"INFO msaaspike: window created, swap chain samples {vlqt_spike_window_samples(w)}, rect {rect0}");
+        Console.WriteLine($"INFO msaaspike: window created, swap chain samples {Native.vlqt_window_samples(w)}, rect {rect0}");
+        check(Native.vlqt_window_samples(w) == 4, $"msaaspike: new window has 4 samples ({Native.vlqt_window_samples(w)})");
+        int prev = 4;
         foreach (var n in new[] { 4, 1, 2, 8, 4, 1 })
         {
+            long count0 = Native.vlqt_window_change_count(w);
             var sw = Stopwatch.StartNew();
-            int rc = vlqt_spike_window_set_samples(w, n);
+            int rc = Native.vlqt_window_set_samples(w, n);
             var setMs = sw.Elapsed.TotalMilliseconds;
             pump(1);
             var firstMs = sw.Elapsed.TotalMilliseconds;
             pump(4);
             var h2 = FindWindowW(null, Title);
             GetWindowRect(h2, out var rect);
-            int actual = vlqt_spike_window_samples(w);
+            int actual = Native.vlqt_window_samples(w);
             using var b = grab(w, Path.Combine(outDir, $"msaa_window_x{n}.png"));
             var e = Edges(b);
             var green = b.GetPixel(30 * b.Width / W, 30 * b.Height / H);
             check(green.G > 240 && green.R < 20, $"msaaspike: image survives change to {n} ({green})");
             Console.WriteLine($"INFO msaaspike: window set {n}: rc {rc}, swap chain {actual}, set {setMs:F1} ms, +first pump {firstMs:F1} ms, visible {Native.vlqt_window_is_visible(w)}, hwnd changed {h2 != hwnd}, rect {rect}, edge px {e.Mid}, levels {e.Levels}");
-            check(rc == 0 && actual == n && Native.vlqt_window_is_visible(w) == 1, $"msaaspike: window live change to {n} (swap chain {actual})");
+            check(rc == n && actual == n && Native.vlqt_window_is_visible(w) == 1, $"msaaspike: window live change to {n} (rc {rc}, swap chain {actual})");
+            long count1 = Native.vlqt_window_change_count(w);
+            check(count1 >= count0 && (h2 == hwnd || count1 > count0), $"msaaspike: change count goes on across a swap ({count0} -> {count1})");
+            check(n == prev ? h2 == hwnd : h2 != hwnd, $"msaaspike: window replaced only on a change ({prev} -> {n}, hwnd changed {h2 != hwnd})");
+            prev = n;
             check(rect.ToString() == rect0.ToString(), $"msaaspike: window rect kept after change to {n} ({rect} vs {rect0})");
             hwnd = h2;
         }
@@ -140,16 +158,98 @@ static class MsaaSpikeTest
         Native.vlqt_window_set_mode(w, Protocol.WindowMode.Fullscreen, Protocol.WindowMode.Fullscreen);
         pump(10);
         GetWindowRect(FindWindowW(null, Title), out var fs0);
-        vlqt_spike_window_set_samples(w, 4);
+        Native.vlqt_window_set_samples(w, 4);
         pump(10);
         GetWindowRect(FindWindowW(null, Title), out var fs1);
-        Console.WriteLine($"INFO msaaspike: fullscreen rect {fs0} -> after change {fs1}, samples {vlqt_spike_window_samples(w)}");
-        check(fs0.ToString() == fs1.ToString() && vlqt_spike_window_samples(w) == 4, "msaaspike: fullscreen kept across a change");
+        Console.WriteLine($"INFO msaaspike: fullscreen rect {fs0} -> after change {fs1}, samples {Native.vlqt_window_samples(w)}");
+        check(fs0.ToString() == fs1.ToString() && Native.vlqt_window_samples(w) == 4, "msaaspike: fullscreen kept across a change");
         Native.vlqt_window_set_mode(w, Protocol.WindowMode.Fullscreen, 0);
         pump(10);
         GetWindowRect(FindWindowW(null, Title), out var back);
         Console.WriteLine($"INFO msaaspike: after fullscreen off rect {back} (before {rect0})");
         Native.vlqt_window_destroy(w);
+    }
+
+    // Real Win32 keys (WM_KEYDOWN/UP dispatched by the WinForms loop like in vvvv, see KeyRouteTest) reach the new HWND
+    // after a swap, WM_GETDLGCODE is answered there, and the TextField keeps the active focus across the swap.
+    static void InputPart(Action<bool, string> check, Action<int> pump)
+    {
+#if WINDOWS
+        const uint WM_KEYDOWN = 0x0100, WM_KEYUP = 0x0101, WM_GETDLGCODE = 0x0087;
+        const int VK_RETURN = 0x0D, DLGC_WANTALLKEYS = 0x0004;
+        const uint T = 1, HT = 61;
+        const string title = Title + " input";
+        var w = Native.vlqt_window_create(400, 200, title);
+        var cmd = new CommandWriter();
+        cmd.Create(T, Protocol.Type.TextField);
+        VL.Qt.Styles.BaseStyle.Write(cmd, T);
+        cmd.SetBool(T, Protocol.Prop.AutoSize, false);
+        cmd.SetPlace(T, 50, 50, 300, 40);
+        cmd.SetString(T, Protocol.Prop.Value, "");
+        cmd.Reparent(T, 0, 0);
+        cmd.Bind(T, HT, 0);
+        check(Native.Apply(w, cmd.EndFrame()) == 0, "msaaspike: input scene");
+        Native.vlqt_window_show(w);
+        pump(3);
+        var buf = new byte[1 << 16];
+        // The last string EV_VALUE of the TextField in this frame, or null.
+        string? Committed()
+        {
+            pump(1);
+            int n = Native.Poll(w, buf);
+            string? value = null;
+            for (int off = 0; off + 12 <= n;)
+            {
+                ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(buf.AsSpan(off));
+                int len = BinaryPrimitives.ReadUInt16LittleEndian(buf.AsSpan(off + 2));
+                if (len < 8 || off + 4 + len > n)
+                    break;
+                var payload = buf.AsSpan(off + 12, len - 8);
+                if (ev == Protocol.Ev.Value && BinaryPrimitives.ReadUInt32LittleEndian(buf.AsSpan(off + 4)) == HT
+                    && BinaryPrimitives.ReadUInt16LittleEndian(payload) == Protocol.Vt.String)
+                    value = Encoding.UTF8.GetString(payload.Slice(8, (int)BinaryPrimitives.ReadUInt32LittleEndian(payload.Slice(4))));
+                off += (4 + len + 3) & ~3;
+            }
+            return value;
+        }
+        var hwnd = FindWindowW(null, title);
+        void Key(int vk)
+        {
+            long scan = MapVirtualKeyW((uint)vk, 0);
+            PostMessageW(hwnd, WM_KEYDOWN, (IntPtr)vk, (IntPtr)(1 | (scan << 16)));
+            PostMessageW(hwnd, WM_KEYUP, (IntPtr)vk, (IntPtr)(1 | (scan << 16) | (1L << 30) | (1L << 31)));
+            System.Windows.Forms.Application.DoEvents();
+        }
+        // As in KeyRouteTest: without the foreground Qt types into nothing; outside the CI that is a SKIP.
+        void CheckKeys(bool ok, string what)
+        {
+            if (ok || GetForegroundWindow() == hwnd || Environment.GetEnvironmentVariable("CI") != null)
+                check(ok, what);
+            else
+                Console.WriteLine($"SKIP {what}: the test window is not in the foreground");
+        }
+        Committed();
+        Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, 200, 70);
+        Native.vlqt_test_send_mouse(w, Protocol.Mouse.Press, 200, 70);
+        Native.vlqt_test_send_mouse(w, Protocol.Mouse.Release, 200, 70);
+        Committed();
+        Key('4'); Key('2'); Key(VK_RETURN);
+        var v = Committed();
+        CheckKeys(v == "42", $"msaaspike: keys before the swap -> \"42\" ({v})");
+        check(Native.vlqt_window_set_samples(w, 1) == 1, "msaaspike: input window swap to 1");
+        pump(3);
+        var old = hwnd;
+        hwnd = FindWindowW(null, title);
+        check(hwnd != IntPtr.Zero && hwnd != old, "msaaspike: input window has a new HWND");
+        var code = (long)SendMessageW(hwnd, WM_GETDLGCODE, (IntPtr)VK_RETURN, IntPtr.Zero);
+        check((code & DLGC_WANTALLKEYS) != 0, $"msaaspike: WM_GETDLGCODE on the new HWND -> DLGC_WANTALLKEYS (0x{code:x})");
+        // No click: the TextField must still have the active focus in the new window.
+        Key('7'); Key(VK_RETURN);
+        v = Committed();
+        CheckKeys(v == "427", $"msaaspike: keys after the swap reach the focused TextField -> \"427\" ({v})");
+        Native.vlqt_window_destroy(w);
+        pump(1);
+#endif
     }
 
     static void OffscreenPart(string outDir, Action<bool, string> check)
@@ -176,8 +276,7 @@ static class MsaaSpikeTest
             foreach (var n in new[] { 1, 2, 4, 8, 1, 4 })
             {
                 Native.vlqt_test_d3d11_create_shared_texture(device, W, H, f.Tex, out var tex, out var handle);
-                vlqt_spike_offscreen_samples(n);
-                int rc = Native.vlqt_offscreen_bind(scene, device, handle, W, H, f.View);
+                int rc = Native.vlqt_offscreen_bind(scene, device, handle, W, H, f.View, n, out var used);
                 Native.vlqt_test_close_handle(handle);
                 int rendered = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
                 var px = new byte[W * H * f.Bytes];
@@ -188,15 +287,22 @@ static class MsaaSpikeTest
                 // White pixel inside the square and black corner: resolve must not change the solid colours.
                 int inside = Red(90 * W + 200), corner = Red(5 * W + 5);
                 Console.WriteLine($"INFO msaaspike: offscreen {f.Name} x{n}: bind {rc}, rendered {rendered}, read {read}, edge px {e.Mid}, levels {e.Levels}, inside {inside}, corner {corner}");
-                check(rc == 0 && rendered == 1 && read == px.Length && inside > 250 && corner < 3, $"msaaspike: offscreen {f.Name} x{n} renders");
+                check(rc == 0 && used == n && rendered == 1 && read == px.Length && inside > 250 && corner < 3, $"msaaspike: offscreen {f.Name} x{n} renders (used {used})");
                 if (f.Tex == 90)
                     SavePng(px, Path.Combine(outDir, $"msaa_offscreen_x{n}.png"));
                 Native.vlqt_offscreen_unbind(scene);
                 Native.vlqt_test_com_release(tex);
             }
+            // Clamp: 16 is above what QRhi's D3D11 backend offers (1/2/4/8).
+            Native.vlqt_test_d3d11_create_shared_texture(device, W, H, f.Tex, out var t16, out var h16);
+            int rc16 = Native.vlqt_offscreen_bind(scene, device, h16, W, H, f.View, 16, out var used16);
+            Native.vlqt_test_close_handle(h16);
+            Console.WriteLine($"INFO msaaspike: offscreen {f.Name} request 16: bind {rc16}, used {used16}");
+            check(rc16 == 0 && used16 is > 1 and <= 8, $"msaaspike: offscreen {f.Name} 16 clamped ({used16})");
+            Native.vlqt_offscreen_unbind(scene);
+            Native.vlqt_test_com_release(t16);
             Native.vlqt_window_destroy(scene);
         }
-        vlqt_spike_offscreen_samples(1);
         Native.vlqt_test_d3d11_release_device(device, context);
     }
 
@@ -239,7 +345,7 @@ static class MsaaSpikeTest
         pump(10);
         foreach (var n in new[] { 1, 2, 4, 8, 1, 4 })
         {
-            vlqt_spike_window_set_samples(w, n);
+            Native.vlqt_window_set_samples(w, n);
             pump(10);
             var sw = Stopwatch.StartNew();
             int f = 0;
@@ -250,7 +356,7 @@ static class MsaaSpikeTest
                 pump(1);
             }
             Native.vlqt_window_get_perf(w, out var p);
-            Console.WriteLine($"INFO msaaspike: window perf x{n} (swap chain {vlqt_spike_window_samples(w)}): fps {p.fps:F0}, frame {p.frame_ms:F2}, render {p.render_ms:F2}, present {p.present_ms:F2}, gpu {p.gpu_ms:F2} (max {p.gpu_ms_max:F2}) ms");
+            Console.WriteLine($"INFO msaaspike: window perf x{n} (swap chain {Native.vlqt_window_samples(w)}): fps {p.fps:F0}, frame {p.frame_ms:F2}, render {p.render_ms:F2}, present {p.present_ms:F2}, gpu {p.gpu_ms:F2} (max {p.gpu_ms_max:F2}) ms");
         }
         Native.vlqt_window_destroy(w);
     }
@@ -268,8 +374,7 @@ static class MsaaSpikeTest
             Heavy(cmd, 0, true);
             Native.Apply(scene, cmd.EndFrame());
             Native.vlqt_test_d3d11_create_shared_texture(device, PW, PH, 90, out var tex, out var handle);
-            vlqt_spike_offscreen_samples(n);
-            Native.vlqt_offscreen_bind(scene, device, handle, PW, PH, 87);
+            Native.vlqt_offscreen_bind(scene, device, handle, PW, PH, 87, n, out _);
             Native.vlqt_test_close_handle(handle);
             var times = new List<double>();
             for (int f = 1; f <= 130; f++)
@@ -286,7 +391,6 @@ static class MsaaSpikeTest
             Native.vlqt_window_destroy(scene);
             Native.vlqt_test_com_release(tex);
         }
-        vlqt_spike_offscreen_samples(1);
         Native.vlqt_test_d3d11_release_device(device, context);
     }
 }

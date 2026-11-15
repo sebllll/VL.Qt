@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <utility>
 #include <vector>
 
 Q_LOGGING_CATEGORY(lcFeedback, "vlqt.feedback")
@@ -136,14 +137,36 @@ EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
 Scene::Scene(QQuickWindow* w, QQmlEngine* e)
     : window(w), engine(e), root(new QQuickItem()), elements(e), handlers(e)
 {
+    elements.proxyParent = root; // Group frame proxies of ShaderEffects (#486)
+    attachRoot();
+}
+
+void Scene::attachRoot()
+{
     root->setParentItem(window->contentItem());
     // Sized to the window, not to the content item: Qt sizes the content item only for a shown window, so the root of
     // an offscreen scene would stay 0 x 0 (the feedback layer of Clear off draws nothing of an empty item, #117).
     root->setSize(window->size());
-    elements.proxyParent = root; // Group frame proxies of ShaderEffects (#486)
     QObject::connect(window, &QWindow::widthChanged, root, [this](int width) { root->setWidth(width); });
     QObject::connect(window, &QWindow::heightChanged, root, [this](int height) { root->setHeight(height); });
     watchWindowGeometry(*this);
+}
+
+void Scene::moveToWindow(QQuickWindow* newWindow)
+{
+    // The feedback layer of Clear off (#117) belongs to the old window: dropped here, rebuilt for the new one below.
+    // The trail is lost; the first frame starts from the clear colour, as after a resize.
+    releaseFeedback();
+    // Cut the connections to the old window now: its deletion must not resize the root or mark the geometry.
+    QObject::disconnect(window, nullptr, &geometryWatch, nullptr);
+    QObject::disconnect(window, nullptr, root, nullptr);
+    window = newWindow;
+    attachRoot();
+    restoreFeedback();
+    geometryDirty = true;
+    // The overlay is a QObject child of the old content item: rebuilt under the new one if it was in use.
+    delete std::exchange(debug, nullptr);
+    updateDebug();
 }
 
 Scene::~Scene()

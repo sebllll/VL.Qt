@@ -38,7 +38,7 @@
 #include <QtQuick/QQuickGraphicsConfiguration>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
-#include <rhi/qrhi.h> // SPIKE #118
+#include <rhi/qrhi.h> // vlqt_window_samples: QRhiSwapChain
 #include <QtQuickControls2/QQuickStyle>
 // Dirty item list of a window (change count, #544): private API, check on Qt updates.
 // QAbstractAnimationTimer / QUnifiedTimer: the keep-alive timer of the vvvv animation clock (VlqtAnimationDriver).
@@ -353,6 +353,13 @@ public:
     long long changeCount() const { return m_changeCount; }
     // The scene changed without a dirty item (e.g. the window color): count the next render.
     void markChanged() { m_changed = true; }
+    // Window swap (#118): the gate of the new window goes on with the change count of the old one, so the count never
+    // goes back; the first render of the new window counts as a change (other sample count).
+    void continueFrom(const UpdateGate& old)
+    {
+        m_changeCount = old.m_changeCount;
+        m_changed = true;
+    }
 
     // all = every window may render; else only the given gates (#314: the windows of the pumping app).
     static void beginPump(bool all, UpdateGate* const* active, int count)
@@ -796,6 +803,28 @@ QQmlEngine* newEngine()
     return engine;
 }
 
+// The event filters and the frame lock of an on-screen window, all children of win: close, update gate, frame lock,
+// fullscreen keys, focus release, test input. At creation and for the window swap (#118, replaceWindow).
+void installWindowFilters(Window* w, QQuickWindow* win)
+{
+    w->closeFilter = new CloseFilter(win);
+    win->installEventFilter(w->closeFilter);
+    w->gate = new UpdateGate(win);
+    win->installEventFilter(w->gate);
+    vlqt::device::lockFrames(win); // windows only: a scene's render thread locks itself (offscreen.cpp)
+    win->installEventFilter(new FullscreenKeys(win, w));
+    win->installEventFilter(new FocusRelease(win)); // #374
+    if (testSyntheticInputOnly())
+        win->installEventFilter(new SystemInputFilter(win)); // test only
+}
+
+// MSAA count of a window's swap chain (#118): R8G8B8A8_UNORM is the format of Qt's D3D11 swap chain (SDR).
+int clampWindowSamples(int requested, QQuickWindow* win)
+{
+    constexpr int swapChainFormat = 28; // DXGI_FORMAT_R8G8B8A8_UNORM
+    return vlqt::device::clampSamples(requested, swapChainFormat, win->rhi());
+}
+
 // ... and, once w->window, w->engine and the window's own event filters exist: GPU timings and pipeline cache, the
 // shared D3D11 device, the scene (apply/poll) and the perf monitor (its event filter, installed last, runs first).
 void initShared(Window* w)
@@ -1007,8 +1036,9 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         // Linux: Qt's default RHI backend (OpenGL; QSG_RHI_BACKEND overrides). Choosing a default is L4b.
         QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
         fmt.setSwapInterval(0);
-        // SPIKE #118: no samples in the default format; Qt takes max(default, window) for a swap chain
-        // (QSGRhiSupport::chooseSampleCountForWindowWithRhi), so a default of 4 would forbid None per window.
+        // No MSAA samples here (#118): Qt gives a swap chain max(default, window) samples
+        // (QSGRhiSupport::chooseSampleCountForWindowWithRhi), so a default count would be a floor for every window.
+        // Each window sets its own count (vlqt_window_create_at, vlqt_window_set_samples).
         QSurfaceFormat::setDefaultFormat(fmt);
 
         // 5. Qt 6 has no API for the render loop; the CRT env copy must be set here.
@@ -1186,21 +1216,15 @@ VLQT_API void* vlqt_window_create_at(float x, float y, int width, int height, co
         // test) inverts the stacking order (Linux/GL only, D3D11 always gets a depth-stencil; #232).
         QSurfaceFormat winFmt = w->window->requestedFormat();
         winFmt.setSwapInterval(swapInterval > 0 ? 1 : 0);
-        winFmt.setSamples(qEnvironmentVariableIntValue("VLQT_SPIKE_WINDOW_SAMPLES") > 0 ? qEnvironmentVariableIntValue("VLQT_SPIKE_WINDOW_SAMPLES") : 4); // SPIKE #118
+        // MSAA (#118): 4 by default, the look of every window before the count became a choice; also fixed per
+        // QQuickWindow (vlqt_window_set_samples replaces the window).
+        winFmt.setSamples(clampWindowSamples(4, w->window));
         w->window->setFormat(winFmt);
         placeWindow(w->window, x, y, width, height);
         w->window->setTitle(QString::fromUtf8(title ? title : ""));
         w->window->setIcon(defaultIcon());
         w->window->setColor(Qt::black);
-        w->closeFilter = new CloseFilter(w->window);
-        w->window->installEventFilter(w->closeFilter);
-        w->gate = new UpdateGate(w->window); // child of the window
-        w->window->installEventFilter(w->gate);
-        vlqt::device::lockFrames(w->window); // windows only: a scene's render thread locks itself (offscreen.cpp)
-        w->window->installEventFilter(new FullscreenKeys(w->window, w));
-        w->window->installEventFilter(new FocusRelease(w->window)); // #374, child of the window
-        if (testSyntheticInputOnly())
-            w->window->installEventFilter(new SystemInputFilter(w->window)); // test only, child of the window
+        installWindowFilters(w, w->window);
         initShared(w);
         result = w;
         return 0;
@@ -1655,12 +1679,63 @@ VLQT_API int vlqt_window_set_mode(void* p, unsigned int mask, unsigned int value
     });
 }
 
-// SPIKE #118: live change of a window's sample count. The basic render loop fixes the count per window when it
-// creates the window's QRhi (QSGGuiThreadRenderLoop::ensureRhi, data.sampleCount, also the render context's count that
-// layers use); QWindow::destroy()/show() only recreates the swap chain with the old count. So a change replaces the
-// QQuickWindow: a new one with the new format, the same placement, mode, title, icon and filters; the scene's root
-// item moves over (items, their state and the QML engine stay), then the old window is deleted.
-VLQT_API int vlqt_spike_window_set_samples(void* p, int samples)
+// Window swap (#118, vlqt_window_set_samples; docs/decisions/render-texture.md, "MSAA"). The basic render loop fixes a
+// window's sample count when it creates the window's QRhi (QSGGuiThreadRenderLoop::ensureRhi: the swap chain and the
+// render context that layers use); QWindow::destroy()/show() recreates the swap chain with the old count. So the handle
+// gets a new QQuickWindow with format f: same screen, geometry, window states, flags, title, icon, colour, filters,
+// graphics configuration and shared device. The scene moves over (items, their state and the QML engine stay), a new
+// PerfMonitor takes the overlay state, windows with the old one as transient parent (Popup.Window popups, QML windows)
+// get the new one, then the old window is deleted. Input needs nothing else: the WM_GETDLGCODE filter looks the HWND up
+// per message. The new native window is shown without activation unless the old one was active.
+static void replaceWindow(Window* w, const QSurfaceFormat& f)
+{
+    QQuickWindow* old = w->window;
+    const bool visible = old->isVisible();
+    const bool active = old->isActive();
+    auto* nw = new QQuickWindow();
+    nw->setFormat(f);
+    nw->setFlags(old->flags());
+    nw->setScreen(old->screen());
+    nw->setGeometry(old->geometry());
+    nw->setWindowStates(old->windowStates());
+    nw->setTitle(old->title());
+    nw->setIcon(old->icon());
+    nw->setColor(old->color());
+    const bool closeRequested = w->closeFilter->requested;
+    const UpdateGate* oldGate = w->gate;
+    w->window = nw;
+    installWindowFilters(w, nw);
+    w->closeFilter->requested = closeRequested;
+    w->gate->continueFrom(*oldGate);
+    nw->setGraphicsConfiguration(old->graphicsConfiguration());
+    vlqt::device::attach(nw);
+    w->scene->moveToWindow(nw);
+    const int overlay = w->perf->overlay();
+    delete w->perf;
+    w->perf = new PerfMonitor(nw, w->engine);
+    w->perf->setScene(w->scene);
+    if (overlay & (PerfMonitor::Meter | PerfMonitor::Stats))
+        w->perf->setOverlay(overlay);
+    for (QWindow* t : QGuiApplication::topLevelWindows())
+        if (t->transientParent() == old)
+            t->setTransientParent(nw);
+    if (w->mode & VLQT_WINDOW_MODE_BORDERLESS)
+        applyBorderless(w, true);
+    if (visible) {
+        // Qt's Windows plugin shows with SW_SHOWNOACTIVATE then: a change from the patch must not take the focus.
+        if (!active)
+            nw->setProperty("_q_showWithoutActivating", true);
+        if (w->mode & VLQT_WINDOW_MODE_FULLSCREEN)
+            nw->showFullScreen();
+        else
+            nw->show();
+        nw->setProperty("_q_showWithoutActivating", QVariant());
+    }
+    delete old;
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+}
+
+VLQT_API int vlqt_window_set_samples(void* p, int requested)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
@@ -1668,74 +1743,33 @@ VLQT_API int vlqt_spike_window_set_samples(void* p, int samples)
             setError("null window");
             return -1;
         }
-        if (w->offscreen)
-            return 0;
-        samples = qMax(1, samples);
-        QQuickWindow* old = w->window;
-        QSurfaceFormat f = old->requestedFormat();
-        if (qMax(1, f.samples()) == samples)
-            return 0;
-        f.setSamples(samples);
-        const bool visible = old->isVisible();
-        auto* nw = new QQuickWindow();
-        nw->setFormat(f);
-        nw->setFlags(old->flags());
-        nw->setScreen(old->screen());
-        nw->setGeometry(old->geometry());
-        nw->setWindowStates(old->windowStates());
-        nw->setTitle(old->title());
-        nw->setIcon(old->icon());
-        nw->setColor(old->color());
-        w->window = nw;
-        w->closeFilter = new CloseFilter(nw);
-        nw->installEventFilter(w->closeFilter);
-        w->gate = new UpdateGate(nw);
-        nw->installEventFilter(w->gate);
-        vlqt::device::lockFrames(nw);
-        nw->installEventFilter(new FullscreenKeys(nw, w));
-        nw->installEventFilter(new FocusRelease(nw));
-        if (testSyntheticInputOnly())
-            nw->installEventFilter(new SystemInputFilter(nw));
-        QQuickGraphicsConfiguration cfg = old->graphicsConfiguration();
-        nw->setGraphicsConfiguration(cfg);
-        vlqt::device::attach(nw);
-        // The scene moves: root item, size follow, window geometry events.
-        vlqt::Scene* scene = w->scene;
-        scene->window = nw;
-        QQuickItem* content = nw->contentItem();
-        scene->root->setParentItem(content);
-        scene->root->setSize(content->size());
-        QQuickItem* root = scene->root;
-        QObject::connect(content, &QQuickItem::widthChanged, root, [root, content] { root->setWidth(content->width()); });
-        QObject::connect(content, &QQuickItem::heightChanged, root, [root, content] { root->setHeight(content->height()); });
-        vlqt::watchWindowGeometry(*scene);
-        scene->geometryDirty = true;
-        delete w->perf;
-        w->perf = new PerfMonitor(nw, w->engine);
-        w->perf->setScene(scene);
-        if (w->mode & VLQT_WINDOW_MODE_BORDERLESS)
-            applyBorderless(w, true);
-        if (visible) {
-            if (w->mode & VLQT_WINDOW_MODE_FULLSCREEN)
-                nw->showFullScreen();
-            else
-                nw->show();
+        if (w->offscreen) {
+            setError("set_samples: an offscreen scene takes its sample count from vlqt_offscreen_bind");
+            return VLQT_OFFSCREEN_BAD_ARGUMENT;
         }
-        delete old;
-        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
-        return 0;
+        const int samples = clampWindowSamples(requested, w->window);
+        QSurfaceFormat f = w->window->requestedFormat();
+        if (qMax(1, f.samples()) == samples)
+            return samples;
+        f.setSamples(samples);
+        // No native window yet (never shown): no swap chain either, Qt reads the format at the first expose.
+        if (!w->window->handle())
+            w->window->setFormat(f);
+        else
+            replaceWindow(w, f);
+        return samples;
     });
 }
 
-// SPIKE #118: sample count of the window's current swap chain (0 = none yet).
-VLQT_API int vlqt_spike_window_samples(void* p)
+VLQT_API int vlqt_window_samples(void* p)
 {
     auto* w = static_cast<Window*>(p);
-    if (!w || !w->window->swapChain())
+    if (!w || w->offscreen)
         return 0;
-    return w->window->swapChain()->sampleCount();
+    if (const QRhiSwapChain* sc = w->window->swapChain())
+        return sc->sampleCount();
+    return qMax(1, w->window->requestedFormat().samples());
 }
-
 
 VLQT_API unsigned int vlqt_window_get_mode(void* p)
 {
