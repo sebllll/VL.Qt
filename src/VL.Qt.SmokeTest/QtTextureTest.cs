@@ -331,17 +331,7 @@ static partial class QtTextureTest
             pump(1);
             state = Native.vlqt_res_wait(id, 0);
         }
-        var error = "";
-        var buf = new byte[64 * 1024];
-        int n = Native.ResPoll(buf);
-        for (int at = 0; at < n;)
-        {
-            var ev = BitConverter.ToUInt16(buf, at);
-            var len = BitConverter.ToUInt16(buf, at + 2);
-            if (ev == Protocol.ResEv.Error && BitConverter.ToUInt64(buf, at + 4) == id)
-                error = System.Text.Encoding.UTF8.GetString(buf, at + 12, len - 8);
-            at += (4 + len + 3) & ~3;
-        }
+        var error = SnapshotError(id);
         check(state == Protocol.ResState.Ready && rendered >= 1,
             $"128 snapshot: Ready after {frames} frame(s), {rendered} render(s) (state {state}) {error}");
         var pixels = new byte[rw * rh * 4];
@@ -353,6 +343,23 @@ static partial class QtTextureTest
             $"128 snapshot: {desc.width}x{desc.height} red ({read} bytes, {Px(rw / 2, rh / 2)}, {Px(0, 0)}, {Px(rw - 1, rh - 1)})");
         Native.vlqt_res_release(id);
         pump(1);
+    }
+
+    // Error text of resource id among the queued resource events ("" if none); drains the queue.
+    internal static string SnapshotError(ulong id)
+    {
+        var error = "";
+        var buf = new byte[64 * 1024];
+        int n = Native.ResPoll(buf);
+        for (int at = 0; at < n;)
+        {
+            var ev = BitConverter.ToUInt16(buf, at);
+            var len = BitConverter.ToUInt16(buf, at + 2);
+            if (ev == Protocol.ResEv.Error && BitConverter.ToUInt64(buf, at + 4) == id)
+                error = System.Text.Encoding.UTF8.GetString(buf, at + 12, len - 8);
+            at += (4 + len + 3) & ~3;
+        }
+        return error;
     }
 
     // Premultiplied BGRA rows as a PNG, to look at.

@@ -13,6 +13,8 @@ using VL.Qt;
 /// A frame imitates vvvv + Stride: apply the changes (Update), render_batch (draw start), 6 ms of Stride CPU work, then
 /// a GPU read of scene 0's texture on the test device (Stride's draw: Map waits for the GPU). A marker rectangle carries the
 /// frame number; after the read every scene's texture must show this frame's marker (same frame, 100 % of the frames).
+/// After the measured frames, snapshots of scene 0's marker every 10th frame (snapshots under load) must finish with a
+/// marker of a frame since their request while same frame still holds.
 /// The process measures the threaded mode (thread count = VLQT_OFFSCREEN_THREAD, default 1) and then starts itself with
 /// VLQT_OFFSCREEN_THREAD=0 for the main thread numbers (reference, no time limit). With VLQT_OFFSCREEN_THREAD=0 it
 /// measures only the main thread. Limit (threaded, hardware adapter): median render_batch time per QtTexture of the heavy
@@ -25,6 +27,8 @@ static class QtTexturePerfTest
     const int B8G8R8A8Unorm = 87;
     const int W = 1280, H = 720;
     const double MainThreadLimitMs = 0.5;
+    // Marker rectangle (id 1) at (0, 0): its red channel is the frame number.
+    const int MarkerSize = 32;
 
     // A scene: rounded rectangles + texts, 1280x720.
     readonly record struct Config(string Name, int Scenes, int Rects, int Texts)
@@ -116,7 +120,7 @@ static class QtTexturePerfTest
             cmd.ClearColor(0, 0, 0, 0);
             // id 1: marker (frame number in red); 2..: rounded rectangles; then texts.
             cmd.Create(1, Protocol.Type.Rectangle);
-            cmd.SetPlace(1, 0, 0, 32, 32);
+            cmd.SetPlace(1, 0, 0, MarkerSize, MarkerSize);
             cmd.Reparent(1, 0, 0);
             for (int i = 0; i < rects; i++)
             {
@@ -150,12 +154,43 @@ static class QtTexturePerfTest
         var pixels = new byte[W * H * 4];
         int misses = 0, older = 0, renderFailures = 0;
         var sw = new Stopwatch();
+        // Snapshots under load: after the measured frames, a snapshot of scene 0's marker every 10th frame (a Snapshot
+        // node runs in the Update, before the renderer). The grab rides on the scene's frames, on the render thread when
+        // threaded; same frame must hold meanwhile and the snapshot shows a marker of a frame since the request.
+        int end = warmup + frames + frames / 2;
+        var snapBatch = new List<double>();
+        var snapLatency = new List<int>();
+        var snapPixels = new byte[MarkerSize * MarkerSize * 4];
+        int snapMisses = 0, snapRequested = 0, snapBad = 0, snapRequestFrame = -1;
+        check(Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var snap) == 0, $"qttextureperf {mode} {config.Name}: snapshot resource");
+        var snapErrors = new List<string>();
+        // Records the pending snapshot if it has finished (Ready or Failed) by frame f, and checks its pixels.
+        void SnapshotDone(int f)
+        {
+            int state = Native.vlqt_res_wait(snap, 0);
+            if (state is not (Protocol.ResState.Ready or Protocol.ResState.Failed))
+                return;
+            snapLatency.Add(f - snapRequestFrame);
+            int got = Native.ResReadSnapshot(snap, snapPixels, out var desc);
+            int r = snapPixels[(MarkerSize / 2 * MarkerSize + MarkerSize / 2) * 4 + 2], a = snapPixels[(MarkerSize / 2 * MarkerSize + MarkerSize / 2) * 4 + 3];
+            bool markerSince = Enumerable.Range(snapRequestFrame, f - snapRequestFrame + 1).Any(g => r == g % 251 + 1);
+            if (state != Protocol.ResState.Ready || got != snapPixels.Length || desc.width != MarkerSize || desc.height != MarkerSize || a != 255 || !markerSince)
+            {
+                snapBad++;
+                if (snapErrors.Count < 3)
+                    snapErrors.Add($"frame {snapRequestFrame}->{f}: state {state}, {got} bytes {desc.width}x{desc.height}, red {r} alpha {a} {(state == Protocol.ResState.Failed ? QtTextureTest.SnapshotError(snap) : "")}");
+            }
+            snapRequestFrame = -1;
+        }
         // A frame waits on the render thread and the GPU: a hang ends the run with a FAIL line.
         using var watchdog = new QtTextureTest.Watchdog($"qttextureperf {config.Name}", 120);
-        for (int f = 0; f < warmup + frames; f++)
+        for (int f = 0; f < end || (snapRequestFrame >= 0 && f < end + 30); f++)
         {
+            bool snapPhase = f >= warmup + frames;
             // The host's pump (before the frame's Update) closes the perf samples: those of the previous frame.
             pump(1);
+            if (snapRequestFrame >= 0)
+                SnapshotDone(f);
             var t0 = Stopwatch.GetTimestamp();
             // Update: per scene the marker, 50 rectangle colours and 10 texts change.
             byte marker = (byte)(f % 251 + 1);
@@ -171,6 +206,11 @@ static class QtTexturePerfTest
                 for (int i = 0; i < Math.Min(10, texts); i++)
                     cmd.SetString((uint)(2 + rects + (f + i) % texts), Protocol.Prop.Text, $"Frame {f} #{i}");
                 Native.Apply(scenes[k], cmd.EndFrame());
+            }
+            if (snapPhase && f < end && f % 10 == 0 && snapRequestFrame < 0 && Native.vlqt_res_snapshot(snap, scenes[0], 1, 1) == 0)
+            {
+                snapRequestFrame = f;
+                snapRequested++;
             }
             var t1 = Stopwatch.GetTimestamp();
             int rendered = Native.OffscreenRenderBatch(context, scenes, f);
@@ -189,14 +229,20 @@ static class QtTexturePerfTest
                 if (k > 0)
                     Native.TestReadTexture(textures[k], pixels, out _, out _, out _);
                 int red = pixels[(8 * W + 8) * 4 + 2]; // BGRA
-                if (red != marker)
+                if (red == marker)
+                    continue;
+                if (snapPhase)
                 {
-                    misses++;
-                    if (red == (byte)((f - 1) % 251 + 1))
-                        older++;
+                    snapMisses++;
+                    continue;
                 }
+                misses++;
+                if (red == (byte)((f - 1) % 251 + 1))
+                    older++;
             }
-            if (f >= warmup)
+            if (snapPhase)
+                snapBatch.Add(Ms(t1, t2));
+            else if (f >= warmup)
             {
                 apply.Add(Ms(t0, t1));
                 batch.Add(Ms(t1, t2));
@@ -211,6 +257,13 @@ static class QtTexturePerfTest
             $"INFO qttextureperf {mode} {config.Name} ({rects} rects + {texts} texts): main-thread render_batch {Median(batch):F3} ms/frame (p95 {P95(batch):F3}) = {perTexture:F3} ms per QtTexture; "
             + $"apply {Median(apply):F3} ms/frame; Stride read wait {Median(read):F3}; frame {Median(total):F3} (p95 {P95(total):F3}); "
             + $"not this frame: {misses} of {(warmup + frames) * count} reads (previous frame {older}){perf}");
+        Console.WriteLine(
+            $"INFO qttextureperf {mode} {config.Name}: snapshots under load: {snapLatency.Count} of {snapRequested} finished, latency {(snapLatency.Count > 0 ? $"{snapLatency.Min()}-{snapLatency.Max()}" : "-")} frames; "
+            + $"main-thread render_batch meanwhile {(snapBatch.Count > 0 ? Median(snapBatch) : 0):F3} ms/frame (p95 {(snapBatch.Count > 0 ? P95(snapBatch) : 0):F3})");
+        check(snapRequested >= 3 && snapLatency.Count == snapRequested && snapBad == 0,
+            $"qttextureperf {mode} {config.Name}: snapshots under load finish with a marker since the request ({snapLatency.Count} of {snapRequested}, {snapBad} bad) {string.Join("; ", snapErrors)}");
+        check(snapMisses == 0, $"qttextureperf {mode} {config.Name}: same frame while snapshots run ({snapMisses} misses)");
+        Native.vlqt_res_release(snap);
         check(renderFailures == 0, $"qttextureperf {mode} {config.Name}: render_batch rendered every scene in every frame ({renderFailures} frames short) {(renderFailures > 0 ? Native.LastError() : "")}");
         check(misses == 0, $"qttextureperf {mode} {config.Name}: every texture holds the frame's marker in every frame ({misses} misses, same frame)");
 
