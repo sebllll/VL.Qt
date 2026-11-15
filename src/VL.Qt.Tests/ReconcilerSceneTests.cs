@@ -250,33 +250,115 @@ namespace VL.Qt.Tests
             Assert.That(Structural, Is.Empty);
         }
 
-        // --- across renderers: the first renderer keeps the element ---
+        // --- across renderers (#126): every renderer shows the element, the first one has the primary occurrence ---
 
         [Test]
-        public void DuplicateAcrossTwoReconcilers_FirstWins_SecondTakesOverWhenFree()
+        public void TwoReconcilers_BothCreate_PrimaryMovesToSecondWhenFirstLetsGo()
         {
             var sink = new ElementSink();
             var e = R(1, new SinkSlot(sink, 0));
             var sink2 = new RecordingSink();
             var rec2 = new Reconciler(sink2, new IdAllocator(), _scene);
 
-            _rec.Update(G(e, e), Space.DIPTopLeft);
+            Frame(G(e, e));
             var root2 = G(e);
+            rec2.Update(root2, Space.DIPTopLeft);
+
+            var n2 = rec2.Root!.Children[0];
+            Assert.That(sink2.OfOp("CREATE").Count(), Is.EqualTo(2)); // group and e
+            Assert.That(n2.IsIgnored, Is.False);
+            Assert.That(sink[0].Warning, Is.Null);
+            Assert.That(_scene.OccurrencesOf(e), Is.EqualTo(3));
+            Assert.That(_scene.OwnerOf(e), Is.SameAs(_rec.Root!.Children[0]));
+            Assert.That(_scene.OwnerReconcilerOf(e), Is.SameAs(_rec));
+            Assert.That(n2.IsPrimary || rec2.Sinks.IsPrimary(n2.BoundHandle), Is.False);
+
+            // Steady: nothing to send, regardless of order.
+            sink2.Clear();
+            rec2.Update(root2, Space.DIPTopLeft);
+            Frame(G(e, e));
+            Assert.That(sink2.Count, Is.EqualTo(0));
+            Assert.That(Structural, Is.Empty);
+
+            // One occurrence in the first renderer left → still the primary there.
+            Frame(G(e));
+            Assert.That(_scene.OwnerOf(e), Is.SameAs(_rec.Root.Children[0]));
+
+            // The first renderer lets go → the second one owns it and picks its primary in its next update.
+            Frame(null);
+            Assert.That(_scene.OwnerReconcilerOf(e), Is.SameAs(rec2));
+            Assert.That(_scene.OwnerOf(e), Is.Null);
+            sink2.Clear();
+            rec2.Update(root2, Space.DIPTopLeft);
+            Assert.That(sink2.OfOp("CREATE").Count(), Is.EqualTo(0));
+            Assert.That(sink2.OfOp("BIND").Count(), Is.EqualTo(1)); // re-bound: QtNative sends its state again
+            Assert.That(_scene.OwnerOf(e), Is.SameAs(n2));
+            Assert.That(n2.IsPrimary && rec2.Sinks.IsPrimary(n2.BoundHandle), Is.True);
+
+            // The first renderer shows it again → a further occurrence there (registration order).
+            Frame(G(e));
+            Assert.That(_scene.OwnerOf(e), Is.SameAs(n2));
+            Assert.That(_rec.Root.Children[0].IsPrimary || IsPrimaryHandle(_rec.Root.Children[0]), Is.False);
+            Assert.That(_scene.OccurrencesOf(e), Is.EqualTo(2));
+
+            _rec.Clear();
+            rec2.Clear();
+            Assert.That(_scene.Count, Is.EqualTo(0));
+            Assert.That(_scene.SlotCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void TwoReconcilers_MoveInsideOwnerTree_KeepsPrimaryThere()
+        {
+            var e = R(1, new SinkSlot(new ElementSink(), 0));
+            var x = R(2);
+            var rec2 = new Reconciler(new RecordingSink(), new IdAllocator(), _scene);
+            Frame(G(e, x));
+            rec2.Update(G(e), Space.DIPTopLeft);
+
+            // e leaves position 0 before it reaches position 1 in the same pass: no hand-over to the second renderer.
+            Frame(G(x, e));
+            Assert.That(_scene.OwnerReconcilerOf(e), Is.SameAs(_rec));
+            Assert.That(_scene.OwnerOf(e), Is.SameAs(_rec.Root!.Children[1]));
+            Assert.That(IsPrimaryHandle(_rec.Root.Children[1]), Is.True);
+        }
+
+        [Test]
+        public void TwoReconcilers_ClearOfOwner_HandsOver()
+        {
+            var e = R(1, new SinkSlot(new ElementSink(), 0));
+            var rec2 = new Reconciler(new RecordingSink(), new IdAllocator(), _scene);
+            var root2 = G(e);
+            Frame(G(e));
+            rec2.Update(root2, Space.DIPTopLeft);
+
+            _rec.Clear();
+            rec2.Update(root2, Space.DIPTopLeft);
+            Assert.That(_scene.OwnerOf(e), Is.SameAs(rec2.Root!.Children[0]));
+            Assert.That(rec2.Sinks.IsPrimary(rec2.Root.Children[0].BoundHandle), Is.True);
+        }
+
+        [Test]
+        public void VideoAcrossTwoReconcilers_FirstWins_SecondTakesOverWhenFree()
+        {
+            var sink = new ElementSink();
+            var v = V(new SinkSlot(sink, 0));
+            var sink2 = new RecordingSink();
+            var rec2 = new Reconciler(sink2, new IdAllocator(), _scene);
+
+            _rec.Update(G(v), Space.DIPTopLeft);
+            var root2 = G(v);
             rec2.Update(root2, Space.DIPTopLeft);
 
             Assert.That(sink2.OfOp("CREATE").Count(), Is.EqualTo(1)); // only the group
             Assert.That(rec2.Root!.Children[0].IsIgnored, Is.True);
-            Assert.That(sink[0].Warning, Is.EqualTo(SceneRegistry.DuplicateWarning));
+            Assert.That(sink[0].Warning, Is.EqualTo(SceneRegistry.VideoDuplicateWarning));
 
             // Steady: the first owner keeps it, regardless of order.
             sink2.Clear();
             rec2.Update(root2, Space.DIPTopLeft);
-            _rec.Update(G(e, e), Space.DIPTopLeft);
+            _rec.Update(G(v), Space.DIPTopLeft);
             Assert.That(sink2.Count, Is.EqualTo(0));
-
-            // One occurrence in the first renderer left → still its element.
-            _rec.Update(G(e), Space.DIPTopLeft);
-            rec2.Update(root2, Space.DIPTopLeft);
             Assert.That(rec2.Root.Children[0].IsIgnored, Is.True);
 
             // The first renderer drops it → the second one shows it next frame (unchanged tree).
@@ -286,15 +368,15 @@ namespace VL.Qt.Tests
             Assert.That(sink2.OfOp("CREATE").Count(), Is.EqualTo(1));
             Assert.That(rec2.Root.Children[0].IsIgnored, Is.False);
             Assert.That(sink[0].Warning, Is.Null);
-            Assert.That(_scene.OwnerOf(e), Is.SameAs(rec2.Root.Children[0]));
+            Assert.That(_scene.OwnerOf(v), Is.SameAs(rec2.Root.Children[0]));
         }
 
         [Test]
         public void AppRestart_NewRegistry_StaleOwnerIsNoDuplicate()
         {
-            // App 1: a renderer owns e and is never disposed/cleared (unclean F8).
+            // App 1: a renderer owns the video e and is never disposed/cleared (unclean F8).
             var sink = new ElementSink();
-            var e = R(1, new SinkSlot(sink, 0));
+            var e = V(new SinkSlot(sink, 0));
             Frame(G(e));
             Assert.That(_scene.OwnerOf(e), Is.Not.Null);
 

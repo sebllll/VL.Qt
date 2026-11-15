@@ -19,12 +19,12 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Object id in QtNative; 0 (the window root id) marks a placeholder for an ignored occurrence (element shown
-        /// in another renderer, or a video shown elsewhere), which has no Qt object, no children and no binding (04d).
+        /// Object id in QtNative; 0 (the window root id) marks a placeholder for an ignored occurrence (a video shown
+        /// elsewhere), which has no Qt object, no children and no binding (04d).
         /// </summary>
         public uint Id { get; }
 
-        /// <summary>Placeholder for an element that is shown in another renderer, or a video shown elsewhere (<see cref="SceneRegistry"/>).</summary>
+        /// <summary>Placeholder for a video that is shown elsewhere (<see cref="SceneRegistry"/>).</summary>
         public bool IsIgnored => Id == 0;
 
         /// <summary>CREATE type; a different type at this position means destroy + create.</summary>
@@ -43,8 +43,8 @@ namespace VL.Qt
         public uint BoundHandle { get; set; }
 
         /// <summary>
-        /// This node is the primary occurrence of its element (#455, first in traversal order, see
-        /// <see cref="SceneRegistry"/>): only its sink handle reports state values.
+        /// This node is the primary occurrence of its element (#455, first in traversal order of the owner renderer,
+        /// see <see cref="SceneRegistry"/>): only its sink handle reports state values.
         /// </summary>
         public bool IsPrimary { get; set; }
 
@@ -77,7 +77,7 @@ namespace VL.Qt
 
         /// <summary>
         /// Objects of <see cref="EffectElements"/> (hidden texture sources, REF of the chain); not part of <see cref="Children"/>,
-        /// no REPARENT. A placeholder (id 0) is an element that is shown in another renderer.
+        /// no REPARENT. A placeholder (id 0) is a video that is shown elsewhere.
         /// </summary>
         public List<Node>? EffectObjects { get; set; }
 

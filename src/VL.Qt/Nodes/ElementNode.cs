@@ -58,7 +58,7 @@ namespace VL.Qt.Nodes
     /// <item>change detection: a new description only if <see cref="CommonInputs"/> or the element specific
     /// <typeparamref name="TProps"/> changed, otherwise the last instance (reference equal → the reconciler skips it);</item>
     /// <item>measurement outputs and the clicks of a Button from the sink (state of the last pump, 1 frame latency);</item>
-    /// <item>the sink warning (e.g. a Video at several places, the element in several renderers, an Interaction at a later place) as persistent node warning; the element itself may hang at several places of one tree (#455);</item>
+    /// <item>the sink warning (e.g. a Video at several places, an Interaction at a later place) as persistent node warning; the element itself may hang at several places of one tree (#455) and in several renderers (#126);</item>
     /// <item>the sink error (reported by Qt for the element, e.g. file not found, #273, or a rejected apply, #275) as persistent node warning,
     /// logged with the node's logger (<see cref="NodeErrors"/>).</item>
     /// </list>
