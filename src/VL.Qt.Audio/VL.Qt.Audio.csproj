@@ -39,7 +39,7 @@
     <PackageId>VL.Qt.Audio</PackageId>
     <Authors>VL.Qt contributors</Authors>
     <Copyright>Copyright (c) 2026 @sebllll (@schnellebuntebilder)</Copyright>
-    <Description>Audio companion of VL.Qt for vvvv gamma: Qt sound as VL.Audio signals (Windows, work in progress).</Description>
+    <Description>Audio companion of VL.Qt for vvvv gamma: the sound of a Qt video as VL.Audio signals, in sync with the picture (Windows).</Description>
     <PackageTags>vvvv;vl;qt;qml;audio;vl.audio</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/sebllll/VL.Qt</RepositoryUrl>
