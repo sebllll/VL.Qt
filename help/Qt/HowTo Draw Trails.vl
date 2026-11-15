@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="xBekByPBAakTBOlLVO65jE" Bounds="85,85,560,94" ShowValueBox="true" isIOBox="true" Value="Clear off on Renderer [Qt] and QtTexture&#xD;&#xA;- Clear (optional pin): off keeps the previous frame, the new one is drawn over it&#xD;&#xA;- A semi-transparent full-size Rectangle drawn first fades the old content&#xD;&#xA;- The alpha of that Rectangle sets the length of the trail&#xD;&#xA;- Switchable at runtime">
+          <Pad Id="xBekByPBAakTBOlLVO65jE" Bounds="85,85,560,94" ShowValueBox="true" isIOBox="true" Value="Clear off on Renderer [Qt] and QtTexture&#xD;&#xA;- Clear (optional pin): off keeps the previous frame, the new one is drawn over it&#xD;&#xA;- The alpha of Clear Color is the fade strength: the lower the alpha, the longer the trail&#xD;&#xA;- Alpha 1 (opaque, the default) leaves no trail, alpha 0 keeps everything&#xD;&#xA;- Switchable at runtime">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="UJC8y4olvhL5fNNbcn4vxA" Bounds="100,240,250,45" ShowValueBox="true" isIOBox="true" Value="1  Fade layer, drawn first: a full-size Rectangle in the Clear Color with a low alpha. The lower the alpha, the longer the trail.">
+          <Pad Id="mLCRU0RjPXIdOivZ2YMBFp" Bounds="130,240,330,30" ShowValueBox="true" isIOBox="true" Value="Moving element: a TransformSRT turns a Rectangle around a point, the LFO gives the angle.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,7 +43,12 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="mLCRU0RjPXIdOivZ2YMBFp" Bounds="360,240,330,30" ShowValueBox="true" isIOBox="true" Value="2  Moving element, drawn last: a TransformSRT turns a Rectangle around a point, the LFO gives the angle.">
+          <Pad Id="HXsNyLIbpmvOUIotYViQoV" Comment="Clear Color" Bounds="142,507,136,15" ShowValueBox="true" isIOBox="true" Value="0, 0, 0, 0.1">
+            <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="RGBA" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="RXe8JNMsfgGMyjV3C65ERH" Bounds="420,500,250,48" ShowValueBox="true" isIOBox="true" Value="Clear Color with a low alpha: with Clear off, every frame fades the previous one toward the color. Lower alpha, longer trail.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -65,32 +70,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="100,405,61,19" Id="PqutyJv6pSj8xarsI5cLDu">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
-              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
-              </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Rectangle" />
-            </p:NodeReference>
-            <Pin Id="aqC2c6P3WBVlWdCI0CO86K" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="5Ss9GIybh5snLysh1C4Or0" Name="Size" Kind="InputPin" DefaultValue="40, 40" />
-            <Pin Id="7vaOmqKTCoZS6UT4DeS9KM" Name="Transform" Kind="InputPin" />
-            <Pin Id="SS9HxzucsODO0NvoHuMpVg" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="rdUVKehw7RWELHyMraxN4Q" Name="Color" Kind="InputPin" />
-            <Pin Id="WwDqHgenzQdBK7j0WcnTkB" Name="Radius" Kind="InputPin" IsHidden="true" />
-            <Pin Id="xFZ7zN9GTamFWripVnIwLf" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
-            <Pin Id="6rJizQtpN7VVErNmUQGEeD" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
-            <Pin Id="NdawEKhA32qdF7WCKwtc1Y" Name="Output" Kind="OutputPin" />
-            <Pin Id="6MNb9X9Hxc9mH8DSBbHYb5" Name="Opacity" Kind="InputPin" IsHidden="true" />
-            <Pin Id="HUY8Z9mCNWeKSeQsYwYV6P" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="crWb1eA3xfjGtKlpPstHmF" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="SfQPWdDPs5eogthjMJRXGV" Name="Clip" Kind="InputPin" DefaultValue="False" IsHidden="true" />
-            <Pin Id="XNtAwanJY3l4EuIKu4lgVt" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="foXMthGa5WBqiIwF9N6v0s" Name="Interaction" Kind="InputPin" IsHidden="true" />
-            <Pin Id="x3sCTtHrJ3nHdDnWib6VSy" Name="Effect" Kind="InputPin" IsHidden="true" />
-          </Node>
-          <Node Bounds="430,370,45,19" Id="Kvk88jDauW8Asofp7hR0fH">
+          <Node Bounds="200,370,45,19" Id="Kvk88jDauW8Asofp7hR0fH">
             <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LFO" />
@@ -105,7 +85,7 @@
             <Pin Id="TgUc9xOwae3e8rIkzmvlPc" Name="On New Cycle" Kind="OutputPin" />
             <Pin Id="pXTERL3WPePuIfuPNBcNPt" Name="Cycles" Kind="OutputPin" />
           </Node>
-          <Node Bounds="380,340,80,19" Id="SbemVQxtln4nXzu1q6UuoF">
+          <Node Bounds="150,340,80,19" Id="SbemVQxtln4nXzu1q6UuoF">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -119,7 +99,7 @@
             <Pin Id="0kxqodpxzCTndy4KMAgpNy" Name="Translation" Kind="InputPin" DefaultValue="1.5, 0" />
             <Pin Id="T9V0Oyx5hCtLGnSmos4d7X" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="380,400,80,19" Id="oyfBTRZWld1BNAVduLePHb">
+          <Node Bounds="150,400,80,19" Id="oyfBTRZWld1BNAVduLePHb">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -133,7 +113,7 @@
             <Pin Id="4dtCSi93dRPcNZjbGt1Nrq" Name="Translation" Kind="InputPin" DefaultValue="3.8, 2" />
             <Pin Id="r17oqlKnQaDxgwgYocQGh0" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="360,470,85,19" Id="DFqhWvsTSRL12rnRrnUyd5">
+          <Node Bounds="130,470,85,19" Id="DFqhWvsTSRL12rnRrnUyd5">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -157,31 +137,6 @@
             <Pin Id="ozOpGU9h19MO2FX3Dy8wW4" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="AYa5Phd0eImyf5QNcdbAf2" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="hsDbNocC7TC1t74wkta8hH" Name="Effect" Kind="InputPin" IsHidden="true" />
-          </Node>
-          <Node Bounds="100,500,265,19" Id="WWfq0OmqkNo5gKqdQGfHqh">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
-              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
-              </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Group" />
-            </p:NodeReference>
-            <Pin Id="WBszYRwOwqf1K9gTPkGtYN" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="DDGNsyzvJ4PfAZUS4X6dV8" Name="Input" Kind="InputPin" />
-            <Pin Id="OB3XUkGDaewdrTtVYFuVIA" Name="Input 2" Kind="InputPin" />
-            <Pin Id="SZ9xnPnfkgKpBAbZ3bGMZV" Name="Output" Kind="OutputPin" />
-            <Pin Id="zOnPZsw0aKLuNyzi487vtP" Name="Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="vCUlzS2V2lQOEUoH9ozWwt" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="JuzSoU9JvQxpDyNu1PSbCK" Name="Transform" Kind="InputPin" IsHidden="true" />
-            <Pin Id="PLFgHcXw2r9pKIGpUcJjsQ" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="XeN9ctnNfjPhNEMaBJuSFs" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="i8pHq3tDW3JKRP4WM4JqNL" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="ZbTkK0OA7Jv4HiP0gz054u" Name="Opacity" Kind="InputPin" DefaultValue="1" IsHidden="true" />
-            <Pin Id="TUk2gnjzZRdKHLYjXf2YP4" Name="Clip" Kind="InputPin" DefaultValue="False" IsHidden="true" />
-            <Pin Id="Q9TlZxCRtE2O8yPSg2h509" Name="Debug" Kind="InputPin" DefaultValue="False" IsHidden="true" />
-            <Pin Id="48HVPe7uE4PWXAs8hBsCSD" Name="Interaction" Kind="InputPin" IsHidden="true" />
-            <Pin Id="NBCKxihY03agGuaH6rVKt3" Name="Effect" Kind="InputPin" IsHidden="true" />
-            <Pin Id="EcsZDs1jOmWeBIwhz8yeYS" Name="Style" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="100,620,105,19" Id="8zA1TmCaxzGn3GN9b30Yih">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
@@ -209,7 +164,7 @@
             <Pin Id="hYhcNdtl87QoWjYmvwEYHm" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="FwWbT0gMBH1OP1qc5VJJH4" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="rCh5u5zjYWswCidNyjoLQV" Bounds="85,690,830,200" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Clear is an optional pin of Renderer [Qt] and QtTexture: show it with the pin context menu. Off: the window or texture keeps the previous frame and the new frame is drawn over it.&#xD;&#xA;- While Clear is off Qt renders every frame, also when nothing changed, so a fade goes on. Cost: one full-size texture and one extra pass, only while Clear is off.&#xD;&#xA;- The alpha is premultiplied: a Rectangle with a low alpha lets the old content shine through and pulls it towards its own colour. In the Clear Color it fades to the background.&#xD;&#xA;- 8-bit textures round while fading: a faint residue of the old content stays and never disappears completely.&#xD;&#xA;- Switching Clear on again, resizing the window and changing the Size of a QtTexture clear the content once.">
+          <Pad Id="rCh5u5zjYWswCidNyjoLQV" Bounds="85,690,830,274" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Clear is an optional pin of Renderer [Qt] and QtTexture: show it with the pin context menu. Off: the window or texture keeps the previous frame and the new frame is drawn over it.&#xD;&#xA;- The alpha of Clear Color is the fade strength while Clear is off: every frame the color is drawn over the previous one (premultiplied: out = color * alpha + previous * (1 - alpha)), then the elements. Alpha 1 gives the result of Clear on, alpha 0 draws no fade and keeps everything.&#xD;&#xA;- For a fade of a region or with a gradient, set the alpha of Clear Color to 0 and draw an own semi-transparent Rectangle (or a gradient) first.&#xD;&#xA;- Limits: the fade goes toward the Clear Color, not toward transparency (for that use alpha 0 and own elements). The fade speed depends on the frame rate. 8-bit targets round while fading: a faint residue of the old content stays and never disappears completely.&#xD;&#xA;- While Clear is off Qt renders every frame, also when nothing changed, so a fade goes on. Cost: one full-size texture and one extra pass, only while Clear is off.&#xD;&#xA;- Switching Clear on again, resizing the window and changing the Size of a QtTexture clear the content once.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -218,31 +173,12 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="USIsqZwvEBUOQxFC03agvD" Comment="Size" Bounds="288,425,35,28" ShowValueBox="true" isIOBox="true" Value="3, 1">
+          <Pad Id="USIsqZwvEBUOQxFC03agvD" Comment="Size" Bounds="58,425,35,28" ShowValueBox="true" isIOBox="true" Value="3, 1">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="HKZR7r4yrT0NBtbVC8p5Yc" Comment="Color" Bounds="422,450,136,15" ShowValueBox="true" isIOBox="true" Value="0.9, 0.35, 0.1, 1">
-            <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="TypeFlag" Name="RGBA" />
-            </p:TypeAnnotation>
-          </Pad>
-          <Node Bounds="156,370,56,19" Id="OlsqPanpe2SLK50mrVlAdK">
-            <p:NodeReference LastCategoryFullName="Color.RGBA" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <Choice Kind="OperationCallFlag" Name="SetAlpha" />
-            </p:NodeReference>
-            <Pin Id="Dc5sC06mDb7MWZgenx4y3h" Name="Input" Kind="StateInputPin" DefaultValue="0, 0, 0, 1" />
-            <Pin Id="Lvxbt4qGlGOOWAlQcgftcQ" Name="Alpha" Kind="InputPin" DefaultValue="0.01" />
-            <Pin Id="TVvA6FWPJNwPLCH6fB1IQL" Name="Output" Kind="StateOutputPin" />
-          </Node>
-          <Pad Id="HwXsCHQsAdHO6myHGNv1zD" Comment="Alpha" Bounds="209,354,35,15" ShowValueBox="true" isIOBox="true" Value="0.05">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="TypeFlag" Name="Float32" />
-            </p:TypeAnnotation>
-          </Pad>
-          <Pad Id="HqwCFhCJPx3MFSwmhy04Dn" Comment="" Bounds="158,329,136,15" ShowValueBox="true" isIOBox="true" Value="0, 0, 0, 1">
+          <Pad Id="HKZR7r4yrT0NBtbVC8p5Yc" Comment="Color" Bounds="192,450,136,15" ShowValueBox="true" isIOBox="true" Value="0.9, 0.35, 0.1, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
@@ -251,8 +187,8 @@
         <Link Id="61b5oSopO2ESMxl5BHXthi" Ids="T9V0Oyx5hCtLGnSmos4d7X,LZHf3gE3Fmu9hY5046Bj4U" />
         <Link Id="gtALi8TM0CAHd4UHMOLPWZ" Ids="d1zGuccQil2l1AjB5C3X4m,JbFQ18OlXmyNoGmaif3g8E" />
         <Link Id="Yly6aUIaEASDrS6VXrnndQ" Ids="r17oqlKnQaDxgwgYocQGh0,xe9O66XGrHJ33AaRpSJbaC" />
-        <Link Id="lKwzWcPjf9iRlJGUX8gPxc" Ids="4uKPLjq2ZqlwQdJ5cBcA2G,OB3XUkGDaewdrTtVYFuVIA" />
-        <Link Id="7pB1AI6tHjtDrXZWqNkJzc" Ids="SZ9xnPnfkgKpBAbZ3bGMZV,PYmui1vn7TFBoLxDS6SSok" />
+        <Link Id="H8UMVYr0Do2MWJr0QTjzA1" Ids="4uKPLjq2ZqlwQdJ5cBcA2G,PYmui1vn7TFBoLxDS6SSok" />
+        <Link Id="Cwgi9Rgjqv7M2lleeHZtvl" Ids="HXsNyLIbpmvOUIotYViQoV,MJ3NbEmMhdxvJkD1TXWKVa" />
         <Link Id="Owm9wsqRpG7dASRtP1cgZL" Ids="OrRxgf6dbx3qUYi4knKg6D,fkcIo4zzMVBSqXcHauwuy1" />
         <Link Id="OkyPvMo2wtvm03PYcESviP" Ids="ZgJazjgImJ9Rnm7IYXqrfP,wezppzg6ciUEwMqZya0qAk" />
         <Patch Id="4didI9BFdUC7ARiSIyJDR2" Name="Create" />
@@ -263,10 +199,6 @@
         </ProcessDefinition>
         <Link Id="CfEpyIeKE8eO4NYAP4zbNg" Ids="USIsqZwvEBUOQxFC03agvD,WVDxcomyrSHe1ngzmu0GKl" />
         <Link Id="OF2HEkSWH0mQNtpD4DURCC" Ids="HKZR7r4yrT0NBtbVC8p5Yc,QQOs5mp9yXulLajRBx283k" />
-        <Link Id="B8ruHhQ9cuCQC7mgJbmv64" Ids="TVvA6FWPJNwPLCH6fB1IQL,rdUVKehw7RWELHyMraxN4Q" />
-        <Link Id="EnyFZvR0R4lOOdTvtXNzI0" Ids="HwXsCHQsAdHO6myHGNv1zD,Lvxbt4qGlGOOWAlQcgftcQ" />
-        <Link Id="AbLaTKRguYxOUWCJJseNwr" Ids="HqwCFhCJPx3MFSwmhy04Dn,Dc5sC06mDb7MWZgenx4y3h" />
-        <Link Id="OZEXimAbezPNrnOWJeQrZD" Ids="NdawEKhA32qdF7WCKwtc1Y,DDGNsyzvJ4PfAZUS4X6dV8" />
       </Patch>
     </Node>
   </Patch>
