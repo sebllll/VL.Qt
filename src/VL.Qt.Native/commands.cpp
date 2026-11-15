@@ -135,7 +135,7 @@ EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
 // ---------------------------------------------------------------------------------------------
 
 Scene::Scene(QQuickWindow* w, QQmlEngine* e)
-    : window(w), engine(e), root(new QQuickItem()), elements(e), handlers(e)
+    : window(w), engine(e), root(new QQuickItem()), elements(e), handlers(e), clearColor(w->color())
 {
     elements.proxyParent = root; // Group frame proxies of ShaderEffects (#486)
     attachRoot();
@@ -205,25 +205,46 @@ void Scene::setClear(bool clear)
 void Scene::releaseFeedback()
 {
     feedback.reset();
+    applyClearColor();
     window->update();
 }
 
 void Scene::restoreFeedback()
 {
-    if (clearFrames || feedback)
-        return;
-    // The software backend draws no ShaderEffectSource (the layer would show a black frame): Clear off is ignored there
-    // and the scene renders as with Clear on.
-    QSGRendererInterface* ri = window->rendererInterface();
-    if (ri && ri->graphicsApi() == QSGRendererInterface::Software) {
-        if (!feedbackSoftwareWarned) {
-            feedbackSoftwareWarned = true;
-            qCWarning(lcFeedback, "Clear off needs a QRhi scenegraph; ignored on the Qt Quick software backend");
+    if (!clearFrames && !feedback) {
+        // The software backend draws no ShaderEffectSource (the layer would show a black frame): Clear off is ignored
+        // there and the scene renders as with Clear on.
+        QSGRendererInterface* ri = window->rendererInterface();
+        if (ri && ri->graphicsApi() == QSGRendererInterface::Software) {
+            if (!feedbackSoftwareWarned) {
+                feedbackSoftwareWarned = true;
+                qCWarning(lcFeedback, "Clear off needs a QRhi scenegraph; ignored on the Qt Quick software backend");
+            }
+        } else {
+            feedback = std::make_unique<FeedbackLayer>(window, root);
         }
-        return;
     }
-    feedback = std::make_unique<FeedbackLayer>(window, root);
+    // Also for Clear on: after a window swap the new window takes the clear colour from here.
+    applyClearColor();
     window->update();
+}
+
+void Scene::setClearColor(const QColor& color)
+{
+    clearColor = color;
+    applyClearColor();
+}
+
+void Scene::applyClearColor()
+{
+    const float alpha = clearColor.alphaF();
+    if (feedback)
+        feedback->setFill(alpha > 0 ? clearColor : QColor(Qt::transparent));
+    // Fade (feedback.h): under the layer the window clears to the colour made opaque.
+    QColor frame = clearColor;
+    if (feedback && alpha > 0 && alpha < 1)
+        frame.setAlphaF(1);
+    window->setColor(frame); // no-op when unchanged
 }
 
 void Scene::setDebugAll(bool on)
@@ -339,7 +360,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                     if (expect(16)) {
                         float f[4];
                         std::memcpy(f, p, sizeof f);
-                        window->setColor(toColor(f));
+                        setClearColor(toColor(f));
                     }
                     break;
                 case VLQT_OP_SET_CLEAR:

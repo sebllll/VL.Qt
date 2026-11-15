@@ -7,7 +7,7 @@
 //   contentItem
 //   ├── source   QQuickShaderEffectSource of the root: recursive, live, hideSource (the root is drawn only into it)
 //   ├── root     the user scene
-//   │   ├── view   draws source's previous texture, z below every element
+//   │   ├── view   draws source's previous texture and the fade fill over it, z below every element
 //   │   └── elements ...
 //   └── debug / perf overlays, snapshot frame sources (outside the root: never accumulated)
 //
@@ -16,12 +16,20 @@
 // switching off (and after a resize, which recreates the texture) starts from the clear colour; premultiplied "over"
 // makes "transparent texture over the clear colour" equal to "clear colour in the texture".
 //
+// Fade (#138): with 0 < alpha of the clear colour, the view draws a full-size fill with the clear colour over the
+// previous frame (premultiplied "over": out = C·a + prev·(1 − a)), so trails fade toward the clear colour; alpha 0
+// draws no fill (pure accumulation). The window then clears to the clear colour made opaque (Scene::applyClearColor):
+// the texture's alpha only grows toward 1 under the fill, and "texture over opaque C" keeps every pixel's colour
+// exactly where the texture is not opaque yet (first frames: the background is C, not C·a or C twice), whatever Qt
+// does with the alpha of a frame clear.
+//
 // Attachment: the vlqt::Scene owns the layer and holds the Clear state; the layer's items belong to one QQuickWindow
 // (source under its content item, view under Scene::root, size from the window's signals, textures in its QRhi). It
 // never moves to another window: Scene::releaseFeedback / restoreFeedback rebuild it from the state when the window
 // is replaced (#118).
 
 #include <QtCore/QPointer>
+#include <QtGui/QColor>
 #include <QtQuick/QQuickItem>
 
 class QQuickShaderEffectSource;
@@ -39,6 +47,10 @@ public:
     ~FeedbackLayer();
     FeedbackLayer(const FeedbackLayer&) = delete;
     FeedbackLayer& operator=(const FeedbackLayer&) = delete;
+
+    /* Colour of the fade fill (straight alpha, as the clear colour); alpha 0 draws no fill. Takes effect at the next
+     * frame, the layer stays. */
+    void setFill(const QColor& color);
 
 private:
     QPointer<QQuickItem> m_source; // QQuickShaderEffectSource, child of the content item

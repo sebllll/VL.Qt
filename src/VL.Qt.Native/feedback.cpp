@@ -4,15 +4,18 @@
 #include <QtCore/QSize>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtQuick/QSGRectangleNode>
 #include <QtQuick/QSGSimpleTextureNode>
 #include <QtQuick/QSGTextureProvider>
 #include <QtQuick/private/qquickshadereffectsource_p.h>
 
+#include <utility>
+
 namespace vlqt {
 
 // Draws the source's current texture, which while the source renders is the previous frame (recursive layers render
-// into a second texture and swap). Draws nothing in the first frame after the texture got a new size (switch off,
-// resize): that texture was never rendered, its contents are undefined.
+// into a second texture and swap), and the fade fill over it. Draws no texture in the first frame after the texture
+// got a new size (switch off, resize): that texture was never rendered, its contents are undefined.
 class FeedbackView : public QQuickItem
 {
 public:
@@ -23,7 +26,21 @@ public:
         setZ(-1e9);
     }
 
+    void setFill(const QColor& color)
+    {
+        if (color == m_fill)
+            return;
+        m_fill = color;
+        update();
+    }
+
 protected:
+    // Texture first, fill over it; each child exists only while it draws.
+    struct Node : QSGNode {
+        QSGSimpleTextureNode* texture = nullptr;
+        QSGRectangleNode* fill = nullptr;
+    };
+
     QSGNode* updatePaintNode(QSGNode* old, UpdatePaintNodeData*) override
     {
         // Render thread (sync). The texture provider can only be queried here. Every finished grab needs a sync of
@@ -36,34 +53,55 @@ protected:
         }
         QSGTexture* texture = provider ? provider->texture() : nullptr;
         const QSize textureSize = texture ? texture->textureSize() : QSize();
-        // Draw nothing while the previous texture is undefined: no texture yet (first frame after switching off), a
-        // new item size (resize: the source gets a new texture in this frame) or a new texture size at the same item
-        // size (device pixel ratio). The frame then starts from the clear colour.
+        // No texture while the previous one is undefined: no texture yet (first frame after switching off), a new item
+        // size (resize: the source gets a new texture in this frame) or a new texture size at the same item size
+        // (device pixel ratio). The frame then starts from the clear colour.
         const bool skip = !texture || textureSize.isEmpty() || size() != m_size
                           || (!m_textureSize.isEmpty() && textureSize != m_textureSize);
         m_textureSize = textureSize;
         m_size = size();
+
+        auto* node = old ? static_cast<Node*>(old) : new Node();
         if (skip) {
-            delete old;
+            drop(node, node->texture);
             update();
-            return nullptr;
+        } else {
+            if (!node->texture) {
+                node->texture = new QSGSimpleTextureNode();
+                node->texture->setOwnsTexture(false);
+                node->texture->setFiltering(QSGTexture::Nearest);
+                node->prependChildNode(node->texture);
+            }
+            node->texture->setTexture(texture);
+            node->texture->setRect(boundingRect());
+            node->texture->markDirty(QSGNode::DirtyMaterial); // the layer swapped its textures
         }
-        auto* node = static_cast<QSGSimpleTextureNode*>(old);
-        if (!node) {
-            node = new QSGSimpleTextureNode();
-            node->setOwnsTexture(false);
-            node->setFiltering(QSGTexture::Nearest);
+        if (m_fill.alphaF() > 0) {
+            if (!node->fill) {
+                node->fill = window()->createRectangleNode();
+                node->appendChildNode(node->fill);
+            }
+            node->fill->setRect(boundingRect());
+            node->fill->setColor(m_fill); // straight alpha; Qt's flat colour material blends premultiplied "over"
+        } else {
+            drop(node, node->fill);
         }
-        node->setTexture(texture);
-        node->setRect(boundingRect());
-        node->markDirty(QSGNode::DirtyMaterial); // the layer swapped its textures
         return node;
     }
 
 private:
+    template <typename T> static void drop(QSGNode* parent, T*& child)
+    {
+        if (!child)
+            return;
+        parent->removeChildNode(child);
+        delete std::exchange(child, nullptr);
+    }
+
     QPointer<QQuickShaderEffectSource> m_source;
     QSize m_textureSize; // of the last sync, empty until the first one
     QSizeF m_size;
+    QColor m_fill = Qt::transparent; // GUI thread; read in the sync
     bool m_connected = false;
 };
 
@@ -96,6 +134,12 @@ FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root)
     QObject::connect(root, &QQuickItem::heightChanged, source, fitSource);
     QObject::connect(root, &QQuickItem::widthChanged, view, fitView);
     QObject::connect(root, &QQuickItem::heightChanged, view, fitView);
+}
+
+void FeedbackLayer::setFill(const QColor& color)
+{
+    if (auto* view = static_cast<FeedbackView*>(m_view.data()))
+        view->setFill(color);
 }
 
 FeedbackLayer::~FeedbackLayer()

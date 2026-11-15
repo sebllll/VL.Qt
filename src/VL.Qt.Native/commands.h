@@ -9,6 +9,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QtTypes>
+#include <QtGui/QColor>
 
 #include <memory>
 #include <string>
@@ -66,6 +67,11 @@ struct Scene {
      * window. */
     void setClear(bool clear);
     bool clear() const { return clearFrames; }
+    /* Clear colour (VLQT_OP_CLEAR_COLOR, straight alpha; kept by RESET and across a window swap). With Clear on, or
+     * Clear off and alpha 0 or 1, the window clears to it. With Clear off its alpha is the fade strength (#138): the
+     * layer draws it over the previous frame (alpha > 0), and for 0 < alpha < 1 the window clears to it opaque
+     * (feedback.h "Fade"). Runtime changes keep the layer. */
+    void setClearColor(const QColor& color);
     /* Before the QQuickWindow is replaced (#118 MSAA change): drops the layer (its source is a child of the old
      * content item, its textures belong to the old window's QRhi), keeps the state. After the root moved to the new
      * window (and `window` points to it): rebuilds the layer from the state; the first frame starts from the clear
@@ -134,6 +140,8 @@ private:
     DebugOverlay* debug = nullptr; // child of contentItem, deleted in ~Scene
     std::unique_ptr<FeedbackLayer> feedback; // Clear off only (#117)
     bool clearFrames = true; // Clear pin state (#117)
+    QColor clearColor; // VLQT_OP_CLEAR_COLOR; initially the colour the window was created with
+    void applyClearColor(); // window clear and layer fill from clearColor and the layer
     bool feedbackSoftwareWarned = false; // Clear off ignored on the software backend, logged once per scene
     std::vector<QQuickItem*> retired; // destroyed former effect sources, deleted after the next frame (#123)
 };
