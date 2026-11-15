@@ -3,5 +3,7 @@
 	<Topic title="Stride">
 		<VLDocument link="HowTo Render Qt into a Stride Texture.vl" tags="qttexture texture stride 3d overlay offscreen" />
 		<VLDocument link="HowTo Interact with a QtTexture.vl" tags="qttexture texture stride 3d input interaction mouse touch notifications totexturepixels" />
+		<VLDocument link="HowTo Draw a QtTexture with Transparency.vl" tags="qttexture texture stride 3d alpha transparency premultiplied blend alphablendpremultiplied format srgb" />
+		<VLDocument link="HowTo Render many QtTextures.vl" tags="qttexture texture stride foreach spread many performance render thread" />
 	</Topic>
 </Pack>
