@@ -403,25 +403,13 @@ static partial class QtTextureTest
         rig.Frames();
         check(rig.Wheels.Count >= 1 && Near(rig.Wheels[0], 1, 0), $"119 wheel: SendWheel dx +120 -> Delta (1, 0) ({Dump()})");
 
-        // The horizontal wheel notification: vvvv's WheelDelta follows WM_MOUSEHWHEEL (positive = right). Qt's Windows plugin
-        // negates it for angleDelta (qwindowsmousehandler.cpp), so the offscreen scene has to see what a window sees.
+        // The horizontal wheel notification: no vvvv input source creates one, so there is no window to match; the convention
+        // is positive WheelDelta = left, as Qt's angleDelta.x and VL.ImGui (render-texture.md "Input"), passed through unchanged.
         rig.Wheels.Clear();
         rig.HWheel(50, 50, 120);
         rig.Frames();
-        var hw = rig.Wheels.Count >= 1 ? rig.Wheels[0] : default;
-        if (windowH is { } wh)
-        {
-            var text = $"119 wheel: vvvv MouseHorizontalWheel +120 -> same Delta as a window gets for WM_MOUSEHWHEEL +120, {windowH} ({Dump()})";
-            if (rig.Wheels.Count >= 1 && Near(hw, wh.X, wh.Y))
-                check(true, text);
-            else
-                // KNOWN BUG, reported to the owner of #119: OffscreenRenderer.Notify passes MouseHorizontalWheelNotification.WheelDelta
-                // on as Qt's angleDelta.x, a window negates it. With the sign fixed the check above passes: then make this branch
-                // check(false, text) so a regression fails.
-                Console.WriteLine("KNOWN-BUG " + text);
-        }
-        else
-            Console.WriteLine($"SKIP 119 wheel: horizontal sign against a window (no WM_MOUSEHWHEEL reached the window); offscreen gave {Dump()}");
+        check(rig.Wheels.Count >= 1 && Near(rig.Wheels[0], 1, 0),
+            $"119 wheel: MouseHorizontalWheel +120 (left) -> Delta (1, 0), Qt's angleDelta.x positive ({Dump()})");
 
         rig.Wheels.Clear();
         rig.Wheel(300, 250, 120);
