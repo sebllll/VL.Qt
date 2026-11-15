@@ -2,5 +2,6 @@
 <Pack>
 	<Topic title="Stride">
 		<VLDocument link="HowTo Render Qt into a Stride Texture.vl" tags="qttexture texture stride 3d overlay offscreen" />
+		<VLDocument link="HowTo Interact with a QtTexture.vl" tags="qttexture texture stride 3d input interaction mouse touch notifications totexturepixels" />
 	</Topic>
 </Pack>

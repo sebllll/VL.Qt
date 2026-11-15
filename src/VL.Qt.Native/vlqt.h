@@ -434,7 +434,7 @@ VLQT_API int   vlqt_test_font_refs(unsigned long long handle);
  * vlqt_test_measure_count, vlqt_test_handler_count. The window-only ones are no-ops on a scene: _show, _hide, _set_title,
  * _set_icon, _set_mode return 0 or do nothing, _take_close_request and _is_visible return 0, _resize returns
  * VLQT_OFFSCREEN_BAD_ARGUMENT (the size comes from vlqt_offscreen_bind), _grab and the vlqt_test_send_... / _queue_... input
- * functions return VLQT_OFFSCREEN_NOT_SUPPORTED (no input in v1). An offscreen scene never renders in
+ * functions return VLQT_OFFSCREEN_NOT_SUPPORTED (input: vlqt_offscreen_send_*, #119). An offscreen scene never renders in
  * vlqt_app_process_events(_for): only vlqt_offscreen_render_batch renders it. 1 DIP = 1 texture pixel. */
 
 /* Creates an unbound offscreen scene of width x height DIP (< 1 = 1). NULL = error (vlqt_last_error). Free it with
@@ -480,6 +480,45 @@ VLQT_API int   vlqt_offscreen_is_bound(void* scene);
  * number of scenes rendered (>= 0), or BAD_ARGUMENT (null context, null scenes with count > 0, count < 0),
  * DEVICE_LOST, NOT_SUPPORTED. */
 VLQT_API int   vlqt_offscreen_render_batch(void* context, void* const* scenes, int count, double driverSeconds);
+
+/* Input into an offscreen scene (#119; design: docs/decisions/render-texture.md, "Input"). The host maps its input to
+ * texture pixels (top-left origin, 1 DIP = 1 pixel; positions outside 0..size are valid: hover ends, a drag goes on) and
+ * calls these between two vlqt_offscreen_render_batch calls, before the batch that should show the result. QtNative
+ * sends the events with QCoreApplication::sendEvent to the scene's QQuickWindow (synchronous, like vlqt_test_send_*;
+ * not marked spontaneous), so the event pipeline of windows (handlers, vlqt_window_poll, channels) is unchanged. Each
+ * scene has its own mouse, touchscreen and pen QPointingDevice (point ids and grabs live in the device, so a press sent
+ * to two scenes does not cancel the other's grab). QtNative synthesizes MouseButtonDblClick from two presses as
+ * QGuiApplication does; Qt shortcuts (QShortcut) do not see the keys. A scene that changes
+ * renders in the next batch. Bound or not does not matter. Main thread. Return codes: OK, NULL_SCENE, BAD_ARGUMENT
+ * (unknown type or device, a touch id in the wrong state, null text with length > 0); a key or text event while the
+ * scene has no focus is dropped and returns OK.
+ *
+ * Focus: a scene window never becomes QGuiApplication's focus window. QtNative gives it focus with QFocusEvent
+ * FocusIn when a PRESS lands inside 0..size and takes it with FocusOut when a PRESS lands outside or the host calls
+ * vlqt_offscreen_set_focus(scene, 0) (e.g. its window lost the focus). The FocusRelease filter of windows (#374: Esc,
+ * press outside the focused element) runs on scenes too. */
+
+/* Pointer event (vlqt_pointer) of device (vlqt_pointer_device) at x/y in texture pixels.
+ *   mouse  id ignored; buttons = Qt::MouseButtons held after the event (PRESS/RELEASE: the changed buttons are the
+ *          difference to the previous call, one event each; none changed = BAD_ARGUMENT), modifiers = Qt::KeyboardModifiers. QMouseEvent; LEAVE sends QEvent::Leave.
+ *   touch  id = the point's id (any int, unique while pressed); buttons ignored. QtNative keeps the active points per
+ *          scene and sends one QTouchEvent per call with all of them (others stationary), as vlqt_test_send_touch.
+ *          Several ids = multitouch. CANCEL cancels every active point (TouchCancel), id ignored; LEAVE is BAD_ARGUMENT.
+ *   pen    as a window on Windows gets one (WM_POINTER): a QTabletEvent from a stylus (pointer type Pen), and if nobody
+ *          accepts it the same as a mouse event synthesized from the stylus, as QGuiApplication does. id and buttons
+ *          ignored (one point; MOVE without PRESS hovers); CANCEL drops the pen's grabs without a release; LEAVE as mouse. */
+VLQT_API int   vlqt_offscreen_send_pointer(void* scene, int device, int type, int id, float x, float y, int buttons,
+                                           int modifiers);
+/* Wheel at x/y (texture pixels): angleDelta dx, dy in eighths of a degree (120 = one notch), modifiers =
+ * Qt::KeyboardModifiers. QWheelEvent from the mouse. */
+VLQT_API int   vlqt_offscreen_send_wheel(void* scene, float x, float y, int dx, int dy, int modifiers);
+/* Key press or release (vlqt_key_event) of key (Qt::Key) with modifiers (Qt::KeyboardModifiers), without text, to the
+ * focus item; autoRepeat 1 for repeated presses. Text comes separately (vlqt_offscreen_send_text). */
+VLQT_API int   vlqt_offscreen_send_key(void* scene, int type, int key, int modifiers, int autoRepeat);
+/* Typed text (UTF-8, length bytes, no NUL needed) to the focus item, e.g. one character of a KeyPress. */
+VLQT_API int   vlqt_offscreen_send_text(void* scene, const char* utf8, int length);
+/* focused 1: FocusIn, 0: FocusOut (a running edit commits as on any focus loss). No-op if unchanged. */
+VLQT_API int   vlqt_offscreen_set_focus(void* scene, int focused);
 
 #ifdef __cplusplus
 }

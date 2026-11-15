@@ -6,6 +6,7 @@ using Stride.Graphics;
 using VL.Core;
 using VL.Core.Import;
 using VL.Lang;
+using VL.Lib.IO.Notifications;
 using VL.Model;
 using VL.Qt.Elements;
 
@@ -26,6 +27,7 @@ namespace VL.Qt.Stride
         readonly NodeErrors _errors;
         readonly QtTextureRenderer _renderer;
         readonly OffscreenRenderer _scene;
+        readonly NotificationQueue _input = new();
         Texture? _texture;
         GraphicsDevice? _device;
         Int2 _size;
@@ -57,6 +59,7 @@ namespace VL.Qt.Stride
         /// <param name="clearColor">Background of the texture (straight alpha, premultiplied here). Alpha 0 gives a transparent texture.</param>
         /// <param name="format">Pixel format of the texture: R8G8B8A8 or B8G8R8A8 (UNorm or SRgb) or R16G16B16A16_Float; other formats give an error. With SRgb Stride samples linear values of what Qt renders in gamma space, like in a Qt window.</param>
         /// <param name="enabled">False freezes the node: no updates of Input, Space, Clear Color, Size or Format, nothing is created or recreated and nothing renders; Output keeps the last content (null if there is none yet).</param>
+        /// <param name="inputNotifications">Mouse, touch and keyboard input for the scene (vvvv notifications) with positions in texture pixels, top-left origin. Map a window's input with ToTexturePixels. A press inside the texture gives the scene keyboard focus, a press outside takes it.</param>
         /// <param name="debug">Debug overlay for all elements of the scene (same as the Debug pin of Renderer [Qt]).</param>
         public void Update(
             out Texture? output,
@@ -68,11 +71,20 @@ namespace VL.Qt.Stride
             [DefaultValue("0, 0, 0, 0")] Color4 clearColor,
             [DefaultValue(typeof(PixelFormat), nameof(PixelFormat.B8G8R8A8_UNorm_SRgb))] PixelFormat format,
             [DefaultValue(true)] bool enabled,
+            [Pin(Visibility = PinVisibility.Optional)] IObservable<INotification>? inputNotifications,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(false)] bool debug)
         {
             // The previous frame had no draw (game not drawing): send its commands now, so they do not pile up.
             if (_scheduled)
                 ApplyCommands();
+
+            // Input acts on the items of the last apply, before this frame's update and before the render in DrawStarted;
+            // a disabled (frozen) scene takes no input.
+            _input.Subscribe(inputNotifications);
+            if (enabled)
+                _input.Drain(_scene);
+            else
+                _input.Clear();
 
             // Disabled: nothing is created, recreated or rebound; the texture keeps its content.
             if (enabled)
@@ -263,6 +275,7 @@ namespace VL.Qt.Stride
             _disposed = true;
             _renderer.StrideDeviceGone -= OnStrideDeviceGone;
             _renderer.Unschedule(this);
+            _input.Dispose();
             // Dispose unbinds first, then frees the scene; the Stride texture last.
             _scene.Dispose();
             _texture?.Dispose();

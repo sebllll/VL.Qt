@@ -320,6 +320,29 @@ namespace VL.Qt
         public static int OffscreenRenderBatch(IntPtr context, ReadOnlySpan<IntPtr> scenes, double driverSeconds)
             => vlqt_offscreen_render_batch(context, in MemoryMarshal.GetReference(scenes), scenes.Length, driverSeconds);
 
+        // Input into an offscreen scene (#119): positions in texture pixels, codes Protocol.Offscreen (vlqt.h).
+        /// <summary>
+        /// Pointer event (Protocol.Pointer) of device (Protocol.PointerDevice) at x/y; mouse: buttons = Qt::MouseButtons held
+        /// after the event, id ignored; touch/pen: id of the point, buttons ignored. modifiers = Qt::KeyboardModifiers.
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_send_pointer(IntPtr scene, int device, int type, int id, float x, float y, int buttons, int modifiers);
+        /// <summary>Wheel at x/y; angle delta in eighths of a degree (120 = one notch).</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_send_wheel(IntPtr scene, float x, float y, int dx, int dy, int modifiers);
+        /// <summary>Key press or release (Protocol.KeyEvent) of a Qt::Key without text; autoRepeat 1 for repeated presses.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_send_key(IntPtr scene, int type, int key, int modifiers, int autoRepeat);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_offscreen_send_text(IntPtr scene, in byte utf8, int length);
+
+        /// <summary>Typed text as UTF-8 (no NUL needed) to the focus item; a stack span keeps it allocation-free.</summary>
+        public static int OffscreenSendText(IntPtr scene, ReadOnlySpan<byte> utf8)
+            => vlqt_offscreen_send_text(scene, in MemoryMarshal.GetReference(utf8), utf8.Length);
+        /// <summary>focused 1: FocusIn, 0: FocusOut; no-op if unchanged.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_set_focus(IntPtr scene, int focused);
+
         // TEST ONLY (#116): a second D3D11 device standing in for Stride's, shared textures and leak probes (vlqt.h).
         /// <summary>TEST ONLY: D3D11 device + immediate context (one reference each); adapter 0 = QtNative's, 1 = WARP.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]

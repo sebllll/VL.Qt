@@ -291,23 +291,7 @@ private:
         }
     }
 
-    // Clears the focus of the outermost focused item below the root, so the active focus goes to the root. A Control
-    // is a focus scope (SpinBox: the focus sits on its contentItem), clearing only the inner item keeps it inside.
-    void release()
-    {
-        QQuickItem* root = m_window->contentItem();
-        QQuickItem* f = m_window->activeFocusItem();
-        if (!f || f == root)
-            return;
-        QQuickItem* top = f;
-        for (QQuickItem* i = f; i && i != root; i = i->parentItem()) {
-            if (i->hasFocus())
-                top = i;
-        }
-        top->setFocus(false, Qt::OtherFocusReason);
-        if (m_window->activeFocusItem() != root)
-            root->forceActiveFocus(Qt::OtherFocusReason);
-    }
+    void release() { vlqt::offscreen::releaseFocus(m_window); }
     QQuickWindow* m_window;
 };
 
@@ -555,8 +539,8 @@ bool testSyntheticInputOnly()
 #endif
 
 // A window handle (void* of the vlqt_window_* exports): a window, or an offscreen scene (#116, offscreen.cpp) whose
-// QQuickWindow is driven by a QQuickRenderControl. Both share engine, scene, gate and perf; a scene has no input
-// filters (closeFilter etc. stay null) and its own part in offscreen.
+// QQuickWindow is driven by a QQuickRenderControl. Both share engine, scene, gate and perf; a scene has only the
+// FocusRelease input filter (closeFilter etc. stay null) and its own part in offscreen.
 struct Window {
     QQuickWindow* window = nullptr;
     vlqt::offscreen::State* offscreen = nullptr; // offscreen scene: render control and binding; null for a window
@@ -594,7 +578,7 @@ QWindow* testKeyTarget(Window* w)
     return w->window;
 }
 
-// The test input exports on an offscreen scene (#116): no input in v1 (vlqt.h).
+// The test input exports on an offscreen scene (#116): a scene takes input through vlqt_offscreen_send_* (#119).
 int notOnScene(const char* function)
 {
     setError(std::string(function) + ": not supported on an offscreen scene");
@@ -893,8 +877,88 @@ void* createHandle(QQuickWindow* window, State* state)
     // Change count (vlqt_window_change_count) only: without a platform window a scene gets no UpdateRequest or Expose,
     // so the gate's event filter is not installed.
     w->gate = new UpdateGate(window); // child of the window
+    // Input comes from vlqt_offscreen_send_* (#119); Esc and a press outside release the focus as in a window.
+    window->installEventFilter(new FocusRelease(window)); // #374, child of the window
     initShared(w);
     return w;
+}
+
+void releaseFocus(QQuickWindow* window)
+{
+    QQuickItem* root = window->contentItem();
+    QQuickItem* f = window->activeFocusItem();
+    if (!f || f == root)
+        return;
+    // A Control is a focus scope (SpinBox: the focus sits on its contentItem), clearing only the inner item keeps it
+    // inside.
+    QQuickItem* top = f;
+    for (QQuickItem* i = f; i && i != root; i = i->parentItem()) {
+        if (i->hasFocus())
+            top = i;
+    }
+    top->setFocus(false, Qt::OtherFocusReason);
+    if (window->activeFocusItem() != root)
+        root->forceActiveFocus(Qt::OtherFocusReason);
+}
+
+bool sendTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<std::pair<int, QPointF>>& active,
+    QEventPoint::State state, int id, QPointF pos, ulong timestamp, Qt::KeyboardModifiers modifiers, const char* function)
+{
+    auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
+    const bool known = it != active.end();
+    const bool press = state == QEventPoint::State::Pressed;
+    if (known == press) {
+        ::setError(std::string(function) + ": point " + std::to_string(id) + (known ? " is already pressed" : " is not pressed"));
+        return false;
+    }
+    if (known)
+        it->second = pos;
+    else
+        active.emplace_back(id, pos);
+
+    auto* devicePrivate = QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device));
+    // What QGuiApplication does before delivering a press: the device registers the point. Without it the grabs
+    // of the delivery are not stored ("point is not in activePoints"), the release goes to every handler under the
+    // point and stacked Tap handlers all tap (#320).
+    if (press)
+        devicePrivate->pointById(id);
+    // The complete touch state: every active point, the changed one with its state, the others stationary.
+    QList<QEventPoint> points;
+    for (const auto& a : active) {
+        const QEventPoint::State st = a.first == id ? state : QEventPoint::State::Stationary;
+        QEventPoint ep = QMutableEventPoint::withTimeStamp(timestamp, a.first, st, a.second, a.second, window->mapToGlobal(a.second));
+        QMutableEventPoint::setDevice(ep, device);
+        QMutableEventPoint::setWindow(ep, window);
+        points.append(ep);
+    }
+    const bool release = state == QEventPoint::State::Released;
+    const QEvent::Type t = press && active.size() == 1 ? QEvent::TouchBegin
+        : release && active.size() == 1               ? QEvent::TouchEnd
+                                                      : QEvent::TouchUpdate;
+    QTouchEvent ev(t, device, modifiers, points);
+    ev.setTimestamp(timestamp);
+    QCoreApplication::sendEvent(window, &ev);
+    if (release) {
+        active.erase(std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; }));
+        // What QGuiApplication does after delivering a release: the device forgets the point (and its grabbers).
+        devicePrivate->removePointById(id);
+    }
+    return true;
+}
+
+void cancelTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<std::pair<int, QPointF>>& active,
+    ulong timestamp, Qt::KeyboardModifiers modifiers)
+{
+    if (active.empty())
+        return;
+    // Without points, like the platform's: Qt Quick cancels every grab of the device's active points.
+    QTouchEvent ev(QEvent::TouchCancel, device, modifiers);
+    ev.setTimestamp(timestamp);
+    QCoreApplication::sendEvent(window, &ev);
+    auto* devicePrivate = QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device));
+    for (const auto& a : active)
+        devicePrivate->removePointById(a.first);
+    active.clear();
 }
 
 State* stateOf(void* handle)
@@ -1724,9 +1788,6 @@ VLQT_API int vlqt_test_send_touch(void* p, int type, int id, float x, float y)
         }
         if (w->offscreen)
             return notOnScene("test_send_touch");
-        auto& active = w->testTouch;
-        auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
-        const bool known = it != active.end();
         QEventPoint::State state;
         switch (type) {
         case VLQT_TOUCH_PRESS: state = QEventPoint::State::Pressed; break;
@@ -1736,46 +1797,13 @@ VLQT_API int vlqt_test_send_touch(void* p, int type, int id, float x, float y)
             setError("test_send_touch: unknown type " + std::to_string(type));
             return -2;
         }
-        if (known == (type == VLQT_TOUCH_PRESS)) {
-            setError("test_send_touch: point " + std::to_string(id) + (known ? " is already pressed" : " is not pressed"));
-            return -2;
-        }
-        const QPointF pos(x, y);
-        if (known)
-            it->second = pos;
-        else
-            active.emplace_back(id, pos);
-
         if (!w->testClock.isValid())
             w->testClock.start();
         const ulong ts = ulong(w->testClock.elapsed()) + 1; // monotonic (TapHandler compares timestamps)
-        const QPointingDevice* device = testTouchDevice();
-        // What QGuiApplication does before delivering a press: the device registers the point. Without it the grabs
-        // of the delivery are not stored ("point is not in activePoints"), the release goes to every handler under the
-        // point and stacked Tap handlers all tap (#320).
-        if (type == VLQT_TOUCH_PRESS)
-            QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device))->pointById(id);
-        // The complete touch state: every active point, the changed one with its state, the others stationary.
-        QList<QEventPoint> points;
-        for (const auto& a : active) {
-            const QEventPoint::State st = a.first == id ? state : QEventPoint::State::Stationary;
-            QEventPoint ep = QMutableEventPoint::withTimeStamp(ts, a.first, st, a.second, a.second, w->window->mapToGlobal(a.second));
-            QMutableEventPoint::setDevice(ep, device);
-            QMutableEventPoint::setWindow(ep, w->window);
-            points.append(ep);
-        }
-        const QEvent::Type t = type == VLQT_TOUCH_PRESS && active.size() == 1 ? QEvent::TouchBegin
-            : type == VLQT_TOUCH_RELEASE && active.size() == 1               ? QEvent::TouchEnd
-                                                                              : QEvent::TouchUpdate;
-        QTouchEvent ev(t, device, Qt::NoModifier, points);
-        ev.setTimestamp(ts);
-        QCoreApplication::sendEvent(w->window, &ev);
-        if (type == VLQT_TOUCH_RELEASE) {
-            active.erase(std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; }));
-            // What QGuiApplication does after delivering a release: the device forgets the point (and its grabbers).
-            QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device))->removePointById(id);
-        }
-        return 0;
+        return vlqt::offscreen::sendTouch(w->window, testTouchDevice(), w->testTouch, state, id, QPointF(x, y), ts,
+                   Qt::NoModifier, "test_send_touch")
+            ? 0
+            : -2;
     });
 }
 

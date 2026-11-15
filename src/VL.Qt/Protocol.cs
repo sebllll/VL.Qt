@@ -440,8 +440,6 @@
             public const int DeviceLost = -25;
             /// <summary>No D3D11 (Linux, other graphics API) or not available on an offscreen scene.</summary>
             public const int NotSupported = -26;
-            /// <summary>Stub of #116 phase 1, removed when all exports are implemented.</summary>
-            public const int NotImplemented = -27;
         }
 
         /// <summary>Mouse event types of the TEST export vlqt_test_send_mouse, not part of the command buffer.</summary>
@@ -464,6 +462,33 @@
             public const int Press = 1;
             public const int Move = 2;
             public const int Release = 3;
+        }
+
+        /// <summary>Pointer events of vlqt_offscreen_send_pointer (#119 QtTexture input), not part of the command buffer.</summary>
+        public static class Pointer
+        {
+            public const int Press = 1;
+            public const int Move = 2;
+            public const int Release = 3;
+            /// <summary>The pointer left the texture or its window (hover ends); x/y ignored.</summary>
+            public const int Leave = 4;
+            /// <summary>Touch/pen: the system cancelled the point (TouchCancel).</summary>
+            public const int Cancel = 5;
+        }
+
+        /// <summary>Pointing devices of vlqt_offscreen_send_pointer (#119). Pen is delivered as a stylus, as in a window on Windows.</summary>
+        public static class PointerDevice
+        {
+            public const int Mouse = 0;
+            public const int Touch = 1;
+            public const int Pen = 2;
+        }
+
+        /// <summary>Key event types of vlqt_offscreen_send_key (#119).</summary>
+        public static class KeyEvent
+        {
+            public const int Press = 1;
+            public const int Release = 2;
         }
 
         /// <summary>Resource kinds of vlqt_res_create (#359).</summary>
