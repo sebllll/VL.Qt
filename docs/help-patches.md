@@ -98,6 +98,7 @@ See [Images](images.md).
 - `HowTo Use Motion Blurs` — DirectionalBlur, ZoomBlur, RadialBlur
 - `HowTo Displace an Element` — Displace with a ShaderEffect as map
 - `HowTo Blend Elements` — Blend: an element as layer over the base, blend modes
+- `HowTo Draw Trails` — `Clear` pin of the Renderer off, a semi-transparent full-size Rectangle fades the previous frame
 
 See [Effects and shaders](effects-and-shaders.md).
 

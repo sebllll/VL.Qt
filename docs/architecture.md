@@ -47,7 +47,12 @@ per vvvv frame:
 1. Each `QQuickWindow` renders directly into its own swap chain: Direct3D 11 on Windows (one device shared by all windows and images), OpenGL on Linux
 2. No `exec()` and no render thread: Qt's `basic` render loop, pumped once per vvvv frame (`vlqt_app_process_events`); each window renders at most once per pump
 3. VSync on by default to avoid tearing, but vvvv's frame clock still controls timing: a frame may wait up to one refresh interval inside the pump (at the start of the frame, F5 segment "vsync wait"). The Renderer's `VSync` pin off gives swap interval 0 (never blocks, tearing allowed). See [Timing](decisions/timing.md)
-4. Texture output to Stride is a separate path, see [Texture output for Stride](#texture-output-for-stride)
+4. Clear off (the `Clear` pin of `Renderer` and `QtTexture`) keeps the previous frame through a feedback layer, see [Feedback layer](#feedback-layer-clear-off)
+5. Texture output to Stride is a separate path, see [Texture output for Stride](#texture-output-for-stride)
+
+### Feedback layer (Clear off)
+
+A swap chain discards its back buffer after `Present`, so a window cannot keep its previous frame. Instead of target-specific paths, `vlqt::Scene` (one per window or offscreen scene) owns a feedback layer that exists only while `Clear` is off: a recursive, live `QQuickShaderEffectSource` of the scene root, drawn under the content, so the previous frame is part of the scene graph and the elements are drawn over it with premultiplied alpha. It is the same code for windows and offscreen scenes, costs one full-size texture and one pass, and Qt renders every frame while it exists. Debug overlay, perf overlay and snapshots stay outside the root and are not accumulated. The layer starts from the clear colour when `Clear` goes off and after a resize. Switching `Clear` back on deletes it, so `Clear` on costs nothing extra. Command `SET_CLEAR`; details and measurements: [Render texture](decisions/render-texture.md#clear-pin-spike-2026-11-15-117-task-1).
 
 ### Texture output for Stride
 

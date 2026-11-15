@@ -153,7 +153,7 @@ Your own filter shaders (see [Shaders](#shaders)) appear as nodes of the same ch
 
 <img src="docs/images/effect-chain.png" width="820" alt="The text VL.Qt: Blur, RGBSplit, DropShadow on the left, DropShadow, RGBSplit, Blur on the right; the shadow is split and blurred in the second picture">
 
-Help patches: `HowTo Chain Effects`, `HowTo Mask an Element`, `HowTo Add a Glow`, `HowTo Use Motion Blurs`, `HowTo Displace an Element`, `HowTo Blend Elements`.
+Help patches: `HowTo Chain Effects`, `HowTo Mask an Element`, `HowTo Add a Glow`, `HowTo Use Motion Blurs`, `HowTo Displace an Element`, `HowTo Blend Elements`, `HowTo Draw Trails`.
 
 More: [Effects](docs/effects-and-shaders.md#effects) (all nodes, mask and padding, [shader effects](docs/effects-and-shaders.md#shader-effects), [shaders in the effect chain](docs/effects-and-shaders.md#shaders-in-the-effect-chain)).
 
@@ -178,7 +178,7 @@ More: [Shaders](docs/effects-and-shaders.md#shaders) (annotations, the [Sampler 
 
 `QtTexture` (category `Qt`, package `VL.Qt.Stride`) works like `Renderer [Qt]`, but opens no window: it renders the element tree offscreen and outputs a Stride `Texture` that you draw, mix or feed to TextureFX like any other texture. **Windows only and experimental** (the pins may still change).
 
-- **Pins:** `Input` (element tree), `Size` (pixels, default 1920×1080; 1 DIP = 1 pixel), `Space`, `Clear Color` (default transparent, so the texture has an alpha channel), `Format` (default `B8G8R8A8_UNorm_SRgb`; 8-bit RGBA/BGRA or `R16G16B16A16_Float`; SRgb and Float hold linear premultiplied values, UNorm the gamma-space values of a Qt window), `Enabled`, `Debug`; outputs `Output` (`Texture`) and `Error`.
+- **Pins:** `Input` (element tree), `Size` (pixels, default 1920×1080; 1 DIP = 1 pixel), `Space`, `Clear Color` (default transparent, so the texture has an alpha channel), `Clear` (default on; off keeps the previous frame: trails and feedback, see the help patch `HowTo Draw Trails`), `Format` (default `B8G8R8A8_UNorm_SRgb`; 8-bit RGBA/BGRA or `R16G16B16A16_Float`; SRgb and Float hold linear premultiplied values, UNorm the gamma-space values of a Qt window), `Enabled`, `Debug`; outputs `Output` (`Texture`) and `Error`.
 - **GPU only:** no readback to the CPU. Qt renders on its own D3D11 device into a texture shared with Stride's device; shared fences make Stride wait on the GPU until Qt has written. The texture is ready in the same frame, the scene is rendered only when it changed, and several `QtTexture` nodes do not block each other.
 - **Alpha:** the texture is premultiplied: draw it with `AlphaBlendPremultiplied` (`AlphaBlend` expects straight alpha and darkens half-transparent parts); where straight alpha is expected, unpremultiply it first (RGB divided by alpha); VL.Stride has no TextureFX for that yet.
 - **Input:** the optional pin `Input Notifications` takes mouse, touch and keyboard notifications in texture pixels; `ToTexturePixels` maps a window's input onto a texture on a quad. A press inside the texture gives the scene keyboard focus.
