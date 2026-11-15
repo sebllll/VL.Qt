@@ -57,6 +57,8 @@ per vvvv frame:
 2. In its `Update` the node applies its scene through the reconciler and schedules itself. A game system with the lowest `DrawOrder` renders all scheduled nodes at the start of Stride's draw, before any other system draws: per changed scene polish, sync, render into the texture, signal the write fence. Stride waits for that fence on the GPU, so the texture is current in the same frame without a CPU wait; a scene that did not change is not rendered again.
 3. Rendering runs on the main thread for now; a Qt render thread is planned as a separate step. The output texture is the same instance until `Size` or `Format` change. Device loss on either side unbinds and binds again in the next `Update`.
 
+`QtRenderer` (category `Stride.Rendering`) is the layer variant: it renders into the same kind of shared texture, sized to its viewport, and draws it into the current Stride render target with premultiplied blending, so half-transparent content blends like a Qt window.
+
 Details and rejected alternatives: [Render texture](decisions/render-texture.md), [Device sharing](decisions/device-sharing.md). The offscreen textures inside a scene (Effect layers, ShaderEffect sources, Snapshot) are a different mechanism and stay inside Qt.
 
 ## Events

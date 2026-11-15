@@ -27,7 +27,7 @@ Why things are built the way they are. Each note states the goals, the decision 
 | Note | Content |
 |---|---|
 | [decisions/device-sharing.md](decisions/device-sharing.md) | One QtNative D3D11 device per process shared by all windows and images, device loss, and why Qt does not render on Stride's device. |
-| [decisions/render-texture.md](decisions/render-texture.md) | `QtTexture` in the companion package `VL.Qt.Stride`: a Qt scene rendered offscreen into a Stride texture, with shared fences, ownership, format and alpha, frame timing and package layout. |
+| [decisions/render-texture.md](decisions/render-texture.md) | `QtTexture` and the layer `QtRenderer` in the companion package `VL.Qt.Stride`: a Qt scene rendered offscreen into a Stride texture or drawn into a render target, with shared fences, ownership, format and alpha, frame timing and package layout. |
 | [decisions/element-catalog-v1.md](decisions/element-catalog-v1.md) | Conventions shared by all elements: geometry pins, coordinate space, colours, image sources and pin design. |
 | [decisions/events.md](decisions/events.md) | How events and measured values travel from Qt back to the element nodes through sinks. |
 | [decisions/qtnative-deployment.md](decisions/qtnative-deployment.md) | How QtNative is built, licensed (LGPL), packaged and located at runtime. |
