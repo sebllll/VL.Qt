@@ -144,7 +144,7 @@ The repository builds two NuGet packages:
 | `VL.Qt` | repo root (`VL.Qt.vl`, `help/`, `src/VL.Qt/`) | the Qt layer and the Qt runtime for Windows and Linux; platform-neutral, no Stride |
 | `VL.Qt.Stride` | `VL.Qt.Stride/` (package folder: `VL.Qt.Stride.vl`, `help/`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Stride/` | Qt scenes rendered into Stride textures, Windows only; depends on `VL.Qt` |
 
-`VL.Qt` never references `VL.Qt.Stride`. `VL.Qt.Stride.vl` is a minimal package document (dependencies and the assembly, no nodes); its help patches are made in vvvv; `lib/` is not tracked by git. Why this layout: [decisions/render-texture.md](decisions/render-texture.md#package-layout-2026-11-14-task-21).
+`VL.Qt` never references `VL.Qt.Stride`. `VL.Qt.Stride.vl` is a minimal package document (dependencies and the assembly, no nodes); its help patches may be written in vvvv or directly (see `AGENTS.md`, "Checking patches"); `lib/` is not tracked by git. Why this layout: [decisions/render-texture.md](decisions/render-texture.md#package-layout-2026-11-14-task-21).
 
 ```powershell
 dotnet build src/VL.Qt.Stride -c Release                  # DLL into VL.Qt.Stride/lib/net10.0-windows7.0/

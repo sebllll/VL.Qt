@@ -1,6 +1,6 @@
 # Help patches
 
-The help patches in `help/Qt/` show one topic each; open them from the vvvv Help Browser (F1). The Browser groups them in topics, set in [`help/Help.xml`](../help/Help.xml).
+The help patches in `help/Qt/` show one topic each; open them from the vvvv Help Browser (F1). The Browser groups them in topics, set in [`help/Help.xml`](../help/Help.xml); the patches of the companion package `VL.Qt.Stride` (in `VL.Qt.Stride/help/`) are listed in [`VL.Qt.Stride/help/Help.xml`](../VL.Qt.Stride/help/Help.xml).
 
 ## Help Browser
 
@@ -122,6 +122,12 @@ See [QML files as elements](user-qml.md).
 - `HowTo Read Performance` — perf numbers as node outputs
 
 See [Diagnostics](diagnostics.md).
+
+## Stride
+
+In `VL.Qt.Stride/help/` (package `VL.Qt.Stride`, Windows only), see [Stride texture](../README.md#stride-texture):
+
+- `HowTo Render Qt into a Stride Texture` — `QtTexture`: a Qt scene (text, shapes) rendered offscreen into a Stride `Texture` with a transparent `Clear Color`, composed over a 3D background; premultiplied alpha, no input yet
 
 ## Export
 
