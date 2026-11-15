@@ -1,9 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="a7FtyUc5KiGKRj116WuJvV" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="JYtXsJOzHSvPdcK4fSw4Lh" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="bXD5cDU3eGGUldLTJuovRB" Location="VL.CoreLib" />
   <DocumentDependency Id="VTva2PAIZrF4BSwj87WcOV" Location="../../VL.Qt.vl" />
   <Patch Id="QEpGun6V6CGSW0CQDbQcAO">
     <Canvas Id="p2KqaaexboG5Oal7fCV9bH" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
     <Node Name="Application" Bounds="100,100" Id="xbfo1hcMzfFtjz8umIQswB">
       <p:NodeReference>
         <Choice Kind="ContainerDefinition" Name="Process" />
@@ -37,8 +42,8 @@
                 <p:OuterCategoryReference Kind="Category" Name="2D" NeedsToBeDirectParent="true" />
               </CategoryReference>
             </p:NodeReference>
-            <Pin Id="NEeyEZFTtaGaTGbiP2Q6PV" Name="Input" Kind="InputPin" IsHidden="true" />
-            <Pin Id="BgDnoySi0mF6t85Wk03jVD" Name="Scaling" Kind="InputPin" IsHidden="true" />
+            <Pin Id="NEeyEZFTtaGaTGbiP2Q6PV" Name="Input" Kind="InputPin" />
+            <Pin Id="BgDnoySi0mF6t85Wk03jVD" Name="Scaling" Kind="InputPin" />
             <Pin Id="SWOTNpSlwLG6GBnUYenQAF" Name="Rotation" Kind="InputPin" DefaultValue="0.08" />
             <Pin Id="SJ0Z0BSH5lG8nwQ1lE0rFL" Name="Translation" Kind="InputPin" DefaultValue="1.8, 1.4" />
             <Pin Id="jj0wAEN2ugFLHhR0n0rSPQ" Name="Output" Kind="OutputPin" />
@@ -76,8 +81,8 @@
                 <p:OuterCategoryReference Kind="Category" Name="2D" NeedsToBeDirectParent="true" />
               </CategoryReference>
             </p:NodeReference>
-            <Pin Id="Yj37UJKeFjFmC4irb5jrfQ" Name="Input" Kind="InputPin" IsHidden="true" />
-            <Pin Id="5bHQK4vu40GQYjB3XHMObV" Name="Scaling" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Yj37UJKeFjFmC4irb5jrfQ" Name="Input" Kind="InputPin" />
+            <Pin Id="5bHQK4vu40GQYjB3XHMObV" Name="Scaling" Kind="InputPin" />
             <Pin Id="7wSJAxviifG5wRwEENQYdJ" Name="Rotation" Kind="InputPin" DefaultValue="0.04" />
             <Pin Id="vTmc7GfCOlF4uY0tXC4xdJ" Name="Translation" Kind="InputPin" DefaultValue="3, 3" />
             <Pin Id="JRDnmExMThFV1Xxo3bXrzS" Name="Output" Kind="OutputPin" />
@@ -107,7 +112,7 @@
             <Pin Id="cZAA4Jk5lzGVpxtKUTnJPT" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="GNhaQYN3d7FEiaNJ9IrgtN" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="100,430,225,19" Id="JvLCblTr4KGOCpRrWwQYeC">
+          <Node Bounds="100,430,206,19" Id="JvLCblTr4KGOCpRrWwQYeC">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -144,9 +149,9 @@
             <Pin Id="Trw9yLWcZnFvTPiCiZ1DqB" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="N1UXluYtzmFOPki8XAfKuH" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="Vk3kv1pLYdGFsEtuZAfJ3G" Name="Input" Kind="InputPin" />
-            <Pin Id="EXbXixau8FGlWaIpKFBNTP" Name="Space" Kind="InputPin" IsHidden="true" />
-            <Pin Id="vSn28L0g9SGxQXSKPqdpgD" Name="Clear Color" Kind="InputPin" IsHidden="true" />
-            <Pin Id="S7h3pgsYNpFXHzUrA08oOT" Name="Enabled" Kind="InputPin" IsHidden="true" />
+            <Pin Id="EXbXixau8FGlWaIpKFBNTP" Name="Space" Kind="InputPin" />
+            <Pin Id="vSn28L0g9SGxQXSKPqdpgD" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="S7h3pgsYNpFXHzUrA08oOT" Name="Enabled" Kind="InputPin" />
             <Pin Id="9PrbzesdLZGoIXSpzINlfR" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="6eHvx90wHpF85NnGF5RIYL" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="MPuWA4m8vfFQFgPZFKAvkL" Name="Title" Kind="InputPin" DefaultValue="HowTo Antialias Edges" />
@@ -158,12 +163,12 @@
             <Pin Id="uSJZRZl1CqF8sycGwAj4wQ" Name="Window" Kind="InputPin" IsHidden="true" />
             <Pin Id="tuQp6eN9ouGpe5Nl1IiXKA" Name="Multisample Count" Kind="InputPin" />
           </Node>
-          <Pad Id="0Aqve2kjnxGeFwvulX2JNV" Comment="Multisample Count" Bounds="142,490,62,15" ShowValueBox="true" isIOBox="true" Value="None">
+          <Pad Id="0Aqve2kjnxGeFwvulX2JNV" Comment="Multisample Count" Bounds="202,481,62,15" ShowValueBox="true" isIOBox="true" Value="None">
             <p:TypeAnnotation LastCategoryFullName="VL.Qt" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="MultisampleCount" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="uFRlTQLkayG6RLkHnlzpUL" Bounds="340,488,240,19" ShowValueBox="true" isIOBox="true" Value="Switch to X4 or X8 and watch the edges.">
+          <Pad Id="uFRlTQLkayG6RLkHnlzpUL" Bounds="223,509,240,19" ShowValueBox="true" isIOBox="true" Value="Switch to X4 or X8 and watch the edges.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
