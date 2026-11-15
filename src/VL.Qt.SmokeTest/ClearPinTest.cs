@@ -368,7 +368,7 @@ static class ClearPinTest
                 Native.vlqt_test_com_release(tex);
             }
             Native.vlqt_test_d3d11_create_shared_texture(device, bw, bh, B8G8R8A8Typeless, out tex, out var handle);
-            int rc = Native.vlqt_offscreen_bind(scene, device, handle, bw, bh, B8G8R8A8Unorm);
+            int rc = Native.vlqt_offscreen_bind(scene, device, handle, bw, bh, B8G8R8A8Unorm, 1, out _);
             Native.vlqt_test_close_handle(handle);
             check(rc == 0, $"clear-pin offscreen: bind {bw}x{bh} ({rc}) {Native.LastError()}");
             (w, h) = (bw, bh);

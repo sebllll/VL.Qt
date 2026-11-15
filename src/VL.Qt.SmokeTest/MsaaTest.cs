@@ -12,7 +12,7 @@ using VL.Qt;
 /// <summary>
 /// #118 (MSAA): sample count of a window and of an offscreen scene. A rotated rectangle and a thin diagonal bar: without
 /// MSAA no pixel has an intermediate value, with it the edges do. Live change of a window (X4, None, X8, X4: swap chain
-/// count, rect, scene, apply), no replacement at the same count, real key input and fullscreen after a swap, offscreen
+/// count, rect, scene, apply), no replacement at the same count, real key input and fullscreen after a swap, Clear off across a swap (#117: trail lost, feedback layer rebuilt), offscreen
 /// (UNORM, SRGB and float through the linear pass; rebind 1, 4, 1) and the clamp of unsupported counts. The checks count
 /// edge pixels and read swap chain counts; nothing depends on time. The cost per count (spike) is in
 /// docs/decisions/render-texture.md.
@@ -118,6 +118,7 @@ static class MsaaTest
         ClampPart(check);
         WindowPart(outDir, check, pump, grab);
         InputPart(check, pump);
+        FeedbackPart(outDir, check, pump, grab);
         OffscreenPart(outDir, check);
     }
 
@@ -218,6 +219,59 @@ static class MsaaTest
         check(fs0.ToString() == fs1.ToString() && Native.vlqt_window_samples(w) == 8, $"msaa: fullscreen kept across a change ({fs0} -> {fs1})");
         Native.vlqt_window_set_mode(w, Protocol.WindowMode.Fullscreen, 0);
         pump(10);
+        Native.vlqt_window_destroy(w);
+    }
+
+    // Clear off (#117) across a swap: Scene::moveToWindow releases the feedback layer and rebuilds it for the new window.
+    // The trail is lost (the first frame starts from the clear colour), the scene draws on, and a new trail builds up.
+    static void FeedbackPart(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    {
+        const string title = Title + " clear off";
+        var w = Native.vlqt_window_create(W, H, title);
+        var cmd = new CommandWriter();
+        cmd.Reset();
+        cmd.ClearColor(0, 0, 1, 1);
+        cmd.SetClear(false);
+        cmd.Create(1, Protocol.Type.Rectangle);
+        cmd.SetPlace(1, 20, 130, 30, 30);
+        cmd.SetColor(1, Protocol.Prop.Color, 1, 1, 1, 1);
+        cmd.Reparent(1, 0, 0);
+        check(Native.Apply(w, cmd.EndFrame()) == 0, "msaa: clear-off scene");
+        Native.vlqt_window_show(w);
+        pump(5);
+        // Moves the square to x0, x0 + 40, ... (one frame each).
+        void Move(int x0, int steps)
+        {
+            for (int i = 0; i < steps; i++)
+            {
+                cmd.Reset();
+                cmd.SetPlace(1, x0 + i * 40, 130, 30, 30);
+                check(Native.Apply(w, cmd.EndFrame()) == 0, "msaa: clear-off move");
+                pump(1);
+            }
+        }
+        bool White(Bitmap b, int x) { var c = b.GetPixel(x * b.Width / W, 145 * b.Height / H); return c.R > 230 && c.G > 230 && c.B > 230; }
+        bool Blue(Bitmap b, int x) { var c = b.GetPixel(x * b.Width / W, 145 * b.Height / H); return c.R < 20 && c.G < 20 && c.B > 230; }
+
+        Move(20, 5); // 20 .. 180
+        using (var b = grab(w, Path.Combine(outDir, "msaa_clear_off_before.png")))
+            check(White(b, 35) && White(b, 115) && White(b, 195), "msaa: Clear off leaves a trail before the change");
+
+        int rc = Native.vlqt_window_set_samples(w, 1);
+        pump(3);
+        using (var b = grab(w, Path.Combine(outDir, "msaa_clear_off_swapped.png")))
+            check(rc == 1 && Native.vlqt_window_samples(w) == 1 && Blue(b, 35) && Blue(b, 115) && White(b, 195),
+                $"msaa: count change with Clear off drops the trail, the square still draws (rc {rc})");
+
+        long c0 = Native.vlqt_window_change_count(w);
+        pump(10);
+        long idle = Native.vlqt_window_change_count(w) - c0;
+        // The recursive layer renders every pump also without a scene change (docs "Clear pin", Rendering).
+        check(idle > 0, $"msaa: feedback layer active again after the change ({idle} changes / 10 pumps)");
+
+        Move(220, 3); // 220 .. 300
+        using (var b = grab(w, Path.Combine(outDir, "msaa_clear_off_after.png")))
+            check(Blue(b, 35) && White(b, 195) && White(b, 235) && White(b, 315), "msaa: a new trail builds up after the change");
         Native.vlqt_window_destroy(w);
     }
 

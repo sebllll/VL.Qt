@@ -188,7 +188,8 @@ VLQT_API unsigned int vlqt_window_get_mode(void* w);
  * window states, mode, title, icon, colour and overlay; the scene (items, their state, the QML engine) moves to it,
  * then the old one is deleted. Costs one new QRhi (tens of ms) and a new native window (HWND), which becomes active.
  * Lost on a change: a snapshot (vlqt_res_snapshot) still in flight fails ("the window was destroyed during the grab",
- * the next request works), pointer grabs and hover of the old window end, the perf history (F5) restarts.
+ * the next request works), pointer grabs and hover of the old window end, the perf history (F5) restarts, and with
+ * Clear off (#117) the kept frame: the feedback layer is rebuilt for the new window and starts from the clear colour.
  * Effect layers and snapshots in the window follow its count. -1 null window, VLQT_OFFSCREEN_BAD_ARGUMENT on an
  * offscreen scene (its count comes from vlqt_offscreen_bind). Main thread. */
 VLQT_API int vlqt_window_set_samples(void* w, int requested);
