@@ -15,7 +15,7 @@
 #include <vector>
 
 #ifdef Q_OS_WIN
-#include <d3d11.h>
+#include <d3d11_4.h>
 #include <d3d11on12.h>
 #include <d3d12.h>
 #include <dxgi1_4.h>
@@ -239,6 +239,15 @@ bool ensureDevice()
         qCWarning(lcDevice, "D3D11CreateDevice failed (0x%08lx) on '%s': every window creates its own device", long(hr),
             qPrintable(name));
         return false;
+    }
+
+    // The render threads of offscreen scenes use this context too (ContextLock); protection serializes single calls.
+    ID3D11Multithread* multithread = nullptr;
+    if (SUCCEEDED(s_ctx->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread)))) {
+        multithread->SetMultithreadProtected(TRUE);
+        multithread->Release();
+    } else {
+        qCWarning(lcDevice, "the shared device's context has no ID3D11Multithread: offscreen render threads are unsafe");
     }
 
     QRhiD3D11InitParams params;
@@ -501,6 +510,37 @@ int testLost(int mode)
     return 0;
 #else
     return -2;
+#endif
+}
+
+ContextLock::ContextLock()
+#ifdef Q_OS_WIN
+    : ContextLock(s_ctx)
+#endif
+{
+}
+
+ContextLock::ContextLock(void* d3d11Context)
+{
+#ifdef Q_OS_WIN
+    auto* const context = static_cast<ID3D11DeviceContext*>(d3d11Context);
+    ID3D11Multithread* multithread = nullptr;
+    if (context && SUCCEEDED(context->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread)))) {
+        multithread->Enter();
+        m_multithread = multithread;
+    }
+#else
+    Q_UNUSED(d3d11Context);
+#endif
+}
+
+ContextLock::~ContextLock()
+{
+#ifdef Q_OS_WIN
+    if (auto* const multithread = static_cast<ID3D11Multithread*>(m_multithread)) {
+        multithread->Leave();
+        multithread->Release();
+    }
 #endif
 }
 

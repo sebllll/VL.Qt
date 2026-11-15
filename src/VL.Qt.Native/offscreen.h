@@ -1,6 +1,7 @@
 // Offscreen scenes (#116, QtTexture): a Qt scene without a native window (QQuickRenderControl) on the shared D3D11
 // device, rendering into a texture of a foreign device (Stride's), ordered by two shared fences. C ABI: the
-// vlqt_offscreen_* exports in vlqt.h; design: docs/decisions/render-texture.md. Main thread only.
+// vlqt_offscreen_* exports in vlqt.h; design: docs/decisions/render-texture.md. Called on the main thread only; the
+// scene graph and QRhi of a scene may live on a render thread (render_thread.h, offscreen.cpp).
 //
 // A scene is a window handle (struct Window of vlqt.cpp) whose QQuickWindow is driven by a QQuickRenderControl:
 // vlqt.cpp owns the parts every handle shares (engine, scene, gate, perf, graphics configuration), this part owns the
@@ -50,7 +51,8 @@ void cancelTouch(QQuickWindow* window, const QPointingDevice* device, std::vecto
 
 // --- offscreen.cpp, called by vlqt_window_destroy ---
 
-// Before the QQuickWindow is deleted: frees the binding (render target, opened texture, fences).
+// Before the QQuickWindow is deleted: frees the binding (render target, opened texture, fences); a scene on a render
+// thread also drops its scene graph and QRhi there (after every render posted before).
 void release(State* state);
 // After the QQuickWindow is deleted: deletes the render control (and with it the scene's QRhi) and state.
 void destroy(State* state);

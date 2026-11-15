@@ -1,5 +1,6 @@
 #include "offscreen.h"
 #include "protocol.h"
+#include "render_thread.h"
 #include "vlqt.h"
 
 #include <QtCore/QElapsedTimer>
@@ -23,6 +24,7 @@
 #include <QtQuick/private/qquickrendercontrol_p.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstdio>
 #include <exception>
@@ -58,6 +60,14 @@ namespace vlqt::offscreen {
 //
 // Foreign device: QtNative holds no reference to it of its own; the two fences opened on it do, until unbind. So a
 // bound scene keeps it alive after its owner released it, and unbind or destroy then frees it.
+//
+// Render thread (#116 phase 5, render-texture.md "Qt render thread", decisions c and e): a scene of a threaded process
+// gets a render thread at create (render_thread::assign) and its scene graph and QRhi live there: initialize, beginFrame,
+// sync, render, endFrame, invalidate and unbind run there, the main thread waits for each of them except render +
+// endFrame + Signal + Flush (posted by render_batch). Items, polish, input, apply and bind stay on the main thread; the
+// render thread touches items only in sync, while the main thread waits. Every blocking job runs after the jobs posted
+// before it, so unbind, destroy, device loss and adapter move drain the thread first. Without a render thread
+// (vlqt_offscreen_set_threaded(0), VLQT_OFFSCREEN_THREAD=0) everything runs on the main thread as before.
 struct State
 {
     QQuickRenderControl* renderControl = nullptr;
@@ -69,7 +79,8 @@ struct State
     bool bound = false;
     unsigned long long readValue = 0;  // last value signalled on the read fence
     unsigned long long writeValue = 0; // last value signalled on the write fence
-    long long renders = 0;             // renders into the texture since bind
+    std::atomic<long long> renders = 0; // renders into the texture since bind (the render thread counts them)
+    render_thread::RenderThread* thread = nullptr; // the scene's render thread; null = main thread
     // Input (#119). Devices of their own per scene, children of renderControl, created at the first event: point ids
     // and grabs live in the device, so two scenes fed the same host input (a press lands in both) must not share one.
     QPointingDevice* mouse = nullptr;
@@ -93,6 +104,9 @@ struct State
     ID3D11Fence* qtWrite = nullptr;
     ID3D11Fence* foreignRead = nullptr;        // ... and opened on the foreign device
     ID3D11Fence* foreignWrite = nullptr;
+    // A device of the binding is a software adapter (WARP): its context deadlocks waiting for a value that is signalled
+    // only later (spike 5.1), so render_batch waits until the render thread submitted the signal.
+    bool software = false;
 #endif
 };
 
@@ -107,6 +121,15 @@ std::vector<State*> s_scenes;
 void deviceLost();
 void deviceRestored();
 #endif
+
+// f on the scene's render thread, blocking and after every job posted before (drains it); here without one.
+template <class F> void onRenderThread(State* s, F&& f)
+{
+    if (s->thread)
+        s->thread->call(std::forward<F>(f));
+    else
+        f();
+}
 
 // Keyboard focus of a scene (#119): Qt Quick gives a window's root item the focus, and so its items the active focus,
 // only while QGuiApplication's focus window is that window, its render window
@@ -156,8 +179,14 @@ void* create(int width, int height)
         setError("offscreen scene: QtNative has no shared D3D11 device (VLQT_SHARED_DEVICE=0 or creation failed, see the log)");
         return nullptr;
     }
+    // From here on the scene graph and the QRhi belong to the render thread (prepareThread before initialize).
+    state->thread = render_thread::assign();
+    if (state->thread)
+        state->renderControl->prepareThread(state->thread->thread());
     // The QRhi now, not at bind: vlqt_test_device_info, snapshots and resources see the scene's device at once.
-    if (!state->renderControl->initialize()) {
+    bool initialized = false;
+    onRenderThread(state, [state, &initialized] { initialized = state->renderControl->initialize(); });
+    if (!initialized) {
         vlqt_window_destroy(handle);
         setError("offscreen scene: QQuickRenderControl::initialize failed (see the log)");
         return nullptr;
@@ -206,10 +235,11 @@ ID3D11Device* qtDevice(const State* s)
 }
 
 // Frees the binding: render target -> opened texture -> fences. While the QRhi still exists (before the QQuickWindow
-// is deleted).
+// is deleted). On the scene's render thread (onRenderThread).
 void unbind(State* s)
 {
     if (s->texture) {
+        vlqt::device::ContextLock lock(s->qtContext);
         s->window->setRenderTarget(QQuickRenderTarget());
         // Qt turns a render target into QRhi wrappers (texture, render target view) only at the next frame
         // (ensureCustomRenderTarget); drop them now, else their view keeps the opened texture alive.
@@ -227,18 +257,26 @@ void unbind(State* s)
     s->bound = false;
 }
 
+// Drops scene graph and QRhi as ~QQuickRenderControl does: initialize() reuses an existing QRhi, so a new one (on a
+// new device) needs resetRhi. The window has no QRhi afterwards. On the scene's render thread.
+void dropRhi(State* s)
+{
+    s->renderControl->invalidate();
+    QQuickWindowPrivate* wd = QQuickWindowPrivate::get(s->window);
+    wd->rhi = nullptr;
+    QQuickRenderControlPrivate::get(s->renderControl)->resetRhi(wd->graphicsConfig);
+}
+
 // device::Listener lost: the old device goes away. Unbind (render target, opened texture, fences on both sides), then
-// drop scene graph and QRhi as ~QQuickRenderControl does: initialize() reuses an existing QRhi, so a new one on the
-// new device needs resetRhi. The window has no QRhi afterwards; device::rebuild hands it the new device.
+// drop scene graph and QRhi; device::rebuild hands the window the new device.
 void deviceLost()
 {
     for (State* s : s_scenes) {
         const bool wasBound = s->bound;
-        unbind(s);
-        s->renderControl->invalidate();
-        QQuickWindowPrivate* wd = QQuickWindowPrivate::get(s->window);
-        wd->rhi = nullptr;
-        QQuickRenderControlPrivate::get(s->renderControl)->resetRhi(wd->graphicsConfig);
+        onRenderThread(s, [s] {
+            unbind(s);
+            dropRhi(s);
+        });
         s->dirty = true;
         if (wasBound)
             qCInfo(lcOffscreen, "offscreen scene %p unbound: QtNative's device is rebuilt, the caller binds again",
@@ -249,10 +287,13 @@ void deviceLost()
 // device::Listener restored: a QRhi on the new device (the window got it from device::rebuild).
 void deviceRestored()
 {
-    for (State* s : s_scenes)
-        if (!s->renderControl->initialize())
+    for (State* s : s_scenes) {
+        bool initialized = false;
+        onRenderThread(s, [s, &initialized] { initialized = s->renderControl->initialize(); });
+        if (!initialized)
             qCWarning(lcOffscreen, "offscreen scene %p: QQuickRenderControl::initialize failed after the device "
                 "rebuild, bind retries it", static_cast<void*>(s));
+    }
 }
 
 // The adapters of the foreign device and of QtNative's device differ: move QtNative's device to the foreign adapter
@@ -309,9 +350,24 @@ int createFence(ID3D11Device5* qt, ID3D11Device5* foreign, ComPtr<ID3D11Fence>& 
     return VLQT_OFFSCREEN_OK;
 }
 
+// True if device runs on a software adapter (WARP).
+bool isSoftware(ID3D11Device* device)
+{
+    ComPtr<IDXGIDevice> dxgi;
+    ComPtr<IDXGIAdapter> adapter;
+    ComPtr<IDXGIAdapter1> adapter1;
+    DXGI_ADAPTER_DESC1 desc{};
+    if (FAILED(device->QueryInterface(IID_PPV_ARGS(dxgi.GetAddressOf()))) || FAILED(dxgi->GetAdapter(adapter.GetAddressOf()))
+        || FAILED(adapter.As(&adapter1)) || FAILED(adapter1->GetDesc1(&desc)))
+        return false;
+    return (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) != 0;
+}
+
+// Main thread; the device calls are free-threaded. Unbind and initialize run on the render thread (drains it), so no
+// render of the old binding is in flight when the render target changes.
 int bind(State* s, void* device, void* ntHandle, int width, int height, int rtvFormat)
 {
-    unbind(s);
+    onRenderThread(s, [s] { unbind(s); });
     if (!device || !ntHandle)
         return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "bind: null device or handle");
     if (width < 1 || height < 1 || width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION || height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION)
@@ -324,7 +380,7 @@ int bind(State* s, void* device, void* ntHandle, int width, int height, int rtvF
         return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "bind: device is no D3D11 device with a DXGI adapter");
     // A failed initialize after a device rebuild (deviceRestored) is retried here.
     if (!s->window->rhi() && s->window->property("_vlqt_shared_device").toBool())
-        s->renderControl->initialize();
+        onRenderThread(s, [s] { s->renderControl->initialize(); });
     ID3D11Device* qt = qtDevice(s);
     if (!qt)
         return fail(VLQT_OFFSCREEN_DEVICE_LOST, "bind: the scene has no QtNative device");
@@ -388,6 +444,7 @@ int bind(State* s, void* device, void* ntHandle, int width, int height, int rtvF
     s->readValue = 0;
     s->writeValue = 0;
     s->renders = 0;
+    s->software = isSoftware(qt) || isSoftware(foreign);
     s->bound = true;
     s->dirty = true;
     return VLQT_OFFSCREEN_OK;
@@ -419,6 +476,129 @@ void render(State* s, ID3D11DeviceContext4* foreign)
     s->renders++;
 }
 
+// The scenes of one render thread in one batch, with the write value each one signals. Two lists per thread: the
+// main thread fills one while the render thread may still render the other (at most one batch is in flight per
+// thread, see renderThreaded). Main thread; the render thread reads the list of its jobs.
+struct ThreadBatch
+{
+    render_thread::RenderThread* thread = nullptr;
+    std::vector<std::pair<State*, unsigned long long>> lists[2];
+    int current = 0;
+    bool used = false;     // in the batch being built
+    bool software = false; // a scene of it is bound to a software device
+};
+std::vector<ThreadBatch> s_threadBatches; // one per render thread that ever rendered
+
+// beginFrame (after Qt's GPU waited for the read value) and sync of one scene. Render thread, blocking job.
+void beginAndSync(State* s)
+{
+    try {
+        {
+            vlqt::device::ContextLock lock(s->qtContext);
+            // Before beginFrame: QRhi D3D11 submits the frame's commands to the immediate context only in endFrame.
+            s->qtContext->Wait(s->qtRead, s->readValue);
+            s->renderControl->beginFrame();
+        }
+        s->renderControl->sync();
+    } catch (const std::exception& e) {
+        qCWarning(lcOffscreen, "offscreen scene %p: sync failed: %s", static_cast<void*>(s), e.what());
+    } catch (...) {
+        qCWarning(lcOffscreen, "offscreen scene %p: sync failed", static_cast<void*>(s));
+    }
+}
+
+// render, endFrame, then the write value: signalled on every path, the foreign context already waits for it (a value
+// never signalled would hang the foreign GPU). Render thread.
+void renderAndSignal(State* s, unsigned long long writeValue)
+{
+    try {
+        s->renderControl->render();
+    } catch (...) {
+        qCWarning(lcOffscreen, "offscreen scene %p: render failed", static_cast<void*>(s));
+    }
+    vlqt::device::ContextLock lock(s->qtContext);
+    try {
+        s->renderControl->endFrame();
+    } catch (...) {
+        qCWarning(lcOffscreen, "offscreen scene %p: endFrame failed", static_cast<void*>(s));
+    }
+    // TODO: GPU time of the frame (as in render).
+    s->qtContext->Signal(s->qtWrite, writeValue);
+    // Submits the frame and the signal; without it the foreign GPU would wait forever.
+    s->qtContext->Flush();
+    s->renders++;
+}
+
+// The threaded batch (decision c): per scene the read signal on the foreign context and polish (main thread); one
+// flush of the foreign context, so Qt's GPU need not wait for the host's next flush; per render thread one blocking job
+// that waits for the read value, begins the frame and syncs its scenes (the main thread waits, items stay untouched);
+// the foreign context's GPU wait for each write value (it waits for a value signalled later, its CPU never waits);
+// then per render thread one posted job that renders, ends the frame, signals the write value and flushes. The next
+// batch's sync job queues behind these renders: a render thread more than a frame behind blocks the main thread
+// there (back pressure, at most one frame in flight per scene). Software devices: the job is blocking and the wait
+// is queued after it.
+void renderThreaded(const std::vector<State*>& scenes, ID3D11DeviceContext4* foreign)
+{
+    for (State* s : scenes) {
+        foreign->Signal(s->foreignRead, ++s->readValue);
+        s->renderControl->polishItems();
+        // Polish's own changes are in this frame; a change made while syncing or rendering renders next frame.
+        s->dirty = false;
+    }
+    foreign->Flush();
+
+    for (ThreadBatch& b : s_threadBatches)
+        b.used = false;
+    for (State* s : scenes) {
+        auto it = std::find_if(s_threadBatches.begin(), s_threadBatches.end(),
+            [s](const ThreadBatch& b) { return b.thread == s->thread; });
+        if (it == s_threadBatches.end()) {
+            s_threadBatches.emplace_back();
+            it = s_threadBatches.end() - 1;
+            it->thread = s->thread;
+        }
+        if (!it->used) {
+            it->used = true;
+            it->software = false;
+            it->current ^= 1;
+            it->lists[it->current].clear();
+        }
+        it->lists[it->current].push_back({ s, ++s->writeValue });
+        it->software = it->software || s->software;
+    }
+
+    for (ThreadBatch& b : s_threadBatches) {
+        if (!b.used)
+            continue;
+        const auto& list = b.lists[b.current];
+        b.thread->call([&list] {
+            for (const auto& [s, writeValue] : list)
+                beginAndSync(s);
+        });
+    }
+    for (const ThreadBatch& b : s_threadBatches)
+        if (b.used && !b.software)
+            for (const auto& [s, writeValue] : b.lists[b.current])
+                foreign->Wait(s->foreignWrite, writeValue);
+    for (ThreadBatch& b : s_threadBatches) {
+        if (!b.used)
+            continue;
+        const auto* list = &b.lists[b.current];
+        const auto job = [list] {
+            for (const auto& [s, writeValue] : *list)
+                renderAndSignal(s, writeValue);
+        };
+        if (b.software)
+            b.thread->call(job);
+        else
+            b.thread->post(job);
+    }
+    for (const ThreadBatch& b : s_threadBatches)
+        if (b.used && b.software)
+            for (const auto& [s, writeValue] : b.lists[b.current])
+                foreign->Wait(s->foreignWrite, writeValue);
+}
+
 int renderBatch(void* context, void* const* scenes, int count, double driverSeconds)
 {
     if (!qGuiApp || QQuickWindow::graphicsApi() != QSGRendererInterface::Direct3D11)
@@ -426,6 +606,8 @@ int renderBatch(void* context, void* const* scenes, int count, double driverSeco
     vlqt_driver_advance(driverSeconds);
     ComPtr<ID3D11DeviceContext4> foreign;
     int rendered = 0;
+    static std::vector<State*> threaded; // reused: no allocation per frame
+    threaded.clear();
     for (int i = 0; i < count; i++) {
         State* s = stateOf(scenes[i]);
         if (!s || !s->bound || !s->dirty)
@@ -439,9 +621,14 @@ int renderBatch(void* context, void* const* scenes, int count, double driverSeco
         ID3D11Device* qt = qtDevice(s);
         if (!qt || FAILED(qt->GetDeviceRemovedReason()))
             return fail(VLQT_OFFSCREEN_DEVICE_LOST, "render_batch: QtNative's device is lost");
-        render(s, foreign.Get());
+        if (s->thread)
+            threaded.push_back(s);
+        else
+            render(s, foreign.Get());
         rendered++;
     }
+    if (!threaded.empty())
+        renderThreaded(threaded, foreign.Get());
     return rendered;
 }
 
@@ -452,7 +639,12 @@ int renderBatch(void* context, void* const* scenes, int count, double driverSeco
 void release(State* state)
 {
 #ifdef _WIN32
-    unbind(state);
+    onRenderThread(state, [state] {
+        unbind(state);
+        // The render thread's scene graph and QRhi go there, before the main thread deletes window and render control.
+        if (state->thread)
+            dropRhi(state);
+    });
 #else
     (void)state;
 #endif
@@ -494,6 +686,9 @@ int testState(void* scene, unsigned long long* readFence, unsigned long long* wr
     State* s = stateOf(scene);
     if (!s)
         return VLQT_OFFSCREEN_NULL_SCENE;
+    // The renders posted by the last batch are counted.
+    if (s->thread)
+        s->thread->drain();
     if (!s->bound)
         return VLQT_OFFSCREEN_UNBOUND;
     if (readFence)
@@ -847,7 +1042,7 @@ VLQT_API int vlqt_offscreen_bind(void* scene, void* device, void* ntHandle, int 
     return guardedCode([&] {
         int rc = bind(state, device, ntHandle, width, height, rtvFormat);
         if (rc != VLQT_OFFSCREEN_OK)
-            unbind(state);
+            onRenderThread(state, [state] { unbind(state); });
         return rc;
     });
 #else
@@ -867,9 +1062,20 @@ VLQT_API int vlqt_offscreen_unbind(void* scene)
     if (!state)
         return VLQT_OFFSCREEN_NULL_SCENE;
     return guardedCode([&] {
-        release(state);
+#ifdef _WIN32
+        onRenderThread(state, [state] { unbind(state); });
+#endif
         return VLQT_OFFSCREEN_OK;
     });
+}
+
+VLQT_API int vlqt_offscreen_set_threaded(int threadCount)
+{
+    const char* error = nullptr;
+    const int rc = vlqt::render_thread::setThreadCount(threadCount, &error);
+    if (error)
+        setError(error);
+    return rc;
 }
 
 VLQT_API int vlqt_offscreen_is_bound(void* scene)

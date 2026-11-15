@@ -22,6 +22,9 @@
  * (canMove): Qt replaces a window's QRhi only after it noticed a loss, so a window on a healthy device would stay on
  * the old one. The adapter of a move is kept for later rebuilds.
  *
+ * Threads (#116 phase 5): the device is free-threaded; its immediate context is multithread-protected and shared with the
+ * render threads of offscreen scenes, so stateful sequences on it take a ContextLock. Everything else here: main thread.
+ *
  * Linux and every non-D3D11 backend: no-op, each window keeps its own device. A shared VkDevice docks here later.
  * VLQT_SHARED_DEVICE=0 (set before process start) also keeps Qt's own device per window (diagnosis, A/B timing).
  */
@@ -77,5 +80,26 @@ bool moveTo(unsigned long long luid);
 
 // vlqt_test_device_lost backend: mode = vlqt_device_lost (protocol.h). 0 / -2 / -7.
 int testLost(int mode);
+
+// Holds the immediate context of a D3D11 device for a stateful sequence of calls (ID3D11Multithread::Enter/Leave,
+// recursive per thread). The render threads of offscreen scenes (#116, render_thread.h) share the shared device's
+// immediate context with the main thread. The shared device's context is multithread-protected from its creation on
+// (every rebuild too), so single calls need no lock; a sequence whose context state must not interleave with another
+// thread's does (a QRhi frame, Wait + beginFrame, endFrame + Signal + Flush, Map + Unmap). No-op for a null context and
+// on other platforms.
+class ContextLock
+{
+public:
+    // The shared device's immediate context; no-op without one. Not while the main thread rebuilds the device.
+    ContextLock();
+    // context: an ID3D11DeviceContext*, or null.
+    explicit ContextLock(void* d3d11Context);
+    ~ContextLock();
+    ContextLock(const ContextLock&) = delete;
+    ContextLock& operator=(const ContextLock&) = delete;
+
+private:
+    void* m_multithread = nullptr; // ID3D11Multithread*, entered
+};
 
 } // namespace vlqt::device

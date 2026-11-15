@@ -319,6 +319,13 @@ namespace VL.Qt
 
         public static int OffscreenRenderBatch(IntPtr context, ReadOnlySpan<IntPtr> scenes, double driverSeconds)
             => vlqt_offscreen_render_batch(context, in MemoryMarshal.GetReference(scenes), scenes.Length, driverSeconds);
+        /// <summary>
+        /// Where offscreen scenes render: 0 = main thread, n = 1 … 16 Qt render threads (without the call:
+        /// VLQT_OFFSCREEN_THREAD, unset = 1). Only before the first vlqt_offscreen_create; afterwards OK only for the
+        /// count in use, else Protocol.Offscreen.NotSupported.
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_set_threaded(int threadCount);
 
         // Input into an offscreen scene (#119): positions in texture pixels, codes Protocol.Offscreen (vlqt.h).
         /// <summary>
