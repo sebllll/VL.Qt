@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if WINDOWS
+using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Drawing;
@@ -429,3 +430,4 @@ static class MsaaTest
         b.Save(path);
     }
 }
+#endif
