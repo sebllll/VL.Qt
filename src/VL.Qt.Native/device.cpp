@@ -1,6 +1,7 @@
 #include "device.h"
 
 #include "protocol.h"
+#include "render_thread.h"
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
@@ -544,6 +545,10 @@ int testLost(int mode)
             "(VLQT_TEST_D3D11ON12=1 before the first window or resource)");
         return -2;
     }
+    // The device goes between two frames, not under a render job a render_batch just posted: D3D11On12 then keeps an
+    // acquire of the scene's shared texture in its batch without a fence, and destroying the old device (releaseRetired)
+    // runs it as ID3D12CommandQueue::Wait(nullptr) - an access violation in D3D12Core (T6, 1 in ~10 threaded runs).
+    render_thread::drainAll();
     qCInfo(lcDevice, "test: removing the shared device %p", static_cast<void*>(s_dev));
     dev5->RemoveDevice();
     dev5->Release();

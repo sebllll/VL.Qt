@@ -86,4 +86,7 @@ inline constexpr int maxThreads = 16;
 // the pool size (setThreadCount, else VLQT_OFFSCREEN_THREAD, else 1) and logs it. Main thread.
 RenderThread* assign();
 
+// Waits until every render thread of the pool ran the jobs queued before (none without a pool). Main thread.
+void drainAll();
+
 } // namespace vlqt::render_thread

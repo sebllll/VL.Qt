@@ -107,5 +107,6 @@ QtNative names its threads, so they are easy to find in a profile, a thread dump
 |---|---|
 | `vlqt-gui` | The Qt GUI thread: the thread that creates the `QGuiApplication` (`vlqt_app_init`), i.e. the thread of the host (the vvvv main thread, the main thread of the SmokeTest). It is named only while it has no name yet, a name the host gave it stays. |
 | `vlqt-res-0` … `vlqt-res-3` | The decode workers of the resource manager (images, shaders; their number is `VLQT_RES_WORKERS`, at most 16). |
+| `vlqt-render-0` … | The Qt render threads of `QtTexture` scenes (#116): scene graph, sync and render of the offscreen scenes; their number is `VLQT_OFFSCREEN_THREAD` (default 1, at most 16, none with 0). |
 
 Qt's own threads keep their names (`QQmlThread`, `QFFmpeg::StreamDecoder0` …). Tools that read thread descriptions (WinDbg and cdb, Visual Studio, ETW-based profilers) show the names instead of "Thread (id)"; on Linux they are the `comm` of the thread (`ps -L`, `top -H`, gdb `info threads`).

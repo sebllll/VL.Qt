@@ -1,6 +1,7 @@
 #include "render_thread.h"
 
 #include "protocol.h"
+#include "threadname.h"
 
 #include <QtCore/QLoggingCategory>
 
@@ -38,10 +39,13 @@ int fromEnvironment()
 
 RenderThread::RenderThread(int index)
 {
-    m_thread.setObjectName(QStringLiteral("vlqt render %1").arg(index));
+    // The same name for Qt and for the OS (profilers, dumps): threadname.h, docs/profiling.md.
+    const QByteArray name = "vlqt-render-" + QByteArray::number(index);
+    m_thread.setObjectName(QString::fromLatin1(name));
     m_thread.start();
     m_context = new QObject();
     m_context->moveToThread(&m_thread);
+    post([name] { setCurrentThreadName(name.constData()); });
 }
 
 void RenderThread::logError(std::exception_ptr error)
@@ -84,6 +88,12 @@ RenderThread* assign()
     while (int(s_pool.size()) <= index)
         s_pool.push_back(new RenderThread(int(s_pool.size())));
     return s_pool[index];
+}
+
+void drainAll()
+{
+    for (RenderThread* t : s_pool)
+        t->drain();
 }
 
 } // namespace vlqt::render_thread
