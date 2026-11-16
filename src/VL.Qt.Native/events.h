@@ -85,9 +85,10 @@
  *                   (default): a press that an element on top already grabs (Tap/Drag handler, Button) is not taken.
  *                   ACCEPTED_DEVICES filter (Qt default: all, i.e. the mouse appears as point id 0).
  *   Pinch handler   (PinchHandler, target null, #321) EV_ACTIVE (u8) on change, EV_PINCH (f32 scale, f32 rotation in
- *                   degrees clockwise, f32 x, f32 y translation of the centroid in the parent's space) while active, on
- *                   change and once per new gesture. Values count from Qt's activation (SmokeTest: when the second
- *                   finger touches); the translation is the centroid's movement since then (not Qt's activeTranslation,
+ *                   degrees clockwise, f32 x, f32 y translation, f32 x, f32 y pivot, in the parent's space) while
+ *                   active, on change and once per new gesture. Values count from Qt's activation (SmokeTest: when the
+ *                   second finger touches); the pivot is the centroid then, the translation the movement of the pivot
+ *                   point (the centroid's movement without a change of the finger count; not Qt's activeTranslation,
  *                   which is wrong after a change of the finger count, touch.cpp). The
  *                   last EV_PINCH comes before EV_ACTIVE 0; the 1/0/0 Qt resets to at the end is never sent, a new sink
  *                   gets nothing until the next gesture. MINIMUM_POINT_COUNT / MAXIMUM_POINT_COUNT (default 2/2),
@@ -224,7 +225,7 @@ struct HandlerNode {
     std::optional<qint32> minimumPointCount; // VLQT_PROP_MINIMUM_POINT_COUNT (Pinch), Qt default (2) while unset
     std::optional<qint32> maximumPointCount; // VLQT_PROP_MAXIMUM_POINT_COUNT (Pinch), Qt default (2) while unset
     QByteArray sentTouch;        // last EV_TOUCH_POINTS payload (empty or count 0 = no point sent)
-    float sentPinch[4] = {};     // last EV_PINCH sent
+    float sentPinch[6] = {};     // last EV_PINCH sent
     quint32 sentGestures = 0;    // PinchState::gestures at the last EV_PINCH
     quint32 sink = 0;            // BIND sinkHandle, 0 = unbound
     std::optional<qint32> acceptedButtons; // VLQT_PROP_ACCEPTED_BUTTONS, Qt default (left) while unset

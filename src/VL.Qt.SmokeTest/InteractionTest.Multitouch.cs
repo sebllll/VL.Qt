@@ -78,7 +78,7 @@ static partial class InteractionTest
         var scale = Channel.Create(5f);
         var rotation = Channel.Create(5f);
         var translation = Channel.Create(new Vector2(5, 5));
-        rig.Chain = () => node.Update(null, active, scale, rotation, translation, 2, 2, PointerDevices.All);
+        rig.Chain = () => node.Update(null, active, scale, rotation, translation, null, 2, 2, PointerDevices.All);
 
         rig.Frames(3);
         check(rig.Handlers() >= 1, $"pinch-node: handler created ({rig.Handlers()}; QtNative adds an internal point counter)");

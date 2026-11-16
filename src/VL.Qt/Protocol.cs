@@ -388,7 +388,7 @@
             /// </summary>
             public const ushort TouchPoints = 15;
             /// <summary>
-            /// 4 x f32 scale, rotation (degrees, clockwise), translation x, y (parent space) of the running gesture, on
+            /// 6 x f32 scale, rotation (degrees, clockwise), translation x, y, pivot x, y (parent space) of the running gesture, on
             /// change; the last one comes before <see cref="Active"/> 0. Pinch handler (#321).
             /// </summary>
             public const ushort Pinch = 16;

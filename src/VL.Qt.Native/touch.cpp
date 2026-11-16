@@ -4,6 +4,7 @@
 #include <QtCore/QVariant>
 #include <QtGui/QVector2D>
 #include <QtQuick/QQuickItem>
+#include <cmath>
 
 namespace vlqt {
 
@@ -124,6 +125,7 @@ void PinchState::onActiveChanged()
             ++gestures;
             for (int i = 0; i < 4; ++i)
                 value[i] = base_[i] = i == 0 ? 1.f : 0.f;
+            pivot_ = centroid();
         } else {
             // Qt starts again after a change of the finger count: go on from the frozen value.
             for (int i = 0; i < 4; ++i)
@@ -146,15 +148,27 @@ void PinchState::onValuesChanged()
     // activeTranslation as the centroid's scene position (press position lost, SmokeTest pinch), a jump of hundreds of
     // pixels. Centroid movement since the activation in scene coordinates, mapped into the parent's space like the Drag
     // handler (events.h).
-    const QPointF c = centroid();
-    QPointF t = c - start_;
     const QQuickItem* item = points_->parentItem(); // the tracker sits at the pinch's item
-    if (const QQuickItem* parent = item ? item->parentItem() : nullptr)
-        t = parent->mapFromScene(c) - parent->mapFromScene(start_);
-    value[0] = base_[0] * float(pinch_->property("activeScale").toDouble());
-    value[1] = base_[1] + float(pinch_->property("activeRotation").toDouble());
-    value[2] = base_[2] + float(t.x());
-    value[3] = base_[3] + float(t.y());
+    const QQuickItem* parent = item ? item->parentItem() : nullptr;
+    const auto toParent = [parent](const QPointF& scene) { return parent ? parent->mapFromScene(scene) : scene; };
+    const QPointF c = toParent(centroid());
+    const QPointF c1 = toParent(start_);   // centroid at the last activation
+    const QPointF c0 = toParent(pivot_);   // pivot of the whole gesture
+    const double s1 = pinch_->property("activeScale").toDouble();
+    const double a1 = pinch_->property("activeRotation").toDouble();
+    // Qt scales and rotates about the centroid of its last activation (c1), the reported values about the pivot c0:
+    // the transform so far (about c0) followed by the one of Qt (about c1), written as one about c0. Without a change of
+    // the finger count c1 = c0 and the translation is the centroid movement.
+    const double rad = a1 * 3.14159265358979323846 / 180.0;
+    const double cs = s1 * std::cos(rad), sn = s1 * std::sin(rad);
+    const QPointF q = c0 + QPointF(base_[2], base_[3]) - c1;
+    const QPointF t = QPointF(cs * q.x() - sn * q.y(), sn * q.x() + cs * q.y()) + c - c0;
+    value[0] = base_[0] * float(s1);
+    value[1] = base_[1] + float(a1);
+    value[2] = float(t.x());
+    value[3] = float(t.y());
+    value[4] = float(c0.x());
+    value[5] = float(c0.y());
 }
 
 void PinchState::onPointsChanged()
