@@ -328,7 +328,7 @@ static class VideoAudioTest
         var reT = Stopwatch.StartNew();
         Frames(5000, () => reader.Snapshot(tap2).Frames > det1.Frames);
         var re = reader.Snapshot(tap2);
-        Console.WriteLine($"INFO videoaudio: first frames after re-attach in {reT.ElapsedMilliseconds} ms; overrun before {det1.Overrun}, after {re.Overrun}; src {src1.Overrun}, shared {src0.Overrun}");
+        Console.WriteLine($"INFO videoaudio: first frames after re-attach in {reT.ElapsedMilliseconds} ms; overrun before {det1.Overrun}, after {re.Overrun}");
         check(re.Flags == (Protocol.AudioTap.Attached | Protocol.AudioTap.Playing) && re.Frames > det1.Frames, $"videoaudio: re-attached after 0 (flags {re.Flags})");
         cmd.Destroy(VideoId);
         Apply("destroy video with tap");
@@ -342,7 +342,55 @@ static class VideoAudioTest
         Console.WriteLine($"INFO videoaudio: sync median {syncMedian:F2} ms |p90| {syncP90:F2} ms; rate 48k {rate1:F3}, msaa {rateMsaa:F3}, 44.1k {rate2:F3}; " +
             $"overrun {end.Overrun}, underrun {end.Underrun}, reads {end.Calls}");
 
+        // 10. DESTROY while buffers flow, after a switch or a 0 -> tap re-attach (the item's children go in Qt's order:
+        // the player before the attachment; CI crash on Linux with the output parented to the player), then a window
+        // destroy with an attached tap (Scene::~Scene). Under ASan (tools/test-linux.sh --sanitize asan) a use after
+        // free shows here; otherwise the process survives and every tap is freed.
+        var freed = true;
+        for (int round = 0; round < 6; round++)
+        {
+            ulong ta = CreateTap(check, 48000), tb = CreateTap(check, 44100);
+            reader.Id = ta;
+            cmd.Create(VideoId, Protocol.Type.Video);
+            cmd.SetPlace(VideoId, 0, 0, 320, 180);
+            cmd.SetString(VideoId, Protocol.Prop.Source, a);
+            cmd.SetBool(VideoId, Protocol.Prop.Loop, true);
+            cmd.SetU64(VideoId, Protocol.Prop.AudioTap, ta);
+            cmd.SetBool(VideoId, Protocol.Prop.Playing, true);
+            cmd.Reparent(VideoId, 0, 0);
+            Apply($"stress {round}: create");
+            Frames(250);
+            if (round % 2 == 1)
+            {
+                cmd.SetU64(VideoId, Protocol.Prop.AudioTap, 0);
+                Apply($"stress {round}: tap 0");
+                Frames(50);
+            }
+            cmd.SetU64(VideoId, Protocol.Prop.AudioTap, tb);
+            Apply($"stress {round}: tap b");
+            reader.Id = tb;
+            Frames(150 + 50 * round);
+            cmd.Destroy(VideoId);
+            Apply($"stress {round}: destroy while playing");
+            reader.Id = 0;
+            Native.vlqt_res_release(ta);
+            Native.vlqt_res_release(tb);
+            Frames(30);
+            freed &= Native.ResReadAudio(ta, Span<float>.Empty, Channels, out _) == -9 && Native.ResReadAudio(tb, Span<float>.Empty, Channels, out _) == -9;
+        }
+        check(freed, "videoaudio: 6 rounds of DESTROY while playing after a tap switch / re-attach: taps freed, no crash");
+
+        var tw = CreateTap(check, 48000);
+        cmd.Create(VideoId, Protocol.Type.Video);
+        cmd.SetString(VideoId, Protocol.Prop.Source, a);
+        cmd.SetU64(VideoId, Protocol.Prop.AudioTap, tw);
+        cmd.SetBool(VideoId, Protocol.Prop.Playing, true);
+        cmd.Reparent(VideoId, 0, 0);
+        Apply("video with tap for window destroy");
+        Frames(300);
         Native.vlqt_window_destroy(w);
+        Native.vlqt_res_release(tw);
         pump(2);
+        check(Native.ResReadAudio(tw, Span<float>.Empty, Channels, out _) == -9, "videoaudio: window destroy with an attached tap frees the tap");
     }
 }

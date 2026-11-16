@@ -26,6 +26,8 @@
 
 struct vlqt_audio_tap_state;
 
+class QQuickItem;
+
 namespace vlqt {
 class Elements;
 struct Node;
@@ -108,5 +110,9 @@ long long nowNs();
 // Setter of VLQT_PROP_AUDIO_TAP (u64): attaches the tap to the element's player and turns Qt's own output off, 0
 // detaches and restores it (protocol.h "Audio tap"). false + err: not a Ready tap (ApplyBadValue).
 bool setVideoTap(Elements& els, Node& node, const ResolvedProp& rp, const Value& v, std::string& err);
+// Before a Video item is deleted (DESTROY, scene teardown), with its player still alive: detaches the tap and
+// unlinks the QAudioBufferOutput from the player (~QMediaPlayer does not, deleting the output afterwards would call
+// into the dead player).
+void releaseVideo(QQuickItem* item);
 
 } // namespace vlqt::res::audio

@@ -21,6 +21,7 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <utility>
 
 namespace vlqt::res::audio {
 
@@ -275,7 +276,18 @@ public:
     {
         setObjectName(QLatin1StringView(attachmentName));
     }
-    ~TapAttachment() override { detach(false); }
+    ~TapAttachment() override
+    {
+        // Normally releaseVideo already unlinked the output while the player was alive. A QAudioBufferOutput keeps a
+        // raw pointer to its player (QAudioBufferOutputPrivate::mediaPlayer) that ~QMediaPlayer does not clear, so
+        // one still set on a destroyed player must never be deleted: leak it rather than crash.
+        if (m_output && !m_player) {
+            qCWarning(lcTap, "audio tap: player destroyed before the tap was detached, its buffer output is leaked");
+            m_output->setParent(nullptr);
+            m_output = nullptr;
+        }
+        detach(false);
+    }
 
     // Attaches tap to the player (replacing the current tap without a moment of Qt sound). false + err on failure.
     bool attach(const std::shared_ptr<TapWork>& tap, QMediaPlayer* player, QVideoSink* sink, std::string& err)
@@ -303,13 +315,14 @@ public:
         fmt.setSampleFormat(QAudioFormat::Float);
         fmt.setChannelCount(tap->channels);
         fmt.setSampleRate(tap->sampleRate);
-        auto* output = new QAudioBufferOutput(fmt, player);
+        // Owned by this attachment, not by the player: its lifetime does not depend on the order in which the item's
+        // children (player, attachment) are destroyed.
+        auto* output = new QAudioBufferOutput(fmt, this);
         TapWork* raw = tap.get();
         // DirectConnection: runs on the player's audio thread. The lambda keeps the Work alive while it may run.
         connect(output, &QAudioBufferOutput::audioBufferReceived, output,
             [keep = tap, raw, gen](const QAudioBuffer& b) { produce(*raw, gen, b); }, Qt::DirectConnection);
-        QAudioBufferOutput* old = m_output;
-        m_output = output;
+        QAudioBufferOutput* old = std::exchange(m_output, output);
         // Buffer output first, then Qt's output off (no Qt sound from here, the player runs on the system clock). The
         // other order leaves a playing player without any audio output for a moment, and the FFmpeg backend then
         // drops the audio stream until the next source change (no buffers at all).
@@ -349,9 +362,12 @@ public:
             // Qt's output back before the buffer output goes: never a playing player without audio output (see attach).
             if (restore)
                 m_player->setAudioOutput(m_qtOutput);
-            if (m_output && m_player->audioBufferOutput() == m_output)
+            if (m_player->audioBufferOutput() == m_output)
                 m_player->setAudioBufferOutput(nullptr);
         }
+        // A buffer in flight may still use it (its slot ignores the tap by generation). Its destructor still reaches
+        // the player even after the unlink above, so it must go while the player exists: the next event loop during
+        // playback, at once in releaseVideo before the item is deleted.
         if (m_output)
             m_output->deleteLater();
         m_output = nullptr;
@@ -382,7 +398,7 @@ private:
     std::shared_ptr<TapWork> m_tap;
     QPointer<QMediaPlayer> m_player;
     QPointer<QAudioOutput> m_qtOutput;          // the wrapper's AudioOutput, restored on detach
-    QPointer<QAudioBufferOutput> m_output;
+    QAudioBufferOutput* m_output = nullptr;    // child of this attachment
     std::vector<QMetaObject::Connection> m_conns;
 };
 
@@ -459,6 +475,17 @@ long long nowNs()
 {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch())
         .count();
+}
+
+void releaseVideo(QQuickItem* item)
+{
+    TapAttachment* a = attachmentOf(item, false);
+    if (!a)
+        return;
+    a->detach(false);
+    // Now, while the player exists (and is stopped, vlqtRelease): also outputs of earlier switches still waiting for
+    // deleteLater, which would otherwise go with the attachment after the player.
+    qDeleteAll(a->findChildren<QAudioBufferOutput*>(Qt::FindDirectChildrenOnly));
 }
 
 bool setVideoTap(Elements&, Node& node, const ResolvedProp&, const Value& v, std::string& err)
