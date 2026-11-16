@@ -1,7 +1,7 @@
-# Builds everything needed to test VL.Qt locally: QtNative (+ Qt deploy), the C# library and VL.Qt.Stride, optionally tests and a patch.
+# Builds everything needed to test VL.Qt locally: QtNative (+ Qt deploy), the C# library, VL.Qt.Stride and VL.Qt.Audio, optionally tests and a patch.
 # Usage: tools/build.ps1 [-Rid win-arm64|win-x64] [-Configuration Release|Debug] [-SkipNative] [-ForceDeploy]
 #                        [-Test] [-Only <scenario,...>] [-SmokeTimeout <s>] [-Patch <doc.vl>]
-#   -Test   unit tests (VL.Qt.Tests) + SmokeTest (log and grabs in build/smoke/); -Only passes --only to the SmokeTest.
+#   -Test   unit tests (VL.Qt.Tests, VL.Qt.Audio.Tests) + SmokeTest (log and grabs in build/smoke/); -Only passes --only to the SmokeTest.
 #           Without -Only, QtTexture also runs in both thread modes (render thread, VLQT_OFFSCREEN_THREAD=0), grabs in build/smoke/qttexture-*
 #   -SmokeTimeout  seconds before the SmokeTest is killed (default 600; a full run takes about 4 min on win-arm64)
 #   -Patch  compile-checks a patch with vvvvc (tools/vvvvc.ps1), e.g. -Patch "help/Qt/HowTo Draw a Rectangle.vl"
@@ -65,11 +65,21 @@ Invoke-Step "VL.Qt.Stride ($Configuration)" {
     Assert-Exit 'dotnet build VL.Qt.Stride'
 }
 
+# Windows only (VL.Audio); the output lands in VL.Qt.Audio\lib\net10.0-windows7.0 (package folder, git-ignored).
+Invoke-Step "VL.Qt.Audio ($Configuration)" {
+    dotnet build "$repo\src\VL.Qt.Audio" -c $Configuration -v q -nologo
+    Assert-Exit 'dotnet build VL.Qt.Audio'
+}
+
 if ($Test)
 {
     Invoke-Step 'unit tests' {
         dotnet test "$repo\src\VL.Qt.Tests" -c $Configuration -nologo --logger "console;verbosity=normal" --logger "trx;LogFileName=unit.trx" --results-directory "$repo\build\test-results"
         Assert-Exit 'dotnet test'
+    }
+    Invoke-Step 'audio unit tests' {
+        dotnet test "$repo\src\VL.Qt.Audio.Tests" -c $Configuration -nologo --logger "console;verbosity=normal" --logger "trx;LogFileName=audio.trx" --results-directory "$repo\build\test-results"
+        Assert-Exit 'dotnet test VL.Qt.Audio.Tests'
     }
     # One SmokeTest process; stdout.log and grabs go to $out. $threads sets VLQT_OFFSCREEN_THREAD for it (empty = unset: default).
     function Invoke-Smoke([string]$exe, [string]$out, [string[]]$extraArgs, [string]$threads, [string]$modeLine)

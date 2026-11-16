@@ -1,6 +1,6 @@
 # Help patches
 
-The help patches in `help/Qt/` show one topic each; open them from the vvvv Help Browser (F1). The Browser groups them in topics, set in [`help/Help.xml`](../help/Help.xml); the patches of the companion package `VL.Qt.Stride` (in `VL.Qt.Stride/help/`) are listed in [`VL.Qt.Stride/help/Help.xml`](../VL.Qt.Stride/help/Help.xml).
+The help patches in `help/Qt/` show one topic each; open them from the vvvv Help Browser (F1). The Browser groups them in topics, set in [`help/Help.xml`](../help/Help.xml); the patches of the companion packages `VL.Qt.Stride` and `VL.Qt.Audio` (in `VL.Qt.Stride/help/`, `VL.Qt.Audio/help/`) are listed in [`VL.Qt.Stride/help/Help.xml`](../VL.Qt.Stride/help/Help.xml) and [`VL.Qt.Audio/help/Help.xml`](../VL.Qt.Audio/help/Help.xml).
 
 ## Help Browser
 
@@ -132,6 +132,12 @@ In `VL.Qt.Stride/help/` (package `VL.Qt.Stride`, Windows only), see [Stride text
 - `HowTo Interact with a QtTexture` — `ToTexturePixels` feeds the window input into the scene of a `QtTexture`
 - `HowTo Draw a QtTexture with Transparency` — half-transparent elements over a 3D scene, premultiplied alpha, `Format`, the same scene in a Qt window to compare
 - `HowTo Render many QtTextures` — one `QtTexture` per slice of a `ForEach`, created and disposed with the spread
+
+## Audio
+
+In `VL.Qt.Audio/help/` (package `VL.Qt.Audio`, Windows only), see [Video sound through VL.Audio](video-audio.md):
+
+- `HowTo Play a Video with VL.Audio` — `Video (VL.Audio)`: the sound of a video as VL.Audio signals at `Audio`, played by `AudioOut`, a `Meter` for the level, `Sync Error` as output, `Audio Offset` to calibrate
 
 ## Export
 

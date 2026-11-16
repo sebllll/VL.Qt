@@ -133,6 +133,22 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void Diff_AudioTap_OnlyWhenSet_BeforePlaying()
+        {
+            // Video [VL.Qt] (AudioTap 0) never sends it; Video (VL.Audio) sends it before Playing and switches ids directly (#22).
+            var sink = new RecordingSink();
+            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            rec.Update(new Video { Playing = true, AudioTap = 5 }, Space.DIPTopLeft);
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 {P.AudioTap} u64(5)", $"SET 1 {P.Playing} bool(1)" }));
+            sink.Clear();
+            rec.Update(new Video { Playing = true, AudioTap = 6 }, Space.DIPTopLeft);
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 {P.AudioTap} u64(6)" }));
+            sink.Clear();
+            rec.Update(new Video { Playing = true }, Space.DIPTopLeft);
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 {P.AudioTap} u64(0)" }));
+        }
+
+        [Test]
         public void Diff_ClampsRateAndVolume()
         {
             var sink = new RecordingSink();

@@ -335,6 +335,7 @@ static class Program
         if (Selected("image-preview")) ImagePreviewTest.Run(outDir, Check, Pump); // Tooltip preview of image resources, flag, 256 px, replacement (#546).
         if (Selected("image-share")) ImageShareTest.Run(outDir, Check, Pump, Grab); // One image resource in 200 elements / 2 windows, switch, replacement, perf (#361).
         if (Selected("video")) VideoTest.Run(outDir, Check, Pump, Grab, () => s_log.ToString()); // Video: MediaPlayer + VideoOutput, EV_MEDIA, file change, leaks (#115).
+        if (Selected("videoaudio")) VideoAudioTest.Run(Check, Pump); // Audio tap of a Video (#22): samples, rate, loop wrap, discontinuities, sync, MSAA swap, tap switch.
         if (Selected("videostop")) VideoStopTest.Run(Check, Pump); // #130: destroy of a playing video with audio, then window_destroy: no hang.
         // Trace replay: live scenario vs. replayed trace (01e).
         if (Selected("replay")) ReplayTest.Run(outDir, Check, Pump, Grab);

@@ -8,6 +8,7 @@
 #include "qtimageitem.h"
 #include "resources.h"
 #include "shader_resource.h"
+#include "audio_tap.h"
 #include "shadereffectitem.h"
 #include "snapshot_resource.h"
 #include "threadname.h"
@@ -2254,6 +2255,22 @@ VLQT_API int vlqt_res_read_pixels(unsigned long long id, void* dst, int cap, vlq
 VLQT_API int vlqt_res_read_preview(unsigned long long id, unsigned char* dst, int cap, vlqt_pixel_desc* desc)
 {
     return guarded([&] { return vlqt::res::image::readPreview(id, dst, cap, desc); });
+}
+
+// Audio taps (#22): audio_tap.h; read runs on VL.Audio's audio thread.
+VLQT_API int vlqt_res_audio_tap_init(unsigned long long id, int channels, int sampleRate)
+{
+    return guarded([&] { return vlqt::res::audio::init(id, channels, sampleRate); });
+}
+
+VLQT_API int vlqt_res_read_audio(unsigned long long id, float* dst, int maxFrames, int channels, vlqt_audio_tap_state* state)
+{
+    return guarded([&] { return vlqt::res::audio::read(id, dst, maxFrames, channels, state); });
+}
+
+VLQT_API long long vlqt_now_ns(void)
+{
+    return vlqt::res::audio::nowNs();
 }
 
 VLQT_API int vlqt_test_res_read_pixels(unsigned long long id, unsigned char* out, int cap, int* width, int* height)

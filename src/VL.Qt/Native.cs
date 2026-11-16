@@ -508,6 +508,63 @@ namespace VL.Qt
         public static int ResReadPreview(ulong id, Span<byte> dst, out vlqt_pixel_desc desc)
             => vlqt_res_read_preview(id, ref MemoryMarshal.GetReference(dst), dst.Length, out desc);
 
+        /// <summary>
+        /// State of an audio tap (vlqt.h vlqt_audio_tap_state, 96 bytes, #22). Times in ns of <see cref="vlqt_now_ns"/>,
+        /// media times in us on Qt's audio axis (continues across loop wraps). "First frame" = the first frame the read
+        /// delivered or dropped, else the next one in the ring. Contract: protocol.h "Audio tap".
+        /// </summary>
+        [StructLayout(LayoutKind.Sequential)]
+        public struct vlqt_audio_tap_state
+        {
+            /// <summary>vlqt_now_ns at the call.</summary>
+            public long now_ns;
+            /// <summary>When the first frame is due (emit time + k / (sample_rate * rate)); 0 = no frame.</summary>
+            public long due_ns;
+            /// <summary>Media time of the first frame; 0 = no frame.</summary>
+            public long media_us;
+            /// <summary>Diagnostics: startTime of the last video frame at the sink (restarts at a loop wrap).</summary>
+            public long video_media_us;
+            /// <summary>Diagnostics: vlqt_now_ns when that frame reached the sink; 0 = none yet.</summary>
+            public long video_ns;
+            public ulong overrun_frames;
+            public ulong underrun_frames;
+            /// <summary>Playback rate of the first frame's segment; 0 = no frame.</summary>
+            public double rate;
+            /// <summary>Segment counter of the first frame; a change means flush and re-lock.</summary>
+            public uint discontinuity;
+            /// <summary>Frames of the current segment left in the ring after the call.</summary>
+            public int available;
+            public int capacity;
+            public int channels;
+            public int sample_rate;
+            /// <summary><see cref="Protocol.AudioTap"/> flags.</summary>
+            public int flags;
+            int _reserved0, _reserved1;
+        }
+
+        // Audio taps (#22): init on the main thread; read and now on any thread (VL.Audio's audio thread), no allocation.
+        /// <summary>Fixes the format of a Pending audio tap (float, interleaved) and makes it Ready. 0 / -7 / -9.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_res_audio_tap_init(ulong id, int channels, int sampleRate);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_res_read_audio(ulong id, ref float dst, int maxFrames, int channels, out vlqt_audio_tap_state state);
+        [DllImport(Lib, EntryPoint = "vlqt_res_read_audio", CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_res_read_audio_drop(ulong id, IntPtr dst, int maxFrames, int channels, out vlqt_audio_tap_state state);
+        /// <summary>The clock of the audio tap times in ns (steady clock: QPC on Windows = Stopwatch.GetTimestamp converted to ns).</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern long vlqt_now_ns();
+
+        /// <summary>
+        /// Copies and consumes up to dst.Length / channels frames of one segment (interleaved). Returns the frames copied,
+        /// -7 (channels mismatch, not initialised) or -9 (released id). An empty dst only fills the state.
+        /// </summary>
+        public static int ResReadAudio(ulong id, Span<float> dst, int channels, out vlqt_audio_tap_state state)
+            => vlqt_res_read_audio(id, ref MemoryMarshal.GetReference(dst), channels > 0 ? dst.Length / channels : 0, channels, out state);
+
+        /// <summary>Drops up to maxFrames frames of one segment without copying (catching up). Returns the frames dropped, -7 or -9.</summary>
+        public static int ResDropAudio(ulong id, int maxFrames, int channels, out vlqt_audio_tap_state state)
+            => vlqt_res_read_audio_drop(id, IntPtr.Zero, maxFrames, channels, out state);
+
         // App fonts (#15, LoadFont node): Qt GUI thread (vvvv main thread) only, reference counted per file in QtNative.
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         static extern int vlqt_font_add([MarshalAs(UnmanagedType.LPUTF8Str)] string path, out ulong handle, ref byte families, int familiesCap);

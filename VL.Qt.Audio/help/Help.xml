@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Pack>
+	<Topic title="Audio">
+		<VLDocument link="HowTo Play a Video with VL.Audio.vl" tags="video audio sound vl.audio audioout audiosignal sync meter offset latency" />
+	</Topic>
+</Pack>

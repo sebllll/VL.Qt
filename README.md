@@ -45,6 +45,8 @@ VL.Qt is on [nuget.org](https://www.nuget.org/packages/VL.Qt/). In vvvv, open th
 
 For Stride users there is the companion package `VL.Qt.Stride` (Windows only, depends on `VL.Qt`, same version) with the `QtTexture` and `QtRenderer` nodes, see [Stride texture](#stride-texture). Both packages are built from this repository, see [Development](docs/development.md#packages).
 
+For VL.Audio users there is the companion package `VL.Qt.Audio` (Windows only, depends on `VL.Qt` of the same version and on `VL.Audio`) with the node `Video (VL.Audio)`: the sound of a video as `AudioSignal`s, synchronized to the picture, see [Video sound through VL.Audio](docs/video-audio.md). `Video` of VL.Qt is unchanged and plays through Qt's own audio output.
+
 The packages are also attached to the [GitHub releases](https://github.com/sebllll/VL.Qt/releases). To build VL.Qt yourself, see [Development](docs/development.md).
 
 ### First patch
@@ -285,6 +287,7 @@ The index with a one-line description per page is in [docs/README.md](docs/READM
 - [Images](docs/images.md): `QtImage`, loaders, Snapshot
 - [Effects and shaders](docs/effects-and-shaders.md): effect chain, custom shaders, `qtshaders/` nodes
 - [Render texture](docs/decisions/render-texture.md): `QtTexture` for Stride, design notes
+- [Video sound through VL.Audio](docs/video-audio.md): `Video (VL.Audio)`, sync model, `Audio Offset`, limits
 - [QML files](docs/user-qml.md): QmlElement and nodes from `.qml` files
 - [Tooltips](docs/tooltips.md): previews in the vvvv editor
 - [Diagnostics](docs/diagnostics.md): overlays, logging, GPU device loss

@@ -1,5 +1,6 @@
 #include "resources.h"
 
+#include "audio_tap.h"
 #include "device.h"
 #include "image_resource.h"
 #include "protocol.h"
@@ -49,8 +50,11 @@ QByteArray idText(uint64_t id)
 
 bool validState(int s) { return s >= int(State::Pending) && s <= int(State::Released); }
 
+// Kinds whose content is made on the main thread without worker and upload (beginExternal / finishExternal).
+bool externalKind(int kind) { return kind == VLQT_RES_KIND_SNAPSHOT || kind == VLQT_RES_KIND_AUDIO_TAP; }
+
 // The allowed transitions; everything else is rejected by transition(). external = content made on the main thread
-// without upload (snapshot, #363): Decoding -> Ready directly. restart = device lost during the first upload (#367):
+// without upload (snapshot #363, audio tap #22): Decoding -> Ready directly. restart = device lost during the first upload (#367):
 // Uploading -> Decoding (decode again for the new device).
 bool allowed(State from, State to, bool external, bool restart)
 {
@@ -388,7 +392,7 @@ public:
             qCWarning(lcRes, "wait: %s already released by the host", idText(id).constData());
             return staleIdRc;
         }
-        if (s->kind == VLQT_RES_KIND_SNAPSHOT) // no worker job: the grab finishes in a later pump (#363)
+        if (externalKind(s->kind)) // no worker job: a grab finishes in a later pump (#363), a tap is Ready at init (#22)
             return int(s->state);
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(std::max(0, timeoutMs));
         if (decoding(*s)) {
@@ -676,6 +680,7 @@ private:
         case VLQT_RES_KIND_IMAGE: return image::kind();
         case VLQT_RES_KIND_SNAPSHOT: return snap::kind();
         case VLQT_RES_KIND_SHADER: return shader::kind();
+        case VLQT_RES_KIND_AUDIO_TAP: return audio::kind();
         default:                  return nullptr;
         }
     }
@@ -696,7 +701,7 @@ private:
 
     bool transition(uint64_t id, Slot& s, State from, State to, bool restart = false)
     {
-        if (s.state != from || !allowed(from, to, s.kind == VLQT_RES_KIND_SNAPSHOT, restart)) {
+        if (s.state != from || !allowed(from, to, externalKind(s.kind), restart)) {
             qCWarning(lcRes, "%s: invalid transition %s -> %s rejected (state is %s)", idText(id).constData(),
                 stateName(from), stateName(to), stateName(s.state));
             return false;

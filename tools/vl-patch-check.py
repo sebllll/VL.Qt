@@ -1,8 +1,8 @@
 """Read-only checker for the VL.Qt nodes in vvvv patches (.vl).
 
 Usage:
-  python tools/vl-patch-check.py [<patch.vl|glob> ...]    check (default: help/Qt/*.vl, help/*.vl and
-                                                          VL.Qt.Stride/help/*.vl)
+  python tools/vl-patch-check.py [<patch.vl|glob> ...]    check (default: help/Qt/*.vl, help/*.vl,
+                                                          VL.Qt.Stride/help/*.vl and VL.Qt.Audio/help/*.vl)
   python tools/vl-patch-check.py --fix <patch.vl> ...      also make hidden pins with a value visible
   python tools/vl-patch-check.py --accept [--reason=TEXT] <patch.vl> ...   put the current findings into the baseline
 Options: --baseline=<file> (default help/.padlint.json), --quiet (no summary line).
@@ -35,7 +35,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import vl_pin_catalog as pc  # noqa: E402
 
 P = '{property}'
-DEFAULT_PATCHES = ('help/Qt/*.vl', 'help/*.vl', 'VL.Qt.Stride/help/*.vl')
+DEFAULT_PATCHES = ('help/Qt/*.vl', 'help/*.vl', 'VL.Qt.Stride/help/*.vl', 'VL.Qt.Audio/help/*.vl')
 DEFAULT_BASELINE = os.path.join(ROOT, 'help', '.padlint.json')
 ERRORS = ('hidden-non-default', 'forbidden-iobox', 'missing-pin', 'stale-baseline')
 KNOWN_EXTRA_PINS = {'Node Context'}  # written by vvvv for every process node, hidden, not part of the catalog

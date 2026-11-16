@@ -25,6 +25,7 @@ namespace VL.Qt
         int ReadSnapshot(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc);
         int SnapshotFit(ulong id, IntPtr window, uint elementId, int maxEdgePx);
         int ReadPreview(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc);
+        int AudioTapInit(ulong id, int channels, int sampleRate);
     }
 
     internal sealed class NativeResourceApi : IResourceApi
@@ -43,6 +44,7 @@ namespace VL.Qt
         public int ReadSnapshot(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc) => Native.ResReadSnapshot(id, buffer, out desc);
         public int SnapshotFit(ulong id, IntPtr window, uint elementId, int maxEdgePx) => Native.vlqt_res_snapshot_fit(id, window, elementId, maxEdgePx);
         public int ReadPreview(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc) => Native.ResReadPreview(id, buffer, out desc);
+        public int AudioTapInit(ulong id, int channels, int sampleRate) => Native.vlqt_res_audio_tap_init(id, channels, sampleRate);
     }
 
     /// <summary>
@@ -222,6 +224,27 @@ namespace VL.Qt
                 return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// New audio tap (#22, protocol.h "Audio tap") with a fixed format (float, channels, sampleRate): Ready at once,
+        /// its id goes to <see cref="Elements.Video"/>.AudioTap. A new sample rate needs a new tap; release the old one
+        /// with <see cref="Release"/> after the Video switched to the new id. Throws if QtNative refuses.
+        /// </summary>
+        public ImageResource CreateAudioTap(int channels, int sampleRate)
+        {
+            var rc = _api.Create(Protocol.ResKind.AudioTap, out var id);
+            if (rc != 0)
+                throw new InvalidOperationException($"vlqt_res_create failed ({rc})");
+            var resource = new ImageResource(id);
+            _live.Add(id, resource);
+            rc = _api.AudioTapInit(id, channels, sampleRate);
+            if (rc != 0)
+            {
+                Release(resource);
+                throw new InvalidOperationException($"vlqt_res_audio_tap_init failed ({rc}, {channels} channels, {sampleRate} Hz)");
+            }
+            return resource;
         }
 
         /// <summary>New snapshot resource (#363): no content until the first <see cref="Snapshot"/> is done. Throws if QtNative refuses.</summary>

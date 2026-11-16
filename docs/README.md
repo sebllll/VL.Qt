@@ -8,6 +8,7 @@ User and contributor documentation. For an overview and installation see the [pr
 | [export.md](export.md) | Exporting a standalone app with vvvvc and what the export bundles. |
 | [linux.md](linux.md) | Exporting for Linux, running the result (WSL or native), fonts, building the Linux runtime from source. |
 | [styles.md](styles.md) | The VLQt base style, the `Style` pin, style nodes, and self-made widgets with `IStylable`. |
+| [video-audio.md](video-audio.md) | `Video (VL.Audio)` in the companion package `VL.Qt.Audio`: video sound as VL.Audio signals, sync model and accuracy, `Audio Offset`, rate (tape), `Volume`, limits. |
 | [images.md](images.md) | `QtImage` as GPU resource, the loader nodes, `ToQtImage`, `Snapshot`, mipmaps and frame budget. |
 | [effects-and-shaders.md](effects-and-shaders.md) | The `Effect` pin and its nodes, ShaderEffect, the `Sampler` node, shader nodes generated from `.frag` files. |
 | [user-qml.md](user-qml.md) | `QmlElement`: load a `.qml` file of your own as an element, properties in, changes and signals out, hot reload, limits; nodes with named pins generated from `.qml` files in `qml/` folders. |
@@ -16,7 +17,7 @@ User and contributor documentation. For an overview and installation see the [pr
 | [profiling.md](profiling.md) | Repeatable CPU profiling of test scenarios with Ultra. |
 | [versioning.md](versioning.md) | Version numbers, what counts as the API, obsolete and experimental nodes. |
 | [architecture.md](architecture.md) | Element tree, reconciler, QtNative, timing, rendering and events. |
-| [development.md](development.md) | Prerequisites, first build, Visual Studio solution, the two packages (VL.Qt, VL.Qt.Stride), scripts, tests, release, project layout, typical workflows, encoding and git hook. |
+| [development.md](development.md) | Prerequisites, first build, Visual Studio solution, the three packages (VL.Qt, VL.Qt.Stride, VL.Qt.Audio), scripts, tests, release, project layout, typical workflows, encoding and git hook. |
 
 For coding agents and contributors, the working conventions (build, tests, code style, branches) are in [AGENTS.md](../AGENTS.md).
 

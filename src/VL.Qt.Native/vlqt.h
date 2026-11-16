@@ -124,6 +124,27 @@ typedef struct vlqt_pixel_desc {
     int flags;              /* vlqt_res_set_pixels: VLQT_IMG_* (#546); 0 when QtNative fills the desc */
 } vlqt_pixel_desc;
 
+/* State of an audio tap, filled by vlqt_res_read_audio (#22, protocol.h "Audio tap"). 96 bytes, mirrored in Native.cs.
+ * Times in ns of vlqt_now_ns, media times in us on Qt's audio startTime axis (keeps counting across loop wraps).
+ * "First frame" = the first frame this call delivered or dropped, or the next one in the ring when it moved none. */
+typedef struct vlqt_audio_tap_state {
+    long long now_ns;                    /* vlqt_now_ns at the call */
+    long long due_ns;                    /* when the first frame is due: emitTime + k * 1e9 / (sample_rate * rate); 0 = no frame */
+    long long media_us;                  /* media time of the first frame: startTime + k * 1e6 / sample_rate; 0 = no frame */
+    long long video_media_us;            /* diagnostics: startTime of the last video frame at the sink (Qt's video axis, restarts at a loop wrap) */
+    long long video_ns;                  /* diagnostics: vlqt_now_ns when that frame reached the sink; 0 = none yet */
+    unsigned long long overrun_frames;   /* frames the producer dropped because the ring was full (since init) */
+    unsigned long long underrun_frames;  /* frames a copying read (dst != NULL) asked for but did not get (since init) */
+    double rate;                         /* playback rate of the first frame's segment (1 = normal); 0 = no frame */
+    unsigned discontinuity;              /* segment counter of the first frame (see protocol.h); a change = flush and re-lock */
+    int available;                       /* frames of the current segment left in the ring after the call */
+    int capacity;                        /* ring size in frames */
+    int channels;                        /* format of the tap (vlqt_res_audio_tap_init) */
+    int sample_rate;
+    int flags;                           /* VLQT_AUDIO_TAP_* (protocol.h) */
+    int reserved[2];                     /* 0 */
+} vlqt_audio_tap_state;
+
 VLQT_API int         vlqt_app_init(const char* nativeDir, vlqt_log_fn log); /* idempotent */
 VLQT_API void        vlqt_app_process_events(void);
 /* #314: like vlqt_app_process_events, but only the given windows (those of one vvvv app) may render in this pump.
@@ -319,6 +340,21 @@ VLQT_API int vlqt_res_read_pixels(unsigned long long id, void* dst, int cap, vlq
  * into dst and returns the bytes written; -required if cap is too small (desc filled, nothing copied), -7 wrong kind
  * or no preview (no flag, not Ready yet), -9. Main thread. */
 VLQT_API int vlqt_res_read_preview(unsigned long long id, unsigned char* dst, int cap, vlqt_pixel_desc* desc);
+/* Audio taps (#22, audio_tap.h, protocol.h "Audio tap"). Main thread: fixes the format of a Pending
+ * VLQT_RES_KIND_AUDIO_TAP resource (interleaved float, channels 1..VLQT_AUDIO_TAP_MAX_CHANNELS, sampleRate
+ * VLQT_AUDIO_TAP_MIN_SAMPLE_RATE..MAX) and makes it Ready at once (RES_EV_INFO w = channels, h = sampleRate, bytes =
+ * ring). Once per tap: a new sample rate needs a new tap. 0 / -7 (wrong kind, bad format, already initialised) / -9. */
+VLQT_API int vlqt_res_audio_tap_init(unsigned long long id, int channels, int sampleRate);
+/* Reads the tap: any thread (VL.Audio's audio thread), no allocation, never waits for the main thread; one reader per
+ * tap. dst != NULL: copies up to maxFrames frames (maxFrames * channels floats, interleaved) of one segment into dst
+ * and consumes them; dst == NULL: drops up to maxFrames frames of one segment (catching up); maxFrames == 0: state
+ * only. channels must equal the tap's (guards dst). state (may be NULL) is filled on every return >= 0 and on -7 for
+ * a tap not yet initialised. Returns the frames copied/dropped (0 = none available), -7 (maxFrames < 0, channels
+ * mismatch, not initialised) or -9 (unknown, released or freed id; silent: the reader polls after a release). */
+VLQT_API int vlqt_res_read_audio(unsigned long long id, float* dst, int maxFrames, int channels, vlqt_audio_tap_state* state);
+/* The clock of the audio tap times (#22): std::chrono::steady_clock in ns (Windows: QPC = Stopwatch.GetTimestamp,
+ * Linux: CLOCK_MONOTONIC). Any thread, no Qt needed. */
+VLQT_API long long vlqt_now_ns(void);
 /* TEST ONLY: writes a test image (vertical stripes red, green, blue, white) as PNG/JPG by extension. 0 / -1 / -7. */
 VLQT_API int vlqt_test_write_image(const char* utf8Path, int width, int height, int quality);
 /* TEST ONLY: starts a Pending VLQT_RES_KIND_TEST resource: decode sleeps decodeMs in a worker (cancellable), upload

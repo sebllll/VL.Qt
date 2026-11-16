@@ -6,6 +6,8 @@
   <Project Path="VL.Qt.Native/VL.Qt.Native.csproj" />
   <!-- Windows only (VL.Stride); VL.Qt does not reference it. -->
   <Project Path="VL.Qt.Stride/VL.Qt.Stride.csproj" />
+  <!-- Windows only (VL.Audio); VL.Qt does not reference it. -->
+  <Project Path="VL.Qt.Audio/VL.Qt.Audio.csproj" />
   <Folder Name="/Solution Items/">
     <File Path="../Directory.Build.props" />
     <File Path="../README.md" />
@@ -21,5 +23,7 @@
       <BuildDependency Project="VL.Qt.Native/VL.Qt.Native.csproj" />
     </Project>
     <Project Path="VL.Qt.Tests/VL.Qt.Tests.csproj" />
+    <!-- Windows only, like VL.Qt.Audio. -->
+    <Project Path="VL.Qt.Audio.Tests/VL.Qt.Audio.Tests.csproj" />
   </Folder>
 </Solution>

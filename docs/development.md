@@ -26,7 +26,9 @@ Open `src/VL.Qt.slnx` in Visual Studio 2026 (or 2022 from 17.14) or Rider. It co
 | `VL.Qt.Native` | QtNative (C++); building it calls `tools/build-native.ps1` (CMake + Ninja, Qt deploy) |
 | `VL.Qt` | the C# library (nodes, reconciler, interop); depends on `VL.Qt.Native` |
 | `VL.Qt.Stride` | companion package for Stride (Windows only, references VL.Stride and VL.Qt); builds into the package folder `VL.Qt.Stride/lib/net10.0-windows7.0/`. VL.Qt never references it. |
+| `VL.Qt.Audio` | companion package for VL.Audio (Windows only, references VL.Audio and VL.Qt); builds into the package folder `VL.Qt.Audio/lib/net10.0-windows7.0/`. VL.Qt never references it. See [video-audio.md](video-audio.md). |
 | `VL.Qt.Tests` | unit tests (NUnit), run them from the Test Explorer |
+| `VL.Qt.Audio.Tests` | unit tests of the sync loop of `Video (VL.Audio)` with simulated clocks (Windows only) |
 | `VL.Qt.SmokeTest` | drives QtNative without vvvv: rendering, grabs, performance limits, protocol drift |
 | `VL.Qt.Probe` | opens one Qt window from C# without vvvv and grabs a PNG; for platform and loader checks |
 | Solution Items | `README.md`, `Directory.Build.props`, `VL.Qt.vl.targets`, the build scripts |
@@ -97,8 +99,8 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 | Script | Use |
 |---|---|
 | `build.ps1` | Builds everything: QtNative + Qt deploy, then `dotnet build src/VL.Qt` and `src/VL.Qt.Stride`. `-Test` adds unit tests and the SmokeTest (log and grabs in `build/smoke/`), `-Only <scenario,...>` limits the SmokeTest, `-SmokeTimeout <s>` sets its time limit (default 600 s), `-Patch <doc.vl>` compile-checks a patch with vvvvc. `-SkipNative` for C#-only changes, `-Configuration Debug`, `-ForceDeploy`. Exit 0 = all steps passed, a summary lists each step. |
-| `start-vvvv.ps1` | Starts vvvv with VL.Qt and VL.Qt.Stride from this repo (two junctions in the package repository). `-Build` builds both first, `-Help "Draw Text"` opens `help/Qt/HowTo Draw Text.vl`, `-Patch <file>` any patch, `-PrepareOnly` only sets up the package repository. |
-| `vvvvc.ps1` | Compiles or exports a patch with vvvvc (vvvv's command-line compiler). `-File <doc.vl>` (default `help/HelloWorld.vl`, a test patch of the repo that is not in the NuGet package; use a `help/Qt/` patch with a package), `-Out <dir>` (default `build/vvvvc`), further arguments go to vvvvc. Exit 0 = no build errors. A patch that depends on `VL.Qt.Stride` (no feed has it before the release) also gets the dev package repository, `--editable-packages` and a local feed `build/vvvvc-feed` with both packages packed as version 0.0.1 (repacked when the build output is newer; run `tools/build.ps1` first). |
+| `start-vvvv.ps1` | Starts vvvv with VL.Qt, VL.Qt.Stride and VL.Qt.Audio from this repo (three junctions in the package repository). `-Build` builds QtNative, VL.Qt and VL.Qt.Stride first (VL.Qt.Audio: `tools/build.ps1`), `-Help "Draw Text"` opens `help/Qt/HowTo Draw Text.vl`, `-Patch <file>` any patch, `-PrepareOnly` only sets up the package repository. |
+| `vvvvc.ps1` | Compiles or exports a patch with vvvvc (vvvv's command-line compiler). `-File <doc.vl>` (default `help/HelloWorld.vl`, a test patch of the repo that is not in the NuGet package; use a `help/Qt/` patch with a package), `-Out <dir>` (default `build/vvvvc`), further arguments go to vvvvc. Exit 0 = no build errors. A patch in `VL.Qt.Stride/` or `VL.Qt.Audio/`, or one that depends on one of them (no feed has them before the release), also gets the dev package repository, `--editable-packages` and a local feed `build/vvvvc-feed` with `VL.Qt` and that package packed as version 0.0.1 (repacked when the build output is newer; run `tools/build.ps1` first). `VL.Audio` is not part of vvvv: the export restores it from NuGet (the version pinned in `VL.Qt.Audio.vl` and the patch, 1.9.21; offline from the NuGet cache). |
 | `start-vvvv-with-nupkg.ps1` / `.cmd` | Starts vvvv with a packed `VL.Qt.<version>.nupkg` without installing it, e.g. to test a release; the `VL.Qt.Stride.<version>.nupkg` of the same version next to it is unpacked too. Takes the newest nupkg next to the script or from `-NupkgDir`; `-Help`, `-Patch` like above. The `.cmd` is for double-clicking. |
 
 **Native build and Qt**
@@ -133,18 +135,19 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 | Script | Use |
 |---|---|
 | `fix-encoding.py` | Checks/repairs the BOM: files, `--all`, `--staged` (used by the git hook), `--check` to only report. See [Encoding and git hook](#encoding-and-git-hook). |
-| `vl-patch-check.py` | Read-only check of the VL.Qt nodes in `.vl` files against their C# pins (`vl_pin_catalog.py`): hidden pins with a value, IOBoxes on `Interaction`, links to removed pins (errors), IOBoxes at the default value (hints). No argument: all `help/Qt/*.vl`, `help/*.vl` and `VL.Qt.Stride/help/*.vl`. `--fix` makes hidden pins with a value visible, `--accept <patch>` puts intended exceptions into `help/.padlint.json`. Test: `test-vl-patch-check.py`. |
+| `vl-patch-check.py` | Read-only check of the VL.Qt nodes in `.vl` files against their C# pins (`vl_pin_catalog.py`): hidden pins with a value, IOBoxes on `Interaction`, links to removed pins (errors), IOBoxes at the default value (hints). No argument: all `help/Qt/*.vl`, `help/*.vl`, `VL.Qt.Stride/help/*.vl` and `VL.Qt.Audio/help/*.vl`. `--fix` makes hidden pins with a value visible, `--accept <patch>` puts intended exceptions into `help/.padlint.json`. Test: `test-vl-patch-check.py`. |
 
 ## Packages
 
-The repository builds two NuGet packages:
+The repository builds three NuGet packages:
 
 | Package | Folder | Content |
 |---|---|---|
 | `VL.Qt` | repo root (`VL.Qt.vl`, `help/`, `src/VL.Qt/`) | the Qt layer and the Qt runtime for Windows and Linux; platform-neutral, no Stride |
 | `VL.Qt.Stride` | `VL.Qt.Stride/` (package folder: `VL.Qt.Stride.vl`, `help/`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Stride/` | Qt scenes rendered into Stride textures, Windows only; depends on `VL.Qt` |
+| `VL.Qt.Audio` | `VL.Qt.Audio/` (package folder: `VL.Qt.Audio.vl`, `help/`, `README.md`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Audio/` | `Video (VL.Audio)`: the sound of a video as VL.Audio signals, Windows only; depends on `VL.Qt` (same version) and `VL.Audio`, see [video-audio.md](video-audio.md) |
 
-`VL.Qt` never references `VL.Qt.Stride`. `VL.Qt.Stride.vl` is a minimal package document (dependencies and the assembly, no nodes); its help patches may be written in vvvv or directly (see `AGENTS.md`, "Checking patches"); `lib/` is not tracked by git. Why this layout: [decisions/render-texture.md](decisions/render-texture.md#package-layout-2026-11-14-task-21).
+`VL.Qt` never references `VL.Qt.Stride` or `VL.Qt.Audio`. `VL.Qt.Stride.vl` (like `VL.Qt.Audio.vl`) is a minimal package document (dependencies and the assembly, no nodes); its help patches may be written in vvvv or directly (see `AGENTS.md`, "Checking patches"); `lib/` is not tracked by git. Why this layout: [decisions/render-texture.md](decisions/render-texture.md#package-layout-2026-11-14-task-21).
 
 ```powershell
 dotnet build src/VL.Qt.Stride -c Release                  # DLL into VL.Qt.Stride/lib/net10.0-windows7.0/
@@ -155,7 +158,7 @@ dotnet pack src/VL.Qt.Stride -c Release -p:Version=1.2.3  # VL.Qt.Stride.1.2.3.n
 
 The CI (`build.yml`) builds `VL.Qt.Stride` on the Windows runners and packs it in the job `pack` on every run, so a broken pack shows up on a pull request. The step "Verify package (VL.Qt.Stride)" checks the layout and the nuspec (id, version, the only dependency `VL.Qt` at the same version). A tag or a plain `workflow_dispatch` uploads both `.nupkg` files; the release attaches both to the GitHub release and pushes both to nuget.org (see [Release](#release)).
 
-For vvvv, `tools/start-vvvv.ps1` puts both package folders into its package repository as junctions (`VL.Qt` and `VL.Qt.Stride`), so both are source packages in the dev workflow.
+For vvvv, `tools/start-vvvv.ps1` puts the package folders into its package repository as junctions (`VL.Qt`, `VL.Qt.Stride`, `VL.Qt.Audio`), so all are source packages in the dev workflow.
 
 ## CI
 

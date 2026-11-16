@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="M2Oo82pjSnMed7iz8Osbio" LanguageVersion="2026.8.0-0156-g7259116c8c" Version="0.128">
+  <NugetDependency Id="h7gbbPYtTxf7KBC8aSJvwX" Location="VL.CoreLib" />
+  <NugetDependency Id="LNC8hZosnWKIgwJVW84cgV" Location="VL.Qt" />
+  <NugetDependency Id="IoycpQv8AQJqXYmxuBgKz3" Location="VL.Audio" Version="1.9.21" />
+  <PlatformDependency Id="acCkiLPTAw7W7UfAsUDQW0" Location="./lib/net10.0-windows7.0/VL.Qt.Audio.dll" IsForward="true" />
+  <Patch Id="eyeJH95uioaPMHhQetAeDh">
+    <Canvas Id="EZL0NllCv4IaULM6pMwCCf" DefaultCategory="Qt" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="Yk8iK7x3BYRUCT8jAuVIdq">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <FullNameCategoryReference ID="Primitive" />
+      </p:NodeReference>
+      <Patch Id="tL3XsY3L8yHC7VSd5146bt">
+        <Canvas Id="0EQBor8pL7QkmVsacCl3aj" CanvasType="Group" />
+        <Patch Id="fBExdTAZfwCFU5BqUc4Im1" Name="Create" />
+        <Patch Id="WFRozj0U7sQrAAcN0KNqFI" Name="Update" />
+        <ProcessDefinition Id="s6epWNs8h5JDwvLK4ukuq7">
+          <Fragment Id="zGQ0JGvTnqELoARPLSy2p0" Patch="fBExdTAZfwCFU5BqUc4Im1" Enabled="true" />
+          <Fragment Id="Tn3L6aDMCBxt0BTSibh0Mw" Patch="WFRozj0U7sQrAAcN0KNqFI" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+</Document>
