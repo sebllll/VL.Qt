@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="AUD6gwXUFs1nRfavqiFvV9" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="AUD6gwXUFs1nRfavqiFvV9" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="aaiXwjHrtkJjL47pvOaP1Z" Location="VL.CoreLib" />
   <DocumentDependency Id="IlAf0GyQnPCym8Iig0190z" Location="../../VL.Qt.vl" />
   <Patch Id="l0nryAsOwIEJbJPdGvPxAl">
@@ -43,12 +43,12 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="pPwYeexHx5MeyaSFxzwQhG" Comment="Text" Bounds="156,451,300,19" ShowValueBox="true" isIOBox="true" Value="Hello VL.Qt, this text is wrapped inside its size.">
+          <Pad Id="pPwYeexHx5MeyaSFxzwQhG" Comment="Text" Bounds="156,361,300,19" ShowValueBox="true" isIOBox="true" Value="Hello VL.Qt, this text is wrapped inside its size.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="MMiTQBQeOaS1QYFpYBPmpD" Comment="Font Size" Bounds="196,481,50,19" ShowValueBox="true" isIOBox="true" Value="0.2">
+          <Pad Id="MMiTQBQeOaS1QYFpYBPmpD" Comment="Font Size" Bounds="196,431,50,19" ShowValueBox="true" isIOBox="true" Value="0.2">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
@@ -87,13 +87,13 @@
             <Pin Id="F5aXVvn23wyPj8FEpuQC6b" Name="Interaction" Kind="InputPin" />
             <Pin Id="Gw9M7ctRLfTOe1L5tWExxU" Name="Effect" Kind="InputPin" />
           </Node>
-          <Node Bounds="94,641,145,19" Id="pZMJdLbjMNAk5hklSjs2K9">
+          <Node Bounds="94,641,85,19" Id="pZMJdLbjMNAk5hklSjs2K9">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="xpJV4N4a0XPzbAM3tgZE7S" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Toqr6z520g2LVulvJgZGG5" Name="Bounds" Kind="InputPin" DefaultValue="1839, 357, 828, 651" IsHidden="true" />
+            <Pin Id="Toqr6z520g2LVulvJgZGG5" Name="Bounds" Kind="InputPin" DefaultValue="619, 95, 828, 651" IsHidden="true" />
             <Pin Id="N49l0J0niFdQC59n94ljX0" Name="V Sync" Kind="InputPin" IsHidden="true" />
             <Pin Id="TCUkQntRkJaM5GCI2t0o4n" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="KLApXhz2d6pPdIeE6KThhB" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
@@ -101,6 +101,7 @@
             <Pin Id="E6SVto52pSQerFQ1asptls" Name="Input" Kind="InputPin" />
             <Pin Id="UgW7HUyEAqeQnBdhEY3HJa" Name="Space" Kind="InputPin" />
             <Pin Id="UMzQrxtJIkZ7eoSIRxCvhf" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="RtTkLvlo3e8PRmoJuOW5EW" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="vQZm33VlLO0n6UWHnzwHaM" Name="Enabled" Kind="InputPin" />
             <Pin Id="7QfijW3a3ZzicHdXVHfST5" Name="Title" Kind="InputPin" />
             <Pin Id="EkpAtz5ZkQ2MtUGJoO8K8w" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
@@ -110,13 +111,15 @@
             <Pin Id="ORhpIgYhhB1mKpHmJojKEq" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="fNKaDPZG7s9pq38dDhUhgk" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="wRspT1hEVJXWoUFHhUKNV7" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="I2Hh3owyJKCPiftmwen78O" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VSdIQfODlHYPIyB4EWFgs1" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="LhLdP17LQVlNJoTq1dAUB6" Comment="Title" Bounds="176,577,100,19" ShowValueBox="true" isIOBox="true" Value="HowTo Draw Text">
+          <Pad Id="LhLdP17LQVlNJoTq1dAUB6" Comment="Title" Bounds="176,610,100,19" ShowValueBox="true" isIOBox="true" Value="HowTo Draw Text">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="114,371,80,19" Id="BvFWANYqA4wT8nWgXEclyM">
+          <Node Bounds="114,281,80,19" Id="BvFWANYqA4wT8nWgXEclyM">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -130,17 +133,17 @@
             <Pin Id="W6eo9wQoEmS0AEXbcHmc7D" Name="Translation" Kind="InputPin" />
             <Pin Id="pQDNehWZ2UyQROYRaNT1Qn" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="Vx1oWSBzqVPacMqIz3Yda3" Comment="Position" Bounds="191,335,35,28" ShowValueBox="true" isIOBox="true" Value="2, 0.5">
+          <Pad Id="Vx1oWSBzqVPacMqIz3Yda3" Comment="Position" Bounds="191,245,35,28" ShowValueBox="true" isIOBox="true" Value="2, 0.5">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="IR8EXeDeFLP6vwkkUjUorm" Comment="Size" Bounds="96,280,35,28" ShowValueBox="true" isIOBox="true" Value="5, 3">
+          <Pad Id="IR8EXeDeFLP6vwkkUjUorm" Comment="Size" Bounds="96,190,35,28" ShowValueBox="true" isIOBox="true" Value="5, 3">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="Agb8iYxmgBnPdHgJZkE1Pe" Comment="Rotation" Bounds="166,305,35,15" ShowValueBox="true" isIOBox="true" Value="0.08">
+          <Pad Id="Agb8iYxmgBnPdHgJZkE1Pe" Comment="Rotation" Bounds="166,215,35,15" ShowValueBox="true" isIOBox="true" Value="0.08">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
@@ -153,9 +156,19 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="CNHe3eXhBsvLYFGU4utHU4" Comment="Anchor" Bounds="136,411,93,15" ShowValueBox="true" isIOBox="true" Value="TopLeft">
+          <Pad Id="CNHe3eXhBsvLYFGU4utHU4" Comment="Anchor" Bounds="136,321,93,15" ShowValueBox="true" isIOBox="true" Value="TopLeft">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RectangleAnchor" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="IXRvpHEB96tN36F3uN4exI" Comment="Font Family" Bounds="176,400,35,15" ShowValueBox="true" isIOBox="true" Value="Arial">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="S3S56UbjL58N1WCyUZmJx8" Comment="Weight" Bounds="216,471,77,15" ShowValueBox="true" isIOBox="true" Value="Bold">
+            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+              <Choice Kind="TypeFlag" Name="FontWeight" />
             </p:TypeAnnotation>
           </Pad>
         </Canvas>
@@ -175,6 +188,8 @@
         <Link Id="Aip8J022DYDOsHdOJN6jmI" Ids="Agb8iYxmgBnPdHgJZkE1Pe,Twxgs6WlqOy0BMflLw3yu2" />
         <Link Id="OdCIAIvdy7oLEzLkzfH3HV" Ids="Uy8b4whes1ePkdnT1kwIKp,GeAsAW3wH1kMN9D6Wy8Nrj" />
         <Link Id="ClBk30Sva9vOK7QATA60oG" Ids="CNHe3eXhBsvLYFGU4utHU4,TIvrdIJBCMOMSR3wdDqBc6" />
+        <Link Id="EyGACIiyRQWQdzEPs0EX12" Ids="IXRvpHEB96tN36F3uN4exI,JejQsbcxpT3FvOXujMhaUQ" />
+        <Link Id="KFo4l3O8VS4NXrblGzG6pM" Ids="S3S56UbjL58N1WCyUZmJx8,BaD4iNwtaNtsAqZKOnzvTp" />
       </Patch>
     </Node>
   </Patch>

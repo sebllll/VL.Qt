@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="Y4qyKBSkbT9XvG8qfaZETi" LanguageVersion="2026.8.0-0262-g7ec3624a42" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="Y4qyKBSkbT9XvG8qfaZETi" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="BaryUcHEvM70DEDcalzKhZ" Location="VL.CoreLib" />
   <DocumentDependency Id="DkuMKmaYhbJGS57z4L1WaM" Location="../../VL.Qt.vl" />
   <Patch Id="9zGpyE7FuDcJ1LQXVDBUzL">
@@ -79,13 +79,13 @@
             <Pin Id="SIY9J8IPRPYLbh0NmLLisK" Name="Interaction" Kind="InputPin" />
             <Pin Id="TgJXTNDDJesQFU2492XunQ" Name="Effect" Kind="InputPin" />
           </Node>
-          <Node Bounds="100,850,145,19" Id="WHfqg0jaSujZQ0XjUjPKcj">
+          <Node Bounds="100,760,85,19" Id="WHfqg0jaSujZQ0XjUjPKcj">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="SfHO8xaOWoDUM4SDvcNcTU" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="P36dBeM7poENosJ31c50TV" Name="Bounds" Kind="InputPin" DefaultValue="1912, 280, 1143, 949" IsHidden="true" />
+            <Pin Id="P36dBeM7poENosJ31c50TV" Name="Bounds" Kind="InputPin" DefaultValue="169, -10, 1143, 949" IsHidden="true" />
             <Pin Id="JVbXtphUCE9Pt6FartOK21" Name="V Sync" Kind="InputPin" IsHidden="true" />
             <Pin Id="O6YLzjo0yTjOdSzxi0MaL4" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="TtUzNAom8eFQIVkw6i98Lo" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
@@ -93,6 +93,7 @@
             <Pin Id="QrSQJiiKoWjErfBGJYoPts" Name="Input" Kind="InputPin" />
             <Pin Id="tlEfZCVQVetjzxkIgVcHQh" Name="Space" Kind="InputPin" />
             <Pin Id="M42soAYK3rIl7FDsQeU0we" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="LcUEPzF6hYMOcKYDKKiD92" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="qRqNMCbkcBn49dSN6a1BaV" Name="Enabled" Kind="InputPin" />
             <Pin Id="TgDkSILEcDLL0tiLeAUmqv" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="u0vnFAOTK847OaOXqAcTR3" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -102,8 +103,10 @@
             <Pin Id="CpWRSCEcBA5X2d44Tjfl1G" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="z0Bz3PefIrZO4zLqwQMMvs" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="8RBnDdg9WTejO4bEKNI6Xl" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="V4kn2Khj9v3LumHQfrdXTn" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="CcOcVlWCDiLMhwIXcGMK7w" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="s2QZfgCrTwXnmI7c1rkfzK" Comment="Title" Bounds="182,787,136,18" ShowValueBox="true" isIOBox="true" Value="HowTo Draw a Rectangle">
+          <Pad Id="s2QZfgCrTwXnmI7c1rkfzK" Comment="Title" Bounds="182,742,136,18" ShowValueBox="true" isIOBox="true" Value="HowTo Draw a Rectangle">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -211,7 +214,7 @@
             </p:ValueBoxSettings>
           </Pad>
           <Pad Id="R9ShHMA0tzVQOwqBdRiNJx" Comment="Phase" Bounds="501,340,35,15" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="fIdqmY17U1Rufrfs2n0ByD" Bounds="85,919,830,94" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Size is width and height in units (1 unit = 100 DIP). A Rectangle with width or height 0 is not drawn.&#xD;&#xA;- Position, rotation and scale come only from Transform. The Anchor is the point of the rectangle that sits at the origin and the pivot of Transform: TopLeft (orange) puts the top left corner on the Translation, Center (default, blue) centers the rectangle on it.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+          <Pad Id="fIdqmY17U1Rufrfs2n0ByD" Bounds="85,814,830,94" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Size is width and height in units (1 unit = 100 DIP). A Rectangle with width or height 0 is not drawn.&#xD;&#xA;- Position, rotation and scale come only from Transform. The Anchor is the point of the rectangle that sits at the origin and the pivot of Transform: TopLeft (orange) puts the top left corner on the Translation, Center (default, blue) centers the rectangle on it.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
