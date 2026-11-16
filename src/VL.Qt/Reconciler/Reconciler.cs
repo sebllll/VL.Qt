@@ -24,10 +24,13 @@ namespace VL.Qt
     /// (<see cref="Node.IsPrimary"/>): only its handle reports state values. A new occurrence is primary if the current
     /// primary was not reached yet in this pass (positions of existing nodes never change their order); when the
     /// primary lets go, the first of the remaining occurrences is picked at the end of the update and re-bound with a
-    /// new handle, so QtNative sends its current state again. Across renderers the first renderer keeps the element,
-    /// and a video is shown once only (also inside this tree, the first occurrence in traversal order wins and takes it
-    /// over from a later position if needed). An ignored occurrence becomes a placeholder node without Qt object and
-    /// sets a warning in the element's sink. REPARENT indices count only the real objects.
+    /// new handle, so QtNative sends its current state again. Other renderers may show the same element at the same
+    /// time (#126), each with its own Qt objects; only the owner renderer (the first one) has the primary occurrence.
+    /// When this tree lets go of the last occurrence of an element it owns, it hands the element over at the end of the
+    /// update (<see cref="SceneRegistry.HandOver"/>); the next renderer picks its primary in its next update
+    /// (<see cref="TakeOver"/>). A video is shown once only, app-wide (inside this tree the first occurrence in traversal
+    /// order wins and takes it over from a later position if needed): an ignored occurrence becomes a placeholder node
+    /// without Qt object and sets a warning in the element's sink. REPARENT indices count only the real objects.
     /// </para>
     /// <para>
     /// Every visited object is bound to the sink slot of its description (BIND with a handle from
@@ -85,7 +88,7 @@ namespace VL.Qt
 
         /// <param name="sink">Target of the commands.</param>
         /// <param name="ids">Object id allocator of the window.</param>
-        /// <param name="scene">Duplicate registry of the app (<see cref="SceneRegistry.ForApp"/>), shared by its renderers.</param>
+        /// <param name="scene">Occurrence registry of the app (<see cref="SceneRegistry.ForApp"/>), shared by its renderers.</param>
         public Reconciler(ICommandSink sink, IdAllocator ids, SceneRegistry scene)
         {
             _sink = sink ?? throw new ArgumentNullException(nameof(sink));
@@ -107,9 +110,15 @@ namespace VL.Qt
 
         /// <summary>
         /// Makes the next <see cref="Update"/> visit the whole tree (no reference-equality shortcut), e.g. because
-        /// an element this reconciler ignored as a duplicate became free.
+        /// a video this reconciler ignored as a duplicate became free.
         /// </summary>
         public void Invalidate() => _invalidated = true;
+
+        /// <summary>
+        /// <paramref name="element"/> was handed over to this renderer (<see cref="SceneRegistry.HandOver"/>): the next
+        /// <see cref="Update"/> picks the first of its occurrences in this tree as the primary one.
+        /// </summary>
+        internal void TakeOver(Element element) => _pendingPrimary.Add(element);
 
         /// <summary>
         /// Reconciles the scene against <paramref name="root"/> (null = empty scene) and writes the commands.
@@ -131,7 +140,7 @@ namespace VL.Qt
                     DestroySubtree(_root);
                     _root = null;
                 }
-                _pendingPrimary.Clear();
+                ResolvePrimaries();
                 return;
             }
 
@@ -151,13 +160,16 @@ namespace VL.Qt
                 Forget(_root);
                 _root = null;
             }
-            _pendingPrimary.Clear();
+            ResolvePrimaries();
             _bindings.Clear();
             _ids.Reset();
             _hasSpace = false;
         }
 
-        /// <summary>Destroys every object (renderer dispose): one DESTROY per top-level object.</summary>
+        /// <summary>
+        /// Destroys every object (renderer dispose): one DESTROY per top-level object. Elements other renderers still show
+        /// are handed over to them.
+        /// </summary>
         public void Clear()
         {
             if (_root is not null)
@@ -165,7 +177,7 @@ namespace VL.Qt
                 DestroySubtree(_root);
                 _root = null;
             }
-            _pendingPrimary.Clear();
+            ResolvePrimaries();
             _hasSpace = false;
         }
 
@@ -238,7 +250,7 @@ namespace VL.Qt
         {
             if (existing is not null && existing.IsIgnored)
             {
-                // Still a duplicate as long as another renderer (a video: another node) shows the element.
+                // Still a duplicate as long as another node (in this or another renderer) shows the video.
                 if (!_force && ReferenceEquals(existing.Last, next) && IsShownElsewhere(next))
                     return existing;
                 _scene.RemoveDuplicate(existing.Last!, this);
@@ -379,20 +391,18 @@ namespace VL.Qt
 
         /// <summary>
         /// Whether <paramref name="self"/> (null = a node about to be created) may show <paramref name="element"/>.
-        /// False if another renderer shows it. Inside this tree always true, except for a video (shown once only): true
-        /// if nobody shows it, or its occurrence is a node of this tree that comes later in this pass (not visited yet,
+        /// Always true, except for a video (shown once only, app-wide): false if another renderer shows it; true if nobody
+        /// shows it, or its occurrence is a node of this tree that comes later in this pass (not visited yet,
         /// or about to be destroyed); then the video is taken over and the old occurrence's subtree is marked dirty, so
         /// it is not skipped and turns into a placeholder when it is visited.
         /// </summary>
         bool CanOwn(Element element, Node? self)
         {
             var ownerReconciler = _scene.OwnerReconcilerOf(element);
-            if (ownerReconciler is null)
+            if (ownerReconciler is null || !SceneRegistry.IsExclusive(element))
                 return true;
             if (!ReferenceEquals(ownerReconciler, this))
                 return false;
-            if (!SceneRegistry.IsExclusive(element))
-                return true;
             var owner = _scene.OwnerOf(element);
             if (owner is null || ReferenceEquals(owner, self))
                 return true;
@@ -400,22 +410,21 @@ namespace VL.Qt
                 return false;
             for (var n = owner; n is not null && !n.Dirty && n.VisitedPass != _pass; n = n.Parent)
                 n.Dirty = true;
-            _scene.RemoveOccurrence(element, owner, invalidateWaiting: false);
+            _scene.RemoveOccurrence(element, owner, this, invalidateWaiting: false);
             return true;
         }
 
-        /// <summary>Whether a placeholder of <paramref name="element"/> has to stay one: another renderer shows it, or it is a video shown at another node.</summary>
+        /// <summary>Whether a placeholder of <paramref name="element"/> has to stay one: it is a video shown at another node.</summary>
         bool IsShownElsewhere(Element element)
-        {
-            var r = _scene.OwnerReconcilerOf(element);
-            return r is not null && (!ReferenceEquals(r, this) || SceneRegistry.IsExclusive(element));
-        }
+            => SceneRegistry.IsExclusive(element) && _scene.OwnerReconcilerOf(element) is not null;
 
         /// <summary>
         /// Registers <paramref name="node"/> as an occurrence of <paramref name="element"/> and decides whether it is the
-        /// primary one: it is if it is the only one, or if the current primary was not reached yet in this pass (it comes
-        /// later in traversal order or is about to be destroyed); the old primary is then demoted. While the primary is
-        /// pending (it let go earlier in this pass) the node waits for <see cref="ResolvePrimaries"/>.
+        /// primary one: it is if it is the only one, or if this renderer owns the element and the current primary was not
+        /// reached yet in this pass (it comes later in traversal order or is about to be destroyed); the old primary is
+        /// then demoted. While the primary is pending (it let go earlier in this pass, or the element was just handed over)
+        /// the node waits for <see cref="ResolvePrimaries"/>. In a renderer that does not own the element it stays a
+        /// further occurrence.
         /// </summary>
         void Register(Element element, Node node)
         {
@@ -425,18 +434,21 @@ namespace VL.Qt
                 return;
             }
             node.IsPrimary = false;
-            var primary = _scene.OwnerOf(element);
-            if (primary is null || IsVisitedThisPass(primary))
+            var primary = _scene.OwnerOf(element, out var owner);
+            if (!ReferenceEquals(owner, this) || primary is null || IsVisitedThisPass(primary))
                 return;
             Demote(primary);
             _scene.SetPrimary(element, node);
             node.IsPrimary = true;
         }
 
-        /// <summary>Removes the occurrence <paramref name="node"/> of <paramref name="element"/>; a primary that leaves others behind is re-picked at the end of the update.</summary>
+        /// <summary>
+        /// Removes the occurrence <paramref name="node"/> of <paramref name="element"/>; a primary that leaves others behind
+        /// (here or in other renderers) is re-picked or handed over at the end of the update.
+        /// </summary>
         void Release(Element element, Node node)
         {
-            if (_scene.RemoveOccurrence(element, node))
+            if (_scene.RemoveOccurrence(element, node, this))
                 _pendingPrimary.Add(element);
             node.IsPrimary = false;
         }
@@ -453,9 +465,11 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Picks the new primary occurrence of every element whose primary let go in this pass: the first of the remaining
-        /// occurrences in traversal order (<see cref="IsBefore"/>), re-bound with a new handle so QtNative sends its state.
-        /// Runs once per update after the whole tree; nothing to do (and no allocation) in the steady state.
+        /// Picks the new primary occurrence of every element whose primary let go in this pass, or that was handed over to
+        /// this renderer: the first of the remaining occurrences in traversal order (<see cref="IsBefore"/>), re-bound with
+        /// a new handle so QtNative sends its state. An element without occurrences left in this tree goes to the next
+        /// renderer that shows it (<see cref="SceneRegistry.HandOver"/>). Runs once per update after the whole tree (and
+        /// after a clear); nothing to do (and no allocation) in the steady state.
         /// </summary>
         void ResolvePrimaries()
         {
@@ -465,7 +479,10 @@ namespace VL.Qt
                 if (!ReferenceEquals(_scene.OwnerReconcilerOf(element), this) || _scene.OwnerOf(element) is not null)
                     continue;
                 if (_scene.OthersOf(element) is not { Count: > 0 } others)
+                {
+                    _scene.HandOver(element, this);
                     continue;
+                }
                 var first = others[0];
                 for (int k = 1; k < others.Count; k++)
                 {
@@ -553,7 +570,7 @@ namespace VL.Qt
             return false;
         }
 
-        /// <summary>Placeholder for an occurrence of an element that is shown in another renderer (or a video shown elsewhere).</summary>
+        /// <summary>Placeholder for an occurrence of a video that is shown elsewhere (in this or another renderer).</summary>
         Node Ignore(Element next, Node? parentNode)
         {
             var node = new Node(0, next.Type) { Parent = parentNode, VisitedPass = _pass, Last = next };

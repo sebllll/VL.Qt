@@ -9,7 +9,9 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QtTypes>
+#include <QtGui/QColor>
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -22,6 +24,7 @@ class QQuickWindow;
 namespace vlqt {
 
 class DebugOverlay;
+class FeedbackLayer;
 
 /* One scene per window: id table, bindings, event queue. Root id 0 = an item filling contentItem. */
 struct Scene {
@@ -29,6 +32,11 @@ struct Scene {
     ~Scene();
     Scene(const Scene&) = delete;
     Scene& operator=(const Scene&) = delete;
+
+    /* Window swap (#118, vlqt_window_set_samples): the root item moves to window's content item (size follow and
+     * window-geometry watch reconnected, EV_WINDOW_GEOMETRY queued), the debug overlay is rebuilt there. Items, nodes,
+     * bindings and the engine stay. Call before the old window is deleted (it owns the old debug overlay). */
+    void moveToWindow(QQuickWindow* newWindow);
 
     /* Applies all commands; stops at the first bad one (earlier ones stay applied). err names index + reason. */
     int apply(const unsigned char* buf, int len, std::string& err);
@@ -52,6 +60,24 @@ struct Scene {
     void updateDebug();
     const QQuickItem* debugOverlay() const; // nullptr until first used (perf: skipped in the item count)
     bool debugAll = false;
+
+    /* Clear (#117, feedback.h): false keeps the previous frame through the feedback layer, which exists only while
+     * clear is false; the first frame after switching off starts from the clear colour. Set by VLQT_OP_SET_CLEAR, kept
+     * by RESET. The layer is derived state: clearFrames is the state, the layer is built from it for the current
+     * window. */
+    void setClear(bool clear);
+    bool clear() const { return clearFrames; }
+    /* Clear colour (VLQT_OP_CLEAR_COLOR, straight alpha; kept by RESET and across a window swap). With Clear on, or
+     * Clear off and alpha 0 or 1, the window clears to it. With Clear off its alpha is the fade strength (#138): the
+     * layer draws it over the previous frame (alpha > 0), and for 0 < alpha < 1 the window clears to it opaque
+     * (feedback.h "Fade"). Runtime changes keep the layer. */
+    void setClearColor(const QColor& color);
+    /* Before the QQuickWindow is replaced (#118 MSAA change): drops the layer (its source is a child of the old
+     * content item, its textures belong to the old window's QRhi), keeps the state. After the root moved to the new
+     * window (and `window` points to it): rebuilds the layer from the state; the first frame starts from the clear
+     * colour, as after a resize. */
+    void releaseFeedback();
+    void restoreFeedback();
 
     QQuickWindow* window;
     QQmlEngine* engine;
@@ -103,6 +129,8 @@ private:
     int setEffectChain(const unsigned char* p, int len, std::string& err); // SET_EFFECT_CHAIN (#489), effectchain.h
     int setQmlProperties(const unsigned char* p, int len, std::string& err); // SET_QML_PROPERTIES (QmlElement, #104)
     void reset();
+    /* root under window's content item, size follow, window-geometry watch (constructor, moveToWindow). */
+    void attachRoot();
     void destroySubtree(QQuickItem* item);
     void destroyHandlersOf(Node& node);
     /* Detaches mask from the link of host's chain that uses it (DESTROY of the mask); the mask stays parked hidden
@@ -110,6 +138,11 @@ private:
     void detachMask(Node& host, QQuickItem* mask);
     void deleteRetired();
     DebugOverlay* debug = nullptr; // child of contentItem, deleted in ~Scene
+    std::unique_ptr<FeedbackLayer> feedback; // Clear off only (#117)
+    bool clearFrames = true; // Clear pin state (#117)
+    QColor clearColor; // VLQT_OP_CLEAR_COLOR; initially the colour the window was created with
+    void applyClearColor(); // window clear and layer fill from clearColor and the layer
+    bool feedbackSoftwareWarned = false; // Clear off ignored on the software backend, logged once per scene
     std::vector<QQuickItem*> retired; // destroyed former effect sources, deleted after the next frame (#123)
 };
 

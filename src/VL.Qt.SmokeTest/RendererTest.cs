@@ -57,7 +57,7 @@ static class RendererTest
 
         void Frame(Element? input, bool enabled = true)
         {
-            r.Update(input, Space.DIPTopLeft, clear, enabled, title);
+            r.Update(input, Space.DIPTopLeft, clear, true, enabled, title);
             r.ApplyCommands();
             pump(3);
             r.AfterEvents();
@@ -164,7 +164,7 @@ static class RendererTest
         var clear = new Color4(0, 0, 0, 1);
         for (int i = 0; i < 5; i++)
         {
-            r.Update(null, Space.DIPTopLeft, clear, true, title);
+            r.Update(null, Space.DIPTopLeft, clear, true, true, title);
             r.ApplyCommands();
             pump(2);
             r.AfterEvents();
@@ -191,7 +191,7 @@ static class RendererTest
             WindowGeometry? last = null;
             for (int i = 0, stable = 0; i < 200 && stable < 5; i++)
             {
-                r.Update(null, Space.DIPTopLeft, clear, true, title);
+                r.Update(null, Space.DIPTopLeft, clear, true, true, title);
                 r.ApplyCommands();
                 pump(2);
                 r.AfterEvents();
@@ -269,7 +269,7 @@ static class RendererTest
         {
             for (int i = 0; i < n; i++)
             {
-                r.Update(null, Space.DIPTopLeft, clear, true, title);
+                r.Update(null, Space.DIPTopLeft, clear, true, true, title);
                 r.ApplyCommands();
                 pump(2);
                 r.AfterEvents();
@@ -305,7 +305,7 @@ static class RendererTest
             return;
         void Frame(WindowRenderer w)
         {
-            w.Update(null, Space.DIPTopLeft, clear, true, title);
+            w.Update(null, Space.DIPTopLeft, clear, true, true, title);
             w.ApplyCommands();
             pump(2);
             w.AfterEvents();

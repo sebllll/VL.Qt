@@ -3,9 +3,12 @@
 #include "device.h"
 #include "perf.h"
 #include "image_resource.h"
+#include "offscreen.h"
+#include "protocol.h"
 #include "qtimageitem.h"
 #include "resources.h"
 #include "shader_resource.h"
+#include "audio_tap.h"
 #include "shadereffectitem.h"
 #include "snapshot_resource.h"
 #include "threadname.h"
@@ -36,6 +39,7 @@
 #include <QtQuick/QQuickGraphicsConfiguration>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
+#include <rhi/qrhi.h> // vlqt_window_samples: QRhiSwapChain
 #include <QtQuickControls2/QQuickStyle>
 // Dirty item list of a window (change count, #544): private API, check on Qt updates.
 // QAbstractAnimationTimer / QUnifiedTimer: the keep-alive timer of the vvvv animation clock (VlqtAnimationDriver).
@@ -289,23 +293,7 @@ private:
         }
     }
 
-    // Clears the focus of the outermost focused item below the root, so the active focus goes to the root. A Control
-    // is a focus scope (SpinBox: the focus sits on its contentItem), clearing only the inner item keeps it inside.
-    void release()
-    {
-        QQuickItem* root = m_window->contentItem();
-        QQuickItem* f = m_window->activeFocusItem();
-        if (!f || f == root)
-            return;
-        QQuickItem* top = f;
-        for (QQuickItem* i = f; i && i != root; i = i->parentItem()) {
-            if (i->hasFocus())
-                top = i;
-        }
-        top->setFocus(false, Qt::OtherFocusReason);
-        if (m_window->activeFocusItem() != root)
-            root->forceActiveFocus(Qt::OtherFocusReason);
-    }
+    void release() { vlqt::offscreen::releaseFocus(m_window); }
     QQuickWindow* m_window;
 };
 
@@ -366,6 +354,13 @@ public:
     long long changeCount() const { return m_changeCount; }
     // The scene changed without a dirty item (e.g. the window color): count the next render.
     void markChanged() { m_changed = true; }
+    // Window swap (#118): the gate of the new window goes on with the change count of the old one, so the count never
+    // goes back; the first render of the new window counts as a change (other sample count).
+    void continueFrom(const UpdateGate& old)
+    {
+        m_changeCount = old.m_changeCount;
+        m_changed = true;
+    }
 
     // all = every window may render; else only the given gates (#314: the windows of the pumping app).
     static void beginPump(bool all, UpdateGate* const* active, int count)
@@ -552,8 +547,12 @@ bool testSyntheticInputOnly()
 }
 #endif
 
+// A window handle (void* of the vlqt_window_* exports): a window, or an offscreen scene (#116, offscreen.cpp) whose
+// QQuickWindow is driven by a QQuickRenderControl. Both share engine, scene, gate and perf; a scene has only the
+// FocusRelease input filter (closeFilter etc. stay null) and its own part in offscreen.
 struct Window {
     QQuickWindow* window = nullptr;
+    vlqt::offscreen::State* offscreen = nullptr; // offscreen scene: render control and binding; null for a window
     CloseFilter* closeFilter = nullptr;
     QQmlEngine* engine = nullptr;
     vlqt::Scene* scene = nullptr; // apply/poll
@@ -586,6 +585,13 @@ QWindow* testKeyTarget(Window* w)
         return f;
     QWindowSystemInterface::handleFocusWindowChanged<QWindowSystemInterface::SynchronousDelivery>(w->window, Qt::PopupFocusReason);
     return w->window;
+}
+
+// The test input exports on an offscreen scene (#116): a scene takes input through vlqt_offscreen_send_* (#119).
+int notOnScene(const char* function)
+{
+    setError(std::string(function) + ": not supported on an offscreen scene");
+    return VLQT_OFFSCREEN_NOT_SUPPORTED;
 }
 
 template <class F>
@@ -789,6 +795,62 @@ void placeWindow(QQuickWindow* win, float x, float y, int width, int height)
         win->setFramePosition(pos);
 }
 
+// The parts of a window handle that windows and offscreen scenes (#116) share: the QML engine with QtNative's imports.
+QQmlEngine* newEngine()
+{
+    auto* engine = new QQmlEngine();
+    if (!g_nativeDir.isEmpty())
+        engine->addImportPath(g_nativeDir + QStringLiteral("/qml"));
+    return engine;
+}
+
+// The event filters and the frame lock of an on-screen window, all children of win: close, update gate, frame lock,
+// fullscreen keys, focus release, test input. At creation and for the window swap (#118, replaceWindow).
+void installWindowFilters(Window* w, QQuickWindow* win)
+{
+    w->closeFilter = new CloseFilter(win);
+    win->installEventFilter(w->closeFilter);
+    w->gate = new UpdateGate(win);
+    win->installEventFilter(w->gate);
+    vlqt::device::lockFrames(win); // windows only: a scene's render thread locks itself (offscreen.cpp)
+    win->installEventFilter(new FullscreenKeys(win, w));
+    win->installEventFilter(new FocusRelease(win)); // #374
+    if (testSyntheticInputOnly())
+        win->installEventFilter(new SystemInputFilter(win)); // test only
+}
+
+// MSAA count of a window's swap chain (#118): R8G8B8A8_UNORM is the format of Qt's D3D11 swap chain (SDR).
+int clampWindowSamples(int requested, QQuickWindow* win)
+{
+    constexpr int swapChainFormat = 28; // DXGI_FORMAT_R8G8B8A8_UNORM
+    return vlqt::device::clampSamples(requested, swapChainFormat, win->rhi());
+}
+
+// ... and, once w->window, w->engine and the window's own event filters exist: GPU timings and pipeline cache, the
+// shared D3D11 device, the scene (apply/poll) and the perf monitor (its event filter, installed last, runs first).
+void initShared(Window* w)
+{
+    // GPU timings for the perf overlay; must be set before the scenegraph initializes.
+    QQuickGraphicsConfiguration cfg = w->window->graphicsConfiguration();
+    cfg.setTimestamps(true);
+    if (!g_pipelineCachePath.isEmpty()) {
+        // Load + save in one file; an unwritable folder only costs the cache (QRhi would fail silently otherwise).
+        const QFileInfo dir(QFileInfo(g_pipelineCachePath).absolutePath());
+        if (dir.isDir() && dir.isWritable()) {
+            cfg.setPipelineCacheLoadFile(g_pipelineCachePath);
+            cfg.setPipelineCacheSaveFile(g_pipelineCachePath);
+        } else {
+            qWarning("pipeline cache: folder of %s is not writable, continuing without cache",
+                qPrintable(g_pipelineCachePath));
+        }
+    }
+    w->window->setGraphicsConfiguration(cfg);
+    vlqt::device::attach(w->window); // one D3D11 device for all windows (#358), before the first expose
+    w->scene = new vlqt::Scene(w->window, w->engine);
+    w->perf = new PerfMonitor(w->window, w->engine);
+    w->perf->setScene(w->scene); // F5 Scene page (#246); perf is deleted before scene
+}
+
 // App fonts (#15, LoadFont node). One entry per font file, shared by every LoadFont node that names it.
 // Thread: QFontDatabase app fonts and every text layout belong to the Qt GUI thread, which is the vvvv main thread
 // (vlqt_app_init, basic render loop, no render thread). Adding there means the next layout in the same pump already
@@ -832,6 +894,121 @@ void fontsEndFrame()
 
 } // namespace
 
+// Offscreen scenes (#116): the window handle part, declared in offscreen.h.
+namespace vlqt::offscreen {
+
+void* createHandle(QQuickWindow* window, State* state)
+{
+    auto* w = new Window();
+    w->offscreen = state;
+    w->engine = newEngine();
+    w->window = window;
+    // Transparent until the first VLQT_OP_CLEAR_COLOR: the QtTexture default (render-texture.md), unlike a window.
+    window->setColor(Qt::transparent);
+    // Change count (vlqt_window_change_count) only: without a platform window a scene gets no UpdateRequest or Expose,
+    // so the gate's event filter is not installed.
+    w->gate = new UpdateGate(window); // child of the window
+    // Input comes from vlqt_offscreen_send_* (#119); Esc and a press outside release the focus as in a window.
+    window->installEventFilter(new FocusRelease(window)); // #374, child of the window
+    initShared(w);
+    return w;
+}
+
+void releaseFocus(QQuickWindow* window)
+{
+    QQuickItem* root = window->contentItem();
+    QQuickItem* f = window->activeFocusItem();
+    if (!f || f == root)
+        return;
+    // A Control is a focus scope (SpinBox: the focus sits on its contentItem), clearing only the inner item keeps it
+    // inside.
+    QQuickItem* top = f;
+    for (QQuickItem* i = f; i && i != root; i = i->parentItem()) {
+        if (i->hasFocus())
+            top = i;
+    }
+    top->setFocus(false, Qt::OtherFocusReason);
+    if (window->activeFocusItem() != root)
+        root->forceActiveFocus(Qt::OtherFocusReason);
+}
+
+bool sendTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<std::pair<int, QPointF>>& active,
+    QEventPoint::State state, int id, QPointF pos, ulong timestamp, Qt::KeyboardModifiers modifiers, const char* function)
+{
+    auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
+    const bool known = it != active.end();
+    const bool press = state == QEventPoint::State::Pressed;
+    if (known == press) {
+        ::setError(std::string(function) + ": point " + std::to_string(id) + (known ? " is already pressed" : " is not pressed"));
+        return false;
+    }
+    if (known)
+        it->second = pos;
+    else
+        active.emplace_back(id, pos);
+
+    auto* devicePrivate = QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device));
+    // What QGuiApplication does before delivering a press: the device registers the point. Without it the grabs
+    // of the delivery are not stored ("point is not in activePoints"), the release goes to every handler under the
+    // point and stacked Tap handlers all tap (#320).
+    if (press)
+        devicePrivate->pointById(id);
+    // The complete touch state: every active point, the changed one with its state, the others stationary.
+    QList<QEventPoint> points;
+    for (const auto& a : active) {
+        const QEventPoint::State st = a.first == id ? state : QEventPoint::State::Stationary;
+        QEventPoint ep = QMutableEventPoint::withTimeStamp(timestamp, a.first, st, a.second, a.second, window->mapToGlobal(a.second));
+        QMutableEventPoint::setDevice(ep, device);
+        QMutableEventPoint::setWindow(ep, window);
+        points.append(ep);
+    }
+    const bool release = state == QEventPoint::State::Released;
+    const QEvent::Type t = press && active.size() == 1 ? QEvent::TouchBegin
+        : release && active.size() == 1               ? QEvent::TouchEnd
+                                                      : QEvent::TouchUpdate;
+    QTouchEvent ev(t, device, modifiers, points);
+    ev.setTimestamp(timestamp);
+    QCoreApplication::sendEvent(window, &ev);
+    if (release) {
+        active.erase(std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; }));
+        // What QGuiApplication does after delivering a release: the device forgets the point (and its grabbers).
+        devicePrivate->removePointById(id);
+    }
+    return true;
+}
+
+void cancelTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<std::pair<int, QPointF>>& active,
+    ulong timestamp, Qt::KeyboardModifiers modifiers)
+{
+    if (active.empty())
+        return;
+    // Without points, like the platform's: Qt Quick cancels every grab of the device's active points.
+    QTouchEvent ev(QEvent::TouchCancel, device, modifiers);
+    ev.setTimestamp(timestamp);
+    QCoreApplication::sendEvent(window, &ev);
+    auto* devicePrivate = QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device));
+    for (const auto& a : active)
+        devicePrivate->removePointById(a.first);
+    active.clear();
+}
+
+State* stateOf(void* handle)
+{
+    return handle ? static_cast<Window*>(handle)->offscreen : nullptr;
+}
+
+QQuickWindow* quickWindow(void* handle)
+{
+    return handle ? static_cast<Window*>(handle)->window : nullptr;
+}
+
+void setError(const std::string& message)
+{
+    ::setError(message);
+}
+
+} // namespace vlqt::offscreen
+
 extern "C" {
 
 VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
@@ -860,7 +1037,9 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         // Linux: Qt's default RHI backend (OpenGL; QSG_RHI_BACKEND overrides). Choosing a default is L4b.
         QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
         fmt.setSwapInterval(0);
-        fmt.setSamples(4);
+        // No MSAA samples here (#118): Qt gives a swap chain max(default, window) samples
+        // (QSGRhiSupport::chooseSampleCountForWindowWithRhi), so a default count would be a floor for every window.
+        // Each window sets its own count (vlqt_window_create_at, vlqt_window_set_samples).
         QSurfaceFormat::setDefaultFormat(fmt);
 
         // 5. Qt 6 has no API for the render loop; the CRT env copy must be set here.
@@ -943,6 +1122,8 @@ VLQT_API void vlqt_app_process_events_for(void* const* windows, int count)
         QCoreApplication::sendPostedEvents();
         QCoreApplication::processEvents(QEventLoop::AllEvents);
         UpdateGate::endPump();
+        // Every window frame of this pump has ended: no lock may outlive it (device.h, lock order).
+        vlqt::device::releaseFrameLocks();
         vlqt::res::endFrame(); // frees resources without references, never in a worker
         fontsEndFrame();       // app fonts without references (#15)
         vlqt::device::checkLost();
@@ -1027,9 +1208,7 @@ VLQT_API void* vlqt_window_create_at(float x, float y, int width, int height, co
             return -1;
         }
         auto* w = new Window();
-        w->engine = new QQmlEngine();
-        if (!g_nativeDir.isEmpty())
-            w->engine->addImportPath(g_nativeDir + QStringLiteral("/qml"));
+        w->engine = newEngine();
         w->window = new QQuickWindow();
         // Swap interval is read from the requested format when the swap chain is created (first show), so it cannot
         // change afterwards. 0 = Present never waits (default), >0 = VSync.
@@ -1038,38 +1217,16 @@ VLQT_API void* vlqt_window_create_at(float x, float y, int width, int height, co
         // test) inverts the stacking order (Linux/GL only, D3D11 always gets a depth-stencil; #232).
         QSurfaceFormat winFmt = w->window->requestedFormat();
         winFmt.setSwapInterval(swapInterval > 0 ? 1 : 0);
+        // MSAA (#118): 4 by default, the look of every window before the count became a choice; also fixed per
+        // QQuickWindow (vlqt_window_set_samples replaces the window).
+        winFmt.setSamples(clampWindowSamples(4, w->window));
         w->window->setFormat(winFmt);
         placeWindow(w->window, x, y, width, height);
         w->window->setTitle(QString::fromUtf8(title ? title : ""));
         w->window->setIcon(defaultIcon());
         w->window->setColor(Qt::black);
-        w->closeFilter = new CloseFilter(w->window);
-        w->window->installEventFilter(w->closeFilter);
-        w->gate = new UpdateGate(w->window); // child of the window
-        w->window->installEventFilter(w->gate);
-        w->window->installEventFilter(new FullscreenKeys(w->window, w));
-        w->window->installEventFilter(new FocusRelease(w->window)); // #374, child of the window
-        if (testSyntheticInputOnly())
-            w->window->installEventFilter(new SystemInputFilter(w->window)); // test only, child of the window
-        // GPU timings for the perf overlay; must be set before the scenegraph initializes.
-        QQuickGraphicsConfiguration cfg = w->window->graphicsConfiguration();
-        cfg.setTimestamps(true);
-        if (!g_pipelineCachePath.isEmpty()) {
-            // Load + save in one file; an unwritable folder only costs the cache (QRhi would fail silently otherwise).
-            const QFileInfo dir(QFileInfo(g_pipelineCachePath).absolutePath());
-            if (dir.isDir() && dir.isWritable()) {
-                cfg.setPipelineCacheLoadFile(g_pipelineCachePath);
-                cfg.setPipelineCacheSaveFile(g_pipelineCachePath);
-            } else {
-                qWarning("pipeline cache: folder of %s is not writable, continuing without cache",
-                    qPrintable(g_pipelineCachePath));
-            }
-        }
-        w->window->setGraphicsConfiguration(cfg);
-        vlqt::device::attach(w->window); // one D3D11 device for all windows (#358), before the first expose
-        w->scene = new vlqt::Scene(w->window, w->engine);
-        w->perf = new PerfMonitor(w->window, w->engine);
-        w->perf->setScene(w->scene); // F5 Scene page (#246); perf is deleted before scene
+        installWindowFilters(w, w->window);
+        initShared(w);
         result = w;
         return 0;
     });
@@ -1082,10 +1239,15 @@ VLQT_API void vlqt_window_destroy(void* p)
         auto* w = static_cast<Window*>(p);
         if (!w)
             return 0;
+        // A scene unbinds first: its render target and opened texture belong to the QRhi of its render control.
+        if (w->offscreen)
+            vlqt::offscreen::release(w->offscreen);
         delete w->perf;
         delete w->scene;
         delete w->window;
         delete w->engine;
+        if (w->offscreen)
+            vlqt::offscreen::destroy(w->offscreen); // after its QQuickWindow: the render control and its QRhi
         delete w;
         QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         return 0;
@@ -1095,7 +1257,7 @@ VLQT_API void vlqt_window_destroy(void* p)
 VLQT_API void vlqt_window_show(void* p)
 {
     guarded([&]() -> int {
-        if (auto* w = static_cast<Window*>(p)) {
+        if (auto* w = static_cast<Window*>(p); w && !w->offscreen) {
             if (w->mode & VLQT_WINDOW_MODE_FULLSCREEN)
                 w->window->showFullScreen(); // show() = showNormal() would drop the state set before show (#234)
             else
@@ -1113,6 +1275,8 @@ VLQT_API int vlqt_window_set_icon(void* p, const char* utf8Path)
             setError("null window");
             return -1;
         }
+        if (w->offscreen)
+            return 0;
         const QString path = QString::fromUtf8(utf8Path ? utf8Path : "");
         if (path.isEmpty()) {
             w->window->setIcon(defaultIcon());
@@ -1141,7 +1305,8 @@ VLQT_API int vlqt_window_set_title(void* p, const char* title)
             setError("null window");
             return -1;
         }
-        w->window->setTitle(QString::fromUtf8(title ? title : ""));
+        if (!w->offscreen)
+            w->window->setTitle(QString::fromUtf8(title ? title : ""));
         return 0;
     });
 }
@@ -1154,6 +1319,10 @@ VLQT_API int vlqt_window_resize(void* p, int width, int height)
             setError("null window");
             return -1;
         }
+        if (w->offscreen) {
+            setError("resize: an offscreen scene takes its size from vlqt_offscreen_bind");
+            return VLQT_OFFSCREEN_BAD_ARGUMENT;
+        }
         w->window->resize(width, height);
         return 0;
     });
@@ -1162,7 +1331,7 @@ VLQT_API int vlqt_window_resize(void* p, int width, int height)
 VLQT_API void vlqt_window_hide(void* p)
 {
     guarded([&]() -> int {
-        if (auto* w = static_cast<Window*>(p))
+        if (auto* w = static_cast<Window*>(p); w && !w->offscreen)
             w->window->hide();
         return 0;
     });
@@ -1171,7 +1340,7 @@ VLQT_API void vlqt_window_hide(void* p)
 VLQT_API int vlqt_window_take_close_request(void* p)
 {
     auto* w = static_cast<Window*>(p);
-    if (!w || !w->closeFilter->requested)
+    if (!w || !w->closeFilter || !w->closeFilter->requested) // a scene has no close filter
         return 0;
     w->closeFilter->requested = false;
     return 1;
@@ -1180,7 +1349,7 @@ VLQT_API int vlqt_window_take_close_request(void* p)
 VLQT_API int vlqt_window_is_visible(void* p)
 {
     auto* w = static_cast<Window*>(p);
-    return (w && w->window->isVisible()) ? 1 : 0;
+    return (w && !w->offscreen && w->window->isVisible()) ? 1 : 0;
 }
 
 VLQT_API int vlqt_window_grab(void* p, const char* pngPath)
@@ -1191,7 +1360,15 @@ VLQT_API int vlqt_window_grab(void* p, const char* pngPath)
             setError("null window");
             return -1;
         }
-        const QImage img = w->window->grabWindow();
+        if (w->offscreen)
+            return notOnScene("grab");
+        QImage img;
+        {
+            // The frame of grabWindow ends without afterFrameEnd (QSGGuiThreadRenderLoop::grab).
+            vlqt::device::ContextLock lock;
+            img = w->window->grabWindow();
+            vlqt::device::releaseFrameLocks();
+        }
         if (img.isNull()) {
             setError("grabWindow returned null image");
             return -2;
@@ -1490,6 +1667,8 @@ VLQT_API int vlqt_window_set_mode(void* p, unsigned int mask, unsigned int value
             setError("null window");
             return -1;
         }
+        if (w->offscreen)
+            return 0;
         mask &= VLQT_WINDOW_MODE_BORDERLESS | VLQT_WINDOW_MODE_FULLSCREEN;
         const unsigned changed = (w->mode ^ value) & mask;
         w->mode = (w->mode & ~mask) | (value & mask);
@@ -1499,6 +1678,98 @@ VLQT_API int vlqt_window_set_mode(void* p, unsigned int mask, unsigned int value
             applyFullscreen(w, w->mode & VLQT_WINDOW_MODE_FULLSCREEN);
         return 0;
     });
+}
+
+// Window swap (#118, vlqt_window_set_samples; docs/decisions/render-texture.md, "MSAA"). The basic render loop fixes a
+// window's sample count when it creates the window's QRhi (QSGGuiThreadRenderLoop::ensureRhi: the swap chain and the
+// render context that layers use); QWindow::destroy()/show() recreates the swap chain with the old count. So the handle
+// gets a new QQuickWindow with format f: same screen, geometry, window states, flags, title, icon, colour, filters,
+// graphics configuration and shared device. The scene moves over (items, their state and the QML engine stay), a new
+// PerfMonitor takes the overlay state, windows with the old one as transient parent (Popup.Window popups, QML windows)
+// get the new one, then the old window is deleted. Input needs nothing else: the WM_GETDLGCODE filter looks the HWND up
+// per message. The new native window is shown without activation unless the old one was active.
+static void replaceWindow(Window* w, const QSurfaceFormat& f)
+{
+    QQuickWindow* old = w->window;
+    const bool visible = old->isVisible();
+    const bool active = old->isActive();
+    auto* nw = new QQuickWindow();
+    nw->setFormat(f);
+    nw->setFlags(old->flags());
+    nw->setScreen(old->screen());
+    nw->setGeometry(old->geometry());
+    nw->setWindowStates(old->windowStates());
+    nw->setTitle(old->title());
+    nw->setIcon(old->icon());
+    nw->setColor(old->color());
+    const bool closeRequested = w->closeFilter->requested;
+    const UpdateGate* oldGate = w->gate;
+    w->window = nw;
+    installWindowFilters(w, nw);
+    w->closeFilter->requested = closeRequested;
+    w->gate->continueFrom(*oldGate);
+    nw->setGraphicsConfiguration(old->graphicsConfiguration());
+    vlqt::device::attach(nw);
+    w->scene->moveToWindow(nw);
+    const int overlay = w->perf->overlay();
+    delete w->perf;
+    w->perf = new PerfMonitor(nw, w->engine);
+    w->perf->setScene(w->scene);
+    if (overlay & (PerfMonitor::Meter | PerfMonitor::Stats))
+        w->perf->setOverlay(overlay);
+    for (QWindow* t : QGuiApplication::topLevelWindows())
+        if (t->transientParent() == old)
+            t->setTransientParent(nw);
+    if (w->mode & VLQT_WINDOW_MODE_BORDERLESS)
+        applyBorderless(w, true);
+    if (visible) {
+        // Qt's Windows plugin shows with SW_SHOWNOACTIVATE then: a change from the patch must not take the focus.
+        if (!active)
+            nw->setProperty("_q_showWithoutActivating", true);
+        if (w->mode & VLQT_WINDOW_MODE_FULLSCREEN)
+            nw->showFullScreen();
+        else
+            nw->show();
+        nw->setProperty("_q_showWithoutActivating", QVariant());
+    }
+    delete old;
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+}
+
+VLQT_API int vlqt_window_set_samples(void* p, int requested)
+{
+    return guarded([&]() -> int {
+        auto* w = static_cast<Window*>(p);
+        if (!w) {
+            setError("null window");
+            return -1;
+        }
+        if (w->offscreen) {
+            setError("set_samples: an offscreen scene takes its sample count from vlqt_offscreen_bind");
+            return VLQT_OFFSCREEN_BAD_ARGUMENT;
+        }
+        const int samples = clampWindowSamples(requested, w->window);
+        QSurfaceFormat f = w->window->requestedFormat();
+        if (qMax(1, f.samples()) == samples)
+            return samples;
+        f.setSamples(samples);
+        // No native window yet (never shown): no swap chain either, Qt reads the format at the first expose.
+        if (!w->window->handle())
+            w->window->setFormat(f);
+        else
+            replaceWindow(w, f);
+        return samples;
+    });
+}
+
+VLQT_API int vlqt_window_samples(void* p)
+{
+    auto* w = static_cast<Window*>(p);
+    if (!w || w->offscreen)
+        return 0;
+    if (const QRhiSwapChain* sc = w->window->swapChain())
+        return sc->sampleCount();
+    return qMax(1, w->window->requestedFormat().samples());
 }
 
 VLQT_API unsigned int vlqt_window_get_mode(void* p)
@@ -1564,6 +1835,8 @@ VLQT_API int vlqt_test_send_mouse(void* p, int type, float x, float y)
             setError("test_send_mouse: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_send_mouse");
         if (type == VLQT_MOUSE_LEAVE) {
             QEvent ev(QEvent::Leave);
             QCoreApplication::sendEvent(w->window, &ev);
@@ -1608,6 +1881,8 @@ VLQT_API int vlqt_test_send_wheel(void* p, float x, float y, int dx, int dy)
             setError("test_send_wheel: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_send_wheel");
         const QPointF local(x, y);
         QWheelEvent ev(local, w->window->mapToGlobal(local), QPoint(), QPoint(dx, dy), w->testButtons, Qt::NoModifier,
             Qt::NoScrollPhase, false);
@@ -1640,9 +1915,8 @@ VLQT_API int vlqt_test_send_touch(void* p, int type, int id, float x, float y)
             setError("test_send_touch: null window");
             return -1;
         }
-        auto& active = w->testTouch;
-        auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
-        const bool known = it != active.end();
+        if (w->offscreen)
+            return notOnScene("test_send_touch");
         QEventPoint::State state;
         switch (type) {
         case VLQT_TOUCH_PRESS: state = QEventPoint::State::Pressed; break;
@@ -1652,46 +1926,13 @@ VLQT_API int vlqt_test_send_touch(void* p, int type, int id, float x, float y)
             setError("test_send_touch: unknown type " + std::to_string(type));
             return -2;
         }
-        if (known == (type == VLQT_TOUCH_PRESS)) {
-            setError("test_send_touch: point " + std::to_string(id) + (known ? " is already pressed" : " is not pressed"));
-            return -2;
-        }
-        const QPointF pos(x, y);
-        if (known)
-            it->second = pos;
-        else
-            active.emplace_back(id, pos);
-
         if (!w->testClock.isValid())
             w->testClock.start();
         const ulong ts = ulong(w->testClock.elapsed()) + 1; // monotonic (TapHandler compares timestamps)
-        const QPointingDevice* device = testTouchDevice();
-        // What QGuiApplication does before delivering a press: the device registers the point. Without it the grabs
-        // of the delivery are not stored ("point is not in activePoints"), the release goes to every handler under the
-        // point and stacked Tap handlers all tap (#320).
-        if (type == VLQT_TOUCH_PRESS)
-            QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device))->pointById(id);
-        // The complete touch state: every active point, the changed one with its state, the others stationary.
-        QList<QEventPoint> points;
-        for (const auto& a : active) {
-            const QEventPoint::State st = a.first == id ? state : QEventPoint::State::Stationary;
-            QEventPoint ep = QMutableEventPoint::withTimeStamp(ts, a.first, st, a.second, a.second, w->window->mapToGlobal(a.second));
-            QMutableEventPoint::setDevice(ep, device);
-            QMutableEventPoint::setWindow(ep, w->window);
-            points.append(ep);
-        }
-        const QEvent::Type t = type == VLQT_TOUCH_PRESS && active.size() == 1 ? QEvent::TouchBegin
-            : type == VLQT_TOUCH_RELEASE && active.size() == 1               ? QEvent::TouchEnd
-                                                                              : QEvent::TouchUpdate;
-        QTouchEvent ev(t, device, Qt::NoModifier, points);
-        ev.setTimestamp(ts);
-        QCoreApplication::sendEvent(w->window, &ev);
-        if (type == VLQT_TOUCH_RELEASE) {
-            active.erase(std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; }));
-            // What QGuiApplication does after delivering a release: the device forgets the point (and its grabbers).
-            QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device))->removePointById(id);
-        }
-        return 0;
+        return vlqt::offscreen::sendTouch(w->window, testTouchDevice(), w->testTouch, state, id, QPointF(x, y), ts,
+                   Qt::NoModifier, "test_send_touch")
+            ? 0
+            : -2;
     });
 }
 
@@ -1716,6 +1957,8 @@ VLQT_API int vlqt_test_queue_mouse(void* p, int type, float x, float y)
             setError("test_queue_mouse: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_queue_mouse");
         QEvent::Type t;
         Qt::MouseButton button = Qt::NoButton;
         Qt::MouseButtons buttons = w->testQueuedButtons;
@@ -1747,6 +1990,8 @@ VLQT_API int vlqt_test_queue_touch(void* p, int type, int id, float x, float y)
             setError("test_queue_touch: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_queue_touch");
         auto& active = w->testQueuedTouch;
         auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
         const bool known = it != active.end();
@@ -1893,6 +2138,8 @@ VLQT_API int vlqt_test_send_key(void* p, int key, int modifiers)
             setError("test_send_key: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_send_key");
         QKeyEvent ev(QEvent::KeyPress, key, Qt::KeyboardModifiers(modifiers));
         QCoreApplication::sendEvent(testKeyTarget(w), &ev);
         return 0;
@@ -1907,6 +2154,8 @@ VLQT_API int vlqt_test_send_key_text(void* p, int key, int modifiers, const char
             setError("test_send_key_text: null window");
             return -1;
         }
+        if (w->offscreen)
+            return notOnScene("test_send_key_text");
         const QString t = text ? QString::fromUtf8(text) : QString();
         QKeyEvent press(QEvent::KeyPress, key, Qt::KeyboardModifiers(modifiers), t);
         QCoreApplication::sendEvent(testKeyTarget(w), &press);
@@ -2006,6 +2255,22 @@ VLQT_API int vlqt_res_read_pixels(unsigned long long id, void* dst, int cap, vlq
 VLQT_API int vlqt_res_read_preview(unsigned long long id, unsigned char* dst, int cap, vlqt_pixel_desc* desc)
 {
     return guarded([&] { return vlqt::res::image::readPreview(id, dst, cap, desc); });
+}
+
+// Audio taps (#22): audio_tap.h; read runs on VL.Audio's audio thread.
+VLQT_API int vlqt_res_audio_tap_init(unsigned long long id, int channels, int sampleRate)
+{
+    return guarded([&] { return vlqt::res::audio::init(id, channels, sampleRate); });
+}
+
+VLQT_API int vlqt_res_read_audio(unsigned long long id, float* dst, int maxFrames, int channels, vlqt_audio_tap_state* state)
+{
+    return guarded([&] { return vlqt::res::audio::read(id, dst, maxFrames, channels, state); });
+}
+
+VLQT_API long long vlqt_now_ns(void)
+{
+    return vlqt::res::audio::nowNs();
 }
 
 VLQT_API int vlqt_test_res_read_pixels(unsigned long long id, unsigned char* out, int cap, int* width, int* height)

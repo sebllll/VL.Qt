@@ -24,6 +24,7 @@ namespace VL.Qt
     public sealed class Renderer : IDisposable, IQtFrameParticipant
     {
         const string IconPhase = "Window Icon";
+        const string SamplesPhase = "Multisample Count";
         internal const string SpaceWarning = "Space: only DIPTopLeft is implemented in v1 (1 unit = 100 DIP, origin top left); behaves like DIPTopLeft.";
 
         // Pump and scene registry of this vvvv app (new per F8/F5, #58); QtApp itself is process-wide.
@@ -43,6 +44,7 @@ namespace VL.Qt
         bool _disposed;
         bool _debug; // last Debug pin value sent to the window (#280)
         bool _borderless; // last Borderless pin value sent to the window (#233)
+        MultisampleCount _samples; // last Multisample Count pin value sent to the window (#118)
         string? _iconPath; // last window icon sent to the window (full path, null = default; #517)
         IDisposable? _keepAlive; // AppHost.KeepAlive() in the WinForms window export only, released on X / Dispose
         IDisposable? _spaceWarning;
@@ -106,8 +108,9 @@ namespace VL.Qt
         /// <summary>Renders the element tree into a Qt window.</summary>
         /// <param name="input">Root element (null = empty scene).</param>
         /// <param name="space">Coordinate space of the elements. v1 implements DIPTopLeft only (1 unit = 100 DIP); other values warn and behave like DIPTopLeft.</param>
-        /// <param name="clearColor">Background of the window.</param>
-        /// <param name="enabled">False freezes the scene (no updates of Input, Space, Clear Color); the window keeps the last state.</param>
+        /// <param name="clearColor">Background of the window. While Clear is off, its alpha is the fade strength of the previous frame (0 = no fade, 1 = like Clear on); an opaque color, the default, leaves no trail.</param>
+        /// <param name="clear">True clears the window to Clear Color every frame. False keeps the previous frame and draws the new one over it (trails, smearing, feedback); the alpha of Clear Color then sets how strongly each frame fades the old content toward the color, so lower it (e.g. 0.1) to see trails: 0 keeps everything, 1 shows none. Fading to transparency is not possible, and the fade speed depends on the frame rate. Switchable at runtime without recreating the window. Costs one full-size texture while off, and Qt renders every frame then, also when the scene did not change.</param>
+        /// <param name="enabled">False freezes the scene (no updates of Input, Space, Clear Color, Clear); the window keeps the last state.</param>
         /// <param name="title">Window title (changes at runtime are sent to the window).</param>
         /// <param name="borderless">Window without frame and title bar (Qt::FramelessWindowHint), switchable at runtime without recreating the node. The client area stays where it is, the frame appears or disappears around it. Without a frame the Bounds position (outer top-left) is the client top-left, and windows narrower than the Windows minimum width of a captioned window (~130-150 px) are possible. Save Bounds works as usual. While fullscreen the value is remembered and applied when leaving fullscreen. Windows and Linux (X11); Wayland: the compositor decides (client-side decoration off, server-side decorations may stay).</param>
         /// <param name="isVisible">Whether the Qt window is currently shown (false after closing it with X; recreate the node to reopen).</param>
@@ -117,6 +120,7 @@ namespace VL.Qt
         /// <param name="debug">Debug overlay for all elements of the window (an element's own Debug pin shows only that element). Does not affect layout or hit-testing. Cyan frame = actual size (solid: Size, dashed: Auto Size on), orange = implicit size, i.e. what Auto Size would give (only where it differs), blue dotted = children extent, translucent red = children outside the frame (overflow), translucent green = padding and hatched violet = Row/Column spacing (both inside the frame), magenta cross = origin, yellow diamond = anchor. Text: green line = baseline, dashed green = ascent, dashed red = descent.</param>
         /// <param name="window">Window settings (WindowSettings node): icon, title, borderless, fullscreen and bounds on create. A value that is set there wins over the matching pin of this node (Title, Borderless, Fullscreen, Bounds); values that are not set leave the pin. The icon has no pin here: without WindowSettings or without a value the window shows the built-in default icon, a file that cannot be loaded gives a warning at this node and keeps the default. Changes apply live without recreating the window (Bounds: on create only). Save Bounds and Client Bounds stay on this node.</param>
         /// <param name="fullscreen">Fullscreen on the screen the window is on (largest share), live; off restores position and size from before. Also applied on create, before the window is shown. F11 / Alt+Enter in the window toggle it as well (like VL.Skia); the pin only acts when its value changes. While fullscreen, Save Bounds writes nothing. No effect on eglfs (kiosk export, always fullscreen); Wayland: the compositor picks the screen.</param>
+        /// <param name="multisampleCount">Anti-aliasing of the edges (MSAA samples per pixel), live. More samples look smoother and cost GPU time and memory (X8 is several times the GPU time of None in a scene with many shapes); a count the device does not support is lowered to the next supported one, with a warning at the node. Effect layers and snapshots in the window use the same count. A change recreates the window on screen once (tens of ms).</param>
         // Pin defaults: string-valued [DefaultValue] (Color4/RectangleF have no TypeConverter, so the (Type, string) form is
         // silently ignored by vvvvc and the pin becomes default(T)); no C# defaults on the pins. #202020 = 0.1254902.
         public void Update(
@@ -127,12 +131,14 @@ namespace VL.Qt
             Element? input,
             [DefaultValue(typeof(Space), nameof(Space.DIPTopLeft))] Space space,
             [DefaultValue("0.1254902, 0.1254902, 0.1254902, 1")] Color4 clearColor,
+            [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(true)] bool clear,
             [DefaultValue(true)] bool enabled,
             [DefaultValue("VL.Qt")] string title,
             [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(false)] bool borderless,
             [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(false)] bool fullscreen,
             [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(false)] bool debug,
-            [Pin(Visibility = VL.Model.PinVisibility.Optional)] WindowSettings? window)
+            [Pin(Visibility = VL.Model.PinVisibility.Optional)] WindowSettings? window,
+            [Pin(Name = "Multisample Count", Visibility = VL.Model.PinVisibility.Optional), DefaultValue(typeof(MultisampleCount), nameof(MultisampleCount.X4))] MultisampleCount multisampleCount)
         {
             Debug.Assert(_app.IsQtThread, "VL.Qt must be used from the thread that created the QGuiApplication");
 
@@ -149,7 +155,9 @@ namespace VL.Qt
                 _iconPath = resolved.IconPath;
                 _view = new WindowRenderer(SceneRegistry.ForApp(_nodeContext.AppHost), title, WindowSettings.ResolveBounds(window, _bounds), _vSync,
                     (borderless ? Protocol.WindowMode.Borderless : 0u) | (fullscreen ? Protocol.WindowMode.Fullscreen : 0u),
-                    _iconPath);
+                    _iconPath, multisampleCount);
+                _samples = multisampleCount;
+                ReportSamples(multisampleCount, _view.UsedSamples);
                 ReportIcon(_view.IconResult);
                 _view.CloseRequested += OnCloseRequested;
                 if (_boundsSaver is { } saver)
@@ -170,6 +178,11 @@ namespace VL.Qt
                 _fullscreen = fullscreen;
                 _view.SetMode(Protocol.WindowMode.Fullscreen, fullscreen);
             }
+            if (multisampleCount != _samples && _view is not null)
+            {
+                _samples = multisampleCount;
+                ReportSamples(multisampleCount, _view.SetSamples(multisampleCount));
+            }
             if (debug != _debug && _view is not null)
             {
                 _debug = debug;
@@ -178,7 +191,7 @@ namespace VL.Qt
             if (enabled)
                 UpdateSpaceWarning(space);
             // Only written here; the pump applies the buffer once per frame (ApplyCommands) after all node updates.
-            _view?.Update(input, Geometry.Resolve(space), clearColor, enabled, title);
+            _view?.Update(input, Geometry.Resolve(space), clearColor, clear, enabled, title);
 
             // Is Visible is live (#93); Perf, Client Bounds and Error reflect the last pump (previous frame).
             isVisible = _view?.IsVisible ?? false;
@@ -196,6 +209,17 @@ namespace VL.Qt
                 _errors.Warn($"Window icon '{_iconPath}' could not be loaded, the default icon is shown: {Native.LastError()}", IconPhase);
             else
                 _errors.Clear(IconPhase);
+        }
+
+        // The count QtNative used is lower than requested (device limit): warning at the node until the next count fits.
+        // A failed call (negative) is shown the same way; the window keeps the count it had.
+        void ReportSamples(MultisampleCount requested, int used)
+        {
+            var warning = used < 0 ? $"Multisample Count could not be set: {Native.LastError()}" : Multisample.ClampWarning(requested, used);
+            if (warning is not null)
+                _errors.Warn(warning, SamplesPhase);
+            else
+                _errors.Clear(SamplesPhase);
         }
 
         void UpdateSpaceWarning(Space space)

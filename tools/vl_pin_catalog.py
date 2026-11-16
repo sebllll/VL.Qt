@@ -5,7 +5,8 @@ MCP interface. `tools/vl-patch-check.py` is its first user.
 
 Usage: python tools/vl_pin_catalog.py [--json]   (prints the catalog)
 
-Reads every node class in src/VL.Qt/Nodes/**/*Node.cs and src/VL.Qt/Renderer.cs (classes with [ProcessNode(...)]):
+Reads every node class in src/VL.Qt/Nodes/**/*Node.cs, src/VL.Qt/Renderer.cs , src/VL.Qt.Stride/*Node.cs and src/VL.Qt.Audio/*Node.cs (classes with
+[ProcessNode(...)]):
   - the pins of the public constructor (create pins) and of Update(...); the hidden NodeContext is skipped;
   - per pin: vvvv name ([Pin(Name = "...")], otherwise the C# name in title case with spaces), type, input/output,
     optional (PinVisibility.Optional), default ([DefaultValue] or the C# parameter default), pin group
@@ -17,13 +18,16 @@ Reads every node class in src/VL.Qt/Nodes/**/*Node.cs and src/VL.Qt/Renderer.cs 
 import glob, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-NODE_SOURCES = ('src/VL.Qt/Nodes/**/*Node.cs', 'src/VL.Qt/Renderer.cs')
+NODE_SOURCES = ('src/VL.Qt/Nodes/**/*Node.cs', 'src/VL.Qt/Renderer.cs', 'src/VL.Qt.Stride/*Node.cs', 'src/VL.Qt.Audio/*Node.cs')
+# Folders whose constants and enums resolve pin defaults (Stride's own enums, like PixelFormat, are not here: their
+# defaults are written as nameof(...) and need no lookup).
+CONSTANT_SOURCES = ('src/VL.Qt/**/*.cs', 'src/VL.Qt.Stride/**/*.cs', 'src/VL.Qt.Audio/**/*.cs')
 # An IOBox on these pins is an error: an IOBox on Interaction makes the element opaque to input.
 FORBIDDEN_IOBOX = {'Interaction'}
 # Pins whose value the node itself writes into the document (node name, pin name): Save Bounds of the Renderer stores
 # the window geometry in the hidden Bounds pin (#143), so a value there is expected.
 WRITTEN_BY_NODE = {('Renderer', 'Bounds')}
-CATEGORIES = {  # src/VL.Qt/Categories.cs
+CATEGORIES = {  # src/VL.Qt/Categories.cs (QtTexture of VL.Qt.Stride uses Categories.Qt too)
     'Qt': 'Qt', 'Elements': 'Qt.Elements', 'Widgets': 'Qt.Widgets', 'Interaction': 'Qt.Interaction',
     'Effects': 'Qt.Effects', 'MultiEffect': 'Qt.Effects.MultiEffect',
 }
@@ -109,9 +113,10 @@ def split_top(s, sep=','):
 
 
 def load_constants(root):
-    """`const string Name = "..."` and enums of src/VL.Qt, to resolve defaults like `WindowPlacement.DefaultBoundsString`."""
+    """`const string Name = "..."` and enums of src/VL.Qt and src/VL.Qt.Stride, to resolve defaults like `WindowPlacement.DefaultBoundsString`."""
     consts, enums = {}, {}
-    for f in glob.glob(os.path.join(root, 'src/VL.Qt/**/*.cs'), recursive=True):
+    files = [f for pattern in CONSTANT_SOURCES for f in glob.glob(os.path.join(root, pattern), recursive=True)]
+    for f in sorted(set(files)):
         src = strip_comments(open(f, encoding='utf-8-sig').read())
         for m in re.finditer(r'const\s+\w+\s+(\w+)\s*=\s*("(?:[^"\\]|\\.)*"|[^;]+);', src):
             consts[m.group(1)] = m.group(2).strip()

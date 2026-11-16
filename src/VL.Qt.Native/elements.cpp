@@ -1,4 +1,5 @@
 #include "elements.h"
+#include "audio_tap.h"
 #include "effectchain.h"
 
 #include "qtimageitem.h"
@@ -679,6 +680,8 @@ constexpr const char* kVideoQml =
     "  readonly property alias vlqtPosition: player.position\n"
     "  readonly property alias vlqtDuration: player.duration\n"
     "  property string vlqtError: \"\"\n"
+    "  readonly property alias vlqtPlayer: player\n" // audio tap (#22, audio_tap.cpp)
+    "  readonly property alias vlqtOut: out\n"
     VLQT_QML_PATH_FN
     "  function vlqtSync() { if (playing) player.play(); else player.pause(); }\n"
     "  function vlqtRelease() { playing = false; player.stop(); player.source = \"\"; }\n"
@@ -734,6 +737,8 @@ std::vector<PropDef> videoProps()
         {VLQT_PROP_KEEP_LAST_FRAME, VLQT_VT_BOOL, setQmlBool, "keepLastFrame"},
         {VLQT_PROP_PLAYBACK_RATE, VLQT_VT_F32, setQmlPositiveReal, "playbackRate"},
         {VLQT_PROP_VOLUME, VLQT_VT_F32, setVolume, "volume"},
+        // Sound to VL.Audio instead of Qt's output (#22, audio_tap.h)
+        {VLQT_PROP_AUDIO_TAP, VLQT_VT_U64, res::audio::setVideoTap, nullptr},
     };
 }
 

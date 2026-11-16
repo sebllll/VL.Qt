@@ -249,6 +249,15 @@ namespace VL.Qt
         public static extern int vlqt_window_set_mode(IntPtr w, uint mask, uint value);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern uint vlqt_window_get_mode(IntPtr w);
+        /// <summary>
+        /// Sets the MSAA sample count of the window (#118; &lt; 1 = none), clamped to what the device supports; returns the
+        /// count used (&gt;= 1) or &lt;0 = error. A shown window is replaced inside the same handle (vlqt.h).
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_window_set_samples(IntPtr w, int requested);
+        /// <summary>Sample count of the window's swap chain, or the count it will be created with; 0 = null or offscreen scene.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_window_samples(IntPtr w);
         /// <summary>Applies a command buffer (protocol.h). 0 = ok, &lt;0 = error, see <see cref="LastError"/>.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         static extern int vlqt_window_apply(IntPtr w, in byte buf, int len);
@@ -293,6 +302,94 @@ namespace VL.Qt
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_device_lost(int mode);
+
+        // Offscreen scenes (#116, QtTexture): main thread only, codes Protocol.Offscreen. The scene handle also works
+        // with vlqt_window_destroy/_apply/_get_apply_error/_poll/_set_debug/_get_perf* (list in vlqt.h).
+        /// <summary>Creates an unbound offscreen scene of width x height DIP; IntPtr.Zero = error. Free with vlqt_window_destroy.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr vlqt_offscreen_create(int width, int height);
+        /// <summary>
+        /// Binds the scene to the texture behind ntHandle (shared NT handle of an ID3D11Texture2D of device, an ID3D11Device*);
+        /// format = DXGI_FORMAT the caller samples the texture with (SRGB and float: linear values, vlqt.h); samples = MSAA
+        /// count (&lt; 2 = none), clamped, the count used in usedSamples. A change of the count is a new bind. The caller may
+        /// close ntHandle after the call.
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_bind(IntPtr scene, IntPtr device, IntPtr ntHandle, int width, int height, int format, int samples, out int usedSamples);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_unbind(IntPtr scene);
+        /// <summary>1 = bound, 0 = unbound (bind again, e.g. after a device loss of QtNative), &lt;0 = error.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_is_bound(IntPtr scene);
+        /// <summary>
+        /// Renders the changed, bound scenes of one host frame, ordered against context (the foreign immediate
+        /// ID3D11DeviceContext*) by fences. Returns the number of scenes rendered, &lt;0 = error.
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_offscreen_render_batch(IntPtr context, in IntPtr scenes, int count, double driverSeconds);
+
+        public static int OffscreenRenderBatch(IntPtr context, ReadOnlySpan<IntPtr> scenes, double driverSeconds)
+            => vlqt_offscreen_render_batch(context, in MemoryMarshal.GetReference(scenes), scenes.Length, driverSeconds);
+        /// <summary>
+        /// Where offscreen scenes render: 0 = main thread, n = 1 … 16 Qt render threads (without the call:
+        /// VLQT_OFFSCREEN_THREAD, unset = 1). Only before the first vlqt_offscreen_create; afterwards OK only for the
+        /// count in use, else Protocol.Offscreen.NotSupported.
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_set_threaded(int threadCount);
+
+        // Input into an offscreen scene (#119): positions in texture pixels, codes Protocol.Offscreen (vlqt.h).
+        /// <summary>
+        /// Pointer event (Protocol.Pointer) of device (Protocol.PointerDevice) at x/y; mouse: buttons = Qt::MouseButtons held
+        /// after the event, id ignored; touch/pen: id of the point, buttons ignored. modifiers = Qt::KeyboardModifiers.
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_send_pointer(IntPtr scene, int device, int type, int id, float x, float y, int buttons, int modifiers);
+        /// <summary>Wheel at x/y; angle delta in eighths of a degree (120 = one notch).</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_send_wheel(IntPtr scene, float x, float y, int dx, int dy, int modifiers);
+        /// <summary>Key press or release (Protocol.KeyEvent) of a Qt::Key without text; autoRepeat 1 for repeated presses.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_send_key(IntPtr scene, int type, int key, int modifiers, int autoRepeat);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_offscreen_send_text(IntPtr scene, in byte utf8, int length);
+
+        /// <summary>Typed text as UTF-8 (no NUL needed) to the focus item; a stack span keeps it allocation-free.</summary>
+        public static int OffscreenSendText(IntPtr scene, ReadOnlySpan<byte> utf8)
+            => vlqt_offscreen_send_text(scene, in MemoryMarshal.GetReference(utf8), utf8.Length);
+        /// <summary>focused 1: FocusIn, 0: FocusOut; no-op if unchanged.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_offscreen_set_focus(IntPtr scene, int focused);
+
+        // TEST ONLY (#116): a second D3D11 device standing in for Stride's, shared textures and leak probes (vlqt.h).
+        /// <summary>TEST ONLY: D3D11 device + immediate context (one reference each); adapter 0 = QtNative's, 1 = WARP.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_d3d11_create_device(int adapter, out IntPtr device, out IntPtr context);
+        /// <summary>TEST ONLY: releases context and device; returns the references left on the device.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_d3d11_release_device(IntPtr device, IntPtr context);
+        /// <summary>TEST ONLY: shared Texture2D (RT | SR, SHARED | SHARED_NTHANDLE) on device and its NT handle.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_d3d11_create_shared_texture(IntPtr device, int width, int height, int dxgiFormat, out IntPtr texture, out IntPtr ntHandle);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_test_d3d11_read_texture(IntPtr texture, ref byte @out, int cap, out int width, out int height, out int dxgiFormat);
+        /// <summary>TEST ONLY: COM reference count of obj without the probe's own reference.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_com_ref_count(IntPtr obj);
+        /// <summary>TEST ONLY: IUnknown::Release; returns the references left.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_com_release(IntPtr obj);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_close_handle(IntPtr handle);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_process_handle_count();
+        /// <summary>TEST ONLY: last read/write fence values and render count of a bound scene.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_test_offscreen_state(IntPtr scene, out ulong readFence, out ulong writeFence, out long renders);
+
+        /// <summary>TEST ONLY: texture pixels via a staging copy, rows tightly packed; bytes written, -required, &lt;0 error.</summary>
+        public static int TestReadTexture(IntPtr texture, Span<byte> @out, out int width, out int height, out int dxgiFormat)
+            => vlqt_test_d3d11_read_texture(texture, ref MemoryMarshal.GetReference(@out), @out.Length, out width, out height, out dxgiFormat);
 
         /// <summary>One resource of vlqt_res_list (vlqt.h vlqt_res_info, #359).</summary>
         [StructLayout(LayoutKind.Sequential)]
@@ -410,6 +507,63 @@ namespace VL.Qt
         /// <summary>Tooltip preview of an image loaded with <see cref="Protocol.Img.Preview"/> (BGRA8 premultiplied, &lt;= 256 px, #546): bytes written, -required (desc set), -7 none, -9.</summary>
         public static int ResReadPreview(ulong id, Span<byte> dst, out vlqt_pixel_desc desc)
             => vlqt_res_read_preview(id, ref MemoryMarshal.GetReference(dst), dst.Length, out desc);
+
+        /// <summary>
+        /// State of an audio tap (vlqt.h vlqt_audio_tap_state, 96 bytes, #22). Times in ns of <see cref="vlqt_now_ns"/>,
+        /// media times in us on Qt's audio axis (continues across loop wraps). "First frame" = the first frame the read
+        /// delivered or dropped, else the next one in the ring. Contract: protocol.h "Audio tap".
+        /// </summary>
+        [StructLayout(LayoutKind.Sequential)]
+        public struct vlqt_audio_tap_state
+        {
+            /// <summary>vlqt_now_ns at the call.</summary>
+            public long now_ns;
+            /// <summary>When the first frame is due (emit time + k / (sample_rate * rate)); 0 = no frame.</summary>
+            public long due_ns;
+            /// <summary>Media time of the first frame; 0 = no frame.</summary>
+            public long media_us;
+            /// <summary>Diagnostics: startTime of the last video frame at the sink (restarts at a loop wrap).</summary>
+            public long video_media_us;
+            /// <summary>Diagnostics: vlqt_now_ns when that frame reached the sink; 0 = none yet.</summary>
+            public long video_ns;
+            public ulong overrun_frames;
+            public ulong underrun_frames;
+            /// <summary>Playback rate of the first frame's segment; 0 = no frame.</summary>
+            public double rate;
+            /// <summary>Segment counter of the first frame; a change means flush and re-lock.</summary>
+            public uint discontinuity;
+            /// <summary>Frames of the current segment left in the ring after the call.</summary>
+            public int available;
+            public int capacity;
+            public int channels;
+            public int sample_rate;
+            /// <summary><see cref="Protocol.AudioTap"/> flags.</summary>
+            public int flags;
+            int _reserved0, _reserved1;
+        }
+
+        // Audio taps (#22): init on the main thread; read and now on any thread (VL.Audio's audio thread), no allocation.
+        /// <summary>Fixes the format of a Pending audio tap (float, interleaved) and makes it Ready. 0 / -7 / -9.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_res_audio_tap_init(ulong id, int channels, int sampleRate);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_res_read_audio(ulong id, ref float dst, int maxFrames, int channels, out vlqt_audio_tap_state state);
+        [DllImport(Lib, EntryPoint = "vlqt_res_read_audio", CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_res_read_audio_drop(ulong id, IntPtr dst, int maxFrames, int channels, out vlqt_audio_tap_state state);
+        /// <summary>The clock of the audio tap times in ns (steady clock: QPC on Windows = Stopwatch.GetTimestamp converted to ns).</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern long vlqt_now_ns();
+
+        /// <summary>
+        /// Copies and consumes up to dst.Length / channels frames of one segment (interleaved). Returns the frames copied,
+        /// -7 (channels mismatch, not initialised) or -9 (released id). An empty dst only fills the state.
+        /// </summary>
+        public static int ResReadAudio(ulong id, Span<float> dst, int channels, out vlqt_audio_tap_state state)
+            => vlqt_res_read_audio(id, ref MemoryMarshal.GetReference(dst), channels > 0 ? dst.Length / channels : 0, channels, out state);
+
+        /// <summary>Drops up to maxFrames frames of one segment without copying (catching up). Returns the frames dropped, -7 or -9.</summary>
+        public static int ResDropAudio(ulong id, int maxFrames, int channels, out vlqt_audio_tap_state state)
+            => vlqt_res_read_audio_drop(id, IntPtr.Zero, maxFrames, channels, out state);
 
         // App fonts (#15, LoadFont node): Qt GUI thread (vvvv main thread) only, reference counted per file in QtNative.
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]

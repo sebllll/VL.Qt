@@ -32,7 +32,7 @@ static class BorderlessTest
             WindowGeometry? last = null;
             for (int i = 0, stable = 0; i < 200 && stable < 5; i++)
             {
-                r.Update(null, Space.DIPTopLeft, clear, true, title);
+                r.Update(null, Space.DIPTopLeft, clear, true, true, title);
                 r.ApplyCommands();
                 pump(2);
                 r.AfterEvents();

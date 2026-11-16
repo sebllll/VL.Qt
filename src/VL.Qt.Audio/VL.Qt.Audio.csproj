@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Windows only: VL.Audio is NAudio-based (net8.0-windows7.0). VL.Qt itself stays platform-neutral and free of VL.Audio. -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>VL.Qt.Audio</RootNamespace>
+    <!-- Package folder VL.Qt.Audio/ at the repo root (same layout as VL.Qt.Stride, issue #22). -->
+    <OutputPath>..\..\VL.Qt.Audio\lib\net10.0-windows7.0\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- VL.Audio from nuget.org (net8.0-windows7.0 build, usable from net10); vvvv gamma 8.0 loads it as a package dependency. -->
+    <VlAudioVersion>1.9.21</VlAudioVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="VL.Core" Version="$(VvvvVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
+    <!-- Not private: nuget install VL.Qt.Audio installs VL.Audio too. Its assemblies come from that package at runtime, not from lib/. -->
+    <PackageReference Include="VL.Audio" Version="$(VlAudioVersion)" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="VL.Qt.Audio.Tests" />
+  </ItemGroup>
+
+  <!-- VL.Qt.dll comes from the VL.Qt package at runtime: not copied, not packed. When packing, this reference becomes
+       a NuGet dependency on VL.Qt with the version of the referenced project (same -p:Version for both). -->
+  <ItemGroup>
+    <ProjectReference Include="..\VL.Qt\VL.Qt.csproj" Private="false" />
+  </ItemGroup>
+
+  <!-- NuGet package (vvvv source-package layout): VL.Qt.Audio.vl, lib/net10.0-windows7.0/VL.Qt.Audio.dll, help/.
+       CI: `dotnet pack src/VL.Qt.Audio -c Release -p:Version=...` with the same version as VL.Qt. Dependencies: VL.Qt (same
+       version) and VL.Audio; VL.Core ships with vvvv (PrivateAssets="all"). -->
+  <PropertyGroup>
+    <PackageId>VL.Qt.Audio</PackageId>
+    <Authors>VL.Qt contributors</Authors>
+    <Copyright>Copyright (c) 2026 @sebllll (@schnellebuntebilder)</Copyright>
+    <Description>Audio companion of VL.Qt for vvvv gamma: the sound of a Qt video as VL.Audio signals, in sync with the picture (Windows).</Description>
+    <PackageTags>vvvv;vl;qt;qml;audio;vl.audio</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/sebllll/VL.Qt</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/sebllll/VL.Qt</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <!-- The assembly goes to lib/net10.0-windows7.0/ via the explicit item below (the build output already lives there). -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoWarn>$(NoWarn);NU5100;NU5128</NoWarn>
+    <RepoRoot>$([MSBuild]::EnsureTrailingSlash('$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..'))'))</RepoRoot>
+    <PackageRoot>$(RepoRoot)VL.Qt.Audio\</PackageRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(PackageRoot)lib\net10.0-windows7.0\VL.Qt.Audio.dll;$(PackageRoot)lib\net10.0-windows7.0\VL.Qt.Audio.pdb;$(PackageRoot)lib\net10.0-windows7.0\VL.Qt.Audio.xml" Pack="true" PackagePath="lib\net10.0-windows7.0\" Visible="false" />
+    <None Include="$(PackageRoot)VL.Qt.Audio.vl" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(PackageRoot)help\**" Pack="true" PackagePath="help\" Visible="false" />
+    <None Include="$(PackageRoot)README.md" Pack="true" PackagePath="" Visible="false" />
+    <None Include="..\VL.Qt\nuget\icon.png" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(RepoRoot)LICENSE" Pack="true" PackagePath="" Visible="false" />
+  </ItemGroup>
+</Project>

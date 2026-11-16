@@ -17,7 +17,7 @@
  *   BIND        u32 id, u32 sinkHandle, u16 flags (sinkHandle 0 = unbind)
  *   CLEAR_COLOR color
  *   RESET       (no payload)                 destroys every object of the window (ids free again), like one DESTROY
- *                                            per top-level object; window root and clear color stay (#92)
+ *                                            per top-level object; window root, clear color and clear stay (#92)
  *   SET_STYLE   u32 id, u16 count, u16 flags (vlqt_style_set), then count entries, each 4-byte aligned:
  *               u16 field (vlqt_style_field), u8 state (vlqt_style_state), u8 valueType, value (like SET)
  *               Styles (#292/#293): the resolved style of a widget (Controls types 10..15 only, others -6). QtNative
@@ -26,6 +26,10 @@
  *               laid over the table (diff), with it the table is emptied first (full send). An unset (field, state)
  *               falls back to (field, NORMAL), then to 0 / transparent / "" (= Qt default font family). Unknown field
  *               or state -6, value type not the field's type -7 (like SET). The base style values live only in C#.
+ *   SET_CLEAR   u32 clear                    (#117) 1 = clear every frame to the clear color (the default), 0 = keep
+ *                                            the previous frame and draw the new one over it (feedback layer in the
+ *                                            scene, windows and offscreen scenes alike); the first frame after
+ *                                            switching to 0 and after a resize starts from the clear color
  *   SET_UNIFORMS u32 id, u16 count, u16 flags (vlqt_uniform_set), then count entries, each 4-byte aligned:
  *               u16 valueType, u16 nameLen (1..VLQT_UNIFORM_NAME_MAX), name (UTF-8, no terminator), padding to 4,
  *               value (like SET), padding to 4. ShaderEffect only (#437, see "ShaderEffect" below).
@@ -248,6 +252,7 @@ enum vlqt_op {
     VLQT_OP_CLEAR_COLOR = 6,
     VLQT_OP_RESET = 7,
     VLQT_OP_SET_STYLE = 8, /* resolved widget style, see the head comment (#292) */
+    VLQT_OP_SET_CLEAR = 9, /* Clear pin (#117), see the head comment */
     /* 16.. effects package 03 (#437), own block to keep merges with other packages simple */
     VLQT_OP_SET_UNIFORMS = 16, /* ShaderEffect uniforms by name, see the head comment */
     VLQT_OP_SET_EFFECT_CHAIN = 17, /* Effect chain of an element (#489), see the head comment "Effect chain" */
@@ -368,6 +373,7 @@ enum vlqt_prop {
     VLQT_PROP_PLAYBACK_RATE = 674,
     VLQT_PROP_VOLUME = 675,
     VLQT_PROP_KEEP_LAST_FRAME = 676,
+    VLQT_PROP_AUDIO_TAP = 677, /* u64 audio tap resource id (VLQT_RES_KIND_AUDIO_TAP), 0 = none (Qt's own output); see "Audio tap" below (#22) */
     VLQT_PROP_ENABLED = 704,
     VLQT_PROP_AUTO_REPEAT = 705,
     VLQT_PROP_VALUE = 706,   /* value of a value input (SpinBox i32, CheckBox/Switch bool, Slider f32, TextField string), no EV_VALUE echo */
@@ -538,6 +544,22 @@ enum vlqt_device_lost {
     VLQT_DEVICE_LOST_HANG = 2
 };
 
+/* Return codes of the offscreen exports vlqt_offscreen_* and vlqt_test_offscreen_state (vlqt.h, #116 QtTexture), not
+ * part of the command buffer. -1 and -7 as in the rest of vlqt.h; the own codes start at -20 so they never collide
+ * with apply's -1..-8 or the resources' -9. vlqt_offscreen_render_batch returns >= 0 (scenes rendered) on success. */
+enum vlqt_offscreen_result {
+    VLQT_OFFSCREEN_OK = 0,
+    VLQT_OFFSCREEN_NULL_SCENE = -1,          /* null handle, or a window handle that is no offscreen scene */
+    VLQT_OFFSCREEN_BAD_ARGUMENT = -7,        /* null device/handle/context, size out of range or not the texture's */
+    VLQT_OFFSCREEN_UNBOUND = -20,            /* the scene has no texture (vlqt_test_offscreen_state) */
+    VLQT_OFFSCREEN_ADAPTER_MISMATCH = -21,   /* foreign device on another adapter than QtNative's device (warning once) */
+    VLQT_OFFSCREEN_OPEN_FAILED = -22,        /* OpenSharedResource1 failed or the handle is no usable Texture2D */
+    VLQT_OFFSCREEN_FORMAT_UNSUPPORTED = -23, /* format not allowed or not compatible with the texture's format */
+    VLQT_OFFSCREEN_FENCE_FAILED = -24,       /* no ID3D11Device5/ID3D11DeviceContext4, or fence create/share/open failed */
+    VLQT_OFFSCREEN_DEVICE_LOST = -25,        /* QtNative's device is lost or being rebuilt: try again next frame */
+    VLQT_OFFSCREEN_NOT_SUPPORTED = -26       /* no D3D11 (Linux, other graphics API) or not available on a scene */
+};
+
 /* Mouse event types of the TEST export vlqt_test_send_mouse (vlqt.h), not part of the command buffer. PRESS/RELEASE =
  * left button, *_RIGHT = right button (#320), *_RIGHT_SYSTEM = right button synthesized by the OS from touch (#321). */
 enum vlqt_mouse {
@@ -558,12 +580,35 @@ enum vlqt_touch {
     VLQT_TOUCH_RELEASE = 3
 };
 
+/* Pointer events of vlqt_offscreen_send_pointer (vlqt.h, #119 QtTexture input), not part of the command buffer. */
+enum vlqt_pointer {
+    VLQT_POINTER_PRESS = 1,
+    VLQT_POINTER_MOVE = 2,
+    VLQT_POINTER_RELEASE = 3,
+    VLQT_POINTER_LEAVE = 4,  /* the pointer left the texture or its window (hover ends); x/y ignored */
+    VLQT_POINTER_CANCEL = 5  /* touch/pen: the system cancelled the point (TouchCancel) */
+};
+
+/* Pointing devices of vlqt_offscreen_send_pointer (#119). Pen is delivered as a stylus, as in a window on Windows. */
+enum vlqt_pointer_device {
+    VLQT_POINTER_DEVICE_MOUSE = 0,
+    VLQT_POINTER_DEVICE_TOUCH = 1,
+    VLQT_POINTER_DEVICE_PEN = 2
+};
+
+/* Key event types of vlqt_offscreen_send_key (#119). */
+enum vlqt_key_event {
+    VLQT_KEY_EVENT_PRESS = 1,
+    VLQT_KEY_EVENT_RELEASE = 2
+};
+
 /* Resource kinds of vlqt_res_create (int) */
 enum vlqt_res_kind {
     VLQT_RES_KIND_TEST = 1, /* test only: decode sleeps n ms in a worker, upload uses n bytes of budget (vlqt_test_res_start) */
     VLQT_RES_KIND_IMAGE = 2, /* image from a file or pixels (vlqt_res_load_image / vlqt_res_set_pixels), texture on the process device (#360) */
     VLQT_RES_KIND_SNAPSHOT = 3, /* CPU copy of an element (vlqt_res_snapshot / vlqt_res_read_pixels), no texture (#363) */
-    VLQT_RES_KIND_SHADER = 4 /* .qsb shader of one stage (vlqt_res_load_shader), for ShaderEffect (#437) */
+    VLQT_RES_KIND_SHADER = 4, /* .qsb shader of one stage (vlqt_res_load_shader), for ShaderEffect (#437) */
+    VLQT_RES_KIND_AUDIO_TAP = 5 /* sound of a Video as float samples (vlqt_res_audio_tap_init / vlqt_res_read_audio), see "Audio tap" (#22) */
 };
 
 /* Resource states (u8 of RES_EV_STATE, return value of vlqt_res_wait). Pending -> Decoding -> Uploading -> Ready | Failed
@@ -611,6 +656,63 @@ enum vlqt_img {
  * flight) -> Ready | Failed; a new snapshot on a Ready id keeps it Ready (previous pixels readable) until the new
  * one is done. RES_EV_INFO: u32 width, u32 height, u32 format = 9 (B8G8R8A8, premultiplied), u64 bytes of the CPU
  * copy (width * height * 4); sent before STATE Ready and after each replaced snapshot. Failed with RES_EV_ERROR:
- * element unknown in the window, window not exposed, element or window destroyed during the grab, grab refused. */
+ * element unknown in the window, window not exposed (offscreen scene: not bound), element or window destroyed during
+ * the grab, grab refused. */
+
+/* Audio tap (#22, VLQT_RES_KIND_AUDIO_TAP, audio_tap.h): the sound of a Video element as interleaved float samples for
+ * VL.Audio (Video (VL.Audio) in VL.Qt.Audio). Contract between QtNative and C#:
+ *
+ * Lifetime. C# creates the resource (vlqt_res_create) and fixes its format once with vlqt_res_audio_tap_init
+ * (channels 1..VLQT_AUDIO_TAP_MAX_CHANNELS, sample rate VLQT_AUDIO_TAP_MIN/MAX_SAMPLE_RATE, always float): Pending ->
+ * Decoding -> Ready at once (external content, no worker, no upload), RES_EV_INFO w = channels, h = sample rate,
+ * format 0, bytes = ring size. The format never changes: a new VL.Audio sample rate means a new tap, C# sets the new id
+ * on the Video and releases the old one (vlqt_res_release); no request flag. A tap is freed like any resource (host
+ * release + no element reference); reads of a freed id return -9 and never touch freed memory.
+ *
+ * VLQT_PROP_AUDIO_TAP (Video). A tap id != 0 attaches a QAudioBufferOutput in the tap's format to the element's
+ * QMediaPlayer and sets the player's audioOutput to null: Qt's own sound is off, the player runs on the system clock
+ * (spike in #22: with an output, even at volume 0, Qt syncs the picture to the audio device with ~200 ms start offset
+ * and seconds of slewing). There is no separate "qtAudio" prop: a tap always means Qt is silent, 0 restores the
+ * AudioOutput (Video [VL.Qt] never sets the prop and is unchanged). C# swaps from one tap to the next without a 0 in
+ * between, so Qt never plays a burst. The tap hangs on the player of the item, never on the QQuickWindow (the window
+ * is replaced on an MSAA change, #118; items move with it). The element holds an element reference on the tap. One
+ * player per tap: a second element with the same tap id is ignored with a warning (rc 0) until the first one detaches.
+ * Bad ids (unknown, wrong kind, not Ready) -> ApplyBadValue, Qt's output stays as it was.
+ *
+ * Clock. All times are ns of one monotonic clock, vlqt_now_ns(): std::chrono::steady_clock. On Windows that is the
+ * QueryPerformanceCounter, so it equals Stopwatch.GetTimestamp() converted to ns (ticks / f * 1e9 + ticks % f * 1e9 / f,
+ * f = Stopwatch.Frequency); on Linux CLOCK_MONOTONIC, also Stopwatch's clock. C# may use either.
+ *
+ * Producer (QtNative, T4). audioBufferReceived runs on a worker thread of the player (Qt::DirectConnection; the thread
+ * changes with the source, still one producer per tap): it copies the samples into a lock-free SPSC ring (about 500 ms)
+ * and stores per buffer: emit time (vlqt_now_ns at the signal), media startTime (us), playback rate, frame count. No
+ * QObjects, no locks, no allocation on that thread. Sample k of a buffer is due (leaves the speaker, before any output
+ * latency) at emitTime + k * 1e9 / (sampleRate * rate) ns: Qt emits a buffer when its start is "now" on the player
+ * clock, in step with the matching video frame (+-1.5 ms in the spike). Its media time is startTime + k * 1e6 /
+ * sampleRate us (the samples are media content, not rescaled by the rate).
+ *
+ * Discontinuity. The producer raises the discontinuity counter and starts a new segment; frames of the old segment
+ * still in the ring are dropped by the reader before it delivers new ones (flush). Raised on: source change (media
+ * startTime jumps back), rate change, first buffer after a pause (gap in wall time), ring overrun (the buffer that did
+ * not fit is dropped, overrun_frames += its frames), attach of the tap. NOT on a loop wrap: Qt's audio startTime keeps
+ * counting across passes (pass * container duration + position) without a gap.
+ *
+ * Reader (C#, audio thread, T5). vlqt_res_read_audio (vlqt.h) is allocation free, never blocks on the main thread and
+ * may be called from any thread; one reader per tap. One call delivers frames of one segment only (it stops at a
+ * segment boundary). dst != NULL: copies and consumes up to maxFrames frames; dst == NULL: consumes (drops) up to
+ * maxFrames frames without copying, this is how C# drops samples to catch up; maxFrames == 0: state only. The state
+ * describes the first frame the call delivered or dropped (or the next one in the ring when it moved none). Resampling,
+ * inserting silence/samples, the sync loop and Volume are C#'s job; QtNative delivers raw frames. */
+
+/* Flags of vlqt_audio_tap_state.flags (vlqt.h). */
+enum vlqt_audio_tap_flag {
+    VLQT_AUDIO_TAP_ATTACHED = 1, /* a Video element (player) writes into the tap */
+    VLQT_AUDIO_TAP_PLAYING = 2   /* that player is in PlayingState (buffers are expected) */
+};
+
+/* Limits of vlqt_res_audio_tap_init. */
+#define VLQT_AUDIO_TAP_MAX_CHANNELS 8
+#define VLQT_AUDIO_TAP_MIN_SAMPLE_RATE 8000
+#define VLQT_AUDIO_TAP_MAX_SAMPLE_RATE 384000
 
 #endif /* VLQT_PROTOCOL_H */

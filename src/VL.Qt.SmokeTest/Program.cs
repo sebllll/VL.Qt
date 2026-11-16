@@ -161,7 +161,16 @@ static class Program
 
         // device-lost (#367): the shared device must be created through D3D11On12 (before the first window/resource).
 #if WINDOWS
-        if (s_only?.Contains("device-lost") == true) SetEnv("VLQT_TEST_D3D11ON12", "1");
+        // qttexture (#116) uses it for the device loss of a bound offscreen scene; the regular run skips that part.
+        if (s_only?.Contains("device-lost") == true || s_only?.Contains("qttexture") == true) SetEnv("VLQT_TEST_D3D11ON12", "1");
+        // qttexture: the leak test reads ReportLiveDeviceObjects of QtNative's device, which needs the debug layer (SDK layers installed).
+        if (s_only?.Contains("qttexture") == true
+            && (File.Exists(Path.Combine(Environment.SystemDirectory, "d3d11sdklayers.dll")) || File.Exists(Path.Combine(Environment.SystemDirectory, "d3d11_3sdklayers.dll"))))
+        {
+            SetEnv("QSG_RHI_DEBUG_LAYER", "1");
+            // QtNative reads it with qgetenv (the C runtime's copy of the environment, which SetEnvironmentVariable does not update).
+            _putenv_s("QSG_RHI_DEBUG_LAYER", "1");
+        }
 #endif
 
         // 1. init (twice: idempotent)
@@ -326,6 +335,7 @@ static class Program
         if (Selected("image-preview")) ImagePreviewTest.Run(outDir, Check, Pump); // Tooltip preview of image resources, flag, 256 px, replacement (#546).
         if (Selected("image-share")) ImageShareTest.Run(outDir, Check, Pump, Grab); // One image resource in 200 elements / 2 windows, switch, replacement, perf (#361).
         if (Selected("video")) VideoTest.Run(outDir, Check, Pump, Grab, () => s_log.ToString()); // Video: MediaPlayer + VideoOutput, EV_MEDIA, file change, leaks (#115).
+        if (Selected("videoaudio")) VideoAudioTest.Run(Check, Pump); // Audio tap of a Video (#22): samples, rate, loop wrap, discontinuities, sync, MSAA swap, tap switch.
         if (Selected("videostop")) VideoStopTest.Run(Check, Pump); // #130: destroy of a playing video with audio, then window_destroy: no hang.
         // Trace replay: live scenario vs. replayed trace (01e).
         if (Selected("replay")) ReplayTest.Run(outDir, Check, Pump, Grab);
@@ -402,7 +412,14 @@ static class Program
         if (Selected("tooltip")) TooltipTest.Run(outDir, Check, Pump, Grab); // Tooltip previews: window change count (static scene, property, hover, video), snapshot_fit sizes, errors (#544).
         if (Selected("font")) FontTest.Run(outDir, Check, Pump, Grab, () => s_log.ToString()); // App fonts (#15, LoadFont): shared per file, refs, removal at the end of the pump, errors, Text with the loaded family, one-time warning for a missing family.
         if (Selected("group-frame")) GroupFrameTest.Run(outDir, Check, Pump, Grab); // Group frame in negative coordinates: snapshot = whole frame, effect layer unclipped (#475).
+        if (Selected("qttexture")) QtTextureTest.Run(outDir, Check, Pump, Grab); // QtTexture (#116): test exports (second D3D11 device, shared textures, readback, ref counts, handle count), offscreen scene bound and rendered through the fences.
+#if WINDOWS
+        if (Selected("Msaa")) MsaaTest.Run(outDir, Check, Pump, Grab); // MSAA (#118): edge pixels per sample count in a window and an offscreen scene, live window change, clamp, input after a swap.
+#endif
+        if (Selected("multirenderer")) MultiRendererTest.Run(outDir, Check, Pump, Grab); // One element tree in a window and an offscreen renderer of one registry: both draw it, state from the primary, hand-over after the window is disposed, Snapshot/TryLocate (#126).
+        if (Selected("QtTextureInput")) QtTextureTest.RunInput(outDir, Check, Pump); // QtTexture input (#119): click, hover, wheel, drag, pinch, pen, Slider, TextInput focus in an offscreen scene, through OffscreenRenderer.Notify/Send*.
         // Last: leaves two VSync windows open on purpose (process end with open windows on the shared device).
+        if (Selected("clear-pin") || Selected("ClearPin")) ClearPinTest.Run(outDir, Check, Pump, Grab); // Clear pin (#117): trail, fade, resize, MSAA, cost with Clear off/on in a window and an offscreen scene (also as -Only ClearPin).
         if (Selected("shared-device")) SharedDeviceTest.Run(Check, Pump); // One D3D11 device for all windows + upload QRhi (#358).
         // Only when named: needs VLQT_TEST_D3D11ON12 from the start (set above). Real device removal + rebuild (#367).
 #if WINDOWS
@@ -410,6 +427,8 @@ static class Program
 #else
         if (s_only?.Contains("device-lost") == true) Console.WriteLine("INFO device-lost: Windows only (D3D11On12), skipped");
 #endif
+        // Only when named (about a minute, run it alone: the render thread count is fixed at the first scene). Main-thread time per QtTexture, same frame, threaded vs main thread (#116 5.4).
+        if (s_only?.Contains("qttextureperf") == true) QtTexturePerfTest.Run(Check, Pump);
         // Only when named (60 s by default, too long for the regular run); before LeaveRunningJobs, which ends with busy workers.
         if (s_only?.Contains("resource-stress") == true) ResourceStressTest.Run(outDir, Check, Pump, () => s_log.ToString(), stressSeconds, stressSeed); // Stress test resource manager, ASan/TSan target (#365).
         if (Selected("resources")) ResourceTest.LeaveRunningJobs(Check, Pump); // After everything: process end with busy workers (#359).
@@ -453,6 +472,7 @@ static class Program
         if (!OperatingSystem.IsWindows() && setenv(name, value, 1) != 0)
             throw new InvalidOperationException($"setenv {name} failed");
     }
+    [DllImport("ucrtbase")] static extern int _putenv_s([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string value);
     [DllImport("libc")] static extern int setenv(string name, string value, int overwrite);
 
     static bool SameImage(Bitmap a, Bitmap b)

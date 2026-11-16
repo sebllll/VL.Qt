@@ -28,6 +28,11 @@
             /// <summary>Resolved widget style: u32 id, u16 count, u16 flags (<see cref="StyleSet"/>), entries (#292).</summary>
             public const ushort SetStyle = 8;
             /// <summary>
+            /// Clear pin (#117): u32 clear, 1 = clear every frame (the default), 0 = keep the previous frame and draw the
+            /// new one over it. <see cref="Reset"/> leaves it as it is, like <see cref="ClearColor"/>.
+            /// </summary>
+            public const ushort SetClear = 9;
+            /// <summary>
             /// ShaderEffect uniforms by name (#437): u32 id, u16 count, u16 flags (<see cref="UniformSet"/>), then per
             /// entry (4-byte aligned) u16 value type (<see cref="Vt"/>), u16 name length (1..<see cref="UniformNameMax"/>),
             /// UTF-8 name, padding to 4, value like SET, padding to 4. Diff by name, full send with <see cref="UniformSet.Clear"/>.
@@ -170,6 +175,8 @@
             public const ushort PlaybackRate = 674;
             public const ushort Volume = 675;
             public const ushort KeepLastFrame = 676;
+            /// <summary>u64 audio tap resource id (<see cref="ResKind.AudioTap"/>), 0 = none: Qt's own output plays (#22, protocol.h "Audio tap").</summary>
+            public const ushort AudioTap = 677;
             public const ushort Enabled = 704;
             public const ushort AutoRepeat = 705;
             /// <summary>Value of a value input in the element's value type (SpinBox i32, CheckBox/Switch bool, Slider f32, TextField string); never echoed as <see cref="Ev.Value"/>.</summary>
@@ -418,6 +425,30 @@
             public const int Hang = 2;
         }
 
+        /// <summary>Return codes of the offscreen exports vlqt_offscreen_* (#116 QtTexture), see protocol.h.</summary>
+        public static class Offscreen
+        {
+            public const int Ok = 0;
+            /// <summary>Null handle, or a window handle that is no offscreen scene.</summary>
+            public const int NullScene = -1;
+            /// <summary>Null device, handle or context, or a size out of range or not the texture's.</summary>
+            public const int BadArgument = -7;
+            /// <summary>The scene has no texture.</summary>
+            public const int Unbound = -20;
+            /// <summary>The foreign device is on another adapter than QtNative's device.</summary>
+            public const int AdapterMismatch = -21;
+            /// <summary>OpenSharedResource1 failed or the handle is no usable Texture2D.</summary>
+            public const int OpenFailed = -22;
+            /// <summary>The render target view format is not allowed or does not fit the texture.</summary>
+            public const int FormatUnsupported = -23;
+            /// <summary>No ID3D11Device5/ID3D11DeviceContext4, or a fence could not be created, shared or opened.</summary>
+            public const int FenceFailed = -24;
+            /// <summary>QtNative's device is lost or being rebuilt; try again next frame.</summary>
+            public const int DeviceLost = -25;
+            /// <summary>No D3D11 (Linux, other graphics API) or not available on an offscreen scene.</summary>
+            public const int NotSupported = -26;
+        }
+
         /// <summary>Mouse event types of the TEST export vlqt_test_send_mouse, not part of the command buffer.</summary>
         public static class Mouse
         {
@@ -440,6 +471,33 @@
             public const int Release = 3;
         }
 
+        /// <summary>Pointer events of vlqt_offscreen_send_pointer (#119 QtTexture input), not part of the command buffer.</summary>
+        public static class Pointer
+        {
+            public const int Press = 1;
+            public const int Move = 2;
+            public const int Release = 3;
+            /// <summary>The pointer left the texture or its window (hover ends); x/y ignored.</summary>
+            public const int Leave = 4;
+            /// <summary>Touch/pen: the system cancelled the point (TouchCancel).</summary>
+            public const int Cancel = 5;
+        }
+
+        /// <summary>Pointing devices of vlqt_offscreen_send_pointer (#119). Pen is delivered as a stylus, as in a window on Windows.</summary>
+        public static class PointerDevice
+        {
+            public const int Mouse = 0;
+            public const int Touch = 1;
+            public const int Pen = 2;
+        }
+
+        /// <summary>Key event types of vlqt_offscreen_send_key (#119).</summary>
+        public static class KeyEvent
+        {
+            public const int Press = 1;
+            public const int Release = 2;
+        }
+
         /// <summary>Resource kinds of vlqt_res_create (#359).</summary>
         public static class ResKind
         {
@@ -451,6 +509,20 @@
             public const int Snapshot = 3;
             /// <summary>.qsb shader of one stage (vlqt_res_load_shader), for ShaderEffect (#437).</summary>
             public const int Shader = 4;
+            /// <summary>Sound of a Video as float samples (vlqt_res_audio_tap_init / vlqt_res_read_audio, #22).</summary>
+            public const int AudioTap = 5;
+        }
+
+        /// <summary>Audio tap (#22, protocol.h "Audio tap"): flags of <see cref="Native.vlqt_audio_tap_state.flags"/> and the limits of vlqt_res_audio_tap_init.</summary>
+        public static class AudioTap
+        {
+            /// <summary>A Video element (player) writes into the tap.</summary>
+            public const int Attached = 1;
+            /// <summary>That player is playing (buffers are expected).</summary>
+            public const int Playing = 2;
+            public const int MaxChannels = 8;
+            public const int MinSampleRate = 8000;
+            public const int MaxSampleRate = 384000;
         }
 
         /// <summary>Shader stages of vlqt_res_load_shader (#437).</summary>

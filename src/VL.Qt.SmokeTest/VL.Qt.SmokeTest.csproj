@@ -28,11 +28,15 @@
     <Compile Include="..\VL.Qt\Reconciler\ICommandSink.cs" Link="ICommandSink.cs" />
     <!-- Renderer core (07a): WindowRenderer + reconciler + element model. -->
     <Compile Include="..\VL.Qt\WindowRenderer.cs" Link="WindowRenderer.cs" />
+    <Compile Include="..\VL.Qt\SceneCore.cs" Link="SceneCore.cs" />
+    <Compile Include="..\VL.Qt\OffscreenRenderer.cs" Link="OffscreenRenderer.cs" />
+    <Compile Include="..\VL.Qt\InputMapping.cs" Link="InputMapping.cs" />
     <Compile Include="..\VL.Qt\WindowPlacement.cs" Link="WindowPlacement.cs" />
     <Compile Include="..\VL.Qt\WindowSettings.cs" Link="WindowSettings.cs" />
     <Compile Include="..\VL.Qt\PerfStats.cs" Link="PerfStats.cs" />
     <Compile Include="..\VL.Qt\Geometry.cs" Link="Geometry.cs" />
     <Compile Include="..\VL.Qt\Space.cs" Link="Space.cs" />
+    <Compile Include="..\VL.Qt\MultisampleCount.cs" Link="MultisampleCount.cs" />
     <Compile Include="..\VL.Qt\EventReader.cs" Link="EventReader.cs" />
     <Compile Include="..\VL.Qt\Elements\*.cs" Link="Elements\%(Filename)%(Extension)" />
     <Compile Include="..\VL.Qt\Reconciler\*.cs" Exclude="..\VL.Qt\Reconciler\ICommandSink.cs" Link="Reconciler\%(Filename)%(Extension)" />

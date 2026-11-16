@@ -47,7 +47,24 @@ per vvvv frame:
 1. Each `QQuickWindow` renders directly into its own swap chain: Direct3D 11 on Windows (one device shared by all windows and images), OpenGL on Linux
 2. No `exec()` and no render thread: Qt's `basic` render loop, pumped once per vvvv frame (`vlqt_app_process_events`); each window renders at most once per pump
 3. VSync on by default to avoid tearing, but vvvv's frame clock still controls timing: a frame may wait up to one refresh interval inside the pump (at the start of the frame, F5 segment "vsync wait"). The Renderer's `VSync` pin off gives swap interval 0 (never blocks, tearing allowed). See [Timing](decisions/timing.md)
-4. Offscreen textures are only used inside the scene: Effect layers, ShaderEffect sources and Snapshot. There is no texture output to Stride or Skia layers
+4. Clear off (the `Clear` pin of `Renderer` and `QtTexture`) keeps the previous frame through a feedback layer, see [Feedback layer](#feedback-layer-clear-off)
+5. Texture output to Stride is a separate path, see [Texture output for Stride](#texture-output-for-stride)
+
+### Feedback layer (Clear off)
+
+A swap chain discards its back buffer after `Present`, so a window cannot keep its previous frame. Instead of target-specific paths, `vlqt::Scene` (one per window or offscreen scene) owns a feedback layer that exists only while `Clear` is off: a recursive, live `QQuickShaderEffectSource` of the scene root, drawn under the content, so the previous frame is part of the scene graph and the elements are drawn over it with premultiplied alpha. It is the same code for windows and offscreen scenes, costs one full-size texture and one pass, and Qt renders every frame while it exists. Debug overlay, perf overlay and snapshots stay outside the root and are not accumulated. While `Clear` is off, the alpha of `Clear Color` is the fade strength: between the previous frame and the elements the layer draws a full-size fill with the clear colour (premultiplied "over", `out = C·a + prev·(1−a)`), only for 0 < alpha < 1. Alpha 0 adds no draw (pure accumulation; a Rectangle of the patch can still fade regions or gradients), alpha 1 equals `Clear` on, and the opaque default `Clear Color` of the `Renderer` therefore shows no trail. Limits: no fade to transparency, the fade speed depends on the frame rate, 8-bit targets keep a faint residue. Changing `Clear Color` or `Clear` at runtime does not recreate the layer. The layer starts from the clear colour when `Clear` goes off and after a resize. Switching `Clear` back on deletes it, so `Clear` on costs nothing extra. Command `SET_CLEAR`; details and measurements: [Render texture](decisions/render-texture.md#clear-pin-spike-2026-11-15-117-task-1).
+
+### Texture output for Stride
+
+`QtTexture` (companion package `VL.Qt.Stride`, Windows only, experimental) renders a scene without a window into a Stride `Texture`. Same element tree, reconciler and protocol as a window; the difference is the render target:
+
+1. The node creates the `Texture` on Stride's device as a shared texture (SRgb: typeless, Stride samples the SRgb view; for SRgb and Float QtNative renders into a texture of its own and converts it to linear premultiplied values) and hands QtNative Stride's device, context and the shared handle. QtNative opens it and owns an offscreen scene (`vlqt_offscreen_*`, no `QQuickWindow` on a swap chain) with two shared `ID3D11Fence`s (Qt write complete, Stride read complete). Qt renders on the QtNative device, which moves to Stride's adapter while no window renders on it.
+2. In its `Update` the node applies its scene through the reconciler and schedules itself. A game system with the lowest `DrawOrder` renders all scheduled nodes at the start of Stride's draw, before any other system draws: per changed scene polish, sync, render into the texture, signal the write fence. Stride waits for that fence on the GPU, so the texture is current in the same frame without a CPU wait; a scene that did not change is not rendered again.
+3. Rendering runs on the main thread for now; a Qt render thread is planned as a separate step. The output texture is the same instance until `Size` or `Format` change. Device loss on either side unbinds and binds again in the next `Update`.
+
+`QtRenderer` (category `Stride.Rendering`) is the layer variant: it renders into the same kind of shared texture, sized to its viewport, and draws it into the current Stride render target with premultiplied blending, so half-transparent content blends like a Qt window.
+
+Details and rejected alternatives: [Render texture](decisions/render-texture.md), [Device sharing](decisions/device-sharing.md). The offscreen textures inside a scene (Effect layers, ShaderEffect sources, Snapshot) are a different mechanism and stay inside Qt.
 
 ## Events
 
@@ -63,7 +80,7 @@ On Windows vvvv's message loop hands mouse, touch and pen messages to Qt between
 
 ## Reusing elements
 
-The same element instance can hang at several places of the tree; each place gets its own Qt object, events from all places are merged. Interaction per place goes on a Group around it (see the help patch `HowTo Reuse an Element`). Exceptions: across several renderers and for Video (would decode twice) the first owner wins, with a warning.
+The same element instance can hang at several places of the tree; each place gets its own Qt object, events from all places are merged. Interaction per place goes on a Group around it (see the help patch `HowTo Reuse an Element`). This holds across renderers too (a window and a `QtTexture`): state values come from the first renderer that shows the element. Exception: a Video (would decode twice) is shown once only, app-wide; the first owner wins, the others get a warning.
 
 ## User QML
 

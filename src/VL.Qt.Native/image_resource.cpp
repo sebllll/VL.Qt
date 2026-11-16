@@ -287,23 +287,27 @@ private:
         const qsizetype bpl = r.m_image.bytesPerLine();
         const int left = h - r.m_uploadedRows;
         const int rows = budget < 0 ? left : int(std::clamp<int64_t>(budget / bpl, 1, left));
-        QRhiCommandBuffer* cb = nullptr;
-        if (rhi->beginOffscreenFrame(&cb) != QRhi::FrameOpSuccess) {
-            error = "upload: offscreen frame failed (device lost?)";
-            return 0;
+        {
+            // The upload QRhi's frame executes its commands on the context shared with the render threads (device.h).
+            device::ContextLock lock;
+            QRhiCommandBuffer* cb = nullptr;
+            if (rhi->beginOffscreenFrame(&cb) != QRhi::FrameOpSuccess) {
+                error = "upload: offscreen frame failed (device lost?)";
+                return 0;
+            }
+            QRhiResourceUpdateBatch* batch = rhi->nextResourceUpdateBatch();
+            const auto* bits = reinterpret_cast<const char*>(r.m_image.constBits()) + bpl * r.m_uploadedRows;
+            QRhiTextureSubresourceUploadDescription sub(QByteArray::fromRawData(bits, bpl * rows));
+            sub.setDataStride(quint32(bpl));
+            sub.setSourceSize(QSize(r.m_size.width(), rows));
+            sub.setDestinationTopLeft(QPoint(0, r.m_uploadedRows));
+            batch->uploadTexture(r.m_texture, QRhiTextureUploadDescription({0, 0, sub}));
+            r.m_uploadedRows += rows;
+            if (r.m_uploadedRows == h && (r.m_texture->flags() & QRhiTexture::MipMapped))
+                batch->generateMips(r.m_texture);
+            cb->resourceUpdate(batch);
+            rhi->endOffscreenFrame();
         }
-        QRhiResourceUpdateBatch* batch = rhi->nextResourceUpdateBatch();
-        const auto* bits = reinterpret_cast<const char*>(r.m_image.constBits()) + bpl * r.m_uploadedRows;
-        QRhiTextureSubresourceUploadDescription sub(QByteArray::fromRawData(bits, bpl * rows));
-        sub.setDataStride(quint32(bpl));
-        sub.setSourceSize(QSize(r.m_size.width(), rows));
-        sub.setDestinationTopLeft(QPoint(0, r.m_uploadedRows));
-        batch->uploadTexture(r.m_texture, QRhiTextureUploadDescription({0, 0, sub}));
-        r.m_uploadedRows += rows;
-        if (r.m_uploadedRows == h && (r.m_texture->flags() & QRhiTexture::MipMapped))
-            batch->generateMips(r.m_texture);
-        cb->resourceUpdate(batch);
-        rhi->endOffscreenFrame();
         qCDebug(lcImg, "upload %dx%d rows %d-%d: %.2f ms (create %.2f ms)", r.m_size.width(), h, r.m_uploadedRows - rows,
             r.m_uploadedRows, timer.nsecsElapsed() / 1e6, createNs / 1e6);
         if (r.m_uploadedRows == h) {
@@ -410,6 +414,8 @@ private:
             return false;
         }
         r.m_copy.get();
+        // Unmap and the GPU copy (+ GenerateMips) as one sequence on the context shared with the render threads.
+        device::ContextLock lock(ctx);
         ctx->Unmap(staging, 0);
         r.m_mapped = false;
         auto* tex = static_cast<ID3D11Texture2D*>(r.m_workerTexture);
@@ -742,13 +748,16 @@ int testRead(uint64_t id, unsigned char* out, int cap, int* width, int* height)
         result = r->m_image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
     } else {
         QRhi* rhi = device::uploadRhi();
-        QRhiCommandBuffer* cb = nullptr;
-        if (rhi->beginOffscreenFrame(&cb) != QRhi::FrameOpSuccess)
-            return errorRc;
-        QRhiResourceUpdateBatch* batch = rhi->nextResourceUpdateBatch();
-        batch->readBackTexture(QRhiReadbackDescription(r->m_texture), &rb);
-        cb->resourceUpdate(batch);
-        rhi->endOffscreenFrame(); // waits for the readback
+        {
+            device::ContextLock lock; // as in uploadNow
+            QRhiCommandBuffer* cb = nullptr;
+            if (rhi->beginOffscreenFrame(&cb) != QRhi::FrameOpSuccess)
+                return errorRc;
+            QRhiResourceUpdateBatch* batch = rhi->nextResourceUpdateBatch();
+            batch->readBackTexture(QRhiReadbackDescription(r->m_texture), &rb);
+            cb->resourceUpdate(batch);
+            rhi->endOffscreenFrame(); // waits for the readback
+        }
         if (rb.data.size() < qsizetype(n))
             return errorRc;
         const qsizetype bpl = rb.data.size() / h;

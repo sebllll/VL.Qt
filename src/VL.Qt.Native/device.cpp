@@ -1,6 +1,7 @@
 #include "device.h"
 
 #include "protocol.h"
+#include "render_thread.h"
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
@@ -8,16 +9,19 @@
 #include <QtQuick/QQuickGraphicsDevice>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
+#include <QtQuick/private/qquickwindow_p.h>   // canMove: offscreen windows (renderControl)
 #include <QtQuick/private/qsgrenderloop_p.h> // test only: dropWindowRhisOnRetired
 #include <rhi/qrhi.h>
 
+#include <algorithm>
+#include <optional>
 #include <vector>
 
 #ifdef Q_OS_WIN
-#include <d3d11.h>
+#include <d3d11_4.h>
 #include <d3d11on12.h>
 #include <d3d12.h>
-#include <dxgi1_2.h>
+#include <dxgi1_4.h>
 #endif
 
 namespace vlqt::device {
@@ -47,8 +51,35 @@ struct Retired
 };
 std::vector<Retired> s_retired;
 #endif
+unsigned long long s_requestedLuid = 0; // adapter of moveTo, kept for later rebuilds (chooseAdapter)
 unsigned s_generation = 0;           // generation()
 std::vector<Listener> s_listeners;   // addListener, main thread
+
+// lockFrames: holds the shared context from beforeRendering to afterFrameEnd of an on-screen window's frame (basic
+// loop, main thread); releaseFrameLocks ends every one still held. Child of its window.
+class FrameLock final : public QObject
+{
+public:
+    explicit FrameLock(QQuickWindow* window) : QObject(window)
+    {
+        s_all.push_back(this);
+        connect(window, &QQuickWindow::beforeRendering, this, [this] {
+            if (!m_lock)
+                m_lock.emplace();
+        }, Qt::DirectConnection);
+        connect(window, &QQuickWindow::afterFrameEnd, this, &FrameLock::release, Qt::DirectConnection);
+    }
+    ~FrameLock() override { s_all.erase(std::remove(s_all.begin(), s_all.end(), this), s_all.end()); }
+    void release() { m_lock.reset(); }
+    static void releaseAll()
+    {
+        for (FrameLock* l : s_all)
+            l->release();
+    }
+private:
+    std::optional<ContextLock> m_lock;
+    static inline std::vector<FrameLock*> s_all; // main thread
+};
 #ifdef Q_OS_WIN
 
 // The adapter Qt's D3D11 backend would pick: QT_D3D_ADAPTER_INDEX, with QSG_RHI_PREFER_SOFTWARE_RENDERER the first
@@ -58,6 +89,24 @@ IDXGIAdapter1* chooseAdapter()
     IDXGIFactory1* factory = nullptr;
     if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&factory))))
         return nullptr;
+    // moveTo: the requested adapter, found by LUID (also WARP, which EnumAdapters1 may not list).
+    if (s_requestedLuid) {
+        IDXGIFactory4* factory4 = nullptr;
+        IDXGIAdapter1* byLuid = nullptr;
+        LUID luid{};
+        luid.LowPart = DWORD(s_requestedLuid & 0xffffffffu);
+        luid.HighPart = LONG(s_requestedLuid >> 32);
+        if (SUCCEEDED(factory->QueryInterface(__uuidof(IDXGIFactory4), reinterpret_cast<void**>(&factory4)))) {
+            factory4->EnumAdapterByLuid(luid, __uuidof(IDXGIAdapter1), reinterpret_cast<void**>(&byLuid));
+            factory4->Release();
+        }
+        if (byLuid) {
+            factory->Release();
+            return byLuid;
+        }
+        qCWarning(lcDevice, "adapter %08lx:%08lx of the last move not found, choosing as at the start",
+            long(luid.HighPart), long(luid.LowPart));
+    }
     const int requested = qEnvironmentVariableIsSet("QT_D3D_ADAPTER_INDEX") ? qEnvironmentVariableIntValue("QT_D3D_ADAPTER_INDEX") : -1;
     const bool software = qEnvironmentVariableIntValue("QSG_RHI_PREFER_SOFTWARE_RENDERER") != 0;
     IDXGIAdapter1* chosen = nullptr;
@@ -221,6 +270,15 @@ bool ensureDevice()
         return false;
     }
 
+    // The render threads of offscreen scenes use this context too (ContextLock); protection serializes single calls.
+    ID3D11Multithread* multithread = nullptr;
+    if (SUCCEEDED(s_ctx->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread)))) {
+        multithread->SetMultithreadProtected(TRUE);
+        multithread->Release();
+    } else {
+        qCWarning(lcDevice, "the shared device's context has no ID3D11Multithread: offscreen render threads are unsafe");
+    }
+
     QRhiD3D11InitParams params;
     params.enableDebugLayer = (flags & D3D11_CREATE_DEVICE_DEBUG) != 0;
     QRhiD3D11NativeHandles handles;
@@ -289,6 +347,16 @@ void attach(QQuickWindow* window)
 #endif
 }
 
+void lockFrames(QQuickWindow* window)
+{
+    new FrameLock(window);
+}
+
+void releaseFrameLocks()
+{
+    FrameLock::releaseAll();
+}
+
 QRhi* uploadRhi()
 {
 #ifdef Q_OS_WIN
@@ -312,6 +380,35 @@ void* nativeDevice(QRhi* rhi)
     return nullptr;
 }
 
+int clampSamples(int requested, int dxgiFormat, QRhi* rhi)
+{
+    if (requested <= 1)
+        return 1;
+    if (!rhi)
+        rhi = uploadRhi();
+    const QList<int> counts = rhi ? rhi->supportedSampleCounts() : QList<int>{1, 2, 4, 8};
+#ifdef Q_OS_WIN
+    auto* dev = static_cast<ID3D11Device*>(nativeDevice(rhi));
+    const auto supports = [dev](int format, int count) {
+        UINT levels = 0;
+        return SUCCEEDED(dev->CheckMultisampleQualityLevels(DXGI_FORMAT(format), UINT(count), &levels)) && levels > 0;
+    };
+#else
+    Q_UNUSED(dxgiFormat);
+#endif
+    int best = 1;
+    for (int c : counts) {
+        if (c <= best || c > requested)
+            continue;
+#ifdef Q_OS_WIN
+        if (dev && (!supports(dxgiFormat, c) || !supports(DXGI_FORMAT_D24_UNORM_S8_UINT, c)))
+            continue;
+#endif
+        best = c;
+    }
+    return best;
+}
+
 void checkLost()
 {
 #ifdef Q_OS_WIN
@@ -328,6 +425,69 @@ void checkLost()
 #endif
 }
 
+unsigned long long adapterLuidOf(void* d3d11Device)
+{
+#ifdef Q_OS_WIN
+    if (!d3d11Device)
+        return 0;
+    IDXGIDevice* dxgi = nullptr;
+    if (FAILED(static_cast<IUnknown*>(d3d11Device)->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(&dxgi))))
+        return 0;
+    IDXGIAdapter* adapter = nullptr;
+    DXGI_ADAPTER_DESC desc{};
+    const bool ok = SUCCEEDED(dxgi->GetAdapter(&adapter)) && SUCCEEDED(adapter->GetDesc(&desc));
+    if (adapter)
+        adapter->Release();
+    dxgi->Release();
+    return ok ? (static_cast<unsigned long long>(static_cast<DWORD>(desc.AdapterLuid.HighPart)) << 32)
+            | desc.AdapterLuid.LowPart : 0;
+#else
+    Q_UNUSED(d3d11Device);
+    return 0;
+#endif
+}
+
+unsigned long long adapterLuid()
+{
+#ifdef Q_OS_WIN
+    return adapterLuidOf(s_dev);
+#else
+    return 0;
+#endif
+}
+
+bool canMove()
+{
+#ifdef Q_OS_WIN
+    if (!s_dev)
+        return false;
+    for (QWindow* w : QGuiApplication::topLevelWindows()) {
+        auto* q = qobject_cast<QQuickWindow*>(w);
+        if (q && !QQuickWindowPrivate::get(q)->renderControl && nativeDevice(q->rhi()) == s_dev)
+            return false;
+    }
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool moveTo(unsigned long long luid)
+{
+#ifdef Q_OS_WIN
+    if (!luid || !canMove())
+        return false;
+    const unsigned long long from = adapterLuid();
+    s_requestedLuid = luid;
+    qCInfo(lcDevice, "moving the shared device from adapter %016llx to %016llx (no window renders on it yet)", from, luid);
+    rebuild();
+    return adapterLuid() == luid;
+#else
+    Q_UNUSED(luid);
+    return false;
+#endif
+}
+
 unsigned generation()
 {
     return s_generation;
@@ -339,6 +499,8 @@ void rebuild()
     QElapsedTimer t;
     t.start();
     ID3D11Device* const old = s_dev;
+    // The listeners run blocking render-thread jobs that take the context lock (device.h, lock order).
+    releaseFrameLocks();
 
     // 1. Listeners free every object of the old device (textures, staging, QRhi resources), keep their sources.
     for (const Listener& l : s_listeners)
@@ -412,12 +574,47 @@ int testLost(int mode)
             "(VLQT_TEST_D3D11ON12=1 before the first window or resource)");
         return -2;
     }
+    // The device goes between two frames, not under a render job a render_batch just posted: D3D11On12 then keeps an
+    // acquire of the scene's shared texture in its batch without a fence, and destroying the old device (releaseRetired)
+    // runs it as ID3D12CommandQueue::Wait(nullptr) - an access violation in D3D12Core (T6, 1 in ~10 threaded runs).
+    render_thread::drainAll();
     qCInfo(lcDevice, "test: removing the shared device %p", static_cast<void*>(s_dev));
     dev5->RemoveDevice();
     dev5->Release();
     return 0;
 #else
     return -2;
+#endif
+}
+
+ContextLock::ContextLock()
+#ifdef Q_OS_WIN
+    : ContextLock(s_ctx)
+#endif
+{
+}
+
+ContextLock::ContextLock(void* d3d11Context)
+{
+#ifdef Q_OS_WIN
+    auto* const context = static_cast<ID3D11DeviceContext*>(d3d11Context);
+    ID3D11Multithread* multithread = nullptr;
+    if (context && SUCCEEDED(context->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread)))) {
+        multithread->Enter();
+        m_multithread = multithread;
+    }
+#else
+    Q_UNUSED(d3d11Context);
+#endif
+}
+
+ContextLock::~ContextLock()
+{
+#ifdef Q_OS_WIN
+    if (auto* const multithread = static_cast<ID3D11Multithread*>(m_multithread)) {
+        multithread->Leave();
+        multithread->Release();
+    }
 #endif
 }
 

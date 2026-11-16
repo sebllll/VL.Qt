@@ -250,6 +250,15 @@ jobs:
       - name: Build (C#)
         run: dotnet build src/VL.Qt -c Release -v q -nologo -p:Version=${{ steps.ver.outputs.version }}
 
+      # VL.Qt.Stride (net10.0-windows, VL.Stride, #116): Windows only, so the Linux jobs never build it. Same version as VL.Qt
+      # (its NuGet dependency on VL.Qt is pinned to that version). No native runtime needed, so it builds on every PR.
+      - name: Build (C#, VL.Qt.Stride)
+        run: dotnet build src/VL.Qt.Stride -c Release -v q -nologo -p:Version=${{ steps.ver.outputs.version }}
+
+      # VL.Qt.Audio (net10.0-windows, VL.Audio from nuget.org, #22): Windows only like VL.Qt.Stride, same version as VL.Qt.
+      - name: Build (C#, VL.Qt.Audio)
+        run: dotnet build src/VL.Qt.Audio -c Release -v q -nologo -p:Version=${{ steps.ver.outputs.version }}
+
       - name: Test
         run: dotnet test src/VL.Qt.Tests -c Release -nologo --logger "console;verbosity=normal" --logger "trx;LogFileName=unit.trx" --results-directory build/test-results
 
@@ -267,14 +276,23 @@ jobs:
         if: env.FULL == 'true'
         run: dotnet pack src/VL.Qt -c Release --no-build -v q -nologo -p:Version=${{ steps.ver.outputs.version }} -o build/pack
 
+      # Every build (also PRs): no Linux runtimes involved, and a broken pack shows up before the release. Only FULL
+      # uploads the .nupkg; the release publishes it together with VL.Qt.
+      - name: Pack (VL.Qt.Stride)
+        run: dotnet pack src/VL.Qt.Stride -c Release --no-build -v q -nologo -p:Version=${{ steps.ver.outputs.version }} -o build/pack
+
+      - name: Pack (VL.Qt.Audio)
+        run: dotnet pack src/VL.Qt.Audio -c Release --no-build -v q -nologo -p:Version=${{ steps.ver.outputs.version }} -o build/pack
+
       - name: Verify package (layout, size, metadata)
         if: env.FULL == 'true'
         shell: pwsh
         env:
           PKG_VERSION: ${{ steps.ver.outputs.version }}
         run: |
-          $pkg = Get-ChildItem build/pack -Filter *.nupkg | Select-Object -First 1
-          if (-not $pkg) { throw 'no .nupkg produced' }
+          # build/pack holds VL.Qt, VL.Qt.Stride and VL.Qt.Audio: VL.Qt.<version>.nupkg, not VL.Qt.Stride.<version>.nupkg.
+          $pkg = Get-ChildItem build/pack -Filter VL.Qt.*.nupkg | Where-Object Name -match '^VL\.Qt\.\d' | Select-Object -First 1
+          if (-not $pkg) { throw 'no VL.Qt .nupkg produced' }
           $mb = $pkg.Length / 1MB
           "{0}: {1:N1} MB (nuget.org limit 250 MB, warning from 200 MB)" -f $pkg.Name, $mb
           if ($mb -ge 250) { throw "package too large: $mb MB" }
@@ -329,6 +347,60 @@ jobs:
           }
           "{0} entries total" -f $names.Count
 
+      - name: Verify package (VL.Qt.Stride)
+        shell: pwsh
+        env:
+          PKG_VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          $pkg = Get-ChildItem build/pack -Filter VL.Qt.Stride.*.nupkg | Select-Object -First 1
+          if (-not $pkg) { throw 'no VL.Qt.Stride .nupkg produced' }
+          "{0}: {1:N2} MB" -f $pkg.Name, ($pkg.Length / 1MB)
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [IO.Compression.ZipFile]::OpenRead($pkg.FullName)
+          try {
+            $names = @($zip.Entries | ForEach-Object FullName)
+            $reader = [IO.StreamReader]::new($zip.GetEntry('VL.Qt.Stride.nuspec').Open())
+            try { [xml]$nuspec = $reader.ReadToEnd() } finally { $reader.Dispose() }
+          } finally { $zip.Dispose() }
+          $missing = @('lib/net10.0-windows7.0/VL.Qt.Stride.dll', 'VL.Qt.Stride.vl', 'help/Help.xml', 'icon.png') | Where-Object { $_ -notin $names }
+          if ($missing) { throw "missing in package: $($missing -join ', ')" }
+          $meta = $nuspec.package.metadata
+          $problems = @()
+          if ($meta.id -ne 'VL.Qt.Stride') { $problems += "id is '$($meta.id)', expected VL.Qt.Stride" }
+          if ($meta.version -ne $env:PKG_VERSION) { $problems += "version is '$($meta.version)', expected $env:PKG_VERSION" }
+          # The only dependency is VL.Qt, at exactly the version built here (VL.Stride/VL.Core ship with vvvv).
+          $deps = @($meta.dependencies.group.dependency | ForEach-Object { '{0} {1}' -f $_.id, $_.version })
+          if ($deps.Count -ne 1 -or $deps[0] -notlike "VL.Qt $env:PKG_VERSION*") { $problems += "dependencies: '$($deps -join '; ')', expected only VL.Qt $env:PKG_VERSION" }
+          if ($problems) { throw "nuspec metadata: $($problems -join '; ')" }
+          "nuspec: id {0}, version {1}, dependencies: {2}; {3} entries" -f $meta.id, $meta.version, ($deps -join '; '), $names.Count
+
+      - name: Verify package (VL.Qt.Audio)
+        shell: pwsh
+        env:
+          PKG_VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          $pkg = Get-ChildItem build/pack -Filter VL.Qt.Audio.*.nupkg | Select-Object -First 1
+          if (-not $pkg) { throw 'no VL.Qt.Audio .nupkg produced' }
+          "{0}: {1:N2} MB" -f $pkg.Name, ($pkg.Length / 1MB)
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [IO.Compression.ZipFile]::OpenRead($pkg.FullName)
+          try {
+            $names = @($zip.Entries | ForEach-Object FullName)
+            $reader = [IO.StreamReader]::new($zip.GetEntry('VL.Qt.Audio.nuspec').Open())
+            try { [xml]$nuspec = $reader.ReadToEnd() } finally { $reader.Dispose() }
+          } finally { $zip.Dispose() }
+          $missing = @('lib/net10.0-windows7.0/VL.Qt.Audio.dll', 'VL.Qt.Audio.vl', 'help/Help.xml', 'icon.png') | Where-Object { $_ -notin $names }
+          if ($missing) { throw "missing in package: $($missing -join ', ')" }
+          $meta = $nuspec.package.metadata
+          $problems = @()
+          if ($meta.id -ne 'VL.Qt.Audio') { $problems += "id is '$($meta.id)', expected VL.Qt.Audio" }
+          if ($meta.version -ne $env:PKG_VERSION) { $problems += "version is '$($meta.version)', expected $env:PKG_VERSION" }
+          # Dependencies: VL.Qt at exactly the version built here, and VL.Audio (nuget.org); VL.Core ships with vvvv.
+          $deps = @($meta.dependencies.group.dependency | ForEach-Object { '{0} {1}' -f $_.id, $_.version })
+          if ($deps.Count -ne 2 -or -not ($deps | Where-Object { $_ -like "VL.Qt $env:PKG_VERSION*" }) -or -not ($deps | Where-Object { $_ -like 'VL.Audio *' })) { $problems += "dependencies: '$($deps -join '; ')', expected VL.Qt $env:PKG_VERSION and VL.Audio" }
+          if ($problems) { throw "nuspec metadata: $($problems -join '; ')" }
+          "nuspec: id {0}, version {1}, dependencies: {2}; {3} entries" -f $meta.id, $meta.version, ($deps -join '; '), $names.Count
+
       # #315: consume the .nupkg like a vvvv export with a NuGet dependency (PackageReference from an exe project with RID,
       # dotnet publish): no NETSDK1152, VL.Qt.dll next to the exe, Qt tree structured in runtimes/<rid>/native.
       # A full vvvvc export against the package needs vvvv on the runner (self-hosted runner, see the follow-up issue).
@@ -336,7 +408,7 @@ jobs:
         if: env.FULL == 'true'
         shell: pwsh
         run: |
-          $pkg = (Get-ChildItem build/pack -Filter *.nupkg | Select-Object -First 1).FullName
+          $pkg = (Get-ChildItem build/pack -Filter VL.Qt.*.nupkg | Where-Object Name -match '^VL\.Qt\.\d' | Select-Object -First 1).FullName
           foreach ($rid in 'win-x64', 'linux-x64') {
             ./tools/test-nupkg-consumer.ps1 -Package $pkg -Rid $rid -Work "build/nupkg-consumer-$rid"
           }
@@ -414,8 +486,9 @@ jobs:
           Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Windows Error Reporting' -Name Disabled -Value 1 -Type DWord
           $sw = [Diagnostics.Stopwatch]::StartNew()
           $p = Start-Process $exe.FullName -ArgumentList 'smoke-out/grabs' -NoNewWindow -PassThru -RedirectStandardOutput smoke-out/stdout.log -RedirectStandardError smoke-out/stderr.log
-          # 5 min: the run takes ~150-175 s on the hosted runner, 3 min was too tight (#65 hit it with 0 FAIL).
-          if (-not $p.WaitForExit(300000)) { $p.Kill($true); throw 'SmokeTest timeout (5 min)' }
+          # 8 min: the run takes ~265 s on the hosted runner since the QtTexture render-thread checks (#116, software
+          # adapter path); 3 min was too tight before (#65 hit it with 0 FAIL). A hang inside a check fails by the watchdog.
+          if (-not $p.WaitForExit(480000)) { $p.Kill($true); throw 'SmokeTest timeout (8 min)' }
           $p.WaitForExit()
           $out = Get-Content smoke-out/stdout.log
           "SmokeTest exit code {0}, {1:N0} s, {2} PASS, {3} FAIL" -f $p.ExitCode, $sw.Elapsed.TotalSeconds,

@@ -1,9 +1,9 @@
-# Startet vvvv mit VL.Qt aus diesem Repo als Source-Paket (Dev-Workflow, kein nupkg).
+# Startet vvvv mit VL.Qt, VL.Qt.Stride und VL.Qt.Audio aus diesem Repo als Source-Pakete (Dev-Workflow, kein nupkg).
 #   tools\start-vvvv.ps1                              # vvvv + VL.Qt aus dem Repo
-#   tools\start-vvvv.ps1 -Build                       # vorher QtNative + C# bauen
+#   tools\start-vvvv.ps1 -Build                       # vorher QtNative + C# (VL.Qt, VL.Qt.Stride) bauen
 #   tools\start-vvvv.ps1 -Help "Draw a Rectangle"     # HowTo-Patch aus help\ öffnen
 #   tools\start-vvvv.ps1 -Patch help\testpatch.vl     # beliebigen Patch öffnen
-#   tools\start-vvvv.ps1 -PrepareOnly                 # nur das Package-Repo (Junction) anlegen, für F5 in VS
+#   tools\start-vvvv.ps1 -PrepareOnly                 # nur das Package-Repo (Junctions) anlegen und seinen Pfad ausgeben (F5 in VS, vvvvc.ps1)
 # Repo: -RepoDir, sonst der Ordner über diesem Script.
 # vvvv: -VvvvDir, sonst $env:VVVV_DIR, sonst neueste C:\vvvv\vvvv_gamma_*-win-<arch>.
 param(
@@ -24,19 +24,31 @@ if ($Build) {
     & (Join-Path $RepoDir 'tools\build-native.ps1') -Rid "win-$arch"
     dotnet build (Join-Path $RepoDir 'src\VL.Qt') -c Release -v q -nologo
     if ($LASTEXITCODE) { throw "dotnet build fehlgeschlagen ($LASTEXITCODE)" }
+    dotnet build (Join-Path $RepoDir 'src\VL.Qt.Stride') -c Release -v q -nologo
+    if ($LASTEXITCODE) { throw "dotnet build VL.Qt.Stride fehlgeschlagen ($LASTEXITCODE)" }
 }
 
 # vvvv erwartet <repo>\<PackageId>\<PackageId>.vl. Der Repo-Ordner heißt evtl. anders (Worktree, VL.QT)
-# und sein Elternordner enthält andere Pakete (C:\vl\VL.StandardLibs) -> eigenes Repo mit Junction.
+# und sein Elternordner enthält andere Pakete (C:\vl\VL.StandardLibs) -> eigenes Repo mit Junctions:
+# VL.Qt -> Repo-Wurzel, VL.Qt.Stride / VL.Qt.Audio -> <repo>\<Paket> (Paketordner mit .vl + help + lib).
 $key = ($RepoDir -replace '[:\\/ ]', '_').Trim('_')
 $pkgRepo = Join-Path $env:LOCALAPPDATA "VL.Qt-dev\$key"
-$link = Join-Path $pkgRepo 'VL.Qt'
-if ((Test-Path $link) -and (Get-Item $link).Target -ne $RepoDir) { (Get-Item $link).Delete() }
-if (-not (Test-Path $link)) {
-    New-Item -ItemType Directory -Force $pkgRepo | Out-Null
-    New-Item -ItemType Junction -Path $link -Target $RepoDir | Out-Null
+function Set-Junction([string]$name, [string]$target) {
+    $link = Join-Path $pkgRepo $name
+    if ((Test-Path $link) -and (Get-Item $link).Target -ne $target) { (Get-Item $link).Delete() }
+    if (-not (Test-Path $link)) {
+        New-Item -ItemType Directory -Force $pkgRepo | Out-Null
+        New-Item -ItemType Junction -Path $link -Target $target | Out-Null
+    }
 }
-if ($PrepareOnly) { Write-Host "Package-Repo: $pkgRepo"; return }
+# der Ordner fehlt vor dem ersten Build (lib/ ist ignoriert, .vl entsteht später); vvvv beachtet ihn erst mit der .vl
+foreach ($companion in 'VL.Qt.Stride', 'VL.Qt.Audio') {
+    New-Item -ItemType Directory -Force (Join-Path $RepoDir $companion) | Out-Null
+}
+Set-Junction 'VL.Qt' $RepoDir
+Set-Junction 'VL.Qt.Stride' (Join-Path $RepoDir 'VL.Qt.Stride')
+Set-Junction 'VL.Qt.Audio' (Join-Path $RepoDir 'VL.Qt.Audio')
+if ($PrepareOnly) { $pkgRepo; return }
 
 if (-not $VvvvDir) {
     $VvvvDir = Get-ChildItem 'C:\vvvv' -Directory -Filter "vvvv_gamma_*-win-$arch" |

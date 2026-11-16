@@ -1,7 +1,8 @@
-# Builds everything needed to test VL.Qt locally: QtNative (+ Qt deploy) and the C# library, optionally tests and a patch.
+# Builds everything needed to test VL.Qt locally: QtNative (+ Qt deploy), the C# library, VL.Qt.Stride and VL.Qt.Audio, optionally tests and a patch.
 # Usage: tools/build.ps1 [-Rid win-arm64|win-x64] [-Configuration Release|Debug] [-SkipNative] [-ForceDeploy]
 #                        [-Test] [-Only <scenario,...>] [-SmokeTimeout <s>] [-Patch <doc.vl>]
-#   -Test   unit tests (VL.Qt.Tests) + SmokeTest (log and grabs in build/smoke/); -Only passes --only to the SmokeTest
+#   -Test   unit tests (VL.Qt.Tests, VL.Qt.Audio.Tests) + SmokeTest (log and grabs in build/smoke/); -Only passes --only to the SmokeTest.
+#           Without -Only, QtTexture also runs in both thread modes (render thread, VLQT_OFFSCREEN_THREAD=0), grabs in build/smoke/qttexture-*
 #   -SmokeTimeout  seconds before the SmokeTest is killed (default 600; a full run takes about 4 min on win-arm64)
 #   -Patch  compile-checks a patch with vvvvc (tools/vvvvc.ps1), e.g. -Patch "help/Qt/HowTo Draw a Rectangle.vl"
 # Rid defaults to the host architecture (only the Qt of that architecture is installed locally).
@@ -58,25 +59,41 @@ Invoke-Step "VL.Qt ($Configuration)" {
     Assert-Exit 'dotnet build'
 }
 
+# Windows only (VL.Stride); the output lands in VL.Qt.Stride\lib\net10.0-windows7.0 (package folder, git-ignored).
+Invoke-Step "VL.Qt.Stride ($Configuration)" {
+    dotnet build "$repo\src\VL.Qt.Stride" -c $Configuration -v q -nologo
+    Assert-Exit 'dotnet build VL.Qt.Stride'
+}
+
+# Windows only (VL.Audio); the output lands in VL.Qt.Audio\lib\net10.0-windows7.0 (package folder, git-ignored).
+Invoke-Step "VL.Qt.Audio ($Configuration)" {
+    dotnet build "$repo\src\VL.Qt.Audio" -c $Configuration -v q -nologo
+    Assert-Exit 'dotnet build VL.Qt.Audio'
+}
+
 if ($Test)
 {
     Invoke-Step 'unit tests' {
         dotnet test "$repo\src\VL.Qt.Tests" -c $Configuration -nologo --logger "console;verbosity=normal" --logger "trx;LogFileName=unit.trx" --results-directory "$repo\build\test-results"
         Assert-Exit 'dotnet test'
     }
-    Invoke-Step "SmokeTest ($Rid)" {
-        dotnet build "$repo\src\VL.Qt.SmokeTest" -c $Configuration -v q -nologo -p:RuntimeIdentifier=$Rid
-        Assert-Exit 'SmokeTest build'
-        $exe = Get-ChildItem "$repo\src\VL.Qt.SmokeTest\bin\$Configuration" -Recurse -Filter VL.Qt.SmokeTest.exe |
-            Where-Object FullName -like "*\$Rid\*" | Select-Object -First 1
-        if (-not $exe) { throw "VL.Qt.SmokeTest.exe ($Rid) not found" }
-        $out = "$repo\build\smoke"
-        if (Test-Path $out) { Remove-Item $out -Recurse -Force }
+    Invoke-Step 'audio unit tests' {
+        dotnet test "$repo\src\VL.Qt.Audio.Tests" -c $Configuration -nologo --logger "console;verbosity=normal" --logger "trx;LogFileName=audio.trx" --results-directory "$repo\build\test-results"
+        Assert-Exit 'dotnet test VL.Qt.Audio.Tests'
+    }
+    # One SmokeTest process; stdout.log and grabs go to $out. $threads sets VLQT_OFFSCREEN_THREAD for it (empty = unset: default).
+    function Invoke-Smoke([string]$exe, [string]$out, [string[]]$extraArgs, [string]$threads, [string]$modeLine)
+    {
         New-Item -ItemType Directory -Force $out | Out-Null
-        $smokeArgs = @("`"$out\grabs`"")
-        if ($Only) { $smokeArgs += '--only', $Only }
-        $p = Start-Process $exe.FullName -ArgumentList $smokeArgs -NoNewWindow -PassThru `
-            -RedirectStandardOutput "$out\stdout.log" -RedirectStandardError "$out\stderr.log"
+        $smokeArgs = @("`"$out\grabs`"") + $extraArgs
+        $saved = $env:VLQT_OFFSCREEN_THREAD
+        if ($threads) { $env:VLQT_OFFSCREEN_THREAD = $threads }
+        try
+        {
+            $p = Start-Process $exe -ArgumentList $smokeArgs -NoNewWindow -PassThru `
+                -RedirectStandardOutput "$out\stdout.log" -RedirectStandardError "$out\stderr.log"
+        }
+        finally { $env:VLQT_OFFSCREEN_THREAD = $saved }
         $null = $p.Handle # without the cached handle ExitCode stays empty (Windows PowerShell): a crash counted as PASS (#534)
         $sw = [Diagnostics.Stopwatch]::StartNew()
         if (-not $p.WaitForExit($SmokeTimeout * 1000))
@@ -94,6 +111,33 @@ if ($Test)
         if ($p.ExitCode) { throw "exit $($p.ExitCode), see $out\stdout.log" }
         # the log is the second witness: an empty ExitCode must not turn a red run into PASS
         if (-not ($log -contains 'SMOKE OK')) { throw "no 'SMOKE OK' in $out\stdout.log" }
+        # the run really used the mode it is named for (QtNative logs it at the first offscreen scene)
+        if ($modeLine -and -not ($log -match [regex]::Escape($modeLine))) { throw "no '$modeLine' in $out\stdout.log: wrong thread mode" }
+    }
+
+    $exe = $null
+    Invoke-Step "SmokeTest ($Rid)" {
+        dotnet build "$repo\src\VL.Qt.SmokeTest" -c $Configuration -v q -nologo -p:RuntimeIdentifier=$Rid
+        Assert-Exit 'SmokeTest build'
+        $script:exe = (Get-ChildItem "$repo\src\VL.Qt.SmokeTest\bin\$Configuration" -Recurse -Filter VL.Qt.SmokeTest.exe |
+            Where-Object FullName -like "*\$Rid\*" | Select-Object -First 1).FullName
+        if (-not $exe) { throw "VL.Qt.SmokeTest.exe ($Rid) not found" }
+        $out = "$repo\build\smoke"
+        if (Test-Path $out) { Remove-Item $out -Recurse -Force }
+        Invoke-Smoke $exe $out $(if ($Only) { '--only', $Only }) '' ''
+    }
+    # QtTexture renders offscreen scenes on a Qt render thread by default or on the main thread (VLQT_OFFSCREEN_THREAD=0, #116):
+    # its suites run in both modes, as processes of their own (the qttexture device loss parts need D3D11On12 from the start,
+    # which the full run does not set). Not with -Only: that is a narrowed run.
+    if (-not $Only)
+    {
+        foreach ($mode in @(@{ Name = 'render thread'; Threads = ''; Line = 'offscreen scenes render on 1 Qt render thread(s)' },
+                            @{ Name = 'main thread'; Threads = '0'; Line = 'offscreen scenes render on the main thread' }))
+        {
+            Invoke-Step "QtTexture ($($mode.Name))" {
+                Invoke-Smoke $exe ("$repo\build\smoke\qttexture-" + ($mode.Name -replace ' ', '-')) @('--only', 'qttexture,QtTextureInput') $mode.Threads $mode.Line
+            }
+        }
     }
 }
 

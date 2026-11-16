@@ -1,10 +1,13 @@
 #include "commands.h"
+#include "audio_tap.h"
 #include "debug.h"
 #include "effectchain.h"
+#include "feedback.h"
 #include "qmlitem.h"
 #include "shadereffectitem.h"
 #include "vlstyle.h"
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QRectF>
 #include <QtGui/QColor>
 #include <QtGui/QVector2D>
@@ -13,11 +16,15 @@
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtQuick/QSGRendererInterface>
 #include <QtQuick/private/qquickwindow_p.h> // itemsToPolish (#71)
 
 #include <algorithm>
 #include <cstring>
+#include <utility>
 #include <vector>
+
+Q_LOGGING_CATEGORY(lcFeedback, "vlqt.feedback")
 
 namespace vlqt {
 namespace {
@@ -46,6 +53,7 @@ const char* opName(quint16 op)
     case VLQT_OP_CLEAR_COLOR: return "CLEAR_COLOR";
     case VLQT_OP_RESET: return "RESET";
     case VLQT_OP_SET_STYLE: return "SET_STYLE";
+    case VLQT_OP_SET_CLEAR: return "SET_CLEAR";
     case VLQT_OP_SET_UNIFORMS: return "SET_UNIFORMS";
     case VLQT_OP_SET_EFFECT_CHAIN: return "SET_EFFECT_CHAIN";
     case VLQT_OP_SET_QML_PROPERTIES: return "SET_QML_PROPERTIES";
@@ -128,27 +136,53 @@ EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
 // ---------------------------------------------------------------------------------------------
 
 Scene::Scene(QQuickWindow* w, QQmlEngine* e)
-    : window(w), engine(e), root(new QQuickItem()), elements(e), handlers(e)
+    : window(w), engine(e), root(new QQuickItem()), elements(e), handlers(e), clearColor(w->color())
 {
-    QQuickItem* content = window->contentItem();
-    root->setParentItem(content);
-    root->setSize(content->size());
     elements.proxyParent = root; // Group frame proxies of ShaderEffects (#486)
-    QObject::connect(content, &QQuickItem::widthChanged, root, [this, content] { root->setWidth(content->width()); });
-    QObject::connect(content, &QQuickItem::heightChanged, root, [this, content] { root->setHeight(content->height()); });
+    attachRoot();
+}
+
+void Scene::attachRoot()
+{
+    root->setParentItem(window->contentItem());
+    // Sized to the window, not to the content item: Qt sizes the content item only for a shown window, so the root of
+    // an offscreen scene would stay 0 x 0 (the feedback layer of Clear off draws nothing of an empty item, #117).
+    root->setSize(window->size());
+    QObject::connect(window, &QWindow::widthChanged, root, [this](int width) { root->setWidth(width); });
+    QObject::connect(window, &QWindow::heightChanged, root, [this](int height) { root->setHeight(height); });
     watchWindowGeometry(*this);
+}
+
+void Scene::moveToWindow(QQuickWindow* newWindow)
+{
+    // The feedback layer of Clear off (#117) belongs to the old window: dropped here, rebuilt for the new one below.
+    // The trail is lost; the first frame starts from the clear colour, as after a resize.
+    releaseFeedback();
+    // Cut the connections to the old window now: its deletion must not resize the root or mark the geometry.
+    QObject::disconnect(window, nullptr, &geometryWatch, nullptr);
+    QObject::disconnect(window, nullptr, root, nullptr);
+    window = newWindow;
+    attachRoot();
+    restoreFeedback();
+    geometryDirty = true;
+    // The overlay is a QObject child of the old content item: rebuilt under the new one if it was in use.
+    delete std::exchange(debug, nullptr);
+    updateDebug();
 }
 
 Scene::~Scene()
 {
     // Items have no QObject parent (only parentItem), so every tracked item is deleted explicitly.
     // Effects are detached from their sources first (arbitrary deletion order below).
+    feedback.reset(); // its view is a child of the root
     for (auto& kv : nodes)
         kv.second.xf->scene = nullptr; // the unparenting and deletes below emit geometry signals (#20)
     for (auto& kv : nodes) {
         elements.clearEffectSource(kv.second);
-        if (kv.second.type == VLQT_TYPE_VIDEO) // #130, see destroySubtree
+        if (kv.second.type == VLQT_TYPE_VIDEO) { // #130, see destroySubtree
             QMetaObject::invokeMethod(kv.second.item, "vlqtRelease");
+            res::audio::releaseVideo(kv.second.item);
+        }
     }
     for (auto& kv : nodes)
         kv.second.item->setParentItem(nullptr);
@@ -160,6 +194,60 @@ Scene::~Scene()
     ids.clear();
     delete debug;
     delete root;
+}
+
+void Scene::setClear(bool clear)
+{
+    if (clear == clearFrames)
+        return;
+    clearFrames = clear;
+    releaseFeedback();
+    restoreFeedback();
+}
+
+void Scene::releaseFeedback()
+{
+    feedback.reset();
+    applyClearColor();
+    window->update();
+}
+
+void Scene::restoreFeedback()
+{
+    if (!clearFrames && !feedback) {
+        // The software backend draws no ShaderEffectSource (the layer would show a black frame): Clear off is ignored
+        // there and the scene renders as with Clear on.
+        QSGRendererInterface* ri = window->rendererInterface();
+        if (ri && ri->graphicsApi() == QSGRendererInterface::Software) {
+            if (!feedbackSoftwareWarned) {
+                feedbackSoftwareWarned = true;
+                qCWarning(lcFeedback, "Clear off needs a QRhi scenegraph; ignored on the Qt Quick software backend");
+            }
+        } else {
+            feedback = std::make_unique<FeedbackLayer>(window, root);
+        }
+    }
+    // Also for Clear on: after a window swap the new window takes the clear colour from here.
+    applyClearColor();
+    window->update();
+}
+
+void Scene::setClearColor(const QColor& color)
+{
+    clearColor = color;
+    applyClearColor();
+}
+
+void Scene::applyClearColor()
+{
+    const float alpha = clearColor.alphaF();
+    if (feedback)
+        feedback->setFill(alpha > 0 ? clearColor : QColor(Qt::transparent));
+    // Fade (feedback.h): under the layer the window clears to the colour made opaque.
+    QColor frame = clearColor;
+    if (feedback && alpha > 0 && alpha < 1)
+        frame.setAlphaF(1);
+    window->setColor(frame); // no-op when unchanged
 }
 
 void Scene::setDebugAll(bool on)
@@ -275,8 +363,12 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                     if (expect(16)) {
                         float f[4];
                         std::memcpy(f, p, sizeof f);
-                        window->setColor(toColor(f));
+                        setClearColor(toColor(f));
                     }
+                    break;
+                case VLQT_OP_SET_CLEAR:
+                    if (expect(4))
+                        setClear(rd<quint32>(p) != 0);
                     break;
                 case VLQT_OP_RESET:
                     if (expect(0))
@@ -342,8 +434,11 @@ void Scene::destroySubtree(QQuickItem* item)
     Node& node = nodes[it->second];
     destroyHandlersOf(node); // before the item goes: handler QML objects, ids free again
     // #130: stop the player and drop its source first, so the decoder and audio threads end before the item goes.
-    if (node.type == VLQT_TYPE_VIDEO)
+    // #22: then the audio tap, while the player still exists (audio_tap.h releaseVideo).
+    if (node.type == VLQT_TYPE_VIDEO) {
         QMetaObject::invokeMethod(item, "vlqtRelease");
+        res::audio::releaseVideo(item);
+    }
     // Effect chain off first (layer, its root and stages; the masks of its links are detached and parked); a
     // SHADER_EFFECT source keeps its layer until flushLayerOff.
     const std::vector<QQuickItem*> masks = elements.effectMasks(node);

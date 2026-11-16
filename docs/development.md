@@ -25,7 +25,10 @@ Open `src/VL.Qt.slnx` in Visual Studio 2026 (or 2022 from 17.14) or Rider. It co
 |---|---|
 | `VL.Qt.Native` | QtNative (C++); building it calls `tools/build-native.ps1` (CMake + Ninja, Qt deploy) |
 | `VL.Qt` | the C# library (nodes, reconciler, interop); depends on `VL.Qt.Native` |
+| `VL.Qt.Stride` | companion package for Stride (Windows only, references VL.Stride and VL.Qt); builds into the package folder `VL.Qt.Stride/lib/net10.0-windows7.0/`. VL.Qt never references it. |
+| `VL.Qt.Audio` | companion package for VL.Audio (Windows only, references VL.Audio and VL.Qt); builds into the package folder `VL.Qt.Audio/lib/net10.0-windows7.0/`. VL.Qt never references it. See [video-audio.md](video-audio.md). |
 | `VL.Qt.Tests` | unit tests (NUnit), run them from the Test Explorer |
+| `VL.Qt.Audio.Tests` | unit tests of the sync loop of `Video (VL.Audio)` with simulated clocks (Windows only) |
 | `VL.Qt.SmokeTest` | drives QtNative without vvvv: rendering, grabs, performance limits, protocol drift |
 | `VL.Qt.Probe` | opens one Qt window from C# without vvvv and grabs a PNG; for platform and loader checks |
 | Solution Items | `README.md`, `Directory.Build.props`, `VL.Qt.vl.targets`, the build scripts |
@@ -95,10 +98,10 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 
 | Script | Use |
 |---|---|
-| `build.ps1` | Builds everything: QtNative + Qt deploy, then `dotnet build src/VL.Qt`. `-Test` adds unit tests and the SmokeTest (log and grabs in `build/smoke/`), `-Only <scenario,...>` limits the SmokeTest, `-SmokeTimeout <s>` sets its time limit (default 600 s), `-Patch <doc.vl>` compile-checks a patch with vvvvc. `-SkipNative` for C#-only changes, `-Configuration Debug`, `-ForceDeploy`. Exit 0 = all steps passed, a summary lists each step. |
-| `start-vvvv.ps1` | Starts vvvv with VL.Qt from this repo. `-Build` builds first, `-Help "Draw Text"` opens `help/Qt/HowTo Draw Text.vl`, `-Patch <file>` any patch, `-PrepareOnly` only sets up the package repository. |
-| `vvvvc.ps1` | Compiles or exports a patch with vvvvc (vvvv's command-line compiler). `-File <doc.vl>` (default `help/HelloWorld.vl`, a test patch of the repo that is not in the NuGet package; use a `help/Qt/` patch with a package), `-Out <dir>` (default `build/vvvvc`), further arguments go to vvvvc. Exit 0 = no build errors. |
-| `start-vvvv-with-nupkg.ps1` / `.cmd` | Starts vvvv with a packed `VL.Qt.*.nupkg` without installing it, e.g. to test a release. Takes the newest nupkg next to the script or from `-NupkgDir`; `-Help`, `-Patch` like above. The `.cmd` is for double-clicking. |
+| `build.ps1` | Builds everything: QtNative + Qt deploy, then `dotnet build src/VL.Qt` and `src/VL.Qt.Stride`. `-Test` adds unit tests and the SmokeTest (log and grabs in `build/smoke/`), `-Only <scenario,...>` limits the SmokeTest, `-SmokeTimeout <s>` sets its time limit (default 600 s), `-Patch <doc.vl>` compile-checks a patch with vvvvc. `-SkipNative` for C#-only changes, `-Configuration Debug`, `-ForceDeploy`. Exit 0 = all steps passed, a summary lists each step. |
+| `start-vvvv.ps1` | Starts vvvv with VL.Qt, VL.Qt.Stride and VL.Qt.Audio from this repo (three junctions in the package repository). `-Build` builds QtNative, VL.Qt and VL.Qt.Stride first (VL.Qt.Audio: `tools/build.ps1`), `-Help "Draw Text"` opens `help/Qt/HowTo Draw Text.vl`, `-Patch <file>` any patch, `-PrepareOnly` only sets up the package repository. |
+| `vvvvc.ps1` | Compiles or exports a patch with vvvvc (vvvv's command-line compiler). `-File <doc.vl>` (default `help/HelloWorld.vl`, a test patch of the repo that is not in the NuGet package; use a `help/Qt/` patch with a package), `-Out <dir>` (default `build/vvvvc`), further arguments go to vvvvc. Exit 0 = no build errors. A patch in `VL.Qt.Stride/` or `VL.Qt.Audio/`, or one that depends on one of them (no feed has them before the release), also gets the dev package repository, `--editable-packages` and a local feed `build/vvvvc-feed` with `VL.Qt` and that package packed as version 0.0.1 (repacked when the build output is newer; run `tools/build.ps1` first). `VL.Audio` is not part of vvvv: the export restores it from NuGet (the version pinned in `VL.Qt.Audio.vl` and the patch, 1.9.21; offline from the NuGet cache). |
+| `start-vvvv-with-nupkg.ps1` / `.cmd` | Starts vvvv with a packed `VL.Qt.<version>.nupkg` without installing it, e.g. to test a release; the `VL.Qt.Stride.<version>.nupkg` of the same version next to it is unpacked too. Takes the newest nupkg next to the script or from `-NupkgDir`; `-Help`, `-Patch` like above. The `.cmd` is for double-clicking. |
 
 **Native build and Qt**
 
@@ -108,7 +111,7 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 | `build-native.ps1` | Builds only QtNative and deploys Qt into `runtimes/<rid>/native` (windeployqt). `-QtDir` for another Qt location, `-ForceDeploy` to redeploy. |
 | `trim-deploy.ps1` | Removes Qt parts VL.Qt never loads from `runtimes/<rid>/native`. Idempotent, `-WhatIf` shows what would go. |
 | `check-licenses.ps1` | Checks that the deployed runtime contains only LGPL-compatible Qt parts (whitelist). Exit 1 on a violation. |
-| `test-nupkg-consumer.ps1` | Consumes a packed nupkg like a vvvv export does and checks the published layout. `-Package <nupkg>`. |
+| `test-nupkg-consumer.ps1` | Consumes a packed nupkg like a vvvv export does and checks the published layout. `-Package <nupkg>`. On Windows RIDs it also consumes `VL.Qt.Stride`: its nupkg of the same version must lie next to it and contain `VL.Qt.Stride.vl`, otherwise the test fails. |
 
 **Linux (run in WSL or on Linux)**
 
@@ -132,7 +135,30 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 | Script | Use |
 |---|---|
 | `fix-encoding.py` | Checks/repairs the BOM: files, `--all`, `--staged` (used by the git hook), `--check` to only report. See [Encoding and git hook](#encoding-and-git-hook). |
-| `vl-patch-check.py` | Read-only check of the VL.Qt nodes in `.vl` files against their C# pins (`vl_pin_catalog.py`): hidden pins with a value, IOBoxes on `Interaction`, links to removed pins (errors), IOBoxes at the default value (hints). No argument: all `help/Qt/*.vl` and `help/*.vl`. `--fix` makes hidden pins with a value visible, `--accept <patch>` puts intended exceptions into `help/.padlint.json`. Test: `test-vl-patch-check.py`. |
+| `vl-patch-check.py` | Read-only check of the VL.Qt nodes in `.vl` files against their C# pins (`vl_pin_catalog.py`): hidden pins with a value, IOBoxes on `Interaction`, links to removed pins (errors), IOBoxes at the default value (hints). No argument: all `help/Qt/*.vl`, `help/*.vl`, `VL.Qt.Stride/help/*.vl` and `VL.Qt.Audio/help/*.vl`. `--fix` makes hidden pins with a value visible, `--accept <patch>` puts intended exceptions into `help/.padlint.json`. Test: `test-vl-patch-check.py`. |
+
+## Packages
+
+The repository builds three NuGet packages:
+
+| Package | Folder | Content |
+|---|---|---|
+| `VL.Qt` | repo root (`VL.Qt.vl`, `help/`, `src/VL.Qt/`) | the Qt layer and the Qt runtime for Windows and Linux; platform-neutral, no Stride |
+| `VL.Qt.Stride` | `VL.Qt.Stride/` (package folder: `VL.Qt.Stride.vl`, `help/`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Stride/` | Qt scenes rendered into Stride textures, Windows only; depends on `VL.Qt` |
+| `VL.Qt.Audio` | `VL.Qt.Audio/` (package folder: `VL.Qt.Audio.vl`, `help/`, `README.md`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Audio/` | `Video (VL.Audio)`: the sound of a video as VL.Audio signals, Windows only; depends on `VL.Qt` (same version) and `VL.Audio`, see [video-audio.md](video-audio.md) |
+
+`VL.Qt` never references `VL.Qt.Stride` or `VL.Qt.Audio`. `VL.Qt.Stride.vl` (like `VL.Qt.Audio.vl`) is a minimal package document (dependencies and the assembly, no nodes); its help patches may be written in vvvv or directly (see `AGENTS.md`, "Checking patches"); `lib/` is not tracked by git. Why this layout: [decisions/render-texture.md](decisions/render-texture.md#package-layout-2026-11-14-task-21).
+
+```powershell
+dotnet build src/VL.Qt.Stride -c Release                  # DLL into VL.Qt.Stride/lib/net10.0-windows7.0/
+dotnet pack src/VL.Qt.Stride -c Release -p:Version=1.2.3  # VL.Qt.Stride.1.2.3.nupkg
+```
+
+**Both packages have the same version**: `VersionPrefix` in `Directory.Build.props` for local builds, one `-p:Version` for both in the CI. `VL.Qt.Stride` declares its dependency on `VL.Qt` with the version of the project reference, so packing it with another `-p:Version` than `VL.Qt` points it at a `VL.Qt` that was not released with it. Packing `VL.Qt` needs the native Qt trees first, see the comment in `src/VL.Qt/VL.Qt.csproj`.
+
+The CI (`build.yml`) builds `VL.Qt.Stride` on the Windows runners and packs it in the job `pack` on every run, so a broken pack shows up on a pull request. The step "Verify package (VL.Qt.Stride)" checks the layout and the nuspec (id, version, the only dependency `VL.Qt` at the same version). A tag or a plain `workflow_dispatch` uploads both `.nupkg` files; the release attaches both to the GitHub release and pushes both to nuget.org (see [Release](#release)).
+
+For vvvv, `tools/start-vvvv.ps1` puts the package folders into its package repository as junctions (`VL.Qt`, `VL.Qt.Stride`, `VL.Qt.Audio`), so all are source packages in the dev workflow.
 
 ## CI
 
@@ -142,7 +168,7 @@ The repository `sebllll/VL.Qt` differs from forks and private copies in a few pl
 
 - The hosted runners are free for public repositories, so the `win-arm64` and `linux-arm64` entries also run on pull requests. Elsewhere they run only on tags and on a plain `workflow_dispatch`.
 - The workflow `public-check.yml` (keyed on the name only, so it runs while the repository is private too) fails on every pull request and push to `develop` and `main` if a file of a maintainer-only working directory (plans, internal notes, local agent settings) is tracked. Its job is a required status check.
-- The `release` job runs only for a `v*` tag whose commit is on `main` (job `release-gate`), in the GitHub environment `release`. In `sebllll/VL.Qt` with the environment variable `NUGET_USER` set, it also pushes the `.nupkg` to nuget.org through Trusted Publishing (no stored API key); elsewhere or without the variable that step is skipped with a notice. See [Release](#release).
+- The `release` job runs only for a `v*` tag whose commit is on `main` (job `release-gate`), in the GitHub environment `release`. In `sebllll/VL.Qt` with the environment variable `NUGET_USER` set, it also pushes both `.nupkg` files (`VL.Qt`, `VL.Qt.Stride`) to nuget.org through Trusted Publishing (no stored API key); elsewhere or without the variable that step is skipped with a notice. See [Release](#release).
 - Pull requests use `pull_request` (not `pull_request_target`); their jobs get no secrets and only `contents: read`.
 
 ## Release
@@ -151,6 +177,7 @@ One-time setup by a maintainer (repository settings):
 
 - [ ] Environment `release` (Settings > Environments): deployment branches and tags limited to `v*`. A required reviewer is optional: the tag ruleset below already decides who can release.
 - [ ] nuget.org Trusted Publishing policy (nuget.org > account > Trusted Publishing): repository owner `sebllll`, repository `VL.Qt`, workflow file `build.yml`, environment `release`, scope push for the package `VL.Qt`. A policy for a private repository is only active for a few days until its first successful push binds it to the repository; if it expired, create it again.
+- [ ] nuget.org Trusted Publishing policy for the second package ID `VL.Qt.Stride`, same settings as above with scope push for `VL.Qt.Stride`. Set it up by hand on nuget.org before the first release that contains the package; nothing in the repository or the CI creates it, and without it the push of that package fails.
 - [ ] Environment variable `NUGET_USER` in `release` (not a secret): the nuget.org profile name that owns the policy.
 - [ ] Rulesets (Settings > Rules > Rulesets):
   - `develop` and `main`: pull request required, no deletion or force push, required check `public check (no private files or content)`.
@@ -162,8 +189,8 @@ Per release:
 - [ ] Everything for the release is merged into `develop`; `tools/build.ps1 -Test` and the CI on `develop` are green.
 - [ ] Open the PR `develop` -> `main` and merge it with a merge commit (no squash).
 - [ ] Tag the merge commit on `main`: `git tag v<version>` (for example `v1.0.0`, `v1.1.0-rc.1`) and `git push origin v<version>`. The tag name is the package version.
-- [ ] The tag starts `build.yml` with all four RIDs. Check the job `pack`: the step "Verify package" prints the package size (limit 250 MB), the `qt/<rid>/` layout and the nuspec metadata (id, version, license, repository).
-- [ ] The job `release` creates the GitHub release with the `.nupkg` and pushes it to nuget.org (approve the deployment first if the environment has a required reviewer).
+- [ ] The tag starts `build.yml` with all four RIDs. Check the job `pack`: the step "Verify package" prints the package size (limit 250 MB), the `qt/<rid>/` layout and the nuspec metadata (id, version, license, repository); the step "Verify package (VL.Qt.Stride)" does the same for `VL.Qt.Stride`.
+- [ ] The job `release` creates the GitHub release with both `.nupkg` files and pushes them to nuget.org (approve the deployment first if the environment has a required reviewer).
 - [ ] Without `NUGET_USER` (or in a fork) the push is skipped with a notice instead of an error. A failed login means the policy does not match (repository, workflow file, environment) or has expired. Fallback: push by hand with `dotnet nuget push <file> -s https://api.nuget.org/v3/index.json -k <key>` and a short-lived API key.
 - [ ] A tag on a commit that is not on `main` builds and tests but does not release (warning in the job `release-gate`). Delete the tag and tag the right commit.
 - [ ] After publishing: check the package on nuget.org and install it with `tools/start-vvvv-with-nupkg.ps1`.
@@ -209,6 +236,8 @@ src/VL.Qt.Native/           # QtNative (C++)
 src/VL.Qt.Tests/            # C# unit tests
 src/VL.Qt.SmokeTest/        # native smoke + perf tests
 src/VL.Qt.Probe/            # one Qt window from C# without vvvv
+src/VL.Qt.Stride/           # C# source of the VL.Qt.Stride package (see Packages)
+VL.Qt.Stride/               # its package folder: VL.Qt.Stride.vl, help/, README.md, lib/ (build output)
 help/Qt/                    # help patches + assets
 docs/                       # documentation
 tools/                      # build, export, license and test scripts

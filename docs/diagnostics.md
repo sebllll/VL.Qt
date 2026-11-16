@@ -74,6 +74,17 @@ On Windows, Qt Quick shares one Direct3D 11 device with all windows and images. 
 - **What you see:** windows briefly show the last frame or black, then the scene is back. Images stay `Ready` (no `Loading` flicker), snapshots are kept. Rebuilding takes typically around 0.1 s; a real driver reset adds the time Windows needs to detect and reset the GPU (TDR, about 2 s by default).
 - **Log:** Warning "shared D3D11 device lost (GetDeviceRemovedReason ...)", then Info "device rebuilt in ... ms" and Info "device lost: N resource(s) upload again".
 
+## QtTexture render thread
+
+`QtTexture` scenes render on a Qt render thread, so the vvvv main thread spends only a fraction of a millisecond per scene (polish, hand-off) instead of the whole Qt render. The environment variable `VLQT_OFFSCREEN_THREAD` switches this for diagnosis:
+
+- **Values:** unset or empty = one render thread shared by all `QtTexture` scenes of the process (the default). `0` = render on the main thread, inside the draw start, as before the render thread existed. `n` (1 to 16) = a pool of n render threads, each scene gets one at creation, round robin. Anything else logs a Warning and uses 1.
+- **When to set it:** in the environment before vvvv starts, QtNative reads it once at the first `QtTexture` scene. Changing it later has no effect; restart vvvv.
+- **Which mode is running:** Info in the Log window, category `vlqt.offscreen`, once at the first scene: "offscreen scenes render on the main thread" or "offscreen scenes render on N Qt render thread(s)".
+- **0 to tell a render-thread problem from a scene problem:** if a `QtTexture` shows a wrong, stale or missing frame, a hang or a crash, start vvvv with `VLQT_OFFSCREEN_THREAD=0`. If the problem is gone, it is a render-thread problem (report it with the log line, GPU and driver); if it stays, it is the scene or the node. The frame time of the patch grows by the Qt render time of every changed scene, so use it for diagnosis only.
+- **More than 1 for several heavy scenes:** with several `QtTexture` nodes whose scenes are heavy (thousands of items, many texts), a pool of 2 can shorten the frame because the scenes render side by side. Measured on one laptop: it pays with CPU (render time per scene grows by 1.4x with 2 threads) and brings nothing for light scenes or a single scene; keep 1 unless the frame time shows it (`docs/decisions/render-texture.md`, "Qt render thread").
+- **Windows only:** Qt windows are not affected, `QtTexture` needs Direct3D 11.
+
 ## CPU profiling
 
 For repeatable CPU measurements see [Profiling](profiling.md).

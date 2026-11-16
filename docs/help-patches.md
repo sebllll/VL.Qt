@@ -1,6 +1,6 @@
 # Help patches
 
-The help patches in `help/Qt/` show one topic each; open them from the vvvv Help Browser (F1). The Browser groups them in topics, set in [`help/Help.xml`](../help/Help.xml).
+The help patches in `help/Qt/` show one topic each; open them from the vvvv Help Browser (F1). The Browser groups them in topics, set in [`help/Help.xml`](../help/Help.xml); the patches of the companion packages `VL.Qt.Stride` and `VL.Qt.Audio` (in `VL.Qt.Stride/help/`, `VL.Qt.Audio/help/`) are listed in [`VL.Qt.Stride/help/Help.xml`](../VL.Qt.Stride/help/Help.xml) and [`VL.Qt.Audio/help/Help.xml`](../VL.Qt.Audio/help/Help.xml).
 
 ## Help Browser
 
@@ -98,6 +98,7 @@ See [Images](images.md).
 - `HowTo Use Motion Blurs` — DirectionalBlur, ZoomBlur, RadialBlur
 - `HowTo Displace an Element` — Displace with a ShaderEffect as map
 - `HowTo Blend Elements` — Blend: an element as layer over the base, blend modes
+- `HowTo Draw Trails` — `Clear` pin of the Renderer off, the alpha of `Clear Color` sets how fast the previous frame fades
 
 See [Effects and shaders](effects-and-shaders.md).
 
@@ -122,6 +123,21 @@ See [QML files as elements](user-qml.md).
 - `HowTo Read Performance` — perf numbers as node outputs
 
 See [Diagnostics](diagnostics.md).
+
+## Stride
+
+In `VL.Qt.Stride/help/` (package `VL.Qt.Stride`, Windows only), see [Stride texture](../README.md#stride-texture):
+
+- `HowTo Render Qt into a Stride Texture` — `QtTexture`: a Qt scene (text, shapes) rendered offscreen into a Stride `Texture` with a transparent `Clear Color`, composed over a 3D background with `AlphaBlendPremultiplied`
+- `HowTo Interact with a QtTexture` — `ToTexturePixels` feeds the window input into the scene of a `QtTexture`
+- `HowTo Draw a QtTexture with Transparency` — half-transparent elements over a 3D scene, premultiplied alpha, `Format`, the same scene in a Qt window to compare
+- `HowTo Render many QtTextures` — one `QtTexture` per slice of a `ForEach`, created and disposed with the spread
+
+## Audio
+
+In `VL.Qt.Audio/help/` (package `VL.Qt.Audio`, Windows only), see [Video sound through VL.Audio](video-audio.md):
+
+- `HowTo Play a Video with VL.Audio` — `Video (VL.Audio)`: the sound of a video as VL.Audio signals at `Audio`, played by `AudioOut`, a `Meter` for the level, `Sync Error` as output, `Audio Offset` to calibrate
 
 ## Export
 

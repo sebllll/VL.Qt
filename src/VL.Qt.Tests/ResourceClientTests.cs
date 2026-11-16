@@ -41,6 +41,12 @@ namespace VL.Qt.Tests
         public Native.vlqt_res_info[] Listed = Array.Empty<Native.vlqt_res_info>();
         public int Polls;
 
+        public int AudioTapInit(ulong id, int channels, int sampleRate)
+        {
+            Calls.Add($"audio tap init {id:X} {channels} {sampleRate}");
+            return 0;
+        }
+
         public int Create(int kind, out ulong id)
         {
             id = 0;

@@ -60,6 +60,7 @@ constexpr double kOnDemandIdleShare = 0.25; // #261: Summary shows "on demand" a
 constexpr double kTextIntervalMs = 250;
 constexpr double kTimelineIntervalMs = 50;
 
+
 const char* kOverlayQml = R"(import QtQuick
 import VLQt.Perf
 Item {
@@ -302,7 +303,8 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
     connect(window, &QQuickWindow::sceneGraphInitialized, this, &PerfMonitor::detectRenderer, Qt::DirectConnection);
     connect(window, &QQuickWindow::frameSwapped, this, &PerfMonitor::detectRenderer,
         Qt::ConnectionType(Qt::DirectConnection | Qt::SingleShotConnection));
-    // Basic render loop: all signals arrive on the GUI (vvvv) thread inside processEvents.
+    // Windows (basic render loop): all signals arrive on the GUI (vvvv) thread inside processEvents. Offscreen scenes:
+    // on the scene's render thread (offscreen.cpp); afterFrameEnd hands the frame to endPump (perf.h, m_done).
     // m_spikePhase >= 0 only after vlqt_test_perf_spike (test hook).
     // #90 vsync wait: beforeFrameBegin -> beforeSynchronizing. QSGGuiThreadRenderLoop::renderWindow emits
     // beforeFrameBegin right before QRhi::beginFrame, and syncSceneGraph emits beforeSynchronizing right after it; Qt has
@@ -312,37 +314,55 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
     // rest of beginFrame (reading back the previous frame's timestamps), prepareSync and the beforeSynchronizing slots
     // connected before this one (the UpdateGate's dirty check, short). Software backend: no beforeFrameBegin, 0.
     connect(window, &QQuickWindow::beforeFrameBegin, this, [this] {
-        if (m_spikePhase >= 0) spin(PhaseEvents);
+        if (m_spikePhase.load(std::memory_order_relaxed) >= 0) spin(PhaseEvents);
         m_tFrameBegin = nowMs();
     }, Qt::DirectConnection);
     connect(window, &QQuickWindow::beforeSynchronizing, this, [this] {
-        if (m_spikePhase >= 0) spin(m_tFrameBegin >= 0 ? PhaseVsync : PhaseEvents);
+        if (m_spikePhase.load(std::memory_order_relaxed) >= 0) spin(m_tFrameBegin >= 0 ? PhaseVsync : PhaseEvents);
         m_tSyncBegin = nowMs();
         if (m_tFrameBegin >= 0)
-            m_cur.vsync += float(m_tSyncBegin - std::exchange(m_tFrameBegin, -1.0));
+            m_pending.vsync += float(m_tSyncBegin - std::exchange(m_tFrameBegin, -1.0));
     }, Qt::DirectConnection);
     connect(window, &QQuickWindow::afterSynchronizing, this, [this] {
-        if (m_spikePhase >= 0) spin(PhaseSync);
-        m_cur.sync += float(nowMs() - m_tSyncBegin);
+        if (m_spikePhase.load(std::memory_order_relaxed) >= 0) spin(PhaseSync);
+        m_pending.sync += float(nowMs() - m_tSyncBegin);
     }, Qt::DirectConnection);
     connect(window, &QQuickWindow::beforeRendering, this, [this] { m_tRenderBegin = nowMs(); }, Qt::DirectConnection);
     connect(window, &QQuickWindow::afterRendering, this, [this] {
-        if (m_spikePhase >= 0) spin(PhaseRender);
+        if (m_spikePhase.load(std::memory_order_relaxed) >= 0) spin(PhaseRender);
         m_tRenderEnd = nowMs();
-        m_cur.render += float(m_tRenderEnd - m_tRenderBegin);
+        m_pending.render += float(m_tRenderEnd - m_tRenderBegin);
         // Valid between beginFrame and endFrame; reports the last frame the GPU has finished.
         if (QRhiSwapChain* sc = m_window->swapChain())
             if (QRhiCommandBuffer* cb = sc->currentFrameCommandBuffer())
-                m_cur.gpu = float(cb->lastCompletedGpuTime() * 1000.0);
+                m_pending.gpu = float(cb->lastCompletedGpuTime() * 1000.0);
     }, Qt::DirectConnection);
     connect(window, &QQuickWindow::frameSwapped, this, [this] {
-        if (m_spikePhase >= 0) spin(PhasePresent);
+        if (m_spikePhase.load(std::memory_order_relaxed) >= 0) spin(PhasePresent);
         const double now = nowMs();
-        m_cur.present += float(now - m_tRenderEnd);
+        m_pending.present += float(now - m_tRenderEnd);
         if (m_tLastSwap >= 0)
-            m_cur.frame = float(now - m_tLastSwap);
+            m_pending.frame = float(now - m_tLastSwap);
         m_tLastSwap = now;
-        m_cur.swaps++;
+        m_pending.swaps++;
+    }, Qt::DirectConnection);
+    // Last signal of a frame, also after a failed beginFrame of a window (no sync then). Scenes: QQuickRenderControl
+    // emits it in endFrame; a scene's failed beginFrame has none, the next beforeFrameBegin starts over.
+    connect(window, &QQuickWindow::afterFrameEnd, this, [this] {
+        m_tFrameBegin = -1;
+        {
+            const std::lock_guard<std::mutex> lock(m_doneLock);
+            m_done.vsync += m_pending.vsync;
+            m_done.sync += m_pending.sync;
+            m_done.render += m_pending.render;
+            m_done.present += m_pending.present;
+            m_done.swaps += m_pending.swaps;
+            if (m_pending.gpu > 0)
+                m_done.gpu = m_pending.gpu;
+            if (m_pending.frame > 0)
+                m_done.frame = m_pending.frame;
+        }
+        m_pending = PerfSample{};
     }, Qt::DirectConnection);
 }
 
@@ -373,9 +393,12 @@ void PerfMonitor::endPumpAll(float pumpMs)
 
 void PerfMonitor::endPump(float pumpMs)
 {
+    {
+        const std::lock_guard<std::mutex> lock(m_doneLock);
+        m_cur = std::exchange(m_done, PerfSample{});
+    }
     m_cur.pump = pumpMs;
     m_cur.events = std::max(0.0f, pumpMs - m_cur.vsync - m_cur.sync - m_cur.render - m_cur.present);
-    m_tFrameBegin = -1; // a beginFrame that failed has no sync
     m_counters.add(m_cur, nowMs(), budgetMs());
     m_ring[(m_head + m_count) % kHistory] = m_cur;
     if (m_count < kHistory)
@@ -698,18 +721,18 @@ void PerfMonitor::setFrozen(bool on)
 
 void PerfMonitor::injectSpike(int phase, float ms)
 {
-    m_spikePhase = phase >= 0 && phase < PhaseCount && ms > 0 ? phase : -1;
-    m_spikeMs = ms;
+    m_spikeMs.store(ms, std::memory_order_relaxed);
+    m_spikePhase.store(phase >= 0 && phase < PhaseCount && ms > 0 ? phase : -1, std::memory_order_release);
 }
 
 void PerfMonitor::spin(int phase)
 {
-    if (m_spikePhase != phase)
+    int expected = phase;
+    if (!m_spikePhase.compare_exchange_strong(expected, -1, std::memory_order_acquire))
         return;
-    m_spikePhase = -1;
     QElapsedTimer t;
     t.start();
-    const qint64 ns = qint64(double(m_spikeMs) * 1e6);
+    const qint64 ns = qint64(double(m_spikeMs.load(std::memory_order_relaxed)) * 1e6);
     while (t.nsecsElapsed() < ns) {
     }
 }

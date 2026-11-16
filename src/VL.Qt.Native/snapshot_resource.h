@@ -11,7 +11,8 @@
  * but their result is ignored.
  *
  * A grab never stays in Decoding: endFrame (every pump) fails it when the element or the window was destroyed, the
- * window is no longer exposed or nothing came for timeoutMs. Released ids drop their result. shutdown drops every grab.
+ * window is no longer exposed (an offscreen scene, never exposed: no longer bound; while bound it is marked dirty so
+ * that render_batch renders it, #128) or nothing came for timeoutMs. Released ids drop their result. shutdown drops every grab.
  * Main thread only.
  */
 #pragma once

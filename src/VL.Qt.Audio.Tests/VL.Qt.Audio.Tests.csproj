@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Windows only like VL.Qt.Audio (VL.Audio is net8.0-windows); VL.Qt.Tests stays net10.0. The tests use
+       AudioTapPlayer with a simulated tap: no Qt, no VL.Audio engine. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>VL.Qt.Audio.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="NUnit" Version="4.*" />
+    <PackageReference Include="NUnit3TestAdapter" Version="5.*" />
+  </ItemGroup>
+
+  <!-- Test host needs the real assemblies at runtime (the references of VL.Qt and VL.Qt.Audio are compile-only). -->
+  <ItemGroup>
+    <PackageReference Include="VL.Core" Version="$(VvvvVersion)" />
+    <ProjectReference Include="..\VL.Qt\VL.Qt.csproj" />
+    <ProjectReference Include="..\VL.Qt.Audio\VL.Qt.Audio.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -2,6 +2,12 @@
   "about": "Intended exceptions for tools/vl-patch-check.py: patch (relative to this folder), element Id, rule, reason. Update with: python tools/vl-patch-check.py --accept <patch.vl>",
   "entries": [
     {
+      "patch": "../VL.Qt.Stride/help/HowTo Draw a QtTexture with Transparency.vl",
+      "id": "DwAfGOMLlsQiYHRLfLgPDi",
+      "rule": "default-iobox",
+      "reason": "Format IOBox to switch the format and compare"
+    },
+    {
       "patch": "HelloWorld.vl",
       "id": "Bd2DcQt7Lk4Mn9Pq3Rs6Tv",
       "rule": "default-iobox",

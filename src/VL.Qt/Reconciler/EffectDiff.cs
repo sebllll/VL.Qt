@@ -69,8 +69,8 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Unchanged chain: the objects are reconciled again (their element may have changed inside, and an element shown in
-        /// another renderer stays a placeholder that is retried every pass, #455); the chain is sent again when an object got
+        /// Unchanged chain: the objects are reconciled again (their element may have changed inside, and a video shown
+        /// elsewhere stays a placeholder that is retried every pass, #455); the chain is sent again when an object got
         /// another id.
         /// </summary>
         void RetryEffectObjects(Node node, Style inherited)
@@ -230,7 +230,7 @@ namespace VL.Qt
 
             if (n.MaskSource is { } mask)
             {
-                // A placeholder (the mask is shown in another renderer) has no object: no mask until a retry finds one.
+                // A placeholder (the mask is a video shown elsewhere) has no object: no mask until a retry finds one.
                 var maskId = EffectObjectId(node, mask);
                 if (maskId != 0)
                     sink.EffectRef(P.EffectMaskSource, maskId);
