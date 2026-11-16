@@ -231,7 +231,7 @@ static class MsaaTest
         var w = Native.vlqt_window_create(W, H, title);
         var cmd = new CommandWriter();
         cmd.Reset();
-        cmd.ClearColor(0, 0, 1, 1);
+        cmd.ClearColor(0, 0, 0, 0); // alpha 0: pure accumulation (an opaque colour with Clear off is Clear on since #138)
         cmd.SetClear(false);
         cmd.Create(1, Protocol.Type.Rectangle);
         cmd.SetPlace(1, 20, 130, 30, 30);
@@ -252,7 +252,8 @@ static class MsaaTest
             }
         }
         bool White(Bitmap b, int x) { var c = b.GetPixel(x * b.Width / W, 145 * b.Height / H); return c.R > 230 && c.G > 230 && c.B > 230; }
-        bool Blue(Bitmap b, int x) { var c = b.GetPixel(x * b.Width / W, 145 * b.Height / H); return c.R < 20 && c.G < 20 && c.B > 230; }
+        // Alpha 0 clears to transparent black in the grabbed window, whatever the RGB of the clear colour.
+        bool Dark(Bitmap b, int x) { var c = b.GetPixel(x * b.Width / W, 145 * b.Height / H); return c.R < 20 && c.G < 20 && c.B < 20; }
 
         Move(20, 5); // 20 .. 180
         using (var b = grab(w, Path.Combine(outDir, "msaa_clear_off_before.png")))
@@ -261,7 +262,7 @@ static class MsaaTest
         int rc = Native.vlqt_window_set_samples(w, 1);
         pump(3);
         using (var b = grab(w, Path.Combine(outDir, "msaa_clear_off_swapped.png")))
-            check(rc == 1 && Native.vlqt_window_samples(w) == 1 && Blue(b, 35) && Blue(b, 115) && White(b, 195),
+            check(rc == 1 && Native.vlqt_window_samples(w) == 1 && Dark(b, 35) && Dark(b, 115) && White(b, 195),
                 $"msaa: count change with Clear off drops the trail, the square still draws (rc {rc})");
 
         long c0 = Native.vlqt_window_change_count(w);
@@ -272,7 +273,7 @@ static class MsaaTest
 
         Move(220, 3); // 220 .. 300
         using (var b = grab(w, Path.Combine(outDir, "msaa_clear_off_after.png")))
-            check(Blue(b, 35) && White(b, 195) && White(b, 235) && White(b, 315), "msaa: a new trail builds up after the change");
+            check(Dark(b, 35) && White(b, 195) && White(b, 235) && White(b, 315), "msaa: a new trail builds up after the change");
         Native.vlqt_window_destroy(w);
     }
 
