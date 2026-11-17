@@ -314,7 +314,7 @@ namespace VL.Qt.Tests
 
         sealed class FakeInteraction(Interaction? previous, SinkSlot sink) : Interaction(99, previous, sink)
         {
-            internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous) { }
+            internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping) { }
         }
 
         [Test]

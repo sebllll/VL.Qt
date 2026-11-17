@@ -88,6 +88,8 @@ namespace VL.Qt
                 _clear = clear;
                 _commands.SetClear(clear);
             }
+            // TODO: #143 T3: SpaceMapping from space + Native.vlqt_window_get_scene_metrics (Zero handle: no metrics),
+            // _commands.SetSpace on change and again after a resync (like the clear color), _reconciler.Update(input, mapping).
             if (_resync.ShouldReconcile(input))
             {
                 var t0 = Stopwatch.GetTimestamp();

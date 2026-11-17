@@ -63,7 +63,7 @@ namespace VL.Qt
     /// around them still are. Exceptions are caught per call and shown at the parent's sink (<see cref="SinkState.BuildError"/>).
     /// </para>
     /// <para>
-    /// Thread: <see cref="Update"/> runs on the vvvv main thread inside the Update of the Renderer [Qt] node
+    /// Thread: <see cref="Update(Element?, in SpaceMapping)"/> runs on the vvvv main thread inside the Update of the Renderer [Qt] node
     /// (<see cref="WindowRenderer.Update"/>), once per frame and window, after the element tree of that frame was
     /// evaluated; it only writes commands. The pump applies them later in the same frame (frame finished, after all node
     /// updates, <see cref="WindowRenderer.ApplyCommands"/>). An exception here is not caught by the renderer: it ends at the
@@ -80,8 +80,8 @@ namespace VL.Qt
         readonly SinkRegistry _sinks = new();
         readonly List<Element> _pendingPrimary = new(); // elements whose primary occurrence let go in this pass
         Node? _root;
-        Space _space;
-        bool _hasSpace;
+        SpaceMapping _mapping = SpaceMapping.Default;
+        bool _hasMapping;
         bool _force;
         bool _invalidated;
         int _pass;
@@ -109,28 +109,41 @@ namespace VL.Qt
         public SinkRegistry Sinks => _sinks;
 
         /// <summary>
-        /// Makes the next <see cref="Update"/> visit the whole tree (no reference-equality shortcut), e.g. because
+        /// Makes the next <see cref="Update(Element?, in SpaceMapping)"/> visit the whole tree (no reference-equality shortcut), e.g. because
         /// a video this reconciler ignored as a duplicate became free.
         /// </summary>
         public void Invalidate() => _invalidated = true;
 
         /// <summary>
         /// <paramref name="element"/> was handed over to this renderer (<see cref="SceneRegistry.HandOver"/>): the next
-        /// <see cref="Update"/> picks the first of its occurrences in this tree as the primary one.
+        /// <see cref="Update(Element?, in SpaceMapping)"/> picks the first of its occurrences in this tree as the primary one.
         /// </summary>
         internal void TakeOver(Element element) => _pendingPrimary.Add(element);
 
+        /// <summary>Mapping of the last <see cref="Update(Element?, in SpaceMapping)"/>: units ↔ logical pixels of this scene (#143).</summary>
+        public SpaceMapping Mapping => _mapping;
+
         /// <summary>
-        /// Reconciles the scene against <paramref name="root"/> (null = empty scene) and writes the commands.
-        /// A change of <paramref name="space"/> disables the reference-equality shortcut for this frame, so the
-        /// property diff sees every element again.
+        /// <see cref="Update(Element?, in SpaceMapping)"/> without scene metrics (size 0, dpr 1): for tests and callers in
+        /// DIPTopLeft or DIP, whose scale does not depend on the scene.
         /// </summary>
-        public void Update(Element? root, Space space)
+        public void Update(Element? root, Space space) => Update(root, new SpaceMapping(space, default, 1f));
+
+        /// <summary>
+        /// Reconciles the scene against <paramref name="root"/> (null = empty scene) and writes the commands, lengths
+        /// converted with <paramref name="mapping"/>. A change of its <see cref="SpaceMapping.UnitScale"/> disables the
+        /// reference-equality shortcut for this frame, so the property diff writes every length again; a change of the
+        /// space alone only moves the origin in QtNative (SET_SPACE, written by <see cref="SceneCore"/>).
+        /// </summary>
+        public void Update(Element? root, in SpaceMapping mapping)
         {
-            _force = !_hasSpace || space != _space || _invalidated;
+            // TODO: #143 T3: PropertyDiff/EffectDiff convert with _mapping; on a scale change resend the handler
+            // properties (WriteProperties with previous = null), not only the element properties.
+            _force = !_hasMapping || mapping.UnitScale != _mapping.UnitScale || _invalidated;
             _invalidated = false;
-            _space = space;
-            _hasSpace = true;
+            _mapping = mapping;
+            _sinks.Mapping = mapping;
+            _hasMapping = true;
             _pass++;
 
             if (root is null)
@@ -151,7 +164,7 @@ namespace VL.Qt
         /// <summary>
         /// Forgets the whole mirror WITHOUT writing commands (ids, element ownership, duplicates, bindings) and
         /// restarts the id allocator. For the resync after a failed apply, once QtNative has been wiped
-        /// (<see cref="ResyncController"/>). The next <see cref="Update"/> builds the scene from scratch.
+        /// (<see cref="ResyncController"/>). The next <see cref="Update(Element?, in SpaceMapping)"/> builds the scene from scratch.
         /// </summary>
         internal void Discard()
         {
@@ -163,7 +176,7 @@ namespace VL.Qt
             ResolvePrimaries();
             _bindings.Clear();
             _ids.Reset();
-            _hasSpace = false;
+            _hasMapping = false;
         }
 
         /// <summary>
@@ -178,7 +191,7 @@ namespace VL.Qt
                 _root = null;
             }
             ResolvePrimaries();
-            _hasSpace = false;
+            _hasMapping = false;
         }
 
         /// <summary>
@@ -731,7 +744,7 @@ namespace VL.Qt
                 h.SeenPass = _pass;
                 if (!ReferenceEquals(h.Last, link))
                 {
-                    link.WriteProperties(_sink, h.Id, h.Last);
+                    link.WriteProperties(_sink, h.Id, h.Last, _mapping);
                     h.Last = link;
                 }
             }
@@ -761,7 +774,7 @@ namespace VL.Qt
             var h = new HandlerNode(_ids.Allocate(), link.HandlerType, link.Sink) { SeenPass = _pass, Last = link };
             _scene.SetHandlerOwner(h);
             _sink.Create(h.Id, h.Type);
-            link.WriteProperties(_sink, h.Id, null);
+            link.WriteProperties(_sink, h.Id, null, _mapping);
             _sink.Reparent(h.Id, node.Id, 0);
             h.BoundHandle = _sinks.Acquire(h.Key);
             _sink.Bind(h.Id, h.BoundHandle, 0);

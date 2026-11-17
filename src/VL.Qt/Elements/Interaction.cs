@@ -35,8 +35,10 @@ namespace VL.Qt.Elements
         /// <summary>
         /// Writes the SETs of the handler properties that differ from <paramref name="previous"/> (same handler type;
         /// null = just created, send only values that differ from QtNative's defaults).
+        /// <paramref name="mapping"/> converts lengths (Drag limits) to logical pixels; when its scale changes the reconciler
+        /// passes <paramref name="previous"/> = null so every non-default value is sent again (#143).
         /// </summary>
-        internal abstract void WriteProperties(ICommandSink sink, uint id, Interaction? previous);
+        internal abstract void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping);
     }
 
     /// <summary>Hover handler (Qt Quick HoverHandler): reports hover only; positions come from the Point handler (#320).</summary>
@@ -48,7 +50,7 @@ namespace VL.Qt.Elements
         }
 
         /// <summary>No properties: QtNative defaults are all a Hover handler has.</summary>
-        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous)
+        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping)
         {
         }
     }
@@ -105,7 +107,7 @@ namespace VL.Qt.Elements
         public PointerButtons Buttons { get; }
         public PointerDevices Devices { get; }
 
-        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous)
+        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping)
             => PointerProps.Write(sink, id, Buttons, Devices, previous is ClickInteraction p ? p.Buttons : PointerMasks.DefaultButtons,
                 previous is ClickInteraction q ? q.Devices : PointerMasks.DefaultDevices, writeButtons: true);
     }
@@ -123,7 +125,7 @@ namespace VL.Qt.Elements
         public PointerButtons Buttons { get; }
         public PointerDevices Devices { get; }
 
-        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous)
+        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping)
             => PointerProps.Write(sink, id, Buttons, Devices, previous is PointInteraction p ? p.Buttons : PointerMasks.DefaultButtons,
                 previous is PointInteraction q ? q.Devices : PointerMasks.DefaultDevices, writeButtons: true);
     }
@@ -137,7 +139,7 @@ namespace VL.Qt.Elements
 
         public PointerDevices Devices { get; }
 
-        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous)
+        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping)
             => PointerProps.Write(sink, id, PointerMasks.DefaultButtons, Devices, PointerMasks.DefaultButtons,
                 previous is WheelInteraction p ? p.Devices : PointerMasks.DefaultDevices, writeButtons: false);
     }
@@ -180,7 +182,7 @@ namespace VL.Qt.Elements
         public PointerButtons Buttons { get; }
         public PointerDevices Devices { get; }
 
-        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous)
+        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping)
         {
             var p = previous as DragInteraction;
             if (MovesElement != (p?.MovesElement ?? true))
@@ -216,7 +218,7 @@ namespace VL.Qt.Elements
         public bool Occlusion { get; }
         public PointerDevices Devices { get; }
 
-        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous)
+        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping)
         {
             var p = previous as TouchPointsInteraction;
             if (Occlusion != (p?.Occlusion ?? true))
@@ -246,7 +248,7 @@ namespace VL.Qt.Elements
         public int MaximumPointCount { get; }
         public PointerDevices Devices { get; }
 
-        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous)
+        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping)
         {
             var p = previous as PinchInteraction;
             if (MinimumPointCount != (p?.MinimumPointCount ?? DefaultPointCount))

@@ -107,6 +107,9 @@ namespace VL.Qt
         /// <summary>SET_CLEAR (#117): false keeps the previous frame and draws the new one over it.</summary>
         public void SetClear(bool clear) => WriteU32(Begin(Protocol.Op.SetClear, 4), clear ? 1u : 0u);
 
+        /// <summary>SET_SPACE (#143): the space of the scene; QtNative moves the origin of the window root accordingly.</summary>
+        public void SetSpace(Space space) => WriteU32(Begin(Protocol.Op.SetSpace, 4), (uint)space);
+
         // --- SET, one method per value type ---
 
         public void SetF32(uint id, ushort prop, float value)

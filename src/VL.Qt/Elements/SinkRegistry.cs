@@ -107,6 +107,12 @@ namespace VL.Qt.Elements
             }
         }
 
+        /// <summary>
+        /// Mapping of the scene the poll buffers come from (#143), set by <see cref="Reconciler.Update(Element?, in SpaceMapping)"/>:
+        /// <see cref="Dispatch"/> converts the logical pixels of Qt to units with it.
+        /// </summary>
+        public SpaceMapping Mapping { get; set; } = SpaceMapping.Default;
+
         public bool TryResolve(uint handle, out SinkSlot slot)
         {
             var found = _slots.TryGetValue(handle, out var b);
@@ -133,7 +139,7 @@ namespace VL.Qt.Elements
         /// one sink are told apart by their handles); offsets &gt; 0 are for items that serve several slots.
         /// Records with an unknown handle, an index above <see cref="MaxIndexOffset"/> (or a target beyond
         /// int.MaxValue), an unknown event or a too short payload are ignored. Values from Qt (logical pixels)
-        /// are converted to units (<see cref="Geometry.FromQt(float)"/>, v1: DIPTopLeft only). State values
+        /// are converted to units (<see cref="Geometry.FromQt(float)"/>; TODO: #143 T3: <see cref="Mapping"/>). State values
         /// (Measured, SceneBounds, Media, Error) of a handle that is not primary are ignored too.
         /// </summary>
         public DispatchResult Dispatch(ReadOnlySpan<byte> poll)
