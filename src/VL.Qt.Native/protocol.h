@@ -133,7 +133,7 @@
  * Poll buffer (QtNative -> C#), per record, 4-byte aligned: u16 event, u16 len, u32 handle, u32 index, payload;
  *   len = bytes of handle + index + payload (without padding). handle = BIND sinkHandle; index = offset to the
  *   slot index of that binding (0 = the bound slot itself; QtNative always sends 0, see events.h).
- *   MEASURED 2 x f32 (w, h), SCENE_BOUNDS 4 x f32 (x, y, w, h), logical pixels; HOVER/PRESS u8 (0/1),
+ *   MEASURED 2 x f32 (w, h), SCENE_BOUNDS 4 x f32 (x, y, w, h) in root coordinates (#143), logical pixels; HOVER/PRESS u8 (0/1),
  *   CLICK u32 (Tap handler: taps since the last poll; Button: clicked signals), POINTER 2 x f32 (x, y) item-local logical pixels,
  *   MEDIA 2 x f32 (position, duration) in seconds (Video only, 0 until loaded); see events.h.
  *   Hover handler: HOVER u8 on change. Tap handler (#320): PRESS u8, CLICK u32, TAP_COUNT u32 on change (never 0),

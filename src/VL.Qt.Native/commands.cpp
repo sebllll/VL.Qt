@@ -140,6 +140,9 @@ Scene::Scene(QQuickWindow* w, QQmlEngine* e)
     : window(w), engine(e), root(new QQuickItem()), elements(e), handlers(e), clearColor(w->color())
 {
     elements.proxyParent = root; // Group frame proxies of ShaderEffects (#486)
+    // The origin of the root follows its size (centre spaces); the root's own signals, so a window swap keeps them.
+    QObject::connect(root, &QQuickItem::widthChanged, root, [this] { updateRootOrigin(); });
+    QObject::connect(root, &QQuickItem::heightChanged, root, [this] { updateRootOrigin(); });
     attachRoot();
 }
 
@@ -151,6 +154,7 @@ void Scene::attachRoot()
     root->setSize(window->size());
     QObject::connect(window, &QWindow::widthChanged, root, [this](int width) { root->setWidth(width); });
     QObject::connect(window, &QWindow::heightChanged, root, [this](int height) { root->setHeight(height); });
+    updateRootOrigin();
     watchWindowGeometry(*this);
 }
 
@@ -213,8 +217,15 @@ int Scene::setSpace(quint32 space, std::string& err)
         return ApplyBadValue;
     }
     sceneSpace = space;
-    // TODO: #143 T2: move the root to the origin of the space (centre for NORMALIZED/DIP, following resizes).
+    updateRootOrigin();
     return ApplyOk;
+}
+
+void Scene::updateRootOrigin()
+{
+    // Only the origin moves, never a scale: layers and text of the elements keep rendering at item size x dpr (C# scales).
+    const bool centre = sceneSpace == VLQT_SPACE_NORMALIZED || sceneSpace == VLQT_SPACE_DIP;
+    root->setPosition(centre ? QPointF(root->width() / 2, root->height() / 2) : QPointF());
 }
 
 void Scene::releaseFeedback()

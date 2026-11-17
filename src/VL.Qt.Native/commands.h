@@ -71,6 +71,8 @@ struct Scene {
      * only the origin of the root (top left or centre of the scene); C# scales. ApplyBadValue for an unknown space. */
     int setSpace(quint32 space, std::string& err);
     quint32 space() const { return sceneSpace; }
+    /* Root position from the space and the root size: top left, or the centre of the scene (follows resizes). */
+    void updateRootOrigin();
     /* Clear colour (VLQT_OP_CLEAR_COLOR, straight alpha; kept by RESET and across a window swap). With Clear on, or
      * Clear off and alpha 0 or 1, the window clears to it. With Clear off its alpha is the fade strength (#138): the
      * layer draws it over the previous frame (alpha > 0), and for 0 < alpha < 1 the window clears to it opaque
