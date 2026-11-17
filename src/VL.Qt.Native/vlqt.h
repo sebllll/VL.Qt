@@ -199,6 +199,14 @@ VLQT_API int   vlqt_window_set_icon(void* w, const char* utf8Path);
  * EV_WINDOW_GEOMETRY reports the resulting state (VLQT_WINDOW_FULLSCREEN). vlqt_window_get_mode = requested modes. */
 VLQT_API int          vlqt_window_set_mode(void* w, unsigned int mask, unsigned int value);
 VLQT_API unsigned int vlqt_window_get_mode(void* w);
+/* Size and device pixel ratio of the scene (#143, Space): what C# needs for the scale of Normalized (height) and
+ * PixelTopLeft (dpr). width/height = size of the scene root in DIP (window: client size; offscreen scene: its bound
+ * size), dpr = QWindow::effectiveDevicePixelRatio of a window, 1 for an offscreen scene (1 DIP = 1 texture pixel).
+ * Live values, cheap enough for every frame. Main thread. 0 = ok, -1 null window or null out. */
+typedef struct vlqt_scene_metrics {
+    float width, height, dpr;
+} vlqt_scene_metrics;
+VLQT_API int          vlqt_window_get_scene_metrics(void* w, vlqt_scene_metrics* out);
 /* MSAA sample count of the window (#118; docs/decisions/render-texture.md, "MSAA"). A window is created with 4 (the
  * look of every window before #118, clamped like here). requested < 1 counts as 1 (none); QtNative clamps it to the
  * highest count not above it that QRhi and the device support for the swap chain (D3D11: CheckMultisampleQualityLevels

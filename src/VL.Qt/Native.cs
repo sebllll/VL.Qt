@@ -249,6 +249,17 @@ namespace VL.Qt
         public static extern int vlqt_window_set_mode(IntPtr w, uint mask, uint value);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern uint vlqt_window_get_mode(IntPtr w);
+
+        /// <summary>Size (DIP) and device pixel ratio of a scene (vlqt.h, #143); an offscreen scene has dpr 1.</summary>
+        [StructLayout(LayoutKind.Sequential)]
+        public struct vlqt_scene_metrics
+        {
+            public float width, height, dpr;
+        }
+
+        /// <summary>Live size and dpr of the scene of a window or offscreen scene (#143). 0 = ok, -1 null window.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_window_get_scene_metrics(IntPtr w, out vlqt_scene_metrics metrics);
         /// <summary>
         /// Sets the MSAA sample count of the window (#118; &lt; 1 = none), clamped to what the device supports; returns the
         /// count used (&gt;= 1) or &lt;0 = error. A shown window is replaced inside the same handle (vlqt.h).

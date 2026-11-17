@@ -2,8 +2,9 @@
  *
  * Every bound item (BIND with sinkHandle != 0) reports
  *   EV_MEASURED     (f32 w, f32 h)          implicitWidth/Height (Text: actual text size)
- *   EV_SCENE_BOUNDS (f32 x, f32 y, f32 w, f32 h)  mapRectToScene(0, 0, width, height): item geometry in the
- *                   window, axis-aligned, incl. transforms (not boundingRect: Text reports its painted rect there)
+ *   EV_SCENE_BOUNDS (f32 x, f32 y, f32 w, f32 h)  mapRectToItem(root, 0, 0, width, height): item geometry in the
+ *                   coordinates of the window root (#143: origin of the Space, centre or top left), axis-aligned, incl.
+ *                   transforms (not boundingRect: Text reports its painted rect there)
  * in logical pixels, and Video items additionally
  *   EV_MEDIA        (f32 position, f32 duration)  seconds, 0 until the media is loaded
  * only when the value changed since the last record sent for the same handle. Items with an error state (QML

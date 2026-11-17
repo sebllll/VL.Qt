@@ -135,8 +135,7 @@ namespace VL.Qt
         /// <summary>
         /// Writes the commands of this frame (applied by the next pump). <paramref name="enabled"/> = false freezes
         /// the scene: no reconcile, clear color or Clear flag, the window keeps showing the last state. Title is
-        /// sent whenever the pin value changes (also when disabled). <paramref name="space"/> must be resolved
-        /// (<see cref="Geometry.Resolve"/>).
+        /// sent whenever the pin value changes (also when disabled).
         /// </summary>
         public void Update(Element? input, Space space, Color4 clearColor, bool clear, bool enabled, string? title)
         {

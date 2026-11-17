@@ -25,13 +25,13 @@ namespace VL.Qt.Nodes
 
         static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
         {
-            var length = Math.Max(Geometry.ToQt(p.Length), 0f);
+            var length = Math.Max(p.Length, 0f);
             var half = length / 2 + length / 64;
             var a = MathF.PI / 180f * p.Angle;
-            var padX = EffectPadding.Ceil(half * MathF.Abs(MathF.Cos(a)));
-            var padY = EffectPadding.Ceil(half * MathF.Abs(MathF.Sin(a)));
+            var padX = half * MathF.Abs(MathF.Cos(a));
+            var padY = half * MathF.Abs(MathF.Sin(a));
             return new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
-                new[] { Uniform.Float("angle", p.Angle), Uniform.Float("blurLength", length) }.ToSpread(),
+                new[] { Uniform.Float("angle", p.Angle), Uniform.Length("blurLength", length) }.ToSpread(),
                 new RectangleF(padX, padY, padX, padY));
         };
 

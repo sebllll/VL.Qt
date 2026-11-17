@@ -26,13 +26,13 @@ namespace VL.Qt.Nodes
 
         static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
         {
-            var radius = Math.Max(Geometry.ToQt(p.Radius), 0f);
-            var pad = EffectPadding.Ceil(1.5f * radius);
+            var radius = Math.Max(p.Radius, 0f);
+            var pad = 1.5f * radius;
             return new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.Pyramid, ids,
                 new[]
                 {
                     Uniform.Color("color", p.Color),
-                    Uniform.Vector2("offsetDip", Geometry.ToQt(p.Offset)),
+                    Uniform.LengthVector2("offsetDip", p.Offset),
                     Uniform.Float("spread", p.Spread),
                     Uniform.Float("intensity", p.Intensity),
                 }.ToSpread(),

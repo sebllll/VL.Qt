@@ -18,12 +18,13 @@ namespace VL.Qt.Tests
 
         static readonly int clearColorBytes = Protocol.HeaderSize + 16;
         static readonly int setClearBytes = Protocol.HeaderSize + 4;
+        static readonly int setSpaceBytes = Protocol.HeaderSize + 4;
 
         [Test]
-        public void FirstUpdate_SendsClearColorAndClear()
+        public void FirstUpdate_SendsClearColorClearAndSpace()
         {
             var core = new SceneCore(new SceneRegistry());
-            Assert.That(Written(core, true, c), Is.EqualTo(clearColorBytes + setClearBytes));
+            Assert.That(Written(core, true, c), Is.EqualTo(clearColorBytes + setClearBytes + setSpaceBytes));
         }
 
         [Test]

@@ -62,7 +62,7 @@ namespace VL.Qt.Tests
             var links = Links();
             Assert.That(links, Has.Length.EqualTo(3));
             Assert.That(links[0], Does.StartWith($"multi {P.EffectBlurEnabled}=bool(1)"));
-            Assert.That(links[1], Does.StartWith("shader 1 [7] pad=(1,2,3,4) strength=10"));
+            Assert.That(links[1], Does.StartWith("shader 1 [7] pad=(100,200,300,400) strength=1000"));
             Assert.That(links[2], Does.StartWith($"multi {P.EffectShadowEnabled}=bool(1)"));
             Assert.That(links[2], Does.Not.Contain($"{P.EffectBlurEnabled}="));
 
@@ -79,7 +79,7 @@ namespace VL.Qt.Tests
             Frame(new Rectangle { Effect = new TestShaderLink(null, Uniform.Float("amount", 0.25f)) });
             var links = Links();
             Assert.That(links, Has.Length.EqualTo(1));
-            Assert.That(links[0], Does.EndWith("strength=10 amount=f32(0.25)"));
+            Assert.That(links[0], Does.EndWith("strength=1000 amount=f32(0.25)"));
         }
 
         [Test]

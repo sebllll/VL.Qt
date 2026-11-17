@@ -67,6 +67,12 @@ struct Scene {
      * window. */
     void setClear(bool clear);
     bool clear() const { return clearFrames; }
+    /* Space (#143, VLQT_OP_SET_SPACE): vlqt_space of the scene, kept by RESET and across a window swap. QtNative moves
+     * only the origin of the root (top left or centre of the scene); C# scales. ApplyBadValue for an unknown space. */
+    int setSpace(quint32 space, std::string& err);
+    quint32 space() const { return sceneSpace; }
+    /* Root position from the space and the root size: top left, or the centre of the scene (follows resizes). */
+    void updateRootOrigin();
     /* Clear colour (VLQT_OP_CLEAR_COLOR, straight alpha; kept by RESET and across a window swap). With Clear on, or
      * Clear off and alpha 0 or 1, the window clears to it. With Clear off its alpha is the fade strength (#138): the
      * layer draws it over the previous frame (alpha > 0), and for 0 < alpha < 1 the window clears to it opaque
@@ -140,6 +146,7 @@ private:
     DebugOverlay* debug = nullptr; // child of contentItem, deleted in ~Scene
     std::unique_ptr<FeedbackLayer> feedback; // Clear off only (#117)
     bool clearFrames = true; // Clear pin state (#117)
+    quint32 sceneSpace = VLQT_SPACE_DIP_TOP_LEFT; // Space pin state (#143)
     QColor clearColor; // VLQT_OP_CLEAR_COLOR; initially the colour the window was created with
     void applyClearColor(); // window clear and layer fill from clearColor and the layer
     bool feedbackSoftwareWarned = false; // Clear off ignored on the software backend, logged once per scene
