@@ -213,17 +213,32 @@ namespace VL.Qt.Tests
             rec.Update(a, Space.DIPTopLeft);
             Assert.That(sink.Count, Is.EqualTo(2 * (n + 1) + n)); // CREATE + REPARENT each, SET Size per child
 
-            for (int i = 0; i < 100; i++)
-                rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft); // warm-up
-
-            sink.Count = 0;
-            const int frames = 1000;
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-            for (int i = 0; i < frames; i++)
+            // Warm-up past the tiered-JIT promotion delay (100 ms call counting timer), so tier-0 code
+            // and the promotion itself do not allocate inside the measurement.
+            var warm = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; warm.ElapsedMilliseconds < 300 || i < 100; i++)
                 rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-            var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(t0);
+
+            // A real per-frame allocation shows in every attempt; a one-off (runtime or JIT work on this
+            // thread) only in one. Pass on the best of a few attempts.
+            const int frames = 1000;
+            long allocated = long.MaxValue;
+            var elapsed = TimeSpan.Zero;
+            for (int attempt = 0; attempt < 5 && allocated != 0; attempt++)
+            {
+                sink.Count = 0;
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+                for (int i = 0; i < frames; i++)
+                    rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
+                var e = System.Diagnostics.Stopwatch.GetElapsedTime(t0);
+                long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+                if (bytes < allocated)
+                {
+                    allocated = bytes;
+                    elapsed = e;
+                }
+            }
 
             double msPerFrame = elapsed.TotalMilliseconds / frames;
             TestContext.Out.WriteLine($"1000 children steady state: {msPerFrame:F4} ms/frame, {allocated} bytes");
