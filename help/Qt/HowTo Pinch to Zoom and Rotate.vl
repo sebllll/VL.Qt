@@ -61,7 +61,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="377,350,53,19" Id="EdWRzmeSKuREmUkV6s7Poi">
+          <Node Bounds="346,310,53,19" Id="EdWRzmeSKuREmUkV6s7Poi">
             <p:NodeReference LastCategoryFullName="Reactive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Reactive" NeedsToBeDirectParent="true" />
@@ -74,7 +74,7 @@
             <Pin Id="BHkzqd9W1XQDjfsNaARuwd" Name="Value" Kind="OutputPin" />
             <Pin Id="D7kB5iZdy84aXEG3T6X7M7" Name="Author" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="532,350,53,19" Id="oHLq2UghVowGqddaRkEVpY">
+          <Node Bounds="470,310,53,19" Id="oHLq2UghVowGqddaRkEVpY">
             <p:NodeReference LastCategoryFullName="Reactive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Reactive" NeedsToBeDirectParent="true" />
@@ -87,7 +87,7 @@
             <Pin Id="5aL9ZeoyZPVcshXiWln9uk" Name="Value" Kind="OutputPin" />
             <Pin Id="d9EfgM0sdhwlFn5NZtfyEB" Name="Author" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="687,348,53,19" Id="oN0IKxAgdxgLMo2kxyJfwp">
+          <Node Bounds="594,310,53,19" Id="oN0IKxAgdxgLMo2kxyJfwp">
             <p:NodeReference LastCategoryFullName="Reactive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Reactive" NeedsToBeDirectParent="true" />
@@ -100,7 +100,7 @@
             <Pin Id="he8AUBgb49OW2jQyqfLU5L" Name="Value" Kind="OutputPin" />
             <Pin Id="7jJipd5jSx8bZVYBL8rfUK" Name="Author" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="842,348,53,19" Id="jrVOjbppgG7GTIz9U7RJIn">
+          <Node Bounds="718,310,53,19" Id="jrVOjbppgG7GTIz9U7RJIn">
             <p:NodeReference LastCategoryFullName="Reactive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Reactive" NeedsToBeDirectParent="true" />
@@ -113,7 +113,7 @@
             <Pin Id="KxR4TseK3LNvSQe7FbTYCK" Name="Value" Kind="OutputPin" />
             <Pin Id="97Hmvz5VirujGMIQhh7AdY" Name="Author" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="A17ZcxKUWeKLKAcysjE3Ny" Comment="Scale (channel type, starts at 1)" Bounds="534,301,35,15" ShowValueBox="true" isIOBox="true" Value="1">
+          <Pad Id="A17ZcxKUWeKLKAcysjE3Ny" Comment="Scale (channel type, starts at 1)" Bounds="472,261,35,15" ShowValueBox="true" isIOBox="true" Value="1">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
@@ -131,6 +131,7 @@
             <Pin Id="10WkWyR61IDuKQjmrwesAM" Name="Scale" Kind="InputPin" />
             <Pin Id="sjHAN7Gd61adfgR5dlfzZD" Name="Rotation" Kind="InputPin" />
             <Pin Id="7bhe5YCdtvyBnQzoaoFvTP" Name="Translation" Kind="InputPin" />
+            <Pin Id="DEInc88IPfCPYmcHbc3kS2" Name="Pivot" Kind="InputPin" />
             <Pin Id="0FmOPhlUe7Z3cEMLfo1WkF" Name="Minimum Point Count" Kind="InputPin" IsHidden="true" />
             <Pin Id="UQJNjliUD63cdzjAqMS5r9" Name="Maximum Point Count" Kind="InputPin" IsHidden="true" />
             <Pin Id="3xpvW96XJovxdpsMuYdS17" Name="Devices" Kind="InputPin" IsHidden="true" />
@@ -141,17 +142,17 @@
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="HK2FP7E70Gb2FT1itnbNY0" Comment="Scale" Bounds="582,391,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="HK2FP7E70Gb2FT1itnbNY0" Comment="Scale" Bounds="520,351,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="biGaVbspjwkmenkshXVEb1" Comment="Rotation" Bounds="737,451,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="biGaVbspjwkmenkshXVEb1" Comment="Rotation" Bounds="644,413,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="cXQYVBxhH7L71HWfm5gX8O" Comment="Translation" Bounds="892,451,35,28" ShowValueBox="true" isIOBox="true">
+          <Pad Id="cXQYVBxhH7L71HWfm5gX8O" Comment="Translation" Bounds="768,413,35,28" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
@@ -202,7 +203,7 @@
             <Pin Id="Ub7EoyhpKbyO72YSbhdPps" Name="Input 2" Kind="InputPin" />
             <Pin Id="WiWFE6evpzX7qhS4rorRjx" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="580,420,46,19" Id="EJMvjhZGj5B1uYtxRqhQXF">
+          <Node Bounds="518,380,46,19" Id="EJMvjhZGj5B1uYtxRqhQXF">
             <p:NodeReference LastCategoryFullName="2D.Vector2" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Vector2Type" Name="Vector2" NeedsToBeDirectParent="true" />
