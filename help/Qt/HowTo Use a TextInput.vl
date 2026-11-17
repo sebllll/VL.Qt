@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="5tjwK99jJBGHiOuCaiQALZ" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="5tjwK99jJBGHiOuCaiQALZ" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="AG8OudXIZ9CWV4KdVlRapA" Location="VL.CoreLib" />
   <DocumentDependency Id="upFxHgVHzJH8uN3jHfdz5z" Location="../../VL.Qt.vl" />
   <Patch Id="gbOrKnJXLKfu0UX0uM2Xgv">
@@ -196,7 +196,7 @@
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="sKJluDkbcGw0A84wnpNedR" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="VvRIpdrkqDyXEElHX3Syqq" Name="Bounds" Kind="InputPin" DefaultValue="472, 144, 520, 640" IsHidden="true" />
+            <Pin Id="VvRIpdrkqDyXEElHX3Syqq" Name="Bounds" Kind="InputPin" DefaultValue="927, 121, 520, 640" IsHidden="true" />
             <Pin Id="BO2kLmvy9lBL65Q4qH5tax" Name="V Sync" Kind="InputPin" IsHidden="true" />
             <Pin Id="ANg0wwit7CmLDmHdEu7TGy" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="HuL9T1rOaYoQcF0uzqzU7V" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
@@ -208,12 +208,14 @@
             <Pin Id="pHFywuNiujZZSY28pvH9rn" Name="Error" Kind="OutputPin" />
             <Pin Id="EO0C5UIxRumN4kSQkaOT8d" Name="Space" Kind="InputPin" />
             <Pin Id="VzRjZBDRG9eQPX0IT3adMP" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="GqoFHrw8xCJOZZZonnW9nm" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="QsDDcKz2hUzMeOkqztIqRR" Name="Enabled" Kind="InputPin" />
             <Pin Id="9dpsduUIURe6quoPz6GMs0" Name="Title" Kind="InputPin" DefaultValue="HowTo Use a TextInput" />
             <Pin Id="GuesAIkg6VKOXF57GYFBvw" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="MuNXhwBNFsoLgwvAZ4LDuh" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="FKDTOwwnepfPktNoyCJjLV" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="ESWCI1VK2AIPUp6m2uDrre" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Ku704t2sxdWQUcCl7xEriW" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="TGOHPVzxVt4gP2ydmLDRKM" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Use a TextInput">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">

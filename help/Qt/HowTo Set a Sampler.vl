@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="spIZq1ZbQ8U2lTaKsjupfG" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="spIZq1ZbQ8U2lTaKsjupfG" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="1ppu5vXXvDQXfQOkxo3b7n" Location="VL.CoreLib" />
   <DocumentDependency Id="NX4iKPYg34EpTdqZvCrTxW" Location="../../VL.Qt.vl" />
   <Patch Id="ieWuw5iFCgq2rNEdRW8ILn">
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="o7JtDLNF0Ta71FHnhUffoH" Bounds="85,1064,830,190" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A Sampler says how a shader reads a texture. Address U / V decide what lies outside 0..1. With Filter Point the magnified pixels stay hard, with Linear they are smooth.&#xD;&#xA;- Connect it to the Sampler pin of a texture input: Input Sampler of a ShaderEffect, the Sampler pin of the Texture and Image uniform nodes, the image pins of shader nodes, Layer Sampler of Blend, Map Sampler of Displace.&#xD;&#xA;- Without a Sampler an element is read as its layer is: Nearest, Clamp, no mipmaps. A connected Sampler sets all of its fields (defaults: Linear, Clamp, None).&#xD;&#xA;- Mip Filter other than None renders the sampled element's layer with mipmaps (+33 % memory, a mip pass per frame): needed to minify without aliasing. An image needs mipmaps from LoadImage.&#xD;&#xA;- Changing a Sampler at runtime rebuilds nothing. Layer format (16 bit float) and anisotropy are not available: Qt cannot resolve its MSAA layers into float textures and QSGTexture has no anisotropy.">
+          <Pad Id="o7JtDLNF0Ta71FHnhUffoH" Bounds="85,959,832,214" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A Sampler says how a shader reads a texture. Address U / V decide what lies outside 0..1. With Filter Point the magnified pixels stay hard, with Linear they are smooth.&#xD;&#xA;- Connect it to the Sampler pin of a texture input: Input Sampler of a ShaderEffect, the Sampler pin of the Texture and Image uniform nodes, the image pins of shader nodes, Layer Sampler of Blend, Map Sampler of Displace.&#xD;&#xA;- Without a Sampler an element is read as its layer is: Nearest, Clamp, no mipmaps. A connected Sampler sets all of its fields (defaults: Linear, Clamp, None).&#xD;&#xA;- Mip Filter other than None renders the sampled element's layer with mipmaps (+33 % memory, a mip pass per frame): needed to minify without aliasing. An image needs mipmaps from LoadImage.&#xD;&#xA;- Changing a Sampler at runtime rebuilds nothing. Layer format (16 bit float) and anisotropy are not available: Qt cannot resolve its MSAA layers into float textures and QSGTexture has no anisotropy.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,7 +43,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="100,380,125,19" Id="ZNYg3x8sbcOaknkshEOQ4f">
+          <Node Bounds="100,275,185,19" Id="ZNYg3x8sbcOaknkshEOQ4f">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -77,7 +77,7 @@
             <Pin Id="A3VExvlPQtBAGepAtiSb2x" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="1IRupwNjNhzJCMAW95OEAg" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="100,885,145,19" Id="MTrFuAhTkCyRsBfrGC3Qp5">
+          <Node Bounds="100,780,145,19" Id="MTrFuAhTkCyRsBfrGC3Qp5">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -111,7 +111,7 @@
             <Pin Id="8RfZcRjd50fG4hDYNBzw95" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="zoCaxvuJeYXWh9OO7LS2U3" Name="Error" Kind="OutputPin" />
           </Node>
-          <Node Bounds="310,571,200,19" Id="y6qYhP6s7MNN4fMhvh4t03">
+          <Node Bounds="310,466,200,19" Id="y6qYhP6s7MNN4fMhvh4t03">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
@@ -127,7 +127,7 @@
             <Pin Id="NpzSx6PbaxuKobWdwvj3Eq" Name="Address V" Kind="InputPin" DefaultValue="Wrap" />
             <Pin Id="PRpJ5UdHQuHpvlHZEjapPM" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,995,85,19" Id="o26MIXIZxNlM1CXF34Zc0C">
+          <Node Bounds="100,890,85,19" Id="o26MIXIZxNlM1CXF34Zc0C">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -141,6 +141,7 @@
             <Pin Id="TcA3TqW8unjqzidCiS86VW" Name="Input" Kind="InputPin" />
             <Pin Id="X168r3y1y0bAxy1rC2pvMZ" Name="Space" Kind="InputPin" />
             <Pin Id="fntU7IYdiehiga2VMOG0Kr" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="JyUvFw3Z3EQOiKfpwUyHzH" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="vddMlTJA5nMROcyDs6Mhbz" Name="Enabled" Kind="InputPin" />
             <Pin Id="Lv3h3QbtWRCl8OJIJ0rfvS" Name="Title" Kind="InputPin" />
             <Pin Id="BWbeGkhDz8O7E2HoMwqulS" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
@@ -151,38 +152,39 @@
             <Pin Id="ftM91WVIRbO6VeKiL4bfkA" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="LM7Scut5RyVZ50pFwcEn62" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="P7gjka8Pr6HOcf2AlrsVtU" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="CLVn7NqPZZHMG5n42kznbD" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="22RfM5vO9VII7JYBVAQw5F" Comment="Fragment Code" Bounds="142,650,592,164" ShowValueBox="true" isIOBox="true" Value="#version 440&#xD;&#xA;layout(location = 0) in vec2 qt_TexCoord0;&#xD;&#xA;layout(location = 0) out vec4 fragColor;&#xD;&#xA;layout(std140, binding = 0) uniform buf { mat4 qt_Matrix; float qt_Opacity; };&#xD;&#xA;layout(binding = 1) uniform sampler2D source;&#xD;&#xA;void main() {&#xD;&#xA;    // zoom 6x into the middle of the input: the filter of the sampler decides how the magnified pixels look&#xD;&#xA;    vec2 uv = vec2(0.5) + (qt_TexCoord0 - vec2(0.5)) / 6.0;&#xD;&#xA;    fragColor = texture(source, uv) * qt_Opacity;&#xD;&#xA;}&#xD;&#xA;">
+          <Pad Id="22RfM5vO9VII7JYBVAQw5F" Comment="Fragment Code" Bounds="142,545,592,164" ShowValueBox="true" isIOBox="true" Value="#version 440&#xD;&#xA;layout(location = 0) in vec2 qt_TexCoord0;&#xD;&#xA;layout(location = 0) out vec4 fragColor;&#xD;&#xA;layout(std140, binding = 0) uniform buf { mat4 qt_Matrix; float qt_Opacity; };&#xD;&#xA;layout(binding = 1) uniform sampler2D source;&#xD;&#xA;void main() {&#xD;&#xA;    // zoom 6x into the middle of the input: the filter of the sampler decides how the magnified pixels look&#xD;&#xA;    vec2 uv = vec2(0.5) + (qt_TexCoord0 - vec2(0.5)) / 6.0;&#xD;&#xA;    fragColor = texture(source, uv) * qt_Opacity;&#xD;&#xA;}&#xD;&#xA;">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="mUSvQg5cXL2SaqoxEPkRF4" Comment="Title" Bounds="182,961,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Set a Sampler">
+          <Pad Id="mUSvQg5cXL2SaqoxEPkRF4" Comment="Title" Bounds="182,856,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Set a Sampler">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="HaOUdX1z02VwKJrD61PEIK" Comment="Clear Color" Bounds="142,931,136,15" ShowValueBox="true" isIOBox="true" Value="0.06, 0.07, 0.1, 1">
+          <Pad Id="HaOUdX1z02VwKJrD61PEIK" Comment="Clear Color" Bounds="142,826,136,15" ShowValueBox="true" isIOBox="true" Value="0.06, 0.07, 0.1, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="1P2vzs53n6GZqQkCicsFT5" Comment="Text" Bounds="142,349,62,15" ShowValueBox="true" isIOBox="true" Value="Text">
+          <Pad Id="1P2vzs53n6GZqQkCicsFT5" Comment="Text" Bounds="142,244,62,15" ShowValueBox="true" isIOBox="true" Value="Text">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="KxzKbrx5tk1PnZtXad2Nr3" Comment="Filter" Bounds="312,516,58,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="KxzKbrx5tk1PnZtXad2Nr3" Comment="Filter" Bounds="312,411,58,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="SamplerFilter" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="VpsAhvIBM65NaEkLMAA8JW" Comment="Address " Bounds="456,516,59,15" ShowValueBox="true" isIOBox="true" Value="Clamp">
+          <Pad Id="VpsAhvIBM65NaEkLMAA8JW" Comment="Address " Bounds="456,411,59,15" ShowValueBox="true" isIOBox="true" Value="Clamp">
             <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="SamplerAddress" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="240,855,39,19" Id="BQEduGdahvhNai1dDMf8xw">
+          <Node Bounds="240,750,39,19" Id="BQEduGdahvhNai1dDMf8xw">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Transform" NeedsToBeDirectParent="true">
@@ -194,12 +196,12 @@
             <Pin Id="CetJLepprkiNxAUUnVAhKo" Name="Scaling" Kind="InputPin" />
             <Pin Id="IL7qIsqkwnaMDlYmyeH8DZ" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="UsfPcZFmOOzN0LpYFzbm4u" Comment="Scaling" Bounds="276,825,35,28" ShowValueBox="true" isIOBox="true" Value="3, 3">
+          <Pad Id="UsfPcZFmOOzN0LpYFzbm4u" Comment="Scaling" Bounds="276,720,35,28" ShowValueBox="true" isIOBox="true" Value="3, 3">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="270,400,45,19" Id="JOrxXX7swgePpLp9hvbLLQ">
+          <Node Bounds="270,295,45,19" Id="JOrxXX7swgePpLp9hvbLLQ">
             <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LFO" />
@@ -214,7 +216,7 @@
             <Pin Id="S96fXSz4kRnPrOJXL17NaX" Name="On New Cycle" Kind="OutputPin" />
             <Pin Id="BTTmyLqHa28NQJf6fEMmqq" Name="Cycles" Kind="OutputPin" />
           </Node>
-          <Node Bounds="310,461,65,19" Id="BIRC2wvcdumOekmkcBr6KP">
+          <Node Bounds="310,356,65,19" Id="BIRC2wvcdumOekmkcBr6KP">
             <p:NodeReference LastCategoryFullName="Primitive.Enum" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="Ord2Enum" />
@@ -222,7 +224,7 @@
             <Pin Id="CAlM63Gbme9NjXFkNfHSGT" Name="Input" Kind="StateInputPin" />
             <Pin Id="CzdJOvVhj7FNprsQXH7yDx" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="310,430,39,19" Id="Irw2JjNpoydMl6Sml3VsQF">
+          <Node Bounds="310,325,39,19" Id="Irw2JjNpoydMl6Sml3VsQF">
             <p:NodeReference LastCategoryFullName="Math" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="MOD" />
@@ -231,7 +233,7 @@
             <Pin Id="PahVCTyK2AGPF3RtcKYKGZ" Name="Input 2" Kind="InputPin" DefaultValue="2" />
             <Pin Id="K1zXQldasTlNAlhKz3beu2" Name="Output" Kind="OutputPin" />
           </Node>
-          <ControlPoint Id="F1Rxaujy3CTLPdXciYR54d" Bounds="121,621" />
+          <ControlPoint Id="F1Rxaujy3CTLPdXciYR54d" Bounds="121,516" />
         </Canvas>
         <Link Id="0jGYjw06v2q2IpXxnLWe8J" Ids="5Bh9v4nrektOQFea1BWEcY,yG0VKN9NOIqykZ1sGUZFOX" />
         <Link Id="EfaWy20SS6NdYdHgzh2Ce2" Ids="PRpJ5UdHQuHpvlHZEjapPM,F1Rxaujy3CTLPdXciYR54d,imd38d1LlI1aByyHLHMx5s" />

@@ -95,7 +95,7 @@ See [Images](images.md).
 - `HowTo Chain Effects` — Blur, DropShadow, ColorAdjust and a shader (RGBSplit) on the Effect pin: one layer per run of MultiEffect nodes, a shader node splits the run, order matters
 - `HowTo Mask an Element` — any element (e.g. Text) as alpha mask, Inverted
 - `HowTo Add a Glow` — Glow and InnerShadow
-- `HowTo Use Motion Blurs` — DirectionalBlur, ZoomBlur, RadialBlur
+- `HowTo Blur An Element` — DirectionalBlur, ZoomBlur, RadialBlur
 - `HowTo Displace an Element` — Displace with a ShaderEffect as map
 - `HowTo Blend Elements` — Blend: an element as layer over the base, blend modes
 - `HowTo Draw Trails` — `Clear` pin of the Renderer off, the alpha of `Clear Color` sets how fast the previous frame fades

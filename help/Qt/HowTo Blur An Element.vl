@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="IzHzngBQW4T4DS3YkVbVre" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="K29YSH35TLPOHTGcNiBYSz" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="CiK54lJh5EhLVFeAvMnNvy" Location="VL.CoreLib" />
   <DocumentDependency Id="P1WgNwCVUFTcAPGT71Poiq" Location="../../VL.Qt.vl" />
   <Patch Id="ibqAYMWUyfMWEbjUMMikgK">
@@ -16,7 +16,7 @@
       </p:NodeReference>
       <Patch Id="z70IFauOzWOln4Mp6HsV3k">
         <Canvas Id="H9LDrQLs1Ekcpx6IDvotur" CanvasType="Group">
-          <Pad Id="QHkGdd5MWoJ49uCWZ4Jc1I" Bounds="85,16,505,52" ShowValueBox="true" isIOBox="true" Value="How To Use Motion Blurs">
+          <Pad Id="QHkGdd5MWoJ49uCWZ4Jc1I" Bounds="85,16,505,52" ShowValueBox="true" isIOBox="true" Value="How To Blur an Element">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,7 +43,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="240,580,83,19" Id="dO0ViBFG5fJfxhUSGjMxxP">
+          <Node Bounds="300,570,83,19" Id="dO0ViBFG5fJfxhUSGjMxxP">
             <p:NodeReference LastCategoryFullName="Qt.Effects" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Effects" NeedsToBeDirectParent="true">
@@ -91,12 +91,12 @@
             <Pin Id="H6beV7YB1ORmOeg2mASC5m" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="45Ka1YdDpjIqN26DJAhxPZ" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="KCtq8TAZB0PLDxEXUfSIk2" Comment="Length" Bounds="320,530,35,15" ShowValueBox="true" isIOBox="true" Value="0.4">
+          <Pad Id="KCtq8TAZB0PLDxEXUfSIk2" Comment="Length" Bounds="380,520,35,15" ShowValueBox="true" isIOBox="true" Value="0.4">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="4R1NMqAXKaPNKPzDpaTN5M" Comment="Angle" Bounds="281,500,35,15" ShowValueBox="true" isIOBox="true" Value="0">
+          <Pad Id="4R1NMqAXKaPNKPzDpaTN5M" Comment="Angle" Bounds="341,490,35,15" ShowValueBox="true" isIOBox="true" Value="0">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
@@ -186,6 +186,7 @@
             <Pin Id="qXrvO3qreZjJW7MO0gIcQM" Name="Input" Kind="InputPin" />
             <Pin Id="0pTsJaI3PJsUyjR0pwLYbM" Name="Space" Kind="InputPin" />
             <Pin Id="nE7wtJF3olDA0XWrxXVote" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="Dalbqr7qSxoQKySGyHAIIy" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="iwdOwkwqoVlhAHVKdH2fk0" Name="Enabled" Kind="InputPin" />
             <Pin Id="8OJNwCD1jBdcQG531UfL9r" Name="Title" Kind="InputPin" />
             <Pin Id="741akbWeJgRKzjb3dRwCG1" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
@@ -196,6 +197,7 @@
             <Pin Id="ZnxlckCj759MV8TiyeTUfR" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="4k32AWsettv7y3LPIHJJTM" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="SYYkpPB9Wm3NgTj16b8Vtf" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LZywuEBCtrqQZLCXOklj2h" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="WmZFA9w8Hd5xO28Y7ZHXPR" Comment="Title" Bounds="202,706,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Use Motion Blurs">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">

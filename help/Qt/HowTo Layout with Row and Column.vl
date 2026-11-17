@@ -56,7 +56,7 @@
             <Pin Id="Q3lxkoe6fqMLhe2ww3cQYc" Name="Transform" Kind="InputPin" />
             <Pin Id="UW20WvR7fxRNLNUYYpN7ZT" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="NWlsTW5xLQuqTtn8sh8eai" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
-            <Pin Id="j4Wjx6BxjqXeqYSjMyWVKM" Name="Radius" Kind="InputPin" DefaultValue="0.1" IsHidden="true" />
+            <Pin Id="j4Wjx6BxjqXeqYSjMyWVKM" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
             <Pin Id="mZLDQTt44K3lqkbNbLqlun" Name="Output" Kind="OutputPin" />
             <Pin Id="CsMRVcSUNidQaEleYjp9Eo" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="GjMUVmHE2kjYaowt204L6A" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
@@ -320,7 +320,7 @@
             <Pin Id="TtbBMTQsmtCPaocp9zjHe6" Name="Transform" Kind="InputPin" />
             <Pin Id="DFWZcG90wjYNBQ5W3iniuF" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="PMeeb6LRgM5MwA3WhhILrX" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
-            <Pin Id="PBCm7S1GAXQLFhKG0B9ZMo" Name="Radius" Kind="InputPin" DefaultValue="0.1" IsHidden="true" />
+            <Pin Id="PBCm7S1GAXQLFhKG0B9ZMo" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
             <Pin Id="Uwbw2NIiOkFMfV9YFgUP6G" Name="Output" Kind="OutputPin" />
             <Pin Id="BuOV2JLMIxbOOujnEWATxI" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="CaU3Rq3I6boPYcY4IIXppO" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
@@ -355,7 +355,7 @@
             <Pin Id="IQSIrgStEDJPxciqxPIh0g" Name="Transform" Kind="InputPin" />
             <Pin Id="JeclXwtCLM2Lk4Ik4Qw88z" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="JFZ1MhO5ZvML19XzdgIqzA" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
-            <Pin Id="CVHon9dbyFyMirpRXAvjzc" Name="Radius" Kind="InputPin" DefaultValue="0.1" IsHidden="true" />
+            <Pin Id="CVHon9dbyFyMirpRXAvjzc" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
             <Pin Id="LKe2i1GhWbqLx0mKw4kHg2" Name="Output" Kind="OutputPin" />
             <Pin Id="Nc7lkwWxaSqLlIxDJ9xWdO" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="GesGwtKgfgSPL5ejMIqsl6" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />

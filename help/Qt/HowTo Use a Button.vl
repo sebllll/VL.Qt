@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="OdhVyfWNf4qLzTW7ivKOIZ" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="OdhVyfWNf4qLzTW7ivKOIZ" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="KVKidxJ6iTItqBq912ERq7" Location="VL.CoreLib" />
   <DocumentDependency Id="6v3osVzAN6k43FLED5aXKK" Location="../../VL.Qt.vl" />
   <Patch Id="cWFNNBZn9c2FXdJ1eIq6TO">
@@ -49,13 +49,13 @@
             <Pin Id="ExgzZy3tG0ONHsWxqnXg4G" Name="Effect" Kind="InputPin" />
             <Pin Id="SrvvLaHWu0zPT3aZg2ucPo" Name="Style" Kind="InputPin" />
           </Node>
-          <Node Bounds="100,1040,85,19" Id="i32wyAjhVFDgbOf2l4v9Ez">
+          <Node Bounds="100,890,85,19" Id="i32wyAjhVFDgbOf2l4v9Ez">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="MoGh0AvXBIBO6O6qWR09Ob" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="HJtG53qqrMLMUNPe8wqCUM" Name="Bounds" Kind="InputPin" DefaultValue="1883, 317, 449, 323" IsHidden="true" />
+            <Pin Id="HJtG53qqrMLMUNPe8wqCUM" Name="Bounds" Kind="InputPin" DefaultValue="508, 303, 449, 323" IsHidden="true" />
             <Pin Id="RzzvG02esblPv3N1DAWfmo" Name="V Sync" Kind="InputPin" IsHidden="true" />
             <Pin Id="sn3GcDJY7DwAs7pT7xlMVt" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="TY5YlAtmJGWJhKe2iuXnvV" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
@@ -63,6 +63,7 @@
             <Pin Id="lYW977Gt97i9XLeVBrv4NP" Name="Input" Kind="InputPin" />
             <Pin Id="7Q331zS68Bvr1fLWEHOzQy" Name="Space" Kind="InputPin" />
             <Pin Id="fayFity6qwcBf23J9CjxLf" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="TuE30q0BbFmMDePdMzEGHL" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="LOY344laXGKln5g1ZKJ7Hu" Name="Enabled" Kind="InputPin" />
             <Pin Id="p7oLSJkZalyGr6ZLlzr48M" Name="Title" Kind="InputPin" />
             <Pin Id="QUYeq79BIygPJM2mZ6AQkL" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
@@ -73,8 +74,9 @@
             <Pin Id="hdjGpJvMumdLkYMLXkBxB4" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="6lTNFBhME1A6I6VgG4TTXt" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="FpEQCy0m6trOJJx3HPA0TE" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="QIzxISZjscWQO3u4p1dCNU" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="371,471,53,19" Id="nJSrzEpUNgePOdsBtb4Km4">
+          <Node Bounds="371,516,53,19" Id="nJSrzEpUNgePOdsBtb4Km4">
             <p:NodeReference LastCategoryFullName="Reactive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Reactive" NeedsToBeDirectParent="true" />
@@ -113,12 +115,12 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="qH2kkYTsMHvs39KYuA0sE2" Comment="Title" Bounds="182,976,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Use a Button">
+          <Pad Id="qH2kkYTsMHvs39KYuA0sE2" Comment="Title" Bounds="182,856,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Use a Button">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="371,540,65,19" Id="CltvxY2sxsjN2rxPT1rylo">
+          <Node Bounds="371,555,65,19" Id="CltvxY2sxsjN2rxPT1rylo">
             <p:NodeReference LastCategoryFullName="Reactive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="HoldLatest" />
@@ -131,13 +133,13 @@
             <Pin Id="BDzxQuSHMGCMLwxjVvwQ4I" Name="Value" Kind="OutputPin" />
             <Pin Id="H0Syzi6cY8aOO7RmXDpVbl" Name="On Data" Kind="OutputPin" />
           </Node>
-          <Pad Id="QZrXyHE8n6mLjpHryojzp9" Comment="Is Clicked" Bounds="433,599,35,35" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="QZrXyHE8n6mLjpHryojzp9" Comment="Is Clicked" Bounds="433,614,35,35" ShowValueBox="true" isIOBox="true" />
           <Pad Id="MpNMynWrb6uP0dABLk2TZi" Comment="Rotation" Bounds="192,384,35,15" ShowValueBox="true" isIOBox="true" Value="0.125">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="653,590,45,19" Id="H2lZ9N6P5yEMOLlcuizZU7">
+          <Node Bounds="260,710,45,19" Id="H2lZ9N6P5yEMOLlcuizZU7">
             <p:NodeReference LastCategoryFullName="Qt.Interaction" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Hover" />
@@ -147,7 +149,7 @@
             <Pin Id="BNvTZ6LYQrwLCn4RQZ0feI" Name="Is Hovered" Kind="InputPin" />
             <Pin Id="Ei1C2maCrumP3gE1v2bCNj" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="693,500,53,19" Id="KisrPAsxSSvQInaZK859gR">
+          <Node Bounds="300,665,53,19" Id="KisrPAsxSSvQInaZK859gR">
             <p:NodeReference LastCategoryFullName="Reactive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Reactive" NeedsToBeDirectParent="true" />
@@ -160,7 +162,7 @@
             <Pin Id="UmuMJhEh2QyPqSAWvBMAkM" Name="Value" Kind="OutputPin" />
             <Pin Id="NbbupWZdK1iNf5GpEuH71e" Name="Author" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="QXmd9KnnHevO01WuFNv9k9" Comment="is Hovered" Bounds="743,540,35,35" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="QXmd9KnnHevO01WuFNv9k9" Comment="is Hovered" Bounds="350,705,35,35" ShowValueBox="true" isIOBox="true" />
           <Pad Id="nc2fLBdGtgaJIqWsc8irbj" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Use a Button">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
@@ -179,7 +181,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="dGla7uN4vRQZihlDnDYwBp" Bounds="85,1089,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A click is reported when the mouse is released over the button (like Qt clicked).&#xD;&#xA;- Enabled = false greys the button out and blocks clicks. Auto Repeat repeats the click while the button is held down.&#xD;&#xA;- Auto Size takes the size from the text: Size is ignored while it is on, the position comes from Transform and Anchor.">
+          <Pad Id="dGla7uN4vRQZihlDnDYwBp" Bounds="85,969,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A click is reported when the mouse is released over the button (like Qt clicked).&#xD;&#xA;- Enabled = false greys the button out and blocks clicks. Auto Repeat repeats the click while the button is held down.&#xD;&#xA;- Auto Size takes the size from the text: Size is ignored while it is on, the position comes from Transform and Anchor.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -207,9 +209,10 @@
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
+          <ControlPoint Id="FfkqPqXGJmwNDL0LhKEwto" Bounds="222,640" />
         </Canvas>
         <Link Id="ge1jQW0r22lEnZ4FN90sz7" Ids="OocCsrfCFHYg7dhYN05Duf,Pmxne1yKuJ1NDp1kGAvsGL" />
-        <Link Id="wesqBZ4V8ydmZv3ZXpTLji" Ids="eD5w6fMF9MLI5VOkKiCGD2,dJtdDW6KaZBOQ7wjLaVrps" />
+        <Link Id="wesqBZ4V8ydmZv3ZXpTLji" Ids="eD5w6fMF9MLI5VOkKiCGD2,FfkqPqXGJmwNDL0LhKEwto,dJtdDW6KaZBOQ7wjLaVrps" />
         <Link Id="857A0HnD3t9IhSB3NujYy8" Ids="hWHxHOQP1eJd01YZwFS0OU,3T696SatgYl5egZcM40EGI" />
         <Link Id="QpdK2K22UidSLNyigBAis5" Ids="txnc9ZI0yaTbAj2ulcZ45y,lYW977Gt97i9XLeVBrv4NP" />
         <Link Id="Krc9NXHstC7qko4NihWU0W" Ids="L9mDiSRTSfEiVoMtWNnaRd,mAEteb59rfCfRAFlbvMeeN" />

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="OozhvJQFFL0n7QPykVrGRB" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="OozhvJQFFL0n7QPykVrGRB" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="hUVq9doSoRN0lp6ES9mvfs" Location="VL.CoreLib" />
   <DocumentDependency Id="4deXu1G9w2qYOdtVc7deai" Location="../../VL.Qt.vl" />
   <Patch Id="yrRdK3q2DH57a3p9xi5JJl">
@@ -227,7 +227,7 @@
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="8sauGWhrRhLXJfOZfznM0s" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="VOtArVZH7bDwXsMWlNQKox" Name="Bounds" Kind="InputPin" DefaultValue="1451, 346, 520, 640" IsHidden="true" />
+            <Pin Id="VOtArVZH7bDwXsMWlNQKox" Name="Bounds" Kind="InputPin" DefaultValue="960, 83, 485, 631" IsHidden="true" />
             <Pin Id="NsYU4MvO4aXLqZED2WNLRW" Name="V Sync" Kind="InputPin" IsHidden="true" />
             <Pin Id="IWMV5mFZECtQVvFTC2X0JP" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="DdJ27S62avSNkKJf6mxviw" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
@@ -239,12 +239,14 @@
             <Pin Id="Phy1fKEmHgdrHUbqwejkNW" Name="Error" Kind="OutputPin" />
             <Pin Id="B5IjccX2mg1NsBordixH2F" Name="Space" Kind="InputPin" />
             <Pin Id="SjQV9G3U4XBQbQo2JYr0Ld" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="VJqvrpwToyCNLkNnO5LgGo" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="ABcUD4ylvT6QSZX4fHQ4kh" Name="Enabled" Kind="InputPin" />
             <Pin Id="Ytpyx3EgmuP2vk8r3KoaYv" Name="Title" Kind="InputPin" DefaultValue="HowTo Use a Slider" />
             <Pin Id="GMVINbFiYPtLjQxk8uDzxw" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="SdDyPpbvdpQO7dZb8tDFjo" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="Iy2BgEglKiOQO9ibNqDWqV" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="QkHgJafL2YGPPWTCRFC2T5" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VfDEUpefo9TQcDmZUBJ8i3" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="122,651,85,19" Id="H3X5E5s9UkMNPrMMgtsFgw">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">

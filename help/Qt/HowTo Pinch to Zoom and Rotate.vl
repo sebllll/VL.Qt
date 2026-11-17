@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="FwHJ1yB0m6HUP91oS6gFXK" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="Pinch [Qt]: two-finger gesture on the element&#xD;&#xA;- Scale: factor, 1 at the start (2 = fingers twice as far apart)&#xD;&#xA;- Rotation: in cycles (1 = 360 degrees), clockwise positive&#xD;&#xA;- Translation: movement of the fingers' centre in units&#xD;&#xA;- Pivot: the fingers' centre when the gesture began, scale and rotation turn around it&#xD;&#xA;- Is Active: true while the gesture runs">
+          <Pad Id="FwHJ1yB0m6HUP91oS6gFXK" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Pinch [Qt]: two-finger gesture on the element&#xD;&#xA;- Scale: factor, 1 at the start (2 = fingers twice as far apart)&#xD;&#xA;- Rotation: in cycles (1 = 360 degrees), clockwise positive&#xD;&#xA;- Translation: movement of the fingers' centre in units&#xD;&#xA;- Is Active: true while the gesture runs">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GaBfqkcwk3KNjEEXTtTxAo" Bounds="85,1428,830,110" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- All values are counted from the start of the gesture. They describe the move of the content about the Pivot, in the parent's space (here the Group): that keeps the image under the fingers wherever they touch it.&#xD;&#xA;- Pinch only reports, it moves nothing: the patch applies the values itself. The channels keep their last value after the gesture, which is why the live values are only used while Is Active is true.&#xD;&#xA;- When Is Active falls (TogEdge, Down Edge) the S+H stores the result, so the image stays where the fingers left it and the next gesture continues from there (FrameDelay closes the loop).">
+          <Pad Id="GaBfqkcwk3KNjEEXTtTxAo" Bounds="85,1428,830,110" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- All values are counted from the start of the gesture.&#xD;&#xA;- Pinch only reports, it moves nothing: the patch applies the values itself. The channels keep their last value after the gesture, which is why the live values are only used while Is Active is true.&#xD;&#xA;- When Is Active falls (TogEdge, Down Edge) the S+H stores the result, so the image stays where the fingers left it and the next gesture continues from there (FrameDelay closes the loop).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,7 +43,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GkYCvKLfhXeQR1vDZQX03q" Bounds="482,778,460,60" ShowValueBox="true" isIOBox="true" Value="Gesture about the pivot: the pivot goes to the origin, scale and rotate, then to Pivot + Translation. Transform of the image = committed transform combined with the live values while Is Active is true">
+          <Pad Id="GkYCvKLfhXeQR1vDZQX03q" Bounds="482,778,460,46" ShowValueBox="true" isIOBox="true" Value="Transform of the image = committed transform combined with the live values while Is Active is true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -52,7 +52,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="F4xQhSFI0ubI8UtntMxE45" Bounds="290,979,415,32" ShowValueBox="true" isIOBox="true" Value="The Group places the image (Position); the gesture works on the image in the Group's space, about the Pivot.">
+          <Pad Id="F4xQhSFI0ubI8UtntMxE45" Bounds="290,979,415,19" ShowValueBox="true" isIOBox="true" Value="The image is scaled and rotated around its centre (Anchor).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -118,7 +118,7 @@
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="222,490,780,19" Id="tTJGDsK8zfyk2JYYyMOP1v">
+          <Node Bounds="222,490,625,19" Id="tTJGDsK8zfyk2JYYyMOP1v">
             <p:NodeReference LastCategoryFullName="Qt.Interaction" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Interaction" />
@@ -130,7 +130,6 @@
             <Pin Id="10WkWyR61IDuKQjmrwesAM" Name="Scale" Kind="InputPin" />
             <Pin Id="sjHAN7Gd61adfgR5dlfzZD" Name="Rotation" Kind="InputPin" />
             <Pin Id="7bhe5YCdtvyBnQzoaoFvTP" Name="Translation" Kind="InputPin" />
-            <Pin Id="V7n61HibNpf4bXBObcwAZ5" Name="Pivot" Kind="InputPin" />
             <Pin Id="0FmOPhlUe7Z3cEMLfo1WkF" Name="Minimum Point Count" Kind="InputPin" IsHidden="true" />
             <Pin Id="UQJNjliUD63cdzjAqMS5r9" Name="Maximum Point Count" Kind="InputPin" IsHidden="true" />
             <Pin Id="3xpvW96XJovxdpsMuYdS17" Name="Devices" Kind="InputPin" IsHidden="true" />
@@ -295,7 +294,7 @@
             </p:TypeAnnotation>
           </Pad>
           <Pad Id="UDx5NJQ0j4kMFwiasVTyRp" SlotId="KTiyP0WPmCMLu40iXOd53a" Bounds="300,901" />
-          <Pad Id="ErfRfyQ6W4zQRW6jtQvEKY" SlotId="KTiyP0WPmCMLu40iXOd53a" Bounds="368,722" />
+          <Pad Id="ErfRfyQ6W4zQRW6jtQvEKY" SlotId="KTiyP0WPmCMLu40iXOd53a" Bounds="368,770" />
           <Node Bounds="142,1220,80,19" Id="xEqXZJycmjhWKE72unH5Wt">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
@@ -315,56 +314,6 @@
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="997,348,53,19" Id="1znHzTtUOOdsOgP6XJrpky">
-            <p:NodeReference LastCategoryFullName="Reactive" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Reactive" NeedsToBeDirectParent="true" />
-              <Choice Kind="ProcessAppFlag" Name="Channel" />
-            </p:NodeReference>
-            <Pin Id="vHhI65YjIA5CNmWTGEXmFP" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="h2FKFPUrLqMxA2iHDqXdlU" Name="Initial Value" Kind="InputPin" IsHidden="true" />
-            <Pin Id="3f6URkDuGxW2DchjA3RfNj" Name="Value" Kind="InputPin" />
-            <Pin Id="qxmiM9JBtSp3rVaCAWxLqg" Name="Output" Kind="StateOutputPin" />
-            <Pin Id="xzcKqKXEHHZrMrqFe88HpL" Name="Value" Kind="OutputPin" />
-            <Pin Id="aPC24eMoDiLFgHrJJg0zF1" Name="Author" Kind="InputPin" IsHidden="true" />
-          </Node>
-          <Pad Id="BcRqr2BmF3Q8HRB2P51S6X" Comment="Pivot" Bounds="1047,451,35,28" ShowValueBox="true" isIOBox="true">
-            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="TypeFlag" Name="Vector2" />
-            </p:TypeAnnotation>
-          </Pad>
-          <Node Bounds="366,750,80,19" Id="5Lio2l4CP4KI5CMrRupoym">
-            <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
-              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <Choice Kind="OperationCallFlag" Name="TransformSRT" />
-              <CategoryReference Kind="Category" Name="Transform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="2D" NeedsToBeDirectParent="true" />
-              </CategoryReference>
-            </p:NodeReference>
-            <Pin Id="dzKzbzRVB19KPtEvUpO5QE" Name="Input" Kind="InputPin" />
-            <Pin Id="HAQt4ANmj07OygeLW47WRb" Name="Scaling" Kind="InputPin" />
-            <Pin Id="URba3fhu6SPaFcTHMINKkc" Name="Rotation" Kind="InputPin" />
-            <Pin Id="784H2X0F7RvIlyE3sxhHbF" Name="Translation" Kind="InputPin" />
-            <Pin Id="KhSVxKfkcRcOncW5uUCaD9" Name="Output" Kind="OutputPin" />
-          </Node>
-          <Node Bounds="600,700,25,19" Id="MQn3gyVKnq4ZB3fb43AGln">
-            <p:NodeReference LastCategoryFullName="Math" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <Choice Kind="OperationCallFlag" Name="-" />
-            </p:NodeReference>
-            <Pin Id="qNeMZJUVBhX0PwPom30dpN" Name="Input" Kind="InputPin" />
-            <Pin Id="xGwtIFwSATxSi2WwLBUf93" Name="Input 2" Kind="InputPin" />
-            <Pin Id="8vIVkSxRi6pK0AQKKh7EAG" Name="Output" Kind="OutputPin" />
-          </Node>
-          <Node Bounds="660,745,25,19" Id="PWzB8MV6FB7IUbxItEhNDf">
-            <p:NodeReference LastCategoryFullName="Math" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <Choice Kind="OperationCallFlag" Name="+" />
-            </p:NodeReference>
-            <Pin Id="nGixT2cSgNkPPBM3Xwh8YY" Name="Input" Kind="InputPin" />
-            <Pin Id="GAlpCmhL2OhakIcJAfSwKb" Name="Input 2" Kind="InputPin" />
-            <Pin Id="jKyMciYCc8vFtntqRFrNUC" Name="Output" Kind="OutputPin" />
-          </Node>
           <ControlPoint Id="QgXVSiY94MoPMfZXTDE2sb" Bounds="48,610" />
           <ControlPoint Id="SOyXcD6q3lKPNvQX9CpS0M" Bounds="48,1070" />
           <Node Bounds="102,1256,45,19" Id="N8gwzPdB2LjOdXDg3iQvYR">
@@ -419,19 +368,12 @@
         <Link Id="Dbpp1tVMZLvM3Ts3oGyDpH" Ids="biGaVbspjwkmenkshXVEb1,FRkaJasnmMCNb9pbiUOG60" />
         <Link Id="R4x16QQ6dK6PljMoYYFZ8P" Ids="HK2FP7E70Gb2FT1itnbNY0,gD0RpiDV8nI75moGzqztzz" />
         <Link Id="KcSzsEgJQy5QCYnY2btX3G" Ids="HK2FP7E70Gb2FT1itnbNY0,51fLdCk1cidJQS9HV796DZ" />
-        <Link Id="NythbNOwC2lQZZ41QW45WM" Ids="cXQYVBxhH7L71HWfm5gX8O,nGixT2cSgNkPPBM3Xwh8YY" />
-        <Link Id="xDyOHNvpXOsRl9WiHTT4w9" Ids="jKyMciYCc8vFtntqRFrNUC,ztOh14zfYxxBnqhwR1e3bP" />
+        <Link Id="NythbNOwC2lQZZ41QW45WM" Ids="cXQYVBxhH7L71HWfm5gX8O,ztOh14zfYxxBnqhwR1e3bP" />
         <Link Id="OnKEhActJjNM4ztUloFkpK" Ids="rA58TY1qnfIYcEf0R5LOlU,UDx5NJQ0j4kMFwiasVTyRp" />
-        <Link Id="EXvlWfpuBEIQNNW3i66B3d" Ids="ErfRfyQ6W4zQRW6jtQvEKY,dzKzbzRVB19KPtEvUpO5QE" />
-        <Link Id="uBjj5Zjv8spCxrqb8DcChG" Ids="KhSVxKfkcRcOncW5uUCaD9,8UzHUD5yw1vxmpNfbBe8QE" />
+        <Link Id="EXvlWfpuBEIQNNW3i66B3d" Ids="ErfRfyQ6W4zQRW6jtQvEKY,8UzHUD5yw1vxmpNfbBe8QE" />
         <Link Id="P0eJDZuarisMOZLcxdJlyw" Ids="ibGn53aT0QSNpDcmLPmzJf,nBjuapQCirZQMpT52Xqec7" />
         <Link Id="SWnFzv2ZaUVLSIEefy5nFi" Ids="ibGn53aT0QSNpDcmLPmzJf,7x06k5BiN6LZl6k0Wb73F0" />
         <Slot Id="KTiyP0WPmCMLu40iXOd53a" Name="prev" />
-        <Link Id="WacbZ8za8NuHArF6JFW9ZT" Ids="qxmiM9JBtSp3rVaCAWxLqg,V7n61HibNpf4bXBObcwAZ5" />
-        <Link Id="TnUP6osMxmG9j4xcASpLKa" Ids="xzcKqKXEHHZrMrqFe88HpL,BcRqr2BmF3Q8HRB2P51S6X" />
-        <Link Id="LCSr4YqXYuzTOMpqwsJHRB" Ids="BcRqr2BmF3Q8HRB2P51S6X,xGwtIFwSATxSi2WwLBUf93" />
-        <Link Id="pmTwVxytM48SWRQ63CYo98" Ids="8vIVkSxRi6pK0AQKKh7EAG,784H2X0F7RvIlyE3sxhHbF" />
-        <Link Id="tougJu4G8P3273ulM4rEo7" Ids="BcRqr2BmF3Q8HRB2P51S6X,GAlpCmhL2OhakIcJAfSwKb" />
         <Link Id="IErjGqIVg6kPxYTU6l7qIX" Ids="Lq8aSnoGWMTNS4istD0gzX,SMbO7fWTcwNE8D2gPXcSoY" />
         <Link Id="VDFVjXr2ul8Pa4yFQrKUfr" Ids="OmCRKoO93arLrO54voeVup,86C4aLxNVkxpop5J9n6YY2" />
         <Link Id="P4RjFeIfguUNLKvYLixoUQ" Ids="WiWFE6evpzX7qhS4rorRjx,OJznculkOJy4iLLVZo22Uk" />
