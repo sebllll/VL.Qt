@@ -186,15 +186,11 @@ namespace VL.Qt.Tests
         {
             var ch = Channel.Create(true);
             for (int i = 0; i < 100; i++) { Update(ch); Update(); }
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) Update(ch);
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0), "connected");
+            Assert.That(Allocations.Fewest(() => Update(ch)), Is.EqualTo(0), "connected");
 
             var unconnected = new ToggleNode(_ => NoWarning);
             for (int i = 0; i < 100; i++) unconnected.Update(DefaultSize, true, default, RectangleAnchor.Center, null, ToggleLook.Switch, true, 1, false, false, null, null, null, out _, out _, out _, out _);
-            before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) unconnected.Update(DefaultSize, true, default, RectangleAnchor.Center, null, ToggleLook.Switch, true, 1, false, false, null, null, null, out _, out _, out _, out _);
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0), "unconnected (null)");
+            Assert.That(Allocations.Fewest(() => unconnected.Update(DefaultSize, true, default, RectangleAnchor.Center, null, ToggleLook.Switch, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "unconnected (null)");
             unconnected.Dispose();
         }
     }

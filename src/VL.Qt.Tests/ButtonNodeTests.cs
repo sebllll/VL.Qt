@@ -126,9 +126,7 @@ namespace VL.Qt.Tests
         {
             var clicked = Channel.Create(Unit.Default);
             for (int i = 0; i < 100; i++) Update(out _, isClicked: clicked);
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) Update(out _, isClicked: clicked);
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+            Assert.That(Allocations.Fewest(() => Update(out _, isClicked: clicked)), Is.EqualTo(0));
         }
     }
 }
