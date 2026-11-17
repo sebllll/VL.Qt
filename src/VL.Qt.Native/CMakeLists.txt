@@ -35,9 +35,9 @@ qt_add_resources(vlqt "vlqt_style"
         style/VLQt/Switch.qml
         style/VLQt/SpinBox.qml
         style/VLQt/TextField.qml)
-# Default window icon (#517): placeholder PNGs in several sizes embedded as :/vlqt/icon/default-<size>.png, so it also
-# shows in an export without a file next to it. Artwork replaceable: same file names (icon/gen_default_icon.py makes
-# the placeholder); a new size = file in icon/ plus a line below and in vlqt.cpp (defaultIcon).
+# Default window icon (#517): PNGs in several sizes (scaled from docs/icon/icon.png) embedded as
+# :/vlqt/icon/default-<size>.png, so it also shows in an export without a file next to it. Artwork replaceable: same
+# file names; a new size = file in icon/ plus a line below and in vlqt.cpp (defaultIcon).
 qt_add_resources(vlqt "vlqt_icon"
     PREFIX "/vlqt/icon"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}/icon"
