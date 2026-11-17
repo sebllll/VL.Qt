@@ -123,6 +123,7 @@
               <CategoryReference Kind="RecordType" Name="PerfStats" />
               <Choice Kind="OperationCallFlag" Name="Split" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="W3TAIJisn5fIOWgrdC8jgw" Name="Input" Kind="StateInputPin" />
             <Pin Id="RWXOhQBF1aEMEnLyXbiM1F" Name="Output" Kind="OutputPin" IsHidden="true" />
             <Pin Id="CQz8dWdxOrcs5QvB9WZaFK" Name="Fps" Kind="OutputPin" />
@@ -198,6 +199,7 @@
               <CategoryReference Kind="RecordType" Name="PerfStats" />
               <Choice Kind="OperationCallFlag" Name="SplitPercentiles" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="Q24PH6q8Q0Bv6NlRKEWKdb" Name="Input" Kind="StateInputPin" />
             <Pin Id="KnUrixiBaL6LFnuveH71mS" Name="Output" Kind="OutputPin" IsHidden="true" />
             <Pin Id="VuMaM5VRcLkyuO4kWIFRup" Name="Budget Ms" Kind="OutputPin" />
@@ -214,6 +216,7 @@
               <CategoryReference Kind="RecordType" Name="PerfStats" />
               <Choice Kind="OperationCallFlag" Name="SplitCounters" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="4WGmXoNqFsPAEOOyxahbGT" Name="Input" Kind="StateInputPin" />
             <Pin Id="ROr4HjT71oKQXncrRmDXNf" Name="Output" Kind="OutputPin" IsHidden="true" />
             <Pin Id="D67WQ5YQjbsCvxYLBhN2B2" Name="Pumps" Kind="OutputPin" />
@@ -233,6 +236,7 @@
               <CategoryReference Kind="RecordType" Name="PerfStats" />
               <Choice Kind="OperationCallFlag" Name="SplitHost" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="K589FPVzWJNf1K3BLLgEit" Name="Input" Kind="StateInputPin" />
             <Pin Id="NV0qjTNbpFcON1Jdb1pyxe" Name="Output" Kind="OutputPin" IsHidden="true" />
             <Pin Id="oQoLYnatzPH18o7ugqhPLF" Name="Vvvv Ms" Kind="OutputPin" />
@@ -251,6 +255,7 @@
               <CategoryReference Kind="RecordType" Name="PerfStats" />
               <Choice Kind="OperationCallFlag" Name="SplitGc" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="jOkxB7O0raojN0qWlCO1Gq" Name="Input" Kind="StateInputPin" />
             <Pin Id="JOPNzydJgRmOwUz8bL0mdB" Name="Output" Kind="OutputPin" IsHidden="true" />
             <Pin Id="XGUFZkZ5NUFs8IHQt779zF" Name="Gen0 Per Second" Kind="OutputPin" />

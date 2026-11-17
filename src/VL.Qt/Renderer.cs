@@ -25,7 +25,6 @@ namespace VL.Qt
     {
         const string IconPhase = "Window Icon";
         const string SamplesPhase = "Multisample Count";
-        internal const string SpaceWarning = "Space: only DIPTopLeft is implemented in v1 (1 unit = 100 DIP, origin top left); behaves like DIPTopLeft.";
 
         // Pump and scene registry of this vvvv app (new per F8/F5, #58); QtApp itself is process-wide.
         readonly QtPump _pump;
@@ -47,7 +46,6 @@ namespace VL.Qt
         MultisampleCount _samples; // last Multisample Count pin value sent to the window (#118)
         string? _iconPath; // last window icon sent to the window (full path, null = default; #517)
         IDisposable? _keepAlive; // AppHost.KeepAlive() in the WinForms window export only, released on X / Dispose
-        IDisposable? _spaceWarning;
 
         /// <param name="nodeContext">Injected by vvvv.</param>
         /// <param name="bounds">Initial position and size of the window in DIP (on create only, like Bounds of VL.Skia/VL.Stride; a change recreates the node). Size = client size, position = outer top-left. Empty bounds: 600x400 centered on the primary screen; bounds on no screen: centered. Applied before the window is shown, on all platforms (Wayland: size only, the compositor places the window). A node added live or restored by Undo/Redo gets no pin value from vvvv and opens at the default bounds until the next restart.</param>
@@ -107,7 +105,7 @@ namespace VL.Qt
 
         /// <summary>Renders the element tree into a Qt window.</summary>
         /// <param name="input">Root element (null = empty scene).</param>
-        /// <param name="space">Coordinate space of the elements. v1 implements DIPTopLeft only (1 unit = 100 DIP); other values warn and behave like DIPTopLeft.</param>
+        /// <param name="space">Coordinate space of the elements: origin and size of one unit, see <see cref="Space"/>.</param>
         /// <param name="clearColor">Background of the window. While Clear is off, its alpha is the fade strength of the previous frame (0 = no fade, 1 = like Clear on); an opaque color, the default, leaves no trail.</param>
         /// <param name="clear">True clears the window to Clear Color every frame. False keeps the previous frame and draws the new one over it (trails, smearing, feedback); the alpha of Clear Color then sets how strongly each frame fades the old content toward the color, so lower it (e.g. 0.1) to see trails: 0 keeps everything, 1 shows none. Fading to transparency is not possible, and the fade speed depends on the frame rate. Switchable at runtime without recreating the window. Costs one full-size texture while off, and Qt renders every frame then, also when the scene did not change.</param>
         /// <param name="enabled">False freezes the scene (no updates of Input, Space, Clear Color, Clear); the window keeps the last state.</param>
@@ -188,10 +186,8 @@ namespace VL.Qt
                 _debug = debug;
                 _view.SetDebug(debug);
             }
-            if (enabled)
-                UpdateSpaceWarning(space);
             // Only written here; the pump applies the buffer once per frame (ApplyCommands) after all node updates.
-            _view?.Update(input, Geometry.Resolve(space), clearColor, clear, enabled, title);
+            _view?.Update(input, space, clearColor, clear, enabled, title);
 
             // Is Visible is live (#93); Perf, Client Bounds and Error reflect the last pump (previous frame).
             isVisible = _view?.IsVisible ?? false;
@@ -220,18 +216,6 @@ namespace VL.Qt
                 _errors.Warn(warning, SamplesPhase);
             else
                 _errors.Clear(SamplesPhase);
-        }
-
-        void UpdateSpaceWarning(Space space)
-        {
-            bool unsupported = !Geometry.IsSupported(space);
-            if (unsupported && _spaceWarning is null)
-                _spaceWarning = _nodeContext.AddPersistentMessage(MessageSeverity.Warning, SpaceWarning);
-            else if (!unsupported && _spaceWarning is not null)
-            {
-                _spaceWarning.Dispose();
-                _spaceWarning = null;
-            }
         }
 
         // Pump phases (#258): an exception is logged with this node's logger (once per distinct error), shown at the node
@@ -368,8 +352,6 @@ namespace VL.Qt
             _view?.Dispose();
             _view = null;
             _pump.Unregister(this);
-            _spaceWarning?.Dispose();
-            _spaceWarning = null;
             _errors.Dispose();
             _keepAlive?.Dispose();
             _keepAlive = null;

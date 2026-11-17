@@ -155,6 +155,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Vector2" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="MK6PPJ0V9DmTp91YWq2f52" Name="Name" Kind="InputPin" DefaultValue="direction" />
             <Pin Id="e31ILW2macOpqEmgAaih2u" Name="Value" Kind="InputPin" DefaultValue="1, 0" />
             <Pin Id="eNJbW0PMaCZMhgVkK07EYs" Name="Result" Kind="OutputPin" />
@@ -197,6 +198,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Image" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="MJkYyzgGGbyVBDnXNrXqIA" Name="Name" Kind="InputPin" DefaultValue="mask" />
             <Pin Id="eE7TdLLNEQ8YM1smQStZE2" Name="Image" Kind="InputPin" />
             <Pin Id="2ngdV5njbubzVYHTILYa5o" Name="Result" Kind="OutputPin" />
@@ -253,6 +255,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
             <Pin Id="eubIJ6I7FseO4SeRDOKKhA" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="KesmiCjrdNMmJgcyMOeJ9d" Name="Input" Kind="InputPin" />
             <Pin Id="ExFd0sx0KbkMKkHttmJXHd" Name="Input Sampler" Kind="InputPin" IsHidden="true" />

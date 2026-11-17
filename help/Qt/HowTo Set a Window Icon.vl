@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="hua8vdtQ0T7UliPdDRVd13" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="hua8vdtQ0T7UliPdDRVd13" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="AXh4VRnnfztZ53173RFU9A" Location="VL.CoreLib" />
   <DocumentDependency Id="9DBifPwuqbJyBTXr1EBHUd" Location="../../VL.Qt.vl" />
   <Patch Id="dD28xudZ8uDWzoOIiRe2As">
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="luRThQEyxFfVIYOjcxmKcE" Bounds="85,630,830,142" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Without Window Settings the window shows the built-in default icon; no value (or an empty path) shows it again. Changes apply live, without recreating the window.&#xD;&#xA;- A file that cannot be loaded keeps the default icon and shows a warning at Renderer [Qt] (Error output).&#xD;&#xA;- Bounds in Window Settings only apply when the window is created; Save Bounds and Client Bounds stay on Renderer [Qt].&#xD;&#xA;- Exported apps: the default icon is built in and needs no file next to the exe. The icon of the .exe file itself is set in the vvvv export settings.&#xD;&#xA;- Linux (Wayland): the compositor takes the icon from the app id and the .desktop file, not from the window.">
+          <Pad Id="luRThQEyxFfVIYOjcxmKcE" Bounds="85,465,830,142" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Without Window Settings the window shows the built-in default icon; no value (or an empty path) shows it again. Changes apply live, without recreating the window.&#xD;&#xA;- A file that cannot be loaded keeps the default icon and shows a warning at Renderer [Qt] (Error output).&#xD;&#xA;- Bounds in Window Settings only apply when the window is created; Save Bounds and Client Bounds stay on Renderer [Qt].&#xD;&#xA;- Exported apps: the default icon is built in and needs no file next to the exe. The icon of the .exe file itself is set in the vvvv export settings.&#xD;&#xA;- Linux (Wayland): the compositor takes the icon from the app id and the .desktop file, not from the window.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,16 +43,17 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="YKQ6Jo2uBVY2X1yPolktMP" Comment="Icon" Bounds="262,415,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-window-icon.png">
+          <Pad Id="YKQ6Jo2uBVY2X1yPolktMP" Comment="Icon" Bounds="262,250,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-window-icon.png">
             <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="260,465,88,19" Id="dFrUhhyp70LPYksaP2g6Ja">
+          <Node Bounds="260,300,88,19" Id="dFrUhhyp70LPYksaP2g6Ja">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="WindowSettings" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="9ZXKPbOoT7w9iTjhheW0nm" Name="Icon" Kind="InputPin" />
             <Pin Id="7tW0z1OeryW93mel38zj7v" Name="Title" Kind="InputPin" IsHidden="true" />
             <Pin Id="7U5wqBOKheF94gxEk4BbTR" Name="Borderless" Kind="InputPin" IsHidden="true" />
@@ -60,7 +61,7 @@
             <Pin Id="MPzliTWPhEcsDFTL87jfo8" Name="Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="uqo7oy4fj6KxugPNYasxkS" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,445,65,19" Id="IFl7OjCZhKzx3FpVRyeU1V">
+          <Node Bounds="100,280,65,19" Id="IFl7OjCZhKzx3FpVRyeU1V">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -85,7 +86,7 @@
             <Pin Id="dfs5yxjQQtWG9QUzpn0SFv" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="hvzHJqDkJTI8UQPW3g35lx" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="100,581,165,19" Id="KPSImDvS09qtXpFAMxKX8O">
+          <Node Bounds="100,416,165,19" Id="KPSImDvS09qtXpFAMxKX8O">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -99,6 +100,7 @@
             <Pin Id="kkIUc6xuLZvW9DoALH0BFG" Name="Input" Kind="InputPin" />
             <Pin Id="sDCU1wHuX5AyjkqLfvGP5i" Name="Space" Kind="InputPin" />
             <Pin Id="mMBInTjKL1Odc6fss81CX7" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="BeJqIbGWUGwPS5mhwsQKRy" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="H52CJKWj8Vg9mVkn5hf9nH" Name="Enabled" Kind="InputPin" />
             <Pin Id="V4oP1b7DSkMxxEfGx2qHkb" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="Cc8GOtCoKE4efsGv0FVz6j" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -109,11 +111,21 @@
             <Pin Id="eOD6kwHCAmo2B4C0DtBgCz" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="SAGado2pY9YxRIyzFdC0NC" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="16Un0354JEGKYEhwcoB6do" Name="Window" Kind="InputPin" />
+            <Pin Id="GTdrEn8XUWAL1o5E5r64xQ" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="knPN6khlOJ0w64d9aOsezS" Comment="Title" Bounds="230,550,136,18" ShowValueBox="true" isIOBox="true" Value="HowTo Set a Window Icon">
+          <Pad Id="knPN6khlOJ0w64d9aOsezS" Comment="Title" Bounds="230,385,136,18" ShowValueBox="true" isIOBox="true" Value="HowTo Set a Window Icon">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="MRy9J9FEzp5PZnLVI3KXwI" Bounds="354,309,269,19" ShowValueBox="true" isIOBox="true" Value="&lt;&lt; might get more propoerties in the future">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
           </Pad>
         </Canvas>
         <Link Id="lRq3R44zxWYKDx6Ew9AlYV" Ids="YKQ6Jo2uBVY2X1yPolktMP,9ZXKPbOoT7w9iTjhheW0nm" />

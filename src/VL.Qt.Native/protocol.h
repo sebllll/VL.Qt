@@ -30,6 +30,15 @@
  *                                            the previous frame and draw the new one over it (feedback layer in the
  *                                            scene, windows and offscreen scenes alike); the first frame after
  *                                            switching to 0 and after a resize starts from the clear color
+ *   SET_SPACE   u32 space                    (#143) vlqt_space of the scene (enum order of VL.Qt.Space), default
+ *                                            DIP_TOP_LEFT; RESET leaves it as it is (like CLEAR_COLOR/SET_CLEAR).
+ *                                            QtNative only moves the origin: the window root sits at the top left of
+ *                                            the scene (DIP_TOP_LEFT, PIXEL_TOP_LEFT) or at its centre (NORMALIZED,
+ *                                            DIP; follows resizes). The scale (units -> logical pixels) is C#'s: every
+ *                                            length arrives in logical pixels as before. Values leaving QtNative are in
+ *                                            the root's coordinates (EV_SCENE_BOUNDS: mapped from the scene into the
+ *                                            root). Size and dpr of the scene: vlqt_window_get_scene_metrics (vlqt.h).
+ *                                            Unknown value -7.
  *   SET_UNIFORMS u32 id, u16 count, u16 flags (vlqt_uniform_set), then count entries, each 4-byte aligned:
  *               u16 valueType, u16 nameLen (1..VLQT_UNIFORM_NAME_MAX), name (UTF-8, no terminator), padding to 4,
  *               value (like SET), padding to 4. ShaderEffect only (#437, see "ShaderEffect" below).
@@ -124,7 +133,7 @@
  * Poll buffer (QtNative -> C#), per record, 4-byte aligned: u16 event, u16 len, u32 handle, u32 index, payload;
  *   len = bytes of handle + index + payload (without padding). handle = BIND sinkHandle; index = offset to the
  *   slot index of that binding (0 = the bound slot itself; QtNative always sends 0, see events.h).
- *   MEASURED 2 x f32 (w, h), SCENE_BOUNDS 4 x f32 (x, y, w, h), logical pixels; HOVER/PRESS u8 (0/1),
+ *   MEASURED 2 x f32 (w, h), SCENE_BOUNDS 4 x f32 (x, y, w, h) in root coordinates (#143), logical pixels; HOVER/PRESS u8 (0/1),
  *   CLICK u32 (Tap handler: taps since the last poll; Button: clicked signals), POINTER 2 x f32 (x, y) item-local logical pixels,
  *   MEDIA 2 x f32 (position, duration) in seconds (Video only, 0 until loaded); see events.h.
  *   Hover handler: HOVER u8 on change. Tap handler (#320): PRESS u8, CLICK u32, TAP_COUNT u32 on change (never 0),
@@ -134,7 +143,7 @@
  *   2 x f32 on change (translation of the running drag); moves the item by its drag offset, SET TRANSFORM resets it to 0
  *   (pin wins: every TRANSFORM, also a resync, puts the item back where the pin says; SIZE/ANCHOR keep the offset).
  *   Touch Points handler (#321): EV_TOUCH_POINTS on change (all points pressed in the item, item-local; count 0 when the
- *   last one goes; at most 64 points). Pinch handler (#321): EV_ACTIVE u8 on change, EV_PINCH 4 x f32 while active, the
+ *   last one goes; at most 64 points). Pinch handler (#321): EV_ACTIVE u8 on change, EV_PINCH 6 x f32 while active, the
  *   last one before EV_ACTIVE 0 (never the 1/0/0 Qt resets to).
  *   Value inputs (SpinBox #210 i32; CheckBox/Switch bool, Slider f32, TextField string #301): EV_VALUE = u16 valueType, u16 0,
  *   value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8; string capped at 60000 bytes on a character
@@ -236,7 +245,7 @@
 #ifndef VLQT_PROTOCOL_H
 #define VLQT_PROTOCOL_H
 
-#define VLQT_PROTOCOL_VERSION 12
+#define VLQT_PROTOCOL_VERSION 13
 #define VLQT_COMMAND_ALIGN 4
 #define VLQT_HEADER_SIZE 4
 #define VLQT_ROOT_ID 0
@@ -253,6 +262,7 @@ enum vlqt_op {
     VLQT_OP_RESET = 7,
     VLQT_OP_SET_STYLE = 8, /* resolved widget style, see the head comment (#292) */
     VLQT_OP_SET_CLEAR = 9, /* Clear pin (#117), see the head comment */
+    VLQT_OP_SET_SPACE = 10, /* Space pin (#143): u32 vlqt_space, see the head comment */
     /* 16.. effects package 03 (#437), own block to keep merges with other packages simple */
     VLQT_OP_SET_UNIFORMS = 16, /* ShaderEffect uniforms by name, see the head comment */
     VLQT_OP_SET_EFFECT_CHAIN = 17, /* Effect chain of an element (#489), see the head comment "Effect chain" */
@@ -513,7 +523,7 @@ enum vlqt_ev {
     VLQT_EV_WHEEL = 13, /* 2 x f32 notches (angleDelta / 120) since the last poll, once (0, 0) after motion (#320) */
     VLQT_EV_DRAG = 14, /* 2 x f32 translation of the running drag since the press (parent space, after limits), on change (#209) */
     VLQT_EV_TOUCH_POINTS = 15, /* u32 count + count x (u32 id, f32 x, f32 y, f32 pressure, f32 w, f32 h), on change (#321) */
-    VLQT_EV_PINCH = 16, /* 4 x f32 scale, rotation (degrees, clockwise), translation x, y (parent space) while active (#321) */
+    VLQT_EV_PINCH = 16, /* 6 x f32 scale, rotation (degrees, clockwise), translation x, y, pivot x, y (parent space) while active (#321) */
     VLQT_EV_VALUE = 17, /* u16 valueType (VLQT_VT_I32/F32/BOOL/STRING), u16 0, value: user change of a value input (#210) */
     VLQT_EV_QML_PROPERTY = 18, /* u16 nameLen, u16 valueType, name, padding to 4, value like EV_VALUE: a root property QML changed (#104) */
     VLQT_EV_QML_SIGNAL = 19    /* u16 nameLen, u16 argCount, name, padding to 4, argCount x (u16 valueType, u16 0, value, padding): a root signal (#104) */
@@ -531,6 +541,14 @@ enum vlqt_window_state {
 enum vlqt_window_mode {
     VLQT_WINDOW_MODE_BORDERLESS = 1,
     VLQT_WINDOW_MODE_FULLSCREEN = 2
+};
+
+/* Spaces of VLQT_OP_SET_SPACE (#143), the order of VL.Qt.Space (= VL.Skia CommonSpace). QtNative uses only the origin. */
+enum vlqt_space {
+    VLQT_SPACE_NORMALIZED = 0,    /* origin at the centre */
+    VLQT_SPACE_DIP = 1,           /* origin at the centre */
+    VLQT_SPACE_DIP_TOP_LEFT = 2,  /* origin at the top left (the default) */
+    VLQT_SPACE_PIXEL_TOP_LEFT = 3 /* origin at the top left */
 };
 
 /* Modes of the TEST export vlqt_test_device_lost (vlqt.h, #367).

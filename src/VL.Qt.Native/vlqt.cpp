@@ -1778,6 +1778,19 @@ VLQT_API unsigned int vlqt_window_get_mode(void* p)
     return w ? w->mode : 0;
 }
 
+VLQT_API int vlqt_window_get_scene_metrics(void* p, vlqt_scene_metrics* out)
+{
+    auto* w = static_cast<Window*>(p);
+    if (!w || !w->scene || !out)
+        return -1;
+    // The root is sized to the window (Scene::attachRoot), also offscreen where the content item stays 0 x 0.
+    const QQuickItem* root = w->scene->root;
+    out->width = float(root->width());
+    out->height = float(root->height());
+    out->dpr = w->offscreen ? 1.f : float(w->window->effectiveDevicePixelRatio());
+    return 0;
+}
+
 VLQT_API int vlqt_window_apply(void* p, const unsigned char* buf, int len)
 {
     return guarded([&]() -> int {

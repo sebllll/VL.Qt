@@ -96,6 +96,7 @@
               <CategoryReference Kind="Category" Name="Interaction" />
               <Choice Kind="ProcessAppFlag" Name="Wheel" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="O7ZuW8KdopVJG1pNPkkcdC" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="k5icyGMJ4g3rUTXFmrbr8N" Name="Input" Kind="InputPin" />
             <Pin Id="IxAhjgeZoPYscIxGRNkF4i" Name="Delta" Kind="InputPin" />

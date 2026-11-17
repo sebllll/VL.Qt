@@ -150,10 +150,10 @@ namespace VL.Qt.Elements
         /// <summary>Uniform values by name, like <see cref="ShaderEffect.Uniforms"/>.</summary>
         public Spread<Uniform> Uniforms { get; }
 
-        /// <summary>Extra effect area in DIP: x = left, y = top, width = right, height = bottom.</summary>
+        /// <summary>Extra effect area in units: x = left, y = top, width = right, height = bottom.</summary>
         public RectangleF Padding { get; }
 
-        /// <summary>Pyramid: radius in DIP; Single and TwoPass: unused.</summary>
+        /// <summary>Pyramid: radius in units; Single and TwoPass: unused.</summary>
         public float Strength { get; }
 
         internal sealed override EffectKind Kind => EffectKind.None;

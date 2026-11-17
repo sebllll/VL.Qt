@@ -314,7 +314,7 @@ namespace VL.Qt.Tests
 
         sealed class FakeInteraction(Interaction? previous, SinkSlot sink) : Interaction(99, previous, sink)
         {
-            internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous) { }
+            internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping) { }
         }
 
         [Test]
@@ -771,10 +771,11 @@ namespace VL.Qt.Tests
             var scale = Channel.Create(1f);
             var rotation = Channel.Create(0f);
             var translation = Channel.Create(Vector2.Zero);
+            var pivot = Channel.Create(Vector2.Zero);
             var scales = new List<float>();
             using var sub = scale.Subscribe(scales.Add);
             scales.Clear();
-            void Update() => node.Update(null, active, scale, rotation, translation, 2, 2, PointerDevices.All);
+            void Update() => node.Update(null, active, scale, rotation, translation, pivot, 2, 2, PointerDevices.All);
 
             scale.Value = 3f; // set by the patch: not overwritten before a gesture
             Update();
@@ -783,12 +784,13 @@ namespace VL.Qt.Tests
 
             var reg = new SinkRegistry();
             uint h = reg.Acquire(node.Core.Slot);
-            reg.Dispatch(new SinkRegistryTests.Poll().Active(h, true).Pinch(h, 2f, 180, 10, 20).Bytes);
+            reg.Dispatch(new SinkRegistryTests.Poll().Active(h, true).Pinch(h, 2f, 180, 10, 20, 300, 150).Bytes);
             Update();
             Assert.That(active.Value, Is.True);
             Assert.That(scale.Value, Is.EqualTo(2f));
             Assert.That(rotation.Value, Is.EqualTo(0.5f), "180 degrees = half a cycle");
             Assert.That(translation.Value, Is.EqualTo(new Vector2(0.1f, 0.2f)));
+            Assert.That(pivot.Value, Is.EqualTo(new Vector2(3f, 1.5f)));
             Assert.That(scale.LatestAuthor, Is.EqualTo("Qt"));
 
             for (int i = 0; i < 3; i++) Update();
@@ -807,17 +809,17 @@ namespace VL.Qt.Tests
             var shown = new List<string>();
             int removed = 0;
             using var node = new PinchNode(m => { shown.Add(m); return new Disposer(() => removed++); });
-            var a = (PinchInteraction)node.Update(null, null, null, null, null, 1, 2, PointerDevices.All);
+            var a = (PinchInteraction)node.Update(null, null, null, null, null, null, 1, 2, PointerDevices.All);
             Assert.That(node.InputError, Is.Not.Null);
             Assert.That((a.MinimumPointCount, a.MaximumPointCount), Is.EqualTo((2, 2)), "nothing invalid goes to QtNative");
-            node.Update(null, null, null, null, null, 1, 2, PointerDevices.All);
+            node.Update(null, null, null, null, null, null, 1, 2, PointerDevices.All);
             Assert.That(shown, Has.Count.EqualTo(1), "shown once");
 
-            var b = (PinchInteraction)node.Update(null, null, null, null, null, 4, 3, PointerDevices.All);
+            var b = (PinchInteraction)node.Update(null, null, null, null, null, null, 4, 3, PointerDevices.All);
             Assert.That(node.InputError, Is.Not.Null, "minimum above maximum");
             Assert.That(b.MinimumPointCount, Is.EqualTo(2));
 
-            var c = (PinchInteraction)node.Update(null, null, null, null, null, 2, 3, PointerDevices.All);
+            var c = (PinchInteraction)node.Update(null, null, null, null, null, null, 2, 3, PointerDevices.All);
             Assert.That(node.InputError, Is.Null);
             Assert.That(removed, Is.EqualTo(1));
             Assert.That((c.MinimumPointCount, c.MaximumPointCount), Is.EqualTo((2, 3)));
@@ -841,7 +843,7 @@ namespace VL.Qt.Tests
             Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 3", $"CREATE 2 {drag}" }));
             Assert.That(_sink.OfOp("SET"), Is.Empty, "moves on / both axes / no limits / Left / All = QtNative defaults");
 
-            Frame(R(D(a, moves: false, axis: DragAxis.Vertical, limits: new DragLimits(-100, 0, 100, 0), buttons: PointerButtons.Right)));
+            Frame(R(D(a, moves: false, axis: DragAxis.Vertical, limits: new DragLimits(-1, 0, 1, 0), buttons: PointerButtons.Right)));
             Assert.That(Commands, Is.EqualTo(new[]
             {
                 $"SET 2 {Protocol.Prop.MovesElement} bool(0)",
@@ -850,12 +852,12 @@ namespace VL.Qt.Tests
                 $"SET 2 {acceptedButtons} i32(2)",
             }));
 
-            Frame(R(D(a, moves: false, axis: DragAxis.Vertical, limits: new DragLimits(float.NegativeInfinity, 0, 100, float.PositiveInfinity), buttons: PointerButtons.Right)));
+            Frame(R(D(a, moves: false, axis: DragAxis.Vertical, limits: new DragLimits(float.NegativeInfinity, 0, 1, float.PositiveInfinity), buttons: PointerButtons.Right)));
             Assert.That(Commands, Is.EqualTo(new[] { $"SET 2 {Protocol.Prop.DragLimits} rect(-Infinity,0,100,Infinity)" }));
         }
 
         [Test]
-        public void DragNode_Pins_ToProperties_InPixels()
+        public void DragNode_Pins_ToProperties_InUnits()
         {
             using var node = new DragNode(_ => new Removal());
             var a = (DragInteraction)node.Update(null, null, null, true, DragAxis.Both, default, default, PointerButtons.Left, PointerDevices.All);
@@ -866,7 +868,7 @@ namespace VL.Qt.Tests
             var b = (DragInteraction)node.Update(null, null, null, true, DragAxis.Horizontal, new Vector2(-1, 0), default, PointerButtons.Left, PointerDevices.All);
             Assert.That(b, Is.Not.SameAs(a));
             Assert.That(b.Axis, Is.EqualTo(DragAxis.Horizontal));
-            Assert.That(b.Limits, Is.EqualTo(new DragLimits(-100, 0, float.PositiveInfinity, float.PositiveInfinity)), "units -> pixels, missing max = +inf");
+            Assert.That(b.Limits, Is.EqualTo(new DragLimits(-1, 0, float.PositiveInfinity, float.PositiveInfinity)), "units as given (the reconciler converts), missing max = +inf");
             Assert.That(node.InputError, Is.Null);
         }
 

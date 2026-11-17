@@ -7,7 +7,7 @@
     /// </summary>
     internal static class Protocol
     {
-        public const int ProtocolVersion = 12;
+        public const int ProtocolVersion = 13;
         public const int CommandAlign = 4;
         public const int HeaderSize = 4;
         public const uint RootId = 0;
@@ -32,6 +32,12 @@
             /// new one over it. <see cref="Reset"/> leaves it as it is, like <see cref="ClearColor"/>.
             /// </summary>
             public const ushort SetClear = 9;
+            /// <summary>
+            /// Space pin (#143): u32 <see cref="Space"/> value. QtNative moves only the origin of the window root (top left,
+            /// or the centre of the scene for Normalized and DIP); C# scales (<see cref="SpaceMapping"/>). Default
+            /// DIPTopLeft; <see cref="Reset"/> leaves it as it is, like <see cref="ClearColor"/>.
+            /// </summary>
+            public const ushort SetSpace = 10;
             /// <summary>
             /// ShaderEffect uniforms by name (#437): u32 id, u16 count, u16 flags (<see cref="UniformSet"/>), then per
             /// entry (4-byte aligned) u16 value type (<see cref="Vt"/>), u16 name length (1..<see cref="UniformNameMax"/>),
@@ -388,7 +394,7 @@
             /// </summary>
             public const ushort TouchPoints = 15;
             /// <summary>
-            /// 4 x f32 scale, rotation (degrees, clockwise), translation x, y (parent space) of the running gesture, on
+            /// 6 x f32 scale, rotation (degrees, clockwise), translation x, y, pivot x, y (parent space) of the running gesture, on
             /// change; the last one comes before <see cref="Active"/> 0. Pinch handler (#321).
             /// </summary>
             public const ushort Pinch = 16;
@@ -414,6 +420,15 @@
         {
             public const uint Borderless = 1;
             public const uint Fullscreen = 2;
+        }
+
+        /// <summary>Spaces of <see cref="Op.SetSpace"/> (#143), the order of <see cref="VL.Qt.Space"/>.</summary>
+        public static class Space
+        {
+            public const uint Normalized = 0;
+            public const uint Dip = 1;
+            public const uint DipTopLeft = 2;
+            public const uint PixelTopLeft = 3;
         }
 
         /// <summary>Modes of the TEST export vlqt_test_device_lost (#367), see protocol.h.</summary>

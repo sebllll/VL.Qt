@@ -113,7 +113,7 @@ static partial class QtTextureTest
                 null, PenClicked, null, null, PointerButtons.Left, PointerDevices.Pen);
             var interactionB = _drag.Update(null, Dragging, DragDelta, true, DragAxis.Both, default, default, PointerButtons.Left, PointerDevices.All);
             var interactionC = _touchPoints.Update(
-                _pinch.Update(null, PinchActive, PinchScale, PinchRotation, null, 2, 2, PointerDevices.All),
+                _pinch.Update(null, PinchActive, PinchScale, PinchRotation, null, null, 2, 2, PointerDevices.All),
                 Points, PointerDevices.All, true);
             var children = Spread.Create<IElement?>(
                 Rect(_rectA, 20, 20, 100, 80, new Color4(1, 0, 0, 1), interactionA),

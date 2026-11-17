@@ -150,6 +150,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Colors" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="Xhapk54lqD5uBKKiFd75P7" Name="Input" Kind="InputPin" />
             <Pin Id="SoMuAKD931DLRKUTvvGYr8" Name="Frame" Kind="InputPin" />
             <Pin Id="xKe8QKNeiuZOHAptUobVUO" Name="Border" Kind="InputPin" />
@@ -180,6 +181,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Frame" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="qKgsgV904dy6EpnK4tFMLf" Name="Input" Kind="InputPin" />
             <Pin Id="VRX517E9E8Wn8qTdK9XI9u" Name="Radius" Kind="InputPin" />
             <Pin Id="MUPzWF8PL8tqBnrW3OnUO5" Name="Border Width" Kind="InputPin" />
@@ -205,6 +207,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Text" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="Bo0hrBY77x65r856pHWtAh" Name="Input" Kind="InputPin" />
             <Pin Id="AIF9OFsar3RNu7VUitbujF" Name="Font Family" Kind="InputPin" />
             <Pin Id="W7ivwCz5EXjYuf441UY15K" Name="Font Size" Kind="InputPin" />
@@ -314,6 +317,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Radius" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="5cERLeHzWvNTSP3kx4YhHl" Name="Input" Kind="InputPin" />
             <Pin Id="YH10d5JmmMHmWjvU7bIApt" Name="Radius" Kind="InputPin" />
             <Pin Id="OBAvg3GxgJShDFwadjGPDl" Name="State" Kind="InputPin" />

@@ -107,6 +107,12 @@ namespace VL.Qt.Elements
             }
         }
 
+        /// <summary>
+        /// Mapping of the scene the poll buffers come from (#143), set by <see cref="Reconciler.Update(Element?, in SpaceMapping)"/>:
+        /// <see cref="Dispatch"/> converts the logical pixels of Qt to units with it.
+        /// </summary>
+        public SpaceMapping Mapping { get; set; } = SpaceMapping.Default;
+
         public bool TryResolve(uint handle, out SinkSlot slot)
         {
             var found = _slots.TryGetValue(handle, out var b);
@@ -133,7 +139,7 @@ namespace VL.Qt.Elements
         /// one sink are told apart by their handles); offsets &gt; 0 are for items that serve several slots.
         /// Records with an unknown handle, an index above <see cref="MaxIndexOffset"/> (or a target beyond
         /// int.MaxValue), an unknown event or a too short payload are ignored. Values from Qt (logical pixels)
-        /// are converted to units (<see cref="Geometry.FromQt(float)"/>, v1: DIPTopLeft only). State values
+        /// are converted to units (<see cref="Mapping"/>; SceneBounds is in root coordinates, QtNative maps it). State values
         /// (Measured, SceneBounds, Media, Error) of a handle that is not primary are ignored too.
         /// </summary>
         public DispatchResult Dispatch(ReadOnlySpan<byte> poll)
@@ -143,7 +149,7 @@ namespace VL.Qt.Elements
             while (r.MoveNext())
             {
                 if (_slots.TryGetValue(r.Handle, out var b) && (b.Primary || !IsState(r.Event))
-                    && Target(b.Slot, r.Index, out int index) && Apply(ref r, b.Slot.Sink!, index))
+                    && Target(b.Slot, r.Index, out int index) && Apply(ref r, b.Slot.Sink!, index, Mapping))
                     applied++;
                 else
                     ignored++;
@@ -169,7 +175,7 @@ namespace VL.Qt.Elements
         const int maxTouchPoints = 64;
 
         /// <summary>EV_TOUCH_POINTS: u32 count, then per point id, x, y, pressure, w, h. Sent on change only, so allocating is fine.</summary>
-        static bool ApplyTouchPoints(ReadOnlySpan<byte> payload, SinkState state)
+        static bool ApplyTouchPoints(ReadOnlySpan<byte> payload, SinkState state, in SpaceMapping mapping)
         {
             if (payload.Length < 4)
                 return false;
@@ -190,9 +196,9 @@ namespace VL.Qt.Elements
                     var p = payload.Slice(4 + i * touchPointSize, touchPointSize);
                     builder.Add(new TouchPoint(
                         (int)Math.Min(System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(p), int.MaxValue),
-                        Geometry.FromQt(new Vector2(ReadF32(p, 4), ReadF32(p, 8))),
+                        mapping.FromQt(new Vector2(ReadF32(p, 4), ReadF32(p, 8))),
                         ReadF32(p, 12),
-                        Geometry.FromQt(new Vector2(ReadF32(p, 16), ReadF32(p, 20)))));
+                        mapping.FromQt(new Vector2(ReadF32(p, 16), ReadF32(p, 20)))));
                 }
                 state.TouchPoints = builder.ToSpread();
             }
@@ -241,18 +247,18 @@ namespace VL.Qt.Elements
         }
 
         /// <summary>Validates the record first, so ignored records do not grow the sink's slot list.</summary>
-        static bool Apply(ref EventReader r, ElementSink sink, int index)
+        static bool Apply(ref EventReader r, ElementSink sink, int index, in SpaceMapping mapping)
         {
             int len = r.Payload.Length;
             switch (r.Event)
             {
                 case Protocol.Ev.Measured:
                     if (len < 8) return false;
-                    sink[index].MeasuredSize = Geometry.FromQt(new Vector2(r.ReadF32(0), r.ReadF32(4)));
+                    sink[index].MeasuredSize = mapping.FromQt(new Vector2(r.ReadF32(0), r.ReadF32(4)));
                     return true;
                 case Protocol.Ev.SceneBounds:
                     if (len < 16) return false;
-                    sink[index].SceneBounds = Geometry.FromQt(new RectangleF(r.ReadF32(0), r.ReadF32(4), r.ReadF32(8), r.ReadF32(12)));
+                    sink[index].SceneBounds = mapping.FromQt(new RectangleF(r.ReadF32(0), r.ReadF32(4), r.ReadF32(8), r.ReadF32(12)));
                     return true;
                 case Protocol.Ev.Hover:
                     if (len < 1) return false;
@@ -292,22 +298,23 @@ namespace VL.Qt.Elements
                 case Protocol.Ev.Drag:
                     if (len < 8) return false;
                     var dr = sink[index];
-                    dr.DragDelta = Geometry.FromQt(new Vector2(r.ReadF32(0), r.ReadF32(4)));
+                    dr.DragDelta = mapping.FromQt(new Vector2(r.ReadF32(0), r.ReadF32(4)));
                     unchecked { dr.DragUpdates++; }
                     return true;
                 case Protocol.Ev.TouchPoints:
-                    return ApplyTouchPoints(r.Payload, sink[index]);
+                    return ApplyTouchPoints(r.Payload, sink[index], mapping);
                 case Protocol.Ev.Pinch:
-                    if (len < 16) return false;
-                    var pi = sink[index]; // scale: factor, rotation: degrees -> cycles, translation: pixels -> units
+                    if (len < 24) return false;
+                    var pi = sink[index]; // scale: factor, rotation: degrees -> cycles, translation and pivot: pixels -> units
                     pi.PinchScale = r.ReadF32(0);
                     pi.PinchRotation = r.ReadF32(4) / 360f;
-                    pi.PinchTranslation = Geometry.FromQt(new Vector2(r.ReadF32(8), r.ReadF32(12)));
+                    pi.PinchTranslation = mapping.FromQt(new Vector2(r.ReadF32(8), r.ReadF32(12)));
+                    pi.PinchPivot = mapping.FromQt(new Vector2(r.ReadF32(16), r.ReadF32(20)));
                     unchecked { pi.PinchUpdates++; }
                     return true;
                 case Protocol.Ev.Pointer:
                     if (len < 8) return false;
-                    sink[index].PointerPosition = Geometry.FromQt(new Vector2(r.ReadF32(0), r.ReadF32(4)));
+                    sink[index].PointerPosition = mapping.FromQt(new Vector2(r.ReadF32(0), r.ReadF32(4)));
                     return true;
                 case Protocol.Ev.Media:
                     if (len < 8) return false;

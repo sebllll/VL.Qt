@@ -53,6 +53,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LoadFont" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="2Bt9YWpw64QhfFlflTzNb5" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="DABBNc2iPJX7W40cxB2YmM" Name="Path" Kind="InputPin" />
             <Pin Id="H3gH8mgKVAEB8oYGvcKQ2R" Name="Family" Kind="OutputPin" />

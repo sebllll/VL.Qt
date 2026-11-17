@@ -44,6 +44,7 @@
               <CategoryReference Kind="Category" Name="Interaction" />
               <Choice Kind="ProcessAppFlag" Name="Touch Points" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="9HdWI7jKOSJnBMKZJHDvrl" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="ISSpgSJJeYaP5iV9Zja669" Name="Input" Kind="InputPin" />
             <Pin Id="j1UND8uDWccXiDfaDDyoni" Name="Points" Kind="InputPin" />
@@ -97,6 +98,7 @@
                   <CategoryReference Kind="RecordType" Name="TouchPoint" />
                   <Choice Kind="OperationCallFlag" Name="Split" />
                 </p:NodeReference>
+                <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                 <Pin Id="bie77Bnow6YrDno8RmHU3r" Name="Input" Kind="StateInputPin" />
                 <Pin Id="i7W1R0nPb9QmFpAy5drlZJ" Name="Output" Kind="OutputPin" IsHidden="true" />
                 <Pin Id="dEeWrjrOdCG6azb6GUoYB0" Name="Id" Kind="OutputPin" />

@@ -8,7 +8,8 @@ namespace VL.Qt.Nodes
 {
     /// <summary>
     /// A link of the Effect chain driven by shaders shipped with VL.Qt (<c>builtin:</c>, #438): template, shader ids,
-    /// padding, radius and uniforms as <see cref="ShaderLink"/> describes them; padding and radius in DIP. TwoPass shaders tell
+    /// padding, radius and uniforms as <see cref="ShaderLink"/> describes them; padding and radius in units of the renderer's space
+    /// (the reconciler converts them, rounds the padding up to whole DIP and scales the uniforms of <see cref="Uniform.IsLength"/>). TwoPass shaders tell
     /// their passes apart by the float uniform passIndex that QtNative sets (0, then 1).
     /// </summary>
     internal sealed class BuiltinShaderLinkEffect : ShaderLink
@@ -17,20 +18,13 @@ namespace VL.Qt.Nodes
         /// <param name="template">The pass template (Single, TwoPass, Pyramid).</param>
         /// <param name="shaderIds">Ids of the built-in shaders the template uses.</param>
         /// <param name="uniforms">Uniform values sent to the shaders.</param>
-        /// <param name="padding">Space around the element the effect may draw into, in DIP.</param>
-        /// <param name="radius">Pyramid: radius in DIP; Single and TwoPass: unused.</param>
+        /// <param name="padding">Space around the element the effect may draw into, in units.</param>
+        /// <param name="radius">Pyramid: radius in units; Single and TwoPass: unused.</param>
         public BuiltinShaderLinkEffect(Effect? previous, ushort template, ImmutableArray<ulong> shaderIds, Spread<Uniform> uniforms,
             RectangleF padding, float radius = 0f)
             : base(previous, template, shaderIds, uniforms, padding, radius)
         {
         }
-    }
-
-    /// <summary>Padding sums up in float: values like 60.000004 must not grow by a whole DIP.</summary>
-    internal static class EffectPadding
-    {
-        /// <summary>Rounds up to whole DIP, ignoring float noise below 0.001.</summary>
-        public static float Ceil(float dip) => MathF.Ceiling(dip - 0.001f);
     }
 
     /// <summary>

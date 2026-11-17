@@ -707,12 +707,14 @@ void collectPinch(Scene& scene, HandlerNode& hn)
     if (ps.running && !hn.sentActive)
         pushFlag(scene, VLQT_EV_ACTIVE, hn.sink, true);
     const float* v = ps.value;
-    const bool changed = v[0] != hn.sentPinch[0] || v[1] != hn.sentPinch[1] || v[2] != hn.sentPinch[2] || v[3] != hn.sentPinch[3];
+    bool changed = false;
+    for (int i = 0; i < 6; ++i)
+        changed = changed || v[i] != hn.sentPinch[i];
     if ((ps.running || hn.sentActive) && (changed || ps.gestures != hn.sentGestures)) {
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 6; ++i)
             hn.sentPinch[i] = v[i];
         hn.sentGestures = ps.gestures;
-        scene.pushEvent(VLQT_EV_PINCH, hn.sink, 0, v, quint16(4 * sizeof(float)));
+        scene.pushEvent(VLQT_EV_PINCH, hn.sink, 0, v, quint16(6 * sizeof(float)));
     }
     if (!ps.running && hn.sentActive)
         pushFlag(scene, VLQT_EV_ACTIVE, hn.sink, false);
@@ -872,7 +874,8 @@ void measureGeometry(Scene& scene, Node& n)
 
     // Item geometry (frame, #469: an auto-sized Group may start in negative coordinates), not boundingRect():
     // QQuickText overrides that with the painted text rect.
-    const QRectF r = item->mapRectToScene(n.xf ? itemFrame(*n.xf, item) : QRectF(0, 0, item->width(), item->height()));
+    // In the coordinates of the window root (#143): its origin is the origin of the Space (the root may sit at the centre).
+    const QRectF r = item->mapRectToItem(scene.root, n.xf ? itemFrame(*n.xf, item) : QRectF(0, 0, item->width(), item->height()));
     const float b[4] = {float(r.x()), float(r.y()), float(r.width()), float(r.height())};
     if (!s.hasBounds || b[0] != s.bounds[0] || b[1] != s.bounds[1] || b[2] != s.bounds[2] || b[3] != s.bounds[3]) {
         for (int i = 0; i < 4; ++i)

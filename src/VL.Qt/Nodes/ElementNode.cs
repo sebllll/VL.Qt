@@ -11,7 +11,7 @@ namespace VL.Qt.Nodes
 {
     /// <summary>
     /// Inputs every element node has (the common pins of <see cref="Element"/>). Value equality is used for
-    /// change detection. Values are in units of the renderer's space; nothing is converted here (Geometry.cs does).
+    /// change detection. Values are in units of the renderer's space; nothing is converted here (the reconciler does, with the SpaceMapping of the scene).
     /// </summary>
     internal readonly record struct CommonInputs
     {

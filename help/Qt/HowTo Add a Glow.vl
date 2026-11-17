@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="jNFyjCJR4FeBFEdxTlqeKC" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="jNFyjCJR4FeBFEdxTlqeKC" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="Vtdv2AY9H9W7EaKyN0lqU3" Location="VL.CoreLib" />
   <DocumentDependency Id="DrfrZt7DI4qK5Sauqoanvz" Location="../../VL.Qt.vl" />
   <Patch Id="OWY46Z5cHVWPynEoe4sppJ">
@@ -51,6 +51,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Glow" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="VeS8y9gWOzPTxu61XygtZN" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="n2c63YrIOlndQnOFAXJux4" Name="Input" Kind="InputPin" />
             <Pin Id="YcXS9Xkp0E2GLaSHmewg6V" Name="Color" Kind="InputPin" DefaultValue="0.15, 0.78, 1, 1" />
@@ -126,6 +127,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="InnerShadow" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="1hk3ecTKGbSreTVn48n0KG" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="gxE9vTO3KhmpsJhwPChruE" Name="Input" Kind="InputPin" />
             <Pin Id="DVVBZrDfjX9bOwjUNgl5iV" Name="Color" Kind="InputPin" DefaultValue="0.25, 0.05, 0, 0.9" />
@@ -213,7 +215,7 @@
             <Pin Id="Gxvr1zMk5lqoGptmEE7VqG" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="E4OZwV8DbfbxTj0BU8zr3Z" Name="Style" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="120,819,85,19" Id="cx0luGZL0yaVquYgZC6BBF">
+          <Node Bounds="120,759,85,19" Id="cx0luGZL0yaVquYgZC6BBF">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -227,6 +229,7 @@
             <Pin Id="KrJ28pE5booECqy5oBSHGW" Name="Input" Kind="InputPin" />
             <Pin Id="kTXfHaFj6SjmbLM57zdrif" Name="Space" Kind="InputPin" />
             <Pin Id="JeM5CTQ2IGdMAY7JdmK5EM" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="CkhnpGhi43PNKWGsyQssFX" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="KSCEftCqOl35I8KPNG4X8C" Name="Enabled" Kind="InputPin" />
             <Pin Id="C95OgEeU0z0F1MFBhlscCV" Name="Title" Kind="InputPin" />
             <Pin Id="AbSaXwdjeiIAV6f6u3v15A" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
@@ -237,8 +240,9 @@
             <Pin Id="pgC34xQ72kzI2oWcrFSHq3" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="m1OjjLK5XHavK6Fr28pLPO" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="Vg04YmjZ4HLOvDRaZh8KJz" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="K9jiU7fP1BdLwtXQT1lyWa" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="sYdzzA40Wp3ZpAlcjGBTyn" Comment="Title" Bounds="202,755,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Add a Glow">
+          <Pad Id="sYdzzA40Wp3ZpAlcjGBTyn" Comment="Title" Bounds="202,725,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Add a Glow">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

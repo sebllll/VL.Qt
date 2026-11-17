@@ -17,7 +17,6 @@ namespace VL.Qt.Stride
     [SupportedOSPlatform("windows")]
     internal sealed class SharedTextureScene : IDisposable
     {
-        readonly NodeContext _nodeContext;
         readonly NodeErrors _errors;
         readonly QtTextureRenderer _renderer;
         readonly OffscreenRenderer _scene;
@@ -32,12 +31,10 @@ namespace VL.Qt.Stride
         // bound to the current texture once, so it holds content; _lastBindCode: result of the last Bind, 0 = ok.
         bool _created, _hasContent, _scheduled, _enabled, _debug, _disposed;
         int _lastBindCode, _rebindWait;
-        IDisposable? _spaceWarning;
         const string SamplesPhase = "Multisample Count";
 
         public SharedTextureScene(NodeContext nodeContext)
         {
-            _nodeContext = nodeContext;
             _errors = new NodeErrors(nodeContext);
             _renderer = QtTextureRenderer.ForApp(nodeContext.AppHost);
             _scene = new OffscreenRenderer(SceneRegistry.ForApp(nodeContext.AppHost), 1920, 1080);
@@ -94,11 +91,9 @@ namespace VL.Qt.Stride
                 _debug = debug;
                 Native.vlqt_window_set_debug(_scene.Scene, debug ? 1 : 0);
             }
-            if (enabled)
-                UpdateSpaceWarning(space);
             // Qt does not premultiply the clear colour itself (render-texture.md, task 1.8).
             var premultiplied = new Color4(clearColor.R * clearColor.A, clearColor.G * clearColor.A, clearColor.B * clearColor.A, clearColor.A);
-            _scene.Update(input, Geometry.Resolve(space), premultiplied, clear, enabled);
+            _scene.Update(input, space, premultiplied, clear, enabled);
 
             if (enabled && _texture is not null)
             {
@@ -238,18 +233,6 @@ namespace VL.Qt.Stride
                 _errors.Clear(SamplesPhase);
         }
 
-        void UpdateSpaceWarning(Space space)
-        {
-            bool unsupported = !Geometry.IsSupported(space);
-            if (unsupported && _spaceWarning is null)
-                _spaceWarning = _nodeContext.AddPersistentMessage(MessageSeverity.Warning, Renderer.SpaceWarning);
-            else if (!unsupported && _spaceWarning is not null)
-            {
-                _spaceWarning.Dispose();
-                _spaceWarning = null;
-            }
-        }
-
         // Called by QtTextureRenderer at the start of the draw, before the batch: sends this frame's commands to QtNative.
         internal OffscreenRenderer ApplyCommands()
         {
@@ -293,7 +276,6 @@ namespace VL.Qt.Stride
             _scene.Dispose();
             _texture?.Dispose();
             _texture = null;
-            _spaceWarning?.Dispose();
             _errors.Dispose();
         }
     }

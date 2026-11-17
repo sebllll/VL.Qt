@@ -12,8 +12,9 @@ namespace VL.Qt
     /// against a default instance of its type, so only non-default values are sent (Qt defaults = element
     /// defaults, see 03c). No reflection, no allocation in the steady state.
     /// <para>
-    /// Units → Qt logical pixels only via <see cref="Geometry"/> (v1: DIPTopLeft, lengths × 100; angles,
-    /// opacity, scale factors and other ratios unchanged).
+    /// Units → Qt logical pixels only via the <see cref="SpaceMapping"/> of the scene (<c>_mapping</c>; angles,
+    /// opacity, scale factors and other ratios unchanged). A length is written again when the unit scale changed
+    /// (<c>_rescale</c>), whether or not its value did.
     /// </para>
     /// </summary>
     internal sealed partial class Reconciler
@@ -138,8 +139,8 @@ namespace VL.Qt
         /// </summary>
         void DiffCommon(uint id, Element p, Element n)
         {
-            if (p.Size != n.Size)
-                _sink.SetVec2(id, P.Size, Geometry.ToQt(n.Size.X), Geometry.ToQt(n.Size.Y));
+            if (_rescale || p.Size != n.Size)
+                _sink.SetVec2(id, P.Size, _mapping.ToQt(n.Size.X), _mapping.ToQt(n.Size.Y));
 
             if (p.Opacity != n.Opacity)
                 _sink.SetF32(id, P.Opacity, n.Opacity);
@@ -153,8 +154,8 @@ namespace VL.Qt
             // Transform and Anchor are sent separately; QtNative resolves the anchor against the item's actual size
             // (follows Auto Size, layout and Size changes without a resend from here). Every TRANSFORM resets a drag
             // offset (#209, pin wins), so it is only sent on change.
-            if (!Same(p.Transform, n.Transform))
-                _sink.SetMat4(id, P.Transform, Geometry.ToQt(n.Transform));
+            if (_rescale || !Same(p.Transform, n.Transform))
+                _sink.SetMat4(id, P.Transform, _mapping.ToQt(n.Transform));
             if (p.Anchor != n.Anchor)
             {
                 int pa = Geometry.ToQtAlignment(p.Anchor), na = Geometry.ToQtAlignment(n.Anchor);
@@ -166,12 +167,12 @@ namespace VL.Qt
         {
             if (p.Fill != n.Fill)
                 _sink.SetColor(id, P.Color, n.Fill);
-            if (p.Radius != n.Radius)
-                _sink.SetF32(id, P.Radius, Geometry.ToQt(n.Radius));
+            if (_rescale || p.Radius != n.Radius)
+                _sink.SetF32(id, P.Radius, _mapping.ToQt(n.Radius));
             if (p.StrokeColor != n.StrokeColor)
                 _sink.SetColor(id, P.BorderColor, n.StrokeColor);
-            if (p.StrokeWidth != n.StrokeWidth)
-                _sink.SetF32(id, P.BorderWidth, Geometry.ToQt(n.StrokeWidth));
+            if (_rescale || p.StrokeWidth != n.StrokeWidth)
+                _sink.SetF32(id, P.BorderWidth, _mapping.ToQt(n.StrokeWidth));
         }
 
         /// <summary>Font size is always sent on creation: Qt's default font size is platform dependent.</summary>
@@ -181,8 +182,8 @@ namespace VL.Qt
                 _sink.SetString(id, P.Text, n.Content.AsSpan());
             if (!string.Equals(p.FontFamily, n.FontFamily))
                 _sink.SetString(id, P.FontFamily, n.FontFamily.AsSpan());
-            if (created || Geometry.ToFontPixels(p.FontSize) != Geometry.ToFontPixels(n.FontSize))
-                _sink.SetF32(id, P.FontSize, Geometry.ToFontPixels(n.FontSize));
+            if (created || _rescale || _mapping.ToFontPixels(p.FontSize) != _mapping.ToFontPixels(n.FontSize))
+                _sink.SetF32(id, P.FontSize, _mapping.ToFontPixels(n.FontSize));
             if (p.Weight != n.Weight)
                 _sink.SetI32(id, P.FontWeight, (int)n.Weight);
             if (p.Italic != n.Italic)
@@ -199,8 +200,8 @@ namespace VL.Qt
                 _sink.SetI32(id, P.Elide, (int)n.Elide);
             if (p.LineHeight != n.LineHeight)
                 _sink.SetF32(id, P.LineHeight, n.LineHeight);
-            if (p.LetterSpacing != n.LetterSpacing)
-                _sink.SetF32(id, P.LetterSpacing, Geometry.ToQt(n.LetterSpacing));
+            if (_rescale || p.LetterSpacing != n.LetterSpacing)
+                _sink.SetF32(id, P.LetterSpacing, _mapping.ToQt(n.LetterSpacing));
             if (p.Autofit != n.Autofit)
                 _sink.SetI32(id, P.FontSizeMode, (int)n.Autofit);
         }
@@ -347,10 +348,10 @@ namespace VL.Qt
 
         void DiffLayout(uint id, float pSpacing, float nSpacing, float pPadding, float nPadding, int pAlign, int nAlign)
         {
-            if (pSpacing != nSpacing)
-                _sink.SetF32(id, P.Spacing, Geometry.ToQt(nSpacing));
-            if (pPadding != nPadding)
-                _sink.SetF32(id, P.Padding, Geometry.ToQt(nPadding));
+            if (_rescale || pSpacing != nSpacing)
+                _sink.SetF32(id, P.Spacing, _mapping.ToQt(nSpacing));
+            if (_rescale || pPadding != nPadding)
+                _sink.SetF32(id, P.Padding, _mapping.ToQt(nPadding));
             if (pAlign != nAlign)
                 _sink.SetI32(id, P.ChildAlignment, nAlign);
         }

@@ -320,6 +320,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="QtRenderer" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="FBImcl016FyNv7Kg1TEwJi" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="GkS0md7EieKMRfhlADMGCU" Name="Input" Kind="InputPin" />
             <Pin Id="MmrZhU9MrYVLwYCg8yzmwz" Name="Space" Kind="InputPin" />

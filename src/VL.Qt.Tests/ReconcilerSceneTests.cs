@@ -97,7 +97,7 @@ namespace VL.Qt.Tests
                 .Click(h0, 1).Click(h1, 2).Bytes);
             Assert.That(res.Applied, Is.EqualTo(4));
             Assert.That(res.Ignored, Is.EqualTo(3));
-            Assert.That(sink[0].MeasuredSize, Is.EqualTo(Geometry.FromQt(new Vector2(1, 2))));
+            Assert.That(sink[0].MeasuredSize, Is.EqualTo(SpaceMapping.Default.FromQt(new Vector2(1, 2))));
             Assert.That(sink[0].SceneBounds, Is.EqualTo(default(RectangleF)));
             Assert.That(sink[0].Error, Is.EqualTo("first"));
             Assert.That(sink[0].PendingClicks, Is.EqualTo(3), "clicks of both occurrences add up");

@@ -65,6 +65,8 @@ Row and Column lay out their children with spacing, padding and alignment:
 
 <img src="docs/images/layout.png" width="820" alt="Column with centered children, Row with bottom aligned children, nested Row and Column">
 
+Lengths are in units; the `Space` pin of the renderer sets origin and unit: `DIPTopLeft` (default: origin top left, 1 unit = 100 DIP, the device independent pixels of Qt), `DIP` (origin in the center), `Normalized` (origin in the center, height from -1 to 1) and `PixelTopLeft` (origin top left, 1 unit = 100 device pixels). y points down in all of them, as in Skia. See `HowTo Choose a Space`.
+
 The help patches in `help/Qt/` show one topic each; open them from the Help Browser (F1). They cover drawing, structure and layout, interaction, widgets and styles, images, effects and shaders, window and diagnostics. The full list is in [Help patches](docs/help-patches.md).
 
 ### Export a standalone app
@@ -155,7 +157,7 @@ Your own filter shaders (see [Shaders](#shaders)) appear as nodes of the same ch
 
 <img src="docs/images/effect-chain.png" width="820" alt="The text VL.Qt: Blur, RGBSplit, DropShadow on the left, DropShadow, RGBSplit, Blur on the right; the shadow is split and blurred in the second picture">
 
-Help patches: `HowTo Chain Effects`, `HowTo Mask an Element`, `HowTo Add a Glow`, `HowTo Use Motion Blurs`, `HowTo Displace an Element`, `HowTo Blend Elements`, `HowTo Draw Trails`.
+Help patches: `HowTo Chain Effects`, `HowTo Mask an Element`, `HowTo Add a Glow`, `HowTo Blur An Element`, `HowTo Displace an Element`, `HowTo Blend Elements`, `HowTo Draw Trails`.
 
 More: [Effects](docs/effects-and-shaders.md#effects) (all nodes, mask and padding, [shader effects](docs/effects-and-shaders.md#shader-effects), [shaders in the effect chain](docs/effects-and-shaders.md#shaders-in-the-effect-chain)).
 
@@ -180,7 +182,7 @@ More: [Shaders](docs/effects-and-shaders.md#shaders) (annotations, the [Sampler 
 
 `QtTexture` (category `Qt`, package `VL.Qt.Stride`) works like `Renderer [Qt]`, but opens no window: it renders the element tree offscreen and outputs a Stride `Texture` that you draw, mix or feed to TextureFX like any other texture. **Windows only and experimental** (the pins may still change).
 
-- **Pins:** `Input` (element tree), `Size` (pixels, default 1920×1080; 1 DIP = 1 pixel), `Space`, `Clear Color` (default transparent, so the texture has an alpha channel), `Clear` (default on; off keeps the previous frame: trails and feedback, where the alpha of `Clear Color` is the fade strength per frame, 0 = no fade, which is the default here, see the help patch `HowTo Draw Trails`), `Format` (default `B8G8R8A8_UNorm_SRgb`; 8-bit RGBA/BGRA or `R16G16B16A16_Float`; SRgb and Float hold linear premultiplied values, UNorm the gamma-space values of a Qt window), `Enabled`, `Debug`; outputs `Output` (`Texture`) and `Error`.
+- **Pins:** `Input` (element tree), `Size` (pixels, default 1920×1080; 1 DIP = 1 pixel), `Space` (default `DIPTopLeft`; the device pixel ratio is 1, so `PixelTopLeft` is the same), `Clear Color` (default transparent, so the texture has an alpha channel), `Clear` (default on; off keeps the previous frame: trails and feedback, where the alpha of `Clear Color` is the fade strength per frame, 0 = no fade, which is the default here, see the help patch `HowTo Draw Trails`), `Format` (default `B8G8R8A8_UNorm_SRgb`; 8-bit RGBA/BGRA or `R16G16B16A16_Float`; SRgb and Float hold linear premultiplied values, UNorm the gamma-space values of a Qt window), `Enabled`, `Debug`; outputs `Output` (`Texture`) and `Error`.
 - **GPU only:** no readback to the CPU. Qt renders on its own D3D11 device into a texture shared with Stride's device; shared fences make Stride wait on the GPU until Qt has written. The texture is ready in the same frame, the scene is rendered only when it changed, and several `QtTexture` nodes do not block each other.
 - **Alpha:** the texture is premultiplied: draw it with `AlphaBlendPremultiplied` (`AlphaBlend` expects straight alpha and darkens half-transparent parts); where straight alpha is expected, unpremultiply it first (RGB divided by alpha); VL.Stride has no TextureFX for that yet.
 - **Input:** the optional pin `Input Notifications` takes mouse, touch and keyboard notifications in texture pixels; `ToTexturePixels` maps a window's input onto a texture on a quad. A press inside the texture gives the scene keyboard focus.

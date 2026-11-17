@@ -54,6 +54,7 @@ const char* opName(quint16 op)
     case VLQT_OP_RESET: return "RESET";
     case VLQT_OP_SET_STYLE: return "SET_STYLE";
     case VLQT_OP_SET_CLEAR: return "SET_CLEAR";
+    case VLQT_OP_SET_SPACE: return "SET_SPACE";
     case VLQT_OP_SET_UNIFORMS: return "SET_UNIFORMS";
     case VLQT_OP_SET_EFFECT_CHAIN: return "SET_EFFECT_CHAIN";
     case VLQT_OP_SET_QML_PROPERTIES: return "SET_QML_PROPERTIES";
@@ -139,6 +140,9 @@ Scene::Scene(QQuickWindow* w, QQmlEngine* e)
     : window(w), engine(e), root(new QQuickItem()), elements(e), handlers(e), clearColor(w->color())
 {
     elements.proxyParent = root; // Group frame proxies of ShaderEffects (#486)
+    // The origin of the root follows its size (centre spaces); the root's own signals, so a window swap keeps them.
+    QObject::connect(root, &QQuickItem::widthChanged, root, [this] { updateRootOrigin(); });
+    QObject::connect(root, &QQuickItem::heightChanged, root, [this] { updateRootOrigin(); });
     attachRoot();
 }
 
@@ -150,6 +154,7 @@ void Scene::attachRoot()
     root->setSize(window->size());
     QObject::connect(window, &QWindow::widthChanged, root, [this](int width) { root->setWidth(width); });
     QObject::connect(window, &QWindow::heightChanged, root, [this](int height) { root->setHeight(height); });
+    updateRootOrigin();
     watchWindowGeometry(*this);
 }
 
@@ -203,6 +208,24 @@ void Scene::setClear(bool clear)
     clearFrames = clear;
     releaseFeedback();
     restoreFeedback();
+}
+
+int Scene::setSpace(quint32 space, std::string& err)
+{
+    if (space > VLQT_SPACE_PIXEL_TOP_LEFT) {
+        err = "unknown space " + std::to_string(space);
+        return ApplyBadValue;
+    }
+    sceneSpace = space;
+    updateRootOrigin();
+    return ApplyOk;
+}
+
+void Scene::updateRootOrigin()
+{
+    // Only the origin moves, never a scale: layers and text of the elements keep rendering at item size x dpr (C# scales).
+    const bool centre = sceneSpace == VLQT_SPACE_NORMALIZED || sceneSpace == VLQT_SPACE_DIP;
+    root->setPosition(centre ? QPointF(root->width() / 2, root->height() / 2) : QPointF());
 }
 
 void Scene::releaseFeedback()
@@ -369,6 +392,10 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                 case VLQT_OP_SET_CLEAR:
                     if (expect(4))
                         setClear(rd<quint32>(p) != 0);
+                    break;
+                case VLQT_OP_SET_SPACE:
+                    if (expect(4))
+                        rc = setSpace(rd<quint32>(p), reason);
                     break;
                 case VLQT_OP_RESET:
                     if (expect(0))

@@ -136,7 +136,7 @@ namespace VL.Qt.Tests
             Frame(BuildScene());
             Frame(BuildScene(rotation: 0.6f));
             var expected = new RecordingSink();
-            expected.SetMat4(2, P.Transform, Geometry.ToQt(Matrix.RotationZ(0.6f)));
+            expected.SetMat4(2, P.Transform, SpaceMapping.Default.ToQt(Matrix.RotationZ(0.6f)));
             Assert.That(_sink.Commands, Is.EqualTo(expected.Commands));
         }
 
@@ -205,7 +205,7 @@ namespace VL.Qt.Tests
             Frame(new Group { Size = new Vector2(0, 0), Transform = rot });
             Assert.That(_sink.Commands.Any(c => c.StartsWith($"SET 1 {P.Anchor} ")), Is.False, "TopLeft is QtNative default");
             var expected = new RecordingSink();
-            expected.SetMat4(1, P.Transform, Geometry.ToQt(rot));
+            expected.SetMat4(1, P.Transform, SpaceMapping.Default.ToQt(rot));
             Assert.That(_sink.Commands, Does.Contain(expected.Commands.Single()));
         }
 

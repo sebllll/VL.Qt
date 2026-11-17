@@ -412,6 +412,7 @@ static class Program
         if (Selected("tooltip")) TooltipTest.Run(outDir, Check, Pump, Grab); // Tooltip previews: window change count (static scene, property, hover, video), snapshot_fit sizes, errors (#544).
         if (Selected("font")) FontTest.Run(outDir, Check, Pump, Grab, () => s_log.ToString()); // App fonts (#15, LoadFont): shared per file, refs, removal at the end of the pump, errors, Text with the loaded family, one-time warning for a missing family.
         if (Selected("group-frame")) GroupFrameTest.Run(outDir, Check, Pump, Grab); // Group frame in negative coordinates: snapshot = whole frame, effect layer unclipped (#475).
+        if (Selected("space")) SpaceTest.Run(outDir, Check, Pump, Grab); // Space (#143): Normalized/DIP/DIPTopLeft/PixelTopLeft pixels, resize, Scene Bounds and click position in units, resync; QT_SCALE_FACTOR=1.5 for dpr 1.5.
         if (Selected("qttexture")) QtTextureTest.Run(outDir, Check, Pump, Grab); // QtTexture (#116): test exports (second D3D11 device, shared textures, readback, ref counts, handle count), offscreen scene bound and rendered through the fences.
 #if WINDOWS
         if (Selected("Msaa")) MsaaTest.Run(outDir, Check, Pump, Grab); // MSAA (#118): edge pixels per sample count in a window and an offscreen scene, live window change, clamp, input after a swap.

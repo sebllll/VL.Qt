@@ -124,16 +124,24 @@ FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root)
     auto* view = new FeedbackView(root, source);
     m_view = view;
 
-    // Sized to the root, which Scene sizes to the window (also offscreen, where the content item stays 0 x 0). One
-    // connection per item, each with the item as context: the view is deleted at once, the source later.
-    const auto fitSource = [source, root] { source->setSize(root->size()); };
-    const auto fitView = [view, root] { view->setSize(root->size()); };
+    // Sized to the root, which Scene sizes to the window (also offscreen, where the content item stays 0 x 0). The root
+    // may sit at the centre of the scene (Space, #143): the window part of it is the rect at -root position in the
+    // root's coordinates, grabbed by the source (sourceRect) and drawn by the view at the same place. One connection
+    // per item, each with the item as context: the view is deleted at once, the source later.
+    const auto fitSource = [source, root] {
+        source->setSize(root->size());
+        source->setSourceRect(QRectF(-root->position(), root->size()));
+    };
+    const auto fitView = [view, root] {
+        view->setSize(root->size());
+        view->setPosition(-root->position());
+    };
     fitSource();
     fitView();
-    QObject::connect(root, &QQuickItem::widthChanged, source, fitSource);
-    QObject::connect(root, &QQuickItem::heightChanged, source, fitSource);
-    QObject::connect(root, &QQuickItem::widthChanged, view, fitView);
-    QObject::connect(root, &QQuickItem::heightChanged, view, fitView);
+    for (auto signal : {&QQuickItem::widthChanged, &QQuickItem::heightChanged, &QQuickItem::xChanged, &QQuickItem::yChanged}) {
+        QObject::connect(root, signal, source, fitSource);
+        QObject::connect(root, signal, view, fitView);
+    }
 }
 
 void FeedbackLayer::setFill(const QColor& color)
