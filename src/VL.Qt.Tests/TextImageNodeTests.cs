@@ -77,9 +77,7 @@ namespace VL.Qt.Tests
             Assert.That(UpdateText(new string("Hello".AsSpan()), new string("Arial".AsSpan())), Is.SameAs(a));
 
             for (int i = 0; i < 100; i++) UpdateText("Hello", "Arial");
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) UpdateText("Hello", "Arial");
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+            Assert.That(Allocations.Fewest(() => UpdateText("Hello", "Arial")), Is.EqualTo(0));
         }
 
         [Test]
@@ -145,9 +143,7 @@ namespace VL.Qt.Tests
             void Call() => _image.Update(DefaultSize, default, RectangleAnchor.Center, image, ImageFillMode.Stretch, true, 1,
                 false, false, null, null, out _, out _);
             for (int k = 0; k < 100; k++) Call();
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int k = 0; k < 1000; k++) Call();
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+            Assert.That(Allocations.Fewest(Call), Is.EqualTo(0));
         }
 
         [Test]

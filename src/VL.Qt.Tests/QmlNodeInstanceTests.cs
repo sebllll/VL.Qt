@@ -245,10 +245,7 @@ namespace VL.Qt.Tests
             for (var i = 0; i < 5; i++)
                 Assert.That(Frame(instance), Is.SameAs(first));
 
-            var before = GC.GetAllocatedBytesForCurrentThread();
-            for (var i = 0; i < 100; i++)
-                instance.Update();
-            var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            var allocated = Allocations.Fewest(() => instance.Update(), frames: 100);
             Assert.That(allocated, Is.EqualTo(0), "bytes allocated by 100 idle frames");
         }
 

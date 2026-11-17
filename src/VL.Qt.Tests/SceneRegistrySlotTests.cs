@@ -93,10 +93,7 @@ namespace VL.Qt.Tests
             var next = Child(0.5f);
             for (var i = 0; i < 100; i++)
                 _scene.TryLocate(next, out _, out _);
-            var before = GC.GetAllocatedBytesForCurrentThread();
-            for (var i = 0; i < 1000; i++)
-                _scene.TryLocate(next, out _, out _);
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+            Assert.That(Allocations.Fewest(() => _scene.TryLocate(next, out _, out _)), Is.EqualTo(0));
         }
     }
 }

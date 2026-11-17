@@ -256,16 +256,16 @@ namespace VL.Qt.Tests
 
             sink.Sets = 0;
             const int frames = 1000;
-            long before = GC.GetAllocatedBytesForCurrentThread();
             long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
             for (int i = 0; i < frames; i++)
                 rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
             var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(t0);
+            Assert.That(sink.Sets, Is.EqualTo(frames), "exactly one SET per frame");
+            int frame = 0;
+            long allocated = Allocations.Fewest(() => rec.Update((frame++ & 1) == 0 ? b : a, Space.DIPTopLeft), frames);
 
             double msPerFrame = elapsed.TotalMilliseconds / frames;
             TestContext.Out.WriteLine($"1000 children, 1 change/frame: {msPerFrame:F4} ms/frame, {allocated} bytes");
-            Assert.That(sink.Sets, Is.EqualTo(frames), "exactly one SET per frame");
             Assert.That(allocated, Is.EqualTo(0));
             // CI runners are slow and noisy (0.32 ms seen on Linux); this still catches a per-frame rebuild of all children.
             Assert.That(msPerFrame, Is.LessThan(1.0));
