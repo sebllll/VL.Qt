@@ -586,7 +586,13 @@ jobs:
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" nupkg/*.nupkg --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
+        # Repeatable: a rerun updates the assets of an existing release instead of failing.
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" nupkg/*.nupkg --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" nupkg/*.nupkg --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
+          fi
 
       # nuget.org push with Trusted Publishing (OIDC, no stored API key). Only sebllll/VL.Qt publishes (the policy on
       # nuget.org is bound to it; forks and private copies would fail the login), and only if NUGET_USER is set;
