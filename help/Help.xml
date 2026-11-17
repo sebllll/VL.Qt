@@ -6,6 +6,7 @@
 		<VLDocument link="Qt\HowTo Group Elements.vl" tags="nest transform" />
 		<VLDocument link="Qt\HowTo Reuse an Element.vl" tags="" />
 		<VLDocument link="Qt\HowTo Antialias Edges.vl" tags="msaa antialiasing multisample edges smooth" />
+		<VLDocument link="Qt\HowTo Choose a Space.vl" tags="space coordinate origin normalized dip pixel unit" />
 	</Topic>
 	<Topic title="Text">
 		<VLDocument link="Qt\HowTo Draw Text.vl" tags="font typography" />
