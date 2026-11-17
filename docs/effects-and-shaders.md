@@ -45,7 +45,7 @@ Every filter shader from a `qtshaders/` folder (one with a `sampler2D source`, s
 
 A shader that draws beyond the element (a blur, a shifted copy) declares its room with `// @padding` in the file head, see [Annotations](#annotations); without it the shader stays inside the element. The help patch `HowTo Chain Effects` builds the two chains above. Shaders that only make sense in the chain, and the templates of the built-in effects, are covered in [Own effects from templates](#own-effects-from-templates).
 
-Help patches: `HowTo Chain Effects`, `HowTo Mask an Element`, `HowTo Add a Glow`, `HowTo Use Motion Blurs`, `HowTo Displace an Element`, `HowTo Blend Elements`, `HowTo Draw Trails`. See [Help patches](help-patches.md).
+Help patches: `HowTo Chain Effects`, `HowTo Mask an Element`, `HowTo Add a Glow`, `HowTo Blur An Element`, `HowTo Displace an Element`, `HowTo Blend Elements`, `HowTo Draw Trails`. See [Help patches](help-patches.md).
 
 ## Shaders
 

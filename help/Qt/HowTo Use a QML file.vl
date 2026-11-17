@@ -94,6 +94,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="QmlElement" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="DvujFJTJ9cJLCDkOc5W6If" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="LfFhaD59jB2N9QbZZS2ETg" Name="File" Kind="InputPin" />
             <Pin Id="RKKY6c5rdXHNfgVwoEyLQj" Name="Properties" Kind="InputPin" />

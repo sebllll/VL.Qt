@@ -50,7 +50,7 @@
       "reason": "feature text compares Buttons None and Left"
     },
     {
-      "patch": "Qt/HowTo Use Motion Blurs.vl",
+      "patch": "Qt/HowTo Blur An Element.vl",
       "id": "4R1NMqAXKaPNKPzDpaTN5M",
       "rule": "default-iobox",
       "reason": "feature text explains Angle (0 = horizontal)"

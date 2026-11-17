@@ -94,6 +94,7 @@
                   <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                   <Choice Kind="ProcessAppFlag" Name="LoadImage (Async)" />
                 </p:NodeReference>
+                <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                 <Pin Id="nEN5N1aE6PwZPf1Qh6yYTW" Name="Node Context" Kind="InputPin" IsHidden="true" />
                 <Pin Id="mE4lBYOvfZ8UzDzV8fUkki" Name="Path" Kind="InputPin" />
                 <Pin Id="bjL5DZPjN0MEQ7wjJJibaZ" Name="Mipmaps" Kind="InputPin" DefaultValue="True" />

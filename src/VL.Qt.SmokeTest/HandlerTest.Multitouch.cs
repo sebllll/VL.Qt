@@ -160,8 +160,19 @@ static partial class HandlerTest
         check(None(recs, 44), $"touch-points: release after DESTROY -> silent ({Dump(recs)})");
     }
 
-    static bool IsPinch(Rec r, uint h) => r.Event == Protocol.Ev.Pinch && r.Handle == h && r.Payload.Length == 16 && r.Index == 0;
-    static string Pinch(Rec r) => $"({r.F(0):0.###}, {r.F(1):0.#}, {r.F(2):0.#}, {r.F(3):0.#})";
+    static bool IsPinch(Rec r, uint h) => r.Event == Protocol.Ev.Pinch && r.Handle == h && r.Payload.Length == 24 && r.Index == 0;
+    static string Pinch(Rec r) => $"({r.F(0):0.###}, {r.F(1):0.#}, {r.F(2):0.#}, {r.F(3):0.#}; pivot {r.F(4):0.#}, {r.F(5):0.#})";
+    // Where the gesture (scale, rotation, translation about the pivot) takes a point: pivot + t + s R (p - pivot).
+    static (float X, float Y) Apply(Rec r, float x, float y)
+    {
+        float s = r.F(0), a = r.F(1) * MathF.PI / 180f, dx = x - r.F(4), dy = y - r.F(5);
+        return (r.F(4) + r.F(2) + s * (MathF.Cos(a) * dx - MathF.Sin(a) * dy), r.F(5) + r.F(3) + s * (MathF.Sin(a) * dx + MathF.Cos(a) * dy));
+    }
+    static bool Sticks(Rec r, (float X, float Y) start, (float X, float Y) now)
+    {
+        var p = Apply(r, start.X, start.Y);
+        return MathF.Abs(p.X - now.X) < 3 && MathF.Abs(p.Y - now.Y) < 3;
+    }
     static string Pinches(List<Rec> recs, uint h) => string.Join(" ", recs.Where(r => IsPinch(r, h)).Select(Pinch));
 
     /// <summary>
@@ -249,6 +260,10 @@ static partial class HandlerTest
         var last = LastPinch(recs, SP);
         check(HasFlag(recs, Protocol.Ev.Active, SP, true) && last is { } l1 && l1.F(0) > 1.5f && MathF.Abs(l1.F(1)) < 1,
             $"pinch: spread -> ACTIVE 1, scale > 1.5 ({Pinches(recs, SP)})");
+        check(last is { } lp && MathF.Abs(lp.F(4) - 300) < 3 && MathF.Abs(lp.F(5) - 300) < 3,
+            $"pinch: pivot = centroid at the start (300, 300) ({Pinches(recs, SP)})");
+        check(last is { } ls && Sticks(ls, (250, 300), (200, 300)) && Sticks(ls, (350, 300), (400, 300)),
+            $"pinch: the transform about the pivot takes both start points to the fingers ({Pinches(recs, SP)})");
         check(h.Bounds.GetValueOrDefault(SE) == bounds0, $"pinch: item geometry unchanged ({Pos(h, SE)})");
         check(LastTouch(recs, STP) is { Length: 2 }, $"pinch: Touch Points sees both fingers during the pinch ({Pts(recs, STP)})");
         // Shift both: translation follows the centroid.
@@ -257,6 +272,8 @@ static partial class HandlerTest
         last = LastPinch(recs, SP);
         check(before is { } b0 && last is { } l2 && Near(l2.F(0), b0.F(0)) && MathF.Abs(l2.F(2) - b0.F(2) - 30) < 1 && MathF.Abs(l2.F(3) - b0.F(3) + 20) < 1,
             $"pinch: shift (30, -20) -> translation +30, -20, scale stays ({(before is { } bb ? Pinch(bb) : "-")} -> {Pinches(recs, SP)})");
+        check(last is { } lShift && Sticks(lShift, (250, 300), (230, 280)) && Sticks(lShift, (350, 300), (430, 280)),
+            $"pinch: after the shift the start points still land on the fingers ({Pinches(recs, SP)})");
         // Release one finger: last PINCH before ACTIVE 0 (or none in this frame), never 1/0/0; no tap.
         var lastValue = last;
         h.Touch(Protocol.Touch.Release, 2, 430, 280);

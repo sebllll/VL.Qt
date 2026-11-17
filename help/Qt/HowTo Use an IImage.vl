@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="bm40T5NlokNPfmsg9HnXEs" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="bm40T5NlokNPfmsg9HnXEs" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="6OVsAvmvdp9zqlqtYHurov" Location="VL.CoreLib" />
   <NugetDependency Id="ZuB05VFvRR6KxH0N01helx" Location="VL.Skia" />
   <DocumentDependency Id="v8jRwppScZnONm5dCUX7Be" Location="../../VL.Qt.vl" />
@@ -44,37 +44,17 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="2gbWxQDEY3QAaCg0cR4v1V" Comment="Path" Bounds="365,235,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-image.png">
+          <Pad Id="2gbWxQDEY3QAaCg0cR4v1V" Comment="Path" Bounds="365,220,300,19" ShowValueBox="true" isIOBox="true" Value="assets/qt-help-image.png">
             <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="363,265,75,19" Id="o1zduWqp8ir99NBjMpfi4q">
-            <p:NodeReference LastCategoryFullName="Graphics.Skia.IO" LastDependency="VL.Skia.vl">
-              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <Choice Kind="ProcessAppFlag" Name="ImageReader" />
-            </p:NodeReference>
-            <Pin Id="PqcjO90ljUfYJLGwYsgQJK" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="iHhP7J25cJvNQgKb6UA11v" Name="Filename" Kind="InputPin" />
-            <Pin Id="cuE5YJHTk4zcy8JqNV4ctD" Name="Load" Kind="InputPin" />
-            <Pin Id="0rmcB7BgnTvhCIuZByUoOu" Name="Output" Kind="OutputPin" />
-          </Node>
-          <Node Bounds="363,314,60,26" Id="82VMQ9dGHJS1zaMAeoWR5a">
-            <p:NodeReference LastCategoryFullName="Graphics.Skia.Imaging" LastDependency="VL.Skia.vl">
-              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Imaging" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Skia" NeedsToBeDirectParent="true" />
-              </CategoryReference>
-              <Choice Kind="OperationCallFlag" Name="ToImage" />
-            </p:NodeReference>
-            <Pin Id="AijjjXNX7ezl89nC09EFTX" Name="Input" Kind="InputPin" />
-            <Pin Id="0R7yjr491K4FZswXx4mkci" Name="Result" Kind="OutputPin" />
-          </Node>
           <Node Bounds="363,364,66,19" Id="7nNduIIJ7NU7mxmMkmnOiJ">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="ToQtImage" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="M2gY1g1juhzgqUUGZRzJkZ" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="A2uEOPctTfRjVQgHbccJ7a" Name="Input" Kind="InputPin" />
             <Pin Id="IQ5AFX7C0mSDr0fVQl9iVE" Name="Image" Kind="OutputPin" />
@@ -118,6 +98,7 @@
             <Pin Id="UHMqrPrkERARGpO5iNtlor" Name="Input" Kind="InputPin" />
             <Pin Id="uxtx5yv4MNUUmhFdmngwTA" Name="Space" Kind="InputPin" />
             <Pin Id="n22YMrV5NQ8yKm80YUideO" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="NaF1pvyTRnjLaPkarAUj0C" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="i8fqnqRinTgrW2mSiicoSi" Name="Enabled" Kind="InputPin" />
             <Pin Id="puclwZZK1herSrhtXY3Emv" Name="Title" Kind="InputPin" />
             <Pin Id="DnWKxMr9odTNmqKsyAixWS" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
@@ -128,6 +109,7 @@
             <Pin Id="wPOrOHhoulHsufTi95624c" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="Po7wNvQ6fy1HEQ2YwDYn5Q" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="KwL6NT9fsUPP85ynMKQQoV" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ELWU5nX2zmjMGF6WKJTCR7" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="qE0lZM9QdJAT28FqBqAiPr" Comment="Title" Bounds="182,645,149,19" ShowValueBox="true" isIOBox="true" Value="HowTo Use an IImage">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
@@ -164,12 +146,46 @@
               <Choice Kind="TypeFlag" Name="ImageFillMode" />
             </p:TypeAnnotation>
           </Pad>
+          <Node Bounds="351,282,84,69" Id="ReaCKohl3lKNqdZLKpW8NV">
+            <p:NodeReference LastCategoryFullName="Primitive" LastDependency="Builtin">
+              <Choice Kind="StatefulRegion" Name="Region (Stateful)" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Primitive" />
+              <Choice Kind="ProcessStatefulRegion" Name="Cache" />
+            </p:NodeReference>
+            <Pin Id="GgsbxLOCUkPP8cjGHJ2aJI" Name="Force" Kind="InputPin" />
+            <Pin Id="HTByZ3rzZ3WMPWqEpAMJgq" Name="Dispose Cached Outputs" Kind="InputPin" />
+            <Pin Id="EWbrrr7uxeaPsyUMzwEmTL" Name="Has Changed" Kind="OutputPin" />
+            <Patch Id="IYKXCZsLCMRPdbzknv8Vxp" ManuallySortedPins="true">
+              <Patch Id="Jhgw9lJILyPOtXPkjhhYJH" Name="Create" ManuallySortedPins="true" />
+              <Patch Id="QGNTuWATaFCLYN8PSR2FJX" Name="Then" ManuallySortedPins="true" />
+              <Node Bounds="363,305,60,26" Id="82VMQ9dGHJS1zaMAeoWR5a">
+                <p:NodeReference LastCategoryFullName="Graphics.Skia.Imaging" LastDependency="VL.Skia.vl">
+                  <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+                  <CategoryReference Kind="Category" Name="Imaging" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Skia" NeedsToBeDirectParent="true" />
+                  </CategoryReference>
+                  <Choice Kind="OperationCallFlag" Name="ToImage" />
+                </p:NodeReference>
+                <Pin Id="AijjjXNX7ezl89nC09EFTX" Name="Input" Kind="InputPin" />
+                <Pin Id="0R7yjr491K4FZswXx4mkci" Name="Result" Kind="OutputPin" />
+              </Node>
+            </Patch>
+            <ControlPoint Id="ICYNANTWzVMOCDSdY11SXF" Bounds="365,345" Alignment="Bottom" />
+            <ControlPoint Id="KTBzdwg66zQLIq5QszoxqV" Bounds="365,288" Alignment="Top" />
+          </Node>
+          <Node Bounds="363,240,75,19" Id="o1zduWqp8ir99NBjMpfi4q">
+            <p:NodeReference LastCategoryFullName="Graphics.Skia.IO" LastDependency="VL.Skia.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="ImageReader" />
+            </p:NodeReference>
+            <Pin Id="PqcjO90ljUfYJLGwYsgQJK" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="iHhP7J25cJvNQgKb6UA11v" Name="Filename" Kind="InputPin" />
+            <Pin Id="cuE5YJHTk4zcy8JqNV4ctD" Name="Load" Kind="InputPin" />
+            <Pin Id="0rmcB7BgnTvhCIuZByUoOu" Name="Output" Kind="OutputPin" />
+          </Node>
         </Canvas>
         <Link Id="iXELpc3IWFugull8vscLDm" Ids="qE0lZM9QdJAT28FqBqAiPr,puclwZZK1herSrhtXY3Emv" />
         <Link Id="ljzfvZfOsYe7vWNBTvBrXS" Ids="iSw2Ui9RVFv7gvMx11NXf1,UHMqrPrkERARGpO5iNtlor" />
-        <Link Id="IeJ7QAOksZnPbnGmvWOOhL" Ids="2gbWxQDEY3QAaCg0cR4v1V,iHhP7J25cJvNQgKb6UA11v" />
-        <Link Id="RZonkCRdcbEE9I6KKkuJBY" Ids="0rmcB7BgnTvhCIuZByUoOu,AijjjXNX7ezl89nC09EFTX" />
-        <Link Id="e5gqQ2uP9NTiGGtixAHSW4" Ids="0R7yjr491K4FZswXx4mkci,A2uEOPctTfRjVQgHbccJ7a" />
         <Link Id="kNwRlkWsizCdF0O62PSvVQ" Ids="IQ5AFX7C0mSDr0fVQl9iVE,FIiCIOjh4G9dYJFMZtxK7H" />
         <Link Id="hENbNmdfXjHYLKfcHMp5qv" Ids="AITyXQsepDkxKNDveORGZU,i7Seu7PhPNIgZqc5b4G3gf" />
         <Patch Id="iqIinRgUpod4EjamJ8KL1v" Name="Create" />
@@ -182,6 +198,11 @@
         <Link Id="O7ffGqQa7KF4qFy9JBx1R5" Ids="a5S6tKCzKLgTd107FepnW1,pkz5JZRww92LbOyJ0ufhsp" />
         <Link Id="pQI2LnpYCrFlzCfg7ExZUD" Ids="4IxheBgZLBeClYmfeqvmnw,sg0q3MJzVypsjRNKStXqEv" />
         <Link Id="AOQEOQZlpPbQGYvGt7XaXP" Ids="Hhq1btI3WbAOIYl2MOvGab,40ddVdxISRSeYXncorxSGi" />
+        <Link Id="KulPdOhPxcqPt0Ccu7SVEU" Ids="0R7yjr491K4FZswXx4mkci,ICYNANTWzVMOCDSdY11SXF" />
+        <Link Id="LmsVIoMYPfINNKQbim6kZD" Ids="ICYNANTWzVMOCDSdY11SXF,A2uEOPctTfRjVQgHbccJ7a" />
+        <Link Id="A0wc0YorSkYOxsMrV7W782" Ids="2gbWxQDEY3QAaCg0cR4v1V,iHhP7J25cJvNQgKb6UA11v" />
+        <Link Id="PxYoBzFFNdHQMSdng1TbXh" Ids="0rmcB7BgnTvhCIuZByUoOu,KTBzdwg66zQLIq5QszoxqV" />
+        <Link Id="V0rnOJkAbPWLEO4qAmEKPo" Ids="KTBzdwg66zQLIq5QszoxqV,AijjjXNX7ezl89nC09EFTX" />
       </Patch>
     </Node>
   </Patch>

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="sMB38XkTQFGWYerl3V4iqJ" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="sMB38XkTQFGWYerl3V4iqJ" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="xg3loqNa8qGji3wC7xSOJO" Location="VL.CoreLib" />
   <DocumentDependency Id="0d9wDN3bn0FISx6baVtyXH" Location="../../VL.Qt.vl" />
   <Patch Id="ioUlsdV5hAGcaf361CACJV">
@@ -105,6 +105,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessNode" Name="RGBSplit" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
             <Pin Id="iZbJYo7fIrFlvAjAMRbX4A" Name="Input" Kind="InputPin" />
             <Pin Id="QRKKQ8MKoXqLVw2UuKIwYh" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="qTlSdFlZdqFPOybCTKoPAH" Name="Amount" Kind="InputPin" />
@@ -156,6 +157,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessNode" Name="Stripes" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
             <Pin Id="jYml1XiDsPGZTV90PvLzjA" Name="Phase" Kind="InputPin" />
             <Pin Id="UgyNDgWOCMjNEtyHG4h703" Name="Thickness" Kind="InputPin" />
             <Pin Id="ytQmLw3VHhFM3DnyQ9SHeQ" Name="Count" Kind="InputPin" DefaultValue="8" />
@@ -245,6 +247,7 @@
             <Pin Id="RJWNmfyaS9FUJtwPTIpL6N" Name="Input" Kind="InputPin" />
             <Pin Id="UkrLlW6Oy5Fw7hJlap5aOS" Name="Space" Kind="InputPin" />
             <Pin Id="cRr39yZgjmGqJm7DvDRxsC" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="TG1F1BnfDAePveQ5VMpXCZ" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="dvvS4qbWPCG9vnBr8HTEES" Name="Enabled" Kind="InputPin" />
             <Pin Id="hUjOKnYUPiGdJtsXG7511P" Name="Title" Kind="InputPin" />
             <Pin Id="Knn5LdPAJgGkgrm797z0nN" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
@@ -255,6 +258,7 @@
             <Pin Id="U2ISunueD9FK71nRkeTB3K" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="RJoF6XuXG4FgwafsJdfLAN" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="THD89yjCsnJQOVgjjXT4i1" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Q92ZZuzHt4GN2dOFW9Yt2m" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="dr29XcgA4ZGhOoKLCR0RpP" Comment="Clear Color" Bounds="142,666,136,15" ShowValueBox="true" isIOBox="true" Value="0.12, 0.12, 0.16, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">

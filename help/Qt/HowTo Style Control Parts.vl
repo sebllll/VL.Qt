@@ -87,6 +87,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="Indicator" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="qIA1id6Vw5DQL05HA064Gi" Name="Input" Kind="InputPin" />
             <Pin Id="IjHGb3CXlMaXZjljENUhJd" Name="Size" Kind="InputPin" />
             <Pin Id="uRHHJEYXg4JdpmrcXgGCJb" Name="Radius" Kind="InputPin" />
@@ -109,6 +110,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="Track" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="qcabUGJmGEp7CgQ0PBQFI1" Name="Input" Kind="InputPin" />
             <Pin Id="4zGtSnovm14TUOizwd1iae" Name="Thickness" Kind="InputPin" />
             <Pin Id="OV4qBkdfQ1y3GQsMpSscDl" Name="Radius" Kind="InputPin" />
@@ -487,6 +489,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Merge" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="zfAvP6QTz4v5cLpmYOSaci" Name="Input" Kind="InputPin" />
             <Pin Id="GMoKBSgUbd5ue4hh9FiHBa" Name="Input 2" Kind="InputPin" />
             <Pin Id="loRIjOVIGhHw1F96ewn294" Name="Output" Kind="OutputPin" />

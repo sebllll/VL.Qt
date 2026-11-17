@@ -138,6 +138,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Mask" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="ymDswpBcrQbvZjpTifmrI1" Name="Input" Kind="InputPin" />
             <Pin Id="YiJCD1YZpkxwnUzyO9Lnt8" Name="Mask" Kind="InputPin" />
             <Pin Id="EGno2CRi8TqM5CLxIpzMGn" Name="Threshold Min" Kind="InputPin" IsHidden="true" />

@@ -67,6 +67,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Blur" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="nZSNbroIDcgba6WhArUKGS" Name="Input" Kind="InputPin" />
             <Pin Id="uvxuDnhJMwks0ZEua2KQFM" Name="Amount" Kind="InputPin" />
             <Pin Id="NUG7kBlht56ssQB80h6Mmr" Name="Max" Kind="InputPin" IsHidden="true" />
@@ -103,6 +104,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="DropShadow" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="QJmoxgSfHgDOGul03Lmk7A" Name="Input" Kind="InputPin" />
             <Pin Id="vaJRC8gpev0soR1RlCv1P6" Name="Color" Kind="InputPin" DefaultValue="1, 0.2, 0.6, 1" />
             <Pin Id="xhRnEHF4SLdDoVpBefKaX0" Name="Offset" Kind="InputPin" DefaultValue="0.1, 0.1" />
@@ -349,6 +351,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ColorAdjust" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="2uhWPRzAGhJq7U1TpMdaCp" Name="Input" Kind="InputPin" />
             <Pin Id="MCZ6uh28PzzneE2WTGTaUP" Name="Brightness" Kind="InputPin" />
             <Pin Id="KrXu4o5qpAObs0yfdgqAbC" Name="Contrast" Kind="InputPin" />

@@ -76,6 +76,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Circle" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="nDhX6ip9246CmOvdwQUTJP" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="YNTHKFqo0Cp8xMJivQyYcR" Name="Radius" Kind="InputPin" />
             <Pin Id="4quTsxY6DK2mmYj4sXhIKy" Name="Transform" Kind="InputPin" />

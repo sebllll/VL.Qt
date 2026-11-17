@@ -41,7 +41,7 @@ namespace VL.Qt.Tests
             public Poll Wheel(uint h, float x, float y) => Add(Protocol.Ev.Wheel, h, F(x, y));
             public Poll Pointer(uint h, float x, float y) => Add(Protocol.Ev.Pointer, h, F(x, y));
             public Poll Drag(uint h, float x, float y) => Add(Protocol.Ev.Drag, h, F(x, y));
-            public Poll Pinch(uint h, float scale, float degrees, float tx, float ty) => Add(Protocol.Ev.Pinch, h, F(scale, degrees, tx, ty));
+            public Poll Pinch(uint h, float scale, float degrees, float tx, float ty, float px = 0, float py = 0) => Add(Protocol.Ev.Pinch, h, F(scale, degrees, tx, ty, px, py));
 
             /// <summary>EV_TOUCH_POINTS with points (id, x, y, pressure, w, h).</summary>
             public Poll TouchPoints(uint h, params (uint Id, float X, float Y, float Pressure, float W, float H)[] points)
@@ -418,16 +418,17 @@ namespace VL.Qt.Tests
             uint h = reg.Acquire(new SinkSlot(sink, 0));
             Assert.That(sink.PinchScale(), Is.EqualTo(1f), "no gesture yet");
 
-            var res = reg.Dispatch(new Poll().Active(h, true).Pinch(h, 1.5f, 90, 20, -40).Bytes);
+            var res = reg.Dispatch(new Poll().Active(h, true).Pinch(h, 1.5f, 90, 20, -40, 100, 50).Bytes);
             Assert.That(res.Ignored, Is.Zero);
             Assert.That(sink.PinchScale(), Is.EqualTo(1.5f));
             Assert.That(sink.PinchRotation(), Is.EqualTo(0.25f).Within(1e-6f), "90 degrees = 0.25 cycles");
             Assert.That(sink.PinchTranslation(), Is.EqualTo(new Vector2(0.2f, -0.4f)));
+            Assert.That(sink.PinchPivot(), Is.EqualTo(new Vector2(1f, 0.5f)));
             Assert.That(sink.PinchUpdates(), Is.EqualTo(1));
 
             reg.Dispatch(new Poll().Active(h, false).Bytes);
             Assert.That(sink.PinchScale(), Is.EqualTo(1.5f), "the last value stays");
-            Assert.That(reg.Dispatch(new Poll().Add(Protocol.Ev.Pinch, h, new byte[12]).Bytes).Ignored, Is.EqualTo(1), "too short");
+            Assert.That(reg.Dispatch(new Poll().Add(Protocol.Ev.Pinch, h, new byte[16]).Bytes).Ignored, Is.EqualTo(1), "too short");
         }
 
         [Test]

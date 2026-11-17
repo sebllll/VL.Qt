@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="kWHhnvqgsIRGTalxMCB3CR" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="kWHhnvqgsIRGTalxMCB3CR" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="1ppu5vXXvDQXfQOkxo3b7n" Location="VL.CoreLib" />
   <DocumentDependency Id="NX4iKPYg34EpTdqZvCrTxW" Location="../../VL.Qt.vl" />
   <Patch Id="ieWuw5iFCgq2rNEdRW8ILn">
@@ -83,6 +83,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Displace" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="4ZxkjPiOZrPYAkEsZxFp3G" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="ocOPjdb5LEhlLQpGcDhGhS" Name="Input" Kind="InputPin" />
             <Pin Id="6v9Ph8WzcpsRTWtxconmav" Name="Map" Kind="InputPin" />
@@ -90,7 +91,7 @@
             <Pin Id="M3SYwVBMbLHjgb1VkSCGNo" Name="Displacement" Kind="InputPin" DefaultValue="0.2" />
             <Pin Id="hrLSPfmhcskyt9ShezHqZ6" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="120,839,125,19" Id="xj7SmnI3CkK9KncGX79Yqe">
+          <Node Bounds="120,839,185,19" Id="xj7SmnI3CkK9KncGX79Yqe">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -159,7 +160,7 @@
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="F7vAVId7xrQNTZjBezyb09" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="itMZffFYOoiimMuQ5Av16N" Name="Bounds" Kind="InputPin" DefaultValue="2142, 315, 786, 432" IsHidden="true" />
+            <Pin Id="itMZffFYOoiimMuQ5Av16N" Name="Bounds" Kind="InputPin" DefaultValue="339, 248, 786, 432" IsHidden="true" />
             <Pin Id="tmHnFmrMlU4ddJs0LeVGqc" Name="V Sync" Kind="InputPin" IsHidden="true" />
             <Pin Id="ILzdVUDdkbsK45B2cuTb07" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="DbJcHAbjAXXdiTNLeZJJA8" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
@@ -167,6 +168,7 @@
             <Pin Id="iNFoKX68Bm5BYoDcuAgojb" Name="Input" Kind="InputPin" />
             <Pin Id="NjxXcrG8UxnjOXP2pqcXI5" Name="Space" Kind="InputPin" />
             <Pin Id="FTGYFbbUJJN9SchozUffTD" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="IaEuWlQt59rLWimP2S0FZV" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="ARiX47Ga75TFJiVx3boaKM" Name="Enabled" Kind="InputPin" />
             <Pin Id="Tuquy5S6YbfieM3KbhMAxi" Name="Title" Kind="InputPin" />
             <Pin Id="92aMPn8Me4n6UPfUUx2i69" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
@@ -177,6 +179,7 @@
             <Pin Id="5ZZG2JhkB4RmlQJyMpafYD" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="QOl1fcQxFx00kZG7DFAIxD" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="Vu4LVUAzgdbNCBscUOK9EB" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KqR2ADoHkLeMCeYiqXREgo" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="T0nvWiU4fTmMFyW8KJwIZK" Comment="Title" Bounds="202,916,240,19" ShowValueBox="true" isIOBox="true" Value="HowTo Displace an Element">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">

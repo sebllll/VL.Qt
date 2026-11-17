@@ -53,6 +53,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LoadImage" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="BaP4y1DUGxcaqzLQydk5TO" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="5DHYjYfNui0hqkhONZDgfb" Name="Path" Kind="InputPin" />
             <Pin Id="RC1KPA9o4xtNfZjCOC8EP5" Name="Mipmaps" Kind="InputPin" DefaultValue="False" />
@@ -72,6 +73,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Image" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="ynZ4N1FfbmYSD6asXT4Ohb" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="1xAHt8wT7H6nBlQ56Voc3B" Name="Size" Kind="InputPin" />
             <Pin Id="pkz5JZRww92LbOyJ0ufhsp" Name="Transform" Kind="InputPin" />
