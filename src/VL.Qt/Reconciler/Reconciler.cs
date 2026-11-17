@@ -83,6 +83,7 @@ namespace VL.Qt
         SpaceMapping _mapping = SpaceMapping.Default;
         bool _hasMapping;
         bool _force;
+        bool _rescale; // the unit scale changed in this pass: every length is written again (#143)
         bool _invalidated;
         int _pass;
 
@@ -137,9 +138,8 @@ namespace VL.Qt
         /// </summary>
         public void Update(Element? root, in SpaceMapping mapping)
         {
-            // TODO: #143 T3: PropertyDiff/EffectDiff convert with _mapping; on a scale change resend the handler
-            // properties (WriteProperties with previous = null), not only the element properties.
-            _force = !_hasMapping || mapping.UnitScale != _mapping.UnitScale || _invalidated;
+            _rescale = _hasMapping && mapping.UnitScale != _mapping.UnitScale;
+            _force = !_hasMapping || _rescale || _invalidated;
             _invalidated = false;
             _mapping = mapping;
             _sinks.Mapping = mapping;
@@ -742,9 +742,10 @@ namespace VL.Qt
             else
             {
                 h.SeenPass = _pass;
-                if (!ReferenceEquals(h.Last, link))
+                if (_rescale || !ReferenceEquals(h.Last, link))
                 {
-                    link.WriteProperties(_sink, h.Id, h.Last, _mapping);
+                    // A new scale sends the limits again: previous = null writes every non-default value.
+                    link.WriteProperties(_sink, h.Id, _rescale ? null : h.Last, _mapping);
                     h.Last = link;
                 }
             }

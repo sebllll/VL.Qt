@@ -99,7 +99,7 @@ namespace VL.Qt
         /// <summary>
         /// Writes the commands of this frame (sent by <see cref="ApplyCommands"/>). <paramref name="enabled"/> = false freezes
         /// the scene: no reconcile, clear color or Clear flag, the texture keeps the last state. <paramref name="clearColor"/> with
-        /// alpha 0 gives a transparent texture. <paramref name="space"/> must be resolved (<see cref="Geometry.Resolve"/>).
+        /// alpha 0 gives a transparent texture. Offscreen scenes have a device pixel ratio of 1.
         /// </summary>
         public void Update(Element? input, Space space, Color4 clearColor, bool clear, bool enabled)
         {

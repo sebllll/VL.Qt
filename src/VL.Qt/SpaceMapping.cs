@@ -1,5 +1,6 @@
 ﻿using System;
 using Stride.Core.Mathematics;
+using VL.Lib.Mathematics;
 
 namespace VL.Qt
 {
@@ -71,6 +72,23 @@ namespace VL.Qt
             r.M41 *= UnitScale; r.M42 *= UnitScale; r.M43 *= UnitScale;
             r.M14 /= UnitScale; r.M24 /= UnitScale; r.M34 /= UnitScale;
             return r;
+        }
+
+        /// <summary>
+        /// Reference formula of the item → parent mapping QtNative computes from SIZE + ANCHOR + TRANSFORM (the
+        /// reconciler sends them separately; used by tests), for an element outside a Row/Column: a point v in the
+        /// item's local coordinates (origin = its top left, logical pixels) lands at <c>v · T(-anchor) · m</c>
+        /// in parent coordinates, like VL.Skia. In a Row/Column the layout position and <c>T(anchor)</c> follow on
+        /// top (the anchor is only the pivot there). <paramref name="m"/> and <paramref name="size"/> are in units.
+        /// Result is a Stride-convention matrix (row vectors, row-major M11..M44).
+        /// </summary>
+        public Matrix ToQtTransform(in Matrix m, Vector2 size, RectangleAnchor anchor)
+        {
+            var p = ToQt(Geometry.AnchorOffset(size, anchor));
+            var mq = ToQt(m);
+            Matrix.Translation(-p.X, -p.Y, 0f, out var toOrigin);
+            Matrix.Multiply(ref toOrigin, ref mq, out var result);
+            return result;
         }
 
         /// <summary>Font size in units → whole logical pixels (QFont pixel sizes are integers), at least 1.</summary>

@@ -29,6 +29,10 @@ namespace VL.Qt
         bool _clear;
         bool _hasClear;
 
+        // Last Space sent to QtNative (change detection, sent again after a resync).
+        Space _space;
+        bool _hasSpace;
+
         string _pollError = "";
         // Host frame (#245): commands of the last apply, reconcile time since the last report.
         int _appliedOps;
@@ -69,9 +73,10 @@ namespace VL.Qt
         public int AppliedOps => _appliedOps;
 
         /// <summary>
-        /// Writes the clear color and the Clear flag (when they changed) and the commands of this frame (applied by
+        /// Writes the clear color, the Clear flag and the Space (when they changed) and the commands of this frame (applied by
         /// <see cref="Apply"/>). <paramref name="clear"/> = false keeps the previous frame and draws the new one over it.
-        /// <paramref name="space"/> must be resolved (<see cref="Geometry.Resolve"/>). Appends: the buffer is reset after
+        /// The lengths are converted with the <see cref="SpaceMapping"/> of <paramref name="space"/> and the size and device
+        /// pixel ratio QtNative reports for the scene right now (#143). Appends: the buffer is reset after
         /// apply, so commands of a frame without apply go out with the next one.
         /// </summary>
         public void Update(Element? input, Space space, Color4 clearColor, bool clear)
@@ -88,14 +93,30 @@ namespace VL.Qt
                 _clear = clear;
                 _commands.SetClear(clear);
             }
-            // TODO: #143 T3: SpaceMapping from space + Native.vlqt_window_get_scene_metrics (Zero handle: no metrics),
-            // _commands.SetSpace on change and again after a resync (like the clear color), _reconciler.Update(input, mapping).
+            if (!_hasSpace || space != _space)
+            {
+                _hasSpace = true;
+                _space = space;
+                _commands.SetSpace(space);
+            }
             if (_resync.ShouldReconcile(input))
             {
+                var mapping = CurrentMapping(space);
                 var t0 = Stopwatch.GetTimestamp();
-                _reconciler.Update(input, space);
+                _reconciler.Update(input, mapping);
                 _reconcileMs += Stopwatch.GetElapsedTime(t0).TotalMilliseconds;
             }
+        }
+
+        /// <summary>
+        /// Mapping of <paramref name="space"/> with the scene metrics of this moment (Qt's state when the lengths are
+        /// written, not the one of the last event). Without a handle (tests, after close) the size is 0 and dpr 1.
+        /// </summary>
+        SpaceMapping CurrentMapping(Space space)
+        {
+            if (_handle != IntPtr.Zero && Native.vlqt_window_get_scene_metrics(_handle, out var m) == 0)
+                return new SpaceMapping(space, new Vector2(m.width, m.height), m.dpr);
+            return new SpaceMapping(space, default, 1f);
         }
 
         int ResetInQtNative()
@@ -130,6 +151,7 @@ namespace VL.Qt
                 // QtNative may have lost them with the aborted batch (RESET keeps them); sent again with the rebuild.
                 _hasClearColor = false;
                 _hasClear = false;
+                _hasSpace = false;
             }
         }
 
