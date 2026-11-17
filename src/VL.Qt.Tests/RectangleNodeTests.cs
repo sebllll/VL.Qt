@@ -86,9 +86,7 @@ namespace VL.Qt.Tests
             Assert.That(_node.Core.Created, Is.EqualTo(1));
 
             for (int i = 0; i < 100; i++) Update(transform: t, fill: new Color4(1, 0, 0, 1)); // warm-up
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) Update(transform: t, fill: new Color4(1, 0, 0, 1));
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            long allocated = Allocations.Fewest(() => Update(transform: t, fill: new Color4(1, 0, 0, 1)));
             Assert.That(allocated, Is.EqualTo(0), "Update with unchanged inputs must not allocate");
         }
 

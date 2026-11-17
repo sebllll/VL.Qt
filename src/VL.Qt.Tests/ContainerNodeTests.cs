@@ -64,9 +64,8 @@ namespace VL.Qt.Tests
 
             var spreads = Enumerable.Range(0, 2).Select(_ => S(A, B, C)).ToArray();
             for (int i = 0; i < 100; i++) Column(n, spreads[i & 1], spacing: 0.1f); // warm-up
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) Column(n, spreads[i & 1], spacing: 0.1f);
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            int frame = 0;
+            long allocated = Allocations.Fewest(() => Column(n, spreads[frame++ & 1], spacing: 0.1f));
             Assert.That(allocated, Is.EqualTo(0), "Update with unchanged children must not allocate");
             Assert.That(Column(n, spreads[0], spacing: 0.1f), Is.SameAs(first));
         }

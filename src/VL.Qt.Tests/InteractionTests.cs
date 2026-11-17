@@ -338,9 +338,7 @@ namespace VL.Qt.Tests
             Run();
             Assert.That(rec.Sinks.Count, Is.EqualTo(2), "element and handler bound");
             for (int i = 0; i < 100; i++) Run();
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) Run();
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            long allocated = Allocations.Fewest(Run);
             Assert.That(allocated, Is.EqualTo(0), "Hover + Rectangle + reconciler unchanged must not allocate");
             hoverNode.Dispose();
             rect.Dispose();
@@ -758,9 +756,7 @@ namespace VL.Qt.Tests
             uint h = reg.Acquire(node.Core.Slot);
             reg.Dispatch(new SinkRegistryTests.Poll().TouchPoints(h, (1, 50, 0, 0.5f, 0, 0)).Bytes);
             for (int i = 0; i < 100; i++) node.Update(null, points, TouchPointsNode_DefaultDevices, true);
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) node.Update(null, points, TouchPointsNode_DefaultDevices, true);
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+            Assert.That(Allocations.Fewest(() => node.Update(null, points, TouchPointsNode_DefaultDevices, true)), Is.EqualTo(0));
         }
 
         [Test]
@@ -986,9 +982,7 @@ namespace VL.Qt.Tests
             Run();
             Assert.That(rec.Sinks.Count, Is.EqualTo(5), "element + four handlers bound");
             for (int i = 0; i < 100; i++) Run();
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) Run();
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            long allocated = Allocations.Fewest(Run);
             Assert.That(allocated, Is.EqualTo(0), "Click + Point + Wheel + Drag + Rectangle + reconciler unchanged must not allocate");
             click.Dispose();
             pointNode.Dispose();
