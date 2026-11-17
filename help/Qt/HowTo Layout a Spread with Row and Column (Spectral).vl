@@ -196,6 +196,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Row (Spectral)" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="UIslBoAW4HOKaCHYD5EDoO" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="aq11520iwvUZHGGcy81dvd" Name="Children" Kind="InputPin" />
             <Pin Id="covb8enk997lEB1UFUQ987" Name="Output" Kind="OutputPin" />
@@ -227,6 +228,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Column (Spectral)" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="IYWLebmv6i43dkszAC7m2b" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="SdzBH2QtXFgyZEvSDWd71d" Name="Children" Kind="InputPin" />
             <Pin Id="4cJpliS69k31IwAPt0QVn3" Name="Output" Kind="OutputPin" />
@@ -263,6 +265,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Group (Spectral)" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="08krMGIGqSQqNBYUJknFF0" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="VOJIEmd9utL99XbgNEiLx2" Name="Children" Kind="InputPin" />
             <Pin Id="405stDaI71punuiyuUxMJv" Name="Output" Kind="OutputPin" />

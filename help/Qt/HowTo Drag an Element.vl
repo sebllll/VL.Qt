@@ -54,6 +54,7 @@
               <CategoryReference Kind="Category" Name="Interaction" />
               <Choice Kind="ProcessAppFlag" Name="Drag" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="JQAgHnItxCTdnfLjiZ8jZ7" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Sjk3GOmFbhExOIqbmC64uW" Name="Input" Kind="InputPin" />
             <Pin Id="GpPHjnZfnL8jxY6ejXsfNe" Name="Is Dragging" Kind="InputPin" />

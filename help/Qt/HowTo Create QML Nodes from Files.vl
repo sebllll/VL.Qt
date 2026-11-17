@@ -78,6 +78,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessNode" Name="Gauge" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
             <Pin Id="HsvTr2peVwcSdP9YMTqupv" Name="Value" Kind="InputPin" />
             <Pin Id="m8JMnMK5wXsDfie7405Bta" Name="Accent" Kind="InputPin" />
             <Pin Id="C6W8RNUGacot4ogFwUPKWQ" Name="Label" Kind="InputPin" />

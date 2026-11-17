@@ -103,6 +103,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="b3cAdvWfELb6uym9rW2nxe" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Cu4hAKHRN78tqfUnAYPCLh" Name="Input" Kind="InputPin" />
             <Pin Id="TXEzdHTExvtN4LkkrHRQYJ" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
@@ -153,6 +154,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="eN4tilBk7SCpDGVHgPSYYI" Name="Name" Kind="InputPin" DefaultValue="time" />
             <Pin Id="JJ0hVSa07XGlpsBSqNgCNe" Name="Value" Kind="InputPin" />
             <Pin Id="hNxPe0YCwGj9WIPe8sNEfV" Name="Result" Kind="OutputPin" />
@@ -286,6 +288,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Color" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="Z3a5k0HAPmEt7lsyGFLfJ1" Name="Name" Kind="InputPin" DefaultValue="tintColor" />
             <Pin Id="c2vJ7B4hDa7Y0P9gONdUvp" Name="Value" Kind="InputPin" />
             <Pin Id="zqAT1l28CfcayVY3xcFsO2" Name="Result" Kind="OutputPin" />

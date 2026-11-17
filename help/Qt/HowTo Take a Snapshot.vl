@@ -185,6 +185,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Snapshot" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="kgfCFukQsTOL54jWslTqUt" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="S7KmeHKWhUltjiuAmggbcL" Name="Element" Kind="InputPin" />
             <Pin Id="W3p43ZObfDQubVCJBBwrBn" Name="Scale" Kind="InputPin" DefaultValue="1" />

@@ -110,6 +110,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Group" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="vKoZyR1WNg28IWEfOTIKHM" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="cKMaHFZmExEPGBzh4Ap78k" Name="Input" Kind="InputPin" />
             <Pin Id="efzN6CU62JOtoUYB3srxQE" Name="Input 2" Kind="InputPin" />

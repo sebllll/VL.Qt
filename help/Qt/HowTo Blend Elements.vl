@@ -94,6 +94,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Blend" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="SzeP57Q2XZxlez2GaK2N7f" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="mWGexbVRoevqCJB8J82GAh" Name="Input" Kind="InputPin" />
             <Pin Id="QAwJX3p9AUoCvoIR31Qmm2" Name="Layer" Kind="InputPin" />

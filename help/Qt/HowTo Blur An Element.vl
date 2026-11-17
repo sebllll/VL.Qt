@@ -51,6 +51,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="DirectionalBlur" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="zKtB8CPABZdsVEg8H6zIYm" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="TRHYaVMTcbuUIpAH6lyTAc" Name="Input" Kind="InputPin" />
             <Pin Id="CGdavbUpiNBaCaMElawnwV" Name="Angle" Kind="InputPin" />
@@ -123,6 +124,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ZoomBlur" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="a4LXfUWkLcw9JR0PAuBRvy" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="8hBvfJceqSpO82NdeGn6ro" Name="Input" Kind="InputPin" />
             <Pin Id="CIFhojyoJCF7UuLwJZVXHj" Name="Center" Kind="InputPin" DefaultValue="0.5, 0.5" />
@@ -151,6 +153,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="RadialBlur" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="kwsqq3cmgaRRmdrnR4Pkk1" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="TzRe9wkTDkak98BLkHXcN0" Name="Input" Kind="InputPin" />
             <Pin Id="rCEoTNlZMDiRoMmHqdo6Ec" Name="Center" Kind="InputPin" DefaultValue="0.5, 0.5" />

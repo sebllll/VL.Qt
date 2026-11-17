@@ -61,6 +61,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Text" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="GNbsBk0ZD1MvWUlIgU8hzm" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="J8srTIa3NvL1gJVNY8OmU4" Name="Size" Kind="InputPin" />
             <Pin Id="rbe4vbR1f3JkOokMZ73E4O" Name="Transform" Kind="InputPin" />

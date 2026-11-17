@@ -81,6 +81,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Row" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="wvSLp4GTjBKsPXbFyIxWkr" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="n6ZGAIa838DO21S9kJUZTL" Name="Input" Kind="InputPin" />
             <Pin Id="wEOQZnWayRkkbFNvVxyeQe" Name="Input 2" Kind="InputPin" />
@@ -182,6 +183,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Column" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="brscJMqGzekIam5YgzyRZK" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="pqkAUVEmWtMQoxTM4lmBbY" Name="Input" Kind="InputPin" />
             <Pin Id="vmrGh0bUnIz1ihMvgM5or9" Name="Input 2" Kind="InputPin" />

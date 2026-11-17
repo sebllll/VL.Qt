@@ -121,6 +121,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Sampler" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="EIM4G4RvUDFDlHlUS3eJ2R" Name="Filter" Kind="InputPin" DefaultValue="Point" />
             <Pin Id="j7GFwA3W9oTs6o8K5jcfvq" Name="Mip Filter" Kind="InputPin" IsHidden="true" />
             <Pin Id="KKx4iWhsvju6UQynRRTWWk" Name="Address U" Kind="InputPin" />

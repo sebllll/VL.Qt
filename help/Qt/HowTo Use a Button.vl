@@ -29,6 +29,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Button" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="vzZea53LxeCgfRE6PYQedO" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Lzru0MYDajrSuUhGPJgW3a" Name="Size" Kind="InputPin" />
             <Pin Id="mAEteb59rfCfRAFlbvMeeN" Name="Auto Size" Kind="InputPin" />

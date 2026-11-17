@@ -92,6 +92,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Labeled" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="B63OIAhvUpypaOPvAqyOGY" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="uFMgY2bPaOMMM9nJn4Z5sS" Name="Element" Kind="InputPin" />
             <Pin Id="qyUOkziJzOXD3dJbDMp5kF" Name="Text" Kind="InputPin" DefaultValue="Volume" />

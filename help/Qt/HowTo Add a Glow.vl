@@ -51,6 +51,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Glow" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="VeS8y9gWOzPTxu61XygtZN" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="n2c63YrIOlndQnOFAXJux4" Name="Input" Kind="InputPin" />
             <Pin Id="YcXS9Xkp0E2GLaSHmewg6V" Name="Color" Kind="InputPin" DefaultValue="0.15, 0.78, 1, 1" />
@@ -126,6 +127,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="InnerShadow" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="1hk3ecTKGbSreTVn48n0KG" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="gxE9vTO3KhmpsJhwPChruE" Name="Input" Kind="InputPin" />
             <Pin Id="DVVBZrDfjX9bOwjUNgl5iV" Name="Color" Kind="InputPin" DefaultValue="0.25, 0.05, 0, 0.9" />

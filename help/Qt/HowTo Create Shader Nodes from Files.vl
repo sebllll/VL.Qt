@@ -105,6 +105,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessNode" Name="RGBSplit" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
             <Pin Id="iZbJYo7fIrFlvAjAMRbX4A" Name="Input" Kind="InputPin" />
             <Pin Id="QRKKQ8MKoXqLVw2UuKIwYh" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="qTlSdFlZdqFPOybCTKoPAH" Name="Amount" Kind="InputPin" />
@@ -156,6 +157,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessNode" Name="Stripes" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
             <Pin Id="jYml1XiDsPGZTV90PvLzjA" Name="Phase" Kind="InputPin" />
             <Pin Id="UgyNDgWOCMjNEtyHG4h703" Name="Thickness" Kind="InputPin" />
             <Pin Id="ytQmLw3VHhFM3DnyQ9SHeQ" Name="Count" Kind="InputPin" DefaultValue="8" />

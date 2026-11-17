@@ -187,6 +187,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="QtTexture" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
             <Pin Id="Cq5miibQIbrPTGpHf9sMvR" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="JnerQWvzNUqNUIi6RiRadb" Name="Input" Kind="InputPin" />
             <Pin Id="Q4n3HdH52lyLb9WvVQY2Md" Name="Size" Kind="InputPin" />
@@ -271,6 +272,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="ToTexturePixels" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="SgpOjJLxzkCND8Aa1mMhYz" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="M6F1NTeNPh8LEicgTTZfil" Name="Input" Kind="InputPin" />
             <Pin Id="CoHmoflZWumM8omryDNryI" Name="World" Kind="InputPin" />

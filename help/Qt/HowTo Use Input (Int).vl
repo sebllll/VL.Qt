@@ -24,6 +24,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Input (Int)" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="cPYWiiIbU7rBOErMvVCXJt" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="FHQn0GOSAhJw0pzwCR4n69" Name="Size" Kind="InputPin" />
             <Pin Id="Axl8VILjlYEOlLPkuzQ332" Name="Auto Size" Kind="InputPin" IsHidden="true" />

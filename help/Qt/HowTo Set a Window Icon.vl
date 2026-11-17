@@ -53,6 +53,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="WindowSettings" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="9ZXKPbOoT7w9iTjhheW0nm" Name="Icon" Kind="InputPin" />
             <Pin Id="7tW0z1OeryW93mel38zj7v" Name="Title" Kind="InputPin" IsHidden="true" />
             <Pin Id="7U5wqBOKheF94gxEk4BbTR" Name="Borderless" Kind="InputPin" IsHidden="true" />

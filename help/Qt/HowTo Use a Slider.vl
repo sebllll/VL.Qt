@@ -24,6 +24,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Slider" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="RwGAmSIPO8iOucbJ7cVnHP" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="RLZPwf3tqs4jIFUXZ7uSHx" Name="Size" Kind="InputPin" />
             <Pin Id="BniwJVg9AKdPJSntKHqstH" Name="Auto Size" Kind="InputPin" IsHidden="true" />

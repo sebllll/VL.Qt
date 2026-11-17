@@ -217,6 +217,7 @@
               <CategoryReference Kind="Category" Name="Interaction" />
               <Choice Kind="ProcessAppFlag" Name="Point" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="Z3o1qpHlhJ9NHYqUGT8WBo" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="8zKJX8uKGNASOIt0DyLN3d" Name="Input" Kind="InputPin" />
             <Pin Id="Snlw10bjpqKRDam98vqBIa" Name="Is Active" Kind="InputPin" />

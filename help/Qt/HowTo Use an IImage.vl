@@ -54,6 +54,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="ToQtImage" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="M2gY1g1juhzgqUUGZRzJkZ" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="A2uEOPctTfRjVQgHbccJ7a" Name="Input" Kind="InputPin" />
             <Pin Id="IQ5AFX7C0mSDr0fVQl9iVE" Name="Image" Kind="OutputPin" />

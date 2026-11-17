@@ -62,6 +62,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Rectangle" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="tCuOmBytOTjv40uooMNn7G" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Tf0XyEsKkTURITaWvKDu2I" Name="Size" Kind="InputPin" />
             <Pin Id="DZzfFtqNA9lOIFD1BsT3hC" Name="Transform" Kind="InputPin" />
@@ -84,6 +85,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="SfHO8xaOWoDUM4SDvcNcTU" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="P36dBeM7poENosJ31c50TV" Name="Bounds" Kind="InputPin" DefaultValue="169, -10, 1143, 949" IsHidden="true" />
             <Pin Id="JVbXtphUCE9Pt6FartOK21" Name="V Sync" Kind="InputPin" IsHidden="true" />

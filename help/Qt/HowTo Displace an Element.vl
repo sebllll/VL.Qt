@@ -83,6 +83,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Displace" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="4ZxkjPiOZrPYAkEsZxFp3G" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="ocOPjdb5LEhlLQpGcDhGhS" Name="Input" Kind="InputPin" />
             <Pin Id="6v9Ph8WzcpsRTWtxconmav" Name="Map" Kind="InputPin" />
