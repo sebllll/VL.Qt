@@ -106,11 +106,11 @@ namespace VL.Qt.Nodes
             return output;
         }
 
-        /// <summary>Limits of the offset in logical pixels; invalid (min &gt; max on an axis) → none, with an error at the node.</summary>
+        /// <summary>Limits of the offset in units (the reconciler converts them); invalid (min &gt; max on an axis) → none, with an error at the node.</summary>
         DragLimits Limits(Optional<Vector2> minimum, Optional<Vector2> maximum)
         {
-            var min = minimum.HasValue ? Geometry.ToQt(minimum.Value) : new Vector2(float.NegativeInfinity);
-            var max = maximum.HasValue ? Geometry.ToQt(maximum.Value) : new Vector2(float.PositiveInfinity);
+            var min = minimum.HasValue ? minimum.Value : new Vector2(float.NegativeInfinity);
+            var max = maximum.HasValue ? maximum.Value : new Vector2(float.PositiveInfinity);
             bool valid = min.X <= max.X && min.Y <= max.Y; // NaN: invalid
             SetInputError(valid ? null : limitsError);
             return valid ? new DragLimits(min.X, min.Y, max.X, max.Y) : DragLimits.None;

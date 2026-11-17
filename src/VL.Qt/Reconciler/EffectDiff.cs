@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Styles;
 using P = VL.Qt.Protocol.Prop;
@@ -23,7 +25,10 @@ namespace VL.Qt
 
             if (ReferenceEquals(chain, node.EffectChain))
             {
-                RetryEffectObjects(node, inherited);
+                var sent = RetryEffectObjects(node, inherited);
+                // A new unit scale changes the lengths of the chain (#143).
+                if (_rescale && !sent && chain is not null)
+                    SendEffectChain(node);
                 return;
             }
 
@@ -71,12 +76,12 @@ namespace VL.Qt
         /// <summary>
         /// Unchanged chain: the objects are reconciled again (their element may have changed inside, and a video shown
         /// elsewhere stays a placeholder that is retried every pass, #455); the chain is sent again when an object got
-        /// another id.
+        /// another id (returns true then).
         /// </summary>
-        void RetryEffectObjects(Node node, Style inherited)
+        bool RetryEffectObjects(Node node, Style inherited)
         {
             if (node.EffectObjects is not { } objects || node.EffectElements is not { } elements)
-                return;
+                return false;
 
             var resend = false;
             for (int i = 0; i < objects.Count; i++)
@@ -88,6 +93,7 @@ namespace VL.Qt
             }
             if (resend)
                 SendEffectChain(node);
+            return resend;
         }
 
         /// <summary>First unused old object of <paramref name="element"/> itself (<paramref name="sameElement"/>) or of its type.</summary>
@@ -197,9 +203,9 @@ namespace VL.Qt
                 sink.EffectColor(P.EffectShadowColor, c.R, c.G, c.B, c.A);
             }
             if (p.ShadowOffset.X != n.ShadowOffset.X)
-                sink.EffectF32(P.EffectShadowHorizontalOffset, Geometry.ToQt(n.ShadowOffset.X));
+                sink.EffectF32(P.EffectShadowHorizontalOffset, _mapping.ToQt(n.ShadowOffset.X));
             if (p.ShadowOffset.Y != n.ShadowOffset.Y)
-                sink.EffectF32(P.EffectShadowVerticalOffset, Geometry.ToQt(n.ShadowOffset.Y));
+                sink.EffectF32(P.EffectShadowVerticalOffset, _mapping.ToQt(n.ShadowOffset.Y));
             if (p.ShadowBlur != n.ShadowBlur)
                 sink.EffectF32(P.EffectShadowBlur, n.ShadowBlur);
             if (p.ShadowScale != n.ShadowScale)
@@ -225,7 +231,7 @@ namespace VL.Qt
             if (p.PaddingRect != n.PaddingRect)
             {
                 var r = n.PaddingRect;
-                sink.EffectRect(P.EffectPaddingRect, Geometry.ToQt(r.X), Geometry.ToQt(r.Y), Geometry.ToQt(r.Width), Geometry.ToQt(r.Height));
+                sink.EffectRect(P.EffectPaddingRect, _mapping.ToQt(r.X), _mapping.ToQt(r.Y), _mapping.ToQt(r.Width), _mapping.ToQt(r.Height));
             }
 
             if (n.MaskSource is { } mask)
@@ -247,12 +253,19 @@ namespace VL.Qt
                 sink.EffectBool(P.EffectMaskInverted, n.MaskInverted);
         }
 
-        /// <summary>Padding and strength of a shader link are DIP already (the node converts), the uniforms follow like SET_UNIFORMS.</summary>
+        /// <summary>
+        /// Padding, strength and the length uniforms (<see cref="Uniform.IsLength"/>) of a shader link are in units, converted
+        /// here; the padding is rounded up to whole DIP. The other uniforms follow like SET_UNIFORMS.
+        /// </summary>
         void WriteShaderLink(Node node, ShaderLink shader)
         {
             var sink = _sink;
             var pad = shader.Padding;
-            sink.BeginShaderLink(shader.Template, shader.ShaderIds.AsSpan(), pad.X, pad.Y, pad.Width, pad.Height, shader.Strength);
+            var padX = EffectPadding.Ceil(_mapping.ToQt(pad.X));
+            var padY = EffectPadding.Ceil(_mapping.ToQt(pad.Y));
+            var padW = EffectPadding.Ceil(_mapping.ToQt(pad.Width));
+            var padH = EffectPadding.Ceil(_mapping.ToQt(pad.Height));
+            sink.BeginShaderLink(shader.Template, shader.ShaderIds.AsSpan(), padX, padY, padW, padH, _mapping.ToQt(shader.Strength));
             foreach (var u in shader.Uniforms)
             {
                 if (u is null || !UniformWriter.IsValidName(u.Name))
@@ -263,10 +276,17 @@ namespace VL.Qt
                 else if (u.Image is { } image)
                     handle = image.Id;
                 if (u.ValueType != Protocol.Vt.Sampler)
-                    UniformWriter.WriteEntry(sink, u.Name, new UniformValue(u.ValueType, u.Numbers, u.Integer, handle));
+                    UniformWriter.WriteEntry(sink, u.Name, new UniformValue(u.ValueType, u.IsLength ? ScaleLength(u.Numbers, _mapping.UnitScale) : u.Numbers, u.Integer, handle));
                 if (u.Sampler is { } sampler)
                     sink.UniformSampler(u.Name, sampler.Pack());
             }
+        }
+
+        /// <summary>Float and vector components of a length uniform (M11..M14) × <paramref name="scale"/>.</summary>
+        static Matrix ScaleLength(Matrix m, float scale)
+        {
+            m.M11 *= scale; m.M12 *= scale; m.M13 *= scale; m.M14 *= scale;
+            return m;
         }
 
         /// <summary>Writes the fold warning of <paramref name="node"/> into <paramref name="slot"/> (null clears what this node wrote).</summary>
@@ -283,5 +303,12 @@ namespace VL.Qt
             }
             node.EffectWarning = warning;
         }
+    }
+
+    /// <summary>Padding sums up in float: values like 60.000004 DIP (after the conversion from units) must not grow by a whole DIP.</summary>
+    internal static class EffectPadding
+    {
+        /// <summary>Rounds up to whole DIP, ignoring float noise below 0.001.</summary>
+        public static float Ceil(float dip) => MathF.Ceiling(dip - 0.001f);
     }
 }

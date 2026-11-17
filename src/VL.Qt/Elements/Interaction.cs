@@ -176,7 +176,7 @@ namespace VL.Qt.Elements
         public bool MovesElement { get; }
         public DragAxis Axis { get; }
 
-        /// <summary>Limits of the drag offset in logical pixels.</summary>
+        /// <summary>Limits of the drag offset in units of the renderer's space (converted in <see cref="WriteProperties"/>).</summary>
         public DragLimits Limits { get; }
 
         public PointerButtons Buttons { get; }
@@ -190,14 +190,14 @@ namespace VL.Qt.Elements
             if (Axis != (p?.Axis ?? DragAxis.Both))
                 sink.SetI32(id, Protocol.Prop.DragAxis, (int)Axis);
             if (Limits != (p?.Limits ?? DragLimits.None))
-                sink.SetRect(id, Protocol.Prop.DragLimits, Limits.MinX, Limits.MinY, Limits.MaxX, Limits.MaxY);
+                sink.SetRect(id, Protocol.Prop.DragLimits, mapping.ToQt(Limits.MinX), mapping.ToQt(Limits.MinY), mapping.ToQt(Limits.MaxX), mapping.ToQt(Limits.MaxY));
             PointerProps.Write(sink, id, Buttons, Devices, p?.Buttons ?? PointerMasks.DefaultButtons,
                 p?.Devices ?? PointerMasks.DefaultDevices, writeButtons: true);
         }
     }
 
     /// <summary>
-    /// Limits of a drag offset in logical pixels (the rectf slots of VLQT_PROP_DRAG_LIMITS), ±infinity = none. Exact
+    /// Limits of a drag offset in units (written as the rectf slots of VLQT_PROP_DRAG_LIMITS in logical pixels), ±infinity = none. Exact
     /// float equality (unlike Stride's vectors, whose near-equality fails for infinity).
     /// </summary>
     internal readonly record struct DragLimits(float MinX, float MinY, float MaxX, float MaxY)

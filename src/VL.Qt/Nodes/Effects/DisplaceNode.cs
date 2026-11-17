@@ -27,12 +27,12 @@ namespace VL.Qt.Nodes
 
         static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
         {
-            var shift = Geometry.ToQt(p.Displacement);
-            var pad = EffectPadding.Ceil(MathF.Abs(shift));
+            var shift = p.Displacement;
+            var pad = MathF.Abs(shift);
             return new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.Single, ids,
                 new[]
                 {
-                    Uniform.Float("displacement", shift),
+                    Uniform.Length("displacement", shift),
                     Uniform.FromTexture("map", p.Map, p.MapSampler),
                 }.ToSpread(),
                 new RectangleF(pad, pad, pad, pad));

@@ -56,7 +56,7 @@ namespace VL.Qt.Stride
         /// <summary>Renders the element tree in the next draw of the layer.</summary>
         /// <param name="error">Last error (texture, binding, apply, poll or render in QtNative), empty if ok; otherwise the hint when the target has no UNorm view and the layer blends like QtTexture.</param>
         /// <param name="input">Root element (null = empty scene).</param>
-        /// <param name="space">Coordinate space of the elements. v1 implements DIPTopLeft only (1 unit = 100 DIP); other values warn and behave like DIPTopLeft.</param>
+        /// <param name="space">Coordinate space of the elements: origin and size of one unit, see <see cref="Space"/>.</param>
         /// <param name="clearColor">Background of the layer (straight alpha, premultiplied here). Alpha 0 shows the target through it.</param>
         /// <param name="enabled">False freezes the layer: no updates of Input, Space or Clear Color, nothing renders and no input reaches the scene; it keeps drawing the last content.</param>
         /// <param name="debug">Debug overlay for all elements of the scene (same as the Debug pin of Renderer [Qt]).</param>
