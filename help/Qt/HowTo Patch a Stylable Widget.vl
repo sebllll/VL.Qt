@@ -451,6 +451,7 @@
                     <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                     <Choice Kind="OperationCallFlag" Name="ResolveState" />
                   </p:NodeReference>
+                  <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                   <Pin Id="VQGRI1VisSfMxye2U6ZYJ2" Name="Is Hovered" Kind="InputPin" />
                   <Pin Id="RTHpRhQksllMUImptYmtXK" Name="Is Pressed" Kind="InputPin" />
                   <Pin Id="OiCrzOV6yvYQVenTTvLkoN" Name="Is Disabled" Kind="InputPin" />
@@ -462,6 +463,7 @@
                     <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                     <Choice Kind="OperationCallFlag" Name="GetColors" />
                   </p:NodeReference>
+                  <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                   <Pin Id="EpdTkpCP2zNMlZapQgzNU1" Name="Input" Kind="InputPin" />
                   <Pin Id="AC8T3akN7GTPd2x6juZ1iz" Name="State" Kind="InputPin" />
                   <Pin Id="MNoScMc2R3kQTheQwPAM5k" Name="Frame" Kind="OutputPin" />
@@ -476,6 +478,7 @@
                     <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                     <Choice Kind="OperationCallFlag" Name="GetFrame" />
                   </p:NodeReference>
+                  <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                   <Pin Id="NkSc1xFWEF8QGVewKYCY0j" Name="Input" Kind="InputPin" />
                   <Pin Id="SO2vZKwDPCrNQWKGn6AYYi" Name="State" Kind="InputPin" />
                   <Pin Id="OgCwaE5pJQCN3R1IMT34JP" Name="Radius" Kind="OutputPin" />
@@ -490,6 +493,7 @@
                     <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                     <Choice Kind="OperationCallFlag" Name="GetText" />
                   </p:NodeReference>
+                  <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                   <Pin Id="GQVylKP2DIRLSvSuqXIsxo" Name="Input" Kind="InputPin" />
                   <Pin Id="U266DlCagFjNbNk0Y2gTdW" Name="State" Kind="InputPin" />
                   <Pin Id="UIOiNQyatEROJDfz43nANn" Name="Font Family" Kind="OutputPin" />

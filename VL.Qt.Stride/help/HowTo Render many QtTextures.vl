@@ -134,6 +134,7 @@
                   <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                   <Choice Kind="ProcessAppFlag" Name="QtTexture" />
                 </p:NodeReference>
+                <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
                 <Pin Id="HNCO9O6oDEela62sMkahi7" Name="Node Context" Kind="InputPin" IsHidden="true" />
                 <Pin Id="ZODEgWy7HAGYnVIdKTTcOY" Name="Input" Kind="InputPin" />
                 <Pin Id="VnQ73k8G7aouCG5jDPL2L6" Name="Size" Kind="InputPin" DefaultValue="1000, 300" />

@@ -89,6 +89,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="VideoSourceToQtImage" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="mERqCHRjfurVgYmvhlANfI" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="wecYETY3sQQFQ4cyRs3l4R" Name="Input" Kind="InputPin" />
             <Pin Id="zBuYBF6anAYGIOfAUu87jB" Name="Fallback" Kind="InputPin" />

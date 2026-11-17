@@ -71,6 +71,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Hover" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
             <Pin Id="3Muhj5mBS6Hh1Op4hy7sXI" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="F9hk5HCJp9OM08LAAhG3p0" Name="Input" Kind="InputPin" />
             <Pin Id="W4k6yBpHBwmkg3ZNtYmzbC" Name="Is Hovered" Kind="InputPin" />
@@ -82,6 +83,7 @@
               <CategoryReference Kind="Category" Name="Interaction" />
               <Choice Kind="ProcessAppFlag" Name="Click" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
             <Pin Id="SKzDVeyyQ8SbUA9BBC26p0" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="qJ8SQq4Nhw0ORRjUpHk9F5" Name="Input" Kind="InputPin" />
             <Pin Id="d85kSLS4MbxfxhH14qdOBf" Name="Is Pressed" Kind="InputPin" />

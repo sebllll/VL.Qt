@@ -214,6 +214,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Light" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="Vh1NMxSq5TnQ90KBdRWIn9" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="E02JpU5qCu0VNKqL7XWePT" Bounds="1455,439,240,60" ShowValueBox="true" isIOBox="true" Value="Presets from Qt.Style. Open it to see how it is built from Colors and Frame, or copy it as a template.">
@@ -293,6 +294,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="Dark" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="HHvMrMPLNNPPveHBS8R1OR" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="1400,540,136,19" Id="ICzZN2WpE6aOgrHRsYyRsm">

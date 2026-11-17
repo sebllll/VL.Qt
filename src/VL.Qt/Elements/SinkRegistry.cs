@@ -304,11 +304,12 @@ namespace VL.Qt.Elements
                 case Protocol.Ev.TouchPoints:
                     return ApplyTouchPoints(r.Payload, sink[index], mapping);
                 case Protocol.Ev.Pinch:
-                    if (len < 16) return false;
-                    var pi = sink[index]; // scale: factor, rotation: degrees -> cycles, translation: pixels -> units
+                    if (len < 24) return false;
+                    var pi = sink[index]; // scale: factor, rotation: degrees -> cycles, translation and pivot: pixels -> units
                     pi.PinchScale = r.ReadF32(0);
                     pi.PinchRotation = r.ReadF32(4) / 360f;
                     pi.PinchTranslation = mapping.FromQt(new Vector2(r.ReadF32(8), r.ReadF32(12)));
+                    pi.PinchPivot = mapping.FromQt(new Vector2(r.ReadF32(16), r.ReadF32(20)));
                     unchecked { pi.PinchUpdates++; }
                     return true;
                 case Protocol.Ev.Pointer:

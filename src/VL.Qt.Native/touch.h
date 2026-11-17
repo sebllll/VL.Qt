@@ -71,15 +71,18 @@ private:
  * Qt ends the pinch (active false, values back to 1/0/0) as soon as the number of points differs from the one it
  * started with (a third finger down or up) and starts a new one later. PinchState keeps the gesture running while at
  * least minimumPointCount points lie on the item (counted by an internal TouchPointsHandler without occlusion): values
- * freeze while Qt is inactive and go on from there when Qt activates again (scale multiplied, rotation and translation
- * added), so a changing finger count does not jump. QObject child of the QML PinchHandler (deleted with it). */
+ * freeze while Qt is inactive and go on from there when Qt activates again (the transform of the new activation is
+ * composed with the frozen one), so a changing finger count does not jump. The values describe
+ * p' = pivot + translation + scale * R(rotation) * (p - pivot) in the parent's space, with the centroid of the first
+ * activation as the pivot: applied like that, the content follows the fingers. QObject child of the QML PinchHandler
+ * (deleted with it). */
 class PinchState : public QObject
 {
     Q_OBJECT
 public:
     PinchState(QObject* pinch, TouchPointsHandler* points);
 
-    float value[4] = {1, 0, 0, 0}; // scale, rotation (degrees, clockwise), translation x, y (parent space) of the gesture
+    float value[6] = {1, 0, 0, 0, 0, 0}; // scale, rotation (degrees, clockwise), translation x, y, pivot x, y (parent space) of the gesture
     bool running = false;          // gesture running (reported as EV_ACTIVE)
     quint32 gestures = 0;          // gestures started: a new one sends EV_PINCH even with the same value
 
@@ -95,6 +98,7 @@ private:
     TouchPointsHandler* points_;
     float base_[4] = {1, 0, 0, 0}; // value of the gesture when Qt activated the last time
     QPointF start_;                // centroid (scene) at the last activation
+    QPointF pivot_;                // centroid (scene) at the first activation of the gesture
     QMetaProperty centroidPos_;    // QQuickHandlerPoint::scenePosition, resolved on first use
 };
 

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="RD1t7oDeAs9XahK0yj6aIO" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="RD1t7oDeAs9XahK0yj6aIO" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="1ppu5vXXvDQXfQOkxo3b7n" Location="VL.CoreLib" />
   <DocumentDependency Id="NX4iKPYg34EpTdqZvCrTxW" Location="../../VL.Qt.vl" />
   <Patch Id="ieWuw5iFCgq2rNEdRW8ILn">
@@ -94,6 +94,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Blend" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="SzeP57Q2XZxlez2GaK2N7f" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="mWGexbVRoevqCJB8J82GAh" Name="Input" Kind="InputPin" />
             <Pin Id="QAwJX3p9AUoCvoIR31Qmm2" Name="Layer" Kind="InputPin" />
@@ -337,6 +338,7 @@
             <Pin Id="Mot9ClVJTJXyr7LuGLVyE8" Name="Input" Kind="InputPin" />
             <Pin Id="xN98cZ9KzmSFazli7gEE5c" Name="Space" Kind="InputPin" />
             <Pin Id="vGoCLWvCzLuj4tMUoH7xtS" Name="Clear Color" Kind="InputPin" DefaultValue="0.06, 0.07, 0.1, 1" />
+            <Pin Id="PiiUWyaAdtRMmDLCQrV5cg" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="QYCdX4whSkKfNWCsujDxEx" Name="Enabled" Kind="InputPin" />
             <Pin Id="s7pWkfIiRvwKJO7gbYm0hs" Name="Title" Kind="InputPin" DefaultValue="HowTo Blend Elements" />
             <Pin Id="x486tyA2pq1xrdJr6zZ6K2" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
@@ -347,6 +349,7 @@
             <Pin Id="ip5vLss6nhmyUujXB5NmJ5" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="B0wKMC6Y0ShAUsGprdnAHi" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="IrWEoTdUWx6OMgcWgWPnyw" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="R0lmMmoL9YaNBM88X6tHVh" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="MXw6O4KHSldNmchrUyKBR7" Comment="Spacing" Bounds="1062,590,35,15" ShowValueBox="true" isIOBox="true" Value="0.2">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">

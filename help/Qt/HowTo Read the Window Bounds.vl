@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="DSvFDLTaSpOix7Sn20EYwK" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="DSvFDLTaSpOix7Sn20EYwK" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="nev8AalwsUoqPOL6bLHK92" Location="VL.CoreLib" />
   <DocumentDependency Id="MBmvU9R1pQJyO7w7I4Hlul" Location="../../VL.Qt.vl" />
   <Patch Id="nnoFQICv7uJHKDcuPHCQcu">
@@ -16,7 +16,7 @@
       </p:NodeReference>
       <Patch Id="ZUJhKaABrtSxOp05B4HjNS">
         <Canvas Id="fJ5HovcFEf9uVX95EB8SF6" CanvasType="Group">
-          <Pad Id="FELg4LEub313Wembvf0vD8" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Read the Window Bounds">
+          <Pad Id="FELg4LEub313Wembvf0vD8" Bounds="85,16,589,52" ShowValueBox="true" isIOBox="true" Value="How To Read the Window Bounds">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -79,11 +79,12 @@
             <Pin Id="SYuaa7rFlUxNlwfcuRbmC0" Name="Interaction" Kind="InputPin" />
             <Pin Id="J27oXcxGakILa0rmc1aIeE" Name="Effect" Kind="InputPin" />
           </Node>
-          <Node Bounds="190,678,85,19" Id="yhOm6nK8dJ6njJsWA7njAz">
+          <Node Bounds="170,660,105,19" Id="yhOm6nK8dJ6njJsWA7njAz">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
             <Pin Id="nhjK6MiwCUKGAUswWn2Zvt" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="BWMUQLCHVit0eMp4lZYrVZ" Name="Bounds" Kind="InputPin" DefaultValue="543, 189, 573, 619" IsHidden="true" />
             <Pin Id="KBLrjY0QPEQQZzJvKIxPeH" Name="V Sync" Kind="InputPin" DefaultValue="False" />
@@ -93,6 +94,7 @@
             <Pin Id="rFogwwvx4f2U4urOh9r5ij" Name="Input" Kind="InputPin" />
             <Pin Id="5RiMDYH8KV8N6S9pQrHmKO" Name="Space" Kind="InputPin" />
             <Pin Id="u4MqmiCYjSyYUuoSfwhv8n" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="TOIpMgSIiJsLKVRDvZ7kxb" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="F0Bvu1cdsNdCXHjd0zrt9I" Name="Enabled" Kind="InputPin" />
             <Pin Id="P3MybhwvhbQLdHVai3Ui7Z" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="VcecQawo3rSvjmPf4n3gM2" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -103,13 +105,14 @@
             <Pin Id="WVuQ55Uh7Jd6pg18Z4m2Z8" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="ouIoT95WI3za1XyEr0YM3h" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="CgBexKrRDx3PrdH9wYcYog" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="RQxRUcbi687MYOxnMhdEmk" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="kwlPCq0SQnBEk4aU4YjMQE" Comment="Title" Bounds="272,615,193,15" ShowValueBox="true" isIOBox="true" Value="HowTo Read the Window Bounds">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="Jdvs3e5iWapOvcWnbdCyTf" SlotId="UfrxdzLPvpMP7YjebO0p1U" Bounds="192,750" />
+          <Pad Id="Jdvs3e5iWapOvcWnbdCyTf" SlotId="UfrxdzLPvpMP7YjebO0p1U" Bounds="172,732" />
           <Pad Id="MUTTkr6CtcZLlrib2nCJob" SlotId="UfrxdzLPvpMP7YjebO0p1U" Bounds="192,263" />
           <Node Bounds="190,325,35,19" Id="DVv9NCZ4rJaQBMHReADE5X">
             <p:NodeReference LastCategoryFullName="2D.Rectangle" LastDependency="VL.CoreLib.vl">
@@ -131,7 +134,7 @@
             <Pin Id="Q73YURhSlFlLEPfKHjYEbV" Name="Scalar" Kind="InputPin" DefaultValue="100" />
             <Pin Id="B0ctQhH3MADPyQR2IWEw6h" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="TO1lTHqL2oVLdFEZ3UmNCg" Comment="Client Bounds" Bounds="232,740,273,133" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="TO1lTHqL2oVLdFEZ3UmNCg" Comment="Client Bounds" Bounds="212,722,273,133" ShowValueBox="true" isIOBox="true" />
         </Canvas>
         <Link Id="1rZXktpIwd0pwWNkj6OBY6" Ids="lQgPgJnJzee0cZYqSBkXdH,8a2A1VbarPnZGNcbLnkWYw" />
         <Link Id="KaomZlDyPAVU7Gg3t7XjQ7" Ids="WA6N4xZhCh5YSmkQ6Nd3wm,PhcCN4nPKEop6NZt7sBdeA" />

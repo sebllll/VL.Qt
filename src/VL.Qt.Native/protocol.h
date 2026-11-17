@@ -143,7 +143,7 @@
  *   2 x f32 on change (translation of the running drag); moves the item by its drag offset, SET TRANSFORM resets it to 0
  *   (pin wins: every TRANSFORM, also a resync, puts the item back where the pin says; SIZE/ANCHOR keep the offset).
  *   Touch Points handler (#321): EV_TOUCH_POINTS on change (all points pressed in the item, item-local; count 0 when the
- *   last one goes; at most 64 points). Pinch handler (#321): EV_ACTIVE u8 on change, EV_PINCH 4 x f32 while active, the
+ *   last one goes; at most 64 points). Pinch handler (#321): EV_ACTIVE u8 on change, EV_PINCH 6 x f32 while active, the
  *   last one before EV_ACTIVE 0 (never the 1/0/0 Qt resets to).
  *   Value inputs (SpinBox #210 i32; CheckBox/Switch bool, Slider f32, TextField string #301): EV_VALUE = u16 valueType, u16 0,
  *   value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8; string capped at 60000 bytes on a character
@@ -523,7 +523,7 @@ enum vlqt_ev {
     VLQT_EV_WHEEL = 13, /* 2 x f32 notches (angleDelta / 120) since the last poll, once (0, 0) after motion (#320) */
     VLQT_EV_DRAG = 14, /* 2 x f32 translation of the running drag since the press (parent space, after limits), on change (#209) */
     VLQT_EV_TOUCH_POINTS = 15, /* u32 count + count x (u32 id, f32 x, f32 y, f32 pressure, f32 w, f32 h), on change (#321) */
-    VLQT_EV_PINCH = 16, /* 4 x f32 scale, rotation (degrees, clockwise), translation x, y (parent space) while active (#321) */
+    VLQT_EV_PINCH = 16, /* 6 x f32 scale, rotation (degrees, clockwise), translation x, y, pivot x, y (parent space) while active (#321) */
     VLQT_EV_VALUE = 17, /* u16 valueType (VLQT_VT_I32/F32/BOOL/STRING), u16 0, value: user change of a value input (#210) */
     VLQT_EV_QML_PROPERTY = 18, /* u16 nameLen, u16 valueType, name, padding to 4, value like EV_VALUE: a root property QML changed (#104) */
     VLQT_EV_QML_SIGNAL = 19    /* u16 nameLen, u16 argCount, name, padding to 4, argCount x (u16 valueType, u16 0, value, padding): a root signal (#104) */

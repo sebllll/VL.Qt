@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="UKJguINj35EyiEocwU1VLs" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="UKJguINj35EyiEocwU1VLs" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="yISisoA5jniyiW6ThVbTtA" Location="VL.CoreLib" />
   <DocumentDependency Id="JDXKk5ZnEk2NDKBqikqIKH" Location="../../VL.Qt.vl" />
   <Patch Id="VM4tBf8TDXWp9JGtzqpV4f">
@@ -103,6 +103,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="b3cAdvWfELb6uym9rW2nxe" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Cu4hAKHRN78tqfUnAYPCLh" Name="Input" Kind="InputPin" />
             <Pin Id="TXEzdHTExvtN4LkkrHRQYJ" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
@@ -153,6 +154,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="eN4tilBk7SCpDGVHgPSYYI" Name="Name" Kind="InputPin" DefaultValue="time" />
             <Pin Id="JJ0hVSa07XGlpsBSqNgCNe" Name="Value" Kind="InputPin" />
             <Pin Id="hNxPe0YCwGj9WIPe8sNEfV" Name="Result" Kind="OutputPin" />
@@ -286,6 +288,7 @@
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Color" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="Z3a5k0HAPmEt7lsyGFLfJ1" Name="Name" Kind="InputPin" DefaultValue="tintColor" />
             <Pin Id="c2vJ7B4hDa7Y0P9gONdUvp" Name="Value" Kind="InputPin" />
             <Pin Id="zqAT1l28CfcayVY3xcFsO2" Name="Result" Kind="OutputPin" />
@@ -352,7 +355,7 @@
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="5ODCaEhwFdrmDdJA2l1zou" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="VO0uXePZYRQEpggEZuySTD" Name="Bounds" Kind="InputPin" DefaultValue="2247, 123, 786, 432" IsHidden="true" />
+            <Pin Id="VO0uXePZYRQEpggEZuySTD" Name="Bounds" Kind="InputPin" DefaultValue="339, 248, 786, 432" IsHidden="true" />
             <Pin Id="IHZF3rBNWaVO1i2qlpgJ73" Name="V Sync" Kind="InputPin" IsHidden="true" />
             <Pin Id="TZHbOzVY1XE1ehPWKVGvw1" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="ajk14Jn3IjQXA5lxcJmF2V" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
@@ -360,6 +363,7 @@
             <Pin Id="6pI6i12d2g9lvJttLvYb2O" Name="Input" Kind="InputPin" />
             <Pin Id="QIpYnwrxs5K7kiamyvVGf2" Name="Space" Kind="InputPin" />
             <Pin Id="SKOggYuVvBnFk48q6FjW5h" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="CUdjI5TGLf9NW3TfZlF1NP" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="LcXgmMffkyKBQU9kMQMEoc" Name="Enabled" Kind="InputPin" />
             <Pin Id="ThJj299XIo0J4hjvk5NyeH" Name="Title" Kind="InputPin" />
             <Pin Id="P6ttwV1IPdYOI6aoHGzGow" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
@@ -370,6 +374,7 @@
             <Pin Id="MMmqq0tkfLIQ0VBtaeLAKL" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="eiJzqVkYPD1hHXh7myaPdo" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="UC1RKHbrDgEOVhe9i20FED" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="RSQuLRm4AQqPbdL5d9SmA9" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="w6deaqIn4PNUqohJtFcOjX" Comment="Title" Bounds="182,1136,200,19" ShowValueBox="true" isIOBox="true" Value="HowTo Write a ShaderEffect">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">

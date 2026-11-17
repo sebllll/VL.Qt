@@ -50,7 +50,7 @@
 		<VLDocument link="Qt\HowTo Chain Effects.vl" tags="blur dropshadow coloradjust layer" />
 		<VLDocument link="Qt\HowTo Mask an Element.vl" tags="alpha" />
 		<VLDocument link="Qt\HowTo Add a Glow.vl" tags="innershadow" />
-		<VLDocument link="Qt\HowTo Use Motion Blurs.vl" tags="directional zoom radial" />
+		<VLDocument link="Qt\HowTo Blur An Element.vl" tags="directional zoom radial" />
 		<VLDocument link="Qt\HowTo Displace an Element.vl" tags="" />
 		<VLDocument link="Qt\HowTo Blend Elements.vl" tags="blend mode" />
 		<VLDocument link="Qt\HowTo Draw Trails.vl" tags="clear feedback fade smear" />

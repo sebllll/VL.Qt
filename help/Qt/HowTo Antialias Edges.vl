@@ -142,6 +142,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
             <Pin Id="HBSH6GYA8pGp2Ww7h8mFVU" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="2vY9DwkjjgG5uT8m9E8VRU" Name="Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="Bc62ILcJgQGqCz9nbcUPRF" Name="V Sync" Kind="InputPin" IsHidden="true" />

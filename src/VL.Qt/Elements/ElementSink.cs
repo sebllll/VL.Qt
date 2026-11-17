@@ -58,6 +58,9 @@ namespace VL.Qt.Elements
         /// <summary>Pinch handler: translation of the running (or last) gesture in units, parent space (#321).</summary>
         public Vector2 PinchTranslation { get; set; }
 
+        /// <summary>Pinch handler: pivot of scale and rotation (the fingers' centroid when the gesture began) in units, parent space (#321).</summary>
+        public Vector2 PinchPivot { get; set; }
+
         /// <summary>Pinch handler: number of EV_PINCH received, so an equal value (new gesture) is still seen as new (#321).</summary>
         public int PinchUpdates { get; set; }
 
@@ -293,6 +296,9 @@ namespace VL.Qt.Elements
 
         /// <summary>Pinch handler: translation in units (#321).</summary>
         public Vector2 PinchTranslation(int index = 0) => TryGet(index, out var s) ? s.PinchTranslation : default;
+
+        /// <summary>Pinch handler: pivot in units (#321).</summary>
+        public Vector2 PinchPivot(int index = 0) => TryGet(index, out var s) ? s.PinchPivot : default;
 
         /// <summary>Pinch handler: number of pinch updates received so far (#321).</summary>
         public int PinchUpdates(int index = 0) => TryGet(index, out var s) ? s.PinchUpdates : 0;

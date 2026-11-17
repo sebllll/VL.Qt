@@ -61,6 +61,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Video" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="pADZOFHQSKXpI86Vgnf5pE" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="BwHL28G17Zu2SMItgeYs1n" Name="Size" Kind="InputPin" />
             <Pin Id="BOskyQetu30YZJvTJJPgqn" Name="Transform" Kind="InputPin" />

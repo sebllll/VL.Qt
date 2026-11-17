@@ -707,12 +707,14 @@ void collectPinch(Scene& scene, HandlerNode& hn)
     if (ps.running && !hn.sentActive)
         pushFlag(scene, VLQT_EV_ACTIVE, hn.sink, true);
     const float* v = ps.value;
-    const bool changed = v[0] != hn.sentPinch[0] || v[1] != hn.sentPinch[1] || v[2] != hn.sentPinch[2] || v[3] != hn.sentPinch[3];
+    bool changed = false;
+    for (int i = 0; i < 6; ++i)
+        changed = changed || v[i] != hn.sentPinch[i];
     if ((ps.running || hn.sentActive) && (changed || ps.gestures != hn.sentGestures)) {
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 6; ++i)
             hn.sentPinch[i] = v[i];
         hn.sentGestures = ps.gestures;
-        scene.pushEvent(VLQT_EV_PINCH, hn.sink, 0, v, quint16(4 * sizeof(float)));
+        scene.pushEvent(VLQT_EV_PINCH, hn.sink, 0, v, quint16(6 * sizeof(float)));
     }
     if (!ps.running && hn.sentActive)
         pushFlag(scene, VLQT_EV_ACTIVE, hn.sink, false);

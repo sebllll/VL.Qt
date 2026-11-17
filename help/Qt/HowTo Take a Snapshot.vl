@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="bwqVsQymbv4DmAHCNRcSXm" LanguageVersion="2026.8.0-0317-g4bf4984586" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="bwqVsQymbv4DmAHCNRcSXm" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="zsYchkGlx2rtaBCLa0eCTI" Location="VL.CoreLib" />
   <NugetDependency Id="EDEACcbE8o2dd5kBLYA01d" Location="VL.Skia" />
   <DocumentDependency Id="EeMjK5luVSSJS7dlMMIIAb" Location="../../VL.Qt.vl" />
@@ -159,7 +159,7 @@
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="UEnkYUMyMYFv75KhggCA2A" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Yn3bisvYBy8rKjqC1rEQPR" Name="Bounds" Kind="InputPin" DefaultValue="1787, 565, 600, 400" IsHidden="true" />
+            <Pin Id="Yn3bisvYBy8rKjqC1rEQPR" Name="Bounds" Kind="InputPin" DefaultValue="866, 463, 600, 400" IsHidden="true" />
             <Pin Id="FktI8m6mvWhYWvOGaJL0dv" Name="V Sync" Kind="InputPin" IsHidden="true" />
             <Pin Id="ir6oKqfGwWTYuEJGv3kTtY" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="wOkP0PgswgsRNaePhEnxj4" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
@@ -167,6 +167,7 @@
             <Pin Id="Xi19Vxtax3PVrudKB22hjM" Name="Input" Kind="InputPin" />
             <Pin Id="iOboAcORExzf0i0fMNU58Z" Name="Space" Kind="InputPin" />
             <Pin Id="NJOmQESidWqF1cMim6x9qt" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="NFiGJcxqmVZPHZsJJPmq3z" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="9ANP8felmKr5tU85mTOmS6" Name="Enabled" Kind="InputPin" />
             <Pin Id="izVO2jTC5Jm4RcMXa0IpvN" Name="Title" Kind="InputPin" />
             <Pin Id="7eFaCx8tqmj5yL93SswJDh" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
@@ -177,12 +178,14 @@
             <Pin Id="20Ff07RLTjMdCA806ehkGw" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="jrefOn8cbiUN7pmUHPwGxe" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="FnnMTyw96PqM0441i8IIn0" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ASpJmDiRMgcPR6kWo8nhr9" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="447,850,100,19" Id="LVtgeACV4QWdLofebkC6Ho">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Snapshot" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="kgfCFukQsTOL54jWslTqUt" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="S7KmeHKWhUltjiuAmggbcL" Name="Element" Kind="InputPin" />
             <Pin Id="W3p43ZObfDQubVCJBBwrBn" Name="Scale" Kind="InputPin" DefaultValue="1" />
@@ -245,7 +248,7 @@
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="CQ551CwCQVtfR9G9zt7uI2" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="YhgE5U2Tk8RA7SMqhpnyWY" Name="Bounds" Kind="InputPin" DefaultValue="1776, 169, 619, 400" IsHidden="true" />
+            <Pin Id="YhgE5U2Tk8RA7SMqhpnyWY" Name="Bounds" Kind="InputPin" DefaultValue="856, 71, 619, 400" IsHidden="true" />
             <Pin Id="yVS9S6yUjmsAq4Sep7vPxR" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="z0H5GfTaFdlC39bHqvldEO" Name="Bound to Document" Kind="InputPin" DefaultValue="True" IsHidden="true" />
             <Pin Id="Kn8drEHp2GWMsppf6vM1ur" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
