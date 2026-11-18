@@ -47,6 +47,9 @@ namespace VL.Qt.Paths
         readonly float _x0, _y0, _x1, _y1, _x2, _y2;
         readonly int _verbCount;
         readonly int _pointCount;
+        // Current point (end of the last segment) and start of the current contour (target of Close), kept per node
+        // so that relative nodes read them in O(1).
+        readonly float _lastX, _lastY, _startX, _startY;
 
         // Written by the first reader. Two threads may both compute it and the results are identical, so no lock is
         // needed: Interlocked.CompareExchange publishes exactly one instance and every reader gets that one.
@@ -72,6 +75,31 @@ namespace VL.Qt.Paths
             _y2 = y2;
             _verbCount = previous._verbCount + 1;
             _pointCount = previous._pointCount + PointCountOf(verb);
+            _startX = previous._startX;
+            _startY = previous._startY;
+            switch (verb)
+            {
+                case Protocol.Verb.Move:
+                    _lastX = _startX = x0;
+                    _lastY = _startY = y0;
+                    break;
+                case Protocol.Verb.Line:
+                    _lastX = x0;
+                    _lastY = y0;
+                    break;
+                case Protocol.Verb.Quad:
+                    _lastX = x1;
+                    _lastY = y1;
+                    break;
+                case Protocol.Verb.Cubic:
+                    _lastX = x2;
+                    _lastY = y2;
+                    break;
+                default:
+                    _lastX = _startX;
+                    _lastY = _startY;
+                    break;
+            }
         }
 
         QtPath(QtPath previous, QtPath appended)
@@ -81,6 +109,10 @@ namespace VL.Qt.Paths
             _verb = byte.MaxValue;
             _verbCount = previous._verbCount + appended._verbCount;
             _pointCount = previous._pointCount + appended._pointCount;
+            _lastX = appended._lastX;
+            _lastY = appended._lastY;
+            _startX = appended._startX;
+            _startY = appended._startY;
         }
 
         static int PointCountOf(byte verb) => verb switch
@@ -97,6 +129,9 @@ namespace VL.Qt.Paths
 
         /// <summary>Bounding box of all points, control points included (zero rectangle for an empty path).</summary>
         public RectangleF Bounds => Flatten().Bounds;
+
+        /// <summary>The end point of the last segment, or the start of the contour after Close; (0, 0) for an empty path.</summary>
+        internal Vector2 LastPoint => new Vector2(_lastX, _lastY);
 
         internal QtPath MoveTo(float x, float y) => new QtPath(this, Protocol.Verb.Move, x, y, 0, 0, 0, 0);
 

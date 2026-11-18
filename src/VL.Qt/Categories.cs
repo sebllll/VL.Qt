@@ -20,6 +20,9 @@
         /// <summary>Blur, shadow, color and mask effects attached to an element (Effect pin).</summary>
         internal const string Effects = "Qt.Effects";
 
+        /// <summary>Builder nodes that create a QtPath step by step (MoveTo, LineTo, AddRect, ...), modelled on Skia.Paths.</summary>
+        internal const string Paths = "Qt.Paths";
+
         /// <summary>Effects Qt merges into one MultiEffect layer (Blur, DropShadow, ColorAdjust, Colorize, Mask).</summary>
         internal const string MultiEffect = "Qt.Effects.MultiEffect";
     }
