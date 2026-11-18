@@ -1,0 +1,474 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="YsV8RFOPx5PLqglwt360F4" LanguageVersion="2026.8.0-0156-g7259116c8c" Version="0.128">
+  <NugetDependency Id="cYkEgvsn5TwSLRQkrGUpWP" Location="VL.CoreLib" />
+  <DocumentDependency Id="sjEYE46ntGE1O3cBMtC66a" Location="../../VL.Qt.vl" />
+  <Patch Id="aYZyuyHmzywV4S6YWqOrTw">
+    <Canvas Id="YWzYzqTep5ke6h9OHzhhGe" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <Node Name="Application" Bounds="100,100" Id="HJlDRBzUGgd9mv10x2c9i5">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="PItpVgipw2l8ckqgvUTrmW">
+        <Canvas Id="SVdp7fi6bFC18GAlFmTHl5" CanvasType="Group">
+          <Pad Id="uLx1708qxSmaaIUloplfJj" Bounds="85,16,300,52" ShowValueBox="true" isIOBox="true" Value="How To Build a Path">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl"><Choice Kind="TypeFlag" Name="String" /></p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="xSMwvxRvZNipHJmmW8wHzI" Bounds="85,85,600,173" ShowValueBox="true" isIOBox="true" Value="Qt.Paths nodes [Qt] build a path step by step, Path [Qt] draws it:&#xD;&#xA;- Every node takes the path so far at Input (unconnected = empty path) and returns the longer path at Output&#xD;&#xA;- MoveTo, LineTo, QuadTo, CubicTo, ArcTo and Close add segments; the (Relative) variants count from the last point&#xD;&#xA;- AddRect, AddRoundRect, AddOval, AddCircle, AddArc, AddPoly and AddPath add whole contours&#xD;&#xA;- ArcTo exists three times, like in Skia: the tangent, oval and SVG form differ in their pins">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl"><Choice Kind="TypeFlag" Name="String" /></p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="q6Be8jnpsnDXATgtHZApBP" Bounds="100,318,290,59" ShowValueBox="true" isIOBox="true" Value="1  A chain: MoveTo, LineTo, LineTo (Relative), CubicTo and Close. The relative point is added to the last point.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl"><Choice Kind="TypeFlag" Name="String" /></p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="w58QfCCvNBATNb3FVRB0Nj" Comment="Point" Bounds="162,392,35,28" ShowValueBox="true" isIOBox="true" Value="0.5, 0.5">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="100,435,65,19" Id="qRu4iNLxusjpTZafKvKaQO">
+            <p:NodeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Paths" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="MoveTo" />
+            </p:NodeReference>
+            <Pin Id="hG6Asr3SeLaV9G1Ege3Tkt" Name="Input" Kind="InputPin" />
+            <Pin Id="vxpKVFzA4ZAQer3SVaUObm" Name="Point" Kind="InputPin" />
+            <Pin Id="3TLSPR6r6H8D4m7lyGzxKi" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="mKLxYc79ibjkNR3XEqpSmY" Comment="Point" Bounds="162,466,35,28" ShowValueBox="true" isIOBox="true" Value="2.2, 0.5">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="100,509,65,19" Id="TCTfS5ztpouGVilf9tMOcA">
+            <p:NodeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Paths" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="LineTo" />
+            </p:NodeReference>
+            <Pin Id="tc9QBZOjTkTp93kAIP6HRj" Name="Input" Kind="InputPin" />
+            <Pin Id="kiBC8GPkevV6DpTasunYY0" Name="Point" Kind="InputPin" />
+            <Pin Id="X8zyVdP05F3elXSV2fc1d0" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="tHAmm8QZbwI2kZiUFWt3tx" Comment="Point" Bounds="227,540,35,28" ShowValueBox="true" isIOBox="true" Value="0.3, 1">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="100,583,130,19" Id="WldCOnmdqSAA3yRdrDXyjl">
+            <p:NodeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Paths" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="LineTo (Relative)" />
+            </p:NodeReference>
+            <Pin Id="Ks7iMUnlZXBfgqe9xAhOO8" Name="Input" Kind="InputPin" />
+            <Pin Id="WxjY9RYuNuqTSRm7JOlpO6" Name="Point" Kind="InputPin" />
+            <Pin Id="Lbhml8k4IL7q8qtdMcVPD0" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="FjnKKLQJaM9xzRdprYhPOs" Comment="EndPoint" Bounds="162,700,35,28" ShowValueBox="true" isIOBox="true" Value="0.5, 1.5">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="G9KvXOVknSCky0pTTWMLjT" Comment="Control Point 2" Bounds="142,657,35,28" ShowValueBox="true" isIOBox="true" Value="0.5, 2.5">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="qG4Wm3pjO52ixaqeAjUa10" Comment="Control Point 1" Bounds="122,614,35,28" ShowValueBox="true" isIOBox="true" Value="2.5, 2.5">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="100,743,65,19" Id="u4sT5M2LWCl1YzEqItQ8fN">
+            <p:NodeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Paths" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="CubicTo" />
+            </p:NodeReference>
+            <Pin Id="TIuCiksyHpXrX56l7KxP0T" Name="Input" Kind="InputPin" />
+            <Pin Id="6uv2XIDZ4IK5UvMUgjUML4" Name="Control Point 1" Kind="InputPin" />
+            <Pin Id="tM2To9A9GI6LBFRLr8lF1N" Name="Control Point 2" Kind="InputPin" />
+            <Pin Id="l4tpxZWAiDwuNLsZFWe55K" Name="EndPoint" Kind="InputPin" />
+            <Pin Id="Az1r2jB7FESFm6Tx7NW2sb" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="100,802,65,19" Id="sGzJEw7Ola0uJt5kk74EA8">
+            <p:NodeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Paths" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Close" />
+            </p:NodeReference>
+            <Pin Id="TMpouhgDmfBIOQtjdHbwfg" Name="Input" Kind="InputPin" />
+            <Pin Id="s0D8hVs7peTD9t4GqpThwn" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="wItyaLQm9Yi0m7owU1um8s" Comment="Fill" Bounds="122,833,136,19" ShowValueBox="true" isIOBox="true" Value="0.2, 0.65, 0.75, 1">
+            <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="RGBA" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="100,867,65,19" Id="MP539wQT80AlmT1aB5Z3VD">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Path" />
+            </p:NodeReference>
+            <Pin Id="6nh12UsXEhG6RIuSh10hrD" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MGFrbPTU5xJzzm3qIn0lrP" Name="Path" Kind="InputPin" />
+            <Pin Id="JC81594RRt83jo522WdCBQ" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="04osNN8cNOe5IUHnFNHTyJ" Name="Fill" Kind="InputPin" />
+            <Pin Id="FLjYvlvOBjWflRZ1HOCYk0" Name="Stroke Color" Kind="InputPin" />
+            <Pin Id="jTkv5iYMdRMEkRmWn8dgkX" Name="Stroke Width" Kind="InputPin" />
+            <Pin Id="KeojAV2QewTGQWnIod4D9e" Name="Output" Kind="OutputPin" />
+            <Pin Id="DybkhIqQtfBityJ41ceKBZ" Name="Cap" Kind="InputPin" IsHidden="true" />
+            <Pin Id="apOSVHFjarKoIPc5eYZsHL" Name="Join" Kind="InputPin" IsHidden="true" />
+            <Pin Id="PHc1IeF9INVrK4pLaQhYyV" Name="Miter Limit" Kind="InputPin" IsHidden="true" />
+            <Pin Id="8dYMb6cKCEXIEDVvyg0XGH" Name="Dash" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Rob6ujxKrp0xZO8etcJR7u" Name="Dash Offset" Kind="InputPin" IsHidden="true" />
+            <Pin Id="SLUDQPM4txeyUeT1QY0NVC" Name="Trim Start" Kind="InputPin" IsHidden="true" />
+            <Pin Id="3wIZH2IDE4yii6ZGRfMJO3" Name="Trim End" Kind="InputPin" IsHidden="true" />
+            <Pin Id="arybFDiV0jQUoPif1PE2vj" Name="Trim Offset" Kind="InputPin" IsHidden="true" />
+            <Pin Id="JEHpvgPqbEZvY1FrpCp6Zw" Name="Fill Rule" Kind="InputPin" IsHidden="true" />
+            <Pin Id="owPPlEUoN970963D8x8jNX" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="B9lUTekBMUjsrr2BzW3K8P" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="A35azSe1hZ3DV8JIkkQv04" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="6NQu0W2M1T86OcfVsDkPBD" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="31sr8iULiAQkynwDAsXGmj" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Y0zrSeL2EET2PIi50elaZb" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="sNkYTwojxNyY4IMc4SccZN" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="KsdzXRtl4M3egYkZ3Tsc0i" Bounds="420,318,290,59" ShowValueBox="true" isIOBox="true" Value="2  Two of the three ArcTo forms in one chain: tangent (rounds the corner) and SVG (a half circle).">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl"><Choice Kind="TypeFlag" Name="String" /></p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="HN2Pojuqq2DVMZGkIakMUN" Comment="Point" Bounds="482,392,35,28" ShowValueBox="true" isIOBox="true" Value="3.3, 0.5">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="420,435,65,19" Id="dWIovdc3Cs8XXdGWwkBtxG">
+            <p:NodeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Paths" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="MoveTo" />
+            </p:NodeReference>
+            <Pin Id="QEIQukozQrv3U3i7iyziSS" Name="Input" Kind="InputPin" />
+            <Pin Id="qlVM2TXCOUzVLq4nbmscIl" Name="Point" Kind="InputPin" />
+            <Pin Id="Mfd0uQffFdzY9Cmzh1WdqH" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="2mJpj5tPwyNuTYFEzvU60Y" Comment="Point" Bounds="482,466,35,28" ShowValueBox="true" isIOBox="true" Value="4.3, 0.5">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="420,509,65,19" Id="uec7ziqkYh3BHDxnKNoUkE">
+            <p:NodeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Paths" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="LineTo" />
+            </p:NodeReference>
+            <Pin Id="rqm68qmxnV1R44lpw9OixH" Name="Input" Kind="InputPin" />
+            <Pin Id="5pCsyts9rNX2PCGzxWrnTV" Name="Point" Kind="InputPin" />
+            <Pin Id="1sxLEBQ5PZtbEzKLuWvCrz" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="Ki9amXOik2x2lqi2di9whg" Comment="Corner Radius" Bounds="482,626,35,15" ShowValueBox="true" isIOBox="true" Value="0.5">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="2nDwDrrKQHt3UXCFsEBmWm" Comment="Destination Point" Bounds="462,583,35,28" ShowValueBox="true" isIOBox="true" Value="5, 1.5">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="CxB9eGnTJr6xqpQ17LfkEb" Comment="Corner" Bounds="442,540,35,28" ShowValueBox="true" isIOBox="true" Value="5, 0.5">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="420,656,65,19" Id="G0Rpq1TT3glP3C7E7NH9wz">
+            <p:NodeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Paths" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="ArcTo" />
+              <PinReference Kind="InputPin" Name="Corner" />
+            </p:NodeReference>
+            <Pin Id="pMVC0SzqKJofbnJ1dKiTT7" Name="Input" Kind="InputPin" />
+            <Pin Id="mnmkwpD1WO20OfEYi4tQNA" Name="Corner" Kind="InputPin" />
+            <Pin Id="KbORifFzahw0voepQeMhbY" Name="Destination Point" Kind="InputPin" />
+            <Pin Id="qYTsHmazcgzghujtuvNRJg" Name="Corner Radius" Kind="InputPin" />
+            <Pin Id="GTSNcR4e8yhB57tOno0WcZ" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="cpEkkrPvhKp6FABsBMZ4cy" Comment="Destination Point" Bounds="482,780,35,28" ShowValueBox="true" isIOBox="true" Value="4, 1">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="Xw6Es53jyhkG0uMQNsFyUf" Comment="Sweep" Bounds="462,730,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Boolean" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="jWHmyBdd4xUmt1vq0TbSQH" Comment="Radius" Bounds="442,687,35,28" ShowValueBox="true" isIOBox="true" Value="0.5, 0.5">
+            <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Vector2" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="420,823,65,19" Id="oNXYEIX51LlITI9Cc2glRN">
+            <p:NodeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Paths" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="ArcTo" />
+              <PinReference Kind="InputPin" Name="Radius" />
+            </p:NodeReference>
+            <Pin Id="V2AYP1C9zf7TrcUWYjcqmx" Name="Input" Kind="InputPin" />
+            <Pin Id="qKlf7TClf2tfXox3I919oZ" Name="Radius" Kind="InputPin" />
+            <Pin Id="pp5VrWQuCFXubNfgRr5zWF" Name="X Axis Rotate" Kind="InputPin" IsHidden="true" />
+            <Pin Id="jwKLTYBaLjvLRnKBvMZ8P8" Name="Large Arc" Kind="InputPin" IsHidden="true" />
+            <Pin Id="86kvcLwET5EL8NtTU2NDRE" Name="Sweep" Kind="InputPin" />
+            <Pin Id="y3GULQRPq3v55EQg0LsqOX" Name="Destination Point" Kind="InputPin" />
+            <Pin Id="lmDNUA2q6UWtWE6CdEum7X" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="M4Rj5h6jkJTepKT4VD4pOx" Comment="Cap" Bounds="482,918,62,15" ShowValueBox="true" isIOBox="true" Value="Round">
+            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+              <Choice Kind="TypeFlag" Name="ShapeCap" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="o1i0wPDbTSHZaj8UdeM2fV" Comment="Stroke Width" Bounds="462,888,35,15" ShowValueBox="true" isIOBox="true" Value="0.1">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="mgF7N142tarlh4q9tT5ts8" Comment="Stroke Color" Bounds="442,854,136,19" ShowValueBox="true" isIOBox="true" Value="0.95, 0.5, 0.15, 1">
+            <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="RGBA" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="420,948,65,19" Id="r2G98IPS1dedvTEQ6lv8S8">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Path" />
+            </p:NodeReference>
+            <Pin Id="lN4CfFyGdtf7SB9jHNRegf" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="uv5WRbAqxvreP2pOGiA148" Name="Path" Kind="InputPin" />
+            <Pin Id="nRID3KIuzziyl28RK7czGp" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="BrrWRaelk4mmdnKGM6KwPb" Name="Fill" Kind="InputPin" IsHidden="true" />
+            <Pin Id="v6ayeY5Stfg9m4maEcKert" Name="Stroke Color" Kind="InputPin" />
+            <Pin Id="MQW81AzieN74W894MoaPdw" Name="Stroke Width" Kind="InputPin" />
+            <Pin Id="IfOGICJIkngBGzNkVON0OR" Name="Output" Kind="OutputPin" />
+            <Pin Id="doBzvpdpWPRpKpAjCDmPLG" Name="Cap" Kind="InputPin" />
+            <Pin Id="YXitk1Jx8mieK2Hbg7Hw9e" Name="Join" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LzplC26qoeoBM1tuEcgqmr" Name="Miter Limit" Kind="InputPin" IsHidden="true" />
+            <Pin Id="SdWpTwTVypGpvoBf2EensT" Name="Dash" Kind="InputPin" IsHidden="true" />
+            <Pin Id="qAvdx3NKsSKDWUR5Pzfbdq" Name="Dash Offset" Kind="InputPin" IsHidden="true" />
+            <Pin Id="6np6KhNj2BIE9t0o640Y2e" Name="Trim Start" Kind="InputPin" IsHidden="true" />
+            <Pin Id="gBmpy2hyG0Mvj5i7sSIrm4" Name="Trim End" Kind="InputPin" IsHidden="true" />
+            <Pin Id="OD2S9H5npoZv5dmnuPfVl5" Name="Trim Offset" Kind="InputPin" IsHidden="true" />
+            <Pin Id="rjnJHWO9NSelx7IWOwKQnm" Name="Fill Rule" Kind="InputPin" IsHidden="true" />
+            <Pin Id="lmrjB8HeNAjE1pOIdAGaWC" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="rxZCyEpvS8L2YNsMKfEMsL" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="6dEtG5whmGoi7lRtxOGjb2" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VfXw15Dj0BQF7CHi8FTQy0" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="8kfWtQHXMxTe5zpnvm0MDq" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="th5Lj1lljF82OhwjqhAr08" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="TF2OnuR4ztmo9oi5Ddqd0K" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="ThtYDhDI9hlZqDJBiISKh1" Bounds="740,318,290,59" ShowValueBox="true" isIOBox="true" Value="3  AddRoundRect adds a whole contour. Rectangle and Radius are set in the pins, the unconnected Input starts a new path.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl"><Choice Kind="TypeFlag" Name="String" /></p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="740,392,98,19" Id="HOHPwFl21gAv6nrXMoB6FQ">
+            <p:NodeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Paths" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="AddRoundRect" />
+            </p:NodeReference>
+            <Pin Id="WnK2iE8Du1T6PSNTbPlW70" Name="Input" Kind="InputPin" />
+            <Pin Id="kvGOgtTYgIWuQuw0zdruqD" Name="Rectangle" Kind="InputPin" DefaultValue="5.6, 0.5, 2, 1.5" />
+            <Pin Id="nqYqx888CyKmdM3v2rp7fl" Name="Radius" Kind="InputPin" DefaultValue="0.4, 0.4" />
+            <Pin Id="l3NyGbNuDorJjIiOtzkQFo" Name="Dir" Kind="InputPin" IsHidden="true" />
+            <Pin Id="vtg4hn81aGT5Ycf0mXFva2" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="yvQUuMTRpHmSIdXjOvIlLm" Comment="Fill" Bounds="762,423,136,19" ShowValueBox="true" isIOBox="true" Value="0.55, 0.35, 0.85, 1">
+            <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="RGBA" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="740,457,65,19" Id="Syn6NZhuDPRxvjXGIiR1VR">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Path" />
+            </p:NodeReference>
+            <Pin Id="xDk2QlqRAIH53MO3yw9VJX" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Oyjo3xpfyJOOAxEJqGheDY" Name="Path" Kind="InputPin" />
+            <Pin Id="X0GWpuN5IwTIlWJVRWrVFQ" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="r4pVR4WTypaPM3YCwDO4se" Name="Fill" Kind="InputPin" />
+            <Pin Id="nrkj3vJryj6hiqA52qJkvk" Name="Stroke Color" Kind="InputPin" />
+            <Pin Id="G6GTjA1e27x4HCG5VF8eQ7" Name="Stroke Width" Kind="InputPin" />
+            <Pin Id="o9Kim0N35LFBZz0YcFk63H" Name="Output" Kind="OutputPin" />
+            <Pin Id="t2Cv52pHwwZSSIATj2xQ2k" Name="Cap" Kind="InputPin" IsHidden="true" />
+            <Pin Id="xvFgD2VlFlBxi9WAEsco87" Name="Join" Kind="InputPin" IsHidden="true" />
+            <Pin Id="6Fj4C60Q26GEO6IlhBwu4R" Name="Miter Limit" Kind="InputPin" IsHidden="true" />
+            <Pin Id="0ZnVN3UGsC8W4d9TQ37zDr" Name="Dash" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GwBfWuZKAxbgseYfSBtyMY" Name="Dash Offset" Kind="InputPin" IsHidden="true" />
+            <Pin Id="F9nYSJffK0DyG8pkIGG86c" Name="Trim Start" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Lejm4xQHjcQYND5BPeuoPG" Name="Trim End" Kind="InputPin" IsHidden="true" />
+            <Pin Id="jt1tlBggI9lzZ6viO3easj" Name="Trim Offset" Kind="InputPin" IsHidden="true" />
+            <Pin Id="2BzVrzeXDCzcvA66sYhXy0" Name="Fill Rule" Kind="InputPin" IsHidden="true" />
+            <Pin Id="4vcJs5ZTGZi4OACLbtXs8Q" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="SlT95mevuz9CrNIToZdATM" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="lfjeBj7S5y0Y69uK3uJqY7" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="8ikgP7kGaler7TlIsyEuSt" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="NDEmyp9MmfvevgT77Dk3X4" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="yl9OA6yyAtdWpH6vGhT7qx" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="KdSZTeRowseHcKKU1vKIFv" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+          </Node>
+          <Node Bounds="100,1007,645,19" Id="aYlkedWFoPWxvq5S3xARVk">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Group" />
+            </p:NodeReference>
+            <Pin Id="gENMIzhPexBctmsaBUVP2y" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="OemtA8Vc9Q60K6L0lFOHNY" Name="Input" Kind="InputPin" />
+            <Pin Id="mY2lYZFRC4rr3FURvr3C5A" Name="Input 2" Kind="InputPin" />
+            <Pin Id="fDpi52wrGgwSos1DNAsnNu" Name="Input 3" Kind="InputPin" />
+            <Pin Id="QtAIiieIq5j2R03yswKrn9" Name="Output" Kind="OutputPin" />
+            <Pin Id="ErQaEmSXLWAPAMiaIEco46" Name="Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="7fSCkRNBo5lXHPc5dJYUlT" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GkvFirs6rWdZ4XohVOAsI4" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="fpMMFj37VnD3OnqH5IcGxH" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="OYAOmazPQj236HKtInkHgH" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="zQ56iyL7UdYbJmkosGgKFp" Name="Anchor" Kind="InputPin" IsHidden="true" />
+            <Pin Id="UQMsCWHrveOevbMrjh3Knt" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="8CUmgIv5DDgEz0lbNlTMGs" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="sCtBCLwQiTz7MclvnD954s" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Ljp5c8wlLUc3Nh8SHn2tIS" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="gwvFm5O6AViWWZ7Iz0816a" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="urAHbpFGQ2lxETXIEmAAmT" Name="Style" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Node Bounds="100,1076,85,19" Id="mJj5py1qQjcycsRHf2t7xf">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="cWIQ5FLIkedVfjFTmQNXjm" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="uV6b0T02RhQGLjZz4ghsIT" Name="Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="cPH5ICa2d38KyBR2VgP8QU" Name="V Sync" Kind="InputPin" IsHidden="true" />
+            <Pin Id="OpLlKzlvjne5kfA2mZeREk" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="0ZytU4bDyCd4cjRIlLaFA3" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="vRAGampXKKanIoRsf6pRz3" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LF3A8GPdB0t0oXTiTWQ1u5" Name="Input" Kind="InputPin" />
+            <Pin Id="9OrZXRyTdzUGBS9T3XozfI" Name="Space" Kind="InputPin" />
+            <Pin Id="fkzwWGjHnUhXq8rLW74tO9" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="0rCCKP6dH5UlfNH8Wi4bPP" Name="Enabled" Kind="InputPin" />
+            <Pin Id="rmPNADCym6mSBDQ5GarURV" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="rWw1JhJLCmRaAvAE65hmxF" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="5YPjJPcUOEC3Kafzzd2t7j" Name="Title" Kind="InputPin" />
+            <Pin Id="MOAZabweQXYINT6JRhX9TO" Name="Error" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="ZpliHM2tqlNmB5rnjHdDR0" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="BSOQLZtLvf9oX7xF6ZitEN" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="5VlGoncLQ3rlnQlqt4YKNf" Name="Debug" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="xg5uHAAqnEoUffMhl0v6Lb" Comment="Title" Bounds="182,1042,190,19" ShowValueBox="true" isIOBox="true" Value="HowTo Build a Path">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl"><Choice Kind="TypeFlag" Name="String" /></p:TypeAnnotation>
+          </Pad>
+          <Pad Id="iJhdd8yhm32IUzij3ATGmz" Bounds="85,1135,830,274" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Points are in units of the Renderer Space (1 unit = 100 DIP, origin top left), angles in cycles (1 = full turn), like Skia. A path never changes: a node returns a new path when one of its inputs changes, so one path can feed several Path nodes.&#xD;&#xA;- ArcTo (tangent) rounds the corner between the last point, Corner and Destination Point. ArcTo (SVG) is the SVG arc command: Radius, X Axis Rotate, Large Arc, Sweep, Destination Point. The oval form takes Bounds, Start Angle, Sweep Angle and Force Move To.&#xD;&#xA;- Add... nodes start a new contour. An unconnected Input starts a new path, so AddRoundRect alone is enough in column 3. Close joins the end of a contour with its start.&#xD;&#xA;- A path must fit one command to Qt (about 65 000 bytes): roughly 7270 line segments, a curve takes more room than a line. A bigger path is not drawn and the Path node warns with the counts.&#xD;&#xA;- Skia: the nodes of Graphics.Skia.Paths (MoveTo, LineTo, CubicTo, ArcTo, Close, AddRect, AddRoundRect ...) and the Path layer. Fill and Stroke are one Path node here.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl"><Choice Kind="TypeFlag" Name="String" /></p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+        </Canvas>
+        <Link Id="PmUgempTKO5MjmvAePg8Rq" Ids="w58QfCCvNBATNb3FVRB0Nj,vxpKVFzA4ZAQer3SVaUObm" />
+        <Link Id="SWIl1eQdONebnriDHF3mqq" Ids="mKLxYc79ibjkNR3XEqpSmY,kiBC8GPkevV6DpTasunYY0" />
+        <Link Id="xJdUxBMPzUI3N2EfbLJGCR" Ids="3TLSPR6r6H8D4m7lyGzxKi,tc9QBZOjTkTp93kAIP6HRj" />
+        <Link Id="UJ2NGj0JRNbzB46akrOyYE" Ids="tHAmm8QZbwI2kZiUFWt3tx,WxjY9RYuNuqTSRm7JOlpO6" />
+        <Link Id="qALKibx7B5p8ma6TqfcNpP" Ids="X8zyVdP05F3elXSV2fc1d0,Ks7iMUnlZXBfgqe9xAhOO8" />
+        <Link Id="DccwfSHpUDndyuxAByaj36" Ids="FjnKKLQJaM9xzRdprYhPOs,l4tpxZWAiDwuNLsZFWe55K" />
+        <Link Id="1N5lyMb9Rp03SX3HbQcbSx" Ids="G9KvXOVknSCky0pTTWMLjT,tM2To9A9GI6LBFRLr8lF1N" />
+        <Link Id="BqPqv63KcxfUqofszXIvO6" Ids="qG4Wm3pjO52ixaqeAjUa10,6uv2XIDZ4IK5UvMUgjUML4" />
+        <Link Id="88wq5of64UpFzEEo0fCli3" Ids="Lbhml8k4IL7q8qtdMcVPD0,TIuCiksyHpXrX56l7KxP0T" />
+        <Link Id="QvAmiYaLLfsigpTK17iiZx" Ids="Az1r2jB7FESFm6Tx7NW2sb,TMpouhgDmfBIOQtjdHbwfg" />
+        <Link Id="WLHY6NiFUaQqQB7z8shJLA" Ids="wItyaLQm9Yi0m7owU1um8s,04osNN8cNOe5IUHnFNHTyJ" />
+        <Link Id="pPmDYhp78Rug27Eg1IHWFK" Ids="s0D8hVs7peTD9t4GqpThwn,MGFrbPTU5xJzzm3qIn0lrP" />
+        <Link Id="xThGT1BJbd9wTrscVz9zcO" Ids="HN2Pojuqq2DVMZGkIakMUN,qlVM2TXCOUzVLq4nbmscIl" />
+        <Link Id="boSya0vmmlePqPvn4rdxY0" Ids="2mJpj5tPwyNuTYFEzvU60Y,5pCsyts9rNX2PCGzxWrnTV" />
+        <Link Id="FVFfsYuISRE5LTKVf9mVKb" Ids="Mfd0uQffFdzY9Cmzh1WdqH,rqm68qmxnV1R44lpw9OixH" />
+        <Link Id="xzjSUslIXfKbiDGe72a0An" Ids="Ki9amXOik2x2lqi2di9whg,qYTsHmazcgzghujtuvNRJg" />
+        <Link Id="LyWDyyVMNlyva8gNNHhUQV" Ids="2nDwDrrKQHt3UXCFsEBmWm,KbORifFzahw0voepQeMhbY" />
+        <Link Id="OpniawR2fW3ZNEKutwKek0" Ids="CxB9eGnTJr6xqpQ17LfkEb,mnmkwpD1WO20OfEYi4tQNA" />
+        <Link Id="N9rMRXEj7rfkU1lF1GstCz" Ids="1sxLEBQ5PZtbEzKLuWvCrz,pMVC0SzqKJofbnJ1dKiTT7" />
+        <Link Id="z6JOU2G9E1XtQaFWBJWaqt" Ids="cpEkkrPvhKp6FABsBMZ4cy,y3GULQRPq3v55EQg0LsqOX" />
+        <Link Id="DVHFEHcMJIlxdAz0mETA6n" Ids="Xw6Es53jyhkG0uMQNsFyUf,86kvcLwET5EL8NtTU2NDRE" />
+        <Link Id="SQcIVA81uL17EN9uutiKcc" Ids="jWHmyBdd4xUmt1vq0TbSQH,qKlf7TClf2tfXox3I919oZ" />
+        <Link Id="Uh9vVy19CNiPLh6YnJ4Md2" Ids="GTSNcR4e8yhB57tOno0WcZ,V2AYP1C9zf7TrcUWYjcqmx" />
+        <Link Id="EUILU63TxL4Og5fuVdlr3b" Ids="M4Rj5h6jkJTepKT4VD4pOx,doBzvpdpWPRpKpAjCDmPLG" />
+        <Link Id="InAhNuc0Gb6VD9F2JVnuVI" Ids="o1i0wPDbTSHZaj8UdeM2fV,MQW81AzieN74W894MoaPdw" />
+        <Link Id="VrY4fVw6gpyT8SwG2ifhyP" Ids="mgF7N142tarlh4q9tT5ts8,v6ayeY5Stfg9m4maEcKert" />
+        <Link Id="hZ9GGJuMzAvE1jnPX9WdJ9" Ids="lmDNUA2q6UWtWE6CdEum7X,uv5WRbAqxvreP2pOGiA148" />
+        <Link Id="Ihg3qrqc0LVa1bm9dPDiZC" Ids="yvQUuMTRpHmSIdXjOvIlLm,r4pVR4WTypaPM3YCwDO4se" />
+        <Link Id="SvElytVYH64WY7uQnTMo0m" Ids="vtg4hn81aGT5Ycf0mXFva2,Oyjo3xpfyJOOAxEJqGheDY" />
+        <Link Id="RdaGX7Ob0EYX8zW1rjqyP2" Ids="KeojAV2QewTGQWnIod4D9e,OemtA8Vc9Q60K6L0lFOHNY" />
+        <Link Id="UKYFx2Aex1lypO9HLiOnmd" Ids="IfOGICJIkngBGzNkVON0OR,mY2lYZFRC4rr3FURvr3C5A" />
+        <Link Id="g3BcvYl2HP6WQpbxpSxsAr" Ids="o9Kim0N35LFBZz0YcFk63H,fDpi52wrGgwSos1DNAsnNu" />
+        <Link Id="h73ao31F7EurozNNkq2qbF" Ids="QtAIiieIq5j2R03yswKrn9,LF3A8GPdB0t0oXTiTWQ1u5" />
+        <Link Id="dghCcFjYbGOPzU0DGiPUUH" Ids="xg5uHAAqnEoUffMhl0v6Lb,5YPjJPcUOEC3Kafzzd2t7j" />
+        <Patch Id="WSswkZW4FUf9ph811oBWzj" Name="Create" />
+        <Patch Id="LTkB7wOT3nOSYimmx5f6vq" Name="Update" />
+        <ProcessDefinition Id="af6YJlFhBmcd7TygUJSvBg">
+          <Fragment Id="PVH3tyVfSst9eXaH4KE2JX" Patch="WSswkZW4FUf9ph811oBWzj" Enabled="true" />
+          <Fragment Id="xV5WB1YqkWJQmkh8vezbzZ" Patch="LTkB7wOT3nOSYimmx5f6vq" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+</Document>
