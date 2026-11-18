@@ -13,8 +13,8 @@
         public const uint RootId = 0;
         /// <summary>Max UTF-8 bytes of a uniform name in <see cref="Op.SetUniforms"/> (#437).</summary>
         public const int UniformNameMax = 255;
-        // u32 id, u16 prop, u16 valueType in front of the value of a SET (as in CommandWriter).
-        const int SetFieldsSize = 8;
+        /// <summary>u32 id, u16 prop, u16 valueType in front of the value of a SET.</summary>
+        internal const int SetFieldsSize = 8;
         /// <summary>Max floats of a <see cref="Vt.F32Array"/> value: the 4-byte count and the floats fit the payload of a SET (8190 points, #154).</summary>
         internal const int MaxF32ArrayCount = (CommandWriter.MaxPayload - SetFieldsSize - 4) / 4;
 

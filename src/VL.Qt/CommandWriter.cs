@@ -176,6 +176,36 @@ namespace VL.Qt
             Encoding.UTF8.GetBytes(value, p.Slice(4));
         }
 
+        /// <summary>f32 array: u32 count + floats. At most <see cref="Protocol.MaxF32ArrayCount"/> floats.</summary>
+        public void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values)
+        {
+            if (values.Length > Protocol.MaxF32ArrayCount)
+                throw new ArgumentOutOfRangeException(nameof(values), values.Length, $"F32 array exceeds {Protocol.MaxF32ArrayCount} floats.");
+            var p = BeginSet(id, prop, Protocol.Vt.F32Array, 4 + 4 * values.Length);
+            WriteU32(p, (uint)values.Length);
+            for (int i = 0; i < values.Length; i++)
+                WriteF32(p.Slice(4 + 4 * i), values[i]);
+        }
+
+        /// <summary>path: u32 verbCount, u32 pointCount, verbs padded with zeros to 4 bytes, points as x,y f32 pairs (<paramref name="points"/> holds 2 floats per point).</summary>
+        public void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points)
+        {
+            if ((points.Length & 1) != 0)
+                throw new ArgumentException("Path points are x,y pairs: the float count must be even.", nameof(points));
+            int pointCount = points.Length / 2;
+            if (!Protocol.PathFits(verbs.Length, pointCount))
+                throw new ArgumentOutOfRangeException(nameof(verbs), verbs.Length, $"Path with {verbs.Length} verbs and {pointCount} points exceeds the payload of a SET.");
+            int paddedVerbs = Align(verbs.Length);
+            var p = BeginSet(id, prop, Protocol.Vt.Path, 8 + paddedVerbs + 8 * pointCount);
+            WriteU32(p, (uint)verbs.Length);
+            WriteU32(p.Slice(4), (uint)pointCount);
+            // The padding bytes are already zero (Begin clears the reserved area).
+            verbs.CopyTo(p.Slice(8));
+            var pts = p.Slice(8 + paddedVerbs);
+            for (int i = 0; i < points.Length; i++)
+                WriteF32(pts.Slice(4 * i), points[i]);
+        }
+
         /// <summary>ref: id of another element (e.g. ShaderEffect source), 0 = none/root.</summary>
         public void SetRef(uint id, ushort prop, uint refId)
         {
@@ -556,15 +586,13 @@ namespace VL.Qt
         /// <summary>Largest payload a single command can carry (u16 payloadLen).</summary>
         public const int MaxPayload = ushort.MaxValue;
 
-        const int SetFieldsSize = 8; // u32 id, u16 prop, u16 valueType
-
         Span<byte> BeginSet(uint id, ushort prop, ushort valueType, int valueSize)
         {
-            var p = Begin(Protocol.Op.Set, SetFieldsSize + valueSize);
+            var p = Begin(Protocol.Op.Set, Protocol.SetFieldsSize + valueSize);
             WriteU32(p, id);
             WriteU16(p.Slice(4), prop);
             WriteU16(p.Slice(6), valueType);
-            return p.Slice(SetFieldsSize);
+            return p.Slice(Protocol.SetFieldsSize);
         }
 
         /// <summary>Writes the header, reserves payload + padding (zeroed) and returns the payload span.</summary>

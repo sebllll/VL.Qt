@@ -90,6 +90,64 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void SetF32Array_CountAndFloats()
+        {
+            Assert.That(Hex(Write(w => w.SetF32Array(3, Protocol.Prop.ShapePoints, new[] { 1f, 2f, 3f }))),
+                Is.EqualTo(SetHdr(16, 3, Protocol.Prop.ShapePoints, Protocol.Vt.F32Array) + U32(3) + F32(1f) + F32(2f) + F32(3f)));
+            Assert.That(Hex(Write(w => w.SetF32Array(3, Protocol.Prop.ShapeDash, ReadOnlySpan<float>.Empty))),
+                Is.EqualTo(SetHdr(4, 3, Protocol.Prop.ShapeDash, Protocol.Vt.F32Array) + U32(0)));
+        }
+
+        [Test]
+        public void SetF32Array_Limit()
+        {
+            var w = new CommandWriter();
+            w.SetF32Array(1, Protocol.Prop.ShapePoints, new float[Protocol.MaxF32ArrayCount]);
+            var before = w.Length;
+            Assert.That(before, Is.GreaterThan(CommandWriter.MaxPayload), "the largest array fills the payload to the last 4-byte unit");
+            Assert.Throws<ArgumentOutOfRangeException>(() => w.SetF32Array(1, Protocol.Prop.ShapePoints, new float[Protocol.MaxF32ArrayCount + 1]));
+            Assert.That(w.Length, Is.EqualTo(before), "failed command must not leave partial bytes");
+        }
+
+        [TestCase(0, "")]
+        [TestCase(1, "000000")]
+        [TestCase(2, "0000")]
+        [TestCase(3, "00")]
+        [TestCase(4, "")]
+        public void SetPath_PadsVerbsToFourBytes(int verbCount, string padding)
+        {
+            // Move/Line verbs take one point each.
+            var verbs = new byte[verbCount];
+            for (int i = 0; i < verbCount; i++)
+                verbs[i] = i == 0 ? Protocol.Verb.Move : Protocol.Verb.Line;
+            var points = new float[verbCount * 2];
+            for (int i = 0; i < points.Length; i++)
+                points[i] = i + 0.5f;
+            int paddedVerbs = (verbCount + 3) & ~3;
+            var expected = SetHdr(8 + paddedVerbs + 8 * verbCount, 5, Protocol.Prop.ShapePath, Protocol.Vt.Path)
+                + U32((uint)verbCount) + U32((uint)verbCount) + Hex(verbs) + padding;
+            foreach (var f in points)
+                expected += F32(f);
+            Assert.That(Hex(Write(w => w.SetPath(5, Protocol.Prop.ShapePath, verbs, points))), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void SetPath_Limit()
+        {
+            // Grow the verb count until exactly one more would not fit.
+            int points = 4000;
+            int verbs = points;
+            while (Protocol.PathFits(verbs + 1, points))
+                verbs++;
+            var w = new CommandWriter();
+            w.SetPath(1, Protocol.Prop.ShapePath, new byte[verbs], new float[points * 2]);
+            var before = w.Length;
+            Assert.Throws<ArgumentOutOfRangeException>(() => w.SetPath(1, Protocol.Prop.ShapePath, new byte[verbs + 1], new float[points * 2]));
+            Assert.That(w.Length, Is.EqualTo(before), "failed command must not leave partial bytes");
+            Assert.Throws<ArgumentException>(() => w.SetPath(1, Protocol.Prop.ShapePath, new byte[1], new float[3]));
+        }
+
+        [Test]
         public void SetString_Utf8WithPadding()
         {
             // "Aä" = 41 C3 A4 → 3 bytes: payload 8 + 4 + 3 = 15, padded to 20 total.

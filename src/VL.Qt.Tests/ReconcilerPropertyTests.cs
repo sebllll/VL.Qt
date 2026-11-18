@@ -286,6 +286,8 @@ namespace VL.Qt.Tests
             public void SetRect(uint id, ushort prop, float x, float y, float width, float height) => Sets++;
             public void SetMat4(uint id, ushort prop, in Matrix m) => Sets++;
             public void SetString(uint id, ushort prop, ReadOnlySpan<char> value) => Sets++;
+            public void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values) => Sets++;
+            public void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points) => Sets++;
             public void SetRef(uint id, ushort prop, uint refId) => Sets++;
             public void SetU64(uint id, ushort prop, ulong value) => Sets++;
             public void BeginStyle(uint id, ushort flags) { }
