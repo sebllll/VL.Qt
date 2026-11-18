@@ -14,8 +14,8 @@ namespace VL.Qt.Paths
         /// Catmull-Rom spline that passes through every point, one cubic per span. <paramref name="alpha"/> sets the knot
         /// spacing (0 uniform, 0.5 centripetal without loops or cusps, 1 chordal; clamped to 0..1),
         /// <paramref name="tension"/> scales the tangents by <c>1 − tension</c> (1 gives straight lines).
-        /// Open ends duplicate the end point as phantom point; its knot interval is zero, so the tangent at an open end
-        /// comes from the far side of the span only. Spans of length zero are skipped, and the neighbors of a span are
+        /// Open ends duplicate the end point as phantom point; its knot interval is zero, so an open curve has tangent 0
+        /// at its end points for every alpha (the control point next to an end point is that end point). Spans of length zero are skipped, and the neighbors of a span are
         /// the nearest points that differ from its ends, so coincident points never divide by zero. Points that all
         /// coincide return the path unchanged.
         /// </summary>

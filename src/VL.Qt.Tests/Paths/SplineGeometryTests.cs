@@ -119,6 +119,17 @@ namespace VL.Qt.Tests.Paths
         [TestCase(0f)]
         [TestCase(0.5f)]
         [TestCase(1f)]
+        public void CatmullRom_OpenEndsHaveTangentZero(float alpha)
+        {
+            var (_, cubics, _) = Read(SplineGeometry.CatmullRom(QtPath.Empty, s_zigzag, false, alpha, 0));
+            TestContext.Out.WriteLine($"alpha {alpha}: start {cubics[0].P0}, first control {cubics[0].P1}, last control {cubics[^1].P2}, end {cubics[^1].P3}");
+            Assert.That(cubics[0].P1, Is.EqualTo(cubics[0].P0));
+            Assert.That(cubics[^1].P2, Is.EqualTo(cubics[^1].P3));
+        }
+
+        [TestCase(0f)]
+        [TestCase(0.5f)]
+        [TestCase(1f)]
         public void CatmullRom_TensionOneGivesStraightLines(float alpha)
         {
             var (_, cubics, _) = Read(SplineGeometry.CatmullRom(QtPath.Empty, s_zigzag, true, alpha, 1));
