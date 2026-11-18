@@ -15,23 +15,28 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "FileWriter (Element)", Category = Categories.Qt)]
     public sealed class FileWriterElementNode : IDisposable
     {
-        readonly ResourceClient _client;
-        readonly SceneRegistry _scene;
+        readonly SnapshotGrab _grab;
         readonly ImageFileWriter _writer;
+        readonly ImageNodeReport _report;
+        // Target of the grab in flight (the newest Write wins, like the snapshot itself).
+        string _path = string.Empty;
+        int _quality;
+        bool _grabbing;
+        string _error = string.Empty;
 
         public FileWriterElementNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext)
         {
-            _client = ResourceClient.ForApp(nodeContext.AppHost);
-            _scene = SceneRegistry.ForApp(nodeContext.AppHost);
+            _grab = new SnapshotGrab(ResourceClient.ForApp(nodeContext.AppHost), SceneRegistry.ForApp(nodeContext.AppHost));
             _writer = ImageFileWriter.CreateNative();
+            _report = new ImageNodeReport(new NodeErrors(nodeContext));
         }
 
         /// <summary>For tests: a client on a fake API, an own scene registry and a writer on a fake write function.</summary>
         internal FileWriterElementNode(ResourceClient client, SceneRegistry scene, ImageFileWriter writer)
         {
-            _client = client;
-            _scene = scene;
+            _grab = new SnapshotGrab(client, scene);
             _writer = writer;
+            _report = new ImageNodeReport(null);
         }
 
         /// <summary>Grabs Element on Write and writes it to File Path.</summary>
@@ -51,11 +56,46 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] int quality = 90,
             bool write = false)
         {
-            // TODO: Implement (#157).
             isDone = false;
-            error = string.Empty;
+            // Polled before Write is handled: a write never reports in the frame it was started.
+            if (_writer.Poll(out var writeError))
+            {
+                isDone = true;
+                _error = writeError;
+            }
+            if (write)
+            {
+                // Every write starts clean: the error of the last one does not stay.
+                _path = filePath?.Value ?? string.Empty;
+                _quality = quality;
+                _grabbing = false;
+                _error = _path.Length == 0 ? FileWriterNode.NoPathError : _grab.Start(element, scale);
+                if (_error.Length > 0)
+                    // Nothing is written: Done and Error in the same frame, so a patch waiting for Is Done does not hang.
+                    isDone = true;
+                else
+                    _grabbing = true;
+            }
+            if (_grab.TakeSettled() && _grabbing)
+            {
+                _grabbing = false;
+                if (_grab.Read() is { } image)
+                    _writer.Start(image, _path, _quality);
+                else
+                {
+                    _error = _grab.Resource is { State: QtImageState.Failed } failed && failed.Error.Length > 0 ? failed.Error : "The snapshot of the element failed";
+                    isDone = true;
+                }
+            }
+            error = _error;
+            _report.Update(null, error);
         }
 
-        public void Dispose() => _writer.Dispose();
+        public void Dispose()
+        {
+            _writer.Dispose();
+            _grab.Dispose();
+            _report.Dispose();
+        }
     }
 }
