@@ -132,6 +132,10 @@ More: [Styles](docs/styles.md) (all style nodes and fields, self-made widgets).
 
 `Line`, `Polyline` and `Polygon` draw point lists; `Path` draws anything you build with the `Qt.Paths` chain (`MoveTo`, `LineTo`, `CubicTo`, `ArcTo`, `Close`, …) with fill, stroke, `Trim Start`/`Trim End` and a fill rule. `Bezier (Handles)`, `Spline (CatmullRom)` and `Spline (BSpline)` turn a few points into a smooth curve you can feed to `Path`.
 
+<img src="docs/images/paths-path.png" width="820" alt="Path elements: a filled and stroked triangle, an open curve, and two rounded squares with a circular hole, one filled with the even-odd rule">
+
+*`HowTo Draw a Path`: fill and stroke, and a fill rule for a path with a hole.*
+
 <img src="docs/images/paths-splines.png" width="820" alt="Spline (CatmullRom) with Alpha 0, 0.5 and 1 and Spline (BSpline) through the same five points">
 
 *`HowTo Draw Splines`: the same five points as `Spline (CatmullRom)` with three Alpha values and as `Spline (BSpline)`.*
