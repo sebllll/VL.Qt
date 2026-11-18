@@ -3,6 +3,9 @@
 	<Topic title="Basics">
 		<VLDocument link="Qt\HowTo Draw a Rectangle.vl" tags="rect box shape" />
 		<VLDocument link="Qt\HowTo Draw a Circle.vl" tags="ellipse shape" />
+		<VLDocument link="Qt\HowTo Draw a Line.vl" tags="line stroke shape trim" />
+		<VLDocument link="Qt\HowTo Draw a Polyline.vl" tags="polyline stroke join cap shape" />
+		<VLDocument link="Qt\HowTo Draw a Polygon.vl" tags="polygon fill shape" />
 		<VLDocument link="Qt\HowTo Group Elements.vl" tags="nest transform" />
 		<VLDocument link="Qt\HowTo Reuse an Element.vl" tags="" />
 		<VLDocument link="Qt\HowTo Antialias Edges.vl" tags="msaa antialiasing multisample edges smooth" />
