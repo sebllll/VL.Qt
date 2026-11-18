@@ -11,6 +11,7 @@
 #include "audio_tap.h"
 #include "shadereffectitem.h"
 #include "snapshot_resource.h"
+#include "image_writer.h"
 #include "threadname.h"
 #include "vlstyle.h"
 
@@ -2289,6 +2290,11 @@ VLQT_API long long vlqt_now_ns(void)
 VLQT_API int vlqt_test_res_read_pixels(unsigned long long id, unsigned char* out, int cap, int* width, int* height)
 {
     return guarded([&] { return vlqt::res::image::testRead(id, out, cap, width, height); });
+}
+
+VLQT_API int vlqt_image_write(const vlqt_pixel_desc* desc, const void* data, int len, const char* utf8Path, int quality, char* err, int errCap)
+{
+    return guarded([&] { return vlqt::imagewriter::write(desc, data, len, utf8Path, quality, err, errCap); });
 }
 
 VLQT_API int vlqt_test_write_image(const char* utf8Path, int width, int height, int quality)

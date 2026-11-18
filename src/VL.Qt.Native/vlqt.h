@@ -363,6 +363,16 @@ VLQT_API int vlqt_res_read_audio(unsigned long long id, float* dst, int maxFrame
 /* The clock of the audio tap times (#22): std::chrono::steady_clock in ns (Windows: QPC = Stopwatch.GetTimestamp,
  * Linux: CLOCK_MONOTONIC). Any thread, no Qt needed. */
 VLQT_API long long vlqt_now_ns(void);
+/* Image file writer (#157, FileWriter nodes): any thread, synchronous (encodes and writes before it returns), no
+ * window needed. Writes the pixels of desc/data (rows top-down, desc.row_bytes per row, len >= height * row_bytes;
+ * desc.format a VL PixelFormat number as in vlqt_res_set_pixels, at least 9 B8G8R8A8 and 10 R8G8B8A8; premultiplied
+ * 0/1, flags ignored) to utf8Path. The file format comes from the extension (png, jpg/jpeg, bmp, ... what
+ * QImageWriter can write); premultiplied pixels are un-premultiplied for formats with alpha, formats without alpha
+ * get the pixels over black. quality 0..100 applies to lossy formats (jpg, webp) only, -1 = Qt's default. Missing
+ * folders are created, an existing file is overwritten. Returns 0; -1 bad arguments (null, size <= 0, row_bytes or
+ * len too small, unsupported pixel format), -2 unknown or unsupported file format (extension), -3 folder could not be
+ * created or the write failed. On < 0 err (UTF-8, NUL-terminated, cut to errCap bytes; may be NULL) says why. */
+VLQT_API int vlqt_image_write(const vlqt_pixel_desc* desc, const void* data, int len, const char* utf8Path, int quality, char* err, int errCap);
 /* TEST ONLY: writes a test image (vertical stripes red, green, blue, white) as PNG/JPG by extension. 0 / -1 / -7. */
 VLQT_API int vlqt_test_write_image(const char* utf8Path, int width, int height, int quality);
 /* TEST ONLY: starts a Pending VLQT_RES_KIND_TEST resource: decode sleeps decodeMs in a worker (cancellable), upload
