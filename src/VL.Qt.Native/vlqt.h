@@ -365,8 +365,8 @@ VLQT_API int vlqt_res_read_audio(unsigned long long id, float* dst, int maxFrame
 VLQT_API long long vlqt_now_ns(void);
 /* Image file writer (#157, FileWriter nodes): any thread, synchronous (encodes and writes before it returns), no
  * window needed. Writes the pixels of desc/data (rows top-down, desc.row_bytes per row, len >= height * row_bytes;
- * desc.format a VL PixelFormat number as in vlqt_res_set_pixels, at least 9 B8G8R8A8 and 10 R8G8B8A8; premultiplied
- * 0/1, flags ignored) to utf8Path. The file format comes from the extension (png, jpg/jpeg, bmp, ... what
+ * desc.format a VL PixelFormat number as in vlqt_res_set_pixels: 1, 2, 4-10 and 12, e.g. 9 B8G8R8A8, 7 R8G8B8A8; not
+ * 3 R32F and 11 R32G32F; premultiplied 0/1, flags ignored) to utf8Path. The file format comes from the extension (png, jpg/jpeg, bmp, ... what
  * QImageWriter can write); premultiplied pixels are un-premultiplied for formats with alpha, formats without alpha
  * get the pixels over black. quality 0..100 applies to lossy formats (jpg, webp) only, -1 = Qt's default. Missing
  * folders are created, an existing file is overwritten. Returns 0; -1 bad arguments (null, size <= 0, row_bytes or

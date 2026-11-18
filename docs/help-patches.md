@@ -86,6 +86,7 @@ See [Styles](styles.md).
 - `HowTo Preload Images` — LoadImage (Async) for a spread of files, switching without stutter
 - `HowTo Use an IImage` — ToQtImage for images from other libraries (e.g. Skia)
 - `HowTo Take a Snapshot` — Snapshot of an element as IImage
+- `HowTo Write an Element to a File` — FileWriter (Element) and Snapshot → FileWriter: PNG/JPG files
 - `HowTo Play a Video` — playback and controls
 - `HowTo Show a VL.Video player in Qt` — VideoSourceToQtImage: a VL.Video source in the Image element
 
