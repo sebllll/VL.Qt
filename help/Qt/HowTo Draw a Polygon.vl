@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="JNpgevsu19uE3tTqDBqNAX" LanguageVersion="2026.8.0-0156-g7259116c8c" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="JNpgevsu19uE3tTqDBqNAX" LanguageVersion="2026.8.0-0328-g2d427d5a66" Version="0.128">
   <NugetDependency Id="RrpmLTWZUO7veNUokiSqeS" Location="VL.CoreLib" />
   <DocumentDependency Id="idYKrMrGMYx3B2UsZQ4uxm" Location="../../VL.Qt.vl" />
   <Patch Id="RbLpIAMhZVVi6qhB6VMeB1">
@@ -16,7 +16,7 @@
         </p:NodeReference>
         <Patch Id="IPFgAWgUTpwU9MHCIOsjZM">
           <Canvas Id="9ro2HsuBD54K3Apqdu5vJ8" CanvasType="Group">
-            <Node Bounds="200,181,65,19" Id="uIR47YckeCiG6YW8wfwam2">
+            <Node Bounds="200,211,65,19" Id="uIR47YckeCiG6YW8wfwam2">
               <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
                 <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                 <Choice Kind="ProcessAppFlag" Name="Circle" />
@@ -37,7 +37,7 @@
               <Pin Id="T1pqNBn6PGQeQwpiG5mbSl" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
               <Pin Id="yYOXdS8OMgTO15najCDaPP" Name="Scene Bounds" Kind="OutputPin" />
             </Node>
-            <Node Bounds="260,131,85,19" Id="W5vFAfIpselLgIbHURIhpE">
+            <Node Bounds="260,180,85,19" Id="W5vFAfIpselLgIbHURIhpE">
               <p:NodeReference LastCategoryFullName="Qt.Interaction" LastDependency="VL.Qt.vl">
                 <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                 <Choice Kind="ProcessAppFlag" Name="Drag" />
@@ -54,7 +54,7 @@
               <Pin Id="t4pBDrZXR7ZdDh44mbRMfX" Name="Buttons" Kind="InputPin" IsHidden="true" />
               <Pin Id="Hed565sUXCpJqUzcndJ8N6" Name="Devices" Kind="InputPin" IsHidden="true" />
             </Node>
-            <Node Bounds="260,222,51,26" Id="Lhy4e2RouEpyhCAKdT4AX4">
+            <Node Bounds="260,252,51,26" Id="Lhy4e2RouEpyhCAKdT4AX4">
               <p:NodeReference LastCategoryFullName="2D.Rectangle" LastDependency="VL.CoreLib.vl">
                 <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                 <CategoryReference Kind="RecordType" Name="Rectangle" NeedsToBeDirectParent="true" />
@@ -77,10 +77,15 @@
               <Pin Id="zNqvyo4fwnzER4QvW6bzrn" Name="Translation" Kind="InputPin" />
               <Pin Id="qPKCyZOo1eaOrOUA73DqKV" Name="Output" Kind="StateOutputPin" />
             </Node>
-            <ControlPoint Id="zxszxXHgikTI0foOEK6pNR" Bounds="202,247" />
-            <ControlPoint Id="06KWAGeZpIuQEgfdBO7Xnv" Bounds="262,295" />
+            <ControlPoint Id="zxszxXHgikTI0foOEK6pNR" Bounds="202,277" />
+            <ControlPoint Id="06KWAGeZpIuQEgfdBO7Xnv" Bounds="262,325" />
             <ControlPoint Id="J3Gr91qrDdV1a2MgL8FNrr" Bounds="275,53" />
-            <ControlPoint Id="NVv5DLLEwzer3jUsoTXn8j" Bounds="202,131" />
+            <ControlPoint Id="NVv5DLLEwzer3jUsoTXn8j" Bounds="202,51" />
+            <Pad Id="RdKBilFSyu0MEZR2ubtnTu" Comment="Color" Bounds="242,161,136,15" ShowValueBox="true" isIOBox="true" Value="0, 1, 0.5999999, 0.65999997">
+              <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
+                <Choice Kind="TypeFlag" Name="RGBA" />
+              </p:TypeAnnotation>
+            </Pad>
           </Canvas>
           <Link Id="HBfjYbsfNU0At5wUwnrTXy" Ids="zxszxXHgikTI0foOEK6pNR,eK0n1CRkYxWZw7oBKVnDI5" IsHidden="true" />
           <Link Id="Z1KijJ51tL8EkK8CV0KcHw" Ids="3a9UKeiE1diJbN349thhwP,zxszxXHgikTI0foOEK6pNR" />
@@ -88,7 +93,7 @@
           <Link Id="lyGSJfZ6C4Te5dpnH4t0kp" Ids="yYOXdS8OMgTO15najCDaPP,tNzMvCU8TUqpswAM4pjRl2" />
           <Link Id="Dh1iZUN7E3MqWmsFRwbMBo" Ids="06KWAGeZpIuQEgfdBO7Xnv,sM2Z7yfYSYkO86kuhfwFrt" IsHidden="true" />
           <Link Id="IAkicrpcGkeqy8fHynA2Gd" Ids="JC3UOQtH6wVGiFemTGrPFP,06KWAGeZpIuQEgfdBO7Xnv" />
-          <Link Id="86xWMz8Y72hrnoro4cszju" Ids="qPKCyZOo1eaOrOUA73DqKV,rOJmilYpQyVuvnD3gQEsDt,OLxBk3kVar6zDdEQsGwh6y" />
+          <Link Id="86xWMz8Y72hrnoro4cszju" Ids="qPKCyZOo1eaOrOUA73DqKV,OLxBk3kVar6zDdEQsGwh6y" />
           <Link Id="sAn2ve0oAqs4zsjRK3nTN2" Ids="rKnJlYBdvNKXwWkBkL2XG5,J3Gr91qrDdV1a2MgL8FNrr" IsHidden="true" />
           <Link Id="eo8AI2tFwZhrNzB6PLwkEv" Ids="J3Gr91qrDdV1a2MgL8FNrr,zNqvyo4fwnzER4QvW6bzrn" />
           <Link Id="oNC2rHZ9iHyCU07Xwwiyi7" Ids="IJxfSKRH8jHtjP9AtHPfeR,NVv5DLLEwzer3jUsoTXn8j" IsHidden="true" />
@@ -104,9 +109,15 @@
             <Fragment Id="7reGqNtd5PtkTudN77CSRS" Patch="AJvGaBZERSbMtXkmINLi7r" Enabled="true" />
             <Fragment Id="0CUbkdGvqUMJeSeMRpZPn3" Patch="hfvysWqjEJuObGhVDcv5Ld" Enabled="true" />
           </ProcessDefinition>
+          <Link Id="OjTREhxp9ZdLJ59kKWcFBG" Ids="RdKBilFSyu0MEZR2ubtnTu,M9vcduJZUSc51ydHlEvcvR" />
         </Patch>
       </Node>
     </Canvas>
+    <!--
+
+    ************************ Application ************************
+
+-->
     <Node Name="Application" Bounds="100,100" Id="UAW3HcwsQoLymTJVpF0JDj">
       <p:NodeReference>
         <Choice Kind="ContainerDefinition" Name="Process" />
@@ -132,12 +143,12 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="mXcBqKaNWFF6eq62rpTM1m" Comment="Radius" Bounds="102,240,35,15" ShowValueBox="true" isIOBox="true" Value="0.2">
+          <Pad Id="mXcBqKaNWFF6eq62rpTM1m" Comment="Radius" Bounds="102,240,35,15" ShowValueBox="true" isIOBox="true" Value="0.1">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="OSGzgHuOKjvkM99Jc9hBAL" Comment="Translation" Bounds="136,275,92,150" ShowValueBox="true" isIOBox="true">
+          <Pad Id="OSGzgHuOKjvkM99Jc9hBAL" Comment="Translation" Bounds="136,275,92,172" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Collections" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Spread" />
               <p:TypeArguments>
@@ -146,18 +157,21 @@
                 </TypeReference>
               </p:TypeArguments>
             </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:maxvisibleentries p:Type="Int32">10</p:maxvisibleentries>
+            </p:ValueBoxSettings>
             <p:Value>
-            <Item>2.2, 1.9</Item>
-            <Item>2.582, 2.874</Item>
-            <Item>3.627, 2.936</Item>
-            <Item>2.818, 3.601</Item>
-            <Item>3.082, 4.614</Item>
-            <Item>2.2, 4.05</Item>
-            <Item>1.318, 4.614</Item>
-            <Item>1.582, 3.601</Item>
-            <Item>0.773, 2.936</Item>
-            <Item>1.818, 2.874</Item>
-          </p:Value>
+              <Item>2.2, 1.9</Item>
+              <Item>2.582, 2.874</Item>
+              <Item>3.627, 2.936</Item>
+              <Item>2.818, 3.601</Item>
+              <Item>3.082, 4.614</Item>
+              <Item>2.2, 4.05</Item>
+              <Item>1.318, 4.614</Item>
+              <Item>1.582, 3.601</Item>
+              <Item>0.773, 2.936</Item>
+              <Item>1.818, 2.874</Item>
+            </p:Value>
           </Pad>
           <Pad Id="O3zmfRT0NLZHKDDCMbshox" Comment="Translation" Bounds="436,325,92,100" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Collections" LastDependency="VL.CoreLib.vl">
@@ -169,14 +183,14 @@
               </p:TypeArguments>
             </p:TypeAnnotation>
             <p:Value>
-            <Item>6.4, 1.8</Item>
-            <Item>7.34, 4.694</Item>
-            <Item>4.878, 2.906</Item>
-            <Item>7.922, 2.906</Item>
-            <Item>5.46, 4.694</Item>
-          </p:Value>
+              <Item>6.4, 1.8</Item>
+              <Item>7.34, 4.694</Item>
+              <Item>4.878, 2.906</Item>
+              <Item>7.922, 2.906</Item>
+              <Item>5.46, 4.694</Item>
+            </p:Value>
           </Pad>
-          <Pad Id="oErSIBEsrhAalQSHVbjgdJ" Bounds="260,275,326,29" ShowValueBox="true" isIOBox="true" Value="Drag the points in the Renderer">
+          <Pad Id="oErSIBEsrhAalQSHVbjgdJ" Bounds="541,248,326,29" ShowValueBox="true" isIOBox="true" Value="Drag the points in the Renderer">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -200,16 +214,16 @@
               <Patch Id="J6o5srBG2qQX0Sg6VlPrXx" Name="Create" ManuallySortedPins="true" />
               <Patch Id="mzLdqwHBWSqNM8phYsKVtn" Name="Update" ManuallySortedPins="true" />
               <Patch Id="pLS6ydYnCi9Py58AmBbJUj" Name="Dispose" ManuallySortedPins="true" />
-                  <Node Bounds="100,480,39,19" Id="MoyS3dckY8yopPRqdDPlkM">
-                    <p:NodeReference LastCategoryFullName="Main" LastDependency="HowTo Draw a Polygon.vl">
-                      <Choice Kind="ProcessNode" Name="Point" />
-                    </p:NodeReference>
-                    <Pin Id="PMtFcCjuBvnRSYeUaIUvQv" Name="Output" Kind="OutputPin" />
-                    <Pin Id="xcgu0r6e4reRaLx05Y2UFB" Name="Position" Kind="OutputPin" />
-                    <Pin Id="ZExVYD5SWW9IbhCWrH3N1X" Name="Node Context" Kind="InputPin" IsHidden="true" />
-                    <Pin Id="QYRkBtfWK4MZrBqgLXDeiU" Name="Radius" Kind="InputPin" />
-                    <Pin Id="nQJPtMsRQ3FZzXp5ToxESw" Name="Translation" Kind="InputPin" />
-                  </Node>
+              <Node Bounds="100,480,39,19" Id="MoyS3dckY8yopPRqdDPlkM">
+                <p:NodeReference LastCategoryFullName="Main" LastDependency="HowTo Draw a Polygon.vl">
+                  <Choice Kind="ProcessNode" Name="Point" />
+                </p:NodeReference>
+                <Pin Id="PMtFcCjuBvnRSYeUaIUvQv" Name="Output" Kind="OutputPin" />
+                <Pin Id="xcgu0r6e4reRaLx05Y2UFB" Name="Position" Kind="OutputPin" />
+                <Pin Id="ZExVYD5SWW9IbhCWrH3N1X" Name="Node Context" Kind="InputPin" IsHidden="true" />
+                <Pin Id="QYRkBtfWK4MZrBqgLXDeiU" Name="Radius" Kind="InputPin" />
+                <Pin Id="nQJPtMsRQ3FZzXp5ToxESw" Name="Translation" Kind="InputPin" />
+              </Node>
             </Patch>
           </Node>
           <Node Bounds="388,440,70,95" Id="vJQQCdX3Oode3ronO0ojug">
@@ -226,16 +240,16 @@
               <Patch Id="D2ruSInK4Bu8hhp4Ec88sR" Name="Create" ManuallySortedPins="true" />
               <Patch Id="vhigiItDmpMOuhZeRbOoGR" Name="Update" ManuallySortedPins="true" />
               <Patch Id="MgtJjiJxpQKYqObaMG4sjO" Name="Dispose" ManuallySortedPins="true" />
-                  <Node Bounds="400,480,39,19" Id="5WVfU34tCuX9egcC9GxqZY">
-                    <p:NodeReference LastCategoryFullName="Main" LastDependency="HowTo Draw a Polygon.vl">
-                      <Choice Kind="ProcessNode" Name="Point" />
-                    </p:NodeReference>
-                    <Pin Id="ofBhmE0VhFZ24YJypkTKZo" Name="Output" Kind="OutputPin" />
-                    <Pin Id="bIf7aaDyI9rTVrmOyeW39y" Name="Position" Kind="OutputPin" />
-                    <Pin Id="fKZPGtZG6GGqR1neWKugkI" Name="Node Context" Kind="InputPin" IsHidden="true" />
-                    <Pin Id="urIuntwoDiVi45CPNQucTm" Name="Radius" Kind="InputPin" />
-                    <Pin Id="MQrmZw19GQoulN4kRVtWcd" Name="Translation" Kind="InputPin" />
-                  </Node>
+              <Node Bounds="400,480,39,19" Id="5WVfU34tCuX9egcC9GxqZY">
+                <p:NodeReference LastCategoryFullName="Main" LastDependency="HowTo Draw a Polygon.vl">
+                  <Choice Kind="ProcessNode" Name="Point" />
+                </p:NodeReference>
+                <Pin Id="ofBhmE0VhFZ24YJypkTKZo" Name="Output" Kind="OutputPin" />
+                <Pin Id="bIf7aaDyI9rTVrmOyeW39y" Name="Position" Kind="OutputPin" />
+                <Pin Id="fKZPGtZG6GGqR1neWKugkI" Name="Node Context" Kind="InputPin" IsHidden="true" />
+                <Pin Id="urIuntwoDiVi45CPNQucTm" Name="Radius" Kind="InputPin" />
+                <Pin Id="MQrmZw19GQoulN4kRVtWcd" Name="Translation" Kind="InputPin" />
+              </Node>
             </Patch>
           </Node>
           <Node Bounds="300,555,65,19" Id="hLrD2F6WVxvC5yEVbvewrz">
@@ -300,7 +314,7 @@
             <Pin Id="5XN0Akr7uxEGeXzPifiWZV" Name="Transform" Kind="InputPin" />
             <Pin Id="gPYYcAnq9mj15Zc3dmeVD6" Name="Fill" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
             <Pin Id="rniqmG7m68G49sliLRWBFV" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="1HXU1tfqWcKSE8ba67Z6IU" Name="Stroke Width" Kind="InputPin" DefaultValue="0.1" />
+            <Pin Id="1HXU1tfqWcKSE8ba67Z6IU" Name="Stroke Width" Kind="InputPin" DefaultValue="0.05" />
             <Pin Id="fnzceyPV2MCmAIkz1DDvGu" Name="Output" Kind="OutputPin" />
             <Pin Id="3ssZoU1PxfogBOQCxIOY7Q" Name="Join" Kind="InputPin" DefaultValue="Round" />
             <Pin Id="ESKvvUkPnFcFSwJVqpaCqo" Name="Miter Limit" Kind="InputPin" IsHidden="true" />
@@ -343,7 +357,7 @@
             <Pin Id="vlDMeTU4UYGkpp88nSmVjZ" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="Wp50ja8fYcJebv2kaAw86E" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="634,595,65,19" Id="OuqQ0RsaqcFnEwEltdzQqS">
+          <Node Bounds="634,570,80,19" Id="OuqQ0RsaqcFnEwEltdzQqS">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -351,13 +365,13 @@
                 <p:OuterCategoryReference Kind="Category" Name="2D" NeedsToBeDirectParent="true" />
               </CategoryReference>
             </p:NodeReference>
-            <Pin Id="hbk36qb8ElqE8inki2Shjg" Name="Input" Kind="InputPin" IsHidden="true" />
-            <Pin Id="N7a9XjuUelJ9XJq2sZD6q4" Name="Scaling" Kind="InputPin" IsHidden="true" />
-            <Pin Id="S54mDqTIZYCpnlRztPB3dX" Name="Rotation" Kind="InputPin" IsHidden="true" />
+            <Pin Id="hbk36qb8ElqE8inki2Shjg" Name="Input" Kind="InputPin" />
+            <Pin Id="N7a9XjuUelJ9XJq2sZD6q4" Name="Scaling" Kind="InputPin" />
+            <Pin Id="S54mDqTIZYCpnlRztPB3dX" Name="Rotation" Kind="InputPin" />
             <Pin Id="Cja1Zfy6JCUfGzh2nj9KxB" Name="Translation" Kind="InputPin" DefaultValue="4.2, 0" />
             <Pin Id="01xZKS8jto1dRUtsZWCxAj" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="EO6UcawDX7CQrkIu1Grqh9" Comment="Fill Rule" Bounds="716,605,62,15" ShowValueBox="true" isIOBox="true" Value="EvenOdd">
+          <Pad Id="EO6UcawDX7CQrkIu1Grqh9" Comment="Fill Rule" Bounds="716,605,70,15" ShowValueBox="true" isIOBox="true" Value="EvenOdd">
             <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="ShapeFillRule" />
             </p:TypeAnnotation>
@@ -498,7 +512,7 @@
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="WGEFPJYwrECQUiQCqD36qk" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="dSHVISfqPgNp5d7m45NRIE" Name="Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="dSHVISfqPgNp5d7m45NRIE" Name="Bounds" Kind="InputPin" DefaultValue="715, 45, 733, 573" IsHidden="true" />
             <Pin Id="Y3rq3587qBISQA61REFi5b" Name="V Sync" Kind="InputPin" IsHidden="true" />
             <Pin Id="3mWnj8O9TjUidVVyjCAN56" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="0ydmANZEn3gcqnFrKw8Ijj" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
@@ -506,14 +520,18 @@
             <Pin Id="oWU6dSJXD9nE52BKmkZX4n" Name="Input" Kind="InputPin" />
             <Pin Id="9A2GJp4tB9rgQGzdCGTK7b" Name="Space" Kind="InputPin" />
             <Pin Id="Zy18nkqGF0tBbOzfCgCw9L" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="MdUwYe3zmCdNHkqk6SvWn3" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="UzrV6h92CUiUx2TWAVa557" Name="Enabled" Kind="InputPin" />
             <Pin Id="QlFmPhGeMb39xQO0yy9Kky" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="2OWITEhvmyneBZyVOCwJkl" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="KdQOXzbOadJnl0M24kxgWY" Name="Title" Kind="InputPin" />
-            <Pin Id="VqHs8GqkZaomABnXL7QuaD" Name="Error" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="UbwtzQZ5iHILrpd1lT6gep" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="VqHs8GqkZaomABnXL7QuaD" Name="Error" Kind="OutputPin" />
             <Pin Id="LL2raVyWKpm218Fab0eNZy" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="JuJI0WJd9KeJpuuebyCFRr" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="G3MsIbN5tiPo5yN9TKeJGs" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TBsBEZoiukNPn7jY0ys4Ix" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Gz2sdmblJAcNFr8o2atdLp" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="3sYROub7a9zMPweo2NtwTy" Bounds="85,915,830,250" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The circles are Point nodes, defined in this patch (Circle, Drag and Translate): one Point in a ForEach per shape. Their Position outputs, the centres of the circles, are the Points of the Polygon, so dragging a circle reshapes it. Translation sets the start positions, Radius the size of the circles.&#xD;&#xA;- Both pentagrams share the same draggable points: the second Polygon gets the same Points and is moved to the right by a Transform (TransformSRT), so dragging a circle changes both. The circles sit on the first pentagram.&#xD;&#xA;- Points are in units of the Renderer Space (1 unit = 100 DIP, origin top left), in the space of the parent. Transform acts around the origin of the parent.&#xD;&#xA;- Fill Rule decides which areas of a self-intersecting outline count as inside: NonZero fills every area the outline encloses at least once, EvenOdd leaves out the areas enclosed an even number of times, here the centre of the pentagram.&#xD;&#xA;- A Polygon is filled by default and has no stroke (Stroke Width 0). Defaults follow Skia: Join Miter, Fill Rule NonZero (Skia: Winding).&#xD;&#xA;- A shape holds at most 8190 points; more are cut off and the node shows a warning. Points that change every frame cost real time: stay below about 4000 points, or move the shape with Transform instead.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
