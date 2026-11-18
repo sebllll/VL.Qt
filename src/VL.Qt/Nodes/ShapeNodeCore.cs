@@ -5,6 +5,7 @@ using VL.Core;
 using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.Paths;
 
 namespace VL.Qt.Nodes
 {
@@ -29,11 +30,15 @@ namespace VL.Qt.Nodes
             ShapeCap Cap, ShapeJoin Join, float MiterLimit, Spread<float> Dash, float DashOffset,
             float TrimStart, float TrimEnd, float TrimOffset, ShapeFillRule FillRule)
         {
+            /// <summary>Path geometry of the node Path; replaces <see cref="Points"/> when set. Compared by reference, then by content.</summary>
+            public QtPath? Path { get; init; }
+
             public bool Equals(Props other)
                 => Closed == other.Closed && Fill == other.Fill && StrokeColor == other.StrokeColor && StrokeWidth == other.StrokeWidth
                     && Cap == other.Cap && Join == other.Join && MiterLimit == other.MiterLimit && DashOffset == other.DashOffset
                     && TrimStart == other.TrimStart && TrimEnd == other.TrimEnd && TrimOffset == other.TrimOffset && FillRule == other.FillRule
-                    && SameContent(Points, other.Points) && SameContent(Dash, other.Dash);
+                    && SameContent(Points, other.Points) && SameContent(Dash, other.Dash)
+                    && (ReferenceEquals(Path, other.Path) || (Path is not null && Path.ContentEquals(other.Path)));
 
             public override int GetHashCode()
                 => HashCode.Combine(Points.Count, Closed, Fill, StrokeColor, StrokeWidth, Dash.Count, TrimStart, TrimEnd);
@@ -45,7 +50,7 @@ namespace VL.Qt.Nodes
         /// </summary>
         internal static readonly Func<CommonInputs, Props, SinkSlot, Shape> Create = static (c, p, slot) => new Shape
         {
-            Size = Extent(p.Points),
+            Size = p.Path is { } path ? Shape.ExtentOf(path) : Extent(p.Points),
             Transform = c.Transform,
             Anchor = RectangleAnchor.TopLeft,
             Opacity = c.Opacity,
@@ -55,6 +60,7 @@ namespace VL.Qt.Nodes
             Effect = c.Effect,
             Sink = slot,
             Points = p.Points,
+            Path = p.Path,
             Closed = p.Closed,
             Fill = p.Fill,
             StrokeColor = p.StrokeColor,
@@ -74,11 +80,20 @@ namespace VL.Qt.Nodes
         internal static string? PointsWarning(int count)
             => count > MaxPoints ? $"Points: only the first {MaxPoints} of {count} points are drawn." : null;
 
+        /// <summary>Returns the warning for a path with <paramref name="verbs"/> verbs and <paramref name="points"/> points, null if it fits one command.</summary>
+        internal static string? PathWarning(int verbs, int points)
+            => Protocol.PathFits(verbs, points)
+                ? null
+                : $"Path: {verbs} verbs and {points} points do not fit one command; nothing is drawn.";
+
         readonly ElementNode<Shape, Props> _node;
         readonly Func<string, IDisposable> _addWarning;
         string? _pointsWarning;
         IDisposable? _pointsWarningMessage;
         int _warnedCount;
+        string? _pathWarning;
+        IDisposable? _pathWarningMessage;
+        QtPath? _checkedPath;
         Spread<Vector2> _line = Spread<Vector2>.Empty;
         Vector2 _lineFrom, _lineTo;
 
@@ -99,6 +114,9 @@ namespace VL.Qt.Nodes
 
         /// <summary>Warning shown for too many points, null if none.</summary>
         public string? Warning => _pointsWarning;
+
+        /// <summary>Warning shown for a path that does not fit one command, null if none.</summary>
+        public string? PathLimitWarning => _pathWarning;
 
         /// <summary>
         /// Returns the points of a two-point line: the same instance as long as <paramref name="from"/> and <paramref name="to"/> stay the
@@ -121,7 +139,25 @@ namespace VL.Qt.Nodes
         /// </summary>
         public Shape Describe(in CommonInputs common, in Props props, out Vector2 measuredSize, out RectangleF sceneBounds)
         {
-            var element = _node.Describe(common, props);
+            var drawn = props;
+            if (props.Path is { } path)
+            {
+                if (!ReferenceEquals(path, _checkedPath))
+                {
+                    _checkedPath = path;
+                    var flat = path.Flatten();
+                    UpdatePathWarning(PathWarning(flat.Verbs.Length, flat.Points.Length / 2));
+                }
+                // A path over the limit is not cut: nothing is drawn.
+                if (_pathWarning is not null)
+                    drawn = props with { Path = QtPath.Empty };
+            }
+            else if (_checkedPath is not null)
+            {
+                _checkedPath = null;
+                UpdatePathWarning(null);
+            }
+            var element = _node.Describe(common, drawn);
             UpdatePointsWarning(props.Points.Count);
             _node.ReadOutputs(out measuredSize, out sceneBounds);
             return element;
@@ -141,9 +177,22 @@ namespace VL.Qt.Nodes
             _pointsWarning = warning;
         }
 
+        void UpdatePathWarning(string? warning)
+        {
+            if (warning == _pathWarning)
+                return;
+            _pathWarningMessage?.Dispose();
+            _pathWarningMessage = warning is null ? null : _addWarning(warning);
+            _pathWarning = warning;
+        }
+
         public void Dispose()
         {
             _node.Dispose();
+            _pathWarningMessage?.Dispose();
+            _pathWarningMessage = null;
+            _pathWarning = null;
+            _checkedPath = null;
             _pointsWarningMessage?.Dispose();
             _pointsWarningMessage = null;
             _pointsWarning = null;
