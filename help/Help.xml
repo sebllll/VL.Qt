@@ -43,6 +43,7 @@
 		<VLDocument link="Qt\HowTo Preload Images.vl" tags="async" />
 		<VLDocument link="Qt\HowTo Use an IImage.vl" tags="skia" />
 		<VLDocument link="Qt\HowTo Take a Snapshot.vl" tags="" />
+		<VLDocument link="Qt\HowTo Write an Element to a File.vl" tags="filewriter save export png jpg screenshot" />
 		<VLDocument link="Qt\HowTo Play a Video.vl" tags="movie" />
 		<VLDocument link="Qt\HowTo Show a VL.Video player in Qt.vl" tags="camera" />
 	</Topic>
