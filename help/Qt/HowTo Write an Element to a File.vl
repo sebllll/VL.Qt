@@ -16,7 +16,7 @@
       </p:NodeReference>
       <Patch Id="EzawkVcsWJGLYFtReRokgE">
         <Canvas Id="UXdNFu7QE96Lc5d6zlgp4s" CanvasType="Group">
-          <Pad Id="TFVfq0z0ue6NFzL8iKT04r" Bounds="85,16,520,52" ShowValueBox="true" isIOBox="true" Value="How To Write an Element to a File">
+          <Pad Id="TFVfq0z0ue6NFzL8iKT04r" Bounds="85,16,627,52" ShowValueBox="true" isIOBox="true" Value="How To Write an Element to a File">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="F6G0QCqo3qYLxjzsjgSHuW" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="FileWriter (Element) [Qt], FileWriter [Qt]&#10;- Element, File Path, Scale, Write: grabs the element and writes it&#10;- Format by file extension: png, jpg, bmp, ...&#10;- Is Done and Error report the result&#10;- Image: write any IImage, e.g. from Snapshot, Quality for JPG">
+          <Pad Id="F6G0QCqo3qYLxjzsjgSHuW" Bounds="85,85,519,110" ShowValueBox="true" isIOBox="true" Value="FileWriter (Element) [Qt], FileWriter [Qt]&#xA;- Element, File Path, Scale, Write: grabs the element and writes it&#xA;- Format by file extension: png, jpg, bmp, ...&#xA;- Is Done and Error report the result&#xA;- Image: write any IImage, e.g. from Snapshot, Quality for JPG">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="100,240,45,19" Id="BIBOIweEeMrMqF5APCQGqf">
+          <Node Bounds="100,225,65,19" Id="BIBOIweEeMrMqF5APCQGqf">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -45,7 +45,7 @@
             <Pin Id="CzjAQL1jL64MQM24Q4mAdu" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="NInMuCjopOVLz50gFURrDA" Name="Output" Kind="OutputPin" />
             <Pin Id="SoG8GLaomdsL0kYHzd46Ei" Name="Size" Kind="InputPin" DefaultValue="3.2, 1.6" />
-            <Pin Id="EmDORm1t5EILpvYNvZ6I3D" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="EmDORm1t5EILpvYNvZ6I3D" Name="Transform" Kind="InputPin" />
             <Pin Id="UmpQcWjvWIEQRCoHVNn6Kl" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="LXsK6MuS5MpOzrhzP0saS7" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
             <Pin Id="Sc7yFfYSbjWN3CExVUlCWE" Name="Radius" Kind="InputPin" DefaultValue="0.3" />
@@ -59,7 +59,7 @@
             <Pin Id="CNY61KrRbf2P4ID6Gssgn3" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="J2lBaw4FBguMkZTBFcUHky" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="260,240,105,19" Id="ERvOz0Ta0LyPj5DocUZBJV">
+          <Node Bounds="139,265,165,19" Id="ERvOz0Ta0LyPj5DocUZBJV">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -70,14 +70,14 @@
             <Pin Id="VuH9qOCahdqOa6byvVIwdB" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="OY9qvgSRoR0NQYSWqf9idi" Name="Output" Kind="OutputPin" />
             <Pin Id="R4D6SRfA1t8Op2iQHTaWMp" Name="Size" Kind="InputPin" DefaultValue="3.2, 1.6" />
-            <Pin Id="NyKVaecNgZoLICiTa9ozbD" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="NyKVaecNgZoLICiTa9ozbD" Name="Transform" Kind="InputPin" />
             <Pin Id="GDuUwWnin14Pv6kTxH4hq6" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="OWa51H92xrTNnBcj6uLyjR" Name="Text" Kind="InputPin" DefaultValue="FileWriter" />
-            <Pin Id="PfZ50ePtVwJNHi7MfT8aor" Name="Font Family" Kind="InputPin" IsHidden="true" />
+            <Pin Id="PfZ50ePtVwJNHi7MfT8aor" Name="Font Family" Kind="InputPin" />
             <Pin Id="CJN9lI7wDJlO7t2TFInwOk" Name="Font Size" Kind="InputPin" DefaultValue="0.5" />
             <Pin Id="Mj8DMgu5slHNUKYgAz8v7E" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
             <Pin Id="D6ggoZrx2enQBfWyZKzn2T" Name="Italic" Kind="InputPin" IsHidden="true" />
-            <Pin Id="KTxV5pwHjeLOLCevN66k8e" Name="Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KTxV5pwHjeLOLCevN66k8e" Name="Color" Kind="InputPin" />
             <Pin Id="LquMJABLf9TMKLSRtGIye3" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="QWHtEWlxHKxLZXJZ9MGBiX" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="EUM0mIHbQUcNbganhrnvwz" Name="Wrap" Kind="InputPin" IsHidden="true" />
@@ -174,16 +174,19 @@
             </p:NodeReference>
             <Pin Id="DEWhai7N8JiLMwt0NoHNGe" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="RAH77bMmm2mPyzWl0TZCFf" Name="Element" Kind="InputPin" />
-            <Pin Id="TQGYyIsRrYSOdXBkRhkuxR" Name="Scale" Kind="InputPin" DefaultValue="1" IsHidden="true" />
+            <Pin Id="TQGYyIsRrYSOdXBkRhkuxR" Name="Scale" Kind="InputPin" DefaultValue="1" />
             <Pin Id="Fd4AemNkupqNVmvabDA12q" Name="Grab" Kind="InputPin" />
             <Pin Id="RnZjwDs9JI3LOrIYKCBrGn" Name="Image" Kind="OutputPin" />
             <Pin Id="QkUQE7LYDj1OzMtSuZJ0J6" Name="Is Ready" Kind="OutputPin" />
-            <Pin Id="AW0XvE4TLm5LdSXHRokcan" Name="Error" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="AW0XvE4TLm5LdSXHRokcan" Name="Error" Kind="OutputPin" />
           </Node>
-          <Pad Id="V34BIrseCiVNGpnYbyzvxv" Comment="Grab" Bounds="980,280,35,35" ShowValueBox="true" isIOBox="true">
+          <Pad Id="V34BIrseCiVNGpnYbyzvxv" Comment="Grab" Bounds="980,280,35,35" ShowValueBox="true" isIOBox="true" Value="False">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Bang</p:buttonmode>
+            </p:ValueBoxSettings>
           </Pad>
           <Pad Id="PkWn85cseQsNb9RMzm9f2z" Bounds="640,245,320,65" ShowValueBox="true" isIOBox="true" Value="2  Snapshot &gt; FileWriter: the Image of Snapshot is written as JPG as soon as it is ready (Is Ready &gt; Write), Quality is an optional pin.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
@@ -239,22 +242,22 @@
             <Pin Id="Az8U6Bzv2WGMWGgUpqu230" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="KRqwJheK2DDM0YvVq4Sd9i" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="GNUfL8rRM2YOKXUpDj5BCR" Name="Input" Kind="InputPin" />
-            <Pin Id="JdhDOdQiLohNsaU52WXnDi" Name="Space" Kind="InputPin" IsHidden="true" />
-            <Pin Id="VTv68dRVDByN4CJ848QsQf" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="JdhDOdQiLohNsaU52WXnDi" Name="Space" Kind="InputPin" />
+            <Pin Id="VTv68dRVDByN4CJ848QsQf" Name="Clear Color" Kind="InputPin" />
             <Pin Id="Ng6EqDQ3c7pNvKBM9e9tqp" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="QGMh3vnY33EQEgxOV1lVOG" Name="Enabled" Kind="InputPin" IsHidden="true" />
+            <Pin Id="QGMh3vnY33EQEgxOV1lVOG" Name="Enabled" Kind="InputPin" />
             <Pin Id="LVzNL3zed6hNDGi2SNAd2x" Name="Title" Kind="InputPin" DefaultValue="HowTo Write an Element to a File" />
             <Pin Id="EPhzYXsXkAQLpGU5WXrHVy" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="AZAeZqMxZG9NlBIjUWls91" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="JZNv1S2hsb6OYaMQzrCWzg" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="EeqeUeFIODMPvDTjwb78Y6" Name="Error" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="EeqeUeFIODMPvDTjwb78Y6" Name="Error" Kind="OutputPin" />
             <Pin Id="FgVbS47qoV5NzjT02ndI17" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="RSGVrK4CCYDMLTchaurNFt" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="CRfy48fbvxPMvKOg7n5LMk" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="NgCp3n7S7kfN5xEhP03Af5" Name="Window" Kind="InputPin" IsHidden="true" />
             <Pin Id="D6r833ZBSGdPW7I3bCN4JH" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="N6Dpkaf3liAN7vipda2EWk" Bounds="85,700,830,174" ShowValueBox="true" isIOBox="true" Value="Notes:&#10;- Writing is asynchronous: Is Done comes in a later frame, never in the frame of Write. It is also true when the write failed, then Error says why.&#10;- The format comes from the extension of File Path (png, jpg, bmp, ...). Quality (0..100) only counts for lossy formats like JPG.&#10;- Missing folders are created, an existing file is overwritten. A relative File Path is relative to the patch.&#10;- Premultiplied alpha is handled: transparent areas of the element stay transparent in a PNG.&#10;- FileWriter (Element) is Snapshot and FileWriter in one node. The element has to be shown in a renderer, here the same Group goes to the Renderer.&#10;- Scale: pixel size = size in DIP * Scale, independent of the screen's DPI scaling. The Group here is 320 x 160 DIP, so Scale 2 gives 640 x 320 pixels.&#10;- FileWriter writes the Image of Snapshot: Write comes from Is Ready, so the file is written as soon as the snapshot is done.">
+          <Pad Id="N6Dpkaf3liAN7vipda2EWk" Bounds="85,700,829,238" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- Writing is asynchronous: Is Done comes in a later frame, never in the frame of Write. It is also true when the write failed, then Error says why.&#xA;- The format comes from the extension of File Path (png, jpg, bmp, ...). Quality (0..100) only counts for lossy formats like JPG.&#xA;- Missing folders are created, an existing file is overwritten. A relative File Path is relative to the patch.&#xA;- Premultiplied alpha is handled: transparent areas of the element stay transparent in a PNG.&#xA;- FileWriter (Element) is Snapshot and FileWriter in one node. The element has to be shown in a renderer, here the same Group goes to the Renderer.&#xA;- Scale: pixel size = size in DIP * Scale, independent of the screen's DPI scaling. The Group here is 320 x 160 DIP, so Scale 2 gives 640 x 320 pixels.&#xA;- FileWriter writes the Image of Snapshot: Write comes from Is Ready, so the file is written as soon as the snapshot is done.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
