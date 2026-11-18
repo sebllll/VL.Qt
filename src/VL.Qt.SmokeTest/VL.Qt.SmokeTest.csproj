@@ -52,6 +52,7 @@
     <Compile Include="..\VL.Qt\Nodes\*.cs" Link="Nodes\%(Filename)%(Extension)" />
     <Compile Include="..\VL.Qt\Nodes\Interaction\*.cs" Link="Nodes\Interaction\%(Filename)%(Extension)" />
     <Compile Include="..\VL.Qt\Nodes\Effects\*.cs" Link="Nodes\Effects\%(Filename)%(Extension)" />
+    <Compile Include="..\VL.Qt\Nodes\Paths\*.cs" Link="Nodes\Paths\%(Filename)%(Extension)" />
     <!-- QtApp (02b) + CommandWriter Stride overloads: real assemblies are copied next to the exe. -->
     <PackageReference Include="VL.Core" Version="$(VvvvVersion)" />
     <PackageReference Include="Stride.Core.Mathematics" Version="$(StrideMathematicsVersion)" />
