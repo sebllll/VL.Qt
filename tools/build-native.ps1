@@ -1,8 +1,8 @@
 # Builds QtNative and deploys Qt into runtimes/<rid>/native (windeployqt runs as CMake target vlqt_deploy).
 # Usage: tools/build-native.ps1 [-Rid win-arm64|win-x64 (default: host)] [-QtDir C:\Qt\6.12.0\msvc2022_arm64] [-ForceDeploy]
 # Configures CMake directly (same settings as the dev-<rid> preset) so CI can point at any Qt location.
-# windeployqt re-runs when vlqt.dll or qml/deploy.qml changed, when the deployed qml/QtQuick/Effects or qml/QtMultimedia
-# is missing, or with -ForceDeploy.
+# windeployqt re-runs when vlqt.dll or qml/deploy.qml changed, when the deployed qml/QtQuick/Effects, qml/QtQuick/Shapes,
+# qml/QtMultimedia or qml/QtQuick/Controls/Basic is missing, or with -ForceDeploy.
 param(
     [ValidateSet('win-arm64', 'win-x64')] [string]$Rid,
     [string]$QtDir,
@@ -37,7 +37,7 @@ $prefix = $QtDir.Replace('\', '/')
 $outDir = Join-Path (Resolve-Path "$PSScriptRoot\..").Path "runtimes\$Rid\native"
 # Deleting the stamp makes Ninja re-run windeployqt even if vlqt.dll and deploy.qml are unchanged.
 $stamp = "$bin\windeployqt.stamp"
-if ((Test-Path $stamp) -and ($ForceDeploy -or -not (Test-Path "$outDir\qml\QtQuick\Effects\qmldir") -or -not (Test-Path "$outDir\qml\QtMultimedia\qmldir") -or -not (Test-Path "$outDir\qml\QtQuick\Controls\Basic\qmldir"))) {
+if ((Test-Path $stamp) -and ($ForceDeploy -or -not (Test-Path "$outDir\qml\QtQuick\Effects\qmldir") -or -not (Test-Path "$outDir\qml\QtQuick\Shapes\qmldir") -or -not (Test-Path "$outDir\qml\QtMultimedia\qmldir") -or -not (Test-Path "$outDir\qml\QtQuick\Controls\Basic\qmldir"))) {
     Remove-Item $stamp
     Write-Host 'Forcing windeployqt'
 }
@@ -51,7 +51,7 @@ if ($LASTEXITCODE) { throw "native build failed ($LASTEXITCODE)" }
 
 $out = Resolve-Path $outDir
 # Modules imported by qml/deploy.qml must arrive with content (an empty folder means windeployqt missed them).
-foreach ($m in 'QtQuick', 'QtQuick\Effects', 'QtMultimedia', 'QtQuick\Controls', 'QtQuick\Controls\Basic', 'QtQuick\Templates') {
+foreach ($m in 'QtQuick', 'QtQuick\Effects', 'QtQuick\Shapes', 'QtMultimedia', 'QtQuick\Controls', 'QtQuick\Controls\Basic', 'QtQuick\Templates') {
     if (-not (Test-Path "$out\qml\$m\qmldir")) { throw "deploy incomplete: qml\$m\qmldir missing" }
 }
 # Video (QtMultimedia): only the FFmpeg backend is used; its plugin needs the FFmpeg DLLs next to the Qt DLLs.

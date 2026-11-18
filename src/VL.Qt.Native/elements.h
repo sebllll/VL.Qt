@@ -1,9 +1,10 @@
 /* elements.h - element registry of QtNative (plan 05).
  *
- * Every element type is a table entry {type id, QML one-liner, property table}. Items are created from
- * QQmlComponents compiled once per type and engine (no private Qt headers, LGPL). QML properties are
- * written through QMetaProperty resolved once per type (indexOfProperty on the first instance), never by
- * name per frame. Grouped properties ("border.color") go through the group object; QFont fields through
+ * Every element type is a table entry {type id, QML one-liner or C++ factory, property table}. Items are created
+ * from QQmlComponents compiled once per type and engine, or in C++ (Image, ShaderEffect, QmlElement, Shape). Hot
+ * setters call the typed setters of Qt's private classes (QtQuick/private, QtQuickShapes/private; #560, #154):
+ * still LGPL, but private API, so check them on Qt updates. Other QML properties are written through QMetaProperty
+ * resolved once per type (indexOfProperty on the first instance), never by name per frame. Grouped properties ("border.color") go through the group object; QFont fields through
  * modifyFont (read-modify-write). New element properties are table entries only, no new exports. */
 #pragma once
 
