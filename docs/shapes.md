@@ -1,6 +1,6 @@
 # Shapes
 
-`Line`, `Polyline` and `Polygon` (category `Qt.Elements`) draw strokes and filled outlines as vector shapes on Qt Quick Shapes. Edges are anti-aliased without MSAA, curves are exact, and moving, rotating or scaling a shape through `Transform` costs almost nothing, because the path stays untouched. `Path` (curves, built with the nodes of `Qt.Paths`) follows with package 04 and uses the same pins and rules.
+`Line`, `Polyline` and `Polygon` (category `Qt.Elements`) draw strokes and filled outlines as vector shapes on Qt Quick Shapes. Edges are anti-aliased without MSAA, curves are exact, and moving, rotating or scaling a shape through `Transform` costs almost nothing, because the path stays untouched. `Path` draws curves built with the nodes of `Qt.Paths` (see [Paths](#paths)) and uses the same pins and rules.
 
 ## Elements
 
@@ -35,6 +35,47 @@ Defaults follow Skia, so Skia patches keep their look:
 - **Trim** takes fractions of the path length: `Trim Start` 0 and `Trim End` 1 draw everything, `Trim Offset` shifts the window along the path. Animating `Trim End` lets a line draw itself.
 - The renderer is Qt's `CurveRenderer`; there is no pin to choose another one.
 
+## Paths
+
+`Path` (category `Qt.Elements`) draws a path built with the nodes of `Qt.Paths`. A path is an immutable value (`QtPath`); each builder node takes a path and returns a new one, so the nodes chain from `MoveTo` to the `Path` element.
+
+| Pin | Values | Default |
+|---|---|---|
+| `Path` | the path to draw | none (draws nothing) |
+| `Transform` | as on the other shapes | identity |
+| `Fill` | fill color of the enclosed area | transparent |
+| `Stroke Color`, `Stroke Width` | as on `Line` | white, 0.05 |
+
+The optional pins (`Cap`, `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Trim Start`, `Trim End`, `Trim Offset`, `Fill Rule`, `Opacity`, …) work as described under [Stroke and fill](#stroke-and-fill).
+
+**Builder nodes** in `Qt.Paths` (the first pin is `Input`, the path so far; the output is `Output`):
+
+| Nodes | Pins besides `Input` |
+|---|---|
+| `MoveTo`, `LineTo` | `Point` |
+| `QuadTo` | `Control Point`, `End Point` |
+| `CubicTo` | `Control Point 1`, `Control Point 2`, `EndPoint` |
+| `Close` | none |
+| `ArcTo` (tangent) | `Corner`, `Destination Point`, `Corner Radius` |
+| `ArcTo` (oval) | `Bounds`, `Start Angle`, `Sweep Angle`, `Force Move To` |
+| `ArcTo` (SVG) | `Radius`, `X Axis Rotate`, `Large Arc`, `Sweep`, `Destination Point` |
+| `AddRect`, `AddRoundRect`, `AddOval`, `AddCircle`, `AddArc`, `AddPoly`, `AddPath` | the shape (`Rectangle`, `Radius`, `Bounds`, `Center`, `Points`, `Other`, …) and, as in Skia, `Direction` (`PathDirection`) or `Mode` (`PathAddMode`) |
+
+- `MoveTo`, `LineTo`, `QuadTo` and `CubicTo` have a `(Relative)` variant that takes its points relative to the current point; of `ArcTo` only the SVG form has one. `Close` and the `Add…` nodes have none (as in Skia).
+- `AddPath` appends another path; `AddPoly` takes a `Spread<Vector2>` and an optional close.
+
+**Skia correspondence.** The nodes in `Qt.Paths` have the names and pins of `Skia.Paths`, so Skia patches carry over. Differences:
+
+- A `QtPath` is immutable: each node returns a new path and leaves its input unchanged. An unconnected `Input` is an empty path.
+- There is no `ConicTo`; Qt has no conics.
+- `PathDirection` and `PathAddMode` replace `SKPathDirection` and `SKPathAddMode`.
+- Angles are in cycles (1 is a full turn), as on Skia's nodes.
+- Queries and operations (`Op`, `Simplify`, sampling) are not part of `Qt.Paths`.
+
+**Limits.** A path that does not fit one command to QtNative (about 7270 line segments) is not drawn; `Path` shows a warning. Arcs and ovals become cubics and count as such.
+
+Help patches: `HowTo Build a Path` (the builder nodes), `HowTo Draw a Path` (the element).
+
 ## Limits
 
 - **At most 8190 points per element.** More points are cut off at the 8190th, and the node shows a warning. The limit comes from the size of one command to QtNative.
@@ -46,4 +87,4 @@ Numbers and method: [research/02_shapes-spike.md](research/02_shapes-spike.md). 
 
 ## Help patches
 
-`HowTo Draw a Line`, `HowTo Draw a Polyline`, `HowTo Draw a Polygon`. See [Help patches](help-patches.md).
+`HowTo Draw a Line`, `HowTo Draw a Polyline`, `HowTo Draw a Polygon`, `HowTo Draw a Path`, `HowTo Build a Path`. See [Help patches](help-patches.md).
