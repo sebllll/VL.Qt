@@ -11,6 +11,9 @@ aqtinstall.log
 
 ExportQT/
 
+# Files the help patch "HowTo Write an Element to a File" writes
+help/Qt/output/
+
 # CodeAlta (tasks, plans, scratch)
 .alta/
 

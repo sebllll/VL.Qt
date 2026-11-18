@@ -473,6 +473,23 @@ namespace VL.Qt
         /// <summary>TEST ONLY: content of a Ready image as RGBA8 premultiplied; bytes written, -required, -9 not Ready.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         static extern int vlqt_test_res_read_pixels(ulong id, ref byte @out, int cap, out int width, out int height);
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        static extern int vlqt_image_write(in vlqt_pixel_desc desc, in byte data, int len, [MarshalAs(UnmanagedType.LPUTF8Str)] string path, int quality, ref byte err, int errCap);
+
+        /// <summary>
+        /// Writes pixels to an image file, format by extension (vlqt.h vlqt_image_write, #157); any thread, synchronous.
+        /// Returns 0, or -1 bad arguments / -2 unsupported file format / -3 write failed with the reason in error.
+        /// </summary>
+        public static int ImageWrite(in vlqt_pixel_desc desc, ReadOnlySpan<byte> data, string path, int quality, out string error)
+        {
+            Span<byte> err = stackalloc byte[512];
+            err.Clear();
+            var rc = vlqt_image_write(in desc, in MemoryMarshal.GetReference(data), data.Length, path, quality, ref MemoryMarshal.GetReference(err), err.Length);
+            var end = err.IndexOf((byte)0);
+            error = rc < 0 ? System.Text.Encoding.UTF8.GetString(end < 0 ? err : err[..end]) : string.Empty;
+            return rc;
+        }
+
         /// <summary>TEST ONLY: writes a stripe test image (red, green, blue, white) as PNG/JPG by extension.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_write_image([MarshalAs(UnmanagedType.LPUTF8Str)] string path, int width, int height, int quality);
