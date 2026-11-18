@@ -29,6 +29,7 @@ namespace VL.Qt.Nodes
         /// <summary>Describes the polyline. A new description is only created when an input changes.</summary>
         /// <param name="points">Vertices in units, in the parent space (at most 8190 are drawn, the node warns about more). Transform acts around the origin of the parent space, not around the shape; the shape reports (max X, max Y) of the points as its size.</param>
         /// <param name="closed">Connects the last point to the first.</param>
+        /// <param name="transform">Position, rotation and scale; applied around the origin of the parent space (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
         /// <param name="strokeColor">Color of the stroke.</param>
         /// <param name="strokeWidth">Width of the stroke in units, 0 = no stroke.</param>
         /// <param name="cap">Shape of the open ends of the stroke: Flat, Square or Round.</param>
@@ -39,7 +40,6 @@ namespace VL.Qt.Nodes
         /// <param name="trimStart">Start of the visible part of the stroke, as fraction of the path length (0 to 1).</param>
         /// <param name="trimEnd">End of the visible part of the stroke, as fraction of the path length (0 to 1).</param>
         /// <param name="trimOffset">Shifts the visible part along the path, as fraction of the path length.</param>
-        /// <param name="transform">Position, rotation and scale; applied around the origin of the parent space (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
         /// <param name="opacity">Opacity of the element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
         /// <param name="clip">Clip children to the extent of the shape (see Rectangle).</param>
         /// <param name="debug">Debug overlay for this element (see Rectangle).</param>
@@ -52,6 +52,7 @@ namespace VL.Qt.Nodes
         public Element Update(
             Spread<Vector2> points,
             [DefaultValue(false)] bool closed,
+            Matrix transform,
             [Pin(Name = "Stroke Color")] [DefaultValue("1, 1, 1, 1")] Color4 strokeColor,
             [Pin(Name = "Stroke Width")] [DefaultValue(0.05f)] float strokeWidth,
             [Pin(Visibility = PinVisibility.Optional)] [DefaultValue(typeof(ShapeCap), nameof(ShapeCap.Flat))] ShapeCap cap,
@@ -62,8 +63,7 @@ namespace VL.Qt.Nodes
             [Pin(Name = "Trim Start", Visibility = PinVisibility.Optional)] [DefaultValue(0f)] float trimStart,
             [Pin(Name = "Trim End", Visibility = PinVisibility.Optional)] [DefaultValue(1f)] float trimEnd,
             [Pin(Name = "Trim Offset", Visibility = PinVisibility.Optional)] [DefaultValue(0f)] float trimOffset,
-            Matrix transform,
-            [DefaultValue(1f)] float opacity,
+            [Pin(Visibility = PinVisibility.Optional)] [DefaultValue(1f)] float opacity,
             [Pin(Visibility = PinVisibility.Optional)] bool clip,
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,

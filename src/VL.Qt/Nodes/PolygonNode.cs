@@ -28,6 +28,7 @@ namespace VL.Qt.Nodes
 
         /// <summary>Describes the polygon. A new description is only created when an input changes.</summary>
         /// <param name="points">Vertices in units, in the parent space (at most 8190 are drawn, the node warns about more). Transform acts around the origin of the parent space, not around the shape; the shape reports (max X, max Y) of the points as its size.</param>
+        /// <param name="transform">Position, rotation and scale; applied around the origin of the parent space (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
         /// <param name="fill">Fill color of the enclosed area.</param>
         /// <param name="strokeColor">Color of the stroke.</param>
         /// <param name="strokeWidth">Width of the stroke in units, 0 = no stroke.</param>
@@ -36,7 +37,6 @@ namespace VL.Qt.Nodes
         /// <param name="dash">Lengths of dashes and gaps in units, alternating. Empty = solid stroke.</param>
         /// <param name="dashOffset">Start of the dash pattern along the stroke, in units.</param>
         /// <param name="fillRule">Which areas of a self-intersecting polygon are filled: NonZero or EvenOdd.</param>
-        /// <param name="transform">Position, rotation and scale; applied around the origin of the parent space (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
         /// <param name="opacity">Opacity of the element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
         /// <param name="clip">Clip children to the extent of the shape (see Rectangle).</param>
         /// <param name="debug">Debug overlay for this element (see Rectangle).</param>
@@ -48,6 +48,7 @@ namespace VL.Qt.Nodes
         [return: Pin(Name = "Output")]
         public Element Update(
             Spread<Vector2> points,
+            Matrix transform,
             [DefaultValue("1, 1, 1, 1")] Color4 fill,
             [Pin(Name = "Stroke Color")] [DefaultValue("1, 1, 1, 1")] Color4 strokeColor,
             [Pin(Name = "Stroke Width")] [DefaultValue(0f)] float strokeWidth,
@@ -56,8 +57,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] Spread<float> dash,
             [Pin(Name = "Dash Offset", Visibility = PinVisibility.Optional)] [DefaultValue(0f)] float dashOffset,
             [Pin(Name = "Fill Rule", Visibility = PinVisibility.Optional)] [DefaultValue(typeof(ShapeFillRule), nameof(ShapeFillRule.NonZero))] ShapeFillRule fillRule,
-            Matrix transform,
-            [DefaultValue(1f)] float opacity,
+            [Pin(Visibility = PinVisibility.Optional)] [DefaultValue(1f)] float opacity,
             [Pin(Visibility = PinVisibility.Optional)] bool clip,
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
