@@ -37,6 +37,7 @@ Why things are built the way they are. Each note states the goals, the decision 
 | [decisions/reconciler-identity.md](decisions/reconciler-identity.md) | How the reconciler decides every frame between updating a Qt object and creating a new one. |
 | [decisions/timing.md](decisions/timing.md) | One shared clock for vvvv and Qt animations through a custom animation driver on `IFrameClock`. |
 | [decisions/paths.md](decisions/paths.md) | Lines, paths and splines on Qt Quick Shapes: element and node set, `QtPath`, Skia parity, limits; plan in [plans/paths/00_overview.md](plans/paths/00_overview.md) (issues #154, #155). |
+| [research/02_shapes-spike.md](research/02_shapes-spike.md) | Spike for lines and paths (#154): Qt Quick Shapes with a custom path element, `CurveRenderer` quality and benchmark, recommended limits. |
 | [topics/element-immutability.md](topics/element-immutability.md) | Why elements are immutable descriptions and where Qt-side state deliberately lives outside them. |
 | [topics/style-nodeset.md](topics/style-nodeset.md) | Design of the nodes that build, merge and read styles for interactive widgets. |
 | [topics/gradients.md](topics/gradients.md) | Open topic: gradient fills for elements (handover for a brainstorm). |
