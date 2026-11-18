@@ -18,7 +18,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="Fl43MBXwAG4vUekOAOlttN" Bounds="85,85,600,116" ShowValueBox="true" isIOBox="true" Value="Path [Qt]&#xD;&#xA;- Fill, Stroke Color, Stroke Width, Cap and Join: fill and stroke in one node&#xD;&#xA;- Trim Start, Trim End and Trim Offset draw a part of the stroke; here an LFO drives Trim End&#xD;&#xA;- Fill Rule: NonZero (default) or EvenOdd, which leaves a hole where contours overlap&#xD;&#xA;- Position, rotation and scale via Transform">
+          <Pad Id="Fl43MBXwAG4vUekOAOlttN" Bounds="85,85,600,116" ShowValueBox="true" isIOBox="true" Value="Path [Qt]&#xD;&#xA;- Fill, Stroke Color, Stroke Width, Cap and Join: fill and stroke in one node&#xD;&#xA;- Trim Start, Trim End and Trim Offset draw a part of the stroke&#xD;&#xA;- Fill Rule: NonZero (default) or EvenOdd, which leaves a hole where contours overlap&#xD;&#xA;- Position, rotation and scale via Transform">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl"><Choice Kind="TypeFlag" Name="String" /></p:TypeAnnotation>
             <p:ValueBoxSettings>
               <p:fontsize p:Type="Int32">9</p:fontsize>
@@ -146,7 +146,7 @@
             <Pin Id="55GetCQXGB0k8ijyAN5kso" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="Z3tSmwYhMofaxPCEyhaawA" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="77jjHtwMXwCxvIewouMLXk" Bounds="400,261,290,59" ShowValueBox="true" isIOBox="true" Value="2  Trim End driven by an LFO: the stroke draws itself. Trim only shortens the stroke.">
+          <Pad Id="77jjHtwMXwCxvIewouMLXk" Bounds="400,261,290,59" ShowValueBox="true" isIOBox="true" Value="2  Trim Start and Trim End draw only a part of the stroke. Trim only shortens the stroke, not the fill.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl"><Choice Kind="TypeFlag" Name="String" /></p:TypeAnnotation>
             <p:ValueBoxSettings>
               <p:fontsize p:Type="Int32">9</p:fontsize>
@@ -199,37 +199,22 @@
             <Pin Id="unBBse64zeEgs4NBSJzz6n" Name="EndPoint" Kind="InputPin" />
             <Pin Id="iPiXn98ARk1QYt0D9QDiZv" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="480,663,65,19" Id="AWqOUV24DGVeOIwWbbBZke">
-            <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <Choice Kind="ProcessAppFlag" Name="LFO" />
-            </p:NodeReference>
-            <Pin Id="42B5r6w7cvwi2l3zz34AFK" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="otUP7Qs3GaItErJQofGO0O" Name="Clock" Kind="InputPin" IsHidden="true" />
-            <Pin Id="FFl0LcPedkMiVDKru5yc19" Name="New Clock" Kind="InputPin" IsHidden="true" />
-            <Pin Id="0u6nJd9tlj0qcPFCUg7sKm" Name="Period" Kind="InputPin" />
-            <Pin Id="gVAZfgnxZpJG0moCIcmKCK" Name="Phase" Kind="OutputPin" />
-            <Pin Id="pnhg9Vo8tquKau0ghQLKKd" Name="Pause" Kind="InputPin" IsHidden="true" />
-            <Pin Id="ahkjMVfivDBagrWdceCwY2" Name="Reset" Kind="InputPin" IsHidden="true" />
-            <Pin Id="CLXYfWH4TvECGOKr3o7pQr" Name="On New Cycle" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="tLs1PCIg57QgYsqd5mx57w" Name="Cycles" Kind="OutputPin" IsHidden="true" />
-          </Node>
-          <Pad Id="NHNUwPq6KSV8pplmfte9zR" Comment="Cap" Bounds="462,633,62,15" ShowValueBox="true" isIOBox="true" Value="Round">
+          <Pad Id="NHNUwPq6KSV8pplmfte9zR" Comment="Cap" Bounds="462,640,62,15" ShowValueBox="true" isIOBox="true" Value="Round">
             <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="ShapeCap" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="evIIx5Di1F9sybCK1QQzz3" Comment="Stroke Width" Bounds="442,603,35,15" ShowValueBox="true" isIOBox="true" Value="0.15">
+          <Pad Id="evIIx5Di1F9sybCK1QQzz3" Comment="Stroke Width" Bounds="442,610,35,15" ShowValueBox="true" isIOBox="true" Value="0.15">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="G7TWXf50VO1hapKqHdz8zS" Comment="Stroke Color" Bounds="422,569,136,19" ShowValueBox="true" isIOBox="true" Value="0.95, 0.5, 0.15, 1">
+          <Pad Id="G7TWXf50VO1hapKqHdz8zS" Comment="Stroke Color" Bounds="422,576,136,19" ShowValueBox="true" isIOBox="true" Value="0.95, 0.5, 0.15, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="400,697,85,19" Id="eWOdy3PnQHk4fN42DB7l9W">
+          <Node Bounds="400,730,105,19" Id="eWOdy3PnQHk4fN42DB7l9W">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -249,7 +234,7 @@
             <Pin Id="LekPg3mD0esf4FdR6gYtyh" Name="Miter Limit" Kind="InputPin" IsHidden="true" />
             <Pin Id="nXf1IL3OJloxE2ks9ml3bX" Name="Dash" Kind="InputPin" IsHidden="true" />
             <Pin Id="IkVTw7N1c0v6iOtgiWMLjA" Name="Dash Offset" Kind="InputPin" IsHidden="true" />
-            <Pin Id="wtZ7iaSIreGPeRi6RfcQ5j" Name="Trim Start" Kind="InputPin" IsHidden="true" />
+            <Pin Id="wtZ7iaSIreGPeRi6RfcQ5j" Name="Trim Start" Kind="InputPin" />
             <Pin Id="sYQbVIJoYqz7flZB4dbcWH" Name="Trim End" Kind="InputPin" />
             <Pin Id="TB3LoZiIFImVrKe4kqtF7F" Name="Trim Offset" Kind="InputPin" IsHidden="true" />
             <Pin Id="VfcLiFqgFvxs2YyHx8L2fO" Name="Fill Rule" Kind="InputPin" IsHidden="true" />
@@ -489,12 +474,22 @@
           <Pad Id="UOkCsmK6YLf22kuBs2lC7v" Comment="Title" Bounds="182,838,190,19" ShowValueBox="true" isIOBox="true" Value="HowTo Draw a Path">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl"><Choice Kind="TypeFlag" Name="String" /></p:TypeAnnotation>
           </Pad>
-          <Pad Id="wKMnLdqsODdrfC1OWgr9Ps" Bounds="85,931,830,255" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Fill and Stroke are drawn together: the fill first, the stroke on top. Stroke Width 0 draws no stroke, a Fill with alpha 0 (the default) draws no fill. Trim only shortens the stroke, not the fill.&#xD;&#xA;- Fill Rule decides which areas count as inside: NonZero fills an area that contours wind around, EvenOdd counts the crossings. Both contours of the hole path run clockwise, so NonZero fills the circle too and EvenOdd leaves it out. With opposite directions (Dir CounterClockwise at AddCircle) NonZero makes a hole as well.&#xD;&#xA;- Transform acts around the origin of the parent space, like in Skia. The hole path is built at 0, 0 and moved by Transform (Translation).&#xD;&#xA;- A path must fit one command to Qt (about 65 000 bytes): roughly 7270 line segments, a curve takes more room than a line. A bigger path is not drawn and the Path node warns with the counts. Animating Trim costs far less than rebuilding the path.&#xD;&#xA;- Skia: the Path layer with its Fill and Stroke, and the nodes of Graphics.Skia.Paths.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+          <Pad Id="wKMnLdqsODdrfC1OWgr9Ps" Bounds="85,931,830,255" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Fill and Stroke are drawn together: the fill first, the stroke on top. Stroke Width 0 draws no stroke, a Fill with alpha 0 (the default) draws no fill. Trim only shortens the stroke, not the fill.&#xD;&#xA;- Fill Rule decides which areas count as inside: NonZero fills an area that contours wind around, EvenOdd counts the crossings. Both contours of the hole path run clockwise, so NonZero fills the circle too and EvenOdd leaves it out. With opposite directions (Dir CounterClockwise at AddCircle) NonZero makes a hole as well.&#xD;&#xA;- Transform acts around the origin of the parent space, like in Skia. The hole path is built at 0, 0 and moved by Transform (Translation).&#xD;&#xA;- A path must fit one command to Qt (about 65 000 bytes): roughly 7270 line segments, a curve takes more room than a line. A bigger path is not drawn and the Path node warns with the counts. Changing Trim costs far less than rebuilding the path.&#xD;&#xA;- Skia: the Path layer with its Fill and Stroke, and the nodes of Graphics.Skia.Paths.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl"><Choice Kind="TypeFlag" Name="String" /></p:TypeAnnotation>
             <p:ValueBoxSettings>
               <p:fontsize p:Type="Int32">9</p:fontsize>
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="u8jzPde0IgxLd6GncfBAep" Comment="Trim Start" Bounds="482,670,35,15" ShowValueBox="true" isIOBox="true" Value="0.15">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="fJBd0Kh8oOOL8dKLzdocJ2" Comment="Trim End" Bounds="502,700,35,15" ShowValueBox="true" isIOBox="true" Value="0.85">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
           </Pad>
         </Canvas>
         <Link Id="lQcaS0J3CswJEKEBQHcN7g" Ids="qnI87raT6YIlvGIyJKZs1t,gaDEA2JmN35Ex9SfIfcp8L" />
@@ -513,7 +508,6 @@
         <Link Id="WLm3qQJwiD932WZrFbCwQI" Ids="YylJBtiU25Pcwulvnchprf,3D7goJRTLcmA06bRQnZ0Rn" />
         <Link Id="IKSOvf2hyJsttdNhFfiJMh" Ids="spI3IjH7EGZIayNXj1a5ON,4A7cO4p9hiMeVe9cDlYFtV" />
         <Link Id="Xlffsbgbfcm2Hw9evO98HS" Ids="vWokefI5yPQnqgJdepMlb9,pIoOb0oJNXAxua94Qy5s4B" />
-        <Link Id="AiWjC0ilNo3OjuXYqtJJa6" Ids="gVAZfgnxZpJG0moCIcmKCK,sYQbVIJoYqz7flZB4dbcWH" />
         <Link Id="qfImqH2oxFprSAmn5Tq0dM" Ids="NHNUwPq6KSV8pplmfte9zR,CnTfxQkN1i4M912yURDni7" />
         <Link Id="sqiIbGtwmrCoYpLb4O9xmO" Ids="evIIx5Di1F9sybCK1QQzz3,qCrIPw1DhGKztK890jixIZ" />
         <Link Id="yssj1xcqd36nwqEQg2WwK4" Ids="G7TWXf50VO1hapKqHdz8zS,uoZGEbrgzqXGOazhbroOw1" />
@@ -533,6 +527,8 @@
         <Link Id="0UApbCernSLpDgssU9Zr0G" Ids="GTWB6oI72DfybSBtuS7ivG,KibC32NkK9xR6CuxyH5BD2" />
         <Link Id="rprrEK5sHoQHaekH0ZMTus" Ids="IW6tA03pq5NbVl3LjUcQDZ,y6brvMpRJEgQh0mdNXOeQy" />
         <Link Id="vL8nZM8S2nF7rw5XHNLAeX" Ids="UOkCsmK6YLf22kuBs2lC7v,WbGzNZqKK05aO66OjUwONO" />
+        <Link Id="isAjIhKtJ0RlgLKOmxgJTe" Ids="u8jzPde0IgxLd6GncfBAep,wtZ7iaSIreGPeRi6RfcQ5j" />
+        <Link Id="KdNnFRIBXuDL7DxtpYlSXp" Ids="fJBd0Kh8oOOL8dKLzdocJ2,sYQbVIJoYqz7flZB4dbcWH" />
         <Patch Id="Ci0NjHfLAte2vp3HOyNe9S" Name="Create" />
         <Patch Id="y9WWQ73iCwm1hK26yUE1kT" Name="Update" />
         <ProcessDefinition Id="nfzWmbT37yLRry7KGvnLMh">
