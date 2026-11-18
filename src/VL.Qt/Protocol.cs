@@ -7,12 +7,26 @@
     /// </summary>
     internal static class Protocol
     {
-        public const int ProtocolVersion = 13;
+        public const int ProtocolVersion = 14;
         public const int CommandAlign = 4;
         public const int HeaderSize = 4;
         public const uint RootId = 0;
         /// <summary>Max UTF-8 bytes of a uniform name in <see cref="Op.SetUniforms"/> (#437).</summary>
         public const int UniformNameMax = 255;
+        // u32 id, u16 prop, u16 valueType in front of the value of a SET (as in CommandWriter).
+        const int SetFieldsSize = 8;
+        /// <summary>Max floats of a <see cref="Vt.F32Array"/> value: the 4-byte count and the floats fit the payload of a SET (8190 points, #154).</summary>
+        internal const int MaxF32ArrayCount = (CommandWriter.MaxPayload - SetFieldsSize - 4) / 4;
+
+        /// <summary>Returns true if a <see cref="Vt.Path"/> with this many verbs and points fits the payload of a SET (#154).</summary>
+        internal static bool PathFits(int verbs, int points)
+        {
+            if (verbs < 0 || points < 0)
+                return false;
+            // u32 verbCount, u32 pointCount, verbs padded to 4 bytes, points as 2 x f32.
+            long size = 8 + ((verbs + 3L) & ~3L) + 8L * points;
+            return size <= CommandWriter.MaxPayload - SetFieldsSize;
+        }
 
         /// <summary>Opcodes (u16).</summary>
         public static class Op
@@ -86,6 +100,25 @@
             public const ushort Ivec2 = 19;
             /// <summary>8 bytes: sampler state of a sampler2D (#492, protocol.h "Sampler").</summary>
             public const ushort Sampler = 20;
+            /// <summary>u32 count, count x f32 (Shape points and dash pattern, #154).</summary>
+            public const ushort F32Array = 10;
+            /// <summary>u32 verbCount, u32 pointCount, verbs (u8, zero padded to 4 bytes), points (2 x f32 each, #154, protocol.h "Values").</summary>
+            public const ushort Path = 11;
+        }
+
+        /// <summary>Path verbs of <see cref="Vt.Path"/> (u8, #154).</summary>
+        public static class Verb
+        {
+            /// <summary>1 point.</summary>
+            public const byte Move = 0;
+            /// <summary>1 point.</summary>
+            public const byte Line = 1;
+            /// <summary>2 points: control, end.</summary>
+            public const byte Quad = 2;
+            /// <summary>3 points: control 1, control 2, end.</summary>
+            public const byte Cubic = 3;
+            /// <summary>0 points.</summary>
+            public const byte Close = 4;
         }
 
         /// <summary>Element type ids of CREATE (u16). 2 was TestRect (removed in 07a), keep it unused.</summary>
@@ -114,6 +147,8 @@
             public const ushort ShaderEffect = 24;
             /// <summary>Loads a user .qml file; properties by name through <see cref="Op.SetQmlProperties"/>, events <see cref="Ev.QmlProperty"/> and <see cref="Ev.QmlSignal"/> (#104).</summary>
             public const ushort Qml = 25;
+            /// <summary>QtQuick.Shapes Shape with one ShapePath: polyline, polygon or path, fill and stroke (#154).</summary>
+            public const ushort Shape = 26;
             /// <summary>
             /// Input handlers from 32 (#319): protocol objects attached to an element by REPARENT (index ignored).
             /// </summary>
@@ -137,7 +172,7 @@
         /// (Color: Rectangle fill + Text; Source: Video string, ShaderEffect ref). Blocks: 256 Rectangle, 512 Text,
         /// 544 Image, 576 Row/Column, 608 reserved (MultiEffect, removed in #459), 640 AutoSize, 672 Video (shares Source/FillMode with Image), 704 Button,
         /// 768 input handlers (only on handler objects), 800 reserved (RectangularShadow, removed in #459),
-        /// 832 keys of the Effect chain's MULTI entries (not via SET, see protocol.h "Effect chain"), 896 ShaderEffect (also takes Source ref and AutoSize).
+        /// 832 keys of the Effect chain's MULTI entries (not via SET, see protocol.h "Effect chain"), 896 ShaderEffect (also takes Source ref and AutoSize), 928 QmlElement, 960 Shape.
         /// </summary>
         public static class Prop
         {
@@ -278,6 +313,36 @@
             public const ushort QmlSource = 928;
             /// <summary>i32, QmlElement: counter, a new value reloads the same file (cache cleared, properties re-applied) (#104).</summary>
             public const ushort QmlReload = 929;
+            /// <summary>f32 array, x,y pairs, logical pixels (Shape, #154).</summary>
+            public const ushort ShapePoints = 960;
+            /// <summary>bool, close the point list (Shape, #154).</summary>
+            public const ushort ShapeClosed = 961;
+            /// <summary>path, verbs + points, logical pixels; replaces <see cref="ShapePoints"/> (Shape, #154).</summary>
+            public const ushort ShapePath = 962;
+            /// <summary>color, fill color (Shape, #154).</summary>
+            public const ushort ShapeFill = 963;
+            /// <summary>color, stroke color (Shape, #154).</summary>
+            public const ushort ShapeStrokeColor = 964;
+            /// <summary>f32, &lt; 0 = no stroke (Shape, #154).</summary>
+            public const ushort ShapeStrokeWidth = 965;
+            /// <summary>i32, 0 Flat, 1 Square, 2 Round (Shape, #154).</summary>
+            public const ushort ShapeCap = 966;
+            /// <summary>i32, 0 Miter, 1 Bevel, 2 Round (Shape, #154).</summary>
+            public const ushort ShapeJoin = 967;
+            /// <summary>f32, miter limit (Shape, #154).</summary>
+            public const ushort ShapeMiterLimit = 968;
+            /// <summary>f32 array, empty = solid; stroke-width units (Shape, #154).</summary>
+            public const ushort ShapeDash = 969;
+            /// <summary>f32, stroke-width units (Shape, #154).</summary>
+            public const ushort ShapeDashOffset = 970;
+            /// <summary>f32, 0..1 (Shape, #154).</summary>
+            public const ushort ShapeTrimStart = 971;
+            /// <summary>f32, 0..1 (Shape, #154).</summary>
+            public const ushort ShapeTrimEnd = 972;
+            /// <summary>f32, trim offset (Shape, #154).</summary>
+            public const ushort ShapeTrimOffset = 973;
+            /// <summary>i32, 0 NonZero, 1 EvenOdd (Shape, #154).</summary>
+            public const ushort ShapeFillRule = 974;
         }
 
         /// <summary>

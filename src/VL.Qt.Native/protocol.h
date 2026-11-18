@@ -52,7 +52,10 @@
  *               EV_ERROR line of the element.
  * Values: f32, i32, bool (u8), color (4 x f32, straight alpha), rectf (4 x f32: x, y, w, h),
  *         mat4 (16 x f32, row-major like Stride), string (u32 len + UTF-8), ref (u32 id), u64,
- *         vec2/vec3/vec4 (2/3/4 x f32), ivec2 (2 x i32).
+ *         vec2/vec3/vec4 (2/3/4 x f32), ivec2 (2 x i32),
+ *         f32 array (u32 count, count x f32), path (u32 verbCount, u32 pointCount, verbCount x u8, zero padding to 4 bytes,
+ *         pointCount x 2 x f32). Path verbs: 0 Move (1 point), 1 Line (1), 2 Quad (2), 3 Cubic (3), 4 Close (0); pointCount
+ *         must equal the points the verbs take (SHAPE, #154). Both are limited by the u16 payload length of a command.
  * Ids are u32, assigned by the C# reconciler; 0 = window root.
  *
  * Input handlers (#319) are objects of their own in the same id space (types from 32, see vlqt_type):
@@ -245,7 +248,7 @@
 #ifndef VLQT_PROTOCOL_H
 #define VLQT_PROTOCOL_H
 
-#define VLQT_PROTOCOL_VERSION 13
+#define VLQT_PROTOCOL_VERSION 14
 #define VLQT_COMMAND_ALIGN 4
 #define VLQT_HEADER_SIZE 4
 #define VLQT_ROOT_ID 0
@@ -280,6 +283,8 @@ enum vlqt_value_type {
     VLQT_VT_STRING = 7,
     VLQT_VT_REF = 8,
     VLQT_VT_U64 = 9, /* u64, e.g. a resource id (IMAGE, #361) */
+    VLQT_VT_F32_ARRAY = 10, /* u32 count, count x f32 (SHAPE points, dash pattern, #154) */
+    VLQT_VT_PATH = 11,      /* u32 verbCount, u32 pointCount, verbs (u8, padded to 4), points (2 x f32 each), see the head comment "Values" (#154) */
     /* 16.. effects package 03 (#437): uniform values (SET_UNIFORMS) and MESH_RESOLUTION */
     VLQT_VT_VEC2 = 16,  /* 2 x f32 */
     VLQT_VT_VEC3 = 17,  /* 3 x f32 */
@@ -306,6 +311,7 @@ enum vlqt_type {
     VLQT_TYPE_TEXT_FIELD = 15, /* QtQuick.Controls TextField (single line): EV_VALUE string (#301) */
     VLQT_TYPE_SHADER_EFFECT = 24, /* own item with .qsb shaders and uniforms by name (#437), see the head comment */
     VLQT_TYPE_QML = 25, /* loads a user .qml file, properties by name through SET_QML_PROPERTIES (#104), see "QmlElement" */
+    VLQT_TYPE_SHAPE = 26, /* QtQuick.Shapes Shape with one ShapePath: polyline, polygon or path, fill and stroke (#154) */
     /* Input handlers from 32 (#319): protocol objects attached to an element by REPARENT, see the head comment. */
     VLQT_TYPE_HOVER_HANDLER = 32, /* Qt Quick HoverHandler: EV_HOVER (positions: Point handler, #320) */
     VLQT_TYPE_TAP_HANDLER = 33,   /* TapHandler (ReleaseWithinBounds): EV_PRESS, EV_CLICK, EV_TAP_COUNT, EV_LONG_PRESS (#320) */
@@ -345,7 +351,7 @@ enum vlqt_type {
  * Blocks: 256.. Rectangle, 512.. Text, 544.. Image, 576.. Row/Column, 608.. reserved (MultiEffect element, removed in #459), 640.. size mode of containers (Item/Group, Row, Column, ShaderEffect only, others -> -6),
  * 672.. Video (SOURCE string and FILL_MODE are shared with Image; Image itself has no SOURCE since #361, -6), 704.. Controls: Button (TEXT and AUTO_SIZE are shared: AUTO_SIZE on =
  * implicit size from the text, default on), from 706 value inputs (SpinBox, CheckBox, Switch, Slider, TextField; VALUE/MINIMUM/MAXIMUM/STEP take the value type of the element), 768.. input handlers (#319, only on handler objects, others -> -6), 800.. reserved (RectangularShadow, removed in #459),
- * 832.. Effect chain MULTI keys (not via SET, see the head comment "Effect chain"), 896.. ShaderEffect (#437), 928.. QmlElement (#104). */
+ * 832.. Effect chain MULTI keys (not via SET, see the head comment "Effect chain"), 896.. ShaderEffect (#437), 928.. QmlElement (#104), 960.. Shape (#154). */
 enum vlqt_prop {
     VLQT_PROP_SIZE = 1,       /* vec2 (w, h), see "Geometry" above (#469; was BOUNDS rectf) */
     VLQT_PROP_TRANSFORM = 2,
@@ -435,7 +441,32 @@ enum vlqt_prop {
     VLQT_PROP_MESH_RESOLUTION = 899,  /* ivec2, grid subdivisions x, y >= 1 (default 1, 1) */
     /* 928.. QmlElement (#104), see the head comment "QmlElement" */
     VLQT_PROP_QML_SOURCE = 928,       /* string, absolute path of the .qml file, empty = nothing loaded */
-    VLQT_PROP_QML_RELOAD = 929        /* i32 counter, a new value reloads the same file (cache cleared, properties re-applied) */
+    VLQT_PROP_QML_RELOAD = 929,       /* i32 counter, a new value reloads the same file (cache cleared, properties re-applied) */
+    /* 960.. Shape (#154): lengths in logical pixels, dash and offset in stroke-width units */
+    VLQT_PROP_SHAPE_POINTS = 960,       /* f32 array, x,y pairs */
+    VLQT_PROP_SHAPE_CLOSED = 961,       /* bool, close the point list */
+    VLQT_PROP_SHAPE_PATH = 962,         /* path, verbs + points; replaces POINTS */
+    VLQT_PROP_SHAPE_FILL = 963,         /* color, fill color */
+    VLQT_PROP_SHAPE_STROKE_COLOR = 964, /* color */
+    VLQT_PROP_SHAPE_STROKE_WIDTH = 965, /* f32, < 0 = no stroke */
+    VLQT_PROP_SHAPE_CAP = 966,          /* i32, 0 Flat, 1 Square, 2 Round */
+    VLQT_PROP_SHAPE_JOIN = 967,         /* i32, 0 Miter, 1 Bevel, 2 Round */
+    VLQT_PROP_SHAPE_MITER_LIMIT = 968,  /* f32 */
+    VLQT_PROP_SHAPE_DASH = 969,         /* f32 array, empty = solid; stroke-width units */
+    VLQT_PROP_SHAPE_DASH_OFFSET = 970,  /* f32, stroke-width units */
+    VLQT_PROP_SHAPE_TRIM_START = 971,   /* f32, 0..1 */
+    VLQT_PROP_SHAPE_TRIM_END = 972,     /* f32, 0..1 */
+    VLQT_PROP_SHAPE_TRIM_OFFSET = 973,  /* f32 */
+    VLQT_PROP_SHAPE_FILL_RULE = 974     /* i32, 0 NonZero, 1 EvenOdd */
+};
+
+/* Path verbs of VLQT_VT_PATH (u8) */
+enum vlqt_path_verb {
+    VLQT_VERB_MOVE = 0,  /* 1 point */
+    VLQT_VERB_LINE = 1,  /* 1 point */
+    VLQT_VERB_QUAD = 2,  /* 2 points: control, end */
+    VLQT_VERB_CUBIC = 3, /* 3 points: control 1, control 2, end */
+    VLQT_VERB_CLOSE = 4  /* 0 points */
 };
 
 /* BIND flags (u16, bit mask). Elements have no pointer handlers since #320: 1 (INTERACTIVE) and 4 (POINTER) of #208
