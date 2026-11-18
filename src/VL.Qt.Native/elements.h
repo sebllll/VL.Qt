@@ -61,6 +61,14 @@ struct Value {
     quint64 u = 0;             // u64 (resource id)
     QByteArray utf8;           // string (raw UTF-8, not copied: fromRawData)
     QObject* ref = nullptr;    // ref (resolved id; id 0 = nullptr, i.e. "no reference")
+    // f32 array and path: views into the command buffer, not copied. The floats are 4-byte aligned within the buffer,
+    // but the buffer itself has no guaranteed alignment: read them with std::memcpy, never through a float*.
+    const unsigned char* floats = nullptr; // f32 array: floatCount x f32
+    quint32 floatCount = 0;
+    const unsigned char* verbs = nullptr;  // path: verbCount x u8 (VLQT_VERB_*, checked; pointCount matches the verbs)
+    quint32 verbCount = 0;
+    const unsigned char* points = nullptr; // path: pointCount x (x, y) f32
+    quint32 pointCount = 0;
 };
 
 /* Geometry of an element (#469, "Geometry" in protocol.h): TRANSFORM as sent and ANCHOR, resolved against the item's
