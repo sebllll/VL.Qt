@@ -37,7 +37,7 @@ Conventions shared by all elements: geometry pins, coordinate space, colours, im
 
 ## Out of scope / possible extensions
 - Anchors: they need references to sibling elements, which is hard to express as dataflow.
-- Grid layouts, shapes and paths, gradients.
+- Grid layouts and gradients. Shapes and paths: see [paths.md](paths.md).
 - Generic property access, possibly through a node factory that creates pins from Qt metadata.
 
 ## Rejected alternatives

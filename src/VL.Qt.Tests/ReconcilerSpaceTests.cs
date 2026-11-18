@@ -1,7 +1,9 @@
 ﻿using System.Linq;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
+using VL.Lib.Collections;
 using VL.Qt.Elements;
+using VL.Qt.Paths;
 using P = VL.Qt.Protocol.Prop;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
@@ -42,6 +44,37 @@ namespace VL.Qt.Tests
                 new Text { Content = "Hi", FontSize = 0.2f },
             ],
         };
+
+        [Test]
+        public void Shape_Coordinates_FollowTheMapping()
+        {
+            var shape = new Shape
+            {
+                Points = Spread.Create(new Vector2(0, 0), new Vector2(1, 0.5f)), StrokeWidth = 0.02f,
+                Dash = Spread.Create(0.1f, 0.05f), DashOffset = 0.02f,
+            };
+            Frame(shape, Normalized(600));   // 300 per unit
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapePoints} f32array(0,0,300,150)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapeStrokeWidth} f32(6)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapeDash} f32array(5,2.5)"));
+
+            // Scale change: points and stroke width again, the dash (a ratio) not.
+            Frame(shape, Normalized(300));   // 150 per unit
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapePoints} f32array(0,0,150,75)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapeStrokeWidth} f32(3)"));
+            Assert.That(_sink.Commands.Any(c => c.Contains($" {P.ShapeDash} ")), Is.False);
+            Assert.That(_sink.Commands.Any(c => c.Contains($" {P.ShapeDashOffset} ")), Is.False);
+        }
+
+        [Test]
+        public void Shape_Path_FollowsTheMappingOnRescale()
+        {
+            var shape = new Shape { Path = QtPath.Empty.MoveTo(0, 0).LineTo(1, 1) };
+            Frame(shape, Normalized(600));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapePath} path(0,1;0,0,300,300)"));
+            Frame(shape, Normalized(300));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapePath} path(0,1;0,0,150,150)"));
+        }
 
         [Test]
         public void Normalized_LengthsFollowTheSceneHeight()

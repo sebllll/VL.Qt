@@ -14,10 +14,10 @@ endif()
 set(VLQT_OUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../runtimes/${VLQT_RID}/native" CACHE PATH "Deployment folder")
 cmake_path(NORMAL_PATH VLQT_OUT_DIR)
 
-find_package(Qt6 6.12 REQUIRED COMPONENTS Gui GuiPrivate Qml Quick QuickPrivate QuickControls2 Multimedia ShaderTools ShaderToolsPrivate)
+find_package(Qt6 6.12 REQUIRED COMPONENTS Gui GuiPrivate Qml Quick QuickPrivate QuickControls2 Multimedia ShaderTools ShaderToolsPrivate QuickShapes QuickShapesPrivate)
 qt_standard_project_setup()
 
-add_library(vlqt SHARED vlqt.cpp vlqt.h device.cpp device.h perf.cpp perf.h commands.cpp commands.h effectchain.cpp effectchain.h elements.cpp elements.h events.cpp events.h touch.cpp touch.h debug.cpp debug.h feedback.cpp feedback.h resources.cpp resources.h image_resource.cpp image_resource.h qtimageitem.cpp qtimageitem.h snapshot_resource.cpp snapshot_resource.h image_writer.cpp image_writer.h audio_tap.cpp audio_tap.h shader_resource.cpp shader_resource.h shadereffectitem.cpp shadereffectitem.h qmlitem.cpp qmlitem.h vlstyle.cpp vlstyle.h offscreen.cpp offscreen.h render_thread.cpp render_thread.h test_offscreen.cpp protocol.h)
+add_library(vlqt SHARED vlqt.cpp vlqt.h device.cpp device.h perf.cpp perf.h commands.cpp commands.h effectchain.cpp effectchain.h elements.cpp elements.h events.cpp events.h touch.cpp touch.h debug.cpp debug.h feedback.cpp feedback.h resources.cpp resources.h image_resource.cpp image_resource.h qtimageitem.cpp qtimageitem.h snapshot_resource.cpp snapshot_resource.h image_writer.cpp image_writer.h audio_tap.cpp audio_tap.h shader_resource.cpp shader_resource.h shadereffectitem.cpp shadereffectitem.h qmlitem.cpp qmlitem.h vlstyle.cpp vlstyle.h offscreen.cpp offscreen.h render_thread.cpp render_thread.h test_offscreen.cpp pathelement.cpp pathelement.h protocol.h)
 target_compile_definitions(vlqt PRIVATE VLQT_BUILD)
 # Base style "VLQt" (#292): Qt Quick Controls style module embedded in QtNative (qrc:/qt/qml/VLQt, on the engine's
 # default import path), nothing to deploy. Plain resources + hand-written qmldir: no qmlcachegen/plugin target; the
@@ -65,6 +65,11 @@ target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick 
 # versioned include dir (include/QtShaderTools/<ver>/QtShaderTools), which just the Private target adds (RHI API,
 # limited compatibility guarantees: check on Qt updates). Qt6ShaderTools is deployed next to QtNative.
 target_link_libraries(vlqt PRIVATE Qt6::ShaderTools Qt6::ShaderToolsPrivate)
+# QuickShapes: Shape/ShapePath for Line, Polyline, Polygon, Path (#154). QuickShapesPrivate: QQuickShape/QQuickShapePath
+# (qquickshape_p.h) built from C++ with typed setters (makeShape in elements.cpp); VlPathElement (pathelement.h)
+# subclasses the private QQuickCurve of QuickPrivate (qquickpath_p.h). Private API, limited compatibility guarantees:
+# check on Qt updates. Qt6QuickShapes and qml/QtQuick/Shapes are deployed next to QtNative (qml/deploy.qml).
+target_link_libraries(vlqt PRIVATE Qt6::QuickShapes Qt6::QuickShapesPrivate)
 if(WIN32)
     target_link_libraries(vlqt PRIVATE d3d11 dxgi) # device.cpp: one D3D11 device per process (#358)
     # linear_pass.cpp: QtTexture into SRGB and float textures; d3dcompiler_47.dll ships with Windows 10 and up.

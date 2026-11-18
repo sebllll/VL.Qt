@@ -13,7 +13,7 @@ namespace VL.Qt.Tests
     public class ElementTypeTests
     {
         static readonly Type[] AllTypes =
-            { typeof(Group), typeof(Elements.Rectangle), typeof(Text), typeof(Image), typeof(Row), typeof(Column), typeof(Video), typeof(Button), typeof(SpinBox), typeof(CheckBox), typeof(Elements.Switch), typeof(Elements.Slider), typeof(TextField), typeof(ShaderEffect) };
+            { typeof(Group), typeof(Elements.Rectangle), typeof(Text), typeof(Image), typeof(Row), typeof(Column), typeof(Video), typeof(Button), typeof(SpinBox), typeof(CheckBox), typeof(Elements.Switch), typeof(Elements.Slider), typeof(TextField), typeof(ShaderEffect), typeof(Shape) };
 
         [TestCaseSource(nameof(AllTypes))]
         public void SealedAndInitOnly(Type t)
@@ -50,8 +50,50 @@ namespace VL.Qt.Tests
             Assert.That(new Image().Type, Is.EqualTo(ElementType.Image));
             Assert.That(new Row().Type, Is.EqualTo(ElementType.Row));
             Assert.That(new Column().Type, Is.EqualTo(ElementType.Column));
+            Assert.That(new Shape().Type, Is.EqualTo(ElementType.Shape));
+            Assert.That((ushort)ElementType.Shape, Is.EqualTo(26));
             Assert.That((ushort)ElementType.Rectangle, Is.EqualTo(Protocol.Type.Rectangle));
             Assert.That((ushort)ElementType.ShaderEffect, Is.EqualTo(Protocol.Type.ShaderEffect));
+        }
+
+        [Test]
+        public void ShapeDefaults()
+        {
+            var s = new Shape();
+            Assert.That(s.Points, Is.Empty);
+            Assert.That(s.Closed, Is.False);
+            Assert.That(s.Path, Is.Null);
+            Assert.That(s.Fill, Is.EqualTo(new Color4(0, 0, 0, 0)));
+            Assert.That(s.StrokeColor, Is.EqualTo(Color4.White));
+            Assert.That(s.StrokeWidth, Is.EqualTo(0f));
+            Assert.That(s.Cap, Is.EqualTo(ShapeCap.Flat));
+            Assert.That(s.Join, Is.EqualTo(ShapeJoin.Miter));
+            Assert.That(s.MiterLimit, Is.EqualTo(4f));
+            Assert.That(s.Dash, Is.Empty);
+            Assert.That(s.DashOffset, Is.EqualTo(0f));
+            Assert.That(s.TrimStart, Is.EqualTo(0f));
+            Assert.That(s.TrimEnd, Is.EqualTo(1f));
+            Assert.That(s.TrimOffset, Is.EqualTo(0f));
+            Assert.That(s.FillRule, Is.EqualTo(ShapeFillRule.NonZero));
+        }
+
+        [Test]
+        public void ShapeEnums_AreProtocolValues()
+        {
+            Assert.That((int)ShapeCap.Square, Is.EqualTo(1));
+            Assert.That((int)ShapeCap.Round, Is.EqualTo(2));
+            Assert.That((int)ShapeJoin.Bevel, Is.EqualTo(1));
+            Assert.That((int)ShapeJoin.Round, Is.EqualTo(2));
+            Assert.That((int)ShapeFillRule.EvenOdd, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ShapeExtent_IsMaxOfTheGeometryAndNotNegative()
+        {
+            Assert.That(Shape.ExtentOf(VL.Lib.Collections.Spread.Create(new Vector2(1, -2), new Vector2(-3, 4))), Is.EqualTo(new Vector2(1, 4)));
+            Assert.That(Shape.ExtentOf(VL.Lib.Collections.Spread<Vector2>.Empty), Is.EqualTo(Vector2.Zero));
+            Assert.That(Shape.ExtentOf(VL.Qt.Paths.QtPath.Empty), Is.EqualTo(Vector2.Zero));
+            Assert.That(Shape.ExtentOf(VL.Qt.Paths.QtPath.Empty.MoveTo(-1, 2).CubicTo(0, 0, 5, 1, 3, 6)), Is.EqualTo(new Vector2(5, 6)));
         }
 
         [Test]

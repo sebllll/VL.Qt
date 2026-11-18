@@ -42,6 +42,7 @@
     <Compile Include="..\VL.Qt\Elements\*.cs" Link="Elements\%(Filename)%(Extension)" />
     <Compile Include="..\VL.Qt\Reconciler\*.cs" Exclude="..\VL.Qt\Reconciler\ICommandSink.cs" Link="Reconciler\%(Filename)%(Extension)" />
     <Compile Include="..\VL.Qt\Styles\*.cs" Link="Styles\%(Filename)%(Extension)" />
+    <Compile Include="..\VL.Qt\Paths\*.cs" Link="Paths\%(Filename)%(Extension)" />
     <Compile Include="..\VL.Qt\QtApp.cs" Link="QtApp.cs" />
     <Compile Include="..\VL.Qt\QtLog.cs" Link="QtLog.cs" />
     <Compile Include="..\VL.Qt\NodeErrors.cs" Link="NodeErrors.cs" />

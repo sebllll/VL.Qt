@@ -328,6 +328,8 @@ static class Program
         if (Selected("perfoverlay")) PerfOverlayTest.Run(outDir, Check, Pump, Grab); // F5 pages, keys, spike in the timeline (#244).
         // Rectangle: color, radius, border; 1000-rect performance (05b).
         if (Selected("rectangle")) RectangleTest.Run(outDir, Check, Pump, Grab);
+        // Shape (#154): polyline, polygon, cubic path, trim, dash; invalid PATH / F32_ARRAY payloads rejected.
+        if (Selected("shapes")) ShapeTest.Run(outDir, Check, Pump, Grab);
         // Text: font, alignment, wrap, elide, lineHeight, letterSpacing, fontSizeMode (05c).
         if (Selected("text")) TextTest.Run(outDir, Check, Pump, Grab);
         // Image: image resource, fillMode, smooth, failed resource (05d, #361).

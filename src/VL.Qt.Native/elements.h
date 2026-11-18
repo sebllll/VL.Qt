@@ -1,9 +1,10 @@
 /* elements.h - element registry of QtNative (plan 05).
  *
- * Every element type is a table entry {type id, QML one-liner, property table}. Items are created from
- * QQmlComponents compiled once per type and engine (no private Qt headers, LGPL). QML properties are
- * written through QMetaProperty resolved once per type (indexOfProperty on the first instance), never by
- * name per frame. Grouped properties ("border.color") go through the group object; QFont fields through
+ * Every element type is a table entry {type id, QML one-liner or C++ factory, property table}. Items are created
+ * from QQmlComponents compiled once per type and engine, or in C++ (Image, ShaderEffect, QmlElement, Shape). Hot
+ * setters call the typed setters of Qt's private classes (QtQuick/private, QtQuickShapes/private; #560, #154):
+ * still LGPL, but private API, so check them on Qt updates. Other QML properties are written through QMetaProperty
+ * resolved once per type (indexOfProperty on the first instance), never by name per frame. Grouped properties ("border.color") go through the group object; QFont fields through
  * modifyFont (read-modify-write). New element properties are table entries only, no new exports. */
 #pragma once
 
@@ -61,6 +62,14 @@ struct Value {
     quint64 u = 0;             // u64 (resource id)
     QByteArray utf8;           // string (raw UTF-8, not copied: fromRawData)
     QObject* ref = nullptr;    // ref (resolved id; id 0 = nullptr, i.e. "no reference")
+    // f32 array and path: views into the command buffer, not copied. The floats are 4-byte aligned within the buffer,
+    // but the buffer itself has no guaranteed alignment: read them with std::memcpy, never through a float*.
+    const unsigned char* floats = nullptr; // f32 array: floatCount x f32
+    quint32 floatCount = 0;
+    const unsigned char* verbs = nullptr;  // path: verbCount x u8 (VLQT_VERB_*, checked; pointCount matches the verbs)
+    quint32 verbCount = 0;
+    const unsigned char* points = nullptr; // path: pointCount x (x, y) f32
+    quint32 pointCount = 0;
 };
 
 /* Geometry of an element (#469, "Geometry" in protocol.h): TRANSFORM as sent and ANCHOR, resolved against the item's

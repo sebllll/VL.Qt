@@ -43,6 +43,9 @@ Notes:                                                   (notes, size 9, bottom)
 
 - `HowTo Draw a Rectangle` — basic shapes, colors, radius
 - `HowTo Draw a Circle` — Circle element
+- `HowTo Draw a Line` — Line element, trim animated: the line draws itself
+- `HowTo Draw a Polyline` — open or closed point list, caps and joins
+- `HowTo Draw a Polygon` — filled point list, fill rule on a self-intersecting polygon
 - `HowTo Group Elements` — grouping, nesting, transforms
 - `HowTo Reuse an Element` — one element at several places of the tree, Interaction per place
 - `HowTo Choose a Space` — the `Space` pin: origin and unit of Normalized, DIP, DIPTopLeft and PixelTopLeft

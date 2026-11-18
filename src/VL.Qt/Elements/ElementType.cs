@@ -21,5 +21,6 @@
         TextField = Protocol.Type.TextField,
         ShaderEffect = Protocol.Type.ShaderEffect,
         Qml = Protocol.Type.Qml,
+        Shape = Protocol.Type.Shape,
     }
 }
