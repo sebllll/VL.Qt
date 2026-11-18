@@ -36,7 +36,6 @@ namespace VL.Qt.Tests
 
             var times = new double[Frames];
             int bytes = 0;
-            long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < Frames; i++)
             {
                 long t0 = Stopwatch.GetTimestamp();
@@ -47,7 +46,18 @@ namespace VL.Qt.Tests
                 if (writer.Count != expectedSets)
                     Assert.Fail($"frame {i}: {writer.Count} commands, expected {expectedSets}");
             }
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+            // Allocations are measured in a separate loop with the fewest of up to five attempts: a one-off of the runtime on
+            // this thread (tiered JIT, framework lazy init; seen on CI win-x64 as a few KB) must not fail the test, a real
+            // per-frame allocation shows in every attempt (see Allocations.Fewest).
+            int frame = 0;
+            Action step = () =>
+            {
+                writer.Reset();
+                rec.Update((frame++ & 1) == 0 ? b : a, Space.DIPTopLeft);
+                writer.EndFrame();
+            };
+            long allocated = Allocations.Fewest(step, Frames);
             Array.Sort(times);
             double mean = 0;
             foreach (var t in times) mean += t;
