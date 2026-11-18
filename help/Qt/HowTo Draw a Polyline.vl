@@ -1,0 +1,160 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="MiNmZtoAfH7WaDRyx8Syux" LanguageVersion="2026.8.0-0156-g7259116c8c" Version="0.128">
+  <NugetDependency Id="sjldSKniuldjf1xck8ZnmB" Location="VL.CoreLib" />
+  <DocumentDependency Id="44yn5CCytq7UTeL9t9G7Xg" Location="../../VL.Qt.vl" />
+  <Patch Id="8u18xxbw6VZDoNKjoVYUdy">
+    <Canvas Id="DRyU0uH3GKhKPybSU0EffL" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <Node Name="Application" Bounds="100,100" Id="4NJJbHfK5I1GejnpU3A7iN">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="I4xPzukpHdaDODweZU8p5S">
+        <Canvas Id="dLHHjINDl77WKonL0DmjHn" CanvasType="Group">
+          <Pad Id="H3zgbhX4WtaupLbvOYB1wp" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Draw a Polyline">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="K6J33nvWTeVSSfobtUwgHM" Bounds="85,85,520,97" ShowValueBox="true" isIOBox="true" Value="Polyline [Qt]&#xD;&#xA;- Points: a Spread of positions, drawn as one stroked chain&#xD;&#xA;- Closed: joins the last point to the first&#xD;&#xA;- Stroke Width, Cap (line ends) and Join (corners): Miter, Bevel or Round&#xD;&#xA;- Dash and Trim like Line, Position and rotation via Transform">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="100,517,125,19" Id="PiKZuABfVUEXVD5KKb8umg">
+            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Polyline" />
+            </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
+            <Pin Id="b8xSQ05IldtP1cFOhBMBj3" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="NkNskJqxSUzHO3HWiOdteY" Name="Points" Kind="InputPin" />
+            <Pin Id="mZBaeXjaRIz7VPeuSchIm3" Name="Closed" Kind="InputPin" />
+            <Pin Id="4sKswtDgpQzOI8snPiUwpU" Name="Transform" Kind="InputPin" />
+            <Pin Id="lOY9oeylhzE5OQMnS58Cox" Name="Stroke Color" Kind="InputPin" />
+            <Pin Id="18Y8AiiYHzW14eIKNgKj6C" Name="Stroke Width" Kind="InputPin" />
+            <Pin Id="p13R7RqqVzkKZHgohk9Izb" Name="Output" Kind="OutputPin" />
+            <Pin Id="UyUFW6p6ZSk4HhiCIvDkgg" Name="Cap" Kind="InputPin" />
+            <Pin Id="hEqn9zUsgyKyWf2WRCGQV8" Name="Join" Kind="InputPin" />
+            <Pin Id="alUwYsVRVHUKOMBCNwQebC" Name="Miter Limit" Kind="InputPin" IsHidden="true" />
+            <Pin Id="pfSEURGBinkvXcm8oxe1fu" Name="Dash" Kind="InputPin" IsHidden="true" />
+            <Pin Id="iVIPmS7ELolYShJaSEGP1s" Name="Dash Offset" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ByXSbHwnAKUzSSow21vhV1" Name="Trim Start" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KyyBWZrNgnv3PP8aU85Sey" Name="Trim End" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ZFR1TwHHWQUbysMcR96Ygb" Name="Trim Offset" Kind="InputPin" IsHidden="true" />
+            <Pin Id="dq5cs4mcmWfsG1bvJnB5jZ" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MEMbIoymXNrTEl0BlBtvQm" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GdcPd3l46FIefFTHNYuzha" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VpJFKCwwIzNcMBdjyQH0r4" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="6f2E5IpWostYqt47XBDyab" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="PQ6brAkip21SYUL5KTvwBb" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="y63q4SiohuN9nfKuRgwuHu" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="EoFCefFhxlSRSiuqEbV73e" Comment="Join" Bounds="222,487,62,15" ShowValueBox="true" isIOBox="true" Value="Round">
+            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+              <Choice Kind="TypeFlag" Name="ShapeJoin" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="uQzFFiCS2pCr5QxYuhLY5T" Comment="Cap" Bounds="202,457,62,15" ShowValueBox="true" isIOBox="true" Value="Round">
+            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+              <Choice Kind="TypeFlag" Name="ShapeCap" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="B8srSkhYepL1yArmaTC0aD" Comment="Stroke Width" Bounds="182,427,35,15" ShowValueBox="true" isIOBox="true" Value="0.3">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="uaIv1TLEHjndbEbtr79d7L" Comment="Closed" Bounds="122,377,35,35" ShowValueBox="true" isIOBox="true" Value="False">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="I78j6nYUFohz9qsMwdvMT4" Comment="Points" Bounds="102,262,92,100" ShowValueBox="true" isIOBox="true">
+            <p:TypeAnnotation LastCategoryFullName="Collections" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Spread" />
+              <p:TypeArguments>
+                <TypeReference LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
+                  <Choice Kind="TypeFlag" Name="Vector2" />
+                </TypeReference>
+              </p:TypeArguments>
+            </p:TypeAnnotation>
+            <p:Value>
+              <Item>1, 3</Item>
+              <Item>2.5, 1</Item>
+              <Item>4, 3</Item>
+              <Item>5.5, 1</Item>
+              <Item>7, 3</Item>
+              <Item>8.5, 1</Item>
+              <Item>10, 3</Item>
+            </p:Value>
+          </Pad>
+          <Node Bounds="100,596,85,19" Id="FlQixNNUTU2CphQca1WsCh">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="VcOA15INtObJCc2I0LhDcq" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="F1cFuALv8y3GdEhPOBr6jr" Name="Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="triF1V0fCSmnho3QXlr2aZ" Name="V Sync" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DHRgyrAfBWMnMC4nPHKneo" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="WpX826O40Oh0xou8ywqLo0" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="q4UQDYk8Bk6gJJg9BdyCFD" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="02GPSSDLDw8wKRbHSecQJ2" Name="Input" Kind="InputPin" />
+            <Pin Id="imsgHEFgG3BWw5v1XQJtsb" Name="Space" Kind="InputPin" />
+            <Pin Id="sUXXJN26Jjp2uAxk2SFSJA" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="am0hBtILPoe7nRkVuOi6vy" Name="Enabled" Kind="InputPin" />
+            <Pin Id="CBuht0blkW2D1SIIZOLpT4" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="kuQJo3gt1KoP7p9nXBSKCs" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="LnPS792VSkqqqNgneMuzF5" Name="Title" Kind="InputPin" />
+            <Pin Id="1fkOYGm3SFeR081nLD5xVI" Name="Error" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="kr1A4UmWWRujCtcJ751cyR" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="F0TABspIWieVK4t91tOKvg" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GdrdRwbMLhiDsWkdfBfU0B" Name="Debug" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="ZO5ZMsGsq8T9UVDVLaGvYx" Comment="Title" Bounds="182,562,190,19" ShowValueBox="true" isIOBox="true" Value="HowTo Draw a Polyline">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="d2k02BMV7nJZSg9OxipTJ1" Bounds="85,655,830,173" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Points are in units of the Renderer Space (1 unit = 100 DIP, origin top left), in the space of the parent. A Polyline needs a Stroke Width above 0 and at least two points.&#xD;&#xA;- Cap shapes the two ends of an open chain, so it has no effect while Closed is on. Join shapes the corners; Miter (default) turns into a Bevel at sharp angles, Miter Limit sets where.&#xD;&#xA;- Defaults follow Skia: Cap Flat, Join Miter.&#xD;&#xA;- A shape holds at most 8190 points; more are cut off and the node shows a warning. Points that change every frame cost real time: stay below about 4000 points, or move the shape with Transform and Trim instead.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+        </Canvas>
+        <Link Id="gW5HuC0PnJ12qXkeWCPACn" Ids="EoFCefFhxlSRSiuqEbV73e,hEqn9zUsgyKyWf2WRCGQV8" />
+        <Link Id="F1ecpMRI9ty39Gs1CILwuZ" Ids="uQzFFiCS2pCr5QxYuhLY5T,UyUFW6p6ZSk4HhiCIvDkgg" />
+        <Link Id="VSDHDITXFUXaRGCQ1rLoCt" Ids="B8srSkhYepL1yArmaTC0aD,18Y8AiiYHzW14eIKNgKj6C" />
+        <Link Id="YkmdRUaEthcRl89W3oWaf9" Ids="uaIv1TLEHjndbEbtr79d7L,mZBaeXjaRIz7VPeuSchIm3" />
+        <Link Id="HU43NHewQOZBa5VC1Ha3rR" Ids="I78j6nYUFohz9qsMwdvMT4,NkNskJqxSUzHO3HWiOdteY" />
+        <Link Id="qBm5ivu0zdg60nxH8rS3e0" Ids="ZO5ZMsGsq8T9UVDVLaGvYx,LnPS792VSkqqqNgneMuzF5" />
+        <Link Id="6taSCOrHuHwgEmFFzareed" Ids="p13R7RqqVzkKZHgohk9Izb,02GPSSDLDw8wKRbHSecQJ2" />
+        <Patch Id="Z0lGtSz4ilPXiFhS2phhgS" Name="Create" />
+        <Patch Id="cL1xYiUxNv9d5NSsc2dzQI" Name="Update" />
+        <ProcessDefinition Id="62QHL6GPYyYAQoRtxPeeaJ">
+          <Fragment Id="mCzHBrgsKoNC5gAr2ZKgmr" Patch="Z0lGtSz4ilPXiFhS2phhgS" Enabled="true" />
+          <Fragment Id="1CLP0ujXibS06HetJ4Hfzi" Patch="cL1xYiUxNv9d5NSsc2dzQI" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+</Document>
