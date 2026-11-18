@@ -16,7 +16,7 @@ flowchart LR
   S --> Q["QQuickShape (CurveRenderer)<br/>QQuickShapePath + VlPathElement (QQuickCurve)"]
 ```
 - One element type `SHAPE` for all four nodes. Geometry is either a point list (`Points` + `Closed`) or a path (`QtPath`).
-- Geometry reaches Qt through one custom path element `VlPathElement`, a subclass of the private `QQuickCurve` (like Qt's `PathPolyline`). It takes a point list or a verb/point array and builds the `QPainterPath` in `addToPath`. Points go through it too, so closed polygons get a real join at the closing point.
+- Geometry reaches Qt through one custom path element `VlPathElement`, a subclass of the private `QQuickCurve` (like Qt's `PathPolyline`). It takes a point list or a verb/point array and builds the `QPainterPath` in `addToPath`. Points go through it too: the element is needed for curves anyway, so there is one route for points and paths and one place that knows `Close` (spike: `PathPolyline` with a repeated point joins as well, so this is not a seam fix).
 - Path values are plain immutable C# data; nothing native lives in an element (one route: reconciler → command writer → protocol).
 
 ## Packages and order
@@ -38,8 +38,8 @@ flowchart LR
 
 ## Fixed in the plan (from the decisions, made concrete here)
 - Protocol: `VLQT_TYPE_SHAPE = 26`, value types `VLQT_VT_F32_ARRAY = 10` (u32 count + count × f32) and `VLQT_VT_PATH = 11` (u32 verbCount, u32 pointCount, verbCount × u8 padded to 4 bytes, pointCount × 2 × f32), property block 960+, `VLQT_PROTOCOL_VERSION` 13 → 14.
-- Limits from the u16 `payloadLen` of SET (65535 − 8 bytes SET fields): at most **8190 points** per point list; a path at most as many verbs and points as fit (`4 + 4 + pad4(verbs) + 8 × points ≤ 65527`). C# checks before writing; the node draws the first part and shows a warning.
-- Defaults follow Skia: cap `Flat` (Skia Butt), join `Miter`, miter limit 4, fill rule `NonZero` (Skia Winding). Stroke width 0 = no stroke (as `Rectangle`); QtNative gets −1 then.
+- Limits from the u16 `payloadLen` of SET (65535 − 8 bytes SET fields): at most **8190 points** per point list; a path at most as many verbs and points as fit (`4 + 4 + pad4(verbs) + 8 × points ≤ 65527`). C# checks before writing; the node draws the first part and shows a warning. Tooltip hint for polylines changing every frame: about 4000 points (spike [research/02_shapes-spike.md](../../research/02_shapes-spike.md)).
+- Defaults follow Skia: cap `Flat` (Skia Butt), join `Miter`, miter limit 4 (pin `float`, QtNative rounds to int: `QQuickShapePath::miterLimit` is an `int`), fill rule `NonZero` (Skia Winding). Stroke width 0 = no stroke (as `Rectangle`); QtNative gets −1 then.
 - Dash lengths are absolute lengths in units (as Skia); the reconciler divides by the stroke width, because Qt's `dashPattern` and `dashOffset` are in stroke-width units.
 - Trim: `Trim Start` 0, `Trim End` 1, `Trim Offset` 0, fractions of the path length (Qt `ShapePath.trim`, Qt 6.10+).
 - Geometry space: points are in the parent space (like Skia's path layers); `Transform` applies around the origin. The shape nodes have no `Anchor` and no `Size` pin; the element's size is the extent of the geometry (`max(0, maxX)`, `max(0, maxY)`), for Row/Column and the tooltip preview.
