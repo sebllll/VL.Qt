@@ -27,6 +27,7 @@ Status: planned, see [plans/paths/00_overview.md](../plans/paths/00_overview.md)
   | `Qt.Paths` | `Bezier (Handles)`, `Spline (CatmullRom)`, `Spline (BSpline)` | normal; handle mode per anchor as an Advanced pin |
 
   Element pins: normal `Points` or `Path`, `Stroke Color`, `Stroke Width`, `Fill` (Polygon, Path), plus `Transform`, `Anchor`, `Opacity` as on all elements; optional `Cap`, `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Trim Start`/`End`/`Offset`, `Fill Rule` (Path).
+- **Generators: end tangents of `Spline (CatmullRom)` and handle modes of `Bezier (Handles)`** (2026-11-18): an open Catmull-Rom curve has tangent 0 at its end points for every `Alpha`, as `curveCatmullRom` in d3. At `Alpha` 0 this differs from the classic end tangent (P2 − P1) / 2; with it, the end of the curve would jump between `Alpha` 0 and a value just above it. `Handle Modes` apply cyclically like any spread (anchor *i* uses entry *i* mod count, empty = `Free`); `Mirrored` ignores the given in handle.
 - **Later (2.0):** `FromSVGPathData` (through the adapter or a parser of its own), `AddStar`, `AddSpiral`, `AddArrow`, `AddGrid`, the `GeometryRenderer`, the Skia adapter.
 
 ## Open

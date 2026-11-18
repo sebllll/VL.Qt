@@ -1,6 +1,6 @@
 # Shapes
 
-`Line`, `Polyline` and `Polygon` (category `Qt.Elements`) draw strokes and filled outlines as vector shapes on Qt Quick Shapes. Edges are anti-aliased without MSAA, curves are exact, and moving, rotating or scaling a shape through `Transform` costs almost nothing, because the path stays untouched. `Path` draws curves built with the nodes of `Qt.Paths` (see [Paths](#paths)) and uses the same pins and rules.
+`Line`, `Polyline` and `Polygon` (category `Qt.Elements`) draw strokes and filled outlines as vector shapes on Qt Quick Shapes. Edges are anti-aliased without MSAA, curves are exact, and moving, rotating or scaling a shape through `Transform` costs almost nothing, because the path stays untouched. `Path` draws curves built with the nodes of `Qt.Paths` (see [Paths](#paths) and [Generators](#generators)) and uses the same pins and rules.
 
 ## Elements
 
@@ -76,6 +76,41 @@ The optional pins (`Cap`, `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Trim St
 
 Help patches: `HowTo Build a Path` (the builder nodes), `HowTo Draw a Path` (the element).
 
+## Generators
+
+Three nodes in `Qt.Paths` create curves from spreads of points. Like the builder nodes they take a path (`Input`, default empty) and return the extended path (`Output`) with a new contour; `Path` draws it. All three produce exact cubics, so the `CurveRenderer` draws them without flattening.
+
+| Node | Pins besides `Input` | Curve |
+|---|---|---|
+| `Bezier (Handles)` | `Anchors`, `In Handles`, `Out Handles`, `Closed`; optional `Handle Modes` | through every anchor, shaped by handles |
+| `Spline (CatmullRom)` | `Points`, `Closed`, `Alpha`, `Tension` | through every point |
+| `Spline (BSpline)` | `Points`, `Closed` | along the control polygon, not through the inner points |
+
+**`Bezier (Handles)`.** Handles are relative to their anchor. The segment from anchor *i* to anchor *i+1* is a cubic with the controls *anchor i + out i* and *anchor i+1 + in i+1*; `Closed` adds the segment back to anchor 0 and a `Close`. A missing handle (a spread shorter than `Anchors`) counts as zero, so the anchor is a corner.
+
+`Handle Modes` (`Spread<HandleMode>`) sets how the in handle of each anchor follows its out handle. The out handle always leads. The modes apply cyclically like any spread; an empty spread means `Free` for all.
+
+| `HandleMode` | In handle |
+|---|---|
+| `Free` | as given |
+| `Mirrored` | the out handle reversed; `In Handles` is ignored |
+| `Aligned` | points opposite to the out handle and keeps the length of the given in handle (as given when the out handle is zero) |
+
+**`Spline (CatmullRom)`.** Passes through every point, one cubic per span.
+
+- `Alpha` sets the spacing of the knots: 0.5 (default) is centripetal and draws no loops or cusps; 0 is uniform, 1 chordal. Values outside 0 to 1 are clamped.
+- `Tension` scales the tangents: 0 (default) is the plain spline, 1 gives straight lines.
+- An open curve has tangent 0 at its end points, for every `Alpha` (as `curveCatmullRom` in d3). This differs from the classic (P2 − P1) / 2 at `Alpha` 0 on purpose: the end of the curve then does not jump between `Alpha` 0 and a value just above it.
+- Coincident points do not break the curve: spans of length zero are skipped. Points that all coincide leave `Input` unchanged.
+
+**`Spline (BSpline)`.** `Points` is the control polygon; the uniform cubic B-spline follows it and stays inside its convex hull, smoother than Catmull-Rom but not through the inner points. Open, the curve is clamped: it starts at the first and ends at the last point, tangent to the first and last edge of the polygon. Closed, it is periodic, with one cubic per point.
+
+**Few points.** With fewer than two points (anchors) all three return `Input` unchanged. An open spline with two points is a straight line.
+
+**Limits.** The limit of the `Path` element (about 7270 line segments) applies to the result: every span is one cubic, and a closed curve counts its closing segment.
+
+Help patches: `HowTo Draw a Bezier Curve with Handles` (handles and modes), `HowTo Draw Splines` (Catmull-Rom with `Alpha` 0, 0.5 and 1, and B-spline, with the control polygon).
+
 ## Limits
 
 - **At most 8190 points per element.** More points are cut off at the 8190th, and the node shows a warning. The limit comes from the size of one command to QtNative.
@@ -87,4 +122,4 @@ Numbers and method: [research/02_shapes-spike.md](research/02_shapes-spike.md). 
 
 ## Help patches
 
-`HowTo Draw a Line`, `HowTo Draw a Polyline`, `HowTo Draw a Polygon`, `HowTo Draw a Path`, `HowTo Build a Path`. See [Help patches](help-patches.md).
+`HowTo Draw a Line`, `HowTo Draw a Polyline`, `HowTo Draw a Polygon`, `HowTo Draw a Path`, `HowTo Build a Path`, `HowTo Draw a Bezier Curve with Handles`, `HowTo Draw Splines`. See [Help patches](help-patches.md).
