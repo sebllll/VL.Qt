@@ -14,17 +14,26 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "FileWriter", Category = Categories.Qt)]
     public sealed class FileWriterNode : IDisposable
     {
+        /// <summary>Error at the node when Write is hit without a File Path.</summary>
+        internal const string NoPathError = "File Path is empty";
+        /// <summary>Error at the node when Write is hit without an Image.</summary>
+        internal const string NoImageError = "Image is empty";
+
         readonly ImageFileWriter _writer;
+        readonly ImageNodeReport _report;
+        string _error = string.Empty;
 
         public FileWriterNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext)
         {
             _writer = ImageFileWriter.CreateNative();
+            _report = new ImageNodeReport(new NodeErrors(nodeContext));
         }
 
         /// <summary>For tests: a writer on a fake write function.</summary>
         internal FileWriterNode(ImageFileWriter writer)
         {
             _writer = writer;
+            _report = new ImageNodeReport(null);
         }
 
         /// <summary>Writes Image to File Path on Write.</summary>
@@ -42,11 +51,36 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] int quality = 90,
             bool write = false)
         {
-            // TODO: Implement (#157).
             isDone = false;
-            error = string.Empty;
+            // Polled before Write is handled: a write never reports in the frame it was started.
+            if (_writer.Poll(out var writeError))
+            {
+                isDone = true;
+                _error = writeError;
+            }
+            if (write)
+            {
+                // Every write starts clean: the error of the last one does not stay.
+                _error = string.Empty;
+                var path = filePath?.Value ?? string.Empty;
+                if (path.Length == 0)
+                    _error = NoPathError;
+                else if (image is null)
+                    _error = NoImageError;
+                if (_error.Length > 0)
+                    // Nothing is written: Done and Error in the same frame, so a patch waiting for Is Done does not hang.
+                    isDone = true;
+                else
+                    _writer.Start(image!, path, quality);
+            }
+            error = _error;
+            _report.Update(null, error);
         }
 
-        public void Dispose() => _writer.Dispose();
+        public void Dispose()
+        {
+            _writer.Dispose();
+            _report.Dispose();
+        }
     }
 }
