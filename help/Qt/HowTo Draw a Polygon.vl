@@ -512,7 +512,7 @@
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="WGEFPJYwrECQUiQCqD36qk" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="dSHVISfqPgNp5d7m45NRIE" Name="Bounds" Kind="InputPin" DefaultValue="715, 45, 733, 573" IsHidden="true" />
+            <Pin Id="dSHVISfqPgNp5d7m45NRIE" Name="Bounds" Kind="InputPin" DefaultValue="126, 103, 1265, 573" IsHidden="true" />
             <Pin Id="Y3rq3587qBISQA61REFi5b" Name="V Sync" Kind="InputPin" IsHidden="true" />
             <Pin Id="3mWnj8O9TjUidVVyjCAN56" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="0ydmANZEn3gcqnFrKw8Ijj" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
