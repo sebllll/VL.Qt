@@ -13,18 +13,20 @@ Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-progra
 > **Early release (`0.x`).** The API may still change. Requires **vvvv gamma 8.x (preview)** on .NET 10; vvvv 7.x (.NET 8) is not supported.
 > The output is a Qt window, or, with the companion package `VL.Qt.Stride` (Windows only, experimental), a Stride texture (`QtTexture`) or a Stride layer (`QtRenderer`); there is no Skia layer. Linux (x64 and ARM64) works as a console export with its own Qt window, tested under WSL2/WSLg so far (see [Platforms](#platforms)).
 
-**Contents:** [Features](#features) · [Getting Started](#getting-started) · [Linux via WSL](#try-it-on-linux-through-wsl) · [Platforms](#platforms) · [Styles](#styles) · [Images](#images) · [Effects](#effects) · [Shaders](#shaders) · [Stride texture](#stride-texture) · [QML](#qml) · [Tooltips](#tooltips-in-the-vvvv-editor) · [Diagnostics](#diagnostics) · [How It Works](#how-it-works) · [Compared to Qt Bridge](#compared-to-qt-bridge-for-c) · [Development](#development) · [Documentation](#documentation) · [Contributing](#contributing) · [License](#license)
+**Contents:** [Features](#features) · [Getting Started](#getting-started) · [Linux via WSL](#try-it-on-linux-through-wsl) · [Platforms](#platforms) · [Styles](#styles) · [Paths](#lines-shapes-and-paths) · [Images](#images) · [Write to file](#write-to-a-file) · [Effects](#effects) · [Shaders](#shaders) · [Stride texture](#stride-texture) · [QML](#qml) · [Tooltips](#tooltips-in-the-vvvv-editor) · [Diagnostics](#diagnostics) · [How It Works](#how-it-works) · [Compared to Qt Bridge](#compared-to-qt-bridge-for-c) · [Development](#development) · [Documentation](#documentation) · [Contributing](#contributing) · [License](#license)
 
 ## Features
 
 | | |
 |---|---|
 | [**Elements**](docs/help-patches.md#drawing) | Rectangle, Circle, Text, Image, Video, Group, Row, Column, ShaderEffect, QmlElement, Labeled; the same element can be placed several times in the tree |
+| [**Paths**](#lines-shapes-and-paths) | Line, Polyline, Polygon and Path elements with fill and stroke, Bezier and spline generators, a `Qt.Paths` builder chain; draggable points in the help patches |
 | [**Layout**](docs/help-patches.md#structure-and-layout) | automatic sizing and spacing with Row/Column, also fed with a spread of elements (Spectral) |
 | [**Widgets**](docs/help-patches.md#widgets-and-styles) | Button, Toggle, Slider, TextInput, Input (Int), with value channels |
 | [**Styles**](docs/styles.md) | own base style VLQt, Style pin on widgets and Group (inherited down the tree), style nodes per part and state, Dark/Light presets, `IStylable` for self-patched widgets |
 | [**Interaction**](docs/help-patches.md#interaction) | hover, press, click and pointer position as channels on every element; drag, mouse wheel, multitouch (pinch, rotate, touch points) |
 | [**Images**](docs/images.md) | LoadImage (Async) in the background, ToQtImage from other libraries, VideoSourceToQtImage for VL.Video sources, Snapshot of any element as `IImage` |
+| [**Write to file**](#write-to-a-file) | `FileWriter (Element)` saves any element as PNG/JPG, `FileWriter` writes an `IImage`; asynchronous, with `Scale` for pixels per DIP |
 | [**Video**](docs/help-patches.md#drawing) | play/pause, loop, rate, volume |
 | [**Effects**](docs/effects-and-shaders.md#effects) | Effect pin on every element: Blur, DropShadow, ColorAdjust, Colorize and Mask (neighbours merged into one offscreen layer), plus your own filter shaders as chain nodes |
 | [**Shaders**](docs/effects-and-shaders.md#shaders) | ShaderEffect with GLSL in a string pin, baked at runtime; every `.frag` file in a `qtshaders/` folder becomes a node with one pin per uniform |
@@ -126,6 +128,26 @@ Help patches: `HowTo Style a Widget`, `HowTo Style Control Parts`, `HowTo Style 
 
 More: [Styles](docs/styles.md) (all style nodes and fields, self-made widgets).
 
+## Lines, shapes and paths
+
+`Line`, `Polyline` and `Polygon` draw point lists; `Path` draws anything you build with the `Qt.Paths` chain (`MoveTo`, `LineTo`, `CubicTo`, `ArcTo`, `Close`, …) with fill, stroke, `Trim Start`/`Trim End` and a fill rule. `Bezier (Handles)`, `Spline (CatmullRom)` and `Spline (BSpline)` turn a few points into a smooth curve you can feed to `Path`.
+
+<img src="docs/images/paths-path.png" width="820" alt="Path elements: a filled and stroked triangle, an open curve, and two rounded squares with a circular hole, one filled with the even-odd rule">
+
+*`HowTo Draw a Path`: fill and stroke, and a fill rule for a path with a hole.*
+
+<img src="docs/images/paths-splines.png" width="820" alt="Spline (CatmullRom) with Alpha 0, 0.5 and 1 and Spline (BSpline) through the same five points">
+
+*`HowTo Draw Splines`: the same five points as `Spline (CatmullRom)` with three Alpha values and as `Spline (BSpline)`.*
+
+<img src="docs/images/paths-polygon.png" width="820" alt="A star as Polygon with draggable corners, and the same star filled with the NonZero fill rule">
+
+*`HowTo Draw a Polygon`: draggable corners; the fill rule decides what is inside of a self-intersecting polygon.*
+
+Help patches: `HowTo Draw a Line`, `HowTo Draw a Polyline`, `HowTo Draw a Polygon`, `HowTo Build a Path`, `HowTo Draw a Path`, `HowTo Draw a Bezier Curve with Handles`, `HowTo Draw Splines`.
+
+More: [Help patches](docs/help-patches.md).
+
 ## Images
 
 Images are GPU resources (`QtImage`), separate from the `Image [Qt]` element that draws them. A loaded image is uploaded once and can be shown by any number of Image elements in any window; switching between loaded images costs nothing.
@@ -139,6 +161,14 @@ Images are GPU resources (`QtImage`), separate from the `Image [Qt]` element tha
 Help patches: `HowTo Draw an Image`, `HowTo Preload Images`, `HowTo Use an IImage`, `HowTo Take a Snapshot`, `HowTo Show a VL.Video player in Qt`.
 
 More: [Images](docs/images.md) (all nodes, mipmaps, frame budget, errors, device loss).
+
+## Write to a file
+
+`FileWriter (Element)` grabs an element (or a Group with its children) on `Write` and saves it; the extension of `File Path` picks the format (PNG, JPG, BMP, WebP). `Scale` sets the pixels per DIP, so `Scale` 2 doubles the resolution regardless of the screen. Writing is asynchronous: `Is Done` comes in a later frame, `Error` says why a write failed. To save an `IImage` you already have (for example from `Snapshot`), use `FileWriter`.
+
+The pictures of the help patches in this README were made with it: the element that goes into the `Renderer` also goes into a `FileWriter (Element)`, and the patch writes its own picture.
+
+Help patch: `HowTo Write an Element to a File`.
 
 ## Effects
 
