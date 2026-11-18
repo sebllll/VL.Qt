@@ -62,10 +62,12 @@ const char* opName(quint16 op)
     }
 }
 
-/* Payload size of a SET value, -1 = unknown value type. Strings: fixed part only. */
+/* Payload size of a SET value, -1 = unknown value type. Variable length (string, f32 array, path): fixed part only. */
 int valueSize(quint16 vt)
 {
     switch (vt) {
+    case VLQT_VT_F32_ARRAY: return 4;
+    case VLQT_VT_PATH: return 8;
     case VLQT_VT_F32: return 4;
     case VLQT_VT_I32: return 4;
     case VLQT_VT_BOOL: return 1;
@@ -80,6 +82,32 @@ int valueSize(quint16 vt)
     case VLQT_VT_VEC3: return 12;
     case VLQT_VT_VEC4: return 16;
     case VLQT_VT_IVEC2: return 8;
+    default: return -1;
+    }
+}
+
+/* Payload size of a fixed-size value, -1 = unknown or variable length (string, f32 array, path). The commands with
+ * entries of their own (uniforms, effect chain) take only these. */
+int fixedValueSize(quint16 vt)
+{
+    switch (vt) {
+    case VLQT_VT_STRING:
+    case VLQT_VT_F32_ARRAY:
+    case VLQT_VT_PATH:
+        return -1;
+    default: return valueSize(vt);
+    }
+}
+
+/* Points a path verb takes, -1 = unknown verb (protocol.h "Values"). */
+int verbPoints(unsigned char verb)
+{
+    switch (verb) {
+    case VLQT_VERB_MOVE:
+    case VLQT_VERB_LINE: return 1;
+    case VLQT_VERB_QUAD: return 2;
+    case VLQT_VERB_CUBIC: return 3;
+    case VLQT_VERB_CLOSE: return 0;
     default: return -1;
     }
 }
@@ -112,7 +140,7 @@ bool samplerValueOk(const unsigned char* v)
     return v[0] <= 1 && v[1] <= 2 && v[2] <= 2 && v[3] <= 2 && v[4] == 0 && v[5] == 0 && v[6] == 0 && v[7] == 0;
 }
 
-/* Copies a value (type already checked, size = valueSize) from the wire; refs stay ids. */
+/* Copies a value (type already checked, size = fixedValueSize >= 0) from the wire; refs stay ids. */
 EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
 {
     EffectValue v;
@@ -127,7 +155,13 @@ EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
     case VLQT_VT_U64: v.u = rd<quint64>(vp); break;
     case VLQT_VT_SAMPLER: v.u = rd<quint64>(vp); break;
     case VLQT_VT_REF: v.ref = rd<quint32>(vp); break;
-    default: std::memcpy(v.f, vp, size_t(valueSize(vt))); break; // f32, color, rectf, mat4, vec2/3/4
+    default: {
+        // f32, color, rectf, mat4, vec2/3/4; variable-length types never get here (fixedValueSize < 0 is rejected)
+        const int size = fixedValueSize(vt);
+        if (size > 0)
+            std::memcpy(v.f, vp, size_t(size));
+        break;
+    }
     }
     return v;
 }
@@ -658,9 +692,15 @@ int Scene::set(const unsigned char* p, int plen, std::string& err)
         err = "unknown value type " + std::to_string(v.type);
         return ApplyBadValue;
     }
-    int expected = fixed;
+    // Variable length: the fixed part holds the counts (64 bit, a u32 count must not overflow the comparison).
+    qint64 expected = fixed;
     if (v.type == VLQT_VT_STRING && vlen >= 4)
-        expected = 4 + int(rd<quint32>(vp));
+        expected = 4 + qint64(rd<quint32>(vp));
+    else if (v.type == VLQT_VT_F32_ARRAY && vlen >= 4)
+        expected = 4 + 4 * qint64(rd<quint32>(vp));
+    else if (v.type == VLQT_VT_PATH && vlen >= 8)
+        expected = 8 + ((qint64(rd<quint32>(vp)) + (VLQT_COMMAND_ALIGN - 1)) & ~qint64(VLQT_COMMAND_ALIGN - 1))
+            + 8 * qint64(rd<quint32>(vp + 4));
     if (vlen != expected) {
         err = "value length " + std::to_string(vlen) + ", expected " + std::to_string(expected)
             + " for value type " + std::to_string(v.type);
@@ -694,6 +734,30 @@ int Scene::set(const unsigned char* p, int plen, std::string& err)
     case VLQT_VT_STRING:
         v.utf8 = QByteArray::fromRawData(reinterpret_cast<const char*>(vp + 4), vlen - 4);
         break;
+    case VLQT_VT_F32_ARRAY:
+        v.floatCount = rd<quint32>(vp);
+        v.floats = vp + 4;
+        break;
+    case VLQT_VT_PATH: {
+        v.verbCount = rd<quint32>(vp);
+        v.pointCount = rd<quint32>(vp + 4);
+        v.verbs = vp + 8;
+        v.points = vp + 8 + align4(int(v.verbCount));
+        quint32 points = 0;
+        for (quint32 i = 0; i < v.verbCount; ++i) {
+            const int n = verbPoints(v.verbs[i]);
+            if (n < 0) {
+                err = "path verb #" + std::to_string(i) + ": unknown verb " + std::to_string(v.verbs[i]);
+                return ApplyBadValue;
+            }
+            points += quint32(n);
+        }
+        if (points != v.pointCount) {
+            err = "path: " + std::to_string(v.pointCount) + " points, the verbs take " + std::to_string(points);
+            return ApplyBadValue;
+        }
+        break;
+    }
     case VLQT_VT_REF: {
         const quint32 ref = rd<quint32>(vp);
         if (ref != VLQT_ROOT_ID) {
@@ -770,7 +834,7 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
         }
         const quint16 vt = rd<quint16>(p + off);
         const int nameLen = rd<quint16>(p + off + 2);
-        const int size = vt == VLQT_VT_STRING ? -1 : valueSize(vt);
+        const int size = fixedValueSize(vt);
         if (size < 0) {
             err = "uniform #" + std::to_string(i) + ": value type " + std::to_string(vt) + " not allowed";
             return ApplyBadValue;
@@ -817,7 +881,7 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
             ref = r != nodes.end() ? r->second.item : nullptr; // 0 (root) = no texture
         }
         item->setUniform(reinterpret_cast<const char*>(p + off + 4), nameLen, vt, p + valueOff, ref);
-        off = valueOff + align4(valueSize(vt));
+        off = valueOff + align4(fixedValueSize(vt));
     }
     item->endUniforms();
     elements.syncTextureGroups(it->second); // Groups as textures go through their frame proxy (#486)
@@ -861,6 +925,10 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
         const int size = valueSize(vt);
         if (size < 0) {
             err = "QML property #" + std::to_string(i) + ": unknown value type " + std::to_string(vt);
+            return ApplyBadValue;
+        }
+        if (vt == VLQT_VT_F32_ARRAY || vt == VLQT_VT_PATH) {
+            err = "QML property #" + std::to_string(i) + ": value type " + std::to_string(vt) + " not allowed";
             return ApplyBadValue;
         }
         if (nameLen < 1 || nameLen > VLQT_UNIFORM_NAME_MAX) {
@@ -994,7 +1062,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
                         + ", property " + std::to_string(prop) + " takes " + std::to_string(expected);
                     return ApplyBadValue;
                 }
-                const int next = e + 4 + align4(valueSize(vt));
+                const int next = e + 4 + align4(fixedValueSize(vt));
                 if (next > end) {
                     err = at + " entry #" + std::to_string(i) + ": entry exceeds the body";
                     return ApplyBadLength;
@@ -1052,7 +1120,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
                 }
                 const quint16 vt = rd<quint16>(p + e);
                 const int uNameLen = rd<quint16>(p + e + 2);
-                const int size = vt == VLQT_VT_STRING ? -1 : valueSize(vt);
+                const int size = fixedValueSize(vt);
                 if (size < 0) {
                     err = ue + ": value type " + std::to_string(vt) + " not allowed";
                     return ApplyBadValue;

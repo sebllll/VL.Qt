@@ -263,6 +263,8 @@ namespace VL.Qt.Tests
             public void SetRect(uint id, ushort prop, float x, float y, float width, float height) => Count++;
             public void SetMat4(uint id, ushort prop, in Matrix m) => Count++;
             public void SetString(uint id, ushort prop, ReadOnlySpan<char> value) => Count++;
+            public void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values) => Count++;
+            public void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points) => Count++;
             public void SetRef(uint id, ushort prop, uint refId) => Count++;
             public void SetU64(uint id, ushort prop, ulong value) => Count++;
             public void BeginStyle(uint id, ushort flags) { }

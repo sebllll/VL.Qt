@@ -53,6 +53,9 @@ namespace VL.Qt.Tests
         }
 
         public void SetString(uint id, ushort prop, ReadOnlySpan<char> value) => AddSet(id, prop, $"string({value.ToString()})");
+        public void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values) => AddSet(id, prop, "f32array(" + string.Join(",", Array.ConvertAll(values.ToArray(), F)) + ")");
+        public void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points) =>
+            AddSet(id, prop, "path(" + string.Join(",", verbs.ToArray()) + ";" + string.Join(",", Array.ConvertAll(points.ToArray(), F)) + ")");
         public void SetRef(uint id, ushort prop, uint refId) => AddSet(id, prop, $"ref({refId})");
         public void SetU64(uint id, ushort prop, ulong value) => AddSet(id, prop, $"u64({value})");
 

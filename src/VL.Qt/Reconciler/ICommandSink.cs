@@ -31,6 +31,12 @@ namespace VL.Qt
 
         void SetString(uint id, ushort prop, ReadOnlySpan<char> value);
 
+        /// <summary>f32 array (<see cref="Protocol.Vt.F32Array"/>, #154): at most <see cref="Protocol.MaxF32ArrayCount"/> floats.</summary>
+        void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values);
+
+        /// <summary>path (<see cref="Protocol.Vt.Path"/>, #154): verbs (<see cref="Protocol.Verb"/>) and points as x,y pairs (2 floats per point).</summary>
+        void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points);
+
         /// <summary>ref: id of another element (e.g. ShaderEffect source), 0 = none/root.</summary>
         void SetRef(uint id, ushort prop, uint refId);
 
