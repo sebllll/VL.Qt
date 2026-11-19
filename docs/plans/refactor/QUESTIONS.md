@@ -178,7 +178,7 @@ Renderer has `Title`, `Borderless`, `Fullscreen` and a `Window: WindowSettings` 
 - (c) Everything through WindowSettings.
 - Recommended: (b).
 - Source: API Q1
-- Decision:
+- Decision: (b) (Sebastian, 2026-11-19).
 
 ### C2 An `Enabled` pin on elements?
 Every Skia layer has `Enabled`; VL.Qt elements have none (Opacity 0 still hit-tests and costs).
@@ -186,7 +186,7 @@ Every Skia layer has `Enabled`; VL.Qt elements have none (Opacity 0 still hit-te
 - (b) Optional `Enabled`, default true, before `Opacity`; it removes the element from the scene (Qt: the item's `visible` property, which also stops input).
 - Recommended: (b).
 - Source: API Q2
-- Decision:
+- Decision: (b), optional `Enabled`, default true, as the very last input pin so that it sits on the far right (as in VL.Skia), not before `Opacity` (Sebastian, 2026-11-19).
 
 ### C3 `IElement` or `Element` on element inputs?
 Containers take `Spread<IElement?>` (so a self-made stylable widget fits), other inputs (Renderer, Labeled, Snapshot, Blend, Mask, Displace) take `Element`. Skia uses `ILayer` on both ends.
@@ -194,14 +194,14 @@ Containers take `Spread<IElement?>` (so a self-made stylable widget fits), other
 - (b) `IElement` on every element input; the reconciler applies the base style there (a reconciler change).
 - Recommended: (a) for 0.10.0.
 - Source: API Q3
-- Decision:
+- Decision: (b), one type on every element input (Sebastian, 2026-11-19); a reconciler issue applies the base style there. Follow-up: outputs also show `IElement`; `Element` stays the internal base class. The name `IElement` is reviewed with the catalog.
 
 ### C4 Fill colour pin: `Fill Color` or `Color`?
 - (a) `Fill Color`, pairs with `Stroke Color`.
 - (b) `Color`, as on Text and Skia's `Fill`.
 - Recommended: (a).
 - Source: API Q4 (API-05)
-- Decision:
+- Decision: (a), `Fill Color` and `Stroke Color` on shapes; a node with one colour (Text) keeps `Color` (Sebastian, 2026-11-19).
 
 ### C5 Style setter and getter names
 Today a setter is named by its field (`Radius`, `Color`), a getter `GetRadius`; bundles `Frame` / `GetFrame`. vvvv imports a record property the other way round (`Radius` reads, `SetRadius` writes). There are also 40 Advanced single setters and getters.
@@ -210,41 +210,41 @@ Today a setter is named by its field (`Radius`, `Color`), a getter `GetRadius`; 
 - (c) Like (b) and drop the single setters; the bundles with Optional pins set one field too.
 - Recommended: (b); with C6 only six process nodes remain if (c).
 - Source: SIP Q1
-- Decision:
+- Decision: (b), vvvv convention, the single setters and getters stay (Sebastian, 2026-11-19).
 
 ### C6 Style setters as process nodes?
 - (a) Process nodes with a cached output for `Colors`, `Frame`, `Text`, `Indicator`, `Track`, `Merge`: no allocation per frame, the reconciler skips unchanged widgets.
 - (b) Keep static nodes, compare by value in the reconciler, accept per-frame garbage.
 - Recommended: (a).
 - Source: SIP Q2 (SIP-01)
-- Decision:
+- Decision: (a) for the six bundles; the single setters and getters stay static (Sebastian, 2026-11-19).
 
 ### C7 `AddRoundRect` with too large radii: follow Skia?
 - (a) Scale the radii together as Skia does: a pill gets semicircular ends. Changes how existing patches draw.
 - (b) Keep the per-axis limit, list it under "Differences" in `shapes.md`.
 - Recommended: (a).
 - Source: SIP Q3 (SIP-02)
-- Decision:
+- Decision: (a), follow Skia (Sebastian, 2026-11-19).
 
 ### C8 Rename `TextInput` to `Input (String)`?
 Pairs with `Input (Int)` and VL.ImGui; tags keep "text, textfield" findable.
 - Recommended: rename.
 - Source: NODW Q3 (NODW-08)
-- Decision:
+- Decision: rename to `Input (String)`, tags `text, textfield` (Sebastian, 2026-11-19).
 
 ### C9 Slider and Input (Int) outside Min/Max: is the channel or the widget the truth?
 - (a) Channel: the widget reads the channel every frame like VL.ImGui and clamps only what it shows; all widgets on one channel agree.
 - (b) Widget (today), like a Qt control: widget and channel can disagree; the pin doc has to say so.
 - Recommended: (a).
 - Source: NODW Q1 (NODW-01)
-- Decision:
+- Decision: (a), the channel is the truth (Sebastian, 2026-11-19).
 
 ### C10 Angle unit of DirectionalBlur and RadialBlur
 - (a) Cycles, as everywhere in vvvv, Pinch and the path nodes.
 - (b) Degrees, as CSS and Qt; two units in one library.
 - Recommended: (a).
 - Source: NODX Q1 (NODX-01)
-- Decision:
+- Decision: (a), cycles (Sebastian, 2026-11-19).
 
 ### C11 One category for all effects?
 Blur, DropShadow, ColorAdjust, Colorize and Mask sit in `Qt.Effects.MultiEffect` (MultiEffect is the Qt item that merges these five into one layer), the others in `Qt.Effects`.
@@ -252,7 +252,7 @@ Blur, DropShadow, ColorAdjust, Colorize and Mask sit in `Qt.Effects.MultiEffect`
 - (b) One category `Qt.Effects`; the merge is explained in the summaries and in `HowTo Chain Effects`.
 - Recommended: (b).
 - Source: NODX Q2
-- Decision:
+- Decision: (b), one category `Qt.Effects` (Sebastian, 2026-11-19).
 
 ### C12 Path pin names: copy Skia's quirks?
 Skia uses `Dir` on AddRoundRect, `Direction` on AddRect/AddOval, `EndPoint` on CubicTo.
@@ -267,7 +267,7 @@ Skia uses `Dir` on AddRoundRect, `Direction` on AddRect/AddOval, `EndPoint` on C
 - (b) Uniform `Is Active` on Drag, Pinch and Point (Qt's term for its input handlers, the objects that turn pointer events into gestures).
 - Recommended: (a).
 - Source: NODX Q4 (NODX-02)
-- Decision:
+- Decision: (a), specific names (Sebastian, 2026-11-19).
 
 ### C14 Rename `ShaderEffect` to `Shader`?
 In VL.Qt "effect" means the `Effect` chain; `ShaderEffect` is Qt's name for an item (an element in Qt's scene) that draws a shader, and has nothing to do with the chain.
@@ -275,7 +275,7 @@ In VL.Qt "effect" means the `Effect` chain; `ShaderEffect` is Qt's name for an i
 - (b) `Shader`, in `Qt.Elements.Shaders`; "effect" then always means the chain.
 - Recommended: (b).
 - Source: SHD Q1
-- Decision:
+- Decision: (b), `Shader` in `Qt.Elements.Shaders` (Sebastian, 2026-11-19).
 
 ### C15 Where does the `Sampler` node live?
 - (a) Keep in `Qt.Elements.Uniform`.
@@ -283,7 +283,7 @@ In VL.Qt "effect" means the `Effect` chain; `ShaderEffect` is Qt's name for an i
 - (c) Next to the image nodes.
 - Recommended: (b), with the catalog.
 - Source: SHD Q2
-- Decision:
+- Decision: (b) (Sebastian, 2026-11-19).
 
 ### C16 Clip pin on Rectangle and Circle
 Qt's clip cuts an item's own painting and its children to its size; Rectangle and Circle have no children and draw inside their size, so the pin probably does nothing (not verified with DropShadow).
@@ -291,14 +291,14 @@ Qt's clip cuts an item's own painting and its children to its size; Rectangle an
 - (b) Remove it from Rectangle and Circle.
 - Recommended: (a), unless a grab shows it never matters.
 - Source: NODE Q4
-- Decision:
+- Decision: (a), keep Clip everywhere; wave 1 checks with a SmokeTest grab (Clip on, DropShadow) whether it ever matters on Rectangle and Circle, and the pin help says so honestly (Sebastian, 2026-11-19).
 
 ### C17 `PerfStats` shape and refresh rate
 - (a) Grouped record structs with nested Split. (b) Flat record with documented parameters.
 - Also: may the Perf output refresh at 4 Hz instead of every frame (the F5 overlay is unaffected)?
 - Recommended: (a), and yes to 4 Hz.
 - Source: RUN Q3 (RUN-10, RUN-04)
-- Decision:
+- Decision: (a), grouped record structs; the output keeps updating every frame, since the node serves debugging and must not lose values (Sebastian, 2026-11-19). RUN-04 then only removes the per-frame allocation (record structs), not the frame rate.
 
 ### C18 May a patch control the diagnostic overlays?
 Today only F2/F5/F6/F7 do, swallowed in every window.
@@ -307,13 +307,13 @@ Today only F2/F5/F6/F7 do, swallowed in every window.
 - (c) Leave as is; a patch with its own F5 shortcut cannot work.
 - Recommended: (a); (b) only if wanted for installations.
 - Source: NDIAG Q1 (NDIAG-07)
-- Decision:
+- Decision: (a), named as in VL.Stride's renderer: `Enable Keyboard Shortcuts`, default true; false disables every diagnostic key and passes the keys to the patch (Sebastian, 2026-11-19).
 
 ### C19 Mark `Video (VL.Audio)` experimental?
 `QtTexture`, `QtRenderer` and `ToTexturePixels` are, `Video (VL.Audio)` is not, though measured only on win-arm64.
 - Recommended: yes, until measured on x64.
 - Source: COMP Q2
-- Decision:
+- Decision: yes, experimental until measured on x64 (Sebastian, 2026-11-19).
 
 ## D Code structure and conventions
 
