@@ -106,28 +106,28 @@ Proposed waves: 1 safety net and tooling (API snapshot TEST-01, tests that prote
 - (c) Let it propagate as today: leaks every frame (REC-01).
 - Recommended: (a), with REC-01's clamping so user data never reaches the exception path.
 - Source: REC Q2
-- Decision:
+- Decision: (a) (Sebastian, 2026-11-19), but the exception goes to the log and marks the Renderer node instead of an `Error` output (see "No `Error` output pins" in DECISIONS.md).
 
 ### B2 A bad command in the middle of a buffer: keep "earlier commands stay applied"?
 - (a) Keep it and document it in `protocol.h` and `architecture.md`; C# resyncs after an error already.
 - (b) Validate the whole buffer first, apply only if all are valid: about twice the decode cost, a second validator.
 - Recommended: (a).
 - Source: NCMD Q1
-- Decision:
+- Decision: (a) (Sebastian, 2026-11-19).
 
 ### B3 `vlqt.dll` and `VL.Qt.dll` of different versions: refuse or warn?
 - (a) Refuse: no windows, error at the Renderer.
 - (b) Warn and continue; result undefined.
 - Recommended: (a).
 - Source: PROTO Q3
-- Decision:
+- Decision: (a), refuse; the Renderer is marked and the log names both versions (Sebastian, 2026-11-19).
 
 ### B4 Error text of native calls: per-thread last error or a buffer per call?
 - (a) Per-thread last error, as `GetLastError`/`errno`; `vlqt_image_write` drops its own buffer (CAPI-02).
 - (b) An `err`/`errCap` buffer on every function: thread-safe by construction, two more parameters everywhere.
 - Recommended: (a).
 - Source: CAPI Q3
-- Decision:
+- Decision: (a), per-thread last error; `vlqt_image_write` drops its buffer (Sebastian, 2026-11-19).
 
 ### B5 The index field of poll records: drop or keep?
 C# adds it to the slot index; QtNative always sends 0 (ELM-08).
@@ -135,7 +135,7 @@ C# adds it to the slot index; QtNative always sends 0 (ELM-08).
 - (b) Keep it for a future item that serves several slots, but never grow the slot list from it.
 - Recommended: (a).
 - Source: ELM Q4
-- Decision:
+- Decision: (a), and the field is removed from the protocol with the native break of A5 (Sebastian, 2026-11-19).
 
 ### B6 Hover and press of an element shown at several places: OR or last event wins?
 `events.md` says OR, the code does last-write-wins (ELM-02).
@@ -143,7 +143,7 @@ C# adds it to the slot index; QtNative always sends 0 (ELM-08).
 - (b) Change the decision to "last event wins".
 - Recommended: (a); the decision was taken for a Button shown twice.
 - Source: ELM Q3
-- Decision:
+- Decision: (a), OR over all occurrences (Sebastian, 2026-11-19).
 
 ### B7 How do resource and file nodes show an error?
 - (a) Error output and log for all; a warning at the node only for a lasting load failure (LoadImage, LoadImage (Async), LoadFont, ToQtImage).
@@ -151,14 +151,14 @@ C# adds it to the slot index; QtNative always sends 0 (ELM-08).
 - (c) Warning at the node for every error, also one-shot Snapshot/FileWriter failures.
 - Recommended: (a).
 - Source: NODW Q2
-- Decision:
+- Decision: decided by the principle "No `Error` output pins" (Sebastian, 2026-11-19): every error goes to the log; a lasting failure (LoadImage, LoadImage (Async), LoadFont, ToQtImage) also marks the node; one-shot failures (Snapshot, FileWriter) only log.
 
 ### B8 QtNative cannot create its GPU device: retry or stay degraded?
 - (a) Retry once per second; meanwhile windows use their own devices, images do not upload, offscreen scenes report `DEVICE_LOST`, the log says so once.
 - (b) As today: degraded until restart; offscreen scenes fall back to private devices nobody watches for loss.
 - Recommended: (a).
 - Source: NDEV Q3
-- Decision:
+- Decision: (a), retry once per second, log once (Sebastian, 2026-11-19).
 
 ### B9 Which app receives Qt's log messages when several vvvv apps run?
 Qt's message handler (the function Qt calls for every warning) does not know the window.
@@ -167,7 +167,7 @@ Qt's message handler (the function Qt calls for every warning) does not know the
 - (c) QtNative attributes messages to a window where it can and C# routes them: exact, but large and across layers.
 - Recommended: (a) now, (c) as a 2.0 issue if users run several apps.
 - Source: RUN Q2
-- Decision:
+- Decision: (a) now; (c) becomes an issue in milestone 2.0 (Sebastian, 2026-11-19).
 
 ## C Node API and naming (besides the catalog)
 
