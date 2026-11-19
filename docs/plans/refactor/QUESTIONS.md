@@ -194,7 +194,7 @@ Containers take `Spread<IElement?>` (so a self-made stylable widget fits), other
 - (b) `IElement` on every element input; the reconciler applies the base style there (a reconciler change).
 - Recommended: (a) for 0.10.0.
 - Source: API Q3
-- Decision: (b), one type on every element input (Sebastian, 2026-11-19); a reconciler issue applies the base style there. Follow-up: outputs also show `IElement`; `Element` stays the internal base class. The name `IElement` is reviewed with the catalog.
+- Decision: (b), one type on every element input (Sebastian, 2026-11-19); a reconciler issue applies the base style there. Follow-up: outputs also show `IElement`; `Element` stays the internal base class. The name stays `IElement`, as Skia's `ILayer` (catalog review, Sebastian, 2026-11-19).
 
 ### C4 Fill colour pin: `Fill Color` or `Color`?
 - (a) `Fill Color`, pairs with `Stroke Color`.

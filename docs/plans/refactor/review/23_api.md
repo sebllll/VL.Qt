@@ -284,116 +284,119 @@ One row per change, for a decision line by line. Unchanged nodes and pins are no
 
 | Node / pin | Current | Proposed | Reason | Finding | Decision |
 |---|---|---|---|---|---|
-| Rectangle / Color | `Color` | `Fill Color` | same meaning as Polygon/Path `Fill`; pairs with `Stroke Color` | API-05 | |
-| Circle / Color | `Color` | `Fill Color` | as above | API-05 | |
-| Polygon / Fill | `Fill` | `Fill Color` | as above | API-05 | |
-| Polygon / Stroke Color default | `1, 1, 1, 1` | `0, 0, 0, 1` | white on a white fill shows nothing; Rectangle/Circle use black | API-05 | |
-| Path / Fill | `Fill` | `Fill Color` | as above | API-05 | |
-| Row, Column, Row (Spectral), Column (Spectral) / Style | missing | `Style` (optional, after `Effect`) | Group has it; style inherits down the tree | API-04 | |
-| Group (Spectral), Row (Spectral), Column (Spectral) / Children | `Children` | `Input` | Skia `Group (Spectral)` and the non-spectral nodes say `Input` | API-04 | |
-| Labeled / pin order | `Element, Text, Label Width, Label Position, Spacing, Transform, Anchor, Label Height, …` | `Element, Text, Label Position, Label Width, Label Height, Spacing, Transform, Anchor, …` | label pins together, geometry after content as on the other containers | API-04 | |
-| Labeled / Clip, Debug | missing | `Clip`, `Debug` (optional) | common tail of every element | API-04 | |
-| QmlElement / pin order | `File, Properties, Size, Auto Size, Transform, Anchor, …` | `Auto Size, Size, Transform, Anchor, File, Properties, …` | content after geometry, as Image/Video | API-03, API-04 | |
-| QmlElement / Size | visible | optional | ignored while the hidden `Auto Size` is on | API-03 | |
-| QmlElement / category | `Qt.Elements` | `Qt.Elements.Qml` | with the generated QML nodes | API-02 | |
-| ShaderEffect / category | `Qt.Elements` | `Qt.Elements.Shaders` | with uniforms, Sampler, generated shader nodes | API-02 | |
-| Image / Fill Mode type | `ImageFillMode` | `FillMode` | one enum for Image and Video | API-10 | |
-| Video, Video (VL.Audio) / Fill Mode type | `VideoFillMode` | `FillMode` | as above | API-10 | |
-| (all elements) / Enabled | missing | `Enabled` (optional, before `Opacity`)? | Skia layers have it; see Q2 | Q2 | |
+| Rectangle / Color | `Color` | `Fill Color` | same meaning as Polygon/Path `Fill`; pairs with `Stroke Color` | API-05 | yes (C4) |
+| Circle / Color | `Color` | `Fill Color` | as above | API-05 | yes (C4) |
+| Polygon / Fill | `Fill` | `Fill Color` | as above | API-05 | yes (C4) |
+| Polygon / Stroke Color default | `1, 1, 1, 1` | `0, 0, 0, 1` | white on a white fill shows nothing; Rectangle/Circle use black | API-05 | yes (Sebastian, 2026-11-19) |
+| Path / Fill | `Fill` | `Fill Color` | as above | API-05 | yes (C4) |
+| Row, Column, Row (Spectral), Column (Spectral) / Style | missing | `Style` (optional, after `Effect`) | Group has it; style inherits down the tree | API-04 | yes (Sebastian, 2026-11-19) |
+| Group (Spectral), Row (Spectral), Column (Spectral) / Children | `Children` | `Input` | Skia `Group (Spectral)` and the non-spectral nodes say `Input` | API-04 | yes (Sebastian, 2026-11-19) |
+| Labeled / pin order | `Element, Text, Label Width, Label Position, Spacing, Transform, Anchor, Label Height, …` | `Element, Text, Label Position, Label Width, Label Height, Spacing, Transform, Anchor, …` | label pins together, geometry after content as on the other containers | API-04 | yes (Sebastian, 2026-11-19) |
+| Labeled / Clip, Debug | missing | `Clip`, `Debug` (optional) | common tail of every element | API-04 | yes (Sebastian, 2026-11-19) |
+| QmlElement / pin order | `File, Properties, Size, Auto Size, Transform, Anchor, …` | `Auto Size, Size, Transform, Anchor, File, Properties, …` | content after geometry, as Image/Video | API-03, API-04 | yes (Sebastian, 2026-11-19) |
+| QmlElement / Size | visible | optional | ignored while the hidden `Auto Size` is on | API-03 | yes, right after `Auto Size` (Sebastian, 2026-11-19) |
+| Group, Row, Column, their Spectral nodes, ShaderEffect / Size | visible | optional, after `Auto Size` | same pattern: `Auto Size` optional and on by default; added during the catalog review | API-03 | yes: one rule for every node with `Auto Size` on by default (Sebastian, 2026-11-19) |
+| QmlElement / category | `Qt.Elements` | `Qt.Elements.Qml` | with the generated QML nodes | API-02 | yes (Sebastian, 2026-11-19) |
+| ShaderEffect / category | `Qt.Elements` | `Qt.Elements.Shaders` | with uniforms, Sampler, generated shader nodes | API-02 | yes, and renamed to `Shader` (C14) |
+| Image / Fill Mode type | `ImageFillMode` | `FillMode` | one enum for Image and Video | API-10 | yes: `Stretch, Fit, Crop, Tile` (`Tile` kept, not `Wrap`: a fill mode at the image's own size, not a sampler address mode) (Sebastian, 2026-11-19) |
+| Video, Video (VL.Audio) / Fill Mode type | `VideoFillMode` | `FillMode` | as above | API-10 | yes; Video draws `Tile` as `Stretch` with a warning on the node, the pin help says so (Sebastian, 2026-11-19) |
+| (all elements) / Enabled | missing | `Enabled` (optional, before `Opacity`)? | Skia layers have it; see Q2 | Q2 | `Enabled`, optional, default true, as the last input pin (C2) |
 
 ### Qt.Elements.Uniform → Qt.Elements.Shaders
 
 | Node / pin | Current | Proposed | Reason | Finding | Decision |
 |---|---|---|---|---|---|
-| Float, Int, Bool, Vector2, Vector3, Vector4, Color, Matrix, Texture, Image | `Float [Qt.Elements.Uniform]` … | `Uniform (Float) [Qt.Elements.Shaders]` … | the node name is a type name; vvvv puts the variant in the version | API-09 | |
-| Sampler / category | `Qt.Elements.Uniform` | `Qt.Elements.Shaders` | belongs with the shader nodes | API-02 | |
+| Float, Int, Bool, Vector2, Vector3, Vector4, Color, Matrix, Texture, Image | `Float [Qt.Elements.Uniform]` … | `Uniform (Float) [Qt.Elements.Shaders]` … | the node name is a type name; vvvv puts the variant in the version | API-09 | no: names stay (`Float` …), category `Qt.Elements.Shaders.Uniform` (C15) (Sebastian, 2026-11-19) |
+| Sampler / category | `Qt.Elements.Uniform` | `Qt.Elements.Shaders` | belongs with the shader nodes | API-02 | yes (C15) |
 
 ### Qt.Widgets
 
 | Node / pin | Current | Proposed | Reason | Finding | Decision |
 |---|---|---|---|---|---|
-| TextInput | `TextInput` | `Input (String)` | ImGui name; VL.Qt already has `Input (Int)` | API-07 | |
-| Slider | `Slider` | `Slider (Float)` | ImGui name; room for `Slider (Int)` | API-07 | |
-| Button, Slider, Toggle, Input (Int), TextInput / Size | visible | optional, after `Auto Size` | ignored while the hidden `Auto Size` is on | API-03 | |
-| Slider, Toggle, Input (Int), TextInput / Bang | `Bang` | `Has Changed` | `Bang` means "clicked" on Button; Skia's name for "changed" | API-08 | |
-| Button / Is Clicked | `Is Clicked` | `On Click` | an event channel (`IChannel<Unit>`), not a bool state | API-08 | |
+| TextInput | `TextInput` | `Input (String)` | ImGui name; VL.Qt already has `Input (Int)` | API-07 | yes, tags `text, textfield` (C8) |
+| Slider | `Slider` | `Slider (Float)` | ImGui name; room for `Slider (Int)` | API-07 | yes (Sebastian, 2026-11-19) |
+| Button, Slider, Toggle, Input (Int), TextInput / Size | visible | optional, after `Auto Size` | ignored while the hidden `Auto Size` is on | API-03 | yes (Sebastian, 2026-11-19) |
+| Slider, Toggle, Input (Int), TextInput / Bang | `Bang` | `Has Changed` | `Bang` means "clicked" on Button; Skia's name for "changed" | API-08 | yes; Button keeps `Bang` (Sebastian, 2026-11-19) |
+| Button / Is Clicked | `Is Clicked` | `On Click` | an event channel (`IChannel<Unit>`), not a bool state | API-08 | yes: `Is …` for states, `On …` for events (Sebastian, 2026-11-19) |
 
 ### Qt.Interaction
 
 | Node / pin | Current | Proposed | Reason | Finding | Decision |
 |---|---|---|---|---|---|
-| Touch Points | `Touch Points` | `TouchPoints` | node names have no spaces | API-12 | |
-| Click / Is Clicked | `Is Clicked` | `On Click` | event channel | API-08 | |
-| Click / Long Pressed | `Long Pressed` | `On Long Press` | event channel | API-08 | |
-| Drag / Minimum, Maximum | `Minimum`, `Maximum` | `Min`, `Max` | widgets and ImGui say `Min`/`Max` | API-08 | |
+| Touch Points | `Touch Points` | `TouchPoints` | node names have no spaces | API-12 | yes (Sebastian, 2026-11-19) |
+| Click / Is Clicked | `Is Clicked` | `On Click` | event channel | API-08 | yes (Sebastian, 2026-11-19) |
+| Click / Long Pressed | `Long Pressed` | `On Long Press` | event channel | API-08 | yes (Sebastian, 2026-11-19) |
+| Drag / Minimum, Maximum | `Minimum`, `Maximum` | `Min`, `Max` | widgets and ImGui say `Min`/`Max` | API-08 | yes (Sebastian, 2026-11-19) |
+| Pinch / Minimum Point Count, Maximum Point Count | `Minimum Point Count`, `Maximum Point Count` | `Min Point Count`, `Max Point Count` | one term in the library; added during the catalog review | API-08 | yes (Sebastian, 2026-11-19) |
 
 ### Qt.Effects
 
 | Node / pin | Current | Proposed | Reason | Finding | Decision |
 |---|---|---|---|---|---|
-| Blur, ColorAdjust, Colorize, DropShadow, Mask / category | `Qt.Effects.MultiEffect` | `Qt.Effects` | MultiEffect is a Qt implementation detail; say it in the node help | API-02 | |
-| DirectionalBlur / Angle | degrees | cycles | vvvv angle unit; paths already use cycles | API-06 | |
-| RadialBlur / Angle | degrees, default `8` | cycles, default `0.02` | as above | API-06 | |
-| Blur / Max | `Max` | `Max Radius` | reads like a range end | API-13 | |
-| Blur / Multiplier | `Multiplier` | `Radius Multiplier` | says what it multiplies | API-13 | |
-| DropShadow / Blur | `Blur` | `Softness` | ambiguous next to the Blur node | API-13 | |
+| Blur, ColorAdjust, Colorize, DropShadow, Mask / category | `Qt.Effects.MultiEffect` | `Qt.Effects` | MultiEffect is a Qt implementation detail; say it in the node help | API-02 | yes (C11) |
+| DirectionalBlur / Angle | degrees | cycles | vvvv angle unit; paths already use cycles | API-06 | yes (C10) |
+| RadialBlur / Angle | degrees, default `8` | cycles, default `0.02` | as above | API-06 | cycles (C10), default `0.05` so the effect shows at once (Sebastian, 2026-11-19) |
+| Blur / Max | `Max` | `Max Radius` | reads like a range end | API-13 | yes (Sebastian, 2026-11-19); note: the value is in pixels, check against "shader parameters in DIP" (E1) |
+| Blur / Multiplier | `Multiplier` | `Radius Multiplier` | says what it multiplies | API-13 | yes (Sebastian, 2026-11-19) |
+| DropShadow / Blur | `Blur` | `Softness` | ambiguous next to the Blur node | API-13 | `Blur Amount`, parallel to `Amount` on Blur (Sebastian, 2026-11-19) |
 
 ### Qt.Paths
 
 | Node / pin | Current | Proposed | Reason | Finding | Decision |
 |---|---|---|---|---|---|
-| AddCircle / Dir | `Dir` | `Direction` | AddOval/AddRect say `Direction` | API-11 | |
-| AddRoundRect / Dir | `Dir` | `Direction` | as above | API-11 | |
-| CubicTo, CubicTo (Relative) / EndPoint | `EndPoint` | `End Point` | QuadTo and Skia say `End Point` | API-11 | |
-| AddPoly / Close | `Close` | `Closed` | Spline, Bezier (Handles), Polyline say `Closed` | API-11 | |
-| AddArc, AddOval / Bounds default | `0, 0, 0, 0` | `0, 0, 1, 1` | a new node adds nothing | API-11 | |
-| AddRect, AddRoundRect / Rectangle default | `0, 0, 0, 0` | `0, 0, 1, 1` | as above | API-11 | |
-| AddArc / Sweep Angle default | `0` | `0.25` | as above | API-11 | |
-| AddRoundRect / Radius default | `0, 0` | `0.1, 0.1` | shows the rounding | API-11 | |
+| AddCircle / Dir | `Dir` | `Direction` | AddOval/AddRect say `Direction` | API-11 | yes (C12) |
+| AddRoundRect / Dir | `Dir` | `Direction` | as above | API-11 | yes (C12) |
+| CubicTo, CubicTo (Relative) / EndPoint | `EndPoint` | `End Point` | QuadTo and Skia say `End Point` | API-11 | yes (C12) |
+| AddPoly / Close | `Close` | `Closed` | Spline, Bezier (Handles), Polyline say `Closed` | API-11 | yes (Sebastian, 2026-11-19) |
+| AddArc, AddOval / Bounds default | `0, 0, 0, 0` | `0, 0, 1, 1` | a new node adds nothing | API-11 | yes (Sebastian, 2026-11-19) |
+| AddRect, AddRoundRect / Rectangle default | `0, 0, 0, 0` | `0, 0, 1, 1` | as above | API-11 | yes (Sebastian, 2026-11-19) |
+| AddArc / Sweep Angle default | `0` | `0.25` | as above | API-11 | yes (Sebastian, 2026-11-19) |
+| AddRoundRect / Radius default | `0, 0` | `0.1, 0.1` | shows the rounding | API-11 | yes (Sebastian, 2026-11-19) |
 
 ### Qt (root) → Qt.Images, Stride
 
 | Node / pin | Current | Proposed | Reason | Finding | Decision |
 |---|---|---|---|---|---|
-| LoadImage, LoadImage (Async), ToQtImage, Snapshot, FileWriter, FileWriter (Element) / category | `Qt` | `Qt.Images` | the root holds 14 unrelated nodes | API-02 | |
-| VideoSourceToQtImage | `VideoSourceToQtImage [Qt]` | `ToQtImage (VideoSource) [Qt.Images]` | conversion naming `To…` with the source in the version | API-02, API-12 | |
-| Snapshot / Element | `Element` | `Input` | main input of a vvvv node; Skia ImageWriter says `Input` | API-12 | |
-| FileWriter (Element) / Element | `Element` | `Input` | as above | API-12 | |
-| TooltipPreview (×2) / aspect | `Advanced` | `Hidden` | only for vvvv's tooltips | API-15 | |
-| Renderer / Title, Borderless, Fullscreen vs Window | both, Window wins | see Q1 | two ways for one value | Q1 | |
-| QtTexture / category | `Qt` | `Stride.Textures.Source` | VL.Stride's `SkiaTexture` is there | API-02 | |
-| ToTexturePixels / category | `Qt` | `Stride.Textures.Source` | belongs with QtTexture | API-02 | |
-| QtTexture / Multisample Count type | `MultisampleCount [VL.Qt]` | `Stride.Graphics.MultisampleCount` | same-named enum twice in a Stride patch | API-10 | |
+| LoadImage, LoadImage (Async), ToQtImage, Snapshot, FileWriter, FileWriter (Element) / category | `Qt` | `Qt.Images` | the root holds 14 unrelated nodes | API-02 | yes (Sebastian, 2026-11-19) |
+| VideoSourceToQtImage | `VideoSourceToQtImage [Qt]` | `ToQtImage (VideoSource) [Qt.Images]` | conversion naming `To…` with the source in the version | API-02, API-12 | no: name kept, as VL.Video's `VideoSourceToSKImage`, `VideoSourceToTexture`, `VideoSourceToImage`; category `Qt.Images` (Sebastian, 2026-11-19) |
+| Snapshot / Element | `Element` | `Input` | main input of a vvvv node; Skia ImageWriter says `Input` | API-12 | yes (Sebastian, 2026-11-19) |
+| FileWriter (Element) / Element | `Element` | `Input` | as above | API-12 | yes (Sebastian, 2026-11-19) |
+| Labeled / Element | `Element` | `Input` | as above; added during the catalog review | API-12 | yes (Sebastian, 2026-11-19) |
+| TooltipPreview (×2) / aspect | `Advanced` | `Hidden` | only for vvvv's tooltips | API-15 | yes (Sebastian, 2026-11-19) |
+| Renderer / Title, Borderless, Fullscreen vs Window | both, Window wins | see Q1 | two ways for one value | Q1 | (b): pins on the Renderer, WindowSettings keeps only `Icon`, `Bounds` (C1) |
+| QtTexture / category | `Qt` | `Stride.Textures.Source` | VL.Stride's `SkiaTexture` is there | API-02 | yes (Sebastian, 2026-11-19) |
+| ToTexturePixels / category | `Qt` | `Stride.Textures.Source` | belongs with QtTexture | API-02 | `Stride.Input`, next to `MouseRay`: Stride sorts by task, the node maps input and is no texture source (Sebastian, 2026-11-19) |
+| QtTexture / Multisample Count type | `MultisampleCount [VL.Qt]` | `Stride.Graphics.MultisampleCount` | same-named enum twice in a Stride patch | API-10 | yes; the Qt Renderer keeps VL.Qt's own enum (Sebastian, 2026-11-19) |
 
 ### Qt.Style
 
 | Node / pin | Current | Proposed | Reason | Finding | Decision |
 |---|---|---|---|---|---|
-| Text, FontWeight [Qt.Style.Text] / Font Weight type | `Optional<int>` | `Optional<FontWeight>` | the Text node takes the enum | API-10 | |
-| GetText, GetFontWeight [Qt.Style.Text] / Font Weight type | `int` | `FontWeight` | as above | API-10 | |
+| Text, FontWeight [Qt.Style.Text] / Font Weight type | `Optional<int>` | `Optional<FontWeight>` | the Text node takes the enum | API-10 | no, the other way round: `int` everywhere, also on the Text node (default 400); the enum `FontWeight` goes. Reason: Qt and CSS take any weight 1–1000 (variable fonts), an enum would break later. The pin help lists the named steps (100 Thin … 400 Normal … 700 Bold … 900 Black) (Sebastian, 2026-11-19) |
+| GetText, GetFontWeight [Qt.Style.Text] / Font Weight type | `int` | `FontWeight` | as above | API-10 | no: stays `int` (see above) |
 
 ### Types and enums
 
 | Type | Current | Proposed | Reason | Finding | Decision |
 |---|---|---|---|---|---|
-| all imported types / category | `VL.Qt`, `VL.Qt.Elements`, `VL.Qt.Paths`, `VL.Qt.Nodes`, `VL.Qt.Images`, `VL.Qt.Stride`, `VL.Qt.Audio` | `Qt`, `Qt.Elements`, `Qt.Paths`, (moved), `Qt.Images`, … (`Qt.Style` stays) | `ImportAsIs` without Namespace/Category | API-01 | |
-| Button, CheckBox, Column, Group, Image, QmlElement, Rectangle, Row, ShaderEffect, Shape, Slider, SpinBox, Switch, Text, TextField, Video (element classes) | public, in the node browser | internal | implementation of the nodes; Qt names the nodes avoid | API-01, Q5 | |
-| ElementSink, SinkState, SinkSlot, ElementType, Geometry | public | internal | plumbing between nodes and reconciler | API-01 | |
-| Element.Type, Element.Sink | public | internal | protocol id and plumbing on the public pin type | API-01 | |
-| Initialization | public, no aspect | public, `Hidden` | StandardLibs convention, not for patches | API-01, API-15 | |
-| BlendMode, LabelPosition, ToggleLook | namespace `VL.Qt.Nodes` (category `VL.Qt.Nodes`) | namespace `VL.Qt.Elements` (category `Qt.Elements`), own files | together with the other pin enums | API-01 | |
-| ImageFillMode, VideoFillMode | two enums | `FillMode` | same concept | API-10 | |
-| IElement / Element on inputs | mixed | see Q3 | two type names for one concept | Q3 | |
+| all imported types / category | `VL.Qt`, `VL.Qt.Elements`, `VL.Qt.Paths`, `VL.Qt.Nodes`, `VL.Qt.Images`, `VL.Qt.Stride`, `VL.Qt.Audio` | `Qt`, `Qt.Elements`, `Qt.Paths`, (moved), `Qt.Images`, … (`Qt.Style` stays) | `ImportAsIs` without Namespace/Category | API-01 | yes (Sebastian, 2026-11-19) |
+| Button, CheckBox, Column, Group, Image, QmlElement, Rectangle, Row, ShaderEffect, Shape, Slider, SpinBox, Switch, Text, TextField, Video (element classes) | public, in the node browser | internal | implementation of the nodes; Qt names the nodes avoid | API-01, Q5 | yes (A6) |
+| ElementSink, SinkState, SinkSlot, ElementType, Geometry | public | internal | plumbing between nodes and reconciler | API-01 | yes, follows from A6 and C3; `ElementSink`, `SinkState`, `SinkSlot` are renamed by A1 |
+| Element.Type, Element.Sink | public | internal | protocol id and plumbing on the public pin type | API-01 | yes, follows from C3 (`Element` becomes internal) |
+| Initialization | public, no aspect | public, `Hidden` | StandardLibs convention, not for patches | API-01, API-15 | yes, with TooltipPreview (Sebastian, 2026-11-19) |
+| BlendMode, LabelPosition, ToggleLook | namespace `VL.Qt.Nodes` (category `VL.Qt.Nodes`) | namespace `VL.Qt.Elements` (category `Qt.Elements`), own files | together with the other pin enums | API-01 | yes (Sebastian, 2026-11-19) |
+| ImageFillMode, VideoFillMode | two enums | `FillMode` | same concept | API-10 | yes (see Image / Fill Mode) |
+| IElement / Element on inputs | mixed | see Q3 | two type names for one concept | Q3 | one type on every input and output (C3); its name stays `IElement`, as Skia's `ILayer` (Sebastian, 2026-11-19) |
 
 ### Categories
 
 | Category | Current | Proposed | Reason | Finding | Decision |
 |---|---|---|---|---|---|
-| `VL.Qt.*` (type tree) | exists | removed (merged into `Qt.*`) | second top-level tree | API-01 | |
-| `Qt.Effects.MultiEffect` | 5 nodes | removed, nodes in `Qt.Effects` | implementation detail | API-02 | |
-| `Qt.Elements.Uniform` | 11 nodes | removed, nodes in `Qt.Elements.Shaders` | one place for shader nodes | API-02 | |
-| `Qt.Elements.Shaders` | generated nodes only | + ShaderEffect, Uniform (…), Sampler | as above | API-02 | |
-| `Qt.Elements.Qml` | generated nodes only | + QmlElement | one place for QML nodes | API-02 | |
-| `Qt.Images` | — | new: image and file nodes | the root is too broad | API-02 | |
-| `Qt` | 14 nodes | Renderer, WindowSettings, LoadFont, TooltipPreview (Hidden) | as above | API-02 | |
-| `Stride.Textures.Source` | — (QtTexture in `Qt`) | QtTexture, ToTexturePixels | as VL.Stride's SkiaTexture | API-02 | |
+| `VL.Qt.*` (type tree) | exists | removed (merged into `Qt.*`) | second top-level tree | API-01 | yes (Sebastian, 2026-11-19) |
+| `Qt.Effects.MultiEffect` | 5 nodes | removed, nodes in `Qt.Effects` | implementation detail | API-02 | yes (C11) |
+| `Qt.Elements.Uniform` | 11 nodes | removed, nodes in `Qt.Elements.Shaders` | one place for shader nodes | API-02 | uniform nodes in `Qt.Elements.Shaders.Uniform`, Sampler in `Qt.Elements.Shaders` (C15) |
+| `Qt.Elements.Shaders` | generated nodes only | + ShaderEffect, Uniform (…), Sampler | as above | API-02 | + `Shader` (C14), Sampler; uniforms in the subcategory `Uniform` |
+| `Qt.Elements.Qml` | generated nodes only | + QmlElement | one place for QML nodes | API-02 | yes (Sebastian, 2026-11-19) |
+| `Qt.Images` | — | new: image and file nodes | the root is too broad | API-02 | yes (Sebastian, 2026-11-19) |
+| `Qt` | 14 nodes | Renderer, WindowSettings, LoadFont, TooltipPreview (Hidden) | as above | API-02 | yes (Sebastian, 2026-11-19) |
+| `Stride.Textures.Source` | — (QtTexture in `Qt`) | QtTexture, ToTexturePixels | as VL.Stride's SkiaTexture | API-02 | QtTexture only; ToTexturePixels goes to `Stride.Input` (Sebastian, 2026-11-19) |
