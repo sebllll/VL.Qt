@@ -440,7 +440,7 @@ Reachable only through `VLQT_OFFSCREEN_THREAD`, untested, which is how NDEV-01 w
 - (b) Diagnosis only: cap at 1, remove the round robin.
 - Recommended: (a); measurements show a gain for several heavy scenes.
 - Source: NDEV Q4 (NDEV-01)
-- Decision: (a), supported, with a pool-2 test run; the pool size gets a pin, not only the environment variable (Sebastian, 2026-11-19). Where the pin lives: `QtTexture` and `QtRenderer` (VL.Qt.Stride) get a pin `Render Threads`, default 1, not shown by default; the window Renderer does not use the pool. With different values the maximum wins; a change at runtime grows or shrinks the pool.
+- Decision: (a), supported, with a pool-2 test run; the pool size gets a pin, not only the environment variable (Sebastian, 2026-11-19). Where the pin lives: `QtTexture` and `QtRenderer` (VL.Qt.Stride) get a pin `Render Threads`, default 1, not shown by default; the window Renderer does not use the pool. With different values the maximum wins. At runtime the pool only grows: a smaller value and 0 apply to scenes created afterwards (P7 in [PLAN-CHECK.md](PLAN-CHECK.md)).
 
 ### E8 Texture reuse for live image sources
 Every new frame of a video or live ToQtImage creates and destroys a GPU texture.
@@ -526,14 +526,14 @@ The SmokeTest needs a second D3D11 device, shared textures and readback to test 
 - (b) References per RID. (c) No compare, pixel probes only.
 - Recommended: (a), scenes without text or with the bundled font.
 - Source: TEST Q2 (TEST-03)
-- Decision: (a) (Sebastian, 2026-11-19).
+- Decision: (a) (Sebastian, 2026-11-19). The local gate compares too, with WARP forced, once wave 1 has shown that it matches (P9 in [PLAN-CHECK.md](PLAN-CHECK.md)).
 
 ### F4 Wall-clock limits in the unit tests
 - (a) Keep behind `VLQT_PERF_FACTOR` and a `Perf` category, warn-only on CI runners.
 - (b) Drop from `dotnet test`, keep SmokeTest `PerfLimits` and the allocation tests.
 - Recommended: (a); the allocation tests stay hard.
 - Source: TEST Q3 (TEST-09)
-- Decision: (a): the limits have caused confusion, so they get the factor and their own `Perf` category, warn-only on CI; the allocation tests stay hard (Sebastian, 2026-11-19).
+- Decision: (a): the limits have caused confusion, so they get the factor and their own `Perf` category, warn-only on CI and in the local gate (P16 in [PLAN-CHECK.md](PLAN-CHECK.md)); the allocation tests stay hard (Sebastian, 2026-11-19).
 
 ### F5 SmokeTest as an NUnit project?
 - (a) Keep the custom runner with a scenario table (TEST-11).

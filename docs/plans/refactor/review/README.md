@@ -2,7 +2,7 @@
 
 Twenty-three read-only review sessions, one per area, on the state of `develop` at release 0.9.10 (647392e), run on 2026-11-19 after the brief [00_brief.md](00_brief.md). Every report has the same structure: summary, what must survive, findings, target structure, questions for Sebastian, notes for other areas. Nothing was built or run: every finding comes from reading the code, and the reports say where a suspicion is not confirmed.
 
-340 findings: 31 `must`, 209 `should`, 100 `could`. They are the raw material of the plan; the issues of the milestone `refactor` are cut from them.
+340 findings: 31 `must`, 211 `should`, 98 `could`. They are the raw material of the plan; the issues of the milestone `0.10.0` are cut from them.
 
 | Report | Area | Prefix | Model | must / should / could | The finding that matters most |
 |---|---|---|---|---|---|
