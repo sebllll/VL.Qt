@@ -153,6 +153,7 @@ Step 3 of P4 renames "after the glossary of P3". Besides CAPI-03, NAPP-17, NELM-
 
 - A5 through to the end: `vlqt_window_report_host_frame`, `_get_host_frame` → `vlqt_scene_report_host_pump`, `_get_host_pump` (CAPI-03 still writes `host_frame`); C# `HostPumpMeter` (RUN-05 writes `HostFrameMeter`).
 - O1: `FeedbackLayer` → `PreviousFrameLayer`. O5: `VLQT_TYPE_SHADER_EFFECT` → `VLQT_ELEMENT_TYPE_SHADER`, `ShaderEffectItem` → `ShaderItem`. O7: `sinkHandle` → `feedbackId` in BIND and in the event header.
+- Block B of [DECISION-ROUND.md](DECISION-ROUND.md): one result table `vlqt_result` (B1, B2); `vlqt_window_create` with the position (B3); `vlqt_app_get_abi_version`, `VLQT_ABI_VERSION` (B4); `BeginShaderLink` → `BeginEffectChainLink` (B8); C# `Protocol.ElementType` only (B9); shader element side `ShaderLayout`, `ShaderDescription`, `ShaderInstance` (B10).
 - One suffix for export files: `<group>_exports.cpp` (NAPP-01), so `offscreen_api.cpp` of NDEV-04 is `offscreen_exports.cpp`.
 
 ## 2 Structure
@@ -210,7 +211,7 @@ src/VL.Qt/                                 VL.Qt
     UniformValue.cs  QmlPropertyWriter.cs  OccurrenceRegistry.cs  InteractionRegistry.cs
     FeedbackRouter.cs  DispatchResult.cs (ELM-06)  IdAllocator.cs
   Elements/                                VL.Qt.Elements       (ELM-01 to -13)
-    IElement.cs  Element.cs  Container.cs  StylableElement.cs  ElementType.cs
+    IElement.cs  Element.cs  Container.cs  StylableElement.cs  (no `ElementType.cs`: `Protocol.ElementType`, B9 of DECISION-ROUND.md)
     Group.cs Row.cs Column.cs Rectangle.cs Text.cs Image.cs Video.cs Shape.cs
     Button.cs CheckBox.cs Slider.cs SpinBox.cs Switch.cs TextField.cs
     Enums/        one public enum per file; FillMode.cs, BlendMode.cs, LabelPosition.cs, ToggleLook.cs (catalog)
@@ -243,6 +244,7 @@ src/VL.Qt/                                 VL.Qt
     RendererNode.cs  WindowSettingsNode.cs  LoadFontNode.cs              category Qt
     ElementNodeCore.cs  CommonInputs.cs  ChildrenInput.cs  ValueChannel.cs  ClickChannel.cs
     ChannelAuthors.cs  NodeMessage.cs  ChainMemo.cs  CommonPins.xml       shared
+    Style/        SetColorsNode  SetFrameNode  SetTextNode  SetIndicatorNode  SetTrackNode  MergeNode (C6, C13)
     Elements/     the 16 element nodes, ShapeNodeCore.cs                  (NODE)
     Widgets/      ButtonNode  ToggleNode  SliderNode  InputIntNode  InputStringNode (NODW)
     Images/       LoadImageNode  LoadImageAsyncNode  ToQtImageNode  VideoSourceToQtImageNode
@@ -257,7 +259,7 @@ src/VL.Qt/                                 VL.Qt
 
 Deleted: `Native.cs` (split), `Reconciler/Node.cs`, `SceneRegistry.cs`, `EffectDiff.cs`, `Elements/Alignment.cs`, `ElementSink.cs`, `SinkRegistry.cs`, `Nodes/Effects/EffectNode.cs`, `BuiltinShaderLink.cs`, `Shaders/ShaderNodeLayout.cs`, `ShaderLinkNode.cs`; the enum `FontWeight` (catalog).
 
-New in this page, in no report, and decided with S3: the folder `Wire/`, and the subfolders `Elements/`, `Widgets/`, `Images/`, `Shaders/`, `Qml/` under `Nodes/`. The folder of a node under `Nodes/` is the tail of its category; the three nodes of the category `Qt` and the shared helpers stay at the top. Exception: the style nodes are static classes and stay in `Styles/` beside their records (SIP).
+New in this page, in no report, and decided with S3: the folder `Wire/`, and the subfolders `Elements/`, `Widgets/`, `Images/`, `Shaders/`, `Qml/` under `Nodes/`. The folder of a node under `Nodes/` is the tail of its category; the three nodes of the category `Qt` and the shared helpers stay at the top. Exception: the static style nodes stay in `Styles/` beside their records (SIP); the six style process nodes of C6 are `SetColorsNode` … `MergeNode` in `Nodes/Style/` (C13 of [DECISION-ROUND.md](DECISION-ROUND.md)).
 
 ### 2.3 `src/VL.Qt.Native`
 
@@ -294,6 +296,7 @@ src/VL.Qt.Native/
   test/       test_input.cpp  test_probes.cpp  test_device  test_resource_kind.cpp (F1)
   testkit/    testkit.cpp, target vlqt_testkit, not packed                         (F2, NDEV-09)
   qml/        elements/*.qml  effects/*.qml  perf/perf_overlay.qml  deploy.qml     (D8, NELM-06, NFX-06)
+              QML type files keep PascalCase (`MultiStage.qml`), the one exception of snake_case (C16)
   shaders/*.frag  fonts/  icon/  tools/glprobe.c (Linux, NAPP-12)
 ```
 
@@ -336,7 +339,7 @@ The node-API snapshot (P6) is the test of this list.
 | `ICommandSink.cs` | next to `CommandWriter.cs` (REC); stays in `Reconciler/` (PROTO) | `Wire/` | it is the wire contract |
 | `QmlEvents.cs` | next to `EventReader.cs` (ELM-09); unchanged in `Elements/` (QML) | `Wire/QmlEventDecoder.cs` | A3: the element model knows no protocol |
 | `BuiltinShaderLink.cs` | stays (NODX); → `ShaderLinkBuilder.cs` (SHD-09) | `Nodes/Effects/ShaderEffectBuilder.cs` (SHD-09, O5) | the shader area owns it |
-| Error reporting of resource nodes | `ImageNodeReport` (SIP), `ResourceNodeReport` (NODW-04), `NodeMessage` (NODE-05), `NodeErrors` (RUN-01) | listed as `ResourceNodeReport.cs` and `NodeMessage.cs` | four findings, one mechanism since "No `Error` output pins"; the pass of P1 writes which one stays |
+| Error reporting of resource nodes | `ImageNodeReport` (SIP), `ResourceNodeReport` (NODW-04), `NodeMessage` (NODE-05), `NodeErrors` (RUN-01) | `NodeErrors.cs` is the store, `NodeMessage.cs` the handle, `ResourceNodeReport.cs` uses it | A1 of [DECISION-ROUND.md](DECISION-ROUND.md) |
 | Perf records in C# | `PerfStats.cs` + `PerfDetails.cs` with four records (NDIAG-11) | one file per record | K3 |
 | C# test hooks | `src/VL.Qt.TestSupport/NativeTest.cs` (CAPI-04), `NativeTestHooks.cs` (TEST), `SmokeTest/TestProtocol.cs` (PROTO-06) | `src/VL.Qt.TestSupport/` | one place for both test projects |
 | Native test files | `test_input.cpp`, `test_probes.cpp` (NAPP-09); `device_testing.*` (NDEV-03); `resource_test_kind.cpp` (NRES-09); `testhooks.cpp` (TEST-08) | `test_*.cpp` | F1 |

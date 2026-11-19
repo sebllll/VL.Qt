@@ -50,6 +50,7 @@ The changes that matter most:
   1. User data must not throw. Add `Protocol.MaxStringBytes = CommandWriter.MaxPayload - Protocol.SetFieldsSize - 4`. In `PropertyDiff`, cut string values at a UTF-8 character boundary to that length through one helper `WriteString(uint id, ushort prop, string value, SinkSlot slot)`, which also writes a warning into the slot (REC-02 mechanism). In `QmlPropertyWriter`, skip a single entry larger than a chunk and warn.
   2. Add a safety net. In `SceneCore.Update`, catch an exception of `_reconciler.Update`, call `_commands.Reset()`, then run the resync path: a new `ResyncController.OnReconcileFailed()` that does what `OnApplyResult(rc != 0)` does (RESET, `Discard`, give-up rule). Report the exception text at the renderer's `Error` output. This keeps mirror and QtNative consistent whatever throws.
   3. Write the invariant "`Node.Last` and the registry change only together, at the end of a visit" into the design page (REC-03).
+- **Decided:** A4, P8, P4 step 4 → with the `u32` length the 64 KB limit goes, so no `Protocol.MaxStringBytes`, no cut at a UTF-8 boundary in `PropertyDiff` and no entry skipping in `QmlPropertyWriter`; part 1 of the proposal holds only as the fallback when the P8 comparison fails twice (`u32` for events only, so commands stay `u16`, then `u16` as today); B1 → part 2 as proposed (reset, resync), but the exception goes to the log and marks the Renderer node instead of an `Error` output (DECISIONS: no `Error` output pins); question 0.2 → wave 1 confirms the leak with the throwing-sink test before this issue is cut; A1 → `SinkSlot` is `FeedbackSlot`; B7 of [DECISION-ROUND.md](../DECISION-ROUND.md) → a value above `VLQT_MAX_COMMAND_PAYLOAD` is a failed reconcile as in B1 of QUESTIONS.md (log, mark the Renderer, resync); no truncation code
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt/Reconciler/PropertyDiff.cs`, `src/VL.Qt/Reconciler/QmlPropertyWriter.cs`, `src/VL.Qt/Reconciler/ResyncController.cs`, `src/VL.Qt/SceneCore.cs`, `src/VL.Qt/Protocol.cs`, new tests in `src/VL.Qt.Tests/ResyncTests.cs` and `ReconcilerPropertyTests.cs`
 - **Depends on:** REC-02 (for the warning)
@@ -73,6 +74,7 @@ The changes that matter most:
   - Writers pass a stable source: the `Node` for effect and build messages, and the constants `SceneRegistry.VideoDuplicate` and `InteractionDuplicate` (objects, not the strings) for the registry.
   - `SetEffectWarning` and `SetBuildError` then shrink to one call each.
   - Build errors of a root widget go to the renderer's `Error` output. `Reconciler.Update` returns them, or exposes `RootBuildError`.
+- **Decided:** A1 → `SinkState` is `FeedbackState`, `SinkSlot` is `FeedbackSlot`; DECISIONS 'No `Error` output pins' → the build error of a root widget goes to the log and marks the Renderer node, not an `Error` output
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt/Elements/ElementSink.cs` (element-model area, coordinate), `src/VL.Qt/Reconciler/EffectDiff.cs`, `src/VL.Qt/Reconciler/Reconciler.cs`, `src/VL.Qt/Reconciler/SceneRegistry.cs`, `src/VL.Qt/SceneCore.cs`, tests that set `Warning` directly (`src/VL.Qt.Tests/RectangleNodeTests.cs:149-159`, `SinkRegistryTests.cs:315-317`)
 - **Depends on:** none
@@ -110,6 +112,7 @@ The changes that matter most:
       - `attached` = no REPARENT;
       - the end-of-update decision in `ResolvePrimaries`;
       - "Last and registry change together" (REC-01).
+- **Decided:** G5 → the decision records are in `docs/design/`, so the link target is `docs/design/reconciler-identity.md`, rewritten for the slot key of A2; P14 → the bare `#NNN` go in wave 3, the comments that need a new sentence (the plan tags 04c, 03c, effects/08) are rewritten by the issue of REC-04 in wave 4; the page uses the glossary words (`ItemMirror`, `FeedbackRouter`, `OccurrenceRegistry`, 'element tree', never 'scene' for the tree of the patch, O2); C14 of [DECISION-ROUND.md](../DECISION-ROUND.md) → the page is a design note: `docs/design/reconciler.md`, not `docs/topics/`
 - **Effort:** M, mechanical: no
 - **Touches:** `docs/topics/reconciler.md` (new), `docs/architecture.md`, `docs/README.md`, `docs/decisions/reconciler-identity.md` (link only), all files in `src/VL.Qt/Reconciler/`
 - **Depends on:** best done together with REC-04 and REC-06, so that the comments are written once against the new types
@@ -133,6 +136,7 @@ The changes that matter most:
   - `EffectChainWriter`, a `static class`: `Send(ICommandSink, EffectChainMirror, in SpaceMapping)` with `WriteMultiLink`/`WriteShaderLink`. Reconciling the effect objects stays in `Reconciler`, because it recurses into `Reconcile`.
   - Per-pass values go in one `readonly struct PassInfo(int Pass, bool Force, bool Rescale, SpaceMapping Mapping)`, passed down instead of read from fields.
   - The folder and namespace become `Reconciliation/` and `VL.Qt.Reconciliation`. A namespace named `Reconciler` would clash with the class.
+- **Decided:** A3 → (a), central: all diffing of elements and of input handlers lives in `Reconciliation/`, `Interaction.WriteProperties` moves there as `HandlerPropertyDiff.cs` (ELM-09); O3 → `Node` and `HandlerNode` are `ItemMirror` and `HandlerMirror`, `EffectChainMirror` as proposed, and the mirror of the `ShaderEffect` element is `ShaderMirror` (O5: the element is `Shader`, so the method for today's `ChildrenReconciled` names the element `Shader`); A1 → `SinkRegistry` is `FeedbackRouter` (`Reconciliation/FeedbackRouter.cs`, with `DispatchResult.cs`) and `SinkSlot` is `FeedbackSlot`; S3 and TARGET 2.7 → `ICommandSink.cs` goes to `Wire/` (not next to the reconciler), `ResyncController.cs` to `Scene/`; S1 → folder `Reconciliation/`, namespace `VL.Qt.Reconciliation`; P14 → K3 (one type per file) is done by this issue in wave 4
 - **Effort:** L, mechanical: no
 - **Touches:** all files in `src/VL.Qt/Reconciler/`, `using` lines in `src/VL.Qt/SceneCore.cs`, `src/VL.Qt/WindowRenderer.cs`, `src/VL.Qt/OffscreenRenderer.cs`, `src/VL.Qt/Nodes/SnapshotNode.cs`, `src/VL.Qt/Nodes/FileWriterElementNode.cs`, `src/VL.Qt/Nodes/ElementTooltipPreview.cs`, `src/VL.Qt/Styles/StyleWriter.cs`, `src/VL.Qt/Elements/Interaction.cs`, `src/VL.Qt/Elements/SinkRegistry.cs`, tests and SmokeTest files that construct `Reconciler` (about 60, listed by `rg "new Reconciler\("`)
 - **Depends on:** REC-05, REC-06, REC-07 (do the renames in the same pass)
@@ -145,6 +149,7 @@ The changes that matter most:
 - **Where:** `src/VL.Qt/Reconciler/PropertyDiff.cs:61`; `src/VL.Qt/Reconciler/Reconciler.cs:297`, `:317`, `:809-815`; `src/VL.Qt/Reconciler/Reconciler.cs:203`, `:220`, `:262`, `:378`, `:395`; `src/VL.Qt/Reconciler/EffectDiff.cs:61`, `:89`
 - **Finding:** `DiffProperties(Node, Element?, Element next, Element? parent)` never reads `parent`. Its doc says the parameter exists "to treat the anchor only as pivot for children of Row/Column". `DiffCommon` says the opposite: everything is sent as it is and QtNative decides (`PropertyDiff.cs:141-142`). The only other use of the `Element? parent` threaded through `Reconcile`/`ReconcileStylable`/`ReconcileElement` is `parent?.Sink` for the build error (`Reconciler.cs:237`).
 - **Proposal:** Drop the parameter from the diff. Replace `Element? parent` in the three `Reconcile*` signatures by `SinkSlot parentSink`, which is what is used. Bundle the remaining position arguments into `readonly struct Position(ItemMirror? Parent, SinkSlot ParentSink, int Index, Style Inherited, bool Attached)`.
+- **Decided:** A1 → the slot type of `Position` and of the `Reconcile*` signatures is `FeedbackSlot`; TARGET 2.2 → `Position.cs` and `PassInfo.cs` live in `Reconciliation/`
 - **Effort:** S, mechanical: yes
 - **Touches:** `src/VL.Qt/Reconciler/Reconciler.cs`, `src/VL.Qt/Reconciler/PropertyDiff.cs`, `src/VL.Qt/Reconciler/EffectDiff.cs`
 - **Depends on:** none
@@ -179,6 +184,7 @@ The changes that matter most:
   - `Node.IsIgnored`/`HandlerNode.IsIgnored` → `IsPlaceholder`, and `Ignore()` → `CreatePlaceholder()`.
   - `CanOwn` becomes `TryClaimShownOnce(element, self)`, documented as "may take the element over from a later occurrence".
   - Remove the stray U+FEFF.
+- **Decided:** A2 → the key is the feedback slot when the element has one, the instance otherwise, done in this issue; the `_shownBySlot` fallback goes and 'owner = first renderer that showed it' becomes true; O2 → `OccurrenceRegistry` and `InteractionRegistry` as proposed (the registry loses the word 'scene'); O3 → `IsIgnored` becomes `IsPlaceholder` on `ItemMirror` and `HandlerMirror`; A1 → `SinkSlot` is `FeedbackSlot`; glossary 1.2 'occurrence' → `PrimaryOf`, `IsPlaceholder`
 - **Effort:** M, mechanical: partly (renames yes, the split no)
 - **Touches:** `src/VL.Qt/Reconciler/SceneRegistry.cs` → `OccurrenceRegistry.cs` + `InteractionRegistry.cs`, `src/VL.Qt/Reconciler/Reconciler.cs`, `src/VL.Qt/Reconciler/Node.cs`, `src/VL.Qt/SceneCore.cs`, `src/VL.Qt/WindowRenderer.cs`, `src/VL.Qt/OffscreenRenderer.cs`, `src/VL.Qt/Renderer.cs`, `src/VL.Qt/Nodes/SnapshotNode.cs`, `src/VL.Qt/Nodes/FileWriterElementNode.cs`, `src/VL.Qt/Nodes/ElementTooltipPreview.cs`, `src/VL.Qt/Nodes/SnapshotGrab*` (wherever `TryLocate` is called), `src/VL.Qt.Stride/SharedTextureScene.cs`, tests (`SceneRegistrySlotTests`, `ReconcilerSceneTests`, `InteractionTests`, `RectangleNodeTests`), SmokeTest `MultiRendererTest`
 - **Depends on:** Q1 (if the key changes, do it in the same issue)
@@ -207,6 +213,7 @@ The changes that matter most:
     - self-made widget: `Stylable`, `BuildError`, `ContainsStylable`
   - The sub-objects are allocated on first use, as `Handlers` already is, which also makes the common item smaller.
   - `HandlerNode` → `HandlerMirror` in `HandlerMirror.cs`.
+- **Decided:** O3 → `ItemMirror` and `HandlerMirror` as proposed; O5 → the element is `Shader`, so `ShaderEffectMirror` is `ShaderMirror` (`ShaderMirror.cs`) and 'ShaderEffect element' reads 'Shader element' next to 'Effect pin'; O7 → `BoundHandle` holds the number that routes events, which is an id: `BoundFeedbackId`; A1 → `BoundSlot` is a `FeedbackSlot`
 - **Effort:** M, mechanical: partly
 - **Touches:** `src/VL.Qt/Reconciler/Node.cs` → `ItemMirror.cs`, `EffectChainMirror.cs`, `ShaderEffectMirror.cs`, `HandlerMirror.cs`; `src/VL.Qt/Reconciler/Reconciler.cs`, `EffectDiff.cs`, `PropertyDiff.cs`, `UniformWriter.cs`, `SceneRegistry.cs`; tests that read `Root`/`Node` (`rg "\.Root\b|Node\b" src/VL.Qt.Tests src/VL.Qt.SmokeTest`)
 - **Depends on:** REC-04
@@ -222,6 +229,7 @@ The changes that matter most:
   - Key the table by `readonly record struct UniformKey(string Name, bool Sampler)` instead of a suffixed string.
   - Keep two dictionaries per `ShaderEffectMirror` (`Sent`, `Scratch`). Fill `Scratch`, compare, and swap only when something was sent. Clear instead of allocating.
   - A fast path: when `effect.Uniforms` is reference-equal to the previous effect's uniforms and no child id changed, skip the build.
+- **Decided:** O5 → the element is `Shader`: `ShaderEffectMirror` is `ShaderMirror` and the new perf case is for a `Shader`, not a `ShaderEffect`
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/Reconciler/UniformWriter.cs`, `src/VL.Qt/Reconciler/PropertyDiff.cs`, `src/VL.Qt/Reconciler/Node.cs` (or `ShaderEffectMirror.cs`), `src/VL.Qt.Tests/ReconcilerPerfTests.cs`
 - **Depends on:** none (REC-07 if done after it)
@@ -243,6 +251,7 @@ The changes that matter most:
   - Keep `Elements` and `Objects` as lists of the `EffectChainMirror` and clear and refill them, with scratch `used`/`matches` buffers on the reconciler (grow-only, like `_shapeBuffer`).
   - Return early without element collection when the new links refer to no element.
   - Ask the element-area review whether `Effect.Segment` can reuse its builder (one line in §6).
+- **Decided:** O3 → `Node?[]` and `List<Node>` are `ItemMirror?[]` and `List<ItemMirror>`; O5 → the shader entries of the chain are `ShaderEffect`s (was `ShaderLink`)
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/Reconciler/EffectDiff.cs`, `src/VL.Qt/Reconciler/Node.cs`, `src/VL.Qt.Tests/ReconcilerPerfTests.cs`
 - **Depends on:** none
@@ -270,6 +279,7 @@ The changes that matter most:
     - pool `RendererOccurrences` together with the lists;
     - when releasing and registering the same position in one visit (the `!same` branch, `Reconciler.cs:291-293`), move the occurrence from the old to the new instance in one registry call `Replace(old, next, node)`, which keeps owner, primary and `Elsewhere`;
     - document that the owner renderer may change after a change.
+- **Decided:** A2 → first branch: the key is the feedback slot when the element has one, occurrence entries live as long as the slot is shown, `_shownBySlot` goes, elements without a slot keep the instance key; the second branch (`Replace(old, next, node)`, pooling, owner 'first renderer to show the current instance') is not taken; accepted: two instances of one node in one tree are two occurrences of one element and a Video node has one player; G5 → the record is `docs/design/reconciler-identity.md`; 'Depends on Q1' is answered
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt/Reconciler/SceneRegistry.cs`, `src/VL.Qt/Reconciler/Reconciler.cs`, `src/VL.Qt.Tests/ReconcilerSceneTests.cs`, `SceneRegistrySlotTests.cs`, SmokeTest `MultiRendererTest.cs`, `docs/decisions/reconciler-identity.md`
 - **Depends on:** Q1, REC-06
@@ -294,6 +304,7 @@ The changes that matter most:
   - a demotion flips the handle's flag.
 
   `BindSink` acquires with `IsPrimary` as today. `BoundPrimary` and the check at `Reconciler.cs:603-607` go. In DEBUG, `ResolveAtEndOfUpdate` asserts `PrimaryOf(e) == node ⇔ node.IsPrimary` for the elements it touched.
+- **Decided:** A1 → `SinkRegistry` is `FeedbackRouter` (the `Primary` flag of the handle lives there); O3 → `Node` is `ItemMirror`; O7 → what BIND carries and the router maps is a feedback id, not a handle: `BoundHandle` is `BoundFeedbackId`, and 'takes a new primary handle' reads 'takes a new feedback id'
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/Reconciler/Reconciler.cs`, `src/VL.Qt/Reconciler/Node.cs`
 - **Depends on:** REC-04
@@ -323,6 +334,7 @@ The changes that matter most:
   - Make the QML members abstract, and give the tests one `abstract class NullCommandSink : ICommandSink` with empty virtual members, which the fakes derive from.
   - Drop `flags` from `Bind` and from the BIND command (`protocol.h`, `Protocol.Bind`, `CommandWriter`, QtNative), or keep the wire field and drop only the C# parameter if the protocol review prefers.
   - Move `ICommandSink.cs` next to `CommandWriter.cs` (it is the wire contract).
+- **Decided:** P4 step 3 (the wire-format pull request with PROTO-02, PROTO-09 and B5) → BIND loses `flags` on the wire too (PROTO-09 deletes the field in the same pull request: `protocol.h`, `Protocol.Bind`, `CommandWriter`, QtNative), so the 'keep the wire field' branch is not taken; O7 → BIND carries `feedbackId` (was `sinkHandle`); S3 → `ICommandSink.cs` moves to `Wire/` and `CommandSinkExtensions` gets its own file
 - **Effort:** M, mechanical: partly
 - **Touches:** `src/VL.Qt/Reconciler/ICommandSink.cs`, `src/VL.Qt/CommandWriter.cs`, `src/VL.Qt/Protocol.cs`, `src/VL.Qt.Native/protocol.h`, `src/VL.Qt.Native/commands.cpp`, `src/VL.Qt/Reconciler/Reconciler.cs`, `src/VL.Qt.Tests/RecordingSink.cs`, `ReconcilerPropertyTests.cs`, `ReconcilerStructureTests.cs`, `ReconcilerSceneTests.cs`
 - **Depends on:** the wire-format review (protocol area)
@@ -346,6 +358,7 @@ The changes that matter most:
   - Replace the counters with one `internal Diagnostics GetDiagnostics()` per type, returning a record struct of counts. Tests keep their leak checks through one member, and the production surface says it is diagnostics.
   - Tests call `Update(root, new SpaceMapping(space, default, 1f))` through a test helper extension in `src/VL.Qt.Tests`.
   - `Func<int>` → `Action`.
+- **Decided:** P22 → REC-14 is one of the K6 findings worked under TEST-07 (one issue), not an issue of its own; the REC-06 names apply to the members it lists (`OccurrencesOf`, `DuplicatesOf`)
 - **Effort:** S, mechanical: yes
 - **Touches:** `src/VL.Qt/Reconciler/IdAllocator.cs`, `SceneRegistry.cs`, `Reconciler.cs`, `ResyncController.cs`, `src/VL.Qt/SceneCore.cs`, tests and SmokeTest files that use these members (`rg "OccurrencesOf|DuplicatesOf|SlotCount|HandlerCount|_ids\.Count|ids\.Count|\.Root\b|Space\.DIP" src/VL.Qt.Tests src/VL.Qt.SmokeTest`)
 - **Depends on:** REC-06 if it is done first (names)
@@ -380,6 +393,7 @@ The changes that matter most:
 - **Proposal:**
   - Add `Measure` cases for: ShaderEffect, Effect chain, Group with `Style` changing every frame, element with Tap + Drag handlers changing every frame, and two reconcilers on one `SceneRegistry`.
   - Add a fault-injection sink (`ThrowingSink`, throws at command n) to the test project.
+- **Decided:** PLAN-CHECK wave 1, item 3 → written in wave 1, before any cut of wave 4 (REC-04); the two-renderer case for REC-10 is written for the slot key of A2
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt.Tests/ReconcilerPerfTests.cs`, new `src/VL.Qt.Tests/ThrowingSink.cs`, `src/VL.Qt.Tests/ReconcilerSceneTests.cs`
 - **Depends on:** none (should land before REC-04)

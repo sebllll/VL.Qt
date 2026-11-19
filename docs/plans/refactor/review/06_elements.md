@@ -52,6 +52,7 @@ An event for an element that is gone: the reconciler releases the handle when it
 - **Where:** `src/VL.Qt/Elements/Effect.cs:9-24`, `:38-51`, `:173`, `:246`; tests `EffectTests.cs:40-59`, `EffectPaddingTests.cs:23-54`, `EffectChainTests.cs:117`
 - **Finding:** The class summary says the whole chain "is folded into one EffectDesc, which becomes one Qt Quick MultiEffect", "the order of the chain has no meaning" and "each kind may appear once". Since shader links (`ShaderLink`, `Segment`) all three are false. `Segment` keeps the application order, a shader link splits the chain into several MultiEffect runs, order matters between runs, and a kind may appear once per run (Blur → shader → Blur gives no warning). A reader who adds an effect trusts the summary and gets it wrong. `Fold` is called only by tests; production uses `Segment` (`EffectDiff.cs:41`). `EffectKind` and `IManualPadding` still point to `Fold` in their docs.
 - **Proposal:** Summary of `Effect` in four sentences: an immutable chain; `Segment` cuts it at every `ShaderLink` into runs of built-in links, in application order (start of the chain first); each run becomes one MultiEffect, in which order has no meaning and a kind counts once (the link nearest to the pin wins); the effect area rule moves to `docs/` (effects page) with one sentence left here. Delete `Fold`. `FoldRun` becomes `private static EffectDesc FoldRun(List<Effect> nearestFirst, out string? warning)`. Tests call `Effect.Segment(chain, out _)[0].Multi` (a helper `SingleRun(chain)` in the test file).
+- **Decided:** O5 → `ShaderLink` is `ShaderEffect : Effect`, so the summary and `Segment` say 'cuts the chain at every `ShaderEffect`'; O4 → the five built-in effects are the 'merged effects' (each run of them becomes one MultiEffect layer) and the others the 'shader effects', in the summary and on the effects page
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/Elements/Effect.cs`, `src/VL.Qt.Tests/EffectTests.cs`, `EffectPaddingTests.cs`, `EffectChainTests.cs`
 - **Depends on:** none (do it together with ELM-11)
@@ -64,6 +65,7 @@ An event for an element that is gone: the reconciler releases the handle when it
 - **Where:** `src/VL.Qt/Elements/SinkRegistry.cs:151`, `:263-270`, `:85-89`, `:91-108`; `docs/decisions/events.md:21`
 - **Finding:** `events.md` says that with one sink and several Qt objects "hover and pressed combine with OR". Dispatch writes `IsHovered = payload` for every handle, primary or not (`IsState` excludes only Measured, SceneBounds, Media, Error), so the last record of the poll wins. The pointer moving from occurrence A to occurrence B in one frame yields "B enter, A leave" or "A leave, B enter", depending on Qt's delivery order. In the first order the slot ends up not hovered while B is hovered. Also `Release` of the primary handle resets hover and press although another occurrence may still be hovered. Item-level hover and press come from the widgets (handler handles are always primary and unique per sink, `SinkRegistry.cs:28`), so the case is "the same Button at two places". I did not run it; the order Qt uses is not verified.
 - **Proposal:** Track the bits per handle and derive the slot value. `Binding` gets `bool Hovered, Pressed` (written back into `_slots[handle]`, which is a struct update without allocation). `SinkState` gets `internal int HoverCount, PressCount`. On EV_HOVER/EV_PRESS a handle that changes its bit adjusts the count, and `IsHovered = HoverCount > 0`. `Release` subtracts the handle's bits instead of resetting the slot; the primary still resets the other pointer fields. If Sebastian prefers last-write-wins, change `events.md:21` instead (Q3).
+- **Decided:** B6 → (a), OR over all occurrences as proposed (per-handle bits, counts per slot); the 'prefers last-write-wins' branch is not taken, `events.md` (in `docs/design/`, G5) stays the rule; A1 → `SinkRegistry` is `FeedbackRouter`, `SinkState` is `FeedbackState`
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/Elements/SinkRegistry.cs`, `src/VL.Qt/Elements/ElementSink.cs`, `src/VL.Qt.Tests/SinkRegistryTests.cs`
 - **Depends on:** Q3
@@ -76,6 +78,7 @@ An event for an element that is gone: the reconciler releases the handle when it
 - **Where:** `src/VL.Qt/Elements/SinkRegistry.cs:123-130`, `:48-49`, `:68-69`, `:116-121`; only caller of `Clear`: `src/VL.Qt.SmokeTest/HandlerTest.Latency.cs:134`
 - **Finding:** `Clear` is documented as "Frees all handles (renderer dispose)", but nothing in `src/VL.Qt` calls it. Either the reconciler releases every handle one by one when a renderer is disposed (then `Clear` and its doc are dead), or a window closed while an element is hovered or pressed leaves `IsHovered`/`IsPressed` stuck at true in the element node. I could not confirm which from my area. `TryResolve` and `IsPrimary` are used only by tests (`ReconcilerSceneTests.cs:42,58,125`, `SinkRegistryTests.cs:251`). `Count` is used only by tests and the SmokeTest (K6).
 - **Proposal:** Read `Reconciler.Clear`/`Discard` (REC area). If they release per handle, delete `Clear` and use the same path in the SmokeTest. If they do not, call `_sinks.Clear()` from the reconciler's dispose and add a test "dispose while hovered → not hovered". Replace `TryResolve`/`IsPrimary`/`Count` in tests with observable behaviour: send an event for the handle and check the slot; for `Count`, assert that a released handle's events are ignored (`DispatchResult.Ignored`). If one counter must stay, keep `Count` (a single `int`, cheap) and drop the other two.
+- **Decided:** A1 → `SinkRegistry` is `FeedbackRouter` (`Clear`, `TryResolve`, `IsPrimary`, `Count` are its members)
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/Elements/SinkRegistry.cs`, possibly `src/VL.Qt/Reconciler/Reconciler.cs`, `src/VL.Qt.Tests/ReconcilerSceneTests.cs`, `SinkRegistryTests.cs`, `src/VL.Qt.SmokeTest/HandlerTest.Latency.cs`
 - **Depends on:** none
@@ -92,6 +95,7 @@ An event for an element that is gone: the reconciler releases the handle when it
   - Make `Video.MinRate`, `ClampRate`, `ClampVolume`, `Shape.ExtentOf` and `Text.DefaultFontSize` internal.
   - Public stays: `Element`, `IElement`, `Effect`, `Interaction`, `Sampler`, `Uniform`, `TouchPoint`, `QmlSignal` and the enums used on pins (`PointerButtons`, `PointerDevices`, `DragAxis`, `FontWeight`, `TextWrap`, `TextElide`, `TextAutofit`, `TextHorizontalAlignment`, `HorizontalAlignment`, `VerticalAlignment`, `ImageFillMode`, `VideoFillMode`, `SliderOrientation`, `ShapeCap`, `ShapeJoin`, `ShapeFillRule`, `SamplerFilter`, `SamplerMipFilter`, `SamplerAddress`).
   - The concrete element classes: Q2.
+- **Decided:** A6 → the concrete element classes (`Rectangle`, `Text`, `Group` …) are internal, so Q2 is answered 'internal' and `Video.ClampRate`, `Shape.ExtentOf` and the other statics of these classes leave the node browser with them; C3 and P5 → `Element` and `Container` are internal too and only `IElement` is public (the 'Public stays' list drops `Element`); catalog → `FontWeight` goes (Font Weight is `int` everywhere) and `ImageFillMode`, `VideoFillMode` become `FillMode`, so the public-enum list loses the first three and gains `FillMode`; A1 → `ElementSink`, `SinkState`, `SinkSlot` are `ElementFeedback`, `FeedbackState`, `FeedbackSlot`, and `Interaction.Sink` is the internal `Interaction.Feedback`; B9 of [DECISION-ROUND.md](../DECISION-ROUND.md) → `ElementType` is not an element type: only `Protocol.ElementType` in `Wire/`, the mapping lives in `Reconciliation/`, `Elements/ElementType.cs` goes
 - **Effort:** M, mechanical: yes (except Q2)
 - **Touches:** `src/VL.Qt/Elements/*.cs`; compile errors will point to any public node member that exposes these types (none found by search)
 - **Depends on:** ELM-05, ELM-06 (do the rename in the same pass), Q2
@@ -104,6 +108,7 @@ An event for an element that is gone: the reconciler releases the handle when it
 - **Where:** `src/VL.Qt/Elements/Element.cs:15`; `src/VL.Qt/Reconciler/PropertyDiff.cs:69-74`; `src/VL.Qt/Elements/StylableElement.cs:15`
 - **Finding:** `Element` has a `protected` constructor taking any `ElementType`, while `Effect` and `Interaction` use `private protected` (`Effect.cs:27`, `Interaction.cs:17`). A class outside the library can derive and pass, for example, `ElementType.Rectangle`. `PropertyDiff` then casts `(Rectangle)next` by `next.Type` (`PropertyDiff.cs:71`) and throws `InvalidCastException` in the middle of a reconcile, which REC Q2 shows is not handled. The summary's "Subclasses should be sealed" is a wish, not a rule. The CLR type already says what an element is; `Type` exists for the wire id and for `Group → Item`.
 - **Proposal:** `private protected Element(ElementType type)`; delete the sentence about sealing (the test `SealedAndInitOnly` enforces it). Make `ElementType` and `Element.Type` internal (ELM-04).
+- **Decided:** C3, A6 → `Element` is internal, so a foreign subclass cannot exist by accessibility; a foreign implementation of `IElement` is ignored, with a warning at the node (P5)
 - **Effort:** S, mechanical: yes
 - **Touches:** `src/VL.Qt/Elements/Element.cs`, `ElementType.cs`
 - **Depends on:** none
@@ -127,6 +132,7 @@ An event for an element that is gone: the reconciler releases the handle when it
   | BIND `sinkHandle`, `Acquire/Release` | `feedbackHandle` | |
 
   Alternative B: keep "sink" for this path and rename `ICommandSink` to `ICommandTarget`.
+- **Decided:** A1 → (a), the table as proposed (alternative B not taken); O1 → 'feedback' names only this way back (`FeedbackLayer` of QtNative is `PreviousFrameLayer`); O7 → the number in BIND and in the event header is `feedbackId`, not `feedbackHandle` (`EventReader.FeedbackId`); P14 → done in wave 3 as one mechanical change before the issues of wave 4, so 'right after the REC file moves, before ELM-07' no longer applies; TARGET 2.2 → `FeedbackRouter` lives in `Reconciliation/`, the three feedback types in `Elements/Feedback/`
 - **Effort:** L, mechanical: yes (rename refactoring; about 25 test files reference the names)
 - **Touches:** `src/VL.Qt/Elements/`, `src/VL.Qt/Reconciler/` (Reconciler, SceneRegistry, EffectDiff, PropertyDiff), `src/VL.Qt/SceneCore.cs`, `src/VL.Qt/Nodes/` (ElementNode and the interaction nodes), `src/VL.Qt/Protocol.cs`, `src/VL.Qt.Native/protocol.h` (field name only), `src/VL.Qt.Tests/`, `src/VL.Qt.SmokeTest/`, `docs/decisions/events.md`, `docs/architecture.md`
 - **Depends on:** Q1; best done right after the REC file moves, before ELM-07
@@ -156,6 +162,7 @@ An event for an element that is gone: the reconciler releases the handle when it
 - **Where:** `src/VL.Qt/Elements/SinkRegistry.cs:132-169`, `:250-341` (every `sink[index]`); `ElementSink.cs:122-130`; test `SinkRegistryTests.cs:490-503`
 - **Finding:** A poll record's index is added to the slot index of the binding, up to `MaxIndexOffset` = 65,535. The doc says "QtNative sends 0" and offsets above 0 are "for items that serve several slots", and no such item exists. Every write uses the growing indexer, so one record with index 65,535 allocates 65,536 `SinkState` objects in the node's sink (the test `RecordIndex_IsOffsetToSlotIndex` asserts exactly that). Those slots stay until the node trims. The feature is unused generality with a memory cost on a malformed record.
 - **Proposal (recommended):** Treat index ≠ 0 as invalid (ignored, counted in `Ignored`) and delete `MaxIndexOffset` and `Target`. Remove the field's meaning from `protocol.h` in the wire area (Q4). Alternative: keep the offset but write only existing slots (`TryGet`) when the offset is above 0.
+- **Decided:** B5 → (a), and the field is removed from the protocol with the native break (P4 step 3, with PROTO-09), not only marked reserved: `MaxIndexOffset`, `Target` and `EventReader.Index` go
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/Elements/SinkRegistry.cs`, `src/VL.Qt.Tests/SinkRegistryTests.cs`; wire area: `protocol.h`/`Protocol.cs` comment
 - **Depends on:** Q4 (only for the protocol side)
@@ -179,6 +186,7 @@ An event for an element that is gone: the reconciler releases the handle when it
   - Move the name check to `Protocol` (`Protocol.IsValidName(string?)`), used by both `UniformWriter` and `QmlProperties`.
   - Move `Sampler.Pack` to `UniformWriter` as `static ulong PackSampler(Sampler)`.
   - The enum values stay equal to protocol values (section 2).
+- **Decided:** A3 → (a), central: `WriteProperties` of the seven links, `PointerMasks` and `PointerProps` move to `Reconciliation/HandlerPropertyDiff.cs`; S3 → `QmlEvents` becomes `Wire/QmlEventDecoder.cs`; the other moves hold; 'Depends on REC Q3' is answered
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt/Elements/Interaction.cs`, `QmlEvents.cs`, `QmlProperties.cs`, `Sampler.cs`; `src/VL.Qt/Reconciler/` (new `HandlerPropertyDiff.cs`, `UniformWriter.cs`, the handler reconcile call site); `src/VL.Qt/EventReader.cs` folder; `src/VL.Qt/Protocol.cs`; `src/VL.Qt.Tests/InteractionTests.cs`, `QmlTests.cs`, `SamplerTests.cs`
 - **Depends on:** REC Q3; ELM-11 (file cut)
@@ -198,6 +206,7 @@ An event for an element that is gone: the reconciler releases the handle when it
   - `Element` gets `internal virtual ImmutableArray<Element> ChildItems => ImmutableArray<Element>.Empty`, the list of items the reconciler creates under this one. `Container` returns `Children`; `ShaderEffect` returns a list computed on first read and cached in a field (like `StylableElement.Empty`), with a linear duplicate check.
   - The reconciler reads `ChildItems`.
   - Delete `Element.Normalize` and the throwing accessor.
+- **Decided:** C3, A6 → `Container` is internal like `Element` (not public as proposed); O5 → the `ShaderEffect` element is `Shader` (`Elements/Shaders/Shader.cs`), its `ChildItems` as proposed
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt/Elements/Element.cs`, `Group.cs`, `Row.cs`, `Column.cs`, `ShaderEffect.cs`, new `Container.cs`; `src/VL.Qt/Reconciler/` (every `.Children` read of an element); `src/VL.Qt.Tests/ElementTypeTests.cs` (`Leaves_RejectChildren` deleted, `Containers_KeepChildren` kept)
 - **Depends on:** none
@@ -224,6 +233,7 @@ An event for an element that is gone: the reconciler releases the handle when it
     With ELM-09 both become pure data, and their only difference is the one that matters: effects fold, handlers keep an identity.
   - `PointerMasks` and `PointerProps` lack an explicit `internal` and `sealed`. `PointerButtons.None` behaviour is documented in a 220-character line.
 - **Proposal:** One type per file in subfolders, layout in section 4. Shared pins as interfaces on both sides: rename `IManualPadding` → `IEffectPadding`; add `IPointerFilter { PointerButtons Buttons; PointerDevices Devices }` on Click, Point and Drag (Wheel, Touch Points and Pinch implement `Devices` only through `IPointerDevices`) so that `HandlerPropertyDiff` (ELM-09) writes them with one helper instead of the `writeButtons` flag.
+- **Decided:** O5 → `ShaderLink` is `ShaderEffect : Effect` in `Effects/ShaderEffect.cs`, the element `ShaderEffect` is `Shader` in `Shaders/Shader.cs`; catalog → `Enums/` has no `FontWeight.cs`, `ImageFillMode.cs` and `VideoFillMode.cs` become `FillMode.cs`, and `BlendMode.cs`, `LabelPosition.cs`, `ToggleLook.cs` join it; A1 → the types of `ElementSink.cs` and `SinkRegistry.cs` carry the names of ELM-06 (`FeedbackRouter` leaves the folder); P14 → K3 is done by this issue in wave 4
 - **Effort:** M, mechanical: yes
 - **Touches:** all files listed under Where, new files per section 4
 - **Depends on:** ELM-01; ELM-09 for the helpers that leave the folder
@@ -254,6 +264,7 @@ An event for an element that is gone: the reconciler releases the handle when it
   - `Release`: "clears hover, press, active, tap count, long presses, wheel, touch points and the error; pending clicks stay until taken."
   - `ElementSink` summary without the plan reference; the one-frame latency sentence stays.
   - `Video`: "Plays a file with Qt's own clock; position and duration come back through the feedback, 0 until the media is loaded."
+- **Decided:** G5 → the records are in `docs/design/` (`element-catalog-v1.md`, `events.md`); C2 → the geometry section says there is no `Visible` pin but an optional `Enabled` (default true, last input pin); A1 → the wording of `events.md` and of the `ElementSink` and `Release` docs says 'feedback slot'
 - **Effort:** S, mechanical: no
 - **Touches:** `docs/decisions/element-catalog-v1.md`, `docs/decisions/events.md`, `src/VL.Qt/Elements/Interaction.cs`, `SinkRegistry.cs`, `ElementSink.cs`, `Video.cs`
 - **Depends on:** none (wording follows ELM-06 if it lands first)
@@ -278,6 +289,7 @@ An event for an element that is gone: the reconciler releases the handle when it
 - **Where:** `src/VL.Qt/Elements/QmlProperties.cs:122-137`
 - **Finding:** `Matches` counts the entries it cannot send, but does not compare them. If an unsupported value changes to another unsupported value (a `double[]` to a `Matrix`, or a null to a string that is too long), the snapshot is kept and the node keeps showing the old reason ("type Double[] is not supported").
 - **Proposal:** Keep the names of the refused entries with their reason (`string[]` of `name + "\0" + typeName`, or a second small dictionary name → `Type?`). `Matches` compares the type of each refused value with it; a different type gives a new snapshot. Still no allocation in the steady state.
+- **Decided:** P22 → ELM-14 = QML-07, one issue
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/Elements/QmlProperties.cs`, `src/VL.Qt.Tests/QmlTests.cs`
 - **Depends on:** none

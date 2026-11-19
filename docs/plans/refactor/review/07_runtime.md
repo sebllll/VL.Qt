@@ -55,6 +55,7 @@ The runtime works and is well tested at the pump level. One Qt application per p
 
   23 node classes create a `NodeErrors`, so the same loss can happen wherever a node uses more than one phase.
 - **Proposal:** `NodeErrors` keeps a small list of `(string Phase, MessageSeverity Severity, string Text)`, at most one entry per phase. `Report`/`Warn` set the entry of their phase. `Clear(phase)` removes only that entry. The node shows one persistent message that joins all entries (errors first, one line each), rebuilt only when the list changes. `Current` becomes `CurrentError` (errors only), and the `Error` pin reads that. The "log once per distinct text" memory moves into the entry.
+- **Decided:** DECISIONS 'No `Error` output pins' → the `Error` pin of the Renderer goes, so `CurrentError` feeds no pin: the message list is shown at the node (warning or error, message as tooltip) and logged; P22 and TARGET 3.2 → RUN-01, NODE-05 and NODW-04 are one mechanism for messages at a node, one issue; A1 of [DECISION-ROUND.md](../DECISION-ROUND.md) → `NodeErrors` is the one store, one entry per phase, and `NodeMessage` is the handle a message source holds on it; `ResourceNodeReport` and the shader area use it
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/NodeErrors.cs`, `src/VL.Qt/Renderer.cs`, new `src/VL.Qt.Tests/NodeErrorsTests.cs` (needs a `NodeContext`; if that is not constructible in unit tests, extract the list logic into `internal sealed class NodeMessageList` and test that)
 - **Depends on:** none
@@ -67,6 +68,7 @@ The runtime works and is well tested at the pump level. One Qt application per p
 - **Where:** `src/VL.Qt/QtApp.cs:386-392`, `src/VL.Qt/OffscreenRenderer.cs:277-285`, `src/VL.Qt.Stride/QtTextureRenderer.cs:124-131`, `src/VL.Qt.Native/offscreen.cpp:645`, `src/VL.Qt.Native/vlqt.cpp:135`, `1168-1182`
 - **Finding:** `PumpFrame` advances the driver only when the new time is greater than `QtApp._driverSeconds`. `RenderBatch` advances the native driver itself (`offscreen.cpp:645`) to a time chosen by `QtTextureRenderer.DriverSeconds()`, but `_driverSeconds` never learns about it. The native `setTime` accepts any value. With app B (QtTexture, its clock ahead) and app A (Renderer) in one process, B's batch sets the native driver to `t_B`. A's pump then compares its time only with the managed value of the last pump and can set the native driver to a time below `t_B`, so Qt animations jump back by up to a frame. In a single app the two times coincide, so the tests do not see it. The rule "the driver never runs backwards" lives in three places: `QtPump._offset`, the `PumpFrame` guard and `QtTextureRenderer.DriverSeconds`.
 - **Proposal:** `QtApp` owns the driver: `internal double AdvanceDriver(double seconds)` applies the max rule, calls `vlqt_driver_advance` only when the time grows, and returns the time in effect. `PumpFrame` calls it. `OffscreenRenderer.RenderBatch` takes the time already resolved by `QtApp.AdvanceDriver`, and `QtTextureRenderer.DriverSeconds` is deleted. Native side (for the native review): `renderBatch` stops calling `vlqt_driver_advance`, or `Driver::setTime` ignores times below the current one, so the guarantee holds in one place.
+- **Decided:** A5 and CAPI-03 → `vlqt_driver_advance` is `vlqt_app_advance_animations` (glossary 'animation clock'); the exports that take scenes are `vlqt_scene_*`; B6 of [DECISION-ROUND.md](../DECISION-ROUND.md) → native side: `Driver::setTime` ignores a time below the current one; `vlqt_offscreen_render_batch` keeps its signature
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/QtApp.cs`, `src/VL.Qt/OffscreenRenderer.cs`, `src/VL.Qt.Stride/QtTextureRenderer.cs`, optionally `src/VL.Qt.Native/offscreen.cpp` and `vlqt.h`/`vlqt.cpp` (signature of `vlqt_offscreen_render_batch`), `src/VL.Qt/Native.cs`, SmokeTest callers of `OffscreenRenderBatch`
 - **Depends on:** none
@@ -99,6 +101,7 @@ The runtime works and is well tested at the pump level. One Qt application per p
   - Build `PerfStats` in one constructor call, without `with`.
   - Rebuild it only every `kPercentileIntervalMs` (250 ms), the same cadence as the percentiles, so the record changes at most four times per second.
   - Resolve the icon path once, in the `WindowSettings` constructor. Store `IconPath` (`string?`, full path or null) next to the given `Icon`.
+- **Decided:** C17 → the Perf output keeps updating every frame, so the 250 ms rebuild and the 4 Hz cadence are not taken; this finding only removes the per-frame allocation (record structs, one constructor call, no `with`) and resolves the icon path once; C1 → `WindowSettings` keeps only `Icon` and `Bounds` (on create), so `Resolve` no longer merges Title, Borderless and Fullscreen
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/WindowRenderer.cs`, `src/VL.Qt/PerfStats.cs`, `src/VL.Qt/WindowSettings.cs`, `src/VL.Qt/Nodes/WindowSettingsNode.cs`, `src/VL.Qt.Tests/WindowSettingsTests.cs`, `src/VL.Qt.Tests/PerfStatsTests.cs`
 - **Depends on:** RUN-10 if PerfStats is reshaped at the same time
@@ -117,6 +120,7 @@ The runtime works and is well tested at the pump level. One Qt application per p
   - `HostFrameMeter.cs` (`internal sealed class`): `Begin()` reads the GC and alloc counters and the start timestamp. `End(long vvvvStart, long prevPumpEnd, long end)` returns the `Native.vlqt_host_frame`. It holds what `HostFrameHistory` held.
   - `PumpDiagnostics.cs` (`internal sealed class`, owned by `QtApp`): the cumulative counters and `[vlqt.stats]`, the slow-frame warning (`WarnIfSlow(...)` with `SumWaitMs`, `ExceedsBudget`, `FormatPhases`), and the rate-limited `LogParticipantError`.
   - `QtApp.cs`: `QtApp`. `PumpFrame` reads as the steps of section 2, about 30 lines.
+- **Decided:** A5 and glossary 1.6 → `HostFrameMeter` is `HostPumpMeter` (`HostPumpMeter.cs`) and `Native.vlqt_host_frame` is `vlqt_host_pump`; P14 → K3 (one type per file) is done by this issue in wave 4
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt/QtApp.cs`, new `IQtFrameParticipant.cs`, `IQtPumpTarget.cs`, `QtPump.cs`, `HostFrameMeter.cs`, `PumpDiagnostics.cs`; `src/VL.Qt.Tests/PerfStatsTests.cs` (calls `QtApp.FormatPhases`), `src/VL.Qt.Tests/QtPumpTests.cs`, SmokeTest `PumpTest.cs`, `HandlerTest.Latency.cs`
 - **Depends on:** RUN-02 (`AdvanceDriver`) if done together
@@ -141,6 +145,7 @@ The runtime works and is well tested at the pump level. One Qt application per p
   - `OffscreenRenderer` → `OffscreenScene`, same pattern. Its input translation moves into `OffscreenInput` (`internal sealed class OffscreenInput`, owns the input state, `Notify(INotification)` calls `OffscreenScene.Send*`). `'\0'` becomes the "no pending high surrogate" value.
   - `RenderBatch(IntPtr context, ReadOnlySpan<IntPtr> scenes, double driverSeconds)` takes handles. The caller keeps its own `IntPtr[]`, and `s_scenes` goes.
   - Note for the reconciler area: `SceneRegistry` (element occurrences per app) would then sit next to `Scene` (one native scene). Review 05 should say whether it becomes `OccurrenceRegistry` or similar.
+- **Decided:** O2 → `Scene`, `WindowScene`, `OffscreenScene` as proposed, and the constructor takes a `SceneHandle` (what the C handle `vlqt_scene` points to, CAPI-03), not a raw `IntPtr`; REC-06 and O2 → `SceneRegistry` is `OccurrenceRegistry`; A5 → `vlqt_window_destroy` and the other shared functions are `vlqt_scene_*`; S1 → `RendererNode` is in namespace `VL.Qt.Nodes` (node classes), `Scene/` stays `VL.Qt`
 - **Effort:** M, mechanical: partly (renames yes, handle-in-constructor no)
 - **Touches:** `src/VL.Qt/Renderer.cs` → `Nodes/RendererNode.cs`, `WindowRenderer.cs` → `WindowScene.cs`, `OffscreenRenderer.cs` → `OffscreenScene.cs` + `OffscreenInput.cs`, `SceneCore.cs` → `Scene.cs`, `src/VL.Qt/Reconciler/Reconciler.cs` (doc refs), `src/VL.Qt.Stride/SharedTextureScene.cs`, `QtTextureRenderer.cs`, unit tests `SceneCoreClearTests.cs`, `SceneCoreSpaceTests.cs`, `ResyncTests.cs`, `ReconcilerSpaceTests.cs`, `PerfStatsTests.cs`, `OffscreenRendererTests.cs`, `InputMappingTests.cs`; SmokeTest `BorderlessTest`, `FullscreenTest`, `MultiRendererTest`, `Program`, `PumpTest`, `RendererTest`, `ResyncTest`, `SpaceTest`, `QtTextureTest*`; docs mentioning the names
 - **Depends on:** RUN-02 (RenderBatch signature)
@@ -190,6 +195,7 @@ The runtime works and is well tested at the pump level. One Qt application per p
   - `Bounds`: keep the first three sentences. The hotswap note goes to `docs/topics/` (or the WindowPlacement code comment, shortened).
   - timing.md gets a section "Several vvvv apps" (pump per app host, driver offset and resync, windows per pump).
   - architecture.md gets the frame order of section 2 of this report.
+- **Decided:** G5 → `docs/decisions/timing.md` is `docs/design/timing.md`
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/Renderer.cs`, `docs/decisions/timing.md`, `docs/architecture.md`
 - **Depends on:** RUN-08 (wording follows the final behaviour)
@@ -211,6 +217,7 @@ The runtime works and is well tested at the pump level. One Qt application per p
   - `GcActivity(Gen0PerSecond…, AllocatedBytesPerFrame)`
 
   Each group is a `public readonly record struct` with documented parameters, so a nested `Split` works in VL without an extra allocation. The four `Split…` methods go. Alternative: keep the flat record and only add `<param>` docs (no break, but the shape stays). Recommendation: the grouped shape, together with RUN-04.
+- **Decided:** C17 → (a), grouped record structs with nested Split; the output updates every frame (RUN-04 only removes the allocation); P22 → RUN-10 = NDIAG-11, one issue; TARGET 2.2 and 2.7 → one file per record in `Window/` (`PerfStats.cs`, `PerfPercentiles.cs`, `PerfCounters.cs`, `HostPerfStats.cs`, `GcPerfStats.cs`), so `HostTimes` and `GcActivity` are `HostPerfStats` and `GcPerfStats`; NDIAG-10 → `PerfSample.frame` is `frameInterval`; E13 → `OverBudget` counts only Qt work (events, sync, render), not the vsync wait
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt/PerfStats.cs`, `src/VL.Qt/WindowRenderer.cs`, `src/VL.Qt.Stride` (if QtTexture outputs PerfStats; check), `src/VL.Qt.Tests/PerfStatsTests.cs`, help patches using `PerfStats` (search `help/` for `Split Percentiles`, `SplitHost`), `help/Help.xml` if a topic changes
 - **Depends on:** RUN-04; question Q3
@@ -251,6 +258,7 @@ The runtime works and is well tested at the pump level. One Qt application per p
 - **Where:** `src/VL.Qt/Geometry.cs:11`, `src/VL.Qt/Renderer.cs:14`
 - **Finding:** `Geometry` is a `public static class`, and the assembly is imported with `ImportAsIs`, so its two methods show up as nodes. They are protocol helpers (Qt alignment bits for the `ANCHOR` command). The tests reach internals through `InternalsVisibleTo`.
 - **Proposal:** Make `Geometry` `internal`. Move `[assembly: ImportAsIs]` from `Renderer.cs` into `Initialization.cs`, next to `[assembly: AssemblyInitializer]`, where a reader looks for assembly attributes.
+- **Decided:** catalog → `Geometry` is internal (row 'ElementSink, SinkState, SinkSlot, ElementType, Geometry'); TARGET 2.2 → the assembly attributes live in `Properties/AssemblyInfo.cs`, not in `Initialization.cs`, and `Geometry.cs` is in `Scene/`
 - **Effort:** S, mechanical: yes
 - **Touches:** `src/VL.Qt/Geometry.cs`, `src/VL.Qt/Renderer.cs`, `src/VL.Qt/Initialization.cs`
 - **Depends on:** none
@@ -274,6 +282,7 @@ The runtime works and is well tested at the pump level. One Qt application per p
   - Drop `DeliverInputAtFrameStart`: the latency test then asserts the current latency only, and the old "one frame later" number goes into its comment.
   - Keep `CreateForTest` and the counters, because PumpTest needs a real `QtApp` on a simulated clock and they are cheap, but group them under a `// Diagnostics read by the SmokeTest` comment.
   - The `Commands` seams stay until review 05 decides how ResyncTest injects a bad command.
+- **Decided:** P22 → RUN-14 is one of the K6 findings worked under TEST-07 (one issue), not an issue of its own
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/WindowPlacement.cs`, `src/VL.Qt/SpaceMapping.cs`, `src/VL.Qt/QtApp.cs`, `src/VL.Qt.Tests/GeometryTests.cs`, `SpaceMappingTests.cs`, `WindowPlacementTests.cs`, SmokeTest `HandlerTest.Latency.cs`
 - **Depends on:** RUN-05

@@ -58,6 +58,7 @@ Keep:
   - Store the last written `elementRect` in `Link` and write it only on change.
   - Set `m_layersDirty` in the SAMPLER branch only when the state differs (`:621`), and reuse a member vector in `refreshLayerRequests`.
   - Call `updateError()` only when `problems`/`shaderError` changed, or from the pass `errorChanged` signal that already exists (`:476`).
+- **Decided:** O5, S2 → `ShaderEffectItem` is `ShaderItem` (`effects/shader_item.*`) and `effectchain.*` is `effects/effect_chain.*`; `Link` stays the name of one entry of a chain
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt.Native/effectchain.h`, `effectchain.cpp`, `shadereffectitem.h`, `shadereffectitem.cpp`
 - **Depends on:** NFX-07 (easier after it, not required)
@@ -82,6 +83,7 @@ Keep:
 - **Where:** `src/VL.Qt.Native/shadereffectitem.cpp:425`, `:980-991`, `:1016-1020`, `:903-905`; `shadereffectitem.h:36`
 - **Finding:** The 1×1 transparent `QSGTexture` is created in `updatePaintNode` but deleted in the destructor and in `releaseResources`, both on the GUI side. At that point the node's material still points to it (`mat.tex`, `:1053`). This is safe only because the `basic` loop never renders between that delete and the next sync. Under a threaded loop it would be a use-after-free, and with OpenGL a texture deleted without a current context. The provider `destroyed` connection (`:905`) is also correct only for the basic loop; that is the right choice, but nothing says so. The header comment speaks of "GUI blocked" and the render thread without naming the loop actually used. A reader cannot tell which places would break if the loop changed.
 - **Proposal:** Let `EffectNode` own the transparent texture: `std::unique_ptr<QSGTexture> transparent`, created on the node's first `updatePaintNode` and destroyed with the node by the scene graph. Then the item's `m_transparent`, the `delete` in the destructor and `releaseResources` all go; `invalidateSceneGraph` only resets `imageTexture`. Add one sentence to the header (and to `docs/architecture.md` under the render loop): "QtNative runs Qt's basic render loop; the provider `destroyed` connection relies on it."
+- **Decided:** E4, O5, G5 → (a) for the texture as proposed (`EffectNode` owns the 1×1 texture); (b) the basic-loop sentence is stated once, in the design note of E4 under `docs/design/`, and the header comment points to it; the render-side file is `effects/shader_material.*` (was `shadereffectmaterial`)
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt.Native/shadereffectitem.h`, `shadereffectitem.cpp`, `docs/architecture.md`
 - **Depends on:** NFX-05 (if done first, the change lands in `shadereffectmaterial.cpp`)
@@ -100,6 +102,7 @@ Keep:
   - "Runtime bake": targets, cache, the GLSL rename check.
 
   Each header keeps three to five lines: what the type is, who calls it, which thread, and a link to the section. Replace "doc 21" with that link and "render-texture.md" with its real path.
+- **Decided:** O5, E4, G5 → the section "ShaderEffect item" is titled "Shader item" (the element is `Shader`; "shader effect" names an effect of the chain); the render-loop sentence is the design note of E4 in `docs/design/`; `effectchain.*`, `shadereffectitem.h`, `linear_pass.h` are `effects/effect_chain.*`, `effects/shader_item.h`, `offscreen/linear_pass.h`; C14 of [DECISION-ROUND.md](../DECISION-ROUND.md) → the internals go to a design note in `docs/design/`, not into the user page `docs/effects-and-shaders.md`
 - **Effort:** M, mechanical: no
 - **Touches:** `docs/effects-and-shaders.md`, `src/VL.Qt.Native/effectchain.h`, `effectchain.cpp`, `shadereffectitem.h`, `shader_resource.h`, `qmlitem.h`, `linear_pass.h`
 - **Depends on:** none
@@ -120,6 +123,7 @@ Keep:
   - `shadereffectmaterial.h/.cpp` (namespace `vlqt`, internal): `EffectMaterial`, `EffectShader`, `SamplerView`, `EffectNode`, `materialTypeFor(vs, fs)`, `writeTexelSize`. Render side only; its head comment says so.
   - `layerrequests.h/.cpp`: `class LayerRequests` (static `request(item, owner, mip)`, `release(item, owner)`, `releaseAllQueued(owner)`), replacing `s_layers`/`requestLayer`/`releaseLayer`/`settleLayer` and the copy of the release loop in the destructor (`:412-422`).
   - In the item: `rebuild()` calls `collectLayout(frag, vert)`, which returns `{members, samplers, errors}`, then `assignAutoUniforms()`, `bindTable()` and `checkSamplerStates()`. Add `bool newShaderPending() const` for the expression at `:847`/`:875`.
+- **Decided:** O5, S2, P14, TARGET 3.3 → the files are in `effects/`: `shader_item.*` (was `shadereffectitem`), `shader_material.*` (was `shadereffectmaterial`), `layer_requests.*` (was `layerrequests`); the split is a pure move in the first round of native cuts, created in the final folder with the final names at once
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt.Native/shadereffectitem.h`, `shadereffectitem.cpp`, new `shadereffectmaterial.h/.cpp`, new `layerrequests.h/.cpp`, `src/VL.Qt.Native/CMakeLists.txt`
 - **Depends on:** none
@@ -132,6 +136,7 @@ Keep:
 - **Where:** `src/VL.Qt.Native/effectchain.cpp:82-112`, `:122-151`, `:157-160`, `:198-209`
 - **Finding:** Three QML documents are C++ string literals with `\n` per line. They cannot be read with highlighting, checked by `qmllint` or edited without escaping. The base style already shows the better way: real `.qml` files embedded through `qt_add_resources` (`CMakeLists.txt:22-37`).
 - **Proposal:** Create `src/VL.Qt.Native/effectchain/MultiStage.qml`, `PassStage.qml` and `ChainRoot.qml`, embedded under `/qt/qml/VLQt/EffectChain` in the same way as `style/VLQt`. `compile()` loads `QUrl("qrc:/qt/qml/VLQt/EffectChain/<name>.qml")`. The comments above the strings (`:71-81`, `:114-121`) move into the QML files as `//` comments. The module stays `VLQt.EffectChain` (the C++ types stay registered by `registerTypes`).
+- **Decided:** D8, P22, TARGET 2.3 → the three QML files are in `src/VL.Qt.Native/qml/effects/` (not `effectchain/`), and this is one issue with NELM-06; C16 of [DECISION-ROUND.md](../DECISION-ROUND.md) → QML type files keep Qt's PascalCase (`MultiStage.qml`), a named exception of the snake_case rule of S2
 - **Effort:** S, mechanical: yes
 - **Touches:** `src/VL.Qt.Native/effectchain.cpp`, new `src/VL.Qt.Native/effectchain/*.qml`, `src/VL.Qt.Native/CMakeLists.txt`
 - **Depends on:** none
@@ -150,6 +155,7 @@ Keep:
   - `Link { quint16 kind; QRectF padding; QPointer<QQuickItem> stage; QQuickItem* fx; QQuickItem* fx2; MultiPart multi; ShaderPart shader; PyramidPasses pyramid; }`
 
   Make `links` private with `size_t linkCount()`, `Link& link(size_t)` for the mask code, and `setBuiltHandler(std::function<…>)`. File layout: see section 4.
+- **Decided:** O5, S2, TARGET 3.3 → the files are in `effects/`: `effect_chain_desc.h`, `effect_chain.*`, `effect_chain_item.*`; `ShaderEffectItem*` in `PyramidPasses` is `ShaderItem*`; `Link` keeps its name ("link" stays only for one entry of a chain as sent); the issue runs in the second round of native cuts, after NELM-05 has cut `elements.cpp` (`elements/`), and `commands.cpp` is in `scene/`
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt.Native/effectchain.h`, `effectchain.cpp`, `elements.cpp`, `commands.cpp` (include of the desc header), new `effectchaindesc.h`
 - **Depends on:** none
@@ -198,6 +204,7 @@ Keep:
 - **Where:** `src/VL.Qt.Native/linear_pass.h:14-23`, `:36`; `linear_pass.cpp:65-71`, `:172-180`
 - **Finding:** `Pass` owns six COM objects through raw pointers but is an implicitly copyable struct. A copy released twice is a double `Release`. `create()` already builds everything in `ComPtr` and `Detach`es at the end. The ownership model is half done.
 - **Proposal:** Give `Pass` `Microsoft::WRL::ComPtr<…>` members and make it non-copyable (`Pass(const Pass&) = delete`, move allowed). `release(pass)` becomes `pass = {}` and goes away together with `releaseCom`; `run` uses `.Get()`/`.GetAddressOf()`.
+- **Decided:** TARGET 2.7 → `linear_pass.*` is in `offscreen/` (its only user is the offscreen scene), not in `effects/`
 - **Effort:** S, mechanical: yes
 - **Touches:** `src/VL.Qt.Native/linear_pass.h`, `linear_pass.cpp`, `offscreen.cpp`
 - **Depends on:** none
@@ -222,6 +229,7 @@ Keep:
 - **Where:** `src/VL.Qt.Native/shader_resource.h:75-77`, `shader_resource.cpp:478-519`; caller `src/VL.Qt/Native.cs:464`
 - **Finding:** `reflect` bakes synchronously on the calling thread under `s_bakeMutex`, so it also waits for any running worker bake. The C# caller builds the pin model of shader nodes. If that runs on vvvv's thread (not confirmed here, see section 6), a save of a `.frag` stalls vvvv for up to two bakes (NFX-12), and the same source is then baked again by the resource worker. The results do not share the cache.
 - **Proposal:** Cache the reflection text under the same key scheme (`stage:-2:sha1`, a separate entry). Document the calling thread in `vlqt.h` next to the function. If the caller is vvvv's thread, consider an async variant: the resource kind already reports results by event.
+- **Decided:** C9 of [DECISION-ROUND.md](../DECISION-ROUND.md) → document the calling thread in `vlqt.h` and use the bake cache; an async variant only if a measurement asks for it
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt.Native/shader_resource.h`, `shader_resource.cpp`, `vlqt.h`
 - **Depends on:** none
@@ -234,6 +242,7 @@ Keep:
 - **Where:** `src/VL.Qt.Native/effectchain.cpp:226-231`, `src/VL.Qt.Native/shadereffectitem.cpp:386-389`, `:772-786`; `docs/effects-and-shaders.md:132`
 - **Finding:** Three places define reserved names: the chain list, the item list, and the item's own `texelSize`/`dpr` handling. The docs say that `base`, `glow` and `shadow` produce "no pin and a warning", but QtNative reports an error line ("is reserved (set by VL.Qt)", `effectchain.cpp:363`).
 - **Proposal:** In `shadereffectitem.h`, add `bool isItemReserved(const QByteArray&)` (`qt_Matrix`, `qt_Opacity`, `source`) and `bool isChainReserved(const QByteArray&)` (adds the chain names), with the list in one place. Decide warning or error with the C# area and align the docs sentence.
+- **Decided:** O5, S2 → `shadereffectitem.h` is `effects/shader_item.h`
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt.Native/effectchain.cpp`, `shadereffectitem.h`, `shadereffectitem.cpp`, `docs/effects-and-shaders.md`
 - **Depends on:** none
@@ -282,6 +291,7 @@ Keep:
 - **Where:** `src/VL.Qt.Native/shadereffectitem.cpp:84-86`, `:73-75`
 - **Finding:** `requestLayer` connects `destroyed` whenever it creates an entry, and `settleLayer` erases the entry when its last user leaves. An element that is requested, released and requested again (a mip filter toggled) collects one more connection each time. This is harmless (each one erases by key) but it grows without bound.
 - **Proposal:** Store the `QMetaObject::Connection` in `LayerEntry` and disconnect it when the entry is erased in `settleLayer`. Lands in `layerrequests.cpp` with NFX-05.
+- **Decided:** O5, S2 → the code lands in `effects/layer_requests.cpp`
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt.Native/shadereffectitem.cpp` (or `layerrequests.cpp`)
 - **Depends on:** NFX-05
@@ -306,6 +316,7 @@ Keep:
 - **Where:** `src/VL.Qt.Native/qmlitem.cpp:176-236`, `:268-277`
 - **Finding:** The watcher connects with raw method ids and dispatches through its own `qt_metacall`. This is clever and documented. But the comment's own limits (Qt stores the id as `ushort`, properties below `kSignalBase`) are not enforced: property `k` must stay below 29,000 and signal `j` below 35,536. Beyond that a signal would be dispatched as a property, or truncated. It is unrealistic but unchecked. The comment also does not say that the trick relies on `QMetaObject::connect` with no receiver meta-object, which calls `qt_metacall` with the absolute id. That is a Qt private detail worth naming for whoever upgrades Qt.
 - **Proposal:** Stop collecting (with a `rejectRootProperty`-style error line "too many properties/signals to watch") when `k >= kSignalBase - kPropBase` or `j >= 65536 - kSignalBase`. Add one sentence naming `QMetaObjectPrivate::connect` (rmeta = nullptr → `QMetaObject::metacall` with the absolute index). Move the class to `qmlwatcher.h/.cpp` (section 4).
+- **Decided:** S2, D9 → `qml_watcher.h/.cpp` are in `user_qml/`; `QMetaObjectPrivate` is a private Qt class and is listed in the head comment of `elements.h` (D9), next to the sentence in the code
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt.Native/qmlitem.cpp`, new `qmlwatcher.h/.cpp`, `CMakeLists.txt`
 - **Depends on:** none
@@ -330,6 +341,7 @@ Keep:
 - **Where:** `src/VL.Qt.Native/vlstyle.cpp:199-214` (`warnMissingFontFamily` in `fontAt`), `:299-391` (`applySetStyle`); `vlstyle.h:18` (`#include "elements.h"` for `Value` and `Apply*`)
 - **Finding:** `fontAt` runs on every state change (every hover) and calls `warnMissingFontFamily`. That function deduplicates, but it is still a lookup and a logging side effect inside a getter. `applySetStyle` parses wire bytes inside the style class, while every other command parses in `commands.cpp`. The header comment itself says "SET_STYLE (commands.cpp)". Including `elements.h` pulls the whole element model into the style header.
 - **Proposal:** Call `warnMissingFontFamily` in `setCell` when a FontFamily cell changes. Move `applySetStyle` into `commands.cpp` as `Scene::setStyle`, using `VlStyle::clear`/`setCell`/`commit`. Forward-declare `Value` from a small `value.h` if one exists, or keep the include in the `.cpp`.
+- **Decided:** S2, O2 → `vlstyle.*` is `style/vl_style.*`; `commands.cpp` is `scene/commands.cpp` (cut by NCMD-05, so `Scene::setStyle` goes to the file that holds `Scene` after that cut); `vlqt::Scene` keeps its name
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt.Native/vlstyle.h`, `vlstyle.cpp`, `commands.cpp`
 - **Depends on:** NFX-10
@@ -347,6 +359,7 @@ Keep:
   - `sampler-mip-shared` (NFX-02).
 
   No test hooks in the library (K6): everything goes through the existing `vlqt_*` API.
+- **Decided:** F5, PLAN-CHECK wave 1 → the scenarios are NUnit tests (`shader-errors`, `style-commands`, `sampler-mip-shared` are test names), written in wave 1 before NFX-01, NFX-05, NFX-07 and NFX-12 are refactored
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt.SmokeTest/` (new test classes, scenario list)
 - **Depends on:** none

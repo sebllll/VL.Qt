@@ -63,6 +63,7 @@ The changes that matter most:
   - `QmlLiteral` (`TryEvaluate(kind, tokens, s, e, out value)`, `TryNumber`, `TryQtCall`, `TryColor`, the named-colour table)
 
   Move `Signature` and `Format` from the parser into `QmlDeclarations` itself: they describe the record, not the parsing. Keep the entry points `QmlDeclarations.Parse` and `QmlDeclarations.ParseHead`.
+- **Decided:** P14, S1 → this issue is the K3 cut (one type per file) of the file and rewrites its K1/K4 comments, not wave 3, and the wave-4 closing check (no file with two types beyond the named exceptions) holds for it; `Qml/Parsing/` keeps the namespace `VL.Qt.Qml` (S1, rule 2); QML-12 is a wave-1 test and goes first.
 - **Effort:** M, mechanical: yes (moves only)
 - **Touches:** `src/VL.Qt/Qml/QmlDeclarations.cs`, new files under `src/VL.Qt/Qml/` and `src/VL.Qt/Qml/Parsing/` (section 4)
 - **Depends on:** QML-12 (net first)
@@ -90,6 +91,7 @@ The changes that matter most:
   - `FolderNodeFactory.ForPath<TFile>(string path, string folderName, Func<string, ImmutableArray<TFile>> scan, Func<TFile, IVLNodeDescription> describe, Func<FileSystemEventArgs, bool> isNewOrDeleted, Func<TFile, IObservable<object>> moved, Func<TFile, string?> duplicateError, ILogger logger) → NodeBuilding.FactoryImpl`
 
   `QmlNodeFactory.Register` becomes `appHost.RegisterNodeFactory(Identifier, (path, f) => ForPath(path, f, logger))`, and `Init` is deleted. Its only caller is `Register`; the tests call `ForPath`.
+- **Decided:** D6, P22, O5, TARGET 2.2 → one issue with SHD-10 (QML-03 = SHD-10), one shared folder-node-factory layer for both factories; the files are `NodeFactories/FolderNodeFactory.cs`, `FileNodeNames.cs`, `FileEditor.cs`, `PinNames.cs`, `FilePinDescription.cs` and `ValuePin.cs`, namespace `VL.Qt.NodeFactories`, as proposed; the shader files it touches carry the O5 names (`ShaderLinkNode.cs` and `ShaderNodeLayout.cs` are deleted by the shader cut, the `ShaderLink*` types become `ShaderEffect*`).
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt/Qml/QmlNodeFactory.cs`, `QmlNodeDescription.cs`, `QmlNodeLayout.cs`, `QmlNodeInstance.cs`; `src/VL.Qt/Shaders/ShaderNodeFactory.cs`, `ShaderNodeDescription.cs`, `ShaderPinModel.cs`, `ShaderNodeLayout.cs`, `ShaderLinkNode.cs`, the files of `ShaderPinDescription` and `ValuePin`; new `src/VL.Qt/NodeFactories/*.cs`; tests that name the moved types (`QmlNodeFactoryTests.cs`, `EffectTemplateShadersTests.cs`, `ShaderLinkNodeTests.cs`)
 - **Depends on:** the shader review's findings on the same files (coordinate: one issue for both factories)
@@ -117,6 +119,7 @@ The changes that matter most:
   - `ImmutableHashSet<string> ReservedNames`, derived from the arrays plus `"Properties"`
 
   `QmlNodeLayout` builds its `FilePinDescription`s from the table. `QmlNodeInstance` keeps its typed `ValuePin` fields but initialises their defaults from the table. A unit test checks the table against `QmlElementNode.Update` by reflection: name after vvvv's pin naming (or the `[Pin(Name)]`), type, `[DefaultValue]`, and `PinVisibility.Optional` versus `IsVisible`. Copy the help texts from the XML docs of `QmlElementNode.Update`, which are the longer, correct ones. Delete `CommonInputNames`. Shorten the 20-line summary of `QmlNodeLayout` (`:48-67`) to two sentences and a link to `docs/user-qml.md#which-declarations-give-which-pins`, which already lists the pins.
+- **Decided:** C2, catalog → the table has `Enabled` (optional, default true, the last input pin, C2) next to the other common pins, and the reflection test compares it with `QmlElement.Update` as it is after the catalog: pin order `Auto Size, Size, Transform, Anchor, File, Properties, …`, `Size` optional, category `Qt.Elements.Qml`; whether the generated nodes follow that order is not decided.; A3 of [DECISION-ROUND.md](../DECISION-ROUND.md) → the generated QML nodes lose their `Error` output
 - **Effort:** S, mechanical: no
 - **Touches:** new `src/VL.Qt/Qml/QmlCommonPins.cs`, `src/VL.Qt/Qml/QmlNodeLayout.cs`, `src/VL.Qt/Qml/QmlNodeInstance.cs`, `src/VL.Qt.Tests/QmlNodeFactoryTests.cs`
 - **Depends on:** QML-03 (pin description type name)
@@ -141,6 +144,7 @@ The changes that matter most:
   2. In `WatchSignature`, add `.Throttle(TimeSpan.FromMilliseconds(150))` before the comparison, so one save means one parse per description.
   3. `QmlNodeDescription.New` keeps the last good layout in its closure (`QmlNodeLayout? lastGood`). When `ReadDeclarations` returns null at init, or the result has an error while `lastGood` had none and the file is younger than 1 s, init uses `lastGood` with an added warning "file could not be read, showing the last pins". The next event corrects it.
   4. Fold `HeadChanged` into the same throttled stream.
+- **Decided:** E2, D6 → keep the last good pins and values while the file does not read or parse, for QML and shaders alike (E2 (a)); the rule is written once in the shared folder-node-factory layer (D6: QML-03 = SHD-10), not in `QmlNodeDescription` alone; the issue compares with VL.Stride's TextureFX; the error shows as a node message and in the log; the 1 s age condition of step 3 is not covered by E2.; C11 of [DECISION-ROUND.md](../DECISION-ROUND.md) → the last good pins stay on every read or parse error, as SHD-05 for shaders, with the throttle; the condition "younger than 1 s" goes
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt/Qml/QmlNodeFactory.cs`, `src/VL.Qt/Qml/QmlNodeDescription.cs`, `src/VL.Qt/Qml/QmlNodeLayout.cs`, `src/VL.Qt.Tests/QmlNodeFactoryTests.cs`
 - **Depends on:** none
@@ -155,6 +159,7 @@ The changes that matter most:
 
   The generated nodes are where this can happen. After a declaration change, vvvv rebuilds the description and creates a new `QmlNodeInstance` with a fresh `QmlElementNode` (reload 0). This is correct only if the old instance ran one more `Update` after the save, bumped its counter and so cleared the cache. That holds when the old node draws in a running renderer. It does not hold when the old element is not under a rendering window at that moment, for example a disconnected `Group` or a closed renderer window. The new pins then name properties the cached component does not have, and `Error` reports them as unknown. Not confirmed by a run.
 - **Proposal:** Confirm with a SmokeTest scenario. Load `A.qml` in item 1. Rewrite `A.qml` with a new property. Create item 2 with the same Source and Reload 0, without bumping item 1. Check whether item 2 sees the property. If it is real, fix it in QtNative: `QmlItem` keeps, per engine, a map from URL to the `QFileInfo::lastModified()` at the last compile. `rebuild` clears the cache when the file on disk is newer. The reload counter then stays the trigger for imported files only.
+- **Decided:** wave 1 of PLAN-CHECK, F5, S2 → the suspicion is confirmed or dropped in wave 1 by the SmokeTest scenario of the proposal, written as an NUnit test (F5), before an issue is cut; the native file is `user_qml/qml_item.cpp/.h` (S2, TARGET 2.3).
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt.Native/qmlitem.cpp`, `qmlitem.h`, `src/VL.Qt.SmokeTest/QmlTest.cs`
 - **Depends on:** none
@@ -179,6 +184,7 @@ The changes that matter most:
 - **Where:** `src/VL.Qt/Qml/QmlNodeLayout.cs:25-26` (`AlwaysSend`); `src/VL.Qt/Qml/QmlNodeInstance.cs:240`; `src/VL.Qt.Native/qmlitem.cpp:482` (`component.create()`); `docs/user-qml.md` "Limitations"
 - **Finding:** The generated node promises that a `required property` "is sent from the first frame", and the parser, layout and instance implement the flag. QtNative creates the root with `QQmlComponent::create()` and sets properties afterwards. Qt refuses a required property that has no value at creation, so every such file fails with an error. The flag makes the pin say something the node cannot keep. The docs list it as a known limitation, which the user can read but cannot act on, other than removing `required`.
 - **Proposal:** In `QmlItem::rebuild`, build a `QVariantMap` from the current property values and call `component.createWithInitialProperties(map)`. That Qt function sets the given properties before the object finishes creation, so required properties are satisfied. Then apply the rest as now. This needs the properties of the frame to reach QtNative before or with `QML_SOURCE`/`QML_RELOAD`. Check the order in which `QmlPropertyWriter` and the source command are written in one frame. Remove the limitation from `docs/user-qml.md` and `docs/decisions/user-qml.md`.
+- **Decided:** E3, S2, G5 → fix natively with `createWithInitialProperties`, as proposed; the native file is `user_qml/qml_item.cpp/.h` (S2), the C# file `Reconciliation/QmlPropertyWriter.cs`, and the design note is edited under `docs/design/` (G5, was `docs/decisions/`).
 - **Effort:** M, mechanical: no
 - **Touches:** `src/VL.Qt.Native/qmlitem.cpp`, `qmlitem.h`, possibly `src/VL.Qt/Reconciler/QmlPropertyWriter.cs`, `src/VL.Qt.SmokeTest/QmlTest.cs`, `docs/user-qml.md`, `docs/decisions/user-qml.md`
 - **Depends on:** none
@@ -258,6 +264,7 @@ The changes that matter most:
     - `IsWatching`: the tests check `Subject.HasObservers` of the subject they pass in, so delete the property.
     - `QmlNodeInstance`: keep a single constructor `QmlNodeInstance(QmlElementNode element, QmlNodeLayout layout)` and let `QmlNodeDescription` pass `new QmlElementNode(c.NodeContext)`, so the constructor is no longer test-only.
     - `QmlElementNode`'s constructors and `Core`: follow the decision on `ElementNode` (K6).
+- **Decided:** wave 1 of PLAN-CHECK, P22 → the parser net (`Parse_NeverThrows_OnAnyPrefixOrSuffix` and the listed cases) is a wave-1 test; the hook part (constructors and `Core` of `QmlElementNode`) follows NODE-06, which is worked in the issue of TEST-07 with the other K6 findings.
 - **Effort:** S, mechanical: no
 - **Touches:** `src/VL.Qt.Tests/QmlDeclarationsTests.cs`, `QmlNodeFactoryTests.cs`, `QmlTests.cs`, `QmlNodeInstanceTests.cs`; `src/VL.Qt/Qml/QmlNodeFactory.cs`, `QmlNodeInstance.cs`, `QmlNodeDescription.cs`; `src/VL.Qt/Nodes/QmlFileWatcher.cs`
 - **Depends on:** none (do it before QML-01 and QML-02)
