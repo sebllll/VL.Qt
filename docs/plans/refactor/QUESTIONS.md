@@ -393,14 +393,14 @@ Documented as DIP (device-independent pixels), applied in renderer units, 100 ti
 - (a) DIP, fix the code. (b) Renderer units, fix the docs.
 - Recommended: (a).
 - Source: SHD Q3
-- Decision:
+- Decision: (a), DIP; shader parameters live in pixel space so that a change of the renderer's space does not change them (Sebastian, 2026-11-19). See "Shaders follow VL.Stride" in DECISIONS.md.
 
 ### E2 Keep the last good pins while a shader file does not compile?
 - (a) Yes: links and values survive a typo, the last good shader keeps drawing, the node shows the error. Same rule as QML-05.
 - (b) No: all uniform pins disappear until it compiles (today).
 - Recommended: (a).
 - Source: SHD Q4 (SHD-05)
-- Decision:
+- Decision: (a), for shaders and QML alike through the shared factory of D6; the issue compares with VL.Stride's TextureFX (Sebastian, 2026-11-19).
 
 ### E3 `required property` in user QML: fix or drop the promise?
 A QML property marked `required` must be set when the item is created.
@@ -408,7 +408,7 @@ A QML property marked `required` must be set when the item is created.
 - (b) Drop the "always sent" promise and `AlwaysSend`; such files keep failing.
 - Recommended: (a).
 - Source: QML Q3 (QML-08)
-- Decision:
+- Decision: (a), fix natively (Sebastian, 2026-11-19).
 
 ### E4 Rely on Qt's `basic` render loop explicitly?
 In a render loop Qt alternates between preparing the scene (GUI thread) and drawing it; `basic` does both on one thread, `threaded` draws on a second one. QtNative forces `basic`.
@@ -416,7 +416,7 @@ In a render loop Qt alternates between preparing the scene (GUI thread) and draw
 - (b) Declare `basic` a design decision and say so in each header that relies on it.
 - Recommended: (a) for the texture, plus (b) as one decision record that other areas check against.
 - Source: NFX Q1
-- Decision:
+- Decision: both: (a) for the texture, (b) as one design note (Sebastian, 2026-11-19).
 
 ### E5 GLSL rename check on Windows
 Shaders are compiled ("baked") for each GPU backend; a uniform name can break only on Linux/OpenGL. The check warns about this on Windows.
@@ -425,14 +425,14 @@ Shaders are compiled ("baked") for each GPU backend; a uniform name can break on
 - (c) Drop the check on non-GL backends.
 - Recommended: (b).
 - Source: NFX Q2 (NFX-12)
-- Decision:
+- Decision: (b), one bake with an extra GLSL target (Sebastian, 2026-11-19).
 
 ### E6 Main-thread mode of offscreen scenes (`VLQT_OFFSCREEN_THREAD=0`)
 - (a) Keep, but through the same batch code (inline executor): one path, the switch stays.
 - (b) Remove: less code and test time, no fallback in the field.
 - Recommended: (a).
 - Source: NDEV Q2 (NDEV-05)
-- Decision:
+- Decision: (a), one batch path with an inline executor; the switch stays (Sebastian, 2026-11-19). By the principle "Pins instead of environment variables" it becomes the value 0 of the pin `Render Threads` (E7), and `VLQT_OFFSCREEN_THREAD` goes.
 
 ### E7 Is a render-thread pool larger than 1 supported?
 Reachable only through `VLQT_OFFSCREEN_THREAD`, untested, which is how NDEV-01 went unnoticed.
@@ -440,27 +440,27 @@ Reachable only through `VLQT_OFFSCREEN_THREAD`, untested, which is how NDEV-01 w
 - (b) Diagnosis only: cap at 1, remove the round robin.
 - Recommended: (a); measurements show a gain for several heavy scenes.
 - Source: NDEV Q4 (NDEV-01)
-- Decision:
+- Decision: (a), supported, with a pool-2 test run; the pool size gets a pin, not only the environment variable (Sebastian, 2026-11-19). Where the pin lives: `QtTexture` and `QtRenderer` (VL.Qt.Stride) get a pin `Render Threads`, default 1, not shown by default; the window Renderer does not use the pool. With different values the maximum wins; a change at runtime grows or shrinks the pool.
 
 ### E8 Texture reuse for live image sources
 Every new frame of a video or live ToQtImage creates and destroys a GPU texture.
 - (a) Keep. (b) A pool of shared textures (about 150 lines). (c) Update one texture in place: a window could show a half-updated frame.
 - Recommended: measure with the video help patch first; (b) if more than about 1 ms main thread per frame.
 - Source: NRES Q1 (NRES-02)
-- Decision:
+- Decision: measure first in wave 1 with the video help patch; (b) if above about 1 ms main thread per frame (Sebastian, 2026-11-19).
 
 ### E9 Device loss for file images
 After a GPU reset a file image is read again from disk.
 - (a) Keep and document. (b) Keep decoded pixels in CPU memory: doubles image memory. (c) Keep the compressed file bytes.
 - Recommended: (a).
 - Source: NRES Q2 (NRES-14)
-- Decision:
+- Decision: (a), keep and document (Sebastian, 2026-11-19).
 
 ### E10 Upload path switch `VLQT_IMG_UPLOAD`
 - (a) Keep as a documented diagnostic variable. (b) Remove.
 - Recommended: (a) if the E8 measurement is planned, else (b).
 - Source: NRES Q3 (NRES-05)
-- Decision:
+- Decision: (a), keep the switch (Sebastian, 2026-11-19); it becomes a hidden pin `Upload` (`Auto`, `Main Thread`, `Worker`; default `Auto`) on LoadImage, LoadImage (Async), ToQtImage and VideoSourceToQtImage, and `VLQT_IMG_UPLOAD` goes; tests set the pin from C#.
 
 ### E11 Animations and a clock that goes back
 Qt animations advance by time deltas and do not rewind (NAPP-10, if confirmed).
@@ -468,12 +468,12 @@ Qt animations advance by time deltas and do not rewind (NAPP-10, if confirmed).
 - (b) Restart all animations on a backward jump: Qt has no API for it.
 - Recommended: (a).
 - Source: NAPP Q3
-- Decision:
+- Decision: (a), document (Sebastian, 2026-11-19).
 
 ### E12 Row/Column alignment: JavaScript in QML or C++?
 - Recommended: measure, move to C++ only if it shows.
 - Source: NELM Q2 (NELM-13)
-- Decision:
+- Decision: no JavaScript: the alignment moves to QtNative (C++), where the children's sizes are known; only if that turns out to be a large rebuild is it raised again (Sebastian, 2026-11-19).
 
 ### E13 What does "over budget" mean?
 - (a) Qt work (events + sync + render) above the refresh budget.
@@ -481,17 +481,17 @@ Qt animations advance by time deltas and do not rewind (NAPP-10, if confirmed).
 - (c) Both, as two counters.
 - Recommended: (a) as `OverBudget`.
 - Source: NDIAG Q2 (NDIAG-01)
-- Decision:
+- Decision: (a), only Qt work counts, as `OverBudget`; C# and QtNative compute it the same way, from one definition (Sebastian, 2026-11-19).
 
 ### E14 Should the F6 freeze also freeze the F2 meter?
 - Recommended: yes, so a screenshot of both is consistent.
 - Source: NDIAG Q3
-- Decision:
+- Decision: no: F6 freezes only the F5 pages, the F2 meter keeps running (Sebastian, 2026-11-19).
 
 ### E15 Rows of the stats page: remove "draw calls: n/a"?
 - Recommended: remove the draw-calls row (always n/a), keep pipelines (shows shader-build hitches).
 - Source: NDIAG Q5
-- Decision:
+- Decision: remove the draw-calls row, keep pipelines (Sebastian, 2026-11-19).
 
 ### E16 Ending an exported app
 vvvv has no API for it; `ExportedApp` sets a private field by reflection, with `Environment.Exit(0)` as fallback.
@@ -499,7 +499,7 @@ vvvv has no API for it; `ExportedApp` sets a private field by reflection, with `
 - (b) Ask the vvvv team for `AppHost.RequestExit()`, keep (a) until it exists.
 - Recommended: (b) with (a) meanwhile.
 - Source: RUN Q1
-- Decision:
+- Decision: (a) now; (b) becomes an issue in milestone 3.0, written neutrally as a request for an official exit API (Sebastian, 2026-11-19).
 
 ## F Tests
 
