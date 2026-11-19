@@ -4,6 +4,8 @@ State of the discussion for the review and refactoring of VL.Qt before 1.0. Phas
 
 ## Decided
 
+- **Order of the work in seven waves (Sebastian, 2026-11-19):** 1 safety net (node-API snapshot TEST-01, tests for unprotected areas, confirm or drop the unconfirmed must findings), 2 API decisions on paper (QUESTIONS.md, the catalog in 23_api.md), 3 repository-wide mechanical changes one after the other (K1–K5, "feedback", the native break), 4 refactoring per area in parallel, 5 tests, 6 documentation, 7 release 0.10.0. Reason: changes that touch almost every file would conflict with everything else, and without the snapshot nobody notices a lost pin. Question 0.2 in [QUESTIONS.md](QUESTIONS.md).
+- **One branch and one draft PR per issue (Sebastian, 2026-11-19):** every issue is worked on its own branch with a draft PR against `refactor`, squash-merged; at the end one PR `refactor` → `develop` as merge commit. Orchestrators do not commit directly on `refactor`. Reason: with parallel agents the PR is where a result is accepted, and a failed issue can be dropped cleanly; PRs against `refactor` cost no CI. Question 0.1 in [QUESTIONS.md](QUESTIONS.md).
 - **Naming follows VL.Skia, VL.ImGui and vvvv, but not their slips (Sebastian, 2026-11-19):** where VL.Skia (drawing, paths, renderer) or VL.ImGui (widgets) has a node or pin of the same meaning, VL.Qt takes its name, pin names and units; otherwise the general vvvv conventions (cycles for angles, getter `Radius` / setter `SetRadius`); Qt names only where vvvv has no word. Where a convention is inconsistent or senseless (Skia's `Dir` on AddRoundRect next to `Direction` on AddRect), VL.Qt standardises instead of copying. Exceptions are written down with their reason. Question A7 in [QUESTIONS.md](QUESTIONS.md).
 - **Concrete element classes are internal (Sebastian, 2026-11-19):** `Rectangle`, `Text`, `Group` and the other element classes become internal; nodes output `Element`. Reason: they still carry internal wiring and change in this refactoring; making them public later breaks nothing, the reverse does. Question A6 in [QUESTIONS.md](QUESTIONS.md).
 - **The native layer breaks once (Sebastian, 2026-11-19):** the C ABI of `vlqt.dll` and the protocol are renamed and reshaped in one change: export names and handle type (CAPI-03), `vlqt_window_*` → `vlqt_scene_*` for what windows and offscreen scenes share (NAPP-03, NAPP-17), `vlqt_host_frame` → `vlqt_host_pump`, protocol type `ITEM` → `GROUP`, and the `u32` length. One name per function in C and C#. Reason: only VL.Qt calls `vlqt.dll`, so the break costs nobody outside, and two names for one function would stay forever. Question A5 in [QUESTIONS.md](QUESTIONS.md).
@@ -26,8 +28,7 @@ State of the discussion for the review and refactoring of VL.Qt before 1.0. Phas
 
 ## Open
 
-- **Pull request per issue:** proposed: one branch and one draft PR per issue against `refactor` (squash), at the end one PR `refactor` → `develop` as merge commit. Not confirmed yet.
-- **Order of the work:** proposed waves: safety net and tooling, API decisions on paper, repository-wide mechanical changes (alone, one after the other), refactoring per area in parallel, tests, documentation, release.
+- The questions in [QUESTIONS.md](QUESTIONS.md) that have no decision yet.
 
 ## Rejected
 

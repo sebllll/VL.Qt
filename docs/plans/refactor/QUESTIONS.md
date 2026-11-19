@@ -90,13 +90,13 @@ Many single questions in C and the catalog of 23_api.md are the same question: w
 - (b) Orchestrators commit directly on `refactor`. Less overhead, no review point per issue.
 - Recommended: (a).
 - Source: DECISIONS.md "Open"
-- Decision:
+- Decision: (a) (Sebastian, 2026-11-19).
 
 ### 0.2 Order of the work?
 Proposed waves: 1 safety net and tooling (API snapshot TEST-01, tests that protect the areas), 2 API decisions on paper (this list, the catalog), 3 repository-wide mechanical changes, one after the other (K1–K5, A1, A5), 4 refactoring per area in parallel, 5 tests, 6 documentation, 7 release.
 - Recommended: as proposed.
 - Source: DECISIONS.md "Open"
-- Decision:
+- Decision: as proposed, and wave 1 also confirms or drops the unconfirmed must findings (REC-01, CAPI-01, NDIAG-01) (Sebastian, 2026-11-19).
 
 ## B Errors and robustness
 
