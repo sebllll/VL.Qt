@@ -556,14 +556,14 @@ The SmokeTest needs a second D3D11 device, shared textures and readback to test 
 - (a) Keep the person. (b) The GbR as licensee, the person as its representative. (c) Leave until the legal review.
 - Recommended: decide (a) or (b) with the legal review, before the repository is public and before the first external signature.
 - Source: DOC Q1
-- Decision:
+- Decision: (a), Sebastian Huber stays the licensee as a person (Sebastian, 2026-11-19). The "Draft – pending legal review" line goes once Sebastian confirms the legal review, before the repository is public.
 
 ### G2 Milestones and version rule after 0.10.0
 - (a) Back to `1.0`/`2.0`/`3.0` with "0.10.x until 1.0".
 - (b) Drop the version-number rule from the contributor pages; keep "milestones are version numbers; `1.0` blocks the release".
 - Recommended: (b).
 - Source: DOC Q2
-- Decision:
+- Decision: (b); versions follow semantic versioning (Sebastian, 2026-11-19).
 
 ### G3 Do `docs/plans/` and the review reports ship in the public repository?
 `public-check.yml` blocks only top-level `plan/` and `docs-internal/`.
@@ -571,32 +571,32 @@ The SmokeTest needs a second D3D11 device, shared textures and readback to test 
 - (b) Keep them public as a record.
 - Recommended: (a).
 - Source: DOC Q3
-- Decision:
+- Decision: (a), in wave 6 (Sebastian, 2026-11-19).
 
 ### G4 Companion docs: one page per package or per topic?
 - Recommended: per package (`video-audio.md`, `stride.md`), as users install packages.
 - Source: DOC Q4
-- Decision:
+- Decision: per package (Sebastian, 2026-11-19).
 
 ### G5 Folder name `docs/design/` or keep `docs/decisions/`?
 - Recommended: `docs/design/`; the links change anyway because most pages are split or merged.
 - Source: DOCD Q1 (DOCD-15)
-- Decision:
+- Decision: (a), `docs/design/` (Sebastian, 2026-11-19).
 
 ### G6 Finished plans and handovers: delete or archive?
 - Recommended: delete (git keeps them); an archive in a public repository is read as current.
 - Source: DOCD Q2
-- Decision:
+- Decision: (a), delete (Sebastian, 2026-11-19).
 
 ### G7 Open 2.0 work (paths 06–10, gradients): are the issues in the public repository?
 - Recommended: create or confirm them there before DOCD-04 and DOCD-14 delete the pages.
 - Source: DOCD Q3
-- Decision:
+- Decision: confirmed, no decision needed (2026-11-19): sebllll/VL.Qt#155 (open, milestone 2.0) holds the package texts "Paths 06" onwards with goal, steps and acceptance criteria; the plan pages can go once DOCD-04/14 check that nothing else is only in them.
 
 ### G8 Measurements from one laptop in public research pages?
 - Recommended: keep, with machine, Qt version, scenario to rerun and "x64 not measured".
 - Source: DOCD Q4
-- Decision:
+- Decision: (a), keep with machine, Qt version, scenario and "x64 not measured" (Sebastian, 2026-11-19).
 
 ---
 
