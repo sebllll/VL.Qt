@@ -65,12 +65,13 @@ def check_patch(raw, catalog):
     """Findings of one patch (bytes of the .vl file) -> (list of Finding, set of element Ids in the patch)."""
     root = ET.fromstring(raw.decode('utf-8-sig'))
     ids = {e.get('Id') for e in root.iter() if e.get('Id')}
-    pins = {}  # pin Id -> (node name, pin element)
+    pins = {}  # pin Id -> (node name, pin element, catalog node of the matching overload)
     for n in root.iter('Node'):
         name = node_name(n, catalog)
         if name:
+            spec_node = pc.resolve_overload(catalog[name], [p.get('Name') for p in n.findall('Pin')])
             for pin in n.findall('Pin'):
-                pins[pin.get('Id')] = (name, pin)
+                pins[pin.get('Id')] = (name, pin, spec_node)
     iopads = {p.get('Id'): p for p in root.iter('Pad') if p.get('isIOBox') == 'true' and p.get('SlotId') is None}
     peers, sources = {}, {}  # Id -> linked Ids; pin Id -> Ids linked into it
     for link in root.iter('Link'):
@@ -83,9 +84,9 @@ def check_patch(raw, catalog):
         sources.setdefault(b, []).append(a)
 
     findings = []
-    for pid, (name, pin) in pins.items():
+    for pid, (name, pin, spec_node) in pins.items():
         pin_name = pin.get('Name')
-        spec = pc.find_pin(catalog[name], pin_name)
+        spec = pc.find_pin(spec_node, pin_name)
         linked = peers.get(pid, [])
         if spec is None:
             if linked and pin_name not in KNOWN_EXTRA_PINS:
@@ -108,8 +109,8 @@ def check_patch(raw, catalog):
         pid = linked[0]
         if pad_id not in sources.get(pid, []):
             continue  # an output IOBox: the pin feeds the pad
-        name, pin = pins[pid]
-        spec = pc.find_pin(catalog[name], pin.get('Name'))
+        name, pin, spec_node = pins[pid]
+        spec = pc.find_pin(spec_node, pin.get('Name'))
         if spec is None or spec['direction'] != 'in':
             continue
         if spec['forbid_iobox']:

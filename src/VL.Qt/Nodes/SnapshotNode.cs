@@ -17,26 +17,21 @@ namespace VL.Qt.Nodes
         /// <summary>Error at the node when Grab is hit for an element that no renderer shows.</summary>
         internal const string NotShownError = "Element is not shown in a renderer";
 
-        readonly ResourceClient _client;
-        readonly SceneRegistry _scene;
+        readonly SnapshotGrab _grab;
         readonly ImageNodeReport _report;
-        ImageResource? _resource;
         IImage? _image;
-        bool _settled;
         string _error = string.Empty;
 
         public SnapshotNode(NodeContext nodeContext)
         {
-            _client = ResourceClient.ForApp(nodeContext.AppHost);
-            _scene = SceneRegistry.ForApp(nodeContext.AppHost);
+            _grab = new SnapshotGrab(ResourceClient.ForApp(nodeContext.AppHost), SceneRegistry.ForApp(nodeContext.AppHost));
             _report = new ImageNodeReport(new NodeErrors(nodeContext));
         }
 
         /// <summary>For tests: a client on a fake API and an own scene registry, nothing is reported.</summary>
         internal SnapshotNode(ResourceClient client, SceneRegistry scene)
         {
-            _client = client;
-            _scene = scene;
+            _grab = new SnapshotGrab(client, scene);
             _report = new ImageNodeReport(null);
         }
 
@@ -51,52 +46,85 @@ namespace VL.Qt.Nodes
         public IImage? Update(Element? element, out bool isReady, out string error, float scale = 1, bool grab = false)
         {
             if (grab)
-                Grab(element, scale);
+                // Every attempt starts clean: an error of an earlier attempt (e.g. not shown yet at the start) does not stay.
+                _error = _grab.Start(element, scale);
             isReady = false;
-            if (_settled)
+            if (_grab.TakeSettled())
             {
-                _settled = false;
-                if (_resource is { State: QtImageState.Ready } && _client.ReadSnapshot(_resource) is { } image)
+                if (_grab.Read() is { } image)
                 {
                     _image = image;
                     isReady = true;
                 }
             }
-            error = _error.Length > 0 ? _error : _resource is { State: QtImageState.Failed } ? _resource.Error : string.Empty;
-            _report.Update(_resource, error);
+            error = _error.Length > 0 ? _error : _grab.Resource is { State: QtImageState.Failed } failed ? failed.Error : string.Empty;
+            _report.Update(_grab.Resource, error);
             return _image;
-        }
-
-        void Grab(Element? element, float scale)
-        {
-            // Every attempt starts clean: an error of an earlier attempt (e.g. not shown yet at the start) does not stay.
-            _error = string.Empty;
-            if (element is null || !_scene.TryLocate(element, out var window, out var elementId))
-            {
-                _error = NotShownError;
-                return;
-            }
-            try
-            {
-                if (_resource is null)
-                {
-                    _resource = _client.CreateSnapshot();
-                    _resource.Settled = _ => _settled = true;
-                }
-                _client.Snapshot(_resource, window, elementId, scale);
-            }
-            catch (Exception e) when (e is not OutOfMemoryException)
-            {
-                _error = e.Message;
-            }
         }
 
         public void Dispose()
         {
-            _client.Release(_resource);
-            _resource = null;
+            _grab.Dispose();
             _image = null;
             _report.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// The grab of Snapshot and FileWriter (Element): locates the element in its renderer, starts the asynchronous snapshot
+    /// into one resource per node and says when it settled. Main thread.
+    /// </summary>
+    internal sealed class SnapshotGrab : IDisposable
+    {
+        readonly ResourceClient _client;
+        readonly SceneRegistry _scene;
+        bool _settled;
+
+        public SnapshotGrab(ResourceClient client, SceneRegistry scene)
+        {
+            _client = client;
+            _scene = scene;
+        }
+
+        /// <summary>The snapshot resource, null until the first <see cref="Start"/> got that far.</summary>
+        public ImageResource? Resource { get; private set; }
+
+        /// <summary>Starts a snapshot of <paramref name="element"/>; returns the error at once (not shown, refused by QtNative), empty on success.</summary>
+        public string Start(Element? element, float scale)
+        {
+            if (element is null || !_scene.TryLocate(element, out var window, out var elementId))
+                return SnapshotNode.NotShownError;
+            try
+            {
+                if (Resource is null)
+                {
+                    Resource = _client.CreateSnapshot();
+                    Resource.Settled = _ => _settled = true;
+                }
+                _client.Snapshot(Resource, window, elementId, scale);
+                return string.Empty;
+            }
+            catch (Exception e) when (e is not OutOfMemoryException)
+            {
+                return e.Message;
+            }
+        }
+
+        /// <summary>True once after a snapshot settled (finished or failed).</summary>
+        public bool TakeSettled()
+        {
+            var settled = _settled;
+            _settled = false;
+            return settled;
+        }
+
+        /// <summary>The finished snapshot as an own copy; null if the resource is not Ready or has none.</summary>
+        public IImage? Read() => Resource is { State: QtImageState.Ready } ? _client.ReadSnapshot(Resource) : null;
+
+        public void Dispose()
+        {
+            _client.Release(Resource);
+            Resource = null;
         }
     }
 }

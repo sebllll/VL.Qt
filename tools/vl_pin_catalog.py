@@ -29,7 +29,7 @@ FORBIDDEN_IOBOX = {'Interaction'}
 WRITTEN_BY_NODE = {('Renderer', 'Bounds')}
 CATEGORIES = {  # src/VL.Qt/Categories.cs (QtTexture of VL.Qt.Stride uses Categories.Qt too)
     'Qt': 'Qt', 'Elements': 'Qt.Elements', 'Widgets': 'Qt.Widgets', 'Interaction': 'Qt.Interaction',
-    'Effects': 'Qt.Effects', 'MultiEffect': 'Qt.Effects.MultiEffect',
+    'Effects': 'Qt.Effects', 'MultiEffect': 'Qt.Effects.MultiEffect', 'Paths': 'Qt.Paths',
 }
 # Value of a pin without a default, as vvvv writes it in an IOBox (None: unknown, never compared).
 TYPE_DEFAULTS = {
@@ -260,7 +260,8 @@ def parse_file(path, consts, enums):
 
 
 def load_catalog(root=ROOT):
-    """Node name -> node dict (name, category, csharp class, source, pins)."""
+    """Node name -> node dict (name, category, csharp class, source, pins, overloads). Nodes of the same name and
+    category (like the three ArcTo forms) are kept in `overloads` of the first one, see `all_forms`/`resolve_overload`."""
     consts, enums = load_constants(root)
     files = []
     for pattern in NODE_SOURCES:
@@ -268,8 +269,37 @@ def load_catalog(root=ROOT):
     catalog = {}
     for f in files:
         for node in parse_file(f, consts, enums):
-            catalog[node['name']] = node
+            node['overloads'] = []
+            first = catalog.get(node['name'])
+            if first is not None and first['category'] == node['category']:
+                first['overloads'].append(node)  # same name and category: an overload, told apart by its pins
+            else:
+                catalog[node['name']] = node
     return catalog
+
+
+def all_forms(node):
+    """The node and its overloads (nodes of the same name and category that differ in their pins)."""
+    return [node] + node.get('overloads', [])
+
+
+def resolve_overload(node, pin_names):
+    """Node-like dict whose `pins` fit the pin names found in a patch: the overload with the most matching names;
+    on a tie, the union of the tied overloads' pins (first one wins per name), so no pin is reported missing wrongly."""
+    forms = all_forms(node)
+    if len(forms) == 1:
+        return node
+    scores = [sum(find_pin(f, n) is not None for n in pin_names) for f in forms]
+    best = [f for f, sc in zip(forms, scores) if sc == max(scores)]
+    if len(best) == 1:
+        return best[0]
+    pins, seen = [], set()
+    for f in best:
+        for pin in f['pins']:
+            if pin['name'] not in seen:
+                seen.add(pin['name'])
+                pins.append(pin)
+    return dict(best[0], pins=pins)
 
 
 def find_pin(node, pin_name):
@@ -330,7 +360,7 @@ if __name__ == '__main__':
         json.dump(catalog, sys.stdout, indent=2)
         print()
     else:
-        for node in catalog.values():
+        for node in (form for first in catalog.values() for form in all_forms(first)):
             print(f"{node['name']} [{node['category']}]  ({node['source']})")
             for p in node['pins']:
                 flags = [f for f, on in (('create', p['create']), ('optional', p['optional']), ('group', p['group']),

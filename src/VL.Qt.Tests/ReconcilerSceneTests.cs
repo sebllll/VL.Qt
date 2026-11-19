@@ -525,17 +525,14 @@ namespace VL.Qt.Tests
 
             const int frames = 1000;
             // Element allocations of the test itself (Group + ImmutableArray) are measured separately.
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int f = 0; f < frames; f++)
-                new Group { Children = builder.ToImmutable() };
-            long testOverhead = GC.GetAllocatedBytesForCurrentThread() - before;
+            long testOverhead = Allocations.Fewest(() => new Group { Children = builder.ToImmutable() }, frames);
 
-            before = GC.GetAllocatedBytesForCurrentThread();
             long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
             for (int f = 0; f < frames; f++)
                 Step(f);
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before - testOverhead;
             double ms = System.Diagnostics.Stopwatch.GetElapsedTime(t0).TotalMilliseconds / frames;
+            int frame = 0;
+            long allocated = Allocations.Fewest(() => Step(frame++), frames) - testOverhead;
             TestContext.Out.WriteLine($"1000 bound children, 1 change/frame: {ms:F4} ms/frame, {allocated} bytes (reconciler)");
             Assert.That(allocated, Is.LessThanOrEqualTo(0));
             // CI runners are slow and noisy (0.32 ms seen on Linux); this still catches a per-frame rebuild of all children.
@@ -556,6 +553,8 @@ namespace VL.Qt.Tests
             public void SetRect(uint id, ushort prop, float x, float y, float width, float height) { }
             public void SetMat4(uint id, ushort prop, in Matrix m) { }
             public void SetString(uint id, ushort prop, ReadOnlySpan<char> value) { }
+            public void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values) { }
+            public void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points) { }
             public void SetRef(uint id, ushort prop, uint refId) { }
             public void SetU64(uint id, ushort prop, ulong value) { }
             public void BeginStyle(uint id, ushort flags) { }

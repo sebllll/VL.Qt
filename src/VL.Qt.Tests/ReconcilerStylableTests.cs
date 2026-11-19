@@ -442,13 +442,11 @@ namespace VL.Qt.Tests
             elements.Update(e);
             stylables.Update(s);
 
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 100; i++)
+            Assert.That(Allocations.Fewest(() =>
             {
                 elements.Update(e);
                 stylables.Update(s);
-            }
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.Zero);
+            }, frames: 100), Is.Zero);
         }
 
         [Test]

@@ -3,6 +3,13 @@
 	<Topic title="Basics">
 		<VLDocument link="Qt\HowTo Draw a Rectangle.vl" tags="rect box shape" />
 		<VLDocument link="Qt\HowTo Draw a Circle.vl" tags="ellipse shape" />
+		<VLDocument link="Qt\HowTo Draw a Line.vl" tags="line stroke shape trim" />
+		<VLDocument link="Qt\HowTo Draw a Polyline.vl" tags="polyline stroke join cap shape" />
+		<VLDocument link="Qt\HowTo Draw a Polygon.vl" tags="polygon fill shape" />
+		<VLDocument link="Qt\HowTo Build a Path.vl" tags="path builder moveto lineto cubicto arcto skia" />
+		<VLDocument link="Qt\HowTo Draw a Path.vl" tags="path fill stroke trim fillrule" />
+		<VLDocument link="Qt\HowTo Draw a Bezier Curve with Handles.vl" tags="bezier handles curve path" />
+		<VLDocument link="Qt\HowTo Draw Splines.vl" tags="spline catmullrom bspline curve path" />
 		<VLDocument link="Qt\HowTo Group Elements.vl" tags="nest transform" />
 		<VLDocument link="Qt\HowTo Reuse an Element.vl" tags="" />
 		<VLDocument link="Qt\HowTo Antialias Edges.vl" tags="msaa antialiasing multisample edges smooth" />
@@ -43,6 +50,7 @@
 		<VLDocument link="Qt\HowTo Preload Images.vl" tags="async" />
 		<VLDocument link="Qt\HowTo Use an IImage.vl" tags="skia" />
 		<VLDocument link="Qt\HowTo Take a Snapshot.vl" tags="" />
+		<VLDocument link="Qt\HowTo Write an Element to a File.vl" tags="filewriter save export png jpg screenshot" />
 		<VLDocument link="Qt\HowTo Play a Video.vl" tags="movie" />
 		<VLDocument link="Qt\HowTo Show a VL.Video player in Qt.vl" tags="camera" />
 	</Topic>

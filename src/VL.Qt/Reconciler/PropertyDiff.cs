@@ -1,6 +1,8 @@
 ﻿using System;
 using Stride.Core.Mathematics;
+using VL.Lib.Collections;
 using VL.Qt.Elements;
+using VL.Qt.Paths;
 using P = VL.Qt.Protocol.Prop;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
@@ -34,6 +36,7 @@ namespace VL.Qt
         static readonly TextField s_textField = new();
         static readonly ShaderEffect s_shaderEffect = new();
         static readonly QmlElement s_qml = new();
+        static readonly Shape s_shape = new();
 
         static Element DefaultOf(ElementType type) => type switch
         {
@@ -51,6 +54,7 @@ namespace VL.Qt
             ElementType.TextField => s_textField,
             ElementType.ShaderEffect => s_shaderEffect,
             ElementType.Qml => s_qml,
+            ElementType.Shape => s_shape,
             _ => s_group,
         };
 
@@ -106,6 +110,7 @@ namespace VL.Qt
                     DiffAutoSize(id, ((ShaderEffect)prev).AutoSize, ((ShaderEffect)next).AutoSize);
                     DiffShaderEffect(id, (ShaderEffect)prev, (ShaderEffect)next);
                     break;
+                case ElementType.Shape: DiffShape(id, (Shape)prev, (Shape)next); break;
                 case ElementType.Qml:
                     DiffAutoSize(id, ((QmlElement)prev).AutoSize, ((QmlElement)next).AutoSize);
                     DiffQml(id, (QmlElement)prev, (QmlElement)next);
@@ -173,6 +178,153 @@ namespace VL.Qt
                 _sink.SetColor(id, P.BorderColor, n.StrokeColor);
             if (_rescale || p.StrokeWidth != n.StrokeWidth)
                 _sink.SetF32(id, P.BorderWidth, _mapping.ToQt(n.StrokeWidth));
+        }
+
+        // Reused for the converted points and dash pattern of DiffShape, so a changing shape allocates nothing per frame.
+        float[] _shapeBuffer = Array.Empty<float>();
+
+        /// <summary>
+        /// Shape (#154). The geometry (points or path) is sent when its reference and its content changed or the unit scale did; every
+        /// coordinate goes through the mapping. A point list or path that does not fit one command is cut to the part that does (the node warns).
+        /// QtNative takes dash and dash offset in stroke-width units, so both are divided by the stroke width and the dash is sent again
+        /// when the stroke width changes. A stroke width of 0 is sent as -1 (no stroke).
+        /// </summary>
+        void DiffShape(uint id, Shape p, Shape n)
+        {
+            if (n.Path is { } path)
+            {
+                if (_rescale || p.Path is null || (!ReferenceEquals(p.Path, path) && !p.Path.ContentEquals(path)))
+                    SendShapePath(id, path);
+            }
+            else if (_rescale || p.Path is not null
+                || (!ReferenceEquals(p.Points, n.Points) && !SameContent(p.Points, n.Points)))
+                SendShapePoints(id, n.Points);
+
+            if (p.Closed != n.Closed)
+                _sink.SetBool(id, P.ShapeClosed, n.Closed);
+            if (p.Fill != n.Fill)
+                _sink.SetColor(id, P.ShapeFill, n.Fill);
+            if (p.StrokeColor != n.StrokeColor)
+                _sink.SetColor(id, P.ShapeStrokeColor, n.StrokeColor);
+
+            bool widthChanged = p.StrokeWidth != n.StrokeWidth;
+            if (_rescale || widthChanged)
+                _sink.SetF32(id, P.ShapeStrokeWidth, n.StrokeWidth > 0 ? _mapping.ToQt(n.StrokeWidth) : -1);
+
+            if (p.Cap != n.Cap)
+                _sink.SetI32(id, P.ShapeCap, (int)n.Cap);
+            if (p.Join != n.Join)
+                _sink.SetI32(id, P.ShapeJoin, (int)n.Join);
+            if (p.MiterLimit != n.MiterLimit)
+                _sink.SetF32(id, P.ShapeMiterLimit, n.MiterLimit);
+
+            // Without a stroke the divisor is irrelevant; it is 1 so that the pattern stays finite.
+            float unit = n.StrokeWidth > 0 ? n.StrokeWidth : 1;
+            if ((widthChanged && (n.Dash.Count > 0 || p.Dash.Count > 0))
+                || (!ReferenceEquals(p.Dash, n.Dash) && !SameContent(p.Dash, n.Dash)))
+                SendShapeDash(id, n.Dash, unit);
+            if (widthChanged || p.DashOffset != n.DashOffset)
+                _sink.SetF32(id, P.ShapeDashOffset, n.DashOffset / unit);
+
+            if (p.TrimStart != n.TrimStart)
+                _sink.SetF32(id, P.ShapeTrimStart, n.TrimStart);
+            if (p.TrimEnd != n.TrimEnd)
+                _sink.SetF32(id, P.ShapeTrimEnd, n.TrimEnd);
+            if (p.TrimOffset != n.TrimOffset)
+                _sink.SetF32(id, P.ShapeTrimOffset, n.TrimOffset);
+            if (p.FillRule != n.FillRule)
+                _sink.SetI32(id, P.ShapeFillRule, (int)n.FillRule);
+        }
+
+        void SendShapePoints(uint id, Spread<Vector2> points)
+        {
+            int count = Math.Min(points.Count * 2, Protocol.MaxF32ArrayCount);
+            var buffer = ShapeBuffer(count);
+            for (int i = 0; i < count; i += 2)
+            {
+                var v = points[i / 2];
+                buffer[i] = _mapping.ToQt(v.X);
+                buffer[i + 1] = _mapping.ToQt(v.Y);
+            }
+            _sink.SetF32Array(id, P.ShapePoints, buffer.AsSpan(0, count));
+        }
+
+        void SendShapePath(uint id, QtPath path)
+        {
+            var flat = path.Flatten();
+            var verbs = flat.Verbs.AsSpan();
+            var coordinates = flat.Points.AsSpan();
+            int verbCount = FitPath(verbs, coordinates.Length / 2, out int pointCount);
+            var buffer = ShapeBuffer(pointCount * 2);
+            for (int i = 0; i < pointCount * 2; i++)
+                buffer[i] = _mapping.ToQt(coordinates[i]);
+            _sink.SetPath(id, P.ShapePath, verbs.Slice(0, verbCount), buffer.AsSpan(0, pointCount * 2));
+        }
+
+        /// <summary>Returns the number of verbs of the longest prefix that fits one command and the points that prefix takes.</summary>
+        static int FitPath(ReadOnlySpan<byte> all, int available, out int pointCount)
+        {
+            pointCount = available;
+            if (Protocol.PathFits(all.Length, available))
+                return all.Length;
+            int points = 0;
+            int count = 0;
+            for (; count < all.Length; count++)
+            {
+                int next = points + all[count] switch
+                {
+                    Protocol.Verb.Quad => 2,
+                    Protocol.Verb.Cubic => 3,
+                    Protocol.Verb.Close => 0,
+                    _ => 1,
+                };
+                if (!Protocol.PathFits(count + 1, next))
+                    break;
+                points = next;
+            }
+            pointCount = points;
+            return count;
+        }
+
+        void SendShapeDash(uint id, Spread<float> dash, float unit)
+        {
+            int count = Math.Min(dash.Count, Protocol.MaxF32ArrayCount);
+            var buffer = ShapeBuffer(count);
+            for (int i = 0; i < count; i++)
+                buffer[i] = dash[i] / unit;
+            _sink.SetF32Array(id, P.ShapeDash, buffer.AsSpan(0, count));
+        }
+
+        float[] ShapeBuffer(int length)
+        {
+            if (_shapeBuffer.Length < length)
+                _shapeBuffer = new float[Math.Max(length, _shapeBuffer.Length * 2)];
+            return _shapeBuffer;
+        }
+
+        // float.Equals instead of ==, so that NaN equals itself and an unchanged list is not sent again.
+        static bool SameContent(Spread<Vector2> a, Spread<Vector2> b)
+        {
+            if (a.Count != b.Count)
+                return false;
+            for (int i = 0; i < a.Count; i++)
+            {
+                if (!a[i].X.Equals(b[i].X) || !a[i].Y.Equals(b[i].Y))
+                    return false;
+            }
+            return true;
+        }
+
+        static bool SameContent(Spread<float> a, Spread<float> b)
+        {
+            if (a.Count != b.Count)
+                return false;
+            for (int i = 0; i < a.Count; i++)
+            {
+                if (!a[i].Equals(b[i]))
+                    return false;
+            }
+            return true;
         }
 
         /// <summary>Font size is always sent on creation: Qt's default font size is platform dependent.</summary>

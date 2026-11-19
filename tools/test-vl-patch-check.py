@@ -149,6 +149,66 @@ def test_audio_patch(tmp):
     expect(not lines_with(out, 'missing-pin') and not lines_with(out, 'PVolume'), 'audio: Volume IOBox with a non-default value is fine, no false missing-pin')
 
 
+ARC_TO_SOURCE = '''
+namespace Test
+{
+    [ProcessNode(Name = "ArcTo", Category = "Qt.Paths")]
+    public sealed class ArcToTangentNode
+    {
+        public ArcToTangentNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext) { }
+        public QtPath Update(QtPath input, Vector2 through, Vector2 target, float radius = 10f) => input;
+    }
+
+    [ProcessNode(Name = "ArcTo", Category = "Qt.Paths")]
+    public sealed class ArcToOvalNode
+    {
+        public ArcToOvalNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext) { }
+        public QtPath Update(QtPath input, Vector2 target, float rx = 10f, float ry = 10f, bool largeArc = false) => input;
+    }
+
+    [ProcessNode(Name = "Other", Category = "Qt.Paths")]
+    public sealed class OtherNode
+    {
+        public OtherNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext) { }
+        public QtPath Update(QtPath input, float length = 1f) => input;
+    }
+}
+'''
+
+
+def test_overloads(tmp):
+    root = os.path.join(tmp, 'overloads')
+    os.makedirs(os.path.join(root, 'src', 'VL.Qt', 'Nodes', 'Test'))
+    open(os.path.join(root, 'src', 'VL.Qt', 'Nodes', 'Test', 'ArcToNode.cs'), 'w', encoding='utf-8').write(ARC_TO_SOURCE)
+    catalog = pc.load_catalog(root)
+    arc = catalog['ArcTo']
+    forms = pc.all_forms(arc)
+    expect(len(forms) == 2 and len(pc.all_forms(catalog['Other'])) == 1, 'overloads: two nodes of the same name are both kept, others stay single')
+    expect([f['csharp'] for f in forms] == ['ArcToTangentNode', 'ArcToOvalNode'], 'overloads: the forms keep their order')
+    expect(pc.resolve_overload(catalog['Other'], ['Input', 'Bogus']) is catalog['Other'], 'overloads: a single node is returned as it is')
+    expect(pc.resolve_overload(arc, ['Input', 'Rx', 'Ry'])['csharp'] == 'ArcToOvalNode', 'overloads: most matching pin names wins')
+    tie = pc.resolve_overload(arc, ['Input', 'Radius', 'Rx'])
+    expect(all(pc.find_pin(tie, n) is not None for n in ('Radius', 'Rx', 'Large Arc', 'Through', 'Output')), 'overloads: a tie gives the union of the pins')
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('vl_patch_check', CHECK)
+    checker = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(checker)
+
+    def missing(pin_names):
+        pins = [(f'A{i}', n, 'OutputPin' if n == 'Output' else 'InputPin', '') for i, n in enumerate(pin_names)]
+        canvas = node('A', 'ArcTo', 'Qt.Paths', pins) + pad('PIn', None, 'In')
+        links = [('PIn', f'A{i}') for i, n in enumerate(pin_names) if n != 'Output']
+        findings, _ = checker.check_patch(document(canvas, links), catalog)
+        return sorted(f.pin for f in findings if f.rule == 'missing-pin')
+
+    expect(missing(['Input', 'Rx', 'Ry', 'Large Arc', 'Output']) == [], 'overloads: pins of the second form give no missing-pin')
+    expect(missing(['Input', 'Through', 'Radius', 'Output']) == [], 'overloads: pins of the first form give no missing-pin')
+    expect(missing(['Input', 'Rx', 'Ry', 'Bogus']) == ['Bogus'], 'overloads: a wrong pin is a missing-pin')
+    expect(missing(['Input', 'Radius', 'Rx', 'Bogus']) == ['Bogus'], 'overloads: a tie reports only pins no form has')
+    expect(missing(['Input', 'Radius', 'Rx']) == [], 'overloads: a tie gives no false missing-pin')
+
+
 def test_default_run():
     code, out = run()
     expect(code == 0, 'default run: exit code 0')
@@ -255,6 +315,7 @@ def main():
     test_audio_catalog()
     test_default_run()
     with tempfile.TemporaryDirectory() as tmp:
+        test_overloads(tmp)
         test_clean(tmp)
         test_errors(tmp)
         test_baseline(tmp)

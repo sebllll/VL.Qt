@@ -4,8 +4,10 @@ using System.Collections.Immutable;
 using System.Linq;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
+using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.Paths;
 using P = VL.Qt.Protocol.Prop;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
@@ -256,19 +258,179 @@ namespace VL.Qt.Tests
 
             sink.Sets = 0;
             const int frames = 1000;
-            long before = GC.GetAllocatedBytesForCurrentThread();
             long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
             for (int i = 0; i < frames; i++)
                 rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
             var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(t0);
+            Assert.That(sink.Sets, Is.EqualTo(frames), "exactly one SET per frame");
+            int frame = 0;
+            long allocated = Allocations.Fewest(() => rec.Update((frame++ & 1) == 0 ? b : a, Space.DIPTopLeft), frames);
 
             double msPerFrame = elapsed.TotalMilliseconds / frames;
             TestContext.Out.WriteLine($"1000 children, 1 change/frame: {msPerFrame:F4} ms/frame, {allocated} bytes");
-            Assert.That(sink.Sets, Is.EqualTo(frames), "exactly one SET per frame");
             Assert.That(allocated, Is.EqualTo(0));
             // CI runners are slow and noisy (0.32 ms seen on Linux); this still catches a per-frame rebuild of all children.
             Assert.That(msPerFrame, Is.LessThan(1.0));
+        }
+
+        // ---- Shape (#154): Frame converts with 100 per unit ----
+
+        static Spread<Vector2> Pts(params Vector2[] points) => Spread.Create(points);
+        static readonly Vector2[] s_triangle = { new(0, 0), new(1, 0), new(0, 1) };
+
+        [Test]
+        public void Shape_FirstFrame_SendsOnlyNonDefaultValues_Converted()
+        {
+            Frame(new Shape { Points = Pts(s_triangle), Closed = true, StrokeWidth = 0.02f, Dash = Spread.Create(0.04f, 0.02f), DashOffset = 0.01f, Cap = ShapeCap.Round });
+            Assert.That(_sink.Commands, Is.EqualTo(new[]
+            {
+                "CREATE 1 26",
+                $"SET 1 {P.ShapePoints} f32array(0,0,100,0,0,100)",
+                $"SET 1 {P.ShapeClosed} bool(1)",
+                $"SET 1 {P.ShapeStrokeWidth} f32(2)",
+                $"SET 1 {P.ShapeCap} i32(2)",
+                $"SET 1 {P.ShapeDash} f32array(2,1)",         // 0.04 / 0.02, 0.02 / 0.02
+                $"SET 1 {P.ShapeDashOffset} f32(0.5)",       // 0.01 / 0.02
+                "REPARENT 1 0 0",
+            }));
+        }
+
+        [Test]
+        public void Shape_Default_SendsNothing()
+        {
+            Frame(new Shape());
+            Assert.That(_sink.OfOp("SET"), Is.Empty);
+        }
+
+        [Test]
+        public void Shape_OtherProperties_SentOnlyOnChange()
+        {
+            var points = Pts(s_triangle);
+            Frame(new Shape { Points = points });
+            Frame(new Shape
+            {
+                Points = points, Fill = new Color4(1, 0, 0, 1), StrokeColor = new Color4(0, 1, 0, 1), Join = ShapeJoin.Round, MiterLimit = 2,
+                TrimStart = 0.1f, TrimEnd = 0.9f, TrimOffset = 0.5f, FillRule = ShapeFillRule.EvenOdd,
+            });
+            Assert.That(_sink.Commands, Is.EqualTo(new[]
+            {
+                $"SET 1 {P.ShapeFill} color(1,0,0,1)",
+                $"SET 1 {P.ShapeStrokeColor} color(0,1,0,1)",
+                $"SET 1 {P.ShapeJoin} i32(2)",
+                $"SET 1 {P.ShapeMiterLimit} f32(2)",
+                $"SET 1 {P.ShapeTrimStart} f32(0.1)",
+                $"SET 1 {P.ShapeTrimEnd} f32(0.9)",
+                $"SET 1 {P.ShapeTrimOffset} f32(0.5)",
+                $"SET 1 {P.ShapeFillRule} i32(1)",
+            }));
+        }
+
+        [Test]
+        public void Shape_NewReferenceWithTheSameContent_SendsNothing()
+        {
+            Frame(new Shape { Points = Pts(s_triangle), Dash = Spread.Create(0.1f, 0.1f), StrokeWidth = 0.02f });
+            Frame(new Shape { Points = Pts(s_triangle), Dash = Spread.Create(0.1f, 0.1f), StrokeWidth = 0.02f });
+            Assert.That(_sink.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void Shape_ChangedPoints_AreSentAgain()
+        {
+            Frame(new Shape { Points = Pts(s_triangle) });
+            Frame(new Shape { Points = Pts(new Vector2(0, 0), new Vector2(2, 0)) });
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.ShapePoints} f32array(0,0,200,0)" }));
+        }
+
+        [Test]
+        public void Shape_PathInsteadOfPoints_SendsThePath()
+        {
+            var path = QtPath.Empty.MoveTo(0, 0).LineTo(1, 0).QuadTo(1, 1, 0, 1).Close();
+            Frame(new Shape { Points = Pts(s_triangle), Path = path });
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapePath} path(0,1,2,4;0,0,100,0,100,100,0,100)"));
+            Assert.That(_sink.Commands.Any(c => c.Contains($" {P.ShapePoints} ")), Is.False);
+
+            // Same content in a new instance: nothing; another path: sent again.
+            Frame(new Shape { Points = Pts(s_triangle), Path = QtPath.Empty.MoveTo(0, 0).LineTo(1, 0).QuadTo(1, 1, 0, 1).Close() });
+            Assert.That(_sink.Count, Is.EqualTo(0));
+            Frame(new Shape { Path = QtPath.Empty.MoveTo(0, 0).LineTo(2, 0) });
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.ShapePath} path(0,1;0,0,200,0)" }));
+        }
+
+        [Test]
+        public void Shape_BackFromPathToPoints_SendsThePoints()
+        {
+            var points = Pts(s_triangle);
+            Frame(new Shape { Path = QtPath.Empty.MoveTo(0, 0).LineTo(1, 0) });
+            Frame(new Shape { Points = points });
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.ShapePoints} f32array(0,0,100,0,0,100)" }));
+        }
+
+        [Test]
+        public void Shape_StrokeWidthZero_IsSentAsMinusOne()
+        {
+            Frame(new Shape { StrokeWidth = 0.02f });
+            Frame(new Shape());
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.ShapeStrokeWidth} f32(-1)", $"SET 1 {P.ShapeDashOffset} f32(0)" }));
+        }
+
+        [Test]
+        public void Shape_StrokeWidthChange_SendsTheDashAgain()
+        {
+            var dash = Spread.Create(0.1f, 0.05f);
+            Frame(new Shape { Dash = dash, DashOffset = 0.1f, StrokeWidth = 0.05f });
+            Frame(new Shape { Dash = dash, DashOffset = 0.1f, StrokeWidth = 0.1f });
+            Assert.That(_sink.Commands, Is.EqualTo(new[]
+            {
+                $"SET 1 {P.ShapeStrokeWidth} f32(10)",
+                $"SET 1 {P.ShapeDash} f32array(1,0.5)",
+                $"SET 1 {P.ShapeDashOffset} f32(1)",
+            }));
+        }
+
+        [Test]
+        public void Shape_DashChangeWithoutStrokeWidthChange_SendsOnlyTheDash()
+        {
+            Frame(new Shape { Dash = Spread.Create(0.1f, 0.05f), StrokeWidth = 0.05f });
+            Frame(new Shape { Dash = Spread.Create(0.2f, 0.05f), StrokeWidth = 0.05f });
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.ShapeDash} f32array(4,1)" }));
+        }
+
+        [Test]
+        public void Shape_TooManyPoints_AreCutToTheLimit()
+        {
+            var many = new Vector2[Protocol.MaxF32ArrayCount];   // twice as many floats as fit
+            Frame(new Shape { Points = Spread.Create(many) });
+            var set = _sink.Commands.Single(c => c.Contains($" {P.ShapePoints} "));
+            Assert.That(set.Split(',').Length, Is.EqualTo(Protocol.MaxF32ArrayCount));
+        }
+
+        [Test]
+        public void Shape_TooLongPath_IsCutToTheVerbsThatFit()
+        {
+            var path = QtPath.Empty.MoveTo(0, 0);
+            for (int i = 0; i < 9000; i++)
+                path = path.LineTo(i, 1);
+            Assert.That(Protocol.PathFits(9001, 9001), Is.False);
+            Assert.DoesNotThrow(() => Frame(new Shape { Path = path }));
+            var set = _sink.Commands.Single(c => c.Contains($" {P.ShapePath} "));
+            int verbs = set.Substring(set.IndexOf("path(") + 5, set.IndexOf(';') - set.IndexOf("path(") - 5).Split(',').Length;
+            Assert.That(Protocol.PathFits(verbs, verbs), Is.True);
+            Assert.That(Protocol.PathFits(verbs + 1, verbs + 1), Is.False);
+        }
+
+        [Test]
+        public void Shape_Steady_AllocatesNothing()
+        {
+            var shape = new Shape { Points = Pts(s_triangle), Dash = Spread.Create(0.1f, 0.1f), StrokeWidth = 0.02f };
+            var pathShape = new Shape { Path = QtPath.Empty.MoveTo(0, 0).LineTo(1, 1) };
+            var tree = G(shape, pathShape);
+            Frame(tree);
+            for (int i = 0; i < 10; i++)
+                Frame(tree);
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 100; i++)
+                _rec.Update(tree, Space.DIPTopLeft);
+            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
         }
 
         sealed class CountingSink : ICommandSink
@@ -286,6 +448,8 @@ namespace VL.Qt.Tests
             public void SetRect(uint id, ushort prop, float x, float y, float width, float height) => Sets++;
             public void SetMat4(uint id, ushort prop, in Matrix m) => Sets++;
             public void SetString(uint id, ushort prop, ReadOnlySpan<char> value) => Sets++;
+            public void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values) => Sets++;
+            public void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points) => Sets++;
             public void SetRef(uint id, ushort prop, uint refId) => Sets++;
             public void SetU64(uint id, ushort prop, ulong value) => Sets++;
             public void BeginStyle(uint id, ushort flags) { }

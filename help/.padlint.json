@@ -32,6 +32,12 @@
       "reason": "feature text: Position and Anchor; shows the pin to switch"
     },
     {
+      "patch": "Qt/HowTo Draw a Polyline.vl",
+      "id": "uaIv1TLEHjndbEbtr79d7L",
+      "rule": "default-iobox",
+      "reason": "Closed toggle to click: Cap is only visible on an open polyline"
+    },
+    {
       "patch": "Qt/HowTo Draw a Rectangle.vl",
       "id": "VryotI6UOkZLBgs6VymRyD",
       "rule": "default-iobox",

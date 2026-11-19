@@ -43,6 +43,13 @@ Notes:                                                   (notes, size 9, bottom)
 
 - `HowTo Draw a Rectangle` — basic shapes, colors, radius
 - `HowTo Draw a Circle` — Circle element
+- `HowTo Draw a Line` — Line element: drag both end points in the Renderer; Cap, Trim Start and Trim End
+- `HowTo Draw a Polyline` — open or closed point list with draggable corners, caps and joins
+- `HowTo Draw a Polygon` — filled point list with draggable corners, fill rule on a self-intersecting polygon
+- `HowTo Build a Path` — Qt.Paths builder chain (MoveTo, LineTo, CubicTo, Close, a Relative variant, two ArcTo forms, AddRoundRect) drawn with Path; every position and parameter is an IOBox at its pin
+- `HowTo Draw a Path` — Path element: fill and stroke, Trim Start and Trim End, Fill Rule EvenOdd on a path with a hole
+- `HowTo Draw a Bezier Curve with Handles` — Bezier (Handles): drag anchors and handle ends; Handle Modes switches between Free, Mirrored and Aligned
+- `HowTo Draw Splines` — Spline (CatmullRom) with Alpha 0, 0.5 and 1 and Spline (BSpline) on the same draggable points, the control polygon drawn with Polyline
 - `HowTo Group Elements` — grouping, nesting, transforms
 - `HowTo Reuse an Element` — one element at several places of the tree, Interaction per place
 - `HowTo Choose a Space` — the `Space` pin: origin and unit of Normalized, DIP, DIPTopLeft and PixelTopLeft
@@ -86,6 +93,7 @@ See [Styles](styles.md).
 - `HowTo Preload Images` — LoadImage (Async) for a spread of files, switching without stutter
 - `HowTo Use an IImage` — ToQtImage for images from other libraries (e.g. Skia)
 - `HowTo Take a Snapshot` — Snapshot of an element as IImage
+- `HowTo Write an Element to a File` — FileWriter (Element) and Snapshot → FileWriter: PNG/JPG files
 - `HowTo Play a Video` — playback and controls
 - `HowTo Show a VL.Video player in Qt` — VideoSourceToQtImage: a VL.Video source in the Image element
 

@@ -3,6 +3,7 @@
 // element snippets in elements.cpp; only LGPL modules (see tools/check-licenses.ps1).
 import QtQuick          // Item, Rectangle, Text, Image, Row, Column, Matrix4x4
 import QtQuick.Effects  // MultiEffect (effect layer)
+import QtQuick.Shapes   // Shape, ShapePath (SHAPE built in C++, elements.cpp; #154)
 import QtMultimedia     // Video: MediaPlayer, AudioOutput, VideoOutput (FFmpeg backend)
 import QtQuick.Controls // Button, SpinBox (element snippets import QtQuick.Controls); CheckBox/Switch/Slider/TextField (#301) need nothing more
 import QtQuick.Controls.Basic // style Basic (set in vlqt.cpp); other styles are trimmed (trim-deploy/trim-linux)

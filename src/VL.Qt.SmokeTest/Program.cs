@@ -328,6 +328,8 @@ static class Program
         if (Selected("perfoverlay")) PerfOverlayTest.Run(outDir, Check, Pump, Grab); // F5 pages, keys, spike in the timeline (#244).
         // Rectangle: color, radius, border; 1000-rect performance (05b).
         if (Selected("rectangle")) RectangleTest.Run(outDir, Check, Pump, Grab);
+        // Shape (#154): polyline, polygon, cubic path, trim, dash; invalid PATH / F32_ARRAY payloads rejected.
+        if (Selected("shapes")) ShapeTest.Run(outDir, Check, Pump, Grab);
         // Text: font, alignment, wrap, elide, lineHeight, letterSpacing, fontSizeMode (05c).
         if (Selected("text")) TextTest.Run(outDir, Check, Pump, Grab);
         // Image: image resource, fillMode, smooth, failed resource (05d, #361).
@@ -407,6 +409,7 @@ static class Program
         if (Selected("resoverlay")) PerfOverlayTest.RunResources(outDir, Check, Pump, Grab); // F5 Resources page: states, budget, order, 1000 resources (#364).
         if (Selected("resources")) ResourceTest.Run(Check, Pump, () => s_log.ToString()); // Resource manager: states, stale ids, budget, release, wait, shutdown (#359).
         if (Selected("image-resource")) ImageResourceTest.Run(outDir, Check, Pump, () => s_log.ToString()); // Image resources: files, pixel formats, replacement, perf (#360).
+        if (Selected("imagewrite")) ImageWriteTest.Run(outDir, Check); // Image file writer (#157): PNG/JPG/BMP from pixels, new folders, alpha, error codes.
         if (Selected("qtimage")) QtImageTest.Run(outDir, Check, Pump, Grab); // QtImage nodes → ResourceClient → QtNative, one image in 100 elements, release queue (#362).
         if (Selected("snapshot")) SnapshotTest.Run(outDir, Check, Pump, Grab); // Snapshot node via ResourceClient and QtNative: pixels vs window grab, latency, error paths, hitches (#363).
         if (Selected("tooltip")) TooltipTest.Run(outDir, Check, Pump, Grab); // Tooltip previews: window change count (static scene, property, hover, video), snapshot_fit sizes, errors (#544).

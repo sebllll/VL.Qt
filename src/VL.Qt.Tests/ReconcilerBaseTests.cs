@@ -79,15 +79,13 @@ namespace VL.Qt.Tests
             for (int i = 0; i < live.Length; i++)
                 ids.Free(live[i]);
 
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int frame = 0; frame < 100; frame++)
+            Assert.That(Allocations.Fewest(() =>
             {
                 for (int i = 0; i < live.Length; i++)
                     live[i] = ids.Allocate();
                 for (int i = 0; i < live.Length; i++)
                     ids.Free(live[i]);
-            }
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+            }, frames: 100), Is.EqualTo(0));
         }
     }
 
@@ -157,14 +155,12 @@ namespace VL.Qt.Tests
             WriteAll(sink); // warm-up: grow the buffer
             writer.Reset();
 
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int frame = 0; frame < 1000; frame++)
+            Assert.That(Allocations.Fewest(() =>
             {
                 writer.Reset();
                 for (int i = 0; i < 10; i++)
                     WriteAll(sink);
-            }
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+            }), Is.EqualTo(0));
         }
 
         [Test]

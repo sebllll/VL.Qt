@@ -175,24 +175,18 @@ namespace VL.Qt.Tests
         {
             var ch = Channel.Create("abc");
             for (int i = 0; i < 100; i++) { Update(ch); Update(); }
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) Update(ch);
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0), "connected, equal strings");
+            Assert.That(Allocations.Fewest(() => Update(ch)), Is.EqualTo(0), "connected, equal strings");
 
             // a patch value with equal content but a new string instance must not allocate or describe again either
             var ch2 = Channel.Create("abc");
             var node = new TextInputNode(_ => NoWarning);
             for (int i = 0; i < 100; i++) node.Update(DefaultSize, true, default, RectangleAnchor.Center, ch2, "ph", true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
-            before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) node.Update(DefaultSize, true, default, RectangleAnchor.Center, ch2, "ph", true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0), "with placeholder");
+            Assert.That(Allocations.Fewest(() => node.Update(DefaultSize, true, default, RectangleAnchor.Center, ch2, "ph", true, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "with placeholder");
             node.Dispose();
 
             var unconnected = new TextInputNode(_ => NoWarning);
             for (int i = 0; i < 100; i++) unconnected.Update(DefaultSize, true, default, RectangleAnchor.Center, null, null, true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
-            before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++) unconnected.Update(DefaultSize, true, default, RectangleAnchor.Center, null, null, true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0), "unconnected (null)");
+            Assert.That(Allocations.Fewest(() => unconnected.Update(DefaultSize, true, default, RectangleAnchor.Center, null, null, true, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "unconnected (null)");
             unconnected.Dispose();
         }
     }

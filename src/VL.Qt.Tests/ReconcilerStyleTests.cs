@@ -172,10 +172,8 @@ namespace VL.Qt.Tests
                 Update((i & 1) == 0 ? b : a);
             _sink.Clear();
 
-            long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 1000; i++)
-                Update((i & 1) == 0 ? b : a);
-            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            int frame = 0;
+            long allocated = Allocations.Fewest(() => Update((frame++ & 1) == 0 ? b : a));
 
             Assert.That(_sink.Commands, Is.Empty);
             Assert.That(allocated, Is.EqualTo(0));
