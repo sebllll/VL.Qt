@@ -324,7 +324,7 @@ About 200 duplicated doc lines across 24 nodes.
 - (c) Accept the duplication.
 - Recommended: (a); a generator only if the node count grows well beyond 24.
 - Source: NODE Q1 (NODE-03)
-- Decision:
+- Decision: (a), `<include>`; the issue checks in vvvv that the included text shows as pin help (Sebastian, 2026-11-19).
 
 ### D2 K5: drop the rule for `[Pin(Visibility = PinVisibility.Hidden)]` on `NodeContext`?
 vvvv recognises the parameter by its type; VL.StandardLibs has 66 constructors without and 4 with the attribute.
@@ -332,14 +332,14 @@ vvvv recognises the parameter by its type; VL.StandardLibs has 66 constructors w
 - (b) Keep the rule, add 55 attributes that change nothing.
 - Recommended: (a).
 - Source: NODE Q2
-- Decision:
+- Decision: (a), drop the rule and the six attributes; K5 is closed by this (Sebastian, 2026-11-19).
 
 ### D3 Explicit defaults for 0, false and null?
 - (a) Add `[DefaultValue(0f)]`/`[DefaultValue(false)]` everywhere (about 60).
 - (b) Rule: "explicit unless `default(T)` is intended; never for `Matrix`"; remove the explicit zeros of the shape nodes; `vl_pin_catalog.py` treats a missing attribute as `default(T)`.
 - Recommended: (b).
 - Source: NODE Q3
-- Decision:
+- Decision: (b) (Sebastian, 2026-11-19). VL.StandardLibs has no strict rule either: 30 `[DefaultValue]` attributes in all its C#, 13 of them for 0/false/null; most of its nodes are patched, not C#.
 
 ### D4 `Protocol.cs`: hand mirror or generated?
 - (a) Hand mirror plus a stricter drift check in the unit tests.
@@ -347,7 +347,7 @@ vvvv recognises the parameter by its type; VL.StandardLibs has 66 constructors w
 - (c) One description file that generates both.
 - Recommended: (a) now, (b) if it becomes a chore, not (c).
 - Source: PROTO Q2 (PROTO-08)
-- Decision:
+- Decision: (a), hand mirror with a stricter drift check as a unit test (Sebastian, 2026-11-19).
 
 ### D5 Keep the hand-written QML declaration parser?
 It reads the properties a user's QML file declares, to make pins in the node browser. QML is Qt's declarative UI language.
@@ -356,7 +356,7 @@ It reads the properties a user's QML file declares, to make pins in the node bro
 - (c) Ask QtNative at runtime: no pins before a renderer runs.
 - Recommended: (a), later a warning when the runtime property list differs.
 - Source: QML Q1
-- Decision:
+- Decision: (a), keep and fix; the runtime cross-check warning comes later (Sebastian, 2026-11-19).
 
 ### D6 One shared folder-node-factory layer for shaders and QML?
 The two node factories (nodes generated from files in a folder) are 90 % identical copies.
@@ -364,27 +364,27 @@ The two node factories (nodes generated from files in a folder) are 90 % identic
 - (b) Leave the copies, only move the pin types out of `Shaders/`.
 - Recommended: (a).
 - Source: QML Q2 (QML-03)
-- Decision:
+- Decision: (a), one shared folder-node-factory layer, one issue for shaders and QML (Sebastian, 2026-11-19).
 
 ### D7 Companion packages (Stride, Audio): `InternalsVisibleTo` or a public API?
 - (a) Keep `InternalsVisibleTo` with a documented seam (COMP-07): nothing frozen, third parties cannot build a companion.
 - (b) A small public API in `VL.Qt.Hosting`: others can build companions, but types still moving get frozen.
 - Recommended: (a) for 0.10.0, as VL.ImGui does.
 - Source: COMP Q1
-- Decision:
+- Decision: (a) for 0.10.0, `InternalsVisibleTo` with a documented seam (Sebastian, 2026-11-19).
 
 ### D8 QML of the built-in element types: files or C++ strings?
 - (a) `.qml` files in a resource folder (NELM-06): readable, lintable, windeployqt (Qt's tool that copies the needed Qt files next to an app) sees the imports, `deploy.qml` mostly goes.
 - (b) Keep C++ strings; `deploy.qml` stays a hand-kept list.
 - Recommended: (a).
 - Source: NELM Q1
-- Decision:
+- Decision: (a), `.qml` files in a resource folder (Sebastian, 2026-11-19).
 
 ### D9 More Qt private API?
 "Private" in Qt means classes without a compatibility promise between Qt versions. QtNative already uses several (`QQuickRectangle`, `QQuickText`, `QQuickShape` …); NELM-07/08 use more of the same classes, no new ones.
 - Recommended: accept, with the rule "only classes listed in the head comment of `elements.h`, checked on each Qt update".
 - Source: NELM Q3
-- Decision:
+- Decision: yes, private Qt classes may be used wherever they help, new ones included; more work on a Qt update is accepted. The classes in use are listed in the head comment of `elements.h` so that an update knows what to check (Sebastian, 2026-11-19).
 
 ## E Native runtime behaviour
 
