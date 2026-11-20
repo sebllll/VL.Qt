@@ -1,4 +1,5 @@
 ﻿using Stride.Core.Mathematics;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // elements have no position/Bounds property any more, only SIZE + ANCHOR + TRANSFORM. Raw-protocol scenarios that used

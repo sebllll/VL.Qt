@@ -1,4 +1,5 @@
-﻿namespace VL.Qt.Elements
+﻿using VL.Qt.Wire;
+namespace VL.Qt.Elements
 {
     /// <summary>
     /// Element kinds. Values are the CREATE type ids of the command protocol

@@ -1,5 +1,6 @@
 ﻿using System;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // NDIAG-01: `over_budget` counts pumps with pump > budget, and pump includes the VSync wait (QRhi::beginFrame) and the

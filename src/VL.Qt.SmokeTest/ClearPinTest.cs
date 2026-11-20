@@ -9,6 +9,7 @@ using VL.Lib.Mathematics;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Wire;
 using Color = System.Drawing.Color;
 using Rectangle = VL.Qt.Elements.Rectangle;
 

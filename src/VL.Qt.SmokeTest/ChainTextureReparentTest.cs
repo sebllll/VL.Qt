@@ -2,6 +2,7 @@
 using System.Buffers.Binary;
 using System.Drawing;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // NCMD-17: the texture element of a SHADER link (here the layer of a Blend) is parked hidden under the root like a mask,

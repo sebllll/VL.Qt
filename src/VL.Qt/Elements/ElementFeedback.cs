@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Elements
 {

@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using NUnit.Framework;
 using VL.Qt;
 using VL.Qt.Nodes;
+using VL.Qt.Wire;
 using static Pixels;
 
 // ShaderEffect Phase 2: GLSL text baked at runtime in the worker (vlqt_res_load_shader_source).

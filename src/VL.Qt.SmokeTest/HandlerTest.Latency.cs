@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reactive.Subjects;
 using Microsoft.Extensions.Logging;
 using VL.Lib.Animation;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Input latency: input queued like platform input between two frames (vlqt_test_queue_mouse / _touch) reaches the

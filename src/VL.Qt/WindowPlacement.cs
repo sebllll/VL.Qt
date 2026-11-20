@@ -1,5 +1,6 @@
 ﻿using System;
 using Stride.Core.Mathematics;
+using VL.Qt.Wire;
 
 namespace VL.Qt
 {

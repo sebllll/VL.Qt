@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using VL.Qt.Wire;
 
 namespace VL.Qt
 {

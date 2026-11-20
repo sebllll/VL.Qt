@@ -7,6 +7,7 @@ using System.Reactive.Subjects;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using VL.Lib.Animation;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Global pump (plan 02a/02b) without vvvv: simulated IFrameClock, two windows, 120 frames.

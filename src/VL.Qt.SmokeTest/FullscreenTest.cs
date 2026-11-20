@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using Stride.Core.Mathematics;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Fullscreen pin without vvvv: WindowRenderer.SetMode(Fullscreen) live and on create (before show).

@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 

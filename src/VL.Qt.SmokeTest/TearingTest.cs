@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 
 /// <summary>

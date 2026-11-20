@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using NUnit.Framework;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Tests
 {

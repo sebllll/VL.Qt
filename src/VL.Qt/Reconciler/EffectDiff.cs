@@ -4,7 +4,8 @@ using System.Collections.Immutable;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Styles;
-using P = VL.Qt.Protocol.Prop;
+using VL.Qt.Wire;
+using P = VL.Qt.Wire.Protocol.Prop;
 
 namespace VL.Qt
 {

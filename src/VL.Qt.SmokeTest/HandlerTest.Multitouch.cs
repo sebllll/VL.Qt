@@ -3,6 +3,7 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Touch Points and Pinch handlers, and the Windows press-and-hold

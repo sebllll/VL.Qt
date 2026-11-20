@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Decoder robustness (NCMD-15): the recorded traces (src/VL.Qt.SmokeTest/traces) are damaged in two ways and applied to QtNative:

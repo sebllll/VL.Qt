@@ -2,6 +2,7 @@
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Elements;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Qml
 {

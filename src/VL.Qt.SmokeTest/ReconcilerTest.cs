@@ -8,6 +8,7 @@ using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Qt;
 using VL.Qt.Elements;
+using VL.Qt.Wire;
 using Color = System.Drawing.Color;
 using Rectangle = VL.Qt.Elements.Rectangle;
 using RectangleF = Stride.Core.Mathematics.RectangleF;

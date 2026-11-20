@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 using Color = System.Drawing.Color;
 using static Pixels;

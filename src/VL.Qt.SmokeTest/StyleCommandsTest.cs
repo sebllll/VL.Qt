@@ -4,6 +4,7 @@ using System.Drawing;
 using NUnit.Framework;
 using VL.Qt;
 using VL.Qt.Styles;
+using VL.Qt.Wire;
 
 // SET_STYLE as a command (NFX-23, applySetStyle in vlstyle.cpp): every malformed variant returns its ApplyResult and,
 // because the whole command is checked before the table is written, leaves the style as it was. No API reads the style

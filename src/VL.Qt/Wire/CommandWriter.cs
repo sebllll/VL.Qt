@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Stride.Core.Mathematics;
 
-namespace VL.Qt
+namespace VL.Qt.Wire
 {
     /// <summary>
     /// Reusable byte buffer holding the commands of one window for one frame (format: see protocol.h).

@@ -8,6 +8,7 @@ using VL.Lib.Collections;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Styles;
+using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests

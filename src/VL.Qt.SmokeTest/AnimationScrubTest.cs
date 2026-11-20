@@ -4,6 +4,7 @@ using System.IO;
 using NUnit.Framework;
 using VL.Qt;
 using VL.Qt.Elements;
+using VL.Qt.Wire;
 
 // NAPP-10 (b): QML animations follow vlqt_driver_advance. docs/architecture.md promises "same tree and time, same output"
 // and scrubbing; QUnifiedTimer advances animations only by positive deltas, so a clock that jumps back may not rewind them.

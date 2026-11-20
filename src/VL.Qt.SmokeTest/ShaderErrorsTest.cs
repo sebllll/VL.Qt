@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Bake errors, the bake cache and the rename warning of shader_resource.cpp (NFX-23), read from the resource events,

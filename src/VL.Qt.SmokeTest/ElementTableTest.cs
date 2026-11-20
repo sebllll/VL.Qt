@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // NELM-12: every property of the element table (elements.cpp) resolves to a QML property or a setter and takes a valid

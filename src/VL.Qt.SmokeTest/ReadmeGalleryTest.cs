@@ -5,6 +5,7 @@ using Stride.Core.Mathematics;
 using NUnit.Framework;
 using VL.Qt;
 using VL.Qt.Styles;
+using VL.Qt.Wire;
 using static Pixels;
 
 // Pictures of the other README sections: styles, layout, images and the basic effects, rendered with raw commands and

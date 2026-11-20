@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // the sound of a Video through an audio tap (QtNative audio_tap.cpp, protocol.h "Audio tap"). A reader thread

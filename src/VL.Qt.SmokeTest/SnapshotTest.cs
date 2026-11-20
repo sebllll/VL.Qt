@@ -14,6 +14,7 @@ using VL.Lib.Basics.Imaging;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Wire;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 using static Pixels;

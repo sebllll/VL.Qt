@@ -8,6 +8,7 @@ using VL.Lib.Reactive;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Wire;
 
 // Touch Points and Pinch nodes at a Rectangle, node level (nodes -> reconciler -> QtNative ->
 // FeedbackRouter -> pull -> channels). The rectangle covers (100, 100, 200, 100) DIP. The raw QtNative side is HandlerTest

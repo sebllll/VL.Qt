@@ -7,6 +7,7 @@ using VL.Core.Import;
 using VL.Lib.Collections;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Nodes
 {

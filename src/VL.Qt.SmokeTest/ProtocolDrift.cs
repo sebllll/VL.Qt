@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Drift check: protocol.h (single source of truth) <-> Protocol.cs, compared by name and value. Needs no GPU: Qt is not

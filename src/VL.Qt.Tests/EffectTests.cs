@@ -4,7 +4,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
-using P = VL.Qt.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.Prop;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests

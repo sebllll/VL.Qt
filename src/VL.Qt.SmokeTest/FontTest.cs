@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // App fonts (LoadFont node): vlqt_font_add / vlqt_font_release in QtNative. Sharing and reference counting per file,

@@ -1,7 +1,7 @@
 ﻿using System;
 using Stride.Core.Mathematics;
 
-namespace VL.Qt
+namespace VL.Qt.Wire
 {
     /// <summary>
     /// Target of the reconciler: the item commands of the protocol (see protocol.h), one SET method per value type.

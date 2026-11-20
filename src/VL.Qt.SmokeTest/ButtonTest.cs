@@ -3,6 +3,7 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Threading;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Button (package A): QtQuick.Controls Button with style Basic. Raw protocol against QtNative: creation, implicit

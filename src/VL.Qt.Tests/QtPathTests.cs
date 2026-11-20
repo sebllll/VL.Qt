@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using NUnit.Framework;
 using VL.Qt.Paths;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Tests
 {

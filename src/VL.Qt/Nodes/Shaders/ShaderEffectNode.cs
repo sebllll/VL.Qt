@@ -7,6 +7,7 @@ using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Nodes

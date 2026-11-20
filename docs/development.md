@@ -220,9 +220,11 @@ src/VL.Qt/                  # C# library
   Elements/                 # element types (Rectangle, Text, ..., FeedbackRouter)
   Nodes/                    # vvvv node wrappers, one folder per category (Elements/, Widgets/, ...)
   Reconciler/               # scene diffing and sync
-  CommandWriter.cs          # binary command encoder
-  EventReader.cs            # event buffer parser
-  Protocol.cs               # IDs mirrored from protocol.h
+  Wire/                     # the protocol to QtNative (namespace VL.Qt.Wire, internal)
+    CommandWriter.cs        # binary command encoder
+    EventReader.cs          # event buffer parser
+    ICommandSink.cs         # target of the reconciler's commands
+    Protocol.cs             # IDs mirrored from protocol.h
 src/VL.Qt.Native/           # QtNative (C++)
   protocol.h                # shared type/property/event IDs
   vlqt.h/cpp                # C API (app, window, rendering)
@@ -250,7 +252,7 @@ tools/                      # build, export, license and test scripts
 
 **Change the protocol:**
 1. Edit `src/VL.Qt.Native/protocol.h` (type or property IDs)
-2. Mirror the change in `src/VL.Qt/Protocol.cs` by hand
+2. Mirror the change in `src/VL.Qt/Wire/Protocol.cs` by hand
 3. Run `dotnet run --project src/VL.Qt.SmokeTest -- --drift` to check that header and C# agree
 4. Implement both sides (`elements.cpp`, `Elements/`, `Reconciler/`)
 

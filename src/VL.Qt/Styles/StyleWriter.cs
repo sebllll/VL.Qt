@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Stride.Core.Mathematics;
 using VL.Core;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Styles
 {

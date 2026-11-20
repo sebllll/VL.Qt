@@ -3,6 +3,7 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // SpinBox (package 1a): QtQuick.Controls SpinBox (style Basic) as value input. Raw protocol against QtNative:

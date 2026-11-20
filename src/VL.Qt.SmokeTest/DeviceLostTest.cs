@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 
 /// <summary>

@@ -3,6 +3,7 @@
 using System.Drawing;
 #endif
 using System.IO;
+using VL.Qt.Wire;
 using VL.Qt;
 
 /// <summary>

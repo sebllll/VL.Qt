@@ -8,6 +8,7 @@ using VL.Core;
 using VL.Core.Diagnostics;
 using VL.Qt.Elements;
 using VL.Qt.Shaders;
+using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests

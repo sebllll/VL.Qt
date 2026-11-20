@@ -8,6 +8,7 @@ using Stride.Core.Mathematics;
 using VL.Core.Diagnostics;
 using VL.Qt.Elements;
 using VL.Qt.Shaders;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Tests
 {

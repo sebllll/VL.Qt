@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Buffers.Binary;
 
-namespace VL.Qt
+namespace VL.Qt.Wire
 {
     /// <summary>
     /// Iterates the poll buffer filled by vlqt_window_poll (QtNative → C#). Record layout, little-endian,
