@@ -26,7 +26,13 @@ public static class DeviceLostTest
     /// <summary>Real removal of the shared D3D11 device, twice: windows, images and snapshot come back (own process).</summary>
     [Test, Category("device-lost"), Category("own-process")]
     public static void DeviceLost() => Scenario.RunLocal(s =>
-        OwnProcess.Run(s, new[] { "device-lost" }, new Dictionary<string, string> { ["VLQT_TEST_D3D11ON12"] = "1" }));
+    {
+        var env = new Dictionary<string, string> { ["VLQT_TEST_D3D11ON12"] = "1" };
+        // CI (GitHub sets CI=true) has no GPU: the device is removed on the software adapter (WARP), only in this process.
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")))
+            env["QSG_RHI_PREFER_SOFTWARE_RENDERER"] = "1";
+        OwnProcess.Run(s, new[] { "device-lost" }, env);
+    });
 
     // Body, run by the helper executable (OwnProcess).
     internal static void Run(Scenario s)

@@ -478,9 +478,7 @@ jobs:
       # SmokeTest checks itself), grabs/. The job log shows the failing tests; the whole folder is uploaded on failure.
       - name: Run SmokeTest
         shell: pwsh
-        env:
-          # Device lost (#367) removes the D3D11 device for real (D3D11On12) on the software adapter (WARP) of this GPU-less runner.
-          QSG_RHI_PREFER_SOFTWARE_RENDERER: '1'
+        # device-lost (#367) runs inside this step as an own-process test; DeviceLostTest.cs puts it on WARP when CI is set.
         run: |
           # A crash must fail fast instead of waiting for the invisible Windows Error Reporting dialog.
           New-Item -Force 'HKCU:\Software\Microsoft\Windows\Windows Error Reporting' | Out-Null
