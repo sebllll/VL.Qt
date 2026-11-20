@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
+using NUnit.Framework;
 using VL.Qt;
+using static Pixels;
 
 // builtin:blend (#439, effects package 05): one pass, the layer blended over the input with a mode (W3C separable modes).
 // A 5 x 3 grid of 140 x 100 DIP cells on 0x20 grey, each a ShaderEffect with Input = opaque base rectangle and a layer
@@ -10,8 +12,12 @@ using VL.Qt;
 //   cells 0..12: the 13 modes, opaque base (0.8, 0.4, 0.2) and opaque layer (0.3, 0.6, 0.9), opacity 1.
 //   cell 13: Multiply, layer alpha 0 -> base unchanged.  cell 14: Normal, layer alpha 0.5, opacity 0.5 -> a quarter layer.
 // Raw commands (DIP). Grab: <outDir>/blend.png.
-static class BlendTest
+[TestFixture, NonParallelizable]
+public static class BlendTest
 {
+    [Test, Category("blend")]
+    public static void Blend() => Scenario.Run(Run);
+
     const float CellW = 140, CellH = 100;
     static readonly string[] Names = { "Normal", "Multiply", "Screen", "Overlay", "Add", "Subtract", "Difference", "Darken", "Lighten", "SoftLight", "HardLight", "ColorDodge", "ColorBurn" };
     static readonly float[] Base = { 0.8f, 0.4f, 0.2f };
@@ -49,26 +55,26 @@ static class BlendTest
     // straight base (opaque) with a layer of alpha a: result = (1 - a) * base + a * B(base, layer)
     static float Expect(int mode, int c, float a) => (1 - a) * Base[c] + a * Blend(mode, Base[c], Layer[c]);
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
-        var gpu = Program.NeedsRhi(check, "ShaderEffect needs a QRhi scenegraph");
-        Directory.CreateDirectory(outDir);
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
+        Directory.CreateDirectory(s.OutDir);
 
         Native.vlqt_res_create(Protocol.ResKind.Shader, out var blend);
         var rcLoad = Native.vlqt_res_load_shader(blend, "builtin:blend", Protocol.ShaderStage.Fragment);
         var sLoad = Native.vlqt_res_wait(blend, 10000);
-        check(rcLoad == 0 && sLoad == Protocol.ResState.Ready, $"439: builtin:blend loads -> Ready ({sLoad}, rc {rcLoad})");
+        s.Check(rcLoad == 0 && sLoad == Protocol.ResState.Ready, $"builtin:blend loads -> Ready ({sLoad}, rc {rcLoad})");
         if (sLoad != Protocol.ResState.Ready) return;
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt blend test");
-        check(w != IntPtr.Zero, "439: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
-        pump(4);
+        s.Pump(4);
         var cmd = new CommandWriter();
         void Apply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"439: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
 
         uint next = 10;
@@ -102,14 +108,14 @@ static class BlendTest
         Fx(13, 1, 0, 1);
         Fx(14, 0, 0.5f, 0.5f);
         Apply("blend scene");
-        pump(8);
+        s.Pump(8);
 
-        using var a = grab(w, Path.Combine(outDir, "blend.png"));
-        var s = a.Width / 800f;
+        using var a = s.Grab(w, "blend.png");
+        var scale = a.Width / 800f;
         Color Sample(int i)
         {
             var (x, y) = Cell(i);
-            return a.GetPixel((int)((x + CellW / 2) * s), (int)((y + CellH / 2) * s));
+            return a.GetPixel((int)((x + CellW / 2) * scale), (int)((y + CellH / 2) * scale));
         }
         bool Near(Color c, int mode, float alpha) =>
             Math.Abs(c.R - Expect(mode, 0, alpha) * 255) <= 2 && Math.Abs(c.G - Expect(mode, 1, alpha) * 255) <= 2 && Math.Abs(c.B - Expect(mode, 2, alpha) * 255) <= 2;
@@ -118,19 +124,19 @@ static class BlendTest
         for (var m = 0; m < Names.Length; m++)
         {
             var c = Sample(m);
-            gpu(Near(c, m, 1), $"439: {Names[m]} opaque layer: ({c.R}, {c.G}, {c.B}) expected {Want(m, 1)}");
+            gpu(Near(c, m, 1), $"{Names[m]} opaque layer: ({c.R}, {c.G}, {c.B}) expected {Want(m, 1)}");
         }
         var none = Sample(13);
-        gpu(Near(none, 1, 0), $"439: transparent layer leaves the base unchanged: ({none.R}, {none.G}, {none.B}) expected {Want(1, 0)}");
+        gpu(Near(none, 1, 0), $"transparent layer leaves the base unchanged: ({none.R}, {none.G}, {none.B}) expected {Want(1, 0)}");
         var quarter = Sample(14);
-        gpu(Near(quarter, 0, 0.25f), $"439: Normal, layer alpha 0.5 x opacity 0.5 = a quarter layer: ({quarter.R}, {quarter.G}, {quarter.B}) expected {Want(0, 0.25f)}");
+        gpu(Near(quarter, 0, 0.25f), $"Normal, layer alpha 0.5 x opacity 0.5 = a quarter layer: ({quarter.R}, {quarter.G}, {quarter.B}) expected {Want(0, 0.25f)}");
 
         cmd.Reset();
         for (uint id = 10; id < next; id += 3) cmd.Destroy(id);
         Apply("destroy");
-        pump(3);
+        s.Pump(3);
         Native.vlqt_window_destroy(w);
         Native.vlqt_res_release(blend);
-        pump(2);
+        s.Pump(2);
     }
 }

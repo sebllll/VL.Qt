@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using NUnit.Framework;
 using VL.Qt;
+using static Pixels;
 
 // #438 Phase A, tasks A2 / A2b: builtin:directional_blur / zoom_blur / radial_blur, checked through ShaderEffect. Each blur is
 // two nested ShaderEffects of the same shader (pass templates in protocol.h): pass 1 (inner, id + 5) with
@@ -16,8 +18,12 @@ using VL.Qt;
 // Checks: small leaves the surroundings of the shape dark, large smears into them in the direction of the effect (horizontal /
 // tangential / along the rays) and not across; length 0 / angle 0 = the unblurred picture; the animated length does not step
 // (mean over a block, 1 DIP steps); long lengths show no copies. Grabs: <outDir>/motion-blur_*.png.
-static class MotionBlurTest
+[TestFixture, NonParallelizable]
+public static class MotionBlurTest
 {
+    [Test, Category("motion-blur")]
+    public static void MotionBlur() => Scenario.Run(Run);
+
     const float CellW = 380, CellH = 190, LongW = 780, LongTextX = 410;
     const float MaxSamples = 64; // maxSamples of the shaders: pass 2 gets length / MaxSamples
     const uint Dir = 100, Zoom = 120, Radial = 140; // + 10 * column (cell: Fx, +1 Group, +2 Frame, +3 Text, +4 Shape)
@@ -28,7 +34,6 @@ static class MotionBlurTest
     const uint LongId = 100; // + row: id of the long cell of a row
 
     static Color Px(Bitmap a, float x, float y) => a.GetPixel((int)(x * a.Width / 800), (int)(y * a.Height / 600));
-    static bool IsBg(Color c) => Math.Abs(c.R - 0x20) < 8 && Math.Abs(c.G - 0x20) < 8 && Math.Abs(c.B - 0x20) < 8;
     static bool IsWhite(Color c) => c.R > 235 && c.G > 235 && c.B > 235;
     // Brightness above the background (0 = background, 1 = white).
     static double Lit(Color c) => (c.R - 0x20) / (255.0 - 0x20);
@@ -93,14 +98,14 @@ static class MotionBlurTest
         return sum / n;
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
-        var gpu = Program.NeedsRhi(check, "ShaderEffect needs a QRhi scenegraph");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         ulong Shader(string name)
         {
             Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
             Native.vlqt_res_load_shader(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
-            check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"438: shader builtin:{name} Ready");
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"shader builtin:{name} Ready");
             return id;
         }
         var directional = Shader("directional_blur");
@@ -108,18 +113,18 @@ static class MotionBlurTest
         var radial = Shader("radial_blur");
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt motion blur test");
-        check(w != IntPtr.Zero, "438: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
-        pump(4);
+        s.Pump(4);
         float dpr; // device pixels per DIP: the layers are DIP size x dpr pixels, texelSize = 1 / that, the lengths stay in DIP
-        using (var probe = grab(w, Path.Combine(outDir, "motion-blur_probe.png")))
+        using (var probe = s.Grab(w, "motion-blur_probe.png"))
             dpr = Math.Max(1f, probe.Width / 800f);
-        Console.WriteLine($"INFO motion-blur: device pixel ratio {dpr:F2}");
+        s.Info($"motion-blur: device pixel ratio {dpr:F2}");
         var cmd = new CommandWriter();
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"438: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
 
         // Uniforms per effect row: Directional (angle, length), Zoom (center, length), Radial (center, angle).
@@ -200,7 +205,7 @@ static class MotionBlurTest
             Cell(Fx(row, 1), row, CellX(1), CellY(row), CellW, 15, shader, large);
         }
         CheckApply("motion blur scene");
-        pump(8);
+        s.Pump(8);
 
         // Window coordinates of a point relative to the cell centre.
         float X(int col, float dx) => CellX(col) + CellW / 2 + dx;
@@ -209,38 +214,38 @@ static class MotionBlurTest
         // Rotation / zoom centre: compared with the unblurred picture below (the text may reach the centre, its width depends
         // on the system font).
         Color zoomCentre, radialCentre;
-        using (var a = grab(w, Path.Combine(outDir, "motion-blur_all.png")))
+        using (var a = s.Grab(w, "motion-blur_all.png"))
         {
             // The shape itself (cell centre + 100..160, +-25) stays bright (box blur centred on the pixel); the large radial blur
             // smears the 50 DIP high shape over +-47 DIP, so only about half of it is left there.
             foreach (var row in new[] { Dir, Zoom, Radial })
                 for (var col = 0; col < 2; col++)
-                    gpu(Lit(Px(a, X(col, 130), Y(row, 0))) > (row == Radial && col == 1 ? 0.4 : 0.8),$"438: row {row} col {col}: shape middle still bright ({Px(a, X(col, 130), Y(row, 0))})");
+                    gpu(Lit(Px(a, X(col, 130), Y(row, 0))) > (row == Radial && col == 1 ? 0.4 : 0.8),$"row {row} col {col}: shape middle still bright ({Px(a, X(col, 130), Y(row, 0))})");
 
             // Directional (angle 0): 20 DIP left of the shape (cell centre + 80): large smears in (1/6), small (length 6) does not.
-            gpu(IsBg(Px(a, X(0, 80), Y(Dir, 0))), $"438: directional small: no smear 20 DIP beside the shape ({Px(a, X(0, 80), Y(Dir, 0))})");
+            gpu(IsBg(Px(a, X(0, 80), Y(Dir, 0))), $"directional small: no smear 20 DIP beside the shape ({Px(a, X(0, 80), Y(Dir, 0))})");
             var dirMean = Mean(a, X(1, 76), Y(Dir, -10), X(1, 84), Y(Dir, 10));
-            gpu(dirMean is > 0.08 and < 0.30, $"438: directional large (60): smear 20 DIP beside the shape ~1/6 ({dirMean:F3})");
+            gpu(dirMean is > 0.08 and < 0.30, $"directional large (60): smear 20 DIP beside the shape ~1/6 ({dirMean:F3})");
             // not across the direction: 45 DIP above / below the shape stays dark
-            gpu(IsBg(Px(a, X(1, 130), Y(Dir, -45))) && IsBg(Px(a, X(1, 130), Y(Dir, 45))), "438: directional angle 0: nothing smeared vertically");
+            gpu(IsBg(Px(a, X(1, 130), Y(Dir, -45))) && IsBg(Px(a, X(1, 130), Y(Dir, 45))), "directional angle 0: nothing smeared vertically");
 
             // Zoom (center 0.5/0.5): at cell centre + 175 the streak (60 DIP at the farthest corner) reaches the shape end (+160).
-            gpu(IsBg(Px(a, X(0, 175), Y(Zoom, 0))), $"438: zoom small: no smear beyond the shape end ({Px(a, X(0, 175), Y(Zoom, 0))})");
+            gpu(IsBg(Px(a, X(0, 175), Y(Zoom, 0))), $"zoom small: no smear beyond the shape end ({Px(a, X(0, 175), Y(Zoom, 0))})");
             var zoomMean = Mean(a, X(1, 172), Y(Zoom, -4), X(1, 178), Y(Zoom, 4));
-            gpu(zoomMean is > 0.05 and < 0.5, $"438: zoom large (60): streak beyond the shape end ({zoomMean:F3})");
+            gpu(zoomMean is > 0.05 and < 0.5, $"zoom large (60): streak beyond the shape end ({zoomMean:F3})");
             // radial streaks only: above the shape the zoom blur stays dark
-            gpu(IsBg(Px(a, X(1, 130), Y(Zoom, -50))), $"438: zoom: nothing smeared sideways ({Px(a, X(1, 130), Y(Zoom, -50))})");
+            gpu(IsBg(Px(a, X(1, 130), Y(Zoom, -50))), $"zoom: nothing smeared sideways ({Px(a, X(1, 130), Y(Zoom, -50))})");
             zoomCentre = Px(a, X(1, 0), Y(Zoom, 0));
 
             // Radial: 20 DIP above / below the shape (cell centre + 130, -45 / +45): large (40 deg, +-20 deg ~ +-47 DIP at
             // radius 140) lights it, small (4 deg) not.
             gpu(IsBg(Px(a, X(0, 130), Y(Radial, -45))) && IsBg(Px(a, X(0, 130), Y(Radial, 45))),
-                $"438: radial small: no smear next to the shape ({Px(a, X(0, 130), Y(Radial, -45))})");
+                $"radial small: no smear next to the shape ({Px(a, X(0, 130), Y(Radial, -45))})");
             gpu(Lit(Px(a, X(1, 130), Y(Radial, -45))) > 0.1 && Lit(Px(a, X(1, 130), Y(Radial, 45))) > 0.1,
-                $"438: radial large: arcs reach above and below the shape ({Px(a, X(1, 130), Y(Radial, -45))}, {Px(a, X(1, 130), Y(Radial, 45))})");
+                $"radial large: arcs reach above and below the shape ({Px(a, X(1, 130), Y(Radial, -45))}, {Px(a, X(1, 130), Y(Radial, 45))})");
             radialCentre = Px(a, X(1, 0), Y(Radial, 0));
             // along the ray the radial blur does not smear: beyond the shape end it stays dark
-            gpu(IsBg(Px(a, X(1, 180), Y(Radial, 0))), $"438: radial: nothing smeared along the ray ({Px(a, X(1, 180), Y(Radial, 0))})");
+            gpu(IsBg(Px(a, X(1, 180), Y(Radial, 0))), $"radial: nothing smeared along the ray ({Px(a, X(1, 180), Y(Radial, 0))})");
         }
 
         // Length 0 / angle 0 = unblurred: the shape edge (x = +100) is sharp in all rows.
@@ -248,18 +253,18 @@ static class MotionBlurTest
         foreach (var row in new[] { Dir, Zoom, Radial })
             Uniforms(Fx(row, 1), row, 0);
         CheckApply("amount 0");
-        pump(4);
-        using (var a = grab(w, Path.Combine(outDir, "motion-blur_zero.png")))
+        s.Pump(4);
+        using (var a = s.Grab(w, "motion-blur_zero.png"))
         {
             foreach (var row in new[] { Dir, Zoom, Radial })
                 gpu(IsBg(Px(a, X(1, 95), Y(row, 0))) && IsWhite(Px(a, X(1, 105), Y(row, 0))),
-                    $"438: row {row}: amount 0 = unblurred edge ({Px(a, X(1, 95), Y(row, 0))} | {Px(a, X(1, 105), Y(row, 0))})");
+                    $"row {row}: amount 0 = unblurred edge ({Px(a, X(1, 95), Y(row, 0))} | {Px(a, X(1, 105), Y(row, 0))})");
             // the large zoom / radial blur leaves its centre as it is
             static bool Same(Color p, Color q) => Math.Abs(p.R - q.R) < 8 && Math.Abs(p.G - q.G) < 8 && Math.Abs(p.B - q.B) < 8;
             var zoomZero = Px(a, X(1, 0), Y(Zoom, 0));
             var radialZero = Px(a, X(1, 0), Y(Radial, 0));
-            gpu(Same(zoomCentre, zoomZero), $"438: zoom: centre unchanged ({zoomCentre} vs {zoomZero} unblurred)");
-            gpu(Same(radialCentre, radialZero), $"438: radial: centre unchanged ({radialCentre} vs {radialZero} unblurred)");
+            gpu(Same(zoomCentre, zoomZero), $"zoom: centre unchanged ({zoomCentre} vs {zoomZero} unblurred)");
+            gpu(Same(radialCentre, radialZero), $"radial: centre unchanged ({radialCentre} vs {radialZero} unblurred)");
         }
 
         // Animated directional length: block mean 10 DIP beside the shape, 1 DIP steps over 40..52 (sample count 20..26) grows
@@ -270,8 +275,8 @@ static class MotionBlurTest
             cmd.Reset();
             Uniforms(Fx(Dir, 1), Dir, 40 + i);
             CheckApply($"directional length {40 + i}");
-            pump(3);
-            using var a = grab(w, Path.Combine(outDir, "motion-blur_anim.png"));
+            s.Pump(3);
+            using var a = s.Grab(w, "motion-blur_anim.png");
             means[i] = Mean(a, X(1, 85), Y(Dir, -10), X(1, 95), Y(Dir, 10));
         }
         double maxStep = 0;
@@ -281,8 +286,8 @@ static class MotionBlurTest
             maxStep = Math.Max(maxStep, Math.Abs(means[i] - means[i - 1]));
             monotonic &= means[i] >= means[i - 1] - 0.015; // one sample more or less moves a block mean by 1 / n at most
         }
-        Console.WriteLine($"INFO motion-blur: animation means {string.Join(" ", Array.ConvertAll(means, m => m.ToString("F3")))}");
-        gpu(maxStep < 0.03 && monotonic, $"438: animated length 40..52: no stepping (max change {maxStep:F4} per DIP, monotonic {monotonic})");
+        s.Info($"motion-blur: animation means {string.Join(" ", Array.ConvertAll(means, m => m.ToString("F3")))}");
+        gpu(maxStep < 0.03 && monotonic, $"animated length 40..52: no stepping (max change {maxStep:F4} per DIP, monotonic {monotonic})");
 
         // Long lengths: directional 400 DIP, zoom 400 DIP, radial 90 degrees on text, cells 780 x 190 (centre at 400, text from
         // 410). First with pass 2 off (a single pass, 64 samples: copies), then the two passes. The second difference along
@@ -292,7 +297,7 @@ static class MotionBlurTest
             for (var col = 0; col < 2; col++)
                 cmd.Destroy(Fx(row, col));
         CheckApply("destroy short cells");
-        pump(2);
+        s.Pump(2);
         var longAmount = new Dictionary<uint, float> { [Dir] = 400, [Zoom] = 400, [Radial] = 90 };
         cmd.Reset();
         foreach (var (row, shader) in new[] { (Dir, directional), (Zoom, zoom), (Radial, radial) })
@@ -301,42 +306,42 @@ static class MotionBlurTest
         cmd.Reset();
         for (var row = Dir; row <= Radial; row += 20) Uniforms(LongId + row, row, longAmount[row], width: LongW, second: false);
         CheckApply("long single pass");
-        pump(6);
+        s.Pump(6);
         var rough = new Dictionary<uint, double>();
-        using (var a = grab(w, Path.Combine(outDir, "motion-blur_long_single.png")))
+        using (var a = s.Grab(w, "motion-blur_long_single.png"))
             foreach (var row in new[] { Dir, Zoom, Radial })
                 rough[row] = Rough(a, row);
         cmd.Reset();
         foreach (var row in new[] { Dir, Zoom, Radial })
             Uniforms(LongId + row, row, longAmount[row], width: LongW);
         CheckApply("long two passes");
-        pump(6);
-        using (var a = grab(w, Path.Combine(outDir, "motion-blur_long.png")))
+        s.Pump(6);
+        using (var a = s.Grab(w, "motion-blur_long.png"))
         {
             foreach (var row in new[] { Dir, Zoom, Radial })
             {
                 var two = Rough(a, row);
-                Console.WriteLine($"INFO motion-blur: row {row} long: second difference single pass {rough[row]:F4}, two passes {two:F4}");
+                s.Info($"motion-blur: row {row} long: second difference single pass {rough[row]:F4}, two passes {two:F4}");
                 // zoom and radial keep the real structure of the glyphs along the path (arcs, edges), and at 1 pixel per DIP
                 // the inner radii stay below 64 pixels of arc (no gaps for pass 2 to fill), so the gain is smaller
                 var factor = row == Dir ? 3.0 : 1.25;
-                gpu(two < rough[row] / factor, $"438: row {row} long: two passes at least {factor}x as smooth as one ({rough[row]:F4} -> {two:F4})");
+                gpu(two < rough[row] / factor, $"row {row} long: two passes at least {factor}x as smooth as one ({rough[row]:F4} -> {two:F4})");
             }
             gpu(Lit(Px(a, 10 + 400 - 150, CellY(Dir) + 95)) > 0.005 && IsBg(Px(a, 10 + 100, CellY(Dir) + 95)) && IsBg(Px(a, 10 + 760, CellY(Dir) + 95)),
-                $"438: directional 400: smear reaches far, nothing beyond ({Px(a, 250, CellY(Dir) + 95)}, {Px(a, 110, CellY(Dir) + 95)})");
+                $"directional 400: smear reaches far, nothing beyond ({Px(a, 250, CellY(Dir) + 95)}, {Px(a, 110, CellY(Dir) + 95)})");
             var arcMean = Mean(a, 400 + 60, CellY(Radial) + 95 - 70, 400 + 100, CellY(Radial) + 95 - 40);
-            gpu(arcMean > 0.01, $"438: radial 90: arcs reach 35 degrees up from the text ({arcMean:F3})");
+            gpu(arcMean > 0.01, $"radial 90: arcs reach 35 degrees up from the text ({arcMean:F3})");
         }
 
         cmd.Reset();
         foreach (var row in new[] { Dir, Zoom, Radial })
             cmd.Destroy(LongId + row);
         CheckApply("destroy");
-        pump(3);
+        s.Pump(3);
         Native.vlqt_window_destroy(w);
         Native.vlqt_res_release(directional);
         Native.vlqt_res_release(zoom);
         Native.vlqt_res_release(radial);
-        pump(2);
+        s.Pump(2);
     }
 }

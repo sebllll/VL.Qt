@@ -4,27 +4,31 @@ using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Lib.Reactive;
+using NUnit.Framework;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using Color = System.Drawing.Color;
+using static Pixels;
 
 // #474: there is no Visible pin any more. Opacity 0 = not drawn (Qt blocks the subtree in the scene graph, also the
 // effect layer: QQuickItemLayer gives the MultiEffect the item's opacity), but the element keeps its place in a Row
 // and keeps receiving input (invisible hit areas). Row: A (blue) | B (red, Opacity 0, Blur effect, Hover) | C (green).
 // Grabs: <outDir>/opacity_zero*.png.
-static class OpacityZeroTest
+[TestFixture, NonParallelizable]
+public static class OpacityZeroTest
 {
+    [Test, Category("opacity-zero")]
+    public static void OpacityZero() => Scenario.Run(Run);
+
     sealed class NoMessage : IDisposable { public void Dispose() { } }
 
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
     static bool Near(Color c, int r, int g, int b, int tol = 12) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
-    static bool IsBg(Color c) => Near(c, 0x20, 0x20, 0x20, 8);
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt opacity zero test");
-        check(w != IntPtr.Zero, "opacity-zero: window_create");
+        s.Check(w != IntPtr.Zero, "opacity-zero: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -63,51 +67,51 @@ static class OpacityZeroTest
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
-                check(rc == 0, $"opacity-zero: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+                s.Check(rc == 0, $"opacity-zero: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
-            pump(1);
+            s.Pump(1);
             int n = Native.Poll(w, buf);
-            check(n >= 0, $"opacity-zero: poll ({n})");
+            s.Check(n >= 0, $"opacity-zero: poll ({n})");
             var res = rec.Sinks.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
-            check(res.Error is null, $"opacity-zero: dispatch ({res.Error})");
+            s.Check(res.Error is null, $"opacity-zero: dispatch ({res.Error})");
         }
         void Frames(int count) { for (int i = 0; i < count; i++) Frame(); }
         void Mouse(int type, float x, float y) => Native.vlqt_test_send_mouse(w, type, x, y);
 
         Frames(4);
-        using (var img = grab(w, System.IO.Path.Combine(outDir, "opacity_zero.png")))
+        using (var img = s.Grab(w, "opacity_zero.png"))
         {
-            check(Near(Px(img, 150, 200), 0, 0, 255), $"opacity-zero: A drawn ({Px(img, 150, 200)})");
+            s.Check(Near(Px(img, 150, 200), 0, 0, 255), $"opacity-zero: A drawn ({Px(img, 150, 200)})");
             // Blur would bleed red around B's edges if the effect layer were still drawn.
-            check(IsBg(Px(img, 400, 200)) && IsBg(Px(img, 300, 200)) && IsBg(Px(img, 290, 200)) && IsBg(Px(img, 510, 200)),
+            s.Check(IsBg(Px(img, 400, 200)) && IsBg(Px(img, 300, 200)) && IsBg(Px(img, 290, 200)) && IsBg(Px(img, 510, 200)),
                 $"opacity-zero: B with Opacity 0 + Blur not drawn ({Px(img, 400, 200)}, {Px(img, 300, 200)}, {Px(img, 290, 200)}, {Px(img, 510, 200)})");
-            check(IsBg(Px(img, 520, 200)) && Near(Px(img, 650, 200), 0, 255, 0),
+            s.Check(IsBg(Px(img, 520, 200)) && Near(Px(img, 650, 200), 0, 255, 0),
                 $"opacity-zero: C after B's place, B keeps its space in the Row ({Px(img, 520, 200)}, {Px(img, 650, 200)})");
         }
 
         Mouse(Protocol.Mouse.Move, 700, 500);
         Frames(2);
-        check(!hovered.Value, "opacity-zero: not hovered outside");
+        s.Check(!hovered.Value, "opacity-zero: not hovered outside");
         Mouse(Protocol.Mouse.Move, 400, 200);
         Frames(2); // event in frame 1, pulled by the node in frame 2
-        check(hovered.Value, "opacity-zero: B with Opacity 0 still receives input (Is Hovered)");
+        s.Check(hovered.Value, "opacity-zero: B with Opacity 0 still receives input (Is Hovered)");
         Mouse(Protocol.Mouse.Move, 700, 500);
         Frames(2);
-        check(!hovered.Value, "opacity-zero: hover out");
+        s.Check(!hovered.Value, "opacity-zero: hover out");
 
         // Back to Opacity 1: drawn again (blurred red at B's center). B sits in its effect layer, which the software
         // backend does not draw.
         opacityB = 1;
         Frames(4);
-        using (var img = grab(w, System.IO.Path.Combine(outDir, "opacity_zero_back.png")))
-            Program.NeedsRhi(check, "MultiEffect needs a QRhi scenegraph")(Px(img, 400, 200).R > 150,
-                $"opacity-zero: B drawn again with Opacity 1 ({Px(img, 400, 200)})");
+        using (var img = s.Grab(w, "opacity_zero_back.png"))
+            s.NeedsRhi(Px(img, 400, 200).R > 150,
+                $"opacity-zero: B drawn again with Opacity 1 ({Px(img, 400, 200)})", "MultiEffect needs a QRhi scenegraph");
 
         cmd.Reset();
         rec.Update(null, Space.DIPTopLeft);
         if (cmd.Length > 0)
-            check(Native.Apply(w, cmd.EndFrame()) == 0, "opacity-zero: clear");
+            s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "opacity-zero: clear");
         Native.vlqt_window_destroy(w);
-        pump(1);
+        s.Pump(1);
     }
 }

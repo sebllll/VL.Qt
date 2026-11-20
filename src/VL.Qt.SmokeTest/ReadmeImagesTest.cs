@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Text.RegularExpressions;
+using NUnit.Framework;
 using VL.Qt;
+using static Pixels;
 
 // README pictures of the Effect chain (#489, plan effects/08 Task 8a), not a test of behaviour: renders reproducible grabs
 // of effect chains (raw SET_EFFECT_CHAIN) and copies them to docs/images/. Dark ground, the text "VL.Qt", one cell of
@@ -15,8 +17,12 @@ using VL.Qt;
 //   effects-collage.png         all of them as a 4 x 2 grid, 1640 px wide
 // Checks only that the picture is not empty. Grabs: <outDir>/readme-images_*.png. On Windows the pictures are scaled to
 // their target width (the grab is in device pixels), elsewhere copied as they are.
-static class ReadmeImagesTest
+[TestFixture, NonParallelizable]
+public static class ReadmeImagesTest
 {
+    [Test, Explicit("runs only when selected (writes docs/images)"), Category("readme-images")]
+    public static void ReadmeImages() => Scenario.Run(Run);
+
     const float CellW = 410, CellH = 230;
     const float TextW = 300, TextH = 120, FontSize = 90;
     const float Bg = 0x16 / 255f;
@@ -78,26 +84,26 @@ static class ReadmeImagesTest
         return ink / (double)Math.Max(n, 1);
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
-        Program.NeedsRhi(check, "the effects are ShaderEffects");
-        Directory.CreateDirectory(outDir);
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "the effects are ShaderEffects");
+        Directory.CreateDirectory(s.OutDir);
         var imagesDir = FindUp("docs", "images");
-        check(imagesDir != null, $"readme-images: docs/images found ({imagesDir})");
+        s.Check(imagesDir != null, $"readme-images: docs/images found ({imagesDir})");
         if (imagesDir == null) return;
 
         ulong Builtin(string name)
         {
             Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
             Native.vlqt_res_load_shader(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
-            check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"readme-images: shader builtin:{name} Ready");
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"readme-images: shader builtin:{name} Ready");
             return id;
         }
         ulong Baked(string code, string what)
         {
             Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
             Native.vlqt_res_load_shader_source(id, code, Protocol.ShaderStage.Fragment);
-            check(Native.vlqt_res_wait(id, 20000) == Protocol.ResState.Ready, $"readme-images: {what} baked, Ready");
+            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResState.Ready, $"readme-images: {what} baked, Ready");
             return id;
         }
         var glowPre = Builtin("glow_prefilter");
@@ -110,7 +116,7 @@ static class ReadmeImagesTest
         var displace = Builtin("displace");
         var waveMap = Baked(WaveMap, "wave map");
         var splitFile = FindUp("help", "Qt", "qtshaders", "RGBSplit.frag");
-        check(splitFile != null, $"readme-images: RGBSplit.frag found ({splitFile})");
+        s.Check(splitFile != null, $"readme-images: RGBSplit.frag found ({splitFile})");
         if (splitFile == null) return;
         var splitCode = File.ReadAllText(splitFile);
         var split = Baked(splitCode, "RGBSplit.frag");
@@ -270,30 +276,30 @@ static class ReadmeImagesTest
             cmd.Reset();
             next = 1;
             var w = Native.vlqt_window_create((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme images");
-            check(w != IntPtr.Zero, $"readme-images {name}: window_create");
+            s.Check(w != IntPtr.Zero, $"readme-images {name}: window_create");
             Native.vlqt_window_show(w);
-            pump(4);
+            s.Pump(4);
             cmd.ClearColor(Bg, Bg, Bg, 1);
             var cols = cells.Length > 2 ? 4 : cells.Length;
-            var s = winW / (cols * CellW);
+            var scale = winW / (cols * CellW);
             uint order = 0;
             foreach (var (kind, label) in cells)
             {
-                Cell(kind, label, order % (uint)cols * CellW * s, order / (uint)cols * CellH * s, s, order);
+                Cell(kind, label, order % (uint)cols * CellW * scale, order / (uint)cols * CellH * scale, scale, order);
                 order++;
             }
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"readme-images {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"readme-images {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
-            pump(10);
-            var grabPath = Path.Combine(outDir, $"readme-images_{name}.png");
-            using (var a = grab(w, grabPath))
+            s.Pump(10);
+            var grabPath = Path.Combine(s.OutDir, $"readme-images_{name}.png");
+            using (var a = s.Grab(w, grabPath))
             {
                 var ink = Ink(a);
-                check(ink > 0.02, $"readme-images {name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
+                s.Check(ink > 0.02, $"readme-images {name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
             }
             var target = Save(grabPath, Path.Combine(imagesDir!, name + ".png"), width);
-            Console.WriteLine($"INFO readme-images: {target} ({new FileInfo(target).Length / 1024} KB)");
+            s.Info($"readme-images: {target} ({new FileInfo(target).Length / 1024} KB)");
             Native.vlqt_window_destroy(w);
         }
 
