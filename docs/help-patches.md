@@ -39,6 +39,18 @@ Notes:                                                   (notes, size 9, bottom)
 - Connect it to Renderer [Qt] or a Group [Qt].
 ```
 
+## Renames
+
+A change that renames a node or a pin or moves a category does not edit the patches by hand. It adds rows to [`tools/vl-patch-mapping.txt`](../tools/vl-patch-mapping.txt) and runs `python tools/vl-patch-migrate.py`, which rewrites every patch of the repository (`help/`, `VL.Qt.vl`, `VL.Qt.HDE.vl`, `VL.Qt.Stride/`, `VL.Qt.Audio/`, `tests/`, `src/`). A change that adds a pin or rebuilds a patch still edits the `.vl` file directly.
+
+- One row per rename: `step | kind | scope | old | new`, kinds `node`, `pin` and `category`. The header of the file explains the columns. Pin names are written as vvvv shows them (`Fill Color`) or as the C# parameter (`fillColor`), which the rule of `tools/vl_pin_catalog.py` turns into the same name.
+- The rows of one step apply together: `Radius → Set Radius` and `Get Radius → Radius` in one step never turn a setter into a getter. Steps apply in the order of the file.
+- The script touches only VL.Qt references: the node name, its `Pin` and `PinReference` names, the category (`LastCategoryFullName`, the `CategoryReference` chain) and, for a category move, the type references. CRLF, the BOM, Ids, positions and every other byte stay as they are.
+- It records nothing in the patches. Each name a row gives lives over a range of steps (an old name until its step, a new name from its step on), and the names of a node tell which steps it has seen; the script applies only the steps after that. So a second run changes nothing, and a patch whose nodes stand at different steps after a git merge is still migrated correctly. A node whose names do not tell the steps apart (a swap where the node shows only `Radius`), or that mixes old and new names, is reported instead of guessed.
+- On a merge conflict in a `.vl` file: merge the mapping file (keep the rows of both sides, the side merged first comes first), take either side of the patch and run the script again. Never change or remove a merged row, since the script reads the steps from it.
+- `--check` lists what would change and exits with 1 if anything would. Exit code 2: a bad or conflicting row, a new name that is not in `src/VL.Qt.Tests/Api/node-api.txt` after all steps (`--no-api-check` skips that lookup), or a node the script cannot place; nothing is written then.
+- Afterwards `tools/vl-patch-check.py` and `tools/vvvvc.ps1 -File` run as after any patch change. `tools/test-vl-patch-migrate.py` is the regression test.
+
 ## Basics
 
 - `HowTo Draw a Rectangle` — basic shapes, colors, radius
