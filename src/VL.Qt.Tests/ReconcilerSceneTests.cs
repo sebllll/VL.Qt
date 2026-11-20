@@ -534,6 +534,106 @@ namespace VL.Qt.Tests
             // The timing of this path is ReconcilerPerfTests.Group_1000BoundChildren_OneChangePerFrame_Fast (category Perf).
         }
 
+        // --- exception inside Update (REC-01, fault injection with ThrowingSink) ---
+
+        static int LiveObjects(RecordingSink sink)
+        {
+            var live = 0;
+            foreach (var c in sink.Commands)
+            {
+                if (c.StartsWith("CREATE ", StringComparison.Ordinal)) live++;
+                else if (c.StartsWith("DESTROY ", StringComparison.Ordinal)) live--;
+            }
+            return live;
+        }
+
+        [Test]
+        public void Fault_InUpdate_PropagatesToTheCaller_AndTheNextUpdateDoesNotThrow()
+        {
+            var sink = new ThrowingSink();
+            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            rec.Update(G(R(1)), Space.DIPTopLeft);
+            sink.Restart();
+            sink.ThrowAt = 1; // the first command of the next frame: the Size SET of the changed rectangle
+
+            Assert.Throws<ThrowingSink.InjectedFault>(() => rec.Update(G(R(2)), Space.DIPTopLeft));
+            Assert.That(sink.Recorded.Commands, Is.Empty, "the throwing command is not recorded");
+
+            sink.ThrowAt = 0;
+            Assert.DoesNotThrow(() => rec.Update(G(R(2)), Space.DIPTopLeft));
+        }
+
+        [Test, Ignore("REC-01: the failed visit already registered the new instance, the retry registers it a second time (OccurrencesOf 2, node demoted)")]
+        public void Fault_AtSetOfAChangedElement_NextUpdateWithSameTree_SendsTheChangeAndStaysPrimary()
+        {
+            var sink = new ThrowingSink();
+            var scene = new SceneRegistry();
+            var rec = new Reconciler(sink, new IdAllocator(), scene);
+            var slot = new SinkSlot(new ElementSink(), 0);
+            var before = R(1, slot);
+            rec.Update(G(before), Space.DIPTopLeft);
+            var node = rec.Root!.Children[0];
+
+            var after = R(2, slot); // a new instance of the same node
+            sink.Restart();
+            sink.ThrowAt = 1;
+            Assert.Throws<ThrowingSink.InjectedFault>(() => rec.Update(G(after), Space.DIPTopLeft));
+
+            // The same tree again: the change that failed is sent now.
+            sink.ThrowAt = 0;
+            sink.Restart();
+            rec.Update(G(after), Space.DIPTopLeft);
+            Assert.That(sink.Recorded.Commands, Is.EqualTo(new[] { $"SET {node.Id} Size vec2(200,100)" }));
+
+            // The registry shows one occurrence, and it still reports state (REC-01: registered twice, demoted).
+            Assert.That(scene.OccurrencesOf(after), Is.EqualTo(1));
+            Assert.That(scene.OwnerOf(after), Is.SameAs(node));
+            Assert.That(rec.Sinks.IsPrimary(node.BoundHandle), Is.True);
+            Assert.That(node.IsPrimary, Is.True);
+
+            // And stays stable.
+            sink.Restart();
+            rec.Update(G(after), Space.DIPTopLeft);
+            Assert.That(sink.Recorded.Commands, Is.Empty);
+        }
+
+        [Test, Ignore("REC-01: the failed visit registered the new node but never added it to its parent; the retry registers it again (OccurrencesOf 2)")]
+        public void Fault_AtANewElement_NextUpdate_LeavesNoOrphanObject()
+        {
+            var sink = new ThrowingSink();
+            var scene = new SceneRegistry();
+            var rec = new Reconciler(sink, new IdAllocator(), scene);
+            rec.Update(G(), Space.DIPTopLeft);
+            var added = R(1, new SinkSlot(new ElementSink(), 0));
+            sink.Restart();
+            sink.ThrowAt = 2; // CREATE of the rectangle is written, its first SET throws
+
+            Assert.Throws<ThrowingSink.InjectedFault>(() => rec.Update(G(added), Space.DIPTopLeft));
+
+            sink.ThrowAt = 0;
+            for (var frame = 0; frame < 3; frame++)
+                rec.Update(G(added), Space.DIPTopLeft);
+
+            // Root and the rectangle are alive in QtNative, nothing else (REC-01: one orphan per frame).
+            Assert.That(LiveObjects(sink.Recorded), Is.EqualTo(2), sink.Recorded.ToString());
+            Assert.That(scene.OccurrencesOf(added), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Fault_AtCreate_NextUpdate_BuildsTheTree()
+        {
+            var sink = new ThrowingSink();
+            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            sink.ThrowAt = 1; // CREATE of the root
+
+            Assert.Throws<ThrowingSink.InjectedFault>(() => rec.Update(G(R(1)), Space.DIPTopLeft));
+
+            sink.ThrowAt = 0;
+            sink.Restart();
+            rec.Update(G(R(1)), Space.DIPTopLeft);
+            Assert.That(sink.Recorded.OfOp("CREATE").Select(c => c.Split(' ')[2]).ToArray(), Is.EqualTo(new[] { "Item", "Rectangle" }), sink.Recorded.ToString());
+        }
+
         sealed class RecordingSinkNull : ICommandSink
         {
             public void Create(uint id, ushort type) { }
