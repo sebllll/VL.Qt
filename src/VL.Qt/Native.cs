@@ -80,6 +80,9 @@ namespace VL.Qt
 
         public static readonly string NativeDir;
 
+        /// <summary>Full path of the loaded vlqt.dll / libvlqt.so.</summary>
+        public static readonly string LibraryPath;
+
         /// <summary>File name of QtNative: vlqt.dll (Windows) or libvlqt.so (Linux).</summary>
         private static readonly string FileName = OperatingSystem.IsWindows() ? "vlqt.dll" : "libvlqt.so";
 
@@ -97,7 +100,8 @@ namespace VL.Qt
                 if (!path.StartsWith(NativeDir + ";", StringComparison.OrdinalIgnoreCase))
                     Environment.SetEnvironmentVariable("PATH", NativeDir + ";" + path);
             }
-            var handle = NativeLibrary.Load(Path.Combine(NativeDir, FileName));
+            LibraryPath = Path.Combine(NativeDir, FileName);
+            var handle = NativeLibrary.Load(LibraryPath);
             NativeLibrary.SetDllImportResolver(typeof(Native).Assembly,
                 (name, _, _) => name == Lib ? handle : IntPtr.Zero);
         }
@@ -167,8 +171,18 @@ namespace VL.Qt
         /// <summary>Forces the static constructor (DLL setup) to run.</summary>
         public static void EnsureLoaded() { }
 
+        /// <summary>ABI version of the loaded library; null if it has no vlqt_app_get_abi_version (a library older than the check).</summary>
+        public static int? ReadAbiVersion()
+        {
+            try { return vlqt_app_get_abi_version(); }
+            catch (EntryPointNotFoundException) { return null; }
+        }
+
         public static string LastError() => Marshal.PtrToStringUTF8(vlqt_last_error()) ?? "";
 
+        /// <summary>ABI version of the library (VLQT_ABI_VERSION): protocol constants, struct layouts, signatures. Needs no init.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int vlqt_app_get_abi_version();
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_app_init([MarshalAs(UnmanagedType.LPUTF8Str)] string nativeDir, LogFn log);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]

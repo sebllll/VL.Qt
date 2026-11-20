@@ -254,8 +254,9 @@ tools/                      # build, export, license and test scripts
 **Change the protocol:**
 1. Edit `src/VL.Qt.Native/protocol.h` (type or property IDs)
 2. Mirror the change in `src/VL.Qt/Wire/Protocol.cs` by hand
-3. Run `dotnet run --project src/VL.Qt.SmokeTest -- --drift` to check that header and C# agree
-4. Implement both sides (`elements.cpp`, `Elements/`, `Reconciler/`)
+3. Bump `VLQT_ABI_VERSION` and `Protocol.AbiVersion` (every change to a constant, a layout or an exported signature; `QtApp` refuses a `vlqt.dll` with another number)
+4. Run `dotnet run --project src/VL.Qt.SmokeTest -- --drift` to check that header and C# agree
+5. Implement both sides (`elements.cpp`, `Elements/`, `Reconciler/`)
 
 **Add a new element type:**
 1. Add IDs to `protocol.h` and `Protocol.cs`
