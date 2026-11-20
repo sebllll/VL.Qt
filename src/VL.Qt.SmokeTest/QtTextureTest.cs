@@ -37,15 +37,23 @@ public static partial class QtTextureTest
 
     /// <summary>QtTexture in the render thread mode, in a process of its own with D3D11On12 (device loss) and the debug layer (leak check).</summary>
     [Test, Category("qttexture-render-thread"), Category("own-process")]
-    public static void QtTextureRenderThread() => Scenario.RunLocal(s =>
-        OwnProcess.Run(s, new[] { "qttexture", "QtTextureInput" }, Env(null), Path.Combine(SmokeParameters.SmokeDir, "qttexture-render-thread", "grabs"),
-            "offscreen scenes render on 1 Qt render thread(s)"));
+    public static void QtTextureRenderThread() => Scenario.RunLocal(s => RunMode(s, null, "qttexture-render-thread", "offscreen scenes render on 1 Qt render thread(s)"));
 
     /// <summary>QtTexture in the main thread mode (VLQT_OFFSCREEN_THREAD=0), in a process of its own with D3D11On12 and the debug layer.</summary>
     [Test, Category("qttexture-main-thread"), Category("own-process")]
-    public static void QtTextureMainThread() => Scenario.RunLocal(s =>
-        OwnProcess.Run(s, new[] { "qttexture", "QtTextureInput" }, Env("0"), Path.Combine(SmokeParameters.SmokeDir, "qttexture-main-thread", "grabs"),
-            "offscreen scenes render on the main thread"));
+    public static void QtTextureMainThread() => Scenario.RunLocal(s => RunMode(s, "0", "qttexture-main-thread", "offscreen scenes render on the main thread"));
+
+    // Both scenarios are D3D11 only (they SKIP elsewhere), so the helper would log no thread mode outside Windows; the former
+    // runner ran the thread modes only from tools/build.ps1 (Windows), tools/test-linux.sh never did.
+    static void RunMode(Scenario s, string? threads, string folder, string modeLine)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            s.Skip($"{folder}: QtTexture is D3D11 only");
+            return;
+        }
+        OwnProcess.Run(s, new[] { "qttexture", "QtTextureInput" }, Env(threads), Path.Combine(SmokeParameters.SmokeDir, folder, "grabs"), modeLine);
+    }
 
     static Dictionary<string, string> Env(string? threads)
     {
@@ -90,8 +98,19 @@ public static partial class QtTextureTest
         // Several rounds: a leak of one handle per round does not hide in noise.
         for (int i = 0; i < 20; i++)
             RoundTrip(i % 2, s, verbose: false);
+        // Up to about 2 s for handles that close late (finalizers, threads of the process that end); a leak stays. A one-off of lazily
+        // created state may still land after the baseline (in the test host 573 -> 577 in some runs, 577 -> 577 in others): the leak
+        // tolerance absorbs it, a leak of one handle per round grows by 22.
         var after = Native.vlqt_test_process_handle_count();
-        s.Check(after == baseline, $"handle count back at baseline ({baseline} -> {after})");
+        for (int attempt = 0; attempt < 20 && after > baseline; attempt++)
+        {
+            s.Pump(2);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            System.Threading.Thread.Sleep(100);
+            after = Native.vlqt_test_process_handle_count();
+        }
+        s.Check(after - baseline <= handleTolerance, $"handle count back at baseline ({baseline} -> {after}, tolerance {handleTolerance})");
 
         // Before the first scene: QtNative can only move to WARP while no window renders on its device.
         // The robustness parts wait on the render thread and the GPU: a hang ends the run with a FAIL line (Watchdog).
