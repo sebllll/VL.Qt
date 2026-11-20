@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -21,7 +22,8 @@ using VL.Qt;
 /// scenes below 0.5 ms (PerfLimits factor applies); a software adapter (WARP, CI runners) waits for the submission on the
 /// main thread by design, so there the limit is logged and skipped.
 /// </summary>
-static class QtTexturePerfTest
+[TestFixture, NonParallelizable]
+public static class QtTexturePerfTest
 {
     const int B8G8R8A8Typeless = 90;
     const int B8G8R8A8Unorm = 87;
@@ -36,11 +38,15 @@ static class QtTexturePerfTest
         public bool Heavy => Rects >= 1000;
     }
 
-    public static void Run(Action<bool, string> check, Action<int> pump)
+    /// <summary>Median main-thread time per QtTexture in both thread modes (about a minute, own process).</summary>
+    [Test, Explicit("about a minute"), Category("qttextureperf"), Category("own-process")]
+    public static void QtTexturePerf() => Scenario.RunLocal(s => OwnProcess.Run(s, new[] { "qttextureperf" }));
+
+    internal static void Run(Scenario s)
     {
         if (!OperatingSystem.IsWindows())
         {
-            Console.WriteLine("INFO qttextureperf: Windows only (Direct3D 11), skipped");
+            s.Info("qttextureperf: Windows only (Direct3D 11), skipped");
             return;
         }
         int threads = 1;
@@ -48,17 +54,17 @@ static class QtTexturePerfTest
         if (!string.IsNullOrEmpty(env) && int.TryParse(env, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n >= 0)
             threads = n;
         int rc = Native.vlqt_offscreen_set_threaded(threads);
-        check(rc == 0, $"qttextureperf: set_threaded({threads}) before the first scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        s.Check(rc == 0, $"qttextureperf: set_threaded({threads}) before the first scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         if (rc != 0)
             return;
 
         bool ok = Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0;
-        check(ok, "qttextureperf: test device on QtNative's adapter");
+        s.Check(ok, "qttextureperf: test device on QtNative's adapter");
         if (!ok)
             return;
         bool software = IsSoftwareAdapter(device, out var adapterName);
         string mode = threads == 0 ? "main thread" : $"{threads} render thread(s)";
-        Console.WriteLine($"INFO qttextureperf: {mode}, adapter \"{adapterName}\"{(software ? " (software)" : "")}, {RuntimeInformation.ProcessArchitecture}, {Environment.ProcessorCount} cores");
+        s.Info($"qttextureperf: {mode}, adapter \"{adapterName}\"{(software ? " (software)" : "")}, {RuntimeInformation.ProcessArchitecture}, {Environment.ProcessorCount} cores");
         // Software adapter: shorter matrix, the scenes render in software.
         var configs = software
             ? new[] { new Config("1 heavy", 1, 2000, 80), new Config("8 light", 8, 100, 4) }
@@ -66,22 +72,22 @@ static class QtTexturePerfTest
         int warmup = software ? 10 : 30, frames = software ? 60 : 200;
         foreach (var config in configs)
         {
-            var main = Measure(device, context, config, threads, warmup, frames, check, pump);
+            var main = Measure(device, context, config, threads, warmup, frames, s);
             if (threads == 0 || !config.Heavy)
                 continue;
             if (software)
-                Console.WriteLine($"INFO qttextureperf: {config.Name}: software adapter, main-thread limit skipped (median {main:F3} ms per QtTexture)");
+                s.Info($"qttextureperf: {config.Name}: software adapter, main-thread limit skipped (median {main:F3} ms per QtTexture)");
             else
-                PerfLimits.Below(check, main, MainThreadLimitMs, $"qttextureperf: {config.Name}, {mode}: median main-thread time per QtTexture {main:F3} ms < {MainThreadLimitMs} ms");
+                PerfLimits.Below(s, main, MainThreadLimitMs, $"qttextureperf: {config.Name}, {mode}: median main-thread time per QtTexture {main:F3} ms < {MainThreadLimitMs} ms");
         }
         Native.vlqt_test_d3d11_release_device(device, context);
 
         if (threads != 0)
-            RunMainThreadChild(check);
+            RunMainThreadChild(s);
     }
 
     // The thread count cannot change after the first scene: the main thread numbers come from a second process.
-    static void RunMainThreadChild(Action<bool, string> check)
+    static void RunMainThreadChild(Scenario s)
     {
         var host = Environment.ProcessPath;
         if (host == null)
@@ -98,15 +104,15 @@ static class QtTexturePerfTest
         using var child = Process.Start(psi);
         if (child == null)
         {
-            check(false, "qttextureperf: start the main thread run");
+            s.Check(false, "qttextureperf: start the main thread run");
             return;
         }
         child.WaitForExit();
-        check(child.ExitCode == 0, $"qttextureperf: main thread run (VLQT_OFFSCREEN_THREAD=0), exit code {child.ExitCode}");
+        s.Check(child.ExitCode == 0, $"qttextureperf: main thread run (VLQT_OFFSCREEN_THREAD=0), exit code {child.ExitCode}");
     }
 
     // Returns the median main-thread time of render_batch per QtTexture (ms).
-    static double Measure(IntPtr device, IntPtr context, Config config, int threads, int warmup, int frames, Action<bool, string> check, Action<int> pump)
+    static double Measure(IntPtr device, IntPtr context, Config config, int threads, int warmup, int frames, Scenario s)
     {
         int count = config.Scenes, rects = config.Rects, texts = config.Texts;
         string mode = threads == 0 ? "main" : $"thread{threads}";
@@ -140,11 +146,11 @@ static class QtTexturePerfTest
                 cmd.SetF32(id, Protocol.Prop.FontSize, 16);
                 cmd.Reparent(id, 0, (uint)(1 + rects + i));
             }
-            check(Native.Apply(scenes[k], cmd.EndFrame()) == 0, $"qttextureperf {config.Name}: apply scene {k}");
+            s.Check(Native.Apply(scenes[k], cmd.EndFrame()) == 0, $"qttextureperf {config.Name}: apply scene {k}");
             Native.vlqt_test_d3d11_create_shared_texture(device, W, H, B8G8R8A8Typeless, out textures[k], out var handle);
             int rc = Native.vlqt_offscreen_bind(scenes[k], device, handle, W, H, B8G8R8A8Unorm, 1, out _);
             Native.vlqt_test_close_handle(handle);
-            check(rc == 0, $"qttextureperf {config.Name}: bind scene {k} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"qttextureperf {config.Name}: bind scene {k} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
 
         var apply = new List<double>();
@@ -162,7 +168,7 @@ static class QtTexturePerfTest
         var snapLatency = new List<int>();
         var snapPixels = new byte[MarkerSize * MarkerSize * 4];
         int snapMisses = 0, snapRequested = 0, snapBad = 0, snapRequestFrame = -1;
-        check(Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var snap) == 0, $"qttextureperf {mode} {config.Name}: snapshot resource");
+        s.Check(Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var snap) == 0, $"qttextureperf {mode} {config.Name}: snapshot resource");
         var snapErrors = new List<string>();
         // Records the pending snapshot if it has finished (Ready or Failed) by frame f, and checks its pixels.
         void SnapshotDone(int f)
@@ -188,7 +194,7 @@ static class QtTexturePerfTest
         {
             bool snapPhase = f >= warmup + frames;
             // The host's pump (before the frame's Update) closes the perf samples: those of the previous frame.
-            pump(1);
+            s.Pump(1);
             if (snapRequestFrame >= 0)
                 SnapshotDone(f);
             var t0 = Stopwatch.GetTimestamp();
@@ -260,12 +266,12 @@ static class QtTexturePerfTest
         Console.WriteLine(
             $"INFO qttextureperf {mode} {config.Name}: snapshots under load: {snapLatency.Count} of {snapRequested} finished, latency {(snapLatency.Count > 0 ? $"{snapLatency.Min()}-{snapLatency.Max()}" : "-")} frames; "
             + $"main-thread render_batch meanwhile {(snapBatch.Count > 0 ? Median(snapBatch) : 0):F3} ms/frame (p95 {(snapBatch.Count > 0 ? P95(snapBatch) : 0):F3})");
-        check(snapRequested >= 3 && snapLatency.Count == snapRequested && snapBad == 0,
+        s.Check(snapRequested >= 3 && snapLatency.Count == snapRequested && snapBad == 0,
             $"qttextureperf {mode} {config.Name}: snapshots under load finish with a marker since the request ({snapLatency.Count} of {snapRequested}, {snapBad} bad) {string.Join("; ", snapErrors)}");
-        check(snapMisses == 0, $"qttextureperf {mode} {config.Name}: same frame while snapshots run ({snapMisses} misses)");
+        s.Check(snapMisses == 0, $"qttextureperf {mode} {config.Name}: same frame while snapshots run ({snapMisses} misses)");
         Native.vlqt_res_release(snap);
-        check(renderFailures == 0, $"qttextureperf {mode} {config.Name}: render_batch rendered every scene in every frame ({renderFailures} frames short) {(renderFailures > 0 ? Native.LastError() : "")}");
-        check(misses == 0, $"qttextureperf {mode} {config.Name}: every texture holds the frame's marker in every frame ({misses} misses, same frame)");
+        s.Check(renderFailures == 0, $"qttextureperf {mode} {config.Name}: render_batch rendered every scene in every frame ({renderFailures} frames short) {(renderFailures > 0 ? Native.LastError() : "")}");
+        s.Check(misses == 0, $"qttextureperf {mode} {config.Name}: every texture holds the frame's marker in every frame ({misses} misses, same frame)");
 
         for (int k = 0; k < count; k++)
         {

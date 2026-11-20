@@ -13,6 +13,9 @@ static class OwnProcess
     // Converted scenarios the helper can run (name -> body). Legacy rows are found through LegacyScenarios.Find.
     static readonly Dictionary<string, Action<Scenario>> s_bodies = new(StringComparer.OrdinalIgnoreCase)
     {
+        ["qttexture"] = QtTextureTest.Run,
+        ["QtTextureInput"] = QtTextureTest.RunInput,
+        ["qttextureperf"] = QtTexturePerfTest.Run,
 #if WINDOWS
         ["device-lost"] = DeviceLostTest.Run,
 #endif
