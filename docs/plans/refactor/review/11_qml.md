@@ -164,6 +164,7 @@ The changes that matter most:
 - **Touches:** `src/VL.Qt.Native/qmlitem.cpp`, `qmlitem.h`, `src/VL.Qt.SmokeTest/QmlTest.cs`
 - **Depends on:** none
 - **Verification:** the new SmokeTest scenario
+- **Wave 1 (W1-15):** confirmed by `QmlStaleComponent` (item 2 with the same Source and reload 0, created after `A.qml` was rewritten from red to blue with a new property, draws the cached red component and reports `extra: the root has no such property`).
 
 ### QML-07 `QmlProperties.Matches` keeps a stale `Problems` text when a rejected entry changes
 - **Kind:** correctness

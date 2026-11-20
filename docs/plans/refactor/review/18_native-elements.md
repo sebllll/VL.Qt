@@ -221,6 +221,7 @@ The changes that matter most: NELM-01 (nested Group frame), NELM-04 (type traits
 - **Touches:** `src/VL.Qt.Native/elements.cpp`, `src/VL.Qt.SmokeTest/GroupFrameTest.cs`
 - **Depends on:** NELM-01
 - **Verification:** the new `GroupFrameTest` case
+- **Wave 1 (W1-15):** dropped: `GroupFrameEffect` (in `GroupFrameTest.cs`) shows the frame of a Group with a 100 x 100 child unchanged with and without a Blur chain (Blur Max 32) on the child, MEASURED 100 x 100 and SCENE_BOUNDS (200, 150, 100, 100), while the halo is drawn outside the child; what the chain adds under the Group does not grow the frame. The test stays as the guard of C10.
 
 ### NELM-15 Small cleanups
 - **Kind:** structure

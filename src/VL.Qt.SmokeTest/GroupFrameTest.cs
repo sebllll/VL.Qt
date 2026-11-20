@@ -195,4 +195,95 @@ public static class GroupFrameTest
         client.SetPumping(false);
         s.Pump(2);
     }
+
+    /// <summary>NELM-14: the layer effect item of a child does not count in the frame of its Group.</summary>
+    [Test, Category("group-frame-effect")]
+    public static void GroupFrameEffect() => Scenario.Run(RunEffect);
+
+    // NELM-14: Qt's item layer creates the layer.effect item as a child of the layered item's parent, so the effect item of
+    // a child with an effect chain is a child of the Group, and the Group frame (polish) adds its rect, padding included.
+    // Decided (C10): the Group counts only tracked children. Group at (200, 150) DIP, top left anchor, auto size; child: a
+    // 100 x 100 orange rectangle at (0, 0). Frame without effect: 100 x 100; with a Blur chain on the child it must stay.
+    static void RunEffect(Scenario s)
+    {
+        const uint g = 1, r = 2, hg = 101;
+        var w = Native.vlqt_window_create(800, 600, "VL.Qt group frame effect test");
+        s.Check(w != IntPtr.Zero, "window_create");
+        Native.vlqt_window_show(w);
+        var cmd = new CommandWriter();
+        var buf = new byte[1 << 16];
+        (float W, float H)? measured = null;
+        (float X, float Y, float W, float H)? bounds = null;
+        void Poll()
+        {
+            int n = Native.Poll(w, buf);
+            var b = buf.AsSpan(0, Math.Max(n, 0));
+            int off = 0;
+            while (off + 12 <= b.Length)
+            {
+                ushort ev = System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(b[off..]);
+                int len = System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(b[(off + 2)..]);
+                if (len < 8 || off + 4 + len > b.Length)
+                    break;
+                uint handle = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..]);
+                var p = b.Slice(off + 12, len - 8).ToArray();
+                float F(int i) => BitConverter.ToSingle(p, 4 * i);
+                if (handle == hg && ev == Protocol.Ev.Measured && p.Length >= 8)
+                    measured = (F(0), F(1));
+                else if (handle == hg && ev == Protocol.Ev.SceneBounds && p.Length >= 16)
+                    bounds = (F(0), F(1), F(2), F(3));
+                off += (4 + len + 3) & ~3;
+            }
+        }
+        void Apply(string what)
+        {
+            var rc = Native.Apply(w, cmd.EndFrame());
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            cmd.Reset();
+        }
+
+        cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
+        cmd.Create(g, Protocol.Type.Item);
+        cmd.SetI32(g, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
+        cmd.SetMat4(g, Protocol.Prop.Transform, Matrix.Translation(200, 150, 0));
+        cmd.Reparent(g, 0, 0);
+        cmd.Bind(g, hg, 0);
+        cmd.Create(r, Protocol.Type.Rectangle);
+        cmd.SetPlace(r, 0, 0, 100, 100);
+        cmd.SetColor(r, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+        cmd.Reparent(r, g, 0);
+        Apply("group and child");
+        s.Pump(4);
+        Poll();
+        var plain = measured;
+        var plainBounds = bounds;
+        s.Check(plain is { } m0 && Near((int)m0.W, 100, 1) && Near((int)m0.H, 100, 1), $"without effect: frame 100 x 100 ({plain}, bounds {plainBounds})");
+
+        // Blur on the child: the MultiEffect grows the child's effect item by its padding (Blur Max 32).
+        cmd.BeginEffectChain(r);
+        cmd.BeginMultiLink();
+        cmd.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
+        cmd.EffectF32(Protocol.Prop.EffectBlur, 1f);
+        cmd.EffectI32(Protocol.Prop.EffectBlurMax, 32);
+        cmd.EndLink();
+        cmd.EndEffectChain();
+        Apply("Blur chain on the child");
+        s.Pump(6);
+        Poll();
+        s.Info($"frame with the Blur on the child: measured {measured}, bounds {bounds} (without: {plain}, {plainBounds})");
+        // The Blur is drawn with its padding: the halo reaches outside the child (else the case would prove nothing).
+        using (var a = s.Grab(w, "group-frame-effect.png"))
+        {
+            var halo = Px(a, 197, 200);
+            s.NeedsRhi(halo.R > 0x20 + 12 && halo.R > halo.B + 12, $"the Blur's halo is drawn 3 DIP left of the child ({halo})", "the Blur is a MultiEffect");
+        }
+        s.Check(measured == plain && bounds == plainBounds,
+            $"the Blur on the child does not change the Group frame (measured {measured}, bounds {bounds}; without: {plain}, {plainBounds})");
+
+        // The child goes with its Group.
+        cmd.Destroy(g);
+        Apply("destroy");
+        s.Pump(2);
+        Native.vlqt_window_destroy(w);
+    }
 }

@@ -245,6 +245,7 @@ The changes that matter most:
 - **Touches:** `src/VL.Qt.Native/commands.cpp`, `src/VL.Qt.Native/elements.h`
 - **Depends on:** none
 - **Verification:** the SmokeTest case described above.
+- **Wave 1 (W1-15):** confirmed by `ChainTextureReparent` (REPARENT of the Blend layer's texture element returns 0 and sends no EV_ERROR; afterwards the element is drawn in the tree at (0, 0) and the chain still samples it, a state that SET_EFFECT_CHAIN rejects with "the texture element has a parent").
 
 ## 4 Target structure
 

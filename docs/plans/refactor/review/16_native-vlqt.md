@@ -202,6 +202,7 @@ What matters most:
 - **Touches:** `src/VL.Qt.Native/vlqt.cpp`, new `animation_clock.h/.cpp`, `offscreen.cpp` (calls `vlqt_driver_advance`, `offscreen.cpp:645`, → `vlqt::clock::advance`), `docs/architecture.md`, `CMakeLists.txt`
 - **Depends on:** none
 - **Verification:** SmokeTest `qml` (animation time base, `QmlTest.cs:213`); the new scrub check
+- **Wave 1 (W1-15):** confirmed by `AnimationScrub` for (b) (a `NumberAnimation` at 10 per second: v = 20.17 after 2 s of the frame clock, still 20.17 after the jump back to 1 s, 25.17 at 1.5 s: animations neither rewind nor hold until the old time, they go on forward from their value with every positive delta); (a) and (c) are plain code facts and need no run.
 
 ### NAPP-11 Refuse a nested pump instead of corrupting it
 - **Kind:** correctness

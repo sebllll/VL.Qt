@@ -176,6 +176,16 @@ static class QtHost
         return true;
     }
 
+    /// <summary>
+    /// Frame clock of <see cref="Pump"/> in seconds. A scenario that drives vlqt_driver_advance itself (clock jumps) sets it
+    /// to the latest time it used, so the clock of later scenarios never goes back.
+    /// </summary>
+    public static double Time
+    {
+        get => s_time;
+        set => s_time = value;
+    }
+
     /// <summary>Advances the frame clock by 1/60 s and processes Qt events, <paramref name="frames"/> times (Qt thread only).</summary>
     public static void Pump(int frames)
     {
