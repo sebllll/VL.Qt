@@ -238,7 +238,7 @@ namespace VL.Qt.Tests
             Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 2 Size vec2(100,50)" }));
         }
 
-        // ---- Shape (#154): Frame converts with 100 per unit ----
+        // ---- Shape: Frame converts with 100 per unit ----
 
         private static Spread<Vector2> Pts(params Vector2[] points) => Spread.Create(points);
         private static readonly Vector2[] s_triangle = { new(0, 0), new(1, 0), new(0, 1) };

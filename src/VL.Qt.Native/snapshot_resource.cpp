@@ -13,8 +13,8 @@
 #include <QtQuick/QQuickItemGrabResult>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
-#include <QtGui/private/qwindow_p.h> // grab of an offscreen scene (#128)
-#include <QtQuick/private/qquickshadereffectsource_p.h> // frame grab of a Group (#475)
+#include <QtGui/private/qwindow_p.h> // grab of an offscreen scene
+#include <QtQuick/private/qquickshadereffectsource_p.h> // frame grab of a Group
 
 #include <algorithm>
 #include <chrono>
@@ -45,7 +45,7 @@ int64_t steadyUs()
     return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
-// Deliveries of the last statsWindowUs for the overlay (#548): a ring of fixed size, oldest overwritten, nothing allocated.
+// Deliveries of the last statsWindowUs for the overlay: a ring of fixed size, oldest overwritten, nothing allocated.
 constexpr int64_t statsWindowUs = 10'000'000;
 constexpr int statsCap = 256;
 struct Delivery
@@ -109,10 +109,10 @@ struct Grab
     QPointer<QQuickItem> item;
     QPointer<QQuickItem> frameSource; // hidden ShaderEffectSource over the frame of a Group (frameTarget), or null
     QPointer<QQuickWindow> window;
-    bool offscreen = false; // window is an offscreen scene (#128): never exposed, renders only while bound
+    bool offscreen = false; // window is an offscreen scene: never exposed, renders only while bound
     QSize size;
     int64_t startMs = 0;
-    int64_t startUs = 0; // for the duration in the overlay (#548)
+    int64_t startUs = 0; // for the duration in the overlay
     bool current = true; // its result counts (false: superseded, released or given up)
     bool done = false;   // ready came; deleted at the next endFrame
 };
@@ -199,9 +199,9 @@ QQuickItem* target(Scene& scene, unsigned elementId, QRectF& frame, std::string&
 }
 
 // grabToImage always renders (0, 0, width, height) of the item. The frame of an auto-sized Group may start left of /
-// above its origin (#469, "Group frame" in protocol.h), so such a grab goes through a hidden ShaderEffectSource whose
+// above its origin ("Group frame" in protocol.h), so such a grab goes through a hidden ShaderEffectSource whose
 // sourceRect is the frame: it renders the element without its own transform (like grabToImage), its texture has the
-// requested pixel size, and grabToImage of the source draws exactly that texture (#475). Hidden: Qt keeps a hidden
+// requested pixel size, and grabToImage of the source draws exactly that texture. Hidden: Qt keeps a hidden
 // item in the scene graph while a grab references it and renders it only into the grab. Parent = the window's content
 // item, never the Group (the source would be part of its own texture) or another element (frame, layout).
 QQuickItem* frameTarget(Scene& scene, QQuickItem* item, const QRectF& frame, QSize pixels)
@@ -258,7 +258,7 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
     std::string error;
     QRectF frame;
     QQuickItem* item = target(scene, elementId, frame, error);
-    // An offscreen scene (QtTexture) has no native window and is never exposed; it renders in render_batch (#128).
+    // An offscreen scene (QtTexture) has no native window and is never exposed; it renders in render_batch.
     const bool offscreenScene = offscreen::isScene(scene.window);
     QSize size;
     if (item) {

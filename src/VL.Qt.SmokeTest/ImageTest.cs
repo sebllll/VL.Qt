@@ -5,7 +5,7 @@ using System.IO;
 using VL.Qt;
 using static Pixels;
 
-// Image in QtNative (plan 05d, #361): image resource (PROP_IMAGE), fillMode, smooth. Grabs go to <OutDir>/05_image*.png.
+// Image in QtNative (plan 05d): image resource (PROP_IMAGE), fillMode, smooth. Grabs go to <OutDir>/05_image*.png.
 // Test asset: assets/stripes_rgb_30x10.png (30x10 px, 10 px stripes red | green | blue). Values are DIP.
 [TestFixture, NonParallelizable]
 public static class ImageTest
@@ -60,7 +60,7 @@ public static class ImageTest
         File.Copy(asset, unicodePath, true);
         var missingPath = Path.Combine(s.OutDir, "missing_vlqt_05d.png");
 
-        // #361: the element draws an image resource (no Source any more); load errors belong to the resource.
+        // the element draws an image resource (no Source any more); load errors belong to the resource.
         var stripes = Load(asset, s.Check, "stripes");
         var unicode = Load(unicodePath, s.Check, "unicode path");
         var missing = Load(missingPath, s.Check, "missing file");
@@ -141,7 +141,7 @@ public static class ImageTest
             s.Check(IsRed(Px(a, 25, 310)) && IsBlue(Px(a, 115, 310)), "failed -> Ready resource draws");
         }
 
-        // Errors: invalid fillMode / smooth as i32 -> -7, Rectangle property / Source (#361) -> -6, unknown resource id /
+        // Errors: invalid fillMode / smooth as i32 -> -7, Rectangle property / Source -> -6, unknown resource id /
         // image as i32 -> -7, no crash.
         void Expect(int expected, string what)
         {

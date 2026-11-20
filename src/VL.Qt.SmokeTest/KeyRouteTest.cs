@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using VL.Qt;
 
-// Keys on the real Windows path (#301): vvvv's main thread runs a WinForms message loop, and Qt gets its keys from
+// Keys on the real Windows path: vvvv's main thread runs a WinForms message loop, and Qt gets its keys from
 // Win32 messages to its own HWND, not from QtNative. WinForms' PreTranslateMessage hands every key message for a
 // non-WinForms window to IsDialogMessage(root). That uses Enter, Tab, Escape and the arrow keys for dialog navigation
 // unless the window answers WM_GETDLGCODE with DLGC_WANT*, so Enter never reached a TextField or SpinBox in vvvv.
@@ -98,14 +98,14 @@ public static class KeyRouteTest
 
         cmd.Reset();
         cmd.Create(T, Protocol.Type.TextField);
-        VL.Qt.Styles.BaseStyle.Write(cmd, T); // like the Reconciler (#292)
+        VL.Qt.Styles.BaseStyle.Write(cmd, T); // like the Reconciler
         cmd.SetBool(T, Protocol.Prop.AutoSize, false);
         cmd.SetPlace(T, 50, 50, 300, 40);
         cmd.SetString(T, Protocol.Prop.Value, "");
         cmd.Reparent(T, 0, 0);
         cmd.Bind(T, HT, 0);
         cmd.Create(S1, Protocol.Type.SpinBox);
-        VL.Qt.Styles.BaseStyle.Write(cmd, S1); // like the Reconciler (#292)
+        VL.Qt.Styles.BaseStyle.Write(cmd, S1); // like the Reconciler
         cmd.SetBool(S1, Protocol.Prop.AutoSize, false);
         cmd.SetPlace(S1, 50, 150, 240, 40);
         cmd.Reparent(S1, 0, 1);
@@ -185,7 +185,7 @@ public static class KeyRouteTest
         s.Pump(1);
     }
 
-    // #374: Esc discards the edit and releases the focus (no EV_VALUE), a press outside the focused element (mouse,
+    // Esc discards the edit and releases the focus (no EV_VALUE), a press outside the focused element (mouse,
     // touch, also on an element with a Tap handler, which still clicks) releases it and commits, Enter keeps it.
     // "Focus gone" shows as: typing + Enter afterwards sends nothing. Starts with TextField "4297", SpinBox 53.
     private static void RunFocus(Action<bool, string> check, IntPtr w, CommandWriter cmd, Action<string> apply, Func<List<Rec>> frame,

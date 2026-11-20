@@ -4,7 +4,7 @@ using VL.Qt.Elements;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Events from QtNative come back in units of the scene's Space (#143): Scene Bounds, size, pointer, drag, pinch, touch.</summary>
+    /// <summary>Events from QtNative come back in units of the scene's Space: Scene Bounds, size, pointer, drag, pinch, touch.</summary>
     public class SinkRegistrySpaceTests
     {
         // Normalized in a 600 DIP high scene: 300 DIP per unit.

@@ -67,7 +67,7 @@ std::shared_ptr<ImageTexture> createTexture(QQuickWindow* window, const std::sha
     t->window = window;
     t->content = content;
     QRhi* rhi = window->rhi();
-    // Content of an older device generation (device lost, #367): its texture is gone, the replacement follows (the
+    // Content of an older device generation (device lost): its texture is gone, the replacement follows (the
     // item gets it through contentEpoch). Never wrap it, never fall back to the CPU copy.
     if (content->generation() != device::generation())
         return nullptr;

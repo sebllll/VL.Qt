@@ -9,7 +9,7 @@ using VL.Qt;
 using Color = System.Drawing.Color;
 using static Pixels;
 
-// Debug overlay (#279): VLQT_PROP_DEBUG per element and vlqt_window_set_debug for the whole window. The overlay is drawn
+// Debug overlay: VLQT_PROP_DEBUG per element and vlqt_window_set_debug for the whole window. The overlay is drawn
 // by QtNative on top of the scene (frame cyan, origin magenta, anchor yellow, overflow red, implicit orange, ...). Checks: layout, Measured Size,
 // Scene Bounds (Auto Size included) and hit-testing are identical with and without debug; the overlay appears in the
 // grab and disappears again. Grabs: <OutDir>/30_debug_off.png, 30_debug_overlay.png, 30_debug_element.png.
@@ -19,7 +19,7 @@ public static class DebugOverlayTest
     private const uint Col = 1, Txt = 5, Grp = 6, RowId = 8, Rot = 9, Ovf = 2;
     private static uint Child(uint parent, uint i) => 10 + parent * 10 + i;
     private const uint HHover = 100; // element sink of the green column child
-    private const uint HoverId = 900, HHoverHandler = 101; // its Hover handler (#319) and that handler's sink
+    private const uint HoverId = 900, HHoverHandler = 101; // its Hover handler and that handler's sink
 
     private readonly record struct Rec(ushort Event, uint Handle, byte[] Payload);
 
@@ -42,7 +42,7 @@ public static class DebugOverlayTest
     private static bool IsCyan(Color c) => c.R < 90 && c.G > 150 && c.B > 150;
     // Any pixel within +-2 logical px (line width 1, HiDPI rounding). IsCyan needs a pixel fully covered by the frame
     // (alpha 235 over background or padding still has G, B > 150): QtNative snaps lines to whole device pixels and
-    // draws them above all fills. A 1 px line split over two pixels by MSAA (#283, DPR 1) fails on purpose.
+    // draws them above all fills. A 1 px line split over two pixels by MSAA (DPR 1) fails on purpose.
     private static bool Near(Bitmap a, int x, int y, Func<Color, bool> f)
     {
         for (int dy = -2; dy <= 2; dy++)
@@ -123,7 +123,7 @@ public static class DebugOverlayTest
         Rect(Child(RowId, 0), RowId, 0, 0, 50, 60, 0.6f, 0.6f, 0.6f);
         Rect(Child(RowId, 1), RowId, 0, 0, 50, 100, 0.6f, 0.6f, 0.6f);
         Rect(Child(RowId, 2), RowId, 0, 0, 50, 30, 0.6f, 0.6f, 0.6f);
-        // Column 120x60, Auto Size off, padding 10, spacing 10, content 110 high (#473): implicit size 120x110 orange,
+        // Column 120x60, Auto Size off, padding 10, spacing 10, content 110 high: implicit size 120x110 orange,
         // children overflow below the frame (y 390..430) red, frame solid cyan at y 390.
         cmd.Create(Ovf, Protocol.Type.Column);
         cmd.SetBool(Ovf, Protocol.Prop.AutoSize, false);
@@ -198,7 +198,7 @@ public static class DebugOverlayTest
             s.Check(Near(a, (int)MathF.Round(rx), (int)MathF.Round(ry), IsCyan), $"debug: rotated frame follows the transform ({Px(a, (int)rx, (int)ry)})");
             // Unchanged layout: pixels away from overlay lines equal the grab without debug (red child center, row child).
             s.Check(Px(a, 60, 40) == Px(off, 60, 40) && Px(a, 390, 360) == Px(off, 390, 360), $"debug: content unchanged under the overlay ({Px(a, 60, 40)}/{Px(off, 60, 40)}, {Px(a, 390, 360)}/{Px(off, 390, 360)})");
-            // Size smaller than the content (#473): solid frame at the SIZE, overflow tinted red, implicit size orange.
+            // Size smaller than the content: solid frame at the SIZE, overflow tinted red, implicit size orange.
             s.Check(Near(a, 80, 390, IsCyan), $"debug: fixed frame at SIZE ({Px(a, 80, 390)})");
             Color ov = Px(a, 80, 415), raw = Px(off, 80, 415);
             s.Check(ov.R > raw.R + 20 && ov.G <= raw.G, $"debug: overflow tinted red ({ov} over {raw})");

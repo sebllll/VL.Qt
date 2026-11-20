@@ -4,7 +4,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using VL.Qt;
 
-// Input handlers as protocol objects (#319): CREATE / REPARENT / SET / BIND / DESTROY / RESET of
+// Input handlers as protocol objects: CREATE / REPARENT / SET / BIND / DESTROY / RESET of
 // a Hover handler, error codes, EV_HOVER / EV_POINTER per handler sink, Text containment mask, id reuse, and the TEST
 // export vlqt_test_send_touch (touch tap on a Tap handler clicks, multitouch bookkeeping). Scenarios tap / point / wheel
 // (#320): the Tap, Point and Wheel handlers (RunTap, RunPoint, RunWheel).
@@ -12,15 +12,15 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static partial class HandlerTest
 {
-    /// <summary>Input handlers as protocol objects (#319): errors, events, id reuse, touch tap.</summary>
+    /// <summary>Input handlers as protocol objects: errors, events, id reuse, touch tap.</summary>
     [Test, Category("handlers")]
     public static void Handlers() => Scenario.Run(Run);
 
-    /// <summary>Tap handler (#320).</summary>
+    /// <summary>Tap handler.</summary>
     [Test, Category("tap")]
     public static void Tap() => Scenario.Run(RunTap);
 
-    /// <summary>Point handler (#320).</summary>
+    /// <summary>Point handler.</summary>
     [Test, Category("point")]
     public static void PointHandler() => Scenario.Run(RunPoint);
 
@@ -28,7 +28,7 @@ public static partial class HandlerTest
     [Test, Category("point-tap")]
     public static void PointTap() => Scenario.Run(RunPointTap);
 
-    /// <summary>Wheel handler (#320).</summary>
+    /// <summary>Wheel handler.</summary>
     [Test, Category("wheel")]
     public static void WheelHandler() => Scenario.Run(RunWheel);
 
@@ -191,7 +191,7 @@ public static partial class HandlerTest
         var recs = Frame();
         s.Check(recs.Count == 0, $"handlers: nothing hovered -> no events ({S(recs)})");
 
-        // Hover in: both sinks HOVER 1, no POINTER (positions come from the Point handler, #320).
+        // Hover in: both sinks HOVER 1, no POINTER (positions come from the Point handler).
         Mouse(Protocol.Mouse.Move, 150, 150);
         recs = Frame();
         s.Check(Flag(recs, Protocol.Ev.Hover, S1, true) && Flag(recs, Protocol.Ev.Hover, S2, true),
@@ -373,7 +373,7 @@ public static partial class HandlerTest
             return rc;
         }
 
-        /// <summary>Last EV_SCENE_BOUNDS per sink of bound elements (x, y, w, h), updated by every Frame (#209).</summary>
+        /// <summary>Last EV_SCENE_BOUNDS per sink of bound elements (x, y, w, h), updated by every Frame.</summary>
         public readonly Dictionary<uint, (float X, float Y, float W, float H)> Bounds = new();
 
         public List<Rec> Frame()
@@ -445,7 +445,7 @@ public static partial class HandlerTest
     private static bool None(List<Rec> recs, uint h) => !recs.Exists(r => r.Handle == h);
     private static string Dump(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
 
-    // Tap handler (#320): PRESS / CLICK / TAP_COUNT / LONG_PRESS, buttons, devices, touch, stacking, sink change, lifetime.
+    // Tap handler: PRESS / CLICK / TAP_COUNT / LONG_PRESS, buttons, devices, touch, stacking, sink change, lifetime.
     private static void RunTap(Scenario s)
     {
         using var h = new Harness("tap", s);
@@ -493,7 +493,7 @@ public static partial class HandlerTest
         s.Check(HasU32(recs, Protocol.Ev.Click, SA, 1) && HasU32(recs, Protocol.Ev.TapCount, SA, 2), $"tap: double click -> CLICK 1, TAP_COUNT 2 ({Dump(recs)})");
         recs = h.Frame();
         s.Check(recs.Count == 0, $"tap: no change -> no records ({Dump(recs)})");
-        // The tap count stays until the next tap (#320 manual test): no TAP_COUNT 0 after the double click interval.
+        // The tap count stays until the next tap (manual test): no TAP_COUNT 0 after the double click interval.
         // Also with the mouse moving over the item and leaving it.
         var later = new List<Rec>();
         var until = DateTime.UtcNow.AddSeconds(2);
@@ -596,7 +596,7 @@ public static partial class HandlerTest
         h.Frame();
     }
 
-    // Point handler (#320): ACTIVE + POINTER while pressed (mouse, touch), passive grab: clicks reach the Tap handler below.
+    // Point handler: ACTIVE + POINTER while pressed (mouse, touch), passive grab: clicks reach the Tap handler below.
     private static void RunPoint(Scenario s)
     {
         using var h = new Harness("point", s);
@@ -663,7 +663,7 @@ public static partial class HandlerTest
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP2, false), $"point: right release -> ACTIVE 0 ({Dump(recs)})");
 
-        // ACCEPTED_BUTTONS 0 (#320): the mouse is active while it is over the item (hover position, internal
+        // ACCEPTED_BUTTONS 0: the mouse is active while it is over the item (hover position, internal
         // HoverHandler), touch while down; switching at runtime leaves no ACTIVE 1 behind.
         h.Mouse(Protocol.Mouse.Move, 700, 500);
         h.Frame();
@@ -750,7 +750,7 @@ public static partial class HandlerTest
         h.Frame();
     }
 
-    // Tap + Point at the same item (#320 manual test): both react to the same (default, left) button and to touch. Point
+    // Tap + Point at the same item (manual test): both react to the same (default, left) button and to touch. Point
     // alone with the default buttons and with ACCEPTED_BUTTONS left set explicitly. Stacked: the top item still wins the click.
     private static void RunPointTap(Scenario s)
     {
@@ -867,7 +867,7 @@ public static partial class HandlerTest
             $"point-tap: stacked touch without Point -> only the top item clicks ({Dump(recs)})");
     }
 
-    // Wheel handler (#320): notches (angleDelta / 120) summed per poll, then once (0, 0); devices; sink change.
+    // Wheel handler: notches (angleDelta / 120) summed per poll, then once (0, 0); devices; sink change.
     private static void RunWheel(Scenario s)
     {
         using var h = new Harness("wheel", s);
@@ -934,11 +934,11 @@ public static partial class HandlerTest
         && r.Index == 0 && Near(r.F(0), x) && Near(r.F(1), y);
 
     // Row-major like Stride: rotation by 90 degrees around z.
-    // Rotation by 90 degrees around the center of the 100 x 100 rectangles R (150, 150) / R2 (450, 150), anchor Center (#469).
+    // Rotation by 90 degrees around the center of the 100 x 100 rectangles R (150, 150) / R2 (450, 150), anchor Center.
     private static readonly float[] s_rot90At150 = { 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 150, 150, 0, 1 };
     private static readonly float[] s_rot90At450 = { 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 450, 150, 0, 1 };
 
-    // Drag handler (#209): offset in the item's transform, EV_ACTIVE / EV_DRAG, SET TRANSFORM resets (#469), mouse + touch,
+    // Drag handler: offset in the item's transform, EV_ACTIVE / EV_DRAG, SET TRANSFORM resets, mouse + touch,
     // TRANSFORM before/after, axis, limits, MOVES_ELEMENT off, property errors.
     private static void RunDrag(Scenario s)
     {
@@ -1013,7 +1013,7 @@ public static partial class HandlerTest
         h.Apply("rotate R");
         recs = h.Drag(150, 150, 40, 0);
         s.Check(HasDrag(recs, SD, 40, 0) && At(h, SR, 140, 100), $"drag: rotated item, drag (40, 0) -> item at 140, 100 ({Dump(recs)}; {Pos(h, SR)})");
-        // TRANSFORM after the drag (R2): pin wins, the drag offset is reset (#469), the item is back at its pin position.
+        // TRANSFORM after the drag (R2): pin wins, the drag offset is reset, the item is back at its pin position.
         h.Drag(450, 150, 40, 0);
         h.Cmd.SetI32(R2, Protocol.Prop.Anchor, GeometryExtensions.AlignCenter);
         h.Cmd.SetMat4(R2, Protocol.Prop.Transform, s_rot90At450);
@@ -1062,7 +1062,7 @@ public static partial class HandlerTest
         s.Check(At(h, SR, 140, 100), $"drag: offset stays after the handler is gone ({Pos(h, SR)})");
     }
 
-    // Drag of a Row child (#209): the child moves, its siblings stay, the layout keeps its place.
+    // Drag of a Row child: the child moves, its siblings stay, the layout keeps its place.
     private static void RunDragRow(Scenario s)
     {
         using var h = new Harness("drag-row", s);
@@ -1094,14 +1094,14 @@ public static partial class HandlerTest
         h.Apply("move row");
         h.Frame();
         s.Check(At(h, SB, 170, 380) && At(h, SA, 100, 300), $"drag-row: row moved -> child keeps its offset ({Pos(h, SB)})");
-        // The child's own BOUNDS (same size) resets the offset and the Row keeps the child at its slot (#346).
+        // The child's own BOUNDS (same size) resets the offset and the Row keeps the child at its slot.
         h.Cmd.SetPlace(B, 0, 0, 50, 50);
         h.Apply("child bounds");
         h.Frame();
         s.Check(At(h, SB, 150, 300), $"drag-row: child BOUNDS -> offset 0, stays in its slot ({Pos(h, SB)})");
     }
 
-    // Group drag (#209): the group moves as a whole (hit area = its size from the children); a child with its own drag
+    // Group drag: the group moves as a whole (hit area = its size from the children); a child with its own drag
     // moves alone.
     private static void RunDragGroup(Scenario s)
     {
@@ -1138,7 +1138,7 @@ public static partial class HandlerTest
             $"drag-group: drag on a child with its own drag -> only the child ({Dump(recs)}; {Pos(h, SB)} / {Pos(h, SG)})");
     }
 
-    // Nested drags (#209): the innermost wins (panel with a slider); a child limited to x lets a vertical drag through to
+    // Nested drags: the innermost wins (panel with a slider); a child limited to x lets a vertical drag through to
     // the parent's drag (Qt: more than 45 degrees off the enabled axis).
     private static void RunDragNested(Scenario s)
     {

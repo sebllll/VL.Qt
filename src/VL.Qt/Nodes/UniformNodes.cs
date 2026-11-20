@@ -7,7 +7,7 @@ using VL.Qt.Elements;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Uniform values for the ShaderEffect (#437): one node per value type, collect them into a spread for its
+    /// Uniform values for the ShaderEffect: one node per value type, collect them into a spread for its
     /// Uniforms pin. The name must match the uniform block member or sampler2D in the shader (case sensitive).
     /// Advanced, like ShaderEffect: shader files in a qtshaders/ folder become nodes with one pin per uniform. The Sampler node stays visible, shader nodes and effects use it too.
     /// </summary>

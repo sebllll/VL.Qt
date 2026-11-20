@@ -9,7 +9,7 @@ using P = VL.Qt.Protocol.Prop;
 namespace VL.Qt
 {
     /// <summary>
-    /// Effect chain (#489, plan effects/08): the Effect chain of an element is segmented (<see cref="Effect.Segment"/>) into
+    /// Effect chain (plan effects/08): the Effect chain of an element is segmented (<see cref="Effect.Segment"/>) into
     /// links in application order and sent as one SET_EFFECT_CHAIN, only when the chain instance changed (reference
     /// comparison, a new instance sends the whole chain again, no chain = linkCount 0). Elements the links refer to (the mask
     /// of a MULTI run, the texture of a shader uniform) are objects of their own, reconciled without REPARENT before the chain
@@ -26,7 +26,7 @@ namespace VL.Qt
             if (ReferenceEquals(chain, node.EffectChain))
             {
                 var sent = RetryEffectObjects(node, inherited);
-                // A new unit scale changes the lengths of the chain (#143).
+                // A new unit scale changes the lengths of the chain.
                 if (_rescale && !sent && chain is not null)
                     SendEffectChain(node);
                 return;
@@ -75,7 +75,7 @@ namespace VL.Qt
 
         /// <summary>
         /// Unchanged chain: the objects are reconciled again (their element may have changed inside, and a video shown
-        /// elsewhere stays a placeholder that is retried every pass, #455); the chain is sent again when an object got
+        /// elsewhere stays a placeholder that is retried every pass); the chain is sent again when an object got
         /// another id (returns true then).
         /// </summary>
         private bool RetryEffectObjects(Node node, Style inherited)

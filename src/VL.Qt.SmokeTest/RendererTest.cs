@@ -56,12 +56,12 @@ public static class RendererTest
         if (r.Window == IntPtr.Zero)
             return;
 
-        // Bounds on create (#94): outer top-left = Bounds.X/Y in DIP * DPI scale (the Skia rule).
+        // Bounds on create: outer top-left = Bounds.X/Y in DIP * DPI scale (the Skia rule).
         if (OperatingSystem.IsWindows()) // Linux: no Win32 window lookup (position check only on Windows)
         {
             var hwnd = FindWindow(null, title);
             s.Check(hwnd != IntPtr.Zero && GetWindowRect(hwnd, out var rc), "Qt window found by title");
-            // Qt's frame (QWindow::framePosition, #100) is the visible frame = DWM extended frame bounds; GetWindowRect
+            // Qt's frame (QWindow::framePosition) is the visible frame = DWM extended frame bounds; GetWindowRect
             // also contains the invisible resize borders (Windows 10+, left/right/bottom).
             if (hwnd != IntPtr.Zero && DwmGetWindowAttribute(hwnd, 9 /* DWMWA_EXTENDED_FRAME_BOUNDS */, out rc, 16) == 0)
             {
@@ -124,11 +124,11 @@ public static class RendererTest
             s.Check(Near(Px(a, 500, 350), 0, 0, 255), "unchanged sibling stays");
         }
 
-        // Title at runtime (only sent when the pin value changes); resize via QtNative (the Size pin is gone, #94).
+        // Title at runtime (only sent when the pin value changes); resize via QtNative (the Size pin is gone).
         title = "VL.Qt renderer test (renamed)";
         Native.vlqt_window_resize(r.Window, 640, 480);
         Frame(tree2);
-        // X11: the window manager answers the resize asynchronously (ConfigureNotify), wait for the new size (#232).
+        // X11: the window manager answers the resize asynchronously (ConfigureNotify), wait for the new size.
         for (int i = 0; i < 100 && r.Geometry?.Bounds.Width != 640; i++) { System.Threading.Thread.Sleep(10); Frame(tree2); }
         lw = 640; lh = 480;
         using (var a = s.Grab(r.Window, "07a_resized.png"))
@@ -162,10 +162,10 @@ public static class RendererTest
     [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool PostMessage(IntPtr h, uint msg, IntPtr w, IntPtr l);
     private const uint WM_CLOSE = 0x0010;
 
-    // Is Visible (#93): live from Qt, true from the creation on (no pump needed), false after X/Hide, true again after
+    // Is Visible: live from Qt, true from the creation on (no pump needed), false after X/Hide, true again after
     // Show, false after Dispose, true for a new window after a Dispose (node recreated, Undo, F8/F5 with a new registry).
     /// <summary>
-    /// VSync pin (#95): the default window (no vSync argument = swap interval 1) and the opt-out window (vSync: false = swap
+    /// VSync pin: the default window (no vSync argument = swap interval 1) and the opt-out window (vSync: false = swap
     /// interval 0) are created and pumped without errors (with VSync the pump may wait for the refresh).
     /// </summary>
     private static void RunVSync(Scenario s)
@@ -199,7 +199,7 @@ public static class RendererTest
     [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern uint GetDpiForSystem();
 
     /// <summary>
-    /// Geometry on create + EV_WINDOW_GEOMETRY (#100, #165, prep for #143): the reported geometry (outer top-left + client
+    /// Geometry on create + EV_WINDOW_GEOMETRY (prep for #143): the reported geometry (outer top-left + client
     /// size, DIP) equals the Bounds given on create, so it round-trips; a resize is reported; empty bounds (sentinel) and
     /// bounds on no screen are both centered on the primary working area with the fallback size.
     /// </summary>
@@ -207,7 +207,7 @@ public static class RendererTest
     {
         var clear = new Color4(0, 0, 0, 1);
         // Pumps until the reported geometry has settled: under X11 the window manager answers placement, resize and
-        // the frame extents asynchronously (#232); on Windows it is stable after the first frames.
+        // the frame extents asynchronously; on Windows it is stable after the first frames.
         WindowGeometry? Shown(WindowRenderer r, string title)
         {
             WindowGeometry? last = null;
@@ -225,7 +225,7 @@ public static class RendererTest
         }
         // WSLg (Weston's X window manager): the frame extents arrive late or not at all, include a 32 px invisible
         // shadow and change after a resize, so Qt's frame position is off by up to shadow + border (seen 0..38 DIP).
-        // Position is only checked roughly there, size exactly (#232). Real X11 desktops: exact like Windows.
+        // Position is only checked roughly there, size exactly. Real X11 desktops: exact like Windows.
         float posTol = !OperatingSystem.IsWindows() && File.Exists("/dev/dxg")
             && Environment.GetEnvironmentVariable("QT_QPA_PLATFORM") is null or "xcb" ? 40 : 1;
         if (posTol > 1) s.Info($"geometry: WSLg/Weston, frame position checked with {posTol} DIP tolerance");
@@ -278,7 +278,7 @@ public static class RendererTest
     }
 
     /// <summary>
-    /// #133: a Renderer added live or restored by Undo/Redo is created by vvvv's hotswap with the VL type default for
+    /// a Renderer added live or restored by Undo/Redo is created by vvvv's hotswap with the VL type default for
     /// Bounds, (-0.5, -0.5, 1, 1), instead of the pin value/default. While a first window is pumped, a second one is
     /// created the way Renderer does it (WindowPlacement.CreateBounds), disposed (Undo) and created again (Redo): each must open
     /// with the pin default size, not as a 1x1 window, and the first window keeps being pumped.

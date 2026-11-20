@@ -105,7 +105,7 @@ public static class CoreTest
         if (!OperatingSystem.IsWindows() && perf.gpu_ms == 0 && s.Log.Contains("SOFTWARE RENDERING"))
             s.Skip("GPU timestamps: none with software rendering on Linux");
         // Linux + QRhi OpenGL on Mesa (e.g. WSLg d3d12): QRhi reports the Timestamps feature, but lastCompletedGpuTime()
-        // stays 0 (L4e, #214). Real values (e.g. a future Mesa) run the normal check again.
+        // stays 0 (L4e). Real values (e.g. a future Mesa) run the normal check again.
         else if (!OperatingSystem.IsWindows() && perf.gpu_ms == 0 && QtHost.MesaGl != null)
             s.Skip($"GPU timestamps: QRhi OpenGL on Mesa reports 0 ({QtHost.MesaGl})");
         else
@@ -113,7 +113,7 @@ public static class CoreTest
         using (var before = s.Grab(w, "perf0.png"))
         {
             Native.vlqt_window_set_overlay(w, 3);
-            s.Check((Native.vlqt_window_get_overlay(w) & 3) == 3, "overlay flags set"); // bits 4..6: F5 page (#244)
+            s.Check((Native.vlqt_window_get_overlay(w) & 3) == 3, "overlay flags set"); // bits 4..6: F5 page
             s.Pump(20);
             using var after = s.Grab(w, "perf1.png");
             s.Check(!SameImage(before, after) && !IsBg(after.GetPixel(30, 30)), "overlay drawn top-left");
@@ -130,7 +130,7 @@ public static class CoreTest
         CheckApply(s, w, cmd, "apply: create 100 perf items");
         var applyMs = new double[20];
         var writeMs = new double[20];
-        // #64: best of up to 3 rounds (see PerfLimits.Best); the INFO line shows the last round's spread.
+        // best of up to 3 rounds (see PerfLimits.Best); the INFO line shows the last round's spread.
         var applyMedian = PerfLimits.Best(2.0, () =>
         {
             for (int run = 0; run < applyMs.Length; run++)
@@ -138,7 +138,7 @@ public static class CoreTest
                 var t = Stopwatch.StartNew();
                 cmd.Reset();
                 for (int i = 0; i < 10_000; i++)
-                    // #469: one SET per item like the old BOUNDS: the position = TRANSFORM translation (SIZE/ANCHOR set above).
+                    // one SET per item like the old BOUNDS: the position = TRANSFORM translation (SIZE/ANCHOR set above).
                     cmd.SetMat4(100 + (uint)(i % 100), Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation(i % 700, run, 0));
                 var buf = cmd.EndFrame();
                 writeMs[run] = t.Elapsed.TotalMilliseconds;
@@ -174,7 +174,7 @@ public static class CoreTest
     public static void Log() => Scenario.Run(s =>
     {
         // vlqt_window_create (the short form most scenarios use) makes a window with swap interval 0, so their pumps never
-        // wait for VSync (one render per pump is checked in PumpTest 1c, #137). One such window of its own makes the
+        // wait for VSync (one render per pump is checked in PumpTest 1c). One such window of its own makes the
         // check independent of the order and the selection of the other tests.
         var cmd = new CommandWriter();
         var w = CreateWithScene(s, cmd);

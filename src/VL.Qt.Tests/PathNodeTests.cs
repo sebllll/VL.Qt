@@ -9,7 +9,7 @@ using VL.Qt.Paths;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>The node Path (#154, package 04): pin defaults, change detection, path limit.</summary>
+    /// <summary>The node Path (package 04): pin defaults, change detection, path limit.</summary>
     public class PathNodeTests
     {
         private string? _warning;

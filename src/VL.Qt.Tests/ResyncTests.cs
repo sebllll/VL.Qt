@@ -10,12 +10,12 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Resync after a failed apply (#76): Reconciler + ResyncController against a fake QtNative that aborts a batch like the real one.</summary>
+    /// <summary>Resync after a failed apply: Reconciler + ResyncController against a fake QtNative that aborts a batch like the real one.</summary>
     public class ResyncTests
     {
         /// <summary>
         /// Interprets the recorded command lines like QtNative: abort at the first bad command (earlier ones stay
-        /// applied), unknown id = -4, a negative Radius = -7, DESTROY removes the subtree, RESET everything (#92).
+        /// applied), unknown id = -4, a negative Radius = -7, DESTROY removes the subtree, RESET everything.
         /// </summary>
         private sealed class FakeQtNative
         {

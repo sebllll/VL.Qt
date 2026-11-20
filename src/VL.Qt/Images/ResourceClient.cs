@@ -8,7 +8,7 @@ using VL.Lib.Basics.Imaging;
 
 namespace VL.Qt
 {
-    /// <summary>The resource C-API of QtNative (vlqt_res_*, #359/#360); a fake in unit tests, which have no Qt.</summary>
+    /// <summary>The resource C-API of QtNative (vlqt_res_*); a fake in unit tests, which have no Qt.</summary>
     internal interface IResourceApi
     {
         int Create(int kind, out ulong id);
@@ -48,7 +48,7 @@ namespace VL.Qt
     }
 
     /// <summary>
-    /// C# side of QtNative's resource manager (#362), one per <see cref="QtApp"/>:
+    /// C# side of QtNative's resource manager, one per <see cref="QtApp"/>:
     /// <list type="bullet">
     /// <item>Creates image resources and starts loads/pixel uploads for the nodes (LoadImage, LoadImage (Async), ToQtImage).</item>
     /// <item>Empties the status queue (vlqt_res_poll) once per pump on the main thread and updates the
@@ -66,10 +66,10 @@ namespace VL.Qt
         /// <summary>LoadImage waits at most this long for a worker; afterwards the image arrives like an async one.</summary>
         internal const int waitTimeoutMs = 10_000;
 
-        /// <summary>Longest edge of the tooltip preview QtNative makes (#546).</summary>
+        /// <summary>Longest edge of the tooltip preview QtNative makes.</summary>
         private const int previewMaxEdge = 256;
 
-        /// <summary>Path prefix of a shader shipped with VL.Qt, resolved by QtNative (vlqt_res_load_shader, #437).</summary>
+        /// <summary>Path prefix of a shader shipped with VL.Qt, resolved by QtNative (vlqt_res_load_shader).</summary>
         internal const string builtinShaderPrefix = "builtin:";
 
         private readonly IResourceApi _api;
@@ -92,7 +92,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Whether loads also ask the worker for a tooltip preview (<see cref="Protocol.Img.Preview"/>, #546): only while the
+        /// Whether loads also ask the worker for a tooltip preview (<see cref="Protocol.Img.Preview"/>): only while the
         /// vvvv editor runs, never in an exported app (it costs a small copy per image).
         /// </summary>
         public bool Previews { get; internal set; }
@@ -138,7 +138,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// New shader resource (#437, Loading, no content yet); <see cref="ImageResource"/> is the generic resource view
+        /// New shader resource (Loading, no content yet); <see cref="ImageResource"/> is the generic resource view
         /// (id, state, error) also for shaders. Throws if QtNative refuses (reported by the node).
         /// </summary>
         public ImageResource CreateShader()
@@ -208,7 +208,7 @@ namespace VL.Qt
 
         /// <summary>
         /// Starts baking full Qt GLSL <paramref name="source"/> (stage <see cref="Protocol.ShaderStage"/>) into
-        /// <paramref name="resource"/> (#483; asynchronous, bake errors arrive as status records). Returns false and fails
+        /// <paramref name="resource"/> (asynchronous, bake errors arrive as status records). Returns false and fails
         /// the resource if QtNative refuses.
         /// </summary>
         public bool LoadShaderSource(ImageResource resource, string source, int stage)
@@ -227,7 +227,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// New audio tap (#22, protocol.h "Audio tap") with a fixed format (float, channels, sampleRate): Ready at once,
+        /// New audio tap (protocol.h "Audio tap") with a fixed format (float, channels, sampleRate): Ready at once,
         /// its id goes to <see cref="Elements.Video"/>.AudioTap. A new sample rate needs a new tap; release the old one
         /// with <see cref="Release"/> after the Video switched to the new id. Throws if QtNative refuses.
         /// </summary>
@@ -247,7 +247,7 @@ namespace VL.Qt
             return resource;
         }
 
-        /// <summary>New snapshot resource (#363): no content until the first <see cref="Snapshot"/> is done. Throws if QtNative refuses.</summary>
+        /// <summary>New snapshot resource: no content until the first <see cref="Snapshot"/> is done. Throws if QtNative refuses.</summary>
         public ImageResource CreateSnapshot()
         {
             var rc = _api.Create(Protocol.ResKind.Snapshot, out var id);
@@ -280,7 +280,7 @@ namespace VL.Qt
 
         /// <summary>
         /// Like <see cref="Snapshot"/>, but QtNative picks the scale so that the longest edge is at most
-        /// <paramref name="maxEdgePx"/> pixels and never above the DIP size (tooltip previews, #544).
+        /// <paramref name="maxEdgePx"/> pixels and never above the DIP size (tooltip previews).
         /// </summary>
         public bool SnapshotFit(ImageResource resource, IntPtr window, uint elementId, int maxEdgePx)
         {
@@ -324,7 +324,7 @@ namespace VL.Qt
 
         /// <summary>
         /// Copies the tooltip preview of a Ready image (made by the worker for <see cref="Protocol.Img.Preview"/>, at most
-        /// 256 px) into a new <see cref="IImage"/> (BGRA8 premultiplied, own memory). Null if there is none (#546).
+        /// 256 px) into a new <see cref="IImage"/> (BGRA8 premultiplied, own memory). Null if there is none.
         /// </summary>
         public IImage? ReadPreview(ImageResource resource)
         {

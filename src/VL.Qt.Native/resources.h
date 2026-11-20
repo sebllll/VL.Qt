@@ -1,4 +1,4 @@
-/* resources.h - generic, window independent resource manager of QtNative (#359, images package 02).
+/* resources.h - generic, window independent resource manager of QtNative (images package 02).
  *
  * One manager per process for every resource kind (images from package 03, later shaders and fonts). C# holds only
  * an id; all work happens here. Kept deliberately simple and fully logged (category VL.Qt.Resources): bugs in this
@@ -27,15 +27,15 @@
  * len = 8 + payload bytes). STATE u8 state, ERROR UTF-8 text, INFO u32 w, u32 h, u32 format, u64 bytes, WARNING
  * UTF-8 text (Kind::takeWarning after a decode, at most one per resource).
  *
- * Replacement (#360): start on a Ready resource decodes and uploads a second Work next to the current one; the state
+ * Replacement: start on a Ready resource decodes and uploads a second Work next to the current one; the state
  * stays Ready (no STATE record) and the current Work is swapped (old one destroyed) when the new upload is complete,
  * with a new INFO record. A failed replacement makes the resource Failed. start on a Failed resource starts over
  * (Failed -> Decoding). start while a decode/upload runs keeps only the newest Work and starts it afterwards.
  *
- * External content (snapshot, #363, snapshot_resource.h): made on the main thread (beginExternal / finishExternal),
+ * External content (snapshot, snapshot_resource.h): made on the main thread (beginExternal / finishExternal),
  * no worker and no upload, so Decoding -> Ready is allowed for that kind only; vlqt_res_wait does not block on it.
  *
- * Device lost (#367, device.h): the manager is a device listener. lost: Kind::releaseDevice on every
+ * Device lost (device.h): the manager is a device listener. lost: Kind::releaseDevice on every
  * Work no worker holds (textures, staging, running uploads of the old device go, the sources stay). restored: every
  * Ready resource with GPU content gets a replacement from Kind::restore (decode + upload within the budget, the state
  * stays Ready, INFO after the swap, C# sees no change); a running replacement or queued content is renewed the same
@@ -98,7 +98,7 @@ public:
     virtual Info info(const Work& work) const { (void)work; return {}; }
     // Main thread, after a successful decode: a warning for the host (WARNING record), empty = none.
     virtual std::string takeWarning(Work& work) { (void)work; return {}; }
-    // Main thread, while Uploading: bytes still to upload (F5 Resources page, #364; 0 = unknown).
+    // Main thread, while Uploading: bytes still to upload (F5 Resources page; 0 = unknown).
     virtual int64_t pendingBytes(const Work& work) const { (void)work; return 0; }
 
     // --- Device lost (see above), main thread ---
@@ -139,7 +139,7 @@ int kindOfId(uint64_t id, const char* what);
 // The id is live and Failed (silent for unknown ids). Main thread.
 bool isFailed(uint64_t id);
 
-// Content made on the main thread without worker and upload (snapshot, #363): Pending -> Decoding -> Ready | Failed.
+// Content made on the main thread without worker and upload (snapshot): Pending -> Decoding -> Ready | Failed.
 // beginExternal: Pending/Failed -> Decoding (Failed: the old Work goes); Ready stays Ready (replacement, the current
 // Work stays readable); Decoding stays Decoding (the caller keeps only its newest request). 0 / -9 / -7 (wrong kind).
 int beginExternal(uint64_t id, int kind);
@@ -149,9 +149,9 @@ int beginExternal(uint64_t id, int kind);
 int finishExternal(uint64_t id, std::shared_ptr<Work> work, int64_t bytes, const std::string& error);
 
 // Changes whenever a resource gets new Ready content (first Ready or a replacement swap). Elements compare it once
-// per pump instead of asking every resource (QtImageItem::afterResourceFrame, #361). Main thread.
+// per pump instead of asking every resource (QtImageItem::afterResourceFrame). Main thread.
 uint64_t contentEpoch();
-// Changes whenever a resource becomes Failed (first load or replacement), e.g. a ShaderEffect stops drawing (#437).
+// Changes whenever a resource becomes Failed (first load or replacement), e.g. a ShaderEffect stops drawing.
 uint64_t failureEpoch();
 
 // Element references (package 04). 0 / -9.
@@ -162,7 +162,7 @@ int releaseElement(uint64_t id);
 void beginFrame(); // takes worker results, uploads within the budget (before the windows render)
 void endFrame();   // frees resources whose references are all gone
 
-// --- F5 overlay, Resources page (#364), main thread ---
+// --- F5 overlay, Resources page, main thread ---
 struct Row
 {
     uint64_t id;

@@ -7,7 +7,7 @@ using VL.Qt.Elements;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// A link of the Effect chain driven by shaders shipped with VL.Qt (<c>builtin:</c>, #438): template, shader ids,
+    /// A link of the Effect chain driven by shaders shipped with VL.Qt (<c>builtin:</c>): template, shader ids,
     /// padding, radius and uniforms as <see cref="ShaderLink"/> describes them; padding and radius in units of the renderer's space
     /// (the reconciler converts them, rounds the padding up to whole DIP and scales the uniforms of <see cref="Uniform.IsLength"/>). TwoPass shaders tell
     /// their passes apart by the float uniform passIndex that QtNative sets (0, then 1).

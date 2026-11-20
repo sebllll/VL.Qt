@@ -3,7 +3,7 @@
 namespace VL.Qt
 {
     /// <summary>
-    /// Errors and warnings of the image nodes (#362): the Error output is logged once per distinct text (the node shows
+    /// Errors and warnings of the image nodes: the Error output is logged once per distinct text (the node shows
     /// it at its output, not as a message); a resource warning (e.g. 16 bit reduced to 8 bit) is logged and shown at the
     /// node until the image changes. Without a <see cref="NodeErrors"/> (unit tests) nothing is reported.
     /// </summary>

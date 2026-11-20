@@ -29,10 +29,10 @@ typedef struct vlqt_perf {
     double gpu_ms, gpu_ms_max;     /* 0 = GPU timestamps unavailable */
     double swaps_per_pump;
     int samples;
-    double vsync_ms;               /* QRhi::beginFrame, see vlqt_perf_sample.vsync (appended, #90) */
+    double vsync_ms;               /* QRhi::beginFrame, see vlqt_perf_sample.vsync (appended) */
 } vlqt_perf;
 
-/* One pump (vlqt_app_process_events) of a window, times in ms (#243). */
+/* One pump (vlqt_app_process_events) of a window, times in ms. */
 typedef struct vlqt_perf_sample {
     float frame;    /* interval between the last two frame swaps (0 = none yet) */
     float pump;     /* whole vlqt_app_process_events */
@@ -40,7 +40,7 @@ typedef struct vlqt_perf_sample {
     float gpu;      /* QRhi timestamps of the last completed frame, 0 = unavailable */
     float events;   /* pump - vsync - sync - render - present: posted events, input, polish, animations (>= 0) */
     int swaps;      /* frames swapped in this pump */
-    /* Appended (#90): beforeFrameBegin -> beforeSynchronizing, summed over the swaps, i.e. QRhi::beginFrame. With VSync
+    /* Appended: beforeFrameBegin -> beforeSynchronizing, summed over the swaps, i.e. QRhi::beginFrame. With VSync
      * D3D11 waits there for the refresh (frame latency waitable object), not in Present; without VSync it waits there
      * when the GPU is behind. F5 segment "vsync wait". 0 on the software backend. */
     float vsync;
@@ -64,7 +64,7 @@ typedef struct vlqt_perf_stats {
     long long recent_pumps, recent_over_budget, recent_long_frames, recent_idle, recent_multi_swap;
 } vlqt_perf_stats;
 
-/* Details of the last vlqt_window_apply of a window (#92/#275), see vlqt_window_get_apply_error. */
+/* Details of the last vlqt_window_apply of a window, see vlqt_window_get_apply_error. */
 typedef struct vlqt_apply_error {
     int rc;              /* return code of the last apply, 0 = it succeeded (then all other fields are 0/empty) */
     int command;         /* index of the bad command in the buffer */
@@ -74,18 +74,18 @@ typedef struct vlqt_apply_error {
     const char* reason;  /* UTF-8 reason without the "apply: command #n ..." prefix; valid until the next apply of the window */
 } vlqt_apply_error;
 
-/* What the host (VL.Qt, .NET) measured around one pump of a window (#245), times in ms. Reported after the pump with
+/* What the host (VL.Qt, .NET) measured around one pump of a window, times in ms. Reported after the pump with
  * vlqt_window_report_host_frame; "since the previous host pump" = one vvvv frame. */
 typedef struct vlqt_host_frame {
     float apply;       /* vlqt_window_apply of this window in this pump (incl. resync) */
     float reconcile;   /* reconcile + command writing in the node updates since the previous host pump */
     float host;        /* the whole host pump (all windows: apply, advance, processEvents, poll) */
-    float interval;    /* since the previous host pump of the same vvvv app (#314; 0 = first) */
+    float interval;    /* since the previous host pump of the same vvvv app (0 = first) */
     float gc_pause;    /* .NET GC pause since the previous host pump */
     int ops;           /* commands applied to this window in this pump */
     int gc0, gc1, gc2; /* .NET collections per generation since the previous host pump */
     long long alloc_bytes; /* .NET bytes allocated (process) since the previous host pump */
-    /* #260: the vvvv side of the frame before this pump (0 = unknown). interval ~ previous host + wait + vvvv. */
+    /* the vvvv side of the frame before this pump (0 = unknown). interval ~ previous host + wait + vvvv. */
     float vvvv;        /* vvvv frame start (IFrameClock ticks; fallback the clock's update time) -> start of this pump */
     float wait;        /* end of the previous host pump -> vvvv frame start (frame timer / vsync / other apps) */
 } vlqt_host_frame;
@@ -101,11 +101,11 @@ typedef struct vlqt_host_stats {
     double gc_pause_ms_per_s;
     double alloc_bytes, alloc_bytes_max; /* per host frame */
     int samples;
-    double vvvv_ms, vvvv_ms_max;       /* #260: vlqt_host_frame.vvvv, average/max */
-    double wait_ms, wait_ms_max;       /* #260: vlqt_host_frame.wait, average/max */
+    double vvvv_ms, vvvv_ms_max;       /* vlqt_host_frame.vvvv, average/max */
+    double wait_ms, wait_ms_max;       /* vlqt_host_frame.wait, average/max */
 } vlqt_host_stats;
 
-/* One resource of vlqt_res_list (#359): introspection for the F5 overlay (images package 07). */
+/* One resource of vlqt_res_list: introspection for the F5 overlay (images package 07). */
 typedef struct vlqt_res_info {
     unsigned long long id;  /* index | generation << 32 */
     int kind;               /* VLQT_RES_KIND_* */
@@ -115,16 +115,16 @@ typedef struct vlqt_res_info {
     int element_refs;       /* references of elements (images package 04) */
 } vlqt_res_info;
 
-/* Pixels of vlqt_res_set_pixels (#360). */
+/* Pixels of vlqt_res_set_pixels. */
 typedef struct vlqt_pixel_desc {
     int width, height;      /* > 0 */
     int row_bytes;          /* bytes per row incl. padding, <= 0 = width * bytes per pixel */
     int format;             /* VL PixelFormat number, table in protocol.h */
     int premultiplied;      /* != 0: color already multiplied with alpha */
-    int flags;              /* vlqt_res_set_pixels: VLQT_IMG_* (#546); 0 when QtNative fills the desc */
+    int flags;              /* vlqt_res_set_pixels: VLQT_IMG_*; 0 when QtNative fills the desc */
 } vlqt_pixel_desc;
 
-/* State of an audio tap, filled by vlqt_res_read_audio (#22, protocol.h "Audio tap"). 96 bytes, mirrored in Native.cs.
+/* State of an audio tap, filled by vlqt_res_read_audio (protocol.h "Audio tap"). 96 bytes, mirrored in Native.cs.
  * Times in ns of vlqt_now_ns, media times in us on Qt's audio startTime axis (keeps counting across loop wraps).
  * "First frame" = the first frame this call delivered or dropped, or the next one in the ring when it moved none. */
 typedef struct vlqt_audio_tap_state {
@@ -147,10 +147,10 @@ typedef struct vlqt_audio_tap_state {
 
 VLQT_API int         vlqt_app_init(const char* nativeDir, vlqt_log_fn log); /* idempotent */
 VLQT_API void        vlqt_app_process_events(void);
-/* #314: like vlqt_app_process_events, but only the given windows (those of one vvvv app) may render in this pump.
+/* like vlqt_app_process_events, but only the given windows (those of one vvvv app) may render in this pump.
  * Update requests of other windows stay pending until their own app's pump. windows NULL = all windows. */
 VLQT_API void        vlqt_app_process_events_for(void* const* windows, int count);
-/* #24: delivers the window system events Qt has queued (input of all windows, also geometry and close) without
+/* delivers the window system events Qt has queued (input of all windows, also geometry and close) without
  * rendering: update requests stay pending and an Expose is deferred, both render in the next pump. Call at the start
  * of the host frame, then vlqt_window_poll, so input that arrived between two frames reaches the host in this frame.
  * Main thread only, outside vlqt_app_process_events (a call from inside the pump does nothing). Returns the number of
@@ -173,7 +173,7 @@ VLQT_API const char* vlqt_last_error(void);
 VLQT_API void* vlqt_window_create_at(float x, float y, int width, int height, const char* title, int swapInterval);
 /* Short form: vlqt_window_create_at(NaN, NaN, width, height, title, 0) = centered, no VSync. */
 VLQT_API void* vlqt_window_create(int width, int height, const char* title);
-/* Pipeline cache (#488): call before the first window. Sets load + save file of the QQuickGraphicsConfiguration of
+/* Pipeline cache: call before the first window. Sets load + save file of the QQuickGraphicsConfiguration of
  * every window created afterwards (driver compiled pipelines survive restarts). utf8Path NULL or empty = off (the
  * default). A cache of another GPU/driver is dropped by Qt; a file that cannot be written only logs a warning.
  * 0 / -7. */
@@ -186,20 +186,20 @@ VLQT_API int   vlqt_window_is_visible(void* w); /* 1 = visible, 0 = hidden */
 /* Runtime changes of the create parameters (Renderer [Qt] Title/Size pins). 0 = ok, -1 null window. Size in Qt logical pixels (DIP). */
 VLQT_API int   vlqt_window_set_title(void* w, const char* title);
 VLQT_API int   vlqt_window_resize(void* w, int width, int height);
-/* Window icon (#517): QWindow::setIcon. utf8Path = .ico/.png/.svg (absolute path), NULL or empty = embedded default
+/* Window icon: QWindow::setIcon. utf8Path = .ico/.png/.svg (absolute path), NULL or empty = embedded default
  * icon (also applied by vlqt_window_create_at before show). Live, any time. 0 = ok, -1 null window, -7 file not
  * loadable (the default icon is shown instead; vlqt_last_error has the reason). */
 VLQT_API int   vlqt_window_set_icon(void* w, const char* utf8Path);
 /* Window modes (vlqt_window_mode, protocol.h), live, without re-creating the window; before or after show.
  * Only the bits in mask change (to their value in value), unknown bits are ignored. 0 = ok, -1 null window.
- *   BORDERLESS  Qt::FramelessWindowHint; the client area stays where it is (#233).
+ *   BORDERLESS  Qt::FramelessWindowHint; the client area stays where it is.
  *   FULLSCREEN  fullscreen on the screen with the largest share of the window; off restores the geometry from
- *               before (#234). BORDERLESS changes while fullscreen take effect on leaving fullscreen.
+ *               before. BORDERLESS changes while fullscreen take effect on leaving fullscreen.
  *               F11 / Alt+Enter in the window toggle this bit (like VL.Skia). No effect on eglfs (always fullscreen).
  * EV_WINDOW_GEOMETRY reports the resulting state (VLQT_WINDOW_FULLSCREEN). vlqt_window_get_mode = requested modes. */
 VLQT_API int          vlqt_window_set_mode(void* w, unsigned int mask, unsigned int value);
 VLQT_API unsigned int vlqt_window_get_mode(void* w);
-/* Size and device pixel ratio of the scene (#143, Space): what C# needs for the scale of Normalized (height) and
+/* Size and device pixel ratio of the scene (Space): what C# needs for the scale of Normalized (height) and
  * PixelTopLeft (dpr). width/height = size of the scene root in DIP (window: client size; offscreen scene: its bound
  * size), dpr = QWindow::effectiveDevicePixelRatio of a window, 1 for an offscreen scene (1 DIP = 1 texture pixel).
  * Live values, cheap enough for every frame. Main thread. 0 = ok, -1 null window or null out. */
@@ -207,7 +207,7 @@ typedef struct vlqt_scene_metrics {
     float width, height, dpr;
 } vlqt_scene_metrics;
 VLQT_API int          vlqt_window_get_scene_metrics(void* w, vlqt_scene_metrics* out);
-/* MSAA sample count of the window (#118; docs/decisions/render-texture.md, "MSAA"). A window is created with 4 (the
+/* MSAA sample count of the window (docs/decisions/render-texture.md, "MSAA"). A window is created with 4 (the
  * look of every window before #118, clamped like here). requested < 1 counts as 1 (none); QtNative clamps it to the
  * highest count not above it that QRhi and the device support for the swap chain (D3D11: CheckMultisampleQualityLevels
  * for R8G8B8A8_UNORM and D24_UNORM_S8_UINT; OpenGL: QRhi::supportedSampleCounts) and returns the count used (>= 1), so
@@ -218,7 +218,7 @@ VLQT_API int          vlqt_window_get_scene_metrics(void* w, vlqt_scene_metrics*
  * then the old one is deleted. Costs one new QRhi (tens of ms) and a new native window (HWND), which becomes active.
  * Lost on a change: a snapshot (vlqt_res_snapshot) still in flight fails ("the window was destroyed during the grab",
  * the next request works), pointer grabs and hover of the old window end, the perf history (F5) restarts, and with
- * Clear off (#117) the kept frame: the feedback layer is rebuilt for the new window and starts from the clear colour.
+ * Clear off the kept frame: the feedback layer is rebuilt for the new window and starts from the clear colour.
  * Effect layers and snapshots in the window follow its count. -1 null window, VLQT_OFFSCREEN_BAD_ARGUMENT on an
  * offscreen scene (its count comes from vlqt_offscreen_bind). Main thread. */
 VLQT_API int vlqt_window_set_samples(void* w, int requested);
@@ -235,7 +235,7 @@ VLQT_API int   vlqt_window_get_perf_stats(void* w, vlqt_perf_stats* out);
 /* Test: the vlqt_perf_stats computation on n given samples with timestamps t_ms (ascending, ms; "now" = t_ms[n-1])
  * and a fixed budget. 0 = ok, -1 null/negative argument. */
 VLQT_API int   vlqt_perf_eval(const vlqt_perf_sample* samples, const double* t_ms, int n, double budget_ms, vlqt_perf_stats* out);
-/* #245: host values of the last completed pump of the window (call after vlqt_app_process_events).
+/* host values of the last completed pump of the window (call after vlqt_app_process_events).
  * 0 = ok, -1 null window/in, -2 no pump yet. */
 VLQT_API int   vlqt_window_report_host_frame(void* w, const vlqt_host_frame* in);
 /* Last reported host frame. 0 = ok, -1 null window/out, -2 none (the last pump has no report). */
@@ -247,7 +247,7 @@ VLQT_API int   vlqt_perf_host_eval(const vlqt_host_frame* frames, int n, vlqt_ho
 /* bit0 = perfmeter panel (F2), bit1 = stats (F5); the keys toggle the same flags */
 VLQT_API int   vlqt_window_set_overlay(void* w, int flags);
 VLQT_API int   vlqt_window_get_overlay(void* w);
-/* Debug overlay for all elements of the window (Renderer [Qt] Debug, #279); per element: VLQT_PROP_DEBUG.
+/* Debug overlay for all elements of the window (Renderer [Qt] Debug); per element: VLQT_PROP_DEBUG.
  * on != 0 = on. Frame cyan, origin magenta, anchor yellow, baseline green, ... (legend: debug.h). 0 = ok, -1 null window. */
 VLQT_API int   vlqt_window_set_debug(void* w, int on);
 VLQT_API int   vlqt_window_get_debug(void* w); /* 1 = on */
@@ -266,7 +266,7 @@ VLQT_API int   vlqt_window_get_apply_error(void* w, vlqt_apply_error* out);
  * the window after a move/resize/state change (events.h). */
 VLQT_API int   vlqt_window_poll(void* w, unsigned char* out, int cap);
 
-/* Resources (#359, resources.h, protocol.h vlqt_res_*): window independent, ids u64 = index | generation << 32.
+/* Resources (resources.h, protocol.h vlqt_res_*): window independent, ids u64 = index | generation << 32.
  * Main thread (the thread of vlqt_app_process_events) only. Return codes: 0 = ok, -1 internal error (log),
  * -7 bad argument / not allowed in this state, -9 unknown, stale or already released id (warning in the log). */
 /* New resource of kind (VLQT_RES_KIND_*) in state Pending, host reference 1. */
@@ -288,7 +288,7 @@ VLQT_API int vlqt_res_list(vlqt_res_info* out, int cap);
 /* Cancels and joins the workers and frees every resource (leak warning with the count of still referenced ones).
  * Call before Qt is torn down / at process end; the next start creates the workers again. */
 VLQT_API void vlqt_res_shutdown(void);
-/* Image resources (#360, image_resource.h): start or replace the content of a VLQT_RES_KIND_IMAGE resource. Decode
+/* Image resources (image_resource.h): start or replace the content of a VLQT_RES_KIND_IMAGE resource. Decode
  * and conversion run in a worker, the upload in the pump within the budget (vlqt_res_wait: at once). New content on
  * a Ready id keeps the old texture visible until the new one is complete; while a decode/upload runs only the newest
  * content is kept. 0 / -7 (wrong kind, bad argument) / -9. A missing or broken file / an unknown format ends in
@@ -297,18 +297,18 @@ VLQT_API void vlqt_res_shutdown(void);
 VLQT_API int vlqt_res_load_image(unsigned long long id, const char* utf8Path, unsigned flags);
 /* Pixels of C#: copied synchronously (data may be reused after the call), len = bytes readable at data. */
 VLQT_API int vlqt_res_set_pixels(unsigned long long id, const vlqt_pixel_desc* desc, const void* data, int len);
-/* Shader resources (#437, shader_resource.h, protocol.h "ShaderEffect"): start or replace the content of a
+/* Shader resources (shader_resource.h, protocol.h "ShaderEffect"): start or replace the content of a
  * VLQT_RES_KIND_SHADER resource. utf8Path: a .qsb file or "builtin:<name>" (shaders/<name>.frag|.vert.qsb next to
  * QtNative); stage: VLQT_SHADER_STAGE_*. The file is read and checked in a worker. New content on a Ready id keeps
  * the old shader until the new one is Ready. 0 / -7 (wrong kind, empty path, bad stage) / -9. Missing file, not a
  * .qsb, wrong stage, no variant for the backend: Failed with RES_EV_ERROR. */
 VLQT_API int vlqt_res_load_shader(unsigned long long id, const char* utf8Path, int stage);
-/* Shader from source (#483, protocol.h "ShaderEffect"): utf8Source = full Qt GLSL (#version 440, NUL-terminated,
+/* Shader from source (protocol.h "ShaderEffect"): utf8Source = full Qt GLSL (#version 440, NUL-terminated,
  * copied at the call), baked by QShaderBaker in a worker for the backend of the process, cached per hash of the source.
  * Same resource rules as vlqt_res_load_shader. 0 / -7 (wrong kind, empty source, bad stage) / -9. Bake errors
  * (compiler message with line numbers) and failed checks: Failed with RES_EV_ERROR. */
 VLQT_API int vlqt_res_load_shader_source(unsigned long long id, const char* utf8Source, int stage);
-/* Shader reflection (#488, shader node factory): bakes utf8Source (full Qt GLSL, NUL-terminated) synchronously to
+/* Shader reflection (shader node factory): bakes utf8Source (full Qt GLSL, NUL-terminated) synchronously to
  * SPIR-V 100 only (under the same mutex as the runtime bakes, never in parallel) and writes the result as UTF-8 text
  * to buf. Returns the required length in bytes without terminator; if it is > bufLen, call again with a larger buffer
  * (buf is then untouched or partially written, NUL-terminated only if there is room). -7: empty source, stage not
@@ -325,7 +325,7 @@ VLQT_API int vlqt_shader_reflect(const char* utf8Source, int stage, char* buf, i
 /* TEST ONLY: content of a Ready image as RGBA8 premultiplied (texture readback). Returns the bytes written, -required
  * if cap is too small (width/height set), -9 if not Ready, -1 readback failed. */
 VLQT_API int vlqt_test_res_read_pixels(unsigned long long id, unsigned char* out, int cap, int* width, int* height);
-/* Snapshot resources (#363, protocol.h): main thread. Starts grabbing element elementId of window w (scale > 0:
+/* Snapshot resources (protocol.h): main thread. Starts grabbing element elementId of window w (scale > 0:
  * pixel size = item size in DIP * scale, ignoring the screen's device pixel ratio) into a VLQT_RES_KIND_SNAPSHOT
  * resource. Asynchronous: the result arrives with RES_EV_INFO / STATE Ready in a later pump (at least one render of
  * the window), errors as Failed with RES_EV_ERROR. A snapshot while one is in flight replaces it (only the newest
@@ -342,13 +342,13 @@ VLQT_API int vlqt_res_snapshot(unsigned long long id, void* w, unsigned elementI
  * row_bytes = width * 4, format = 9 B8G8R8A8, premultiplied = 1), copies rows top-down into dst, returns the bytes
  * written; -required if cap is too small (out filled, nothing copied), -7 wrong kind or no snapshot yet, -9. */
 VLQT_API int vlqt_res_read_pixels(unsigned long long id, void* dst, int cap, vlqt_pixel_desc* out);
-/* Tooltip preview of an image resource (#546), only on a Ready resource: the worker made it when the content was
+/* Tooltip preview of an image resource, only on a Ready resource: the worker made it when the content was
  * loaded with VLQT_IMG_PREVIEW (load_image flags / set_pixels desc.flags), longest edge <= 256 px, never upscaled.
  * Fills desc (width, height, row_bytes = width * 4, format = 9 B8G8R8A8, premultiplied = 1), copies the rows top-down
  * into dst and returns the bytes written; -required if cap is too small (desc filled, nothing copied), -7 wrong kind
  * or no preview (no flag, not Ready yet), -9. Main thread. */
 VLQT_API int vlqt_res_read_preview(unsigned long long id, unsigned char* dst, int cap, vlqt_pixel_desc* desc);
-/* Audio taps (#22, audio_tap.h, protocol.h "Audio tap"). Main thread: fixes the format of a Pending
+/* Audio taps (audio_tap.h, protocol.h "Audio tap"). Main thread: fixes the format of a Pending
  * VLQT_RES_KIND_AUDIO_TAP resource (interleaved float, channels 1..VLQT_AUDIO_TAP_MAX_CHANNELS, sampleRate
  * VLQT_AUDIO_TAP_MIN_SAMPLE_RATE..MAX) and makes it Ready at once (RES_EV_INFO w = channels, h = sampleRate, bytes =
  * ring). Once per tap: a new sample rate needs a new tap. 0 / -7 (wrong kind, bad format, already initialised) / -9. */
@@ -360,10 +360,10 @@ VLQT_API int vlqt_res_audio_tap_init(unsigned long long id, int channels, int sa
  * a tap not yet initialised. Returns the frames copied/dropped (0 = none available), -7 (maxFrames < 0, channels
  * mismatch, not initialised) or -9 (unknown, released or freed id; silent: the reader polls after a release). */
 VLQT_API int vlqt_res_read_audio(unsigned long long id, float* dst, int maxFrames, int channels, vlqt_audio_tap_state* state);
-/* The clock of the audio tap times (#22): std::chrono::steady_clock in ns (Windows: QPC = Stopwatch.GetTimestamp,
+/* The clock of the audio tap times: std::chrono::steady_clock in ns (Windows: QPC = Stopwatch.GetTimestamp,
  * Linux: CLOCK_MONOTONIC). Any thread, no Qt needed. */
 VLQT_API long long vlqt_now_ns(void);
-/* Image file writer (#157, FileWriter nodes): any thread, synchronous (encodes and writes before it returns), no
+/* Image file writer (FileWriter nodes): any thread, synchronous (encodes and writes before it returns), no
  * window needed. Writes the pixels of desc/data (rows top-down, desc.row_bytes per row, len >= height * row_bytes;
  * desc.format a VL PixelFormat number as in vlqt_res_set_pixels: 1, 2, 4-10 and 12, e.g. 9 B8G8R8A8, 7 R8G8B8A8; not
  * 3 R32F and 11 R32G32F; premultiplied 0/1, flags ignored) to utf8Path. The file format comes from the extension (png, jpg/jpeg, bmp, ... what
@@ -389,46 +389,46 @@ VLQT_API int vlqt_test_res_element_ref(unsigned long long id, int delta);
  * Delivered synchronously, no processEvents needed. 0 = ok, -1 null window, -2 unknown type.
  * With env VLQT_TEST_SYNTHETIC_INPUT=1 (read at vlqt_window_create) windows ignore real (OS) pointer input. */
 VLQT_API int   vlqt_test_send_mouse(void* w, int type, float x, float y);
-/* TEST ONLY (#319): synthetic touch input, not for production use. type = vlqt_touch (protocol.h) for touch point id,
+/* TEST ONLY: synthetic touch input, not for production use. type = vlqt_touch (protocol.h) for touch point id,
  * x/y in window logical pixels. QtNative keeps the active points per window and sends the complete QTouchEvent
  * (TouchBegin/Update/End, every active point with its state, others stationary) from one test touchscreen
  * (QPointingDevice, registered once) via QCoreApplication::sendEvent: synchronous, not spontaneous (passes
  * VLQT_TEST_SYNTHETIC_INPUT). Several ids = multitouch. 0 = ok, -1 null window, -2 unknown type, PRESS of an active id
  * or MOVE/RELEASE of an inactive one. */
 VLQT_API int   vlqt_test_send_touch(void* w, int type, int id, float x, float y);
-/* TEST ONLY (#24): like vlqt_test_send_mouse / vlqt_test_send_touch (PRESS, MOVE, RELEASE), but queued like platform
+/* TEST ONLY: like vlqt_test_send_mouse / vlqt_test_send_touch (PRESS, MOVE, RELEASE), but queued like platform
  * input (QWindowSystemInterface, asynchronous): delivered by vlqt_app_deliver_input or the next pump. The events come
  * from test devices and pass VLQT_TEST_SYNTHETIC_INPUT. 0 = ok, -1 null window, -2 unknown type or touch id state. */
 VLQT_API int   vlqt_test_queue_mouse(void* w, int type, float x, float y);
 VLQT_API int   vlqt_test_queue_touch(void* w, int type, int id, float x, float y);
-/* TEST ONLY (#320): synthetic wheel input, not for production use. Sends a QWheelEvent at x/y (window logical pixels)
+/* TEST ONLY: synthetic wheel input, not for production use. Sends a QWheelEvent at x/y (window logical pixels)
  * with angleDelta (dx, dy) in eighths of a degree (120 = one notch) via QCoreApplication::sendEvent (synchronous, not
  * spontaneous: passes VLQT_TEST_SYNTHETIC_INPUT). 0 = ok, -1 null window. */
 VLQT_API int   vlqt_test_send_wheel(void* w, float x, float y, int dx, int dy);
-/* TEST ONLY: number of pointer handlers (QQuickPointerHandler children) of item id (input handlers, #319);
+/* TEST ONLY: number of pointer handlers (QQuickPointerHandler children) of item id (input handlers);
  * -1 null window, -4 unknown id. */
 VLQT_API int   vlqt_test_handler_count(void* w, unsigned int id);
-/* TEST ONLY (#244): busy-waits ms inside one phase of the window's next rendered frame (0 events, 1 sync, 2 render,
+/* TEST ONLY: busy-waits ms inside one phase of the window's next rendered frame (0 events, 1 sync, 2 render,
  * 3 present, 4 vsync wait) to check that the F5 timeline attributes a spike. 0 = ok, -1 null window. */
 VLQT_API int   vlqt_test_perf_spike(void* w, int phase, float ms);
-/* TEST ONLY (#246, #260): plain UTF-8 text of an F5 page (0 Summary, 1 Timeline, 2 Scene, 3 System, 4 Resources; others empty), built on demand, overlay state
+/* TEST ONLY: plain UTF-8 text of an F5 page (0 Summary, 1 Timeline, 2 Scene, 3 System, 4 Resources; others empty), built on demand, overlay state
  * unchanged. Returns the byte length without NUL; -(length + 1) if cap is too small; -1 null window. */
 VLQT_API int   vlqt_test_perf_text(void* w, int page, char* out, int cap);
-/* TEST ONLY (#358): QRhi of the window and its native device (ID3D11Device* on D3D11, else null). Null window = the
+/* TEST ONLY: QRhi of the window and its native device (ID3D11Device* on D3D11, else null). Null window = the
  * upload QRhi on the shared device. 0 = ok, -2 no QRhi (scenegraph not initialized yet, or no shared device). */
 VLQT_API int   vlqt_test_device_info(void* w, void** device, void** rhi);
-/* TEST ONLY (#367): makes the shared graphics device lost, mode = vlqt_device_lost (protocol.h). Returns at once; the
+/* TEST ONLY: makes the shared graphics device lost, mode = vlqt_device_lost (protocol.h). Returns at once; the
  * QtNative notices the loss in the next pump and rebuilds device, windows and resources (device.h). 0 = ok, -2 not
  * possible (no shared device, or REMOVE without VLQT_TEST_D3D11ON12=1), -7 unknown mode. */
 VLQT_API int   vlqt_test_device_lost(int mode);
-/* TEST ONLY (#244): sends a key press (Qt::Key, Qt::KeyboardModifiers) to the window, e.g. F5 page cycling.
+/* TEST ONLY: sends a key press (Qt::Key, Qt::KeyboardModifiers) to the window, e.g. F5 page cycling.
  * 0 = ok, -1 null window. */
 VLQT_API int   vlqt_test_send_key(void* w, int key, int modifiers);
-/* TEST ONLY (#210): key press + release with text (UTF-8, may be null/empty) to the window's focus item, e.g. typing
+/* TEST ONLY: key press + release with text (UTF-8, may be null/empty) to the window's focus item, e.g. typing
  * digits into a SpinBox (key Qt::Key_1, text "1") or Enter (Qt::Key_Return, "\r"). 0 = ok, -1 null window. */
 VLQT_API int   vlqt_test_send_key_text(void* w, int key, int modifiers, const char* text);
 
-/* TEST ONLY (#116, QtTexture): a second D3D11 device that stands in for Stride's, its shared textures and leak probes.
+/* TEST ONLY (QtTexture): a second D3D11 device that stands in for Stride's, its shared textures and leak probes.
  * Main thread. Windows only; elsewhere every function returns VLQT_OFFSCREEN_NOT_SUPPORTED (protocol.h) or NULL.
  * Creates a D3D11 device (BGRA support, feature level >= 11_0) with its immediate context, both with one reference
  * owned by the caller. adapter: 0 = the adapter of QtNative's shared device (the default adapter if there is none
@@ -466,7 +466,7 @@ VLQT_API int   vlqt_test_process_handle_count(void);
 VLQT_API int   vlqt_test_offscreen_state(void* scene, unsigned long long* readFence, unsigned long long* writeFence,
                                          long long* renders);
 
-/* Tooltip previews (#543, package 01 #544): main thread. */
+/* Tooltip previews (package 01): main thread. */
 /* Number of frames in which the scene of window w changed since it was created (item/reconciler/video update(),
  * polish, resize): not every pump, and not the render a grab (vlqt_res_snapshot / _fit) triggers by itself, so a
  * static scene keeps the count while snapshots run. Compare two values for "changed since". >= 0, -9 null window. */
@@ -477,7 +477,7 @@ VLQT_API long long vlqt_window_change_count(void* w);
  * 0 / -7 (wrong kind, w NULL, maxEdgePx <= 0) / -9. */
 VLQT_API int   vlqt_res_snapshot_fit(unsigned long long id, void* w, unsigned elementId, int maxEdgePx);
 
-/* App fonts (#15, LoadFont node): font files for Text/Style FontFamily without installing them. Qt GUI thread only (the
+/* App fonts (LoadFont node): font files for Text/Style FontFamily without installing them. Qt GUI thread only (the
  * vvvv main thread, after vlqt_app_init); other threads get -1. One QFontDatabase registration per file (canonical path
  * + size + last-modified), shared and reference counted: every successful add takes one reference, release drops it.
  * An entry without references is removed at the end of the pump (vlqt_app_process_events) unless it was added again in
@@ -490,7 +490,7 @@ VLQT_API int   vlqt_font_release(unsigned long long handle);
 /* TEST ONLY: references of a font handle, 0 = removal pending (end of pump), -9 = removed or unknown. */
 VLQT_API int   vlqt_test_font_refs(unsigned long long handle);
 
-/* Offscreen scenes (#116, QtTexture; design: docs/decisions/render-texture.md). A Qt scene without a native window
+/* Offscreen scenes (QtTexture; design: docs/decisions/render-texture.md). A Qt scene without a native window
  * (QQuickRenderControl) on QtNative's shared D3D11 device that renders into a texture of a foreign D3D11 device
  * (Stride's), shared by NT handle. Two shared ID3D11Fences per binding order Qt's write and the foreign device's read
  * on the GPU; no CPU wait, the foreign context gets only Signal/Wait calls. Main thread (the thread of
@@ -503,7 +503,7 @@ VLQT_API int   vlqt_test_font_refs(unsigned long long handle);
  * vlqt_test_handler_count. The window-only ones are no-ops on a scene: _show, _hide, _set_title,
  * _set_icon, _set_mode return 0 or do nothing, _take_close_request and _is_visible return 0, _resize returns
  * VLQT_OFFSCREEN_BAD_ARGUMENT (the size comes from vlqt_offscreen_bind), _grab and the vlqt_test_send_... / _queue_... input
- * functions return VLQT_OFFSCREEN_NOT_SUPPORTED (input: vlqt_offscreen_send_*, #119). An offscreen scene never renders in
+ * functions return VLQT_OFFSCREEN_NOT_SUPPORTED (input: vlqt_offscreen_send_*). An offscreen scene never renders in
  * vlqt_app_process_events(_for): only vlqt_offscreen_render_batch renders it. 1 DIP = 1 texture pixel. */
 
 /* Creates an unbound offscreen scene of width x height DIP (< 1 = 1). NULL = error (vlqt_last_error). Free it with
@@ -527,7 +527,7 @@ VLQT_API void* vlqt_offscreen_create(int width, int height);
  *              holds premultiplied alpha. UNORM: Qt renders into the texture, gamma-space values as in a Qt window.
  *              SRGB and float: the caller reads linear values; Qt renders into a float texture of QtNative and after
  *              each frame a pass writes a * linear(c) into every pixel (unpremultiply, sRGB decode, premultiply).
- *   samples    MSAA sample count (#118), < 2 = none. Qt renders into a multisample colour and depth-stencil texture of
+ *   samples    MSAA sample count, < 2 = none. Qt renders into a multisample colour and depth-stencil texture of
  *              its own and resolves into the texture (or into the float texture of the linear pass) at the end of each
  *              frame; the texture itself stays single-sample. Clamped to the highest count not above it that QRhi and
  *              QtNative's device support for the render target format (D3D11 CheckMultisampleQualityLevels). Layers in
@@ -564,7 +564,7 @@ VLQT_API int   vlqt_offscreen_is_bound(void* scene);
  * run on the render thread after this call returned. context's GPU waits for Qt's frame, its CPU never does; this
  * call blocks only while a render thread is still busy with the previous batch. */
 VLQT_API int   vlqt_offscreen_render_batch(void* context, void* const* scenes, int count, double driverSeconds);
-/* Where offscreen scenes render (#116 phase 5; docs/decisions/render-texture.md, "Qt render thread"). threadCount
+/* Where offscreen scenes render (phase 5; docs/decisions/render-texture.md, "Qt render thread"). threadCount
  * 0 = on the main thread, inside vlqt_offscreen_render_batch; n = 1 ... 16 = on a pool of n Qt render threads shared by
  * every scene of the process, a scene assigned round robin at vlqt_offscreen_create. Without this call the environment
  * variable VLQT_OFFSCREEN_THREAD decides (0 = main thread, n = n threads), unset = 1 render thread. Effective only
@@ -572,7 +572,7 @@ VLQT_API int   vlqt_offscreen_render_batch(void* context, void* const* scenes, i
  * VLQT_OFFSCREEN_BAD_ARGUMENT (threadCount < 0 or > 16), VLQT_OFFSCREEN_NOT_SUPPORTED (too late; vlqt_last_error). */
 VLQT_API int   vlqt_offscreen_set_threaded(int threadCount);
 
-/* Input into an offscreen scene (#119; design: docs/decisions/render-texture.md, "Input"). The host maps its input to
+/* Input into an offscreen scene (design: docs/decisions/render-texture.md, "Input"). The host maps its input to
  * texture pixels (top-left origin, 1 DIP = 1 pixel; positions outside 0..size are valid: hover ends, a drag goes on) and
  * calls these between two vlqt_offscreen_render_batch calls, before the batch that should show the result. QtNative
  * sends the events with QCoreApplication::sendEvent to the scene's QQuickWindow (synchronous, like vlqt_test_send_*;
@@ -586,7 +586,7 @@ VLQT_API int   vlqt_offscreen_set_threaded(int threadCount);
  *
  * Focus: a scene window never becomes QGuiApplication's focus window. QtNative gives it focus with QFocusEvent
  * FocusIn when a PRESS lands inside 0..size and takes it with FocusOut when a PRESS lands outside or the host calls
- * vlqt_offscreen_set_focus(scene, 0) (e.g. its window lost the focus). The FocusRelease filter of windows (#374: Esc,
+ * vlqt_offscreen_set_focus(scene, 0) (e.g. its window lost the focus). The FocusRelease filter of windows (Esc,
  * press outside the focused element) runs on scenes too. */
 
 /* Pointer event (vlqt_pointer) of device (vlqt_pointer_device) at x/y in texture pixels.

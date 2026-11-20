@@ -8,7 +8,7 @@ using VL.Core;
 namespace VL.Qt
 {
     /// <summary>
-    /// Lifetime of exported apps (L7b, #157). AppHost has no API to end an exported app: its main loop runs while
+    /// Lifetime of exported apps (L7b). AppHost has no API to end an exported app: its main loop runs while
     /// AppHost.KeepAlive() is held (KeepAppAlive) or, in the WinForms host, a Form is open (IL of vvvv 8.0-0156,
     /// VL.AppServices).
     /// <list type="bullet">

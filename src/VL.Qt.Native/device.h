@@ -1,4 +1,4 @@
-/* device.h - one graphics device per process (#358, images package 01).
+/* device.h - one graphics device per process (images package 01).
  *
  * Windows/D3D11: QtNative creates one ID3D11Device + immediate context (lazily, at the first window) on the adapter
  * Qt's D3D11 backend would pick, and hands it to every QQuickWindow with QQuickGraphicsDevice::fromDeviceAndContext
@@ -10,19 +10,19 @@
  * Only rebuild replaces them: the upload QRhi is deleted at once, the old device is released once no window QRhi
  * uses it any more (checkLost, after Qt dropped the window QRhis).
  *
- * Device lost (#367): checkLost notices it (GetDeviceRemovedReason) and calls
+ * Device lost: checkLost notices it (GetDeviceRemovedReason) and calls
  * rebuild: listeners free their objects of the old device (lost), a new device and upload QRhi are created, every
  * QQuickWindow that was on the old device gets the new one (setGraphicsDevice) and an update; Qt then notices the
  * loss itself at that window's next Present, drops the window's QRhi and scenegraph ("Graphics device lost") and
  * creates a new QRhi on the imported new device. Same QQuickWindow, same HWND, items keep their state. Listeners
  * then re-upload (restored). Test trigger: testLost (vlqt_test_device_lost).
  *
- * Adapter (#116, QtTexture): the first device goes on the adapter Qt's D3D11 backend would pick. moveTo rebuilds it
+ * Adapter (QtTexture): the first device goes on the adapter Qt's D3D11 backend would pick. moveTo rebuilds it
  * on another adapter (that of Stride's device) the same way, but only while no on-screen window renders on it
  * (canMove): Qt replaces a window's QRhi only after it noticed a loss, so a window on a healthy device would stay on
  * the old one. The adapter of a move is kept for later rebuilds.
  *
- * Threads (#116 phase 5): the device is free-threaded; its immediate context is multithread-protected and shared with the
+ * Threads (phase 5): the device is free-threaded; its immediate context is multithread-protected and shared with the
  * render threads of offscreen scenes, so stateful sequences on it take a ContextLock. Everything else here: main thread.
  *
  * Linux and every non-D3D11 backend: no-op, each window keeps its own device. A shared VkDevice docks here later.
@@ -39,7 +39,7 @@ namespace vlqt::device {
 void attach(QQuickWindow* window);
 
 // Holds the shared device's immediate context (ContextLock) from beforeRendering to afterFrameEnd of every frame of
-// this on-screen window, so the render threads of offscreen scenes (#116 phase 5) cannot change the context state while
+// this on-screen window, so the render threads of offscreen scenes (phase 5) cannot change the context state while
 // QRhi D3D11 submits the frame (in endFrame). The vsync wait in beginFrame stays outside. Main thread, basic loop; not
 // for offscreen scenes (their render thread locks itself).
 void lockFrames(QQuickWindow* window);
@@ -49,13 +49,13 @@ void lockFrames(QQuickWindow* window);
 void releaseFrameLocks();
 
 // Upload QRhi on the shared device, nullptr if there is none (Linux, creation failed, VLQT_SHARED_DEVICE=0). Creates
-// the device if no window did yet (resources before the first window, #360). Main thread.
+// the device if no window did yet (resources before the first window). Main thread.
 QRhi* uploadRhi();
 
 // Native device of a QRhi (ID3D11Device* for D3D11), nullptr for other backends.
 void* nativeDevice(QRhi* rhi);
 
-// MSAA sample count for a render target (#118): the highest count not above requested (< 1 = 1) that QRhi lists
+// MSAA sample count for a render target: the highest count not above requested (< 1 = 1) that QRhi lists
 // (supportedSampleCounts; D3D11 hard-codes 1/2/4/8 there) and, on D3D11, that the device has quality levels for in
 // dxgiFormat and in D24_UNORM_S8_UINT (the depth-stencil Qt adds). rhi: the QRhi that will render (a window's, once it
 // has one); null = the upload QRhi; without any QRhi (Linux before the first expose) the list 1/2/4/8. Qt's own clamp
@@ -99,7 +99,7 @@ bool moveTo(unsigned long long luid);
 int testLost(int mode);
 
 // Holds the immediate context of a D3D11 device for a stateful sequence of calls (ID3D11Multithread::Enter/Leave,
-// recursive per thread). The render threads of offscreen scenes (#116, render_thread.h) share the shared device's
+// recursive per thread). The render threads of offscreen scenes (render_thread.h) share the shared device's
 // immediate context with the main thread. The shared device's context is multithread-protected from its creation on
 // (every rebuild too), so single calls need no lock; a sequence whose context state must not interleave with another
 // thread's does (a QRhi frame, Wait + beginFrame, endFrame + Signal + Flush, Map + Unmap). No-op for a null context and

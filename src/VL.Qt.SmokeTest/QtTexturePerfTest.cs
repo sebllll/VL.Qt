@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using VL.Qt;
 
 /// <summary>
-/// #116 task 5.4 (perf): main-thread time per QtTexture and frame time of offscreen scenes rendered on a Qt render thread
+/// task 5.4 (perf): main-thread time per QtTexture and frame time of offscreen scenes rendered on a Qt render thread
 /// (default) or on the main thread (<c>VLQT_OFFSCREEN_THREAD=0</c>), and "same frame" in every frame. Opt-in, not part
 /// of --all (about a minute): <c>--only qttextureperf</c>, run alone because the thread count is fixed at the first scene.
 /// A frame imitates vvvv + Stride: apply the changes (Update), render_batch (draw start), 6 ms of Stride CPU work, then

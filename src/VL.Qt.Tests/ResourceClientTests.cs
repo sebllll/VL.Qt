@@ -15,7 +15,7 @@ using Path = VL.Lib.IO.Path;
 namespace VL.Qt.Tests
 {
     /// <summary>
-    /// The resource API of QtNative without Qt (#362): records calls, hands out ids and status records like vlqt_res_*.
+    /// The resource API of QtNative without Qt: records calls, hands out ids and status records like vlqt_res_*.
     /// </summary>
     internal sealed class FakeResourceApi : IResourceApi
     {
@@ -33,7 +33,7 @@ namespace VL.Qt.Tests
         public (int Width, int Height)? PreviewSize;
         public byte PreviewByte = 0x55;
         public int PreviewCalls;
-        /// <summary>Flags of the LoadImage calls and desc.flags of the SetPixels calls (#546).</summary>
+        /// <summary>Flags of the LoadImage calls and desc.flags of the SetPixels calls.</summary>
         public readonly List<uint> LoadFlags = new();
         public readonly List<int> PixelFlags = new();
         /// <summary>Records written into the queue when Wait is called (QtNative's synchronous decode + upload).</summary>
@@ -197,7 +197,7 @@ namespace VL.Qt.Tests
         }
     }
 
-    /// <summary>ResourceClient (#362): status records, release queue, stale ids, shutdown, format mapping.</summary>
+    /// <summary>ResourceClient: status records, release queue, stale ids, shutdown, format mapping.</summary>
     public class ResourceClientTests
     {
         private FakeResourceApi _api = null!;
@@ -465,7 +465,7 @@ namespace VL.Qt.Tests
         }
     }
 
-    /// <summary>LoadImage, LoadImage (Async), ToQtImage and the Image pin (#362) against the fake QtNative.</summary>
+    /// <summary>LoadImage, LoadImage (Async), ToQtImage and the Image pin against the fake QtNative.</summary>
     public class ImageResourceNodeTests
     {
         private FakeResourceApi _api = null!;

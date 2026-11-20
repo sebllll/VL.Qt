@@ -18,7 +18,7 @@ using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 using static Pixels;
 
-// Snapshot (#363): SnapshotNode → ResourceClient → QtNative (QQuickItem::grabToImage, asynchronous). Pixels against
+// Snapshot: SnapshotNode → ResourceClient → QtNative (QQuickItem::grabToImage, asynchronous). Pixels against
 // vlqt_window_grab, latency in pumps, error paths, hitch rate with periodic snapshots. PNGs go to <OutDir>/363_*.png.
 [TestFixture, NonParallelizable]
 public static class SnapshotTest
@@ -92,7 +92,7 @@ public static class SnapshotTest
         s.Write(n);
     }
 
-    /// <summary>Group snapshots: result, latency in pumps, error paths, hitch rate (#363).</summary>
+    /// <summary>Group snapshots: result, latency in pumps, error paths, hitch rate.</summary>
     [Test, Category("snapshot")]
     public static void Snapshot() => Scenario.Run(Run);
 
@@ -420,7 +420,7 @@ public static class SnapshotTest
             perfNode.Dispose();
         }
 
-        // 6) F5 Resources page shows the snapshot cost (#548): a burst of snapshots gives a rate and a number for last / max,
+        // 6) F5 Resources page shows the snapshot cost: a burst of snapshots gives a rate and a number for last / max,
         // a second without snapshots brings the rate back to 0/s.
         {
             string SnapLine() => PerfOverlayTest.PageText(w, PerfOverlayTest.ResourcesPage).Split('\n').FirstOrDefault(l => l.StartsWith("snapshots"))?.Trim() ?? "(missing)";

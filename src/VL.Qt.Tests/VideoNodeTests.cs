@@ -11,7 +11,7 @@ using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Video element + node (#115): defaults, property diff, clamping, EV_MEDIA back channel.</summary>
+    /// <summary>Video element + node: defaults, property diff, clamping, EV_MEDIA back channel.</summary>
     public class VideoNodeTests
     {
         private static readonly IDisposable NoWarning = new Nop();
@@ -135,7 +135,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Diff_AudioTap_OnlyWhenSet_BeforePlaying()
         {
-            // Video [VL.Qt] (AudioTap 0) never sends it; Video (VL.Audio) sends it before Playing and switches ids directly (#22).
+            // Video [VL.Qt] (AudioTap 0) never sends it; Video (VL.Audio) sends it before Playing and switches ids directly.
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
             rec.Update(new Video { Playing = true, AudioTap = 5 }, Space.DIPTopLeft);

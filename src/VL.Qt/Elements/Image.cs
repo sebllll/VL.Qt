@@ -9,7 +9,7 @@
         Tile = 3,
     }
 
-    /// <summary>Draws a <see cref="QtImage"/> (image resource of QtNative, #362).</summary>
+    /// <summary>Draws a <see cref="QtImage"/> (image resource of QtNative).</summary>
     public sealed class Image : Element
     {
         public Image() : base(ElementType.Image) { }

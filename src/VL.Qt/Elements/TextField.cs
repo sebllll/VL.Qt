@@ -1,7 +1,7 @@
 ﻿namespace VL.Qt.Elements
 {
     /// <summary>
-    /// Single-line text input (QtQuick.Controls TextField, style Basic, #301). User changes come from Qt's
+    /// Single-line text input (QtQuick.Controls TextField, style Basic). User changes come from Qt's
     /// <c>editingFinished</c> (Enter or focus loss, only if the text changed) as EV_VALUE (string) into
     /// <see cref="Element.Sink"/>; SET VALUE is never echoed.
     /// </summary>

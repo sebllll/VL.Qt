@@ -88,7 +88,7 @@ public static class ApplyTest
         public Buf SetRef(uint id, ushort prop, uint refId) { BinaryPrimitives.WriteUInt32LittleEndian(SetHeader(id, prop, Protocol.Vt.Ref, 4), refId); return this; }
         public Buf SetI32(uint id, ushort prop, int v) { BinaryPrimitives.WriteInt32LittleEndian(SetHeader(id, prop, Protocol.Vt.I32, 4), v); return this; }
         public Buf Size(uint id, float w, float h) => SetFloats(id, Protocol.Prop.Size, Protocol.Vt.Vec2, w, h);
-        // #469: no position property any more: SIZE + ANCHOR TopLeft + TRANSFORM translation.
+        // no position property any more: SIZE + ANCHOR TopLeft + TRANSFORM translation.
         public Buf Place(uint id, float x, float y, float w, float h) => Size(id, w, h).SetI32(id, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft)
             .SetFloats(id, Protocol.Prop.Transform, Protocol.Vt.Mat4, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, 0, 1);
         public Buf Color(uint id, float r, float g, float b, float a = 1) => SetFloats(id, Protocol.Prop.Color, Protocol.Vt.Color, r, g, b, a);
@@ -307,7 +307,7 @@ public static class ApplyTest
         Err("bind unknown id", b.Clear().Bind(777, 1, 0), -4, "command #0");
         s.Check(Native.Apply(IntPtr.Zero, b.Span) == -1, "apply: null window -> -1");
 
-        // Structured error (#92/#275): object id, op and property of the bad command, reason without prefix.
+        // Structured error: object id, op and property of the bad command, reason without prefix.
         Native.vlqt_apply_error ae = default;
         rc = Apply(b.Clear().Create(9, Protocol.Type.Item).SetFloats(9, Protocol.Prop.Size, Protocol.Vt.F32, 1));
         s.Check(rc == -7 && Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.rc == -7 && ae.command == 1 && ae.id == 9
@@ -330,7 +330,7 @@ public static class ApplyTest
             s.Check(Near(Px(a, 200, 175), 255, 255, 0), $"apply: command before the error stays applied (yellow) ({Px(a, 200, 175)})");
 
         // Poll: id 1 is bound (handle 42) -> EV_MEASURED + EV_SCENE_BOUNDS once (06b), plus the first
-        // EV_WINDOW_GEOMETRY of the window (40 bytes, #100, client position #465), then nothing.
+        // EV_WINDOW_GEOMETRY of the window (40 bytes, client position), then nothing.
         var ev = new byte[128];
         int need = Native.Poll(w, Span<byte>.Empty);
         s.Check(need == -(20 + 28 + 40), $"poll: cap 0 -> -required ({need})");
@@ -343,7 +343,7 @@ public static class ApplyTest
         for (uint i = 0; i < 100; i++) b.Create(1000 + i, Protocol.Type.Rectangle).Reparent(1000 + i, 0, 1000);
         s.Check(Apply(b) == 0, "apply: create 100 perf items");
         var times = new double[20];
-        // #64: best of up to 3 rounds (see PerfLimits.Best); the INFO line shows the last round's spread.
+        // best of up to 3 rounds (see PerfLimits.Best); the INFO line shows the last round's spread.
         var median = PerfLimits.Best(2.0, () =>
         {
             for (int run = 0; run < times.Length; run++)
@@ -370,7 +370,7 @@ public static class ApplyTest
         rc = Apply(b);
         s.Info($"apply 10000 SET (color via QML property): {sw2.Elapsed.TotalMilliseconds:F3} ms (rc {rc})");
 
-        // RESET (#92): every object goes at once (nested and unparented ones too), ids are free again, the clear color stays.
+        // RESET: every object goes at once (nested and unparented ones too), ids are free again, the clear color stays.
         b.Clear().ClearColor(0.5f, 0, 0).Create(2000, Protocol.Type.Item).Reparent(2000, 0, 0).Create(2001, Protocol.Type.Rectangle)
             .Reparent(2001, 2000, 0).Place(2001, 0, 0, 800, 600).Color(2001, 0, 1, 0).Create(2002, Protocol.Type.Rectangle);
         s.Check(Apply(b) == 0, "reset: build nested + unparented objects");

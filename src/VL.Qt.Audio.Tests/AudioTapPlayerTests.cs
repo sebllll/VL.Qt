@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace VL.Qt.Audio.Tests
 {
     /// <summary>
-    /// The sync loop of Video (VL.Audio) against a simulated tap and a simulated audio device (#22): the device pulls
+    /// The sync loop of Video (VL.Audio) against a simulated tap and a simulated audio device: the device pulls
     /// buffers on its own clock (drift against the tap clock, callback jitter), each output frame leaves the speaker at a
     /// known time, and the error is that time minus the true due time of the source frame it carries minus the target delay.
     /// </summary>

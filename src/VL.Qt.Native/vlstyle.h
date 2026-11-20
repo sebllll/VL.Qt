@@ -1,4 +1,4 @@
-/* vlstyle.h - attached object VlStyle (#292): the resolved style of one Controls element as a table field x state,
+/* vlstyle.h - attached object VlStyle: the resolved style of one Controls element as a table field x state,
  * written by SET_STYLE (commands.cpp) and read by the VL.Qt base style (style/VLQt/*.qml, embedded module "VLQt").
  *
  * QML API (see docs/styles.md):

@@ -41,7 +41,7 @@ internal static class Program
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         cmd.Create(1, Protocol.Type.Rectangle);
         cmd.SetVec2(1, Protocol.Prop.Size, 300, 200);
-        cmd.SetI32(1, Protocol.Prop.Anchor, 0x1 | 0x20); // TopLeft; position = Transform translation (#469)
+        cmd.SetI32(1, Protocol.Prop.Anchor, 0x1 | 0x20); // TopLeft; position = Transform translation
         cmd.SetMat4(1, Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation(100, 100, 0));
         cmd.SetColor(1, Protocol.Prop.Color, 1, 0.5f, 0, 1);
         cmd.SetF32(1, Protocol.Prop.Radius, 20);

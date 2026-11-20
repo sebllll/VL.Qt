@@ -3,7 +3,7 @@ using NUnit.Framework;
 using System.Runtime.InteropServices;
 using VL.Qt;
 
-// #526: vvvv crashed on quick repeated F9. QCoreApplication::processEvents also dispatches the Win32 messages of vvvv's
+// vvvv crashed on quick repeated F9. QCoreApplication::processEvents also dispatches the Win32 messages of vvvv's
 // thread; a WinForms callback in there (the runtime restart) disposed the Renderer, i.e. destroyed a window of the
 // running pump, and the pump then ended the frame of that window (PerfMonitor) through a dangling pointer.
 // Part 1 (Windows): a message-only window posted to itself destroys the pump's window from inside processEvents and

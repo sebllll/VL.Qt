@@ -8,7 +8,7 @@ using VL.Qt.Qml;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>The parser of the root declarations of a .qml file (#107).</summary>
+    /// <summary>The parser of the root declarations of a .qml file.</summary>
     [TestFixture]
     internal sealed class QmlDeclarationsTests
     {

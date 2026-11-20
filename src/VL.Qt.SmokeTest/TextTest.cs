@@ -163,7 +163,7 @@ public static class TextTest
         rc = Apply();
         s.Check(rc == -7, $"weight as f32 -> -7 ({rc}: {Native.LastError()})");
 
-        // Real glyphs (#427): without any font all characters are the same empty box (tofu), "iiiiiiii" would be as
+        // Real glyphs: without any font all characters are the same empty box (tofu), "iiiiiiii" would be as
         // wide as "WWWWWWWW". Own scene: the checks above scan regions this one would disturb.
         cmd.Reset();
         foreach (var id in new[] { Plain, Right, Bottom, Wrapped, Elided, Fit })

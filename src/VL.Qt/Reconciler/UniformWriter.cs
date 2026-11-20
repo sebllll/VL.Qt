@@ -7,13 +7,13 @@ using VL.Qt.Elements;
 namespace VL.Qt
 {
     /// <summary>
-    /// One uniform as QtNative holds it (#437): wire value type, the value and, for samplers, the resolved id (element
+    /// One uniform as QtNative holds it: wire value type, the value and, for samplers, the resolved id (element
     /// child id for a texture, image resource id for an image). Value equality decides what is sent again.
     /// </summary>
     internal readonly record struct UniformValue(ushort ValueType, Matrix Numbers, int Integer, ulong Handle);
 
     /// <summary>
-    /// Writes SET_UNIFORMS (#437) for a ShaderEffect as a diff by name against what was sent last: changed or new
+    /// Writes SET_UNIFORMS for a ShaderEffect as a diff by name against what was sent last: changed or new
     /// entries only, nothing at all if the table is equal. The protocol cannot remove a single name, so a removed
     /// uniform sends the whole table with <see cref="Protocol.UniformSet.Clear"/>. Entries with an invalid name (empty,
     /// more than <see cref="Protocol.UniformNameMax"/> UTF-8 bytes) are skipped; the node reports them.

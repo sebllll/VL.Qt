@@ -31,7 +31,7 @@ internal static class QtHost
     /// <summary>Name of the scenario that did not return in time; the Qt thread is blocked by it and no later scenario can run.</summary>
     public static string? BlockedBy { get; set; }
 
-    // WSL with GPU passthrough (WSLg): Present copies to the host compositor (L4e, #214).
+    // WSL with GPU passthrough (WSLg): Present copies to the host compositor (L4e).
     public static bool Wslg => !OperatingSystem.IsWindows() && System.IO.File.Exists("/dev/dxg");
     // WSLg with the xcb platform (the default of an export): Weston's X window manager places windows itself.
     public static bool WslgXcb => Wslg && Environment.GetEnvironmentVariable("QT_QPA_PLATFORM") is null or "xcb";
@@ -124,10 +124,10 @@ internal static class QtHost
     {
         // Test windows ignore the real cursor (only vlqt_test_send_mouse input), read by QtNative per window (06c).
         SetEnv("VLQT_TEST_SYNTHETIC_INPUT", "1");
-        // Controls hover (base style Hovered state, #292): Qt turns it off where the platform has no hover effects
+        // Controls hover (base style Hovered state): Qt turns it off where the platform has no hover effects
         // (Linux offscreen in CI), so the style test would see Normal there. Same behaviour on every platform.
         SetEnv("QT_QUICK_CONTROLS_HOVER_ENABLED", "1");
-        // Linux: the GL renderer/version line (qt.rhi.general) needs QSG_INFO; used to recognize Mesa GL (#214).
+        // Linux: the GL renderer/version line (qt.rhi.general) needs QSG_INFO; used to recognize Mesa GL.
         if (!OperatingSystem.IsWindows() && Environment.GetEnvironmentVariable("QSG_INFO") == null)
             SetEnv("QSG_INFO", "1");
         // QtTexture leak checks read ReportLiveDeviceObjects, which needs the debug layer; OwnProcess passes the request

@@ -4,7 +4,7 @@ using VL.Qt.Elements;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Base style (#292): sent once per Controls element at CREATE, nothing on unchanged frames, again after a resync.</summary>
+    /// <summary>Base style: sent once per Controls element at CREATE, nothing on unchanged frames, again after a resync.</summary>
     public class BaseStyleTests
     {
         private RecordingSink _sink = null!;

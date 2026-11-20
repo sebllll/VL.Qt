@@ -1,4 +1,4 @@
-/* effectchain.h - parsed SET_EFFECT_CHAIN (#489, plan effects/08): the links of an element's Effect chain in the order
+/* effectchain.h - parsed SET_EFFECT_CHAIN (plan effects/08): the links of an element's Effect chain in the order
  * they apply (first = applied first to the element). Built by Scene::setEffectChain (commands.cpp) after the whole
  * command was validated (wire format: protocol.h head comment "Effect chain"), handed to Elements::setEffectChain.
  * The description owns its data (names, values), so it may be kept beyond the apply; refs are element ids, resolved
@@ -92,7 +92,7 @@ struct EffectComponents {
     quint64 pyramidDown = 0, pyramidUp = 0; // builtin:pyramid_down / pyramid_up, loaded on first use, shared by all links
 };
 
-/* The Effect chain of one element (#489, protocol.h "Effect chain"), QObject child of the element's item.
+/* The Effect chain of one element (protocol.h "Effect chain"), QObject child of the element's item.
  *
  * Item tree: the element's layer creates the root (layer.effect = EffectComponents::root, an EffectChainItem with the
  * element's geometry and transform, source = the layer texture); the root finds this object as a child of the layer's
@@ -155,7 +155,7 @@ public:
 
     /* Takes the links of desc (masks: mask item per link, nullptr = none). Same structure (link count and kinds) with a
      * root: the stages stay, only changed values are written (no shader switch, no new item). Otherwise the stages
-     * are rebuilt; the old ones are hidden and go to retired (deleted by the caller after the next frame, #123). A mask
+     * are rebuilt; the old ones are hidden and go to retired (deleted by the caller after the next frame). A mask
      * that stays attached keeps its frame (moved to its new link); the others go to dropped. false + err: a stage could
      * not be created (QML error). */
     bool apply(const EffectChainDesc& desc, const std::vector<QQuickItem*>& masks, std::vector<QPointer<QQuickItem>>& retired,
@@ -169,7 +169,7 @@ public:
     const QString& error() const { return m_error; }
 
     std::vector<Link> links;
-    /* Called after the stages were (re)built, with the first stage (Group frame: frameLeft/frameTop, #475). */
+    /* Called after the stages were (re)built, with the first stage (Group frame: frameLeft/frameTop). */
     std::function<void(QQuickItem* first)> built;
 
 private:

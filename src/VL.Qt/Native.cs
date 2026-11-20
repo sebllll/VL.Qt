@@ -19,7 +19,7 @@ namespace VL.Qt
             public double vsync_ms;
         }
 
-        /// <summary>One pump of a window (vlqt.h vlqt_perf_sample, #243), ms.</summary>
+        /// <summary>One pump of a window (vlqt.h vlqt_perf_sample), ms.</summary>
         [StructLayout(LayoutKind.Sequential)]
         public struct vlqt_perf_sample
         {
@@ -28,7 +28,7 @@ namespace VL.Qt
             public float vsync;
         }
 
-        /// <summary>Percentiles over the ring, counters since start and over the last 10 s, budget (vlqt.h vlqt_perf_stats, #243).</summary>
+        /// <summary>Percentiles over the ring, counters since start and over the last 10 s, budget (vlqt.h vlqt_perf_stats).</summary>
         [StructLayout(LayoutKind.Sequential)]
         public struct vlqt_perf_stats
         {
@@ -40,8 +40,8 @@ namespace VL.Qt
             public long recent_pumps, recent_over_budget, recent_long_frames, recent_idle, recent_multi_swap;
         }
 
-        /// <summary>What the host measured around one pump of a window (vlqt.h vlqt_host_frame, #245), ms.</summary>
-        /// <summary>Details of the last apply of a window (vlqt.h, #92/#275); rc 0 = it succeeded.</summary>
+        /// <summary>What the host measured around one pump of a window (vlqt.h vlqt_host_frame), ms.</summary>
+        /// <summary>Details of the last apply of a window (vlqt.h); rc 0 = it succeeded.</summary>
         [StructLayout(LayoutKind.Sequential)]
         public struct vlqt_apply_error
         {
@@ -60,11 +60,11 @@ namespace VL.Qt
             public float apply, reconcile, host, interval, gc_pause;
             public int ops, gc0, gc1, gc2;
             public long alloc_bytes;
-            /// <summary>#260: vvvv frame start → pump start; end of previous pump → vvvv frame start (0 = unknown).</summary>
+            /// <summary>vvvv frame start → pump start; end of previous pump → vvvv frame start (0 = unknown).</summary>
             public float vvvv, wait;
         }
 
-        /// <summary>Host frames over the last ~1 s: averages, maxima, rates per second (vlqt.h vlqt_host_stats, #245).</summary>
+        /// <summary>Host frames over the last ~1 s: averages, maxima, rates per second (vlqt.h vlqt_host_stats).</summary>
         [StructLayout(LayoutKind.Sequential)]
         public struct vlqt_host_stats
         {
@@ -72,7 +72,7 @@ namespace VL.Qt
             public double ops, ops_max, gc0_per_s, gc1_per_s, gc2_per_s, gc_pause_ms_per_s;
             public double alloc_bytes, alloc_bytes_max;
             public int samples;
-            public double vvvv_ms, vvvv_ms_max, wait_ms, wait_ms_max; // #260
+            public double vvvv_ms, vvvv_ms_max, wait_ms, wait_ms_max;
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -116,7 +116,7 @@ namespace VL.Qt
             var rid = os + "-" + arch;
             var asmDir = Path.GetDirectoryName(typeof(Native).Assembly.Location)!;
             // Layouts (docs/decisions/qtnative-deployment.md): the assembly sits in lib/net10.0/ in the repo and the package.
-            // The package keeps the Qt tree in qt/<rid>/, outside runtimes/<rid>/native, which NuGet would flatten (#315).
+            // The package keeps the Qt tree in qt/<rid>/, outside runtimes/<rid>/native, which NuGet would flatten.
             foreach (var candidate in new[] {
                 Path.Combine(asmDir, "runtimes", rid, "native"),               // app output (SmokeTest, export)
                 Path.Combine(asmDir, "..", "..", "qt", rid),                   // package (lib/net10.0/ + qt/<rid>/)
@@ -128,7 +128,7 @@ namespace VL.Qt
             throw new DllNotFoundException($"VL.Qt: {FileName} for {rid} not found relative to {asmDir}");
         }
 
-        /// <summary>Windows MAX_PATH (incl. the terminating NUL): Qt does not load plugins from longer paths (#313).</summary>
+        /// <summary>Windows MAX_PATH (incl. the terminating NUL): Qt does not load plugins from longer paths.</summary>
         public const int maxPath = 260;
 
         private static readonly Lazy<(int Length, string Path)> s_longestPath = new(FindLongestPath);
@@ -138,7 +138,7 @@ namespace VL.Qt
 
         /// <summary>
         /// True on Windows when a file in the Qt tree reaches MAX_PATH. Qt then fails to load such plugins and reports them
-        /// as "not found" (e.g. module "QtQuick.Controls" plugin ... not found), although the file is there (#313).
+        /// as "not found" (e.g. module "QtQuick.Controls" plugin ... not found), although the file is there.
         /// </summary>
         public static bool PathsTooLong => OperatingSystem.IsWindows() && LongestPath.Length >= maxPath;
 
@@ -173,11 +173,11 @@ namespace VL.Qt
         public static extern int vlqt_app_init([MarshalAs(UnmanagedType.LPUTF8Str)] string nativeDir, LogFn log);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void vlqt_app_process_events();
-        /// <summary>#314: only <paramref name="windows"/>[0..count) may render in this pump (the windows of one vvvv app).</summary>
+        /// <summary>only <paramref name="windows"/>[0..count) may render in this pump (the windows of one vvvv app).</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void vlqt_app_process_events_for(IntPtr[] windows, int count);
         /// <summary>
-        /// #24: delivers the queued window system events (input) without rendering, at the start of the host frame.
+        /// delivers the queued window system events (input) without rendering, at the start of the host frame.
         /// Number of delivered events, -1 = app not initialized.
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -224,7 +224,7 @@ namespace VL.Qt
         /// <summary>Test: vlqt_perf_stats computed from given samples and timestamps (ms, ascending) with a fixed budget.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_perf_eval(vlqt_perf_sample[] samples, double[] t_ms, int n, double budget_ms, out vlqt_perf_stats stats);
-        /// <summary>#245: host values of the last completed pump. 0 = ok, -1 null window/in, -2 no pump yet.</summary>
+        /// <summary>host values of the last completed pump. 0 = ok, -1 null window/in, -2 no pump yet.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_report_host_frame(IntPtr w, in vlqt_host_frame frame);
         /// <summary>Last reported host frame. 0 = ok, -1 null window, -2 none for the last pump.</summary>
@@ -239,7 +239,7 @@ namespace VL.Qt
         public static extern int vlqt_window_set_overlay(IntPtr w, int flags);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_get_overlay(IntPtr w);
-        /// <summary>Debug overlay for all elements of the window (#279); per element: <see cref="Protocol.Prop.Debug"/>. 0 = ok.</summary>
+        /// <summary>Debug overlay for all elements of the window; per element: <see cref="Protocol.Prop.Debug"/>. 0 = ok.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_set_debug(IntPtr w, int on);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -250,18 +250,18 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern uint vlqt_window_get_mode(IntPtr w);
 
-        /// <summary>Size (DIP) and device pixel ratio of a scene (vlqt.h, #143); an offscreen scene has dpr 1.</summary>
+        /// <summary>Size (DIP) and device pixel ratio of a scene (vlqt.h); an offscreen scene has dpr 1.</summary>
         [StructLayout(LayoutKind.Sequential)]
         public struct vlqt_scene_metrics
         {
             public float width, height, dpr;
         }
 
-        /// <summary>Live size and dpr of the scene of a window or offscreen scene (#143). 0 = ok, -1 null window.</summary>
+        /// <summary>Live size and dpr of the scene of a window or offscreen scene. 0 = ok, -1 null window.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_get_scene_metrics(IntPtr w, out vlqt_scene_metrics metrics);
         /// <summary>
-        /// Sets the MSAA sample count of the window (#118; &lt; 1 = none), clamped to what the device supports; returns the
+        /// Sets the MSAA sample count of the window (&lt; 1 = none), clamped to what the device supports; returns the
         /// count used (&gt;= 1) or &lt;0 = error. A shown window is replaced inside the same handle (vlqt.h).
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -294,10 +294,10 @@ namespace VL.Qt
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_send_touch(IntPtr w, int type, int id, float x, float y);
-        /// <summary>TEST ONLY (#24): mouse event (Move, Press, Release) queued like platform input, delivered later. 0 = ok.</summary>
+        /// <summary>TEST ONLY: mouse event (Move, Press, Release) queued like platform input, delivered later. 0 = ok.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_queue_mouse(IntPtr w, int type, float x, float y);
-        /// <summary>TEST ONLY (#24): touch point event queued like platform input, delivered later. 0 = ok, -2 unknown type or id state.</summary>
+        /// <summary>TEST ONLY: touch point event queued like platform input, delivered later. 0 = ok, -2 unknown type or id state.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_queue_touch(IntPtr w, int type, int id, float x, float y);
         /// <summary>
@@ -307,14 +307,14 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_device_info(IntPtr w, out IntPtr device, out IntPtr rhi);
         /// <summary>
-        /// TEST ONLY (#367): makes the shared graphics device lost (<see cref="Protocol.DeviceLost"/>); QtNative rebuilds
+        /// TEST ONLY: makes the shared graphics device lost (<see cref="Protocol.DeviceLost"/>); QtNative rebuilds
         /// device, windows and resources in the next pumps. 0 = ok, -2 not possible (no shared device, or REMOVE without
         /// VLQT_TEST_D3D11ON12=1), -7 unknown mode.
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_device_lost(int mode);
 
-        // Offscreen scenes (#116, QtTexture): main thread only, codes Protocol.Offscreen. The scene handle also works
+        // Offscreen scenes (QtTexture): main thread only, codes Protocol.Offscreen. The scene handle also works
         // with vlqt_window_destroy/_apply/_get_apply_error/_poll/_set_debug/_get_perf* (list in vlqt.h).
         /// <summary>Creates an unbound offscreen scene of width x height DIP; IntPtr.Zero = error. Free with vlqt_window_destroy.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -349,7 +349,7 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_offscreen_set_threaded(int threadCount);
 
-        // Input into an offscreen scene (#119): positions in texture pixels, codes Protocol.Offscreen (vlqt.h).
+        // Input into an offscreen scene: positions in texture pixels, codes Protocol.Offscreen (vlqt.h).
         /// <summary>
         /// Pointer event (Protocol.Pointer) of device (Protocol.PointerDevice) at x/y; mouse: buttons = Qt::MouseButtons held
         /// after the event, id ignored; touch/pen: id of the point, buttons ignored. modifiers = Qt::KeyboardModifiers.
@@ -372,7 +372,7 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_offscreen_set_focus(IntPtr scene, int focused);
 
-        // TEST ONLY (#116): a second D3D11 device standing in for Stride's, shared textures and leak probes (vlqt.h).
+        // TEST ONLY: a second D3D11 device standing in for Stride's, shared textures and leak probes (vlqt.h).
         /// <summary>TEST ONLY: D3D11 device + immediate context (one reference each); adapter 0 = QtNative's, 1 = WARP.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_d3d11_create_device(int adapter, out IntPtr device, out IntPtr context);
@@ -402,7 +402,7 @@ namespace VL.Qt
         public static int TestReadTexture(IntPtr texture, Span<byte> @out, out int width, out int height, out int dxgiFormat)
             => vlqt_test_d3d11_read_texture(texture, ref MemoryMarshal.GetReference(@out), @out.Length, out width, out height, out dxgiFormat);
 
-        /// <summary>One resource of vlqt_res_list (vlqt.h vlqt_res_info, #359).</summary>
+        /// <summary>One resource of vlqt_res_list (vlqt.h vlqt_res_info).</summary>
         [StructLayout(LayoutKind.Sequential)]
         public struct vlqt_res_info
         {
@@ -412,7 +412,7 @@ namespace VL.Qt
             public int host_refs, element_refs;
         }
 
-        // Resources (#359): main thread only; 0 = ok, -1 internal error, -7 bad argument/state, -9 unknown or stale id.
+        // Resources: main thread only; 0 = ok, -1 internal error, -7 bad argument/state, -9 unknown or stale id.
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_res_create(int kind, out ulong id);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -428,35 +428,35 @@ namespace VL.Qt
         private static extern int vlqt_res_list(ref vlqt_res_info @out, int cap);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void vlqt_res_shutdown();
-        /// <summary>Pixels of vlqt_res_set_pixels (vlqt.h vlqt_pixel_desc, #360); format = VL PixelFormat number.</summary>
+        /// <summary>Pixels of vlqt_res_set_pixels (vlqt.h vlqt_pixel_desc); format = VL PixelFormat number.</summary>
         [StructLayout(LayoutKind.Sequential)]
         public struct vlqt_pixel_desc
         {
             public int width, height, row_bytes, format, premultiplied;
-            /// <summary>vlqt_res_set_pixels: <see cref="Protocol.Img"/> flags (#546); 0 when QtNative fills the desc.</summary>
+            /// <summary>vlqt_res_set_pixels: <see cref="Protocol.Img"/> flags; 0 when QtNative fills the desc.</summary>
             public int flags;
         }
 
-        /// <summary>Starts or replaces the content of an image resource from a file (flags <see cref="Protocol.Img"/>), #360.</summary>
+        /// <summary>Starts or replaces the content of an image resource from a file (flags <see cref="Protocol.Img"/>).</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_res_load_image(ulong id, [MarshalAs(UnmanagedType.LPUTF8Str)] string path, uint flags);
 
         /// <summary>
         /// Starts or replaces the content of a shader resource (<see cref="Protocol.ResKind.Shader"/>) from a .qsb file or
-        /// "builtin:&lt;name&gt;" (shipped shader), stage <see cref="Protocol.ShaderStage"/>, #437. 0 / -7 / -9.
+        /// "builtin:&lt;name&gt;" (shipped shader), stage <see cref="Protocol.ShaderStage"/>. 0 / -7 / -9.
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_res_load_shader(ulong id, [MarshalAs(UnmanagedType.LPUTF8Str)] string path, int stage);
 
         /// <summary>
         /// Starts or replaces the content of a shader resource from full Qt GLSL source (#version 440), baked by QtNative
-        /// in a worker (QShaderBaker), cached per hash of the source, #483. 0 / -7 / -9; bake errors arrive as RES_EV_ERROR.
+        /// in a worker (QShaderBaker), cached per hash of the source. 0 / -7 / -9; bake errors arrive as RES_EV_ERROR.
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_res_load_shader_source(ulong id, [MarshalAs(UnmanagedType.LPUTF8Str)] string source, int stage);
 
         /// <summary>
-        /// Synchronous SPIR-V bake + reflection of Qt GLSL source (#488), any thread. Writes UTF-8 text (format in vlqt.h)
+        /// Synchronous SPIR-V bake + reflection of Qt GLSL source, any thread. Writes UTF-8 text (format in vlqt.h)
         /// to buf and returns the required length without terminator (> bufLen: call again with a larger buffer), -7 on
         /// bad arguments. Use <see cref="Shaders.ShaderReflection.Reflect"/>.
         /// </summary>
@@ -464,7 +464,7 @@ namespace VL.Qt
         public static extern int vlqt_shader_reflect([MarshalAs(UnmanagedType.LPUTF8Str)] string source, int stage, ref byte buf, int bufLen);
 
         /// <summary>
-        /// Load + save file of Qt's pipeline cache for all windows created afterwards (#488); null/empty = off. 0 / -7.
+        /// Load + save file of Qt's pipeline cache for all windows created afterwards; null/empty = off. 0 / -7.
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_set_pipeline_cache([MarshalAs(UnmanagedType.LPUTF8Str)] string? path);
@@ -477,7 +477,7 @@ namespace VL.Qt
         private static extern int vlqt_image_write(in vlqt_pixel_desc desc, in byte data, int len, [MarshalAs(UnmanagedType.LPUTF8Str)] string path, int quality, ref byte err, int errCap);
 
         /// <summary>
-        /// Writes pixels to an image file, format by extension (vlqt.h vlqt_image_write, #157); any thread, synchronous.
+        /// Writes pixels to an image file, format by extension (vlqt.h vlqt_image_write); any thread, synchronous.
         /// Returns 0, or -1 bad arguments / -2 unsupported file format / -3 write failed with the reason in error.
         /// </summary>
         public static int ImageWrite(in vlqt_pixel_desc desc, ReadOnlySpan<byte> data, string path, int quality, out string error)
@@ -494,7 +494,7 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_write_image([MarshalAs(UnmanagedType.LPUTF8Str)] string path, int width, int height, int quality);
 
-        /// <summary>Starts or replaces the content of an image resource from pixels (copied synchronously), #360.</summary>
+        /// <summary>Starts or replaces the content of an image resource from pixels (copied synchronously).</summary>
         public static int ResSetPixels(ulong id, in vlqt_pixel_desc desc, ReadOnlySpan<byte> data)
             => vlqt_res_set_pixels(id, in desc, in MemoryMarshal.GetReference(data), data.Length);
         public static int ResReadPixels(ulong id, Span<byte> @out, out int width, out int height)
@@ -510,17 +510,17 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_res_element_ref(ulong id, int delta);
 
-        /// <summary>Starts grabbing element elementId of window w into a snapshot resource (asynchronous, #363); 0 / -7 / -9.</summary>
+        /// <summary>Starts grabbing element elementId of window w into a snapshot resource (asynchronous); 0 / -7 / -9.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_res_snapshot(ulong id, IntPtr w, uint elementId, float scale);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern int vlqt_res_read_pixels(ulong id, ref byte dst, int cap, out vlqt_pixel_desc desc);
 
-        /// <summary>Pixels of the last finished snapshot (BGRA8 premultiplied, #363): bytes written, -required (desc set), -7 none yet, -9.</summary>
+        /// <summary>Pixels of the last finished snapshot (BGRA8 premultiplied): bytes written, -required (desc set), -7 none yet, -9.</summary>
         public static int ResReadSnapshot(ulong id, Span<byte> dst, out vlqt_pixel_desc desc)
             => vlqt_res_read_pixels(id, ref MemoryMarshal.GetReference(dst), dst.Length, out desc);
 
-        // Tooltip previews (#543, package 01 #544).
+        // Tooltip previews (package 01).
         /// <summary>Number of frames with scene changes in window w (not the renders a grab triggers); &gt;= 0, -9 null window.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern long vlqt_window_change_count(IntPtr w);
@@ -528,16 +528,16 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_res_snapshot_fit(ulong id, IntPtr w, uint elementId, int maxEdgePx);
 
-        // QtImage tooltip preview (#543, package 03 #546).
+        // QtImage tooltip preview (package 03).
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern int vlqt_res_read_preview(ulong id, ref byte dst, int cap, out vlqt_pixel_desc desc);
 
-        /// <summary>Tooltip preview of an image loaded with <see cref="Protocol.Img.Preview"/> (BGRA8 premultiplied, &lt;= 256 px, #546): bytes written, -required (desc set), -7 none, -9.</summary>
+        /// <summary>Tooltip preview of an image loaded with <see cref="Protocol.Img.Preview"/> (BGRA8 premultiplied, &lt;= 256 px): bytes written, -required (desc set), -7 none, -9.</summary>
         public static int ResReadPreview(ulong id, Span<byte> dst, out vlqt_pixel_desc desc)
             => vlqt_res_read_preview(id, ref MemoryMarshal.GetReference(dst), dst.Length, out desc);
 
         /// <summary>
-        /// State of an audio tap (vlqt.h vlqt_audio_tap_state, 96 bytes, #22). Times in ns of <see cref="vlqt_now_ns"/>,
+        /// State of an audio tap (vlqt.h vlqt_audio_tap_state, 96 bytes). Times in ns of <see cref="vlqt_now_ns"/>,
         /// media times in us on Qt's audio axis (continues across loop wraps). "First frame" = the first frame the read
         /// delivered or dropped, else the next one in the ring. Contract: protocol.h "Audio tap".
         /// </summary>
@@ -570,7 +570,7 @@ namespace VL.Qt
             private int _reserved0, _reserved1;
         }
 
-        // Audio taps (#22): init on the main thread; read and now on any thread (VL.Audio's audio thread), no allocation.
+        // Audio taps: init on the main thread; read and now on any thread (VL.Audio's audio thread), no allocation.
         /// <summary>Fixes the format of a Pending audio tap (float, interleaved) and makes it Ready. 0 / -7 / -9.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_res_audio_tap_init(ulong id, int channels, int sampleRate);
@@ -593,7 +593,7 @@ namespace VL.Qt
         public static int ResDropAudio(ulong id, int maxFrames, int channels, out vlqt_audio_tap_state state)
             => vlqt_res_read_audio_drop(id, IntPtr.Zero, maxFrames, channels, out state);
 
-        // App fonts (#15, LoadFont node): Qt GUI thread (vvvv main thread) only, reference counted per file in QtNative.
+        // App fonts (LoadFont node): Qt GUI thread (vvvv main thread) only, reference counted per file in QtNative.
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern int vlqt_font_add([MarshalAs(UnmanagedType.LPUTF8Str)] string path, out ulong handle, ref byte families, int familiesCap);
         /// <summary>Drops one reference of a font handle; the font is removed at the end of the pump when none is left. 0 / -1 wrong thread / -9.</summary>

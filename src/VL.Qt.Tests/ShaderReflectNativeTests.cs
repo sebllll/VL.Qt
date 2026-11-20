@@ -7,7 +7,7 @@ using NUnit.Framework;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>vlqt_shader_reflect (#488): the real QtNative, text format of vlqt.h. Needs a built vlqt.dll (tools/build.ps1).</summary>
+    /// <summary>vlqt_shader_reflect: the real QtNative, text format of vlqt.h. Needs a built vlqt.dll (tools/build.ps1).</summary>
     public class ShaderReflectNativeTests
     {
         private const string good = @"#version 440

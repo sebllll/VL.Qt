@@ -1,4 +1,4 @@
-// VL.Qt base style (#292): Slider. Frame = background (padding area), Track = groove + TrackFill (value part),
+// VL.Qt base style: Slider. Frame = background (padding area), Track = groove + TrackFill (value part),
 // Indicator = handle. Values from the attached VlStyle (see Button.qml).
 import QtQuick
 import QtQuick.Templates as T

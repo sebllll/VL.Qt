@@ -98,7 +98,7 @@ uchar unitToByte(float v)
 // the pixels through a mapped staging texture filled by a copy task, then a GPU copy: < 1 ms per 4K on the main
 // thread; stripes instead: the first write into a new 4K texture costs ~9 ms on the main thread, ~1 ms per 8 MB after
 // it, 20 x 4K: 22 % hitches), pixels -> stripes in the frame budget (set_pixels per frame). VLQT_IMG_UPLOAD=
-// stripes|worker forces one path (A/B). Mipmaps take the worker path too (#562): the texture gets its mip chain in the
+// stripes|worker forces one path (A/B). Mipmaps take the worker path too: the texture gets its mip chain in the
 // worker (GENERATE_MIPS), the main thread copies level 0 and records GenerateMips, without an offscreen frame (whose
 // endOffscreenFrame waited actively for the GPU: 2.2 ms per frame in the profile Images).
 [[maybe_unused]] bool workerUpload(bool file)
@@ -108,7 +108,7 @@ uchar unitToByte(float v)
 }
 
 #ifdef Q_OS_WIN
-// The device (ID3D11Device*) was removed (device lost, #367); thread safe, also in a worker.
+// The device (ID3D11Device*) was removed (device lost); thread safe, also in a worker.
 bool deviceRemoved(void* device)
 {
     return device && static_cast<ID3D11Device*>(device)->GetDeviceRemovedReason() != S_OK;
@@ -130,7 +130,7 @@ public:
     std::string decode(Work& work) override
     {
         auto& r = static_cast<ImageResource&>(work);
-        // Pixels restored after a device loss (#367) bring their converted copy along: nothing to convert.
+        // Pixels restored after a device loss bring their converted copy along: nothing to convert.
         std::string error = !r.m_path.isEmpty() ? readFile(r) : r.m_image.isNull() ? convertPixels(r) : std::string();
         if (!error.empty() || r.cancel.load())
             return error.empty() ? std::string("cancelled") : error;
@@ -138,8 +138,8 @@ public:
         makePreview(r);
 #ifdef Q_OS_WIN
         if (r.m_device && workerUpload(!r.m_path.isEmpty())) {
-            // Removed device (#367): no error, the rebuild decodes again for the new device (stale). Mipmaps that the
-            // device cannot make this way (#562) fall back to the stripes (generateMips through the upload QRhi).
+            // Removed device: no error, the rebuild decodes again for the new device (stale). Mipmaps that the
+            // device cannot make this way fall back to the stripes (generateMips through the upload QRhi).
             if (!createWorkerTextures(r) && !deviceRemoved(r.m_device)) {
                 if (!(r.m_flags & VLQT_IMG_MIPMAPS))
                     return "CreateTexture2D failed";
@@ -155,7 +155,7 @@ public:
         auto& r = static_cast<ImageResource&>(work);
         const int64_t used = uploadNow(r, budget, done, error);
 #ifdef Q_OS_WIN
-        // Removed device (#367): no Failed, the rebuild after checkLost uploads again on the new device.
+        // Removed device: no Failed, the rebuild after checkLost uploads again on the new device.
         if (!error.empty() && (deviceRemoved(r.m_device) || deviceRemoved(device::nativeDevice(device::uploadRhi())))) {
             qCDebug(lcImg, "upload on a removed device (%s), waiting for the rebuild", error.c_str());
             error.clear();
@@ -171,7 +171,7 @@ public:
         releaseDevice(work);
     }
 
-    // Device lost (#367): the textures, the staging texture and a running copy go, the source stays.
+    // Device lost: the textures, the staging texture and a running copy go, the source stays.
     void releaseDevice(Work& work) override
     {
         auto& r = static_cast<ImageResource&>(work);
@@ -202,7 +202,7 @@ public:
         auto r = std::make_shared<ImageResource>();
         r->m_path = old.m_path;
         r->m_flags = old.m_flags;
-        r->m_preview = old.m_preview; // same content: no new scaling (implicitly shared, read-only after Ready, #546)
+        r->m_preview = old.m_preview; // same content: no new scaling (implicitly shared, read-only after Ready)
         if (old.m_path.isEmpty()) {
             r->m_raw = old.m_raw;
             r->m_rawWidth = old.m_rawWidth;
@@ -228,7 +228,7 @@ public:
         return {uint32_t(r.m_size.width()), uint32_t(r.m_size.height()), r.format()};
     }
 
-    // F5 Resources page (#364): rows not yet uploaded (a worker texture goes up in one call: all of it until then).
+    // F5 Resources page: rows not yet uploaded (a worker texture goes up in one call: all of it until then).
     int64_t pendingBytes(const Work& work) const override
     {
         const auto& r = static_cast<const ImageResource&>(work);
@@ -262,7 +262,7 @@ private:
             return 0; // the copy task still runs (next pump), or error
 #endif
         if (!r.m_texture) {
-            // Worker texture: it has its mip chain already (#562, the same level count as QRhi's mipLevelsForSize), the
+            // Worker texture: it has its mip chain already (the same level count as QRhi's mipLevelsForSize), the
             // flag lets QRhi and the windows' wrappers (qtimageitem.cpp) see all levels.
             QRhiTexture::Flags flags;
             if (r.m_flags & VLQT_IMG_MIPMAPS)
@@ -319,9 +319,9 @@ private:
 
 #ifdef Q_OS_WIN
     // Worker upload path, worker side: an empty texture and an empty staging texture (CPU write) of the image size.
-    // No initial data (#390): CreateTexture2D with initial data blocks the main thread's context calls for as long as
+    // No initial data: CreateTexture2D with initial data blocks the main thread's context calls for as long as
     // it runs (arm64 Adreno: 4K 5-45 ms, every pump that overlaps it is a hitch, 4 MB stripes as well); empty creates
-    // take < 1 ms and block nothing. Mipmaps (#562): the texture has the full chain (render target + GENERATE_MIPS,
+    // take < 1 ms and block nothing. Mipmaps: the texture has the full chain (render target + GENERATE_MIPS,
     // like QRhi's UsedWithGenerateMips) and a shader resource view over it for GenerateMips; the staging texture holds
     // level 0 only. Returns false (all released) on an error.
     static bool createWorkerTextures(ImageResource& r)
@@ -420,7 +420,7 @@ private:
         r.m_mapped = false;
         auto* tex = static_cast<ID3D11Texture2D*>(r.m_workerTexture);
         if (auto* srv = static_cast<ID3D11ShaderResourceView*>(r.m_workerSrv)) {
-            // Mipmaps (#562): level 0 from the staging texture, the rest on the GPU. Both are only recorded on the
+            // Mipmaps: level 0 from the staging texture, the rest on the GPU. Both are only recorded on the
             // immediate context (no wait, unlike the offscreen frame of the stripes); the windows draw on the same
             // context afterwards, so they see the finished chain.
             ctx->CopySubresourceRegion(tex, 0, 0, 0, 0, staging, 0, nullptr);
@@ -474,10 +474,10 @@ private:
             r.m_image = QImage();
     }
 
-    // Tooltip preview (#546): longest edge <= 256 px (never upscaled), BGRA8 premultiplied. Made right after m_image is
+    // Tooltip preview: longest edge <= 256 px (never upscaled), BGRA8 premultiplied. Made right after m_image is
     // set (files: readFile, pixels: convertPixels, restored pixels: the copied m_image), before the upload drops m_image;
     // m_preview lives until the Work is destroyed. A deep copy: m_image may share its data with m_raw / the file buffer.
-    // A restore (#367) takes the preview of the old Work over and skips this. Large images first go down to 4 x 256 px
+    // A restore takes the preview of the old Work over and skips this. Large images first go down to 4 x 256 px
     // with the fast filter (a single smooth step from 8k costs tens of ms in the worker, which a synchronous LoadImage
     // waits for), then smooth to 256.
     static void makePreview(ImageResource& r)
@@ -725,7 +725,7 @@ int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc)
 
 int testRead(uint64_t id, unsigned char* out, int cap, int* width, int* height)
 {
-    if (kindOfId(id, "test read_pixels") < 0) // unknown, stale or released by the host (#365); ready() does not check
+    if (kindOfId(id, "test read_pixels") < 0) // unknown, stale or released by the host; ready() does not check
         return staleIdRc;
     auto r = ready(id);
     if (!r)
@@ -738,12 +738,12 @@ int testRead(uint64_t id, unsigned char* out, int cap, int* width, int* height)
     const int n = w * h * 4;
     if (!out || cap < n)
         return -n;
-    // rb outlives result (#387): convertToFormat returns a shallow copy when the format already matches (RGBA8
+    // rb outlives result: convertToFormat returns a shallow copy when the format already matches (RGBA8
     // readback), so result may point into rb.data; freed at the end of the else block, the copy below read freed memory.
     QRhiReadbackResult rb;
     QImage result;
     if (!r->m_texture) {
-        if (r->m_image.isNull()) // file content whose texture went with a lost device, until its replacement (#367)
+        if (r->m_image.isNull()) // file content whose texture went with a lost device, until its replacement
             return errorRc;
         result = r->m_image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
     } else {

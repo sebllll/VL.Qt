@@ -111,7 +111,7 @@ internal sealed class Scenario
 
     /// <summary>
     /// Check on where a window ends up: under WSLg/xcb the window manager chooses the position of a new window and the
-    /// position after leaving fullscreen, so a miss there is a SKIP with reason. A pass counts everywhere (#10).
+    /// position after leaving fullscreen, so a miss there is a SKIP with reason. A pass counts everywhere.
     /// </summary>
     public void CheckPosition(bool ok, string what)
     {

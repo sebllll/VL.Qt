@@ -7,7 +7,7 @@ using NUnit.Framework;
 using VL.Qt;
 using static Pixels;
 
-// Sampler state of a sampler2D (#492, SAMPLER entry of SET_UNIFORMS): filter, address, mip filter, read back from pixels.
+// Sampler state of a sampler2D (SAMPLER entry of SET_UNIFORMS): filter, address, mip filter, read back from pixels.
 // One GLSL shader per sampler name (source = Input, overlay = texture uniform) that samples c + (uv - 0.5) * k.
 // 4 x 3 grid of 160 x 120 DIP cells on 0x20 grey:
 //   row 0  (Input = Group of a red | blue pair, zoomed in at their edge, k = 0.04): Point, Linear, no sampler (a layer reads Nearest),

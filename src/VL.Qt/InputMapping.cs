@@ -5,7 +5,7 @@ namespace VL.Qt
 {
     /// <summary>
     /// vvvv input values (<see cref="Keys"/>, <see cref="MouseButtons"/>, WinForms numbering) to Qt values
-    /// (<c>Qt::Key</c>, <c>Qt::MouseButtons</c>, <c>Qt::KeyboardModifiers</c>) for the input of offscreen scenes (#119).
+    /// (<c>Qt::Key</c>, <c>Qt::MouseButtons</c>, <c>Qt::KeyboardModifiers</c>) for the input of offscreen scenes.
     /// Pure functions, no allocation.
     /// </summary>
     internal static class InputMapping

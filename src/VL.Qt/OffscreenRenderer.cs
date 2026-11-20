@@ -8,7 +8,7 @@ using VL.Qt.Elements;
 namespace VL.Qt
 {
     /// <summary>
-    /// The window-free sibling of <see cref="WindowRenderer"/> (#116, QtTexture): one offscreen Qt scene, its reconciler
+    /// The window-free sibling of <see cref="WindowRenderer"/> (QtTexture): one offscreen Qt scene, its reconciler
     /// and command buffer, rendered into a texture of a foreign D3D11 device (Stride's) shared by NT handle. Stride-free:
     /// <c>VL.Qt.Stride</c> passes native pointers. Not rendered by the window pump (<see cref="QtPump"/>): the caller runs
     /// <see cref="Update"/> and <see cref="ApplyCommands"/> per frame, then <see cref="RenderBatch"/> once for all renderers
@@ -126,7 +126,7 @@ namespace VL.Qt
                 _core.Dispatch(events, frameStart: false);
         }
 
-        // Input (#119, render-texture.md "Input"): positions in texture pixels (top-left origin, 1 DIP = 1 pixel), call
+        // Input (render-texture.md "Input"): positions in texture pixels (top-left origin, 1 DIP = 1 pixel), call
         // between two RenderBatch calls; the scene shows the result in the next batch, its events arrive in PollEvents.
         // Each returns a Protocol.Offscreen code.
 

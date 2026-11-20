@@ -33,7 +33,7 @@ namespace VL.Qt.Tests
         public void CommonDefaults(Type t)
         {
             var e = (Element)Activator.CreateInstance(t)!;
-            // All elements: TopLeft, like QtNative default (#471).
+            // All elements: TopLeft, like QtNative default.
             Assert.That(e.Anchor, Is.EqualTo(RectangleAnchor.TopLeft));
             Assert.That(e.Opacity, Is.EqualTo(1f));
             Assert.That(e.Transform, Is.EqualTo(Matrix.Identity));

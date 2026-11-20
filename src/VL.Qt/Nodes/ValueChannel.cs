@@ -9,7 +9,7 @@ using VL.Qt.Elements;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Value of a value input element (Input (Int) #210; Toggle, Slider, TextInput #301) and its optional channel pin,
+    /// Value of a value input element (Input (Int); Toggle, Slider, TextInput) and its optional channel pin,
     /// in the spirit of VL.ImGui's <c>ChannelWidget&lt;T&gt;</c>. Pull, no subscription: <see cref="Update"/> reads
     /// <c>channel.Value</c> once per frame and compares it with the last value it saw.
     /// <list type="bullet">
@@ -20,7 +20,7 @@ namespace VL.Qt.Nodes
     /// <see cref="Bang"/> for one Update. It is not echoed as a channel change. If the patch changed the channel in the
     /// same frame, the user wins.</item>
     /// <item>The node describes <see cref="Value"/>; the reconciler diffs it against the last sent description as usual
-    /// (no "last sent = user value", PR #354).</item>
+    /// (no "last sent = user value").</item>
     /// <item>Qt clamps a SET without an event, so the node clamps the own copy with <see cref="Clamp"/>; the channel keeps
     /// the patch's value.</item>
     /// </list>

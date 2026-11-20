@@ -121,7 +121,7 @@ namespace VL.Qt.Stride
             }
         }
 
-        // The process-wide animation driver must never run backwards (QtApp.PumpFrame, #314): the frame time of this
+        // The process-wide animation driver must never run backwards (QtApp.PumpFrame): the frame time of this
         // app, or the time the pump already set if that is later (pump offset after an app restart). With the pump at
         // GetFrameFinished after the draw start this is the current frame's time; the order is task 3.4 of #116.
         private double DriverSeconds()

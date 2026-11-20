@@ -26,25 +26,25 @@ namespace VL.Qt
         private const string IconPhase = "Window Icon";
         private const string SamplesPhase = "Multisample Count";
 
-        // Pump and scene registry of this vvvv app (new per F8/F5, #58); QtApp itself is process-wide.
+        // Pump and scene registry of this vvvv app (new per F8/F5); QtApp itself is process-wide.
         private readonly QtPump _pump;
         private readonly QtApp _app;
         private readonly NodeContext _nodeContext;
-        private readonly NodeErrors _errors; // node logger + pump exceptions at the node (#258)
+        private readonly NodeErrors _errors; // node logger + pump exceptions at the node
         private readonly bool _boundToDocument;
         private readonly bool _dialogIfDocumentChanged;
         private readonly RectangleF _bounds;
         private readonly bool _vSync;
-        private bool _fullscreen; // last Fullscreen pin value sent to QtNative (#234)
-        private readonly IDevSession? _session; // editor only (null in exported apps): Save Bounds writes the Bounds pin (#143)
+        private bool _fullscreen; // last Fullscreen pin value sent to QtNative
+        private readonly IDevSession? _session; // editor only (null in exported apps): Save Bounds writes the Bounds pin
         private readonly BoundsSaver? _boundsSaver;
         private readonly Stopwatch _clock = Stopwatch.StartNew(); // wall time for the Save Bounds delay (the frame clock may pause)
         private WindowRenderer? _view; // created in the first Update (Title/Size are update pins)
         private bool _disposed;
-        private bool _debug; // last Debug pin value sent to the window (#280)
-        private bool _borderless; // last Borderless pin value sent to the window (#233)
-        private MultisampleCount _samples; // last Multisample Count pin value sent to the window (#118)
-        private string? _iconPath; // last window icon sent to the window (full path, null = default; #517)
+        private bool _debug; // last Debug pin value sent to the window
+        private bool _borderless; // last Borderless pin value sent to the window
+        private MultisampleCount _samples; // last Multisample Count pin value sent to the window
+        private string? _iconPath; // last window icon sent to the window (full path, null = default)
         private IDisposable? _keepAlive; // AppHost.KeepAlive() in the WinForms window export only, released on X / Dispose
 
         /// <param name="nodeContext">Injected by vvvv.</param>
@@ -77,7 +77,7 @@ namespace VL.Qt
             // they need KeepAppAlive [System] in the top-level patch (docs/linux.md).
             if (nodeContext.AppHost.IsExported && IsWindowsFormsHost(nodeContext.AppHost))
                 _keepAlive = nodeContext.AppHost.KeepAlive();
-            ExportedApp.Attach(nodeContext); // console export: signals, clean end (L7b, #157)
+            ExportedApp.Attach(nodeContext); // console export: signals, clean end (L7b)
             if (saveBounds && !nodeContext.AppHost.IsExported && IDevSession.Current is { } session)
             {
                 _session = session;
@@ -140,7 +140,7 @@ namespace VL.Qt
         {
             Debug.Assert(_app.IsQtThread, "VL.Qt must be used from the thread that created the QGuiApplication");
 
-            // A value set in Window wins over the pin (#518); borderless/fullscreen/title below are the resolved values.
+            // A value set in Window wins over the pin; borderless/fullscreen/title below are the resolved values.
             var resolved = WindowSettings.Resolve(window, title, borderless, fullscreen);
             title = resolved.Title!;
             borderless = resolved.Borderless;
@@ -189,7 +189,7 @@ namespace VL.Qt
             // Only written here; the pump applies the buffer once per frame (ApplyCommands) after all node updates.
             _view?.Update(input, space, clearColor, clear, enabled, title);
 
-            // Is Visible is live (#93); Perf, Client Bounds and Error reflect the last pump (previous frame).
+            // Is Visible is live; Perf, Client Bounds and Error reflect the last pump (previous frame).
             isVisible = _view?.IsVisible ?? false;
             perf = _view?.Perf ?? PerfStats.Empty;
             clientBounds = _view?.Geometry?.ClientBounds ?? default;
@@ -218,7 +218,7 @@ namespace VL.Qt
                 _errors.Clear(SamplesPhase);
         }
 
-        // Pump phases (#258): an exception is logged with this node's logger (once per distinct error), shown at the node
+        // Pump phases: an exception is logged with this node's logger (once per distinct error), shown at the node
         // and on Error, and cleared when the same phase succeeds again. Never left to the global pump catch.
         void IQtFrameParticipant.ApplyCommands()
         {
@@ -339,7 +339,7 @@ namespace VL.Qt
             _view?.Hide();
             _keepAlive?.Dispose();
             _keepAlive = null;
-            if (_boundToDocument) // exported (L1c, #160): end the app even if KeepAppAlive holds it
+            if (_boundToDocument) // exported (L1c): end the app even if KeepAppAlive holds it
                 ExportedApp.Exit(_nodeContext.AppHost);
         }
 

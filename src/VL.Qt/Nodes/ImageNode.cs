@@ -18,7 +18,7 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Image", Category = Categories.Elements)]
     public sealed class ImageNode : IDisposable
     {
-        // The image is compared by reference: a new QtImage is a new image (#362).
+        // The image is compared by reference: a new QtImage is a new image.
         internal readonly record struct Props(QtImage? Image, ImageFillMode FillMode, bool Smooth);
 
         private readonly ElementNode<Image, Props> _node;

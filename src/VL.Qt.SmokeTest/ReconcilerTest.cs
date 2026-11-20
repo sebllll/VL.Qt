@@ -126,7 +126,7 @@ public static class ReconcilerTest
     }
 
     // Steady state through the real QtNative: 1000 rectangles, one color change per frame.
-    // Limits are generous (#71); the measured values go to the log.
+    // Limits are generous; the measured values go to the log.
     private static void Perf(IntPtr w, Scenario s)
     {
         const int N = 1000, Frames = 1000;

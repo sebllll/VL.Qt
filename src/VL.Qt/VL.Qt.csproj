@@ -54,7 +54,7 @@
        ./lib/net10.0/VL.Qt.dll; packman/dotnet only accept lib/<tfm>), help/, qt/<rid>/** (= repo runtimes/<rid>/native/**),
        buildTransitive/VL.Qt.targets, LICENSES/, LICENSES.md.
        The Qt tree must not go to runtimes/<rid>/native: NuGet treats every file there as a native asset and copies it flat
-       into an app referencing the package (NETSDK1152, many qmldir with the same name, #315). qt/<rid>/ is no NuGet asset
+       into an app referencing the package (NETSDK1152, many qmldir with the same name). qt/<rid>/ is no NuGet asset
        folder; buildTransitive/VL.Qt.targets copies it with its structure to runtimes/<rid>/native in the app output. -->
   <PropertyGroup>
     <PackageId>VL.Qt</PackageId>

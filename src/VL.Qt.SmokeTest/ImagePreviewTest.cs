@@ -5,7 +5,7 @@ using System.IO;
 using VL.Qt;
 
 /// <summary>
-/// #546 (tooltips package 03): the tooltip preview of image resources. With VLQT_IMG_PREVIEW the decode worker keeps a
+/// (tooltips package 03): the tooltip preview of image resources. With VLQT_IMG_PREVIEW the decode worker keeps a
 /// BGRA8 premultiplied copy with a longest edge of 256 px (never upscaled); readable on a Ready resource only, without
 /// the flag -7. Files and set_pixels, a replacement shows the preview of the visible content. No window needed.
 /// </summary>

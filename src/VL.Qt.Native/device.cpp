@@ -360,7 +360,7 @@ void releaseFrameLocks()
 QRhi* uploadRhi()
 {
 #ifdef Q_OS_WIN
-    // Resources may come before the first window (#360): create the device here then.
+    // Resources may come before the first window: create the device here then.
     if (!s_tried && QQuickWindow::graphicsApi() == QSGRendererInterface::Direct3D11)
         ensureDevice();
     return s_upload;

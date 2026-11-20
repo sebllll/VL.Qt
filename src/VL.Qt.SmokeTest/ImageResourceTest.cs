@@ -9,7 +9,7 @@ using System.Threading;
 using VL.Qt;
 
 /// <summary>
-/// #360 (images package 03): image resources of QtNative. PNG/JPG 1080p + 4K async to Ready, missing/broken file
+/// (images package 03): image resources of QtNative. PNG/JPG 1080p + 4K async to Ready, missing/broken file
 /// Failed, every pixel format of the table pixel exact against a reference (readback, with row padding), one warning
 /// per resource for 16 bit/float, replacement without an empty frame, release during the upload, sync wait, and the
 /// perf runs (skipped with warn-only perf limits, CI): 20 x 4K async while an animation runs (hitches vs. background)

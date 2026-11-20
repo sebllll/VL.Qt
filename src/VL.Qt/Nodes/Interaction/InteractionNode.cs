@@ -8,7 +8,7 @@ using VL.Qt.Elements;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Shared core of all interaction nodes (Hover, Click, Point, Wheel, …; #319, #320), the counterpart of <see cref="ElementNode{TElement, TProps}"/>.
+    /// Shared core of all interaction nodes (Hover, Click, Point, Wheel, …), the counterpart of <see cref="ElementNode{TElement, TProps}"/>.
     /// Held as a field by the public <c>[ProcessNode]</c> class.
     /// <list type="bullet">
     /// <item>one <see cref="ElementSink"/> per node instance (slot 0): key of the handler in the reconciler and
@@ -16,7 +16,7 @@ namespace VL.Qt.Nodes
     /// <item>change detection: a new link only if the chain at Input (by reference) or the node specific
     /// <typeparamref name="TProps"/> changed, otherwise the last instance (reference equal → no QtNative ops);</item>
     /// <item>the sink warning (interaction used more than once) as persistent node warning, the sink error (e.g. a
-    /// handler property Qt rejected, #275) as persistent node warning, logged (<see cref="NodeErrors"/>).</item>
+    /// handler property Qt rejected) as persistent node warning, logged (<see cref="NodeErrors"/>).</item>
     /// </list>
     /// The public node pulls the sink state into its channels in its Update (<see cref="Write{T}"/>: only on change,
     /// author <see cref="Author"/>). No static state. Main thread only.

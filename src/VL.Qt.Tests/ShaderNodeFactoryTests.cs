@@ -11,7 +11,7 @@ using VL.Qt.Shaders;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Shader node factory (#488): names, scan of qtshaders/, layout of a node, uniform spread. No QtNative, no vvvv.</summary>
+    /// <summary>Shader node factory: names, scan of qtshaders/, layout of a node, uniform spread. No QtNative, no vvvv.</summary>
     public class ShaderNodeFactoryTests
     {
         private const string fragmentSource = @"// @category Qt.Test

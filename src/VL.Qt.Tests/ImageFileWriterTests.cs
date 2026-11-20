@@ -26,7 +26,7 @@ namespace VL.Qt.Tests
         public void Dispose() { }
     }
 
-    /// <summary>ImageFileWriter (#157) on a fake write function: worker thread, newest wins, one report per finished write.</summary>
+    /// <summary>ImageFileWriter on a fake write function: worker thread, newest wins, one report per finished write.</summary>
     public class ImageFileWriterTests
     {
         private static readonly TimeSpan timeout = TimeSpan.FromSeconds(10);

@@ -1,5 +1,5 @@
 #pragma once
-// VlPathElement (#154): the one path element of a SHAPE's ShapePath (makeShape in elements.cpp). Takes a point list
+// VlPathElement: the one path element of a SHAPE's ShapePath (makeShape in elements.cpp). Takes a point list
 // (POINTS + CLOSED: polyline or polygon) or a verb/point array (PATH) and builds the QPainterPath in addToPath, like
 // Qt's own PathPolyline. A closed point list ends with closeSubpath (a real join at the start point, no cap). The
 // latest of POINTS and PATH wins: each replaces the other.

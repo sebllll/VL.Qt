@@ -5,7 +5,7 @@ using NUnit.Framework;
 using VL.Qt;
 using static Pixels;
 
-// Group as ShaderEffect texture (#486, #480): Input and texture uniform sample the whole Group frame, also its part left of /
+// Group as ShaderEffect texture: Input and texture uniform sample the whole Group frame, also its part left of /
 // above the origin; the effect's implicit size is the frame and follows it live. Raw commands (DIP).
 // Group children: orange 100 x 100 at (-40, -30), blue 100 x 80 at (60, 20), a Text on the blue: frame (-40, -30) .. (160, 100)
 // = 200 x 130. In the texture (frame coordinates): orange 0..100 x 0..100, blue 100..200 x 50..130.

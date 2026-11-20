@@ -29,7 +29,7 @@ namespace VL.Qt.Elements
 
         /// <summary>
         /// The value is a length in units of the renderer's space (Float, Vector2): the reconciler converts it to logical
-        /// pixels (#143). Only the shader effect nodes of VL.Qt set it; uniforms of user shaders are sent as they are.
+        /// pixels. Only the shader effect nodes of VL.Qt set it; uniforms of user shaders are sent as they are.
         /// </summary>
         internal bool IsLength { get; private init; }
 

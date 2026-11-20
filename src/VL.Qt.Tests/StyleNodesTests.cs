@@ -5,7 +5,7 @@ using VL.Qt.Styles;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Style nodeset (#294): setters, getters, Merge, ResolveState.</summary>
+    /// <summary>Style nodeset: setters, getters, Merge, ResolveState.</summary>
     public class StyleNodesTests
     {
         private static readonly Color4 red = new(1, 0, 0, 1);

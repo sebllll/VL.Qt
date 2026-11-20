@@ -7,7 +7,7 @@ using VL.Qt.Styles;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Style resolution in the reconciler (#293): base style → Group → … → widget, SET_STYLE diffs only for widgets.</summary>
+    /// <summary>Style resolution in the reconciler: base style → Group → … → widget, SET_STYLE diffs only for widgets.</summary>
     public class ReconcilerStyleTests
     {
         private RecordingSink _sink = null!;

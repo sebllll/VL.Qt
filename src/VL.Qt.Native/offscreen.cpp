@@ -20,7 +20,7 @@
 #include <QtQuick/QQuickRenderTarget>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
-// Scene focus (#119): SceneRenderControlPrivate. Private API, check on Qt updates.
+// Scene focus: SceneRenderControlPrivate. Private API, check on Qt updates.
 #include <QtQuick/private/qquickrendercontrol_p.h>
 
 #include <algorithm>
@@ -63,7 +63,7 @@ namespace vlqt::offscreen {
 // Foreign device: QtNative holds no reference to it of its own; the two fences opened on it do, until unbind. So a
 // bound scene keeps it alive after its owner released it, and unbind or destroy then frees it.
 //
-// Render thread (#116 phase 5, render-texture.md "Qt render thread", decisions c and e): a scene of a threaded process
+// Render thread (phase 5, render-texture.md "Qt render thread", decisions c and e): a scene of a threaded process
 // gets a render thread at create (render_thread::assign) and its scene graph and QRhi live there: initialize, beginFrame,
 // sync, render, endFrame, invalidate and unbind run there, the main thread waits for each of them except render +
 // endFrame + Signal + Flush (posted by render_batch). Items, polish, input, apply and bind stay on the main thread; the
@@ -83,7 +83,7 @@ struct State
     unsigned long long writeValue = 0; // last value signalled on the write fence
     std::atomic<long long> renders = 0; // renders into the texture since bind (the render thread counts them)
     render_thread::RenderThread* thread = nullptr; // the scene's render thread; null = main thread
-    // Input (#119). Devices of their own per scene, children of renderControl, created at the first event: point ids
+    // Input. Devices of their own per scene, children of renderControl, created at the first event: point ids
     // and grabs live in the device, so two scenes fed the same host input (a press lands in both) must not share one.
     QPointingDevice* mouse = nullptr;
     QPointingDevice* touchscreen = nullptr;
@@ -136,7 +136,7 @@ template <class F> void onRenderThread(State* s, F&& f)
         f();
 }
 
-// Keyboard focus of a scene (#119): Qt Quick gives a window's root item the focus, and so its items the active focus,
+// Keyboard focus of a scene: Qt Quick gives a window's root item the focus, and so its items the active focus,
 // only while QGuiApplication's focus window is that window, its render window
 // (QQuickRenderControlPrivate::isRenderWindow) or none. A scene has no render window, and right after the host window
 // was clicked a Qt window can still be the focus window (its deactivation is queued). So while the scene has the focus
@@ -449,7 +449,7 @@ int bind(State* s, void* device, void* ntHandle, int width, int height, int form
             return fail(VLQT_OFFSCREEN_OPEN_FAILED, what, hr);
     }
 
-    // MSAA (#118): Qt renders into a multisample colour and depth-stencil texture of its own and resolves into the
+    // MSAA: Qt renders into a multisample colour and depth-stencil texture of its own and resolves into the
     // target at the end of the pass (MultisampleResolve; without the flag the count would mean "the target itself is
     // multisample"). With the linear pass Qt resolves into the pass's float source, the pass reads resolved pixels.
     // Layers in the scene stay single-sample (the render control's count, render-texture.md "MSAA").
@@ -758,7 +758,7 @@ int guardedCode(F&& f)
     return VLQT_OFFSCREEN_BAD_ARGUMENT;
 }
 
-// --- Input (#119; vlqt.h, render-texture.md "Input") ---
+// --- Input (vlqt.h, render-texture.md "Input") ---
 // Events go with QCoreApplication::sendEvent to the scene's QQuickWindow, like vlqt_test_send_*: synchronous, so the
 // FocusRelease filter, handlers and vlqt_window_poll see them as window input.
 
@@ -908,7 +908,7 @@ int sendTouchPointer(State* s, int type, int id, QPointF pos, Qt::KeyboardModifi
 }
 
 // A pen as QGuiApplication delivers one from Qt's Windows plugin: a QTabletEvent from the stylus (pointer handlers with
-// Devices = Pen take it, #351); if nobody accepts it, the same as a mouse event synthesized by Qt from the same device
+// Devices = Pen take it); if nobody accepts it, the same as a mouse event synthesized by Qt from the same device
 // (MouseArea, Controls, hover), with double clicks. id is ignored: one pen point. Public API only.
 int sendPenPointer(State* s, int type, QPointF pos, Qt::KeyboardModifiers modifiers, ulong ts)
 {

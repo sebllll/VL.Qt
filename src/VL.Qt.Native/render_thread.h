@@ -1,4 +1,4 @@
-/* render_thread.h - the Qt render threads of offscreen scenes (#116 phase 5; design: docs/decisions/render-texture.md,
+/* render_thread.h - the Qt render threads of offscreen scenes (phase 5; design: docs/decisions/render-texture.md,
  * "Qt render thread").
  *
  * A pool of threads with a Qt event loop, shared by every offscreen scene of the process (scenes of every app host).

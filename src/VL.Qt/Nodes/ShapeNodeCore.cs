@@ -10,7 +10,7 @@ using VL.Qt.Paths;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Shared core of the nodes Line, Polyline and Polygon (#154, package 03): the element specific inputs (<see cref="Props"/>), the
+    /// Shared core of the nodes Line, Polyline and Polygon (package 03): the element specific inputs (<see cref="Props"/>), the
     /// description of the <see cref="Shape"/> (<see cref="Create"/>) and the warning for too many points. The public node classes are thin shells
     /// that pass their pins to <see cref="Describe"/>; Polygon passes Closed = true, Line the points of <see cref="LinePoints"/>.
     /// The points live in the parent space: the node has no Anchor and no Size pin, it reports

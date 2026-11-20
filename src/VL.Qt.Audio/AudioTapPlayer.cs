@@ -4,7 +4,7 @@ using System.Threading;
 namespace VL.Qt.Audio
 {
     /// <summary>
-    /// The sync loop of Video (VL.Audio) (#22, protocol.h "Audio tap"), free of VL.Audio so that tests can drive it with
+    /// The sync loop of Video (VL.Audio) (protocol.h "Audio tap"), free of VL.Audio so that tests can drive it with
     /// simulated clocks. Pulls frames from an audio tap and resamples them so that a frame due at d (the moment Qt shows the
     /// matching picture) leaves the speaker at d + <see cref="TargetDelayNs"/>.
     /// <para>

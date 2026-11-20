@@ -1,4 +1,4 @@
-/* shader_resource.h - resource kind VLQT_RES_KIND_SHADER (#437, effects package 03; runtime bake #483).
+/* shader_resource.h - resource kind VLQT_RES_KIND_SHADER (effects package 03; runtime bake).
  *
  * One shader of one stage for the ShaderEffect item (protocol.h "ShaderEffect", vlqt.h vlqt_res_load_shader /
  * vlqt_res_load_shader_source).
@@ -14,7 +14,7 @@
  *           Every problem ends in Failed with RES_EV_ERROR; bake errors one line per glslang message,
  *           "fragment code, line <n>: <text>".
  *           A uniform or sampler named like a GLSL builtin (`length`, ...) is renamed in the GLSL code but not in
- *           the reflection, so the OpenGL backend never sets it: RES_EV_WARNING (#77). Checked on the GLSL variant of
+ *           the reflection, so the OpenGL backend never sets it: RES_EV_WARNING. Checked on the GLSL variant of
  *           a .qsb, or for a source on another backend on an extra GLSL 150 translation (cached with the bake).
  *   upload: nothing (no GPU object, RES_EV_INFO all 0); each ShaderEffect item builds its pipeline from the QShader.
  * Device lost: CPU data only, nothing to restore. A new load on a Ready id keeps the old shader until the new one is
@@ -59,7 +59,7 @@ private:
 
     // decode result (worker)
     QShader m_shader;
-    std::string m_warning; // a uniform or sampler the GLSL translation renamed (#77), for Kind::takeWarning
+    std::string m_warning; // a uniform or sampler the GLSL translation renamed, for Kind::takeWarning
 };
 
 // The kind for the manager (resources.cpp kindOf).
@@ -68,11 +68,11 @@ Kind* kind();
 // vlqt_res_load_shader: utf8Path = .qsb file or "builtin:<name>", stage = VLQT_SHADER_STAGE_*. 0 / -7 / -9.
 int load(uint64_t id, const char* utf8Path, int stage);
 
-// vlqt_res_load_shader_source (#483): utf8Source = full Qt GLSL, baked in the worker (QShaderBaker), cached per hash.
+// vlqt_res_load_shader_source: utf8Source = full Qt GLSL, baked in the worker (QShaderBaker), cached per hash.
 // 0 / -7 / -9.
 int loadSource(uint64_t id, const char* utf8Source, int stage);
 
-// vlqt_shader_reflect (#488): synchronous SPIR-V bake under s_bakeMutex + QShaderDescription as text (format in
+// vlqt_shader_reflect: synchronous SPIR-V bake under s_bakeMutex + QShaderDescription as text (format in
 // vlqt.h). Returns the required length without terminator, -7 on bad arguments. Any thread.
 int reflect(const char* utf8Source, int stage, char* buf, int bufLen);
 

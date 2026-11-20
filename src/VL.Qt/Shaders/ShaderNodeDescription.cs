@@ -57,7 +57,7 @@ namespace VL.Qt.Shaders
     }
 
     /// <summary>
-    /// Node description of one shader file (#488). init (lazy, when vvvv needs the pins): read
+    /// Node description of one shader file. init (lazy, when vvvv needs the pins): read
     /// the files, reflect, build the pins (Input if the shader samples source, image and uniform pins, fixed ShaderEffect
     /// pins), errors and warnings as messages of the description. invalidated: content change of the own .frag/.vert;
     /// vvvv then asks for a new description and keeps links on pins with the same name.
@@ -130,7 +130,7 @@ namespace VL.Qt.Shaders
                 });
 
         /// <summary>
-        /// Middle click / Definition > Open (#498): opens the .frag and, if there is one, the .vert next to it in the
+        /// Middle click / Definition > Open: opens the .frag and, if there is one, the .vert next to it in the
         /// default editor, like VL.Stride's shader nodes.
         /// </summary>
         internal static bool OpenEditor(ShaderFile file, ILogger logger)
@@ -157,7 +157,7 @@ namespace VL.Qt.Shaders
     }
 
     /// <summary>
-    /// Instance of a generated shader node: a <see cref="ShaderEffectNode"/> fed with the file content (source path #483)
+    /// Instance of a generated shader node: a <see cref="ShaderEffectNode"/> fed with the file content (source path)
     /// and the uniform pins as Spread&lt;Uniform&gt;, rebuilt only when a pin changed.
     /// </summary>
     internal sealed class ShaderNodeInstance : IDisposable

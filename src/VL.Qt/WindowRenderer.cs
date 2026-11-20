@@ -24,7 +24,7 @@ namespace VL.Qt
         private string _createError = "";
         private Native.vlqt_perf _lastPerf;
         private bool _perfChanged;
-        // #574: percentiles sort two rings in QtNative, so they are recomputed at most every kPercentileIntervalMs
+        // percentiles sort two rings in QtNative, so they are recomputed at most every kPercentileIntervalMs
         // (the ring spans ~1 s, ~4 updates per second are enough); the averages of _lastPerf stay per pump.
         private const long kPercentileIntervalMs = 250;
         private Native.vlqt_perf_stats _stats;
@@ -42,14 +42,14 @@ namespace VL.Qt
         /// flash); later changes via <see cref="SetMode"/>.</param>
         /// <param name="iconPath">Full path of the window icon, set before the first show (no flash of the default icon);
         /// null = default icon. The result is in <see cref="IconResult"/>, later changes via <see cref="SetIcon"/>.</param>
-        /// <param name="samples">MSAA count set before the first show (no window swap at the first frame, #118); not set =
+        /// <param name="samples">MSAA count set before the first show (no window swap at the first frame); not set =
         /// QtNative's creation default. The count used is in <see cref="UsedSamples"/>, later changes via <see cref="SetSamples"/>.</param>
         public WindowRenderer(SceneRegistry scene, string? title, RectangleF bounds, bool vSync = true, uint mode = 0, string? iconPath = null,
             Optional<MultisampleCount> samples = default)
         {
             _core = new SceneCore(scene);
             _title = title ?? "";
-            // Position and size are set in QtNative before show (#100): no flash at Qt's default position.
+            // Position and size are set in QtNative before show: no flash at Qt's default position.
             var a = WindowPlacement.FromBounds(bounds);
             _window = Native.vlqt_window_create_at(a.X, a.Y, a.Width, a.Height, _title, vSync ? 1 : 0);
             _core.Handle = _window;
@@ -80,7 +80,7 @@ namespace VL.Qt
 
         /// <summary>
         /// Whether the window is shown (false after X/<see cref="Hide"/> and after <see cref="Dispose"/>). Queried live from Qt
-        /// (QWindow::isVisible, a plain getter), not cached in the pump (#93): a cached value was false in the frame of the
+        /// (QWindow::isVisible, a plain getter), not cached in the pump: a cached value was false in the frame of the
         /// creation (node created, Undo, F5, Bounds changed) and stayed false whenever this window was not pumped.
         /// </summary>
         public bool IsVisible => !_disposed && _window != IntPtr.Zero && Native.vlqt_window_is_visible(_window) != 0;
@@ -91,8 +91,8 @@ namespace VL.Qt
 
         /// <summary>
         /// Last window geometry reported by QtNative (EV_WINDOW_GEOMETRY, DIP, Bounds convention: outer top-left + client
-        /// size, plus client bounds); null until the first pump after creation. Used by Save Bounds (#143) and the
-        /// Client Bounds output (#465).
+        /// size, plus client bounds); null until the first pump after creation. Used by Save Bounds and the
+        /// Client Bounds output.
         /// </summary>
         public WindowGeometry? Geometry { get; private set; }
 
@@ -104,10 +104,10 @@ namespace VL.Qt
 
         internal Reconciler Reconciler => _core.Reconciler;
 
-        /// <summary>Command buffer of the next apply (test seam: SmokeTest injects an invalid command, #76).</summary>
+        /// <summary>Command buffer of the next apply (test seam: SmokeTest injects an invalid command).</summary>
         internal CommandWriter Commands => _core.Commands;
 
-        /// <summary>Number of resyncs after failed applies (#76).</summary>
+        /// <summary>Number of resyncs after failed applies.</summary>
         internal int Resyncs => _core.Resyncs;
 
         /// <summary>Perf of the last pump; a new record only when the values changed.</summary>
@@ -187,7 +187,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// #24: frame start, after QtNative delivered the queued input: events into the sinks, so the element nodes see them
+        /// frame start, after QtNative delivered the queued input: events into the sinks, so the element nodes see them
         /// in this frame. The frame end (<see cref="AfterEvents"/>) polls again; each event is in exactly one of both polls.
         /// </summary>
         public void PollInput()
@@ -197,7 +197,7 @@ namespace VL.Qt
             PollEvents(frameStart: true);
         }
 
-        /// <summary>#245: adds ops/reconcile of this window to the host frame and reports it to the native PerfMonitor.</summary>
+        /// <summary>adds ops/reconcile of this window to the host frame and reports it to the native PerfMonitor.</summary>
         public void ReportHostFrame(Native.vlqt_host_frame frame)
         {
             if (_disposed || _window == IntPtr.Zero)
@@ -207,7 +207,7 @@ namespace VL.Qt
             Native.vlqt_window_report_host_frame(_window, frame);
         }
 
-        /// <summary>Last native PerfSample (budget warning, #241). false = none yet.</summary>
+        /// <summary>Last native PerfSample (budget warning). false = none yet.</summary>
         public bool TryGetLastSample(out Native.vlqt_perf_sample sample)
         {
             sample = default;
@@ -236,7 +236,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Sets the window icon live (vlqt_window_set_icon, #517). <paramref name="fullPath"/> null = the built-in default
+        /// Sets the window icon live (vlqt_window_set_icon). <paramref name="fullPath"/> null = the built-in default
         /// icon; QtNative resolves a relative path against the working directory, so pass a full path. A file that cannot
         /// be loaded leaves the default icon (<see cref="IconResult"/> -7, text in <see cref="Native.LastError"/>).
         /// </summary>
@@ -247,7 +247,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Sets the MSAA count of the window (vlqt_window_set_samples, #118). QtNative clamps it to the device and, for a
+        /// Sets the MSAA count of the window (vlqt_window_set_samples). QtNative clamps it to the device and, for a
         /// shown window, swaps the window inside the same handle (some ms, the window is recreated on screen once), so call it
         /// only when the value changed. Returns <see cref="UsedSamples"/>.
         /// </summary>
@@ -258,7 +258,7 @@ namespace VL.Qt
             return UsedSamples;
         }
 
-        /// <summary>Debug overlay for all elements live (vlqt_window_set_debug, #280).</summary>
+        /// <summary>Debug overlay for all elements live (vlqt_window_set_debug).</summary>
         public void SetDebug(bool on)
         {
             if (!_disposed && _window != IntPtr.Zero)

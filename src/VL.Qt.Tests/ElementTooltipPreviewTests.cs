@@ -9,7 +9,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Tooltip preview of an element (#545) on a fake resource API: throttle, change test, one grab at a time, text, release.</summary>
+    /// <summary>Tooltip preview of an element on a fake resource API: throttle, change test, one grab at a time, text, release.</summary>
     public class ElementTooltipPreviewTests
     {
         private FakeResourceApi _api = null!;
@@ -83,7 +83,7 @@ namespace VL.Qt.Tests
         [Test]
         public void NewInstanceEveryFrame_BeforeRendererUpdate_FoundByItsSlot()
         {
-            // #548: an animated Group is a new instance every frame (same sink slot); the tooltip runs before the renderer.
+            // an animated Group is a new instance every frame (same sink slot); the tooltip runs before the renderer.
             var slot = new SinkSlot(new ElementSink(), 0);
             Show(new Group { Sink = slot, Size = new Vector2(10, 10) });
             for (var frame = 0; frame < 3; frame++)

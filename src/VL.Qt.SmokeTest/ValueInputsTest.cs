@@ -7,7 +7,7 @@ using System.Text;
 using VL.Qt;
 
 // Value inputs of #301 (package 2a): QtQuick.Controls CheckBox and Switch (Toggle, bool), Slider (f32) and TextField
-// (string), style Basic, raw protocol against QtNative. Same guarantees as SpinBox (#210): EV_VALUE only after user
+// (string), style Basic, raw protocol against QtNative. Same guarantees as SpinBox: EV_VALUE only after user
 // changes (click/Space, press/drag/wheel/arrow keys, Enter/focus loss with changed text), never for SET, the user value
 // captured at the signal survives a stale SET before the poll, several changes in one frame = one event, a rebind drops
 // a change not polled. Input comes from the TEST exports vlqt_test_send_mouse / _wheel / _key_text.
@@ -18,9 +18,9 @@ public static class ValueInputsTest
     [Test, Category("valueinputs")]
     public static void ValueInputs() => Scenario.Run(Run);
 
-    // Slider: distance of the handle centre at 0 / 1 from the Bounds edge. Base style (#292): frame padding + handle radius.
+    // Slider: distance of the handle centre at 0 / 1 from the Bounds edge. Base style: frame padding + handle radius.
     private const float SliderInset = 8 + 14 / 2; // BaseStyle FramePaddingX + IndicatorSize / 2
-    private const float StyleMin = 24; // BaseStyle FrameMinWidth/FrameMinHeight: lower bound of every implicit size (#292)
+    private const float StyleMin = 24; // BaseStyle FrameMinWidth/FrameMinHeight: lower bound of every implicit size
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
     private static extern int vlqt_test_send_key_text(IntPtr w, int key, int modifiers, [MarshalAs(UnmanagedType.LPUTF8Str)] string? text);
 
@@ -119,14 +119,14 @@ public static class ValueInputsTest
         // --- Toggle: CheckBox and Switch, no text. AUTO_SIZE default on -> indicator + padding; SET VALUE no echo.
         cmd.Reset();
         cmd.Create(C, Protocol.Type.CheckBox);
-        VL.Qt.Styles.BaseStyle.Write(cmd, C); // like the Reconciler (#292)
+        VL.Qt.Styles.BaseStyle.Write(cmd, C); // like the Reconciler
         cmd.SetPlace(C, 100, 100, 0, 0);
         cmd.SetBool(C, Protocol.Prop.Value, false);
         cmd.SetBool(C, Protocol.Prop.Enabled, true);
         cmd.Reparent(C, 0, 0);
         cmd.Bind(C, HC, 0);
         cmd.Create(Sw, Protocol.Type.Switch);
-        VL.Qt.Styles.BaseStyle.Write(cmd, Sw); // like the Reconciler (#292)
+        VL.Qt.Styles.BaseStyle.Write(cmd, Sw); // like the Reconciler
         cmd.SetPlace(Sw, 300, 100, 0, 0);
         cmd.SetBool(Sw, Protocol.Prop.Value, true);
         cmd.Reparent(Sw, 0, 1);
@@ -204,7 +204,7 @@ public static class ValueInputsTest
         // --- Slider: Qt defaults 0..1, step 0. Fixed Bounds 400 x 40 at (100, 200): Basic padding 6, handle 28 ->
         // position p at x = 100 + 6 + 14 + p * (400 - 12 - 28) = 120 + 360 p.
         cmd.Create(Sl, Protocol.Type.Slider);
-        VL.Qt.Styles.BaseStyle.Write(cmd, Sl); // like the Reconciler (#292)
+        VL.Qt.Styles.BaseStyle.Write(cmd, Sl); // like the Reconciler
         cmd.SetPlace(Sl, 100, 200, 0, 0);
         cmd.Reparent(Sl, 0, 0);
         cmd.Bind(Sl, HL, 0);
@@ -317,7 +317,7 @@ public static class ValueInputsTest
 
         // --- TextField: commit on Enter / focus loss only if the text changed; SET VALUE no echo, also not on focus loss.
         cmd.Create(T1, Protocol.Type.TextField);
-        VL.Qt.Styles.BaseStyle.Write(cmd, T1); // like the Reconciler (#292)
+        VL.Qt.Styles.BaseStyle.Write(cmd, T1); // like the Reconciler
         cmd.SetPlace(T1, 100, 300, 0, 0);
         cmd.SetString(T1, Protocol.Prop.Value, "start");
         cmd.SetString(T1, Protocol.Prop.Placeholder, "Name");
@@ -326,7 +326,7 @@ public static class ValueInputsTest
         cmd.Reparent(T1, 0, 0);
         cmd.Bind(T1, HT, 0);
         cmd.Create(T2, Protocol.Type.TextField);
-        VL.Qt.Styles.BaseStyle.Write(cmd, T2); // like the Reconciler (#292)
+        VL.Qt.Styles.BaseStyle.Write(cmd, T2); // like the Reconciler
         cmd.SetBool(T2, Protocol.Prop.AutoSize, false);
         cmd.SetPlace(T2, 100, 400, 300, 40);
         cmd.Reparent(T2, 0, 1);

@@ -19,7 +19,7 @@ qt_standard_project_setup()
 
 add_library(vlqt SHARED vlqt.cpp vlqt.h device.cpp device.h perf.cpp perf.h commands.cpp commands.h effectchain.cpp effectchain.h elements.cpp elements.h events.cpp events.h touch.cpp touch.h debug.cpp debug.h feedback.cpp feedback.h resources.cpp resources.h image_resource.cpp image_resource.h qtimageitem.cpp qtimageitem.h snapshot_resource.cpp snapshot_resource.h image_writer.cpp image_writer.h audio_tap.cpp audio_tap.h shader_resource.cpp shader_resource.h shadereffectitem.cpp shadereffectitem.h qmlitem.cpp qmlitem.h vlstyle.cpp vlstyle.h offscreen.cpp offscreen.h render_thread.cpp render_thread.h test_offscreen.cpp pathelement.cpp pathelement.h protocol.h)
 target_compile_definitions(vlqt PRIVATE VLQT_BUILD)
-# Base style "VLQt" (#292): Qt Quick Controls style module embedded in QtNative (qrc:/qt/qml/VLQt, on the engine's
+# Base style "VLQt": Qt Quick Controls style module embedded in QtNative (qrc:/qt/qml/VLQt, on the engine's
 # default import path), nothing to deploy. Plain resources + hand-written qmldir: no qmlcachegen/plugin target; the
 # C++ part (attached VlStyle) is registered at app start as module VLQt.Style (vlstyle.cpp). Controls without a file
 # here fall back to Basic (qmldir "import QtQuick.Controls.Basic auto"). A new control = <Control>.qml in style/VLQt,
@@ -35,7 +35,7 @@ qt_add_resources(vlqt "vlqt_style"
         style/VLQt/Switch.qml
         style/VLQt/SpinBox.qml
         style/VLQt/TextField.qml)
-# Default window icon (#517): PNGs in several sizes (scaled from docs/icon/icon.png) embedded as
+# Default window icon: PNGs in several sizes (scaled from docs/icon/icon.png) embedded as
 # :/vlqt/icon/default-<size>.png, so it also shows in an export without a file next to it. Artwork replaceable: same
 # file names; a new size = file in icon/ plus a line below and in vlqt.cpp (defaultIcon).
 qt_add_resources(vlqt "vlqt_icon"
@@ -49,7 +49,7 @@ qt_add_resources(vlqt "vlqt_icon"
         icon/default-64.png
         icon/default-128.png
         icon/default-256.png)
-# Sanitizer builds (Linux, gcc/clang; #365): only QtNative is instrumented, the host (dotnet) gets the runtime per
+# Sanitizer builds (Linux, gcc/clang): only QtNative is instrumented, the host (dotnet) gets the runtime per
 # LD_PRELOAD (tools/test-linux.sh --sanitize). Own build/out dir (presets linux-*-asan/-tsan, build-native.sh --sanitize).
 set(VLQT_SANITIZE "" CACHE STRING "Sanitizer for QtNative: empty, address or thread")
 set_property(CACHE VLQT_SANITIZE PROPERTY STRINGS "" address thread)
@@ -60,18 +60,18 @@ if(VLQT_SANITIZE)
     target_compile_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE} -fno-omit-frame-pointer -g)
     target_link_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE})
 endif()
-target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick Qt6::QuickPrivate Qt6::QuickControls2 Qt6::Multimedia) # GuiPrivate: QRhi (GPU timestamps); QuickPrivate: QQuickPointerDeviceHandler (touch.h, check on Qt updates); QuickControls2: QQuickStyle; Multimedia: QAudioBufferOutput of the audio tap (#22, deployed for the Video element anyway)
-# ShaderToolsPrivate: QShaderBaker (runtime bake of ShaderEffect sources, #483). rhi/qshaderbaker.h lies only in the
+target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick Qt6::QuickPrivate Qt6::QuickControls2 Qt6::Multimedia) # GuiPrivate: QRhi (GPU timestamps); QuickPrivate: QQuickPointerDeviceHandler (touch.h, check on Qt updates); QuickControls2: QQuickStyle; Multimedia: QAudioBufferOutput of the audio tap (deployed for the Video element anyway)
+# ShaderToolsPrivate: QShaderBaker (runtime bake of ShaderEffect sources). rhi/qshaderbaker.h lies only in the
 # versioned include dir (include/QtShaderTools/<ver>/QtShaderTools), which just the Private target adds (RHI API,
 # limited compatibility guarantees: check on Qt updates). Qt6ShaderTools is deployed next to QtNative.
 target_link_libraries(vlqt PRIVATE Qt6::ShaderTools Qt6::ShaderToolsPrivate)
-# QuickShapes: Shape/ShapePath for Line, Polyline, Polygon, Path (#154). QuickShapesPrivate: QQuickShape/QQuickShapePath
+# QuickShapes: Shape/ShapePath for Line, Polyline, Polygon, Path. QuickShapesPrivate: QQuickShape/QQuickShapePath
 # (qquickshape_p.h) built from C++ with typed setters (makeShape in elements.cpp); VlPathElement (pathelement.h)
 # subclasses the private QQuickCurve of QuickPrivate (qquickpath_p.h). Private API, limited compatibility guarantees:
 # check on Qt updates. Qt6QuickShapes and qml/QtQuick/Shapes are deployed next to QtNative (qml/deploy.qml).
 target_link_libraries(vlqt PRIVATE Qt6::QuickShapes Qt6::QuickShapesPrivate)
 if(WIN32)
-    target_link_libraries(vlqt PRIVATE d3d11 dxgi) # device.cpp: one D3D11 device per process (#358)
+    target_link_libraries(vlqt PRIVATE d3d11 dxgi) # device.cpp: one D3D11 device per process
     # linear_pass.cpp: QtTexture into SRGB and float textures; d3dcompiler_47.dll ships with Windows 10 and up.
     target_sources(vlqt PRIVATE linear_pass.cpp linear_pass.h)
     target_link_libraries(vlqt PRIVATE d3dcompiler)
@@ -100,7 +100,7 @@ if(NOT WIN32)
         "LINKER:--no-undefined")
 endif()
 
-# ShaderEffect (#437): bundled shaders src/VL.Qt.Native/shaders/<name>.frag|.vert are baked at build time by qsb (Qt host
+# ShaderEffect: bundled shaders src/VL.Qt.Native/shaders/<name>.frag|.vert are baked at build time by qsb (Qt host
 # tool, build-time only: qsb is never deployed or packed) into <out>/shaders/<name>.frag.qsb|.vert.qsb next to qml/.
 # Targets: GLSL 100es/120/150 (OpenGL, GLES), HLSL 5.0 (D3D11), MSL 1.2 (Metal), plus SPIR-V (Vulkan) by default.
 # Own custom commands instead of qt_add_shaders: that one embeds into a target's resources, we need loose files.

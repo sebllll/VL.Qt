@@ -7,7 +7,7 @@ namespace VL.Qt.Elements
     /// <summary>
     /// Draws a pre-baked .qsb fragment shader (optionally with a vertex shader) over its bounds, optionally sampling
     /// an <see cref="Input"/> element as sampler2D "source". Uniforms are matched by name through the shader's
-    /// reflection (protocol.h "ShaderEffect", #437).
+    /// reflection (protocol.h "ShaderEffect").
     /// </summary>
     public sealed class ShaderEffect : Element
     {

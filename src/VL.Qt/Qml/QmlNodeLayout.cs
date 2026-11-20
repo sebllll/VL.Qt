@@ -14,7 +14,7 @@ using VL.Qt.Shaders;
 namespace VL.Qt.Qml
 {
     /// <summary>
-    /// Input pin of a declared, not readonly property. Sending rule (#107): the value is not sent while it equals
+    /// Input pin of a declared, not readonly property. Sending rule: the value is not sent while it equals
     /// <see cref="QmlPropertyDecl.Default"/> and was never different; once it differs it is sent, and from then on on every
     /// change (also back to the default). <see cref="AlwaysSend"/> (required property): sent from the first frame.
     /// </summary>
@@ -46,7 +46,7 @@ namespace VL.Qt.Qml
     }
 
     /// <summary>
-    /// The exact pins of a generated QML node (#107), built once per node description from the parsed declarations. Both the
+    /// The exact pins of a generated QML node, built once per node description from the parsed declarations. Both the
     /// description (<see cref="InputDescriptions"/>, <see cref="OutputDescriptions"/>) and the instance
     /// (<see cref="QmlNodeInstance"/>) take the order from here.
     /// <para>Inputs, in this order:</para>

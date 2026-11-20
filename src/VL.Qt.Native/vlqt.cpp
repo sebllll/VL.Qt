@@ -45,12 +45,12 @@
 #include <QtQuick/QSGRendererInterface>
 #include <rhi/qrhi.h> // vlqt_window_samples: QRhiSwapChain
 #include <QtQuickControls2/QQuickStyle>
-// Dirty item list of a window (change count, #544): private API, check on Qt updates.
+// Dirty item list of a window (change count): private API, check on Qt updates.
 // QAbstractAnimationTimer / QUnifiedTimer: the keep-alive timer of the vvvv animation clock (VlqtAnimationDriver).
 #include <QtCore/private/qabstractanimation_p.h>
 #include <QtQuick/private/qquickitem_p.h>
 #include <QtQuick/private/qquickwindow_p.h>
-// Touch moves held back until the next render (#24, vlqt_app_deliver_input): private API, check on Qt updates.
+// Touch moves held back until the next render (vlqt_app_deliver_input): private API, check on Qt updates.
 #include <QtQuick/private/qquickdeliveryagent_p_p.h>
 
 #ifdef _WIN32
@@ -69,11 +69,11 @@
 #include <unistd.h>
 #endif
 
-// TEST ONLY (vlqt_test_send_touch, #319): event points with an item-local position, one registered touchscreen.
+// TEST ONLY (vlqt_test_send_touch): event points with an item-local position, one registered touchscreen.
 #include <QtGui/private/qeventpoint_p.h>
 #include <QtGui/private/qpointingdevice_p.h>
 #include <QtGui/qpa/qwindowsysteminterface.h>
-// vlqt_app_deliver_input (#24): QWindowSystemInterface::flushWindowSystemEvents. TEST ONLY: native positions of queued input.
+// vlqt_app_deliver_input: QWindowSystemInterface::flushWindowSystemEvents. TEST ONLY: native positions of queued input.
 #include <QtGui/private/qhighdpiscaling_p.h>
 
 #include <string>
@@ -92,14 +92,14 @@ namespace {
 // side thread, TSan finding #365); emitLog reads it once.
 std::atomic<vlqt_log_fn> g_log{nullptr};
 QString g_nativeDir;
-QString g_pipelineCachePath; // vlqt_set_pipeline_cache (#488), empty = Qt's pipeline cache off
+QString g_pipelineCachePath; // vlqt_set_pipeline_cache, empty = Qt's pipeline cache off
 std::string g_lastError;
 QGuiApplication* g_app = nullptr;
 
 void setError(const std::string& e) { g_lastError = e; }
 void setErrorQ(const QString& e) { g_lastError = e.toStdString(); }
 
-// #258: every message of QtNative and of Qt goes to the managed logger (vvvv Log window, logging providers).
+// every message of QtNative and of Qt goes to the managed logger (vvvv Log window, logging providers).
 // Levels: 0 debug, 1 info, 2 warning, 3 critical, 4 fatal (C# maps them to LogLevel); the category is passed verbatim.
 // VLQT_LOG_STDERR (set before process start) additionally mirrors everything to stderr: a diagnostic for exports
 // without a console logging provider, not a second log path of the library.
@@ -129,7 +129,7 @@ void messageHandler(QtMsgType type, const QMessageLogContext& ctx, const QString
 // Animation time comes from vvvv (IFrameClock), not from a wall clock (decisions/user-qml.md, timing.md).
 // QUnifiedTimer (Qt 6, qabstractanimation.cpp) computes its time as driverStartTime + driver->elapsed() while the driver
 // runs, so elapsed() must count from start() like QAnimationDriver's own timer: the absolute vvvv time made every
-// animation after the clock had moved jump by that time (one step to the end value; #104). When the driver is stopped,
+// animation after the clock had moved jump by that time (one step to the end value). When the driver is stopped,
 // QUnifiedTimer takes the wall clock instead: it stops the driver when no animation runs (stopTimer, the time base is
 // reset) and when only pauses run (localRestart, a wall-clock pause timer), and takes driverStartTime from the wall clock
 // at the next start. VlqtKeepAlive below keeps it running, so every delta is a difference of vvvv times.
@@ -179,7 +179,7 @@ protected:
     }
 };
 
-// F11 and Alt+Enter toggle fullscreen like VL.Skia's renderer (#234): the same path as the Fullscreen pin
+// F11 and Alt+Enter toggle fullscreen like VL.Skia's renderer: the same path as the Fullscreen pin
 // (vlqt_window_set_mode). The pin only acts on change, so a toggle by key stays until the pin changes.
 class FullscreenKeys : public QObject
 {
@@ -205,7 +205,7 @@ private:
     void* m_window;
 };
 
-// #374: Qt Quick never takes the focus away by itself, so an input element kept it until another one was clicked.
+// Qt Quick never takes the focus away by itself, so an input element kept it until another one was clicked.
 //   Esc        discards the running edit (TextField text -> vlqtCommitted, SpinBox text -> displayText of value) and
 //              releases the focus: the following focus loss finds nothing changed, so no EV_VALUE.
 //   Press      (mouse, touch, tablet) outside the focused element releases the focus *before* the press is delivered:
@@ -304,7 +304,7 @@ private:
 };
 
 #ifdef _WIN32
-// #301: vvvv's main thread runs a WinForms message loop. Its PreTranslateMessage hands every key message for a
+// vvvv's main thread runs a WinForms message loop. Its PreTranslateMessage hands every key message for a
 // non-WinForms HWND (our Qt windows) to IsDialogMessage(root), which takes Enter, Tab, Escape and the arrow keys for
 // dialog navigation unless the window asks for them via WM_GETDLGCODE. Qt answers 0 (DefWindowProc), so Enter never
 // reached a TextField or SpinBox (commit only on focus loss). Qt does its own focus handling: want all keys.
@@ -327,11 +327,11 @@ public:
 };
 #endif
 
-// At most one render per pump, and only inside the pump (#137). With the basic loop Qt renders on UpdateRequest,
+// At most one render per pump, and only inside the pump. With the basic loop Qt renders on UpdateRequest,
 // which vvvv's Win32 message loop also delivers between two pumps. A MultiEffect source (layer) requests a second,
 // redundant render right after each one (frame interval ~0.9 ms, "1100 fps"). Requests outside the pump or after
 // this pump's render are swallowed and delivered once at the end of the next pump. The pump never waits for VSync.
-// #314: several vvvv apps (entry points) pump the one QGuiApplication, each once per vvvv frame. Only the windows of the
+// several vvvv apps (entry points) pump the one QGuiApplication, each once per vvvv frame. Only the windows of the
 // pumping app may render (the others are blocked and keep their request for their own app's pump), so each window
 // still renders at most once per vvvv frame instead of once per app.
 class UpdateGate : public QObject
@@ -355,12 +355,12 @@ public:
     // Qt rendered this window in the last pump (and so polished its items). Valid until the next pump starts.
     bool rendered() const { return m_rendered; }
 
-    // Frames with a change of the scene (#544, vlqt_window_change_count): counted where Qt syncs a render, so a
+    // Frames with a change of the scene (vlqt_window_change_count): counted where Qt syncs a render, so a
     // static scene keeps the count however often the pump runs or Expose re-renders it.
     long long changeCount() const { return m_changeCount; }
     // The scene changed without a dirty item (e.g. the window color): count the next render.
     void markChanged() { m_changed = true; }
-    // Window swap (#118): the gate of the new window goes on with the change count of the old one, so the count never
+    // Window swap: the gate of the new window goes on with the change count of the old one, so the count never
     // goes back; the first render of the new window counts as a change (other sample count).
     void continueFrom(const UpdateGate& old)
     {
@@ -368,7 +368,7 @@ public:
         m_changed = true;
     }
 
-    // all = every window may render; else only the given gates (#314: the windows of the pumping app).
+    // all = every window may render; else only the given gates (the windows of the pumping app).
     static void beginPump(bool all, UpdateGate* const* active, int count)
     {
         s_inPump = true;
@@ -392,7 +392,7 @@ public:
         s_inPump = false;
     }
     static bool inPump() { return s_inPump; }
-    // #24: input delivered at the host frame start (vlqt_app_deliver_input) renders nothing: update requests are
+    // input delivered at the host frame start (vlqt_app_deliver_input) renders nothing: update requests are
     // swallowed as outside every pump, and an Expose is deferred to the next pump as well.
     static void beginDelivery() { s_delivering = true; }
     static void endDelivery() { s_delivering = false; }
@@ -418,9 +418,9 @@ protected:
         } else if (e->type() == QEvent::Expose && m_window->isExposed()
                    && (s_inPump ? m_blocked || m_rendered : s_delivering || !m_everRendered)) {
             // Re-expose after this pump's render (XWayland sends two Expose on show) and the initial Expose outside
-            // the pump (Windows: on show) render once in the pump instead (#214). Later Expose outside the pump
+            // the pump (Windows: on show) render once in the pump instead. Later Expose outside the pump
             // (live resize in Windows' modal size loop) still renders directly, except during the input delivery of
-            // the frame start (#24); un-expose always passes.
+            // the frame start; un-expose always passes.
             m_pending = true;
             return true;
         }
@@ -428,7 +428,7 @@ protected:
     }
 private:
     // The window's dirty items (Qt syncs them right after beforeSynchronizing) hold a change other than the footprint
-    // of a snapshot (#544, grabs must not count, or an open tooltip would grab a static scene forever): grabToImage
+    // of a snapshot (grabs must not count, or an open tooltip would grab a static scene forever): grabToImage
     // and a snapshot's frame source ref the item when they start and deref it when they are done (EffectReference on
     // the item, ChildrenStackingChanged on its parent), and the frame source comes and goes under the content item.
     // A real change in the same frame as such a ref (a reorder of the grabbed item's siblings) is missed until the
@@ -496,16 +496,16 @@ private:
     std::vector<QQuickItem*> m_contentChildren; // the content item's children at the last render, without frame sources
     static inline std::vector<QQuickItem*> s_children; // scratch, no allocation per render
     bool m_pending = false, m_rendered = false, m_everRendered = false;
-    bool m_blocked = false; // this pump belongs to another app (#314)
+    bool m_blocked = false; // this pump belongs to another app
     static inline bool s_inPump = false;
-    static inline bool s_delivering = false; // vlqt_app_deliver_input (#24)
+    static inline bool s_delivering = false; // vlqt_app_deliver_input
     static inline std::vector<UpdateGate*> s_gates;
 };
 
 // TEST ONLY: with VLQT_TEST_SYNTHETIC_INPUT=1 (read per window at create, SmokeTest) the window drops spontaneous
 // (OS) pointer/hover events, so a real cursor resting over a test window cannot change hover/press state; input
 // from vlqt_test_send_mouse (sendEvent, not spontaneous) passes, and so does queued input of the test devices
-// (vlqt_test_queue_mouse / _touch, spontaneous like platform input, #24).
+// (vlqt_test_queue_mouse / _touch, spontaneous like platform input).
 constexpr qint64 testTouchSystemId = 0x766c7174;
 constexpr qint64 testMouseSystemId = 0x766c716d;
 class SystemInputFilter : public QObject
@@ -553,7 +553,7 @@ bool testSyntheticInputOnly()
 }
 #endif
 
-// A window handle (void* of the vlqt_window_* exports): a window, or an offscreen scene (#116, offscreen.cpp) whose
+// A window handle (void* of the vlqt_window_* exports): a window, or an offscreen scene (offscreen.cpp) whose
 // QQuickWindow is driven by a QQuickRenderControl. Both share engine, scene, gate and perf; a scene has only the
 // FocusRelease input filter (closeFilter etc. stay null) and its own part in offscreen.
 struct Window {
@@ -567,10 +567,10 @@ struct Window {
     Qt::MouseButtons testButtons = Qt::NoButton; // vlqt_test_send_mouse: buttons held between test events
     QElapsedTimer testClock;                     // vlqt_test_send_mouse / _touch: event timestamps
     std::vector<std::pair<int, QPointF>> testTouch; // vlqt_test_send_touch: active points (id, window DIP)
-    Qt::MouseButtons testQueuedButtons = Qt::NoButton;    // vlqt_test_queue_mouse (#24)
-    std::vector<std::pair<int, QPointF>> testQueuedTouch; // vlqt_test_queue_touch (#24): active points (id, window DIP)
+    Qt::MouseButtons testQueuedButtons = Qt::NoButton;    // vlqt_test_queue_mouse
+    std::vector<std::pair<int, QPointF>> testQueuedTouch; // vlqt_test_queue_touch: active points (id, window DIP)
     unsigned mode = 0;                           // vlqt_window_set_mode: requested vlqt_window_mode bits
-    // #234: geometry before fullscreen (DIP, frame position like vlqt_window_create_at), restored when leaving it
+    // geometry before fullscreen (DIP, frame position like vlqt_window_create_at), restored when leaving it
     bool fsSaved = false;
     QPoint fsFramePos;
     QSize fsSize;
@@ -578,7 +578,7 @@ struct Window {
 };
 
 // vlqt_test_send_key*: deliver like the platform does, to the focus window. A Qt Quick popup of type Popup.Window
-// (e.g. the TextField context menu under Linux offscreen, #376) is its own Qt::Popup window and holds the keyboard
+// (e.g. the TextField context menu under Linux offscreen) is its own Qt::Popup window and holds the keyboard
 // focus; sent to the main window, Escape would never close it and all later keys would be lost. Once the popup is
 // hidden, a window manager gives the focus back to the main window; the offscreen QPA has none and leaves it on the
 // hidden popup (main window inactive, no active focus item), so the test hands it back here.
@@ -593,7 +593,7 @@ QWindow* testKeyTarget(Window* w)
     return w->window;
 }
 
-// The test input exports on an offscreen scene (#116): a scene takes input through vlqt_offscreen_send_* (#119).
+// The test input exports on an offscreen scene: a scene takes input through vlqt_offscreen_send_*.
 int notOnScene(const char* function)
 {
     setError(std::string(function) + ": not supported on an offscreen scene");
@@ -614,13 +614,13 @@ int guarded(F&& f)
 }
 
 #ifndef _WIN32
-// WSLg (#174): WSL has no DRM node (/dev/dri), only /dev/dxg, so Mesa's EGL loader finds no
+// WSLg: WSL has no DRM node (/dev/dri), only /dev/dxg, so Mesa's EGL loader finds no
 // hardware driver, Zink finds no Vulkan device (Ubuntu ships no Dozen) and Mesa falls back to llvmpipe.
 // GALLIUM_DRIVER=d3d12 selects Mesa's D3D12 Gallium driver (host GPU via /usr/lib/wsl/lib). Mesa reads it with
 // libc getenv when EGL initializes (first window), so setenv here, before QGuiApplication, is early enough.
 // Default under WSL; VLQT_GPU=software (set before process start) keeps Mesa's own choice.
 // A GALLIUM_DRIVER set by the user always wins.
-// #216: Wayland + d3d12 hangs WSLg at the first window/GL context (process in state D, whole WSL VM
+// Wayland + d3d12 hangs WSLg at the first window/GL context (process in state D, whole WSL VM
 // unresponsive until `wsl --shutdown`); xcb + d3d12 works. So when we set d3d12 ourselves and the
 // platform is not chosen explicitly, force QT_QPA_PLATFORM=xcb (Qt would otherwise pick Wayland via
 // WAYLAND_DISPLAY). An explicit wayland* platform together with d3d12 only gets a warning.
@@ -714,7 +714,7 @@ void applyWslGpuDefault()
     }
 }
 
-// #427: a minimal/kiosk Linux without any font (fontconfig finds none) renders all text as tofu boxes, silently.
+// a minimal/kiosk Linux without any font (fontconfig finds none) renders all text as tofu boxes, silently.
 // Warn in the vvvv log, then register the bundled DejaVu Sans (<native>/fonts, deploy-linux.sh) and make it the app
 // font. Only when there is no real font: with system fonts nothing changes. Needs the QGuiApplication.
 // QFontDatabase::families() is not empty then: Qt (QFontconfigDatabase) always lists the generic aliases "Sans Serif",
@@ -746,13 +746,13 @@ void ensureFonts()
 }
 #endif
 
-// Initial geometry (#100, #165), Qt logical pixels (DIP), applied before the first show so the window never
+// Initial geometry, Qt logical pixels (DIP), applied before the first show so the window never
 // appears at Qt's default position. Same rules as VL.Skia's SkiaRenderer.SetBounds, but via QScreen (platform
 // neutral, no user32): a window rect that intersects no screen, and the NaN sentinel, are centered on the primary
 // screen's working area; size < 1 = 600x400. The position is the outer top-left: setFramePosition marks it frame
 // inclusive, the platform plugin adds the frame when it creates the native window (Windows: from the window style,
 // xcb: NorthWest gravity), so the frame size need not be known yet. Wayland ignores client positions.
-// #517: embedded placeholder (CMakeLists.txt, :/vlqt/icon), several sizes so Windows picks title bar / taskbar / Alt-Tab sharp.
+// embedded placeholder (CMakeLists.txt, :/vlqt/icon), several sizes so Windows picks title bar / taskbar / Alt-Tab sharp.
 const QIcon& defaultIcon()
 {
     static const QIcon icon = [] {
@@ -801,7 +801,7 @@ void placeWindow(QQuickWindow* win, float x, float y, int width, int height)
         win->setFramePosition(pos);
 }
 
-// The parts of a window handle that windows and offscreen scenes (#116) share: the QML engine with QtNative's imports.
+// The parts of a window handle that windows and offscreen scenes share: the QML engine with QtNative's imports.
 QQmlEngine* newEngine()
 {
     auto* engine = new QQmlEngine();
@@ -811,7 +811,7 @@ QQmlEngine* newEngine()
 }
 
 // The event filters and the frame lock of an on-screen window, all children of win: close, update gate, frame lock,
-// fullscreen keys, focus release, test input. At creation and for the window swap (#118, replaceWindow).
+// fullscreen keys, focus release, test input. At creation and for the window swap (replaceWindow).
 void installWindowFilters(Window* w, QQuickWindow* win)
 {
     w->closeFilter = new CloseFilter(win);
@@ -820,12 +820,12 @@ void installWindowFilters(Window* w, QQuickWindow* win)
     win->installEventFilter(w->gate);
     vlqt::device::lockFrames(win); // windows only: a scene's render thread locks itself (offscreen.cpp)
     win->installEventFilter(new FullscreenKeys(win, w));
-    win->installEventFilter(new FocusRelease(win)); // #374
+    win->installEventFilter(new FocusRelease(win));
     if (testSyntheticInputOnly())
         win->installEventFilter(new SystemInputFilter(win)); // test only
 }
 
-// MSAA count of a window's swap chain (#118): R8G8B8A8_UNORM is the format of Qt's D3D11 swap chain (SDR).
+// MSAA count of a window's swap chain: R8G8B8A8_UNORM is the format of Qt's D3D11 swap chain (SDR).
 int clampWindowSamples(int requested, QQuickWindow* win)
 {
     constexpr int swapChainFormat = 28; // DXGI_FORMAT_R8G8B8A8_UNORM
@@ -851,13 +851,13 @@ void initShared(Window* w)
         }
     }
     w->window->setGraphicsConfiguration(cfg);
-    vlqt::device::attach(w->window); // one D3D11 device for all windows (#358), before the first expose
+    vlqt::device::attach(w->window); // one D3D11 device for all windows, before the first expose
     w->scene = new vlqt::Scene(w->window, w->engine);
     w->perf = new PerfMonitor(w->window, w->engine);
-    w->perf->setScene(w->scene); // F5 Scene page (#246); perf is deleted before scene
+    w->perf->setScene(w->scene); // F5 Scene page; perf is deleted before scene
 }
 
-// App fonts (#15, LoadFont node). One entry per font file, shared by every LoadFont node that names it.
+// App fonts (LoadFont node). One entry per font file, shared by every LoadFont node that names it.
 // Thread: QFontDatabase app fonts and every text layout belong to the Qt GUI thread, which is the vvvv main thread
 // (vlqt_app_init, basic render loop, no render thread). Adding there means the next layout in the same pump already
 // sees the family, so no queue to another thread is needed; calls from other threads are rejected.
@@ -900,7 +900,7 @@ void fontsEndFrame()
 
 } // namespace
 
-// Offscreen scenes (#116): the window handle part, declared in offscreen.h.
+// Offscreen scenes: the window handle part, declared in offscreen.h.
 namespace vlqt::offscreen {
 
 void* createHandle(QQuickWindow* window, State* state)
@@ -914,8 +914,8 @@ void* createHandle(QQuickWindow* window, State* state)
     // Change count (vlqt_window_change_count) only: without a platform window a scene gets no UpdateRequest or Expose,
     // so the gate's event filter is not installed.
     w->gate = new UpdateGate(window); // child of the window
-    // Input comes from vlqt_offscreen_send_* (#119); Esc and a press outside release the focus as in a window.
-    window->installEventFilter(new FocusRelease(window)); // #374, child of the window
+    // Input comes from vlqt_offscreen_send_*; Esc and a press outside release the focus as in a window.
+    window->installEventFilter(new FocusRelease(window)); // child of the window
     initShared(w);
     return w;
 }
@@ -956,7 +956,7 @@ bool sendTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<
     auto* devicePrivate = QPointingDevicePrivate::get(const_cast<QPointingDevice*>(device));
     // What QGuiApplication does before delivering a press: the device registers the point. Without it the grabs
     // of the delivery are not stored ("point is not in activePoints"), the release goes to every handler under the
-    // point and stacked Tap handlers all tap (#320).
+    // point and stacked Tap handlers all tap.
     if (press)
         devicePrivate->pointById(id);
     // The complete touch state: every active point, the changed one with its state, the others stationary.
@@ -1043,7 +1043,7 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         // Linux: Qt's default RHI backend (OpenGL; QSG_RHI_BACKEND overrides). Choosing a default is L4b.
         QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
         fmt.setSwapInterval(0);
-        // No MSAA samples here (#118): Qt gives a swap chain max(default, window) samples
+        // No MSAA samples here: Qt gives a swap chain max(default, window) samples
         // (QSGRhiSupport::chooseSampleCountForWindowWithRhi), so a default count would be a floor for every window.
         // Each window sets its own count (vlqt_window_create_at, vlqt_window_set_samples).
         QSurfaceFormat::setDefaultFormat(fmt);
@@ -1054,7 +1054,7 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         // (default 5 ms rounds up to ~16 ms+ on Windows: only ~1 in 4 pumps rendered).
         qputenv("QT_QPA_UPDATE_IDLE_TIME", "0");
         // Windows press-and-hold on a touchscreen sends a right click synthesized by the system; Qt Quick lets it
-        // through (only that one) unless this is 0. Touch has its own long press (Tap handler), so drop it (#321).
+        // through (only that one) unless this is 0. Touch has its own long press (Tap handler), so drop it.
         // Read once by Qt Quick on the first mouse event; an explicit value set before the start wins.
         if (!qEnvironmentVariableIsSet("QT_QUICK_ALLOW_SYNTHETIC_RIGHT_CLICK"))
             qputenv("QT_QUICK_ALLOW_SYNTHETIC_RIGHT_CLICK", "0");
@@ -1063,7 +1063,7 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         applyWslGpuDefault();
 #endif
 
-        // Qt Quick Controls style: the own base style "VLQt" on QtQuick.Templates (#292), embedded in QtNative
+        // Qt Quick Controls style: the own base style "VLQt" on QtQuick.Templates, embedded in QtNative
         // (qrc:/qt/qml/VLQt, CMakeLists.txt), values from the attached VlStyle (vlstyle.h). Controls without an own file
         // fall back to Basic, the only Qt style deployed (trim-deploy/trim-linux). The single place that picks it.
         QQuickStyle::setStyle(QStringLiteral("VLQt"));
@@ -1072,7 +1072,7 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         static int argc = 1;
         static char* argv[] = {const_cast<char*>("vvvv"), nullptr};
         g_app = new QGuiApplication(argc, argv);
-        // The calling thread is the Qt GUI thread from here on (#11).
+        // The calling thread is the Qt GUI thread from here on.
         vlqt::nameGuiThreadIfUnnamed("vlqt-gui");
         QGuiApplication::setQuitOnLastWindowClosed(false);
         emitLog(1, "vlqt.app", "QPA platform: " + QGuiApplication::platformName().toUtf8());
@@ -1080,7 +1080,7 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         ensureFonts();
 #endif
 #ifdef _WIN32
-        static DialogCodeFilter dialogCodeFilter; // Enter/Tab/Esc/arrows past IsDialogMessage (#301)
+        static DialogCodeFilter dialogCodeFilter; // Enter/Tab/Esc/arrows past IsDialogMessage
         g_app->installNativeEventFilter(&dialogCodeFilter);
 #endif
 
@@ -1109,7 +1109,7 @@ VLQT_API void vlqt_app_process_events_for(void* const* windows, int count)
         QElapsedTimer t;
         t.start();
         static std::vector<UpdateGate*> s_active; // reused, no allocation per pump
-        // #526: processEvents also dispatches the Win32 messages of the host thread; a host callback in there (vvvv
+        // processEvents also dispatches the Win32 messages of the host thread; a host callback in there (vvvv
         // restart) may destroy a window of this list, so its frame is ended only if the monitor is still alive.
         static std::vector<QPointer<PerfMonitor>> s_perf;
         s_active.clear();
@@ -1119,11 +1119,11 @@ VLQT_API void vlqt_app_process_events_for(void* const* windows, int count)
                 s_active.push_back(w->gate);
                 s_perf.emplace_back(w->perf);
             }
-        // Device lost (#367): also before anything renders, so no window builds a new QRhi on the removed device.
+        // Device lost: also before anything renders, so no window builds a new QRhi on the removed device.
         vlqt::device::checkLost();
-        vlqt::res::beginFrame(); // worker results + uploads within the budget, before the windows render (#359)
-        vlqt::QtImageItem::afterResourceFrame(); // Image elements take new Ready content, drawn in this pump (#361)
-        vlqt::ShaderEffectItem::afterResourceFrame(); // ShaderEffects take new Ready / Failed shaders (#437)
+        vlqt::res::beginFrame(); // worker results + uploads within the budget, before the windows render
+        vlqt::QtImageItem::afterResourceFrame(); // Image elements take new Ready content, drawn in this pump
+        vlqt::ShaderEffectItem::afterResourceFrame(); // ShaderEffects take new Ready / Failed shaders
         UpdateGate::beginPump(!windows, s_active.data(), int(s_active.size()));
         QCoreApplication::sendPostedEvents();
         QCoreApplication::processEvents(QEventLoop::AllEvents);
@@ -1131,7 +1131,7 @@ VLQT_API void vlqt_app_process_events_for(void* const* windows, int count)
         // Every window frame of this pump has ended: no lock may outlive it (device.h, lock order).
         vlqt::device::releaseFrameLocks();
         vlqt::res::endFrame(); // frees resources without references, never in a worker
-        fontsEndFrame();       // app fonts without references (#15)
+        fontsEndFrame();       // app fonts without references
         vlqt::device::checkLost();
         const float ms = float(t.nsecsElapsed() / 1e6);
         if (!windows)
@@ -1180,7 +1180,7 @@ VLQT_API int vlqt_driver_advance(double seconds)
         // An animation started since the last tick (in the apply, e.g. a QML Behavior retargeted by a property set every
         // frame) enters the running list of QAnimationTimer only through a queued startAnimations() call. Without this the
         // call ran in processEvents after the tick, so an animation restarted every frame was never advanced and stood
-        // still (#104). Delivering the queued calls first gives it this tick, like Qt's own loop does before a vsync tick.
+        // still. Delivering the queued calls first gives it this tick, like Qt's own loop does before a vsync tick.
         QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
         g_driver->setTime(seconds);
         g_driver->advance();
@@ -1220,10 +1220,10 @@ VLQT_API void* vlqt_window_create_at(float x, float y, int width, int height, co
         // change afterwards. 0 = Present never waits (default), >0 = VSync.
         // Start from the window's own format: QQuickWindow adds depth 24 + stencil 8 to the default format. Without
         // them the OpenGL default framebuffer has no depth buffer and Qt Quick's opaque pass (front to back, depth
-        // test) inverts the stacking order (Linux/GL only, D3D11 always gets a depth-stencil; #232).
+        // test) inverts the stacking order (Linux/GL only, D3D11 always gets a depth-stencil).
         QSurfaceFormat winFmt = w->window->requestedFormat();
         winFmt.setSwapInterval(swapInterval > 0 ? 1 : 0);
-        // MSAA (#118): 4 by default, the look of every window before the count became a choice; also fixed per
+        // MSAA: 4 by default, the look of every window before the count became a choice; also fixed per
         // QQuickWindow (vlqt_window_set_samples replaces the window).
         winFmt.setSamples(clampWindowSamples(4, w->window));
         w->window->setFormat(winFmt);
@@ -1265,7 +1265,7 @@ VLQT_API void vlqt_window_show(void* p)
     guarded([&]() -> int {
         if (auto* w = static_cast<Window*>(p); w && !w->offscreen) {
             if (w->mode & VLQT_WINDOW_MODE_FULLSCREEN)
-                w->window->showFullScreen(); // show() = showNormal() would drop the state set before show (#234)
+                w->window->showFullScreen(); // show() = showNormal() would drop the state set before show
             else
                 w->window->show();
         }
@@ -1593,7 +1593,7 @@ VLQT_API int vlqt_window_get_debug(void* p)
 }
 
 // Window modes (vlqt_window_set_mode): each applies one bit, w->mode already holds the new modes.
-// Frame on/off (Qt::FramelessWindowHint) without re-creating the window (#233). Also called by the fullscreen part
+// Frame on/off (Qt::FramelessWindowHint) without re-creating the window. Also called by the fullscreen part
 // when leaving fullscreen (restores the borderless state from w->mode).
 // Before the first show (no platform window yet) only the flag changes: placeWindow's setFramePosition keeps the
 // position frame inclusive, so the outer top-left = Bounds position, which without a frame is the client top-left.
@@ -1634,7 +1634,7 @@ static void applyFrameless(Window* w, bool on)
         return;
     // xcb: the window manager re-frames asynchronously; client geometry requested frame exclusive.
     // QWindow::setGeometry returns early for an unchanged rect, so the platform window would never see it. offscreen
-    // (CI, #255) recomputes its frame margins (2 px) only in QOffscreenWindow::setGeometry (no setWindowFlags), so the
+    // (CI) recomputes its frame margins (2 px) only in QOffscreenWindow::setGeometry (no setWindowFlags), so the
     // reported frame position kept the old margins and wandered by them on every toggle. The client rect is therefore
     // passed to the platform window directly, frame exclusive, as QWindow::setGeometry would.
     if (win->geometry() != client)
@@ -1654,7 +1654,7 @@ static void applyBorderless(Window* w, bool on)
     applyFrameless(w, on);
 }
 
-// Screen with the largest share of the window's frame rect, the rule of placeWindow (#165). Windows keeps
+// Screen with the largest share of the window's frame rect, the rule of placeWindow. Windows keeps
 // QWindow::screen() current while moving (MonitorFromWindow, nearest = largest intersection), xcb updates it from the
 // window center only, so it is computed here and set if it differs.
 static QScreen* screenWithLargestShare(QWindow* win)
@@ -1673,7 +1673,7 @@ static QScreen* screenWithLargestShare(QWindow* win)
     return best ? best : win->screen();
 }
 
-// #234: fullscreen on the screen the window is on now; off restores frame position, size and maximized state from
+// fullscreen on the screen the window is on now; off restores frame position, size and maximized state from
 // before and the Borderless state from w->mode. Hidden windows (Fullscreen pin on create, before show) only get the
 // state, show() keeps it.
 // Windows: Qt saves/restores the native frame itself and hides the frame while fullscreen; the explicit restore
@@ -1706,7 +1706,7 @@ static void applyFullscreen(Window* w, bool on)
         return;
     win->setWindowStates(w->fsSaved ? w->fsStates : Qt::WindowNoState);
     if (w->fsSaved) {
-        // Borderless state from w->mode (changes during fullscreen are only kept there, #233).
+        // Borderless state from w->mode (changes during fullscreen are only kept there).
         applyFrameless(w, w->mode & VLQT_WINDOW_MODE_BORDERLESS);
         if (!w->fsStates.testFlag(Qt::WindowMaximized)) { // maximized: Qt keeps the normal geometry itself
             win->setFramePosition(w->fsFramePos);
@@ -1737,7 +1737,7 @@ VLQT_API int vlqt_window_set_mode(void* p, unsigned int mask, unsigned int value
     });
 }
 
-// Window swap (#118, vlqt_window_set_samples; docs/decisions/render-texture.md, "MSAA"). The basic render loop fixes a
+// Window swap (vlqt_window_set_samples; docs/decisions/render-texture.md, "MSAA"). The basic render loop fixes a
 // window's sample count when it creates the window's QRhi (QSGGuiThreadRenderLoop::ensureRhi: the swap chain and the
 // render context that layers use); QWindow::destroy()/show() recreates the swap chain with the old count. So the handle
 // gets a new QQuickWindow with format f: same screen, geometry, window states, flags, title, icon, colour, filters,
@@ -1860,8 +1860,8 @@ VLQT_API int vlqt_window_apply(void* p, const unsigned char* buf, int len)
         const int rc = w->scene->apply(buf, len, err);
         if (rc != 0)
             setError(err);
-        w->scene->updateDebug(); // #279: show/hide/repaint the debug overlay, no-op while debug was never used
-        // Commands changed the scene: request the render ourselves (#137). Inside a MultiEffect source (layer)
+        w->scene->updateDebug(); // show/hide/repaint the debug overlay, no-op while debug was never used
+        // Commands changed the scene: request the render ourselves. Inside a MultiEffect source (layer)
         // Qt stops requesting updates for changed items after the first frames; the UpdateGate keeps it at one per pump.
         if (len > 0) {
             w->window->update();
@@ -1890,7 +1890,7 @@ VLQT_API int vlqt_window_poll(void* p, unsigned char* out, int cap)
             return -1;
         }
         // No render in this pump (Wayland: UpdateRequest only on the compositor's frame callback; not exposed,
-        // e.g. minimized): Qt has not polished, layouts would report stale geometry (#215).
+        // e.g. minimized): Qt has not polished, layouts would report stale geometry.
         if (!w->gate->rendered())
             w->scene->polish();
         return w->scene->poll(out, cap);
@@ -2006,7 +2006,7 @@ VLQT_API int vlqt_test_send_touch(void* p, int type, int id, float x, float y)
     });
 }
 
-// TEST ONLY: one mouse for vlqt_test_queue_mouse (#24), registered once like the touchscreen.
+// TEST ONLY: one mouse for vlqt_test_queue_mouse, registered once like the touchscreen.
 static const QPointingDevice* testMouseDevice()
 {
     static QPointer<QPointingDevice> s_device;
@@ -2137,7 +2137,7 @@ VLQT_API int vlqt_test_perf_spike(void* p, int phase, float ms)
     return 0;
 }
 
-// #261: header text of the F5 stats page as UTF-8 (HTML); returns the full length, copies up to len - 1 bytes.
+// header text of the F5 stats page as UTF-8 (HTML); returns the full length, copies up to len - 1 bytes.
 VLQT_API int vlqt_test_perf_stats_text(void* p, char* buf, int len)
 {
     auto* w = static_cast<Window*>(p);
@@ -2223,7 +2223,7 @@ VLQT_API int vlqt_test_send_key_text(void* p, int key, int modifiers, const char
     });
 }
 
-// Resources (#359): thin wrappers, the manager logs its own warnings (category VL.Qt.Resources).
+// Resources: thin wrappers, the manager logs its own warnings (category VL.Qt.Resources).
 VLQT_API int vlqt_res_create(int kind, unsigned long long* outId)
 {
     return guarded([&] {
@@ -2315,7 +2315,7 @@ VLQT_API int vlqt_res_read_preview(unsigned long long id, unsigned char* dst, in
     return guarded([&] { return vlqt::res::image::readPreview(id, dst, cap, desc); });
 }
 
-// Audio taps (#22): audio_tap.h; read runs on VL.Audio's audio thread.
+// Audio taps: audio_tap.h; read runs on VL.Audio's audio thread.
 VLQT_API int vlqt_res_audio_tap_init(unsigned long long id, int channels, int sampleRate)
 {
     return guarded([&] { return vlqt::res::audio::init(id, channels, sampleRate); });
@@ -2361,7 +2361,7 @@ VLQT_API int vlqt_test_res_element_ref(unsigned long long id, int delta)
     return guarded([&] { return vlqt::res::testElementRef(id, delta); });
 }
 
-// Tooltip previews (#543, package 01 #544).
+// Tooltip previews (package 01).
 VLQT_API long long vlqt_window_change_count(void* p)
 {
     long long count = vlqt::res::staleIdRc;

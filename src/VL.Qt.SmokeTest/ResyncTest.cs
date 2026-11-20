@@ -12,7 +12,7 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 using QtRect = VL.Qt.Elements.Rectangle;
 using static Pixels;
 
-// Resync after a failed apply (#76) through the real QtNative: an invalid command (SET Color with an f32 value → -7)
+// Resync after a failed apply through the real QtNative: an invalid command (SET Color with an f32 value → -7)
 // is injected in the middle of a frame's batch, the commands appended after it are dropped by QtNative.
 // The next frame must rebuild the scene completely; a permanently failing input must not loop.
 // Grabs go to <OutDir>/76_*.png.
@@ -91,7 +91,7 @@ public static class ResyncTest
         using (var a = s.Grab(r.Window, "76_after.png"))
             s.Check(Near(Px(a, 150, 150), 255, 0, 0) && Near(Px(a, 550, 150), 0x20, 0x20, 0x20), "normal diff updates work again");
 
-        // #275: a failing command on an element with a sink goes to that element (sink), not to the renderer's Error.
+        // a failing command on an element with a sink goes to that element (sink), not to the renderer's Error.
         var sink = new ElementSink();
         QtRect Bound(float x) => new() { Size = new Vector2(2, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(x, 1, 0), Fill = new Color4(0, 1, 0, 1), Sink = new SinkSlot(sink, 0) };
         var t3 = new Group { Size = new Vector2(8, 6), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0), Children = ImmutableArray.Create<Element>(Bound(1)) };

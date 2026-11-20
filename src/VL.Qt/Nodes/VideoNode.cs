@@ -21,7 +21,7 @@ namespace VL.Qt.Nodes
     public sealed class VideoNode : IDisposable
     {
         // The path is compared as string (value equality); the Path object is rebuilt only when it changes.
-        // Shared with Video (VL.Audio) in VL.Qt.Audio (#22): it sets AudioTap, this node never does.
+        // Shared with Video (VL.Audio) in VL.Qt.Audio: it sets AudioTap, this node never does.
         internal readonly record struct Props(string Path, bool Play, bool Loop, bool KeepLastFrame, float Rate, float Volume, VideoFillMode FillMode, ulong AudioTap = 0);
 
         private readonly ElementNode<Video, Props> _node;
@@ -33,7 +33,7 @@ namespace VL.Qt.Nodes
         internal VideoNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Video, Props>(addWarning, Create);
 
-        /// <summary>Builds the element from the inputs; also used by Video (VL.Audio) in VL.Qt.Audio (#22).</summary>
+        /// <summary>Builds the element from the inputs; also used by Video (VL.Audio) in VL.Qt.Audio.</summary>
         internal static readonly Func<CommonInputs, Props, SinkSlot, Video> Create = static (c, p, slot) => new Video
             {
                 Size = c.Size,

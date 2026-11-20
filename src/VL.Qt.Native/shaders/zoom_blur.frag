@@ -3,7 +3,7 @@
 // Box blur between uv scaled by 1 - k/2 and 1 + k/2 around center (centred on the pixel, the picture does not shift).
 // Lengths in DIP, texelSize in pixels.
 // Uniform block (std140): qt_Matrix 0, qt_Opacity 64, center 72, blurLength 80, texelSize 88, dpr 96, passIndex 100.
-// Not named `length`: the GLSL translation renames a member called like a GLSL builtin, the GL backend would not set it (#77).
+// Not named `length`: the GLSL translation renames a member called like a GLSL builtin, the GL backend would not set it.
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {

@@ -32,7 +32,7 @@ namespace VL.Qt.Qml
     }
 
     /// <summary>
-    /// Node factory for qml/**/*.qml next to a document or in a package (#107), the same mechanism as
+    /// Node factory for qml/**/*.qml next to a document or in a package, the same mechanism as
     /// <see cref="Shaders.ShaderNodeFactory"/>: the scan reads only the head tags (category, summary, tags), the pins come
     /// lazily in the init of the node description (<see cref="QmlNodeDescription"/>) from <see cref="QmlDeclarations.Parse"/>.
     /// Only files whose name starts with an uppercase letter become nodes (QML's rule for component files); the others

@@ -4,7 +4,7 @@ using Stride.Core.Mathematics;
 namespace VL.Qt.Stride
 {
     /// <summary>
-    /// The mapping of ToTexturePixels (#119): a window position through the inverse of World * View * Projection onto the
+    /// The mapping of ToTexturePixels: a window position through the inverse of World * View * Projection onto the
     /// plane z = 0 of Stride's unit quad (-0.5 ... 0.5 in local XY, +Y up), then to texture pixels with a top-left origin.
     /// Immutable: the matrices are inverted once per change, <see cref="Map"/> allocates nothing.
     /// </summary>

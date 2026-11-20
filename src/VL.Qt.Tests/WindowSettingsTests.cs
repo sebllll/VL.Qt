@@ -7,7 +7,7 @@ using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Window settings (#517, #518): precedence over the Renderer pins, icon path, node identity.</summary>
+    /// <summary>Window settings: precedence over the Renderer pins, icon path, node identity.</summary>
     public class WindowSettingsTests
     {
         private static WindowSettings Settings(Optional<string> icon = default, Optional<string> title = default, Optional<bool> borderless = default,

@@ -60,7 +60,7 @@ struct Painter {
     }
     // Device pixel grid (scene units): a line of whole device pixels whose edges lie on pixel boundaries. Without it a
     // 1 px line on an integer coordinate straddles two pixels and the 4x MSAA resolve (vlqt.cpp) halves it into both
-    // at DPR 1 (#283: frame + padding mixed to (37,144,124) on CI).
+    // at DPR 1 (frame + padding mixed to (37,144,124) on CI).
     qreal snapEdge(qreal v) const { return std::round(v * dpr) / dpr; }
     qreal snapCenter(qreal v, qreal widthPx) const { return (std::round(v * dpr - widthPx / 2) + widthPx / 2) / dpr; }
     // Quad of scene points (two triangles).
@@ -209,7 +209,7 @@ void DebugOverlay::drawNode(const Node& n)
     Painter p{m_verts, m_lines, item, m_dpr};
     const qreal w = item->width(), h = item->height();
     // Frame = actual size: (0, 0, w, h) = SIZE, or the Auto Size result; for an auto-sized Group with children in
-    // negative coordinates it starts there (#469). Everything else is drawn relative to it.
+    // negative coordinates it starts there. Everything else is drawn relative to it.
     const QRectF frame = n.xf ? itemFrame(*n.xf, item) : QRectF(0, 0, w, h);
     const bool container = isContainer(n.type);
 
@@ -333,7 +333,7 @@ QSGNode* DebugOverlay::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
     return node;
 }
 
-// Software backend: custom geometry is not drawn there (#246), so the triangles go into one image (like PerfGraph).
+// Software backend: custom geometry is not drawn there, so the triangles go into one image (like PerfGraph).
 QSGNode* DebugOverlay::paintSoftware(QSGNode* old)
 {
     auto* node = static_cast<QSGImageNode*>(old);

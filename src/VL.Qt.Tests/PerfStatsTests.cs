@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>#245: PerfStats additively carries percentiles, counters, budget and host values (apply/reconcile, ops, GC).</summary>
+    /// <summary>PerfStats additively carries percentiles, counters, budget and host values (apply/reconcile, ops, GC).</summary>
     public class PerfStatsTests
     {
         private static Native.vlqt_perf Perf() => new()

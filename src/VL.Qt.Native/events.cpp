@@ -34,9 +34,9 @@ constexpr const char* kPointQml = "import QtQuick\nPointHandler {}\n";
 constexpr const char* kWheelQml = "import QtQuick\nWheelHandler {\n    target: null\n    property point vlqtDelta\n"
                                   "    onWheel: (event) => vlqtDelta = Qt.point(vlqtDelta.x + event.angleDelta.x / 120,"
                                   " vlqtDelta.y + event.angleDelta.y / 120)\n}\n";
-// target null: the handler moves nothing itself, DragState writes the drag offset of the item (#209).
+// target null: the handler moves nothing itself, DragState writes the drag offset of the item.
 constexpr const char* kDragQml = "import QtQuick\nDragHandler { target: null }\n";
-// target null: the handler scales/rotates/moves nothing, PinchState reports its values (#321).
+// target null: the handler scales/rotates/moves nothing, PinchState reports its values.
 constexpr const char* kPinchQml = "import QtQuick\nPinchHandler { target: null }\n";
 // EV_TOUCH_POINTS: at most this many points (u16 record length; 8 + 4 + 64 * 24 bytes).
 constexpr int kMaxTouchPoints = 64;
@@ -113,7 +113,7 @@ bool applyAccepted(QObject* obj, quint16 prop, qint32 v)
     return ok;
 }
 
-/* Point handler with ACCEPTED_BUTTONS 0 (#320): an internal HoverHandler makes the mouse (and touchpad cursor) of
+/* Point handler with ACCEPTED_BUTTONS 0: an internal HoverHandler makes the mouse (and touchpad cursor) of
    ACCEPTED_DEVICES active while it is over the item; the PointHandler itself then only takes touch and pen. Creates,
    updates or removes it after a change of the item, the buttons or the devices. */
 void syncPointHover(Scene& scene, HandlerNode& hn, QQuickItem* item)
@@ -134,7 +134,7 @@ void syncPointHover(Scene& scene, HandlerNode& hn, QQuickItem* item)
     }
 }
 
-/* Point handlers first (#320 manual test): Qt delivers to the handlers of an item from the last attached to the first
+/* Point handlers first (manual test): Qt delivers to the handlers of an item from the last attached to the first
    (QQuickItemPrivate::addPointerHandler prepends), and a PointHandler ignores a mouse point that another handler already
    grabs exclusively. A Tap handler attached after a Point handler took the left press first (exclusive grab, button
    semantics) and the Point handler stayed inactive. So the Point handlers of the item are attached again after any
@@ -361,10 +361,10 @@ void bindNode(Scene& scene, Node& node, quint32 handle)
 {
     if (node.sink != handle) {
         node.sent = SentState{}; // new sink (or unbind): the next poll sends the current values again
-        markGeometry(*node.xf);  // ... measured once more, unchanged or not (#20)
+        markGeometry(*node.xf);  // ... measured once more, unchanged or not
         scene.elements.takeClicks(node); // Button clicks not yet polled belonged to the old sink
         QVariant dropped;
-        scene.elements.takeUserValue(node, dropped); // same for a user change of a value input (#210)
+        scene.elements.takeUserValue(node, dropped); // same for a user change of a value input
     }
     node.sink = handle;
 }
@@ -575,9 +575,9 @@ void destroyHandler(Scene& scene, quint32 handlerId)
     if (oit != scene.nodes.end()) {
         auto& list = oit->second.handlers;
         list.erase(std::remove(list.begin(), list.end(), handlerId), list.end());
-        delete handler.hover;  // internal HoverHandler of a Point handler (#320), also a child of the item
+        delete handler.hover;  // internal HoverHandler of a Point handler, also a child of the item
         if (handler.pinch)
-            delete handler.points; // internal point counter of a Pinch handler (#321); Touch Points: points == object
+            delete handler.points; // internal point counter of a Pinch handler; Touch Points: points == object
         delete handler.object; // QObject child of the item, deleted before it (takes the TapState along)
         updateTextMask(oit->second);
     }
@@ -619,7 +619,7 @@ void collectTap(Scene& scene, HandlerNode& hn)
         ts.taps = 0;
         scene.pushEvent(VLQT_EV_CLICK, hn.sink, 0, &c, quint16(sizeof c));
     }
-    // Never 0 (#320): the count of the last tap stays until the next tap (a sink change starts at 0 = nothing sent).
+    // Never 0: the count of the last tap stays until the next tap (a sink change starts at 0 = nothing sent).
     if (ts.tapCount != 0 && ts.tapCount != hn.sentTapCount) {
         hn.sentTapCount = ts.tapCount;
         scene.pushEvent(VLQT_EV_TAP_COUNT, hn.sink, 0, &ts.tapCount, quint16(sizeof ts.tapCount));
@@ -633,7 +633,7 @@ void collectTap(Scene& scene, HandlerNode& hn)
 
 void collectPoint(Scene& scene, HandlerNode& hn)
 {
-    // A pressed point (touch, pen, accepted mouse button) wins over the hovering mouse (ACCEPTED_BUTTONS 0, #320).
+    // A pressed point (touch, pen, accepted mouse button) wins over the hovering mouse (ACCEPTED_BUTTONS 0).
     const bool pressed = scene.handlers.isActive(hn.object);
     const bool hovered = !pressed && hn.hover && scene.handlers.isHovered(hn.hover);
     const bool active = pressed || hovered;
@@ -703,7 +703,7 @@ void collectTouchPoints(Scene& scene, HandlerNode& hn)
 void collectPinch(Scene& scene, HandlerNode& hn)
 {
     const PinchState& ps = *hn.pinch;
-    // Gesture start: ACTIVE 1, then the values; end: the last values (if not sent yet), then ACTIVE 0 (#321 (e)).
+    // Gesture start: ACTIVE 1, then the values; end: the last values (if not sent yet), then ACTIVE 0 ((e)).
     if (ps.running && !hn.sentActive)
         pushFlag(scene, VLQT_EV_ACTIVE, hn.sink, true);
     const float* v = ps.value;
@@ -721,7 +721,7 @@ void collectPinch(Scene& scene, HandlerNode& hn)
     hn.sentActive = ps.running;
 }
 
-/* Events of the input handlers (#319, #320, #209, #321), only while bound. */
+/* Events of the input handlers, only while bound. */
 void collectHandlers(Scene& scene)
 {
     for (auto& kv : scene.handlerNodes) {
@@ -741,7 +741,7 @@ void collectHandlers(Scene& scene)
     }
 }
 
-/* EV_VALUE (#210): u16 value type, u16 0, value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8). The
+/* EV_VALUE: u16 value type, u16 0, value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8). The
  * value type follows the QML type of vlqtUserValue (int, real, bool, string); others are not sent. Strings are capped
  * at kMaxValueString bytes on a UTF-8 character boundary (the record length is u16). Only on user changes, so the
  * string copy does not allocate per frame. */
@@ -794,7 +794,7 @@ void pushValue(Scene& scene, quint32 sink, const QVariant& v)
     scene.pushEvent(VLQT_EV_VALUE, sink, 0, payload.constData(), quint16(payload.size()));
 }
 
-/* QmlElement (#104, protocol.h "QmlElement"): the changes of the root since the last poll as EV_QML_PROPERTY (one per
+/* QmlElement (protocol.h "QmlElement"): the changes of the root since the last poll as EV_QML_PROPERTY (one per
  * changed property, its last value) and EV_QML_SIGNAL (every emitted signal, in order). Records are 4-byte aligned inside
  * (name, value, argument), the poll record is padded by pushEvent; one that would not fit the u16 length is skipped.
  * Taken (and dropped) also without a sink so that nothing piles up; "signals dropped" is shown by QmlItem::error. */
@@ -873,7 +873,7 @@ void measureGeometry(Scene& scene, Node& n)
 
     // Item geometry (frame, #469: an auto-sized Group may start in negative coordinates), not boundingRect():
     // QQuickText overrides that with the painted text rect.
-    // In the coordinates of the window root (#143): its origin is the origin of the Space (the root may sit at the centre).
+    // In the coordinates of the window root: its origin is the origin of the Space (the root may sit at the centre).
     const QRectF r = item->mapRectToItem(scene.root, n.xf ? itemFrame(*n.xf, item) : QRectF(0, 0, item->width(), item->height()));
     const float b[4] = {float(r.x()), float(r.y()), float(r.width()), float(r.height())};
     if (!s.hasBounds || b[0] != s.bounds[0] || b[1] != s.bounds[1] || b[2] != s.bounds[2] || b[3] != s.bounds[3]) {
@@ -982,7 +982,7 @@ void collectMeasurements(Scene& scene)
         Node& n = it->second;
         n.polledStamp = scene.pollStamp;
         if (n.type == VLQT_TYPE_QML)
-            collectQml(scene, n); // QML root changes and signals (#104)
+            collectQml(scene, n); // QML root changes and signals
         if (n.sink == 0)
             continue;
         SentState& s = n.sent;
@@ -994,7 +994,7 @@ void collectMeasurements(Scene& scene)
             scene.pushEvent(VLQT_EV_MEDIA, n.sink, 0, md, quint16(sizeof md));
         }
 
-        // Error text (#273): only on change; empty = cleared. Capped (record length is u16).
+        // Error text: only on change; empty = cleared. Capped (record length is u16).
         const QString error = scene.elements.readError(n);
         if (error != s.error) {
             s.error = error;
@@ -1004,11 +1004,11 @@ void collectMeasurements(Scene& scene)
         if (n.type == VLQT_TYPE_QML)
             static_cast<QmlItem*>(n.item)->clearDropNotice(); // "signals dropped" is shown for one poll
 
-        // Button (#213): clicked signals, always on (Bang output).
+        // Button: clicked signals, always on (Bang output).
         if (const quint32 bc = scene.elements.takeClicks(n))
             scene.pushEvent(VLQT_EV_CLICK, n.sink, 0, &bc, quint16(sizeof bc));
 
-        // Value inputs (#210): the value of the last user change, captured at the signal (protocol.h EV_VALUE).
+        // Value inputs: the value of the last user change, captured at the signal (protocol.h EV_VALUE).
         QVariant uv;
         if (scene.elements.takeUserValue(n, uv))
             pushValue(scene, n.sink, uv);
@@ -1034,7 +1034,7 @@ void collectWindowGeometry(Scene& scene)
 {
     QQuickWindow* w = scene.window;
     // Same convention as vlqt_window_create_at: outer top-left (frame position), client size, DIP.
-    // Fullscreen has no frame, but Qt (Windows) keeps reporting the old frame margins: client position (#234).
+    // Fullscreen has no frame, but Qt (Windows) keeps reporting the old frame margins: client position.
     const Qt::WindowStates st = w->windowStates();
     const QPoint pos = st.testFlag(Qt::WindowFullScreen) ? w->position() : w->framePosition();
     if (!scene.geometryDirty && pos == scene.reportedFramePos)

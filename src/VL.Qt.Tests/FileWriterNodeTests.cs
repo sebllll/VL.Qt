@@ -11,7 +11,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>FileWriter (IImage) and FileWriter (Element) (#157) on fake writes and a fake resource API.</summary>
+    /// <summary>FileWriter (IImage) and FileWriter (Element) on fake writes and a fake resource API.</summary>
     public class FileWriterNodeTests
     {
         private static readonly TimeSpan timeout = TimeSpan.FromSeconds(10);

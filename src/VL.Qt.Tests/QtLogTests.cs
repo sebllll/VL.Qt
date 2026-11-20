@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace VL.Qt.Tests
 {
     /// <summary>
-    /// #258: Qt/QtNative messages reach the app host's logger factory with mapped level and the Qt category as log category;
+    /// Qt/QtNative messages reach the app host's logger factory with mapped level and the Qt category as log category;
     /// messages without a logger are kept and flushed into the next one. No Qt here: <see cref="QtLog.Receive"/> is what
     /// the native callback calls.
     /// </summary>

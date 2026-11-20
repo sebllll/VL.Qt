@@ -5,7 +5,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>SET_SPACE of SceneCore.Update (#143): written when the Space changes; a Space change alone rewrites no lengths.</summary>
+    /// <summary>SET_SPACE of SceneCore.Update: written when the Space changes; a Space change alone rewrites no lengths.</summary>
     public class SceneCoreSpaceTests
     {
         private static readonly Color4 c = new Color4(0.1f, 0.2f, 0.3f, 1f);

@@ -33,7 +33,7 @@ struct Scene {
     Scene(const Scene&) = delete;
     Scene& operator=(const Scene&) = delete;
 
-    /* Window swap (#118, vlqt_window_set_samples): the root item moves to window's content item (size follow and
+    /* Window swap (vlqt_window_set_samples): the root item moves to window's content item (size follow and
      * window-geometry watch reconnected, EV_WINDOW_GEOMETRY queued), the debug overlay is rebuilt there. Items, nodes,
      * bindings and the engine stay. Call before the old window is deleted (it owns the old debug overlay). */
     void moveToWindow(QQuickWindow* newWindow);
@@ -44,41 +44,41 @@ struct Scene {
      * the queue; returns bytes written, -required if cap is too small (events stay queued). */
     int poll(unsigned char* out, int cap);
     /* Runs pending polish (layouts/positioners) of all scene items without a render, so poll measures current
-     * geometry also when Qt did not render this pump (#215). Skipped when nothing changed since the last poll
+     * geometry also when Qt did not render this pump. Skipped when nothing changed since the last poll
      * (#71): no apply, no marked geometry, no window geometry change and no polish request pending in the window. */
     void polish();
-    /* Set by apply, cleared by poll: the next polish must run (#71). */
+    /* Set by apply, cleared by poll: the next polish must run. */
     bool appliedSincePoll = true;
 
     /* Appends one record u16 event, u16 len, u32 handle, u32 index, payload (padded to 4);
      * len = 8 + payloadLen (handle + index + payload, without padding). */
     void pushEvent(quint16 ev, quint32 handle, quint32 index, const void* payload, quint16 payloadLen);
 
-    /* Debug overlay (debug.h, #279): window-wide switch (vlqt_window_set_debug) and the refresh after commands. The
+    /* Debug overlay (debug.h): window-wide switch (vlqt_window_set_debug) and the refresh after commands. The
      * overlay is created on first use and shown while debugAll is on or any node has DEBUG (Elements::debugCount). */
     void setDebugAll(bool on);
     void updateDebug();
     const QQuickItem* debugOverlay() const; // nullptr until first used (perf: skipped in the item count)
     bool debugAll = false;
 
-    /* Clear (#117, feedback.h): false keeps the previous frame through the feedback layer, which exists only while
+    /* Clear (feedback.h): false keeps the previous frame through the feedback layer, which exists only while
      * clear is false; the first frame after switching off starts from the clear colour. Set by VLQT_OP_SET_CLEAR, kept
      * by RESET. The layer is derived state: clearFrames is the state, the layer is built from it for the current
      * window. */
     void setClear(bool clear);
     bool clear() const { return clearFrames; }
-    /* Space (#143, VLQT_OP_SET_SPACE): vlqt_space of the scene, kept by RESET and across a window swap. QtNative moves
+    /* Space (VLQT_OP_SET_SPACE): vlqt_space of the scene, kept by RESET and across a window swap. QtNative moves
      * only the origin of the root (top left or centre of the scene); C# scales. ApplyBadValue for an unknown space. */
     int setSpace(quint32 space, std::string& err);
     quint32 space() const { return sceneSpace; }
     /* Root position from the space and the root size: top left, or the centre of the scene (follows resizes). */
     void updateRootOrigin();
     /* Clear colour (VLQT_OP_CLEAR_COLOR, straight alpha; kept by RESET and across a window swap). With Clear on, or
-     * Clear off and alpha 0 or 1, the window clears to it. With Clear off its alpha is the fade strength (#138): the
+     * Clear off and alpha 0 or 1, the window clears to it. With Clear off its alpha is the fade strength: the
      * layer draws it over the previous frame (alpha > 0), and for 0 < alpha < 1 the window clears to it opaque
      * (feedback.h "Fade"). Runtime changes keep the layer. */
     void setClearColor(const QColor& color);
-    /* Before the QQuickWindow is replaced (#118 MSAA change): drops the layer (its source is a child of the old
+    /* Before the QQuickWindow is replaced (MSAA change): drops the layer (its source is a child of the old
      * content item, its textures belong to the old window's QRhi), keeps the state. After the root moved to the new
      * window (and `window` points to it): rebuilds the layer from the state; the first frame starts from the clear
      * colour, as after a resize. */
@@ -90,7 +90,7 @@ struct Scene {
     QQuickItem* root;
     std::unordered_map<quint32, Node> nodes;
     std::unordered_map<const QQuickItem*, quint32> ids; // reverse map for recursive DESTROY
-    std::unordered_map<quint32, HandlerNode> handlerNodes; // input handlers (#319), same id space as nodes, events.h
+    std::unordered_map<quint32, HandlerNode> handlerNodes; // input handlers, same id space as nodes, events.h
     QByteArray events;
     Elements elements; // component + property caches of this window's engine
     Handlers handlers; // QML components of the input handlers, events.h
@@ -98,10 +98,10 @@ struct Scene {
      * connections end with the scene), cleared by the poll that queues the record. */
     bool geometryDirty = true;
     /* Frame position of the last record: X11 delivers the frame margins (_NET_FRAME_EXTENTS) later than the
-     * geometry and Qt has no signal for them, so a moved framePosition() also queues a record (#232). */
+     * geometry and Qt has no signal for them, so a moved framePosition() also queues a record. */
     QPoint reportedFramePos;
     QObject geometryWatch;
-    /* Measure on change (#20, events.h): ids whose geometry changed since the last poll (markGeometry, no duplicates
+    /* Measure on change (events.h): ids whose geometry changed since the last poll (markGeometry, no duplicates
      * until the poll), the walk stack and poll stamp of collectMeasurements (capacity reused, no per-frame allocation). */
     std::vector<quint32> measureQueue;
     std::vector<QQuickItem*> measureStack;
@@ -111,7 +111,7 @@ struct Scene {
     std::vector<quint32> pollIds;
     quint32 pollStamp = 0;
 
-    /* Details of the last apply (#92/#275): rc 0 = it succeeded. id = object id the bad command addresses (0 = none:
+    /* Details of the last apply: rc 0 = it succeeded. id = object id the bad command addresses (0 = none:
      * CLEAR_COLOR, RESET, truncated header, root), prop = property of a bad SET (else 0), reason = message without
      * the "apply: command #n ..." prefix. Read by vlqt_window_get_apply_error. */
     struct ApplyError {
@@ -128,10 +128,10 @@ private:
     int destroy(quint32 id, std::string& err);
     int reparent(quint32 id, quint32 parent, quint32 index, std::string& err);
     int set(const unsigned char* p, int len, std::string& err);
-    int setStyle(const unsigned char* p, int len, std::string& err); // SET_STYLE (vlstyle.h, #292)
-    int setUniforms(const unsigned char* p, int len, std::string& err); // SET_UNIFORMS (ShaderEffect, #437)
-    int setEffectChain(const unsigned char* p, int len, std::string& err); // SET_EFFECT_CHAIN (#489), effectchain.h
-    int setQmlProperties(const unsigned char* p, int len, std::string& err); // SET_QML_PROPERTIES (QmlElement, #104)
+    int setStyle(const unsigned char* p, int len, std::string& err); // SET_STYLE (vlstyle.h)
+    int setUniforms(const unsigned char* p, int len, std::string& err); // SET_UNIFORMS (ShaderEffect)
+    int setEffectChain(const unsigned char* p, int len, std::string& err); // SET_EFFECT_CHAIN, effectchain.h
+    int setQmlProperties(const unsigned char* p, int len, std::string& err); // SET_QML_PROPERTIES (QmlElement)
     void reset();
     /* root under window's content item, size follow, window-geometry watch (constructor, moveToWindow). */
     void attachRoot();
@@ -142,13 +142,13 @@ private:
     void detachMask(Node& host, QQuickItem* mask);
     void deleteRetired();
     DebugOverlay* debug = nullptr; // child of contentItem, deleted in ~Scene
-    std::unique_ptr<FeedbackLayer> feedback; // Clear off only (#117)
-    bool clearFrames = true; // Clear pin state (#117)
-    quint32 sceneSpace = VLQT_SPACE_DIP_TOP_LEFT; // Space pin state (#143)
+    std::unique_ptr<FeedbackLayer> feedback; // Clear off only
+    bool clearFrames = true; // Clear pin state
+    quint32 sceneSpace = VLQT_SPACE_DIP_TOP_LEFT; // Space pin state
     QColor clearColor; // VLQT_OP_CLEAR_COLOR; initially the colour the window was created with
     void applyClearColor(); // window clear and layer fill from clearColor and the layer
     bool feedbackSoftwareWarned = false; // Clear off ignored on the software backend, logged once per scene
-    std::vector<QQuickItem*> retired; // destroyed former effect sources, deleted after the next frame (#123)
+    std::vector<QQuickItem*> retired; // destroyed former effect sources, deleted after the next frame
 };
 
 } // namespace vlqt

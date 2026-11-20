@@ -6,7 +6,7 @@ using NUnit.Framework;
 using VL.Qt;
 using static Pixels;
 
-// #438 Phase A, tasks A2 / A2b: builtin:directional_blur / zoom_blur / radial_blur, checked through ShaderEffect. Each blur is
+// Phase A, tasks A2 / A2b: builtin:directional_blur / zoom_blur / radial_blur, checked through ShaderEffect. Each blur is
 // two nested ShaderEffects of the same shader (pass templates in protocol.h): pass 1 (inner, id + 5) with
 // the length, pass 2 (outer) with length / 64 (the sample spacing of pass 1 at the sample cap), which fills the gaps between
 // the samples of pass 1. Raw commands (DIP). Grid of 3 rows (directional, zoom, radial) x 2 columns (small, large parameter

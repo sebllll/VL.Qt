@@ -13,7 +13,7 @@ using P = VL.Qt.Protocol.Prop;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Slider node (#301): description, property diff, value channel (f32), clamp, bound order and channel attributes.</summary>
+    /// <summary>Slider node: description, property diff, value channel (f32), clamp, bound order and channel attributes.</summary>
     public class SliderNodeTests
     {
         private static readonly Vector2 DefaultSize = new(2, 0.28f);

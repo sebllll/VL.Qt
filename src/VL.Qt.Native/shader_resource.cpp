@@ -126,7 +126,7 @@ std::string checkReflection(const QShader& s)
     return {};
 }
 
-// Uniform block members and samplers the GLSL translation renamed (#77): SPIRV-Cross renames a name that collides with a
+// Uniform block members and samplers the GLSL translation renamed: SPIRV-Cross renames a name that collides with a
 // GLSL builtin or keyword (`length`, `texture`, ...), but the reflection keeps the original, and the OpenGL backend
 // of QRhi looks uniforms and samplers up by the reflected name: the renamed one is never set (stays 0 / transparent).
 // Checks the first GLSL variant of s; none = nothing to check. Empty = fine, else a warning text.
@@ -173,7 +173,7 @@ std::string glslRenames(const QShader& s, const std::string& where)
         + (one ? "it is" : "they are") + " never set. Rename " + (one ? "it" : "them") + where;
 }
 
-// --- runtime bake (#483) ----------------------------------------------------------------------------------------------
+// --- runtime bake ----------------------------------------------------------------------------------------------
 
 // Targets QShaderBaker generates: only the shader language of the process backend (main thread, at loadSource).
 // Unknown backend: SPIR-V, HLSL and GLSL like qsb's usual set.
@@ -321,7 +321,7 @@ public:
         return {};
     }
 
-    // Source (#483): cache hit or QShaderBaker for the targets noted at loadSource, then the same checks as a .qsb.
+    // Source: cache hit or QShaderBaker for the targets noted at loadSource, then the same checks as a .qsb.
     static std::string bake(ShaderResource& w)
     {
         const QByteArray key = cacheKey(w.m_stage, w.m_source, w.m_code);

@@ -11,10 +11,10 @@ using VL.Qt.Nodes;
 using Color = System.Drawing.Color;
 using static Pixels;
 
-// Anchor against the actual item size (#88, #469): like VL.Skia a point v of the element lands at (v - anchor) * M in its
+// Anchor against the actual item size: like VL.Skia a point v of the element lands at (v - anchor) * M in its
 // parent (outside Row/Column); in Row/Column the layout places it and the anchor is only the pivot of Transform.
 // Row/Group with Auto Size on use the center of their implicit size; a Group with Auto Size off keeps its children at its
-// origin and places only its frame (Size) by the anchor (#475), so Transform pivots around the origin. The
+// origin and places only its frame (Size) by the anchor, so Transform pivots around the origin. The
 // anchor follows a size change without a matrix resend. Nodes → Reconciler → CommandWriter → real QtNative. Grabs go to
 // <OutDir>/88_*.png (pixel checks in DIP); the analytic expectations use the Skia formula (v - anchor) * M.
 // Stride RotationZ(+90) turns clockwise on screen (y down): (x, y) → (-y, x); the left child goes up, the right child down.
@@ -108,7 +108,7 @@ public static class AnchorTest
         CheckCenter200x150("88_group_autosize.png", "group auto size on");
 
         // 4) Group, Auto Size off, size (8, 6), children around the group origin (red -100..0, green 0..100, y -50..50).
-        //    The origin (= anchor point of the frame, #475) is placed at (400, 300): red x 350..450 / y 200..300,
+        //    The origin (= anchor point of the frame) is placed at (400, 300): red x 350..450 / y 200..300,
         //    green y 300..400.
         Frame(Group(new Vector2(8, 6), false, RectangleAnchor.Center, RotAround(4, 3), -1, -0.5f), "group auto size off");
         using (var a = s.Grab(w, "88_group_size_center.png"))
@@ -119,7 +119,7 @@ public static class AnchorTest
                 $"group auto size off: unrotated positions empty ({Px(a, 320, 300)}, {Px(a, 480, 300)})");
         }
 
-        // 5) Same group with Anchor TopLeft: Auto Size off moves only the frame (#475), the children stay at the origin,
+        // 5) Same group with Anchor TopLeft: Auto Size off moves only the frame, the children stay at the origin,
         //    the picture is the same as in 4).
         Frame(Group(new Vector2(8, 6), false, RectangleAnchor.TopLeft, RotAround(4, 3), -1, -0.5f), "group anchor top left");
         using (var a = s.Grab(w, "88_group_size_topleft.png"))

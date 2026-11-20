@@ -16,7 +16,7 @@ using Path = VL.Lib.IO.Path;
 namespace VL.Qt.Audio
 {
     /// <summary>
-    /// Video from a file whose sound goes to VL.Audio instead of Qt's own output (#22). Same picture and pins as Video
+    /// Video from a file whose sound goes to VL.Audio instead of Qt's own output. Same picture and pins as Video
     /// [Qt.Elements]; the sound comes out at Audio, one signal per channel, synchronized to the picture. Connect Output to
     /// Renderer [Qt] or a Group and Audio to AudioOut. Windows only.
     /// </summary>

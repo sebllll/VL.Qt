@@ -134,7 +134,7 @@ namespace VL.Qt.Tests
         [Test]
         public void SeveralRenderers_NoWarning_SinkWarningShownAtNode()
         {
-            // Several times in one tree (#455) and in two renderers (#126) is fine.
+            // Several times in one tree and in two renderers is fine.
             var scene = new SceneRegistry();
             var rec = new Reconciler(new RecordingSink(), new IdAllocator(), scene);
             var rec2 = new Reconciler(new RecordingSink(), new IdAllocator(), scene);

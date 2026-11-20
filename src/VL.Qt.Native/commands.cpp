@@ -17,7 +17,7 @@
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
-#include <QtQuick/private/qquickwindow_p.h> // itemsToPolish (#71)
+#include <QtQuick/private/qquickwindow_p.h> // itemsToPolish
 
 #include <algorithm>
 #include <cstring>
@@ -173,7 +173,7 @@ EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
 Scene::Scene(QQuickWindow* w, QQmlEngine* e)
     : window(w), engine(e), root(new QQuickItem()), elements(e), handlers(e), clearColor(w->color())
 {
-    elements.proxyParent = root; // Group frame proxies of ShaderEffects (#486)
+    elements.proxyParent = root; // Group frame proxies of ShaderEffects
     // The origin of the root follows its size (centre spaces); the root's own signals, so a window swap keeps them.
     QObject::connect(root, &QQuickItem::widthChanged, root, [this] { updateRootOrigin(); });
     QObject::connect(root, &QQuickItem::heightChanged, root, [this] { updateRootOrigin(); });
@@ -184,7 +184,7 @@ void Scene::attachRoot()
 {
     root->setParentItem(window->contentItem());
     // Sized to the window, not to the content item: Qt sizes the content item only for a shown window, so the root of
-    // an offscreen scene would stay 0 x 0 (the feedback layer of Clear off draws nothing of an empty item, #117).
+    // an offscreen scene would stay 0 x 0 (the feedback layer of Clear off draws nothing of an empty item).
     root->setSize(window->size());
     QObject::connect(window, &QWindow::widthChanged, root, [this](int width) { root->setWidth(width); });
     QObject::connect(window, &QWindow::heightChanged, root, [this](int height) { root->setHeight(height); });
@@ -194,7 +194,7 @@ void Scene::attachRoot()
 
 void Scene::moveToWindow(QQuickWindow* newWindow)
 {
-    // The feedback layer of Clear off (#117) belongs to the old window: dropped here, rebuilt for the new one below.
+    // The feedback layer of Clear off belongs to the old window: dropped here, rebuilt for the new one below.
     // The trail is lost; the first frame starts from the clear colour, as after a resize.
     releaseFeedback();
     // Cut the connections to the old window now: its deletion must not resize the root or mark the geometry.
@@ -215,10 +215,10 @@ Scene::~Scene()
     // Effects are detached from their sources first (arbitrary deletion order below).
     feedback.reset(); // its view is a child of the root
     for (auto& kv : nodes)
-        kv.second.xf->scene = nullptr; // the unparenting and deletes below emit geometry signals (#20)
+        kv.second.xf->scene = nullptr; // the unparenting and deletes below emit geometry signals
     for (auto& kv : nodes) {
         elements.clearEffectSource(kv.second);
-        if (kv.second.type == VLQT_TYPE_VIDEO) { // #130, see destroySubtree
+        if (kv.second.type == VLQT_TYPE_VIDEO) { // see destroySubtree
             QMetaObject::invokeMethod(kv.second.item, "vlqtRelease");
             res::audio::releaseVideo(kv.second.item);
         }
@@ -365,7 +365,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                 reason = "command (" + std::to_string(size) + " bytes incl. padding) exceeds buffer ("
                     + std::to_string(len - off) + " bytes left)";
             } else {
-                // Object addressed by the command, for the structured error (#92): first u32 of every op with an id.
+                // Object addressed by the command, for the structured error: first u32 of every op with an id.
                 const bool hasId = op == VLQT_OP_CREATE || op == VLQT_OP_DESTROY || op == VLQT_OP_REPARENT
                     || op == VLQT_OP_SET || op == VLQT_OP_BIND || op == VLQT_OP_SET_STYLE || op == VLQT_OP_SET_UNIFORMS
                     || op == VLQT_OP_SET_EFFECT_CHAIN || op == VLQT_OP_SET_QML_PROPERTIES;
@@ -407,7 +407,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                         auto it = nodes.find(id);
                         auto hit = it == nodes.end() ? handlerNodes.find(id) : handlerNodes.end();
                         if (it != nodes.end()) {
-                            bindNode(*this, it->second, rd<quint32>(p + 4)); // flags ignored (#320)
+                            bindNode(*this, it->second, rd<quint32>(p + 4)); // flags ignored
                         } else if (hit != handlerNodes.end()) {
                             bindHandler(*this, hit->second, rd<quint32>(p + 4)); // flags: none for handlers
                         } else {
@@ -478,10 +478,10 @@ int Scene::create(quint32 id, quint16 type, std::string& err)
     if (!item)
         return ApplyInvalid;
     Node& node = nodes[id] = Node{item, type, 0, 0, nullptr};
-    elements.initGeometry(node); // anchor placement, follows size changes (#469)
+    elements.initGeometry(node); // anchor placement, follows size changes
     node.polled = elements.pollsState(type);
     ids[item] = id;
-    watchGeometry(*this, id, node); // measure on change (#20)
+    watchGeometry(*this, id, node); // measure on change
     return ApplyOk;
 }
 
@@ -494,8 +494,8 @@ void Scene::destroySubtree(QQuickItem* item)
     auto it = ids.find(item);
     Node& node = nodes[it->second];
     destroyHandlersOf(node); // before the item goes: handler QML objects, ids free again
-    // #130: stop the player and drop its source first, so the decoder and audio threads end before the item goes.
-    // #22: then the audio tap, while the player still exists (audio_tap.h releaseVideo).
+    // stop the player and drop its source first, so the decoder and audio threads end before the item goes.
+    // then the audio tap, while the player still exists (audio_tap.h releaseVideo).
     if (node.type == VLQT_TYPE_VIDEO) {
         QMetaObject::invokeMethod(item, "vlqtRelease");
         res::audio::releaseVideo(item);
@@ -506,7 +506,7 @@ void Scene::destroySubtree(QQuickItem* item)
     elements.releaseEffectLayer(node);
     // QQuickMultiEffect holds a raw pointer to its source: detach before anything is deleted.
     elements.clearEffectSource(node);
-    elements.releaseTextureGroups(node); // Group frame proxies of its texture uniforms (#486)
+    elements.releaseTextureGroups(node); // Group frame proxies of its texture uniforms
     // Masks (protocol.h "Effect chain"): the attached masks go with their element (not child items: parked under the
     // root); a destroyed mask is detached from its element first. Both are retired below like a former source.
     for (QQuickItem* mask : masks) {
@@ -528,14 +528,14 @@ void Scene::destroySubtree(QQuickItem* item)
                 elements.clearEffectSource(kv.second);
     if (node.debug)
         --elements.debugCount;
-    node.xf->scene = nullptr; // its connections may outlive the node (retired item): no more queue entries (#20)
+    node.xf->scene = nullptr; // its connections may outlive the node (retired item): no more queue entries
     nodes.erase(it->second);
     ids.erase(it);
     if (!wasSource) {
         delete item;
         return;
     }
-    // #123: a former effect source is deleted only after the next frame (next poll or apply). QQuickMultiEffect's
+    // a former effect source is deleted only after the next frame (next poll or apply). QQuickMultiEffect's
     // source proxy keeps the old item as its output until it polishes in that frame and compares by pointer:
     // deleted right away, the replacement input created in the same apply could get the same address, the proxy
     // saw "unchanged" and the effect stayed empty for good (CI: 5 of 40). Its layer is switched off one frame
@@ -591,7 +591,7 @@ int Scene::destroy(quint32 id, std::string& err)
 void Scene::reset()
 {
     // Top-level objects: parent is the root, nothing (created, never reparented) or an untracked item. Collected
-    // first, destroySubtree changes the maps. Same path as DESTROY (video release, effect sources, #123 retire).
+    // first, destroySubtree changes the maps. Same path as DESTROY (video release, effect sources, retire).
     std::vector<QQuickItem*> top;
     for (const auto& kv : nodes) {
         QQuickItem* parent = kv.second.item->parentItem();
@@ -644,7 +644,7 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
         }
     if (item->parentItem() != parent) {
         item->setParentItem(parent); // appended as last child
-        // Free parent: x/y = -anchor; Row/Column: its layout owns x/y and lays out the new child itself (#469).
+        // Free parent: x/y = -anchor; Row/Column: its layout owns x/y and lays out the new child itself.
         if (!elements.placeAfterReparent(it->second, err))
             return ApplyInvalid;
     }
@@ -804,7 +804,7 @@ int Scene::setStyle(const unsigned char* p, int plen, std::string& err)
 
 int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
 {
-    // Interface stub (#437 task 1): validates the command completely (wire format: protocol.h head comment), applies
+    // Interface stub (task 1): validates the command completely (wire format: protocol.h head comment), applies
     // nothing yet. Task 3 hands the entries to the ShaderEffect item (table by name, CLEAR = full send).
     if (plen < 8) {
         err = "payloadLen " + std::to_string(plen) + " too short for SET_UNIFORMS (>= 8)";
@@ -884,8 +884,8 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
         off = valueOff + align4(fixedValueSize(vt));
     }
     item->endUniforms();
-    elements.syncTextureGroups(it->second); // Groups as textures go through their frame proxy (#486)
-    item->refreshLayerRequests(true); // their proxies carry the layer mipmaps / format of the samplers (#492)
+    elements.syncTextureGroups(it->second); // Groups as textures go through their frame proxy
+    item->refreshLayerRequests(true); // their proxies carry the layer mipmaps / format of the samplers
     return ApplyOk;
 }
 
@@ -1228,7 +1228,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
             u.refItem = tex.item;
         }
     const int rc = elements.setEffectChain(host, chain, masks, err);
-    listPolled(*this, host); // a chain reports its content errors (EV_ERROR, #489)
+    listPolled(*this, host); // a chain reports its content errors (EV_ERROR)
     const std::vector<QQuickItem*> after = elements.effectMasks(host);
     for (QQuickItem* m : before)
         if (std::find(after.begin(), after.end(), m) == after.end())
@@ -1241,7 +1241,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
 
 void Scene::polish()
 {
-    // Nothing changed since the last poll (#71): ensurePolished calls updatePolish unconditionally, so the passes
+    // Nothing changed since the last poll: ensurePolished calls updatePolish unconditionally, so the passes
     // below cost a call per element although nothing moves. A change after the last poll shows as an apply, a marked
     // geometry (events.h) or a window resize; a layout that has to follow a child (Row/Column, Text implicit size,
     // Group frame) requests polish() and is in the window's itemsToPolish until Qt polishes it in a render, so a

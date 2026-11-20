@@ -17,7 +17,7 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 using VlPath = VL.Lib.IO.Path;
 using static Pixels;
 
-// QtImage end to end (#362): LoadImage / LoadImage (Async) / ToQtImage nodes → ResourceClient → QtNative, one QtImage in
+// QtImage end to end: LoadImage / LoadImage (Async) / ToQtImage nodes → ResourceClient → QtNative, one QtImage in
 // 100 Image nodes through the Reconciler, release queue. Grabs go to <OutDir>/362_*.png.
 [TestFixture, NonParallelizable]
 public static class QtImageTest
@@ -142,7 +142,7 @@ public static class QtImageTest
         var first = async.Update(new VlPath(asset), false, true, out var isLoaded, out _, out var onLoaded);
         using var subscription = onLoaded.Subscribe(i => { fired = i; loadedCount++; });
         // Wait by time, not by pump count: the decode runs in a worker, so how many pumps it takes depends on CPU load and
-        // on the worker queue (#391). Keep pumping so the result can be delivered; yield so the worker gets the CPU.
+        // on the worker queue. Keep pumping so the result can be delivered; yield so the worker gets the CPU.
         var asyncWait = Stopwatch.StartNew();
         var asyncPumps = 0;
         while (!isLoaded && asyncWait.ElapsedMilliseconds < 10000)

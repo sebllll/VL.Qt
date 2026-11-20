@@ -7,7 +7,7 @@ using NUnit.Framework;
 using VL.Qt;
 using static Pixels;
 
-// InnerShadow (#438 A4): the blur pyramid of Glow (pyramid_down / pyramid_up), pass templates in protocol.h.
+// InnerShadow (A4): the blur pyramid of Glow (pyramid_down / pyramid_up), pass templates in protocol.h.
 // innershadow_prefilter (1/2: inverted alpha, shifted) -> pyramid_down (1/4 .. 1/2^n)
 // -> pyramid_up (.. 1/2) -> innershadow_composite (full size, element + shadow inside its alpha). The pass graph is
 // fixed, radius / offset / spread only change uniforms.

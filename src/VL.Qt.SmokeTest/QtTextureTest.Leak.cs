@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using VL.Qt;
 
 /// <summary>
-/// #116 task 1.8 (f), the leak test: many rounds of create / bind / render / rebind / unbind / destroy with changing sizes and
+/// task 1.8 (f), the leak test: many rounds of create / bind / render / rebind / unbind / destroy with changing sizes and
 /// formats, a device loss of QtNative's device with scenes bound, and the foreign device released and recreated (unbound
 /// first). Afterwards the device reference counts are back at their baseline (QtNative's device counts the scene-graph
 /// resources of the scenes until they are destroyed, so it is compared after the destroy), the process handle count does not grow beyond a small

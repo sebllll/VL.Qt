@@ -30,7 +30,7 @@ namespace VL.Qt.Shaders
     internal sealed record UniformAnnotation(string? Default, string? Min, string? Max, bool IsColor, string? Summary, int Line);
 
     /// <summary>
-    /// Comment annotations of a Qt GLSL file (#488, docs/effects-and-shaders.md): only // comments. File head (comments at
+    /// Comment annotations of a Qt GLSL file (docs/effects-and-shaders.md): only // comments. File head (comments at
     /// the start before/after #version up to the first code line): @category, @summary, @padding, @passes, @chainonly. At a uniform:
     /// @default, @min, @max, @color, @summary. @summary/@category take the rest of the line, following comment lines without @ are appended.
     /// </summary>

@@ -3,7 +3,7 @@ using Stride.Core.Mathematics;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Clear color and Clear flag of SceneCore.Update go to QtNative only when they change (#117).</summary>
+    /// <summary>Clear color and Clear flag of SceneCore.Update go to QtNative only when they change.</summary>
     public class SceneCoreClearTests
     {
         private static readonly Color4 c = new Color4(0.1f, 0.2f, 0.3f, 1f);

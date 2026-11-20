@@ -113,7 +113,7 @@ namespace VL.Qt.Tests
         public void UniformSampler(ReadOnlySpan<char> name, ulong packed) => _uniforms.Append($" {name.ToString()}=sampler({packed:x})");
         public void EndUniforms() => Add(_uniforms.ToString());
 
-        // SET_QML_PROPERTIES (#104) is recorded as one line: "QML id flags name=value ..."; the entries go through the Uniform*
+        // SET_QML_PROPERTIES is recorded as one line: "QML id flags name=value ..."; the entries go through the Uniform*
         // methods (and QmlRect / QmlString) into the same builder.
         public void BeginQmlProperties(uint id, ushort flags) => _uniforms.Clear().Append($"QML {id} {flags}");
         public void QmlRect(ReadOnlySpan<char> name, float x, float y, float width, float height) => _uniforms.Append($" {name.ToString()}=rect({F(x)},{F(y)},{F(width)},{F(height)})");

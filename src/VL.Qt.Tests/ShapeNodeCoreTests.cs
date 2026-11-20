@@ -9,7 +9,7 @@ using VL.Qt.Nodes;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Shared core of Line, Polyline and Polygon (#154, package 03): content equality, extent, closed, limit warning.</summary>
+    /// <summary>Shared core of Line, Polyline and Polygon (package 03): content equality, extent, closed, limit warning.</summary>
     public class ShapeNodeCoreTests
     {
         private ShapeNodeCore _core = null!;

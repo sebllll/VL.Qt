@@ -6,7 +6,7 @@ using NUnit.Framework;
 using VL.Qt;
 using static Pixels;
 
-// Blend and Displace behind a Blur in the Effect chain (#439, Sebastian's report on PR #528): the chain grows by the padding of
+// Blend and Displace behind a Blur in the Effect chain (Sebastian's report on PR #528): the chain grows by the padding of
 // the Blur (MultiEffect, automatic padding), the layer / map element must still sit exactly on the ELEMENT (QtNative auto uniform
 // elementRect), not be stretched over the grown effect area, and the halo of the Blur must survive the Blend pass.
 // Scene (one window per case): a 300 x 150 DIP orange rectangle R at (250, 150) on 0x20 grey; the layer is

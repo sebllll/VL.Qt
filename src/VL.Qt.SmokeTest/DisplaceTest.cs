@@ -5,7 +5,7 @@ using NUnit.Framework;
 using VL.Qt;
 using static Pixels;
 
-// builtin:displace (#438, effects package 04, task A3): one-pass displacement of the input by a map element.
+// builtin:displace (effects package 04, task A3): one-pass displacement of the input by a map element.
 // 3 x 3 grid of 240 x 140 DIP cells on 0x20 grey; the source is a white Text "HAL", centered, with margin all around
 // (the shift stays inside the cell). texelSize = 1 / pixel size of the cell (240 x 140 DIP x dpr) and dpr, set here like
 // the pass driver of #489 does (doc 21: texelSize is per pixel, the shift in DIP).

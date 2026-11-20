@@ -1,7 +1,7 @@
 ﻿namespace VL.Qt.Elements
 {
     /// <summary>
-    /// Push button (QtQuick.Controls Button, style Basic, #213). Clicks come from Qt's <c>clicked</c> signal into
+    /// Push button (QtQuick.Controls Button, style Basic). Clicks come from Qt's <c>clicked</c> signal into
     /// <see cref="Element.Sink"/> (release over the button; AutoRepeat repeats while held).
     /// Lengths in units.
     /// </summary>

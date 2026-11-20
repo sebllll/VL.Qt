@@ -122,7 +122,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// QmlElement (#104): Source, the reload counter, then the properties by name: only the entries that changed since the
+        /// QmlElement: Source, the reload counter, then the properties by name: only the entries that changed since the
         /// previous description. A new Source or Reload sends all of them again (QtNative has a new instance, protocol.h "QmlElement");
         /// a key that is gone from the dictionary is not reset in QML.
         /// </summary>
@@ -139,7 +139,7 @@ namespace VL.Qt
 
         /// <summary>
         /// Common item properties. Size, Anchor and Transform are sent as they are, also for children of Row/Column
-        /// (there the layout places them and QtNative uses the anchor only as pivot, protocol.h "Geometry"). Visibility is QtNative's (#474): it hides the
+        /// (there the layout places them and QtNative uses the anchor only as pivot, protocol.h "Geometry"). Visibility is QtNative's: it hides the
         /// children of a ShaderEffect (drawn through their layers), Opacity 0 = not drawn.
         /// </summary>
         private void DiffCommon(uint id, Element p, Element n)
@@ -158,7 +158,7 @@ namespace VL.Qt
 
             // Transform and Anchor are sent separately; QtNative resolves the anchor against the item's actual size
             // (follows Auto Size, layout and Size changes without a resend from here). Every TRANSFORM resets a drag
-            // offset (#209, pin wins), so it is only sent on change.
+            // offset (pin wins), so it is only sent on change.
             if (_rescale || !Same(p.Transform, n.Transform))
                 _sink.SetMat4(id, P.Transform, _mapping.ToQt(n.Transform));
             if (p.Anchor != n.Anchor)
@@ -184,7 +184,7 @@ namespace VL.Qt
         private float[] _shapeBuffer = Array.Empty<float>();
 
         /// <summary>
-        /// Shape (#154). The geometry (points or path) is sent when its reference and its content changed or the unit scale did; every
+        /// Shape. The geometry (points or path) is sent when its reference and its content changed or the unit scale did; every
         /// coordinate goes through the mapping. A point list or path that does not fit one command is cut to the part that does (the node warns).
         /// QtNative takes dash and dash offset in stroke-width units, so both are divided by the stroke width and the dash is sent again
         /// when the stroke width changes. A stroke width of 0 is sent as -1 (no stroke).
@@ -369,11 +369,11 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// SpinBox (#210): Minimum/Maximum before Value, otherwise Qt clamps the new value with the old bounds. Qt also
+        /// SpinBox: Minimum/Maximum before Value, otherwise Qt clamps the new value with the old bounds. Qt also
         /// clamps on every bound change, possibly against an intermediate range (new Minimum with old Maximum), so Value
         /// is resent whenever a bound changed; an equal SET VALUE is a no-op in Qt and sends no EV_VALUE.
         /// The diff is against the last sent description, also after a user change (EV_VALUE): the node then describes
-        /// the user's value, the SET fixes a stale SET that Qt applied after the change (see PR #354).
+        /// the user's value, the SET fixes a stale SET that Qt applied after the change.
         /// </summary>
         private void DiffSpinBox(uint id, SpinBox p, SpinBox n)
         {
@@ -398,7 +398,7 @@ namespace VL.Qt
                 _sink.SetBool(id, P.Enabled, n.Enabled);
         }
 
-        /// <summary>CheckBox and Switch (#301): the value is only sent after a change; see <see cref="DiffSpinBox"/> for the diff base.</summary>
+        /// <summary>CheckBox and Switch: the value is only sent after a change; see <see cref="DiffSpinBox"/> for the diff base.</summary>
         private void DiffToggle(uint id, bool pValue, bool nValue, bool pEnabled, bool nEnabled)
         {
             if (pValue != nValue)
@@ -407,7 +407,7 @@ namespace VL.Qt
                 _sink.SetBool(id, P.Enabled, nEnabled);
         }
 
-        /// <summary>Slider (#301): Minimum/Maximum before Value and Value again after a bound change, like <see cref="DiffSpinBox"/>.</summary>
+        /// <summary>Slider: Minimum/Maximum before Value and Value again after a bound change, like <see cref="DiffSpinBox"/>.</summary>
         private void DiffSlider(uint id, Slider p, Slider n)
         {
             bool bounds = false;
@@ -444,7 +444,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Image: the resource id of the QtImage (#362), 0 = none. Sent when the id changes; a QtImage whose content is
+        /// Image: the resource id of the QtImage, 0 = none. Sent when the id changes; a QtImage whose content is
         /// replaced in place (ToQtImage) keeps its id, QtNative swaps the texture itself.
         /// </summary>
         private void DiffImage(uint id, Image p, Image n)
@@ -480,7 +480,7 @@ namespace VL.Qt
             float pv = Video.ClampVolume(p.Volume), nv = Video.ClampVolume(n.Volume);
             if (pv != nv)
                 _sink.SetF32(id, P.Volume, nv);
-            // Before Playing, so Qt's output is off before the first buffer plays (#22); Video [VL.Qt] keeps 0 and never sends it.
+            // Before Playing, so Qt's output is off before the first buffer plays; Video [VL.Qt] keeps 0 and never sends it.
             if (p.AudioTap != n.AudioTap)
                 _sink.SetU64(id, P.AudioTap, n.AudioTap);
             // Last: QtNative starts playback when Playing arrives (or once the media is loaded).
@@ -509,7 +509,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// ShaderEffect (#437): shader resource ids (0 = none), Blending, MeshResolution (clamped to &gt;= 1, QtNative rejects
+        /// ShaderEffect: shader resource ids (0 = none), Blending, MeshResolution (clamped to &gt;= 1, QtNative rejects
         /// smaller values with -7). Source and the uniforms follow in <see cref="ChildrenReconciled"/>.
         /// </summary>
         private void DiffShaderEffect(uint id, ShaderEffect p, ShaderEffect n)

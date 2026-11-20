@@ -4,13 +4,13 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 
-// Central handling of timing thresholds (issue #71). Functional checks (pixels, counts, allocations) do not go through here.
+// Central handling of timing thresholds. Functional checks (pixels, counts, allocations) do not go through here.
 //   VLQT_PERF_FACTOR=<x>     multiplies every time limit (default 1; CI e.g. 3..5). < 1 tightens (proves the checks bite).
 //   VLQT_PERF_WARN_ONLY=1    or --perf-warn-only: exceeded limits print "WARN" and do not fail the run.
 //   --perf-factor <x>        same as the env var (flag wins).
-// Defaults without env/flag (#132): factor 1.5 on arm64 (limits were set on x64; arm64 laptops land ~1.2x above),
+// Defaults without env/flag: factor 1.5 on arm64 (limits were set on x64; arm64 laptops land ~1.2x above),
 // warn-only while a debugger is attached. VLQT_PERF_WARN_ONLY=0 forces hard failures even then.
-// CPU-bound micro limits (Below(..., cpuBound: true), #64): the limits were set on a current Windows x64 desktop CPU. On Linux
+// CPU-bound micro limits (Below(..., cpuBound: true)): the limits were set on a current Windows x64 desktop CPU. On Linux
 // a short calibration loop measures the core speed (CpuFactor, 1 on a fast core, at most MaxCpuFactor) and scales only these
 // limits, so an old CPU does not fail them while a real regression (several times the calibrated time) still does.
 // VLQT_PERF_FACTOR / --perf-factor set the factor by hand: no calibration then.
@@ -86,7 +86,7 @@ internal static class PerfLimits
         return f;
     }
 
-    // Noise vs regression (#64): a median can land above the limit when the core clocks up late or another process wakes up
+    // Noise vs regression: a median can land above the limit when the core clocks up late or another process wakes up
     // (one round ~ +45 %). Measures up to `rounds` times, stops at the first round within the limit and returns the best
     // value: a real regression is systematic and stays above the limit in every round.
     public static double Best(double limit, Func<double> measure, int rounds = 3, bool cpuBound = false)

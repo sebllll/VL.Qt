@@ -11,7 +11,7 @@ using P = VL.Qt.Protocol.Prop;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Toggle node (#301): description for both looks, property diff, look change, value channel and EV_VALUE (bool).</summary>
+    /// <summary>Toggle node: description for both looks, property diff, look change, value channel and EV_VALUE (bool).</summary>
     public class ToggleNodeTests
     {
         private static readonly Vector2 DefaultSize = new(0.68f, 0.4f);

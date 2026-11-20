@@ -6,7 +6,7 @@ using System.IO;
 using VL.Qt;
 
 /// <summary>
-/// #116 task 1.8, part 1: what lands in the texture. Pixels against a window render (a), premultiplied alpha (b),
+/// task 1.8, part 1: what lands in the texture. Pixels against a window render (a), premultiplied alpha (b),
 /// 8-bit typeless textures with UNORM and SRGB views, float, unsupported formats (c), two scenes in one batch (e).
 /// SRGB views and float hold linear premultiplied values (QtNative's linear pass). (d) is covered
 /// by OffscreenScene (unchanged scene: no render, no fence signal) and extended in Batch.

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using VL.Qt;
 
-// App fonts (#15, LoadFont node): vlqt_font_add / vlqt_font_release in QtNative. Sharing and reference counting per file,
+// App fonts (LoadFont node): vlqt_font_add / vlqt_font_release in QtNative. Sharing and reference counting per file,
 // removal at the end of the pump (and reuse within the same pump), errors (missing file, no font, wrong thread), a Text
 // that renders with the loaded family, and the one-time warning for a family Qt does not have (log category vlqt.font).
 // Test font: src/VL.Qt.Native/fonts/DejaVuSans.ttf (the Linux fallback font of the bundle, Bitstream Vera license,

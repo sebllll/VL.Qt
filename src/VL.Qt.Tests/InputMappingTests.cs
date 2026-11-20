@@ -3,7 +3,7 @@ using VL.Lib.IO;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>InputMapping (#119): vvvv Keys / MouseButtons to Qt values.</summary>
+    /// <summary>InputMapping: vvvv Keys / MouseButtons to Qt values.</summary>
     public class InputMappingTests
     {
         [Test]

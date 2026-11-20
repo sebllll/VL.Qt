@@ -8,7 +8,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Occurrences and duplicates (SceneRegistry, #455) and sink binding (BIND without flags) of the reconciler (04d).</summary>
+    /// <summary>Occurrences and duplicates (SceneRegistry) and sink binding (BIND without flags) of the reconciler (04d).</summary>
     public class ReconcilerSceneTests
     {
         private RecordingSink _sink = null!;
@@ -35,7 +35,7 @@ namespace VL.Qt.Tests
             (rec ?? _rec).Update(root, Space.DIPTopLeft);
         }
 
-﻿        // --- several occurrences in one tree (#455) ---
+﻿        // --- several occurrences in one tree ---
 
         private static Video V(SinkSlot sink = default) => new() { Size = new Vector2(1, 1), Sink = sink };
 
@@ -250,7 +250,7 @@ namespace VL.Qt.Tests
             Assert.That(Structural, Is.Empty);
         }
 
-        // --- across renderers (#126): every renderer shows the element, the first one has the primary occurrence ---
+        // --- across renderers: every renderer shows the element, the first one has the primary occurrence ---
 
         [Test]
         public void TwoReconcilers_BothCreate_PrimaryMovesToSecondWhenFirstLetsGo()
@@ -435,7 +435,7 @@ namespace VL.Qt.Tests
             Frame(R(2, new SinkSlot(sinkA, 0)));
             Assert.That(_sink.OfOp("BIND"), Is.Empty);
 
-            // Sink change → new BIND without flags (CancelPress is reserved, #320), old sink loses hover/press.
+            // Sink change → new BIND without flags (CancelPress is reserved), old sink loses hover/press.
             sinkA[0].IsHovered = true;
             sinkA[0].IsPressed = true;
             Frame(R(2, new SinkSlot(sinkB, 0)));
@@ -465,7 +465,7 @@ namespace VL.Qt.Tests
             Frame(G(E(0), E(2)));
             Frame(G(E(0), E(1), E(2)));
             var c = _rec.Root!.Children;
-            // Position 1 keeps its object, gets slot 1 (was 2) → new BIND without flags (CancelPress is reserved, #320); position 2 is new → plain BIND.
+            // Position 1 keeps its object, gets slot 1 (was 2) → new BIND without flags (CancelPress is reserved); position 2 is new → plain BIND.
             Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {c[1].Id} {c[1].BoundHandle} 0", $"BIND {c[2].Id} {c[2].BoundHandle} 0" }));
             Assert.That(_rec.Bindings.Count, Is.EqualTo(3));
         }

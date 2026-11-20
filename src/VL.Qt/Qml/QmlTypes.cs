@@ -6,7 +6,7 @@ using VL.Qt.Elements;
 namespace VL.Qt.Qml
 {
     /// <summary>
-    /// QML value types that get a pin (#107). The wire form is <see cref="QmlValue"/> of the QmlElement (#104), so every
+    /// QML value types that get a pin. The wire form is <see cref="QmlValue"/> of the QmlElement, so every
     /// kind maps to one CLR pin type and one <c>Protocol.Vt</c> value type.
     /// </summary>
     internal enum QmlValueKind
@@ -32,7 +32,7 @@ namespace VL.Qt.Qml
     }
 
     /// <summary>
-    /// Pin model mapping of the QML node factory (#107): QML type name → <see cref="QmlValueKind"/> → CLR pin type → wire value
+    /// Pin model mapping of the QML node factory: QML type name → <see cref="QmlValueKind"/> → CLR pin type → wire value
     /// (<see cref="QmlValue"/>). Everything not listed here (<c>alias</c>, <c>var</c>, <c>list&lt;…&gt;</c>, <c>url</c>, <c>point</c>,
     /// <c>size</c>, <c>font</c>, enums, object types) gets no pin; the parser reports it as an info message.
     /// </summary>
@@ -131,7 +131,7 @@ namespace VL.Qt.Qml
         }
 
         /// <summary>
-        /// CLR type of the output pin of a signal (#107): no arguments → bool (true in the frame it fired); one argument →
+        /// CLR type of the output pin of a signal: no arguments → bool (true in the frame it fired); one argument →
         /// Spread of its values this frame (Spread&lt;object&gt; for an argument without <see cref="QmlValueKind"/>: QtNative sends
         /// it in its string form or as whatever supported type the value has); two or more → Spread&lt;QmlSignal&gt;.
         /// </summary>

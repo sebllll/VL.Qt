@@ -6,7 +6,7 @@ using System.Threading;
 using VL.Qt;
 
 /// <summary>
-/// #358 (images package 01): all windows render on one D3D11 device created by QtNative; next to them an upload QRhi on
+/// (images package 01): all windows render on one D3D11 device created by QtNative; next to them an upload QRhi on
 /// the same device. Two windows report the same ID3D11Device, closing and reopening one keeps it, GPU timestamps keep
 /// coming per window, and the frame intervals of two and of three VSync windows are printed (compare with
 /// VLQT_SHARED_DEVICE=0) and checked: each window renders every refresh (median interval, hard check), each window at
@@ -102,7 +102,7 @@ public static class SharedDeviceTest
         Native.vlqt_window_destroy(b);
         s.Pump(2);
 
-        // #90: several VSync windows do not halve the frame rate. Pumped like the vvvv main loop: paced at the refresh rate,
+        // several VSync windows do not halve the frame rate. Pumped like the vvvv main loop: paced at the refresh rate,
         // and Win32 messages are dispatched between the pumps (Qt's VBlank thread per monitor posts the update requests
         // there; a pump that dispatches nothing renders a request only one pump later). With VSync 1 not every pump has to
         // render, so the intervals between this window's renders are measured here (the stats count consecutive frames).

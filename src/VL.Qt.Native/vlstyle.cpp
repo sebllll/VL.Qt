@@ -201,7 +201,7 @@ QFont VlStyle::fontAt(int state) const
     QFont font; // Qt default: family "", size 0 and weight 0 keep its values
     const Cell* family = resolve(FontFamily, state);
     if (family && !family->s.isEmpty()) {
-        warnMissingFontFamily(family->s); // #15, once per name
+        warnMissingFontFamily(family->s); // once per name
         font.setFamilies({family->s});
     }
     const float size = numberAt(FontSize, state);

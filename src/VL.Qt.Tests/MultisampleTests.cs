@@ -2,7 +2,7 @@
 
 namespace VL.Qt.Tests
 {
-    /// <summary>MultisampleCount and the clamp warning of the Multisample Count pins (#118).</summary>
+    /// <summary>MultisampleCount and the clamp warning of the Multisample Count pins.</summary>
     public class MultisampleTests
     {
         [Test]

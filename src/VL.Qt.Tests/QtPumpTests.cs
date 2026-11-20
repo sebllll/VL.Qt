@@ -10,7 +10,7 @@ using VL.Lib.Animation;
 namespace VL.Qt.Tests
 {
     /// <summary>
-    /// #58: the pump is bound to one vvvv app (its frame clock), not to the process. F8/F5 = old pump disposed,
+    /// the pump is bound to one vvvv app (its frame clock), not to the process. F8/F5 = old pump disposed,
     /// new pump on a new clock. No Qt here: a fake target records what QtApp would do.
     /// </summary>
     public class QtPumpTests
@@ -41,11 +41,11 @@ namespace VL.Qt.Tests
             public double DriverSeconds { get; private set; } = double.NaN;
             public int Participants, Pumps, Frames, Registered, Unregistered;
             public readonly List<IQtFrameParticipant[]> Calls = new();
-            public readonly List<double> VvvvMs = new(); // #260: vvvv frame start → pump, -1 = unknown
+            public readonly List<double> VvvvMs = new(); // vvvv frame start → pump, -1 = unknown
             public void PumpFrame(IQtFrameParticipant[] participants, double driverSeconds, double budgetMs, long vvvvStart, HostFrameHistory history)
             {
                 VvvvMs.Add(vvvvStart != 0 ? Stopwatch.GetElapsedTime(vvvvStart).TotalMilliseconds : -1);
-                // Like QtApp (#314): the driver only moves forward; a pump may be slightly behind (another app's clock).
+                // Like QtApp: the driver only moves forward; a pump may be slightly behind (another app's clock).
                 Assert.That(driverSeconds, Is.GreaterThanOrEqualTo(double.IsNaN(DriverSeconds) ? double.MinValue : DriverSeconds - QtPump.ResyncSeconds), "driver must not run backwards");
                 if (!(driverSeconds <= DriverSeconds))
                     DriverSeconds = driverSeconds;
@@ -71,7 +71,7 @@ namespace VL.Qt.Tests
         [Test]
         public void TwoApps_PausedAppResumesFromDriverTime()
         {
-            // #314: two vvvv apps (entry points) pump the one QtApp. App 2 is paused while app 1 drives the animation
+            // two vvvv apps (entry points) pump the one QtApp. App 2 is paused while app 1 drives the animation
             // driver ahead; when app 2 runs alone again, the driver continues from there instead of standing still.
             var app = new FakeApp();
             var clock1 = new Clock(100);

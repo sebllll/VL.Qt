@@ -8,7 +8,7 @@ using VL.Qt.Elements;
 namespace VL.Qt
 {
 ﻿    /// <summary>
-    /// App-wide record of where each element instance is shown (docs/decisions/reconciler-identity.md, #455, #126).
+    /// App-wide record of where each element instance is shown (docs/decisions/reconciler-identity.md).
     /// <para>
     /// An element may hang at several places, inside one renderer and in several renderers: every occurrence is a Qt
     /// object of its own and binds the element's sink. The primary occurrence (<see cref="OwnerOf(Element)"/>) is the
@@ -36,7 +36,7 @@ namespace VL.Qt
     /// visited.
     /// </para>
     /// <para>
-    /// Place fallback (#548): an element node outputs a new instance whenever an input changes, always with the same sink
+    /// Place fallback: an element node outputs a new instance whenever an input changes, always with the same sink
     /// slot. Snapshot and TooltipPreview may run before the renderer of the same frame, when the registry still holds the
     /// previous instance. <see cref="TryLocate"/> then falls back to the last shown instance of the element's slot (same
     /// window, same object). The slot entry goes with the entry of that instance (no extra lifetime, no leak).
@@ -81,7 +81,7 @@ namespace VL.Qt
 
         private readonly Dictionary<Element, Entry> _entries = new(ReferenceEqualityComparer.Instance);
         private readonly Stack<List<Node>> _lists = new();
-        private readonly Dictionary<SinkSlot, Element> _shownBySlot = new(); // sink slot → last instance shown with it (#548)
+        private readonly Dictionary<SinkSlot, Element> _shownBySlot = new(); // sink slot → last instance shown with it
 
         /// <summary>Number of elements currently shown or waiting as duplicates (tests).</summary>
         public int Count => _entries.Count;
@@ -127,8 +127,8 @@ namespace VL.Qt
             => _entries.TryGetValue(element, out var e) ? e.Others : null;
 
         /// <summary>
-        /// Native window and object id of the primary occurrence of <paramref name="element"/> (#363, Snapshot). An
-        /// instance no renderer has seen yet is located by its place: the last shown instance of its sink slot (#548, a
+        /// Native window and object id of the primary occurrence of <paramref name="element"/> (Snapshot). An
+        /// instance no renderer has seen yet is located by its place: the last shown instance of its sink slot (a
         /// node's new instance before the renderer of this frame ran). False if it is not shown in a renderer (no
         /// occurrence, no shown instance of its slot, no primary right after a hand-over, or the reconciler has no window).
         /// </summary>
@@ -341,7 +341,7 @@ namespace VL.Qt
                 _lists.Push(list);
         }
 
-        // --- Input handlers (#319): one interaction node is active at one
+        // --- Input handlers: one interaction node is active at one
         // handler only. Keyed by the sink of the interaction node. Unlike elements the current owner always keeps it
         // (no take-over by traversal order); further occurrences wait as placeholders until the owner lets go. ---
 

@@ -17,12 +17,12 @@ namespace VL.Qt.Elements
     /// Handles are counted up and not reused (wrap-around skips 0 and live handles): events QtNative still
     /// sends for a released handle (e.g. EV_HOVER 0 / EV_PRESS 0 after an unbind, 1 frame later) are dropped
     /// instead of landing in another slot. Releasing resets hover/press of the slot right away
-    /// (docs/decisions/events.md); this also holds for the handles of input handlers (#319: a removed Hover node's
+    /// (docs/decisions/events.md); this also holds for the handles of input handlers (a removed Hover node's
     /// channel falls back to not hovered). Lives with the reconciler (one per window), so a restarted app (F8/F5)
     /// starts empty. Main thread only, allocation-free in the steady state.
     /// </para>
     /// <para>
-    /// Several handles may point to the same slot (#455: one element at several places of the tree, one Qt object and
+    /// Several handles may point to the same slot (one element at several places of the tree, one Qt object and
     /// handle per occurrence). Only the primary handle (the first occurrence in traversal order, see
     /// <see cref="SceneRegistry"/>) writes state values (Measured, SceneBounds, Media, Error) and resets the slot when
     /// it is released; events (Click, Value) count from every handle. Handles of input handlers are always primary.
@@ -108,7 +108,7 @@ namespace VL.Qt.Elements
         }
 
         /// <summary>
-        /// Mapping of the scene the poll buffers come from (#143), set by <see cref="Reconciler.Update(Element?, in SpaceMapping)"/>:
+        /// Mapping of the scene the poll buffers come from, set by <see cref="Reconciler.Update(Element?, in SpaceMapping)"/>:
         /// <see cref="Dispatch"/> converts the logical pixels of Qt to units with it.
         /// </summary>
         public SpaceMapping Mapping { get; set; } = SpaceMapping.Default;

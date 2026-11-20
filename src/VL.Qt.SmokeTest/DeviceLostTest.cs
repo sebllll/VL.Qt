@@ -9,7 +9,7 @@ using NUnit.Framework;
 using VL.Qt;
 
 /// <summary>
-/// #367 (images package 10): the shared D3D11 device is removed for real (D3D11On12 + RemoveDevice, needs
+/// (images package 10): the shared D3D11 device is removed for real (D3D11On12 + RemoveDevice, needs
 /// VLQT_TEST_D3D11ON12=1 before the first window, so it runs in a helper process of its own). QtNative rebuilds device,
 /// upload QRhi, windows and resources: both windows end up on the new device, same as the upload QRhi, and draw their
 /// rect and 20 images again (10 PNG files + 10 via set_pixels, both windows show all of them). Twice in a row.

@@ -7,7 +7,7 @@ using VL.Lib.Collections;
 namespace VL.Qt.Elements
 {
     /// <summary>
-    /// Decoding of the two QML events of QtNative (#104, protocol.h "QmlElement"). Values come boxed as float, int, bool, string,
+    /// Decoding of the two QML events of QtNative (protocol.h "QmlElement"). Values come boxed as float, int, bool, string,
     /// Color4 (straight alpha), Vector2/3/4 or RectangleF, in the units of QML (no unit conversion). The events are sent on
     /// change only, so allocating the name and the box is fine.
     /// </summary>

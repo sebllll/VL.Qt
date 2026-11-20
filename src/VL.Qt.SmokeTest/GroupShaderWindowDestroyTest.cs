@@ -3,7 +3,7 @@ using NUnit.Framework;
 using VL.Qt;
 using static Pixels;
 
-// #534: vlqt_window_destroy while ShaderEffects with a Group as Input (frame proxy, #486) are still in the tree, without
+// vlqt_window_destroy while ShaderEffects with a Group as Input (frame proxy) are still in the tree, without
 // destroying the effects first. 10 GLSL effects (texture(source, ...)), each with its own Group of two Rectangles as Input,
 // plus one with a Group of 80 Rectangles; a few frames, then the window goes directly. Second round: first the Input of one
 // effect released and its Group destroyed in one apply. Both crashed with 0xC0000005 in ~QQuickShaderEffectSource before the fix.

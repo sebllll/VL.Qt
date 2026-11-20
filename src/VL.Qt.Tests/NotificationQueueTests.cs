@@ -8,7 +8,7 @@ using VL.Qt.Stride;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>NotificationQueue of QtTexture (#119), compiled in from VL.Qt.Stride: Input Notifications reach the scene.</summary>
+    /// <summary>NotificationQueue of QtTexture, compiled in from VL.Qt.Stride: Input Notifications reach the scene.</summary>
     public class NotificationQueueTests
     {
         private sealed class Source : IObservable<INotification>

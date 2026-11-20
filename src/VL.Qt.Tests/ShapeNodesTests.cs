@@ -9,7 +9,7 @@ using VL.Qt.Nodes;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>The nodes Line, Polyline and Polygon (#154, package 03): pin defaults, change detection, point limit.</summary>
+    /// <summary>The nodes Line, Polyline and Polygon (package 03): pin defaults, change detection, point limit.</summary>
     public class ShapeNodesTests
     {
         private static readonly Color4 White = Color4.White;

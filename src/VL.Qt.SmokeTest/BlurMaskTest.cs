@@ -11,7 +11,7 @@ using NUnit.Framework;
 using VL.Qt;
 using static Pixels;
 
-// #487: example shader help/Qt/shaders/blur_mask.frag (separable Gaussian blur, radius per pixel from a grayscale mask),
+// example shader help/Qt/shaders/blur_mask.frag (separable Gaussian blur, radius per pixel from a grayscale mask),
 // two chained ShaderEffects (pass 1 horizontal, pass 2 vertical). (1) Correctness: stripes + mask (left black, right white)
 // -> left sharp, right soft. (2) Performance at 1920x1080 and 3840x2160 pixels, radius 0 / 8 / 32 / 64, CPU (sync + render)
 // and GPU time per frame (QRhi timestamps of QtNative, 0 = not available), against the same scene without blur.

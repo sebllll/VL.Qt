@@ -11,7 +11,7 @@ using VL.Qt.Nodes;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 
-// One element tree in two renderers of one SceneRegistry (#126): a WindowRenderer (registered first, owns the element)
+// One element tree in two renderers of one SceneRegistry: a WindowRenderer (registered first, owns the element)
 // and an OffscreenRenderer (D3D11, Windows only). Both draw it, no warning in the sink; state values (SceneBounds,
 // Measured) come from the window; after the window renderer is disposed the offscreen renderer takes over (after its
 // next update), state values keep arriving and Snapshot / TryLocate find the element in the offscreen scene.
@@ -29,7 +29,7 @@ public static class MultiRendererTest
     private static bool IsBg(int r, int g, int b) => Math.Abs(r - 0x20) < 8 && Math.Abs(g - 0x20) < 8 && Math.Abs(b - 0x20) < 8;
     private static bool Close(float a, float b) => Math.Abs(a - b) < 0.02f;
 
-    /// <summary>One element tree in a window and an offscreen scene (#126).</summary>
+    /// <summary>One element tree in a window and an offscreen scene.</summary>
     [Test, Category("multirenderer")]
     public static void MultiRenderer() => Scenario.Run(Run);
 

@@ -8,7 +8,7 @@ using System.Threading;
 using VL.Qt;
 
 /// <summary>
-/// #365 (images package 08): stress test of the resource manager. Runs <c>seconds</c> with a fixed, logged seed and mixes
+/// (images package 08): stress test of the resource manager. Runs <c>seconds</c> with a fixed, logged seed and mixes
 /// load/release (file and pixels), stale ids after release, image elements created/destroyed/re-pointed, a second window
 /// opened/closed and a simulated hotswap (all handles dropped and recreated). At the end vlqt_res_list must be empty, no
 /// leak warning in the log, no crash, no hang (watchdog). Only runs when named explicitly (--only resource-stress),
@@ -26,7 +26,7 @@ public static class ResourceStressTest
 
     private sealed record Elem(uint Id, IntPtr Win);
 
-    /// <summary>Random resource actions for StressSeconds (default 60 s) with StressSeed (#365, sanitizer runs).</summary>
+    /// <summary>Random resource actions for StressSeconds (default 60 s) with StressSeed (sanitizer runs).</summary>
     [Test, Explicit("s by default; parameters StressSeconds / StressSeed"), Category("resource-stress")]
     public static void ResourceStress() => Scenario.Run(s => Run(s, SmokeParameters.StressSeconds, SmokeParameters.StressSeed));
 

@@ -15,7 +15,7 @@ using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 
 /// <summary>
-/// Wave 1, task W1-17 (issue #171): two measurements that decide later work. Both are explicit (a measurement, not a gate)
+/// Wave 1, task W1-17: two measurements that decide later work. Both are explicit (a measurement, not a gate)
 /// and warn-only: they never fail on a number.
 /// C16 / NODE-02: does <c>Clip</c> ever change a pixel on Rectangle and Circle? Rectangle and Circle with fill, stroke and a
 /// DropShadow, Clip off against Clip on, grabbed and compared pixel by pixel.

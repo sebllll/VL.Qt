@@ -1,6 +1,6 @@
 ﻿namespace VL.Qt.Nodes
 {
-    /// <summary>Default shader text of the ShaderEffect node's code pins (#483).</summary>
+    /// <summary>Default shader text of the ShaderEffect node's code pins.</summary>
     internal static class ShaderTemplates
     {
         public const string Fragment = """

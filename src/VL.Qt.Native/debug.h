@@ -1,4 +1,4 @@
-/* debug.h - debug overlay of a window (#112/#279).
+/* debug.h - debug overlay of a window.
  *
  * One item per window, child of contentItem next to the user root (like the perf overlay), so it takes no part in
  * layout, childrenRect, implicit/Measured Size, REPARENT indices or effect layers. enabled=false, no mouse buttons,
@@ -9,7 +9,7 @@
  * Shown for every element with VLQT_PROP_DEBUG and for all elements while vlqt_window_set_debug is on. Without
  * either the overlay is hidden and costs nothing per frame (no update, no geometry); it is created on first use.
  *
- * Legend (#473, no labels; one color per meaning, the line style carries the mode):
+ * Legend (no labels; one color per meaning, the line style carries the mode):
  *   cyan frame      = actual size (itemFrame: SIZE, or the Auto Size result); solid = fixed SIZE, dashed = Auto Size on
  *   orange frame    = implicit size, i.e. what Auto Size gives (Group: extent of children + origin, may start negative);
  *                     only where it differs from the actual size (Auto Size on: never), types with AUTO_SIZE and Text

@@ -7,7 +7,7 @@ using VL.Core;
 namespace VL.Qt.Qml
 {
     /// <summary>
-    /// Node description of one .qml file (#107). init (lazy, when vvvv needs the pins): <see cref="QmlNodeLayout.Load"/>, then
+    /// Node description of one .qml file. init (lazy, when vvvv needs the pins): <see cref="QmlNodeLayout.Load"/>, then
     /// <c>context.Node(layout.InputDescriptions(), layout.OutputDescriptions(), newNode: c =&gt; new QmlNodeInstance(c.NodeContext, layout).CreateNode(c),
     /// messages: layout.Messages, openEditorAction, summary: layout.Summary ?? file.Summary, filePath: file.FilePath)</c>; not
     /// fragmented (like the shader nodes, so vvvv calls Update). Name <see cref="QmlFile.FullName"/>, category

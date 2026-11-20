@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using VL.Qt;
 
-// SpinBox (#210, package 1a): QtQuick.Controls SpinBox (style Basic) as value input. Raw protocol against QtNative:
+// SpinBox (package 1a): QtQuick.Controls SpinBox (style Basic) as value input. Raw protocol against QtNative:
 // implicit size (AUTO_SIZE), EV_VALUE i32 only after user changes (+/- click, wheel, typed text on Enter and on focus
 // loss), never for SET VALUE/MINIMUM/MAXIMUM, the captured user value survives a stale SET before the poll, several
 // changes in one frame = one event with the last value, full int range, Editable/Enabled false, rebind drops a change
@@ -20,7 +20,7 @@ public static class SpinBoxTest
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
     private static extern int vlqt_test_send_key_text(IntPtr w, int key, int modifiers, [MarshalAs(UnmanagedType.LPUTF8Str)] string? text);
 
-    private const float StyleMin = 24; // BaseStyle FrameMinWidth/FrameMinHeight: lower bound of every implicit size (#292)
+    private const float StyleMin = 24; // BaseStyle FrameMinWidth/FrameMinHeight: lower bound of every implicit size
     private const int KeyA = 0x41;
     private const int KeyReturn = 0x01000004;
     private const int ControlModifier = 0x04000000;
@@ -95,7 +95,7 @@ public static class SpinBoxTest
         // Created with a large range and a value, bound without flags; AUTO_SIZE default on -> implicit size; SET no echo.
         cmd.Reset();
         cmd.Create(S1, Protocol.Type.SpinBox);
-        VL.Qt.Styles.BaseStyle.Write(cmd, S1); // like the Reconciler (#292)
+        VL.Qt.Styles.BaseStyle.Write(cmd, S1); // like the Reconciler
         cmd.SetPlace(S1, 100, 100, 0, 0);
         cmd.SetI32(S1, Protocol.Prop.Minimum, -2_000_000_000);
         cmd.SetI32(S1, Protocol.Prop.Maximum, 2_000_000_000);
@@ -118,14 +118,14 @@ public static class SpinBoxTest
         cmd.SetBool(S1, Protocol.Prop.AutoSize, false);
         cmd.SetPlace(S1, 100, 100, 240, 40);
         cmd.Create(S2, Protocol.Type.SpinBox);
-        VL.Qt.Styles.BaseStyle.Write(cmd, S2); // like the Reconciler (#292)
+        VL.Qt.Styles.BaseStyle.Write(cmd, S2); // like the Reconciler
         cmd.SetBool(S2, Protocol.Prop.AutoSize, false);
         cmd.SetPlace(S2, 100, 200, 240, 40);
         cmd.Reparent(S2, 0, 1);
         cmd.Bind(S2, H2, 0);
         CheckApply("spinbox bounds + second spinbox");
         Frame();
-        // Base style (#292): both buttons at the right, squares of the box height minus the border (BaseStyle FrameBorderWidth 1).
+        // Base style: both buttons at the right, squares of the box height minus the border (BaseStyle FrameBorderWidth 1).
         const float bs = 40 - 2 * 1, upX = 100 + 240 - 1 - bs / 2, downX = 100 + 240 - 1 - bs * 1.5f, textX = 100 + 100, y1 = 120, y2 = 220;
 
         // + -> 6 at once.

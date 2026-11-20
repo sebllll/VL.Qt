@@ -11,7 +11,7 @@ using P = VL.Qt.Protocol.Prop;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>TextInput node (#301): description, property diff, value channel (string), null/empty handling, EV_VALUE.</summary>
+    /// <summary>TextInput node: description, property diff, value channel (string), null/empty handling, EV_VALUE.</summary>
     public class TextInputNodeTests
     {
         private static readonly Vector2 DefaultSize = new(2, 0.4f);

@@ -11,7 +11,7 @@ using P = VL.Qt.Protocol.Prop;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Button node (#213): description, property diff, Bang and the IsClicked channel without Interactive.</summary>
+    /// <summary>Button node: description, property diff, Bang and the IsClicked channel without Interactive.</summary>
     public class ButtonNodeTests
     {
         private static readonly Vector2 DefaultSize = new(1, 0.4f);

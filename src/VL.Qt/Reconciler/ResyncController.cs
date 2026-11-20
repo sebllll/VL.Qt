@@ -4,11 +4,11 @@ using VL.Qt.Elements;
 namespace VL.Qt
 {
     /// <summary>
-    /// Resync after a failed <c>vlqt_window_apply</c> (#76). QtNative aborts a batch at the first bad command, so
+    /// Resync after a failed <c>vlqt_window_apply</c>. QtNative aborts a batch at the first bad command, so
     /// the reconciler's mirror is ahead of QtNative. Recovery is always complete: one RESET wipes the window's
-    /// scene in QtNative (#92), the mirror is dropped without commands (<see cref="Reconciler.Discard"/>) and the
+    /// scene in QtNative, the mirror is dropped without commands (<see cref="Reconciler.Discard"/>) and the
     /// next <c>Update</c> creates the scene from scratch, i.e. one frame later. (QtNative reports the failing id,
-    /// vlqt_window_get_apply_error; it is used to show the error at the element node, #275, not for a partial rebuild.)
+    /// vlqt_window_get_apply_error; it is used to show the error at the element node, not for a partial rebuild.)
     /// <para>
     /// No endless loop: if the rebuild fails as well (first apply after a resync), the controller gives up and
     /// leaves the scene empty; <see cref="ShouldReconcile"/> stays false until the input changes (new reference),

@@ -6,7 +6,7 @@ using VL.Qt;
 using Color = System.Drawing.Color;
 using static Pixels;
 
-// SIZE and AUTO_SIZE (#83, #469). Size 0 stays 0 (SIZE always sets width/height explicitly). Containers
+// SIZE and AUTO_SIZE. Size 0 stays 0 (SIZE always sets width/height explicitly). Containers
 // (Group, Row, Column, ShaderEffect) have AUTO_SIZE, default on: the SIZE is ignored, the implicit size
 // applies. Off: the SIZE counts, also 0.
 [TestFixture, NonParallelizable]

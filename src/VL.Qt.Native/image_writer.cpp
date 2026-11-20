@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <cstring>
 
-// Image file writer (#157). Any thread, no QObject / GUI-thread-only API: QImage and QImageWriter only.
+// Image file writer. Any thread, no QObject / GUI-thread-only API: QImage and QImageWriter only.
 namespace vlqt::imagewriter
 {
     namespace

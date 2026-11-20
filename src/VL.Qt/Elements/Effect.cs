@@ -124,7 +124,7 @@ namespace VL.Qt.Elements
     }
 
     /// <summary>
-    /// A filter shader as link of the Effect chain (#489): driven by QtNative's pass driver with a template (protocol.h
+    /// A filter shader as link of the Effect chain: driven by QtNative's pass driver with a template (protocol.h
     /// "Effect chain", passes: docs/effects-and-shaders.md). Ends a MultiEffect run in <see cref="Effect.Segment"/>.
     /// QtNative sets texelSize, dpr, weight, elementRect, source and the template's inputs itself; <see cref="Uniforms"/> must not use them.
     /// </summary>

@@ -157,7 +157,7 @@ namespace VL.Qt.Tests
                 Is.EqualTo(SetHdr(4, 2, 257, Protocol.Vt.String) + U32(0)));
         }
 
-        // SET_STYLE (#292): header, u32 id, u16 count, u16 flags, entries (u16 field, u8 state, u8 vt, value), 4-byte aligned.
+        // SET_STYLE: header, u32 id, u16 count, u16 flags, entries (u16 field, u8 state, u8 vt, value), 4-byte aligned.
         private static string Entry(ushort field, byte state, ushort vt, string value) => U16(field) + state.ToString("X2") + vt.ToString("X2") + value;
 
         [Test]

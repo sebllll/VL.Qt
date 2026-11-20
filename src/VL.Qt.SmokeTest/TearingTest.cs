@@ -9,7 +9,7 @@ using NUnit.Framework;
 using VL.Qt;
 
 /// <summary>
-/// Manual scenario (#90 T0b), explicit NUnit test (category tearing). Its flags come from the run parameter TearingArgs:
+/// Manual scenario (T0b), explicit NUnit test (category tearing). Its flags come from the run parameter TearingArgs:
 /// <c>[--windows N] [--interval 0|1] [--fullscreen] [--pump-hz N] [--seconds N]</c>. N windows with a vertical bar sweeping fast across the whole width (tearing shows as a broken
 /// bar), pumped like the vvvv main loop. Once per second a line per window (fps = swaps/s, present and pump p50/p99 from
 /// vlqt_perf_sample, refresh rate of the screen) and one for the whole host pump; at the end a TEARING SUMMARY line per

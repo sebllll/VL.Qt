@@ -6,7 +6,7 @@ using VL.Lib.Basics.Imaging;
 namespace VL.Qt
 {
     /// <summary>
-    /// Writes images to files on a worker thread for the FileWriter nodes (#157). One write runs at a time per instance;
+    /// Writes images to files on a worker thread for the FileWriter nodes. One write runs at a time per instance;
     /// a Start while one runs replaces the waiting one (the newest wins, at most one waits). Start and Poll are called on
     /// the main thread, the write delegate runs on a worker thread.
     /// </summary>

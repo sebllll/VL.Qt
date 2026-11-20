@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace VL.Qt
 {
     /// <summary>
-    /// Process-wide log target of VL.Qt (#258): the "VL.Qt" logger for process-wide messages (pump, stats) and the
+    /// Process-wide log target of VL.Qt: the "VL.Qt" logger for process-wide messages (pump, stats) and the
     /// receiver of all Qt/QtNative messages (qDebug … qFatal, QML/JS warnings, vlqt.* categories) from QtNative's message
     /// handler. Everything ends up in the app host's <see cref="ILoggerFactory"/>, i.e. in the vvvv Log window and in
     /// whatever logging providers are configured (files etc.).

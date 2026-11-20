@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using VL.Lib.Animation;
 using VL.Qt;
 
-// Input latency (#24): input queued like platform input between two frames (vlqt_test_queue_mouse / _touch) reaches the
+// Input latency: input queued like platform input between two frames (vlqt_test_queue_mouse / _touch) reaches the
 // sinks at the frame start (QtPump tick: vlqt_app_deliver_input, then PollInput), i.e. before the node updates of that
 // frame. Before #24 it reached them at the frame end, so the patch saw it one frame later. Measured in both modes on a
 // simulated clock (QtPump.DeliverInputAtFrameStart), plus: no event twice or lost (press/release pairs, multitouch), no

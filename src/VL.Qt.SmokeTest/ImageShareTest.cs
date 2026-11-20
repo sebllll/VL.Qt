@@ -9,7 +9,7 @@ using System.Threading;
 using VL.Qt;
 
 /// <summary>
-/// #361 (images package 04): one image resource in many Image elements and windows. 200 elements in 2 windows = one
+/// (images package 04): one image resource in many Image elements and windows. 200 elements in 2 windows = one
 /// upload (vlqt_res_list: bytes of one texture, 200 element references), a switch to a resource that is still loading
 /// keeps the old image until it is Ready, a replacement of the same id shows up without an empty frame, destroying an
 /// element while its resource loads leaks nothing, mipmaps draw. Perf (skipped with warn-only perf limits, CI): switching

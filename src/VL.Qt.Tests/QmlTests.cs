@@ -16,7 +16,7 @@ using P = VL.Qt.Protocol.Prop;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Wire helpers shared by the QmlElement tests (#104): values and events encoded like protocol.h "QmlElement".</summary>
+    /// <summary>Wire helpers shared by the QmlElement tests: values and events encoded like protocol.h "QmlElement".</summary>
     internal static class QmlWire
     {
         public static byte[] F(params float[] v)
@@ -67,7 +67,7 @@ namespace VL.Qt.Tests
         }
     }
 
-    /// <summary>QmlValue (#104): conversion of patch values to wire values, exact equality, the lines for values that are refused.</summary>
+    /// <summary>QmlValue: conversion of patch values to wire values, exact equality, the lines for values that are refused.</summary>
     public class QmlValueTests
     {
         private static IEnumerable<TestCaseData> Supported()
@@ -162,7 +162,7 @@ namespace VL.Qt.Tests
                 Is.EqualTo("Property 't': type Int64 is not supported, ignored (use float, int, bool, string, Color4, Vector2/3/4 or RectangleF)"));
     }
 
-    /// <summary>QmlProperties (#104): the converted snapshot of the Properties dictionary, change detection by content, problem lines.</summary>
+    /// <summary>QmlProperties: the converted snapshot of the Properties dictionary, change detection by content, problem lines.</summary>
     public class QmlPropertiesTests
     {
         [Test]
@@ -252,7 +252,7 @@ namespace VL.Qt.Tests
         }
     }
 
-    /// <summary>QmlPropertyWriter (#104): the diff by name and the encoding of every value type into SET_QML_PROPERTIES.</summary>
+    /// <summary>QmlPropertyWriter: the diff by name and the encoding of every value type into SET_QML_PROPERTIES.</summary>
     public class QmlPropertyWriterTests
     {
         private static QmlProperties Props(params (string Name, object Value)[] entries)
@@ -443,7 +443,7 @@ namespace VL.Qt.Tests
         }
     }
 
-    /// <summary>QmlEvents (#104): decoding of EV_QML_PROPERTY and EV_QML_SIGNAL, for every value type and for broken payloads.</summary>
+    /// <summary>QmlEvents: decoding of EV_QML_PROPERTY and EV_QML_SIGNAL, for every value type and for broken payloads.</summary>
     public class QmlEventsTests
     {
         private static IEnumerable<TestCaseData> Values()
@@ -621,7 +621,7 @@ namespace VL.Qt.Tests
         }
     }
 
-    /// <summary>QmlFileWatcher (#104): which changes count, folder only, change flag taken once.</summary>
+    /// <summary>QmlFileWatcher: which changes count, folder only, change flag taken once.</summary>
     public class QmlFileWatcherTests
     {
         private string _dir = null!;
@@ -743,7 +743,7 @@ namespace VL.Qt.Tests
         }
     }
 
-    /// <summary>QmlElement node (#104): description, reconciler commands, reload, outputs, errors.</summary>
+    /// <summary>QmlElement node: description, reconciler commands, reload, outputs, errors.</summary>
     public class QmlElementNodeTests
     {
         private string _dir = null!;

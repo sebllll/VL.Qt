@@ -5,7 +5,7 @@ using VL.Core.Import;
 
 namespace VL.Qt.Styles
 {
-    /// <summary>One style state (#294): used by getters and by <see cref="StateValues{T}.Get"/>.</summary>
+    /// <summary>One style state: used by getters and by <see cref="StateValues{T}.Get"/>.</summary>
     [Category("Qt.Style")]
     public enum StyleState : byte
     {
@@ -16,7 +16,7 @@ namespace VL.Qt.Styles
         Checked = Protocol.StyleState.Checked,
     }
 
-    /// <summary>Set of style states for setters (#294), combinable with |. Default of the setters is <see cref="All"/>.</summary>
+    /// <summary>Set of style states for setters, combinable with |. Default of the setters is <see cref="All"/>.</summary>
     [Flags]
     [Category("Qt.Style")]
     public enum StyleStates
@@ -31,7 +31,7 @@ namespace VL.Qt.Styles
     }
 
     /// <summary>
-    /// One style field in all five states (#293). An unset state inherits from the parent style (merge); when the
+    /// One style field in all five states. An unset state inherits from the parent style (merge); when the
     /// resolved style is read, an unset state falls back to Normal (like QtNative).
     /// </summary>
     internal readonly record struct StateValues<T>(
@@ -76,7 +76,7 @@ namespace VL.Qt.Styles
             return Normal.HasValue ? Normal.Value : fallback;
         }
 
-        /// <summary>Merge rule (S1, #291): per state, a set value of <paramref name="over"/> wins, else <paramref name="under"/>.</summary>
+        /// <summary>Merge rule (S1): per state, a set value of <paramref name="over"/> wins, else <paramref name="under"/>.</summary>
         public static StateValues<T> Merge(in StateValues<T> under, in StateValues<T> over) => new(
             over.Normal.HasValue ? over.Normal : under.Normal,
             over.Hovered.HasValue ? over.Hovered : under.Hovered,
@@ -85,7 +85,7 @@ namespace VL.Qt.Styles
             over.Checked.HasValue ? over.Checked : under.Checked);
     }
 
-    /// <summary>Frame part of a style (background of the control, #292).</summary>
+    /// <summary>Frame part of a style (background of the control).</summary>
     internal sealed record FrameStyle
     {
         public StateValues<Color4> Color { get; init; }
@@ -107,7 +107,7 @@ namespace VL.Qt.Styles
         public StateValues<int> FontWeight { get; init; }
     }
 
-    /// <summary>Indicator part: slider handle, check mark, switch knob, SpinBox -/+ (#292).</summary>
+    /// <summary>Indicator part: slider handle, check mark, switch knob, SpinBox -/+.</summary>
     internal sealed record IndicatorStyle
     {
         public StateValues<Color4> Color { get; init; }
@@ -116,7 +116,7 @@ namespace VL.Qt.Styles
         public StateValues<float> BorderWidth { get; init; }
     }
 
-    /// <summary>Track part: slider groove, switch track, check box; FillColor = slider value, switch on, text selection (#292).</summary>
+    /// <summary>Track part: slider groove, switch track, check box; FillColor = slider value, switch on, text selection.</summary>
     internal sealed record TrackStyle
     {
         public StateValues<Color4> Color { get; init; }
@@ -126,9 +126,9 @@ namespace VL.Qt.Styles
     }
 
     /// <summary>
-    /// Look of the widgets (#293): immutable, every field <see cref="Optional{T}"/> per state, unset = inherit from the
+    /// Look of the widgets: immutable, every field <see cref="Optional{T}"/> per state, unset = inherit from the
     /// parent (Group). Resolved top-down: base style → Group → … → widget (<see cref="StyleMerge"/>). A null part
-    /// means "nothing set" in that part. Deep value equality. Built and read with the Qt.Style nodes (#294);
+    /// means "nothing set" in that part. Deep value equality. Built and read with the Qt.Style nodes;
     /// the parts are internal so that only the nodeset shows in the node browser.
     /// </summary>
     [Category("Qt.Style")]
@@ -137,7 +137,7 @@ namespace VL.Qt.Styles
         /// <summary>The style with nothing set.</summary>
         internal static readonly Style Empty = new();
 
-        // Built only through the Qt.Style nodes (#294), so no constructor node.
+        // Built only through the Qt.Style nodes, so no constructor node.
         internal Style()
         {
         }

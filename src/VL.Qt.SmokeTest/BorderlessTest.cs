@@ -6,7 +6,7 @@ using Stride.Core.Mathematics;
 using VL.Qt;
 
 /// <summary>
-/// Borderless pin (#233) via vlqt_window_set_mode: live toggle keeps the client area in place (reported outer top-left
+/// Borderless pin via vlqt_window_set_mode: live toggle keeps the client area in place (reported outer top-left
 /// moves by the frame, client size stays), a borderless window can be smaller than the captioned minimum width, a
 /// window created borderless reports exactly its Bounds (outer top-left = client top-left), toggling back restores the
 /// framed geometry.
@@ -26,7 +26,7 @@ public static class BorderlessTest
     private static void Run(Scenario s)
     {
         var clear = new Color4(0, 0, 0, 1);
-        // WSLg/Weston: frame extents late and with shadow (see RendererTest.RunGeometry, #232): position only roughly.
+        // WSLg/Weston: frame extents late and with shadow (see RendererTest.RunGeometry): position only roughly.
         float posTol = !OperatingSystem.IsWindows() && File.Exists("/dev/dxg")
             && Environment.GetEnvironmentVariable("QT_QPA_PLATFORM") is null or "xcb" ? 40 : 1;
         bool Close(RectangleF a, RectangleF b) =>

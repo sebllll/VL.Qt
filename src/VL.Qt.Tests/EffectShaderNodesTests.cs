@@ -8,7 +8,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>The shader effect nodes (#438 phase B): template, shaders, uniforms, padding and strength in DIP, change detection.</summary>
+    /// <summary>The shader effect nodes (phase B): template, shaders, uniforms, padding and strength in DIP, change detection.</summary>
     public class EffectShaderNodesTests
     {
         private FakeResourceApi _api = null!;
@@ -23,7 +23,7 @@ namespace VL.Qt.Tests
 
         private static ShaderLink Link(Effect? e) => (ShaderLink)e!;
 
-        // The nodes describe the effect in units; the reconciler converts (EffectDiff, #143). The expectations are written in DIP.
+        // The nodes describe the effect in units; the reconciler converts (EffectDiff). The expectations are written in DIP.
         private static float Unit(float dip) => SpaceMapping.Default.FromQt(dip);
 
         private static void AssertPadding(RectangleF actual, float left, float top, float right, float bottom)

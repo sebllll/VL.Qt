@@ -4,7 +4,7 @@ using VL.Lib.Mathematics;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>SpaceMapping (#143): scale and origin mode per Space, conversions to Qt logical pixels and back.</summary>
+    /// <summary>SpaceMapping: scale and origin mode per Space, conversions to Qt logical pixels and back.</summary>
     public class SpaceMappingTests
     {
         private const float Eps = 1e-3f;
