@@ -23,9 +23,9 @@ using static Pixels;
 public static class QtImageTest
 {
 
-    sealed class SolidImage : IImage, IImageData
+    private sealed class SolidImage : IImage, IImageData
     {
-        readonly byte[] _bytes;
+        private readonly byte[] _bytes;
 
         public SolidImage(int width, int height, byte b, byte g, byte r)
         {
@@ -52,7 +52,7 @@ public static class QtImageTest
     [Test, Category("qtimage")]
     public static void QtImage() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var asset = ImageTest.FindAsset();
         s.Check(asset != null, "test asset found");
@@ -176,7 +176,7 @@ public static class QtImageTest
         Pump(1);
     }
 
-    static int Live()
+    private static int Live()
     {
         Span<Native.vlqt_res_info> list = stackalloc Native.vlqt_res_info[256];
         return Native.ResList(list);

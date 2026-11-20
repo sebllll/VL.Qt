@@ -11,40 +11,40 @@ using VL.Qt;
 /// SRGB views and float hold linear premultiplied values (QtNative's linear pass). (d) is covered
 /// by OffscreenScene (unchanged scene: no render, no fence signal) and extended in Batch.
 /// </summary>
-static partial class QtTextureTest
+public static partial class QtTextureTest
 {
     // A rectangle element: place in DIP = texture pixels, straight (non-premultiplied) colour.
-    readonly record struct Box(int X, int Y, int W, int H, float R, float G, float B, float A);
+    private readonly record struct Box(int X, int Y, int W, int H, float R, float G, float B, float A);
 
     // A texture format and the format the consumer samples it with (the bind format).
-    readonly record struct Fmt(string Name, int Texture, int View, int Bytes)
+    private readonly record struct Fmt(string Name, int Texture, int View, int Bytes)
     {
         // The consumer reads linear values: QtNative writes a * linear(c) (vlqt_offscreen_bind).
         public bool Linear => View is R8G8B8A8UnormSrgb or B8G8R8A8UnormSrgb or R16G16B16A16Float;
     }
 
-    static readonly Fmt s_bgra = new("B8G8R8A8_TYPELESS/UNORM", B8G8R8A8Typeless, B8G8R8A8Unorm, 4);
-    static readonly Fmt s_rgba = new("R8G8B8A8_TYPELESS/UNORM", 27, R8G8B8A8Unorm, 4);
-    static readonly Fmt s_bgraSrgb = new("B8G8R8A8_TYPELESS/UNORM_SRGB", B8G8R8A8Typeless, B8G8R8A8UnormSrgb, 4);
-    static readonly Fmt s_rgbaSrgb = new("R8G8B8A8_TYPELESS/UNORM_SRGB", 27, R8G8B8A8UnormSrgb, 4);
-    static readonly Fmt s_float = new("R16G16B16A16_FLOAT", R16G16B16A16Float, R16G16B16A16Float, 8);
-    static readonly Fmt[] s_formats = { s_bgra, s_rgba, s_bgraSrgb, s_rgbaSrgb, s_float };
+    private static readonly Fmt s_bgra = new("B8G8R8A8_TYPELESS/UNORM", B8G8R8A8Typeless, B8G8R8A8Unorm, 4);
+    private static readonly Fmt s_rgba = new("R8G8B8A8_TYPELESS/UNORM", 27, R8G8B8A8Unorm, 4);
+    private static readonly Fmt s_bgraSrgb = new("B8G8R8A8_TYPELESS/UNORM_SRGB", B8G8R8A8Typeless, B8G8R8A8UnormSrgb, 4);
+    private static readonly Fmt s_rgbaSrgb = new("R8G8B8A8_TYPELESS/UNORM_SRGB", 27, R8G8B8A8UnormSrgb, 4);
+    private static readonly Fmt s_float = new("R16G16B16A16_FLOAT", R16G16B16A16Float, R16G16B16A16Float, 8);
+    private static readonly Fmt[] s_formats = { s_bgra, s_rgba, s_bgraSrgb, s_rgbaSrgb, s_float };
     // Leak test (here, not in its file: static fields of a partial class initialize per file in an undefined order):
     // UNORM (Qt renders into the texture), SRGB and float (the linear pass); the last one must be float.
-    static readonly Fmt[] s_leakFormats = { s_bgra, s_bgraSrgb, s_float };
+    private static readonly Fmt[] s_leakFormats = { s_bgra, s_bgraSrgb, s_float };
 
     // sRGB decode of a 0..1 value.
-    static double Decode(double c) => c <= 0.04045 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+    private static double Decode(double c) => c <= 0.04045 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
 
     // Premultiplied linear colour of a straight gamma-space colour, 0..255 rounded: a * linear(c).
-    static int[] LinearPremultiplied(float r, float g, float b, float a)
+    private static int[] LinearPremultiplied(float r, float g, float b, float a)
     {
         int L(float c) => (int)Math.Round(255 * a * Decode(c));
         return new[] { L(r), L(g), L(b), (int)Math.Round(255 * a) };
     }
 
     // A scene of w x h DIP with the boxes (element ids 1..n) on a clear colour; IntPtr.Zero on failure.
-    static IntPtr NewScene(int w, int h, (float R, float G, float B, float A) clear, Box[] boxes, Scenario s, string label)
+    private static IntPtr NewScene(int w, int h, (float R, float G, float B, float A) clear, Box[] boxes, Scenario s, string label)
     {
         var scene = Native.vlqt_offscreen_create(w, h);
         s.Check(scene != IntPtr.Zero, $"{label}: offscreen_create {(scene == IntPtr.Zero ? Native.LastError() : "")}");
@@ -67,7 +67,7 @@ static partial class QtTextureTest
     }
 
     // Changes the colour of element id (1-based, as NewScene numbers them).
-    static void Recolor(IntPtr scene, uint id, float r, float g, float b, float a, Scenario s, string label)
+    private static void Recolor(IntPtr scene, uint id, float r, float g, float b, float a, Scenario s, string label)
     {
         var cmd = new CommandWriter();
         cmd.Reset();
@@ -77,14 +77,14 @@ static partial class QtTextureTest
     }
 
     // Pixels of a texture as bytes, null when the readback failed.
-    static byte[]? Read(IntPtr texture, int w, int h, Fmt f)
+    private static byte[]? Read(IntPtr texture, int w, int h, Fmt f)
     {
         var pixels = new byte[w * h * f.Bytes];
         return Native.TestReadTexture(texture, pixels, out _, out _, out _) == pixels.Length ? pixels : null;
     }
 
     // R, G, B, A (0..255, rounded) of pixel x, y of a readback in format f.
-    static int[] Rgba(byte[] px, int w, int x, int y, Fmt f)
+    private static int[] Rgba(byte[] px, int w, int x, int y, Fmt f)
     {
         int i = (y * w + x) * f.Bytes;
         if (f.Texture == R16G16B16A16Float)
@@ -96,7 +96,7 @@ static partial class QtTextureTest
     }
 
     // R, G, B, A (0..255, rounded) of pixel x, y as the consumer samples it: an SRGB view decodes the bytes.
-    static int[] Seen(byte[] px, int w, int x, int y, Fmt f)
+    private static int[] Seen(byte[] px, int w, int x, int y, Fmt f)
     {
         var c = Rgba(px, w, x, y, f);
         if (f.View is R8G8B8A8UnormSrgb or B8G8R8A8UnormSrgb)
@@ -105,7 +105,7 @@ static partial class QtTextureTest
         return c;
     }
 
-    static bool Near(int[] actual, int[] expected, int tolerance)
+    private static bool Near(int[] actual, int[] expected, int tolerance)
     {
         for (int i = 0; i < 4; i++)
             if (Math.Abs(actual[i] - expected[i]) > tolerance)
@@ -113,15 +113,15 @@ static partial class QtTextureTest
         return true;
     }
 
-    static string Str(int[] c) => $"{c[0]},{c[1]},{c[2]},{c[3]}";
+    private static string Str(int[] c) => $"{c[0]},{c[1]},{c[2]},{c[3]}";
 
     // A test device texture + NT handle in format f; false when it could not be created.
-    static bool NewTarget(IntPtr device, int w, int h, int textureFormat, out IntPtr texture, out IntPtr handle)
+    private static bool NewTarget(IntPtr device, int w, int h, int textureFormat, out IntPtr texture, out IntPtr handle)
         => Native.vlqt_test_d3d11_create_shared_texture(device, w, h, textureFormat, out texture, out handle) == 0;
 
     // (c) The allowed formats render the same scene (UNORM: gamma-space values, SRGB and float: linear values);
     // unsupported formats are refused.
-    static void Formats(Scenario s)
+    private static void Formats(Scenario s)
     {
         bool check(bool ok, string what)
         {
@@ -203,7 +203,7 @@ static partial class QtTextureTest
     }
 
     // (e) Two scenes of different size and format in one batch, each into its own texture; then only one changes.
-    static void Batch(Scenario s)
+    private static void Batch(Scenario s)
     {
         bool check(bool ok, string what)
         {
@@ -282,7 +282,7 @@ static partial class QtTextureTest
 
     // (b) Premultiplied alpha: transparent clear = transparent black, semi-transparent elements, over each other,
     // a semi-transparent clear colour; the result on a checkerboard as PNG.
-    static void Alpha(Scenario s)
+    private static void Alpha(Scenario s)
     {
         bool check(bool ok, string what)
         {
@@ -384,7 +384,7 @@ static partial class QtTextureTest
     }
 
     // Premultiplied BGRA composited over a grey checkerboard (8 px cells), as an opaque PNG: transparency is visible.
-    static void WriteChecker(string path, byte[] bgra, int w, int h)
+    private static void WriteChecker(string path, byte[] bgra, int w, int h)
     {
         var composed = new byte[w * h * 4];
         for (int y = 0; y < h; y++)
@@ -401,7 +401,7 @@ static partial class QtTextureTest
     }
 
     // (a) The same scene in a window and in the texture: pixels match within a small tolerance.
-    static void WindowMatch(Scenario s)
+    private static void WindowMatch(Scenario s)
     {
         bool check(bool ok, string what)
         {

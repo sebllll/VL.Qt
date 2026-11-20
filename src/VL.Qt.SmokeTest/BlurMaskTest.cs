@@ -22,14 +22,14 @@ public static class BlurMaskTest
     [Test, Category("blur-mask")]
     public static void BlurMask() => Scenario.Run(Run);
 
-    const uint Img = 1, Pass1 = 2, Pass2 = 3, Dot = 4;
+    private const uint Img = 1, Pass1 = 2, Pass2 = 3, Dot = 4;
     // CI (VLQT_PERF_WARN_ONLY, shared runners often without GPU = WARP): the numbers carry no meaning there, so only a
     // short run at 1920x1080 checks that the chain renders; the full measurement (both sizes, 60 frames) runs locally.
-    static bool Quick => PerfLimits.SkipHeavy;
-    static int Frames => Quick ? 5 : 60;
-    static int Warmup => Quick ? 2 : 15;
+    private static bool Quick => PerfLimits.SkipHeavy;
+    private static int Frames => Quick ? 5 : 60;
+    private static int Warmup => Quick ? 2 : 15;
 
-    static string? FindFile(params string[] rel)
+    private static string? FindFile(params string[] rel)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
@@ -40,14 +40,14 @@ public static class BlurMaskTest
     }
 
     // --- minimal PNG writer (8 bit, grey or RGB), independent of System.Drawing (not on Linux) ---
-    static readonly uint[] s_crc = Enumerable.Range(0, 256).Select(n =>
+    private static readonly uint[] s_crc = Enumerable.Range(0, 256).Select(n =>
     {
         var c = (uint)n;
         for (int k = 0; k < 8; k++) c = (c & 1) != 0 ? 0xEDB88320 ^ (c >> 1) : c >> 1;
         return c;
     }).ToArray();
 
-    static void Chunk(Stream s, string type, byte[] data)
+    private static void Chunk(Stream s, string type, byte[] data)
     {
         var len = new byte[4];
         System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(len, (uint)data.Length);
@@ -61,7 +61,7 @@ public static class BlurMaskTest
         s.Write(len);
     }
 
-    static void WritePng(string path, int w, int h, int channels, Func<int, int, (byte r, byte g, byte b)> px)
+    private static void WritePng(string path, int w, int h, int channels, Func<int, int, (byte r, byte g, byte b)> px)
     {
         using var raw = new MemoryStream();
         using (var z = new ZLibStream(raw, CompressionLevel.Fastest, true))
@@ -89,16 +89,16 @@ public static class BlurMaskTest
         Chunk(f, "IEND", Array.Empty<byte>());
     }
 
-    static double Median(List<double> v)
+    private static double Median(List<double> v)
     {
         if (v.Count == 0) return 0;
         var s = v.OrderBy(x => x).ToList();
         return s[s.Count / 2];
     }
 
-    sealed record Row(string Size, string Mode, string Case, double Wall, double Cpu, double Gpu, double GpuMax);
+    private sealed record Row(string Size, string Mode, string Case, double Wall, double Cpu, double Gpu, double GpuMax);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpuCheck = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         var shaderFile = FindFile("help", "Qt", "shaders", "blur_mask.frag");

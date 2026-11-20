@@ -15,10 +15,10 @@ namespace VL.Qt
     /// </summary>
     internal sealed class NodeErrors : IDisposable
     {
-        readonly NodeContext _nodeContext;
-        IDisposable? _message;
-        string? _shown, _shownPhase;
-        string? _loggedException, _loggedError, _loggedReport;
+        private readonly NodeContext _nodeContext;
+        private IDisposable? _message;
+        private string? _shown, _shownPhase;
+        private string? _loggedException, _loggedError, _loggedReport;
 
         public NodeErrors(NodeContext nodeContext)
         {
@@ -85,7 +85,7 @@ namespace VL.Qt
             _loggedReport = null;
         }
 
-        void Show(string text, MessageSeverity severity = MessageSeverity.Error)
+        private void Show(string text, MessageSeverity severity = MessageSeverity.Error)
         {
             if (text == _shown)
                 return;

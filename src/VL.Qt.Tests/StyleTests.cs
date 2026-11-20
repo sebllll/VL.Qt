@@ -8,12 +8,12 @@ namespace VL.Qt.Tests
     /// <summary>Styles (#293): StateValues, merge rule, base style, writer diff.</summary>
     public class StyleTests
     {
-        static readonly Color4 red = new(1, 0, 0, 1);
-        static readonly Color4 green = new(0, 1, 0, 1);
+        private static readonly Color4 red = new(1, 0, 0, 1);
+        private static readonly Color4 green = new(0, 1, 0, 1);
 
-        static Style WithRadius(StateValues<float> r) => new() { Frame = new FrameStyle { Radius = r } };
+        private static Style WithRadius(StateValues<float> r) => new() { Frame = new FrameStyle { Radius = r } };
 
-        static StateValues<float> V(StyleStates s, float v) => default(StateValues<float>).With(s, v);
+        private static StateValues<float> V(StyleStates s, float v) => default(StateValues<float>).With(s, v);
 
         [Test]
         public void With_SetsOnlyGivenStates_AndGetFallsBackToNormal()
@@ -89,7 +89,7 @@ namespace VL.Qt.Tests
             Assert.That(WithRadius(V(StyleStates.Normal, 1)), Is.Not.EqualTo(WithRadius(V(StyleStates.Normal, 2))));
         }
 
-        static Style BaseStyleBuild() => new()
+        private static Style BaseStyleBuild() => new()
         {
             Frame = new FrameStyle { Color = default(StateValues<Color4>).With(StyleStates.Normal, red), Radius = V(StyleStates.All, 2) },
             Text = new TextStyle { FontFamily = default(StateValues<string>).With(StyleStates.Normal, "x") },

@@ -18,17 +18,17 @@ namespace VL.Qt.Tests
     /// </summary>
     public class ReconcilerPerfTests
     {
-        const int N = 1000;
-        const int Frames = 1000;
+        private const int N = 1000;
+        private const int Frames = 1000;
 
         // Plan 04: Update < 0.3 ms. Checked against the median: it is ~4x below the limit (~0.08 ms), while the mean
         // of a shared CI runner is pushed over it by single spikes (0.31 ms seen on linux-x64 with a median of the same size).
-        const double MaxMsPerFrame = 0.3;
+        private const double MaxMsPerFrame = 0.3;
 
         /// <summary>One frame of a prepared scenario plus the commands it must write.</summary>
-        sealed record Scenario(string Label, Action Step, Func<int> Commands, int ExpectedCommands);
+        private sealed record Scenario(string Label, Action Step, Func<int> Commands, int ExpectedCommands);
 
-        static Scenario Alternating(string label, Element a, Element b, int expectedSets, int minFirstFrame = N * 3)
+        private static Scenario Alternating(string label, Element a, Element b, int expectedSets, int minFirstFrame = N * 3)
         {
             var writer = new CommandWriter();
             var rec = new Reconciler(writer, new IdAllocator(), new SceneRegistry());
@@ -44,7 +44,7 @@ namespace VL.Qt.Tests
             return Warm(new Scenario(label, step, () => writer.Count, expectedSets));
         }
 
-        static Scenario Warm(Scenario s)
+        private static Scenario Warm(Scenario s)
         {
             for (int i = 0; i < 200; i++) // warm-up (JIT, buffer growth)
             {
@@ -55,7 +55,7 @@ namespace VL.Qt.Tests
         }
 
         /// <summary>Median ms per frame, best of up to three rounds (a real regression stays above the limit in every round).</summary>
-        static double MedianMs(Scenario s, double limit)
+        private static double MedianMs(Scenario s, double limit)
         {
             var best = double.MaxValue;
             var times = new double[Frames];
@@ -78,12 +78,12 @@ namespace VL.Qt.Tests
 
         // Allocations: the fewest of up to five attempts, so a one-off of the runtime on this thread (tiered JIT, framework lazy init)
         // does not fail the test; a real per-frame allocation shows in every attempt (see Allocations.Fewest).
-        static void AssertNoAllocation(Scenario s) =>
+        private static void AssertNoAllocation(Scenario s) =>
             Assert.That(Allocations.Fewest(s.Step, Frames), Is.EqualTo(0), s.Label);
 
-        static void AssertFast(Scenario s) => PerfLimit.Below(MedianMs(s, MaxMsPerFrame), MaxMsPerFrame, s.Label + " ms/frame");
+        private static void AssertFast(Scenario s) => PerfLimit.Below(MedianMs(s, MaxMsPerFrame), MaxMsPerFrame, s.Label + " ms/frame");
 
-        static Element[] Rects(Func<int, Color4> fill)
+        private static Element[] Rects(Func<int, Color4> fill)
         {
             var children = new Element[N];
             for (int i = 0; i < N; i++)
@@ -91,14 +91,14 @@ namespace VL.Qt.Tests
             return children;
         }
 
-        static Element[] WithOneChanged(Element[] children, Element changed)
+        private static Element[] WithOneChanged(Element[] children, Element changed)
         {
             var copy = (Element[])children.Clone();
             copy[N / 2] = changed;
             return copy;
         }
 
-        static Scenario GroupOneColorChange()
+        private static Scenario GroupOneColorChange()
         {
             var children = Rects(_ => Color4.White);
             var changed = new Rectangle { Size = children[N / 2].Size, Fill = new Color4(1, 0, 0, 1) };
@@ -107,7 +107,7 @@ namespace VL.Qt.Tests
             return Alternating("Group, 1000 rectangles, 1 color change/frame:", a, b, expectedSets: 1);
         }
 
-        static Scenario ColumnOneSizeChange()
+        private static Scenario ColumnOneSizeChange()
         {
             // Layout children: only the size goes to Qt (04c), the changed child sends one Size SET.
             var children = Rects(_ => Color4.White);
@@ -117,7 +117,7 @@ namespace VL.Qt.Tests
             return Alternating("Column, 1000 rectangles, 1 size change/frame:", a, b, expectedSets: 1);
         }
 
-        static Scenario GroupOneContentChange()
+        private static Scenario GroupOneContentChange()
         {
             // String SETs are UTF-8 encoded into the buffer without allocation.
             var children = new Element[N];
@@ -129,14 +129,14 @@ namespace VL.Qt.Tests
             return Alternating("Group, 1000 texts, 1 content change/frame:", a, b, expectedSets: 1);
         }
 
-        static Scenario GroupUnchanged()
+        private static Scenario GroupUnchanged()
         {
             // Two alternating roots with the same children: the root is diffed, every child is skipped by reference; no command.
             var arr = ImmutableArray.Create(Rects(_ => Color4.White));
             return Alternating("Group, 1000 rectangles, unchanged:", new Group { Children = arr }, new Group { Children = arr }, expectedSets: 0);
         }
 
-        static Scenario BoundChildrenOneChange()
+        private static Scenario BoundChildrenOneChange()
         {
             // A fresh Group per frame; one bound child alternates its description, the sink slot stays the same.
             var sink = new ElementSink();
@@ -167,9 +167,9 @@ namespace VL.Qt.Tests
 
         // --- REC-16: paths the cases above do not reach (the changed element is a new instance every frame) ---
 
-        static Style RadiusStyle(float r) => new() { Frame = new FrameStyle { Radius = default(StateValues<float>).With(StyleStates.Normal, r) } };
+        private static Style RadiusStyle(float r) => new() { Frame = new FrameStyle { Radius = default(StateValues<float>).With(StyleStates.Normal, r) } };
 
-        static Scenario ShaderEffectAnimatedUniform()
+        private static Scenario ShaderEffectAnimatedUniform()
         {
             // REC-08: three uniforms, one animated float; the effect is a new instance every frame, one UNIFORMS command.
             var input = new Rectangle { Size = new Vector2(1, 1) };
@@ -181,14 +181,14 @@ namespace VL.Qt.Tests
             return Alternating("ShaderEffect, 3 uniforms, 1 animated:", new Group { Children = [Make(0f)] }, new Group { Children = [Make(1f)] }, expectedSets: 1, minFirstFrame: 5);
         }
 
-        static Scenario AnimatedEffectChain()
+        private static Scenario AnimatedEffectChain()
         {
             // REC-09: the chain is a new instance every frame (an animated blur), one CHAIN command.
             Element Make(float amount) => new Group { Children = [new Rectangle { Size = new Vector2(1, 1), Effect = new BlurEffect(null, amount, 32, 0) }] };
             return Alternating("Rectangle with animated blur chain:", Make(0.5f), Make(0.7f), expectedSets: 1, minFirstFrame: 5);
         }
 
-        static Scenario GroupWithAnimatedStyle()
+        private static Scenario GroupWithAnimatedStyle()
         {
             // A Group whose Style changes every frame; its 10 Button children all take the style.
             var buttons = ImmutableArray.CreateRange(Enumerable.Range(0, 10).Select(_ => (Element)new Button()));
@@ -196,7 +196,7 @@ namespace VL.Qt.Tests
                 new Group { Style = RadiusStyle(9), Children = buttons }, expectedSets: 10, minFirstFrame: 10);
         }
 
-        static Scenario HandlersChangingEveryFrame()
+        private static Scenario HandlersChangingEveryFrame()
         {
             // Tap + Drag on one element; both handlers are new instances every frame with changed properties, the slots stay.
             var tapSlot = new SinkSlot(new ElementSink(), 0);
@@ -213,7 +213,7 @@ namespace VL.Qt.Tests
         }
 
         /// <summary>Two reconcilers (own writers) on one registry; the shared element is a new instance of one slot every frame.</summary>
-        static Scenario TwoRenderersSharedElement(bool aFirst)
+        private static Scenario TwoRenderersSharedElement(bool aFirst)
         {
             var scene = new SceneRegistry();
             var slot = new SinkSlot(new ElementSink(), 0);
@@ -247,7 +247,7 @@ namespace VL.Qt.Tests
             return Warm(new Scenario($"Two renderers, shared element changing, {(aFirst ? "A then B" : "B then A")}:", step, () => wa.Count + wb.Count, 2));
         }
 
-        static Group SharedRoot(SinkSlot slot, float width) => new() { Children = [new Rectangle { Size = new Vector2(width, 1), Sink = slot }] };
+        private static Group SharedRoot(SinkSlot slot, float width) => new() { Children = [new Rectangle { Size = new Vector2(width, 1), Sink = slot }] };
 
         [Test]
         public void Group_1000Rectangles_OneChangePerFrame_NoAllocations() => AssertNoAllocation(GroupOneColorChange());

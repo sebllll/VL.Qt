@@ -24,7 +24,7 @@ public static class ClearPinTest
 {
     // The commands go in a buffer of their own (the scenario's writer belongs to the reconciler). 0 = ok.
     // Clear Color (grey, alpha) alone: the layer stays, as when vvvv changes the pin at runtime.
-    static int SetClearColor(IntPtr w, float grey, float alpha)
+    private static int SetClearColor(IntPtr w, float grey, float alpha)
     {
         var cmd = new CommandWriter();
         cmd.Reset();
@@ -34,7 +34,7 @@ public static class ClearPinTest
     }
 
     // Clear Color and Clear in one buffer. Clear off needs alpha < 1 to show a trail (alpha 1 is Clear on, #138), 0 = pure accumulation.
-    static int SetMode(IntPtr w, float grey, bool clear, float alpha)
+    private static int SetMode(IntPtr w, float grey, bool clear, float alpha)
     {
         var cmd = new CommandWriter();
         cmd.Reset();
@@ -46,13 +46,13 @@ public static class ClearPinTest
 
     // The OpenGL window (Linux) has no alpha buffer (alphaBufferSize 0), so a grab with Clear off and alpha 0 keeps the RGB of the
     // clear colour; only D3D11 clears to transparent black there.
-    static int ExpectedBg(float alpha) => alpha > 0 || !OperatingSystem.IsWindows() ? 0x20 : 0;
+    private static int ExpectedBg(float alpha) => alpha > 0 || !OperatingSystem.IsWindows() ? 0x20 : 0;
 
-    const float WindowGrey = 0x20 / 255f;
-    const float OffscreenGrey = 0.125f;
+    private const float WindowGrey = 0x20 / 255f;
+    private const float OffscreenGrey = 0.125f;
 
     // Pixels of a and b (same size) that differ by more than tol in a channel, every second row and column.
-    static int Diff(Bitmap a, Bitmap b, int tol)
+    private static int Diff(Bitmap a, Bitmap b, int tol)
     {
         int n = 0;
         for (int y = 0; y < Math.Min(a.Height, b.Height); y += 2)
@@ -65,15 +65,15 @@ public static class ClearPinTest
         return n;
     }
 
-    static Color Px(Bitmap a, int x, int y, int w = 800, int h = 600) => a.GetPixel(x * a.Width / w, y * a.Height / h);
-    static bool Near(Color c, int r, int g, int b, int tol = 10) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
-    static bool IsOrange(Color c) => Near(c, 255, 153, 0);
+    private static Color Px(Bitmap a, int x, int y, int w = 800, int h = 600) => a.GetPixel(x * a.Width / w, y * a.Height / h);
+    private static bool Near(Color c, int r, int g, int b, int tol = 10) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
+    private static bool IsOrange(Color c) => Near(c, 255, 153, 0);
     // The grabbed window shows the clear colour (0x20) while its alpha is > 0; with alpha 0 Qt clears to transparent black (premultiplied).
-    static int s_bg = 0x20;
-    static bool IsBg(Color c) => Near(c, s_bg, s_bg, s_bg);
+    private static int s_bg = 0x20;
+    private static bool IsBg(Color c) => Near(c, s_bg, s_bg, s_bg);
 
     // Pixels that are neither background nor orange (garbage check).
-    static int Odd(Bitmap a)
+    private static int Odd(Bitmap a)
     {
         int n = 0;
         for (int y = 0; y < a.Height; y += 4)
@@ -98,7 +98,7 @@ public static class ClearPinTest
             Offscreen(s);
     }
 
-    static void Window(Scenario s)
+    private static void Window(Scenario s)
     {
         var client = new ResourceClient(new NativeResourceApi(), Environment.CurrentManagedThreadId, static () => null);
         client.SetPumping(true);
@@ -470,7 +470,7 @@ public static class ClearPinTest
     }
 
     // Offscreen scene (QtTexture): 64 x 48, opaque grey clear colour, a 8 x 8 orange box moved along x.
-    static void Offscreen(Scenario s)
+    private static void Offscreen(Scenario s)
     {
         const int B8G8R8A8Typeless = 90, B8G8R8A8Unorm = 87;
         if (!check2(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "clear-pin offscreen: test device"))

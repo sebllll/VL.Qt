@@ -20,15 +20,15 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class ImageResourceTest
 {
-    const uint Rect = 1;
+    private const uint Rect = 1;
 
-    sealed record Rec(ushort Ev, ulong Id, byte[] Payload);
+    private sealed record Rec(ushort Ev, ulong Id, byte[] Payload);
 
     /// <summary>Image resources.</summary>
     [Test, Category("image-resource")]
     public static void ImageResource() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var dir = Path.Combine(s.OutDir, "image-resource");
         Directory.CreateDirectory(dir);

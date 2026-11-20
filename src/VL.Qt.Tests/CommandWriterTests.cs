@@ -7,21 +7,21 @@ namespace VL.Qt.Tests
 {
     public class CommandWriterTests
     {
-        static byte[] Write(Action<CommandWriter> write)
+        private static byte[] Write(Action<CommandWriter> write)
         {
             var w = new CommandWriter();
             write(w);
             return w.Written.ToArray();
         }
 
-        static string Hex(byte[] b) => Convert.ToHexString(b);
+        private static string Hex(byte[] b) => Convert.ToHexString(b);
 
         // Little-endian helpers for expected byte strings.
-        static string U16(int v) => $"{v & 0xFF:X2}{(v >> 8) & 0xFF:X2}";
-        static string U32(uint v) => Hex(BitConverter.GetBytes(v));
-        static string F32(float v) => Hex(BitConverter.GetBytes(v));
-        static string Hdr(ushort op, int len) => U16(op) + U16(len);
-        static string SetHdr(int valueLen, uint id, ushort prop, ushort vt) => Hdr(Protocol.Op.Set, 8 + valueLen) + U32(id) + U16(prop) + U16(vt);
+        private static string U16(int v) => $"{v & 0xFF:X2}{(v >> 8) & 0xFF:X2}";
+        private static string U32(uint v) => Hex(BitConverter.GetBytes(v));
+        private static string F32(float v) => Hex(BitConverter.GetBytes(v));
+        private static string Hdr(ushort op, int len) => U16(op) + U16(len);
+        private static string SetHdr(int valueLen, uint id, ushort prop, ushort vt) => Hdr(Protocol.Op.Set, 8 + valueLen) + U32(id) + U16(prop) + U16(vt);
 
         [Test]
         public void Create() =>
@@ -158,7 +158,7 @@ namespace VL.Qt.Tests
         }
 
         // SET_STYLE (#292): header, u32 id, u16 count, u16 flags, entries (u16 field, u8 state, u8 vt, value), 4-byte aligned.
-        static string Entry(ushort field, byte state, ushort vt, string value) => U16(field) + state.ToString("X2") + vt.ToString("X2") + value;
+        private static string Entry(ushort field, byte state, ushort vt, string value) => U16(field) + state.ToString("X2") + vt.ToString("X2") + value;
 
         [Test]
         public void SetStyle_ColorWithClear() =>

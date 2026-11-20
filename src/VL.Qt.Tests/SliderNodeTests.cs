@@ -16,15 +16,15 @@ namespace VL.Qt.Tests
     /// <summary>Slider node (#301): description, property diff, value channel (f32), clamp, bound order and channel attributes.</summary>
     public class SliderNodeTests
     {
-        static readonly Vector2 DefaultSize = new(2, 0.28f);
-        static readonly IDisposable NoWarning = new Nop();
-        sealed class Nop : IDisposable { public void Dispose() { } }
+        private static readonly Vector2 DefaultSize = new(2, 0.28f);
+        private static readonly IDisposable NoWarning = new Nop();
+        private sealed class Nop : IDisposable { public void Dispose() { } }
 
-        SliderNode _node = null!;
-        SinkRegistry _registry = null!;
-        uint _handle;
-        RecordingSink _sink = null!;
-        Reconciler _reconciler = null!;
+        private SliderNode _node = null!;
+        private SinkRegistry _registry = null!;
+        private uint _handle;
+        private RecordingSink _sink = null!;
+        private Reconciler _reconciler = null!;
 
         [SetUp]
         public void SetUp()
@@ -39,27 +39,27 @@ namespace VL.Qt.Tests
         [TearDown]
         public void TearDown() => _node.Dispose();
 
-        Slider Update(out float value, out bool bang, IChannel<float>? channel = null, Optional<float> min = default, Optional<float> max = default,
+        private Slider Update(out float value, out bool bang, IChannel<float>? channel = null, Optional<float> min = default, Optional<float> max = default,
             float step = 0, SliderOrientation orientation = SliderOrientation.Horizontal, bool enabled = true, bool autoSize = true)
             => (Slider)_node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, channel, min, max, step, orientation, enabled,
                 1, false, false, null, null, null, out value, out bang, out _, out _);
 
-        Slider Update(IChannel<float>? channel = null, Optional<float> min = default, Optional<float> max = default)
+        private Slider Update(IChannel<float>? channel = null, Optional<float> min = default, Optional<float> max = default)
             => Update(out _, out _, channel, min, max);
 
-        string[] Frame(out float value, out bool bang, IChannel<float>? channel = null, Optional<float> min = default, Optional<float> max = default)
+        private string[] Frame(out float value, out bool bang, IChannel<float>? channel = null, Optional<float> min = default, Optional<float> max = default)
         {
             _sink.Clear();
             _reconciler.Update(Update(out value, out bang, channel, min, max), Space.DIPTopLeft);
             return _sink.Commands.ToArray();
         }
 
-        string[] Frame(IChannel<float>? channel = null, Optional<float> min = default, Optional<float> max = default)
+        private string[] Frame(IChannel<float>? channel = null, Optional<float> min = default, Optional<float> max = default)
             => Frame(out _, out _, channel, min, max);
 
-        void UserChanges(float value) => _registry.Dispatch(new SinkRegistryTests.Poll().Value(_handle, Protocol.Vt.F32, BitConverter.GetBytes(value)).Bytes);
+        private void UserChanges(float value) => _registry.Dispatch(new SinkRegistryTests.Poll().Value(_handle, Protocol.Vt.F32, BitConverter.GetBytes(value)).Bytes);
 
-        static string SetValue(float v) => $"SET 1 Value f32({v.ToString("R", System.Globalization.CultureInfo.InvariantCulture)})";
+        private static string SetValue(float v) => $"SET 1 Value f32({v.ToString("R", System.Globalization.CultureInfo.InvariantCulture)})";
 
         [Test]
         public void Defaults_ZeroToOne_Continuous()

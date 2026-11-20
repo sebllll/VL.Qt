@@ -14,12 +14,12 @@ namespace VL.Qt.Tests
     /// <summary>Rectangle node and the shared element node core (07b): change detection, outputs, warning.</summary>
     public class RectangleNodeTests
     {
-        static readonly Vector2 DefaultSize = new(1, 1);
+        private static readonly Vector2 DefaultSize = new(1, 1);
 
-        RectangleNode _node = null!;
-        int _warnings; // currently shown warnings
+        private RectangleNode _node = null!;
+        private int _warnings; // currently shown warnings
 
-        sealed class Removal(RectangleNodeTests t) : IDisposable { public void Dispose() => t._warnings--; }
+        private sealed class Removal(RectangleNodeTests t) : IDisposable { public void Dispose() => t._warnings--; }
 
         [SetUp]
         public void SetUp() => _node = new RectangleNode(w => { _warnings++; return new Removal(this); });
@@ -28,7 +28,7 @@ namespace VL.Qt.Tests
         public void TearDown() => _node.Dispose();
 
         // Pin defaults as declared on Update (what vvvv passes for unconnected pins).
-        Element Update(Vector2? size = null, Matrix transform = default, RectangleAnchor anchor = RectangleAnchor.Center,
+        private Element Update(Vector2? size = null, Matrix transform = default, RectangleAnchor anchor = RectangleAnchor.Center,
             Color4? fill = null, float radius = 0, Color4? strokeColor = null, float strokeWidth = 0,
             float opacity = 1, bool clip = false, bool debug = false,
             Interaction? interaction = null)

@@ -20,7 +20,7 @@ public static class ShaderErrorsTest
     public static void ShaderErrors() => Scenario.Run(Run);
 
     // Two faulty lines (an undeclared identifier foo on line 9, a vec3 assigned to a float on line 10); glslang reports the first.
-    const string BrokenSource =
+    private const string BrokenSource =
         "#version 440\n" +
         "layout(location = 0) in vec2 qt_TexCoord0;\n" +
         "layout(location = 0) out vec4 fragColor;\n" +
@@ -33,7 +33,7 @@ public static class ShaderErrorsTest
         "    fragColor.g = bar;\n" +
         "}\n";
 
-    const string WithLength =
+    private const string WithLength =
         "#version 440\n" +
         "layout(location = 0) in vec2 qt_TexCoord0;\n" +
         "layout(location = 0) out vec4 fragColor;\n" +
@@ -46,9 +46,9 @@ public static class ShaderErrorsTest
         "    fragColor = vec4(length, 0.0, 0.0, 1.0) * qt_Opacity;\n" +
         "}\n";
 
-    sealed record Res(ushort Ev, ulong Id, string Text);
+    private sealed record Res(ushort Ev, ulong Id, string Text);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var events = new List<Res>();
         var buf = new byte[64 * 1024];

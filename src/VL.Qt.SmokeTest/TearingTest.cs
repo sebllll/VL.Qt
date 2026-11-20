@@ -19,16 +19,16 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class TearingTest
 {
-    sealed record Options(int Windows, int Interval, bool Fullscreen, int PumpHz, int Seconds);
+    private sealed record Options(int Windows, int Interval, bool Fullscreen, int PumpHz, int Seconds);
 
-    const float BarFraction = 0.05f; // bar width relative to the window width
-    const float SweepSeconds = 0.6f; // one way across the window, ~3000 px/s on 1920 px: a clear tear line
+    private const float BarFraction = 0.05f; // bar width relative to the window width
+    private const float SweepSeconds = 0.6f; // one way across the window, ~3000 px/s on 1920 px: a clear tear line
 
     /// <summary>Manual swap/tearing measurement; the TEARING lines are in the test output.</summary>
     [Test, Explicit("manual measurement (#90)"), Category("tearing")]
     public static void Tearing() => Scenario.Run(s => s.Check(Run(SmokeParameters.TearingArgs) == 0, "tearing run"));
 
-    static int Run(string[] args)
+    private static int Run(string[] args)
     {
         if (!TryParse(args, out var o, out var error))
         {
@@ -102,7 +102,7 @@ public static class TearingTest
         }
     }
 
-    static int Loop(Options o, List<IntPtr> windows, string[] titles, (float W, float H)[] sizes, string display0, Func<bool> stopped)
+    private static int Loop(Options o, List<IntPtr> windows, string[] titles, (float W, float H)[] sizes, string display0, Func<bool> stopped)
     {
         var n = windows.Count;
         var cmd = new CommandWriter();
@@ -248,7 +248,7 @@ public static class TearingTest
 
     // Refresh rate of the screen of the window: Windows API (the real mode of the monitor), else 1000 / budget_ms of the
     // window stats (QtNative falls back to 60 Hz there, so that is the second choice). n/a = unknown.
-    static string Refresh(IntPtr w, string title)
+    private static string Refresh(IntPtr w, string title)
     {
         if (OperatingSystem.IsWindows() && Win.RefreshHz(title) is { } hz and > 1)
             return hz.ToString("F1", CultureInfo.InvariantCulture);
@@ -258,10 +258,10 @@ public static class TearingTest
     }
 
     // ok | locked | unknown (non-Windows, or the check itself failed).
-    static string CheckDisplay() => OperatingSystem.IsWindows() ? Win.InputDesktopState() : "unknown";
+    private static string CheckDisplay() => OperatingSystem.IsWindows() ? Win.InputDesktopState() : "unknown";
 
     // Nearest rank, like vlqt_perf_stats.
-    static double Percentile(List<float> values, double p)
+    private static double Percentile(List<float> values, double p)
     {
         if (values.Count == 0) return 0;
         var sorted = values.ToArray();
@@ -269,7 +269,7 @@ public static class TearingTest
         return sorted[Math.Clamp((int)Math.Ceiling(p * sorted.Length) - 1, 0, sorted.Length - 1)];
     }
 
-    static bool TryParse(string[] args, out Options o, out string error)
+    private static bool TryParse(string[] args, out Options o, out string error)
     {
         o = new Options(1, 1, false, 60, 20);
         string err = "";
@@ -303,28 +303,28 @@ public static class TearingTest
     }
 
     [SupportedOSPlatform("windows")]
-    static class Win
+    private static class Win
     {
-        const uint EsContinuous = 0x80000000, EsDisplayRequired = 0x00000002;
+        private const uint EsContinuous = 0x80000000, EsDisplayRequired = 0x00000002;
 
-        [StructLayout(LayoutKind.Sequential)] struct Rc { public int Left, Top, Right, Bottom; }
+        [StructLayout(LayoutKind.Sequential)] private struct Rc { public int Left, Top, Right, Bottom; }
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        struct MonitorInfoEx
+        private struct MonitorInfoEx
         {
             public int Size; public Rc Monitor, Work; public uint Flags;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string Device;
         }
-        delegate bool MonitorEnum(IntPtr monitor, IntPtr dc, ref Rc rect, IntPtr data);
+        private delegate bool MonitorEnum(IntPtr monitor, IntPtr dc, ref Rc rect, IntPtr data);
 
-        [DllImport("kernel32.dll")] static extern uint SetThreadExecutionState(uint flags);
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindowW(string? cls, string title);
-        [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern bool GetMonitorInfoW(IntPtr m, ref MonitorInfoEx mi);
-        [DllImport("user32.dll")] static extern bool EnumDisplayMonitors(IntPtr dc, IntPtr clip, MonitorEnum cb, IntPtr data);
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern bool EnumDisplaySettingsW(string? device, int mode, byte[] devMode);
-        [DllImport("user32.dll", SetLastError = true)] static extern IntPtr OpenInputDesktop(uint flags, bool inherit, uint access);
-        [DllImport("user32.dll")] static extern bool CloseDesktop(IntPtr desktop);
-        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern bool GetUserObjectInformationW(IntPtr obj, int index, byte[] info, uint length, out uint needed);
+        [DllImport("kernel32.dll")] private static extern uint SetThreadExecutionState(uint flags);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr FindWindowW(string? cls, string title);
+        [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool GetMonitorInfoW(IntPtr m, ref MonitorInfoEx mi);
+        [DllImport("user32.dll")] private static extern bool EnumDisplayMonitors(IntPtr dc, IntPtr clip, MonitorEnum cb, IntPtr data);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool EnumDisplaySettingsW(string? device, int mode, byte[] devMode);
+        [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr OpenInputDesktop(uint flags, bool inherit, uint access);
+        [DllImport("user32.dll")] private static extern bool CloseDesktop(IntPtr desktop);
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)] private static extern bool GetUserObjectInformationW(IntPtr obj, int index, byte[] info, uint length, out uint needed);
 
         // Keeps the display on while the thread lives; false = the call failed.
         public static bool KeepDisplayOn(bool on) => SetThreadExecutionState(on ? EsContinuous | EsDisplayRequired : EsContinuous) != 0;

@@ -12,7 +12,7 @@ namespace VL.Qt.Tests
     /// <summary>QML node factory (#107): names, scan of qml/, event filter, descriptions, pins of hand-made declarations. No QtNative, no vvvv.</summary>
     public class QmlNodeFactoryTests
     {
-        string _dir = null!;
+        private string _dir = null!;
 
         [SetUp]
         public void CreateDir()
@@ -24,7 +24,7 @@ namespace VL.Qt.Tests
         [TearDown]
         public void DeleteDir() => Directory.Delete(_dir, recursive: true);
 
-        string Write(string relativePath, string content = "import QtQuick\nItem { }\n")
+        private string Write(string relativePath, string content = "import QtQuick\nItem { }\n")
         {
             var path = Path.Combine(_dir, relativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -33,7 +33,7 @@ namespace VL.Qt.Tests
         }
 
         // Stands in for QmlDeclarations.ParseHead (T2): "// @category X", "// @summary X", "// @tags a, b".
-        static QmlFileHead FakeHead(string source)
+        private static QmlFileHead FakeHead(string source)
         {
             string? category = null, summary = null;
             var tags = ImmutableArray<string>.Empty;
@@ -199,7 +199,7 @@ namespace VL.Qt.Tests
 
         // --- descriptions ---
 
-        static QmlFile File_(string path, string name, string? version = null, string category = QmlNodeFactory.DefaultCategory, string tags = "") =>
+        private static QmlFile File_(string path, string name, string? version = null, string category = QmlNodeFactory.DefaultCategory, string tags = "") =>
             new(path, name, version, category, null, tags, null);
 
         [Test]
@@ -255,10 +255,10 @@ namespace VL.Qt.Tests
 
         // --- pins from hand-made declarations ---
 
-        static QmlPropertyDecl Prop(string name, QmlValueKind kind, QmlPropertyFlags flags = QmlPropertyFlags.None, QmlInitializer init = QmlInitializer.None, object? value = null, string? summary = null) =>
+        private static QmlPropertyDecl Prop(string name, QmlValueKind kind, QmlPropertyFlags flags = QmlPropertyFlags.None, QmlInitializer init = QmlInitializer.None, object? value = null, string? summary = null) =>
             new(name, kind.ToString().ToLowerInvariant(), kind, flags, init, value ?? QmlTypes.TypeDefault(kind), summary, 1);
 
-        static QmlDeclarations Declare(QmlPropertyDecl[] properties, QmlSignalDecl[]? signals = null) =>
+        private static QmlDeclarations Declare(QmlPropertyDecl[] properties, QmlSignalDecl[]? signals = null) =>
             new("Item", QmlFileHead.Empty, properties.ToImmutableArray(), (signals ?? Array.Empty<QmlSignalDecl>()).ToImmutableArray(), ImmutableArray<QmlParseMessage>.Empty);
 
         [Test]
@@ -288,7 +288,7 @@ namespace VL.Qt.Tests
             Assert.That(warning.Text, Does.Contain("'size'").And.Contain("Size 2"));
         }
 
-        sealed class FakeFactory : IVLNodeDescriptionFactory
+        private sealed class FakeFactory : IVLNodeDescriptionFactory
         {
             public string Identifier => "Test";
             public ImmutableArray<IVLNodeDescription> NodeDescriptions => default;

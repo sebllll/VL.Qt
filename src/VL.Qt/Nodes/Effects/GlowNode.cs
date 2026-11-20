@@ -21,9 +21,9 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Color4 Color, float Radius, float Spread, float Intensity, bool Additive);
 
-        static readonly string[] s_shaders = { "glow_prefilter", "glow_composite" };
+        private static readonly string[] s_shaders = { "glow_prefilter", "glow_composite" };
 
-        static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
         {
             var radius = Math.Max(p.Radius, 0f);
             var pad = 1.5f * radius;
@@ -38,7 +38,7 @@ namespace VL.Qt.Nodes
                 new RectangleF(pad, pad, pad, pad), radius);
         };
 
-        readonly BuiltinShaderLink<Props> _link;
+        private readonly BuiltinShaderLink<Props> _link;
 
         public GlowNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))

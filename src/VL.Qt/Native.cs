@@ -8,7 +8,7 @@ namespace VL.Qt
     /// <summary>P/Invoke surface of QtNative vlqt.dll / libvlqt.so (C ABI, cdecl, UTF-8).</summary>
     internal static class Native
     {
-        const string Lib = "vlqt";
+        private const string Lib = "vlqt";
 
         [StructLayout(LayoutKind.Sequential)]
         public struct vlqt_perf
@@ -81,7 +81,7 @@ namespace VL.Qt
         public static readonly string NativeDir;
 
         /// <summary>File name of QtNative: vlqt.dll (Windows) or libvlqt.so (Linux).</summary>
-        static readonly string FileName = OperatingSystem.IsWindows() ? "vlqt.dll" : "libvlqt.so";
+        private static readonly string FileName = OperatingSystem.IsWindows() ? "vlqt.dll" : "libvlqt.so";
 
         static Native()
         {
@@ -102,7 +102,7 @@ namespace VL.Qt
                 (name, _, _) => name == Lib ? handle : IntPtr.Zero);
         }
 
-        static string FindNativeDir()
+        private static string FindNativeDir()
         {
             var os = OperatingSystem.IsWindows() ? "win"
                 : OperatingSystem.IsLinux() ? "linux"
@@ -131,7 +131,7 @@ namespace VL.Qt
         /// <summary>Windows MAX_PATH (incl. the terminating NUL): Qt does not load plugins from longer paths (#313).</summary>
         public const int maxPath = 260;
 
-        static readonly Lazy<(int Length, string Path)> s_longestPath = new(FindLongestPath);
+        private static readonly Lazy<(int Length, string Path)> s_longestPath = new(FindLongestPath);
 
         /// <summary>Longest file path in the Qt tree under <see cref="NativeDir"/> (computed once, enumerates the tree).</summary>
         public static (int Length, string Path) LongestPath => s_longestPath.Value;
@@ -146,7 +146,7 @@ namespace VL.Qt
         public static string PathTooLongHint
             => $"The VL.Qt files are installed under a path that is too long for Windows ({LongestPath.Length} >= {maxPath} characters). Move the package or exported app to a shorter path.";
 
-        static (int Length, string Path) FindLongestPath()
+        private static (int Length, string Path) FindLongestPath()
         {
             var longest = (Length: 0, Path: "");
             try
@@ -185,7 +185,7 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_driver_advance(double seconds);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern IntPtr vlqt_last_error();
+        private static extern IntPtr vlqt_last_error();
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr vlqt_window_create(int width, int height, [MarshalAs(UnmanagedType.LPUTF8Str)] string title);
@@ -271,13 +271,13 @@ namespace VL.Qt
         public static extern int vlqt_window_samples(IntPtr w);
         /// <summary>Applies a command buffer (protocol.h). 0 = ok, &lt;0 = error, see <see cref="LastError"/>.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_window_apply(IntPtr w, in byte buf, int len);
+        private static extern int vlqt_window_apply(IntPtr w, in byte buf, int len);
         /// <summary>Structured last apply error of the window (failing object id, op, property). 0 = ok, -1 null window.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_get_apply_error(IntPtr w, out vlqt_apply_error error);
         /// <summary>Copies queued events into out; returns bytes written, 0 = none, -required if out is too small, -1 = null window.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_window_poll(IntPtr w, ref byte @out, int cap);
+        private static extern int vlqt_window_poll(IntPtr w, ref byte @out, int cap);
 
         /// <summary>TEST ONLY: synthetic mouse event (<see cref="Protocol.Mouse"/>), x/y in window DIP. 0 = ok.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -337,7 +337,7 @@ namespace VL.Qt
         /// ID3D11DeviceContext*) by fences. Returns the number of scenes rendered, &lt;0 = error.
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_offscreen_render_batch(IntPtr context, in IntPtr scenes, int count, double driverSeconds);
+        private static extern int vlqt_offscreen_render_batch(IntPtr context, in IntPtr scenes, int count, double driverSeconds);
 
         public static int OffscreenRenderBatch(IntPtr context, ReadOnlySpan<IntPtr> scenes, double driverSeconds)
             => vlqt_offscreen_render_batch(context, in MemoryMarshal.GetReference(scenes), scenes.Length, driverSeconds);
@@ -363,7 +363,7 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_offscreen_send_key(IntPtr scene, int type, int key, int modifiers, int autoRepeat);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_offscreen_send_text(IntPtr scene, in byte utf8, int length);
+        private static extern int vlqt_offscreen_send_text(IntPtr scene, in byte utf8, int length);
 
         /// <summary>Typed text as UTF-8 (no NUL needed) to the focus item; a stack span keeps it allocation-free.</summary>
         public static int OffscreenSendText(IntPtr scene, ReadOnlySpan<byte> utf8)
@@ -383,7 +383,7 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_d3d11_create_shared_texture(IntPtr device, int width, int height, int dxgiFormat, out IntPtr texture, out IntPtr ntHandle);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_test_d3d11_read_texture(IntPtr texture, ref byte @out, int cap, out int width, out int height, out int dxgiFormat);
+        private static extern int vlqt_test_d3d11_read_texture(IntPtr texture, ref byte @out, int cap, out int width, out int height, out int dxgiFormat);
         /// <summary>TEST ONLY: COM reference count of obj without the probe's own reference.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_com_ref_count(IntPtr obj);
@@ -420,12 +420,12 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_res_set_budget(int bytes);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_res_poll(ref byte @out, int cap);
+        private static extern int vlqt_res_poll(ref byte @out, int cap);
         /// <summary>Blocks until Ready/Failed or timeout; returns the state (<see cref="Protocol.ResState"/>) or -9.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_res_wait(ulong id, int timeoutMs);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_res_list(ref vlqt_res_info @out, int cap);
+        private static extern int vlqt_res_list(ref vlqt_res_info @out, int cap);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void vlqt_res_shutdown();
         /// <summary>Pixels of vlqt_res_set_pixels (vlqt.h vlqt_pixel_desc, #360); format = VL PixelFormat number.</summary>
@@ -469,12 +469,12 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_set_pipeline_cache([MarshalAs(UnmanagedType.LPUTF8Str)] string? path);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_res_set_pixels(ulong id, in vlqt_pixel_desc desc, in byte data, int len);
+        private static extern int vlqt_res_set_pixels(ulong id, in vlqt_pixel_desc desc, in byte data, int len);
         /// <summary>TEST ONLY: content of a Ready image as RGBA8 premultiplied; bytes written, -required, -9 not Ready.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_test_res_read_pixels(ulong id, ref byte @out, int cap, out int width, out int height);
+        private static extern int vlqt_test_res_read_pixels(ulong id, ref byte @out, int cap, out int width, out int height);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_image_write(in vlqt_pixel_desc desc, in byte data, int len, [MarshalAs(UnmanagedType.LPUTF8Str)] string path, int quality, ref byte err, int errCap);
+        private static extern int vlqt_image_write(in vlqt_pixel_desc desc, in byte data, int len, [MarshalAs(UnmanagedType.LPUTF8Str)] string path, int quality, ref byte err, int errCap);
 
         /// <summary>
         /// Writes pixels to an image file, format by extension (vlqt.h vlqt_image_write, #157); any thread, synchronous.
@@ -514,7 +514,7 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_res_snapshot(ulong id, IntPtr w, uint elementId, float scale);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_res_read_pixels(ulong id, ref byte dst, int cap, out vlqt_pixel_desc desc);
+        private static extern int vlqt_res_read_pixels(ulong id, ref byte dst, int cap, out vlqt_pixel_desc desc);
 
         /// <summary>Pixels of the last finished snapshot (BGRA8 premultiplied, #363): bytes written, -required (desc set), -7 none yet, -9.</summary>
         public static int ResReadSnapshot(ulong id, Span<byte> dst, out vlqt_pixel_desc desc)
@@ -530,7 +530,7 @@ namespace VL.Qt
 
         // QtImage tooltip preview (#543, package 03 #546).
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_res_read_preview(ulong id, ref byte dst, int cap, out vlqt_pixel_desc desc);
+        private static extern int vlqt_res_read_preview(ulong id, ref byte dst, int cap, out vlqt_pixel_desc desc);
 
         /// <summary>Tooltip preview of an image loaded with <see cref="Protocol.Img.Preview"/> (BGRA8 premultiplied, &lt;= 256 px, #546): bytes written, -required (desc set), -7 none, -9.</summary>
         public static int ResReadPreview(ulong id, Span<byte> dst, out vlqt_pixel_desc desc)
@@ -567,7 +567,7 @@ namespace VL.Qt
             public int sample_rate;
             /// <summary><see cref="Protocol.AudioTap"/> flags.</summary>
             public int flags;
-            int _reserved0, _reserved1;
+            private int _reserved0, _reserved1;
         }
 
         // Audio taps (#22): init on the main thread; read and now on any thread (VL.Audio's audio thread), no allocation.
@@ -575,9 +575,9 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_res_audio_tap_init(ulong id, int channels, int sampleRate);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_res_read_audio(ulong id, ref float dst, int maxFrames, int channels, out vlqt_audio_tap_state state);
+        private static extern int vlqt_res_read_audio(ulong id, ref float dst, int maxFrames, int channels, out vlqt_audio_tap_state state);
         [DllImport(Lib, EntryPoint = "vlqt_res_read_audio", CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_res_read_audio_drop(ulong id, IntPtr dst, int maxFrames, int channels, out vlqt_audio_tap_state state);
+        private static extern int vlqt_res_read_audio_drop(ulong id, IntPtr dst, int maxFrames, int channels, out vlqt_audio_tap_state state);
         /// <summary>The clock of the audio tap times in ns (steady clock: QPC on Windows = Stopwatch.GetTimestamp converted to ns).</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern long vlqt_now_ns();
@@ -595,7 +595,7 @@ namespace VL.Qt
 
         // App fonts (#15, LoadFont node): Qt GUI thread (vvvv main thread) only, reference counted per file in QtNative.
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        static extern int vlqt_font_add([MarshalAs(UnmanagedType.LPUTF8Str)] string path, out ulong handle, ref byte families, int familiesCap);
+        private static extern int vlqt_font_add([MarshalAs(UnmanagedType.LPUTF8Str)] string path, out ulong handle, ref byte families, int familiesCap);
         /// <summary>Drops one reference of a font handle; the font is removed at the end of the pump when none is left. 0 / -1 wrong thread / -9.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_font_release(ulong handle);

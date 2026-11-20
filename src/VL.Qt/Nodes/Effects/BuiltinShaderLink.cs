@@ -37,16 +37,16 @@ namespace VL.Qt.Nodes
     internal sealed class BuiltinShaderLink<TProps> : IDisposable
         where TProps : struct, IEquatable<TProps>
     {
-        const string phase = "Shader";
+        private const string phase = "Shader";
 
-        readonly ShaderSlot[] _slots;
-        readonly string[] _paths;
-        readonly Func<Effect?, ImmutableArray<ulong>, TProps, Effect> _create;
-        readonly NodeErrors? _errors;
-        Effect? _last;
-        Effect? _lastInput;
-        ulong _id0, _id1;
-        TProps _props;
+        private readonly ShaderSlot[] _slots;
+        private readonly string[] _paths;
+        private readonly Func<Effect?, ImmutableArray<ulong>, TProps, Effect> _create;
+        private readonly NodeErrors? _errors;
+        private Effect? _last;
+        private Effect? _lastInput;
+        private ulong _id0, _id1;
+        private TProps _props;
 
         /// <param name="client">Creates the shader resources, may be null (tests): the chain then passes on unchanged.</param>
         /// <param name="shaders">Names of the built-in shaders by role (see <see cref="ShaderLink.ShaderIds"/>).</param>
@@ -92,7 +92,7 @@ namespace VL.Qt.Nodes
             return _last;
         }
 
-        void ReportErrors()
+        private void ReportErrors()
         {
             if (_errors is null)
                 return;

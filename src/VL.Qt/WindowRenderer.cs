@@ -14,23 +14,23 @@ namespace VL.Qt
     /// </summary>
     internal sealed class WindowRenderer : IDisposable
     {
-        readonly SceneCore _core;
-        IntPtr _window;
-        bool _disposed;
+        private readonly SceneCore _core;
+        private IntPtr _window;
+        private bool _disposed;
 
         // Last title sent to QtNative (change detection; a resize by the user is not fought back).
-        string _title;
+        private string _title;
 
-        string _createError = "";
-        Native.vlqt_perf _lastPerf;
-        bool _perfChanged;
+        private string _createError = "";
+        private Native.vlqt_perf _lastPerf;
+        private bool _perfChanged;
         // #574: percentiles sort two rings in QtNative, so they are recomputed at most every kPercentileIntervalMs
         // (the ring spans ~1 s, ~4 updates per second are enough); the averages of _lastPerf stay per pump.
-        const long kPercentileIntervalMs = 250;
-        Native.vlqt_perf_stats _stats;
-        Native.vlqt_host_stats _host;
-        long _statsAt = long.MinValue;
-        PerfStats _perf = PerfStats.Empty;
+        private const long kPercentileIntervalMs = 250;
+        private Native.vlqt_perf_stats _stats;
+        private Native.vlqt_host_stats _host;
+        private long _statsAt = long.MinValue;
+        private PerfStats _perf = PerfStats.Empty;
 
         /// <param name="scene">Duplicate registry of the app (<see cref="SceneRegistry.ForApp"/>).</param>
         /// <param name="title">Initial window title.</param>
@@ -215,7 +215,7 @@ namespace VL.Qt
         }
 
         // Events and measured values into the sinks (read by the element nodes in the next Update).
-        void PollEvents(bool frameStart = false)
+        private void PollEvents(bool frameStart = false)
         {
             var events = _core.ReadEvents(frameStart);
             if (events.IsEmpty)

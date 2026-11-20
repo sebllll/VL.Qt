@@ -17,15 +17,15 @@ namespace VL.Qt.Tests
     /// <summary>QmlNodeInstance (#107): typed pins to dictionary (send rule), property and signal outputs, passthrough.</summary>
     public class QmlNodeInstanceTests
     {
-        string _dir = null!;
-        string _file = null!;
-        readonly Subject<FileSystemEventArgs> _events = new();
-        QmlElementNode _element = null!;
-        SinkRegistry _registry = null!;
-        uint _handle;
-        QmlNodeInstance? _instance;
+        private string _dir = null!;
+        private string _file = null!;
+        private readonly Subject<FileSystemEventArgs> _events = new();
+        private QmlElementNode _element = null!;
+        private SinkRegistry _registry = null!;
+        private uint _handle;
+        private QmlNodeInstance? _instance;
 
-        sealed class Nop : IDisposable { public void Dispose() { } }
+        private sealed class Nop : IDisposable { public void Dispose() { } }
 
         [SetUp]
         public void SetUp()
@@ -49,14 +49,14 @@ namespace VL.Qt.Tests
 
         // --- declarations by hand (the parser is T2's) ---
 
-        static QmlPropertyDecl Prop(string name, QmlValueKind kind, object? literal = null, QmlPropertyFlags flags = QmlPropertyFlags.None)
+        private static QmlPropertyDecl Prop(string name, QmlValueKind kind, object? literal = null, QmlPropertyFlags flags = QmlPropertyFlags.None)
             => new(name, kind.ToString().ToLowerInvariant(), kind, flags,
                 literal is null ? QmlInitializer.None : QmlInitializer.Literal, literal ?? QmlTypes.TypeDefault(kind), null, 1);
 
-        static QmlSignalDecl Signal(string name, params QmlSignalArg[] args)
+        private static QmlSignalDecl Signal(string name, params QmlSignalArg[] args)
             => new(name, args.ToImmutableArray(), null, 1);
 
-        QmlNodeInstance Create(IEnumerable<QmlPropertyDecl>? properties = null, IEnumerable<QmlSignalDecl>? signals = null)
+        private QmlNodeInstance Create(IEnumerable<QmlPropertyDecl>? properties = null, IEnumerable<QmlSignalDecl>? signals = null)
         {
             var declarations = QmlDeclarations.Empty with
             {
@@ -68,20 +68,20 @@ namespace VL.Qt.Tests
         }
 
         // Pins by name, as the layout orders them.
-        static IVLPin In(QmlNodeInstance instance, int index) => instance.Inputs.ElementAt(index);
+        private static IVLPin In(QmlNodeInstance instance, int index) => instance.Inputs.ElementAt(index);
 
-        static IVLPin Out(QmlNodeInstance instance, int index) => instance.Outputs.ElementAt(index);
+        private static IVLPin Out(QmlNodeInstance instance, int index) => instance.Outputs.ElementAt(index);
 
         // Property-input order of the tests below: first the declared ones, then Properties, then the common pins.
-        static void Set(QmlNodeInstance instance, int index, object? value) => In(instance, index).Value = value;
+        private static void Set(QmlNodeInstance instance, int index, object? value) => In(instance, index).Value = value;
 
-        QmlElement Frame(QmlNodeInstance instance)
+        private QmlElement Frame(QmlNodeInstance instance)
         {
             instance.Update();
             return (QmlElement)Out(instance, 0).Value!;
         }
 
-        static Dictionary<string, object> Sent(QmlElement e)
+        private static Dictionary<string, object> Sent(QmlElement e)
         {
             var d = new Dictionary<string, object>();
             foreach (var (name, _) in e.Properties)
@@ -89,11 +89,11 @@ namespace VL.Qt.Tests
             return d;
         }
 
-        static string[] Names(QmlElement e) => Sent(e).Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray();
+        private static string[] Names(QmlElement e) => Sent(e).Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray();
 
-        SinkRegistryTests.Poll NewPoll() => new();
+        private SinkRegistryTests.Poll NewPoll() => new();
 
-        void Dispatch(SinkRegistryTests.Poll poll) => _registry.Dispatch(poll.Bytes);
+        private void Dispatch(SinkRegistryTests.Poll poll) => _registry.Dispatch(poll.Bytes);
 
         // --- pins ---
 

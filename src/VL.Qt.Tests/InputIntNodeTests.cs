@@ -16,15 +16,15 @@ namespace VL.Qt.Tests
     /// <summary>Input (Int) node (#210): description, property diff, the value channel (pull, user wins, clamp) and EV_VALUE.</summary>
     public class InputIntNodeTests
     {
-        static readonly Vector2 DefaultSize = new(1.4f, 0.4f);
-        static readonly IDisposable NoWarning = new Nop();
-        sealed class Nop : IDisposable { public void Dispose() { } }
+        private static readonly Vector2 DefaultSize = new(1.4f, 0.4f);
+        private static readonly IDisposable NoWarning = new Nop();
+        private sealed class Nop : IDisposable { public void Dispose() { } }
 
-        InputIntNode _node = null!;
-        SinkRegistry _registry = null!;
-        uint _handle;
-        RecordingSink _sink = null!;
-        Reconciler _reconciler = null!;
+        private InputIntNode _node = null!;
+        private SinkRegistry _registry = null!;
+        private uint _handle;
+        private RecordingSink _sink = null!;
+        private Reconciler _reconciler = null!;
 
         [SetUp]
         public void SetUp()
@@ -40,28 +40,28 @@ namespace VL.Qt.Tests
         public void TearDown() => _node.Dispose();
 
         // Pin defaults as declared on Update.
-        SpinBox Update(out int value, out bool bang, IChannel<int>? channel = null, Optional<int> min = default, Optional<int> max = default,
+        private SpinBox Update(out int value, out bool bang, IChannel<int>? channel = null, Optional<int> min = default, Optional<int> max = default,
             int step = 1, bool editable = true, bool enabled = true, bool autoSize = true)
             => (SpinBox)_node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, channel, min, max, step, editable, enabled,
                 1, false, false, null, null, null, out value, out bang, out _, out _);
 
-        SpinBox Update(IChannel<int>? channel = null, Optional<int> min = default, Optional<int> max = default)
+        private SpinBox Update(IChannel<int>? channel = null, Optional<int> min = default, Optional<int> max = default)
             => Update(out _, out _, channel, min, max);
 
         /// <summary>One frame: update the node, reconcile, return the commands it produced.</summary>
-        string[] Frame(out int value, out bool bang, IChannel<int>? channel = null, Optional<int> min = default, Optional<int> max = default)
+        private string[] Frame(out int value, out bool bang, IChannel<int>? channel = null, Optional<int> min = default, Optional<int> max = default)
         {
             _sink.Clear();
             _reconciler.Update(Update(out value, out bang, channel, min, max), Space.DIPTopLeft);
             return _sink.Commands.ToArray();
         }
 
-        string[] Frame(IChannel<int>? channel = null, Optional<int> min = default, Optional<int> max = default)
+        private string[] Frame(IChannel<int>? channel = null, Optional<int> min = default, Optional<int> max = default)
             => Frame(out _, out _, channel, min, max);
 
-        void UserChanges(int value) => _registry.Dispatch(new SinkRegistryTests.Poll().ValueI32(_handle, value).Bytes);
+        private void UserChanges(int value) => _registry.Dispatch(new SinkRegistryTests.Poll().ValueI32(_handle, value).Bytes);
 
-        static string SetValue(int v) => $"SET 1 Value i32({v})";
+        private static string SetValue(int v) => $"SET 1 Value i32({v})";
 
         [Test]
         public void Defaults_FullIntRange()

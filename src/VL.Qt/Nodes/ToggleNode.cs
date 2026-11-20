@@ -29,8 +29,8 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(bool Value, ToggleLook Look, bool Enabled, bool AutoSize, Style? Style);
 
-        readonly ElementNode<Element, Props> _node;
-        readonly ValueChannel<bool> _value = new(false);
+        private readonly ElementNode<Element, Props> _node;
+        private readonly ValueChannel<bool> _value = new(false);
 
         public ToggleNode(NodeContext nodeContext)
             => _node = new ElementNode<Element, Props>(nodeContext, Create);
@@ -39,7 +39,7 @@ namespace VL.Qt.Nodes
         internal ToggleNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Element, Props>(addWarning, Create);
 
-        static readonly Func<CommonInputs, Props, SinkSlot, Element> Create = static (c, p, slot) => p.Look == ToggleLook.Switch
+        private static readonly Func<CommonInputs, Props, SinkSlot, Element> Create = static (c, p, slot) => p.Look == ToggleLook.Switch
             ? new Switch
             {
                 Size = c.Size,

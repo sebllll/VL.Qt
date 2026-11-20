@@ -37,7 +37,7 @@ public static class ClipVideoPerfTest
 
     // ---- C16 ----
 
-    static void RunClip(Scenario s)
+    private static void RunClip(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt clip grab");
         s.Check(w != IntPtr.Zero, "clip-grab: window_create");
@@ -133,16 +133,16 @@ public static class ClipVideoPerfTest
         s.Pump(2);
     }
 
-    static IDisposable Disposable() => new Nop();
+    private static IDisposable Disposable() => new Nop();
 
-    sealed class Nop : IDisposable
+    private sealed class Nop : IDisposable
     {
         public void Dispose() { }
     }
 
     // ---- E8 ----
 
-    static void RunVideo(Scenario s)
+    private static void RunVideo(Scenario s)
     {
         var runs = Math.Max(1, int.TryParse(Environment.GetEnvironmentVariable("VLQT_SMOKE_VIDEOUPLOADRUNS"), out var r) ? r : 5);
         var frames = Math.Max(60, int.TryParse(Environment.GetEnvironmentVariable("VLQT_SMOKE_VIDEOUPLOADFRAMES"), out var f) ? f : 240);
@@ -214,9 +214,9 @@ public static class ClipVideoPerfTest
         Thread.Sleep(2000);
     }
 
-    readonly record struct Result(double SetMedian, double PumpMedian, double PollMedian, double TotalMedian, double TotalP95, double TotalMax, double Infos);
+    private readonly record struct Result(double SetMedian, double PumpMedian, double PollMedian, double TotalMedian, double TotalP95, double TotalMax, double Infos);
 
-    static Result Measure(Scenario s, ulong res, Native.vlqt_pixel_desc desc, byte[] data, byte[] buf, int frames, bool newFrame)
+    private static Result Measure(Scenario s, ulong res, Native.vlqt_pixel_desc desc, byte[] data, byte[] buf, int frames, bool newFrame)
     {
         const double period = 1000.0 / 60;
         var set = new List<double>(frames);
@@ -265,7 +265,7 @@ public static class ClipVideoPerfTest
         return new Result(Median(set), Median(pump), Median(poll), Median(total), sorted[(int)(sorted.Count * 0.95)], sorted[^1], infos);
     }
 
-    static double Median(List<double> l)
+    private static double Median(List<double> l)
     {
         var o = l.OrderBy(x => x).ToList();
         return o.Count == 0 ? 0 : o.Count % 2 == 1 ? o[o.Count / 2] : (o[o.Count / 2 - 1] + o[o.Count / 2]) / 2;

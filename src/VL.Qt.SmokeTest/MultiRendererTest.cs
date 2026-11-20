@@ -20,20 +20,20 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 [TestFixture, NonParallelizable]
 public static class MultiRendererTest
 {
-    const int WindowW = 480, WindowH = 360;
-    const int TexW = 256, TexH = 192;
-    const int B8G8R8A8Typeless = 90, B8G8R8A8Unorm = 87;
-    const int MaxFrames = 120;
+    private const int WindowW = 480, WindowH = 360;
+    private const int TexW = 256, TexH = 192;
+    private const int B8G8R8A8Typeless = 90, B8G8R8A8Unorm = 87;
+    private const int MaxFrames = 120;
 
-    static bool IsOrange(int r, int g, int b) => Math.Abs(r - 255) < 8 && Math.Abs(g - 153) < 8 && b < 8;
-    static bool IsBg(int r, int g, int b) => Math.Abs(r - 0x20) < 8 && Math.Abs(g - 0x20) < 8 && Math.Abs(b - 0x20) < 8;
-    static bool Close(float a, float b) => Math.Abs(a - b) < 0.02f;
+    private static bool IsOrange(int r, int g, int b) => Math.Abs(r - 255) < 8 && Math.Abs(g - 153) < 8 && b < 8;
+    private static bool IsBg(int r, int g, int b) => Math.Abs(r - 0x20) < 8 && Math.Abs(g - 0x20) < 8 && Math.Abs(b - 0x20) < 8;
+    private static bool Close(float a, float b) => Math.Abs(a - b) < 0.02f;
 
     /// <summary>One element tree in a window and an offscreen scene (#126).</summary>
     [Test, Category("multirenderer")]
     public static void MultiRenderer() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         bool check(bool ok, string what)
         {

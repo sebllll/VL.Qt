@@ -12,11 +12,11 @@ namespace VL.Qt.Tests
     /// <summary>Shared core of Line, Polyline and Polygon (#154, package 03): content equality, extent, closed, limit warning.</summary>
     public class ShapeNodeCoreTests
     {
-        ShapeNodeCore _core = null!;
-        int _warnings; // currently shown warnings
-        string? _lastWarning;
+        private ShapeNodeCore _core = null!;
+        private int _warnings; // currently shown warnings
+        private string? _lastWarning;
 
-        sealed class Removal(ShapeNodeCoreTests t) : IDisposable { public void Dispose() => t._warnings--; }
+        private sealed class Removal(ShapeNodeCoreTests t) : IDisposable { public void Dispose() => t._warnings--; }
 
         [SetUp]
         public void SetUp()
@@ -29,17 +29,17 @@ namespace VL.Qt.Tests
         [TearDown]
         public void TearDown() => _core.Dispose();
 
-        static readonly CommonInputs Common = new(default, default, RectangleAnchor.Center, 1, false, false, null, null);
+        private static readonly CommonInputs Common = new(default, default, RectangleAnchor.Center, 1, false, false, null, null);
 
-        static ShapeNodeCore.Props PropsOf(Spread<Vector2> points, bool closed = false, Spread<float>? dash = null, float strokeWidth = 0.05f)
+        private static ShapeNodeCore.Props PropsOf(Spread<Vector2> points, bool closed = false, Spread<float>? dash = null, float strokeWidth = 0.05f)
             => new(points, closed, Color4.White, Color4.White, strokeWidth, ShapeCap.Flat, ShapeJoin.Miter, 4, dash ?? Spread<float>.Empty,
                 0, 0, 1, 0, ShapeFillRule.NonZero);
 
-        Shape Describe(ShapeNodeCore.Props props) => _core.Describe(Common, props, out _, out _);
+        private Shape Describe(ShapeNodeCore.Props props) => _core.Describe(Common, props, out _, out _);
 
-        static Spread<Vector2> Points(params (float x, float y)[] p) => p.Select(v => new Vector2(v.x, v.y)).ToSpread();
+        private static Spread<Vector2> Points(params (float x, float y)[] p) => p.Select(v => new Vector2(v.x, v.y)).ToSpread();
 
-        static Spread<Vector2> Many(int count) => Enumerable.Range(0, count).Select(i => new Vector2(i, i % 7)).ToSpread();
+        private static Spread<Vector2> Many(int count) => Enumerable.Range(0, count).Select(i => new Vector2(i, i % 7)).ToSpread();
 
         [Test]
         public void SameContentInNewSpread_SameElementInstance()

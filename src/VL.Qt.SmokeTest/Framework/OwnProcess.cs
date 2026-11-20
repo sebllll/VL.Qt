@@ -9,10 +9,10 @@ using System.Linq;
 /// thread modes, the render-thread count is fixed at the first scene): the NUnit test starts this assembly as helper
 /// executable (Program.Main, `--scenario a,b`) and mirrors the child's check lines into its own result.
 /// </summary>
-static class OwnProcess
+internal static class OwnProcess
 {
     // Scenarios the helper can run (name -> body).
-    static readonly Dictionary<string, Action<Scenario>> s_bodies = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, Action<Scenario>> s_bodies = new(StringComparer.OrdinalIgnoreCase)
     {
         ["qttexture"] = QtTextureTest.Run,
         ["QtTextureInput"] = QtTextureTest.RunInput,

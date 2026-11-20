@@ -13,13 +13,13 @@ using VL.Qt;
 /// VLQT_TEST_D3D11ON12=1 (set for "-Only qttexture"); the WARP part needs QtNative's device not to be in use by a window
 /// (also "-Only qttexture"); each says so and skips otherwise. A hang in QtNative stops the run through <see cref="Watchdog"/>.
 /// </summary>
-static partial class QtTextureTest
+public static partial class QtTextureTest
 {
     // Hang guard for code that waits on the render thread or on the GPU: after the limit the run ends with a FAIL line
     // (a deadlock would otherwise only end at the SmokeTest time limit, without telling where).
     internal sealed class Watchdog : IDisposable
     {
-        readonly Timer _timer;
+        private readonly Timer _timer;
 
         public Watchdog(string what, int seconds)
             => _timer = new Timer(_ =>
@@ -33,13 +33,13 @@ static partial class QtTextureTest
     }
 
     // QtNative's last error text for the message of a failed check; nothing when the call went well (the text is not cleared).
-    static string ErrIf(bool failed) => failed ? Native.LastError() : "";
+    private static string ErrIf(bool failed) => failed ? Native.LastError() : "";
 
     // The thread count QtNative uses: VLQT_OFFSCREEN_THREAD, unset = 1 (render-texture.md, "Qt render thread").
-    static int ExpectedThreads => int.TryParse(Environment.GetEnvironmentVariable("VLQT_OFFSCREEN_THREAD"), out var n) ? n : 1;
+    private static int ExpectedThreads => int.TryParse(Environment.GetEnvironmentVariable("VLQT_OFFSCREEN_THREAD"), out var n) ? n : 1;
 
     // set_threaded after the first scene is OK only for the count in use: tells which mode the suite really runs in.
-    static void ThreadMode(Scenario s)
+    private static void ThreadMode(Scenario s)
     {
         int expected = ExpectedThreads;
         int other = expected == 0 ? 1 : 0;
@@ -51,7 +51,7 @@ static partial class QtTextureTest
 
     // (4) QtNative's device moves to WARP and the scene renders against a software foreign device: 10 runs of three frames
     // each (the fallback waits on the main thread for the render thread's signal; a deadlock showed in 9 of 10 runs without it).
-    static void WarpRuns(Scenario s)
+    private static void WarpRuns(Scenario s)
     {
         bool check(bool ok, string what)
         {
@@ -144,7 +144,7 @@ static partial class QtTextureTest
     // the foreign side must not hang. The readback on the foreign device (copy + Map READ) queues behind that wait, so it
     // would block for ever if the value never came; it runs on a worker thread with a limit. Whether the render still
     // finished before the removal depends on timing: both outcomes are legal, the result is logged.
-    static void NeverSignalled(Scenario s)
+    private static void NeverSignalled(Scenario s)
     {
         bool check(bool ok, string what)
         {
@@ -231,7 +231,7 @@ static partial class QtTextureTest
     // (5) A window and a bound scene (both on QtNative's device, the window's frames hold the context lock), device loss,
     // then pumping while the host keeps calling render_batch: the main thread never blocks, the scene is unbound, binds
     // again and renders red, the window renders again.
-    static void WindowAndDeviceLoss(Scenario s)
+    private static void WindowAndDeviceLoss(Scenario s)
     {
         bool check(bool ok, string what)
         {

@@ -29,11 +29,11 @@ public static class ReadmeImagesTest
     [Test, Explicit("writes docs/images"), Category("readme-docs"), Category("own-process")]
     public static void ReadmeImagesDocs() => Scenario.RunLocal(s => ImageCompare.RunDocs(s, new[] { "readme-images" }));
 
-    const float CellW = 410, CellH = 230;
-    const float TextW = 300, TextH = 120, FontSize = 90;
-    const float Bg = 0x16 / 255f;
+    private const float CellW = 410, CellH = 230;
+    private const float TextW = 300, TextH = 120, FontSize = 90;
+    private const float Bg = 0x16 / 255f;
 
-    const string WaveMap =
+    private const string WaveMap =
         "#version 440\n" +
         "layout(location = 0) in vec2 qt_TexCoord0;\n" +
         "layout(location = 0) out vec4 fragColor;\n" +

@@ -19,9 +19,9 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class DeviceLostTest
 {
-    const uint Rect = 1;
-    const int TimeoutMs = 5000;
-    const int Images = 20;
+    private const uint Rect = 1;
+    private const int TimeoutMs = 5000;
+    private const int Images = 20;
 
     /// <summary>Real removal of the shared D3D11 device, twice: windows, images and snapshot come back (own process).</summary>
     [Test, Category("device-lost"), Category("own-process")]

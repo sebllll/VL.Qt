@@ -9,7 +9,7 @@ namespace VL.Qt.Tests
 {
     public class ElementTests
     {
-        sealed class TestElement : Element
+        private sealed class TestElement : Element
         {
             public TestElement() : base(ElementType.Item) { }
         }

@@ -21,7 +21,7 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Row (Spectral)", Category = Categories.Elements)]
     public sealed class RowSpectralNode : IDisposable
     {
-        readonly RowNode _inner;
+        private readonly RowNode _inner;
 
         public RowSpectralNode(NodeContext nodeContext) => _inner = new RowNode(nodeContext);
 

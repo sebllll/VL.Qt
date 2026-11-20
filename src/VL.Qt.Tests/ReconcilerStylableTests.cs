@@ -16,12 +16,12 @@ namespace VL.Qt.Tests
     public class ReconcilerStylableTests
     {
         /// <summary>Behaves like a patched widget: the same instance, a cached element, a new one only when a field or the style changes.</summary>
-        sealed class TestStylable : IStylable
+        private sealed class TestStylable : IStylable
         {
-            Element? _cached;
-            Style? _cachedStyle;
-            Color4 _cachedFill;
-            bool _cachedButton;
+            private Element? _cached;
+            private Style? _cachedStyle;
+            private Color4 _cachedFill;
+            private bool _cachedButton;
 
             public int Builds { get; private set; }
             public Style? LastStyle { get; private set; }
@@ -50,12 +50,12 @@ namespace VL.Qt.Tests
             }
         }
 
-        sealed class UnknownElement : IElement
+        private sealed class UnknownElement : IElement
         {
         }
 
-        RecordingSink _sink = null!;
-        Reconciler _rec = null!;
+        private RecordingSink _sink = null!;
+        private Reconciler _rec = null!;
 
         [SetUp]
         public void SetUp()
@@ -64,13 +64,13 @@ namespace VL.Qt.Tests
             _rec = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
         }
 
-        static Style Radius(float r) => new() { Frame = new FrameStyle { Radius = default(StateValues<float>).With(StyleStates.Normal, r) } };
+        private static Style Radius(float r) => new() { Frame = new FrameStyle { Radius = default(StateValues<float>).With(StyleStates.Normal, r) } };
 
-        static ImmutableArray<Element> Kids(params Element[] e) => ImmutableArray.Create(e);
+        private static ImmutableArray<Element> Kids(params Element[] e) => ImmutableArray.Create(e);
 
-        static StylableElement Wrap(IStylable s) => new(s);
+        private static StylableElement Wrap(IStylable s) => new(s);
 
-        void Update(Element root) => _rec.Update(root, Space.DIPTopLeft);
+        private void Update(Element root) => _rec.Update(root, Space.DIPTopLeft);
 
         // 1 ---------------------------------------------------------------
 
@@ -346,7 +346,7 @@ namespace VL.Qt.Tests
 
         // 8 ---------------------------------------------------------------
 
-        static Spread<IElement?> Input(params IElement?[] items) => items.ToSpread();
+        private static Spread<IElement?> Input(params IElement?[] items) => items.ToSpread();
 
         [Test]
         public void ChildrenInput_StylableBecomesStylableElement_SameInstanceWhenUnchanged()

@@ -19,13 +19,13 @@ public static class GlowTest
     [Test, Category("glow")]
     public static void Glow() => Scenario.Run(Run);
 
-    const uint Fx = 1, Src = 2, Box = 3, Bar = 4;
-    const uint Down = 100, Up = 200; // + step k (Down + k is 1 / 2^k of the effect size)
+    private const uint Fx = 1, Src = 2, Box = 3, Bar = 4;
+    private const uint Down = 100, Up = 200; // + step k (Down + k is 1 / 2^k of the effect size)
 
-    static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
+    private static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
     // Glow strength at (x, y): mean green above the background #202020 over 5 x 5 samples (1 DIP apart).
-    static float Glow(Bitmap a, int x, int y)
+    private static float Glow(Bitmap a, int x, int y)
     {
         float sum = 0;
         for (int dy = -2; dy <= 2; dy++)
@@ -35,14 +35,14 @@ public static class GlowTest
     }
 
     // Pyramid step of a radius (DIP): sigma = radius / 2 in pixels; n steps down and up blur with sigma^2 = 7/6 (4^n - 1) px^2.
-    static float Level(float radius, float dpr)
+    private static float Level(float radius, float dpr)
     {
         var s = radius * dpr / 2;
         return 0.5f * MathF.Log2(1 + s * s * 6 / 7);
     }
-    static float RadiusOf(float level, float dpr) => 2 / dpr * MathF.Sqrt((MathF.Pow(4, level) - 1) * 7 / 6);
+    private static float RadiusOf(float level, float dpr) => 2 / dpr * MathF.Sqrt((MathF.Pow(4, level) - 1) * 7 / 6);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         ulong Shader(string path)

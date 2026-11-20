@@ -15,24 +15,24 @@ namespace VL.Qt.Tests
     /// <summary>Group, Row and Column nodes (07d): children pin group, change detection, layout pins.</summary>
     public class ContainerNodeTests
     {
-        static IDisposable NoWarning(string _) => throw new AssertionException("unexpected warning");
+        private static IDisposable NoWarning(string _) => throw new AssertionException("unexpected warning");
 
-        static readonly Rectangle A = new() { Size = new Vector2(1, 0.5f) };
-        static readonly Rectangle B = new() { Size = new Vector2(0.5f, 0.25f) };
-        static readonly Rectangle C = new() { Size = new Vector2(2, 1) };
+        private static readonly Rectangle A = new() { Size = new Vector2(1, 0.5f) };
+        private static readonly Rectangle B = new() { Size = new Vector2(0.5f, 0.25f) };
+        private static readonly Rectangle C = new() { Size = new Vector2(2, 1) };
 
-        static Spread<IElement?> S(params IElement?[] e) => Spread.Create(e);
+        private static Spread<IElement?> S(params IElement?[] e) => Spread.Create(e);
 
-        static Element Group(GroupNode n, Spread<IElement?> children, float opacity = 1, bool autoSize = true)
+        private static Element Group(GroupNode n, Spread<IElement?> children, float opacity = 1, bool autoSize = true)
             => n.Update(children, default, autoSize, default, RectangleAnchor.Center, opacity, false, false,
                 null, null, null, out _, out _);
 
-        static Element Column(ColumnNode n, Spread<IElement?> children, float spacing = 0, float padding = 0,
+        private static Element Column(ColumnNode n, Spread<IElement?> children, float spacing = 0, float padding = 0,
             HorizontalAlignment align = HorizontalAlignment.Left, bool autoSize = true)
             => n.Update(children, default, autoSize, default, RectangleAnchor.Center, spacing, padding, align, 1, false, false,
                 null, null, out _, out _);
 
-        static Element Row(RowNode n, Spread<IElement?> children, float spacing = 0, float padding = 0,
+        private static Element Row(RowNode n, Spread<IElement?> children, float spacing = 0, float padding = 0,
             VerticalAlignment align = VerticalAlignment.Top, bool autoSize = true)
             => n.Update(children, default, autoSize, default, RectangleAnchor.Center, spacing, padding, align, 1, false, false,
                 null, null, out _, out _);

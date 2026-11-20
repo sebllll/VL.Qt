@@ -18,7 +18,7 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Path", Category = Categories.Elements)]
     public sealed class PathNode : IDisposable
     {
-        readonly ShapeNodeCore _core;
+        private readonly ShapeNodeCore _core;
 
         public PathNode(NodeContext nodeContext) => _core = new ShapeNodeCore(nodeContext);
 

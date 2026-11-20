@@ -23,8 +23,8 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(ImmutableArray<Element> Children, float Spacing, float Padding, HorizontalAlignment ChildAlignment, bool AutoSize);
 
-        readonly ElementNode<Column, Props> _node;
-        readonly ChildrenInput _children = new();
+        private readonly ElementNode<Column, Props> _node;
+        private readonly ChildrenInput _children = new();
 
         public ColumnNode(NodeContext nodeContext)
             => _node = new ElementNode<Column, Props>(nodeContext, Create);
@@ -33,7 +33,7 @@ namespace VL.Qt.Nodes
         internal ColumnNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Column, Props>(addWarning, Create);
 
-        static readonly Func<CommonInputs, Props, SinkSlot, Column> Create = static (c, p, slot) => new Column
+        private static readonly Func<CommonInputs, Props, SinkSlot, Column> Create = static (c, p, slot) => new Column
             {
                 Size = c.Size,
                 Transform = c.Transform,

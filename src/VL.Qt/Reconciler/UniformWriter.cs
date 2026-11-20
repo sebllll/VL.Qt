@@ -21,7 +21,7 @@ namespace VL.Qt
     internal static class UniformWriter
     {
         /// <summary>Suffix of the table key of a sampler entry: a texture and its sampler share a name, so they need two keys.</summary>
-        const char SamplerKey = '\u0001';
+        private const char SamplerKey = '\u0001';
 
         /// <summary>Whether <paramref name="name"/> can be sent (1..<see cref="Protocol.UniformNameMax"/> UTF-8 bytes).</summary>
         public static bool IsValidName(string? name)
@@ -80,7 +80,7 @@ namespace VL.Qt
             return next;
         }
 
-        static bool Equal(Dictionary<string, UniformValue> a, Dictionary<string, UniformValue> b)
+        private static bool Equal(Dictionary<string, UniformValue> a, Dictionary<string, UniformValue> b)
         {
             if (a.Count != b.Count)
                 return false;
@@ -90,7 +90,7 @@ namespace VL.Qt
             return true;
         }
 
-        static void Send(ICommandSink sink, uint id, ushort flags, Dictionary<string, UniformValue>? next, Dictionary<string, UniformValue>? skipEqualTo)
+        private static void Send(ICommandSink sink, uint id, ushort flags, Dictionary<string, UniformValue>? next, Dictionary<string, UniformValue>? skipEqualTo)
         {
             sink.BeginUniforms(id, flags);
             if (next is not null)
@@ -105,7 +105,7 @@ namespace VL.Qt
             sink.EndUniforms();
         }
 
-        static UniformValue Resolve(Uniform u, ShaderEffect effect, IReadOnlyList<Node> children)
+        private static UniformValue Resolve(Uniform u, ShaderEffect effect, IReadOnlyList<Node> children)
         {
             ulong handle = 0;
             if (u.Texture is { } texture)

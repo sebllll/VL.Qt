@@ -11,7 +11,7 @@ namespace VL.Qt.Tests
     /// <summary>NotificationQueue of QtTexture (#119), compiled in from VL.Qt.Stride: Input Notifications reach the scene.</summary>
     public class NotificationQueueTests
     {
-        sealed class Source : IObservable<INotification>
+        private sealed class Source : IObservable<INotification>
         {
             public readonly List<IObserver<INotification>> Observers = new();
 
@@ -28,14 +28,14 @@ namespace VL.Qt.Tests
             }
         }
 
-        sealed class Unsubscriber : IDisposable
+        private sealed class Unsubscriber : IDisposable
         {
-            readonly Action _action;
+            private readonly Action _action;
             public Unsubscriber(Action action) => _action = action;
             public void Dispose() => _action();
         }
 
-        static INotification Move(float x) => new MouseMoveNotification(new Vector2(x, 0), new Vector2(100, 100), Keys.None, null);
+        private static INotification Move(float x) => new MouseMoveNotification(new Vector2(x, 0), new Vector2(100, 100), Keys.None, null);
 
         [Test]
         public void Drain_HandsQueuedNotificationsToTheSinkInOrder()

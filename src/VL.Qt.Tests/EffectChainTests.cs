@@ -11,7 +11,7 @@ namespace VL.Qt.Tests
     /// <summary>SET_EFFECT_CHAIN (#489): wire encoding of the writer and <see cref="Effect.Segment"/>.</summary>
     public class EffectChainTests
     {
-        sealed class TestShaderLink : ShaderLink
+        private sealed class TestShaderLink : ShaderLink
         {
             public TestShaderLink(Effect? previous, ushort template = Protocol.EffectTemplate.Single)
                 : base(previous, template, ImmutableArray.Create(7UL), null, new RectangleF(1, 2, 3, 4), 10)
@@ -19,14 +19,14 @@ namespace VL.Qt.Tests
             }
         }
 
-        static string Hex(byte[] b) => Convert.ToHexString(b);
-        static string U16(int v) => $"{v & 0xFF:X2}{(v >> 8) & 0xFF:X2}";
-        static string U32(uint v) => Hex(BitConverter.GetBytes(v));
-        static string U64(ulong v) => Hex(BitConverter.GetBytes(v));
-        static string F32(float v) => Hex(BitConverter.GetBytes(v));
-        static string Ascii(string s) => Hex(Encoding.ASCII.GetBytes(s));
+        private static string Hex(byte[] b) => Convert.ToHexString(b);
+        private static string U16(int v) => $"{v & 0xFF:X2}{(v >> 8) & 0xFF:X2}";
+        private static string U32(uint v) => Hex(BitConverter.GetBytes(v));
+        private static string U64(ulong v) => Hex(BitConverter.GetBytes(v));
+        private static string F32(float v) => Hex(BitConverter.GetBytes(v));
+        private static string Ascii(string s) => Hex(Encoding.ASCII.GetBytes(s));
 
-        static string Write(Action<CommandWriter> write)
+        private static string Write(Action<CommandWriter> write)
         {
             var w = new CommandWriter();
             write(w);

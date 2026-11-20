@@ -17,7 +17,7 @@ public static class PumpTest
     [Test, Category("pump")]
     public static void Pump() => Scenario.Run(Run);
 
-    const float U = 100f;
+    private const float U = 100f;
 
     // Like vvvv's (WinForms) main loop between two frames: dispatches every Win32 message of the thread,
     // including the ones Qt posts to its own hidden window (timers, posted events, update requests).
@@ -67,25 +67,25 @@ public static class PumpTest
         timeBeginPeriod(1);
         return new Release(true);
     }
-    sealed class Release(bool active) : IDisposable { public void Dispose() { if (active) timeEndPeriod(1); } }
-    [DllImport("winmm.dll")] static extern uint timeBeginPeriod(uint ms);
-    [DllImport("winmm.dll")] static extern uint timeEndPeriod(uint ms);
+    private sealed class Release(bool active) : IDisposable { public void Dispose() { if (active) timeEndPeriod(1); } }
+    [DllImport("winmm.dll")] private static extern uint timeBeginPeriod(uint ms);
+    [DllImport("winmm.dll")] private static extern uint timeEndPeriod(uint ms);
 
     [StructLayout(LayoutKind.Sequential)]
-    struct MSG { public IntPtr hwnd; public uint message; public UIntPtr wParam; public IntPtr lParam; public uint time; public int x, y; public uint lPrivate; }
-    [DllImport("user32.dll")] static extern bool PeekMessageW(out MSG msg, IntPtr hwnd, uint min, uint max, uint remove);
-    [DllImport("user32.dll")] static extern bool TranslateMessage(ref MSG msg);
-    [DllImport("user32.dll")] static extern IntPtr DispatchMessageW(ref MSG msg);
-    const uint RectId = 1, FxId = 2;
+    private struct MSG { public IntPtr hwnd; public uint message; public UIntPtr wParam; public IntPtr lParam; public uint time; public int x, y; public uint lPrivate; }
+    [DllImport("user32.dll")] private static extern bool PeekMessageW(out MSG msg, IntPtr hwnd, uint min, uint max, uint remove);
+    [DllImport("user32.dll")] private static extern bool TranslateMessage(ref MSG msg);
+    [DllImport("user32.dll")] private static extern IntPtr DispatchMessageW(ref MSG msg);
+    private const uint RectId = 1, FxId = 2;
 
-    sealed class SimClock : IFrameClock
+    private sealed class SimClock : IFrameClock
     {
         public readonly Subject<FrameFinishedMessage> Finished = new();
         public readonly Subject<FrameTimeMessage> Ticks = new();
-        double _t = 10_000; // monotonic and later than the manual driver times of the earlier smoke tests
+        private double _t = 10_000; // monotonic and later than the manual driver times of the earlier smoke tests
         public SimClock() { }
         public SimClock(double t) { _t = t; }
-        ulong _n;
+        private ulong _n;
         public Time Time => new(_t);
         public double TimeDifference => 1.0 / 60;
         public IObservable<FrameTimeMessage> GetTicks() => Ticks;
@@ -102,7 +102,7 @@ public static class PumpTest
         }
     }
 
-    sealed class CollectingLogger : ILogger
+    private sealed class CollectingLogger : ILogger
     {
         public readonly List<string> Lines = new();
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
@@ -114,9 +114,9 @@ public static class PumpTest
     }
 
     // A window as participant of the pump (like Renderer): the rect moves every frame so each pump renders.
-    sealed class TestWindow : IQtFrameParticipant
+    private sealed class TestWindow : IQtFrameParticipant
     {
-        readonly CommandWriter _cmd = new();
+        private readonly CommandWriter _cmd = new();
         public readonly IntPtr Handle;
         public int Applies, Afters, Frame;
         public Native.vlqt_perf Perf;
@@ -149,7 +149,7 @@ public static class PumpTest
         }
 
         // Size + anchor once, then one SET per frame (TRANSFORM, #469): the host frame reports ops 1.
-        void Move() => _cmd.SetMat4(RectId, Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation((0.5f + (Frame++ % 100) * 0.01f) * U, 1 * U, 0));
+        private void Move() => _cmd.SetMat4(RectId, Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation((0.5f + (Frame++ % 100) * 0.01f) * U, 1 * U, 0));
 
         // "Update()": write the commands of this frame (before the pump).
         public void Update() { _cmd.Reset(); Move(); }
@@ -170,14 +170,14 @@ public static class PumpTest
         public void Destroy() => Native.vlqt_window_destroy(Handle);
     }
 
-    sealed class Throwing : IQtFrameParticipant
+    private sealed class Throwing : IQtFrameParticipant
     {
         public int Calls;
         public void ApplyCommands() { Calls++; throw new InvalidOperationException("test"); }
         public void AfterEvents() { Calls++; throw new InvalidOperationException("test"); }
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var clock = new SimClock();
         var log = new CollectingLogger();
@@ -373,7 +373,7 @@ public static class PumpTest
         foreach (var l in log.Lines) s.Info("pump log " + l);
     }
 
-    static void RunTwoApps(QtApp app, Scenario s)
+    private static void RunTwoApps(QtApp app, Scenario s)
     {
         var clockA = new SimClock();
         var clockB = new SimClock();
@@ -415,7 +415,7 @@ public static class PumpTest
 
     // #58: F8/F5 in vvvv stops the app (its app host disposes the pump service and the renderers) and starts a new app
     // with a new frame clock. QtApp (QGuiApplication) stays; the new app's pump must drive the new windows.
-    static void RunRestart(QtApp app, QtPump pump, SimClock clock, Scenario s)
+    private static void RunRestart(QtApp app, QtPump pump, SimClock clock, Scenario s)
     {
         // F8: the app host disposes its services (pump) - the old clock may still exist but no longer drives anything.
         pump.Dispose();
@@ -459,7 +459,7 @@ public static class PumpTest
 
     // Acceptance 02a: pump < 2 ms. WSLg (L4e, #214): Present copies to the host compositor (4.6 ms d3d12, 12 ms
     // llvmpipe) -> hard limit on QtNative/Qt share (pump - present), the total stays visible as WARN.
-    static void PumpLimit(Scenario s, double pump, double present, string what, string detail)
+    private static void PumpLimit(Scenario s, double pump, double present, string what, string detail)
     {
         if (!QtHost.Wslg)
         {
@@ -471,5 +471,5 @@ public static class PumpTest
             s.Warn($"pump: mean pump time {what} {pump:F3} ms >= 2 ms, present {present:F3} ms (WSLg)");
     }
 
-    static double Average(double[] v) { double s = 0; foreach (var x in v) s += x; return s / v.Length; }
+    private static double Average(double[] v) { double s = 0; foreach (var x in v) s += x; return s / v.Length; }
 }

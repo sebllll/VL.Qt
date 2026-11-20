@@ -9,7 +9,7 @@ namespace VL.Qt.Elements
     /// </summary>
     public sealed record Uniform
     {
-        Uniform(string name, ushort valueType)
+        private Uniform(string name, ushort valueType)
         {
             Name = name ?? string.Empty;
             ValueType = valueType;

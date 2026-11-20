@@ -20,12 +20,12 @@ namespace VL.Qt.Audio
         public const int Channels = 2;
 
         // WASAPI shared mode when the device period cannot be read: the usual default period.
-        const long fallbackDriverLatencyNs = 10_000_000;
+        private const long fallbackDriverLatencyNs = 10_000_000;
 
-        readonly AudioTapPlayer _player;
-        string? _latencyDriver;
-        int _latencySampleRate;
-        long _driverLatencyNs;
+        private readonly AudioTapPlayer _player;
+        private string? _latencyDriver;
+        private int _latencySampleRate;
+        private long _driverLatencyNs;
 
         public VideoAudioSignal(IAudioTapReader reader)
         {
@@ -80,7 +80,7 @@ namespace VL.Qt.Audio
             _player.OutputLatencyNs = (long)(BufferSize * 1e9 / sampleRate) + _driverLatencyNs;
         }
 
-        static long QueryDriverLatencyNs(AudioEngine engine, int sampleRate)
+        private static long QueryDriverLatencyNs(AudioEngine engine, int sampleRate)
         {
             try
             {

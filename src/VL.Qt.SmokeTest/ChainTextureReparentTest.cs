@@ -18,14 +18,14 @@ public static class ChainTextureReparentTest
     [Ignore("NCMD-17: REPARENT of a chain link's texture element is accepted without a check or error, the element is drawn in the tree and still sampled by the chain (fails: rc 0, no EV_ERROR, blue in both places)")]
     public static void ChainTextureReparent() => Scenario.Run(Run);
 
-    const uint R = 1, L = 2, HR = 101, HL = 102;
-    const float RX = 250, RY = 150, RW = 300, RH = 150;
+    private const uint R = 1, L = 2, HR = 101, HL = 102;
+    private const float RX = 250, RY = 150, RW = 300, RH = 150;
 
-    static Color Px(Bitmap a, float x, float y) => a.GetPixel((int)(x * a.Width / 800), (int)(y * a.Height / 600));
-    static bool Blueish(Color c) => c.B > c.R + 40;
-    static bool Orangeish(Color c) => c.R > c.B + 12 && c.R > 0x30;
+    private static Color Px(Bitmap a, float x, float y) => a.GetPixel((int)(x * a.Width / 800), (int)(y * a.Height / 600));
+    private static bool Blueish(Color c) => c.B > c.R + 40;
+    private static bool Orangeish(Color c) => c.R > c.B + 12 && c.R > 0x30;
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "Blend is a ShaderEffect");
         Native.vlqt_res_create(Protocol.ResKind.Shader, out var blend);

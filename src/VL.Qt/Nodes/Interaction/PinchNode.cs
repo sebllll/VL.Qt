@@ -27,21 +27,21 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(int MinimumPointCount, int MaximumPointCount, PointerDevices Devices);
 
-        const string countError = "Minimum and Maximum Point Count must be at least 2, and Minimum must not be greater than Maximum. 2 and 2 are used.";
+        private const string countError = "Minimum and Maximum Point Count must be at least 2, and Minimum must not be greater than Maximum. 2 and 2 are used.";
 
-        readonly InteractionNode<Props> _node;
-        readonly Func<string, IDisposable> _addError;
-        IChannel<bool>? _active;
-        IChannel<float>? _scale;
-        IChannel<float>? _rotation;
-        IChannel<Vector2>? _translation;
-        IChannel<Vector2>? _pivot;
-        bool _lastActive;
-        int _scaleUpdates;
-        int _rotationUpdates;
-        int _translationUpdates;
-        int _pivotUpdates;
-        IDisposable? _inputErrorMessage;
+        private readonly InteractionNode<Props> _node;
+        private readonly Func<string, IDisposable> _addError;
+        private IChannel<bool>? _active;
+        private IChannel<float>? _scale;
+        private IChannel<float>? _rotation;
+        private IChannel<Vector2>? _translation;
+        private IChannel<Vector2>? _pivot;
+        private bool _lastActive;
+        private int _scaleUpdates;
+        private int _rotationUpdates;
+        private int _translationUpdates;
+        private int _pivotUpdates;
+        private IDisposable? _inputErrorMessage;
 
         public PinchNode(NodeContext nodeContext)
         {
@@ -56,7 +56,7 @@ namespace VL.Qt.Nodes
             _addError = addMessage;
         }
 
-        static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
             = static (previous, p, slot) => new PinchInteraction(previous, slot, p.MinimumPointCount, p.MaximumPointCount, p.Devices);
 
         internal InteractionNode<Props> Core => _node;
@@ -108,7 +108,7 @@ namespace VL.Qt.Nodes
             return output;
         }
 
-        static void Pull<T>(IChannel<T>? channel, ref IChannel<T>? last, ref int lastUpdates, int updates, T value)
+        private static void Pull<T>(IChannel<T>? channel, ref IChannel<T>? last, ref int lastUpdates, int updates, T value)
         {
             if (!channel.IsValid())
             {
@@ -124,7 +124,7 @@ namespace VL.Qt.Nodes
                 channel.SetValueAndAuthor(value, InteractionNode<Props>.Author);
         }
 
-        void SetInputError(string? error)
+        private void SetInputError(string? error)
         {
             if (ReferenceEquals(error, InputError))
                 return;

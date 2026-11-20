@@ -22,8 +22,8 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(int Value, int Minimum, int Maximum, int Step, bool Editable, bool Enabled, bool AutoSize, Style? Style);
 
-        readonly ElementNode<SpinBox, Props> _node;
-        readonly ValueChannel<int> _value = new(0);
+        private readonly ElementNode<SpinBox, Props> _node;
+        private readonly ValueChannel<int> _value = new(0);
 
         public InputIntNode(NodeContext nodeContext)
             => _node = new ElementNode<SpinBox, Props>(nodeContext, Create);
@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
         internal InputIntNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<SpinBox, Props>(addWarning, Create);
 
-        static readonly Func<CommonInputs, Props, SinkSlot, SpinBox> Create = static (c, p, slot) => new SpinBox
+        private static readonly Func<CommonInputs, Props, SinkSlot, SpinBox> Create = static (c, p, slot) => new SpinBox
             {
                 Size = c.Size,
                 Transform = c.Transform,

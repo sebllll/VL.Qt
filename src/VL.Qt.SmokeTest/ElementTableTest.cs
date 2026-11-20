@@ -16,10 +16,10 @@ using VL.Qt;
 public static class ElementTableTest
 {
     // Block 1..255 of Protocol.Prop: on every element type (commonProps() in elements.cpp).
-    const ushort commonMax = 255;
+    private const ushort commonMax = 255;
 
     // Type-specific properties per element type, mirrored from the tables in elements.cpp and the protocol.h comments.
-    static readonly Dictionary<ushort, ushort[]> s_typeProps = new()
+    private static readonly Dictionary<ushort, ushort[]> s_typeProps = new()
     {
         [Protocol.Type.Item] = [Protocol.Prop.AutoSize],
         [Protocol.Type.Rectangle] = [Protocol.Prop.Color, Protocol.Prop.Radius, Protocol.Prop.BorderColor, Protocol.Prop.BorderWidth],
@@ -68,7 +68,7 @@ public static class ElementTableTest
     };
 
     // Default value type of each property (protocol.h comments); TypeValueType has the per-type exceptions.
-    static readonly Dictionary<ushort, ushort> s_valueType = new()
+    private static readonly Dictionary<ushort, ushort> s_valueType = new()
     {
         [Protocol.Prop.Size] = Protocol.Vt.Vec2,
         [Protocol.Prop.Transform] = Protocol.Vt.Mat4,
@@ -140,11 +140,11 @@ public static class ElementTableTest
 
     // Not element table properties: input handler properties (only on handler objects) and the keys of the effect chain
     // (SET of them is -6, protocol.h "Effect chain").
-    static bool IsExempt(ushort prop) =>
+    private static bool IsExempt(ushort prop) =>
         prop >= Protocol.Prop.AcceptedButtons && prop <= Protocol.Prop.Occlusion
         || prop >= Protocol.Prop.EffectEnabled && prop <= Protocol.Prop.EffectMaskInverted;
 
-    static ushort TypeValueType(ushort type, ushort prop)
+    private static ushort TypeValueType(ushort type, ushort prop)
     {
         if (type == Protocol.Type.ShaderEffect && prop == Protocol.Prop.Source)
             return Protocol.Vt.Ref;
@@ -158,7 +158,7 @@ public static class ElementTableTest
         return s_valueType[prop];
     }
 
-    static List<(string Name, ushort Value)> Constants(Type holder) =>
+    private static List<(string Name, ushort Value)> Constants(Type holder) =>
         holder.GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(f => f.IsLiteral && f.FieldType == typeof(ushort))
             .Select(f => (f.Name, (ushort)f.GetRawConstantValue()!))
@@ -168,7 +168,7 @@ public static class ElementTableTest
     [Test, Category("element-table")]
     public static void ElementTable() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var typeNames = Constants(typeof(Protocol.Type)).ToDictionary(c => c.Value, c => c.Name);
         var propNames = Constants(typeof(Protocol.Prop)).ToDictionary(c => c.Value, c => c.Name);
@@ -232,7 +232,7 @@ public static class ElementTableTest
     }
 
     // A valid value of the property's value type; properties with a narrower range than their type get their own.
-    static byte[] ValueFor(ushort type, ushort prop, ushort vt)
+    private static byte[] ValueFor(ushort type, ushort prop, ushort vt)
     {
         var b = new List<byte>();
         void F(params float[] f) { foreach (var x in f) b.AddRange(BitConverter.GetBytes(x)); }
@@ -280,13 +280,13 @@ public static class ElementTableTest
     }
 
     // Minimal command encoder (like ApplyTest): the test does not depend on CommandWriter.
-    sealed class Buf
+    private sealed class Buf
     {
-        readonly List<byte> _b = new();
+        private readonly List<byte> _b = new();
         public ReadOnlySpan<byte> Span => System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_b);
         public Buf Clear() { _b.Clear(); return this; }
 
-        Buf Cmd(ushort op, params byte[][] parts)
+        private Buf Cmd(ushort op, params byte[][] parts)
         {
             var len = parts.Sum(p => p.Length);
             _b.AddRange(BitConverter.GetBytes(op));
@@ -298,8 +298,8 @@ public static class ElementTableTest
             return this;
         }
 
-        static byte[] U32(uint v) => BitConverter.GetBytes(v);
-        static byte[] U16(ushort v) => BitConverter.GetBytes(v);
+        private static byte[] U32(uint v) => BitConverter.GetBytes(v);
+        private static byte[] U16(ushort v) => BitConverter.GetBytes(v);
 
         public Buf Create(uint id, ushort type) => Cmd(Protocol.Op.Create, U32(id), U16(type));
         public Buf Destroy(uint id) => Cmd(Protocol.Op.Destroy, U32(id));

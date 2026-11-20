@@ -10,7 +10,7 @@ using NUnit.Framework;
 /// environment variable VLQT_SMOKE_&lt;NAME&gt; (e.g. VLQT_SMOKE_OUTDIR); the helper executable gets them from its parent
 /// through the environment.
 /// </summary>
-static class SmokeParameters
+internal static class SmokeParameters
 {
     /// <summary>Folder of the run's files: smoke.log (Qt log), checks.tsv (one line per check). Default &lt;repo&gt;/build/smoke.</summary>
     public static string SmokeDir => Get("SmokeDir") ?? DefaultSmokeDir();
@@ -23,7 +23,7 @@ static class SmokeParameters
 
     /// <summary>resource-stress: seed; without one a random seed (logged by the scenario).</summary>
     public static int StressSeed => s_stressSeed ??= GetInt("StressSeed") ?? Environment.TickCount;
-    static int? s_stressSeed;
+    private static int? s_stressSeed;
 
     /// <summary>Seconds a scenario may take before the Qt thread counts as blocked (default 600).</summary>
     public static int ScenarioTimeoutSeconds => GetInt("ScenarioTimeoutSeconds") ?? 600;
@@ -63,11 +63,11 @@ static class SmokeParameters
                 yield return new(EnvName(name), v);
     }
 
-    static readonly string[] s_names = { "SmokeDir", "OutDir", "StressSeconds", "StressSeed", "ScenarioTimeoutSeconds", "TearingArgs", "ReplayTrace", "ReplayArgs", "OverlayCostRounds", "PerfWarnOnly", "PerfFactor", "UpdateRefs", "DocsImages" };
+    private static readonly string[] s_names = { "SmokeDir", "OutDir", "StressSeconds", "StressSeed", "ScenarioTimeoutSeconds", "TearingArgs", "ReplayTrace", "ReplayArgs", "OverlayCostRounds", "PerfWarnOnly", "PerfFactor", "UpdateRefs", "DocsImages" };
 
-    static string EnvName(string name) => "VLQT_SMOKE_" + name.ToUpperInvariant();
+    private static string EnvName(string name) => "VLQT_SMOKE_" + name.ToUpperInvariant();
 
-    static string? Get(string name)
+    private static string? Get(string name)
     {
         string? value = null;
         try
@@ -81,12 +81,12 @@ static class SmokeParameters
         return string.IsNullOrEmpty(value) ? Environment.GetEnvironmentVariable(EnvName(name)) is { Length: > 0 } e ? e : null : value;
     }
 
-    static int? GetInt(string name) => int.TryParse(Get(name), NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : null;
+    private static int? GetInt(string name) => int.TryParse(Get(name), NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : null;
 
-    static string[] Split(string? value) => value?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+    private static string[] Split(string? value) => value?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
 
     // <repo>/build/smoke: the folder above the build output that holds src/VL.Qt.SmokeTest; next to the assembly otherwise.
-    static string DefaultSmokeDir()
+    private static string DefaultSmokeDir()
     {
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
             if (Directory.Exists(Path.Combine(dir.FullName, "src", "VL.Qt.SmokeTest")))

@@ -12,12 +12,12 @@ namespace VL.Qt.Tests
     /// <summary>Text and Image nodes (07c): defaults, change detection, outputs. The shared core is covered by RectangleNodeTests.</summary>
     public class TextImageNodeTests
     {
-        static readonly Vector2 DefaultSize = new(1, 1);
-        static readonly IDisposable NoWarning = new Nop();
-        sealed class Nop : IDisposable { public void Dispose() { } }
+        private static readonly Vector2 DefaultSize = new(1, 1);
+        private static readonly IDisposable NoWarning = new Nop();
+        private sealed class Nop : IDisposable { public void Dispose() { } }
 
-        TextNode _text = null!;
-        ImageNode _image = null!;
+        private TextNode _text = null!;
+        private ImageNode _image = null!;
 
         [SetUp]
         public void SetUp()
@@ -30,7 +30,7 @@ namespace VL.Qt.Tests
         public void TearDown() { _text.Dispose(); _image.Dispose(); }
 
         // Pin defaults as declared on Update.
-        Element UpdateText(string text = "Text", string family = "", float fontSize = 0.12f, FontWeight weight = FontWeight.Normal,
+        private Element UpdateText(string text = "Text", string family = "", float fontSize = 0.12f, FontWeight weight = FontWeight.Normal,
             bool italic = false, Color4? color = null, TextHorizontalAlignment h = TextHorizontalAlignment.Left,
             VerticalAlignment v = VerticalAlignment.Top, TextWrap wrap = TextWrap.NoWrap, TextElide elide = TextElide.None,
             float lineHeight = 1, float letterSpacing = 0, TextAutofit autofit = TextAutofit.Fixed, Vector2? size = null,
@@ -39,10 +39,10 @@ namespace VL.Qt.Tests
                 color ?? Color4.White, h, v, wrap, elide, lineHeight, letterSpacing, autofit, 1, false, false,
                 interaction, null, out _, out _);
 
-        Element UpdateImage(QtImage? image = null, ImageFillMode fill = ImageFillMode.Stretch, bool smooth = true)
+        private Element UpdateImage(QtImage? image = null, ImageFillMode fill = ImageFillMode.Stretch, bool smooth = true)
             => _image.Update(DefaultSize, default, RectangleAnchor.Center, image, fill, smooth, 1, false, false, null, null, out _, out _);
 
-        static QtImage NewImage(ulong id) => new(new ImageResource(id));
+        private static QtImage NewImage(ulong id) => new(new ImageResource(id));
 
         [Test]
         public void Text_Defaults_WithSink()

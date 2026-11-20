@@ -7,7 +7,7 @@ namespace VL.Qt.Tests
 {
     public class QtPathTests
     {
-        static QtPath Triangle() => QtPath.Empty.MoveTo(1, 2).LineTo(3, 4).LineTo(5, 0).Close();
+        private static QtPath Triangle() => QtPath.Empty.MoveTo(1, 2).LineTo(3, 4).LineTo(5, 0).Close();
 
         [Test]
         public void Empty_HasNoSegments()

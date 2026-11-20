@@ -17,21 +17,21 @@ namespace VL.Qt.Stride
     [SupportedOSPlatform("windows")]
     internal sealed class SharedTextureScene : IDisposable
     {
-        readonly NodeErrors _errors;
-        readonly QtTextureRenderer _renderer;
-        readonly OffscreenRenderer _scene;
-        readonly NotificationQueue _input;
-        Texture? _texture;
-        GraphicsDevice? _device;
-        Int2 _size;
-        PixelFormat _format;
-        MultisampleCount _samples;
-        string _textureError = "", _batchError = "";
+        private readonly NodeErrors _errors;
+        private readonly QtTextureRenderer _renderer;
+        private readonly OffscreenRenderer _scene;
+        private readonly NotificationQueue _input;
+        private Texture? _texture;
+        private GraphicsDevice? _device;
+        private Int2 _size;
+        private PixelFormat _format;
+        private MultisampleCount _samples;
+        private string _textureError = "", _batchError = "";
         // _created: the texture state matches the inputs seen last (also when it is an error); _hasContent: the scene was
         // bound to the current texture once, so it holds content; _lastBindCode: result of the last Bind, 0 = ok.
-        bool _created, _hasContent, _scheduled, _enabled, _debug, _disposed;
-        int _lastBindCode, _rebindWait;
-        const string SamplesPhase = "Multisample Count";
+        private bool _created, _hasContent, _scheduled, _enabled, _debug, _disposed;
+        private int _lastBindCode, _rebindWait;
+        private const string SamplesPhase = "Multisample Count";
 
         public SharedTextureScene(NodeContext nodeContext)
         {
@@ -106,7 +106,7 @@ namespace VL.Qt.Stride
 
         // Creates the shared texture and binds the scene when size, format or Stride's device change (a Stride reset releases
         // the texture in OnStrideDeviceGone and clears _created); rebinds it after QtNative unbound the scene.
-        void EnsureTexture(Int2 size, PixelFormat format, MultisampleCount samples)
+        private void EnsureTexture(Int2 size, PixelFormat format, MultisampleCount samples)
         {
             var device = _renderer.GraphicsDevice;
             var max = device is null ? int.MaxValue : StrideInterop.MaxTextureSize(device);
@@ -170,7 +170,7 @@ namespace VL.Qt.Stride
         // QtNative unbinds a scene when its device is lost (the Stride texture itself is fine): bind again with a new handle.
         // Right away after a loss (the last bind was fine) and while QtNative rebuilds its device (DeviceLost); other failures
         // (adapter, open, fences) are structural and tried again only now and then, so a failing bind costs nothing per frame.
-        void RebindIfUnbound()
+        private void RebindIfUnbound()
         {
             if (_scene.IsBound)
                 return;
@@ -178,7 +178,7 @@ namespace VL.Qt.Stride
                 TryBind();
         }
 
-        void TryBind()
+        private void TryBind()
         {
             _rebindWait = 0;
             try
@@ -205,7 +205,7 @@ namespace VL.Qt.Stride
 
         // Stride resets or disposes its device: the native device and the texture go. Qt side first (render target, opened
         // texture and fences hold the old device), then the texture; the next Update creates a new one.
-        void OnStrideDeviceGone()
+        private void OnStrideDeviceGone()
         {
             ReleaseTexture();
             _created = false;
@@ -213,7 +213,7 @@ namespace VL.Qt.Stride
         }
 
         // Order: Qt side (render target, opened texture, fences) -> Stride texture. D3D11 keeps what the GPU still uses alive.
-        void ReleaseTexture()
+        private void ReleaseTexture()
         {
             _scene.Unbind();
             _texture?.Dispose();
@@ -224,7 +224,7 @@ namespace VL.Qt.Stride
         }
 
         // The count QtNative used is lower than requested (device limit): warning at the node until the next bind fits.
-        void ReportSamples()
+        private void ReportSamples()
         {
             var warning = _lastBindCode == Protocol.Offscreen.Ok ? Multisample.ClampWarning(_samples, _scene.UsedSamples) : null;
             if (warning is not null)

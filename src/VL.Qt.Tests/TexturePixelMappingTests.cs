@@ -7,17 +7,17 @@ namespace VL.Qt.Tests
     /// <summary>TexturePixelMapping of ToTexturePixels (#119), compiled in from VL.Qt.Stride: window position to texture pixel.</summary>
     public class TexturePixelMappingTests
     {
-        static readonly Vector2 s_texture = new(100, 50);
-        static readonly Vector2 s_client = new(200, 100);
+        private static readonly Vector2 s_texture = new(100, 50);
+        private static readonly Vector2 s_client = new(200, 100);
 
-        static void AssertPixel(Vector2 actual, float x, float y)
+        private static void AssertPixel(Vector2 actual, float x, float y)
         {
             Assert.That(actual.X, Is.EqualTo(x).Within(1e-3f), "x of " + actual);
             Assert.That(actual.Y, Is.EqualTo(y).Within(1e-3f), "y of " + actual);
         }
 
         // World = Scaling(2, 2, 1) turns the unit quad (-0.5 ... 0.5) into the whole clip space (-1 ... 1).
-        static TexturePixelMapping Fullscreen() => new(Matrix.Scaling(2, 2, 1), Matrix.Identity, Matrix.Identity, s_texture);
+        private static TexturePixelMapping Fullscreen() => new(Matrix.Scaling(2, 2, 1), Matrix.Identity, Matrix.Identity, s_texture);
 
         [Test]
         public void FullscreenMapsWindowCornersToTextureCorners()

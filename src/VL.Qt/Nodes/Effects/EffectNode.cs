@@ -13,10 +13,10 @@ namespace VL.Qt.Nodes
     internal sealed class EffectNode<TProps>
         where TProps : struct, IEquatable<TProps>
     {
-        readonly Func<Effect?, TProps, Effect> _create;
-        Effect? _last;
-        Effect? _input;
-        TProps _props;
+        private readonly Func<Effect?, TProps, Effect> _create;
+        private Effect? _last;
+        private Effect? _input;
+        private TProps _props;
 
         /// <param name="create">Builds a link; use a static lambda (no capture → no allocation).</param>
         public EffectNode(Func<Effect?, TProps, Effect> create) => _create = create;

@@ -20,11 +20,11 @@ public static class ShaderSourceTest
     [Test, Category("shader-source")]
     public static void ShaderSource() => Scenario.Run(Run);
 
-    const uint Solid = 10, Wave = 20, WaveIn = 21, Template = 30, Fresh = 40;
+    private const uint Solid = 10, Wave = 20, WaveIn = 21, Template = 30, Fresh = 40;
 
-    static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
+    private static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
-    static string? FindFile(params string[] rel)
+    private static string? FindFile(params string[] rel)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
@@ -35,7 +35,7 @@ public static class ShaderSourceTest
     }
 
     // Number of sampled pixels (step 3) in the region that differ from the other grab by more than 8 in any channel.
-    static int Diff(Bitmap a, Bitmap b, int x0, int y0, int x1, int y1)
+    private static int Diff(Bitmap a, Bitmap b, int x0, int y0, int x1, int y1)
     {
         int n = 0;
         for (int y = y0; y < y1; y += 3)
@@ -47,10 +47,10 @@ public static class ShaderSourceTest
         return n;
     }
 
-    sealed record Res(ushort Ev, ulong Id, byte[] Payload);
+    private sealed record Res(ushort Ev, ulong Id, byte[] Payload);
 
     // Generative solid shader (no input, uniform block with the two reserved members only).
-    static string SolidSource(string rgb) =>
+    private static string SolidSource(string rgb) =>
         "#version 440\n" +
         "layout(location = 0) in vec2 qt_TexCoord0;\n" +
         "layout(location = 0) out vec4 fragColor;\n" +
@@ -63,7 +63,7 @@ public static class ShaderSourceTest
         "    fragColor = vec4(" + rgb + ", 1.0) * qt_Opacity;\n" +
         "}\n";
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect source needs a QRhi scenegraph");
         var stripes = FindFile("src", "VL.Qt.SmokeTest", "assets", "stripes_rgb_30x10.png");

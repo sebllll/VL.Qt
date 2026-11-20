@@ -15,16 +15,16 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "FileWriter (Element)", Category = Categories.Qt)]
     public sealed class FileWriterElementNode : IDisposable
     {
-        readonly SnapshotGrab _grab;
-        readonly ImageFileWriter _writer;
-        readonly ImageNodeReport _report;
+        private readonly SnapshotGrab _grab;
+        private readonly ImageFileWriter _writer;
+        private readonly ImageNodeReport _report;
         // Target of the grab in flight (the newest Write wins, like the snapshot itself).
-        string _path = string.Empty;
-        int _quality;
-        bool _grabbing;
-        string _error = string.Empty;
+        private string _path = string.Empty;
+        private int _quality;
+        private bool _grabbing;
+        private string _error = string.Empty;
 
-        public FileWriterElementNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext)
+        public FileWriterElementNode(NodeContext nodeContext)
         {
             _grab = new SnapshotGrab(ResourceClient.ForApp(nodeContext.AppHost), SceneRegistry.ForApp(nodeContext.AppHost));
             _writer = ImageFileWriter.CreateNative();

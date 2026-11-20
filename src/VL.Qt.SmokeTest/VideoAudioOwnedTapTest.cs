@@ -15,7 +15,7 @@ using NAudio.CoreAudioApi;
 [TestFixture, NonParallelizable]
 public static class VideoAudioOwnedTapTest
 {
-    const uint Video1Id = 1, Video2Id = 2, Video3Id = 3, Handle = 41;
+    private const uint Video1Id = 1, Video2Id = 2, Video3Id = 3, Handle = 41;
 
     /// <summary>COMP-03: a second Video on an owned audio tap must not play Qt's sound.</summary>
     [Test, Category("videoaudio-owned")]
@@ -24,7 +24,7 @@ public static class VideoAudioOwnedTapTest
 
 #if WINDOWS
     // Peak of all audio sessions of this process on the default render device, 0 without a session.
-    static float ProcessPeak()
+    private static float ProcessPeak()
     {
         using var enumerator = new MMDeviceEnumerator();
         using var device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
@@ -40,7 +40,7 @@ public static class VideoAudioOwnedTapTest
         return peak;
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         string? a = null;
         for (var d = new System.IO.DirectoryInfo(AppContext.BaseDirectory); d != null && a == null; d = d.Parent)

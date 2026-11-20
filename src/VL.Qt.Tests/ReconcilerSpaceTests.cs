@@ -12,8 +12,8 @@ namespace VL.Qt.Tests
     /// <summary>Reconciler and Space (#143): a change of the scale rewrites every length, a change of the Space alone writes nothing.</summary>
     public class ReconcilerSpaceTests
     {
-        RecordingSink _sink = null!;
-        Reconciler _rec = null!;
+        private RecordingSink _sink = null!;
+        private Reconciler _rec = null!;
 
         [SetUp]
         public void SetUp()
@@ -22,16 +22,16 @@ namespace VL.Qt.Tests
             _rec = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
         }
 
-        void Frame(Element? root, SpaceMapping mapping)
+        private void Frame(Element? root, SpaceMapping mapping)
         {
             _sink.Clear();
             _rec.Update(root, mapping);
         }
 
-        static SpaceMapping Normalized(float height) => new(Space.Normalized, new Vector2(800, height), 1f);
+        private static SpaceMapping Normalized(float height) => new(Space.Normalized, new Vector2(800, height), 1f);
 
         // Ids: Column 1, Rectangle 2, Text 3. Every length of the tree is non-zero.
-        static readonly Element Tree = new Column
+        private static readonly Element Tree = new Column
         {
             Spacing = 0.1f, Padding = 0.05f,
             Children =

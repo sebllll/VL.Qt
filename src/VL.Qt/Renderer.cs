@@ -23,29 +23,29 @@ namespace VL.Qt
     [ProcessNode(Name = "Renderer", Category = Categories.Qt)]
     public sealed class Renderer : IDisposable, IQtFrameParticipant
     {
-        const string IconPhase = "Window Icon";
-        const string SamplesPhase = "Multisample Count";
+        private const string IconPhase = "Window Icon";
+        private const string SamplesPhase = "Multisample Count";
 
         // Pump and scene registry of this vvvv app (new per F8/F5, #58); QtApp itself is process-wide.
-        readonly QtPump _pump;
-        readonly QtApp _app;
-        readonly NodeContext _nodeContext;
-        readonly NodeErrors _errors; // node logger + pump exceptions at the node (#258)
-        readonly bool _boundToDocument;
-        readonly bool _dialogIfDocumentChanged;
-        readonly RectangleF _bounds;
-        readonly bool _vSync;
-        bool _fullscreen; // last Fullscreen pin value sent to QtNative (#234)
-        readonly IDevSession? _session; // editor only (null in exported apps): Save Bounds writes the Bounds pin (#143)
-        readonly BoundsSaver? _boundsSaver;
-        readonly Stopwatch _clock = Stopwatch.StartNew(); // wall time for the Save Bounds delay (the frame clock may pause)
-        WindowRenderer? _view; // created in the first Update (Title/Size are update pins)
-        bool _disposed;
-        bool _debug; // last Debug pin value sent to the window (#280)
-        bool _borderless; // last Borderless pin value sent to the window (#233)
-        MultisampleCount _samples; // last Multisample Count pin value sent to the window (#118)
-        string? _iconPath; // last window icon sent to the window (full path, null = default; #517)
-        IDisposable? _keepAlive; // AppHost.KeepAlive() in the WinForms window export only, released on X / Dispose
+        private readonly QtPump _pump;
+        private readonly QtApp _app;
+        private readonly NodeContext _nodeContext;
+        private readonly NodeErrors _errors; // node logger + pump exceptions at the node (#258)
+        private readonly bool _boundToDocument;
+        private readonly bool _dialogIfDocumentChanged;
+        private readonly RectangleF _bounds;
+        private readonly bool _vSync;
+        private bool _fullscreen; // last Fullscreen pin value sent to QtNative (#234)
+        private readonly IDevSession? _session; // editor only (null in exported apps): Save Bounds writes the Bounds pin (#143)
+        private readonly BoundsSaver? _boundsSaver;
+        private readonly Stopwatch _clock = Stopwatch.StartNew(); // wall time for the Save Bounds delay (the frame clock may pause)
+        private WindowRenderer? _view; // created in the first Update (Title/Size are update pins)
+        private bool _disposed;
+        private bool _debug; // last Debug pin value sent to the window (#280)
+        private bool _borderless; // last Borderless pin value sent to the window (#233)
+        private MultisampleCount _samples; // last Multisample Count pin value sent to the window (#118)
+        private string? _iconPath; // last window icon sent to the window (full path, null = default; #517)
+        private IDisposable? _keepAlive; // AppHost.KeepAlive() in the WinForms window export only, released on X / Dispose
 
         /// <param name="nodeContext">Injected by vvvv.</param>
         /// <param name="bounds">Initial position and size of the window in DIP (on create only, like Bounds of VL.Skia/VL.Stride; a change recreates the node). Size = client size, position = outer top-left. Empty bounds: 600x400 centered on the primary screen; bounds on no screen: centered. Applied before the window is shown, on all platforms (Wayland: size only, the compositor places the window). A node added live or restored by Undo/Redo gets no pin value from vvvv and opens at the default bounds until the next restart.</param>
@@ -199,7 +199,7 @@ namespace VL.Qt
         }
 
         // Not loadable (-7): QtNative keeps the default icon, the node shows a warning until the next icon applies.
-        void ReportIcon(int result)
+        private void ReportIcon(int result)
         {
             if (result == -7 && _iconPath is not null)
                 _errors.Warn($"Window icon '{_iconPath}' could not be loaded, the default icon is shown: {Native.LastError()}", IconPhase);
@@ -209,7 +209,7 @@ namespace VL.Qt
 
         // The count QtNative used is lower than requested (device limit): warning at the node until the next count fits.
         // A failed call (negative) is shown the same way; the window keeps the count it had.
-        void ReportSamples(MultisampleCount requested, int used)
+        private void ReportSamples(MultisampleCount requested, int used)
         {
             var warning = used < 0 ? $"Multisample Count could not be set: {Native.LastError()}" : Multisample.ClampWarning(requested, used);
             if (warning is not null)
@@ -294,7 +294,7 @@ namespace VL.Qt
         // (a changed create value would otherwise rebuild the window). The public API cannot tell whether Bounds is
         // connected (Save Bounds = false is the way out, like VL.Skia's pin of the same name).
         // Posted like OnCloseRequested: changing the solution not from within the pump.
-        void SaveBounds(RectangleF bounds)
+        private void SaveBounds(RectangleF bounds)
         {
             var session = _session!;
             var stack = _nodeContext.Path.Stack;
@@ -321,7 +321,7 @@ namespace VL.Qt
         // Mirrors VL.Skia's SkiaRendererNode.FormClosing: editor → hide, or close the document when bound;
         // exported → the window closes (here: hides; in the WinForms host releasing the AppHost keep-alive ends the app,
         // in console exports KeepAppAlive [System] in the top-level patch decides); bound → the app ends.
-        void OnCloseRequested()
+        private void OnCloseRequested()
         {
             if (_boundToDocument && !_nodeContext.AppHost.IsExported)
             {

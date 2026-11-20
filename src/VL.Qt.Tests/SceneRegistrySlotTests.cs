@@ -9,9 +9,9 @@ namespace VL.Qt.Tests
     /// <summary>Place fallback of <see cref="SceneRegistry.TryLocate"/> (#548): a new instance is found by its sink slot.</summary>
     public class SceneRegistrySlotTests
     {
-        SceneRegistry _scene = null!;
-        Reconciler _reconciler = null!;
-        SinkSlot _slot;
+        private SceneRegistry _scene = null!;
+        private Reconciler _reconciler = null!;
+        private SinkSlot _slot;
 
         [SetUp]
         public void SetUp()
@@ -21,9 +21,9 @@ namespace VL.Qt.Tests
             _slot = new SinkSlot(new ElementSink(), 0);
         }
 
-        Group Child(float opacity) => new() { Sink = _slot, Opacity = opacity };
+        private Group Child(float opacity) => new() { Sink = _slot, Opacity = opacity };
 
-        Group Root(Element child) => new() { Children = [new Rectangle { Size = new Vector2(1, 1) }, child] };
+        private Group Root(Element child) => new() { Children = [new Rectangle { Size = new Vector2(1, 1) }, child] };
 
         [Test]
         public void NewInstanceEveryFrame_LocatedBeforeTheReconcile_AtTheSamePlace()

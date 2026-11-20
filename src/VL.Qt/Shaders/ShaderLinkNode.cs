@@ -28,13 +28,13 @@ namespace VL.Qt.Shaders
     /// </summary>
     internal static class ShaderLinkDescription
     {
-        static readonly IVLPinDescription[] s_outputs =
+        private static readonly IVLPinDescription[] s_outputs =
         {
             new ShaderPinDescription("Output", typeof(Effect), null, null),
             new ShaderPinDescription("Error", typeof(string), string.Empty, "Shader bake errors at runtime (with line numbers), empty if none."),
         };
 
-        const string inputSummary = "Effect chain to extend: what the other effect nodes before this one made of the element. This link works on that result.";
+        private const string inputSummary = "Effect chain to extend: what the other effect nodes before this one made of the element. This link works on that result.";
 
         /// <summary>Input pins: Input (the chain before), image and uniform pins.</summary>
         internal static List<IVLPinDescription> Inputs(ShaderNodeLayout layout)
@@ -74,23 +74,23 @@ namespace VL.Qt.Shaders
     /// </summary>
     internal sealed class ShaderLinkNodeInstance : IDisposable
     {
-        readonly ShaderSlot _fragment;
-        readonly NodeErrors? _errors;
-        readonly string _fragmentSource;
-        readonly ushort _template;
-        readonly ShaderUniforms _uniforms;
+        private readonly ShaderSlot _fragment;
+        private readonly NodeErrors? _errors;
+        private readonly string _fragmentSource;
+        private readonly ushort _template;
+        private readonly ShaderUniforms _uniforms;
         // @padding <uniform> [factor]: the pin and its factor, null for a fixed padding.
-        readonly IVLPin<float>? _paddingPin;
-        readonly float _paddingFactor;
-        RectangleF _padding;
-        float _paddingSource = float.NaN;
-        readonly ValuePin<Effect?> _input = new(null);
-        readonly ValuePin<Effect?> _output = new(null);
-        readonly ValuePin<string> _error = new(string.Empty);
-        ShaderFileLink? _last;
-        Effect? _lastInput;
-        ulong _lastId;
-        Spread<Uniform>? _lastUniforms;
+        private readonly IVLPin<float>? _paddingPin;
+        private readonly float _paddingFactor;
+        private RectangleF _padding;
+        private float _paddingSource = float.NaN;
+        private readonly ValuePin<Effect?> _input = new(null);
+        private readonly ValuePin<Effect?> _output = new(null);
+        private readonly ValuePin<string> _error = new(string.Empty);
+        private ShaderFileLink? _last;
+        private Effect? _lastInput;
+        private ulong _lastId;
+        private Spread<Uniform>? _lastUniforms;
 
         public ShaderLinkNodeInstance(NodeContext nodeContext, ShaderNodeLayout layout)
             : this(ResourceClient.ForApp(nodeContext.AppHost), layout, new NodeErrors(nodeContext))
@@ -175,7 +175,7 @@ namespace VL.Qt.Shaders
         }
 
         /// <summary>Recomputes the padding of <c>@padding &lt;uniform&gt; [factor]</c> (abs(value) * factor, all sides) when the pin value changed; true if it did.</summary>
-        bool UpdatePadding()
+        private bool UpdatePadding()
         {
             if (_paddingPin is null)
                 return false;

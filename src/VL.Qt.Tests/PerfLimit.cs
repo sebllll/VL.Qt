@@ -16,7 +16,7 @@ namespace VL.Qt.Tests
 
         public static bool WarnOnly { get; } = Environment.GetEnvironmentVariable("VLQT_PERF_WARN_ONLY") is { Length: > 0 } w && w != "0";
 
-        static double ReadFactor()
+        private static double ReadFactor()
         {
             var env = Environment.GetEnvironmentVariable("VLQT_PERF_FACTOR");
             return !string.IsNullOrWhiteSpace(env) && double.TryParse(env, NumberStyles.Float, CultureInfo.InvariantCulture, out var f) && f > 0 ? f : 1.0;

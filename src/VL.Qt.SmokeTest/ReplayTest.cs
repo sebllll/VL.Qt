@@ -12,7 +12,7 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class ReplayTest
 {
-    const float U = 100f;
+    private const float U = 100f;
 
     /// <summary>Reads a length-prefixed trace file. Throws <see cref="InvalidDataException"/> on a truncated or oversized frame.</summary>
     public static List<byte[]> ReadFrames(string path)
@@ -71,13 +71,13 @@ public static class ReplayTest
     /// per frame and prints pump avg/max, spikes above 8 ms (with GC deltas) and the native sync/render/present averages.
     /// Leaves the last window open and returns it.
     /// </summary>
-    static int s_overlay; // --overlay
+    private static int s_overlay; // --overlay
 
     // Phases a spike is attributed to (#19): C# apply, advance + managed pump overhead (apply+pump minus native pump),
     // then the native PerfSample phases of that pump.
-    static readonly string[] s_phases = { "apply", "advance", "events", "sync", "render", "present" };
+    private static readonly string[] s_phases = { "apply", "advance", "events", "sync", "render", "present" };
 
-    static int RunPaced(List<byte[]> frames, int loops, Action<int> pump, out IntPtr last)
+    private static int RunPaced(List<byte[]> frames, int loops, Action<int> pump, out IntPtr last)
     {
         const double SpikeMs = 8.0;
         const double PresentSlowMs = 4.0;
@@ -259,10 +259,10 @@ public static class ReplayTest
     }
 
     /// <summary>Busy threads at normal priority for <c>--load</c>; stopped on dispose.</summary>
-    sealed class CpuLoad : IDisposable
+    private sealed class CpuLoad : IDisposable
     {
-        readonly Thread[] _threads;
-        volatile bool _stop;
+        private readonly Thread[] _threads;
+        private volatile bool _stop;
 
         public CpuLoad(int n)
         {
@@ -286,7 +286,7 @@ public static class ReplayTest
     /// Animated scene for spike hunting (#19): <paramref name="rects"/> semi-transparent rounded rectangles moving on
     /// circles plus 8 texts whose content changes every frame (text layout), in <paramref name="count"/> frames.
     /// </summary>
-    static List<byte[]> AnimatedScenario(int count, int rects)
+    private static List<byte[]> AnimatedScenario(int count, int rects)
     {
         const int Texts = 8;
         var c = new CommandWriter();
@@ -330,7 +330,7 @@ public static class ReplayTest
     }
 
     /// <summary>The test-rect scenario of the smoke test as a frame sequence (same commands as Program's section 2).</summary>
-    static List<byte[]> TestRectScenario()
+    private static List<byte[]> TestRectScenario()
     {
         var c = new CommandWriter();
         var frames = new List<byte[]>();
@@ -352,7 +352,7 @@ public static class ReplayTest
         return frames;
     }
 
-    static bool SamePixels(Bitmap a, Bitmap b)
+    private static bool SamePixels(Bitmap a, Bitmap b)
     {
         if (a.Width != b.Width || a.Height != b.Height) return false;
         for (int y = 0; y < a.Height; y++)
@@ -370,7 +370,7 @@ public static class ReplayTest
     [Test, Explicit("needs the parameter ReplayTrace"), Category("replay-cli")]
     public static void ReplayCli() => Scenario.Run(s => s.Check(SmokeParameters.ReplayTrace is { } t && RunCli(t, s.OutDir, s.Pump, SmokeParameters.ReplayArgs) == 0, "replay-cli (parameter ReplayTrace)"));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var frames = TestRectScenario();
 

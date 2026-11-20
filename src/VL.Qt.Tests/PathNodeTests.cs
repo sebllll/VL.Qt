@@ -12,12 +12,12 @@ namespace VL.Qt.Tests
     /// <summary>The node Path (#154, package 04): pin defaults, change detection, path limit.</summary>
     public class PathNodeTests
     {
-        string? _warning;
-        int _warnings; // currently shown warnings
+        private string? _warning;
+        private int _warnings; // currently shown warnings
 
-        sealed class Removal(PathNodeTests t) : IDisposable { public void Dispose() => t._warnings--; }
+        private sealed class Removal(PathNodeTests t) : IDisposable { public void Dispose() => t._warnings--; }
 
-        IDisposable AddWarning(string text)
+        private IDisposable AddWarning(string text)
         {
             _warnings++;
             _warning = text;
@@ -25,18 +25,18 @@ namespace VL.Qt.Tests
         }
 
         // Pin defaults as declared on Update (what vvvv passes for unconnected pins).
-        static Element Path(PathNode n, QtPath? path, out Vector2 size)
+        private static Element Path(PathNode n, QtPath? path, out Vector2 size)
         {
             var e = n.Update(path, default, new Color4(0, 0, 0, 0), Color4.White, 0.05f, ShapeCap.Flat, ShapeJoin.Miter, 4, Spread<float>.Empty,
                 0, 0, 1, 0, ShapeFillRule.NonZero, 1, false, false, null, null, out size, out _);
             return e;
         }
 
-        static Element Path(PathNode n, QtPath? path) => Path(n, path, out _);
+        private static Element Path(PathNode n, QtPath? path) => Path(n, path, out _);
 
-        static QtPath Triangle(float x = 3) => QtPath.Empty.MoveTo(1, 1).LineTo(x, 1).LineTo(2, 4).Close();
+        private static QtPath Triangle(float x = 3) => QtPath.Empty.MoveTo(1, 1).LineTo(x, 1).LineTo(2, 4).Close();
 
-        static QtPath Long(int segments)
+        private static QtPath Long(int segments)
         {
             var p = QtPath.Empty.MoveTo(0, 0);
             for (int i = 0; i < segments; i++)

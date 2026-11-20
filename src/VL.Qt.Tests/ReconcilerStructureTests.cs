@@ -11,9 +11,9 @@ namespace VL.Qt.Tests
     /// <summary>Structure diff of the reconciler (04b): identity, create/destroy/reparent, clear.</summary>
     public class ReconcilerStructureTests
     {
-        RecordingSink _sink = null!;
-        IdAllocator _ids = null!;
-        Reconciler _rec = null!;
+        private RecordingSink _sink = null!;
+        private IdAllocator _ids = null!;
+        private Reconciler _rec = null!;
 
         [SetUp]
         public void SetUp()
@@ -23,15 +23,15 @@ namespace VL.Qt.Tests
             _rec = new Reconciler(_sink, _ids, new SceneRegistry());
         }
 
-        static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
-        static Column C(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
-        static Rectangle R(float w = 1) => new() { Size = new Vector2(w, 1) };
-        static Text T(string s = "a") => new() { Content = s };
+        private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
+        private static Column C(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
+        private static Rectangle R(float w = 1) => new() { Size = new Vector2(w, 1) };
+        private static Text T(string s = "a") => new() { Content = s };
 
         /// <summary>Recorded commands without SETs (the property diff is covered by ReconcilerPropertyTests).</summary>
-        string[] Structural => _sink.Commands.Where(c => !c.StartsWith("SET ", StringComparison.Ordinal)).ToArray();
+        private string[] Structural => _sink.Commands.Where(c => !c.StartsWith("SET ", StringComparison.Ordinal)).ToArray();
 
-        void Frame(Element? root)
+        private void Frame(Element? root)
         {
             _sink.Clear();
             _rec.Update(root, Space.DIPTopLeft);
@@ -196,7 +196,7 @@ namespace VL.Qt.Tests
             Assert.That(_sink.Count, Is.EqualTo(0));
         }
 
-        sealed class CountingSink : ICommandSink
+        private sealed class CountingSink : ICommandSink
         {
             public int Count;
             public void Create(uint id, ushort type) => Count++;

@@ -17,7 +17,7 @@ namespace VL.Qt.Tests
             public InjectedFault(int command) : base($"injected fault at command {command}") { }
         }
 
-        readonly RecordingSink _inner = new();
+        private readonly RecordingSink _inner = new();
 
         /// <summary>What reached the inner sink.</summary>
         public RecordingSink Recorded => _inner;
@@ -35,7 +35,7 @@ namespace VL.Qt.Tests
             _inner.Clear();
         }
 
-        void Tick()
+        private void Tick()
         {
             if (++Count == ThrowAt)
                 throw new InjectedFault(Count);

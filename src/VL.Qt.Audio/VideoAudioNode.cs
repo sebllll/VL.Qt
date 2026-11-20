@@ -23,15 +23,15 @@ namespace VL.Qt.Audio
     [ProcessNode(Name = "Video (VL.Audio)", Category = Categories.Elements)]
     public sealed class VideoAudioNode : IDisposable
     {
-        readonly ElementNode<Video, VideoNode.Props> _node;
-        readonly VideoAudioSignal _signal;
-        readonly ResourceClient _client;
-        readonly NodeErrors _errors;
-        ImageResource? _tap;
-        int _tapSampleRate;
-        int _failedSampleRate; // a refused rate is not retried every frame
+        private readonly ElementNode<Video, VideoNode.Props> _node;
+        private readonly VideoAudioSignal _signal;
+        private readonly ResourceClient _client;
+        private readonly NodeErrors _errors;
+        private ImageResource? _tap;
+        private int _tapSampleRate;
+        private int _failedSampleRate; // a refused rate is not retried every frame
 
-        public VideoAudioNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext)
+        public VideoAudioNode(NodeContext nodeContext)
         {
             _node = new ElementNode<Video, VideoNode.Props>(nodeContext, VideoNode.Create);
             _client = ResourceClient.ForApp(nodeContext.AppHost);
@@ -110,7 +110,7 @@ namespace VL.Qt.Audio
         // A tap in the engine's sample rate: created on the first Update, replaced when the rate changes. The element
         // switches straight to the new id (Qt never plays in between); the old tap is released after that switch
         // (ResourceClient releases in the next pump, after the commands are applied).
-        void UpdateTap()
+        private void UpdateTap()
         {
             var sampleRate = _signal.EngineSampleRate;
             if ((_tap is not null && sampleRate == _tapSampleRate) || sampleRate == _failedSampleRate)

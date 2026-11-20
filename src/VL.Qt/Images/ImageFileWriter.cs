@@ -12,15 +12,15 @@ namespace VL.Qt
     /// </summary>
     internal sealed class ImageFileWriter : IDisposable
     {
-        readonly Func<IImage, string, int, string> _write;
-        readonly object _syncRoot = new();
+        private readonly Func<IImage, string, int, string> _write;
+        private readonly object _syncRoot = new();
         // Idle = no write runs or waits; the tests wait on it.
-        readonly ManualResetEventSlim _idle = new(true);
-        Job? _pending;
-        bool _running, _finished, _disposed;
-        string _error = string.Empty;
+        private readonly ManualResetEventSlim _idle = new(true);
+        private Job? _pending;
+        private bool _running, _finished, _disposed;
+        private string _error = string.Empty;
 
-        sealed record Job(IImage Image, string Path, int Quality);
+        private sealed record Job(IImage Image, string Path, int Quality);
 
         /// <param name="write">Writes the image to the path with the quality and returns the error, empty on success; worker thread.</param>
         internal ImageFileWriter(Func<IImage, string, int, string> write)
@@ -96,7 +96,7 @@ namespace VL.Qt
         /// <summary>For tests: waits until no write runs or waits any more; false on timeout.</summary>
         internal bool WaitIdle(TimeSpan timeout) => _idle.Wait(timeout);
 
-        void Run(Job? job)
+        private void Run(Job? job)
         {
             while (job is not null)
             {
@@ -129,7 +129,7 @@ namespace VL.Qt
             }
         }
 
-        static string WriteNative(IImage image, string path, int quality)
+        private static string WriteNative(IImage image, string path, int quality)
         {
             try
             {
@@ -160,11 +160,11 @@ namespace VL.Qt
         }
 
         /// <summary>Own copy of the pixels of a volatile image, valid after the source was reused.</summary>
-        sealed class CopiedImage : IImage, IImageData
+        private sealed class CopiedImage : IImage, IImageData
         {
-            readonly byte[] _bytes;
+            private readonly byte[] _bytes;
 
-            CopiedImage(ImageInfo info, int scanSize, byte[] bytes)
+            private CopiedImage(ImageInfo info, int scanSize, byte[] bytes)
             {
                 Info = info;
                 ScanSize = scanSize;

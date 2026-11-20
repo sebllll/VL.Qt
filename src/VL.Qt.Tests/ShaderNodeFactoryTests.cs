@@ -14,7 +14,7 @@ namespace VL.Qt.Tests
     /// <summary>Shader node factory (#488): names, scan of qtshaders/, layout of a node, uniform spread. No QtNative, no vvvv.</summary>
     public class ShaderNodeFactoryTests
     {
-        const string fragmentSource = @"// @category Qt.Test
+        private const string fragmentSource = @"// @category Qt.Test
 // @summary Splits the channels.
 #version 440
 layout(location = 0) in vec2 qt_TexCoord0;
@@ -30,9 +30,9 @@ layout(binding = 1) uniform sampler2D source;
 void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opacity; }
 ";
 
-        const string reflection = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\nuniform amount float 0\nuniform size vec2 0\nuniform tint vec4 0\nsampler source 1\n";
+        private const string reflection = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\nuniform amount float 0\nuniform size vec2 0\nuniform tint vec4 0\nsampler source 1\n";
 
-        string _dir = null!;
+        private string _dir = null!;
 
         [SetUp]
         public void CreateDir()
@@ -44,7 +44,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
         [TearDown]
         public void DeleteDir() => Directory.Delete(_dir, recursive: true);
 
-        string Write(string relativePath, string content)
+        private string Write(string relativePath, string content)
         {
             var path = Path.Combine(_dir, relativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -121,7 +121,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
 
         // --- layout (fake reflection) ---
 
-        ShaderNodeLayout Load(string source, string reflectionText)
+        private ShaderNodeLayout Load(string source, string reflectionText)
         {
             var path = Write("Test.frag", source);
             var file = new ShaderFile(path, null, "Test", null, ShaderNodeFactory.DefaultCategory, null, null);
@@ -225,7 +225,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
             Assert.That(description.Fragmented, Is.False);
         }
 
-        sealed class FakeFactory : IVLNodeDescriptionFactory
+        private sealed class FakeFactory : IVLNodeDescriptionFactory
         {
             public string Identifier => "Test";
             public System.Collections.Immutable.ImmutableArray<IVLNodeDescription> NodeDescriptions => default;

@@ -91,10 +91,10 @@ namespace VL.Qt.Tests
 
     public class CommandSinkTests
     {
-        static readonly Matrix s_mat = Matrix.RotationZ(0.5f) * Matrix.Translation(10, 20, 0);
+        private static readonly Matrix s_mat = Matrix.RotationZ(0.5f) * Matrix.Translation(10, 20, 0);
 
         // One call per interface method, all through ICommandSink.
-        static void WriteAll(ICommandSink s)
+        private static void WriteAll(ICommandSink s)
         {
             s.Create(1, Protocol.Type.Rectangle);
             s.Reparent(1, 0, 0);

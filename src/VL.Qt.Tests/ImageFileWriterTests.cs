@@ -8,7 +8,7 @@ using VL.Lib.Basics.Imaging;
 namespace VL.Qt.Tests
 {
     /// <summary>Image of the tests: own bytes that a test can change, optionally volatile.</summary>
-    sealed class TestImage : IImage, IImageData
+    internal sealed class TestImage : IImage, IImageData
     {
         public TestImage(int width, int height, byte fill, bool isVolatile = false, PixelFormat format = PixelFormat.B8G8R8A8)
         {
@@ -29,13 +29,13 @@ namespace VL.Qt.Tests
     /// <summary>ImageFileWriter (#157) on a fake write function: worker thread, newest wins, one report per finished write.</summary>
     public class ImageFileWriterTests
     {
-        static readonly TimeSpan timeout = TimeSpan.FromSeconds(10);
+        private static readonly TimeSpan timeout = TimeSpan.FromSeconds(10);
 
         // NUnit shares one fixture instance between the tests: all state is made in SetUp.
-        ConcurrentQueue<(string Path, int Quality, byte FirstByte, int ThreadId)> _writes = null!;
-        ManualResetEventSlim _started = null!, _gate = null!;
-        Func<string, string> _result = null!;
-        ImageFileWriter _writer = null!;
+        private ConcurrentQueue<(string Path, int Quality, byte FirstByte, int ThreadId)> _writes = null!;
+        private ManualResetEventSlim _started = null!, _gate = null!;
+        private Func<string, string> _result = null!;
+        private ImageFileWriter _writer = null!;
 
         [SetUp]
         public void SetUp()
@@ -63,7 +63,7 @@ namespace VL.Qt.Tests
             _writer.Dispose();
         }
 
-        void Finish() => Assert.That(_writer.WaitIdle(timeout), Is.True, "the writes did not finish");
+        private void Finish() => Assert.That(_writer.WaitIdle(timeout), Is.True, "the writes did not finish");
 
         [Test]
         public void Poll_Idle_NothingToReport()

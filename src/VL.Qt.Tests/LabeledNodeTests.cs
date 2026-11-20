@@ -11,11 +11,11 @@ namespace VL.Qt.Tests
     /// <summary>Labeled node: Row/Column of label Text and element, change detection.</summary>
     public class LabeledNodeTests
     {
-        static IDisposable NoWarning(string _) => throw new AssertionException("unexpected warning");
+        private static IDisposable NoWarning(string _) => throw new AssertionException("unexpected warning");
 
-        static readonly Rectangle A = new() { Size = new Vector2(1, 0.5f) };
+        private static readonly Rectangle A = new() { Size = new Vector2(1, 0.5f) };
 
-        static Element Labeled(LabeledNode n, Element? element, string text = "Volume", float labelWidth = 1.5f,
+        private static Element Labeled(LabeledNode n, Element? element, string text = "Volume", float labelWidth = 1.5f,
             LabelPosition position = LabelPosition.Left)
             => n.Update(element, text, labelWidth, position, 0.1f, default, RectangleAnchor.Center, 0.2f, 1, null,
                 null, out _, out _);

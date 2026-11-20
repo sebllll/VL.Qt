@@ -18,12 +18,12 @@ public static class BorderlessTest
     [Test, Category("borderless")]
     public static void Borderless() => Scenario.Run(Run);
 
-    struct Pt { public int X, Y; }
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindow(string? cls, string title);
-    [DllImport("user32.dll")] static extern bool ClientToScreen(IntPtr h, ref Pt p);
-    [DllImport("user32.dll")] static extern uint GetDpiForWindow(IntPtr h);
+    private struct Pt { public int X, Y; }
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr FindWindow(string? cls, string title);
+    [DllImport("user32.dll")] private static extern bool ClientToScreen(IntPtr h, ref Pt p);
+    [DllImport("user32.dll")] private static extern uint GetDpiForWindow(IntPtr h);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var clear = new Color4(0, 0, 0, 1);
         // WSLg/Weston: frame extents late and with shadow (see RendererTest.RunGeometry, #232): position only roughly.

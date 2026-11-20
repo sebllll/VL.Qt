@@ -16,9 +16,9 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "MoveTo", Category = Categories.Paths)]
     public sealed class MoveToNode
     {
-        QtPath? _input;
-        Vector2 _point;
-        QtPath? _output;
+        private QtPath? _input;
+        private Vector2 _point;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a new contour that starts at the point.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -42,9 +42,9 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "MoveTo (Relative)", Category = Categories.Paths)]
     public sealed class MoveToRelativeNode
     {
-        QtPath? _input;
-        Vector2 _point;
-        QtPath? _output;
+        private QtPath? _input;
+        private Vector2 _point;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a new contour that starts at the last point plus the offset.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>

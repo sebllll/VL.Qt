@@ -17,7 +17,7 @@ namespace VL.Qt
     /// </summary>
     internal sealed partial class Reconciler
     {
-        void ReconcileEffect(Node node, Element next, Style inherited)
+        private void ReconcileEffect(Node node, Element next, Style inherited)
         {
             var chain = next.Effect;
             if (chain is null && node.EffectChain is null)
@@ -36,7 +36,7 @@ namespace VL.Qt
         }
 
         /// <summary>The chain instance changed: segments it, reconciles the objects, sends it and destroys the objects it no longer uses.</summary>
-        void ChangeEffectChain(Node node, Element next, Effect? chain, Style inherited)
+        private void ChangeEffectChain(Node node, Element next, Effect? chain, Style inherited)
         {
             var links = Effect.Segment(chain, out var warnings);
             node.EffectChain = chain;
@@ -78,7 +78,7 @@ namespace VL.Qt
         /// elsewhere stays a placeholder that is retried every pass, #455); the chain is sent again when an object got
         /// another id (returns true then).
         /// </summary>
-        bool RetryEffectObjects(Node node, Style inherited)
+        private bool RetryEffectObjects(Node node, Style inherited)
         {
             if (node.EffectObjects is not { } objects || node.EffectElements is not { } elements)
                 return false;
@@ -97,7 +97,7 @@ namespace VL.Qt
         }
 
         /// <summary>First unused old object of <paramref name="element"/> itself (<paramref name="sameElement"/>) or of its type.</summary>
-        static Node? TakeObject(List<Node> old, bool[] used, Element element, bool sameElement)
+        private static Node? TakeObject(List<Node> old, bool[] used, Element element, bool sameElement)
         {
             for (int i = 0; i < old.Count; i++)
             {
@@ -113,7 +113,7 @@ namespace VL.Qt
         }
 
         /// <summary>The elements the links refer to (mask sources and uniform textures), each once by reference, in chain order.</summary>
-        static List<Element> CollectEffectElements(ImmutableArray<EffectChainLink> links)
+        private static List<Element> CollectEffectElements(ImmutableArray<EffectChainLink> links)
         {
             var elements = new List<Element>();
             foreach (var link in links)
@@ -132,7 +132,7 @@ namespace VL.Qt
             return elements;
         }
 
-        static void AddOnce(List<Element> elements, Element element)
+        private static void AddOnce(List<Element> elements, Element element)
         {
             foreach (var e in elements)
                 if (ReferenceEquals(e, element))
@@ -141,7 +141,7 @@ namespace VL.Qt
         }
 
         /// <summary>Id of the object of <paramref name="element"/> (0 = placeholder or unknown).</summary>
-        static uint EffectObjectId(Node node, Element element)
+        private static uint EffectObjectId(Node node, Element element)
         {
             if (node.EffectElements is { } elements && node.EffectObjects is { } objects)
             {
@@ -152,7 +152,7 @@ namespace VL.Qt
             return 0;
         }
 
-        void SendEffectChain(Node node)
+        private void SendEffectChain(Node node)
         {
             var sink = _sink;
             sink.BeginEffectChain(node.Id);
@@ -180,7 +180,7 @@ namespace VL.Qt
         }
 
         /// <summary>Writes the values of one run that differ from Qt's defaults (a run is applied whole in QtNative).</summary>
-        void WriteMultiLink(Node node, in EffectDesc n)
+        private void WriteMultiLink(Node node, in EffectDesc n)
         {
             var sink = _sink;
             var p = EffectDesc.Default;
@@ -257,7 +257,7 @@ namespace VL.Qt
         /// Padding, strength and the length uniforms (<see cref="Uniform.IsLength"/>) of a shader link are in units, converted
         /// here; the padding is rounded up to whole DIP. The other uniforms follow like SET_UNIFORMS.
         /// </summary>
-        void WriteShaderLink(Node node, ShaderLink shader)
+        private void WriteShaderLink(Node node, ShaderLink shader)
         {
             var sink = _sink;
             var pad = shader.Padding;
@@ -283,14 +283,14 @@ namespace VL.Qt
         }
 
         /// <summary>Float and vector components of a length uniform (M11..M14) × <paramref name="scale"/>.</summary>
-        static Matrix ScaleLength(Matrix m, float scale)
+        private static Matrix ScaleLength(Matrix m, float scale)
         {
             m.M11 *= scale; m.M12 *= scale; m.M13 *= scale; m.M14 *= scale;
             return m;
         }
 
         /// <summary>Writes the fold warning of <paramref name="node"/> into <paramref name="slot"/> (null clears what this node wrote).</summary>
-        static void SetEffectWarning(Node node, SinkSlot slot, string? warning)
+        private static void SetEffectWarning(Node node, SinkSlot slot, string? warning)
         {
             if (warning == node.EffectWarning)
                 return;

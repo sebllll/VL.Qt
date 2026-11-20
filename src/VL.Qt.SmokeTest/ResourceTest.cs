@@ -16,15 +16,15 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class ResourceTest
 {
-    const int Mb = 1 << 20;
+    private const int Mb = 1 << 20;
 
-    sealed record Rec(ushort Ev, ulong Id, byte[] Payload);
+    private sealed record Rec(ushort Ev, ulong Id, byte[] Payload);
 
     /// <summary>Resources.</summary>
     [Test, Category("resources")]
     public static void Resources() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         // A window as in vvvv: uploads run in the pump before the windows render.
         var w = Native.vlqt_window_create(320, 200, "VL.Qt resources");

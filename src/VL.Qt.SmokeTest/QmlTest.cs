@@ -30,20 +30,20 @@ public static class QmlTest
     [Test, Category("qml")]
     public static void Qml() => Scenario.Run(Run);
 
-    const uint Q = 10, T = 20, R = 30, E = 40, O = 50, Extra = 99;
-    const uint HQ = 110, HT = 120, HR = 130, HE = 140, HO = 150;
+    private const uint Q = 10, T = 20, R = 30, E = 40, O = 50, Extra = 99;
+    private const uint HQ = 110, HT = 120, HR = 130, HE = 140, HO = 150;
 
-    static bool Near(Color c, int r, int g, int b, int tol = 10) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
-    static bool IsBg(Color c) => Near(c, 0x20, 0x20, 0x20);
-    static bool IsRed(Color c) => Near(c, 255, 0, 0);
-    static bool IsGreen(Color c) => Near(c, 0, 255, 0);
-    static bool IsBlue(Color c) => Near(c, 0, 0, 255);
-    static bool IsWhite(Color c) => Near(c, 255, 255, 255);
-    static bool IsYellow(Color c) => Near(c, 255, 255, 0);
-    static bool IsMagenta(Color c) => Near(c, 255, 0, 255);
-    static bool IsCyan(Color c) => Near(c, 0, 255, 255);
+    private static bool Near(Color c, int r, int g, int b, int tol = 10) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
+    private static bool IsBg(Color c) => Near(c, 0x20, 0x20, 0x20);
+    private static bool IsRed(Color c) => Near(c, 255, 0, 0);
+    private static bool IsGreen(Color c) => Near(c, 0, 255, 0);
+    private static bool IsBlue(Color c) => Near(c, 0, 0, 255);
+    private static bool IsWhite(Color c) => Near(c, 255, 255, 255);
+    private static bool IsYellow(Color c) => Near(c, 255, 255, 0);
+    private static bool IsMagenta(Color c) => Near(c, 255, 0, 255);
+    private static bool IsCyan(Color c) => Near(c, 0, 255, 255);
 
-    static string? FindFile(params string[] rel)
+    private static string? FindFile(params string[] rel)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
@@ -53,9 +53,9 @@ public static class QmlTest
         return null;
     }
 
-    readonly record struct Rec(ushort Event, uint Handle, byte[] Payload);
+    private readonly record struct Rec(ushort Event, uint Handle, byte[] Payload);
 
-    static List<Rec> Parse(ReadOnlySpan<byte> b)
+    private static List<Rec> Parse(ReadOnlySpan<byte> b)
     {
         var list = new List<Rec>();
         int off = 0;
@@ -71,7 +71,7 @@ public static class QmlTest
         return list;
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var qmlTest = FindFile("src", "VL.Qt.SmokeTest", "assets", "QmlTest.qml");
         var qmlTypes = FindFile("src", "VL.Qt.SmokeTest", "assets", "QmlTypes.qml");
@@ -537,9 +537,9 @@ public static class QmlTest
     }
 
     /// <summary>Entries of one SET_QML_PROPERTIES in the form of the test.</summary>
-    readonly struct QmlProps
+    private readonly struct QmlProps
     {
-        readonly CommandWriter _w;
+        private readonly CommandWriter _w;
         public QmlProps(CommandWriter w) => _w = w;
         public void F32(string name, float v) => _w.UniformF32(name, v);
         public void I32(string name, int v) => _w.UniformI32(name, v);

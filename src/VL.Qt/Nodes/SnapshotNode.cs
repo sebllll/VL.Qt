@@ -17,10 +17,10 @@ namespace VL.Qt.Nodes
         /// <summary>Error at the node when Grab is hit for an element that no renderer shows.</summary>
         internal const string NotShownError = "Element is not shown in a renderer";
 
-        readonly SnapshotGrab _grab;
-        readonly ImageNodeReport _report;
-        IImage? _image;
-        string _error = string.Empty;
+        private readonly SnapshotGrab _grab;
+        private readonly ImageNodeReport _report;
+        private IImage? _image;
+        private string _error = string.Empty;
 
         public SnapshotNode(NodeContext nodeContext)
         {
@@ -76,9 +76,9 @@ namespace VL.Qt.Nodes
     /// </summary>
     internal sealed class SnapshotGrab : IDisposable
     {
-        readonly ResourceClient _client;
-        readonly SceneRegistry _scene;
-        bool _settled;
+        private readonly ResourceClient _client;
+        private readonly SceneRegistry _scene;
+        private bool _settled;
 
         public SnapshotGrab(ResourceClient client, SceneRegistry scene)
         {

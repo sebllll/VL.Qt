@@ -16,14 +16,14 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 // QtNative side of the handlers is HandlerTest (scenarios tap / point / wheel).
 public static partial class InteractionTest
 {
-    sealed class Rig : IDisposable
+    private sealed class Rig : IDisposable
     {
-        readonly Scenario _s;
-        readonly string _tag;
-        readonly CommandWriter _cmd = new();
-        readonly Reconciler _rec;
-        readonly byte[] _buf = new byte[1 << 16];
-        readonly RectangleNode _rect = new(_ => new NoMessage());
+        private readonly Scenario _s;
+        private readonly string _tag;
+        private readonly CommandWriter _cmd = new();
+        private readonly Reconciler _rec;
+        private readonly byte[] _buf = new byte[1 << 16];
+        private readonly RectangleNode _rect = new(_ => new NoMessage());
         public readonly IntPtr W;
         public Func<Interaction?> Chain = () => null;
         public RectangleF Bounds = new(1, 1, 2, 1);
@@ -78,10 +78,10 @@ public static partial class InteractionTest
         }
     }
 
-    static bool Near(Vector2 a, float x, float y) => Math.Abs(a.X - x) < 1e-4f && Math.Abs(a.Y - y) < 1e-4f;
+    private static bool Near(Vector2 a, float x, float y) => Math.Abs(a.X - x) < 1e-4f && Math.Abs(a.Y - y) < 1e-4f;
 
     // Scenario "click-node": mouse, double click, touch, long press, Buttons, Devices.
-    static void RunClick(Scenario s)
+    private static void RunClick(Scenario s)
     {
         using var click = new ClickNode(_ => new NoMessage());
         using var rig = new Rig("click", s);
@@ -186,7 +186,7 @@ public static partial class InteractionTest
 
     // Scenario "point-node": position in units, mouse + touch, passes presses through, chain Hover -> Click -> Point,
     // Buttons None = hover position of the mouse (#320).
-    static void RunPoint(Scenario s)
+    private static void RunPoint(Scenario s)
     {
         using var hover = new HoverNode(_ => new NoMessage());
         using var click = new ClickNode(_ => new NoMessage());
@@ -285,7 +285,7 @@ public static partial class InteractionTest
     }
 
     // Scenario "wheel-node": Delta in notches, once per frame with motion, then once (0, 0); Devices.
-    static void RunWheel(Scenario s)
+    private static void RunWheel(Scenario s)
     {
         using var wheel = new WheelNode(_ => new NoMessage());
         using var rig = new Rig("wheel", s);
@@ -332,7 +332,7 @@ public static partial class InteractionTest
 
     // Scenario "drag-node": the Drag node moves the element, Scene Bounds shows it, a changed (also animated) Bounds pin
     // puts it back, Moves Element off only reports (#209).
-    static void RunDragNode(Scenario s)
+    private static void RunDragNode(Scenario s)
     {
         using var drag = new DragNode(_ => new NoMessage());
         using var rig = new Rig("drag-node", s);

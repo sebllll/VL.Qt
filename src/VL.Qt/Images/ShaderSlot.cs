@@ -10,13 +10,13 @@ namespace VL.Qt
     /// </summary>
     internal sealed class ShaderSlot : IDisposable
     {
-        readonly ResourceClient? _client;
-        readonly int _stage;
-        readonly string _label;
-        string? _source;
-        bool _isCode;
-        ImageResource? _resource;
-        string _createError = string.Empty;
+        private readonly ResourceClient? _client;
+        private readonly int _stage;
+        private readonly string _label;
+        private string? _source;
+        private bool _isCode;
+        private ImageResource? _resource;
+        private string _createError = string.Empty;
 
         /// <param name="client">Creates and releases the shader resources, may be null: then <see cref="Id"/> stays 0 and <see cref="Error"/> reports it.</param>
         /// <param name="stage"><see cref="Protocol.ShaderStage"/>.</param>
@@ -58,7 +58,7 @@ namespace VL.Qt
             }
         }
 
-        string _errorSource = string.Empty, _errorText = string.Empty;
+        private string _errorSource = string.Empty, _errorText = string.Empty;
 
         /// <summary>
         /// Loads <paramref name="path"/> if set (not empty), otherwise bakes <paramref name="code"/> (full Qt GLSL, #483,

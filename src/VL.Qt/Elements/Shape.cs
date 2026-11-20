@@ -13,8 +13,8 @@ namespace VL.Qt.Elements
     {
         public Shape() : base(ElementType.Shape) { }
 
-        Spread<Vector2> _points = Spread<Vector2>.Empty;
-        Spread<float> _dash = Spread<float>.Empty;
+        private Spread<Vector2> _points = Spread<Vector2>.Empty;
+        private Spread<float> _dash = Spread<float>.Empty;
 
         /// <summary>Vertices of the polyline or polygon in units; ignored when <see cref="Path"/> is set.</summary>
         public Spread<Vector2> Points { get => _points; init => _points = value ?? Spread<Vector2>.Empty; }

@@ -24,7 +24,7 @@ public static class ResyncTest
     [Test, Category("resync")]
     public static void Resync() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var scene = new SceneRegistry();
         var clear = new Color4(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);

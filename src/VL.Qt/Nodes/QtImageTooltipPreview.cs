@@ -11,10 +11,10 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "TooltipPreview", Category = Categories.Qt), Smell(SymbolSmell.Advanced)]
     public sealed class QtImageTooltipPreview
     {
-        readonly ResourceClient _client;
-        QtImage? _image;
-        int _version = -1;
-        IImage? _preview;
+        private readonly ResourceClient _client;
+        private QtImage? _image;
+        private int _version = -1;
+        private IImage? _preview;
 
         public QtImageTooltipPreview(NodeContext nodeContext)
         {

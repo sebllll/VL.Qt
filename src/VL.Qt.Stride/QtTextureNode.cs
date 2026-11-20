@@ -23,10 +23,10 @@ namespace VL.Qt.Stride
     [SupportedOSPlatform("windows")]
     public sealed class QtTextureNode : IDisposable
     {
-        readonly SharedTextureScene _scene;
+        private readonly SharedTextureScene _scene;
 
         /// <param name="nodeContext">Injected by vvvv.</param>
-        public QtTextureNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext)
+        public QtTextureNode(NodeContext nodeContext)
             => _scene = new SharedTextureScene(nodeContext);
 
         /// <summary>Renders the element tree into the texture at Output.</summary>

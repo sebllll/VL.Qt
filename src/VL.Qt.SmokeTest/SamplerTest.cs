@@ -23,9 +23,9 @@ public static class SamplerTest
     [Test, Category("sampler")]
     public static void Sampler() => Scenario.Run(Run);
 
-    const float CellW = 160, CellH = 120;
+    private const float CellW = 160, CellH = 120;
 
-    static string Shader(string sampler) =>
+    private static string Shader(string sampler) =>
         "#version 440\n" +
         "layout(location = 0) in vec2 qt_TexCoord0;\n" +
         "layout(location = 0) out vec4 fragColor;\n" +
@@ -34,14 +34,14 @@ public static class SamplerTest
         $"void main() {{ fragColor = texture({sampler}, c + (qt_TexCoord0 - 0.5) * k) * qt_Opacity; }}\n";
 
     // protocol.h "Sampler": filter (0 Linear, 1 Nearest), mip (0 None, 1 Nearest, 2 Linear), address U, V (0 Clamp, 1 Repeat, 2 Mirror)
-    static ulong S(int filter, int mip, int au, int av) =>
+    private static ulong S(int filter, int mip, int au, int av) =>
         (ulong)(uint)filter | (ulong)(uint)mip << 8 | (ulong)(uint)au << 16 | (ulong)(uint)av << 24;
 
-    static bool Near(Color c, int r, int g, int b, int tol = 16) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
+    private static bool Near(Color c, int r, int g, int b, int tol = 16) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
-    static (float x, float y) Cell(int cx, int cy) => (15 + cx * 200, 20 + cy * 140);
+    private static (float x, float y) Cell(int cx, int cy) => (15 + cx * 200, 20 + cy * 140);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         Directory.CreateDirectory(s.OutDir);
@@ -287,7 +287,7 @@ public static class SamplerTest
         Teardown();
     }
 
-    static string? FindFile(params string[] rel)
+    private static string? FindFile(params string[] rel)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {

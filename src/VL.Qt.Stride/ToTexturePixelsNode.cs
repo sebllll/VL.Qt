@@ -5,7 +5,6 @@ using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
 using VL.Lib.IO.Notifications;
-using VL.Model;
 
 namespace VL.Qt.Stride
 {
@@ -19,14 +18,14 @@ namespace VL.Qt.Stride
     public sealed class ToTexturePixelsNode : IDisposable
     {
         // Read by the thread the notifications arrive on, replaced by Update only when an input changed.
-        TexturePixelMapping? _mapping;
-        Matrix _world, _view, _projection;
-        Int2 _textureSize;
-        IObservable<INotification>? _input;
-        IObservable<INotification>? _output;
+        private TexturePixelMapping? _mapping;
+        private Matrix _world, _view, _projection;
+        private Int2 _textureSize;
+        private IObservable<INotification>? _input;
+        private IObservable<INotification>? _output;
 
         /// <param name="nodeContext">Injected by vvvv.</param>
-        public ToTexturePixelsNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext)
+        public ToTexturePixelsNode(NodeContext nodeContext)
         {
         }
 
@@ -65,12 +64,12 @@ namespace VL.Qt.Stride
         {
         }
 
-        TexturePixelMapping Mapping => Volatile.Read(ref _mapping)!;
+        private TexturePixelMapping Mapping => Volatile.Read(ref _mapping)!;
 
-        sealed class Mapped : IObservable<INotification>
+        private sealed class Mapped : IObservable<INotification>
         {
-            readonly IObservable<INotification> _source;
-            readonly ToTexturePixelsNode _owner;
+            private readonly IObservable<INotification> _source;
+            private readonly ToTexturePixelsNode _owner;
 
             public Mapped(IObservable<INotification> source, ToTexturePixelsNode owner)
             {
@@ -82,12 +81,12 @@ namespace VL.Qt.Stride
         }
 
         // One per subscription: OnNext is sequential, so the client area of the current notification lives in a field.
-        sealed class Mapper : IObserver<INotification>, INotificationSpaceTransformer
+        private sealed class Mapper : IObserver<INotification>, INotificationSpaceTransformer
         {
-            readonly IObserver<INotification> _observer;
-            readonly ToTexturePixelsNode _owner;
-            TexturePixelMapping _mapping;
-            Vector2 _clientArea;
+            private readonly IObserver<INotification> _observer;
+            private readonly ToTexturePixelsNode _owner;
+            private TexturePixelMapping _mapping;
+            private Vector2 _clientArea;
 
             public Mapper(IObserver<INotification> observer, ToTexturePixelsNode owner)
             {

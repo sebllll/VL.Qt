@@ -18,7 +18,7 @@ namespace VL.Qt.Tests
     public class EffectTemplateShadersTests
     {
         // Template file (without .frag), built-in shader (without .frag).
-        static readonly (string Template, string Builtin)[] s_pairs =
+        private static readonly (string Template, string Builtin)[] s_pairs =
         {
             ("ExampleBlend", "blend"),
             ("ExampleDisplace", "displace"),
@@ -27,10 +27,10 @@ namespace VL.Qt.Tests
             ("ExampleRadialBlur", "radial_blur"),
         };
 
-        static readonly Regex s_comments = new(@"//[^\r\n]*|/\*.*?\*/", RegexOptions.Singleline | RegexOptions.CultureInvariant);
-        static readonly Regex s_whitespace = new(@"\s+", RegexOptions.CultureInvariant);
+        private static readonly Regex s_comments = new(@"//[^\r\n]*|/\*.*?\*/", RegexOptions.Singleline | RegexOptions.CultureInvariant);
+        private static readonly Regex s_whitespace = new(@"\s+", RegexOptions.CultureInvariant);
 
-        static string RepoRoot()
+        private static string RepoRoot()
         {
             for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
             {
@@ -41,12 +41,12 @@ namespace VL.Qt.Tests
             throw new InvalidOperationException("Repository root (help/Qt/qtshaders and src/VL.Qt.Native/shaders) not found above " + AppContext.BaseDirectory);
         }
 
-        static string TemplatePath(string template) => Path.Combine(RepoRoot(), "help", "Qt", "qtshaders", template + ".frag");
+        private static string TemplatePath(string template) => Path.Combine(RepoRoot(), "help", "Qt", "qtshaders", template + ".frag");
 
-        static string BuiltinPath(string builtin) => Path.Combine(RepoRoot(), "src", "VL.Qt.Native", "shaders", builtin + ".frag");
+        private static string BuiltinPath(string builtin) => Path.Combine(RepoRoot(), "src", "VL.Qt.Native", "shaders", builtin + ".frag");
 
         /// <summary>The code of a shader: without // and /* */ comments and without any whitespace.</summary>
-        static string Code(string path) => s_whitespace.Replace(s_comments.Replace(File.ReadAllText(path), string.Empty), string.Empty);
+        private static string Code(string path) => s_whitespace.Replace(s_comments.Replace(File.ReadAllText(path), string.Empty), string.Empty);
 
         [TestCaseSource(nameof(s_pairs))]
         public void Template_HasTheCodeOfTheBuiltinShader((string Template, string Builtin) pair)
@@ -63,12 +63,12 @@ namespace VL.Qt.Tests
                 "so both files must change together. First difference at character " + at + ": template '" + Excerpt(template, at) + "' / built-in '" + Excerpt(builtin, at) + "'.");
         }
 
-        static string Excerpt(string code, int at) => code.Substring(Math.Min(at, code.Length), Math.Min(40, Math.Max(0, code.Length - at)));
+        private static string Excerpt(string code, int at) => code.Substring(Math.Min(at, code.Length), Math.Min(40, Math.Max(0, code.Length - at)));
 
         // --- the effect chain nodes the factory makes of the templates ---
 
         // Pins of the effect chain node (Input first, the sampler pin of an image second, shown only when needed).
-        static readonly (string Template, string[] Pins, bool TwoPass)[] s_nodes =
+        private static readonly (string Template, string[] Pins, bool TwoPass)[] s_nodes =
         {
             ("ExampleBlend", new[] { "Input", "Layer", "Layer Sampler", "Mode", "Layer Opacity" }, false),
             ("ExampleDisplace", new[] { "Input", "Map", "Map Sampler", "Displacement" }, false),
@@ -77,9 +77,9 @@ namespace VL.Qt.Tests
             ("ExampleRadialBlur", new[] { "Input", "Center", "Angle" }, true),
         };
 
-        string _dir = null!;
-        FakeResourceApi _api = null!;
-        ResourceClient _client = null!;
+        private string _dir = null!;
+        private FakeResourceApi _api = null!;
+        private ResourceClient _client = null!;
 
         [SetUp]
         public void CreateDirAndClient()
@@ -150,7 +150,7 @@ namespace VL.Qt.Tests
                 MathF.Abs(a.X - b.X) < 1e-4f && MathF.Abs(a.Y - b.Y) < 1e-4f && MathF.Abs(a.Width - b.Width) < 1e-4f && MathF.Abs(a.Height - b.Height) < 1e-4f));
         }
 
-        ShaderNodeLayout LoadChainLayout(string template)
+        private ShaderNodeLayout LoadChainLayout(string template)
         {
             var path = Path.Combine(_dir, template + ".frag");
             File.Copy(TemplatePath(template), path, overwrite: true);
@@ -158,7 +158,7 @@ namespace VL.Qt.Tests
             return ShaderNodeLayout.Load(file, ShaderReflection.Reflect, NullLogger.Instance).ForChain(NullLogger.Instance, path);
         }
 
-        sealed class FakeNodeFactory : VL.Core.IVLNodeDescriptionFactory
+        private sealed class FakeNodeFactory : VL.Core.IVLNodeDescriptionFactory
         {
             public string Identifier => "Test";
             public System.Collections.Immutable.ImmutableArray<VL.Core.IVLNodeDescription> NodeDescriptions => default;

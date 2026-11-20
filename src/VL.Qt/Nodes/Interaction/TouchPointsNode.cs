@@ -23,9 +23,9 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(bool Occlusion, PointerDevices Devices);
 
-        readonly InteractionNode<Props> _node;
-        IChannel<Spread<TouchPoint>>? _points;
-        int _lastUpdates;
+        private readonly InteractionNode<Props> _node;
+        private IChannel<Spread<TouchPoint>>? _points;
+        private int _lastUpdates;
 
         public TouchPointsNode(NodeContext nodeContext)
             => _node = new InteractionNode<Props>(nodeContext, Create);
@@ -34,7 +34,7 @@ namespace VL.Qt.Nodes
         internal TouchPointsNode(Func<string, IDisposable> addWarning)
             => _node = new InteractionNode<Props>(addWarning, Create);
 
-        static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
             = static (previous, p, slot) => new TouchPointsInteraction(previous, slot, p.Occlusion, p.Devices);
 
         internal InteractionNode<Props> Core => _node;

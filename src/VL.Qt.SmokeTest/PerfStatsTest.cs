@@ -13,7 +13,7 @@ public static class PerfStatsTest
     [Test, Category("perfstats")]
     public static void PerfStatistics() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         // 100 pumps, one every 200 ms (0 .. 19.8 s, "now" = 19.8 s -> last 10 s = pumps 50..99).
         // pump = frame = i + 1 ms; swaps 0 for i % 10 == 0, 2 for i % 10 == 5, else 1.

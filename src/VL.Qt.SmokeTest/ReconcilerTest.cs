@@ -19,16 +19,16 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class ReconcilerTest
 {
-    static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
-    static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
-    static bool IsBlue(Color c) => c.B > 200 && c.R < 40 && c.G < 40;
-    static bool IsYellow(Color c) => c.R > 200 && c.G > 200 && c.B < 40;
+    private static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
+    private static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
+    private static bool IsBlue(Color c) => c.B > 200 && c.R < 40 && c.G < 40;
+    private static bool IsYellow(Color c) => c.R > 200 && c.G > 200 && c.B < 40;
 
-    static readonly Color4 Red = new(1, 0, 0, 1), Green = new(0, 1, 0, 1), Blue = new(0, 0, 1, 1), Yellow = new(1, 1, 0, 1);
+    private static readonly Color4 Red = new(1, 0, 0, 1), Green = new(0, 1, 0, 1), Blue = new(0, 0, 1, 1), Yellow = new(1, 1, 0, 1);
 
     // Column at (1, 1) units, 2 x 4 units, padding 0.1, spacing 0.2, Left. The children have no position
     // (Transform identity, the layout places them): only their size goes to Qt.
-    static Column Scene(Element c0, Element c1, Element? c2) => new()
+    private static Column Scene(Element c0, Element c1, Element? c2) => new()
     {
         Size = new Vector2(2, 4), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(1, 1, 0),
         Padding = 0.1f,
@@ -36,13 +36,13 @@ public static class ReconcilerTest
         Children = c2 is null ? ImmutableArray.Create(c0, c1) : ImmutableArray.Create(c0, c1, c2),
     };
 
-    static Rectangle R(float w, float h, Color4 fill) => new() { Size = new Vector2(w, h), Anchor = RectangleAnchor.TopLeft, Fill = fill };
+    private static Rectangle R(float w, float h, Color4 fill) => new() { Size = new Vector2(w, h), Anchor = RectangleAnchor.TopLeft, Fill = fill };
 
     /// <summary>Reconciler (scene diffing).</summary>
     [Test, Category("reconciler")]
     public static void Reconciler() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt reconciler test");
         s.Check(w != IntPtr.Zero, "window_create");
@@ -127,7 +127,7 @@ public static class ReconcilerTest
 
     // Steady state through the real QtNative: 1000 rectangles, one color change per frame.
     // Limits are generous (#71); the measured values go to the log.
-    static void Perf(IntPtr w, Scenario s)
+    private static void Perf(IntPtr w, Scenario s)
     {
         const int N = 1000, Frames = 1000;
         var cmd = new CommandWriter();

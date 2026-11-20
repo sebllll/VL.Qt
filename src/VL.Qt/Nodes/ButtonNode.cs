@@ -22,7 +22,7 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(string Text, bool Enabled, bool AutoRepeat, bool AutoSize, Style? Style);
 
-        readonly ElementNode<Button, Props> _node;
+        private readonly ElementNode<Button, Props> _node;
 
         public ButtonNode(NodeContext nodeContext)
             => _node = new ElementNode<Button, Props>(nodeContext, Create);
@@ -31,7 +31,7 @@ namespace VL.Qt.Nodes
         internal ButtonNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Button, Props>(addWarning, Create);
 
-        static readonly Func<CommonInputs, Props, SinkSlot, Button> Create = static (c, p, slot) => new Button
+        private static readonly Func<CommonInputs, Props, SinkSlot, Button> Create = static (c, p, slot) => new Button
             {
                 Size = c.Size,
                 Transform = c.Transform,

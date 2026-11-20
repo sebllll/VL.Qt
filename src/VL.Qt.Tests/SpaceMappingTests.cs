@@ -7,9 +7,9 @@ namespace VL.Qt.Tests
     /// <summary>SpaceMapping (#143): scale and origin mode per Space, conversions to Qt logical pixels and back.</summary>
     public class SpaceMappingTests
     {
-        const float Eps = 1e-3f;
+        private const float Eps = 1e-3f;
 
-        static SpaceMapping Make(Space space, float height = 600, float dpr = 1f) => new(space, new Vector2(800, height), dpr);
+        private static SpaceMapping Make(Space space, float height = 600, float dpr = 1f) => new(space, new Vector2(800, height), dpr);
 
         [TestCase(Space.Normalized, 600f, 1f, 300f)]
         [TestCase(Space.Normalized, 300f, 1.5f, 150f)]   // height -1 … 1 in DIP, independent of the dpr

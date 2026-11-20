@@ -113,7 +113,7 @@ namespace VL.Qt.Elements
     /// </summary>
     public sealed class ElementSink
     {
-        readonly List<SinkState> _states = new();
+        private readonly List<SinkState> _states = new();
 
         /// <summary>Number of slots currently allocated.</summary>
         public int Count => _states.Count;

@@ -22,7 +22,7 @@ namespace VL.Qt
     /// </summary>
     public sealed class QtImage
     {
-        readonly ImageResource _resource;
+        private readonly ImageResource _resource;
 
         internal QtImage(ImageResource resource) => _resource = resource;
 
@@ -53,7 +53,7 @@ namespace VL.Qt
     /// </summary>
     internal sealed class ImageResource
     {
-        TaskCompletionSource<ImageResource>? _settled;
+        private TaskCompletionSource<ImageResource>? _settled;
 
         public ImageResource(ulong id) => Id = id;
 

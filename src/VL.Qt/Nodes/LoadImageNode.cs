@@ -12,13 +12,13 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "LoadImage", Category = Categories.Qt)]
     public sealed class LoadImageNode : IDisposable
     {
-        readonly ResourceClient _client;
-        readonly ImageNodeReport _report;
-        string? _path;
-        bool _mipmaps;
-        ImageResource? _resource;
-        QtImage? _image;
-        string _createError = string.Empty;
+        private readonly ResourceClient _client;
+        private readonly ImageNodeReport _report;
+        private string? _path;
+        private bool _mipmaps;
+        private ImageResource? _resource;
+        private QtImage? _image;
+        private string _createError = string.Empty;
 
         public LoadImageNode(NodeContext nodeContext)
         {
@@ -49,7 +49,7 @@ namespace VL.Qt.Nodes
             return _image;
         }
 
-        void Load(string path, bool mipmaps)
+        private void Load(string path, bool mipmaps)
         {
             _path = path;
             _mipmaps = mipmaps;

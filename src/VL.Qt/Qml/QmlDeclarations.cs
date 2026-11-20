@@ -190,7 +190,7 @@ namespace VL.Qt.Qml
     /// </summary>
     internal static class QmlDeclarationParser
     {
-        enum TokenKind
+        private enum TokenKind
         {
             Ident,
             Number,
@@ -199,18 +199,18 @@ namespace VL.Qt.Qml
             Punct,
         }
 
-        readonly record struct Token(TokenKind Kind, string Text, int Line, string? Value = null)
+        private readonly record struct Token(TokenKind Kind, string Text, int Line, string? Value = null)
         {
             public bool IsPunct(char c) => Kind == TokenKind.Punct && Text[0] == c;
             public bool IsIdent(string name) => Kind == TokenKind.Ident && Text == name;
         }
 
-        readonly record struct Comment(int Line, string Text, bool OwnLine);
+        private readonly record struct Comment(int Line, string Text, bool OwnLine);
 
-        sealed record Lexed(List<Token> Tokens, List<Comment> Comments, string? Error, int ErrorLine);
+        private sealed record Lexed(List<Token> Tokens, List<Comment> Comments, string? Error, int ErrorLine);
 
-        static readonly Regex s_tagStart = new(@"^@(?<name>\w+)\s*(?<rest>.*)$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-        static readonly Lazy<Dictionary<string, Color4>> s_namedColors = new(BuildNamedColors);
+        private static readonly Regex s_tagStart = new(@"^@(?<name>\w+)\s*(?<rest>.*)$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+        private static readonly Lazy<Dictionary<string, Color4>> s_namedColors = new(BuildNamedColors);
 
         // ---- entry points --------------------------------------------------------------------------------------------------
 
@@ -289,7 +289,7 @@ namespace VL.Qt.Qml
             return new QmlDeclarations(rootType, head, properties.ToImmutableArray(), signals.ToImmutableArray(), messages.ToImmutableArray());
         }
 
-        static void Inherit(
+        private static void Inherit(
             string rootType,
             int rootLine,
             Func<string, string?> readSibling,
@@ -334,7 +334,7 @@ namespace VL.Qt.Qml
 
         // ---- lexer ---------------------------------------------------------------------------------------------------------
 
-        static Lexed Lex(string s, bool headOnly)
+        private static Lexed Lex(string s, bool headOnly)
         {
             var tokens = new List<Token>();
             var comments = new List<Comment>();
@@ -515,7 +515,7 @@ namespace VL.Qt.Qml
         // ---- head ----------------------------------------------------------------------------------------------------------
 
         // Skips imports, pragmas and ".import"/".pragma" lines (everything on their line), returns the index of the root type.
-        static int SkipHeader(List<Token> tokens)
+        private static int SkipHeader(List<Token> tokens)
         {
             var i = 0;
             while (i < tokens.Count)
@@ -532,13 +532,13 @@ namespace VL.Qt.Qml
             return i;
         }
 
-        static int HeadEndLine(List<Token> tokens)
+        private static int HeadEndLine(List<Token> tokens)
         {
             var i = SkipHeader(tokens);
             return i < tokens.Count ? tokens[i].Line : int.MaxValue;
         }
 
-        static QmlFileHead ReadHead(List<Comment> comments, int endLine, List<QmlParseMessage> warnings)
+        private static QmlFileHead ReadHead(List<Comment> comments, int endLine, List<QmlParseMessage> warnings)
         {
             string? category = null;
             string? summary = null;
@@ -588,7 +588,7 @@ namespace VL.Qt.Qml
 
         // ---- members -------------------------------------------------------------------------------------------------------
 
-        static Dictionary<int, string> OwnLineComments(List<Comment> comments)
+        private static Dictionary<int, string> OwnLineComments(List<Comment> comments)
         {
             var map = new Dictionary<int, string>();
             foreach (var c in comments)
@@ -598,7 +598,7 @@ namespace VL.Qt.Qml
         }
 
         // The "//" lines directly above a declaration (no blank line, no code in between); an empty "//" ends the block.
-        static string? SummaryAbove(Dictionary<int, string> ownLine, int line)
+        private static string? SummaryAbove(Dictionary<int, string> ownLine, int line)
         {
             List<string>? lines = null;
             for (var l = line - 1; ownLine.TryGetValue(l, out var text) && text.Length > 0; l--)
@@ -610,7 +610,7 @@ namespace VL.Qt.Qml
         }
 
         // Returns the index after the member that starts at s (the first token of a statement inside the root object), -1 on error.
-        static int ScanMember(List<Token> t, int s, Stack<(char Open, int Line)> stack, out string? error, out int errorLine)
+        private static int ScanMember(List<Token> t, int s, Stack<(char Open, int Line)> stack, out string? error, out int errorLine)
         {
             error = null;
             errorLine = 0;
@@ -670,7 +670,7 @@ namespace VL.Qt.Qml
         }
 
         // The expression goes on after the line break between prev and next (an operator ends or starts the line).
-        static bool Continues(Token prev, Token next)
+        private static bool Continues(Token prev, Token next)
         {
             if (next.Kind == TokenKind.Punct && "{([.?:+-*/%&|^<>=,".Contains(next.Text[0]))
                 return true;
@@ -679,7 +679,7 @@ namespace VL.Qt.Qml
             return prev.Kind == TokenKind.Punct && "+-*/%&|^<>=!?:,.([".Contains(prev.Text[0]);
         }
 
-        static void ReadMember(
+        private static void ReadMember(
             List<Token> t,
             int s,
             int e,
@@ -708,14 +708,14 @@ namespace VL.Qt.Qml
                 Reassign(t, s, e, properties);
         }
 
-        static int TrimSemicolons(List<Token> t, int start, int end)
+        private static int TrimSemicolons(List<Token> t, int start, int end)
         {
             while (end > start && t[end - 1].IsPunct(';'))
                 end--;
             return end;
         }
 
-        static void ReadProperty(
+        private static void ReadProperty(
             List<Token> t,
             int s,
             int propertyIndex,
@@ -785,7 +785,7 @@ namespace VL.Qt.Qml
         }
 
         // "name: value" in the root of a derived file replaces the initializer of an inherited property.
-        static void Reassign(List<Token> t, int s, int e, List<QmlPropertyDecl> properties)
+        private static void Reassign(List<Token> t, int s, int e, List<QmlPropertyDecl> properties)
         {
             var name = t[s].Text;
             var index = properties.FindIndex(p => p.Name == name);
@@ -798,7 +798,7 @@ namespace VL.Qt.Qml
             properties[index] = properties[index] with { Initializer = initializer, Default = value };
         }
 
-        static void ReadSignal(List<Token> t, int s, int e, string? summary, List<QmlSignalDecl> signals)
+        private static void ReadSignal(List<Token> t, int s, int e, string? summary, List<QmlSignalDecl> signals)
         {
             var name = t[s + 1].Text;
             var args = ImmutableArray.CreateBuilder<QmlSignalArg>();
@@ -873,10 +873,10 @@ namespace VL.Qt.Qml
 
         // ---- literals ------------------------------------------------------------------------------------------------------
 
-        static (QmlInitializer, object) Evaluate(QmlValueKind kind, List<Token> t, int s, int e)
+        private static (QmlInitializer, object) Evaluate(QmlValueKind kind, List<Token> t, int s, int e)
             => TryLiteral(kind, t, s, e, out var value) ? (QmlInitializer.Literal, value) : (QmlInitializer.Binding, QmlTypes.TypeDefault(kind));
 
-        static bool TryLiteral(QmlValueKind kind, List<Token> t, int s, int e, out object value)
+        private static bool TryLiteral(QmlValueKind kind, List<Token> t, int s, int e, out object value)
         {
             value = QmlTypes.TypeDefault(kind);
             double d;
@@ -970,7 +970,7 @@ namespace VL.Qt.Qml
         }
 
         // [+|-] number
-        static bool TryNumber(List<Token> t, int s, int e, out double value)
+        private static bool TryNumber(List<Token> t, int s, int e, out double value)
         {
             value = 0;
             var sign = 1.0;
@@ -997,7 +997,7 @@ namespace VL.Qt.Qml
         }
 
         // Qt.name(number, number, ...) over the whole range s..e
-        static bool TryQtCall(List<Token> t, int s, int e, out string name, out double[] args)
+        private static bool TryQtCall(List<Token> t, int s, int e, out string name, out double[] args)
         {
             name = string.Empty;
             args = Array.Empty<double>();
@@ -1020,7 +1020,7 @@ namespace VL.Qt.Qml
             return true;
         }
 
-        static bool TryColor(string text, out Color4 color)
+        private static bool TryColor(string text, out Color4 color)
         {
             text = text.Trim();
             color = default;
@@ -1046,10 +1046,10 @@ namespace VL.Qt.Qml
             }
         }
 
-        static Color4 FromBytes(uint r, uint g, uint b, uint a) => new(r / 255f, g / 255f, b / 255f, a / 255f);
+        private static Color4 FromBytes(uint r, uint g, uint b, uint a) => new(r / 255f, g / 255f, b / 255f, a / 255f);
 
         // SVG colour names (what QML accepts) from the named colours of Stride; "grey" spellings, transparent and rebeccapurple added.
-        static Dictionary<string, Color4> BuildNamedColors()
+        private static Dictionary<string, Color4> BuildNamedColors()
         {
             var map = new Dictionary<string, Color4>(StringComparer.Ordinal);
 
@@ -1095,7 +1095,7 @@ namespace VL.Qt.Qml
             return sb.ToString();
         }
 
-        static string Format(object value)
+        private static string Format(object value)
         {
             static string F(float f) => f.ToString("R", CultureInfo.InvariantCulture);
             return value switch

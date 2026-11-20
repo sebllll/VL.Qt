@@ -13,7 +13,7 @@ namespace VL.Qt.Elements
     /// </summary>
     internal static class QmlEvents
     {
-        const int maxArguments = 64;
+        private const int maxArguments = 64;
 
         /// <summary>
         /// EV_QML_PROPERTY: u16 name length, u16 value type, name (UTF-8), padding to 4, value. False for a short or
@@ -136,8 +136,8 @@ namespace VL.Qt.Elements
             }
         }
 
-        static float F(ReadOnlySpan<byte> p, int offset) => BinaryPrimitives.ReadSingleLittleEndian(p.Slice(offset));
+        private static float F(ReadOnlySpan<byte> p, int offset) => BinaryPrimitives.ReadSingleLittleEndian(p.Slice(offset));
 
-        static int Align(int n) => (n + (Protocol.CommandAlign - 1)) & ~(Protocol.CommandAlign - 1);
+        private static int Align(int n) => (n + (Protocol.CommandAlign - 1)) & ~(Protocol.CommandAlign - 1);
     }
 }

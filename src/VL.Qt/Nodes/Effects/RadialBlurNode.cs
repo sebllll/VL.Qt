@@ -21,9 +21,9 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Vector2 Center, float Angle, float Padding);
 
-        static readonly string[] s_shaders = { "radial_blur" };
+        private static readonly string[] s_shaders = { "radial_blur" };
 
-        static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
         {
             var pad = Math.Max(p.Padding, 0f);
             return new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
@@ -31,7 +31,7 @@ namespace VL.Qt.Nodes
                 new RectangleF(pad, pad, pad, pad));
         };
 
-        readonly BuiltinShaderLink<Props> _link;
+        private readonly BuiltinShaderLink<Props> _link;
 
         public RadialBlurNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))

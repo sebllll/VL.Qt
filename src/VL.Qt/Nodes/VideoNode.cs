@@ -24,7 +24,7 @@ namespace VL.Qt.Nodes
         // Shared with Video (VL.Audio) in VL.Qt.Audio (#22): it sets AudioTap, this node never does.
         internal readonly record struct Props(string Path, bool Play, bool Loop, bool KeepLastFrame, float Rate, float Volume, VideoFillMode FillMode, ulong AudioTap = 0);
 
-        readonly ElementNode<Video, Props> _node;
+        private readonly ElementNode<Video, Props> _node;
 
         public VideoNode(NodeContext nodeContext)
             => _node = new ElementNode<Video, Props>(nodeContext, Create);

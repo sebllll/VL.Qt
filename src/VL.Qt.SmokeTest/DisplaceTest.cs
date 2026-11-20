@@ -22,9 +22,9 @@ public static class DisplaceTest
     [Test, Category("displace")]
     public static void Displace() => Scenario.Run(Run);
 
-    const float CellW = 240, CellH = 140;
-    const uint Ref = 100;
-    const string WaveMap =
+    private const float CellW = 240, CellH = 140;
+    private const uint Ref = 100;
+    private const string WaveMap =
         "#version 440\n" +
         "layout(location = 0) in vec2 qt_TexCoord0;\n" +
         "layout(location = 0) out vec4 fragColor;\n" +
@@ -34,9 +34,9 @@ public static class DisplaceTest
         "    fragColor = vec4(0.5 + 0.5 * sin(uv.y * 9.4248), 0.5 + 0.5 * sin(uv.x * 12.5664), 0.5, 1.0) * qt_Opacity;\n" +
         "}\n";
 
-    static (float x, float y) Cell(int cx, int cy) => (20 + cx * 260, 20 + cy * 160);
+    private static (float x, float y) Cell(int cx, int cy) => (20 + cx * 260, 20 + cy * 160);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         Directory.CreateDirectory(s.OutDir);

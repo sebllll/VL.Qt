@@ -29,25 +29,25 @@ namespace VL.Qt.Stride
     [SupportedOSPlatform("windows")]
     public sealed class QtRendererNode : RendererBase
     {
-        readonly SharedTextureScene _scene;
-        readonly ILogger _logger;
-        readonly ViewportOffset _offset = new();
-        IInputSource? _inputSource;
+        private readonly SharedTextureScene _scene;
+        private readonly ILogger _logger;
+        private readonly ViewportOffset _offset = new();
+        private IInputSource? _inputSource;
         // Size of the last draw's viewport (the scene renders at it from the next Update on); none before the first draw.
-        Int2 _drawSize;
-        bool _drawn;
+        private Int2 _drawSize;
+        private bool _drawn;
         // The target of the last draw: the Stride texture (for Destroyed), its native resource (a swap chain reuses the
         // Stride texture for a new back buffer), the composition decided for it and the UNorm view on it (Direct, if the
         // target's own view is not UNorm).
-        Texture? _target;
-        IntPtr _targetResource;
-        LayerComposition _composition = LayerComposition.Fallback(PixelFormat.B8G8R8A8_UNorm_SRgb);
-        Texture? _view;
-        string _hint = "", _loggedHint = "";
+        private Texture? _target;
+        private IntPtr _targetResource;
+        private LayerComposition _composition = LayerComposition.Fallback(PixelFormat.B8G8R8A8_UNorm_SRgb);
+        private Texture? _view;
+        private string _hint = "", _loggedHint = "";
 
         /// <param name="nodeContext">Injected by vvvv.</param>
         [Fragment]
-        public QtRendererNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext)
+        public QtRendererNode(NodeContext nodeContext)
         {
             _scene = new SharedTextureScene(nodeContext);
             _logger = nodeContext.GetLogger();
@@ -127,7 +127,7 @@ namespace VL.Qt.Stride
 
         // Direct needs a UNorm view on the target's resource: the target itself if its view is UNorm, else a view of our own.
         // If Stride cannot create one (e.g. a format the device does not support for a multisampled view), fallback.
-        void ChooseComposition(Texture target, PixelFormat resourceFormat)
+        private void ChooseComposition(Texture target, PixelFormat resourceFormat)
         {
             var composition = LayerComposition.Choose(resourceFormat, target.ViewFormat);
             if (composition.Direct && composition.ViewFormat != target.ViewFormat)
@@ -160,7 +160,7 @@ namespace VL.Qt.Stride
         }
 
         // Like SkiaRenderer: the window input source of the render context; a new source re-subscribes.
-        void SubscribeInput(RenderDrawContext context)
+        private void SubscribeInput(RenderDrawContext context)
         {
             var inputSource = context.RenderContext.GetWindowInputSource();
             if (inputSource == _inputSource)
@@ -171,9 +171,9 @@ namespace VL.Qt.Stride
                 : inputManager.GetNotifications(inputSource, sender: this).Select(n => n.Transform(_offset)));
         }
 
-        void OnTargetDestroyed(object? sender, EventArgs e) => ReleaseView();
+        private void OnTargetDestroyed(object? sender, EventArgs e) => ReleaseView();
 
-        void ReleaseView()
+        private void ReleaseView()
         {
             _targetResource = IntPtr.Zero;
             _view?.Dispose();
@@ -191,10 +191,10 @@ namespace VL.Qt.Stride
 
         // Window positions to texture pixels: minus the origin of the last draw's viewport. Read on the thread the input
         // arrives on, set in the draw.
-        sealed class ViewportOffset : INotificationSpaceTransformer
+        private sealed class ViewportOffset : INotificationSpaceTransformer
         {
-            Vector2 _origin;
-            readonly object syncRoot = new();
+            private Vector2 _origin;
+            private readonly object syncRoot = new();
 
             public void Set(Vector2 origin)
             {

@@ -25,15 +25,15 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class QtTexturePerfTest
 {
-    const int B8G8R8A8Typeless = 90;
-    const int B8G8R8A8Unorm = 87;
-    const int W = 1280, H = 720;
-    const double MainThreadLimitMs = 0.5;
+    private const int B8G8R8A8Typeless = 90;
+    private const int B8G8R8A8Unorm = 87;
+    private const int W = 1280, H = 720;
+    private const double MainThreadLimitMs = 0.5;
     // Marker rectangle (id 1) at (0, 0): its red channel is the frame number.
-    const int MarkerSize = 32;
+    private const int MarkerSize = 32;
 
     // A scene: rounded rectangles + texts, 1280x720.
-    readonly record struct Config(string Name, int Scenes, int Rects, int Texts)
+    private readonly record struct Config(string Name, int Scenes, int Rects, int Texts)
     {
         public bool Heavy => Rects >= 1000;
     }
@@ -87,7 +87,7 @@ public static class QtTexturePerfTest
     }
 
     // The thread count cannot change after the first scene: the main thread numbers come from a second process.
-    static void RunMainThreadChild(Scenario s)
+    private static void RunMainThreadChild(Scenario s)
     {
         var host = Environment.ProcessPath;
         if (host == null)
@@ -112,7 +112,7 @@ public static class QtTexturePerfTest
     }
 
     // Returns the median main-thread time of render_batch per QtTexture (ms).
-    static double Measure(IntPtr device, IntPtr context, Config config, int threads, int warmup, int frames, Scenario s)
+    private static double Measure(IntPtr device, IntPtr context, Config config, int threads, int warmup, int frames, Scenario s)
     {
         int count = config.Scenes, rects = config.Rects, texts = config.Texts;
         string mode = threads == 0 ? "main" : $"thread{threads}";
@@ -283,17 +283,17 @@ public static class QtTexturePerfTest
     }
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    delegate int GetAdapterFn(IntPtr self, out IntPtr adapter);
+    private delegate int GetAdapterFn(IntPtr self, out IntPtr adapter);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    delegate int GetDescFn(IntPtr self, IntPtr desc);
+    private delegate int GetDescFn(IntPtr self, IntPtr desc);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    delegate uint ReleaseFn(IntPtr self);
+    private delegate uint ReleaseFn(IntPtr self);
 
-    static T VTable<T>(IntPtr obj, int index) where T : Delegate
+    private static T VTable<T>(IntPtr obj, int index) where T : Delegate
         => Marshal.GetDelegateForFunctionPointer<T>(Marshal.ReadIntPtr(Marshal.ReadIntPtr(obj), index * IntPtr.Size));
 
     // True if device runs on a software adapter (WARP, vendor Microsoft 0x1414); name = adapter description.
-    static bool IsSoftwareAdapter(IntPtr device, out string name)
+    private static bool IsSoftwareAdapter(IntPtr device, out string name)
     {
         name = "unknown";
         var iidDxgiDevice = new Guid("54ec77fa-1377-44e6-8c32-88fd5f44c84c");
@@ -319,7 +319,7 @@ public static class QtTexturePerfTest
         }
     }
 
-    static double Ms(long a, long b) => (b - a) * 1000.0 / Stopwatch.Frequency;
-    static double Median(List<double> v) => v.OrderBy(x => x).ElementAt(v.Count / 2);
-    static double P95(List<double> v) => v.OrderBy(x => x).ElementAt((int)(v.Count * 0.95));
+    private static double Ms(long a, long b) => (b - a) * 1000.0 / Stopwatch.Frequency;
+    private static double Median(List<double> v) => v.OrderBy(x => x).ElementAt(v.Count / 2);
+    private static double P95(List<double> v) => v.OrderBy(x => x).ElementAt((int)(v.Count * 0.95));
 }

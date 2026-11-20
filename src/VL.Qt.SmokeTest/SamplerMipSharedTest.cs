@@ -17,10 +17,10 @@ public static class SamplerMipSharedTest
     [Ignore("NFX-02: refreshLayerRequests lets the last sampler overwrite the owner's mip request, the mip filter of the other sampler on the same element is lost (fails: mip on the higher binding b, plain a)")]
     public static void SamplerMipShared() => Scenario.Run(Run);
 
-    const float CellW = 150, CellH = 120;
+    private const float CellW = 150, CellH = 120;
 
     // Two sampler2D, bindings 1 and 2: `which` picks the one that is read (whichever order QtNative walks the samplers in).
-    const string Shader =
+    private const string Shader =
         "#version 440\n" +
         "layout(location = 0) in vec2 qt_TexCoord0;\n" +
         "layout(location = 0) out vec4 fragColor;\n" +
@@ -34,10 +34,10 @@ public static class SamplerMipSharedTest
         "}\n";
 
     // protocol.h "Sampler": filter (0 Linear, 1 Nearest), mip (0 None, 1 Nearest, 2 Linear), address U, V (0 Clamp, 1 Repeat, 2 Mirror)
-    static ulong S(int filter, int mip, int au, int av) =>
+    private static ulong S(int filter, int mip, int au, int av) =>
         (ulong)(uint)filter | (ulong)(uint)mip << 8 | (ulong)(uint)au << 16 | (ulong)(uint)av << 24;
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         Native.vlqt_res_create(Protocol.ResKind.Shader, out var shader);

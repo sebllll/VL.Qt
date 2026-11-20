@@ -19,7 +19,7 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Color4 Color, Vector2 Offset, float Blur, float Scale, bool AutoPadding = true, RectangleF Padding = default);
 
-        readonly EffectNode<Props> _node = new(static (previous, p) => new DropShadowEffect(previous, p.Color, p.Offset, p.Blur, p.Scale, p.AutoPadding, p.Padding));
+        private readonly EffectNode<Props> _node = new(static (previous, p) => new DropShadowEffect(previous, p.Color, p.Offset, p.Blur, p.Scale, p.AutoPadding, p.Padding));
 
         internal EffectNode<Props> Core => _node;
 

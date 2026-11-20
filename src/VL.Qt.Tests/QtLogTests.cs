@@ -13,9 +13,9 @@ namespace VL.Qt.Tests
     [NonParallelizable] // QtLog is process-wide
     public class QtLogTests
     {
-        sealed record Entry(string Category, LogLevel Level, string Message);
+        private sealed record Entry(string Category, LogLevel Level, string Message);
 
-        sealed class Factory : ILoggerFactory
+        private sealed class Factory : ILoggerFactory
         {
             public readonly List<Entry> Entries = new();
             public ILogger CreateLogger(string categoryName) => new Logger(this, categoryName);
@@ -23,10 +23,10 @@ namespace VL.Qt.Tests
             public void Dispose() { }
         }
 
-        sealed class Logger : ILogger
+        private sealed class Logger : ILogger
         {
-            readonly Factory _factory;
-            readonly string _category;
+            private readonly Factory _factory;
+            private readonly string _category;
             public Logger(Factory factory, string category) { _factory = factory; _category = category; }
             public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
             public bool IsEnabled(LogLevel logLevel) => true;

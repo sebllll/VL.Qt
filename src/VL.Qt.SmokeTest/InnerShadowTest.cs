@@ -19,14 +19,14 @@ public static class InnerShadowTest
     [Test, Category("innershadow")]
     public static void InnerShadow() => Scenario.Run(Run);
 
-    const uint Fx = 1, Src = 2, Rect = 3, Txt = 4;
-    const uint Down = 100, Up = 200; // + step k (Down + k is 1 / 2^k of the effect size)
-    const int Left = 300, Top = 240, Right = 500, Bottom = 360, Cy = 300; // the rectangle, DIP
+    private const uint Fx = 1, Src = 2, Rect = 3, Txt = 4;
+    private const uint Down = 100, Up = 200; // + step k (Down + k is 1 / 2^k of the effect size)
+    private const int Left = 300, Top = 240, Right = 500, Bottom = 360, Cy = 300; // the rectangle, DIP
 
-    static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
+    private static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
     // Shadow strength at (x, y) on the orange rectangle (R 255): mean red loss over (2 half + 1)^2 samples (1 DIP apart).
-    static float Shade(Bitmap a, int x, int y, int half = 2)
+    private static float Shade(Bitmap a, int x, int y, int half = 2)
     {
         float sum = 0;
         for (int dy = -half; dy <= half; dy++)
@@ -38,7 +38,7 @@ public static class InnerShadowTest
     // Shade d DIP inside the left / right / top / bottom edge of the rectangle, measured the same way on all four sides:
     // in device pixels, from the pixel at the edge (the first inside pixel is d = 0 on every side, so a fractional device
     // pixel ratio samples left and right alike), (2 half + 1)^2 pixels around the one d DIP inside.
-    static float ShadePx(Bitmap a, int cx, int cy, int half)
+    private static float ShadePx(Bitmap a, int cx, int cy, int half)
     {
         float sum = 0;
         for (int dy = -half; dy <= half; dy++)
@@ -46,18 +46,18 @@ public static class InnerShadowTest
                 sum += 255 - a.GetPixel(cx + dx, cy + dy).R;
         return sum / ((2 * half + 1) * (2 * half + 1));
     }
-    static int Dev(Bitmap a, int dip) => (int)MathF.Round(dip * a.Width / 800f);
-    static float EdgeL(Bitmap a, int d, int half = 2) => ShadePx(a, Dev(a, Left) + Dev(a, d), Dev(a, Cy), half);
-    static float EdgeR(Bitmap a, int d, int half = 2) => ShadePx(a, Dev(a, Right) - 1 - Dev(a, d), Dev(a, Cy), half);
-    static float EdgeT(Bitmap a, int d, int half = 2) => ShadePx(a, Dev(a, 400), Dev(a, Top) + Dev(a, d), half);
-    static float EdgeB(Bitmap a, int d, int half = 2) => ShadePx(a, Dev(a, 400), Dev(a, Bottom) - 1 - Dev(a, d), half);
+    private static int Dev(Bitmap a, int dip) => (int)MathF.Round(dip * a.Width / 800f);
+    private static float EdgeL(Bitmap a, int d, int half = 2) => ShadePx(a, Dev(a, Left) + Dev(a, d), Dev(a, Cy), half);
+    private static float EdgeR(Bitmap a, int d, int half = 2) => ShadePx(a, Dev(a, Right) - 1 - Dev(a, d), Dev(a, Cy), half);
+    private static float EdgeT(Bitmap a, int d, int half = 2) => ShadePx(a, Dev(a, 400), Dev(a, Top) + Dev(a, d), half);
+    private static float EdgeB(Bitmap a, int d, int half = 2) => ShadePx(a, Dev(a, 400), Dev(a, Bottom) - 1 - Dev(a, d), half);
 
     // Mirrored edges read alike: the passes sample on half-resolution texel centres, a shifted pass shows as one side
     // stronger than the other (the passes once ran at full size, 179 against 130 of 255 at radius 4).
-    static bool Symmetric(float a, float b) => Math.Abs(a - b) <= 0.08f * Math.Max(a, b) + 2;
+    private static bool Symmetric(float a, float b) => Math.Abs(a - b) <= 0.08f * Math.Max(a, b) + 2;
 
     // Sum of red over the text box (white text on #202020): drops as the shadow darkens the glyphs.
-    static long Ink(Bitmap a)
+    private static long Ink(Bitmap a)
     {
         long sum = 0;
         for (int y = 200 * a.Height / 600; y < 400 * a.Height / 600; y++)
@@ -93,13 +93,13 @@ public static class InnerShadowTest
     }
 
     // Pyramid step of a radius (DIP): sigma = radius / 2 in pixels; n steps down and up blur with sigma^2 = 7/6 (4^n - 1) px^2.
-    static float Level(float radius, float dpr)
+    private static float Level(float radius, float dpr)
     {
         var s = radius * dpr / 2;
         return 0.5f * MathF.Log2(1 + s * s * 6 / 7);
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         ulong Shader(string path)

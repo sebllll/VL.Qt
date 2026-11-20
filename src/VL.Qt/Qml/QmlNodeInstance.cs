@@ -32,36 +32,36 @@ namespace VL.Qt.Qml
     /// </summary>
     internal sealed class QmlNodeInstance : IDisposable
     {
-        readonly QmlElementNode _element;
-        readonly Path _file;
-        readonly InputSlot[] _slots;
-        readonly PropertyOutput[] _propertyOutputs;
-        readonly SignalOutput[] _signalOutputs;
+        private readonly QmlElementNode _element;
+        private readonly Path _file;
+        private readonly InputSlot[] _slots;
+        private readonly PropertyOutput[] _propertyOutputs;
+        private readonly SignalOutput[] _signalOutputs;
 
-        readonly ValuePin<Dictionary<string, object>?> _propertiesPin = new(null);
-        readonly ValuePin<Vector2> _size = new(new Vector2(1f, 1f));
-        readonly ValuePin<bool> _autoSize = new(true);
-        readonly ValuePin<Matrix> _transform = new(Matrix.Identity);
-        readonly ValuePin<RectangleAnchor> _anchor = new(RectangleAnchor.TopLeft);
-        readonly ValuePin<float> _opacity = new(1f);
-        readonly ValuePin<bool> _clip = new(false);
-        readonly ValuePin<bool> _debug = new(false);
-        readonly ValuePin<Interaction?> _interaction = new(null);
-        readonly ValuePin<Effect?> _effect = new(null);
+        private readonly ValuePin<Dictionary<string, object>?> _propertiesPin = new(null);
+        private readonly ValuePin<Vector2> _size = new(new Vector2(1f, 1f));
+        private readonly ValuePin<bool> _autoSize = new(true);
+        private readonly ValuePin<Matrix> _transform = new(Matrix.Identity);
+        private readonly ValuePin<RectangleAnchor> _anchor = new(RectangleAnchor.TopLeft);
+        private readonly ValuePin<float> _opacity = new(1f);
+        private readonly ValuePin<bool> _clip = new(false);
+        private readonly ValuePin<bool> _debug = new(false);
+        private readonly ValuePin<Interaction?> _interaction = new(null);
+        private readonly ValuePin<Effect?> _effect = new(null);
 
-        readonly ValuePin<Element?> _output = new(null);
-        readonly ValuePin<Vector2> _measuredSize = new(Vector2.Zero);
-        readonly ValuePin<RectangleF> _sceneBounds = new(RectangleF.Empty);
-        readonly ValuePin<string> _error = new(string.Empty);
+        private readonly ValuePin<Element?> _output = new(null);
+        private readonly ValuePin<Vector2> _measuredSize = new(Vector2.Zero);
+        private readonly ValuePin<RectangleF> _sceneBounds = new(RectangleF.Empty);
+        private readonly ValuePin<string> _error = new(string.Empty);
 
-        readonly IVLPin[] _inputs;
-        readonly IVLPin[] _outputs;
+        private readonly IVLPin[] _inputs;
+        private readonly IVLPin[] _outputs;
 
         // The dictionary handed to the element (reused), and the copy of the Properties input it was built from.
-        readonly Dictionary<string, object> _properties = new(StringComparer.Ordinal);
-        readonly Dictionary<string, object> _planB = new(StringComparer.Ordinal);
-        Dictionary<string, object>? _lastChanged;
-        bool _signalsEmpty = true;
+        private readonly Dictionary<string, object> _properties = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, object> _planB = new(StringComparer.Ordinal);
+        private Dictionary<string, object>? _lastChanged;
+        private bool _signalsEmpty = true;
 
         public QmlNodeInstance(NodeContext nodeContext, QmlNodeLayout layout)
             : this(new QmlElementNode(nodeContext), layout)
@@ -138,7 +138,7 @@ namespace VL.Qt.Qml
         }
 
         /// <summary>Copies the Properties input when its content differs from the last copy; true if it did.</summary>
-        bool UpdatePlanB()
+        private bool UpdatePlanB()
         {
             var source = _propertiesPin.Value;
             var count = source?.Count ?? 0;
@@ -165,7 +165,7 @@ namespace VL.Qt.Qml
             return true;
         }
 
-        void RebuildProperties()
+        private void RebuildProperties()
         {
             _properties.Clear();
             foreach (var (name, value) in _planB)
@@ -178,7 +178,7 @@ namespace VL.Qt.Qml
             }
         }
 
-        void UpdateSignals(Spread<QmlSignal> signals)
+        private void UpdateSignals(Spread<QmlSignal> signals)
         {
             if (signals.Count == 0)
             {
@@ -197,7 +197,7 @@ namespace VL.Qt.Qml
         public void Dispose() => _element.Dispose();
 
         /// <summary>Typed input pin of a property: the send rule of <see cref="QmlInputPin"/>.</summary>
-        abstract class InputSlot
+        private abstract class InputSlot
         {
             public string PropertyName { get; protected init; } = string.Empty;
             public bool IsSent { get; protected set; }
@@ -211,12 +211,12 @@ namespace VL.Qt.Qml
                 => (InputSlot)Activator.CreateInstance(typeof(InputSlot<>).MakeGenericType(pin.Property.ClrType), pin)!;
         }
 
-        sealed class InputSlot<T> : InputSlot
+        private sealed class InputSlot<T> : InputSlot
         {
-            readonly ValuePin<T> _pin;
-            readonly bool _alwaysSend;
-            readonly T _default;
-            T _last;
+            private readonly ValuePin<T> _pin;
+            private readonly bool _alwaysSend;
+            private readonly T _default;
+            private T _last;
 
             public InputSlot(QmlInputPin pin)
             {
@@ -250,7 +250,7 @@ namespace VL.Qt.Qml
         }
 
         /// <summary>Output pin of a property: the last value QML changed, else the declared default.</summary>
-        abstract class PropertyOutput
+        private abstract class PropertyOutput
         {
             public abstract IVLPin Pin { get; }
 
@@ -261,11 +261,11 @@ namespace VL.Qt.Qml
                 => (PropertyOutput)Activator.CreateInstance(typeof(PropertyOutput<>).MakeGenericType(pin.Property.ClrType), pin)!;
         }
 
-        sealed class PropertyOutput<T> : PropertyOutput
+        private sealed class PropertyOutput<T> : PropertyOutput
         {
-            readonly ValuePin<T> _pin;
-            readonly QmlPropertyDecl _property;
-            readonly T _default;
+            private readonly ValuePin<T> _pin;
+            private readonly QmlPropertyDecl _property;
+            private readonly T _default;
 
             public PropertyOutput(QmlOutputPin pin)
             {
@@ -281,7 +281,7 @@ namespace VL.Qt.Qml
         }
 
         /// <summary>Output pin of a signal, see <see cref="QmlTypes.SignalPinType"/>.</summary>
-        abstract class SignalOutput
+        private abstract class SignalOutput
         {
             public abstract IVLPin Pin { get; }
 
@@ -301,10 +301,10 @@ namespace VL.Qt.Qml
             };
         }
 
-        sealed class BangOutput : SignalOutput
+        private sealed class BangOutput : SignalOutput
         {
-            readonly ValuePin<bool> _pin = new(false);
-            readonly string _name;
+            private readonly ValuePin<bool> _pin = new(false);
+            private readonly string _name;
 
             public BangOutput(QmlSignalPin pin) => _name = pin.Signal.Name;
 
@@ -327,11 +327,11 @@ namespace VL.Qt.Qml
             }
         }
 
-        sealed class ValuesOutput<T> : SignalOutput
+        private sealed class ValuesOutput<T> : SignalOutput
         {
-            readonly ValuePin<Spread<T>> _pin = new(Spread<T>.Empty);
-            readonly string _name;
-            readonly QmlValueKind? _kind;
+            private readonly ValuePin<Spread<T>> _pin = new(Spread<T>.Empty);
+            private readonly string _name;
+            private readonly QmlValueKind? _kind;
 
             public ValuesOutput(QmlSignalPin pin, QmlValueKind? kind)
             {
@@ -365,10 +365,10 @@ namespace VL.Qt.Qml
             }
         }
 
-        sealed class SignalsOutput : SignalOutput
+        private sealed class SignalsOutput : SignalOutput
         {
-            readonly ValuePin<Spread<QmlSignal>> _pin = new(Spread<QmlSignal>.Empty);
-            readonly string _name;
+            private readonly ValuePin<Spread<QmlSignal>> _pin = new(Spread<QmlSignal>.Empty);
+            private readonly string _name;
 
             public SignalsOutput(QmlSignalPin pin) => _name = pin.Signal.Name;
 

@@ -22,11 +22,11 @@ public static class MultiPlacementTest
     [Test, Category("multiplacement")]
     public static void MultiPlacement() => Scenario.Run(Run);
 
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
-    static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
-    static bool IsBg(Color c) => Math.Abs(c.R - 0x20) < 8 && Math.Abs(c.G - 0x20) < 8 && Math.Abs(c.B - 0x20) < 8;
+    private static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
+    private static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
+    private static bool IsBg(Color c) => Math.Abs(c.R - 0x20) < 8 && Math.Abs(c.G - 0x20) < 8 && Math.Abs(c.B - 0x20) < 8;
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt multi placement test");
         s.Check(w != IntPtr.Zero, "window_create");
@@ -128,7 +128,7 @@ public static class MultiPlacementTest
         s.Pump(1);
     }
 
-    sealed class NoopDisposable : IDisposable
+    private sealed class NoopDisposable : IDisposable
     {
         public void Dispose() { }
     }

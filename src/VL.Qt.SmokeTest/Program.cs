@@ -8,12 +8,12 @@ using System.Linq;
 /// and a final <see cref="DoneLine"/>; exit code 0 if no check failed. Options come from the environment (SmokeParameters).
 /// The tests themselves run through `dotnet test` (NUnit), not through this entry point.
 /// </summary>
-static class Program
+internal static class Program
 {
     public const string DoneLine = "SMOKE-HELPER DONE";
 
     [STAThread] // like vvvv's main thread; Qt needs STA for OleInitialize
-    static int Main(string[] args)
+    private static int Main(string[] args)
     {
         var si = Array.IndexOf(args, "--scenario");
         if (si < 0 || si + 1 >= args.Length)

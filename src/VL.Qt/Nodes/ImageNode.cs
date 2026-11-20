@@ -21,7 +21,7 @@ namespace VL.Qt.Nodes
         // The image is compared by reference: a new QtImage is a new image (#362).
         internal readonly record struct Props(QtImage? Image, ImageFillMode FillMode, bool Smooth);
 
-        readonly ElementNode<Image, Props> _node;
+        private readonly ElementNode<Image, Props> _node;
 
         public ImageNode(NodeContext nodeContext)
             => _node = new ElementNode<Image, Props>(nodeContext, Create);
@@ -30,7 +30,7 @@ namespace VL.Qt.Nodes
         internal ImageNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Image, Props>(addWarning, Create);
 
-        static readonly Func<CommonInputs, Props, SinkSlot, Image> Create = static (c, p, slot) => new Image
+        private static readonly Func<CommonInputs, Props, SinkSlot, Image> Create = static (c, p, slot) => new Image
             {
                 Size = c.Size,
                 Transform = c.Transform,

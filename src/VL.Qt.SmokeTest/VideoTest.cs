@@ -22,11 +22,11 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class VideoTest
 {
-    const string AssetA = "testsrc_160x90_2s.mp4", AssetB = "testsrc_96x96_1s.mp4";
-    const uint VideoId = 1, ImageId = 2;
-    const uint Handle = 21;
+    private const string AssetA = "testsrc_160x90_2s.mp4", AssetB = "testsrc_96x96_1s.mp4";
+    private const uint VideoId = 1, ImageId = 2;
+    private const uint Handle = 21;
 
-    static string? FindAsset(string name)
+    private static string? FindAsset(string name)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
@@ -39,7 +39,7 @@ public static class VideoTest
 
 
     /// <summary>Number of differing pixels in the DIP region (8 px grid).</summary>
-    static int Diff(Bitmap a, Bitmap b, int x0, int y0, int x1, int y1)
+    private static int Diff(Bitmap a, Bitmap b, int x0, int y0, int x1, int y1)
     {
         int n = 0;
         for (int y = y0; y < y1; y += 8)
@@ -55,7 +55,7 @@ public static class VideoTest
     [Test, Category("video")]
     public static void Video() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         void gpu(bool ok, string what) => s.NeedsRhi(ok, what, "VideoOutput draws nothing");
         string? a = FindAsset(AssetA), b = FindAsset(AssetB);
@@ -346,10 +346,10 @@ public static class VideoTest
         RunNode(s, a, b);
     }
 
-    static IDisposable NoWarning(string _) => throw new InvalidOperationException("unexpected node warning");
+    private static IDisposable NoWarning(string _) => throw new InvalidOperationException("unexpected node warning");
 
     /// <summary>Video node → Reconciler → QtNative → poll → SinkRegistry → node outputs Position/Duration.</summary>
-    static void RunNode(Scenario s, string a, string b)
+    private static void RunNode(Scenario s, string a, string b)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt video node test");
         s.Check(w != IntPtr.Zero, "node: window_create");

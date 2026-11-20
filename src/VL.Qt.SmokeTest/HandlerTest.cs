@@ -64,7 +64,7 @@ public static partial class HandlerTest
     [Test, Category("input-latency")]
     public static void InputLatency() => Scenario.Run(RunInputLatency);
 
-    readonly record struct Rec(ushort Event, uint Handle, uint Index, byte[] Payload)
+    private readonly record struct Rec(ushort Event, uint Handle, uint Index, byte[] Payload)
     {
         public float F(int i) => BinaryPrimitives.ReadSingleLittleEndian(Payload.AsSpan(4 * i));
         public uint U32 => BinaryPrimitives.ReadUInt32LittleEndian(Payload);
@@ -72,7 +72,7 @@ public static partial class HandlerTest
     }
 
     // u16 event, u16 len, u32 handle, u32 index, payload, 4-aligned.
-    static List<Rec> Parse(ReadOnlySpan<byte> b, Scenario s)
+    private static List<Rec> Parse(ReadOnlySpan<byte> b, Scenario s)
     {
         var list = new List<Rec>();
         int off = 0;
@@ -88,11 +88,11 @@ public static partial class HandlerTest
         return list;
     }
 
-    static bool IsPointerEvent(ushort ev) => ev is Protocol.Ev.Hover or Protocol.Ev.Press or Protocol.Ev.Click or Protocol.Ev.Pointer
+    private static bool IsPointerEvent(ushort ev) => ev is Protocol.Ev.Hover or Protocol.Ev.Press or Protocol.Ev.Click or Protocol.Ev.Pointer
         or Protocol.Ev.TapCount or Protocol.Ev.LongPress or Protocol.Ev.Active or Protocol.Ev.Wheel or Protocol.Ev.Drag
         or Protocol.Ev.TouchPoints or Protocol.Ev.Pinch;
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt handler test");
         s.Check(w != IntPtr.Zero, "handlers: window_create");
@@ -295,7 +295,7 @@ public static partial class HandlerTest
     }
 
     // vlqt_test_send_touch: complete QTouchEvent per call; a touch tap on a Tap handler clicks.
-    static void RunTouch(Scenario s, IntPtr w, CommandWriter cmd, Func<List<Rec>> frame,
+    private static void RunTouch(Scenario s, IntPtr w, CommandWriter cmd, Func<List<Rec>> frame,
         Func<List<Rec>, ushort, uint, Rec?> find, Func<List<Rec>, string> str)
     {
         int Touch(int type, int id, float x, float y) => Native.vlqt_test_send_touch(w, type, id, x, y);
@@ -342,11 +342,11 @@ public static partial class HandlerTest
     }
 ﻿
     // One test window with the helpers of the #320 scenarios (tap, point, wheel).
-    sealed class Harness : IDisposable
+    private sealed class Harness : IDisposable
     {
-        readonly Scenario _s;
-        readonly string _tag;
-        readonly byte[] _buf = new byte[1 << 16];
+        private readonly Scenario _s;
+        private readonly string _tag;
+        private readonly byte[] _buf = new byte[1 << 16];
         public readonly IntPtr W;
         public readonly CommandWriter Cmd = new();
 
@@ -432,21 +432,21 @@ public static partial class HandlerTest
         }
     }
 
-    static Rec? FindRec(List<Rec> recs, ushort ev, uint handle)
+    private static Rec? FindRec(List<Rec> recs, ushort ev, uint handle)
     {
         foreach (var r in recs)
             if (r.Event == ev && r.Handle == handle) return r;
         return null;
     }
-    static bool HasFlag(List<Rec> recs, ushort ev, uint h, bool v) => FindRec(recs, ev, h) is { } r && r.Flag == v && r.Index == 0;
-    static bool HasU32(List<Rec> recs, ushort ev, uint h, uint v) => FindRec(recs, ev, h) is { } r && r.Payload.Length == 4 && r.U32 == v && r.Index == 0;
-    static bool HasVec(List<Rec> recs, ushort ev, uint h, float x, float y) => FindRec(recs, ev, h) is { } r && r.Payload.Length == 8
+    private static bool HasFlag(List<Rec> recs, ushort ev, uint h, bool v) => FindRec(recs, ev, h) is { } r && r.Flag == v && r.Index == 0;
+    private static bool HasU32(List<Rec> recs, ushort ev, uint h, uint v) => FindRec(recs, ev, h) is { } r && r.Payload.Length == 4 && r.U32 == v && r.Index == 0;
+    private static bool HasVec(List<Rec> recs, ushort ev, uint h, float x, float y) => FindRec(recs, ev, h) is { } r && r.Payload.Length == 8
         && r.Index == 0 && r.F(0) == x && r.F(1) == y;
-    static bool None(List<Rec> recs, uint h) => !recs.Exists(r => r.Handle == h);
-    static string Dump(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
+    private static bool None(List<Rec> recs, uint h) => !recs.Exists(r => r.Handle == h);
+    private static string Dump(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
 
     // Tap handler (#320): PRESS / CLICK / TAP_COUNT / LONG_PRESS, buttons, devices, touch, stacking, sink change, lifetime.
-    static void RunTap(Scenario s)
+    private static void RunTap(Scenario s)
     {
         using var h = new Harness("tap", s);
         // A (100..300) with tap TA, B (200..400) on top of A's right half with tap TB.
@@ -597,7 +597,7 @@ public static partial class HandlerTest
     }
 
     // Point handler (#320): ACTIVE + POINTER while pressed (mouse, touch), passive grab: clicks reach the Tap handler below.
-    static void RunPoint(Scenario s)
+    private static void RunPoint(Scenario s)
     {
         using var h = new Harness("point", s);
         const uint E = 1, P = 2, TE = 10, PP = 11;
@@ -752,7 +752,7 @@ public static partial class HandlerTest
 
     // Tap + Point at the same item (#320 manual test): both react to the same (default, left) button and to touch. Point
     // alone with the default buttons and with ACCEPTED_BUTTONS left set explicitly. Stacked: the top item still wins the click.
-    static void RunPointTap(Scenario s)
+    private static void RunPointTap(Scenario s)
     {
         using var h = new Harness("point-tap", s);
         // X: Tap (created first, like the chain Hover -> Click -> Point) + Point. Y: Point only. Z: Point, SET left.
@@ -868,7 +868,7 @@ public static partial class HandlerTest
     }
 
     // Wheel handler (#320): notches (angleDelta / 120) summed per poll, then once (0, 0); devices; sink change.
-    static void RunWheel(Scenario s)
+    private static void RunWheel(Scenario s)
     {
         using var h = new Harness("wheel", s);
         const uint R = 1, WR = 10;
@@ -927,20 +927,20 @@ public static partial class HandlerTest
         s.Check(HasVec(recs, Protocol.Ev.Wheel, SW, 0, 1), $"wheel: ACCEPTED_DEVICES mouse -> WHEEL (0, 1) ({Dump(recs)})");
     }
 
-    static bool Near(float a, float b) => Math.Abs(a - b) < 0.01f;
-    static bool At(Harness h, uint sink, float x, float y) => h.Bounds.TryGetValue(sink, out var b) && Near(b.X, x) && Near(b.Y, y);
-    static string Pos(Harness h, uint sink) => h.Bounds.TryGetValue(sink, out var b) ? $"{b.X}, {b.Y}, {b.W}, {b.H}" : "no bounds";
-    static bool HasDrag(List<Rec> recs, uint h, float x, float y) => FindRec(recs, Protocol.Ev.Drag, h) is { } r && r.Payload.Length == 8
+    private static bool Near(float a, float b) => Math.Abs(a - b) < 0.01f;
+    private static bool At(Harness h, uint sink, float x, float y) => h.Bounds.TryGetValue(sink, out var b) && Near(b.X, x) && Near(b.Y, y);
+    private static string Pos(Harness h, uint sink) => h.Bounds.TryGetValue(sink, out var b) ? $"{b.X}, {b.Y}, {b.W}, {b.H}" : "no bounds";
+    private static bool HasDrag(List<Rec> recs, uint h, float x, float y) => FindRec(recs, Protocol.Ev.Drag, h) is { } r && r.Payload.Length == 8
         && r.Index == 0 && Near(r.F(0), x) && Near(r.F(1), y);
 
     // Row-major like Stride: rotation by 90 degrees around z.
     // Rotation by 90 degrees around the center of the 100 x 100 rectangles R (150, 150) / R2 (450, 150), anchor Center (#469).
-    static readonly float[] s_rot90At150 = { 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 150, 150, 0, 1 };
-    static readonly float[] s_rot90At450 = { 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 450, 150, 0, 1 };
+    private static readonly float[] s_rot90At150 = { 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 150, 150, 0, 1 };
+    private static readonly float[] s_rot90At450 = { 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 450, 150, 0, 1 };
 
     // Drag handler (#209): offset in the item's transform, EV_ACTIVE / EV_DRAG, SET TRANSFORM resets (#469), mouse + touch,
     // TRANSFORM before/after, axis, limits, MOVES_ELEMENT off, property errors.
-    static void RunDrag(Scenario s)
+    private static void RunDrag(Scenario s)
     {
         using var h = new Harness("drag", s);
         const uint R = 1, R2 = 2, D = 10, D2 = 11;
@@ -1063,7 +1063,7 @@ public static partial class HandlerTest
     }
 
     // Drag of a Row child (#209): the child moves, its siblings stay, the layout keeps its place.
-    static void RunDragRow(Scenario s)
+    private static void RunDragRow(Scenario s)
     {
         using var h = new Harness("drag-row", s);
         const uint Row = 1, A = 2, B = 3, C = 4, D = 10;
@@ -1103,7 +1103,7 @@ public static partial class HandlerTest
 
     // Group drag (#209): the group moves as a whole (hit area = its size from the children); a child with its own drag
     // moves alone.
-    static void RunDragGroup(Scenario s)
+    private static void RunDragGroup(Scenario s)
     {
         using var h = new Harness("drag-group", s);
         const uint G = 1, A = 2, B = 3, DG = 10, DB = 11;
@@ -1140,7 +1140,7 @@ public static partial class HandlerTest
 
     // Nested drags (#209): the innermost wins (panel with a slider); a child limited to x lets a vertical drag through to
     // the parent's drag (Qt: more than 45 degrees off the enabled axis).
-    static void RunDragNested(Scenario s)
+    private static void RunDragNested(Scenario s)
     {
         using var h = new Harness("drag-nested", s);
         const uint P = 1, K = 2, DP = 10, DK = 11;

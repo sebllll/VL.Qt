@@ -21,9 +21,9 @@ namespace VL.Qt
     {
         public const string TraceEnvVar = "VLQT_TRACE_COMMANDS";
 
-        byte[] _buffer;
-        int _length;
-        int _count;
+        private byte[] _buffer;
+        private int _length;
+        private int _count;
 
         public CommandWriter(int initialCapacity = 4096)
         {
@@ -235,10 +235,10 @@ namespace VL.Qt
 
         // --- SET_STYLE (#292): u32 id, u16 count, u16 flags, entries (u16 field, u8 state, u8 valueType, value), each 4-byte aligned ---
 
-        const int StyleFieldsSize = 8; // u32 id, u16 count, u16 flags
-        const int StyleEntryHeaderSize = 4; // u16 field, u8 state, u8 valueType
-        int _styleStart = -1; // offset of the open SET_STYLE command, -1 = none
-        int _styleEntries;
+        private const int StyleFieldsSize = 8; // u32 id, u16 count, u16 flags
+        private const int StyleEntryHeaderSize = 4; // u16 field, u8 state, u8 valueType
+        private int _styleStart = -1; // offset of the open SET_STYLE command, -1 = none
+        private int _styleEntries;
 
         /// <summary>Starts a SET_STYLE; entries follow, <see cref="EndStyle"/> patches count and payload length.</summary>
         public void BeginStyle(uint id, ushort flags)
@@ -295,7 +295,7 @@ namespace VL.Qt
         }
 
         /// <summary>Appends one 4-byte aligned entry (zero padded) to the open SET_STYLE and returns the value span.</summary>
-        Span<byte> StyleEntry(ushort field, byte state, ushort valueType, int valueSize)
+        private Span<byte> StyleEntry(ushort field, byte state, ushort valueType, int valueSize)
         {
             if (_styleStart < 0)
                 throw new InvalidOperationException("Style entry without BeginStyle.");
@@ -313,9 +313,9 @@ namespace VL.Qt
 
         // --- SET_UNIFORMS (#437): u32 id, u16 count, u16 flags, entries (u16 valueType, u16 nameLen, name, pad 4, value, pad 4) ---
 
-        const int UniformFieldsSize = 8; // u32 id, u16 count, u16 flags
-        int _uniformsStart = -1; // offset of the open SET_UNIFORMS command, -1 = none
-        int _uniformEntries;
+        private const int UniformFieldsSize = 8; // u32 id, u16 count, u16 flags
+        private int _uniformsStart = -1; // offset of the open SET_UNIFORMS command, -1 = none
+        private int _uniformEntries;
 
         /// <summary>Starts a SET_UNIFORMS; entries follow, <see cref="EndUniforms"/> patches count and payload length.</summary>
         public void BeginUniforms(uint id, ushort flags) => BeginEntries(Protocol.Op.SetUniforms, id, flags);
@@ -329,7 +329,7 @@ namespace VL.Qt
         /// <summary>Closes the SET_QML_PROPERTIES started by <see cref="BeginQmlProperties"/> (entry count, payload length).</summary>
         public void EndQmlProperties() => EndUniforms();
 
-        void BeginEntries(ushort op, uint id, ushort flags)
+        private void BeginEntries(ushort op, uint id, ushort flags)
         {
             if (_uniformsStart >= 0)
                 throw new InvalidOperationException("SET_UNIFORMS or SET_QML_PROPERTIES already open, call EndUniforms first.");
@@ -428,7 +428,7 @@ namespace VL.Qt
         /// Appends one entry (name and value each 4-byte aligned, zero padded) to the open SET_UNIFORMS or the open shader
         /// link of a SET_EFFECT_CHAIN and returns the value span.
         /// </summary>
-        Span<byte> UniformEntry(ReadOnlySpan<char> name, ushort valueType, int valueSize)
+        private Span<byte> UniformEntry(ReadOnlySpan<char> name, ushort valueType, int valueSize)
         {
             var inLink = _uniformsStart < 0;
             if (inLink && _linkKind != Protocol.EffectLink.Shader)
@@ -454,14 +454,14 @@ namespace VL.Qt
 
         // --- SET_EFFECT_CHAIN (#489): u32 id, u16 linkCount, u16 flags, links (u16 kind, u16 count, u32 bodyLen, body) ---
 
-        const int ChainFieldsSize = 8; // u32 id, u16 linkCount, u16 flags
-        const int LinkHeaderSize = 8; // u16 kind, u16 count, u32 bodyLen
-        const int ShaderLinkFixedSize = 4 + 24; // u16 template, u16 shaderCount | 4 x f32 padding, f32 strength, u16 nameLen, u16 0
-        int _chainStart = -1; // offset of the open SET_EFFECT_CHAIN command, -1 = none
-        int _chainLinks;
-        int _linkStart = -1; // offset of the open link header, -1 = none
-        ushort _linkKind; // kind of the open link, 0 = none
-        int _linkEntries;
+        private const int ChainFieldsSize = 8; // u32 id, u16 linkCount, u16 flags
+        private const int LinkHeaderSize = 8; // u16 kind, u16 count, u32 bodyLen
+        private const int ShaderLinkFixedSize = 4 + 24; // u16 template, u16 shaderCount | 4 x f32 padding, f32 strength, u16 nameLen, u16 0
+        private int _chainStart = -1; // offset of the open SET_EFFECT_CHAIN command, -1 = none
+        private int _chainLinks;
+        private int _linkStart = -1; // offset of the open link header, -1 = none
+        private ushort _linkKind; // kind of the open link, 0 = none
+        private int _linkEntries;
 
         /// <summary>Starts a SET_EFFECT_CHAIN; links follow, <see cref="EndEffectChain"/> patches count and payload length.</summary>
         public void BeginEffectChain(uint id)
@@ -547,7 +547,7 @@ namespace VL.Qt
         }
 
         /// <summary>Appends a link header plus a zeroed head of <paramref name="headSize"/> bytes (multiple of 4) and returns the head.</summary>
-        Span<byte> BeginLink(ushort kind, int headSize)
+        private Span<byte> BeginLink(ushort kind, int headSize)
         {
             if (_chainStart < 0)
                 throw new InvalidOperationException("Effect link without BeginEffectChain.");
@@ -566,7 +566,7 @@ namespace VL.Qt
         }
 
         /// <summary>Appends one MULTI entry (u16 prop, u16 value type, value, zero padded to 4) and returns the value span.</summary>
-        Span<byte> EffectEntry(ushort prop, ushort valueType, int valueSize)
+        private Span<byte> EffectEntry(ushort prop, ushort valueType, int valueSize)
         {
             if (_linkKind != Protocol.EffectLink.Multi)
                 throw new InvalidOperationException("Effect entry without BeginMultiLink.");
@@ -586,7 +586,7 @@ namespace VL.Qt
         /// <summary>Largest payload a single command can carry (u16 payloadLen).</summary>
         public const int MaxPayload = ushort.MaxValue;
 
-        Span<byte> BeginSet(uint id, ushort prop, ushort valueType, int valueSize)
+        private Span<byte> BeginSet(uint id, ushort prop, ushort valueType, int valueSize)
         {
             var p = Begin(Protocol.Op.Set, Protocol.SetFieldsSize + valueSize);
             WriteU32(p, id);
@@ -596,7 +596,7 @@ namespace VL.Qt
         }
 
         /// <summary>Writes the header, reserves payload + padding (zeroed) and returns the payload span.</summary>
-        Span<byte> Begin(ushort op, int payloadLen)
+        private Span<byte> Begin(ushort op, int payloadLen)
         {
             if ((uint)payloadLen > MaxPayload)
                 throw new ArgumentOutOfRangeException(nameof(payloadLen), payloadLen, $"Command payload exceeds {MaxPayload} bytes (op {op}).");
@@ -613,9 +613,9 @@ namespace VL.Qt
             return cmd.Slice(Protocol.HeaderSize, payloadLen);
         }
 
-        static int Align(int n) => (n + (Protocol.CommandAlign - 1)) & ~(Protocol.CommandAlign - 1);
+        private static int Align(int n) => (n + (Protocol.CommandAlign - 1)) & ~(Protocol.CommandAlign - 1);
 
-        void EnsureCapacity(int required)
+        private void EnsureCapacity(int required)
         {
             if (required <= _buffer.Length)
                 return;
@@ -623,11 +623,11 @@ namespace VL.Qt
             Array.Resize(ref _buffer, newSize);
         }
 
-        static void WriteU16(Span<byte> s, ushort v) => BinaryPrimitives.WriteUInt16LittleEndian(s, v);
-        static void WriteU32(Span<byte> s, uint v) => BinaryPrimitives.WriteUInt32LittleEndian(s, v);
-        static void WriteF32(Span<byte> s, float v) => BinaryPrimitives.WriteSingleLittleEndian(s, v);
+        private static void WriteU16(Span<byte> s, ushort v) => BinaryPrimitives.WriteUInt16LittleEndian(s, v);
+        private static void WriteU32(Span<byte> s, uint v) => BinaryPrimitives.WriteUInt32LittleEndian(s, v);
+        private static void WriteF32(Span<byte> s, float v) => BinaryPrimitives.WriteSingleLittleEndian(s, v);
 
-        static void WriteF32x4(Span<byte> s, float a, float b, float c, float d)
+        private static void WriteF32x4(Span<byte> s, float a, float b, float c, float d)
         {
             WriteF32(s, a);
             WriteF32(s.Slice(4), b);
@@ -636,16 +636,16 @@ namespace VL.Qt
         }
 
         /// <summary>Process-wide trace file shared by all writers (frames of all windows in call order).</summary>
-        static class Trace
+        private static class Trace
         {
             public static readonly bool Enabled = IsEnabled(Environment.GetEnvironmentVariable(TraceEnvVar));
-            static readonly object s_lock = new();
-            static FileStream? s_stream;
-            static bool s_failed;
+            private static readonly object s_lock = new();
+            private static FileStream? s_stream;
+            private static bool s_failed;
 
             public static string FilePath => Path.Combine(Path.GetTempPath(), $"vlqt-trace-{Environment.ProcessId}.bin");
 
-            static bool IsEnabled(string? v) => !string.IsNullOrEmpty(v) && v != "0";
+            private static bool IsEnabled(string? v) => !string.IsNullOrEmpty(v) && v != "0";
 
             public static void Write(ReadOnlySpan<byte> frame)
             {

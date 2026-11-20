@@ -30,7 +30,7 @@ namespace VL.Qt.Elements
     /// </summary>
     internal sealed class SinkRegistry
     {
-        readonly struct Binding
+        private readonly struct Binding
         {
             public Binding(SinkSlot slot, bool primary)
             {
@@ -42,8 +42,8 @@ namespace VL.Qt.Elements
             public bool Primary { get; }
         }
 
-        readonly Dictionary<uint, Binding> _slots = new();
-        uint _last;
+        private readonly Dictionary<uint, Binding> _slots = new();
+        private uint _last;
 
         /// <summary>Number of live handles.</summary>
         public int Count => _slots.Count;
@@ -88,7 +88,7 @@ namespace VL.Qt.Elements
                 ResetPointerState(b.Slot);
         }
 
-        static void ResetPointerState(SinkSlot slot)
+        private static void ResetPointerState(SinkSlot slot)
         {
             if (slot.Sink!.TryGet(slot.Index, out var state))
             {
@@ -158,24 +158,24 @@ namespace VL.Qt.Elements
         }
 
         /// <summary>Events that report the state of an element (only the primary occurrence writes them).</summary>
-        static bool IsState(ushort ev)
+        private static bool IsState(ushort ev)
             => ev == Protocol.Ev.Measured || ev == Protocol.Ev.SceneBounds || ev == Protocol.Ev.Media || ev == Protocol.Ev.Error;
 
-        static bool Target(SinkSlot slot, uint offset, out int index)
+        private static bool Target(SinkSlot slot, uint offset, out int index)
         {
             long target = slot.Index + (long)offset;
             index = (int)target;
             return offset <= MaxIndexOffset && target <= int.MaxValue;
         }
 
-        static float ReadF32(ReadOnlySpan<byte> p, int offset)
+        private static float ReadF32(ReadOnlySpan<byte> p, int offset)
             => System.Buffers.Binary.BinaryPrimitives.ReadSingleLittleEndian(p.Slice(offset));
 
-        const int touchPointSize = 24;
-        const int maxTouchPoints = 64;
+        private const int touchPointSize = 24;
+        private const int maxTouchPoints = 64;
 
         /// <summary>EV_TOUCH_POINTS: u32 count, then per point id, x, y, pressure, w, h. Sent on change only, so allocating is fine.</summary>
-        static bool ApplyTouchPoints(ReadOnlySpan<byte> payload, SinkState state, in SpaceMapping mapping)
+        private static bool ApplyTouchPoints(ReadOnlySpan<byte> payload, SinkState state, in SpaceMapping mapping)
         {
             if (payload.Length < 4)
                 return false;
@@ -210,7 +210,7 @@ namespace VL.Qt.Elements
         /// EV_VALUE: u16 value type, u16 0, then the value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8).
         /// Sent only after a user change, so allocating the string is fine. Keeps the last change until it is taken.
         /// </summary>
-        static bool ApplyValue(ReadOnlySpan<byte> payload, ElementSink sink, int index)
+        private static bool ApplyValue(ReadOnlySpan<byte> payload, ElementSink sink, int index)
         {
             if (payload.Length < 4)
                 return false;
@@ -247,7 +247,7 @@ namespace VL.Qt.Elements
         }
 
         /// <summary>Validates the record first, so ignored records do not grow the sink's slot list.</summary>
-        static bool Apply(ref EventReader r, ElementSink sink, int index, in SpaceMapping mapping)
+        private static bool Apply(ref EventReader r, ElementSink sink, int index, in SpaceMapping mapping)
         {
             int len = r.Payload.Length;
             switch (r.Event)

@@ -14,17 +14,17 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "VideoSourceToQtImage", Category = Categories.Qt)]
     public sealed class VideoSourceToQtImageNode : IDisposable
     {
-        readonly ResourceClient _client;
-        readonly ImageNodeReport _report;
-        readonly VideoPlaybackContext _ctx;
-        IVideoSource? _source;
-        int _ticket;
-        bool _preferPush;
-        VideoFrameStream? _stream;
-        ImageResource? _resource;
-        QtImage? _image;
-        bool _hasFrame;
-        string _error = string.Empty;
+        private readonly ResourceClient _client;
+        private readonly ImageNodeReport _report;
+        private readonly VideoPlaybackContext _ctx;
+        private IVideoSource? _source;
+        private int _ticket;
+        private bool _preferPush;
+        private VideoFrameStream? _stream;
+        private ImageResource? _resource;
+        private QtImage? _image;
+        private bool _hasFrame;
+        private string _error = string.Empty;
 
         public VideoSourceToQtImageNode(NodeContext nodeContext)
         {
@@ -78,9 +78,9 @@ namespace VL.Qt.Nodes
             return output;
         }
 
-        static int GetChangedTicket(IVideoSource? source) => source is IVideoSource2 source2 ? source2.ChangedTicket : 0;
+        private static int GetChangedTicket(IVideoSource? source) => source is IVideoSource2 source2 ? source2.ChangedTicket : 0;
 
-        void Restart()
+        private void Restart()
         {
             // Stop the old stream and release its frames; the resource stays for the next source.
             _stream?.Dispose();
@@ -93,7 +93,7 @@ namespace VL.Qt.Nodes
                 _stream = new VideoFrameStream(_source, _ctx, _preferPush);
         }
 
-        void Upload(VideoFrame? frame)
+        private void Upload(VideoFrame? frame)
         {
             if (frame is null)
                 return;

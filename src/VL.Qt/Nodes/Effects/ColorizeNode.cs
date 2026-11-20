@@ -17,7 +17,7 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Color4 Color, float Amount);
 
-        readonly EffectNode<Props> _node = new(static (previous, p) => new ColorizeEffect(previous, p.Color, p.Amount));
+        private readonly EffectNode<Props> _node = new(static (previous, p) => new ColorizeEffect(previous, p.Color, p.Amount));
 
         internal EffectNode<Props> Core => _node;
 

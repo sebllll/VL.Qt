@@ -8,14 +8,14 @@ namespace VL.Qt.Tests.Paths
 {
     public class ArcGeometryTests
     {
-        const double maxRadialError = 0.0003; // 0.03 % of the radius
-        const int samplesPerCubic = 64;
+        private const double maxRadialError = 0.0003; // 0.03 % of the radius
+        private const int samplesPerCubic = 64;
 
         // Ellipse in its own frame: center, radii, rotation. Radial error is measured in the unit circle of that frame,
         // so it is relative to the radius for circles and ellipses alike.
-        readonly record struct Ell(double Cx, double Cy, double Rx, double Ry, double Rot = 0);
+        private readonly record struct Ell(double Cx, double Cy, double Rx, double Ry, double Rot = 0);
 
-        static double Radial(Ell e, double x, double y)
+        private static double Radial(Ell e, double x, double y)
         {
             double dx = x - e.Cx, dy = y - e.Cy;
             var c = Math.Cos(e.Rot);
@@ -26,7 +26,7 @@ namespace VL.Qt.Tests.Paths
         }
 
         // Exact cubic segments of a path: start point and 3 points each.
-        static List<(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3)> Cubics(QtPath path)
+        private static List<(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3)> Cubics(QtPath path)
         {
             var flat = path.Flatten();
             var result = new List<(Vector2, Vector2, Vector2, Vector2)>();
@@ -60,7 +60,7 @@ namespace VL.Qt.Tests.Paths
             return result;
         }
 
-        static Vector2 At((Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3) c, double t)
+        private static Vector2 At((Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3) c, double t)
         {
             var u = 1 - t;
             var x = u * u * u * c.p0.X + 3 * u * u * t * c.p1.X + 3 * u * t * t * c.p2.X + t * t * t * c.p3.X;
@@ -68,7 +68,7 @@ namespace VL.Qt.Tests.Paths
             return new Vector2((float)x, (float)y);
         }
 
-        static double MaxError(QtPath path, Ell e)
+        private static double MaxError(QtPath path, Ell e)
         {
             var max = 0.0;
             foreach (var c in Cubics(path))
@@ -81,17 +81,17 @@ namespace VL.Qt.Tests.Paths
             return max;
         }
 
-        static Vector2 LastPoint(QtPath path)
+        private static Vector2 LastPoint(QtPath path)
         {
             var flat = path.Flatten();
             var n = flat.Points.Length;
             return new Vector2(flat.Points[n - 2], flat.Points[n - 1]);
         }
 
-        static void AssertVerbs(byte[] expected, System.Collections.Immutable.ImmutableArray<byte> actual) =>
+        private static void AssertVerbs(byte[] expected, System.Collections.Immutable.ImmutableArray<byte> actual) =>
             Assert.That(System.Linq.Enumerable.ToArray(actual), Is.EqualTo(expected));
 
-        static int CubicCount(QtPath path)
+        private static int CubicCount(QtPath path)
         {
             var n = 0;
             foreach (var v in path.Flatten().Verbs)
@@ -100,13 +100,13 @@ namespace VL.Qt.Tests.Paths
             return n;
         }
 
-        static void AssertFinite(QtPath path)
+        private static void AssertFinite(QtPath path)
         {
             foreach (var f in path.Flatten().Points)
                 Assert.That(float.IsFinite(f), Is.True);
         }
 
-        static readonly RectangleF Circle10 = new RectangleF(-10, -10, 20, 20);
+        private static readonly RectangleF Circle10 = new RectangleF(-10, -10, 20, 20);
 
         [TestCase(0f, 0.25f, 1)]
         [TestCase(0.1f, 0.25f, 1)]

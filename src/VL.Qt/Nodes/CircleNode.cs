@@ -18,7 +18,7 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Circle", Category = Categories.Elements)]
     public sealed class CircleNode : IDisposable
     {
-        readonly ElementNode<Rectangle, RectangleNode.Props> _node;
+        private readonly ElementNode<Rectangle, RectangleNode.Props> _node;
 
         public CircleNode(NodeContext nodeContext)
             => _node = new ElementNode<Rectangle, RectangleNode.Props>(nodeContext, RectangleNode.Create);

@@ -13,9 +13,9 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "LineTo", Category = Categories.Paths)]
     public sealed class LineToNode
     {
-        QtPath? _input;
-        Vector2 _point;
-        QtPath? _output;
+        private QtPath? _input;
+        private Vector2 _point;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a line to the point added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -39,9 +39,9 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "LineTo (Relative)", Category = Categories.Paths)]
     public sealed class LineToRelativeNode
     {
-        QtPath? _input;
-        Vector2 _point;
-        QtPath? _output;
+        private QtPath? _input;
+        private Vector2 _point;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a line to the last point plus the offset added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>

@@ -13,8 +13,8 @@ namespace VL.Qt.Paths
     /// </summary>
     internal static class ArcGeometry
     {
-        const double quarterTurn = Math.PI / 2;
-        const double cycle = 2 * Math.PI;
+        private const double quarterTurn = Math.PI / 2;
+        private const double cycle = 2 * Math.PI;
 
         /// <summary>
         /// Skia <c>ArcTo (Oval)</c>: the arc of <paramref name="oval"/> from <paramref name="startAngle"/> for
@@ -202,7 +202,7 @@ namespace VL.Qt.Paths
             return Emit(path, cx, cy, radius, radius, 1, 0, a0, dt, true, t1x, t1y);
         }
 
-        static (double cx, double cy, double rx, double ry) Center(RectangleF oval) =>
+        private static (double cx, double cy, double rx, double ry) Center(RectangleF oval) =>
             (oval.X + oval.Width / 2.0, oval.Y + oval.Height / 2.0, Math.Abs(oval.Width) / 2.0, Math.Abs(oval.Height) / 2.0);
 
         /// <summary>
@@ -210,7 +210,7 @@ namespace VL.Qt.Paths
         /// from the parameter angle t0 (radians) for dt. The current point must be the start of the arc. With
         /// <paramref name="snapEnd"/> the last point is exactly (ex, ey), so a chain does not drift.
         /// </summary>
-        static QtPath Emit(QtPath path, double cx, double cy, double rx, double ry, double cosPhi, double sinPhi,
+        private static QtPath Emit(QtPath path, double cx, double cy, double rx, double ry, double cosPhi, double sinPhi,
             double t0, double dt, bool snapEnd, double ex, double ey)
         {
             if (dt == 0)

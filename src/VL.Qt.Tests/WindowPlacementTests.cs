@@ -46,7 +46,7 @@ namespace VL.Qt.Tests
             Assert.That(new RectangleF(parts[0], parts[1], parts[2], parts[3]), Is.EqualTo(WindowPlacement.DefaultBounds));
         }
 
-        static byte[] Record(ushort ev, uint handle, float x, float y, float w, float h, uint flags, float cx = 0, float cy = 0)
+        private static byte[] Record(ushort ev, uint handle, float x, float y, float w, float h, uint flags, float cx = 0, float cy = 0)
         {
             var b = new byte[Protocol.HeaderSize + EventReader.RecordFieldsSize + 28];
             BinaryPrimitives.WriteUInt16LittleEndian(b, ev);
@@ -84,9 +84,9 @@ namespace VL.Qt.Tests
         }
 
         // Save Bounds (#143): debounce 0.5 s, only normal geometry, whole DIP, nothing while equal to the pin value.
-        static readonly RectangleF Pin = new(1000, 40, 786, 432);
-        static WindowGeometry Normal(float x, float y, float w, float h) => new(new RectangleF(x, y, w, h), WindowStates.Visible);
-        static TimeSpan S(double s) => TimeSpan.FromSeconds(s);
+        private static readonly RectangleF Pin = new(1000, 40, 786, 432);
+        private static WindowGeometry Normal(float x, float y, float w, float h) => new(new RectangleF(x, y, w, h), WindowStates.Visible);
+        private static TimeSpan S(double s) => TimeSpan.FromSeconds(s);
 
         [Test]
         public void SaveBounds_InitialReportEqualToPin_WritesNothing()
@@ -146,7 +146,7 @@ namespace VL.Qt.Tests
         }
     }
 
-    static class ByteArrayExtensions
+    internal static class ByteArrayExtensions
     {
         public static byte[] Concat(this byte[] a, byte[] b)
         {

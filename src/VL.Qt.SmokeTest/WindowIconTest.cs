@@ -14,11 +14,11 @@ public static class WindowIconTest
     [Test, Category("window-icon")]
     public static void WindowIcon() => Scenario.Run(Run);
 
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindow(string? cls, string title);
-    [DllImport("user32.dll")] static extern IntPtr SendMessage(IntPtr h, uint msg, IntPtr wParam, IntPtr lParam);
-    const uint WM_GETICON = 0x007F;
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr FindWindow(string? cls, string title);
+    [DllImport("user32.dll")] private static extern IntPtr SendMessage(IntPtr h, uint msg, IntPtr wParam, IntPtr lParam);
+    private const uint WM_GETICON = 0x007F;
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         const string title = "VL.Qt window icon test";
         var w = Native.vlqt_window_create(400, 300, title);

@@ -8,11 +8,11 @@ namespace VL.Qt.Tests
     /// <summary>Shader node factory (#488): reflection text parser, annotations, pin rules. No QtNative needed.</summary>
     public class ShaderPinModelTests
     {
-        const string head = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\n";
+        private const string head = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\n";
 
-        static ShaderReflection R(string body) => ShaderReflection.Parse(head + body);
+        private static ShaderReflection R(string body) => ShaderReflection.Parse(head + body);
 
-        static ShaderPinModel Build(string fragReflection, string fragSource, string? vertReflection = null, string? vertSource = null) =>
+        private static ShaderPinModel Build(string fragReflection, string fragSource, string? vertReflection = null, string? vertSource = null) =>
             ShaderPinModel.Build(
                 "Test",
                 R(fragReflection),
@@ -151,7 +151,7 @@ void main() {
 
         // --- pin model ---
 
-        const string blockStart = "#version 440\nlayout(std140, binding = 0) uniform buf {\n    mat4 qt_Matrix;\n    float qt_Opacity;\n";
+        private const string blockStart = "#version 440\nlayout(std140, binding = 0) uniform buf {\n    mat4 qt_Matrix;\n    float qt_Opacity;\n";
 
         [Test]
         public void Pins_FiltersQtAndSource_SetsHasInput()

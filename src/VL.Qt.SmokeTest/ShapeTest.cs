@@ -10,17 +10,17 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class ShapeTest
 {
-    static System.Drawing.Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
-    static bool Near(System.Drawing.Color c, int r, int g, int b) => Math.Abs(c.R - r) < 12 && Math.Abs(c.G - g) < 12 && Math.Abs(c.B - b) < 12;
-    static bool IsBg(System.Drawing.Color c) => Near(c, 0x20, 0x20, 0x20);
+    private static System.Drawing.Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
+    private static bool Near(System.Drawing.Color c, int r, int g, int b) => Math.Abs(c.R - r) < 12 && Math.Abs(c.G - g) < 12 && Math.Abs(c.B - b) < 12;
+    private static bool IsBg(System.Drawing.Color c) => Near(c, 0x20, 0x20, 0x20);
 
-    const uint Polyline = 1, Polygon = 2, Cubic = 3, Trimmed = 4, Dashed = 5, Rect = 6;
+    private const uint Polyline = 1, Polygon = 2, Cubic = 3, Trimmed = 4, Dashed = 5, Rect = 6;
 
     /// <summary>Shape elements.</summary>
     [Test, Category("shapes")]
     public static void Shapes() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt shapes test");
         s.Check(w != IntPtr.Zero, "shapes: window_create");

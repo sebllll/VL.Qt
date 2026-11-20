@@ -19,19 +19,19 @@ namespace VL.Qt.Audio.Tests
     public sealed class VideoAudioNodePinTests
     {
         // The only pins the audio variant has on top of Video.
-        static readonly string[] s_extraPins = { "audioOffset", "audio", "syncError" };
+        private static readonly string[] s_extraPins = { "audioOffset", "audio", "syncError" };
 
         // Differences allowed besides the extra pins, as "<pin>: <what>". Empty today. The Decided lines of C2/O3 give both
         // nodes `Enabled` and `FillMode` later; if that lands in one node first, list the difference here and let the
         // issue of C2/O3 delete the list.
-        static readonly string[] s_allowedDifferences = Array.Empty<string>();
+        private static readonly string[] s_allowedDifferences = Array.Empty<string>();
 
-        sealed record PinInfo(string Name, Type Type, object? Default, Type? DefaultType, PinVisibility Visibility)
+        private sealed record PinInfo(string Name, Type Type, object? Default, Type? DefaultType, PinVisibility Visibility)
         {
             public override string ToString() => $"{Name}: {Type.Name} default={Default ?? "none"} {Visibility}";
         }
 
-        static List<PinInfo> PinsOf(Type node)
+        private static List<PinInfo> PinsOf(Type node)
         {
             var update = node.GetMethod("Update", BindingFlags.Public | BindingFlags.Instance)!;
             return update.GetParameters().Select(p =>
@@ -45,7 +45,7 @@ namespace VL.Qt.Audio.Tests
         }
 
         // DefaultValue(typeof(T), "text") keeps the value as string; its type is part of the pin.
-        static Type? DefaultTypeOf(DefaultValueAttribute a) => a.Value?.GetType();
+        private static Type? DefaultTypeOf(DefaultValueAttribute a) => a.Value?.GetType();
 
         [Test]
         public void VideoPinsAppearInVideoAudioInTheSameOrder()

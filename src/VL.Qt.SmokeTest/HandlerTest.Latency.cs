@@ -13,12 +13,12 @@ using VL.Qt;
 // render in the delivery, a window destroyed or created between two frames.
 public static partial class HandlerTest
 {
-    sealed class LatencyClock : IFrameClock
+    private sealed class LatencyClock : IFrameClock
     {
         public readonly Subject<FrameFinishedMessage> Finished = new();
         public readonly Subject<FrameTimeMessage> Ticks = new();
-        double _t = 20_000; // later than the driver times of the earlier scenarios
-        ulong _n;
+        private double _t = 20_000; // later than the driver times of the earlier scenarios
+        private ulong _n;
         public Time Time => new(_t);
         public double TimeDifference => 1.0 / 60;
         public IObservable<FrameTimeMessage> GetTicks() => Ticks;
@@ -31,7 +31,7 @@ public static partial class HandlerTest
         }
     }
 
-    sealed class LatencyLogger : ILogger
+    private sealed class LatencyLogger : ILogger
     {
         public readonly List<string> Errors = new();
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
@@ -43,10 +43,10 @@ public static partial class HandlerTest
     }
 
     // A renderer of the pump: the polled pointer records stand for the sinks the element nodes read in their update.
-    sealed class LatencyWindow : IQtFrameParticipant
+    private sealed class LatencyWindow : IQtFrameParticipant
     {
-        readonly byte[] _buf = new byte[1 << 16];
-        readonly Scenario _s;
+        private readonly byte[] _buf = new byte[1 << 16];
+        private readonly Scenario _s;
         public readonly IntPtr W;
         public readonly List<Rec> Sinks = new(); // since the last Clear (one measurement)
         public readonly List<Rec> All = new();   // the whole run (pairs, duplicates)
@@ -65,7 +65,7 @@ public static partial class HandlerTest
         public void AfterEvents() => Poll();
         public void PollInput() => Poll();
 
-        void Poll()
+        private void Poll()
         {
             if (Destroyed)
                 return;
@@ -84,7 +84,7 @@ public static partial class HandlerTest
         }
     }
 
-    static void RunInputLatency(Scenario s)
+    private static void RunInputLatency(Scenario s)
     {
         var log = new LatencyLogger();
         var app = QtApp.CreateForTest(log);
@@ -106,7 +106,7 @@ public static partial class HandlerTest
     }
 
     // Latencies in frames of: mouse press, mouse release, two fingers down, finger 1 moves, both fingers up.
-    static int[] MeasureLatency(QtApp app, Scenario s, bool atFrameStart, out List<Rec> records)
+    private static int[] MeasureLatency(QtApp app, Scenario s, bool atFrameStart, out List<Rec> records)
     {
         var tag = atFrameStart ? "now" : "before";
         var clock = new LatencyClock();
@@ -181,14 +181,14 @@ public static partial class HandlerTest
         return lat;
     }
 
-    static void Frame(LatencyClock clock)
+    private static void Frame(LatencyClock clock)
     {
         clock.Frame();
         PumpTest.ForeignMessageLoop(2);
     }
 
     // Lifecycle: a window destroyed with queued input, a renderer without window, a window created between two frames.
-    static void LatencyLifecycle(QtApp app, Scenario s)
+    private static void LatencyLifecycle(QtApp app, Scenario s)
     {
         var clock = new LatencyClock();
         var pump = new QtPump(app, clock);

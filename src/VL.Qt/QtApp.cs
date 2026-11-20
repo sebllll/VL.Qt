@@ -100,14 +100,14 @@ namespace VL.Qt
         /// </summary>
         internal const double ResyncSeconds = 0.1;
 
-        readonly IQtPumpTarget _target;
-        readonly HostFrameHistory _history = new();
-        readonly IDisposable _subscription, _ticks;
-        long _frameStart; // #260: Stopwatch timestamp of the last tick (vvvv frame start), 0 = none since the last pump
-        IQtFrameParticipant[] _participants = Array.Empty<IQtFrameParticipant>();
-        double _lastSeconds = double.NaN;
-        double _offset;
-        bool _first = true, _disposed;
+        private readonly IQtPumpTarget _target;
+        private readonly HostFrameHistory _history = new();
+        private readonly IDisposable _subscription, _ticks;
+        private long _frameStart; // #260: Stopwatch timestamp of the last tick (vvvv frame start), 0 = none since the last pump
+        private IQtFrameParticipant[] _participants = Array.Empty<IQtFrameParticipant>();
+        private double _lastSeconds = double.NaN;
+        private double _offset;
+        private bool _first = true, _disposed;
 
         /// <summary>
         /// The pump shared by all renderers of one vvvv app (service of its <see cref="AppHost"/>, disposed with it).
@@ -255,30 +255,30 @@ namespace VL.Qt
     /// </summary>
     internal sealed class QtApp : IQtPumpTarget
     {
-        static QtApp? s_instance;
+        private static QtApp? s_instance;
 
-        const long StatsIntervalMs = 10_000;
-        const long WarningIntervalMs = 5_000;
+        private const long StatsIntervalMs = 10_000;
+        private const long WarningIntervalMs = 5_000;
 
-        readonly int _threadId;
-        double _driverSeconds = double.NaN;
-        long _lastWarningTicks, _lastErrorTicks;
-        bool _wrongThreadLogged;
+        private readonly int _threadId;
+        private double _driverSeconds = double.NaN;
+        private long _lastWarningTicks, _lastErrorTicks;
+        private bool _wrongThreadLogged;
 
         // Cumulative counters (since process start), logged as [vlqt.stats].
-        long _pumps, _advances, _processEvents, _registered, _unregistered, _participantErrors;
-        int _participantCount, _activePumps;
+        private long _pumps, _advances, _processEvents, _registered, _unregistered, _participantErrors;
+        private int _participantCount, _activePumps;
         // Stats interval.
-        long _statsStartTicks, _statsPumps;
-        double _statsPumpMsSum, _statsPumpMsMax;
+        private long _statsStartTicks, _statsPumps;
+        private double _statsPumpMsSum, _statsPumpMsMax;
         // Host frame (#245): apply time per participant of the current pump; end of the previous pump of any app (#260).
-        float[] _applyMs = Array.Empty<float>();
-        long _prevPumpEnd;
+        private float[] _applyMs = Array.Empty<float>();
+        private long _prevPumpEnd;
         // #314: QtNative windows of the current pump, reused (no allocation per frame).
-        IntPtr[] _windows = new IntPtr[4];
-        readonly ResourceClient _resources;
+        private IntPtr[] _windows = new IntPtr[4];
+        private readonly ResourceClient _resources;
 
-        QtApp()
+        private QtApp()
         {
             _threadId = Environment.CurrentManagedThreadId;
             Native.EnsureLoaded();
@@ -517,7 +517,7 @@ namespace VL.Qt
         internal int LastDeliveredInput { get; private set; }
 
         /// <summary>Fills <see cref="_windows"/> with QtNative windows of the participants (#314), returns the count.</summary>
-        int CollectWindows(IQtFrameParticipant[] participants)
+        private int CollectWindows(IQtFrameParticipant[] participants)
         {
             if (_windows.Length < participants.Length)
                 _windows = new IntPtr[participants.Length * 2];
@@ -566,7 +566,7 @@ namespace VL.Qt
             return sb.ToString();
         }
 
-        void LogStats(long now)
+        private void LogStats(long now)
         {
             var seconds = (now - _statsStartTicks) / 1000.0;
             Logger?.LogInformation(
@@ -579,7 +579,7 @@ namespace VL.Qt
             _statsPumpMsMax = 0;
         }
 
-        void LogParticipantError(Exception e, string phase)
+        private void LogParticipantError(Exception e, string phase)
         {
             _participantErrors++;
             var now = Environment.TickCount64;

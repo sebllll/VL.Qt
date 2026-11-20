@@ -21,11 +21,11 @@ public static class OpacityZeroTest
     [Test, Category("opacity-zero")]
     public static void OpacityZero() => Scenario.Run(Run);
 
-    sealed class NoMessage : IDisposable { public void Dispose() { } }
+    private sealed class NoMessage : IDisposable { public void Dispose() { } }
 
-    static bool Near(Color c, int r, int g, int b, int tol = 12) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
+    private static bool Near(Color c, int r, int g, int b, int tol = 12) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt opacity zero test");
         s.Check(w != IntPtr.Zero, "opacity-zero: window_create");

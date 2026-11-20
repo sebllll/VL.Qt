@@ -24,31 +24,31 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 /// B (260, 20, 120 x 80) Drag; C (20, 120, 120 x 80) Pinch + Touch Points; Slider (160, 130, 220 x 30); TextInput (160, 170, 220 x 30);
 /// the rest is empty.
 /// </summary>
-static partial class QtTextureTest
+public static partial class QtTextureTest
 {
-    sealed class InputRig : IDisposable
+    private sealed class InputRig : IDisposable
     {
         internal sealed class NoMessage : IDisposable { public void Dispose() { } }
 
         public const int W = 400, H = 300;
-        static readonly Vector2 s_client = new(W, H);
+        private static readonly Vector2 s_client = new(W, H);
 
-        readonly Scenario _s;
-        readonly IntPtr _device, _context, _texture;
+        private readonly Scenario _s;
+        private readonly IntPtr _device, _context, _texture;
         public readonly OffscreenRenderer R;
-        readonly OffscreenRenderer[] _batch;
+        private readonly OffscreenRenderer[] _batch;
         public readonly bool Ok;
 
-        readonly RectangleNode _rectA = new(_ => new NoMessage()), _rectP = new(_ => new NoMessage()), _rectB = new(_ => new NoMessage()), _rectC = new(_ => new NoMessage());
-        readonly GroupNode _group = new(_ => new NoMessage());
-        readonly SliderNode _slider = new(_ => new NoMessage());
-        readonly TextInputNode _text = new(_ => new NoMessage());
-        readonly HoverNode _hover = new(_ => new NoMessage());
-        readonly ClickNode _clickA = new(_ => new NoMessage()), _clickMouse = new(_ => new NoMessage()), _clickTouch = new(_ => new NoMessage()), _clickPen = new(_ => new NoMessage());
-        readonly WheelNode _wheel = new(_ => new NoMessage());
-        readonly DragNode _drag = new(_ => new NoMessage());
-        readonly PinchNode _pinch = new(_ => new NoMessage());
-        readonly TouchPointsNode _touchPoints = new(_ => new NoMessage());
+        private readonly RectangleNode _rectA = new(_ => new NoMessage()), _rectP = new(_ => new NoMessage()), _rectB = new(_ => new NoMessage()), _rectC = new(_ => new NoMessage());
+        private readonly GroupNode _group = new(_ => new NoMessage());
+        private readonly SliderNode _slider = new(_ => new NoMessage());
+        private readonly TextInputNode _text = new(_ => new NoMessage());
+        private readonly HoverNode _hover = new(_ => new NoMessage());
+        private readonly ClickNode _clickA = new(_ => new NoMessage()), _clickMouse = new(_ => new NoMessage()), _clickTouch = new(_ => new NoMessage()), _clickPen = new(_ => new NoMessage());
+        private readonly WheelNode _wheel = new(_ => new NoMessage());
+        private readonly DragNode _drag = new(_ => new NoMessage());
+        private readonly PinchNode _pinch = new(_ => new NoMessage());
+        private readonly TouchPointsNode _touchPoints = new(_ => new NoMessage());
 
         // Channels of the nodes: values in, the last author of a write says it came from Qt.
         public readonly IChannel<bool> Hovered = Channel.Create(false), Pressed = Channel.Create(false);
@@ -63,7 +63,7 @@ static partial class QtTextureTest
 
         public int Clicks, MouseClicks, TouchClicks, PenClicks, TextWrites, SliderWrites;
         public readonly List<Vector2> Wheels = new();
-        readonly IDisposable[] _subs;
+        private readonly IDisposable[] _subs;
 
         public InputRig(Scenario s)
         {
@@ -95,14 +95,14 @@ static partial class QtTextureTest
         }
 
         // DIP -> units (1 unit = 100 DIP in DIPTopLeft).
-        static Vector2 Sz(float w, float h) => new(w / 100f, h / 100f);
-        static Matrix At(float x, float y) => Matrix.Translation(x / 100f, y / 100f, 0);
+        private static Vector2 Sz(float w, float h) => new(w / 100f, h / 100f);
+        private static Matrix At(float x, float y) => Matrix.Translation(x / 100f, y / 100f, 0);
 
-        Element Rect(RectangleNode node, float x, float y, float w, float h, Color4 color, Interaction? interaction)
+        private Element Rect(RectangleNode node, float x, float y, float w, float h, Color4 color, Interaction? interaction)
             => node.Update(Sz(w, h), At(x, y), RectangleAnchor.TopLeft, color, 0, new Color4(0, 0, 0, 1), 0, 1, false, false, interaction, null, out _, out _);
 
         // The scene of the frame: nodes pull the events of the last poll, then describe the elements.
-        Element Describe()
+        private Element Describe()
         {
             var hoverA = _hover.Update(null, Hovered);
             var clickA = _clickA.Update(hoverA, Pressed, Clicked, TapCount, null, PointerButtons.Left, PointerDevices.All);
@@ -237,7 +237,7 @@ static partial class QtTextureTest
     }
 
     // Hover enter and leave through mouse moves and MouseLost.
-    static void InputHover(InputRig rig, Scenario s)
+    private static void InputHover(InputRig rig, Scenario s)
     {
         rig.Move(300, 250);
         rig.Frames();
@@ -261,7 +261,7 @@ static partial class QtTextureTest
     }
 
     // Press, release, click, double click; clicks outside; right button not accepted.
-    static void InputClick(InputRig rig, Scenario s)
+    private static void InputClick(InputRig rig, Scenario s)
     {
         // Clicks outside every element do nothing.
         rig.Click(300, 250);
@@ -300,7 +300,7 @@ static partial class QtTextureTest
 
     // The reference for the wheel sign: a real window gets WM_MOUSEWHEEL / WM_MOUSEHWHEEL (+120) sent like the OS does, Qt's
     // Windows plugin turns them into angleDelta, a Wheel node reads that. Null if the message did not reach the node.
-    static void WindowWheelReference(Scenario s, out Vector2? vertical, out Vector2? horizontal)
+    private static void WindowWheelReference(Scenario s, out Vector2? vertical, out Vector2? horizontal)
     {
         vertical = horizontal = null;
 #if WINDOWS
@@ -368,17 +368,17 @@ static partial class QtTextureTest
 
 #if WINDOWS
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-    struct Point32 { public int X, Y; }
+    private struct Point32 { public int X, Y; }
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-    struct Rect32 { public int Left, Top, Right, Bottom; }
-    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)] static extern IntPtr FindWindowW(string? cls, string title);
-    [System.Runtime.InteropServices.DllImport("user32.dll")] static extern IntPtr SendMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
-    [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool ClientToScreen(IntPtr hwnd, ref Point32 p);
-    [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool GetClientRect(IntPtr hwnd, out Rect32 r);
+    private struct Rect32 { public int Left, Top, Right, Bottom; }
+    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)] private static extern IntPtr FindWindowW(string? cls, string title);
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern IntPtr SendMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool ClientToScreen(IntPtr hwnd, ref Point32 p);
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool GetClientRect(IntPtr hwnd, out Rect32 r);
 #endif
 
     // Vertical and horizontal wheel through Notify and SendWheel, against what a window delivers for the same OS messages.
-    static void InputWheel(InputRig rig, Scenario s)
+    private static void InputWheel(InputRig rig, Scenario s)
     {
         static bool Near(Vector2 a, float x, float y) => Math.Abs(a.X - x) < 1e-3f && Math.Abs(a.Y - y) < 1e-3f;
         string Dump() => string.Join(" ", rig.Wheels);
@@ -421,7 +421,7 @@ static partial class QtTextureTest
     }
 
     // Mouse, touch and pen are told apart by the device of the pointer event.
-    static void InputDevices(InputRig rig, Scenario s)
+    private static void InputDevices(InputRig rig, Scenario s)
     {
         void Counts(string what, int mouse, int touch, int pen)
             => s.Check(rig.MouseClicks == mouse && rig.TouchClicks == touch && rig.PenClicks == pen,
@@ -449,7 +449,7 @@ static partial class QtTextureTest
     }
 
     // Drag of a rectangle: the element follows the mouse (Scene Bounds and pixels), Delta in units.
-    static void InputDrag(InputRig rig, Scenario s)
+    private static void InputDrag(InputRig rig, Scenario s)
     {
         rig.Move(300, 50);
         rig.Frames();
@@ -475,7 +475,7 @@ static partial class QtTextureTest
     }
 
     // Two fingers with their own ids: Touch Points reports both, Pinch scales.
-    static void InputPinch(InputRig rig, Scenario s)
+    private static void InputPinch(InputRig rig, Scenario s)
     {
         // Fingers 11 and 12 at x = 60 / 100 (y 160), spread to 40 / 120.
         rig.Touch(TouchNotificationKind.TouchDown, 11, 60, 160);
@@ -502,7 +502,7 @@ static partial class QtTextureTest
     }
 
     // Slider: drag the handle with the mouse.
-    static void InputSlider(InputRig rig, Scenario s)
+    private static void InputSlider(InputRig rig, Scenario s)
     {
         rig.Move(300, 250);
         rig.Frames();
@@ -521,7 +521,7 @@ static partial class QtTextureTest
     }
 
     // TextInput: a click focuses, keys and text type, Enter commits, Esc and a press outside release the focus (#374).
-    static void InputText(InputRig rig, Scenario s)
+    private static void InputText(InputRig rig, Scenario s)
     {
         var r = rig.R;
         string Value() => rig.TextValue.Value ?? "";

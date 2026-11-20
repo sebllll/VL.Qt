@@ -22,8 +22,8 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(string Value, string Placeholder, bool Editable, bool Enabled, bool AutoSize, Style? Style);
 
-        readonly ElementNode<TextField, Props> _node;
-        readonly ValueChannel<string> _value = new(string.Empty);
+        private readonly ElementNode<TextField, Props> _node;
+        private readonly ValueChannel<string> _value = new(string.Empty);
 
         public TextInputNode(NodeContext nodeContext)
             => _node = new ElementNode<TextField, Props>(nodeContext, Create);
@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
         internal TextInputNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<TextField, Props>(addWarning, Create);
 
-        static readonly Func<CommonInputs, Props, SinkSlot, TextField> Create = static (c, p, slot) => new TextField
+        private static readonly Func<CommonInputs, Props, SinkSlot, TextField> Create = static (c, p, slot) => new TextField
             {
                 Size = c.Size,
                 Transform = c.Transform,

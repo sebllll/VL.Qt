@@ -18,17 +18,17 @@ public static class FullscreenTest
     [Test, Category("fullscreen")]
     public static void Fullscreen() => Scenario.Run(Run);
 
-    [StructLayout(LayoutKind.Sequential)] struct Rc { public int Left, Top, Right, Bottom; }
-    [StructLayout(LayoutKind.Sequential)] struct MonitorInfo { public int Size; public Rc Monitor, Work; public uint Flags; }
-    delegate bool MonitorEnum(IntPtr monitor, IntPtr dc, ref Rc rect, IntPtr data);
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindow(string? cls, string title);
-    [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
-    [DllImport("user32.dll")] static extern bool GetMonitorInfoW(IntPtr m, ref MonitorInfo mi);
-    [DllImport("user32.dll")] static extern bool EnumDisplayMonitors(IntPtr dc, IntPtr clip, MonitorEnum cb, IntPtr data);
-    [DllImport("shcore.dll")] static extern int GetDpiForMonitor(IntPtr m, int type, out uint dpiX, out uint dpiY);
+    [StructLayout(LayoutKind.Sequential)] private struct Rc { public int Left, Top, Right, Bottom; }
+    [StructLayout(LayoutKind.Sequential)] private struct MonitorInfo { public int Size; public Rc Monitor, Work; public uint Flags; }
+    private delegate bool MonitorEnum(IntPtr monitor, IntPtr dc, ref Rc rect, IntPtr data);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr FindWindow(string? cls, string title);
+    [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
+    [DllImport("user32.dll")] private static extern bool GetMonitorInfoW(IntPtr m, ref MonitorInfo mi);
+    [DllImport("user32.dll")] private static extern bool EnumDisplayMonitors(IntPtr dc, IntPtr clip, MonitorEnum cb, IntPtr data);
+    [DllImport("shcore.dll")] private static extern int GetDpiForMonitor(IntPtr m, int type, out uint dpiX, out uint dpiY);
 
     // Monitor rect in Qt DIP: Qt 6 keeps a screen's top-left in native pixels and scales the size by its DPI.
-    static RectangleF MonitorDip(IntPtr m)
+    private static RectangleF MonitorDip(IntPtr m)
     {
         var mi = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
         GetMonitorInfoW(m, ref mi);
@@ -38,7 +38,7 @@ public static class FullscreenTest
             (float)Math.Round((mi.Monitor.Right - mi.Monitor.Left) / s), (float)Math.Round((mi.Monitor.Bottom - mi.Monitor.Top) / s));
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var clear = new Color4(0, 0, 0, 1);
         var clock = Stopwatch.StartNew();

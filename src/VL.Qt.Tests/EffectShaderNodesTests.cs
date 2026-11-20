@@ -11,8 +11,8 @@ namespace VL.Qt.Tests
     /// <summary>The shader effect nodes (#438 phase B): template, shaders, uniforms, padding and strength in DIP, change detection.</summary>
     public class EffectShaderNodesTests
     {
-        FakeResourceApi _api = null!;
-        ResourceClient _client = null!;
+        private FakeResourceApi _api = null!;
+        private ResourceClient _client = null!;
 
         [SetUp]
         public void CreateClient()
@@ -21,12 +21,12 @@ namespace VL.Qt.Tests
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
         }
 
-        static ShaderLink Link(Effect? e) => (ShaderLink)e!;
+        private static ShaderLink Link(Effect? e) => (ShaderLink)e!;
 
         // The nodes describe the effect in units; the reconciler converts (EffectDiff, #143). The expectations are written in DIP.
-        static float Unit(float dip) => SpaceMapping.Default.FromQt(dip);
+        private static float Unit(float dip) => SpaceMapping.Default.FromQt(dip);
 
-        static void AssertPadding(RectangleF actual, float left, float top, float right, float bottom)
+        private static void AssertPadding(RectangleF actual, float left, float top, float right, float bottom)
         {
             Assert.That(actual.X, Is.EqualTo(Unit(left)).Within(1e-4), "left");
             Assert.That(actual.Y, Is.EqualTo(Unit(top)).Within(1e-4), "top");

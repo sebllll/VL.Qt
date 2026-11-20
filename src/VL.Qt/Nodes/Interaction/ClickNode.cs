@@ -21,11 +21,11 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(PointerButtons Buttons, PointerDevices Devices);
 
-        readonly InteractionNode<Props> _node;
-        IChannel<bool>? _pressed;
-        IChannel<int>? _tapCount;
-        bool _lastPressed;
-        int _lastTapCount;
+        private readonly InteractionNode<Props> _node;
+        private IChannel<bool>? _pressed;
+        private IChannel<int>? _tapCount;
+        private bool _lastPressed;
+        private int _lastTapCount;
 
         public ClickNode(NodeContext nodeContext)
             => _node = new InteractionNode<Props>(nodeContext, Create);
@@ -34,7 +34,7 @@ namespace VL.Qt.Nodes
         internal ClickNode(Func<string, IDisposable> addWarning)
             => _node = new InteractionNode<Props>(addWarning, Create);
 
-        static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
             = static (previous, p, slot) => new ClickInteraction(previous, slot, p.Buttons, p.Devices);
 
         internal InteractionNode<Props> Core => _node;

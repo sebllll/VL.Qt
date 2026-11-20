@@ -23,7 +23,7 @@ namespace VL.Qt.Nodes
         internal readonly record struct Props(Element? Mask, float ThresholdMin, float SpreadAtMin, float ThresholdMax,
             float SpreadAtMax, bool Inverted);
 
-        readonly EffectNode<Props> _node = new(static (previous, p)
+        private readonly EffectNode<Props> _node = new(static (previous, p)
             => new MaskEffect(previous, p.Mask, p.ThresholdMin, p.SpreadAtMin, p.ThresholdMax, p.SpreadAtMax, p.Inverted));
 
         internal EffectNode<Props> Core => _node;

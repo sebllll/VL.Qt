@@ -32,13 +32,13 @@ namespace VL.Qt.Nodes
         /// <summary>Author of every value the user produced in Qt.</summary>
         public const string Author = "Qt";
 
-        IChannel<T>? _channel;
-        T _lastSeen;
-        T _value;
-        IChannel<Spread<Attribute>>? _attributes;
-        Spread<Attribute>? _lastAttributes;
-        Optional<T> _attributeMin;
-        Optional<T> _attributeMax;
+        private IChannel<T>? _channel;
+        private T _lastSeen;
+        private T _value;
+        private IChannel<Spread<Attribute>>? _attributes;
+        private Spread<Attribute>? _lastAttributes;
+        private Optional<T> _attributeMin;
+        private Optional<T> _attributeMax;
 
         /// <param name="initial">Value while no channel was seen yet (unconnected pin).</param>
         public ValueChannel(T initial)
@@ -142,7 +142,7 @@ namespace VL.Qt.Nodes
         /// <c>Attributes()</c> may add the attributes component to the channel once; the scan only runs when the
         /// attribute spread changed.
         /// </summary>
-        void UpdateAttributes()
+        private void UpdateAttributes()
         {
             if (!_channel.IsValid())
                 return;

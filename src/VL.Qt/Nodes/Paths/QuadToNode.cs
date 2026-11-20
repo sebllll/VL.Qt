@@ -11,10 +11,10 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "QuadTo", Category = Categories.Paths)]
     public sealed class QuadToNode
     {
-        QtPath? _input;
-        Vector2 _controlPoint;
-        Vector2 _endPoint;
-        QtPath? _output;
+        private QtPath? _input;
+        private Vector2 _controlPoint;
+        private Vector2 _endPoint;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a quadratic curve added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -40,10 +40,10 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "QuadTo (Relative)", Category = Categories.Paths)]
     public sealed class QuadToRelativeNode
     {
-        QtPath? _input;
-        Vector2 _controlPoint;
-        Vector2 _endPoint;
-        QtPath? _output;
+        private QtPath? _input;
+        private Vector2 _controlPoint;
+        private Vector2 _endPoint;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a quadratic curve added, its points offset by the last point.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>

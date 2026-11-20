@@ -41,9 +41,9 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Element? Layer, Sampler? LayerSampler, BlendMode Mode, float Opacity);
 
-        static readonly string[] s_shaders = { "blend" };
+        private static readonly string[] s_shaders = { "blend" };
 
-        static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
             new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.Single, ids,
                 new[]
                 {
@@ -53,7 +53,7 @@ namespace VL.Qt.Nodes
                 }.ToSpread(),
                 default);
 
-        readonly BuiltinShaderLink<Props> _link;
+        private readonly BuiltinShaderLink<Props> _link;
 
         public BlendNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))

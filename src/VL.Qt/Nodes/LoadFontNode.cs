@@ -13,12 +13,12 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "LoadFont", Category = Categories.Qt)]
     public sealed class LoadFontNode : IDisposable
     {
-        readonly NodeErrors _errors;
-        readonly QtApp _app;
-        string? _path;
-        ulong _handle;
-        string _family = string.Empty;
-        string _error = string.Empty;
+        private readonly NodeErrors _errors;
+        private readonly QtApp _app;
+        private string? _path;
+        private ulong _handle;
+        private string _family = string.Empty;
+        private string _error = string.Empty;
 
         public LoadFontNode(NodeContext nodeContext)
         {
@@ -41,7 +41,7 @@ namespace VL.Qt.Nodes
             return _family;
         }
 
-        void Load(string path)
+        private void Load(string path)
         {
             _path = path;
             var previous = _handle;
@@ -69,7 +69,7 @@ namespace VL.Qt.Nodes
                 _errors.Clear("LoadFont");
         }
 
-        void Release(ulong handle)
+        private void Release(ulong handle)
         {
             if (handle != 0 && Native.vlqt_font_release(handle) != 0)
                 _errors.LogOnly(Native.LastError());

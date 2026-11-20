@@ -9,7 +9,7 @@ namespace VL.Qt.Elements
     /// </summary>
     internal sealed class StylableElement : Element
     {
-        Group? _empty;
+        private Group? _empty;
 
         public StylableElement(IStylable stylable)
             : base(ElementType.Item)

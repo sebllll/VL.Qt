@@ -20,9 +20,9 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(PointerDevices Devices);
 
-        readonly InteractionNode<Props> _node;
-        IChannel<Vector2>? _delta;
-        Vector2 _lastDelta;
+        private readonly InteractionNode<Props> _node;
+        private IChannel<Vector2>? _delta;
+        private Vector2 _lastDelta;
 
         public WheelNode(NodeContext nodeContext)
             => _node = new InteractionNode<Props>(nodeContext, Create);
@@ -31,7 +31,7 @@ namespace VL.Qt.Nodes
         internal WheelNode(Func<string, IDisposable> addWarning)
             => _node = new InteractionNode<Props>(addWarning, Create);
 
-        static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
             = static (previous, p, slot) => new WheelInteraction(previous, slot, p.Devices);
 
         internal InteractionNode<Props> Core => _node;

@@ -18,21 +18,21 @@ public static class SpinBoxTest
     public static void SpinBox() => Scenario.Run(Run);
 
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    static extern int vlqt_test_send_key_text(IntPtr w, int key, int modifiers, [MarshalAs(UnmanagedType.LPUTF8Str)] string? text);
+    private static extern int vlqt_test_send_key_text(IntPtr w, int key, int modifiers, [MarshalAs(UnmanagedType.LPUTF8Str)] string? text);
 
-    const float StyleMin = 24; // BaseStyle FrameMinWidth/FrameMinHeight: lower bound of every implicit size (#292)
-    const int KeyA = 0x41;
-    const int KeyReturn = 0x01000004;
-    const int ControlModifier = 0x04000000;
+    private const float StyleMin = 24; // BaseStyle FrameMinWidth/FrameMinHeight: lower bound of every implicit size (#292)
+    private const int KeyA = 0x41;
+    private const int KeyReturn = 0x01000004;
+    private const int ControlModifier = 0x04000000;
 
-    readonly record struct Rec(ushort Event, uint Handle, byte[] Payload)
+    private readonly record struct Rec(ushort Event, uint Handle, byte[] Payload)
     {
         public float F(int i) => BinaryPrimitives.ReadSingleLittleEndian(Payload.AsSpan(4 * i));
         public ushort ValueType => BinaryPrimitives.ReadUInt16LittleEndian(Payload);
         public int I32 => BinaryPrimitives.ReadInt32LittleEndian(Payload.AsSpan(4));
     }
 
-    static List<Rec> Parse(ReadOnlySpan<byte> b)
+    private static List<Rec> Parse(ReadOnlySpan<byte> b)
     {
         var list = new List<Rec>();
         int off = 0;
@@ -48,7 +48,7 @@ public static class SpinBoxTest
         return list;
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt spinbox test");
         s.Check(w != IntPtr.Zero, "window_create");
@@ -241,9 +241,9 @@ public static class SpinBoxTest
         s.Pump(1);
     }
 
-    const uint S1 = 1;
-    const uint S2 = 2;
-    const uint H = 41;
-    const uint H2 = 42;
-    const uint H3 = 43;
+    private const uint S1 = 1;
+    private const uint S2 = 2;
+    private const uint H = 41;
+    private const uint H2 = 42;
+    private const uint H3 = 43;
 }

@@ -9,11 +9,11 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "AddCircle", Category = Categories.Paths)]
     public sealed class AddCircleNode
     {
-        QtPath? _input;
-        Vector2 _center;
-        PathDirection _direction;
-        float _radius;
-        QtPath? _output;
+        private QtPath? _input;
+        private Vector2 _center;
+        private PathDirection _direction;
+        private float _radius;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a circle that starts at the right of its center.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>

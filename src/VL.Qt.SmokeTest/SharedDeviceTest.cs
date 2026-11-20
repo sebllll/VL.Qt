@@ -16,13 +16,13 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class SharedDeviceTest
 {
-    const uint Rect = 1;
+    private const uint Rect = 1;
 
     /// <summary>Windows share one D3D11 device; VSync cost with shared and separate devices.</summary>
     [Test, Category("shared-device")]
     public static void SharedDevice() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         if (!OperatingSystem.IsWindows() || s.QuickSoftware)
         {
@@ -125,7 +125,7 @@ public static class SharedDeviceTest
     // an Adreno X1-45 next to a second SmokeTest: 49..52 fps, while the median interval stays at one refresh), so they are
     // perf limits (PerfLimits: factor, warn-only) and measured again, up to 3 rounds, only while a limit is exceeded.
     // animate: moves the content of every window, so each pump has a change to render.
-    static void MeasureVSync(List<IntPtr> windows, Scenario s, bool shared, Action animate)
+    private static void MeasureVSync(List<IntPtr> windows, Scenario s, bool shared, Action animate)
     {
         var n = windows.Count;
         Native.vlqt_window_get_perf_stats(windows[0], out var st);
@@ -147,7 +147,7 @@ public static class SharedDeviceTest
 
     // One measurement: 1 s warm-up, 5 s measured. Returns the fps of the slowest window, the host pump p99 and the largest
     // median render interval of the windows (ms).
-    static (double MinFps, double HostP99, double MaxP50) MeasureVSyncRound(List<IntPtr> windows, Scenario s, bool shared, Action animate, double budget)
+    private static (double MinFps, double HostP99, double MaxP50) MeasureVSyncRound(List<IntPtr> windows, Scenario s, bool shared, Action animate, double budget)
     {
         var n = windows.Count;
         var renders = new List<double>[n];

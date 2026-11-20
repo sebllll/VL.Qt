@@ -21,24 +21,24 @@ namespace VL.Qt
     /// </summary>
     internal sealed partial class Reconciler
     {
-        static readonly Group s_group = new();
-        static readonly Rectangle s_rectangle = new();
-        static readonly Text s_text = new();
-        static readonly Image s_image = new();
-        static readonly Row s_row = new();
-        static readonly Column s_column = new();
-        static readonly Video s_video = new();
-        static readonly Button s_button = new();
-        static readonly SpinBox s_spinBox = new();
-        static readonly CheckBox s_checkBox = new();
-        static readonly Switch s_switch = new();
-        static readonly Slider s_slider = new();
-        static readonly TextField s_textField = new();
-        static readonly ShaderEffect s_shaderEffect = new();
-        static readonly QmlElement s_qml = new();
-        static readonly Shape s_shape = new();
+        private static readonly Group s_group = new();
+        private static readonly Rectangle s_rectangle = new();
+        private static readonly Text s_text = new();
+        private static readonly Image s_image = new();
+        private static readonly Row s_row = new();
+        private static readonly Column s_column = new();
+        private static readonly Video s_video = new();
+        private static readonly Button s_button = new();
+        private static readonly SpinBox s_spinBox = new();
+        private static readonly CheckBox s_checkBox = new();
+        private static readonly Switch s_switch = new();
+        private static readonly Slider s_slider = new();
+        private static readonly TextField s_textField = new();
+        private static readonly ShaderEffect s_shaderEffect = new();
+        private static readonly QmlElement s_qml = new();
+        private static readonly Shape s_shape = new();
 
-        static Element DefaultOf(ElementType type) => type switch
+        private static Element DefaultOf(ElementType type) => type switch
         {
             ElementType.Rectangle => s_rectangle,
             ElementType.Text => s_text,
@@ -126,7 +126,7 @@ namespace VL.Qt
         /// previous description. A new Source or Reload sends all of them again (QtNative has a new instance, protocol.h "QmlElement");
         /// a key that is gone from the dictionary is not reset in QML.
         /// </summary>
-        void DiffQml(uint id, QmlElement p, QmlElement n)
+        private void DiffQml(uint id, QmlElement p, QmlElement n)
         {
             bool sourceChanged = p.Source != n.Source;
             if (sourceChanged)
@@ -142,7 +142,7 @@ namespace VL.Qt
         /// (there the layout places them and QtNative uses the anchor only as pivot, protocol.h "Geometry"). Visibility is QtNative's (#474): it hides the
         /// children of a ShaderEffect (drawn through their layers), Opacity 0 = not drawn.
         /// </summary>
-        void DiffCommon(uint id, Element p, Element n)
+        private void DiffCommon(uint id, Element p, Element n)
         {
             if (_rescale || p.Size != n.Size)
                 _sink.SetVec2(id, P.Size, _mapping.ToQt(n.Size.X), _mapping.ToQt(n.Size.Y));
@@ -168,7 +168,7 @@ namespace VL.Qt
                     _sink.SetI32(id, P.Anchor, na);
             }
         }
-        void DiffRectangle(uint id, Rectangle p, Rectangle n)
+        private void DiffRectangle(uint id, Rectangle p, Rectangle n)
         {
             if (p.Fill != n.Fill)
                 _sink.SetColor(id, P.Color, n.Fill);
@@ -181,7 +181,7 @@ namespace VL.Qt
         }
 
         // Reused for the converted points and dash pattern of DiffShape, so a changing shape allocates nothing per frame.
-        float[] _shapeBuffer = Array.Empty<float>();
+        private float[] _shapeBuffer = Array.Empty<float>();
 
         /// <summary>
         /// Shape (#154). The geometry (points or path) is sent when its reference and its content changed or the unit scale did; every
@@ -189,7 +189,7 @@ namespace VL.Qt
         /// QtNative takes dash and dash offset in stroke-width units, so both are divided by the stroke width and the dash is sent again
         /// when the stroke width changes. A stroke width of 0 is sent as -1 (no stroke).
         /// </summary>
-        void DiffShape(uint id, Shape p, Shape n)
+        private void DiffShape(uint id, Shape p, Shape n)
         {
             if (n.Path is { } path)
             {
@@ -236,7 +236,7 @@ namespace VL.Qt
                 _sink.SetI32(id, P.ShapeFillRule, (int)n.FillRule);
         }
 
-        void SendShapePoints(uint id, Spread<Vector2> points)
+        private void SendShapePoints(uint id, Spread<Vector2> points)
         {
             int count = Math.Min(points.Count * 2, Protocol.MaxF32ArrayCount);
             var buffer = ShapeBuffer(count);
@@ -249,7 +249,7 @@ namespace VL.Qt
             _sink.SetF32Array(id, P.ShapePoints, buffer.AsSpan(0, count));
         }
 
-        void SendShapePath(uint id, QtPath path)
+        private void SendShapePath(uint id, QtPath path)
         {
             var flat = path.Flatten();
             var verbs = flat.Verbs.AsSpan();
@@ -262,7 +262,7 @@ namespace VL.Qt
         }
 
         /// <summary>Returns the number of verbs of the longest prefix that fits one command and the points that prefix takes.</summary>
-        static int FitPath(ReadOnlySpan<byte> all, int available, out int pointCount)
+        private static int FitPath(ReadOnlySpan<byte> all, int available, out int pointCount)
         {
             pointCount = available;
             if (Protocol.PathFits(all.Length, available))
@@ -286,7 +286,7 @@ namespace VL.Qt
             return count;
         }
 
-        void SendShapeDash(uint id, Spread<float> dash, float unit)
+        private void SendShapeDash(uint id, Spread<float> dash, float unit)
         {
             int count = Math.Min(dash.Count, Protocol.MaxF32ArrayCount);
             var buffer = ShapeBuffer(count);
@@ -295,7 +295,7 @@ namespace VL.Qt
             _sink.SetF32Array(id, P.ShapeDash, buffer.AsSpan(0, count));
         }
 
-        float[] ShapeBuffer(int length)
+        private float[] ShapeBuffer(int length)
         {
             if (_shapeBuffer.Length < length)
                 _shapeBuffer = new float[Math.Max(length, _shapeBuffer.Length * 2)];
@@ -303,7 +303,7 @@ namespace VL.Qt
         }
 
         // float.Equals instead of ==, so that NaN equals itself and an unchanged list is not sent again.
-        static bool SameContent(Spread<Vector2> a, Spread<Vector2> b)
+        private static bool SameContent(Spread<Vector2> a, Spread<Vector2> b)
         {
             if (a.Count != b.Count)
                 return false;
@@ -315,7 +315,7 @@ namespace VL.Qt
             return true;
         }
 
-        static bool SameContent(Spread<float> a, Spread<float> b)
+        private static bool SameContent(Spread<float> a, Spread<float> b)
         {
             if (a.Count != b.Count)
                 return false;
@@ -328,7 +328,7 @@ namespace VL.Qt
         }
 
         /// <summary>Font size is always sent on creation: Qt's default font size is platform dependent.</summary>
-        void DiffText(uint id, bool created, Text p, Text n)
+        private void DiffText(uint id, bool created, Text p, Text n)
         {
             if (!string.Equals(p.Content, n.Content))
                 _sink.SetString(id, P.Text, n.Content.AsSpan());
@@ -358,7 +358,7 @@ namespace VL.Qt
                 _sink.SetI32(id, P.FontSizeMode, (int)n.Autofit);
         }
 
-        void DiffButton(uint id, Button p, Button n)
+        private void DiffButton(uint id, Button p, Button n)
         {
             if (!string.Equals(p.Text, n.Text))
                 _sink.SetString(id, P.Text, n.Text.AsSpan());
@@ -375,7 +375,7 @@ namespace VL.Qt
         /// The diff is against the last sent description, also after a user change (EV_VALUE): the node then describes
         /// the user's value, the SET fixes a stale SET that Qt applied after the change (see PR #354).
         /// </summary>
-        void DiffSpinBox(uint id, SpinBox p, SpinBox n)
+        private void DiffSpinBox(uint id, SpinBox p, SpinBox n)
         {
             bool bounds = false;
             if (p.Minimum != n.Minimum)
@@ -399,7 +399,7 @@ namespace VL.Qt
         }
 
         /// <summary>CheckBox and Switch (#301): the value is only sent after a change; see <see cref="DiffSpinBox"/> for the diff base.</summary>
-        void DiffToggle(uint id, bool pValue, bool nValue, bool pEnabled, bool nEnabled)
+        private void DiffToggle(uint id, bool pValue, bool nValue, bool pEnabled, bool nEnabled)
         {
             if (pValue != nValue)
                 _sink.SetBool(id, P.Value, nValue);
@@ -408,7 +408,7 @@ namespace VL.Qt
         }
 
         /// <summary>Slider (#301): Minimum/Maximum before Value and Value again after a bound change, like <see cref="DiffSpinBox"/>.</summary>
-        void DiffSlider(uint id, Slider p, Slider n)
+        private void DiffSlider(uint id, Slider p, Slider n)
         {
             bool bounds = false;
             if (p.Minimum != n.Minimum)
@@ -431,7 +431,7 @@ namespace VL.Qt
                 _sink.SetBool(id, P.Enabled, n.Enabled);
         }
 
-        void DiffTextField(uint id, TextField p, TextField n)
+        private void DiffTextField(uint id, TextField p, TextField n)
         {
             if (!string.Equals(p.Value, n.Value))
                 _sink.SetString(id, P.Value, n.Value);
@@ -447,7 +447,7 @@ namespace VL.Qt
         /// Image: the resource id of the QtImage (#362), 0 = none. Sent when the id changes; a QtImage whose content is
         /// replaced in place (ToQtImage) keeps its id, QtNative swaps the texture itself.
         /// </summary>
-        void DiffImage(uint id, Image p, Image n)
+        private void DiffImage(uint id, Image p, Image n)
         {
             ulong pi = p.Source?.Id ?? 0, ni = n.Source?.Id ?? 0;
             if (pi != ni)
@@ -462,7 +462,7 @@ namespace VL.Qt
         /// Video: Rate is clamped to &gt;= <see cref="Video.MinRate"/> and Volume to 0..1 here (QtNative rejects other
         /// values with -7), so a patch can animate them freely. Values equal after clamping are not resent.
         /// </summary>
-        void DiffVideo(uint id, Video p, Video n)
+        private void DiffVideo(uint id, Video p, Video n)
         {
             string pp = p.Path?.Value ?? string.Empty;
             string np = n.Path?.Value ?? string.Empty;
@@ -492,13 +492,13 @@ namespace VL.Qt
         /// Auto Size (containers and Button): QtNative applies the implicit size while on and the last Size while off,
         /// so only the flag is sent here; Size is not resent when it flips.
         /// </summary>
-        void DiffAutoSize(uint id, bool p, bool n)
+        private void DiffAutoSize(uint id, bool p, bool n)
         {
             if (p != n)
                 _sink.SetBool(id, P.AutoSize, n);
         }
 
-        void DiffLayout(uint id, float pSpacing, float nSpacing, float pPadding, float nPadding, int pAlign, int nAlign)
+        private void DiffLayout(uint id, float pSpacing, float nSpacing, float pPadding, float nPadding, int pAlign, int nAlign)
         {
             if (_rescale || pSpacing != nSpacing)
                 _sink.SetF32(id, P.Spacing, _mapping.ToQt(nSpacing));
@@ -512,7 +512,7 @@ namespace VL.Qt
         /// ShaderEffect (#437): shader resource ids (0 = none), Blending, MeshResolution (clamped to &gt;= 1, QtNative rejects
         /// smaller values with -7). Source and the uniforms follow in <see cref="ChildrenReconciled"/>.
         /// </summary>
-        void DiffShaderEffect(uint id, ShaderEffect p, ShaderEffect n)
+        private void DiffShaderEffect(uint id, ShaderEffect p, ShaderEffect n)
         {
             if (p.FragmentShaderId != n.FragmentShaderId)
                 _sink.SetU64(id, P.FragmentShader, n.FragmentShaderId);
@@ -548,7 +548,7 @@ namespace VL.Qt
         }
 
         /// <summary>Exact component-wise equality (any change, however small, is sent).</summary>
-        static bool Same(in Matrix a, in Matrix b) =>
+        private static bool Same(in Matrix a, in Matrix b) =>
             a.M11 == b.M11 && a.M12 == b.M12 && a.M13 == b.M13 && a.M14 == b.M14 &&
             a.M21 == b.M21 && a.M22 == b.M22 && a.M23 == b.M23 && a.M24 == b.M24 &&
             a.M31 == b.M31 && a.M32 == b.M32 && a.M33 == b.M33 && a.M34 == b.M34 &&

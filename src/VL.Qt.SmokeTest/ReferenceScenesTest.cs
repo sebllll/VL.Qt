@@ -27,13 +27,13 @@ public static class ReferenceScenesTest
     [Test, Explicit("writes src/VL.Qt.SmokeTest/references"), Category("update-refs")]
     public static void UpdateRefs() => Scenario.RunLocal(ImageCompare.UpdateAll);
 
-    const float Bg = 0x16 / 255f;
-    const uint Orange = 0xFF8C33, Cyan = 0x26C7FF, Pink = 0xFF5C9E, Green = 0x7CD66B, Panel = 0x1E2128;
-    const int Width = 400, Height = 300;
+    private const float Bg = 0x16 / 255f;
+    private const uint Orange = 0xFF8C33, Cyan = 0x26C7FF, Pink = 0xFF5C9E, Green = 0x7CD66B, Panel = 0x1E2128;
+    private const int Width = 400, Height = 300;
 
-    static (float r, float g, float b) C(uint rgb) => (((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f);
+    private static (float r, float g, float b) C(uint rgb) => (((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f);
 
-    static StateValues<Color4> Colors(Color4 normal, Color4? disabled = null)
+    private static StateValues<Color4> Colors(Color4 normal, Color4? disabled = null)
     {
         var v = default(StateValues<Color4>).With(StyleStates.Normal, normal);
         return disabled is { } d ? v.With(StyleStates.Disabled, d) : v;

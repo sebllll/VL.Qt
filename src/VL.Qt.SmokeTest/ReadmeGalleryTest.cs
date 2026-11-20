@@ -25,10 +25,10 @@ public static class ReadmeGalleryTest
     [Test, Explicit("writes docs/images"), Category("readme-docs"), Category("own-process")]
     public static void ReadmeGalleryDocs() => Scenario.RunLocal(s => ImageCompare.RunDocs(s, new[] { "readme-gallery" }));
 
-    const float Bg = 0x16 / 255f;
+    private const float Bg = 0x16 / 255f;
 
-    static Color4 C(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
-    static StateValues<Color4> Colors(uint normal, uint hovered, uint pressed, uint disabled, uint @checked = 0)
+    private static Color4 C(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
+    private static StateValues<Color4> Colors(uint normal, uint hovered, uint pressed, uint disabled, uint @checked = 0)
     {
         var v = default(StateValues<Color4>).With(StyleStates.Normal, C(normal)).With(StyleStates.Hovered, C(hovered))
             .With(StyleStates.Pressed, C(pressed)).With(StyleStates.Disabled, C(disabled));
@@ -36,7 +36,7 @@ public static class ReadmeGalleryTest
     }
 
     // The base style with light colors: dimensions, fonts and states stay.
-    static Style Light()
+    private static Style Light()
     {
         var b = BaseStyle.Default;
         return b with

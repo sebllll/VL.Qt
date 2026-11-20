@@ -11,11 +11,11 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "CubicTo", Category = Categories.Paths)]
     public sealed class CubicToNode
     {
-        QtPath? _input;
-        Vector2 _controlPoint1;
-        Vector2 _controlPoint2;
-        Vector2 _endPoint;
-        QtPath? _output;
+        private QtPath? _input;
+        private Vector2 _controlPoint1;
+        private Vector2 _controlPoint2;
+        private Vector2 _endPoint;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a cubic curve added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -47,11 +47,11 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "CubicTo (Relative)", Category = Categories.Paths)]
     public sealed class CubicToRelativeNode
     {
-        QtPath? _input;
-        Vector2 _controlPoint1;
-        Vector2 _controlPoint2;
-        Vector2 _endPoint;
-        QtPath? _output;
+        private QtPath? _input;
+        private Vector2 _controlPoint1;
+        private Vector2 _controlPoint2;
+        private Vector2 _endPoint;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a cubic curve added, its points offset by the last point.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>

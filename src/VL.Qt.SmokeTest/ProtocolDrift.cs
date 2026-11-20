@@ -13,8 +13,8 @@ using VL.Qt;
 [TestFixture]
 public static class ProtocolDrift
 {
-    static readonly Regex s_define = new(@"^\s*#define\s+VLQT_(\w+)\s+(-?\d+)\s*(/\*.*)?$");
-    static readonly Regex s_enumMember = new(@"^\s*VLQT_(\w+)\s*=\s*(-?\d+)\s*,?\s*(/\*.*)?$");
+    private static readonly Regex s_define = new(@"^\s*#define\s+VLQT_(\w+)\s+(-?\d+)\s*(/\*.*)?$");
+    private static readonly Regex s_enumMember = new(@"^\s*VLQT_(\w+)\s*=\s*(-?\d+)\s*,?\s*(/\*.*)?$");
 
     public static string DefaultHeaderPath => Path.Combine(AppContext.BaseDirectory, "protocol.h");
 
@@ -53,7 +53,7 @@ public static class ProtocolDrift
         return errors;
     }
 
-    static Dictionary<string, long> ParseHeader(string[] lines, List<string> errors)
+    private static Dictionary<string, long> ParseHeader(string[] lines, List<string> errors)
     {
         var result = new Dictionary<string, long>();
         for (int i = 0; i < lines.Length; i++)
@@ -68,7 +68,7 @@ public static class ProtocolDrift
     }
 
     // Top-level consts -> UPPER_SNAKE, nested class consts -> GROUP_UPPER_SNAKE.
-    static Dictionary<string, long> ReflectMirror(System.Type root)
+    private static Dictionary<string, long> ReflectMirror(System.Type root)
     {
         var result = new Dictionary<string, long>();
         void Add(System.Type t, string prefix)
@@ -82,7 +82,7 @@ public static class ProtocolDrift
         return result;
     }
 
-    static List<string> Compare(Dictionary<string, long> header, Dictionary<string, long> mirror)
+    private static List<string> Compare(Dictionary<string, long> header, Dictionary<string, long> mirror)
     {
         var errors = new List<string>();
         foreach (var (name, value) in header)
@@ -95,7 +95,7 @@ public static class ProtocolDrift
         return errors;
     }
 
-    static string ToUpperSnake(string pascal)
+    private static string ToUpperSnake(string pascal)
     {
         var sb = new StringBuilder();
         for (int i = 0; i < pascal.Length; i++)

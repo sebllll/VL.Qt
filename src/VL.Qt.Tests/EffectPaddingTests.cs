@@ -11,10 +11,10 @@ namespace VL.Qt.Tests
     /// <summary>Auto Padding / Padding of Blur and DropShadow: fold into the one effect area and the reconciler SETs.</summary>
     public class EffectPaddingTests
     {
-        static BlurEffect Blur(Effect? previous = null, bool auto = true, RectangleF padding = default)
+        private static BlurEffect Blur(Effect? previous = null, bool auto = true, RectangleF padding = default)
             => new(previous, 0.5f, 32, 0, auto, padding);
 
-        static DropShadowEffect Shadow(Effect? previous = null, bool auto = true, RectangleF padding = default)
+        private static DropShadowEffect Shadow(Effect? previous = null, bool auto = true, RectangleF padding = default)
             => new(previous, Color4.Black, new Vector2(0.1f, 0.2f), 1, 1, auto, padding);
 
         [Test]

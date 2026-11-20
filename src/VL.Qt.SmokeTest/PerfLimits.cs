@@ -14,17 +14,17 @@ using System.Runtime.InteropServices;
 // a short calibration loop measures the core speed (CpuFactor, 1 on a fast core, at most MaxCpuFactor) and scales only these
 // limits, so an old CPU does not fail them while a real regression (several times the calibrated time) still does.
 // VLQT_PERF_FACTOR / --perf-factor set the factor by hand: no calibration then.
-static class PerfLimits
+internal static class PerfLimits
 {
     public const double Arm64Factor = 1.5;
 
     // Calibration loop time (ms, best of several) of the reference core the CPU-bound limits were set for, and the cap of CpuFactor.
-    const double CalibrationReferenceMs = 6.8; // ~5 GHz-class core: the loop is a dependent chain (8 cycles per step), its time follows the clock
+    private const double CalibrationReferenceMs = 6.8; // ~5 GHz-class core: the loop is a dependent chain (8 cycles per step), its time follows the clock
     public const double MaxCpuFactor = 3.0;
 
-    static bool s_factorSet;
-    static double? s_cpuFactor;
-    static uint s_sink;
+    private static bool s_factorSet;
+    private static double? s_cpuFactor;
+    private static uint s_sink;
 
     public static double Factor { get; private set; } = 1.0;
     public static bool WarnOnly { get; private set; }
@@ -63,7 +63,7 @@ static class PerfLimits
     // factor was set by hand. Measured once, on first use (Linux only).
     public static double CpuFactor => s_cpuFactor ??= MeasureCpuFactor();
 
-    static double MeasureCpuFactor()
+    private static double MeasureCpuFactor()
     {
         if (!OperatingSystem.IsLinux() || s_factorSet) return 1.0;
         // Scalar integer work with dependent stores into a small buffer, like writing and applying a command buffer; no SIMD.

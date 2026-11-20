@@ -12,14 +12,14 @@ namespace VL.Qt.Tests
     /// <summary>The nodes Line, Polyline and Polygon (#154, package 03): pin defaults, change detection, point limit.</summary>
     public class ShapeNodesTests
     {
-        static readonly Color4 White = Color4.White;
+        private static readonly Color4 White = Color4.White;
 
-        string? _warning;
-        int _warnings; // currently shown warnings
+        private string? _warning;
+        private int _warnings; // currently shown warnings
 
-        sealed class Removal(ShapeNodesTests t) : IDisposable { public void Dispose() => t._warnings--; }
+        private sealed class Removal(ShapeNodesTests t) : IDisposable { public void Dispose() => t._warnings--; }
 
-        IDisposable AddWarning(string text)
+        private IDisposable AddWarning(string text)
         {
             _warnings++;
             _warning = text;
@@ -27,21 +27,21 @@ namespace VL.Qt.Tests
         }
 
         // Pin defaults as declared on Update (what vvvv passes for unconnected pins).
-        static Element Line(LineNode n, Vector2? from = null, Vector2? to = null, float strokeWidth = 0.05f)
+        private static Element Line(LineNode n, Vector2? from = null, Vector2? to = null, float strokeWidth = 0.05f)
             => n.Update(from ?? new Vector2(0.5f, 0.5f), to ?? new Vector2(2.5f, 1.5f), default, White, strokeWidth, ShapeCap.Flat,
                 Spread<float>.Empty, 0, 0, 1, 0, 1, false, false, null, null, out _, out _);
 
-        static Element Polyline(PolylineNode n, Spread<Vector2> points, bool closed = false)
+        private static Element Polyline(PolylineNode n, Spread<Vector2> points, bool closed = false)
             => n.Update(points, closed, default, White, 0.05f, ShapeCap.Flat, ShapeJoin.Miter, 4, Spread<float>.Empty, 0, 0, 1, 0, 1,
                 false, false, null, null, out _, out _);
 
-        static Element Polygon(PolygonNode n, Spread<Vector2> points)
+        private static Element Polygon(PolygonNode n, Spread<Vector2> points)
             => n.Update(points, default, White, White, 0, ShapeJoin.Miter, 4, Spread<float>.Empty, 0, ShapeFillRule.NonZero, 1,
                 false, false, null, null, out _, out _);
 
-        static Spread<Vector2> Points(params (float x, float y)[] p) => p.Select(v => new Vector2(v.x, v.y)).ToSpread();
+        private static Spread<Vector2> Points(params (float x, float y)[] p) => p.Select(v => new Vector2(v.x, v.y)).ToSpread();
 
-        static Spread<Vector2> Many(int count) => Enumerable.Range(0, count).Select(i => new Vector2(i, i % 7)).ToSpread();
+        private static Spread<Vector2> Many(int count) => Enumerable.Range(0, count).Select(i => new Vector2(i, i % 7)).ToSpread();
 
         [Test]
         public void Line_Defaults()

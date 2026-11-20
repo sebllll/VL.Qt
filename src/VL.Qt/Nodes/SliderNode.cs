@@ -22,8 +22,8 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(float Value, float Minimum, float Maximum, float Step, SliderOrientation Orientation, bool Enabled, bool AutoSize, Style? Style);
 
-        readonly ElementNode<Slider, Props> _node;
-        readonly ValueChannel<float> _value = new(0f);
+        private readonly ElementNode<Slider, Props> _node;
+        private readonly ValueChannel<float> _value = new(0f);
 
         public SliderNode(NodeContext nodeContext)
             => _node = new ElementNode<Slider, Props>(nodeContext, Create);
@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
         internal SliderNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Slider, Props>(addWarning, Create);
 
-        static readonly Func<CommonInputs, Props, SinkSlot, Slider> Create = static (c, p, slot) => new Slider
+        private static readonly Func<CommonInputs, Props, SinkSlot, Slider> Create = static (c, p, slot) => new Slider
             {
                 Size = c.Size,
                 Transform = c.Transform,

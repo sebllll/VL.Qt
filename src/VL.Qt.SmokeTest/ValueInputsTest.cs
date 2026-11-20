@@ -19,19 +19,19 @@ public static class ValueInputsTest
     public static void ValueInputs() => Scenario.Run(Run);
 
     // Slider: distance of the handle centre at 0 / 1 from the Bounds edge. Base style (#292): frame padding + handle radius.
-    const float SliderInset = 8 + 14 / 2; // BaseStyle FramePaddingX + IndicatorSize / 2
-    const float StyleMin = 24; // BaseStyle FrameMinWidth/FrameMinHeight: lower bound of every implicit size (#292)
+    private const float SliderInset = 8 + 14 / 2; // BaseStyle FramePaddingX + IndicatorSize / 2
+    private const float StyleMin = 24; // BaseStyle FrameMinWidth/FrameMinHeight: lower bound of every implicit size (#292)
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    static extern int vlqt_test_send_key_text(IntPtr w, int key, int modifiers, [MarshalAs(UnmanagedType.LPUTF8Str)] string? text);
+    private static extern int vlqt_test_send_key_text(IntPtr w, int key, int modifiers, [MarshalAs(UnmanagedType.LPUTF8Str)] string? text);
 
-    const int KeyA = 0x41;
-    const int KeySpace = 0x20;
-    const int KeyEscape = 0x01000000;
-    const int KeyReturn = 0x01000004;
-    const int KeyRight = 0x01000014;
-    const int ControlModifier = 0x04000000;
+    private const int KeyA = 0x41;
+    private const int KeySpace = 0x20;
+    private const int KeyEscape = 0x01000000;
+    private const int KeyReturn = 0x01000004;
+    private const int KeyRight = 0x01000014;
+    private const int ControlModifier = 0x04000000;
 
-    readonly record struct Rec(ushort Event, uint Handle, byte[] Payload)
+    private readonly record struct Rec(ushort Event, uint Handle, byte[] Payload)
     {
         public float F(int i) => BinaryPrimitives.ReadSingleLittleEndian(Payload.AsSpan(4 * i));
         public ushort ValueType => BinaryPrimitives.ReadUInt16LittleEndian(Payload);
@@ -39,7 +39,7 @@ public static class ValueInputsTest
         public string Str => Encoding.UTF8.GetString(Payload, 8, (int)BinaryPrimitives.ReadUInt32LittleEndian(Payload.AsSpan(4)));
     }
 
-    static List<Rec> Parse(ReadOnlySpan<byte> b)
+    private static List<Rec> Parse(ReadOnlySpan<byte> b)
     {
         var list = new List<Rec>();
         int off = 0;
@@ -55,7 +55,7 @@ public static class ValueInputsTest
         return list;
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt value inputs test");
         s.Check(w != IntPtr.Zero, "window_create");
@@ -455,17 +455,17 @@ public static class ValueInputsTest
         s.Pump(1);
     }
 
-    const uint C = 1;
-    const uint Sw = 2;
-    const uint Sl = 3;
-    const uint T1 = 4;
-    const uint T2 = 5;
-    const uint HC = 51;
-    const uint HC2 = 52;
-    const uint HS = 53;
-    const uint HL = 54;
-    const uint HL2 = 55;
-    const uint HT = 56;
-    const uint HT2 = 57;
-    const uint HT3 = 58;
+    private const uint C = 1;
+    private const uint Sw = 2;
+    private const uint Sl = 3;
+    private const uint T1 = 4;
+    private const uint T2 = 5;
+    private const uint HC = 51;
+    private const uint HC2 = 52;
+    private const uint HS = 53;
+    private const uint HL = 54;
+    private const uint HL2 = 55;
+    private const uint HT = 56;
+    private const uint HT2 = 57;
+    private const uint HT3 = 58;
 }

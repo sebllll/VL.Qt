@@ -17,7 +17,7 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Line", Category = Categories.Elements)]
     public sealed class LineNode : IDisposable
     {
-        readonly ShapeNodeCore _core;
+        private readonly ShapeNodeCore _core;
 
         public LineNode(NodeContext nodeContext) => _core = new ShapeNodeCore(nodeContext);
 

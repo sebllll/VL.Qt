@@ -19,11 +19,11 @@ namespace VL.Qt.Nodes
         /// <summary>Error at the node when Write is hit without an Image.</summary>
         internal const string NoImageError = "Image is empty";
 
-        readonly ImageFileWriter _writer;
-        readonly ImageNodeReport _report;
-        string _error = string.Empty;
+        private readonly ImageFileWriter _writer;
+        private readonly ImageNodeReport _report;
+        private string _error = string.Empty;
 
-        public FileWriterNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext)
+        public FileWriterNode(NodeContext nodeContext)
         {
             _writer = ImageFileWriter.CreateNative();
             _report = new ImageNodeReport(new NodeErrors(nodeContext));

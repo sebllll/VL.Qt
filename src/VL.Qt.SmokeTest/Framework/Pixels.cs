@@ -5,7 +5,7 @@ using System.Drawing;
 /// Pixel helpers of the scenarios (TEST-12). Grabs are in device pixels (HiDPI); test coordinates are logical, by default
 /// in the 800x600 test window. Import with `using static Pixels;` so `Px`, `Near` and `IsBg` read as before.
 /// </summary>
-static class Pixels
+internal static class Pixels
 {
     /// <summary>Logical size of the standard test window.</summary>
     public const int Width = 800, Height = 600;

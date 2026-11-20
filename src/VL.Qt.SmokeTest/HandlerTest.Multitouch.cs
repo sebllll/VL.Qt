@@ -10,10 +10,10 @@ using VL.Qt;
 // touch moves until the next pump, so gestures move in small steps with one Frame per step.
 public static partial class HandlerTest
 {
-    readonly record struct TouchPoint(uint Id, float X, float Y, float Pressure, float W, float H);
+    private readonly record struct TouchPoint(uint Id, float X, float Y, float Pressure, float W, float H);
 
     /// <summary>Points of an EV_TOUCH_POINTS payload; null if the layout is wrong.</summary>
-    static TouchPoint[]? TouchPoints(Rec r)
+    private static TouchPoint[]? TouchPoints(Rec r)
     {
         var p = r.Payload;
         if (p.Length < 4) return null;
@@ -31,22 +31,22 @@ public static partial class HandlerTest
     }
 
     /// <summary>The last EV_TOUCH_POINTS of the sink in the records; null if none.</summary>
-    static TouchPoint[]? LastTouch(List<Rec> recs, uint h)
+    private static TouchPoint[]? LastTouch(List<Rec> recs, uint h)
     {
         var r = recs.LastOrDefault(r => r.Event == Protocol.Ev.TouchPoints && r.Handle == h && r.Index == 0);
         return r.Payload is null ? null : TouchPoints(r) ?? Array.Empty<TouchPoint>();
     }
 
-    static bool HasPoints(List<Rec> recs, uint h, params (uint Id, float X, float Y)[] expected)
+    private static bool HasPoints(List<Rec> recs, uint h, params (uint Id, float X, float Y)[] expected)
         => LastTouch(recs, h) is { } pts && pts.Length == expected.Length
             && pts.Zip(expected).All(z => z.First.Id == z.Second.Id && Near(z.First.X, z.Second.X) && Near(z.First.Y, z.Second.Y));
 
-    static string Pts(List<Rec> recs, uint h) => LastTouch(recs, h) is { } pts
+    private static string Pts(List<Rec> recs, uint h) => LastTouch(recs, h) is { } pts
         ? $"[{string.Join(" ", pts.Select(p => $"{p.Id}:{p.X},{p.Y} p{p.Pressure} {p.W}x{p.H}"))}]" : "no TOUCH_POINTS";
 
     // Touch Points (#321): all points of an item with ids and item-local positions, release one by one, parallel to
     // Tap, occlusion by an element on top (on/off), accepted devices, sink change / DESTROY, property errors.
-    static void RunTouchPoints(Scenario s)
+    private static void RunTouchPoints(Scenario s)
     {
         using var h = new Harness("touch-points", s);
         const uint A = 1, C = 2, TP = 10, TA = 11, TC = 12;
@@ -161,26 +161,26 @@ public static partial class HandlerTest
         s.Check(None(recs, 44), $"touch-points: release after DESTROY -> silent ({Dump(recs)})");
     }
 
-    static bool IsPinch(Rec r, uint h) => r.Event == Protocol.Ev.Pinch && r.Handle == h && r.Payload.Length == 24 && r.Index == 0;
-    static string Pinch(Rec r) => $"({r.F(0):0.###}, {r.F(1):0.#}, {r.F(2):0.#}, {r.F(3):0.#}; pivot {r.F(4):0.#}, {r.F(5):0.#})";
+    private static bool IsPinch(Rec r, uint h) => r.Event == Protocol.Ev.Pinch && r.Handle == h && r.Payload.Length == 24 && r.Index == 0;
+    private static string Pinch(Rec r) => $"({r.F(0):0.###}, {r.F(1):0.#}, {r.F(2):0.#}, {r.F(3):0.#}; pivot {r.F(4):0.#}, {r.F(5):0.#})";
     // Where the gesture (scale, rotation, translation about the pivot) takes a point: pivot + t + s R (p - pivot).
-    static (float X, float Y) Apply(Rec r, float x, float y)
+    private static (float X, float Y) Apply(Rec r, float x, float y)
     {
         float s = r.F(0), a = r.F(1) * MathF.PI / 180f, dx = x - r.F(4), dy = y - r.F(5);
         return (r.F(4) + r.F(2) + s * (MathF.Cos(a) * dx - MathF.Sin(a) * dy), r.F(5) + r.F(3) + s * (MathF.Sin(a) * dx + MathF.Cos(a) * dy));
     }
-    static bool Sticks(Rec r, (float X, float Y) start, (float X, float Y) now)
+    private static bool Sticks(Rec r, (float X, float Y) start, (float X, float Y) now)
     {
         var p = Apply(r, start.X, start.Y);
         return MathF.Abs(p.X - now.X) < 3 && MathF.Abs(p.Y - now.Y) < 3;
     }
-    static string Pinches(List<Rec> recs, uint h) => string.Join(" ", recs.Where(r => IsPinch(r, h)).Select(Pinch));
+    private static string Pinches(List<Rec> recs, uint h) => string.Join(" ", recs.Where(r => IsPinch(r, h)).Select(Pinch));
 
     /// <summary>
     /// Moves the given fingers linearly from their start to their end positions in steps of at most ~5 px, one Frame per
     /// step; all records in order.
     /// </summary>
-    static List<Rec> Gesture(Harness h, params (int Id, float X0, float Y0, float X1, float Y1)[] fingers)
+    private static List<Rec> Gesture(Harness h, params (int Id, float X0, float Y0, float X1, float Y1)[] fingers)
     {
         float len = fingers.Max(f => MathF.Max(MathF.Abs(f.X1 - f.X0), MathF.Abs(f.Y1 - f.Y0)));
         int steps = Math.Max(10, (int)MathF.Ceiling(len / 5));
@@ -195,7 +195,7 @@ public static partial class HandlerTest
     }
 
     /// <summary>Two fingers on a circle around (cx, cy) with radius r, from angle a0 to a1 (degrees), one Frame per step.</summary>
-    static List<Rec> Rotate(Harness h, float cx, float cy, float r, float a0, float a1, int steps)
+    private static List<Rec> Rotate(Harness h, float cx, float cy, float r, float a0, float a1, int steps)
     {
         var all = new List<Rec>();
         for (int i = 1; i <= steps; ++i)
@@ -209,7 +209,7 @@ public static partial class HandlerTest
     }
 
     /// <summary>Largest step between consecutive EV_PINCH values (scale, rotation, translation length).</summary>
-    static (float Scale, float Rotation, float Translation) MaxStep(List<Rec> recs, uint h)
+    private static (float Scale, float Rotation, float Translation) MaxStep(List<Rec> recs, uint h)
     {
         var p = recs.Where(r => IsPinch(r, h)).ToList();
         float s = 0, rot = 0, t = 0;
@@ -222,12 +222,12 @@ public static partial class HandlerTest
         return (s, rot, t);
     }
 
-    static Rec? LastPinch(List<Rec> recs, uint h) => recs.LastOrDefault(r => IsPinch(r, h)) is { Payload: not null } r ? r : null;
+    private static Rec? LastPinch(List<Rec> recs, uint h) => recs.LastOrDefault(r => IsPinch(r, h)) is { Payload: not null } r ? r : null;
 
     // Pinch (#321): spread / rotate / shift, values only while active, last value before ACTIVE 0 (never 1/0/0), the
     // item stays (target null), no tap from two fingers, Touch Points in parallel, a third finger pauses the gesture
     // without a jump (down and up), MAXIMUM_POINT_COUNT, sink change, DESTROY, property errors.
-    static void RunPinch(Scenario s)
+    private static void RunPinch(Scenario s)
     {
         using var h = new Harness("pinch", s);
         const uint P = 1, PH = 10, TA = 11, TP = 12;
@@ -382,7 +382,7 @@ public static partial class HandlerTest
 
     // Windows press-and-hold (#321): the OS synthesizes a right click from touch. QtNative sets
     // QT_QUICK_ALLOW_SYNTHETIC_RIGHT_CLICK=0 (unless set before the start), so Qt Quick drops it; a real right click taps.
-    static void RunSyntheticRightClick(Scenario s)
+    private static void RunSyntheticRightClick(Scenario s)
     {
         using var h = new Harness("right-click", s);
         const uint A = 1, TA = 10, STA = 41;

@@ -8,8 +8,8 @@ namespace VL.Qt.Tests
     /// <summary>QtImage tooltip preview (#546): the Preview flag only for the editor, ReadPreview, and the node reading once per image.</summary>
     public class QtImageTooltipPreviewTests
     {
-        FakeResourceApi _api = null!;
-        ResourceClient _client = null!;
+        private FakeResourceApi _api = null!;
+        private ResourceClient _client = null!;
 
         [SetUp]
         public void SetUp()
@@ -19,13 +19,13 @@ namespace VL.Qt.Tests
             _client.SetPumping(true);
         }
 
-        void Pump()
+        private void Pump()
         {
             _client.BeforeEvents();
             _client.AfterEvents();
         }
 
-        QtImage ReadyImage(int width = 640, int height = 480)
+        private QtImage ReadyImage(int width = 640, int height = 480)
         {
             var r = _client.CreateImage();
             _client.Load(r, "C:/a.png", false);

@@ -22,7 +22,7 @@ namespace VL.Qt.Nodes
             TextHorizontalAlignment HAlign, VerticalAlignment VAlign, TextWrap Wrap, TextElide Elide,
             float LineHeight, float LetterSpacing, TextAutofit Autofit);
 
-        readonly ElementNode<Text, Props> _node;
+        private readonly ElementNode<Text, Props> _node;
 
         public TextNode(NodeContext nodeContext)
             => _node = new ElementNode<Text, Props>(nodeContext, Create);
@@ -31,7 +31,7 @@ namespace VL.Qt.Nodes
         internal TextNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Text, Props>(addWarning, Create);
 
-        static readonly Func<CommonInputs, Props, SinkSlot, Text> Create = static (c, p, slot) => new Text
+        private static readonly Func<CommonInputs, Props, SinkSlot, Text> Create = static (c, p, slot) => new Text
             {
                 Size = c.Size,
                 Transform = c.Transform,

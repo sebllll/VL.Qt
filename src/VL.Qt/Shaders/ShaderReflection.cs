@@ -36,7 +36,7 @@ namespace VL.Qt.Shaders
         ImmutableArray<ReflectedSampler> Samplers,
         string Error)
     {
-        const int initialBufferSize = 4096;
+        private const int initialBufferSize = 4096;
 
         /// <summary>Failed reflection with the given error text (also used for QtNative/argument errors).</summary>
         public static ShaderReflection Failed(string error) =>

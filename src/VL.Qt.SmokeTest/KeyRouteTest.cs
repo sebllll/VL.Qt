@@ -20,27 +20,27 @@ public static class KeyRouteTest
     [Test, Category("keyroute")]
     public static void KeyRoute() => Scenario.Run(Run);
 
-    const uint WM_KEYDOWN = 0x0100;
-    const uint WM_KEYUP = 0x0101;
-    const uint WM_GETDLGCODE = 0x0087;
-    const int VK_RETURN = 0x0D;
-    const int VK_LEFT = 0x25;
-    const int DLGC_WANTALLKEYS = 0x0004;
+    private const uint WM_KEYDOWN = 0x0100;
+    private const uint WM_KEYUP = 0x0101;
+    private const uint WM_GETDLGCODE = 0x0087;
+    private const int VK_RETURN = 0x0D;
+    private const int VK_LEFT = 0x25;
+    private const int DLGC_WANTALLKEYS = 0x0004;
 
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindowW(string? cls, string title);
-    [DllImport("user32.dll")] static extern bool PostMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
-    [DllImport("user32.dll")] static extern IntPtr SendMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
-    [DllImport("user32.dll")] static extern uint MapVirtualKeyW(uint code, uint mapType);
-    [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr FindWindowW(string? cls, string title);
+    [DllImport("user32.dll")] private static extern bool PostMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern IntPtr SendMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern uint MapVirtualKeyW(uint code, uint mapType);
+    [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
 
-    readonly record struct Rec(ushort Event, uint Handle, byte[] Payload)
+    private readonly record struct Rec(ushort Event, uint Handle, byte[] Payload)
     {
         public ushort ValueType => BinaryPrimitives.ReadUInt16LittleEndian(Payload);
         public int I32 => BinaryPrimitives.ReadInt32LittleEndian(Payload.AsSpan(4));
         public string Str => Encoding.UTF8.GetString(Payload, 8, (int)BinaryPrimitives.ReadUInt32LittleEndian(Payload.AsSpan(4)));
     }
 
-    static List<Rec> Parse(ReadOnlySpan<byte> b)
+    private static List<Rec> Parse(ReadOnlySpan<byte> b)
     {
         var list = new List<Rec>();
         int off = 0;
@@ -56,7 +56,7 @@ public static class KeyRouteTest
         return list;
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var hwnd = IntPtr.Zero;
         // Locally the key checks failed in runs beside other sessions (18 FAIL), the same develop commit passed in the
@@ -188,7 +188,7 @@ public static class KeyRouteTest
     // #374: Esc discards the edit and releases the focus (no EV_VALUE), a press outside the focused element (mouse,
     // touch, also on an element with a Tap handler, which still clicks) releases it and commits, Enter keeps it.
     // "Focus gone" shows as: typing + Enter afterwards sends nothing. Starts with TextField "4297", SpinBox 53.
-    static void RunFocus(Action<bool, string> check, IntPtr w, CommandWriter cmd, Action<string> apply, Func<List<Rec>> frame,
+    private static void RunFocus(Action<bool, string> check, IntPtr w, CommandWriter cmd, Action<string> apply, Func<List<Rec>> frame,
         Action<int, bool> postKey, Action<string> type, Action<float, float> click)
     {
         const int VK_ESCAPE = 0x1B, VK_END = 0x23;
@@ -345,12 +345,12 @@ public static class KeyRouteTest
         check(FocusGone(HS, out fr), $"spinbox touch tap into the empty window releases the focus ({fr})");
     }
 
-    const uint R = 3;
-    const uint RT = 4;
-    const uint HR = 63;
-    const uint T = 1;
-    const uint S1 = 2;
-    const uint HT = 61;
-    const uint HS = 62;
+    private const uint R = 3;
+    private const uint RT = 4;
+    private const uint HR = 63;
+    private const uint T = 1;
+    private const uint S1 = 2;
+    private const uint HT = 61;
+    private const uint HS = 62;
 }
 #endif
