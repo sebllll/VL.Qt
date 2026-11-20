@@ -371,8 +371,8 @@ public static class SnapshotTest
 
         // 5) Hitch rate: paced to 60 Hz, a moving rectangle; 300 frames without snapshots, then 300 with a snapshot of
         // the group every 10th frame. Hitch = interval > 1.5 x median of the run without snapshots.
-        if (PerfLimits.WarnOnly)
-            s.Skip("perf run snapshot hitches: perf limits are warn-only (shared runner)");
+        if (PerfLimits.SkipHeavy)
+            s.Skip("perf run snapshot hitches: heavy perf measurement skipped on shared CI runners");
         else
             RunPerf();
 

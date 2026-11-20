@@ -317,8 +317,8 @@ public static class ImageResourceTest
 
         // The perf runs (~10 s locally, much more on a 2-core runner) only where their limits count: with warn-only
         // (shared CI runners, VLQT_PERF_WARN_ONLY=1) they would only cost time in the 2-minute budget of the smoke job.
-        if (PerfLimits.WarnOnly)
-            s.Skip("perf runs 20 x 4K async + set_pixels 1080p per frame: perf limits are warn-only (shared runner)");
+        if (PerfLimits.SkipHeavy)
+            s.Skip("perf runs 20 x 4K async + set_pixels 1080p per frame: heavy perf measurement skipped on shared CI runners");
         else
             RunPerf();
         s.Check(!s.Log.Contains("without a resource"), "no worker result without a resource");
