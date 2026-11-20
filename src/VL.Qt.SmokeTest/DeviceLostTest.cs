@@ -108,7 +108,7 @@ public static class DeviceLostTest
             return w;
         }
 
-        IntPtr Device(IntPtr w) => Native.vlqt_test_device_info(w, out var dev, out _) == 0 ? dev : IntPtr.Zero;
+        IntPtr Device(IntPtr w) => NativeTest.vlqt_test_device_info(w, out var dev, out _) == 0 ? dev : IntPtr.Zero;
 
         // Grab succeeds and shows the orange rect (logical 20,20,100,60) on the dark background and every image tile
         // in its color.
@@ -116,7 +116,7 @@ public static class DeviceLostTest
         bool Shows(IntPtr w, string path)
         {
             badTiles = -1;
-            if (Native.vlqt_window_grab(w, path) != 0)
+            if (NativeTest.vlqt_test_window_grab(w, path) != 0)
                 return false;
             using var b = new Bitmap(path);
             var c = b.GetPixel(70 * b.Width / 400, 50 * b.Height / 400);
@@ -219,7 +219,7 @@ public static class DeviceLostTest
 
         for (int round = 1; round <= 2; round++)
         {
-            var rc = Native.vlqt_test_device_lost(Protocol.DeviceLost.Remove);
+            var rc = NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.Remove);
             s.Check(rc == 0, $"round {round}: vlqt_test_device_lost(REMOVE) = {rc} (needs VLQT_TEST_D3D11ON12=1)");
             if (rc != 0)
                 return;
@@ -235,7 +235,7 @@ public static class DeviceLostTest
             {
                 Pump();
                 pumps++;
-                Native.vlqt_test_device_info(IntPtr.Zero, out upload, out _);
+                NativeTest.vlqt_test_device_info(IntPtr.Zero, out upload, out _);
                 da = Device(a);
                 db = Device(b);
                 if (Moved())
@@ -252,8 +252,8 @@ public static class DeviceLostTest
             }
             var visibleMs = sw.Elapsed.TotalMilliseconds;
             s.Check(visible, $"round {round}: rect + 20 images visible again in both windows (bad tiles {badTiles}) " + (visible ? "" : Native.LastError()));
-            Native.vlqt_window_grab(a, Path.Combine(dir, $"after{round}_a.png"));
-            Native.vlqt_window_grab(b, Path.Combine(dir, $"after{round}_b.png"));
+            NativeTest.vlqt_test_window_grab(a, Path.Combine(dir, $"after{round}_a.png"));
+            NativeTest.vlqt_test_window_grab(b, Path.Combine(dir, $"after{round}_b.png"));
 
             // Resources: same count, all Ready, same bytes (no leak of old textures), snapshot pixels unchanged.
             var after = Table();

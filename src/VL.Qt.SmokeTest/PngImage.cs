@@ -5,7 +5,7 @@ using System.IO;
 using System.IO.Compression;
 
 // L4a: stand-in for System.Drawing.Bitmap on Linux (System.Drawing.Common is Windows-only since .NET 7).
-// Only what the smoke test uses: load a PNG written by vlqt_window_grab (QImage::save), Width, Height, GetPixel.
+// Only what the smoke test uses: load a PNG written by vlqt_test_window_grab (QImage::save), Width, Height, GetPixel.
 // Supports 8-bit grey/RGB/grey+alpha/RGBA, non-interlaced (what Qt writes). Compiled only on non-Windows hosts.
 sealed class Bitmap : IDisposable
 {

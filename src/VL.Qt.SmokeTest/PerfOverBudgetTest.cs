@@ -26,7 +26,7 @@ public static class PerfOverBudgetTest
             samples[i] = new Native.vlqt_perf_sample { frame = 16.6f, pump = 18, vsync = 14, sync = 0.5f, render = 1, present = 0.5f, events = 2, swaps = 1 };
             t[i] = i * budget;
         }
-        var rc = Native.vlqt_perf_eval(samples, t, samples.Length, budget, out var st);
+        var rc = NativeTest.vlqt_test_perf_eval(samples, t, samples.Length, budget, out var st);
         s.Check(rc == 0 && st.over_budget == 0,
             $"eval: 20 pumps of 18 ms with 14 ms VSync wait (Qt work 4 ms) are not over budget (rc {rc}, over budget {st.over_budget})");
 

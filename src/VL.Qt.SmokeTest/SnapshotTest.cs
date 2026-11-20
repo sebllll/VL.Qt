@@ -20,7 +20,7 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 using static Pixels;
 
 // Snapshot: SnapshotNode → ResourceClient → QtNative (QQuickItem::grabToImage, asynchronous). Pixels against
-// vlqt_window_grab, latency in pumps, error paths, hitch rate with periodic snapshots. PNGs go to <OutDir>/363_*.png.
+// vlqt_test_window_grab, latency in pumps, error paths, hitch rate with periodic snapshots. PNGs go to <OutDir>/363_*.png.
 [TestFixture, NonParallelizable]
 public static class SnapshotTest
 {
@@ -158,7 +158,7 @@ public static class SnapshotTest
             return ready ? image : null;
         }
 
-        // 1) Group with Rectangle + Text: BGRA8 premultiplied, size = group size * Scale, pixels against vlqt_window_grab.
+        // 1) Group with Rectangle + Text: BGRA8 premultiplied, size = group size * Scale, pixels against vlqt_test_window_grab.
         var img1 = Snap(node, group, 1, out var err1, out var frames1);
         latencies.Add(frames1);
         s.Check(img1 is not null && err1.Length == 0, $"snapshot of the group is ready ('{err1}')");

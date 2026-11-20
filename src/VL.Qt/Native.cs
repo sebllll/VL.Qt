@@ -83,6 +83,9 @@ namespace VL.Qt
         /// <summary>Full path of the loaded vlqt.dll / libvlqt.so.</summary>
         public static readonly string LibraryPath;
 
+        /// <summary>Handle of the loaded vlqt.dll / libvlqt.so, for the DllImport resolver of the test support.</summary>
+        internal static readonly IntPtr Handle;
+
         /// <summary>File name of QtNative: vlqt.dll (Windows) or libvlqt.so (Linux).</summary>
         private static readonly string FileName = OperatingSystem.IsWindows() ? "vlqt.dll" : "libvlqt.so";
 
@@ -101,9 +104,9 @@ namespace VL.Qt
                     Environment.SetEnvironmentVariable("PATH", NativeDir + ";" + path);
             }
             LibraryPath = Path.Combine(NativeDir, FileName);
-            var handle = NativeLibrary.Load(LibraryPath);
+            Handle = NativeLibrary.Load(LibraryPath);
             NativeLibrary.SetDllImportResolver(typeof(Native).Assembly,
-                (name, _, _) => name == Lib ? handle : IntPtr.Zero);
+                (name, _, _) => name == Lib ? Handle : IntPtr.Zero);
         }
 
         private static string FindNativeDir()
@@ -227,17 +230,12 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_take_close_request(IntPtr w);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_window_grab(IntPtr w, [MarshalAs(UnmanagedType.LPUTF8Str)] string pngPath);
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_get_perf(IntPtr w, out vlqt_perf perf);
         /// <summary>Last completed pump. 0 = ok, -1 null window, -2 no pump yet.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_get_perf_sample(IntPtr w, out vlqt_perf_sample sample);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_get_perf_stats(IntPtr w, out vlqt_perf_stats stats);
-        /// <summary>Test: vlqt_perf_stats computed from given samples and timestamps (ms, ascending) with a fixed budget.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_perf_eval(vlqt_perf_sample[] samples, double[] t_ms, int n, double budget_ms, out vlqt_perf_stats stats);
         /// <summary>host values of the last completed pump. 0 = ok, -1 null window/in, -2 no pump yet.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_report_host_frame(IntPtr w, in vlqt_host_frame frame);
@@ -246,9 +244,6 @@ namespace VL.Qt
         public static extern int vlqt_window_get_host_frame(IntPtr w, out vlqt_host_frame frame);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_get_host_stats(IntPtr w, out vlqt_host_stats stats);
-        /// <summary>Test: vlqt_host_stats computed from given host frames.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_perf_host_eval(vlqt_host_frame[] frames, int n, out vlqt_host_stats stats);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_set_overlay(IntPtr w, int flags);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -292,41 +287,6 @@ namespace VL.Qt
         /// <summary>Copies queued events into out; returns bytes written, 0 = none, -required if out is too small, -1 = null window.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern int vlqt_window_poll(IntPtr w, ref byte @out, int cap);
-
-        /// <summary>TEST ONLY: synthetic mouse event (<see cref="Protocol.Mouse"/>), x/y in window DIP. 0 = ok.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_send_mouse(IntPtr w, int type, float x, float y);
-        /// <summary>TEST ONLY: synthetic wheel event at x/y (window DIP), angleDelta in eighths of a degree (120 = one notch). 0 = ok.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_send_wheel(IntPtr w, float x, float y, int dx, int dy);
-        /// <summary>TEST ONLY: number of pointer handlers (input handlers) of item id, &lt;0 = error.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_handler_count(IntPtr w, uint id);
-        /// <summary>
-        /// TEST ONLY: synthetic touch point event (<see cref="Protocol.Touch"/>) for point id, x/y in window DIP. QtNative keeps
-        /// the active points per window and sends the complete QTouchEvent. 0 = ok, -1 null window, -2 unknown type or id state.
-        /// </summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_send_touch(IntPtr w, int type, int id, float x, float y);
-        /// <summary>TEST ONLY: mouse event (Move, Press, Release) queued like platform input, delivered later. 0 = ok.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_queue_mouse(IntPtr w, int type, float x, float y);
-        /// <summary>TEST ONLY: touch point event queued like platform input, delivered later. 0 = ok, -2 unknown type or id state.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_queue_touch(IntPtr w, int type, int id, float x, float y);
-        /// <summary>
-        /// TEST ONLY: QRhi of window w (IntPtr.Zero = the upload QRhi on the shared device) and its native device
-        /// (ID3D11Device* on D3D11). 0 = ok, -2 no QRhi yet.
-        /// </summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_device_info(IntPtr w, out IntPtr device, out IntPtr rhi);
-        /// <summary>
-        /// TEST ONLY: makes the shared graphics device lost (<see cref="Protocol.DeviceLost"/>); QtNative rebuilds
-        /// device, windows and resources in the next pumps. 0 = ok, -2 not possible (no shared device, or REMOVE without
-        /// VLQT_TEST_D3D11ON12=1), -7 unknown mode.
-        /// </summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_device_lost(int mode);
 
         // Offscreen scenes (QtTexture): main thread only, codes Protocol.Offscreen. The scene handle also works
         // with vlqt_window_destroy/_apply/_get_apply_error/_poll/_set_debug/_get_perf* (list in vlqt.h).
@@ -385,36 +345,6 @@ namespace VL.Qt
         /// <summary>focused 1: FocusIn, 0: FocusOut; no-op if unchanged.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_offscreen_set_focus(IntPtr scene, int focused);
-
-        // TEST ONLY: a second D3D11 device standing in for Stride's, shared textures and leak probes (vlqt.h).
-        /// <summary>TEST ONLY: D3D11 device + immediate context (one reference each); adapter 0 = QtNative's, 1 = WARP.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_d3d11_create_device(int adapter, out IntPtr device, out IntPtr context);
-        /// <summary>TEST ONLY: releases context and device; returns the references left on the device.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_d3d11_release_device(IntPtr device, IntPtr context);
-        /// <summary>TEST ONLY: shared Texture2D (RT | SR, SHARED | SHARED_NTHANDLE) on device and its NT handle.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_d3d11_create_shared_texture(IntPtr device, int width, int height, int dxgiFormat, out IntPtr texture, out IntPtr ntHandle);
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int vlqt_test_d3d11_read_texture(IntPtr texture, ref byte @out, int cap, out int width, out int height, out int dxgiFormat);
-        /// <summary>TEST ONLY: COM reference count of obj without the probe's own reference.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_com_ref_count(IntPtr obj);
-        /// <summary>TEST ONLY: IUnknown::Release; returns the references left.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_com_release(IntPtr obj);
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_close_handle(IntPtr handle);
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_process_handle_count();
-        /// <summary>TEST ONLY: last read/write fence values and render count of a bound scene.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_offscreen_state(IntPtr scene, out ulong readFence, out ulong writeFence, out long renders);
-
-        /// <summary>TEST ONLY: texture pixels via a staging copy, rows tightly packed; bytes written, -required, &lt;0 error.</summary>
-        public static int TestReadTexture(IntPtr texture, Span<byte> @out, out int width, out int height, out int dxgiFormat)
-            => vlqt_test_d3d11_read_texture(texture, ref MemoryMarshal.GetReference(@out), @out.Length, out width, out height, out dxgiFormat);
 
         /// <summary>One resource of vlqt_res_list (vlqt.h vlqt_res_info).</summary>
         [StructLayout(LayoutKind.Sequential)]
@@ -484,9 +414,6 @@ namespace VL.Qt
         public static extern int vlqt_set_pipeline_cache([MarshalAs(UnmanagedType.LPUTF8Str)] string? path);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern int vlqt_res_set_pixels(ulong id, in vlqt_pixel_desc desc, in byte data, int len);
-        /// <summary>TEST ONLY: content of a Ready image as RGBA8 premultiplied; bytes written, -required, -9 not Ready.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        private static extern int vlqt_test_res_read_pixels(ulong id, ref byte @out, int cap, out int width, out int height);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern int vlqt_image_write(in vlqt_pixel_desc desc, in byte data, int len, [MarshalAs(UnmanagedType.LPUTF8Str)] string path, int quality, ref byte err, int errCap);
 
@@ -504,25 +431,9 @@ namespace VL.Qt
             return rc;
         }
 
-        /// <summary>TEST ONLY: writes a stripe test image (red, green, blue, white) as PNG/JPG by extension.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_write_image([MarshalAs(UnmanagedType.LPUTF8Str)] string path, int width, int height, int quality);
-
         /// <summary>Starts or replaces the content of an image resource from pixels (copied synchronously).</summary>
         public static int ResSetPixels(ulong id, in vlqt_pixel_desc desc, ReadOnlySpan<byte> data)
             => vlqt_res_set_pixels(id, in desc, in MemoryMarshal.GetReference(data), data.Length);
-        public static int ResReadPixels(ulong id, Span<byte> @out, out int width, out int height)
-            => vlqt_test_res_read_pixels(id, ref MemoryMarshal.GetReference(@out), @out.Length, out width, out height);
-
-        /// <summary>TEST ONLY: starts a Pending test resource (decode sleeps decodeMs, upload uses uploadBytes; flags 1 = decode fails, 2 = upload fails).</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_res_start(ulong id, int decodeMs, long uploadBytes, int flags);
-        /// <summary>TEST ONLY: state machine transition; 0 = done, -7 = rejected, -9 = stale id.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_res_transition(ulong id, int from, int to);
-        /// <summary>TEST ONLY: element reference +1 / -1.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_res_element_ref(ulong id, int delta);
 
         /// <summary>Starts grabbing element elementId of window w into a snapshot resource (asynchronous); 0 / -7 / -9.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
@@ -613,9 +524,6 @@ namespace VL.Qt
         /// <summary>Drops one reference of a font handle; the font is removed at the end of the pump when none is left. 0 / -1 wrong thread / -9.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_font_release(ulong handle);
-        /// <summary>Test: references of a font handle, 0 = removal pending, -9 = removed or unknown.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int vlqt_test_font_refs(ulong handle);
 
         /// <summary>
         /// Registers a font file (or shares its registration) and takes one reference: 0 with the handle and the family

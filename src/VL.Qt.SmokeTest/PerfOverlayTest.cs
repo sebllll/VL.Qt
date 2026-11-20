@@ -17,30 +17,12 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class PerfOverlayTest
 {
-    // Test exports (vlqt.h, TEST ONLY); declared here so VL.Qt's Native.cs stays untouched.
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int vlqt_test_perf_spike(IntPtr w, int phase, float ms);
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int vlqt_test_send_key(IntPtr w, int key, int modifiers);
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int vlqt_test_perf_stats_text(IntPtr w, byte[] buf, int len);
-
-    private static string StatsText(IntPtr w)
-    {
-        var buf = new byte[4096];
-        var n = vlqt_test_perf_stats_text(w, buf, buf.Length);
-        return n > 0 ? System.Text.RegularExpressions.Regex.Replace(System.Text.Encoding.UTF8.GetString(buf, 0, Math.Min(n, buf.Length - 1)), "<[^>]*>", " ").Replace("&nbsp;", " ") : "";
-    }
-
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
-
     // plain text of the Scene/System page, single spaces (columns collapsed) for robust Contains checks.
     internal static string PageText(IntPtr w, int page)
     {
-        var need = -vlqt_test_perf_text(w, page, null, 0);
+        var need = -NativeTest.vlqt_test_perf_text(w, page, null, 0);
         var buf = new byte[Math.Max(need, 1)];
-        var n = vlqt_test_perf_text(w, page, buf, buf.Length);
+        var n = NativeTest.vlqt_test_perf_text(w, page, buf, buf.Length);
         var text = n > 0 ? System.Text.Encoding.UTF8.GetString(buf, 0, n) : "";
         return System.Text.RegularExpressions.Regex.Replace(text, " +", " ");
     }
@@ -105,7 +87,7 @@ public static class PerfOverlayTest
             $"perfoverlay: VSync on: 'vsync wait' and plain 'present' in summary and timeline ({LineWith(sum, "vsync wait")} | {LineWith(sum, "present")})");
         Retry(s, "perfoverlay: VSync on: vsync spike in the vsync wait segment", () =>
         {
-            if (vlqt_test_perf_spike(v, PhaseVsync, 10) != 0) return (false, "inject failed");
+            if (NativeTest.vlqt_test_perf_spike(v, PhaseVsync, 10) != 0) return (false, "inject failed");
             cmd.Reset();
             cmd.SetPlace(1, 120, 200, 100, 60);
             Native.Apply(v, cmd.EndFrame());
@@ -171,7 +153,7 @@ public static class PerfOverlayTest
                 if (lastEnd != 0 && Stopwatch.GetElapsedTime(lastEnd, t0).TotalMilliseconds > stallMs) bigStalls.Add(frame);
                 Native.Apply(w, cmd.EndFrame());
                 var apply = (float)Stopwatch.GetElapsedTime(t0).TotalMilliseconds;
-                if (spikeMs > 0) vlqt_test_perf_spike(w, PhaseSync, spikeMs);
+                if (spikeMs > 0) NativeTest.vlqt_test_perf_spike(w, PhaseSync, spikeMs);
                 s.Pump(1);
                 // Host values like QtApp reports them, so the Summary shows its apply/GC rows. vvvv: the
                 // time between pumps stands in for the patch update, so the F2 graph shows its vvvv line.
@@ -194,7 +176,7 @@ public static class PerfOverlayTest
         // ~6 ms can land in the same pump, the attribution is still clear.
         Retry(s, "perfoverlay: render spike in the render phase", () =>
         {
-            if (vlqt_test_perf_spike(w, PhaseRender, 12) != 0) return (false, "inject failed");
+            if (NativeTest.vlqt_test_perf_spike(w, PhaseRender, 12) != 0) return (false, "inject failed");
             Run(1);
             Native.vlqt_window_get_perf_sample(w, out var ps);
             var ok = ps.render >= 12 && ps.sync < ps.render / 2 && ps.events < ps.render / 2 && ps.pump >= 12;
@@ -204,7 +186,7 @@ public static class PerfOverlayTest
         Run(40);
         Retry(s, "perfoverlay: sync spike in the sync phase", () =>
         {
-            if (vlqt_test_perf_spike(w, PhaseSync, 10) != 0) return (false, "inject failed");
+            if (NativeTest.vlqt_test_perf_spike(w, PhaseSync, 10) != 0) return (false, "inject failed");
             Run(1);
             Native.vlqt_window_get_perf_sample(w, out var ps);
             var ok = ps.sync >= 10 && ps.render < ps.sync / 2 && ps.events < ps.sync / 2;
@@ -240,12 +222,12 @@ public static class PerfOverlayTest
             return (ok, peaks);
         });
         // F7 (stats visible) hides the host segments: the same pumps are now attributed to Qt phases only.
-        vlqt_test_send_key(w, KeyF7, 0);
+        NativeTest.vlqt_test_send_key(w, KeyF7, 0);
         var tlOff = PageText(w, Timeline);
         var peaksOff = string.Join(" | ", tlOff.Split('\n').SkipWhile(l => !l.StartsWith("peaks")).Take(3).Select(l => l.Trim()));
         s.Check(tlOff.Contains("F7 vvvv/GC/apply off") && !peaksOff.Contains("vvvv") && !peaksOff.Contains("GC") && !peaksOff.Contains("apply"),
             $"perfoverlay: F7 hides the host segments ({peaksOff})");
-        vlqt_test_send_key(w, KeyF7, 0);
+        NativeTest.vlqt_test_send_key(w, KeyF7, 0);
         s.Check(PageText(w, Timeline).Contains("F7 vvvv/GC/apply on"), "perfoverlay: F7 again shows them");
         Run(20); // all 3 spikes stay in the summary window (60 pumps)
         var sum = PageText(w, Summary);
@@ -256,13 +238,13 @@ public static class PerfOverlayTest
         else s.Check(sumOk, sumDetail);
         // a fresh spike in the last pump instead of the one from ~90 pumps ago (the stats window is shorter): which
         // other pump of the window was above 12 ms depended on the machine (page renders, stalls).
-        vlqt_test_perf_spike(w, PhaseRender, 14);
+        NativeTest.vlqt_test_perf_spike(w, PhaseRender, 14);
         Run(1);
         Native.vlqt_window_get_perf_stats(w, out var st);
         s.Check(st.pump_max >= 12, $"perfoverlay: stats see the spike (pump max {st.pump_max:F1})");
         using (var a = s.Grab(w, Path.Combine(s.OutDir, $"perf_f5_summary{sw}.png")))
             s.Check(a.Width > 0, "perfoverlay: summary grabbed");
-        s.Check(StatsText(w).Contains("fps") && !StatsText(w).Contains("on demand"), "perfoverlay: animated summary is not 'on demand'");
+        s.Check(PageText(w, 0).Contains("fps") && !PageText(w, 0).Contains("on demand"), "perfoverlay: animated summary is not 'on demand'");
 
         Native.vlqt_window_set_overlay(w, Stats | ((Timeline + 1) << PageShift));
         Run(5);
@@ -270,16 +252,16 @@ public static class PerfOverlayTest
             s.Check(Page(w) == Timeline, "perfoverlay: timeline grabbed");
 
         // F6 freezes: the snapshot stays while new pumps arrive; F6 again releases.
-        s.Check(vlqt_test_send_key(w, KeyF6, 0) == 0 && (Native.vlqt_window_get_overlay(w) & Freeze) != 0, "perfoverlay: F6 freezes");
+        s.Check(NativeTest.vlqt_test_send_key(w, KeyF6, 0) == 0 && (Native.vlqt_window_get_overlay(w) & Freeze) != 0, "perfoverlay: F6 freezes");
         Run(10);
         using (var a = s.Grab(w, Path.Combine(s.OutDir, $"perf_f5_timeline_frozen{sw}.png")))
         {
-            vlqt_test_send_key(w, KeyF6, 0);
+            NativeTest.vlqt_test_send_key(w, KeyF6, 0);
             s.Check((Native.vlqt_window_get_overlay(w) & Freeze) == 0, "perfoverlay: F6 again releases");
         }
 
         // F5 cycles Timeline -> Scene -> System -> Resources -> off; next F5 starts at Summary.
-        vlqt_test_send_key(w, KeyF5, 0);
+        NativeTest.vlqt_test_send_key(w, KeyF5, 0);
         Run(2);
         s.Check(Visible(w) && Page(w) == Scene, $"perfoverlay: F5 -> Scene (page {Page(w)})");
         using (var a = s.Grab(w, Path.Combine(s.OutDir, $"perf_f5_scene{sw}.png"))) { }
@@ -292,7 +274,7 @@ public static class PerfOverlayTest
         s.Check(scene.Contains("draw calls n/a"), "perfoverlay: scene draw calls n/a");
         if (s.QuickSoftware)
             s.Check(scene.Contains("gpu memory n/a") && scene.Contains("pipelines n/a"), $"perfoverlay: scene GPU values n/a on software ({Line(scene, "gpu memory")})");
-        vlqt_test_send_key(w, KeyF5, 0);
+        NativeTest.vlqt_test_send_key(w, KeyF5, 0);
         Run(2);
         s.Check(Visible(w) && Page(w) == SystemPage, $"perfoverlay: F5 -> System (page {Page(w)})");
         using (var a = s.Grab(w, Path.Combine(s.OutDir, $"perf_f5_system{sw}.png"))) { }
@@ -322,23 +304,23 @@ public static class PerfOverlayTest
             $"perfoverlay: VSync off: 'vsync wait' and plain 'present' in summary and timeline ({LineWith(sumOff, "present")})");
         if (!s.QuickSoftware)
             VSyncWindowLabels(s);
-        vlqt_test_send_key(w, KeyF5, 0);
+        NativeTest.vlqt_test_send_key(w, KeyF5, 0);
         Run(2);
         s.Check(Visible(w) && Page(w) == ResourcesPage, $"perfoverlay: F5 -> Resources (page {Page(w)})");
         s.Check(PageText(w, ResourcesPage).Contains("RESOURCES 5/5"), "perfoverlay: resources page header");
-        vlqt_test_send_key(w, KeyF5, 0);
+        NativeTest.vlqt_test_send_key(w, KeyF5, 0);
         s.Check(!Visible(w), "perfoverlay: F5 after Resources hides");
-        vlqt_test_send_key(w, KeyF5, 0);
+        NativeTest.vlqt_test_send_key(w, KeyF5, 0);
         s.Check(Visible(w) && Page(w) == Summary, $"perfoverlay: F5 from off -> Summary (page {Page(w)})");
         // Shift+F5 hides and re-shows the same page.
-        vlqt_test_send_key(w, KeyF5, 0);
-        vlqt_test_send_key(w, KeyF5, Shift);
+        NativeTest.vlqt_test_send_key(w, KeyF5, 0);
+        NativeTest.vlqt_test_send_key(w, KeyF5, Shift);
         s.Check(!Visible(w), "perfoverlay: Shift+F5 hides");
-        vlqt_test_send_key(w, KeyF5, Shift);
+        NativeTest.vlqt_test_send_key(w, KeyF5, Shift);
         s.Check(Visible(w) && Page(w) == Timeline, $"perfoverlay: Shift+F5 shows the remembered page (page {Page(w)})");
         // F6 without the stats is not consumed / changes nothing.
         Native.vlqt_window_set_overlay(w, 0);
-        vlqt_test_send_key(w, KeyF6, 0);
+        NativeTest.vlqt_test_send_key(w, KeyF6, 0);
         s.Check((Native.vlqt_window_get_overlay(w) & (Stats | Freeze)) == 0, "perfoverlay: F6 ignored while hidden");
 
         // the F2 meter draws its lines also on the software backend (there as an image, QSGGeometryNode is not drawn).
@@ -402,7 +384,7 @@ public static class PerfOverlayTest
                 last = now;
             }
             Native.vlqt_window_get_perf_stats(w, out var s1);
-            var head = StatsText(w);
+            var head = PageText(w, 0);
             var newLong = s1.long_frames - s0.long_frames;
             var detail = $"long {s0.long_frames} -> {s1.long_frames}, host stalls {stalls}/150 (> {stallMs:F1} ms), idle pumps {s1.idle - s0.idle}/150, head '{head}'";
             var ok = newLong <= 2 + stalls && s1.idle - s0.idle > 75 && head.Contains("on demand");
@@ -433,9 +415,9 @@ public static class PerfOverlayTest
         var ids = new List<ulong>();
         ulong Start(int decodeMs, long bytes, int flags)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Test, out var id);
+            Native.vlqt_res_create(TestProtocol.ResKind.Test, out var id);
             ids.Add(id);
-            if (decodeMs >= 0) Native.vlqt_test_res_start(id, decodeMs, bytes, flags);
+            if (decodeMs >= 0) NativeTest.vlqt_test_res_start(id, decodeMs, bytes, flags);
             return id;
         }
         s.Check(Native.vlqt_res_set_budget(Mb) == 0, "budget 1 MB");
@@ -482,10 +464,10 @@ public static class PerfOverlayTest
         for (int i = 0; i < 996; i++) Native.vlqt_res_wait(Start(0, 4096, 0), 5000);
         Run(10);
         var probe = new byte[1 << 16];
-        for (int i = 0; i < 5; i++) vlqt_test_perf_text(w, ResourcesPage, probe, probe.Length); // warm up
+        for (int i = 0; i < 5; i++) NativeTest.vlqt_test_perf_text(w, ResourcesPage, probe, probe.Length); // warm up
         const int Builds = 50;
         var t0 = Stopwatch.GetTimestamp();
-        for (int i = 0; i < Builds; i++) vlqt_test_perf_text(w, ResourcesPage, probe, probe.Length);
+        for (int i = 0; i < Builds; i++) NativeTest.vlqt_test_perf_text(w, ResourcesPage, probe, probe.Length);
         var perBuild = Stopwatch.GetElapsedTime(t0).TotalMilliseconds / Builds;
         Console.WriteLine($"  resources page with 1000 resources: {perBuild:F3} ms per build (incl. plain text), every 250 ms");
         // The page's own build time (footer, without the plain text conversion of this test export): best of a few.

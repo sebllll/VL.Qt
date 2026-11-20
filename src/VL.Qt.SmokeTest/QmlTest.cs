@@ -162,12 +162,12 @@ public static class QmlTest
         string Err(uint h) => errors.TryGetValue(h, out var e) ? e : "";
         static bool Close(object? v, float expected, float tolerance = 0.002f) => v is float f && Math.Abs(f - expected) <= tolerance;
 
-        void Mouse(int type, float x, float y) => s.Check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
+        void Mouse(int type, float x, float y) => s.Check(NativeTest.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
         void Click(float x, float y)
         {
-            Mouse(Protocol.Mouse.Move, x, y);
-            Mouse(Protocol.Mouse.Press, x, y);
-            Mouse(Protocol.Mouse.Release, x, y);
+            Mouse(TestProtocol.Mouse.Move, x, y);
+            Mouse(TestProtocol.Mouse.Press, x, y);
+            Mouse(TestProtocol.Mouse.Release, x, y);
         }
 
         void Qml(uint id, uint handle, string path, float x, float y)

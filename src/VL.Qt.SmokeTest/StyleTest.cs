@@ -57,7 +57,7 @@ public static class StyleTest
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
-        void Mouse(int type, float x, float y) => s.Check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
+        void Mouse(int type, float x, float y) => s.Check(NativeTest.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
         void ExpectRc(int expected, string what)
         {
             var rc = Apply();
@@ -77,7 +77,7 @@ public static class StyleTest
         cmd.SetPlace(Rect, 500, 100, 100, 100);
         cmd.Reparent(Rect, 0, 1);
         CheckApply("create button + rectangle");
-        Mouse(Protocol.Mouse.Move, 790, 590);
+        Mouse(TestProtocol.Mouse.Move, 790, 590);
         s.Pump(5);
 
         // Without a style (CREATE only): no frame (transparent), nothing but the background.
@@ -120,11 +120,11 @@ public static class StyleTest
         // (d) Hover: Hovered frame color 0x454545 (the base style sets Normal + Hovered).
         BaseStyle.Write(cmd, Btn);
         CheckApply("base style again");
-        Mouse(Protocol.Mouse.Move, 105, 105);
+        Mouse(TestProtocol.Mouse.Move, 105, 105);
         s.Pump(5);
         using (var a = s.Grab(w, "style4.png"))
             s.Check(Near(Px(a, 110, 110), 0x454545), $"hover: frame color Hovered ({Px(a, 110, 110)})");
-        Mouse(Protocol.Mouse.Move, 790, 590);
+        Mouse(TestProtocol.Mouse.Move, 790, 590);
         s.Pump(5);
         using (var a = s.Grab(w, "style5.png"))
             s.Check(Near(Px(a, 110, 110), 0x383838), $"mouse away: frame color Normal again ({Px(a, 110, 110)})");
@@ -376,7 +376,7 @@ public static class StyleTest
         var rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"gallery apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         cmd.Reset();
-        Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, c0 + 10, 40);
+        NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, c0 + 10, 40);
         s.Pump(10);
         var path = Path.Combine(s.OutDir, "style-gallery.png");
         using (var a = s.Grab(w, path))

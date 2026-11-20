@@ -40,7 +40,7 @@ public static partial class InteractionTest
             Native.vlqt_window_show(W);
         }
 
-        public int Handlers() => Native.vlqt_test_handler_count(W, _rec.Root?.Id ?? 0);
+        public int Handlers() => NativeTest.vlqt_test_handler_count(W, _rec.Root?.Id ?? 0);
 
         public void Frame()
         {
@@ -62,10 +62,10 @@ public static partial class InteractionTest
 
         // Event in frame 1, pulled by the node in frame 2.
         public void Frames(int count = 2) { for (int i = 0; i < count; i++) Frame(); }
-        public void Mouse(int type, float x, float y) => Native.vlqt_test_send_mouse(W, type, x, y);
-        public void Touch(int type, float x, float y) => Native.vlqt_test_send_touch(W, type, 1, x, y);
-        public void Touch(int type, int id, float x, float y) => Native.vlqt_test_send_touch(W, type, id, x, y);
-        public void Click(float x, float y) { Mouse(Protocol.Mouse.Press, x, y); Mouse(Protocol.Mouse.Release, x, y); }
+        public void Mouse(int type, float x, float y) => NativeTest.vlqt_test_send_mouse(W, type, x, y);
+        public void Touch(int type, float x, float y) => NativeTest.vlqt_test_send_touch(W, type, 1, x, y);
+        public void Touch(int type, int id, float x, float y) => NativeTest.vlqt_test_send_touch(W, type, id, x, y);
+        public void Click(float x, float y) { Mouse(TestProtocol.Mouse.Press, x, y); Mouse(TestProtocol.Mouse.Release, x, y); }
 
         public void Dispose()
         {
@@ -98,7 +98,7 @@ public static partial class InteractionTest
         var devices = PointerDevices.All;
         rig.Chain = () => click.Update(null, pressed, clicked, tapCount, longPressed, buttons, devices);
 
-        rig.Mouse(Protocol.Mouse.Move, 700, 500);
+        rig.Mouse(TestProtocol.Mouse.Move, 700, 500);
         rig.Frames();
         s.Check(rig.Handlers() == 1, $"click: one TapHandler at the item ({rig.Handlers()})");
 
@@ -106,11 +106,11 @@ public static partial class InteractionTest
         rig.Frames();
         s.Check(clicks == 0 && !pressed.Value, $"click: outside -> nothing ({clicks})");
 
-        rig.Mouse(Protocol.Mouse.Press, 150, 150);
+        rig.Mouse(TestProtocol.Mouse.Press, 150, 150);
         rig.Frames();
         s.Check(pressed.Value && pressed.LatestAuthor == "Qt", $"click: Is Pressed while down, author Qt ({pressed.Value}, {pressed.LatestAuthor})");
         s.Check(clicks == 0, "click: no click before the release");
-        rig.Mouse(Protocol.Mouse.Release, 150, 150);
+        rig.Mouse(TestProtocol.Mouse.Release, 150, 150);
         rig.Frames();
         s.Check(!pressed.Value, "click: released -> Is Pressed false");
         s.Check(clicks == 1 && clicked.LatestAuthor == "Qt", $"click: one value per click ({clicks}, {clicked.LatestAuthor})");
@@ -133,17 +133,17 @@ public static partial class InteractionTest
         s.Check(tapCount.Value == 2, $"click: 2 s later Tap Count still 2 ({tapCount.Value})");
 
         Thread.Sleep(1000);
-        rig.Touch(Protocol.Touch.Press, 150, 150);
+        rig.Touch(TestProtocol.Touch.Press, 150, 150);
         rig.Frames();
         s.Check(pressed.Value, "click: touch press -> Is Pressed");
-        rig.Touch(Protocol.Touch.Release, 150, 150);
+        rig.Touch(TestProtocol.Touch.Release, 150, 150);
         rig.Frames();
         s.Check(clicks == 4 && !pressed.Value, $"click: touch tap clicks ({clicks})");
 
         // Long press: Qt's press-and-hold interval is 800 ms.
         Thread.Sleep(1000);
         int before = clicks;
-        rig.Mouse(Protocol.Mouse.Press, 150, 150);
+        rig.Mouse(TestProtocol.Mouse.Press, 150, 150);
         rig.Frame();
         // Hold until the long press arrived (interval 800 ms), at most 4 s: a stalled machine delays the timer.
         var held = System.Diagnostics.Stopwatch.StartNew();
@@ -151,21 +151,21 @@ public static partial class InteractionTest
         Thread.Sleep(400); // still held: a second long press would show up here
         rig.Frames();
         s.Check(longs == 1, $"click: long press -> one Long Pressed value ({longs})");
-        rig.Mouse(Protocol.Mouse.Release, 150, 150);
+        rig.Mouse(TestProtocol.Mouse.Release, 150, 150);
         rig.Frames();
         s.Check(longs == 1 && clicks == before, $"click: no second long press, no click after it ({longs}, {clicks})");
 
         // Buttons: the right button does nothing until accepted.
         Thread.Sleep(1000);
         before = clicks;
-        rig.Mouse(Protocol.Mouse.PressRight, 150, 150);
-        rig.Mouse(Protocol.Mouse.ReleaseRight, 150, 150);
+        rig.Mouse(TestProtocol.Mouse.PressRight, 150, 150);
+        rig.Mouse(TestProtocol.Mouse.ReleaseRight, 150, 150);
         rig.Frames();
         s.Check(clicks == before, $"click: right button not accepted by default ({clicks})");
         buttons = PointerButtons.Right;
         rig.Frame(); // SET ACCEPTED_BUTTONS
-        rig.Mouse(Protocol.Mouse.PressRight, 150, 150);
-        rig.Mouse(Protocol.Mouse.ReleaseRight, 150, 150);
+        rig.Mouse(TestProtocol.Mouse.PressRight, 150, 150);
+        rig.Mouse(TestProtocol.Mouse.ReleaseRight, 150, 150);
         rig.Frames();
         s.Check(clicks == before + 1, $"click: Buttons = Right -> right click counts ({clicks})");
 
@@ -175,9 +175,9 @@ public static partial class InteractionTest
         rig.Frame();
         Thread.Sleep(1000);
         before = clicks;
-        rig.Touch(Protocol.Touch.Press, 150, 150);
+        rig.Touch(TestProtocol.Touch.Press, 150, 150);
         rig.Frame();
-        rig.Touch(Protocol.Touch.Release, 150, 150);
+        rig.Touch(TestProtocol.Touch.Release, 150, 150);
         rig.Frames();
         s.Check(clicks == before, $"click: Devices = Mouse -> touch ignored ({clicks})");
         rig.Click(150, 150);
@@ -213,26 +213,26 @@ public static partial class InteractionTest
             return point.Update(chain, active, position, buttons, PointerDevices.All);
         };
 
-        rig.Mouse(Protocol.Mouse.Move, 700, 500);
+        rig.Mouse(TestProtocol.Mouse.Move, 700, 500);
         rig.Frames();
         s.Check(rig.Handlers() == 1, $"point: one PointHandler ({rig.Handlers()})");
         s.Check(!active.Value, "point: not active");
 
-        rig.Mouse(Protocol.Mouse.Press, 160, 170);
+        rig.Mouse(TestProtocol.Mouse.Press, 160, 170);
         rig.Frames();
         s.Check(active.Value && active.LatestAuthor == "Qt", $"point: Is Active while down ({active.Value})");
         s.Check(Near(position.Value, 0.6f, 0.7f) && position.LatestAuthor == "Qt", $"point: Position (0.6, 0.7) units, local ({position.Value})");
-        rig.Mouse(Protocol.Mouse.Move, 180, 180);
+        rig.Mouse(TestProtocol.Mouse.Move, 180, 180);
         rig.Frames();
         s.Check(Near(position.Value, 0.8f, 0.8f), $"point: Position follows the drag ({position.Value})");
-        rig.Mouse(Protocol.Mouse.Release, 180, 180);
+        rig.Mouse(TestProtocol.Mouse.Release, 180, 180);
         rig.Frames();
         s.Check(!active.Value, "point: released -> Is Active false");
 
-        rig.Touch(Protocol.Touch.Press, 150, 150);
+        rig.Touch(TestProtocol.Touch.Press, 150, 150);
         rig.Frames();
         s.Check(active.Value && Near(position.Value, 0.5f, 0.5f), $"point: touch -> active, Position ({active.Value}, {position.Value})");
-        rig.Touch(Protocol.Touch.Release, 150, 150);
+        rig.Touch(TestProtocol.Touch.Release, 150, 150);
         rig.Frames();
         s.Check(!active.Value, "point: touch released -> not active");
 
@@ -240,44 +240,44 @@ public static partial class InteractionTest
         chained = true;
         rig.Frame();
         s.Check(rig.Handlers() == 3, $"point: Hover + Click + Point -> three handlers ({rig.Handlers()})");
-        rig.Mouse(Protocol.Mouse.Move, 150, 150);
+        rig.Mouse(TestProtocol.Mouse.Move, 150, 150);
         rig.Frames();
         s.Check(hovered.Value, "point: chain -> hovered");
         rig.Click(150, 150);
         rig.Frames();
         s.Check(clicks == 1 && Near(position.Value, 0.5f, 0.5f), $"point: chain -> Click counts, Point reports ({clicks}, {position.Value})");
         // Same left button for Click and Point (manual test): Point active with the position while held, click on release.
-        rig.Mouse(Protocol.Mouse.Press, 120, 130);
+        rig.Mouse(TestProtocol.Mouse.Press, 120, 130);
         rig.Frames();
         s.Check(active.Value && Near(position.Value, 0.2f, 0.3f), $"point: chain, left held -> Is Active, Position ({active.Value}, {position.Value})");
-        rig.Mouse(Protocol.Mouse.Move, 130, 140);
+        rig.Mouse(TestProtocol.Mouse.Move, 130, 140);
         rig.Frames();
         s.Check(active.Value && Near(position.Value, 0.3f, 0.4f), $"point: chain, drag -> Position follows ({active.Value}, {position.Value})");
-        rig.Mouse(Protocol.Mouse.Release, 130, 140);
+        rig.Mouse(TestProtocol.Mouse.Release, 130, 140);
         rig.Frames();
         s.Check(!active.Value && clicks == 2, $"point: chain, release -> not active, Click counts ({active.Value}, {clicks})");
         System.Threading.Thread.Sleep(600);
-        rig.Touch(Protocol.Touch.Press, 120, 130);
+        rig.Touch(TestProtocol.Touch.Press, 120, 130);
         rig.Frames();
         s.Check(active.Value && Near(position.Value, 0.2f, 0.3f), $"point: chain, finger -> Is Active, Position ({active.Value}, {position.Value})");
-        rig.Touch(Protocol.Touch.Release, 120, 130);
+        rig.Touch(TestProtocol.Touch.Release, 120, 130);
         rig.Frames();
         s.Check(!active.Value && clicks == 3, $"point: chain, finger up -> not active, Click counts ({active.Value}, {clicks})");
 
         // Buttons None: the mouse is active while over the element, without a press.
         chained = false;
-        rig.Mouse(Protocol.Mouse.Move, 700, 500);
+        rig.Mouse(TestProtocol.Mouse.Move, 700, 500);
         rig.Frames();
         buttons = PointerButtons.None;
         rig.Frames();
         s.Check(!active.Value, "point: Buttons None, mouse outside -> not active");
-        rig.Mouse(Protocol.Mouse.Move, 120, 130);
+        rig.Mouse(TestProtocol.Mouse.Move, 120, 130);
         rig.Frames();
         s.Check(active.Value && Near(position.Value, 0.2f, 0.3f), $"point: Buttons None -> active while hovering, Position ({active.Value}, {position.Value})");
-        rig.Mouse(Protocol.Mouse.Move, 700, 500);
+        rig.Mouse(TestProtocol.Mouse.Move, 700, 500);
         rig.Frames();
         s.Check(!active.Value && Near(position.Value, 0.2f, 0.3f), $"point: Buttons None, mouse leaves -> not active, Position kept ({active.Value}, {position.Value})");
-        rig.Mouse(Protocol.Mouse.Move, 150, 150);
+        rig.Mouse(TestProtocol.Mouse.Move, 150, 150);
         rig.Frames();
         s.Check(active.Value, "point: Buttons None, mouse back -> active");
         buttons = PointerButtons.Left;
@@ -301,32 +301,32 @@ public static partial class InteractionTest
         rig.Frames();
         s.Check(rig.Handlers() == 1 && values.Count == 0, $"wheel: one WheelHandler, nothing at rest ({rig.Handlers()}, {values.Count})");
 
-        Native.vlqt_test_send_wheel(rig.W, 150, 150, 0, 120);
+        NativeTest.vlqt_test_send_wheel(rig.W, 150, 150, 0, 120);
         rig.Frames(3);
         s.Check(values.Count == 2 && Near(values[0], 0, 1) && values[1] == Vector2.Zero,
             $"wheel: one notch -> (0, 1), then once (0, 0) ({string.Join(" ", values)})");
         s.Check(delta.LatestAuthor == "Qt", "wheel: author Qt");
 
         values.Clear();
-        Native.vlqt_test_send_wheel(rig.W, 150, 150, 60, -120);
-        Native.vlqt_test_send_wheel(rig.W, 150, 150, 0, -120);
+        NativeTest.vlqt_test_send_wheel(rig.W, 150, 150, 60, -120);
+        NativeTest.vlqt_test_send_wheel(rig.W, 150, 150, 0, -120);
         rig.Frames(3);
         s.Check(values.Count == 2 && Near(values[0], 0.5f, -2) && values[1] == Vector2.Zero,
             $"wheel: summed per frame (0.5, -2) ({string.Join(" ", values)})");
         s.Check(Near(value.Value, 0.5f, -1) && value.LatestAuthor == "Qt", $"wheel: Value sums all motion (0.5, -1) ({value.Value})");
         value.Value = Vector2.Zero; // reset from outside
-        Native.vlqt_test_send_wheel(rig.W, 150, 150, 0, 240);
+        NativeTest.vlqt_test_send_wheel(rig.W, 150, 150, 0, 240);
         rig.Frames(3);
         s.Check(Near(value.Value, 0, 2), $"wheel: Value reset from outside, then (0, 2) ({value.Value})");
 
         values.Clear();
-        Native.vlqt_test_send_wheel(rig.W, 700, 500, 0, 120);
+        NativeTest.vlqt_test_send_wheel(rig.W, 700, 500, 0, 120);
         rig.Frames(3);
         s.Check(values.Count == 0, $"wheel: outside the element -> nothing ({values.Count})");
 
         devices = PointerDevices.TouchScreen;
         rig.Frame();
-        Native.vlqt_test_send_wheel(rig.W, 150, 150, 0, 120);
+        NativeTest.vlqt_test_send_wheel(rig.W, 150, 150, 0, 120);
         rig.Frames(3);
         s.Check(values.Count == 0, $"wheel: Devices = TouchScreen -> mouse wheel ignored ({values.Count})");
     }
@@ -344,18 +344,18 @@ public static partial class InteractionTest
 
         void Drag(float x, float y, float dx, float dy, bool release)
         {
-            rig.Mouse(Protocol.Mouse.Move, x, y);
-            rig.Mouse(Protocol.Mouse.Press, x, y);
+            rig.Mouse(TestProtocol.Mouse.Move, x, y);
+            rig.Mouse(TestProtocol.Mouse.Press, x, y);
             for (int i = 1; i <= 4; ++i)
-                rig.Mouse(Protocol.Mouse.Move, x + dx * i / 4, y + dy * i / 4);
+                rig.Mouse(TestProtocol.Mouse.Move, x + dx * i / 4, y + dy * i / 4);
             if (release)
-                rig.Mouse(Protocol.Mouse.Release, x + dx, y + dy);
+                rig.Mouse(TestProtocol.Mouse.Release, x + dx, y + dy);
             rig.Frames(3);
         }
         Vector2 Offset(RectangleF home) => rig.SceneBounds.TopLeft - home.TopLeft;
         static bool Close(Vector2 a, float x, float y) => Math.Abs(a.X - x) < 1e-3f && Math.Abs(a.Y - y) < 1e-3f;
 
-        rig.Mouse(Protocol.Mouse.Move, 700, 500);
+        rig.Mouse(TestProtocol.Mouse.Move, 700, 500);
         rig.Frames(3);
         s.Check(rig.Handlers() == 1, $"drag-node: one DragHandler ({rig.Handlers()})");
         var home = rig.SceneBounds;
@@ -365,7 +365,7 @@ public static partial class InteractionTest
         s.Check(dragging.Value && dragging.LatestAuthor == "Qt", $"drag-node: Is Dragging while dragged ({dragging.Value})");
         s.Check(Near(delta.Value, 0.4f, 0.2f) && delta.LatestAuthor == "Qt", $"drag-node: Delta (0.4, 0.2) units ({delta.Value})");
         s.Check(Close(Offset(home), 0.4f, 0.2f), $"drag-node: element follows, Scene Bounds has the offset ({rig.SceneBounds})");
-        rig.Mouse(Protocol.Mouse.Release, 190, 170);
+        rig.Mouse(TestProtocol.Mouse.Release, 190, 170);
         rig.Frames(3);
         s.Check(!dragging.Value && Near(delta.Value, 0.4f, 0.2f), $"drag-node: release -> not dragging, Delta kept ({dragging.Value}, {delta.Value})");
         s.Check(Close(Offset(home), 0.4f, 0.2f), $"drag-node: unchanged Bounds pin -> element stays ({rig.SceneBounds})");
@@ -386,7 +386,7 @@ public static partial class InteractionTest
             rig.Frames(3);
             s.Check(Close(Offset(home), 0.1f * i, 0), $"drag-node: animated Bounds pin overrules the drag, frame {i} ({rig.SceneBounds})");
         }
-        rig.Mouse(Protocol.Mouse.Release, 190, 170);
+        rig.Mouse(TestProtocol.Mouse.Release, 190, 170);
         rig.Bounds = new RectangleF(1, 1, 2, 1);
         rig.Frames(3);
         s.Check(Close(Offset(home), 0, 0), $"drag-node: reset ({rig.SceneBounds})");

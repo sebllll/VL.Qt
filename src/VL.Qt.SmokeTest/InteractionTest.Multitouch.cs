@@ -31,8 +31,8 @@ public static partial class InteractionTest
         s.Check(rig.Handlers() == 1, $"touch-points-node: one handler ({rig.Handlers()})");
         s.Check(writes == 0, $"touch-points-node: nothing written before a touch ({writes})");
 
-        rig.Touch(Protocol.Touch.Press, 1, 150, 130);
-        rig.Touch(Protocol.Touch.Press, 2, 250, 170);
+        rig.Touch(TestProtocol.Touch.Press, 1, 150, 130);
+        rig.Touch(TestProtocol.Touch.Press, 2, 250, 170);
         rig.Frames(3);
         var p = points.Value!;
         s.Check(p.Count == 2 && p[0].Id != p[1].Id && p[0].Id < p[1].Id, $"touch-points-node: two points sorted by id ({Describe(p)})");
@@ -45,25 +45,25 @@ public static partial class InteractionTest
         rig.Frames(5);
         s.Check(writes == 0, $"touch-points-node: no write at rest ({writes})");
 
-        rig.Touch(Protocol.Touch.Move, 1, 160, 140);
+        rig.Touch(TestProtocol.Touch.Move, 1, 160, 140);
         rig.Frames(3);
         p = points.Value!;
         s.Check(p.Count == 2 && p.Select(x => x.Id).SequenceEqual(ids) && Near(p[0].Position, 0.6f, 0.4f),
             $"touch-points-node: ids stable while moving, position follows ({Describe(p)})");
 
-        rig.Touch(Protocol.Touch.Release, 1, 160, 140);
+        rig.Touch(TestProtocol.Touch.Release, 1, 160, 140);
         rig.Frames(3);
         p = points.Value!;
         s.Check(p.Count == 1 && p[0].Id == ids[1], $"touch-points-node: release one -> the other stays ({Describe(p)})");
-        rig.Touch(Protocol.Touch.Release, 2, 250, 170);
+        rig.Touch(TestProtocol.Touch.Release, 2, 250, 170);
         rig.Frames(3);
         s.Check(points.Value!.Count == 0, $"touch-points-node: release all -> empty ({Describe(points.Value!)})");
 
         // The mouse is not a point with the default Devices.
-        rig.Mouse(Protocol.Mouse.Press, 150, 130);
+        rig.Mouse(TestProtocol.Mouse.Press, 150, 130);
         rig.Frames(3);
         s.Check(points.Value!.Count == 0, $"touch-points-node: mouse ignored by the default Devices ({Describe(points.Value!)})");
-        rig.Mouse(Protocol.Mouse.Release, 150, 130);
+        rig.Mouse(TestProtocol.Mouse.Release, 150, 130);
         rig.Frames(2);
     }
 
@@ -88,13 +88,13 @@ public static partial class InteractionTest
             "pinch-node: channel values untouched before a gesture");
 
         // Spread: fingers at x = 150 / 250 -> 120 / 280 (y 150).
-        rig.Touch(Protocol.Touch.Press, 1, 150, 150);
-        rig.Touch(Protocol.Touch.Press, 2, 250, 150);
+        rig.Touch(TestProtocol.Touch.Press, 1, 150, 150);
+        rig.Touch(TestProtocol.Touch.Press, 2, 250, 150);
         rig.Frames(3);
         for (int i = 1; i <= 8; i++)
         {
-            rig.Touch(Protocol.Touch.Move, 1, 150 - 30 * i / 8f, 150);
-            rig.Touch(Protocol.Touch.Move, 2, 250 + 30 * i / 8f, 150);
+            rig.Touch(TestProtocol.Touch.Move, 1, 150 - 30 * i / 8f, 150);
+            rig.Touch(TestProtocol.Touch.Move, 2, 250 + 30 * i / 8f, 150);
             rig.Frames(2);
         }
         rig.Frames(2);
@@ -102,8 +102,8 @@ public static partial class InteractionTest
         s.Check(scale.Value > 1.5f && scale.Value < 1.8f, $"pinch-node: spread 100 -> 160 px -> Scale about 1.6 ({scale.Value})");
         s.Check(MathF.Abs(rotation.Value) < 0.05f, $"pinch-node: no rotation ({rotation.Value})");
 
-        rig.Touch(Protocol.Touch.Release, 1, 120, 150);
-        rig.Touch(Protocol.Touch.Release, 2, 280, 150);
+        rig.Touch(TestProtocol.Touch.Release, 1, 120, 150);
+        rig.Touch(TestProtocol.Touch.Release, 2, 280, 150);
         rig.Frames(3);
         float lastScale = scale.Value;
         s.Check(!active.Value && lastScale > 1.5f, $"pinch-node: release -> Is Active false, Scale keeps the last value ({active.Value}, {lastScale})");
@@ -111,21 +111,21 @@ public static partial class InteractionTest
         s.Check(scale.Value == lastScale, "pinch-node: nothing more at rest");
 
         // Rotate 90 degrees clockwise (y down) around (200, 150), radius 50: Rotation about +0.25 cycles.
-        rig.Touch(Protocol.Touch.Press, 1, 250, 150);
-        rig.Touch(Protocol.Touch.Press, 2, 150, 150);
+        rig.Touch(TestProtocol.Touch.Press, 1, 250, 150);
+        rig.Touch(TestProtocol.Touch.Press, 2, 150, 150);
         rig.Frames(3);
         for (int i = 1; i <= 18; i++)
         {
             float a = MathF.PI / 2 * i / 18;
-            rig.Touch(Protocol.Touch.Move, 1, 200 + 50 * MathF.Cos(a), 150 + 50 * MathF.Sin(a));
-            rig.Touch(Protocol.Touch.Move, 2, 200 - 50 * MathF.Cos(a), 150 - 50 * MathF.Sin(a));
+            rig.Touch(TestProtocol.Touch.Move, 1, 200 + 50 * MathF.Cos(a), 150 + 50 * MathF.Sin(a));
+            rig.Touch(TestProtocol.Touch.Move, 2, 200 - 50 * MathF.Cos(a), 150 - 50 * MathF.Sin(a));
             rig.Frames(2);
         }
         rig.Frames(2);
         s.Check(rotation.Value > 0.15f && rotation.Value < 0.27f, $"pinch-node: rotate 90 deg clockwise -> Rotation about 0.25 cycles ({rotation.Value})");
         s.Check(MathF.Abs(scale.Value - 1) < 0.1f, $"pinch-node: scale about 1 while rotating ({scale.Value})");
-        rig.Touch(Protocol.Touch.Release, 1, 200, 200);
-        rig.Touch(Protocol.Touch.Release, 2, 200, 100);
+        rig.Touch(TestProtocol.Touch.Release, 1, 200, 200);
+        rig.Touch(TestProtocol.Touch.Release, 2, 200, 100);
         rig.Frames(3);
         s.Check(!active.Value && rotation.Value > 0.15f, $"pinch-node: Rotation kept after the end ({rotation.Value})");
     }

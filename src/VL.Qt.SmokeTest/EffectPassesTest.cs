@@ -40,17 +40,14 @@ public static class EffectPassesTest
     private static Color Px(Bitmap a, float x, float y) => a.GetPixel((int)(x * a.Width / 800), (int)(y * a.Height / 600));
     private static double Lit(Color c) => ((c.R + c.G + c.B) / 3.0 - 0x20) / (255.0 - 0x20); // 0 = background, 1 = white
 
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
-
     // Scene page (F5) of the perf overlay: "QML items <n>" (items in the window's tree). A poll first: retired stages are
     // deleted one frame late, at the next poll or apply.
     private static int Items(IntPtr w)
     {
         Native.Poll(w, new byte[1 << 16]);
-        var need = -vlqt_test_perf_text(w, 2, null, 0);
+        var need = -NativeTest.vlqt_test_perf_text(w, 2, null, 0);
         var buf = new byte[Math.Max(need, 1)];
-        var n = vlqt_test_perf_text(w, 2, buf, buf.Length);
+        var n = NativeTest.vlqt_test_perf_text(w, 2, buf, buf.Length);
         var m = Regex.Match(n > 0 ? Encoding.UTF8.GetString(buf, 0, n) : "", @"QML items\s+(\d+)");
         return m.Success ? int.Parse(m.Groups[1].Value) : -1;
     }

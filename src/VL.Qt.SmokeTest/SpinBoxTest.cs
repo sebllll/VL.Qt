@@ -18,9 +18,6 @@ public static class SpinBoxTest
     [Test, Category("spinbox")]
     public static void SpinBox() => Scenario.Run(Run);
 
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int vlqt_test_send_key_text(IntPtr w, int key, int modifiers, [MarshalAs(UnmanagedType.LPUTF8Str)] string? text);
-
     private const float StyleMin = 24; // BaseStyle FrameMinWidth/FrameMinHeight: lower bound of every implicit size
     private const int KeyA = 0x41;
     private const int KeyReturn = 0x01000004;
@@ -69,14 +66,14 @@ public static class SpinBoxTest
             s.Check(n >= 0, $"poll ({n})");
             return Parse(buf.AsSpan(0, Math.Max(n, 0)));
         }
-        void Mouse(int type, float x, float y) => s.Check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
+        void Mouse(int type, float x, float y) => s.Check(NativeTest.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
         void Click(float x, float y)
         {
-            Mouse(Protocol.Mouse.Move, x, y);
-            Mouse(Protocol.Mouse.Press, x, y);
-            Mouse(Protocol.Mouse.Release, x, y);
+            Mouse(TestProtocol.Mouse.Move, x, y);
+            Mouse(TestProtocol.Mouse.Press, x, y);
+            Mouse(TestProtocol.Mouse.Release, x, y);
         }
-        void Key(int key, int modifiers, string? text) => s.Check(vlqt_test_send_key_text(w, key, modifiers, text) == 0, $"send_key_text {key}");
+        void Key(int key, int modifiers, string? text) => s.Check(NativeTest.vlqt_test_send_key_text(w, key, modifiers, text) == 0, $"send_key_text {key}");
         void Type(string s)
         {
             Key(KeyA, ControlModifier, null); // select all, typing replaces the text
@@ -107,7 +104,7 @@ public static class SpinBoxTest
         cmd.Reparent(S1, 0, 0);
         cmd.Bind(S1, H, 0);
         CheckApply("spinbox create + range/value/step/editable/enabled");
-        Mouse(Protocol.Mouse.Move, 700, 500);
+        Mouse(TestProtocol.Mouse.Move, 700, 500);
         s.Pump(2);
         var recs = Frame();
         recs.AddRange(Frame());
@@ -148,8 +145,8 @@ public static class SpinBoxTest
         ExpectNone(recs, "SET VALUE 100");
 
         // Wheel one notch up over the spinbox -> 101 at once.
-        Mouse(Protocol.Mouse.Move, textX, y1);
-        s.Check(Native.vlqt_test_send_wheel(w, textX, y1, 0, 120) == 0, "send_wheel");
+        Mouse(TestProtocol.Mouse.Move, textX, y1);
+        s.Check(NativeTest.vlqt_test_send_wheel(w, textX, y1, 0, 120) == 0, "send_wheel");
         ExpectValue(Frame(), 101, "wheel up");
 
         // Step 1000: + -> 1101.
@@ -219,7 +216,7 @@ public static class SpinBoxTest
         cmd.SetBool(S1, Protocol.Prop.Enabled, false);
         CheckApply("enabled false");
         Click(upX, y1);
-        s.Check(Native.vlqt_test_send_wheel(w, textX, y1, 0, 120) == 0, "send_wheel disabled");
+        s.Check(NativeTest.vlqt_test_send_wheel(w, textX, y1, 0, 120) == 0, "send_wheel disabled");
         ExpectNone(Frame(), "+ and wheel with Enabled false");
 
         // A new feedback id drops a change not polled yet (like Button clicks).

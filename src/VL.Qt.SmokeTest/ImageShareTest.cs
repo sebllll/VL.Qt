@@ -36,8 +36,8 @@ public static class ImageShareTest
             return;
         // 4 stripes red | green | blue | white (vlqt_test_write_image), 4K for the loads that take a few frames.
         var p4k = Path.Combine(dir, "p4k.png");
-        s.Check(Native.vlqt_test_write_image(p4k, 3840, 2160, 90) == 0, "4K test image written");
-        var gpu = Native.vlqt_test_device_info(IntPtr.Zero, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
+        s.Check(NativeTest.vlqt_test_write_image(p4k, 3840, 2160, 90) == 0, "4K test image written");
+        var gpu = NativeTest.vlqt_test_device_info(IntPtr.Zero, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
         s.Info($"texture path: {(gpu ? "shared device (wrapper per window)" : "CPU copy (texture per window)")}");
 
         var cmd = new CommandWriter();

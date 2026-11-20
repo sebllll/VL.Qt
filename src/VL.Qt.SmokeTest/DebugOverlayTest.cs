@@ -156,11 +156,11 @@ public static class DebugOverlayTest
         // Hit test: hover in/out of the green column child at (20+10+30, 20+10+40+20+20) = (60, 110).
         string Hover()
         {
-            Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, 780, 580);
+            NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, 780, 580);
             var outRecs = Frame(2);
-            Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, 60, 110);
+            NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, 60, 110);
             var inRecs = Frame(2);
-            Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, 780, 580);
+            NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, 780, 580);
             var out2 = Frame(2);
             string F(List<Rec> recs) => string.Join(",", recs.FindAll(r => r.Event == Protocol.Ev.Hover && r.Handle == HHoverHandler).ConvertAll(r => r.Payload[0]));
             return $"{F(outRecs)}|{F(inRecs)}|{F(out2)}";

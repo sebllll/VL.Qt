@@ -25,6 +25,12 @@
     <ProjectReference Include="..\VL.Qt\VL.Qt.csproj" />
   </ItemGroup>
 
+  <!-- The test exports of QtNative (NativeTest) and the constants of vlqt_test.h (TestProtocol), shared with the other test projects. -->
+  <ItemGroup>
+    <Compile Include="..\VL.Qt.TestSupport\NativeTest.cs" Link="NativeTest.cs" />
+    <Compile Include="..\VL.Qt.TestSupport\TestProtocol.cs" Link="TestProtocol.cs" />
+  </ItemGroup>
+
   <!-- VL.Qt.Stride needs Stride's graphics; its classes without D3D11 and rendering are compiled in. PixelFormat lives in
        the package Stride (no native code). -->
   <ItemGroup>
@@ -39,6 +45,8 @@
   <ItemGroup>
     <None Include="..\VL.Qt.Native\protocol.h" Link="protocol.h" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\VL.Qt.Native\vlqt.h" Link="vlqt.h" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\VL.Qt.Native\vlqt_test.h" Link="vlqt_test.h" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\VL.Qt.Native\testkit\testkit.h" Link="testkit.h" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- Node-API snapshot (Api/NodeApiSnapshotTests.cs, TEST-01): VL.Qt.Stride and VL.Qt.Audio target net10.0-windows, so they

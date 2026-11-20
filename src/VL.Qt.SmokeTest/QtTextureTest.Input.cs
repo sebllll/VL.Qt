@@ -69,7 +69,7 @@ public static partial class QtTextureTest
         public InputRig(Scenario s)
         {
             _s = s;
-            if (Native.vlqt_test_d3d11_create_device(0, out _device, out _context) != 0)
+            if (NativeTest.CreateDevice(0, out _device, out _context) != 0)
             {
                 s.Check(false, "input: create test device");
                 R = null!;
@@ -77,11 +77,11 @@ public static partial class QtTextureTest
                 _subs = Array.Empty<IDisposable>();
                 return;
             }
-            Native.vlqt_test_d3d11_create_shared_texture(_device, W, H, B8G8R8A8Typeless, out _texture, out var handle);
+            NativeTest.vlqt_test_d3d11_create_shared_texture(_device, W, H, B8G8R8A8Typeless, out _texture, out var handle);
             R = new OffscreenRenderer(new SceneRegistry(), W, H);
             _batch = new[] { R };
             int rc = R.Bind(_device, handle, new Int2(W, H), B8G8R8A8Unorm);
-            Native.vlqt_test_close_handle(handle);
+            NativeTest.vlqt_test_close_handle(handle);
             Ok = rc == Protocol.Offscreen.Ok && R.IsBound;
             s.Check(Ok, $"input: scene created and bound ({rc}) {R.Error}");
             _subs = new[]
@@ -170,7 +170,7 @@ public static partial class QtTextureTest
         public byte[]? Pixels()
         {
             var pixels = new byte[W * H * 4];
-            return Native.TestReadTexture(_texture, pixels, out _, out _, out _) == pixels.Length ? pixels : null;
+            return NativeTest.TestReadTexture(_texture, pixels, out _, out _, out _) == pixels.Length ? pixels : null;
         }
 
         public static string Px(byte[]? pixels, int x, int y)
@@ -190,11 +190,11 @@ public static partial class QtTextureTest
             R?.Unbind();
             R?.Dispose();
             _s.Pump(1);
-            Native.vlqt_test_com_release(_texture);
+            NativeTest.vlqt_test_com_release(_texture);
             _clickA.Dispose(); _clickMouse.Dispose(); _clickTouch.Dispose(); _clickPen.Dispose();
             _rectA.Dispose(); _rectP.Dispose(); _rectB.Dispose(); _rectC.Dispose();
             _group.Dispose(); _slider.Dispose(); _text.Dispose(); _hover.Dispose(); _wheel.Dispose(); _drag.Dispose(); _pinch.Dispose(); _touchPoints.Dispose();
-            Native.vlqt_test_d3d11_release_device(_device, _context);
+            NativeTest.vlqt_test_d3d11_release_device(_device, _context);
         }
     }
 

@@ -123,7 +123,7 @@ public static partial class HandlerTest
         }
         void Mouse(int type, float x, float y)
         {
-            var rc = Native.vlqt_test_send_mouse(w, type, x, y);
+            var rc = NativeTest.vlqt_test_send_mouse(w, type, x, y);
             s.Check(rc == 0, $"handlers: test_send_mouse {type} ({rc})");
         }
         static Rec? Find(List<Rec> recs, ushort ev, uint handle)
@@ -134,7 +134,7 @@ public static partial class HandlerTest
         }
         static string S(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
         bool Flag(List<Rec> recs, ushort ev, uint h, bool v) => Find(recs, ev, h) is { } r && r.Flag == v && r.Index == 0;
-        int Count(uint id) => Native.vlqt_test_handler_count(w, id);
+        int Count(uint id) => NativeTest.vlqt_test_handler_count(w, id);
 
         // A: two hover handlers (H1 bound before the REPARENT, H2 after). B: no handler (transparent).
         const ushort reportPosition = 768; // reserved since #320 (Hover without position): unknown property
@@ -187,20 +187,20 @@ public static partial class HandlerTest
         CheckApply("destroy loose handler");
         s.Check(Count(B) == 0, "handlers: failed REPARENTs attached nothing to B");
 
-        Mouse(Protocol.Mouse.Move, 700, 500); // outside of every item
+        Mouse(TestProtocol.Mouse.Move, 700, 500); // outside of every item
         s.Pump(2);
         var recs = Frame();
         s.Check(recs.Count == 0, $"handlers: nothing hovered -> no events ({S(recs)})");
 
         // Hover in: both feedback HOVER 1, no POINTER (positions come from the Point handler).
-        Mouse(Protocol.Mouse.Move, 150, 150);
+        Mouse(TestProtocol.Mouse.Move, 150, 150);
         recs = Frame();
         s.Check(Flag(recs, Protocol.Ev.Hover, S1, true) && Flag(recs, Protocol.Ev.Hover, S2, true),
             $"handlers: two hover handlers at one item -> both HOVER 1 ({S(recs)})");
         s.Check(Find(recs, Protocol.Ev.Pointer, S1) is null && Find(recs, Protocol.Ev.Pointer, S2) is null, $"handlers: hover -> no POINTER ({S(recs)})");
         recs = Frame();
         s.Check(recs.Count == 0, $"handlers: no change -> no records ({S(recs)})");
-        Mouse(Protocol.Mouse.Move, 160, 170);
+        Mouse(TestProtocol.Mouse.Move, 160, 170);
         recs = Frame();
         s.Check(recs.Count == 0, $"handlers: move inside -> no records ({S(recs)})");
 
@@ -212,7 +212,7 @@ public static partial class HandlerTest
             $"handlers: feedback change -> old HOVER 0, new HOVER 1 ({S(recs)})");
 
         // Over B (no handler): A's feedback HOVER 0, nothing for B.
-        Mouse(Protocol.Mouse.Move, 450, 150);
+        Mouse(TestProtocol.Mouse.Move, 450, 150);
         recs = Frame();
         s.Check(Flag(recs, Protocol.Ev.Hover, S1, false) && Flag(recs, Protocol.Ev.Hover, S2b, false) && Find(recs, Protocol.Ev.Hover, SB) is null
             && Find(recs, Protocol.Ev.Pointer, S1) is null, $"handlers: hover out -> HOVER 0, element without handler silent ({S(recs)})");
@@ -220,7 +220,7 @@ public static partial class HandlerTest
         // Unbind: no events while hovered; DESTROY of a hovered handler sends HOVER 0.
         cmd.Bind(H1, 0, 0);
         CheckApply("unbind H1");
-        Mouse(Protocol.Mouse.Move, 150, 150);
+        Mouse(TestProtocol.Mouse.Move, 150, 150);
         recs = Frame();
         s.Check(Find(recs, Protocol.Ev.Hover, S1) is null && Flag(recs, Protocol.Ev.Hover, S2b, true), $"handlers: unbound handler silent ({S(recs)})");
         cmd.Destroy(H2);
@@ -240,10 +240,10 @@ public static partial class HandlerTest
         cmd.Reparent(HT, T, 0);
         cmd.Bind(HT, ST, 0);
         CheckApply("text with hover handler");
-        Mouse(Protocol.Mouse.Move, 420, 310); // inside the item, left of the right-aligned text
+        Mouse(TestProtocol.Mouse.Move, 420, 310); // inside the item, left of the right-aligned text
         recs = Frame();
         s.Check(Find(recs, Protocol.Ev.Hover, ST) is null, $"handlers: Text area without text -> not hovered ({S(recs)})");
-        Mouse(Protocol.Mouse.Move, 765, 315); // on the text
+        Mouse(TestProtocol.Mouse.Move, 765, 315); // on the text
         recs = Frame();
         s.Check(Flag(recs, Protocol.Ev.Hover, ST, true), $"handlers: over the text -> HOVER 1 ({S(recs)})");
 
@@ -265,7 +265,7 @@ public static partial class HandlerTest
         cmd.Reparent(HT, H1, 0);
         CheckApply("reuse ids after DESTROY");
         s.Check(Count(H1) == 2, $"handlers: reused ids -> 2 handlers ({Count(H1)})");
-        Mouse(Protocol.Mouse.Move, 150, 150);
+        Mouse(TestProtocol.Mouse.Move, 150, 150);
         recs = Frame();
         s.Check(Flag(recs, Protocol.Ev.Hover, S1, true), $"handlers: handler with reused id reports ({S(recs)})");
 
@@ -299,7 +299,7 @@ public static partial class HandlerTest
     private static void RunTouch(Scenario s, IntPtr w, CommandWriter cmd, Func<List<Rec>> frame,
         Func<List<Rec>, ushort, uint, Rec?> find, Func<List<Rec>, string> str)
     {
-        int Touch(int type, int id, float x, float y) => Native.vlqt_test_send_touch(w, type, id, x, y);
+        int Touch(int type, int id, float x, float y) => NativeTest.vlqt_test_send_touch(w, type, id, x, y);
         const uint E = 1, TE = 2, SE = 40;
         cmd.Create(E, Protocol.Type.Rectangle);
         cmd.SetPlace(E, 100, 100, 200, 100);
@@ -312,26 +312,26 @@ public static partial class HandlerTest
         cmd.Reset();
         frame();
 
-        s.Check(Native.vlqt_test_send_touch(IntPtr.Zero, Protocol.Touch.Press, 1, 0, 0) == -1, "touch: null window -> -1");
+        s.Check(NativeTest.vlqt_test_send_touch(IntPtr.Zero, TestProtocol.Touch.Press, 1, 0, 0) == -1, "touch: null window -> -1");
         s.Check(Touch(99, 1, 0, 0) == -2, "touch: unknown type -> -2");
-        s.Check(Touch(Protocol.Touch.Move, 5, 0, 0) == -2 && Touch(Protocol.Touch.Release, 5, 0, 0) == -2, "touch: MOVE/RELEASE of an inactive point -> -2");
+        s.Check(Touch(TestProtocol.Touch.Move, 5, 0, 0) == -2 && Touch(TestProtocol.Touch.Release, 5, 0, 0) == -2, "touch: MOVE/RELEASE of an inactive point -> -2");
 
         // Tap with one finger -> CLICK 1.
-        s.Check(Touch(Protocol.Touch.Press, 1, 150, 150) == 0, "touch: press");
-        s.Check(Touch(Protocol.Touch.Press, 1, 150, 150) == -2, "touch: PRESS of an active point -> -2");
+        s.Check(Touch(TestProtocol.Touch.Press, 1, 150, 150) == 0, "touch: press");
+        s.Check(Touch(TestProtocol.Touch.Press, 1, 150, 150) == -2, "touch: PRESS of an active point -> -2");
         var recs = frame();
         s.Check(find(recs, Protocol.Ev.Press, SE) is { } p && p.Flag, $"touch: press -> PRESS 1 ({str(recs)})");
-        s.Check(Touch(Protocol.Touch.Release, 1, 151, 150) == 0, "touch: release");
+        s.Check(Touch(TestProtocol.Touch.Release, 1, 151, 150) == 0, "touch: release");
         recs = frame();
         s.Check(find(recs, Protocol.Ev.Click, SE) is { } c && c.U32 == 1, $"touch: tap -> CLICK 1 ({str(recs)})");
 
         // The same id again (point forgotten after the release), then two fingers.
-        s.Check(Touch(Protocol.Touch.Press, 1, 150, 150) == 0 && Touch(Protocol.Touch.Release, 1, 150, 150) == 0, "touch: second tap, same id");
+        s.Check(Touch(TestProtocol.Touch.Press, 1, 150, 150) == 0 && Touch(TestProtocol.Touch.Release, 1, 150, 150) == 0, "touch: second tap, same id");
         recs = frame();
         s.Check(find(recs, Protocol.Ev.Click, SE) is { } c2 && c2.U32 == 1, $"touch: second tap -> CLICK 1 ({str(recs)})");
-        s.Check(Touch(Protocol.Touch.Press, 1, 150, 150) == 0 && Touch(Protocol.Touch.Press, 2, 600, 400) == 0
-            && Touch(Protocol.Touch.Move, 2, 610, 400) == 0 && Touch(Protocol.Touch.Release, 2, 610, 400) == 0
-            && Touch(Protocol.Touch.Release, 1, 150, 150) == 0, "touch: two points (multitouch) accepted");
+        s.Check(Touch(TestProtocol.Touch.Press, 1, 150, 150) == 0 && Touch(TestProtocol.Touch.Press, 2, 600, 400) == 0
+            && Touch(TestProtocol.Touch.Move, 2, 610, 400) == 0 && Touch(TestProtocol.Touch.Release, 2, 610, 400) == 0
+            && Touch(TestProtocol.Touch.Release, 1, 150, 150) == 0, "touch: two points (multitouch) accepted");
         recs = frame();
         s.Check(find(recs, Protocol.Ev.Click, SE) is { } c3 && c3.U32 == 1, $"touch: tap while a second finger is down elsewhere -> CLICK 1 ({str(recs)})");
 
@@ -389,25 +389,25 @@ public static partial class HandlerTest
             return all.FindAll(r => IsPointerEvent(r.Event));
         }
 
-        public void Mouse(int type, float x, float y) => _s.Check(Native.vlqt_test_send_mouse(W, type, x, y) == 0, $"{_tag}: test_send_mouse {type}");
-        public void Touch(int type, int id, float x, float y) => _s.Check(Native.vlqt_test_send_touch(W, type, id, x, y) == 0, $"{_tag}: test_send_touch {type}");
-        public void Wheel(float x, float y, int dx, int dy) => _s.Check(Native.vlqt_test_send_wheel(W, x, y, dx, dy) == 0, $"{_tag}: test_send_wheel");
+        public void Mouse(int type, float x, float y) => _s.Check(NativeTest.vlqt_test_send_mouse(W, type, x, y) == 0, $"{_tag}: test_send_mouse {type}");
+        public void Touch(int type, int id, float x, float y) => _s.Check(NativeTest.vlqt_test_send_touch(W, type, id, x, y) == 0, $"{_tag}: test_send_touch {type}");
+        public void Wheel(float x, float y, int dx, int dy) => _s.Check(NativeTest.vlqt_test_send_wheel(W, x, y, dx, dy) == 0, $"{_tag}: test_send_wheel");
         public void Click(float x, float y)
         {
-            Mouse(Protocol.Mouse.Press, x, y);
-            Mouse(Protocol.Mouse.Release, x, y);
+            Mouse(TestProtocol.Mouse.Press, x, y);
+            Mouse(TestProtocol.Mouse.Release, x, y);
         }
-        public int Count(uint id) => Native.vlqt_test_handler_count(W, id);
+        public int Count(uint id) => NativeTest.vlqt_test_handler_count(W, id);
 
         /// <summary>Mouse drag from (x, y) by (dx, dy) in four moves (past the drag threshold); one Frame, its records.</summary>
         public List<Rec> Drag(float x, float y, float dx, float dy, bool release = true)
         {
-            Mouse(Protocol.Mouse.Move, x, y);
-            Mouse(Protocol.Mouse.Press, x, y);
+            Mouse(TestProtocol.Mouse.Move, x, y);
+            Mouse(TestProtocol.Mouse.Press, x, y);
             for (int i = 1; i <= 4; ++i)
-                Mouse(Protocol.Mouse.Move, x + dx * i / 4, y + dy * i / 4);
+                Mouse(TestProtocol.Mouse.Move, x + dx * i / 4, y + dy * i / 4);
             if (release)
-                Mouse(Protocol.Mouse.Release, x + dx, y + dy);
+                Mouse(TestProtocol.Mouse.Release, x + dx, y + dy);
             return Frame();
         }
 
@@ -479,12 +479,12 @@ public static partial class HandlerTest
         h.Apply("destroy loose handlers");
 
         // Press -> PRESS 1; release -> PRESS 0, CLICK 1, TAP_COUNT 1.
-        h.Mouse(Protocol.Mouse.Move, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Move, 150, 150);
         h.Frame();
-        h.Mouse(Protocol.Mouse.Press, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Press, 150, 150);
         var recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Press, SA, true) && FindRec(recs, Protocol.Ev.Click, SA) is null, $"tap: press -> PRESS 1 ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Release, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Release, 150, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Press, SA, false) && HasU32(recs, Protocol.Ev.Click, SA, 1) && HasU32(recs, Protocol.Ev.TapCount, SA, 1),
             $"tap: release -> PRESS 0, CLICK 1, TAP_COUNT 1 ({Dump(recs)})");
@@ -501,11 +501,11 @@ public static partial class HandlerTest
         for (int i = 0; DateTime.UtcNow < until; i++)
         {
             if (i % 10 == 5)
-                h.Mouse(Protocol.Mouse.Move, i % 20 == 5 ? 160 : 700, 150);
+                h.Mouse(TestProtocol.Mouse.Move, i % 20 == 5 ? 160 : 700, 150);
             later.AddRange(h.Frame());
             System.Threading.Thread.Sleep(20);
         }
-        h.Mouse(Protocol.Mouse.Move, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Move, 150, 150);
         later.AddRange(h.Frame());
         s.Check(later.FindAll(r => r.Handle == SA).Count == 0, $"tap: 2 s without a tap -> TAP_COUNT stays 2 ({Dump(later)})");
         // Later single tap: TAP_COUNT back to 1; two taps per frame: CLICK delta 2.
@@ -526,26 +526,26 @@ public static partial class HandlerTest
 
         // Right button: ignored by default, clicks with ACCEPTED_BUTTONS left | right.
         System.Threading.Thread.Sleep(1000);
-        h.Mouse(Protocol.Mouse.PressRight, 150, 150);
-        h.Mouse(Protocol.Mouse.ReleaseRight, 150, 150);
+        h.Mouse(TestProtocol.Mouse.PressRight, 150, 150);
+        h.Mouse(TestProtocol.Mouse.ReleaseRight, 150, 150);
         recs = h.Frame();
         s.Check(None(recs, SA), $"tap: right click with the default buttons -> nothing ({Dump(recs)})");
         h.Cmd.SetI32(TA, Protocol.Prop.AcceptedButtons, 0x1 | 0x2);
         h.Apply("accepted buttons left | right");
-        h.Mouse(Protocol.Mouse.PressRight, 150, 150);
-        h.Mouse(Protocol.Mouse.ReleaseRight, 150, 150);
+        h.Mouse(TestProtocol.Mouse.PressRight, 150, 150);
+        h.Mouse(TestProtocol.Mouse.ReleaseRight, 150, 150);
         recs = h.Frame();
         s.Check(HasU32(recs, Protocol.Ev.Click, SA, 1), $"tap: right click with ACCEPTED_BUTTONS left | right -> CLICK 1 ({Dump(recs)})");
 
         // Touch tap clicks; ACCEPTED_DEVICES mouse only: touch ignored, the mouse still clicks.
-        h.Touch(Protocol.Touch.Press, 1, 150, 150);
-        h.Touch(Protocol.Touch.Release, 1, 150, 150);
+        h.Touch(TestProtocol.Touch.Press, 1, 150, 150);
+        h.Touch(TestProtocol.Touch.Release, 1, 150, 150);
         recs = h.Frame();
         s.Check(HasU32(recs, Protocol.Ev.Click, SA, 1), $"tap: touch tap -> CLICK 1 ({Dump(recs)})");
         h.Cmd.SetI32(TA, Protocol.Prop.AcceptedDevices, 0x1); // QInputDevice::DeviceType::Mouse
         h.Apply("accepted devices mouse");
-        h.Touch(Protocol.Touch.Press, 1, 150, 150);
-        h.Touch(Protocol.Touch.Release, 1, 150, 150);
+        h.Touch(TestProtocol.Touch.Press, 1, 150, 150);
+        h.Touch(TestProtocol.Touch.Release, 1, 150, 150);
         recs = h.Frame();
         s.Check(FindRec(recs, Protocol.Ev.Click, SA) is null, $"tap: ACCEPTED_DEVICES mouse -> touch tap ignored ({Dump(recs)})");
         h.Click(150, 150);
@@ -553,27 +553,27 @@ public static partial class HandlerTest
         s.Check(HasU32(recs, Protocol.Ev.Click, SA, 1), $"tap: ACCEPTED_DEVICES mouse -> mouse clicks ({Dump(recs)})");
 
         // Long press: LONG_PRESS 1 after the threshold.
-        h.Mouse(Protocol.Mouse.Press, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Press, 150, 150);
         h.Frame();
         System.Threading.Thread.Sleep(1200); // > QStyleHints::mousePressAndHoldInterval (800 ms)
         recs = h.Frame();
         recs.AddRange(h.Frame());
         s.Check(HasU32(recs, Protocol.Ev.LongPress, SA, 1), $"tap: held -> LONG_PRESS 1 ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Release, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Release, 150, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Press, SA, false) && FindRec(recs, Protocol.Ev.LongPress, SA) is null,
             $"tap: release after long press -> PRESS 0, no second LONG_PRESS ({Dump(recs)})");
 
         // New feedback while pressed: old PRESS 0, the running press is cancelled (no PRESS 1 / click for the new feedback).
         System.Threading.Thread.Sleep(1000);
-        h.Mouse(Protocol.Mouse.Press, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Press, 150, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Press, SA, true), $"tap: pressed before the feedback change ({Dump(recs)})");
         h.Cmd.Bind(TA, SA2, 0);
         h.Apply("rebind while pressed");
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Press, SA, false) && None(recs, SA2), $"tap: feedback change -> old PRESS 0, new silent ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Release, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Release, 150, 150);
         recs = h.Frame();
         s.Check(FindRec(recs, Protocol.Ev.Click, SA2) is null && None(recs, SA), $"tap: release of the cancelled press -> no click ({Dump(recs)})");
         h.Click(150, 150);
@@ -581,19 +581,19 @@ public static partial class HandlerTest
         s.Check(HasU32(recs, Protocol.Ev.Click, SA2, 1), $"tap: next tap after the feedback change clicks ({Dump(recs)})");
 
         // DESTROY while pressed: PRESS 0, release silent.
-        h.Mouse(Protocol.Mouse.Press, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Press, 150, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Press, SA2, true), $"tap: pressed before DESTROY ({Dump(recs)})");
         h.Cmd.Destroy(TA);
         h.Apply("destroy pressed handler");
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Press, SA2, false) && h.Count(A) == 0, $"tap: DESTROY while pressed -> PRESS 0, no handler ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Release, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Release, 150, 150);
         recs = h.Frame();
         s.Check(recs.Count == 0, $"tap: release after DESTROY -> silent ({Dump(recs)})");
 
         // Window destroyed while a tap handler is pressed (Dispose).
-        h.Mouse(Protocol.Mouse.Press, 250, 150);
+        h.Mouse(TestProtocol.Mouse.Press, 250, 150);
         h.Frame();
     }
 
@@ -610,73 +610,73 @@ public static partial class HandlerTest
         h.Apply("scene");
         s.Check(h.Count(P) == 1, $"point: one handler ({h.Count(P)})");
 
-        h.Mouse(Protocol.Mouse.Move, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Move, 150, 150);
         var recs = h.Frame();
         s.Check(None(recs, SP), $"point: hover without button -> not active ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Press, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Press, 150, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP, true) && HasVec(recs, Protocol.Ev.Pointer, SP, 50, 50), $"point: press -> ACTIVE 1, POINTER (50, 50) ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Move, 160, 170);
+        h.Mouse(TestProtocol.Mouse.Move, 160, 170);
         recs = h.Frame();
         s.Check(HasVec(recs, Protocol.Ev.Pointer, SP, 60, 70) && FindRec(recs, Protocol.Ev.Active, SP) is null, $"point: drag -> POINTER (60, 70) ({Dump(recs)})");
         recs = h.Frame();
         s.Check(None(recs, SP), $"point: no change -> no records ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Release, 160, 170);
+        h.Mouse(TestProtocol.Mouse.Release, 160, 170);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP, false) && FindRec(recs, Protocol.Ev.Pointer, SP) is null, $"point: release -> ACTIVE 0 ({Dump(recs)})");
         s.Check(HasU32(recs, Protocol.Ev.Click, SE, 1), $"point: the click passes through to the Tap handler below ({Dump(recs)})");
 
         // Touch: a finger on the item.
-        h.Touch(Protocol.Touch.Press, 1, 120, 110);
+        h.Touch(TestProtocol.Touch.Press, 1, 120, 110);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP, true) && HasVec(recs, Protocol.Ev.Pointer, SP, 20, 10), $"point: finger -> ACTIVE 1, POINTER (20, 10) ({Dump(recs)})");
-        h.Touch(Protocol.Touch.Move, 1, 130, 110);
+        h.Touch(TestProtocol.Touch.Move, 1, 130, 110);
         recs = h.Frame();
         s.Check(HasVec(recs, Protocol.Ev.Pointer, SP, 30, 10), $"point: finger moves -> POINTER (30, 10) ({Dump(recs)})");
-        h.Touch(Protocol.Touch.Release, 1, 130, 110);
+        h.Touch(TestProtocol.Touch.Release, 1, 130, 110);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP, false) && HasU32(recs, Protocol.Ev.Click, SE, 1),
             $"point: finger up -> ACTIVE 0, touch tap passes through ({Dump(recs)})");
 
         // New feedback while active: old ACTIVE 0, new ACTIVE 1 + current POINTER.
-        h.Mouse(Protocol.Mouse.Press, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Press, 150, 150);
         h.Frame();
         h.Cmd.Bind(PP, SP2, 0);
         h.Apply("rebind while active");
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP, false) && HasFlag(recs, Protocol.Ev.Active, SP2, true) && HasVec(recs, Protocol.Ev.Pointer, SP2, 50, 50),
             $"point: feedback change -> old ACTIVE 0, new ACTIVE 1 + POINTER ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Release, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Release, 150, 150);
         h.Frame();
 
         // ACCEPTED_BUTTONS right: the left button does nothing, the right one activates.
         h.Cmd.SetI32(PP, Protocol.Prop.AcceptedButtons, 0x2);
         h.Apply("accepted buttons right");
-        h.Mouse(Protocol.Mouse.Press, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Press, 150, 150);
         recs = h.Frame();
         s.Check(None(recs, SP2), $"point: ACCEPTED_BUTTONS right -> left press ignored ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Release, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Release, 150, 150);
         h.Frame();
-        h.Mouse(Protocol.Mouse.PressRight, 150, 150);
+        h.Mouse(TestProtocol.Mouse.PressRight, 150, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP2, true), $"point: ACCEPTED_BUTTONS right -> right press ACTIVE 1 ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.ReleaseRight, 150, 150);
+        h.Mouse(TestProtocol.Mouse.ReleaseRight, 150, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP2, false), $"point: right release -> ACTIVE 0 ({Dump(recs)})");
 
         // ACCEPTED_BUTTONS 0: the mouse is active while it is over the item (hover position, internal
         // HoverHandler), touch while down; switching at runtime leaves no ACTIVE 1 behind.
-        h.Mouse(Protocol.Mouse.Move, 700, 500);
+        h.Mouse(TestProtocol.Mouse.Move, 700, 500);
         h.Frame();
         h.Cmd.SetI32(PP, Protocol.Prop.AcceptedButtons, 0);
         h.Apply("accepted buttons none");
         recs = h.Frame();
         s.Check(None(recs, SP2) && h.Count(P) == 2, $"point none: internal hover handler, mouse outside -> nothing ({h.Count(P)}, {Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Move, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Move, 150, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP2, true) && HasVec(recs, Protocol.Ev.Pointer, SP2, 50, 50),
             $"point none: mouse over the item without a press -> ACTIVE 1, POINTER (50, 50) ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Move, 160, 170);
+        h.Mouse(TestProtocol.Mouse.Move, 160, 170);
         recs = h.Frame();
         s.Check(HasVec(recs, Protocol.Ev.Pointer, SP2, 60, 70) && FindRec(recs, Protocol.Ev.Active, SP2) is null,
             $"point none: mouse moves -> POINTER (60, 70) ({Dump(recs)})");
@@ -684,18 +684,18 @@ public static partial class HandlerTest
         recs = h.Frame();
         s.Check(HasU32(recs, Protocol.Ev.Click, SE, 1) && FindRec(recs, Protocol.Ev.Active, SP2) is null,
             $"point none: a click passes through, still active ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Move, 700, 500);
+        h.Mouse(TestProtocol.Mouse.Move, 700, 500);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP2, false), $"point none: mouse leaves -> ACTIVE 0 ({Dump(recs)})");
-        h.Touch(Protocol.Touch.Press, 1, 120, 110);
+        h.Touch(TestProtocol.Touch.Press, 1, 120, 110);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP2, true) && HasVec(recs, Protocol.Ev.Pointer, SP2, 20, 10),
             $"point none: finger -> ACTIVE 1, POINTER (20, 10) ({Dump(recs)})");
-        h.Touch(Protocol.Touch.Release, 1, 120, 110);
+        h.Touch(TestProtocol.Touch.Release, 1, 120, 110);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP2, false), $"point none: finger up -> ACTIVE 0 ({Dump(recs)})");
         // Runtime switch while the mouse is over the item: Left -> ACTIVE 0 (hover handler removed), None -> ACTIVE 1.
-        h.Mouse(Protocol.Mouse.Move, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Move, 150, 150);
         h.Frame();
         h.Cmd.SetI32(PP, Protocol.Prop.AcceptedButtons, 0x1);
         h.Apply("accepted buttons left while hovered");
@@ -704,7 +704,7 @@ public static partial class HandlerTest
             $"point none -> left while hovered: ACTIVE 0, hover handler removed ({h.Count(P)}, {Dump(recs)})");
         h.Cmd.SetI32(PP, Protocol.Prop.AcceptedButtons, 0);
         h.Apply("accepted buttons none again");
-        h.Mouse(Protocol.Mouse.Move, 151, 150);
+        h.Mouse(TestProtocol.Mouse.Move, 151, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP2, true) && HasVec(recs, Protocol.Ev.Pointer, SP2, 51, 50),
             $"point left -> none: hovering mouse active again ({Dump(recs)})");
@@ -715,10 +715,10 @@ public static partial class HandlerTest
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP2, false) && h.Count(P) == 1, $"point none + touch only -> ACTIVE 0, no hover handler ({h.Count(P)}, {Dump(recs)})");
         h.Cmd.SetI32(PP, Protocol.Prop.AcceptedDevices, 0x7FFFFFFF);
         h.Apply("accepted devices all");
-        h.Mouse(Protocol.Mouse.Move, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Move, 150, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP2, true) && h.Count(P) == 2, $"point none + all devices -> active again ({h.Count(P)}, {Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Move, 700, 500);
+        h.Mouse(TestProtocol.Mouse.Move, 700, 500);
         h.Frame();
         h.Cmd.SetI32(PP, Protocol.Prop.AcceptedButtons, 0x2);
         h.Apply("accepted buttons right again");
@@ -730,24 +730,24 @@ public static partial class HandlerTest
         h.Cmd.Reparent(PN, P, 0);
         h.Cmd.Bind(PN, SPN, 0);
         h.Apply("point none created");
-        h.Mouse(Protocol.Mouse.Move, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Move, 150, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SPN, true) && h.Count(P) == 3, $"point none at creation: hover active ({h.Count(P)}, {Dump(recs)})");
         h.Cmd.Destroy(PN);
         h.Apply("destroy point none");
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SPN, false) && h.Count(P) == 1, $"point none: DESTROY while hovered -> ACTIVE 0 ({h.Count(P)}, {Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Move, 700, 500);
+        h.Mouse(TestProtocol.Mouse.Move, 700, 500);
         h.Frame();
 
         // DESTROY while active: ACTIVE 0.
-        h.Mouse(Protocol.Mouse.PressRight, 150, 150);
+        h.Mouse(TestProtocol.Mouse.PressRight, 150, 150);
         h.Frame();
         h.Cmd.Destroy(PP);
         h.Apply("destroy active handler");
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP2, false) && h.Count(P) == 0, $"point: DESTROY while active -> ACTIVE 0 ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.ReleaseRight, 150, 150);
+        h.Mouse(TestProtocol.Mouse.ReleaseRight, 150, 150);
         h.Frame();
     }
 
@@ -779,31 +779,31 @@ public static partial class HandlerTest
         h.Apply("scene");
 
         // Mouse: press / drag / release on X -> Point active with the position, Tap presses and clicks.
-        h.Mouse(Protocol.Mouse.Move, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Move, 150, 150);
         h.Frame();
-        h.Mouse(Protocol.Mouse.Press, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Press, 150, 150);
         var recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SPX, true) && HasVec(recs, Protocol.Ev.Pointer, SPX, 50, 50),
             $"point-tap: left press -> Point ACTIVE 1, POINTER (50, 50) ({Dump(recs)})");
         s.Check(HasFlag(recs, Protocol.Ev.Press, STX, true), $"point-tap: left press -> Tap PRESS 1 ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Move, 160, 170);
+        h.Mouse(TestProtocol.Mouse.Move, 160, 170);
         recs = h.Frame();
         s.Check(HasVec(recs, Protocol.Ev.Pointer, SPX, 60, 70), $"point-tap: drag -> POINTER (60, 70) ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Release, 160, 170);
+        h.Mouse(TestProtocol.Mouse.Release, 160, 170);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SPX, false) && HasU32(recs, Protocol.Ev.Click, STX, 1) && HasFlag(recs, Protocol.Ev.Press, STX, false),
             $"point-tap: release -> Point ACTIVE 0, Tap PRESS 0 + CLICK 1 ({Dump(recs)})");
 
         // Touch on X: the same.
         System.Threading.Thread.Sleep(600); // no double tap
-        h.Touch(Protocol.Touch.Press, 1, 120, 110);
+        h.Touch(TestProtocol.Touch.Press, 1, 120, 110);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SPX, true) && HasVec(recs, Protocol.Ev.Pointer, SPX, 20, 10) && HasFlag(recs, Protocol.Ev.Press, STX, true),
             $"point-tap: finger -> Point ACTIVE 1, POINTER (20, 10), Tap PRESS 1 ({Dump(recs)})");
-        h.Touch(Protocol.Touch.Move, 1, 130, 110);
+        h.Touch(TestProtocol.Touch.Move, 1, 130, 110);
         recs = h.Frame();
         s.Check(HasVec(recs, Protocol.Ev.Pointer, SPX, 30, 10), $"point-tap: finger moves -> POINTER (30, 10) ({Dump(recs)})");
-        h.Touch(Protocol.Touch.Release, 1, 130, 110);
+        h.Touch(TestProtocol.Touch.Release, 1, 130, 110);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SPX, false) && HasU32(recs, Protocol.Ev.Click, STX, 1),
             $"point-tap: finger up -> Point ACTIVE 0, Tap CLICK 1 ({Dump(recs)})");
@@ -815,13 +815,13 @@ public static partial class HandlerTest
         h.Handler(TR, Protocol.Type.TapHandler, R, STR);
         h.Handler(HR, Protocol.Type.HoverHandler, R, SHR);
         h.Apply("point before tap");
-        h.Mouse(Protocol.Mouse.Move, 450, 450);
+        h.Mouse(TestProtocol.Mouse.Move, 450, 450);
         h.Frame();
-        h.Mouse(Protocol.Mouse.Press, 450, 450);
+        h.Mouse(TestProtocol.Mouse.Press, 450, 450);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SPR, true) && HasFlag(recs, Protocol.Ev.Press, STR, true),
             $"point-tap: Point before Tap -> left press: ACTIVE 1, PRESS 1 ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Release, 450, 450);
+        h.Mouse(TestProtocol.Mouse.Release, 450, 450);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SPR, false) && HasU32(recs, Protocol.Ev.Click, STR, 1),
             $"point-tap: Point before Tap -> release: ACTIVE 0, CLICK 1 ({Dump(recs)})");
@@ -829,27 +829,27 @@ public static partial class HandlerTest
         // Point alone, default buttons (Y) and SET left (Z).
         foreach (var (y, feedbackId, name) in new[] { (300f, SPY, "default buttons"), (450f, SPZ, "SET left") })
         {
-            h.Mouse(Protocol.Mouse.Press, 150, y);
+            h.Mouse(TestProtocol.Mouse.Press, 150, y);
             recs = h.Frame();
             s.Check(HasFlag(recs, Protocol.Ev.Active, feedbackId, true) && HasVec(recs, Protocol.Ev.Pointer, feedbackId, 50, 50),
                 $"point-tap: Point alone, {name}: left press -> ACTIVE 1, POINTER (50, 50) ({Dump(recs)})");
-            h.Mouse(Protocol.Mouse.Release, 150, y);
+            h.Mouse(TestProtocol.Mouse.Release, 150, y);
             recs = h.Frame();
             s.Check(HasFlag(recs, Protocol.Ev.Active, feedbackId, false), $"point-tap: Point alone, {name}: release -> ACTIVE 0 ({Dump(recs)})");
         }
 
         // Stacked: V (Tap + Point) over U (Tap). The top item clicks and its Point is active, U does not click.
-        h.Mouse(Protocol.Mouse.Press, 550, 150);
+        h.Mouse(TestProtocol.Mouse.Press, 550, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SPV, true) && HasFlag(recs, Protocol.Ev.Press, STV, true) && FindRec(recs, Protocol.Ev.Press, STU) is null,
             $"point-tap: stacked press -> top Point ACTIVE 1 + Tap PRESS 1, lower Tap not pressed ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Release, 550, 150);
+        h.Mouse(TestProtocol.Mouse.Release, 550, 150);
         recs = h.Frame();
         s.Check(HasU32(recs, Protocol.Ev.Click, STV, 1) && FindRec(recs, Protocol.Ev.Click, STU) is null && HasFlag(recs, Protocol.Ev.Active, SPV, false),
             $"point-tap: stacked -> only the top item clicks ({Dump(recs)})");
         System.Threading.Thread.Sleep(600);
-        h.Touch(Protocol.Touch.Press, 1, 550, 150);
-        h.Touch(Protocol.Touch.Release, 1, 550, 150);
+        h.Touch(TestProtocol.Touch.Press, 1, 550, 150);
+        h.Touch(TestProtocol.Touch.Release, 1, 550, 150);
         recs = h.Frame();
         s.Check(HasU32(recs, Protocol.Ev.Click, STV, 1) && FindRec(recs, Protocol.Ev.Click, STU) is null,
             $"point-tap: stacked touch -> only the top item clicks ({Dump(recs)})");
@@ -861,8 +861,8 @@ public static partial class HandlerTest
         h.Handler(TV2, Protocol.Type.TapHandler, V2, STV2);
         h.Apply("stacked taps");
         System.Threading.Thread.Sleep(600);
-        h.Touch(Protocol.Touch.Press, 1, 550, 300);
-        h.Touch(Protocol.Touch.Release, 1, 550, 300);
+        h.Touch(TestProtocol.Touch.Press, 1, 550, 300);
+        h.Touch(TestProtocol.Touch.Release, 1, 550, 300);
         recs = h.Frame();
         s.Check(HasU32(recs, Protocol.Ev.Click, STV2, 1) && FindRec(recs, Protocol.Ev.Click, STU2) is null,
             $"point-tap: stacked touch without Point -> only the top item clicks ({Dump(recs)})");
@@ -878,7 +878,7 @@ public static partial class HandlerTest
         h.Handler(WR, Protocol.Type.WheelHandler, R, SW);
         h.Apply("scene");
         s.Check(h.Count(R) == 1, $"wheel: one handler ({h.Count(R)})");
-        h.Mouse(Protocol.Mouse.Move, 150, 150);
+        h.Mouse(TestProtocol.Mouse.Move, 150, 150);
         h.Frame();
 
         h.Wheel(150, 150, 0, 120);
@@ -973,7 +973,7 @@ public static partial class HandlerTest
         var recs = h.Drag(150, 150, 40, 20, release: false);
         s.Check(HasFlag(recs, Protocol.Ev.Active, SD, true) && HasDrag(recs, SD, 40, 20) && At(h, SR, 140, 120),
             $"drag: mouse drag (40, 20) -> ACTIVE 1, DRAG (40, 20), item at 140, 120 ({Dump(recs)}; {Pos(h, SR)})");
-        h.Mouse(Protocol.Mouse.Release, 190, 170);
+        h.Mouse(TestProtocol.Mouse.Release, 190, 170);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SD, false) && FindRec(recs, Protocol.Ev.Drag, SD) is null && At(h, SR, 140, 120),
             $"drag: release -> ACTIVE 0, DRAG stays, item stays ({Dump(recs)}; {Pos(h, SR)})");
@@ -988,11 +988,11 @@ public static partial class HandlerTest
 
         // Touch drag. Touch moves are compressed until the next pump, and Qt sets the translation from the move after
         // the activation on: one move per frame, past the target and back to it.
-        h.Touch(Protocol.Touch.Press, 1, 150, 150);
-        h.Touch(Protocol.Touch.Move, 1, 210, 180);
+        h.Touch(TestProtocol.Touch.Press, 1, 150, 150);
+        h.Touch(TestProtocol.Touch.Move, 1, 210, 180);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SD, true), $"drag: touch drag -> ACTIVE 1 ({Dump(recs)})");
-        h.Touch(Protocol.Touch.Move, 1, 190, 170);
+        h.Touch(TestProtocol.Touch.Move, 1, 190, 170);
         recs = h.Frame();
         s.Check(HasDrag(recs, SD, 40, 20) && At(h, SR, 140, 120), $"drag: touch drag (40, 20) -> item at 140, 120 ({Dump(recs)}; {Pos(h, SR)})");
         // SET TRANSFORM during the drag: back to the pin position, the drag goes on from there.
@@ -1000,8 +1000,8 @@ public static partial class HandlerTest
         h.Apply("transform during drag");
         h.Frame();
         s.Check(At(h, SR, 100, 100), $"drag: SET TRANSFORM during the drag -> item at 100, 100 ({Pos(h, SR)})");
-        h.Touch(Protocol.Touch.Move, 1, 200, 170);
-        h.Touch(Protocol.Touch.Release, 1, 200, 170);
+        h.Touch(TestProtocol.Touch.Move, 1, 200, 170);
+        h.Touch(TestProtocol.Touch.Release, 1, 200, 170);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SD, false) && At(h, SR, 110, 100),
             $"drag: drag goes on after SET TRANSFORM -> item at 110, 100 ({Dump(recs)}; {Pos(h, SR)})");
@@ -1058,7 +1058,7 @@ public static partial class HandlerTest
         h.Apply("destroy while dragging");
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, 43, false) && h.Count(R) == 0, $"drag: DESTROY while dragging -> ACTIVE 0 ({Dump(recs)})");
-        h.Mouse(Protocol.Mouse.Release, 190, 150);
+        h.Mouse(TestProtocol.Mouse.Release, 190, 150);
         h.Frame();
         s.Check(At(h, SR, 140, 100), $"drag: offset stays after the handler is gone ({Pos(h, SR)})");
     }

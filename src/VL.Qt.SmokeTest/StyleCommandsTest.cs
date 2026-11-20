@@ -52,7 +52,7 @@ public static class StyleCommandsTest
         cmd.Reparent(Btn, 0, 0);
         CheckApply("create button");
         // The pointer stays away from the button (no hover state).
-        Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, 790, 590);
+        NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, 790, 590);
 
         void BaseStyleAgain(string what)
         {

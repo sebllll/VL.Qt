@@ -100,7 +100,7 @@ public static class SpaceTest
             return (m.width, m.height, m.dpr);
         }
 
-        void Mouse(int type, float x, float y) => Native.vlqt_test_send_mouse(r.Window, type, x, y);
+        void Mouse(int type, float x, float y) => NativeTest.vlqt_test_send_mouse(r.Window, type, x, y);
 
         // Pixel at a DIP position of a w x h scene (the grab is in device pixels).
         static Color At(Bitmap a, float x, float y, float w, float h)
@@ -156,13 +156,13 @@ public static class SpaceTest
             var py = o.Y + 0.7f * k;
             if (px < w && py < h)
             {
-                Mouse(Protocol.Mouse.Move, px, py);
-                Mouse(Protocol.Mouse.Press, px, py);
+                Mouse(TestProtocol.Mouse.Move, px, py);
+                Mouse(TestProtocol.Mouse.Press, px, py);
                 Frame();
                 s.Check(active.Value && Math.Abs(position.Value.X - 0.3f) < Eps && Math.Abs(position.Value.Y - 0.7f) < Eps,
                     $"{tag}: click at ({px:F0}, {py:F0}) DIP is (0.3, 0.7) units (active {active.Value}, {position.Value})");
-                Mouse(Protocol.Mouse.Release, px, py);
-                Mouse(Protocol.Mouse.Move, w - 1, h - 1);
+                Mouse(TestProtocol.Mouse.Release, px, py);
+                Mouse(TestProtocol.Mouse.Move, w - 1, h - 1);
                 Frame();
                 s.Check(!active.Value, $"{tag}: released");
             }

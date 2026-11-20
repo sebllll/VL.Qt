@@ -59,7 +59,7 @@ public static class ButtonTest
             s.Check(n >= 0, $"poll ({n})");
             return Parse(buf.AsSpan(0, Math.Max(n, 0)));
         }
-        void Mouse(int type, float x, float y) => s.Check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
+        void Mouse(int type, float x, float y) => s.Check(NativeTest.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
         static Rec? Last(List<Rec> recs, ushort ev)
         {
             Rec? found = null;
@@ -87,7 +87,7 @@ public static class ButtonTest
         cmd.Reparent(B, 0, 0);
         cmd.Bind(B, H, 0);
         CheckApply("button create + text/enabled/autoRepeat");
-        Mouse(Protocol.Mouse.Move, 700, 500);
+        Mouse(TestProtocol.Mouse.Move, 700, 500);
         s.Pump(2);
         var recs = Frame();
         recs.AddRange(Frame());
@@ -97,7 +97,7 @@ public static class ButtonTest
         s.Check(w0 > 20 && h0 > 10, $"implicit size from text ({w0} x {h0}) ({S(recs)})");
         s.Check(sb is { } b0 && b0.F(0) == 100 && b0.F(1) == 100 && b0.F(2) == w0 && b0.F(3) == h0,
             $"AUTO_SIZE on -> item size = implicit size ({S(recs)})");
-        s.Check(Native.vlqt_test_handler_count(w, B) == 0, "no Interactive handlers needed for clicks");
+        s.Check(NativeTest.vlqt_test_handler_count(w, B) == 0, "no Interactive handlers needed for clicks");
 
         // Longer text -> wider implicit size, follows without a new Bounds.
         cmd.SetString(B, Protocol.Prop.Text, "Click me, I am a much longer label");
@@ -109,29 +109,29 @@ public static class ButtonTest
 
         // Click = press + release over the button -> EV_CLICK 1 without the Interactive flag.
         float cx = 100 + w1 / 2, cy = 100 + h0 / 2;
-        Mouse(Protocol.Mouse.Move, cx, cy);
-        Mouse(Protocol.Mouse.Press, cx, cy);
+        Mouse(TestProtocol.Mouse.Move, cx, cy);
+        Mouse(TestProtocol.Mouse.Press, cx, cy);
         recs = Frame();
         s.Check(Clicks(recs) == 0, $"press alone -> no click ({S(recs)})");
-        Mouse(Protocol.Mouse.Release, cx, cy);
+        Mouse(TestProtocol.Mouse.Release, cx, cy);
         recs = Frame();
         s.Check(Clicks(recs) == 1, $"release over the button -> CLICK 1 ({S(recs)})");
         recs = Frame();
         s.Check(Clicks(recs) == 0, $"click is sent once ({S(recs)})");
 
         // Release outside -> no click (Qt default).
-        Mouse(Protocol.Mouse.Press, cx, cy);
-        Mouse(Protocol.Mouse.Move, 700, 500);
-        Mouse(Protocol.Mouse.Release, 700, 500);
+        Mouse(TestProtocol.Mouse.Press, cx, cy);
+        Mouse(TestProtocol.Mouse.Move, 700, 500);
+        Mouse(TestProtocol.Mouse.Release, 700, 500);
         recs = Frame();
         s.Check(Clicks(recs) == 0, $"release outside -> no click ({S(recs)})");
 
         // Enabled false -> no clicks.
         cmd.SetBool(B, Protocol.Prop.Enabled, false);
         CheckApply("button disabled");
-        Mouse(Protocol.Mouse.Move, cx, cy);
-        Mouse(Protocol.Mouse.Press, cx, cy);
-        Mouse(Protocol.Mouse.Release, cx, cy);
+        Mouse(TestProtocol.Mouse.Move, cx, cy);
+        Mouse(TestProtocol.Mouse.Press, cx, cy);
+        Mouse(TestProtocol.Mouse.Release, cx, cy);
         recs = Frame();
         s.Check(Clicks(recs) == 0, $"disabled -> no click ({S(recs)})");
 
@@ -139,7 +139,7 @@ public static class ButtonTest
         cmd.SetBool(B, Protocol.Prop.Enabled, true);
         cmd.SetBool(B, Protocol.Prop.AutoRepeat, true);
         CheckApply("button autoRepeat");
-        Mouse(Protocol.Mouse.Press, cx, cy);
+        Mouse(TestProtocol.Mouse.Press, cx, cy);
         uint repeated = 0;
         // Hold until 3 repeats arrived (typically ~700 ms), at most 3 s: a stalled machine delays the wall clock timers,
         // a missing auto repeat never gets there.
@@ -149,7 +149,7 @@ public static class ButtonTest
             Thread.Sleep(50);
             repeated += Clicks(Frame());
         }
-        Mouse(Protocol.Mouse.Release, cx, cy);
+        Mouse(TestProtocol.Mouse.Release, cx, cy);
         repeated += Clicks(Frame());
         s.Check(repeated >= 3, $"autoRepeat -> repeated clicks while held ({repeated})");
 
