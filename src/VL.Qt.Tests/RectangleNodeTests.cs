@@ -58,7 +58,7 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void Defaults_WhiteUnitRectangle_IdentityTransform_WithSink()
+        public void Defaults_WhiteUnitRectangle_IdentityTransform_WithFeedback()
         {
             var r = (Rectangle)Update();
             Assert.That(r.Size, Is.EqualTo(DefaultSize));
@@ -72,8 +72,8 @@ namespace VL.Qt.Tests
             Assert.That(r.Clip, Is.False);
             Assert.That(r.Interaction, Is.Null);
             Assert.That(r.Debug, Is.False);
-            Assert.That(r.Sink.Sink, Is.SameAs(_node.Core.Sink));
-            Assert.That(r.Sink.Index, Is.EqualTo(0));
+            Assert.That(r.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
+            Assert.That(r.Feedback.Index, Is.EqualTo(0));
         }
 
         [Test]
@@ -113,16 +113,16 @@ namespace VL.Qt.Tests
             var chain = new HoverNode(_ => new Removal(this)).Update(null, null);
             Changed(Update(interaction: chain), r => ReferenceEquals(r.Interaction, chain), "interaction");
             Changed(Update(debug: true), r => r.Debug, "debug");
-            // Back to defaults → new description again; the sink stays the same.
-            Changed(Update(), r => r.Sink.Sink == _node.Core.Sink, "back to defaults");
+            // Back to defaults → new description again; the feedback stays the same.
+            Changed(Update(), r => r.Feedback.Feedback == _node.Core.Feedback, "back to defaults");
             Assert.That(Update(), Is.SameAs(last));
         }
 
         [Test]
-        public void Outputs_FromSink()
+        public void Outputs_FromFeedback()
         {
             Update();
-            var s = _node.Core.Sink[0];
+            var s = _node.Core.Feedback[0];
             s.MeasuredSize = new Vector2(0.3f, 0.4f);
             s.SceneBounds = new RectangleF(1, 2, 3, 4);
             _node.Update(DefaultSize, default, RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false,
@@ -132,7 +132,7 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void SeveralRenderers_NoWarning_SinkWarningShownAtNode()
+        public void SeveralRenderers_NoWarning_FeedbackWarningShownAtNode()
         {
             // Several times in one tree and in two renderers is fine.
             var scene = new SceneRegistry();
@@ -145,18 +145,18 @@ namespace VL.Qt.Tests
             Assert.That(_node.Core.Warning, Is.Null);
             Assert.That(_warnings, Is.EqualTo(0));
 
-            // A warning in the sink slot (e.g. a video duplicate) is shown at the node once and removed with it.
-            _node.Core.Sink[0].Warning = SceneRegistry.VideoDuplicateWarning;
+            // A warning in the feedback slot (e.g. a video duplicate) is shown at the node once and removed with it.
+            _node.Core.Feedback[0].Warning = SceneRegistry.VideoDuplicateWarning;
             Update();
             Assert.That(_warnings, Is.EqualTo(1));
             Update();
             Assert.That(_warnings, Is.EqualTo(1), "added once");
 
-            _node.Core.Sink[0].Warning = null;
+            _node.Core.Feedback[0].Warning = null;
             Update();
             Assert.That(_warnings, Is.EqualTo(0), "removed");
 
-            _node.Core.Sink[0].Warning = SceneRegistry.VideoDuplicateWarning;
+            _node.Core.Feedback[0].Warning = SceneRegistry.VideoDuplicateWarning;
             Update();
             Assert.That(_warnings, Is.EqualTo(1));
             _node.Dispose();

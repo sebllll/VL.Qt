@@ -290,9 +290,9 @@ namespace VL.Qt.Tests
 
             var r = new EventReader(buf);
             Assert.That(r.MoveNext(), Is.True);
-            Assert.That((r.Event, r.Handle, r.Index, r.Payload.Length), Is.EqualTo((Protocol.Ev.Hover, 42u, 1u, 0)));
+            Assert.That((r.Event, r.FeedbackId, r.Index, r.Payload.Length), Is.EqualTo((Protocol.Ev.Hover, 42u, 1u, 0)));
             Assert.That(r.MoveNext(), Is.True);
-            Assert.That((r.Event, r.Handle, r.Index, r.ReadI32(0)), Is.EqualTo((Protocol.Ev.Click, 7u, 2u, 3)));
+            Assert.That((r.Event, r.FeedbackId, r.Index, r.ReadI32(0)), Is.EqualTo((Protocol.Ev.Click, 7u, 2u, 3)));
             Assert.That(r.MoveNext(), Is.True);
             Assert.That((r.Event, r.Payload.Length, r.Payload[0]), Is.EqualTo((Protocol.Ev.Measured, 1, (byte)0xFF)));
             Assert.That(r.MoveNext(), Is.False);

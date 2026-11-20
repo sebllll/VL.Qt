@@ -404,7 +404,7 @@ namespace VL.Qt.Tests
             public void Create(uint id, ushort type) { }
             public void Destroy(uint id) { }
             public void Reparent(uint id, uint parent, uint index) { }
-            public void Bind(uint id, uint sinkHandle, ushort flags) { }
+            public void Bind(uint id, uint feedbackId, ushort flags) { }
             public void SetF32(uint id, ushort prop, float value) => Sets++;
             public void SetI32(uint id, ushort prop, int value) => Sets++;
             public void SetBool(uint id, ushort prop, bool value) => Sets++;

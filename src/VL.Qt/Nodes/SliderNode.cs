@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
         internal SliderNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Slider, Props>(addWarning, Create);
 
-        private static readonly Func<CommonInputs, Props, SinkSlot, Slider> Create = static (c, p, slot) => new Slider
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Slider> Create = static (c, p, slot) => new Slider
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -43,7 +43,7 @@ namespace VL.Qt.Nodes
                 Interaction = c.Interaction,
                 Effect = c.Effect,
                 Style = p.Style,
-                Sink = slot,
+                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Value = p.Value,
                 Minimum = p.Minimum,
@@ -99,7 +99,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            _value.Update(channel, _node.Sink);
+            _value.Update(channel, _node.Feedback);
             float minimum = _value.Min(min, 0f);
             float maximum = _value.Max(max, 1f);
             value = _value.Clamp(minimum, maximum);

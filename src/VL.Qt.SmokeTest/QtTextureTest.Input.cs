@@ -335,7 +335,7 @@ public static partial class QtTextureTest
                     s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "wheel reference: apply " + Native.LastError());
                 s.Pump(1);
                 int n = Native.Poll(w, buf);
-                rec.Sinks.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
+                rec.FeedbackRouter.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
             }
         }
         Frames();

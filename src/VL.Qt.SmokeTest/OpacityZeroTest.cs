@@ -72,7 +72,7 @@ public static class OpacityZeroTest
             s.Pump(1);
             int n = Native.Poll(w, buf);
             s.Check(n >= 0, $"opacity-zero: poll ({n})");
-            var res = rec.Sinks.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
+            var res = rec.FeedbackRouter.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
             s.Check(res.Error is null, $"opacity-zero: dispatch ({res.Error})");
         }
         void Frames(int count) { for (int i = 0; i < count; i++) Frame(); }

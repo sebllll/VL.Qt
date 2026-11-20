@@ -29,7 +29,7 @@ namespace VL.Qt.Nodes
         internal RectangleNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Rectangle, Props>(addWarning, Create);
 
-        internal static readonly Func<CommonInputs, Props, SinkSlot, Rectangle> Create = static (c, p, slot) => new Rectangle
+        internal static readonly Func<CommonInputs, Props, FeedbackSlot, Rectangle> Create = static (c, p, slot) => new Rectangle
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -39,7 +39,7 @@ namespace VL.Qt.Nodes
                 Debug = c.Debug,
                 Interaction = c.Interaction,
                 Effect = c.Effect,
-                Sink = slot,
+                Feedback = slot,
                 Fill = p.Color,
                 Radius = p.Radius,
                 StrokeColor = p.StrokeColor,

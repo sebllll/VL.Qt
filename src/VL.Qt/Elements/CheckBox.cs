@@ -2,7 +2,7 @@
 {
     /// <summary>
     /// Check box without text (QtQuick.Controls CheckBox, style Basic). The Toggle node with look Checkbox.
-    /// User changes come from Qt's <c>toggled</c> as EV_VALUE (bool) into <see cref="Element.Sink"/>; SET VALUE is never echoed.
+    /// User changes come from Qt's <c>toggled</c> as EV_VALUE (bool) into <see cref="Element.Feedback"/>; SET VALUE is never echoed.
     /// </summary>
     public sealed class CheckBox : Element
     {

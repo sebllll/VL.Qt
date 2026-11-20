@@ -19,26 +19,26 @@ namespace VL.Qt
     /// </para>
     /// <para>
     /// An element may hang at several places of this tree (<see cref="SceneRegistry"/>): every occurrence gets
-    /// its own Qt object and its own sink handle on the element's sink. The first occurrence in traversal order
+    /// its own Qt object and its own feedback id on the element's feedback. The first occurrence in traversal order
     /// (depth-first, children in order; an effect mask counts at its place, before the children) is the primary one
-    /// (<see cref="Node.IsPrimary"/>): only its handle reports state values. A new occurrence is primary if the current
+    /// (<see cref="Node.IsPrimary"/>): only its feedback id reports state values. A new occurrence is primary if the current
     /// primary was not reached yet in this pass (positions of existing nodes never change their order); when the
     /// primary lets go, the first of the remaining occurrences is picked at the end of the update and re-bound with a
-    /// new handle, so QtNative sends its current state again. Other renderers may show the same element at the same
+    /// new feedback id, so QtNative sends its current state again. Other renderers may show the same element at the same
     /// time, each with its own Qt objects; only the owner renderer (the first one) has the primary occurrence.
     /// When this tree lets go of the last occurrence of an element it owns, it hands the element over at the end of the
     /// update (<see cref="SceneRegistry.HandOver"/>); the next renderer picks its primary in its next update
     /// (<see cref="TakeOver"/>). A video is shown once only, app-wide (inside this tree the first occurrence in traversal
     /// order wins and takes it over from a later position if needed): an ignored occurrence becomes a placeholder node
-    /// without Qt object and sets a warning in the element's sink. REPARENT indices count only the real objects.
+    /// without Qt object and sets a warning in the element's feedback. REPARENT indices count only the real objects.
     /// </para>
     /// <para>
-    /// Every visited object is bound to the sink slot of its description (BIND with a handle from
-    /// <see cref="Sinks"/>, a new handle per slot change, no BIND flags), no sink sends an unbind (handle 0).
+    /// Every visited object is bound to the feedback slot of its description (BIND with a feedback id from
+    /// <see cref="FeedbackRouter"/>, a new feedback id per slot change, no BIND flags), no feedback sends an unbind (feedback id 0).
     /// </para>
     /// <para>
     /// Input handlers: the interaction chain of an element (<see cref="Element.Interaction"/>) becomes a list of
-    /// handler objects per item (<see cref="Node.Handlers"/>, not children), diffed by the sink of each interaction
+    /// handler objects per item (<see cref="Node.Handlers"/>, not children), diffed by the feedback of each interaction
     /// node (see ReconcileHandlers); they are written after the item's BIND and before its children.
     /// </para>
     /// <para>
@@ -60,7 +60,7 @@ namespace VL.Qt
     /// children array) is built with the style inherited at its position, and the returned element is reconciled in its
     /// place. Build runs on every pass, because a patched widget is usually a mutable instance whose reference does not
     /// change; subtrees containing one are therefore never skipped (<see cref="Node.ContainsStylable"/>), the elements
-    /// around them still are. Exceptions are caught per call and shown at the parent's sink (<see cref="SinkState.BuildError"/>).
+    /// around them still are. Exceptions are caught per call and shown at the parent's feedback (<see cref="FeedbackState.BuildError"/>).
     /// </para>
     /// <para>
     /// Thread: <see cref="Update(Element?, in SpaceMapping)"/> runs on the vvvv main thread inside the Update of the Renderer [Qt] node
@@ -76,8 +76,8 @@ namespace VL.Qt
         private readonly ICommandSink _sink;
         private readonly IdAllocator _ids;
         private readonly SceneRegistry _scene;
-        private readonly Dictionary<uint, SinkSlot> _bindings = new();
-        private readonly SinkRegistry _sinks = new();
+        private readonly Dictionary<uint, FeedbackSlot> _bindings = new();
+        private readonly FeedbackRouter _feedbackRouter = new();
         private readonly List<Element> _pendingPrimary = new(); // elements whose primary occurrence let go in this pass
         private Node? _root;
         private SpaceMapping _mapping = SpaceMapping.Default;
@@ -103,11 +103,11 @@ namespace VL.Qt
         /// <summary>Mirror of the object under the window root (index 0); null = empty scene.</summary>
         internal Node? Root => _root;
 
-        /// <summary>Object id → sink slot of every bound object.</summary>
-        public IReadOnlyDictionary<uint, SinkSlot> Bindings => _bindings;
+        /// <summary>Object id → feedback slot of every bound object.</summary>
+        public IReadOnlyDictionary<uint, FeedbackSlot> Bindings => _bindings;
 
-        /// <summary>Sink handles of this window; <see cref="SinkRegistry.Dispatch"/> takes the window's poll buffer.</summary>
-        public SinkRegistry Sinks => _sinks;
+        /// <summary>Feedback ids of this window; <see cref="FeedbackRouter.Dispatch"/> takes the window's poll buffer.</summary>
+        public FeedbackRouter FeedbackRouter => _feedbackRouter;
 
         /// <summary>
         /// Makes the next <see cref="Update(Element?, in SpaceMapping)"/> visit the whole tree (no reference-equality shortcut), e.g. because
@@ -142,7 +142,7 @@ namespace VL.Qt
             _force = !_hasMapping || _rescale || _invalidated;
             _invalidated = false;
             _mapping = mapping;
-            _sinks.Mapping = mapping;
+            _feedbackRouter.Mapping = mapping;
             _hasMapping = true;
             _pass++;
 
@@ -214,7 +214,7 @@ namespace VL.Qt
         /// Position of an <see cref="IStylable"/>: calls its Build with <paramref name="inherited"/> (every pass that
         /// reaches it; its ancestors are never skipped, see <see cref="Node.ContainsStylable"/>) and reconciles the returned
         /// element in its place. A reference-equal result costs nothing more than the call. An exception is caught and shown
-        /// at the parent's sink (<see cref="SinkState.BuildError"/>); the element of the last successful Build of the same
+        /// at the parent's feedback (<see cref="FeedbackState.BuildError"/>); the element of the last successful Build of the same
         /// stylable stays. Null (or a failure without such an element) shows the placeholder's empty Group.
         /// </summary>
         private Node ReconcileStylable(Node? existing, StylableElement next, Element? parent, Node? parentNode, int index, Style inherited, bool attached)
@@ -234,7 +234,7 @@ namespace VL.Qt
 
             var node = ReconcileElement(existing, built, parent, parentNode, index, inherited, attached);
             node.Stylable = next;
-            SetBuildError(parent?.Sink ?? default, node, error);
+            SetBuildError(parent?.Feedback ?? default, node, error);
             return node;
         }
 
@@ -242,13 +242,13 @@ namespace VL.Qt
         /// Shows <paramref name="error"/> of the Build at <paramref name="node"/> in <paramref name="slot"/> (the parent's), or
         /// clears what this node showed there (null). An error of a sibling that is already shown is kept.
         /// </summary>
-        private static void SetBuildError(SinkSlot slot, Node node, string? error)
+        private static void SetBuildError(FeedbackSlot slot, Node node, string? error)
         {
             if (error == node.BuildError)
                 return;
             if (error is null)
             {
-                if (slot.Sink is { } sink && sink.TryGet(slot.Index, out var state) && state.BuildError == node.BuildError)
+                if (slot.Feedback is { } feedback && feedback.TryGet(slot.Index, out var state) && state.BuildError == node.BuildError)
                     state.BuildError = null;
             }
             else if (slot.State is { } shown && (shown.BuildError is null || shown.BuildError == node.BuildError))
@@ -295,7 +295,7 @@ namespace VL.Qt
 
                 var resolved = ResolveStyle(existing, next, inherited);
                 DiffProperties(existing, existing.Last, next, parent);
-                BindSink(existing, next);
+                BindFeedback(existing, next);
                 ReconcileHandlers(existing, existing.Last?.Interaction, next.Interaction);
                 ReconcileEffect(existing, next, resolved);
                 ReconcileChildren(existing, next, resolved);
@@ -317,7 +317,7 @@ namespace VL.Qt
             DiffProperties(node, null, next, parent);
             if (!attached)
                 _sink.Reparent(node.Id, parentNode?.Id ?? IdAllocator.Root, (uint)index);
-            BindSink(node, next);
+            BindFeedback(node, next);
             ReconcileHandlers(node, null, next.Interaction);
             ReconcileEffect(node, next, childStyle);
             ReconcileChildren(node, next, childStyle);
@@ -466,13 +466,13 @@ namespace VL.Qt
             node.IsPrimary = false;
         }
 
-        /// <summary>Makes <paramref name="node"/> a further occurrence; its handle stops reporting state values right away (no BIND needed).</summary>
+        /// <summary>Makes <paramref name="node"/> a further occurrence; its feedback id stops reporting state values right away (no BIND needed).</summary>
         private void Demote(Node node)
         {
             node.IsPrimary = false;
             if (node.BoundPrimary)
             {
-                _sinks.SetPrimary(node.BoundHandle, false);
+                _feedbackRouter.SetPrimary(node.BoundFeedbackId, false);
                 node.BoundPrimary = false;
             }
         }
@@ -480,7 +480,7 @@ namespace VL.Qt
         /// <summary>
         /// Picks the new primary occurrence of every element whose primary let go in this pass, or that was handed over to
         /// this renderer: the first of the remaining occurrences in traversal order (<see cref="IsBefore"/>), re-bound with
-        /// a new handle so QtNative sends its state. An element without occurrences left in this tree goes to the next
+        /// a new feedback id so QtNative sends its state. An element without occurrences left in this tree goes to the next
         /// renderer that shows it (<see cref="SceneRegistry.HandOver"/>). Runs once per update after the whole tree (and
         /// after a clear); nothing to do (and no allocation) in the steady state.
         /// </summary>
@@ -504,28 +504,28 @@ namespace VL.Qt
                 }
                 _scene.SetPrimary(element, first);
                 first.IsPrimary = true;
-                if (!first.BoundSink.IsNone)
+                if (!first.BoundFeedback.IsNone)
                     SyncPrimary(first);
             }
             _pendingPrimary.Clear();
         }
 
         /// <summary>
-        /// Brings the sink handle of <paramref name="node"/> in line with <see cref="Node.IsPrimary"/>: a promotion takes a
-        /// new primary handle and sends BIND (QtNative then sends the current Measured/SceneBounds/Media/Error again), a
-        /// demotion only flips the flag of the handle.
+        /// Brings the feedback id of <paramref name="node"/> in line with <see cref="Node.IsPrimary"/>: a promotion takes a
+        /// new primary feedback id and sends BIND (QtNative then sends the current Measured/SceneBounds/Media/Error again), a
+        /// demotion only flips the flag of the feedback id.
         /// </summary>
         private void SyncPrimary(Node node)
         {
             if (node.IsPrimary)
             {
-                _sinks.Release(node.BoundHandle); // not primary: leaves the slot alone
-                node.BoundHandle = _sinks.Acquire(node.BoundSink, primary: true);
-                _sink.Bind(node.Id, node.BoundHandle, 0);
+                _feedbackRouter.Release(node.BoundFeedbackId); // not primary: leaves the slot alone
+                node.BoundFeedbackId = _feedbackRouter.Acquire(node.BoundFeedback, primary: true);
+                _sink.Bind(node.Id, node.BoundFeedbackId, 0);
             }
             else
             {
-                _sinks.SetPrimary(node.BoundHandle, false);
+                _feedbackRouter.SetPrimary(node.BoundFeedbackId, false);
             }
             node.BoundPrimary = node.IsPrimary;
         }
@@ -592,14 +592,14 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// BIND when the sink slot changed (no flags: input comes from handlers since #319; QtNative cancels the press of a
-        /// Tap handler with a new sink itself since #320). The handle is primary or not after <see cref="Node.IsPrimary"/>;
+        /// BIND when the feedback slot changed (no flags: input comes from handlers since #319; QtNative cancels the press of a
+        /// Tap handler with a new feedback itself since #320). The feedback id is primary or not after <see cref="Node.IsPrimary"/>;
         /// a node that became primary with an unchanged slot is re-bound too (<see cref="SyncPrimary"/>).
         /// </summary>
-        private void BindSink(Node node, Element next)
+        private void BindFeedback(Node node, Element next)
         {
-            SinkSlot slot = next.Sink;
-            SinkSlot old = node.BoundSink;
+            FeedbackSlot slot = next.Feedback;
+            FeedbackSlot old = node.BoundFeedback;
             if (slot == old)
             {
                 if (!slot.IsNone && node.IsPrimary != node.BoundPrimary)
@@ -611,20 +611,20 @@ namespace VL.Qt
             {
                 _sink.Bind(node.Id, 0, 0);
                 _bindings.Remove(node.Id);
-                _sinks.Release(node.BoundHandle);
-                node.BoundHandle = 0;
+                _feedbackRouter.Release(node.BoundFeedbackId);
+                node.BoundFeedbackId = 0;
                 node.BoundPrimary = false;
             }
             else
             {
-                // New handle: late events of the old binding are dropped, the old slot loses hover/press.
-                _sinks.Release(node.BoundHandle);
-                node.BoundHandle = _sinks.Acquire(slot, node.IsPrimary);
+                // New feedback id: late events of the old binding are dropped, the old slot loses hover/press.
+                _feedbackRouter.Release(node.BoundFeedbackId);
+                node.BoundFeedbackId = _feedbackRouter.Acquire(slot, node.IsPrimary);
                 node.BoundPrimary = node.IsPrimary;
-                _sink.Bind(node.Id, node.BoundHandle, 0);
+                _sink.Bind(node.Id, node.BoundFeedbackId, 0);
                 _bindings[node.Id] = slot;
             }
-            node.BoundSink = slot;
+            node.BoundFeedback = slot;
         }
 
         /// <summary>DESTROY for the top node only (QtNative destroys its children), all ids freed.</summary>
@@ -639,7 +639,7 @@ namespace VL.Qt
         private void Forget(Node node)
         {
             if (node.BuildError is not null)
-                SetBuildError(node.Parent?.Last?.Sink ?? default, node, null);
+                SetBuildError(node.Parent?.Last?.Feedback ?? default, node, null);
             if (node.IsIgnored)
             {
                 _scene.RemoveDuplicate(node.Last!, this);
@@ -655,13 +655,13 @@ namespace VL.Qt
                 node.EffectObjects = null;
             }
             if (node.EffectWarning is not null)
-                SetEffectWarning(node, node.Last?.Sink ?? default, null);
+                SetEffectWarning(node, node.Last?.Feedback ?? default, null);
             if (node.Last is not null)
                 Release(node.Last, node);
-            if (!node.BoundSink.IsNone)
+            if (!node.BoundFeedback.IsNone)
             {
                 _bindings.Remove(node.Id);
-                _sinks.Release(node.BoundHandle);
+                _feedbackRouter.Release(node.BoundFeedbackId);
             }
             if (node.Handlers is { } handlers)
             {
@@ -675,9 +675,9 @@ namespace VL.Qt
 
         /// <summary>
         /// Diffs the input handlers of <paramref name="node"/> against the interaction chain <paramref name="next"/>
-        /// (#319). Key = <see cref="Interaction.Sink"/>; the order of the chain does not matter. A new key creates the
-        /// handler (CREATE, property SETs, REPARENT to the item, BIND to a new sink handle), the same instance costs
-        /// nothing, a changed instance sends the changed properties, a missing key is destroyed (ids and handle freed).
+        /// (#319). Key = <see cref="Interaction.Feedback"/>; the order of the chain does not matter. A new key creates the
+        /// handler (CREATE, property SETs, REPARENT to the item, BIND to a new feedback id), the same instance costs
+        /// nothing, a changed instance sends the changed properties, a missing key is destroyed (ids and feedback id freed).
         /// An interaction that is already active at another handler (another element, the same chain twice, another
         /// renderer) gets a placeholder and the duplicate warning (<see cref="SceneRegistry"/>); it takes over once
         /// the owner lets go (next update). A reference-equal chain is skipped unless the whole tree is forced.
@@ -713,7 +713,7 @@ namespace VL.Qt
             if (link.Previous is { } previous)
                 ReconcileLink(node, list, previous);
 
-            int k = IndexOfUnseen(list, link.Sink);
+            int k = IndexOfUnseen(list, link.Feedback);
             if (k < 0)
             {
                 list.Add(CreateHandler(node, link));
@@ -723,7 +723,7 @@ namespace VL.Qt
             var h = list[k];
             if (h.IsIgnored)
             {
-                if (_scene.HandlerOwnerOf(link.Sink) is null)
+                if (_scene.HandlerOwnerOf(link.Feedback) is null)
                 {
                     _scene.RemoveHandlerDuplicate(h.Key, this);
                     list[k] = CreateHandler(node, link);
@@ -752,7 +752,7 @@ namespace VL.Qt
         }
 
         /// <summary>Index of the handler with <paramref name="key"/> not yet matched in this pass, -1 if none.</summary>
-        private int IndexOfUnseen(List<HandlerNode> list, SinkSlot key)
+        private int IndexOfUnseen(List<HandlerNode> list, FeedbackSlot key)
         {
             for (int i = 0; i < list.Count; i++)
             {
@@ -766,19 +766,19 @@ namespace VL.Qt
         /// <summary>New handler at the item of <paramref name="node"/>, or a placeholder if the interaction is active elsewhere.</summary>
         private HandlerNode CreateHandler(Node node, Interaction link)
         {
-            if (_scene.HandlerOwnerOf(link.Sink) is not null)
+            if (_scene.HandlerOwnerOf(link.Feedback) is not null)
             {
-                _scene.AddHandlerDuplicate(link.Sink, this);
-                return new HandlerNode(0, link.HandlerType, link.Sink) { SeenPass = _pass, Last = link };
+                _scene.AddHandlerDuplicate(link.Feedback, this);
+                return new HandlerNode(0, link.HandlerType, link.Feedback) { SeenPass = _pass, Last = link };
             }
 
-            var h = new HandlerNode(_ids.Allocate(), link.HandlerType, link.Sink) { SeenPass = _pass, Last = link };
+            var h = new HandlerNode(_ids.Allocate(), link.HandlerType, link.Feedback) { SeenPass = _pass, Last = link };
             _scene.SetHandlerOwner(h);
             _sink.Create(h.Id, h.Type);
             link.WriteProperties(_sink, h.Id, null, _mapping);
             _sink.Reparent(h.Id, node.Id, 0);
-            h.BoundHandle = _sinks.Acquire(h.Key);
-            _sink.Bind(h.Id, h.BoundHandle, 0);
+            h.BoundFeedbackId = _feedbackRouter.Acquire(h.Key);
+            _sink.Bind(h.Id, h.BoundFeedbackId, 0);
             _bindings[h.Id] = h.Key;
             return h;
         }
@@ -791,7 +791,7 @@ namespace VL.Qt
             ForgetHandler(h);
         }
 
-        /// <summary>Frees id, sink handle (resets the slot: not hovered), binding and ownership of a handler.</summary>
+        /// <summary>Frees id, feedback id (resets the slot: not hovered), binding and ownership of a handler.</summary>
         private void ForgetHandler(HandlerNode h)
         {
             if (h.IsIgnored)
@@ -801,8 +801,8 @@ namespace VL.Qt
             }
             _scene.ReleaseHandler(h);
             _bindings.Remove(h.Id);
-            _sinks.Release(h.BoundHandle);
-            h.BoundHandle = 0;
+            _feedbackRouter.Release(h.BoundFeedbackId);
+            h.BoundFeedbackId = 0;
             _ids.Free(h.Id);
         }
 

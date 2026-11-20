@@ -60,7 +60,7 @@ namespace VL.Qt.Nodes
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
         }
 
-        private static readonly Func<CommonInputs, Props, SinkSlot, ShaderEffect> Create = static (c, p, slot) => new ShaderEffect
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, ShaderEffect> Create = static (c, p, slot) => new ShaderEffect
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -70,7 +70,7 @@ namespace VL.Qt.Nodes
                 Debug = c.Debug,
                 Interaction = c.Interaction,
                 Effect = c.Effect,
-                Sink = slot,
+                Feedback = slot,
                 Input = p.Input,
                 InputSampler = p.InputSampler,
                 FragmentShaderId = p.FragmentShaderId,

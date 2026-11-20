@@ -34,7 +34,7 @@ namespace VL.Qt.Nodes
         internal TouchPointsNode(Func<string, IDisposable> addWarning)
             => _node = new InteractionNode<Props>(addWarning, Create);
 
-        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new TouchPointsInteraction(previous, slot, p.Occlusion, p.Devices);
 
         internal InteractionNode<Props> Core => _node;
@@ -55,25 +55,25 @@ namespace VL.Qt.Nodes
 
             // Pull: state of the last pump (1 frame latency). A new Spread only when Qt reported a change; at rest
             // nothing is built or written. A channel connected later gets the current points, but only if there was
-            // any event yet (an untouched sink would overwrite the value of the channel for nothing).
+            // any event yet (an untouched feedback would overwrite the value of the channel for nothing).
             if (!points.IsValid())
             {
                 _points = null;
                 return output;
             }
-            var sink = _node.Sink;
-            int updates = sink.TouchUpdates();
+            var feedback = _node.Feedback;
+            int updates = feedback.TouchUpdates();
             if (!ReferenceEquals(points, _points))
             {
                 _points = points;
                 _lastUpdates = updates;
                 if (updates != 0)
-                    points.SetValueAndAuthor(sink.TouchPoints(), InteractionNode<Props>.Author);
+                    points.SetValueAndAuthor(feedback.TouchPoints(), InteractionNode<Props>.Author);
             }
             else if (updates != _lastUpdates)
             {
                 _lastUpdates = updates;
-                points.SetValueAndAuthor(sink.TouchPoints(), InteractionNode<Props>.Author);
+                points.SetValueAndAuthor(feedback.TouchPoints(), InteractionNode<Props>.Author);
             }
             return output;
         }

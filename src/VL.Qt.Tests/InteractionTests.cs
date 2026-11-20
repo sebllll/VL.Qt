@@ -38,11 +38,11 @@ namespace VL.Qt.Tests
 
         private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
 
-        // Default bounds/fill: no element SETs, no element sink: no element BIND (only the handler commands remain).
+        // Default bounds/fill: no element SETs, no element feedback: no element BIND (only the handler commands remain).
         private static Rectangle R(Interaction? interaction, float radius = 0) => new() { Interaction = interaction, Radius = radius };
 
-        private static HoverInteraction H(ElementSink sink, Interaction? previous = null)
-            => new(previous, new SinkSlot(sink, 0));
+        private static HoverInteraction H(ElementFeedback feedback, Interaction? previous = null)
+            => new(previous, new FeedbackSlot(feedback, 0));
 
         private void Frame(Element? root)
         {
@@ -55,7 +55,7 @@ namespace VL.Qt.Tests
         [Test]
         public void NewChain_CreateSetReparentBind_AfterTheItem()
         {
-            var a = new ElementSink();
+            var a = new ElementFeedback();
             Frame(R(H(a)));
 
             Assert.That(Commands, Is.EqualTo(new[]
@@ -63,22 +63,22 @@ namespace VL.Qt.Tests
                 "CREATE 1 Rectangle", "REPARENT 1 0 0",
                 $"CREATE 2 {hover}", "REPARENT 2 1 0", "BIND 2 1 0",
             }));
-            Assert.That(_rec.Bindings[2], Is.EqualTo(new SinkSlot(a, 0)));
-            Assert.That(_rec.Sinks.Count, Is.EqualTo(1));
-            Assert.That(_scene.HandlerOwnerOf(new SinkSlot(a, 0)), Is.Not.Null);
+            Assert.That(_rec.Bindings[2], Is.EqualTo(new FeedbackSlot(a, 0)));
+            Assert.That(_rec.FeedbackRouter.Count, Is.EqualTo(1));
+            Assert.That(_scene.HandlerOwnerOf(new FeedbackSlot(a, 0)), Is.Not.Null);
         }
 
         [Test]
         public void DefaultProperties_NotSent()
         {
-            Frame(R(H(new ElementSink())));
+            Frame(R(H(new ElementFeedback())));
             Assert.That(_sink.OfOp("SET"), Is.Empty, "Hover has no properties (no position since #320)");
         }
 
         [Test]
         public void UnchangedFrame_NoOps_AlsoWhenOnlyTheElementChanges()
         {
-            var chain = H(new ElementSink());
+            var chain = H(new ElementFeedback());
             var root = R(chain);
             Frame(root);
             Frame(root);
@@ -91,8 +91,8 @@ namespace VL.Qt.Tests
         [Test]
         public void AddLink_CreatesOnlyTheNewHandler()
         {
-            var a = new ElementSink();
-            var b = new ElementSink();
+            var a = new ElementFeedback();
+            var b = new ElementFeedback();
             var first = H(a);
             Frame(R(first));
 
@@ -104,8 +104,8 @@ namespace VL.Qt.Tests
         [Test]
         public void RemoveLink_DestroysHandler_FreesIdAndHandle_ResetsHover()
         {
-            var a = new ElementSink();
-            var b = new ElementSink();
+            var a = new ElementFeedback();
+            var b = new ElementFeedback();
             var first = H(a);
             Frame(R(H(b, first)));
             Assert.That(_ids.Count, Is.EqualTo(3));
@@ -114,10 +114,10 @@ namespace VL.Qt.Tests
             Frame(R(first));
             Assert.That(Commands, Is.EqualTo(new[] { "DESTROY 3" }));
             Assert.That(_ids.Count, Is.EqualTo(2));
-            Assert.That(_rec.Sinks.Count, Is.EqualTo(1));
+            Assert.That(_rec.FeedbackRouter.Count, Is.EqualTo(1));
             Assert.That(_rec.Bindings.ContainsKey(3), Is.False);
             Assert.That(b.IsHovered(), Is.False, "released handle resets the slot");
-            Assert.That(_scene.HandlerOwnerOf(new SinkSlot(b, 0)), Is.Null);
+            Assert.That(_scene.HandlerOwnerOf(new FeedbackSlot(b, 0)), Is.Null);
 
             Frame(R(null));
             Assert.That(Commands, Is.EqualTo(new[] { "DESTROY 2" }));
@@ -127,8 +127,8 @@ namespace VL.Qt.Tests
         [Test]
         public void ChainOrder_DoesNotMatter()
         {
-            var a = new ElementSink();
-            var b = new ElementSink();
+            var a = new ElementFeedback();
+            var b = new ElementFeedback();
             Frame(R(H(b, H(a))));
             Frame(R(H(a, H(b))));
             Assert.That(Commands, Is.Empty);
@@ -137,7 +137,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Duplicate_AtTwoElements()
         {
-            var a = new ElementSink();
+            var a = new ElementFeedback();
             var chain = H(a);
             Frame(G(R(chain), R(chain, radius: 0.1f)));
 
@@ -145,7 +145,7 @@ namespace VL.Qt.Tests
             Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Item", "CREATE 2 Rectangle", $"CREATE 3 {hover}", "CREATE 4 Rectangle" }));
             Assert.That(Commands, Does.Contain("REPARENT 3 2 0"));
             Assert.That(a.Warning, Is.EqualTo(SceneRegistry.InteractionDuplicateWarning));
-            Assert.That(_rec.Sinks.Count, Is.EqualTo(1));
+            Assert.That(_rec.FeedbackRouter.Count, Is.EqualTo(1));
 
             // The first element lets go: the second takes over one update later (reconciler invalidated).
             var second = R(chain, radius: 0.1f);
@@ -162,8 +162,8 @@ namespace VL.Qt.Tests
         [Test]
         public void Duplicate_InOneChain_OneHandler()
         {
-            var a = new ElementSink();
-            var slot = new SinkSlot(a, 0);
+            var a = new ElementFeedback();
+            var slot = new FeedbackSlot(a, 0);
             var chain = new HoverInteraction(new HoverInteraction(null, slot), slot);
             Frame(R(chain));
             Assert.That(_sink.OfOp("CREATE").Count(), Is.EqualTo(2), "item + one handler");
@@ -179,7 +179,7 @@ namespace VL.Qt.Tests
         {
             var otherSink = new RecordingSink();
             var other = new Reconciler(otherSink, new IdAllocator(), _scene);
-            var a = new ElementSink();
+            var a = new ElementFeedback();
             var chain = H(a);
             Frame(R(chain));
             other.Update(R(chain, radius: 0.1f), Space.DIPTopLeft);
@@ -196,7 +196,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ElementDestroy_FreesHandlerIds_NoHandlerDestroy()
         {
-            var a = new ElementSink();
+            var a = new ElementFeedback();
             Frame(G(R(H(a)), R(null)));
             Assert.That(_ids.Count, Is.EqualTo(4));
             a[0].IsHovered = true;
@@ -208,7 +208,7 @@ namespace VL.Qt.Tests
             Frame(null);
             Assert.That(Commands, Is.EqualTo(new[] { "DESTROY 1" }));
             Assert.That(_ids.Count, Is.Zero);
-            Assert.That(_rec.Sinks.Count, Is.Zero);
+            Assert.That(_rec.FeedbackRouter.Count, Is.Zero);
             Assert.That(_scene.HandlerCount, Is.Zero);
             Assert.That(a.IsHovered(), Is.False);
         }
@@ -216,38 +216,38 @@ namespace VL.Qt.Tests
         [Test]
         public void ElementDestroy_WithHandler_OnlyItemDestroyed()
         {
-            var a = new ElementSink();
+            var a = new ElementFeedback();
             Frame(G(R(null), R(H(a))));
             Assert.That(_ids.Count, Is.EqualTo(4));
 
             Frame(G(R(null)));
             Assert.That(Commands, Is.EqualTo(new[] { "DESTROY 3" }), "QtNative removes the handler with its item");
             Assert.That(_ids.Count, Is.EqualTo(2));
-            Assert.That(_rec.Sinks.Count, Is.Zero);
+            Assert.That(_rec.FeedbackRouter.Count, Is.Zero);
             Assert.That(_scene.HandlerCount, Is.Zero);
         }
 
         [Test]
         public void Resync_ReplaysHandlers()
         {
-            var a = new ElementSink();
+            var a = new ElementFeedback();
             var root = R(H(a));
             Frame(root);
             var first = Commands;
 
             _rec.Discard();
             Assert.That(_scene.HandlerCount, Is.Zero);
-            Assert.That(_rec.Sinks.Count, Is.Zero);
+            Assert.That(_rec.FeedbackRouter.Count, Is.Zero);
             Frame(root);
-            Assert.That(Commands.Select(c => c.Replace("BIND 2 2 0", "BIND 2 1 0")), Is.EqualTo(first), "same commands, new sink handle");
+            Assert.That(Commands.Select(c => c.Replace("BIND 2 2 0", "BIND 2 1 0")), Is.EqualTo(first), "same commands, new feedback handle");
         }
 
         [Test]
         public void HandlerTypeChange_DestroyAndCreate()
         {
-            var a = new ElementSink();
+            var a = new ElementFeedback();
             Frame(R(H(a)));
-            Frame(R(new FakeInteraction(null, new SinkSlot(a, 0))));
+            Frame(R(new FakeInteraction(null, new FeedbackSlot(a, 0))));
             var c = Commands;
             Assert.That(c.Length, Is.EqualTo(4), string.Join(" | ", c));
             Assert.That(c[0], Is.EqualTo("DESTROY 2"));
@@ -312,7 +312,7 @@ namespace VL.Qt.Tests
             }
         }
 
-        private sealed class FakeInteraction(Interaction? previous, SinkSlot sink) : Interaction(99, previous, sink)
+        private sealed class FakeInteraction(Interaction? previous, FeedbackSlot feedback) : Interaction(99, previous, feedback)
         {
             internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping) { }
         }
@@ -336,7 +336,7 @@ namespace VL.Qt.Tests
             }
 
             Run();
-            Assert.That(rec.Sinks.Count, Is.EqualTo(2), "element and handler bound");
+            Assert.That(rec.FeedbackRouter.Count, Is.EqualTo(2), "element and handler bound");
             for (int i = 0; i < 100; i++) Run();
             long allocated = Allocations.Fewest(Run);
             Assert.That(allocated, Is.EqualTo(0), "Hover + Rectangle + reconciler unchanged must not allocate");
@@ -355,7 +355,7 @@ namespace VL.Qt.Tests
             var a = node.Update(null, null);
             Assert.That(node.Update(null, null), Is.SameAs(a), "unchanged -> same instance");
             Assert.That(a, Is.InstanceOf<HoverInteraction>());
-            Assert.That(a.Sink, Is.EqualTo(node.Core.Slot));
+            Assert.That(a.Feedback, Is.EqualTo(node.Core.Slot));
             Assert.That(node.Update(null, Channel.Create(false)), Is.SameAs(a), "a channel does not change the handler");
 
             var previous = new HoverNode(_ => new Removal()).Update(null, null);
@@ -377,7 +377,7 @@ namespace VL.Qt.Tests
             node.Update(null, hovered);
             Assert.That(writes, Is.Zero, "unchanged -> no write");
 
-            var s = node.Core.Sink[0];
+            var s = node.Core.Feedback[0];
             s.IsHovered = true;
             node.Update(null, hovered);
             Assert.That(hovered.Value, Is.True);
@@ -422,35 +422,35 @@ namespace VL.Qt.Tests
         private const string acceptedButtons = nameof(Protocol.Prop.AcceptedButtons); // 769
         private const string acceptedDevices = nameof(Protocol.Prop.AcceptedDevices); // 770
 
-        private static ClickInteraction C(ElementSink sink, Interaction? previous = null, PointerButtons buttons = PointerButtons.Left, PointerDevices devices = PointerDevices.All)
-            => new(previous, new SinkSlot(sink, 0), buttons, devices);
+        private static ClickInteraction C(ElementFeedback feedback, Interaction? previous = null, PointerButtons buttons = PointerButtons.Left, PointerDevices devices = PointerDevices.All)
+            => new(previous, new FeedbackSlot(feedback, 0), buttons, devices);
 
         [Test]
         public void ClickPointWheel_DefaultProperties_NotSent()
         {
-            var a = new ElementSink();
-            Frame(R(new WheelInteraction(new PointInteraction(C(a), new SinkSlot(a, 0), PointerButtons.Left, PointerDevices.All),
-                new SinkSlot(new ElementSink(), 0), PointerDevices.All)));
+            var a = new ElementFeedback();
+            Frame(R(new WheelInteraction(new PointInteraction(C(a), new FeedbackSlot(a, 0), PointerButtons.Left, PointerDevices.All),
+                new FeedbackSlot(new ElementFeedback(), 0), PointerDevices.All)));
             Assert.That(_sink.OfOp("SET"), Is.Empty, "Left / All = QtNative defaults");
         }
 
         [Test]
         public void Chain_HoverClickPoint_ThreeHandlers()
         {
-            var h = new ElementSink();
-            var c = new ElementSink();
-            var p = new ElementSink();
-            var chain = new PointInteraction(C(c, H(h)), new SinkSlot(p, 0), PointerButtons.Left, PointerDevices.All);
+            var h = new ElementFeedback();
+            var c = new ElementFeedback();
+            var p = new ElementFeedback();
+            var chain = new PointInteraction(C(c, H(h)), new FeedbackSlot(p, 0), PointerButtons.Left, PointerDevices.All);
             Frame(R(chain));
             Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Rectangle", $"CREATE 2 {hover}", $"CREATE 3 {tap}", $"CREATE 4 {point}" }));
             Assert.That(_sink.OfOp("BIND").Count(), Is.EqualTo(3));
-            Assert.That(_rec.Sinks.Count, Is.EqualTo(3));
+            Assert.That(_rec.FeedbackRouter.Count, Is.EqualTo(3));
         }
 
         [Test]
         public void ClickProperties_OnlySetWhenDifferent()
         {
-            var a = new ElementSink();
+            var a = new ElementFeedback();
             Frame(R(C(a, buttons: PointerButtons.Right | PointerButtons.Middle, devices: PointerDevices.TouchScreen)));
             Assert.That(_sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 2 {acceptedButtons} i32(6)", $"SET 2 {acceptedDevices} i32(2)" }));
 
@@ -464,8 +464,8 @@ namespace VL.Qt.Tests
         [Test]
         public void WheelProperties_DevicesOnly()
         {
-            var a = new ElementSink();
-            Frame(R(new WheelInteraction(null, new SinkSlot(a, 0), PointerDevices.Mouse)));
+            var a = new ElementFeedback();
+            Frame(R(new WheelInteraction(null, new FeedbackSlot(a, 0), PointerDevices.Mouse)));
             Assert.That(_sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 2 {acceptedDevices} i32(1)" }));
         }
 
@@ -503,7 +503,7 @@ namespace VL.Qt.Tests
             Update();
             Assert.That(clicks + longs + taps + presses, Is.Zero, "nothing happened -> nothing written");
 
-            var s = node.Core.Sink[0];
+            var s = node.Core.Feedback[0];
             s.IsPressed = true;
             s.PendingClicks = 2;
             s.PendingLongPresses = 1;
@@ -523,7 +523,7 @@ namespace VL.Qt.Tests
         public void ClickNode_Unconnected_DropsEvents_NoBacklog()
         {
             using var node = new ClickNode(_ => new Removal());
-            var s = node.Core.Sink[0];
+            var s = node.Core.Feedback[0];
             s.PendingClicks = 5;
             s.PendingLongPresses = 3;
             node.Update(null, null, null, null, null, PointerButtons.Left, PointerDevices.All);
@@ -555,7 +555,7 @@ namespace VL.Qt.Tests
             node.Update(null, active, position, PointerButtons.Left, PointerDevices.All);
             Assert.That(writes, Is.Zero);
 
-            var s = node.Core.Sink[0];
+            var s = node.Core.Feedback[0];
             s.IsActive = true;
             s.PointerPosition = new Vector2(0.25f, 0.5f);
             node.Update(null, active, position, PointerButtons.Left, PointerDevices.All);
@@ -586,7 +586,7 @@ namespace VL.Qt.Tests
             var values = new List<Vector2>();
             using var sub = delta.Subscribe(values.Add);
             values.Clear();
-            var s = node.Core.Sink[0];
+            var s = node.Core.Feedback[0];
 
             node.Update(null, delta, null, PointerDevices.All);
             Assert.That(values, Is.Empty, "no motion at rest: nothing written");
@@ -607,9 +607,9 @@ namespace VL.Qt.Tests
         public void WheelNode_Unconnected_DropsMotion()
         {
             using var node = new WheelNode(_ => new Removal());
-            node.Core.Sink[0].PendingWheel = new Vector2(1, 1);
+            node.Core.Feedback[0].PendingWheel = new Vector2(1, 1);
             node.Update(null, null, null, PointerDevices.All);
-            Assert.That(node.Core.Sink[0].PendingWheel, Is.EqualTo(Vector2.Zero));
+            Assert.That(node.Core.Feedback[0].PendingWheel, Is.EqualTo(Vector2.Zero));
         }
 
         [Test]
@@ -620,7 +620,7 @@ namespace VL.Qt.Tests
             int writes = 0;
             using var sub = value.Subscribe(_ => writes++);
             writes = 0;
-            var s = node.Core.Sink[0];
+            var s = node.Core.Feedback[0];
 
             node.Update(null, null, value, PointerDevices.All);
             Assert.That(writes, Is.Zero, "no motion: nothing written");
@@ -651,11 +651,11 @@ namespace VL.Qt.Tests
             using var sub = tapCount.Subscribe(values.Add);
             values.Clear();
             void Update() => node.Update(null, null, null, tapCount, null, PointerButtons.Left, PointerDevices.All);
-            var s = node.Core.Sink[0];
+            var s = node.Core.Feedback[0];
 
             s.TapCount = 2;
             Update();
-            s.TapCount = 0; // released handle / new handler (SinkRegistry resets the slot)
+            s.TapCount = 0; // released handle / new handler (FeedbackRouter resets the slot)
             Update();
             Update();
             Assert.That(tapCount.Value, Is.EqualTo(2), "0 is not written: the count of the last click stays");
@@ -674,12 +674,12 @@ namespace VL.Qt.Tests
         [Test]
         public void TouchPointsProperties_DefaultsNotSent_OnlyChangesSet()
         {
-            var a = new ElementSink();
-            Frame(R(new TouchPointsInteraction(null, new SinkSlot(a, 0), true, PointerMasks.DefaultDevices)));
+            var a = new ElementFeedback();
+            Frame(R(new TouchPointsInteraction(null, new FeedbackSlot(a, 0), true, PointerMasks.DefaultDevices)));
             Assert.That(Commands.Where(c => c.StartsWith("CREATE")), Is.EqualTo(new[] { "CREATE 1 Rectangle", $"CREATE 2 TouchPointsHandler" }));
             Assert.That(_sink.OfOp("SET"), Is.Empty, "occlusion on / All = QtNative defaults");
 
-            var chain = new TouchPointsInteraction(null, new SinkSlot(a, 0), false, TouchPointsNode_DefaultDevices);
+            var chain = new TouchPointsInteraction(null, new FeedbackSlot(a, 0), false, TouchPointsNode_DefaultDevices);
             Frame(R(chain));
             Assert.That(Commands, Is.EqualTo(new[]
             {
@@ -693,12 +693,12 @@ namespace VL.Qt.Tests
         [Test]
         public void PinchProperties_DefaultsNotSent_OnlyChangesSet()
         {
-            var a = new ElementSink();
-            Frame(R(new PinchInteraction(null, new SinkSlot(a, 0), 2, 2, PointerDevices.All)));
+            var a = new ElementFeedback();
+            Frame(R(new PinchInteraction(null, new FeedbackSlot(a, 0), 2, 2, PointerDevices.All)));
             Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Rectangle", $"CREATE 2 PinchHandler" }));
             Assert.That(_sink.OfOp("SET"), Is.Empty);
 
-            Frame(R(new PinchInteraction(null, new SinkSlot(a, 0), 3, 4, PointerDevices.TouchScreen)));
+            Frame(R(new PinchInteraction(null, new FeedbackSlot(a, 0), 3, 4, PointerDevices.TouchScreen)));
             Assert.That(Commands, Is.EqualTo(new[]
             {
                 $"SET 2 MinimumPointCount i32(3)",
@@ -729,9 +729,9 @@ namespace VL.Qt.Tests
             Update();
             Assert.That(writes, Is.Empty, "no event yet: nothing written");
 
-            var reg = new SinkRegistry();
+            var reg = new FeedbackRouter();
             uint h = reg.Acquire(node.Core.Slot);
-            reg.Dispatch(new SinkRegistryTests.Poll().TouchPoints(h, (1, 50, 0, 0.5f, 0, 0), (2, 100, 0, 0.5f, 0, 0)).Bytes);
+            reg.Dispatch(new FeedbackRouterTests.Poll().TouchPoints(h, (1, 50, 0, 0.5f, 0, 0), (2, 100, 0, 0.5f, 0, 0)).Bytes);
             Update();
             Assert.That(writes, Has.Count.EqualTo(1));
             Assert.That(points.Value!.Select(p => p.Id), Is.EqualTo(new[] { 1, 2 }));
@@ -741,7 +741,7 @@ namespace VL.Qt.Tests
             for (int i = 0; i < 3; i++) Update();
             Assert.That(writes, Has.Count.EqualTo(1), "unchanged: no write");
 
-            reg.Dispatch(new SinkRegistryTests.Poll().TouchPoints(h).Bytes);
+            reg.Dispatch(new FeedbackRouterTests.Poll().TouchPoints(h).Bytes);
             Update();
             Assert.That(writes, Has.Count.EqualTo(2));
             Assert.That(points.Value, Is.Empty);
@@ -752,9 +752,9 @@ namespace VL.Qt.Tests
         {
             using var node = new TouchPointsNode(_ => new Removal());
             var points = Channel.Create(Spread<Elements.TouchPoint>.Empty);
-            var reg = new SinkRegistry();
+            var reg = new FeedbackRouter();
             uint h = reg.Acquire(node.Core.Slot);
-            reg.Dispatch(new SinkRegistryTests.Poll().TouchPoints(h, (1, 50, 0, 0.5f, 0, 0)).Bytes);
+            reg.Dispatch(new FeedbackRouterTests.Poll().TouchPoints(h, (1, 50, 0, 0.5f, 0, 0)).Bytes);
             for (int i = 0; i < 100; i++) node.Update(null, points, TouchPointsNode_DefaultDevices, true);
             Assert.That(Allocations.Fewest(() => node.Update(null, points, TouchPointsNode_DefaultDevices, true)), Is.EqualTo(0));
         }
@@ -778,9 +778,9 @@ namespace VL.Qt.Tests
             Assert.That(scale.Value, Is.EqualTo(3f));
             scales.Clear();
 
-            var reg = new SinkRegistry();
+            var reg = new FeedbackRouter();
             uint h = reg.Acquire(node.Core.Slot);
-            reg.Dispatch(new SinkRegistryTests.Poll().Active(h, true).Pinch(h, 2f, 180, 10, 20, 300, 150).Bytes);
+            reg.Dispatch(new FeedbackRouterTests.Poll().Active(h, true).Pinch(h, 2f, 180, 10, 20, 300, 150).Bytes);
             Update();
             Assert.That(active.Value, Is.True);
             Assert.That(scale.Value, Is.EqualTo(2f));
@@ -792,7 +792,7 @@ namespace VL.Qt.Tests
             for (int i = 0; i < 3; i++) Update();
             Assert.That(scales, Has.Count.EqualTo(1), "only on change");
 
-            reg.Dispatch(new SinkRegistryTests.Poll().Active(h, false).Bytes);
+            reg.Dispatch(new FeedbackRouterTests.Poll().Active(h, false).Bytes);
             Update();
             Assert.That(active.Value, Is.False);
             Assert.That(scale.Value, Is.EqualTo(2f), "keeps the last value");
@@ -825,16 +825,16 @@ namespace VL.Qt.Tests
 
         private const string drag = nameof(Protocol.Type.DragHandler); // 38
 
-        private static DragInteraction D(ElementSink sink, bool moves = true, DragAxis axis = DragAxis.Both, DragLimits? limits = null,
+        private static DragInteraction D(ElementFeedback feedback, bool moves = true, DragAxis axis = DragAxis.Both, DragLimits? limits = null,
             PointerButtons buttons = PointerButtons.Left, PointerDevices devices = PointerDevices.All)
-            => new(null, new SinkSlot(sink, 0), moves, axis, limits ?? DragLimits.None, buttons, devices);
+            => new(null, new FeedbackSlot(feedback, 0), moves, axis, limits ?? DragLimits.None, buttons, devices);
 
         private static Rectangle RB(Interaction? interaction, Matrix transform) => new() { Interaction = interaction, Transform = transform };
 
         [Test]
         public void DragProperties_DefaultsNotSent_OnlyChangesSet()
         {
-            var a = new ElementSink();
+            var a = new ElementFeedback();
             Frame(R(D(a)));
             Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Rectangle", $"CREATE 2 {drag}" }));
             Assert.That(_sink.OfOp("SET"), Is.Empty, "moves on / both axes / no limits / Left / All = QtNative defaults");
@@ -903,23 +903,23 @@ namespace VL.Qt.Tests
             Update();
             Assert.That(deltas, Is.Empty, "no drag yet: nothing written");
 
-            var reg = new SinkRegistry();
+            var reg = new FeedbackRouter();
             uint h = reg.Acquire(node.Core.Slot);
-            reg.Dispatch(new SinkRegistryTests.Poll().Active(h, true).Drag(h, 50, 0).Bytes);
+            reg.Dispatch(new FeedbackRouterTests.Poll().Active(h, true).Drag(h, 50, 0).Bytes);
             Update();
             Assert.That(dragging.Value, Is.True);
             Assert.That(dragging.LatestAuthor, Is.EqualTo("Qt"));
             Assert.That(delta.Value, Is.EqualTo(new Vector2(0.5f, 0)), "pixels -> units");
             Assert.That(delta.LatestAuthor, Is.EqualTo("Qt"));
 
-            reg.Dispatch(new SinkRegistryTests.Poll().Active(h, false).Bytes);
+            reg.Dispatch(new FeedbackRouterTests.Poll().Active(h, false).Bytes);
             Update();
             Update();
             Assert.That(dragging.Value, Is.False);
             Assert.That(delta.Value, Is.EqualTo(new Vector2(0.5f, 0)), "keeps the last drag's value");
 
             // A new drag with the same movement is still reported (QtNative sends it once per drag).
-            reg.Dispatch(new SinkRegistryTests.Poll().Active(h, true).Drag(h, 50, 0).Bytes);
+            reg.Dispatch(new FeedbackRouterTests.Poll().Active(h, true).Drag(h, 50, 0).Bytes);
             Update();
             Assert.That(deltas, Is.EqualTo(new[] { new Vector2(0.5f, 0), new Vector2(0.5f, 0) }));
         }
@@ -928,7 +928,7 @@ namespace VL.Qt.Tests
         public void Drag_UnchangedTransformPin_SendsNoTransform_ChangedSends()
         {
             // QtNative resets the drag offset on every SET TRANSFORM: only a changed Transform pin may send it.
-            var a = new ElementSink();
+            var a = new ElementFeedback();
             var chain = D(a);
             var transform = Matrix.Translation(0, 0, 0) * Matrix.Scaling(2);
             Frame(RB(chain, transform));
@@ -980,7 +980,7 @@ namespace VL.Qt.Tests
             }
 
             Run();
-            Assert.That(rec.Sinks.Count, Is.EqualTo(5), "element + four handlers bound");
+            Assert.That(rec.FeedbackRouter.Count, Is.EqualTo(5), "element + four handlers bound");
             for (int i = 0; i < 100; i++) Run();
             long allocated = Allocations.Fewest(Run);
             Assert.That(allocated, Is.EqualTo(0), "Click + Point + Wheel + Drag + Rectangle + reconciler unchanged must not allocate");

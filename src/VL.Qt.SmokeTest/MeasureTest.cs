@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using VL.Qt;
 
-// Back channel EV_MEASURED / EV_SCENE_BOUNDS (plan 06b). Values are DIP (logical pixels), the C# SinkRegistry
+// Back channel EV_MEASURED / EV_SCENE_BOUNDS (plan 06b). Values are DIP (logical pixels), the C# FeedbackRouter
 // converts them to units. Bound items report on the first poll after BIND, afterwards only on change.
 [TestFixture, NonParallelizable]
 public static class MeasureTest

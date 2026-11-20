@@ -110,7 +110,7 @@ public static class StylableTest
         var leftWidget = new PatchedWidget();
         var rightWidget = new PatchedWidget();
         var thrower = new Thrower();
-        var leftSink = new ElementSink();
+        var leftFeedback = new ElementFeedback();
 
         ImmutableArray<Element> Kids(IStylable widget, bool withThrower) => ImmutableArray.Create<Element>(
             new StylableElement(widget),
@@ -123,7 +123,7 @@ public static class StylableTest
         Element Root(Style groupStyle) => new Group
         { Anchor = RectangleAnchor.TopLeft,
             Children = ImmutableArray.Create<Element>(
-                new Group { Size = new Vector2(0, 0), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0), Style = groupStyle, Sink = new SinkSlot(leftSink, 0), Children = leftKids },
+                new Group { Size = new Vector2(0, 0), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0), Style = groupStyle, Feedback = new FeedbackSlot(leftFeedback, 0), Children = leftKids },
                 new Group { Size = new Vector2(0, 0), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(4.0f, 0, 0), Children = rightKids }),
         };
 
@@ -157,7 +157,7 @@ public static class StylableTest
         }
 
         Frame(Root(GroupStyle(frame1, border1, text1, 14)), "initial", clear: true);
-        s.Check(!string.IsNullOrEmpty(leftSink[0].BuildError) && leftSink[0].BuildError!.Contains("boom"), $"throwing IStylable: error at the group sink ({leftSink[0].BuildError})");
+        s.Check(!string.IsNullOrEmpty(leftFeedback[0].BuildError) && leftFeedback[0].BuildError!.Contains("boom"), $"throwing IStylable: error at the group feedback ({leftFeedback[0].BuildError})");
         using (var a = s.Grab(w, "stylable.png"))
             Probes(a, frame1, border1, text1, "initial");
 

@@ -33,7 +33,7 @@ namespace VL.Qt.Nodes
         internal RowNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Row, Props>(addWarning, Create);
 
-        private static readonly Func<CommonInputs, Props, SinkSlot, Row> Create = static (c, p, slot) => new Row
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Row> Create = static (c, p, slot) => new Row
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -43,7 +43,7 @@ namespace VL.Qt.Nodes
                 Debug = c.Debug,
                 Interaction = c.Interaction,
                 Effect = c.Effect,
-                Sink = slot,
+                Feedback = slot,
                 Children = p.Children,
                 Spacing = p.Spacing,
                 Padding = p.Padding,

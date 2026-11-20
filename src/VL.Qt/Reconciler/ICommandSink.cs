@@ -14,8 +14,8 @@ namespace VL.Qt
         void Destroy(uint id);
         void Reparent(uint id, uint parent, uint index);
 
-        /// <summary>BIND: sinkHandle 0 = unbind; flags = <see cref="Protocol.Bind"/> bit mask.</summary>
-        void Bind(uint id, uint sinkHandle, ushort flags);
+        /// <summary>BIND: feedbackId 0 = unbind; flags = <see cref="Protocol.Bind"/> bit mask.</summary>
+        void Bind(uint id, uint feedbackId, ushort flags);
 
         void SetF32(uint id, ushort prop, float value);
         void SetI32(uint id, ushort prop, int value);

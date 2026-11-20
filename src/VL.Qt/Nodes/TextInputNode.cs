@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
         internal TextInputNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<TextField, Props>(addWarning, Create);
 
-        private static readonly Func<CommonInputs, Props, SinkSlot, TextField> Create = static (c, p, slot) => new TextField
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, TextField> Create = static (c, p, slot) => new TextField
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -43,7 +43,7 @@ namespace VL.Qt.Nodes
                 Interaction = c.Interaction,
                 Effect = c.Effect,
                 Style = p.Style,
-                Sink = slot,
+                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Value = p.Value,
                 Placeholder = p.Placeholder,
@@ -93,7 +93,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            value = _value.Update(channel, _node.Sink) ?? string.Empty;
+            value = _value.Update(channel, _node.Feedback) ?? string.Empty;
             bang = _value.Bang;
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),

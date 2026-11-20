@@ -31,7 +31,7 @@ namespace VL.Qt.Nodes
         internal ButtonNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Button, Props>(addWarning, Create);
 
-        private static readonly Func<CommonInputs, Props, SinkSlot, Button> Create = static (c, p, slot) => new Button
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Button> Create = static (c, p, slot) => new Button
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -42,7 +42,7 @@ namespace VL.Qt.Nodes
                 Interaction = c.Interaction,
                 Effect = c.Effect,
                 Style = p.Style,
-                Sink = slot,
+                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Text = p.Text,
                 Enabled = p.Enabled,

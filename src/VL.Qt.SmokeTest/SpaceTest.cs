@@ -57,8 +57,8 @@ public static class SpaceTest
         using var point = new PointNode(_ => new NoMessage());
         var active = Channel.Create(false);
         var position = Channel.Create(Vector2.Zero);
-        var redSink = new ElementSink();
-        var blueSink = new ElementSink();
+        var redFeedback = new ElementFeedback();
+        var blueFeedback = new ElementFeedback();
         Interaction? interaction = null;
         Element? root = null;
         var space = Space.DIPTopLeft;
@@ -74,8 +74,8 @@ public static class SpaceTest
                 {
                     Children =
                     [
-                        new QtRect { Size = new Vector2(1, 1), Fill = new Color4(1, 0, 0, 1), Sink = new SinkSlot(redSink, 0), Interaction = i },
-                        new QtRect { Size = new Vector2(0.5f, 0.5f), Transform = Matrix.Translation(1, 0, 0), Fill = new Color4(0, 0, 1, 1), Sink = new SinkSlot(blueSink, 0) },
+                        new QtRect { Size = new Vector2(1, 1), Fill = new Color4(1, 0, 0, 1), Feedback = new FeedbackSlot(redFeedback, 0), Interaction = i },
+                        new QtRect { Size = new Vector2(0.5f, 0.5f), Transform = Matrix.Translation(1, 0, 0), Fill = new Color4(0, 0, 1, 1), Feedback = new FeedbackSlot(blueFeedback, 0) },
                     ],
                 };
             }
@@ -144,8 +144,8 @@ public static class SpaceTest
             }
 
             // Scene Bounds in units, independent of the space.
-            var rb = redSink.SceneBounds();
-            var bb = blueSink.SceneBounds();
+            var rb = redFeedback.SceneBounds();
+            var bb = blueFeedback.SceneBounds();
             bool Close(RectangleF q, float x, float y, float qw, float qh)
                 => Math.Abs(q.X - x) < Eps && Math.Abs(q.Y - y) < Eps && Math.Abs(q.Width - qw) < Eps && Math.Abs(q.Height - qh) < Eps;
             s.Check(Close(rb, 0, 0, 1, 1) && Close(bb, 1, 0, 0.5f, 0.5f), $"{tag}: Scene Bounds in units (red {rb}, blue {bb})");

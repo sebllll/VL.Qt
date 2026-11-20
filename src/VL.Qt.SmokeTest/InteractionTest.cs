@@ -11,7 +11,7 @@ using VL.Qt.Nodes;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 // Node level interaction: Hover -> element Interaction pin -> Reconciler (handler
-// objects) -> QtNative -> SinkRegistry -> channels. The raw QtNative side of the input handlers is HandlerTest (the #208 bind
+// objects) -> QtNative -> FeedbackRouter -> channels. The raw QtNative side of the input handlers is HandlerTest (the #208 bind
 // flags Interactive / Pointer are gone since #320). Mouse input comes from the TEST export vlqt_test_send_mouse; real
 // (OS) pointer input is ignored by the test windows (VLQT_TEST_SYNTHETIC_INPUT=1, set by QtHost).
 [TestFixture, NonParallelizable]
@@ -54,7 +54,7 @@ public static partial class InteractionTest
     private sealed class NoMessage : IDisposable { public void Dispose() { } }
 
     // scenario "interaction-chain": node level Hover -> Rectangle (Interaction pin) ->
-    // Reconciler (handler objects) -> QtNative -> SinkRegistry.Dispatch -> pull in Hover.Update -> channels.
+    // Reconciler (handler objects) -> QtNative -> FeedbackRouter.Dispatch -> pull in Hover.Update -> channels.
     private static void RunChain(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt interaction chain test");
@@ -89,7 +89,7 @@ public static partial class InteractionTest
             s.Pump(1);
             int n = Native.Poll(w, buf);
             s.Check(n >= 0, $"chain: poll ({n})");
-            var res = rec.Sinks.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
+            var res = rec.FeedbackRouter.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
             s.Check(res.Error is null, $"chain: dispatch ({res.Error})");
         }
         void Frames(int count) { for (int i = 0; i < count; i++) Frame(); }
@@ -127,7 +127,7 @@ public static partial class InteractionTest
         Frames(2);
         s.Check(Handlers() == 0, $"chain: Interaction removed -> no handlers ({Handlers()})");
         s.Check(!hovered.Value && !hovered2.Value, "chain: removed while hovered -> Is Hovered false");
-        s.Check(rec.Sinks.Count == 1, $"chain: only the element handle left ({rec.Sinks.Count})");
+        s.Check(rec.FeedbackRouter.Count == 1, $"chain: only the element handle left ({rec.FeedbackRouter.Count})");
 
         attach = true;
         Frame();
@@ -186,7 +186,7 @@ public static partial class InteractionTest
                 }
                 s.Pump(1);
                 int n = Native.Poll(w, buf);
-                var res = rec.Sinks.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
+                var res = rec.FeedbackRouter.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
                 s.Check(res.Error is null, $"elements {name}: dispatch ({res.Error})");
             }
 

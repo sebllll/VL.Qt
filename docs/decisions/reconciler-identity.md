@@ -23,15 +23,15 @@ How comparable systems handle identity:
   - Events are merged: a click on any occurrence counts, hover/pressed combine with OR.
   - Channels are unchanged; two views of one value are intended.
   - To tell which occurrence was clicked, put an interaction on the surrounding group per placement.
-  - Class instances with their own element node are unaffected; every instance has its own sink.
+  - Class instances with their own element node are unaffected; every instance has its own feedback.
   - Rationale: a rule that forbids multiple occurrences is surprising for users (a warning instead of drawing), and Skia layers behave the same way.
 - **The same rules hold across renderers** (#126). An element may hang in several renderers at once (a `Renderer [Qt]` window and a `QtTexture`, two textures at different sizes); every renderer builds its own Qt objects, no placeholder, no warning.
   - The primary occurrence is the first occurrence in traversal order of the owner renderer, the first renderer that showed the element (registration order). It alone reports state values; Snapshot and TooltipPreview locate it.
-  - Events of all occurrences in all renderers are merged into the sink, as inside one renderer.
+  - Events of all occurrences in all renderers are merged into the feedback, as inside one renderer.
   - When the primary lets go, the first remaining occurrence in the owner's tree takes over. When the owner has no occurrence left at the end of its update, the next renderer in registration order becomes the owner and picks its first occurrence as primary in its next update; in between there is no primary for one update (no new state values). Deciding at the end of the update keeps a move inside the owner's tree from handing the element to another renderer.
   - `Video` stays exclusive app-wide (one player): the first occurrence of the first renderer plays, every other occurrence is a placeholder with a warning until it becomes free.
   - Interaction handlers are not covered: an interaction node is active at one handler only, app-wide (see the open question below).
-- **Sink binding per frame** (see `events.md`): identity stays position plus type. The sink comes from the description every frame and is bound to the Qt object at that position. A key pin would only affect the identity of Qt objects, not the sink binding.
+- **Feedback binding per frame** (see `events.md`): identity stays position plus type. The feedback comes from the description every frame and is bound to the Qt object at that position. A key pin would only affect the identity of Qt objects, not the sink binding.
 
 ## Open questions
 - **Optional `Key` pin** (among siblings only). It would also remove the state jump (hover/pressed) when inserting or reordering. It becomes necessary with Qt-native animations/transitions or enter/exit effects.

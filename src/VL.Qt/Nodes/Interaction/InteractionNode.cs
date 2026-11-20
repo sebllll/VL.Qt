@@ -11,14 +11,14 @@ namespace VL.Qt.Nodes
     /// Shared core of all interaction nodes (Hover, Click, Point, Wheel, …), the counterpart of <see cref="ElementNode{TElement, TProps}"/>.
     /// Held as a field by the public <c>[ProcessNode]</c> class.
     /// <list type="bullet">
-    /// <item>one <see cref="ElementSink"/> per node instance (slot 0): key of the handler in the reconciler and
+    /// <item>one <see cref="ElementFeedback"/> per node instance (slot 0): key of the handler in the reconciler and
     /// receiver of its events;</item>
     /// <item>change detection: a new link only if the chain at Input (by reference) or the node specific
     /// <typeparamref name="TProps"/> changed, otherwise the last instance (reference equal → no QtNative ops);</item>
-    /// <item>the sink warning (interaction used more than once) as persistent node warning, the sink error (e.g. a
+    /// <item>the feedback warning (interaction used more than once) as persistent node warning, the feedback error (e.g. a
     /// handler property Qt rejected) as persistent node warning, logged (<see cref="NodeErrors"/>).</item>
     /// </list>
-    /// The public node pulls the sink state into its channels in its Update (<see cref="Write{T}"/>: only on change,
+    /// The public node pulls the feedback state into its channels in its Update (<see cref="Write{T}"/>: only on change,
     /// author <see cref="Author"/>). No static state. Main thread only.
     /// </summary>
     /// <typeparam name="TProps">Node specific inputs that go to QtNative; a readonly record struct (value equality, no allocation).</typeparam>
@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
 
         private readonly Func<string, IDisposable> _addWarning;
         private readonly NodeErrors? _errors;
-        private readonly Func<Interaction?, TProps, SinkSlot, Interaction> _create;
+        private readonly Func<Interaction?, TProps, FeedbackSlot, Interaction> _create;
         private Interaction? _last;
         private Interaction? _input;
         private TProps _props;
@@ -42,7 +42,7 @@ namespace VL.Qt.Nodes
 
         /// <param name="nodeContext">Context of the public node (warning and error are shown there).</param>
         /// <param name="create">Builds a link; use a static lambda (no capture → no allocation).</param>
-        public InteractionNode(NodeContext nodeContext, Func<Interaction?, TProps, SinkSlot, Interaction> create)
+        public InteractionNode(NodeContext nodeContext, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
             : this(w => nodeContext.AddPersistentMessage(MessageSeverity.Warning, w), create)
         {
             _errors = new NodeErrors(nodeContext);
@@ -51,17 +51,17 @@ namespace VL.Qt.Nodes
         /// <param name="addWarning">Shows a warning, the result removes it (tests: no NodeContext/AppHost needed; the
         /// error is then only tracked in <see cref="Error"/>).</param>
         /// <param name="create">Builds a link; use a static lambda (no capture → no allocation).</param>
-        public InteractionNode(Func<string, IDisposable> addWarning, Func<Interaction?, TProps, SinkSlot, Interaction> create)
+        public InteractionNode(Func<string, IDisposable> addWarning, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
         {
             _addWarning = addWarning;
             _create = create;
         }
 
         /// <summary>Receives the events of the handler (slot 0).</summary>
-        public ElementSink Sink { get; } = new();
+        public ElementFeedback Feedback { get; } = new();
 
         /// <summary>Slot written into every link (one handler per node → index 0).</summary>
-        public SinkSlot Slot => new(Sink, 0);
+        public FeedbackSlot Slot => new(Feedback, 0);
 
         /// <summary>Warning currently shown at the node, null if none.</summary>
         public string? Warning => _warning;
@@ -74,7 +74,7 @@ namespace VL.Qt.Nodes
 
         /// <summary>
         /// Returns the link for the inputs: the last instance if nothing changed, else a new one. Also updates the node
-        /// warning and error from the sink. Call once per Update.
+        /// warning and error from the feedback. Call once per Update.
         /// </summary>
         public Interaction Describe(Interaction? input, in TProps props)
         {
@@ -106,7 +106,7 @@ namespace VL.Qt.Nodes
 
         /// <summary>
         /// Writes one <see cref="Unit"/> per event (click, long press) into <paramref name="channel"/> with author
-        /// <see cref="Author"/>. Without a channel the events are dropped (the caller took them from the sink).
+        /// <see cref="Author"/>. Without a channel the events are dropped (the caller took them from the feedback).
         /// </summary>
         public static void WriteEvents(IChannel<Unit>? channel, int count)
         {
@@ -118,7 +118,7 @@ namespace VL.Qt.Nodes
 
         private void UpdateWarning()
         {
-            var warning = Sink.Warning;
+            var warning = Feedback.Warning;
             if (ReferenceEquals(warning, _warning) || warning == _warning)
                 return;
             _warningMessage?.Dispose();
@@ -128,7 +128,7 @@ namespace VL.Qt.Nodes
 
         private void UpdateError()
         {
-            var error = Sink.Error;
+            var error = Feedback.Error;
             if (ReferenceEquals(error, _error) || error == _error)
                 return;
             _error = error;

@@ -217,7 +217,7 @@ If a diff shows whole files as changed, the cause is line endings or BOM: run `g
 
 ```
 src/VL.Qt/                  # C# library
-  Elements/                 # element types (Rectangle, Text, ..., SinkRegistry)
+  Elements/                 # element types (Rectangle, Text, ..., FeedbackRouter)
   Nodes/                    # vvvv node wrappers
   Reconciler/               # scene diffing and sync
   CommandWriter.cs          # binary command encoder

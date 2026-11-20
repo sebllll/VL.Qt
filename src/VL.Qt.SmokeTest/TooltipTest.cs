@@ -322,10 +322,10 @@ public static class TooltipTest
         }
 
         // 2d) Order of a patch: Snapshot and TooltipPreview run BEFORE the renderer of the same frame, and the Group is a new
-        // instance every frame (an animated input) with the sink slot of its node. The registry still holds last frame's instance;
+        // instance every frame (an animated input) with the feedback slot of its node. The registry still holds last frame's instance;
         // TryLocate falls back to the place of the slot, so both find the group and deliver an image.
         {
-            var slot = new SinkSlot(new ElementSink(), 0);
+            var slot = new FeedbackSlot(new ElementFeedback(), 0);
             var tip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_window_change_count(window),
                 static () => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
             var snap = new SnapshotNode(client, scene);
@@ -337,7 +337,7 @@ public static class TooltipTest
                 Anchor = RectangleAnchor.TopLeft,
                 Transform = Matrix.Translation(3, 2, 0),
                 Opacity = 0.9f + i % 10 * 0.01f,
-                Sink = slot,
+                Feedback = slot,
                 Children = [orange, tail],
             };
             current = new Group { Anchor = RectangleAnchor.TopLeft, Children = [Animated(0), small] };

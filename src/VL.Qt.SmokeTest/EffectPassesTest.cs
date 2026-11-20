@@ -31,7 +31,7 @@ public static class EffectPassesTest
     [Test, Category("effect-passes")]
     public static void EffectPasses() => Scenario.Run(Run);
 
-    private const uint R = 1, T = 2, S = 3, Map = 4, Bad = 5, SinkR = 41;
+    private const uint R = 1, T = 2, S = 3, Map = 4, Bad = 5, FeedbackIdR = 41;
     private const float RX = 250, RY = 60, RW = 300, RH = 150;
     private const float SX = 350, SY = 470, SW = 100, SH = 60;
     private const float L = 400; // directional blur length (DIP)
@@ -54,8 +54,8 @@ public static class EffectPassesTest
         return m.Success ? int.Parse(m.Groups[1].Value) : -1;
     }
 
-    // Last EV_ERROR text for sink in the poll buffer, null if none.
-    private static string? ErrorText(ReadOnlySpan<byte> b, uint sink)
+    // Last EV_ERROR text for feedbackId in the poll buffer, null if none.
+    private static string? ErrorText(ReadOnlySpan<byte> b, uint feedbackId)
     {
         string? text = null;
         int off = 0;
@@ -64,7 +64,7 @@ public static class EffectPassesTest
             var ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
             var len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
             if (len < 8 || off + 4 + len > b.Length) break;
-            if (ev == Protocol.Ev.Error && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)) == sink)
+            if (ev == Protocol.Ev.Error && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)) == feedbackId)
                 text = Encoding.UTF8.GetString(b.Slice(off + 12, len - 8));
             off += (4 + len + 3) & ~3;
         }
@@ -139,7 +139,7 @@ public static class EffectPassesTest
         {
             s.Pump(2);
             var n = Native.Poll(w, poll);
-            return ErrorText(poll.AsSpan(0, Math.Max(n, 0)), SinkR);
+            return ErrorText(poll.AsSpan(0, Math.Max(n, 0)), FeedbackIdR);
         }
         Bitmap Shot(string name) { s.Pump(5); return s.Grab(w, $"effect-passes_{name}.png"); }
 
@@ -194,7 +194,7 @@ public static class EffectPassesTest
         cmd.SetPlace(R, RX, RY, RW, RH);
         cmd.SetColor(R, Protocol.Prop.Color, 1, 1, 1, 1);
         cmd.Reparent(R, 0, 0);
-        cmd.Bind(R, SinkR, 0);
+        cmd.Bind(R, FeedbackIdR, 0);
         cmd.Create(T, Protocol.Type.Text);
         cmd.SetPlace(T, 300, 260, 200, 140);
         cmd.SetString(T, Protocol.Prop.Text, "MO");
@@ -374,7 +374,7 @@ public static class EffectPassesTest
     }
 
     // (f) PYRAMID links. G: orange box 160 x 100 at (320, 250) like GlowTest, the glow is measured right of it (y 300).
-    private const uint G = 1, SinkG = 42;
+    private const uint G = 1, FeedbackIdG = 42;
     private const float GX = 320, GY = 250, GW = 160, GH = 100;
 
     // Glow strength at (x, y): mean green above the background over 5 x 5 samples 1 DIP apart (like GlowTest).
@@ -427,7 +427,7 @@ public static class EffectPassesTest
         {
             s.Pump(2);
             var n = Native.Poll(w, poll);
-            return ErrorText(poll.AsSpan(0, Math.Max(n, 0)), SinkG);
+            return ErrorText(poll.AsSpan(0, Math.Max(n, 0)), FeedbackIdG);
         }
         Bitmap Shot(string name) { s.Pump(6); return s.Grab(w, $"effect-passes_{name}.png"); }
 
@@ -468,7 +468,7 @@ public static class EffectPassesTest
         cmd.SetPlace(G, GX, GY, GW, GH);
         cmd.SetColor(G, Protocol.Prop.Color, 1, 0.6f, 0, 1);
         cmd.Reparent(G, 0, 0);
-        cmd.Bind(G, SinkG, 0);
+        cmd.Bind(G, FeedbackIdG, 0);
         CheckApply("scene");
         s.Pump(4);
         var itemsPlain = Items(w);

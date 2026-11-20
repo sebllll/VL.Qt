@@ -30,7 +30,7 @@ public static partial class HandlerTest
         return list;
     }
 
-    /// <summary>The last EV_TOUCH_POINTS of the sink in the records; null if none.</summary>
+    /// <summary>The last EV_TOUCH_POINTS of the feedback in the records; null if none.</summary>
     private static TouchPoint[]? LastTouch(List<Rec> recs, uint h)
     {
         var r = recs.LastOrDefault(r => r.Event == Protocol.Ev.TouchPoints && r.Handle == h && r.Index == 0);
@@ -45,7 +45,7 @@ public static partial class HandlerTest
         ? $"[{string.Join(" ", pts.Select(p => $"{p.Id}:{p.X},{p.Y} p{p.Pressure} {p.W}x{p.H}"))}]" : "no TOUCH_POINTS";
 
     // Touch Points: all points of an item with ids and item-local positions, release one by one, parallel to
-    // Tap, occlusion by an element on top (on/off), accepted devices, sink change / DESTROY, property errors.
+    // Tap, occlusion by an element on top (on/off), accepted devices, feedback change / DESTROY, property errors.
     private static void RunTouchPoints(Scenario s)
     {
         using var h = new Harness("touch-points", s);
@@ -144,14 +144,14 @@ public static partial class HandlerTest
         h.Mouse(Protocol.Mouse.Release, 150, 150);
         h.Frame();
 
-        // Sink change while a finger lies: the old sink sees count 0, the new one gets the point.
+        // Feedback change while a finger lies: the old feedback sees count 0, the new one gets the point.
         h.Touch(Protocol.Touch.Press, 6, 150, 150);
         h.Frame();
         h.Cmd.Bind(TP, 44, 0);
         h.Apply("rebind");
         recs = h.Frame();
-        s.Check(HasPoints(recs, STP) && HasPoints(recs, 44, (6, 50, 50)), $"touch-points: sink change -> old count 0, new gets the point ({Dump(recs)})");
-        // DESTROY while a finger lies: count 0 to the sink.
+        s.Check(HasPoints(recs, STP) && HasPoints(recs, 44, (6, 50, 50)), $"touch-points: feedback change -> old count 0, new gets the point ({Dump(recs)})");
+        // DESTROY while a finger lies: count 0 to the feedback.
         h.Cmd.Destroy(TP);
         h.Apply("destroy");
         recs = h.Frame();
@@ -226,7 +226,7 @@ public static partial class HandlerTest
 
     // Pinch: spread / rotate / shift, values only while active, last value before ACTIVE 0 (never 1/0/0), the
     // item stays (target null), no tap from two fingers, Touch Points in parallel, a third finger pauses the gesture
-    // without a jump (down and up), MAXIMUM_POINT_COUNT, sink change, DESTROY, property errors.
+    // without a jump (down and up), MAXIMUM_POINT_COUNT, feedback change, DESTROY, property errors.
     private static void RunPinch(Scenario s)
     {
         using var h = new Harness("pinch", s);
@@ -360,7 +360,7 @@ public static partial class HandlerTest
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP, false), $"pinch: max 3 ends ({Dump(recs)})");
 
-        // Sink change during a pinch: old ACTIVE 0, new ACTIVE 1 + current value; DESTROY: ACTIVE 0.
+        // Feedback change during a pinch: old ACTIVE 0, new ACTIVE 1 + current value; DESTROY: ACTIVE 0.
         h.Touch(Protocol.Touch.Press, 1, 250, 300);
         h.Touch(Protocol.Touch.Press, 2, 350, 300);
         h.Frame();
@@ -369,7 +369,7 @@ public static partial class HandlerTest
         h.Apply("rebind");
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP, false) && HasFlag(recs, Protocol.Ev.Active, 44, true) && LastPinch(recs, 44) is not null,
-            $"pinch: sink change -> old ACTIVE 0, new ACTIVE 1 + PINCH ({Dump(recs)})");
+            $"pinch: feedback change -> old ACTIVE 0, new ACTIVE 1 + PINCH ({Dump(recs)})");
         h.Cmd.Destroy(PH);
         h.Apply("destroy");
         recs = h.Frame();

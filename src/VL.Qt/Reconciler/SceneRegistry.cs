@@ -11,10 +11,10 @@ namespace VL.Qt
     /// App-wide record of where each element instance is shown (docs/decisions/reconciler-identity.md).
     /// <para>
     /// An element may hang at several places, inside one renderer and in several renderers: every occurrence is a Qt
-    /// object of its own and binds the element's sink. The primary occurrence (<see cref="OwnerOf(Element)"/>) is the
+    /// object of its own and binds the element's feedback. The primary occurrence (<see cref="OwnerOf(Element)"/>) is the
     /// first occurrence in traversal order in the owner renderer, the first renderer that showed the element (registration
-    /// order): only it reports state values into the sink (<see cref="Elements.SinkRegistry"/>), Snapshot and
-    /// TooltipPreview locate it (<see cref="TryLocate"/>). Events of all occurrences in all renderers reach the sink. The
+    /// order): only it reports state values into the feedback (<see cref="Elements.FeedbackRouter"/>), Snapshot and
+    /// TooltipPreview locate it (<see cref="TryLocate"/>). Events of all occurrences in all renderers reach the feedback. The
     /// owner's reconciler keeps the primary up to date inside its tree (see <see cref="Reconciler"/>).
     /// </para>
     /// <para>
@@ -26,7 +26,7 @@ namespace VL.Qt
     /// <para>
     /// A <see cref="ElementType.Video"/> is shown at one place only, app-wide (two occurrences would be two players): the
     /// first occurrence in traversal order of the first renderer plays, the others are placeholders registered here as
-    /// duplicates, which puts <see cref="VideoDuplicateWarning"/> into the element's sink slot. When the last occurrence
+    /// duplicates, which puts <see cref="VideoDuplicateWarning"/> into the element's feedback slot. When the last occurrence
     /// lets go while duplicates wait, their reconcilers are invalidated, so their next update visits the whole tree and
     /// one of them takes over.
     /// </para>
@@ -36,7 +36,7 @@ namespace VL.Qt
     /// visited.
     /// </para>
     /// <para>
-    /// Place fallback: an element node outputs a new instance whenever an input changes, always with the same sink
+    /// Place fallback: an element node outputs a new instance whenever an input changes, always with the same feedback
     /// slot. Snapshot and TooltipPreview may run before the renderer of the same frame, when the registry still holds the
     /// previous instance. <see cref="TryLocate"/> then falls back to the last shown instance of the element's slot (same
     /// window, same object). The slot entry goes with the entry of that instance (no extra lifetime, no leak).
@@ -46,7 +46,7 @@ namespace VL.Qt
     /// </summary>
     internal sealed class SceneRegistry
     {
-        /// <summary>Warning written to the sink slot of a video that is used more than once.</summary>
+        /// <summary>Warning written to the feedback slot of a video that is used more than once.</summary>
         public const string VideoDuplicateWarning = "Video is used more than once (in one tree or across renderers); only the first occurrence plays.";
 
         /// <summary>
@@ -81,12 +81,12 @@ namespace VL.Qt
 
         private readonly Dictionary<Element, Entry> _entries = new(ReferenceEqualityComparer.Instance);
         private readonly Stack<List<Node>> _lists = new();
-        private readonly Dictionary<SinkSlot, Element> _shownBySlot = new(); // sink slot → last instance shown with it
+        private readonly Dictionary<FeedbackSlot, Element> _shownBySlot = new(); // feedback slot → last instance shown with it
 
         /// <summary>Number of elements currently shown or waiting as duplicates (tests).</summary>
         public int Count => _entries.Count;
 
-        /// <summary>Number of sink slots with a shown instance (tests).</summary>
+        /// <summary>Number of feedback slot with a shown instance (tests).</summary>
         public int SlotCount => _shownBySlot.Count;
 
         /// <summary>Primary occurrence of <paramref name="element"/> or null; <paramref name="reconciler"/> = the owner renderer's reconciler.</summary>
@@ -128,13 +128,13 @@ namespace VL.Qt
 
         /// <summary>
         /// Native window and object id of the primary occurrence of <paramref name="element"/> (Snapshot). An
-        /// instance no renderer has seen yet is located by its place: the last shown instance of its sink slot (a
+        /// instance no renderer has seen yet is located by its place: the last shown instance of its feedback slot (a
         /// node's new instance before the renderer of this frame ran). False if it is not shown in a renderer (no
         /// occurrence, no shown instance of its slot, no primary right after a hand-over, or the reconciler has no window).
         /// </summary>
         public bool TryLocate(Element element, out IntPtr window, out uint id)
         {
-            if (!_entries.ContainsKey(element) && element.Sink.Sink is not null && _shownBySlot.TryGetValue(element.Sink, out var shown))
+            if (!_entries.ContainsKey(element) && element.Feedback.Feedback is not null && _shownBySlot.TryGetValue(element.Feedback, out var shown))
                 element = shown;
             var node = OwnerOf(element, out var reconciler);
             if (node is not null && !node.IsIgnored && reconciler is not null && reconciler.Window != IntPtr.Zero)
@@ -161,8 +161,8 @@ namespace VL.Qt
         public bool AddOccurrence(Element element, Node node, Reconciler reconciler)
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_entries, element, out _);
-            if (element.Sink.Sink is not null)
-                _shownBySlot[element.Sink] = element;
+            if (element.Feedback.Feedback is not null)
+                _shownBySlot[element.Feedback] = element;
             if (entry.OwnerReconciler is null || ReferenceEquals(entry.OwnerReconciler, reconciler))
             {
                 entry.OwnerReconciler = reconciler;
@@ -303,7 +303,7 @@ namespace VL.Qt
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_entries, element, out _);
             (entry.Waiting ??= new List<Reconciler>()).Add(reconciler);
-            if (element.Sink.State is { } state)
+            if (element.Feedback.State is { } state)
                 state.Warning = VideoDuplicateWarning;
         }
 
@@ -316,8 +316,8 @@ namespace VL.Qt
             if (entry.Waiting.Count > 0)
                 return;
             entry.Waiting = null;
-            var slot = element.Sink;
-            if (slot.Sink is not null && slot.Sink.TryGet(slot.Index, out var state) && state.Warning == VideoDuplicateWarning)
+            var slot = element.Feedback;
+            if (slot.Feedback is not null && slot.Feedback.TryGet(slot.Index, out var state) && state.Warning == VideoDuplicateWarning)
                 state.Warning = null;
             if (entry.OwnerReconciler is null)
                 RemoveEntry(element);
@@ -327,8 +327,8 @@ namespace VL.Qt
         private void RemoveEntry(Element element)
         {
             _entries.Remove(element);
-            var slot = element.Sink;
-            if (slot.Sink is not null && _shownBySlot.TryGetValue(slot, out var shown) && ReferenceEquals(shown, element))
+            var slot = element.Feedback;
+            if (slot.Feedback is not null && _shownBySlot.TryGetValue(slot, out var shown) && ReferenceEquals(shown, element))
                 _shownBySlot.Remove(slot);
         }
 
@@ -342,10 +342,10 @@ namespace VL.Qt
         }
 
         // --- Input handlers: one interaction node is active at one
-        // handler only. Keyed by the sink of the interaction node. Unlike elements the current owner always keeps it
+        // handler only. Keyed by the feedback of the interaction node. Unlike elements the current owner always keeps it
         // (no take-over by traversal order); further occurrences wait as placeholders until the owner lets go. ---
 
-        /// <summary>Warning written to the sink slot of an interaction node that is used more than once.</summary>
+        /// <summary>Warning written to the feedback slot of an interaction node that is used more than once.</summary>
         public const string InteractionDuplicateWarning = "Interaction is used more than once (at several elements, in one chain twice or across renderers); only the first occurrence is active. Use one interaction node per element.";
 
         private struct HandlerEntry
@@ -354,13 +354,13 @@ namespace VL.Qt
             public List<Reconciler>? Waiting; // one entry per ignored occurrence (placeholder)
         }
 
-        private readonly Dictionary<SinkSlot, HandlerEntry> _handlers = new();
+        private readonly Dictionary<FeedbackSlot, HandlerEntry> _handlers = new();
 
-        /// <summary>Number of interaction sinks currently active or waiting as duplicates (tests).</summary>
+        /// <summary>Number of interaction feedback slots currently active or waiting as duplicates (tests).</summary>
         public int HandlerCount => _handlers.Count;
 
-        /// <summary>Handler that currently serves the interaction with sink <paramref name="key"/>, or null.</summary>
-        public HandlerNode? HandlerOwnerOf(SinkSlot key) => _handlers.TryGetValue(key, out var e) ? e.Owner : null;
+        /// <summary>Handler that currently serves the interaction with feedback <paramref name="key"/>, or null.</summary>
+        public HandlerNode? HandlerOwnerOf(FeedbackSlot key) => _handlers.TryGetValue(key, out var e) ? e.Owner : null;
 
         /// <summary>Makes <paramref name="handler"/> the owner of its key (the caller checked that there is none).</summary>
         public void SetHandlerOwner(HandlerNode handler)
@@ -386,7 +386,7 @@ namespace VL.Qt
         }
 
         /// <summary>Registers an ignored occurrence of <paramref name="key"/> held by <paramref name="reconciler"/> and sets the warning.</summary>
-        public void AddHandlerDuplicate(SinkSlot key, Reconciler reconciler)
+        public void AddHandlerDuplicate(FeedbackSlot key, Reconciler reconciler)
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_handlers, key, out _);
             (entry.Waiting ??= new List<Reconciler>()).Add(reconciler);
@@ -395,7 +395,7 @@ namespace VL.Qt
         }
 
         /// <summary>Removes one ignored occurrence of <paramref name="key"/>; clears the warning when none is left.</summary>
-        public void RemoveHandlerDuplicate(SinkSlot key, Reconciler reconciler)
+        public void RemoveHandlerDuplicate(FeedbackSlot key, Reconciler reconciler)
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrNullRef(_handlers, key);
             if (Unsafe.IsNullRef(ref entry) || entry.Waiting is null || !entry.Waiting.Remove(reconciler))
@@ -403,7 +403,7 @@ namespace VL.Qt
             if (entry.Waiting.Count > 0)
                 return;
             entry.Waiting = null;
-            if (key.Sink is not null && key.Sink.TryGet(key.Index, out var state) && state.Warning == InteractionDuplicateWarning)
+            if (key.Feedback is not null && key.Feedback.TryGet(key.Index, out var state) && state.Warning == InteractionDuplicateWarning)
                 state.Warning = null;
             if (entry.Owner is null)
                 _handlers.Remove(key);

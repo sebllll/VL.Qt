@@ -221,7 +221,7 @@ public static class SpinBoxTest
         s.Check(Native.vlqt_test_send_wheel(w, textX, y1, 0, 120) == 0, "send_wheel disabled");
         ExpectNone(Frame(), "+ and wheel with Enabled false");
 
-        // A new sink handle drops a change not polled yet (like Button clicks).
+        // A new feedback id drops a change not polled yet (like Button clicks).
         cmd.SetBool(S1, Protocol.Prop.Enabled, true);
         CheckApply("enabled true");
         Click(upX, y1);

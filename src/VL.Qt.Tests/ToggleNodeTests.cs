@@ -19,7 +19,7 @@ namespace VL.Qt.Tests
         private sealed class Nop : IDisposable { public void Dispose() { } }
 
         private ToggleNode _node = null!;
-        private SinkRegistry _registry = null!;
+        private FeedbackRouter _registry = null!;
         private uint _handle;
         private RecordingSink _sink = null!;
         private Reconciler _reconciler = null!;
@@ -28,8 +28,8 @@ namespace VL.Qt.Tests
         public void SetUp()
         {
             _node = new ToggleNode(_ => NoWarning);
-            _registry = new SinkRegistry();
-            _handle = _registry.Acquire(new SinkSlot(_node.Core.Sink, 0));
+            _registry = new FeedbackRouter();
+            _handle = _registry.Acquire(new FeedbackSlot(_node.Core.Feedback, 0));
             _sink = new RecordingSink();
             _reconciler = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
         }
@@ -55,7 +55,7 @@ namespace VL.Qt.Tests
         private string[] Frame(IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox)
             => Frame(out _, out _, channel, look);
 
-        private void UserChanges(bool value) => _registry.Dispatch(new SinkRegistryTests.Poll().Value(_handle, Protocol.Vt.Bool, new byte[] { (byte)(value ? 1 : 0) }).Bytes);
+        private void UserChanges(bool value) => _registry.Dispatch(new FeedbackRouterTests.Poll().Value(_handle, Protocol.Vt.Bool, new byte[] { (byte)(value ? 1 : 0) }).Bytes);
 
         private static string SetValue(int id, bool v) => $"SET {id} Value bool({(v ? 1 : 0)})";
 
@@ -68,7 +68,7 @@ namespace VL.Qt.Tests
             Assert.That((ushort)ElementType.CheckBox, Is.EqualTo(Protocol.Type.CheckBox));
             Assert.That((c.Value, c.Enabled, c.AutoSize), Is.EqualTo((false, true, true)));
             Assert.That((value, bang), Is.EqualTo((false, false)));
-            Assert.That(c.Sink.Sink, Is.SameAs(_node.Core.Sink));
+            Assert.That(c.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
         }
 
         [Test]
@@ -78,7 +78,7 @@ namespace VL.Qt.Tests
             Assert.That(s.Type, Is.EqualTo(ElementType.Switch));
             Assert.That((ushort)ElementType.Switch, Is.EqualTo(Protocol.Type.Switch));
             Assert.That((s.Value, s.Enabled, s.AutoSize), Is.EqualTo((false, true, true)));
-            Assert.That(s.Sink.Sink, Is.SameAs(_node.Core.Sink));
+            Assert.That(s.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
         }
 
         [Test]
@@ -109,7 +109,7 @@ namespace VL.Qt.Tests
             Assert.That(cmds, Does.Contain("DESTROY 1"));
             Assert.That(cmds, Does.Contain($"CREATE 1 Switch"), "ids are reused");
             Assert.That(cmds, Does.Contain(SetValue(1, true)), "the new element gets the value");
-            Assert.That(cmds.Any(c => c.StartsWith("BIND 1 ", StringComparison.Ordinal)), Is.True, "the sink is bound to the new element");
+            Assert.That(cmds.Any(c => c.StartsWith("BIND 1 ", StringComparison.Ordinal)), Is.True, "the feedback is bound to the new element");
 
             Assert.That(Frame(ch, ToggleLook.Switch), Is.Empty, "stable afterwards");
 

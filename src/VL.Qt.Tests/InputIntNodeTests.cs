@@ -21,7 +21,7 @@ namespace VL.Qt.Tests
         private sealed class Nop : IDisposable { public void Dispose() { } }
 
         private InputIntNode _node = null!;
-        private SinkRegistry _registry = null!;
+        private FeedbackRouter _registry = null!;
         private uint _handle;
         private RecordingSink _sink = null!;
         private Reconciler _reconciler = null!;
@@ -30,8 +30,8 @@ namespace VL.Qt.Tests
         public void SetUp()
         {
             _node = new InputIntNode(_ => NoWarning);
-            _registry = new SinkRegistry();
-            _handle = _registry.Acquire(new SinkSlot(_node.Core.Sink, 0));
+            _registry = new FeedbackRouter();
+            _handle = _registry.Acquire(new FeedbackSlot(_node.Core.Feedback, 0));
             _sink = new RecordingSink();
             _reconciler = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
         }
@@ -59,7 +59,7 @@ namespace VL.Qt.Tests
         private string[] Frame(IChannel<int>? channel = null, Optional<int> min = default, Optional<int> max = default)
             => Frame(out _, out _, channel, min, max);
 
-        private void UserChanges(int value) => _registry.Dispatch(new SinkRegistryTests.Poll().ValueI32(_handle, value).Bytes);
+        private void UserChanges(int value) => _registry.Dispatch(new FeedbackRouterTests.Poll().ValueI32(_handle, value).Bytes);
 
         private static string SetValue(int v) => $"SET 1 Value i32({v})";
 
@@ -72,7 +72,7 @@ namespace VL.Qt.Tests
             Assert.That((s.Value, s.Minimum, s.Maximum, s.Step, s.Editable, s.Enabled, s.AutoSize),
                 Is.EqualTo((0, int.MinValue, int.MaxValue, 1, true, true, true)));
             Assert.That((value, bang), Is.EqualTo((0, false)));
-            Assert.That(s.Sink.Sink, Is.SameAs(_node.Core.Sink));
+            Assert.That(s.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
         }
 
         [Test]

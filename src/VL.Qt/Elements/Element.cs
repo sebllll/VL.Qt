@@ -31,7 +31,7 @@ namespace VL.Qt.Elements
 
         /// <summary>Draws the debug overlay for this element only (not recursive).</summary>
         public bool Debug { get; init; }
-        public SinkSlot Sink { get; init; }
+        public FeedbackSlot Feedback { get; init; }
 
         /// <summary>
         /// Chain of interaction descriptions (Hover, Click, …); each link becomes an input handler at the item.

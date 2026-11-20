@@ -48,7 +48,7 @@ namespace VL.Qt.Nodes
         /// Builds the element. The points are not cut here (the reconciler sends the first <see cref="MaxPoints"/>, <see cref="PointsWarning"/> says so);
         /// the Size covers only the points that are drawn.
         /// </summary>
-        internal static readonly Func<CommonInputs, Props, SinkSlot, Shape> Create = static (c, p, slot) => new Shape
+        internal static readonly Func<CommonInputs, Props, FeedbackSlot, Shape> Create = static (c, p, slot) => new Shape
         {
             Size = p.Path is { } path ? Shape.ExtentOf(path) : Extent(p.Points),
             Transform = c.Transform,
@@ -58,7 +58,7 @@ namespace VL.Qt.Nodes
             Debug = c.Debug,
             Interaction = c.Interaction,
             Effect = c.Effect,
-            Sink = slot,
+            Feedback = slot,
             Points = p.Points,
             Path = p.Path,
             Closed = p.Closed,
@@ -134,7 +134,7 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>
-        /// Describes the shape (a new description only when an input changes), updates the node warnings (too many points, sink)
+        /// Describes the shape (a new description only when an input changes), updates the node warnings (too many points, feedback)
         /// and reads the outputs. Call once per Update.
         /// </summary>
         public Shape Describe(in CommonInputs common, in Props props, out Vector2 measuredSize, out RectangleF sceneBounds)

@@ -19,7 +19,7 @@ namespace VL.Qt.Tests
         private sealed class Nop : IDisposable { public void Dispose() { } }
 
         private TextInputNode _node = null!;
-        private SinkRegistry _registry = null!;
+        private FeedbackRouter _registry = null!;
         private uint _handle;
         private RecordingSink _sink = null!;
         private Reconciler _reconciler = null!;
@@ -28,8 +28,8 @@ namespace VL.Qt.Tests
         public void SetUp()
         {
             _node = new TextInputNode(_ => NoWarning);
-            _registry = new SinkRegistry();
-            _handle = _registry.Acquire(new SinkSlot(_node.Core.Sink, 0));
+            _registry = new FeedbackRouter();
+            _handle = _registry.Acquire(new FeedbackSlot(_node.Core.Feedback, 0));
             _sink = new RecordingSink();
             _reconciler = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
         }
@@ -53,7 +53,7 @@ namespace VL.Qt.Tests
 
         private string[] Frame(IChannel<string>? channel = null) => Frame(out _, out _, channel);
 
-        private void UserChanges(string value) => _registry.Dispatch(new SinkRegistryTests.Poll().ValueString(_handle, value).Bytes);
+        private void UserChanges(string value) => _registry.Dispatch(new FeedbackRouterTests.Poll().ValueString(_handle, value).Bytes);
 
         private static string SetValue(string v) => $"SET 1 Value string({v})";
 
@@ -65,7 +65,7 @@ namespace VL.Qt.Tests
             Assert.That((ushort)ElementType.TextField, Is.EqualTo(Protocol.Type.TextField));
             Assert.That((t.Value, t.Placeholder, t.Editable, t.Enabled, t.AutoSize), Is.EqualTo(("", "", true, true, true)));
             Assert.That((value, bang), Is.EqualTo(("", false)));
-            Assert.That(t.Sink.Sink, Is.SameAs(_node.Core.Sink));
+            Assert.That(t.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
         }
 
         [Test]

@@ -33,7 +33,7 @@ namespace VL.Qt.Nodes
         internal GroupNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Group, Props>(addWarning, Create);
 
-        private static readonly Func<CommonInputs, Props, SinkSlot, Group> Create = static (c, p, slot) => new Group
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Group> Create = static (c, p, slot) => new Group
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -44,7 +44,7 @@ namespace VL.Qt.Nodes
                 Interaction = c.Interaction,
                 Effect = c.Effect,
                 Style = p.Style,
-                Sink = slot,
+                Feedback = slot,
                 Children = p.Children,
                 AutoSize = p.AutoSize,
             };

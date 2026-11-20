@@ -3,7 +3,7 @@
     /// <summary>
     /// Loads a user .qml file into the element tree (protocol.h "QmlElement"). The root of the file must be an Item. The
     /// patch sets properties of the root by name (<see cref="Properties"/>), QtNative reports the property changes and the
-    /// signals of the root back into <see cref="Element.Sink"/>.
+    /// signals of the root back into <see cref="Element.Feedback"/>.
     /// </summary>
     public sealed class QmlElement : Element
     {

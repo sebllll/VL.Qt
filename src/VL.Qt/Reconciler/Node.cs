@@ -8,7 +8,7 @@ namespace VL.Qt
     /// <summary>
     /// Mirror of one Qt item as the reconciler last sent it: its id, type, the description it was last
     /// updated from (for the reference-equality shortcut and the property diff), its children in order
-    /// and the sink slot currently bound to it.
+    /// and the feedback slot currently bound to it.
     /// </summary>
     internal sealed class Node
     {
@@ -36,19 +36,19 @@ namespace VL.Qt
         /// <summary>Child nodes in reconciled order (index = REPARENT index).</summary>
         public List<Node> Children { get; } = new();
 
-        /// <summary>Sink slot bound via BIND; <see cref="SinkSlot.IsNone"/> = unbound.</summary>
-        public SinkSlot BoundSink { get; set; }
+        /// <summary>Feedback slot bound via BIND; <see cref="FeedbackSlot.IsNone"/> = unbound.</summary>
+        public FeedbackSlot BoundFeedback { get; set; }
 
-        /// <summary>Sink handle sent with BIND (<see cref="SinkRegistry"/>); 0 = unbound.</summary>
-        public uint BoundHandle { get; set; }
+        /// <summary>Feedback id sent with BIND (<see cref="FeedbackRouter"/>); 0 = unbound.</summary>
+        public uint BoundFeedbackId { get; set; }
 
         /// <summary>
         /// This node is the primary occurrence of its element (first in traversal order of the owner renderer,
-        /// see <see cref="SceneRegistry"/>): only its sink handle reports state values.
+        /// see <see cref="SceneRegistry"/>): only its feedback id reports state values.
         /// </summary>
         public bool IsPrimary { get; set; }
 
-        /// <summary>Whether <see cref="BoundHandle"/> is registered as primary (<see cref="Elements.SinkRegistry"/>); follows <see cref="IsPrimary"/>.</summary>
+        /// <summary>Whether <see cref="BoundFeedbackId"/> is registered as primary (<see cref="Elements.FeedbackRouter"/>); follows <see cref="IsPrimary"/>.</summary>
         public bool BoundPrimary { get; set; }
 
         /// <summary>Parent node (null under the window root). Nodes never change their parent.</summary>
@@ -84,7 +84,7 @@ namespace VL.Qt
         /// <summary>Ids of <see cref="EffectObjects"/> as the last SET_EFFECT_CHAIN refers to them; a changed id sends the chain again.</summary>
         public List<uint>? EffectSentIds { get; set; }
 
-        /// <summary>Fold warning currently written into the element's sink slot, null if none.</summary>
+        /// <summary>Fold warning currently written into the element's feedback slot, null if none.</summary>
         public string? EffectWarning { get; set; }
 
         /// <summary>ShaderEffect only: the input child node last sent as SET Source (null = none sent).</summary>
@@ -114,7 +114,7 @@ namespace VL.Qt
         /// </summary>
         public StylableElement? Stylable { get; set; }
 
-        /// <summary>Error text of the last failed Build at this position, shown at the parent's sink; null if none.</summary>
+        /// <summary>Error text of the last failed Build at this position, shown at the parent's feedback; null if none.</summary>
         public string? BuildError { get; set; }
 
         /// <summary>
@@ -124,13 +124,13 @@ namespace VL.Qt
     }
 
     /// <summary>
-    /// Mirror of one input handler object as the reconciler last sent it: id, type, key (the sink of the
-    /// interaction node), the description it was last updated from and its sink handle. Id 0 marks a placeholder for
+    /// Mirror of one input handler object as the reconciler last sent it: id, type, key (the feedback of the
+    /// interaction node), the description it was last updated from and its feedback id. Id 0 marks a placeholder for
     /// an ignored occurrence (the interaction is active elsewhere, see <see cref="SceneRegistry"/>).
     /// </summary>
     internal sealed class HandlerNode
     {
-        public HandlerNode(uint id, ushort type, SinkSlot key)
+        public HandlerNode(uint id, ushort type, FeedbackSlot key)
         {
             Id = id;
             Type = type;
@@ -146,14 +146,14 @@ namespace VL.Qt
         /// <summary>CREATE type (<see cref="Protocol.Type"/>, from 32).</summary>
         public ushort Type { get; }
 
-        /// <summary>Sink of the interaction node; identifies the handler within the element's chain.</summary>
-        public SinkSlot Key { get; }
+        /// <summary>Feedback of the interaction node; identifies the handler within the element's chain.</summary>
+        public FeedbackSlot Key { get; }
 
         /// <summary>Description this handler was last updated from.</summary>
         public Interaction? Last { get; set; }
 
-        /// <summary>Sink handle sent with BIND (<see cref="SinkRegistry"/>); 0 = unbound or placeholder.</summary>
-        public uint BoundHandle { get; set; }
+        /// <summary>Feedback id sent with BIND (<see cref="FeedbackRouter"/>); 0 = unbound or placeholder.</summary>
+        public uint BoundFeedbackId { get; set; }
 
         /// <summary>Update pass in which the chain last contained this handler (see Reconciler.Handlers).</summary>
         public int SeenPass { get; set; }

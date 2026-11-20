@@ -100,8 +100,8 @@ namespace VL.Qt.Audio
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
                 new VideoNode.Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, _tap is null ? 0f : 1f, fillMode, _tap?.Id ?? 0));
             _node.ReadOutputs(out measuredSize, out sceneBounds);
-            position = _node.Sink.MediaPosition();
-            duration = _node.Sink.MediaDuration();
+            position = _node.Feedback.MediaPosition();
+            duration = _node.Feedback.MediaDuration();
             audio = _signal.Outputs;
             syncError = _signal.SyncErrorMs;
             return element;

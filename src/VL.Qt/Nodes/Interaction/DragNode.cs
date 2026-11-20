@@ -48,7 +48,7 @@ namespace VL.Qt.Nodes
             _addError = addMessage;
         }
 
-        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new DragInteraction(previous, slot, p.MovesElement, p.Axis, p.Limits, p.Buttons, p.Devices);
 
         internal InteractionNode<Props> Core => _node;
@@ -81,26 +81,26 @@ namespace VL.Qt.Nodes
             var output = _node.Describe(input, new Props(movesElement, axis, Limits(minimum, maximum), buttons, devices));
 
             // Pull: state of the last pump (1 frame latency).
-            var sink = _node.Sink;
+            var feedback = _node.Feedback;
             if (isDragging.IsValid())
-                InteractionNode<Props>.Write(isDragging, ref _dragging, ref _lastDragging, sink.IsActive());
+                InteractionNode<Props>.Write(isDragging, ref _dragging, ref _lastDragging, feedback.IsActive());
             else
                 _dragging = null;
 
-            int updates = sink.DragUpdates();
+            int updates = feedback.DragUpdates();
             if (!delta.IsValid())
                 _delta = null;
             else if (!ReferenceEquals(delta, _delta))
             {
                 _delta = delta;
                 _lastDragUpdates = updates;
-                delta.EnsureValue(sink.DragDelta(), author: InteractionNode<Props>.Author);
+                delta.EnsureValue(feedback.DragDelta(), author: InteractionNode<Props>.Author);
             }
             else if (updates != _lastDragUpdates)
             {
                 // Every EV_DRAG counts, also one equal to the last value (a new drag with the same movement).
                 _lastDragUpdates = updates;
-                delta.SetValueAndAuthor(sink.DragDelta(), InteractionNode<Props>.Author);
+                delta.SetValueAndAuthor(feedback.DragDelta(), InteractionNode<Props>.Author);
             }
 
             return output;

@@ -56,7 +56,7 @@ namespace VL.Qt.Nodes
             _addError = addMessage;
         }
 
-        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new PinchInteraction(previous, slot, p.MinimumPointCount, p.MaximumPointCount, p.Devices);
 
         internal InteractionNode<Props> Core => _node;
@@ -94,17 +94,17 @@ namespace VL.Qt.Nodes
 
             // Pull: state of the last pump (1 frame latency). The values are written once per EV_PINCH; a channel
             // connected later gets the current value only if a gesture happened (the channel's own value stays otherwise).
-            var sink = _node.Sink;
+            var feedback = _node.Feedback;
             if (isActive.IsValid())
-                InteractionNode<Props>.Write(isActive, ref _active, ref _lastActive, sink.IsActive());
+                InteractionNode<Props>.Write(isActive, ref _active, ref _lastActive, feedback.IsActive());
             else
                 _active = null;
 
-            int updates = sink.PinchUpdates();
-            Pull(scale, ref _scale, ref _scaleUpdates, updates, sink.PinchScale());
-            Pull(rotation, ref _rotation, ref _rotationUpdates, updates, sink.PinchRotation());
-            Pull(translation, ref _translation, ref _translationUpdates, updates, sink.PinchTranslation());
-            Pull(pivot, ref _pivot, ref _pivotUpdates, updates, sink.PinchPivot());
+            int updates = feedback.PinchUpdates();
+            Pull(scale, ref _scale, ref _scaleUpdates, updates, feedback.PinchScale());
+            Pull(rotation, ref _rotation, ref _rotationUpdates, updates, feedback.PinchRotation());
+            Pull(translation, ref _translation, ref _translationUpdates, updates, feedback.PinchTranslation());
+            Pull(pivot, ref _pivot, ref _pivotUpdates, updates, feedback.PinchPivot());
             return output;
         }
 

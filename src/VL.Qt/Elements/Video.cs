@@ -12,7 +12,7 @@ namespace VL.Qt.Elements
 
     /// <summary>
     /// Video from a file (Qt MediaPlayer + VideoOutput, FFmpeg backend). v1: file path only, own clock (no seek,
-    /// no sync to vvvv). Position and duration come back through the sink, 0 until the media is loaded.
+    /// no sync to vvvv). Position and duration come back through the feedback, 0 until the media is loaded.
     /// </summary>
     public sealed class Video : Element
     {

@@ -31,7 +31,7 @@ namespace VL.Qt.Nodes
         internal WheelNode(Func<string, IDisposable> addWarning)
             => _node = new InteractionNode<Props>(addWarning, Create);
 
-        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new WheelInteraction(previous, slot, p.Devices);
 
         internal InteractionNode<Props> Core => _node;
@@ -51,7 +51,7 @@ namespace VL.Qt.Nodes
             var output = _node.Describe(input, new Props(devices));
 
             // Pull: the motion of the last pump, taken every frame (also unconnected, so it does not pile up).
-            var wheel = _node.Sink.TakeWheel();
+            var wheel = _node.Feedback.TakeWheel();
             if (delta.IsValid())
             {
                 if (!ReferenceEquals(delta, _delta))

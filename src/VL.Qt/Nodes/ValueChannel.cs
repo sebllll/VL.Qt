@@ -16,7 +16,7 @@ namespace VL.Qt.Nodes
     /// <item>Unconnected the pin is null (<c>[DefaultValue(null)] IChannel&lt;T&gt;?</c>); the node then keeps its own
     /// value, changed by the user only. A plain value or an IOBox on the pin is lifted by vvvv into a private channel:
     /// start value and setting from the patch.</item>
-    /// <item>A user change (EV_VALUE from the sink) is written into the channel with author <see cref="Author"/> and sets
+    /// <item>A user change (EV_VALUE from the feedback) is written into the channel with author <see cref="Author"/> and sets
     /// <see cref="Bang"/> for one Update. It is not echoed as a channel change. If the patch changed the channel in the
     /// same frame, the user wins.</item>
     /// <item>The node describes <see cref="Value"/>; the reconciler diffs it against the last sent description as usual
@@ -26,7 +26,7 @@ namespace VL.Qt.Nodes
     /// </list>
     /// Main thread only. No allocation per frame (the attributes of a channel are read once per change).
     /// </summary>
-    /// <typeparam name="T">Value type of the element: int, float, bool or string (see <see cref="ElementSink.TakeValue{T}"/>).</typeparam>
+    /// <typeparam name="T">Value type of the element: int, float, bool or string (see <see cref="ElementFeedback.TakeValue{T}"/>).</typeparam>
     internal sealed class ValueChannel<T>
     {
         /// <summary>Author of every value the user produced in Qt.</summary>
@@ -54,10 +54,10 @@ namespace VL.Qt.Nodes
         public bool Bang { get; private set; }
 
         /// <summary>
-        /// Takes the patch's channel value and the user's change from <paramref name="sink"/> and returns the new
+        /// Takes the patch's channel value and the user's change from <paramref name="feedback"/> and returns the new
         /// <see cref="Value"/>. Call once per Update, before <see cref="Clamp"/> and the description.
         /// </summary>
-        public T Update(IChannel<T>? channel, ElementSink sink, int index = 0)
+        public T Update(IChannel<T>? channel, ElementFeedback feedback, int index = 0)
         {
             Bang = false;
             bool fromPatch = false;
@@ -87,7 +87,7 @@ namespace VL.Qt.Nodes
                 }
             }
 
-            if (sink.TakeValue<T>(out var user, index))
+            if (feedback.TakeValue<T>(out var user, index))
             {
                 // the user wins over a patch change of the same frame
                 _value = user;

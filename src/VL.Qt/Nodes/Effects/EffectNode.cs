@@ -7,7 +7,7 @@ namespace VL.Qt.Nodes
     /// Shared core of the effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), the counterpart of
     /// <see cref="InteractionNode{TProps}"/>: a new link only if the chain at Input (by reference) or the node specific
     /// <typeparamref name="TProps"/> changed, otherwise the last instance (reference equal → no QtNative ops). Effects have no
-    /// sink: warnings (e.g. a duplicate kind) are shown at the element. No static state. Main thread only.
+    /// feedback: warnings (e.g. a duplicate kind) are shown at the element. No static state. Main thread only.
     /// </summary>
     /// <typeparam name="TProps">Node specific inputs; a readonly record struct (value equality, no allocation).</typeparam>
     internal sealed class EffectNode<TProps>

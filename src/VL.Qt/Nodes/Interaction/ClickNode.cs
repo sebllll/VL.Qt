@@ -34,7 +34,7 @@ namespace VL.Qt.Nodes
         internal ClickNode(Func<string, IDisposable> addWarning)
             => _node = new InteractionNode<Props>(addWarning, Create);
 
-        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new ClickInteraction(previous, slot, p.Buttons, p.Devices);
 
         internal InteractionNode<Props> Core => _node;
@@ -61,18 +61,18 @@ namespace VL.Qt.Nodes
 
             // Pull: state of the last pump (1 frame latency). Events (clicks, long presses) are taken every frame, also
             // without a channel, so they do not pile up; states are written only on change.
-            var sink = _node.Sink;
+            var feedback = _node.Feedback;
             if (isPressed.IsValid())
-                InteractionNode<Props>.Write(isPressed, ref _pressed, ref _lastPressed, sink.IsPressed());
+                InteractionNode<Props>.Write(isPressed, ref _pressed, ref _lastPressed, feedback.IsPressed());
             else
                 _pressed = null;
 
-            InteractionNode<Props>.WriteEvents(isClicked, sink.TakeClicks());
-            InteractionNode<Props>.WriteEvents(longPressed, sink.TakeLongPresses());
+            InteractionNode<Props>.WriteEvents(isClicked, feedback.TakeClicks());
+            InteractionNode<Props>.WriteEvents(longPressed, feedback.TakeLongPresses());
 
-            // 0 = no tap yet for this sink (new node, new handler, released handle): not written, the channel keeps
+            // 0 = no tap yet for this feedback (new node, new handler, released handle): not written, the channel keeps
             // the count of the last click until the next one.
-            int count = sink.TapCount();
+            int count = feedback.TapCount();
             if (!tapCount.IsValid())
                 _tapCount = null;
             else if (count > 0)

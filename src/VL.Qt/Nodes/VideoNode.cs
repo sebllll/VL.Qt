@@ -34,7 +34,7 @@ namespace VL.Qt.Nodes
             => _node = new ElementNode<Video, Props>(addWarning, Create);
 
         /// <summary>Builds the element from the inputs; also used by Video (VL.Audio) in VL.Qt.Audio.</summary>
-        internal static readonly Func<CommonInputs, Props, SinkSlot, Video> Create = static (c, p, slot) => new Video
+        internal static readonly Func<CommonInputs, Props, FeedbackSlot, Video> Create = static (c, p, slot) => new Video
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -44,7 +44,7 @@ namespace VL.Qt.Nodes
                 Debug = c.Debug,
                 Interaction = c.Interaction,
                 Effect = c.Effect,
-                Sink = slot,
+                Feedback = slot,
                 Path = p.Path.Length == 0 ? Path.Default : new Path(p.Path),
                 Playing = p.Play,
                 Loop = p.Loop,
@@ -104,8 +104,8 @@ namespace VL.Qt.Nodes
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
                 new Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, volume, fillMode));
             _node.ReadOutputs(out measuredSize, out sceneBounds);
-            position = _node.Sink.MediaPosition();
-            duration = _node.Sink.MediaDuration();
+            position = _node.Feedback.MediaPosition();
+            duration = _node.Feedback.MediaDuration();
             return element;
         }
 

@@ -45,7 +45,7 @@ namespace VL.Qt.Tests
         private static QtImage NewImage(ulong id) => new(new ImageResource(id));
 
         [Test]
-        public void Text_Defaults_WithSink()
+        public void Text_Defaults_WithFeedback()
         {
             var t = (Text)UpdateText();
             Assert.That(t.Size, Is.EqualTo(DefaultSize));
@@ -54,7 +54,7 @@ namespace VL.Qt.Tests
             Assert.That(t.FontSize, Is.EqualTo(Text.DefaultFontSize));
             Assert.That(t.Color, Is.EqualTo(Color4.White));
             Assert.That(t.Transform, Is.EqualTo(Matrix.Identity));
-            Assert.That(t.Sink.Sink, Is.SameAs(_text.Core.Sink));
+            Assert.That(t.Feedback.Feedback, Is.SameAs(_text.Core.Feedback));
         }
 
         [Test]
@@ -110,10 +110,10 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void Text_MeasuredSize_FromSink()
+        public void Text_MeasuredSize_FromFeedback()
         {
             UpdateText();
-            _text.Core.Sink[0].MeasuredSize = new Vector2(0.5f, 0.15f);
+            _text.Core.Feedback[0].MeasuredSize = new Vector2(0.5f, 0.15f);
             _text.Update(DefaultSize, default, RectangleAnchor.Center, "Text", "", 0.12f, FontWeight.Normal, false, Color4.White,
                 TextHorizontalAlignment.Left, VerticalAlignment.Top, TextWrap.NoWrap, TextElide.None, 1, 0, TextAutofit.Fixed, 1,
                 false, false, null, null, out var measured, out _);
@@ -121,14 +121,14 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void Image_Defaults_WithSink()
+        public void Image_Defaults_WithFeedback()
         {
             var i = (Image)UpdateImage();
             Assert.That(i.Size, Is.EqualTo(DefaultSize));
             Assert.That(i.Source, Is.Null);
             Assert.That(i.FillMode, Is.EqualTo(ImageFillMode.Stretch));
             Assert.That(i.Smooth, Is.True);
-            Assert.That(i.Sink.Sink, Is.SameAs(_image.Core.Sink));
+            Assert.That(i.Feedback.Feedback, Is.SameAs(_image.Core.Feedback));
         }
 
         [Test]

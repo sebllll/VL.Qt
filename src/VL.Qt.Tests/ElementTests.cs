@@ -24,7 +24,7 @@ namespace VL.Qt.Tests
             Assert.That(e.Clip, Is.False);
             Assert.That(e.Interaction, Is.Null);
             Assert.That(e.Transform, Is.EqualTo(Matrix.Identity));
-            Assert.That(e.Sink.IsNone, Is.True);
+            Assert.That(e.Feedback.IsNone, Is.True);
             Assert.That(e.Children, Is.Empty);
         }
 
@@ -44,10 +44,10 @@ namespace VL.Qt.Tests
         [Test]
         public void Init_SetsValues()
         {
-            var sink = new ElementSink();
-            var e = new TestElement { Opacity = 0.5f, Sink = new SinkSlot(sink, 2) };
+            var feedback = new ElementFeedback();
+            var e = new TestElement { Opacity = 0.5f, Feedback = new FeedbackSlot(feedback, 2) };
             Assert.That(e.Opacity, Is.EqualTo(0.5f));
-            Assert.That(e.Sink.Index, Is.EqualTo(2));
+            Assert.That(e.Feedback.Index, Is.EqualTo(2));
         }
 
         [Test]
@@ -58,20 +58,20 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void Sink_SlotsGrowAndShrink()
+        public void Feedback_SlotsGrowAndShrink()
         {
-            var sink = new ElementSink();
-            Assert.That(sink.Count, Is.EqualTo(0));
-            sink[2].PendingClicks = 3;
-            Assert.That(sink.Count, Is.EqualTo(3));
-            Assert.That(sink[2].PendingClicks, Is.EqualTo(3));
-            Assert.That(sink[0].IsHovered, Is.False);
-            Assert.That(sink.TryGet(5, out _), Is.False);
-            Assert.That(sink.Count, Is.EqualTo(3));
-            sink.Resize(1);
-            Assert.That(sink.Count, Is.EqualTo(1));
-            Assert.That(new SinkSlot(sink, 0).State, Is.SameAs(sink[0]));
-            Assert.That(default(SinkSlot).State, Is.Null);
+            var feedback = new ElementFeedback();
+            Assert.That(feedback.Count, Is.EqualTo(0));
+            feedback[2].PendingClicks = 3;
+            Assert.That(feedback.Count, Is.EqualTo(3));
+            Assert.That(feedback[2].PendingClicks, Is.EqualTo(3));
+            Assert.That(feedback[0].IsHovered, Is.False);
+            Assert.That(feedback.TryGet(5, out _), Is.False);
+            Assert.That(feedback.Count, Is.EqualTo(3));
+            feedback.Resize(1);
+            Assert.That(feedback.Count, Is.EqualTo(1));
+            Assert.That(new FeedbackSlot(feedback, 0).State, Is.SameAs(feedback[0]));
+            Assert.That(default(FeedbackSlot).State, Is.Null);
         }
 
         [Test]

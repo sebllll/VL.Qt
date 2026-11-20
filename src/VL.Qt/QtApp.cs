@@ -27,7 +27,7 @@ namespace VL.Qt
 
         /// <summary>
         /// at the start of the vvvv frame, after Qt delivered the queued input (<see cref="Native.vlqt_app_deliver_input"/>):
-        /// poll the window into the sinks, so the node updates of this frame see it. Nothing is rendered or applied.
+        /// poll the window into the feedback, so the node updates of this frame see it. Nothing is rendered or applied.
         /// </summary>
         void PollInput() { }
 
@@ -497,7 +497,7 @@ namespace VL.Qt
 
         /// <summary>
         /// start of a vvvv frame. Qt delivers the queued input of all windows without rendering (QtNative closes the
-        /// update gate), then the participants of the pumping app poll it into their sinks. Events of another app's windows
+        /// update gate), then the participants of the pumping app poll it into their feedback. Events of another app's windows
         /// stay in their window's buffer until that app polls. Not inside a pump (QtNative ignores the call there).
         /// </summary>
         public void DeliverInput(IQtFrameParticipant[] participants)
