@@ -4,6 +4,9 @@
 #include "perf.h"
 #include "image_resource.h"
 #include "offscreen.h"
+#ifndef _WIN32
+#include "offscreen_glx.h"
+#endif
 #include "protocol.h"
 #include "qtimageitem.h"
 #include "resources.h"
@@ -56,6 +59,8 @@
 #else
 #include <QtGui/private/qhighdpiscaling_p.h>
 #include <QtGui/private/qwindow_p.h>
+#include <QtGui/QOpenGLContext>
+#include <QtGui/QOpenGLFunctions>
 #include <QtGui/qpa/qplatformwindow.h>
 #include <cstdlib>
 #include <dlfcn.h>
@@ -1353,6 +1358,45 @@ VLQT_API int vlqt_window_is_visible(void* p)
     return (w && !w->offscreen && w->window->isVisible()) ? 1 : 0;
 }
 
+#ifndef _WIN32
+// W1-21: on Qt's offscreen platform with OpenGL, Mesa's software winsys can keep an old size of the window's default
+// framebuffer (offscreen_glx.h), so a grab would read only part of the frame. Before a grab, make the window's context
+// current (Qt sizes its X window to the window) and invalidate the drawable, so the grab's frame takes the window's size.
+// Returns the GL context, or null on other platforms and backends.
+static QOpenGLContext* refreshOffscreenGlx(QQuickWindow* window)
+{
+    if (QGuiApplication::platformName() != QLatin1String("offscreen"))
+        return nullptr;
+    QRhi* rhi = window->rhi();
+    if (!rhi || rhi->backend() != QRhi::OpenGLES2)
+        return nullptr;
+    auto* handles = static_cast<const QRhiGles2NativeHandles*>(rhi->nativeHandles());
+    QOpenGLContext* ctx = handles ? handles->context : nullptr;
+    if (!ctx || !ctx->makeCurrent(window))
+        return nullptr;
+    static bool s_warned = false;
+    if (!vlqt::glx::invalidateCurrentDrawable() && !s_warned) {
+        s_warned = true;
+        emitLog(2, "vlqt.grab", "offscreen GLX: no current drawable or libGL not found, a window grab may read a framebuffer of an old size");
+    }
+    return ctx;
+}
+
+// Returns false if the default framebuffer of the current context does not reach the window's last pixel (a grab then
+// read memory that was never written).
+static bool glxCoversWindow(QOpenGLContext* ctx, QQuickWindow* window)
+{
+    if (!ctx->makeCurrent(window))
+        return true;
+    const QSize px = window->size() * window->devicePixelRatio();
+    auto* f = ctx->functions();
+    f->glBindFramebuffer(GL_FRAMEBUFFER, ctx->defaultFramebufferObject());
+    quint32 v = 0xDEADBEEF;
+    f->glReadPixels(px.width() - 1, px.height() - 1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &v);
+    return v != 0xDEADBEEF;
+}
+#endif
+
 VLQT_API int vlqt_window_grab(void* p, const char* pngPath)
 {
     return guarded([&]() -> int {
@@ -1364,12 +1408,24 @@ VLQT_API int vlqt_window_grab(void* p, const char* pngPath)
         if (w->offscreen)
             return notOnScene("grab");
         QImage img;
+#ifndef _WIN32
+        QOpenGLContext* glx = refreshOffscreenGlx(w->window);
+#endif
         {
             // The frame of grabWindow ends without afterFrameEnd (QSGGuiThreadRenderLoop::grab).
             vlqt::device::ContextLock lock;
             img = w->window->grabWindow();
             vlqt::device::releaseFrameLocks();
         }
+#ifndef _WIN32
+        if (glx && !glxCoversWindow(glx, w->window)) {
+            int w3, h3;
+            vlqt::glx::currentDrawableSize(&w3, &h3);
+            const QSize px = w->window->size() * w->window->devicePixelRatio();
+            emitLog(2, "vlqt.grab", QStringLiteral("offscreen GLX framebuffer smaller than the window (%1 x %2 px, X window %3 x %4 px): grab %5 is incomplete")
+                .arg(px.width()).arg(px.height()).arg(w3).arg(h3).arg(QString::fromUtf8(pngPath)).toUtf8());
+        }
+#endif
         if (img.isNull()) {
             setError("grabWindow returned null image");
             return -2;
