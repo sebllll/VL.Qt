@@ -56,20 +56,4 @@ static class Program
         stdout.Flush();
         return failures == 0 ? 0 : 1;
     }
-
-    // Legacy (W1-01): members the not yet converted scenario files use; they go with the last conversion.
-    internal static bool Wslg => QtHost.Wslg;
-    internal static bool QuickSoftware => QtHost.QuickSoftware;
-
-    internal static Action<bool, string> PositionByWindowManager(Action<bool, string> check) => (ok, what) =>
-    {
-        if (!ok && QtHost.WslgXcb) Console.WriteLine($"SKIP {what}: position chosen by the WSLg window manager (Weston/XWayland)");
-        else check(ok, what);
-    };
-
-    internal static Action<bool, string> NeedsRhi(Action<bool, string> check, string why) => (ok, what) =>
-    {
-        if (QtHost.QuickSoftware) Console.WriteLine($"SKIP {what}: {why} (Qt Quick software backend)");
-        else check(ok, what);
-    };
 }

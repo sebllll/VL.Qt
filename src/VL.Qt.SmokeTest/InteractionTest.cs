@@ -13,7 +13,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 // Node level interaction (#319): Hover -> element Interaction pin -> Reconciler (handler
 // objects) -> QtNative -> SinkRegistry -> channels. The raw QtNative side of the input handlers is HandlerTest (the #208 bind
 // flags Interactive / Pointer are gone since #320). Mouse input comes from the TEST export vlqt_test_send_mouse; real
-// (OS) pointer input is ignored by the test windows (VLQT_TEST_SYNTHETIC_INPUT=1, set in Program.Main).
+// (OS) pointer input is ignored by the test windows (VLQT_TEST_SYNTHETIC_INPUT=1, set by QtHost).
 [TestFixture, NonParallelizable]
 public static partial class InteractionTest
 {

@@ -10,7 +10,7 @@ using System.IO;
 /// </summary>
 static class OwnProcess
 {
-    // Converted scenarios the helper can run (name -> body). Legacy rows are found through LegacyScenarios.Find.
+    // Scenarios the helper can run (name -> body).
     static readonly Dictionary<string, Action<Scenario>> s_bodies = new(StringComparer.OrdinalIgnoreCase)
     {
         ["qttexture"] = QtTextureTest.Run,
@@ -23,7 +23,7 @@ static class OwnProcess
 
     /// <summary>Body of a scenario the helper executable can run, or null.</summary>
     public static Action<Scenario>? Find(string name) =>
-        s_bodies.TryGetValue(name, out var body) ? body : LegacyScenarios.Find(name);
+        s_bodies.TryGetValue(name, out var body) ? body : null;
 
     /// <summary>
     /// Runs <paramref name="scenarios"/> (in this order, in one fresh process) and records their checks in <paramref name="s"/>.
