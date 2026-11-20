@@ -57,7 +57,7 @@ namespace VL.Qt.Tests
 
         void UserChanges(bool value) => _registry.Dispatch(new SinkRegistryTests.Poll().Value(_handle, Protocol.Vt.Bool, new byte[] { (byte)(value ? 1 : 0) }).Bytes);
 
-        static string SetValue(int id, bool v) => $"SET {id} {P.Value} bool({(v ? 1 : 0)})";
+        static string SetValue(int id, bool v) => $"SET {id} Value bool({(v ? 1 : 0)})";
 
         [Test]
         public void Defaults_Checkbox()
@@ -85,16 +85,16 @@ namespace VL.Qt.Tests
         public void Reconciler_SendsOnlyNonDefaults_ChangeDetection()
         {
             var cmds = Frame();
-            Assert.That(cmds, Does.Contain($"CREATE 1 {Protocol.Type.CheckBox}"));
-            Assert.That(cmds.Where(c => c.StartsWith($"SET 1 {P.Value} ", StringComparison.Ordinal) || c.StartsWith($"SET 1 {P.Enabled} ", StringComparison.Ordinal)
-                || c.StartsWith($"SET 1 {P.AutoSize} ", StringComparison.Ordinal)), Is.Empty, "QtNative defaults are not sent");
+            Assert.That(cmds, Does.Contain($"CREATE 1 CheckBox"));
+            Assert.That(cmds.Where(c => c.StartsWith($"SET 1 Value ", StringComparison.Ordinal) || c.StartsWith($"SET 1 Enabled ", StringComparison.Ordinal)
+                || c.StartsWith($"SET 1 AutoSize ", StringComparison.Ordinal)), Is.Empty, "QtNative defaults are not sent");
 
             var a = Update();
             Assert.That(Update(), Is.SameAs(a));
 
             _sink.Clear();
             _reconciler.Update(Update(out _, out _, enabled: false, autoSize: false), Space.DIPTopLeft);
-            Assert.That(_sink.Commands, Is.EquivalentTo(new[] { $"SET 1 {P.AutoSize} bool(0)", $"SET 1 {P.Enabled} bool(0)" }));
+            Assert.That(_sink.Commands, Is.EquivalentTo(new[] { $"SET 1 AutoSize bool(0)", $"SET 1 Enabled bool(0)" }));
         }
 
         [Test]
@@ -107,7 +107,7 @@ namespace VL.Qt.Tests
             var cmds = Frame(out bool value, out bool bang, ch, ToggleLook.Switch);
             Assert.That((value, bang), Is.EqualTo((true, false)));
             Assert.That(cmds, Does.Contain("DESTROY 1"));
-            Assert.That(cmds, Does.Contain($"CREATE 1 {Protocol.Type.Switch}"), "ids are reused");
+            Assert.That(cmds, Does.Contain($"CREATE 1 Switch"), "ids are reused");
             Assert.That(cmds, Does.Contain(SetValue(1, true)), "the new element gets the value");
             Assert.That(cmds.Any(c => c.StartsWith("BIND 1 ", StringComparison.Ordinal)), Is.True, "the sink is bound to the new element");
 
@@ -122,8 +122,8 @@ namespace VL.Qt.Tests
             // and back
             cmds = Frame(out value, out _, ch, ToggleLook.Checkbox);
             Assert.That(value, Is.False);
-            Assert.That(cmds, Does.Contain($"CREATE 1 {Protocol.Type.CheckBox}"));
-            Assert.That(cmds.Any(c => c.StartsWith($"SET 1 {P.Value} ", StringComparison.Ordinal)), Is.False, "false is QtNative default");
+            Assert.That(cmds, Does.Contain($"CREATE 1 CheckBox"));
+            Assert.That(cmds.Any(c => c.StartsWith($"SET 1 Value ", StringComparison.Ordinal)), Is.False, "false is QtNative default");
         }
 
         [Test]

@@ -61,7 +61,7 @@ namespace VL.Qt.Tests
 
         void UserChanges(int value) => _registry.Dispatch(new SinkRegistryTests.Poll().ValueI32(_handle, value).Bytes);
 
-        static string SetValue(int v) => $"SET 1 {P.Value} i32({v})";
+        static string SetValue(int v) => $"SET 1 Value i32({v})";
 
         [Test]
         public void Defaults_FullIntRange()
@@ -79,8 +79,8 @@ namespace VL.Qt.Tests
         public void Reconciler_SendsOnlyNonDefaults_ChangeDetection()
         {
             var cmds = Frame();
-            Assert.That(cmds, Does.Contain($"CREATE 1 {Protocol.Type.SpinBox}"));
-            Assert.That(cmds.Where(c => c.StartsWith("SET 1 7", StringComparison.Ordinal) || c.StartsWith($"SET 1 {P.AutoSize} ", StringComparison.Ordinal)),
+            Assert.That(cmds, Does.Contain($"CREATE 1 SpinBox"));
+            Assert.That(cmds.Where(c => c.StartsWith("SET 1 Debug", StringComparison.Ordinal) || c.StartsWith($"SET 1 AutoSize ", StringComparison.Ordinal)),
                 Is.Empty, "QtNative defaults are not sent");
 
             var a = Update();
@@ -90,7 +90,7 @@ namespace VL.Qt.Tests
             _reconciler.Update(Update(out _, out _, step: 5, editable: false, enabled: false, autoSize: false), Space.DIPTopLeft);
             Assert.That(_sink.Commands, Is.EquivalentTo(new[]
             {
-                $"SET 1 {P.AutoSize} bool(0)", $"SET 1 {P.Step} i32(5)", $"SET 1 {P.Editable} bool(0)", $"SET 1 {P.Enabled} bool(0)",
+                $"SET 1 AutoSize bool(0)", $"SET 1 Step i32(5)", $"SET 1 Editable bool(0)", $"SET 1 Enabled bool(0)",
             }));
         }
 
@@ -172,7 +172,7 @@ namespace VL.Qt.Tests
             var cmds = Frame(out int value, out _, ch, 0, 10);
             Assert.That(value, Is.EqualTo(10));
             Assert.That(ch.Value, Is.EqualTo(50), "the channel keeps the patch's value");
-            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 {P.Minimum} i32(0)", $"SET 1 {P.Maximum} i32(10)", SetValue(10) }),
+            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 Minimum i32(0)", $"SET 1 Maximum i32(10)", SetValue(10) }),
                 "Minimum/Maximum before Value");
 
             ch.Value = -5;
@@ -185,7 +185,7 @@ namespace VL.Qt.Tests
 
             // A bound change resends Value even if it stayed the same (Qt may have clamped with an intermediate range).
             cmds = Frame(out value, out _, ch, 0, 20);
-            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 {P.Minimum} i32(0)", $"SET 1 {P.Maximum} i32(20)", SetValue(0) }));
+            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 Minimum i32(0)", $"SET 1 Maximum i32(20)", SetValue(0) }));
         }
 
         [Test]

@@ -185,7 +185,7 @@ namespace VL.Qt.Tests
             Update(root);
 
             Assert.That(_sink.OfOp("DESTROY").Single(), Is.EqualTo($"DESTROY {oldId}"));
-            Assert.That(_sink.OfOp("CREATE").Single(), Does.EndWith($" {(ushort)ElementType.Button}"));
+            Assert.That(_sink.OfOp("CREATE").Single(), Does.EndWith(" Button"));
             Assert.That(_sink.OfOp("REPARENT").Single(), Does.EndWith(" 1"));
             Assert.That(_rec.Root.Children[1].Type, Is.EqualTo(ElementType.Button));
         }

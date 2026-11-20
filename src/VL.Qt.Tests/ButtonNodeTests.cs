@@ -66,17 +66,17 @@ namespace VL.Qt.Tests
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
             rec.Update(Update(), Space.DIPTopLeft);
-            Assert.That(sink.Commands, Does.Contain($"CREATE 1 {Protocol.Type.Button}"));
-            Assert.That(sink.Commands, Does.Contain($"SET 1 {P.Text} string(Button)"));
-            Assert.That(sink.Commands.Any(c => c.StartsWith($"SET 1 {P.Enabled} ") || c.StartsWith($"SET 1 {P.AutoRepeat} ")
-                || c.StartsWith($"SET 1 {P.AutoSize} ")), Is.False, "Qt defaults are not sent");
+            Assert.That(sink.Commands, Does.Contain($"CREATE 1 Button"));
+            Assert.That(sink.Commands, Does.Contain($"SET 1 Text string(Button)"));
+            Assert.That(sink.Commands.Any(c => c.StartsWith($"SET 1 Enabled ") || c.StartsWith($"SET 1 AutoRepeat ")
+                || c.StartsWith($"SET 1 AutoSize ")), Is.False, "Qt defaults are not sent");
             Assert.That(sink.Commands.Single(c => c.StartsWith("BIND 1 ")), Does.EndWith(" 0"), "bound without flags");
 
             sink.Clear();
             rec.Update(Update(text: "OK", enabled: false, autoRepeat: true, autoSize: false), Space.DIPTopLeft);
             Assert.That(sink.Commands, Is.EquivalentTo(new[]
             {
-                $"SET 1 {P.AutoSize} bool(0)", $"SET 1 {P.Text} string(OK)", $"SET 1 {P.Enabled} bool(0)", $"SET 1 {P.AutoRepeat} bool(1)",
+                $"SET 1 AutoSize bool(0)", $"SET 1 Text string(OK)", $"SET 1 Enabled bool(0)", $"SET 1 AutoRepeat bool(1)",
             }));
         }
 

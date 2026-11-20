@@ -71,10 +71,10 @@ namespace VL.Qt.Tests
             Frame(new Rectangle { Size = new Vector2(1, 2), Fill = new Color4(1, 0, 0, 1), StrokeWidth = 0.02f });
             Assert.That(_sink.Commands, Is.EqualTo(new[]
             {
-                "CREATE 1 3",
-                $"SET 1 {P.Size} vec2(100,200)",
-                $"SET 1 {P.Color} color(1,0,0,1)",
-                $"SET 1 {P.BorderWidth} f32(2)",          // 0.02 * 100
+                "CREATE 1 Rectangle",
+                $"SET 1 Size vec2(100,200)",
+                $"SET 1 Color color(1,0,0,1)",
+                $"SET 1 BorderWidth f32(2)",          // 0.02 * 100
                 "REPARENT 1 0 0",
             }));
         }
@@ -83,7 +83,7 @@ namespace VL.Qt.Tests
         public void DefaultElements_SendNoSets_ExceptTextFontSize()
         {
             Frame(G(new Rectangle(), new Image(), new Row(), new Column(), new ShaderEffect(), new Text()));
-            Assert.That(_sink.OfOp("SET"), Is.EqualTo(new[] { $"SET 7 {P.FontSize} f32(12)" }));
+            Assert.That(_sink.OfOp("SET"), Is.EqualTo(new[] { $"SET 7 FontSize f32(12)" }));
         }
 
         [Test]
@@ -91,18 +91,18 @@ namespace VL.Qt.Tests
         {
             Frame(G(new Rectangle()));
             Frame(G(new Rectangle { Debug = true }));
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 2 {P.Debug} bool(1)" }), "child only, not the Group");
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 2 Debug bool(1)" }), "child only, not the Group");
             Frame(G(new Rectangle { Debug = true }));
             Assert.That(_sink.Count, Is.EqualTo(0), "unchanged: nothing sent");
             Frame(G(new Rectangle()));
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 2 {P.Debug} bool(0)" }));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 2 Debug bool(0)" }));
         }
 
         [Test]
         public void Debug_OnCreatedElement_Sent()
         {
             Frame(new Rectangle { Debug = true });
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.Debug} bool(1)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 Debug bool(1)"));
         }
 
         [Test]
@@ -116,12 +116,12 @@ namespace VL.Qt.Tests
 
         static IEnumerable<TestCaseData> SingleChanges()
         {
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(fill: 0.5f)), $"SET 2 {P.Color} color(0.5,0,0,1)").SetName("Rectangle.Fill");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(opacity: 0.25f)), $"SET 2 {P.Opacity} f32(0.25)").SetName("Opacity");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(width: 2)), $"SET 2 {P.Size} vec2(200,200)").SetName("Size");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(text: "World")), $"SET 4 {P.Text} string(World)").SetName("Text.Content");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(spacing: 0.25f)), $"SET 3 {P.Spacing} f32(25)").SetName("Column.Spacing");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(blending: true)), $"SET 7 {P.Blending} bool(1)").SetName("ShaderEffect.Blending");
+            yield return new TestCaseData(new Func<Element>(() => BuildScene(fill: 0.5f)), $"SET 2 Color color(0.5,0,0,1)").SetName("Rectangle.Fill");
+            yield return new TestCaseData(new Func<Element>(() => BuildScene(opacity: 0.25f)), $"SET 2 Opacity f32(0.25)").SetName("Opacity");
+            yield return new TestCaseData(new Func<Element>(() => BuildScene(width: 2)), $"SET 2 Size vec2(200,200)").SetName("Size");
+            yield return new TestCaseData(new Func<Element>(() => BuildScene(text: "World")), $"SET 4 Text string(World)").SetName("Text.Content");
+            yield return new TestCaseData(new Func<Element>(() => BuildScene(spacing: 0.25f)), $"SET 3 Spacing f32(25)").SetName("Column.Spacing");
+            yield return new TestCaseData(new Func<Element>(() => BuildScene(blending: true)), $"SET 7 Blending bool(1)").SetName("ShaderEffect.Blending");
         }
 
         [TestCaseSource(nameof(SingleChanges))]
@@ -148,47 +148,47 @@ namespace VL.Qt.Tests
             var b = new Vector2(1, 1);
             Frame(new Rectangle { Size = b, Anchor = RectangleAnchor.Center });
             Frame(new Rectangle { Size = b, Anchor = RectangleAnchor.TopLeft });
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.Anchor} i32(33)" }), "TopLeft = AlignLeft|AlignTop");
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 Anchor i32(33)" }), "TopLeft = AlignLeft|AlignTop");
 
             var rot = Matrix.RotationZ(MathUtil.PiOverTwo);
             Frame(new Rectangle { Size = b, Transform = rot, Anchor = RectangleAnchor.TopLeft });
-            Assert.That(_sink.Commands.Single(), Does.StartWith($"SET 1 {P.Transform} mat4("));
+            Assert.That(_sink.Commands.Single(), Does.StartWith($"SET 1 Transform mat4("));
 
             Frame(new Rectangle { Size = new Vector2(2, 1), Transform = rot, Anchor = RectangleAnchor.TopLeft });
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.Size} vec2(200,100)" }),
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 Size vec2(200,100)" }),
                 "QtNative resolves the anchor against the new size: no matrix resend");
 
             Frame(new Rectangle { Size = new Vector2(2, 1), Transform = rot, Anchor = RectangleAnchor.BottomRight });
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.Anchor} i32(66)" }), "BottomRight = AlignRight|AlignBottom");
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 Anchor i32(66)" }), "BottomRight = AlignRight|AlignBottom");
         }
 
         [Test]
         public void Size_SentAsVec2OnChangeOnly_ConvertedToDip()
         {
             Frame(new Rectangle { Size = new Vector2(1, 0.5f) });
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.Size} vec2(100,50)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 Size vec2(100,50)"));
 
             Frame(new Rectangle { Size = new Vector2(1, 0.5f) });
             Assert.That(_sink.Count, Is.EqualTo(0), "same size: nothing sent");
 
             Frame(new Rectangle { Size = new Vector2(2, 0.5f) });
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.Size} vec2(200,50)" }));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 Size vec2(200,50)" }));
 
             Frame(new Rectangle { Size = new Vector2(2, 0.25f) });
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.Size} vec2(200,25)" }));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 Size vec2(200,25)" }));
         }
 
         [Test]
         public void Anchor_SentOnChangeOnly_NotOnEquality()
         {
             Frame(new Rectangle { Size = new Vector2(1, 1), Anchor = RectangleAnchor.Center });
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.Anchor} i32(132)"), "Center = 0x84 (not the default)");
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 Anchor i32(132)"), "Center = 0x84 (not the default)");
 
             Frame(new Rectangle { Size = new Vector2(1, 1), Anchor = RectangleAnchor.Center });
             Assert.That(_sink.Count, Is.EqualTo(0), "same anchor: nothing sent");
 
             Frame(new Rectangle { Size = new Vector2(1, 1), Anchor = RectangleAnchor.TopLeft });
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.Anchor} i32(33)" }), "back to TopLeft = 0x21");
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 Anchor i32(33)" }), "back to TopLeft = 0x21");
         }
 
         [Test]
@@ -197,7 +197,7 @@ namespace VL.Qt.Tests
             var rot = Matrix.RotationZ(0.5f);
             Frame(new Rectangle { Size = new Vector2(1, 1), Transform = rot, Anchor = RectangleAnchor.BottomRight });
             Frame(new Rectangle { Size = new Vector2(3, 1), Transform = rot, Anchor = RectangleAnchor.BottomRight });
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.Size} vec2(300,100)" }));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 Size vec2(300,100)" }));
         }
 
         [Test]
@@ -205,7 +205,7 @@ namespace VL.Qt.Tests
         {
             var rot = Matrix.RotationZ(MathUtil.PiOverTwo);
             Frame(new Group { Size = new Vector2(0, 0), Transform = rot });
-            Assert.That(_sink.Commands.Any(c => c.StartsWith($"SET 1 {P.Anchor} ")), Is.False, "TopLeft is QtNative default");
+            Assert.That(_sink.Commands.Any(c => c.StartsWith($"SET 1 Anchor ")), Is.False, "TopLeft is QtNative default");
             var expected = new RecordingSink();
             expected.SetMat4(1, P.Transform, SpaceMapping.Default.ToQt(rot));
             Assert.That(_sink.Commands, Does.Contain(expected.Commands.Single()));
@@ -226,16 +226,16 @@ namespace VL.Qt.Tests
         public void LayoutChild_OnlySizeSent()
         {
             Frame(C(new Rectangle { Size = new Vector2(0.5f, 0.25f) }));
-            Assert.That(_sink.OfOp("SET"), Is.EqualTo(new[] { $"SET 2 {P.Size} vec2(50,25)" }));
+            Assert.That(_sink.OfOp("SET"), Is.EqualTo(new[] { $"SET 2 Size vec2(50,25)" }));
 
             Frame(C(new Rectangle { Size = new Vector2(0.5f, 0.25f) }));
             Assert.That(_sink.Count, Is.EqualTo(0), _sink.ToString());
 
             Frame(new Row { Children = ImmutableArray.Create<Element>(new Rectangle { Size = new Vector2(1, 0.25f) }) });
-            Assert.That(_sink.OfOp("SET"), Is.EqualTo(new[] { $"SET 2 {P.Size} vec2(100,25)" }), "Column → Row recreates");
+            Assert.That(_sink.OfOp("SET"), Is.EqualTo(new[] { $"SET 2 Size vec2(100,25)" }), "Column → Row recreates");
 
             Frame(new Row { Children = ImmutableArray.Create<Element>(new Rectangle { Size = new Vector2(1, 0.5f) }) });
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 2 {P.Size} vec2(100,50)" }));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 2 Size vec2(100,50)" }));
         }
 
         // ---- Shape (#154): Frame converts with 100 per unit ----
@@ -249,13 +249,13 @@ namespace VL.Qt.Tests
             Frame(new Shape { Points = Pts(s_triangle), Closed = true, StrokeWidth = 0.02f, Dash = Spread.Create(0.04f, 0.02f), DashOffset = 0.01f, Cap = ShapeCap.Round });
             Assert.That(_sink.Commands, Is.EqualTo(new[]
             {
-                "CREATE 1 26",
-                $"SET 1 {P.ShapePoints} f32array(0,0,100,0,0,100)",
-                $"SET 1 {P.ShapeClosed} bool(1)",
-                $"SET 1 {P.ShapeStrokeWidth} f32(2)",
-                $"SET 1 {P.ShapeCap} i32(2)",
-                $"SET 1 {P.ShapeDash} f32array(2,1)",         // 0.04 / 0.02, 0.02 / 0.02
-                $"SET 1 {P.ShapeDashOffset} f32(0.5)",       // 0.01 / 0.02
+                "CREATE 1 Shape",
+                $"SET 1 ShapePoints f32array(0,0,100,0,0,100)",
+                $"SET 1 ShapeClosed bool(1)",
+                $"SET 1 ShapeStrokeWidth f32(2)",
+                $"SET 1 ShapeCap i32(2)",
+                $"SET 1 ShapeDash f32array(2,1)",         // 0.04 / 0.02, 0.02 / 0.02
+                $"SET 1 ShapeDashOffset f32(0.5)",       // 0.01 / 0.02
                 "REPARENT 1 0 0",
             }));
         }
@@ -279,14 +279,14 @@ namespace VL.Qt.Tests
             });
             Assert.That(_sink.Commands, Is.EqualTo(new[]
             {
-                $"SET 1 {P.ShapeFill} color(1,0,0,1)",
-                $"SET 1 {P.ShapeStrokeColor} color(0,1,0,1)",
-                $"SET 1 {P.ShapeJoin} i32(2)",
-                $"SET 1 {P.ShapeMiterLimit} f32(2)",
-                $"SET 1 {P.ShapeTrimStart} f32(0.1)",
-                $"SET 1 {P.ShapeTrimEnd} f32(0.9)",
-                $"SET 1 {P.ShapeTrimOffset} f32(0.5)",
-                $"SET 1 {P.ShapeFillRule} i32(1)",
+                $"SET 1 ShapeFill color(1,0,0,1)",
+                $"SET 1 ShapeStrokeColor color(0,1,0,1)",
+                $"SET 1 ShapeJoin i32(2)",
+                $"SET 1 ShapeMiterLimit f32(2)",
+                $"SET 1 ShapeTrimStart f32(0.1)",
+                $"SET 1 ShapeTrimEnd f32(0.9)",
+                $"SET 1 ShapeTrimOffset f32(0.5)",
+                $"SET 1 ShapeFillRule i32(1)",
             }));
         }
 
@@ -303,7 +303,7 @@ namespace VL.Qt.Tests
         {
             Frame(new Shape { Points = Pts(s_triangle) });
             Frame(new Shape { Points = Pts(new Vector2(0, 0), new Vector2(2, 0)) });
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.ShapePoints} f32array(0,0,200,0)" }));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 ShapePoints f32array(0,0,200,0)" }));
         }
 
         [Test]
@@ -311,14 +311,14 @@ namespace VL.Qt.Tests
         {
             var path = QtPath.Empty.MoveTo(0, 0).LineTo(1, 0).QuadTo(1, 1, 0, 1).Close();
             Frame(new Shape { Points = Pts(s_triangle), Path = path });
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapePath} path(0,1,2,4;0,0,100,0,100,100,0,100)"));
-            Assert.That(_sink.Commands.Any(c => c.Contains($" {P.ShapePoints} ")), Is.False);
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 ShapePath path(0,1,2,4;0,0,100,0,100,100,0,100)"));
+            Assert.That(_sink.Commands.Any(c => c.Contains($" {nameof(P.ShapePoints)} ")), Is.False);
 
             // Same content in a new instance: nothing; another path: sent again.
             Frame(new Shape { Points = Pts(s_triangle), Path = QtPath.Empty.MoveTo(0, 0).LineTo(1, 0).QuadTo(1, 1, 0, 1).Close() });
             Assert.That(_sink.Count, Is.EqualTo(0));
             Frame(new Shape { Path = QtPath.Empty.MoveTo(0, 0).LineTo(2, 0) });
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.ShapePath} path(0,1;0,0,200,0)" }));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 ShapePath path(0,1;0,0,200,0)" }));
         }
 
         [Test]
@@ -327,7 +327,7 @@ namespace VL.Qt.Tests
             var points = Pts(s_triangle);
             Frame(new Shape { Path = QtPath.Empty.MoveTo(0, 0).LineTo(1, 0) });
             Frame(new Shape { Points = points });
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.ShapePoints} f32array(0,0,100,0,0,100)" }));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 ShapePoints f32array(0,0,100,0,0,100)" }));
         }
 
         [Test]
@@ -335,7 +335,7 @@ namespace VL.Qt.Tests
         {
             Frame(new Shape { StrokeWidth = 0.02f });
             Frame(new Shape());
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.ShapeStrokeWidth} f32(-1)", $"SET 1 {P.ShapeDashOffset} f32(0)" }));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 ShapeStrokeWidth f32(-1)", $"SET 1 ShapeDashOffset f32(0)" }));
         }
 
         [Test]
@@ -346,9 +346,9 @@ namespace VL.Qt.Tests
             Frame(new Shape { Dash = dash, DashOffset = 0.1f, StrokeWidth = 0.1f });
             Assert.That(_sink.Commands, Is.EqualTo(new[]
             {
-                $"SET 1 {P.ShapeStrokeWidth} f32(10)",
-                $"SET 1 {P.ShapeDash} f32array(1,0.5)",
-                $"SET 1 {P.ShapeDashOffset} f32(1)",
+                $"SET 1 ShapeStrokeWidth f32(10)",
+                $"SET 1 ShapeDash f32array(1,0.5)",
+                $"SET 1 ShapeDashOffset f32(1)",
             }));
         }
 
@@ -357,7 +357,7 @@ namespace VL.Qt.Tests
         {
             Frame(new Shape { Dash = Spread.Create(0.1f, 0.05f), StrokeWidth = 0.05f });
             Frame(new Shape { Dash = Spread.Create(0.2f, 0.05f), StrokeWidth = 0.05f });
-            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.ShapeDash} f32array(4,1)" }));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 1 ShapeDash f32array(4,1)" }));
         }
 
         [Test]
@@ -365,7 +365,7 @@ namespace VL.Qt.Tests
         {
             var many = new Vector2[Protocol.MaxF32ArrayCount];   // twice as many floats as fit
             Frame(new Shape { Points = Spread.Create(many) });
-            var set = _sink.Commands.Single(c => c.Contains($" {P.ShapePoints} "));
+            var set = _sink.Commands.Single(c => c.Contains($" {nameof(P.ShapePoints)} "));
             Assert.That(set.Split(',').Length, Is.EqualTo(Protocol.MaxF32ArrayCount));
         }
 
@@ -377,7 +377,7 @@ namespace VL.Qt.Tests
                 path = path.LineTo(i, 1);
             Assert.That(Protocol.PathFits(9001, 9001), Is.False);
             Assert.DoesNotThrow(() => Frame(new Shape { Path = path }));
-            var set = _sink.Commands.Single(c => c.Contains($" {P.ShapePath} "));
+            var set = _sink.Commands.Single(c => c.Contains($" {nameof(P.ShapePath)} "));
             int verbs = set.Substring(set.IndexOf("path(") + 5, set.IndexOf(';') - set.IndexOf("path(") - 5).Split(',').Length;
             Assert.That(Protocol.PathFits(verbs, verbs), Is.True);
             Assert.That(Protocol.PathFits(verbs + 1, verbs + 1), Is.False);

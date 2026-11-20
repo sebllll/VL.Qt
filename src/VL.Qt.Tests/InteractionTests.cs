@@ -20,7 +20,7 @@ namespace VL.Qt.Tests
     /// </summary>
     public class InteractionTests
     {
-        const ushort hover = Protocol.Type.HoverHandler;     // 32
+        const string hover = nameof(Protocol.Type.HoverHandler);     // 32
 
         RecordingSink _sink = null!;
         IdAllocator _ids = null!;
@@ -60,7 +60,7 @@ namespace VL.Qt.Tests
 
             Assert.That(Commands, Is.EqualTo(new[]
             {
-                "CREATE 1 3", "REPARENT 1 0 0",
+                "CREATE 1 Rectangle", "REPARENT 1 0 0",
                 $"CREATE 2 {hover}", "REPARENT 2 1 0", "BIND 2 1 0",
             }));
             Assert.That(_rec.Bindings[2], Is.EqualTo(new SinkSlot(a, 0)));
@@ -85,7 +85,7 @@ namespace VL.Qt.Tests
             Assert.That(Commands, Is.Empty, "reference-equal root");
 
             Frame(R(chain, radius: 0.1f));
-            Assert.That(Commands, Is.EqualTo(new[] { $"SET 1 {Protocol.Prop.Radius} f32(10)" }), "same chain instance -> no handler ops");
+            Assert.That(Commands, Is.EqualTo(new[] { $"SET 1 Radius f32(10)" }), "same chain instance -> no handler ops");
         }
 
         [Test]
@@ -142,7 +142,7 @@ namespace VL.Qt.Tests
             Frame(G(R(chain), R(chain, radius: 0.1f)));
 
             // Group 1, first rectangle 2 + its handler 3, second rectangle 4 without handler.
-            Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 1", "CREATE 2 3", $"CREATE 3 {hover}", "CREATE 4 3" }));
+            Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Item", "CREATE 2 Rectangle", $"CREATE 3 {hover}", "CREATE 4 Rectangle" }));
             Assert.That(Commands, Does.Contain("REPARENT 3 2 0"));
             Assert.That(a.Warning, Is.EqualTo(SceneRegistry.InteractionDuplicateWarning));
             Assert.That(_rec.Sinks.Count, Is.EqualTo(1));
@@ -183,7 +183,7 @@ namespace VL.Qt.Tests
             var chain = H(a);
             Frame(R(chain));
             other.Update(R(chain, radius: 0.1f), Space.DIPTopLeft);
-            Assert.That(otherSink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 3" }));
+            Assert.That(otherSink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Rectangle" }));
             Assert.That(a.Warning, Is.EqualTo(SceneRegistry.InteractionDuplicateWarning));
 
             Frame(null);
@@ -416,11 +416,11 @@ namespace VL.Qt.Tests
 
         // --- Click, Point, Wheel nodes (#320, pkg 05) ---
 
-        const ushort tap = Protocol.Type.TapHandler;       // 33
-        const ushort point = Protocol.Type.PointHandler;   // 34
-        const ushort wheel = Protocol.Type.WheelHandler;   // 35
-        const ushort acceptedButtons = Protocol.Prop.AcceptedButtons; // 769
-        const ushort acceptedDevices = Protocol.Prop.AcceptedDevices; // 770
+        const string tap = nameof(Protocol.Type.TapHandler);       // 33
+        const string point = nameof(Protocol.Type.PointHandler);   // 34
+        const string wheel = nameof(Protocol.Type.WheelHandler);   // 35
+        const string acceptedButtons = nameof(Protocol.Prop.AcceptedButtons); // 769
+        const string acceptedDevices = nameof(Protocol.Prop.AcceptedDevices); // 770
 
         static ClickInteraction C(ElementSink sink, Interaction? previous = null, PointerButtons buttons = PointerButtons.Left, PointerDevices devices = PointerDevices.All)
             => new(previous, new SinkSlot(sink, 0), buttons, devices);
@@ -442,7 +442,7 @@ namespace VL.Qt.Tests
             var p = new ElementSink();
             var chain = new PointInteraction(C(c, H(h)), new SinkSlot(p, 0), PointerButtons.Left, PointerDevices.All);
             Frame(R(chain));
-            Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 3", $"CREATE 2 {hover}", $"CREATE 3 {tap}", $"CREATE 4 {point}" }));
+            Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Rectangle", $"CREATE 2 {hover}", $"CREATE 3 {tap}", $"CREATE 4 {point}" }));
             Assert.That(_sink.OfOp("BIND").Count(), Is.EqualTo(3));
             Assert.That(_rec.Sinks.Count, Is.EqualTo(3));
         }
@@ -475,7 +475,7 @@ namespace VL.Qt.Tests
             using var node = new ClickNode(_ => new Removal());
             var a = node.Update(null, null, null, null, null, PointerButtons.Left, PointerDevices.All);
             Assert.That(node.Update(null, null, null, null, null, PointerButtons.Left, PointerDevices.All), Is.SameAs(a));
-            Assert.That(a.HandlerType, Is.EqualTo(tap));
+            Assert.That(a.HandlerType, Is.EqualTo(Protocol.Type.TapHandler));
             var b = node.Update(null, null, null, null, null, PointerButtons.Right, PointerDevices.All);
             Assert.That(b, Is.Not.SameAs(a));
             Assert.That(((ClickInteraction)b).Buttons, Is.EqualTo(PointerButtons.Right));
@@ -676,14 +676,14 @@ namespace VL.Qt.Tests
         {
             var a = new ElementSink();
             Frame(R(new TouchPointsInteraction(null, new SinkSlot(a, 0), true, PointerMasks.DefaultDevices)));
-            Assert.That(Commands.Where(c => c.StartsWith("CREATE")), Is.EqualTo(new[] { "CREATE 1 3", $"CREATE 2 {Protocol.Type.TouchPointsHandler}" }));
+            Assert.That(Commands.Where(c => c.StartsWith("CREATE")), Is.EqualTo(new[] { "CREATE 1 Rectangle", $"CREATE 2 TouchPointsHandler" }));
             Assert.That(_sink.OfOp("SET"), Is.Empty, "occlusion on / All = QtNative defaults");
 
             var chain = new TouchPointsInteraction(null, new SinkSlot(a, 0), false, TouchPointsNode_DefaultDevices);
             Frame(R(chain));
             Assert.That(Commands, Is.EqualTo(new[]
             {
-                $"SET 2 {Protocol.Prop.Occlusion} bool(0)",
+                $"SET 2 Occlusion bool(0)",
                 $"SET 2 {acceptedDevices} i32({0x2 | 0x8 | 0x10 | 0x20})",
             }));
         }
@@ -695,14 +695,14 @@ namespace VL.Qt.Tests
         {
             var a = new ElementSink();
             Frame(R(new PinchInteraction(null, new SinkSlot(a, 0), 2, 2, PointerDevices.All)));
-            Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 3", $"CREATE 2 {Protocol.Type.PinchHandler}" }));
+            Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Rectangle", $"CREATE 2 PinchHandler" }));
             Assert.That(_sink.OfOp("SET"), Is.Empty);
 
             Frame(R(new PinchInteraction(null, new SinkSlot(a, 0), 3, 4, PointerDevices.TouchScreen)));
             Assert.That(Commands, Is.EqualTo(new[]
             {
-                $"SET 2 {Protocol.Prop.MinimumPointCount} i32(3)",
-                $"SET 2 {Protocol.Prop.MaximumPointCount} i32(4)",
+                $"SET 2 MinimumPointCount i32(3)",
+                $"SET 2 MaximumPointCount i32(4)",
                 $"SET 2 {acceptedDevices} i32(2)",
             }));
         }
@@ -823,7 +823,7 @@ namespace VL.Qt.Tests
 
         // --- Drag node (#209, pkg 12) ---
 
-        const ushort drag = Protocol.Type.DragHandler; // 38
+        const string drag = nameof(Protocol.Type.DragHandler); // 38
 
         static DragInteraction D(ElementSink sink, bool moves = true, DragAxis axis = DragAxis.Both, DragLimits? limits = null,
             PointerButtons buttons = PointerButtons.Left, PointerDevices devices = PointerDevices.All)
@@ -836,20 +836,20 @@ namespace VL.Qt.Tests
         {
             var a = new ElementSink();
             Frame(R(D(a)));
-            Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 3", $"CREATE 2 {drag}" }));
+            Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Rectangle", $"CREATE 2 {drag}" }));
             Assert.That(_sink.OfOp("SET"), Is.Empty, "moves on / both axes / no limits / Left / All = QtNative defaults");
 
             Frame(R(D(a, moves: false, axis: DragAxis.Vertical, limits: new DragLimits(-1, 0, 1, 0), buttons: PointerButtons.Right)));
             Assert.That(Commands, Is.EqualTo(new[]
             {
-                $"SET 2 {Protocol.Prop.MovesElement} bool(0)",
-                $"SET 2 {Protocol.Prop.DragAxis} i32(2)",
-                $"SET 2 {Protocol.Prop.DragLimits} rect(-100,0,100,0)",
+                $"SET 2 MovesElement bool(0)",
+                $"SET 2 DragAxis i32(2)",
+                $"SET 2 DragLimits rect(-100,0,100,0)",
                 $"SET 2 {acceptedButtons} i32(2)",
             }));
 
             Frame(R(D(a, moves: false, axis: DragAxis.Vertical, limits: new DragLimits(float.NegativeInfinity, 0, 1, float.PositiveInfinity), buttons: PointerButtons.Right)));
-            Assert.That(Commands, Is.EqualTo(new[] { $"SET 2 {Protocol.Prop.DragLimits} rect(-Infinity,0,100,Infinity)" }));
+            Assert.That(Commands, Is.EqualTo(new[] { $"SET 2 DragLimits rect(-Infinity,0,100,Infinity)" }));
         }
 
         [Test]
@@ -932,7 +932,7 @@ namespace VL.Qt.Tests
             var chain = D(a);
             var transform = Matrix.Translation(0, 0, 0) * Matrix.Scaling(2);
             Frame(RB(chain, transform));
-            Assert.That(Commands.Count(c => c.StartsWith($"SET 1 {Protocol.Prop.Transform} ")), Is.EqualTo(1));
+            Assert.That(Commands.Count(c => c.StartsWith($"SET 1 Transform ")), Is.EqualTo(1));
 
             for (int i = 0; i < 3; i++)
             {
@@ -942,9 +942,9 @@ namespace VL.Qt.Tests
 
             // Animated Transform pin: every changed value is sent, so it overrules the drag each frame.
             Frame(RB(chain, Matrix.Translation(0.1f, 0, 0)));
-            Assert.That(Commands.Count(c => c.StartsWith($"SET 1 {Protocol.Prop.Transform} ")), Is.EqualTo(1));
+            Assert.That(Commands.Count(c => c.StartsWith($"SET 1 Transform ")), Is.EqualTo(1));
             Frame(RB(chain, Matrix.Translation(0.2f, 0, 0)));
-            Assert.That(Commands.Count(c => c.StartsWith($"SET 1 {Protocol.Prop.Transform} ")), Is.EqualTo(1));
+            Assert.That(Commands.Count(c => c.StartsWith($"SET 1 Transform ")), Is.EqualTo(1));
         }
 
         [Test]

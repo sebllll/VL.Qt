@@ -28,7 +28,7 @@ namespace VL.Qt.Tests
             _rec.Update(root, Space.DIPTopLeft);
         }
 
-        int Sets(ushort prop) => _sink.OfOp("SET").Count(c => c.Split(' ')[2] == prop.ToString());
+        int Sets(ushort prop) => _sink.OfOp("SET").Count(c => c.Split(' ')[2] == RecordingSink.PropName(prop));
 
         static BlurEffect Blur(Effect? previous = null, float amount = 0.5f) => new(previous, amount, 32, 0);
         static DropShadowEffect Shadow(Effect? previous = null) => new(previous, Color4.Black, new Vector2(0.1f, 0.2f), 1, 1);
@@ -80,8 +80,8 @@ namespace VL.Qt.Tests
             Frame(new Rectangle { Effect = chain });
             // One MULTI run with the folded values (offset y 0.2 units = 20 logical pixels), no EFFECT_* SET.
             Assert.That(Chains, Has.Length.EqualTo(1));
-            Assert.That(Chains[0], Does.StartWith("CHAIN 1 | multi 833=bool(1) 834=f32(0.5) "));
-            Assert.That(Chains[0], Does.Contain(" 840=f32(20)"));
+            Assert.That(Chains[0], Does.StartWith("CHAIN 1 | multi EffectBlurEnabled=bool(1) EffectBlur=f32(0.5) "));
+            Assert.That(Chains[0], Does.Contain(" EffectShadowVerticalOffset=f32(20)"));
             Assert.That(Sets(P.EffectEnabled), Is.EqualTo(0));
 
             // New description with the same chain instance: nothing.
@@ -91,7 +91,7 @@ namespace VL.Qt.Tests
             // Changed chain: the whole chain again, no SET.
             Frame(new Rectangle { Effect = Shadow(Blur(null, 0.7f)) });
             Assert.That(Chains, Has.Length.EqualTo(1));
-            Assert.That(Chains[0], Does.Contain("834=f32(0.7)"));
+            Assert.That(Chains[0], Does.Contain("EffectBlur=f32(0.7)"));
             Assert.That(_sink.OfOp("SET").Count(), Is.EqualTo(0));
         }
 
@@ -109,7 +109,7 @@ namespace VL.Qt.Tests
             // Back on: the whole chain.
             Frame(new Rectangle { Effect = Blur() });
             Assert.That(Chains, Has.Length.EqualTo(1));
-            Assert.That(Chains[0], Does.StartWith("CHAIN 1 | multi 833=bool(1)"));
+            Assert.That(Chains[0], Does.StartWith("CHAIN 1 | multi EffectBlurEnabled=bool(1)"));
         }
 
         [Test]
@@ -117,7 +117,7 @@ namespace VL.Qt.Tests
         {
             Frame(new Rectangle());
             Assert.That(Chains, Is.Empty);
-            Assert.That(_sink.Commands.Any(c => c.StartsWith("SET ") && c.Split(' ')[2] == "832"), Is.False);
+            Assert.That(_sink.Commands.Any(c => c.StartsWith("SET ") && c.Split(' ')[2] == nameof(P.EffectEnabled)), Is.False);
         }
 
         [Test]
@@ -128,7 +128,7 @@ namespace VL.Qt.Tests
             Frame(new Rectangle { Effect = chain });
             Assert.That(_sink.OfOp("CREATE").Count(), Is.EqualTo(2));
             Assert.That(Chains, Has.Length.EqualTo(1));
-            Assert.That(Chains[0], Does.Contain("850=ref(2)"));
+            Assert.That(Chains[0], Does.Contain("EffectMaskSource=ref(2)"));
             Assert.That(_sink.OfOp("REPARENT").Count(), Is.EqualTo(1), "only the element itself");
             Assert.That(_sink.Commands.Any(c => c.StartsWith("REPARENT 2 ")), Is.False);
             Assert.That(_sink.Commands.FindIndex(c => c.StartsWith("CREATE 2 ")), Is.LessThan(_sink.Commands.FindIndex(c => c.StartsWith("CHAIN "))),

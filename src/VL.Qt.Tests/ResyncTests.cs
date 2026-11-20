@@ -50,7 +50,7 @@ namespace VL.Qt.Tests
                             break;
                         case "SET":
                             if (!_items.TryGetValue(id, out var s)) return -4;
-                            if (t[2] == Protocol.Prop.Radius.ToString(CultureInfo.InvariantCulture))
+                            if (t[2] == nameof(Protocol.Prop.Radius))
                             {
                                 float v = float.Parse(t[3][4..^1], CultureInfo.InvariantCulture);
                                 if (v < 0) return -7;

@@ -40,7 +40,7 @@ namespace VL.Qt.Tests
         {
             Update(new Button());
 
-            Assert.That(_sink.Commands[0], Is.EqualTo("CREATE 1 10"));
+            Assert.That(_sink.Commands[0], Is.EqualTo("CREATE 1 Button"));
             Assert.That(_sink.Commands[1], Is.EqualTo(Full(1, BaseStyle.Default)));
             Assert.That(_sink.Commands[1], Does.StartWith($"STYLE 1 {Protocol.StyleSet.Clear} "));
             Assert.That(_sink.OfOp("STYLE").Count(), Is.EqualTo(1));

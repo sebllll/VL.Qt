@@ -428,7 +428,7 @@ namespace VL.Qt.Tests
             uint id = _rec.Root!.Id;
             uint h = _rec.Root!.BoundHandle;
             Assert.That(h, Is.Not.Zero);
-            Assert.That(Structural, Is.EqualTo(new[] { $"CREATE {id} {Protocol.Type.Rectangle}", $"REPARENT {id} 0 0", $"BIND {id} {h} 0" }));
+            Assert.That(Structural, Is.EqualTo(new[] { $"CREATE {id} Rectangle", $"REPARENT {id} 0 0", $"BIND {id} {h} 0" }));
             Assert.That(_rec.Bindings[id], Is.EqualTo(new SinkSlot(sinkA, 0)));
 
             // Same sink on a new description → no BIND.

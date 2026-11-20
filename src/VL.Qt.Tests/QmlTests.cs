@@ -830,9 +830,9 @@ namespace VL.Qt.Tests
         public void Reconciler_FirstFrame_CreatesSetsSourceAndAllProperties()
         {
             var cmds = Frame(new() { ["fill"] = new Color4(1, 0, 0, 1), ["progress"] = 0.5f });
-            Assert.That(cmds[0], Is.EqualTo($"CREATE 1 {Protocol.Type.Qml}"));
-            Assert.That(cmds, Does.Contain($"SET 1 {P.QmlSource} string({_file})"));
-            Assert.That(cmds, Does.Not.Contain($"SET 1 {P.QmlReload} i32(0)"), "reload counter 0 is the default");
+            Assert.That(cmds[0], Is.EqualTo($"CREATE 1 Qml"));
+            Assert.That(cmds, Does.Contain($"SET 1 QmlSource string({_file})"));
+            Assert.That(cmds, Does.Not.Contain($"SET 1 QmlReload i32(0)"), "reload counter 0 is the default");
             Assert.That(cmds, Does.Contain("QML 1 0 fill=color(1,0,0,1) progress=f32(0.5)"));
         }
 
@@ -870,7 +870,7 @@ namespace VL.Qt.Tests
             Frame(d);
             var other = System.IO.Path.Combine(_dir, "b.qml");
             var cmds = Frame(d, other);
-            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 {P.QmlSource} string({other})", "QML 1 0 a=f32(1)" }));
+            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 QmlSource string({other})", "QML 1 0 a=f32(1)" }));
         }
 
         [Test]
@@ -879,7 +879,7 @@ namespace VL.Qt.Tests
             Update();
             _sink.Clear();
             _reconciler.Update(Update(autoSize: false), Space.DIPTopLeft);
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.AutoSize} bool(0)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 AutoSize bool(0)"));
         }
 
         [Test]
@@ -890,7 +890,7 @@ namespace VL.Qt.Tests
             Assert.That(Frame(d), Is.Empty);
             _events.OnNext(new FileSystemEventArgs(WatcherChangeTypes.Changed, _dir, "Helper.qml"));
             var cmds = Frame(d);
-            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 {P.QmlReload} i32(1)", "QML 1 0 a=f32(1) b=string(x)" }));
+            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 QmlReload i32(1)", "QML 1 0 a=f32(1) b=string(x)" }));
             Assert.That(Frame(d), Is.Empty, "once per change");
         }
 

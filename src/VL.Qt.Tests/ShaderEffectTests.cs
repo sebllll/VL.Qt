@@ -109,11 +109,11 @@ namespace VL.Qt.Tests
                 Uniforms = U(Uniform.Float("time", 0.5f), Uniform.Vector2("size", new Vector2(2, 3))),
             });
             var text = _sink.ToString();
-            Assert.That(text, Does.Contain($"SET 1 {P.FragmentShader} u64(11)"));
-            Assert.That(text, Does.Contain($"SET 1 {P.VertexShader} u64(12)"));
-            Assert.That(text, Does.Contain($"SET 1 {P.Blending} bool(0)"));
-            Assert.That(text, Does.Contain($"SET 1 {P.MeshResolution} ivec2(4,3)"));
-            Assert.That(text, Does.Contain($"SET 1 {P.Source} ref(2)"));
+            Assert.That(text, Does.Contain($"SET 1 FragmentShader u64(11)"));
+            Assert.That(text, Does.Contain($"SET 1 VertexShader u64(12)"));
+            Assert.That(text, Does.Contain($"SET 1 Blending bool(0)"));
+            Assert.That(text, Does.Contain($"SET 1 MeshResolution ivec2(4,3)"));
+            Assert.That(text, Does.Contain($"SET 1 Source ref(2)"));
             // The input is hidden by QtNative on REPARENT under the ShaderEffect (#474), nothing to send.
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo("UNIFORMS 1 0 time=f32(0.5) size=vec2(2,3)"));
             Assert.That(text.IndexOf("CREATE 2", StringComparison.Ordinal), Is.LessThan(text.IndexOf("UNIFORMS", StringComparison.Ordinal)));
@@ -182,7 +182,7 @@ namespace VL.Qt.Tests
                 Uniforms = U(Uniform.FromTexture("mask", tex), Uniform.FromTexture("again", tex), Uniform.FromTexture("other", tex2)),
             });
             var text = _sink.ToString();
-            Assert.That(text, Does.Contain($"SET 1 {P.Source} ref(2)"));
+            Assert.That(text, Does.Contain($"SET 1 Source ref(2)"));
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo("UNIFORMS 1 0 mask=ref(3) again=ref(3) other=ref(4)"));
             Assert.That(_sink.OfOp("REPARENT").Count(), Is.EqualTo(4));
         }
@@ -207,9 +207,9 @@ namespace VL.Qt.Tests
             Frame(new ShaderEffect { FragmentShaderId = 2, Blending = false, MeshResolution = new Int2(0, 5) });
             Assert.That(_sink.OfOp("SET"), Is.EquivalentTo(new[]
             {
-                $"SET 1 {P.FragmentShader} u64(2)",
-                $"SET 1 {P.Blending} bool(0)",
-                $"SET 1 {P.MeshResolution} ivec2(1,5)",
+                $"SET 1 FragmentShader u64(2)",
+                $"SET 1 Blending bool(0)",
+                $"SET 1 MeshResolution ivec2(1,5)",
             }));
             Frame(new ShaderEffect { FragmentShaderId = 2, Blending = false, MeshResolution = new Int2(-3, 5) });
             Assert.That(_sink.Commands, Is.Empty, "clamped value is unchanged");
@@ -220,7 +220,7 @@ namespace VL.Qt.Tests
         {
             Frame(new ShaderEffect { Input = new Rectangle() });
             Frame(new ShaderEffect());
-            Assert.That(_sink.ToString(), Does.Contain($"SET 1 {P.Source} ref(0)"));
+            Assert.That(_sink.ToString(), Does.Contain($"SET 1 Source ref(0)"));
         }
 
         // --- node ---

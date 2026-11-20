@@ -641,12 +641,12 @@ namespace VL.Qt.Tests
             var r = _client.CreateImage();
             var image = new QtImage(r);
             rec.Update(new Image { Source = image }, Space.DIPTopLeft);
-            Assert.That(sink.OfOp("SET"), Has.One.EqualTo($"SET 1 {Protocol.Prop.Image} u64({r.Id})"));
+            Assert.That(sink.OfOp("SET"), Has.One.EqualTo($"SET 1 Image u64({r.Id})"));
             sink.Clear();
             rec.Update(new Image { Source = new QtImage(r) }, Space.DIPTopLeft);
             Assert.That(sink.OfOp("SET"), Is.Empty, "same resource: nothing to send");
             rec.Update(new Image(), Space.DIPTopLeft);
-            Assert.That(sink.OfOp("SET"), Has.One.EqualTo($"SET 1 {Protocol.Prop.Image} u64(0)"));
+            Assert.That(sink.OfOp("SET"), Has.One.EqualTo($"SET 1 Image u64(0)"));
         }
 
         [Test]

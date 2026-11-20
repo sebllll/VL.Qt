@@ -169,11 +169,11 @@ namespace VL.Qt.Tests
             var rec = new RecordingSink();
             WriteAll(rec);
             Assert.That(rec.Count, Is.EqualTo(12));
-            Assert.That(rec.Commands[0], Is.EqualTo($"CREATE 1 {Protocol.Type.Rectangle}"));
+            Assert.That(rec.Commands[0], Is.EqualTo($"CREATE 1 Rectangle"));
             Assert.That(rec.Commands[1], Is.EqualTo("REPARENT 1 0 0"));
-            Assert.That(rec.Commands[2], Is.EqualTo($"SET 1 {Protocol.Prop.Opacity} f32(0.5)"));
-            Assert.That(rec.Commands[5], Is.EqualTo($"SET 1 {Protocol.Prop.Color} color(1,0,0,1)"));
-            Assert.That(rec.Commands[6], Is.EqualTo($"SET 1 {Protocol.Prop.EffectPaddingRect} rect(1,2,3,4)"));
+            Assert.That(rec.Commands[2], Is.EqualTo($"SET 1 Opacity f32(0.5)"));
+            Assert.That(rec.Commands[5], Is.EqualTo($"SET 1 Color color(1,0,0,1)"));
+            Assert.That(rec.Commands[6], Is.EqualTo($"SET 1 EffectPaddingRect rect(1,2,3,4)"));
             Assert.That(rec.Commands[8], Is.EqualTo("SET 1 301 string(Hällo)"));
             Assert.That(rec.Commands[10], Is.EqualTo("BIND 1 5 2"));
             Assert.That(rec.Commands[11], Is.EqualTo("DESTROY 1"));

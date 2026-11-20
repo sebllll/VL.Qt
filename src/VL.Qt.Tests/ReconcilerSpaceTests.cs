@@ -54,16 +54,16 @@ namespace VL.Qt.Tests
                 Dash = Spread.Create(0.1f, 0.05f), DashOffset = 0.02f,
             };
             Frame(shape, Normalized(600));   // 300 per unit
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapePoints} f32array(0,0,300,150)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapeStrokeWidth} f32(6)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapeDash} f32array(5,2.5)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 ShapePoints f32array(0,0,300,150)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 ShapeStrokeWidth f32(6)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 ShapeDash f32array(5,2.5)"));
 
             // Scale change: points and stroke width again, the dash (a ratio) not.
             Frame(shape, Normalized(300));   // 150 per unit
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapePoints} f32array(0,0,150,75)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapeStrokeWidth} f32(3)"));
-            Assert.That(_sink.Commands.Any(c => c.Contains($" {P.ShapeDash} ")), Is.False);
-            Assert.That(_sink.Commands.Any(c => c.Contains($" {P.ShapeDashOffset} ")), Is.False);
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 ShapePoints f32array(0,0,150,75)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 ShapeStrokeWidth f32(3)"));
+            Assert.That(_sink.Commands.Any(c => c.Contains($" {nameof(P.ShapeDash)} ")), Is.False);
+            Assert.That(_sink.Commands.Any(c => c.Contains($" {nameof(P.ShapeDashOffset)} ")), Is.False);
         }
 
         [Test]
@@ -71,20 +71,20 @@ namespace VL.Qt.Tests
         {
             var shape = new Shape { Path = QtPath.Empty.MoveTo(0, 0).LineTo(1, 1) };
             Frame(shape, Normalized(600));
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapePath} path(0,1;0,0,300,300)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 ShapePath path(0,1;0,0,300,300)"));
             Frame(shape, Normalized(300));
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.ShapePath} path(0,1;0,0,150,150)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 ShapePath path(0,1;0,0,150,150)"));
         }
 
         [Test]
         public void Normalized_LengthsFollowTheSceneHeight()
         {
             Frame(Tree, Normalized(600));
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.Spacing} f32(30)"));   // 0.1 * 300
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.Padding} f32(15)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 2 {P.Size} vec2(300,150)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 2 {P.Radius} f32(30)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 3 {P.FontSize} f32(60)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 Spacing f32(30)"));   // 0.1 * 300
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 Padding f32(15)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 2 Size vec2(300,150)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 2 Radius f32(30)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 3 FontSize f32(60)"));
         }
 
         [Test]
@@ -96,14 +96,14 @@ namespace VL.Qt.Tests
             Frame(Tree, Normalized(300));
 
             Assert.That(_sink.OfOp("SET").Count(), Is.EqualTo(_sink.Count), "only SET commands");
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.Spacing} f32(15)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.Padding} f32(7.5)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 2 {P.Size} vec2(150,75)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 2 {P.Radius} f32(15)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 2 {P.BorderWidth} f32(3)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 3 {P.FontSize} f32(30)"));
-            Assert.That(_sink.Commands.Any(c => c.StartsWith($"SET 2 {P.Transform} mat4(") && c.Contains(",30,45,0,")), "transform translation (0.2, 0.3) * 150: " + string.Join("\n", _sink.Commands));
-            Assert.That(_sink.Commands.Any(c => c.Split(' ')[2] is var prop && (prop == P.Opacity.ToString() || prop == P.Color.ToString())), Is.False,
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 Spacing f32(15)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 Padding f32(7.5)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 2 Size vec2(150,75)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 2 Radius f32(15)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 2 BorderWidth f32(3)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 3 FontSize f32(30)"));
+            Assert.That(_sink.Commands.Any(c => c.StartsWith($"SET 2 Transform mat4(") && c.Contains(",30,45,0,")), "transform translation (0.2, 0.3) * 150: " + string.Join("\n", _sink.Commands));
+            Assert.That(_sink.Commands.Any(c => c.Split(' ')[2] is var prop && (prop == nameof(P.Opacity) || prop == nameof(P.Color))), Is.False,
                 "opacity and color unchanged: " + string.Join("\n", _sink.Commands));
         }
 
@@ -120,13 +120,13 @@ namespace VL.Qt.Tests
         public void ScaleChange_PixelTopLeft_DprChange_RewritesEveryLength()
         {
             Frame(Tree, new SpaceMapping(Space.PixelTopLeft, new Vector2(800, 600), 1f));
-            Assert.That(_sink.Commands, Does.Contain($"SET 2 {P.Size} vec2(100,50)"), "100 device pixels per unit at dpr 1");
+            Assert.That(_sink.Commands, Does.Contain($"SET 2 Size vec2(100,50)"), "100 device pixels per unit at dpr 1");
 
             // The window moves to a screen with 200 %: 1 unit = 100 device pixels = 50 DIP.
             Frame(Tree, new SpaceMapping(Space.PixelTopLeft, new Vector2(800, 600), 2f));
-            Assert.That(_sink.Commands, Does.Contain($"SET 2 {P.Size} vec2(50,25)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 2 {P.Radius} f32(5)"));
-            Assert.That(_sink.Commands, Does.Contain($"SET 3 {P.FontSize} f32(10)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 2 Size vec2(50,25)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 2 Radius f32(5)"));
+            Assert.That(_sink.Commands, Does.Contain($"SET 3 FontSize f32(10)"));
             Assert.That(_sink.OfOp("SET").Count(), Is.EqualTo(_sink.Count));
         }
 
@@ -135,8 +135,8 @@ namespace VL.Qt.Tests
         {
             Frame(Tree, Normalized(600));
             Frame(new Column { Spacing = 0.2f, Padding = 0.05f, Children = ((Column)Tree).Children }, Normalized(300));
-            Assert.That(_sink.OfOp("SET").Count(c => c.StartsWith($"SET 1 {P.Spacing} ")), Is.EqualTo(1));
-            Assert.That(_sink.Commands, Does.Contain($"SET 1 {P.Spacing} f32(30)"), "0.2 * 150");
+            Assert.That(_sink.OfOp("SET").Count(c => c.StartsWith($"SET 1 Spacing ")), Is.EqualTo(1));
+            Assert.That(_sink.Commands, Does.Contain($"SET 1 Spacing f32(30)"), "0.2 * 150");
         }
 
         [TestCase(Space.DIPTopLeft, Space.DIP)]
