@@ -75,6 +75,10 @@ if(WIN32)
     # linear_pass.cpp: QtTexture into SRGB and float textures; d3dcompiler_47.dll ships with Windows 10 and up.
     target_sources(vlqt PRIVATE linear_pass.cpp linear_pass.h)
     target_link_libraries(vlqt PRIVATE d3dcompiler)
+else()
+    # offscreen_glx.cpp: X geometry of the offscreen platform's GLX drawable for window grabs (W1-21). Uses the X11
+    # headers that Qt's OpenGL dependency brings (libgl-dev); libX11/libGL are looked up at run time, not linked.
+    target_sources(vlqt PRIVATE offscreen_glx.cpp offscreen_glx.h)
 endif()
 set_target_properties(vlqt PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${VLQT_OUT_DIR}"   # vlqt.dll
