@@ -1,4 +1,5 @@
 ﻿using System;
+using NUnit.Framework;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -8,7 +9,8 @@ using VL.Qt;
 
 // Replays command traces recorded with VLQT_TRACE_COMMANDS (plan 01e): file = repeated "u32 length (LE) + frame bytes".
 // The trace has no window id, so all frames are applied to one 800x600 window (traces of one window replay exactly).
-static class ReplayTest
+[TestFixture, NonParallelizable]
+public static class ReplayTest
 {
     const float U = 100f;
 
@@ -360,33 +362,41 @@ static class ReplayTest
     }
 
     /// <summary>Part of the full smoke test: live scenario vs. replay of its trace file must give the same grab.</summary>
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    /// <summary>Command trace replay.</summary>
+    [Test, Category("replay")]
+    public static void Replay() => Scenario.Run(s => Run(s));
+
+    /// <summary>Former --replay &lt;trace&gt; [--load N] [--frames a-b] [--paced] [--overlay N] [--loop N]: parameters ReplayTrace, ReplayArgs.</summary>
+    [Test, Explicit("needs the parameter ReplayTrace"), Category("replay-cli")]
+    public static void ReplayCli() => Scenario.Run(s => s.Check(SmokeParameters.ReplayTrace is { } t && RunCli(t, s.OutDir, s.Pump, SmokeParameters.ReplayArgs) == 0, "replay-cli (parameter ReplayTrace)"));
+
+    static void Run(Scenario s)
     {
         var frames = TestRectScenario();
 
         var live = Native.vlqt_window_create(800, 600, "VL.Qt replay live");
         Native.vlqt_window_show(live);
-        int liveErrors = Apply(live, frames, pump, _ => { });
-        pump(5);
-        using var liveGrab = grab(live, Path.Combine(outDir, "replay_live.png"));
+        int liveErrors = Apply(live, frames, s.Pump, _ => { });
+        s.Pump(5);
+        using var liveGrab = s.Grab(live, "replay_live.png");
         Native.vlqt_window_destroy(live);
-        check(liveErrors == 0, "replay: live scenario applies without errors");
+        s.Check(liveErrors == 0, "replay: live scenario applies without errors");
 
-        var tracePath = Path.Combine(outDir, "replay-testrect.bin");
+        var tracePath = Path.Combine(s.OutDir, "replay-testrect.bin");
         WriteFrames(tracePath, frames);
         var read = ReadFrames(tracePath);
-        check(read.Count == frames.Count && read[0].AsSpan().SequenceEqual(frames[0]) && read[2].AsSpan().SequenceEqual(frames[2]),
+        s.Check(read.Count == frames.Count && read[0].AsSpan().SequenceEqual(frames[0]) && read[2].AsSpan().SequenceEqual(frames[2]),
             $"replay: trace roundtrip ({read.Count} frames)");
 
         var rw = Native.vlqt_window_create(800, 600, "VL.Qt replay");
         Native.vlqt_window_show(rw);
         var msgs = new List<string>();
-        int errors = Apply(rw, read, pump, msgs.Add);
-        pump(5);
-        using var replayGrab = grab(rw, Path.Combine(outDir, "replay_replay.png"));
+        int errors = Apply(rw, read, s.Pump, msgs.Add);
+        s.Pump(5);
+        using var replayGrab = s.Grab(rw, "replay_replay.png");
         Native.vlqt_window_destroy(rw);
-        check(errors == 0, "replay: trace applies without errors");
-        check(SamePixels(liveGrab, replayGrab), "replay: grab identical to live scenario");
+        s.Check(errors == 0, "replay: trace applies without errors");
+        s.Check(SamePixels(liveGrab, replayGrab), "replay: grab identical to live scenario");
 
         // Error reporting with frame number: unknown id in frame 1 is reported, later frames still apply.
         var bad = new CommandWriter();
@@ -395,17 +405,17 @@ static class ReplayTest
         var bw = Native.vlqt_window_create(800, 600, "VL.Qt replay broken");
         Native.vlqt_window_show(bw);
         msgs.Clear();
-        int badErrors = Apply(bw, broken, pump, msgs.Add);
+        int badErrors = Apply(bw, broken, s.Pump, msgs.Add);
         Native.vlqt_window_destroy(bw);
-        check(badErrors == 1 && msgs.Count == 1 && msgs[0].StartsWith("frame 1:") && msgs[0].Contains("777"),
+        s.Check(badErrors == 1 && msgs.Count == 1 && msgs[0].StartsWith("frame 1:") && msgs[0].Contains("777"),
             $"replay: error reported with frame number ({string.Join("; ", msgs)})");
 
         // Truncated trace is rejected.
-        var cut = Path.Combine(outDir, "replay-truncated.bin");
+        var cut = Path.Combine(s.OutDir, "replay-truncated.bin");
         var all = File.ReadAllBytes(tracePath);
         File.WriteAllBytes(cut, all.AsSpan(0, all.Length - 3).ToArray());
         bool threw = false;
         try { ReadFrames(cut); } catch (InvalidDataException) { threw = true; }
-        check(threw, "replay: truncated trace rejected");
+        s.Check(threw, "replay: truncated trace rejected");
     }
 }
