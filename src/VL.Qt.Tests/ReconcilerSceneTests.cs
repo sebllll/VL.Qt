@@ -527,16 +527,11 @@ namespace VL.Qt.Tests
             // Element allocations of the test itself (Group + ImmutableArray) are measured separately.
             long testOverhead = Allocations.Fewest(() => new Group { Children = builder.ToImmutable() }, frames);
 
-            long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-            for (int f = 0; f < frames; f++)
-                Step(f);
-            double ms = System.Diagnostics.Stopwatch.GetElapsedTime(t0).TotalMilliseconds / frames;
             int frame = 0;
             long allocated = Allocations.Fewest(() => Step(frame++), frames) - testOverhead;
-            TestContext.Out.WriteLine($"1000 bound children, 1 change/frame: {ms:F4} ms/frame, {allocated} bytes (reconciler)");
+            TestContext.Out.WriteLine($"1000 bound children, 1 change/frame: {allocated} bytes (reconciler)");
             Assert.That(allocated, Is.LessThanOrEqualTo(0));
-            // CI runners are slow and noisy (0.32 ms seen on Linux); this still catches a per-frame rebuild of all children.
-            Assert.That(ms, Is.LessThan(1.0));
+            // The timing of this path is ReconcilerPerfTests.Group_1000BoundChildren_OneChangePerFrame_Fast (category Perf).
         }
 
         sealed class RecordingSinkNull : ICommandSink

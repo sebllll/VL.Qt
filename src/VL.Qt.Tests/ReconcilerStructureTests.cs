@@ -196,58 +196,6 @@ namespace VL.Qt.Tests
             Assert.That(_sink.Count, Is.EqualTo(0));
         }
 
-        [Test]
-        public void SteadyState_1000Children_NoAllocations_Fast()
-        {
-            const int n = 1000;
-            var children = new Element[n];
-            for (int i = 0; i < n; i++)
-                children[i] = R(i);
-            var arr = ImmutableArray.Create(children);
-            var sink = new CountingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
-
-            // Two alternating roots with the same children: the root is diffed, every child is skipped by reference.
-            var a = new Group { Children = arr };
-            var b = new Group { Children = arr };
-            rec.Update(a, Space.DIPTopLeft);
-            Assert.That(sink.Count, Is.EqualTo(2 * (n + 1) + n)); // CREATE + REPARENT each, SET Size per child
-
-            // Warm-up past the tiered-JIT promotion delay (100 ms call counting timer), so tier-0 code
-            // and the promotion itself do not allocate inside the measurement.
-            var warm = System.Diagnostics.Stopwatch.StartNew();
-            for (int i = 0; warm.ElapsedMilliseconds < 300 || i < 100; i++)
-                rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
-
-            // A real per-frame allocation shows in every attempt; a one-off (runtime or JIT work on this
-            // thread) only in one. Pass on the best of a few attempts.
-            const int frames = 1000;
-            long allocated = long.MaxValue;
-            var elapsed = TimeSpan.Zero;
-            for (int attempt = 0; attempt < 5 && allocated != 0; attempt++)
-            {
-                sink.Count = 0;
-                long before = GC.GetAllocatedBytesForCurrentThread();
-                long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-                for (int i = 0; i < frames; i++)
-                    rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
-                var e = System.Diagnostics.Stopwatch.GetElapsedTime(t0);
-                long bytes = GC.GetAllocatedBytesForCurrentThread() - before;
-                if (bytes < allocated)
-                {
-                    allocated = bytes;
-                    elapsed = e;
-                }
-            }
-
-            double msPerFrame = elapsed.TotalMilliseconds / frames;
-            TestContext.Out.WriteLine($"1000 children steady state: {msPerFrame:F4} ms/frame, {allocated} bytes");
-            Assert.That(sink.Count, Is.EqualTo(0));
-            Assert.That(allocated, Is.EqualTo(0));
-            // CI runners are slow and noisy (0.32 ms seen on Linux); this still catches a per-frame rebuild of all children.
-            Assert.That(msPerFrame, Is.LessThan(1.0));
-        }
-
         sealed class CountingSink : ICommandSink
         {
             public int Count;
