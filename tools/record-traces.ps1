@@ -11,7 +11,9 @@
 # Needs a built VL.Qt (tools/build.ps1 or `dotnet build src/VL.Qt -c Release`). vvvv: -VvvvDir, else $env:VVVV_DIR, else the newest C:\vvvv\vvvv_gamma_*-win-<arch>.
 # Per trace: starts vvvv with the patch, waits until -Frames frames are written (a static patch writes few frames: until no new
 # frame comes for 10 s), stops vvvv, cuts the trace to at most -Frames frames and copies it. A trace that needs image files gets a text file
-# <name>.images next to it (one path relative to the repository per line, in the order of the resource ids 1, 2, ...).
+# <name>.images next to it (one path relative to the repository per line, in the order of the resource ids 1, 2, ...); one that
+# uses shader files (Qt.Effects shader nodes, ShaderEffect) gets <name>.shaders (same form, in the order the trace first uses
+# the shader ids). TraceReplay creates these resources and rewrites the ids of the trace to them.
 param(
     [string[]]$Only,
     [int]$Frames = 90,
@@ -31,7 +33,7 @@ $traces = [ordered]@{
     'layout'    = @{ Patch = 'HowTo Layout with Row and Column' }
     'widgets'   = @{ Patch = 'HowTo Use a Slider' }
     'image'     = @{ Patch = 'HowTo Use an IImage'; Images = @('help/Qt/assets/qt-help-image.png') }
-    'effects'   = @{ Patch = 'HowTo Chain Effects' }
+    'effects'   = @{ Patch = 'HowTo Chain Effects'; Shaders = @('help/Qt/qtshaders/RGBSplit.frag', 'help/Qt/qtshaders/RGBSplit.frag') }
     'qml'       = @{ Patch = 'HowTo Use a QML file' }
 }
 if ($Only) { foreach ($n in $Only) { if (-not $traces.Contains($n)) { throw "unknown trace '$n' (known: $($traces.Keys -join ', '))" } } }
@@ -108,5 +110,6 @@ foreach ($name in $traces.Keys) {
     finally { $fs.Dispose() }
     Remove-Item $trace -ErrorAction SilentlyContinue
     if ($info.Images) { Set-Content (Join-Path $outDir "$name.images") $info.Images }
+    if ($info.Shaders) { Set-Content (Join-Path $outDir "$name.shaders") $info.Shaders }
     Write-Host ("   {0}: {1} frames, {2:N0} bytes" -f "$name.bin", $count, (Get-Item $target).Length)
 }

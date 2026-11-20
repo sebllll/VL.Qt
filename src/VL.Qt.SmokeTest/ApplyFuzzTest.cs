@@ -30,23 +30,13 @@ public static class ApplyFuzzTest
             s.Check(false, $"fuzz-{name}: traces folder not found");
             return;
         }
-        var repo = Path.GetFullPath(Path.Combine(traces, "..", "..", ".."));
         var frames = ReplayTest.ReadFrames(Path.Combine(traces, name + ".bin"));
         s.Check(frames.Count > 0, $"fuzz-{name}: {frames.Count} frames");
         if (frames.Count == 0)
             return;
 
-        // Image resources the trace refers to (same preparation as TraceReplay).
-        var images = new List<ulong>();
-        var imagesFile = Path.Combine(traces, name + ".images");
-        if (File.Exists(imagesFile))
-            foreach (var line in File.ReadAllLines(imagesFile))
-            {
-                var rel = line.Trim();
-                if (rel.Length > 0)
-                    images.Add(ImageTest.Load(Path.GetFullPath(Path.Combine(repo, rel)), (ok, what) => s.Check(ok, $"fuzz-{name}: {what}"), rel));
-            }
-        frames = TraceReplay.Rewrite(frames, Path.Combine(repo, "help", "Qt"), images, out _);
+        // Image and shader resources the trace refers to (same preparation as TraceReplay).
+        frames = TraceReplay.Prepare(s, traces, name, frames, "fuzz-" + name, checkMapped: false, out var resources);
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt apply fuzz " + name);
         s.Check(w != IntPtr.Zero, $"fuzz-{name}: window_create");
@@ -131,7 +121,7 @@ public static class ApplyFuzzTest
         Native.vlqt_window_destroy(w);
         s.Pump(1);
         // Later in-process scenarios (image-resource, image-share, resoverlay) expect no resources left.
-        foreach (var id in images)
+        foreach (var id in resources)
             Native.vlqt_res_release(id);
         s.Pump(2);
     }
