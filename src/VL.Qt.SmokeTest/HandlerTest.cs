@@ -8,7 +8,7 @@ using VL.Qt;
 // a Hover handler, error codes, EV_HOVER / EV_POINTER per handler sink, Text containment mask, id reuse, and the TEST
 // export vlqt_test_send_touch (touch tap on a Tap handler clicks, multitouch bookkeeping). Scenarios tap / point / wheel
 // (#320): the Tap, Point and Wheel handlers (RunTap, RunPoint, RunWheel).
-// Mouse input via vlqt_test_send_mouse; real (OS) pointer input is ignored (VLQT_TEST_SYNTHETIC_INPUT=1, Program.Main).
+// Mouse input via vlqt_test_send_mouse; real (OS) pointer input is ignored (VLQT_TEST_SYNTHETIC_INPUT=1, set by QtHost).
 [TestFixture, NonParallelizable]
 public static partial class HandlerTest
 {
