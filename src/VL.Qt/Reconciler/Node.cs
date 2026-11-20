@@ -43,7 +43,7 @@ namespace VL.Qt
         public uint BoundHandle { get; set; }
 
         /// <summary>
-        /// This node is the primary occurrence of its element (#455, first in traversal order of the owner renderer,
+        /// This node is the primary occurrence of its element (first in traversal order of the owner renderer,
         /// see <see cref="SceneRegistry"/>): only its sink handle reports state values.
         /// </summary>
         public bool IsPrimary { get; set; }
@@ -66,7 +66,7 @@ namespace VL.Qt
         /// </summary>
         public bool Dirty { get; set; }
 
-        /// <summary>Effect chain (Effect pin) QtNative holds (last SET_EFFECT_CHAIN); compared by reference (#489).</summary>
+        /// <summary>Effect chain (Effect pin) QtNative holds (last SET_EFFECT_CHAIN); compared by reference.</summary>
         public Effect? EffectChain { get; set; }
 
         /// <summary>The links of <see cref="EffectChain"/> as sent (<see cref="Effect.Segment"/>).</summary>
@@ -90,41 +90,41 @@ namespace VL.Qt
         /// <summary>ShaderEffect only: the input child node last sent as SET Source (null = none sent).</summary>
         public Node? EffectSource { get; set; }
 
-        /// <summary>ShaderEffect only: the uniform table QtNative holds (last SET_UNIFORMS), null = nothing sent (#437).</summary>
+        /// <summary>ShaderEffect only: the uniform table QtNative holds (last SET_UNIFORMS), null = nothing sent.</summary>
         public Dictionary<string, UniformValue>? SentUniforms { get; set; }
 
         /// <summary>
-        /// Input handlers attached to this item (#319), one per link of the element's interaction chain; not part of
+        /// Input handlers attached to this item, one per link of the element's interaction chain; not part of
         /// <see cref="Children"/> (layouts never see them). Null until the element first has an interaction.
         /// </summary>
         public List<HandlerNode>? Handlers { get; set; }
 
-        /// <summary>Resolved style of the parent chain this node was last reconciled with (reference; part of the skip test, #293).</summary>
+        /// <summary>Resolved style of the parent chain this node was last reconciled with (reference; part of the skip test).</summary>
         public Style? InheritedStyle { get; set; }
 
-        /// <summary>Resolved style of this node (Group, widgets): kept as the same reference while it stays equal (#293).</summary>
+        /// <summary>Resolved style of this node (Group, widgets): kept as the same reference while it stays equal.</summary>
         public Style? ResolvedStyle { get; set; }
 
-        /// <summary>Widgets: resolved style QtNative holds (last SET_STYLE); null = nothing sent (#293).</summary>
+        /// <summary>Widgets: resolved style QtNative holds (last SET_STYLE); null = nothing sent.</summary>
         public Style? SentStyle { get; set; }
 
         /// <summary>
-        /// Position holds an <see cref="Styles.IStylable"/> (#413): its placeholder this node was reconciled from; null for
+        /// Position holds an <see cref="Styles.IStylable"/>: its placeholder this node was reconciled from; null for
         /// plain elements. <see cref="Last"/> is then the element its Build returned.
         /// </summary>
         public StylableElement? Stylable { get; set; }
 
-        /// <summary>Error text of the last failed Build at this position, shown at the parent's sink; null if none (#413).</summary>
+        /// <summary>Error text of the last failed Build at this position, shown at the parent's sink; null if none.</summary>
         public string? BuildError { get; set; }
 
         /// <summary>
-        /// This subtree contains an <see cref="Styles.IStylable"/> (#413): never skipped, so every Build runs once per pass.
+        /// This subtree contains an <see cref="Styles.IStylable"/>: never skipped, so every Build runs once per pass.
         /// </summary>
         public bool ContainsStylable { get; set; }
     }
 
     /// <summary>
-    /// Mirror of one input handler object (#319) as the reconciler last sent it: id, type, key (the sink of the
+    /// Mirror of one input handler object as the reconciler last sent it: id, type, key (the sink of the
     /// interaction node), the description it was last updated from and its sink handle. Id 0 marks a placeholder for
     /// an ignored occurrence (the interaction is active elsewhere, see <see cref="SceneRegistry"/>).
     /// </summary>

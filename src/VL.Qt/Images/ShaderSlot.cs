@@ -3,7 +3,7 @@
 namespace VL.Qt
 {
     /// <summary>
-    /// One shader stage of a ShaderEffect node (#437): owns the shader resource for the current path or GLSL code (#483). A new source creates
+    /// One shader stage of a ShaderEffect node: owns the shader resource for the current path or GLSL code. A new source creates
     /// a new resource and queues the release of the old one (QtNative keeps drawing the old shader until the new one is
     /// Ready, the element switches ids first, see <see cref="ResourceClient.Release"/>); the same source never reloads.
     /// Loading is asynchronous, nothing here waits. Main thread only.
@@ -36,7 +36,7 @@ namespace VL.Qt
 
         /// <summary>
         /// Why the shader is not (fully) usable ("Fragment shader: ..."): the load error, or for a Ready shader the warning of
-        /// QtNative (a uniform the OpenGL backend never sets, #77). Empty if it is loading, fine or not set. Cached, no
+        /// QtNative (a uniform the OpenGL backend never sets). Empty if it is loading, fine or not set. Cached, no
         /// allocation while unchanged.
         /// </summary>
         public string Error
@@ -61,7 +61,7 @@ namespace VL.Qt
         private string _errorSource = string.Empty, _errorText = string.Empty;
 
         /// <summary>
-        /// Loads <paramref name="path"/> if set (not empty), otherwise bakes <paramref name="code"/> (full Qt GLSL, #483,
+        /// Loads <paramref name="path"/> if set (not empty), otherwise bakes <paramref name="code"/> (full Qt GLSL,
         /// not empty/whitespace); only when the effective source (kind + text) differs from the last call. Both empty = no
         /// shader (id 0). While typing, a new code text waits until the running bake is settled (Ready or Failed), then
         /// the latest text of a later call starts; no pending state needed because the node calls this every frame.

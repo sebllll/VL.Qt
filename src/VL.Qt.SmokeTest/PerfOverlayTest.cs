@@ -10,7 +10,7 @@ using System.Threading;
 using VL.Qt;
 
 /// <summary>
-/// #244: F5 overlay pages (Summary, Timeline, Scene, System, Resources), F5/Shift+F5/F6 keys, and an injected 12 ms render spike
+/// F5 overlay pages (Summary, Timeline, Scene, System, Resources), F5/Shift+F5/F6 keys, and an injected 12 ms render spike
 /// that shows up in the timeline and in the render phase of the sample. Grabs perf_f5_*.png for a visual check.
 /// </summary>
 [TestFixture, NonParallelizable]
@@ -34,7 +34,7 @@ public static class PerfOverlayTest
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
     private static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
 
-    // #246: plain text of the Scene/System page, single spaces (columns collapsed) for robust Contains checks.
+    // plain text of the Scene/System page, single spaces (columns collapsed) for robust Contains checks.
     internal static string PageText(IntPtr w, int page)
     {
         var need = -vlqt_test_perf_text(w, page, null, 0);
@@ -57,7 +57,7 @@ public static class PerfOverlayTest
     private static int Page(IntPtr w) => ((Native.vlqt_window_get_overlay(w) >> PageShift) & 7) - 1;
     private static bool Visible(IntPtr w) => (Native.vlqt_window_get_overlay(w) & Stats) != 0;
 
-    // #379: timing checks measure one pump / one grab on a machine that runs other work (an unrelated 10 ms render or a
+    // timing checks measure one pump / one grab on a machine that runs other work (an unrelated 10 ms render or a
     // stalled present lands in the same sample). Retry a few times; a real regression is systematic and fails every try.
     private const int Attempts = 3;
 
@@ -72,7 +72,7 @@ public static class PerfOverlayTest
         check(r.ok, $"{what} ({r.detail}{(n > 1 ? $"; attempt {n}/{Attempts}" : "")})");
     }
 
-    // #90: the timeline legend and the summary of a window with VSync (swap interval 1) show the segment "vsync wait" (the
+    // the timeline legend and the summary of a window with VSync (swap interval 1) show the segment "vsync wait" (the
     // wait in QRhi::beginFrame) next to a plain "present", a spike there lands in vsync wait, and the System page says
     // VSync on / allow tearing no.
     private static void VSyncWindowLabels(Scenario s)
@@ -151,7 +151,7 @@ public static class PerfOverlayTest
         s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "perfoverlay: scene");
         Native.vlqt_window_show(w);
         int frame = 0;
-        // #17: pumps whose loop step took longer than the smallest host spike (150 ms) are host stalls (parallel builds,
+        // pumps whose loop step took longer than the smallest host spike (150 ms) are host stalls (parallel builds,
         // other sessions): such a step reports a vvvv time above the injected 180-190 ms spikes and takes over the timeline's
         // peaks. The checks that read the peaks use these to tell "machine overloaded" from "regression".
         const float stallMs = 150;
@@ -172,8 +172,8 @@ public static class PerfOverlayTest
                 var apply = (float)Stopwatch.GetElapsedTime(t0).TotalMilliseconds;
                 if (spikeMs > 0) vlqt_test_perf_spike(w, PhaseSync, spikeMs);
                 s.Pump(1);
-                // Host values like QtApp reports them (#245), so the Summary shows its apply/GC rows. vvvv (#260): the
-                // time between pumps stands in for the patch update, so the F2 graph shows its vvvv line (#265).
+                // Host values like QtApp reports them, so the Summary shows its apply/GC rows. vvvv: the
+                // time between pumps stands in for the patch update, so the F2 graph shows its vvvv line.
                 var vvvv = lastEnd == 0 ? 0 : (float)Stopwatch.GetElapsedTime(lastEnd, t0).TotalMilliseconds;
                 Native.vlqt_window_report_host_frame(w, new Native.vlqt_host_frame { apply = apply, ops = 1, vvvv = vvvv });
                 lastEnd = Stopwatch.GetTimestamp();
@@ -211,14 +211,14 @@ public static class PerfOverlayTest
             return (ok, $"pump {ps.pump:F1}, events {ps.events:F1}, sync {ps.sync:F1}, render {ps.render:F1}");
         });
 
-        // #260/#193.5: host-side spikes (simulated host frames, overwriting the report of that pump): vvvv update, GC
+        // host-side spikes (simulated host frames, overwriting the report of that pump): vvvv update, GC
         // pause (inside the vvvv update) and apply. Far larger than the Qt spikes above and stray present stalls (~35 ms seen), so they are the timeline's 3 peaks,
         // each attributed to its own segment, not to a Qt phase.
         // On a loaded machine a stalled loop step reports a vvvv time of ~90 ms itself (time between pumps, see Run):
         // spikes of ~190 ms stay above it, and a stall that still takes a peak leaves the ring before the retry.
         // With heavier load (several times more busy processes than cores) stalls of seconds happen and take the peaks in
         // every try: when the 240-pump ring of the last try holds such a stall (a step > 150 ms), the host is too loaded
-        // to read the peaks and the check is SKIPPED, not failed. Without stalls the same failure is a regression (#17).
+        // to read the peaks and the check is SKIPPED, not failed. Without stalls the same failure is a regression.
         void HostSpike(Native.vlqt_host_frame f) { Run(1); Native.vlqt_window_report_host_frame(w, f); Run(3); }
         const string hostSpikeCheck = "perfoverlay: host spikes attributed to vvvv/GC/apply in the timeline";
         var hostSpikesOverloaded = false;
@@ -253,7 +253,7 @@ public static class PerfOverlayTest
         var sumDetail = $"perfoverlay: summary vvvv row + share ({Line(sum, "vvvv")}; {Line(sum, "fps")})";
         if (!sumOk && StallsWithin(60)) s.Skip($"{sumDetail}: host too loaded, loop steps > {stallMs:F0} ms in the last 60 pumps");
         else s.Check(sumOk, sumDetail);
-        // #17: a fresh spike in the last pump instead of the one from ~90 pumps ago (the stats window is shorter): which
+        // a fresh spike in the last pump instead of the one from ~90 pumps ago (the stats window is shorter): which
         // other pump of the window was above 12 ms depended on the machine (page renders, stalls).
         vlqt_test_perf_spike(w, PhaseRender, 14);
         Run(1);
@@ -282,7 +282,7 @@ public static class PerfOverlayTest
         Run(2);
         s.Check(Visible(w) && Page(w) == Scene, $"perfoverlay: F5 -> Scene (page {Page(w)})");
         using (var a = s.Grab(w, Path.Combine(s.OutDir, $"perf_f5_scene{sw}.png"))) { }
-        // #246: element count from the reconciler (1 rect), ops/apply from the reported host frames (ops = 1),
+        // element count from the reconciler (1 rect), ops/apply from the reported host frames (ops = 1),
         // draw calls n/a; GPU memory and pipelines n/a without QRhi.
         var scene = PageText(w, Scene);
         s.Check(scene.Contains("elements 1 rect 1"), $"perfoverlay: scene counts 1 rect element ({Line(scene, "elements")})");
@@ -305,7 +305,7 @@ public static class PerfOverlayTest
         else
             s.Check(!sys.Contains("adapter n/a") && sys.Contains("swap int. 0 VSync off"),
                 $"perfoverlay: system on QRhi: adapter named, swap interval 0 ({Line(sys, "adapter")} | {Line(sys, "swap int.")})");
-        // #90: allow tearing (D3D11 only, "no" with VSync) and refresh rate sit next to the swap interval; with VSync off the
+        // allow tearing (D3D11 only, "no" with VSync) and refresh rate sit next to the swap interval; with VSync off the
         // segments are the same (vsync wait then shows a GPU that is behind).
         var tear = Line(sys, "allow tearing");
         var hz = System.Text.RegularExpressions.Regex.IsMatch(Line(sys, "refresh"), @"^refresh \d+(\.\d+)? Hz");
@@ -340,10 +340,10 @@ public static class PerfOverlayTest
         vlqt_test_send_key(w, KeyF6, 0);
         s.Check((Native.vlqt_window_get_overlay(w) & (Stats | Freeze)) == 0, "perfoverlay: F6 ignored while hidden");
 
-        // #246: the F2 meter draws its lines also on the software backend (there as an image, QSGGeometryNode is not drawn).
+        // the F2 meter draws its lines also on the software backend (there as an image, QSGGeometryNode is not drawn).
         // The line follows the pump times: a grab in a quiet moment can show fewer pixels (and the grab itself renders),
-        // so the pixel count gets a few tries with fresh frames in between (#379).
-        // #17: the pump of this scene takes ~0.5 ms on a fast machine, then the orange line lies on the GPU/frame lines
+        // so the pixel count gets a few tries with fresh frames in between.
+        // the pump of this scene takes ~0.5 ms on a fast machine, then the orange line lies on the GPU/frame lines
         // (drawn later, on top) at the bottom of the graph and fewer than 40 px stay orange. Every pump therefore gets a
         // sync spike of 8 ms, so the line runs clearly above the baseline (~20 % of the graph height) over the whole 240-pump
         // ring (filled once before the grab) and the 40 px (~14 % of the 282 columns) mean a continuous line, as intended.
@@ -370,7 +370,7 @@ public static class PerfOverlayTest
         s.Check(Page(w2) == Timeline, $"perfoverlay: new window opens the remembered page (page {Page(w2)})");
         Native.vlqt_window_destroy(w2);
 
-        // #261: static scene -> Qt renders only on changes (here: the 4 Hz overlay text). The intervals after idle
+        // static scene -> Qt renders only on changes (here: the 4 Hz overlay text). The intervals after idle
         // pumps are no missed frames, and the Summary shows "on demand" instead of a red fps.
         Native.vlqt_window_set_overlay(w, Stats | ((Summary + 1) << PageShift));
         for (int i = 0; i < 10; i++) { s.Pump(1); Thread.Sleep(15); } // settle: switching pages renders
@@ -414,7 +414,7 @@ public static class PerfOverlayTest
     }
 
     /// <summary>
-    /// #364 (images package 07): F5 Resources page with the test kind of #359. One resource per state (Pending,
+    /// (images package 07): F5 Resources page with the test kind of #359. One resource per state (Pending,
     /// Decoding stuck > 2 s, Uploading against a 1 MB budget, Ready, Failed): counts, upload queue, budget use, the
     /// Failed/stuck ones first in the list. Then 1000 resources: build cost of the page. Grabs perf_f5_resources*.png.
     /// </summary>
@@ -510,7 +510,7 @@ public static class PerfOverlayTest
     /// rectangles), 60 Hz paced like vvvv. Modes alternate in blocks of 120 pumps (8 rounds) so drift hits all alike;
     /// prints median / mean / p90 per mode and the difference to "off".
     /// </summary>
-    /// <summary>Native pump time per overlay mode on a small animated scene (F5 overlay cost, #244); parameter OverlayCostRounds.</summary>
+    /// <summary>Native pump time per overlay mode on a small animated scene (F5 overlay cost); parameter OverlayCostRounds.</summary>
     [Test, Explicit("measurement, about a minute"), Category("overlay-cost")]
     public static void OverlayCost() => Scenario.Run(s => s.Check(RunCost(s, SmokeParameters.OverlayCostRounds) == 0, "overlay-cost"));
 

@@ -4,7 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using VL.Qt;
 
-// Window icon (#517): vlqt_window_set_icon return codes and, on Windows, the real icon of the HWND (WM_GETICON).
+// Window icon: vlqt_window_set_icon return codes and, on Windows, the real icon of the HWND (WM_GETICON).
 // Default at create (embedded PNGs, no file), custom PNG, NULL/empty = default again, missing/broken file = -7 and
 // the default instead of the custom icon, null window = -1. Linux: return codes only (no WM_GETICON).
 [TestFixture, NonParallelizable]

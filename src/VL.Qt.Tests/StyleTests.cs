@@ -5,7 +5,7 @@ using VL.Qt.Styles;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Styles (#293): StateValues, merge rule, base style, writer diff.</summary>
+    /// <summary>Styles: StateValues, merge rule, base style, writer diff.</summary>
     public class StyleTests
     {
         private static readonly Color4 red = new(1, 0, 0, 1);

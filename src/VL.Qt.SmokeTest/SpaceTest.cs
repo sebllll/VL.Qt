@@ -14,7 +14,7 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 using QtRect = VL.Qt.Elements.Rectangle;
 using static Pixels;
 
-// Space (#143): one scene, four spaces, through WindowRenderer (SceneCore → SET_SPACE + SpaceMapping lengths → real QtNative).
+// Space: one scene, four spaces, through WindowRenderer (SceneCore → SET_SPACE + SpaceMapping lengths → real QtNative).
 // A red rectangle of 1 x 1 unit at (0, 0) and a blue one (0.5 x 0.5 at (1, 0)) as the reference. Expectations in DIP
 // (logical pixels), per space, derived here from the Space description alone:
 //   DIPTopLeft    origin top left, 100 DIP per unit            DIP      origin = centre, 100 DIP per unit
@@ -191,7 +191,7 @@ public static class SpaceTest
             CheckScene(sp, "400x300");
         }
 
-        // 3) Resync (#76): the invalid command comes before the SET_SPACE of the same frame (DIPTopLeft → DIP: same scale, other origin), QtNative drops
+        // 3) Resync: the invalid command comes before the SET_SPACE of the same frame (DIPTopLeft → DIP: same scale, other origin), QtNative drops
         //    the rest of the batch; the rebuild must send the Space again, else the origin stays where DIPTopLeft put it.
         space = Space.DIPTopLeft;
         Frame();

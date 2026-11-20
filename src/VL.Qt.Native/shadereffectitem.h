@@ -1,11 +1,11 @@
-/* shadereffectitem.h - the ShaderEffect element (#437, effects package 03, protocol.h "ShaderEffect").
+/* shadereffectitem.h - the ShaderEffect element (effects package 03, protocol.h "ShaderEffect").
  *
  * Own QQuickItem with a QSGGeometryNode + QSGMaterial/QSGMaterialShader instead of QML's ShaderEffect: the uniforms
  * of SET_UNIFORMS are mapped by name through the reflection of the shaders (QShaderDescription of the .qsb).
  *
  * Shaders: FRAGMENT_SHADER / VERTEX_SHADER are shader resource ids (shader_resource.h). The item holds an element
  * reference on the shown id and on the one it waits for; the old shader stays until the new one is Ready. If the
- * wanted id (or a replacement on the shown id) fails, the slot keeps drawing its last Ready content (#483, live
+ * wanted id (or a replacement on the shown id) fails, the slot keeps drawing its last Ready content (live
  * editing never goes black; the content pointer stays, the reference on shown too); a Failed shader without an
  * earlier Ready one in that slot draws nothing (its error goes by RES_EV_ERROR). Without a vertex shader Qt's default
  * ShaderEffect vertex shader (embedded in Qt Quick) is used. Pipelines: one QSGMaterialType per shader pair (content
@@ -21,12 +21,12 @@
  * enabled), U64 = image resource (shared texture cache of qtimageitem.h). A sampler without texture samples a 1x1
  * transparent texture. Dynamic textures (layers) are updated in the node's preprocess like Qt's ShaderEffect does.
  *
- * Chain pass (setChainPass, effect chain #489, effectchain.cpp): the item is a pass of a SHADER link. QtNative sets
+ * Chain pass (setChainPass, effect chain, effectchain.cpp): the item is a pass of a SHADER link. QtNative sets
  * texelSize (vec2, 1 / pixel size of the source texture, read from the texture itself, also after the layer resized it in
  * preprocess) and dpr (float, effectiveDevicePixelRatio) when the fragment shader declares them; while the fragment slot has
  * no Ready content (id 0, loading, Failed without an earlier Ready one) Qt's default ShaderEffect fragment shader passes
  * source through unchanged (no table checks then). Reserved names of the chain are filtered by the chain, not here. A
- * PYRAMID link (#489) also uses setTexelSamplers (texelSize of the composite = the glow / shadow texture, not source),
+ * PYRAMID link also uses setTexelSamplers (texelSize of the composite = the glow / shadow texture, not source),
  * setOptionalUniforms (prefilter and composite get the same table, each takes what it declares; the chain reports names
  * neither declares) and devicePixelRatioChanged (the pass sizes follow dpr).
  *
@@ -99,7 +99,7 @@ public:
     // value points at the wire value (layout like SET); ref = resolved element for REF (nullptr = none).
     void setUniform(const char* name, int nameLen, quint16 valueType, const unsigned char* value, QQuickItem* ref);
     void endUniforms();
-    // Layer mipmaps the samplers ask for (#492), on the elements they read; also after the Groups got their proxy.
+    // Layer mipmaps the samplers ask for, on the elements they read; also after the Groups got their proxy.
     void refreshLayerRequests(bool force = false);
     // The REF uniforms changed since the last call (structural change of the table, Elements::syncTextureGroups).
     bool takeRefsChanged() { return std::exchange(m_refsChanged, false); }
@@ -179,7 +179,7 @@ private:
 
     std::vector<Uniform> m_uniforms;
     bool m_structureChanged = false;
-    std::vector<std::pair<QByteArray, quint64>> m_samplerStates; // SAMPLER entries by sampler2D name (#492), bit 63 = present
+    std::vector<std::pair<QByteArray, quint64>> m_samplerStates; // SAMPLER entries by sampler2D name, bit 63 = present
     std::vector<QPointer<QQuickItem>> m_layerItems; // elements this item holds a layer request on (layer mipmap)
     bool m_layersDirty = false;
     bool m_refsChanged = false;

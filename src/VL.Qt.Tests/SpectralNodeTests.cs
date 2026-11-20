@@ -9,7 +9,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Group/Row/Column (Spectral) (#117): one Spread input, same behavior as the pin-group variants.</summary>
+    /// <summary>Group/Row/Column (Spectral): one Spread input, same behavior as the pin-group variants.</summary>
     public class SpectralNodeTests
     {
         private static IDisposable NoWarning(string _) => throw new AssertionException("unexpected warning");

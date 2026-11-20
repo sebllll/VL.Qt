@@ -10,7 +10,7 @@ using VL.Qt.Elements;
 namespace VL.Qt.Shaders
 {
     /// <summary>
-    /// A filter shader file as link of the Effect chain (#489): template Single, or TwoPass with @passes 2, one fragment
+    /// A filter shader file as link of the Effect chain: template Single, or TwoPass with @passes 2, one fragment
     /// shader resource owned by the node, the uniform pins as <see cref="ShaderLink.Uniforms"/>, @padding as padding.
     /// </summary>
     internal sealed class ShaderFileLink : ShaderLink

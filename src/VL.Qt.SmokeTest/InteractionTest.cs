@@ -10,7 +10,7 @@ using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-// Node level interaction (#319): Hover -> element Interaction pin -> Reconciler (handler
+// Node level interaction: Hover -> element Interaction pin -> Reconciler (handler
 // objects) -> QtNative -> SinkRegistry -> channels. The raw QtNative side of the input handlers is HandlerTest (the #208 bind
 // flags Interactive / Pointer are gone since #320). Mouse input comes from the TEST export vlqt_test_send_mouse; real
 // (OS) pointer input is ignored by the test windows (VLQT_TEST_SYNTHETIC_INPUT=1, set by QtHost).
@@ -53,7 +53,7 @@ public static partial class InteractionTest
 
     private sealed class NoMessage : IDisposable { public void Dispose() { } }
 
-    // #319, scenario "interaction-chain": node level Hover -> Rectangle (Interaction pin) ->
+    // scenario "interaction-chain": node level Hover -> Rectangle (Interaction pin) ->
     // Reconciler (handler objects) -> QtNative -> SinkRegistry.Dispatch -> pull in Hover.Update -> channels.
     private static void RunChain(Scenario s)
     {
@@ -146,7 +146,7 @@ public static partial class InteractionTest
         s.Pump(1);
     }
 
-    // #319: the Interaction pin works at Text, Group and Button as well (Hover -> Is Hovered).
+    // the Interaction pin works at Text, Group and Button as well (Hover -> Is Hovered).
     private static void RunElements(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt interaction elements test");

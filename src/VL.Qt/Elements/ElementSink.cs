@@ -22,50 +22,50 @@ namespace VL.Qt.Elements
         /// <summary>Clicks not yet taken by <see cref="ElementSink.TakeClicks"/>.</summary>
         public int PendingClicks { get; set; }
 
-        /// <summary>Tap handler: tap count of the last tap (2 = double click), 0 before the first tap (#320).</summary>
+        /// <summary>Tap handler: tap count of the last tap (2 = double click), 0 before the first tap.</summary>
         public int TapCount { get; set; }
 
-        /// <summary>Tap handler: long presses not yet taken by <see cref="ElementSink.TakeLongPresses"/> (#320).</summary>
+        /// <summary>Tap handler: long presses not yet taken by <see cref="ElementSink.TakeLongPresses"/>.</summary>
         public int PendingLongPresses { get; set; }
 
-        /// <summary>Point handler: a point (mouse button, finger, pen) is down on the item (#320).</summary>
+        /// <summary>Point handler: a point (mouse button, finger, pen) is down on the item.</summary>
         public bool IsActive { get; set; }
 
-        /// <summary>Wheel handler: notches not yet taken by <see cref="ElementSink.TakeWheel"/> (#320).</summary>
+        /// <summary>Wheel handler: notches not yet taken by <see cref="ElementSink.TakeWheel"/>.</summary>
         public Vector2 PendingWheel { get; set; }
 
         /// <summary>
         /// Drag handler: translation of the running (or last) drag in units; kept after the release until the next
-        /// drag (#209).
+        /// drag.
         /// </summary>
         public Vector2 DragDelta { get; set; }
 
-        /// <summary>Drag handler: number of EV_DRAG received, so a value equal to the last one (new drag) is still seen as new (#209).</summary>
+        /// <summary>Drag handler: number of EV_DRAG received, so a value equal to the last one (new drag) is still seen as new.</summary>
         public int DragUpdates { get; set; }
 
-        /// <summary>Touch Points handler: points currently pressed in the item, sorted by id, in units (#321). Empty when none.</summary>
+        /// <summary>Touch Points handler: points currently pressed in the item, sorted by id, in units. Empty when none.</summary>
         public Spread<TouchPoint> TouchPoints { get; set; } = Spread<TouchPoint>.Empty;
 
-        /// <summary>Touch Points handler: number of EV_TOUCH_POINTS received (changes with every event, #321).</summary>
+        /// <summary>Touch Points handler: number of EV_TOUCH_POINTS received (changes with every event).</summary>
         public int TouchUpdates { get; set; }
 
-        /// <summary>Pinch handler: scale factor of the running (or last) gesture, 1 before the first one (#321).</summary>
+        /// <summary>Pinch handler: scale factor of the running (or last) gesture, 1 before the first one.</summary>
         public float PinchScale { get; set; } = 1f;
 
-        /// <summary>Pinch handler: rotation of the running (or last) gesture in cycles, clockwise positive (#321).</summary>
+        /// <summary>Pinch handler: rotation of the running (or last) gesture in cycles, clockwise positive.</summary>
         public float PinchRotation { get; set; }
 
-        /// <summary>Pinch handler: translation of the running (or last) gesture in units, parent space (#321).</summary>
+        /// <summary>Pinch handler: translation of the running (or last) gesture in units, parent space.</summary>
         public Vector2 PinchTranslation { get; set; }
 
-        /// <summary>Pinch handler: pivot of scale and rotation (the fingers' centroid when the gesture began) in units, parent space (#321).</summary>
+        /// <summary>Pinch handler: pivot of scale and rotation (the fingers' centroid when the gesture began) in units, parent space.</summary>
         public Vector2 PinchPivot { get; set; }
 
-        /// <summary>Pinch handler: number of EV_PINCH received, so an equal value (new gesture) is still seen as new (#321).</summary>
+        /// <summary>Pinch handler: number of EV_PINCH received, so an equal value (new gesture) is still seen as new.</summary>
         public int PinchUpdates { get; set; }
 
         /// <summary>
-        /// Value input (#210, #301): the last user change (EV_VALUE) not yet taken by <see cref="ElementSink.TakeValue{T}"/>.
+        /// Value input: the last user change (EV_VALUE) not yet taken by <see cref="ElementSink.TakeValue{T}"/>.
         /// Several changes between two takes keep the last one.
         /// </summary>
         internal bool HasPendingValue { get; set; }
@@ -79,7 +79,7 @@ namespace VL.Qt.Elements
         /// <summary>Pending user value for <see cref="Protocol.Vt.String"/>.</summary>
         internal string? PendingString { get; set; }
 
-        /// <summary>QmlElement (#104): last value of each root property that QML changed, by name; null until the first change. Cleared by <see cref="ElementSink.ResetQml"/>.</summary>
+        /// <summary>QmlElement: last value of each root property that QML changed, by name; null until the first change. Cleared by <see cref="ElementSink.ResetQml"/>.</summary>
         internal Dictionary<string, object>? QmlProperties { get; set; }
 
         /// <summary>QmlElement: number of changes written into <see cref="QmlProperties"/> (also by a reset), so a node sees that there is something new.</summary>
@@ -90,17 +90,17 @@ namespace VL.Qt.Elements
 
         public string? Warning { get; set; }
 
-        /// <summary>Error reported by Qt for the element (e.g. file not found), null if none (#273).</summary>
+        /// <summary>Error reported by Qt for the element (e.g. file not found), null if none.</summary>
         public string? Error { get; set; }
 
         /// <summary>
-        /// Error of the last failed apply that addressed this element (e.g. a value Qt rejected), null if none (#275).
+        /// Error of the last failed apply that addressed this element (e.g. a value Qt rejected), null if none.
         /// Set and cleared by the renderer; kept across the resync, unlike <see cref="Error"/>.
         /// </summary>
         public string? ApplyError { get; set; }
 
         /// <summary>
-        /// Containers: error of the last failed <see cref="Styles.IStylable.Build"/> of a child, null if none (#413).
+        /// Containers: error of the last failed <see cref="Styles.IStylable.Build"/> of a child, null if none.
         /// Set and cleared by the reconciler.
         /// </summary>
         public string? BuildError { get; set; }
@@ -167,7 +167,7 @@ namespace VL.Qt.Elements
         }
 
         /// <summary>
-        /// Value input (#210, #301): takes the last user change (EV_VALUE) since the last call, and resets it. Returns
+        /// Value input: takes the last user change (EV_VALUE) since the last call, and resets it. Returns
         /// false if there is none or its value type does not match <typeparamref name="T"/> (int = i32, float = f32,
         /// bool, string); a mismatching change is dropped. Call once per Update. No allocation.
         /// </summary>
@@ -205,7 +205,7 @@ namespace VL.Qt.Elements
         /// <summary>Most signals kept for a node that does not take them (QmlElement); further ones are dropped.</summary>
         internal const int MaxPendingQmlSignals = 4096;
 
-        /// <summary>QmlElement (#104): the last value of each root property that QML changed. The live table: copy it, do not keep it. Null if none yet.</summary>
+        /// <summary>QmlElement: the last value of each root property that QML changed. The live table: copy it, do not keep it. Null if none yet.</summary>
         internal Dictionary<string, object>? QmlPropertyValues(int index = 0) => TryGet(index, out var s) ? s.QmlProperties : null;
 
         /// <summary>QmlElement: number of property changes (and resets) so far; differs from the last call when <see cref="QmlPropertyValues"/> has something new.</summary>
@@ -276,31 +276,31 @@ namespace VL.Qt.Elements
             return wheel;
         }
 
-        /// <summary>Drag handler: translation of the running (or last) drag in units (#209).</summary>
+        /// <summary>Drag handler: translation of the running (or last) drag in units.</summary>
         public Vector2 DragDelta(int index = 0) => TryGet(index, out var s) ? s.DragDelta : default;
 
-        /// <summary>Drag handler: number of drag updates received so far (changes with every EV_DRAG, #209).</summary>
+        /// <summary>Drag handler: number of drag updates received so far (changes with every EV_DRAG).</summary>
         public int DragUpdates(int index = 0) => TryGet(index, out var s) ? s.DragUpdates : 0;
 
-        /// <summary>Touch Points handler: the points pressed in the item right now (#321). The same instance until the next event.</summary>
+        /// <summary>Touch Points handler: the points pressed in the item right now. The same instance until the next event.</summary>
         public Spread<TouchPoint> TouchPoints(int index = 0) => TryGet(index, out var s) ? s.TouchPoints : Spread<TouchPoint>.Empty;
 
-        /// <summary>Touch Points handler: number of touch events received so far (#321).</summary>
+        /// <summary>Touch Points handler: number of touch events received so far.</summary>
         public int TouchUpdates(int index = 0) => TryGet(index, out var s) ? s.TouchUpdates : 0;
 
-        /// <summary>Pinch handler: scale factor of the running (or last) gesture, 1 before the first (#321).</summary>
+        /// <summary>Pinch handler: scale factor of the running (or last) gesture, 1 before the first.</summary>
         public float PinchScale(int index = 0) => TryGet(index, out var s) ? s.PinchScale : 1f;
 
-        /// <summary>Pinch handler: rotation in cycles, clockwise positive (#321).</summary>
+        /// <summary>Pinch handler: rotation in cycles, clockwise positive.</summary>
         public float PinchRotation(int index = 0) => TryGet(index, out var s) ? s.PinchRotation : 0f;
 
-        /// <summary>Pinch handler: translation in units (#321).</summary>
+        /// <summary>Pinch handler: translation in units.</summary>
         public Vector2 PinchTranslation(int index = 0) => TryGet(index, out var s) ? s.PinchTranslation : default;
 
-        /// <summary>Pinch handler: pivot in units (#321).</summary>
+        /// <summary>Pinch handler: pivot in units.</summary>
         public Vector2 PinchPivot(int index = 0) => TryGet(index, out var s) ? s.PinchPivot : default;
 
-        /// <summary>Pinch handler: number of pinch updates received so far (#321).</summary>
+        /// <summary>Pinch handler: number of pinch updates received so far.</summary>
         public int PinchUpdates(int index = 0) => TryGet(index, out var s) ? s.PinchUpdates : 0;
 
         /// <summary>Last pointer position, local to the item, in units (Hover and Point node).</summary>
@@ -331,8 +331,8 @@ namespace VL.Qt.Elements
         }
 
         /// <summary>
-        /// First error of any slot (reported by Qt, e.g. a file that cannot be opened, or a rejected apply, #275, or a
-        /// failed Build of an IStylable child, #413), null if none.
+        /// First error of any slot (reported by Qt, e.g. a file that cannot be opened, or a rejected apply, or a
+        /// failed Build of an IStylable child), null if none.
         /// </summary>
         public string? Error
         {

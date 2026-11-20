@@ -4,7 +4,7 @@ using System.IO;
 using VL.Qt;
 
 /// <summary>
-/// #157 (FileWriter, native layer): vlqt_image_write. A small BGRA8 premultiplied image with opaque and half-transparent
+/// (FileWriter, native layer): vlqt_image_write. A small BGRA8 premultiplied image with opaque and half-transparent
 /// pixels as PNG into a not-yet-existing subfolder, read back through the image resource path (size, alpha and
 /// un-premultiplied colors within +-2), straight RGBA8 with row padding, JPG and BMP (alpha over black), overwrite, and
 /// the error codes: unknown extension -2, bad arguments -1, folder that cannot be created -3. Needs no window.

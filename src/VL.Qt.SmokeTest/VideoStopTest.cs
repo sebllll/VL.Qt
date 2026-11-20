@@ -5,7 +5,7 @@ using System.IO;
 using System.Threading;
 using VL.Qt;
 
-// #130: F8 in vvvv with a playing Video [Qt] (with audio) hung for good in Renderer.Dispose -> Native.Apply (DESTROY of
+// F8 in vvvv with a playing Video [Qt] (with audio) hung for good in Renderer.Dispose -> Native.Apply (DESTROY of
 // the video during playback). Scenario: video with an audio track plays, then the element is destroyed by an apply
 // (like Reconciler.Clear), then the window is destroyed. A watchdog ends the process if a step hangs.
 // Asset: help/Qt/assets/qt-help-video-audio.mp4 (help video with an audio track).
@@ -27,7 +27,7 @@ public static class VideoStopTest
         return null;
     }
 
-    /// <summary>Stopping videos (#130).</summary>
+    /// <summary>Stopping videos.</summary>
     [Test, Category("videostop")]
     public static void VideoStop() => Scenario.Run(s => Run(s));
 

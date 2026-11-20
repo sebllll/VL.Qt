@@ -21,12 +21,12 @@
 #include <QtQml/QQmlListReference>
 #include <QtQml/QQmlProperty>
 #include <QtQuick/QQuickItem>
-#include <QtQuick/private/qquickitem_p.h>               // explicitVisible of Group children (#486)
-#include <QtQuick/private/qquickrectangle_p.h>          // typed color setters (#560)
-#include <QtQuick/private/qquicktext_p.h>               // typed color setter (#560)
-#include <QtQuick/private/qquicktranslate_p.h>          // QQuickMatrix4x4::setMatrix without QVariant (#560)
-#include <QtQuick/private/qquickshadereffectsource_p.h> // Group frame proxy (#486)
-#include <QtQuickShapes/private/qquickshape_p.h>         // SHAPE built in C++, typed setters (#154)
+#include <QtQuick/private/qquickitem_p.h>               // explicitVisible of Group children
+#include <QtQuick/private/qquickrectangle_p.h>          // typed color setters
+#include <QtQuick/private/qquicktext_p.h>               // typed color setter
+#include <QtQuick/private/qquicktranslate_p.h>          // QQuickMatrix4x4::setMatrix without QVariant
+#include <QtQuick/private/qquickshadereffectsource_p.h> // Group frame proxy
+#include <QtQuickShapes/private/qquickshape_p.h>         // SHAPE built in C++, typed setters
 
 #include <algorithm>
 #include <cmath>
@@ -67,7 +67,7 @@ QColor toColor(const float* f) { return QColor::fromRgbF(f[0], f[1], f[2], f[3])
 
 // Other types (Rectangle, Text, Image) always take SIZE, also 0 (not drawn, not clickable).
 // Button and the value inputs take part in AUTO_SIZE like the containers (implicit size = content + style padding,
-// #213, #210, #301).
+// #213).
 void setGroupAutoSize(QQuickItem* item, bool on); // GroupItem, below
 
 void applySize(Node& n)
@@ -75,7 +75,7 @@ void applySize(Node& n)
     if (n.type == VLQT_TYPE_ITEM)
         setGroupAutoSize(n.item, n.autoSize); // frame origin: extent with Auto Size, (0, 0) with SIZE
     if (n.type == VLQT_TYPE_QML)
-        static_cast<QmlItem*>(n.item)->setAutoSize(n.autoSize); // root = implicit size of the QML, or this item's SIZE (#104)
+        static_cast<QmlItem*>(n.item)->setAutoSize(n.autoSize); // root = implicit size of the QML, or this item's SIZE
     if (isAutoSized(n)) {
         n.item->resetWidth();
         n.item->resetHeight();
@@ -85,7 +85,7 @@ void applySize(Node& n)
     }
 }
 
-// SIZE (#469): width/height only; the position comes from ANCHOR + TRANSFORM (see "Geometry" in protocol.h). The
+// SIZE: width/height only; the position comes from ANCHOR + TRANSFORM (see "Geometry" in protocol.h). The
 // anchor placement follows the size change by itself (Elements::initGeometry), also for implicit sizes.
 bool setSize(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&)
 {
@@ -110,7 +110,7 @@ bool setTransform(Elements& els, Node& n, const ResolvedProp&, const Value& v, s
     // reads row-major too, but Qt uses column vectors -> transpose (translation lands in column 4).
     if (!els.setMatrix(n, QMatrix4x4(v.f).transposed(), err))
         return false;
-    // Pin wins (#209, #469): every TRANSFORM (also a resync) puts the item back where the pin says, the drag offset
+    // Pin wins: every TRANSFORM (also a resync) puts the item back where the pin says, the drag offset
     // goes to 0. SIZE/ANCHOR keep it.
     ++n.transformEpoch;
     return els.setDragOffset(n, 0, 0, err);
@@ -131,7 +131,7 @@ bool setAnchor(Elements& els, Node& n, const ResolvedProp&, const Value& v, std:
 }
 bool setOpacity(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&) { n.item->setOpacity(v.f[0]); return true; }
 bool setClip(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&) { n.item->setClip(v.b); return true; }
-// DEBUG (#279): only a flag for the debug overlay (debug.h), the item itself is not touched.
+// DEBUG: only a flag for the debug overlay (debug.h), the item itself is not touched.
 bool setDebug(Elements& els, Node& n, const ResolvedProp&, const Value& v, std::string&)
 {
     if (n.debug != v.b)
@@ -153,7 +153,7 @@ const std::vector<PropDef>& commonProps()
     return t;
 }
 
-// EFFECT_* (block 832): keys of SET_EFFECT_CHAIN MULTI entries only (#489, effectchain.cpp); SET with one is -6.
+// EFFECT_* (block 832): keys of SET_EFFECT_CHAIN MULTI entries only (effectchain.cpp); SET with one is -6.
 bool isEffectProp(quint16 prop) { return prop >= VLQT_PROP_EFFECT_ENABLED && prop <= VLQT_PROP_EFFECT_MASK_INVERTED; }
 
 // ---------------------------------------------------------------------------------------------
@@ -161,7 +161,7 @@ bool isEffectProp(quint16 prop) { return prop >= VLQT_PROP_EFFECT_ENABLED && pro
 
 bool setQmlColor(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
-    // Typed setters (perf, #560): QMetaProperty::write(QVariant(QColor)) per element and frame costs several percent
+    // Typed setters (perf): QMetaProperty::write(QVariant(QColor)) per element and frame costs several percent
     // CPU. The Qt setters compare first, so an unchanged color stays a no-op. Everything else takes the QML property.
     const QColor c = toColor(v.f);
     if (auto* r = qobject_cast<QQuickRectangle*>(n.item)) {
@@ -303,7 +303,7 @@ std::vector<PropDef> textProps()
 }
 
 // ---------------------------------------------------------------------------------------------
-// Error state of an element (#273): a QML string property vlqtError on the root item, empty = no error. Read by
+// Error state of an element: a QML string property vlqtError on the root item, empty = no error. Read by
 // the poll (Elements::readError) and sent as EV_ERROR to the bound sink, i.e. shown at the element's vvvv node.
 // vlqtPath: local path of a file URL for messages (file:///C:/a%20b.png -> C:/a b.png, file:///home/x -> /home/x).
 #define VLQT_QML_PATH_FN \
@@ -318,7 +318,7 @@ bool setMediaSource(Elements&, Node& n, const ResolvedProp& rp, const Value& v, 
 }
 
 // ---------------------------------------------------------------------------------------------
-// Image (#361): QtImageItem draws an image resource (vlqt_res_*, image_resource.h) instead of a file URL, so one
+// Image: QtImageItem draws an image resource (vlqt_res_*, image_resource.h) instead of a file URL, so one
 // upload serves every element and window. No SOURCE any more (-6); load errors belong to the resource (RES_EV_ERROR).
 
 QQuickItem* makeImage() { return new QtImageItem(); }
@@ -328,11 +328,11 @@ bool setImageResource(Elements&, Node& n, const ResolvedProp&, const Value& v, s
     return static_cast<QtImageItem*>(n.item)->setResource(v.u, err);
 }
 
-// ShaderEffect (#437, protocol.h "ShaderEffect"): ShaderEffectItem (shadereffectitem.h), own QQuickItem with a
+// ShaderEffect (protocol.h "ShaderEffect"): ShaderEffectItem (shadereffectitem.h), own QQuickItem with a
 // QSGMaterialShader. SOURCE goes through the effect source bookkeeping (layer, hidden, cleared before deletion).
 QQuickItem* makeShaderEffect() { return new ShaderEffectItem(); }
 
-// QmlElement (#104, protocol.h "QmlElement"): QmlItem (qmlitem.h), own QQuickItem that holds the instance of a user .qml file.
+// QmlElement (protocol.h "QmlElement"): QmlItem (qmlitem.h), own QQuickItem that holds the instance of a user .qml file.
 QQuickItem* makeQml() { return new QmlItem(); }
 
 bool setQmlSource(Elements& els, Node& n, const ResolvedProp&, const Value& v, std::string&)
@@ -425,7 +425,7 @@ std::vector<PropDef> imageProps()
 // of every child after each positioning pass (positioningComplete), on a size change of the container
 // and on an alignment change. Reference extent = own width/height (implicit = content with AUTO_SIZE
 // on) minus padding. Children with width or height 0 or visible false are skipped by Qt (not laid
-// out). The layout owns x/y of its children (no anchor placement, ANCHOR is only the pivot, #469).
+// out). The layout owns x/y of its children (no anchor placement, ANCHOR is only the pivot).
 // TRANSFORM of a child stays visual: it acts in the child's local coordinates after positioning
 // and does not move siblings.
 
@@ -480,7 +480,7 @@ std::vector<PropDef> rowProps()
 }
 
 // ---------------------------------------------------------------------------------------------
-// Group (#469, "Group frame" in protocol.h): an Item whose implicit size is its frame = bounding box of the children
+// Group ("Group frame" in protocol.h): an Item whose implicit size is its frame = bounding box of the children
 // (mapped through their x/y AND transform, unlike Qt's childrenRect) and of its own origin. With Auto Size on the frame
 // may start left of / above the origin (xf->ox/oy < 0): width/height = frame size, hit area (contains) and clip follow
 // the frame, the anchor resolves against it (Left/Top stay at the origin, see anchorPoint). Recomputed in
@@ -492,12 +492,12 @@ public:
     std::shared_ptr<TransformState> xf; // Elements::initGeometry
     std::function<void()> placed;       // re-places the group after a frame origin change (initGeometry)
     QPointer<QObject> effectHolder;     // first stage of the effect chain (Elements::setEffectChain): frameLeft/frameTop follow the frame
-    QPointer<QQuickShaderEffectSource> proxy; // texture of the whole frame for ShaderEffects (#486, Elements::acquireGroupProxy)
+    QPointer<QQuickShaderEffectSource> proxy; // texture of the whole frame for ShaderEffects (Elements::acquireGroupProxy)
     int proxyRefs = 0;                  // Input/texture uniform uses of proxy
     QMetaObject::Connection proxyRetire; // destroyed -> retire proxy (acquireGroupProxy), dropped on release
 
-    // The effect chain's padding covers the part of the frame left of / above the origin (#475, effectchain.cpp); the
-    // ShaderEffect proxy samples exactly the frame (#486). Called on every frame change (origin, size, anchor, Auto Size).
+    // The effect chain's padding covers the part of the frame left of / above the origin (effectchain.cpp); the
+    // ShaderEffect proxy samples exactly the frame. Called on every frame change (origin, size, anchor, Auto Size).
     void syncEffectFrame()
     {
         if ((!effectHolder && !proxy) || !xf)
@@ -564,12 +564,12 @@ protected:
     void updatePolish() override
     {
         // Only after a change: Scene::polish (poll without a render) calls ensurePolished, i.e. updatePolish, on every
-        // item twice per poll, changed or not (perf, #469).
+        // item twice per poll, changed or not (perf).
         if (!dirty_)
             return;
         dirty_ = false;
         // Children with an empty rect (size 0 = not drawn) and hidden ones do not count. Hidden = the child's own flag:
-        // isVisible() is false for every child of a hidden Group, e.g. the Input of a ShaderEffect (#486).
+        // isVisible() is false for every child of a hidden Group, e.g. the Input of a ShaderEffect.
         QRectF e;
         bool any = false;
         for (QQuickItem* c : childItems()) {
@@ -594,7 +594,7 @@ protected:
             syncEffectFrame();
             if (placed)
                 placed();
-            markGeometry(*xf); // the frame moved inside the item: no x/y/size signal for that (#20)
+            markGeometry(*xf); // the frame moved inside the item: no x/y/size signal for that
         }
     }
 
@@ -655,14 +655,14 @@ void setLayerEnabled(QQuickItem* item, bool on)
 // Video (QtMultimedia, FFmpeg backend): MediaPlayer + AudioOutput + VideoOutput in a wrapper Item, like the
 // MultiEffect wrapper. Deliberate exception from "vvvv drives the clock": the player runs on its own clock, no
 // seek, no sync. playing true -> play(), false -> pause() (shows the current frame; after loading the first one).
-// Loop off during playback (#125): the running pass ends, then playback stops. The FFmpeg backend has already read
+// Loop off during playback: the running pass ends, then playback stops. The FFmpeg backend has already read
 // ahead into the next passes; a seek to the current position drops them, then loops = 1 applies.
-// End of stream (#136): keepLastFrame -> VideoOutput.endOfStreamPolicy KeepLastFrame, else ClearOutput (Qt default).
+// End of stream: keepLastFrame -> VideoOutput.endOfStreamPolicy KeepLastFrame, else ClearOutput (Qt default).
 // A source change (incl. empty) always clears the output, otherwise KeepLastFrame would keep the old file's frame.
 // A source change stops Qt's player, so the wrapper re-applies playing right away (play() during loading starts once
 // loaded; not on LoadedMedia: the FFmpeg backend reports it again after the end and would restart). Loading
 // is asynchronous: implicit size (natural video size), position and duration are 0 until then. Player errors go
-// to vlqtError (shown + logged at the Video node, #273) until the next source change. The player and its
+// to vlqtError (shown + logged at the Video node) until the next source change. The player and its
 // decoder threads are children of the item and go with DESTROY.
 
 constexpr const char* kVideoQml =
@@ -682,7 +682,7 @@ constexpr const char* kVideoQml =
     "  readonly property alias vlqtPosition: player.position\n"
     "  readonly property alias vlqtDuration: player.duration\n"
     "  property string vlqtError: \"\"\n"
-    "  readonly property alias vlqtPlayer: player\n" // audio tap (#22, audio_tap.cpp)
+    "  readonly property alias vlqtPlayer: player\n" // audio tap (audio_tap.cpp)
     "  readonly property alias vlqtOut: out\n"
     VLQT_QML_PATH_FN
     "  function vlqtSync() { if (playing) player.play(); else player.pause(); }\n"
@@ -739,13 +739,13 @@ std::vector<PropDef> videoProps()
         {VLQT_PROP_KEEP_LAST_FRAME, VLQT_VT_BOOL, setQmlBool, "keepLastFrame"},
         {VLQT_PROP_PLAYBACK_RATE, VLQT_VT_F32, setQmlPositiveReal, "playbackRate"},
         {VLQT_PROP_VOLUME, VLQT_VT_F32, setVolume, "volume"},
-        // Sound to VL.Audio instead of Qt's output (#22, audio_tap.h)
+        // Sound to VL.Audio instead of Qt's output (audio_tap.h)
         {VLQT_PROP_AUDIO_TAP, VLQT_VT_U64, res::audio::setVideoTap, nullptr},
     };
 }
 
 // ---------------------------------------------------------------------------------------------
-// Button (QtQuick.Controls, first Controls element, #213). Base style VLQt (style/VLQt/Button.qml, #292), values from
+// Button (QtQuick.Controls, first Controls element). Base style VLQt (style/VLQt/Button.qml), values from
 // SET_STYLE (vlstyle.h); style picked once at startup (vlqt.cpp). Clicks are
 // Qt's clicked signal (release over the button; autoRepeat repeats it while held; disabled = none), counted in
 // vlqtClicks and sent as EV_CLICK by the poll for every bound Button (input handlers report their own clicks)
@@ -770,7 +770,7 @@ std::vector<PropDef> buttonProps()
 }
 
 // ---------------------------------------------------------------------------------------------
-// Value inputs (SpinBox #210; CheckBox, Switch, Slider, TextField #301). Generic user-value channel: the QML
+// Value inputs (SpinBox; CheckBox, Switch, Slider, TextField). Generic user-value channel: the QML
 // snippet declares
 //   property int vlqtUserCount   user changes since the last poll (reset to 0 by Elements::takeUserValue)
 //   property <T> vlqtUserValue   value of the last user change, T = int | real | bool | string (= EV_VALUE value type)
@@ -813,7 +813,7 @@ std::vector<PropDef> spinBoxProps()
     };
 }
 
-// Toggle (#301): one vvvv node, two looks = two types, CheckBox and Switch. No text (labels are separate Text
+// Toggle: one vvvv node, two looks = two types, CheckBox and Switch. No text (labels are separate Text
 // elements): spacing 0, so the implicit size is the indicator + style padding (style VLQt: INDICATOR_SIZE + padding, Switch lane 2 x size) and the
 // indicator is centred in a larger SIZE. toggled = user only (click, Space); SET VALUE (checked) never fires it.
 // Tristate and dragging the Switch handle are not exposed; a drag that flips the Switch also sends toggled.
@@ -847,7 +847,7 @@ std::vector<PropDef> toggleProps()
     };
 }
 
-// Slider (#301): f32 value, Qt defaults 0..1, step 0 (continuous). moved = user only (press/drag, arrow keys, wheel;
+// Slider: f32 value, Qt defaults 0..1, step 0 (continuous). moved = user only (press/drag, arrow keys, wheel;
 // live, so every drag step), SET VALUE/MINIMUM/MAXIMUM never fire it (also not Qt's clamp). Several moves between two
 // polls give one EV_VALUE with the last value. snapMode SnapAlways: with STEP > 0 a drag lands on from + k * step like
 // keys and wheel; STEP 0 stays continuous. Wheel on (like SpinBox). ORIENTATION Qt::Horizontal 1 | Qt::Vertical 2.
@@ -876,7 +876,7 @@ std::vector<PropDef> sliderProps()
     };
 }
 
-// TextField (#301): single line, string value. Commit on Enter or focus loss (editingFinished), but only if the text
+// TextField: single line, string value. Commit on Enter or focus loss (editingFinished), but only if the text
 // differs from the last set or committed one (vlqtCommitted): a focus loss or Enter without an edit is no user change
 // and would otherwise echo the value C# set (no echo, like SpinBox). SET VALUE writes text and vlqtCommitted together,
 // so a SET while the user types replaces the edit and counts as the new reference. EDITABLE = !readOnly.
@@ -918,9 +918,9 @@ std::vector<PropDef> textFieldProps()
 }
 
 // ---------------------------------------------------------------------------------------------
-// Shape (#154, protocol.h 960..): QQuickShape with the CurveRenderer and one QQuickShapePath whose only path element is
+// Shape (protocol.h 960..): QQuickShape with the CurveRenderer and one QQuickShapePath whose only path element is
 // a VlPathElement (pathelement.h). Built in C++ (no QML snippet), so the setters reach the ShapePath and the element
-// directly (typed, no QVariant writes, #560). Defaults as the C# Shape element: no geometry, not closed, fill
+// directly (typed, no QVariant writes). Defaults as the C# Shape element: no geometry, not closed, fill
 // transparent, stroke white with width -1 (no stroke), cap Flat, join Miter, miter limit 4, solid, trim 0/1/0, NonZero.
 // The item keeps width/height 0: the shape draws outside its frame, the element size is the extent of the geometry.
 
@@ -1130,7 +1130,7 @@ std::vector<PropDef> shapeProps()
 const std::unordered_map<quint16, TypeDef>& typeTable()
 {
     static const std::unordered_map<quint16, TypeDef> t = {
-        // Group (C#) = GroupItem: implicit size/frame from the children incl. their transform (#469).
+        // Group (C#) = GroupItem: implicit size/frame from the children incl. their transform.
         {VLQT_TYPE_ITEM, {VLQT_TYPE_ITEM, "ITEM", nullptr, {{VLQT_PROP_AUTO_SIZE, VLQT_VT_BOOL, setAutoSize, nullptr}}, makeGroup}},
         {VLQT_TYPE_RECTANGLE, {VLQT_TYPE_RECTANGLE, "RECTANGLE", kRectangleQml, rectangleProps()}},
         {VLQT_TYPE_TEXT, {VLQT_TYPE_TEXT, "TEXT", kTextQml, textProps()}},
@@ -1154,7 +1154,7 @@ const std::unordered_map<quint16, TypeDef>& typeTable()
 const PropDef* findProp(const TypeDef& type, quint16 prop)
 {
     if (isEffectProp(prop))
-        return nullptr; // only via SET_EFFECT_CHAIN (#489)
+        return nullptr; // only via SET_EFFECT_CHAIN
     const auto& list = prop >= 256 ? type.props : commonProps();
     for (const PropDef& p : list)
         if (p.id == prop)
@@ -1260,7 +1260,7 @@ QString Elements::readError(const Node& node) const
     QString own;
     if (it != types.end() && it->second.error.isValid())
         own = it->second.error.read(node.item).toString(); // implicitly shared, no copy of the text
-    // Content problems of the effect chain (#489, "link N: ..."); joined only while both have text.
+    // Content problems of the effect chain ("link N: ..."); joined only while both have text.
     if (!node.effectChain || node.effectChain->error().isEmpty())
         return own;
     return own.isEmpty() ? node.effectChain->error() : own + u'\n' + node.effectChain->error();
@@ -1396,7 +1396,7 @@ QObject* Elements::createTransform(std::string& err)
 
 namespace {
 // Qt column vectors: v' = T(d) * T(p) * M * T(-p) * v with p = anchor in the item's local coordinates (actual size)
-// and d = drag offset (#209): the offset comes last, i.e. it moves the item in the parent's space. One Matrix4x4 for
+// and d = drag offset: the offset comes last, i.e. it moves the item in the parent's space. One Matrix4x4 for
 // both instead of a Matrix4x4 + Translate pair: the order in item.transform can never be wrong.
 // Together with the anchor placement (x/y = -p outside Row/Column, placeItem) Qt maps v -> d + M * (v - p), i.e.
 // (v - anchor) * M in row vectors as in protocol.h; in a Row/Column v -> layoutPos + d + p + M * (v - p).
@@ -1412,7 +1412,7 @@ QMatrix4x4 pivoted(const TransformState& s, const QQuickItem* item)
 }
 
 // A Row/Column (Qt positioner) owns the position of its children: writing x/y there would overwrite the layout, and
-// the positioner only lays out again on a size change (#346). The lookup runs once per meta object (hot path: every
+// the positioner only lays out again on a size change. The lookup runs once per meta object (hot path: every
 // size change of every element, 10000 per apply in the perf test).
 bool inPositioner(const QQuickItem* item)
 {
@@ -1438,9 +1438,9 @@ bool isTranslation2D(const QMatrix4x4& m)
         && m(3, 0) == 0 && m(3, 1) == 0 && m(3, 2) == 0 && m(3, 3) == 1;
 }
 
-// Anchor placement (#469): outside a Row/Column the anchor point (actual size) lies at the parent origin before
+// Anchor placement: outside a Row/Column the anchor point (actual size) lies at the parent origin before
 // TRANSFORM, i.e. x/y = -anchor. Inside one the layout keeps x/y.
-// Fast path (perf, #469): as long as no Matrix4x4 is attached (TRANSFORM was only ever a pure x/y translation, no drag
+// Fast path (perf): as long as no Matrix4x4 is attached (TRANSFORM was only ever a pure x/y translation, no drag
 // offset, never in a Row/Column) the translation goes into x/y as well: x/y = t - anchor is the same mapping as
 // T(t) * T(-anchor), without a QML transform object, its QVariant writes and the general matrix in every
 // mapToScene/sync. Elements::setMatrix decides when to attach the Matrix4x4 (from then on it carries TRANSFORM).
@@ -1455,7 +1455,7 @@ void placeItem(const TransformState& s, QQuickItem* item)
 }
 
 // Matrix4x4 objects only come from Elements::createTransform (checked with qobject_cast there). setMatrix compares
-// first and emits matrixChanged only on a real change; no QVariant/QMetaProperty detour (perf, #560).
+// first and emits matrixChanged only on a real change; no QVariant/QMetaProperty detour (perf).
 void setMatrixValue(QObject* t, const QMatrix4x4& m)
 {
     static_cast<QQuickMatrix4x4*>(t)->setMatrix(m);
@@ -1487,7 +1487,7 @@ QRectF itemFrame(const TransformState& s, const QQuickItem* item)
 
 QPointF anchorPoint(const TransformState& s, const QQuickItem* item)
 {
-    // Group with Auto Size off (#475): the frame is placed around the origin, the item and its children stay.
+    // Group with Auto Size off: the frame is placed around the origin, the item and its children stay.
     if (s.sizedFrame)
         return QPointF(0, 0);
     // Left/Top (0) is always the origin: an auto-sized Group stays a pure transform container (its origin = that of
@@ -1500,7 +1500,7 @@ QPointF anchorPoint(const TransformState& s, const QQuickItem* item)
 void Elements::initGeometry(Node& node)
 {
     node.xf = std::make_shared<TransformState>();
-    // Default ANCHOR AlignLeft|AlignTop for all elements (fx = fy = 0, TransformState default; #471).
+    // Default ANCHOR AlignLeft|AlignTop for all elements (fx = fy = 0, TransformState default).
     auto* group = dynamic_cast<GroupItem*>(node.item);
     placeItem(*node.xf, node.item);
     // Placement and the anchor of TRANSFORM follow every size change (Auto Size, layout, text, children extent), not
@@ -1509,14 +1509,14 @@ void Elements::initGeometry(Node& node)
     auto update = [xf = node.xf, item = node.item]() {
         placeItem(*xf, item);
         writeMatrix(*xf, item);
-        markGeometry(*xf); // size and frame changed (#20)
+        markGeometry(*xf); // size and frame changed
     };
     QObject::connect(node.item, &QQuickItem::widthChanged, node.item, update);
     QObject::connect(node.item, &QQuickItem::heightChanged, node.item, update);
     if (group) {
         group->xf = node.xf;
         group->placed = update; // a mask frame follows through x/y (the anchor moves with the frame origin)
-        // Auto Size off: the frame origin depends on the size (-fx * w), the effect padding follows (#475).
+        // Auto Size off: the frame origin depends on the size (-fx * w), the effect padding follows.
         QObject::connect(group, &QQuickItem::widthChanged, group, [group] { group->syncEffectFrame(); });
         QObject::connect(group, &QQuickItem::heightChanged, group, [group] { group->syncEffectFrame(); });
     }
@@ -1576,7 +1576,7 @@ bool Elements::writeTransform(Node& node, std::string& err)
     setMatrixValue(node.transform, pivoted(*node.xf, node.item));
     updateMaskFrame(node);
     pokeGroup(node.item);
-    markGeometry(*node.xf); // Qt has no public signal for a transform change (#20)
+    markGeometry(*node.xf); // Qt has no public signal for a transform change
     return true;
 }
 
@@ -1588,12 +1588,12 @@ bool Elements::setAnchor(Node& node, float fx, float fy, std::string& err)
     node.xf->fy = fy;
     placeItem(*node.xf, node.item);
     if (auto* group = dynamic_cast<GroupItem*>(node.item))
-        group->syncEffectFrame(); // Auto Size off: the frame moves with the anchor (#475)
+        group->syncEffectFrame(); // Auto Size off: the frame moves with the anchor
     if (node.transform)
         setMatrixValue(node.transform, pivoted(*node.xf, node.item));
     updateMaskFrame(node);
     pokeGroup(node.item);
-    markGeometry(*node.xf); // matrix pivot or Group frame (Auto Size off) moved, maybe without an x/y change (#20)
+    markGeometry(*node.xf); // matrix pivot or Group frame (Auto Size off) moved, maybe without an x/y change
     return true;
 }
 bool Elements::setEffectSource(Node& effect, const ResolvedProp& rp, QQuickItem* source, std::string& err)
@@ -1601,7 +1601,7 @@ bool Elements::setEffectSource(Node& effect, const ResolvedProp& rp, QQuickItem*
     QQuickItem* old = effect.effectSource;
     if (old == source)
         return true;
-    // A Group goes through its frame proxy (#486): the layer would cover only (0, 0, width, height), not the part of the
+    // A Group goes through its frame proxy: the layer would cover only (0, 0, width, height), not the part of the
     // frame left of / above the origin. Its own layer (Effect pin) stays untouched.
     QQuickItem* input = isGroup(source) ? acquireGroupProxy(source) : source;
     if (!writeQml(effect.item, rp, QVariant::fromValue(input), err)) {
@@ -1612,11 +1612,11 @@ bool Elements::setEffectSource(Node& effect, const ResolvedProp& rp, QQuickItem*
     effect.effectSource = source;
     if (old) {
         if (isGroup(old))
-            releaseGroupProxy(old); // the proxy goes after the next frame (#123)
+            releaseGroupProxy(old); // the proxy goes after the next frame
         auto it = sourceRefs.find(old);
         if (it != sourceRefs.end() && --it->second <= 0) {
             sourceRefs.erase(it);
-            // Free the layer texture, but only after the next frame (#123): disabling the layer deletes its texture
+            // Free the layer texture, but only after the next frame: disabling the layer deletes its texture
             // provider right away, while the effect still renders from it until it polishes onto the new source
             // (use after free, crash 0xC0000409 when the input changes every frame). Visibility stays with the host.
             if (!isGroup(old))
@@ -1652,7 +1652,7 @@ int Elements::setEffectChain(Node& node, const EffectChainDesc& chain, const std
     std::vector<EffectChain::DroppedMask> dropped;
     const bool ok = ec->apply(chain, masks, retired, dropped, err);
     for (const QPointer<QQuickItem>& stage : retired)
-        frameDelete.emplace_back(stage); // may still be sampled this frame (#123)
+        frameDelete.emplace_back(stage); // may still be sampled this frame
     for (const EffectChain::DroppedMask& d : dropped)
         retireMaskFrame(node, d.mask, d.frame);
     if (!ok)
@@ -1692,7 +1692,7 @@ void Elements::releaseEffectLayer(Node& node)
         detachEffectMask(node, mask);
     effectLayers.erase(node.item);
     // A SHADER_EFFECT source or an attached mask keeps its layer (an effect samples it), only the layer effect goes;
-    // a Group source is sampled through its frame proxy (#486), not its layer. The root and its stages go with it.
+    // a Group source is sampled through its frame proxy, not its layer. The root and its stages go with it.
     if ((!isEffectSource(node.item) || isGroup(node.item)) && !isMaskLayer(node.item))
         setLayerEnabled(node.item, false);
     QQmlProperty(node.item, QStringLiteral("layer.effect")).write(QVariant::fromValue<QQmlComponent*>(nullptr));
@@ -1779,7 +1779,7 @@ void Elements::retireMaskFrame(Node& node, QQuickItem* mask, QQuickItem* frame)
         mask->setParentItem(frame->parentItem()); // parked next to it again, hidden
         mask->setVisible(false);
     }
-    // The effect may sample the frame until it polishes (#123): layer off and delete after the next frame.
+    // The effect may sample the frame until it polishes: layer off and delete after the next frame.
     layerOff.emplace_back(frame);
     frameDelete.emplace_back(frame);
 }
@@ -1826,7 +1826,7 @@ QQuickItem* Elements::acquireGroupProxy(QQuickItem* item)
     if (group->proxy)
         return group->proxy;
     // A ShaderEffectSource renders its source item (also a hidden one: it refs it, refFromEffectItem) into its own
-    // texture with sourceRect = the frame (like the snapshot's frameTarget, #475). Hidden itself, so it never draws on
+    // texture with sourceRect = the frame (like the snapshot's frameTarget). Hidden itself, so it never draws on
     // screen; it still gets updatePaintNode and its texture is rendered by the consuming ShaderEffectItem's preprocess
     // without an extra refFromEffectItem on the proxy (checked by grab in the smoke test group-shader-source, also
     // live changes). Under the root, never under the Group (it would be part of its own texture) or an element (layout,
@@ -1855,11 +1855,11 @@ void Elements::releaseGroupProxy(QQuickItem* item)
     group->proxyRefs = 0;
     QQuickShaderEffectSource* proxy = group->proxy;
     group->proxy = nullptr;
-    // Only our own connection (#534): disconnecting every destroyed -> proxy connection would also drop the proxy's
+    // Only our own connection: disconnecting every destroyed -> proxy connection would also drop the proxy's
     // sourceItemDestroyed, and ~QQuickShaderEffectSource would then use the deleted Group (window_destroy, or the Input
     // released and the Group destroyed in one apply).
     QObject::disconnect(group->proxyRetire);
-    frameDelete.emplace_back(proxy); // the effect may sample it until it syncs onto the new texture (#123)
+    frameDelete.emplace_back(proxy); // the effect may sample it until it syncs onto the new texture
 }
 
 void Elements::syncTextureGroups(Node& effect)

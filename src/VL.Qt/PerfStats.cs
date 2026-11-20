@@ -27,7 +27,7 @@ namespace VL.Qt
             (float)p.gpu_ms, (float)p.gpu_ms_max,
             (float)p.swaps_per_pump);
 
-        // #245, additive (init-only, 0 when unknown): percentiles/counters/budget of the window's ring and the host side
+        // additive (init-only, 0 when unknown): percentiles/counters/budget of the window's ring and the host side
         // (apply/reconcile, commands, .NET GC) over the last ~1 s.
 
         /// <summary>Frame budget in ms: 1000 / refresh rate of the window's screen (fallback 60 Hz).</summary>
@@ -75,7 +75,7 @@ namespace VL.Qt
         /// <summary>.NET bytes allocated per vvvv frame (process, average over ~1 s).</summary>
         public float AllocatedBytesPerFrame { get; init; }
 
-        // #260, additive: the vvvv side of the frame before the Qt pump.
+        // additive: the vvvv side of the frame before the Qt pump.
 
         /// <summary>vvvv frame (patch update, from the frame clock's tick to the Qt pump) in ms, average/max over ~1 s.</summary>
         public float VvvvMs { get; init; }
@@ -87,7 +87,7 @@ namespace VL.Qt
         /// <summary>Start of the frame (QRhi::beginFrame) in ms per frame, average over ~1 s. With VSync this is where Direct3D 11 waits for the display refresh; without VSync it waits there when the GPU is behind. Not Qt work.</summary>
         public float VsyncMs { get; init; }
 
-        // #270: VL imports the primary-constructor parameters as the pins of `Split`, but not the init-only properties above.
+        // VL imports the primary-constructor parameters as the pins of `Split`, but not the init-only properties above.
         // These explicit operations read them in a patch (PerfStats (Split Percentiles) etc.); `Split` itself is unchanged.
 
         /// <summary>Frame budget and the frame/pump percentiles (ms) over the last up to 240 pumps.</summary>

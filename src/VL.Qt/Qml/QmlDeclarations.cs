@@ -128,7 +128,7 @@ namespace VL.Qt.Qml
     }
 
     /// <summary>
-    /// The root declarations of a .qml file (#107, docs/decisions/user-qml.md): a C# parser, no Qt, runs no user code. Reads only
+    /// The root declarations of a .qml file (docs/decisions/user-qml.md): a C# parser, no Qt, runs no user code. Reads only
     /// the members of the root object at depth 1 (nested objects, functions, strings and comments are skipped) and the head tags.
     /// If the root type is a sibling file of the same folder (<c>Gauge { }</c> + Gauge.qml), its declarations come first
     /// (recursive, a cycle gives a warning and stops); a redeclaration in the derived file replaces the inherited one in place.

@@ -36,12 +36,12 @@ namespace VL.Qt.Elements
         /// Writes the SETs of the handler properties that differ from <paramref name="previous"/> (same handler type;
         /// null = just created, send only values that differ from QtNative's defaults).
         /// <paramref name="mapping"/> converts lengths (Drag limits) to logical pixels; when its scale changes the reconciler
-        /// passes <paramref name="previous"/> = null so every non-default value is sent again (#143).
+        /// passes <paramref name="previous"/> = null so every non-default value is sent again.
         /// </summary>
         internal abstract void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping);
     }
 
-    /// <summary>Hover handler (Qt Quick HoverHandler): reports hover only; positions come from the Point handler (#320).</summary>
+    /// <summary>Hover handler (Qt Quick HoverHandler): reports hover only; positions come from the Point handler.</summary>
     internal sealed class HoverInteraction : Interaction
     {
         public HoverInteraction(Interaction? previous, SinkSlot sink)
@@ -156,7 +156,7 @@ namespace VL.Qt.Elements
     }
 
     /// <summary>
-    /// Drag handler (Qt Quick DragHandler, target null, #209): reports the running drag and, with
+    /// Drag handler (Qt Quick DragHandler, target null): reports the running drag and, with
     /// <see cref="MovesElement"/>, moves the element by its drag offset in QtNative. Limits are in logical pixels
     /// (minX, minY, maxX, maxY of the offset), ±infinity = none; the node validates min ≤ max before.
     /// </summary>
@@ -205,7 +205,7 @@ namespace VL.Qt.Elements
         public static readonly DragLimits None = new(float.NegativeInfinity, float.NegativeInfinity, float.PositiveInfinity, float.PositiveInfinity);
     }
 
-    /// <summary>Touch Points handler (own QtNative handler, passive grabs): all points pressed in the item (#321).</summary>
+    /// <summary>Touch Points handler (own QtNative handler, passive grabs): all points pressed in the item.</summary>
     internal sealed class TouchPointsInteraction : Interaction
     {
         public TouchPointsInteraction(Interaction? previous, SinkSlot sink, bool occlusion, PointerDevices devices)
@@ -229,7 +229,7 @@ namespace VL.Qt.Elements
     }
 
     /// <summary>
-    /// Pinch handler (Qt Quick PinchHandler, target null): scale, rotation and translation of the running gesture (#321).
+    /// Pinch handler (Qt Quick PinchHandler, target null): scale, rotation and translation of the running gesture.
     /// The node validates the point counts (both at least 2, minimum not above maximum) before.
     /// </summary>
     internal sealed class PinchInteraction : Interaction

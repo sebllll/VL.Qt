@@ -1,6 +1,6 @@
 #pragma once
 
-// Clear off (#117): the feedback layer keeps the previous frame of a scene (window or offscreen scene) and draws the
+// Clear off: the feedback layer keeps the previous frame of a scene (window or offscreen scene) and draws the
 // new frame over it. Same code for both targets: the previous frame is part of the scene graph, so neither the swap
 // chain (flip model discards the back buffer) nor the render target of a QtTexture has to keep its contents.
 //
@@ -16,7 +16,7 @@
 // switching off (and after a resize, which recreates the texture) starts from the clear colour; premultiplied "over"
 // makes "transparent texture over the clear colour" equal to "clear colour in the texture".
 //
-// Fade (#138): with 0 < alpha of the clear colour, the view draws a full-size fill with the clear colour over the
+// Fade: with 0 < alpha of the clear colour, the view draws a full-size fill with the clear colour over the
 // previous frame (premultiplied "over": out = C·a + prev·(1 − a)), so trails fade toward the clear colour; alpha 0
 // draws no fill (pure accumulation). The window then clears to the clear colour made opaque (Scene::applyClearColor):
 // the texture's alpha only grows toward 1 under the fill, and "texture over opaque C" keeps every pixel's colour
@@ -26,7 +26,7 @@
 // Attachment: the vlqt::Scene owns the layer and holds the Clear state; the layer's items belong to one QQuickWindow
 // (source under its content item, view under Scene::root, size from the window's signals, textures in its QRhi). It
 // never moves to another window: Scene::releaseFeedback / restoreFeedback rebuild it from the state when the window
-// is replaced (#118).
+// is replaced.
 
 #include <QtCore/QPointer>
 #include <QtGui/QColor>

@@ -9,7 +9,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Snapshot node (#363) on a fake resource API: grab without renderer, ready frame, failure, release.</summary>
+    /// <summary>Snapshot node on a fake resource API: grab without renderer, ready frame, failure, release.</summary>
     public class SnapshotNodeTests
     {
         private FakeResourceApi _api = null!;
@@ -68,7 +68,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Grab_NewInstanceBeforeRendererUpdate_FoundByItsSlot()
         {
-            // Like a Group with an animated input (#548): the node outputs a new instance every frame with the same sink
+            // Like a Group with an animated input: the node outputs a new instance every frame with the same sink
             // slot, and Snapshot runs before the renderer of that frame.
             var slot = new SinkSlot(new ElementSink(), 0);
             _reconciler.Window = new IntPtr(1);

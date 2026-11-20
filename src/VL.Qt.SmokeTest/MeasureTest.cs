@@ -38,7 +38,7 @@ public static class MeasureTest
         return list;
     }
 
-    /// <summary>Text of the last EV_ERROR record of <paramref name="handle"/> in a poll buffer (#273), null if none.</summary>
+    /// <summary>Text of the last EV_ERROR record of <paramref name="handle"/> in a poll buffer, null if none.</summary>
     internal static string? ErrorText(ReadOnlySpan<byte> b, uint handle)
     {
         string? text = null;
@@ -73,7 +73,7 @@ public static class MeasureTest
             int n = Native.Poll(w, buf);
             s.Check(n >= 0, $"poll ({n})");
             var recs = Parse(buf.AsSpan(0, Math.Max(n, 0)), s);
-            recs.RemoveAll(r => r.Event == Protocol.Ev.WindowGeometry); // window record (handle 0, #100), not an item
+            recs.RemoveAll(r => r.Event == Protocol.Ev.WindowGeometry); // window record (handle 0), not an item
             return recs;
         }
         Rec? Find(List<Rec> recs, ushort ev, uint handle)
@@ -174,7 +174,7 @@ public static class MeasureTest
             $"rebind after unbind -> resend ({recs.Count} records)");
 
         // Transform: SCENE_BOUNDS is the axis-aligned box in the scene (rotated 90 deg about its center).
-        var rot = Stride.Core.Mathematics.Matrix.RotationZ(Stride.Core.Mathematics.MathUtil.PiOverTwo); // ANCHOR Center via SetPlaceXf (#88, #469)
+        var rot = Stride.Core.Mathematics.Matrix.RotationZ(Stride.Core.Mathematics.MathUtil.PiOverTwo); // ANCHOR Center via SetPlaceXf
 
         cmd.SetPlaceXf(TextId, 50, 40, 400, 60, rot);
         CheckApply("text transform");
@@ -221,7 +221,7 @@ public static class MeasureTest
         s.Check(first == 1000 * (20 + 28), $"1000 bound items -> 2000 records on the first poll ({first} bytes)");
         var idle = new double[101];
         var moved = new double[101];
-        // #64: best of up to 3 rounds of the idle polls (see PerfLimits.Best); the moved polls run once.
+        // best of up to 3 rounds of the idle polls (see PerfLimits.Best); the moved polls run once.
         var idleMedian = PerfLimits.Best(0.2, () =>
         {
             for (int f = 0; f < idle.Length; f++)
@@ -259,7 +259,7 @@ public static class MeasureTest
         RunEffectGroups(s);
     }
 
-    // #71: a poll after a pump without a render polishes the scene itself (#215), but only when something changed
+    // a poll after a pump without a render polishes the scene itself, but only when something changed
     // since the last poll. An apply between two polls without a pump in between (Qt did not render) must still give
     // the new layout: Row after a Button text change (implicit size), Column after a spacing change, Text measure.
     // The next poll without a change reports nothing, and the following render agrees with the polished layout.
@@ -366,8 +366,8 @@ public static class MeasureTest
         Native.vlqt_window_destroy(w);
     }
 
-    // #20 review: an element inside a Group with an effect chain, and inside a Group used as ShaderEffect Input (frame
-    // proxy under the root, #486), still reports new SCENE_BOUNDS when the Group moves (TRANSFORM: translation = x/y
+    // review: an element inside a Group with an effect chain, and inside a Group used as ShaderEffect Input (frame
+    // proxy under the root), still reports new SCENE_BOUNDS when the Group moves (TRANSFORM: translation = x/y
     // path, scale = Matrix4x4 path) or the ShaderEffect holding the Group moves.
     private static void RunEffectGroups(Scenario s)
     {
@@ -455,7 +455,7 @@ public static class MeasureTest
     private static int Records(ReadOnlySpan<byte> poll, int n, ushort ev, Scenario s) =>
         Parse(poll.Slice(0, Math.Max(n, 0)), s).FindAll(x => x.Event == ev).Count;
 
-    // #20: cost of the measurement path for a static scene of count bound rectangles (flat in one Group, like the
+    // cost of the measurement path for a static scene of count bound rectangles (flat in one Group, like the
     // Elements500/2000 profile scenarios), and with one of them moving. Poll time = Stopwatch around vlqt_window_poll.
     private static void RunStaticCost(Scenario s, int count)
     {

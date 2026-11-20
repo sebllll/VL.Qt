@@ -39,7 +39,7 @@ constexpr int kMaxMesh = 1024;     // MESH_RESOLUTION per axis (vertex count sta
 std::unordered_set<ShaderEffectItem*> s_items; // main thread
 uint64_t s_contentEpoch = 0, s_failureEpoch = 0;
 
-// Layer requests of the samplers (#492): a mip filter other than None needs the layer of the sampled element rendered with
+// Layer requests of the samplers: a mip filter other than None needs the layer of the sampled element rendered with
 // mipmaps. Several ShaderEffectItems can sample one element, so the layer has mipmaps while any of them asks.
 struct LayerUser
 {
@@ -127,7 +127,7 @@ QSGMaterialType* typeFor(const QShader& vs, const QShader& fs)
     return s_types.back().type.get();
 }
 
-// A texture seen through a sampler state (#492): the sampler Qt creates for a draw comes from the filtering and wrap
+// A texture seen through a sampler state: the sampler Qt creates for a draw comes from the filtering and wrap
 // modes of the QSGTexture it gets, and the texture of a layer or an image is shared with other items, so its own modes
 // are never touched. The view carries the modes and forwards everything else.
 class SamplerView final : public QSGTexture
@@ -236,7 +236,7 @@ public:
             t = v.get();
         }
         // Uploads a texture made from a QImage (the CPU copy of an image resource without a shared device, Linux):
-        // without it rhiTexture() stays null and Qt binds a transparent dummy (#77). No-op for layers and wrappers.
+        // without it rhiTexture() stays null and Qt binds a transparent dummy. No-op for layers and wrappers.
         t->commitTextureOperations(state.rhi(), state.resourceUpdateBatch());
         *texture = t;
     }
@@ -660,7 +660,7 @@ void ShaderEffectItem::setUniform(const char* name, int nameLen, quint16 vt, con
         if (u.ref != ref) {
             u.ref = ref;
             // A texture child is drawn through its layer (hidden on REPARENT); the layer stays while it lives. A Group
-            // goes through its frame proxy instead (#486, Elements::syncTextureGroups after endUniforms).
+            // goes through its frame proxy instead (Elements::syncTextureGroups after endUniforms).
             if (ref && !isGroup(ref))
                 QQmlProperty(ref, QStringLiteral("layer.enabled")).write(true);
             m_structureChanged = true;
@@ -712,7 +712,7 @@ void ShaderEffectItem::rebuild()
     m_shaderChanged = true;
     QStringList errors;
 
-    // last good version (#483): a Failed want keeps the Ready content of the slot (held via shown); none -> nothing
+    // last good version: a Failed want keeps the Ready content of the slot (held via shown); none -> nothing
     const auto* frag = m_frag.content.get();
     const auto* vert = m_vert.content.get();
     if (frag && frag->stage() != VLQT_SHADER_STAGE_FRAGMENT) {
@@ -868,7 +868,7 @@ void ShaderEffectItem::rebuild()
             if (mit->offset + size <= m_ubufSize)
                 m_writes.push_back({mit->offset, size, k});
         }
-        // Sampler states (#492) of names the shader does not have: same leniency as for uniforms while a shader still bakes.
+        // Sampler states of names the shader does not have: same leniency as for uniforms while a shader still bakes.
         for (const auto& st : m_samplerStates) {
             if (passThrough || std::any_of(samplers.begin(), samplers.end(), [&](const SamplerDesc& s) { return s.name == st.first; }))
                 continue;
@@ -960,7 +960,7 @@ QSGTexture* ShaderEffectItem::samplerTexture(Sampler& s)
     else if (u && u->type == VLQT_VT_REF)
         item = u->ref;
     if (item) {
-        if (QQuickItem* proxy = groupTextureSource(item)) // a Group texture is its whole frame (#486)
+        if (QQuickItem* proxy = groupTextureSource(item)) // a Group texture is its whole frame
             item = proxy;
         QSGTextureProvider* p = item->isTextureProvider() ? item->textureProvider() : nullptr;
         s.provider = p;

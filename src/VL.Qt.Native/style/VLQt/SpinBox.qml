@@ -1,4 +1,4 @@
-// VL.Qt base style (#292): SpinBox. Frame = box, Text = value text, Indicator = the two buttons (- and + side by side
+// VL.Qt base style: SpinBox. Frame = box, Text = value text, Indicator = the two buttons (- and + side by side
 // at the right, each a square of the box height; own state per button via VlStyle.value). "Pressed" state of the
 // control = a button is pressed. Values from the attached VlStyle (see Button.qml).
 import QtQuick
@@ -18,7 +18,7 @@ T.SpinBox {
     readonly property int fieldIndicatorBorderWidth: 98
     // Button edge: box height inside the frame border.
     readonly property real buttonSize: Math.max(0, height - 2 * VlStyle.frame.borderWidth)
-    // Radius of the frame's inner edge (inside the border): the outer corners of the + button follow it (#421), so the
+    // Radius of the frame's inner edge (inside the border): the outer corners of the + button follow it, so the
     // button does not stick out over the rounded frame corners. Capped by the button edge.
     readonly property real innerRadius: Math.min(buttonSize / 2, Math.max(0, VlStyle.frame.radius - VlStyle.frame.borderWidth))
 

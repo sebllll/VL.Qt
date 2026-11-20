@@ -15,7 +15,7 @@ using VL.Qt.Nodes;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 /// <summary>
-/// #119 task 6, scenario <c>QtTextureInput</c>: input into an offscreen scene, no window involved. One scene (400 x 300 DIP) bound to
+/// task 6, scenario <c>QtTextureInput</c>: input into an offscreen scene, no window involved. One scene (400 x 300 DIP) bound to
 /// a texture of the test D3D11 device, built from the element nodes (Hover, Click, Wheel, Drag, Pinch, Touch Points, Slider,
 /// TextInput) and fed through <see cref="OffscreenRenderer"/>: vvvv notifications (<c>Notify</c>: mouse, wheel, touch, keyboard) and
 /// the <c>Send*</c> calls (pen, which vvvv has no notification for, horizontal wheel, text, focus). The frame order is the one of
@@ -197,8 +197,8 @@ public static partial class QtTextureTest
         }
     }
 
-    // Scenario QtTextureInput (#119): click, hover, wheel, drag, pinch, pen, Slider, TextInput focus.
-    /// <summary>Input into an offscreen QtTexture scene: click, hover, wheel, drag, pinch, pen, Slider, TextInput focus (#119).</summary>
+    // Scenario QtTextureInput: click, hover, wheel, drag, pinch, pen, Slider, TextInput focus.
+    /// <summary>Input into an offscreen QtTexture scene: click, hover, wheel, drag, pinch, pen, Slider, TextInput focus.</summary>
     [Test, Category("QtTextureInput")]
     public static void QtTextureInput() => Scenario.Run(RunInput);
 
@@ -520,7 +520,7 @@ public static partial class QtTextureTest
             $"slider: drag by 96 px of 220 -> value about 0.45 ({rig.SliderValue.Value}, author {rig.SliderValue.LatestAuthor})");
     }
 
-    // TextInput: a click focuses, keys and text type, Enter commits, Esc and a press outside release the focus (#374).
+    // TextInput: a click focuses, keys and text type, Enter commits, Esc and a press outside release the focus.
     private static void InputText(InputRig rig, Scenario s)
     {
         var r = rig.R;

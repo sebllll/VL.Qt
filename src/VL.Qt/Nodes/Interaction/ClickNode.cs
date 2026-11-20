@@ -71,7 +71,7 @@ namespace VL.Qt.Nodes
             InteractionNode<Props>.WriteEvents(longPressed, sink.TakeLongPresses());
 
             // 0 = no tap yet for this sink (new node, new handler, released handle): not written, the channel keeps
-            // the count of the last click until the next one (#320).
+            // the count of the last click until the next one.
             int count = sink.TapCount();
             if (!tapCount.IsValid())
                 _tapCount = null;

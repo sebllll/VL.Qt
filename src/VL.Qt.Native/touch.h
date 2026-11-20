@@ -1,4 +1,4 @@
-/* touch.h - Touch Points and Pinch handlers of QtNative (#321).
+/* touch.h - Touch Points and Pinch handlers of QtNative.
  *
  * Touch Points has no QML counterpart: TouchPointsHandler is an own pointer handler (QQuickPointerDeviceHandler
  * subclass, Qt private API). Pinch is the QML PinchHandler (target null), PinchState composes its values into one
@@ -23,7 +23,7 @@ class QQuickItem;
 
 namespace vlqt {
 
-/* Touch Points (#321): passive grab on every point pressed inside the parent item, follows it until the release
+/* Touch Points: passive grab on every point pressed inside the parent item, follows it until the release
  * (also outside the item), reports all of them. Does not take the points away from Tap, Point, Drag or Pinch handlers
  * at the same item. Occlusion on (default): a press that another item's handler (an element on top with Tap/Drag) or
  * item (Button) already grabs exclusively is ignored; exclusive grabs of handlers at the same item do not count.
@@ -33,7 +33,7 @@ class TouchPointsHandler : public QQuickPointerDeviceHandler
     Q_OBJECT
 public:
     struct Point {
-        const QPointingDevice* device; // with qtId the key of the point: ids are per device (#351)
+        const QPointingDevice* device; // with qtId the key of the point: ids are per device
         int qtId;                      // QEventPoint::id (pen and mouse always 0, touch from 0 per screen)
         QPointF pos;     // item-local, logical pixels
         float pressure;  // QEventPoint::pressure (device-dependent, often a constant)
@@ -60,14 +60,14 @@ private:
     std::map<quint32, Point>::iterator find(const QEventPoint& point);
     quint32 newId(int qtId) const;
 
-    // By own id (#351): QEventPoint::id is only unique per device (pen 0, first finger 0), so a pen and a finger
+    // By own id: QEventPoint::id is only unique per device (pen 0, first finger 0), so a pen and a finger
     // would share one entry. A new point keeps Qt's id when no other point uses it (touch alone: Qt's ids unchanged),
     // otherwise it gets the smallest free id; either way it keeps the id until its release.
     std::map<quint32, Point> points_;
     bool occlusion_ = true;
 };
 
-/* Pinch (#321): follows the QML PinchHandler (target null) and composes its active values into one gesture.
+/* Pinch: follows the QML PinchHandler (target null) and composes its active values into one gesture.
  * Qt ends the pinch (active false, values back to 1/0/0) as soon as the number of points differs from the one it
  * started with (a third finger down or up) and starts a new one later. PinchState keeps the gesture running while at
  * least minimumPointCount points lie on the item (counted by an internal TouchPointsHandler without occlusion): values

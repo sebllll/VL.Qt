@@ -54,7 +54,7 @@ namespace VL.Qt.Shaders
         string? Summary);
 
     /// <summary>
-    /// Pins of a generated shader node from the reflection of .frag (and optional .vert) plus their annotations (#488).
+    /// Pins of a generated shader node from the reflection of .frag (and optional .vert) plus their annotations.
     /// Holds all pin rules of the shader node factory (docs/effects-and-shaders.md): filter qt_Matrix/qt_Opacity, sampler2D source →
     /// Input, merge vert/frag (same name once), type mapping incl. @color and bool regex, skipped types and arrays as
     /// warnings, defaults. Order: further samplers (Image) first, then uniforms, each in source order.

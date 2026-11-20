@@ -11,7 +11,7 @@ namespace VL.Qt.Nodes
     /// <summary>
     /// Turns the children input (the pin group, a <see cref="Spread{T}"/> that VL may rebuild every frame, or the
     /// Sequence input of the Spectral nodes) into a stable <see cref="ImmutableArray{T}"/>: unconnected pins (null) and
-    /// unknown <see cref="IElement"/> implementations are dropped, an <see cref="IStylable"/> becomes a <see cref="StylableElement"/> (#413, the instance is kept while the
+    /// unknown <see cref="IElement"/> implementations are dropped, an <see cref="IStylable"/> becomes a <see cref="StylableElement"/> (the instance is kept while the
     /// stylable stays the same), and the same array instance is returned as long as the children are reference equal
     /// element by element. Since <see cref="ImmutableArray{T}"/> equality is reference equality of its backing array, the
     /// result can go straight into a node's <c>Props</c> record struct for change detection. No allocation if nothing

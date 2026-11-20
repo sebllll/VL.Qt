@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using Stride.Core.Mathematics;
 using VL.Qt;
 
-// Fullscreen pin (#234) without vvvv: WindowRenderer.SetMode(Fullscreen) live and on create (before show).
+// Fullscreen pin without vvvv: WindowRenderer.SetMode(Fullscreen) live and on create (before show).
 // On → EV_WINDOW_GEOMETRY reports VLQT_WINDOW_FULLSCREEN and (Windows) the rect of the window's monitor in DIP;
 // off → the geometry from before. Save Bounds (BoundsSaver) writes nothing during or after the round trip.
 // A second monitor (Windows) is tested if present, otherwise skipped with INFO.
@@ -57,7 +57,7 @@ public static class FullscreenTest
             }
             return r.Geometry;
         }
-        // Same tolerance as RendererTest.RunGeometry: WSLg/Weston reports the frame position late and with a shadow (#232).
+        // Same tolerance as RendererTest.RunGeometry: WSLg/Weston reports the frame position late and with a shadow.
         float posTol = !OperatingSystem.IsWindows() && File.Exists("/dev/dxg")
             && Environment.GetEnvironmentVariable("QT_QPA_PLATFORM") is null or "xcb" ? 40 : 1;
         bool Close(RectangleF a, RectangleF b, float tol = 1) =>

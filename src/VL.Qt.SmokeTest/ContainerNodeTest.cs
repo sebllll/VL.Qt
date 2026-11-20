@@ -91,7 +91,7 @@ public static class ContainerNodeTest
                 $"center: blue x 75..125 DIP ({Px(a, 72, 270)}, {Px(a, 78, 270)})");
         }
 
-        // 3) Row at (1, 1) units, size 0 (= implicit size, #83), padding 0.1, spacing 0.2, Bottom; heights 1, 0.5, 0.25 (inner height 100 DIP),
+        // 3) Row at (1, 1) units, size 0 (= implicit size), padding 0.1, spacing 0.2, Bottom; heights 1, 0.5, 0.25 (inner height 100 DIP),
         //    red x 110..210, green 230..330 at y 160..210, blue 350..450 at y 185..210. The Rectangle nodes have no position
         //    (Transform identity), the row places them.
         e = row.Update(Spread.Create<IElement?>(Rect(red, Red), Rect(green, Green, h: 0.5f), Rect(blue, Blue, h: 0.25f)),

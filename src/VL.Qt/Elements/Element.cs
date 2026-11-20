@@ -35,7 +35,7 @@ namespace VL.Qt.Elements
 
         /// <summary>
         /// Chain of interaction descriptions (Hover, Click, …); each link becomes an input handler at the item.
-        /// Null = no handlers, the element is transparent for input (#319).
+        /// Null = no handlers, the element is transparent for input.
         /// </summary>
         public Interaction? Interaction { get; init; }
 
@@ -46,7 +46,7 @@ namespace VL.Qt.Elements
         public Effect? Effect { get; init; }
 
         /// <summary>
-        /// Own style (#293), only read at Group and at the widgets (Button … TextField); null = inherit everything.
+        /// Own style, only read at Group and at the widgets (Button … TextField); null = inherit everything.
         /// Group passes its resolved style on to its children, other containers pass on what they inherited.
         /// </summary>
         public Style? Style { get; init; }

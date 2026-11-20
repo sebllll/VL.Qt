@@ -15,7 +15,7 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 using VPath = VL.Lib.IO.Path;
 using static Pixels;
 
-// Video element (#115): QtMultimedia MediaPlayer + VideoOutput (FFmpeg backend) in QtNative, EV_MEDIA back channel,
+// Video element: QtMultimedia MediaPlayer + VideoOutput (FFmpeg backend) in QtNative, EV_MEDIA back channel,
 // Video node through the reconciler. The player runs on its own (wall) clock, so this test pumps frames in real time.
 // Assets (self-made with ffmpeg testsrc/testsrc2, H.264 baseline, no audio): assets/testsrc_160x90_2s.mp4,
 // assets/testsrc_96x96_1s.mp4. Grabs go to <OutDir>/115_video*.png. Values are DIP.
@@ -71,7 +71,7 @@ public static class VideoTest
         float pos = 0, dur = 0, mw = 0, mh = 0;
         int mediaRecords = 0;
         float firstPos = -1, firstDur = -1; // first EV_MEDIA record of Handle
-        var error = ""; // last EV_ERROR text of Handle (#273)
+        var error = ""; // last EV_ERROR text of Handle
 
         int Apply()
         {
@@ -192,7 +192,7 @@ public static class VideoTest
         CheckApply("playing true");
         s.Check(WaitFor(() => pos > paused + 0.1f || pos < paused - 0.5f, 1500), $"play resumes ({paused:F3} -> {pos:F3})");
 
-        // --- 5) Loop off during playback: the running pass plays to its end, then playback stops (#125: no further
+        // --- 5) Loop off during playback: the running pass plays to its end, then playback stops (no further
         // pre-buffered passes). Switched off mid-pass; stopped = position at the end and unchanged for 500 ms.
         int wraps = 0;
         long StopAfter(int timeoutMs)
@@ -228,7 +228,7 @@ public static class VideoTest
         s.Info($"without loop from the start: stopped after {stopMs} ms");
         s.Check(stopMs >= 1000 && stopMs < 2800 && Math.Abs(pos - dur) < 0.2f, $"without loop playback stops after one pass ({pos:F3}, {stopMs} ms)");
 
-        // --- 5b) End of stream (#136): Qt default ClearOutput empties the element, KeepLastFrame keeps the last frame.
+        // --- 5b) End of stream: Qt default ClearOutput empties the element, KeepLastFrame keeps the last frame.
         Frame();
         using (var gc = s.Grab(w, "115_video_end_clear.png"))
             gpu(IsBg(Px(gc, 180, 110)), $"keepLastFrame off (Qt default): output cleared at the end ({Px(gc, 180, 110)})");
@@ -276,7 +276,7 @@ public static class VideoTest
         Run(300);
         s.Check(pos != pb, $"file change: new file plays ({pb:F3} -> {pos:F3})");
 
-        // --- 8) Missing file: EV_ERROR with the path (#273, shown at the Video node), duration back to 0, no crash;
+        // --- 8) Missing file: EV_ERROR with the path (shown at the Video node), duration back to 0, no crash;
         // a valid file loads again and clears the error.
         s.Check(error == "", $"no error for valid files ({error})");
         var missing = Path.Combine(s.OutDir, "missing_vlqt_115.mp4");

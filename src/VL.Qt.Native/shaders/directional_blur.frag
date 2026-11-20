@@ -2,7 +2,7 @@
 // Directional (linear motion) blur of the input element (builtin:directional_blur). Needs an Input. Two passes (see sampleCount).
 // Box blur along a line through each pixel, centred on it (the picture does not shift). Lengths in DIP, texelSize in pixels.
 // Uniform block (std140): qt_Matrix 0, qt_Opacity 64, angle 68, blurLength 72, texelSize 80, dpr 88, passIndex 92.
-// Not named `length`: the GLSL translation renames a member called like a GLSL builtin, the GL backend would not set it (#77).
+// Not named `length`: the GLSL translation renames a member called like a GLSL builtin, the GL backend would not set it.
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {

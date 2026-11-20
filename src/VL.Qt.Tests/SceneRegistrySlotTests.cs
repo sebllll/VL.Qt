@@ -6,7 +6,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Place fallback of <see cref="SceneRegistry.TryLocate"/> (#548): a new instance is found by its sink slot.</summary>
+    /// <summary>Place fallback of <see cref="SceneRegistry.TryLocate"/>: a new instance is found by its sink slot.</summary>
     public class SceneRegistrySlotTests
     {
         private SceneRegistry _scene = null!;

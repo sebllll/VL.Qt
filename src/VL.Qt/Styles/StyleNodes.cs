@@ -4,8 +4,8 @@ using VL.Core.Import;
 
 namespace VL.Qt.Styles
 {
-    // Style nodeset (S5, #294). Setters are a chain: Style in on top, Style out; a null input is an empty style and an
-    // unconnected Optional pin means "not set". Getters return resolved values (unset → base style, #292) for one state
+    // Style nodeset (S5). Setters are a chain: Style in on top, Style out; a null input is an empty style and an
+    // unconnected Optional pin means "not set". Getters return resolved values (unset → base style) for one state
     // and never throw on a null input. Colors go through Colors (Qt.Style) or the per-part color setters (Advanced).
 
     /// <summary>Nodes that combine styles and the state helper of the style nodeset.</summary>

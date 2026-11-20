@@ -1,4 +1,4 @@
-/* audio_tap.h - resource kind VLQT_RES_KIND_AUDIO_TAP (#22): the sound of a Video element as float samples for
+/* audio_tap.h - resource kind VLQT_RES_KIND_AUDIO_TAP: the sound of a Video element as float samples for
  * VL.Audio. The contract (lifetime, clock, discontinuities, reader rules) is in protocol.h "Audio tap"; the C API in
  * vlqt.h (vlqt_res_audio_tap_init, vlqt_res_read_audio, vlqt_now_ns).
  *
@@ -13,7 +13,7 @@
  *
  * Attach: a QObject child of the Video item (TapAttachment in audio_tap.cpp) owns the QAudioBufferOutput on the item's
  * QMediaPlayer and the element reference; its destructor (DESTROY of the element) detaches. The window is never
- * involved, so a window swap (MSAA, #118) does not touch the tap.
+ * involved, so a window swap (MSAA) does not touch the tap.
  */
 #pragma once
 

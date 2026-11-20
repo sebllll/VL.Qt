@@ -7,10 +7,10 @@ using System.Linq;
 using System.Threading;
 using VL.Qt;
 
-// #22: the sound of a Video through an audio tap (QtNative audio_tap.cpp, protocol.h "Audio tap"). A reader thread
+// the sound of a Video through an audio tap (QtNative audio_tap.cpp, protocol.h "Audio tap"). A reader thread
 // plays the part of VL.Audio's audio thread and reads the tap the whole time. Checks: samples not silent, about 1 s of
 // samples per s of wall time, loop wrap without discontinuity and gap, source change and pause -> play raise the
-// discontinuity, audio due times match the video frames at the sink, an MSAA window swap (#118) keeps the tap running,
+// discontinuity, audio due times match the video frames at the sink, an MSAA window swap keeps the tap running,
 // a tap switch and a second Video on the same tap during playback, detach, DESTROY and release.
 // Asset: help/Qt/assets/qt-help-video-audio.mp4 (video with an audio track).
 [TestFixture, NonParallelizable]
@@ -267,7 +267,7 @@ public static class VideoAudioTest
         var played = reader.Snapshot(tap1);
         s.Check(played.Changes == paused.Changes + 1 && played.Frames > paused.Frames, $"videoaudio: play after pause raises the discontinuity ({paused.Changes} -> {played.Changes})");
 
-        // 4. MSAA window swap (#118): the tap hangs on the player, not on the window.
+        // 4. MSAA window swap: the tap hangs on the player, not on the window.
         var swap = Native.vlqt_window_set_samples(w, 4);
         Frames(300);
         var before = reader.Snapshot(tap1);

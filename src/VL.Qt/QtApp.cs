@@ -9,7 +9,7 @@ namespace VL.Qt
 {
     /// <summary>
     /// A window (renderer) that takes part in the global pump. Called on the Qt thread, once per vvvv frame,
-    /// after all node updates; only <see cref="PollInput"/> runs at the frame start, before them (#24).
+    /// after all node updates; only <see cref="PollInput"/> runs at the frame start, before them.
     /// </summary>
     internal interface IQtFrameParticipant
     {
@@ -17,7 +17,7 @@ namespace VL.Qt
         void ApplyCommands();
 
         /// <summary>
-        /// #314: QtNative window of this participant, zero = none. Only the windows of the pumping app may render in its
+        /// QtNative window of this participant, zero = none. Only the windows of the pumping app may render in its
         /// pump, so with several vvvv apps a window still renders once per vvvv frame, not once per app.
         /// </summary>
         IntPtr Window => IntPtr.Zero;
@@ -26,18 +26,18 @@ namespace VL.Qt
         void AfterEvents();
 
         /// <summary>
-        /// #24: at the start of the vvvv frame, after Qt delivered the queued input (<see cref="Native.vlqt_app_deliver_input"/>):
+        /// at the start of the vvvv frame, after Qt delivered the queued input (<see cref="Native.vlqt_app_deliver_input"/>):
         /// poll the window into the sinks, so the node updates of this frame see it. Nothing is rendered or applied.
         /// </summary>
         void PollInput() { }
 
         /// <summary>
-        /// #245: after <see cref="AfterEvents"/>, the host values of this pump for the window's native PerfMonitor. QtApp fills
+        /// after <see cref="AfterEvents"/>, the host values of this pump for the window's native PerfMonitor. QtApp fills
         /// apply time and the shared values (host pump, interval, GC); the participant adds ops/reconcile and reports.
         /// </summary>
         void ReportHostFrame(Native.vlqt_host_frame frame) { }
 
-        /// <summary>Last native PerfSample of the window (budget warning, #241). false = none.</summary>
+        /// <summary>Last native PerfSample of the window (budget warning). false = none.</summary>
         bool TryGetLastSample(out Native.vlqt_perf_sample sample)
         {
             sample = default;
@@ -53,13 +53,13 @@ namespace VL.Qt
 
         /// <summary>
         /// apply → advance(<paramref name="driverSeconds"/>) → processEvents → poll. <paramref name="vvvvStart"/>: Stopwatch
-        /// timestamp of the vvvv frame start before this pump (#260), 0 = unknown. <paramref name="history"/>: host-frame
-        /// state of the pumping app (#314: interval and GC per app, not since another app's pump).
+        /// timestamp of the vvvv frame start before this pump, 0 = unknown. <paramref name="history"/>: host-frame
+        /// state of the pumping app (interval and GC per app, not since another app's pump).
         /// </summary>
         void PumpFrame(IQtFrameParticipant[] participants, double driverSeconds, double budgetMs, long vvvvStart, HostFrameHistory history);
 
         /// <summary>
-        /// #24: start of the vvvv frame: Qt delivers the input queued since the last pump (without rendering), then every
+        /// start of the vvvv frame: Qt delivers the input queued since the last pump (without rendering), then every
         /// participant polls it (<see cref="IQtFrameParticipant.PollInput"/>).
         /// </summary>
         void DeliverInput(IQtFrameParticipant[] participants) { }
@@ -73,19 +73,19 @@ namespace VL.Qt
     /// The pump of one vvvv app: subscribes to the frame clock of its <see cref="AppHost"/> and pumps the process-wide
     /// <see cref="QtApp"/> with the participants (renderers) of that app, once per frame (<see cref="IFrameClock.GetFrameFinished"/>).
     /// <para>
-    /// #260: also listens to <see cref="IFrameClock.GetTicks"/> (fired in FrameClock.BeginFrame on the same mainloop thread,
+    /// also listens to <see cref="IFrameClock.GetTicks"/> (fired in FrameClock.BeginFrame on the same mainloop thread,
     /// before the patch update) and hands its timestamp to the pump, so the host frame can tell vvvv time (frame start →
     /// pump) from waiting (previous pump end → frame start). Without a tick for this frame (the first frame: the renderer
     /// creates the pump inside the update; clocks without ticks) the clock's own update time
     /// (<see cref="FrameFinishedMessage.FrameDuration"/>) is the fallback, else 0 = unknown.
     /// </para>
     /// <para>
-    /// #24: the tick also delivers the input that arrived since the last pump (<see cref="IQtPumpTarget.DeliverInput"/>),
+    /// the tick also delivers the input that arrived since the last pump (<see cref="IQtPumpTarget.DeliverInput"/>),
     /// so it reaches the patch in this frame instead of the next one. The frame end (apply, render, poll) stays as it is.
     /// </para>
     /// <para>
     /// Lives as a service of the app host (<see cref="ForApp"/>) and is disposed with it. F8/F5 replaces the app host and its
-    /// frame clock; the new app gets a new pump bound to the new clock (#58: a process-wide subscription stayed on the
+    /// frame clock; the new app gets a new pump bound to the new clock (a process-wide subscription stayed on the
     /// clock of the first app, which no longer ticks after a restart → black window, 0 fps, IsVisible false).
     /// </para>
     /// Main (Qt) thread only. Copy-on-write participants: Register/Unregister allocate, a frame only reads the current
@@ -94,7 +94,7 @@ namespace VL.Qt
     internal sealed class QtPump : IObserver<FrameFinishedMessage>, IObserver<FrameTimeMessage>, IDisposable
     {
         /// <summary>
-        /// #314: this far behind the animation driver (another app drove it, e.g. while this app was paused) the pump
+        /// this far behind the animation driver (another app drove it, e.g. while this app was paused) the pump
         /// re-syncs its offset instead of waiting until its clock catches up. Smaller gaps (two apps in the same vvvv frame)
         /// keep the driver as it is.
         /// </summary>
@@ -103,7 +103,7 @@ namespace VL.Qt
         private readonly IQtPumpTarget _target;
         private readonly HostFrameHistory _history = new();
         private readonly IDisposable _subscription, _ticks;
-        private long _frameStart; // #260: Stopwatch timestamp of the last tick (vvvv frame start), 0 = none since the last pump
+        private long _frameStart; // Stopwatch timestamp of the last tick (vvvv frame start), 0 = none since the last pump
         private IQtFrameParticipant[] _participants = Array.Empty<IQtFrameParticipant>();
         private double _lastSeconds = double.NaN;
         private double _offset;
@@ -133,7 +133,7 @@ namespace VL.Qt
         public int ParticipantCount => _participants.Length;
         public bool IsDisposed => _disposed;
 
-        /// <summary>#24: deliver and poll input at the frame start (default). False = only at the frame end (SmokeTest: latency before).</summary>
+        /// <summary>deliver and poll input at the frame start (default). False = only at the frame end (SmokeTest: latency before).</summary>
         internal bool DeliverInputAtFrameStart { get; set; } = true;
 
         public void Register(IQtFrameParticipant participant)
@@ -161,14 +161,14 @@ namespace VL.Qt
 
         /// <summary>
         /// One frame of this app (also called directly by tests). <paramref name="updateSeconds"/>: the clock's update time
-        /// of this frame, fallback for the vvvv phase when no tick came (#260).
+        /// of this frame, fallback for the vvvv phase when no tick came.
         /// </summary>
         internal void Frame(double seconds, double updateSeconds = 0)
         {
             if (_disposed)
                 return;
 
-            // #260: vvvv frame start. A tick from a previous frame never survives (reset per pump); a tick "after" now
+            // vvvv frame start. A tick from a previous frame never survives (reset per pump); a tick "after" now
             // (other thread, clock skew) is ignored.
             var now = Stopwatch.GetTimestamp();
             var vvvvStart = _frameStart;
@@ -184,7 +184,7 @@ namespace VL.Qt
 
             // The animation driver lives in the process; a restarted app's clock may start below the time it already got.
             // Shift this app's time so the driver never runs backwards. 0 for the first app (driver time = clock time).
-            // #314: later on, another app may have driven it far ahead (this app paused): continue from there by one frame.
+            // later on, another app may have driven it far ahead (this app paused): continue from there by one frame.
             var last = _target.DriverSeconds;
             if (_first)
             {
@@ -197,7 +197,7 @@ namespace VL.Qt
             _target.PumpFrame(_participants, seconds + _offset, budgetMs, vvvvStart, _history);
         }
 
-        /// <summary>vvvv frame start (#260): remembers the time and delivers the input (#24); also called directly by tests.</summary>
+        /// <summary>vvvv frame start: remembers the time and delivers the input; also called directly by tests.</summary>
         internal void Tick()
         {
             _frameStart = Stopwatch.GetTimestamp();
@@ -238,7 +238,7 @@ namespace VL.Qt
     }
 
     /// <summary>
-    /// Host-frame state of one vvvv app between two of its pumps (#245, #314): interval and GC/alloc are per app frame.
+    /// Host-frame state of one vvvv app between two of its pumps: interval and GC/alloc are per app frame.
     /// </summary>
     internal sealed class HostFrameHistory
     {
@@ -250,7 +250,7 @@ namespace VL.Qt
     /// <summary>
     /// The one QGuiApplication per process. Never released: Qt cannot re-create its app in the same process.
     /// Holds no frame clock and no participants: those belong to a vvvv app (<see cref="QtPump"/>), because an app
-    /// restart (F8/F5) replaces the app host and its frame clock while this process-wide state lives on (#58).
+    /// restart (F8/F5) replaces the app host and its frame clock while this process-wide state lives on.
     /// One <see cref="PumpFrame"/>: all participants apply their commands → advance the animation driver → process events → all participants poll.
     /// </summary>
     internal sealed class QtApp : IQtPumpTarget
@@ -271,10 +271,10 @@ namespace VL.Qt
         // Stats interval.
         private long _statsStartTicks, _statsPumps;
         private double _statsPumpMsSum, _statsPumpMsMax;
-        // Host frame (#245): apply time per participant of the current pump; end of the previous pump of any app (#260).
+        // Host frame: apply time per participant of the current pump; end of the previous pump of any app.
         private float[] _applyMs = Array.Empty<float>();
         private long _prevPumpEnd;
-        // #314: QtNative windows of the current pump, reused (no allocation per frame).
+        // QtNative windows of the current pump, reused (no allocation per frame).
         private IntPtr[] _windows = new IntPtr[4];
         private readonly ResourceClient _resources;
 
@@ -327,7 +327,7 @@ namespace VL.Qt
         public long ProcessEventsCount => _processEvents;
         public double DriverSeconds => _driverSeconds;
 
-        /// <summary>Image resources of QtNative (#362): status queue and release queue, pumped here.</summary>
+        /// <summary>Image resources of QtNative: status queue and release queue, pumped here.</summary>
         public ResourceClient Resources => _resources;
 
         void IQtPumpTarget.OnParticipantsChanged(int delta)
@@ -347,7 +347,7 @@ namespace VL.Qt
 
         /// <summary>
         /// One pump: apply → advance → processEvents → poll. Called by a <see cref="QtPump"/> once per frame of its app.
-        /// #314: with several apps each pumps once per vvvv frame; only the windows of <paramref name="participants"/> render,
+        /// with several apps each pumps once per vvvv frame; only the windows of <paramref name="participants"/> render,
         /// and the process-wide animation driver only moves forward.
         /// </summary>
         public void PumpFrame(IQtFrameParticipant[] participants, double driverSeconds, double budgetMs, long vvvvStart, HostFrameHistory history)
@@ -378,12 +378,12 @@ namespace VL.Qt
                 _applyMs[i] = (float)Stopwatch.GetElapsedTime(t0).TotalMilliseconds;
             }
 
-            // #362: releases after the apply (elements switching away acquire their new image first), before the frame end frees.
+            // releases after the apply (elements switching away acquire their new image first), before the frame end frees.
             try { _resources.BeforeEvents(); }
             catch (Exception e) { LogParticipantError(e, nameof(ResourceClient.BeforeEvents)); }
 
             var tApplied = Stopwatch.GetTimestamp();
-            // #314: another app's pump in the same vvvv frame may bring an earlier time (own clock): keep the driver.
+            // another app's pump in the same vvvv frame may bring an earlier time (own clock): keep the driver.
             if (!(driverSeconds <= _driverSeconds))
             {
                 _driverSeconds = driverSeconds;
@@ -408,12 +408,12 @@ namespace VL.Qt
             var ms = Stopwatch.GetElapsedTime(start, tEnd).TotalMilliseconds;
             var now = Environment.TickCount64;
 
-            // Host frame (#245) to every window's PerfMonitor: GC/alloc since the previous pump start (= one vvvv frame).
+            // Host frame to every window's PerfMonitor: GC/alloc since the previous pump start (= one vvvv frame).
             var host = new Native.vlqt_host_frame
             {
                 host = (float)ms,
                 interval = history.PumpStart != 0 ? (float)Stopwatch.GetElapsedTime(history.PumpStart, start).TotalMilliseconds : 0,
-                // #260: vvvv = frame start → this pump; wait = previous pump end (any app) → frame start. Interleaved apps
+                // vvvv = frame start → this pump; wait = previous pump end (any app) → frame start. Interleaved apps
                 // (frame start before the previous pump ended) give wait 0.
                 vvvv = vvvvStart != 0 && vvvvStart <= start ? (float)Stopwatch.GetElapsedTime(vvvvStart, start).TotalMilliseconds : 0,
                 wait = vvvvStart != 0 && _prevPumpEnd != 0 && vvvvStart > _prevPumpEnd
@@ -447,8 +447,8 @@ namespace VL.Qt
                 && ExceedsBudget(ms, waitMs = SumWaitMs(participants), budgetMs))
             {
                 _lastWarningTicks = now;
-                // Phase breakdown (#140): which part of the pump, and did a .NET GC run meanwhile? Plus the Qt phases of each
-                // window's last pump (#241: is a spike in sync, render, present, gpu or events?).
+                // Phase breakdown: which part of the pump, and did a .NET GC run meanwhile? Plus the Qt phases of each
+                // window's last pump (is a spike in sync, render, present, gpu or events?).
                 Logger?.LogWarning("Qt frame took {Ms:F1} ms of {Budget:F1} ms (pump {Pump:F1} ms minus vsync wait and present {Wait:F1} ms), vvvv before it {Vvvv:F1} ms (apply {Apply:F1}, advance {Advance:F1}, processEvents {Process:F1}, after {After:F1}; GC gen0 +{Gc0}, gen1 +{Gc1}, gen2 +{Gc2}, pause {GcPause:F1} ms; alloc {AllocKb:F0} KB/frame){Phases}",
                     ms - Math.Min(waitMs, ms), budgetMs, ms, waitMs, host.vvvv,
                     Stopwatch.GetElapsedTime(start, tApplied).TotalMilliseconds,
@@ -496,7 +496,7 @@ namespace VL.Qt
             pumpMs - Math.Min(waitMs, pumpMs) > budgetMs * 0.5;
 
         /// <summary>
-        /// #24: start of a vvvv frame. Qt delivers the queued input of all windows without rendering (QtNative closes the
+        /// start of a vvvv frame. Qt delivers the queued input of all windows without rendering (QtNative closes the
         /// update gate), then the participants of the pumping app poll it into their sinks. Events of another app's windows
         /// stay in their window's buffer until that app polls. Not inside a pump (QtNative ignores the call there).
         /// </summary>
@@ -516,7 +516,7 @@ namespace VL.Qt
         /// <summary>Queued window system events of the last <see cref="DeliverInput"/> (SmokeTest), -1 = error.</summary>
         internal int LastDeliveredInput { get; private set; }
 
-        /// <summary>Fills <see cref="_windows"/> with QtNative windows of the participants (#314), returns the count.</summary>
+        /// <summary>Fills <see cref="_windows"/> with QtNative windows of the participants, returns the count.</summary>
         private int CollectWindows(IQtFrameParticipant[] participants)
         {
             if (_windows.Length < participants.Length)
@@ -534,7 +534,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// " · Qt last pump: vsync wait … sync … render … present … gpu … events … ms (n swaps)" per window with a sample (#241);
+        /// " · Qt last pump: vsync wait … sync … render … present … gpu … events … ms (n swaps)" per window with a sample;
         /// windows are numbered when there are several. "" without samples. Allocates: warning path only.
         /// </summary>
         internal static string FormatPhases(IQtFrameParticipant[] participants)

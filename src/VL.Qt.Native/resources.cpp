@@ -31,7 +31,7 @@ Q_LOGGING_CATEGORY(lcRes, "VL.Qt.Resources")
 
 // Counts content changes of Ready resources (first Ready, replacement swap); see contentEpoch.
 std::atomic<uint64_t> s_contentEpoch{0};
-// Counts transitions to Failed; see failureEpoch (#437).
+// Counts transitions to Failed; see failureEpoch.
 std::atomic<uint64_t> s_failureEpoch{0};
 
 constexpr uint32_t maxSlots = 1u << 20;      // ~1M live resources; more is a leak in the host
@@ -54,7 +54,7 @@ bool validState(int s) { return s >= int(State::Pending) && s <= int(State::Rele
 bool externalKind(int kind) { return kind == VLQT_RES_KIND_SNAPSHOT || kind == VLQT_RES_KIND_AUDIO_TAP; }
 
 // The allowed transitions; everything else is rejected by transition(). external = content made on the main thread
-// without upload (snapshot #363, audio tap #22): Decoding -> Ready directly. restart = device lost during the first upload (#367):
+// without upload (snapshot, audio tap): Decoding -> Ready directly. restart = device lost during the first upload:
 // Uploading -> Decoding (decode again for the new device).
 bool allowed(State from, State to, bool external, bool restart)
 {
@@ -64,8 +64,8 @@ bool allowed(State from, State to, bool external, bool restart)
     case State::Pending:   return to == State::Decoding || to == State::Failed;
     case State::Decoding:  return to == State::Uploading || to == State::Failed || (external && to == State::Ready);
     case State::Uploading: return to == State::Ready || to == State::Failed || (restart && to == State::Decoding);
-    case State::Ready:     return to == State::Failed;   // failed replacement (#360)
-    case State::Failed:    return to == State::Decoding; // new content after a failure (#360)
+    case State::Ready:     return to == State::Failed;   // failed replacement
+    case State::Failed:    return to == State::Decoding; // new content after a failure
     default:               return false;
     }
 }
@@ -119,7 +119,7 @@ struct Slot
     int kind = 0;
     State state = State::Released;
     std::shared_ptr<Work> work;
-    std::shared_ptr<Work> next;   // replacement of a Ready resource in Decoding/Uploading (#360)
+    std::shared_ptr<Work> next;   // replacement of a Ready resource in Decoding/Uploading
     std::shared_ptr<Work> queued; // newest start while a decode/upload runs, started afterwards
     bool nextUploading = false;   // next is decoded and in m_uploads
     bool warned = false;          // a WARNING record was sent (at most one per resource)
@@ -128,7 +128,7 @@ struct Slot
     bool inWorker = false;     // a job of this resource is queued or running in a worker
     bool freeQueued = false;   // in toFree: both refs are zero, freed at a frame end
     int64_t bytes = 0;         // uploaded bytes
-    int64_t sinceMs = 0;       // steadyMs() of the last state change (F5 Resources page, #364)
+    int64_t sinceMs = 0;       // steadyMs() of the last state change (F5 Resources page)
 };
 
 int64_t steadyMs()
@@ -388,11 +388,11 @@ public:
         Slot* s = find(id, "wait");
         if (!s)
             return staleIdRc;
-        if (s->hostRefs == 0) { // still in the table (element ref, running decode), but dead for the host (#365)
+        if (s->hostRefs == 0) { // still in the table (element ref, running decode), but dead for the host
             qCWarning(lcRes, "wait: %s already released by the host", idText(id).constData());
             return staleIdRc;
         }
-        if (externalKind(s->kind)) // no worker job: a grab finishes in a later pump (#363), a tap is Ready at init (#22)
+        if (externalKind(s->kind)) // no worker job: a grab finishes in a later pump, a tap is Ready at init
             return int(s->state);
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(std::max(0, timeoutMs));
         if (decoding(*s)) {
@@ -542,7 +542,7 @@ public:
         m_usedLastFrame = m_budget - left;
     }
 
-    // F5 Resources page (#364): live resources and the upload totals under one lock; rows keeps its capacity.
+    // F5 Resources page: live resources and the upload totals under one lock; rows keeps its capacity.
     void snapshot(std::vector<Row>& rows, Overview& out)
     {
         std::lock_guard lock(m_mutex);
@@ -589,7 +589,7 @@ public:
         m_toFree.resize(keep);
     }
 
-    // --- Device lost (#367, device.h listener, main thread inside device::rebuild) ---
+    // --- Device lost (device.h listener, main thread inside device::rebuild) ---
 
     // Frees every object of the old device; Works a worker holds are restarted when their result comes back.
     void deviceLost()
@@ -740,7 +740,7 @@ private:
             return;
         }
         Kind* kind = kindOf(s->kind);
-        // Decoded for a device that is gone meanwhile (#367): decode again, also after an error (the old device).
+        // Decoded for a device that is gone meanwhile: decode again, also after an error (the old device).
         if (std::shared_ptr<Work>& decoded = s->next ? s->next : s->work; decoded && kind->stale(*decoded)
             && renew(kind, decoded)) {
             qCDebug(lcRes, "%s: decode for the old device dropped, decoding again", idText(r.id).constData());

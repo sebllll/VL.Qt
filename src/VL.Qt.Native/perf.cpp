@@ -56,7 +56,7 @@ std::vector<PerfMonitor*> s_monitors;
 bool s_softwareWarned = false; // once per process
 
 constexpr int kSummaryPumps = 60; // ~1 s at 60 Hz
-constexpr double kOnDemandIdleShare = 0.25; // #261: Summary shows "on demand" above this share of idle pumps
+constexpr double kOnDemandIdleShare = 0.25; // Summary shows "on demand" above this share of idle pumps
 constexpr double kTextIntervalMs = 250;
 constexpr double kTimelineIntervalMs = 50;
 
@@ -187,7 +187,7 @@ float phaseMs(const PerfSample& s, int phase)
     }
 }
 
-// #260/#193.5: timeline segments, in frame order bottom -> top: the host side of the frame before the Qt pump (vvvv
+// timeline segments, in frame order bottom -> top: the host side of the frame before the Qt pump (vvvv
 // update, .NET GC pause, apply), then the Qt phases. Host values come from PerfSample.host (0 without a report).
 // GC is carved out of the vvvv segment: the pause is reported per frame without its position, and most collections
 // fall into the vvvv update (allocations of the patch); a pause longer than the vvvv update is shown in full.
@@ -195,7 +195,7 @@ float phaseMs(const PerfSample& s, int phase)
 enum Segment { SegVvvv, SegGc, SegApply, SegQt };
 constexpr int SegCount = SegQt + int(PerfMonitor::PhaseCount);
 constexpr Rgb kHostColor[SegQt] = {
-    {255, 110, 180, "#ff6eb4"}, // vvvv (same as the F2 line, #265)
+    {255, 110, 180, "#ff6eb4"}, // vvvv (same as the F2 line)
     {176, 112, 64, "#b07040"},  // GC
     {160, 160, 184, "#a0a0b8"}, // apply
 };
@@ -306,7 +306,7 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
     // Windows (basic render loop): all signals arrive on the GUI (vvvv) thread inside processEvents. Offscreen scenes:
     // on the scene's render thread (offscreen.cpp); afterFrameEnd hands the frame to endPump (perf.h, m_done).
     // m_spikePhase >= 0 only after vlqt_test_perf_spike (test hook).
-    // #90 vsync wait: beforeFrameBegin -> beforeSynchronizing. QSGGuiThreadRenderLoop::renderWindow emits
+    // vsync wait: beforeFrameBegin -> beforeSynchronizing. QSGGuiThreadRenderLoop::renderWindow emits
     // beforeFrameBegin right before QRhi::beginFrame, and syncSceneGraph emits beforeSynchronizing right after it; Qt has
     // no signal at the end of beginFrame. With D3D11 beginFrame waits on the frame latency waitable object
     // (qrhid3d11.cpp:1489-1496, v6.12.0, max frame latency 2): with VSync that is where the wait for the refresh lands,
@@ -376,7 +376,7 @@ void PerfMonitor::detectRenderer()
     s_softwareWarned = true;
     qCWarning(lcGpu, "SOFTWARE RENDERING: Qt Quick renders on the CPU (%s), not on the GPU. Expect low fps. "
         "WSLg: GALLIUM_DRIVER=d3d12 selects the host GPU via Mesa d3d12.", qPrintable(m_software));
-    // #258: no extra stderr line; exports see it via a logging provider or VLQT_LOG_STDERR (vlqt.cpp emitLog).
+    // no extra stderr line; exports see it via a logging provider or VLQT_LOG_STDERR (vlqt.cpp emitLog).
 }
 
 PerfMonitor::~PerfMonitor()
@@ -492,7 +492,7 @@ void PerfCounters::add(const PerfSample& s, double tMs, double budgetMs)
         m_bucketSec[b] = sec;
     }
     const bool over = s.pump > budgetMs;
-    // #261: after idle pumps (on-demand rendering) the interval spans the idle time, not a missed refresh.
+    // after idle pumps (on-demand rendering) the interval spans the idle time, not a missed refresh.
     const bool longFrame = s.swaps > 0 && m_prevSwap && s.frame > 1.5 * budgetMs;
     m_prevSwap = s.swaps > 0;
     for (Counts* c : {&m_total, &m_buckets[b]}) {
@@ -624,7 +624,7 @@ void perfHostStats(const vlqt_host_frame* frames, int n, vlqt_host_stats* out)
         out->ops_max = std::max(out->ops_max, double(f.ops));
         out->alloc_bytes += double(f.alloc_bytes);
         out->alloc_bytes_max = std::max(out->alloc_bytes_max, double(f.alloc_bytes));
-        out->vvvv_ms += f.vvvv; // #260
+        out->vvvv_ms += f.vvvv;
         out->vvvv_ms_max = std::max(out->vvvv_ms_max, double(f.vvvv));
         out->wait_ms += f.wait;
         out->wait_ms_max = std::max(out->wait_ms_max, double(f.wait));
@@ -757,7 +757,7 @@ bool PerfMonitor::eventFilter(QObject* obj, QEvent* ev)
             }
             // Freeze only while the stats are visible; otherwise F6 belongs to the scene.
             if (ke->key() == Qt::Key_F6 && (m_flags & Stats)) { setOverlay(keep ^ Freeze); return true; }
-            // #260: F7 hides/shows the host segments (vvvv, GC, apply) in the timeline; same rule as F6.
+            // F7 hides/shows the host segments (vvvv, GC, apply) in the timeline; same rule as F6.
             if (ke->key() == Qt::Key_F7 && (m_flags & Stats)) {
                 s_hostSegments = !s_hostSegments;
                 m_lastTextMs = m_lastTimelineMs = -1e9; // redraw now (also while frozen: forced text)
@@ -795,7 +795,7 @@ void PerfMonitor::ensureOverlay()
     if (QQuickWindow::sceneGraphBackend() == QLatin1String("software")
         || (ri && ri->graphicsApi() == QSGRendererInterface::Software))
         item->setProperty("layered", false);
-    item->setObjectName(QLatin1String(vlqt::perfOverlayName)); // not counted as a scene change (#544, vlqt.cpp UpdateGate)
+    item->setObjectName(QLatin1String(vlqt::perfOverlayName)); // not counted as a scene change (vlqt.cpp UpdateGate)
     item->setParentItem(m_window->contentItem());
     item->setZ(1e9); // above the user root
     auto* graph = item->findChild<PerfGraph*>(QStringLiteral("graph"));
@@ -826,7 +826,7 @@ void PerfMonitor::updateOverlay()
     const bool stats = m_flags & Stats;
     const double now = nowMs();
     // New timeline geometry costs a vertex fill (sync) and upload (render), not every pump; 20 Hz is smooth enough
-    // to read. The timeline sits outside the panel layer, so this re-renders no text (#244). 10 Hz measured no
+    // to read. The timeline sits outside the panel layer, so this re-renders no text. 10 Hz measured no
     // better within the noise.
     if (stats && m_page == Timeline && !m_frozen && m_timeline && now - m_lastTimelineMs >= kTimelineIntervalMs) {
         m_lastTimelineMs = now;
@@ -896,7 +896,7 @@ QString PerfMonitor::summaryPage(QString* body) const
     const int first = std::max(0, n - kSummaryPumps);
     double frameSum = 0, pumpSum = 0, gpuSum = 0, gpuMax = 0, swaps = 0;
     double phSum[PhaseCount] = {}, phMax[PhaseCount] = {};
-    double rowSum = 0; // frame row: consecutive frames only, like the percentiles (#261)
+    double rowSum = 0; // frame row: consecutive frames only, like the percentiles
     int frames = 0, rowFrames = 0, gpus = 0, idle = 0;
     for (int i = 0; i < n; i++) {
         const PerfSample& s = ring[i];
@@ -918,7 +918,7 @@ QString PerfMonitor::summaryPage(QString* body) const
     const double frameAvg = frames ? frameSum / frames : 0;
     const double rowAvg = rowFrames ? rowSum / rowFrames : 0;
     const double pumpAvg = na ? pumpSum / na : 0;
-    // #261: Qt renders only on changes; a low fps from idle pumps is not a slowdown -> neutral, no traffic light.
+    // Qt renders only on changes; a low fps from idle pumps is not a slowdown -> neutral, no traffic light.
     const bool onDemand = na > 0 && idle > kOnDemandIdleShare * na;
 
     Html h;
@@ -927,9 +927,9 @@ QString PerfMonitor::summaryPage(QString* body) const
     if (onDemand)
         h.c(kGrey, QStringLiteral(" (on demand, %1 % idle)").arg(qRound(100.0 * idle / na)));
     h.t(QStringLiteral("   budget %1 ms (%2 Hz)").arg(num(budget, 0), num(1000.0 / budget, 0, 0)));
-    vlqt_host_stats hs; // #245: C# side (live, also while frozen); only when the host reports it
+    vlqt_host_stats hs; // C# side (live, also while frozen); only when the host reports it
     hostStats(&hs);
-    const bool vvvv = hs.samples > 0 && hs.vvvv_ms_max > 0; // #260: 0 = unknown (older host)
+    const bool vvvv = hs.samples > 0 && hs.vvvv_ms_max > 0; // 0 = unknown (older host)
     if (frameAvg > 0 && !onDemand) {
         h.t(QStringLiteral("   Qt pump %1% of frame").arg(qRound(100.0 * pumpAvg / frameAvg)));
         if (vvvv)
@@ -966,7 +966,7 @@ QString PerfMonitor::summaryPage(QString* body) const
         b.c(kGrey, QStringLiteral("n/a").rightJustified(W)).br();
     b.t(lab("swaps/pump", L)).t(num(na ? swaps / na : 0, W)).br();
     if (hs.samples > 0) {
-        if (vvvv) // #260: the vvvv update before the pump, same columns as the phases (avg, max)
+        if (vvvv) // the vvvv update before the pump, same columns as the phases (avg, max)
             b.c(kHostColor[SegVvvv].html, lab("vvvv", L)).c(pumpColor(hs.vvvv_ms, budget), num(hs.vvvv_ms, W))
                 .t(QString(3 * W, u' ')).c(pumpColor(hs.vvvv_ms_max, budget), num(hs.vvvv_ms_max, W)).br();
         b.c(kHostColor[SegApply].html, lab("apply", L)).c(pumpColor(hs.apply_ms, budget), num(hs.apply_ms, W)).t(QString(3 * W, u' '))
@@ -1094,7 +1094,7 @@ QString PerfMonitor::scenePage() const
     }
     const int items = countItems(m_window->contentItem(), m_overlay, m_scene ? m_scene->debugOverlay() : nullptr);
     h.br().t(lab("QML items", L)).t(QString::number(items).rightJustified(8)).c(kGrey, "  QQuickItems below the root, incl. element internals");
-    // Effect layers (elements with an effect chain, #489) and all MultiEffect items (one per MULTI run).
+    // Effect layers (elements with an effect chain) and all MultiEffect items (one per MULTI run).
     int layers = 0;
     if (m_scene)
         for (const auto& kv : m_scene->nodes)
@@ -1106,7 +1106,7 @@ QString PerfMonitor::scenePage() const
     const QUnifiedTimer* timer = QUnifiedTimer::instance(false);
     h.br().t(lab("animations", L)).t(QString::number(timer ? qlonglong(timer->runningAnimationCount()) : 0).rightJustified(8))
         .c(kGrey, "  running (process)");
-    // Ops per apply: commands the host applied to this window per pump (#245 host frames, ~1 s).
+    // Ops per apply: commands the host applied to this window per pump (host frames, ~1 s).
     vlqt_host_stats hs;
     hostStats(&hs);
     vlqt_host_frame last;
@@ -1116,7 +1116,7 @@ QString PerfMonitor::scenePage() const
     else
         h.t(kNa.rightJustified(8)).c(kGrey, "  no host frames reported");
 
-    // QRhi statistics (#246 feasibility): GPU memory only from the D3D12/Vulkan
+    // QRhi statistics (feasibility): GPU memory only from the D3D12/Vulkan
     // allocators; draw calls/batches are not exposed by Qt Quick.
     QRhi* rhi = m_window->rhi();
     const QRhiStats st = rhi ? rhi->statistics() : QRhiStats{};
@@ -1267,12 +1267,12 @@ const char* resColor(const vlqt::res::Row& r)
 
 } // namespace
 
-// #364: live resources of the process-wide manager (resources.h), the same on every window. Built only while the
+// live resources of the process-wide manager (resources.h), the same on every window. Built only while the
 // page is visible (4 Hz text interval) or on demand (pageText); the row buffer is reused.
 QString PerfMonitor::resourcesPage() const
 {
     using vlqt::res::State;
-    QElapsedTimer timer; // own build time in the footer (#364: < 0.5 ms with 1000 resources)
+    QElapsedTimer timer; // own build time in the footer (< 0.5 ms with 1000 resources)
     timer.start();
     vlqt::res::Overview ov;
     vlqt::res::snapshot(m_resRows, ov);
@@ -1302,7 +1302,7 @@ QString PerfMonitor::resourcesPage() const
     const double use = ov.budget > 0 ? double(ov.usedLastFrame) / double(ov.budget) : 0;
     h.br().t(lab("budget", L)).t(bytesText(ov.budget).rightJustified(10)).t(" / frame   last frame ")
         .c(use >= 1 ? kYellow : kGreen, QStringLiteral("%1 (%2%)").arg(bytesText(ov.usedLastFrame)).arg(qRound(100 * use)));
-    // #548: cost of the snapshots (grab start to delivery); grey with nothing in the last 10 s
+    // cost of the snapshots (grab start to delivery); grey with nothing in the last 10 s
     vlqt::res::snap::Stats snap;
     vlqt::res::snap::stats(snap);
     const QString none(QChar(0x2013));
@@ -1338,7 +1338,7 @@ QString PerfMonitor::pageText(int page) const
 {
     QString html, part;
     switch (page) {
-    case Summary: html = summaryPage(&part); break; // #260: also Summary/Timeline (head + body/foot)
+    case Summary: html = summaryPage(&part); break; // also Summary/Timeline (head + body/foot)
     case Timeline: html = timelinePage(&part); break;
     case Scene: html = scenePage(); break;
     case System: html = systemPage(); break;
@@ -1363,7 +1363,7 @@ namespace {
 struct GraphSeries { QRgb color; const char* html; float (*value)(const PerfSample&); };
 constexpr QRgb kGraphGuide = qRgba(255, 255, 255, 60);
 const GraphSeries kGraphSeries[] = {
-    {qRgb(255, 110, 180), "#ff6eb4", [](const PerfSample& s) { return s.hostReported ? s.host.vvvv : 0.f; }}, // #260
+    {qRgb(255, 110, 180), "#ff6eb4", [](const PerfSample& s) { return s.hostReported ? s.host.vvvv : 0.f; }},
     {qRgb(255, 160, 40), "#ffa028", [](const PerfSample& s) { return s.pump; }},
     {qRgb(80, 220, 120), "#50dc78", [](const PerfSample& s) { return s.gpu; }},
     {qRgb(255, 255, 255), "#ffffff", [](const PerfSample& s) { return s.frame; }},
@@ -1397,7 +1397,7 @@ void graphSeries(const PerfMonitor* m, int series, F point)
 } // namespace
 
 // All lines (guides + series) in one vertex-colored DrawLines node: one draw call and one buffer upload per frame
-// instead of one per line (#265). Rewritten every pump (one new sample each).
+// instead of one per line. Rewritten every pump (one new sample each).
 QSGNode* PerfGraph::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
 {
     const QSGRendererInterface* ri = window() ? window()->rendererInterface() : nullptr;
@@ -1442,7 +1442,7 @@ QSGNode* PerfGraph::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
     return node;
 }
 
-// Software backend: a QSGGeometryNode is silently not drawn there (the F2 graph showed no lines, #246). Same pattern as
+// Software backend: a QSGGeometryNode is silently not drawn there (the F2 graph showed no lines). Same pattern as
 // PerfTimeline::paintSoftware: paint into one image, one image node. Only while the meter is on (update() at pump rate).
 QSGNode* PerfGraph::paintSoftware(QSGNode* old)
 {
@@ -1532,7 +1532,7 @@ void PerfTimeline::buildPrims()
     const int n = m_monitor ? m_monitor->viewCount() : 0;
     const float w = float(width()), h = float(height());
     const float budget = m_monitor ? float(m_monitor->budgetMs()) : 1000.f / 60;
-    // Bar heights once per sample (#268: the peak search re-evaluated them per pump); top as scaleFor().
+    // Bar heights once per sample (the peak search re-evaluated them per pump); top as scaleFor().
     std::array<float, PerfMonitor::kHistory> total;
     float top = 2 * budget;
     for (int i = 0; i < n; i++) {
@@ -1677,10 +1677,10 @@ void setVertices(QSGGeometryNode* node, int count, bool onlyIfChanged, F fill)
 
 } // namespace
 
-// Four nodes, drawn in this order (#268): over-budget highlights, bars + peak markers, budget + GPU lines, max-hold
+// Four nodes, drawn in this order: over-budget highlights, bars + peak markers, budget + GPU lines, max-hold
 // line. An update rewrites bars and lines; highlights and max-hold are marked dirty only when they change, which in a
 // steady view is rare (max-hold) or never (no highlights): every dirty node makes the batch renderer re-batch.
-// Measured and dropped (#268, Snapdragon/D3D11): a ring of chunk nodes moved by transforms (uploads only new
+// Measured and dropped (Snapdragon/D3D11): a ring of chunk nodes moved by transforms (uploads only new
 // samples, but each extra node costs per frame, also without updates) and opaque materials for the bars (cheaper
 // render phase, but a higher pump median).
 QSGNode* PerfTimeline::paintRhi(QSGNode* old)

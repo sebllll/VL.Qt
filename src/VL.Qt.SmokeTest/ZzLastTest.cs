@@ -9,7 +9,7 @@
 public static class ZzLastTest
 {
     /// <summary>
-    /// Process end with busy workers (#359): three 10 s decodes are left running on purpose. Not at the end of the
+    /// Process end with busy workers: three 10 s decodes are left running on purpose. Not at the end of the
     /// resources test: with a single worker (2-core CI runners) they would queue 30 s in front of every later decode
     /// (image-resource).
     /// </summary>

@@ -55,7 +55,7 @@ namespace VL.Qt.Tests
         [TestCase(RectangleAnchor.BottomRight, 200f, 100f)]
         public void Identity_AnchorPointLandsAtParentOrigin(RectangleAnchor anchor, float px, float py)
         {
-            // Position comes from the transform: with Identity the anchor point of the element sits at the origin (#469).
+            // Position comes from the transform: with Identity the anchor point of the element sits at the origin.
             var q = SpaceMapping.Default.ToQtTransform(Matrix.Identity, Size, anchor);
             AssertPoint(Apply(q, px, py), 0, 0);
             AssertPoint(Apply(q, 0, 0), -px, -py);

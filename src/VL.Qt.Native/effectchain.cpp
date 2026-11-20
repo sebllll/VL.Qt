@@ -71,7 +71,7 @@ namespace {
 // Stage of a MULTI link: fx (MultiEffect) has the size of the input and lies where the input lies (input = the root
 // for the first link, whose layer texture covers the element's (0, 0, w, h); otherwise the previous stage, whose
 // x/y/size are its effect area in root coordinates); the stage covers fx.itemRect (input + padding), its area in root
-// = element coordinates. frameLeft/frameTop (#475, first link only): how far an auto-sized Group's frame reaches left of /
+// = element coordinates. frameLeft/frameTop (first link only): how far an auto-sized Group's frame reaches left of /
 // above its origin; Qt's layer covers (0, 0, width, height) of the item, so that part goes into the left/top padding
 // (added to the automatic and the manual padding): the effect area includes the whole frame, unclipped. Mask: the
 // Binding points the frame's layer.sourceRect at the effect area of this link (protocol.h mask rule), maskEnabled
@@ -116,7 +116,7 @@ constexpr const char* kMultiStageQml =
 // points the sourceRect of the input's layer (tex: the element's layer source for the first link, else the previous
 // stage) at that area, so the input arrives padded and transparent around it, 1:1 over UV 0..1 of the passes. Always
 // through layer.sourceRect, never on the layer's ShaderEffectSource itself: QQuickItemLayer caches the value and skips an
-// equal write, and a later MultiEffect on the same layer sets its padded rect there (#529: else it kept our rect, hard edge).
+// equal write, and a later MultiEffect on the same layer sets its padded rect there (else it kept our rect, hard edge).
 // SINGLE: e1 draws. TWO_PASS: e1 hidden with its own layer (texture provider of e2), e2 draws. PYRAMID: e1 = composite
 // draws, the pyramid passes are created by EffectChain::layoutPyramid under the stage, e2 is unused. active false: retired.
 constexpr const char* kPassStageQml =

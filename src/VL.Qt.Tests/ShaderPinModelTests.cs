@@ -5,7 +5,7 @@ using VL.Qt.Shaders;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Shader node factory (#488): reflection text parser, annotations, pin rules. No QtNative needed.</summary>
+    /// <summary>Shader node factory: reflection text parser, annotations, pin rules. No QtNative needed.</summary>
     public class ShaderPinModelTests
     {
         private const string head = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\n";

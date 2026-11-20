@@ -16,8 +16,8 @@ namespace VL.Qt
     internal sealed class SceneCore
     {
         private readonly CommandWriter _commands = new CommandWriter();
-        private readonly CommandWriter _wipe = new CommandWriter(); // RESET of the resync (#76, #92)
-        private readonly List<SinkState> _applyErrorSlots = new(); // slots showing an apply error (#275)
+        private readonly CommandWriter _wipe = new CommandWriter(); // RESET of the resync
+        private readonly List<SinkState> _applyErrorSlots = new(); // slots showing an apply error
         private readonly Reconciler _reconciler;
         private readonly ResyncController _resync;
         private IntPtr _handle;
@@ -34,7 +34,7 @@ namespace VL.Qt
         private bool _hasSpace;
 
         private string _pollError = "";
-        // Host frame (#245): commands of the last apply, reconcile time since the last report.
+        // Host frame: commands of the last apply, reconcile time since the last report.
         private int _appliedOps;
         private double _reconcileMs;
 
@@ -57,10 +57,10 @@ namespace VL.Qt
 
         public Reconciler Reconciler => _reconciler;
 
-        /// <summary>Command buffer of the next apply (test seam: SmokeTest injects an invalid command, #76).</summary>
+        /// <summary>Command buffer of the next apply (test seam: SmokeTest injects an invalid command).</summary>
         public CommandWriter Commands => _commands;
 
-        /// <summary>Number of resyncs after failed applies (#76).</summary>
+        /// <summary>Number of resyncs after failed applies.</summary>
         public int Resyncs => _resync.Resyncs;
 
         /// <summary>Error of the last apply, empty if ok (the element took it, or the apply worked).</summary>
@@ -76,7 +76,7 @@ namespace VL.Qt
         /// Writes the clear color, the Clear flag and the Space (when they changed) and the commands of this frame (applied by
         /// <see cref="Apply"/>). <paramref name="clear"/> = false keeps the previous frame and draws the new one over it.
         /// The lengths are converted with the <see cref="SpaceMapping"/> of <paramref name="space"/> and the size and device
-        /// pixel ratio QtNative reports for the scene right now (#143). Appends: the buffer is reset after
+        /// pixel ratio QtNative reports for the scene right now. Appends: the buffer is reset after
         /// apply, so commands of a frame without apply go out with the next one.
         /// </summary>
         public void Update(Element? input, Space space, Color4 clearColor, bool clear)
@@ -155,7 +155,7 @@ namespace VL.Qt
             }
         }
 
-        /// <summary>Reconcile time since the last call (host frame report, #245).</summary>
+        /// <summary>Reconcile time since the last call (host frame report).</summary>
         public double TakeReconcileMs()
         {
             var ms = _reconcileMs;
@@ -164,7 +164,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// #275: the failing object id (vlqt_window_get_apply_error) resolved to its sink slot shows the error at the
+        /// the failing object id (vlqt_window_get_apply_error) resolved to its sink slot shows the error at the
         /// element node; returns the text for the renderer's Error output, empty if the element took it.
         /// </summary>
         private string ReportApplyError()
@@ -195,7 +195,7 @@ namespace VL.Qt
             if (e.op != Protocol.Op.Set)
             {
                 var reason = e.Reason;
-                // #313: a plugin under a path beyond MAX_PATH is reported as "not found" although it is there.
+                // a plugin under a path beyond MAX_PATH is reported as "not found" although it is there.
                 if (reason.Contains("plugin", StringComparison.Ordinal) && reason.Contains("not found", StringComparison.Ordinal) && Native.PathsTooLong)
                     reason += ". " + Native.PathTooLongHint;
                 return $"Qt rejected {ConstantName(typeof(Protocol.Op), e.op) ?? "command " + e.op}: {reason}";
@@ -213,7 +213,7 @@ namespace VL.Qt
 
         /// <summary>
         /// Reads the queued events of QtNative. Returns them for <see cref="Dispatch"/> (valid until the next call), empty if
-        /// there are none or the poll failed (then <see cref="PollError"/> is set). The frame start poll (#24) only sets a
+        /// there are none or the poll failed (then <see cref="PollError"/> is set). The frame start poll only sets a
         /// poll error: one from the frame end stays visible to the node updates of the next frame.
         /// </summary>
         public ReadOnlySpan<byte> ReadEvents(bool frameStart)

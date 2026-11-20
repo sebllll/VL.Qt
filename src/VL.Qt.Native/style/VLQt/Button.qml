@@ -1,4 +1,4 @@
-// VL.Qt base style (#292): Button. Every value comes from the attached VlStyle (written by SET_STYLE from C#, which
+// VL.Qt base style: Button. Every value comes from the attached VlStyle (written by SET_STYLE from C#, which
 // holds the defaults); unset values are 0 / transparent / Qt font. Sub-items read control.VlStyle: a bare VlStyle
 // there would attach a second, empty object to the sub-item.
 import QtQuick

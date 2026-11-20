@@ -5,7 +5,7 @@ using VL.Lib.Mathematics;
 namespace VL.Qt
 {
     /// <summary>
-    /// Conversion between the VL units of one scene and Qt logical pixels (DIP), #143. Built per frame from the
+    /// Conversion between the VL units of one scene and Qt logical pixels (DIP). Built per frame from the
     /// <see cref="Space"/> pin and the scene metrics (vlqt_window_get_scene_metrics: size in DIP, device pixel ratio).
     /// </summary>
     /// <remarks>

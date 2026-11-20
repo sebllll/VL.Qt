@@ -70,7 +70,7 @@ public static class EffectMaskTest
         return any == 0 ? 0 : (double)both / any;
     }
 
-    // MULTI run of one element (#489): the values the steps change, sent whole by SET_EFFECT_CHAIN.
+    // MULTI run of one element: the values the steps change, sent whole by SET_EFFECT_CHAIN.
     private sealed class FxRun
     {
         public uint Mask;

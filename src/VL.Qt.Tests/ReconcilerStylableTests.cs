@@ -12,7 +12,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>IStylable in the reconciler and in the children input (#413).</summary>
+    /// <summary>IStylable in the reconciler and in the children input.</summary>
     public class ReconcilerStylableTests
     {
         /// <summary>Behaves like a patched widget: the same instance, a cached element, a new one only when a field or the style changes.</summary>

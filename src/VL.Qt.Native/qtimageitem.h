@@ -1,4 +1,4 @@
-/* qtimageitem.h - the Image element (#361, images package 04): draws an image resource (image_resource.h).
+/* qtimageitem.h - the Image element (images package 04): draws an image resource (image_resource.h).
  *
  * PROP_IMAGE sets the resource id (0 = no image). The item takes an element reference (res::acquire) for the id it
  * shows and for the id it waits for, and drops it on a change or in the destructor. Until the new resource is Ready
@@ -13,7 +13,7 @@
  * Everything runs on the main thread (render loop basic). Textures go in releaseResources/invalidateSceneGraph,
  * before the window's QRhi.
  *
- * Device lost (#367): content of an older device generation (ImageResource::generation) is skipped silently until its
+ * Device lost: content of an older device generation (ImageResource::generation) is skipped silently until its
  * replacement is Ready; so is a window that still renders with its old QRhi right after device::rebuild.
  *
  * Fill modes as QML Image (values of Image.fillMode, centered): Stretch, PreserveAspectFit, PreserveAspectCrop and
@@ -38,7 +38,7 @@ class ImageResource;
 }
 struct ImageTexture;
 
-// Texture of an image resource in a window from the shared cache (also used for ShaderEffect samplers, #437);
+// Texture of an image resource in a window from the shared cache (also used for ShaderEffect samplers);
 // nullptr if it cannot be drawn there (device generation, no shared device). Main thread.
 std::shared_ptr<ImageTexture> imageTextureFor(QQuickWindow* window, const std::shared_ptr<res::image::ImageResource>& content);
 QSGTexture* textureOf(const ImageTexture& t);

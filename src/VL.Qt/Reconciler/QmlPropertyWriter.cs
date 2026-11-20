@@ -3,7 +3,7 @@
 namespace VL.Qt
 {
     /// <summary>
-    /// Writes SET_QML_PROPERTIES (#104) for a QmlElement as a diff by name against what was sent last: new or changed entries
+    /// Writes SET_QML_PROPERTIES for a QmlElement as a diff by name against what was sent last: new or changed entries
     /// only, nothing at all if there are none. A key that is gone from <c>next</c> is not reset in QML (the protocol has no
     /// removal; documented behavior). A large table is split into several commands (a command carries 64 KB).
     /// </summary>

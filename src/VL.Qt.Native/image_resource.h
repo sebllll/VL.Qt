@@ -1,4 +1,4 @@
-/* image_resource.h - resource kind VLQT_RES_KIND_IMAGE (#360, images package 03).
+/* image_resource.h - resource kind VLQT_RES_KIND_IMAGE (images package 03).
  *
  * An image comes from a file (vlqt_res_load_image) or from pixels of C# (vlqt_res_set_pixels) and ends up as a
  * texture on the process device (device.h): an ID3D11Texture2D created by the upload QRhi, independent of windows.
@@ -8,15 +8,15 @@
  *           comment in protocol.h) in a worker.
  *   upload: files: the worker creates an empty texture and an empty staging texture; on the main thread the staging
  *           texture is mapped, a copy task writes the pixels into it (an image within the frame budget: the main
- *           thread), then Unmap + CopyResource (GPU copy) and the texture is wrapped (#390: CreateTexture2D with
+ *           thread), then Unmap + CopyResource (GPU copy) and the texture is wrapped (CreateTexture2D with
  *           initial data blocked the render for as long as it ran);
  *           pixels: main thread, in stripes of at most the frame budget through one offscreen frame of the upload
- *           QRhi per resource and pump. Ready only when every stripe is there. Mipmaps (#562): on the worker path the
+ *           QRhi per resource and pump. Ready only when every stripe is there. Mipmaps: on the worker path the
  *           texture is created with its mip chain, the main thread copies level 0 and records GenerateMips (no
  *           offscreen frame, no wait); on the stripes path generateMips follows the last stripe.
- *           VLQT_IMG_UPLOAD=stripes|worker forces one path (measurements in #360, #390).
+ *           VLQT_IMG_UPLOAD=stripes|worker forces one path (measurements in #360).
  *
- * Source kept for the re-upload after a device loss (package 10, #367): the path for files (no CPU copy after the
+ * Source kept for the re-upload after a device loss (package 10): the path for files (no CPU copy after the
  * upload, restore decodes the file again), the converted CPU copy for pixels (restore only uploads it again). A Work
  * remembers the device generation it was made for (generation()); QtImageItem draws only content of the current one. Without a shared device (Linux, VLQT_SHARED_DEVICE=0) there is no texture: the
  * resource keeps the converted QImage and is Ready after the decode (image()).
@@ -57,7 +57,7 @@ public:
     uint32_t format() const { return m_bgra ? 9u : 7u; }
     // Converted pixels without a shared device; empty after the upload of a file.
     const QImage& image() const { return m_image; }
-    // device::generation() this content was made for (#367). Content of another generation lost its texture with the
+    // device::generation() this content was made for. Content of another generation lost its texture with the
     // old device and must not be drawn; its replacement for the new device follows (resources.h, device lost).
     unsigned generation() const { return m_generation; }
 
@@ -84,8 +84,8 @@ private:
     QSize m_size;
     std::string m_warning;
     void* m_workerTexture = nullptr; // ID3D11Texture2D* created empty in the worker (worker upload path)
-    void* m_staging = nullptr;       // ID3D11Texture2D* staging (CPU write), created empty in the worker (#390)
-    void* m_workerSrv = nullptr;     // ID3D11ShaderResourceView* over m_workerTexture for GenerateMips (mipmaps, #562)
+    void* m_staging = nullptr;       // ID3D11Texture2D* staging (CPU write), created empty in the worker
+    void* m_workerSrv = nullptr;     // ID3D11ShaderResourceView* over m_workerTexture for GenerateMips (mipmaps)
 
     // upload (main thread)
     QRhiTexture* m_texture = nullptr;
@@ -100,7 +100,7 @@ Kind* kind();
 // --- C API backends (vlqt.h), main thread ---
 int load(uint64_t id, const char* utf8Path, unsigned flags);
 int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int len);
-// vlqt_res_read_preview (#546): the preview the worker made for VLQT_IMG_PREVIEW, read only on a Ready resource.
+// vlqt_res_read_preview: the preview the worker made for VLQT_IMG_PREVIEW, read only on a Ready resource.
 int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc);
 
 // Current content of a Ready image resource, nullptr otherwise (also during the first load). Package 04 takes an

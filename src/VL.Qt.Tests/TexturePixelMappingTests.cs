@@ -4,7 +4,7 @@ using VL.Qt.Stride;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>TexturePixelMapping of ToTexturePixels (#119), compiled in from VL.Qt.Stride: window position to texture pixel.</summary>
+    /// <summary>TexturePixelMapping of ToTexturePixels, compiled in from VL.Qt.Stride: window position to texture pixel.</summary>
     public class TexturePixelMappingTests
     {
         private static readonly Vector2 s_texture = new(100, 50);

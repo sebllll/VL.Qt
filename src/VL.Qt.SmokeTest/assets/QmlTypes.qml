@@ -1,6 +1,6 @@
 import QtQuick
 
-// Test file of the SmokeTest scenario "qml" (#104): every value type of the protocol in a property and in a second property
+// Test file of the SmokeTest scenario "qml": every value type of the protocol in a property and in a second property
 // bound to it (the binding result comes back as an event, so the value has made the whole trip patch -> QML -> patch).
 Item {
     implicitWidth: 100

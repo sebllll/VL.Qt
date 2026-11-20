@@ -1,7 +1,7 @@
 ﻿namespace VL.Qt.Audio
 {
     /// <summary>
-    /// Read side of a QtNative audio tap (#22, protocol.h "Audio tap", vlqt.h vlqt_res_read_audio), as an interface so
+    /// Read side of a QtNative audio tap (protocol.h "Audio tap", vlqt.h vlqt_res_read_audio), as an interface so
     /// that unit tests can feed <see cref="VideoAudioSignal"/> simulated clocks and buffers without Qt. Every member runs
     /// on the audio thread and allocates nothing.
     /// </summary>

@@ -6,7 +6,7 @@ using Stride.Core.Mathematics;
 namespace VL.Qt.Elements
 {
     /// <summary>
-    /// One value of a QmlElement property as it goes over the wire (#104): wire value type and the value in plain fields, so
+    /// One value of a QmlElement property as it goes over the wire: wire value type and the value in plain fields, so
     /// value equality is exact (Stride's vector equality is a near-equal compare and would swallow tiny changes) and no boxing
     /// is left after the conversion. Color and rect use <c>A..D</c> (r, g, b, a / x, y, width, height).
     /// </summary>
@@ -48,7 +48,7 @@ namespace VL.Qt.Elements
     }
 
     /// <summary>
-    /// The Properties of a QmlElement as the node sends them: a snapshot of the converted dictionary entries by name (#104).
+    /// The Properties of a QmlElement as the node sends them: a snapshot of the converted dictionary entries by name.
     /// Immutable; the node keeps the same instance while its input dictionary is unchanged (a patch may mutate the dictionary
     /// in place, so <see cref="Update"/> compares the content), which is what the reconciler's reference check relies on.
     /// Entries that cannot be sent (unsupported type, invalid name) are left out and listed in <see cref="Problems"/>.

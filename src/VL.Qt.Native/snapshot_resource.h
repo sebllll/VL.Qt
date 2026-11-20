@@ -1,4 +1,4 @@
-/* snapshot_resource.h - resource kind VLQT_RES_KIND_SNAPSHOT (#363, images package 06).
+/* snapshot_resource.h - resource kind VLQT_RES_KIND_SNAPSHOT (images package 06).
  *
  * vlqt_res_snapshot grabs one element of a window with QQuickItem::grabToImage (never grabWindow): asynchronous, the
  * window renders the item into an offscreen texture in its next render and reads it back; QQuickItemGrabResult::ready
@@ -12,7 +12,7 @@
  *
  * A grab never stays in Decoding: endFrame (every pump) fails it when the element or the window was destroyed, the
  * window is no longer exposed (an offscreen scene, never exposed: no longer bound; while bound it is marked dirty so
- * that render_batch renders it, #128) or nothing came for timeoutMs. Released ids drop their result. shutdown drops every grab.
+ * that render_batch renders it) or nothing came for timeoutMs. Released ids drop their result. shutdown drops every grab.
  * Main thread only.
  */
 #pragma once
@@ -48,7 +48,7 @@ int start(uint64_t id, Scene& scene, unsigned elementId, float scale);
 int startFit(uint64_t id, Scene& scene, unsigned elementId, int maxEdgePx);
 int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out);
 
-// --- Cost of the snapshots for the F5 Resources page (#548) ---
+// --- Cost of the snapshots for the F5 Resources page ---
 // Grab start (startImpl) to a successful delivery (onReady), over the last ~10 s; every snapshot counts.
 struct Stats
 {

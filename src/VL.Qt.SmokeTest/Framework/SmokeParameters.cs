@@ -18,7 +18,7 @@ internal static class SmokeParameters
     /// <summary>Folder of the grabs (PNG files keep their former names). Default &lt;SmokeDir&gt;/grabs.</summary>
     public static string OutDir => Get("OutDir") ?? Path.Combine(SmokeDir, "grabs");
 
-    /// <summary>resource-stress: duration in seconds (#365).</summary>
+    /// <summary>resource-stress: duration in seconds.</summary>
     public static int StressSeconds => GetInt("StressSeconds") ?? ResourceStressTest.DefaultSeconds;
 
     /// <summary>resource-stress: seed; without one a random seed (logged by the scenario).</summary>
@@ -28,7 +28,7 @@ internal static class SmokeParameters
     /// <summary>Seconds a scenario may take before the Qt thread counts as blocked (default 600).</summary>
     public static int ScenarioTimeoutSeconds => GetInt("ScenarioTimeoutSeconds") ?? 600;
 
-    /// <summary>Flags of the manual tearing scenario, e.g. "--windows 2 --interval 0 --seconds 10" (#90).</summary>
+    /// <summary>Flags of the manual tearing scenario, e.g. "--windows 2 --interval 0 --seconds 10".</summary>
     public static string[] TearingArgs => Split(Get("TearingArgs"));
 
     /// <summary>replay-cli: trace file (01e) and its flags, e.g. "--loop 3 --paced".</summary>
@@ -41,7 +41,7 @@ internal static class SmokeParameters
     /// <summary>readme-images / readme-gallery: write the README pictures into docs/images (normal renderer) instead of comparing (1/true).</summary>
     public static bool DocsImages => Get("DocsImages") is "1" or "true";
 
-    /// <summary>overlay-cost: rounds of 120 pumps per mode (#244, default 8).</summary>
+    /// <summary>overlay-cost: rounds of 120 pumps per mode (default 8).</summary>
     public static int OverlayCostRounds => GetInt("OverlayCostRounds") ?? 8;
 
     /// <summary>Arguments for PerfLimits.Configure: PerfFactor and PerfWarnOnly (VLQT_PERF_FACTOR / VLQT_PERF_WARN_ONLY still work).</summary>

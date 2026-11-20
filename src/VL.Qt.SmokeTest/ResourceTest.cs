@@ -8,7 +8,7 @@ using System.Threading;
 using VL.Qt;
 
 /// <summary>
-/// #359 (images package 02): the generic resource manager of QtNative with its test kind. State machine incl. rejected
+/// (images package 02): the generic resource manager of QtNative with its test kind. State machine incl. rejected
 /// transitions, stale ids after release, upload budget per pump, release while decoding/uploading, element references,
 /// vlqt_res_wait (sync decode + upload, others keep going), shutdown with running jobs (10 rounds), poll cap.
 /// Ends with running jobs on purpose: the process must end cleanly with busy workers.

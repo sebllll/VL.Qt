@@ -111,7 +111,7 @@ FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root)
     auto* source = new QQuickShaderEffectSource();
     // In the window before the source item is set: a source without a window takes a window reference on the root
     // in setSourceItem and another one when it enters the window, but gives back only one (setSourceItem(nullptr)).
-    // The root then keeps the old window and cannot move to a new one (#118 window swap).
+    // The root then keeps the old window and cannot move to a new one (window swap).
     source->setParentItem(content);
     source->setSourceItem(root);
     source->setRecursive(true);
@@ -125,7 +125,7 @@ FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root)
     m_view = view;
 
     // Sized to the root, which Scene sizes to the window (also offscreen, where the content item stays 0 x 0). The root
-    // may sit at the centre of the scene (Space, #143): the window part of it is the rect at -root position in the
+    // may sit at the centre of the scene (Space): the window part of it is the rect at -root position in the
     // root's coordinates, grabbed by the source (sourceRect) and drawn by the view at the same place. One connection
     // per item, each with the item as context: the view is deleted at once, the source later.
     const auto fitSource = [source, root] {

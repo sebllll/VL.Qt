@@ -1,6 +1,6 @@
 import QtQuick
 
-// Test file of the SmokeTest scenario "qml" (#104): a red rectangle with a white progress bar, a property in
+// Test file of the SmokeTest scenario "qml": a red rectangle with a white progress bar, a property in
 // (fill, progress), properties QML changes itself (steps, clicks, shown with a Behavior animation) and two signals.
 Item {
     id: root

@@ -1,4 +1,4 @@
-// VL.Qt base style (#292): Switch. Frame = background (padding area), Track = the lane (Track colour off, TrackFill
+// VL.Qt base style: Switch. Frame = background (padding area), Track = the lane (Track colour off, TrackFill
 // on; the state ranks Hovered/Pressed above Checked, so the lane follows `checked`), Indicator = knob.
 // Values from the attached VlStyle (see Button.qml). No label by default (spacing 0, lane centred in larger bounds).
 import QtQuick

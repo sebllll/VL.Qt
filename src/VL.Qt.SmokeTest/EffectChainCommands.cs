@@ -1,7 +1,7 @@
 ﻿using System;
 using VL.Qt;
 
-// Raw SET_EFFECT_CHAIN for the smoke tests (#489): one MULTI link per run, each written by its own action (Effect*
+// Raw SET_EFFECT_CHAIN for the smoke tests: one MULTI link per run, each written by its own action (Effect*
 // entries). A run is applied whole in QtNative, so a test keeps the values of its runs and sends them all again.
 internal static class EffectChainCommands
 {

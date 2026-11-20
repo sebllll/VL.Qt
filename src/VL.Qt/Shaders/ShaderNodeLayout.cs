@@ -11,7 +11,7 @@ using VL.Core.Diagnostics;
 namespace VL.Qt.Shaders
 {
     /// <summary>
-    /// Everything the init of a generated shader node needs, built once per node description (#488): the file sources,
+    /// Everything the init of a generated shader node needs, built once per node description: the file sources,
     /// the pin model (with pin names made unique against the fixed pins) and the messages shown at the node. Errors (red):
     /// file not readable, compile error (then only the fixed pins), duplicate file name. Warnings (orange): the pin
     /// model's warnings. Everything is logged too.

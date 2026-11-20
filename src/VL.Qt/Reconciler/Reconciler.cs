@@ -18,14 +18,14 @@ namespace VL.Qt
     /// its whole subtree.
     /// </para>
     /// <para>
-    /// An element may hang at several places of this tree (#455, <see cref="SceneRegistry"/>): every occurrence gets
+    /// An element may hang at several places of this tree (<see cref="SceneRegistry"/>): every occurrence gets
     /// its own Qt object and its own sink handle on the element's sink. The first occurrence in traversal order
     /// (depth-first, children in order; an effect mask counts at its place, before the children) is the primary one
     /// (<see cref="Node.IsPrimary"/>): only its handle reports state values. A new occurrence is primary if the current
     /// primary was not reached yet in this pass (positions of existing nodes never change their order); when the
     /// primary lets go, the first of the remaining occurrences is picked at the end of the update and re-bound with a
     /// new handle, so QtNative sends its current state again. Other renderers may show the same element at the same
-    /// time (#126), each with its own Qt objects; only the owner renderer (the first one) has the primary occurrence.
+    /// time, each with its own Qt objects; only the owner renderer (the first one) has the primary occurrence.
     /// When this tree lets go of the last occurrence of an element it owns, it hands the element over at the end of the
     /// update (<see cref="SceneRegistry.HandOver"/>); the next renderer picks its primary in its next update
     /// (<see cref="TakeOver"/>). A video is shown once only, app-wide (inside this tree the first occurrence in traversal
@@ -37,7 +37,7 @@ namespace VL.Qt
     /// <see cref="Sinks"/>, a new handle per slot change, no BIND flags), no sink sends an unbind (handle 0).
     /// </para>
     /// <para>
-    /// Input handlers (#319): the interaction chain of an element (<see cref="Element.Interaction"/>) becomes a list of
+    /// Input handlers: the interaction chain of an element (<see cref="Element.Interaction"/>) becomes a list of
     /// handler objects per item (<see cref="Node.Handlers"/>, not children), diffed by the sink of each interaction
     /// node (see ReconcileHandlers); they are written after the item's BIND and before its children.
     /// </para>
@@ -47,7 +47,7 @@ namespace VL.Qt
     /// the ids of the whole subtree are returned to the <see cref="IdAllocator"/>.
     /// </para>
     /// <para>
-    /// Styles (#293) are resolved top-down: the base style (<see cref="BaseStyle.Default"/>) under the window root, each
+    /// Styles are resolved top-down: the base style (<see cref="BaseStyle.Default"/>) under the window root, each
     /// Group and widget merges its <see cref="Element.Style"/> over the style it inherited (<see cref="StyleMerge"/>),
     /// all other elements pass the inherited style on unchanged. A resolved style that stays equal keeps its reference
     /// (<see cref="Node.ResolvedStyle"/>), so a reference-equal subtree is skipped only if its inherited style is
@@ -56,7 +56,7 @@ namespace VL.Qt
     /// (<see cref="StyleWriter"/>); primitives never get SET_STYLE.
     /// </para>
     /// <para>
-    /// Self-made widgets (#413): a child that is an <see cref="IStylable"/> (a <see cref="StylableElement"/> in the
+    /// Self-made widgets: a child that is an <see cref="IStylable"/> (a <see cref="StylableElement"/> in the
     /// children array) is built with the style inherited at its position, and the returned element is reconciled in its
     /// place. Build runs on every pass, because a patched widget is usually a mutable instance whose reference does not
     /// change; subtrees containing one are therefore never skipped (<see cref="Node.ContainsStylable"/>), the elements
@@ -83,7 +83,7 @@ namespace VL.Qt
         private SpaceMapping _mapping = SpaceMapping.Default;
         private bool _hasMapping;
         private bool _force;
-        private bool _rescale; // the unit scale changed in this pass: every length is written again (#143)
+        private bool _rescale; // the unit scale changed in this pass: every length is written again
         private bool _invalidated;
         private int _pass;
 
@@ -97,7 +97,7 @@ namespace VL.Qt
             _scene = scene ?? throw new ArgumentNullException(nameof(scene));
         }
 
-        /// <summary>Native window of the renderer (vlqt_window_*), Zero in tests; used by Snapshot (#363) to find an element.</summary>
+        /// <summary>Native window of the renderer (vlqt_window_*), Zero in tests; used by Snapshot to find an element.</summary>
         public IntPtr Window { get; set; }
 
         /// <summary>Mirror of the object under the window root (index 0); null = empty scene.</summary>
@@ -121,7 +121,7 @@ namespace VL.Qt
         /// </summary>
         internal void TakeOver(Element element) => _pendingPrimary.Add(element);
 
-        /// <summary>Mapping of the last <see cref="Update(Element?, in SpaceMapping)"/>: units ↔ logical pixels of this scene (#143).</summary>
+        /// <summary>Mapping of the last <see cref="Update(Element?, in SpaceMapping)"/>: units ↔ logical pixels of this scene.</summary>
         public SpaceMapping Mapping => _mapping;
 
         /// <summary>
@@ -211,7 +211,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Position of an <see cref="IStylable"/> (#413): calls its Build with <paramref name="inherited"/> (every pass that
+        /// Position of an <see cref="IStylable"/>: calls its Build with <paramref name="inherited"/> (every pass that
         /// reaches it; its ancestors are never skipped, see <see cref="Node.ContainsStylable"/>) and reconciles the returned
         /// element in its place. A reference-equal result costs nothing more than the call. An exception is caught and shown
         /// at the parent's sink (<see cref="SinkState.BuildError"/>); the element of the last successful Build of the same
@@ -327,7 +327,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Resolves the style of <paramref name="node"/> (#293) and returns the style its children inherit. Group and
+        /// Resolves the style of <paramref name="node"/> and returns the style its children inherit. Group and
         /// widgets merge their own style over <paramref name="inherited"/> (only when one of both changed by reference;
         /// an equal result keeps the old reference, so unchanged children can still be skipped); widgets send the
         /// resolved style as SET_STYLE diff against what QtNative holds. Other elements pass <paramref name="inherited"/> on.

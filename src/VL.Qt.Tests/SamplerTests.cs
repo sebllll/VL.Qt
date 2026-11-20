@@ -7,7 +7,7 @@ using VL.Qt.Nodes;
 
 namespace VL.Qt.Tests
 {
-    // Sampler state (#492): wire packing, SET_UNIFORMS entry, diff and removal by the UniformWriter.
+    // Sampler state: wire packing, SET_UNIFORMS entry, diff and removal by the UniformWriter.
     [TestFixture]
     public class SamplerTests
     {

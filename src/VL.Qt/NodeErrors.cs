@@ -6,7 +6,7 @@ using VL.Lang;
 namespace VL.Qt
 {
     /// <summary>
-    /// The one way (#258) a VL.Qt node reports runtime errors that do not surface through vvvv itself (pump path,
+    /// The one way a VL.Qt node reports runtime errors that do not surface through vvvv itself (pump path,
     /// QtNative errors): logged with the node's own logger (<see cref="NodeContext.GetLogger"/>, so the Log window links to
     /// the node and logging providers get it too) and shown at the node as a persistent error message until it is
     /// cleared or replaced. Repeated identical errors (e.g. every frame) are logged and shown once.
@@ -48,7 +48,7 @@ namespace VL.Qt
         /// <summary>
         /// Logs a warning text (once per distinct text) and shows it at the node as a warning until <see cref="Clear"/>
         /// is called for the same <paramref name="phase"/> (e.g. an element error reported by Qt like a missing file,
-        /// #273: the app keeps running, the element stays empty).
+        /// the app keeps running, the element stays empty).
         /// </summary>
         public void Warn(string warning, string phase)
         {

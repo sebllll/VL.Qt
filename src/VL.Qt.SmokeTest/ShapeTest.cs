@@ -4,7 +4,7 @@ using System.Drawing;
 using System.IO;
 using VL.Qt;
 
-// Shape in QtNative (#154): open polyline, closed filled polygon with a thick miter stroke, cubic path, trimmed polyline,
+// Shape in QtNative: open polyline, closed filled polygon with a thick miter stroke, cubic path, trimmed polyline,
 // dashed line; pixel checks on stroke, fill, closed join, trim and dash. Then invalid PATH / F32_ARRAY payloads: rejected, no crash.
 // Grab goes to <OutDir>/shapes.png. Coordinates are logical pixels relative to the item origin (the Shape item has size 0).
 [TestFixture, NonParallelizable]

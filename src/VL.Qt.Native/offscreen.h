@@ -1,4 +1,4 @@
-// Offscreen scenes (#116, QtTexture): a Qt scene without a native window (QQuickRenderControl) on the shared D3D11
+// Offscreen scenes (QtTexture): a Qt scene without a native window (QQuickRenderControl) on the shared D3D11
 // device, rendering into a texture of a foreign device (Stride's), ordered by two shared fences. C ABI: the
 // vlqt_offscreen_* exports in vlqt.h; design: docs/decisions/render-texture.md. Called on the main thread only; the
 // scene graph and QRhi of a scene may live on a render thread (render_thread.h, offscreen.cpp).
@@ -27,7 +27,7 @@ struct State;
 
 // Window handle of a new scene around window, a QQuickWindow of state's render control: QML engine, scene (apply,
 // poll), change count, perf monitor and graphics configuration on the shared device (device::attach), the
-// FocusRelease filter (#374) and no other input filter. The handle owns window and state from here on;
+// FocusRelease filter and no other input filter. The handle owns window and state from here on;
 // vlqt_window_destroy frees them.
 void* createHandle(QQuickWindow* window, State* state);
 // The offscreen part of handle; nullptr for a null handle or a window.
@@ -36,7 +36,7 @@ QQuickWindow* quickWindow(void* handle);
 // vlqt_last_error.
 void setError(const std::string& message);
 // Clears the focus of the outermost focused item below window's root, so the active focus goes to the root: a running
-// edit commits as on any focus loss. Shared by the FocusRelease filter (#374) and the scene's focus loss (#119).
+// edit commits as on any focus loss. Shared by the FocusRelease filter and the scene's focus loss.
 void releaseFocus(QQuickWindow* window);
 // Injected touch, shared with vlqt_test_send_touch: sends the complete touch state of window after point id of device
 // changed to state (Pressed, Updated or Released) at pos (window DIP), like a touchscreen driver: one QTouchEvent

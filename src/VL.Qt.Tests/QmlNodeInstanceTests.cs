@@ -14,7 +14,7 @@ using VL.Qt.Qml;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>QmlNodeInstance (#107): typed pins to dictionary (send rule), property and signal outputs, passthrough.</summary>
+    /// <summary>QmlNodeInstance: typed pins to dictionary (send rule), property and signal outputs, passthrough.</summary>
     public class QmlNodeInstanceTests
     {
         private string _dir = null!;

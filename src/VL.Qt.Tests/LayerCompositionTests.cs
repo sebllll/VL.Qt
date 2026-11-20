@@ -5,7 +5,7 @@ using VL.Qt.Stride;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>LayerComposition of QtRenderer (#120), compiled in from VL.Qt.Stride: format decision and input mapping.</summary>
+    /// <summary>LayerComposition of QtRenderer, compiled in from VL.Qt.Stride: format decision and input mapping.</summary>
     public class LayerCompositionTests
     {
         [TestCase(PixelFormat.B8G8R8A8_UNorm, PixelFormat.B8G8R8A8_UNorm_SRgb, PixelFormat.B8G8R8A8_UNorm)]   // flip-model back buffer

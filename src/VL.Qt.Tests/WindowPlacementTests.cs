@@ -5,7 +5,7 @@ using Stride.Core.Mathematics;
 
 namespace VL.Qt.Tests
 {
-    // Bounds pin → vlqt_window_create_at arguments, and parsing of EV_WINDOW_GEOMETRY (#100, #165, #143).
+    // Bounds pin → vlqt_window_create_at arguments, and parsing of EV_WINDOW_GEOMETRY.
     // The screen rules (rect on no screen → centered) live in QtNative (QScreen) and are checked by the SmokeTest.
     public class WindowPlacementTests
     {
@@ -27,7 +27,7 @@ namespace VL.Qt.Tests
             Assert.That((a.Width, a.Height), Is.EqualTo((0, 0)));
         }
 
-        // #133: a Renderer created by vvvv's hotswap (added live, Undo/Redo) gets the VL type default for Bounds,
+        // a Renderer created by vvvv's hotswap (added live, Undo/Redo) gets the VL type default for Bounds,
         // (-0.5, -0.5, 1, 1) in vvvv 8.0-0156; it must open at the pin default, not as a 1x1 window.
         [Test]
         public void CreateBounds_TypeDefaultMeansPinDefault()
@@ -83,7 +83,7 @@ namespace VL.Qt.Tests
             Assert.That(WindowPlacement.TryReadGeometry(ReadOnlySpan<byte>.Empty, out _), Is.False);
         }
 
-        // Save Bounds (#143): debounce 0.5 s, only normal geometry, whole DIP, nothing while equal to the pin value.
+        // Save Bounds: debounce 0.5 s, only normal geometry, whole DIP, nothing while equal to the pin value.
         private static readonly RectangleF Pin = new(1000, 40, 786, 432);
         private static WindowGeometry Normal(float x, float y, float w, float h) => new(new RectangleF(x, y, w, h), WindowStates.Visible);
         private static TimeSpan S(double s) => TimeSpan.FromSeconds(s);
@@ -135,7 +135,7 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void SaveBounds_FullscreenRoundTrip_WritesNothing() // #234: on → screen rect, off → geometry from before
+        public void SaveBounds_FullscreenRoundTrip_WritesNothing() // on → screen rect, off → geometry from before
         {
             var s = new BoundsSaver(Pin);
             s.OnGeometry(Normal(1000, 40, 786, 432), S(0));

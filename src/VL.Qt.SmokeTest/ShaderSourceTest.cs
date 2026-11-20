@@ -10,7 +10,7 @@ using VL.Qt;
 using VL.Qt.Nodes;
 using static Pixels;
 
-// ShaderEffect Phase 2 (#483): GLSL text baked at runtime in the worker (vlqt_res_load_shader_source).
+// ShaderEffect Phase 2: GLSL text baked at runtime in the worker (vlqt_res_load_shader_source).
 // A text shader (wave.frag) draws, the default template of the node bakes and draws, a syntax error ends Failed with a line
 // number while the last good version keeps drawing, going back to an earlier text comes from the bake cache.
 // Raw commands (DIP). Grabs go to <outDir>/shader-source_*.png.
@@ -115,7 +115,7 @@ public static class ShaderSourceTest
             $"GLSL texts (solid, wave.frag, default template) bake -> Ready ({sGreen}, {sWave}, {sTemplate}; {ResError(green)}{ResError(waveShader)}{ResError(template)})");
         s.Check(ResError(template).Length == 0 && ResError(waveShader).Length == 0, "no bake error for the default template and wave.frag");
 
-        // #77: a uniform named like a GLSL builtin is renamed in the OpenGL code, where it is never set: Ready plus a warning
+        // a uniform named like a GLSL builtin is renamed in the OpenGL code, where it is never set: Ready plus a warning
         // (on every backend: another one checks an extra GLSL translation), none for ordinary names.
         var builtinName = Source(SolidSource("length, 0.0, 0.0").Replace("float qt_Opacity;\n", "float qt_Opacity;\n    float length;\n"),
             out var sBuiltinName, out _, out _);

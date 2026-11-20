@@ -11,7 +11,7 @@ using VL.Qt.Nodes;
 using Color = System.Drawing.Color;
 using static Pixels;
 
-// #474: there is no Visible pin any more. Opacity 0 = not drawn (Qt blocks the subtree in the scene graph, also the
+// there is no Visible pin any more. Opacity 0 = not drawn (Qt blocks the subtree in the scene graph, also the
 // effect layer: QQuickItemLayer gives the MultiEffect the item's opacity), but the element keeps its place in a Row
 // and keeps receiving input (invisible hit areas). Row: A (blue) | B (red, Opacity 0, Blur effect, Hover) | C (green).
 // Grabs: <outDir>/opacity_zero*.png.

@@ -15,7 +15,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 namespace VL.Qt.Tests
 {
     /// <summary>
-    /// Interaction chain (#319): handler diff of the reconciler (create / unchanged / properties /
+    /// Interaction chain: handler diff of the reconciler (create / unchanged / properties /
     /// remove / duplicates / element destroy / resync) and the Hover node (change detection, pull into channels).
     /// </summary>
     public class InteractionTests
@@ -414,7 +414,7 @@ namespace VL.Qt.Tests
             Assert.That(Run(null).Interaction, Is.Null);
         }
 
-        // --- Click, Point, Wheel nodes (#320, pkg 05) ---
+        // --- Click, Point, Wheel nodes (pkg 05) ---
 
         private const string tap = nameof(Protocol.Type.TapHandler);       // 33
         private const string point = nameof(Protocol.Type.PointHandler);   // 34
@@ -669,7 +669,7 @@ namespace VL.Qt.Tests
             Assert.That(tapCount.Value, Is.EqualTo(1));
         }
 
-        // --- Touch Points and Pinch nodes (#321, pkg 09) ---
+        // --- Touch Points and Pinch nodes (pkg 09) ---
 
         [Test]
         public void TouchPointsProperties_DefaultsNotSent_OnlyChangesSet()
@@ -821,7 +821,7 @@ namespace VL.Qt.Tests
             Assert.That((c.MinimumPointCount, c.MaximumPointCount), Is.EqualTo((2, 3)));
         }
 
-        // --- Drag node (#209, pkg 12) ---
+        // --- Drag node (pkg 12) ---
 
         private const string drag = nameof(Protocol.Type.DragHandler); // 38
 
@@ -927,7 +927,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Drag_UnchangedTransformPin_SendsNoTransform_ChangedSends()
         {
-            // QtNative resets the drag offset on every SET TRANSFORM: only a changed Transform pin may send it (#209, #469).
+            // QtNative resets the drag offset on every SET TRANSFORM: only a changed Transform pin may send it.
             var a = new ElementSink();
             var chain = D(a);
             var transform = Matrix.Translation(0, 0, 0) * Matrix.Scaling(2);

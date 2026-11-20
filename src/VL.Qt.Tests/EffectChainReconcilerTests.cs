@@ -9,7 +9,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>SET_EFFECT_CHAIN (#489, plan effects/08 task 5): what the reconciler sends for the Effect chain of an element.</summary>
+    /// <summary>SET_EFFECT_CHAIN (plan effects/08 task 5): what the reconciler sends for the Effect chain of an element.</summary>
     public class EffectChainReconcilerTests
     {
         private sealed class TestShaderLink : ShaderLink

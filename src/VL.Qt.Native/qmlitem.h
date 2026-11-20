@@ -1,4 +1,4 @@
-/* qmlitem.h - the QmlElement (#104, protocol.h "QmlElement"): loads a user .qml file into the element tree.
+/* qmlitem.h - the QmlElement (protocol.h "QmlElement"): loads a user .qml file into the element tree.
  *
  * QmlItem is an item that holds the instance of the file's root (a QQuickItem) as its only child item. It
  *  - compiles the file from a file: URL on the engine of the scene (relative imports resolve), rebuilds the instance on
@@ -114,7 +114,7 @@ private:
     QString m_errorText;
     QList<QString> m_order;              // names in the order first set
     QHash<QString, QVariant> m_values;   // last value per name
-    // Former instances, deleted one frame later like other items (#123): age 0 = retired this frame.
+    // Former instances, deleted one frame later like other items: age 0 = retired this frame.
     std::vector<std::pair<QPointer<QQuickItem>, int>> m_retired;
     QMetaObject::Connection m_frameConnection;
 };

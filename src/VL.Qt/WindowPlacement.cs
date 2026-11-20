@@ -18,7 +18,7 @@ namespace VL.Qt
     /// Window geometry reported by QtNative (EV_WINDOW_GEOMETRY) in DIP, same convention as the Renderer's Bounds pin on
     /// create: <see cref="Bounds"/> position = outer top-left incl. frame, size = client size. Setting it back as Bounds
     /// round-trips (vlqt_window_create_at). Minimized/fullscreen records carry no usable position (Windows: -32000).
-    /// <see cref="ClientBounds"/> = client top-left + client size (Renderer's Client Bounds output, #465).
+    /// <see cref="ClientBounds"/> = client top-left + client size (Renderer's Client Bounds output).
     /// </summary>
     internal readonly record struct WindowGeometry(RectangleF Bounds, WindowStates States, RectangleF ClientBounds = default)
     {
@@ -32,7 +32,7 @@ namespace VL.Qt
     }
 
     /// <summary>
-    /// Save Bounds (#143), pure part: decides when a reported geometry is written to the Bounds pin. Like VL.Skia
+    /// Save Bounds, pure part: decides when a reported geometry is written to the Bounds pin. Like VL.Skia
     /// (BoundsChanged.Throttle(0.5 s), Rx Throttle = debounce): a value is taken once the window has been still for
     /// <see cref="Delay"/>. Only normal geometry counts (minimized/maximized/fullscreen/hidden records are skipped, a
     /// pending normal value survives them), values are rounded to whole DIP, and nothing is written while the geometry
@@ -79,7 +79,7 @@ namespace VL.Qt
     }
 
     /// <summary>
-    /// Pure parts of the window placement (#100, #165). Screen logic (rect on no screen → centered on the primary working
+    /// Pure parts of the window placement. Screen logic (rect on no screen → centered on the primary working
     /// area, fallback size) lives in QtNative (vlqt_window_create_at, QScreen), so it is platform neutral.
     /// </summary>
     internal static class WindowPlacement
@@ -89,7 +89,7 @@ namespace VL.Qt
         public static readonly RectangleF DefaultBounds = new RectangleF(1000, 40, 786, 432);
 
         /// <summary>
-        /// Bounds a Renderer creates its window with (#133). A node added live, or restored by Undo/Redo, is created by
+        /// Bounds a Renderer creates its window with. A node added live, or restored by Undo/Redo, is created by
         /// vvvv's hotswap (IL of vvvv 8.0-0156, VL.AppServices: CompilationHelper.RestoreManagedField → CreateNew →
         /// AppHost.CreateInstance without arguments): create pins get neither their pin value nor the [DefaultValue]
         /// attribute, only C# parameter defaults, otherwise the VL default of the type, for RectangleF (-0.5, -0.5, 1, 1).

@@ -12,7 +12,7 @@ using VL.Qt;
 using Color = System.Drawing.Color;
 using static Pixels;
 
-// SHADER links of the Effect chain (#489, plan effects/08 Task 3): QtNative's pass driver with the templates SINGLE and
+// SHADER links of the Effect chain (plan effects/08 Task 3): QtNative's pass driver with the templates SINGLE and
 // TWO_PASS, raw SET_EFFECT_CHAIN. (a) MULTI(blur) -> SINGLE(builtin:wave) -> MULTI(hard red shadow) against the reversed
 // order on a white rectangle R: both show the wave and the shadow, the pictures differ. (b) TWO_PASS builtin:directional_blur
 // 400 DIP on a Text T: no copies (much smoother than one pass of the same length), and on a rectangle S: the blur reaches
@@ -43,7 +43,7 @@ public static class EffectPassesTest
     private static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
 
     // Scene page (F5) of the perf overlay: "QML items <n>" (items in the window's tree). A poll first: retired stages are
-    // deleted one frame late, at the next poll or apply (#123).
+    // deleted one frame late, at the next poll or apply.
     private static int Items(IntPtr w)
     {
         Native.Poll(w, new byte[1 << 16]);
@@ -565,7 +565,7 @@ public static class EffectPassesTest
                 $"effect-passes: innershadow offset (8, 8) at the left/top inner edge ({Shade(a, GX + 4, y0):F0} vs {Shade(a, GX + GW - 5, y0):F0}, {Shade(a, 400, GY + 4):F0} vs {Shade(a, 400, GY + GH - 5):F0})");
         err = PollError();
         s.Check(string.IsNullOrEmpty(err), $"effect-passes: innershadow links without EV_ERROR ({err})");
-        // The node's way (#438 phase B): the offset as offsetDip in DIP, converted by the shader (dpr, texture size); same picture as the UV offset above.
+        // The node's way (phase B): the offset as offsetDip in DIP, converted by the shader (dpr, texture size); same picture as the UV offset above.
         float[] ShadeRow(Bitmap a) => new[] { GX + 2f, GX + 4f, GX + 10f, GX + GW - 5f }.Select(x => Shade(a, x, y0)).Concat(
             new[] { GY + 2f, GY + 4f, GY + 10f, GY + GH - 5f }.Select(y => Shade(a, 400, y))).ToArray();
         float[] viaUv, viaDip;

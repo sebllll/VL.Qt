@@ -4,7 +4,7 @@ using VL.Qt.Elements;
 namespace VL.Qt.Styles
 {
     /// <summary>
-    /// A self-made widget that reads the style of its surroundings (#413). Connect it to a Group, Row or Column like an
+    /// A self-made widget that reads the style of its surroundings. Connect it to a Group, Row or Column like an
     /// element: when the scene is built, the container calls <see cref="Build"/> with the style resolved down to this
     /// position (base style, then every Group's style on the way), and shows the returned element in its place.
     /// <para>

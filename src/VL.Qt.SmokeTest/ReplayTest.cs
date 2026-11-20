@@ -73,7 +73,7 @@ public static class ReplayTest
     /// </summary>
     private static int s_overlay; // --overlay
 
-    // Phases a spike is attributed to (#19): C# apply, advance + managed pump overhead (apply+pump minus native pump),
+    // Phases a spike is attributed to: C# apply, advance + managed pump overhead (apply+pump minus native pump),
     // then the native PerfSample phases of that pump.
     private static readonly string[] s_phases = { "apply", "advance", "events", "sync", "render", "present" };
 
@@ -91,7 +91,7 @@ public static class ReplayTest
         int errors = 0, frameNo = 0, spikes = 0, steadySpikes = 0;
         double pumpSum = 0, pumpMax = 0, applySum = 0, applyMax = 0, steadySum = 0, steadyMax = 0, lateMax = 0;
         long steadyN = 0;
-        var steadyAll = new List<double>(); // for the median (overlay cost, #244)
+        var steadyAll = new List<double>(); // for the median (overlay cost)
         IntPtr w = IntPtr.Zero;
         var gc0 = GC.CollectionCount(0); var gc1 = GC.CollectionCount(1); var gc2 = GC.CollectionCount(2);
         var gcPause = GC.GetTotalPauseDuration();
@@ -125,7 +125,7 @@ public static class ReplayTest
                 if (apply > applyMax) applyMax = apply;
                 var steady = i >= WarmupFrames;
                 if (steady) { steadyN++; steadySum += total; steadyAll.Add(total); if (total > steadyMax) steadyMax = total; }
-                // Phases of this pump from the native sample (#243, #19).
+                // Phases of this pump from the native sample.
                 var hasSample = Native.vlqt_window_get_perf_sample(w, out var ps) == 0;
                 if (steady && hasSample)
                 {
@@ -193,7 +193,7 @@ public static class ReplayTest
         List<byte[]> frames;
         if (tracePath == "anim" || tracePath.StartsWith("anim:"))
         {
-            // Built-in animated trace (#19): "anim[:frames[:rects]]", written to outDir for reuse.
+            // Built-in animated trace: "anim[:frames[:rects]]", written to outDir for reuse.
             var p = tracePath.Split(':');
             var count = p.Length > 1 && int.TryParse(p[1], out var fc) && fc > 0 ? fc : 600;
             var rects = p.Length > 2 && int.TryParse(p[2], out var rc) && rc > 0 ? rc : 300;
@@ -207,7 +207,7 @@ public static class ReplayTest
         }
         Console.WriteLine($"REPLAY {tracePath}: {frames.Count} frames");
 
-        // "--load N": N threads spinning on the CPU while replaying, to provoke scheduling/present spikes (#19).
+        // "--load N": N threads spinning on the CPU while replaying, to provoke scheduling/present spikes.
         var ldi = Array.IndexOf(args, "--load");
         var loadThreads = 0;
         if (ldi >= 0 && (ldi + 1 >= args.Length || !int.TryParse(args[ldi + 1], out loadThreads) || loadThreads < 0))
@@ -226,11 +226,11 @@ public static class ReplayTest
             Console.WriteLine($"REPLAY frames {a}-{b} ({frames.Count})");
         }
 
-        // "--paced": vvvv-like pacing (60 fps, Win32 message loop between pumps), prints swaps per pump (#137).
-        // "--loop N" (with --paced): plays the trace N times in a row (fresh window per round) to catch rare spikes (#140).
+        // "--paced": vvvv-like pacing (60 fps, Win32 message loop between pumps), prints swaps per pump.
+        // "--loop N" (with --paced): plays the trace N times in a row (fresh window per round) to catch rare spikes.
         var paced = Array.IndexOf(args, "--paced") >= 0;
         // "--overlay F" (with --paced): vlqt_window_set_overlay flags per window, e.g. 18 = F5 Summary, 34 = Timeline,
-        // to measure the overlay's pump cost against 0 (#244).
+        // to measure the overlay's pump cost against 0.
         var oi = Array.IndexOf(args, "--overlay");
         if (oi >= 0 && (oi + 1 >= args.Length || !int.TryParse(args[oi + 1], out s_overlay)))
         { Console.WriteLine("REPLAY FAILED: --overlay expects flags"); return 2; }
@@ -283,7 +283,7 @@ public static class ReplayTest
     }
 
     /// <summary>
-    /// Animated scene for spike hunting (#19): <paramref name="rects"/> semi-transparent rounded rectangles moving on
+    /// Animated scene for spike hunting: <paramref name="rects"/> semi-transparent rounded rectangles moving on
     /// circles plus 8 texts whose content changes every frame (text layout), in <paramref name="count"/> frames.
     /// </summary>
     private static List<byte[]> AnimatedScenario(int count, int rects)

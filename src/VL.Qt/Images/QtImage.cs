@@ -47,7 +47,7 @@ namespace VL.Qt
     }
 
     /// <summary>
-    /// One image resource of QtNative as seen from C# (#362): id, state and size from the status queue
+    /// One image resource of QtNative as seen from C#: id, state and size from the status queue
     /// (<see cref="ResourceClient"/>). Owned by the node that created it; <see cref="QtImage"/>s are views on it.
     /// Main (Qt) thread only, except <see cref="ResourceClient.Release"/>.
     /// </summary>
@@ -63,7 +63,7 @@ namespace VL.Qt
         public int Height { get; private set; }
         public string Error { get; private set; } = string.Empty;
 
-        /// <summary>Counts finished loads (Ready or Failed, also replacements): changes whenever the content may be new (#546).</summary>
+        /// <summary>Counts finished loads (Ready or Failed, also replacements): changes whenever the content may be new.</summary>
         public int Version { get; private set; }
 
         /// <summary>RES_EV_WARNING text (e.g. 16 bit reduced to 8 bit), empty = none. At most one per resource.</summary>

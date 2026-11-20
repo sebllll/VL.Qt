@@ -11,7 +11,7 @@ using VL.Qt.Styles;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 
-// Styles S4 (#413): IStylable through the real reconciler. A C#-made widget (mutable class, same reference) builds Rectangle +
+// Styles S4: IStylable through the real reconciler. A C#-made widget (mutable class, same reference) builds Rectangle +
 // Text from the resolved style. Left Group with a style, right Group without (base style), each with the widget and a built-in
 // Button. Group style changed at runtime, a field of the widget changed (same reference, no style change), a throwing
 // IStylable next to a sibling. Images <outDir>/stylable.png and stylable2.png.

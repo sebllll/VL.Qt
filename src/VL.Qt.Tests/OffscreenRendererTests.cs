@@ -5,7 +5,7 @@ using Stride.Core.Mathematics;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>OffscreenRenderer (#116 QtTexture): the error texts need no native device, the rest needs a built vlqt.dll.</summary>
+    /// <summary>OffscreenRenderer (QtTexture): the error texts need no native device, the rest needs a built vlqt.dll.</summary>
     public class OffscreenRendererTests
     {
         private static int[] ErrorCodes => typeof(Protocol.Offscreen).GetFields()

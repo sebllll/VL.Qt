@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 using VL.Qt;
 
 /// <summary>
-/// #116 (QtTexture) task 1.7: self-test of the TEST ONLY exports that stand in for Stride's device (vlqt.h): a second
+/// (QtTexture) task 1.7: self-test of the TEST ONLY exports that stand in for Stride's device (vlqt.h): a second
 /// D3D11 device on QtNative's adapter and on WARP, shared textures (B8G8R8A8_TYPELESS, R16G16B16A16_FLOAT) with NT
 /// handles, readback through a staging copy, COM reference counts, and that releasing everything frees the device and
 /// leaves the process handle count where it was. Tasks 1.3/1.4: an offscreen scene bound to a shared texture, rendered
@@ -31,7 +31,7 @@ public static partial class QtTextureTest
     private const int B8G8R8A8UnormSrgb = 91;
     private const int R32G32B32A32Float = 2; // not supported by the readback
 
-    /// <summary>QtTexture (offscreen scenes into foreign D3D11 textures): round trips, adapters, device loss, leaks, window match (#116).</summary>
+    /// <summary>QtTexture (offscreen scenes into foreign D3D11 textures): round trips, adapters, device loss, leaks, window match.</summary>
     [Test, Category("qttexture")]
     public static void QtTexture() => Scenario.Run(Run);
 
@@ -369,7 +369,7 @@ public static partial class QtTextureTest
         check(Native.vlqt_test_d3d11_release_device(device, context) == 0, "scene: test device freed");
     }
 
-    // #128: snapshot of an element of a bound offscreen scene that has nothing to render (not dirty). The scene is never
+    // snapshot of an element of a bound offscreen scene that has nothing to render (not dirty). The scene is never
     // exposed; the grab asks for a frame, the next render_batch renders it and the pump delivers the pixels (red, rw x rh).
     private static void OffscreenSnapshot(IntPtr scene, uint element, int rw, int rh, IntPtr context, Scenario s)
     {

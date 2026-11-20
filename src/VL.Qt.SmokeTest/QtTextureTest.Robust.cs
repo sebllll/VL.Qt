@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using VL.Qt;
 
 /// <summary>
-/// #116 task 5.4, robustness of the Qt render thread: the thread mode in use, WARP as the foreign device (the fallback
+/// task 5.4, robustness of the Qt render thread: the thread mode in use, WARP as the foreign device (the fallback
 /// that waits for the submission), QtNative's device removed while the foreign context has a queued wait for a value
 /// that may never be signalled, and a window next to a bound scene when the device is lost. The device loss parts need
 /// VLQT_TEST_D3D11ON12=1 (set for "-Only qttexture"); the WARP part needs QtNative's device not to be in use by a window

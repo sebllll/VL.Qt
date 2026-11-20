@@ -8,7 +8,7 @@ using VL.Qt.Elements;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>SET_EFFECT_CHAIN (#489): wire encoding of the writer and <see cref="Effect.Segment"/>.</summary>
+    /// <summary>SET_EFFECT_CHAIN: wire encoding of the writer and <see cref="Effect.Segment"/>.</summary>
     public class EffectChainTests
     {
         private sealed class TestShaderLink : ShaderLink

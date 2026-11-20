@@ -16,10 +16,10 @@ namespace VL.Qt
         {
             base.Configure(appHost);
 
-            // Shader nodes from qtshaders/**/*.frag next to documents and in packages (#488).
+            // Shader nodes from qtshaders/**/*.frag next to documents and in packages.
             Shaders.ShaderNodeFactory.Register(appHost);
 
-            // QML component nodes from qml/**/*.qml next to documents and in packages (#107).
+            // QML component nodes from qml/**/*.qml next to documents and in packages.
             Qml.QmlNodeFactory.Register(appHost);
 
             // Qt's pipeline cache in the exported program only (the editor would share one file between runs and patches,

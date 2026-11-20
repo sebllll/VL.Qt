@@ -8,7 +8,7 @@ using NUnit.Framework;
 using VL.Qt;
 using static Pixels;
 
-// Glow (#438 A1): blur pyramid as nested ShaderEffects, pass templates in protocol.h.
+// Glow (A1): blur pyramid as nested ShaderEffects, pass templates in protocol.h.
 // glow_prefilter (1/2) -> pyramid_down (1/4 .. 1/2^n) -> pyramid_up (.. 1/2, base = the down step of that size)
 // -> glow_composite (full size, element + glow). The pass graph is fixed, the radius only changes the weights.
 // Source: transparent 800 x 600 rectangle (room for the glow) with an orange box 160 x 100 at (320, 250) and a white

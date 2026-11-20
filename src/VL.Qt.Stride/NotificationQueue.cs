@@ -6,7 +6,7 @@ namespace VL.Qt.Stride
 {
     /// <summary>
     /// Takes the notifications of an Input Notifications pin from whatever thread they arrive on and hands them to the
-    /// main thread in order (#119, render-texture.md "Timing"). <see cref="Subscribe"/> and <see cref="Drain"/> on the main
+    /// main thread in order (render-texture.md "Timing"). <see cref="Subscribe"/> and <see cref="Drain"/> on the main
     /// thread only; the lock is short and allocation-free (the two lists are reused).
     /// </summary>
     internal sealed class NotificationQueue : IObserver<INotification>, IDisposable

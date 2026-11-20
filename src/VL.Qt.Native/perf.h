@@ -20,7 +20,7 @@ class QQuickWindow;
 namespace vlqt { struct Scene; }
 
 namespace vlqt {
-// objectName of the F5 overlay item: its changes are no scene change (#544, vlqt_window_change_count).
+// objectName of the F5 overlay item: its changes are no scene change (vlqt_window_change_count).
 inline constexpr char perfOverlayName[] = "vlqt-perf-overlay";
 }
 
@@ -40,14 +40,14 @@ struct PerfSample {
     // pump minus vsync/sync/render/present: posted events, input, polish, animation ticks (and, with several windows,
     // the other windows' frames). >= 0.
     float events = 0;
-    // beforeFrameBegin -> beforeSynchronizing (QRhi::beginFrame; D3D11 waits there for the refresh with VSync, #90).
+    // beforeFrameBegin -> beforeSynchronizing (QRhi::beginFrame; D3D11 waits there for the refresh with VSync).
     float vsync = 0;
-    // #245: what the host (C#) measured around this pump, reported after it (vlqt_window_report_host_frame).
+    // what the host (C#) measured around this pump, reported after it (vlqt_window_report_host_frame).
     vlqt_host_frame host{};
     bool hostReported = false;
 };
 
-// Running counters of a window's pumps (#243): since start and over the last kRecentSeconds (1 s buckets).
+// Running counters of a window's pumps: since start and over the last kRecentSeconds (1 s buckets).
 // No Qt, no allocation; add() is O(1), recent() sums kRecentSeconds buckets.
 class PerfCounters
 {
@@ -69,10 +69,10 @@ private:
     Counts m_total;
     std::array<Counts, kRecentSeconds> m_buckets{};
     std::array<long long, kRecentSeconds> m_bucketSec{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-    bool m_prevSwap = false; // previous pump had a frame (#261)
+    bool m_prevSwap = false; // previous pump had a frame
 };
 
-// #261: samples[i] has a frame interval between consecutive frames (previous pump also had a frame); the interval
+// samples[i] has a frame interval between consecutive frames (previous pump also had a frame); the interval
 // after idle pumps (on-demand rendering) spans the idle time and is not a frame time.
 bool consecutiveFrame(const PerfSample* samples, int i);
 
@@ -84,13 +84,13 @@ void perfStats(const PerfSample* samples, int n, const PerfCounters& counters, d
 // vlqt_perf_eval: the same computation on given samples with timestamps (tests).
 void perfEval(const vlqt_perf_sample* samples, const double* tMs, int n, double budgetMs, vlqt_perf_stats* out);
 
-// #245: averages/maxima/rates of n host frames (vlqt_perf_host_eval and PerfMonitor::hostStats). No allocation.
+// averages/maxima/rates of n host frames (vlqt_perf_host_eval and PerfMonitor::hostStats). No allocation.
 void perfHostStats(const vlqt_host_frame* frames, int n, vlqt_host_stats* out);
 
 // Per-window measurement, overlay (F2 perfmeter, F5 stats pages) and key handling.
 // Keys (window focused, no other modifiers): F2 meter on/off; F5 Summary -> Timeline -> Scene -> System -> Resources -> off;
 // Shift+F5 hides/shows the stats keeping the page; F6 (only while the stats are visible) freezes the overlay; F7 (same)
-// hides/shows the host segments (vvvv, GC, apply) of the timeline, process-wide (#260).
+// hides/shows the host segments (vvvv, GC, apply) of the timeline, process-wide.
 // The last page is remembered process-wide (new windows open on it).
 // vlqt_window_set_overlay / get_overlay flags: bit0 meter, bit1 stats, bit3 freeze, bits 4..6 = page + 1
 // (set: 0 = keep the remembered page).
@@ -111,11 +111,11 @@ public:
 
     // Called by vlqt_app_process_events after each pump for every window.
     static void endPumpAll(float pumpMs);
-    // #314: vlqt_app_process_events_for, only for the windows of that pump.
+    // vlqt_app_process_events_for, only for the windows of that pump.
     void endPump(float pumpMs);
 
     void summary(vlqt_perf* out) const;
-    // #243: last completed pump (false = none yet) and percentiles/counters/budget.
+    // last completed pump (false = none yet) and percentiles/counters/budget.
     bool lastSample(PerfSample* out) const;
     void stats(vlqt_perf_stats* out) const;
     // 1000 / refresh rate of the window's screen, 60 Hz if unknown.
@@ -126,9 +126,9 @@ public:
 
     // Test: busy-waits ms inside the given phase of the next rendered frame (vlqt_test_perf_spike).
     void injectSpike(int phase, float ms);
-    // Tests: current header text of the stats page (HTML), empty without overlay (#261).
+    // Tests: current header text of the stats page (HTML), empty without overlay.
     QString statsText() const { return m_overlay ? m_overlay->property("statsText").toString() : QString(); }
-    // Element registry for the Scene page (#246); set once after both exist, read only while that page is shown.
+    // Element registry for the Scene page; set once after both exist, read only while that page is shown.
     void setScene(const vlqt::Scene* scene) { m_scene = scene; }
     // Test (vlqt_test_perf_text): plain text of a page (all five; Summary/Timeline with body/foot), built on demand,
     // overlay state unchanged.
@@ -186,12 +186,12 @@ private:
     int m_page = 0;
     bool m_frozen = false;
     std::vector<PerfSample> m_frozenRing; // filled while frozen
-    mutable std::vector<vlqt::res::Row> m_resRows; // Resources page (#364): reused, no allocation once grown
+    mutable std::vector<vlqt::res::Row> m_resRows; // Resources page: reused, no allocation once grown
     std::atomic<int> m_spikePhase{-1}; // set on the main thread, taken in a frame signal (render thread for a scene)
     std::atomic<float> m_spikeMs{0};
 
 public:
-    // #245: host values (apply/reconcile, ops, .NET GC) of the last completed pump. false = no pump yet.
+    // host values (apply/reconcile, ops, .NET GC) of the last completed pump. false = no pump yet.
     bool reportHostFrame(const vlqt_host_frame& f);
     // Last reported host frame (false = none in the ring) and averages/rates over the summary range (~1 s).
     bool lastHostFrame(vlqt_host_frame* out) const;
@@ -201,7 +201,7 @@ public:
 void registerPerfTypes();
 
 // Line graph of the ring buffer; drawn with scenegraph geometry, no JS/Canvas. Qt Quick software backend (no custom
-// geometry there, #246): the lines are painted into one image shown by an image node.
+// geometry there): the lines are painted into one image shown by an image node.
 class PerfGraph : public QQuickItem
 {
     Q_OBJECT

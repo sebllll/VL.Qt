@@ -72,7 +72,7 @@ namespace VL.Qt
             WriteU32(Begin(Protocol.Op.Destroy, 4), id);
         }
 
-        /// <summary>RESET: destroys every object of the window at once (resync after a failed apply, #92).</summary>
+        /// <summary>RESET: destroys every object of the window at once (resync after a failed apply).</summary>
         public void ResetScene()
         {
             Begin(Protocol.Op.Reset, 0);
@@ -104,10 +104,10 @@ namespace VL.Qt
 
         public void ClearColor(in Color4 c) => ClearColor(c.R, c.G, c.B, c.A);
 
-        /// <summary>SET_CLEAR (#117): false keeps the previous frame and draws the new one over it.</summary>
+        /// <summary>SET_CLEAR: false keeps the previous frame and draws the new one over it.</summary>
         public void SetClear(bool clear) => WriteU32(Begin(Protocol.Op.SetClear, 4), clear ? 1u : 0u);
 
-        /// <summary>SET_SPACE (#143): the space of the scene; QtNative moves the origin of the window root accordingly.</summary>
+        /// <summary>SET_SPACE: the space of the scene; QtNative moves the origin of the window root accordingly.</summary>
         public void SetSpace(Space space) => WriteU32(Begin(Protocol.Op.SetSpace, 4), (uint)space);
 
         // --- SET, one method per value type ---
@@ -212,13 +212,13 @@ namespace VL.Qt
             WriteU32(BeginSet(id, prop, Protocol.Vt.Ref, 4), refId);
         }
 
-        /// <summary>u64, e.g. an image resource id (Prop.Image, #361), 0 = none.</summary>
+        /// <summary>u64, e.g. an image resource id (Prop.Image), 0 = none.</summary>
         public void SetU64(uint id, ushort prop, ulong value)
         {
             BinaryPrimitives.WriteUInt64LittleEndian(BeginSet(id, prop, Protocol.Vt.U64, 8), value);
         }
 
-        /// <summary>ivec2, e.g. <see cref="Protocol.Prop.MeshResolution"/> (#437).</summary>
+        /// <summary>ivec2, e.g. <see cref="Protocol.Prop.MeshResolution"/>.</summary>
         public void SetVec2(uint id, ushort prop, float x, float y)
         {
             var p = BeginSet(id, prop, Protocol.Vt.Vec2, 8);
@@ -233,7 +233,7 @@ namespace VL.Qt
             BinaryPrimitives.WriteInt32LittleEndian(p.Slice(4), y);
         }
 
-        // --- SET_STYLE (#292): u32 id, u16 count, u16 flags, entries (u16 field, u8 state, u8 valueType, value), each 4-byte aligned ---
+        // --- SET_STYLE: u32 id, u16 count, u16 flags, entries (u16 field, u8 state, u8 valueType, value), each 4-byte aligned ---
 
         private const int StyleFieldsSize = 8; // u32 id, u16 count, u16 flags
         private const int StyleEntryHeaderSize = 4; // u16 field, u8 state, u8 valueType
@@ -311,7 +311,7 @@ namespace VL.Qt
             return e.Slice(StyleEntryHeaderSize, valueSize);
         }
 
-        // --- SET_UNIFORMS (#437): u32 id, u16 count, u16 flags, entries (u16 valueType, u16 nameLen, name, pad 4, value, pad 4) ---
+        // --- SET_UNIFORMS: u32 id, u16 count, u16 flags, entries (u16 valueType, u16 nameLen, name, pad 4, value, pad 4) ---
 
         private const int UniformFieldsSize = 8; // u32 id, u16 count, u16 flags
         private int _uniformsStart = -1; // offset of the open SET_UNIFORMS command, -1 = none
@@ -321,7 +321,7 @@ namespace VL.Qt
         public void BeginUniforms(uint id, ushort flags) => BeginEntries(Protocol.Op.SetUniforms, id, flags);
 
         /// <summary>
-        /// Starts a SET_QML_PROPERTIES (#104); the entries are encoded exactly like those of SET_UNIFORMS, so they are written
+        /// Starts a SET_QML_PROPERTIES; the entries are encoded exactly like those of SET_UNIFORMS, so they are written
         /// with the Uniform* methods and the command is closed by <see cref="EndUniforms"/> (or <see cref="EndQmlProperties"/>).
         /// </summary>
         public void BeginQmlProperties(uint id, ushort flags) => BeginEntries(Protocol.Op.SetQmlProperties, id, flags);
@@ -369,11 +369,11 @@ namespace VL.Qt
         public void UniformColor(ReadOnlySpan<char> name, float r, float g, float b, float a)
             => WriteF32x4(UniformEntry(name, Protocol.Vt.Color, 16), r, g, b, a);
 
-        /// <summary>Entry of value type rect (x, y, width, height) of an open SET_QML_PROPERTIES (#104).</summary>
+        /// <summary>Entry of value type rect (x, y, width, height) of an open SET_QML_PROPERTIES.</summary>
         public void QmlRect(ReadOnlySpan<char> name, float x, float y, float width, float height)
             => WriteF32x4(UniformEntry(name, Protocol.Vt.Rectf, 16), x, y, width, height);
 
-        /// <summary>Entry of value type string (u32 byte length + UTF-8) of an open SET_QML_PROPERTIES (#104).</summary>
+        /// <summary>Entry of value type string (u32 byte length + UTF-8) of an open SET_QML_PROPERTIES.</summary>
         public void QmlString(ReadOnlySpan<char> name, ReadOnlySpan<char> value)
         {
             int byteCount = Encoding.UTF8.GetByteCount(value);
@@ -452,7 +452,7 @@ namespace VL.Qt
             return e.Slice(nameBlock, valueSize);
         }
 
-        // --- SET_EFFECT_CHAIN (#489): u32 id, u16 linkCount, u16 flags, links (u16 kind, u16 count, u32 bodyLen, body) ---
+        // --- SET_EFFECT_CHAIN: u32 id, u16 linkCount, u16 flags, links (u16 kind, u16 count, u32 bodyLen, body) ---
 
         private const int ChainFieldsSize = 8; // u32 id, u16 linkCount, u16 flags
         private const int LinkHeaderSize = 8; // u16 kind, u16 count, u32 bodyLen

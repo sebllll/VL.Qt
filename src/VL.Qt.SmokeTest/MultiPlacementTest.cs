@@ -11,7 +11,7 @@ using VL.Qt.Nodes;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 
-// One element instance at several places of one tree (#455) through the real QtNative: the same Rectangle and Button
+// One element instance at several places of one tree through the real QtNative: the same Rectangle and Button
 // description in two Groups at different positions. Both places are drawn, clicks from both places reach the shared
 // sink, state values (Measured, SceneBounds) come from the first occurrence only and move to the remaining one when
 // the first is removed. Grabs go to <outDir>/455_*.png. Node inputs are units (DIPTopLeft, 1 unit = 100 DIP).

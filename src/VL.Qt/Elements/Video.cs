@@ -32,7 +32,7 @@ namespace VL.Qt.Elements
         /// <summary>Qt VideoOutput default: Fit.</summary>
         public VideoFillMode FillMode { get; init; } = VideoFillMode.Fit;
         /// <summary>
-        /// Audio tap resource id (#22, Video (VL.Audio) only), 0 = none: Qt's own output plays. A tap turns Qt's output
+        /// Audio tap resource id (Video (VL.Audio) only), 0 = none: Qt's own output plays. A tap turns Qt's output
         /// off and sends the sound to the tap (protocol.h "Audio tap"). Not a pin of Video [VL.Qt].
         /// </summary>
         internal ulong AudioTap { get; init; }

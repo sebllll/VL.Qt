@@ -14,16 +14,16 @@ namespace VL.Qt.Shaders
     }
 
     /// <summary>
-    /// One member of the uniform block, raw from QtNative (#488). Type is the GLSL name as written by vlqt_shader_reflect
+    /// One member of the uniform block, raw from QtNative. Type is the GLSL name as written by vlqt_shader_reflect
     /// ("float", "vec4", "mat4", ..., "other" for anything else); ArrayLength 0 = no array.
     /// </summary>
     internal sealed record ReflectedUniform(string Name, string Type, int ArrayLength);
 
-    /// <summary>One combined image sampler, raw from QtNative (#488).</summary>
+    /// <summary>One combined image sampler, raw from QtNative.</summary>
     internal sealed record ReflectedSampler(string Name, int Binding);
 
     /// <summary>
-    /// Result of vlqt_shader_reflect: raw facts of one stage (#488). Pin rules (filter qt_*, source → Input,
+    /// Result of vlqt_shader_reflect: raw facts of one stage. Pin rules (filter qt_*, source → Input,
     /// type mapping) are not applied here but in <see cref="ShaderPinModel"/>.
     /// </summary>
     /// <param name="Ok">False if the bake failed; then Uniforms/Samplers are empty and Error holds the compiler lines.</param>

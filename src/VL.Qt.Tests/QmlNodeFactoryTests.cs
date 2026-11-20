@@ -9,7 +9,7 @@ using VL.Qt.Qml;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>QML node factory (#107): names, scan of qml/, event filter, descriptions, pins of hand-made declarations. No QtNative, no vvvv.</summary>
+    /// <summary>QML node factory: names, scan of qml/, event filter, descriptions, pins of hand-made declarations. No QtNative, no vvvv.</summary>
     public class QmlNodeFactoryTests
     {
         private string _dir = null!;

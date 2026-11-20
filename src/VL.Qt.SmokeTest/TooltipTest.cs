@@ -15,7 +15,7 @@ using VL.Qt.Nodes;
 using Color = System.Drawing.Color;
 using VPath = VL.Lib.IO.Path;
 
-// Tooltip previews (#543, package 01 #544): vlqt_window_change_count (counts scene changes only: not every pump, not the
+// Tooltip previews (package 01): vlqt_window_change_count (counts scene changes only: not every pump, not the
 // render a grab triggers) and vlqt_res_snapshot_fit (scale so that the longest edge is <= maxEdgePx and <= 1 pixel per
 // DIP). Window 1200 x 700 DIP: a 1000 x 500 DIP blue rectangle, a 100 x 50 red one, a Button, a Group whose orange child
 // sits in negative coordinates (frame 250 x 150, see GroupFrameTest). Snapshots go to <OutDir>/544_*.png.
@@ -45,7 +45,7 @@ public static class TooltipTest
         public bool Started;
     }
 
-    /// <summary>Tooltip previews: change count and snapshot fit (#543, #544).</summary>
+    /// <summary>Tooltip previews: change count and snapshot fit.</summary>
     [Test, Category("tooltip")]
     public static void Tooltip() => Scenario.Run(Run);
 
@@ -218,7 +218,7 @@ public static class TooltipTest
         foreach (var j in new[] { jBig, jSmall, jGroup, jEdge, jExact }) client.Release(j.Resource);
         Step(2);
 
-        // 2b) ElementTooltipPreview (#545) on the real QtNative: an image <= 256 px, no further grabs in a static scene,
+        // 2b) ElementTooltipPreview on the real QtNative: an image <= 256 px, no further grabs in a static scene,
         // a new one after the scene changed (hover), a text for an element no renderer shows, release on Dispose.
         {
             var tip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_window_change_count(window),
@@ -278,7 +278,7 @@ public static class TooltipTest
             Step(3);
         }
 
-        // 2c) ElementTooltipPreview (#548): a target that is a new instance every frame at the same place (an LFO on colour and size
+        // 2c) ElementTooltipPreview: a target that is a new instance every frame at the same place (an LFO on colour and size
         // in a patch). The place is the identity, so the first image arrives, stays, and gets replaced by newer ones, never null in between.
         {
             var tip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_window_change_count(window),
@@ -321,7 +321,7 @@ public static class TooltipTest
             Step(3);
         }
 
-        // 2d) Order of a patch (#548): Snapshot and TooltipPreview run BEFORE the renderer of the same frame, and the Group is a new
+        // 2d) Order of a patch: Snapshot and TooltipPreview run BEFORE the renderer of the same frame, and the Group is a new
         // instance every frame (an animated input) with the sink slot of its node. The registry still holds last frame's instance;
         // TryLocate falls back to the place of the slot, so both find the group and deliver an image.
         {
@@ -425,7 +425,7 @@ public static class TooltipTest
         Native.vlqt_window_set_overlay(w, 0);
         Step(10);
 
-        // 3b) ElementTooltipPreview and video (#548). (a) A tree with a Video gets only text and never a grab (a grab of a running
+        // 3b) ElementTooltipPreview and video. (a) A tree with a Video gets only text and never a grab (a grab of a running
         // hardware-decoded video costs the frame 25-57 ms). (b) Hitch rate of the preview on an element without a video.
         {
             var videoGroup = new Group
@@ -461,7 +461,7 @@ public static class TooltipTest
             Step(5);
         }
 
-        // Hitch rate of ElementTooltipPreview (#548): paced to 60 Hz, a moving rectangle next to the tooltip target (a group with a
+        // Hitch rate of ElementTooltipPreview: paced to 60 Hz, a moving rectangle next to the tooltip target (a group with a
         // big rectangle and a small one, 1000 x 500 DIP, scaled down to 256 px); the moving one changes the scene every frame.
         // The target is a new instance every frame in both arms (colour and size of the small rectangle move, like an LFO in a patch).
         // Arms A (without the node) and B (tip.Update every frame, throttled to <= 5 Hz inside) alternate A B A B so drift and

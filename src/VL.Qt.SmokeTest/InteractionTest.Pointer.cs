@@ -11,7 +11,7 @@ using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-// #320: Click / Point / Wheel nodes at a Rectangle, node level (nodes -> reconciler -> QtNative ->
+// Click / Point / Wheel nodes at a Rectangle, node level (nodes -> reconciler -> QtNative ->
 // SinkRegistry -> pull -> channels). One window per scenario; the rectangle covers (100, 100, 200, 100) DIP. The raw
 // QtNative side of the handlers is HandlerTest (scenarios tap / point / wheel).
 public static partial class InteractionTest
@@ -122,7 +122,7 @@ public static partial class InteractionTest
         rig.Click(150, 150);
         rig.Frames();
         s.Check(clicks == 3 && tapCount.Value == 2, $"click: double click -> 2 values, Tap Count 2 ({clicks}, {tapCount.Value})");
-        // Tap Count keeps the value of the last click until the next one (#320 manual test: it fell back to 0).
+        // Tap Count keeps the value of the last click until the next one (manual test: it fell back to 0).
         var until = DateTime.UtcNow.AddSeconds(2);
         while (DateTime.UtcNow < until)
         {
@@ -144,7 +144,7 @@ public static partial class InteractionTest
         int before = clicks;
         rig.Mouse(Protocol.Mouse.Press, 150, 150);
         rig.Frame();
-        // Hold until the long press arrived (interval 800 ms), at most 4 s: a stalled machine delays the timer (#379).
+        // Hold until the long press arrived (interval 800 ms), at most 4 s: a stalled machine delays the timer.
         var held = System.Diagnostics.Stopwatch.StartNew();
         while (longs == 0 && held.ElapsedMilliseconds < 4000) { Thread.Sleep(50); rig.Frames(); }
         Thread.Sleep(400); // still held: a second long press would show up here
@@ -185,7 +185,7 @@ public static partial class InteractionTest
     }
 
     // Scenario "point-node": position in units, mouse + touch, passes presses through, chain Hover -> Click -> Point,
-    // Buttons None = hover position of the mouse (#320).
+    // Buttons None = hover position of the mouse.
     private static void RunPoint(Scenario s)
     {
         using var hover = new HoverNode(_ => new NoMessage());
@@ -245,7 +245,7 @@ public static partial class InteractionTest
         rig.Click(150, 150);
         rig.Frames();
         s.Check(clicks == 1 && Near(position.Value, 0.5f, 0.5f), $"point: chain -> Click counts, Point reports ({clicks}, {position.Value})");
-        // Same left button for Click and Point (#320 manual test): Point active with the position while held, click on release.
+        // Same left button for Click and Point (manual test): Point active with the position while held, click on release.
         rig.Mouse(Protocol.Mouse.Press, 120, 130);
         rig.Frames();
         s.Check(active.Value && Near(position.Value, 0.2f, 0.3f), $"point: chain, left held -> Is Active, Position ({active.Value}, {position.Value})");
@@ -331,7 +331,7 @@ public static partial class InteractionTest
     }
 
     // Scenario "drag-node": the Drag node moves the element, Scene Bounds shows it, a changed (also animated) Bounds pin
-    // puts it back, Moves Element off only reports (#209).
+    // puts it back, Moves Element off only reports.
     private static void RunDragNode(Scenario s)
     {
         using var drag = new DragNode(_ => new NoMessage());

@@ -1,7 +1,7 @@
 ﻿using Stride.Core.Mathematics;
 using VL.Qt;
 
-// #469: elements have no position/Bounds property any more, only SIZE + ANCHOR + TRANSFORM. Raw-protocol scenarios that used
+// elements have no position/Bounds property any more, only SIZE + ANCHOR + TRANSFORM. Raw-protocol scenarios that used
 // to place an item with BOUNDS (x, y, w, h) get the same picture with SetPlace: SIZE (w, h), ANCHOR top left and a
 // TRANSFORM translation (x, y). Inside Row/Column the layout owns the position, so there only (0, 0) is meaningful
 // (the translation would be a visual offset).

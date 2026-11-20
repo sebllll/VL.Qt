@@ -43,7 +43,7 @@ public static class RowColumnTest
         void Container(uint id, ushort type, RectangleF bounds, float spacing, float padding, int align)
         {
             cmd.Create(id, type);
-            if (bounds.Width > 0) cmd.SetBool(id, Protocol.Prop.AutoSize, false); // explicit size (Auto Size would ignore it, #83)
+            if (bounds.Width > 0) cmd.SetBool(id, Protocol.Prop.AutoSize, false); // explicit size (Auto Size would ignore it)
             if (bounds.Width > 0 || bounds.X != 0 || bounds.Y != 0)
                 cmd.SetPlace(id, bounds.X, bounds.Y, bounds.Width, bounds.Height);
             if (spacing != 0) cmd.SetF32(id, Protocol.Prop.Spacing, spacing);
@@ -81,8 +81,8 @@ public static class RowColumnTest
         Rect(Child(ColD, 0), ColD, 100, 40, 1, 0, 0);
         Rect(Child(ColD, 1), ColD, 100, 40, 0, 1, 0);
         Rect(Child(ColD, 2), ColD, 100, 40, 0, 0, 1);
-        var rot = Matrix.RotationZ(MathUtil.PiOverTwo); // around the default PIVOT (center, resolved by QtNative, #88)
-        cmd.SetI32(Child(ColD, 1), Protocol.Prop.Anchor, GeometryExtensions.AlignCenter); // pivot only inside a Column (#469)
+        var rot = Matrix.RotationZ(MathUtil.PiOverTwo); // around the default PIVOT (center, resolved by QtNative)
+        cmd.SetI32(Child(ColD, 1), Protocol.Prop.Anchor, GeometryExtensions.AlignCenter); // pivot only inside a Column
         cmd.SetMat4(Child(ColD, 1), Protocol.Prop.Transform, in rot);
         CheckApply("row/column scene");
         s.Pump(3);

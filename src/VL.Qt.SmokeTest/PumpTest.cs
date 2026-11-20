@@ -91,7 +91,7 @@ public static class PumpTest
         public IObservable<FrameTimeMessage> GetTicks() => Ticks;
         public IObservable<FrameFinishedMessage> GetFrameFinished() => Finished;
 
-        /// <summary>vvvv frame start (FrameClock.BeginFrame), before the patch update (#260).</summary>
+        /// <summary>vvvv frame start (FrameClock.BeginFrame), before the patch update.</summary>
         public void Tick() => Ticks.OnNext(new FrameTimeMessage(new Time(_t), _n, TimeSpan.Zero));
 
         /// <summary>Publishes one frame finished at the current clock time + dt.</summary>
@@ -122,7 +122,7 @@ public static class PumpTest
         public Native.vlqt_perf Perf;
         public Native.vlqt_perf_sample Last;
 
-        // effect: the rect sits in a Group with an effect layer (hidden layer source, #137, #459).
+        // effect: the rect sits in a Group with an effect layer (hidden layer source).
         public TestWindow(string title, bool effect = false)
         {
             Handle = Native.vlqt_window_create(400, 300, title);
@@ -148,23 +148,23 @@ public static class PumpTest
             Native.vlqt_window_show(Handle);
         }
 
-        // Size + anchor once, then one SET per frame (TRANSFORM, #469): the host frame reports ops 1.
+        // Size + anchor once, then one SET per frame (TRANSFORM): the host frame reports ops 1.
         private void Move() => _cmd.SetMat4(RectId, Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation((0.5f + (Frame++ % 100) * 0.01f) * U, 1 * U, 0));
 
         // "Update()": write the commands of this frame (before the pump).
         public void Update() { _cmd.Reset(); Move(); }
 
-        // #314: only the windows of the pumping app render in its pump.
+        // only the windows of the pumping app render in its pump.
         public IntPtr Window => Handle;
 
         public void ApplyCommands() { Applies++; var rc = Native.Apply(Handle, _cmd.EndFrame()); if (rc != 0 && Applies < 5) Console.WriteLine("INFO pump apply rc " + rc + " " + Native.LastError()); }
 
         public void AfterEvents() { Afters++; Native.vlqt_window_get_perf(Handle, out Perf); Native.vlqt_window_get_perf_sample(Handle, out Last); }
 
-        // Like WindowRenderer (#245): ops of this window, then to the native PerfMonitor.
+        // Like WindowRenderer: ops of this window, then to the native PerfMonitor.
         public void ReportHostFrame(Native.vlqt_host_frame frame) { frame.ops = _cmd.Count; Native.vlqt_window_report_host_frame(Handle, frame); }
 
-        // Qt phases in the budget warning (#241).
+        // Qt phases in the budget warning.
         public bool TryGetLastSample(out Native.vlqt_perf_sample sample) => Native.vlqt_window_get_perf_sample(Handle, out sample) == 0;
 
         public void Destroy() => Native.vlqt_window_destroy(Handle);
@@ -208,7 +208,7 @@ public static class PumpTest
             ms[f] = Stopwatch.GetElapsedTime(t).TotalMilliseconds;
             present[f] = a.Last.present + b.Last.present;
             // Per pump (last perf sample): exactly 1 swap, also in the first pump: the gate counts expose renders too
-            // (XWayland sends two Expose on show, #214; before that #253 allowed 2). Linux (X11, Wayland): the window is
+            // (XWayland sends two Expose on show; before that #253 allowed 2). Linux (X11, Wayland): the window is
             // mapped/configured asynchronously, pumps before its first swap may have none (platform, L4e). Windows: strict.
             // The 60-sample summary ring must hold one sample per pump.
             foreach (var w in new[] { a, b })
@@ -230,7 +230,7 @@ public static class PumpTest
         s.Check(a.Applies == 120 && b.Applies == 120 && a.Afters == 120 && b.Afters == 120,
             $"pump: each window 120 apply / 120 after-events ({a.Applies}/{a.Afters}, {b.Applies}/{b.Afters})");
         s.Check(swapsOk, "pump: exactly 1 swap per window and frame (perf ring)" + swapErr);
-        // #245: QtApp reports apply/host/interval/GC per pump, the window adds its ops.
+        // QtApp reports apply/host/interval/GC per pump, the window adds its ops.
         var hrc = Native.vlqt_window_get_host_frame(a.Handle, out var hf);
         Native.vlqt_window_get_host_stats(a.Handle, out var hs);
         s.Check(hrc == 0 && hf.apply > 0 && hf.host >= hf.apply && hf.interval > 0 && hf.ops == 1 && hf.alloc_bytes >= 0
@@ -238,7 +238,7 @@ public static class PumpTest
             $"pump: host frame reported (rc {hrc}, apply {hf.apply:F3}, host {hf.host:F2}, interval {hf.interval:F1}, ops {hf.ops}, alloc {hf.alloc_bytes}; stats samples {hs.samples}, ops {hs.ops}, gen0/s {hs.gc0_per_s:F1})");
         s.Check(hf.vvvv == 0 && hf.wait == 0, $"pump: no tick, no clock update time -> vvvv/wait unknown (vvvv {hf.vvvv}, wait {hf.wait})");
 
-        // #260: host-side 10 ms spike in the vvvv update (tick -> frame finished) shows up as vvvv, not in the Qt phases.
+        // host-side 10 ms spike in the vvvv update (tick -> frame finished) shows up as vvvv, not in the Qt phases.
         for (int f = 0; f < 2; f++)
         {
             a.Update(); b.Update();
@@ -250,7 +250,7 @@ public static class PumpTest
         hrc = Native.vlqt_window_get_host_frame(a.Handle, out hf);
         Native.vlqt_window_get_host_stats(a.Handle, out hs);
         var qt = a.Last.events + a.Last.sync + a.Last.render + a.Last.present;
-        // WSLg: Present copies to the host compositor (L4e, #214) -> the Qt/host limits without the Present share.
+        // WSLg: Present copies to the host compositor (L4e) -> the Qt/host limits without the Present share.
         var wslgPresent = QtHost.Wslg ? a.Last.present + b.Last.present : 0;
         s.Check(hrc == 0 && hf.vvvv >= 9.5f && hf.vvvv < 100 && hf.wait >= 10 && hf.wait < 200
               && qt - (QtHost.Wslg ? a.Last.present : 0) < 9 && hf.host - wslgPresent < 9
@@ -269,7 +269,7 @@ public static class PumpTest
 
         // 1b. One window only, same pacing.
         pump.Unregister(b);
-        // #379: best of 3 rounds. Background load on the machine (other sessions, indexers) can double a whole round;
+        // best of 3 rounds. Background load on the machine (other sessions, indexers) can double a whole round;
         // a real slowdown of the pump shows in every round.
         double mean1 = double.MaxValue, presentMean1 = 0;
         for (int round = 0; round < 3; round++)
@@ -296,7 +296,7 @@ public static class PumpTest
         s.Perf("pump.mean_1_window", mean1);
         PumpLimit(s, mean1, presentMean1, "1 window", $"{mean1:F3} ms");
 
-        // 1c. Moving content inside an effect layer source (#137): exactly one swap per pump, no overlay needed,
+        // 1c. Moving content inside an effect layer source: exactly one swap per pump, no overlay needed,
         // no second render right after the first (that showed ~1100 fps in vvvv). Swaps are counted by the perf ring.
         pump.Unregister(a);
         pump.Unregister(b);
@@ -321,14 +321,14 @@ public static class PumpTest
         pump.Unregister(fx);
         fx.Destroy();
 
-        // 1d. Two vvvv apps (two entry points, #314): each app has its own clock and pump, both pump the one QtApp once
+        // 1d. Two vvvv apps (two entry points): each app has its own clock and pump, both pump the one QtApp once
         // per vvvv frame. Each window must render once per frame (in its own app's pump), not once per app (~120 fps).
         RunTwoApps(app, s);
         pump.Register(a);
         pump.Register(b);
 
         // 2. Pause/Play: while the clock stands still nothing is pumped; Play continues with the next frame.
-        // Deltas: since 1d (two apps) not every pump advances the driver (#314).
+        // Deltas: since 1d (two apps) not every pump advances the driver.
         var pumps = app.Pumps;
         var advances = app.Advances;
         System.Threading.Thread.Sleep(300);
@@ -413,7 +413,7 @@ public static class PumpTest
         wb.Destroy();
     }
 
-    // #58: F8/F5 in vvvv stops the app (its app host disposes the pump service and the renderers) and starts a new app
+    // F8/F5 in vvvv stops the app (its app host disposes the pump service and the renderers) and starts a new app
     // with a new frame clock. QtApp (QGuiApplication) stays; the new app's pump must drive the new windows.
     private static void RunRestart(QtApp app, QtPump pump, SimClock clock, Scenario s)
     {
@@ -457,7 +457,7 @@ public static class PumpTest
         }
     }
 
-    // Acceptance 02a: pump < 2 ms. WSLg (L4e, #214): Present copies to the host compositor (4.6 ms d3d12, 12 ms
+    // Acceptance 02a: pump < 2 ms. WSLg (L4e): Present copies to the host compositor (4.6 ms d3d12, 12 ms
     // llvmpipe) -> hard limit on QtNative/Qt share (pump - present), the total stays visible as WARN.
     private static void PumpLimit(Scenario s, double pump, double present, string what, string detail)
     {

@@ -3,8 +3,8 @@
 namespace VL.Qt.Styles
 {
     /// <summary>
-    /// The one merge rule of the styles (S1, #291): field by field and state by state, a set value of the upper style
-    /// wins, otherwise the lower one counts. Used by the reconciler (#293), later by Merge (Style) (#294) and IStylable (#413).
+    /// The one merge rule of the styles (S1): field by field and state by state, a set value of the upper style
+    /// wins, otherwise the lower one counts. Used by the reconciler, later by Merge (Style) and IStylable.
     /// </summary>
     internal static class StyleMerge
     {

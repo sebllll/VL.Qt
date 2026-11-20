@@ -34,7 +34,7 @@ namespace VL.Qt.Nodes
             var clock = nodeContext.AppHost.Services.GetService(typeof(IFrameClock)) as IFrameClock
                 ?? throw new InvalidOperationException("VL.Qt: the app host has no IFrameClock");
             // CPU frames only: no graphics device in the context, the players deliver frames in memory.
-            // GPU zero-copy (#368): pass the device of the Qt RHI here (preferGpu) and take texture-backed frames below.
+            // GPU zero-copy: pass the device of the Qt RHI here (preferGpu) and take texture-backed frames below.
             _ctx = new VideoPlaybackContext(clock, errors.Logger);
         }
 

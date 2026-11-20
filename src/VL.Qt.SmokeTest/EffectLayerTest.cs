@@ -230,7 +230,7 @@ public static class EffectLayerTest
         using (var a = s.Grab(w, "effect_layer_again.png"))
             gpu(Near(Px(a, 150, 215), 255, 0, 0, 40), $"effect-layer: on again after the cycles ({Px(a, 150, 215)})");
 
-        // Two MULTI runs (#489): run 1 = the hard red shadow, run 2 = saturation -1. One run keeps the shadow red (above:
+        // Two MULTI runs: run 1 = the hard red shadow, run 2 = saturation -1. One run keeps the shadow red (above:
         // saturation acts on the source only); as a second run the saturation greys run 1's output, shadow included. The
         // shadow lies outside A (y 200..230): drawn only if run 2's effect area includes run 1's padding.
         static void ShadowRun(CommandWriter c) => Shadow(c, 1, 0, 0);
@@ -247,7 +247,7 @@ public static class EffectLayerTest
         cmd.Chain(A, ShadowRun, GreyRun);
         CheckApply("two runs");
         s.Pump(5);
-        Native.Poll(w, poll); // the old one-run stage is retired and deleted after the next frame, at poll/apply (#123)
+        Native.Poll(w, poll); // the old one-run stage is retired and deleted after the next frame, at poll/apply
         s.Pump(2);
         var two = Counts(w);
         s.Check(two.layers == 1 && two.effects == 2, $"effect-layer: two runs on A -> one layer, two MultiEffects ({two})");

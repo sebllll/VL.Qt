@@ -12,7 +12,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Filter shader files as links of the effect chain (#489): scan, @padding, pins, link, SET_EFFECT_CHAIN.</summary>
+    /// <summary>Filter shader files as links of the effect chain: scan, @padding, pins, link, SET_EFFECT_CHAIN.</summary>
     public class ShaderLinkNodeTests
     {
         private const string filterSource = @"// @summary Splits the channels.

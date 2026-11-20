@@ -1,6 +1,6 @@
 #pragma once
 
-// Names for the threads of QtNative, so profiles and dumps show them (#11). The same names on every platform, at most
+// Names for the threads of QtNative, so profiles and dumps show them. The same names on every platform, at most
 // 15 characters (the limit of pthread_setname_np on Linux): "vlqt-gui", "vlqt-res-N".
 
 #include <QtCore/QtGlobal>

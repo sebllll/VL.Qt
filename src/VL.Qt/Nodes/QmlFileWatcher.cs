@@ -7,7 +7,7 @@ using VL.Core;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Hot reload source of a QmlElement (#104), after <see cref="Shaders.ShaderNodeFactory.WatchContent"/>: watches the folder
+    /// Hot reload source of a QmlElement, after <see cref="Shaders.ShaderNodeFactory.WatchContent"/>: watches the folder
     /// of the .qml file (<c>NodeBuilding.WatchDir</c>) and reports a change of the file itself, of any other *.qml next to it or of
     /// <c>qmldir</c> (components the file imports by relative path). The events come on a file system thread; the node asks
     /// with <see cref="TakeChanged"/> once per Update. Dispose it with the node.

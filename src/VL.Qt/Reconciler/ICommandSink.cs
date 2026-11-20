@@ -31,26 +31,26 @@ namespace VL.Qt
 
         void SetString(uint id, ushort prop, ReadOnlySpan<char> value);
 
-        /// <summary>f32 array (<see cref="Protocol.Vt.F32Array"/>, #154): at most <see cref="Protocol.MaxF32ArrayCount"/> floats.</summary>
+        /// <summary>f32 array (<see cref="Protocol.Vt.F32Array"/>): at most <see cref="Protocol.MaxF32ArrayCount"/> floats.</summary>
         void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values);
 
-        /// <summary>path (<see cref="Protocol.Vt.Path"/>, #154): verbs (<see cref="Protocol.Verb"/>) and points as x,y pairs (2 floats per point).</summary>
+        /// <summary>path (<see cref="Protocol.Vt.Path"/>): verbs (<see cref="Protocol.Verb"/>) and points as x,y pairs (2 floats per point).</summary>
         void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points);
 
         /// <summary>ref: id of another element (e.g. ShaderEffect source), 0 = none/root.</summary>
         void SetRef(uint id, ushort prop, uint refId);
 
-        /// <summary>u64, e.g. an image resource id (<see cref="Protocol.Prop.Image"/>, #362), 0 = none.</summary>
+        /// <summary>u64, e.g. an image resource id (<see cref="Protocol.Prop.Image"/>), 0 = none.</summary>
         void SetU64(uint id, ushort prop, ulong value);
 
-        /// <summary>vec2 (2 x f32), e.g. <see cref="Protocol.Prop.Size"/> (#469).</summary>
+        /// <summary>vec2 (2 x f32), e.g. <see cref="Protocol.Prop.Size"/>.</summary>
         void SetVec2(uint id, ushort prop, float x, float y);
 
-        /// <summary>ivec2 (2 x i32), e.g. <see cref="Protocol.Prop.MeshResolution"/> (#437).</summary>
+        /// <summary>ivec2 (2 x i32), e.g. <see cref="Protocol.Prop.MeshResolution"/>.</summary>
         void SetIvec2(uint id, ushort prop, int x, int y);
 
         /// <summary>
-        /// SET_STYLE (#292): starts the command for element <paramref name="id"/>, flags = <see cref="Protocol.StyleSet"/> bit mask.
+        /// SET_STYLE: starts the command for element <paramref name="id"/>, flags = <see cref="Protocol.StyleSet"/> bit mask.
         /// Followed by Style* entries and <see cref="EndStyle"/>; no other command in between.
         /// </summary>
         void BeginStyle(uint id, ushort flags);
@@ -66,7 +66,7 @@ namespace VL.Qt
         void EndStyle();
 
         /// <summary>
-        /// SET_UNIFORMS (#437): starts the command for the ShaderEffect <paramref name="id"/>, flags = <see cref="Protocol.UniformSet"/>
+        /// SET_UNIFORMS: starts the command for the ShaderEffect <paramref name="id"/>, flags = <see cref="Protocol.UniformSet"/>
         /// bit mask. Followed by Uniform* entries (name 1..<see cref="Protocol.UniformNameMax"/> UTF-8 bytes) and
         /// <see cref="EndUniforms"/>; no other command in between.
         /// </summary>
@@ -92,14 +92,14 @@ namespace VL.Qt
         /// <summary>sampler2D from an image resource id (0 = none).</summary>
         void UniformU64(ReadOnlySpan<char> name, ulong value);
 
-        /// <summary>Sampler state of the sampler2D <paramref name="name"/> (#492, <see cref="Elements.Sampler.Pack"/>).</summary>
+        /// <summary>Sampler state of the sampler2D <paramref name="name"/> (<see cref="Elements.Sampler.Pack"/>).</summary>
         void UniformSampler(ReadOnlySpan<char> name, ulong packed);
 
         /// <summary>Closes the SET_UNIFORMS started by <see cref="BeginUniforms"/> (entry count, payload length).</summary>
         void EndUniforms();
 
         /// <summary>
-        /// SET_QML_PROPERTIES (#104): starts the command for the QmlElement <paramref name="id"/> (flags 0). The entries are encoded
+        /// SET_QML_PROPERTIES: starts the command for the QmlElement <paramref name="id"/> (flags 0). The entries are encoded
         /// like those of SET_UNIFORMS and written with the Uniform* methods (<see cref="UniformF32"/>, <see cref="UniformI32"/>,
         /// <see cref="UniformBool"/>, <see cref="UniformVec2"/>, <see cref="UniformVec3"/>, <see cref="UniformVec4"/>,
         /// <see cref="UniformColor"/>) and <see cref="QmlRect"/>, then <see cref="EndQmlProperties"/>; no other command in between.
@@ -117,7 +117,7 @@ namespace VL.Qt
         void EndQmlProperties() => throw new NotSupportedException("SET_QML_PROPERTIES is not supported by this sink.");
 
         /// <summary>
-        /// SET_EFFECT_CHAIN (#489): starts the whole Effect chain of element <paramref name="id"/>. Followed by the links in
+        /// SET_EFFECT_CHAIN: starts the whole Effect chain of element <paramref name="id"/>. Followed by the links in
         /// application order (first = applied first), each <see cref="BeginMultiLink"/> + Effect* entries or
         /// <see cref="BeginShaderLink"/> + Uniform* entries, then <see cref="EndLink"/>; closed by <see cref="EndEffectChain"/>.
         /// No links = no chain. No other command in between.

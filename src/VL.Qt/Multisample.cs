@@ -2,7 +2,7 @@
 
 namespace VL.Qt
 {
-    /// <summary>What the nodes with a Multisample Count pin (Renderer [Qt], QtTexture) share: the clamp warning (#118).</summary>
+    /// <summary>What the nodes with a Multisample Count pin (Renderer [Qt], QtTexture) share: the clamp warning.</summary>
     internal static class Multisample
     {
         /// <summary>

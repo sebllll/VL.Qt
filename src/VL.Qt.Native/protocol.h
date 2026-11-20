@@ -17,20 +17,20 @@
  *   BIND        u32 id, u32 sinkHandle, u16 flags (sinkHandle 0 = unbind)
  *   CLEAR_COLOR color
  *   RESET       (no payload)                 destroys every object of the window (ids free again), like one DESTROY
- *                                            per top-level object; window root, clear color and clear stay (#92)
+ *                                            per top-level object; window root, clear color and clear stay
  *   SET_STYLE   u32 id, u16 count, u16 flags (vlqt_style_set), then count entries, each 4-byte aligned:
  *               u16 field (vlqt_style_field), u8 state (vlqt_style_state), u8 valueType, value (like SET)
- *               Styles (#292/#293): the resolved style of a widget (Controls types 10..15 only, others -6). QtNative
+ *               Styles: the resolved style of a widget (Controls types 10..15 only, others -6). QtNative
  *               keeps a table field x state per element and exposes it to the VL.Qt base style through the attached
  *               object VlStyle (no inheritance to children: C# resolves). Without STYLE_SET_CLEAR the entries are
  *               laid over the table (diff), with it the table is emptied first (full send). An unset (field, state)
  *               falls back to (field, NORMAL), then to 0 / transparent / "" (= Qt default font family). Unknown field
  *               or state -6, value type not the field's type -7 (like SET). The base style values live only in C#.
- *   SET_CLEAR   u32 clear                    (#117) 1 = clear every frame to the clear color (the default), 0 = keep
+ *   SET_CLEAR   u32 clear                    1 = clear every frame to the clear color (the default), 0 = keep
  *                                            the previous frame and draw the new one over it (feedback layer in the
  *                                            scene, windows and offscreen scenes alike); the first frame after
  *                                            switching to 0 and after a resize starts from the clear color
- *   SET_SPACE   u32 space                    (#143) vlqt_space of the scene (enum order of VL.Qt.Space), default
+ *   SET_SPACE   u32 space                    vlqt_space of the scene (enum order of VL.Qt.Space), default
  *                                            DIP_TOP_LEFT; RESET leaves it as it is (like CLEAR_COLOR/SET_CLEAR).
  *                                            QtNative only moves the origin: the window root sits at the top left of
  *                                            the scene (DIP_TOP_LEFT, PIXEL_TOP_LEFT) or at its centre (NORMALIZED,
@@ -41,13 +41,13 @@
  *                                            Unknown value -7.
  *   SET_UNIFORMS u32 id, u16 count, u16 flags (vlqt_uniform_set), then count entries, each 4-byte aligned:
  *               u16 valueType, u16 nameLen (1..VLQT_UNIFORM_NAME_MAX), name (UTF-8, no terminator), padding to 4,
- *               value (like SET), padding to 4. ShaderEffect only (#437, see "ShaderEffect" below).
+ *               value (like SET), padding to 4. ShaderEffect only (see "ShaderEffect" below).
  *   SET_EFFECT_CHAIN u32 id, u16 linkCount, u16 flags (0, reserved), then linkCount links in application order, each
  *               u16 kind (vlqt_effect_link), u16 count, u32 bodyLen, body (bodyLen bytes, 4-byte aligned). Every
- *               element type (#489, see "Effect chain" below for the bodies).
+ *               element type (see "Effect chain" below for the bodies).
  *   SET_QML_PROPERTIES u32 id, u16 count, u16 flags (0, reserved), then count entries encoded exactly like
  *               SET_UNIFORMS entries (u16 valueType, u16 nameLen, name, padding to 4, value, padding to 4). Sets
- *               properties of the root of a user QML file by name (#104, see "QmlElement" below). Only on QML elements
+ *               properties of the root of a user QML file by name (see "QmlElement" below). Only on QML elements
  *               (VLQT_TYPE_QML), else -6. An unknown name or a failed QVariant conversion does not fail the apply:
  *               EV_ERROR line of the element.
  * Values: f32, i32, bool (u8), color (4 x f32, straight alpha), rectf (4 x f32: x, y, w, h),
@@ -55,10 +55,10 @@
  *         vec2/vec3/vec4 (2/3/4 x f32), ivec2 (2 x i32),
  *         f32 array (u32 count, count x f32), path (u32 verbCount, u32 pointCount, verbCount x u8, zero padding to 4 bytes,
  *         pointCount x 2 x f32). Path verbs: 0 Move (1 point), 1 Line (1), 2 Quad (2), 3 Cubic (3), 4 Close (0); pointCount
- *         must equal the points the verbs take (SHAPE, #154). Both are limited by the u16 payload length of a command.
+ *         must equal the points the verbs take (SHAPE). Both are limited by the u16 payload length of a command.
  * Ids are u32, assigned by the C# reconciler; 0 = window root.
  *
- * Input handlers (#319) are objects of their own in the same id space (types from 32, see vlqt_type):
+ * Input handlers are objects of their own in the same id space (types from 32, see vlqt_type):
  *   CREATE      reserves the id and remembers type + properties; the QML handler is created by the REPARENT
  *   REPARENT    handler, parent, index: attaches it to the element item parent (not the root 0, not a handler; index
  *               ignored); a second REPARENT of an attached handler is -8 (the host re-attaches by DESTROY + CREATE)
@@ -70,7 +70,7 @@
  *   DESTROY     removes only the handler; DESTROY/RESET of an element removes its handlers too (ids free again)
  *   A Text item with at least one handler hit-tests against its painted text (TextMask as containmentMask).
  *
- * Effect chain (#489, plan effects/08; replaces the Effect layer of plan effects/01): the Effect pin of an element is a
+ * Effect chain (plan effects/08; replaces the Effect layer of plan effects/01): the Effect pin of an element is a
  *   chain of links; SET_EFFECT_CHAIN sends the whole chain (always a full send, no diff) in application order: the
  *   first link applies first to the element (the start of the chain in vvvv, Previous == null), the last one (the link
  *   at the Effect pin) last, like Stride TextureFX. linkCount 0 = no chain: the layer is removed (no leak). Otherwise
@@ -106,7 +106,7 @@
  *     shadow. Texture uniforms: REF = an element object of its own that the host never REPARENTs (like a mask, see
  *     below; QtNative parks it hidden and renders it as layer; unknown id -4), U64 = image resource id.
  *     Shader id 0 or not Ready yet: the link passes its input through unchanged; a Failed id keeps the last Ready
- *     shader of that link (like ShaderEffect, #483). Padding grows from link to link (each link's effect area = its
+ *     shader of that link (like ShaderEffect). Padding grows from link to link (each link's effect area = its
  *     input's plus its padding).
  *   Content problems never fail the apply (unknown uniform name, wrong type, shader not ready, reserved names,
  *   negative padding/strength): EV_ERROR text of the element, one line per problem prefixed with the link index
@@ -131,24 +131,24 @@
  *   the mask's content alpha is 0 (element invisible there, INVERTED flips it); content of the mask's children outside
  *   its item rectangle counts. ref 0 detaches it (it stays parked and hidden until a REPARENT, which shows it again, or its
  *   DESTROY). DESTROY of an attached mask detaches it first; DESTROY/RESET of the element destroys its attached mask
- *   too (its ids are free). A used mask item is deleted one frame later (#123). REPARENT of an attached mask, and
+ *   too (its ids are free). A used mask item is deleted one frame later. REPARENT of an attached mask, and
  *   attaching the element itself, an ancestor, an element with a parent or one attached elsewhere, is -8.
  * Poll buffer (QtNative -> C#), per record, 4-byte aligned: u16 event, u16 len, u32 handle, u32 index, payload;
  *   len = bytes of handle + index + payload (without padding). handle = BIND sinkHandle; index = offset to the
  *   slot index of that binding (0 = the bound slot itself; QtNative always sends 0, see events.h).
- *   MEASURED 2 x f32 (w, h), SCENE_BOUNDS 4 x f32 (x, y, w, h) in root coordinates (#143), logical pixels; HOVER/PRESS u8 (0/1),
+ *   MEASURED 2 x f32 (w, h), SCENE_BOUNDS 4 x f32 (x, y, w, h) in root coordinates, logical pixels; HOVER/PRESS u8 (0/1),
  *   CLICK u32 (Tap handler: taps since the last poll; Button: clicked signals), POINTER 2 x f32 (x, y) item-local logical pixels,
  *   MEDIA 2 x f32 (position, duration) in seconds (Video only, 0 until loaded); see events.h.
- *   Hover handler: HOVER u8 on change. Tap handler (#320): PRESS u8, CLICK u32, TAP_COUNT u32 on change (never 0),
+ *   Hover handler: HOVER u8 on change. Tap handler: PRESS u8, CLICK u32, TAP_COUNT u32 on change (never 0),
  *   LONG_PRESS u32 (count since the last poll). Point handler: ACTIVE u8 on change, POINTER while active (with
  *   ACCEPTED_BUTTONS 0 the mouse is active while hovering, touch/pen while down). Wheel handler: WHEEL 2 x f32
- *   (notches since the last poll, only != 0, once (0, 0) after motion). Drag handler (#209): ACTIVE u8 on change, DRAG
+ *   (notches since the last poll, only != 0, once (0, 0) after motion). Drag handler: ACTIVE u8 on change, DRAG
  *   2 x f32 on change (translation of the running drag); moves the item by its drag offset, SET TRANSFORM resets it to 0
  *   (pin wins: every TRANSFORM, also a resync, puts the item back where the pin says; SIZE/ANCHOR keep the offset).
- *   Touch Points handler (#321): EV_TOUCH_POINTS on change (all points pressed in the item, item-local; count 0 when the
- *   last one goes; at most 64 points). Pinch handler (#321): EV_ACTIVE u8 on change, EV_PINCH 6 x f32 while active, the
+ *   Touch Points handler: EV_TOUCH_POINTS on change (all points pressed in the item, item-local; count 0 when the
+ *   last one goes; at most 64 points). Pinch handler: EV_ACTIVE u8 on change, EV_PINCH 6 x f32 while active, the
  *   last one before EV_ACTIVE 0 (never the 1/0/0 Qt resets to).
- *   Value inputs (SpinBox #210 i32; CheckBox/Switch bool, Slider f32, TextField string #301): EV_VALUE = u16 valueType, u16 0,
+ *   Value inputs (SpinBox i32; CheckBox/Switch bool, Slider f32, TextField string): EV_VALUE = u16 valueType, u16 0,
  *   value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8; string capped at 60000 bytes on a character
  *   boundary). Sent for every bound value input, independent of input handlers, only after a user change (SpinBox:
  *   valueModified = +/-, arrow keys, wheel at once, typed text on Enter or focus loss; CheckBox/Switch: toggled = click,
@@ -158,7 +158,7 @@
  *   signal fires, not the current value: a SET VALUE applied between the user change and the poll does not hide it.
  *   Several user changes between two polls: one EV_VALUE with the last one. A new sink handle drops a change not polled.
  *
- * Resources (#359, resources.h): window independent, own status queue vlqt_res_poll (vlqt.h). Ids are u64 assigned by
+ * Resources (resources.h): window independent, own status queue vlqt_res_poll (vlqt.h). Ids are u64 assigned by
  *   QtNative: index (low 32 bits) | generation (high 32 bits). Record per status, 4-byte aligned: u16 event, u16 len,
  *   u64 id, payload; len = 8 + payload bytes (without padding).
  *   RES_EV_STATE u8 state (vlqt_res_state), RES_EV_ERROR UTF-8 text (Failed, sent before its STATE), RES_EV_INFO
@@ -166,9 +166,9 @@
  *   RES_EV_WARNING UTF-8 text (at most one per resource). No record after vlqt_res_release.
  *   Replacement: new content on a Ready id keeps it Ready (old texture visible) until the new upload is complete.
  *
- * ShaderEffect (#437): own QQuickItem with QSGMaterialShader in QtNative
+ * ShaderEffect: own QQuickItem with QSGMaterialShader in QtNative
  *   (no QML ShaderEffect); uniforms are mapped by name through the reflection of the shaders (QShaderDescription:
- *   members of the uniform block, std140 offsets, sampler2D bindings). Phase 1: pre-baked .qsb; Phase 2 (#483): GLSL
+ *   members of the uniform block, std140 offsets, sampler2D bindings). Phase 1: pre-baked .qsb; Phase 2: GLSL
  *   source baked at runtime (vlqt_res_load_shader_source, see below).
  *   Shaders are resources (VLQT_RES_KIND_SHADER, vlqt_res_load_shader in vlqt.h): window independent, loaded in a
  *   worker (never in the frame), ids with generation like images, element references via acquire/releaseElement.
@@ -178,7 +178,7 @@
  *   (build time only, qsb is not shipped). Anything else is a file path. Not a .qsb (e.g. GLSL text), stage of the
  *   .qsb not the requested one, no variant for the backend of the process device, missing file: Failed with
  *   RES_EV_ERROR. RES_EV_INFO of a shader is all 0 (no upload; each item builds its pipeline itself).
- *   Source (#483, vlqt_res_load_shader_source): full Qt GLSL (Vulkan-style GLSL 440 as qsb takes it, no preamble
+ *   Source (vlqt_res_load_shader_source): full Qt GLSL (Vulkan-style GLSL 440 as qsb takes it, no preamble
  *   added), copied at the call, baked by QShaderBaker (Qt6::ShaderTools) in the worker, only for the shader language
  *   of the process backend (plus the reflection), never in the frame. Bakes are cached per (stage, backend, hash of the
  *   source) in the process, so going back to an earlier text is Ready without a bake. The same checks as for a .qsb
@@ -196,7 +196,7 @@
  *   texture elements in uniform order, each once), hidden by QtNative on REPARENT; QtNative
  *   renders them as layers (texture providers). A Group (ITEM) is sampled as its whole frame instead (also the part
  *   left of / above its origin, "Group frame" below) through one hidden ShaderEffectSource per Group, shared by Input
- *   and texture uniforms; with Input = Group the implicit size is the frame size and follows it live (#486).
+ *   and texture uniforms; with Input = Group the implicit size is the frame size and follows it live.
  *   Uniform block: like Qt's ShaderEffect, std140, identical in vertex and fragment shader, starting with mat4
  *   qt_Matrix (offset 0) and float qt_Opacity (offset 64), both set by QtNative; own members follow.
  *   SET_UNIFORMS: entries without UNIFORM_SET_CLEAR are laid over the element's table by name (diff), with it the
@@ -210,7 +210,7 @@
  *   and fragment shader differing go as EV_ERROR text of the element (one line per problem, empty = cleared), which
  *   the C# node shows as warning and at its Error output; the shader errors themselves come by RES_EV_ERROR.
  * *
- * Sampler (#492): how a sampler2D reads its texture. Entry of SET_UNIFORMS and of a SHADER link
+ * Sampler: how a sampler2D reads its texture. Entry of SET_UNIFORMS and of a SHADER link
  *   uniform table like a value: type SAMPLER (20), name = the sampler2D it belongs to ("source" = the Input of a
  *   ShaderEffect is allowed here, unlike for a texture), value 8 bytes (little endian u64): byte 0 filter (0 Linear,
  *   1 Nearest: min and mag), byte 1 mip filter (0 None, 1 Nearest, 2 Linear), byte 2 address U, byte 3 address V
@@ -226,7 +226,7 @@
  *   nobody does. An image (U64) keeps what its load made (VLQT_IMG_MIPMAPS): the mip filter needs mipmaps there. Without
  *   the entry nothing changes at the element.
  *
- * QmlElement (#104, decisions/user-qml.md): VLQT_TYPE_QML loads a user .qml file into the element tree. The element is an
+ * QmlElement (decisions/user-qml.md): VLQT_TYPE_QML loads a user .qml file into the element tree. The element is an
  * item that holds the instance of the file's root (which must be a QQuickItem, else EV_ERROR). Properties:
  * QML_SOURCE (string, absolute file path, empty = nothing loaded; compiled from a file: URL so relative imports resolve)
  * and QML_RELOAD (i32 counter, initially 0: a new value clears the engine's component cache for the URL and rebuilds the instance,
@@ -252,7 +252,7 @@
 #define VLQT_COMMAND_ALIGN 4
 #define VLQT_HEADER_SIZE 4
 #define VLQT_ROOT_ID 0
-#define VLQT_UNIFORM_NAME_MAX 255 /* max UTF-8 bytes of a SET_UNIFORMS name (#437) */
+#define VLQT_UNIFORM_NAME_MAX 255 /* max UTF-8 bytes of a SET_UNIFORMS name */
 
 /* Opcodes (u16) */
 enum vlqt_op {
@@ -263,13 +263,13 @@ enum vlqt_op {
     VLQT_OP_BIND = 5,
     VLQT_OP_CLEAR_COLOR = 6,
     VLQT_OP_RESET = 7,
-    VLQT_OP_SET_STYLE = 8, /* resolved widget style, see the head comment (#292) */
-    VLQT_OP_SET_CLEAR = 9, /* Clear pin (#117), see the head comment */
-    VLQT_OP_SET_SPACE = 10, /* Space pin (#143): u32 vlqt_space, see the head comment */
-    /* 16.. effects package 03 (#437), own block to keep merges with other packages simple */
+    VLQT_OP_SET_STYLE = 8, /* resolved widget style, see the head comment */
+    VLQT_OP_SET_CLEAR = 9, /* Clear pin, see the head comment */
+    VLQT_OP_SET_SPACE = 10, /* Space pin: u32 vlqt_space, see the head comment */
+    /* 16.. effects package 03, own block to keep merges with other packages simple */
     VLQT_OP_SET_UNIFORMS = 16, /* ShaderEffect uniforms by name, see the head comment */
-    VLQT_OP_SET_EFFECT_CHAIN = 17, /* Effect chain of an element (#489), see the head comment "Effect chain" */
-    VLQT_OP_SET_QML_PROPERTIES = 18 /* properties of a QmlElement's root by name (#104), see the head comment */
+    VLQT_OP_SET_EFFECT_CHAIN = 17, /* Effect chain of an element, see the head comment "Effect chain" */
+    VLQT_OP_SET_QML_PROPERTIES = 18 /* properties of a QmlElement's root by name, see the head comment */
 };
 
 /* Value types of SET (u16) */
@@ -282,15 +282,15 @@ enum vlqt_value_type {
     VLQT_VT_MAT4 = 6,
     VLQT_VT_STRING = 7,
     VLQT_VT_REF = 8,
-    VLQT_VT_U64 = 9, /* u64, e.g. a resource id (IMAGE, #361) */
-    VLQT_VT_F32_ARRAY = 10, /* u32 count, count x f32 (SHAPE points, dash pattern, #154) */
-    VLQT_VT_PATH = 11,      /* u32 verbCount, u32 pointCount, verbs (u8, padded to 4), points (2 x f32 each), see the head comment "Values" (#154) */
-    /* 16.. effects package 03 (#437): uniform values (SET_UNIFORMS) and MESH_RESOLUTION */
+    VLQT_VT_U64 = 9, /* u64, e.g. a resource id (IMAGE) */
+    VLQT_VT_F32_ARRAY = 10, /* u32 count, count x f32 (SHAPE points, dash pattern) */
+    VLQT_VT_PATH = 11,      /* u32 verbCount, u32 pointCount, verbs (u8, padded to 4), points (2 x f32 each), see the head comment "Values" */
+    /* 16.. effects package 03: uniform values (SET_UNIFORMS) and MESH_RESOLUTION */
     VLQT_VT_VEC2 = 16,  /* 2 x f32 */
     VLQT_VT_VEC3 = 17,  /* 3 x f32 */
     VLQT_VT_VEC4 = 18,  /* 4 x f32 (unlike COLOR not premultiplied by QtNative) */
     VLQT_VT_IVEC2 = 19, /* 2 x i32 */
-    VLQT_VT_SAMPLER = 20 /* 8 bytes: sampler state of a sampler2D (#492), see the head comment "Sampler" */
+    VLQT_VT_SAMPLER = 20 /* 8 bytes: sampler state of a sampler2D, see the head comment "Sampler" */
 };
 
 /* Element type ids of CREATE (u16). 2 was TEST_RECT (removed in 07a), 8 MULTI_EFFECT and 16 RECTANGULAR_SHADOW
@@ -303,28 +303,28 @@ enum vlqt_type {
     VLQT_TYPE_ROW = 6,
     VLQT_TYPE_COLUMN = 7,
     VLQT_TYPE_VIDEO = 9,
-    VLQT_TYPE_BUTTON = 10, /* QtQuick.Controls Button (style Basic), #213 */
-    VLQT_TYPE_SPIN_BOX = 11, /* QtQuick.Controls SpinBox (style Basic): Input (Int), EV_VALUE i32 (#210) */
-    VLQT_TYPE_CHECK_BOX = 12, /* QtQuick.Controls CheckBox: Toggle look Checkbox, EV_VALUE bool (#301) */
-    VLQT_TYPE_SWITCH = 13,    /* QtQuick.Controls Switch: Toggle look Switch, EV_VALUE bool (#301) */
-    VLQT_TYPE_SLIDER = 14,    /* QtQuick.Controls Slider: EV_VALUE f32 (#301) */
-    VLQT_TYPE_TEXT_FIELD = 15, /* QtQuick.Controls TextField (single line): EV_VALUE string (#301) */
-    VLQT_TYPE_SHADER_EFFECT = 24, /* own item with .qsb shaders and uniforms by name (#437), see the head comment */
-    VLQT_TYPE_QML = 25, /* loads a user .qml file, properties by name through SET_QML_PROPERTIES (#104), see "QmlElement" */
-    VLQT_TYPE_SHAPE = 26, /* QtQuick.Shapes Shape with one ShapePath: polyline, polygon or path, fill and stroke (#154) */
-    /* Input handlers from 32 (#319): protocol objects attached to an element by REPARENT, see the head comment. */
-    VLQT_TYPE_HOVER_HANDLER = 32, /* Qt Quick HoverHandler: EV_HOVER (positions: Point handler, #320) */
-    VLQT_TYPE_TAP_HANDLER = 33,   /* TapHandler (ReleaseWithinBounds): EV_PRESS, EV_CLICK, EV_TAP_COUNT, EV_LONG_PRESS (#320) */
-    VLQT_TYPE_POINT_HANDLER = 34, /* PointHandler: EV_ACTIVE, EV_POINTER while active; buttons 0: mouse hover (#320) */
-    VLQT_TYPE_WHEEL_HANDLER = 35, /* WheelHandler (target null): EV_WHEEL (#320) */
-    VLQT_TYPE_TOUCH_POINTS_HANDLER = 36, /* own handler (passive grabs): EV_TOUCH_POINTS, all points pressed in the item (#321) */
-    VLQT_TYPE_PINCH_HANDLER = 37, /* PinchHandler (target null): EV_ACTIVE, EV_PINCH; moves nothing (#321) */
-    VLQT_TYPE_DRAG_HANDLER = 38   /* DragHandler (target null): EV_ACTIVE, EV_DRAG; moves the item by its drag offset (#209) */
+    VLQT_TYPE_BUTTON = 10, /* QtQuick.Controls Button (style Basic) */
+    VLQT_TYPE_SPIN_BOX = 11, /* QtQuick.Controls SpinBox (style Basic): Input (Int), EV_VALUE i32 */
+    VLQT_TYPE_CHECK_BOX = 12, /* QtQuick.Controls CheckBox: Toggle look Checkbox, EV_VALUE bool */
+    VLQT_TYPE_SWITCH = 13,    /* QtQuick.Controls Switch: Toggle look Switch, EV_VALUE bool */
+    VLQT_TYPE_SLIDER = 14,    /* QtQuick.Controls Slider: EV_VALUE f32 */
+    VLQT_TYPE_TEXT_FIELD = 15, /* QtQuick.Controls TextField (single line): EV_VALUE string */
+    VLQT_TYPE_SHADER_EFFECT = 24, /* own item with .qsb shaders and uniforms by name, see the head comment */
+    VLQT_TYPE_QML = 25, /* loads a user .qml file, properties by name through SET_QML_PROPERTIES, see "QmlElement" */
+    VLQT_TYPE_SHAPE = 26, /* QtQuick.Shapes Shape with one ShapePath: polyline, polygon or path, fill and stroke */
+    /* Input handlers from 32: protocol objects attached to an element by REPARENT, see the head comment. */
+    VLQT_TYPE_HOVER_HANDLER = 32, /* Qt Quick HoverHandler: EV_HOVER (positions: Point handler) */
+    VLQT_TYPE_TAP_HANDLER = 33,   /* TapHandler (ReleaseWithinBounds): EV_PRESS, EV_CLICK, EV_TAP_COUNT, EV_LONG_PRESS */
+    VLQT_TYPE_POINT_HANDLER = 34, /* PointHandler: EV_ACTIVE, EV_POINTER while active; buttons 0: mouse hover */
+    VLQT_TYPE_WHEEL_HANDLER = 35, /* WheelHandler (target null): EV_WHEEL */
+    VLQT_TYPE_TOUCH_POINTS_HANDLER = 36, /* own handler (passive grabs): EV_TOUCH_POINTS, all points pressed in the item */
+    VLQT_TYPE_PINCH_HANDLER = 37, /* PinchHandler (target null): EV_ACTIVE, EV_PINCH; moves nothing */
+    VLQT_TYPE_DRAG_HANDLER = 38   /* DragHandler (target null): EV_ACTIVE, EV_DRAG; moves the item by its drag offset */
 };
 
 /* Property ids of SET (u16). 1..255 common to all items; type-specific ids start at 256. QtNative looks them up
  * per type, so one id may serve several types (COLOR: Rectangle fill + Text; SOURCE: Video string, ShaderEffect ref).
- * Geometry (#469, like VL.Skia; replaces BOUNDS + PIVOT): there is no position property, position comes from TRANSFORM.
+ * Geometry (like VL.Skia; replaces BOUNDS + PIVOT): there is no position property, position comes from TRANSFORM.
  *   SIZE vec2 (w, h, logical pixels): the item's width/height (Rectangle/Text/Image/...: always, 0 = not drawn, not
  *   clickable; containers, Button, value inputs, ShaderEffect with Input: only with AUTO_SIZE off, otherwise implicit).
  *   ANCHOR i32 Qt::Alignment (one of AlignLeft/Right/HCenter | one of AlignTop/Bottom/VCenter, default AlignLeft|AlignTop = 0x21):
@@ -334,32 +334,32 @@ enum vlqt_type {
  *   Identity + AlignLeft|AlignTop: top left corner at the parent origin; AlignCenter: the item's center there.
  *   Children of a Row/Column (positioner): the layout owns x/y, ANCHOR is only the pivot of TRANSFORM
  *   (v -> layoutPos + anchor + (v - anchor) * M), the item is not moved out of its cell.
- *   Drag offset (#209) comes last, in parent space (see the Drag handler at the poll buffer).
- *   Group frame (ITEM, #469; C# default anchor TopLeft = a pure transform container like the Skia group): with
+ *   Drag offset comes last, in parent space (see the Drag handler at the poll buffer).
+ *   Group frame (ITEM; C# default anchor TopLeft = a pure transform container like the Skia group): with
  *   AUTO_SIZE on the frame is the bounding box of the group origin and of all visible children with a non-empty size,
  *   each mapped with its x/y AND TRANSFORM (not Qt's childrenRect). Children left of / above the origin make the frame
  *   start in negative group coordinates. The frame is the group's size (= MEASURED), hit area (free area for handlers
  *   of the group), clip rect, SCENE_BOUNDS and debug overlay frame. ANCHOR per axis: Left/Top = the group origin
  *   (never shifted by the content), HCenter/VCenter/Right/Bottom = that point of the frame. Content at non-negative
- *   coordinates gives frame (0, 0, right, bottom), i.e. the plain f * size of every other element. AUTO_SIZE off (#475):
+ *   coordinates gives frame (0, 0, right, bottom), i.e. the plain f * size of every other element. AUTO_SIZE off:
  *   frame = SIZE placed by ANCHOR around the group origin, (-fx * w, -fy * h, w, h); the group origin (and so the
  *   children) does not move, TRANSFORM pivots around the origin (= the anchor point of the frame). Recomputed once per frame (polish) after a child changed position, size, visibility or TRANSFORM.
  *   A snapshot (vlqt_res_snapshot) of a Group is the frame, also its part in negative coordinates; an effect layer on
- *   a Group covers the whole frame (that part is added to the left/top padding of the MultiEffect) (#475), so does a
- *   Group as ShaderEffect Input or texture uniform (#486). A child counts by its own visibility, also inside a hidden
+ *   a Group covers the whole frame (that part is added to the left/top padding of the MultiEffect), so does a
+ *   Group as ShaderEffect Input or texture uniform. A child counts by its own visibility, also inside a hidden
  *   Group (e.g. the Input of a ShaderEffect).
  * Blocks: 256.. Rectangle, 512.. Text, 544.. Image, 576.. Row/Column, 608.. reserved (MultiEffect element, removed in #459), 640.. size mode of containers (Item/Group, Row, Column, ShaderEffect only, others -> -6),
  * 672.. Video (SOURCE string and FILL_MODE are shared with Image; Image itself has no SOURCE since #361, -6), 704.. Controls: Button (TEXT and AUTO_SIZE are shared: AUTO_SIZE on =
- * implicit size from the text, default on), from 706 value inputs (SpinBox, CheckBox, Switch, Slider, TextField; VALUE/MINIMUM/MAXIMUM/STEP take the value type of the element), 768.. input handlers (#319, only on handler objects, others -> -6), 800.. reserved (RectangularShadow, removed in #459),
- * 832.. Effect chain MULTI keys (not via SET, see the head comment "Effect chain"), 896.. ShaderEffect (#437), 928.. QmlElement (#104), 960.. Shape (#154). */
+ * implicit size from the text, default on), from 706 value inputs (SpinBox, CheckBox, Switch, Slider, TextField; VALUE/MINIMUM/MAXIMUM/STEP take the value type of the element), 768.. input handlers (only on handler objects, others -> -6), 800.. reserved (RectangularShadow, removed in #459),
+ * 832.. Effect chain MULTI keys (not via SET, see the head comment "Effect chain"), 896.. ShaderEffect, 928.. QmlElement, 960.. Shape. */
 enum vlqt_prop {
-    VLQT_PROP_SIZE = 1,       /* vec2 (w, h), see "Geometry" above (#469; was BOUNDS rectf) */
+    VLQT_PROP_SIZE = 1,       /* vec2 (w, h), see "Geometry" above (was BOUNDS rectf) */
     VLQT_PROP_TRANSFORM = 2,
     VLQT_PROP_OPACITY = 3,
     /* 4 free: was VISIBLE, removed in #474 (Opacity 0 = not drawn, input stays; visibility is QtNative's) */
     VLQT_PROP_CLIP = 5,
-    VLQT_PROP_ANCHOR = 6,     /* i32 Qt::Alignment, see "Geometry" above (#469; was PIVOT) */
-    VLQT_PROP_DEBUG = 7, /* bool: draw this element in the window's debug overlay (not recursive, #279) */
+    VLQT_PROP_ANCHOR = 6,     /* i32 Qt::Alignment, see "Geometry" above (was PIVOT) */
+    VLQT_PROP_DEBUG = 7, /* bool: draw this element in the window's debug overlay (not recursive) */
     VLQT_PROP_COLOR = 256,
     VLQT_PROP_RADIUS = 257,
     VLQT_PROP_BORDER_COLOR = 258,
@@ -379,7 +379,7 @@ enum vlqt_prop {
     VLQT_PROP_SOURCE = 544,
     VLQT_PROP_FILL_MODE = 545,
     VLQT_PROP_SMOOTH = 546,
-    VLQT_PROP_IMAGE = 547, /* u64 image resource id (vlqt_res_*), 0 = no image; the old one stays until the new one is Ready (#361) */
+    VLQT_PROP_IMAGE = 547, /* u64 image resource id (vlqt_res_*), 0 = no image; the old one stays until the new one is Ready */
     VLQT_PROP_SPACING = 576,
     VLQT_PROP_PADDING = 577,
     VLQT_PROP_CHILD_ALIGNMENT = 578,
@@ -389,7 +389,7 @@ enum vlqt_prop {
     VLQT_PROP_PLAYBACK_RATE = 674,
     VLQT_PROP_VOLUME = 675,
     VLQT_PROP_KEEP_LAST_FRAME = 676,
-    VLQT_PROP_AUDIO_TAP = 677, /* u64 audio tap resource id (VLQT_RES_KIND_AUDIO_TAP), 0 = none (Qt's own output); see "Audio tap" below (#22) */
+    VLQT_PROP_AUDIO_TAP = 677, /* u64 audio tap resource id (VLQT_RES_KIND_AUDIO_TAP), 0 = none (Qt's own output); see "Audio tap" below */
     VLQT_PROP_ENABLED = 704,
     VLQT_PROP_AUTO_REPEAT = 705,
     VLQT_PROP_VALUE = 706,   /* value of a value input (SpinBox i32, CheckBox/Switch bool, Slider f32, TextField string), no EV_VALUE echo */
@@ -399,16 +399,16 @@ enum vlqt_prop {
     VLQT_PROP_EDITABLE = 710, /* bool, SpinBox: the value can be typed (default true); TextField: not readOnly (default true) */
     VLQT_PROP_ORIENTATION = 711, /* i32 Qt::Orientation, Slider: 1 horizontal (default), 2 vertical; others -> ApplyBadValue */
     VLQT_PROP_PLACEHOLDER = 712, /* string, TextField placeholderText shown while empty (default empty) */
-    /* 768 (REPORT_POSITION, Hover handler position) is reserved (#320): positions come from the Point handler only. */
+    /* 768 (REPORT_POSITION, Hover handler position) is reserved: positions come from the Point handler only. */
     VLQT_PROP_ACCEPTED_BUTTONS = 769, /* i32 Qt::MouseButtons, Tap + Point + Drag handler (default Qt::LeftButton; Point 0: hover) */
     VLQT_PROP_ACCEPTED_DEVICES = 770, /* i32 QInputDevice::DeviceTypes, Tap + Point + Wheel + Drag + Touch Points + Pinch handler (default: Qt's = all) */
     VLQT_PROP_MOVES_ELEMENT = 771,    /* bool, Drag handler: the drag moves the item by its drag offset (default true; false: report only) */
     VLQT_PROP_DRAG_AXIS = 772,        /* i32, Drag handler: 0 both axes (default), 1 x only, 2 y only */
     VLQT_PROP_DRAG_LIMITS = 773,      /* rectf, Drag handler: minX, minY, maxX, maxY of the drag offset (logical pixels, +-inf = none) */
     VLQT_PROP_MINIMUM_POINT_COUNT = 774, /* i32 >= 2, Pinch handler (default 2) */
-    VLQT_PROP_MAXIMUM_POINT_COUNT = 775, /* i32 >= 2, Pinch handler (default 2); more points: the gesture pauses (#321) */
-    VLQT_PROP_OCCLUSION = 776,        /* bool, Touch Points handler: ignore presses an element on top grabs (default true, #321) */
-    /* 832.. keys of MULTI entries of SET_EFFECT_CHAIN (#489), values of one MultiEffect run, Qt defaults. Not
+    VLQT_PROP_MAXIMUM_POINT_COUNT = 775, /* i32 >= 2, Pinch handler (default 2); more points: the gesture pauses */
+    VLQT_PROP_OCCLUSION = 776,        /* bool, Touch Points handler: ignore presses an element on top grabs (default true) */
+    /* 832.. keys of MULTI entries of SET_EFFECT_CHAIN, values of one MultiEffect run, Qt defaults. Not
      * settable by SET any more (-6, see the head comment "Effect chain"). */
     VLQT_PROP_EFFECT_ENABLED = 832,            /* reserved (was: layer on/off of the single Effect layer, plan effects/01) */
     VLQT_PROP_EFFECT_BLUR_ENABLED = 833,       /* bool (default false) */
@@ -434,15 +434,15 @@ enum vlqt_prop {
     VLQT_PROP_EFFECT_MASK_THRESHOLD_MAX = 853, /* f32 0..1 (default 1) */
     VLQT_PROP_EFFECT_MASK_SPREAD_AT_MAX = 854, /* f32 0..1 (default 0) */
     VLQT_PROP_EFFECT_MASK_INVERTED = 855,      /* bool (default false) */
-    /* 896.. ShaderEffect (#437), see the head comment; it also takes SOURCE (ref) and AUTO_SIZE */
+    /* 896.. ShaderEffect, see the head comment; it also takes SOURCE (ref) and AUTO_SIZE */
     VLQT_PROP_FRAGMENT_SHADER = 896,  /* u64 shader resource id (stage FRAGMENT), 0 = none: draws nothing */
     VLQT_PROP_VERTEX_SHADER = 897,    /* u64 shader resource id (stage VERTEX), 0 = Qt's default vertex shader */
     VLQT_PROP_BLENDING = 898,         /* bool, premultiplied alpha blending (default true) */
     VLQT_PROP_MESH_RESOLUTION = 899,  /* ivec2, grid subdivisions x, y >= 1 (default 1, 1) */
-    /* 928.. QmlElement (#104), see the head comment "QmlElement" */
+    /* 928.. QmlElement, see the head comment "QmlElement" */
     VLQT_PROP_QML_SOURCE = 928,       /* string, absolute path of the .qml file, empty = nothing loaded */
     VLQT_PROP_QML_RELOAD = 929,       /* i32 counter, a new value reloads the same file (cache cleared, properties re-applied) */
-    /* 960.. Shape (#154): lengths in logical pixels, dash and offset in stroke-width units */
+    /* 960.. Shape: lengths in logical pixels, dash and offset in stroke-width units */
     VLQT_PROP_SHAPE_POINTS = 960,       /* f32 array, x,y pairs */
     VLQT_PROP_SHAPE_CLOSED = 961,       /* bool, close the point list */
     VLQT_PROP_SHAPE_PATH = 962,         /* path, verbs + points; replaces POINTS */
@@ -470,36 +470,36 @@ enum vlqt_path_verb {
 };
 
 /* BIND flags (u16, bit mask). Elements have no pointer handlers since #320: 1 (INTERACTIVE) and 4 (POINTER) of #208
- * are reserved (#319), keep them unused. 2 (CANCEL_PRESS) is reserved as well: no effect any more (a new sink of a Tap
+ * are reserved, keep them unused. 2 (CANCEL_PRESS) is reserved as well: no effect any more (a new sink of a Tap
  * handler cancels its press itself), the C# reconciler does not send it. */
 enum vlqt_bind {
-    VLQT_BIND_CANCEL_PRESS = 2 /* reserved (#320) */
+    VLQT_BIND_CANCEL_PRESS = 2 /* reserved */
 };
 
-/* SET_UNIFORMS flags (u16, bit mask), #437 */
+/* SET_UNIFORMS flags (u16, bit mask) */
 enum vlqt_uniform_set {
     VLQT_UNIFORM_SET_CLEAR = 1 /* empty the element's uniform table before applying the entries (full send) */
 };
 
-/* Link kinds of SET_EFFECT_CHAIN (u16), #489 */
+/* Link kinds of SET_EFFECT_CHAIN (u16) */
 enum vlqt_effect_link {
     VLQT_EFFECT_LINK_MULTI = 1, /* one MultiEffect run: EFFECT_* entries */
     VLQT_EFFECT_LINK_SHADER = 2 /* filter shader link: template, shader ids, padding, strength (PYRAMID radius), uniforms */
 };
 
-/* Pass templates of a SHADER link (u16), #489, passes: docs/effects-and-shaders.md */
+/* Pass templates of a SHADER link (u16), passes: docs/effects-and-shaders.md */
 enum vlqt_effect_template {
     VLQT_EFFECT_TEMPLATE_SINGLE = 1,   /* one pass of the shader over the input */
     VLQT_EFFECT_TEMPLATE_TWO_PASS = 2, /* the shader twice: passIndex 0, then 1 (motion blurs) */
     VLQT_EFFECT_TEMPLATE_PYRAMID = 3   /* prefilter, pyramid_down/up stages, composite (Glow, InnerShadow) */
 };
 
-/* SET_STYLE flags (u16, bit mask), #292 */
+/* SET_STYLE flags (u16, bit mask) */
 enum vlqt_style_set {
     VLQT_STYLE_SET_CLEAR = 1 /* empty the element's style table before applying the entries (full send) */
 };
 
-/* Style states (u8 of a SET_STYLE entry), #292. Every field exists per state. When several apply, the base style
+/* Style states (u8 of a SET_STYLE entry). Every field exists per state. When several apply, the base style
  * picks one by rank: DISABLED > PRESSED > HOVERED > CHECKED > NORMAL (see docs/styles.md). */
 enum vlqt_style_state {
     VLQT_STYLE_STATE_NORMAL = 0,
@@ -509,7 +509,7 @@ enum vlqt_style_state {
     VLQT_STYLE_STATE_CHECKED = 4
 };
 
-/* Style fields (u16 of a SET_STYLE entry), #292. Grouped by part like the Style nodeset (S5, #294): colors 1..,
+/* Style fields (u16 of a SET_STYLE entry). Grouped by part like the Style nodeset (S5): colors 1..,
  * Frame 32.., Text 64.., Indicator 96.., Track 128... Value type per field is fixed (comment). Lengths in logical
  * pixels. Frame = background of the control (Button face, TextField/SpinBox box, the CheckBox/Switch/Slider padding
  * area); Indicator = Slider handle, CheckBox check mark, Switch knob, SpinBox up/down buttons; Track = Slider groove,
@@ -547,17 +547,17 @@ enum vlqt_ev {
     VLQT_EV_POINTER = 6,
     VLQT_EV_MEDIA = 7,
     VLQT_EV_WINDOW_GEOMETRY = 8, /* handle 0: the window itself, not a sink */
-    VLQT_EV_ERROR = 9, /* UTF-8 error text of the element, empty = cleared (#273) */
-    VLQT_EV_TAP_COUNT = 10, /* u32 tapCount of the last tap, on change (2 = double click), Tap handler (#320) */
-    VLQT_EV_LONG_PRESS = 11, /* u32 long presses since the last poll, Tap handler (#320) */
-    VLQT_EV_ACTIVE = 12, /* u8 0/1 on change, Point handler (#320) */
-    VLQT_EV_WHEEL = 13, /* 2 x f32 notches (angleDelta / 120) since the last poll, once (0, 0) after motion (#320) */
-    VLQT_EV_DRAG = 14, /* 2 x f32 translation of the running drag since the press (parent space, after limits), on change (#209) */
-    VLQT_EV_TOUCH_POINTS = 15, /* u32 count + count x (u32 id, f32 x, f32 y, f32 pressure, f32 w, f32 h), on change (#321) */
-    VLQT_EV_PINCH = 16, /* 6 x f32 scale, rotation (degrees, clockwise), translation x, y, pivot x, y (parent space) while active (#321) */
-    VLQT_EV_VALUE = 17, /* u16 valueType (VLQT_VT_I32/F32/BOOL/STRING), u16 0, value: user change of a value input (#210) */
-    VLQT_EV_QML_PROPERTY = 18, /* u16 nameLen, u16 valueType, name, padding to 4, value like EV_VALUE: a root property QML changed (#104) */
-    VLQT_EV_QML_SIGNAL = 19    /* u16 nameLen, u16 argCount, name, padding to 4, argCount x (u16 valueType, u16 0, value, padding): a root signal (#104) */
+    VLQT_EV_ERROR = 9, /* UTF-8 error text of the element, empty = cleared */
+    VLQT_EV_TAP_COUNT = 10, /* u32 tapCount of the last tap, on change (2 = double click), Tap handler */
+    VLQT_EV_LONG_PRESS = 11, /* u32 long presses since the last poll, Tap handler */
+    VLQT_EV_ACTIVE = 12, /* u8 0/1 on change, Point handler */
+    VLQT_EV_WHEEL = 13, /* 2 x f32 notches (angleDelta / 120) since the last poll, once (0, 0) after motion */
+    VLQT_EV_DRAG = 14, /* 2 x f32 translation of the running drag since the press (parent space, after limits), on change */
+    VLQT_EV_TOUCH_POINTS = 15, /* u32 count + count x (u32 id, f32 x, f32 y, f32 pressure, f32 w, f32 h), on change */
+    VLQT_EV_PINCH = 16, /* 6 x f32 scale, rotation (degrees, clockwise), translation x, y, pivot x, y (parent space) while active */
+    VLQT_EV_VALUE = 17, /* u16 valueType (VLQT_VT_I32/F32/BOOL/STRING), u16 0, value: user change of a value input */
+    VLQT_EV_QML_PROPERTY = 18, /* u16 nameLen, u16 valueType, name, padding to 4, value like EV_VALUE: a root property QML changed */
+    VLQT_EV_QML_SIGNAL = 19    /* u16 nameLen, u16 argCount, name, padding to 4, argCount x (u16 valueType, u16 0, value, padding): a root signal */
 };
 
 /* Flags of EV_WINDOW_GEOMETRY (u32 bit mask) */
@@ -568,13 +568,13 @@ enum vlqt_window_state {
     VLQT_WINDOW_VISIBLE = 8
 };
 
-/* Window modes: u32 bit mask of vlqt_window_set_mode (vlqt.h), Renderer [Qt] pins Borderless (#233), Fullscreen (#234) */
+/* Window modes: u32 bit mask of vlqt_window_set_mode (vlqt.h), Renderer [Qt] pins Borderless, Fullscreen */
 enum vlqt_window_mode {
     VLQT_WINDOW_MODE_BORDERLESS = 1,
     VLQT_WINDOW_MODE_FULLSCREEN = 2
 };
 
-/* Spaces of VLQT_OP_SET_SPACE (#143), the order of VL.Qt.Space (= VL.Skia CommonSpace). QtNative uses only the origin. */
+/* Spaces of VLQT_OP_SET_SPACE, the order of VL.Qt.Space (= VL.Skia CommonSpace). QtNative uses only the origin. */
 enum vlqt_space {
     VLQT_SPACE_NORMALIZED = 0,    /* origin at the centre */
     VLQT_SPACE_DIP = 1,           /* origin at the centre */
@@ -582,7 +582,7 @@ enum vlqt_space {
     VLQT_SPACE_PIXEL_TOP_LEFT = 3 /* origin at the top left */
 };
 
-/* Modes of the TEST export vlqt_test_device_lost (vlqt.h, #367).
+/* Modes of the TEST export vlqt_test_device_lost (vlqt.h).
  * REMOVE: real removal of the shared device (ID3D12Device5::RemoveDevice of the D3D12 device under it). Needs the
  *         shared device created through D3D11On12, i.e. VLQT_TEST_D3D11ON12=1 set before the first window/resource;
  *         deterministic, no admin, works on WARP (CI). Qt then sees the loss itself at the next Present.
@@ -593,7 +593,7 @@ enum vlqt_device_lost {
     VLQT_DEVICE_LOST_HANG = 2
 };
 
-/* Return codes of the offscreen exports vlqt_offscreen_* and vlqt_test_offscreen_state (vlqt.h, #116 QtTexture), not
+/* Return codes of the offscreen exports vlqt_offscreen_* and vlqt_test_offscreen_state (vlqt.h, QtTexture), not
  * part of the command buffer. -1 and -7 as in the rest of vlqt.h; the own codes start at -20 so they never collide
  * with apply's -1..-8 or the resources' -9. vlqt_offscreen_render_batch returns >= 0 (scenes rendered) on success. */
 enum vlqt_offscreen_result {
@@ -610,7 +610,7 @@ enum vlqt_offscreen_result {
 };
 
 /* Mouse event types of the TEST export vlqt_test_send_mouse (vlqt.h), not part of the command buffer. PRESS/RELEASE =
- * left button, *_RIGHT = right button (#320), *_RIGHT_SYSTEM = right button synthesized by the OS from touch (#321). */
+ * left button, *_RIGHT = right button, *_RIGHT_SYSTEM = right button synthesized by the OS from touch. */
 enum vlqt_mouse {
     VLQT_MOUSE_MOVE = 1,
     VLQT_MOUSE_PRESS = 2,
@@ -618,7 +618,7 @@ enum vlqt_mouse {
     VLQT_MOUSE_LEAVE = 4,
     VLQT_MOUSE_PRESS_RIGHT = 5,
     VLQT_MOUSE_RELEASE_RIGHT = 6,
-    VLQT_MOUSE_PRESS_RIGHT_SYSTEM = 7,  /* right button, source Qt::MouseEventSynthesizedBySystem (Windows press-and-hold, #321) */
+    VLQT_MOUSE_PRESS_RIGHT_SYSTEM = 7,  /* right button, source Qt::MouseEventSynthesizedBySystem (Windows press-and-hold) */
     VLQT_MOUSE_RELEASE_RIGHT_SYSTEM = 8
 };
 
@@ -629,7 +629,7 @@ enum vlqt_touch {
     VLQT_TOUCH_RELEASE = 3
 };
 
-/* Pointer events of vlqt_offscreen_send_pointer (vlqt.h, #119 QtTexture input), not part of the command buffer. */
+/* Pointer events of vlqt_offscreen_send_pointer (vlqt.h, QtTexture input), not part of the command buffer. */
 enum vlqt_pointer {
     VLQT_POINTER_PRESS = 1,
     VLQT_POINTER_MOVE = 2,
@@ -638,14 +638,14 @@ enum vlqt_pointer {
     VLQT_POINTER_CANCEL = 5  /* touch/pen: the system cancelled the point (TouchCancel) */
 };
 
-/* Pointing devices of vlqt_offscreen_send_pointer (#119). Pen is delivered as a stylus, as in a window on Windows. */
+/* Pointing devices of vlqt_offscreen_send_pointer. Pen is delivered as a stylus, as in a window on Windows. */
 enum vlqt_pointer_device {
     VLQT_POINTER_DEVICE_MOUSE = 0,
     VLQT_POINTER_DEVICE_TOUCH = 1,
     VLQT_POINTER_DEVICE_PEN = 2
 };
 
-/* Key event types of vlqt_offscreen_send_key (#119). */
+/* Key event types of vlqt_offscreen_send_key. */
 enum vlqt_key_event {
     VLQT_KEY_EVENT_PRESS = 1,
     VLQT_KEY_EVENT_RELEASE = 2
@@ -654,10 +654,10 @@ enum vlqt_key_event {
 /* Resource kinds of vlqt_res_create (int) */
 enum vlqt_res_kind {
     VLQT_RES_KIND_TEST = 1, /* test only: decode sleeps n ms in a worker, upload uses n bytes of budget (vlqt_test_res_start) */
-    VLQT_RES_KIND_IMAGE = 2, /* image from a file or pixels (vlqt_res_load_image / vlqt_res_set_pixels), texture on the process device (#360) */
-    VLQT_RES_KIND_SNAPSHOT = 3, /* CPU copy of an element (vlqt_res_snapshot / vlqt_res_read_pixels), no texture (#363) */
-    VLQT_RES_KIND_SHADER = 4, /* .qsb shader of one stage (vlqt_res_load_shader), for ShaderEffect (#437) */
-    VLQT_RES_KIND_AUDIO_TAP = 5 /* sound of a Video as float samples (vlqt_res_audio_tap_init / vlqt_res_read_audio), see "Audio tap" (#22) */
+    VLQT_RES_KIND_IMAGE = 2, /* image from a file or pixels (vlqt_res_load_image / vlqt_res_set_pixels), texture on the process device */
+    VLQT_RES_KIND_SNAPSHOT = 3, /* CPU copy of an element (vlqt_res_snapshot / vlqt_res_read_pixels), no texture */
+    VLQT_RES_KIND_SHADER = 4, /* .qsb shader of one stage (vlqt_res_load_shader), for ShaderEffect */
+    VLQT_RES_KIND_AUDIO_TAP = 5 /* sound of a Video as float samples (vlqt_res_audio_tap_init / vlqt_res_read_audio), see "Audio tap" */
 };
 
 /* Resource states (u8 of RES_EV_STATE, return value of vlqt_res_wait). Pending -> Decoding -> Uploading -> Ready | Failed
@@ -676,19 +676,19 @@ enum vlqt_res_ev {
     VLQT_RES_EV_STATE = 1,
     VLQT_RES_EV_ERROR = 2,
     VLQT_RES_EV_INFO = 3,
-    VLQT_RES_EV_WARNING = 4 /* UTF-8 text, at most one per resource (e.g. 16 bit / float reduced to 8 bit, #360) */
+    VLQT_RES_EV_WARNING = 4 /* UTF-8 text, at most one per resource (e.g. 16 bit / float reduced to 8 bit) */
 };
 
-/* Shader stages of vlqt_res_load_shader (int), #437 */
+/* Shader stages of vlqt_res_load_shader (int) */
 enum vlqt_shader_stage {
     VLQT_SHADER_STAGE_VERTEX = 1,
     VLQT_SHADER_STAGE_FRAGMENT = 2
 };
 
-/* Flags of vlqt_res_load_image (#360) */
+/* Flags of vlqt_res_load_image */
 enum vlqt_img {
     VLQT_IMG_MIPMAPS = 1, /* generate mipmaps after the upload (+33 % VRAM; small items without aliasing) */
-    VLQT_IMG_PREVIEW = 2  /* the worker also keeps a preview <= 256 px (vlqt_res_read_preview, editor tooltips #546) */
+    VLQT_IMG_PREVIEW = 2  /* the worker also keeps a preview <= 256 px (vlqt_res_read_preview, editor tooltips) */
 };
 
 /* Pixel formats of vlqt_res_set_pixels = VL PixelFormat numbers (VL.Core PixelFormat.cs, append-only), #360:
@@ -700,7 +700,7 @@ enum vlqt_img {
  * Not premultiplied input is premultiplied in the worker; row_bytes > width * bpp (padding) is copied row by row.
  * The texture is RGBA8 or BGRA8, 8 bit premultiplied; RES_EV_INFO format = 7 or 9. */
 
-/* Snapshot resources (#363, VLQT_RES_KIND_SNAPSHOT): vlqt_res_snapshot grabs an element with QQuickItem::grabToImage
+/* Snapshot resources (VLQT_RES_KIND_SNAPSHOT): vlqt_res_snapshot grabs an element with QQuickItem::grabToImage
  * (asynchronous, done after the next render of its window, never grabWindow). States: Pending -> Decoding (grab in
  * flight) -> Ready | Failed; a new snapshot on a Ready id keeps it Ready (previous pixels readable) until the new
  * one is done. RES_EV_INFO: u32 width, u32 height, u32 format = 9 (B8G8R8A8, premultiplied), u64 bytes of the CPU
@@ -708,7 +708,7 @@ enum vlqt_img {
  * element unknown in the window, window not exposed (offscreen scene: not bound), element or window destroyed during
  * the grab, grab refused. */
 
-/* Audio tap (#22, VLQT_RES_KIND_AUDIO_TAP, audio_tap.h): the sound of a Video element as interleaved float samples for
+/* Audio tap (VLQT_RES_KIND_AUDIO_TAP, audio_tap.h): the sound of a Video element as interleaved float samples for
  * VL.Audio (Video (VL.Audio) in VL.Qt.Audio). Contract between QtNative and C#:
  *
  * Lifetime. C# creates the resource (vlqt_res_create) and fixes its format once with vlqt_res_audio_tap_init
@@ -724,7 +724,7 @@ enum vlqt_img {
  * and seconds of slewing). There is no separate "qtAudio" prop: a tap always means Qt is silent, 0 restores the
  * AudioOutput (Video [VL.Qt] never sets the prop and is unchanged). C# swaps from one tap to the next without a 0 in
  * between, so Qt never plays a burst. The tap hangs on the player of the item, never on the QQuickWindow (the window
- * is replaced on an MSAA change, #118; items move with it). The element holds an element reference on the tap. One
+ * is replaced on an MSAA change; items move with it). The element holds an element reference on the tap. One
  * player per tap: a second element with the same tap id is ignored with a warning (rc 0) until the first one detaches.
  * Bad ids (unknown, wrong kind, not Ready) -> ApplyBadValue, Qt's output stays as it was.
  *

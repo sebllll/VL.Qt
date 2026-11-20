@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using VL.Qt;
 
-// Touch Points and Pinch handlers (#321), and the Windows press-and-hold
+// Touch Points and Pinch handlers, and the Windows press-and-hold
 // right click (QT_QUICK_ALLOW_SYNTHETIC_RIGHT_CLICK=0, set by QtNative). Touch via vlqt_test_send_touch: Qt compresses
 // touch moves until the next pump, so gestures move in small steps with one Frame per step.
 public static partial class HandlerTest
@@ -44,7 +44,7 @@ public static partial class HandlerTest
     private static string Pts(List<Rec> recs, uint h) => LastTouch(recs, h) is { } pts
         ? $"[{string.Join(" ", pts.Select(p => $"{p.Id}:{p.X},{p.Y} p{p.Pressure} {p.W}x{p.H}"))}]" : "no TOUCH_POINTS";
 
-    // Touch Points (#321): all points of an item with ids and item-local positions, release one by one, parallel to
+    // Touch Points: all points of an item with ids and item-local positions, release one by one, parallel to
     // Tap, occlusion by an element on top (on/off), accepted devices, sink change / DESTROY, property errors.
     private static void RunTouchPoints(Scenario s)
     {
@@ -124,7 +124,7 @@ public static partial class HandlerTest
         h.Mouse(Protocol.Mouse.Press, 150, 150);
         recs = h.Frame();
         s.Check(HasPoints(recs, STP, (0, 50, 50)), $"touch-points: default devices -> mouse is point 0 ({Pts(recs, STP)})");
-        // Two devices with the same Qt id (mouse/pen always 0, first finger 0, #351): two points, the second gets a free id.
+        // Two devices with the same Qt id (mouse/pen always 0, first finger 0): two points, the second gets a free id.
         h.Touch(Protocol.Touch.Press, 0, 250, 200);
         recs = h.Frame();
         s.Check(HasPoints(recs, STP, (0, 50, 50), (1, 150, 100)), $"touch-points: mouse + finger with id 0 -> two points 0, 1 ({Pts(recs, STP)})");
@@ -224,7 +224,7 @@ public static partial class HandlerTest
 
     private static Rec? LastPinch(List<Rec> recs, uint h) => recs.LastOrDefault(r => IsPinch(r, h)) is { Payload: not null } r ? r : null;
 
-    // Pinch (#321): spread / rotate / shift, values only while active, last value before ACTIVE 0 (never 1/0/0), the
+    // Pinch: spread / rotate / shift, values only while active, last value before ACTIVE 0 (never 1/0/0), the
     // item stays (target null), no tap from two fingers, Touch Points in parallel, a third finger pauses the gesture
     // without a jump (down and up), MAXIMUM_POINT_COUNT, sink change, DESTROY, property errors.
     private static void RunPinch(Scenario s)
@@ -380,7 +380,7 @@ public static partial class HandlerTest
         s.Check(None(recs, 44), $"pinch: release after DESTROY -> silent ({Dump(recs)})");
     }
 
-    // Windows press-and-hold (#321): the OS synthesizes a right click from touch. QtNative sets
+    // Windows press-and-hold: the OS synthesizes a right click from touch. QtNative sets
     // QT_QUICK_ALLOW_SYNTHETIC_RIGHT_CLICK=0 (unless set before the start), so Qt Quick drops it; a real right click taps.
     private static void RunSyntheticRightClick(Scenario s)
     {

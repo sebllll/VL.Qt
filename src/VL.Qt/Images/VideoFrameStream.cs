@@ -8,7 +8,7 @@ using VL.Lib.Basics.Video;
 namespace VL.Qt
 {
     /// <summary>
-    /// The frames of one <see cref="IVideoSource"/> for one consumer (#114), the pattern of VideoSourceToImage in
+    /// The frames of one <see cref="IVideoSource"/> for one consumer, the pattern of VideoSourceToImage in
     /// VL.CoreLib against the VL.Core types only (VL.Qt does not reference VL.CoreLib):
     /// <list type="bullet">
     /// <item>Push: a dedicated thread starts the player (IVideoSource2) and grabs frames; it only puts the frame handle

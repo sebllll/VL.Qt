@@ -9,7 +9,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Reconciler and Space (#143): a change of the scale rewrites every length, a change of the Space alone writes nothing.</summary>
+    /// <summary>Reconciler and Space: a change of the scale rewrites every length, a change of the Space alone writes nothing.</summary>
     public class ReconcilerSpaceTests
     {
         private RecordingSink _sink = null!;

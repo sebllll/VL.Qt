@@ -11,7 +11,7 @@ using VL.Qt.Nodes;
 using Color = System.Drawing.Color;
 using static Pixels;
 
-// Frame of an auto-sized Group in negative coordinates (#475, "Group frame" in protocol.h): the snapshot of the Group is
+// Frame of an auto-sized Group in negative coordinates ("Group frame" in protocol.h): the snapshot of the Group is
 // the whole frame (not (0, 0, w, h) of the item), and an effect layer on the Group draws the part left of / above its
 // origin. Group origin at (300, 200) DIP; orange 100 x 100 centered on the origin (-50..50), blue 100 x 50 at (100, 50):
 // frame (-50, -50) .. (200, 100) = 250 x 150 DIP, at (250, 150) in the window. Grabs: <OutDir>/475_*.png.
@@ -20,7 +20,7 @@ public static class GroupFrameTest
 {
     private static bool Near(int a, int b, int tolerance) => Math.Abs(a - b) <= tolerance;
 
-    /// <summary>Group frame with negative coordinates (#475).</summary>
+    /// <summary>Group frame with negative coordinates.</summary>
     [Test, Category("group-frame")]
     public static void GroupFrame() => Scenario.Run(Run);
 
@@ -115,7 +115,7 @@ public static class GroupFrameTest
             gpu(shifted.R < 0x30, $"effect content is not shifted to the origin ({shifted})");
         }
 
-        // 3) Auto Size off (#475): frame = Size placed by the Anchor around the group origin, the children stay where
+        // 3) Auto Size off: frame = Size placed by the Anchor around the group origin, the children stay where
         //    they are (Group = pure transform container). Snapshot, effect layer and debug frame use that frame.
         IImage? Snap(Element element, out string err)
         {

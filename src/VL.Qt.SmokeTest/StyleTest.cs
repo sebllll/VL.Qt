@@ -11,7 +11,7 @@ using VL.Qt.Styles;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 
-// Styles S2 (#292): SET_STYLE through the real QtNative. Base style at a Button (frame color, text unchanged by an override),
+// Styles S2: SET_STYLE through the real QtNative. Base style at a Button (frame color, text unchanged by an override),
 // override without CLEAR, CLEAR, Hovered state via the test mouse, error codes (Rectangle -6, wrong value type -7, unknown
 // field -6), and the gallery <outDir>/style-gallery.png (all controls with the base style, for the visual check).
 [TestFixture, NonParallelizable]
@@ -169,7 +169,7 @@ public static class StyleTest
         Track = new TrackStyle { FillColor = default(StateValues<Color4>).With(StyleStates.All, Rgb(fill)) },
     };
 
-    // Styles S3 (#293): inheritance through the real reconciler. Left Group with its own style (children without style inherit it,
+    // Styles S3: inheritance through the real reconciler. Left Group with its own style (children without style inherit it,
     // the second Button overrides the frame color), right Group without a style (base style) for comparison.
     // Images <outDir>/style-inherit.png, then the Group style is replaced by a new instance → style-inherit2.png.
     private static void Inherit(Scenario s)
@@ -246,7 +246,7 @@ public static class StyleTest
         s.Pump(1);
     }
 
-    // Styles S5 (#294): the same inheritance, but the styles are built only with the nodeset methods. Group style: Colors
+    // Styles S5: the same inheritance, but the styles are built only with the nodeset methods. Group style: Colors
     // (frame, track fill) + Frame radius; the second Button overrides only the frame color with FrameNodes.Color.
     // Image <outDir>/style-nodeset.png.
     private static void Nodeset(Scenario s)
@@ -294,7 +294,7 @@ public static class StyleTest
             s.Check(Near(Px(a, 40, 24), groupFrame), $"Button inherits the frame color from Colors ({Px(a, 40, 24)})");
             s.Check(Near(Px(a, 260, 24), ownFrame), $"Button with FrameNodes.Color keeps its own frame color ({Px(a, 260, 24)})");
             s.Check(Near(Px(a, 80, 195), groupFill), $"Slider fill = Colors TrackFill ({Px(a, 80, 195)})");
-            // #421: frame radius 14: the + button follows the rounded outer corners (corner pixel = background, not button color).
+            // frame radius 14: the + button follows the rounded outer corners (corner pixel = background, not button color).
             s.Check(Near(Px(a, 218, 252), 0x101010) && Near(Px(a, 218, 298), 0x101010), $"SpinBox + button stays inside the rounded corners ({Px(a, 218, 252)}, {Px(a, 218, 298)})");
         }
 

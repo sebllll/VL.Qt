@@ -13,7 +13,7 @@ using P = VL.Qt.Protocol.Prop;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Input (Int) node (#210): description, property diff, the value channel (pull, user wins, clamp) and EV_VALUE.</summary>
+    /// <summary>Input (Int) node: description, property diff, the value channel (pull, user wins, clamp) and EV_VALUE.</summary>
     public class InputIntNodeTests
     {
         private static readonly Vector2 DefaultSize = new(1.4f, 0.4f);
@@ -118,7 +118,7 @@ namespace VL.Qt.Tests
             var cmds = Frame(out int value, out bool bang, ch);
             Assert.That((value, bang, ch.Value, ch.LatestAuthor), Is.EqualTo((5, true, 5, "Qt")));
             // Diffed against the last sent value (1): one SET with the user's value, a no-op in Qt (no EV_VALUE), that
-            // repairs a stale SET applied after the change (PR #354).
+            // repairs a stale SET applied after the change.
             Assert.That(cmds, Is.EqualTo(new[] { SetValue(5) }));
 
             cmds = Frame(out value, out bang, ch);

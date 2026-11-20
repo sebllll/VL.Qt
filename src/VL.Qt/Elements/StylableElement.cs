@@ -3,7 +3,7 @@
 namespace VL.Qt.Elements
 {
     /// <summary>
-    /// Placeholder for an <see cref="IStylable"/> in a children array (#413), created by the children input of the
+    /// Placeholder for an <see cref="IStylable"/> in a children array, created by the children input of the
     /// container nodes. Never becomes a Qt object: the reconciler calls <see cref="IStylable.Build"/> with the style
     /// resolved at this position and reconciles the returned element in its place.
     /// </summary>

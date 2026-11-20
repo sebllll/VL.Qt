@@ -15,7 +15,7 @@ using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 using static Pixels;
 
-// QmlElement (#104): a user .qml file in the element tree, raw protocol against QtNative (CREATE, SET QML_SOURCE / QML_RELOAD,
+// QmlElement: a user .qml file in the element tree, raw protocol against QtNative (CREATE, SET QML_SOURCE / QML_RELOAD,
 // SET_QML_PROPERTIES, EV_QML_PROPERTY / EV_QML_SIGNAL / EV_ERROR). Test files: assets/QmlTest.qml (red rectangle, white progress
 // bar, properties fill / progress / shown / steps / clicks, signals clicked(int) and finished(...)), assets/QmlTypes.qml (every
 // value type in a property and in a bound copy). Files that are edited at run time live in <outDir>/qml/.

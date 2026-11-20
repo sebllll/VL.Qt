@@ -15,7 +15,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 // Acceptance scenario of #117 and #138 (Clear pin): drives the feedback layer (src/VL.Qt.Native/feedback.h) through the
 // SET_CLEAR command, in a window and in an offscreen scene (QtTexture). Clear off with a transparent Clear Color (alpha 0):
 // a moving rectangle leaves a trail, a semi-transparent full-size rectangle fades it, effect layers, snapshots and the debug
-// overlay stay correct, a resize clears once, MSAA edges match Clear on. The alpha of Clear Color while Clear is off (#138)
+// overlay stay correct, a resize clears once, MSAA edges match Clear on. The alpha of Clear Color while Clear is off
 // is the fade strength: 0.25 fades older positions away, 1 equals Clear on, a change at runtime keeps the layer. Clear on
 // again: trail gone, and cost and idle behaviour as in the baseline measured before the first switch. Prints the numbers
 // the decision in docs/decisions/render-texture.md ("Clear pin") is based on. Grabs: <OutDir>/clear_pin_*.png (window)
@@ -33,7 +33,7 @@ public static class ClearPinTest
         return Native.Apply(w, cmd.EndFrame());
     }
 
-    // Clear Color and Clear in one buffer. Clear off needs alpha < 1 to show a trail (alpha 1 is Clear on, #138), 0 = pure accumulation.
+    // Clear Color and Clear in one buffer. Clear off needs alpha < 1 to show a trail (alpha 1 is Clear on), 0 = pure accumulation.
     private static int SetMode(IntPtr w, float grey, bool clear, float alpha)
     {
         var cmd = new CommandWriter();
@@ -306,7 +306,7 @@ public static class ClearPinTest
         long idleAgain = Native.vlqt_window_change_count(w) - c0;
         s.Check(idleAgain == 0, $"clear-pin: idle with Clear on again renders nothing ({idleAgain} changes / 30 pumps)");
 
-        // 7b) Alpha of Clear Color while Clear is off (#138): the previous frame fades toward the clear colour by that alpha
+        // 7b) Alpha of Clear Color while Clear is off: the previous frame fades toward the clear colour by that alpha
         // per frame. 25 %: the first frame starts from the clear colour, older positions are darker than newer ones, and the
         // trail is gone after enough frames (up to the 8-bit residue).
         s.Check(SetMode(w, WindowGrey, false, 0.25f) == 0, "clear-pin: set_clear 0 (alpha 0.25)");
@@ -384,7 +384,7 @@ public static class ClearPinTest
                 $"clear-pin: alpha 1 gives the pixels of Clear on, no trail ({Px(offImg, 75, 125)}, {diff} differing pixels)");
         }
 
-        // 8) MSAA (#118): windows render with 4 samples, the layer inherits them. An opaque full-size black rectangle
+        // 8) MSAA: windows render with 4 samples, the layer inherits them. An opaque full-size black rectangle
         // under a rotated orange one stops the accumulation, so the edges show only the sampling: pixels between black
         // and orange along the edges, Clear on vs. Clear off.
         float angle = 0;
@@ -592,7 +592,7 @@ public static class ClearPinTest
         Native.Apply(scene, cmd.EndFrame());
         s.Check(SetMode(scene, OffscreenGrey, true, 1) == 0, "clear-pin offscreen: set_clear 1 (after fade)");
 
-        // Alpha of Clear Color while Clear is off (#138), as in the window: 25 % fades older positions (box moved 7 times, 8 px
+        // Alpha of Clear Color while Clear is off, as in the window: 25 % fades older positions (box moved 7 times, 8 px
         // apart: oldest 6 frames, middle 3 frames old), then the trail is gone; changes at runtime keep the layer; alpha 1 = Clear on.
         s.Check(SetMode(scene, OffscreenGrey, false, 0.25f) == 0, "clear-pin offscreen: set_clear 0 (alpha 0.25)");
         Move(0);

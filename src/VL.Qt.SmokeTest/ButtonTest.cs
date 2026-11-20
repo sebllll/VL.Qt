@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using VL.Qt;
 
-// Button (#213, package A): QtQuick.Controls Button with style Basic. Raw protocol against QtNative: creation, implicit
+// Button (package A): QtQuick.Controls Button with style Basic. Raw protocol against QtNative: creation, implicit
 // size from the text (AUTO_SIZE default on), Bounds size with AUTO_SIZE off, EV_CLICK per clicked signal without the
 // Interactive flag, Enabled false suppresses clicks, AutoRepeat repeats clicks while held. Mouse input comes from the
 // TEST export vlqt_test_send_mouse (see InteractionTest).
@@ -78,7 +78,7 @@ public static class ButtonTest
         // Created with text, bound without flags; Bounds size 0 + AUTO_SIZE default on -> implicit size.
         cmd.Reset();
         cmd.Create(B, Protocol.Type.Button);
-        VL.Qt.Styles.BaseStyle.Write(cmd, B); // like the Reconciler (#292)
+        VL.Qt.Styles.BaseStyle.Write(cmd, B); // like the Reconciler
         cmd.SetPlace(B, 100, 100, 0, 0);
         cmd.SetString(B, Protocol.Prop.Text, "Click me");
         cmd.SetBool(B, Protocol.Prop.Enabled, true);
@@ -141,7 +141,7 @@ public static class ButtonTest
         Mouse(Protocol.Mouse.Press, cx, cy);
         uint repeated = 0;
         // Hold until 3 repeats arrived (typically ~700 ms), at most 3 s: a stalled machine delays the wall clock timers,
-        // a missing auto repeat never gets there (#379).
+        // a missing auto repeat never gets there.
         var held = System.Diagnostics.Stopwatch.StartNew();
         while (repeated < 3 && held.ElapsedMilliseconds < 3000)
         {

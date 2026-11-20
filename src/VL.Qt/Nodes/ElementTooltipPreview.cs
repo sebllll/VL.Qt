@@ -9,7 +9,7 @@ using VL.Qt.Elements;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Editor tooltip preview of an element (used by the link tooltip in the vvvv editor, #543): a small live image of
+    /// Editor tooltip preview of an element (used by the link tooltip in the vvvv editor): a small live image of
     /// the element as a renderer shows it, plus a text. Grabs only while it is called, at most ~5 times per second and
     /// only when the scene changed or the element is a new instance. The element has to be shown in a renderer.
     /// The identity of the preview is the place of the element (renderer window and element id), not the instance: an

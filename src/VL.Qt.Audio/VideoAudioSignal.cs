@@ -4,7 +4,7 @@ using VL.Audio;
 namespace VL.Qt.Audio
 {
     /// <summary>
-    /// The sound of one Video (VL.Audio) as VL.Audio signals, one per channel (#22). Reads the QtNative audio tap whose
+    /// The sound of one Video (VL.Audio) as VL.Audio signals, one per channel. Reads the QtNative audio tap whose
     /// id the node sets (<see cref="TapId"/>) and keeps it in sync with the picture; the loop itself is
     /// <see cref="AudioTapPlayer"/>.
     /// <para>

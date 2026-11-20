@@ -13,7 +13,7 @@ using VL.Qt.Nodes;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>VideoSourceToQtImage (#114, CPU path) with a fake video source and the fake resource API, no Qt.</summary>
+    /// <summary>VideoSourceToQtImage (CPU path) with a fake video source and the fake resource API, no Qt.</summary>
     public class VideoSourceToQtImageTests
     {
         private sealed class Clock : IFrameClock

@@ -13,7 +13,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>ShaderEffect (#437): SET_UNIFORMS encoding, uniform diff, properties, shader resources of the node.</summary>
+    /// <summary>ShaderEffect: SET_UNIFORMS encoding, uniform diff, properties, shader resources of the node.</summary>
     public class ShaderEffectTests
     {
         private static string U16(int v) => Convert.ToHexString(BitConverter.GetBytes((ushort)v));
@@ -114,7 +114,7 @@ namespace VL.Qt.Tests
             Assert.That(text, Does.Contain($"SET 1 Blending bool(0)"));
             Assert.That(text, Does.Contain($"SET 1 MeshResolution ivec2(4,3)"));
             Assert.That(text, Does.Contain($"SET 1 Source ref(2)"));
-            // The input is hidden by QtNative on REPARENT under the ShaderEffect (#474), nothing to send.
+            // The input is hidden by QtNative on REPARENT under the ShaderEffect, nothing to send.
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo("UNIFORMS 1 0 time=f32(0.5) size=vec2(2,3)"));
             Assert.That(text.IndexOf("CREATE 2", StringComparison.Ordinal), Is.LessThan(text.IndexOf("UNIFORMS", StringComparison.Ordinal)));
         }
@@ -378,7 +378,7 @@ namespace VL.Qt.Tests
             Assert.That(e3, Is.Not.SameAs(e1));
         }
 
-        // --- GLSL code (#483) ---
+        // --- GLSL code ---
 
         private ShaderEffect UpdateCode(string? fragmentCode, string? fragmentPath, string? vertexCode, out string error)
         {

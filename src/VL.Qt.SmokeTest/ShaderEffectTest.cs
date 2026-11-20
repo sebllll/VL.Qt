@@ -7,7 +7,7 @@ using NUnit.Framework;
 using VL.Qt;
 using static Pixels;
 
-// ShaderEffect (#437, effects package 03, task 5): shipped shaders builtin:wave / builtin:gradient, a fixture shader with a
+// ShaderEffect (effects package 03, task 5): shipped shaders builtin:wave / builtin:gradient, a fixture shader with a
 // second sampler (shaders/dual.frag.qsb: Texture uniform = element, Image uniform = image resource), mesh resolution,
 // broken / missing shader paths, unknown uniform name / wrong type -> EV_ERROR and its correction.
 // Raw commands (DIP). Grabs go to <outDir>/shader-effect_*.png.
@@ -307,7 +307,7 @@ public static class ShaderEffectTest
         using (var a = s.Grab(w, "shader-effect_recovered.png"))
             gpu(ImageTest.IsRed(Px(a, 70, 520)) && ImageTest.IsGreen(Px(a, 125, 520)) && ImageTest.IsBlue(Px(a, 180, 520)),
                 $"a good shader replaces the failed one ({Px(a, 70, 520)}, {Px(a, 125, 520)}, {Px(a, 180, 520)})");
-        // And back to a failed one (#483): the last good version keeps drawing (live editing never goes black).
+        // And back to a failed one: the last good version keeps drawing (live editing never goes black).
         cmd.Reset();
         cmd.SetU64(Broken, Protocol.Prop.FragmentShader, missing);
         CheckApply("good -> failed shader");

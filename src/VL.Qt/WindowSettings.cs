@@ -5,7 +5,7 @@ using VL.Core;
 namespace VL.Qt
 {
     /// <summary>
-    /// Immutable window settings for the <c>Window</c> pin of Renderer (#517, #518). Every value is optional: a value
+    /// Immutable window settings for the <c>Window</c> pin of Renderer. Every value is optional: a value
     /// that is set wins over the matching Renderer pin (Title, Borderless, Fullscreen, Bounds), an unset one leaves the
     /// Renderer pin (or the default). <see cref="Nodes.WindowSettingsNode"/> hands out the same instance as long as its inputs
     /// do not change.

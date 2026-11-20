@@ -5,7 +5,7 @@ using VL.Qt.Nodes;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>QtImage tooltip preview (#546): the Preview flag only for the editor, ReadPreview, and the node reading once per image.</summary>
+    /// <summary>QtImage tooltip preview: the Preview flag only for the editor, ReadPreview, and the node reading once per image.</summary>
     public class QtImageTooltipPreviewTests
     {
         private FakeResourceApi _api = null!;

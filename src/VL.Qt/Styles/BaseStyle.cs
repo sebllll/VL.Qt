@@ -3,7 +3,7 @@
 namespace VL.Qt.Styles
 {
     /// <summary>
-    /// The VL.Qt base style (#292): neutral, dark, close to the vvvv/ImGui look. The only place with these values
+    /// The VL.Qt base style: neutral, dark, close to the vvvv/ImGui look. The only place with these values
     /// (QtNative has no defaults of its own). Only (field, state) pairs that differ from the Normal state are listed:
     /// QtNative falls back to (field, Normal) for an unset state, so all dimensions are stored once for all states.
     /// </summary>
@@ -62,7 +62,7 @@ namespace VL.Qt.Styles
             },
         };
 
-        /// <summary>The base style as a <see cref="Style"/> (all fields set at Normal), root of the resolution (#293).</summary>
+        /// <summary>The base style as a <see cref="Style"/> (all fields set at Normal), root of the resolution.</summary>
         public static Style Default => s_default;
 
         /// <summary>Whether elements of this protocol type are widgets that take a style (Button ... TextField).</summary>

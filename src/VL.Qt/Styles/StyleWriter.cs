@@ -5,7 +5,7 @@ using VL.Core;
 namespace VL.Qt.Styles
 {
     /// <summary>
-    /// Sends a resolved style as SET_STYLE (#293). Decision: diff against the style last sent to the element; only
+    /// Sends a resolved style as SET_STYLE. Decision: diff against the style last sent to the element; only
     /// changed (field, state) entries go out. A full send with <see cref="Protocol.StyleSet.Clear"/> happens when nothing
     /// was sent yet (create, resync) or when an entry that was set is unset now (the protocol has no "remove entry").
     /// Unset states are not sent (QtNative falls back to Normal). Allocation-free.

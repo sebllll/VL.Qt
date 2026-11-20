@@ -3,7 +3,7 @@ using NUnit.Framework;
 using VL.Qt;
 
 /// <summary>
-/// #243: percentiles and counters of vlqt_perf_stats on known samples (vlqt_perf_eval), plus the live window API
+/// percentiles and counters of vlqt_perf_stats on known samples (vlqt_perf_eval), plus the live window API
 /// (vlqt_window_get_perf_sample / vlqt_window_get_perf_stats).
 /// </summary>
 [TestFixture, NonParallelizable]
@@ -27,7 +27,7 @@ public static class PerfStatsTest
             t[i] = i * 200.0;
         }
         var rc = Native.vlqt_perf_eval(samples, t, samples.Length, budget, out var st);
-        // #261: frame intervals only between consecutive frames -> pumps after an idle one (i % 10 == 1) do not count.
+        // frame intervals only between consecutive frames -> pumps after an idle one (i % 10 == 1) do not count.
         s.Check(rc == 0 && st.budget_ms == budget && st.samples == 100 && st.frames == 80,
             $"perfstats: eval ok, budget, 100 samples, 80 consecutive frames (rc {rc}, {st.samples}, {st.frames})");
         s.Check(st.pump_p50 == 50 && st.pump_p95 == 95 && st.pump_p99 == 99 && st.pump_max == 100,
@@ -83,12 +83,12 @@ public static class PerfStatsTest
         s.Check(Native.vlqt_window_get_perf_sample(IntPtr.Zero, out _) == -1 && Native.vlqt_window_get_perf_stats(IntPtr.Zero, out _) == -1,
             "perfstats: null window -> -1");
 
-        // #245: host frames. Eval: 4 frames of 250 ms, apply 1..4, ops 10..40, alloc 100..400, gen0 1 each, gen2 once.
+        // host frames. Eval: 4 frames of 250 ms, apply 1..4, ops 10..40, alloc 100..400, gen0 1 each, gen2 once.
         var hf = new Native.vlqt_host_frame[4];
         for (int i = 0; i < 4; i++)
             hf[i] = new Native.vlqt_host_frame { apply = i + 1, reconcile = 2 * (i + 1), host = 5, interval = 250, gc_pause = 0.5f,
                 ops = 10 * (i + 1), gc0 = 1, gc2 = i == 3 ? 1 : 0, alloc_bytes = 100 * (i + 1),
-                vvvv = 2 * (i + 1), wait = i == 2 ? 10 : 1 }; // #260: vvvv 2..8, wait 1,1,10,1
+                vvvv = 2 * (i + 1), wait = i == 2 ? 10 : 1 }; // vvvv 2..8, wait 1,1,10,1
         rc = Native.vlqt_perf_host_eval(hf, 4, out var hs);
         s.Check(rc == 0 && hs.samples == 4 && hs.apply_ms == 2.5 && hs.apply_ms_max == 4 && hs.reconcile_ms == 5 && hs.reconcile_ms_max == 8
               && hs.host_ms == 5 && hs.ops == 25 && hs.ops_max == 40 && hs.gc0_per_s == 4 && hs.gc1_per_s == 0 && hs.gc2_per_s == 1

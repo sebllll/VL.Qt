@@ -12,7 +12,7 @@ using Path = VL.Lib.IO.Path;
 namespace VL.Qt.Qml
 {
     /// <summary>
-    /// Instance of a generated QML node (#107): a <see cref="QmlElementNode"/> fed with the file of the layout and a
+    /// Instance of a generated QML node: a <see cref="QmlElementNode"/> fed with the file of the layout and a
     /// Dictionary built from the typed pins, its outputs split into typed pins. Per frame:
     /// <list type="number">
     /// <item>Properties dictionary: the entries of the Properties input, then the typed property inputs on top (a pin wins on a

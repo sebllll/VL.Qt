@@ -34,7 +34,7 @@ public static class ElementsTest
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
 
-        // Group with Auto Size off: ANCHOR only places its frame, the children stay at the origin (#475). So "m around
+        // Group with Auto Size off: ANCHOR only places its frame, the children stay at the origin. So "m around
         // the center of the rect" is T(-center) · m · T(center + position) with ANCHOR TopLeft.
         void PlaceGroupXf(float x, float y, float gw, float gh, in Matrix m)
         {
@@ -48,7 +48,7 @@ public static class ElementsTest
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         cmd.Create(Group, Protocol.Type.Item);
         cmd.SetPlace(Group, 200, 200, 400, 200);
-        cmd.SetBool(Group, Protocol.Prop.AutoSize, false); // explicit size 400 x 200 (Auto Size would ignore it, #83)
+        cmd.SetBool(Group, Protocol.Prop.AutoSize, false); // explicit size 400 x 200 (Auto Size would ignore it)
         cmd.Reparent(Group, 0, 0);
         cmd.Create(Red, Protocol.Type.Rectangle);
         cmd.SetPlace(Red, 0, 0, 200, 100);
@@ -73,7 +73,7 @@ public static class ElementsTest
             s.Check(IsRed(Px(a, 400, 300)) && IsBg(Px(a, 250, 220)) && IsGreen(Px(a, 650, 300)),
                 $"translation (100,50) moves the group ({Px(a, 400, 300)}, {Px(a, 250, 220)}, {Px(a, 650, 300)})");
 
-        // Rotation 90 deg around the group center (200,100 local): ANCHOR Center (#88, #469): v' = (v - c) * Rz * T(c + position).
+        // Rotation 90 deg around the group center (200,100 local): ANCHOR Center: v' = (v - c) * Rz * T(c + position).
         // Stride RotationZ(+90) turns clockwise on screen (y down): red (left) goes up, green (right) down.
         var rot = Matrix.RotationZ(MathUtil.PiOverTwo);
         for (int i = 0; i < 3; i++) // the same matrix again must not compound (Matrix4x4 attached once)
@@ -91,7 +91,7 @@ public static class ElementsTest
                 $"rotation 90: old area empty, nothing beyond 400..500 x 100..500 ({Px(a, 300, 250)}, {Px(a, 450, 90)})");
         }
 
-        // Opacity / Clip on the group (Opacity 0 replaces Visible, #474).
+        // Opacity / Clip on the group (Opacity 0 replaces Visible).
         cmd.Reset();
         PlaceGroupXf(200, 200, 400, 200, Matrix.Identity);
         cmd.SetF32(Group, Protocol.Prop.Opacity, 0.5f);
