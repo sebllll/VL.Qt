@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
@@ -13,16 +14,51 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 // objects) -> QtNative -> SinkRegistry -> channels. The raw QtNative side of the input handlers is HandlerTest (the #208 bind
 // flags Interactive / Pointer are gone since #320). Mouse input comes from the TEST export vlqt_test_send_mouse; real
 // (OS) pointer input is ignored by the test windows (VLQT_TEST_SYNTHETIC_INPUT=1, set in Program.Main).
-static partial class InteractionTest
+[TestFixture, NonParallelizable]
+public static partial class InteractionTest
 {
+    /// <summary>Interaction chain and element interaction.</summary>
+    [Test, Category("interaction-chain")]
+    public static void Chain() => Scenario.Run(RunChainAndElements);
+
+    static void RunChainAndElements(Scenario s)
+    {
+        RunChain(s);
+        RunElements(s);
+    }
+
+    /// <summary>Click node.</summary>
+    [Test, Category("click-node")]
+    public static void ClickNode() => Scenario.Run(RunClick);
+
+    /// <summary>Point node.</summary>
+    [Test, Category("point-node")]
+    public static void PointNode() => Scenario.Run(RunPoint);
+
+    /// <summary>Wheel node.</summary>
+    [Test, Category("wheel-node")]
+    public static void WheelNode() => Scenario.Run(RunWheel);
+
+    /// <summary>Drag node.</summary>
+    [Test, Category("drag-node")]
+    public static void DragNode() => Scenario.Run(RunDragNode);
+
+    /// <summary>Touch points node.</summary>
+    [Test, Category("touch-points-node")]
+    public static void TouchPointsNode() => Scenario.Run(RunTouchPointsNode);
+
+    /// <summary>Pinch node.</summary>
+    [Test, Category("pinch-node")]
+    public static void PinchNode() => Scenario.Run(RunPinchNode);
+
     sealed class NoMessage : IDisposable { public void Dispose() { } }
 
     // #319, scenario "interaction-chain": node level Hover -> Rectangle (Interaction pin) ->
     // Reconciler (handler objects) -> QtNative -> SinkRegistry.Dispatch -> pull in Hover.Update -> channels.
-    public static void RunChain(Action<bool, string> check, Action<int> pump)
+    static void RunChain(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt interaction chain test");
-        check(w != IntPtr.Zero, "chain: window_create");
+        s.Check(w != IntPtr.Zero, "chain: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -48,13 +84,13 @@ static partial class InteractionTest
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
-                check(rc == 0, $"chain: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+                s.Check(rc == 0, $"chain: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
-            pump(1);
+            s.Pump(1);
             int n = Native.Poll(w, buf);
-            check(n >= 0, $"chain: poll ({n})");
+            s.Check(n >= 0, $"chain: poll ({n})");
             var res = rec.Sinks.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
-            check(res.Error is null, $"chain: dispatch ({res.Error})");
+            s.Check(res.Error is null, $"chain: dispatch ({res.Error})");
         }
         void Frames(int count) { for (int i = 0; i < count; i++) Frame(); }
         void Mouse(int type, float x, float y) => Native.vlqt_test_send_mouse(w, type, x, y);
@@ -62,59 +98,59 @@ static partial class InteractionTest
 
         Mouse(Protocol.Mouse.Move, 700, 500);
         Frames(2);
-        check(Handlers() == 1, $"chain: Hover -> one handler at the item ({Handlers()})");
-        check(!hovered.Value, "chain: not hovered outside");
+        s.Check(Handlers() == 1, $"chain: Hover -> one handler at the item ({Handlers()})");
+        s.Check(!hovered.Value, "chain: not hovered outside");
 
         Mouse(Protocol.Mouse.Move, 150, 150);
         Frames(2); // event in frame 1, pulled by the node in frame 2
-        check(hovered.Value && hovered.LatestAuthor == "Qt", $"chain: Is Hovered follows the mouse, author Qt ({hovered.Value}, {hovered.LatestAuthor})");
+        s.Check(hovered.Value && hovered.LatestAuthor == "Qt", $"chain: Is Hovered follows the mouse, author Qt ({hovered.Value}, {hovered.LatestAuthor})");
         Mouse(Protocol.Mouse.Move, 180, 180);
         Frames(2);
-        check(hovered.Value, "chain: still hovered");
+        s.Check(hovered.Value, "chain: still hovered");
 
         // A handler attached under a resting cursor reports hover with the next pointer move (Qt, as with Interactive in 06c).
         chainTwo = true;
         Frame();
         Mouse(Protocol.Mouse.Move, 181, 180);
         Frames(2);
-        check(Handlers() == 2 && hovered.Value && hovered2.Value,
+        s.Check(Handlers() == 2 && hovered.Value && hovered2.Value,
             $"chain: two Hover nodes -> two handlers, both hovered ({Handlers()}, {hovered.Value}, {hovered2.Value})");
 
         Mouse(Protocol.Mouse.Move, 700, 500);
         Frames(2);
-        check(!hovered.Value && !hovered2.Value, "chain: hover out -> both false");
+        s.Check(!hovered.Value && !hovered2.Value, "chain: hover out -> both false");
 
         Mouse(Protocol.Mouse.Move, 150, 150);
         Frames(2);
-        check(hovered.Value && hovered2.Value, "chain: hovered again");
+        s.Check(hovered.Value && hovered2.Value, "chain: hovered again");
         attach = false;
         Frames(2);
-        check(Handlers() == 0, $"chain: Interaction removed -> no handlers ({Handlers()})");
-        check(!hovered.Value && !hovered2.Value, "chain: removed while hovered -> Is Hovered false");
-        check(rec.Sinks.Count == 1, $"chain: only the element handle left ({rec.Sinks.Count})");
+        s.Check(Handlers() == 0, $"chain: Interaction removed -> no handlers ({Handlers()})");
+        s.Check(!hovered.Value && !hovered2.Value, "chain: removed while hovered -> Is Hovered false");
+        s.Check(rec.Sinks.Count == 1, $"chain: only the element handle left ({rec.Sinks.Count})");
 
         attach = true;
         Frame();
         Mouse(Protocol.Mouse.Move, 151, 150);
         Frames(2);
-        check(Handlers() == 2 && hovered.Value, $"chain: re-attached -> handlers + hovered ({Handlers()}, {hovered.Value})");
+        s.Check(Handlers() == 2 && hovered.Value, $"chain: re-attached -> handlers + hovered ({Handlers()}, {hovered.Value})");
 
         cmd.Reset();
         rec.Update(null, Space.DIPTopLeft);
         if (cmd.Length > 0)
-            check(Native.Apply(w, cmd.EndFrame()) == 0, "chain: clear");
+            s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "chain: clear");
         hover.Dispose();
         hover2.Dispose();
         rect.Dispose();
         Native.vlqt_window_destroy(w);
-        pump(1);
+        s.Pump(1);
     }
 
     // #319: the Interaction pin works at Text, Group and Button as well (Hover -> Is Hovered).
-    public static void RunElements(Action<bool, string> check, Action<int> pump)
+    static void RunElements(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt interaction elements test");
-        check(w != IntPtr.Zero, "elements: window_create");
+        s.Check(w != IntPtr.Zero, "elements: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -146,32 +182,32 @@ static partial class InteractionTest
                 if (cmd.Length > 0)
                 {
                     var rc = Native.Apply(w, cmd.EndFrame());
-                    check(rc == 0, $"elements {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+                    s.Check(rc == 0, $"elements {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
                 }
-                pump(1);
+                s.Pump(1);
                 int n = Native.Poll(w, buf);
                 var res = rec.Sinks.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
-                check(res.Error is null, $"elements {name}: dispatch ({res.Error})");
+                s.Check(res.Error is null, $"elements {name}: dispatch ({res.Error})");
             }
 
             Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, 700, 500);
             Frame(true);
             Frame(true);
-            check(!hovered.Value, $"elements {name}: not hovered outside");
+            s.Check(!hovered.Value, $"elements {name}: not hovered outside");
             Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, 150, 150);
             Frame(true);
             Frame(true);
-            check(hovered.Value && hovered.LatestAuthor == "Qt", $"elements {name}: Interaction pin -> Is Hovered ({hovered.Value})");
+            s.Check(hovered.Value && hovered.LatestAuthor == "Qt", $"elements {name}: Interaction pin -> Is Hovered ({hovered.Value})");
             Frame(false);
             Frame(false);
-            check(!hovered.Value, $"elements {name}: Interaction removed -> Is Hovered false");
+            s.Check(!hovered.Value, $"elements {name}: Interaction removed -> Is Hovered false");
             cmd.Reset();
             rec.Update(null, Space.DIPTopLeft);
             if (cmd.Length > 0)
-                check(Native.Apply(w, cmd.EndFrame()) == 0, $"elements {name}: clear");
+                s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"elements {name}: clear");
         }
         hover.Dispose();
         Native.vlqt_window_destroy(w);
-        pump(1);
+        s.Pump(1);
     }
 }

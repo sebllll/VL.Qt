@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Drawing;
 using System.Collections.Immutable;
 using System.IO;
@@ -13,8 +14,13 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 // Styles S2 (#292): SET_STYLE through the real QtNative. Base style at a Button (frame color, text unchanged by an override),
 // override without CLEAR, CLEAR, Hovered state via the test mouse, error codes (Rectangle -6, wrong value type -7, unknown
 // field -6), and the gallery <outDir>/style-gallery.png (all controls with the base style, for the visual check).
-static class StyleTest
+[TestFixture, NonParallelizable]
+public static class StyleTest
 {
+    /// <summary>Styles of controls.</summary>
+    [Test, Category("style")]
+    public static void Style() => Scenario.Run(Run);
+
     const uint Btn = 1, Rect = 2;
     const float BgGray = 0x10 / 255f;
 
@@ -37,24 +43,24 @@ static class StyleTest
         return false;
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt style test");
-        check(w != IntPtr.Zero, "292: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         int Apply() => Native.Apply(w, cmd.EndFrame());
         void CheckApply(string what)
         {
             var rc = Apply();
-            check(rc == 0, $"292: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
-        void Mouse(int type, float x, float y) => check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"292: test_send_mouse {type}");
+        void Mouse(int type, float x, float y) => s.Check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
         void ExpectRc(int expected, string what)
         {
             var rc = Apply();
-            check(rc == expected, $"292: {what} -> {expected} ({rc}: {Native.LastError()})");
+            s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
             cmd.Reset();
         }
 
@@ -71,20 +77,20 @@ static class StyleTest
         cmd.Reparent(Rect, 0, 1);
         CheckApply("create button + rectangle");
         Mouse(Protocol.Mouse.Move, 790, 590);
-        pump(5);
+        s.Pump(5);
 
         // Without a style (CREATE only): no frame (transparent), nothing but the background.
-        using (var a = grab(w, Path.Combine(outDir, "style0.png")))
-            check(IsBg(Px(a, 110, 110)), $"292: button without style: frame transparent ({Px(a, 110, 110)})");
+        using (var a = s.Grab(w, "style0.png"))
+            s.Check(IsBg(Px(a, 110, 110)), $"button without style: frame transparent ({Px(a, 110, 110)})");
 
         // (a) Base style: Normal frame color 0x383838, text (0xE0E0E0) visible.
         BaseStyle.Write(cmd, Btn);
         CheckApply("base style");
-        pump(5);
-        using (var a = grab(w, Path.Combine(outDir, "style1.png")))
+        s.Pump(5);
+        using (var a = s.Grab(w, "style1.png"))
         {
-            check(Near(Px(a, 110, 110), 0x383838), $"292: base style: frame color Normal ({Px(a, 110, 110)})");
-            check(HasBright(a, 130, 105, 270, 155, 0xC0), "292: base style: text drawn bright");
+            s.Check(Near(Px(a, 110, 110), 0x383838), $"base style: frame color Normal ({Px(a, 110, 110)})");
+            s.Check(HasBright(a, 130, 105, 270, 155, 0xC0), "base style: text drawn bright");
         }
 
         // (b) Override without CLEAR: only FRAME_COLOR Normal red, the rest stays (text color unchanged).
@@ -92,35 +98,35 @@ static class StyleTest
         cmd.StyleColor(Protocol.StyleField.FrameColor, Protocol.StyleState.Normal, 1, 0, 0, 1);
         cmd.EndStyle();
         CheckApply("override frame color red");
-        pump(5);
-        using (var a = grab(w, Path.Combine(outDir, "style2.png")))
+        s.Pump(5);
+        using (var a = s.Grab(w, "style2.png"))
         {
-            check(Near(Px(a, 110, 110), 0xFF0000), $"292: override: frame red ({Px(a, 110, 110)})");
-            check(HasBright(a, 130, 105, 270, 155, 0xC0), "292: override: text color unchanged");
+            s.Check(Near(Px(a, 110, 110), 0xFF0000), $"override: frame red ({Px(a, 110, 110)})");
+            s.Check(HasBright(a, 130, 105, 270, 155, 0xC0), "override: text color unchanged");
         }
 
         // (c) CLEAR with an empty table: back to transparent / no text.
         cmd.BeginStyle(Btn, Protocol.StyleSet.Clear);
         cmd.EndStyle();
         CheckApply("clear");
-        pump(5);
-        using (var a = grab(w, Path.Combine(outDir, "style3.png")))
+        s.Pump(5);
+        using (var a = s.Grab(w, "style3.png"))
         {
-            check(IsBg(Px(a, 110, 110)), $"292: clear: frame transparent again ({Px(a, 110, 110)})");
-            check(!HasBright(a, 130, 105, 270, 155, 0xC0), "292: clear: no text color (transparent)");
+            s.Check(IsBg(Px(a, 110, 110)), $"clear: frame transparent again ({Px(a, 110, 110)})");
+            s.Check(!HasBright(a, 130, 105, 270, 155, 0xC0), "clear: no text color (transparent)");
         }
 
         // (d) Hover: Hovered frame color 0x454545 (the base style sets Normal + Hovered).
         BaseStyle.Write(cmd, Btn);
         CheckApply("base style again");
         Mouse(Protocol.Mouse.Move, 105, 105);
-        pump(5);
-        using (var a = grab(w, Path.Combine(outDir, "style4.png")))
-            check(Near(Px(a, 110, 110), 0x454545), $"292: hover: frame color Hovered ({Px(a, 110, 110)})");
+        s.Pump(5);
+        using (var a = s.Grab(w, "style4.png"))
+            s.Check(Near(Px(a, 110, 110), 0x454545), $"hover: frame color Hovered ({Px(a, 110, 110)})");
         Mouse(Protocol.Mouse.Move, 790, 590);
-        pump(5);
-        using (var a = grab(w, Path.Combine(outDir, "style5.png")))
-            check(Near(Px(a, 110, 110), 0x383838), $"292: mouse away: frame color Normal again ({Px(a, 110, 110)})");
+        s.Pump(5);
+        using (var a = s.Grab(w, "style5.png"))
+            s.Check(Near(Px(a, 110, 110), 0x383838), $"mouse away: frame color Normal again ({Px(a, 110, 110)})");
 
         // (e) Error codes: a Rectangle takes no style, a field has a fixed value type, unknown field.
         cmd.BeginStyle(Rect, 0);
@@ -135,19 +141,19 @@ static class StyleTest
         cmd.StyleF32(999, Protocol.StyleState.Normal, 1);
         cmd.EndStyle();
         ExpectRc(-6, "SET_STYLE unknown field");
-        pump(3);
-        using (var a = grab(w, Path.Combine(outDir, "style6.png")))
-            check(Near(Px(a, 110, 110), 0x383838), $"292: failed SET_STYLE left the style alone ({Px(a, 110, 110)})");
+        s.Pump(3);
+        using (var a = s.Grab(w, "style6.png"))
+            s.Check(Near(Px(a, 110, 110), 0x383838), $"failed SET_STYLE left the style alone ({Px(a, 110, 110)})");
 
         cmd.Destroy(Btn);
         cmd.Destroy(Rect);
         CheckApply("destroy");
         Native.vlqt_window_destroy(w);
-        pump(1);
+        s.Pump(1);
 
-        Gallery(outDir, check, pump, grab);
-        Inherit(outDir, check, pump, grab);
-        Nodeset(outDir, check, pump, grab);
+        Gallery(s);
+        Inherit(s);
+        Nodeset(s);
     }
 
     static Color4 Rgb(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1);
@@ -166,13 +172,13 @@ static class StyleTest
     // Styles S3 (#293): inheritance through the real reconciler. Left Group with its own style (children without style inherit it,
     // the second Button overrides the frame color), right Group without a style (base style) for comparison.
     // Images <outDir>/style-inherit.png, then the Group style is replaced by a new instance → style-inherit2.png.
-    static void Inherit(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Inherit(Scenario s)
     {
         const uint groupFrame = 0xC04000, groupIndicator = 0x00C0C0, groupFill = 0xC0C000, ownFrame = 0x2040E0;
         const uint frame2 = 0x8000C0, indicator2 = 0xE000E0, fill2 = 0x00A000;
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt style inherit");
-        check(w != IntPtr.Zero, "293: inherit window_create");
+        s.Check(w != IntPtr.Zero, "inherit window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -206,49 +212,49 @@ static class StyleTest
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
-                check(rc == 0, $"293: inherit apply {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+                s.Check(rc == 0, $"inherit apply {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
-            pump(5);
+            s.Pump(5);
         }
 
         void Probes(Bitmap a, uint frame, uint indicator, uint fill, string when)
         {
             // Left group (x offset 0).
-            check(Near(Px(a, 40, 24), frame), $"293: {when}: Button inherits the group frame color ({Px(a, 40, 24)})");
-            check(Near(Px(a, 260, 24), ownFrame), $"293: {when}: Button with own style keeps its own frame color ({Px(a, 260, 24)})");
-            check(Near(Px(a, 80, 195), fill), $"293: {when}: Slider fill = group TrackFill ({Px(a, 80, 195)})");
-            check(Near(Px(a, 195, 195), indicator), $"293: {when}: Slider handle = group Indicator ({Px(a, 195, 195)})");
-            check(Near(Px(a, 100, 244), frame), $"293: {when}: SpinBox frame = group frame ({Px(a, 100, 244)})");
-            check(Near(Px(a, 300, 314), frame), $"293: {when}: TextField frame = group frame ({Px(a, 300, 314)})");
+            s.Check(Near(Px(a, 40, 24), frame), $"{when}: Button inherits the group frame color ({Px(a, 40, 24)})");
+            s.Check(Near(Px(a, 260, 24), ownFrame), $"{when}: Button with own style keeps its own frame color ({Px(a, 260, 24)})");
+            s.Check(Near(Px(a, 80, 195), fill), $"{when}: Slider fill = group TrackFill ({Px(a, 80, 195)})");
+            s.Check(Near(Px(a, 195, 195), indicator), $"{when}: Slider handle = group Indicator ({Px(a, 195, 195)})");
+            s.Check(Near(Px(a, 100, 244), frame), $"{when}: SpinBox frame = group frame ({Px(a, 100, 244)})");
+            s.Check(Near(Px(a, 300, 314), frame), $"{when}: TextField frame = group frame ({Px(a, 300, 314)})");
             // Right group (x offset 400): base style.
-            check(Near(Px(a, 460, 24), 0x383838), $"293: {when}: unstyled Group → Button with base style ({Px(a, 460, 24)})");
-            check(!Near(Px(a, 600, 314), frame), $"293: {when}: unstyled Group → TextField not in the group color ({Px(a, 600, 314)})");
-            check(!Near(Px(a, 500, 195), fill) && !Near(Px(a, 615, 195), indicator), $"293: {when}: unstyled Group → Slider not in the group colors ({Px(a, 500, 195)}, {Px(a, 615, 195)})");
+            s.Check(Near(Px(a, 460, 24), 0x383838), $"{when}: unstyled Group → Button with base style ({Px(a, 460, 24)})");
+            s.Check(!Near(Px(a, 600, 314), frame), $"{when}: unstyled Group → TextField not in the group color ({Px(a, 600, 314)})");
+            s.Check(!Near(Px(a, 500, 195), fill) && !Near(Px(a, 615, 195), indicator), $"{when}: unstyled Group → Slider not in the group colors ({Px(a, 500, 195)}, {Px(a, 615, 195)})");
         }
 
         Frame(Root(GroupStyle(groupFrame, groupIndicator, groupFill, 14)), "inherit", clear: true);
-        pump(5);
-        using (var a = grab(w, Path.Combine(outDir, "style-inherit.png")))
+        s.Pump(5);
+        using (var a = s.Grab(w, "style-inherit.png"))
             Probes(a, groupFrame, groupIndicator, groupFill, "inherit");
 
         // New Group style instance at runtime: the children recolor, the own style of Button B stays.
         Frame(Root(GroupStyle(frame2, indicator2, fill2, 4)), "group style changed");
-        using (var a = grab(w, Path.Combine(outDir, "style-inherit2.png")))
+        using (var a = s.Grab(w, "style-inherit2.png"))
             Probes(a, frame2, indicator2, fill2, "group style changed");
 
         Native.vlqt_window_destroy(w);
-        pump(1);
+        s.Pump(1);
     }
 
     // Styles S5 (#294): the same inheritance, but the styles are built only with the nodeset methods. Group style: Colors
     // (frame, track fill) + Frame radius; the second Button overrides only the frame color with FrameNodes.Color.
     // Image <outDir>/style-nodeset.png.
-    static void Nodeset(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Nodeset(Scenario s)
     {
         const uint groupFrame = 0xC04000, groupFill = 0xC0C000, ownFrame = 0x2040E0;
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt style nodeset");
-        check(w != IntPtr.Zero, "294: nodeset window_create");
+        s.Check(w != IntPtr.Zero, "nodeset window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -278,29 +284,29 @@ static class StyleTest
         cmd.ClearColor(BgGray, BgGray, BgGray, 1);
         rec.Update(root, Space.DIPTopLeft);
         var rc = Native.Apply(w, cmd.EndFrame());
-        check(rc == 0, $"294: nodeset apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-        pump(10);
+        s.Check(rc == 0, $"nodeset apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        s.Pump(10);
 
-        var path = Path.Combine(outDir, "style-nodeset.png");
-        using (var a = grab(w, path))
+        var path = Path.Combine(s.OutDir, "style-nodeset.png");
+        using (var a = s.Grab(w, path))
         {
-            check(File.Exists(path), $"294: nodeset image written to {path}");
-            check(Near(Px(a, 40, 24), groupFrame), $"294: Button inherits the frame color from Colors ({Px(a, 40, 24)})");
-            check(Near(Px(a, 260, 24), ownFrame), $"294: Button with FrameNodes.Color keeps its own frame color ({Px(a, 260, 24)})");
-            check(Near(Px(a, 80, 195), groupFill), $"294: Slider fill = Colors TrackFill ({Px(a, 80, 195)})");
+            s.Check(File.Exists(path), $"nodeset image written to {path}");
+            s.Check(Near(Px(a, 40, 24), groupFrame), $"Button inherits the frame color from Colors ({Px(a, 40, 24)})");
+            s.Check(Near(Px(a, 260, 24), ownFrame), $"Button with FrameNodes.Color keeps its own frame color ({Px(a, 260, 24)})");
+            s.Check(Near(Px(a, 80, 195), groupFill), $"Slider fill = Colors TrackFill ({Px(a, 80, 195)})");
             // #421: frame radius 14: the + button follows the rounded outer corners (corner pixel = background, not button color).
-            check(Near(Px(a, 218, 252), 0x101010) && Near(Px(a, 218, 298), 0x101010), $"421: SpinBox + button stays inside the rounded corners ({Px(a, 218, 252)}, {Px(a, 218, 298)})");
+            s.Check(Near(Px(a, 218, 252), 0x101010) && Near(Px(a, 218, 298), 0x101010), $"SpinBox + button stays inside the rounded corners ({Px(a, 218, 252)}, {Px(a, 218, 298)})");
         }
 
         Native.vlqt_window_destroy(w);
-        pump(1);
+        s.Pump(1);
     }
 
     // All controls with the base style in a grid on a dark background; hover on the first button. For Sebastian's visual check.
-    static void Gallery(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Gallery(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt style gallery");
-        check(w != IntPtr.Zero, "292: gallery window_create");
+        s.Check(w != IntPtr.Zero, "gallery window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         uint next = 1;
@@ -327,10 +333,10 @@ static class StyleTest
         cmd.SetString(b, Protocol.Prop.Text, "Button");
         b = Add(Protocol.Type.Button, c2, y, 0, 0, enabled: false);
         cmd.SetString(b, Protocol.Prop.Text, "Disabled");
-        var s = Add(Protocol.Type.SpinBox, c3, y, 0, 0);
-        cmd.SetI32(s, Protocol.Prop.Value, 42);
-        cmd.SetI32(s, Protocol.Prop.Minimum, 0);
-        cmd.SetI32(s, Protocol.Prop.Maximum, 100);
+        var spin = Add(Protocol.Type.SpinBox, c3, y, 0, 0);
+        cmd.SetI32(spin, Protocol.Prop.Value, 42);
+        cmd.SetI32(spin, Protocol.Prop.Minimum, 0);
+        cmd.SetI32(spin, Protocol.Prop.Maximum, 100);
         y += 70;
         // Row 2: CheckBox off / on / disabled, Switch off / on / disabled, SpinBox disabled.
         var c = Add(Protocol.Type.CheckBox, c0, y, 0, 0);
@@ -345,10 +351,10 @@ static class StyleTest
         cmd.SetBool(c, Protocol.Prop.Value, true);
         c = Add(Protocol.Type.Switch, c1 + 210, y, 0, 0, enabled: false);
         cmd.SetBool(c, Protocol.Prop.Value, true);
-        s = Add(Protocol.Type.SpinBox, c3, y, 0, 0, enabled: false);
-        cmd.SetI32(s, Protocol.Prop.Value, 7);
-        cmd.SetI32(s, Protocol.Prop.Minimum, 0);
-        cmd.SetI32(s, Protocol.Prop.Maximum, 100);
+        spin = Add(Protocol.Type.SpinBox, c3, y, 0, 0, enabled: false);
+        cmd.SetI32(spin, Protocol.Prop.Value, 7);
+        cmd.SetI32(spin, Protocol.Prop.Minimum, 0);
+        cmd.SetI32(spin, Protocol.Prop.Maximum, 100);
         y += 70;
         // Row 3: Slider horizontal 0.3, disabled, vertical (own column).
         var sl = Add(Protocol.Type.Slider, c0, y, 300, 30);
@@ -367,14 +373,14 @@ static class StyleTest
         t = Add(Protocol.Type.TextField, c0 + 440, y, 0, 0, enabled: false);
         cmd.SetString(t, Protocol.Prop.Value, "Disabled");
         var rc = Native.Apply(w, cmd.EndFrame());
-        check(rc == 0, $"292: gallery apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        s.Check(rc == 0, $"gallery apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         cmd.Reset();
         Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, c0 + 10, 40);
-        pump(10);
-        var path = Path.Combine(outDir, "style-gallery.png");
-        using (var a = grab(w, path))
-            check(a.Width > 0 && File.Exists(path), $"292: gallery written to {path}");
+        s.Pump(10);
+        var path = Path.Combine(s.OutDir, "style-gallery.png");
+        using (var a = s.Grab(w, path))
+            s.Check(a.Width > 0 && File.Exists(path), $"gallery written to {path}");
         Native.vlqt_window_destroy(w);
-        pump(1);
+        s.Pump(1);
     }
 }
