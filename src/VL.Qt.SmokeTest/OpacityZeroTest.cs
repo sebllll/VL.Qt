@@ -77,7 +77,7 @@ public static class OpacityZeroTest
             s.Check(res.Error is null, $"opacity-zero: dispatch ({res.Error})");
         }
         void Frames(int count) { for (int i = 0; i < count; i++) Frame(); }
-        void Mouse(int type, float x, float y) => Native.vlqt_test_send_mouse(w, type, x, y);
+        void Mouse(int type, float x, float y) => NativeTest.vlqt_test_send_mouse(w, type, x, y);
 
         Frames(4);
         using (var img = s.Grab(w, "opacity_zero.png"))
@@ -90,13 +90,13 @@ public static class OpacityZeroTest
                 $"opacity-zero: C after B's place, B keeps its space in the Row ({Px(img, 520, 200)}, {Px(img, 650, 200)})");
         }
 
-        Mouse(Protocol.Mouse.Move, 700, 500);
+        Mouse(TestProtocol.Mouse.Move, 700, 500);
         Frames(2);
         s.Check(!hovered.Value, "opacity-zero: not hovered outside");
-        Mouse(Protocol.Mouse.Move, 400, 200);
+        Mouse(TestProtocol.Mouse.Move, 400, 200);
         Frames(2); // event in frame 1, pulled by the node in frame 2
         s.Check(hovered.Value, "opacity-zero: B with Opacity 0 still receives input (Is Hovered)");
-        Mouse(Protocol.Mouse.Move, 700, 500);
+        Mouse(TestProtocol.Mouse.Move, 700, 500);
         Frames(2);
         s.Check(!hovered.Value, "opacity-zero: hover out");
 

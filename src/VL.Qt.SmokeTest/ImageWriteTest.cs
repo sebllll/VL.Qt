@@ -49,10 +49,10 @@ public static class ImageWriteTest
             {
                 Native.vlqt_res_load_image(id, path, 0);
                 if (Native.vlqt_res_wait(id, 5000) != Protocol.ResState.Ready) return [];
-                var n = Native.ResReadPixels(id, Span<byte>.Empty, out rw, out rh);
+                var n = NativeTest.ResReadPixels(id, Span<byte>.Empty, out rw, out rh);
                 if (n >= 0) return [];
                 var px = new byte[-n];
-                return Native.ResReadPixels(id, px, out rw, out rh) == px.Length ? px : [];
+                return NativeTest.ResReadPixels(id, px, out rw, out rh) == px.Length ? px : [];
             }
             finally { Native.vlqt_res_release(id); }
         }

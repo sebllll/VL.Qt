@@ -65,7 +65,7 @@ bool isScene(const QQuickWindow* window);
 // render_batch renders it also when nothing changed. Returns false if the scene is unbound (it does not render).
 bool requestFrame(const QQuickWindow* window);
 
-// Backend of vlqt_test_offscreen_state (test_offscreen.cpp): fence values and render count of a bound scene.
+// test hook: backend of vlqt_test_offscreen_state (test/test_probes.cpp): fence values and render count of a bound scene.
 // Out pointers may be null. Returns a vlqt_offscreen_result code (protocol.h).
 int testState(void* scene, unsigned long long* readFence, unsigned long long* writeFence, long long* renders);
 

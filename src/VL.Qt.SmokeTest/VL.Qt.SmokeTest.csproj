@@ -30,6 +30,12 @@
     <Compile Remove="PngImage.cs" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
   </ItemGroup>
 
+  <!-- The test exports of QtNative (NativeTest) and the constants of vlqt_test.h (TestProtocol), shared with the other test projects. -->
+  <ItemGroup>
+    <Compile Include="..\VL.Qt.TestSupport\NativeTest.cs" Link="NativeTest.cs" />
+    <Compile Include="..\VL.Qt.TestSupport\TestProtocol.cs" Link="TestProtocol.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
     <PackageReference Include="NUnit" Version="4.*" />

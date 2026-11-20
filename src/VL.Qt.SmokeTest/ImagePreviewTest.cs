@@ -23,8 +23,8 @@ public static class ImagePreviewTest
         Directory.CreateDirectory(dir);
         var big = Path.Combine(dir, "big.png");
         var small = Path.Combine(dir, "small.png");
-        s.Check(Native.vlqt_test_write_image(big, 4000, 2000, 90) == 0, "4000x2000 test image written");
-        s.Check(Native.vlqt_test_write_image(small, 100, 80, 90) == 0, "100x80 test image written");
+        s.Check(NativeTest.vlqt_test_write_image(big, 4000, 2000, 90) == 0, "4000x2000 test image written");
+        s.Check(NativeTest.vlqt_test_write_image(small, 100, 80, 90) == 0, "100x80 test image written");
 
         ulong Create()
         {
@@ -79,7 +79,7 @@ public static class ImagePreviewTest
         s.Check(Native.ResReadPreview(0xdeadbeefUL << 8, Span<byte>.Empty, out _) == -9, "unknown id -> -9");
         var pending = Create();
         s.Check(Native.ResReadPreview(pending, Span<byte>.Empty, out _) == -7, "Pending resource -> -7");
-        s.Check(Native.vlqt_res_create(Protocol.ResKind.Test, out var testId) == 0 && Native.ResReadPreview(testId, Span<byte>.Empty, out _) == -7, "test resource (wrong kind) -> -7");
+        s.Check(Native.vlqt_res_create(TestProtocol.ResKind.Test, out var testId) == 0 && Native.ResReadPreview(testId, Span<byte>.Empty, out _) == -7, "test resource (wrong kind) -> -7");
         Native.vlqt_res_release(testId);
         Native.vlqt_res_release(pending);
 

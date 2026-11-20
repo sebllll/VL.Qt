@@ -8,7 +8,6 @@
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QColor>
 #include <QtGui/QImageReader>
-#include <QtGui/QPainter>
 #include <rhi/qrhi.h>
 
 #include <algorithm>
@@ -723,6 +722,7 @@ int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc)
     return int(required);
 }
 
+// test hook: vlqt_test_res_read_pixels (test/test_probes.cpp).
 int testRead(uint64_t id, unsigned char* out, int cap, int* width, int* height)
 {
     if (kindOfId(id, "test read_pixels") < 0) // unknown, stale or released by the host; ready() does not check
@@ -769,19 +769,6 @@ int testRead(uint64_t id, unsigned char* out, int cap, int* width, int* height)
     for (int y = 0; y < h; y++)
         std::memcpy(out + size_t(w) * 4 * y, result.constScanLine(y), size_t(w) * 4);
     return n;
-}
-
-int testWrite(const char* utf8Path, int width, int height, int quality)
-{
-    if (!utf8Path || width <= 0 || height <= 0)
-        return badValueRc;
-    QImage img(width, height, QImage::Format_RGB32);
-    QPainter p(&img);
-    const QColor colors[] = {Qt::red, Qt::green, Qt::blue, Qt::white};
-    for (int i = 0; i < 4; i++)
-        p.fillRect(QRect(width * i / 4, 0, width * (i + 1) / 4 - width * i / 4, height), colors[i]);
-    p.end();
-    return img.save(QString::fromUtf8(utf8Path), nullptr, quality) ? okRc : errorRc;
 }
 
 } // namespace vlqt::res::image

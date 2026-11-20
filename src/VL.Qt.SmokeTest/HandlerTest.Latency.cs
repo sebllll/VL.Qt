@@ -148,19 +148,19 @@ public static partial class HandlerTest
             }
             return -1;
         }
-        void Mouse(int type, float x, float y) => s.Check(Native.vlqt_test_queue_mouse(w.W, type, x, y) == 0, $"input-latency {tag}: queue_mouse {type}");
-        void Touch(int type, int id, float x, float y) => s.Check(Native.vlqt_test_queue_touch(w.W, type, id, x, y) == 0, $"input-latency {tag}: queue_touch {type} {id}");
+        void Mouse(int type, float x, float y) => s.Check(NativeTest.vlqt_test_queue_mouse(w.W, type, x, y) == 0, $"input-latency {tag}: queue_mouse {type}");
+        void Touch(int type, int id, float x, float y) => s.Check(NativeTest.vlqt_test_queue_touch(w.W, type, id, x, y) == 0, $"input-latency {tag}: queue_touch {type} {id}");
 
         var lat = new int[5];
-        lat[0] = Latency(() => { Mouse(Protocol.Mouse.Move, 200, 200); Mouse(Protocol.Mouse.Press, 200, 200); },
+        lat[0] = Latency(() => { Mouse(TestProtocol.Mouse.Move, 200, 200); Mouse(TestProtocol.Mouse.Press, 200, 200); },
             s => HasFlag(s, Protocol.Ev.Press, STA, true));
-        lat[1] = Latency(() => Mouse(Protocol.Mouse.Release, 200, 200), s => HasU32(s, Protocol.Ev.Click, STA, 1));
+        lat[1] = Latency(() => Mouse(TestProtocol.Mouse.Release, 200, 200), s => HasU32(s, Protocol.Ev.Click, STA, 1));
         Frame(clock);
         var mouse = new List<Rec>(w.All);
-        lat[2] = Latency(() => { Touch(Protocol.Touch.Press, 1, 150, 150); Touch(Protocol.Touch.Press, 2, 250, 200); },
+        lat[2] = Latency(() => { Touch(TestProtocol.Touch.Press, 1, 150, 150); Touch(TestProtocol.Touch.Press, 2, 250, 200); },
             s => HasPoints(s, STP, (1, 50, 50), (2, 150, 100)));
-        lat[3] = Latency(() => Touch(Protocol.Touch.Move, 1, 160, 170), s => HasPoints(s, STP, (1, 60, 70), (2, 150, 100)));
-        lat[4] = Latency(() => { Touch(Protocol.Touch.Release, 1, 160, 170); Touch(Protocol.Touch.Release, 2, 250, 200); },
+        lat[3] = Latency(() => Touch(TestProtocol.Touch.Move, 1, 160, 170), s => HasPoints(s, STP, (1, 60, 70), (2, 150, 100)));
+        lat[4] = Latency(() => { Touch(TestProtocol.Touch.Release, 1, 160, 170); Touch(TestProtocol.Touch.Release, 2, 250, 200); },
             s => HasPoints(s, STP));
         for (int i = 0; i < 2; i++)
             Frame(clock);
@@ -201,8 +201,8 @@ public static partial class HandlerTest
             Frame(clock);
 
         // Input queued for a window that is destroyed before the next frame starts: Qt drops it, A still gets its own.
-        s.Check(Native.vlqt_test_queue_touch(gone.W, Protocol.Touch.Press, 7, 50, 50) == 0, "input-latency: queue_touch for B");
-        s.Check(Native.vlqt_test_queue_mouse(a.W, Protocol.Mouse.Move, 20, 20) == 0, "input-latency: queue_mouse for A");
+        s.Check(NativeTest.vlqt_test_queue_touch(gone.W, TestProtocol.Touch.Press, 7, 50, 50) == 0, "input-latency: queue_touch for B");
+        s.Check(NativeTest.vlqt_test_queue_mouse(a.W, TestProtocol.Mouse.Move, 20, 20) == 0, "input-latency: queue_mouse for A");
         gone.Destroy(); // still registered: a renderer whose window is gone (Window zero, PollInput skips it)
         clock.Tick();
         s.Check(app.LastDeliveredInput >= 0, $"input-latency: deliver with a destroyed window -> no crash ({app.LastDeliveredInput})");
@@ -213,7 +213,7 @@ public static partial class HandlerTest
         // renders nothing (a render there would count into the pump's sample), the first pump renders it exactly once.
         var born = new LatencyWindow(s, "VL.Qt input-latency lifecycle C");
         pump.Register(born);
-        s.Check(Native.vlqt_test_queue_mouse(born.W, Protocol.Mouse.Move, 30, 30) == 0, "input-latency: queue_mouse for C");
+        s.Check(NativeTest.vlqt_test_queue_mouse(born.W, TestProtocol.Mouse.Move, 30, 30) == 0, "input-latency: queue_mouse for C");
         clock.Tick();
         Frame(clock);
         var src = Native.vlqt_window_get_perf_sample(born.W, out var first);
@@ -221,7 +221,7 @@ public static partial class HandlerTest
             $"input-latency: new window rendered once in its first pump, not in the delivery (rc {src}, swaps {first.swaps})");
 
         // Not in a pump: the native call alone delivers and returns >= 0; a second call has nothing left.
-        s.Check(Native.vlqt_test_queue_mouse(a.W, Protocol.Mouse.Move, 40, 40) == 0, "input-latency: queue_mouse for A again");
+        s.Check(NativeTest.vlqt_test_queue_mouse(a.W, TestProtocol.Mouse.Move, 40, 40) == 0, "input-latency: queue_mouse for A again");
         var delivered = Native.vlqt_app_deliver_input();
         var again = Native.vlqt_app_deliver_input();
         s.Check(delivered >= 1 && again == 0, $"input-latency: deliver_input -> queued events once ({delivered}, then {again})");

@@ -28,16 +28,13 @@ public static class EffectChainTest
 
     private static bool Near(Color c, int r, int g, int b, int tol = 12) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
-
     private const int ScenePage = 2;
 
     internal static (int layers, int effects) Counts(IntPtr w)
     {
-        var need = -vlqt_test_perf_text(w, ScenePage, null, 0);
+        var need = -NativeTest.vlqt_test_perf_text(w, ScenePage, null, 0);
         var buf = new byte[Math.Max(need, 1)];
-        var n = vlqt_test_perf_text(w, ScenePage, buf, buf.Length);
+        var n = NativeTest.vlqt_test_perf_text(w, ScenePage, buf, buf.Length);
         var text = n > 0 ? System.Text.Encoding.UTF8.GetString(buf, 0, n) : "";
         var fx = Regex.Match(text, @"effects\s+(\d+)\s+effect layers, (\d+) MultiEffect items");
         return (fx.Success ? int.Parse(fx.Groups[1].Value) : -1, fx.Success ? int.Parse(fx.Groups[2].Value) : -1);

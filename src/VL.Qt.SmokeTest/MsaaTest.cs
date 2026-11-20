@@ -345,9 +345,9 @@ public static class MsaaTest
                 s.Skip($"{what}: the test window is not in the foreground");
         }
         Committed();
-        Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, 200, 70);
-        Native.vlqt_test_send_mouse(w, Protocol.Mouse.Press, 200, 70);
-        Native.vlqt_test_send_mouse(w, Protocol.Mouse.Release, 200, 70);
+        NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, 200, 70);
+        NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Press, 200, 70);
+        NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Release, 200, 70);
         Committed();
         Key('4'); Key('2'); Key(VK_RETURN);
         var v = Committed();
@@ -370,7 +370,7 @@ public static class MsaaTest
 
     private static void OffscreenPart(Scenario s)
     {
-        if (Native.vlqt_test_d3d11_create_device(0, out var device, out var context) != 0)
+        if (NativeTest.CreateDevice(0, out var device, out var context) != 0)
         {
             s.Check(false, "msaa: test device");
             return;
@@ -392,12 +392,12 @@ public static class MsaaTest
             var tag = f.Tex == 90 ? "unorm" : f.Tex == 27 ? "srgb" : "float";
             foreach (var n in f.Counts)
             {
-                Native.vlqt_test_d3d11_create_shared_texture(device, W, H, f.Tex, out var tex, out var handle);
+                NativeTest.vlqt_test_d3d11_create_shared_texture(device, W, H, f.Tex, out var tex, out var handle);
                 int rc = Native.vlqt_offscreen_bind(scene, device, handle, W, H, f.View, n, out var used);
-                Native.vlqt_test_close_handle(handle);
+                NativeTest.vlqt_test_close_handle(handle);
                 int rendered = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
                 var px = new byte[W * H * f.Bytes];
-                int read = Native.TestReadTexture(tex, px, out _, out _, out _);
+                int read = NativeTest.TestReadTexture(tex, px, out _, out _, out _);
                 int Red(int x, int y)
                 {
                     int i = y * W + x;
@@ -414,21 +414,21 @@ public static class MsaaTest
                 if (f.Tex == 90)
                     SavePng(px, Path.Combine(s.OutDir, $"msaa_offscreen_x{n}.png"));
                 Native.vlqt_offscreen_unbind(scene);
-                Native.vlqt_test_com_release(tex);
+                NativeTest.vlqt_test_com_release(tex);
             }
             // Clamp: 16 is above what QRhi's D3D11 backend offers (1/2/4/8), 3 is no count.
             foreach (var (request, ok) in new (int, Func<int, bool>)[] { (16, u => u is 4 or 8), (3, u => u == 2) })
             {
-                Native.vlqt_test_d3d11_create_shared_texture(device, W, H, f.Tex, out var t, out var h);
+                NativeTest.vlqt_test_d3d11_create_shared_texture(device, W, H, f.Tex, out var t, out var h);
                 int rc = Native.vlqt_offscreen_bind(scene, device, h, W, H, f.View, request, out var used);
-                Native.vlqt_test_close_handle(h);
+                NativeTest.vlqt_test_close_handle(h);
                 s.Check(rc == 0 && ok(used), $"msaa: offscreen {tag} request {request} clamped (used {used})");
                 Native.vlqt_offscreen_unbind(scene);
-                Native.vlqt_test_com_release(t);
+                NativeTest.vlqt_test_com_release(t);
             }
             Native.vlqt_window_destroy(scene);
         }
-        Native.vlqt_test_d3d11_release_device(device, context);
+        NativeTest.vlqt_test_d3d11_release_device(device, context);
     }
 
     private static void SavePng(byte[] bgra, string path)

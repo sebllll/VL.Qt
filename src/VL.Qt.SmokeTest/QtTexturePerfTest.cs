@@ -59,7 +59,7 @@ public static class QtTexturePerfTest
         if (rc != 0)
             return;
 
-        bool ok = Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0;
+        bool ok = NativeTest.CreateDevice(0, out var device, out var context) == 0;
         s.Check(ok, "qttextureperf: test device on QtNative's adapter");
         if (!ok)
             return;
@@ -81,7 +81,7 @@ public static class QtTexturePerfTest
             else
                 PerfLimits.Below(s, main, MainThreadLimitMs, $"qttextureperf: {config.Name}, {mode}: median main-thread time per QtTexture {main:F3} ms < {MainThreadLimitMs} ms");
         }
-        Native.vlqt_test_d3d11_release_device(device, context);
+        NativeTest.vlqt_test_d3d11_release_device(device, context);
 
         if (threads != 0)
             RunMainThreadChild(s);
@@ -148,9 +148,9 @@ public static class QtTexturePerfTest
                 cmd.Reparent(id, 0, (uint)(1 + rects + i));
             }
             s.Check(Native.Apply(scenes[k], cmd.EndFrame()) == 0, $"qttextureperf {config.Name}: apply scene {k}");
-            Native.vlqt_test_d3d11_create_shared_texture(device, W, H, B8G8R8A8Typeless, out textures[k], out var handle);
+            NativeTest.vlqt_test_d3d11_create_shared_texture(device, W, H, B8G8R8A8Typeless, out textures[k], out var handle);
             int rc = Native.vlqt_offscreen_bind(scenes[k], device, handle, W, H, B8G8R8A8Unorm, 1, out _);
-            Native.vlqt_test_close_handle(handle);
+            NativeTest.vlqt_test_close_handle(handle);
             s.Check(rc == 0, $"qttextureperf {config.Name}: bind scene {k} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
 
@@ -229,12 +229,12 @@ public static class QtTexturePerfTest
             while (sw.Elapsed.TotalMilliseconds < 6) { }
             var t3 = Stopwatch.GetTimestamp();
             // Stride's draw reads scene 0's texture; Map waits for the GPU (and so for Qt's write signal).
-            Native.TestReadTexture(textures[0], pixels, out _, out _, out _);
+            NativeTest.TestReadTexture(textures[0], pixels, out _, out _, out _);
             var t4 = Stopwatch.GetTimestamp();
             for (int k = 0; k < count; k++)
             {
                 if (k > 0)
-                    Native.TestReadTexture(textures[k], pixels, out _, out _, out _);
+                    NativeTest.TestReadTexture(textures[k], pixels, out _, out _, out _);
                 int red = pixels[(8 * W + 8) * 4 + 2]; // BGRA
                 if (red == marker)
                     continue;
@@ -278,7 +278,7 @@ public static class QtTexturePerfTest
         {
             Native.vlqt_offscreen_unbind(scenes[k]);
             Native.vlqt_window_destroy(scenes[k]);
-            Native.vlqt_test_com_release(textures[k]);
+            NativeTest.vlqt_test_com_release(textures[k]);
         }
         return perTexture;
     }

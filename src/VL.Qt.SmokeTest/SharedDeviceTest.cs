@@ -61,7 +61,7 @@ public static class SharedDeviceTest
         {
             for (int i = 0; i < 60; i++)
             {
-                if (Native.vlqt_test_device_info(w, out var dev, out var rhi) == 0)
+                if (NativeTest.vlqt_test_device_info(w, out var dev, out var rhi) == 0)
                     return (dev, rhi);
                 s.Pump(1);
             }
@@ -76,7 +76,7 @@ public static class SharedDeviceTest
         if (shared)
         {
             s.Check(devA == devB, $"both windows on the same ID3D11Device ({devA:X} / {devB:X})");
-            var urc = Native.vlqt_test_device_info(IntPtr.Zero, out var devU, out var rhiU);
+            var urc = NativeTest.vlqt_test_device_info(IntPtr.Zero, out var devU, out var rhiU);
             s.Check(urc == 0 && rhiU != IntPtr.Zero && devU == devA, $"upload QRhi on the same device ({urc}, {devU:X})");
         }
         else

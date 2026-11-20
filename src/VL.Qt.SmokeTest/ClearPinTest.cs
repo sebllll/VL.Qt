@@ -474,7 +474,7 @@ public static class ClearPinTest
     private static void Offscreen(Scenario s)
     {
         const int B8G8R8A8Typeless = 90, B8G8R8A8Unorm = 87;
-        if (!check2(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "clear-pin offscreen: test device"))
+        if (!check2(NativeTest.CreateDevice(0, out var device, out var context) == 0, "clear-pin offscreen: test device"))
             return;
         bool check2(bool ok, string what) { s.Check(ok, what); return ok; }
         int w = 64, h = 48;
@@ -493,11 +493,11 @@ public static class ClearPinTest
             if (tex != IntPtr.Zero)
             {
                 Native.vlqt_offscreen_unbind(scene);
-                Native.vlqt_test_com_release(tex);
+                NativeTest.vlqt_test_com_release(tex);
             }
-            Native.vlqt_test_d3d11_create_shared_texture(device, bw, bh, B8G8R8A8Typeless, out tex, out var handle);
+            NativeTest.vlqt_test_d3d11_create_shared_texture(device, bw, bh, B8G8R8A8Typeless, out tex, out var handle);
             int rc = Native.vlqt_offscreen_bind(scene, device, handle, bw, bh, B8G8R8A8Unorm, 1, out _);
-            Native.vlqt_test_close_handle(handle);
+            NativeTest.vlqt_test_close_handle(handle);
             s.Check(rc == 0, $"clear-pin offscreen: bind {bw}x{bh} ({rc}) {Native.LastError()}");
             (w, h) = (bw, bh);
         }
@@ -505,7 +505,7 @@ public static class ClearPinTest
         byte[] Read()
         {
             var px = new byte[w * h * 4];
-            Native.TestReadTexture(tex, px, out _, out _, out _);
+            NativeTest.TestReadTexture(tex, px, out _, out _, out _);
             return px;
         }
         (int R, int G, int B, int A) At(byte[] px, int x, int y) { int i = (y * w + x) * 4; return (px[i + 2], px[i + 1], px[i], px[i + 3]); }
@@ -695,8 +695,8 @@ public static class ClearPinTest
         s.Check(stepValues[0] == stepValues[1], $"clear-pin offscreen: MSAA edges with Clear off as with Clear on ({stepValues[0]} vs {stepValues[1]} distinct values)");
 
         Native.vlqt_offscreen_unbind(scene);
-        Native.vlqt_test_com_release(tex);
+        NativeTest.vlqt_test_com_release(tex);
         Native.vlqt_window_destroy(scene);
-        Native.vlqt_test_d3d11_release_device(device, context);
+        NativeTest.vlqt_test_d3d11_release_device(device, context);
     }
 }

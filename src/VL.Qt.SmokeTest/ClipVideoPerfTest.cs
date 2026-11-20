@@ -147,7 +147,7 @@ public static class ClipVideoPerfTest
     {
         var runs = Math.Max(1, int.TryParse(Environment.GetEnvironmentVariable("VLQT_SMOKE_VIDEOUPLOADRUNS"), out var r) ? r : 5);
         var frames = Math.Max(60, int.TryParse(Environment.GetEnvironmentVariable("VLQT_SMOKE_VIDEOUPLOADFRAMES"), out var f) ? f : 240);
-        var gpu = Native.vlqt_test_device_info(IntPtr.Zero, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
+        var gpu = NativeTest.vlqt_test_device_info(IntPtr.Zero, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
         s.Info($"video-upload-perf: {(gpu ? "GPU upload (shared upload QRhi)" : "CPU copy, no upload QRhi")}, {runs} runs of {frames} frames, paced 60 Hz, "
             + $"{System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture}, {Environment.ProcessorCount} cores, VLQT_IMG_UPLOAD={Environment.GetEnvironmentVariable("VLQT_IMG_UPLOAD") ?? "(auto)"}");
 

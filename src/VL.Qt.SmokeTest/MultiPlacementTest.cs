@@ -78,13 +78,13 @@ public static class MultiPlacementTest
             s.Check(res.Error is null, $"dispatch ({res.Error})");
         }
         void Frames(int count) { for (int i = 0; i < count; i++) Frame(); }
-        void Mouse(int type, float x, float y) => Native.vlqt_test_send_mouse(w, type, x, y);
+        void Mouse(int type, float x, float y) => NativeTest.vlqt_test_send_mouse(w, type, x, y);
         void Click(float x, float y)
         {
-            Mouse(Protocol.Mouse.Move, x, y);
-            Mouse(Protocol.Mouse.Press, x, y);
+            Mouse(TestProtocol.Mouse.Move, x, y);
+            Mouse(TestProtocol.Mouse.Press, x, y);
             Frames(2);
-            Mouse(Protocol.Mouse.Release, x, y);
+            Mouse(TestProtocol.Mouse.Release, x, y);
             Frames(3);
         }
         static bool Close(float a, float b) => Math.Abs(a - b) < 0.02f;

@@ -105,10 +105,10 @@ public static class TooltipTest
             }
         }
         long Count() => Native.vlqt_window_change_count(w);
-        void Mouse(int type, float x, float y) => s.Check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
+        void Mouse(int type, float x, float y) => s.Check(NativeTest.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
 
         Frame(clear: true);
-        Mouse(Protocol.Mouse.Move, 1150, 650);
+        Mouse(TestProtocol.Mouse.Move, 1150, 650);
         Step(10);
 
         float dpr;
@@ -260,11 +260,11 @@ public static class TooltipTest
             s.Check(Count() == cStatic, $"static scene: previews do not raise the change count ({cStatic} -> {Count()})");
 
             // Scene change: hover over the Button → the count rises → a new image.
-            Mouse(Protocol.Mouse.Move, 1040, 115);
+            Mouse(TestProtocol.Mouse.Move, 1040, 115);
             for (int i = 0; i < 60 && ReferenceEquals(tipImage, settledImage); i++)
                 TipSteps(1, 15);
             s.Check(!ReferenceEquals(tipImage, settledImage), "hover raises the change count: a new preview image arrives");
-            Mouse(Protocol.Mouse.Move, 1150, 650);
+            Mouse(TestProtocol.Mouse.Move, 1150, 650);
             TipSteps(40, 15); // transition and the last grab done
             var afterHover = tipImage;
             TipSteps(40, 15);
@@ -378,7 +378,7 @@ public static class TooltipTest
         s.Check(Count() == cNow, $"static again after the change ({cNow} -> {Count()})");
 
         cNow = Count();
-        Mouse(Protocol.Mouse.Move, 1040, 115); // over the button
+        Mouse(TestProtocol.Mouse.Move, 1040, 115); // over the button
         Step(5);
         var cHover = Count();
         s.Info($"hover over the Button: change count {cNow} -> {cHover}");
@@ -387,7 +387,7 @@ public static class TooltipTest
         cNow = Count();
         Step(30);
         s.Check(Count() == cNow, $"static while hovering ({cNow} -> {Count()})");
-        Mouse(Protocol.Mouse.Move, 1150, 650);
+        Mouse(TestProtocol.Mouse.Move, 1150, 650);
         Step(5);
         s.Info($"hover left: change count {cNow} -> {Count()}");
         s.Check(Count() > cNow, $"leaving the Button raises the change count ({cNow} -> {Count()})");

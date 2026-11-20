@@ -94,34 +94,34 @@ public static partial class InteractionTest
             s.Check(res.Error is null, $"chain: dispatch ({res.Error})");
         }
         void Frames(int count) { for (int i = 0; i < count; i++) Frame(); }
-        void Mouse(int type, float x, float y) => Native.vlqt_test_send_mouse(w, type, x, y);
-        int Handlers() => Native.vlqt_test_handler_count(w, rec.Root?.Id ?? 0);
+        void Mouse(int type, float x, float y) => NativeTest.vlqt_test_send_mouse(w, type, x, y);
+        int Handlers() => NativeTest.vlqt_test_handler_count(w, rec.Root?.Id ?? 0);
 
-        Mouse(Protocol.Mouse.Move, 700, 500);
+        Mouse(TestProtocol.Mouse.Move, 700, 500);
         Frames(2);
         s.Check(Handlers() == 1, $"chain: Hover -> one handler at the item ({Handlers()})");
         s.Check(!hovered.Value, "chain: not hovered outside");
 
-        Mouse(Protocol.Mouse.Move, 150, 150);
+        Mouse(TestProtocol.Mouse.Move, 150, 150);
         Frames(2); // event in frame 1, pulled by the node in frame 2
         s.Check(hovered.Value && hovered.LatestAuthor == "Qt", $"chain: Is Hovered follows the mouse, author Qt ({hovered.Value}, {hovered.LatestAuthor})");
-        Mouse(Protocol.Mouse.Move, 180, 180);
+        Mouse(TestProtocol.Mouse.Move, 180, 180);
         Frames(2);
         s.Check(hovered.Value, "chain: still hovered");
 
         // A handler attached under a resting cursor reports hover with the next pointer move (Qt, as with Interactive in 06c).
         chainTwo = true;
         Frame();
-        Mouse(Protocol.Mouse.Move, 181, 180);
+        Mouse(TestProtocol.Mouse.Move, 181, 180);
         Frames(2);
         s.Check(Handlers() == 2 && hovered.Value && hovered2.Value,
             $"chain: two Hover nodes -> two handlers, both hovered ({Handlers()}, {hovered.Value}, {hovered2.Value})");
 
-        Mouse(Protocol.Mouse.Move, 700, 500);
+        Mouse(TestProtocol.Mouse.Move, 700, 500);
         Frames(2);
         s.Check(!hovered.Value && !hovered2.Value, "chain: hover out -> both false");
 
-        Mouse(Protocol.Mouse.Move, 150, 150);
+        Mouse(TestProtocol.Mouse.Move, 150, 150);
         Frames(2);
         s.Check(hovered.Value && hovered2.Value, "chain: hovered again");
         attach = false;
@@ -132,7 +132,7 @@ public static partial class InteractionTest
 
         attach = true;
         Frame();
-        Mouse(Protocol.Mouse.Move, 151, 150);
+        Mouse(TestProtocol.Mouse.Move, 151, 150);
         Frames(2);
         s.Check(Handlers() == 2 && hovered.Value, $"chain: re-attached -> handlers + hovered ({Handlers()}, {hovered.Value})");
 
@@ -191,11 +191,11 @@ public static partial class InteractionTest
                 s.Check(res.Error is null, $"elements {name}: dispatch ({res.Error})");
             }
 
-            Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, 700, 500);
+            NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, 700, 500);
             Frame(true);
             Frame(true);
             s.Check(!hovered.Value, $"elements {name}: not hovered outside");
-            Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, 150, 150);
+            NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, 150, 150);
             Frame(true);
             Frame(true);
             s.Check(hovered.Value && hovered.LatestAuthor == "Qt", $"elements {name}: Interaction pin -> Is Hovered ({hovered.Value})");

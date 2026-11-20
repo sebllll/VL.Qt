@@ -248,10 +248,10 @@
 #ifndef VLQT_PROTOCOL_H
 #define VLQT_PROTOCOL_H
 
-/* One number for the command protocol (this file) and the C ABI (vlqt.h): vlqt_app_get_abi_version() returns it, VL.Qt.dll
+/* One number for the command protocol (this file) and the C ABI (vlqt.h, vlqt_test.h): vlqt_app_get_abi_version() returns it, VL.Qt.dll
  * compares it with Protocol.AbiVersion before the first window or resource and refuses a vlqt.dll with another one.
  * Bump it on EVERY change to a constant, a struct layout or an exported signature (also additions); mirror it in Protocol.cs. */
-#define VLQT_ABI_VERSION 16
+#define VLQT_ABI_VERSION 17
 #define VLQT_COMMAND_ALIGN 4
 #define VLQT_HEADER_SIZE 4
 #define VLQT_ROOT_ID 0
@@ -597,19 +597,8 @@ enum vlqt_space {
     VLQT_SPACE_PIXEL_TOP_LEFT = 3 /* origin at the top left */
 };
 
-/* Modes of the TEST export vlqt_test_device_lost (vlqt.h).
- * REMOVE: real removal of the shared device (ID3D12Device5::RemoveDevice of the D3D12 device under it). Needs the
- *         shared device created through D3D11On12, i.e. VLQT_TEST_D3D11ON12=1 set before the first window/resource;
- *         deterministic, no admin, works on WARP (CI). Qt then sees the loss itself at the next Present.
- * HANG:   real loss by the driver: an endless shader on the shared device, Windows resets the GPU after ~2 s (TDR).
- *         Affects every application on that GPU, manual checks only. */
-enum vlqt_device_lost {
-    VLQT_DEVICE_LOST_REMOVE = 1,
-    VLQT_DEVICE_LOST_HANG = 2
-};
-
-/* Return codes of the offscreen exports vlqt_offscreen_* and vlqt_test_offscreen_state (vlqt.h, QtTexture), not
- * part of the command buffer. -1 and -7 as in the rest of vlqt.h; the own codes start at -20 so they never collide
+/* Return codes of the offscreen exports vlqt_offscreen_* (vlqt.h, QtTexture) and vlqt_test_offscreen_state
+ * (vlqt_test.h), not part of the command buffer. -1 and -7 as in the rest of vlqt.h; the own codes start at -20 so they never collide
  * with apply's -1..-8 or the resources' -9. vlqt_offscreen_render_batch returns >= 0 (scenes rendered) on success. */
 enum vlqt_offscreen_result {
     VLQT_OFFSCREEN_OK = 0,
@@ -622,26 +611,6 @@ enum vlqt_offscreen_result {
     VLQT_OFFSCREEN_FENCE_FAILED = -24,       /* no ID3D11Device5/ID3D11DeviceContext4, or fence create/share/open failed */
     VLQT_OFFSCREEN_DEVICE_LOST = -25,        /* QtNative's device is lost or being rebuilt: try again next frame */
     VLQT_OFFSCREEN_NOT_SUPPORTED = -26       /* no D3D11 (Linux, other graphics API) or not available on a scene */
-};
-
-/* Mouse event types of the TEST export vlqt_test_send_mouse (vlqt.h), not part of the command buffer. PRESS/RELEASE =
- * left button, *_RIGHT = right button, *_RIGHT_SYSTEM = right button synthesized by the OS from touch. */
-enum vlqt_mouse {
-    VLQT_MOUSE_MOVE = 1,
-    VLQT_MOUSE_PRESS = 2,
-    VLQT_MOUSE_RELEASE = 3,
-    VLQT_MOUSE_LEAVE = 4,
-    VLQT_MOUSE_PRESS_RIGHT = 5,
-    VLQT_MOUSE_RELEASE_RIGHT = 6,
-    VLQT_MOUSE_PRESS_RIGHT_SYSTEM = 7,  /* right button, source Qt::MouseEventSynthesizedBySystem (Windows press-and-hold) */
-    VLQT_MOUSE_RELEASE_RIGHT_SYSTEM = 8
-};
-
-/* Touch point events of the TEST export vlqt_test_send_touch (vlqt.h), not part of the command buffer. */
-enum vlqt_touch {
-    VLQT_TOUCH_PRESS = 1,
-    VLQT_TOUCH_MOVE = 2,
-    VLQT_TOUCH_RELEASE = 3
 };
 
 /* Pointer events of vlqt_offscreen_send_pointer (vlqt.h, QtTexture input), not part of the command buffer. */
@@ -666,9 +635,8 @@ enum vlqt_key_event {
     VLQT_KEY_EVENT_RELEASE = 2
 };
 
-/* Resource kinds of vlqt_res_create (int) */
+/* Resource kinds of vlqt_res_create (int); 1 is VLQT_RES_KIND_TEST of vlqt_test.h */
 enum vlqt_res_kind {
-    VLQT_RES_KIND_TEST = 1, /* test only: decode sleeps n ms in a worker, upload uses n bytes of budget (vlqt_test_res_start) */
     VLQT_RES_KIND_IMAGE = 2, /* image from a file or pixels (vlqt_res_load_image / vlqt_res_set_pixels), texture on the process device */
     VLQT_RES_KIND_SNAPSHOT = 3, /* CPU copy of an element (vlqt_res_snapshot / vlqt_res_read_pixels), no texture */
     VLQT_RES_KIND_SHADER = 4, /* .qsb shader of one stage (vlqt_res_load_shader), for ShaderEffect */

@@ -255,7 +255,7 @@ tools/                      # build, export, license and test scripts
 1. Edit `src/VL.Qt.Native/protocol.h` (type or property IDs)
 2. Mirror the change in `src/VL.Qt/Wire/Protocol.cs` by hand
 3. Bump `VLQT_ABI_VERSION` and `Protocol.AbiVersion` (every change to a constant, a layout or an exported signature; `QtApp` refuses a `vlqt.dll` with another number)
-4. Run `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"` to check that header and C# agree: constants and fixed wire sizes of `protocol.h` (`ProtocolDriftTests`), struct layouts of `vlqt.h` (`NativeLayoutTests`, numbers also in the `static_assert`s of `vlqt.cpp`) and the `VLQT_API` exports against the `[DllImport]`s (`ApiDriftTests`)
+4. Run `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"` to check that header and C# agree: constants and fixed wire sizes of `protocol.h` and the constants of `vlqt_test.h` (`ProtocolDriftTests`, against `Protocol.cs` and `TestProtocol.cs`), struct layouts of `vlqt.h` (`NativeLayoutTests`, numbers also in the `static_assert`s of `vlqt.cpp`) and the `VLQT_API` exports of `vlqt.h`, `vlqt_test.h` and `testkit/testkit.h` against the `[DllImport]`s of `Native` and `NativeTest` (`ApiDriftTests`)
 5. Implement both sides (`elements.cpp`, `Elements/`, `Reconciler/`)
 
 **Add a new element type:**

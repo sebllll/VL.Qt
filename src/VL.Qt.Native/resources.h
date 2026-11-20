@@ -181,9 +181,10 @@ struct Overview
 // Live resources into rows (cleared, capacity kept) and the upload totals, under one lock.
 void snapshot(std::vector<Row>& rows, Overview& out);
 
-// --- Tests (vlqt_test_res_*) ---
-int testStart(uint64_t id, int decodeMs, long long uploadBytes, int flags);
+// --- Test hooks (test/test_resource_kind.cpp) ---
+// The kind VLQT_RES_KIND_TEST (vlqt_test.h), defined in test/test_resource_kind.cpp.
+Kind* testKind();
+// vlqt_test_res_transition: the state machine's transition (VLQT_RES_STATE_*). 0 / -7 (rejected, logged) / -9.
 int testTransition(uint64_t id, int from, int to);
-int testElementRef(uint64_t id, int delta);
 
 } // namespace vlqt::res

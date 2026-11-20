@@ -25,17 +25,14 @@ public static class EffectLayerTest
 
     private static bool Near(Color c, int r, int g, int b, int tol = 12) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
-
     private const int ScenePage = 2;
 
     // Scene page (F5): "effects <layers> effect layers, <n> MultiEffect items" and "QML items <n>".
     private static (int layers, int effects, int items) Counts(IntPtr w)
     {
-        var need = -vlqt_test_perf_text(w, ScenePage, null, 0);
+        var need = -NativeTest.vlqt_test_perf_text(w, ScenePage, null, 0);
         var buf = new byte[Math.Max(need, 1)];
-        var n = vlqt_test_perf_text(w, ScenePage, buf, buf.Length);
+        var n = NativeTest.vlqt_test_perf_text(w, ScenePage, buf, buf.Length);
         var text = n > 0 ? System.Text.Encoding.UTF8.GetString(buf, 0, n) : "";
         var fx = Regex.Match(text, @"effects\s+(\d+)\s+effect layers, (\d+) MultiEffect items");
         var it = Regex.Match(text, @"QML items\s+(\d+)");
@@ -93,7 +90,7 @@ public static class EffectLayerTest
         }
         bool? Hover(float x, float y)
         {
-            Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, x, y);
+            NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, x, y);
             s.Pump(1);
             var n = Native.Poll(w, poll);
             return HoverFlag(poll.AsSpan(0, Math.Max(n, 0)), FeedbackIdH);

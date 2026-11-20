@@ -107,10 +107,8 @@ int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc)
 // element reference (res::acquire) for as long as it draws it.
 std::shared_ptr<ImageResource> ready(uint64_t id);
 
-// --- Tests (vlqt_test_*) ---
-// Reads the content back as RGBA8 premultiplied (texture readback through the upload QRhi, else the CPU copy).
+// test hook (vlqt_test_res_read_pixels, test/test_probes.cpp): reads the content back as RGBA8 premultiplied (texture
+// readback through the upload QRhi, else the CPU copy).
 int testRead(uint64_t id, unsigned char* out, int cap, int* width, int* height);
-// Writes a test image (four vertical stripes red, green, blue, white) as PNG/JPG (by extension).
-int testWrite(const char* utf8Path, int width, int height, int quality);
 
 } // namespace vlqt::res::image

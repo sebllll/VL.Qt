@@ -4,9 +4,6 @@
 #include "perf.h"
 #include "image_resource.h"
 #include "offscreen.h"
-#ifndef _WIN32
-#include "offscreen_glx.h"
-#endif
 #include "protocol.h"
 #include "qtimageitem.h"
 #include "resources.h"
@@ -15,6 +12,8 @@
 #include "shadereffectitem.h"
 #include "snapshot_resource.h"
 #include "image_writer.h"
+#include "last_error.h"
+#include "test/test_hooks.h"
 #include "threadname.h"
 #include "vlstyle.h"
 
@@ -32,7 +31,6 @@
 #include <QtGui/QIcon>
 #include <QtGui/QImage>
 #include <QtGui/QImageReader>
-#include <QtGui/QMouseEvent>
 #include <QtGui/QPointingDevice>
 #include <QtGui/QScreen>
 #include <QtGui/QSurfaceFormat>
@@ -59,8 +57,6 @@
 #else
 #include <QtGui/private/qhighdpiscaling_p.h>
 #include <QtGui/private/qwindow_p.h>
-#include <QtGui/QOpenGLContext>
-#include <QtGui/QOpenGLFunctions>
 #include <QtGui/qpa/qplatformwindow.h>
 #include <cstdlib>
 #include <dlfcn.h>
@@ -69,11 +65,11 @@
 #include <unistd.h>
 #endif
 
-// TEST ONLY (vlqt_test_send_touch): event points with an item-local position, one registered touchscreen.
+// Injected touch (sendTouch): event points with an item-local position, the device's point registration.
 #include <QtGui/private/qeventpoint_p.h>
 #include <QtGui/private/qpointingdevice_p.h>
+// vlqt_app_deliver_input: QWindowSystemInterface::flushWindowSystemEvents.
 #include <QtGui/qpa/qwindowsysteminterface.h>
-// vlqt_app_deliver_input: QWindowSystemInterface::flushWindowSystemEvents. TEST ONLY: native positions of queued input.
 #include <QtGui/private/qhighdpiscaling_p.h>
 
 #include <string>
@@ -115,6 +111,7 @@ QGuiApplication* g_app = nullptr;
 
 void setError(const std::string& e) { g_lastError = e; }
 void setErrorQ(const QString& e) { g_lastError = e.toStdString(); }
+using vlqt::guarded;
 
 // every message of QtNative and of Qt goes to the managed logger (vvvv Log window, logging providers).
 // Levels: 0 debug, 1 info, 2 warning, 3 critical, 4 fatal (C# maps them to LogLevel); the category is passed verbatim.
@@ -519,57 +516,6 @@ private:
     static inline std::vector<UpdateGate*> s_gates;
 };
 
-// TEST ONLY: with VLQT_TEST_SYNTHETIC_INPUT=1 (read per window at create, SmokeTest) the window drops spontaneous
-// (OS) pointer/hover events, so a real cursor resting over a test window cannot change hover/press state; input
-// from vlqt_test_send_mouse (sendEvent, not spontaneous) passes, and so does queued input of the test devices
-// (vlqt_test_queue_mouse / _touch, spontaneous like platform input).
-constexpr qint64 testTouchSystemId = 0x766c7174;
-constexpr qint64 testMouseSystemId = 0x766c716d;
-class SystemInputFilter : public QObject
-{
-public:
-    using QObject::QObject;
-protected:
-    static bool fromTestDevice(QEvent* e)
-    {
-        if (!e->isPointerEvent())
-            return false;
-        const QPointingDevice* d = static_cast<QPointerEvent*>(e)->pointingDevice();
-        return d && (d->systemId() == testTouchSystemId || d->systemId() == testMouseSystemId);
-    }
-    bool eventFilter(QObject* o, QEvent* e) override
-    {
-        if (e->spontaneous() && !fromTestDevice(e)) {
-            switch (e->type()) {
-            case QEvent::MouseMove: case QEvent::MouseButtonPress: case QEvent::MouseButtonRelease:
-            case QEvent::MouseButtonDblClick: case QEvent::HoverEnter: case QEvent::HoverMove:
-            case QEvent::HoverLeave: case QEvent::Enter: case QEvent::Leave: case QEvent::Wheel:
-            case QEvent::TouchBegin: case QEvent::TouchUpdate: case QEvent::TouchEnd: case QEvent::TouchCancel:
-            case QEvent::TabletMove: case QEvent::TabletPress: case QEvent::TabletRelease:
-                return true;
-            default:
-                break;
-            }
-        }
-        return QObject::eventFilter(o, e);
-    }
-};
-
-#ifdef _WIN32
-// Win32 process environment, not the CRT copy (qgetenv): the .NET host sets the variable at runtime.
-bool testSyntheticInputOnly()
-{
-    wchar_t v[4] = {};
-    return GetEnvironmentVariableW(L"VLQT_TEST_SYNTHETIC_INPUT", v, 4) == 1 && v[0] == L'1';
-}
-#else
-// libc environ (getenv).
-bool testSyntheticInputOnly()
-{
-    return qgetenv("VLQT_TEST_SYNTHETIC_INPUT") == "1";
-}
-#endif
-
 // A window handle (void* of the vlqt_window_* exports): a window, or an offscreen scene (offscreen.cpp) whose
 // QQuickWindow is driven by a QQuickRenderControl. Both share engine, scene, gate and perf; a scene has only the
 // FocusRelease input filter (closeFilter etc. stay null) and its own part in offscreen.
@@ -581,11 +527,7 @@ struct Window {
     vlqt::Scene* scene = nullptr; // apply/poll
     UpdateGate* gate = nullptr;
     PerfMonitor* perf = nullptr;
-    Qt::MouseButtons testButtons = Qt::NoButton; // vlqt_test_send_mouse: buttons held between test events
-    QElapsedTimer testClock;                     // vlqt_test_send_mouse / _touch: event timestamps
-    std::vector<std::pair<int, QPointF>> testTouch; // vlqt_test_send_touch: active points (id, window DIP)
-    Qt::MouseButtons testQueuedButtons = Qt::NoButton;    // vlqt_test_queue_mouse
-    std::vector<std::pair<int, QPointF>> testQueuedTouch; // vlqt_test_queue_touch: active points (id, window DIP)
+    vlqt::test::InputState testInput;            // test hook: synthetic input state (test/test_input.cpp)
     unsigned mode = 0;                           // vlqt_window_set_mode: requested vlqt_window_mode bits
     // geometry before fullscreen (DIP, frame position like vlqt_window_create_at), restored when leaving it
     bool fsSaved = false;
@@ -593,42 +535,6 @@ struct Window {
     QSize fsSize;
     Qt::WindowStates fsStates;
 };
-
-// vlqt_test_send_key*: deliver like the platform does, to the focus window. A Qt Quick popup of type Popup.Window
-// (e.g. the TextField context menu under Linux offscreen) is its own Qt::Popup window and holds the keyboard
-// focus; sent to the main window, Escape would never close it and all later keys would be lost. Once the popup is
-// hidden, a window manager gives the focus back to the main window; the offscreen QPA has none and leaves it on the
-// hidden popup (main window inactive, no active focus item), so the test hands it back here.
-QWindow* testKeyTarget(Window* w)
-{
-    QWindow* f = QGuiApplication::focusWindow();
-    if (!f || f == w->window || f->type() != Qt::Popup || f->transientParent() != w->window)
-        return w->window;
-    if (f->isVisible())
-        return f;
-    QWindowSystemInterface::handleFocusWindowChanged<QWindowSystemInterface::SynchronousDelivery>(w->window, Qt::PopupFocusReason);
-    return w->window;
-}
-
-// The test input exports on an offscreen scene: a scene takes input through vlqt_offscreen_send_*.
-int notOnScene(const char* function)
-{
-    setError(std::string(function) + ": not supported on an offscreen scene");
-    return VLQT_OFFSCREEN_NOT_SUPPORTED;
-}
-
-template <class F>
-int guarded(F&& f)
-{
-    try {
-        return f();
-    } catch (const std::exception& e) {
-        setError(std::string("exception: ") + e.what());
-    } catch (...) {
-        setError("unknown exception");
-    }
-    return -1;
-}
 
 #ifndef _WIN32
 // WSLg: WSL has no DRM node (/dev/dri), only /dev/dxg, so Mesa's EGL loader finds no
@@ -838,8 +744,7 @@ void installWindowFilters(Window* w, QQuickWindow* win)
     vlqt::device::lockFrames(win); // windows only: a scene's render thread locks itself (offscreen.cpp)
     win->installEventFilter(new FullscreenKeys(win, w));
     win->installEventFilter(new FocusRelease(win));
-    if (testSyntheticInputOnly())
-        win->installEventFilter(new SystemInputFilter(win)); // test only
+    vlqt::test::installInputFilter(win); // test hook: VLQT_TEST_SYNTHETIC_INPUT (test/test_input.cpp)
 }
 
 // MSAA count of a window's swap chain: R8G8B8A8_UNORM is the format of Qt's D3D11 swap chain (SDR).
@@ -1031,6 +936,37 @@ void setError(const std::string& message)
 }
 
 } // namespace vlqt::offscreen
+
+void vlqt::setLastError(const std::string& message)
+{
+    ::setError(message);
+}
+
+// test hooks: the parts of a window handle the test exports read (test/test_hooks.h).
+namespace vlqt::test {
+
+Scene* scene(void* handle)
+{
+    return handle ? static_cast<Window*>(handle)->scene : nullptr;
+}
+
+PerfMonitor* perf(void* handle)
+{
+    return handle ? static_cast<Window*>(handle)->perf : nullptr;
+}
+
+InputState* input(void* handle)
+{
+    return handle ? &static_cast<Window*>(handle)->testInput : nullptr;
+}
+
+int fontRefs(unsigned long long handle)
+{
+    const FontEntry* e = findFont(handle);
+    return e ? e->refs : -9;
+}
+
+} // namespace vlqt::test
 
 extern "C" {
 
@@ -1380,86 +1316,6 @@ VLQT_API int vlqt_window_is_visible(void* p)
     return (w && !w->offscreen && w->window->isVisible()) ? 1 : 0;
 }
 
-#ifndef _WIN32
-// W1-21: on Qt's offscreen platform with OpenGL, Mesa's software winsys can keep an old size of the window's default
-// framebuffer (offscreen_glx.h), so a grab would read only part of the frame. Before a grab, make the window's context
-// current (Qt sizes its X window to the window) and invalidate the drawable, so the grab's frame takes the window's size.
-// Returns the GL context, or null on other platforms and backends.
-static QOpenGLContext* refreshOffscreenGlx(QQuickWindow* window)
-{
-    if (QGuiApplication::platformName() != QLatin1String("offscreen"))
-        return nullptr;
-    QRhi* rhi = window->rhi();
-    if (!rhi || rhi->backend() != QRhi::OpenGLES2)
-        return nullptr;
-    auto* handles = static_cast<const QRhiGles2NativeHandles*>(rhi->nativeHandles());
-    QOpenGLContext* ctx = handles ? handles->context : nullptr;
-    if (!ctx || !ctx->makeCurrent(window))
-        return nullptr;
-    static bool s_warned = false;
-    if (!vlqt::glx::invalidateCurrentDrawable() && !s_warned) {
-        s_warned = true;
-        emitLog(2, "vlqt.grab", "offscreen GLX: no current drawable or libGL not found, a window grab may read a framebuffer of an old size");
-    }
-    return ctx;
-}
-
-// Returns false if the default framebuffer of the current context does not reach the window's last pixel (a grab then
-// read memory that was never written).
-static bool glxCoversWindow(QOpenGLContext* ctx, QQuickWindow* window)
-{
-    if (!ctx->makeCurrent(window))
-        return true;
-    const QSize px = window->size() * window->devicePixelRatio();
-    auto* f = ctx->functions();
-    f->glBindFramebuffer(GL_FRAMEBUFFER, ctx->defaultFramebufferObject());
-    quint32 v = 0xDEADBEEF;
-    f->glReadPixels(px.width() - 1, px.height() - 1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &v);
-    return v != 0xDEADBEEF;
-}
-#endif
-
-VLQT_API int vlqt_window_grab(void* p, const char* pngPath)
-{
-    return guarded([&]() -> int {
-        auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("null window");
-            return -1;
-        }
-        if (w->offscreen)
-            return notOnScene("grab");
-        QImage img;
-#ifndef _WIN32
-        QOpenGLContext* glx = refreshOffscreenGlx(w->window);
-#endif
-        {
-            // The frame of grabWindow ends without afterFrameEnd (QSGGuiThreadRenderLoop::grab).
-            vlqt::device::ContextLock lock;
-            img = w->window->grabWindow();
-            vlqt::device::releaseFrameLocks();
-        }
-#ifndef _WIN32
-        if (glx && !glxCoversWindow(glx, w->window)) {
-            int w3, h3;
-            vlqt::glx::currentDrawableSize(&w3, &h3);
-            const QSize px = w->window->size() * w->window->devicePixelRatio();
-            emitLog(2, "vlqt.grab", QStringLiteral("offscreen GLX framebuffer smaller than the window (%1 x %2 px, X window %3 x %4 px): grab %5 is incomplete")
-                .arg(px.width()).arg(px.height()).arg(w3).arg(h3).arg(QString::fromUtf8(pngPath)).toUtf8());
-        }
-#endif
-        if (img.isNull()) {
-            setError("grabWindow returned null image");
-            return -2;
-        }
-        if (!img.save(QString::fromUtf8(pngPath), "PNG")) {
-            setError("saving png failed");
-            return -3;
-        }
-        return 0;
-    });
-}
-
 VLQT_API int vlqt_window_get_perf(void* p, vlqt_perf* out)
 {
     return guarded([&]() -> int {
@@ -1501,18 +1357,6 @@ VLQT_API int vlqt_window_get_perf_stats(void* p, vlqt_perf_stats* out)
             return -1;
         }
         w->perf->stats(out);
-        return 0;
-    });
-}
-
-VLQT_API int vlqt_perf_eval(const vlqt_perf_sample* samples, const double* t_ms, int n, double budget_ms, vlqt_perf_stats* out)
-{
-    return guarded([&]() -> int {
-        if (!out || n < 0 || (n > 0 && (!samples || !t_ms))) {
-            setError("null or negative argument");
-            return -1;
-        }
-        perfEval(samples, t_ms, n, budget_ms, out);
         return 0;
     });
 }
@@ -1559,18 +1403,6 @@ VLQT_API int vlqt_window_get_host_stats(void* p, vlqt_host_stats* out)
             return -1;
         }
         w->perf->hostStats(out);
-        return 0;
-    });
-}
-
-VLQT_API int vlqt_perf_host_eval(const vlqt_host_frame* frames, int n, vlqt_host_stats* out)
-{
-    return guarded([&]() -> int {
-        if (!out || n < 0 || (n > 0 && !frames)) {
-            setError("null or negative argument");
-            return -1;
-        }
-        perfHostStats(frames, n, out);
         return 0;
     });
 }
@@ -1919,332 +1751,6 @@ VLQT_API int vlqt_window_poll(void* p, unsigned char* out, int cap)
     });
 }
 
-VLQT_API int vlqt_test_send_mouse(void* p, int type, float x, float y)
-{
-    return guarded([&]() -> int {
-        auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("test_send_mouse: null window");
-            return -1;
-        }
-        if (w->offscreen)
-            return notOnScene("test_send_mouse");
-        if (type == VLQT_MOUSE_LEAVE) {
-            QEvent ev(QEvent::Leave);
-            QCoreApplication::sendEvent(w->window, &ev);
-            return 0;
-        }
-        QEvent::Type t;
-        Qt::MouseButton button = Qt::NoButton;
-        Qt::MouseButtons buttons = Qt::NoButton;
-        Qt::MouseEventSource source = Qt::MouseEventNotSynthesized;
-        switch (type) {
-        case VLQT_MOUSE_MOVE: t = QEvent::MouseMove; buttons = w->testButtons; break;
-        case VLQT_MOUSE_PRESS: t = QEvent::MouseButtonPress; button = Qt::LeftButton; buttons = Qt::LeftButton; break;
-        case VLQT_MOUSE_RELEASE: t = QEvent::MouseButtonRelease; button = Qt::LeftButton; break;
-        case VLQT_MOUSE_PRESS_RIGHT: t = QEvent::MouseButtonPress; button = Qt::RightButton; buttons = Qt::RightButton; break;
-        case VLQT_MOUSE_RELEASE_RIGHT: t = QEvent::MouseButtonRelease; button = Qt::RightButton; break;
-        case VLQT_MOUSE_PRESS_RIGHT_SYSTEM:
-            t = QEvent::MouseButtonPress; button = Qt::RightButton; buttons = Qt::RightButton; source = Qt::MouseEventSynthesizedBySystem;
-            break;
-        case VLQT_MOUSE_RELEASE_RIGHT_SYSTEM:
-            t = QEvent::MouseButtonRelease; button = Qt::RightButton; source = Qt::MouseEventSynthesizedBySystem;
-            break;
-        default:
-            setError("test_send_mouse: unknown type " + std::to_string(type));
-            return -2;
-        }
-        w->testButtons = buttons;
-        const QPointF local(x, y);
-        QMouseEvent ev(t, local, local, w->window->mapToGlobal(local), button, buttons, Qt::NoModifier, source);
-        if (!w->testClock.isValid())
-            w->testClock.start();
-        ev.setTimestamp(quint64(w->testClock.elapsed()) + 1); // monotonic (TapHandler compares timestamps)
-        QCoreApplication::sendEvent(w->window, &ev);
-        return 0;
-    });
-}
-
-VLQT_API int vlqt_test_send_wheel(void* p, float x, float y, int dx, int dy)
-{
-    return guarded([&]() -> int {
-        auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("test_send_wheel: null window");
-            return -1;
-        }
-        if (w->offscreen)
-            return notOnScene("test_send_wheel");
-        const QPointF local(x, y);
-        QWheelEvent ev(local, w->window->mapToGlobal(local), QPoint(), QPoint(dx, dy), w->testButtons, Qt::NoModifier,
-            Qt::NoScrollPhase, false);
-        if (!w->testClock.isValid())
-            w->testClock.start();
-        ev.setTimestamp(quint64(w->testClock.elapsed()) + 1);
-        QCoreApplication::sendEvent(w->window, &ev);
-        return 0;
-    });
-}
-
-// TEST ONLY: one touchscreen for vlqt_test_send_touch, registered once (child of the app, recreated with it).
-static const QPointingDevice* testTouchDevice()
-{
-    static QPointer<QPointingDevice> s_device;
-    if (!s_device) {
-        s_device = new QPointingDevice(QStringLiteral("vlqt test touchscreen"), testTouchSystemId, QInputDevice::DeviceType::TouchScreen,
-            QPointingDevice::PointerType::Finger, QInputDevice::Capability::Position | QInputDevice::Capability::Area, 10, 0,
-            QString(), QPointingDeviceUniqueId(), QCoreApplication::instance());
-        QWindowSystemInterface::registerInputDevice(s_device);
-    }
-    return s_device;
-}
-
-VLQT_API int vlqt_test_send_touch(void* p, int type, int id, float x, float y)
-{
-    return guarded([&]() -> int {
-        auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("test_send_touch: null window");
-            return -1;
-        }
-        if (w->offscreen)
-            return notOnScene("test_send_touch");
-        QEventPoint::State state;
-        switch (type) {
-        case VLQT_TOUCH_PRESS: state = QEventPoint::State::Pressed; break;
-        case VLQT_TOUCH_MOVE: state = QEventPoint::State::Updated; break;
-        case VLQT_TOUCH_RELEASE: state = QEventPoint::State::Released; break;
-        default:
-            setError("test_send_touch: unknown type " + std::to_string(type));
-            return -2;
-        }
-        if (!w->testClock.isValid())
-            w->testClock.start();
-        const ulong ts = ulong(w->testClock.elapsed()) + 1; // monotonic (TapHandler compares timestamps)
-        return vlqt::offscreen::sendTouch(w->window, testTouchDevice(), w->testTouch, state, id, QPointF(x, y), ts,
-                   Qt::NoModifier, "test_send_touch")
-            ? 0
-            : -2;
-    });
-}
-
-// TEST ONLY: one mouse for vlqt_test_queue_mouse, registered once like the touchscreen.
-static const QPointingDevice* testMouseDevice()
-{
-    static QPointer<QPointingDevice> s_device;
-    if (!s_device) {
-        s_device = new QPointingDevice(QStringLiteral("vlqt test mouse"), testMouseSystemId, QInputDevice::DeviceType::Mouse,
-            QPointingDevice::PointerType::Generic, QInputDevice::Capability::Position | QInputDevice::Capability::Hover, 1, 3,
-            QString(), QPointingDeviceUniqueId(), QCoreApplication::instance());
-        QWindowSystemInterface::registerInputDevice(s_device);
-    }
-    return s_device;
-}
-
-VLQT_API int vlqt_test_queue_mouse(void* p, int type, float x, float y)
-{
-    return guarded([&]() -> int {
-        auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("test_queue_mouse: null window");
-            return -1;
-        }
-        if (w->offscreen)
-            return notOnScene("test_queue_mouse");
-        QEvent::Type t;
-        Qt::MouseButton button = Qt::NoButton;
-        Qt::MouseButtons buttons = w->testQueuedButtons;
-        switch (type) {
-        case VLQT_MOUSE_MOVE: t = QEvent::MouseMove; break;
-        case VLQT_MOUSE_PRESS: t = QEvent::MouseButtonPress; button = Qt::LeftButton; buttons |= Qt::LeftButton; break;
-        case VLQT_MOUSE_RELEASE: t = QEvent::MouseButtonRelease; button = Qt::LeftButton; buttons &= ~Qt::LeftButton; break;
-        default:
-            setError("test_queue_mouse: unknown type " + std::to_string(type));
-            return -2;
-        }
-        w->testQueuedButtons = buttons;
-        if (!w->testClock.isValid())
-            w->testClock.start();
-        const QPointF local(x, y);
-        // Native pixels, like the platform plugin hands them over (QWindowSystemInterface scales them back).
-        QWindowSystemInterface::handleMouseEvent<QWindowSystemInterface::AsynchronousDelivery>(w->window,
-            ulong(w->testClock.elapsed()) + 1, testMouseDevice(), QHighDpi::toNativeLocalPosition(local, w->window),
-            QHighDpi::toNativeGlobalPosition(QPointF(w->window->mapToGlobal(local)), w->window), buttons, button, t);
-        return 0;
-    });
-}
-
-VLQT_API int vlqt_test_queue_touch(void* p, int type, int id, float x, float y)
-{
-    return guarded([&]() -> int {
-        auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("test_queue_touch: null window");
-            return -1;
-        }
-        if (w->offscreen)
-            return notOnScene("test_queue_touch");
-        auto& active = w->testQueuedTouch;
-        auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
-        const bool known = it != active.end();
-        QEventPoint::State state;
-        switch (type) {
-        case VLQT_TOUCH_PRESS: state = QEventPoint::State::Pressed; break;
-        case VLQT_TOUCH_MOVE: state = QEventPoint::State::Updated; break;
-        case VLQT_TOUCH_RELEASE: state = QEventPoint::State::Released; break;
-        default:
-            setError("test_queue_touch: unknown type " + std::to_string(type));
-            return -2;
-        }
-        if (known == (type == VLQT_TOUCH_PRESS)) {
-            setError("test_queue_touch: point " + std::to_string(id) + (known ? " is already pressed" : " is not pressed"));
-            return -2;
-        }
-        const QPointF pos(x, y);
-        if (known)
-            it->second = pos;
-        else
-            active.emplace_back(id, pos);
-        if (!w->testClock.isValid())
-            w->testClock.start();
-        // The complete touch state like a touchscreen driver: every active point, the changed one with its state.
-        // QGuiApplication registers and forgets the points at the device itself (not the sendEvent path).
-        QList<QWindowSystemInterface::TouchPoint> points;
-        for (const auto& a : active) {
-            QWindowSystemInterface::TouchPoint tp;
-            tp.id = a.first;
-            tp.state = a.first == id ? state : QEventPoint::State::Stationary;
-            const QPointF global = QHighDpi::toNativeGlobalPosition(QPointF(w->window->mapToGlobal(a.second)), w->window);
-            tp.area = QRectF(global - QPointF(2, 2), QSizeF(4, 4));
-            tp.pressure = tp.state == QEventPoint::State::Released ? 0 : 1;
-            points.append(tp);
-        }
-        QWindowSystemInterface::handleTouchEvent<QWindowSystemInterface::AsynchronousDelivery>(w->window,
-            ulong(w->testClock.elapsed()) + 1, testTouchDevice(), points);
-        if (type == VLQT_TOUCH_RELEASE)
-            active.erase(std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; }));
-        return 0;
-    });
-}
-
-VLQT_API int vlqt_test_handler_count(void* p, unsigned int id)
-{
-    return guarded([&]() -> int {
-        auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("test_handler_count: null window");
-            return -1;
-        }
-        auto it = w->scene->nodes.find(id);
-        if (it == w->scene->nodes.end()) {
-            setError("test_handler_count: unknown id " + std::to_string(id));
-            return vlqt::ApplyUnknownId;
-        }
-        int n = 0;
-        for (QObject* c : it->second.item->children())
-            if (c->inherits("QQuickPointerHandler"))
-                ++n;
-        return n;
-    });
-}
-
-VLQT_API int vlqt_test_perf_spike(void* p, int phase, float ms)
-{
-    auto* w = static_cast<Window*>(p);
-    if (!w) {
-        setError("test_perf_spike: null window");
-        return -1;
-    }
-    w->perf->injectSpike(phase, ms);
-    return 0;
-}
-
-// header text of the F5 stats page as UTF-8 (HTML); returns the full length, copies up to len - 1 bytes.
-VLQT_API int vlqt_test_perf_stats_text(void* p, char* buf, int len)
-{
-    auto* w = static_cast<Window*>(p);
-    if (!w) {
-        setError("test_perf_stats_text: null window");
-        return -1;
-    }
-    const QByteArray t = w->perf->statsText().toUtf8();
-    if (buf && len > 0) {
-        const int n = std::min<int>(len - 1, int(t.size()));
-        std::memcpy(buf, t.constData(), size_t(n));
-        buf[n] = 0;
-    }
-    return int(t.size());
-}
-
-VLQT_API int vlqt_test_perf_text(void* p, int page, char* out, int cap)
-{
-    return guarded([&]() -> int {
-        auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("test_perf_text: null window");
-            return -1;
-        }
-        const QByteArray utf8 = w->perf->pageText(page).toUtf8();
-        const int n = int(utf8.size());
-        if (!out || cap < n + 1)
-            return -(n + 1);
-        std::memcpy(out, utf8.constData(), size_t(n) + 1);
-        return n;
-    });
-}
-
-VLQT_API int vlqt_test_device_info(void* p, void** device, void** rhi)
-{
-    return guarded([&]() -> int {
-        QRhi* r = p ? static_cast<Window*>(p)->window->rhi() : vlqt::device::uploadRhi();
-        if (device)
-            *device = vlqt::device::nativeDevice(r);
-        if (rhi)
-            *rhi = r;
-        return r ? 0 : -2;
-    });
-}
-
-VLQT_API int vlqt_test_device_lost(int mode)
-{
-    return guarded([&]() -> int { return vlqt::device::testLost(mode); });
-}
-
-VLQT_API int vlqt_test_send_key(void* p, int key, int modifiers)
-{
-    return guarded([&]() -> int {
-        auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("test_send_key: null window");
-            return -1;
-        }
-        if (w->offscreen)
-            return notOnScene("test_send_key");
-        QKeyEvent ev(QEvent::KeyPress, key, Qt::KeyboardModifiers(modifiers));
-        QCoreApplication::sendEvent(testKeyTarget(w), &ev);
-        return 0;
-    });
-}
-
-VLQT_API int vlqt_test_send_key_text(void* p, int key, int modifiers, const char* text)
-{
-    return guarded([&]() -> int {
-        auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("test_send_key_text: null window");
-            return -1;
-        }
-        if (w->offscreen)
-            return notOnScene("test_send_key_text");
-        const QString t = text ? QString::fromUtf8(text) : QString();
-        QKeyEvent press(QEvent::KeyPress, key, Qt::KeyboardModifiers(modifiers), t);
-        QCoreApplication::sendEvent(testKeyTarget(w), &press);
-        QKeyEvent release(QEvent::KeyRelease, key, Qt::KeyboardModifiers(modifiers), t);
-        QCoreApplication::sendEvent(testKeyTarget(w), &release);
-        return 0;
-    });
-}
-
 // Resources: thin wrappers, the manager logs its own warnings (category VL.Qt.Resources).
 VLQT_API int vlqt_res_create(int kind, unsigned long long* outId)
 {
@@ -2353,34 +1859,9 @@ VLQT_API long long vlqt_now_ns(void)
     return vlqt::res::audio::nowNs();
 }
 
-VLQT_API int vlqt_test_res_read_pixels(unsigned long long id, unsigned char* out, int cap, int* width, int* height)
-{
-    return guarded([&] { return vlqt::res::image::testRead(id, out, cap, width, height); });
-}
-
 VLQT_API int vlqt_image_write(const vlqt_pixel_desc* desc, const void* data, int len, const char* utf8Path, int quality, char* err, int errCap)
 {
     return guarded([&] { return vlqt::imagewriter::write(desc, data, len, utf8Path, quality, err, errCap); });
-}
-
-VLQT_API int vlqt_test_write_image(const char* utf8Path, int width, int height, int quality)
-{
-    return guarded([&] { return vlqt::res::image::testWrite(utf8Path, width, height, quality); });
-}
-
-VLQT_API int vlqt_test_res_start(unsigned long long id, int decodeMs, long long uploadBytes, int flags)
-{
-    return guarded([&] { return vlqt::res::testStart(id, decodeMs, uploadBytes, flags); });
-}
-
-VLQT_API int vlqt_test_res_transition(unsigned long long id, int from, int to)
-{
-    return guarded([&] { return vlqt::res::testTransition(id, from, to); });
-}
-
-VLQT_API int vlqt_test_res_element_ref(unsigned long long id, int delta)
-{
-    return guarded([&] { return vlqt::res::testElementRef(id, delta); });
 }
 
 // Tooltip previews (package 01).
@@ -2490,12 +1971,6 @@ VLQT_API int vlqt_font_release(unsigned long long handle)
         e->refs--; // removed at the end of the pump if still 0 (fontsEndFrame)
         return 0;
     });
-}
-
-VLQT_API int vlqt_test_font_refs(unsigned long long handle)
-{
-    const FontEntry* e = findFont(handle);
-    return e ? e->refs : -9;
 }
 
 } // extern "C"

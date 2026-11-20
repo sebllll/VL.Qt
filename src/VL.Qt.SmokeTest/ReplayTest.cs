@@ -252,7 +252,7 @@ public static class ReplayTest
         }
         pump(5);
         var png = Path.Combine(outDir, "replay.png");
-        if (Native.vlqt_window_grab(w, png) == 0) Console.WriteLine("REPLAY grab " + png);
+        if (NativeTest.vlqt_test_window_grab(w, png) == 0) Console.WriteLine("REPLAY grab " + png);
         else { errors++; Console.WriteLine("REPLAY ERROR grab: " + Native.LastError()); }
         Native.vlqt_window_destroy(w);
         Console.WriteLine(errors == 0 ? "REPLAY OK" : $"REPLAY FAILED ({errors} errors)");

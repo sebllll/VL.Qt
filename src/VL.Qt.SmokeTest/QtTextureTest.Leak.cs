@@ -63,11 +63,11 @@ public static partial class QtTextureTest
             s.Check(ok, what);
             return ok;
         }
-        if (!check(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "leak: create test device"))
+        if (!check(NativeTest.CreateDevice(0, out var device, out var context) == 0, "leak: create test device"))
             return;
-        IntPtr QtDevice() => Native.vlqt_test_device_info(IntPtr.Zero, out var d, out _) == 0 ? d : IntPtr.Zero;
+        IntPtr QtDevice() => NativeTest.vlqt_test_device_info(IntPtr.Zero, out var d, out _) == 0 ? d : IntPtr.Zero;
         Dictionary<string, int>? Live() => OperatingSystem.IsWindows() ? D3DDebugLayer.LiveObjects(QtDevice()) : null;
-        int QtRefs() => QtDevice() is var d && d != IntPtr.Zero ? Native.vlqt_test_com_ref_count(d) : -1;
+        int QtRefs() => QtDevice() is var d && d != IntPtr.Zero ? NativeTest.vlqt_test_com_ref_count(d) : -1;
 
         // One round: a scene bound to a texture of size and format 1, rendered, rebound to a texture of size and format 2
         // (a replacing bind), rendered, unbound, destroyed. Returns false when a step failed (first failure is logged).
@@ -100,7 +100,7 @@ public static partial class QtTextureTest
             if (ok && NewTarget(foreignDevice, w1, h1, f1.Texture, out tex1, out var handle1))
             {
                 int rc = Native.vlqt_offscreen_bind(scene, foreignDevice, handle1, w1, h1, f1.View, 1, out _);
-                Native.vlqt_test_close_handle(handle1);
+                NativeTest.vlqt_test_close_handle(handle1);
                 int rendered = rc == 0 ? Native.OffscreenRenderBatch(foreignContext, new[] { scene }, 0) : rc;
                 if (rc != 0 || rendered != 1)
                 {
@@ -123,7 +123,7 @@ public static partial class QtTextureTest
             if (ok && NewTarget(foreignDevice, w2, h2, f2.Texture, out tex2, out var handle2))
             {
                 int rc = Native.vlqt_offscreen_bind(scene, foreignDevice, handle2, w2, h2, f2.View, 1, out _);
-                Native.vlqt_test_close_handle(handle2);
+                NativeTest.vlqt_test_close_handle(handle2);
                 int rendered = rc == 0 ? Native.OffscreenRenderBatch(foreignContext, new[] { scene }, 0) : rc;
                 if (rc != 0 || rendered != 1)
                 {
@@ -136,9 +136,9 @@ public static partial class QtTextureTest
             if (Native.vlqt_offscreen_unbind(scene) != 0)
                 Fail("unbind", 0);
             if (tex1 != IntPtr.Zero)
-                Native.vlqt_test_com_release(tex1);
+                NativeTest.vlqt_test_com_release(tex1);
             if (tex2 != IntPtr.Zero)
-                Native.vlqt_test_com_release(tex2);
+                NativeTest.vlqt_test_com_release(tex2);
             Native.vlqt_window_destroy(scene);
             return ok;
         }
@@ -154,7 +154,7 @@ public static partial class QtTextureTest
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
-                count = Native.vlqt_test_process_handle_count();
+                count = NativeTest.vlqt_test_process_handle_count();
                 if (reference == int.MaxValue || count - reference <= handleTolerance)
                     break;
                 System.Threading.Thread.Sleep(100);
@@ -167,7 +167,7 @@ public static partial class QtTextureTest
         for (int i = 0; i < 6; i++)
             Round(i, device, context);
         int handles0 = Handles();
-        int deviceRefs0 = Native.vlqt_test_com_ref_count(device);
+        int deviceRefs0 = NativeTest.vlqt_test_com_ref_count(device);
         int qtRefs0 = QtRefs();
         var live0 = Live();
         check(failure == null, $"leak: warm-up rounds ({failure})");
@@ -180,14 +180,14 @@ public static partial class QtTextureTest
             rounds++;
             if (!Round(i, device, context))
                 failedRounds++;
-            if (Native.vlqt_test_com_ref_count(device) != deviceRefs0)
+            if (NativeTest.vlqt_test_com_ref_count(device) != deviceRefs0)
                 refMismatches++;
             if (rounds == handleMarkRounds)
                 handlesMark = Handles();
         }
         double seconds = clock.Elapsed.TotalSeconds;
         int handles1 = Handles(handlesMark >= 0 ? handlesMark : handles0);
-        int deviceRefs1 = Native.vlqt_test_com_ref_count(device);
+        int deviceRefs1 = NativeTest.vlqt_test_com_ref_count(device);
         int qtRefs1 = QtRefs();
         check(failedRounds == 0, $"leak: {rounds} rounds with size and format changes all rendered ({failedRounds} failed; {failure})");
         s.Info($"leak: {rounds} rounds in {seconds:F1} s ({seconds * 1000 / rounds:F1} ms per round)");
@@ -204,14 +204,14 @@ public static partial class QtTextureTest
         int foreignLeft = 0, foreignFailed = 0;
         for (int i = 0; i < foreignRounds; i++)
         {
-            if (Native.vlqt_test_d3d11_create_device(0, out var d2, out var c2) != 0)
+            if (NativeTest.CreateDevice(0, out var d2, out var c2) != 0)
             {
                 foreignFailed++;
                 continue;
             }
             if (!Round(i, d2, c2))
                 foreignFailed++;
-            foreignLeft += Math.Max(0, Native.vlqt_test_d3d11_release_device(d2, c2));
+            foreignLeft += Math.Max(0, NativeTest.vlqt_test_d3d11_release_device(d2, c2));
         }
         int qtRefs2 = QtRefs();
         int handles2 = Handles();
@@ -253,14 +253,14 @@ public static partial class QtTextureTest
                 Native.Apply(scenes[k], cmd.EndFrame());
                 NewTarget(device, 32, 24, f.Texture, out textures[k], out var handle);
                 int rc = Native.vlqt_offscreen_bind(scenes[k], device, handle, 32, 24, f.View, 1, out _);
-                Native.vlqt_test_close_handle(handle);
+                NativeTest.vlqt_test_close_handle(handle);
                 if (rc != 0)
                     Fail($"device loss round {round} bind {k}", rc);
             }
             int rendered = Native.OffscreenRenderBatch(context, scenes, 0);
             if (rendered != 3)
                 Fail($"device loss round {round} first render", rendered);
-            int lost = Native.vlqt_test_device_lost(Protocol.DeviceLost.Remove);
+            int lost = NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.Remove);
             if (lost != 0)
             {
                 s.Info($"leak: device loss of QtNative's device skipped ({lost}, needs VLQT_TEST_D3D11ON12=1: -Only qttexture)");
@@ -268,7 +268,7 @@ public static partial class QtTextureTest
                 {
                     Native.vlqt_offscreen_unbind(scenes[k]);
                     Native.vlqt_window_destroy(scenes[k]);
-                    Native.vlqt_test_com_release(textures[k]);
+                    NativeTest.vlqt_test_com_release(textures[k]);
                 }
                 break;
             }
@@ -288,11 +288,11 @@ public static partial class QtTextureTest
                 var f = s_leakFormats[k];
                 NewTarget(device, 32, 24, f.Texture, out var fresh, out var handle);
                 int rc = Native.vlqt_offscreen_bind(scenes[k], device, handle, 32, 24, f.View, 1, out _);
-                Native.vlqt_test_close_handle(handle);
+                NativeTest.vlqt_test_close_handle(handle);
                 rendered = rc == 0 ? 1 : 0;
                 if (rc != 0)
                     Fail($"device loss round {round} rebind {k}", rc);
-                Native.vlqt_test_com_release(textures[k]);
+                NativeTest.vlqt_test_com_release(textures[k]);
                 textures[k] = fresh;
             }
             rendered = Native.OffscreenRenderBatch(context, scenes, 0);
@@ -303,7 +303,7 @@ public static partial class QtTextureTest
             {
                 Native.vlqt_offscreen_unbind(scenes[k]);
                 Native.vlqt_window_destroy(scenes[k]);
-                Native.vlqt_test_com_release(textures[k]);
+                NativeTest.vlqt_test_com_release(textures[k]);
             }
             s.Pump(2);
             // Every device loss makes a new QtNative device: its count is compared between the rounds on new devices.
@@ -315,7 +315,7 @@ public static partial class QtTextureTest
         {
             check(failure == null, $"leak: three device losses of QtNative's device with three scenes bound, rebind renders ({failure})");
             check(lossRefsFirst > 0 && lossRefsLast == lossRefsFirst, $"leak: QtNative device references the same after each device loss ({lossRefsFirst} -> {lossRefsLast})");
-            check(Native.vlqt_test_com_ref_count(device) == deviceRefs0, $"leak: test device references unchanged by the device losses ({deviceRefs0} -> {Native.vlqt_test_com_ref_count(device)})");
+            check(NativeTest.vlqt_test_com_ref_count(device) == deviceRefs0, $"leak: test device references unchanged by the device losses ({deviceRefs0} -> {NativeTest.vlqt_test_com_ref_count(device)})");
         }
         else
             check(failure == null, $"leak: ({failure})");
@@ -328,8 +328,8 @@ public static partial class QtTextureTest
         int handles3 = Handles(handlesRef);
         s.Info($"leak: handle count {handles0} (baseline) -> {handles1} (rounds) -> {handles2} (foreign devices) -> {handles3} (device losses)");
         check(handles3 - handlesRef <= handleTolerance, $"leak: process handle count did not grow at the end ({handlesRef} -> {handles3}, tolerance {handleTolerance})");
-        s.Info($"leak: device references: test device {deviceRefs0} -> {Native.vlqt_test_com_ref_count(device)}, QtNative {qtRefs0} -> {qtRefs1} (rounds) -> {qtRefs2} (foreign devices)");
+        s.Info($"leak: device references: test device {deviceRefs0} -> {NativeTest.vlqt_test_com_ref_count(device)}, QtNative {qtRefs0} -> {qtRefs1} (rounds) -> {qtRefs2} (foreign devices)");
 
-        check(Native.vlqt_test_d3d11_release_device(device, context) == 0, "leak: test device freed");
+        check(NativeTest.vlqt_test_d3d11_release_device(device, context) == 0, "leak: test device freed");
     }
 }

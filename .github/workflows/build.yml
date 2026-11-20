@@ -316,6 +316,9 @@ jobs:
           # The test patches of the repo (help/HelloWorld*, help/linux/) must not ship.
           $hello = @($names | Where-Object { $_ -like 'help/HelloWorld*' -or $_ -like 'help/linux/*' })
           if ($hello) { throw "test patches in the package: $($hello -join ', ')" }
+          # vlqt_testkit (the SmokeTest's stand-in D3D11 device) lies next to vlqt.dll in the runtime but must not ship.
+          $testkit = @($names | Where-Object { $_ -like 'qt/*/vlqt_testkit*' })
+          if ($testkit) { throw "test library in the package: $($testkit -join ', ')" }
           # Metadata from the nuspec (nuget.org needs id, version, license; repository links the package to the source).
           $nuspecEntry = $names | Where-Object { $_ -like '*.nuspec' -and $_ -notlike '*/*' } | Select-Object -First 1
           if (-not $nuspecEntry) { throw 'no .nuspec in the package' }

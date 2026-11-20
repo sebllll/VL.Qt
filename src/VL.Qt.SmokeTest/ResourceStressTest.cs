@@ -62,7 +62,7 @@ public static class ResourceStressTest
         foreach (var (name, w, h, weight) in new[] { ("s64.png", 64, 48, 4), ("m256.jpg", 256, 256, 4), ("m640.png", 640, 480, 3), ("l1080.png", 1920, 1080, 2), ("xl4k.jpg", 3840, 2160, 1) })
         {
             var path = Path.Combine(dir, name);
-            s.Check(Native.vlqt_test_write_image(path, w, h, 90) == 0, $"test image {name} written");
+            s.Check(NativeTest.vlqt_test_write_image(path, w, h, 90) == 0, $"test image {name} written");
             files.Add((path, weight));
         }
         var broken = Path.Combine(dir, "broken.png");
@@ -235,7 +235,7 @@ public static class ResourceStressTest
                 case 1: name = "load_image"; rc = Native.vlqt_res_load_image(id, files[rng.Next(files.Count)].path, 0); break;
                 case 2: name = "set_pixels"; rc = Native.ResSetPixels(id, new Native.vlqt_pixel_desc { width = 8, height = 8, format = 7 }, pixelBuf.AsSpan(0, 8 * 8 * 4)); break;
                 case 3: name = "wait"; rc = Native.vlqt_res_wait(id, 0); break;
-                case 4: name = "read_pixels"; rc = Native.ResReadPixels(id, new byte[64], out _, out _); break;
+                case 4: name = "read_pixels"; rc = NativeTest.ResReadPixels(id, new byte[64], out _, out _); break;
                 default: name = "snapshot"; rc = windows.Count > 0 ? Native.vlqt_res_snapshot(id, windows[0], FirstElement, 1) : -9; break;
             }
             // Also while the id is still in the table (element ref or running decode): vlqt.h promises -9 for every call.

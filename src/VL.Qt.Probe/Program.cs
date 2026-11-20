@@ -72,7 +72,7 @@ internal static class Program
             if (!grabbed && sw.Elapsed.TotalSeconds >= 1)
             {
                 grabbed = true;
-                var g = Native.vlqt_window_grab(w, grab);
+                var g = NativeTest.vlqt_test_window_grab(w, grab);
                 Console.WriteLine(g == 0 ? $"grab:        {grab}" : $"grab failed ({g}): {Native.LastError()}");
             }
             if (Native.vlqt_window_take_close_request(w) != 0)

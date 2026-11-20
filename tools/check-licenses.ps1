@@ -16,8 +16,8 @@ $qtAllowed = ('Core Gui Network OpenGL Qml QmlMeta QmlModels QmlWorkerScript Qml
               'QuickControls2Impl QuickControls2BasicStyleImpl ShaderTools Svg Concurrent Multimedia MultimediaQuick') -split ' ' | ForEach-Object { "Qt6$_.dll" }
 # Known GPL-only modules: listed only to give a precise message (everything not whitelisted fails anyway).
 $qtDenied = '^Qt6(Quick3D\w*|Charts\w*|DataVisualization\w*|Graphs\w*|QuickTimeline\w*|VirtualKeyboard\w*|Mqtt|Coap|Opcua\w*)\.dll$'
-# Non-Qt DLLs we ship or may get from windeployqt.
-$otherAllowed = 'vlqt.dll', 'D3Dcompiler_47.dll', 'dxcompiler.dll', 'dxil.dll', 'opengl32sw.dll',
+# Non-Qt DLLs we ship or may get from windeployqt; vlqt_testkit.dll (own code, MIT) is built for the SmokeTest, not packed.
+$otherAllowed = 'vlqt.dll', 'vlqt_testkit.dll', 'D3Dcompiler_47.dll', 'dxcompiler.dll', 'dxil.dll', 'opengl32sw.dll',
                 'vcruntime140.dll', 'vcruntime140_1.dll', 'msvcp140.dll', 'msvcp140_1.dll', 'msvcp140_2.dll', 'concrt140.dll'
 # FFmpeg shared libraries of Qt Multimedia (FFmpeg backend). LGPL-2.1-or-later only: each DLL must carry FFmpeg's
 # license string 'LGPL version 2.1 or later' and must not be configured with --enable-gpl / --enable-nonfree.

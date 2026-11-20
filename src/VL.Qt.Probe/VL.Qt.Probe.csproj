@@ -13,6 +13,12 @@
     <NativeRid Condition="'$(NativeRid)' == ''">linux-x64</NativeRid>
   </PropertyGroup>
 
+  <!-- The test exports of QtNative (vlqt_test_window_grab). -->
+  <ItemGroup>
+    <Compile Include="..\VL.Qt.TestSupport\NativeTest.cs" Link="NativeTest.cs" />
+    <Compile Include="..\VL.Qt.TestSupport\TestProtocol.cs" Link="TestProtocol.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\VL.Qt\VL.Qt.csproj" />
     <!-- VL.Qt references these privately (ExcludeAssets=runtime, vvvv provides them). The probe needs them at runtime:

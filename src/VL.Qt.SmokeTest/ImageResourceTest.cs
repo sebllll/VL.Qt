@@ -112,10 +112,10 @@ public static class ImageResourceTest
         }
         byte[] Read(ulong id, out int rw, out int rh)
         {
-            var n = Native.ResReadPixels(id, Span<byte>.Empty, out rw, out rh);
+            var n = NativeTest.ResReadPixels(id, Span<byte>.Empty, out rw, out rh);
             if (n >= 0) return [];
             var px = new byte[-n];
-            return Native.ResReadPixels(id, px, out rw, out rh) == px.Length ? px : [];
+            return NativeTest.ResReadPixels(id, px, out rw, out rh) == px.Length ? px : [];
         }
         static bool Near(byte[] px, int width, int x, int y, int r, int g, int b, int tol)
         {
@@ -130,10 +130,10 @@ public static class ImageResourceTest
         s.Check(leftoverCount == 0, $"no resources left from earlier scenarios ({leftoverCount})");
         // Upload path: GPU textures only with the shared upload QRhi (Windows D3D11); otherwise (Linux, software backend)
         // the CPU copy is the image, Ready right after the decode, without stripes.
-        var gpuUpload = Native.vlqt_test_device_info(IntPtr.Zero, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
+        var gpuUpload = NativeTest.vlqt_test_device_info(IntPtr.Zero, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
         s.Info($"upload path: {(gpuUpload ? "GPU (shared upload QRhi)" : "CPU copy (no upload QRhi)")}");
         s.Check(Native.vlqt_res_load_image(1, "x.png", 0) == -9, "load_image on an unknown id -> -9");
-        var testKind = Native.vlqt_res_create(Protocol.ResKind.Test, out var tid) == 0 ? tid : 0;
+        var testKind = Native.vlqt_res_create(TestProtocol.ResKind.Test, out var tid) == 0 ? tid : 0;
         s.Check(Native.vlqt_res_load_image(testKind, "x.png", 0) == -7, "load_image on a test resource -> -7 (wrong kind)");
         Native.vlqt_res_release(testKind);
 
@@ -143,7 +143,7 @@ public static class ImageResourceTest
             foreach (var ext in new[] { "png", "jpg" })
             {
                 var path = Path.Combine(dir, $"{name}.{ext}");
-                s.Check(Native.vlqt_test_write_image(path, fw, fh, 90) == 0, $"test image {name}.{ext} written");
+                s.Check(NativeTest.vlqt_test_write_image(path, fw, fh, 90) == 0, $"test image {name}.{ext} written");
                 files.Add((path, fw, fh, ext == "jpg" ? 12 : 0));
             }
         var broken = Path.Combine(dir, "broken.png");

@@ -81,7 +81,7 @@ public static partial class QtTextureTest
     private static byte[]? Read(IntPtr texture, int w, int h, Fmt f)
     {
         var pixels = new byte[w * h * f.Bytes];
-        return Native.TestReadTexture(texture, pixels, out _, out _, out _) == pixels.Length ? pixels : null;
+        return NativeTest.TestReadTexture(texture, pixels, out _, out _, out _) == pixels.Length ? pixels : null;
     }
 
     // R, G, B, A (0..255, rounded) of pixel x, y of a readback in format f.
@@ -118,7 +118,7 @@ public static partial class QtTextureTest
 
     // A test device texture + NT handle in format f; false when it could not be created.
     private static bool NewTarget(IntPtr device, int w, int h, int textureFormat, out IntPtr texture, out IntPtr handle)
-        => Native.vlqt_test_d3d11_create_shared_texture(device, w, h, textureFormat, out texture, out handle) == 0;
+        => NativeTest.vlqt_test_d3d11_create_shared_texture(device, w, h, textureFormat, out texture, out handle) == 0;
 
     // (c) The allowed formats render the same scene (UNORM: gamma-space values, SRGB and float: linear values);
     // unsupported formats are refused.
@@ -129,7 +129,7 @@ public static partial class QtTextureTest
             s.Check(ok, what);
             return ok;
         }
-        if (!check(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "formats: create test device"))
+        if (!check(NativeTest.CreateDevice(0, out var device, out var context) == 0, "formats: create test device"))
             return;
         const int w = 64, h = 48;
         // Opaque orange (left), 50 % blue straight alpha (right), transparent between and around.
@@ -141,7 +141,7 @@ public static partial class QtTextureTest
         var scene = NewScene(w, h, (0, 0, 0, 0), boxes, s, "formats");
         if (scene == IntPtr.Zero)
         {
-            Native.vlqt_test_d3d11_release_device(device, context);
+            NativeTest.vlqt_test_d3d11_release_device(device, context);
             return;
         }
 
@@ -151,7 +151,7 @@ public static partial class QtTextureTest
             if (!check(NewTarget(device, w, h, f.Texture, out var tex, out var handle), $"formats: {f.Name}: create texture"))
                 continue;
             int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, f.View, 1, out _);
-            Native.vlqt_test_close_handle(handle);
+            NativeTest.vlqt_test_close_handle(handle);
             check(rc == 0, $"formats: {f.Name}: bind ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             rc = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
             check(rc == 1, $"formats: {f.Name}: renders ({rc}) {(rc < 0 ? Native.LastError() : "")}");
@@ -172,7 +172,7 @@ public static partial class QtTextureTest
                     (floatOrange, floatBlue) = (o, b);
             }
             Native.vlqt_offscreen_unbind(scene);
-            Native.vlqt_test_com_release(tex);
+            NativeTest.vlqt_test_com_release(tex);
         }
         if (srgbOrange != null && floatOrange != null && srgbBlue != null && floatBlue != null)
             check(Near(floatOrange, srgbOrange, 2) && Near(floatBlue, srgbBlue, 2),
@@ -195,12 +195,12 @@ public static partial class QtTextureTest
             int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, view, 1, out _);
             check(rc == Protocol.Offscreen.FormatUnsupported && Native.vlqt_offscreen_is_bound(scene) == 0,
                 $"formats: {name} = FORMAT_UNSUPPORTED, scene unbound ({rc}) {(rc < 0 ? Native.LastError() : "")}");
-            Native.vlqt_test_close_handle(handle);
-            Native.vlqt_test_com_release(tex);
+            NativeTest.vlqt_test_close_handle(handle);
+            NativeTest.vlqt_test_com_release(tex);
         }
 
         Native.vlqt_window_destroy(scene);
-        check(Native.vlqt_test_d3d11_release_device(device, context) == 0, "formats: test device freed");
+        check(NativeTest.vlqt_test_d3d11_release_device(device, context) == 0, "formats: test device freed");
     }
 
     // (e) Two scenes of different size and format in one batch, each into its own texture; then only one changes.
@@ -211,7 +211,7 @@ public static partial class QtTextureTest
             s.Check(ok, what);
             return ok;
         }
-        if (!check(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "batch: create test device"))
+        if (!check(NativeTest.CreateDevice(0, out var device, out var context) == 0, "batch: create test device"))
             return;
         var red = new[] { 255, 0, 0, 255 };
         var green = new[] { 0, 255, 0, 255 };
@@ -225,13 +225,13 @@ public static partial class QtTextureTest
             || !check(NewTarget(device, 64, 48, B8G8R8A8Typeless, out texA, out handleA), "batch: texture A")
             || !check(NewTarget(device, 80, 40, 27, out texB, out handleB), "batch: texture B"))
         {
-            Native.vlqt_test_d3d11_release_device(device, context);
+            NativeTest.vlqt_test_d3d11_release_device(device, context);
             return;
         }
         int rcA = Native.vlqt_offscreen_bind(a, device, handleA, 64, 48, B8G8R8A8Unorm, 1, out _);
         int rcB = Native.vlqt_offscreen_bind(b, device, handleB, 80, 40, R8G8B8A8Unorm, 1, out _);
-        Native.vlqt_test_close_handle(handleA);
-        Native.vlqt_test_close_handle(handleB);
+        NativeTest.vlqt_test_close_handle(handleA);
+        NativeTest.vlqt_test_close_handle(handleB);
         check(rcA == 0 && rcB == 0, $"batch: bind both ({rcA}, {rcB}) {(rcA != 0 || rcB != 0 ? Native.LastError() : "")}");
 
         // A null entry and an unbound scene in the list are skipped.
@@ -246,23 +246,23 @@ public static partial class QtTextureTest
             check(Near(Rgba(pb!, 80, 30, 20, s_rgba), green, 0) && Near(Rgba(pb!, 80, 2, 2, s_rgba), none, 0) && Near(Rgba(pb!, 80, 70, 36, s_rgba), none, 0),
                 $"batch: B is green on transparent ({Str(Rgba(pb!, 80, 30, 20, s_rgba))}, {Str(Rgba(pb!, 80, 2, 2, s_rgba))})");
         }
-        Native.vlqt_test_offscreen_state(a, out var readA1, out var writeA1, out var rendersA1);
-        Native.vlqt_test_offscreen_state(b, out var readB1, out var writeB1, out var rendersB1);
+        NativeTest.vlqt_test_offscreen_state(a, out var readA1, out var writeA1, out var rendersA1);
+        NativeTest.vlqt_test_offscreen_state(b, out var readB1, out var writeB1, out var rendersB1);
         check(rendersA1 == 1 && rendersB1 == 1 && writeA1 == 1 && writeB1 == 1 && readA1 == 1 && readB1 == 1,
             $"batch: each scene signalled its own fences once (A {readA1}/{writeA1}/{rendersA1}, B {readB1}/{writeB1}/{rendersB1})");
 
         // (d) Nothing changed: no render, no signal, the textures keep their content.
         rc = Native.OffscreenRenderBatch(context, new[] { a, b }, 0);
-        Native.vlqt_test_offscreen_state(a, out var readA2, out var writeA2, out var rendersA2);
-        Native.vlqt_test_offscreen_state(b, out var readB2, out var writeB2, out var rendersB2);
+        NativeTest.vlqt_test_offscreen_state(a, out var readA2, out var writeA2, out var rendersA2);
+        NativeTest.vlqt_test_offscreen_state(b, out var readB2, out var writeB2, out var rendersB2);
         check(rc == 0 && (readA2, writeA2, rendersA2) == (readA1, writeA1, rendersA1) && (readB2, writeB2, rendersB2) == (readB1, writeB1, rendersB1),
             $"batch: unchanged scenes render nothing, fence values unchanged (rc {rc})");
 
         // Only B changes: one render, A's values stay, B's advance; B is blue now, A untouched.
         Recolor(b, 1, 0, 0, 1, 1, s, "batch");
         rc = Native.OffscreenRenderBatch(context, new[] { a, b }, 0);
-        Native.vlqt_test_offscreen_state(a, out var readA3, out var writeA3, out var rendersA3);
-        Native.vlqt_test_offscreen_state(b, out var readB3, out var writeB3, out var rendersB3);
+        NativeTest.vlqt_test_offscreen_state(a, out var readA3, out var writeA3, out var rendersA3);
+        NativeTest.vlqt_test_offscreen_state(b, out var readB3, out var writeB3, out var rendersB3);
         check(rc == 1 && (readA3, writeA3, rendersA3) == (readA1, writeA1, rendersA1) && rendersB3 == 2 && writeB3 > writeB2 && readB3 > readB2,
             $"batch: only B changed: one render, A unchanged, B fences advanced (rc {rc}, A {readA3}/{writeA3}/{rendersA3}, B {readB3}/{writeB3}/{rendersB3})");
         pa = Read(texA, 64, 48, s_bgra);
@@ -276,9 +276,9 @@ public static partial class QtTextureTest
         Native.vlqt_window_destroy(a);
         Native.vlqt_window_destroy(b);
         Native.vlqt_window_destroy(idle);
-        Native.vlqt_test_com_release(texA);
-        Native.vlqt_test_com_release(texB);
-        check(Native.vlqt_test_d3d11_release_device(device, context) == 0, "batch: test device freed");
+        NativeTest.vlqt_test_com_release(texA);
+        NativeTest.vlqt_test_com_release(texB);
+        check(NativeTest.vlqt_test_d3d11_release_device(device, context) == 0, "batch: test device freed");
     }
 
     // (b) Premultiplied alpha: transparent clear = transparent black, semi-transparent elements, over each other,
@@ -290,7 +290,7 @@ public static partial class QtTextureTest
             s.Check(ok, what);
             return ok;
         }
-        if (!check(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "alpha: create test device"))
+        if (!check(NativeTest.CreateDevice(0, out var device, out var context) == 0, "alpha: create test device"))
             return;
         const int w = 96, h = 64;
         // Opaque red; 50 % green over its right part and the free space; 25 % blue; 50 % orange (a colour that sRGB
@@ -309,13 +309,13 @@ public static partial class QtTextureTest
             || !check(NewTarget(device, w, h, B8G8R8A8Typeless, out tex, out handle), "alpha: texture")
             || !check(NewTarget(device, 16, 16, B8G8R8A8Typeless, out clearTex, out clearHandle), "alpha: clear colour texture"))
         {
-            Native.vlqt_test_d3d11_release_device(device, context);
+            NativeTest.vlqt_test_d3d11_release_device(device, context);
             return;
         }
         int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
         int rc2 = Native.vlqt_offscreen_bind(clearScene, device, clearHandle, 16, 16, B8G8R8A8Unorm, 1, out _);
-        Native.vlqt_test_close_handle(handle);
-        Native.vlqt_test_close_handle(clearHandle);
+        NativeTest.vlqt_test_close_handle(handle);
+        NativeTest.vlqt_test_close_handle(clearHandle);
         check(rc == 0 && rc2 == 0, $"alpha: bind ({rc}, {rc2}) {(rc != 0 || rc2 != 0 ? Native.LastError() : "")}");
         rc = Native.OffscreenRenderBatch(context, new[] { scene, clearScene }, 0);
         check(rc == 2, $"alpha: render ({rc}) {(rc < 0 ? Native.LastError() : "")}");
@@ -343,7 +343,7 @@ public static partial class QtTextureTest
             if (!check(NewTarget(device, w, h, f.Texture, out var linTex, out var linHandle), $"alpha {f.Name}: texture"))
                 continue;
             rc = Native.vlqt_offscreen_bind(scene, device, linHandle, w, h, f.View, 1, out _);
-            Native.vlqt_test_close_handle(linHandle);
+            NativeTest.vlqt_test_close_handle(linHandle);
             check(rc == 0, $"alpha {f.Name}: bind ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             rc = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
             check(rc == 1, $"alpha {f.Name}: render ({rc}) {(rc < 0 ? Native.LastError() : "")}");
@@ -361,7 +361,7 @@ public static partial class QtTextureTest
                 check(Near(orange, expected, 2), $"alpha {f.Name}: 50 % orange = a * linear(c) {Str(expected)} ({Str(orange)})");
             }
             Native.vlqt_offscreen_unbind(scene);
-            Native.vlqt_test_com_release(linTex);
+            NativeTest.vlqt_test_com_release(linTex);
         }
 
         // Does Qt premultiply a semi-transparent clear colour itself? QtNative passes (1, 0, 0, 0.5) straight to
@@ -379,9 +379,9 @@ public static partial class QtTextureTest
         Native.vlqt_offscreen_unbind(clearScene);
         Native.vlqt_window_destroy(scene);
         Native.vlqt_window_destroy(clearScene);
-        Native.vlqt_test_com_release(tex);
-        Native.vlqt_test_com_release(clearTex);
-        check(Native.vlqt_test_d3d11_release_device(device, context) == 0, "alpha: test device freed");
+        NativeTest.vlqt_test_com_release(tex);
+        NativeTest.vlqt_test_com_release(clearTex);
+        check(NativeTest.vlqt_test_d3d11_release_device(device, context) == 0, "alpha: test device freed");
     }
 
     // Premultiplied BGRA composited over a grey checkerboard (8 px cells), as an opaque PNG: transparency is visible.
@@ -410,7 +410,7 @@ public static partial class QtTextureTest
             return ok;
         }
 #if WINDOWS
-        if (!check(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "window: create test device"))
+        if (!check(NativeTest.CreateDevice(0, out var device, out var context) == 0, "window: create test device"))
             return;
         const int w = 200, h = 150;
         // Opaque background so that premultiplied and straight values agree; rectangles, one translucent over the other.
@@ -428,7 +428,7 @@ public static partial class QtTextureTest
         if (scene == IntPtr.Zero || win == IntPtr.Zero
             || !check(NewTarget(device, w, h, B8G8R8A8Typeless, out tex, out handle), "window: texture"))
         {
-            Native.vlqt_test_d3d11_release_device(device, context);
+            NativeTest.vlqt_test_d3d11_release_device(device, context);
             return;
         }
         // The window gets the same scene.
@@ -448,7 +448,7 @@ public static partial class QtTextureTest
         s.Pump(3);
 
         int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
-        Native.vlqt_test_close_handle(handle);
+        NativeTest.vlqt_test_close_handle(handle);
         check(rc == 0, $"window: bind ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         rc = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
         check(rc == 1, $"window: render ({rc}) {(rc < 0 ? Native.LastError() : "")}");
@@ -478,8 +478,8 @@ public static partial class QtTextureTest
         Native.vlqt_offscreen_unbind(scene);
         Native.vlqt_window_destroy(scene);
         Native.vlqt_window_destroy(win);
-        Native.vlqt_test_com_release(tex);
-        check(Native.vlqt_test_d3d11_release_device(device, context) == 0, "window: test device freed");
+        NativeTest.vlqt_test_com_release(tex);
+        check(NativeTest.vlqt_test_d3d11_release_device(device, context) == 0, "window: test device freed");
 #endif
     }
 }

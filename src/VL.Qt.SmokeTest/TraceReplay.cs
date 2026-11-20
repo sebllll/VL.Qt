@@ -83,7 +83,7 @@ public static class TraceReplay
         for (var round = 0; round < 60 && !settled; round++)
         {
             s.Pump(10);
-            if (Native.vlqt_window_grab(w, probePath) != 0)
+            if (NativeTest.vlqt_test_window_grab(w, probePath) != 0)
                 break;
             var bytes = File.ReadAllBytes(probePath);
             settled = previous != null && bytes.AsSpan().SequenceEqual(previous);

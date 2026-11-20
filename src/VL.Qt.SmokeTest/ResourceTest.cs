@@ -64,7 +64,7 @@ public static class ResourceTest
 
         ulong Create()
         {
-            var rc = Native.vlqt_res_create(Protocol.ResKind.Test, out var id);
+            var rc = Native.vlqt_res_create(TestProtocol.ResKind.Test, out var id);
             if (rc != 0 || id == 0) s.Check(false, $"create ({rc}, {id:X})");
             return id;
         }
@@ -72,7 +72,7 @@ public static class ResourceTest
         ulong Start(int decodeMs, long bytes, int flags = 0)
         {
             var id = Create();
-            var rc = Native.vlqt_test_res_start(id, decodeMs, bytes, flags);
+            var rc = NativeTest.vlqt_test_res_start(id, decodeMs, bytes, flags);
             if (rc != 0) s.Check(false, $"test start {id:X} ({rc})");
             return id;
         }
@@ -118,15 +118,15 @@ public static class ResourceTest
         s.Check(err != null && Encoding.UTF8.GetString(err.Payload).Contains("decode failed"), "ERROR text of the failed decode");
         s.Check(Seq(badUp) == "1,2,3,5", $"upload failure -> Failed ({Seq(badUp)})");
 
-        s.Check(Native.vlqt_test_res_transition(a, Protocol.ResState.Ready, Protocol.ResState.Decoding) == -7, "Ready -> Decoding rejected");
-        s.Check(Native.vlqt_test_res_transition(a, Protocol.ResState.Pending, Protocol.ResState.Decoding) == -7, "wrong from-state rejected");
-        s.Check(Native.vlqt_test_res_start(a, 0, 0, 0) == 0 && Native.vlqt_res_wait(a, 2000) == Protocol.ResState.Ready, "start of a Ready resource = replacement, stays Ready");
+        s.Check(NativeTest.vlqt_test_res_transition(a, Protocol.ResState.Ready, Protocol.ResState.Decoding) == -7, "Ready -> Decoding rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(a, Protocol.ResState.Pending, Protocol.ResState.Decoding) == -7, "wrong from-state rejected");
+        s.Check(NativeTest.vlqt_test_res_start(a, 0, 0, 0) == 0 && Native.vlqt_res_wait(a, 2000) == Protocol.ResState.Ready, "start of a Ready resource = replacement, stays Ready");
         var p = Create();
-        s.Check(Native.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Ready) == -7, "Pending -> Ready rejected");
-        s.Check(Native.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Released) == -7, "Released only by release + frame end");
-        s.Check(Native.vlqt_test_res_transition(p, Protocol.ResState.Pending, 99) == -7, "unknown state rejected");
-        s.Check(Native.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Failed) == 0, "Pending -> Failed allowed");
-        s.Check(Native.vlqt_test_res_transition(p, Protocol.ResState.Failed, Protocol.ResState.Ready) == -7, "Failed -> Ready rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Ready) == -7, "Pending -> Ready rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Released) == -7, "Released only by release + frame end");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, 99) == -7, "unknown state rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Failed) == 0, "Pending -> Failed allowed");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Failed, Protocol.ResState.Ready) == -7, "Failed -> Ready rejected");
         s.Check(s.Log.Contains("invalid transition Ready -> Decoding rejected"), "rejected transition logged");
         s.Check(s.Log.Contains("VL.Qt.Resources: #") && s.Log.Contains("Uploading -> Ready"), "transitions logged (debug, VL.Qt.Resources)");
 
@@ -141,8 +141,8 @@ public static class ResourceTest
         s.Check(!Listed(a), "released resource gone after the frame end");
         var e2 = Create();
         s.Check((uint)e2 == (uint)a && e2 != a, $"index reused with a new generation ({a:X} -> {e2:X})");
-        s.Check(Native.vlqt_res_release(a) == -9 && Native.vlqt_test_res_start(a, 0, 0, 0) == -9 && Native.vlqt_res_wait(a, 10) == -9
-            && Native.vlqt_test_res_transition(a, 1, 5) == -9 && Native.vlqt_test_res_element_ref(a, 1) == -9, "stale id -> -9 everywhere");
+        s.Check(Native.vlqt_res_release(a) == -9 && NativeTest.vlqt_test_res_start(a, 0, 0, 0) == -9 && Native.vlqt_res_wait(a, 10) == -9
+            && NativeTest.vlqt_test_res_transition(a, 1, 5) == -9 && NativeTest.vlqt_test_res_element_ref(a, 1) == -9, "stale id -> -9 everywhere");
         var e2Info = List().FirstOrDefault(r => r.id == e2);
         s.Check(e2Info.state == Protocol.ResState.Pending && e2Info.host_refs == 1 && e2Info.element_refs == 0, "new resource untouched by the stale id");
         s.Check(s.Log.Contains("stale resource id"), "stale id logged as warning");
@@ -199,12 +199,12 @@ public static class ResourceTest
         // Element references: the host release alone does not free.
         var el = Start(0, Mb);
         s.Check(Settle(2000, el), "element test resource Ready");
-        s.Check(Native.vlqt_test_res_element_ref(el, 1) == 0, "element acquire");
+        s.Check(NativeTest.vlqt_test_res_element_ref(el, 1) == 0, "element acquire");
         s.Check(Native.vlqt_res_release(el) == 0, "host release with an element ref");
         Frame();
         var elInfo = List().FirstOrDefault(r => r.id == el);
         s.Check(elInfo.id == el && elInfo.host_refs == 0 && elInfo.element_refs == 1, "kept while an element holds it");
-        s.Check(Native.vlqt_test_res_element_ref(el, -1) == 0 && Native.vlqt_test_res_element_ref(el, -1) == -9, "element release, second one -9");
+        s.Check(NativeTest.vlqt_test_res_element_ref(el, -1) == 0 && NativeTest.vlqt_test_res_element_ref(el, -1) == -9, "element release, second one -9");
         Frame();
         s.Check(!Listed(el), "freed after the last element release");
 
@@ -270,7 +270,7 @@ public static class ResourceTest
     {
         for (int i = 0; i < 3; i++)
         {
-            var ok = Native.vlqt_res_create(Protocol.ResKind.Test, out var id) == 0 && Native.vlqt_test_res_start(id, 10000, Mb, 0) == 0;
+            var ok = Native.vlqt_res_create(TestProtocol.ResKind.Test, out var id) == 0 && NativeTest.vlqt_test_res_start(id, 10000, Mb, 0) == 0;
             if (!ok) s.Check(false, $"running job {i} for the process end started");
         }
         s.Pump(1);

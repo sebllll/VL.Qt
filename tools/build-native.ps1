@@ -1,4 +1,5 @@
-# Builds QtNative and deploys Qt into runtimes/<rid>/native (windeployqt runs as CMake target vlqt_deploy).
+# Builds QtNative and deploys Qt into runtimes/<rid>/native (windeployqt runs as CMake target vlqt_deploy), with
+# vlqt_testkit.dll (the SmokeTest's stand-in D3D11 device) next to vlqt.dll; packing leaves the testkit out.
 # Usage: tools/build-native.ps1 [-Rid win-arm64|win-x64 (default: host)] [-QtDir C:\Qt\6.12.0\msvc2022_arm64] [-ForceDeploy]
 # Configures CMake directly (same settings as the dev-<rid> preset) so CI can point at any Qt location.
 # windeployqt re-runs when vlqt.dll or qml/deploy.qml changed, when the deployed qml/QtQuick/Effects, qml/QtQuick/Shapes,
@@ -58,5 +59,6 @@ foreach ($m in 'QtQuick', 'QtQuick\Effects', 'QtQuick\Shapes', 'QtMultimedia', '
 foreach ($f in 'plugins\multimedia\ffmpegmediaplugin.dll', 'avcodec-*.dll', 'avformat-*.dll', 'avutil-*.dll', 'swresample-*.dll', 'swscale-*.dll') {
     if (-not (Test-Path "$out\$f")) { throw "deploy incomplete: $f missing (Qt Multimedia installed? tools/setup-qt.ps1)" }
 }
+if (-not (Test-Path "$out\vlqt_testkit.dll")) { throw "vlqt_testkit.dll missing next to vlqt.dll (CMake option VLQT_BUILD_TESTKIT)" }
 $mb = [math]::Round((Get-ChildItem $out -Recurse -File | Measure-Object Length -Sum).Sum / 1MB, 1)
 Write-Host "Deployed to $out ($mb MB)"

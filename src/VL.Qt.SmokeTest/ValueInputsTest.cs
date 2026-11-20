@@ -22,9 +22,6 @@ public static class ValueInputsTest
     // Slider: distance of the handle centre at 0 / 1 from the Bounds edge. Base style: frame padding + handle radius.
     private const float SliderInset = 8 + 14 / 2; // BaseStyle FramePaddingX + IndicatorSize / 2
     private const float StyleMin = 24; // BaseStyle FrameMinWidth/FrameMinHeight: lower bound of every implicit size
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int vlqt_test_send_key_text(IntPtr w, int key, int modifiers, [MarshalAs(UnmanagedType.LPUTF8Str)] string? text);
-
     private const int KeyA = 0x41;
     private const int KeySpace = 0x20;
     private const int KeyEscape = 0x01000000;
@@ -76,14 +73,14 @@ public static class ValueInputsTest
             s.Check(n >= 0, $"poll ({n})");
             return Parse(buf.AsSpan(0, Math.Max(n, 0)));
         }
-        void Mouse(int type, float x, float y) => s.Check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
+        void Mouse(int type, float x, float y) => s.Check(NativeTest.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
         void Click(float x, float y)
         {
-            Mouse(Protocol.Mouse.Move, x, y);
-            Mouse(Protocol.Mouse.Press, x, y);
-            Mouse(Protocol.Mouse.Release, x, y);
+            Mouse(TestProtocol.Mouse.Move, x, y);
+            Mouse(TestProtocol.Mouse.Press, x, y);
+            Mouse(TestProtocol.Mouse.Release, x, y);
         }
-        void Key(int key, int modifiers, string? text) => s.Check(vlqt_test_send_key_text(w, key, modifiers, text) == 0, $"send_key_text {key}");
+        void Key(int key, int modifiers, string? text) => s.Check(NativeTest.vlqt_test_send_key_text(w, key, modifiers, text) == 0, $"send_key_text {key}");
         void Type(string s)
         {
             Key(KeyA, ControlModifier, null); // select all, typing replaces the text
@@ -133,7 +130,7 @@ public static class ValueInputsTest
         cmd.Reparent(Sw, 0, 1);
         cmd.Bind(Sw, HS, 0);
         CheckApply("checkbox + switch create");
-        Mouse(Protocol.Mouse.Move, 790, 590);
+        Mouse(TestProtocol.Mouse.Move, 790, 590);
         s.Pump(2);
         var recs = Frame();
         recs.AddRange(Frame());
@@ -228,22 +225,22 @@ public static class ValueInputsTest
         Click(X(0.5f), y);
         ExpectF32(Frame(), HL, 0.5f, 0.01f, "slider click at 0.5");
         ExpectNone(Frame(), HL, "slider next frame (sent once)");
-        Mouse(Protocol.Mouse.Move, X(0.5f), y);
-        Mouse(Protocol.Mouse.Press, X(0.5f), y);
-        Mouse(Protocol.Mouse.Move, X(0.6f), y);
-        Mouse(Protocol.Mouse.Move, X(0.7f), y);
-        Mouse(Protocol.Mouse.Move, X(0.75f), y);
+        Mouse(TestProtocol.Mouse.Move, X(0.5f), y);
+        Mouse(TestProtocol.Mouse.Press, X(0.5f), y);
+        Mouse(TestProtocol.Mouse.Move, X(0.6f), y);
+        Mouse(TestProtocol.Mouse.Move, X(0.7f), y);
+        Mouse(TestProtocol.Mouse.Move, X(0.75f), y);
         ExpectF32(Frame(), HL, 0.75f, 0.01f, "slider drag, several moves in one frame (last value)");
-        Mouse(Protocol.Mouse.Move, X(0.9f), y);
+        Mouse(TestProtocol.Mouse.Move, X(0.9f), y);
         ExpectF32(Frame(), HL, 0.9f, 0.01f, "slider drag continues (live)");
-        Mouse(Protocol.Mouse.Release, X(0.9f), y);
+        Mouse(TestProtocol.Mouse.Release, X(0.9f), y);
         ExpectNone(Frame(), HL, "slider release at the same position");
 
         cmd.SetF32(Sl, Protocol.Prop.Value, 0.1f);
         CheckApply("slider set 0.1");
         ExpectNone(Frame(), HL, "slider SET VALUE 0.1");
-        Mouse(Protocol.Mouse.Move, X(0.5f), y);
-        s.Check(Native.vlqt_test_send_wheel(w, X(0.5f), y, 0, 120) == 0, "slider send_wheel");
+        Mouse(TestProtocol.Mouse.Move, X(0.5f), y);
+        s.Check(NativeTest.vlqt_test_send_wheel(w, X(0.5f), y, 0, 120) == 0, "slider send_wheel");
         ExpectF32(Frame(), HL, 0.2f, 0.001f, "slider wheel up with step 0 (Qt: 0.1)");
         Key(KeyRight, 0, null); // focus from the clicks above
         recs = Frame();
@@ -259,8 +256,8 @@ public static class ValueInputsTest
         ExpectNone(Frame(), HL, "slider SET range/step/value");
         Click(X(0.6f), y); // 2.0 -> snaps to 2.5
         ExpectF32(Frame(), HL, 2.5f, 0.001f, "slider click snaps to the step");
-        Mouse(Protocol.Mouse.Move, X(0.5f), y);
-        s.Check(Native.vlqt_test_send_wheel(w, X(0.5f), y, 0, 120) == 0, "slider send_wheel step");
+        Mouse(TestProtocol.Mouse.Move, X(0.5f), y);
+        s.Check(NativeTest.vlqt_test_send_wheel(w, X(0.5f), y, 0, 120) == 0, "slider send_wheel step");
         ExpectF32(Frame(), HL, 5f, 0.001f, "slider wheel up with step 2.5");
         Click(X(0.85f), y); // 7.0 -> 7.5
         ExpectF32(Frame(), HL, 7.5f, 0.001f, "slider click at 7 snaps to 7.5");
@@ -282,7 +279,7 @@ public static class ValueInputsTest
         cmd.SetBool(Sl, Protocol.Prop.Enabled, false);
         CheckApply("slider enabled false");
         Click(X(0.75f), y);
-        s.Check(Native.vlqt_test_send_wheel(w, X(0.75f), y, 0, 120) == 0, "slider send_wheel disabled");
+        s.Check(NativeTest.vlqt_test_send_wheel(w, X(0.75f), y, 0, 120) == 0, "slider send_wheel disabled");
         ExpectNone(Frame(), HL, "slider click + wheel with Enabled false");
         cmd.SetBool(Sl, Protocol.Prop.Enabled, true);
         CheckApply("slider enabled true");
@@ -434,9 +431,9 @@ public static class ValueInputsTest
         // Context menu (right click, Qt 6.9+ TextEditingContextMenu from the Basic impl plugin): no QML warning in the
         // log (the loose .qml is trimmed, the plugin's compiled copy must load); Escape closes it, then typing works.
         int logStart = s.Log.Length;
-        Mouse(Protocol.Mouse.Move, t1x, t1y);
-        Mouse(Protocol.Mouse.PressRight, t1x, t1y);
-        Mouse(Protocol.Mouse.ReleaseRight, t1x, t1y);
+        Mouse(TestProtocol.Mouse.Move, t1x, t1y);
+        Mouse(TestProtocol.Mouse.PressRight, t1x, t1y);
+        Mouse(TestProtocol.Mouse.ReleaseRight, t1x, t1y);
         s.Pump(3);
         var menuLog = s.Log.Substring(logStart);
         s.Check(menuLog.IndexOf("qml", StringComparison.OrdinalIgnoreCase) < 0 && menuLog.IndexOf("warn", StringComparison.OrdinalIgnoreCase) < 0,

@@ -48,11 +48,11 @@ public static class MultiRendererTest
         }
         s.Info("multirenderer: #126 one element tree in a window and an offscreen scene");
 
-        if (!check(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "create test device"))
+        if (!check(NativeTest.CreateDevice(0, out var device, out var context) == 0, "create test device"))
             return;
-        if (!check(Native.vlqt_test_d3d11_create_shared_texture(device, TexW, TexH, B8G8R8A8Typeless, out var texture, out var handle) == 0, "create shared texture"))
+        if (!check(NativeTest.vlqt_test_d3d11_create_shared_texture(device, TexW, TexH, B8G8R8A8Typeless, out var texture, out var handle) == 0, "create shared texture"))
         {
-            Native.vlqt_test_d3d11_release_device(device, context);
+            NativeTest.vlqt_test_d3d11_release_device(device, context);
             return;
         }
 
@@ -64,7 +64,7 @@ public static class MultiRendererTest
         var offscreen = new OffscreenRenderer(registry, TexW, TexH);
         check(window.Window != IntPtr.Zero && offscreen.Scene != IntPtr.Zero, $"renderers created ({window.Error}{offscreen.Error})");
         int rc = offscreen.Bind(device, handle, new Int2(TexW, TexH), B8G8R8A8Unorm);
-        Native.vlqt_test_close_handle(handle);
+        NativeTest.vlqt_test_close_handle(handle);
         check(rc == Protocol.Offscreen.Ok && offscreen.IsBound, $"offscreen bind ({rc}) {offscreen.Error}");
 
         // Rectangle (120 x 80 DIP at (20, 20), orange) and Text below it; Feedback slots 0 (rectangle) and 1 (text).
@@ -126,7 +126,7 @@ public static class MultiRendererTest
         check(measured, $"state values arrive ({feedback[1].MeasuredSize}, {feedback[0].SceneBounds})");
         Until(() => false, 4);
         var pixels = new byte[TexW * TexH * 4];
-        check(Native.TestReadTexture(texture, pixels, out _, out _, out _) == pixels.Length, "read back the texture");
+        check(NativeTest.TestReadTexture(texture, pixels, out _, out _, out _) == pixels.Length, "read back the texture");
         {
             var c = Tex(pixels, 80, 60);
             var bg = Tex(pixels, 200, 60);
@@ -225,7 +225,7 @@ public static class MultiRendererTest
             client.AfterEvents();
         }
         client.SetPumping(false);
-        Native.vlqt_test_com_release(texture);
-        Native.vlqt_test_d3d11_release_device(device, context);
+        NativeTest.vlqt_test_com_release(texture);
+        NativeTest.vlqt_test_d3d11_release_device(device, context);
     }
 }

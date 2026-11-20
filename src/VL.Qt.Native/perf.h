@@ -81,10 +81,10 @@ bool consecutiveFrame(const PerfSample* samples, int i);
 void perfStats(const PerfSample* samples, int n, const PerfCounters& counters, double nowMs, double budgetMs,
     vlqt_perf_stats* out);
 
-// vlqt_perf_eval: the same computation on given samples with timestamps (tests).
+// The same computation on given samples with timestamps (vlqt_test_perf_eval).
 void perfEval(const vlqt_perf_sample* samples, const double* tMs, int n, double budgetMs, vlqt_perf_stats* out);
 
-// averages/maxima/rates of n host frames (vlqt_perf_host_eval and PerfMonitor::hostStats). No allocation.
+// averages/maxima/rates of n host frames (PerfMonitor::hostStats and vlqt_test_perf_host_eval). No allocation.
 void perfHostStats(const vlqt_host_frame* frames, int n, vlqt_host_stats* out);
 
 // Per-window measurement, overlay (F2 perfmeter, F5 stats pages) and key handling.
@@ -124,13 +124,11 @@ public:
     void setOverlay(int flags);
     int page() const { return m_page; }
 
-    // Test: busy-waits ms inside the given phase of the next rendered frame (vlqt_test_perf_spike).
+    // test hook: busy-waits ms inside the given phase of the next rendered frame (vlqt_test_perf_spike).
     void injectSpike(int phase, float ms);
-    // Tests: current header text of the stats page (HTML), empty without overlay.
-    QString statsText() const { return m_overlay ? m_overlay->property("statsText").toString() : QString(); }
     // Element registry for the Scene page; set once after both exist, read only while that page is shown.
     void setScene(const vlqt::Scene* scene) { m_scene = scene; }
-    // Test (vlqt_test_perf_text): plain text of a page (all five; Summary/Timeline with body/foot), built on demand,
+    // test hook (vlqt_test_perf_text): plain text of a page (all five; Summary/Timeline with body/foot), built on demand,
     // overlay state unchanged.
     QString pageText(int page) const;
 

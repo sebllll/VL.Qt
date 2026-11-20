@@ -8,7 +8,7 @@
     internal static class Protocol
     {
         /// <summary>Version of the command protocol and the C ABI of vlqt.h; QtApp refuses a vlqt.dll with another one. Bump with every change (see protocol.h).</summary>
-        public const int AbiVersion = 16;
+        public const int AbiVersion = 17;
         public const int CommandAlign = 4;
         public const int HeaderSize = 4;
         public const uint RootId = 0;
@@ -513,15 +513,6 @@
             public const uint PixelTopLeft = 3;
         }
 
-        /// <summary>Modes of the TEST export vlqt_test_device_lost, see protocol.h.</summary>
-        internal static class DeviceLost
-        {
-            /// <summary>Real removal of the shared device; needs VLQT_TEST_D3D11ON12=1 before the device is created.</summary>
-            public const int Remove = 1;
-            /// <summary>Real loss through a GPU hang (TDR, whole GPU); manual checks only.</summary>
-            public const int Hang = 2;
-        }
-
         /// <summary>Return codes of the offscreen exports vlqt_offscreen_* (QtTexture), see protocol.h.</summary>
         internal static class Offscreen
         {
@@ -544,28 +535,6 @@
             public const int DeviceLost = -25;
             /// <summary>No D3D11 (Linux, other graphics API) or not available on an offscreen scene.</summary>
             public const int NotSupported = -26;
-        }
-
-        /// <summary>Mouse event types of the TEST export vlqt_test_send_mouse, not part of the command buffer.</summary>
-        internal static class Mouse
-        {
-            public const int Move = 1;
-            public const int Press = 2;
-            public const int Release = 3;
-            public const int Leave = 4;
-            public const int PressRight = 5;
-            public const int ReleaseRight = 6;
-            /// <summary>Right button synthesized by the OS from touch (Windows press-and-hold).</summary>
-            public const int PressRightSystem = 7;
-            public const int ReleaseRightSystem = 8;
-        }
-
-        /// <summary>Touch point events of the TEST export vlqt_test_send_touch, not part of the command buffer.</summary>
-        internal static class Touch
-        {
-            public const int Press = 1;
-            public const int Move = 2;
-            public const int Release = 3;
         }
 
         /// <summary>Pointer events of vlqt_offscreen_send_pointer (QtTexture input), not part of the command buffer.</summary>
@@ -598,8 +567,6 @@
         /// <summary>Resource kinds of vlqt_res_create.</summary>
         internal static class ResKind
         {
-            /// <summary>Test only: decode sleeps in a worker, upload uses budget (vlqt_test_res_start).</summary>
-            public const int Test = 1;
             /// <summary>Image from a file or pixels (vlqt_res_load_image / vlqt_res_set_pixels), texture on the process device.</summary>
             public const int Image = 2;
             /// <summary>CPU copy of an element (vlqt_res_snapshot / vlqt_res_read_pixels), no texture.</summary>

@@ -90,9 +90,9 @@ public static class KeyRouteTest
         }
         void Click(float x, float y)
         {
-            Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, x, y);
-            Native.vlqt_test_send_mouse(w, Protocol.Mouse.Press, x, y);
-            Native.vlqt_test_send_mouse(w, Protocol.Mouse.Release, x, y);
+            NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, x, y);
+            NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Press, x, y);
+            NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Release, x, y);
         }
         static List<Rec> Values(List<Rec> recs, uint handle) => recs.FindAll(r => r.Event == Protocol.Ev.Value && r.Handle == handle);
         static string S(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
@@ -206,8 +206,8 @@ public static class KeyRouteTest
         void Tap(float x, float y)
         {
             frame();
-            Native.vlqt_test_send_touch(w, Protocol.Touch.Press, 1, x, y);
-            Native.vlqt_test_send_touch(w, Protocol.Touch.Release, 1, x, y);
+            NativeTest.vlqt_test_send_touch(w, TestProtocol.Touch.Press, 1, x, y);
+            NativeTest.vlqt_test_send_touch(w, TestProtocol.Touch.Release, 1, x, y);
         }
         void Focus(float x, float y)
         {

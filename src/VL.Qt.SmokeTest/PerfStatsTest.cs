@@ -26,7 +26,7 @@ public static class PerfStatsTest
             samples[i] = new Native.vlqt_perf_sample { pump = i + 1, frame = swaps > 0 ? i + 1 : 0, swaps = swaps };
             t[i] = i * 200.0;
         }
-        var rc = Native.vlqt_perf_eval(samples, t, samples.Length, budget, out var st);
+        var rc = NativeTest.vlqt_test_perf_eval(samples, t, samples.Length, budget, out var st);
         // frame intervals only between consecutive frames -> pumps after an idle one (i % 10 == 1) do not count.
         s.Check(rc == 0 && st.budget_ms == budget && st.samples == 100 && st.frames == 80,
             $"perfstats: eval ok, budget, 100 samples, 80 consecutive frames (rc {rc}, {st.samples}, {st.frames})");
@@ -53,7 +53,7 @@ public static class PerfStatsTest
             samples[i] = new Native.vlqt_perf_sample { pump = 0.2f, frame = swaps == 0 ? 0 : animated ? 16 : 128, swaps = swaps };
             t[i] = i * 16.0;
         }
-        rc = Native.vlqt_perf_eval(samples, t, samples.Length, budget, out st);
+        rc = NativeTest.vlqt_test_perf_eval(samples, t, samples.Length, budget, out st);
         s.Check(rc == 0 && st.long_frames == 0 && st.idle == 56 && st.frames == 16 && st.frame_max == 16,
             $"perfstats: on demand -> long frames 0, idle 56, 16 consecutive frames, frame max 16 (long {st.long_frames}, idle {st.idle}, frames {st.frames}, max {st.frame_max})");
 
@@ -61,10 +61,10 @@ public static class PerfStatsTest
         samples = new Native.vlqt_perf_sample[300];
         t = new double[300];
         for (int i = 0; i < 300; i++) { samples[i] = new Native.vlqt_perf_sample { pump = i, frame = 16, swaps = 1 }; t[i] = i * 16.0; }
-        rc = Native.vlqt_perf_eval(samples, t, samples.Length, budget, out st);
+        rc = NativeTest.vlqt_test_perf_eval(samples, t, samples.Length, budget, out st);
         s.Check(rc == 0 && st.samples == 240 && st.pumps == 300 && st.pump_p50 == 179 && st.pump_max == 299 && st.frame_p99 == 16 && st.long_frames == 0,
             $"perfstats: ring of 240 (samples {st.samples}, pumps {st.pumps}, p50 {st.pump_p50}, max {st.pump_max}, frame p99 {st.frame_p99})");
-        rc = Native.vlqt_perf_eval(samples, t, 0, budget, out st);
+        rc = NativeTest.vlqt_test_perf_eval(samples, t, 0, budget, out st);
         s.Check(rc == 0 && st.samples == 0 && st.pumps == 0 && st.pump_max == 0, "perfstats: no samples -> zeros");
 
         // Live window: last sample and stats after a few pumps.
@@ -89,13 +89,13 @@ public static class PerfStatsTest
             hf[i] = new Native.vlqt_host_frame { apply = i + 1, reconcile = 2 * (i + 1), host = 5, interval = 250, gc_pause = 0.5f,
                 ops = 10 * (i + 1), gc0 = 1, gc2 = i == 3 ? 1 : 0, alloc_bytes = 100 * (i + 1),
                 vvvv = 2 * (i + 1), wait = i == 2 ? 10 : 1 }; // vvvv 2..8, wait 1,1,10,1
-        rc = Native.vlqt_perf_host_eval(hf, 4, out var hs);
+        rc = NativeTest.vlqt_test_perf_host_eval(hf, 4, out var hs);
         s.Check(rc == 0 && hs.samples == 4 && hs.apply_ms == 2.5 && hs.apply_ms_max == 4 && hs.reconcile_ms == 5 && hs.reconcile_ms_max == 8
               && hs.host_ms == 5 && hs.ops == 25 && hs.ops_max == 40 && hs.gc0_per_s == 4 && hs.gc1_per_s == 0 && hs.gc2_per_s == 1
               && hs.gc_pause_ms_per_s == 2 && hs.alloc_bytes == 250 && hs.alloc_bytes_max == 400
               && hs.vvvv_ms == 5 && hs.vvvv_ms_max == 8 && hs.wait_ms == 3.25 && hs.wait_ms_max == 10,
             $"perfstats: host eval (rc {rc}, n {hs.samples}, apply {hs.apply_ms}/{hs.apply_ms_max}, ops {hs.ops}/{hs.ops_max}, gen0/1/2 per s {hs.gc0_per_s}/{hs.gc1_per_s}/{hs.gc2_per_s}, pause/s {hs.gc_pause_ms_per_s}, alloc {hs.alloc_bytes}/{hs.alloc_bytes_max}, vvvv {hs.vvvv_ms}/{hs.vvvv_ms_max}, wait {hs.wait_ms}/{hs.wait_ms_max})");
-        rc = Native.vlqt_perf_host_eval(hf, 0, out hs);
+        rc = NativeTest.vlqt_test_perf_host_eval(hf, 0, out hs);
         s.Check(rc == 0 && hs.samples == 0 && hs.gc0_per_s == 0, "perfstats: host eval, no frames -> zeros");
 
         // Live: report after a pump, read back; the next pump without a report has none.

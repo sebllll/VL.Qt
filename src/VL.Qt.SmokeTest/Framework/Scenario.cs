@@ -129,7 +129,7 @@ internal sealed class Scenario
     {
         if (!Path.IsPathRooted(path))
             path = Path.Combine(OutDir, path);
-        var rc = Native.vlqt_window_grab(window, path);
+        var rc = NativeTest.vlqt_test_window_grab(window, path);
         Check(rc == 0, $"grab {path} " + (rc != 0 ? Native.LastError() : ""));
         return new Bitmap(path);
     }
