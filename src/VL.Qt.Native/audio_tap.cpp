@@ -29,7 +29,6 @@ namespace {
 
 Q_LOGGING_CATEGORY(lcTap, "VL.Qt.Resources")
 
-static_assert(sizeof(vlqt_audio_tap_state) == 96, "vlqt_audio_tap_state is mirrored in Native.cs (96 bytes)");
 static_assert(std::atomic<double>::is_always_lock_free && std::atomic<uint64_t>::is_always_lock_free,
     "the audio thread must not take a lock");
 

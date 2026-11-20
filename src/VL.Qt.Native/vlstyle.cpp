@@ -298,8 +298,8 @@ void registerStyleTypes()
 
 int applySetStyle(QQuickItem* item, const unsigned char* p, int plen, std::string& err)
 {
-    if (plen < 8) {
-        err = "payloadLen " + std::to_string(plen) + " too short for SET_STYLE (>= 8)";
+    if (plen < VLQT_LIST_FIELDS_SIZE) {
+        err = "payloadLen " + std::to_string(plen) + " too short for SET_STYLE (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
     }
     const int count = rd<quint16>(p + 4);
@@ -320,10 +320,10 @@ int applySetStyle(QQuickItem* item, const unsigned char* p, int plen, std::strin
             if (flags & VLQT_STYLE_SET_CLEAR)
                 style->clear();
         }
-        int off = 8;
+        int off = VLQT_LIST_FIELDS_SIZE;
         for (int e = 0; e < count; ++e) {
             auto at = [&] { return "entry " + std::to_string(e) + " (offset " + std::to_string(off) + ")"; };
-            if (plen - off < 4) {
+            if (plen - off < VLQT_ENTRY_HEADER_SIZE) {
                 err = at() + ": truncated (" + std::to_string(plen - off) + " bytes left)";
                 return ApplyBadLength;
             }
@@ -331,7 +331,7 @@ int applySetStyle(QQuickItem* item, const unsigned char* p, int plen, std::strin
             const int state = p[off + 2];
             Value v;
             v.type = p[off + 3];
-            const unsigned char* vp = p + off + 4;
+            const unsigned char* vp = p + off + VLQT_ENTRY_HEADER_SIZE;
             const int slot = VlStyle::slotOf(field);
             if (slot < 0) {
                 err = at() + ": unknown style field " + std::to_string(field);
@@ -359,7 +359,7 @@ int applySetStyle(QQuickItem* item, const unsigned char* p, int plen, std::strin
                 break;
             default: break;
             }
-            const qint64 left = plen - off - 4;
+            const qint64 left = plen - off - VLQT_ENTRY_HEADER_SIZE;
             if (size < 0 || size > left) {
                 err = at() + ": value needs " + std::to_string(size) + " bytes, " + std::to_string(left) + " left";
                 return ApplyBadLength;
@@ -376,10 +376,10 @@ int applySetStyle(QQuickItem* item, const unsigned char* p, int plen, std::strin
                 }
                 style->setCell(slot, state, v);
             }
-            off += align4(4 + int(size));
+            off += align4(VLQT_ENTRY_HEADER_SIZE + int(size));
         }
         // payloadLen excludes the padding of the last entry (like every command); the padded end is accepted too.
-        const int end = count > 0 ? off : 8;
+        const int end = count > 0 ? off : VLQT_LIST_FIELDS_SIZE;
         if (pass == 0 && plen != end && !(count > 0 && plen < end && align4(plen) == end)) {
             err = "payloadLen " + std::to_string(plen) + " does not match " + std::to_string(count)
                 + " entries (" + std::to_string(end) + " bytes incl. padding)";

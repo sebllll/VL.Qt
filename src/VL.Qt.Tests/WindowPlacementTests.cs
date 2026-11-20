@@ -49,11 +49,11 @@ namespace VL.Qt.Tests
 
         private static byte[] Record(ushort ev, uint handle, float x, float y, float w, float h, uint flags, float cx = 0, float cy = 0)
         {
-            var b = new byte[Protocol.HeaderSize + EventReader.RecordFieldsSize + 28];
+            var b = new byte[Protocol.HeaderSize + Protocol.EventFieldsSize + 28];
             BinaryPrimitives.WriteUInt16LittleEndian(b, ev);
-            BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(2), (ushort)(EventReader.RecordFieldsSize + 28));
+            BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(2), (ushort)(Protocol.EventFieldsSize + 28));
             BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), handle);
-            int p = Protocol.HeaderSize + EventReader.RecordFieldsSize;
+            int p = Protocol.HeaderSize + Protocol.EventFieldsSize;
             BinaryPrimitives.WriteSingleLittleEndian(b.AsSpan(p), x);
             BinaryPrimitives.WriteSingleLittleEndian(b.AsSpan(p + 4), y);
             BinaryPrimitives.WriteSingleLittleEndian(b.AsSpan(p + 8), w);

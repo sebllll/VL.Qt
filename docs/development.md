@@ -29,7 +29,7 @@ Open `src/VL.Qt.slnx` in Visual Studio 2026 (or 2022 from 17.14) or Rider. It co
 | `VL.Qt.Audio` | companion package for VL.Audio (Windows only, references VL.Audio and VL.Qt); builds into the package folder `VL.Qt.Audio/lib/net10.0-windows7.0/`. VL.Qt never references it. See [video-audio.md](video-audio.md). |
 | `VL.Qt.Tests` | unit tests (NUnit), run them from the Test Explorer |
 | `VL.Qt.Audio.Tests` | unit tests of the sync loop of `Video (VL.Audio)` with simulated clocks (Windows only) |
-| `VL.Qt.SmokeTest` | drives QtNative without vvvv: rendering, grabs, performance limits, protocol drift |
+| `VL.Qt.SmokeTest` | drives QtNative without vvvv: rendering, grabs, performance limits |
 | `VL.Qt.Probe` | opens one Qt window from C# without vvvv and grabs a PNG; for platform and loader checks |
 | Solution Items | `README.md`, `Directory.Build.props`, `VL.Qt.vl.targets`, the build scripts |
 
@@ -55,7 +55,7 @@ dotnet build src/VL.Qt -c Release
 # Unit tests
 dotnet test src/VL.Qt.Tests
 
-# Smoke tests: QtNative without vvvv (rendering, performance, protocol drift)
+# Smoke tests: QtNative without vvvv (rendering, performance)
 dotnet run --project src/VL.Qt.SmokeTest -c Release -- --all
 
 # Compile-check a patch with vvvvc (exit 0 = no build errors)
@@ -255,7 +255,7 @@ tools/                      # build, export, license and test scripts
 1. Edit `src/VL.Qt.Native/protocol.h` (type or property IDs)
 2. Mirror the change in `src/VL.Qt/Wire/Protocol.cs` by hand
 3. Bump `VLQT_ABI_VERSION` and `Protocol.AbiVersion` (every change to a constant, a layout or an exported signature; `QtApp` refuses a `vlqt.dll` with another number)
-4. Run `dotnet run --project src/VL.Qt.SmokeTest -- --drift` to check that header and C# agree
+4. Run `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"` to check that header and C# agree: constants and fixed wire sizes of `protocol.h` (`ProtocolDriftTests`), struct layouts of `vlqt.h` (`NativeLayoutTests`, numbers also in the `static_assert`s of `vlqt.cpp`) and the `VLQT_API` exports against the `[DllImport]`s (`ApiDriftTests`)
 5. Implement both sides (`elements.cpp`, `Elements/`, `Reconciler/`)
 
 **Add a new element type:**

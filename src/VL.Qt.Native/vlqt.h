@@ -414,6 +414,9 @@ VLQT_API int   vlqt_test_handler_count(void* w, unsigned int id);
 /* TEST ONLY: busy-waits ms inside one phase of the window's next rendered frame (0 events, 1 sync, 2 render,
  * 3 present, 4 vsync wait) to check that the F5 timeline attributes a spike. 0 = ok, -1 null window. */
 VLQT_API int   vlqt_test_perf_spike(void* w, int phase, float ms);
+/* TEST ONLY: header text of the F5 stats page as UTF-8 (HTML). Returns its full byte length, copies up to len - 1 bytes and a NUL
+ * (nothing when buf is NULL or len <= 0); -1 null window. */
+VLQT_API int   vlqt_test_perf_stats_text(void* w, char* buf, int len);
 /* TEST ONLY: plain UTF-8 text of an F5 page (0 Summary, 1 Timeline, 2 Scene, 3 System, 4 Resources; others empty), built on demand, overlay state
  * unchanged. Returns the byte length without NUL; -(length + 1) if cap is too small; -1 null window. */
 VLQT_API int   vlqt_test_perf_text(void* w, int page, char* out, int cap);

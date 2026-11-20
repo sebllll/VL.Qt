@@ -1,7 +1,7 @@
 /*
  * protocol.h - single source of truth for the VL.Qt command buffer protocol.
  *
- * Mirrored 1:1 in src/VL.Qt/Wire/Protocol.cs. The SmokeTest drift check parses this file
+ * Mirrored 1:1 in src/VL.Qt/Wire/Protocol.cs. The unit test ProtocolDriftTests parses this file
  * and compares every constant (name + value) with Protocol.cs, so keep the format simple:
  *   - only `#define VLQT_<NAME> <integer>` and `enum { VLQT_<GROUP>_<NAME> = <integer>, ... };`
  *   - one constant per line, explicit values, no expressions.
@@ -251,11 +251,23 @@
 /* One number for the command protocol (this file) and the C ABI (vlqt.h): vlqt_app_get_abi_version() returns it, VL.Qt.dll
  * compares it with Protocol.AbiVersion before the first window or resource and refuses a vlqt.dll with another one.
  * Bump it on EVERY change to a constant, a struct layout or an exported signature (also additions); mirror it in Protocol.cs. */
-#define VLQT_ABI_VERSION 15
+#define VLQT_ABI_VERSION 16
 #define VLQT_COMMAND_ALIGN 4
 #define VLQT_HEADER_SIZE 4
 #define VLQT_ROOT_ID 0
 #define VLQT_UNIFORM_NAME_MAX 255 /* max UTF-8 bytes of a SET_UNIFORMS name */
+
+/* Fixed sizes of the wire format in bytes (payload parts; the header, VLQT_HEADER_SIZE, comes before). The decoder checks
+ * lengths against them, CommandWriter and EventReader write and read with them, the unit tests compare the mirror. */
+#define VLQT_CREATE_PAYLOAD 6 /* CREATE: u32 id, u16 type (the whole payload) */
+#define VLQT_REPARENT_PAYLOAD 12 /* REPARENT: u32 id, u32 parent, u32 index (the whole payload) */
+#define VLQT_BIND_PAYLOAD 10 /* BIND: u32 id, u32 sinkHandle, u16 flags (the whole payload) */
+#define VLQT_SET_FIELDS_SIZE 8 /* SET: u32 id, u16 prop, u16 valueType in front of the value */
+#define VLQT_LIST_FIELDS_SIZE 8 /* SET_STYLE, SET_UNIFORMS, SET_QML_PROPERTIES, SET_EFFECT_CHAIN: u32 id, u16 count, u16 flags in front of the entries */
+#define VLQT_ENTRY_HEADER_SIZE 4 /* entry of SET_STYLE (u16 field, u8 state, u8 valueType), SET_UNIFORMS and SET_QML_PROPERTIES (u16 valueType, u16 nameLen) in front of name and value */
+#define VLQT_LINK_HEADER_SIZE 8 /* effect chain link: u16 kind, u16 count, u32 bodyLen in front of the body */
+#define VLQT_SHADER_LINK_FIXED_SIZE 24 /* SHADER link body after u16 template, u16 shaderCount and the shader ids: 4 x f32 padding, f32 strength, u16 reserved, u16 0 */
+#define VLQT_EVENT_FIELDS_SIZE 8 /* poll record after its header: u32 handle, u32 index in front of the payload */
 
 /* Opcodes (u16) */
 enum vlqt_op {

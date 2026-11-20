@@ -51,7 +51,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\VL.Qt.Native\protocol.h" Link="protocol.h" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\runtimes\$(RuntimeIdentifier)\native\**" Link="runtimes\$(RuntimeIdentifier)\native\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

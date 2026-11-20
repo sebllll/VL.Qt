@@ -85,6 +85,23 @@
 #include <cstring>
 #include <cmath>
 #include <limits>
+#include <cstddef>
+
+// Layout of the structs of vlqt.h: sizes and the offset of the last field. The same numbers are in
+// src/VL.Qt.Tests/NativeLayoutTests.cs, which checks them against the mirrors in Native.cs. Change both, and bump
+// VLQT_ABI_VERSION (protocol.h). All members are 8-, 4- or 2-byte types (long long, double, int, float, pointer on a
+// 64-bit target), so the numbers are the same on Windows (x64, arm64) and Linux.
+static_assert(sizeof(void*) == 8, "the layouts below assume a 64-bit target");
+static_assert(sizeof(vlqt_perf) == 104 && offsetof(vlqt_perf, vsync_ms) == 96, "vlqt_perf layout");
+static_assert(sizeof(vlqt_perf_sample) == 36 && offsetof(vlqt_perf_sample, vsync) == 32, "vlqt_perf_sample layout");
+static_assert(sizeof(vlqt_perf_stats) == 160 && offsetof(vlqt_perf_stats, recent_multi_swap) == 152, "vlqt_perf_stats layout");
+static_assert(sizeof(vlqt_apply_error) == 24 && offsetof(vlqt_apply_error, reason) == 16, "vlqt_apply_error layout");
+static_assert(sizeof(vlqt_host_frame) == 56 && offsetof(vlqt_host_frame, wait) == 52, "vlqt_host_frame layout");
+static_assert(sizeof(vlqt_host_stats) == 152 && offsetof(vlqt_host_stats, wait_ms_max) == 144, "vlqt_host_stats layout");
+static_assert(sizeof(vlqt_res_info) == 32 && offsetof(vlqt_res_info, element_refs) == 28, "vlqt_res_info layout");
+static_assert(sizeof(vlqt_pixel_desc) == 24 && offsetof(vlqt_pixel_desc, flags) == 20, "vlqt_pixel_desc layout");
+static_assert(sizeof(vlqt_audio_tap_state) == 96 && offsetof(vlqt_audio_tap_state, reserved) == 88, "vlqt_audio_tap_state layout");
+static_assert(sizeof(vlqt_scene_metrics) == 12 && offsetof(vlqt_scene_metrics, dpr) == 8, "vlqt_scene_metrics layout");
 
 namespace {
 
