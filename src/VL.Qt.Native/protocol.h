@@ -248,7 +248,10 @@
 #ifndef VLQT_PROTOCOL_H
 #define VLQT_PROTOCOL_H
 
-#define VLQT_PROTOCOL_VERSION 14
+/* One number for the command protocol (this file) and the C ABI (vlqt.h): vlqt_app_get_abi_version() returns it, VL.Qt.dll
+ * compares it with Protocol.AbiVersion before the first window or resource and refuses a vlqt.dll with another one.
+ * Bump it on EVERY change to a constant, a struct layout or an exported signature (also additions); mirror it in Protocol.cs. */
+#define VLQT_ABI_VERSION 15
 #define VLQT_COMMAND_ALIGN 4
 #define VLQT_HEADER_SIZE 4
 #define VLQT_ROOT_ID 0

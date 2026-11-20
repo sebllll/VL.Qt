@@ -25,6 +25,14 @@ public static class CoreTest
         s.Check(QtHost.InitAgain() == 0, "app_init idempotent");
     });
 
+    /// <summary>vlqt.dll and VL.Qt.dll have the same ABI version (QtApp refuses a vlqt.dll with another one).</summary>
+    [Test, Category("core-abi")]
+    public static void AbiVersion() => Scenario.RunLocal(s => // loads vlqt.dll but does not start Qt: no GPU needed
+    {
+        var actual = Native.vlqt_app_get_abi_version();
+        s.Check(actual == Protocol.AbiVersion, $"vlqt_app_get_abi_version() {actual} == Protocol.AbiVersion {Protocol.AbiVersion}");
+    });
+
     /// <summary>Test rect through the command buffer: pixels after create, set + reparent, a broken buffer, destroy.</summary>
     [Test, Category("core-rect")]
     public static void Rect() => Scenario.Run(s =>

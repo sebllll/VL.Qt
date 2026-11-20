@@ -7,7 +7,8 @@
     /// </summary>
     internal static class Protocol
     {
-        public const int ProtocolVersion = 14;
+        /// <summary>Version of the command protocol and the C ABI of vlqt.h; QtApp refuses a vlqt.dll with another one. Bump with every change (see protocol.h).</summary>
+        public const int AbiVersion = 15;
         public const int CommandAlign = 4;
         public const int HeaderSize = 4;
         public const uint RootId = 0;

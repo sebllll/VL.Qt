@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using VL.Core;
 using VL.Lib.Animation;
+using VL.Qt.Wire;
 
 namespace VL.Qt
 {
@@ -264,6 +265,7 @@ namespace VL.Qt
         private double _driverSeconds = double.NaN;
         private long _lastWarningTicks, _lastErrorTicks;
         private bool _wrongThreadLogged;
+        private static bool s_abiMismatchLogged;
 
         // Cumulative counters (since process start), logged as [vlqt.stats].
         private long _pumps, _advances, _processEvents, _registered, _unregistered, _participantErrors;
@@ -282,6 +284,7 @@ namespace VL.Qt
         {
             _threadId = Environment.CurrentManagedThreadId;
             Native.EnsureLoaded();
+            CheckAbi();
             if (Native.PathsTooLong)
             {
                 Logger?.LogWarning("VL.Qt: the Qt files are installed under a path that is too long for Windows (MAX_PATH {MaxPath}): "
@@ -293,6 +296,22 @@ namespace VL.Qt
                 throw new InvalidOperationException("VL.Qt: vlqt_app_init failed: " + Native.LastError());
             _statsStartTicks = Environment.TickCount64;
             _resources = new ResourceClient(new NativeResourceApi(), _threadId, static () => Logger);
+        }
+
+        // Before the first window or resource: a vlqt.dll of another ABI version is refused (no window, no QGuiApplication).
+        // Every caller of Get throws again, so every Renderer node shows the error; the log gets it once.
+        private static void CheckAbi()
+        {
+            var actual = Native.ReadAbiVersion();
+            var message = AbiCheck.Describe(actual, Protocol.AbiVersion, Native.LibraryPath);
+            if (message is null)
+                return;
+            if (!s_abiMismatchLogged)
+            {
+                s_abiMismatchLogged = true;
+                Logger?.LogError(AbiCheck.Template, Native.LibraryPath, AbiCheck.ActualText(actual), Protocol.AbiVersion);
+            }
+            throw new AbiMismatchException(message);
         }
 
         /// <summary>

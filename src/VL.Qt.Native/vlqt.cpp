@@ -1017,6 +1017,11 @@ void setError(const std::string& message)
 
 extern "C" {
 
+VLQT_API int vlqt_app_get_abi_version(void)
+{
+    return VLQT_ABI_VERSION;
+}
+
 VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
 {
     return guarded([&]() -> int {

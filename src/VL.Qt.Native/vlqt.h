@@ -145,6 +145,9 @@ typedef struct vlqt_audio_tap_state {
     int reserved[2];                     /* 0 */
 } vlqt_audio_tap_state;
 
+/* ABI version of this library (VLQT_ABI_VERSION, protocol.h): protocol constants, struct layouts and signatures of this
+ * header. Needs no vlqt_app_init; the host reads it first and refuses a library with another number. */
+VLQT_API int         vlqt_app_get_abi_version(void);
 VLQT_API int         vlqt_app_init(const char* nativeDir, vlqt_log_fn log); /* idempotent */
 VLQT_API void        vlqt_app_process_events(void);
 /* like vlqt_app_process_events, but only the given windows (those of one vvvv app) may render in this pump.
