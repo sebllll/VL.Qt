@@ -5,7 +5,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     // Template for the builder nodes of Qt.Paths (MoveTo, LineTo, ...): a [ProcessNode] class per node, absolute and
     // relative variant side by side. The relative one is a separate node "<Name> (Relative)" (VL shows the text in

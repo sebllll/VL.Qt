@@ -3,7 +3,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     /// <summary>Adds an arc of an oval as a new contour (Skia AddArc).</summary>
     [ProcessNode(Name = "AddArc", Category = Categories.Paths)]

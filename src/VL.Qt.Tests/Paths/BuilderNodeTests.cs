@@ -2,7 +2,7 @@
 using System.Linq;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
-using VL.Qt.Nodes.Paths;
+using VL.Qt.Nodes;
 using VL.Qt.Paths;
 
 namespace VL.Qt.Tests.Paths

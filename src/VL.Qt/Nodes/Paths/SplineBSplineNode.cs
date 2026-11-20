@@ -4,7 +4,7 @@ using VL.Core.Import;
 using VL.Lib.Collections;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     /// <summary>Adds a uniform cubic B-spline that follows a control polygon, as exact cubic Béziers.</summary>
     [ProcessNode(Name = "Spline (BSpline)", Category = Categories.Paths)]

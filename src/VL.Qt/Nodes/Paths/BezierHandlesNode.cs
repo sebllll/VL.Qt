@@ -5,7 +5,7 @@ using VL.Lib.Collections;
 using VL.Model;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     /// <summary>Adds a Bézier path through anchors, shaped by a pair of handles per anchor.</summary>
     [ProcessNode(Name = "Bezier (Handles)", Category = Categories.Paths)]

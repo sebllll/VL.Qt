@@ -4,7 +4,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     /// <summary>Closes the current contour with a line to its start (Skia Close; Skia has no relative variant).</summary>
     [ProcessNode(Name = "Close", Category = Categories.Paths)]

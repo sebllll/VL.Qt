@@ -5,7 +5,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     /// <summary>Adds a cubic Bézier curve from the last point to an end point (Skia CubicTo).</summary>
     [ProcessNode(Name = "CubicTo", Category = Categories.Paths)]

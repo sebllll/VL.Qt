@@ -4,7 +4,7 @@ using VL.Core.Import;
 using VL.Lib.Collections;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     /// <summary>Adds a contour through a list of points, optionally closed (Skia AddPoly).</summary>
     [ProcessNode(Name = "AddPoly", Category = Categories.Paths)]

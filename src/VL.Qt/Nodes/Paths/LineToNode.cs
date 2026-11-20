@@ -5,7 +5,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     // Builder nodes of Qt.Paths, see MoveToNode for the pattern.
 

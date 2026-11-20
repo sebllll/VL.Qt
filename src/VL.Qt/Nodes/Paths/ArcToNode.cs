@@ -5,7 +5,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     // Skia has three ArcTo nodes with the same name (Tangent, Oval, SVG: they differ in their pins) and
     // ArcTo (Relative) for the SVG form. The names are the same here. Angles are in cycles (1 = full turn), as in Skia.
