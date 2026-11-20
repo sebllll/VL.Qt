@@ -860,7 +860,6 @@ namespace {
 /* EV_MEASURED / EV_SCENE_BOUNDS of one bound node, each only on change. */
 void measureGeometry(Scene& scene, Node& n)
 {
-    ++scene.measuredLastPoll;
     SentState& s = n.sent;
     const QQuickItem* item = n.item;
 
@@ -890,7 +889,6 @@ void measureGeometry(Scene& scene, Node& n)
  * Elements::updateMaskFrame): they go with the element. */
 void collectGeometry(Scene& scene)
 {
-    scene.measuredLastPoll = 0;
     if (scene.measureQueue.empty())
         return;
     if (++scene.measureStamp == 0) // wrapped: 0 is the stamp of nodes never visited

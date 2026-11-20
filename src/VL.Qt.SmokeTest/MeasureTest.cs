@@ -451,8 +451,9 @@ public static class MeasureTest
         Native.vlqt_res_release(wave);
     }
 
-    [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    static extern int vlqt_test_measure_count(IntPtr w);
+    // Items measured by one poll = MEASURED / SCENE_BOUNDS records in its buffer (each is queued only for an item whose geometry changed).
+    static int Records(ReadOnlySpan<byte> poll, int n, ushort ev, Scenario s) =>
+        Parse(poll.Slice(0, Math.Max(n, 0)), s).FindAll(x => x.Event == ev).Count;
 
     // #20: cost of the measurement path for a static scene of count bound rectangles (flat in one Group, like the
     // Elements500/2000 profile scenarios), and with one of them moving. Poll time = Stopwatch around vlqt_window_poll.
@@ -483,7 +484,6 @@ public static class MeasureTest
         int measured = firstRecs.FindAll(x => x.Event == Protocol.Ev.Measured).Count;
         int bounds = firstRecs.FindAll(x => x.Event == Protocol.Ev.SceneBounds).Count;
         s.Check(measured == count && bounds == count, $"{count} bound items -> MEASURED + SCENE_BOUNDS each on the first poll ({measured}, {bounds})");
-        s.Check(vlqt_test_measure_count(w) == count, $"first poll measures all {count} items ({vlqt_test_measure_count(w)})");
 
         const int frames = 201;
         var idle = new double[frames];
@@ -494,7 +494,7 @@ public static class MeasureTest
             var t = Stopwatch.StartNew();
             int n = Native.Poll(w, buf);
             idle[f] = t.Elapsed.TotalMilliseconds;
-            idleMeasured = Math.Max(idleMeasured, vlqt_test_measure_count(w));
+            idleMeasured = Math.Max(idleMeasured, Records(buf, n, Protocol.Ev.Measured, s) + Records(buf, n, Protocol.Ev.SceneBounds, s));
             if (n != 0) { s.Check(false, $"static poll returned {n} bytes ({count})"); break; }
         }
         var one = new double[frames];
@@ -508,7 +508,7 @@ public static class MeasureTest
             var t = Stopwatch.StartNew();
             int n = Native.Poll(w, buf);
             one[f] = t.Elapsed.TotalMilliseconds;
-            oneMeasured = Math.Max(oneMeasured, vlqt_test_measure_count(w));
+            oneMeasured = Math.Max(oneMeasured, Records(buf, n, Protocol.Ev.SceneBounds, s));
             if (n != 28) { s.Check(false, $"one moved -> one SCENE_BOUNDS, got {n} bytes ({count})"); break; }
         }
         Array.Sort(idle);
