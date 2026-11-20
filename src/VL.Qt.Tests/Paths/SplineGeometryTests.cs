@@ -9,16 +9,16 @@ namespace VL.Qt.Tests.Paths
 {
     public class SplineGeometryTests
     {
-        const float eps = 1e-4f;
+        private const float eps = 1e-4f;
 
-        static readonly Vector2[] s_zigzag =
+        private static readonly Vector2[] s_zigzag =
         {
             new Vector2(0, 0), new Vector2(100, 40), new Vector2(150, -30), new Vector2(260, 10), new Vector2(300, 150),
         };
 
-        readonly record struct Cubic(Vector2 P0, Vector2 P1, Vector2 P2, Vector2 P3);
+        private readonly record struct Cubic(Vector2 P0, Vector2 P1, Vector2 P2, Vector2 P3);
 
-        static (byte[] verbs, List<Cubic> cubics, Vector2 move) Read(QtPath path)
+        private static (byte[] verbs, List<Cubic> cubics, Vector2 move) Read(QtPath path)
         {
             var flat = path.Flatten();
             var pts = flat.Points;
@@ -50,20 +50,20 @@ namespace VL.Qt.Tests.Paths
             return (flat.Verbs.ToArray(), cubics, move);
         }
 
-        static void AssertNear(Vector2 expected, Vector2 actual, float tolerance = eps)
+        private static void AssertNear(Vector2 expected, Vector2 actual, float tolerance = eps)
         {
             Assert.That(actual.X, Is.EqualTo(expected.X).Within(tolerance), $"x of {actual}");
             Assert.That(actual.Y, Is.EqualTo(expected.Y).Within(tolerance), $"y of {actual}");
         }
 
-        static void AssertFinite(QtPath path)
+        private static void AssertFinite(QtPath path)
         {
             foreach (var v in path.Flatten().Points)
                 Assert.That(float.IsFinite(v), Is.True, "non-finite coordinate");
         }
 
         // Same direction: parallel and pointing the same way.
-        static void AssertSameDirection(Vector2 a, Vector2 b)
+        private static void AssertSameDirection(Vector2 a, Vector2 b)
         {
             Assert.That(a.Length(), Is.GreaterThan(eps));
             Assert.That(b.Length(), Is.GreaterThan(eps));
@@ -73,14 +73,14 @@ namespace VL.Qt.Tests.Paths
         }
 
         // Points on segment p-q (within tolerance).
-        static bool OnSegment(Vector2 p, Vector2 q, Vector2 x)
+        private static bool OnSegment(Vector2 p, Vector2 q, Vector2 x)
         {
             var d = q - p;
             var t = Vector2.Dot(x - p, d) / d.LengthSquared();
             return t >= -eps && t <= 1 + eps && (p + d * t - x).Length() < 1e-3f;
         }
 
-        static byte[] Verbs(params byte[] verbs) => verbs;
+        private static byte[] Verbs(params byte[] verbs) => verbs;
 
         [TestCase(0f)]
         [TestCase(0.5f)]

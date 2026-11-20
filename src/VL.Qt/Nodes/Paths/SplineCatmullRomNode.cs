@@ -11,12 +11,12 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "Spline (CatmullRom)", Category = Categories.Paths)]
     public sealed class SplineCatmullRomNode
     {
-        QtPath? _input;
-        Spread<Vector2>? _points;
-        bool _closed;
-        float _alpha;
-        float _tension;
-        QtPath? _output;
+        private QtPath? _input;
+        private Spread<Vector2>? _points;
+        private bool _closed;
+        private float _alpha;
+        private float _tension;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a smooth curve that runs through all points.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>

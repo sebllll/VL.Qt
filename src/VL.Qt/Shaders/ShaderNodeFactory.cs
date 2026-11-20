@@ -63,8 +63,8 @@ namespace VL.Qt.Shaders
         /// </summary>
         public const string LinkCategory = Categories.Effects;
 
-        const string fragmentExtension = ".frag";
-        const string vertexExtension = ".vert";
+        private const string fragmentExtension = ".frag";
+        private const string vertexExtension = ".vert";
 
         /// <summary>
         /// Registers the factory at the app host (called from <see cref="Initialization.Configure"/>). Like VL.Stride over
@@ -187,7 +187,7 @@ namespace VL.Qt.Shaders
         }
 
         /// <summary>Annotations for the NodeBrowser only; a file that cannot be read now gets the defaults (init reports it).</summary>
-        static ShaderAnnotations ReadHead(string fragment)
+        private static ShaderAnnotations ReadHead(string fragment)
         {
             try
             {
@@ -200,7 +200,7 @@ namespace VL.Qt.Shaders
         }
 
         /// <summary>Whether the .frag declares <c>sampler2D source</c>; null if it cannot be read now.</summary>
-        static bool? ReadIsFilter(string fragment)
+        private static bool? ReadIsFilter(string fragment)
         {
             try
             {
@@ -238,9 +238,9 @@ namespace VL.Qt.Shaders
                 .Select(static e => (object)e);
         }
 
-        static bool HasExtension(string path, string extension) => path.EndsWith(extension, StringComparison.OrdinalIgnoreCase);
+        private static bool HasExtension(string path, string extension) => path.EndsWith(extension, StringComparison.OrdinalIgnoreCase);
 
-        static bool IsShaderFile(string? name) =>
+        private static bool IsShaderFile(string? name) =>
             name != null && (HasExtension(name, fragmentExtension) || HasExtension(name, vertexExtension));
 
         /// <summary>

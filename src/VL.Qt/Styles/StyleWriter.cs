@@ -46,7 +46,7 @@ namespace VL.Qt.Styles
             return true;
         }
 
-        static void Visit(ICommandSink? sink, Style cur, Style? last, bool full, ref bool changed, ref bool removed)
+        private static void Visit(ICommandSink? sink, Style cur, Style? last, bool full, ref bool changed, ref bool removed)
         {
             var f = cur.Frame;
             var lf = last?.Frame;
@@ -82,7 +82,7 @@ namespace VL.Qt.Styles
         }
 
         /// <summary>Reduced form of one state: Normal as set; others only if set and different from Normal.</summary>
-        static Optional<T> Reduced<T>(in StateValues<T> v, StyleState state)
+        private static Optional<T> Reduced<T>(in StateValues<T> v, StyleState state)
         {
             var s = v[state];
             if (!s.HasValue)
@@ -93,7 +93,7 @@ namespace VL.Qt.Styles
         }
 
         /// <summary>Compares one state of the reduced forms; true if the new entry has to be written (value = the entry).</summary>
-        static bool Entry<T>(in StateValues<T> cur, in StateValues<T> last, StyleState state, bool full, ref bool changed, ref bool removed, out T value)
+        private static bool Entry<T>(in StateValues<T> cur, in StateValues<T> last, StyleState state, bool full, ref bool changed, ref bool removed, out T value)
         {
             var c = Reduced(cur, state);
             var l = Reduced(last, state);
@@ -108,28 +108,28 @@ namespace VL.Qt.Styles
             return full || differs;
         }
 
-        static void Color(ICommandSink? sink, ushort field, in StateValues<Color4> cur, in StateValues<Color4> last, bool full, ref bool changed, ref bool removed)
+        private static void Color(ICommandSink? sink, ushort field, in StateValues<Color4> cur, in StateValues<Color4> last, bool full, ref bool changed, ref bool removed)
         {
             for (byte s = 0; s <= Protocol.StyleState.Checked; s++)
                 if (Entry(cur, last, (StyleState)s, full, ref changed, ref removed, out var v))
                     sink?.StyleColor(field, s, v.R, v.G, v.B, v.A);
         }
 
-        static void Float(ICommandSink? sink, ushort field, in StateValues<float> cur, in StateValues<float> last, bool full, ref bool changed, ref bool removed)
+        private static void Float(ICommandSink? sink, ushort field, in StateValues<float> cur, in StateValues<float> last, bool full, ref bool changed, ref bool removed)
         {
             for (byte s = 0; s <= Protocol.StyleState.Checked; s++)
                 if (Entry(cur, last, (StyleState)s, full, ref changed, ref removed, out var v))
                     sink?.StyleF32(field, s, v);
         }
 
-        static void Int(ICommandSink? sink, ushort field, in StateValues<int> cur, in StateValues<int> last, bool full, ref bool changed, ref bool removed)
+        private static void Int(ICommandSink? sink, ushort field, in StateValues<int> cur, in StateValues<int> last, bool full, ref bool changed, ref bool removed)
         {
             for (byte s = 0; s <= Protocol.StyleState.Checked; s++)
                 if (Entry(cur, last, (StyleState)s, full, ref changed, ref removed, out var v))
                     sink?.StyleI32(field, s, v);
         }
 
-        static void Text(ICommandSink? sink, ushort field, in StateValues<string> cur, in StateValues<string> last, bool full, ref bool changed, ref bool removed)
+        private static void Text(ICommandSink? sink, ushort field, in StateValues<string> cur, in StateValues<string> last, bool full, ref bool changed, ref bool removed)
         {
             for (byte s = 0; s <= Protocol.StyleState.Checked; s++)
                 if (Entry(cur, last, (StyleState)s, full, ref changed, ref removed, out var v))

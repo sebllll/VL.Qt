@@ -183,10 +183,10 @@ namespace VL.Qt.Shaders
         }
 
         /// <summary>@padding starting with an identifier names a uniform; numbers (also "-1", ".5") are the fixed form.</summary>
-        static bool IsUniformPadding(string text) => text.Length > 0 && (char.IsLetter(text[0]) || text[0] == '_');
+        private static bool IsUniformPadding(string text) => text.Length > 0 && (char.IsLetter(text[0]) || text[0] == '_');
 
         /// <summary>@padding &lt;uniform&gt; [factor]: factor is a finite number, 0 or more; anything else is an error and gives no padding.</summary>
-        static (string? Uniform, float Factor) ParsePaddingUniform(string text, int line, ImmutableArray<ShaderAnnotationWarning>.Builder errors)
+        private static (string? Uniform, float Factor) ParsePaddingUniform(string text, int line, ImmutableArray<ShaderAnnotationWarning>.Builder errors)
         {
             var parts = text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
             var factor = 1f;
@@ -200,7 +200,7 @@ namespace VL.Qt.Shaders
         }
 
         /// <summary>@padding: one number (all sides) or four (left, top, right, bottom), DIP, not negative. Anything else warns and gives 0.</summary>
-        static RectangleF ParsePadding(string text, int line, ImmutableArray<ShaderAnnotationWarning>.Builder warnings)
+        private static RectangleF ParsePadding(string text, int line, ImmutableArray<ShaderAnnotationWarning>.Builder warnings)
         {
             var parts = text.Split(',', StringSplitOptions.TrimEntries);
             var values = new float[parts.Length];
@@ -218,16 +218,16 @@ namespace VL.Qt.Shaders
                 : new RectangleF(values[0], values[1], values[2], values[3]);
         }
 
-        static readonly Regex declaration = new(
+        private static readonly Regex declaration = new(
             @"^\s*(?:layout\s*\([^)]*\)\s*)?(?:uniform\s+)?(?:(?:highp|mediump|lowp)\s+)?(?<type>[A-Za-z_]\w*)\s+(?<name>[A-Za-z_]\w*)\s*(?:\[[^\]]*\])?\s*;",
             RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        static readonly Regex uniformWord = new(@"\buniform\b", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+        private static readonly Regex uniformWord = new(@"\buniform\b", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        static bool IsHeadLine(string trimmed) =>
+        private static bool IsHeadLine(string trimmed) =>
             trimmed.Length == 0 || trimmed.StartsWith("//", StringComparison.Ordinal) || trimmed.StartsWith("#version", StringComparison.Ordinal);
 
-        static void ReadUniform(
+        private static void ReadUniform(
             string name,
             List<(string Text, int Line)> above,
             string? trailing,
@@ -267,7 +267,7 @@ namespace VL.Qt.Shaders
         }
 
         // Tags in comments that belong to no uniform and are not in the head.
-        static void ReadOrphans(
+        private static void ReadOrphans(
             List<(string Text, int Line)> above,
             string? trailing,
             int trailingLine,
@@ -284,18 +284,18 @@ namespace VL.Qt.Shaders
                 warnings.Add(new(tag.Line, $"@{tag.Name} is not above a uniform declaration"));
         }
 
-        sealed record Tag(string Name, string Value, int Line);
+        private sealed record Tag(string Name, string Value, int Line);
 
         /// <summary>Collects @tags of consecutive comment lines; summary/category continue on following lines without @.</summary>
-        sealed class TagReader
+        private sealed class TagReader
         {
-            static readonly Regex tagStart = new(@"^\s*@(?<name>\w+)\s*(?<rest>.*)$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-            static readonly Regex nextTag = new(@"(?:^|\s)@\w",RegexOptions.Compiled | RegexOptions.CultureInvariant);
-            static readonly HashSet<string> known = new(StringComparer.Ordinal) { "category", "summary", "padding", "passes", "chainonly", "default", "min", "max", "color" };
+            private static readonly Regex tagStart = new(@"^\s*@(?<name>\w+)\s*(?<rest>.*)$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+            private static readonly Regex nextTag = new(@"(?:^|\s)@\w",RegexOptions.Compiled | RegexOptions.CultureInvariant);
+            private static readonly HashSet<string> known = new(StringComparer.Ordinal) { "category", "summary", "padding", "passes", "chainonly", "default", "min", "max", "color" };
 
-            readonly ImmutableArray<ShaderAnnotationWarning>.Builder _warnings;
-            readonly List<Tag> _tags = new();
-            int _open = -1; // index of the summary/category tag that accepts continuation lines
+            private readonly ImmutableArray<ShaderAnnotationWarning>.Builder _warnings;
+            private readonly List<Tag> _tags = new();
+            private int _open = -1; // index of the summary/category tag that accepts continuation lines
 
             public TagReader(ImmutableArray<ShaderAnnotationWarning>.Builder warnings) => _warnings = warnings;
 

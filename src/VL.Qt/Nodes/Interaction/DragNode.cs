@@ -25,15 +25,15 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(bool MovesElement, DragAxis Axis, DragLimits Limits, PointerButtons Buttons, PointerDevices Devices);
 
-        const string limitsError = "Minimum must not be greater than Maximum. The limits are ignored.";
+        private const string limitsError = "Minimum must not be greater than Maximum. The limits are ignored.";
 
-        readonly InteractionNode<Props> _node;
-        readonly Func<string, IDisposable> _addError;
-        IChannel<bool>? _dragging;
-        IChannel<Vector2>? _delta;
-        bool _lastDragging;
-        int _lastDragUpdates;
-        IDisposable? _inputErrorMessage;
+        private readonly InteractionNode<Props> _node;
+        private readonly Func<string, IDisposable> _addError;
+        private IChannel<bool>? _dragging;
+        private IChannel<Vector2>? _delta;
+        private bool _lastDragging;
+        private int _lastDragUpdates;
+        private IDisposable? _inputErrorMessage;
 
         public DragNode(NodeContext nodeContext)
         {
@@ -48,7 +48,7 @@ namespace VL.Qt.Nodes
             _addError = addMessage;
         }
 
-        static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
             = static (previous, p, slot) => new DragInteraction(previous, slot, p.MovesElement, p.Axis, p.Limits, p.Buttons, p.Devices);
 
         internal InteractionNode<Props> Core => _node;
@@ -107,7 +107,7 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>Limits of the offset in units (the reconciler converts them); invalid (min &gt; max on an axis) → none, with an error at the node.</summary>
-        DragLimits Limits(Optional<Vector2> minimum, Optional<Vector2> maximum)
+        private DragLimits Limits(Optional<Vector2> minimum, Optional<Vector2> maximum)
         {
             var min = minimum.HasValue ? minimum.Value : new Vector2(float.NegativeInfinity);
             var max = maximum.HasValue ? maximum.Value : new Vector2(float.PositiveInfinity);
@@ -116,7 +116,7 @@ namespace VL.Qt.Nodes
             return valid ? new DragLimits(min.X, min.Y, max.X, max.Y) : DragLimits.None;
         }
 
-        void SetInputError(string? error)
+        private void SetInputError(string? error)
         {
             if (ReferenceEquals(error, InputError))
                 return;

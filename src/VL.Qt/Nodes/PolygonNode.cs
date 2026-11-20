@@ -17,7 +17,7 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Polygon", Category = Categories.Elements)]
     public sealed class PolygonNode : IDisposable
     {
-        readonly ShapeNodeCore _core;
+        private readonly ShapeNodeCore _core;
 
         public PolygonNode(NodeContext nodeContext) => _core = new ShapeNodeCore(nodeContext);
 

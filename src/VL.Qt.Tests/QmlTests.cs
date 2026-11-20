@@ -47,7 +47,7 @@ namespace VL.Qt.Tests
 
         public static byte[] Pad(byte[] b) => b.Concat(new byte[(4 - b.Length % 4) % 4]).ToArray();
 
-        static byte[] U16(int v) => new[] { (byte)(v & 0xFF), (byte)(v >> 8) };
+        private static byte[] U16(int v) => new[] { (byte)(v & 0xFF), (byte)(v >> 8) };
 
         /// <summary>EV_QML_PROPERTY payload: u16 name length, u16 value type, name, padding to 4, value.</summary>
         public static byte[] Property(string name, ushort type, byte[] value)
@@ -70,7 +70,7 @@ namespace VL.Qt.Tests
     /// <summary>QmlValue (#104): conversion of patch values to wire values, exact equality, the lines for values that are refused.</summary>
     public class QmlValueTests
     {
-        static IEnumerable<TestCaseData> Supported()
+        private static IEnumerable<TestCaseData> Supported()
         {
             yield return new TestCaseData(1.5f, Protocol.Vt.F32);
             yield return new TestCaseData(2.25d, Protocol.Vt.F32);
@@ -111,7 +111,7 @@ namespace VL.Qt.Tests
             Assert.That(s.Text, Is.EqualTo("hi"));
         }
 
-        static IEnumerable<TestCaseData> Unsupported()
+        private static IEnumerable<TestCaseData> Unsupported()
         {
             yield return new TestCaseData(null);
             yield return new TestCaseData(5L);
@@ -255,7 +255,7 @@ namespace VL.Qt.Tests
     /// <summary>QmlPropertyWriter (#104): the diff by name and the encoding of every value type into SET_QML_PROPERTIES.</summary>
     public class QmlPropertyWriterTests
     {
-        static QmlProperties Props(params (string Name, object Value)[] entries)
+        private static QmlProperties Props(params (string Name, object Value)[] entries)
         {
             var d = new Dictionary<string, object>();
             foreach (var (n, v) in entries)
@@ -263,7 +263,7 @@ namespace VL.Qt.Tests
             return QmlProperties.From(d);
         }
 
-        static string[] Write(QmlProperties next, QmlProperties? previous, out int sent)
+        private static string[] Write(QmlProperties next, QmlProperties? previous, out int sent)
         {
             var sink = new RecordingSink();
             sent = QmlPropertyWriter.Write(sink, 7, next, previous);
@@ -361,13 +361,13 @@ namespace VL.Qt.Tests
 
         // --- bytes ---
 
-        static string Hex(byte[] b) => Convert.ToHexString(b);
-        static string U16(int v) => $"{v & 0xFF:X2}{(v >> 8) & 0xFF:X2}";
-        static string U32(uint v) => Hex(BitConverter.GetBytes(v));
-        static string F32(float v) => Hex(BitConverter.GetBytes(v));
+        private static string Hex(byte[] b) => Convert.ToHexString(b);
+        private static string U16(int v) => $"{v & 0xFF:X2}{(v >> 8) & 0xFF:X2}";
+        private static string U32(uint v) => Hex(BitConverter.GetBytes(v));
+        private static string F32(float v) => Hex(BitConverter.GetBytes(v));
 
         /// <summary>One entry: u16 value type, u16 name length, name padded so that the block is a multiple of 4, value padded to 4.</summary>
-        static string Entry(ushort type, string name, string valueHex)
+        private static string Entry(ushort type, string name, string valueHex)
         {
             var n = Encoding.UTF8.GetBytes(name);
             var block = Hex(n) + new string('0', 2 * ((4 - (4 + n.Length) % 4) % 4));
@@ -375,10 +375,10 @@ namespace VL.Qt.Tests
             return U16(type) + U16(n.Length) + block + value;
         }
 
-        static string Command(uint id, int count, string entries) =>
+        private static string Command(uint id, int count, string entries) =>
             U16(Protocol.Op.SetQmlProperties) + U16(8 + entries.Length / 2) + U32(id) + U16(count) + U16(0) + entries;
 
-        static string Encode(params (string Name, object Value)[] entries)
+        private static string Encode(params (string Name, object Value)[] entries)
         {
             var w = new CommandWriter();
             QmlPropertyWriter.Write(w, 9, Props(entries), null);
@@ -446,7 +446,7 @@ namespace VL.Qt.Tests
     /// <summary>QmlEvents (#104): decoding of EV_QML_PROPERTY and EV_QML_SIGNAL, for every value type and for broken payloads.</summary>
     public class QmlEventsTests
     {
-        static IEnumerable<TestCaseData> Values()
+        private static IEnumerable<TestCaseData> Values()
         {
             yield return new TestCaseData(Protocol.Vt.F32, QmlWire.F(1.5f), 1.5f);
             yield return new TestCaseData(Protocol.Vt.I32, QmlWire.I32(-42), -42);
@@ -545,7 +545,7 @@ namespace VL.Qt.Tests
 
         // --- through the registry into the slot ---
 
-        static (SinkRegistry Registry, ElementSink Sink, uint Handle) Bound()
+        private static (SinkRegistry Registry, ElementSink Sink, uint Handle) Bound()
         {
             var registry = new SinkRegistry();
             var sink = new ElementSink();
@@ -624,10 +624,10 @@ namespace VL.Qt.Tests
     /// <summary>QmlFileWatcher (#104): which changes count, folder only, change flag taken once.</summary>
     public class QmlFileWatcherTests
     {
-        string _dir = null!;
-        readonly Subject<FileSystemEventArgs> _events = new();
-        int _subscriptions;
-        string? _watched;
+        private string _dir = null!;
+        private readonly Subject<FileSystemEventArgs> _events = new();
+        private int _subscriptions;
+        private string? _watched;
 
         [SetUp]
         public void SetUp()
@@ -640,7 +640,7 @@ namespace VL.Qt.Tests
         [TearDown]
         public void TearDown() => Directory.Delete(_dir, true);
 
-        QmlFileWatcher Watcher() => new(dir =>
+        private QmlFileWatcher Watcher() => new(dir =>
         {
             _watched = dir;
             return System.Reactive.Linq.Observable.Create<FileSystemEventArgs>(o =>
@@ -651,7 +651,7 @@ namespace VL.Qt.Tests
             });
         });
 
-        FileSystemEventArgs Changed(string name) => new(WatcherChangeTypes.Changed, _dir, name);
+        private FileSystemEventArgs Changed(string name) => new(WatcherChangeTypes.Changed, _dir, name);
 
         [TestCase("a.qml", true)]
         [TestCase("Other.QML", true)]
@@ -746,17 +746,17 @@ namespace VL.Qt.Tests
     /// <summary>QmlElement node (#104): description, reconciler commands, reload, outputs, errors.</summary>
     public class QmlElementNodeTests
     {
-        string _dir = null!;
-        string _file = null!;
-        readonly Subject<FileSystemEventArgs> _events = new();
-        QmlElementNode _node = null!;
-        SinkRegistry _registry = null!;
-        uint _handle;
-        RecordingSink _sink = null!;
-        Reconciler _reconciler = null!;
-        readonly List<string> _warnings = new();
+        private string _dir = null!;
+        private string _file = null!;
+        private readonly Subject<FileSystemEventArgs> _events = new();
+        private QmlElementNode _node = null!;
+        private SinkRegistry _registry = null!;
+        private uint _handle;
+        private RecordingSink _sink = null!;
+        private Reconciler _reconciler = null!;
+        private readonly List<string> _warnings = new();
 
-        sealed class Nop : IDisposable { public void Dispose() { } }
+        private sealed class Nop : IDisposable { public void Dispose() { } }
 
         [SetUp]
         public void SetUp()
@@ -778,23 +778,23 @@ namespace VL.Qt.Tests
             Directory.Delete(_dir, true);
         }
 
-        QmlElement Update(Dictionary<string, object>? properties = null, string? file = "", bool autoSize = true)
+        private QmlElement Update(Dictionary<string, object>? properties = null, string? file = "", bool autoSize = true)
             => Update(out _, out _, out _, properties, file, autoSize);
 
-        QmlElement Update(out Dictionary<string, object> changed, out Spread<QmlSignal> signals, out string error,
+        private QmlElement Update(out Dictionary<string, object> changed, out Spread<QmlSignal> signals, out string error,
             Dictionary<string, object>? properties = null, string? file = "", bool autoSize = true)
             => (QmlElement)_node.Update(file is null ? null : new Path(file == "" ? _file : file), properties, new Vector2(1, 1), autoSize,
                 Matrix.Identity, RectangleAnchor.TopLeft, 1, false, false, null, null,
                 out changed, out signals, out _, out _, out error);
 
-        string[] Frame(Dictionary<string, object>? properties = null, string? file = "")
+        private string[] Frame(Dictionary<string, object>? properties = null, string? file = "")
         {
             _sink.Clear();
             _reconciler.Update(Update(properties, file), Space.DIPTopLeft);
             return _sink.Commands.ToArray();
         }
 
-        SinkRegistryTests.Poll NewPoll() => new();
+        private SinkRegistryTests.Poll NewPoll() => new();
 
         [Test]
         public void Defaults()

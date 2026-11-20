@@ -15,7 +15,7 @@ using VL.Qt.Nodes;
 public static partial class InteractionTest
 {
     // Scenario "touch-points-node": two fingers -> two TouchPoints with stable ids in units, moves, release one by one.
-    static void RunTouchPointsNode(Scenario s)
+    private static void RunTouchPointsNode(Scenario s)
     {
         using var node = new TouchPointsNode(_ => new NoMessage());
         using var rig = new Rig("touch-points-node", s);
@@ -66,12 +66,12 @@ public static partial class InteractionTest
         rig.Frames(2);
     }
 
-    static string Describe(Spread<TouchPoint> p)
+    private static string Describe(Spread<TouchPoint> p)
         => "[" + string.Join(" ", p.Select(x => $"{x.Id}:{x.Position.X:F2},{x.Position.Y:F2}")) + "]";
 
     // Scenario "pinch-node": spread -> Scale > 1, rotate -> Rotation in cycles (clockwise positive), Is Active, the last
     // value stays after the release, the channel's own value is not overwritten before a gesture.
-    static void RunPinchNode(Scenario s)
+    private static void RunPinchNode(Scenario s)
     {
         using var node = new PinchNode(_ => new NoMessage());
         using var rig = new Rig("pinch-node", s);

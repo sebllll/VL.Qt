@@ -20,9 +20,9 @@ namespace VL.Qt.Nodes
     /// </summary>
     internal sealed class ChildrenInput
     {
-        readonly List<IElement?> _buffer = new();
-        object? _lastInput;
-        ImmutableArray<Element> _current = ImmutableArray<Element>.Empty;
+        private readonly List<IElement?> _buffer = new();
+        private object? _lastInput;
+        private ImmutableArray<Element> _current = ImmutableArray<Element>.Empty;
 
         /// <summary>Current children (never default).</summary>
         public ImmutableArray<Element> Current => _current;
@@ -66,7 +66,7 @@ namespace VL.Qt.Nodes
             return _current;
         }
 
-        static void Fill(List<IElement?> buffer, IEnumerable<IElement?> input)
+        private static void Fill(List<IElement?> buffer, IEnumerable<IElement?> input)
         {
             // Indexing a Spread of another element type (covariant IReadOnlyList) needs no enumerator.
             if (input is IReadOnlyList<IElement?> list)
@@ -80,7 +80,7 @@ namespace VL.Qt.Nodes
             }
         }
 
-        void Apply<T>(ReadOnlySpan<T> input) where T : IElement?
+        private void Apply<T>(ReadOnlySpan<T> input) where T : IElement?
         {
             if (SameChildren(input, _current))
                 return;
@@ -88,7 +88,7 @@ namespace VL.Qt.Nodes
             Built++;
         }
 
-        static bool SameChildren<T>(ReadOnlySpan<T> input, ImmutableArray<Element> current) where T : IElement?
+        private static bool SameChildren<T>(ReadOnlySpan<T> input, ImmutableArray<Element> current) where T : IElement?
         {
             int j = 0;
             foreach (var e in input)
@@ -102,12 +102,12 @@ namespace VL.Qt.Nodes
             return j == current.Length;
         }
 
-        static bool IsChild(IElement? e) => e is Element or IStylable;
+        private static bool IsChild(IElement? e) => e is Element or IStylable;
 
-        static bool Matches(IElement e, Element current)
+        private static bool Matches(IElement e, Element current)
             => ReferenceEquals(e, current) || current is StylableElement s && ReferenceEquals(e, s.Stylable);
 
-        static ImmutableArray<Element> Build<T>(ReadOnlySpan<T> input, ImmutableArray<Element> previous) where T : IElement?
+        private static ImmutableArray<Element> Build<T>(ReadOnlySpan<T> input, ImmutableArray<Element> previous) where T : IElement?
         {
             int count = 0;
             foreach (var e in input)
@@ -127,7 +127,7 @@ namespace VL.Qt.Nodes
             return builder.MoveToImmutable();
         }
 
-        static StylableElement? Find(ImmutableArray<Element> previous, IStylable stylable)
+        private static StylableElement? Find(ImmutableArray<Element> previous, IStylable stylable)
         {
             foreach (var e in previous)
                 if (e is StylableElement s && ReferenceEquals(s.Stylable, stylable))

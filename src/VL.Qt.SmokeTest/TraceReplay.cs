@@ -11,7 +11,7 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class TraceReplay
 {
-    const int Width = 800, Height = 600;
+    private const int Width = 800, Height = 600;
 
     /// <summary>Names of the recorded traces (files traces/&lt;name&gt;.bin except the hand-written testrect), sorted.</summary>
     internal static string[] TraceNames()
@@ -147,7 +147,7 @@ public static class TraceReplay
         return result;
     }
 
-    static IEnumerable<string> ListFile(string file)
+    private static IEnumerable<string> ListFile(string file)
     {
         if (!File.Exists(file))
             yield break;

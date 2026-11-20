@@ -8,7 +8,7 @@ namespace VL.Qt.Tests
     /// <summary>OffscreenRenderer (#116 QtTexture): the error texts need no native device, the rest needs a built vlqt.dll.</summary>
     public class OffscreenRendererTests
     {
-        static int[] ErrorCodes => typeof(Protocol.Offscreen).GetFields()
+        private static int[] ErrorCodes => typeof(Protocol.Offscreen).GetFields()
             .Where(f => f.IsLiteral && f.GetRawConstantValue() is int v && v < 0)
             .Select(f => (int)f.GetRawConstantValue()!)
             .ToArray();

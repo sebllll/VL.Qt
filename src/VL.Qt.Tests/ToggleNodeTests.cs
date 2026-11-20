@@ -14,15 +14,15 @@ namespace VL.Qt.Tests
     /// <summary>Toggle node (#301): description for both looks, property diff, look change, value channel and EV_VALUE (bool).</summary>
     public class ToggleNodeTests
     {
-        static readonly Vector2 DefaultSize = new(0.68f, 0.4f);
-        static readonly IDisposable NoWarning = new Nop();
-        sealed class Nop : IDisposable { public void Dispose() { } }
+        private static readonly Vector2 DefaultSize = new(0.68f, 0.4f);
+        private static readonly IDisposable NoWarning = new Nop();
+        private sealed class Nop : IDisposable { public void Dispose() { } }
 
-        ToggleNode _node = null!;
-        SinkRegistry _registry = null!;
-        uint _handle;
-        RecordingSink _sink = null!;
-        Reconciler _reconciler = null!;
+        private ToggleNode _node = null!;
+        private SinkRegistry _registry = null!;
+        private uint _handle;
+        private RecordingSink _sink = null!;
+        private Reconciler _reconciler = null!;
 
         [SetUp]
         public void SetUp()
@@ -37,27 +37,27 @@ namespace VL.Qt.Tests
         [TearDown]
         public void TearDown() => _node.Dispose();
 
-        Element Update(out bool value, out bool bang, IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox,
+        private Element Update(out bool value, out bool bang, IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox,
             bool enabled = true, bool autoSize = true)
             => _node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, channel, look, enabled,
                 1, false, false, null, null, null, out value, out bang, out _, out _);
 
-        Element Update(IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox)
+        private Element Update(IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox)
             => Update(out _, out _, channel, look);
 
-        string[] Frame(out bool value, out bool bang, IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox)
+        private string[] Frame(out bool value, out bool bang, IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox)
         {
             _sink.Clear();
             _reconciler.Update(Update(out value, out bang, channel, look), Space.DIPTopLeft);
             return _sink.Commands.ToArray();
         }
 
-        string[] Frame(IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox)
+        private string[] Frame(IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox)
             => Frame(out _, out _, channel, look);
 
-        void UserChanges(bool value) => _registry.Dispatch(new SinkRegistryTests.Poll().Value(_handle, Protocol.Vt.Bool, new byte[] { (byte)(value ? 1 : 0) }).Bytes);
+        private void UserChanges(bool value) => _registry.Dispatch(new SinkRegistryTests.Poll().Value(_handle, Protocol.Vt.Bool, new byte[] { (byte)(value ? 1 : 0) }).Bytes);
 
-        static string SetValue(int id, bool v) => $"SET {id} Value bool({(v ? 1 : 0)})";
+        private static string SetValue(int id, bool v) => $"SET {id} Value bool({(v ? 1 : 0)})";
 
         [Test]
         public void Defaults_Checkbox()

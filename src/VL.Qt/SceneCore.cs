@@ -15,28 +15,28 @@ namespace VL.Qt
     /// </summary>
     internal sealed class SceneCore
     {
-        readonly CommandWriter _commands = new CommandWriter();
-        readonly CommandWriter _wipe = new CommandWriter(); // RESET of the resync (#76, #92)
-        readonly List<SinkState> _applyErrorSlots = new(); // slots showing an apply error (#275)
-        readonly Reconciler _reconciler;
-        readonly ResyncController _resync;
-        IntPtr _handle;
-        byte[] _poll = new byte[16 * 1024];
+        private readonly CommandWriter _commands = new CommandWriter();
+        private readonly CommandWriter _wipe = new CommandWriter(); // RESET of the resync (#76, #92)
+        private readonly List<SinkState> _applyErrorSlots = new(); // slots showing an apply error (#275)
+        private readonly Reconciler _reconciler;
+        private readonly ResyncController _resync;
+        private IntPtr _handle;
+        private byte[] _poll = new byte[16 * 1024];
 
         // Last clear color and Clear flag sent to QtNative (change detection).
-        Color4 _clearColor;
-        bool _hasClearColor;
-        bool _clear;
-        bool _hasClear;
+        private Color4 _clearColor;
+        private bool _hasClearColor;
+        private bool _clear;
+        private bool _hasClear;
 
         // Last Space sent to QtNative (change detection, sent again after a resync).
-        Space _space;
-        bool _hasSpace;
+        private Space _space;
+        private bool _hasSpace;
 
-        string _pollError = "";
+        private string _pollError = "";
         // Host frame (#245): commands of the last apply, reconcile time since the last report.
-        int _appliedOps;
-        double _reconcileMs;
+        private int _appliedOps;
+        private double _reconcileMs;
 
         public SceneCore(SceneRegistry scene)
         {
@@ -112,14 +112,14 @@ namespace VL.Qt
         /// Mapping of <paramref name="space"/> with the scene metrics of this moment (Qt's state when the lengths are
         /// written, not the one of the last event). Without a handle (tests, after close) the size is 0 and dpr 1.
         /// </summary>
-        SpaceMapping CurrentMapping(Space space)
+        private SpaceMapping CurrentMapping(Space space)
         {
             if (_handle != IntPtr.Zero && Native.vlqt_window_get_scene_metrics(_handle, out var m) == 0)
                 return new SpaceMapping(space, new Vector2(m.width, m.height), m.dpr);
             return new SpaceMapping(space, default, 1f);
         }
 
-        int ResetInQtNative()
+        private int ResetInQtNative()
         {
             _wipe.Reset();
             _wipe.ResetScene();
@@ -167,7 +167,7 @@ namespace VL.Qt
         /// #275: the failing object id (vlqt_window_get_apply_error) resolved to its sink slot shows the error at the
         /// element node; returns the text for the renderer's Error output, empty if the element took it.
         /// </summary>
-        string ReportApplyError()
+        private string ReportApplyError()
         {
             var text = Native.LastError();
             ClearApplyErrors(); // only the latest failure is shown (the retry after a resync reports it again)
@@ -180,7 +180,7 @@ namespace VL.Qt
             return "";
         }
 
-        void ClearApplyErrors()
+        private void ClearApplyErrors()
         {
             if (_applyErrorSlots.Count == 0)
                 return;
@@ -203,7 +203,7 @@ namespace VL.Qt
             return $"Qt rejected {ConstantName(typeof(Protocol.Prop), e.prop) ?? "property " + e.prop}: {e.Reason}";
         }
 
-        static string? ConstantName(Type constants, ushort value)
+        private static string? ConstantName(Type constants, ushort value)
         {
             foreach (var f in constants.GetFields(BindingFlags.Public | BindingFlags.Static))
                 if (f.IsLiteral && f.GetRawConstantValue() is ushort v && v == value)

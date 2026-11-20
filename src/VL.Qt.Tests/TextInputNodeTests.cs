@@ -14,15 +14,15 @@ namespace VL.Qt.Tests
     /// <summary>TextInput node (#301): description, property diff, value channel (string), null/empty handling, EV_VALUE.</summary>
     public class TextInputNodeTests
     {
-        static readonly Vector2 DefaultSize = new(2, 0.4f);
-        static readonly IDisposable NoWarning = new Nop();
-        sealed class Nop : IDisposable { public void Dispose() { } }
+        private static readonly Vector2 DefaultSize = new(2, 0.4f);
+        private static readonly IDisposable NoWarning = new Nop();
+        private sealed class Nop : IDisposable { public void Dispose() { } }
 
-        TextInputNode _node = null!;
-        SinkRegistry _registry = null!;
-        uint _handle;
-        RecordingSink _sink = null!;
-        Reconciler _reconciler = null!;
+        private TextInputNode _node = null!;
+        private SinkRegistry _registry = null!;
+        private uint _handle;
+        private RecordingSink _sink = null!;
+        private Reconciler _reconciler = null!;
 
         [SetUp]
         public void SetUp()
@@ -37,25 +37,25 @@ namespace VL.Qt.Tests
         [TearDown]
         public void TearDown() => _node.Dispose();
 
-        TextField Update(out string value, out bool bang, IChannel<string>? channel = null, string? placeholder = "",
+        private TextField Update(out string value, out bool bang, IChannel<string>? channel = null, string? placeholder = "",
             bool editable = true, bool enabled = true, bool autoSize = true)
             => (TextField)_node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, channel, placeholder, editable, enabled,
                 1, false, false, null, null, null, out value, out bang, out _, out _);
 
-        TextField Update(IChannel<string>? channel = null) => Update(out _, out _, channel);
+        private TextField Update(IChannel<string>? channel = null) => Update(out _, out _, channel);
 
-        string[] Frame(out string value, out bool bang, IChannel<string>? channel = null, string? placeholder = "")
+        private string[] Frame(out string value, out bool bang, IChannel<string>? channel = null, string? placeholder = "")
         {
             _sink.Clear();
             _reconciler.Update(Update(out value, out bang, channel, placeholder), Space.DIPTopLeft);
             return _sink.Commands.ToArray();
         }
 
-        string[] Frame(IChannel<string>? channel = null) => Frame(out _, out _, channel);
+        private string[] Frame(IChannel<string>? channel = null) => Frame(out _, out _, channel);
 
-        void UserChanges(string value) => _registry.Dispatch(new SinkRegistryTests.Poll().ValueString(_handle, value).Bytes);
+        private void UserChanges(string value) => _registry.Dispatch(new SinkRegistryTests.Poll().ValueString(_handle, value).Bytes);
 
-        static string SetValue(string v) => $"SET 1 Value string({v})";
+        private static string SetValue(string v) => $"SET 1 Value string({v})";
 
         [Test]
         public void Defaults_EmptyEditable()

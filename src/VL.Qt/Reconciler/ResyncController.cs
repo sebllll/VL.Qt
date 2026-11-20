@@ -18,12 +18,12 @@ namespace VL.Qt
     /// </summary>
     internal sealed class ResyncController
     {
-        readonly Reconciler _reconciler;
-        readonly Func<int> _resetInQtNative;
-        Element? _lastInput;
-        bool _justResynced;
-        bool _gaveUp;
-        Element? _gaveUpInput;
+        private readonly Reconciler _reconciler;
+        private readonly Func<int> _resetInQtNative;
+        private Element? _lastInput;
+        private bool _justResynced;
+        private bool _gaveUp;
+        private Element? _gaveUpInput;
 
         /// <param name="reconciler">Mirror of the window.</param>
         /// <param name="resetInQtNative">Sends one RESET to QtNative and returns the apply result (errors are ignored here).</param>

@@ -8,7 +8,7 @@ namespace VL.Qt.Tests
     public class SinkRegistrySpaceTests
     {
         // Normalized in a 600 DIP high scene: 300 DIP per unit.
-        static readonly SpaceMapping Normalized600 = new(Space.Normalized, new Vector2(800, 600), 1f);
+        private static readonly SpaceMapping Normalized600 = new(Space.Normalized, new Vector2(800, 600), 1f);
 
         [Test]
         public void Events_AreConvertedWithTheMappingOfTheScene()

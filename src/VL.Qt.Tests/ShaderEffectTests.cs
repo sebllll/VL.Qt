@@ -16,9 +16,9 @@ namespace VL.Qt.Tests
     /// <summary>ShaderEffect (#437): SET_UNIFORMS encoding, uniform diff, properties, shader resources of the node.</summary>
     public class ShaderEffectTests
     {
-        static string U16(int v) => Convert.ToHexString(BitConverter.GetBytes((ushort)v));
-        static string U32(uint v) => Convert.ToHexString(BitConverter.GetBytes(v));
-        static string F32(float v) => Convert.ToHexString(BitConverter.GetBytes(v));
+        private static string U16(int v) => Convert.ToHexString(BitConverter.GetBytes((ushort)v));
+        private static string U32(uint v) => Convert.ToHexString(BitConverter.GetBytes(v));
+        private static string F32(float v) => Convert.ToHexString(BitConverter.GetBytes(v));
 
         // --- wire format ---
 
@@ -81,8 +81,8 @@ namespace VL.Qt.Tests
 
         // --- reconciler ---
 
-        RecordingSink _sink = null!;
-        Reconciler _rec = null!;
+        private RecordingSink _sink = null!;
+        private Reconciler _rec = null!;
 
         [SetUp]
         public void SetUp()
@@ -91,13 +91,13 @@ namespace VL.Qt.Tests
             _rec = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
         }
 
-        void Frame(Element root)
+        private void Frame(Element root)
         {
             _sink.Clear();
             _rec.Update(root, Space.DIPTopLeft);
         }
 
-        static Spread<Uniform> U(params Uniform[] uniforms) => uniforms.ToSpread();
+        private static Spread<Uniform> U(params Uniform[] uniforms) => uniforms.ToSpread();
 
         [Test]
         public void Create_SendsShadersBlendingMeshSourceAndUniforms()
@@ -225,11 +225,11 @@ namespace VL.Qt.Tests
 
         // --- node ---
 
-        FakeResourceApi _api = null!;
-        ResourceClient _client = null!;
-        ShaderEffectNode _node = null!;
+        private FakeResourceApi _api = null!;
+        private ResourceClient _client = null!;
+        private ShaderEffectNode _node = null!;
 
-        void CreateNode()
+        private void CreateNode()
         {
             _api = new FakeResourceApi();
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
@@ -237,20 +237,20 @@ namespace VL.Qt.Tests
             _node = new ShaderEffectNode(_client, static _ => new Noop());
         }
 
-        sealed class Noop : IDisposable
+        private sealed class Noop : IDisposable
         {
             public void Dispose() { }
         }
 
-        void Pump()
+        private void Pump()
         {
             _client.BeforeEvents();
             _client.AfterEvents();
         }
 
-        ShaderEffect Update(string? fragment, out string error) => Update(fragment, null, null, out error);
+        private ShaderEffect Update(string? fragment, out string error) => Update(fragment, null, null, out error);
 
-        ShaderEffect Update(string? fragment, string? vertex, Spread<Uniform>? uniforms, out string error)
+        private ShaderEffect Update(string? fragment, string? vertex, Spread<Uniform>? uniforms, out string error)
         {
             var element = _node.Update(null, null, null, fragment is null ? null : new Path(fragment), null, vertex is null ? null : new Path(vertex), uniforms, true,
                 default, new Vector2(1, 1), true, Matrix.Identity, RectangleAnchor.Center, 1f, false, false, null, null,
@@ -380,7 +380,7 @@ namespace VL.Qt.Tests
 
         // --- GLSL code (#483) ---
 
-        ShaderEffect UpdateCode(string? fragmentCode, string? fragmentPath, string? vertexCode, out string error)
+        private ShaderEffect UpdateCode(string? fragmentCode, string? fragmentPath, string? vertexCode, out string error)
         {
             var element = _node.Update(null, null, fragmentCode, fragmentPath is null ? null : new Path(fragmentPath), vertexCode, null, null, true,
                 default, new Vector2(1, 1), true, Matrix.Identity, RectangleAnchor.Center, 1f, false, false, null, null,

@@ -62,13 +62,13 @@ namespace VL.Qt
         public static bool IsExclusive(Element element) => element.Type == ElementType.Video;
 
         /// <summary>Occurrences of an element in one renderer that is not (yet) its owner.</summary>
-        sealed class RendererOccurrences(Reconciler reconciler, List<Node> nodes)
+        private sealed class RendererOccurrences(Reconciler reconciler, List<Node> nodes)
         {
             public readonly Reconciler Reconciler = reconciler;
             public readonly List<Node> Nodes = nodes; // unordered
         }
 
-        struct Entry
+        private struct Entry
         {
             public Reconciler? OwnerReconciler; // set while the element has at least one occurrence
             public Node? Primary;               // null only inside an update after the primary let go, or after a hand-over
@@ -79,9 +79,9 @@ namespace VL.Qt
             public readonly bool HasOwnerOccurrences => Primary is not null || Others is { Count: > 0 };
         }
 
-        readonly Dictionary<Element, Entry> _entries = new(ReferenceEqualityComparer.Instance);
-        readonly Stack<List<Node>> _lists = new();
-        readonly Dictionary<SinkSlot, Element> _shownBySlot = new(); // sink slot → last instance shown with it (#548)
+        private readonly Dictionary<Element, Entry> _entries = new(ReferenceEqualityComparer.Instance);
+        private readonly Stack<List<Node>> _lists = new();
+        private readonly Dictionary<SinkSlot, Element> _shownBySlot = new(); // sink slot → last instance shown with it (#548)
 
         /// <summary>Number of elements currently shown or waiting as duplicates (tests).</summary>
         public int Count => _entries.Count;
@@ -256,7 +256,7 @@ namespace VL.Qt
         }
 
         /// <summary>Removes <paramref name="node"/> from the occurrences of <paramref name="reconciler"/>, which is not the owner.</summary>
-        void RemoveElsewhere(ref Entry entry, Node node, Reconciler reconciler)
+        private void RemoveElsewhere(ref Entry entry, Node node, Reconciler reconciler)
         {
             if (entry.Elsewhere is not { } elsewhere)
                 return;
@@ -324,7 +324,7 @@ namespace VL.Qt
         }
 
         /// <summary>Removes the entry of <paramref name="element"/> and its slot entry if the slot still points to it.</summary>
-        void RemoveEntry(Element element)
+        private void RemoveEntry(Element element)
         {
             _entries.Remove(element);
             var slot = element.Sink;
@@ -332,9 +332,9 @@ namespace VL.Qt
                 _shownBySlot.Remove(slot);
         }
 
-        List<Node> RentList() => _lists.Count > 0 ? _lists.Pop() : new List<Node>(2);
+        private List<Node> RentList() => _lists.Count > 0 ? _lists.Pop() : new List<Node>(2);
 
-        void ReturnList(List<Node> list)
+        private void ReturnList(List<Node> list)
         {
             list.Clear();
             if (_lists.Count < 16)
@@ -348,13 +348,13 @@ namespace VL.Qt
         /// <summary>Warning written to the sink slot of an interaction node that is used more than once.</summary>
         public const string InteractionDuplicateWarning = "Interaction is used more than once (at several elements, in one chain twice or across renderers); only the first occurrence is active. Use one interaction node per element.";
 
-        struct HandlerEntry
+        private struct HandlerEntry
         {
             public HandlerNode? Owner;
             public List<Reconciler>? Waiting; // one entry per ignored occurrence (placeholder)
         }
 
-        readonly Dictionary<SinkSlot, HandlerEntry> _handlers = new();
+        private readonly Dictionary<SinkSlot, HandlerEntry> _handlers = new();
 
         /// <summary>Number of interaction sinks currently active or waiting as duplicates (tests).</summary>
         public int HandlerCount => _handlers.Count;

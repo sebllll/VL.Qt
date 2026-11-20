@@ -38,15 +38,15 @@ public static class RendererTest
     public static void Hotswap() => Scenario.Run(RunHotswap);
 
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-    struct Rc { public int Left, Top, Right, Bottom; }
-    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)] static extern IntPtr FindWindow(string? cls, string title);
-    [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr h, out Rc r);
-    [System.Runtime.InteropServices.DllImport("user32.dll")] static extern uint GetDpiForWindow(IntPtr h);
-    [System.Runtime.InteropServices.DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr h, int attr, out Rc r, int size);
+    private struct Rc { public int Left, Top, Right, Bottom; }
+    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)] private static extern IntPtr FindWindow(string? cls, string title);
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr h, out Rc r);
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern uint GetDpiForWindow(IntPtr h);
+    [System.Runtime.InteropServices.DllImport("dwmapi.dll")] private static extern int DwmGetWindowAttribute(IntPtr h, int attr, out Rc r, int size);
 
-    static bool Near(Color c, int r, int g, int b) => Math.Abs(c.R - r) < 8 && Math.Abs(c.G - g) < 8 && Math.Abs(c.B - b) < 8;
+    private static bool Near(Color c, int r, int g, int b) => Math.Abs(c.R - r) < 8 && Math.Abs(c.G - g) < 8 && Math.Abs(c.B - b) < 8;
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var scene = new SceneRegistry();
         var clear = new Color4(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
@@ -159,8 +159,8 @@ public static class RendererTest
         s.Pump(2);
     }
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool PostMessage(IntPtr h, uint msg, IntPtr w, IntPtr l);
-    const uint WM_CLOSE = 0x0010;
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool PostMessage(IntPtr h, uint msg, IntPtr w, IntPtr l);
+    private const uint WM_CLOSE = 0x0010;
 
     // Is Visible (#93): live from Qt, true from the creation on (no pump needed), false after X/Hide, true again after
     // Show, false after Dispose, true for a new window after a Dispose (node recreated, Undo, F8/F5 with a new registry).
@@ -168,13 +168,13 @@ public static class RendererTest
     /// VSync pin (#95): the default window (no vSync argument = swap interval 1) and the opt-out window (vSync: false = swap
     /// interval 0) are created and pumped without errors (with VSync the pump may wait for the refresh).
     /// </summary>
-    static void RunVSync(Scenario s)
+    private static void RunVSync(Scenario s)
     {
         VSyncWindow(s, "default (VSync on)", "VL.Qt vsync test", null);
         VSyncWindow(s, "vSync: false (opt-out)", "VL.Qt vsync off test", false);
     }
 
-    static void VSyncWindow(Scenario s, string what, string title, bool? vSync)
+    private static void VSyncWindow(Scenario s, string what, string title, bool? vSync)
     {
         var bounds = new RectangleF(0, 0, 320, 240);
         var r = vSync is bool v
@@ -195,15 +195,15 @@ public static class RendererTest
         r.Dispose();
     }
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool SystemParametersInfoW(uint action, uint param, out Rc rect, uint winIni);
-    [System.Runtime.InteropServices.DllImport("user32.dll")] static extern uint GetDpiForSystem();
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool SystemParametersInfoW(uint action, uint param, out Rc rect, uint winIni);
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern uint GetDpiForSystem();
 
     /// <summary>
     /// Geometry on create + EV_WINDOW_GEOMETRY (#100, #165, prep for #143): the reported geometry (outer top-left + client
     /// size, DIP) equals the Bounds given on create, so it round-trips; a resize is reported; empty bounds (sentinel) and
     /// bounds on no screen are both centered on the primary working area with the fallback size.
     /// </summary>
-    static void RunGeometry(Scenario s)
+    private static void RunGeometry(Scenario s)
     {
         var clear = new Color4(0, 0, 0, 1);
         // Pumps until the reported geometry has settled: under X11 the window manager answers placement, resize and
@@ -283,7 +283,7 @@ public static class RendererTest
     /// created the way Renderer does it (WindowPlacement.CreateBounds), disposed (Undo) and created again (Redo): each must open
     /// with the pin default size, not as a 1x1 window, and the first window keeps being pumped.
     /// </summary>
-    static void RunHotswap(Scenario s)
+    private static void RunHotswap(Scenario s)
     {
         var clear = new Color4(0, 0, 0, 1);
         var vlDefault = new RectangleF(-0.5f, -0.5f, 1, 1); // AppHost.GetDefaultValue<RectangleF>() in vvvv 8.0-0156
@@ -316,7 +316,7 @@ public static class RendererTest
         s.Pump(2);
     }
 
-    static void RunVisibility(Scenario s)
+    private static void RunVisibility(Scenario s)
     {
         const string title = "VL.Qt visibility test";
         var scene = new SceneRegistry();

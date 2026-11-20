@@ -10,7 +10,7 @@ namespace VL.Qt.Tests
     /// <summary>Window settings (#517, #518): precedence over the Renderer pins, icon path, node identity.</summary>
     public class WindowSettingsTests
     {
-        static WindowSettings Settings(Optional<string> icon = default, Optional<string> title = default, Optional<bool> borderless = default,
+        private static WindowSettings Settings(Optional<string> icon = default, Optional<string> title = default, Optional<bool> borderless = default,
             Optional<bool> fullscreen = default, Optional<RectangleF> bounds = default)
             => new(icon, title, borderless, fullscreen, bounds);
 

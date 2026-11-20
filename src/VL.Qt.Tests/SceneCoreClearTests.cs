@@ -6,19 +6,19 @@ namespace VL.Qt.Tests
     /// <summary>Clear color and Clear flag of SceneCore.Update go to QtNative only when they change (#117).</summary>
     public class SceneCoreClearTests
     {
-        static readonly Color4 c = new Color4(0.1f, 0.2f, 0.3f, 1f);
+        private static readonly Color4 c = new Color4(0.1f, 0.2f, 0.3f, 1f);
 
         // Written commands of the next Update, without a native handle (Apply does not run).
-        static int Written(SceneCore core, bool clear, Color4 color)
+        private static int Written(SceneCore core, bool clear, Color4 color)
         {
             core.Commands.Reset();
             core.Update(null, Space.DIPTopLeft, color, clear);
             return core.Commands.Length;
         }
 
-        static readonly int clearColorBytes = Protocol.HeaderSize + 16;
-        static readonly int setClearBytes = Protocol.HeaderSize + 4;
-        static readonly int setSpaceBytes = Protocol.HeaderSize + 4;
+        private static readonly int clearColorBytes = Protocol.HeaderSize + 16;
+        private static readonly int setClearBytes = Protocol.HeaderSize + 4;
+        private static readonly int setSpaceBytes = Protocol.HeaderSize + 4;
 
         [Test]
         public void FirstUpdate_SendsClearColorClearAndSpace()

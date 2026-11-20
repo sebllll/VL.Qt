@@ -12,16 +12,16 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class ElementsTest
 {
-    static bool IsRed(System.Drawing.Color c) => Near(c, 255, 0, 0);
-    static bool IsGreen(System.Drawing.Color c) => Near(c, 0, 255, 0);
+    private static bool IsRed(System.Drawing.Color c) => Near(c, 255, 0, 0);
+    private static bool IsGreen(System.Drawing.Color c) => Near(c, 0, 255, 0);
 
-    const uint Group = 1, Red = 2, Green = 3;
+    private const uint Group = 1, Red = 2, Green = 3;
 
     /// <summary>Element types and the cost of 1000 groups.</summary>
     [Test, Category("elements")]
     public static void Elements() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt elements test");
         s.Check(w != IntPtr.Zero, "window_create");

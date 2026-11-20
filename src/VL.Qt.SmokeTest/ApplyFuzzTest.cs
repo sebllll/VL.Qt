@@ -13,16 +13,16 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class ApplyFuzzTest
 {
-    const int Seed = 20260101;
-    const int TruncateStep = 4;
+    private const int Seed = 20260101;
+    private const int TruncateStep = 4;
     // Flipped buffers per frame: one per 2 bytes, at least 64.
-    const int FlipsPerBytes = 2, MinFlips = 64;
+    private const int FlipsPerBytes = 2, MinFlips = 64;
 
     /// <summary>One recorded trace, damaged: truncated at every 4th byte and byte flips; apply returns 0 or an ApplyResult and agrees with apply_error.</summary>
     [Test, TestCaseSource(typeof(TraceReplay), "TraceNames"), Category("apply-fuzz")]
     public static void Fuzz(string name) => Scenario.Run(s => Run(s, name));
 
-    static void Run(Scenario s, string name)
+    private static void Run(Scenario s, string name)
     {
         var traces = ImageCompare.FindUp("src", "VL.Qt.SmokeTest", "traces");
         if (traces == null)

@@ -12,8 +12,8 @@ namespace VL.Qt.Tests
     /// <summary>Effect chain (plan effects/01): fold and the reconciler's effect layer SETs.</summary>
     public class EffectTests
     {
-        RecordingSink _sink = null!;
-        Reconciler _rec = null!;
+        private RecordingSink _sink = null!;
+        private Reconciler _rec = null!;
 
         [SetUp]
         public void SetUp()
@@ -22,17 +22,17 @@ namespace VL.Qt.Tests
             _rec = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
         }
 
-        void Frame(Element? root)
+        private void Frame(Element? root)
         {
             _sink.Clear();
             _rec.Update(root, Space.DIPTopLeft);
         }
 
-        int Sets(ushort prop) => _sink.OfOp("SET").Count(c => c.Split(' ')[2] == RecordingSink.PropName(prop));
+        private int Sets(ushort prop) => _sink.OfOp("SET").Count(c => c.Split(' ')[2] == RecordingSink.PropName(prop));
 
-        static BlurEffect Blur(Effect? previous = null, float amount = 0.5f) => new(previous, amount, 32, 0);
-        static DropShadowEffect Shadow(Effect? previous = null) => new(previous, Color4.Black, new Vector2(0.1f, 0.2f), 1, 1);
-        static ColorAdjustEffect Adjust(Effect? previous = null) => new(previous, 0.1f, 0.2f, 0.3f);
+        private static BlurEffect Blur(Effect? previous = null, float amount = 0.5f) => new(previous, amount, 32, 0);
+        private static DropShadowEffect Shadow(Effect? previous = null) => new(previous, Color4.Black, new Vector2(0.1f, 0.2f), 1, 1);
+        private static ColorAdjustEffect Adjust(Effect? previous = null) => new(previous, 0.1f, 0.2f, 0.3f);
 
         [Test]
         public void Fold_NoChain_IsNull()
@@ -71,7 +71,7 @@ namespace VL.Qt.Tests
             Assert.That(node.Core.Created, Is.EqualTo(2));
         }
 
-        string[] Chains => _sink.OfOp("CHAIN").ToArray();
+        private string[] Chains => _sink.OfOp("CHAIN").ToArray();
 
         [Test]
         public void Reconciler_SendsChainOnce_ThenNothing()

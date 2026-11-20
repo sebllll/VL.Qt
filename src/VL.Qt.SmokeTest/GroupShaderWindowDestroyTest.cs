@@ -13,7 +13,7 @@ public static class GroupShaderWindowDestroyTest
     [Test, Category("group-shader-window-destroy")]
     public static void GroupShaderWindowDestroy() => Scenario.Run(Run);
 
-    const string Code =
+    private const string Code =
         "#version 440\n" +
         "layout(location = 0) in vec2 qt_TexCoord0;\n" +
         "layout(location = 0) out vec4 fragColor;\n" +
@@ -21,7 +21,7 @@ public static class GroupShaderWindowDestroyTest
         "layout(binding = 1) uniform sampler2D source;\n" +
         "void main() { fragColor = texture(source, qt_TexCoord0) * qt_Opacity; }\n";
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Native.vlqt_res_create(Protocol.ResKind.Shader, out var shader);
         var rc = Native.vlqt_res_load_shader_source(shader, Code, Protocol.ShaderStage.Fragment);

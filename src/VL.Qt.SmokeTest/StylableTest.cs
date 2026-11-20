@@ -22,16 +22,16 @@ public static class StylableTest
     [Test, Category("stylable")]
     public static void Stylable() => Scenario.Run(Run);
 
-    const float BgGray = 0x10 / 255f;
+    private const float BgGray = 0x10 / 255f;
 
     // Grabs are in device pixels (HiDPI); test coordinates are logical (800x600).
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
-    static bool Near(Color c, uint rgb) =>
+    private static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
+    private static bool Near(Color c, uint rgb) =>
         Math.Abs(c.R - (int)((rgb >> 16) & 0xFF)) < 8 && Math.Abs(c.G - (int)((rgb >> 8) & 0xFF)) < 8 && Math.Abs(c.B - (int)(rgb & 0xFF)) < 8;
-    static bool IsBg(Color c) => Near(c, 0x101010);
-    static Color4 Rgb(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1);
+    private static bool IsBg(Color c) => Near(c, 0x101010);
+    private static Color4 Rgb(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1);
 
-    static bool HasColor(Bitmap a, int x0, int y0, int x1, int y1, uint rgb)
+    private static bool HasColor(Bitmap a, int x0, int y0, int x1, int y1, uint rgb)
     {
         for (int y = y0; y < y1; y++)
             for (int x = x0; x < x1; x++)
@@ -40,21 +40,21 @@ public static class StylableTest
         return false;
     }
 
-    static StateValues<T> All<T>(T value) => default(StateValues<T>).With(StyleStates.All, value);
+    private static StateValues<T> All<T>(T value) => default(StateValues<T>).With(StyleStates.All, value);
 
-    static Style GroupStyle(uint frame, uint border, uint text, float radius) => new()
+    private static Style GroupStyle(uint frame, uint border, uint text, float radius) => new()
     {
         Frame = new FrameStyle { Color = All(Rgb(frame)), BorderColor = All(Rgb(border)), Radius = All(radius), BorderWidth = All(6f) },
         Text = new TextStyle { Color = All(Rgb(text)), FontWeight = All(700), FontSize = All(24f) },
     };
 
     // Behaves like a patched widget: mutable, the reference stays; Build caches its element and rebuilds on a style or field change.
-    sealed class PatchedWidget : IStylable
+    private sealed class PatchedWidget : IStylable
     {
-        Style? _lastStyle;
-        string? _lastText;
-        float _lastWidth;
-        Element? _element;
+        private Style? _lastStyle;
+        private string? _lastText;
+        private float _lastWidth;
+        private Element? _element;
 
         public string Text { get; set; } = "Patched";
         public float Width { get; set; } = 2;
@@ -91,12 +91,12 @@ public static class StylableTest
         }
     }
 
-    sealed class Thrower : IStylable
+    private sealed class Thrower : IStylable
     {
         public Element? Build(Style style) => throw new InvalidOperationException("boom");
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         const uint frame1 = 0xC04000, border1 = 0x00FF00, text1 = 0xFFFF00;
         const uint frame2 = 0x8000C0, border2 = 0x00A0FF, text2 = 0xFF8080;

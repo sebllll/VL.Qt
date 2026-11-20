@@ -45,10 +45,10 @@ namespace VL.Qt.Paths
             return closed ? path.Close() : path;
         }
 
-        static Vector2 OutHandle(IReadOnlyList<Vector2> outHandles, int i) =>
+        private static Vector2 OutHandle(IReadOnlyList<Vector2> outHandles, int i) =>
             i < outHandles.Count ? outHandles[i] : Vector2.Zero;
 
-        static Vector2 InHandle(IReadOnlyList<Vector2> inHandles, IReadOnlyList<Vector2> outHandles, IReadOnlyList<HandleMode> modes, int i)
+        private static Vector2 InHandle(IReadOnlyList<Vector2> inHandles, IReadOnlyList<Vector2> outHandles, IReadOnlyList<HandleMode> modes, int i)
         {
             var mode = modes.Count == 0 ? HandleMode.Free : modes[i % modes.Count];
             var given = i < inHandles.Count ? inHandles[i] : Vector2.Zero;

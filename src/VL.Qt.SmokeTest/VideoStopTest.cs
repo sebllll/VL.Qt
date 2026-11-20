@@ -12,11 +12,11 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class VideoStopTest
 {
-    const string Asset = "qt-help-video-audio.mp4";
-    const uint Handle = 31;
-    const int HangMs = 10000;
+    private const string Asset = "qt-help-video-audio.mp4";
+    private const uint Handle = 31;
+    private const int HangMs = 10000;
 
-    static string? FindAsset(string name)
+    private static string? FindAsset(string name)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
@@ -35,7 +35,7 @@ public static class VideoStopTest
     [Test, Explicit("quick repro of #130 with 5 rounds"), Category("video-stop-repro")]
     public static void VideoStopRepro() => Scenario.Run(s => Run(s, 5));
 
-    static void Run(Scenario s, int rounds = 3)
+    private static void Run(Scenario s, int rounds = 3)
     {
         var a = FindAsset(Asset);
         s.Check(a != null, "test video with audio found");
@@ -49,7 +49,7 @@ public static class VideoStopTest
     }
 
     // destroyWindowOnly: no DESTROY of the element, the window goes with the playing video still in it.
-    static void Round(Scenario s, string a, int round, bool destroyWindowOnly)
+    private static void Round(Scenario s, string a, int round, bool destroyWindowOnly)
     {
         var tag = $"round {round}{(destroyWindowOnly ? " (window only)" : "")}";
         var w = Native.vlqt_window_create(400, 300, "VL.Qt video stop test");

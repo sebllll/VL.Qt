@@ -18,13 +18,13 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class GroupFrameTest
 {
-    static bool Near(int a, int b, int tolerance) => Math.Abs(a - b) <= tolerance;
+    private static bool Near(int a, int b, int tolerance) => Math.Abs(a - b) <= tolerance;
 
     /// <summary>Group frame with negative coordinates (#475).</summary>
     [Test, Category("group-frame")]
     public static void GroupFrame() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var client = new ResourceClient(new NativeResourceApi(), Environment.CurrentManagedThreadId, static () => null);
         client.SetPumping(true);
@@ -204,7 +204,7 @@ public static class GroupFrameTest
     // a child with an effect chain is a child of the Group, and the Group frame (polish) adds its rect, padding included.
     // Decided (C10): the Group counts only tracked children. Group at (200, 150) DIP, top left anchor, auto size; child: a
     // 100 x 100 orange rectangle at (0, 0). Frame without effect: 100 x 100; with a Blur chain on the child it must stay.
-    static void RunEffect(Scenario s)
+    private static void RunEffect(Scenario s)
     {
         const uint g = 1, r = 2, hg = 101;
         var w = Native.vlqt_window_create(800, 600, "VL.Qt group frame effect test");

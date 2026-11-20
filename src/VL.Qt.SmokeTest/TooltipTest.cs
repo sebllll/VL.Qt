@@ -23,11 +23,11 @@ using VPath = VL.Lib.IO.Path;
 [TestFixture, NonParallelizable]
 public static class TooltipTest
 {
-    const string VideoAsset = "testsrc_160x90_2s.mp4";
+    private const string VideoAsset = "testsrc_160x90_2s.mp4";
 
-    static bool Near(int a, int b, int tolerance) => Math.Abs(a - b) <= tolerance;
+    private static bool Near(int a, int b, int tolerance) => Math.Abs(a - b) <= tolerance;
 
-    static string? FindAsset(string name)
+    private static string? FindAsset(string name)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
@@ -38,7 +38,7 @@ public static class TooltipTest
         return null;
     }
 
-    sealed class Job
+    private sealed class Job
     {
         public ImageResource Resource = null!;
         public bool Done;
@@ -49,7 +49,7 @@ public static class TooltipTest
     [Test, Category("tooltip")]
     public static void Tooltip() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var client = new ResourceClient(new NativeResourceApi(), Environment.CurrentManagedThreadId, static () => null);
         client.SetPumping(true);

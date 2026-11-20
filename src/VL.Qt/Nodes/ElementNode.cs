@@ -70,17 +70,17 @@ namespace VL.Qt.Nodes
         where TElement : Element
         where TProps : struct, IEquatable<TProps>
     {
-        const string errorPhase = "Qt";
+        private const string errorPhase = "Qt";
 
-        readonly Func<string, IDisposable> _addWarning;
-        readonly NodeErrors? _errors;
-        readonly Func<CommonInputs, TProps, SinkSlot, TElement> _create;
-        TElement? _last;
-        CommonInputs _common;
-        TProps _props;
-        string? _warning;
-        IDisposable? _warningMessage;
-        string? _error;
+        private readonly Func<string, IDisposable> _addWarning;
+        private readonly NodeErrors? _errors;
+        private readonly Func<CommonInputs, TProps, SinkSlot, TElement> _create;
+        private TElement? _last;
+        private CommonInputs _common;
+        private TProps _props;
+        private string? _warning;
+        private IDisposable? _warningMessage;
+        private string? _error;
 
         /// <param name="nodeContext">Context of the public node (warning and error are shown there).</param>
         /// <param name="create">Builds a description; use a static lambda (no capture → no allocation).</param>
@@ -157,7 +157,7 @@ namespace VL.Qt.Nodes
             sceneBounds = sink.SceneBounds();
         }
 
-        void UpdateWarning()
+        private void UpdateWarning()
         {
             var warning = Sink.Warning;
             if (ReferenceEquals(warning, _warning) || warning == _warning)
@@ -167,7 +167,7 @@ namespace VL.Qt.Nodes
             _warning = warning;
         }
 
-        void UpdateError()
+        private void UpdateError()
         {
             var error = Sink.Error;
             if (ReferenceEquals(error, _error) || error == _error)

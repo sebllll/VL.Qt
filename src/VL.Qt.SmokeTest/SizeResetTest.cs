@@ -12,17 +12,17 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class SizeResetTest
 {
-    const uint RowId = 1, A = 2, B = 3, GroupId = 4, G1 = 5, RectId = 6, EffectId = 7, EffectSrc = 8;
-    const uint HRow = 21, HGroup = 22, HRect = 23, HEffect = 24;
+    private const uint RowId = 1, A = 2, B = 3, GroupId = 4, G1 = 5, RectId = 6, EffectId = 7, EffectSrc = 8;
+    private const uint HRow = 21, HGroup = 22, HRect = 23, HEffect = 24;
 
-    static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
-    static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
+    private static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
+    private static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
 
     /// <summary>Size reset.</summary>
     [Test, Category("sizereset")]
     public static void SizeReset() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt size / auto size test");
         s.Check(w != IntPtr.Zero, "window_create");

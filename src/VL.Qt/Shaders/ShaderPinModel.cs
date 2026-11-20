@@ -162,7 +162,7 @@ namespace VL.Qt.Shaders
             return new ShaderPinModel(hasInput, pins.ToImmutable(), warnings.ToImmutable(), string.Empty);
         }
 
-        static UniformAnnotation? FindAnnotation(string name, ShaderAnnotations fragA, ShaderAnnotations? vertA)
+        private static UniformAnnotation? FindAnnotation(string name, ShaderAnnotations fragA, ShaderAnnotations? vertA)
         {
             if (fragA.Uniforms.TryGetValue(name, out var a))
                 return a;
@@ -171,7 +171,7 @@ namespace VL.Qt.Shaders
             return null;
         }
 
-        static ShaderPinType? MapType(string glslType, string name, UniformAnnotation? annotation, ImmutableHashSet<string> bools) => glslType switch
+        private static ShaderPinType? MapType(string glslType, string name, UniformAnnotation? annotation, ImmutableHashSet<string> bools) => glslType switch
         {
             "float" => ShaderPinType.Float,
             "vec2" => ShaderPinType.Vector2,
@@ -184,7 +184,7 @@ namespace VL.Qt.Shaders
             _ => null,
         };
 
-        static ShaderPin BuildPin(ReflectedUniform uniform, ShaderPinType type, UniformAnnotation? annotation, ImmutableArray<ShaderAnnotationWarning>.Builder warnings)
+        private static ShaderPin BuildPin(ReflectedUniform uniform, ShaderPinType type, UniformAnnotation? annotation, ImmutableArray<ShaderAnnotationWarning>.Builder warnings)
         {
             var line = annotation?.Line ?? 0;
             var name = uniform.Name;
@@ -207,7 +207,7 @@ namespace VL.Qt.Shaders
             return new ShaderPin(PinName(name), name, type, def, min, max, annotation?.Summary);
         }
 
-        static object? ZeroValue(ShaderPinType type) => type switch
+        private static object? ZeroValue(ShaderPinType type) => type switch
         {
             ShaderPinType.Float => 0f,
             ShaderPinType.Vector2 => Vector2.Zero,
@@ -220,7 +220,7 @@ namespace VL.Qt.Shaders
             _ => null,
         };
 
-        static bool TryParseValue(ShaderPinType type, string text, bool allowSingle, out object? value)
+        private static bool TryParseValue(ShaderPinType type, string text, bool allowSingle, out object? value)
         {
             value = null;
             switch (type)
@@ -275,7 +275,7 @@ namespace VL.Qt.Shaders
             return true;
         }
 
-        static bool TryParseFloat(string text, out float value) =>
+        private static bool TryParseFloat(string text, out float value) =>
             float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value) && float.IsFinite(value);
 
         /// <summary>"pixelSize" → "Pixel Size", "pixel_size" → "Pixel Size".</summary>

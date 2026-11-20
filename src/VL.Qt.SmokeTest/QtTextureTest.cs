@@ -23,13 +23,13 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static partial class QtTextureTest
 {
-    const int B8G8R8A8Typeless = 90;
-    const int R16G16B16A16Float = 10;
-    const int R8G8B8A8Unorm = 28;
-    const int B8G8R8A8Unorm = 87;
-    const int R8G8B8A8UnormSrgb = 29;
-    const int B8G8R8A8UnormSrgb = 91;
-    const int R32G32B32A32Float = 2; // not supported by the readback
+    private const int B8G8R8A8Typeless = 90;
+    private const int R16G16B16A16Float = 10;
+    private const int R8G8B8A8Unorm = 28;
+    private const int B8G8R8A8Unorm = 87;
+    private const int R8G8B8A8UnormSrgb = 29;
+    private const int B8G8R8A8UnormSrgb = 91;
+    private const int R32G32B32A32Float = 2; // not supported by the readback
 
     /// <summary>QtTexture (offscreen scenes into foreign D3D11 textures): round trips, adapters, device loss, leaks, window match (#116).</summary>
     [Test, Category("qttexture")]
@@ -45,7 +45,7 @@ public static partial class QtTextureTest
 
     // Both scenarios are D3D11 only (they SKIP elsewhere), so the helper would log no thread mode outside Windows; the former
     // runner ran the thread modes only from tools/build.ps1 (Windows), tools/test-linux.sh never did.
-    static void RunMode(Scenario s, string? threads, string folder, string modeLine)
+    private static void RunMode(Scenario s, string? threads, string folder, string modeLine)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -55,7 +55,7 @@ public static partial class QtTextureTest
         OwnProcess.Run(s, new[] { "qttexture", "QtTextureInput" }, Env(threads), Path.Combine(SmokeParameters.SmokeDir, folder, "grabs"), modeLine);
     }
 
-    static Dictionary<string, string> Env(string? threads)
+    private static Dictionary<string, string> Env(string? threads)
     {
         var env = new Dictionary<string, string> { ["VLQT_TEST_D3D11ON12"] = "1", ["VLQT_SMOKE_DEBUG_LAYER"] = DebugLayerAvailable() ? "1" : "0" };
         if (threads != null)
@@ -64,7 +64,7 @@ public static partial class QtTextureTest
     }
 
     // The leak test reads ReportLiveDeviceObjects of QtNative's device, which needs the D3D SDK layers.
-    static bool DebugLayerAvailable() => OperatingSystem.IsWindows()
+    private static bool DebugLayerAvailable() => OperatingSystem.IsWindows()
         && (File.Exists(Path.Combine(Environment.SystemDirectory, "d3d11sdklayers.dll"))
             || File.Exists(Path.Combine(Environment.SystemDirectory, "d3d11_3sdklayers.dll")));
 
@@ -132,7 +132,7 @@ public static partial class QtTextureTest
     }
 
     // A scene of w x h DIP with a red rectangle (16, 12, 32, 24) on a transparent clear colour; null on failure.
-    static IntPtr RectScene(int w, int h, Scenario s, string label)
+    private static IntPtr RectScene(int w, int h, Scenario s, string label)
     {
         var scene = Native.vlqt_offscreen_create(w, h);
         s.Check(scene != IntPtr.Zero, $"{label}: offscreen_create {(scene == IntPtr.Zero ? Native.LastError() : "")}");
@@ -151,7 +151,7 @@ public static partial class QtTextureTest
     }
 
     // Centre pixel of a B8G8R8A8 texture as "R,G,B,A".
-    static string Centre(IntPtr texture, int w, int h)
+    private static string Centre(IntPtr texture, int w, int h)
     {
         var pixels = new byte[w * h * 4];
         if (Native.TestReadTexture(texture, pixels, out _, out _, out _) != pixels.Length)
@@ -161,7 +161,7 @@ public static partial class QtTextureTest
     }
 
     // Task 1.5: adapter mismatch or move, device loss of QtNative's device, foreign device released while bound.
-    static void AdapterAndDeviceLoss(Scenario s)
+    private static void AdapterAndDeviceLoss(Scenario s)
     {
         bool check(bool ok, string what)
         {
@@ -273,7 +273,7 @@ public static partial class QtTextureTest
 
     // Task 1.3/1.4: a scene bound to a B8G8R8A8_TYPELESS texture of the test device, one render through the fences,
     // readback; an unchanged scene renders nothing; unbind and destroy give back every device reference.
-    static void OffscreenScene(Scenario s)
+    private static void OffscreenScene(Scenario s)
     {
         bool check(bool ok, string what)
         {
@@ -371,7 +371,7 @@ public static partial class QtTextureTest
 
     // #128: snapshot of an element of a bound offscreen scene that has nothing to render (not dirty). The scene is never
     // exposed; the grab asks for a frame, the next render_batch renders it and the pump delivers the pixels (red, rw x rh).
-    static void OffscreenSnapshot(IntPtr scene, uint element, int rw, int rh, IntPtr context, Scenario s)
+    private static void OffscreenSnapshot(IntPtr scene, uint element, int rw, int rh, IntPtr context, Scenario s)
     {
         bool check(bool ok, string what)
         {
@@ -434,7 +434,7 @@ public static partial class QtTextureTest
     }
 
     // Device on the adapter (0 = QtNative's, 1 = WARP), shared textures, readback, ref counts, release everything.
-    static void RoundTrip(int adapter, Scenario s, bool verbose)
+    private static void RoundTrip(int adapter, Scenario s, bool verbose)
     {
         string name = adapter == 0 ? "QtNative adapter" : "WARP";
         bool Check(bool ok, string what)

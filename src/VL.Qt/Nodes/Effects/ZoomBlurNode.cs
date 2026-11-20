@@ -21,9 +21,9 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Vector2 Center, float Length);
 
-        static readonly string[] s_shaders = { "zoom_blur" };
+        private static readonly string[] s_shaders = { "zoom_blur" };
 
-        static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
         {
             var length = Math.Max(p.Length, 0f);
             var pad = 0.6f * length;
@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
                 new RectangleF(pad, pad, pad, pad));
         };
 
-        readonly BuiltinShaderLink<Props> _link;
+        private readonly BuiltinShaderLink<Props> _link;
 
         public ZoomBlurNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))

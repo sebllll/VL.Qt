@@ -17,10 +17,10 @@ namespace VL.Qt.Tests
     /// <summary>
     /// The resource API of QtNative without Qt (#362): records calls, hands out ids and status records like vlqt_res_*.
     /// </summary>
-    sealed class FakeResourceApi : IResourceApi
+    internal sealed class FakeResourceApi : IResourceApi
     {
-        readonly List<byte> _queue = new();
-        uint _next;
+        private readonly List<byte> _queue = new();
+        private uint _next;
 
         public readonly List<string> Calls = new();
         public readonly List<ulong> Released = new();
@@ -157,7 +157,7 @@ namespace VL.Qt.Tests
             return required;
         }
 
-        void Record(ushort ev, ulong id, ReadOnlySpan<byte> payload)
+        private void Record(ushort ev, ulong id, ReadOnlySpan<byte> payload)
         {
             var len = 8 + payload.Length;
             Span<byte> head = stackalloc byte[12];
@@ -200,8 +200,8 @@ namespace VL.Qt.Tests
     /// <summary>ResourceClient (#362): status records, release queue, stale ids, shutdown, format mapping.</summary>
     public class ResourceClientTests
     {
-        FakeResourceApi _api = null!;
-        ResourceClient _client = null!;
+        private FakeResourceApi _api = null!;
+        private ResourceClient _client = null!;
 
         [SetUp]
         public void SetUp()
@@ -212,7 +212,7 @@ namespace VL.Qt.Tests
         }
 
         /// <summary>One pump as QtApp runs it: releases after apply, status after processEvents.</summary>
-        void Pump()
+        private void Pump()
         {
             _client.BeforeEvents();
             _client.AfterEvents();
@@ -468,8 +468,8 @@ namespace VL.Qt.Tests
     /// <summary>LoadImage, LoadImage (Async), ToQtImage and the Image pin (#362) against the fake QtNative.</summary>
     public class ImageResourceNodeTests
     {
-        FakeResourceApi _api = null!;
-        ResourceClient _client = null!;
+        private FakeResourceApi _api = null!;
+        private ResourceClient _client = null!;
 
         [SetUp]
         public void SetUp()
@@ -479,13 +479,13 @@ namespace VL.Qt.Tests
             _client.SetPumping(true);
         }
 
-        void Pump()
+        private void Pump()
         {
             _client.BeforeEvents();
             _client.AfterEvents();
         }
 
-        static Path P(string path) => new(path);
+        private static Path P(string path) => new(path);
 
         [Test]
         public void LoadImage_Synchronous_ReadyAfterUpdate()
@@ -599,9 +599,9 @@ namespace VL.Qt.Tests
             Assert.That(_api.Released, Is.EqualTo(new[] { a.Id + 1 }), "B released, A stays at the output");
         }
 
-        sealed class TestImage : IImage, IImageData
+        private sealed class TestImage : IImage, IImageData
         {
-            readonly byte[] _bytes;
+            private readonly byte[] _bytes;
             public TestImage(int width, int height, PixelFormat format, bool volatileImage = false)
             {
                 Info = new ImageInfo(width, height, format);
@@ -691,7 +691,7 @@ namespace VL.Qt.Tests
                 n.Dispose();
         }
 
-        sealed class NoWarning : IDisposable
+        private sealed class NoWarning : IDisposable
         {
             public static readonly NoWarning Instance = new();
             public void Dispose() { }

@@ -24,22 +24,22 @@ public static class MotionBlurTest
     [Test, Category("motion-blur")]
     public static void MotionBlur() => Scenario.Run(Run);
 
-    const float CellW = 380, CellH = 190, LongW = 780, LongTextX = 410;
-    const float MaxSamples = 64; // maxSamples of the shaders: pass 2 gets length / MaxSamples
-    const uint Dir = 100, Zoom = 120, Radial = 140; // + 10 * column (cell: Fx, +1 Group, +2 Frame, +3 Text, +4 Shape)
+    private const float CellW = 380, CellH = 190, LongW = 780, LongTextX = 410;
+    private const float MaxSamples = 64; // maxSamples of the shaders: pass 2 gets length / MaxSamples
+    private const uint Dir = 100, Zoom = 120, Radial = 140; // + 10 * column (cell: Fx, +1 Group, +2 Frame, +3 Text, +4 Shape)
 
-    static uint Fx(uint row, int col) => row + 10u * (uint)col;
-    static float CellX(int col) => 10 + 400 * col;
-    static float CellY(uint row) => 5 + 200 * ((row - Dir) / 20);
-    const uint LongId = 100; // + row: id of the long cell of a row
+    private static uint Fx(uint row, int col) => row + 10u * (uint)col;
+    private static float CellX(int col) => 10 + 400 * col;
+    private static float CellY(uint row) => 5 + 200 * ((row - Dir) / 20);
+    private const uint LongId = 100; // + row: id of the long cell of a row
 
-    static Color Px(Bitmap a, float x, float y) => a.GetPixel((int)(x * a.Width / 800), (int)(y * a.Height / 600));
-    static bool IsWhite(Color c) => c.R > 235 && c.G > 235 && c.B > 235;
+    private static Color Px(Bitmap a, float x, float y) => a.GetPixel((int)(x * a.Width / 800), (int)(y * a.Height / 600));
+    private static bool IsWhite(Color c) => c.R > 235 && c.G > 235 && c.B > 235;
     // Brightness above the background (0 = background, 1 = white).
-    static double Lit(Color c) => (c.R - 0x20) / (255.0 - 0x20);
+    private static double Lit(Color c) => (c.R - 0x20) / (255.0 - 0x20);
 
     // Mean Lit over a block (logical coordinates, step 2), so the jitter noise of single pixels does not count.
-    static double Mean(Bitmap a, float x0, float y0, float x1, float y1)
+    private static double Mean(Bitmap a, float x0, float y0, float x1, float y1)
     {
         double sum = 0;
         int n = 0;
@@ -55,7 +55,7 @@ public static class MotionBlurTest
     // The path is sampled bilinearly between pixels: with the nearest pixel, a circle or a slanted ray zigzags across the
     // pixel grid, and where it runs along a glyph edge (the arcs of the radial blur) that zigzag alone gives a second
     // difference as large as the copies, in both images, so the gain of pass 2 drowned in it at 1 pixel per DIP.
-    static double Rough(Bitmap a, uint row)
+    private static double Rough(Bitmap a, uint row)
     {
         var scale = a.Width / 800.0; // physical pixels per DIP
         var step = 1 / scale; // 1 physical pixel in DIP
@@ -98,7 +98,7 @@ public static class MotionBlurTest
         return sum / n;
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         ulong Shader(string name)

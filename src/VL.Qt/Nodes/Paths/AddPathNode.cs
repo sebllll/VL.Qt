@@ -8,10 +8,10 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "AddPath", Category = Categories.Paths)]
     public sealed class AddPathNode
     {
-        QtPath? _input;
-        QtPath? _other;
-        PathAddMode _mode;
-        QtPath? _output;
+        private QtPath? _input;
+        private QtPath? _other;
+        private PathAddMode _mode;
+        private QtPath? _output;
 
         /// <summary>Returns the path with the segments of the other path added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -33,7 +33,7 @@ namespace VL.Qt.Nodes.Paths
             return _output;
         }
 
-        static QtPath Build(QtPath path, QtPath other, PathAddMode mode)
+        private static QtPath Build(QtPath path, QtPath other, PathAddMode mode)
         {
             if (other.IsEmpty)
                 return path;
@@ -51,7 +51,7 @@ namespace VL.Qt.Nodes.Paths
         }
 
         // Replays the segments of the added path one by one, its first Move as a Line (a join of the two paths cannot change a segment).
-        static QtPath ExtendWith(QtPath path, FlatPath flat)
+        private static QtPath ExtendWith(QtPath path, FlatPath flat)
         {
             var verbs = flat.Verbs;
             var p = flat.Points;

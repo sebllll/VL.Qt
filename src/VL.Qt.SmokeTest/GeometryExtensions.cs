@@ -5,7 +5,7 @@ using VL.Qt;
 // to place an item with BOUNDS (x, y, w, h) get the same picture with SetPlace: SIZE (w, h), ANCHOR top left and a
 // TRANSFORM translation (x, y). Inside Row/Column the layout owns the position, so there only (0, 0) is meaningful
 // (the translation would be a visual offset).
-static class GeometryExtensions
+internal static class GeometryExtensions
 {
     public const int AlignTopLeft = 0x1 | 0x20;
     public const int AlignCenter = 0x4 | 0x80;

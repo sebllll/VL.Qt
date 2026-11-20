@@ -12,17 +12,17 @@ using VL.Qt;
 /// <see cref="Invoke"/>; in the helper executable (Program.Main) the main thread is the Qt thread. Qt is started on first
 /// use, so tests that need no GPU (protocol drift) never start it.
 /// </summary>
-static class QtHost
+internal static class QtHost
 {
-    static readonly object s_syncRoot = new();
+    private static readonly object s_syncRoot = new();
     // Separate from s_syncRoot: the log callback takes that one on the Qt thread while EnsureStarted waits for the init.
-    static readonly object s_startLock = new();
-    static readonly StringBuilder s_log = new();
-    static readonly Native.LogFn s_logFn = OnLog;
-    static BlockingCollection<Action>? s_queue;
-    static Thread? s_thread;
-    static double s_time;
-    static bool s_started;
+    private static readonly object s_startLock = new();
+    private static readonly StringBuilder s_log = new();
+    private static readonly Native.LogFn s_logFn = OnLog;
+    private static BlockingCollection<Action>? s_queue;
+    private static Thread? s_thread;
+    private static double s_time;
+    private static bool s_started;
 
     /// <summary>Result of the first vlqt_app_init (0 = ok) and its error text.</summary>
     public static int InitResult { get; private set; } = int.MinValue;
@@ -67,7 +67,7 @@ static class QtHost
             return start < s_log.Length ? s_log.ToString(start, s_log.Length - start) : "";
     }
 
-    static void OnLog(int level, IntPtr category, IntPtr message)
+    private static void OnLog(int level, IntPtr category, IntPtr message)
     {
         var line = $"[{level}] {Marshal.PtrToStringUTF8(category)}: {Marshal.PtrToStringUTF8(message)}";
         lock (s_syncRoot)
@@ -120,7 +120,7 @@ static class QtHost
         Init();
     }
 
-    static void Init()
+    private static void Init()
     {
         // Test windows ignore the real cursor (only vlqt_test_send_mouse input), read by QtNative per window (06c).
         SetEnv("VLQT_TEST_SYNTHETIC_INPUT", "1");
@@ -206,6 +206,6 @@ static class QtHost
             throw new InvalidOperationException($"setenv {name} failed");
     }
 
-    [DllImport("ucrtbase")] static extern int _putenv_s([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string value);
-    [DllImport("libc")] static extern int setenv(string name, string value, int overwrite);
+    [DllImport("ucrtbase")] private static extern int _putenv_s([MarshalAs(UnmanagedType.LPStr)] string name, [MarshalAs(UnmanagedType.LPStr)] string value);
+    [DllImport("libc")] private static extern int setenv(string name, string value, int overwrite);
 }

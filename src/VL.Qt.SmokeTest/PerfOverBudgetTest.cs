@@ -15,7 +15,7 @@ public static class PerfOverBudgetTest
     [Ignore("NDIAG-01: over_budget counts pump > budget including the VSync wait and the present (fails: eval, 20 pumps of 4 ms Qt work and 14 ms VSync wait counted 20 times)")]
     public static void PerfOverBudget() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         const double budget = 1000.0 / 60;
         var samples = new Native.vlqt_perf_sample[20];

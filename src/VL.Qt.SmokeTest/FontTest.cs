@@ -14,11 +14,11 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class FontTest
 {
-    const uint Line = 1;
-    const string Sample = "Hamburgefonstiv 0123";
-    const string Missing = "VlQt Not Installed Family";
+    private const uint Line = 1;
+    private const string Sample = "Hamburgefonstiv 0123";
+    private const string Missing = "VlQt Not Installed Family";
 
-    static string? FindFile(params string[] rel)
+    private static string? FindFile(params string[] rel)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
@@ -30,7 +30,7 @@ public static class FontTest
     }
 
     /// <summary>Number of differing pixels in a region given in window coordinates (800x600), both grabs of the same size.</summary>
-    static int Diff(Bitmap a, Bitmap b, int x, int y, int w, int h)
+    private static int Diff(Bitmap a, Bitmap b, int x, int y, int w, int h)
     {
         var count = 0;
         for (var yy = y; yy < y + h; yy++)
@@ -48,7 +48,7 @@ public static class FontTest
     [Test, Category("font")]
     public static void Font() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var fontPath = FindFile("src", "VL.Qt.Native", "fonts", "DejaVuSans.ttf");
         s.Check(fontPath != null, "test font src/VL.Qt.Native/fonts/DejaVuSans.ttf found");

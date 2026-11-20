@@ -14,16 +14,16 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "LoadImage (Async)", Category = Categories.Qt)]
     public sealed class LoadImageAsyncNode : IDisposable
     {
-        readonly ResourceClient _client;
-        readonly ImageNodeReport _report;
-        readonly Subject<QtImage> _onLoaded = new();
-        readonly Action<ImageResource> _onSettled;
-        string? _path;
-        bool _mipmaps;
+        private readonly ResourceClient _client;
+        private readonly ImageNodeReport _report;
+        private readonly Subject<QtImage> _onLoaded = new();
+        private readonly Action<ImageResource> _onSettled;
+        private string? _path;
+        private bool _mipmaps;
         // Current = at the output; pending = loading while the current one stays (Keep Previous).
-        ImageResource? _current, _pending;
-        QtImage? _currentImage, _pendingImage;
-        string _error = string.Empty;
+        private ImageResource? _current, _pending;
+        private QtImage? _currentImage, _pendingImage;
+        private string _error = string.Empty;
 
         public LoadImageAsyncNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
@@ -36,7 +36,7 @@ namespace VL.Qt.Nodes
         {
         }
 
-        LoadImageAsyncNode(ResourceClient client, NodeErrors? errors)
+        private LoadImageAsyncNode(ResourceClient client, NodeErrors? errors)
         {
             _client = client;
             _report = new ImageNodeReport(errors);
@@ -72,7 +72,7 @@ namespace VL.Qt.Nodes
             return _currentImage;
         }
 
-        void Load(string path, bool mipmaps, bool keepPrevious)
+        private void Load(string path, bool mipmaps, bool keepPrevious)
         {
             _path = path;
             _mipmaps = mipmaps;
@@ -110,7 +110,7 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>The pending image replaces the current one once ready; a failed one is dropped (the current one stays).</summary>
-        void Promote()
+        private void Promote()
         {
             if (_pending is null || _pending.State == QtImageState.Loading)
                 return;
@@ -130,7 +130,7 @@ namespace VL.Qt.Nodes
         }
 
         // Main thread, in the pump or a synchronous failure of Load.
-        void OnSettled(ImageResource resource)
+        private void OnSettled(ImageResource resource)
         {
             if (resource.State != QtImageState.Ready)
                 return;
@@ -140,14 +140,14 @@ namespace VL.Qt.Nodes
                 _onLoaded.OnNext(_currentImage);
         }
 
-        void ReleasePending()
+        private void ReleasePending()
         {
             _client.Release(_pending);
             _pending = null;
             _pendingImage = null;
         }
 
-        void ReleaseCurrent()
+        private void ReleaseCurrent()
         {
             _client.Release(_current);
             _current = null;

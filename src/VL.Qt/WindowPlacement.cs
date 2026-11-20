@@ -42,9 +42,9 @@ namespace VL.Qt
     {
         public static readonly TimeSpan Delay = TimeSpan.FromSeconds(0.5);
 
-        RectangleF _saved;
-        RectangleF? _pending;
-        TimeSpan _pendingSince;
+        private RectangleF _saved;
+        private RectangleF? _pending;
+        private TimeSpan _pendingSince;
 
         public BoundsSaver(RectangleF pinValue) => _saved = pinValue;
 
@@ -74,7 +74,7 @@ namespace VL.Qt
         }
 
         // Whole DIP: clean pin values; the round trip is stable (placing at an integer DIP reports it back).
-        static RectangleF Round(RectangleF r) =>
+        private static RectangleF Round(RectangleF r) =>
             new(MathF.Round(r.X), MathF.Round(r.Y), MathF.Round(r.Width), MathF.Round(r.Height));
     }
 

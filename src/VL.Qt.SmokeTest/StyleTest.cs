@@ -21,17 +21,17 @@ public static class StyleTest
     [Test, Category("style")]
     public static void Style() => Scenario.Run(Run);
 
-    const uint Btn = 1, Rect = 2;
-    const float BgGray = 0x10 / 255f;
+    private const uint Btn = 1, Rect = 2;
+    private const float BgGray = 0x10 / 255f;
 
     // Grabs are in device pixels (HiDPI); test coordinates are logical (800x600).
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
-    static bool Near(Color c, uint rgb) =>
+    private static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
+    private static bool Near(Color c, uint rgb) =>
         Math.Abs(c.R - (int)((rgb >> 16) & 0xFF)) < 8 && Math.Abs(c.G - (int)((rgb >> 8) & 0xFF)) < 8 && Math.Abs(c.B - (int)(rgb & 0xFF)) < 8;
-    static bool IsBg(Color c) => Near(c, 0x101010);
+    private static bool IsBg(Color c) => Near(c, 0x101010);
 
     // Any pixel in the logical rectangle at least this bright (text of the Button).
-    static bool HasBright(Bitmap a, int x0, int y0, int x1, int y1, int min)
+    private static bool HasBright(Bitmap a, int x0, int y0, int x1, int y1, int min)
     {
         for (int y = y0; y < y1; y++)
             for (int x = x0; x < x1; x++)
@@ -43,7 +43,7 @@ public static class StyleTest
         return false;
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt style test");
         s.Check(w != IntPtr.Zero, "window_create");
@@ -156,9 +156,9 @@ public static class StyleTest
         Nodeset(s);
     }
 
-    static Color4 Rgb(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1);
+    private static Color4 Rgb(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1);
 
-    static Style GroupStyle(uint frame, uint indicator, uint fill, float radius) => new()
+    private static Style GroupStyle(uint frame, uint indicator, uint fill, float radius) => new()
     {
         Frame = new FrameStyle
         {
@@ -172,7 +172,7 @@ public static class StyleTest
     // Styles S3 (#293): inheritance through the real reconciler. Left Group with its own style (children without style inherit it,
     // the second Button overrides the frame color), right Group without a style (base style) for comparison.
     // Images <outDir>/style-inherit.png, then the Group style is replaced by a new instance → style-inherit2.png.
-    static void Inherit(Scenario s)
+    private static void Inherit(Scenario s)
     {
         const uint groupFrame = 0xC04000, groupIndicator = 0x00C0C0, groupFill = 0xC0C000, ownFrame = 0x2040E0;
         const uint frame2 = 0x8000C0, indicator2 = 0xE000E0, fill2 = 0x00A000;
@@ -249,7 +249,7 @@ public static class StyleTest
     // Styles S5 (#294): the same inheritance, but the styles are built only with the nodeset methods. Group style: Colors
     // (frame, track fill) + Frame radius; the second Button overrides only the frame color with FrameNodes.Color.
     // Image <outDir>/style-nodeset.png.
-    static void Nodeset(Scenario s)
+    private static void Nodeset(Scenario s)
     {
         const uint groupFrame = 0xC04000, groupFill = 0xC0C000, ownFrame = 0x2040E0;
 
@@ -303,7 +303,7 @@ public static class StyleTest
     }
 
     // All controls with the base style in a grid on a dark background; hover on the first button. For Sebastian's visual check.
-    static void Gallery(Scenario s)
+    private static void Gallery(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt style gallery");
         s.Check(w != IntPtr.Zero, "gallery window_create");

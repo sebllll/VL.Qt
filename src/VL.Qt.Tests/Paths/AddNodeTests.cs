@@ -9,11 +9,11 @@ namespace VL.Qt.Tests.Paths
 {
     public class AddNodeTests
     {
-        const byte M = Protocol.Verb.Move, L = Protocol.Verb.Line, C = Protocol.Verb.Cubic, Z = Protocol.Verb.Close;
+        private const byte M = Protocol.Verb.Move, L = Protocol.Verb.Line, C = Protocol.Verb.Cubic, Z = Protocol.Verb.Close;
 
-        static byte[] Verbs(QtPath path) => path.Flatten().Verbs.ToArray();
+        private static byte[] Verbs(QtPath path) => path.Flatten().Verbs.ToArray();
 
-        static void AssertBounds(QtPath path, float x, float y, float w, float h, float tolerance = 1e-4f)
+        private static void AssertBounds(QtPath path, float x, float y, float w, float h, float tolerance = 1e-4f)
         {
             var b = path.Bounds;
             Assert.That(b.X, Is.EqualTo(x).Within(tolerance));

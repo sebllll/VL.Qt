@@ -91,7 +91,7 @@ namespace VL.Qt.Elements
         }
 
         /// <summary>Folds built-in links given nearest-to-the-Effect-pin first (that one wins for a duplicate kind).</summary>
-        static EffectDesc FoldRun(List<Effect> links, out string? warning)
+        private static EffectDesc FoldRun(List<Effect> links, out string? warning)
         {
             warning = null;
             var desc = EffectDesc.Default;

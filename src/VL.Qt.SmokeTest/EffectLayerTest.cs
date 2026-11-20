@@ -22,15 +22,15 @@ public static class EffectLayerTest
     [Test, Category("effect-layer")]
     public static void EffectLayer() => Scenario.Run(Run);
 
-    static bool Near(Color c, int r, int g, int b, int tol = 12) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
+    private static bool Near(Color c, int r, int g, int b, int tol = 12) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
+    private static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
 
-    const int ScenePage = 2;
+    private const int ScenePage = 2;
 
     // Scene page (F5): "effects <layers> effect layers, <n> MultiEffect items" and "QML items <n>".
-    static (int layers, int effects, int items) Counts(IntPtr w)
+    private static (int layers, int effects, int items) Counts(IntPtr w)
     {
         var need = -vlqt_test_perf_text(w, ScenePage, null, 0);
         var buf = new byte[Math.Max(need, 1)];
@@ -43,7 +43,7 @@ public static class EffectLayerTest
     }
 
     // Text area statistics: white-ish (text), green-ish (shadow), soft (neither text, shadow nor background: blur).
-    static (int white, int green, int soft) TextStats(Bitmap a)
+    private static (int white, int green, int soft) TextStats(Bitmap a)
     {
         int white = 0, green = 0, soft = 0;
         for (int y = 300; y < 560; y += 2)
@@ -58,7 +58,7 @@ public static class EffectLayerTest
     }
 
     // Hover events (EV_HOVER) for sink in the poll buffer: last flag, or null if none.
-    static bool? HoverFlag(ReadOnlySpan<byte> b, uint sink)
+    private static bool? HoverFlag(ReadOnlySpan<byte> b, uint sink)
     {
         bool? flag = null;
         int off = 0;
@@ -74,9 +74,9 @@ public static class EffectLayerTest
         return flag;
     }
 
-    const uint Row = 1, A = 2, B = 3, T = 4, H = 10, SinkH = 31;
+    private const uint Row = 1, A = 2, B = 3, T = 4, H = 10, SinkH = 31;
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "MultiEffect is a ShaderEffect");
         var w = Native.vlqt_window_create(800, 600, "VL.Qt effect layer test");

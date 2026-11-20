@@ -24,15 +24,15 @@ namespace VL.Qt
     {
         /// <summary>Category for uncategorized Qt messages (Qt's "default" category).</summary>
         internal const string DefaultQtCategory = "Qt";
-        const int MaxPending = 256;
+        private const int MaxPending = 256;
 
         // Delegate must stay reachable for the lifetime of the process (native keeps the pointer).
         internal static readonly Native.LogFn Fn = OnLog;
 
-        static readonly object s_syncRoot = new();
-        static readonly Queue<(LogLevel Level, string Category, string Message)> s_pending = new();
-        static int s_dropped;
-        static volatile Target? s_target;
+        private static readonly object s_syncRoot = new();
+        private static readonly Queue<(LogLevel Level, string Category, string Message)> s_pending = new();
+        private static int s_dropped;
+        private static volatile Target? s_target;
 
         /// <summary>Logger for process-wide VL.Qt messages, null before the first app host set one.</summary>
         internal static ILogger? Logger => s_target?.Main;
@@ -45,7 +45,7 @@ namespace VL.Qt
         internal static void SetLogger(ILogger? logger)
             => Set(logger is null ? null : new Target(logger, null));
 
-        static void Set(Target? target)
+        private static void Set(Target? target)
         {
             lock (s_syncRoot)
             {
@@ -76,7 +76,7 @@ namespace VL.Qt
         internal static string ToCategory(string? qtCategory)
             => string.IsNullOrEmpty(qtCategory) || qtCategory == "default" ? DefaultQtCategory : qtCategory;
 
-        static void OnLog(int level, IntPtr category, IntPtr message)
+        private static void OnLog(int level, IntPtr category, IntPtr message)
         {
             // Called from native code: no exception may escape (it would cross the native frames and end the process).
             try
@@ -111,10 +111,10 @@ namespace VL.Qt
             }
         }
 
-        sealed class Target
+        private sealed class Target
         {
-            readonly ILoggerFactory? _factory;
-            readonly ConcurrentDictionary<string, ILogger> _byCategory = new();
+            private readonly ILoggerFactory? _factory;
+            private readonly ConcurrentDictionary<string, ILogger> _byCategory = new();
 
             public Target(ILogger main, ILoggerFactory? factory)
             {

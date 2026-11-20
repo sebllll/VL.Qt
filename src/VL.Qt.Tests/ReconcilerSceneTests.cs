@@ -11,9 +11,9 @@ namespace VL.Qt.Tests
     /// <summary>Occurrences and duplicates (SceneRegistry, #455) and sink binding (BIND without flags) of the reconciler (04d).</summary>
     public class ReconcilerSceneTests
     {
-        RecordingSink _sink = null!;
-        SceneRegistry _scene = null!;
-        Reconciler _rec = null!;
+        private RecordingSink _sink = null!;
+        private SceneRegistry _scene = null!;
+        private Reconciler _rec = null!;
 
         [SetUp]
         public void SetUp()
@@ -23,13 +23,13 @@ namespace VL.Qt.Tests
             _rec = new Reconciler(_sink, new IdAllocator(), _scene);
         }
 
-        static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
-        static Rectangle R(float w = 1, SinkSlot sink = default)
+        private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
+        private static Rectangle R(float w = 1, SinkSlot sink = default)
             => new() { Size = new Vector2(w, 1), Sink = sink };
 
-        string[] Structural => _sink.Commands.Where(c => !c.StartsWith("SET ", StringComparison.Ordinal)).ToArray();
+        private string[] Structural => _sink.Commands.Where(c => !c.StartsWith("SET ", StringComparison.Ordinal)).ToArray();
 
-        void Frame(Element? root, Reconciler? rec = null)
+        private void Frame(Element? root, Reconciler? rec = null)
         {
             _sink.Clear();
             (rec ?? _rec).Update(root, Space.DIPTopLeft);
@@ -37,9 +37,9 @@ namespace VL.Qt.Tests
 
 ﻿        // --- several occurrences in one tree (#455) ---
 
-        static Video V(SinkSlot sink = default) => new() { Size = new Vector2(1, 1), Sink = sink };
+        private static Video V(SinkSlot sink = default) => new() { Size = new Vector2(1, 1), Sink = sink };
 
-        bool IsPrimaryHandle(Node n) => _rec.Sinks.IsPrimary(n.BoundHandle);
+        private bool IsPrimaryHandle(Node n) => _rec.Sinks.IsPrimary(n.BoundHandle);
 
         [Test]
         public void TwoOccurrences_TwoObjects_OwnHandlesOnSameSlot()
@@ -536,7 +536,7 @@ namespace VL.Qt.Tests
 
         // --- exception inside Update (REC-01, fault injection with ThrowingSink) ---
 
-        static int LiveObjects(RecordingSink sink)
+        private static int LiveObjects(RecordingSink sink)
         {
             var live = 0;
             foreach (var c in sink.Commands)
@@ -643,7 +643,7 @@ namespace VL.Qt.Tests
             Assert.That(sink.Recorded.OfOp("CREATE").Select(c => c.Split(' ')[2]).ToArray(), Is.EqualTo(new[] { "Item", "Rectangle" }), sink.Recorded.ToString());
         }
 
-        sealed class RecordingSinkNull : ICommandSink
+        private sealed class RecordingSinkNull : ICommandSink
         {
             public void Create(uint id, ushort type) { }
             public void Destroy(uint id) { }

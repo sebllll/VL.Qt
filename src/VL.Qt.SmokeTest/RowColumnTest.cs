@@ -15,20 +15,20 @@ using static Pixels;
 public static class RowColumnTest
 {
     // Containers
-    const uint ColA = 1, ColB = 2, RowC = 3, ColD = 4;
+    private const uint ColA = 1, ColB = 2, RowC = 3, ColD = 4;
     // Children: 10 + container * 10 + index
-    static uint Child(uint container, uint index) => 10 + container * 10 + index;
+    private static uint Child(uint container, uint index) => 10 + container * 10 + index;
 
-    static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
-    static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
-    static bool IsBlue(Color c) => c.B > 200 && c.R < 40 && c.G < 40;
-    static bool IsYellow(Color c) => c.R > 200 && c.G > 200 && c.B < 40;
+    private static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
+    private static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
+    private static bool IsBlue(Color c) => c.B > 200 && c.R < 40 && c.G < 40;
+    private static bool IsYellow(Color c) => c.R > 200 && c.G > 200 && c.B < 40;
 
     /// <summary>Row and Column layout.</summary>
     [Test, Category("rowcolumn")]
     public static void RowColumn() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt row/column test");
         s.Check(w != IntPtr.Zero, "window_create");

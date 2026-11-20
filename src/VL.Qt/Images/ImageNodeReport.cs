@@ -9,10 +9,10 @@ namespace VL.Qt
     /// </summary>
     internal sealed class ImageNodeReport : IDisposable
     {
-        const string phase = "Image";
+        private const string phase = "Image";
 
-        readonly NodeErrors? _errors;
-        string _error = string.Empty, _warning = string.Empty;
+        private readonly NodeErrors? _errors;
+        private string _error = string.Empty, _warning = string.Empty;
 
         public ImageNodeReport(NodeErrors? errors) => _errors = errors;
 

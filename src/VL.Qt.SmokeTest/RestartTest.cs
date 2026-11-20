@@ -13,23 +13,23 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class RestartTest
 {
-    const uint Effect = 10;
-    const int rounds = 24;
-    const uint wmApp = 0x8000;
-    const int gwlpWndProc = -4;
-    static readonly IntPtr s_hwndMessage = new(-3);
+    private const uint Effect = 10;
+    private const int rounds = 24;
+    private const uint wmApp = 0x8000;
+    private const int gwlpWndProc = -4;
+    private static readonly IntPtr s_hwndMessage = new(-3);
 
-    delegate IntPtr WndProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+    private delegate IntPtr WndProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    static extern IntPtr CreateWindowExW(int exStyle, string cls, string? name, int style, int x, int y, int w, int h,
+    private static extern IntPtr CreateWindowExW(int exStyle, string cls, string? name, int style, int x, int y, int w, int h,
         IntPtr parent, IntPtr menu, IntPtr instance, IntPtr param);
-    [DllImport("user32.dll")] static extern bool DestroyWindow(IntPtr hwnd);
-    [DllImport("user32.dll")] static extern bool PostMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
-    [DllImport("user32.dll")] static extern IntPtr SetWindowLongPtrW(IntPtr hwnd, int index, IntPtr value);
-    [DllImport("user32.dll")] static extern IntPtr CallWindowProcW(IntPtr prev, IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern bool DestroyWindow(IntPtr hwnd);
+    [DllImport("user32.dll")] private static extern bool PostMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern IntPtr SetWindowLongPtrW(IntPtr hwnd, int index, IntPtr value);
+    [DllImport("user32.dll")] private static extern IntPtr CallWindowProcW(IntPtr prev, IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
 
-    static string Source(bool thickness, int round) =>
+    private static string Source(bool thickness, int round) =>
         "#version 440\n" +
         "layout(location = 0) in vec2 qt_TexCoord0;\n" +
         "layout(location = 0) out vec4 fragColor;\n" +
@@ -48,7 +48,7 @@ public static class RestartTest
         "// round " + round + "\n";
 
     // A window with one ShaderEffect on shader text <paramref name="shader"/> (Ready or still baking).
-    static IntPtr Scene(CommandWriter cmd, ulong shader, bool thickness)
+    private static IntPtr Scene(CommandWriter cmd, ulong shader, bool thickness)
     {
         var w = Native.vlqt_window_create(400, 300, "VL.Qt shader restart test");
         Native.vlqt_window_show(w);
@@ -66,7 +66,7 @@ public static class RestartTest
         return w;
     }
 
-    static ulong Load(bool thickness, int round)
+    private static ulong Load(bool thickness, int round)
     {
         Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
         Native.vlqt_res_load_shader_source(id, Source(thickness, round), Protocol.ShaderStage.Fragment);
@@ -77,7 +77,7 @@ public static class RestartTest
     [Test, Category("restart")]
     public static void Restart() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         if (OperatingSystem.IsWindows())
             RunReentrant(s);
@@ -85,7 +85,7 @@ public static class RestartTest
     }
 
     // Part 1: the window of the pump is destroyed (and the next one created) inside vlqt_app_process_events_for.
-    static void RunReentrant(Scenario s)
+    private static void RunReentrant(Scenario s)
     {
         var cmd = new CommandWriter();
         var current = IntPtr.Zero;
@@ -134,7 +134,7 @@ public static class RestartTest
     }
 
     // Part 2: restarts while a new shader text with one more uniform bakes.
-    static void RunBaking(Scenario s)
+    private static void RunBaking(Scenario s)
     {
         var cmd = new CommandWriter();
         for (int round = 0; round < rounds; round++)

@@ -9,7 +9,7 @@ namespace VL.Qt.Tests.Paths
 {
     public class BuilderNodeTests
     {
-        static readonly QtPath start = QtPath.Empty.MoveTo(1, 2).LineTo(10, 20);
+        private static readonly QtPath start = QtPath.Empty.MoveTo(1, 2).LineTo(10, 20);
 
         [Test]
         public void LineTo_AddsLine_RelativeAddsLastPoint()
@@ -108,7 +108,7 @@ namespace VL.Qt.Tests.Paths
             Check(new ArcToRelativeNode(), n => n.Update(start, Vector2.One, 0, false, true, Vector2.One), n => n.Update(start, Vector2.One, 0, false, false, Vector2.One));
         }
 
-        static void Check<T>(T node, Func<T, QtPath> same, Func<T, QtPath> changed)
+        private static void Check<T>(T node, Func<T, QtPath> same, Func<T, QtPath> changed)
         {
             var a = same(node);
             Assert.That(same(node), Is.SameAs(a), typeof(T).Name);

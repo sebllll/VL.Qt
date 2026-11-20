@@ -14,8 +14,8 @@ namespace VL.Qt
     {
         public const int RecordFieldsSize = 8; // u32 handle, u32 index
 
-        readonly ReadOnlySpan<byte> _data;
-        int _offset;
+        private readonly ReadOnlySpan<byte> _data;
+        private int _offset;
 
         public EventReader(ReadOnlySpan<byte> data)
         {
@@ -74,7 +74,7 @@ namespace VL.Qt
             return true;
         }
 
-        bool Fail(string reason)
+        private bool Fail(string reason)
         {
             Error = $"{reason} at byte {_offset}";
             Payload = default;

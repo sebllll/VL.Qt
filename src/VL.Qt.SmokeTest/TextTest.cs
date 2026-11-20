@@ -10,12 +10,12 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class TextTest
 {
-    static bool IsBg(System.Drawing.Color c) => Math.Abs(c.R - 0x20) < 24 && Math.Abs(c.G - 0x20) < 24 && Math.Abs(c.B - 0x20) < 24;
+    private static bool IsBg(System.Drawing.Color c) => Math.Abs(c.R - 0x20) < 24 && Math.Abs(c.G - 0x20) < 24 && Math.Abs(c.B - 0x20) < 24;
 
     /// <summary>Non-background pixels in a region given in window coordinates (800x600), plus their x/y extent.</summary>
-    record struct Ink(int Count, int MinX, int MaxX, int MinY, int MaxY, int Reddish);
+    private record struct Ink(int Count, int MinX, int MaxX, int MinY, int MaxY, int Reddish);
 
-    static Ink Scan(Bitmap a, int x, int y, int w, int h)
+    private static Ink Scan(Bitmap a, int x, int y, int w, int h)
     {
         int count = 0, minX = int.MaxValue, maxX = -1, minY = int.MaxValue, maxY = -1, red = 0;
         for (int yy = y; yy < y + h; yy++)
@@ -33,14 +33,14 @@ public static class TextTest
         return new Ink(count, minX, maxX, minY, maxY, red);
     }
 
-    const uint Plain = 1, Right = 2, Bottom = 3, Wrapped = 4, Elided = 5, Fit = 6;
-    const string Long = "one two three four five six seven eight";
+    private const uint Plain = 1, Right = 2, Bottom = 3, Wrapped = 4, Elided = 5, Fit = 6;
+    private const string Long = "one two three four five six seven eight";
 
     /// <summary>Text element.</summary>
     [Test, Category("text")]
     public static void Text() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt text test");
         s.Check(w != IntPtr.Zero, "window_create");

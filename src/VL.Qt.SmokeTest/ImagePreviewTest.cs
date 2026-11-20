@@ -16,7 +16,7 @@ public static class ImagePreviewTest
     [Test, Category("image-preview")]
     public static void ImagePreview() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var dir = Path.Combine(s.OutDir, "image-preview");
         Directory.CreateDirectory(dir);

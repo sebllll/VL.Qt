@@ -55,7 +55,7 @@ public static class MeasureTest
         return text;
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt measure test");
         s.Check(w != IntPtr.Zero, "window_create");
@@ -263,7 +263,7 @@ public static class MeasureTest
     // since the last poll. An apply between two polls without a pump in between (Qt did not render) must still give
     // the new layout: Row after a Button text change (implicit size), Column after a spacing change, Text measure.
     // The next poll without a change reports nothing, and the following render agrees with the polished layout.
-    static void RunPolishWithoutRender(Scenario s)
+    private static void RunPolishWithoutRender(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt measure polish without render");
         s.Check(w != IntPtr.Zero, "window_create");
@@ -369,7 +369,7 @@ public static class MeasureTest
     // #20 review: an element inside a Group with an effect chain, and inside a Group used as ShaderEffect Input (frame
     // proxy under the root, #486), still reports new SCENE_BOUNDS when the Group moves (TRANSFORM: translation = x/y
     // path, scale = Matrix4x4 path) or the ShaderEffect holding the Group moves.
-    static void RunEffectGroups(Scenario s)
+    private static void RunEffectGroups(Scenario s)
     {
         void Check(bool ok, string what) => s.NeedsRhi(ok, what, "ShaderEffect/effect chain need a QRhi scenegraph");
         Native.vlqt_res_create(Protocol.ResKind.Shader, out var wave);
@@ -452,12 +452,12 @@ public static class MeasureTest
     }
 
     // Items measured by one poll = MEASURED / SCENE_BOUNDS records in its buffer (each is queued only for an item whose geometry changed).
-    static int Records(ReadOnlySpan<byte> poll, int n, ushort ev, Scenario s) =>
+    private static int Records(ReadOnlySpan<byte> poll, int n, ushort ev, Scenario s) =>
         Parse(poll.Slice(0, Math.Max(n, 0)), s).FindAll(x => x.Event == ev).Count;
 
     // #20: cost of the measurement path for a static scene of count bound rectangles (flat in one Group, like the
     // Elements500/2000 profile scenarios), and with one of them moving. Poll time = Stopwatch around vlqt_window_poll.
-    static void RunStaticCost(Scenario s, int count)
+    private static void RunStaticCost(Scenario s, int count)
     {
         var w = Native.vlqt_window_create(800, 600, $"VL.Qt measure cost {count}");
         s.Check(w != IntPtr.Zero, $"window_create ({count})");

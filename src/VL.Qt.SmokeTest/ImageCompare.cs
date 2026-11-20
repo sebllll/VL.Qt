@@ -18,7 +18,7 @@ using VL.Qt.Styles;
 /// Check on another machine (e.g. the arm64 notebook), one command: `dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=image-compare`.
 /// Green = WARP there matches the x64 references within the limits; a FAIL names the grab and the written diff image.
 /// </remarks>
-static class ImageCompare
+internal static class ImageCompare
 {
     // The limits were set from x64 WARP runs, which are deterministic (difference 0.000 in every scene, 0.002 in the collage).
     // Keep them tight: a 20 x 20 block on a 400 x 300 picture (0.33 %) must fail. If WARP on arm64 does not fit, the arm64
@@ -161,7 +161,7 @@ static class ImageCompare
     }
 
     // README picture: scaled to the target width, docs/images/<name without the scenario prefix>.png.
-    static void WriteDocs(Scenario s, string name, string grabPath, int width)
+    private static void WriteDocs(Scenario s, string name, string grabPath, int width)
     {
         var imagesDir = FindUp("docs", "images");
         s.Check(imagesDir != null, $"{name}: docs/images found ({imagesDir})");
@@ -173,10 +173,10 @@ static class ImageCompare
         s.Info($"{name}: {target} ({new FileInfo(target).Length / 1024} KB)");
     }
 
-    static string DocsName(string name) => name.StartsWith("readme-images_") ? name["readme-images_".Length..] : name.StartsWith("readme-gallery_") ? name["readme-gallery_".Length..] : name;
+    private static string DocsName(string name) => name.StartsWith("readme-images_") ? name["readme-images_".Length..] : name.StartsWith("readme-gallery_") ? name["readme-gallery_".Length..] : name;
 
     /// <summary>The picture scaled to the target width (bicubic, deterministic); the caller disposes it.</summary>
-    static Bitmap Scale(string path, int width)
+    private static Bitmap Scale(string path, int width)
     {
         using var a = new Bitmap(path);
         var height = (int)MathF.Round(a.Height * width / (float)a.Width);
@@ -235,7 +235,7 @@ static class ImageCompare
         return (ok, text);
     }
 
-    static byte[] Bytes(Bitmap b)
+    private static byte[] Bytes(Bitmap b)
     {
         var bits = b.LockBits(new Rectangle(0, 0, b.Width, b.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
         var data = new byte[b.Width * b.Height * 4];
@@ -245,7 +245,7 @@ static class ImageCompare
     }
 
     // Row by row (the stride may be padded).
-    static void Copy(byte[] data, System.Drawing.Imaging.BitmapData bits, bool toBitmap)
+    private static void Copy(byte[] data, System.Drawing.Imaging.BitmapData bits, bool toBitmap)
     {
         var row = bits.Width * 4;
         for (var y = 0; y < bits.Height; y++)

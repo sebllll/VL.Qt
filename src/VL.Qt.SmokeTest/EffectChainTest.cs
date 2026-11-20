@@ -25,12 +25,12 @@ public static class EffectChainTest
     [Test, Category("effect-chain")]
     public static void EffectChain() => Scenario.Run(Run);
 
-    static bool Near(Color c, int r, int g, int b, int tol = 12) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
+    private static bool Near(Color c, int r, int g, int b, int tol = 12) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
+    private static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
 
-    const int ScenePage = 2;
+    private const int ScenePage = 2;
 
     internal static (int layers, int effects) Counts(IntPtr w)
     {
@@ -43,7 +43,7 @@ public static class EffectChainTest
     }
 
     // Text area statistics: white-ish (text), green-ish (shadow), soft (neither: blur).
-    static (int white, int green, int soft) TextStats(Bitmap a)
+    private static (int white, int green, int soft) TextStats(Bitmap a)
     {
         int white = 0, green = 0, soft = 0;
         for (int y = 300; y < 560; y += 2)
@@ -57,7 +57,7 @@ public static class EffectChainTest
         return (white, green, soft);
     }
 
-    static int Diff(Bitmap a, Bitmap b)
+    private static int Diff(Bitmap a, Bitmap b)
     {
         int diff = 0;
         for (int y = 0; y < 600; y += 4)
@@ -69,7 +69,7 @@ public static class EffectChainTest
         return diff;
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "MultiEffect is a ShaderEffect");
         var w = Native.vlqt_window_create(800, 600, "VL.Qt effect chain test");
@@ -267,7 +267,7 @@ public static class EffectChainTest
         s.Pump(2);
     }
 
-    sealed class Remove(List<string> list, string message) : IDisposable
+    private sealed class Remove(List<string> list, string message) : IDisposable
     {
         public void Dispose() => list.Remove(message);
     }

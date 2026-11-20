@@ -54,23 +54,23 @@ namespace VL.Qt.Shaders
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
 
-        static readonly Func<string, float, Uniform> s_float = Uniform.Float;
-        static readonly Func<string, Vector2, Uniform> s_vector2 = Uniform.Vector2;
-        static readonly Func<string, Vector3, Uniform> s_vector3 = Uniform.Vector3;
-        static readonly Func<string, Vector4, Uniform> s_vector4 = Uniform.Vector4;
-        static readonly Func<string, Color4, Uniform> s_color = Uniform.Color;
-        static readonly Func<string, int, Uniform> s_int = Uniform.Int;
-        static readonly Func<string, bool, Uniform> s_bool = Uniform.Bool;
-        static readonly Func<string, Matrix, Uniform> s_matrix = Uniform.Matrix;
-        static readonly Func<string, QtImage?, Uniform> s_image = static (n, i) => Uniform.FromImage(n, i);
-        static readonly Func<string, Sampler?, Uniform> s_sampler = Uniform.FromSampler;
+        private static readonly Func<string, float, Uniform> s_float = Uniform.Float;
+        private static readonly Func<string, Vector2, Uniform> s_vector2 = Uniform.Vector2;
+        private static readonly Func<string, Vector3, Uniform> s_vector3 = Uniform.Vector3;
+        private static readonly Func<string, Vector4, Uniform> s_vector4 = Uniform.Vector4;
+        private static readonly Func<string, Color4, Uniform> s_color = Uniform.Color;
+        private static readonly Func<string, int, Uniform> s_int = Uniform.Int;
+        private static readonly Func<string, bool, Uniform> s_bool = Uniform.Bool;
+        private static readonly Func<string, Matrix, Uniform> s_matrix = Uniform.Matrix;
+        private static readonly Func<string, QtImage?, Uniform> s_image = static (n, i) => Uniform.FromImage(n, i);
+        private static readonly Func<string, Sampler?, Uniform> s_sampler = Uniform.FromSampler;
     }
 
     internal sealed class UniformPin<T> : UniformPin, IVLPin<T>
     {
-        readonly string _uniformName;
-        readonly Func<string, T, Uniform> _create;
-        T _value, _built;
+        private readonly string _uniformName;
+        private readonly Func<string, T, Uniform> _create;
+        private T _value, _built;
 
         public UniformPin(ShaderPin pin, Func<string, T, Uniform> create)
         {
@@ -105,8 +105,8 @@ namespace VL.Qt.Shaders
     /// <summary>The uniform pins of a generated shader node and the Spread&lt;Uniform&gt; handed to the ShaderEffect (rebuilt only on a pin change, nothing allocated otherwise).</summary>
     internal sealed class ShaderUniforms
     {
-        readonly UniformPin[] _pins;
-        Spread<Uniform> _spread;
+        private readonly UniformPin[] _pins;
+        private Spread<Uniform> _spread;
 
         public ShaderUniforms(ImmutableArray<ShaderPin> pins)
         {
@@ -130,7 +130,7 @@ namespace VL.Qt.Shaders
             return _spread;
         }
 
-        Spread<Uniform> Build()
+        private Spread<Uniform> Build()
         {
             if (_pins.Length == 0)
                 return Spread<Uniform>.Empty;

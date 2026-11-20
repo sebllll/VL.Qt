@@ -10,10 +10,10 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "Spline (BSpline)", Category = Categories.Paths)]
     public sealed class SplineBSplineNode
     {
-        QtPath? _input;
-        Spread<Vector2>? _points;
-        bool _closed;
-        QtPath? _output;
+        private QtPath? _input;
+        private Spread<Vector2>? _points;
+        private bool _closed;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a smooth curve that follows the control polygon and does not pass through its inner points.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>

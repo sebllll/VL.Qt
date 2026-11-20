@@ -27,14 +27,14 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class SpaceTest
 {
-    sealed class NoMessage : IDisposable { public void Dispose() { } }
+    private sealed class NoMessage : IDisposable { public void Dispose() { } }
 
-    static readonly Color4 Bg = new(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-    const float Eps = 2e-3f;
+    private static readonly Color4 Bg = new(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
+    private const float Eps = 2e-3f;
 
 
     /// <summary>Origin (DIP) and DIP per unit of a space for a scene of w x h DIP.</summary>
-    static (Vector2 Origin, float Unit) Layout(Space space, float w, float h, float dpr) => space switch
+    private static (Vector2 Origin, float Unit) Layout(Space space, float w, float h, float dpr) => space switch
     {
         Space.Normalized => (new Vector2(w / 2, h / 2), h / 2),
         Space.DIP => (new Vector2(w / 2, h / 2), 100f),
@@ -46,7 +46,7 @@ public static class SpaceTest
     [Test, Category("space")]
     public static void SpaceScenes() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var scene = new SceneRegistry();
         var r = new WindowRenderer(scene, "VL.Qt space test", new RectangleF(100, 100, 800, 600));

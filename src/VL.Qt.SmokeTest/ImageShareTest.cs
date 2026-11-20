@@ -19,13 +19,13 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class ImageShareTest
 {
-    const int Elements = 100; // per window
+    private const int Elements = 100; // per window
 
     /// <summary>Image sharing between windows.</summary>
     [Test, Category("image-share")]
     public static void ImageShare() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var dir = Path.Combine(s.OutDir, "image-share");
         Directory.CreateDirectory(dir);

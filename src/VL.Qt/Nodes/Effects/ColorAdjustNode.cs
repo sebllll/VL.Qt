@@ -16,7 +16,7 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(float Brightness, float Contrast, float Saturation);
 
-        readonly EffectNode<Props> _node = new(static (previous, p) => new ColorAdjustEffect(previous, p.Brightness, p.Contrast, p.Saturation));
+        private readonly EffectNode<Props> _node = new(static (previous, p) => new ColorAdjustEffect(previous, p.Brightness, p.Contrast, p.Saturation));
 
         internal EffectNode<Props> Core => _node;
 

@@ -29,8 +29,8 @@ namespace VL.Qt.Tests.Api
     [TestFixture]
     public sealed class NodeApiSnapshotTests
     {
-        const string updateVariable = "VLQT_UPDATE_SNAPSHOT";
-        static readonly string[] s_windowsOnlyAssemblies = { "VL.Qt.Stride", "VL.Qt.Audio" };
+        private const string updateVariable = "VLQT_UPDATE_SNAPSHOT";
+        private static readonly string[] s_windowsOnlyAssemblies = { "VL.Qt.Stride", "VL.Qt.Audio" };
 
         [Test]
         public void NodeApi_MatchesSnapshot()
@@ -107,7 +107,7 @@ namespace VL.Qt.Tests.Api
             return sorted;
         }
 
-        static string SnapshotPath()
+        private static string SnapshotPath()
         {
             var path = typeof(NodeApiSnapshotTests).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
                 .Single(a => a.Key == "NodeApiSnapshot").Value;
@@ -115,7 +115,7 @@ namespace VL.Qt.Tests.Api
         }
 
         /// <summary>Line diff (longest common subsequence) of two sorted lists: "- line" only in the snapshot, "+ line" only now.</summary>
-        static List<string> Diff(IReadOnlyList<string> expected, IReadOnlyList<string> actual)
+        private static List<string> Diff(IReadOnlyList<string> expected, IReadOnlyList<string> actual)
         {
             // Both lists are sorted ordinally: a merge walk gives the exact set difference in order.
             var result = new List<string>();
@@ -147,7 +147,7 @@ namespace VL.Qt.Tests.Api
 
         // --- generated nodes ---
 
-        const string testShader = @"// @category Qt.Test
+        private const string testShader = @"// @category Qt.Test
 // @summary Snapshot shader.
 #version 440
 layout(location = 0) in vec2 qt_TexCoord0;
@@ -165,9 +165,9 @@ void main() { fragColor = texture(source, qt_TexCoord0) * texture(mask, qt_TexCo
 ";
 
         // What QtNative's reflection reports for testShader (the unit tests run without QtNative).
-        const string testShaderReflection = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\nuniform amount float 0\nuniform offset vec2 0\nuniform tint vec4 0\nsampler source 1\nsampler mask 2\n";
+        private const string testShaderReflection = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\nuniform amount float 0\nuniform offset vec2 0\nuniform tint vec4 0\nsampler source 1\nsampler mask 2\n";
 
-        const string testQml = @"// @summary Snapshot component.
+        private const string testQml = @"// @summary Snapshot component.
 import QtQuick
 Item {
     property real level: 0.5
@@ -181,7 +181,7 @@ Item {
 }
 ";
 
-        static IEnumerable<string> ShaderFactoryLines()
+        private static IEnumerable<string> ShaderFactoryLines()
         {
             var dir = CreateTempDir();
             try
@@ -202,7 +202,7 @@ Item {
             }
         }
 
-        static IEnumerable<string> QmlFactoryLines()
+        private static IEnumerable<string> QmlFactoryLines()
         {
             var dir = CreateTempDir();
             try
@@ -222,14 +222,14 @@ Item {
             }
         }
 
-        static string CreateTempDir()
+        private static string CreateTempDir()
         {
             var dir = Path.Combine(Path.GetTempPath(), "vlqt-nodeapi-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(dir);
             return dir;
         }
 
-        static IEnumerable<string> GeneratedNodeLines(string factory, string name, string category, IEnumerable<IVLPinDescription> inputs, IEnumerable<IVLPinDescription> outputs)
+        private static IEnumerable<string> GeneratedNodeLines(string factory, string name, string category, IEnumerable<IVLPinDescription> inputs, IEnumerable<IVLPinDescription> outputs)
         {
             var prefix = $"factory {factory} | node {name}";
             yield return $"{prefix} | category {category}";
@@ -244,7 +244,7 @@ Item {
             yield return $"{prefix} | order {string.Join(", ", order)}";
         }
 
-        static string TypeName(Type type)
+        private static string TypeName(Type type)
         {
             if (type.IsGenericType)
             {
@@ -255,7 +255,7 @@ Item {
             return Keyword(type.FullName!.Replace('+', '.'));
         }
 
-        static string FormatValue(object value) => value switch
+        private static string FormatValue(object value) => value switch
         {
             string s => Quote(s),
             bool b => b ? "true" : "false",
@@ -273,9 +273,9 @@ Item {
             _ => "<" + TypeName(value.GetType()) + ">",
         };
 
-        static string Numbers(params float[] values) => string.Join(", ", values.Select(v => v.ToString(CultureInfo.InvariantCulture)));
+        private static string Numbers(params float[] values) => string.Join(", ", values.Select(v => v.ToString(CultureInfo.InvariantCulture)));
 
-        static string Quote(string s)
+        private static string Quote(string s)
         {
             var sb = new StringBuilder("\"");
             foreach (var c in s)
@@ -294,7 +294,7 @@ Item {
             return sb.Append('"').ToString();
         }
 
-        static readonly Dictionary<string, string> s_keywords = new()
+        private static readonly Dictionary<string, string> s_keywords = new()
         {
             ["System.Void"] = "void", ["System.Boolean"] = "bool", ["System.Char"] = "char", ["System.SByte"] = "sbyte",
             ["System.Byte"] = "byte", ["System.Int16"] = "short", ["System.UInt16"] = "ushort", ["System.Int32"] = "int",
@@ -303,31 +303,31 @@ Item {
             ["System.IntPtr"] = "nint", ["System.UIntPtr"] = "nuint", ["System.Decimal"] = "decimal",
         };
 
-        static string Keyword(string fullName) => s_keywords.TryGetValue(fullName, out var k) ? k : fullName;
+        private static string Keyword(string fullName) => s_keywords.TryGetValue(fullName, out var k) ? k : fullName;
 
         // --- metadata reading ---
 
         /// <summary>Enum facts of one type: underlying type and member names by value.</summary>
-        sealed record EnumInfo(PrimitiveTypeCode Underlying, IReadOnlyDictionary<long, string> Names, bool Flags);
+        private sealed record EnumInfo(PrimitiveTypeCode Underlying, IReadOnlyDictionary<long, string> Names, bool Flags);
 
         /// <summary>The public surface of one assembly, read from its metadata.</summary>
-        sealed class AssemblyApi : ICustomAttributeTypeProvider<string>, ISignatureTypeProvider<string, AssemblyApi.GenericContext>
+        private sealed class AssemblyApi : ICustomAttributeTypeProvider<string>, ISignatureTypeProvider<string, AssemblyApi.GenericContext>
         {
             internal readonly record struct GenericContext(ImmutableArray<string> TypeParameters, ImmutableArray<string> MethodParameters);
 
             // Attributes vvvv reads, by full name (other VL.* attributes are kept too, see IsRelevant).
-            static readonly HashSet<string> s_systemAttributes = new(StringComparer.Ordinal)
+            private static readonly HashSet<string> s_systemAttributes = new(StringComparer.Ordinal)
             {
                 "System.ComponentModel.DefaultValueAttribute", "System.ComponentModel.BrowsableAttribute", "System.FlagsAttribute",
                 "System.ObsoleteAttribute", "System.ParamArrayAttribute",
             };
 
-            readonly MetadataReader _reader;
-            readonly string _assembly;
-            readonly Dictionary<string, EnumInfo> _localEnums = new(StringComparer.Ordinal);
-            readonly Dictionary<string, EnumInfo?> _externalEnums = new(StringComparer.Ordinal);
-            readonly Dictionary<string, string> _externalEnumAssemblies = new(StringComparer.Ordinal);
-            readonly List<string> _lines = new();
+            private readonly MetadataReader _reader;
+            private readonly string _assembly;
+            private readonly Dictionary<string, EnumInfo> _localEnums = new(StringComparer.Ordinal);
+            private readonly Dictionary<string, EnumInfo?> _externalEnums = new(StringComparer.Ordinal);
+            private readonly Dictionary<string, string> _externalEnumAssemblies = new(StringComparer.Ordinal);
+            private readonly List<string> _lines = new();
 
             internal AssemblyApi(string path)
             {
@@ -365,9 +365,9 @@ Item {
                 return _lines;
             }
 
-            void Add(string owner, string fact) => _lines.Add($"{_assembly} | {owner} | {fact}");
+            private void Add(string owner, string fact) => _lines.Add($"{_assembly} | {owner} | {fact}");
 
-            bool IsPublic(TypeDefinitionHandle handle)
+            private bool IsPublic(TypeDefinitionHandle handle)
             {
                 var type = _reader.GetTypeDefinition(handle);
                 var visibility = type.Attributes & TypeAttributes.VisibilityMask;
@@ -376,7 +376,7 @@ Item {
                 return visibility == TypeAttributes.NestedPublic && IsPublic(type.GetDeclaringType());
             }
 
-            void AddType(TypeDefinitionHandle handle)
+            private void AddType(TypeDefinitionHandle handle)
             {
                 var type = _reader.GetTypeDefinition(handle);
                 var name = FullName(handle);
@@ -456,7 +456,7 @@ Item {
                 }
             }
 
-            void AddEnumMembers(string owner, TypeDefinition type)
+            private void AddEnumMembers(string owner, TypeDefinition type)
             {
                 foreach (var f in type.GetFields())
                 {
@@ -470,7 +470,7 @@ Item {
                 }
             }
 
-            void AddProperty(string owner, PropertyDefinition property, GenericContext context, HashSet<MethodDefinitionHandle> accessors)
+            private void AddProperty(string owner, PropertyDefinition property, GenericContext context, HashSet<MethodDefinitionHandle> accessors)
             {
                 var a = property.GetAccessors();
                 if (!a.Getter.IsNil)
@@ -502,7 +502,7 @@ Item {
                     Add(owner, $"property {name} | attr {attribute}");
             }
 
-            bool IsInitOnly(MethodDefinition setter)
+            private bool IsInitOnly(MethodDefinition setter)
             {
                 var blob = _reader.GetBlobReader(setter.Signature);
                 blob.ReadSignatureHeader();
@@ -513,7 +513,7 @@ Item {
                 return handle.Kind == HandleKind.TypeReference && FullName((TypeReferenceHandle)handle) == "System.Runtime.CompilerServices.IsExternalInit";
             }
 
-            void AddEvent(string owner, EventDefinition e, GenericContext context, HashSet<MethodDefinitionHandle> accessors)
+            private void AddEvent(string owner, EventDefinition e, GenericContext context, HashSet<MethodDefinitionHandle> accessors)
             {
                 var a = e.GetAccessors();
                 if (!a.Adder.IsNil)
@@ -534,7 +534,7 @@ Item {
                     Add(owner, $"event {name} | attr {attribute}");
             }
 
-            void AddField(string owner, FieldDefinition field, GenericContext context)
+            private void AddField(string owner, FieldDefinition field, GenericContext context)
             {
                 if ((field.Attributes & FieldAttributes.FieldAccessMask) != FieldAttributes.Public)
                     return;
@@ -558,7 +558,7 @@ Item {
                     Add(owner, $"field {name} | attr {attribute}");
             }
 
-            static string Modifiers(MethodDefinition method)
+            private static string Modifiers(MethodDefinition method)
             {
                 var a = method.Attributes;
                 if ((a & MethodAttributes.Abstract) != 0)
@@ -570,7 +570,7 @@ Item {
                 return (a & MethodAttributes.NewSlot) != 0 ? "virtual " : "override ";
             }
 
-            void AddMethod(string owner, string key, MethodDefinition method, GenericContext context)
+            private void AddMethod(string owner, string key, MethodDefinition method, GenericContext context)
             {
                 var signature = method.DecodeSignature(this, context);
                 var isStatic = (method.Attributes & MethodAttributes.Static) != 0 ? "static " : "";
@@ -614,7 +614,7 @@ Item {
             }
 
             /// <summary>Name = "..." of [Pin] on the parameter, else <paramref name="fallback"/>.</summary>
-            string PinName(Parameter parameter, string fallback)
+            private string PinName(Parameter parameter, string fallback)
             {
                 foreach (var handle in parameter.GetCustomAttributes())
                 {
@@ -632,7 +632,7 @@ Item {
             }
 
             /// <summary>Default of a pin: [DefaultValue] wins over the C# parameter default; null if neither.</summary>
-            string? DefaultValue(Parameter parameter, string type)
+            private string? DefaultValue(Parameter parameter, string type)
             {
                 foreach (var handle in parameter.GetCustomAttributes())
                 {
@@ -652,7 +652,7 @@ Item {
                 return null;
             }
 
-            IEnumerable<string> Attributes(CustomAttributeHandleCollection handles)
+            private IEnumerable<string> Attributes(CustomAttributeHandleCollection handles)
             {
                 var result = new List<string>();
                 foreach (var handle in handles)
@@ -674,7 +674,7 @@ Item {
                 return result;
             }
 
-            string AttributeTypeName(CustomAttribute attribute)
+            private string AttributeTypeName(CustomAttribute attribute)
             {
                 switch (attribute.Constructor.Kind)
                 {
@@ -693,7 +693,7 @@ Item {
                 }
             }
 
-            string FormatArgument(string type, object? value)
+            private string FormatArgument(string type, object? value)
             {
                 switch (value)
                 {
@@ -712,7 +712,7 @@ Item {
                 return FormatValue(value);
             }
 
-            string FormatConstant(Constant constant, string? type)
+            private string FormatConstant(Constant constant, string? type)
             {
                 var blob = _reader.GetBlobReader(constant.Value);
                 object? value = constant.TypeCode switch
@@ -739,14 +739,14 @@ Item {
                 return FormatValue(value);
             }
 
-            string ReadConstantString(Constant constant)
+            private string ReadConstantString(Constant constant)
             {
                 // String constants are UTF-16 without a length prefix.
                 var bytes = _reader.GetBlobBytes(constant.Value);
                 return Encoding.Unicode.GetString(bytes);
             }
 
-            static string EnumName(string type, EnumInfo info, long value)
+            private static string EnumName(string type, EnumInfo info, long value)
             {
                 var shortType = type.Substring(type.LastIndexOf('.') + 1);
                 if (info.Names.TryGetValue(value, out var name))
@@ -769,7 +769,7 @@ Item {
                 return $"({shortType}){value.ToString(CultureInfo.InvariantCulture)}";
             }
 
-            static string StripAssembly(string serializedName)
+            private static string StripAssembly(string serializedName)
             {
                 // "Ns.Type, Assembly, Version=..." -> "Ns.Type" (generic arguments in [[...]] keep their brackets).
                 var depth = 0;
@@ -788,7 +788,7 @@ Item {
 
             // --- enums ---
 
-            EnumInfo? ReadEnum(TypeDefinition type)
+            private EnumInfo? ReadEnum(TypeDefinition type)
             {
                 if (type.BaseType.IsNil || TypeName(type.BaseType, default) != "System.Enum")
                     return null;
@@ -824,7 +824,7 @@ Item {
                 return new EnumInfo(underlying, names, flags);
             }
 
-            static PrimitiveTypeCode UnderlyingCode(string keyword) => keyword switch
+            private static PrimitiveTypeCode UnderlyingCode(string keyword) => keyword switch
             {
                 "sbyte" => PrimitiveTypeCode.SByte,
                 "byte" => PrimitiveTypeCode.Byte,
@@ -837,7 +837,7 @@ Item {
             };
 
             /// <summary>Enum facts of a type by full name: local from this metadata, external by loading the referenced assembly; null if not an enum or not found.</summary>
-            EnumInfo? Enum(string type)
+            private EnumInfo? Enum(string type)
             {
                 if (_localEnums.TryGetValue(type, out var local))
                     return local;
@@ -872,7 +872,7 @@ Item {
 
             // --- names ---
 
-            string FullName(TypeDefinitionHandle handle)
+            private string FullName(TypeDefinitionHandle handle)
             {
                 var type = _reader.GetTypeDefinition(handle);
                 var name = StripArity(_reader.GetString(type.Name));
@@ -882,7 +882,7 @@ Item {
                 return ns.Length > 0 ? ns + "." + name : name;
             }
 
-            string FullName(TypeReferenceHandle handle)
+            private string FullName(TypeReferenceHandle handle)
             {
                 var type = _reader.GetTypeReference(handle);
                 var name = StripArity(_reader.GetString(type.Name));
@@ -892,13 +892,13 @@ Item {
                 return ns.Length > 0 ? ns + "." + name : name;
             }
 
-            static string StripArity(string name)
+            private static string StripArity(string name)
             {
                 var tick = name.IndexOf('`');
                 return tick < 0 ? name : name.Substring(0, tick);
             }
 
-            string TypeName(EntityHandle handle, GenericContext context) => handle.Kind switch
+            private string TypeName(EntityHandle handle, GenericContext context) => handle.Kind switch
             {
                 HandleKind.TypeDefinition => Keyword(FullName((TypeDefinitionHandle)handle)),
                 HandleKind.TypeReference => Keyword(FullName((TypeReferenceHandle)handle)),

@@ -17,7 +17,7 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Polyline", Category = Categories.Elements)]
     public sealed class PolylineNode : IDisposable
     {
-        readonly ShapeNodeCore _core;
+        private readonly ShapeNodeCore _core;
 
         public PolylineNode(NodeContext nodeContext) => _core = new ShapeNodeCore(nodeContext);
 

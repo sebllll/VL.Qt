@@ -10,8 +10,8 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "Close", Category = Categories.Paths)]
     public sealed class CloseNode
     {
-        QtPath? _input;
-        QtPath? _output;
+        private QtPath? _input;
+        private QtPath? _output;
 
         /// <summary>Returns the path with the current contour closed.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>

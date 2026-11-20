@@ -13,14 +13,14 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class ApplyTest
 {
-    sealed class Buf
+    private sealed class Buf
     {
-        byte[] _b = new byte[1 << 16];
+        private byte[] _b = new byte[1 << 16];
         public int Length;
         public ReadOnlySpan<byte> Span => _b.AsSpan(0, Length);
         public Buf Clear() { Length = 0; return this; }
 
-        Span<byte> Begin(ushort op, int payloadLen)
+        private Span<byte> Begin(ushort op, int payloadLen)
         {
             var size = (4 + payloadLen + 3) & ~3;
             if (Length + size > _b.Length) Array.Resize(ref _b, Math.Max(_b.Length * 2, Length + size));
@@ -75,7 +75,7 @@ public static class ApplyTest
             WriteFloats(s, r, g, b, a);
             return this;
         }
-        Span<byte> SetHeader(uint id, ushort prop, ushort vt, int valueLen)
+        private Span<byte> SetHeader(uint id, ushort prop, ushort vt, int valueLen)
         {
             var s = Begin(Protocol.Op.Set, 8 + valueLen);
             BinaryPrimitives.WriteUInt32LittleEndian(s, id);
@@ -93,16 +93,16 @@ public static class ApplyTest
             .SetFloats(id, Protocol.Prop.Transform, Protocol.Vt.Mat4, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, 0, 1);
         public Buf Color(uint id, float r, float g, float b, float a = 1) => SetFloats(id, Protocol.Prop.Color, Protocol.Vt.Color, r, g, b, a);
 
-        static void WriteFloats(Span<byte> s, params float[] f)
+        private static void WriteFloats(Span<byte> s, params float[] f)
         {
             for (int i = 0; i < f.Length; i++) BinaryPrimitives.WriteSingleLittleEndian(s[(i * 4)..], f[i]);
         }
     }
 
     /// <summary>Little-endian payload writer for the entry-based commands (entries are written by hand, not by CommandWriter, so malformed ones are possible).</summary>
-    sealed class Pay
+    private sealed class Pay
     {
-        readonly List<byte> _b = new();
+        private readonly List<byte> _b = new();
         public Pay U16(int v) { _b.Add((byte)v); _b.Add((byte)(v >> 8)); return this; }
         public Pay U32(uint v) { U16((int)(v & 0xFFFF)); U16((int)(v >> 16)); return this; }
         public Pay U64(ulong v) { U32((uint)v); U32((uint)(v >> 32)); return this; }
@@ -145,7 +145,7 @@ public static class ApplyTest
 
     // Rejection branches of the entry-based commands and of path values (NCMD-15): each case asserts the return code and a part
     // of the reason. A malformed command changes nothing, so the elements stay valid across the cases.
-    static void RejectCases(Scenario s, IntPtr w, Buf b)
+    private static void RejectCases(Scenario s, IntPtr w, Buf b)
     {
         const uint fx = 3000, qml = 3001, shape = 3002, rect = 3003;
         int rc = Native.Apply(w, b.Clear().Create(fx, Protocol.Type.ShaderEffect).Create(qml, Protocol.Type.Qml)
@@ -242,7 +242,7 @@ public static class ApplyTest
     [Test, Category("apply")]
     public static void Apply() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt apply test");
         s.Check(w != IntPtr.Zero, "apply: window_create");

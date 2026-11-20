@@ -15,12 +15,12 @@ namespace VL.Qt.Tests
     /// </summary>
     public class QtPumpTests
     {
-        sealed class Clock : IFrameClock
+        private sealed class Clock : IFrameClock
         {
-            readonly Subject<FrameFinishedMessage> _finished = new();
-            readonly Subject<FrameTimeMessage> _ticks = new();
-            double _t;
-            ulong _n;
+            private readonly Subject<FrameFinishedMessage> _finished = new();
+            private readonly Subject<FrameTimeMessage> _ticks = new();
+            private double _t;
+            private ulong _n;
             public Clock(double t) { _t = t; }
             public Time Time => new(_t);
             public double TimeDifference => 1.0 / 60;
@@ -36,7 +36,7 @@ namespace VL.Qt.Tests
             }
         }
 
-        sealed class FakeApp : IQtPumpTarget
+        private sealed class FakeApp : IQtPumpTarget
         {
             public double DriverSeconds { get; private set; } = double.NaN;
             public int Participants, Pumps, Frames, Registered, Unregistered;
@@ -61,7 +61,7 @@ namespace VL.Qt.Tests
             public void OnPumpChanged(int delta) => Pumps += delta;
         }
 
-        sealed class Participant : IQtFrameParticipant
+        private sealed class Participant : IQtFrameParticipant
         {
             public int Applies, Afters;
             public void ApplyCommands() => Applies++;

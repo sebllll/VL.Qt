@@ -12,12 +12,12 @@ namespace VL.Qt.Tests
     /// <summary>Snapshot node (#363) on a fake resource API: grab without renderer, ready frame, failure, release.</summary>
     public class SnapshotNodeTests
     {
-        FakeResourceApi _api = null!;
-        ResourceClient _client = null!;
-        SceneRegistry _scene = null!;
-        Reconciler _reconciler = null!;
-        SnapshotNode _node = null!;
-        Rectangle _element = null!;
+        private FakeResourceApi _api = null!;
+        private ResourceClient _client = null!;
+        private SceneRegistry _scene = null!;
+        private Reconciler _reconciler = null!;
+        private SnapshotNode _node = null!;
+        private Rectangle _element = null!;
 
         [SetUp]
         public void SetUp()
@@ -34,22 +34,22 @@ namespace VL.Qt.Tests
         [TearDown]
         public void TearDown() => _node.Dispose();
 
-        void Pump()
+        private void Pump()
         {
             _client.BeforeEvents();
             _client.AfterEvents();
         }
 
-        void Show()
+        private void Show()
         {
             _reconciler.Window = new IntPtr(1);
             _reconciler.Update(_element, Space.DIPTopLeft);
         }
 
-        IImage? Update(out bool isReady, out string error, bool grab = false, float scale = 1)
+        private IImage? Update(out bool isReady, out string error, bool grab = false, float scale = 1)
             => _node.Update(_element, out isReady, out error, scale, grab);
 
-        static ulong IdOf(FakeResourceApi api)
+        private static ulong IdOf(FakeResourceApi api)
             => api.Calls.Where(c => c.StartsWith("snapshot")).Select(c => Convert.ToUInt64(c.Split(' ')[1], 16)).Last();
 
         [Test]

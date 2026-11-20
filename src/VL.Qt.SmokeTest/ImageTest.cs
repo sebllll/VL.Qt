@@ -10,8 +10,8 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class ImageTest
 {
-    const string AssetName = "stripes_rgb_30x10.png";
-    const uint Stretch = 1, Smooth = 2, Fit = 3, Crop = 4, Tile = 5, Missing = 6, Unicode = 7;
+    private const string AssetName = "stripes_rgb_30x10.png";
+    private const uint Stretch = 1, Smooth = 2, Fit = 3, Crop = 4, Tile = 5, Missing = 6, Unicode = 7;
 
     /// <summary>Finds src/VL.Qt.SmokeTest/assets by walking up from the output directory (no copy step needed).</summary>
     internal static string? FindAsset(string name = AssetName)
@@ -47,7 +47,7 @@ public static class ImageTest
     [Test, Category("image")]
     public static void Image() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var asset = FindAsset();
         s.Check(asset != null, $"test asset {AssetName} found");

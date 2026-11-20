@@ -12,7 +12,7 @@ namespace VL.Qt.Tests
     [TestFixture]
     internal sealed class QmlDeclarationsTests
     {
-        static string RepoRoot()
+        private static string RepoRoot()
         {
             for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
             {
@@ -22,12 +22,12 @@ namespace VL.Qt.Tests
             throw new InvalidOperationException("Repository root not found above " + AppContext.BaseDirectory);
         }
 
-        static QmlDeclarations Parse(string source, IDictionary<string, string>? siblings = null)
+        private static QmlDeclarations Parse(string source, IDictionary<string, string>? siblings = null)
             => QmlDeclarations.Parse(source, name => siblings != null && siblings.TryGetValue(name, out var s) ? s : null);
 
-        static QmlPropertyDecl Prop(QmlDeclarations d, string name) => d.Properties.Single(p => p.Name == name);
+        private static QmlPropertyDecl Prop(QmlDeclarations d, string name) => d.Properties.Single(p => p.Name == name);
 
-        static void AssertColor(Color4 expected, object actual)
+        private static void AssertColor(Color4 expected, object actual)
         {
             var c = (Color4)actual;
             Assert.That(c.R, Is.EqualTo(expected.R).Within(1e-4));
@@ -658,7 +658,7 @@ namespace VL.Qt.Tests
 
         // ---- signature --------------------------------------------------------------------------------------------------------
 
-        const string SignatureBase = """
+        private const string SignatureBase = """
             import QtQuick
             // @category Qt.Widgets
             Item {

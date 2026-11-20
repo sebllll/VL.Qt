@@ -8,7 +8,7 @@ namespace VL.Qt.Tests.Paths
 {
     public class GeneratorNodeTests
     {
-        static Spread<Vector2> Points(params (float x, float y)[] p)
+        private static Spread<Vector2> Points(params (float x, float y)[] p)
         {
             var b = new SpreadBuilder<Vector2>();
             foreach (var (x, y) in p)
@@ -16,9 +16,9 @@ namespace VL.Qt.Tests.Paths
             return b.ToSpread();
         }
 
-        static Spread<HandleMode> Modes(params HandleMode[] m) => Spread.Create(m);
+        private static Spread<HandleMode> Modes(params HandleMode[] m) => Spread.Create(m);
 
-        static readonly (float, float)[] s_pts = { (0, 0), (10, 5), (20, -5), (30, 0) };
+        private static readonly (float, float)[] s_pts = { (0, 0), (10, 5), (20, -5), (30, 0) };
 
         // ---- Bezier (Handles) ----
 

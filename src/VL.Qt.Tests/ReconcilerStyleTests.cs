@@ -10,8 +10,8 @@ namespace VL.Qt.Tests
     /// <summary>Style resolution in the reconciler (#293): base style → Group → … → widget, SET_STYLE diffs only for widgets.</summary>
     public class ReconcilerStyleTests
     {
-        RecordingSink _sink = null!;
-        Reconciler _rec = null!;
+        private RecordingSink _sink = null!;
+        private Reconciler _rec = null!;
 
         [SetUp]
         public void SetUp()
@@ -20,20 +20,20 @@ namespace VL.Qt.Tests
             _rec = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
         }
 
-        static Style Radius(float r) => new() { Frame = new FrameStyle { Radius = default(StateValues<float>).With(StyleStates.Normal, r) } };
+        private static Style Radius(float r) => new() { Frame = new FrameStyle { Radius = default(StateValues<float>).With(StyleStates.Normal, r) } };
 
-        static ImmutableArray<Element> Kids(params Element[] e) => ImmutableArray.Create(e);
+        private static ImmutableArray<Element> Kids(params Element[] e) => ImmutableArray.Create(e);
 
-        static string Full(uint id, Style resolved)
+        private static string Full(uint id, Style resolved)
         {
             var s = new RecordingSink();
             StyleWriter.Write(s, id, resolved, null);
             return s.Commands.Single();
         }
 
-        static string RadiusEntry(float r) => $" {Protocol.StyleField.FrameRadius}/0=f32({r})";
+        private static string RadiusEntry(float r) => $" {Protocol.StyleField.FrameRadius}/0=f32({r})";
 
-        void Update(Element root) => _rec.Update(root, Space.DIPTopLeft);
+        private void Update(Element root) => _rec.Update(root, Space.DIPTopLeft);
 
         [Test]
         public void WidgetWithoutStyle_GetsBaseStyle_FullWithClear_RightAfterCreate()

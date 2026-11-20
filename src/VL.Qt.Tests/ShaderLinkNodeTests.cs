@@ -15,7 +15,7 @@ namespace VL.Qt.Tests
     /// <summary>Filter shader files as links of the effect chain (#489): scan, @padding, pins, link, SET_EFFECT_CHAIN.</summary>
     public class ShaderLinkNodeTests
     {
-        const string filterSource = @"// @summary Splits the channels.
+        private const string filterSource = @"// @summary Splits the channels.
 // @padding 4, 8, 12, 16
 #version 440
 layout(location = 0) in vec2 qt_TexCoord0;
@@ -33,16 +33,16 @@ layout(binding = 2) uniform sampler2D map;
 void main() { fragColor = texture(source, qt_TexCoord0) * amount * qt_Opacity; }
 ";
 
-        const string filterReflection = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\nuniform amount float 0\nuniform texelSize vec2 0\nuniform weight float 0\nuniform glow float 0\nsampler source 1\nsampler map 2\n";
+        private const string filterReflection = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\nuniform amount float 0\nuniform texelSize vec2 0\nuniform weight float 0\nuniform glow float 0\nsampler source 1\nsampler map 2\n";
 
-        const string generatorSource = @"#version 440
+        private const string generatorSource = @"#version 440
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf { mat4 qt_Matrix; float qt_Opacity; float phase; };
 // uniform sampler2D source; (only a comment)
 void main() { fragColor = vec4(phase); }
 ";
 
-        string _dir = null!;
+        private string _dir = null!;
 
         [SetUp]
         public void CreateDir()
@@ -54,14 +54,14 @@ void main() { fragColor = vec4(phase); }
         [TearDown]
         public void DeleteDir() => Directory.Delete(_dir, recursive: true);
 
-        string Write(string name, string content)
+        private string Write(string name, string content)
         {
             var path = Path.Combine(_dir, name);
             File.WriteAllText(path, content);
             return path;
         }
 
-        ShaderNodeLayout Load(string source, string reflectionText)
+        private ShaderNodeLayout Load(string source, string reflectionText)
         {
             var path = Write("Test.frag", source);
             var file = new ShaderFile(path, null, "Test", null, ShaderNodeFactory.DefaultCategory, null, null, true);
@@ -117,7 +117,7 @@ void main() { fragColor = vec4(phase); }
 
         // --- @padding ---
 
-        static ShaderAnnotations Annotations(string head) => ShaderAnnotations.Parse(head + "\n#version 440\nvoid main() {}\n");
+        private static ShaderAnnotations Annotations(string head) => ShaderAnnotations.Parse(head + "\n#version 440\nvoid main() {}\n");
 
         [Test]
         public void Padding_OneNumber_AllSides()
@@ -217,8 +217,8 @@ void main() { fragColor = vec4(phase); }
 
         // --- the link ---
 
-        FakeResourceApi _api = null!;
-        ResourceClient _client = null!;
+        private FakeResourceApi _api = null!;
+        private ResourceClient _client = null!;
 
         [SetUp]
         public void CreateClient()
@@ -227,7 +227,7 @@ void main() { fragColor = vec4(phase); }
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
         }
 
-        static Effect? Output(ShaderLinkNodeInstance instance) => (Effect?)instance.Outputs.First().Value;
+        private static Effect? Output(ShaderLinkNodeInstance instance) => (Effect?)instance.Outputs.First().Value;
 
         [Test]
         public void Update_NewLinkOnlyOnChange()
@@ -311,9 +311,9 @@ void main() { fragColor = vec4(phase); }
 
         // --- @passes, @padding <uniform> [factor], @chainonly ---
 
-        const string blurHead = "// @passes 2\n// @padding blurLength 0.5\n";
+        private const string blurHead = "// @passes 2\n// @padding blurLength 0.5\n";
 
-        const string blurBody = @"#version 440
+        private const string blurBody = @"#version 440
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
@@ -328,12 +328,12 @@ layout(binding = 1) uniform sampler2D source;
 void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
 ";
 
-        const string blurReflection = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\nuniform blurLength float 0\nuniform offset vec2 0\nuniform passIndex float 0\nuniform weight float 0\nsampler source 1\n";
+        private const string blurReflection = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\nuniform blurLength float 0\nuniform offset vec2 0\nuniform passIndex float 0\nuniform weight float 0\nsampler source 1\n";
 
-        ShaderNodeLayout LoadBlur(string head) =>
+        private ShaderNodeLayout LoadBlur(string head) =>
             Load(head + blurBody, blurReflection).ForChain(NullLogger.Instance, "Test.frag");
 
-        static string[] Errors(ShaderNodeLayout layout) =>
+        private static string[] Errors(ShaderNodeLayout layout) =>
             layout.Messages.Where(m => m.Type == MessageType.Error).Select(m => m.Text).ToArray();
 
         [Test]
@@ -547,7 +547,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
             }), "with @chainonly @category moves the chain node, without it only the element node");
         }
 
-        sealed class FakeFactory : IVLNodeDescriptionFactory
+        private sealed class FakeFactory : IVLNodeDescriptionFactory
         {
             public string Identifier => "Test";
             public System.Collections.Immutable.ImmutableArray<IVLNodeDescription> NodeDescriptions => default;

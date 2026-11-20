@@ -12,14 +12,14 @@ namespace VL.Qt.Tests
     /// <summary>Tooltip preview of an element (#545) on a fake resource API: throttle, change test, one grab at a time, text, release.</summary>
     public class ElementTooltipPreviewTests
     {
-        FakeResourceApi _api = null!;
-        ResourceClient _client = null!;
-        SceneRegistry _scene = null!;
-        Reconciler _reconciler = null!;
-        ElementTooltipPreview _node = null!;
-        Rectangle _element = null!;
-        long _changes;
-        double _clock;
+        private FakeResourceApi _api = null!;
+        private ResourceClient _client = null!;
+        private SceneRegistry _scene = null!;
+        private Reconciler _reconciler = null!;
+        private ElementTooltipPreview _node = null!;
+        private Rectangle _element = null!;
+        private long _changes;
+        private double _clock;
 
         [SetUp]
         public void SetUp()
@@ -38,25 +38,25 @@ namespace VL.Qt.Tests
         [TearDown]
         public void TearDown() => _node.Dispose();
 
-        void Pump()
+        private void Pump()
         {
             _client.BeforeEvents();
             _client.AfterEvents();
         }
 
-        void Show(Element? element = null)
+        private void Show(Element? element = null)
         {
             _reconciler.Window = new IntPtr(1);
             _reconciler.Update(element ?? _element, Space.DIPTopLeft);
         }
 
-        IImage? Update(out string text, Element? element = null) => _node.Update(element ?? _element, out text);
+        private IImage? Update(out string text, Element? element = null) => _node.Update(element ?? _element, out text);
 
-        int Grabs => _api.Calls.Count(c => c.StartsWith("snapshot_fit"));
+        private int Grabs => _api.Calls.Count(c => c.StartsWith("snapshot_fit"));
 
-        ulong Id => _api.Calls.Where(c => c.StartsWith("snapshot_fit")).Select(c => Convert.ToUInt64(c.Split(' ')[1], 16)).Last();
+        private ulong Id => _api.Calls.Where(c => c.StartsWith("snapshot_fit")).Select(c => Convert.ToUInt64(c.Split(' ')[1], 16)).Last();
 
-        void Finish()
+        private void Finish()
         {
             _api.Ready(Id, 4, 4);
             Pump();
@@ -346,7 +346,7 @@ namespace VL.Qt.Tests
             Assert.That(Grabs, Is.EqualTo(2), "a change retries; the refusal did not block the node");
         }
 
-        static Group VideoTree(bool playing = false)
+        private static Group VideoTree(bool playing = false)
             => new Group { Children = [new Rectangle { Size = new Vector2(10, 10) }, new Group { Children = [new Video { Size = new Vector2(4, 3), Playing = playing }] }] };
 
         [Test]

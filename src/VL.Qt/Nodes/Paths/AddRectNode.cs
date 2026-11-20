@@ -9,10 +9,10 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "AddRect", Category = Categories.Paths)]
     public sealed class AddRectNode
     {
-        QtPath? _input;
-        RectangleF _rectangle;
-        PathDirection _direction;
-        QtPath? _output;
+        private QtPath? _input;
+        private RectangleF _rectangle;
+        private PathDirection _direction;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a rectangle that starts at the top left corner.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -33,7 +33,7 @@ namespace VL.Qt.Nodes.Paths
             return _output;
         }
 
-        static QtPath Build(QtPath path, RectangleF rect, PathDirection direction)
+        private static QtPath Build(QtPath path, RectangleF rect, PathDirection direction)
         {
             float l = rect.Left, t = rect.Top, r = rect.Right, b = rect.Bottom;
             path = path.MoveTo(l, t);

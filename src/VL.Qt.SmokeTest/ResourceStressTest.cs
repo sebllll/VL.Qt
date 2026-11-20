@@ -21,16 +21,16 @@ using VL.Qt;
 public static class ResourceStressTest
 {
     public const int DefaultSeconds = 60;
-    const int MaxLive = 48, MaxStale = 256;
-    const uint FirstElement = 1000;
+    private const int MaxLive = 48, MaxStale = 256;
+    private const uint FirstElement = 1000;
 
-    sealed record Elem(uint Id, IntPtr Win);
+    private sealed record Elem(uint Id, IntPtr Win);
 
     /// <summary>Random resource actions for StressSeconds (default 60 s) with StressSeed (#365, sanitizer runs).</summary>
     [Test, Explicit("s by default; parameters StressSeconds / StressSeed"), Category("resource-stress")]
     public static void ResourceStress() => Scenario.Run(s => Run(s, SmokeParameters.StressSeconds, SmokeParameters.StressSeed));
 
-    static void Run(Scenario s, int seconds, int seed)
+    private static void Run(Scenario s, int seconds, int seed)
     {
         s.Info($"resource-stress {seconds} s, seed {seed} (repeat with --stress-seed {seed})");
         var dir = Path.Combine(s.OutDir, "resource-stress");

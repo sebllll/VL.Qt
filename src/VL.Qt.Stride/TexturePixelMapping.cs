@@ -13,8 +13,8 @@ namespace VL.Qt.Stride
         // Where a position without a hit lands (ray parallel to the quad or a singular matrix): far outside every texture.
         public static readonly Vector2 Miss = new(-1e6f, -1e6f);
 
-        readonly Matrix _inverse;
-        readonly bool _valid;
+        private readonly Matrix _inverse;
+        private readonly bool _valid;
         public readonly Vector2 TextureSize;
 
         /// <summary>A zero matrix counts as identity (an unconnected Matrix pin).</summary>
@@ -26,7 +26,7 @@ namespace VL.Qt.Stride
             _inverse = _valid ? Matrix.Invert(wvp) : Matrix.Identity;
         }
 
-        static Matrix OrIdentity(Matrix m) => m == Matrix.Zero ? Matrix.Identity : m;
+        private static Matrix OrIdentity(Matrix m) => m == Matrix.Zero ? Matrix.Identity : m;
 
         /// <summary>Returns the texture pixel under <paramref name="position"/> (pixels of a window of size <paramref name="clientArea"/>, top-left origin); outside 0 ... Texture Size when the quad is not hit there.</summary>
         public Vector2 Map(Vector2 position, Vector2 clientArea)

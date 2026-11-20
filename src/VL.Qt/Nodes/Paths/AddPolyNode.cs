@@ -10,10 +10,10 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "AddPoly", Category = Categories.Paths)]
     public sealed class AddPolyNode
     {
-        QtPath? _input;
-        Spread<Vector2>? _points;
-        bool _close;
-        QtPath? _output;
+        private QtPath? _input;
+        private Spread<Vector2>? _points;
+        private bool _close;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a contour that moves to the first point and runs through the others with lines.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -36,7 +36,7 @@ namespace VL.Qt.Nodes.Paths
             return _output;
         }
 
-        static bool SameContent(Spread<Vector2> a, Spread<Vector2>? b)
+        private static bool SameContent(Spread<Vector2> a, Spread<Vector2>? b)
         {
             if (ReferenceEquals(a, b))
                 return true;
@@ -50,7 +50,7 @@ namespace VL.Qt.Nodes.Paths
             return true;
         }
 
-        static QtPath Build(QtPath path, Spread<Vector2> points, bool close)
+        private static QtPath Build(QtPath path, Spread<Vector2> points, bool close)
         {
             if (points.Count == 0)
                 return path;

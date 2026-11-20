@@ -18,16 +18,16 @@ public static class BlendTest
     [Test, Category("blend")]
     public static void Blend() => Scenario.Run(Run);
 
-    const float CellW = 140, CellH = 100;
-    static readonly string[] Names = { "Normal", "Multiply", "Screen", "Overlay", "Add", "Subtract", "Difference", "Darken", "Lighten", "SoftLight", "HardLight", "ColorDodge", "ColorBurn" };
-    static readonly float[] Base = { 0.8f, 0.4f, 0.2f };
-    static readonly float[] Layer = { 0.3f, 0.6f, 0.9f };
+    private const float CellW = 140, CellH = 100;
+    private static readonly string[] Names = { "Normal", "Multiply", "Screen", "Overlay", "Add", "Subtract", "Difference", "Darken", "Lighten", "SoftLight", "HardLight", "ColorDodge", "ColorBurn" };
+    private static readonly float[] Base = { 0.8f, 0.4f, 0.2f };
+    private static readonly float[] Layer = { 0.3f, 0.6f, 0.9f };
 
-    static (float x, float y) Cell(int i) => (10 + i % 5 * 150, 10 + i / 5 * 110);
+    private static (float x, float y) Cell(int i) => (10 + i % 5 * 150, 10 + i / 5 * 110);
 
-    static float HardLight(float cb, float cs) => cs <= 0.5f ? cb * 2 * cs : cb + (2 * cs - 1) - cb * (2 * cs - 1);
+    private static float HardLight(float cb, float cs) => cs <= 0.5f ? cb * 2 * cs : cb + (2 * cs - 1) - cb * (2 * cs - 1);
 
-    static float Blend(int mode, float cb, float cs)
+    private static float Blend(int mode, float cb, float cs)
     {
         switch (mode)
         {
@@ -53,9 +53,9 @@ public static class BlendTest
     }
 
     // straight base (opaque) with a layer of alpha a: result = (1 - a) * base + a * B(base, layer)
-    static float Expect(int mode, int c, float a) => (1 - a) * Base[c] + a * Blend(mode, Base[c], Layer[c]);
+    private static float Expect(int mode, int c, float a) => (1 - a) * Base[c] + a * Blend(mode, Base[c], Layer[c]);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         Directory.CreateDirectory(s.OutDir);

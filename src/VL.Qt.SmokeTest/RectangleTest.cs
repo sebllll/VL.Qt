@@ -9,13 +9,13 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class RectangleTest
 {
-    const uint Stroked = 1, ColorOnly = 2, Rounded = 3, Translucent = 4;
+    private const uint Stroked = 1, ColorOnly = 2, Rounded = 3, Translucent = 4;
 
     /// <summary>Color, radius and border of a rectangle, errors, and the cost of 1000 rectangles.</summary>
     [Test, Category("rectangle")]
     public static void Rectangle() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt rectangle test");
         s.Check(w != IntPtr.Zero, "window_create");

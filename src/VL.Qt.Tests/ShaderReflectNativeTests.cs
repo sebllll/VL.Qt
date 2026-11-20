@@ -10,7 +10,7 @@ namespace VL.Qt.Tests
     /// <summary>vlqt_shader_reflect (#488): the real QtNative, text format of vlqt.h. Needs a built vlqt.dll (tools/build.ps1).</summary>
     public class ShaderReflectNativeTests
     {
-        const string good = @"#version 440
+        private const string good = @"#version 440
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
@@ -70,7 +70,7 @@ void main() {
             Assert.Ignore(reason);
         }
 
-        static string Reflect(string source, int stage)
+        private static string Reflect(string source, int stage)
         {
             var buf = new byte[4096];
             var n = Native.vlqt_shader_reflect(source, stage, ref buf[0], buf.Length);

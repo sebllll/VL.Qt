@@ -848,7 +848,7 @@ VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | type sealed class
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | attr ProcessNode(Name = "FileWriter (Element)", Category = "Qt")
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | ctor | new
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | ctor | order Node Context
-VL.Qt | VL.Qt.Nodes.FileWriterElementNode | ctor | pin Node Context | in VL.Core.NodeContext | Pin(Visibility = PinVisibility.Hidden) | (nodeContext)
+VL.Qt | VL.Qt.Nodes.FileWriterElementNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | method Update | order Element, File Path, Is Done, Error, Scale, Quality, Write
@@ -864,7 +864,7 @@ VL.Qt | VL.Qt.Nodes.FileWriterElementNode | type sealed class
 VL.Qt | VL.Qt.Nodes.FileWriterNode | attr ProcessNode(Name = "FileWriter", Category = "Qt")
 VL.Qt | VL.Qt.Nodes.FileWriterNode | ctor | new
 VL.Qt | VL.Qt.Nodes.FileWriterNode | ctor | order Node Context
-VL.Qt | VL.Qt.Nodes.FileWriterNode | ctor | pin Node Context | in VL.Core.NodeContext | Pin(Visibility = PinVisibility.Hidden) | (nodeContext)
+VL.Qt | VL.Qt.Nodes.FileWriterNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt | VL.Qt.Nodes.FileWriterNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.FileWriterNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.FileWriterNode | method Update | order Image, File Path, Is Done, Error, Quality, Write
@@ -2574,7 +2574,7 @@ VL.Qt | assembly | attr ImportAsIs
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | attr ProcessNode(Name = "Video (VL.Audio)", Category = "Qt.Elements")
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | ctor | new
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | ctor | order Node Context
-VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | ctor | pin Node Context | in VL.Core.NodeContext | Pin(Visibility = PinVisibility.Hidden) | (nodeContext)
+VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | implements System.IDisposable
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Dispose | void
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | VL.Qt.Elements.Element
@@ -2613,7 +2613,7 @@ VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | attr Smell(SymbolSmell.Experimental
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | ctor | attr Fragment
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | ctor | new
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | ctor | order Node Context
-VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | ctor | pin Node Context | in VL.Core.NodeContext | Pin(Visibility = PinVisibility.Hidden) | (nodeContext)
+VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | Stride.Rendering.IGraphicsRendererBase
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | attr Fragment
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | order Error, Input, Space, Clear Color, Enabled, Debug, Output
@@ -2629,7 +2629,7 @@ VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | attr ProcessNode(Name = "QtTexture",
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | attr Smell(SymbolSmell.Experimental)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | ctor | new
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | ctor | order Node Context
-VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | ctor | pin Node Context | in VL.Core.NodeContext | Pin(Visibility = PinVisibility.Hidden) | (nodeContext)
+VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | implements System.IDisposable
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Dispose | void
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | order Output, Error, Perf, Input, Size, Space, Clear Color, Clear, Format, Enabled, Input Notifications, Debug, Multisample Count
@@ -2652,7 +2652,7 @@ VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | attr ProcessNode(Name = "ToTex
 VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | attr Smell(SymbolSmell.Experimental)
 VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | ctor | new
 VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | ctor | order Node Context
-VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | ctor | pin Node Context | in VL.Core.NodeContext | Pin(Visibility = PinVisibility.Hidden) | (nodeContext)
+VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | implements System.IDisposable
 VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | method Dispose | void
 VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | method Update | System.IObservable<VL.Lib.IO.Notifications.INotification>

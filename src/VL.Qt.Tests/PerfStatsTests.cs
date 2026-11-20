@@ -7,7 +7,7 @@ namespace VL.Qt.Tests
     /// <summary>#245: PerfStats additively carries percentiles, counters, budget and host values (apply/reconcile, ops, GC).</summary>
     public class PerfStatsTests
     {
-        static Native.vlqt_perf Perf() => new()
+        private static Native.vlqt_perf Perf() => new()
         {
             fps = 60, frame_ms = 16.6, frame_ms_max = 20, pump_ms = 2, pump_ms_max = 5,
             sync_ms = 0.5, render_ms = 0.7, present_ms = 0.3, gpu_ms = 1, gpu_ms_max = 2, swaps_per_pump = 1, samples = 60,
@@ -66,9 +66,9 @@ namespace VL.Qt.Tests
             Assert.That(PerfStats.From(Perf(), stats, default), Is.Not.EqualTo(old), "new values take part in equality");
         }
 
-        sealed class Window : IQtFrameParticipant
+        private sealed class Window : IQtFrameParticipant
         {
-            readonly Native.vlqt_perf_sample? _sample;
+            private readonly Native.vlqt_perf_sample? _sample;
             public Window(Native.vlqt_perf_sample? sample) { _sample = sample; }
             public void ApplyCommands() { }
             public void AfterEvents() { }
@@ -79,7 +79,7 @@ namespace VL.Qt.Tests
             }
         }
 
-        sealed class Plain : IQtFrameParticipant
+        private sealed class Plain : IQtFrameParticipant
         {
             public void ApplyCommands() { }
             public void AfterEvents() { }

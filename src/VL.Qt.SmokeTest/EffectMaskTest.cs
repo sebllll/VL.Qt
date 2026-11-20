@@ -20,12 +20,12 @@ public static class EffectMaskTest
     [Test, Category("effect-mask")]
     public static void EffectMask() => Scenario.Run(Run);
 
-    static bool IsBg(Color c) => Math.Abs(c.R - 0x20) < 10 && Math.Abs(c.G - 0x20) < 10 && Math.Abs(c.B - 0x20) < 10;
-    static bool IsRed(Color c) => c.R > 200 && c.G < 60 && c.B < 60;
-    static bool IsWhite(Color c) => c.R > 200 && c.G > 200 && c.B > 200;
+    private static bool IsBg(Color c) => Math.Abs(c.R - 0x20) < 10 && Math.Abs(c.G - 0x20) < 10 && Math.Abs(c.B - 0x20) < 10;
+    private static bool IsRed(Color c) => c.R > 200 && c.G < 60 && c.B < 60;
+    private static bool IsWhite(Color c) => c.R > 200 && c.G > 200 && c.B > 200;
 
     // Samples of R's area (window 50..450 x 50..250): red, background, other (antialiased text edges).
-    static bool[] RedSamples(Bitmap a, out int red, out int bg)
+    private static bool[] RedSamples(Bitmap a, out int red, out int bg)
     {
         var s = new bool[40 * 20];
         red = bg = 0;
@@ -40,7 +40,7 @@ public static class EffectMaskTest
         return s;
     }
 
-    static int WhiteCount(Bitmap a)
+    private static int WhiteCount(Bitmap a)
     {
         int n = 0;
         for (int y = 0; y < 600; y += 6)
@@ -50,7 +50,7 @@ public static class EffectMaskTest
     }
 
     // R > 128 on a 4 px grid: white text (sibling) resp. red through the mask; background and green are 0x20 / 0.
-    static bool[] Lit(Bitmap a)
+    private static bool[] Lit(Bitmap a)
     {
         var s = new bool[200 * 150];
         for (int j = 0; j < 150; j++)
@@ -59,7 +59,7 @@ public static class EffectMaskTest
         return s;
     }
 
-    static double IoU(bool[] a, bool[] b)
+    private static double IoU(bool[] a, bool[] b)
     {
         int both = 0, any = 0;
         for (int i = 0; i < a.Length; i++)
@@ -71,7 +71,7 @@ public static class EffectMaskTest
     }
 
     // MULTI run of one element (#489): the values the steps change, sent whole by SET_EFFECT_CHAIN.
-    sealed class FxRun
+    private sealed class FxRun
     {
         public uint Mask;
         public bool Inverted, Blur, Padding;
@@ -95,9 +95,9 @@ public static class EffectMaskTest
         }
     }
 
-    const uint Row = 1, R = 2, B = 3, T = 4, M2 = 5, M2Rect = 6, T2 = 7, R2 = 8, P = 9, X = 10, X2 = 11, Q = 12;
+    private const uint Row = 1, R = 2, B = 3, T = 4, M2 = 5, M2Rect = 6, T2 = 7, R2 = 8, P = 9, X = 10, X2 = 11, Q = 12;
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "MultiEffect is a ShaderEffect");
         var w = Native.vlqt_window_create(800, 600, "VL.Qt effect mask test");

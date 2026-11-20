@@ -28,15 +28,15 @@ public static class BlendChainTest
     [Test, Category("blend-chain")]
     public static void BlendChain() => Scenario.Run(Run);
 
-    const uint R = 1, Layer = 2, Map = 3;
-    const float RX = 250, RY = 150, RW = 300, RH = 150;
+    private const uint R = 1, Layer = 2, Map = 3;
+    private const float RX = 250, RY = 150, RW = 300, RH = 150;
 
-    static Color Px(Bitmap a, float x, float y) => a.GetPixel((int)(x * a.Width / 800), (int)(y * a.Height / 600));
-    static bool Blueish(Color c) => c.B > c.R + 40;
-    static bool Orangeish(Color c) => c.R > c.B + 12 && c.R > 0x30;
-    static bool Lit(Color c) => c.R + c.G + c.B > 3 * 0x20 + 20;
+    private static Color Px(Bitmap a, float x, float y) => a.GetPixel((int)(x * a.Width / 800), (int)(y * a.Height / 600));
+    private static bool Blueish(Color c) => c.B > c.R + 40;
+    private static bool Orangeish(Color c) => c.R > c.B + 12 && c.R > 0x30;
+    private static bool Lit(Color c) => c.R + c.G + c.B > 3 * 0x20 + 20;
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "the passes are ShaderEffects");
         Directory.CreateDirectory(s.OutDir);

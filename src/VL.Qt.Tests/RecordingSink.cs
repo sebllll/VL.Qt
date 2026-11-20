@@ -16,8 +16,8 @@ namespace VL.Qt.Tests
     /// </summary>
     internal sealed class RecordingSink : ICommandSink
     {
-        static readonly Dictionary<ushort, string> s_typeNames = NamesOf(typeof(Protocol.Type));
-        static readonly Dictionary<ushort, string> s_propNames = NamesOf(typeof(Protocol.Prop));
+        private static readonly Dictionary<ushort, string> s_typeNames = NamesOf(typeof(Protocol.Type));
+        private static readonly Dictionary<ushort, string> s_propNames = NamesOf(typeof(Protocol.Prop));
 
         /// <summary>Maps each value of the ushort constants of <paramref name="holder"/> to its first name (declaration order).</summary>
         internal static Dictionary<ushort, string> NamesOf(Type holder)
@@ -33,7 +33,7 @@ namespace VL.Qt.Tests
             holder.GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => f.IsLiteral && f.FieldType == typeof(ushort))
                 .ToLookup(f => (ushort)f.GetRawConstantValue()!, f => f.Name);
 
-        static string TypeName(ushort type) => s_typeNames.TryGetValue(type, out var n) ? n : type.ToString(CultureInfo.InvariantCulture);
+        private static string TypeName(ushort type) => s_typeNames.TryGetValue(type, out var n) ? n : type.ToString(CultureInfo.InvariantCulture);
         internal static string PropName(ushort prop) => s_propNames.TryGetValue(prop, out var n) ? n : prop.ToString(CultureInfo.InvariantCulture);
 
         public List<string> Commands { get; } = new();
@@ -52,11 +52,11 @@ namespace VL.Qt.Tests
 
         public override string ToString() => string.Join("\n", Commands);
 
-        static string F(float v) => v.ToString("R", CultureInfo.InvariantCulture);
+        private static string F(float v) => v.ToString("R", CultureInfo.InvariantCulture);
 
-        void Add(string s) => Commands.Add(s);
+        private void Add(string s) => Commands.Add(s);
 
-        void AddSet(uint id, ushort prop, string value) => Add($"SET {id} {PropName(prop)} {value}");
+        private void AddSet(uint id, ushort prop, string value) => Add($"SET {id} {PropName(prop)} {value}");
 
         public void Create(uint id, ushort type) => Add($"CREATE {id} {TypeName(type)}");
         public void Destroy(uint id) => Add($"DESTROY {id}");
@@ -84,7 +84,7 @@ namespace VL.Qt.Tests
         public void SetU64(uint id, ushort prop, ulong value) => AddSet(id, prop, $"u64({value})");
 
         // SET_STYLE is recorded as one line: "STYLE id flags field/state=value ...".
-        readonly System.Text.StringBuilder _style = new();
+        private readonly System.Text.StringBuilder _style = new();
 
         public void BeginStyle(uint id, ushort flags) => _style.Clear().Append($"STYLE {id} {flags}");
         public void StyleColor(ushort field, byte state, float r, float g, float b, float a) => _style.Append($" {field}/{state}=color({F(r)},{F(g)},{F(b)},{F(a)})");
@@ -96,7 +96,7 @@ namespace VL.Qt.Tests
         public void SetIvec2(uint id, ushort prop, int x, int y) => AddSet(id, prop, $"ivec2({x},{y})");
 
         // SET_UNIFORMS is recorded as one line: "UNIFORMS id flags name=value ...".
-        readonly System.Text.StringBuilder _uniforms = new();
+        private readonly System.Text.StringBuilder _uniforms = new();
 
         public void BeginUniforms(uint id, ushort flags) => _uniforms.Clear().Append($"UNIFORMS {id} {flags}");
         public void UniformF32(ReadOnlySpan<char> name, float value) => _uniforms.Append($" {name.ToString()}=f32({F(value)})");

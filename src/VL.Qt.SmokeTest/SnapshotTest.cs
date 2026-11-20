@@ -23,7 +23,7 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class SnapshotTest
 {
-    const int MaxLatency = 8; // frames from Grab to Is Ready (a grab needs the next render of its window)
+    private const int MaxLatency = 8; // frames from Grab to Is Ready (a grab needs the next render of its window)
 
     /// <summary>BGRA8 premultiplied pixel at (x, y) of the snapshot.</summary>
     internal static (int B, int G, int R, int A) At(IImage image, int x, int y, int sizeDip = 300)
@@ -35,7 +35,7 @@ public static class SnapshotTest
         return (bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3]);
     }
 
-    static bool Near(int a, int b, int tolerance) => Math.Abs(a - b) <= tolerance;
+    private static bool Near(int a, int b, int tolerance) => Math.Abs(a - b) <= tolerance;
 
     // Straight-alpha RGBA PNG (the smoke test has no image encoder on Linux, so a minimal one).
     internal static void WritePng(IImage image, string path)
@@ -72,7 +72,7 @@ public static class SnapshotTest
         Chunk(f, "IEND", []);
     }
 
-    static void Chunk(Stream s, string type, byte[] data)
+    private static void Chunk(Stream s, string type, byte[] data)
     {
         var n = new byte[4];
         BinaryPrimitives.WriteInt32BigEndian(n, data.Length);
@@ -96,7 +96,7 @@ public static class SnapshotTest
     [Test, Category("snapshot")]
     public static void Snapshot() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         // The client QtApp owns, without a QtApp (the smoke test pumps QtNative itself).
         var client = new ResourceClient(new NativeResourceApi(), Environment.CurrentManagedThreadId, static () => null);

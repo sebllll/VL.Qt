@@ -30,12 +30,12 @@ namespace VL.Qt.Nodes
         internal readonly record struct TextProps(string Content, float Width, float Height);
         internal readonly record struct LayoutProps(ImmutableArray<Element> Children, float Spacing);
 
-        readonly ElementNode<Text, TextProps> _text;
-        readonly ElementNode<Row, LayoutProps> _row;
-        readonly ElementNode<Column, LayoutProps> _column;
-        Element? _lastElement;
-        Text? _lastText;
-        ImmutableArray<Element> _children = ImmutableArray<Element>.Empty;
+        private readonly ElementNode<Text, TextProps> _text;
+        private readonly ElementNode<Row, LayoutProps> _row;
+        private readonly ElementNode<Column, LayoutProps> _column;
+        private Element? _lastElement;
+        private Text? _lastText;
+        private ImmutableArray<Element> _children = ImmutableArray<Element>.Empty;
 
         public LabeledNode(NodeContext nodeContext)
         {
@@ -54,7 +54,7 @@ namespace VL.Qt.Nodes
 
         // The label box is Width x Height: the text is aligned left and vertically centered in it, so it stays
         // centered next to elements that are taller than the text.
-        static readonly Func<CommonInputs, TextProps, SinkSlot, Text> CreateText = static (c, p, slot) => new Text
+        private static readonly Func<CommonInputs, TextProps, SinkSlot, Text> CreateText = static (c, p, slot) => new Text
             {
                 Size = new Vector2(p.Width, p.Height),
                 Anchor = RectangleAnchor.TopLeft,
@@ -64,7 +64,7 @@ namespace VL.Qt.Nodes
                 VAlign = VerticalAlignment.Center,
             };
 
-        static readonly Func<CommonInputs, LayoutProps, SinkSlot, Row> CreateRow = static (c, p, slot) => new Row
+        private static readonly Func<CommonInputs, LayoutProps, SinkSlot, Row> CreateRow = static (c, p, slot) => new Row
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -78,7 +78,7 @@ namespace VL.Qt.Nodes
                 ChildAlignment = VerticalAlignment.Center,
             };
 
-        static readonly Func<CommonInputs, LayoutProps, SinkSlot, Column> CreateColumn = static (c, p, slot) => new Column
+        private static readonly Func<CommonInputs, LayoutProps, SinkSlot, Column> CreateColumn = static (c, p, slot) => new Column
             {
                 Size = c.Size,
                 Transform = c.Transform,

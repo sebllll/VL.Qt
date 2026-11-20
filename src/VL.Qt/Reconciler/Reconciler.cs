@@ -73,19 +73,19 @@ namespace VL.Qt
     /// </summary>
     internal sealed partial class Reconciler
     {
-        readonly ICommandSink _sink;
-        readonly IdAllocator _ids;
-        readonly SceneRegistry _scene;
-        readonly Dictionary<uint, SinkSlot> _bindings = new();
-        readonly SinkRegistry _sinks = new();
-        readonly List<Element> _pendingPrimary = new(); // elements whose primary occurrence let go in this pass
-        Node? _root;
-        SpaceMapping _mapping = SpaceMapping.Default;
-        bool _hasMapping;
-        bool _force;
-        bool _rescale; // the unit scale changed in this pass: every length is written again (#143)
-        bool _invalidated;
-        int _pass;
+        private readonly ICommandSink _sink;
+        private readonly IdAllocator _ids;
+        private readonly SceneRegistry _scene;
+        private readonly Dictionary<uint, SinkSlot> _bindings = new();
+        private readonly SinkRegistry _sinks = new();
+        private readonly List<Element> _pendingPrimary = new(); // elements whose primary occurrence let go in this pass
+        private Node? _root;
+        private SpaceMapping _mapping = SpaceMapping.Default;
+        private bool _hasMapping;
+        private bool _force;
+        private bool _rescale; // the unit scale changed in this pass: every length is written again (#143)
+        private bool _invalidated;
+        private int _pass;
 
         /// <param name="sink">Target of the commands.</param>
         /// <param name="ids">Object id allocator of the window.</param>
@@ -200,7 +200,7 @@ namespace VL.Qt
         /// (number of real objects before this position). <paramref name="inherited"/> = resolved style of the parent
         /// chain (the base style under the window root).
         /// </summary>
-        Node Reconcile(Node? existing, Element next, Element? parent, Node? parentNode, int index, Style inherited, bool attached = false)
+        private Node Reconcile(Node? existing, Element next, Element? parent, Node? parentNode, int index, Style inherited, bool attached = false)
         {
             if (next is StylableElement stylable)
                 return ReconcileStylable(existing, stylable, parent, parentNode, index, inherited, attached);
@@ -217,7 +217,7 @@ namespace VL.Qt
         /// at the parent's sink (<see cref="SinkState.BuildError"/>); the element of the last successful Build of the same
         /// stylable stays. Null (or a failure without such an element) shows the placeholder's empty Group.
         /// </summary>
-        Node ReconcileStylable(Node? existing, StylableElement next, Element? parent, Node? parentNode, int index, Style inherited, bool attached)
+        private Node ReconcileStylable(Node? existing, StylableElement next, Element? parent, Node? parentNode, int index, Style inherited, bool attached)
         {
             Element built;
             string? error = null;
@@ -242,7 +242,7 @@ namespace VL.Qt
         /// Shows <paramref name="error"/> of the Build at <paramref name="node"/> in <paramref name="slot"/> (the parent's), or
         /// clears what this node showed there (null). An error of a sibling that is already shown is kept.
         /// </summary>
-        static void SetBuildError(SinkSlot slot, Node node, string? error)
+        private static void SetBuildError(SinkSlot slot, Node node, string? error)
         {
             if (error == node.BuildError)
                 return;
@@ -259,7 +259,7 @@ namespace VL.Qt
         }
 
         /// <summary>Reconciles a plain element at one position (see <see cref="Reconcile"/>).</summary>
-        Node ReconcileElement(Node? existing, Element next, Element? parent, Node? parentNode, int index, Style inherited, bool attached = false)
+        private Node ReconcileElement(Node? existing, Element next, Element? parent, Node? parentNode, int index, Style inherited, bool attached = false)
         {
             if (existing is not null && existing.IsIgnored)
             {
@@ -332,7 +332,7 @@ namespace VL.Qt
         /// an equal result keeps the old reference, so unchanged children can still be skipped); widgets send the
         /// resolved style as SET_STYLE diff against what QtNative holds. Other elements pass <paramref name="inherited"/> on.
         /// </summary>
-        Style ResolveStyle(Node node, Element next, Style inherited)
+        private Style ResolveStyle(Node node, Element next, Style inherited)
         {
             var styled = next is Group || BaseStyle.AppliesTo((ushort)node.Type);
             if (!styled)
@@ -363,7 +363,7 @@ namespace VL.Qt
         }
 
         /// <summary>Reconciles the children and updates <see cref="Node.ContainsStylable"/> of <paramref name="node"/>.</summary>
-        void ReconcileChildren(Node node, Element next, Style inherited)
+        private void ReconcileChildren(Node node, Element next, Style inherited)
         {
             ImmutableArray<Element> children = next.Children;
             List<Node> old = node.Children;
@@ -409,7 +409,7 @@ namespace VL.Qt
         /// or about to be destroyed); then the video is taken over and the old occurrence's subtree is marked dirty, so
         /// it is not skipped and turns into a placeholder when it is visited.
         /// </summary>
-        bool CanOwn(Element element, Node? self)
+        private bool CanOwn(Element element, Node? self)
         {
             var ownerReconciler = _scene.OwnerReconcilerOf(element);
             if (ownerReconciler is null || !SceneRegistry.IsExclusive(element))
@@ -428,7 +428,7 @@ namespace VL.Qt
         }
 
         /// <summary>Whether a placeholder of <paramref name="element"/> has to stay one: it is a video shown at another node.</summary>
-        bool IsShownElsewhere(Element element)
+        private bool IsShownElsewhere(Element element)
             => SceneRegistry.IsExclusive(element) && _scene.OwnerReconcilerOf(element) is not null;
 
         /// <summary>
@@ -439,7 +439,7 @@ namespace VL.Qt
         /// the node waits for <see cref="ResolvePrimaries"/>. In a renderer that does not own the element it stays a
         /// further occurrence.
         /// </summary>
-        void Register(Element element, Node node)
+        private void Register(Element element, Node node)
         {
             if (_scene.AddOccurrence(element, node, this))
             {
@@ -459,7 +459,7 @@ namespace VL.Qt
         /// Removes the occurrence <paramref name="node"/> of <paramref name="element"/>; a primary that leaves others behind
         /// (here or in other renderers) is re-picked or handed over at the end of the update.
         /// </summary>
-        void Release(Element element, Node node)
+        private void Release(Element element, Node node)
         {
             if (_scene.RemoveOccurrence(element, node, this))
                 _pendingPrimary.Add(element);
@@ -467,7 +467,7 @@ namespace VL.Qt
         }
 
         /// <summary>Makes <paramref name="node"/> a further occurrence; its handle stops reporting state values right away (no BIND needed).</summary>
-        void Demote(Node node)
+        private void Demote(Node node)
         {
             node.IsPrimary = false;
             if (node.BoundPrimary)
@@ -484,7 +484,7 @@ namespace VL.Qt
         /// renderer that shows it (<see cref="SceneRegistry.HandOver"/>). Runs once per update after the whole tree (and
         /// after a clear); nothing to do (and no allocation) in the steady state.
         /// </summary>
-        void ResolvePrimaries()
+        private void ResolvePrimaries()
         {
             for (int i = 0; i < _pendingPrimary.Count; i++)
             {
@@ -515,7 +515,7 @@ namespace VL.Qt
         /// new primary handle and sends BIND (QtNative then sends the current Measured/SceneBounds/Media/Error again), a
         /// demotion only flips the flag of the handle.
         /// </summary>
-        void SyncPrimary(Node node)
+        private void SyncPrimary(Node node)
         {
             if (node.IsPrimary)
             {
@@ -531,7 +531,7 @@ namespace VL.Qt
         }
 
         /// <summary>True if <paramref name="a"/> comes before <paramref name="b"/> in traversal order (both in this tree, not equal).</summary>
-        static bool IsBefore(Node a, Node b)
+        private static bool IsBefore(Node a, Node b)
         {
             int da = Depth(a), db = Depth(b);
             var x = a;
@@ -550,7 +550,7 @@ namespace VL.Qt
             return Position(x) < Position(y);
         }
 
-        static int Depth(Node node)
+        private static int Depth(Node node)
         {
             int d = 0;
             for (var p = node.Parent; p is not null; p = p.Parent)
@@ -559,7 +559,7 @@ namespace VL.Qt
         }
 
         /// <summary>Order among siblings: the effect objects (negative, in chain order) before the children (index).</summary>
-        static int Position(Node node)
+        private static int Position(Node node)
         {
             if (node.Parent is not { } parent)
                 return 0;
@@ -573,7 +573,7 @@ namespace VL.Qt
         }
 
         /// <summary>True if <paramref name="node"/> was reached earlier in this pass (itself or a skipped ancestor).</summary>
-        bool IsVisitedThisPass(Node node)
+        private bool IsVisitedThisPass(Node node)
         {
             if (node.VisitedPass == _pass)
                 return true;
@@ -584,7 +584,7 @@ namespace VL.Qt
         }
 
         /// <summary>Placeholder for an occurrence of a video that is shown elsewhere (in this or another renderer).</summary>
-        Node Ignore(Element next, Node? parentNode)
+        private Node Ignore(Element next, Node? parentNode)
         {
             var node = new Node(0, next.Type) { Parent = parentNode, VisitedPass = _pass, Last = next };
             _scene.AddDuplicate(next, this);
@@ -596,7 +596,7 @@ namespace VL.Qt
         /// Tap handler with a new sink itself since #320). The handle is primary or not after <see cref="Node.IsPrimary"/>;
         /// a node that became primary with an unchanged slot is re-bound too (<see cref="SyncPrimary"/>).
         /// </summary>
-        void BindSink(Node node, Element next)
+        private void BindSink(Node node, Element next)
         {
             SinkSlot slot = next.Sink;
             SinkSlot old = node.BoundSink;
@@ -628,7 +628,7 @@ namespace VL.Qt
         }
 
         /// <summary>DESTROY for the top node only (QtNative destroys its children), all ids freed.</summary>
-        void DestroySubtree(Node node)
+        private void DestroySubtree(Node node)
         {
             if (!node.IsIgnored)
                 _sink.Destroy(node.Id);
@@ -636,7 +636,7 @@ namespace VL.Qt
         }
 
         /// <summary>Frees ids, ownership, duplicate registrations and bindings of the whole subtree.</summary>
-        void Forget(Node node)
+        private void Forget(Node node)
         {
             if (node.BuildError is not null)
                 SetBuildError(node.Parent?.Last?.Sink ?? default, node, null);
@@ -682,7 +682,7 @@ namespace VL.Qt
         /// renderer) gets a placeholder and the duplicate warning (<see cref="SceneRegistry"/>); it takes over once
         /// the owner lets go (next update). A reference-equal chain is skipped unless the whole tree is forced.
         /// </summary>
-        void ReconcileHandlers(Node node, Interaction? previous, Interaction? next)
+        private void ReconcileHandlers(Node node, Interaction? previous, Interaction? next)
         {
             var list = node.Handlers;
             if (next is null && (list is null || list.Count == 0))
@@ -708,7 +708,7 @@ namespace VL.Qt
         /// Matches one link (after the links before it, so ids and the first occurrence of a duplicate follow the patch
         /// order; recursion depth = chain length).
         /// </summary>
-        void ReconcileLink(Node node, List<HandlerNode> list, Interaction link)
+        private void ReconcileLink(Node node, List<HandlerNode> list, Interaction link)
         {
             if (link.Previous is { } previous)
                 ReconcileLink(node, list, previous);
@@ -752,7 +752,7 @@ namespace VL.Qt
         }
 
         /// <summary>Index of the handler with <paramref name="key"/> not yet matched in this pass, -1 if none.</summary>
-        int IndexOfUnseen(List<HandlerNode> list, SinkSlot key)
+        private int IndexOfUnseen(List<HandlerNode> list, SinkSlot key)
         {
             for (int i = 0; i < list.Count; i++)
             {
@@ -764,7 +764,7 @@ namespace VL.Qt
         }
 
         /// <summary>New handler at the item of <paramref name="node"/>, or a placeholder if the interaction is active elsewhere.</summary>
-        HandlerNode CreateHandler(Node node, Interaction link)
+        private HandlerNode CreateHandler(Node node, Interaction link)
         {
             if (_scene.HandlerOwnerOf(link.Sink) is not null)
             {
@@ -784,7 +784,7 @@ namespace VL.Qt
         }
 
         /// <summary>DESTROY of one handler (placeholders have no QtNative object), then <see cref="ForgetHandler"/>.</summary>
-        void DestroyHandler(HandlerNode h)
+        private void DestroyHandler(HandlerNode h)
         {
             if (!h.IsIgnored)
                 _sink.Destroy(h.Id);
@@ -792,7 +792,7 @@ namespace VL.Qt
         }
 
         /// <summary>Frees id, sink handle (resets the slot: not hovered), binding and ownership of a handler.</summary>
-        void ForgetHandler(HandlerNode h)
+        private void ForgetHandler(HandlerNode h)
         {
             if (h.IsIgnored)
             {

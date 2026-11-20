@@ -14,23 +14,23 @@ namespace VL.Qt.Tests
     /// <summary>FileWriter (IImage) and FileWriter (Element) (#157) on fake writes and a fake resource API.</summary>
     public class FileWriterNodeTests
     {
-        static readonly TimeSpan timeout = TimeSpan.FromSeconds(10);
+        private static readonly TimeSpan timeout = TimeSpan.FromSeconds(10);
 
         // NUnit shares one fixture instance between the tests: all state is made in SetUp.
-        List<(string Path, int Quality, int Width, int Height, byte FirstByte)> _writes = null!;
-        string _writeError = null!;
-        ImageFileWriter _writer = null!;
-        FileWriterNode _node = null!;
+        private List<(string Path, int Quality, int Width, int Height, byte FirstByte)> _writes = null!;
+        private string _writeError = null!;
+        private ImageFileWriter _writer = null!;
+        private FileWriterNode _node = null!;
 
-        FakeResourceApi _api = null!;
-        ResourceClient _client = null!;
-        SceneRegistry _scene = null!;
-        Reconciler _reconciler = null!;
-        ImageFileWriter _elementWriter = null!;
-        FileWriterElementNode _elementNode = null!;
-        Rectangle _element = null!;
+        private FakeResourceApi _api = null!;
+        private ResourceClient _client = null!;
+        private SceneRegistry _scene = null!;
+        private Reconciler _reconciler = null!;
+        private ImageFileWriter _elementWriter = null!;
+        private FileWriterElementNode _elementNode = null!;
+        private Rectangle _element = null!;
 
-        ImageFileWriter NewWriter() => new((image, path, quality) =>
+        private ImageFileWriter NewWriter() => new((image, path, quality) =>
         {
             using var data = image.GetData();
             lock (_writes)
@@ -63,27 +63,27 @@ namespace VL.Qt.Tests
             _elementNode.Dispose();
         }
 
-        static void Finish(ImageFileWriter writer) => Assert.That(writer.WaitIdle(timeout), Is.True, "the write did not finish");
+        private static void Finish(ImageFileWriter writer) => Assert.That(writer.WaitIdle(timeout), Is.True, "the write did not finish");
 
-        void Pump()
+        private void Pump()
         {
             _client.BeforeEvents();
             _client.AfterEvents();
         }
 
-        void Show()
+        private void Show()
         {
             _reconciler.Window = new IntPtr(1);
             _reconciler.Update(_element, Space.DIPTopLeft);
         }
 
-        void Update(IImage? image, string? path, out bool isDone, out string error, bool write = false, int quality = 90)
+        private void Update(IImage? image, string? path, out bool isDone, out string error, bool write = false, int quality = 90)
             => _node.Update(image, path is null ? null! : new Path(path), out isDone, out error, quality, write);
 
-        void UpdateElement(string? path, out bool isDone, out string error, bool write = false, float scale = 1, int quality = 90)
+        private void UpdateElement(string? path, out bool isDone, out string error, bool write = false, float scale = 1, int quality = 90)
             => _elementNode.Update(_element, path is null ? null! : new Path(path), out isDone, out error, scale, quality, write);
 
-        ulong SnapshotId() => Convert.ToUInt64(_api.Calls.Where(c => c.StartsWith("snapshot")).Last().Split(' ')[1], 16);
+        private ulong SnapshotId() => Convert.ToUInt64(_api.Calls.Where(c => c.StartsWith("snapshot")).Last().Split(' ')[1], 16);
 
         // ---- FileWriter (IImage)
 

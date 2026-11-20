@@ -82,10 +82,10 @@ namespace VL.Qt.Elements
         All = Mouse | TouchScreen | TouchPad | Pen,
     }
 
-    static class PointerMasks
+    internal static class PointerMasks
     {
         /// <summary>Qt's default of acceptedDevices (all device types, also those without an enum value here).</summary>
-        const int allDevices = 0x7FFFFFFF;
+        private const int allDevices = 0x7FFFFFFF;
 
         public const PointerButtons DefaultButtons = PointerButtons.Left;
         public const PointerDevices DefaultDevices = PointerDevices.All;
@@ -261,7 +261,7 @@ namespace VL.Qt.Elements
     }
 
     /// <summary>Shared SETs of the pointer handlers: only values that differ from the old ones (a new handler: from QtNative defaults).</summary>
-    static class PointerProps
+    internal static class PointerProps
     {
         public static void Write(ICommandSink sink, uint id, PointerButtons buttons, PointerDevices devices,
             PointerButtons oldButtons, PointerDevices oldDevices, bool writeButtons)

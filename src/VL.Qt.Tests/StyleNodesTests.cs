@@ -8,11 +8,11 @@ namespace VL.Qt.Tests
     /// <summary>Style nodeset (#294): setters, getters, Merge, ResolveState.</summary>
     public class StyleNodesTests
     {
-        static readonly Color4 red = new(1, 0, 0, 1);
-        static readonly Color4 green = new(0, 1, 0, 1);
-        static readonly Color4 blue = new(0, 0, 1, 1);
+        private static readonly Color4 red = new(1, 0, 0, 1);
+        private static readonly Color4 green = new(0, 1, 0, 1);
+        private static readonly Color4 blue = new(0, 0, 1, 1);
 
-        static Optional<T> O<T>(T v) => new(v);
+        private static Optional<T> O<T>(T v) => new(v);
 
         [Test]
         public void NullInput_Getters_ReturnBaseStyle()

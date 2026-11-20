@@ -8,17 +8,17 @@ namespace VL.Qt.Tests
     /// <summary>SET_SPACE of SceneCore.Update (#143): written when the Space changes; a Space change alone rewrites no lengths.</summary>
     public class SceneCoreSpaceTests
     {
-        static readonly Color4 c = new Color4(0.1f, 0.2f, 0.3f, 1f);
-        static readonly int setSpaceBytes = Protocol.HeaderSize + 4;
+        private static readonly Color4 c = new Color4(0.1f, 0.2f, 0.3f, 1f);
+        private static readonly int setSpaceBytes = Protocol.HeaderSize + 4;
 
         // Same tree object every frame, like a patch at rest.
-        static readonly Element tree = new Group
+        private static readonly Element tree = new Group
         {
             Children = [new Rectangle { Size = new Vector2(1, 2), Radius = 0.1f, Fill = new Color4(1, 0, 0, 1) }],
         };
 
         // Written commands of the next Update, without a native handle (Apply does not run; the scene is 0 x 0 DIP, dpr 1).
-        static int Written(SceneCore core, Space space)
+        private static int Written(SceneCore core, Space space)
         {
             core.Commands.Reset();
             core.Update(tree, space, c, true);

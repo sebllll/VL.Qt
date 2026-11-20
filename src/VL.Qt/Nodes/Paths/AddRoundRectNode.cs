@@ -9,11 +9,11 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "AddRoundRect", Category = Categories.Paths)]
     public sealed class AddRoundRectNode
     {
-        QtPath? _input;
-        RectangleF _rectangle;
-        Vector2 _radius;
-        PathDirection _direction;
-        QtPath? _output;
+        private QtPath? _input;
+        private RectangleF _rectangle;
+        private Vector2 _radius;
+        private PathDirection _direction;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a rectangle whose corners are quarter ellipses.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>

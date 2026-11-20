@@ -20,7 +20,7 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Color4 Color, float Radius, Color4 StrokeColor, float StrokeWidth);
 
-        readonly ElementNode<Rectangle, Props> _node;
+        private readonly ElementNode<Rectangle, Props> _node;
 
         public RectangleNode(NodeContext nodeContext)
             => _node = new ElementNode<Rectangle, Props>(nodeContext, Create);

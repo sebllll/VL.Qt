@@ -9,11 +9,11 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "AddArc", Category = Categories.Paths)]
     public sealed class AddArcNode
     {
-        QtPath? _input;
-        RectangleF _bounds;
-        float _startAngle;
-        float _sweepAngle;
-        QtPath? _output;
+        private QtPath? _input;
+        private RectangleF _bounds;
+        private float _startAngle;
+        private float _sweepAngle;
+        private QtPath? _output;
 
         /// <summary>Returns the path with an open contour that follows part of the outline of an oval.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>

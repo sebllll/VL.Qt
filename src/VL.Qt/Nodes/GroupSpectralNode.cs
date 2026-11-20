@@ -21,7 +21,7 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Group (Spectral)", Category = Categories.Elements)]
     public sealed class GroupSpectralNode : IDisposable
     {
-        readonly GroupNode _inner;
+        private readonly GroupNode _inner;
 
         public GroupSpectralNode(NodeContext nodeContext) => _inner = new GroupNode(nodeContext);
 

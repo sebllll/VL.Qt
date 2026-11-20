@@ -23,15 +23,15 @@ namespace VL.Qt
     /// </summary>
     internal static class ExportedApp
     {
-        const string refCountField = "refCount";
+        private const string refCountField = "refCount";
 
-        static readonly object s_syncRoot = new();
-        static AppHost? s_consoleHost; // set once by Attach (one AppHost per exported process)
-        static SynchronizationContext? s_mainContext;
-        static ILogger? s_logger;
-        static PosixSignalRegistration? s_sigTerm, s_sigInt;
-        static int s_signals;
-        static volatile bool s_ended; // AppHost.OnExit fired: the regular end ran, _exit is safe
+        private static readonly object s_syncRoot = new();
+        private static AppHost? s_consoleHost; // set once by Attach (one AppHost per exported process)
+        private static SynchronizationContext? s_mainContext;
+        private static ILogger? s_logger;
+        private static PosixSignalRegistration? s_sigTerm, s_sigInt;
+        private static int s_signals;
+        private static volatile bool s_ended; // AppHost.OnExit fired: the regular end ran, _exit is safe
 
         /// <summary>
         /// Called by every Renderer [Qt] on creation. In the exported console host (once per process): signal handlers and,
@@ -79,7 +79,7 @@ namespace VL.Qt
 
         // ShouldStayAlive = refCount > 0 (AppHostBase); the loop checks it at the end of each frame. Holders that dispose
         // their KeepAlive later count below 0, which no longer matters once the loop has ended.
-        static bool ReleaseKeepAlive(AppHost appHost)
+        private static bool ReleaseKeepAlive(AppHost appHost)
         {
             for (var t = appHost.GetType(); t != null; t = t.BaseType)
             {
@@ -94,7 +94,7 @@ namespace VL.Qt
 
         // Signal thread. The first signal ends the app on the main thread (between two frames), a second one is left to
         // .NET (immediate end, exit code 128 + signal) in case the main loop no longer runs.
-        static void OnSignal(PosixSignalContext context)
+        private static void OnSignal(PosixSignalContext context)
         {
             if (Interlocked.Increment(ref s_signals) > 1 || s_consoleHost is not { } appHost || s_mainContext is not { } mainContext)
                 return;
@@ -103,7 +103,7 @@ namespace VL.Qt
             mainContext.Post(_ => Exit(appHost), null);
         }
 
-        static void OnProcessExit(object? sender, EventArgs e)
+        private static void OnProcessExit(object? sender, EventArgs e)
         {
             if (!s_ended)
                 return;
@@ -113,6 +113,6 @@ namespace VL.Qt
         }
 
         [DllImport("libc", EntryPoint = "_exit")]
-        static extern void SysExit(int status);
+        private static extern void SysExit(int status);
     }
 }

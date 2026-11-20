@@ -16,19 +16,19 @@ namespace VL.Qt.Tests
     /// <summary>VideoSourceToQtImage (#114, CPU path) with a fake video source and the fake resource API, no Qt.</summary>
     public class VideoSourceToQtImageTests
     {
-        sealed class Clock : IFrameClock
+        private sealed class Clock : IFrameClock
         {
-            readonly Subject<FrameFinishedMessage> _finished = new();
-            readonly Subject<FrameTimeMessage> _ticks = new();
+            private readonly Subject<FrameFinishedMessage> _finished = new();
+            private readonly Subject<FrameTimeMessage> _ticks = new();
             public Time Time => new(0);
             public double TimeDifference => 1.0 / 60;
             public IObservable<FrameTimeMessage> GetTicks() => _ticks;
             public IObservable<FrameFinishedMessage> GetFrameFinished() => _finished;
         }
 
-        sealed record MemoryFrame(int W, int H, bool InMemory = true) : VideoFrame
+        private sealed record MemoryFrame(int W, int H, bool InMemory = true) : VideoFrame
         {
-            readonly byte[] _bytes = new byte[W * H * 4];
+            private readonly byte[] _bytes = new byte[W * H * 4];
             public override int Width => W;
             public override int Height => H;
             public override PixelFormat PixelFormat => PixelFormat.B8G8R8A8;
@@ -41,7 +41,7 @@ namespace VL.Qt.Tests
         }
 
         /// <summary>IVideoSource2: every Start creates a player that hands out a new refcounted frame per grab.</summary>
-        sealed class FakeSource : IVideoSource2
+        private sealed class FakeSource : IVideoSource2
         {
             public int Created, Released, Started, Stopped;
             public int Ticket;
@@ -55,9 +55,9 @@ namespace VL.Qt.Tests
                 return new Player(this);
             }
 
-            sealed class Player : IVideoPlayer
+            private sealed class Player : IVideoPlayer
             {
-                readonly FakeSource _source;
+                private readonly FakeSource _source;
                 public Player(FakeSource source) => _source = source;
 
                 public IResourceProvider<VideoFrame>? GrabVideoFrame()
@@ -72,9 +72,9 @@ namespace VL.Qt.Tests
             }
         }
 
-        FakeResourceApi _api = null!;
-        ResourceClient _client = null!;
-        VideoPlaybackContext _ctx = null!;
+        private FakeResourceApi _api = null!;
+        private ResourceClient _client = null!;
+        private VideoPlaybackContext _ctx = null!;
 
         [SetUp]
         public void SetUp()
@@ -85,13 +85,13 @@ namespace VL.Qt.Tests
             _ctx = new VideoPlaybackContext(new Clock(), NullLogger.Instance);
         }
 
-        void Pump()
+        private void Pump()
         {
             _client.BeforeEvents();
             _client.AfterEvents();
         }
 
-        static QtImage? UpdateUntilFrame(VideoSourceToQtImageNode node, IVideoSource source, QtImage? fallback = null)
+        private static QtImage? UpdateUntilFrame(VideoSourceToQtImageNode node, IVideoSource source, QtImage? fallback = null)
         {
             var watch = Stopwatch.StartNew();
             while (watch.ElapsedMilliseconds < 5000)

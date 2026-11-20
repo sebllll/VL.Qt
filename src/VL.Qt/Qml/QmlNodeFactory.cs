@@ -55,7 +55,7 @@ namespace VL.Qt.Qml
         /// <summary>Category of a generated node without @category.</summary>
         public const string DefaultCategory = Categories.Elements + ".Qml";
 
-        const string extension = ".qml";
+        private const string extension = ".qml";
 
         /// <summary>
         /// Registers the factory at the app host (called from <see cref="Initialization.Configure"/>), over the app host's
@@ -156,12 +156,12 @@ namespace VL.Qt.Qml
             return result.MoveToImmutable();
         }
 
-        static string CategoryOf(QmlFileHead head) => string.IsNullOrWhiteSpace(head.Category) ? DefaultCategory : head.Category.Trim();
+        private static string CategoryOf(QmlFileHead head) => string.IsNullOrWhiteSpace(head.Category) ? DefaultCategory : head.Category.Trim();
 
-        static string TagsOf(QmlFileHead head) => string.Join(",", head.Tags);
+        private static string TagsOf(QmlFileHead head) => string.Join(",", head.Tags);
 
         /// <summary>Head tags for the node browser only; a file that cannot be read now gets the defaults (init reports it).</summary>
-        static QmlFileHead ReadHead(string path, Func<string, QmlFileHead> parseHead)
+        private static QmlFileHead ReadHead(string path, Func<string, QmlFileHead> parseHead)
         {
             try
             {
@@ -174,7 +174,7 @@ namespace VL.Qt.Qml
         }
 
         /// <summary>True if @category or @tags of the file on disk differ from the scan (a description cannot change them itself); false if it cannot be read now.</summary>
-        static bool HeadChanged(QmlFile file)
+        private static bool HeadChanged(QmlFile file)
         {
             try
             {
@@ -227,7 +227,7 @@ namespace VL.Qt.Qml
                 .Select(static e => (object)e);
 
         // Events of the own file only (head tags).
-        static IObservable<FileSystemEventArgs> WatchContent(QmlFile file)
+        private static IObservable<FileSystemEventArgs> WatchContent(QmlFile file)
         {
             var fileName = Path.GetFileName(file.FilePath);
             return NodeBuilding.WatchDir(Path.GetDirectoryName(file.FilePath)!)
@@ -235,7 +235,7 @@ namespace VL.Qt.Qml
         }
 
         // Null if the file cannot be read right now (editors save over a temp file): then nothing is compared, the next event decides.
-        static string? CurrentSignature(QmlFile file)
+        private static string? CurrentSignature(QmlFile file)
         {
             try
             {
@@ -252,13 +252,13 @@ namespace VL.Qt.Qml
         }
 
         // Any .qml file of the folder: the file itself or a sibling root type it inherits from.
-        static bool IsQmlEvent(FileSystemEventArgs e)
+        private static bool IsQmlEvent(FileSystemEventArgs e)
             => HasQmlExtension(e.Name) || (e is RenamedEventArgs r && HasQmlExtension(r.OldName));
 
-        static bool HasQmlExtension(string? name) => name != null && name.EndsWith(extension, StringComparison.OrdinalIgnoreCase);
+        private static bool HasQmlExtension(string? name) => name != null && name.EndsWith(extension, StringComparison.OrdinalIgnoreCase);
 
         // Directories have no extension: a created, deleted or renamed folder may hold component files.
-        static bool IsComponentOrFolder(string? name) => name != null && (IsComponentFileName(Path.GetFileName(name)) || Path.GetExtension(name).Length == 0);
+        private static bool IsComponentOrFolder(string? name) => name != null && (IsComponentFileName(Path.GetFileName(name)) || Path.GetExtension(name).Length == 0);
 
         /// <summary>
         /// Only component files count (a lowercase helper does not make a node; a sibling's content change goes through

@@ -20,12 +20,12 @@ namespace VL.Qt.Tests
     /// </summary>
     public class InteractionTests
     {
-        const string hover = nameof(Protocol.Type.HoverHandler);     // 32
+        private const string hover = nameof(Protocol.Type.HoverHandler);     // 32
 
-        RecordingSink _sink = null!;
-        IdAllocator _ids = null!;
-        SceneRegistry _scene = null!;
-        Reconciler _rec = null!;
+        private RecordingSink _sink = null!;
+        private IdAllocator _ids = null!;
+        private SceneRegistry _scene = null!;
+        private Reconciler _rec = null!;
 
         [SetUp]
         public void SetUp()
@@ -36,21 +36,21 @@ namespace VL.Qt.Tests
             _rec = new Reconciler(_sink, _ids, _scene);
         }
 
-        static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
+        private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
 
         // Default bounds/fill: no element SETs, no element sink: no element BIND (only the handler commands remain).
-        static Rectangle R(Interaction? interaction, float radius = 0) => new() { Interaction = interaction, Radius = radius };
+        private static Rectangle R(Interaction? interaction, float radius = 0) => new() { Interaction = interaction, Radius = radius };
 
-        static HoverInteraction H(ElementSink sink, Interaction? previous = null)
+        private static HoverInteraction H(ElementSink sink, Interaction? previous = null)
             => new(previous, new SinkSlot(sink, 0));
 
-        void Frame(Element? root)
+        private void Frame(Element? root)
         {
             _sink.Clear();
             _rec.Update(root, Space.DIPTopLeft);
         }
 
-        string[] Commands => _sink.Commands.ToArray();
+        private string[] Commands => _sink.Commands.ToArray();
 
         [Test]
         public void NewChain_CreateSetReparentBind_AfterTheItem()
@@ -258,7 +258,7 @@ namespace VL.Qt.Tests
 
         // --- Interaction pin at every element node (pkg 03) ---
 
-        static IEnumerable<Type> ElementNodeTypes() => typeof(RectangleNode).Assembly.GetTypes()
+        private static IEnumerable<Type> ElementNodeTypes() => typeof(RectangleNode).Assembly.GetTypes()
             .Where(t => t.IsPublic && t.Name.EndsWith("Node", StringComparison.Ordinal)
                 && t.GetMethod("Update") is { } m && typeof(Element).IsAssignableFrom(m.ReturnType));
 
@@ -312,7 +312,7 @@ namespace VL.Qt.Tests
             }
         }
 
-        sealed class FakeInteraction(Interaction? previous, SinkSlot sink) : Interaction(99, previous, sink)
+        private sealed class FakeInteraction(Interaction? previous, SinkSlot sink) : Interaction(99, previous, sink)
         {
             internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping) { }
         }
@@ -344,7 +344,7 @@ namespace VL.Qt.Tests
             rect.Dispose();
         }
 
-        sealed class Removal : IDisposable { public void Dispose() { } }
+        private sealed class Removal : IDisposable { public void Dispose() { } }
 
         // --- Hover node ---
 
@@ -416,13 +416,13 @@ namespace VL.Qt.Tests
 
         // --- Click, Point, Wheel nodes (#320, pkg 05) ---
 
-        const string tap = nameof(Protocol.Type.TapHandler);       // 33
-        const string point = nameof(Protocol.Type.PointHandler);   // 34
-        const string wheel = nameof(Protocol.Type.WheelHandler);   // 35
-        const string acceptedButtons = nameof(Protocol.Prop.AcceptedButtons); // 769
-        const string acceptedDevices = nameof(Protocol.Prop.AcceptedDevices); // 770
+        private const string tap = nameof(Protocol.Type.TapHandler);       // 33
+        private const string point = nameof(Protocol.Type.PointHandler);   // 34
+        private const string wheel = nameof(Protocol.Type.WheelHandler);   // 35
+        private const string acceptedButtons = nameof(Protocol.Prop.AcceptedButtons); // 769
+        private const string acceptedDevices = nameof(Protocol.Prop.AcceptedDevices); // 770
 
-        static ClickInteraction C(ElementSink sink, Interaction? previous = null, PointerButtons buttons = PointerButtons.Left, PointerDevices devices = PointerDevices.All)
+        private static ClickInteraction C(ElementSink sink, Interaction? previous = null, PointerButtons buttons = PointerButtons.Left, PointerDevices devices = PointerDevices.All)
             => new(previous, new SinkSlot(sink, 0), buttons, devices);
 
         [Test]
@@ -688,7 +688,7 @@ namespace VL.Qt.Tests
             }));
         }
 
-        static readonly PointerDevices TouchPointsNode_DefaultDevices = PointerDevices.TouchScreen | PointerDevices.Pen;
+        private static readonly PointerDevices TouchPointsNode_DefaultDevices = PointerDevices.TouchScreen | PointerDevices.Pen;
 
         [Test]
         public void PinchProperties_DefaultsNotSent_OnlyChangesSet()
@@ -823,13 +823,13 @@ namespace VL.Qt.Tests
 
         // --- Drag node (#209, pkg 12) ---
 
-        const string drag = nameof(Protocol.Type.DragHandler); // 38
+        private const string drag = nameof(Protocol.Type.DragHandler); // 38
 
-        static DragInteraction D(ElementSink sink, bool moves = true, DragAxis axis = DragAxis.Both, DragLimits? limits = null,
+        private static DragInteraction D(ElementSink sink, bool moves = true, DragAxis axis = DragAxis.Both, DragLimits? limits = null,
             PointerButtons buttons = PointerButtons.Left, PointerDevices devices = PointerDevices.All)
             => new(null, new SinkSlot(sink, 0), moves, axis, limits ?? DragLimits.None, buttons, devices);
 
-        static Rectangle RB(Interaction? interaction, Matrix transform) => new() { Interaction = interaction, Transform = transform };
+        private static Rectangle RB(Interaction? interaction, Matrix transform) => new() { Interaction = interaction, Transform = transform };
 
         [Test]
         public void DragProperties_DefaultsNotSent_OnlyChangesSet()
@@ -887,7 +887,7 @@ namespace VL.Qt.Tests
             Assert.That(removed, Is.EqualTo(1));
         }
 
-        sealed class Disposer(Action dispose) : IDisposable { public void Dispose() => dispose(); }
+        private sealed class Disposer(Action dispose) : IDisposable { public void Dispose() => dispose(); }
 
         [Test]
         public void DragNode_PullsDraggingAndDelta_EveryDragUpdate()

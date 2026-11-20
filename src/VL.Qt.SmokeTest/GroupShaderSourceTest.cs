@@ -20,16 +20,16 @@ public static class GroupShaderSourceTest
     [Test, Category("group-shader-source")]
     public static void GroupShaderSource() => Scenario.Run(Run);
 
-    const uint FxA = 10, GA = 11, OrangeA = 12, BlueA = 13, TextA = 14;
-    const uint FxB = 20, InB = 21, GB = 22, OrangeB = 23, BlueB = 24, TextB = 25;
-    const uint FxE = 30, GE = 31, OrangeE = 32;
+    private const uint FxA = 10, GA = 11, OrangeA = 12, BlueA = 13, TextA = 14;
+    private const uint FxB = 20, InB = 21, GB = 22, OrangeB = 23, BlueB = 24, TextB = 25;
+    private const uint FxE = 30, GE = 31, OrangeE = 32;
 
-    static bool Near(Color c, int r, int g, int b, int tol = 16) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
-    static bool IsBg(Color c) => Near(c, 0x20, 0x20, 0x20, 10);
-    static bool IsOrange(Color c) => Near(c, 255, 153, 0);
-    static bool IsBlue(Color c) => Near(c, 51, 102, 255);
+    private static bool Near(Color c, int r, int g, int b, int tol = 16) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
+    private static bool IsBg(Color c) => Near(c, 0x20, 0x20, 0x20, 10);
+    private static bool IsOrange(Color c) => Near(c, 255, 153, 0);
+    private static bool IsBlue(Color c) => Near(c, 51, 102, 255);
 
-    static string? FindFile(params string[] rel)
+    private static string? FindFile(params string[] rel)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
@@ -39,7 +39,7 @@ public static class GroupShaderSourceTest
         return null;
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         var dualQsb = FindFile("src", "VL.Qt.SmokeTest", "shaders", "dual.frag.qsb");

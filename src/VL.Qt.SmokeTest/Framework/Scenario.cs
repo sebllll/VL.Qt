@@ -12,17 +12,17 @@ using VL.Qt;
 /// together at the end (one NUnit failure entry each). Every check also writes one line (PASS/FAIL/WARN/SKIP + message)
 /// to the test output and to &lt;SmokeDir&gt;/checks.tsv (scenario, status, message).
 /// </summary>
-sealed class Scenario
+internal sealed class Scenario
 {
-    static readonly object s_syncRoot = new();
-    static bool s_tsvStarted;
-    static bool s_perfStarted;
+    private static readonly object s_syncRoot = new();
+    private static bool s_tsvStarted;
+    private static bool s_perfStarted;
 
-    readonly TextWriter _out;
-    readonly List<string> _failures = new();
-    readonly List<string> _warnings = new();
+    private readonly TextWriter _out;
+    private readonly List<string> _failures = new();
+    private readonly List<string> _warnings = new();
 
-    Scenario(string name, TextWriter output)
+    private Scenario(string name, TextWriter output)
     {
         Name = name;
         _out = output;
@@ -134,7 +134,7 @@ sealed class Scenario
         return new Bitmap(path);
     }
 
-    void Write(string status, string what)
+    private void Write(string status, string what)
     {
         var line = status + " " + what;
         lock (s_syncRoot)
@@ -148,7 +148,7 @@ sealed class Scenario
     /// <summary>Helper executable: the parent records the checks, the child writes no checks.tsv.</summary>
     public static bool WriteTsv { get; set; } = true;
 
-    static void AppendTsv(string name, string status, string what)
+    private static void AppendTsv(string name, string status, string what)
     {
         if (!WriteTsv)
             return;
@@ -247,7 +247,7 @@ sealed class Scenario
     }
 
     // Qt thread: the console of the scenario code (INFO/WARN/SKIP lines, PerfLimits) goes to the scenario's output.
-    void RunHere(Action<Scenario> body)
+    private void RunHere(Action<Scenario> body)
     {
         Directory.CreateDirectory(OutDir);
         var console = Console.Out;
@@ -277,7 +277,7 @@ sealed class Scenario
                 _out.WriteLine(line);
     }
 
-    void Report(bool completed, Exception? error, TimeSpan timeout, int logStart, TextWriter output)
+    private void Report(bool completed, Exception? error, TimeSpan timeout, int logStart, TextWriter output)
     {
         foreach (var w in _warnings)
             Assert.Warn(w);
@@ -301,10 +301,10 @@ sealed class Scenario
         }
     }
 
-    sealed class LineWriter : TextWriter
+    private sealed class LineWriter : TextWriter
     {
-        readonly Scenario _owner;
-        readonly StringBuilder _line = new();
+        private readonly Scenario _owner;
+        private readonly StringBuilder _line = new();
 
         public LineWriter(Scenario owner) => _owner = owner;
 

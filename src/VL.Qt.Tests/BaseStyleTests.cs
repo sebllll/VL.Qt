@@ -7,8 +7,8 @@ namespace VL.Qt.Tests
     /// <summary>Base style (#292): sent once per Controls element at CREATE, nothing on unchanged frames, again after a resync.</summary>
     public class BaseStyleTests
     {
-        RecordingSink _sink = null!;
-        Reconciler _rec = null!;
+        private RecordingSink _sink = null!;
+        private Reconciler _rec = null!;
 
         [SetUp]
         public void SetUp()

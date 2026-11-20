@@ -67,21 +67,21 @@ namespace VL.Qt
         internal const int waitTimeoutMs = 10_000;
 
         /// <summary>Longest edge of the tooltip preview QtNative makes (#546).</summary>
-        const int previewMaxEdge = 256;
+        private const int previewMaxEdge = 256;
 
         /// <summary>Path prefix of a shader shipped with VL.Qt, resolved by QtNative (vlqt_res_load_shader, #437).</summary>
         internal const string builtinShaderPrefix = "builtin:";
 
-        readonly IResourceApi _api;
-        readonly int _threadId;
-        readonly Func<ILogger?> _logger;
-        readonly Dictionary<ulong, ImageResource> _live = new();
-        readonly object _syncRoot = new();
-        readonly List<ImageResource> _releases = new();
-        ImageResource[] _flushing = new ImageResource[8];
-        byte[] _buffer = new byte[4096];
-        Native.vlqt_res_info[] _list = new Native.vlqt_res_info[64];
-        bool _pumping;
+        private readonly IResourceApi _api;
+        private readonly int _threadId;
+        private readonly Func<ILogger?> _logger;
+        private readonly Dictionary<ulong, ImageResource> _live = new();
+        private readonly object _syncRoot = new();
+        private readonly List<ImageResource> _releases = new();
+        private ImageResource[] _flushing = new ImageResource[8];
+        private byte[] _buffer = new byte[4096];
+        private Native.vlqt_res_info[] _list = new Native.vlqt_res_info[64];
+        private bool _pumping;
 
         public ResourceClient(IResourceApi api, int threadId, Func<ILogger?> logger, bool previews = false)
         {
@@ -109,9 +109,9 @@ namespace VL.Qt
             return client;
         }
 
-        ILogger? Logger => _logger();
+        private ILogger? Logger => _logger();
 
-        bool IsMainThread => Environment.CurrentManagedThreadId == _threadId;
+        private bool IsMainThread => Environment.CurrentManagedThreadId == _threadId;
 
         /// <summary>Resources created and not yet released.</summary>
         public int LiveCount => _live.Count;
@@ -359,9 +359,9 @@ namespace VL.Qt
         }
 
         /// <summary>The pixels of a finished snapshot: BGRA8 premultiplied, owned by the image, rows packed (width * 4).</summary>
-        sealed class SnapshotImage : IImage, IImageData
+        private sealed class SnapshotImage : IImage, IImageData
         {
-            readonly byte[] _bytes;
+            private readonly byte[] _bytes;
 
             public SnapshotImage(int width, int height, byte[] bytes)
             {
@@ -520,7 +520,7 @@ namespace VL.Qt
             }
         }
 
-        void FlushReleases()
+        private void FlushReleases()
         {
             int count;
             lock (_syncRoot)
@@ -549,7 +549,7 @@ namespace VL.Qt
         /// vlqt_res_shutdown (joins the workers) once nothing is referenced: no live image here and no resource held by
         /// anyone else (an element of a window still open, another API user). A clean end therefore logs no leak.
         /// </summary>
-        void TryShutdown()
+        private void TryShutdown()
         {
             if (_live.Count > 0)
                 return;
@@ -599,7 +599,7 @@ namespace VL.Qt
             }
         }
 
-        void Dispatch(ImageResource resource, ushort ev, ReadOnlySpan<byte> payload)
+        private void Dispatch(ImageResource resource, ushort ev, ReadOnlySpan<byte> payload)
         {
             switch (ev)
             {
@@ -626,7 +626,7 @@ namespace VL.Qt
             }
         }
 
-        void Settle(ImageResource resource)
+        private void Settle(ImageResource resource)
         {
             resource.CompleteSettled();
             try

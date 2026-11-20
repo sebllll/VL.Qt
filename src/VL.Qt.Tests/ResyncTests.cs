@@ -17,9 +17,9 @@ namespace VL.Qt.Tests
         /// Interprets the recorded command lines like QtNative: abort at the first bad command (earlier ones stay
         /// applied), unknown id = -4, a negative Radius = -7, DESTROY removes the subtree, RESET everything (#92).
         /// </summary>
-        sealed class FakeQtNative
+        private sealed class FakeQtNative
         {
-            readonly Dictionary<uint, (uint Parent, float Radius)> _items = new();
+            private readonly Dictionary<uint, (uint Parent, float Radius)> _items = new();
             public int Applies;
 
             public int Apply(IEnumerable<string> commands)
@@ -62,7 +62,7 @@ namespace VL.Qt.Tests
                 return 0;
             }
 
-            void Remove(uint id)
+            private void Remove(uint id)
             {
                 foreach (var child in _items.Where(kv => kv.Value.Parent == id).Select(kv => kv.Key).ToList())
                     Remove(child);
@@ -74,7 +74,7 @@ namespace VL.Qt.Tests
 
             public int Count => _items.Count;
 
-            string Describe(uint parent)
+            private string Describe(uint parent)
             {
                 var kids = _items.Where(kv => kv.Value.Parent == parent).OrderBy(kv => kv.Key)
                     .Select(kv => "[" + (kv.Value.Radius == 0 && _items.Any(x => x.Value.Parent == kv.Key) ? "g" : (kv.Value.Radius / 100f).ToString(CultureInfo.InvariantCulture)) + Describe(kv.Key) + "]");
@@ -82,11 +82,11 @@ namespace VL.Qt.Tests
             }
         }
 
-        RecordingSink _sink = null!;
-        FakeQtNative _qtNative = null!;
-        Reconciler _rec = null!;
-        ResyncController _resync = null!;
-        int _lastRc;
+        private RecordingSink _sink = null!;
+        private FakeQtNative _qtNative = null!;
+        private Reconciler _rec = null!;
+        private ResyncController _resync = null!;
+        private int _lastRc;
 
         [SetUp]
         public void SetUp()
@@ -97,11 +97,11 @@ namespace VL.Qt.Tests
             _resync = new ResyncController(_rec, () => _qtNative.Apply(new[] { "RESET" }));
         }
 
-        static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
-        static Rectangle R(float radius) => new() { Size = new Vector2(1, 1), Radius = radius };
+        private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
+        private static Rectangle R(float radius) => new() { Size = new Vector2(1, 1), Radius = radius };
 
         /// <summary>One frame: node Update (reconcile), then the pump (apply + result).</summary>
-        void Frame(Element? input)
+        private void Frame(Element? input)
         {
             if (_resync.ShouldReconcile(input))
                 _rec.Update(input, Space.DIPTopLeft);

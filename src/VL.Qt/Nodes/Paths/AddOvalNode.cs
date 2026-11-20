@@ -9,10 +9,10 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "AddOval", Category = Categories.Paths)]
     public sealed class AddOvalNode
     {
-        QtPath? _input;
-        RectangleF _bounds;
-        PathDirection _direction;
-        QtPath? _output;
+        private QtPath? _input;
+        private RectangleF _bounds;
+        private PathDirection _direction;
+        private QtPath? _output;
 
         /// <summary>Returns the path with an oval that starts at the right middle of its bounds.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>

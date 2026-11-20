@@ -30,12 +30,12 @@ namespace VL.Qt.Nodes
             Element? Input, ulong FragmentShaderId, ulong VertexShaderId, Spread<Uniform>? Uniforms, bool Blending,
             Int2 MeshResolution, bool AutoSize, Sampler? InputSampler);
 
-        readonly ElementNode<ShaderEffect, Props> _node;
-        readonly ShaderSlot _fragment, _vertex;
-        readonly NodeErrors? _errors;
-        Spread<Uniform>? _checkedUniforms;
-        string _uniformProblems = string.Empty, _shownUniformProblems = string.Empty;
-        string _fragmentError = string.Empty, _vertexError = string.Empty, _elementError = string.Empty, _error = string.Empty;
+        private readonly ElementNode<ShaderEffect, Props> _node;
+        private readonly ShaderSlot _fragment, _vertex;
+        private readonly NodeErrors? _errors;
+        private Spread<Uniform>? _checkedUniforms;
+        private string _uniformProblems = string.Empty, _shownUniformProblems = string.Empty;
+        private string _fragmentError = string.Empty, _vertexError = string.Empty, _elementError = string.Empty, _error = string.Empty;
 
         public ShaderEffectNode(NodeContext nodeContext)
         {
@@ -60,7 +60,7 @@ namespace VL.Qt.Nodes
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
         }
 
-        static readonly Func<CommonInputs, Props, SinkSlot, ShaderEffect> Create = static (c, p, slot) => new ShaderEffect
+        private static readonly Func<CommonInputs, Props, SinkSlot, ShaderEffect> Create = static (c, p, slot) => new ShaderEffect
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -146,7 +146,7 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>Joins shader load errors, uniform name problems and the element error (Qt) into the Error output, one line each; recomputed only when a part changes.</summary>
-        string UpdateError()
+        private string UpdateError()
         {
             string fragment = _fragment.Error, vertex = _vertex.Error, element = _node.Error ?? string.Empty;
             if (fragment != _fragmentError || vertex != _vertexError || element != _elementError || _uniformProblems != _shownUniformProblems)
@@ -162,7 +162,7 @@ namespace VL.Qt.Nodes
             return _error;
         }
 
-        static string JoinLines(params string[] parts) => string.Join('\n', Array.FindAll(parts, static p => p.Length > 0));
+        private static string JoinLines(params string[] parts) => string.Join('\n', Array.FindAll(parts, static p => p.Length > 0));
 
         /// <summary>Name problems QtNative could not tell (it never sees them): empty or too long names, a name set twice (the last one counts).</summary>
         internal static string CheckUniforms(Spread<Uniform>? uniforms)

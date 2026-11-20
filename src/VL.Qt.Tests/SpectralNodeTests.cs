@@ -12,12 +12,12 @@ namespace VL.Qt.Tests
     /// <summary>Group/Row/Column (Spectral) (#117): one Spread input, same behavior as the pin-group variants.</summary>
     public class SpectralNodeTests
     {
-        static IDisposable NoWarning(string _) => throw new AssertionException("unexpected warning");
+        private static IDisposable NoWarning(string _) => throw new AssertionException("unexpected warning");
 
-        static readonly Rectangle A = new() { Size = new Vector2(1, 0.5f) };
-        static readonly Rectangle B = new() { Size = new Vector2(2, 1) };
+        private static readonly Rectangle A = new() { Size = new Vector2(1, 0.5f) };
+        private static readonly Rectangle B = new() { Size = new Vector2(2, 1) };
 
-        static Spread<IElement?> S(params IElement?[] e) => Spread.Create(e);
+        private static Spread<IElement?> S(params IElement?[] e) => Spread.Create(e);
 
         [Test]
         public void Group_SpreadChildren_NullsSkipped_SameInstanceWhenUnchanged()

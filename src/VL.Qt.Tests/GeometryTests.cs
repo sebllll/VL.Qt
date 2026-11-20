@@ -7,24 +7,24 @@ namespace VL.Qt.Tests
 {
     public class GeometryTests
     {
-        const float Eps = 1e-3f;
+        private const float Eps = 1e-3f;
 
         // 2 x 1 units → local item 200 x 100 DIP.
-        static readonly Vector2 Size = new Vector2(2f, 1f);
+        private static readonly Vector2 Size = new Vector2(2f, 1f);
 
-        static Vector2 Apply(in Matrix m, float x, float y)
+        private static Vector2 Apply(in Matrix m, float x, float y)
         {
             var r = Vector3.TransformCoordinate(new Vector3(x, y, 0), m);
             return new Vector2(r.X, r.Y);
         }
 
-        static void AssertPoint(Vector2 actual, float x, float y)
+        private static void AssertPoint(Vector2 actual, float x, float y)
         {
             Assert.That(actual.X, Is.EqualTo(x).Within(Eps), "x");
             Assert.That(actual.Y, Is.EqualTo(y).Within(Eps), "y");
         }
 
-        static void AssertMatrix(in Matrix actual, in Matrix expected)
+        private static void AssertMatrix(in Matrix actual, in Matrix expected)
         {
             var a = actual.ToArray();
             var e = expected.ToArray();

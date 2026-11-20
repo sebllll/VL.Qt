@@ -41,29 +41,29 @@ namespace VL.Qt.Paths
     {
         // A node is either one segment (_verb + points) with a predecessor, or a join (_appended != null) of
         // _previous and _appended. The Empty node has neither (_verb = byte.MaxValue).
-        readonly QtPath? _previous;
-        readonly QtPath? _appended;
-        readonly byte _verb;
-        readonly float _x0, _y0, _x1, _y1, _x2, _y2;
-        readonly int _verbCount;
-        readonly int _pointCount;
+        private readonly QtPath? _previous;
+        private readonly QtPath? _appended;
+        private readonly byte _verb;
+        private readonly float _x0, _y0, _x1, _y1, _x2, _y2;
+        private readonly int _verbCount;
+        private readonly int _pointCount;
         // Current point (end of the last segment) and start of the current contour (target of Close), kept per node
         // so that relative nodes read them in O(1).
-        readonly float _lastX, _lastY, _startX, _startY;
+        private readonly float _lastX, _lastY, _startX, _startY;
 
         // Written by the first reader. Two threads may both compute it and the results are identical, so no lock is
         // needed: Interlocked.CompareExchange publishes exactly one instance and every reader gets that one.
-        FlatPath? _flat;
+        private FlatPath? _flat;
 
         /// <summary>The path without segments.</summary>
         public static QtPath Empty { get; } = new QtPath();
 
-        QtPath()
+        private QtPath()
         {
             _verb = byte.MaxValue;
         }
 
-        QtPath(QtPath previous, byte verb, float x0, float y0, float x1, float y1, float x2, float y2)
+        private QtPath(QtPath previous, byte verb, float x0, float y0, float x1, float y1, float x2, float y2)
         {
             _previous = previous;
             _verb = verb;
@@ -102,7 +102,7 @@ namespace VL.Qt.Paths
             }
         }
 
-        QtPath(QtPath previous, QtPath appended)
+        private QtPath(QtPath previous, QtPath appended)
         {
             _previous = previous;
             _appended = appended;
@@ -115,7 +115,7 @@ namespace VL.Qt.Paths
             _startY = appended._startY;
         }
 
-        static int PointCountOf(byte verb) => verb switch
+        private static int PointCountOf(byte verb) => verb switch
         {
             Protocol.Verb.Move => 1,
             Protocol.Verb.Line => 1,
@@ -167,7 +167,7 @@ namespace VL.Qt.Paths
             return Interlocked.CompareExchange(ref _flat, flat, null) ?? flat;
         }
 
-        FlatPath Compute()
+        private FlatPath Compute()
         {
             if (_verbCount == 0)
                 return FlatPath.Empty;

@@ -18,13 +18,13 @@ public static class PerfOverlayTest
 {
     // Test exports (vlqt.h, TEST ONLY); declared here so VL.Qt's Native.cs stays untouched.
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    static extern int vlqt_test_perf_spike(IntPtr w, int phase, float ms);
+    private static extern int vlqt_test_perf_spike(IntPtr w, int phase, float ms);
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    static extern int vlqt_test_send_key(IntPtr w, int key, int modifiers);
+    private static extern int vlqt_test_send_key(IntPtr w, int key, int modifiers);
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    static extern int vlqt_test_perf_stats_text(IntPtr w, byte[] buf, int len);
+    private static extern int vlqt_test_perf_stats_text(IntPtr w, byte[] buf, int len);
 
-    static string StatsText(IntPtr w)
+    private static string StatsText(IntPtr w)
     {
         var buf = new byte[4096];
         var n = vlqt_test_perf_stats_text(w, buf, buf.Length);
@@ -32,7 +32,7 @@ public static class PerfOverlayTest
     }
 
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
+    private static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
 
     // #246: plain text of the Scene/System page, single spaces (columns collapsed) for robust Contains checks.
     internal static string PageText(IntPtr w, int page)
@@ -44,27 +44,27 @@ public static class PerfOverlayTest
         return System.Text.RegularExpressions.Regex.Replace(text, " +", " ");
     }
 
-    static string Line(string text, string label) => text.Split('\n').FirstOrDefault(l => l.StartsWith(label))?.Trim() ?? "(missing)";
+    private static string Line(string text, string label) => text.Split('\n').FirstOrDefault(l => l.StartsWith(label))?.Trim() ?? "(missing)";
     // Indented rows (the summary's phases): the page text collapsed the spaces, so StartsWith does not find them.
-    static string LineWith(string text, string part) => text.Split('\n').FirstOrDefault(l => l.Contains(part))?.Trim() ?? "(missing)";
+    private static string LineWith(string text, string part) => text.Split('\n').FirstOrDefault(l => l.Contains(part))?.Trim() ?? "(missing)";
 
-    const int KeyF5 = 0x01000034, KeyF6 = 0x01000035, KeyF7 = 0x01000036, Shift = 0x02000000;
-    const int Stats = 2, Freeze = 8, PageShift = 4;
+    private const int KeyF5 = 0x01000034, KeyF6 = 0x01000035, KeyF7 = 0x01000036, Shift = 0x02000000;
+    private const int Stats = 2, Freeze = 8, PageShift = 4;
     internal const int ResourcesPage = 4;
-    const int Summary = 0, Timeline = 1, Scene = 2, SystemPage = 3;
-    const int PhaseSync = 1, PhaseRender = 2, PhaseVsync = 4;
+    private const int Summary = 0, Timeline = 1, Scene = 2, SystemPage = 3;
+    private const int PhaseSync = 1, PhaseRender = 2, PhaseVsync = 4;
 
-    static int Page(IntPtr w) => ((Native.vlqt_window_get_overlay(w) >> PageShift) & 7) - 1;
-    static bool Visible(IntPtr w) => (Native.vlqt_window_get_overlay(w) & Stats) != 0;
+    private static int Page(IntPtr w) => ((Native.vlqt_window_get_overlay(w) >> PageShift) & 7) - 1;
+    private static bool Visible(IntPtr w) => (Native.vlqt_window_get_overlay(w) & Stats) != 0;
 
     // #379: timing checks measure one pump / one grab on a machine that runs other work (an unrelated 10 ms render or a
     // stalled present lands in the same sample). Retry a few times; a real regression is systematic and fails every try.
-    const int Attempts = 3;
+    private const int Attempts = 3;
 
-    static void Retry(Scenario s, string what, Func<(bool ok, string detail)> once) => Retry(s.Check, what, once);
+    private static void Retry(Scenario s, string what, Func<(bool ok, string detail)> once) => Retry(s.Check, what, once);
 
     // The report goes through a delegate where the caller turns a failure into a SKIP (host too loaded).
-    static void Retry(Action<bool, string> check, string what, Func<(bool ok, string detail)> once)
+    private static void Retry(Action<bool, string> check, string what, Func<(bool ok, string detail)> once)
     {
         (bool ok, string detail) r = default;
         int n = 0;
@@ -75,7 +75,7 @@ public static class PerfOverlayTest
     // #90: the timeline legend and the summary of a window with VSync (swap interval 1) show the segment "vsync wait" (the
     // wait in QRhi::beginFrame) next to a plain "present", a spike there lands in vsync wait, and the System page says
     // VSync on / allow tearing no.
-    static void VSyncWindowLabels(Scenario s)
+    private static void VSyncWindowLabels(Scenario s)
     {
         var v = Native.vlqt_window_create_at(float.NaN, float.NaN, 640, 480, "VL.Qt perf overlay VSync", 1);
         s.Check(v != IntPtr.Zero, "perfoverlay: VSync window created " + (v == IntPtr.Zero ? Native.LastError() : ""));
@@ -139,7 +139,7 @@ public static class PerfOverlayTest
     [Test, Category("perfoverlay")]
     public static void PerfOverlay() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         using var timer = PumpTest.HighResTimer(); // ~60 Hz pacing with Sleep(15)
         var w = Native.vlqt_window_create(800, 600, "VL.Qt perf overlay");
@@ -422,7 +422,7 @@ public static class PerfOverlayTest
     [Test, Category("resoverlay")]
     public static void ResourceOverlay() => Scenario.Run(RunResources);
 
-    static void RunResources(Scenario s)
+    private static void RunResources(Scenario s)
     {
         const int Mb = 1 << 20;
         var w = Native.vlqt_window_create(800, 600, "VL.Qt resources overlay");
@@ -514,7 +514,7 @@ public static class PerfOverlayTest
     [Test, Explicit("measurement, about a minute"), Category("overlay-cost")]
     public static void OverlayCost() => Scenario.Run(s => s.Check(RunCost(s, SmokeParameters.OverlayCostRounds) == 0, "overlay-cost"));
 
-    static int RunCost(Scenario s, int rounds = 8)
+    private static int RunCost(Scenario s, int rounds = 8)
     {
         using var timer = PumpTest.HighResTimer();
         var w = Native.vlqt_window_create(800, 600, "VL.Qt overlay cost");

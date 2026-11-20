@@ -81,7 +81,7 @@ The reference is the code written by the vvvv team in [VL.StandardLibs](https://
 - Node classes end in `Node`, the vvvv name comes from the attribute (`[ProcessNode(Name = "...")]`). File name = main type.
 
 **Nodes**
-- A node is a `[ProcessNode]` class with a constructor taking a hidden `NodeContext` (`[Pin(Visibility = PinVisibility.Hidden)]`) and one `Update(...)` method; it implements `IDisposable`.
+- A node is a `[ProcessNode]` class with a constructor taking a `NodeContext` (vvvv hides it by its type, so no `Hidden` attribute) and one `Update(...)` method; it implements `IDisposable`.
 - Outputs via `[return: Pin(Name = "Output")]` or `out` parameters, no tuples. Optional pins with `[Pin(Visibility = PinVisibility.Optional)]`.
 - Set every default explicitly, as a C# parameter default or `[DefaultValue]`; for structs use the type/string form, e.g. `[DefaultValue(typeof(Int2), "1920, 1080")]`. A pin without one gets the type's default, which is rarely what the help patch needs.
 - Pin names come from the C# names. Add `[Pin(Name = "...")]` where that would get the spelling, spacing or an acronym wrong, and when renaming a C# parameter of an existing pin (a changed pin name breaks patches).

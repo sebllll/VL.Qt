@@ -23,18 +23,18 @@ namespace VL.Qt.Stride
     [SupportedOSPlatform("windows")]
     internal sealed class QtTextureRenderer : IDisposable
     {
-        readonly VLGame _game;
-        readonly IFrameClock _clock;
-        readonly QtApp _app;
-        readonly ILogger _logger;
-        readonly DrawStartSystem _system;
-        readonly IGraphicsDeviceService? _deviceService;
-        readonly List<SharedTextureScene> _scheduled = new();
+        private readonly VLGame _game;
+        private readonly IFrameClock _clock;
+        private readonly QtApp _app;
+        private readonly ILogger _logger;
+        private readonly DrawStartSystem _system;
+        private readonly IGraphicsDeviceService? _deviceService;
+        private readonly List<SharedTextureScene> _scheduled = new();
         // Renderers of one batch: reused, so a frame allocates nothing.
-        OffscreenRenderer[] _batch = new OffscreenRenderer[8];
-        bool _disposed;
+        private OffscreenRenderer[] _batch = new OffscreenRenderer[8];
+        private bool _disposed;
 
-        QtTextureRenderer(AppHost appHost)
+        private QtTextureRenderer(AppHost appHost)
         {
             _game = appHost.Services.GetService(typeof(VLGame)) as VLGame
                 ?? throw new InvalidOperationException("VL.Qt.Stride: the app host has no VLGame (VL.Stride not loaded)");
@@ -81,9 +81,9 @@ namespace VL.Qt.Stride
         /// <summary>Removes <paramref name="scene"/> from the next batch (scene disposed).</summary>
         public void Unschedule(SharedTextureScene scene) => _scheduled.Remove(scene);
 
-        void OnDeviceGone(object? sender, EventArgs e) => StrideDeviceGone?.Invoke();
+        private void OnDeviceGone(object? sender, EventArgs e) => StrideDeviceGone?.Invoke();
 
-        void OnDrawStarted()
+        private void OnDrawStarted()
         {
             // Task 3.4 (frame order): the Qt pump (GetFrameFinished) has already run in this frame if the driver time it set
             // is not behind this frame's clock. Expected: false (draw start comes first).
@@ -124,7 +124,7 @@ namespace VL.Qt.Stride
         // The process-wide animation driver must never run backwards (QtApp.PumpFrame, #314): the frame time of this
         // app, or the time the pump already set if that is later (pump offset after an app restart). With the pump at
         // GetFrameFinished after the draw start this is the current frame's time; the order is task 3.4 of #116.
-        double DriverSeconds()
+        private double DriverSeconds()
         {
             var seconds = _clock.Time.Seconds;
             var driver = _app.DriverSeconds;
@@ -151,9 +151,9 @@ namespace VL.Qt.Stride
         }
 
         // Draws first (lowest DrawOrder) and calls back; the rendering itself is in QtTextureRenderer.
-        sealed class DrawStartSystem : GameSystemBase
+        private sealed class DrawStartSystem : GameSystemBase
         {
-            readonly Action _onDraw;
+            private readonly Action _onDraw;
 
             public DrawStartSystem(IServiceRegistry services, Action onDraw)
                 : base(services)

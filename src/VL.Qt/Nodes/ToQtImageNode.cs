@@ -13,12 +13,12 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "ToQtImage", Category = Categories.Qt)]
     public sealed class ToQtImageNode : IDisposable
     {
-        readonly ResourceClient _client;
-        readonly ImageNodeReport _report;
-        IImage? _last;
-        ImageResource? _resource;
-        QtImage? _image;
-        string _error = string.Empty;
+        private readonly ResourceClient _client;
+        private readonly ImageNodeReport _report;
+        private IImage? _last;
+        private ImageResource? _resource;
+        private QtImage? _image;
+        private string _error = string.Empty;
 
         public ToQtImageNode(NodeContext nodeContext)
         {
@@ -58,7 +58,7 @@ namespace VL.Qt.Nodes
             return _image;
         }
 
-        void Upload(IImage input)
+        private void Upload(IImage input)
         {
             try
             {

@@ -12,7 +12,7 @@ namespace VL.Qt.Tests
     /// <summary>SET_EFFECT_CHAIN (#489, plan effects/08 task 5): what the reconciler sends for the Effect chain of an element.</summary>
     public class EffectChainReconcilerTests
     {
-        sealed class TestShaderLink : ShaderLink
+        private sealed class TestShaderLink : ShaderLink
         {
             public TestShaderLink(Effect? previous, params Uniform[] uniforms)
                 : base(previous, Protocol.EffectTemplate.Single, ImmutableArray.Create(7UL), uniforms.ToSpread(), new RectangleF(1, 2, 3, 4), 10)
@@ -20,9 +20,9 @@ namespace VL.Qt.Tests
             }
         }
 
-        RecordingSink _sink = null!;
-        IdAllocator _ids = null!;
-        Reconciler _rec = null!;
+        private RecordingSink _sink = null!;
+        private IdAllocator _ids = null!;
+        private Reconciler _rec = null!;
 
         [SetUp]
         public void SetUp()
@@ -32,26 +32,26 @@ namespace VL.Qt.Tests
             _rec = new Reconciler(_sink, _ids, new SceneRegistry());
         }
 
-        void Frame(Element? root)
+        private void Frame(Element? root)
         {
             _sink.Clear();
             _rec.Update(root, Space.DIPTopLeft);
         }
 
-        string[] Chains => _sink.OfOp("CHAIN").ToArray();
+        private string[] Chains => _sink.OfOp("CHAIN").ToArray();
 
         /// <summary>The links of the (only) chain of the frame: "multi ...", "shader ...".</summary>
-        string[] Links()
+        private string[] Links()
         {
             Assert.That(Chains, Has.Length.EqualTo(1), _sink.ToString());
             return Chains[0].Split(" | ").Skip(1).ToArray();
         }
 
-        int IndexOf(string prefix) => _sink.Commands.FindIndex(c => c.StartsWith(prefix));
+        private int IndexOf(string prefix) => _sink.Commands.FindIndex(c => c.StartsWith(prefix));
 
-        static BlurEffect Blur(Effect? previous = null) => new(previous, 0.5f, 32, 0);
-        static DropShadowEffect Shadow(Effect? previous = null) => new(previous, Color4.Black, new Vector2(0.1f, 0.2f), 1, 1);
-        static MaskEffect Mask(Effect? previous, Element source) => new(previous, source, 0, 0, 1, 0, false);
+        private static BlurEffect Blur(Effect? previous = null) => new(previous, 0.5f, 32, 0);
+        private static DropShadowEffect Shadow(Effect? previous = null) => new(previous, Color4.Black, new Vector2(0.1f, 0.2f), 1, 1);
+        private static MaskEffect Mask(Effect? previous, Element source) => new(previous, source, 0, 0, 1, 0, false);
 
         [Test]
         public void Order_StartOfChainFirst()

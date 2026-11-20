@@ -21,7 +21,7 @@ public static partial class InteractionTest
     [Test, Category("interaction-chain")]
     public static void Chain() => Scenario.Run(RunChainAndElements);
 
-    static void RunChainAndElements(Scenario s)
+    private static void RunChainAndElements(Scenario s)
     {
         RunChain(s);
         RunElements(s);
@@ -51,11 +51,11 @@ public static partial class InteractionTest
     [Test, Category("pinch-node")]
     public static void PinchNode() => Scenario.Run(RunPinchNode);
 
-    sealed class NoMessage : IDisposable { public void Dispose() { } }
+    private sealed class NoMessage : IDisposable { public void Dispose() { } }
 
     // #319, scenario "interaction-chain": node level Hover -> Rectangle (Interaction pin) ->
     // Reconciler (handler objects) -> QtNative -> SinkRegistry.Dispatch -> pull in Hover.Update -> channels.
-    static void RunChain(Scenario s)
+    private static void RunChain(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt interaction chain test");
         s.Check(w != IntPtr.Zero, "chain: window_create");
@@ -147,7 +147,7 @@ public static partial class InteractionTest
     }
 
     // #319: the Interaction pin works at Text, Group and Button as well (Hover -> Is Hovered).
-    static void RunElements(Scenario s)
+    private static void RunElements(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt interaction elements test");
         s.Check(w != IntPtr.Zero, "elements: window_create");

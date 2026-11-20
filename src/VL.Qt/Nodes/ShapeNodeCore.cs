@@ -86,16 +86,16 @@ namespace VL.Qt.Nodes
                 ? null
                 : $"Path: {verbs} verbs and {points} points do not fit one command; nothing is drawn.";
 
-        readonly ElementNode<Shape, Props> _node;
-        readonly Func<string, IDisposable> _addWarning;
-        string? _pointsWarning;
-        IDisposable? _pointsWarningMessage;
-        int _warnedCount;
-        string? _pathWarning;
-        IDisposable? _pathWarningMessage;
-        QtPath? _checkedPath;
-        Spread<Vector2> _line = Spread<Vector2>.Empty;
-        Vector2 _lineFrom, _lineTo;
+        private readonly ElementNode<Shape, Props> _node;
+        private readonly Func<string, IDisposable> _addWarning;
+        private string? _pointsWarning;
+        private IDisposable? _pointsWarningMessage;
+        private int _warnedCount;
+        private string? _pathWarning;
+        private IDisposable? _pathWarningMessage;
+        private QtPath? _checkedPath;
+        private Spread<Vector2> _line = Spread<Vector2>.Empty;
+        private Vector2 _lineFrom, _lineTo;
 
         public ShapeNodeCore(NodeContext nodeContext)
         {
@@ -163,7 +163,7 @@ namespace VL.Qt.Nodes
             return element;
         }
 
-        void UpdatePointsWarning(int count)
+        private void UpdatePointsWarning(int count)
         {
             // The text is only formatted when the count changes.
             if (count == _warnedCount)
@@ -177,7 +177,7 @@ namespace VL.Qt.Nodes
             _pointsWarning = warning;
         }
 
-        void UpdatePathWarning(string? warning)
+        private void UpdatePathWarning(string? warning)
         {
             if (warning == _pathWarning)
                 return;
@@ -200,7 +200,7 @@ namespace VL.Qt.Nodes
         }
 
         // Like Shape.ExtentOf, limited to the points that are drawn.
-        static Vector2 Extent(Spread<Vector2> points)
+        private static Vector2 Extent(Spread<Vector2> points)
         {
             if (points.Count <= MaxPoints)
                 return Shape.ExtentOf(points);

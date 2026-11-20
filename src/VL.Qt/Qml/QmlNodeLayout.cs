@@ -95,11 +95,11 @@ namespace VL.Qt.Qml
             "Output", "Measured Size", "Scene Bounds", "Error");
 
         // Help texts like QmlElementNode.Update.
-        static readonly IVLPinDescription s_propertiesInput = new ShaderPinDescription(PropertiesPinName, typeof(Dictionary<string, object>), null,
+        private static readonly IVLPinDescription s_propertiesInput = new ShaderPinDescription(PropertiesPinName, typeof(Dictionary<string, object>), null,
             "Plan B for properties of the QML root that get no pin (alias, var, list, object types): values by name, as at QmlElement. A pin of the node wins over an entry with the same name.",
             isVisible: false);
 
-        static readonly IVLPinDescription[] s_commonInputs =
+        private static readonly IVLPinDescription[] s_commonInputs =
         {
             new ShaderPinDescription("Size", typeof(Vector2), new Vector2(1f, 1f), "Size of the element (width, height), only with Auto Size off: it sets width and height of the QML root. The position comes from Transform and Anchor."),
             new ShaderPinDescription("Auto Size", typeof(bool), true, "On: the element takes the implicit size (implicitWidth, implicitHeight) of the QML root. Off: Size counts.", isVisible: false),
@@ -112,9 +112,9 @@ namespace VL.Qt.Qml
             new ShaderPinDescription("Effect", typeof(Effect), null, "Chain of effect nodes (Blur, DropShadow, …), drawn as one effect layer on the element.", isVisible: false),
         };
 
-        static readonly IVLPinDescription s_output = new ShaderPinDescription("Output", typeof(Element), null, null);
+        private static readonly IVLPinDescription s_output = new ShaderPinDescription("Output", typeof(Element), null, null);
 
-        static readonly IVLPinDescription[] s_trailingOutputs =
+        private static readonly IVLPinDescription[] s_trailingOutputs =
         {
             new ShaderPinDescription("Measured Size", typeof(Vector2), Vector2.Zero, "Implicit size of the QML root reported by Qt, in units (last frame).", isVisible: false),
             new ShaderPinDescription("Scene Bounds", typeof(RectangleF), RectangleF.Empty, "Bounds in window coordinates after layout and transform, in units (last frame).", isVisible: false),
@@ -249,10 +249,10 @@ namespace VL.Qt.Qml
                 messages.MoveToImmutable(), declarations.Head.Summary);
         }
 
-        static string PinSummary(QmlPropertyDecl property)
+        private static string PinSummary(QmlPropertyDecl property)
             => property.Summary ?? $"{(property.IsReadOnly ? "readonly " : string.Empty)}{property.QmlType} property '{property.Name}' of the QML root.";
 
-        static string SignalSummary(QmlSignalDecl signal)
+        private static string SignalSummary(QmlSignalDecl signal)
         {
             var help = signal.Shape switch
             {

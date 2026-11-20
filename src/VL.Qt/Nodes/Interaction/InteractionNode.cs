@@ -28,17 +28,17 @@ namespace VL.Qt.Nodes
         /// <summary>Author of every value written by Qt (<see cref="IChannel{T}.SetValueAndAuthor"/>).</summary>
         public const string Author = "Qt";
 
-        const string errorPhase = "Qt";
+        private const string errorPhase = "Qt";
 
-        readonly Func<string, IDisposable> _addWarning;
-        readonly NodeErrors? _errors;
-        readonly Func<Interaction?, TProps, SinkSlot, Interaction> _create;
-        Interaction? _last;
-        Interaction? _input;
-        TProps _props;
-        string? _warning;
-        IDisposable? _warningMessage;
-        string? _error;
+        private readonly Func<string, IDisposable> _addWarning;
+        private readonly NodeErrors? _errors;
+        private readonly Func<Interaction?, TProps, SinkSlot, Interaction> _create;
+        private Interaction? _last;
+        private Interaction? _input;
+        private TProps _props;
+        private string? _warning;
+        private IDisposable? _warningMessage;
+        private string? _error;
 
         /// <param name="nodeContext">Context of the public node (warning and error are shown there).</param>
         /// <param name="create">Builds a link; use a static lambda (no capture → no allocation).</param>
@@ -116,7 +116,7 @@ namespace VL.Qt.Nodes
                 channel.SetValueAndAuthor(Unit.Default, Author);
         }
 
-        void UpdateWarning()
+        private void UpdateWarning()
         {
             var warning = Sink.Warning;
             if (ReferenceEquals(warning, _warning) || warning == _warning)
@@ -126,7 +126,7 @@ namespace VL.Qt.Nodes
             _warning = warning;
         }
 
-        void UpdateError()
+        private void UpdateError()
         {
             var error = Sink.Error;
             if (ReferenceEquals(error, _error) || error == _error)

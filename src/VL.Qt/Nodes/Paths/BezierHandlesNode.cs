@@ -11,13 +11,13 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "Bezier (Handles)", Category = Categories.Paths)]
     public sealed class BezierHandlesNode
     {
-        QtPath? _input;
-        Spread<Vector2>? _anchors;
-        Spread<Vector2>? _inHandles;
-        Spread<Vector2>? _outHandles;
-        Spread<HandleMode>? _handleModes;
-        bool _closed;
-        QtPath? _output;
+        private QtPath? _input;
+        private Spread<Vector2>? _anchors;
+        private Spread<Vector2>? _inHandles;
+        private Spread<Vector2>? _outHandles;
+        private Spread<HandleMode>? _handleModes;
+        private bool _closed;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a curve through the anchors, bent by the handles.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -59,7 +59,7 @@ namespace VL.Qt.Nodes.Paths
             return _output;
         }
 
-        static bool SameModes(Spread<HandleMode> a, Spread<HandleMode>? b)
+        private static bool SameModes(Spread<HandleMode> a, Spread<HandleMode>? b)
         {
             if (ReferenceEquals(a, b))
                 return true;

@@ -10,7 +10,7 @@ namespace VL.Qt
     internal static class QmlPropertyWriter
     {
         /// <summary>Estimated size at which a command is closed and the next one started (well below the 64 KB limit).</summary>
-        const int maxChunkBytes = 32 * 1024;
+        private const int maxChunkBytes = 32 * 1024;
 
         /// <summary>
         /// Sends the entries of <paramref name="next"/> that differ from <paramref name="previous"/> (null = send all).
@@ -45,7 +45,7 @@ namespace VL.Qt
             return sent;
         }
 
-        static int EntrySize(string name, in Elements.QmlValue v)
+        private static int EntrySize(string name, in Elements.QmlValue v)
             => 8 + Encoding.UTF8.GetByteCount(name) + 16 + (v.Text is null ? 0 : 4 + Encoding.UTF8.GetByteCount(v.Text));
 
         internal static void WriteEntry(ICommandSink sink, string name, in Elements.QmlValue v)

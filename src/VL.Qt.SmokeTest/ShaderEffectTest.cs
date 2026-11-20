@@ -18,20 +18,20 @@ public static class ShaderEffectTest
     public static void ShaderEffect() => Scenario.Run(Run);
 
     // Case 1: wave
-    const uint Wave = 10, WaveIn = 11;
+    private const uint Wave = 10, WaveIn = 11;
     // Case 2: gradient (generative), also the target of the uniform errors
-    const uint Grad = 20;
+    private const uint Grad = 20;
     // Case 3: fixture with texture uniform (element) and image uniform
-    const uint DualTex = 30, DualTexIn = 31, DualTexOv = 32, DualImg = 33, DualImgIn = 34;
+    private const uint DualTex = 30, DualTexIn = 31, DualTexOv = 32, DualImg = 33, DualImgIn = 34;
     // Mesh resolution
-    const uint Mesh = 40, MeshIn = 41;
+    private const uint Mesh = 40, MeshIn = 41;
     // Case 4: broken / missing shader
-    const uint Broken = 50, BrokenIn = 51, NoShader = 52, NoShaderIn = 53;
-    const uint HWave = 1, HGrad = 2, HBroken = 3;
+    private const uint Broken = 50, BrokenIn = 51, NoShader = 52, NoShaderIn = 53;
+    private const uint HWave = 1, HGrad = 2, HBroken = 3;
 
-    static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
+    private static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
-    static string? FindFile(params string[] rel)
+    private static string? FindFile(params string[] rel)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
@@ -42,7 +42,7 @@ public static class ShaderEffectTest
     }
 
     // Number of sampled pixels (step 3, logical coordinates) in the region whose color differs by more than 40 in any channel.
-    static int Diff(Bitmap a, Bitmap b, int x0, int y0, int x1, int y1)
+    private static int Diff(Bitmap a, Bitmap b, int x0, int y0, int x1, int y1)
     {
         int n = 0;
         for (int y = y0; y < y1; y += 3)
@@ -54,9 +54,9 @@ public static class ShaderEffectTest
         return n;
     }
 
-    sealed record Res(ushort Ev, ulong Id, byte[] Payload);
+    private sealed record Res(ushort Ev, ulong Id, byte[] Payload);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         var stripes = FindFile("src", "VL.Qt.SmokeTest", "assets", "stripes_rgb_30x10.png");

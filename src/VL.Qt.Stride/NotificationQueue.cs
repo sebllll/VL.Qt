@@ -11,12 +11,12 @@ namespace VL.Qt.Stride
     /// </summary>
     internal sealed class NotificationQueue : IObserver<INotification>, IDisposable
     {
-        readonly object syncRoot = new();
-        readonly Action<INotification> _sink;
-        List<INotification> _pending = new();
-        List<INotification> _draining = new();
-        IObservable<INotification>? _source;
-        IDisposable? _subscription;
+        private readonly object syncRoot = new();
+        private readonly Action<INotification> _sink;
+        private List<INotification> _pending = new();
+        private List<INotification> _draining = new();
+        private IObservable<INotification>? _source;
+        private IDisposable? _subscription;
 
         /// <param name="sink">Receives the notifications in <see cref="Drain"/>, on the main thread.</param>
         public NotificationQueue(Action<INotification> sink)

@@ -14,11 +14,11 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "ArcTo", Category = Categories.Paths)]
     public sealed class ArcToTangentNode
     {
-        QtPath? _input;
-        Vector2 _corner;
-        Vector2 _destinationPoint;
-        float _cornerRadius;
-        QtPath? _output;
+        private QtPath? _input;
+        private Vector2 _corner;
+        private Vector2 _destinationPoint;
+        private float _cornerRadius;
+        private QtPath? _output;
 
         /// <summary>Returns the path with a rounded corner added: a line from the last point towards the corner, rounded by a circle that touches the line to the destination point.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>
@@ -50,12 +50,12 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "ArcTo", Category = Categories.Paths)]
     public sealed class ArcToOvalNode
     {
-        QtPath? _input;
-        RectangleF _bounds;
-        float _startAngle;
-        float _sweepAngle;
-        bool _forceMoveTo;
-        QtPath? _output;
+        private QtPath? _input;
+        private RectangleF _bounds;
+        private float _startAngle;
+        private float _sweepAngle;
+        private bool _forceMoveTo;
+        private QtPath? _output;
 
         /// <summary>Returns the path with an arc of the oval added. A line connects the last point to the start of the arc, unless a new contour is forced.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -90,13 +90,13 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "ArcTo", Category = Categories.Paths)]
     public sealed class ArcToSvgNode
     {
-        QtPath? _input;
-        Vector2 _radius;
-        float _xAxisRotate;
-        bool _largeArc;
-        bool _sweep;
-        Vector2 _destinationPoint;
-        QtPath? _output;
+        private QtPath? _input;
+        private Vector2 _radius;
+        private float _xAxisRotate;
+        private bool _largeArc;
+        private bool _sweep;
+        private Vector2 _destinationPoint;
+        private QtPath? _output;
 
         /// <summary>Returns the path with an elliptical arc to the destination point added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>
@@ -134,13 +134,13 @@ namespace VL.Qt.Nodes.Paths
     [ProcessNode(Name = "ArcTo (Relative)", Category = Categories.Paths)]
     public sealed class ArcToRelativeNode
     {
-        QtPath? _input;
-        Vector2 _radius;
-        float _xAxisRotate;
-        bool _largeArc;
-        bool _sweep;
-        Vector2 _destinationPoint;
-        QtPath? _output;
+        private QtPath? _input;
+        private Vector2 _radius;
+        private float _xAxisRotate;
+        private bool _largeArc;
+        private bool _sweep;
+        private Vector2 _destinationPoint;
+        private QtPath? _output;
 
         /// <summary>Returns the path with an elliptical arc to the last point plus the offset added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>

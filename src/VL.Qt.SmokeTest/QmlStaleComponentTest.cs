@@ -19,9 +19,9 @@ public static class QmlStaleComponentTest
     [Ignore("QML-06: a new item with reload 0 gets the cached component of a file that changed on disk (fails: item 2 is red, extra unknown)")]
     public static void QmlStaleComponent() => Scenario.Run(Run);
 
-    const uint Q1 = 10, Q2 = 20, H1 = 110, H2 = 120;
+    private const uint Q1 = 10, Q2 = 20, H1 = 110, H2 = 120;
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var dir = Path.Combine(s.OutDir, "qml-stale");
         if (Directory.Exists(dir))

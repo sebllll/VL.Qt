@@ -18,9 +18,9 @@ public static class AnimationScrubTest
     [Ignore("NAPP-10: a backward jump of vlqt_driver_advance does not rewind QML animations, they keep their value and go on forward from it (fails: v 20.17 after the jump back to 1 s, 25.17 at 1.5 s)")]
     public static void AnimationScrub() => Scenario.Run(Run);
 
-    const uint Q = 10, HQ = 110;
+    private const uint Q = 10, HQ = 110;
 
-    const string Qml =
+    private const string Qml =
         "import QtQuick\n\n" +
         "Rectangle {\n" +
         "    implicitWidth: 100\n" +
@@ -30,7 +30,7 @@ public static class AnimationScrubTest
         "    NumberAnimation on v { from: 0; to: 100; duration: 10000 }\n" +
         "}\n";
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var dir = Path.Combine(s.OutDir, "animation-scrub");
         Directory.CreateDirectory(dir);

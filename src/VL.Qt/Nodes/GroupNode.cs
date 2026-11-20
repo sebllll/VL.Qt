@@ -23,8 +23,8 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(ImmutableArray<Element> Children, bool AutoSize, Style? Style);
 
-        readonly ElementNode<Group, Props> _node;
-        readonly ChildrenInput _children = new();
+        private readonly ElementNode<Group, Props> _node;
+        private readonly ChildrenInput _children = new();
 
         public GroupNode(NodeContext nodeContext)
             => _node = new ElementNode<Group, Props>(nodeContext, Create);
@@ -33,7 +33,7 @@ namespace VL.Qt.Nodes
         internal GroupNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Group, Props>(addWarning, Create);
 
-        static readonly Func<CommonInputs, Props, SinkSlot, Group> Create = static (c, p, slot) => new Group
+        private static readonly Func<CommonInputs, Props, SinkSlot, Group> Create = static (c, p, slot) => new Group
             {
                 Size = c.Size,
                 Transform = c.Transform,

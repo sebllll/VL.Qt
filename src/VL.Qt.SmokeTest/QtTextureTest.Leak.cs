@@ -11,26 +11,26 @@ using VL.Qt;
 /// resources of the scenes until they are destroyed, so it is compared after the destroy), the process handle count does not grow beyond a small
 /// tolerance, and the live D3D objects of QtNative's device did not grow (debug layer, where the SDK layers are installed).
 /// </summary>
-static partial class QtTextureTest
+public static partial class QtTextureTest
 {
     // 1000 rounds take about 20 s on a development machine; a slow machine stops at the time limit (at least minLeakRounds).
-    const int leakRounds = 1000;
-    const int minLeakRounds = 100;
-    const double leakSeconds = 50;
+    private const int leakRounds = 1000;
+    private const int minLeakRounds = 100;
+    private const double leakSeconds = 50;
     // Handles the count may grow by between two measurements (lazily created process state, e.g. of the driver, or handles the finalizer closes late);
     // a drop is no leak (other parts of the process close handles meanwhile). A leak per round grows by hundreds, so the tolerance only absorbs one-offs.
-    const int handleTolerance = 4;
+    private const int handleTolerance = 4;
     // Rounds after the baseline at which the handle count is measured again: the check compares the rest of the run with this mark (slope),
     // so a one-off that happens early does not count.
-    const int handleMarkRounds = 100;
+    private const int handleMarkRounds = 100;
     // Live D3D objects of one type (and the device's own reference count) that may differ.
-    const int liveTolerance = 0;
+    private const int liveTolerance = 0;
 
     // Qt's Windows event dispatcher runs short timers on a multimedia timer (timeSetEvent). winmm creates its timer thread
     // (a thread, an I/O completion port, a waitable timer, events: about 8 handles) once per process at the first such timer and
     // keeps it. Qt starts one at a random point during the device losses, which pushed the count past the tolerance once per
     // process (handle types per device loss: one step, then flat). Creating the thread here keeps it out of the baseline.
-    static void WarmUpMultimediaTimer()
+    private static void WarmUpMultimediaTimer()
     {
         if (!OperatingSystem.IsWindows())
             return;
@@ -40,14 +40,14 @@ static partial class QtTextureTest
             timeKillEvent(id);
     }
 
-    const uint timePeriodic = 1;
-    delegate void TimeProc(uint id, uint msg, IntPtr user, IntPtr dw1, IntPtr dw2);
+    private const uint timePeriodic = 1;
+    private delegate void TimeProc(uint id, uint msg, IntPtr user, IntPtr dw1, IntPtr dw2);
     // Kept in a static field: winmm calls it from its timer thread.
-    static readonly TimeProc s_timeProc = (_, _, _, _, _) => { };
-    [DllImport("winmm")] static extern uint timeSetEvent(uint delay, uint resolution, TimeProc proc, IntPtr user, uint flags);
-    [DllImport("winmm")] static extern uint timeKillEvent(uint id);
+    private static readonly TimeProc s_timeProc = (_, _, _, _, _) => { };
+    [DllImport("winmm")] private static extern uint timeSetEvent(uint delay, uint resolution, TimeProc proc, IntPtr user, uint flags);
+    [DllImport("winmm")] private static extern uint timeKillEvent(uint id);
 
-    static int Sum(Dictionary<string, int> live)
+    private static int Sum(Dictionary<string, int> live)
     {
         int sum = 0;
         foreach (var c in live.Values)
@@ -55,7 +55,7 @@ static partial class QtTextureTest
         return sum;
     }
 
-    static void Leak(Scenario s)
+    private static void Leak(Scenario s)
     {
         bool check(bool ok, string what)
         {

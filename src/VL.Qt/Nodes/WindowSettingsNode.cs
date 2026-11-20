@@ -13,10 +13,10 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "WindowSettings", Category = Categories.Qt)]
     public sealed class WindowSettingsNode
     {
-        WindowSettings? _last;
-        Optional<string> _icon, _title;
-        Optional<bool> _borderless, _fullscreen;
-        Optional<RectangleF> _bounds;
+        private WindowSettings? _last;
+        private Optional<string> _icon, _title;
+        private Optional<bool> _borderless, _fullscreen;
+        private Optional<RectangleF> _bounds;
 
         /// <summary>Describes the window settings; the same instance as long as no input changes.</summary>
         /// <param name="icon">Icon of the window (title bar, taskbar, Alt-Tab): .ico, .png, .svg or anything Qt reads; a relative path is relative to the patch. Changes apply live; empty or unset shows the built-in default icon. A file that cannot be loaded keeps the default icon and shows a warning at the Renderer. Wayland: the icon comes from the app id and .desktop file, not from here.</param>

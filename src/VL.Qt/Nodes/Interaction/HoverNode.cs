@@ -20,9 +20,9 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props;
 
-        readonly InteractionNode<Props> _node;
-        IChannel<bool>? _hovered;
-        bool _lastHovered;
+        private readonly InteractionNode<Props> _node;
+        private IChannel<bool>? _hovered;
+        private bool _lastHovered;
 
         public HoverNode(NodeContext nodeContext)
             => _node = new InteractionNode<Props>(nodeContext, Create);
@@ -31,7 +31,7 @@ namespace VL.Qt.Nodes
         internal HoverNode(Func<string, IDisposable> addWarning)
             => _node = new InteractionNode<Props>(addWarning, Create);
 
-        static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
             = static (previous, p, slot) => new HoverInteraction(previous, slot);
 
         internal InteractionNode<Props> Core => _node;

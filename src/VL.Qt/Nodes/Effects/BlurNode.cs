@@ -18,7 +18,7 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(float Amount, int Max, float Multiplier, bool AutoPadding = true, RectangleF Padding = default);
 
-        readonly EffectNode<Props> _node = new(static (previous, p) => new BlurEffect(previous, p.Amount, p.Max, p.Multiplier, p.AutoPadding, p.Padding));
+        private readonly EffectNode<Props> _node = new(static (previous, p) => new BlurEffect(previous, p.Amount, p.Max, p.Multiplier, p.AutoPadding, p.Padding));
 
         internal EffectNode<Props> Core => _node;
 

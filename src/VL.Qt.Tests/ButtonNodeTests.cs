@@ -14,11 +14,11 @@ namespace VL.Qt.Tests
     /// <summary>Button node (#213): description, property diff, Bang and the IsClicked channel without Interactive.</summary>
     public class ButtonNodeTests
     {
-        static readonly Vector2 DefaultSize = new(1, 0.4f);
-        static readonly IDisposable NoWarning = new Nop();
-        sealed class Nop : IDisposable { public void Dispose() { } }
+        private static readonly Vector2 DefaultSize = new(1, 0.4f);
+        private static readonly IDisposable NoWarning = new Nop();
+        private sealed class Nop : IDisposable { public void Dispose() { } }
 
-        ButtonNode _node = null!;
+        private ButtonNode _node = null!;
 
         [SetUp]
         public void SetUp() => _node = new ButtonNode(_ => NoWarning);
@@ -27,12 +27,12 @@ namespace VL.Qt.Tests
         public void TearDown() => _node.Dispose();
 
         // Pin defaults as declared on Update.
-        Button Update(out bool bang, string text = "Button", bool enabled = true, bool autoRepeat = false, bool autoSize = true,
+        private Button Update(out bool bang, string text = "Button", bool enabled = true, bool autoRepeat = false, bool autoSize = true,
             IChannel<Unit>? isClicked = null, Interaction? interaction = null)
             => (Button)_node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, text, enabled, autoRepeat, isClicked,
                 1, false, false, interaction, null, null, out bang, out _, out _);
 
-        Button Update(string text = "Button", bool enabled = true, bool autoRepeat = false, bool autoSize = true)
+        private Button Update(string text = "Button", bool enabled = true, bool autoRepeat = false, bool autoSize = true)
             => Update(out _, text, enabled, autoRepeat, autoSize);
 
         [Test]

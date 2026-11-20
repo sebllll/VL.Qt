@@ -16,14 +16,14 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class DebugOverlayTest
 {
-    const uint Col = 1, Txt = 5, Grp = 6, RowId = 8, Rot = 9, Ovf = 2;
-    static uint Child(uint parent, uint i) => 10 + parent * 10 + i;
-    const uint HHover = 100; // element sink of the green column child
-    const uint HoverId = 900, HHoverHandler = 101; // its Hover handler (#319) and that handler's sink
+    private const uint Col = 1, Txt = 5, Grp = 6, RowId = 8, Rot = 9, Ovf = 2;
+    private static uint Child(uint parent, uint i) => 10 + parent * 10 + i;
+    private const uint HHover = 100; // element sink of the green column child
+    private const uint HoverId = 900, HHoverHandler = 101; // its Hover handler (#319) and that handler's sink
 
-    readonly record struct Rec(ushort Event, uint Handle, byte[] Payload);
+    private readonly record struct Rec(ushort Event, uint Handle, byte[] Payload);
 
-    static List<Rec> Parse(ReadOnlySpan<byte> b)
+    private static List<Rec> Parse(ReadOnlySpan<byte> b)
     {
         var list = new List<Rec>();
         int off = 0;
@@ -38,12 +38,12 @@ public static class DebugOverlayTest
         return list;
     }
 
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(Math.Clamp(x * a.Width / 800, 0, a.Width - 1), Math.Clamp(y * a.Height / 600, 0, a.Height - 1));
-    static bool IsCyan(Color c) => c.R < 90 && c.G > 150 && c.B > 150;
+    private static Color Px(Bitmap a, int x, int y) => a.GetPixel(Math.Clamp(x * a.Width / 800, 0, a.Width - 1), Math.Clamp(y * a.Height / 600, 0, a.Height - 1));
+    private static bool IsCyan(Color c) => c.R < 90 && c.G > 150 && c.B > 150;
     // Any pixel within +-2 logical px (line width 1, HiDPI rounding). IsCyan needs a pixel fully covered by the frame
     // (alpha 235 over background or padding still has G, B > 150): QtNative snaps lines to whole device pixels and
     // draws them above all fills. A 1 px line split over two pixels by MSAA (#283, DPR 1) fails on purpose.
-    static bool Near(Bitmap a, int x, int y, Func<Color, bool> f)
+    private static bool Near(Bitmap a, int x, int y, Func<Color, bool> f)
     {
         for (int dy = -2; dy <= 2; dy++)
             for (int dx = -2; dx <= 2; dx++)
@@ -55,7 +55,7 @@ public static class DebugOverlayTest
     [Test, Category("debug")]
     public static void Debug() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt debug overlay test");
         s.Check(w != IntPtr.Zero, "debug: window_create");

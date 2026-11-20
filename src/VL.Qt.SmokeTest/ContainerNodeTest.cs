@@ -17,19 +17,19 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class ContainerNodeTest
 {
-    static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
-    static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
-    static bool IsBlue(Color c) => c.B > 200 && c.R < 40 && c.G < 40;
+    private static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
+    private static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
+    private static bool IsBlue(Color c) => c.B > 200 && c.R < 40 && c.G < 40;
 
-    static IDisposable NoWarning(string _) => throw new InvalidOperationException("unexpected node warning");
+    private static IDisposable NoWarning(string _) => throw new InvalidOperationException("unexpected node warning");
 
-    static readonly Color4 Red = new(1, 0, 0, 1), Green = new(0, 1, 0, 1), Blue = new(0, 0, 1, 1);
+    private static readonly Color4 Red = new(1, 0, 0, 1), Green = new(0, 1, 0, 1), Blue = new(0, 0, 1, 1);
 
     /// <summary>Container nodes.</summary>
     [Test, Category("containernode")]
     public static void ContainerNode() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt container node test");
         s.Check(w != IntPtr.Zero, "window_create");

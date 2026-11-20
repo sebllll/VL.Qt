@@ -22,19 +22,19 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class MsaaTest
 {
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindowW(string? cls, string title);
-    [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr hwnd, out RECT r);
-    [DllImport("user32.dll")] static extern bool PostMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
-    [DllImport("user32.dll")] static extern IntPtr SendMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
-    [DllImport("user32.dll")] static extern uint MapVirtualKeyW(uint code, uint mapType);
-    [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
-    [StructLayout(LayoutKind.Sequential)] struct RECT { public int L, T, R, B; public override string ToString() => $"{L},{T},{R},{B}"; }
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr FindWindowW(string? cls, string title);
+    [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr hwnd, out RECT r);
+    [DllImport("user32.dll")] private static extern bool PostMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern IntPtr SendMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern uint MapVirtualKeyW(uint code, uint mapType);
+    [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+    [StructLayout(LayoutKind.Sequential)] private struct RECT { public int L, T, R, B; public override string ToString() => $"{L},{T},{R},{B}"; }
 
-    const int W = 400, H = 300;
-    const string Title = "VL.Qt SmokeTest MSAA";
+    private const int W = 400, H = 300;
+    private const string Title = "VL.Qt SmokeTest MSAA";
 
     // Thin bar + rotated square, white on black: hard edges without AA.
-    static void Scene(CommandWriter cmd)
+    private static void Scene(CommandWriter cmd)
     {
         cmd.Reset();
         cmd.ClearColor(0, 0, 0, 1);
@@ -49,7 +49,7 @@ public static class MsaaTest
     }
 
     // Pixels with an intermediate red value (edge pixels) among the pixels of the area, and the number of distinct red values.
-    static (int Mid, int Levels) Edges(Func<int, int, int> red, int x0, int y0, int x1, int y1)
+    private static (int Mid, int Levels) Edges(Func<int, int, int> red, int x0, int y0, int x1, int y1)
     {
         int mid = 0;
         var levels = new HashSet<int>();
@@ -64,7 +64,7 @@ public static class MsaaTest
     }
 
     // The area of the bar and the square in DIP, without the image and the text of the window scene. The grab is in device pixels.
-    static (int Mid, int Levels) Edges(Bitmap b)
+    private static (int Mid, int Levels) Edges(Bitmap b)
     {
         var d = b.LockBits(new System.Drawing.Rectangle(0, 0, b.Width, b.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
         var px = new byte[d.Stride * b.Height];
@@ -75,7 +75,7 @@ public static class MsaaTest
     }
 
     // Magnified crop of a grab (DIP area), nearest neighbour, so single pixels show.
-    static Bitmap Zoom(Bitmap b, System.Drawing.Rectangle dip, int scale)
+    private static Bitmap Zoom(Bitmap b, System.Drawing.Rectangle dip, int scale)
     {
         float sx = (float)b.Width / W, sy = (float)b.Height / H;
         var src = new System.Drawing.Rectangle((int)(dip.X * sx), (int)(dip.Y * sy), (int)(dip.Width * sx), (int)(dip.Height * sy));
@@ -88,7 +88,7 @@ public static class MsaaTest
     }
 
     // None left, X4 right: the left end of the bar (thin line) above, a corner of the square below.
-    static void SaveCompare(string path, Bitmap none, Bitmap x4)
+    private static void SaveCompare(string path, Bitmap none, Bitmap x4)
     {
         var areas = new[] { new System.Drawing.Rectangle(60, 115, 60, 40), new System.Drawing.Rectangle(145, 30, 60, 40) };
         const int scale = 6, gap = 8;
@@ -109,7 +109,7 @@ public static class MsaaTest
     [Test, Category("Msaa")]
     public static void Msaa() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -130,7 +130,7 @@ public static class MsaaTest
     }
 
     // Clamp and the format-only path: a window not shown yet changes its format, no swap. QRhi's D3D11 backend offers 1/2/4/8.
-    static void ClampPart(Scenario s)
+    private static void ClampPart(Scenario s)
     {
         var w = Native.vlqt_window_create(W, H, Title + " clamp");
         int r16 = Native.vlqt_window_set_samples(w, 16), r3 = Native.vlqt_window_set_samples(w, 3), r0 = Native.vlqt_window_set_samples(w, 0);
@@ -144,7 +144,7 @@ public static class MsaaTest
         Native.vlqt_window_destroy(scene);
     }
 
-    static void WindowPart(Scenario s)
+    private static void WindowPart(Scenario s)
     {
         var w = Native.vlqt_window_create(W, H, Title);
         var cmd = new CommandWriter();
@@ -233,7 +233,7 @@ public static class MsaaTest
 
     // Clear off (#117) across a swap: Scene::moveToWindow releases the feedback layer and rebuilds it for the new window.
     // The trail is lost (the first frame starts from the clear colour), the scene draws on, and a new trail builds up.
-    static void FeedbackPart(Scenario s)
+    private static void FeedbackPart(Scenario s)
     {
         const string title = Title + " clear off";
         var w = Native.vlqt_window_create(W, H, title);
@@ -287,7 +287,7 @@ public static class MsaaTest
 
     // Real Win32 keys (WM_KEYDOWN/UP dispatched by the WinForms loop like in vvvv, see KeyRouteTest) reach the new HWND
     // after a swap, WM_GETDLGCODE is answered there, and the TextField keeps the active focus across the swap.
-    static void InputPart(Scenario s)
+    private static void InputPart(Scenario s)
     {
 #if WINDOWS
         const uint WM_KEYDOWN = 0x0100, WM_KEYUP = 0x0101, WM_GETDLGCODE = 0x0087;
@@ -367,7 +367,7 @@ public static class MsaaTest
 #endif
     }
 
-    static void OffscreenPart(Scenario s)
+    private static void OffscreenPart(Scenario s)
     {
         if (Native.vlqt_test_d3d11_create_device(0, out var device, out var context) != 0)
         {
@@ -430,7 +430,7 @@ public static class MsaaTest
         Native.vlqt_test_d3d11_release_device(device, context);
     }
 
-    static void SavePng(byte[] bgra, string path)
+    private static void SavePng(byte[] bgra, string path)
     {
         using var b = new Bitmap(W, H, PixelFormat.Format32bppArgb);
         var d = b.LockBits(new System.Drawing.Rectangle(0, 0, W, H), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);

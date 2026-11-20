@@ -84,7 +84,7 @@ namespace VL.Qt.Paths
             return closed ? Periodic(path, points) : Clamped(path, points);
         }
 
-        static QtPath Periodic(QtPath path, ReadOnlySpan<Vector2> points)
+        private static QtPath Periodic(QtPath path, ReadOnlySpan<Vector2> points)
         {
             var n = points.Length;
             // Segment k runs between the points k and k + 1, controlled by k − 1 .. k + 2 (Böhm conversion).
@@ -106,10 +106,10 @@ namespace VL.Qt.Paths
         }
 
         // (p0 + 4·p1 + p2) / 6: the point of a uniform cubic B-spline at the knot of p1.
-        static Vector2 Third(Vector2 p0, Vector2 p1, Vector2 p2) =>
+        private static Vector2 Third(Vector2 p0, Vector2 p1, Vector2 p2) =>
             new Vector2((p0.X + 4 * p1.X + p2.X) / 6, (p0.Y + 4 * p1.Y + p2.Y) / 6);
 
-        static QtPath Clamped(QtPath path, ReadOnlySpan<Vector2> points)
+        private static QtPath Clamped(QtPath path, ReadOnlySpan<Vector2> points)
         {
             var n = points.Length;
             var first = points[0];
@@ -145,14 +145,14 @@ namespace VL.Qt.Paths
         }
 
         // Knot j of the clamped knot vector for n points.
-        static double ClampedKnot(int j, int n) => Math.Clamp(j - 3, 0, n - 3);
+        private static double ClampedKnot(int j, int n) => Math.Clamp(j - 3, 0, n - 3);
 
         /// <summary>
         /// The blossom (polar form) f(x1, x2, x3) of segment <paramref name="s"/> of the clamped spline: de Boor's
         /// algorithm with a different parameter per level. The segment uses the points s .. s + 3 and the knot interval
         /// [u(s+3), u(s+4)]; all denominators span that interval, so they are at least 1.
         /// </summary>
-        static Vector2 Blossom(ReadOnlySpan<Vector2> points, int s, double x1, double x2, double x3)
+        private static Vector2 Blossom(ReadOnlySpan<Vector2> points, int s, double x1, double x2, double x3)
         {
             var n = points.Length;
             var i = s + 3;
@@ -171,19 +171,19 @@ namespace VL.Qt.Paths
         }
 
         // de Boor weight for the point j at a level whose knot span is u(j) .. u(j + span).
-        static double Weight(int j, int span, double x, int n)
+        private static double Weight(int j, int span, double x, int n)
         {
             var uj = ClampedKnot(j, n);
             return (x - uj) / (ClampedKnot(j + span, n) - uj);
         }
 
-        static void Lerp(ref double ax, ref double ay, double bx, double by, double t)
+        private static void Lerp(ref double ax, ref double ay, double bx, double by, double t)
         {
             ax += (bx - ax) * t;
             ay += (by - ay) * t;
         }
 
-        static bool HasDistinct(ReadOnlySpan<Vector2> points)
+        private static bool HasDistinct(ReadOnlySpan<Vector2> points)
         {
             for (var i = 1; i < points.Length; i++)
                 if (points[i] != points[0])
@@ -192,7 +192,7 @@ namespace VL.Qt.Paths
         }
 
         // Knot interval |q − p|^alpha (1 for alpha 0); p and q differ.
-        static double Knot(Vector2 p, Vector2 q, double alpha)
+        private static double Knot(Vector2 p, Vector2 q, double alpha)
         {
             double dx = q.X - p.X, dy = q.Y - p.Y;
             return Math.Pow(dx * dx + dy * dy, alpha / 2);
@@ -202,7 +202,7 @@ namespace VL.Qt.Paths
         /// The nearest point from <paramref name="index"/> in <paramref name="step"/> direction that differs from the
         /// point at <paramref name="index"/>, wrapping around if <paramref name="closed"/>. False at an open end.
         /// </summary>
-        static bool TryNeighbor(ReadOnlySpan<Vector2> points, int index, int step, bool closed, out Vector2 neighbor)
+        private static bool TryNeighbor(ReadOnlySpan<Vector2> points, int index, int step, bool closed, out Vector2 neighbor)
         {
             var n = points.Length;
             var p = points[index];

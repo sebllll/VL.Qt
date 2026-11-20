@@ -12,7 +12,7 @@ namespace VL.Qt.Tests
 {
     public class ElementTypeTests
     {
-        static readonly Type[] AllTypes =
+        private static readonly Type[] AllTypes =
             { typeof(Group), typeof(Elements.Rectangle), typeof(Text), typeof(Image), typeof(Row), typeof(Column), typeof(Video), typeof(Button), typeof(SpinBox), typeof(CheckBox), typeof(Elements.Switch), typeof(Elements.Slider), typeof(TextField), typeof(ShaderEffect), typeof(Shape) };
 
         [TestCaseSource(nameof(AllTypes))]

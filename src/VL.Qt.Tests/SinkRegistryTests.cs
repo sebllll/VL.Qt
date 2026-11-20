@@ -15,7 +15,7 @@ namespace VL.Qt.Tests
         /// <summary>Builds a synthetic poll buffer like QtNative: u16 event, u16 len, u32 handle, u32 index, payload, 4-aligned.</summary>
         internal sealed class Poll
         {
-            readonly List<byte> _b = new();
+            private readonly List<byte> _b = new();
 
             public Poll Add(ushort ev, uint handle, byte[] payload, uint index = 0)
             {
@@ -81,7 +81,7 @@ namespace VL.Qt.Tests
 
             public byte[] Bytes => _b.ToArray();
 
-            static byte[] F(params float[] v)
+            private static byte[] F(params float[] v)
             {
                 var p = new byte[v.Length * 4];
                 for (int i = 0; i < v.Length; i++)
@@ -446,7 +446,7 @@ namespace VL.Qt.Tests
             Assert.That(sink.TakeWheel(), Is.EqualTo(Vector2.Zero));
         }
 
-        static Rectangle R(float w, SinkSlot sink)
+        private static Rectangle R(float w, SinkSlot sink)
             => new() { Size = new Vector2(w, 1), Sink = sink };
 
         [Test]

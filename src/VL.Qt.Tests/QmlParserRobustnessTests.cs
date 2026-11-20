@@ -12,7 +12,7 @@ namespace VL.Qt.Tests
     [TestFixture]
     internal sealed class QmlParserRobustnessTests
     {
-        static string RepoRoot()
+        private static string RepoRoot()
         {
             for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
             {
@@ -22,12 +22,12 @@ namespace VL.Qt.Tests
             throw new InvalidOperationException("Repository root not found above " + AppContext.BaseDirectory);
         }
 
-        static QmlDeclarations Parse(string source, IDictionary<string, string>? siblings = null)
+        private static QmlDeclarations Parse(string source, IDictionary<string, string>? siblings = null)
             => QmlDeclarations.Parse(source, name => siblings != null && siblings.TryGetValue(name, out var s) ? s : null);
 
-        static QmlPropertyDecl Prop(QmlDeclarations d, string name) => d.Properties.Single(p => p.Name == name);
+        private static QmlPropertyDecl Prop(QmlDeclarations d, string name) => d.Properties.Single(p => p.Name == name);
 
-        const string tricky = """
+        private const string tricky = """
             // @category Qt.Test
             import QtQuick
             Item {
@@ -43,7 +43,7 @@ namespace VL.Qt.Tests
             }
             """;
 
-        static IEnumerable<(string Name, string Source)> Sources()
+        private static IEnumerable<(string Name, string Source)> Sources()
         {
             var root = RepoRoot();
             var files = Directory.GetFiles(Path.Combine(root, "help", "Qt"), "*.qml", SearchOption.AllDirectories)

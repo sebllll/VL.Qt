@@ -17,7 +17,7 @@ namespace VL.Qt.Audio.Tests
     [TestFixture, NonParallelizable]
     public sealed class WasapiLatencyTests
     {
-        sealed class Silence : IWaveProvider
+        private sealed class Silence : IWaveProvider
         {
             public WaveFormat WaveFormat { get; } = WaveFormat.CreateIeeeFloatWaveFormat(48000, 2);
 

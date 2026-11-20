@@ -14,13 +14,13 @@ namespace VL.Qt.Nodes
     /// </summary>
     internal sealed class QmlFileWatcher : IDisposable
     {
-        const string qmlExtension = ".qml";
-        const string qmldirName = "qmldir";
+        private const string qmlExtension = ".qml";
+        private const string qmldirName = "qmldir";
 
-        readonly Func<string, IObservable<FileSystemEventArgs>> _watchDir;
-        IDisposable? _subscription;
-        string _path = string.Empty;
-        int _changed;
+        private readonly Func<string, IObservable<FileSystemEventArgs>> _watchDir;
+        private IDisposable? _subscription;
+        private string _path = string.Empty;
+        private int _changed;
 
         public QmlFileWatcher()
             : this(static dir => NodeBuilding.WatchDir(dir))

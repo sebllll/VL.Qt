@@ -17,19 +17,19 @@ namespace VL.Qt
     internal sealed class OffscreenRenderer : IDisposable
     {
         // Scene handles of one RenderBatch: reused, so a frame allocates nothing (main thread only).
-        static IntPtr[] s_scenes = new IntPtr[8];
+        private static IntPtr[] s_scenes = new IntPtr[8];
 
-        readonly SceneCore _core;
-        IntPtr _scene;
-        bool _disposed;
+        private readonly SceneCore _core;
+        private IntPtr _scene;
+        private bool _disposed;
         // Input state (Notify): vvvv notifications carry the changed mouse button, Qt wants the buttons held after the event;
         // _keysDown detects auto-repeat (a KeyDown of a key that is already down); _highSurrogate joins the two KeyPress
         // notifications of a character outside the BMP.
-        int _mouseButtons;
-        readonly bool[] _keysDown = new bool[256];
-        char _highSurrogate;
-        string _createError = "", _bindError = "";
-        int _usedSamples;
+        private int _mouseButtons;
+        private readonly bool[] _keysDown = new bool[256];
+        private char _highSurrogate;
+        private string _createError = "", _bindError = "";
+        private int _usedSamples;
 
         /// <param name="scene">Duplicate registry of the app (<see cref="SceneRegistry.ForApp"/>).</param>
         /// <param name="width">Initial scene width in DIP (1 DIP = 1 texture pixel); <see cref="Bind"/> sets the final size.</param>
@@ -193,7 +193,7 @@ namespace VL.Qt
             }
         }
 
-        void SendKeyCode(int type, KeyCodeNotification notification)
+        private void SendKeyCode(int type, KeyCodeNotification notification)
         {
             var code = notification.KeyCode & Keys.KeyCode;
             var key = InputMapping.ToQtKey(code);
@@ -214,7 +214,7 @@ namespace VL.Qt
 
         // KeyPress carries the typed character (layout, shift and dead keys applied). Control characters (Enter, Tab, Backspace,
         // Ctrl+letter) come as key events already and are not text. A character outside the BMP arrives as two notifications.
-        void SendKeyChar(char c)
+        private void SendKeyChar(char c)
         {
             if (char.IsHighSurrogate(c))
             {

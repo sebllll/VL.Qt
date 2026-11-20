@@ -14,10 +14,10 @@ namespace VL.Qt
         /// <summary>The window's root object, never allocated or freed.</summary>
         public const uint Root = 0;
 
-        readonly Stack<uint> _free = new();
-        bool[] _live = new bool[64];
-        uint _next = 1;
-        int _count;
+        private readonly Stack<uint> _free = new();
+        private bool[] _live = new bool[64];
+        private uint _next = 1;
+        private int _count;
 
         /// <summary>Number of ids currently in use.</summary>
         public int Count => _count;

@@ -47,11 +47,11 @@ namespace VL.Qt.Shaders
             "Interaction", "Effect", "Output", "Measured Size", "Scene Bounds", "Error");
 
         // Used only when the shader does not compile: keeps the Input pin (and its link) through a typo.
-        static readonly Regex s_sourceSampler = new(@"\buniform\s+sampler2D\s+source\b", RegexOptions.CultureInvariant);
+        private static readonly Regex s_sourceSampler = new(@"\buniform\s+sampler2D\s+source\b", RegexOptions.CultureInvariant);
 
         // Uniforms QtNative sets itself in a SHADER link of the effect chain (protocol.h "Effect chain"); an entry from C# would be an error.
-        static readonly ImmutableHashSet<string> s_chainAutomaticNames = ImmutableHashSet.Create(StringComparer.Ordinal, "texelSize", "dpr", "weight", "elementRect", "passIndex");
-        static readonly ImmutableHashSet<string> s_chainReservedNames = ImmutableHashSet.Create(StringComparer.Ordinal, "base", "glow", "shadow");
+        private static readonly ImmutableHashSet<string> s_chainAutomaticNames = ImmutableHashSet.Create(StringComparer.Ordinal, "texelSize", "dpr", "weight", "elementRect", "passIndex");
+        private static readonly ImmutableHashSet<string> s_chainReservedNames = ImmutableHashSet.Create(StringComparer.Ordinal, "base", "glow", "shadow");
 
         /// <summary>
         /// The shader declares <c>sampler2D source</c> (comments ignored): a filter, which also becomes a link of the effect
@@ -217,7 +217,7 @@ namespace VL.Qt.Shaders
             return result.MoveToImmutable();
         }
 
-        static ImmutableArray<Message> ToMessages(List<string> errors, List<string> warnings)
+        private static ImmutableArray<Message> ToMessages(List<string> errors, List<string> warnings)
         {
             var messages = ImmutableArray.CreateBuilder<Message>(errors.Count + warnings.Count);
             foreach (var e in errors)

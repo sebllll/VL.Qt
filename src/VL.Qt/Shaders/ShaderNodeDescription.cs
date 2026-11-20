@@ -65,7 +65,7 @@ namespace VL.Qt.Shaders
     internal static class ShaderNodeDescription
     {
         // Fixed pins like the ShaderEffect node (without Fragment/Vertex Code/Shader and Uniforms), help texts from there.
-        static readonly IVLPinDescription[] s_fixedInputs =
+        private static readonly IVLPinDescription[] s_fixedInputs =
         {
             new ShaderPinDescription("Blending", typeof(bool), true, "Premultiplied alpha blending with what is behind. Off: the shader output replaces it."),
             new ShaderPinDescription("Mesh Resolution", typeof(Int2), new Int2(1, 1), "Grid subdivisions (x, y >= 1) for vertex shaders that deform the element.", isVisible: false),
@@ -80,7 +80,7 @@ namespace VL.Qt.Shaders
             new ShaderPinDescription("Effect", typeof(Effect), null, "Chain of effect nodes (Blur, DropShadow, …), drawn as one effect layer on the element.", isVisible: false),
         };
 
-        static readonly IVLPinDescription[] s_outputs =
+        private static readonly IVLPinDescription[] s_outputs =
         {
             new ShaderPinDescription("Output", typeof(Element), null, null),
             new ShaderPinDescription("Measured Size", typeof(Vector2), Vector2.Zero, "Implicit size reported by Qt, in units (last frame).", isVisible: false),
@@ -88,7 +88,7 @@ namespace VL.Qt.Shaders
             new ShaderPinDescription("Error", typeof(string), string.Empty, "Shader bake errors at runtime (with line numbers), empty if none."),
         };
 
-        const string inputSummary = "Element sampled as sampler2D \"source\" (hidden itself, only the effect output is drawn).";
+        private const string inputSummary = "Element sampled as sampler2D \"source\" (hidden itself, only the effect output is drawn).";
 
         /// <summary>Input pins: Input (if the shader samples source), image and uniform pins, fixed ShaderEffect pins.</summary>
         internal static List<IVLPinDescription> Inputs(ShaderNodeLayout layout)
@@ -141,7 +141,7 @@ namespace VL.Qt.Shaders
             return opened;
         }
 
-        static bool Open(string path, ILogger logger)
+        private static bool Open(string path, ILogger logger)
         {
             try
             {
@@ -162,27 +162,27 @@ namespace VL.Qt.Shaders
     /// </summary>
     internal sealed class ShaderNodeInstance : IDisposable
     {
-        readonly ShaderEffectNode _effect;
-        readonly string _fragmentSource;
-        readonly string? _vertexSource;
-        readonly ValuePin<Element?>? _input;
-        readonly ValuePin<Sampler?>? _inputSampler;
-        readonly ShaderUniforms _uniforms;
-        readonly ValuePin<bool> _blending = new(true);
-        readonly ValuePin<Int2> _meshResolution = new(new Int2(1, 1));
-        readonly ValuePin<Vector2> _size = new(new Vector2(1f, 1f));
-        readonly ValuePin<bool> _autoSize = new(true);
-        readonly ValuePin<Matrix> _transform = new(Matrix.Identity);
-        readonly ValuePin<RectangleAnchor> _anchor = new(RectangleAnchor.TopLeft);
-        readonly ValuePin<float> _opacity = new(1f);
-        readonly ValuePin<bool> _clip = new(false);
-        readonly ValuePin<bool> _debug = new(false);
-        readonly ValuePin<Interaction?> _interaction = new(null);
-        readonly ValuePin<Effect?> _effectChain = new(null);
-        readonly ValuePin<Element?> _output = new(null);
-        readonly ValuePin<Vector2> _measuredSize = new(Vector2.Zero);
-        readonly ValuePin<RectangleF> _sceneBounds = new(RectangleF.Empty);
-        readonly ValuePin<string> _error = new(string.Empty);
+        private readonly ShaderEffectNode _effect;
+        private readonly string _fragmentSource;
+        private readonly string? _vertexSource;
+        private readonly ValuePin<Element?>? _input;
+        private readonly ValuePin<Sampler?>? _inputSampler;
+        private readonly ShaderUniforms _uniforms;
+        private readonly ValuePin<bool> _blending = new(true);
+        private readonly ValuePin<Int2> _meshResolution = new(new Int2(1, 1));
+        private readonly ValuePin<Vector2> _size = new(new Vector2(1f, 1f));
+        private readonly ValuePin<bool> _autoSize = new(true);
+        private readonly ValuePin<Matrix> _transform = new(Matrix.Identity);
+        private readonly ValuePin<RectangleAnchor> _anchor = new(RectangleAnchor.TopLeft);
+        private readonly ValuePin<float> _opacity = new(1f);
+        private readonly ValuePin<bool> _clip = new(false);
+        private readonly ValuePin<bool> _debug = new(false);
+        private readonly ValuePin<Interaction?> _interaction = new(null);
+        private readonly ValuePin<Effect?> _effectChain = new(null);
+        private readonly ValuePin<Element?> _output = new(null);
+        private readonly ValuePin<Vector2> _measuredSize = new(Vector2.Zero);
+        private readonly ValuePin<RectangleF> _sceneBounds = new(RectangleF.Empty);
+        private readonly ValuePin<string> _error = new(string.Empty);
 
         public ShaderNodeInstance(NodeContext nodeContext, ShaderNodeLayout layout)
             : this(new ShaderEffectNode(nodeContext), layout)

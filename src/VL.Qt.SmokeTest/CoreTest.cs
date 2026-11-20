@@ -13,8 +13,8 @@ using static Pixels;
 public static class CoreTest
 {
     // Space v1 = DIPTopLeft: 1 unit = 100 DIP = 100 Qt logical pixels (like Renderer [Qt]).
-    const float U = 100f;
-    const uint RectId = 1, GroupId = 2;
+    private const float U = 100f;
+    private const uint RectId = 1, GroupId = 2;
 
     /// <summary>vlqt_app_init succeeds and a second call is a no-op.</summary>
     [Test, Category("core-app")]
@@ -192,7 +192,7 @@ public static class CoreTest
 
     // Bytes allocated by 1000 frames of 100 SETs + apply. A method of its own: inside the scenario lambda the JIT'ed loop
     // allocated 80 bytes per frame (on-stack replacement of the long lambda), which is not what the check is about.
-    static long AllocatedBy1000Frames(IntPtr w, CommandWriter cmd)
+    private static long AllocatedBy1000Frames(IntPtr w, CommandWriter cmd)
     {
         var alloc0 = GC.GetAllocatedBytesForCurrentThread();
         for (int f = 0; f < 1000; f++)
@@ -206,7 +206,7 @@ public static class CoreTest
     }
 
     // Same scene as Renderer [Qt]: #202020 background, orange test rect at (1,1) size (3,2) units.
-    static IntPtr CreateWithScene(Scenario s, CommandWriter cmd)
+    private static IntPtr CreateWithScene(Scenario s, CommandWriter cmd)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt SmokeTest");
         s.Check(w != IntPtr.Zero, "window_create " + (w == IntPtr.Zero ? Native.LastError() : ""));
@@ -221,7 +221,7 @@ public static class CoreTest
         return w;
     }
 
-    static void CheckApply(Scenario s, IntPtr w, CommandWriter cmd, string what)
+    private static void CheckApply(Scenario s, IntPtr w, CommandWriter cmd, string what)
     {
         var rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");

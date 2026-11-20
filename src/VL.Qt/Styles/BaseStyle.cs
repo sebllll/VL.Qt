@@ -10,12 +10,12 @@ namespace VL.Qt.Styles
     internal static class BaseStyle
     {
         // Colors as 0xRRGGBB (sRGB, opaque).
-        static Color4 C(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
+        private static Color4 C(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
 
         // Dimensions are set at Normal only.
-        static StateValues<float> N(float v) => default(StateValues<float>).With(StyleStates.Normal, v);
+        private static StateValues<float> N(float v) => default(StateValues<float>).With(StyleStates.Normal, v);
 
-        static readonly Style s_default = new()
+        private static readonly Style s_default = new()
         {
             Frame = new FrameStyle
             {

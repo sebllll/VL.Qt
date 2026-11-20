@@ -16,8 +16,8 @@ namespace VL.Qt.Tests
     /// <summary>Property diff of the reconciler (04c): only changed values are sent, converted via Geometry.</summary>
     public class ReconcilerPropertyTests
     {
-        RecordingSink _sink = null!;
-        Reconciler _rec = null!;
+        private RecordingSink _sink = null!;
+        private Reconciler _rec = null!;
 
         [SetUp]
         public void SetUp()
@@ -26,18 +26,18 @@ namespace VL.Qt.Tests
             _rec = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
         }
 
-        void Frame(Element? root)
+        private void Frame(Element? root)
         {
             _sink.Clear();
             _rec.Update(root, Space.DIPTopLeft);
         }
 
-        static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
-        static Column C(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
+        private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
+        private static Column C(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
 
         /// <summary>A tree using every type with non-default values everywhere. Ids: Group 1, Rectangle 2,
         /// Column 3, Text 4, Image 5, Row 6, ShaderEffect 7, its input 8.</summary>
-        static Element BuildScene(float fill = 1, string text = "Hello", float spacing = 0.1f, bool blending = false,
+        private static Element BuildScene(float fill = 1, string text = "Hello", float spacing = 0.1f, bool blending = false,
             float width = 1, float opacity = 0.5f, float rotation = 0.3f) =>
             G(
                 new Rectangle
@@ -114,7 +114,7 @@ namespace VL.Qt.Tests
             Assert.That(_sink.Count, Is.EqualTo(0), _sink.ToString());
         }
 
-        static IEnumerable<TestCaseData> SingleChanges()
+        private static IEnumerable<TestCaseData> SingleChanges()
         {
             yield return new TestCaseData(new Func<Element>(() => BuildScene(fill: 0.5f)), $"SET 2 Color color(0.5,0,0,1)").SetName("Rectangle.Fill");
             yield return new TestCaseData(new Func<Element>(() => BuildScene(opacity: 0.25f)), $"SET 2 Opacity f32(0.25)").SetName("Opacity");
@@ -240,8 +240,8 @@ namespace VL.Qt.Tests
 
         // ---- Shape (#154): Frame converts with 100 per unit ----
 
-        static Spread<Vector2> Pts(params Vector2[] points) => Spread.Create(points);
-        static readonly Vector2[] s_triangle = { new(0, 0), new(1, 0), new(0, 1) };
+        private static Spread<Vector2> Pts(params Vector2[] points) => Spread.Create(points);
+        private static readonly Vector2[] s_triangle = { new(0, 0), new(1, 0), new(0, 1) };
 
         [Test]
         public void Shape_FirstFrame_SendsOnlyNonDefaultValues_Converted()
@@ -398,7 +398,7 @@ namespace VL.Qt.Tests
             Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
         }
 
-        sealed class CountingSink : ICommandSink
+        private sealed class CountingSink : ICommandSink
         {
             public int Sets;
             public void Create(uint id, ushort type) { }

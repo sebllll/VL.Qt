@@ -21,9 +21,9 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(float Angle, float Length);
 
-        static readonly string[] s_shaders = { "directional_blur" };
+        private static readonly string[] s_shaders = { "directional_blur" };
 
-        static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
         {
             var length = Math.Max(p.Length, 0f);
             var half = length / 2 + length / 64;
@@ -35,7 +35,7 @@ namespace VL.Qt.Nodes
                 new RectangleF(padX, padY, padX, padY));
         };
 
-        readonly BuiltinShaderLink<Props> _link;
+        private readonly BuiltinShaderLink<Props> _link;
 
         public DirectionalBlurNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))

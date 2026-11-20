@@ -16,11 +16,11 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class VideoAudioTest
 {
-    const uint VideoId = 1, Video2Id = 2, Handle = 41;
-    const int Channels = 2;
+    private const uint VideoId = 1, Video2Id = 2, Handle = 41;
+    private const int Channels = 2;
 
     // Statistics of one tap, written by the reader thread.
-    sealed class TapStats
+    private sealed class TapStats
     {
         public long Frames, Gaps, Calls;
         public float Peak;
@@ -31,13 +31,13 @@ public static class VideoAudioTest
         public readonly List<double> SyncErrorsMs = new();
     }
 
-    sealed class Reader : IDisposable
+    private sealed class Reader : IDisposable
     {
-        readonly Thread _thread;
-        readonly object _syncRoot = new();
-        readonly Dictionary<ulong, TapStats> _stats = new();
-        volatile bool _stop;
-        ulong _id;
+        private readonly Thread _thread;
+        private readonly object _syncRoot = new();
+        private readonly Dictionary<ulong, TapStats> _stats = new();
+        private volatile bool _stop;
+        private ulong _id;
 
         public Reader()
         {
@@ -61,7 +61,7 @@ public static class VideoAudioTest
                 return _stats.TryGetValue(id, out var s) ? new List<double>(s.SyncErrorsMs) : new List<double>();
         }
 
-        void Loop()
+        private void Loop()
         {
             var buf = new float[4800 * Channels];
             while (!_stop)
@@ -89,7 +89,7 @@ public static class VideoAudioTest
             }
         }
 
-        void Account(ulong id, float[] buf, int n, Native.vlqt_audio_tap_state st)
+        private void Account(ulong id, float[] buf, int n, Native.vlqt_audio_tap_state st)
         {
             lock (_syncRoot)
             {
@@ -139,14 +139,14 @@ public static class VideoAudioTest
         }
     }
 
-    static TapStats Copy(this TapStats s) => new()
+    private static TapStats Copy(this TapStats s) => new()
     {
         Frames = s.Frames, Gaps = s.Gaps, Calls = s.Calls, Peak = s.Peak, Discontinuity = s.Discontinuity, Changes = s.Changes,
         MaxGapUs = s.MaxGapUs, LastMediaUs = s.LastMediaUs, MaxMediaUs = s.MaxMediaUs, LastEndUs = s.LastEndUs, Flags = s.Flags,
         Overrun = s.Overrun, Underrun = s.Underrun,
     };
 
-    static string? FindAsset(string name)
+    private static string? FindAsset(string name)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
@@ -157,7 +157,7 @@ public static class VideoAudioTest
         return null;
     }
 
-    static ulong CreateTap(Scenario s, int sampleRate)
+    private static ulong CreateTap(Scenario s, int sampleRate)
     {
         var rc = Native.vlqt_res_create(Protocol.ResKind.AudioTap, out var id);
         var init = rc == 0 ? Native.vlqt_res_audio_tap_init(id, Channels, sampleRate) : rc;
@@ -165,7 +165,7 @@ public static class VideoAudioTest
         return id;
     }
 
-    static double Median(List<double> v)
+    private static double Median(List<double> v)
     {
         if (v.Count == 0)
             return double.NaN;
@@ -177,7 +177,7 @@ public static class VideoAudioTest
     [Test, Category("videoaudio")]
     public static void VideoAudio() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         string? a = FindAsset("qt-help-video-audio.mp4"), b = FindAsset("qt-help-video.mp4");
         s.Check(a != null && b != null, "videoaudio: assets found");

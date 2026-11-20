@@ -14,10 +14,10 @@ namespace VL.Qt.Tests
     /// <summary>Video element + node (#115): defaults, property diff, clamping, EV_MEDIA back channel.</summary>
     public class VideoNodeTests
     {
-        static readonly IDisposable NoWarning = new Nop();
-        sealed class Nop : IDisposable { public void Dispose() { } }
+        private static readonly IDisposable NoWarning = new Nop();
+        private sealed class Nop : IDisposable { public void Dispose() { } }
 
-        VideoNode _node = null!;
+        private VideoNode _node = null!;
 
         [SetUp]
         public void SetUp() => _node = new VideoNode(_ => NoWarning);
@@ -26,16 +26,16 @@ namespace VL.Qt.Tests
         public void TearDown() => _node.Dispose();
 
         // Pin defaults as declared on Update.
-        Element Update(string? path = null, bool play = true, bool loop = true, bool keepLast = true, float rate = 1, float volume = 1,
+        private Element Update(string? path = null, bool play = true, bool loop = true, bool keepLast = true, float rate = 1, float volume = 1,
             VideoFillMode fill = VideoFillMode.Fit) => Update(out _, out _, path, play, loop, keepLast, rate, volume, fill);
 
-        Element Update(out float position, out float duration, string? path = null, bool play = true, bool loop = true, bool keepLast = true,
+        private Element Update(out float position, out float duration, string? path = null, bool play = true, bool loop = true, bool keepLast = true,
             float rate = 1, float volume = 1, VideoFillMode fill = VideoFillMode.Fit)
             => _node.Update(new Vector2(1.6f, 0.9f), default, RectangleAnchor.Center, path is null ? Path.Default : new Path(path),
                 play, loop, keepLast, rate, volume, fill, 1, false, false, null, null, out position, out duration,
                 out _, out _);
 
-        static byte[] ErrorRecord(uint handle, string text)
+        private static byte[] ErrorRecord(uint handle, string text)
         {
             var t = System.Text.Encoding.UTF8.GetBytes(text);
             var b = new byte[(12 + t.Length + 3) & ~3];
@@ -46,7 +46,7 @@ namespace VL.Qt.Tests
             return b;
         }
 
-        static byte[] MediaRecord(uint handle, float position, float duration)
+        private static byte[] MediaRecord(uint handle, float position, float duration)
         {
             var b = new byte[20];
             BinaryPrimitives.WriteUInt16LittleEndian(b, Protocol.Ev.Media);

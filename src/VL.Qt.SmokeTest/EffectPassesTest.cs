@@ -31,20 +31,20 @@ public static class EffectPassesTest
     [Test, Category("effect-passes")]
     public static void EffectPasses() => Scenario.Run(Run);
 
-    const uint R = 1, T = 2, S = 3, Map = 4, Bad = 5, SinkR = 41;
-    const float RX = 250, RY = 60, RW = 300, RH = 150;
-    const float SX = 350, SY = 470, SW = 100, SH = 60;
-    const float L = 400; // directional blur length (DIP)
+    private const uint R = 1, T = 2, S = 3, Map = 4, Bad = 5, SinkR = 41;
+    private const float RX = 250, RY = 60, RW = 300, RH = 150;
+    private const float SX = 350, SY = 470, SW = 100, SH = 60;
+    private const float L = 400; // directional blur length (DIP)
 
-    static Color Px(Bitmap a, float x, float y) => a.GetPixel((int)(x * a.Width / 800), (int)(y * a.Height / 600));
-    static double Lit(Color c) => ((c.R + c.G + c.B) / 3.0 - 0x20) / (255.0 - 0x20); // 0 = background, 1 = white
+    private static Color Px(Bitmap a, float x, float y) => a.GetPixel((int)(x * a.Width / 800), (int)(y * a.Height / 600));
+    private static double Lit(Color c) => ((c.R + c.G + c.B) / 3.0 - 0x20) / (255.0 - 0x20); // 0 = background, 1 = white
 
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
-    static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
+    private static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
 
     // Scene page (F5) of the perf overlay: "QML items <n>" (items in the window's tree). A poll first: retired stages are
     // deleted one frame late, at the next poll or apply (#123).
-    static int Items(IntPtr w)
+    private static int Items(IntPtr w)
     {
         Native.Poll(w, new byte[1 << 16]);
         var need = -vlqt_test_perf_text(w, 2, null, 0);
@@ -55,7 +55,7 @@ public static class EffectPassesTest
     }
 
     // Last EV_ERROR text for sink in the poll buffer, null if none.
-    static string? ErrorText(ReadOnlySpan<byte> b, uint sink)
+    private static string? ErrorText(ReadOnlySpan<byte> b, uint sink)
     {
         string? text = null;
         int off = 0;
@@ -72,7 +72,7 @@ public static class EffectPassesTest
     }
 
     // Right edge of R per row (first lit pixel from the right), min and max over the rows.
-    static (float min, float max) RightEdge(Bitmap a)
+    private static (float min, float max) RightEdge(Bitmap a)
     {
         float min = float.MaxValue, max = float.MinValue;
         for (var y = RY + 10; y < RY + RH - 10; y += 4)
@@ -87,7 +87,7 @@ public static class EffectPassesTest
     }
 
     // Mean second difference of Lit along rows through T (one physical pixel apart): high for copies of the text.
-    static double Rough(Bitmap a)
+    private static double Rough(Bitmap a)
     {
         var step = 800.0 / a.Width;
         double sum = 0;
@@ -105,7 +105,7 @@ public static class EffectPassesTest
         return sum / n;
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "the passes are ShaderEffects");
         ulong Shader(string name)
@@ -374,11 +374,11 @@ public static class EffectPassesTest
     }
 
     // (f) PYRAMID links. G: orange box 160 x 100 at (320, 250) like GlowTest, the glow is measured right of it (y 300).
-    const uint G = 1, SinkG = 42;
-    const float GX = 320, GY = 250, GW = 160, GH = 100;
+    private const uint G = 1, SinkG = 42;
+    private const float GX = 320, GY = 250, GW = 160, GH = 100;
 
     // Glow strength at (x, y): mean green above the background over 5 x 5 samples 1 DIP apart (like GlowTest).
-    static float Glow(Bitmap a, float x, float y)
+    private static float Glow(Bitmap a, float x, float y)
     {
         float sum = 0;
         for (int dy = -2; dy <= 2; dy++)
@@ -386,15 +386,15 @@ public static class EffectPassesTest
                 sum += Px(a, x + dx, y + dy).G - 0x20;
         return sum / 25;
     }
-    static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
-    static float Level(float radius, float dpr)
+    private static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
+    private static float Level(float radius, float dpr)
     {
         var s = radius * dpr / 2;
         return 0.5f * MathF.Log2(1 + s * s * 6 / 7);
     }
-    static float RadiusOf(float level, float dpr) => 2 / dpr * MathF.Sqrt((MathF.Pow(4, level) - 1) * 7 / 6);
+    private static float RadiusOf(float level, float dpr) => 2 / dpr * MathF.Sqrt((MathF.Pow(4, level) - 1) * 7 / 6);
 
-    static void Pyramid(Scenario s, Action<bool, string> gpu, ulong wave)
+    private static void Pyramid(Scenario s, Action<bool, string> gpu, ulong wave)
     {
         ulong Shader(string name)
         {

@@ -16,7 +16,7 @@ public static class LastErrorTest
     [Ignore("CAPI-01: vlqt_last_error is one global string: a worker's failure replaces the Qt thread's message, and vlqt_offscreen_is_bound(NULL) fails without one (fails: both checks)")]
     public static void LastError() => Scenario.Run(Run);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         // A failing call on the Qt thread (this one): apply on a null window.
         var rc = Native.Apply(IntPtr.Zero, new byte[16]);

@@ -22,11 +22,11 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(PointerButtons Buttons, PointerDevices Devices);
 
-        readonly InteractionNode<Props> _node;
-        IChannel<bool>? _active;
-        IChannel<Vector2>? _position;
-        bool _lastActive;
-        Vector2 _lastPosition;
+        private readonly InteractionNode<Props> _node;
+        private IChannel<bool>? _active;
+        private IChannel<Vector2>? _position;
+        private bool _lastActive;
+        private Vector2 _lastPosition;
 
         public PointNode(NodeContext nodeContext)
             => _node = new InteractionNode<Props>(nodeContext, Create);
@@ -35,7 +35,7 @@ namespace VL.Qt.Nodes
         internal PointNode(Func<string, IDisposable> addWarning)
             => _node = new InteractionNode<Props>(addWarning, Create);
 
-        static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
             = static (previous, p, slot) => new PointInteraction(previous, slot, p.Buttons, p.Devices);
 
         internal InteractionNode<Props> Core => _node;

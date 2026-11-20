@@ -17,19 +17,19 @@ public static class StyleCommandsTest
     [Test, Category("style-commands")]
     public static void StyleCommands() => Scenario.Run(Run);
 
-    const uint Btn = 1;
-    const float BgGray = 0x10 / 255f;
-    const int BadLength = -2, UnknownProperty = -6, BadValue = -7;
+    private const uint Btn = 1;
+    private const float BgGray = 0x10 / 255f;
+    private const int BadLength = -2, UnknownProperty = -6, BadValue = -7;
 
     // Grabs are in device pixels (HiDPI); test coordinates are logical (800x600).
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
-    static bool Near(Color c, uint rgb) =>
+    private static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
+    private static bool Near(Color c, uint rgb) =>
         Math.Abs(c.R - (int)((rgb >> 16) & 0xFF)) < 8 && Math.Abs(c.G - (int)((rgb >> 8) & 0xFF)) < 8 && Math.Abs(c.B - (int)(rgb & 0xFF)) < 8;
 
-    static int PayloadLen(byte[] b) => BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(2));
-    static void SetPayloadLen(byte[] b, int len) => BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(2), (ushort)len);
+    private static int PayloadLen(byte[] b) => BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(2));
+    private static void SetPayloadLen(byte[] b, int len) => BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(2), (ushort)len);
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt style commands test");
         s.Check(w != IntPtr.Zero, "window_create");

@@ -58,10 +58,10 @@ namespace VL.Qt.Elements
         /// <summary>No properties.</summary>
         public static readonly QmlProperties Empty = new(new Dictionary<string, QmlValue>(StringComparer.Ordinal), 0, string.Empty);
 
-        readonly Dictionary<string, QmlValue> _values;
-        readonly int _invalid;
+        private readonly Dictionary<string, QmlValue> _values;
+        private readonly int _invalid;
 
-        QmlProperties(Dictionary<string, QmlValue> values, int invalid, string problems)
+        private QmlProperties(Dictionary<string, QmlValue> values, int invalid, string problems)
         {
             _values = values;
             _invalid = invalid;
@@ -119,7 +119,7 @@ namespace VL.Qt.Elements
         /// <summary>Whether <paramref name="name"/> can be sent (1..<see cref="Protocol.UniformNameMax"/> UTF-8 bytes).</summary>
         public static bool IsValidName(string? name) => UniformWriter.IsValidName(name);
 
-        bool Matches(Dictionary<string, object> source)
+        private bool Matches(Dictionary<string, object> source)
         {
             int valid = 0, invalid = 0;
             foreach (var (name, value) in source)

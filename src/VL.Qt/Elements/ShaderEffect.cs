@@ -59,7 +59,7 @@ namespace VL.Qt.Elements
 
         public override ImmutableArray<Element> Children => _children;
 
-        static ImmutableArray<Element> BuildChildren(Element? input, Spread<Uniform> uniforms)
+        private static ImmutableArray<Element> BuildChildren(Element? input, Spread<Uniform> uniforms)
         {
             var builder = ImmutableArray.CreateBuilder<Element>();
             if (input is not null)

@@ -8,13 +8,13 @@ using VL.Qt;
 
 // L3a: opens one Qt window from C# (rectangle + text), pumps it for a while, grabs a PNG.
 // Usage: VL.Qt.Probe [--seconds N] [--grab <png>]   (N = 0: run until the window is closed)
-static class Program
+internal static class Program
 {
-    static readonly Native.LogFn s_logFn = (level, cat, msg) =>
+    private static readonly Native.LogFn s_logFn = (level, cat, msg) =>
         Console.WriteLine($"[{level}] {Marshal.PtrToStringUTF8(cat)}: {Marshal.PtrToStringUTF8(msg)}");
 
     [STAThread] // Windows: Qt's OleInitialize needs an STA thread; no effect on Linux.
-    static int Main(string[] args)
+    private static int Main(string[] args)
     {
         double seconds = 10;
         string grab = Path.Combine(AppContext.BaseDirectory, "probe.png");
@@ -84,7 +84,7 @@ static class Program
         return grabbed ? 0 : Fail("window closed before the grab");
     }
 
-    static int Fail(string what)
+    private static int Fail(string what)
     {
         Console.WriteLine("FAIL " + what);
         return 1;

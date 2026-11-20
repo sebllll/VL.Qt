@@ -16,13 +16,13 @@ public static class ButtonTest
     [Test, Category("button")]
     public static void Button() => Scenario.Run(Run);
 
-    readonly record struct Rec(ushort Event, uint Handle, byte[] Payload)
+    private readonly record struct Rec(ushort Event, uint Handle, byte[] Payload)
     {
         public float F(int i) => BinaryPrimitives.ReadSingleLittleEndian(Payload.AsSpan(4 * i));
         public uint U32 => BinaryPrimitives.ReadUInt32LittleEndian(Payload);
     }
 
-    static List<Rec> Parse(ReadOnlySpan<byte> b)
+    private static List<Rec> Parse(ReadOnlySpan<byte> b)
     {
         var list = new List<Rec>();
         int off = 0;
@@ -38,7 +38,7 @@ public static class ButtonTest
         return list;
     }
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt button test");
         s.Check(w != IntPtr.Zero, "window_create");
@@ -166,6 +166,6 @@ public static class ButtonTest
         s.Pump(1);
     }
 
-    const uint B = 1;
-    const uint H = 31;
+    private const uint B = 1;
+    private const uint H = 31;
 }

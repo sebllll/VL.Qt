@@ -30,16 +30,16 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(string Source, int Reload, QmlProperties Properties, bool AutoSize);
 
-        readonly ElementNode<QmlElement, Props> _node;
-        readonly QmlFileWatcher _watcher;
-        readonly NodeErrors? _errors;
-        string? _file, _fileResolved;
-        string _source = string.Empty;
-        int _reload;
-        QmlProperties _properties = QmlProperties.Empty;
-        string _shownProblems = string.Empty, _elementError = string.Empty, _error = string.Empty;
-        Dictionary<string, object> _changedProperties = new();
-        int _seenPropertyUpdates;
+        private readonly ElementNode<QmlElement, Props> _node;
+        private readonly QmlFileWatcher _watcher;
+        private readonly NodeErrors? _errors;
+        private string? _file, _fileResolved;
+        private string _source = string.Empty;
+        private int _reload;
+        private QmlProperties _properties = QmlProperties.Empty;
+        private string _shownProblems = string.Empty, _elementError = string.Empty, _error = string.Empty;
+        private Dictionary<string, object> _changedProperties = new();
+        private int _seenPropertyUpdates;
 
         public QmlElementNode(NodeContext nodeContext)
         {
@@ -61,7 +61,7 @@ namespace VL.Qt.Nodes
             _watcher = watchDir is null ? new QmlFileWatcher() : new QmlFileWatcher(watchDir);
         }
 
-        static readonly Func<CommonInputs, Props, SinkSlot, QmlElement> Create = static (c, p, slot) => new QmlElement
+        private static readonly Func<CommonInputs, Props, SinkSlot, QmlElement> Create = static (c, p, slot) => new QmlElement
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -146,7 +146,7 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>The full path of <paramref name="value"/>, cached for the last input (no work per frame); empty for none.</summary>
-        string ResolveSource(string? value)
+        private string ResolveSource(string? value)
         {
             if (string.IsNullOrWhiteSpace(value))
                 return string.Empty;
@@ -165,7 +165,7 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>Joins the property problems and the error Qt reported for the element, one line each; recomputed only when a part changes.</summary>
-        string UpdateError()
+        private string UpdateError()
         {
             string problems = _properties.Problems, element = _node.Error ?? string.Empty;
             if (problems != _shownProblems || element != _elementError)

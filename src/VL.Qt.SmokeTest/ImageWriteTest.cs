@@ -12,13 +12,13 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class ImageWriteTest
 {
-    const int W = 8, H = 4;
+    private const int W = 8, H = 4;
 
     /// <summary>Writing images.</summary>
     [Test, Category("imagewrite")]
     public static void ImageWrite() => Scenario.Run(s => Run(s));
 
-    static void Run(Scenario s)
+    private static void Run(Scenario s)
     {
         var dir = Path.Combine(s.OutDir, "image-write");
         if (Directory.Exists(dir)) Directory.Delete(dir, true);
