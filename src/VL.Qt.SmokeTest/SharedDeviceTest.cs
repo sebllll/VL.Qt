@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using VL.Qt.Wire;
 using VL.Qt;
 
 /// <summary>

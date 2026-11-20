@@ -2,6 +2,7 @@
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Input handlers as protocol objects: CREATE / REPARENT / SET / BIND / DESTROY / RESET of

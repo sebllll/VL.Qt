@@ -4,6 +4,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Tests
 {

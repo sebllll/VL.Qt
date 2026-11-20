@@ -2,6 +2,7 @@
 using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Styles
 {

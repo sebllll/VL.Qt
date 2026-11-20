@@ -3,6 +3,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 

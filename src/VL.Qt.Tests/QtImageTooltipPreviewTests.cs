@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using VL.Lib.Basics.Imaging;
 using VL.Qt.Nodes;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Tests
 {

@@ -11,6 +11,7 @@ using VL.Lib.Collections;
 using NUnit.Framework;
 using VL.Qt;
 using VL.Qt.Elements;
+using VL.Qt.Wire;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 using static Pixels;

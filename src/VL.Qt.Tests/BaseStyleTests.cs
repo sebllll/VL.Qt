@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using NUnit.Framework;
 using VL.Qt.Elements;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Tests
 {

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Threading;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Replays command traces recorded with VLQT_TRACE_COMMANDS (plan 01e): file = repeated "u32 length (LE) + frame bytes".

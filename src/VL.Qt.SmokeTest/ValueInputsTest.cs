@@ -4,6 +4,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Value inputs of #301 (package 2a): QtQuick.Controls CheckBox and Switch (Toggle, bool), Slider (f32) and TextField

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // L3a: opens one Qt window from C# (rectangle + text), pumps it for a while, grabs a PNG.

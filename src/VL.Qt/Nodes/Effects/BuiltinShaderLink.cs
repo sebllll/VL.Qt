@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Elements;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Nodes
 {

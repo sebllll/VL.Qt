@@ -40,7 +40,7 @@ dotnet run --project src/VL.Qt.SmokeTest -c Release -- --drift # protocol.h and 
 
 - `tools/build.ps1 -Test` writes the SmokeTest log and grabbed PNGs to `build/smoke/`; exit code 0 means every step passed. Look at the PNGs when you change rendering.
 - Rebuild QtNative (`tools/build-native.ps1` or `tools/build.ps1`) whenever you touch `src/VL.Qt.Native/`. Use `-SkipNative` for C#-only changes.
-- Protocol changes: edit `src/VL.Qt.Native/protocol.h`, mirror in `src/VL.Qt/Protocol.cs` by hand, run `--drift`.
+- Protocol changes: edit `src/VL.Qt.Native/protocol.h`, mirror in `src/VL.Qt/Wire/Protocol.cs` by hand, run `--drift`.
 - A change is done when the affected help patch, unit tests and SmokeTest pass.
 
 ## Checking patches

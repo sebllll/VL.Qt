@@ -4,6 +4,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt;
 using VL.Qt.Styles;
+using VL.Qt.Wire;
 
 // Reference scenes the refactoring touches (TEST-03), compared with src/VL.Qt.SmokeTest/references/reference-*.png like the
 // README pictures (ImageCompare: WARP, own process). Each scene is a 400 x 300 DIP window on ground 0x16, raw commands.

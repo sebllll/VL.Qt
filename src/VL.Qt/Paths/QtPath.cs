@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Stride.Core.Mathematics;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Paths
 {

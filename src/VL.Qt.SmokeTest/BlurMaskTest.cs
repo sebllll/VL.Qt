@@ -8,6 +8,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 

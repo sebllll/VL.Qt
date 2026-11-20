@@ -6,7 +6,8 @@ using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
-using P = VL.Qt.Protocol.Prop;
+using VL.Qt.Wire;
+using P = VL.Qt.Wire.Protocol.Prop;
 using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Tests

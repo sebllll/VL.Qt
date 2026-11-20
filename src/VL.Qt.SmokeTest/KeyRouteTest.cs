@@ -5,6 +5,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Keys on the real Windows path: vvvv's main thread runs a WinForms message loop, and Qt gets its keys from

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Traces recorded from help patches (TEST-04, tools/record-traces.ps1): each trace in src/VL.Qt.SmokeTest/traces/<name>.bin

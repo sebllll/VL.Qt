@@ -11,8 +11,9 @@ using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
-using P = VL.Qt.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.Prop;
 
 namespace VL.Qt.Tests
 {

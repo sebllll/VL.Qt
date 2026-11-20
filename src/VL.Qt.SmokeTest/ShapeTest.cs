@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using System.Drawing;
 using System.IO;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Shape in QtNative: open polyline, closed filled polygon with a thick miter stroke, cubic path, trimmed polyline,

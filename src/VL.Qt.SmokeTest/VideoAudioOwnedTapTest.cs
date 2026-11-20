@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using NUnit.Framework;
+using VL.Qt.Wire;
 using VL.Qt;
 #if WINDOWS
 using NAudio.CoreAudioApi;

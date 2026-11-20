@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using VL.Qt.Wire;
 
 namespace VL.Qt
 {

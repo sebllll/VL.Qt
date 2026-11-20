@@ -3,6 +3,7 @@ using System.Buffers.Binary;
 using System.Text;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Elements
 {

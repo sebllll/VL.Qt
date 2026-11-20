@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using VL.Qt.Wire;
 using VL.Qt;
 
 /// <summary>

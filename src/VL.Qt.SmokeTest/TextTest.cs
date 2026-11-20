@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using System.Drawing;
 using System.IO;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // Text in QtNative (plan 05c): text, font.*, color, alignment, wrap, elide, lineHeight, letterSpacing, fontSizeMode.

@@ -8,6 +8,7 @@ using Stride.Graphics;
 using VL.Core;
 using VL.Lib.Animation;
 using VL.Stride.Games;
+using VL.Qt.Wire;
 using IServiceRegistry = global::Stride.Core.IServiceRegistry;
 
 namespace VL.Qt.Stride

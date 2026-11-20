@@ -1,7 +1,7 @@
 /*
  * protocol.h - single source of truth for the VL.Qt command buffer protocol.
  *
- * Mirrored 1:1 in src/VL.Qt/Protocol.cs. The SmokeTest drift check parses this file
+ * Mirrored 1:1 in src/VL.Qt/Wire/Protocol.cs. The SmokeTest drift check parses this file
  * and compares every constant (name + value) with Protocol.cs, so keep the format simple:
  *   - only `#define VLQT_<NAME> <integer>` and `enum { VLQT_<GROUP>_<NAME> = <integer>, ... };`
  *   - one constant per line, explicit values, no expressions.

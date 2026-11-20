@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // F8 in vvvv with a playing Video [Qt] (with audio) hung for good in Renderer.Dispose -> Native.Apply (DESTROY of

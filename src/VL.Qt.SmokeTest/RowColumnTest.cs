@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System.Drawing;
 using System.IO;
 using Stride.Core.Mathematics;
+using VL.Qt.Wire;
 using VL.Qt;
 using Color = System.Drawing.Color;
 using RectangleF = System.Drawing.RectangleF;

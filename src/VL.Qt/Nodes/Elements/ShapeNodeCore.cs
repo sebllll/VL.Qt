@@ -6,6 +6,7 @@ using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Paths;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Nodes
 {

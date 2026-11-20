@@ -1,6 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 using System.Runtime.InteropServices;
+using VL.Qt.Wire;
 using VL.Qt;
 
 // vvvv crashed on quick repeated F9. QCoreApplication::processEvents also dispatches the Win32 messages of vvvv's

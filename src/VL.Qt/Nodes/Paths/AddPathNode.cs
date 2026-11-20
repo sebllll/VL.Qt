@@ -1,6 +1,7 @@
 ﻿using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Nodes
 {

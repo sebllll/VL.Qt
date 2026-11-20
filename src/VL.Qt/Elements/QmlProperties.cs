@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Stride.Core.Mathematics;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Elements
 {

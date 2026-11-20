@@ -9,6 +9,7 @@ using VL.Lib.Basics.Imaging;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Wire;
 using Image = VL.Qt.Elements.Image;
 using Path = VL.Lib.IO.Path;
 
