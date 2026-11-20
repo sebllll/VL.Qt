@@ -245,6 +245,31 @@ namespace VL.Qt.Tests
             Assert.That(error, Is.EqualTo("no permission"));
         }
 
+        [Test, Ignore("NODW-03: the first grab to settle is written to the path of the second Write (A's pixels in b.png)")]
+        public void Element_SecondWriteBeforeTheFirstGrabSettled_WritesTheSecondGrabToTheSecondPath()
+        {
+            Show();
+            UpdateElement("a.png", out _, out _, write: true);
+            UpdateElement("b.png", out _, out _, write: true);
+
+            // The grab of the first Write settles first (QtNative does not cancel it): 6 wide.
+            _api.SnapshotSize = (6, 3);
+            _api.Ready(SnapshotId(), 6, 3);
+            Pump();
+            UpdateElement("b.png", out _, out _);
+            Finish(_elementWriter);
+            Assert.That(_writes, Is.Empty, "the first grab is not written to the path of the second Write");
+
+            // The grab of the second Write settles: 7 wide, written to b.png.
+            _api.SnapshotSize = (7, 3);
+            _api.Ready(SnapshotId(), 7, 3);
+            Pump();
+            UpdateElement("b.png", out _, out _);
+            Finish(_elementWriter);
+            Assert.That(_writes.Single().Path, Is.EqualTo("b.png"));
+            Assert.That(_writes.Single().Width, Is.EqualTo(7));
+        }
+
         [Test]
         public void Element_Dispose_ReleasesTheSnapshotResource()
         {

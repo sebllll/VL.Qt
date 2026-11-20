@@ -62,6 +62,7 @@ The area is in good shape. The widgets are thin shells over `ElementNode` plus `
 - **Touches:** `src/VL.Qt/Nodes/SnapshotNode.cs` (or `Images/SnapshotGrab.cs` after the split), `FileWriterElementNode.cs`, `src/VL.Qt.Tests/FileWriterNodeTests.cs`
 - **Depends on:** none
 - **Verification:** new unit test "second Write before the first grab settled writes the second grab"; SmokeTest scenario of FileWriter (Element) if one exists.
+- **Wave 1 (W1-14):** confirmed by `Element_SecondWriteBeforeTheFirstGrabSettled_WritesTheSecondGrabToTheSecondPath` (the first grab to settle is written to the path of the second Write: the 6-wide grab of A lands in `b.png`).
 
 ### NODW-04 One rule for how resource and file nodes show errors
 - **Kind:** api

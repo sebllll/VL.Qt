@@ -619,6 +619,15 @@ namespace VL.Qt.Tests
             Assert.That(scene.OccurrencesOf(added), Is.EqualTo(1));
         }
 
+        [Test, Ignore("REC-01: a Text with 100,000 characters makes CommandWriter.SetString throw ArgumentOutOfRangeException out of Reconciler.Update")]
+        public void OversizedString_WithARealCommandWriter_DoesNotThrowOutOfUpdate()
+        {
+            var rec = new Reconciler(new CommandWriter(), new IdAllocator(), new SceneRegistry());
+            var text = new Text { Content = new string('x', 100_000) };
+            // B7: the target is a failed reconcile handled by the caller (log, mark, resync); the unit shows at least that no ArgumentOutOfRangeException escapes.
+            Assert.DoesNotThrow(() => rec.Update(G(text), Space.DIPTopLeft));
+        }
+
         [Test]
         public void Fault_AtCreate_NextUpdate_BuildsTheTree()
         {

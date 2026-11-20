@@ -291,7 +291,7 @@ namespace VL.Qt.Tests
         [Test, Category("Perf")]
         public void EffectChain_Animated_Fast() => AssertFast(AnimatedEffectChain());
 
-        [Test, Ignore("not in REC-01..10 (new finding for W1-14): a Group Style change with 10 Button children allocates 504 B/frame, cause not analysed")]
+        [Test, Ignore("no finding covers it (W1-14): a Group Style change with 10 Button children allocates 504 B/frame, cause not analysed")]
         public void Group_StyleChangingEveryFrame_NoAllocations() => AssertNoAllocation(GroupWithAnimatedStyle());
 
         [Test, Category("Perf")]

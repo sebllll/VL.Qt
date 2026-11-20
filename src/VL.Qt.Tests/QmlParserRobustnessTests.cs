@@ -126,8 +126,8 @@ namespace VL.Qt.Tests
             Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "after" }));
         }
 
-        // 0b/0o: Default stays 0 (not read as a number, no message); no finding covers it yet.
-        [Ignore("QML-12: 0b/0o numbers are not evaluated, the default stays 0")]
+        // 0b/0o: Default stays 0 (not read as a number, no message); no finding covers it (W1-14).
+        [Ignore("no finding covers it (W1-14; QML-12 only asks for tests): 0b/0o numbers are not evaluated, the default stays 0")]
         [TestCase("0b101", 5)]
         [TestCase("0B11", 3)]
         [TestCase("0o17", 15)]
