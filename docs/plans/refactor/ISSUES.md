@@ -27,7 +27,7 @@ Per machine (P16): arm64 95, x64 92, Sebastian in vvvv 2, both 1. 35 issues add 
 
 ## 2 Rules of the cut
 
-- **One task, one branch, one draft PR** against `refactor`, merged with a merge commit, no squash (0.1, changed by Sebastian on 2026-11-20); the tasks of one package are one GitHub issue with a task list (section 2a, Sebastian, 2026-11-20). Milestone `0.10.0` (P13). It does not exist on GitHub yet (open milestones: `1.0`, `2.0`, `3.0`); it is created when the issues are opened.
+- **One task, one branch, one draft PR** against `refactor`, merged with a merge commit, no squash (0.1, changed by Sebastian on 2026-11-20); the tasks of one package are one GitHub issue with a task list (section 2a, Sebastian, 2026-11-20). Milestone `0.10.0` (P13). Created on 2026-11-20.
 - **Ids** are `W<wave>-<NN>`, numbered in the order the issues run. Wave 4 is numbered cuts, chain, lanes, closing. The title is the GitHub title.
 - **Findings:** the first one is the main finding. Merged into one issue are the duplicates of P22, the merges of TARGET 3.2, and S or M findings of one lane that edit the same files. Every `must` finding is the main finding of its issue or is named in its title.
 - **Overturned findings** (P1, `Decided:` lines that overturn) are cut as the decided thing in the issue that does it: TEST-11 in W1-01, API-09 in W4-17, NODW-02 in W4-95, NODW-05 in W4-98. No finding is left without an issue.
@@ -42,39 +42,41 @@ Per machine (P16): arm64 95, x64 92, Sebastian in vvvv 2, both 1. 35 issues add 
 ## 2a GitHub issues and their tasks
 
 Sebastian, 2026-11-20: the 192 tasks of section 3 are grouped into 30 GitHub issues, one per package: a wave-1 or wave-3 package, the native and the C# cuts, the chain, one issue per lane of wave 4, the closing, two of tests, two of docs, the release. A task is what section 3 calls an issue: one branch and one draft PR against `refactor`. The GitHub issue holds its tasks as a task list; a PR says `Part of #<issue>, task <id>` and ticks its box when it is merged; the issue is closed when its last task is merged. Labels of an issue: the union of the areas of its tasks, one type (the type of most of its tasks, `bug` where the lane is mostly fixes), at most one topic, `manual-check` if any task carries it.
+Opened on GitHub on 2026-11-20 in the milestone `0.10.0` (#169 to #198); #144 and #28 moved into it (section 5).
 
-| Issue | Wave | Title | Tasks | Labels |
-|---|---|---|---|---|
-| I-01 | 1 | Wave 1: SmokeTest on NUnit, perf baseline, reference images, Linux green | W1-01, W1-07, W1-08, W1-12, W1-13, W1-19 | `enhancement`, `area:csharp`, `area:native`, `area:ci` |
-| I-02 | 1 | Wave 1: node-API snapshot and the tests the refactoring needs | W1-04, W1-02, W1-03, W1-05, W1-06, W1-09, W1-10, W1-11 | `enhancement`, `area:csharp`, `area:native` |
-| I-03 | 1 | Wave 1: confirm or drop the suspected defects; measurements | W1-14, W1-15, W1-16, W1-17, W1-18 | `question`, `area:csharp`, `area:native`, `area:patch`, `manual-check` |
-| I-04 | 3 | Wave 3: repository-wide mechanical steps (private, issue refs, feedback, node and wire folders) | W3-01, W3-02, W3-03, W3-04, W3-05 | `enhancement`, `area:csharp`, `area:native` |
-| I-05 | 3 | Wave 3: help-patch mapping script, glossary, docs/design | W3-06, W3-07, W3-08 | `enhancement`, `area:patch` |
-| I-06 | 3 | Wave 3: the native break in seven pull requests | W3-09, W3-10, W3-11, W3-12, W3-13, W3-14, W3-15 | `enhancement`, `area:native`, `area:csharp` |
-| I-07 | 4 | Wave 4: cut QtNative into folders (pure moves) | W4-01, W4-02, W4-03, W4-04, W4-05, W4-06, W4-07, W4-08, W4-09 | `enhancement`, `area:native`, `area:ci` |
-| I-08 | 4 | Wave 4: cut the C# runtime, reconciler, interop, QML and factories (pure moves) | W4-10, W4-11, W4-12, W4-13, W4-14, W4-15 | `enhancement`, `area:csharp` |
-| I-09 | 4 | Wave 4: the cross-cutting chain (imports, categories, IElement, node core, messages, Enabled) | W4-16, W4-17, W4-18, W4-19, W4-20, W4-21 | `enhancement`, `area:csharp`, `area:native`, `area:patch`, `manual-check` |
-| I-10 | 4 | Wave 4, lane N-app: app, window and platform of QtNative | W4-22, W4-23, W4-24, W4-25, W4-26, W4-27, W4-28, W4-29 | `enhancement`, `area:native`, `area:csharp` |
-| I-11 | 4 | Wave 4, lane N-scene: commands, events and the scene of QtNative | W4-30, W4-31, W4-32, W4-33, W4-34, W4-35, W4-36 | `bug`, `area:native` |
-| I-12 | 4 | Wave 4, lane N-elements: the native elements | W4-37, W4-38, W4-39, W4-40, W4-41, W4-42, W4-43 | `bug`, `area:native` |
-| I-13 | 4 | Wave 4, lane N-effects: effect chain, shader item, user QML, style | W4-44, W4-45, W4-46, W4-47, W4-48, W4-49, W4-50, W4-51 | `enhancement`, `area:native`, `area:csharp`, `topic:effects` |
-| I-14 | 4 | Wave 4, lane N-resources: images, snapshots, shaders, audio tap | W4-52, W4-53, W4-54, W4-55, W4-56, W4-57, W4-58, W4-59, W4-60 | `bug`, `area:native`, `area:csharp`, `topic:images` |
-| I-15 | 4 | Wave 4, lane N-device: device, offscreen scenes, render threads | W4-61, W4-62, W4-63, W4-64, W4-65, W4-66, W4-67 | `bug`, `area:native`, `area:csharp` |
-| I-16 | 4 | Wave 4, lane N-diagnostics: perf statistics and overlays | W4-68, W4-69, W4-70, W4-71, W4-72, W4-73 | `bug`, `area:native`, `area:csharp`, `topic:performance` |
-| I-17 | 4 | Wave 4, lane C-reconciler: reconciliation and the scene registry | W4-74, W4-75, W4-76, W4-77, W4-78, W4-79, W4-80, W4-81, W4-82, W4-83 | `bug`, `area:csharp` |
-| I-18 | 4 | Wave 4, lane C-runtime: app, pump, renderer node, PerfStats | W4-84, W4-85, W4-86, W4-87, W4-88, W4-89 | `enhancement`, `area:csharp`, `area:native`, `area:patch`, `manual-check` |
-| I-19 | 4 | Wave 4, lane C-elements: the element model | W4-90, W4-91, W4-92 | `enhancement`, `area:csharp`, `area:native`, `area:patch` |
-| I-20 | 4 | Wave 4, lane C-nodes: element, widget and image nodes | W4-93, W4-94, W4-95, W4-96, W4-97, W4-98, W4-99 | `enhancement`, `area:csharp`, `area:patch`, `manual-check` |
-| I-21 | 4 | Wave 4, lane C-chains: effect, interaction and path nodes | W4-100, W4-101, W4-102, W4-103, W4-104, W4-105, W4-106, W4-107, W4-108, W4-109 | `enhancement`, `area:csharp`, `area:native`, `area:patch`, `manual-check` |
-| I-22 | 4 | Wave 4, lane C-files: QML and shader files and their node factories | W4-110, W4-111, W4-112, W4-113, W4-114, W4-115, W4-116, W4-117, W4-118, W4-119, W4-120 | `enhancement`, `area:csharp`, `area:native`, `area:patch` |
-| I-23 | 4 | Wave 4, lane C-values: styles, images and paths | W4-121, W4-122, W4-123, W4-124, W4-125, W4-126 | `enhancement`, `area:csharp`, `area:patch` |
-| I-24 | 4 | Wave 4, lane companions: VL.Qt.Stride and VL.Qt.Audio | W4-127, W4-128, W4-129 | `enhancement`, `area:csharp`, `area:patch`, `manual-check` |
-| I-25 | 4 | Wave 4: closing check and the look at every help patch | W4-130, W4-131 | `enhancement`, `area:patch`, `area:ci`, `manual-check` |
-| I-26 | 5 | Wave 5: test hooks out of the library; test folders | W5-01a, W5-01b, W5-02, W5-06 | `enhancement`, `area:csharp`, `area:native` |
-| I-27 | 5 | Wave 5: patch checker on node-api.txt, Stride tests, tests/ and the Probe | W5-03, W5-04, W5-05 | `enhancement`, `area:csharp`, `area:patch`, `area:ci` |
-| I-28 | 6 | Wave 6: user and contributor pages | W6-01, W6-02, W6-03, W6-04, W6-05, W6-06, W6-07, W6-08, W6-09, W6-10 | `documentation` |
-| I-29 | 6 | Wave 6: design notes | W6-11, W6-12, W6-13, W6-14, W6-15, W6-16, W6-17, W6-18, W6-19 | `documentation`, `area:native`, `area:csharp` |
-| I-30 | 7 | Release 0.10.0 | W7-01 | `enhancement`, `area:ci` |
+
+| Issue | GitHub | Wave | Title | Tasks | Labels |
+|---|---|---|---|---|---|
+| I-01 | [#169](https://github.com/sebllll/VL.Qt/issues/169) | 1 | Wave 1: SmokeTest on NUnit, perf baseline, reference images, Linux green | W1-01, W1-07, W1-08, W1-12, W1-13, W1-19 | `enhancement`, `area:csharp`, `area:native`, `area:ci` |
+| I-02 | [#170](https://github.com/sebllll/VL.Qt/issues/170) | 1 | Wave 1: node-API snapshot and the tests the refactoring needs | W1-04, W1-02, W1-03, W1-05, W1-06, W1-09, W1-10, W1-11 | `enhancement`, `area:csharp`, `area:native` |
+| I-03 | [#171](https://github.com/sebllll/VL.Qt/issues/171) | 1 | Wave 1: confirm or drop the suspected defects; measurements | W1-14, W1-15, W1-16, W1-17, W1-18 | `question`, `area:csharp`, `area:native`, `area:patch`, `manual-check` |
+| I-04 | [#172](https://github.com/sebllll/VL.Qt/issues/172) | 3 | Wave 3: repository-wide mechanical steps (private, issue refs, feedback, node and wire folders) | W3-01, W3-02, W3-03, W3-04, W3-05 | `enhancement`, `area:csharp`, `area:native` |
+| I-05 | [#173](https://github.com/sebllll/VL.Qt/issues/173) | 3 | Wave 3: help-patch mapping script, glossary, docs/design | W3-06, W3-07, W3-08 | `enhancement`, `area:patch` |
+| I-06 | [#174](https://github.com/sebllll/VL.Qt/issues/174) | 3 | Wave 3: the native break in seven pull requests | W3-09, W3-10, W3-11, W3-12, W3-13, W3-14, W3-15 | `enhancement`, `area:native`, `area:csharp` |
+| I-07 | [#175](https://github.com/sebllll/VL.Qt/issues/175) | 4 | Wave 4: cut QtNative into folders (pure moves) | W4-01, W4-02, W4-03, W4-04, W4-05, W4-06, W4-07, W4-08, W4-09 | `enhancement`, `area:native`, `area:ci` |
+| I-08 | [#176](https://github.com/sebllll/VL.Qt/issues/176) | 4 | Wave 4: cut the C# runtime, reconciler, interop, QML and factories (pure moves) | W4-10, W4-11, W4-12, W4-13, W4-14, W4-15 | `enhancement`, `area:csharp` |
+| I-09 | [#177](https://github.com/sebllll/VL.Qt/issues/177) | 4 | Wave 4: the cross-cutting chain (imports, categories, IElement, node core, messages, Enabled) | W4-16, W4-17, W4-18, W4-19, W4-20, W4-21 | `enhancement`, `area:csharp`, `area:native`, `area:patch`, `manual-check` |
+| I-10 | [#178](https://github.com/sebllll/VL.Qt/issues/178) | 4 | Wave 4, lane N-app: app, window and platform of QtNative | W4-22, W4-23, W4-24, W4-25, W4-26, W4-27, W4-28, W4-29 | `enhancement`, `area:native`, `area:csharp` |
+| I-11 | [#179](https://github.com/sebllll/VL.Qt/issues/179) | 4 | Wave 4, lane N-scene: commands, events and the scene of QtNative | W4-30, W4-31, W4-32, W4-33, W4-34, W4-35, W4-36 | `bug`, `area:native` |
+| I-12 | [#180](https://github.com/sebllll/VL.Qt/issues/180) | 4 | Wave 4, lane N-elements: the native elements | W4-37, W4-38, W4-39, W4-40, W4-41, W4-42, W4-43 | `bug`, `area:native` |
+| I-13 | [#181](https://github.com/sebllll/VL.Qt/issues/181) | 4 | Wave 4, lane N-effects: effect chain, shader item, user QML, style | W4-44, W4-45, W4-46, W4-47, W4-48, W4-49, W4-50, W4-51 | `enhancement`, `area:native`, `area:csharp`, `topic:effects` |
+| I-14 | [#182](https://github.com/sebllll/VL.Qt/issues/182) | 4 | Wave 4, lane N-resources: images, snapshots, shaders, audio tap | W4-52, W4-53, W4-54, W4-55, W4-56, W4-57, W4-58, W4-59, W4-60 | `bug`, `area:native`, `area:csharp`, `topic:images` |
+| I-15 | [#183](https://github.com/sebllll/VL.Qt/issues/183) | 4 | Wave 4, lane N-device: device, offscreen scenes, render threads | W4-61, W4-62, W4-63, W4-64, W4-65, W4-66, W4-67 | `bug`, `area:native`, `area:csharp` |
+| I-16 | [#184](https://github.com/sebllll/VL.Qt/issues/184) | 4 | Wave 4, lane N-diagnostics: perf statistics and overlays | W4-68, W4-69, W4-70, W4-71, W4-72, W4-73 | `bug`, `area:native`, `area:csharp`, `topic:performance` |
+| I-17 | [#185](https://github.com/sebllll/VL.Qt/issues/185) | 4 | Wave 4, lane C-reconciler: reconciliation and the scene registry | W4-74, W4-75, W4-76, W4-77, W4-78, W4-79, W4-80, W4-81, W4-82, W4-83 | `bug`, `area:csharp` |
+| I-18 | [#186](https://github.com/sebllll/VL.Qt/issues/186) | 4 | Wave 4, lane C-runtime: app, pump, renderer node, PerfStats | W4-84, W4-85, W4-86, W4-87, W4-88, W4-89 | `enhancement`, `area:csharp`, `area:native`, `area:patch`, `manual-check` |
+| I-19 | [#187](https://github.com/sebllll/VL.Qt/issues/187) | 4 | Wave 4, lane C-elements: the element model | W4-90, W4-91, W4-92 | `enhancement`, `area:csharp`, `area:native`, `area:patch` |
+| I-20 | [#188](https://github.com/sebllll/VL.Qt/issues/188) | 4 | Wave 4, lane C-nodes: element, widget and image nodes | W4-93, W4-94, W4-95, W4-96, W4-97, W4-98, W4-99 | `enhancement`, `area:csharp`, `area:patch`, `manual-check` |
+| I-21 | [#189](https://github.com/sebllll/VL.Qt/issues/189) | 4 | Wave 4, lane C-chains: effect, interaction and path nodes | W4-100, W4-101, W4-102, W4-103, W4-104, W4-105, W4-106, W4-107, W4-108, W4-109 | `enhancement`, `area:csharp`, `area:native`, `area:patch`, `manual-check` |
+| I-22 | [#190](https://github.com/sebllll/VL.Qt/issues/190) | 4 | Wave 4, lane C-files: QML and shader files and their node factories | W4-110, W4-111, W4-112, W4-113, W4-114, W4-115, W4-116, W4-117, W4-118, W4-119, W4-120 | `enhancement`, `area:csharp`, `area:native`, `area:patch` |
+| I-23 | [#191](https://github.com/sebllll/VL.Qt/issues/191) | 4 | Wave 4, lane C-values: styles, images and paths | W4-121, W4-122, W4-123, W4-124, W4-125, W4-126 | `enhancement`, `area:csharp`, `area:patch` |
+| I-24 | [#192](https://github.com/sebllll/VL.Qt/issues/192) | 4 | Wave 4, lane companions: VL.Qt.Stride and VL.Qt.Audio | W4-127, W4-128, W4-129 | `enhancement`, `area:csharp`, `area:patch`, `manual-check` |
+| I-25 | [#193](https://github.com/sebllll/VL.Qt/issues/193) | 4 | Wave 4: closing check and the look at every help patch | W4-130, W4-131 | `enhancement`, `area:patch`, `area:ci`, `manual-check` |
+| I-26 | [#194](https://github.com/sebllll/VL.Qt/issues/194) | 5 | Wave 5: test hooks out of the library; test folders | W5-01a, W5-01b, W5-02, W5-06 | `enhancement`, `area:csharp`, `area:native` |
+| I-27 | [#195](https://github.com/sebllll/VL.Qt/issues/195) | 5 | Wave 5: patch checker on node-api.txt, Stride tests, tests/ and the Probe | W5-03, W5-04, W5-05 | `enhancement`, `area:csharp`, `area:patch`, `area:ci` |
+| I-28 | [#196](https://github.com/sebllll/VL.Qt/issues/196) | 6 | Wave 6: user and contributor pages | W6-01, W6-02, W6-03, W6-04, W6-05, W6-06, W6-07, W6-08, W6-09, W6-10 | `documentation` |
+| I-29 | [#197](https://github.com/sebllll/VL.Qt/issues/197) | 6 | Wave 6: design notes | W6-11, W6-12, W6-13, W6-14, W6-15, W6-16, W6-17, W6-18, W6-19 | `documentation`, `area:native`, `area:csharp` |
+| I-30 | [#198](https://github.com/sebllll/VL.Qt/issues/198) | 7 | Release 0.10.0 | W7-01 | `enhancement`, `area:ci` |
 
 ## 3 Waves
 
@@ -431,8 +433,8 @@ Mixed issues with a small native part that touches neither CMake nor an `#if` bl
 
 | Issue | Milestone | Title | 0.10.0 | Reason |
 |---|---|---|---|---|
-| #144 | 1.0 | Help flags: at least one per node | moves | joins W4-131, the look at every help patch at the end of wave 4 (P21) |
-| #28 | 3.0 | ShaderEffect: provide the pixel size of samplers as a uniform and use DIP for lengths | moves | done by W4-120 (`texelSize`, `dpr`, `viewSize` on the Shader element, SREF-10) and W4-101 (every effect length in DIP, E1, SREF-01); closed by W4-120 |
+| #144 | 1.0 | Help flags: at least one per node | moved | joins W4-131 in #193, the look at every help patch at the end of wave 4 (P21) |
+| #28 | 3.0 | ShaderEffect: provide the pixel size of samplers as a uniform and use DIP for lengths | moved | done by W4-120 (#190) (`texelSize`, `dpr`, `viewSize` on the Shader element, SREF-10) and W4-101 (every effect length in DIP, E1, SREF-01); closed by W4-120 |
 | #155 | 2.0 | Lines, paths and splines: follow-ups | stays | new features; W6-13 only links it and adds the gradient questions if they are missing (G7) |
 | #153 | 2.0 | Normalized/PixelTopLeft: one frame with the old scale during a live resize | stays | a fix of its own; no finding touches it |
 | #60 | 1.0 | CLA bot: remaining steps | stays | repository setup for going public |
