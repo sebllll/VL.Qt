@@ -34,14 +34,14 @@ static partial class QtTextureTest
         return sum;
     }
 
-    static void Leak(Action<bool, string> report, Action<int> pump)
+    static void Leak(Scenario s)
     {
         bool check(bool ok, string what)
         {
-            report(ok, what);
+            s.Check(ok, what);
             return ok;
         }
-        if (!check(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "116 leak: create test device"))
+        if (!check(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "leak: create test device"))
             return;
         IntPtr QtDevice() => Native.vlqt_test_device_info(IntPtr.Zero, out var d, out _) == 0 ? d : IntPtr.Zero;
         Dictionary<string, int>? Live() => OperatingSystem.IsWindows() ? D3DDebugLayer.LiveObjects(QtDevice()) : null;
@@ -128,7 +128,7 @@ static partial class QtTextureTest
             int count = 0;
             for (int attempt = 0; attempt < 20; attempt++)
             {
-                pump(2);
+                s.Pump(2);
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
@@ -147,7 +147,7 @@ static partial class QtTextureTest
         int deviceRefs0 = Native.vlqt_test_com_ref_count(device);
         int qtRefs0 = QtRefs();
         var live0 = Live();
-        check(failure == null, $"116 leak: warm-up rounds ({failure})");
+        check(failure == null, $"leak: warm-up rounds ({failure})");
 
         // 1. Create / bind / render / rebind / unbind / destroy.
         var clock = Stopwatch.StartNew();
@@ -166,15 +166,15 @@ static partial class QtTextureTest
         int handles1 = Handles(handlesMark >= 0 ? handlesMark : handles0);
         int deviceRefs1 = Native.vlqt_test_com_ref_count(device);
         int qtRefs1 = QtRefs();
-        check(failedRounds == 0, $"116 leak: {rounds} rounds with size and format changes all rendered ({failedRounds} failed; {failure})");
-        Console.WriteLine($"INFO 116 leak: {rounds} rounds in {seconds:F1} s ({seconds * 1000 / rounds:F1} ms per round)");
-        check(refMismatches == 0 && deviceRefs1 == deviceRefs0, $"116 leak: test device references back after every round ({deviceRefs0} -> {deviceRefs1}, {refMismatches} rounds off)");
-        check(qtRefs0 > 0 && qtRefs1 == qtRefs0, $"116 leak: QtNative device references back after {rounds} rounds ({qtRefs0} -> {qtRefs1})");
+        check(failedRounds == 0, $"leak: {rounds} rounds with size and format changes all rendered ({failedRounds} failed; {failure})");
+        s.Info($"leak: {rounds} rounds in {seconds:F1} s ({seconds * 1000 / rounds:F1} ms per round)");
+        check(refMismatches == 0 && deviceRefs1 == deviceRefs0, $"leak: test device references back after every round ({deviceRefs0} -> {deviceRefs1}, {refMismatches} rounds off)");
+        check(qtRefs0 > 0 && qtRefs1 == qtRefs0, $"leak: QtNative device references back after {rounds} rounds ({qtRefs0} -> {qtRefs1})");
         // The slope: a leak per round grows between the mark and the end; a constant offset (lazy state) shows up before the mark.
         if (handlesMark >= 0 && rounds > handleMarkRounds)
-            check(handles1 - handlesMark <= handleTolerance, $"116 leak: process handle count did not grow over the last {rounds - handleMarkRounds} of {rounds} rounds ({handles0} -> {handlesMark} -> {handles1}, tolerance {handleTolerance})");
+            check(handles1 - handlesMark <= handleTolerance, $"leak: process handle count did not grow over the last {rounds - handleMarkRounds} of {rounds} rounds ({handles0} -> {handlesMark} -> {handles1}, tolerance {handleTolerance})");
         else
-            check(handles1 - handles0 <= handleTolerance, $"116 leak: process handle count did not grow after {rounds} rounds ({handles0} -> {handles1}, tolerance {handleTolerance})");
+            check(handles1 - handles0 <= handleTolerance, $"leak: process handle count did not grow after {rounds} rounds ({handles0} -> {handles1}, tolerance {handleTolerance})");
 
         // 2. The foreign device released and recreated, scenes unbound first.
         int foreignRounds = 20;
@@ -192,21 +192,21 @@ static partial class QtTextureTest
         }
         int qtRefs2 = QtRefs();
         int handles2 = Handles();
-        check(foreignFailed == 0 && foreignLeft == 0, $"116 leak: {foreignRounds} foreign devices released and recreated, no reference left ({foreignFailed} failed rounds, {foreignLeft} references left)");
-        check(qtRefs2 == qtRefs0, $"116 leak: QtNative device references back after the foreign device rounds ({qtRefs0} -> {qtRefs2})");
+        check(foreignFailed == 0 && foreignLeft == 0, $"leak: {foreignRounds} foreign devices released and recreated, no reference left ({foreignFailed} failed rounds, {foreignLeft} references left)");
+        check(qtRefs2 == qtRefs0, $"leak: QtNative device references back after the foreign device rounds ({qtRefs0} -> {qtRefs2})");
 
         // Debug layer: the live objects of QtNative's device per type did not grow (after a device loss it is a new device).
         var live1 = Live();
         if (live0 == null || live1 == null)
-            Console.WriteLine("INFO 116 leak: ReportLiveDeviceObjects skipped (debug layer not active: SDK layers not installed, or QSG_RHI_DEBUG_LAYER not set before the device was created)");
+            s.Info("leak: ReportLiveDeviceObjects skipped (debug layer not active: SDK layers not installed, or QSG_RHI_DEBUG_LAYER not set before the device was created)");
         else
         {
             var grown = new List<string>();
             foreach (var (type, count) in live1)
                 if (count > live0.GetValueOrDefault(type) + liveTolerance)
                     grown.Add($"{type} {live0.GetValueOrDefault(type)} -> {count}");
-            Console.WriteLine($"INFO 116 leak: live objects of QtNative's device {Sum(live0)} -> {Sum(live1)} in {live1.Count} types");
-            check(grown.Count == 0, $"116 leak: ReportLiveDeviceObjects of QtNative's device: no type grew by more than {liveTolerance} ({string.Join("; ", grown)})");
+            s.Info($"leak: live objects of QtNative's device {Sum(live0)} -> {Sum(live1)} in {live1.Count} types");
+            check(grown.Count == 0, $"leak: ReportLiveDeviceObjects of QtNative's device: no type grew by more than {liveTolerance} ({string.Join("; ", grown)})");
         }
 
         // 3. Device loss of QtNative's device with scenes bound (needs VLQT_TEST_D3D11ON12=1: -Only qttexture).
@@ -240,7 +240,7 @@ static partial class QtTextureTest
             int lost = Native.vlqt_test_device_lost(Protocol.DeviceLost.Remove);
             if (lost != 0)
             {
-                Console.WriteLine($"INFO 116 leak: device loss of QtNative's device skipped ({lost}, needs VLQT_TEST_D3D11ON12=1: -Only qttexture)");
+                s.Info($"leak: device loss of QtNative's device skipped ({lost}, needs VLQT_TEST_D3D11ON12=1: -Only qttexture)");
                 for (int k = 0; k < 3; k++)
                 {
                     Native.vlqt_offscreen_unbind(scenes[k]);
@@ -254,7 +254,7 @@ static partial class QtTextureTest
             bool allUnbound = false;
             while (!allUnbound && sw.ElapsedMilliseconds < 5000)
             {
-                pump(1);
+                s.Pump(1);
                 allUnbound = Native.vlqt_offscreen_is_bound(scenes[0]) == 0 && Native.vlqt_offscreen_is_bound(scenes[1]) == 0 && Native.vlqt_offscreen_is_bound(scenes[2]) == 0;
             }
             if (!allUnbound)
@@ -282,7 +282,7 @@ static partial class QtTextureTest
                 Native.vlqt_window_destroy(scenes[k]);
                 Native.vlqt_test_com_release(textures[k]);
             }
-            pump(2);
+            s.Pump(2);
             // Every device loss makes a new QtNative device: its count is compared between the rounds on new devices.
             if (round == 0)
                 lossRefsFirst = QtRefs();
@@ -290,20 +290,20 @@ static partial class QtTextureTest
         }
         if (lossRan)
         {
-            check(failure == null, $"116 leak: three device losses of QtNative's device with three scenes bound, rebind renders ({failure})");
-            check(lossRefsFirst > 0 && lossRefsLast == lossRefsFirst, $"116 leak: QtNative device references the same after each device loss ({lossRefsFirst} -> {lossRefsLast})");
-            check(Native.vlqt_test_com_ref_count(device) == deviceRefs0, $"116 leak: test device references unchanged by the device losses ({deviceRefs0} -> {Native.vlqt_test_com_ref_count(device)})");
+            check(failure == null, $"leak: three device losses of QtNative's device with three scenes bound, rebind renders ({failure})");
+            check(lossRefsFirst > 0 && lossRefsLast == lossRefsFirst, $"leak: QtNative device references the same after each device loss ({lossRefsFirst} -> {lossRefsLast})");
+            check(Native.vlqt_test_com_ref_count(device) == deviceRefs0, $"leak: test device references unchanged by the device losses ({deviceRefs0} -> {Native.vlqt_test_com_ref_count(device)})");
         }
         else
-            check(failure == null, $"116 leak: ({failure})");
+            check(failure == null, $"leak: ({failure})");
 
         // 4. Final numbers.
         int handles3 = Handles(handles1);
-        Console.WriteLine($"INFO 116 leak: handle count {handles0} (baseline) -> {handles1} (rounds) -> {handles2} (foreign devices) -> {handles3} (device losses)");
+        s.Info($"leak: handle count {handles0} (baseline) -> {handles1} (rounds) -> {handles2} (foreign devices) -> {handles3} (device losses)");
         // Against the end of the rounds: the foreign devices and device losses add a handful of devices, a leak per device would grow beyond the tolerance.
-        check(handles3 - handles1 <= handleTolerance, $"116 leak: process handle count did not grow at the end ({handles1} -> {handles3}, tolerance {handleTolerance})");
-        Console.WriteLine($"INFO 116 leak: device references: test device {deviceRefs0} -> {Native.vlqt_test_com_ref_count(device)}, QtNative {qtRefs0} -> {qtRefs1} (rounds) -> {qtRefs2} (foreign devices)");
+        check(handles3 - handles1 <= handleTolerance, $"leak: process handle count did not grow at the end ({handles1} -> {handles3}, tolerance {handleTolerance})");
+        s.Info($"leak: device references: test device {deviceRefs0} -> {Native.vlqt_test_com_ref_count(device)}, QtNative {qtRefs0} -> {qtRefs1} (rounds) -> {qtRefs2} (foreign devices)");
 
-        check(Native.vlqt_test_d3d11_release_device(device, context) == 0, "116 leak: test device freed");
+        check(Native.vlqt_test_d3d11_release_device(device, context) == 0, "leak: test device freed");
     }
 }

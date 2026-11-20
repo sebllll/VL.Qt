@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -17,9 +18,10 @@ using VPath = VL.Lib.IO.Path;
 // Tooltip previews (#543, package 01 #544): vlqt_window_change_count (counts scene changes only: not every pump, not the
 // render a grab triggers) and vlqt_res_snapshot_fit (scale so that the longest edge is <= maxEdgePx and <= 1 pixel per
 // DIP). Window 1200 x 700 DIP: a 1000 x 500 DIP blue rectangle, a 100 x 50 red one, a Button, a Group whose orange child
-// sits in negative coordinates (frame 250 x 150, see GroupFrameTest). Snapshots go to <outDir>/544_*.png.
+// sits in negative coordinates (frame 250 x 150, see GroupFrameTest). Snapshots go to <OutDir>/544_*.png.
 // A device pixel ratio other than 1 needs its own run: $env:QT_SCALE_FACTOR=1.5; tools/build.ps1 -Test -Only tooltip.
-static class TooltipTest
+[TestFixture, NonParallelizable]
+public static class TooltipTest
 {
     const string VideoAsset = "testsrc_160x90_2s.mp4";
 
@@ -43,13 +45,17 @@ static class TooltipTest
         public bool Started;
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    /// <summary>Tooltip previews: change count and snapshot fit (#543, #544).</summary>
+    [Test, Category("tooltip")]
+    public static void Tooltip() => Scenario.Run(Run);
+
+    static void Run(Scenario s)
     {
         var client = new ResourceClient(new NativeResourceApi(), Environment.CurrentManagedThreadId, static () => null);
         client.SetPumping(true);
 
         var w = Native.vlqt_window_create(1200, 700, "VL.Qt tooltip test");
-        check(w != IntPtr.Zero, "544: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var scene = new SceneRegistry();
@@ -82,7 +88,7 @@ static class TooltipTest
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
-                check(rc == 0, $"544: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+                s.Check(rc == 0, $"apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
         }
         // One vvvv frame as QtApp runs it: reconciler apply, then releases → processEvents (grabs finish) → status queue.
@@ -92,22 +98,22 @@ static class TooltipTest
             {
                 Frame();
                 client.BeforeEvents();
-                pump(1);
+                s.Pump(1);
                 client.AfterEvents();
                 if (sleepMs > 0) Thread.Sleep(sleepMs);
             }
         }
         long Count() => Native.vlqt_window_change_count(w);
-        void Mouse(int type, float x, float y) => check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"544: test_send_mouse {type}");
+        void Mouse(int type, float x, float y) => s.Check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
 
         Frame(clear: true);
         Mouse(Protocol.Mouse.Move, 1150, 650);
         Step(10);
 
         float dpr;
-        using (var probe = grab(w, Path.Combine(outDir, "544_window.png")))
+        using (var probe = s.Grab(w, "544_window.png"))
             dpr = probe.Width / 1200f;
-        Console.WriteLine($"INFO 544: device pixel ratio {dpr:F2} (another dpr needs another run: $env:QT_SCALE_FACTOR=1.5; tools/build.ps1 -Test -Only tooltip)");
+        s.Info($"device pixel ratio {dpr:F2} (another dpr needs another run: $env:QT_SCALE_FACTOR=1.5; tools/build.ps1 -Test -Only tooltip)");
 
         // Snapshot helpers on the client the way a node uses them.
         Job Start(Element element, int fitEdge, float scale = 1)
@@ -116,7 +122,7 @@ static class TooltipTest
             job.Resource.Settled = _ => job.Done = true;
             if (!scene.TryLocate(element, out var window, out var id))
             {
-                check(false, "544: element is shown (TryLocate)");
+                s.Check(false, "element is shown (TryLocate)");
                 return job;
             }
             job.Started = fitEdge > 0 ? client.SnapshotFit(job.Resource, window, id, fitEdge) : client.Snapshot(job.Resource, window, id, scale);
@@ -133,8 +139,8 @@ static class TooltipTest
         var c0 = Count();
         Step(60);
         var c1 = Count();
-        Console.WriteLine($"INFO 544: static scene, 60 pumps: change count {c0} -> {c1}");
-        check(c0 >= 0 && c1 == c0, $"544: static scene: change count stays over 60 pumps ({c0} -> {c1})");
+        s.Info($"static scene, 60 pumps: change count {c0} -> {c1}");
+        s.Check(c0 >= 0 && c1 == c0, $"static scene: change count stays over 60 pumps ({c0} -> {c1})");
 
         var deltas = new List<string>();
         int snapshots = 0, readable = 0;
@@ -164,9 +170,9 @@ static class TooltipTest
         }
         Step(10);
         var cEnd = Count();
-        Console.WriteLine($"INFO 544: static scene with snapshots: change count {cStart} -> {cEnd} (delta per snapshot: {string.Join(", ", deltas)}), {snapshots} done, {readable} readable");
-        check(snapshots == 3 * 8 && readable == snapshots, $"544: snapshots finish while the scene is static ({snapshots} done, {readable} readable of 24)");
-        check(cEnd == cStart, $"544: static scene: change count stays while snapshots run and finish ({cStart} -> {cEnd})");
+        s.Info($"static scene with snapshots: change count {cStart} -> {cEnd} (delta per snapshot: {string.Join(", ", deltas)}), {snapshots} done, {readable} readable");
+        s.Check(snapshots == 3 * 8 && readable == snapshots, $"snapshots finish while the scene is static ({snapshots} done, {readable} readable of 24)");
+        s.Check(cEnd == cStart, $"static scene: change count stays while snapshots run and finish ({cStart} -> {cEnd})");
 
         // 2) snapshot_fit sizes and pixels: 1000 x 500 DIP at 256 -> 256 x 128, 100 x 50 at 256 -> 100 x 50, group frame (250 x 150) at 100 -> 100 x 60.
         var jBig = Start(big, 256);
@@ -181,33 +187,33 @@ static class TooltipTest
         var edgeImage = Read(jEdge);
         var exactImage = Read(jExact);
         {
-            check(bigImage is { Info: { Width: 256, Height: 128 } }, $"544: fit 1000 x 500 DIP at 256 = 256 x 128 ({bigImage?.Info.Width} x {bigImage?.Info.Height}, state {jBig.Resource.State})");
-            check(smallImage is { Info: { Width: 100, Height: 50 } }, $"544: fit 100 x 50 DIP at 256 = 100 x 50, never upscaled ({smallImage?.Info.Width} x {smallImage?.Info.Height})");
-            check(groupImage is { Info: { Width: 100, Height: 60 } }, $"544: fit Group frame 250 x 150 at 100 = 100 x 60 ({groupImage?.Info.Width} x {groupImage?.Info.Height})");
-            check(edgeImage is { Info: { Width: 1 } }, $"544: fit at 1 = 1 x 1 ({edgeImage?.Info.Width} x {edgeImage?.Info.Height})");
-            check(exactImage is { Info: { Width: 100, Height: 50 } }, $"544: fit 100 x 50 DIP at 100 = 100 x 50 ({exactImage?.Info.Width} x {exactImage?.Info.Height})");
+            s.Check(bigImage is { Info: { Width: 256, Height: 128 } }, $"fit 1000 x 500 DIP at 256 = 256 x 128 ({bigImage?.Info.Width} x {bigImage?.Info.Height}, state {jBig.Resource.State})");
+            s.Check(smallImage is { Info: { Width: 100, Height: 50 } }, $"fit 100 x 50 DIP at 256 = 100 x 50, never upscaled ({smallImage?.Info.Width} x {smallImage?.Info.Height})");
+            s.Check(groupImage is { Info: { Width: 100, Height: 60 } }, $"fit Group frame 250 x 150 at 100 = 100 x 60 ({groupImage?.Info.Width} x {groupImage?.Info.Height})");
+            s.Check(edgeImage is { Info: { Width: 1 } }, $"fit at 1 = 1 x 1 ({edgeImage?.Info.Width} x {edgeImage?.Info.Height})");
+            s.Check(exactImage is { Info: { Width: 100, Height: 50 } }, $"fit 100 x 50 DIP at 100 = 100 x 50 ({exactImage?.Info.Width} x {exactImage?.Info.Height})");
             if (bigImage is not null)
             {
-                SnapshotTest.WritePng(bigImage, Path.Combine(outDir, "544_fit_big_256.png"));
+                SnapshotTest.WritePng(bigImage, Path.Combine(s.OutDir, "544_fit_big_256.png"));
                 var (b, g, r, a) = SnapshotTest.At(bigImage, 128, 64, 256);
-                check(a == 255 && Near(r, 51, 3) && Near(g, 102, 3) && Near(b, 255, 3), $"544: fit big: center pixel is blue (B{b} G{g} R{r} A{a})");
+                s.Check(a == 255 && Near(r, 51, 3) && Near(g, 102, 3) && Near(b, 255, 3), $"fit big: center pixel is blue (B{b} G{g} R{r} A{a})");
             }
             if (smallImage is not null)
             {
-                SnapshotTest.WritePng(smallImage, Path.Combine(outDir, "544_fit_small_256.png"));
+                SnapshotTest.WritePng(smallImage, Path.Combine(s.OutDir, "544_fit_small_256.png"));
                 var (b, g, r, a) = SnapshotTest.At(smallImage, 50, 25, 100);
-                check(a == 255 && Near(r, 255, 3) && Near(g, 0, 3) && Near(b, 0, 3), $"544: fit small: center pixel is red (B{b} G{g} R{r} A{a})");
+                s.Check(a == 255 && Near(r, 255, 3) && Near(g, 0, 3) && Near(b, 0, 3), $"fit small: center pixel is red (B{b} G{g} R{r} A{a})");
             }
             if (groupImage is not null)
             {
-                SnapshotTest.WritePng(groupImage, Path.Combine(outDir, "544_fit_group_100.png"));
+                SnapshotTest.WritePng(groupImage, Path.Combine(s.OutDir, "544_fit_group_100.png"));
                 var tl = SnapshotTest.At(groupImage, 5, 5, 100); // top left of the frame: the orange part in negative coordinates
                 var br = SnapshotTest.At(groupImage, 95, 55, 100); // bottom right: the blue rectangle
-                check(tl.A == 255 && Near(tl.R, 255, 3) && Near(tl.G, 153, 3), $"544: fit group: top left of the frame is orange ({tl})");
-                check(br.A == 255 && Near(br.R, 51, 3) && Near(br.B, 255, 3), $"544: fit group: bottom right of the frame is blue ({br})");
+                s.Check(tl.A == 255 && Near(tl.R, 255, 3) && Near(tl.G, 153, 3), $"fit group: top left of the frame is orange ({tl})");
+                s.Check(br.A == 255 && Near(br.R, 51, 3) && Near(br.B, 255, 3), $"fit group: bottom right of the frame is blue ({br})");
             }
             if (edgeImage is not null)
-                SnapshotTest.WritePng(edgeImage, Path.Combine(outDir, "544_fit_big_1.png"));
+                SnapshotTest.WritePng(edgeImage, Path.Combine(s.OutDir, "544_fit_big_1.png"));
         }
         foreach (var j in new[] { jBig, jSmall, jGroup, jEdge, jExact }) client.Release(j.Resource);
         Step(2);
@@ -226,7 +232,7 @@ static class TooltipTest
                     Frame();
                     tipImage = tip.Update(big, out tipText);
                     client.BeforeEvents();
-                    pump(1);
+                    s.Pump(1);
                     client.AfterEvents();
                     if (sleepMs > 0) Thread.Sleep(sleepMs);
                 }
@@ -234,14 +240,14 @@ static class TooltipTest
 
             for (int i = 0; i < 120 && tipImage is null; i++)
                 TipSteps(1, 5);
-            check(tipImage is { Info: { Width: <= 256, Height: <= 256 } } && Math.Max(tipImage.Info.Width, tipImage.Info.Height) == 256,
-                $"545: preview of the big rectangle has a longest edge of 256 px ({tipImage?.Info.Width} x {tipImage?.Info.Height})");
-            check(tipText.StartsWith("Rectangle"), $"545: preview text names the type ('{tipText}')");
+            s.Check(tipImage is { Info: { Width: <= 256, Height: <= 256 } } && Math.Max(tipImage.Info.Width, tipImage.Info.Height) == 256,
+                $"preview of the big rectangle has a longest edge of 256 px ({tipImage?.Info.Width} x {tipImage?.Info.Height})");
+            s.Check(tipText.StartsWith("Rectangle"), $"preview text names the type ('{tipText}')");
             if (tipImage is not null)
             {
-                SnapshotTest.WritePng(tipImage, Path.Combine(outDir, "545_preview_big.png"));
+                SnapshotTest.WritePng(tipImage, Path.Combine(s.OutDir, "545_preview_big.png"));
                 var (b, g, r, a) = SnapshotTest.At(tipImage, 128, 64, tipImage.Info.Width);
-                check(a == 255 && Near(r, 51, 3) && Near(g, 102, 3) && Near(b, 255, 3), $"545: preview: center pixel is blue (B{b} G{g} R{r} A{a})");
+                s.Check(a == 255 && Near(r, 51, 3) && Near(g, 102, 3) && Near(b, 255, 3), $"preview: center pixel is blue (B{b} G{g} R{r} A{a})");
             }
 
             // Static scene: 40 calls over more than 0.2 s (the throttle is open) give no new image.
@@ -249,24 +255,24 @@ static class TooltipTest
             var settledImage = tipImage;
             var cStatic = Count();
             TipSteps(40, 15);
-            check(ReferenceEquals(tipImage, settledImage), "545: static scene: no further grab (same image over 40 calls)");
-            check(Count() == cStatic, $"545: static scene: previews do not raise the change count ({cStatic} -> {Count()})");
+            s.Check(ReferenceEquals(tipImage, settledImage), "static scene: no further grab (same image over 40 calls)");
+            s.Check(Count() == cStatic, $"static scene: previews do not raise the change count ({cStatic} -> {Count()})");
 
             // Scene change: hover over the Button → the count rises → a new image.
             Mouse(Protocol.Mouse.Move, 1040, 115);
             for (int i = 0; i < 60 && ReferenceEquals(tipImage, settledImage); i++)
                 TipSteps(1, 15);
-            check(!ReferenceEquals(tipImage, settledImage), "545: hover raises the change count: a new preview image arrives");
+            s.Check(!ReferenceEquals(tipImage, settledImage), "hover raises the change count: a new preview image arrives");
             Mouse(Protocol.Mouse.Move, 1150, 650);
             TipSteps(40, 15); // transition and the last grab done
             var afterHover = tipImage;
             TipSteps(40, 15);
-            check(ReferenceEquals(tipImage, afterHover), "545: static again: no further grab");
+            s.Check(ReferenceEquals(tipImage, afterHover), "static again: no further grab");
 
             // An element no renderer shows: text, no image, no grab.
             var hidden = new VL.Qt.Elements.Rectangle { Size = new Vector2(2, 1) };
             var hiddenImage = tip.Update(hidden, out var hiddenText);
-            check(hiddenImage is null && hiddenText.Contains("not shown in a renderer"), $"545: element in no renderer: text only ('{hiddenText}')");
+            s.Check(hiddenImage is null && hiddenText.Contains("not shown in a renderer"), $"element in no renderer: text only ('{hiddenText}')");
 
             tip.Dispose();
             Step(3);
@@ -301,15 +307,15 @@ static class TooltipTest
                     lastImage = image;
                 }
                 client.BeforeEvents();
-                pump(1);
+                s.Pump(1);
                 client.AfterEvents();
                 Thread.Sleep(15);
             }
-            check(lastImage is not null, "548: a target that is a new instance every frame gets a preview image");
-            check(flickers == 0, $"548: new instance every frame: the image never falls back to null ({flickers} times)");
-            check(arrivals >= 3, $"548: new instance every frame: the image is replaced by newer ones ({arrivals} images in about 2.5 s)");
+            s.Check(lastImage is not null, "a target that is a new instance every frame gets a preview image");
+            s.Check(flickers == 0, $"new instance every frame: the image never falls back to null ({flickers} times)");
+            s.Check(arrivals >= 3, $"new instance every frame: the image is replaced by newer ones ({arrivals} images in about 2.5 s)");
             if (lastImage is not null)
-                SnapshotTest.WritePng(lastImage, Path.Combine(outDir, "548_preview_new_instance_every_frame.png"));
+                SnapshotTest.WritePng(lastImage, Path.Combine(s.OutDir, "548_preview_new_instance_every_frame.png"));
             tip.Dispose();
             current = Tree(big, false);
             Step(3);
@@ -348,11 +354,11 @@ static class TooltipTest
                 current = new Group { Anchor = RectangleAnchor.TopLeft, Children = [target, small] };
                 Step(1, 15);
             }
-            check(notShown == 0, $"548: new instance before the renderer update: found by its place ({notShown} times 'not shown', last '{tipText}' / '{snapError}')");
-            check(tipImage is not null, "548: TooltipPreview before the renderer update delivers an image");
-            check(snapImage is not null, $"548: Snapshot before the renderer update delivers an image ('{snapError}')");
+            s.Check(notShown == 0, $"new instance before the renderer update: found by its place ({notShown} times 'not shown', last '{tipText}' / '{snapError}')");
+            s.Check(tipImage is not null, "TooltipPreview before the renderer update delivers an image");
+            s.Check(snapImage is not null, $"Snapshot before the renderer update delivers an image ('{snapError}')");
             if (snapImage is not null)
-                SnapshotTest.WritePng(snapImage, Path.Combine(outDir, "548_snapshot_before_renderer.png"));
+                SnapshotTest.WritePng(snapImage, Path.Combine(s.OutDir, "548_snapshot_before_renderer.png"));
             tip.Dispose();
             snap.Dispose();
             current = Tree(big, false);
@@ -364,30 +370,30 @@ static class TooltipTest
         current = Tree(Big(new Color4(0.8f, 0.2f, 0.2f, 1)), false);
         Step(3);
         var cProp = Count();
-        Console.WriteLine($"INFO 544: changed colour: change count {cNow} -> {cProp}");
-        check(cProp > cNow, $"544: changed property raises the change count ({cNow} -> {cProp})");
+        s.Info($"changed colour: change count {cNow} -> {cProp}");
+        s.Check(cProp > cNow, $"changed property raises the change count ({cNow} -> {cProp})");
         cNow = Count();
         Step(30);
-        check(Count() == cNow, $"544: static again after the change ({cNow} -> {Count()})");
+        s.Check(Count() == cNow, $"static again after the change ({cNow} -> {Count()})");
 
         cNow = Count();
         Mouse(Protocol.Mouse.Move, 1040, 115); // over the button
         Step(5);
         var cHover = Count();
-        Console.WriteLine($"INFO 544: hover over the Button: change count {cNow} -> {cHover}");
-        check(cHover > cNow, $"544: hover raises the change count ({cNow} -> {cHover})");
+        s.Info($"hover over the Button: change count {cNow} -> {cHover}");
+        s.Check(cHover > cNow, $"hover raises the change count ({cNow} -> {cHover})");
         Step(20); // transition of the style done
         cNow = Count();
         Step(30);
-        check(Count() == cNow, $"544: static while hovering ({cNow} -> {Count()})");
+        s.Check(Count() == cNow, $"static while hovering ({cNow} -> {Count()})");
         Mouse(Protocol.Mouse.Move, 1150, 650);
         Step(5);
-        Console.WriteLine($"INFO 544: hover left: change count {cNow} -> {Count()}");
-        check(Count() > cNow, $"544: leaving the Button raises the change count ({cNow} -> {Count()})");
+        s.Info($"hover left: change count {cNow} -> {Count()}");
+        s.Check(Count() > cNow, $"leaving the Button raises the change count ({cNow} -> {Count()})");
         Step(20);
 
         if (videoPath is null)
-            Console.WriteLine($"INFO 544: video asset {VideoAsset} not found, running video not checked");
+            s.Info($"video asset {VideoAsset} not found, running video not checked");
         else
         {
             current = Tree(Big(new Color4(0.8f, 0.2f, 0.2f, 1)), true);
@@ -395,26 +401,26 @@ static class TooltipTest
             cNow = Count();
             Step(40, 15);
             var cVideo = Count();
-            Console.WriteLine($"INFO 544: running video, 40 pumps (15 ms): change count {cNow} -> {cVideo}");
-            Program.NeedsRhi(check, "VideoOutput draws nothing")(cVideo - cNow >= 5, $"544: running video raises the change count ({cNow} -> {cVideo})");
+            s.Info($"running video, 40 pumps (15 ms): change count {cNow} -> {cVideo}");
+            s.NeedsRhi(cVideo - cNow >= 5, $"running video raises the change count ({cNow} -> {cVideo})", "VideoOutput draws nothing");
             current = Tree(Big(new Color4(0.8f, 0.2f, 0.2f, 1)), false);
             Step(10, 15);
             cNow = Count();
             Step(30);
-            check(Count() == cNow, $"544: static again after the video left ({cNow} -> {Count()})");
+            s.Check(Count() == cNow, $"static again after the video left ({cNow} -> {Count()})");
         }
 
         // F5 overlay (stats, pages with a graph): redraws every frame, but is no scene change; let it settle once after opening.
         foreach (var (page, name) in new[] { (1, "Timeline"), (0, "Summary") })
         {
             const int Stats = 2, PageShift = 4;
-            check(Native.vlqt_window_set_overlay(w, Stats | ((page + 1) << PageShift)) == 0, $"544: F5 overlay {name} opens");
+            s.Check(Native.vlqt_window_set_overlay(w, Stats | ((page + 1) << PageShift)) == 0, $"F5 overlay {name} opens");
             Step(30);
             cNow = Count();
             Step(60);
             var cOverlay = Count();
-            Console.WriteLine($"INFO 544: static scene, F5 overlay {name}, 60 pumps: change count {cNow} -> {cOverlay}");
-            check(cOverlay == cNow, $"544: static scene with the F5 overlay ({name}): change count stays over 60 pumps ({cNow} -> {cOverlay})");
+            s.Info($"static scene, F5 overlay {name}, 60 pumps: change count {cNow} -> {cOverlay}");
+            s.Check(cOverlay == cNow, $"static scene with the F5 overlay ({name}): change count stays over 60 pumps ({cNow} -> {cOverlay})");
         }
         Native.vlqt_window_set_overlay(w, 0);
         Step(10);
@@ -443,13 +449,13 @@ static class TooltipTest
                 Frame();
                 videoImage = videoTip.Update(videoGroup, out videoText);
                 client.BeforeEvents();
-                pump(1);
+                s.Pump(1);
                 client.AfterEvents();
                 Thread.Sleep(5);
             }
-            check(videoImage is null, "548: tree with a Video: no preview image");
-            check(videoText.Contains("contains video, no preview"), $"548: tree with a Video: text says so ('{videoText}')");
-            check(client.LiveCount == liveBefore, $"548: tree with a Video: no snapshot resource created, so no grab (live {liveBefore} -> {client.LiveCount})");
+            s.Check(videoImage is null, "tree with a Video: no preview image");
+            s.Check(videoText.Contains("contains video, no preview"), $"tree with a Video: text says so ('{videoText}')");
+            s.Check(client.LiveCount == liveBefore, $"tree with a Video: no snapshot resource created, so no grab (live {liveBefore} -> {client.LiveCount})");
             videoTip.Dispose();
             current = Tree(big, false);
             Step(5);
@@ -461,7 +467,7 @@ static class TooltipTest
         // Arms A (without the node) and B (tip.Update every frame, throttled to <= 5 Hz inside) alternate A B A B so drift and
         // load hit both. Hitch = interval > 1.5 x median of all A intervals.
         if (PerfLimits.WarnOnly)
-            Console.WriteLine("SKIP 548: perf run tooltip preview hitches: perf limits are warn-only (shared runner)");
+            s.Skip("perf run tooltip preview hitches: perf limits are warn-only (shared runner)");
         else
         {
             const double Period = 1000.0 / 60;
@@ -503,7 +509,7 @@ static class TooltipTest
                     lastPreview = image ?? lastPreview;
                 }
                 client.BeforeEvents();
-                pump(1);
+                s.Pump(1);
                 client.AfterEvents();
             }
             for (int i = 0; i < 120; i++) PerfFrame(false, null); // warm-up
@@ -516,15 +522,15 @@ static class TooltipTest
             var hitchLimit = medianA * 1.5;
             int Hitches(List<double> l) => l.Count(x => x > hitchLimit);
             double HitchRate(List<double> l) => l.Count == 0 ? 0 : 100.0 * Hitches(l) / l.Count;
-            Console.WriteLine($"INFO 548 perf: ohne Tooltip {Hitches(intervalsA)}/{intervalsA.Count} hitches ({HitchRate(intervalsA):F1} %), "
+            s.Info($"perf: ohne Tooltip {Hitches(intervalsA)}/{intervalsA.Count} hitches ({HitchRate(intervalsA):F1} %), "
                 + $"mit Tooltip {Hitches(intervalsB)}/{intervalsB.Count} ({HitchRate(intervalsB):F1} %), median {medianA:F2} ms, max {intervalsB.Max():F1} ms, {previews} previews");
-            check(previews >= 10, $"548: previews arrived while running ({previews} new images)");
-            PerfLimits.Below(check, HitchRate(intervalsB), Math.Max(HitchRate(intervalsA) * 3, 5), "548: hitch rate with ElementTooltipPreview on an animated element in the range of the background, %");
+            s.Check(previews >= 10, $"previews arrived while running ({previews} new images)");
+            PerfLimits.Below(s, HitchRate(intervalsB), Math.Max(HitchRate(intervalsA) * 3, 5), "hitch rate with ElementTooltipPreview on an animated element in the range of the background, %");
 
             // F5 Resources page after the B run: the snapshot line of package 01 shows the previews' rate and cost.
-            check(Native.vlqt_window_set_overlay(w, 2 | ((PerfOverlayTest.ResourcesPage + 1) << 4)) == 0, "548: F5 overlay Resources opens");
+            s.Check(Native.vlqt_window_set_overlay(w, 2 | ((PerfOverlayTest.ResourcesPage + 1) << 4)) == 0, "F5 overlay Resources opens");
             for (int i = 0; i < BlockFrames; i++) PerfFrame(true, null);
-            Console.WriteLine($"INFO 548: F5 Resources after the run: {PerfOverlayTest.PageText(w, PerfOverlayTest.ResourcesPage).Split('\n').FirstOrDefault(l => l.StartsWith("snapshots"))?.Trim() ?? "(missing)"}");
+            s.Info($"F5 Resources after the run: {PerfOverlayTest.PageText(w, PerfOverlayTest.ResourcesPage).Split('\n').FirstOrDefault(l => l.StartsWith("snapshots"))?.Trim() ?? "(missing)"}");
             Native.vlqt_window_set_overlay(w, 0);
             perfTip.Dispose();
             current = Tree(big, false);
@@ -532,14 +538,14 @@ static class TooltipTest
         }
 
         // 4) Error paths: null window, bad edge, unknown element.
-        check(Native.vlqt_window_change_count(IntPtr.Zero) == -9, $"544: change_count of a null window = -9 ({Native.vlqt_window_change_count(IntPtr.Zero)})");
+        s.Check(Native.vlqt_window_change_count(IntPtr.Zero) == -9, $"change_count of a null window = -9 ({Native.vlqt_window_change_count(IntPtr.Zero)})");
         var bad = client.CreateSnapshot();
-        check(Native.vlqt_res_snapshot_fit(bad.Id, IntPtr.Zero, 0, 256) == -7, "544: snapshot_fit with a null window = -7");
-        check(Native.vlqt_res_snapshot_fit(bad.Id, w, 0, 0) == -7, "544: snapshot_fit maxEdge 0 = -7");
-        check(Native.vlqt_res_snapshot_fit(bad.Id, w, 0, -5) == -7, "544: snapshot_fit maxEdge -5 = -7");
+        s.Check(Native.vlqt_res_snapshot_fit(bad.Id, IntPtr.Zero, 0, 256) == -7, "snapshot_fit with a null window = -7");
+        s.Check(Native.vlqt_res_snapshot_fit(bad.Id, w, 0, 0) == -7, "snapshot_fit maxEdge 0 = -7");
+        s.Check(Native.vlqt_res_snapshot_fit(bad.Id, w, 0, -5) == -7, "snapshot_fit maxEdge -5 = -7");
         client.Release(bad);
         Step(3);
-        check(client.LiveCount == 0, $"544: all snapshot resources released (live {client.LiveCount})");
+        s.Check(client.LiveCount == 0, $"all snapshot resources released (live {client.LiveCount})");
 
         // Raw: unknown element → Failed with an error text, same as vlqt_res_snapshot; the client does not poll here.
         var events = new List<(ushort Ev, ulong Id, byte[] Payload)>();
@@ -563,28 +569,28 @@ static class TooltipTest
         string RawFailure(bool fit, out byte state)
         {
             var rcCreate = Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var id);
-            check(rcCreate == 0 && id != 0, $"544: raw create ({rcCreate})");
+            s.Check(rcCreate == 0 && id != 0, $"raw create ({rcCreate})");
             events.Clear();
             var rc = fit ? Native.vlqt_res_snapshot_fit(id, w, 4_000_000, 256) : Native.vlqt_res_snapshot(id, w, 4_000_000, 1);
-            check(rc == 0, $"544: raw {(fit ? "snapshot_fit" : "snapshot")} of an unknown element is accepted ({rc})");
+            s.Check(rc == 0, $"raw {(fit ? "snapshot_fit" : "snapshot")} of an unknown element is accepted ({rc})");
             state = 0;
             for (int i = 0; i < 120 && state is not (Protocol.ResState.Ready or Protocol.ResState.Failed); i++)
             {
-                pump(1);
+                s.Pump(1);
                 Poll();
                 state = events.Where(e => e.Id == id && e.Ev == Protocol.ResEv.State).Select(e => e.Payload[0]).LastOrDefault();
             }
             var text = events.Where(e => e.Id == id && e.Ev == Protocol.ResEv.Error).Select(e => Encoding.UTF8.GetString(e.Payload)).LastOrDefault() ?? "";
             Native.vlqt_res_release(id);
-            pump(1);
+            s.Pump(1);
             Poll();
             return text;
         }
         var fitError = RawFailure(true, out var fitState);
         var plainError = RawFailure(false, out var plainState);
-        Console.WriteLine($"INFO 544: unknown element: snapshot_fit '{fitError.TrimEnd('\0')}' (state {fitState}), snapshot '{plainError.TrimEnd('\0')}' (state {plainState})");
-        check(fitState == Protocol.ResState.Failed && fitError.Length > 0, $"544: snapshot_fit of an unknown element: Failed with an error text (state {fitState}, '{fitError}')");
-        check(fitError == plainError, $"544: the error text equals the one of vlqt_res_snapshot ('{fitError}' vs '{plainError}')");
+        s.Info($"unknown element: snapshot_fit '{fitError.TrimEnd('\0')}' (state {fitState}), snapshot '{plainError.TrimEnd('\0')}' (state {plainState})");
+        s.Check(fitState == Protocol.ResState.Failed && fitError.Length > 0, $"snapshot_fit of an unknown element: Failed with an error text (state {fitState}, '{fitError}')");
+        s.Check(fitError == plainError, $"the error text equals the one of vlqt_res_snapshot ('{fitError}' vs '{plainError}')");
 
         // Cleanup: the window goes, the count of a destroyed window is not asked again.
         client.SetPumping(false);
@@ -592,6 +598,6 @@ static class TooltipTest
         rec.Clear();
         Native.Apply(w, cmd.EndFrame());
         Native.vlqt_window_destroy(w);
-        pump(2);
+        s.Pump(2);
     }
 }

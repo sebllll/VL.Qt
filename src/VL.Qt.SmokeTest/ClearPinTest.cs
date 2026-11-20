@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -17,9 +18,9 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 // overlay stay correct, a resize clears once, MSAA edges match Clear on. The alpha of Clear Color while Clear is off (#138)
 // is the fade strength: 0.25 fades older positions away, 1 equals Clear on, a change at runtime keeps the layer. Clear on
 // again: trail gone, and cost and idle behaviour as in the baseline measured before the first switch. Prints the numbers
-// the decision in docs/decisions/render-texture.md ("Clear pin") is based on. Grabs: <outDir>/clear_pin_*.png (window)
+// the decision in docs/decisions/render-texture.md ("Clear pin") is based on. Grabs: <OutDir>/clear_pin_*.png (window)
 // and clear_pin_offscreen_*.png.
-static class ClearPinTest
+public static class ClearPinTest
 {
     // The commands go in a buffer of their own (the scenario's writer belongs to the reconciler). 0 = ok.
     // Clear Color (grey, alpha) alone: the layer stays, as when vvvv changes the pin at runtime.
@@ -82,17 +83,18 @@ static class ClearPinTest
         return n;
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    // Test method: ZzLastTest.ClearPin (it leaves two VSync windows open and must run last).
+    internal static void Run(Scenario s)
     {
-        Window(outDir, check, pump, grab);
+        Window(s);
         // Offscreen scenes need Direct3D 11 (QRhi), as in SharedDeviceTest.
-        if (!OperatingSystem.IsWindows() || Program.QuickSoftware)
-            Console.WriteLine("SKIP clear-pin offscreen: offscreen scenes need Direct3D 11");
+        if (!OperatingSystem.IsWindows() || s.QuickSoftware)
+            s.Skip("clear-pin offscreen: offscreen scenes need Direct3D 11");
         else
-            Offscreen(outDir, check);
+            Offscreen(s);
     }
 
-    static void Window(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Window(Scenario s)
     {
         var client = new ResourceClient(new NativeResourceApi(), Environment.CurrentManagedThreadId, static () => null);
         client.SetPumping(true);
@@ -101,17 +103,17 @@ static class ClearPinTest
             for (int i = 0; i < frames; i++)
             {
                 client.BeforeEvents();
-                pump(1);
+                s.Pump(1);
                 client.AfterEvents();
             }
         }
         var w = Native.vlqt_window_create(800, 600, "VL.Qt clear spike");
-        check(w != IntPtr.Zero, "clear-pin: window_create");
+        s.Check(w != IntPtr.Zero, "clear-pin: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var scene = new SceneRegistry();
         var rec = new Reconciler(cmd, new IdAllocator(), scene) { Window = w };
-        string P(string name) => Path.Combine(outDir, $"clear_pin_{name}.png");
+        string P(string name) => Path.Combine(s.OutDir, $"clear_pin_{name}.png");
 
         // Orange 50 x 50 DIP at (x, 100); blurred red rectangle at (300, 400) (effect layer); optional black fade.
         float x = 50;
@@ -136,7 +138,7 @@ static class ClearPinTest
             first = false;
             rec.Update(Tree(), Space.DIPTopLeft);
             if (cmd.Length > 0)
-                check(Native.Apply(w, cmd.EndFrame()) == 0, $"clear-pin: apply {Native.LastError()}");
+                s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"clear-pin: apply {Native.LastError()}");
             Pump(1);
         }
         // Mean GPU / render ms of n frames with the rectangle moving back and forth.
@@ -178,22 +180,22 @@ static class ClearPinTest
         long c0 = Native.vlqt_window_change_count(w);
         Pump(30);
         long idleBase = Native.vlqt_window_change_count(w) - c0;
-        check(idleBase == 0, $"clear-pin: idle with Clear on renders nothing ({idleBase} changes / 30 pumps)");
+        s.Check(idleBase == 0, $"clear-pin: idle with Clear on renders nothing ({idleBase} changes / 30 pumps)");
 
         // Checks of the feedback layer: QtNative ignores Clear off on the software backend (no ShaderEffectSource there),
         // the frame then renders as with Clear on; the checks without "layer" hold on both backends.
-        var layer = Program.NeedsRhi(check, "Clear off needs a QRhi scenegraph");
+        Action<bool, string> layer = (ok, what) => s.NeedsRhi(ok, what, "Clear off needs a QRhi scenegraph");
 
         // 1) Off: the first frame starts from the clear colour (no garbage), the moving rectangle leaves a trail.
         x = 50;
         Frame();
         // Alpha 0: nothing fades, pure accumulation (an opaque Clear Color with Clear off is Clear on since #138).
-        check(SetMode(w, WindowGrey, false, 0) == 0, "clear-pin: set_clear 0 (alpha 0)");
+        s.Check(SetMode(w, WindowGrey, false, 0) == 0, "clear-pin: set_clear 0 (alpha 0)");
         Frame();
-        using (var img = grab(w, P("first")))
+        using (var img = s.Grab(w, P("first")))
         {
             int odd = Odd(img);
-            check(odd < 20 && IsOrange(Px(img, 75, 125)) && IsBg(Px(img, 600, 300)),
+            s.Check(odd < 20 && IsOrange(Px(img, 75, 125)) && IsBg(Px(img, 600, 300)),
                 $"clear-pin: first frame after Clear off = clear colour + scene ({odd} odd pixels, {Px(img, 75, 125)}, {Px(img, 600, 300)})");
         }
         for (int i = 1; i <= 10; i++)
@@ -201,15 +203,15 @@ static class ClearPinTest
             x = 50 + i * 40;
             Frame();
         }
-        using (var img = grab(w, P("trail")))
+        using (var img = s.Grab(w, P("trail")))
         {
-            check(IsOrange(Px(img, 475, 125)) && IsBg(Px(img, 600, 300)),
+            s.Check(IsOrange(Px(img, 475, 125)) && IsBg(Px(img, 600, 300)),
                 $"clear-pin: Clear off does not blank the frame ({Px(img, 475, 125)}, {Px(img, 600, 300)})");
             layer(IsOrange(Px(img, 75, 125)) && IsOrange(Px(img, 300, 125)) && IsOrange(Px(img, 470, 125)),
                 $"clear-pin: trail of the moving rectangle ({Px(img, 75, 125)}, {Px(img, 300, 125)}, {Px(img, 470, 125)})");
-            check(IsBg(Px(img, 600, 300)) && IsBg(Px(img, 75, 60)), $"clear-pin: background outside the trail ({Px(img, 600, 300)}, {Px(img, 75, 60)})");
+            s.Check(IsBg(Px(img, 600, 300)) && IsBg(Px(img, 75, 60)), $"clear-pin: background outside the trail ({Px(img, 600, 300)}, {Px(img, 75, 60)})");
             layer(Px(img, 350, 450).R > 150, $"clear-pin: effect layer (blur) drawn with Clear off ({Px(img, 350, 450)})");
-            check(IsBg(Px(img, 75, 475)), $"clear-pin: nothing at the mirrored position ({Px(img, 75, 475)})");
+            s.Check(IsBg(Px(img, 75, 475)), $"clear-pin: nothing at the mirrored position ({Px(img, 75, 475)})");
         }
 
         // 2) Idle: no scene change. Does the recursive live layer keep Qt rendering (continuous frames)?
@@ -223,7 +225,7 @@ static class ClearPinTest
         // 3) Fade with alpha 0: a full-size black rectangle at 25 % alpha fades old content (premultiplied "over").
         fade = 0.25f;
         for (int i = 0; i < 30; i++) Frame();
-        using (var img = grab(w, P("fade")))
+        using (var img = s.Grab(w, P("fade")))
         {
             layer(Px(img, 75, 125).R < 20 && Px(img, 600, 300).R < 20 && IsOrange(Px(img, 475, 125)),
                 $"clear-pin: fade: old trail and clear colour fade to black, current position stays orange ({Px(img, 75, 125)}, {Px(img, 600, 300)}, {Px(img, 475, 125)})");
@@ -232,13 +234,13 @@ static class ClearPinTest
         Frame();
 
         // 4) Debug overlay on while moving, then off: its outlines are outside the root, never accumulated.
-        check(Native.vlqt_window_set_debug(w, 1) == 0, "clear-pin: debug on");
+        s.Check(Native.vlqt_window_set_debug(w, 1) == 0, "clear-pin: debug on");
         for (int i = 0; i < 6; i++) { x = 100 + i * 50; Frame(); }
-        grab(w, P("debug_on")).Dispose();
-        check(Native.vlqt_window_set_debug(w, 0) == 0, "clear-pin: debug off");
+        s.Grab(w, P("debug_on")).Dispose();
+        s.Check(Native.vlqt_window_set_debug(w, 0) == 0, "clear-pin: debug off");
         Frame();
         Frame();
-        grab(w, P("debug_off")).Dispose();
+        s.Grab(w, P("debug_off")).Dispose();
 
         // 5) Snapshot of the blurred rectangle with Clear off: only the element, no feedback in it.
         var snap = new SnapshotNode(client, scene);
@@ -248,7 +250,7 @@ static class ClearPinTest
             Pump(1);
             image = snap.Update(blurred, out ready, out error, 1);
         }
-        check(ready && image != null, $"clear-pin: snapshot ready with Clear off ('{error}')");
+        s.Check(ready && image != null, $"clear-pin: snapshot ready with Clear off ('{error}')");
         if (image != null)
         {
             SnapshotTest.WritePng(image, P("snapshot"));
@@ -259,14 +261,14 @@ static class ClearPinTest
 
         // 6) Resize: the source texture is recreated, the trail is gone, the first frame shows no garbage.
         for (int i = 0; i < 6; i++) { x = 50 + i * 50; Frame(); }
-        check(Native.vlqt_window_resize(w, 700, 500) == 0, "clear-pin: resize");
+        s.Check(Native.vlqt_window_resize(w, 700, 500) == 0, "clear-pin: resize");
         x = 500;
         Frame();
-        using (var img = grab(w, P("resize")))
+        using (var img = s.Grab(w, P("resize")))
         {
             int odd = Odd(img);
-            check(odd < 40, $"clear-pin: resize: no garbage ({odd} odd pixels)");
-            check(IsBg(Px(img, 75, 125, 700, 500)) && IsOrange(Px(img, 525, 125, 700, 500)),
+            s.Check(odd < 40, $"clear-pin: resize: no garbage ({odd} odd pixels)");
+            s.Check(IsBg(Px(img, 75, 125, 700, 500)) && IsOrange(Px(img, 525, 125, 700, 500)),
                 $"clear-pin: resize clears the trail ({Px(img, 75, 125, 700, 500)}, {Px(img, 525, 125, 700, 500)})");
         }
         // The layer settles within two frames (second texture of the recursive source); from then on the trail accumulates.
@@ -274,42 +276,42 @@ static class ClearPinTest
         Frame();
         x = 575;
         Frame();
-        using (var img = grab(w, P("resize_after")))
+        using (var img = s.Grab(w, P("resize_after")))
             layer(IsOrange(Px(img, 525, 125, 700, 500)) && IsOrange(Px(img, 600, 125, 700, 500)) && IsBg(Px(img, 75, 125, 700, 500)),
                 $"clear-pin: trail accumulates again after the resize ({Px(img, 525, 125, 700, 500)}, {Px(img, 600, 125, 700, 500)})");
-        check(Native.vlqt_window_resize(w, 800, 600) == 0, "clear-pin: resize back");
+        s.Check(Native.vlqt_window_resize(w, 800, 600) == 0, "clear-pin: resize back");
         Frame();
 
         var off = Best(3, 60);
         Console.WriteLine($"clear-pin: window Clear off: gpu {off.Gpu:F3} ms, render {off.Render:F3} ms, {off.Changes} changes / 60");
 
         // 7) Clear on again: the trail goes at once.
-        check(SetMode(w, WindowGrey, true, 1) == 0, "clear-pin: set_clear 1");
+        s.Check(SetMode(w, WindowGrey, true, 1) == 0, "clear-pin: set_clear 1");
         x = 500;
         Frame();
-        using (var img = grab(w, P("on_again")))
-            check(IsBg(Px(img, 75, 125)) && IsOrange(Px(img, 525, 125)), $"clear-pin: Clear on removes the trail ({Px(img, 75, 125)}, {Px(img, 525, 125)})");
+        using (var img = s.Grab(w, P("on_again")))
+            s.Check(IsBg(Px(img, 75, 125)) && IsOrange(Px(img, 525, 125)), $"clear-pin: Clear on removes the trail ({Px(img, 75, 125)}, {Px(img, 525, 125)})");
         Frame();
         var on2 = Best(3, 60);
         Console.WriteLine($"clear-pin: window Clear on again: gpu {on2.Gpu:F3} ms, render {on2.Render:F3} ms, {on2.Changes} changes / 60");
         // Clear on costs nothing extra, also after Clear was off: GPU and CPU render time as in the baseline (noise margin).
-        PerfLimits.Below(check, on2.Gpu, on.Gpu * 1.5 + 0.5, $"clear-pin: Clear on again GPU {on2.Gpu:F3} ms vs baseline {on.Gpu:F3} ms (limit 1.5 x + 0.5 ms)");
-        PerfLimits.Below(check, on2.Render, on.Render * 2 + 0.1, $"clear-pin: Clear on again CPU render {on2.Render:F3} ms vs baseline {on.Render:F3} ms (limit 2 x + 0.1 ms)", cpuBound: true);
+        PerfLimits.Below(s, on2.Gpu, on.Gpu * 1.5 + 0.5, $"clear-pin: Clear on again GPU {on2.Gpu:F3} ms vs baseline {on.Gpu:F3} ms (limit 1.5 x + 0.5 ms)");
+        PerfLimits.Below(s, on2.Render, on.Render * 2 + 0.1, $"clear-pin: Clear on again CPU render {on2.Render:F3} ms vs baseline {on.Render:F3} ms (limit 2 x + 0.1 ms)", cpuBound: true);
         c0 = Native.vlqt_window_change_count(w);
         Pump(30);
         long idleAgain = Native.vlqt_window_change_count(w) - c0;
-        check(idleAgain == 0, $"clear-pin: idle with Clear on again renders nothing ({idleAgain} changes / 30 pumps)");
+        s.Check(idleAgain == 0, $"clear-pin: idle with Clear on again renders nothing ({idleAgain} changes / 30 pumps)");
 
         // 7b) Alpha of Clear Color while Clear is off (#138): the previous frame fades toward the clear colour by that alpha
         // per frame. 25 %: the first frame starts from the clear colour, older positions are darker than newer ones, and the
         // trail is gone after enough frames (up to the 8-bit residue).
-        check(SetMode(w, WindowGrey, false, 0.25f) == 0, "clear-pin: set_clear 0 (alpha 0.25)");
+        s.Check(SetMode(w, WindowGrey, false, 0.25f) == 0, "clear-pin: set_clear 0 (alpha 0.25)");
         x = 50;
         Frame();
-        using (var img = grab(w, P("alpha_first")))
+        using (var img = s.Grab(w, P("alpha_first")))
         {
             int odd = Odd(img);
-            check(odd < 20 && IsOrange(Px(img, 75, 125)) && IsBg(Px(img, 600, 300)),
+            s.Check(odd < 20 && IsOrange(Px(img, 75, 125)) && IsBg(Px(img, 600, 300)),
                 $"clear-pin: alpha 0.25: first frame = clear colour + scene ({odd} odd pixels, {Px(img, 75, 125)}, {Px(img, 600, 300)})");
         }
         for (int i = 1; i <= 10; i++)
@@ -317,7 +319,7 @@ static class ClearPinTest
             x = 50 + i * 40;
             Frame();
         }
-        using (var img = grab(w, P("alpha_025")))
+        using (var img = s.Grab(w, P("alpha_025")))
         {
             int rOld = Px(img, 75, 125).R, rMid = Px(img, 275, 125).R, rNew = Px(img, 475, 125).R;
             Console.WriteLine($"clear-pin: alpha 0.25: old {rOld} / mid {rMid} / new {rNew}, background {Px(img, 600, 300).R}");
@@ -326,55 +328,55 @@ static class ClearPinTest
         }
         x = 450;
         for (int i = 0; i < 40; i++) Frame();
-        using (var img = grab(w, P("alpha_025_gone")))
+        using (var img = s.Grab(w, P("alpha_025_gone")))
             layer(IsBg(Px(img, 75, 125)) && IsBg(Px(img, 275, 125)) && IsOrange(Px(img, 475, 125)) && Px(img, 75, 125).R <= 36,
                 $"clear-pin: alpha 0.25: the trail is gone, the box stays ({Px(img, 75, 125)}, {Px(img, 275, 125)}, {Px(img, 475, 125)})");
 
         // Alpha changes at runtime keep the layer (a rebuilt layer would start from the clear colour and lose the trail).
         // 0: full strength.
-        check(SetClearColor(w, WindowGrey, 0) == 0, "clear-pin: alpha 0 at runtime");
+        s.Check(SetClearColor(w, WindowGrey, 0) == 0, "clear-pin: alpha 0 at runtime");
         for (int i = 0; i <= 10; i++)
         {
             x = 50 + i * 40;
             Frame();
         }
-        using (var img = grab(w, P("alpha_0")))
+        using (var img = s.Grab(w, P("alpha_0")))
             layer(IsOrange(Px(img, 75, 125)) && IsOrange(Px(img, 275, 125)) && IsOrange(Px(img, 475, 125)),
                 $"clear-pin: alpha 0: the trail stays at full strength ({Px(img, 75, 125)}, {Px(img, 275, 125)}, {Px(img, 475, 125)})");
         // 0.25 on the existing trail: darker, not wiped.
-        check(SetClearColor(w, WindowGrey, 0.25f) == 0, "clear-pin: alpha 0.25 at runtime");
+        s.Check(SetClearColor(w, WindowGrey, 0.25f) == 0, "clear-pin: alpha 0.25 at runtime");
         Frame();
-        using (var img = grab(w, P("alpha_runtime")))
+        using (var img = s.Grab(w, P("alpha_runtime")))
         {
             int rAfter = Px(img, 75, 125).R;
             layer(rAfter > 100 && rAfter < 250 && IsOrange(Px(img, 475, 125)),
                 $"clear-pin: alpha 0.25 at runtime fades the existing trail without a rebuild (old {rAfter}, new {Px(img, 475, 125)})");
         }
         // Back to 0: the fade stops.
-        check(SetClearColor(w, WindowGrey, 0) == 0, "clear-pin: alpha 0 again");
+        s.Check(SetClearColor(w, WindowGrey, 0) == 0, "clear-pin: alpha 0 again");
         Frame();
         int rStop1, rStop2;
-        using (var img = grab(w, P("alpha_stop1")))
+        using (var img = s.Grab(w, P("alpha_stop1")))
             rStop1 = Px(img, 75, 125).R;
         for (int i = 0; i < 6; i++) Frame();
-        using (var img = grab(w, P("alpha_stop2")))
+        using (var img = s.Grab(w, P("alpha_stop2")))
             rStop2 = Px(img, 75, 125).R;
         layer(Math.Abs(rStop1 - rStop2) <= 2 && rStop2 > 32, $"clear-pin: alpha 0 again stops the fade (old {rStop1} -> {rStop2})");
         // 1: same pixels as Clear on, also with a moving box.
-        check(SetClearColor(w, WindowGrey, 1) == 0, "clear-pin: alpha 1 at runtime");
+        s.Check(SetClearColor(w, WindowGrey, 1) == 0, "clear-pin: alpha 1 at runtime");
         for (int i = 0; i <= 10; i++)
         {
             x = 50 + i * 40;
             Frame();
         }
-        using (var offImg = grab(w, P("alpha_1")))
+        using (var offImg = s.Grab(w, P("alpha_1")))
         {
-            check(SetMode(w, WindowGrey, true, 1) == 0, "clear-pin: set_clear 1 (after alpha 1)");
+            s.Check(SetMode(w, WindowGrey, true, 1) == 0, "clear-pin: set_clear 1 (after alpha 1)");
             Frame();
-            using var onImg = grab(w, P("alpha_1_clear_on"));
+            using var onImg = s.Grab(w, P("alpha_1_clear_on"));
             int diff = Diff(offImg, onImg, 3);
             Console.WriteLine($"clear-pin: alpha 1 vs Clear on: {diff} differing pixels (every 2nd row and column)");
-            check(IsBg(Px(offImg, 75, 125)) && IsOrange(Px(offImg, 475, 125)) && diff == 0,
+            s.Check(IsBg(Px(offImg, 75, 125)) && IsOrange(Px(offImg, 475, 125)) && diff == 0,
                 $"clear-pin: alpha 1 gives the pixels of Clear on, no trail ({Px(offImg, 75, 125)}, {diff} differing pixels)");
         }
 
@@ -393,12 +395,12 @@ static class ClearPinTest
             cmd.Reset();
             rec.Update(Msaa(), Space.DIPTopLeft);
             if (cmd.Length > 0)
-                check(Native.Apply(w, cmd.EndFrame()) == 0, $"clear-pin: apply {Native.LastError()}");
+                s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"clear-pin: apply {Native.LastError()}");
             Pump(1);
         }
         int Edge(string name)
         {
-            using var img = grab(w, P(name));
+            using var img = s.Grab(w, P(name));
             // Distinct red values between black and orange: n samples give n - 1 coverage steps, vertex AA many.
             var values = new HashSet<int>();
             for (int y = 0; y < img.Height; y += 1)
@@ -448,7 +450,7 @@ static class ClearPinTest
             string Ms(List<double> v) => string.Join(" / ", v.Select(m => m.ToString("F3")));
             Console.WriteLine($"clear-pin: cost {sw}x{sh}: gpu Clear on {Ms(gpuOn)} ms, off (alpha 0) {Ms(gpuOff)} ms, off (alpha 0.25) {Ms(gpuFade)} ms");
             // Documented cost of the layer: about +0.3 ms at 1920x1080, at worst +1 ms; best of the interleaved rounds.
-            PerfLimits.Below(check, gpuOff.Min(), gpuOn.Min() * 1.5 + 1.0, $"clear-pin: cost {sw}x{sh}: Clear off (alpha 0) {gpuOff.Min():F3} ms vs on {gpuOn.Min():F3} ms (limit 1.5 x + 1 ms)");
+            PerfLimits.Below(s, gpuOff.Min(), gpuOn.Min() * 1.5 + 1.0, $"clear-pin: cost {sw}x{sh}: Clear off (alpha 0) {gpuOff.Min():F3} ms vs on {gpuOn.Min():F3} ms (limit 1.5 x + 1 ms)");
         }
         SetMode(w, WindowGrey, true, 1);
 
@@ -461,12 +463,12 @@ static class ClearPinTest
     }
 
     // Offscreen scene (QtTexture): 64 x 48, opaque grey clear colour, a 8 x 8 orange box moved along x.
-    static void Offscreen(string outDir, Action<bool, string> check)
+    static void Offscreen(Scenario s)
     {
         const int B8G8R8A8Typeless = 90, B8G8R8A8Unorm = 87;
         if (!check2(Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0, "clear-pin offscreen: test device"))
             return;
-        bool check2(bool ok, string what) { check(ok, what); return ok; }
+        bool check2(bool ok, string what) { s.Check(ok, what); return ok; }
         int w = 64, h = 48;
         var scene = Native.vlqt_offscreen_create(w, h);
         var cmd = new CommandWriter();
@@ -476,7 +478,7 @@ static class ClearPinTest
         cmd.SetPlace(1, 0, 4, 8, 8);
         cmd.SetColor(1, Protocol.Prop.Color, 1, 0.6f, 0, 1);
         cmd.Reparent(1, 0, 0);
-        check(Native.Apply(scene, cmd.EndFrame()) == 0, $"clear-pin offscreen: apply {Native.LastError()}");
+        s.Check(Native.Apply(scene, cmd.EndFrame()) == 0, $"clear-pin offscreen: apply {Native.LastError()}");
         IntPtr tex = IntPtr.Zero;
         void Bind(int bw, int bh)
         {
@@ -488,7 +490,7 @@ static class ClearPinTest
             Native.vlqt_test_d3d11_create_shared_texture(device, bw, bh, B8G8R8A8Typeless, out tex, out var handle);
             int rc = Native.vlqt_offscreen_bind(scene, device, handle, bw, bh, B8G8R8A8Unorm, 1, out _);
             Native.vlqt_test_close_handle(handle);
-            check(rc == 0, $"clear-pin offscreen: bind {bw}x{bh} ({rc}) {Native.LastError()}");
+            s.Check(rc == 0, $"clear-pin offscreen: bind {bw}x{bh} ({rc}) {Native.LastError()}");
             (w, h) = (bw, bh);
         }
         int Render() => Native.OffscreenRenderBatch(context, new[] { scene }, 0);
@@ -510,10 +512,10 @@ static class ClearPinTest
         int r0 = Render();
         var pxOn = Read();
         Console.WriteLine($"clear-pin offscreen: before Clear off: rendered {r0}, box {At(pxOn, 4, 8)}, background {At(pxOn, 40, 30)}");
-        check(SetMode(scene, OffscreenGrey, false, 0) == 0, "clear-pin offscreen: set_clear 0 (alpha 0)");
+        s.Check(SetMode(scene, OffscreenGrey, false, 0) == 0, "clear-pin offscreen: set_clear 0 (alpha 0)");
         int first = Render();
         var px0 = Read();
-        check(At(px0, 4, 8).R == 255 && At(px0, 40, 30).R == 32 && At(px0, 40, 30).A == 0,
+        s.Check(At(px0, 4, 8).R == 255 && At(px0, 40, 30).R == 32 && At(px0, 40, 30).A == 0,
             $"clear-pin offscreen: first frame after Clear off = clear colour + box (rendered {first}, {At(px0, 4, 8)}, {At(px0, 40, 30)})");
         for (int i = 1; i <= 6; i++)
         {
@@ -521,8 +523,8 @@ static class ClearPinTest
             Render();
         }
         var px1 = Read();
-        QtTextureTest.WritePng(Path.Combine(outDir, "clear_pin_offscreen_trail.png"), px1, w, h);
-        check(At(px1, 4, 8).R == 255 && At(px1, 28, 8).R == 255 && At(px1, 52, 8).R == 255 && At(px1, 40, 30).R == 32,
+        QtTextureTest.WritePng(Path.Combine(s.OutDir, "clear_pin_offscreen_trail.png"), px1, w, h);
+        s.Check(At(px1, 4, 8).R == 255 && At(px1, 28, 8).R == 255 && At(px1, 52, 8).R == 255 && At(px1, 40, 30).R == 32,
             $"clear-pin offscreen: trail ({At(px1, 4, 8)}, {At(px1, 28, 8)}, {At(px1, 52, 8)}, background {At(px1, 40, 30)})");
         int idle = 0;
         for (int i = 0; i < 10; i++)
@@ -533,7 +535,7 @@ static class ClearPinTest
         Move(60);
         Render();
         var px2 = Read();
-        QtTextureTest.WritePng(Path.Combine(outDir, "clear_pin_offscreen_resize.png"), px2, w, h);
+        QtTextureTest.WritePng(Path.Combine(s.OutDir, "clear_pin_offscreen_resize.png"), px2, w, h);
         int odd = 0;
         for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++)
@@ -542,7 +544,7 @@ static class ClearPinTest
                 if (!(c.R == 32 && c.G == 32) && !(c.R == 255 && c.G > 140 && c.G < 165))
                     odd++;
             }
-        check(odd == 0 && At(px2, 4, 8).R == 32 && At(px2, 64, 8).R == 255,
+        s.Check(odd == 0 && At(px2, 4, 8).R == 32 && At(px2, 64, 8).R == 255,
             $"clear-pin offscreen: rebind with a new size clears the trail, no garbage ({odd} odd, {At(px2, 4, 8)}, {At(px2, 64, 8)})");
         // Once: accumulation goes on after the rebind.
         // The recursive layer allocates its second texture on the next frame, so the first frame after the rebind is dropped once
@@ -552,17 +554,17 @@ static class ClearPinTest
         Move(68);
         Render();
         var px2b = Read();
-        check(At(px2b, 4, 8).R == 32 && At(px2b, 64, 8).R == 255 && At(px2b, 72, 8).R == 255,
+        s.Check(At(px2b, 4, 8).R == 32 && At(px2b, 64, 8).R == 255 && At(px2b, 72, 8).R == 255,
             $"clear-pin offscreen: trail accumulates again after the rebind ({At(px2b, 4, 8)}, {At(px2b, 64, 8)}, {At(px2b, 72, 8)})");
 
-        check(SetMode(scene, OffscreenGrey, true, 1) == 0, "clear-pin offscreen: set_clear 1");
+        s.Check(SetMode(scene, OffscreenGrey, true, 1) == 0, "clear-pin offscreen: set_clear 1");
         Move(20);
         Render();
         var px3 = Read();
-        check(At(px3, 64, 8).R == 32 && At(px3, 24, 8).R == 255, $"clear-pin offscreen: Clear on removes the trail ({At(px3, 64, 8)}, {At(px3, 24, 8)})");
+        s.Check(At(px3, 64, 8).R == 32 && At(px3, 24, 8).R == 255, $"clear-pin offscreen: Clear on removes the trail ({At(px3, 64, 8)}, {At(px3, 24, 8)})");
 
         // Fade: a full-size black rectangle below the box, 25 % alpha, fades trail and clear colour; the box (drawn after it) stays.
-        check(SetMode(scene, OffscreenGrey, false, 0) == 0, "clear-pin offscreen: set_clear 0 (fade, alpha 0)");
+        s.Check(SetMode(scene, OffscreenGrey, false, 0) == 0, "clear-pin offscreen: set_clear 0 (fade, alpha 0)");
         Move(8);
         Render();
         Move(40);
@@ -572,24 +574,24 @@ static class ClearPinTest
         cmd.SetPlace(3, 0, 0, w, h);
         cmd.SetColor(3, Protocol.Prop.Color, 0, 0, 0, 0.25f);
         cmd.Reparent(3, 0, 0);
-        check(Native.Apply(scene, cmd.EndFrame()) == 0, $"clear-pin offscreen: apply fade {Native.LastError()}");
+        s.Check(Native.Apply(scene, cmd.EndFrame()) == 0, $"clear-pin offscreen: apply fade {Native.LastError()}");
         for (int i = 0; i < 30; i++) Render();
         var pxFade = Read();
-        QtTextureTest.WritePng(Path.Combine(outDir, "clear_pin_offscreen_fade.png"), pxFade, w, h);
-        check(At(pxFade, 12, 8).R < 20 && At(pxFade, 70, 30).R < 10 && At(pxFade, 44, 8).R == 255,
+        QtTextureTest.WritePng(Path.Combine(s.OutDir, "clear_pin_offscreen_fade.png"), pxFade, w, h);
+        s.Check(At(pxFade, 12, 8).R < 20 && At(pxFade, 70, 30).R < 10 && At(pxFade, 44, 8).R == 255,
             $"clear-pin offscreen: fade: trail and clear colour fade to black, the box stays ({At(pxFade, 12, 8)}, {At(pxFade, 70, 30)}, {At(pxFade, 44, 8)})");
         cmd.Reset();
         cmd.SetColor(3, Protocol.Prop.Color, 0, 0, 0, 0);
         Native.Apply(scene, cmd.EndFrame());
-        check(SetMode(scene, OffscreenGrey, true, 1) == 0, "clear-pin offscreen: set_clear 1 (after fade)");
+        s.Check(SetMode(scene, OffscreenGrey, true, 1) == 0, "clear-pin offscreen: set_clear 1 (after fade)");
 
         // Alpha of Clear Color while Clear is off (#138), as in the window: 25 % fades older positions (box moved 7 times, 8 px
         // apart: oldest 6 frames, middle 3 frames old), then the trail is gone; changes at runtime keep the layer; alpha 1 = Clear on.
-        check(SetMode(scene, OffscreenGrey, false, 0.25f) == 0, "clear-pin offscreen: set_clear 0 (alpha 0.25)");
+        s.Check(SetMode(scene, OffscreenGrey, false, 0.25f) == 0, "clear-pin offscreen: set_clear 0 (alpha 0.25)");
         Move(0);
         Render();
         var pa0 = Read();
-        check(At(pa0, 4, 8).R == 255 && At(pa0, 44, 8).R <= 34 && At(pa0, 40, 30).R is >= 30 and <= 33 && At(pa0, 40, 30).A == 255,
+        s.Check(At(pa0, 4, 8).R == 255 && At(pa0, 44, 8).R <= 34 && At(pa0, 40, 30).R is >= 30 and <= 33 && At(pa0, 40, 30).A == 255,
             $"clear-pin offscreen: alpha 0.25: first frame = clear colour + box ({At(pa0, 4, 8)}, {At(pa0, 44, 8)}, {At(pa0, 40, 30)})");
         for (int i = 1; i <= 6; i++)
         {
@@ -597,48 +599,48 @@ static class ClearPinTest
             Render();
         }
         var pa = Read();
-        QtTextureTest.WritePng(Path.Combine(outDir, "clear_pin_offscreen_alpha_025.png"), pa, w, h);
+        QtTextureTest.WritePng(Path.Combine(s.OutDir, "clear_pin_offscreen_alpha_025.png"), pa, w, h);
         int rOld = At(pa, 4, 8).R, rMid = At(pa, 28, 8).R, rNew = At(pa, 52, 8).R;
         Console.WriteLine($"clear-pin offscreen: alpha 0.25: old {rOld} / mid {rMid} / new {rNew}, background {At(pa, 40, 30).R}");
-        check(rOld is >= 60 and <= 85 && rMid is >= 110 and <= 140 && rNew == 255 && rOld < rMid,
+        s.Check(rOld is >= 60 and <= 85 && rMid is >= 110 and <= 140 && rNew == 255 && rOld < rMid,
             $"clear-pin offscreen: alpha 0.25: older positions darker than newer ones (old {rOld} < mid {rMid} < new {rNew})");
         Move(48);
         for (int i = 0; i < 40; i++) Render();
         var pg = Read();
-        QtTextureTest.WritePng(Path.Combine(outDir, "clear_pin_offscreen_alpha_025_gone.png"), pg, w, h);
-        check(At(pg, 4, 8).R <= 36 && At(pg, 28, 8).R <= 36 && At(pg, 52, 8).R == 255 && At(pg, 40, 30).R is >= 30 and <= 33,
+        QtTextureTest.WritePng(Path.Combine(s.OutDir, "clear_pin_offscreen_alpha_025_gone.png"), pg, w, h);
+        s.Check(At(pg, 4, 8).R <= 36 && At(pg, 28, 8).R <= 36 && At(pg, 52, 8).R == 255 && At(pg, 40, 30).R is >= 30 and <= 33,
             $"clear-pin offscreen: alpha 0.25: the trail is gone up to the 8-bit residue, the box stays ({At(pg, 4, 8)}, {At(pg, 28, 8)}, {At(pg, 52, 8)}, background {At(pg, 40, 30)})");
         // Runtime: 0 = full strength, 0.25 fades the existing trail without a rebuild, 0 again stops the fade.
-        check(SetClearColor(scene, OffscreenGrey, 0) == 0, "clear-pin offscreen: alpha 0 at runtime");
+        s.Check(SetClearColor(scene, OffscreenGrey, 0) == 0, "clear-pin offscreen: alpha 0 at runtime");
         for (int i = 0; i <= 6; i++)
         {
             Move(i * 8);
             Render();
         }
         var pb = Read();
-        QtTextureTest.WritePng(Path.Combine(outDir, "clear_pin_offscreen_alpha_0.png"), pb, w, h);
-        check(At(pb, 4, 8).R == 255 && At(pb, 28, 8).R == 255 && At(pb, 52, 8).R == 255,
+        QtTextureTest.WritePng(Path.Combine(s.OutDir, "clear_pin_offscreen_alpha_0.png"), pb, w, h);
+        s.Check(At(pb, 4, 8).R == 255 && At(pb, 28, 8).R == 255 && At(pb, 52, 8).R == 255,
             $"clear-pin offscreen: alpha 0: the trail stays at full strength ({At(pb, 4, 8)}, {At(pb, 28, 8)}, {At(pb, 52, 8)})");
-        check(SetClearColor(scene, OffscreenGrey, 0.25f) == 0, "clear-pin offscreen: alpha 0.25 at runtime");
+        s.Check(SetClearColor(scene, OffscreenGrey, 0.25f) == 0, "clear-pin offscreen: alpha 0.25 at runtime");
         Render();
         int rRun = At(Read(), 4, 8).R;
-        check(rRun is >= 185 and <= 215, $"clear-pin offscreen: alpha 0.25 at runtime fades the existing trail by one step without a rebuild (old {rRun}, expected about 199)");
-        check(SetClearColor(scene, OffscreenGrey, 0) == 0, "clear-pin offscreen: alpha 0 again");
+        s.Check(rRun is >= 185 and <= 215, $"clear-pin offscreen: alpha 0.25 at runtime fades the existing trail by one step without a rebuild (old {rRun}, expected about 199)");
+        s.Check(SetClearColor(scene, OffscreenGrey, 0) == 0, "clear-pin offscreen: alpha 0 again");
         Render();
         int rStop1 = At(Read(), 4, 8).R;
         for (int i = 0; i < 6; i++) Render();
         int rStop2 = At(Read(), 4, 8).R;
-        check(Math.Abs(rStop1 - rStop2) <= 1 && rStop2 > 32, $"clear-pin offscreen: alpha 0 again stops the fade (old {rStop1} -> {rStop2})");
+        s.Check(Math.Abs(rStop1 - rStop2) <= 1 && rStop2 > 32, $"clear-pin offscreen: alpha 0 again stops the fade (old {rStop1} -> {rStop2})");
         // 1: the pixels of Clear on, also with a moving box.
-        check(SetClearColor(scene, OffscreenGrey, 1) == 0, "clear-pin offscreen: alpha 1 at runtime");
+        s.Check(SetClearColor(scene, OffscreenGrey, 1) == 0, "clear-pin offscreen: alpha 1 at runtime");
         for (int i = 0; i <= 6; i++)
         {
             Move(i * 8);
             Render();
         }
         var pOne = Read();
-        QtTextureTest.WritePng(Path.Combine(outDir, "clear_pin_offscreen_alpha_1.png"), pOne, w, h);
-        check(SetMode(scene, OffscreenGrey, true, 1) == 0, "clear-pin offscreen: set_clear 1 (after alpha 1)");
+        QtTextureTest.WritePng(Path.Combine(s.OutDir, "clear_pin_offscreen_alpha_1.png"), pOne, w, h);
+        s.Check(SetMode(scene, OffscreenGrey, true, 1) == 0, "clear-pin offscreen: set_clear 1 (after alpha 1)");
         Move(48);
         Render();
         var pOn = Read();
@@ -646,7 +648,7 @@ static class ClearPinTest
         for (int i = 0; i < pOne.Length; i++)
             if (Math.Abs(pOne[i] - pOn[i]) > 1)
                 bytesDiff++;
-        check(bytesDiff == 0 && At(pOne, 4, 8).R == 32 && At(pOne, 52, 8).R == 255,
+        s.Check(bytesDiff == 0 && At(pOne, 4, 8).R == 32 && At(pOne, 52, 8).R == 255,
             $"clear-pin offscreen: alpha 1 gives the pixels of Clear on, no trail ({bytesDiff} differing bytes, {At(pOne, 4, 8)}, {At(pOne, 52, 8)})");
 
         // MSAA: the render target of a scene has 1 sample, the layer inherits it. A rotated white square on the grey clear
@@ -657,7 +659,7 @@ static class ClearPinTest
         cmd.SetColor(2, Protocol.Prop.Color, 1, 1, 1, 1);
         cmd.SetMat4(2, Protocol.Prop.Transform, Matrix.RotationZ(0.5f) * Matrix.Translation(40, 14, 0));
         cmd.Reparent(2, 0, 1);
-        check(Native.Apply(scene, cmd.EndFrame()) == 0, $"clear-pin offscreen: apply rotated {Native.LastError()}");
+        s.Check(Native.Apply(scene, cmd.EndFrame()) == 0, $"clear-pin offscreen: apply rotated {Native.LastError()}");
         int Steps()
         {
             var px = Read();
@@ -682,7 +684,7 @@ static class ClearPinTest
             steps.Add($"{name} {n}");
         }
         Console.WriteLine($"clear-pin offscreen: distinct edge values (n samples: n - 1): {string.Join(", ", steps)}");
-        check(stepValues[0] == stepValues[1], $"clear-pin offscreen: MSAA edges with Clear off as with Clear on ({stepValues[0]} vs {stepValues[1]} distinct values)");
+        s.Check(stepValues[0] == stepValues[1], $"clear-pin offscreen: MSAA edges with Clear off as with Clear on ({stepValues[0]} vs {stepValues[1]} distinct values)");
 
         Native.vlqt_offscreen_unbind(scene);
         Native.vlqt_test_com_release(tex);
