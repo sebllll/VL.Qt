@@ -1,23 +1,21 @@
-// TEST ONLY exports of #116 (QtTexture): a second D3D11 device standing in for Stride's, shared textures, readback and
-// leak probes for the SmokeTest (vlqt.h, "TEST ONLY (#116 ...)").
-#include "offscreen.h"
-#include "protocol.h"
-#include "vlqt.h"
+// vlqt_testkit (testkit.h): the stand-in "Stride" D3D11 device of the QtTexture tests, shared textures, readback and
+// leak probes. Windows only, no Qt, no QtNative.
+#include "testkit.h"
 
-#ifdef _WIN32
+#include "../protocol.h"
 
-#include "device.h"
-
-#include <rhi/qrhi.h>
-
-#include <d3d11_1.h>
-#include <dxgi1_2.h>
+#include <d3d11_4.h> // ID3D11Multithread
+#include <dxgi1_4.h>
 #include <windows.h>
 
+#include <climits>
 #include <cstdio>
 #include <cstring>
+#include <string>
 
 namespace {
+
+std::string s_lastError;
 
 // Releases a COM pointer on scope exit.
 template <class T> struct ComPtr
@@ -36,12 +34,36 @@ template <class T> struct ComPtr
     explicit operator bool() const { return p != nullptr; }
 };
 
-// Sets vlqt_last_error and returns -1.
+// Holds the immediate context of a device for a stateful sequence (ID3D11Multithread::Enter/Leave): the critical
+// section QtNative's ContextLock (device.h) takes on a context its render threads share.
+class ContextLock
+{
+public:
+    explicit ContextLock(ID3D11DeviceContext* context)
+    {
+        if (context)
+            context->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(m_multithread.put()));
+        if (m_multithread)
+            m_multithread->Enter();
+    }
+    ~ContextLock()
+    {
+        if (m_multithread)
+            m_multithread->Leave();
+    }
+    ContextLock(const ContextLock&) = delete;
+    ContextLock& operator=(const ContextLock&) = delete;
+
+private:
+    ComPtr<ID3D11Multithread> m_multithread;
+};
+
+// Sets vlqt_test_last_error and returns -1.
 int fail(const char* what, HRESULT hr)
 {
     char text[160];
     std::snprintf(text, sizeof text, "vlqt_test: %s failed (HRESULT 0x%08lX)", what, static_cast<unsigned long>(hr));
-    vlqt::offscreen::setError(text);
+    s_lastError = text;
     return -1;
 }
 
@@ -85,22 +107,17 @@ int bytesPerPixel(DXGI_FORMAT f)
     }
 }
 
-// The adapter of QtNative's shared device, or null (no device yet, or none shared): then the default adapter is used.
-// Never creates the device: the caller's device must not decide how QtNative's is created.
-// The returned adapter carries one reference.
-IDXGIAdapter* qtNativeAdapter()
+// The adapter with this LUID (LowPart | HighPart << 32), null if there is none. Carries one reference.
+IDXGIAdapter* adapterByLuid(unsigned long long luid)
 {
-    if (vlqt::device::generation() == 0)
+    ComPtr<IDXGIFactory4> factory;
+    if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory4), reinterpret_cast<void**>(factory.put()))))
         return nullptr;
-    QRhi* rhi = vlqt::device::uploadRhi();
-    auto* qtDevice = static_cast<IUnknown*>(vlqt::device::nativeDevice(rhi));
-    if (!qtDevice)
-        return nullptr;
-    ComPtr<IDXGIDevice> dxgiDevice;
-    if (FAILED(qtDevice->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(dxgiDevice.put()))))
-        return nullptr;
+    LUID l{};
+    l.LowPart = DWORD(luid & 0xffffffffu);
+    l.HighPart = LONG(luid >> 32);
     IDXGIAdapter* adapter = nullptr;
-    dxgiDevice->GetAdapter(&adapter);
+    factory->EnumAdapterByLuid(l, __uuidof(IDXGIAdapter), reinterpret_cast<void**>(&adapter));
     return adapter;
 }
 
@@ -108,7 +125,12 @@ IDXGIAdapter* qtNativeAdapter()
 
 extern "C" {
 
-VLQT_API int vlqt_test_d3d11_create_device(int adapter, void** device, void** context)
+VLQT_TESTKIT_API const char* vlqt_test_last_error(void)
+{
+    return s_lastError.c_str();
+}
+
+VLQT_TESTKIT_API int vlqt_test_d3d11_create_device(int adapter, unsigned long long adapterLuid, void** device, void** context)
 {
     if (device)
         *device = nullptr;
@@ -125,9 +147,15 @@ VLQT_API int vlqt_test_d3d11_create_device(int adapter, void** device, void** co
         hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_WARP, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT, levels,
                                _countof(levels), D3D11_SDK_VERSION, &dev, nullptr, &ctx);
     } else {
-        ComPtr<IDXGIAdapter> qtAdapter;
-        qtAdapter.p = qtNativeAdapter();
-        hr = D3D11CreateDevice(qtAdapter.p, qtAdapter ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE, nullptr,
+        ComPtr<IDXGIAdapter> byLuid;
+        if (adapterLuid) {
+            byLuid.p = adapterByLuid(adapterLuid);
+            if (!byLuid) {
+                s_lastError = "vlqt_test: no adapter with LUID " + std::to_string(adapterLuid);
+                return VLQT_OFFSCREEN_BAD_ARGUMENT;
+            }
+        }
+        hr = D3D11CreateDevice(byLuid.p, byLuid ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE, nullptr,
                                D3D11_CREATE_DEVICE_BGRA_SUPPORT, levels, _countof(levels), D3D11_SDK_VERSION, &dev,
                                nullptr, &ctx);
     }
@@ -138,7 +166,7 @@ VLQT_API int vlqt_test_d3d11_create_device(int adapter, void** device, void** co
     return 0;
 }
 
-VLQT_API int vlqt_test_d3d11_release_device(void* device, void* context)
+VLQT_TESTKIT_API int vlqt_test_d3d11_release_device(void* device, void* context)
 {
     if (!device)
         return VLQT_OFFSCREEN_BAD_ARGUMENT;
@@ -147,8 +175,8 @@ VLQT_API int vlqt_test_d3d11_release_device(void* device, void* context)
     return static_cast<int>(static_cast<ID3D11Device*>(device)->Release());
 }
 
-VLQT_API int vlqt_test_d3d11_create_shared_texture(void* device, int width, int height, int dxgiFormat, void** texture,
-                                                   void** ntHandle)
+VLQT_TESTKIT_API int vlqt_test_d3d11_create_shared_texture(void* device, int width, int height, int dxgiFormat,
+                                                          void** texture, void** ntHandle)
 {
     if (texture)
         *texture = nullptr;
@@ -186,8 +214,8 @@ VLQT_API int vlqt_test_d3d11_create_shared_texture(void* device, int width, int 
     return 0;
 }
 
-VLQT_API int vlqt_test_d3d11_read_texture(void* texture, unsigned char* out, int cap, int* width, int* height,
-                                          int* dxgiFormat)
+VLQT_TESTKIT_API int vlqt_test_d3d11_read_texture(void* texture, unsigned char* out, int cap, int* width, int* height,
+                                                 int* dxgiFormat)
 {
     if (!texture || !width || !height || !dxgiFormat || cap < 0 || (cap > 0 && !out))
         return VLQT_OFFSCREEN_BAD_ARGUMENT;
@@ -201,6 +229,9 @@ VLQT_API int vlqt_test_d3d11_read_texture(void* texture, unsigned char* out, int
     *height = static_cast<int>(desc.Height);
     *dxgiFormat = static_cast<int>(desc.Format);
     const long long required = static_cast<long long>(desc.Width) * desc.Height * bpp;
+    // The byte count is an int (return value, cap): a larger texture (e.g. 16384 x 16384 RGBA16F) cannot be read.
+    if (required > INT_MAX)
+        return VLQT_OFFSCREEN_BAD_ARGUMENT;
     if (required > cap)
         return -static_cast<int>(required);
 
@@ -218,8 +249,8 @@ VLQT_API int vlqt_test_d3d11_read_texture(void* texture, unsigned char* out, int
     HRESULT hr = device->CreateTexture2D(&stagingDesc, nullptr, staging.put());
     if (FAILED(hr))
         return fail("CreateTexture2D(staging)", hr);
-    // Copy, Map and Unmap as one sequence on a context the render threads may share (device.h).
-    vlqt::device::ContextLock lock(context.p);
+    // Copy, Map and Unmap as one sequence on a context QtNative's render threads may share (device.h).
+    ContextLock lock(context.p);
     context->CopyResource(staging.p, tex);
     D3D11_MAPPED_SUBRESOURCE mapped;
     // Blocks until the GPU has finished the copy (and everything queued before it).
@@ -233,7 +264,7 @@ VLQT_API int vlqt_test_d3d11_read_texture(void* texture, unsigned char* out, int
     return static_cast<int>(required);
 }
 
-VLQT_API int vlqt_test_com_ref_count(void* obj)
+VLQT_TESTKIT_API int vlqt_test_com_ref_count(void* obj)
 {
     if (!obj)
         return VLQT_OFFSCREEN_BAD_ARGUMENT;
@@ -242,69 +273,24 @@ VLQT_API int vlqt_test_com_ref_count(void* obj)
     return static_cast<int>(unknown->Release());
 }
 
-VLQT_API int vlqt_test_com_release(void* obj)
+VLQT_TESTKIT_API int vlqt_test_com_release(void* obj)
 {
     if (!obj)
         return VLQT_OFFSCREEN_BAD_ARGUMENT;
     return static_cast<int>(static_cast<IUnknown*>(obj)->Release());
 }
 
-VLQT_API int vlqt_test_close_handle(void* handle)
+VLQT_TESTKIT_API int vlqt_test_close_handle(void* handle)
 {
     if (!handle)
         return VLQT_OFFSCREEN_BAD_ARGUMENT;
     return CloseHandle(handle) ? 0 : -1;
 }
 
-VLQT_API int vlqt_test_process_handle_count(void)
+VLQT_TESTKIT_API int vlqt_test_process_handle_count(void)
 {
     DWORD count = 0;
     return GetProcessHandleCount(GetCurrentProcess(), &count) ? static_cast<int>(count) : -1;
-}
-
-#else // !_WIN32
-
-extern "C" {
-
-VLQT_API int vlqt_test_d3d11_create_device(int, void** device, void** context)
-{
-    if (device)
-        *device = nullptr;
-    if (context)
-        *context = nullptr;
-    return VLQT_OFFSCREEN_NOT_SUPPORTED;
-}
-
-VLQT_API int vlqt_test_d3d11_release_device(void*, void*) { return VLQT_OFFSCREEN_NOT_SUPPORTED; }
-
-VLQT_API int vlqt_test_d3d11_create_shared_texture(void*, int, int, int, void** texture, void** ntHandle)
-{
-    if (texture)
-        *texture = nullptr;
-    if (ntHandle)
-        *ntHandle = nullptr;
-    return VLQT_OFFSCREEN_NOT_SUPPORTED;
-}
-
-VLQT_API int vlqt_test_d3d11_read_texture(void*, unsigned char*, int, int*, int*, int*)
-{
-    return VLQT_OFFSCREEN_NOT_SUPPORTED;
-}
-
-VLQT_API int vlqt_test_com_ref_count(void*) { return VLQT_OFFSCREEN_NOT_SUPPORTED; }
-
-VLQT_API int vlqt_test_com_release(void*) { return VLQT_OFFSCREEN_NOT_SUPPORTED; }
-
-VLQT_API int vlqt_test_close_handle(void*) { return VLQT_OFFSCREEN_NOT_SUPPORTED; }
-
-VLQT_API int vlqt_test_process_handle_count(void) { return VLQT_OFFSCREEN_NOT_SUPPORTED; }
-
-#endif // _WIN32
-
-VLQT_API int vlqt_test_offscreen_state(void* scene, unsigned long long* readFence, unsigned long long* writeFence,
-                                       long long* renders)
-{
-    return vlqt::offscreen::testState(scene, readFence, writeFence, renders);
 }
 
 } // extern "C"

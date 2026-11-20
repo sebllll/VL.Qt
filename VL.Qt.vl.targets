@@ -53,7 +53,8 @@
       <VLQtRuntimeIdentifier Condition="'$(VLQtRuntimeIdentifier)' == ''">$(_VLQtRid)</VLQtRuntimeIdentifier>
     </PropertyGroup>
     <ItemGroup>
-      <_VLQtFile Include="$(MSBuildThisFileDirectory)runtimes\$(_VLQtRuntimesSubdir)**\*.*" />
+      <!-- vlqt_testkit: the SmokeTest's stand-in D3D11 device, built next to vlqt.dll, not part of an app. -->
+      <_VLQtFile Include="$(MSBuildThisFileDirectory)runtimes\$(_VLQtRuntimesSubdir)**\*.*" Exclude="$(MSBuildThisFileDirectory)runtimes\**\vlqt_testkit.*" />
       <Content Include="@(_VLQtFile)">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <Link>runtimes\$(_VLQtRuntimesSubdir)%(RecursiveDir)%(Filename)%(Extension)</Link>

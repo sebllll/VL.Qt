@@ -720,6 +720,7 @@ bool requestFrame(const QQuickWindow* window)
     return true;
 }
 
+// test hook: vlqt_test_offscreen_state (test/test_probes.cpp).
 int testState(void* scene, unsigned long long* readFence, unsigned long long* writeFence, long long* renders)
 {
     State* s = stateOf(scene);

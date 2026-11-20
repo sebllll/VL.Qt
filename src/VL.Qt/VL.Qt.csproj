@@ -84,9 +84,10 @@
     <None Include="nuget\README.md;nuget\icon.png" Pack="true" PackagePath="" Visible="false" />
     <None Include="$(RepoRoot)LICENSE" Pack="true" PackagePath="" Visible="false" />
     <None Include="buildTransitive\VL.Qt.targets;buildTransitive\VL.Qt.Shaders.targets" Pack="true" PackagePath="buildTransitive\" />
-    <!-- runtimes/<rid>/native/** -> qt/<rid>/** (see above); one line per RID (same RIDs as build.yml) -->
-    <None Include="$(RepoRoot)runtimes\win-x64\native\**" Pack="true" PackagePath="qt\win-x64\" Visible="false" />
-    <None Include="$(RepoRoot)runtimes\win-arm64\native\**" Pack="true" PackagePath="qt\win-arm64\" Visible="false" />
+    <!-- runtimes/<rid>/native/** -> qt/<rid>/** (see above); one line per RID (same RIDs as build.yml). vlqt_testkit
+         (the stand-in D3D11 device of the SmokeTest, Windows) lies there too and is never packed. -->
+    <None Include="$(RepoRoot)runtimes\win-x64\native\**" Exclude="$(RepoRoot)runtimes\win-x64\native\vlqt_testkit.*" Pack="true" PackagePath="qt\win-x64\" Visible="false" />
+    <None Include="$(RepoRoot)runtimes\win-arm64\native\**" Exclude="$(RepoRoot)runtimes\win-arm64\native\vlqt_testkit.*" Pack="true" PackagePath="qt\win-arm64\" Visible="false" />
     <None Include="$(RepoRoot)runtimes\linux-x64\native\**" Pack="true" PackagePath="qt\linux-x64\" Visible="false" />
     <None Include="$(RepoRoot)runtimes\linux-arm64\native\**" Pack="true" PackagePath="qt\linux-arm64\" Visible="false" />
   </ItemGroup>

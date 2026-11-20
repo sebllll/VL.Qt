@@ -161,7 +161,7 @@ Laid down as stubs that build; later tasks fill them without changing the signat
 
 **Open risks:**
 - OpenGL (Linux): `NoMirroring` and the view's texture coordinates are verified on D3D11 only; check the orientation under WSL/Linux in task 5.
-- `vlqt_window_grab` (`grabWindow`) renders the scene once more: probably one extra accumulation step per grab (not measured). Snapshots of elements are unaffected.
+- `vlqt_test_window_grab` (`grabWindow`) renders the scene once more: probably one extra accumulation step per grab (not measured). Snapshots of elements are unaffected.
 - Input through the hidden root is expected to work (`hideSource` changes only drawing), not tested yet: task 5 should press and hover an element with Clear off.
 - 8-bit residue of fades; a float format for the source (`RGBA16F`) would fix it at twice the memory (option, not decided).
 - A user `z` below -1e9 would draw under the view (no element pin sets z today).

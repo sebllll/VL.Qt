@@ -17,7 +17,9 @@ cmake_path(NORMAL_PATH VLQT_OUT_DIR)
 find_package(Qt6 6.12 REQUIRED COMPONENTS Gui GuiPrivate Qml Quick QuickPrivate QuickControls2 Multimedia ShaderTools ShaderToolsPrivate QuickShapes QuickShapesPrivate)
 qt_standard_project_setup()
 
-add_library(vlqt SHARED vlqt.cpp vlqt.h device.cpp device.h perf.cpp perf.h commands.cpp commands.h effectchain.cpp effectchain.h elements.cpp elements.h events.cpp events.h touch.cpp touch.h debug.cpp debug.h feedback.cpp feedback.h resources.cpp resources.h image_resource.cpp image_resource.h qtimageitem.cpp qtimageitem.h snapshot_resource.cpp snapshot_resource.h image_writer.cpp image_writer.h audio_tap.cpp audio_tap.h shader_resource.cpp shader_resource.h shadereffectitem.cpp shadereffectitem.h qmlitem.cpp qmlitem.h vlstyle.cpp vlstyle.h offscreen.cpp offscreen.h render_thread.cpp render_thread.h test_offscreen.cpp pathelement.cpp pathelement.h protocol.h)
+add_library(vlqt SHARED vlqt.cpp vlqt.h device.cpp device.h perf.cpp perf.h commands.cpp commands.h effectchain.cpp effectchain.h elements.cpp elements.h events.cpp events.h touch.cpp touch.h debug.cpp debug.h feedback.cpp feedback.h resources.cpp resources.h image_resource.cpp image_resource.h qtimageitem.cpp qtimageitem.h snapshot_resource.cpp snapshot_resource.h image_writer.cpp image_writer.h audio_tap.cpp audio_tap.h shader_resource.cpp shader_resource.h shadereffectitem.cpp shadereffectitem.h qmlitem.cpp qmlitem.h vlstyle.cpp vlstyle.h offscreen.cpp offscreen.h render_thread.cpp render_thread.h pathelement.cpp pathelement.h protocol.h last_error.h)
+# Test exports of vlqt_test.h, in every build (F1): only the SmokeTest and the unit tests call them.
+target_sources(vlqt PRIVATE vlqt_test.h test/test_hooks.h test/test_input.cpp test/test_probes.cpp test/test_resource_kind.cpp)
 target_compile_definitions(vlqt PRIVATE VLQT_BUILD)
 # Base style "VLQt": Qt Quick Controls style module embedded in QtNative (qrc:/qt/qml/VLQt, on the engine's
 # default import path), nothing to deploy. Plain resources + hand-written qmldir: no qmlcachegen/plugin target; the
@@ -75,6 +77,8 @@ if(WIN32)
     # linear_pass.cpp: QtTexture into SRGB and float textures; d3dcompiler_47.dll ships with Windows 10 and up.
     target_sources(vlqt PRIVATE linear_pass.cpp linear_pass.h)
     target_link_libraries(vlqt PRIVATE d3dcompiler)
+    # D3D11On12 test device of vlqt_test_device_lost (NDEV-03); d3d12.dll is loaded at run time, not linked.
+    target_sources(vlqt PRIVATE test/test_device.cpp test/test_device.h)
 else()
     # offscreen_glx.cpp: X geometry of the offscreen platform's GLX drawable for window grabs (W1-21). Uses the X11
     # headers that Qt's OpenGL dependency brings (libgl-dev); libX11/libGL are looked up at run time, not linked.
@@ -98,6 +102,20 @@ if(NOT WIN32)
     target_link_options(vlqt PRIVATE
         "LINKER:--version-script=${CMAKE_CURRENT_SOURCE_DIR}/vlqt.map"
         "LINKER:--no-undefined")
+endif()
+
+# vlqt_testkit (testkit/testkit.h, F2): the stand-in "Stride" D3D11 device of the SmokeTest's QtTexture tests. A library
+# of its own, no Qt, next to vlqt.dll so the SmokeTest finds it; never packed (src/VL.Qt/VL.Qt.csproj excludes it).
+# Windows only.
+option(VLQT_BUILD_TESTKIT "Build vlqt_testkit, the stand-in D3D11 device of the SmokeTest (Windows only)" ON)
+if(WIN32 AND VLQT_BUILD_TESTKIT)
+    add_library(vlqt_testkit SHARED testkit/testkit.cpp testkit/testkit.h)
+    target_compile_definitions(vlqt_testkit PRIVATE VLQT_TESTKIT_BUILD)
+    target_link_libraries(vlqt_testkit PRIVATE d3d11 dxgi)
+    set_target_properties(vlqt_testkit PROPERTIES
+        AUTOMOC OFF AUTOUIC OFF AUTORCC OFF
+        RUNTIME_OUTPUT_DIRECTORY "${VLQT_OUT_DIR}"   # vlqt_testkit.dll
+        PDB_OUTPUT_DIRECTORY "${VLQT_OUT_DIR}")
 endif()
 
 # ShaderEffect: bundled shaders src/VL.Qt.Native/shaders/<name>.frag|.vert are baked at build time by qsb (Qt host

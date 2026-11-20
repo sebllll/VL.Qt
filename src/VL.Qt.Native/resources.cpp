@@ -8,6 +8,7 @@
 #include "snapshot_resource.h"
 #include "threadname.h"
 #include "vlqt.h"
+#include "vlqt_test.h" // test hook: VLQT_RES_KIND_TEST
 
 #include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
@@ -69,48 +70,6 @@ bool allowed(State from, State to, bool external, bool restart)
     default:               return false;
     }
 }
-
-// --- Test kind (VLQT_RES_KIND_TEST): decode sleeps, upload consumes budget in stripes ---
-
-struct TestWork final : Work
-{
-    int decodeMs = 0;
-    int64_t remaining = 0; // bytes still to upload
-    bool failDecode = false, failUpload = false;
-};
-
-class TestKind final : public Kind
-{
-public:
-    const char* name() const override { return "test"; }
-
-    std::string decode(Work& work) override
-    {
-        auto& w = static_cast<TestWork&>(work);
-        const auto end = std::chrono::steady_clock::now() + std::chrono::milliseconds(w.decodeMs);
-        while (std::chrono::steady_clock::now() < end) {
-            if (w.cancel.load())
-                return "cancelled";
-            std::this_thread::sleep_for(std::chrono::milliseconds(2));
-        }
-        return w.failDecode ? "test: decode failed (requested)" : std::string();
-    }
-
-    int64_t upload(Work& work, int64_t budget, bool& done, std::string& error) override
-    {
-        auto& w = static_cast<TestWork&>(work);
-        if (w.failUpload) {
-            error = "test: upload failed (requested)";
-            return 0;
-        }
-        const int64_t used = budget < 0 ? w.remaining : std::min(w.remaining, budget);
-        w.remaining -= used;
-        done = w.remaining == 0;
-        return used;
-    }
-
-    int64_t pendingBytes(const Work& work) const override { return static_cast<const TestWork&>(work).remaining; }
-};
 
 struct Slot
 {
@@ -652,8 +611,7 @@ public:
             qCInfo(lcRes, "device lost: %d resource(s) upload again", restarted);
     }
 
-    // --- Tests ---
-
+    // test hook: vlqt_test_res_transition (test/test_resource_kind.cpp).
     int testTransition(uint64_t id, int from, int to)
     {
         std::lock_guard lock(m_mutex);
@@ -674,9 +632,8 @@ public:
 private:
     Kind* kindOf(int kind)
     {
-        static TestKind s_test;
         switch (kind) {
-        case VLQT_RES_KIND_TEST:  return &s_test;
+        case VLQT_RES_KIND_TEST:  return testKind(); // test hook: test/test_resource_kind.cpp
         case VLQT_RES_KIND_IMAGE: return image::kind();
         case VLQT_RES_KIND_SNAPSHOT: return snap::kind();
         case VLQT_RES_KIND_SHADER: return shader::kind();
@@ -1099,29 +1056,6 @@ void endFrame()
         m->endFrame();
 }
 
-int testStart(uint64_t id, int decodeMs, long long uploadBytes, int flags)
-{
-    if (decodeMs < 0 || uploadBytes < 0) {
-        qCWarning(lcRes, "test start: negative argument (%d ms, %lld bytes)", decodeMs, uploadBytes);
-        return badValueRc;
-    }
-    auto work = std::make_shared<TestWork>();
-    work->decodeMs = decodeMs;
-    work->remaining = uploadBytes;
-    work->failDecode = (flags & 1) != 0;
-    work->failUpload = (flags & 2) != 0;
-    return manager().start(id, std::move(work), 0);
-}
-
 int testTransition(uint64_t id, int from, int to) { return manager().testTransition(id, from, to); }
-
-int testElementRef(uint64_t id, int delta)
-{
-    if (delta == 1)
-        return acquire(id);
-    if (delta == -1)
-        return releaseElement(id);
-    return badValueRc;
-}
 
 } // namespace vlqt::res

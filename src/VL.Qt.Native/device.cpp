@@ -1,8 +1,5 @@
 #include "device.h"
 
-#include "protocol.h"
-#include "render_thread.h"
-
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QGuiApplication>
@@ -10,7 +7,6 @@
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
 #include <QtQuick/private/qquickwindow_p.h>   // canMove: offscreen windows (renderControl)
-#include <QtQuick/private/qsgrenderloop_p.h> // test only: dropWindowRhisOnRetired
 #include <rhi/qrhi.h>
 
 #include <algorithm>
@@ -18,9 +14,9 @@
 #include <vector>
 
 #ifdef Q_OS_WIN
+#include "test/test_device.h"
+
 #include <d3d11_4.h>
-#include <d3d11on12.h>
-#include <d3d12.h>
 #include <dxgi1_4.h>
 #endif
 
@@ -37,17 +33,15 @@ ID3D11DeviceContext* s_ctx = nullptr;
 QRhi* s_upload = nullptr;
 bool s_tried = false;
 bool s_lostReported = false;
-// Test device (VLQT_TEST_D3D11ON12=1): the D3D12 device and queue under the 11on12 device, for testLost REMOVE.
-ID3D12Device* s_dev12 = nullptr;
-ID3D12CommandQueue* s_queue12 = nullptr;
+// test hook: the D3D12 device and queue under a D3D11On12 device (VLQT_TEST_D3D11ON12=1, test/test_device.h).
+test::On12 s_on12;
 // Old devices after a rebuild: released once no window's QRhi uses them any more (Qt drops the window QRhi at its
 // next render), so a window QRhi never points to a released device. Main thread.
 struct Retired
 {
     ID3D11Device* dev = nullptr;
     ID3D11DeviceContext* ctx = nullptr;
-    ID3D12Device* dev12 = nullptr;
-    ID3D12CommandQueue* queue12 = nullptr;
+    test::On12 on12; // test hook: empty for a plain D3D11 device
 };
 std::vector<Retired> s_retired;
 #endif
@@ -126,101 +120,16 @@ IDXGIAdapter1* chooseAdapter()
     return chosen;
 }
 
-bool testD3D11On12()
-{
-    wchar_t v[4] = {};
-    return GetEnvironmentVariableW(L"VLQT_TEST_D3D11ON12", v, 4) == 1 && v[0] == L'1';
-}
-
-// Test only: D3D12 device + direct queue on the adapter, D3D11 device on top (D3D11On12), so testLost can remove it
-// for real (ID3D12Device5::RemoveDevice). d3d12.dll is loaded dynamically: no link dependency in the shipped QtNative.
-HRESULT createD3D11On12(IDXGIAdapter1* adapter, UINT flags, D3D_FEATURE_LEVEL* level)
-{
-    // CLSID_D3D12DeviceFactory (d3d12.h), local copy: no dxguid/d3d12 import library.
-    static constexpr GUID clsidDeviceFactory = { 0x114863bf, 0xc386, 0x4aee,
-        { 0xb3, 0x9d, 0x8f, 0x0b, 0xbb, 0x06, 0x29, 0x55 } };
-    static const HMODULE d3d12 = LoadLibraryW(L"d3d12.dll");
-    if (!d3d12)
-        return E_NOTIMPL;
-    const auto create12 = reinterpret_cast<PFN_D3D12_CREATE_DEVICE>(GetProcAddress(d3d12, "D3D12CreateDevice"));
-    const auto getInterface = reinterpret_cast<PFN_D3D12_GET_INTERFACE>(GetProcAddress(d3d12, "D3D12GetInterface"));
-    const HMODULE d3d11 = GetModuleHandleW(L"d3d11.dll");
-    const auto create11on12 = d3d11
-        ? reinterpret_cast<PFN_D3D11ON12_CREATE_DEVICE>(GetProcAddress(d3d11, "D3D11On12CreateDevice"))
-        : nullptr;
-    if (!create11on12)
-        return E_NOTIMPL;
-    // D3D12 devices are singletons per adapter: after RemoveDevice, D3D12CreateDevice returns the removed one as long as
-    // a window QRhi still holds it. A device factory that stores no singleton creates a fresh device every time.
-    // Without the factory (before Windows 11 24H2, e.g. Windows Server 2022 on the CI runner) only the singleton.
-    HRESULT hr = E_NOTIMPL;
-    ID3D12DeviceFactory* factory = nullptr;
-    if (getInterface && SUCCEEDED(getInterface(clsidDeviceFactory, __uuidof(ID3D12DeviceFactory),
-            reinterpret_cast<void**>(&factory)))) {
-        factory->SetFlags(D3D12_DEVICE_FACTORY_FLAG_DISALLOW_STORING_NEW_DEVICE_AS_SINGLETON);
-        hr = factory->CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device),
-            reinterpret_cast<void**>(&s_dev12));
-        factory->Release();
-        if (FAILED(hr))
-            qCWarning(lcDevice, "VLQT_TEST_D3D11ON12: ID3D12DeviceFactory::CreateDevice failed (0x%08lx)", long(hr));
-    }
-    const char* path = SUCCEEDED(hr) ? "device factory" : "D3D12CreateDevice (singleton)";
-    if (FAILED(hr) && create12)
-        hr = create12(adapter, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), reinterpret_cast<void**>(&s_dev12));
-    if (SUCCEEDED(hr)) {
-        // A removed singleton comes back as a valid pointer: only its removed reason tells.
-        const HRESULT removed = s_dev12->GetDeviceRemovedReason();
-        if (FAILED(removed))
-            hr = removed;
-    }
-    if (SUCCEEDED(hr)) {
-        D3D12_COMMAND_QUEUE_DESC desc{};
-        desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-        hr = s_dev12->CreateCommandQueue(&desc, __uuidof(ID3D12CommandQueue), reinterpret_cast<void**>(&s_queue12));
-    }
-    if (SUCCEEDED(hr)) {
-        IUnknown* queues[] = { s_queue12 };
-        hr = create11on12(s_dev12, flags, nullptr, 0, queues, 1, 0, &s_dev, &s_ctx, level);
-    }
-    qCInfo(lcDevice, "VLQT_TEST_D3D11ON12: D3D12 device %p via %s: 0x%08lx", static_cast<void*>(s_dev12), path,
-        long(hr));
-    if (FAILED(hr)) {
-        if (s_queue12)
-            s_queue12->Release();
-        if (s_dev12)
-            s_dev12->Release();
-        s_queue12 = nullptr;
-        s_dev12 = nullptr;
-    }
-    return hr;
-}
-
 void releaseRetired();
 
-// Test only, D3D12 singleton (no device factory): the removed D3D12 device lives on as long as a window QRhi holds it,
-// so a new D3D11On12 device would sit on the removed one. Let each window on a retired device render now (past the
-// update gate): Qt notices the loss at Present and drops its QRhi, then the retired device is released. The windows
-// get no device until rebuild imports the new one; an empty one meanwhile is safer than the released pointer.
+// test hook: a D3D11On12 device on the D3D12 singleton found only the removed one (test::dropWindowRhisOn). Drops the
+// window QRhis on the retired devices, then releases those.
 void dropWindowRhisOnRetired()
 {
-    QSGRenderLoop* const loop = QSGRenderLoop::instance();
-    int dropped = 0;
-    for (QWindow* w : QGuiApplication::topLevelWindows()) {
-        auto* q = qobject_cast<QQuickWindow*>(w);
-        if (!q || !q->rhi())
-            continue;
-        void* const dev = nativeDevice(q->rhi());
-        for (const Retired& r : s_retired) {
-            if (r.dev != dev)
-                continue;
-            q->setGraphicsDevice(QQuickGraphicsDevice());
-            q->update(); // the basic loop presents (and so notices the loss) only with a pending update
-            loop->handleUpdateRequest(q);
-            if (!q->rhi())
-                dropped++;
-            break;
-        }
-    }
+    std::vector<void*> devices;
+    for (const Retired& r : s_retired)
+        devices.push_back(r.dev);
+    const int dropped = test::dropWindowRhisOn(devices);
     releaseRetired();
     qCInfo(lcDevice, "VLQT_TEST_D3D11ON12: %d window QRhi(s) dropped, %d retired device(s) left", dropped,
         int(s_retired.size()));
@@ -242,11 +151,11 @@ bool ensureDevice()
         flags |= D3D11_CREATE_DEVICE_DEBUG;
     D3D_FEATURE_LEVEL level{};
     HRESULT hr = E_FAIL;
-    if (testD3D11On12()) {
-        hr = createD3D11On12(adapter, flags, &level);
+    if (test::isOn12Requested()) { // test hook: the device of vlqt_test_device_lost REMOVE (test/test_device.h)
+        hr = test::createOn12(adapter, flags, &s_dev, &s_ctx, &level, s_on12);
         if (hr == DXGI_ERROR_DEVICE_REMOVED && !s_retired.empty()) {
             dropWindowRhisOnRetired();
-            hr = createD3D11On12(adapter, flags, &level);
+            hr = test::createOn12(adapter, flags, &s_dev, &s_ctx, &level, s_on12);
         }
         if (FAILED(hr))
             qCWarning(lcDevice, "VLQT_TEST_D3D11ON12: D3D11On12 device failed (0x%08lx), plain D3D11 device instead",
@@ -289,7 +198,7 @@ bool ensureDevice()
         qCWarning(lcDevice, "upload QRhi on the shared device could not be created");
     s_generation++;
     qCInfo(lcDevice, "shared D3D11 device %p%s on '%s' (feature level 0x%x), upload QRhi %p, generation %u",
-        static_cast<void*>(s_dev), s_dev12 ? " (D3D11On12, test)" : "", qPrintable(name), unsigned(level),
+        static_cast<void*>(s_dev), s_on12.dev12 ? " (D3D11On12, test)" : "", qPrintable(name), unsigned(level),
         static_cast<void*>(s_upload), s_generation);
     return true;
 }
@@ -302,9 +211,7 @@ void release(Retired& r)
         r.ctx->Release();
     }
     const ULONG dev = r.dev ? r.dev->Release() : 0;
-    if (r.queue12)
-        r.queue12->Release();
-    const ULONG dev12 = r.dev12 ? r.dev12->Release() : 0;
+    const ULONG dev12 = test::release(r.on12);
     if (dev || dev12)
         qCWarning(lcDevice, "old D3D11 device %p still has %lu reference(s) (D3D12 device %lu): leak",
             static_cast<void*>(r.dev), dev, dev12);
@@ -512,11 +419,10 @@ void rebuild()
     delete s_upload;
     s_upload = nullptr;
     if (s_dev)
-        s_retired.push_back({ s_dev, s_ctx, s_dev12, s_queue12 });
+        s_retired.push_back({ s_dev, s_ctx, s_on12 });
     s_dev = nullptr;
     s_ctx = nullptr;
-    s_dev12 = nullptr;
-    s_queue12 = nullptr;
+    s_on12 = {};
 
     // 3. New device (generation + 1; D3D11On12 again with VLQT_TEST_D3D11ON12).
     s_tried = false;
@@ -558,32 +464,12 @@ void addListener(Listener listener)
     s_listeners.push_back(listener);
 }
 
-int testLost(int mode)
+void* testDevice12()
 {
-    if (mode != VLQT_DEVICE_LOST_REMOVE && mode != VLQT_DEVICE_LOST_HANG)
-        return -7;
 #ifdef Q_OS_WIN
-    if (mode == VLQT_DEVICE_LOST_HANG) {
-        // Not implemented: a TDR resets the whole GPU (every application). Manual check: dxcap -forcetdr (admin).
-        qCWarning(lcDevice, "vlqt_test_device_lost(HANG) not implemented, use 'dxcap -forcetdr' for a real TDR");
-        return -2;
-    }
-    ID3D12Device5* dev5 = nullptr;
-    if (!s_dev12 || FAILED(s_dev12->QueryInterface(__uuidof(ID3D12Device5), reinterpret_cast<void**>(&dev5)))) {
-        qCWarning(lcDevice, "vlqt_test_device_lost(REMOVE) needs the shared device on D3D11On12 "
-            "(VLQT_TEST_D3D11ON12=1 before the first window or resource)");
-        return -2;
-    }
-    // The device goes between two frames, not under a render job a render_batch just posted: D3D11On12 then keeps an
-    // acquire of the scene's shared texture in its batch without a fence, and destroying the old device (releaseRetired)
-    // runs it as ID3D12CommandQueue::Wait(nullptr) - an access violation in D3D12Core (T6, 1 in ~10 threaded runs).
-    render_thread::drainAll();
-    qCInfo(lcDevice, "test: removing the shared device %p", static_cast<void*>(s_dev));
-    dev5->RemoveDevice();
-    dev5->Release();
-    return 0;
+    return s_on12.dev12;
 #else
-    return -2;
+    return nullptr;
 #endif
 }
 

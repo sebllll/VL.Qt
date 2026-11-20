@@ -15,7 +15,7 @@
  * QQuickWindow that was on the old device gets the new one (setGraphicsDevice) and an update; Qt then notices the
  * loss itself at that window's next Present, drops the window's QRhi and scenegraph ("Graphics device lost") and
  * creates a new QRhi on the imported new device. Same QQuickWindow, same HWND, items keep their state. Listeners
- * then re-upload (restored). Test trigger: testLost (vlqt_test_device_lost).
+ * then re-upload (restored). Test trigger: vlqt_test_device_lost (vlqt_test.h) on the test device (test/test_device.h).
  *
  * Adapter (QtTexture): the first device goes on the adapter Qt's D3D11 backend would pick. moveTo rebuilds it
  * on another adapter (that of Stride's device) the same way, but only while no on-screen window renders on it
@@ -95,8 +95,9 @@ bool canMove();
 // unknown adapter) or no shared device afterwards (creation failed, see the log).
 bool moveTo(unsigned long long luid);
 
-// vlqt_test_device_lost backend: mode = vlqt_device_lost (protocol.h). 0 / -2 / -7.
-int testLost(int mode);
+// test hook (vlqt_test_device_lost, test/test_probes.cpp): the ID3D12Device under the shared device when it was created
+// on D3D11On12 (VLQT_TEST_D3D11ON12=1, test/test_device.h), else null. Main thread.
+void* testDevice12();
 
 // Holds the immediate context of a D3D11 device for a stateful sequence of calls (ID3D11Multithread::Enter/Leave,
 // recursive per thread). The render threads of offscreen scenes (render_thread.h) share the shared device's
