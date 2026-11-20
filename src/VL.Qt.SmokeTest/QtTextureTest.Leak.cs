@@ -26,6 +26,27 @@ static partial class QtTextureTest
     // Live D3D objects of one type (and the device's own reference count) that may differ.
     const int liveTolerance = 0;
 
+    // Qt's Windows event dispatcher runs short timers on a multimedia timer (timeSetEvent). winmm creates its timer thread
+    // (a thread, an I/O completion port, a waitable timer, events: about 8 handles) once per process at the first such timer and
+    // keeps it. Qt starts one at a random point during the device losses, which pushed the count past the tolerance once per
+    // process (handle types per device loss: one step, then flat). Creating the thread here keeps it out of the baseline.
+    static void WarmUpMultimediaTimer()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+        var id = timeSetEvent(1, 1, s_timeProc, IntPtr.Zero, timePeriodic);
+        System.Threading.Thread.Sleep(20);
+        if (id != 0)
+            timeKillEvent(id);
+    }
+
+    const uint timePeriodic = 1;
+    delegate void TimeProc(uint id, uint msg, IntPtr user, IntPtr dw1, IntPtr dw2);
+    // Kept in a static field: winmm calls it from its timer thread.
+    static readonly TimeProc s_timeProc = (_, _, _, _, _) => { };
+    [DllImport("winmm")] static extern uint timeSetEvent(uint delay, uint resolution, TimeProc proc, IntPtr user, uint flags);
+    [DllImport("winmm")] static extern uint timeKillEvent(uint id);
+
     static int Sum(Dictionary<string, int> live)
     {
         int sum = 0;
@@ -141,6 +162,7 @@ static partial class QtTextureTest
         }
 
         // Warm-up: lazily created state (D3D runtime, driver, Qt's pipelines per format) stays out of the baseline.
+        WarmUpMultimediaTimer();
         for (int i = 0; i < 6; i++)
             Round(i, device, context);
         int handles0 = Handles();
@@ -298,10 +320,13 @@ static partial class QtTextureTest
             check(failure == null, $"leak: ({failure})");
 
         // 4. Final numbers.
-        int handles3 = Handles(handles1);
+        // Against the higher of baseline and end of the rounds: a few handles of idle state close during the rounds and come back with the
+        // first foreign device (e.g. 714 -> 711 -> 717), so the end of the rounds alone is a low point. The foreign devices and device losses
+        // add 23 devices, a leak per device would grow beyond the tolerance.
+        int handlesRef = Math.Max(handles0, handles1);
+        int handles3 = Handles(handlesRef);
         s.Info($"leak: handle count {handles0} (baseline) -> {handles1} (rounds) -> {handles2} (foreign devices) -> {handles3} (device losses)");
-        // Against the end of the rounds: the foreign devices and device losses add a handful of devices, a leak per device would grow beyond the tolerance.
-        check(handles3 - handles1 <= handleTolerance, $"leak: process handle count did not grow at the end ({handles1} -> {handles3}, tolerance {handleTolerance})");
+        check(handles3 - handlesRef <= handleTolerance, $"leak: process handle count did not grow at the end ({handlesRef} -> {handles3}, tolerance {handleTolerance})");
         s.Info($"leak: device references: test device {deviceRefs0} -> {Native.vlqt_test_com_ref_count(device)}, QtNative {qtRefs0} -> {qtRefs1} (rounds) -> {qtRefs2} (foreign devices)");
 
         check(Native.vlqt_test_d3d11_release_device(device, context) == 0, "leak: test device freed");
