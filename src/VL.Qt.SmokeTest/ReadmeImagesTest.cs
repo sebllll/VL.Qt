@@ -7,21 +7,23 @@ using NUnit.Framework;
 using VL.Qt;
 using static Pixels;
 
-// README pictures of the Effect chain (#489, plan effects/08 Task 8a), not a test of behaviour: renders reproducible grabs
-// of effect chains (raw SET_EFFECT_CHAIN) and copies them to docs/images/. Dark ground, the text "VL.Qt", one cell of
+// Effect chain pictures (#489, plan effects/08 Task 8a): renders reproducible grabs of effect chains (raw SET_EFFECT_CHAIN)
+// and compares them with src/VL.Qt.SmokeTest/references/ (ImageCompare, on WARP in a helper process; TEST-03); the
+// explicit test `update-refs` writes the references. docs/images is not touched. Dark ground, the text "VL.Qt", one cell of
 // 410 x 230 DIP per picture (scaled by s, the label at the bottom), same values in the collage and in the single pictures.
 //   effect-chain.png            Blur -> RGBSplit -> DropShadow (left) against the reverse order (right); RGBSplit baked from
 //                               help/Qt/qtshaders/RGBSplit.frag, padding from its "@padding" line
 //   effect-glow / -directional-blur / -zoom-blur / -radial-blur / -innershadow / -displace .png
 //                               one effect each, as links with the builtin shaders (values as in EffectPassesTest/MotionBlurTest)
 //   effects-collage.png         all of them as a 4 x 2 grid, 1640 px wide
-// Checks only that the picture is not empty. Grabs: <outDir>/readme-images_*.png. On Windows the pictures are scaled to
-// their target width (the grab is in device pixels), elsewhere copied as they are.
+// Grabs: <outDir>/readme-images_*.png (a failed compare also writes readme-images_<name>_diff.png). The pictures are scaled
+// to their target width before the compare (the grab is in device pixels). Text uses the bundled DejaVu Sans.
 [TestFixture, NonParallelizable]
 public static class ReadmeImagesTest
 {
-    [Test, Explicit("runs only when selected (writes docs/images)"), Category("readme-images")]
-    public static void ReadmeImages() => Scenario.Run(Run);
+    /// <summary>Effect chain pictures against the references (WARP, own process).</summary>
+    [Test, Category("readme-images"), Category("image-compare"), Category("own-process")]
+    public static void ReadmeImages() => Scenario.RunLocal(s => ImageCompare.Run(s, new[] { "readme-images" }));
 
     const float CellW = 410, CellH = 230;
     const float TextW = 300, TextH = 120, FontSize = 90;
@@ -37,60 +39,11 @@ public static class ReadmeImagesTest
         "    fragColor = vec4(0.5 + 0.5 * sin(uv.y * 12.566), 0.5 + 0.5 * sin(uv.x * 12.566), 0.5, 1.0) * qt_Opacity;\n" +
         "}\n";
 
-    internal static string? FindUp(params string[] rel)
-    {
-        for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
-        {
-            var p = Path.Combine(d.FullName, Path.Combine(rel));
-            if (File.Exists(p) || Directory.Exists(p))
-                return p;
-        }
-        return null;
-    }
-
-    // Copies a grab to its target; on Windows scaled to the target width (the grab is in device pixels).
-    internal static string Save(string grabPath, string target, int width)
-    {
-#if WINDOWS
-        using (var a = new Bitmap(grabPath))
-        {
-            var height = (int)MathF.Round(a.Height * width / (float)a.Width);
-            using var scaled = new Bitmap(width, height);
-            using (var g = Graphics.FromImage(scaled))
-            {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                g.DrawImage(a, 0, 0, width, height);
-            }
-            scaled.Save(target, System.Drawing.Imaging.ImageFormat.Png);
-        }
-#else
-        File.Copy(grabPath, target, true);
-#endif
-        return target;
-    }
-
-    // Share of the sampled pixels that differ from the ground: > 0 = something is drawn.
-    internal static double Ink(Bitmap a)
-    {
-        int n = 0, ink = 0;
-        for (var y = 0; y < a.Height; y += 6)
-            for (var x = 0; x < a.Width; x += 6, n++)
-            {
-                var c = a.GetPixel(x, y);
-                if (Math.Abs(c.R - 0x16) + Math.Abs(c.G - 0x16) + Math.Abs(c.B - 0x16) > 60)
-                    ink++;
-            }
-        return ink / (double)Math.Max(n, 1);
-    }
-
-    static void Run(Scenario s)
+    internal static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "the effects are ShaderEffects");
         Directory.CreateDirectory(s.OutDir);
-        var imagesDir = FindUp("docs", "images");
-        s.Check(imagesDir != null, $"readme-images: docs/images found ({imagesDir})");
-        if (imagesDir == null) return;
+        var family = ImageCompare.LoadFont(s);
 
         ulong Builtin(string name)
         {
@@ -115,7 +68,7 @@ public static class ReadmeImagesTest
         var radial = Builtin("radial_blur");
         var displace = Builtin("displace");
         var waveMap = Baked(WaveMap, "wave map");
-        var splitFile = FindUp("help", "Qt", "qtshaders", "RGBSplit.frag");
+        var splitFile = ImageCompare.FindUp("help", "Qt", "qtshaders", "RGBSplit.frag");
         s.Check(splitFile != null, $"readme-images: RGBSplit.frag found ({splitFile})");
         if (splitFile == null) return;
         var splitCode = File.ReadAllText(splitFile);
@@ -168,6 +121,7 @@ public static class ReadmeImagesTest
             cmd.Create(labelId, Protocol.Type.Text);
             cmd.SetPlace(labelId, ox + 22 * s, oy + (CellH - 42) * s, (CellW - 44) * s, 26 * s);
             cmd.SetString(labelId, Protocol.Prop.Text, label);
+            cmd.SetString(labelId, Protocol.Prop.FontFamily, family);
             cmd.SetF32(labelId, Protocol.Prop.FontSize, 15 * s);
             cmd.SetColor(labelId, Protocol.Prop.Color, 0.52f, 0.57f, 0.66f, 1);
             cmd.SetI32(labelId, Protocol.Prop.HorizontalAlignment, 1);
@@ -177,6 +131,7 @@ public static class ReadmeImagesTest
             cmd.Create(text, Protocol.Type.Text);
             cmd.SetPlace(text, ox + (CellW - TextW) / 2 * s, oy + 28 * s, TextW * s, TextH * s);
             cmd.SetString(text, Protocol.Prop.Text, "VL.Qt");
+            cmd.SetString(text, Protocol.Prop.FontFamily, family);
             cmd.SetF32(text, Protocol.Prop.FontSize, FontSize * s);
             cmd.SetI32(text, Protocol.Prop.FontWeight, 700);
             cmd.SetI32(text, Protocol.Prop.HorizontalAlignment, 4);
@@ -295,11 +250,10 @@ public static class ReadmeImagesTest
             var grabPath = Path.Combine(s.OutDir, $"readme-images_{name}.png");
             using (var a = s.Grab(w, grabPath))
             {
-                var ink = Ink(a);
+                var ink = ImageCompare.Ink(a);
                 s.Check(ink > 0.02, $"readme-images {name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
             }
-            var target = Save(grabPath, Path.Combine(imagesDir!, name + ".png"), width);
-            s.Info($"readme-images: {target} ({new FileInfo(target).Length / 1024} KB)");
+            ImageCompare.Check(s, "readme-images_" + name, grabPath, width);
             Native.vlqt_window_destroy(w);
         }
 

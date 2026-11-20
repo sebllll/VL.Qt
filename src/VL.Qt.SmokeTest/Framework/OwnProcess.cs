@@ -16,6 +16,9 @@ static class OwnProcess
         ["qttexture"] = QtTextureTest.Run,
         ["QtTextureInput"] = QtTextureTest.RunInput,
         ["qttextureperf"] = QtTexturePerfTest.Run,
+        ["readme-images"] = ReadmeImagesTest.Run,
+        ["readme-gallery"] = ReadmeGalleryTest.Run,
+        ["reference-scenes"] = ReferenceScenesTest.Run,
 #if WINDOWS
         ["device-lost"] = DeviceLostTest.Run,
 #endif
