@@ -5,8 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using NUnit.Framework;
 using VL.Qt;
 using Color = System.Drawing.Color;
+using static Pixels;
 
 // Effect layer in QtNative (plan effects/01 Task 2, since #489 by SET_EFFECT_CHAIN): a chain of one MULTI run on the
 // element's own item (layer.effect = one MultiEffect), raw commands. Blur + shadow + color adjust on a Text and a
@@ -14,11 +16,13 @@ using Color = System.Drawing.Color;
 // without effect); REPARENT indices ignore the effect sibling; two MULTI runs (the second run greys the first run's
 // shadow, its effect area includes the first's padding; reversed = like one run); SET EFFECT_* -6; DESTROY with the
 // effect on. Grabs: <outDir>/effect_layer*.png.
-static class EffectLayerTest
+[TestFixture, NonParallelizable]
+public static class EffectLayerTest
 {
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
+    [Test, Category("effect-layer")]
+    public static void EffectLayer() => Scenario.Run(Run);
+
     static bool Near(Color c, int r, int g, int b, int tol = 12) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
-    static bool IsBg(Color c) => Near(c, 0x20, 0x20, 0x20, 8);
 
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
     static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
@@ -72,24 +76,24 @@ static class EffectLayerTest
 
     const uint Row = 1, A = 2, B = 3, T = 4, H = 10, SinkH = 31;
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
-        var gpu = Program.NeedsRhi(check, "MultiEffect is a ShaderEffect");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "MultiEffect is a ShaderEffect");
         var w = Native.vlqt_window_create(800, 600, "VL.Qt effect layer test");
-        check(w != IntPtr.Zero, "effect-layer: window_create");
+        s.Check(w != IntPtr.Zero, "effect-layer: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var poll = new byte[1 << 16];
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"effect-layer: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"effect-layer: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
         bool? Hover(float x, float y)
         {
             Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, x, y);
-            pump(1);
+            s.Pump(1);
             var n = Native.Poll(w, poll);
             return HoverFlag(poll.AsSpan(0, Math.Max(n, 0)), SinkH);
         }
@@ -142,30 +146,30 @@ static class EffectLayerTest
         cmd.SetColor(T, Protocol.Prop.Color, 1, 1, 1, 1);
         cmd.Reparent(T, 0, 1);
         CheckApply("scene");
-        pump(5);
+        s.Pump(5);
         var before = Counts(w);
-        check(before.layers == 0 && before.effects == 0 && before.items > 0, $"effect-layer: no effect -> no layer, no MultiEffect ({before})");
-        using var plain = grab(w, Path.Combine(outDir, "effect_layer_off.png"));
+        s.Check(before.layers == 0 && before.effects == 0 && before.items > 0, $"effect-layer: no effect -> no layer, no MultiEffect ({before})");
+        using var plain = s.Grab(w, "effect_layer_off.png");
         var plainText = TextStats(plain);
         var bColor = Px(plain, 300, 125); // B in the Row (Row spacing default)
-        check(Near(Px(plain, 150, 125), 0, 0, 255) && !IsBg(bColor) && IsBg(Px(plain, 150, 215)) && plainText.white > 50,
+        s.Check(Near(Px(plain, 150, 125), 0, 0, 255) && !IsBg(bColor) && IsBg(Px(plain, 150, 215)) && plainText.white > 50,
             $"effect-layer: plain scene ({Px(plain, 150, 125)}, {bColor}, {Px(plain, 150, 215)}, {plainText})");
 
         // On: chain of one run on A and on T.
         EffectA(true);
         EffectT(true);
         CheckApply("effects on");
-        pump(5);
+        s.Pump(5);
         var on = Counts(w);
-        check(on.layers == 2 && on.effects == 2, $"effect-layer: two elements -> exactly one MultiEffect each ({on})");
-        using (var a = grab(w, Path.Combine(outDir, "effect_layer.png")))
+        s.Check(on.layers == 2 && on.effects == 2, $"effect-layer: two elements -> exactly one MultiEffect each ({on})");
+        using (var a = s.Grab(w, "effect_layer.png"))
         {
             var ac = Px(a, 150, 125);
             gpu(Math.Abs(ac.R - ac.B) < 30 && Math.Abs(ac.G - ac.B) < 30 && ac.B < 120, // pure blue -> dark grey (luminance)
                 $"effect-layer: saturation -1 -> A grey ({ac})");
             gpu(Near(Px(a, 150, 215), 255, 0, 0, 40) && IsBg(Px(a, 40, 125)),
                 $"effect-layer: red shadow below A ({Px(a, 150, 215)}, {Px(a, 40, 125)})");
-            check(Px(a, 300, 125) == bColor || Near(Px(a, 300, 125), bColor.R, bColor.G, bColor.B, 4),
+            s.Check(Px(a, 300, 125) == bColor || Near(Px(a, 300, 125), bColor.R, bColor.G, bColor.B, 4),
                 $"effect-layer: Row layout unchanged, B in place ({Px(a, 300, 125)} vs {bColor})");
             var st = TextStats(a);
             gpu(st.green > 50 && st.soft > plainText.soft + 50,
@@ -173,27 +177,27 @@ static class EffectLayerTest
         }
 
         // Hit-test: inside A hovered, the shadow area below A is not.
-        check(Hover(150, 125) == true, "effect-layer: hover inside A with effect");
-        check(Hover(150, 215) == false, "effect-layer: shadow area is not A (hover leaves)");
+        s.Check(Hover(150, 125) == true, "effect-layer: hover inside A with effect");
+        s.Check(Hover(150, 215) == false, "effect-layer: shadow area is not A (hover leaves)");
 
         // REPARENT indices count elements only (the effect sibling of A does not): B to index 0 = first in the Row.
         cmd.Reparent(B, Row, 0);
         CheckApply("reparent B to index 0");
-        pump(5);
-        using (var a = grab(w, Path.Combine(outDir, "effect_layer_reorder.png")))
-            check(Near(Px(a, 100, 125), bColor.R, bColor.G, bColor.B, 8), $"effect-layer: B first in the Row ({Px(a, 100, 125)})");
+        s.Pump(5);
+        using (var a = s.Grab(w, "effect_layer_reorder.png"))
+            s.Check(Near(Px(a, 100, 125), bColor.R, bColor.G, bColor.B, 8), $"effect-layer: B first in the Row ({Px(a, 100, 125)})");
         cmd.Reparent(B, Row, 1);
         CheckApply("reparent B back to index 1");
-        pump(5);
+        s.Pump(5);
 
         // Off: MultiEffects gone, item count as before, image as without effect.
         EffectA(false);
         EffectT(false);
         CheckApply("effects off");
-        pump(5);
+        s.Pump(5);
         var off = Counts(w);
-        check(off.layers == 0 && off.effects == 0 && off.items == before.items, $"effect-layer: off -> no MultiEffect left ({off} vs {before})");
-        using (var a = grab(w, Path.Combine(outDir, "effect_layer_off_again.png")))
+        s.Check(off.layers == 0 && off.effects == 0 && off.items == before.items, $"effect-layer: off -> no MultiEffect left ({off} vs {before})");
+        using (var a = s.Grab(w, "effect_layer_off_again.png"))
         {
             int diff = 0;
             for (int y = 0; y < 600; y += 4)
@@ -202,7 +206,7 @@ static class EffectLayerTest
                     Color p = Px(plain, x, y), q = Px(a, x, y);
                     if (!Near(p, q.R, q.G, q.B, 6)) diff++;
                 }
-            check(diff == 0, $"effect-layer: off -> same image as without effect ({diff} differing samples)");
+            s.Check(diff == 0, $"effect-layer: off -> same image as without effect ({diff} differing samples)");
         }
 
         // 20 on/off cycles: no MultiEffect or item left over.
@@ -211,19 +215,19 @@ static class EffectLayerTest
             EffectA(true);
             EffectT(true);
             CheckApply("cycle on");
-            pump(1);
+            s.Pump(1);
             EffectA(false);
             EffectT(false);
             CheckApply("cycle off");
-            pump(1);
+            s.Pump(1);
         }
-        pump(3);
+        s.Pump(3);
         var cycled = Counts(w);
-        check(cycled.layers == 0 && cycled.effects == 0 && cycled.items == before.items, $"effect-layer: 20 on/off cycles leak nothing ({cycled})");
+        s.Check(cycled.layers == 0 && cycled.effects == 0 && cycled.items == before.items, $"effect-layer: 20 on/off cycles leak nothing ({cycled})");
         EffectA(true);
         CheckApply("on again");
-        pump(5);
-        using (var a = grab(w, Path.Combine(outDir, "effect_layer_again.png")))
+        s.Pump(5);
+        using (var a = s.Grab(w, "effect_layer_again.png"))
             gpu(Near(Px(a, 150, 215), 255, 0, 0, 40), $"effect-layer: on again after the cycles ({Px(a, 150, 215)})");
 
         // Two MULTI runs (#489): run 1 = the hard red shadow, run 2 = saturation -1. One run keeps the shadow red (above:
@@ -242,12 +246,12 @@ static class EffectLayerTest
         static void GreyRun(CommandWriter c) => c.EffectF32(Protocol.Prop.EffectSaturation, -1);
         cmd.Chain(A, ShadowRun, GreyRun);
         CheckApply("two runs");
-        pump(5);
+        s.Pump(5);
         Native.Poll(w, poll); // the old one-run stage is retired and deleted after the next frame, at poll/apply (#123)
-        pump(2);
+        s.Pump(2);
         var two = Counts(w);
-        check(two.layers == 1 && two.effects == 2, $"effect-layer: two runs on A -> one layer, two MultiEffects ({two})");
-        using (var a = grab(w, Path.Combine(outDir, "effect_layer_two_runs.png")))
+        s.Check(two.layers == 1 && two.effects == 2, $"effect-layer: two runs on A -> one layer, two MultiEffects ({two})");
+        using (var a = s.Grab(w, "effect_layer_two_runs.png"))
         {
             Color sc = Px(a, 150, 215), ac = Px(a, 150, 125);
             gpu(!IsBg(sc) && Math.Abs(sc.R - sc.G) < 30 && Math.Abs(sc.R - sc.B) < 30,
@@ -257,41 +261,41 @@ static class EffectLayerTest
         // Reversed: saturation first, the shadow of the grey A stays red (as with one run).
         cmd.Chain(A, GreyRun, ShadowRun);
         CheckApply("two runs reversed");
-        pump(5);
-        using (var a = grab(w, Path.Combine(outDir, "effect_layer_two_runs_reversed.png")))
+        s.Pump(5);
+        using (var a = s.Grab(w, "effect_layer_two_runs_reversed.png"))
             gpu(Near(Px(a, 150, 215), 255, 0, 0, 40), $"effect-layer: reversed runs -> red shadow ({Px(a, 150, 215)})");
         // Same structure, other values: no new item (written in place).
         var itemsBefore = Counts(w).items;
         cmd.Chain(A, GreyRun, BlueShadowRun);
         CheckApply("two runs, other shadow color");
-        pump(5);
+        s.Pump(5);
         var itemsAfter = Counts(w).items;
-        check(itemsAfter == itemsBefore, $"effect-layer: same structure -> no new item ({itemsAfter} vs {itemsBefore})");
-        using (var a = grab(w, Path.Combine(outDir, "effect_layer_two_runs_blue.png")))
+        s.Check(itemsAfter == itemsBefore, $"effect-layer: same structure -> no new item ({itemsAfter} vs {itemsBefore})");
+        using (var a = s.Grab(w, "effect_layer_two_runs_blue.png"))
             gpu(Near(Px(a, 150, 215), 0, 0, 255, 40), $"effect-layer: value changed in place -> blue shadow ({Px(a, 150, 215)})");
         EffectA(true);
         CheckApply("back to one run");
-        pump(3);
+        s.Pump(3);
 
         // Errors: SET with an EFFECT_* property -> -6 (only via SET_EFFECT_CHAIN); a chain on a handler -> -6.
         cmd.SetBool(A, Protocol.Prop.EffectShadowEnabled, true);
         var rc1 = Native.Apply(w, cmd.EndFrame());
         cmd.Reset();
-        check(rc1 == -6, $"effect-layer: SET EFFECT_SHADOW_ENABLED -> -6 ({rc1})");
+        s.Check(rc1 == -6, $"effect-layer: SET EFFECT_SHADOW_ENABLED -> -6 ({rc1})");
         cmd.Chain(H, RunA);
         var rc2 = Native.Apply(w, cmd.EndFrame());
         cmd.Reset();
-        check(rc2 == -6, $"effect-layer: effect chain on a handler -> -6 ({rc2})");
+        s.Check(rc2 == -6, $"effect-layer: effect chain on a handler -> -6 ({rc2})");
 
         // DESTROY with the effect on: its MultiEffect goes too.
         cmd.Destroy(A);
         CheckApply("destroy A with effect");
-        pump(3);
+        s.Pump(3);
         var gone = Counts(w);
-        check(gone.layers == 0 && gone.effects == 0, $"effect-layer: destroyed element takes its MultiEffect ({gone})");
+        s.Check(gone.layers == 0 && gone.effects == 0, $"effect-layer: destroyed element takes its MultiEffect ({gone})");
         EffectT(true);
         CheckApply("T on before window destroy");
-        pump(2);
+        s.Pump(2);
         Native.vlqt_window_destroy(w);
     }
 }

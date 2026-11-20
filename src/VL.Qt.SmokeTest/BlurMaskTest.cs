@@ -7,15 +7,21 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using NUnit.Framework;
 using VL.Qt;
+using static Pixels;
 
 // #487: example shader help/Qt/shaders/blur_mask.frag (separable Gaussian blur, radius per pixel from a grayscale mask),
 // two chained ShaderEffects (pass 1 horizontal, pass 2 vertical). (1) Correctness: stripes + mask (left black, right white)
 // -> left sharp, right soft. (2) Performance at 1920x1080 and 3840x2160 pixels, radius 0 / 8 / 32 / 64, CPU (sync + render)
 // and GPU time per frame (QRhi timestamps of QtNative, 0 = not available), against the same scene without blur.
 // Raw commands (DIP). Grab: <outDir>/blur-mask_result.png, table: build/smoke/blur-mask-perf.md (parent of the grabs folder).
-static class BlurMaskTest
+[TestFixture, NonParallelizable]
+public static class BlurMaskTest
 {
+    [Test, Category("blur-mask")]
+    public static void BlurMask() => Scenario.Run(Run);
+
     const uint Img = 1, Pass1 = 2, Pass2 = 3, Dot = 4;
     // CI (VLQT_PERF_WARN_ONLY, shared runners often without GPU = WARP): the numbers carry no meaning there, so only a
     // short run at 1920x1080 checks that the chain renders; the full measurement (both sizes, 60 frames) runs locally.
@@ -92,25 +98,25 @@ static class BlurMaskTest
 
     sealed record Row(string Size, string Mode, string Case, double Wall, double Cpu, double Gpu, double GpuMax);
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
-        var gpuCheck = Program.NeedsRhi(check, "ShaderEffect needs a QRhi scenegraph");
+        Action<bool, string> gpuCheck = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         var shaderFile = FindFile("help", "Qt", "shaders", "blur_mask.frag");
-        check(shaderFile != null, $"487: blur_mask.frag found ({shaderFile})");
+        s.Check(shaderFile != null, $"blur_mask.frag found ({shaderFile})");
         if (shaderFile == null) return;
-        Directory.CreateDirectory(outDir);
+        Directory.CreateDirectory(s.OutDir);
 
         // Test images: stripes 40 px wide (black / white), mask split at x = 420 of 800, ramp mask for the measurements,
         // content for the measurements (RGB, gradient + checkers, so the blur has something to do).
-        var stripes = Path.Combine(outDir, "blur-mask_stripes.png");
-        var maskSplit = Path.Combine(outDir, "blur-mask_mask_split.png");
-        var maskRamp = Path.Combine(outDir, "blur-mask_mask_ramp.png");
+        var stripes = Path.Combine(s.OutDir, "blur-mask_stripes.png");
+        var maskSplit = Path.Combine(s.OutDir, "blur-mask_mask_split.png");
+        var maskRamp = Path.Combine(s.OutDir, "blur-mask_mask_ramp.png");
         WritePng(stripes, 800, 600, 1, (x, y) => ((byte)((x / 40) % 2 == 0 ? 0 : 255), (byte)0, (byte)0));
         WritePng(maskSplit, 800, 8, 1, (x, y) => ((byte)(x < 420 ? 0 : 255), (byte)0, (byte)0));
         WritePng(maskRamp, 1024, 8, 1, (x, y) => ((byte)(x * 255 / 1023), (byte)0, (byte)0));
         string Content(int w, int h)
         {
-            var p = Path.Combine(outDir, $"blur-mask_content_{w}x{h}.png");
+            var p = Path.Combine(s.OutDir, $"blur-mask_content_{w}x{h}.png");
             if (!File.Exists(p))
                 WritePng(p, w, h, 3, (x, y) => ((byte)(x * 255 / w), (byte)(y * 255 / h), (byte)(((x / 32 + y / 32) & 1) * 200)));
             return p;
@@ -120,14 +126,14 @@ static class BlurMaskTest
         {
             Native.vlqt_res_create(Protocol.ResKind.Image, out var id);
             Native.vlqt_res_load_image(id, path, 0);
-            check(Native.vlqt_res_wait(id, 20000) == Protocol.ResState.Ready, $"487: image {Path.GetFileName(path)} Ready");
+            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResState.Ready, $"image {Path.GetFileName(path)} Ready");
             return id;
         }
         var code = File.ReadAllText(shaderFile);
         Native.vlqt_res_create(Protocol.ResKind.Shader, out var shader);
         var rcShader = Native.vlqt_res_load_shader_source(shader, code, Protocol.ShaderStage.Fragment);
         var sShader = rcShader == 0 ? Native.vlqt_res_wait(shader, 20000) : Protocol.ResState.Failed;
-        check(sShader == Protocol.ResState.Ready, $"487: blur_mask.frag bakes -> Ready ({sShader}, rc {rcShader})");
+        s.Check(sShader == Protocol.ResState.Ready, $"blur_mask.frag bakes -> Ready ({sShader}, rc {rcShader})");
         if (sShader != Protocol.ResState.Ready) return;
 
         var imgStripes = LoadImage(stripes);
@@ -140,7 +146,7 @@ static class BlurMaskTest
         void Apply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            if (rc != 0) check(false, $"487: {what} ({rc}) {Native.LastError()}");
+            if (rc != 0) s.Check(false, $"{what} ({rc}) {Native.LastError()}");
         }
         // Destroying the top element destroys its children (Pass2 -> Pass1 -> Img).
         void Teardown()
@@ -186,7 +192,7 @@ static class BlurMaskTest
             cmd.Reparent(Dot, 0, 2000);
             Apply("build");
             built = blur ? 1 : 2;
-            pump(6);
+            s.Pump(6);
         }
         void SetRadius(float radius)
         {
@@ -200,16 +206,16 @@ static class BlurMaskTest
 
         // ---------------- (1) correctness ----------------
         w = Native.vlqt_window_create(800, 600, "VL.Qt blur mask test");
-        check(w != IntPtr.Zero, "487: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
-        pump(4);
+        s.Pump(4);
         float dpr;
-        using (var probe = grab(w, Path.Combine(outDir, "blur-mask_probe.png")))
+        using (var probe = s.Grab(w, "blur-mask_probe.png"))
             dpr = Math.Max(1f, probe.Width / 800f);
-        Console.WriteLine($"INFO blur-mask: device pixel ratio {dpr:F2}");
+        s.Info($"blur-mask: device pixel ratio {dpr:F2}");
         const float testRadius = 40;
         Build(800, 600, dpr, imgStripes, imgMaskSplit, testRadius, true);
-        using (var a = grab(w, Path.Combine(outDir, "blur-mask_result.png")))
+        using (var a = s.Grab(w, "blur-mask_result.png"))
         {
             Color P(int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
             // left (mask black): edge at x = 200 stays sharp; right (mask white): edge at x = 600 is blurred
@@ -220,31 +226,31 @@ static class BlurMaskTest
             double sum = 0; int n = 0;
             for (int x = 560; x < 720; x++, n++) sum += P(x, 300).R;
             var mean = (int)Math.Round(sum / n);
-            gpuCheck(l1 < 30 && l2 > 225, $"487: left (mask black) the stripe edge stays sharp ({l1} | {l2})");
+            gpuCheck(l1 < 30 && l2 > 225, $"left (mask black) the stripe edge stays sharp ({l1} | {l2})");
             gpuCheck(r1 > 40 && r1 < 200 && r2 > 40 && r2 < 215 && Math.Abs(r1 - r2) < 120,
-                $"487: right (mask white) the stripe edge is soft ({r1} | {r2})");
-            gpuCheck(mean is > 110 and < 145, $"487: the blur is normalized, mean over two stripe periods ~50 % ({mean})");
+                $"right (mask white) the stripe edge is soft ({r1} | {r2})");
+            gpuCheck(mean is > 110 and < 145, $"the blur is normalized, mean over two stripe periods ~50 % ({mean})");
             int grey = 0;
             for (int x = 440; x < 760; x += 4) if (P(x, 300).R is > 20 and < 235) grey++;
-            Console.WriteLine($"INFO blur-mask: result grab {a.Width}x{a.Height}, {grey} soft pixels of 80 sampled on the right");
+            s.Info($"blur-mask: result grab {a.Width}x{a.Height}, {grey} soft pixels of 80 sampled on the right");
         }
         // radius 0 returns the original pixels
         cmd.Reset();
         SetRadius(0);
         Apply("radius 0");
-        pump(4);
-        using (var a = grab(w, Path.Combine(outDir, "blur-mask_radius0.png")))
+        s.Pump(4);
+        using (var a = s.Grab(w, "blur-mask_radius0.png"))
         {
             Color P(int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
-            gpuCheck(P(597, 300).R < 30 && P(603, 300).R > 225, $"487: radius 0 -> original pixels ({P(597, 300).R} | {P(603, 300).R})");
+            gpuCheck(P(597, 300).R < 30 && P(603, 300).R > 225, $"radius 0 -> original pixels ({P(597, 300).R} | {P(603, 300).R})");
         }
         cmd.Reset();
         Teardown();
         Apply("destroy");
         built = 0;
-        pump(3);
+        s.Pump(3);
         Native.vlqt_window_destroy(w);
-        pump(2);
+        s.Pump(2);
 
         // ---------------- (2) performance ----------------
         var rows = new List<Row>();
@@ -256,10 +262,10 @@ static class BlurMaskTest
             var content = LoadImage(Content(pw, ph));
             w = Native.vlqt_window_create((int)MathF.Round(ew), (int)MathF.Round(eh), "VL.Qt blur mask perf " + name);
             Native.vlqt_window_show(w);
-            pump(4);
-            using (var probe = grab(w, Path.Combine(outDir, "blur-mask_probe.png")))
+            s.Pump(4);
+            using (var probe = s.Grab(w, "blur-mask_probe.png"))
             {
-                    Console.WriteLine($"INFO blur-mask: {name}: window grab {probe.Width}x{probe.Height} (wanted {pw}x{ph})");
+                    s.Info($"blur-mask: {name}: window grab {probe.Width}x{probe.Height} (wanted {pw}x{ph})");
                 if (probe.Width != pw || probe.Height != ph) notes.Add($"{name}: the window was limited by the screen to {probe.Width}x{probe.Height} px; the element and its two layers keep the full size, only the visible part of pass 2 is smaller than in a real {name} output, so its GPU times are a lower bound.");
             }
 
@@ -274,12 +280,12 @@ static class BlurMaskTest
                     if (blur && dirty) SetRadius(radius + (i % 2) * 0.01f);
                     Apply("frame");
                     var sw = Stopwatch.StartNew();
-                    pump(1);
+                    s.Pump(1);
                     var ms = sw.Elapsed.TotalMilliseconds;
                     if (i < Warmup) continue;
-                    if (Native.vlqt_window_get_perf_sample(w, out var s) == 0 && s.swaps > 0)
+                    if (Native.vlqt_window_get_perf_sample(w, out var sample) == 0 && sample.swaps > 0)
                     {
-                        wall.Add(ms); cpu.Add(s.sync + s.render); gpu.Add(s.gpu);
+                        wall.Add(ms); cpu.Add(sample.sync + sample.render); gpu.Add(sample.gpu);
                     }
                 }
                 var g = Median(gpu);
@@ -295,10 +301,10 @@ static class BlurMaskTest
             Teardown();
             Apply("destroy");
             built = 0;
-            pump(3);
+            s.Pump(3);
             Native.vlqt_window_destroy(w);
             Native.vlqt_res_release(content);
-            pump(2);
+            s.Pump(2);
         }
 
         // ---------------- report ----------------
@@ -315,18 +321,18 @@ static class BlurMaskTest
         md.AppendLine("|---|---|---|---|---|---|---|");
         foreach (var r in rows)
             md.AppendLine($"| {r.Size} | {r.Mode} | {r.Case} | {F(r.Wall)} | {F(r.Cpu)} | {(gpuAvailable ? F(r.Gpu) : "n/a")} | {(gpuAvailable ? F(r.GpuMax) : "n/a")} |");
-        foreach (var n in notes) { md.AppendLine(); md.AppendLine("Note: " + n); Console.WriteLine("INFO blur-mask: " + n); }
-        var mdDir = Path.GetFileName(outDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)) == "grabs" ? Path.GetDirectoryName(outDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))! : outDir; // build/smoke next to the log
+        foreach (var n in notes) { md.AppendLine(); md.AppendLine("Note: " + n); s.Info("blur-mask: " + n); }
+        var mdDir = Path.GetFileName(s.OutDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)) == "grabs" ? Path.GetDirectoryName(s.OutDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))! : s.OutDir; // build/smoke next to the log
         File.WriteAllText(Path.Combine(mdDir, "blur-mask-perf.md"), md.ToString());
         foreach (var r in rows)
         {
             var verdict = r.Cpu <= 16.7 && (!gpuAvailable || r.Gpu <= 16.7) ? "60 fps OK" : "below 60 fps";
-            Console.WriteLine($"INFO blur-mask: {r.Size} {r.Mode,-6} {r.Case,-7} wall {F(r.Wall)} ms, CPU {F(r.Cpu)} ms, GPU {(gpuAvailable ? F(r.Gpu) + " ms (max " + F(r.GpuMax) + ")" : "n/a")} -> {verdict}");
+            s.Info($"blur-mask: {r.Size} {r.Mode,-6} {r.Case,-7} wall {F(r.Wall)} ms, CPU {F(r.Cpu)} ms, GPU {(gpuAvailable ? F(r.Gpu) + " ms (max " + F(r.GpuMax) + ")" : "n/a")} -> {verdict}");
         }
-        if (!gpuAvailable) Console.WriteLine("INFO blur-mask: GPU time not measurable here (gpu_ms = 0), only CPU times");
-        check(rows.Count == (Quick ? 9 : 18) && rows.All(r => r.Wall > 0), $"487: all {rows.Count} measurements delivered frames");
+        if (!gpuAvailable) s.Info("blur-mask: GPU time not measurable here (gpu_ms = 0), only CPU times");
+        s.Check(rows.Count == (Quick ? 9 : 18) && rows.All(r => r.Wall > 0), $"all {rows.Count} measurements delivered frames");
         Native.vlqt_res_release(shader);
         foreach (var id in new[] { imgStripes, imgMaskSplit, imgMaskRamp }) Native.vlqt_res_release(id);
-        pump(2);
+        s.Pump(2);
     }
 }

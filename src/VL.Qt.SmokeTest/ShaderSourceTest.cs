@@ -5,20 +5,24 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using NUnit.Framework;
 using VL.Qt;
 using VL.Qt.Nodes;
+using static Pixels;
 
 // ShaderEffect Phase 2 (#483): GLSL text baked at runtime in the worker (vlqt_res_load_shader_source).
 // A text shader (wave.frag) draws, the default template of the node bakes and draws, a syntax error ends Failed with a line
 // number while the last good version keeps drawing, going back to an earlier text comes from the bake cache.
 // Raw commands (DIP). Grabs go to <outDir>/shader-source_*.png.
-static class ShaderSourceTest
+[TestFixture, NonParallelizable]
+public static class ShaderSourceTest
 {
+    [Test, Category("shader-source")]
+    public static void ShaderSource() => Scenario.Run(Run);
+
     const uint Solid = 10, Wave = 20, WaveIn = 21, Template = 30, Fresh = 40;
 
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
     static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
-    static bool IsBg(Color c) => Near(c, 0x20, 0x20, 0x20, 8);
 
     static string? FindFile(params string[] rel)
     {
@@ -59,12 +63,12 @@ static class ShaderSourceTest
         "    fragColor = vec4(" + rgb + ", 1.0) * qt_Opacity;\n" +
         "}\n";
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
-        var gpu = Program.NeedsRhi(check, "ShaderEffect source needs a QRhi scenegraph");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect source needs a QRhi scenegraph");
         var stripes = FindFile("src", "VL.Qt.SmokeTest", "assets", "stripes_rgb_30x10.png");
         var waveFile = FindFile("src", "VL.Qt.Native", "shaders", "wave.frag");
-        check(stripes != null && waveFile != null, $"483: test files found ({stripes}, {waveFile})");
+        s.Check(stripes != null && waveFile != null, $"test files found ({stripes}, {waveFile})");
         if (stripes == null || waveFile == null) return;
         var waveText = File.ReadAllText(waveFile);
 
@@ -102,35 +106,35 @@ static class ShaderSourceTest
 
         Native.vlqt_res_create(Protocol.ResKind.Image, out var image);
         Native.vlqt_res_load_image(image, stripes, 0);
-        check(Native.vlqt_res_wait(image, 10000) == Protocol.ResState.Ready, "483: stripes image Ready");
+        s.Check(Native.vlqt_res_wait(image, 10000) == Protocol.ResState.Ready, "stripes image Ready");
 
         var green = Source(SolidSource("0.0, 1.0, 0.0"), out var sGreen, out var callGreen, out var bakeGreen);
         var waveShader = Source(waveText, out var sWave, out _, out _);
         var template = Source(ShaderTemplates.Fragment, out var sTemplate, out _, out _);
-        check(sGreen == Protocol.ResState.Ready && sWave == Protocol.ResState.Ready && sTemplate == Protocol.ResState.Ready,
-            $"483: GLSL texts (solid, wave.frag, default template) bake -> Ready ({sGreen}, {sWave}, {sTemplate}; {ResError(green)}{ResError(waveShader)}{ResError(template)})");
-        check(ResError(template).Length == 0 && ResError(waveShader).Length == 0, "483: no bake error for the default template and wave.frag");
+        s.Check(sGreen == Protocol.ResState.Ready && sWave == Protocol.ResState.Ready && sTemplate == Protocol.ResState.Ready,
+            $"GLSL texts (solid, wave.frag, default template) bake -> Ready ({sGreen}, {sWave}, {sTemplate}; {ResError(green)}{ResError(waveShader)}{ResError(template)})");
+        s.Check(ResError(template).Length == 0 && ResError(waveShader).Length == 0, "no bake error for the default template and wave.frag");
 
         // #77: a uniform named like a GLSL builtin is renamed in the OpenGL code, where it is never set: Ready plus a warning
         // (on every backend: another one checks an extra GLSL translation), none for ordinary names.
         var builtinName = Source(SolidSource("length, 0.0, 0.0").Replace("float qt_Opacity;\n", "float qt_Opacity;\n    float length;\n"),
             out var sBuiltinName, out _, out _);
         var builtinWarning = ResWarning(builtinName);
-        check(sBuiltinName == Protocol.ResState.Ready && builtinWarning.Contains("'length'"),
-            $"77: uniform 'length' -> Ready with a rename warning ({sBuiltinName}, '{builtinWarning}' {ResError(builtinName)})");
-        check(ResWarning(template).Length == 0 && ResWarning(waveShader).Length == 0 && ResWarning(green).Length == 0,
-            $"77: no rename warning for ordinary names ({ResWarning(template)}{ResWarning(waveShader)}{ResWarning(green)})");
-        check(callGreen < 250, $"483: the load call returns at once, the bake runs in the worker (call {callGreen:F1} ms of {bakeGreen:F1} ms)");
+        s.Check(sBuiltinName == Protocol.ResState.Ready && builtinWarning.Contains("'length'"),
+            $"uniform 'length' -> Ready with a rename warning ({sBuiltinName}, '{builtinWarning}' {ResError(builtinName)})");
+        s.Check(ResWarning(template).Length == 0 && ResWarning(waveShader).Length == 0 && ResWarning(green).Length == 0,
+            $"no rename warning for ordinary names ({ResWarning(template)}{ResWarning(waveShader)}{ResWarning(green)})");
+        s.Check(callGreen < 250, $"the load call returns at once, the bake runs in the worker (call {callGreen:F1} ms of {bakeGreen:F1} ms)");
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt shader source test");
-        check(w != IntPtr.Zero, "483: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         int Apply() => Native.Apply(w, cmd.EndFrame());
         void CheckApply(string what)
         {
             var rc = Apply();
-            check(rc == 0, $"483: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
         void Effect(uint id, float x, float y, float ew, float eh, ulong frag)
         {
@@ -160,14 +164,14 @@ static class ShaderSourceTest
         // Default template of the node (no uniforms, no input) at (50, 300) 300 x 200
         Effect(Template, 50, 300, 300, 200, template);
         CheckApply("shader source scene");
-        pump(8);
+        s.Pump(8);
 
         // --- (a)/(b) drawing ---
-        using var first = grab(w, Path.Combine(outDir, "shader-source_text.png"));
+        using var first = s.Grab(w, "shader-source_text.png");
         gpu(Near(Px(first, 200, 150), 0, 255, 0) && IsBg(Px(first, 40, 150)) && IsBg(Px(first, 360, 150)),
-            $"483: solid GLSL text draws green inside the item ({Px(first, 200, 150)})");
+            $"solid GLSL text draws green inside the item ({Px(first, 200, 150)})");
         gpu(Near(Px(first, 450, 150), 255, 0, 0) && Near(Px(first, 550, 150), 0, 255, 0) && Near(Px(first, 650, 150), 0, 0, 255),
-            $"483: wave.frag as text draws the stripes ({Px(first, 450, 150)}, {Px(first, 550, 150)}, {Px(first, 650, 150)})");
+            $"wave.frag as text draws the stripes ({Px(first, 450, 150)}, {Px(first, 550, 150)}, {Px(first, 650, 150)})");
         int visible = 0, total = 0;
         for (int y = 320; y < 480; y += 20)
             for (int x = 70; x < 340; x += 20)
@@ -176,59 +180,59 @@ static class ShaderSourceTest
                 if (!IsBg(Px(first, x, y))) visible++;
             }
         gpu(visible > total / 2 && IsBg(Px(first, 40, 400)) && IsBg(Px(first, 360, 400)),
-            $"483: default template draws visibly and stays inside the item ({visible} of {total} samples differ from the background)");
+            $"default template draws visibly and stays inside the item ({visible} of {total} samples differ from the background)");
 
         // --- (c)/(d) syntax error: Failed with a line number, last good version keeps drawing ---
         var broken = Source(SolidSource("foo, 1.0, 0.0"), out var sBroken, out _, out _);
         var error = ResError(broken);
-        check(sBroken == Protocol.ResState.Failed && error.Length > 0, $"483: syntax error -> Failed with a message ('{error}')");
-        check(Regex.IsMatch(error, @"line\s+\d+") && error.Contains("foo"), $"483: the message names the line and the identifier ('{error}')");
+        s.Check(sBroken == Protocol.ResState.Failed && error.Length > 0, $"syntax error -> Failed with a message ('{error}')");
+        s.Check(Regex.IsMatch(error, @"line\s+\d+") && error.Contains("foo"), $"the message names the line and the identifier ('{error}')");
         cmd.Reset();
         cmd.SetU64(Solid, Protocol.Prop.FragmentShader, broken);
         CheckApply("good -> broken text");
-        pump(6);
-        using (var a = grab(w, Path.Combine(outDir, "shader-source_error_keeps_last_good.png")))
+        s.Pump(6);
+        using (var a = s.Grab(w, "shader-source_error_keeps_last_good.png"))
         {
             gpu(Near(Px(a, 200, 150), 0, 255, 0) && IsBg(Px(a, 40, 150)),
-                $"483: after the failed bake the last good version keeps drawing ({Px(a, 200, 150)})");
-            gpu(Diff(first, a, 50, 50, 350, 250) == 0, "483: pixels of the element unchanged by the failed bake (no black, no transparent)");
+                $"after the failed bake the last good version keeps drawing ({Px(a, 200, 150)})");
+            gpu(Diff(first, a, 50, 50, 350, 250) == 0, "pixels of the element unchanged by the failed bake (no black, no transparent)");
         }
 
         // --- a fix: red text replaces green, then back to the green text (bake cache) ---
         var red = Source(SolidSource("1.0, 0.0, 0.0"), out var sRed, out _, out var bakeRed);
-        check(sRed == Protocol.ResState.Ready, $"483: corrected text bakes -> Ready ({sRed}; {ResError(red)})");
+        s.Check(sRed == Protocol.ResState.Ready, $"corrected text bakes -> Ready ({sRed}; {ResError(red)})");
         cmd.Reset();
         cmd.SetU64(Solid, Protocol.Prop.FragmentShader, red);
         CheckApply("broken -> red text");
-        pump(6);
-        using (var a = grab(w, Path.Combine(outDir, "shader-source_fixed_red.png")))
-            gpu(Near(Px(a, 200, 150), 255, 0, 0), $"483: a corrected text replaces the last good version ({Px(a, 200, 150)})");
+        s.Pump(6);
+        using (var a = s.Grab(w, "shader-source_fixed_red.png"))
+            gpu(Near(Px(a, 200, 150), 255, 0, 0), $"a corrected text replaces the last good version ({Px(a, 200, 150)})");
 
         var greenAgain = Source(SolidSource("0.0, 1.0, 0.0"), out var sAgain, out _, out var cached);
-        check(sAgain == Protocol.ResState.Ready, $"483: the earlier text is Ready again ({sAgain})");
-        check(cached < bakeGreen * 0.6 || cached < 30, $"483: back to an earlier text comes from the cache (first bake {bakeGreen:F1} ms, again {cached:F1} ms, red {bakeRed:F1} ms)");
+        s.Check(sAgain == Protocol.ResState.Ready, $"the earlier text is Ready again ({sAgain})");
+        s.Check(cached < bakeGreen * 0.6 || cached < 30, $"back to an earlier text comes from the cache (first bake {bakeGreen:F1} ms, again {cached:F1} ms, red {bakeRed:F1} ms)");
         cmd.Reset();
         cmd.SetU64(Solid, Protocol.Prop.FragmentShader, greenAgain);
         CheckApply("red -> earlier green text");
-        pump(6);
-        using (var a = grab(w, Path.Combine(outDir, "shader-source_back_to_green.png")))
-            gpu(Near(Px(a, 200, 150), 0, 255, 0), $"483: the earlier text draws again ({Px(a, 200, 150)})");
+        s.Pump(6);
+        using (var a = s.Grab(w, "shader-source_back_to_green.png"))
+            gpu(Near(Px(a, 200, 150), 0, 255, 0), $"the earlier text draws again ({Px(a, 200, 150)})");
 
         // --- a failed text without an earlier Ready version draws nothing ---
         cmd.Reset();
         Effect(Fresh, 400, 300, 200, 150, broken);
         CheckApply("element with a failed text only");
-        pump(6);
-        using (var a = grab(w, Path.Combine(outDir, "shader-source_failed_first.png")))
-            gpu(IsBg(Px(a, 500, 375)), $"483: a failed text without an earlier Ready version draws nothing ({Px(a, 500, 375)})");
+        s.Pump(6);
+        using (var a = s.Grab(w, "shader-source_failed_first.png"))
+            gpu(IsBg(Px(a, 500, 375)), $"a failed text without an earlier Ready version draws nothing ({Px(a, 500, 375)})");
 
         cmd.Reset();
         foreach (var id in new[] { Solid, Wave, Template, Fresh }) cmd.Destroy(id);
         CheckApply("destroy all effects");
-        pump(3);
+        s.Pump(3);
         Native.vlqt_window_destroy(w);
         foreach (var id in new[] { image, green, waveShader, template, broken, red, greenAgain }) Native.vlqt_res_release(id);
-        pump(2);
-        check(true, "483: window destroyed, resources released");
+        s.Pump(2);
+        s.Check(true, "window destroyed, resources released");
     }
 }

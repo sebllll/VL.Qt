@@ -7,8 +7,10 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using NUnit.Framework;
 using VL.Qt;
 using Color = System.Drawing.Color;
+using static Pixels;
 
 // SHADER links of the Effect chain (#489, plan effects/08 Task 3): QtNative's pass driver with the templates SINGLE and
 // TWO_PASS, raw SET_EFFECT_CHAIN. (a) MULTI(blur) -> SINGLE(builtin:wave) -> MULTI(hard red shadow) against the reversed
@@ -23,15 +25,18 @@ using Color = System.Drawing.Color;
 // cut), radius sweep over two step boundaries (no jump, the far point grows, no new item), size change of the element
 // (steps follow), MULTI -> PYRAMID -> SINGLE, a name neither shader declares is an EV_ERROR line, live changes without leak.
 // Grabs: <outDir>/effect-passes_*.png.
-static class EffectPassesTest
+[TestFixture, NonParallelizable]
+public static class EffectPassesTest
 {
+    [Test, Category("effect-passes")]
+    public static void EffectPasses() => Scenario.Run(Run);
+
     const uint R = 1, T = 2, S = 3, Map = 4, Bad = 5, SinkR = 41;
     const float RX = 250, RY = 60, RW = 300, RH = 150;
     const float SX = 350, SY = 470, SW = 100, SH = 60;
     const float L = 400; // directional blur length (DIP)
 
     static Color Px(Bitmap a, float x, float y) => a.GetPixel((int)(x * a.Width / 800), (int)(y * a.Height / 600));
-    static bool IsBg(Color c) => Math.Abs(c.R - 0x20) < 8 && Math.Abs(c.G - 0x20) < 8 && Math.Abs(c.B - 0x20) < 8;
     static double Lit(Color c) => ((c.R + c.G + c.B) / 3.0 - 0x20) / (255.0 - 0x20); // 0 = background, 1 = white
 
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
@@ -100,14 +105,14 @@ static class EffectPassesTest
         return sum / n;
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
-        var gpu = Program.NeedsRhi(check, "the passes are ShaderEffects");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "the passes are ShaderEffects");
         ulong Shader(string name)
         {
             Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
             Native.vlqt_res_load_shader(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
-            check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"effect-passes: shader builtin:{name} Ready");
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"effect-passes: shader builtin:{name} Ready");
             return id;
         }
         var wave = Shader("wave");
@@ -115,28 +120,28 @@ static class EffectPassesTest
         var displace = Shader("displace");
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt effect passes test");
-        check(w != IntPtr.Zero, "effect-passes: window_create");
+        s.Check(w != IntPtr.Zero, "effect-passes: window_create");
         Native.vlqt_window_show(w);
-        pump(4);
+        s.Pump(4);
         float dpr;
-        using (var probe = grab(w, Path.Combine(outDir, "effect-passes_probe.png")))
+        using (var probe = s.Grab(w, "effect-passes_probe.png"))
             dpr = Math.Max(1f, probe.Width / 800f);
-        Console.WriteLine($"INFO effect-passes: device pixel ratio {dpr:F2} (another dpr needs another run, QT_SCALE_FACTOR)");
+        s.Info($"effect-passes: device pixel ratio {dpr:F2} (another dpr needs another run, QT_SCALE_FACTOR)");
         var cmd = new CommandWriter();
         var poll = new byte[1 << 16];
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"effect-passes: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"effect-passes: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
         string? PollError()
         {
-            pump(2);
+            s.Pump(2);
             var n = Native.Poll(w, poll);
             return ErrorText(poll.AsSpan(0, Math.Max(n, 0)), SinkR);
         }
-        Bitmap Shot(string name) { pump(5); return grab(w, Path.Combine(outDir, $"effect-passes_{name}.png")); }
+        Bitmap Shot(string name) { s.Pump(5); return s.Grab(w, $"effect-passes_{name}.png"); }
 
         // Links
         static void Blur(CommandWriter c)
@@ -208,11 +213,11 @@ static class EffectPassesTest
         cmd.SetColor(Bad, Protocol.Prop.Color, 0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         cmd.Reparent(Bad, 0, 3);
         CheckApply("scene");
-        pump(5);
+        s.Pump(5);
         var itemsPlain = Items(w);
         using var plain = Shot("plain");
         var plainEdge = RightEdge(plain);
-        check(itemsPlain > 0 && Math.Abs(plainEdge.max - plainEdge.min) <= 1 && Math.Abs(plainEdge.max - (RX + RW)) <= 2,
+        s.Check(itemsPlain > 0 && Math.Abs(plainEdge.max - plainEdge.min) <= 1 && Math.Abs(plainEdge.max - (RX + RW)) <= 2,
             $"effect-passes: plain scene (items {itemsPlain}, R right edge {plainEdge})");
 
         // (a) SINGLE wave alone: the right edge waves; then the mixed chain in both orders.
@@ -242,23 +247,23 @@ static class EffectPassesTest
         gpu(diff > 300, $"effect-passes: reversed order is a different picture ({diff} pixels differ)");
 
         // (e) values only (same structure): no new item.
-        pump(3);
+        s.Pump(3);
         var itemsChain = Items(w);
         Chain(R, Shadow, c => Wave(c, 0.02f), Blur);
         CheckApply("values only");
-        pump(5);
-        check(Items(w) == itemsChain, $"effect-passes: values only -> no new item ({Items(w)} vs {itemsChain})");
+        s.Pump(5);
+        s.Check(Items(w) == itemsChain, $"effect-passes: values only -> no new item ({Items(w)} vs {itemsChain})");
 
         // (d) reserved names and a REF with a parent: EV_ERROR lines with the link index, the apply succeeds.
         Chain(R, Blur, c => Wave(c, 0.05f, "texelSize"));
         CheckApply("reserved name");
         var err = PollError();
-        check(err != null && err.Contains("link 1: uniform 'texelSize' is reserved"), $"effect-passes: reserved name -> EV_ERROR ({err})");
+        s.Check(err != null && err.Contains("link 1: uniform 'texelSize' is reserved"), $"effect-passes: reserved name -> EV_ERROR ({err})");
         // passIndex is set by QtNative (TWO_PASS: 0, then 1), so C# may not send it.
         Chain(R, Blur, c => Wave(c, 0.05f, "passIndex"));
         CheckApply("reserved passIndex");
         err = PollError();
-        check(err != null && err.Contains("link 1: uniform 'passIndex' is reserved"), $"effect-passes: passIndex reserved -> EV_ERROR ({err})");
+        s.Check(err != null && err.Contains("link 1: uniform 'passIndex' is reserved"), $"effect-passes: passIndex reserved -> EV_ERROR ({err})");
         Chain(R, c =>
         {
             c.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
@@ -268,7 +273,7 @@ static class EffectPassesTest
         });
         CheckApply("REF with a parent");
         err = PollError();
-        check(err != null && err.StartsWith("link 0: uniform 'map': the texture element has a parent"),
+        s.Check(err != null && err.StartsWith("link 0: uniform 'map': the texture element has a parent"),
             $"effect-passes: REF with a parent -> EV_ERROR ({err})");
 
         // (c) REF texture: Map (red 1 = shift) parked and sampled; R shifts left, Map itself is not drawn.
@@ -281,14 +286,14 @@ static class EffectPassesTest
         });
         CheckApply("REF texture");
         err = PollError();
-        check(string.IsNullOrEmpty(err), $"effect-passes: REF texture without error ({err})");
+        s.Check(string.IsNullOrEmpty(err), $"effect-passes: REF texture without error ({err})");
         using (var d = Shot("displace"))
         {
             var e = RightEdge(d);
             // displacement 30 DIP at full red: 30 DIP at any dpr (texelSize per pixel, the shader scales by dpr).
             gpu(Math.Abs(e.max - (RX + RW - 30)) <= 2 && Math.Abs(e.min - (RX + RW - 30)) <= 2,
                 $"effect-passes: REF map shifts R 30 DIP to the left at dpr {dpr:F2} ({e}, expected {RX + RW - 30})");
-            check(IsBg(Px(d, 50, 50)), $"effect-passes: the parked map is not drawn ({Px(d, 50, 50)})");
+            s.Check(IsBg(Px(d, 50, 50)), $"effect-passes: the parked map is not drawn ({Px(d, 50, 50)})");
         }
         Chain(R);
         CheckApply("R chain off");
@@ -327,28 +332,28 @@ static class EffectPassesTest
         CheckApply("T, S off");
         Chain(R, Blur, c => Wave(c), Shadow);
         CheckApply("mixed again");
-        pump(3);
+        s.Pump(3);
         Chain(R, c => Directional(c, Protocol.EffectTemplate.TwoPass, pad));
         CheckApply("TWO_PASS on R");
-        pump(3);
+        s.Pump(3);
         Chain(R, c =>
         {
             c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [wave, wave], 0, 0, 0, 0, 10);
             c.EndLink();
         }, c => Wave(c));
         CheckApply("PYRAMID (pass-through) + wave");
-        pump(3);
+        s.Pump(3);
         Chain(R);
         CheckApply("all chains off");
-        pump(6);
+        s.Pump(6);
         var itemsAfter = Items(w);
         // + 2: Map is parked under the root since its use as texture (hidden until a REPARENT or its DESTROY), with the
         // ShaderEffectSource of its layer as sibling (Qt's QQuickItemLayer).
-        check(itemsAfter == itemsPlain + 2, $"effect-passes: no leak after live changes (items {itemsAfter} vs {itemsPlain} + parked map + its layer)");
+        s.Check(itemsAfter == itemsPlain + 2, $"effect-passes: no leak after live changes (items {itemsAfter} vs {itemsPlain} + parked map + its layer)");
         using (var off = Shot("off"))
         {
             var e = RightEdge(off);
-            check(Math.Abs(e.max - (RX + RW)) <= 2 && e.max - e.min <= 1, $"effect-passes: R plain again ({e})");
+            s.Check(Math.Abs(e.max - (RX + RW)) <= 2 && e.max - e.min <= 1, $"effect-passes: R plain again ({e})");
         }
 
         cmd.Destroy(R);
@@ -357,15 +362,15 @@ static class EffectPassesTest
         cmd.Destroy(Map);
         cmd.Destroy(Bad);
         CheckApply("destroy");
-        pump(3);
+        s.Pump(3);
         Native.vlqt_window_destroy(w);
         Native.vlqt_res_release(blur);
         Native.vlqt_res_release(displace);
-        pump(2);
+        s.Pump(2);
 
-        Pyramid(outDir, check, pump, grab, gpu, wave);
+        Pyramid(s, gpu, wave);
         Native.vlqt_res_release(wave);
-        pump(2);
+        s.Pump(2);
     }
 
     // (f) PYRAMID links. G: orange box 160 x 100 at (320, 250) like GlowTest, the glow is measured right of it (y 300).
@@ -389,14 +394,13 @@ static class EffectPassesTest
     }
     static float RadiusOf(float level, float dpr) => 2 / dpr * MathF.Sqrt((MathF.Pow(4, level) - 1) * 7 / 6);
 
-    static void Pyramid(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab,
-        Action<bool, string> gpu, ulong wave)
+    static void Pyramid(Scenario s, Action<bool, string> gpu, ulong wave)
     {
         ulong Shader(string name)
         {
             Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
             Native.vlqt_res_load_shader(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
-            check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"effect-passes: shader builtin:{name} Ready");
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"effect-passes: shader builtin:{name} Ready");
             return id;
         }
         var glowPre = Shader("glow_prefilter");
@@ -405,27 +409,27 @@ static class EffectPassesTest
         var isComp = Shader("innershadow_composite");
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt effect passes test (pyramid)");
-        check(w != IntPtr.Zero, "effect-passes pyramid: window_create");
+        s.Check(w != IntPtr.Zero, "effect-passes pyramid: window_create");
         Native.vlqt_window_show(w);
-        pump(4);
+        s.Pump(4);
         float dpr;
-        using (var probe = grab(w, Path.Combine(outDir, "effect-passes_pyramid_probe.png")))
+        using (var probe = s.Grab(w, "effect-passes_pyramid_probe.png"))
             dpr = Math.Max(1f, probe.Width / 800f);
         var cmd = new CommandWriter();
         var poll = new byte[1 << 16];
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"effect-passes pyramid: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"effect-passes pyramid: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
         string? PollError()
         {
-            pump(2);
+            s.Pump(2);
             var n = Native.Poll(w, poll);
             return ErrorText(poll.AsSpan(0, Math.Max(n, 0)), SinkG);
         }
-        Bitmap Shot(string name) { pump(6); return grab(w, Path.Combine(outDir, $"effect-passes_{name}.png")); }
+        Bitmap Shot(string name) { s.Pump(6); return s.Grab(w, $"effect-passes_{name}.png"); }
 
         // Glow link (cyan, like GlowTest); padding ceil(1.5 r) unless given.
         Action<CommandWriter> GlowLink(float radius, float? pad = null, float intensity = 1.5f, string? extra = null) => c =>
@@ -466,7 +470,7 @@ static class EffectPassesTest
         cmd.Reparent(G, 0, 0);
         cmd.Bind(G, SinkG, 0);
         CheckApply("scene");
-        pump(4);
+        s.Pump(4);
         var itemsPlain = Items(w);
 
         const float y0 = 300, edge = GX + GW;
@@ -482,7 +486,7 @@ static class EffectPassesTest
             CheckApply($"glow r{radius}");
             using var a = Shot($"glow_r{radius}");
             var v = Far(a);
-            Console.WriteLine($"INFO effect-passes glow r{radius} (dpr {dpr:F2}): {Profile(a)}, box {Px(a, 400, y0)}");
+            s.Info($"effect-passes glow r{radius} (dpr {dpr:F2}): {Profile(a)}, box {Px(a, 400, y0)}");
             gpu(Near(Px(a, 400, y0), 255, 153, 0), $"effect-passes: glow r{radius} behind the box: box unchanged ({Px(a, 400, y0)})");
             if (radius == 4)
                 gpu(v[0] > 6 && v[1] < 3 && v[3] < 1, $"effect-passes: glow r4 at the edge only ({Profile(a)})");
@@ -499,13 +503,13 @@ static class EffectPassesTest
             }
         }
         var err = PollError();
-        check(string.IsNullOrEmpty(err), $"effect-passes: glow links without EV_ERROR ({err})");
+        s.Check(string.IsNullOrEmpty(err), $"effect-passes: glow links without EV_ERROR ({err})");
 
         // Radius sweep over two step boundaries (step 4.5 .. 6.5 in 0.1), padding fixed: weights only, no new item, no jump.
         var padMax = MathF.Ceiling(1.5f * RadiusOf(6.5f, dpr));
         Chain(GlowLink(RadiusOf(4.5f, dpr), padMax));
         CheckApply("sweep start");
-        pump(4);
+        s.Pump(4);
         var itemsSweep = Items(w);
         var points = new[] { (Name: "d10", D: 10f), (Name: "d40", D: 40f), (Name: "d100", D: 100f) };
         var rows = new List<float[]>();
@@ -514,12 +518,12 @@ static class EffectPassesTest
             var level = 4.5f + i * 0.1f;
             Chain(GlowLink(RadiusOf(level, dpr), padMax));
             CheckApply("glow sweep");
-            pump(3);
-            using var a = grab(w, Path.Combine(outDir, "effect-passes_glow_sweep.png"));
+            s.Pump(3);
+            using var a = s.Grab(w, "effect-passes_glow_sweep.png");
             rows.Add(points.Select(p => Glow(a, edge + p.D, y0)).ToArray());
         }
-        Console.WriteLine("INFO effect-passes glow sweep: " + string.Join(" | ", rows.Select(v => string.Join(" ", v.Select(x => x.ToString("F1"))))));
-        check(Items(w) == itemsSweep, $"effect-passes: radius sweep writes weights only, no new item ({Items(w)} vs {itemsSweep})");
+        s.Info("effect-passes glow sweep: " + string.Join(" | ", rows.Select(v => string.Join(" ", v.Select(x => x.ToString("F1"))))));
+        s.Check(Items(w) == itemsSweep, $"effect-passes: radius sweep writes weights only, no new item ({Items(w)} vs {itemsSweep})");
         for (int j = 0; j < points.Length; j++)
         {
             var col = rows.Select(v => v[j]).ToArray();
@@ -550,7 +554,7 @@ static class EffectPassesTest
         CheckApply("innershadow r8");
         using (var a = Shot("innershadow_r8"))
         {
-            Console.WriteLine($"INFO effect-passes innershadow r8: L1 {Shade(a, GX + 1, y0):F0}, L4 {Shade(a, GX + 4, y0):F0}, centre {Px(a, 400, y0)}, outside {Px(a, GX - 4, y0)}");
+            s.Info($"effect-passes innershadow r8: L1 {Shade(a, GX + 1, y0):F0}, L4 {Shade(a, GX + 4, y0):F0}, centre {Px(a, 400, y0)}, outside {Px(a, GX - 4, y0)}");
             gpu(Shade(a, GX + 1, y0) > 20 && Shade(a, GX + GW - 2, y0) > 20 && Near(Px(a, 400, y0), 255, 153, 0) && IsBg(Px(a, GX - 4, y0)),
                 $"effect-passes: innershadow r8 inside the edges only ({Shade(a, GX + 1, y0):F0}, {Shade(a, GX + GW - 2, y0):F0}, {Px(a, 400, y0)}, {Px(a, GX - 4, y0)})");
         }
@@ -560,7 +564,7 @@ static class EffectPassesTest
             gpu(Shade(a, GX + 4, y0) > Shade(a, GX + GW - 5, y0) + 20 && Shade(a, 400, GY + 4) > Shade(a, 400, GY + GH - 5) + 20,
                 $"effect-passes: innershadow offset (8, 8) at the left/top inner edge ({Shade(a, GX + 4, y0):F0} vs {Shade(a, GX + GW - 5, y0):F0}, {Shade(a, 400, GY + 4):F0} vs {Shade(a, 400, GY + GH - 5):F0})");
         err = PollError();
-        check(string.IsNullOrEmpty(err), $"effect-passes: innershadow links without EV_ERROR ({err})");
+        s.Check(string.IsNullOrEmpty(err), $"effect-passes: innershadow links without EV_ERROR ({err})");
         // The node's way (#438 phase B): the offset as offsetDip in DIP, converted by the shader (dpr, texture size); same picture as the UV offset above.
         float[] ShadeRow(Bitmap a) => new[] { GX + 2f, GX + 4f, GX + 10f, GX + GW - 5f }.Select(x => Shade(a, x, y0)).Concat(
             new[] { GY + 2f, GY + 4f, GY + 10f, GY + GH - 5f }.Select(y => Shade(a, 400, y))).ToArray();
@@ -604,41 +608,41 @@ static class EffectPassesTest
         CheckApply("MULTI -> PYRAMID -> SINGLE");
         using (var a = Shot("mixed_multi-pyramid-single"))
         {
-            Console.WriteLine($"INFO effect-passes mixed: {Profile(a)}, centre {Px(a, 400, y0)}");
+            s.Info($"effect-passes mixed: {Profile(a)}, centre {Px(a, 400, y0)}");
             gpu(Glow(a, edge + 12, y0) > 8 && Px(a, 400, y0).R > 200, $"effect-passes: mixed chain shows box and glow ({Profile(a)}, {Px(a, 400, y0)})");
         }
         err = PollError();
-        check(string.IsNullOrEmpty(err), $"effect-passes: mixed chain without EV_ERROR ({err})");
+        s.Check(string.IsNullOrEmpty(err), $"effect-passes: mixed chain without EV_ERROR ({err})");
 
         // A name neither prefilter nor composite declares: EV_ERROR line, the apply succeeds.
         Chain(GlowLink(16, extra: "bogus"));
         CheckApply("unknown name");
         err = PollError();
-        check(err != null && err.Contains("link 0: unknown uniform 'bogus'") && !err.Contains("'spread'"),
+        s.Check(err != null && err.Contains("link 0: unknown uniform 'bogus'") && !err.Contains("'spread'"),
             $"effect-passes: unknown PYRAMID uniform -> EV_ERROR, known ones not ({err})");
 
         // Live changes, then no chain: item count as before.
         Chain(GlowLink(64), ShadowLink(4, 0, 0));
         CheckApply("glow -> innershadow");
-        pump(3);
+        s.Pump(3);
         Chain(ShadowLink(16, 4, 0));
         CheckApply("innershadow alone");
-        pump(3);
+        s.Pump(3);
         Chain(GlowLink(128));
         CheckApply("glow 128");
-        pump(3);
+        s.Pump(3);
         Chain();
         CheckApply("chain off");
-        pump(6);
+        s.Pump(6);
         var itemsAfter = Items(w);
-        check(itemsAfter == itemsPlain, $"effect-passes: PYRAMID live changes without leak (items {itemsAfter} vs {itemsPlain})");
+        s.Check(itemsAfter == itemsPlain, $"effect-passes: PYRAMID live changes without leak (items {itemsAfter} vs {itemsPlain})");
 
         cmd.Destroy(G);
         CheckApply("destroy");
-        pump(3);
+        s.Pump(3);
         Native.vlqt_window_destroy(w);
         foreach (var id in new[] { glowPre, glowComp, isPre, isComp })
             Native.vlqt_res_release(id);
-        pump(2);
+        s.Pump(2);
     }
 }

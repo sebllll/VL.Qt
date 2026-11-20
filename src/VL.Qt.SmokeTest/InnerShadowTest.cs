@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Text;
+using NUnit.Framework;
 using VL.Qt;
+using static Pixels;
 
 // InnerShadow (#438 A4): the blur pyramid of Glow (pyramid_down / pyramid_up), pass templates in protocol.h.
 // innershadow_prefilter (1/2: inverted alpha, shifted) -> pyramid_down (1/4 .. 1/2^n)
@@ -11,13 +13,16 @@ using VL.Qt;
 // fixed, radius / offset / spread only change uniforms.
 // Source: transparent 800 x 600 group (room for the shadow) with an orange rectangle 200 x 120 at (300, 240) and the
 // white text "Hg" (160, bold), shown one at a time. Raw commands (DIP). Grabs: <outDir>/innershadow_*.png.
-static class InnerShadowTest
+[TestFixture, NonParallelizable]
+public static class InnerShadowTest
 {
+    [Test, Category("innershadow")]
+    public static void InnerShadow() => Scenario.Run(Run);
+
     const uint Fx = 1, Src = 2, Rect = 3, Txt = 4;
     const uint Down = 100, Up = 200; // + step k (Down + k is 1 / 2^k of the effect size)
     const int Left = 300, Top = 240, Right = 500, Bottom = 360, Cy = 300; // the rectangle, DIP
 
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
     static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
     // Shadow strength at (x, y) on the orange rectangle (R 255): mean red loss over (2 half + 1)^2 samples (1 DIP apart).
@@ -94,14 +99,14 @@ static class InnerShadowTest
         return 0.5f * MathF.Log2(1 + s * s * 6 / 7);
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
-        var gpu = Program.NeedsRhi(check, "ShaderEffect needs a QRhi scenegraph");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         ulong Shader(string path)
         {
             Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
             Native.vlqt_res_load_shader(id, path, Protocol.ShaderStage.Fragment);
-            check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"438: shader {path} Ready");
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"shader {path} Ready");
             return id;
         }
         var prefilter = Shader("builtin:innershadow_prefilter");
@@ -110,11 +115,11 @@ static class InnerShadowTest
         var composite = Shader("builtin:innershadow_composite");
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt innershadow test");
-        check(w != IntPtr.Zero, "438: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
-        pump(4);
+        s.Pump(4);
         float dpr;
-        using (var probe = grab(w, Path.Combine(outDir, "innershadow_probe.png")))
+        using (var probe = s.Grab(w, "innershadow_probe.png"))
             dpr = Math.Max(1f, probe.Width / 800f);
 
         // Step sizes in pixels (each the ceiling of half the one above); steps up to the one radius 256 needs, at least 2 px.
@@ -123,7 +128,7 @@ static class InnerShadowTest
         for (int k = 1; k <= n && px[k - 1].H >= 4; k++)
             px.Add(((px[k - 1].W + 1) / 2, (px[k - 1].H + 1) / 2));
         n = px.Count - 1;
-        Console.WriteLine($"INFO innershadow: device pixel ratio {dpr:F2}, {n} steps, smallest {px[n].W} x {px[n].H} px");
+        s.Info($"innershadow: device pixel ratio {dpr:F2}, {n} steps, smallest {px[n].W} x {px[n].H} px");
 
         var cmd = new CommandWriter();
         var evBuf = new byte[1 << 16];
@@ -131,7 +136,7 @@ static class InnerShadowTest
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"438: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
         void DrainErrors()
         {
@@ -243,7 +248,7 @@ static class InnerShadowTest
         Show(false);
         SetShadow(4);
         CheckApply("innershadow scene");
-        pump(8);
+        s.Pump(8);
 
         Bitmap Shot(string name, bool text, float radius, float ox = 0, float oy = 0, float spread = 0, float intensity = 1, float alpha = 1)
         {
@@ -251,10 +256,10 @@ static class InnerShadowTest
             Show(text);
             SetShadow(radius, ox, oy, spread, intensity, alpha);
             CheckApply($"innershadow {name}");
-            pump(4);
-            var a = grab(w, Path.Combine(outDir, $"innershadow_{name}.png"));
+            s.Pump(4);
+            var a = s.Grab(w, $"innershadow_{name}.png");
             if (!text)
-                Console.WriteLine($"INFO innershadow {name}: left d3 {EdgeL(a, 3):F1}, d10 {EdgeL(a, 10):F1}, d25 {EdgeL(a, 25):F1}, " +
+                s.Info($"innershadow {name}: left d3 {EdgeL(a, 3):F1}, d10 {EdgeL(a, 10):F1}, d25 {EdgeL(a, 25):F1}, " +
                     $"d60 {EdgeL(a, 60):F1}, centre {Shade(a, 400, Cy):F1}, right d3 {EdgeR(a, 3):F1}, " +
                     $"top d3 {EdgeT(a, 3):F1}, bottom d3 {EdgeB(a, 3):F1}");
             return a;
@@ -268,47 +273,47 @@ static class InnerShadowTest
             // Radius 4 DIP is sigma 2 px at dpr 1: the shadow is gone ~4 px in, so the edge is measured on the first DIP
             // (3 x 3 window at d1; d3 reads ~10 at dpr 1 and ~17 at dpr 1.5).
             gpu(EdgeL(a, 1, 1) > 20 && Shade(a, Left + 10, Cy) < 3 && Shade(a, Left + 25, Cy) < 1,
-                $"438: radius 4: shadow at the edge only ({EdgeL(a, 1, 1):F1}, {Shade(a, Left + 10, Cy):F1}, {Shade(a, Left + 25, Cy):F1})");
-            gpu(Near(Px(a, 400, Cy), 255, 153, 0), $"438: radius 4: centre of the element unchanged ({Px(a, 400, Cy)})");
-            gpu(OutsideUnchanged(a), "438: radius 4: nothing outside the element");
+                $"radius 4: shadow at the edge only ({EdgeL(a, 1, 1):F1}, {Shade(a, Left + 10, Cy):F1}, {Shade(a, Left + 25, Cy):F1})");
+            gpu(Near(Px(a, 400, Cy), 255, 153, 0), $"radius 4: centre of the element unchanged ({Px(a, 400, Cy)})");
+            gpu(OutsideUnchanged(a), "radius 4: nothing outside the element");
             gpu(EdgeR(a, 1, 1) > 20 && EdgeT(a, 1, 1) > 20 && EdgeB(a, 1, 1) > 20,
-                $"438: radius 4: all four edges ({EdgeR(a, 1, 1):F1}, {EdgeT(a, 1, 1):F1}, {EdgeB(a, 1, 1):F1})");
+                $"radius 4: all four edges ({EdgeR(a, 1, 1):F1}, {EdgeT(a, 1, 1):F1}, {EdgeB(a, 1, 1):F1})");
             gpu(Symmetric(EdgeL(a, 1, 1), EdgeR(a, 1, 1)) && Symmetric(EdgeT(a, 1, 1), EdgeB(a, 1, 1)) && Symmetric(EdgeL(a, 1, 1), EdgeT(a, 1, 1)),
-                $"438: radius 4: edges symmetric, left/right {EdgeL(a, 1, 1):F1} / {EdgeR(a, 1, 1):F1}, top/bottom {EdgeT(a, 1, 1):F1} / {EdgeB(a, 1, 1):F1}");
+                $"radius 4: edges symmetric, left/right {EdgeL(a, 1, 1):F1} / {EdgeR(a, 1, 1):F1}, top/bottom {EdgeT(a, 1, 1):F1} / {EdgeB(a, 1, 1):F1}");
         }
         using (var a = Shot("rect_r32", false, 32))
         {
             gpu(Shade(a, Left + 3, Cy) > 60 && Shade(a, Left + 25, Cy) > 5 && Shade(a, Left + 60, Cy) < 3,
-                $"438: radius 32: shadow reaches ~30 DIP inwards, not 60 ({Shade(a, Left + 3, Cy):F1}, {Shade(a, Left + 25, Cy):F1}, {Shade(a, Left + 60, Cy):F1})");
-            gpu(OutsideUnchanged(a), "438: radius 32: nothing outside the element");
+                $"radius 32: shadow reaches ~30 DIP inwards, not 60 ({Shade(a, Left + 3, Cy):F1}, {Shade(a, Left + 25, Cy):F1}, {Shade(a, Left + 60, Cy):F1})");
+            gpu(OutsideUnchanged(a), "radius 32: nothing outside the element");
             gpu(Symmetric(EdgeL(a, 3), EdgeR(a, 3)) && Symmetric(EdgeT(a, 3), EdgeB(a, 3)) && Symmetric(EdgeL(a, 10), EdgeR(a, 10)) && Symmetric(EdgeT(a, 10), EdgeB(a, 10)),
-                $"438: radius 32: edges symmetric, d3 {EdgeL(a, 3):F1} / {EdgeR(a, 3):F1} and {EdgeT(a, 3):F1} / {EdgeB(a, 3):F1}, d10 {EdgeL(a, 10):F1} / {EdgeR(a, 10):F1} and {EdgeT(a, 10):F1} / {EdgeB(a, 10):F1}");
+                $"radius 32: edges symmetric, d3 {EdgeL(a, 3):F1} / {EdgeR(a, 3):F1} and {EdgeT(a, 3):F1} / {EdgeB(a, 3):F1}, d10 {EdgeL(a, 10):F1} / {EdgeR(a, 10):F1} and {EdgeT(a, 10):F1} / {EdgeB(a, 10):F1}");
         }
         using (var a = Shot("rect_r128", false, 128))
         {
             var centre = Shade(a, 400, Cy);
             gpu(centre > 40 && Shade(a, Left + 3, Cy) > centre,
-                $"438: radius 128: shadow reaches the centre ({centre:F1}), strongest at the edge ({Shade(a, Left + 3, Cy):F1})");
-            gpu(OutsideUnchanged(a), "438: radius 128: nothing outside the element");
+                $"radius 128: shadow reaches the centre ({centre:F1}), strongest at the edge ({Shade(a, Left + 3, Cy):F1})");
+            gpu(OutsideUnchanged(a), "radius 128: nothing outside the element");
         }
         using (var a = Shot("rect_r0", false, 0))
-            gpu(Shade(a, Left + 3, Cy) < 1 && Near(Px(a, Left + 1, Cy), 255, 153, 0, 40), $"438: radius 0: nothing inside ({Shade(a, Left + 3, Cy):F1})");
+            gpu(Shade(a, Left + 3, Cy) < 1 && Near(Px(a, Left + 1, Cy), 255, 153, 0, 40), $"radius 0: nothing inside ({Shade(a, Left + 3, Cy):F1})");
 
         // Offset (8, 8): the shadow moves with the hole, left and top edges get it, right and bottom do not.
         using (var a = Shot("rect_r4_o8", false, 4, 8, 8))
         {
             gpu(Shade(a, Left + 3, Cy) > 150 && Shade(a, 400, Top + 3) > 150 && Shade(a, Right - 3, Cy) < 3 && Shade(a, 400, Bottom - 3) < 3,
-                $"438: offset (8, 8): left/top inside ({Shade(a, Left + 3, Cy):F1}, {Shade(a, 400, Top + 3):F1}), right/bottom not ({Shade(a, Right - 3, Cy):F1}, {Shade(a, 400, Bottom - 3):F1})");
-            gpu(OutsideUnchanged(a), "438: offset (8, 8): nothing outside the element");
+                $"offset (8, 8): left/top inside ({Shade(a, Left + 3, Cy):F1}, {Shade(a, 400, Top + 3):F1}), right/bottom not ({Shade(a, Right - 3, Cy):F1}, {Shade(a, 400, Bottom - 3):F1})");
+            gpu(OutsideUnchanged(a), "offset (8, 8): nothing outside the element");
         }
         using (var a = Shot("rect_r32_o8", false, 32, 8, 8))
         {
             gpu(Shade(a, Left + 3, Cy) > Shade(a, Right - 3, Cy) + 40 && Shade(a, 400, Top + 3) > Shade(a, 400, Bottom - 3) + 40,
-                $"438: radius 32 offset (8, 8): left/top stronger than right/bottom ({Shade(a, Left + 3, Cy):F1} / {Shade(a, Right - 3, Cy):F1}, {Shade(a, 400, Top + 3):F1} / {Shade(a, 400, Bottom - 3):F1})");
-            gpu(OutsideUnchanged(a), "438: radius 32 offset (8, 8): nothing outside the element");
+                $"radius 32 offset (8, 8): left/top stronger than right/bottom ({Shade(a, Left + 3, Cy):F1} / {Shade(a, Right - 3, Cy):F1}, {Shade(a, 400, Top + 3):F1} / {Shade(a, 400, Bottom - 3):F1})");
+            gpu(OutsideUnchanged(a), "radius 32 offset (8, 8): nothing outside the element");
         }
         using (var a = Shot("rect_r128_o8", false, 128, 8, 8))
-            gpu(OutsideUnchanged(a), "438: radius 128 offset (8, 8): nothing outside the element");
+            gpu(OutsideUnchanged(a), "radius 128 offset (8, 8): nothing outside the element");
 
         // Spread and intensity at radius 32.
         float s25, s10;
@@ -318,30 +323,30 @@ static class InnerShadowTest
             s10 = Shade(a, Left + 10, Cy);
         }
         using (var a = Shot("rect_r32_spread", false, 32, spread: 0.6f))
-            gpu(Shade(a, Left + 25, Cy) > s25 * 1.5f + 3, $"438: spread 0.6 makes the shadow denser ({s25:F1} -> {Shade(a, Left + 25, Cy):F1})");
+            gpu(Shade(a, Left + 25, Cy) > s25 * 1.5f + 3, $"spread 0.6 makes the shadow denser ({s25:F1} -> {Shade(a, Left + 25, Cy):F1})");
         using (var a = Shot("rect_r32_i05", false, 32, intensity: 0.5f))
-            gpu(Shade(a, Left + 10, Cy) < s10 * 0.7f, $"438: intensity 0.5 weaker ({s10:F1} -> {Shade(a, Left + 10, Cy):F1})");
+            gpu(Shade(a, Left + 10, Cy) < s10 * 0.7f, $"intensity 0.5 weaker ({s10:F1} -> {Shade(a, Left + 10, Cy):F1})");
 
         // Text, radius 0 / 4 / 32 / 128, offset 0 and (8, 8): the glyphs get darker with the radius, outside stays empty.
         long inkPrev;
         using (var a = Shot("text_r0", true, 0))
         {
             inkPrev = Ink(a);
-            Console.WriteLine($"INFO innershadow text: ink r0 {inkPrev}");
+            s.Info($"innershadow text: ink r0 {inkPrev}");
         }
         foreach (var r in new[] { 4, 32, 128 })
         {
             using var a = Shot($"text_r{r}", true, r);
             var ink = Ink(a);
-            Console.WriteLine($"INFO innershadow text: ink r{r} {ink}");
-            gpu(ink < inkPrev, $"438: text radius {r}: glyphs darker than before ({inkPrev} -> {ink})");
-            gpu(Near(Px(a, 100, 100), 32, 32, 32, 4) && Near(Px(a, 700, 500), 32, 32, 32, 4), $"438: text radius {r}: background clean");
+            s.Info($"innershadow text: ink r{r} {ink}");
+            gpu(ink < inkPrev, $"text radius {r}: glyphs darker than before ({inkPrev} -> {ink})");
+            gpu(Near(Px(a, 100, 100), 32, 32, 32, 4) && Near(Px(a, 700, 500), 32, 32, 32, 4), $"text radius {r}: background clean");
             inkPrev = ink;
         }
         foreach (var r in new[] { 4, 32, 128 })
         {
             using var a = Shot($"text_r{r}_o8", true, r, 8, 8);
-            gpu(Near(Px(a, 100, 100), 32, 32, 32, 4) && Near(Px(a, 700, 500), 32, 32, 32, 4), $"438: text radius {r} offset (8, 8): background clean");
+            gpu(Near(Px(a, 100, 100), 32, 32, 32, 4) && Near(Px(a, 700, 500), 32, 32, 32, 4), $"text radius {r} offset (8, 8): background clean");
         }
 
         // Banding: the soft shadow (alpha 0.2) on the rectangle is a flat gradient.
@@ -349,19 +354,19 @@ static class InnerShadowTest
         {
             var cy = Cy * a.Height / 600;
             var band = Banding(a, (Left + 4) * a.Width / 800, (Left + 96) * a.Width / 800, new[] { cy - 10, cy, cy + 10 }, c => c.R);
-            Console.WriteLine($"INFO innershadow banding: soft shadow, mean run {band:F1} px");
-            gpu(band < 8, $"438: soft shadow without rings (mean run of equal values {band:F1} px)");
+            s.Info($"innershadow banding: soft shadow, mean run {band:F1} px");
+            gpu(band < 8, $"soft shadow without rings (mean run of equal values {band:F1} px)");
         }
 
         DrainErrors();
-        check(errors.Count == 0, $"438: no EV_ERROR from the passes ({string.Join("; ", errors)})");
+        s.Check(errors.Count == 0, $"no EV_ERROR from the passes ({string.Join("; ", errors)})");
 
         cmd.Reset();
         cmd.Destroy(Fx);
         CheckApply("destroy");
-        pump(3);
+        s.Pump(3);
         Native.vlqt_window_destroy(w);
         foreach (var id in new[] { prefilter, down, up, composite }) Native.vlqt_res_release(id);
-        pump(2);
+        s.Pump(2);
     }
 }

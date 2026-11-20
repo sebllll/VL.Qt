@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Text;
+using NUnit.Framework;
 using VL.Qt;
+using static Pixels;
 
 // Sampler state of a sampler2D (#492, SAMPLER entry of SET_UNIFORMS): filter, address, mip filter, read back from pixels.
 // One GLSL shader per sampler name (source = Input, overlay = texture uniform) that samples c + (uv - 0.5) * k.
@@ -15,8 +17,12 @@ using VL.Qt;
 //          with MipFilter Linear every pixel is the purple mean (the layer of the Group proxy is rendered with mipmaps).
 // Live: Point -> Linear by a diff entry, back by CLEAR, a sampler state for a name the shader does not have (EV_ERROR),
 // an out of range state (apply error -7). Raw commands (DIP). Grabs: <outDir>/sampler_*.png.
-static class SamplerTest
+[TestFixture, NonParallelizable]
+public static class SamplerTest
 {
+    [Test, Category("sampler")]
+    public static void Sampler() => Scenario.Run(Run);
+
     const float CellW = 160, CellH = 120;
 
     static string Shader(string sampler) =>
@@ -31,17 +37,16 @@ static class SamplerTest
     static ulong S(int filter, int mip, int au, int av) =>
         (ulong)(uint)filter | (ulong)(uint)mip << 8 | (ulong)(uint)au << 16 | (ulong)(uint)av << 24;
 
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
     static bool Near(Color c, int r, int g, int b, int tol = 16) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
     static (float x, float y) Cell(int cx, int cy) => (15 + cx * 200, 20 + cy * 140);
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
-        var gpu = Program.NeedsRhi(check, "ShaderEffect needs a QRhi scenegraph");
-        Directory.CreateDirectory(outDir);
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
+        Directory.CreateDirectory(s.OutDir);
         var stripesPath = FindFile("src", "VL.Qt.SmokeTest", "assets", "stripes_rgb_30x10.png");
-        check(stripesPath != null, "492: stripes image found");
+        s.Check(stripesPath != null, "stripes image found");
         if (stripesPath == null) return;
 
         ulong LoadShader(string name)
@@ -49,17 +54,17 @@ static class SamplerTest
             Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
             var rc = Native.vlqt_res_load_shader_source(id, Shader(name), Protocol.ShaderStage.Fragment);
             var st = rc == 0 ? Native.vlqt_res_wait(id, 20000) : Protocol.ResState.Failed;
-            check(st == Protocol.ResState.Ready, $"492: shader sampling '{name}' bakes -> Ready ({st}, rc {rc})");
+            s.Check(st == Protocol.ResState.Ready, $"shader sampling '{name}' bakes -> Ready ({st}, rc {rc})");
             return id;
         }
         var onSource = LoadShader("source");
         var onOverlay = LoadShader("overlay");
         Native.vlqt_res_create(Protocol.ResKind.Image, out var stripes);
         Native.vlqt_res_load_image(stripes, stripesPath, 0);
-        check(Native.vlqt_res_wait(stripes, 10000) == Protocol.ResState.Ready, "492: stripes image Ready");
+        s.Check(Native.vlqt_res_wait(stripes, 10000) == Protocol.ResState.Ready, "stripes image Ready");
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt sampler test");
-        check(w != IntPtr.Zero, "492: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var evBuf = new byte[1 << 16];
@@ -68,7 +73,7 @@ static class SamplerTest
         void Apply(string what)
         {
             var rc = ApplyRc();
-            check(rc == 0, $"492: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
         string Err(uint handle)
         {
@@ -90,7 +95,7 @@ static class SamplerTest
             foreach (var fx in effects)
                 cmd.Destroy(fx);
             ApplyRc();
-            pump(4);
+            s.Pump(4);
             Native.vlqt_window_destroy(w);
             foreach (var id in new[] { onSource, onOverlay, stripes }) Native.vlqt_res_release(id);
         }
@@ -197,37 +202,37 @@ static class SamplerTest
         }
         cmd.Bind(edge[0], 1, 0);
         Apply("sampler scene");
-        pump(10);
+        s.Pump(10);
 
         // --- row 0: filter ---
-        using (var a = grab(w, Path.Combine(outDir, "sampler_filter.png")))
+        using (var a = s.Grab(w, "sampler_filter.png"))
         {
             var (x0, y0) = Cell(0, 0);
             int cy = (int)(y0 + CellH / 2);
             Color Left(int cell) => Px(a, (int)Cell(cell, 0).x + 80 - 3, cy);
             Color Right(int cell) => Px(a, (int)Cell(cell, 0).x + 80 + 3, cy);
-            gpu(Near(Left(0), 255, 0, 0) && Near(Right(0), 0, 0, 255), $"492: Point: hard red | blue edge ({Left(0)}, {Right(0)})");
-            gpu(Left(1).B > 25 && Left(1).R < 240 && Right(1).R > 25 && Right(1).B < 240, $"492: Linear: the edge is blended ({Left(1)}, {Right(1)})");
-            gpu(Near(Left(2), 255, 0, 0) && Near(Right(2), 0, 0, 255), $"492: no sampler: a layer is read Nearest, as before ({Left(2)}, {Right(2)})");
+            gpu(Near(Left(0), 255, 0, 0) && Near(Right(0), 0, 0, 255), $"Point: hard red | blue edge ({Left(0)}, {Right(0)})");
+            gpu(Left(1).B > 25 && Left(1).R < 240 && Right(1).R > 25 && Right(1).B < 240, $"Linear: the edge is blended ({Left(1)}, {Right(1)})");
+            gpu(Near(Left(2), 255, 0, 0) && Near(Right(2), 0, 0, 255), $"no sampler: a layer is read Nearest, as before ({Left(2)}, {Right(2)})");
             var f = Px(a, (int)Cell(3, 0).x + 80, cy);
-            gpu(Near(f, 255, 0, 0), $"492: plain element with mip filter shows the red rectangle ({f})");
+            gpu(Near(f, 255, 0, 0), $"plain element with mip filter shows the red rectangle ({f})");
         }
-        check(Err(1).Length == 0, $"492: valid sampler states: no error ({Err(1)})");
+        s.Check(Err(1).Length == 0, $"valid sampler states: no error ({Err(1)})");
 
         // --- row 1: address ---
-        using (var a = grab(w, Path.Combine(outDir, "sampler_wrap.png")))
+        using (var a = s.Grab(w, "sampler_wrap.png"))
         {
             int cy = (int)(Cell(0, 1).y + CellH / 2);
             Color At(int cell, float t) => Px(a, (int)(Cell(cell, 1).x + t * CellW), cy);
             gpu(Near(At(0, 0.1f), 255, 0, 0) && Near(At(0, 0.6f), 0, 0, 255) && Near(At(0, 0.9f), 0, 0, 255),
-                $"492: Clamp: the edge texel continues ({At(0, 0.1f)}, {At(0, 0.6f)}, {At(0, 0.9f)})");
-            gpu(Near(At(1, 0.6f), 255, 0, 0) && Near(At(1, 0.9f), 0, 0, 255), $"492: Wrap: the texture tiles ({At(1, 0.6f)}, {At(1, 0.9f)})");
-            gpu(Near(At(2, 0.6f), 0, 0, 255) && Near(At(2, 0.9f), 255, 0, 0), $"492: Mirror: every second tile is mirrored ({At(2, 0.6f)}, {At(2, 0.9f)})");
-            gpu(Near(At(3, 0.6f), 0, 0, 255) && Near(At(3, 0.9f), 0, 0, 255), $"492: no sampler: Clamp as before ({At(3, 0.6f)}, {At(3, 0.9f)})");
+                $"Clamp: the edge texel continues ({At(0, 0.1f)}, {At(0, 0.6f)}, {At(0, 0.9f)})");
+            gpu(Near(At(1, 0.6f), 255, 0, 0) && Near(At(1, 0.9f), 0, 0, 255), $"Wrap: the texture tiles ({At(1, 0.6f)}, {At(1, 0.9f)})");
+            gpu(Near(At(2, 0.6f), 0, 0, 255) && Near(At(2, 0.9f), 255, 0, 0), $"Mirror: every second tile is mirrored ({At(2, 0.6f)}, {At(2, 0.9f)})");
+            gpu(Near(At(3, 0.6f), 0, 0, 255) && Near(At(3, 0.9f), 0, 0, 255), $"no sampler: Clamp as before ({At(3, 0.6f)}, {At(3, 0.9f)})");
         }
 
         // --- row 2: mipmaps ---
-        using (var a = grab(w, Path.Combine(outDir, "sampler_mip.png")))
+        using (var a = s.Grab(w, "sampler_mip.png"))
         {
             int cy = (int)(Cell(0, 2).y + CellH / 2);
             int Off(int cell)
@@ -238,8 +243,8 @@ static class SamplerTest
                 return n;
             }
             int off0 = Off(0), off1 = Off(1);
-            gpu(off0 > 8, $"492: no mipmaps: the stripes alias ({off0} of 44 samples off the mean)");
-            gpu(off1 == 0, $"492: mip filter Linear: every pixel is the mean of the stripes ({off1} of 44 samples off)");
+            gpu(off0 > 8, $"no mipmaps: the stripes alias ({off0} of 44 samples off the mean)");
+            gpu(off1 == 0, $"mip filter Linear: every pixel is the mean of the stripes ({off1} of 44 samples off)");
         }
 
         // --- live: Point -> Linear (diff entry), back by CLEAR; a name the shader does not have; out of range ---
@@ -248,37 +253,37 @@ static class SamplerTest
         cmd.UniformSampler("source", S(0, 0, 0, 0));
         cmd.EndUniforms();
         Apply("sampler Point -> Linear");
-        pump(6);
-        using (var a = grab(w, Path.Combine(outDir, "sampler_live_linear.png")))
+        s.Pump(6);
+        using (var a = s.Grab(w, "sampler_live_linear.png"))
         {
             int cy = (int)(Cell(0, 0).y + CellH / 2);
             var c = Px(a, (int)Cell(0, 0).x + 80 - 3, cy);
-            gpu(c.B > 25 && c.R < 240, $"492: live change Point -> Linear without rebuild ({c})");
+            gpu(c.B > 25 && c.R < 240, $"live change Point -> Linear without rebuild ({c})");
         }
         cmd.Reset();
         Uniforms(edge[0], Protocol.UniformSet.Clear, 0.5f, 0.5f, 0.04f, null, 0);
         Apply("sampler removed (CLEAR)");
-        pump(6);
-        using (var a = grab(w, Path.Combine(outDir, "sampler_live_removed.png")))
+        s.Pump(6);
+        using (var a = s.Grab(w, "sampler_live_removed.png"))
         {
             int cy = (int)(Cell(0, 0).y + CellH / 2);
             var c = Px(a, (int)Cell(0, 0).x + 80 - 3, cy);
-            gpu(Near(c, 255, 0, 0), $"492: sampler removed: back to the layer as it is ({c})");
+            gpu(Near(c, 255, 0, 0), $"sampler removed: back to the layer as it is ({c})");
         }
         cmd.Reset();
         cmd.BeginUniforms(edge[0], 0);
         cmd.UniformSampler("nope", S(0, 0, 0, 0));
         cmd.EndUniforms();
         Apply("sampler state of an unknown name");
-        pump(4);
+        s.Pump(4);
         var err = Err(1);
-        check(err.Contains("nope") && err.Contains("sampler2D"), $"492: unknown sampler name -> EV_ERROR ({err})");
+        s.Check(err.Contains("nope") && err.Contains("sampler2D"), $"unknown sampler name -> EV_ERROR ({err})");
         cmd.Reset();
         cmd.BeginUniforms(edge[0], Protocol.UniformSet.Clear);
         cmd.UniformSampler("source", S(0, 3, 0, 0));
         cmd.EndUniforms();
         var rc = ApplyRc();
-        check(rc == -7, $"492: out of range state (mip 3) -> apply error -7 ({rc})");
+        s.Check(rc == -7, $"out of range state (mip 3) -> apply error -7 ({rc})");
         Teardown();
     }
 
