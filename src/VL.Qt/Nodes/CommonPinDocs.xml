@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<docs>
+  <param name="opacity">Opacity of the element and its children (0 to 1). [from the shared doc file, include check W1-18]</param>
+</docs>
