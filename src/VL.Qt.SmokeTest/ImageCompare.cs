@@ -33,6 +33,16 @@ static class ImageCompare
     public static readonly string[] Scenes = { "readme-images", "readme-gallery", "reference-scenes" };
 
     /// <summary>
+    /// Runs the README scenarios (readme-images, readme-gallery) in a helper process on the normal renderer and writes the
+    /// pictures to docs/images (the former behaviour); never touches the references.
+    /// </summary>
+    public static void RunDocs(Scenario s, string[] scenarios)
+    {
+        var env = new Dictionary<string, string> { ["VLQT_SMOKE_DOCSIMAGES"] = "1" };
+        OwnProcess.Run(s, scenarios, env);
+    }
+
+    /// <summary>
     /// Runs the compare scenario <paramref name="scenario"/> in a helper process on WARP; <paramref name="update"/> writes the
     /// references instead of comparing.
     /// </summary>
@@ -55,6 +65,9 @@ static class ImageCompare
     /// </summary>
     public static string LoadFont(Scenario s)
     {
+        // README pictures keep the default font (as before).
+        if (SmokeParameters.DocsImages)
+            return "";
         var file = FindUp("src", "VL.Qt.Native", "fonts", "DejaVuSans.ttf");
         s.Check(file != null, "bundled font src/VL.Qt.Native/fonts/DejaVuSans.ttf found");
         if (file == null || Native.FontAdd(file, out _, out var families) != 0)
@@ -99,6 +112,11 @@ static class ImageCompare
     /// </summary>
     public static void Check(Scenario s, string name, string grabPath, int width)
     {
+        if (SmokeParameters.DocsImages)
+        {
+            WriteDocs(s, name, grabPath, width);
+            return;
+        }
         var refDir = FindUp("src", "VL.Qt.SmokeTest");
         if (refDir == null)
         {
@@ -126,6 +144,21 @@ static class ImageCompare
         s.Info($"{name}: {text}");
         s.Check(ok, $"{name}: matches reference ({text}); grab {grabPath}" + (ok ? "" : $", diff image {diffPath}"));
     }
+
+    // README picture: scaled to the target width, docs/images/<name without the scenario prefix>.png.
+    static void WriteDocs(Scenario s, string name, string grabPath, int width)
+    {
+        var imagesDir = FindUp("docs", "images");
+        s.Check(imagesDir != null, $"{name}: docs/images found ({imagesDir})");
+        if (imagesDir == null)
+            return;
+        var target = Path.Combine(imagesDir, DocsName(name) + ".png");
+        using (var scaled = Scale(grabPath, width))
+            scaled.Save(target, System.Drawing.Imaging.ImageFormat.Png);
+        s.Info($"{name}: {target} ({new FileInfo(target).Length / 1024} KB)");
+    }
+
+    static string DocsName(string name) => name.StartsWith("readme-images_") ? name["readme-images_".Length..] : name.StartsWith("readme-gallery_") ? name["readme-gallery_".Length..] : name;
 
     /// <summary>The picture scaled to the target width (bicubic, deterministic); the caller disposes it.</summary>
     static Bitmap Scale(string path, int width)
@@ -210,6 +243,19 @@ static class ImageCompare
         }
     }
 #else
-    public static void Check(Scenario s, string name, string grabPath, int width) => s.Skip($"{name}: the compare runs on WARP (Windows only)");
+    public static void Check(Scenario s, string name, string grabPath, int width)
+    {
+        if (!SmokeParameters.DocsImages)
+        {
+            s.Skip($"{name}: the compare runs on WARP (Windows only)");
+            return;
+        }
+        var imagesDir = FindUp("docs", "images");
+        s.Check(imagesDir != null, $"{name}: docs/images found ({imagesDir})");
+        if (imagesDir != null)
+            File.Copy(grabPath, Path.Combine(imagesDir, DocsName(name) + ".png"), true);
+    }
+
+    static string DocsName(string name) => name.StartsWith("readme-images_") ? name["readme-images_".Length..] : name.StartsWith("readme-gallery_") ? name["readme-gallery_".Length..] : name;
 #endif
 }

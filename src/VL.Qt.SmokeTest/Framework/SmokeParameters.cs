@@ -38,6 +38,9 @@ static class SmokeParameters
     /// <summary>Image compare scenarios (reference-scenes, readme-images, readme-gallery): write the references instead of comparing (1/true).</summary>
     public static bool UpdateRefs => Get("UpdateRefs") is "1" or "true";
 
+    /// <summary>readme-images / readme-gallery: write the README pictures into docs/images (normal renderer) instead of comparing (1/true).</summary>
+    public static bool DocsImages => Get("DocsImages") is "1" or "true";
+
     /// <summary>overlay-cost: rounds of 120 pumps per mode (#244, default 8).</summary>
     public static int OverlayCostRounds => GetInt("OverlayCostRounds") ?? 8;
 
@@ -60,7 +63,7 @@ static class SmokeParameters
                 yield return new(EnvName(name), v);
     }
 
-    static readonly string[] s_names = { "SmokeDir", "OutDir", "StressSeconds", "StressSeed", "ScenarioTimeoutSeconds", "TearingArgs", "ReplayTrace", "ReplayArgs", "OverlayCostRounds", "PerfWarnOnly", "PerfFactor", "UpdateRefs" };
+    static readonly string[] s_names = { "SmokeDir", "OutDir", "StressSeconds", "StressSeed", "ScenarioTimeoutSeconds", "TearingArgs", "ReplayTrace", "ReplayArgs", "OverlayCostRounds", "PerfWarnOnly", "PerfFactor", "UpdateRefs", "DocsImages" };
 
     static string EnvName(string name) => "VLQT_SMOKE_" + name.ToUpperInvariant();
 

@@ -21,6 +21,10 @@ public static class ReadmeGalleryTest
     [Test, Category("readme-gallery"), Category("image-compare"), Category("own-process")]
     public static void ReadmeGallery() => Scenario.RunLocal(s => ImageCompare.Run(s, new[] { "readme-gallery" }));
 
+    /// <summary>Writes the README pictures into docs/images on the normal renderer (not the references).</summary>
+    [Test, Explicit("writes docs/images"), Category("readme-docs"), Category("own-process")]
+    public static void ReadmeGalleryDocs() => Scenario.RunLocal(s => ImageCompare.RunDocs(s, new[] { "readme-gallery" }));
+
     const float Bg = 0x16 / 255f;
 
     static Color4 C(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);

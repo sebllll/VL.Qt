@@ -25,6 +25,10 @@ public static class ReadmeImagesTest
     [Test, Category("readme-images"), Category("image-compare"), Category("own-process")]
     public static void ReadmeImages() => Scenario.RunLocal(s => ImageCompare.Run(s, new[] { "readme-images" }));
 
+    /// <summary>Writes the README pictures into docs/images on the normal renderer (not the references).</summary>
+    [Test, Explicit("writes docs/images"), Category("readme-docs"), Category("own-process")]
+    public static void ReadmeImagesDocs() => Scenario.RunLocal(s => ImageCompare.RunDocs(s, new[] { "readme-images" }));
+
     const float CellW = 410, CellH = 230;
     const float TextW = 300, TextH = 120, FontSize = 90;
     const float Bg = 0x16 / 255f;
