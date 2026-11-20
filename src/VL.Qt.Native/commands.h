@@ -102,12 +102,10 @@ struct Scene {
     QPoint reportedFramePos;
     QObject geometryWatch;
     /* Measure on change (#20, events.h): ids whose geometry changed since the last poll (markGeometry, no duplicates
-     * until the poll), the walk stack and poll stamp of collectMeasurements (capacity reused, no per-frame allocation),
-     * and the number of bound items whose geometry the last poll read (vlqt_test_measure_count). */
+     * until the poll), the walk stack and poll stamp of collectMeasurements (capacity reused, no per-frame allocation). */
     std::vector<quint32> measureQueue;
     std::vector<QQuickItem*> measureStack;
     quint32 measureStamp = 0;
-    int measuredLastPoll = 0;
     /* Ids of the nodes whose media/error/clicks/user value the poll reads (listPolled, events.h); entries of destroyed
      * nodes drop out in the next poll. pollStamp skips a second entry of a reused id. */
     std::vector<quint32> pollIds;

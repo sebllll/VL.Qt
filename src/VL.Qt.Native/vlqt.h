@@ -408,9 +408,6 @@ VLQT_API int   vlqt_test_send_wheel(void* w, float x, float y, int dx, int dy);
 /* TEST ONLY: number of pointer handlers (QQuickPointerHandler children) of item id (input handlers, #319);
  * -1 null window, -4 unknown id. */
 VLQT_API int   vlqt_test_handler_count(void* w, unsigned int id);
-/* TEST ONLY (#20): number of bound items whose geometry (EV_MEASURED / EV_SCENE_BOUNDS) the last poll of the window
- * read; a static scene reads none. -1 null window. */
-VLQT_API int   vlqt_test_measure_count(void* w);
 /* TEST ONLY (#244): busy-waits ms inside one phase of the window's next rendered frame (0 events, 1 sync, 2 render,
  * 3 present, 4 vsync wait) to check that the F5 timeline attributes a spike. 0 = ok, -1 null window. */
 VLQT_API int   vlqt_test_perf_spike(void* w, int phase, float ms);
@@ -503,7 +500,7 @@ VLQT_API int   vlqt_test_font_refs(unsigned long long handle);
  * _destroy (unbinds first), _apply (clear colour via VLQT_OP_CLEAR_COLOR; alpha 0 = transparent texture),
  * _get_apply_error, _poll, _set_debug/_get_debug, _set_overlay/_get_overlay, _get_perf/_sample/_stats,
  * _report_host_frame/_get_host_frame/_get_host_stats, _change_count, vlqt_res_snapshot/_fit, vlqt_test_device_info,
- * vlqt_test_measure_count, vlqt_test_handler_count. The window-only ones are no-ops on a scene: _show, _hide, _set_title,
+ * vlqt_test_handler_count. The window-only ones are no-ops on a scene: _show, _hide, _set_title,
  * _set_icon, _set_mode return 0 or do nothing, _take_close_request and _is_visible return 0, _resize returns
  * VLQT_OFFSCREEN_BAD_ARGUMENT (the size comes from vlqt_offscreen_bind), _grab and the vlqt_test_send_... / _queue_... input
  * functions return VLQT_OFFSCREEN_NOT_SUPPORTED (input: vlqt_offscreen_send_*, #119). An offscreen scene never renders in

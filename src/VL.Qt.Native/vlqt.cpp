@@ -2049,18 +2049,6 @@ VLQT_API int vlqt_test_queue_touch(void* p, int type, int id, float x, float y)
     });
 }
 
-VLQT_API int vlqt_test_measure_count(void* p)
-{
-    return guarded([&]() -> int {
-        auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("test_measure_count: null window");
-            return -1;
-        }
-        return w->scene->measuredLastPoll;
-    });
-}
-
 VLQT_API int vlqt_test_handler_count(void* p, unsigned int id)
 {
     return guarded([&]() -> int {

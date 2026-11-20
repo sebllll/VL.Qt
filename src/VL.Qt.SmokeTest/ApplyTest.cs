@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using System.Buffers.Binary;
 using System.Diagnostics;
@@ -36,6 +37,12 @@ public static class ApplyTest
         {
             var s = Begin(op, actualLen);
             BinaryPrimitives.WriteUInt16LittleEndian(_b.AsSpan(Length - ((4 + actualLen + 3) & ~3) + 2), (ushort)declaredLen);
+            return this;
+        }
+        /// <summary>Command with a hand-built payload (declared length = payload length).</summary>
+        public Buf Cmd(ushort op, byte[] payload)
+        {
+            payload.CopyTo(Begin(op, payload.Length));
             return this;
         }
         public Buf Create(uint id, ushort type)
@@ -90,6 +97,142 @@ public static class ApplyTest
         {
             for (int i = 0; i < f.Length; i++) BinaryPrimitives.WriteSingleLittleEndian(s[(i * 4)..], f[i]);
         }
+    }
+
+    /// <summary>Little-endian payload writer for the entry-based commands (entries are written by hand, not by CommandWriter, so malformed ones are possible).</summary>
+    sealed class Pay
+    {
+        readonly List<byte> _b = new();
+        public Pay U16(int v) { _b.Add((byte)v); _b.Add((byte)(v >> 8)); return this; }
+        public Pay U32(uint v) { U16((int)(v & 0xFFFF)); U16((int)(v >> 16)); return this; }
+        public Pay U64(ulong v) { U32((uint)v); U32((uint)(v >> 32)); return this; }
+        public Pay F32(float v) { var t = new byte[4]; BinaryPrimitives.WriteSingleLittleEndian(t, v); _b.AddRange(t); return this; }
+        public Pay Zeros(int n) { _b.AddRange(new byte[n]); return this; }
+        public Pay Pad() { while (_b.Count % 4 != 0) _b.Add(0); return this; }
+        public Pay Bytes(params byte[] v) { _b.AddRange(v); return this; }
+        public int Length => _b.Count;
+        public byte[] ToArray() => _b.ToArray();
+
+        /// <summary>One entry of SET_UNIFORMS / SET_QML_PROPERTIES / a SHADER link: u16 value type, u16 name length, name, pad, value, pad.</summary>
+        public Pay Entry(ushort vt, string name, byte[] value, int? nameLen = null)
+        {
+            var n = System.Text.Encoding.UTF8.GetBytes(name);
+            U16(vt).U16(nameLen ?? n.Length).Bytes(n).Pad().Bytes(value).Pad();
+            return this;
+        }
+        public Pay F4Entry(ushort vt, string name, int floats) => Entry(vt, name, new byte[floats * 4]);
+
+        /// <summary>SET_UNIFORMS / SET_QML_PROPERTIES head: u32 id, u16 count, u16 flags.</summary>
+        public static Pay Head(uint id, int count, int flags = 0) => new Pay().U32(id).U16(count).U16(flags);
+        /// <summary>SET_EFFECT_CHAIN head: u32 id, u16 link count, u16 reserved.</summary>
+        public static Pay ChainHead(uint id, int links) => new Pay().U32(id).U16(links).U16(0);
+        /// <summary>Link header + body: u16 kind, u16 count, u32 body length, body.</summary>
+        public Pay Link(ushort kind, int count, Pay body, uint? bodyLen = null) => U16(kind).U16(count).U32(bodyLen ?? (uint)body.Length).Bytes(body.ToArray());
+        /// <summary>SHADER link body head: u16 template, u16 shader count, shader ids, 16 bytes padding, f32 strength, u16 reserved, u16 0.</summary>
+        public static Pay ShaderBody(ushort templ, int shaderCount, int reserved = 0)
+        {
+            var p = new Pay().U16(templ).U16(shaderCount);
+            for (int i = 0; i < shaderCount; i++) p.U64(0);
+            return p.Zeros(16).F32(0).U16(reserved).U16(0);
+        }
+        /// <summary>SET of a Shape path: u32 id, u16 prop, u16 value type, u32 verbCount, u32 pointCount, verbs (padded), points.</summary>
+        public static Pay PathSet(uint id, byte[] verbs, uint pointCount)
+        {
+            var p = new Pay().U32(id).U16(Protocol.Prop.ShapePath).U16(Protocol.Vt.Path).U32((uint)verbs.Length).U32(pointCount).Bytes(verbs).Pad();
+            return p.Zeros((int)pointCount * 8);
+        }
+    }
+
+    // Rejection branches of the entry-based commands and of path values (NCMD-15): each case asserts the return code and a part
+    // of the reason. A malformed command changes nothing, so the elements stay valid across the cases.
+    static void RejectCases(Scenario s, IntPtr w, Buf b)
+    {
+        const uint fx = 3000, qml = 3001, shape = 3002, rect = 3003;
+        int rc = Native.Apply(w, b.Clear().Create(fx, Protocol.Type.ShaderEffect).Create(qml, Protocol.Type.Qml)
+            .Create(shape, Protocol.Type.Shape).Create(rect, Protocol.Type.Rectangle).Span);
+        s.Check(rc == 0, $"reject cases: create elements ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+
+        void Case(string what, ushort op, Pay p, int expected, string mustContain)
+        {
+            var r = Native.Apply(w, b.Clear().Cmd(op, p.ToArray()).Span);
+            var e = Native.LastError();
+            var got = Native.vlqt_window_get_apply_error(w, out var ae);
+            var ok = r == expected && (expected == 0 || (e.Contains(mustContain) && got == 0 && ae.rc == expected && ae.Reason.Contains(mustContain)));
+            s.Check(ok, $"reject {what} -> {r} \"{(expected == 0 ? "" : e)}\"");
+        }
+        const ushort uni = Protocol.Op.SetUniforms, qop = Protocol.Op.SetQmlProperties, chain = Protocol.Op.SetEffectChain;
+        const ushort F = Protocol.Vt.F32, V4 = Protocol.Vt.Vec4, Str = Protocol.Vt.String;
+        var name256 = new string('n', 256);
+
+        // SET_UNIFORMS
+        Case("uniforms: valid entry (control)", uni, Pay.Head(fx, 1).F4Entry(F, "a", 1), 0, "");
+        Case("uniforms: payload < 8", uni, new Pay().U32(fx).U16(0), -2, "too short");
+        Case("uniforms: name length 0", uni, Pay.Head(fx, 1).Entry(F, "a", new byte[4], nameLen: 0), -7, "name length 0");
+        Case("uniforms: name length 256", uni, Pay.Head(fx, 1).Entry(F, name256, new byte[4]), -7, "name length 256");
+        Case("uniforms: entry past the payload", uni, Pay.Head(fx, 1).U16(V4).U16(1).Bytes((byte)'a', 0, 0, 0).Zeros(4), -2, "exceeds the payload");
+        Case("uniforms: count larger than the entries", uni, Pay.Head(fx, 2).F4Entry(F, "a", 1), -2, "truncated entry");
+        Case("uniforms: trailing bytes", uni, Pay.Head(fx, 1).F4Entry(F, "a", 1).Zeros(4), -2, "bytes after the last entry");
+        Case("uniforms: STRING not allowed", uni, Pay.Head(fx, 1).Entry(Str, "a", new byte[4]), -7, "not allowed");
+        Case("uniforms: unknown value type", uni, Pay.Head(fx, 1).Entry(999, "a", new byte[4]), -7, "not allowed");
+        Case("uniforms: sampler out of range", uni, Pay.Head(fx, 1).Entry(Protocol.Vt.Sampler, "a", new byte[] { 9, 0, 0, 0, 0, 0, 0, 0 }), -7, "sampler state");
+        Case("uniforms: unknown ref", uni, Pay.Head(fx, 1).Entry(Protocol.Vt.Ref, "a", new byte[] { 0x39, 5, 0, 0 }), -4, "unknown ref id 1337");
+        Case("uniforms: unknown id", uni, Pay.Head(9999, 0), -4, "unknown id 9999");
+        Case("uniforms: not a ShaderEffect", uni, Pay.Head(rect, 0), -6, "ShaderEffect only");
+
+        // SET_QML_PROPERTIES
+        Case("qml: valid entries (control)", qop, Pay.Head(qml, 2).F4Entry(F, "a", 1).Entry(Str, "s", new Pay().U32(2).Bytes((byte)'h', (byte)'i').ToArray()), 0, "");
+        Case("qml: payload < 8", qop, new Pay().U32(qml).U16(0), -2, "too short");
+        Case("qml: name length 0", qop, Pay.Head(qml, 1).Entry(F, "a", new byte[4], nameLen: 0), -7, "name length 0");
+        Case("qml: name length 256", qop, Pay.Head(qml, 1).Entry(F, name256, new byte[4]), -7, "name length 256");
+        Case("qml: entry past the payload", qop, Pay.Head(qml, 1).U16(V4).U16(1).Bytes((byte)'a', 0, 0, 0).Zeros(4), -2, "exceeds the payload");
+        Case("qml: string length past the payload", qop, Pay.Head(qml, 1).Entry(Str, "s", new Pay().U32(1000).Bytes(1, 2, 3, 4).ToArray()), -2, "exceeds the payload");
+        Case("qml: string without its length field", qop, Pay.Head(qml, 1).U16(Str).U16(1).Bytes((byte)'s', 0, 0, 0), -2, "exceeds the payload");
+        Case("qml: count larger than the entries", qop, Pay.Head(qml, 2).F4Entry(F, "a", 1), -2, "truncated entry");
+        Case("qml: trailing bytes", qop, Pay.Head(qml, 1).F4Entry(F, "a", 1).Zeros(4), -2, "bytes after the last entry");
+        Case("qml: unknown value type", qop, Pay.Head(qml, 1).Entry(999, "a", new byte[4]), -7, "unknown value type");
+        Case("qml: PATH not allowed", qop, Pay.Head(qml, 1).Entry(Protocol.Vt.Path, "a", new byte[8]), -7, "not allowed");
+        Case("qml: not a QmlElement", qop, Pay.Head(rect, 0), -6, "QmlElement only");
+
+        // SET_EFFECT_CHAIN
+        const ushort multi = Protocol.EffectLink.Multi, shader = Protocol.EffectLink.Shader, single = Protocol.EffectTemplate.Single;
+        Case("chain: empty chain (control)", chain, Pay.ChainHead(rect, 0), 0, "");
+        Case("chain: SHADER link (control)", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1)), 0, "");
+        Case("chain: payload < 8", chain, new Pay().U32(rect).U16(0), -2, "too short");
+        Case("chain: unknown id", chain, Pay.ChainHead(9999, 0), -4, "unknown id 9999");
+        Case("chain: truncated link header", chain, Pay.ChainHead(rect, 1).U32(0), -2, "truncated link header");
+        Case("chain: misaligned bodyLen", chain, Pay.ChainHead(rect, 1).Link(multi, 0, new Pay().Zeros(4), bodyLen: 2), -2, "not aligned");
+        Case("chain: bodyLen past the payload", chain, Pay.ChainHead(rect, 1).Link(multi, 0, new Pay(), bodyLen: 64), -2, "exceeds the payload");
+        Case("chain: unknown link kind", chain, Pay.ChainHead(rect, 1).Link(3, 0, new Pay()), -7, "unknown kind 3");
+        Case("chain: unknown template", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(9, 1)), -7, "unknown template 9");
+        Case("chain: SINGLE with 2 shaders", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 2)), -7, "takes 1 shader id");
+        Case("chain: PYRAMID with 1 shader", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(Protocol.EffectTemplate.Pyramid, 1)), -7, "takes 2 shader id");
+        Case("chain: truncated SHADER head", chain, Pay.ChainHead(rect, 1).Link(shader, 0, new Pay().U16(single).U16(1).Zeros(8)), -2, "truncated SHADER head");
+        Case("chain: reserved field not 0", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1, reserved: 7)), -7, "reserved field 7");
+        Case("chain: shader uniform name length 0", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).Entry(F, "a", new byte[4], nameLen: 0)), -7, "name length 0");
+        Case("chain: shader uniform name length 256", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).Entry(F, name256, new byte[4])), -7, "name length 256");
+        Case("chain: shader uniform past the body", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).U16(V4).U16(1).Bytes((byte)'a', 0, 0, 0).Zeros(4)), -2, "exceeds the body");
+        Case("chain: shader uniform count larger", chain, Pay.ChainHead(rect, 1).Link(shader, 2, Pay.ShaderBody(single, 1).F4Entry(F, "a", 1)), -2, "truncated entry");
+        Case("chain: shader uniform STRING not allowed", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).Entry(Str, "a", new byte[4])), -7, "not allowed");
+        Case("chain: trailing bytes in a body", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1).Zeros(4)), -2, "bytes after the last entry of the body");
+        Case("chain: trailing bytes after the last link", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1)).Zeros(4), -2, "bytes after the last link");
+        Case("chain: link count larger than the links", chain, Pay.ChainHead(rect, 2).Link(shader, 0, Pay.ShaderBody(single, 1)), -2, "truncated link header");
+        Case("chain: MULTI truncated entry", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay()), -2, "truncated entry");
+        Case("chain: MULTI unknown key", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(1).U16(F).F32(0)), -6, "is no MULTI key");
+        Case("chain: MULTI wrong value type", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(Protocol.Prop.EffectBlurEnabled).U16(F).F32(0)), -7, "takes");
+        Case("chain: MULTI entry past the body", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(Protocol.Prop.EffectBlurEnabled).U16(Protocol.Vt.Bool)), -2, "exceeds the body");
+        Case("chain: MULTI trailing bytes in the body", chain, Pay.ChainHead(rect, 1).Link(multi, 0, new Pay().Zeros(4)), -2, "bytes after the last entry of the body");
+
+        // Path values (SET of ShapePath)
+        const ushort set = Protocol.Op.Set;
+        Case("path: valid (control)", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Line, Protocol.Verb.Close }, 2), 0, "");
+        Case("path: unknown verb", set, Pay.PathSet(shape, new byte[] { Protocol.Verb.Move, 9 }, 2), -7, "unknown verb 9");
+        Case("path: too few points", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Cubic }, 2), -7, "the verbs take 4");
+        Case("path: too many points", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Line }, 3), -7, "the verbs take 2");
+        Case("path: counts past the payload", set, new Pay().U32(shape).U16(Protocol.Prop.ShapePath).U16(Protocol.Vt.Path).U32(0xFFFFFFFF).U32(0xFFFFFFFF), -2, "value length");
+
+        // Rejected commands changed nothing: the elements still take a valid command.
+        rc = Native.Apply(w, b.Clear().Cmd(uni, Pay.Head(fx, 1).F4Entry(F, "a", 1).ToArray()).Span);
+        s.Check(rc == 0, $"reject cases: element still valid ({rc}) {(rc != 0 ? Native.LastError() : "")}");
     }
 
     // Grabs are in device pixels (HiDPI); test coordinates are logical (800x600).
@@ -240,6 +383,8 @@ public static class ApplyTest
         s.Pump(3);
         using (var a = s.Grab(w, "apply_reset.png"))
             s.Check(Near(Px(a, 400, 300), 128, 0, 0), $"reset: scene empty, clear color kept ({Px(a, 400, 300)})");
+
+        RejectCases(s, w, b);
 
         s.Pump(2);
         Native.vlqt_window_destroy(w); // releases all remaining ids
