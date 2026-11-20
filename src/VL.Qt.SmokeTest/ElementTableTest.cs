@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using NUnit.Framework;
 using VL.Qt;
 
@@ -218,6 +220,14 @@ public static class ElementTableTest
         finally
         {
             Native.vlqt_window_destroy(w);
+            // The Video row starts QtMultimedia (player, audio output) only for a moment. A process that ends right after
+            // that stays behind as an unkillable testhost (run alone: element-table is the last scenario). Like the video
+            // test, let it settle for a while before the scenario ends.
+            for (var t = Stopwatch.StartNew(); t.ElapsedMilliseconds < 2000;)
+            {
+                s.Pump(1);
+                Thread.Sleep(15);
+            }
         }
     }
 
