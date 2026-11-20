@@ -57,7 +57,12 @@ static class ImageCompare
             s.Skip($"{string.Join("+", scenarios)}: the compare runs on WARP (Windows only)");
             return;
         }
-        var env = new Dictionary<string, string> { ["QSG_RHI_PREFER_SOFTWARE_RENDERER"] = "1" };
+        var env = new Dictionary<string, string>
+        {
+            ["QSG_RHI_PREFER_SOFTWARE_RENDERER"] = "1",
+            // The references are rendered at device pixel ratio 1; the monitor scale must not change the grab.
+            ["QT_ENABLE_HIGHDPI_SCALING"] = "0",
+        };
         if (update || SmokeParameters.UpdateRefs)
             env["VLQT_SMOKE_UPDATEREFS"] = "1";
         OwnProcess.Run(s, scenarios, env);
