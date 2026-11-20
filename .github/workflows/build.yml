@@ -473,49 +473,40 @@ jobs:
       - name: Build SmokeTest (win-x64)
         run: dotnet build src/VL.Qt.SmokeTest -c Release -v q -nologo -p:RuntimeIdentifier=win-x64
 
-      # The full log (incl. qt.rhi/qt.scenegraph debug, which the SmokeTest checks itself) goes to smoke-out/;
-      # the job log shows only the summary, the full logs are printed and uploaded on failure.
+      # NUnit run (one Qt start; device-lost, the QtTexture thread modes etc. are own-process tests inside it). Results in
+      # build/smoke: smoke.trx, checks.tsv (one line per check), smoke.log (Qt log incl. qt.rhi/qt.scenegraph debug, which the
+      # SmokeTest checks itself), grabs/. The job log shows the failing tests; the whole folder is uploaded on failure.
       - name: Run SmokeTest
         shell: pwsh
+        env:
+          # Device lost (#367) removes the D3D11 device for real (D3D11On12) on the software adapter (WARP) of this GPU-less runner.
+          QSG_RHI_PREFER_SOFTWARE_RENDERER: '1'
         run: |
-          $exe = Get-ChildItem src/VL.Qt.SmokeTest/bin -Recurse -Filter VL.Qt.SmokeTest.exe | Select-Object -First 1
-          New-Item -ItemType Directory -Force smoke-out | Out-Null
           # A crash must fail fast instead of waiting for the invisible Windows Error Reporting dialog.
           New-Item -Force 'HKCU:\Software\Microsoft\Windows\Windows Error Reporting' | Out-Null
           Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Windows Error Reporting' -Name DontShowUI -Value 1 -Type DWord
           Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\Windows Error Reporting' -Name Disabled -Value 1 -Type DWord
-          $sw = [Diagnostics.Stopwatch]::StartNew()
-          $p = Start-Process $exe.FullName -ArgumentList 'smoke-out/grabs' -NoNewWindow -PassThru -RedirectStandardOutput smoke-out/stdout.log -RedirectStandardError smoke-out/stderr.log
-          # 8 min: the run takes ~265 s on the hosted runner since the QtTexture render-thread checks (#116, software
-          # adapter path); 3 min was too tight before (#65 hit it with 0 FAIL). A hang inside a check fails by the watchdog.
-          if (-not $p.WaitForExit(480000)) { $p.Kill($true); throw 'SmokeTest timeout (8 min)' }
-          $p.WaitForExit()
-          $out = Get-Content smoke-out/stdout.log
-          "SmokeTest exit code {0}, {1:N0} s, {2} PASS, {3} FAIL" -f $p.ExitCode, $sw.Elapsed.TotalSeconds,
-            @($out -match '^PASS ').Count, @($out -match '^FAIL ').Count
-          $out -match '^(FAIL|WARN|SMOKE) '
-          $err = @(Get-Content smoke-out/stderr.log)
-          "stderr: {0} lines, FFmpeg noise (Input #/Stream #/dxva2/AVHWFramesContext): {1}" -f $err.Count, @($err -match 'Input #|Stream #|dxva2|AVHWFramesContext').Count
-          if ($p.ExitCode -ne 0) { throw "SmokeTest failed (exit $($p.ExitCode))" }
-
-      # Device lost (#367): the D3D11 device is removed for real (D3D11On12), with the software D3D11 adapter (WARP).
-      - name: Run SmokeTest device-lost (WARP)
-        shell: pwsh
-        env:
-          QSG_RHI_PREFER_SOFTWARE_RENDERER: '1'
-        run: |
-          $exe = Get-ChildItem src/VL.Qt.SmokeTest/bin -Recurse -Filter VL.Qt.SmokeTest.exe | Select-Object -First 1
-          $p = Start-Process $exe.FullName -ArgumentList 'smoke-out/devicelost','--only','device-lost' -NoNewWindow -PassThru -RedirectStandardOutput smoke-out/devicelost-stdout.log -RedirectStandardError smoke-out/devicelost-stderr.log
-          if (-not $p.WaitForExit(120000)) { $p.Kill($true); throw 'device-lost timeout (2 min)' }
-          $p.WaitForExit()
-          $out = Get-Content smoke-out/devicelost-stdout.log
-          $out -match '^(PASS|FAIL|INFO 367|SMOKE) ' | Select-Object -Last 40
-          if ($p.ExitCode -ne 0) {
-            # QtNative's log (vlqt.device, Qt warnings) goes to stdout with the PASS/FAIL lines.
-            '--- devicelost-stdout.log (vlqt.device, device lost, last 30) ---'
-            $out | Select-String 'vlqt\.device|device lost|Device loss' | Select-Object -Last 30 | ForEach-Object Line
-            throw "device-lost failed (exit $($p.ExitCode))"
+          # The run takes ~265 s on the hosted runner (+ device-lost); a hang inside a test is stopped by the blame-hang timeout
+          # (8 min, kills the test host) and by the scenario watchdog.
+          dotnet test src/VL.Qt.SmokeTest -c Release -nologo -p:RuntimeIdentifier=win-x64 `
+            --logger 'trx;LogFileName=smoke.trx' --results-directory build/smoke `
+            --blame-hang --blame-hang-timeout 8m
+          $code = $LASTEXITCODE
+          $trx = 'build/smoke/smoke.trx'
+          if (Test-Path $trx) {
+            $ns = @{ t = 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010' }
+            $c = ([xml](Get-Content $trx -Raw)).TestRun.ResultSummary.Counters
+            "SmokeTest exit code {0}: {1} passed, {2} failed, {3} not executed of {4} tests" -f $code, $c.passed, $c.failed, $c.notExecuted, $c.total
+            foreach ($r in (Select-Xml -Path $trx -XPath '//t:UnitTestResult[@outcome="Failed"]' -Namespace $ns).Node) {
+              "FAILED TEST $($r.testName)"
+              $r.Output.ErrorInfo.Message -split "`n" | Select-Object -First 8 | ForEach-Object { "    $_" }
+            }
+            if ([int]$c.executed -eq 0 -and $code -eq 0) { $code = 1; 'no SmokeTest ran' }
           }
+          if (Test-Path build/smoke/checks.tsv) {
+            Get-Content build/smoke/checks.tsv | Where-Object { ($_ -split "`t")[1] -eq 'FAIL' } | ForEach-Object { 'FAIL check: ' + ($_ -replace "`t", ' | ') }
+          }
+          if ($code -ne 0) { throw "SmokeTest failed (exit $code)" }
 
       - name: Diagnostics (on failure)
         if: failure()
@@ -524,15 +515,14 @@ jobs:
           Get-CimInstance Win32_VideoController | ForEach-Object { "GPU: {0} (driver {1})" -f $_.Name, $_.DriverVersion }
           "Session: $env:SESSIONNAME, user $env:USERNAME, OS $([Environment]::OSVersion.Version)"
           Get-ChildItem runtimes/win-x64/native/plugins/platforms -ErrorAction SilentlyContinue | ForEach-Object Name
-          if (Test-Path smoke-out/stdout.log) { '--- stdout (last 60) ---'; Get-Content smoke-out/stdout.log -Tail 60 }
-          if (Test-Path smoke-out/stderr.log) { '--- stderr (last 30) ---'; Get-Content smoke-out/stderr.log -Tail 30 }
+          if (Test-Path build/smoke/smoke.log) { '--- smoke.log (Qt log, last 60) ---'; Get-Content build/smoke/smoke.log -Tail 60 }
 
       - name: Upload logs and grabs (on failure)
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: smoke-failure
-          path: smoke-out
+          path: build/smoke   # smoke.trx, checks.tsv, smoke.log, grabs/
           if-no-files-found: ignore
           retention-days: 3
 
