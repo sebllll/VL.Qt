@@ -184,6 +184,10 @@ public static class ReconcilerTest
             $"(p99 {reconcileMs[Frames * 99 / 100]:F4}, max {reconcileMs[^1]:F4}), apply median {applyMs[Frames / 2]:F4} ms " +
             $"(p99 {applyMs[Frames * 99 / 100]:F4}, max {applyMs[^1]:F4}), {alloc} bytes allocated in {Frames} frames");
         s.Check(errors == 0 && commands == Frames, $"perf: 1 command per frame, no apply errors ({commands}, {errors})");
+        s.Perf("reconciler.first_frame_1000_reconcile", createReconcileMs);
+        s.Perf("reconciler.first_frame_1000_apply", createApplyMs);
+        s.Perf("reconciler.steady_reconcile_write_median", reconcileMs[Frames / 2]);
+        s.Perf("reconciler.steady_apply_median", applyMs[Frames / 2]);
         PerfLimits.Below(s, reconcileMs[Frames / 2], 1.0, $"perf: reconcile+write median < 1 ms ({reconcileMs[Frames / 2]:F4} ms)");
         PerfLimits.Below(s, applyMs[Frames / 2], 1.0, $"perf: apply median < 1 ms ({applyMs[Frames / 2]:F4} ms)");
         s.Check(alloc < 1024, $"perf: {Frames} frames reconcile + apply allocate < 1 KB ({alloc} bytes)");

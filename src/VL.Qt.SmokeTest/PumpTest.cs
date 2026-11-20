@@ -293,6 +293,7 @@ public static class PumpTest
             if (mean1 < 2.0 * PerfLimits.Factor) break; // within the limit, no need for another round
         }
         pump.Register(b);
+        s.Perf("pump.mean_1_window", mean1);
         PumpLimit(s, mean1, presentMean1, "1 window", $"{mean1:F3} ms");
 
         // 1c. Moving content inside an effect layer source (#137): exactly one swap per pump, no overlay needed,

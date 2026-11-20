@@ -157,6 +157,8 @@ public static class CoreTest
         }, cpuBound: true);
         s.Info($"10000 SET bounds ({cmd.Length} bytes): apply median {applyMedian:F3} ms (last round: min {applyMs[0]:F3}, max {applyMs[^1]:F3}), " +
             $"CommandWriter median {writeMs[10]:F3} ms");
+        s.Perf("core-perf.apply_10000_set", applyMedian);
+        s.Perf("core-perf.writer_10000_set", writeMs[10]);
         PerfLimits.Below(s, applyMedian, 2.0, $"10000 SET in one apply < 2 ms (median {applyMedian:F3} ms)", cpuBound: true);
 
         // No managed allocation per frame: 1000 frames of writer + apply.

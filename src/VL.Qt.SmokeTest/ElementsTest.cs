@@ -150,6 +150,8 @@ public static class ElementsTest
         s.Pump(1);
         var totalMs = sw.Elapsed.TotalMilliseconds;
         s.Check(rcp == 0, $"create 1000 groups ({rcp})");
+        s.Perf("elements.create_1000_groups_apply", applyMs);
+        s.Perf("elements.create_1000_groups_first_frame_total", totalMs);
         s.Info($"GROUP create+bounds+reparent: apply {applyMs:F2} ms, incl. first frame {totalMs:F2} ms");
 
         // 1000 transforms per frame (Matrix4x4.matrix via cached QMetaProperty; first one attaches).
@@ -165,6 +167,7 @@ public static class ElementsTest
             times[run] = sw.Elapsed.TotalMilliseconds;
         }
         Array.Sort(times, 1, times.Length - 1);
+        s.Perf("elements.set_transform_1000_median", times[5]);
         s.Info($"SET Transform: first (attach) {times[0]:F2} ms, then median {times[5]:F3} ms");
 
         Native.vlqt_window_destroy(w);
