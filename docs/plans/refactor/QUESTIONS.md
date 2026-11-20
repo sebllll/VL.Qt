@@ -74,6 +74,7 @@ No pin uses them; every node outputs `Element`.
 - Recommended: ELM says (a), API says (b) for 0.10.0 (API-01). Making them public later breaks nothing; the reverse does.
 - Source: ELM Q2, API Q5
 - Decision: (b), internal for 0.10.0 (Sebastian, 2026-11-19). Check in vvvv what the tooltip of an `Element` link shows afterwards (`manual-check`).
+- **Wave 1 (W1-18):** confirmed in vvvv by Sebastian, 2026-11-20 (vvvv 8.0-0317 x64, HowTo Draw a Rectangle): the Rectangle→Renderer link tooltip shows the element preview. The tooltip comes from `ElementViewer`, registered as `IValueViewer<Element>` in `VL.Qt.HDE.vl`; it must move to `IElement` (and the `TooltipPreview` input) when nodes output `IElement` (W4-16).
 
 ### A7 Naming principle of the node API: do VL.Skia and VL.ImGui win?
 Many single questions in C and the catalog of 23_api.md are the same question: where VL.Skia (drawing, paths, renderer) or VL.ImGui (widgets) has a node or pin of the same meaning, VL.Qt takes its name, pin names and units, quirks included; otherwise the general vvvv conventions (cycles for angles, `Set…`/getter pattern of records). Qt names are used only where vvvv has no word.
@@ -325,6 +326,7 @@ About 200 duplicated doc lines across 24 nodes.
 - Recommended: (a); a generator only if the node count grows well beyond 24.
 - Source: NODE Q1 (NODE-03)
 - Decision: (a), `<include>`; the issue checks in vvvv that the included text shows as pin help (Sebastian, 2026-11-19).
+- **Wave 1 (W1-18):** confirmed in vvvv by Sebastian, 2026-11-20 (vvvv 8.0-0317 x64): the included text shows as pin help (tooltip of the Opacity pin). An `<include>` must replace the whole `<param>` element (`<include file="…" path="docs/param[@name='x']"/>`); inside a `<param>` with `node()` it gives CS1589.
 
 ### D2 K5: drop the rule for `[Pin(Visibility = PinVisibility.Hidden)]` on `NodeContext`?
 vvvv recognises the parameter by its type; VL.StandardLibs has 66 constructors without and 4 with the attribute.
