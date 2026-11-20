@@ -97,6 +97,38 @@ public static class ClipVideoPerfTest
                 s.Info($"clip-grab: {label}: Clip off vs on differs in {diff} of {off.Width * off.Height} pixels");
                 s.Perf($"clip-grab {label} differing pixels", diff, "px");
             }
+
+        // Positive control: the same grab and Clip setting must see a clip where content reaches outside the bounds. A parent
+        // Rectangle 150 x 100 DIP with a child 150 x 100 DIP shifted by (100, 50); Clip off, then on, on the native element itself.
+        void Control(bool clip)
+        {
+            cmd.Reset();
+            if (!clip)
+            {
+                cmd.Create(900001, Protocol.Type.Rectangle);
+                cmd.SetPlace(900001, 20, 20, 150, 100);
+                cmd.SetColor(900001, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+                cmd.Reparent(900001, 0, 0);
+                cmd.Create(900002, Protocol.Type.Rectangle);
+                cmd.SetPlace(900002, 100, 50, 150, 100);
+                cmd.SetColor(900002, Protocol.Prop.Color, 0, 0, 1, 1);
+                cmd.Reparent(900002, 900001, 0);
+            }
+            else
+                cmd.SetBool(900001, Protocol.Prop.Clip, true);
+            s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"clip-grab: apply control clip={clip} {Native.LastError()}");
+            s.Pump(6);
+        }
+        Control(false);
+        using (var controlOff = s.Grab(w, "clip_control_off.png"))
+        {
+            Control(true);
+            using var controlOn = s.Grab(w, "clip_control_on.png");
+            var diff = Diff(controlOff, controlOn);
+            s.Info($"clip-grab: control (child outside the parent): Clip off vs on differs in {diff} of {controlOff.Width * controlOff.Height} pixels (expected > 0)");
+            s.Perf("clip-grab control differing pixels", diff, "px");
+            s.Check(diff > 0, "clip-grab: positive control, Clip on cuts a child that reaches outside");
+        }
         Native.vlqt_window_destroy(w);
         s.Pump(2);
     }
