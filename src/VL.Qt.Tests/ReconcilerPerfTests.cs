@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Linq;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
+using VL.Lib.Collections;
 using VL.Qt.Elements;
+using VL.Qt.Styles;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
@@ -25,12 +28,12 @@ namespace VL.Qt.Tests
         /// <summary>One frame of a prepared scenario plus the commands it must write.</summary>
         sealed record Scenario(string Label, Action Step, Func<int> Commands, int ExpectedCommands);
 
-        static Scenario Alternating(string label, Element a, Element b, int expectedSets)
+        static Scenario Alternating(string label, Element a, Element b, int expectedSets, int minFirstFrame = N * 3)
         {
             var writer = new CommandWriter();
             var rec = new Reconciler(writer, new IdAllocator(), new SceneRegistry());
             rec.Update(a, Space.DIPTopLeft);
-            Assert.That(writer.Count, Is.GreaterThan(N * 3), "first frame creates the whole tree");
+            Assert.That(writer.Count, Is.GreaterThan(minFirstFrame), "first frame creates the whole tree");
             int frame = 0;
             Action step = () =>
             {
@@ -162,6 +165,90 @@ namespace VL.Qt.Tests
             return new Scenario("Group, 1000 bound children, 1 change/frame:", step, () => writer.Count, 1);
         }
 
+        // --- REC-16: paths the cases above do not reach (the changed element is a new instance every frame) ---
+
+        static Style RadiusStyle(float r) => new() { Frame = new FrameStyle { Radius = default(StateValues<float>).With(StyleStates.Normal, r) } };
+
+        static Scenario ShaderEffectAnimatedUniform()
+        {
+            // REC-08: three uniforms, one animated float; the effect is a new instance every frame, one UNIFORMS command.
+            var input = new Rectangle { Size = new Vector2(1, 1) };
+            ShaderEffect Make(float time) => new()
+            {
+                Input = input, FragmentShaderId = 11,
+                Uniforms = new[] { Uniform.Float("time", time), Uniform.Vector2("size", new Vector2(2, 3)), Uniform.Color("tint", Color4.White) }.ToSpread(),
+            };
+            return Alternating("ShaderEffect, 3 uniforms, 1 animated:", new Group { Children = [Make(0f)] }, new Group { Children = [Make(1f)] }, expectedSets: 1, minFirstFrame: 5);
+        }
+
+        static Scenario AnimatedEffectChain()
+        {
+            // REC-09: the chain is a new instance every frame (an animated blur), one CHAIN command.
+            Element Make(float amount) => new Group { Children = [new Rectangle { Size = new Vector2(1, 1), Effect = new BlurEffect(null, amount, 32, 0) }] };
+            return Alternating("Rectangle with animated blur chain:", Make(0.5f), Make(0.7f), expectedSets: 1, minFirstFrame: 5);
+        }
+
+        static Scenario GroupWithAnimatedStyle()
+        {
+            // A Group whose Style changes every frame; its 10 Button children all take the style.
+            var buttons = ImmutableArray.CreateRange(Enumerable.Range(0, 10).Select(_ => (Element)new Button()));
+            return Alternating("Group with Style changing every frame:", new Group { Style = RadiusStyle(5), Children = buttons },
+                new Group { Style = RadiusStyle(9), Children = buttons }, expectedSets: 10, minFirstFrame: 10);
+        }
+
+        static Scenario HandlersChangingEveryFrame()
+        {
+            // Tap + Drag on one element; both handlers are new instances every frame with changed properties, the slots stay.
+            var tapSlot = new SinkSlot(new ElementSink(), 0);
+            var dragSlot = new SinkSlot(new ElementSink(), 0);
+            Element Make(PointerButtons buttons, DragAxis axis) => new Group
+            {
+                Children = [new Rectangle
+                {
+                    Size = new Vector2(1, 1),
+                    Interaction = new DragInteraction(new ClickInteraction(null, tapSlot, buttons, PointerDevices.All), dragSlot, true, axis, DragLimits.None, buttons, PointerDevices.All),
+                }],
+            };
+            return Alternating("Tap + Drag handlers changing every frame:", Make(PointerButtons.Left, DragAxis.Both), Make(PointerButtons.Right, DragAxis.Vertical), expectedSets: 3, minFirstFrame: 5);
+        }
+
+        /// <summary>Two reconcilers (own writers) on one registry; the shared element is a new instance of one slot every frame.</summary>
+        static Scenario TwoRenderersSharedElement(bool aFirst)
+        {
+            var scene = new SceneRegistry();
+            var slot = new SinkSlot(new ElementSink(), 0);
+            var wa = new CommandWriter();
+            var wb = new CommandWriter();
+            var ra = new Reconciler(wa, new IdAllocator(), scene);
+            var rb = new Reconciler(wb, new IdAllocator(), scene);
+            var a = SharedRoot(slot, 1);
+            var b = SharedRoot(slot, 2);
+            ra.Update(a, Space.DIPTopLeft);
+            rb.Update(a, Space.DIPTopLeft);
+            int frame = 0;
+            Action step = () =>
+            {
+                var root = (frame++ & 1) == 0 ? b : a;
+                wa.Reset();
+                wb.Reset();
+                if (aFirst)
+                {
+                    ra.Update(root, Space.DIPTopLeft);
+                    rb.Update(root, Space.DIPTopLeft);
+                }
+                else
+                {
+                    rb.Update(root, Space.DIPTopLeft);
+                    ra.Update(root, Space.DIPTopLeft);
+                }
+                wa.EndFrame();
+                wb.EndFrame();
+            };
+            return Warm(new Scenario($"Two renderers, shared element changing, {(aFirst ? "A then B" : "B then A")}:", step, () => wa.Count + wb.Count, 2));
+        }
+
+        static Group SharedRoot(SinkSlot slot, float width) => new() { Children = [new Rectangle { Size = new Vector2(width, 1), Sink = slot }] };
+
         [Test]
         public void Group_1000Rectangles_OneChangePerFrame_NoAllocations() => AssertNoAllocation(GroupOneColorChange());
 
@@ -189,5 +276,63 @@ namespace VL.Qt.Tests
         // The allocation check of the bound variant stays in ReconcilerSceneTests (it subtracts the test's own Group allocations).
         [Test, Category("Perf")]
         public void Group_1000BoundChildren_OneChangePerFrame_Fast() => AssertFast(BoundChildrenOneChange());
+
+        // --- REC-16 ---
+
+        [Test, Ignore("REC-08: UniformWriter builds a Dictionary and key strings per visit (456 B/frame measured)")]
+        public void ShaderEffect_ThreeUniforms_OneAnimated_NoAllocations() => AssertNoAllocation(ShaderEffectAnimatedUniform());
+
+        [Test, Category("Perf")]
+        public void ShaderEffect_ThreeUniforms_OneAnimated_Fast() => AssertFast(ShaderEffectAnimatedUniform());
+
+        [Test, Ignore("REC-09: ChangeEffectChain allocates Segment, lists and arrays when the chain instance changes (1472 B/frame measured)")]
+        public void EffectChain_Animated_NoAllocations() => AssertNoAllocation(AnimatedEffectChain());
+
+        [Test, Category("Perf")]
+        public void EffectChain_Animated_Fast() => AssertFast(AnimatedEffectChain());
+
+        [Test, Ignore("not in REC-01..10 (new finding for W1-14): a Group Style change with 10 Button children allocates 504 B/frame, cause not analysed")]
+        public void Group_StyleChangingEveryFrame_NoAllocations() => AssertNoAllocation(GroupWithAnimatedStyle());
+
+        [Test, Category("Perf")]
+        public void Group_StyleChangingEveryFrame_Fast() => AssertFast(GroupWithAnimatedStyle());
+
+        [Test]
+        public void Element_TapAndDragHandlersChangingEveryFrame_NoAllocations() => AssertNoAllocation(HandlersChangingEveryFrame());
+
+        [Test, Category("Perf")]
+        public void Element_TapAndDragHandlersChangingEveryFrame_Fast() => AssertFast(HandlersChangingEveryFrame());
+
+        [TestCase(true, IgnoreReason = "REC-10: old instance released and new one registered per frame (192 B/frame measured: RendererOccurrences and list, hand-over)")]
+        [TestCase(false, IgnoreReason = "REC-10: order B then A writes 3 commands instead of 2 (hand-over/owner flip), and allocates per frame")]
+        public void TwoRenderers_SharedElementChangingInstance_NoAllocations(bool aFirst) => AssertNoAllocation(TwoRenderersSharedElement(aFirst));
+
+        [TestCase(true)]
+        [TestCase(false, IgnoreReason = "REC-10: B registers the new instance first and becomes its owner; the owner is the renderer that updates first after a change")]
+        public void TwoRenderers_SharedElementChangingInstance_OwnerStaysTheFirstRenderer(bool aFirst)
+        {
+            // A2: the element is keyed by its slot; whichever renderer updates first after a change, A (first to show it) stays the owner.
+            var scene = new SceneRegistry();
+            var slot = new SinkSlot(new ElementSink(), 0);
+            var ra = new Reconciler(new CommandWriter(), new IdAllocator(), scene);
+            var rb = new Reconciler(new CommandWriter(), new IdAllocator(), scene);
+            var first = SharedRoot(slot, 1);
+            ra.Update(first, Space.DIPTopLeft);
+            rb.Update(first, Space.DIPTopLeft);
+            var ownerNode = ra.Root!.Children[0];
+            for (var i = 0; i < 6; i++)
+            {
+                var root = SharedRoot(slot, 2 + i);
+                if (aFirst) { ra.Update(root, Space.DIPTopLeft); rb.Update(root, Space.DIPTopLeft); }
+                else { rb.Update(root, Space.DIPTopLeft); ra.Update(root, Space.DIPTopLeft); }
+                var element = root.Children[0];
+                Assert.That(scene.OwnerOf(element, out var owner), Is.SameAs(ownerNode), $"frame {i}");
+                Assert.That(owner, Is.SameAs(ra), $"frame {i}");
+                Assert.That(scene.OccurrencesOf(element), Is.EqualTo(2), $"frame {i}");
+            }
+        }
+
+        [Test, Category("Perf")]
+        public void TwoRenderers_SharedElementChangingInstance_Fast() => AssertFast(TwoRenderersSharedElement(true));
     }
 }
