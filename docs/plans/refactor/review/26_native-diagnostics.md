@@ -39,6 +39,7 @@ The three changes that matter most: (1) make "pump" vs "Qt work" one defined qua
 - **Touches:** `perf.h`, `perf.cpp`, `vlqt.h`, `Native.cs`, `PerfStats.cs`, `docs/diagnostics.md`, `PerfStatsTest.cs`, `PerfOverlayTest.cs`
 - **Depends on:** NDIAG-10 (names)
 - **Verification:** `PerfStatsTest` with a synthetic sample that has a long vsync wait and a short render: counter does not increment. `PerfOverlayTest.VSyncWindowLabels` extended: VSync-on window, static scene, `over budget` stays 0.
+- **Wave 1 (W1-15):** confirmed by `PerfOverBudget` (`vlqt_perf_eval` counts all 20 synthetic pumps of 18 ms with 14 ms VSync wait and 4 ms Qt work as over budget). The live symptom was not seen on this machine (RTX 5080, 75 Hz screen, VSync window, host pump every 16 ms and every 4 ms): VSync wait about 0.03 ms, no pump over budget, counter 0; the static-scene check of the decision passes (counter 0 over 60 pumps). The defect is in the definition; how often it shows depends on where the platform waits.
 
 ### NDIAG-02 `Fps`/`FrameMs` and the phase averages are defined differently from the percentiles and from the F5 page
 - **Kind:** correctness
@@ -105,6 +106,7 @@ The three changes that matter most: (1) make "pump" vs "Qt work" one defined qua
 - **Touches:** `perf.cpp` (→ `perf_monitor.cpp`), `perf.h`, `offscreen.cpp` (read only)
 - **Depends on:** NDIAG-04
 - **Verification:** a QtTexture scene with the F5 overlay open under a stress loop (`QtTexturePerfTest.cs`) with the thread sanitizer on the Linux build; a 100-frame run with `VLQT_OFFSCREEN_THREAD=2` and two scenes shows one software warning at most.
+- **Wave 1 (W1-15):** dropped, by code reading only (no run can show the interleaving from C#, and no TSan build was run; evidence: medium to strong). `offscreen.cpp` runs every render-thread job that touches the monitor beyond `m_pending`/`m_done` as a blocking call (`onRenderThread` -> `RenderThread::call`, `BlockingQueuedConnection`): `renderControl->initialize()`, which emits `sceneGraphInitialized` -> `detectRenderer`, at create, bind and device restore, and `beginAndSync` (sync = `updatePaintNode` of PerfGraph/PerfTimeline) in `renderThreaded`. The main thread waits in each, so (1) and (3) never overlap a GUI-thread read, and (2) cannot warn twice because the main thread starts the initializations of a pool one after the other. The posted job (render, endFrame) touches only `m_pending` and `m_done` under `m_doneLock`. Left: `detectRenderer` writes a QML property of a GUI-thread item from the render thread while the GUI thread waits, which is an affinity break, not a race; the contract comment of (b) is still useful with NDIAG-04.
 
 ### NDIAG-07 F2, F5, F6 and F7 are swallowed in every window and cannot be turned off
 - **Kind:** api

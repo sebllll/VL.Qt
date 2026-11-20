@@ -75,6 +75,7 @@ Keep:
 - **Touches:** `src/VL.Qt.Native/shadereffectitem.cpp`
 - **Depends on:** none
 - **Verification:** new SmokeTest scenario `sampler-mip-shared` (one element read by two samplers, mip on the lower binding only, two frames, mip level visible in a minified read); existing `shader-effect`, `qtshaders`.
+- **Wave 1 (W1-11):** confirmed by `SamplerMipShared` (it fails for the cell with the mip filter on the higher binding `b` and none on `a`: the request of the last sampler wins and the mip filter is lost; ignored with the reason). Line added in W1-15.
 
 ### NFX-03 Make the GUI-side texture delete independent of the basic render loop
 - **Kind:** lifetime

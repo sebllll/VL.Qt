@@ -55,6 +55,7 @@ What is wrong or hard to follow:
 - **Touches:** `src/VL.Qt.Native/vlqt.cpp`, `src/VL.Qt.Native/offscreen.cpp`, `src/VL.Qt.Native/test_offscreen.cpp`, `src/VL.Qt.Native/vlqt.h`
 - **Depends on:** none (do before or together with CAPI-02)
 - **Verification:** SmokeTest `resources`, `font`, `qttexture` (error messages unchanged); `resource-stress` under TSan on Linux (#365 target) shows no race on `g_lastError`; a new SmokeTest check: call `vlqt_font_add` from a worker thread while the main thread fails an apply, both messages correct.
+- **Wave 1 (W1-15):** confirmed by `LastError` (a `vlqt_font_add` failure on a worker thread replaces the message the Qt thread reads after its own failed apply, and `vlqt_offscreen_is_bound(NULL)` returns -1 without a message, so the caller reads the text of the earlier apply). The render-thread suspicion is dropped by reading: `badArgument` (`offscreen.cpp:767`) is called only by the `vlqt_offscreen_send_*` input exports on the caller's thread, and no `setError`/`fail` of `offscreen.cpp` runs inside an `onRenderThread` job or a posted render job.
 
 ### CAPI-02 One return-code table for the whole API
 - **Kind:** api
