@@ -1,39 +1,44 @@
 ﻿using System;
+using NUnit.Framework;
 using System.Drawing;
 using System.IO;
 using Stride.Core.Mathematics;
 using VL.Qt;
 using Color = System.Drawing.Color;
 using RectangleF = System.Drawing.RectangleF;
+using static Pixels;
 
 // Row/Column in QtNative (plan 05e): Qt positioners + childAlignment, spacing, padding.
-// Grabs go to <outDir>/05_rowcolumn*.png. Values are DIP. Children get Bounds (0, 0, w, h) like the
+// Grabs go to <OutDir>/05_rowcolumn*.png. Values are DIP. Children get Bounds (0, 0, w, h) like the
 // reconciler sends them (04c: Bounds.Position of layout children is ignored).
-static class RowColumnTest
+[TestFixture, NonParallelizable]
+public static class RowColumnTest
 {
     // Containers
     const uint ColA = 1, ColB = 2, RowC = 3, ColD = 4;
     // Children: 10 + container * 10 + index
     static uint Child(uint container, uint index) => 10 + container * 10 + index;
 
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
     static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
     static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
     static bool IsBlue(Color c) => c.B > 200 && c.R < 40 && c.G < 40;
     static bool IsYellow(Color c) => c.R > 200 && c.G > 200 && c.B < 40;
-    static bool IsBg(Color c) => Math.Abs(c.R - 0x20) < 8 && Math.Abs(c.G - 0x20) < 8 && Math.Abs(c.B - 0x20) < 8;
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    /// <summary>Row and Column layout.</summary>
+    [Test, Category("rowcolumn")]
+    public static void RowColumn() => Scenario.Run(s => Run(s));
+
+    static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt row/column test");
-        check(w != IntPtr.Zero, "05e: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         int Apply() => Native.Apply(w, cmd.EndFrame());
         void CheckApply(string what)
         {
             var rc = Apply();
-            check(rc == 0, $"05e: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
         void Container(uint id, ushort type, RectangleF bounds, float spacing, float padding, int align)
         {
@@ -80,30 +85,30 @@ static class RowColumnTest
         cmd.SetI32(Child(ColD, 1), Protocol.Prop.Anchor, GeometryExtensions.AlignCenter); // pivot only inside a Column (#469)
         cmd.SetMat4(Child(ColD, 1), Protocol.Prop.Transform, in rot);
         CheckApply("row/column scene");
-        pump(3);
+        s.Pump(3);
 
-        using (var a = grab(w, Path.Combine(outDir, "05_rowcolumn.png")))
+        using (var a = s.Grab(w, "05_rowcolumn.png"))
         {
             // A: red y 30..70, green 90..130, blue 150..190, all at x 30 (padding 10).
-            check(IsRed(Px(a, 35, 35)) && IsGreen(Px(a, 35, 95)) && IsBlue(Px(a, 35, 155)),
-                $"05e: column stacks 3 children ({Px(a, 35, 35)}, {Px(a, 35, 95)}, {Px(a, 35, 155)})");
-            check(IsBg(Px(a, 35, 80)) && IsBg(Px(a, 35, 140)), "05e: column spacing 20 leaves gaps");
-            check(IsBg(Px(a, 25, 25)) && IsBg(Px(a, 25, 50)) && IsRed(Px(a, 31, 31)), "05e: column padding 10");
-            check(IsBg(Px(a, 95, 110)) && IsGreen(Px(a, 85, 110)), "05e: column child keeps its width (60)");
+            s.Check(IsRed(Px(a, 35, 35)) && IsGreen(Px(a, 35, 95)) && IsBlue(Px(a, 35, 155)),
+                $"column stacks 3 children ({Px(a, 35, 35)}, {Px(a, 35, 95)}, {Px(a, 35, 155)})");
+            s.Check(IsBg(Px(a, 35, 80)) && IsBg(Px(a, 35, 140)), "column spacing 20 leaves gaps");
+            s.Check(IsBg(Px(a, 25, 25)) && IsBg(Px(a, 25, 50)) && IsRed(Px(a, 31, 31)), "column padding 10");
+            s.Check(IsBg(Px(a, 95, 110)) && IsGreen(Px(a, 85, 110)), "column child keeps its width (60)");
             // B: HCenter in 180 -> red x 270..370, green 290..350, blue 250..390.
-            check(IsRed(Px(a, 275, 50)) && IsBg(Px(a, 265, 50)) && IsRed(Px(a, 365, 50)) && IsBg(Px(a, 375, 50)),
-                $"05e: column HCenter red ({Px(a, 265, 50)}, {Px(a, 275, 50)})");
-            check(IsGreen(Px(a, 295, 100)) && IsBg(Px(a, 285, 100)) && IsBg(Px(a, 355, 100)),
-                $"05e: column HCenter green ({Px(a, 285, 100)}, {Px(a, 295, 100)})");
-            check(IsBlue(Px(a, 255, 150)) && IsBg(Px(a, 245, 150)), "05e: column HCenter blue");
+            s.Check(IsRed(Px(a, 275, 50)) && IsBg(Px(a, 265, 50)) && IsRed(Px(a, 365, 50)) && IsBg(Px(a, 375, 50)),
+                $"column HCenter red ({Px(a, 265, 50)}, {Px(a, 275, 50)})");
+            s.Check(IsGreen(Px(a, 295, 100)) && IsBg(Px(a, 285, 100)) && IsBg(Px(a, 355, 100)),
+                $"column HCenter green ({Px(a, 285, 100)}, {Px(a, 295, 100)})");
+            s.Check(IsBlue(Px(a, 255, 150)) && IsBg(Px(a, 245, 150)), "column HCenter blue");
             // C: Bottom in 180 -> red y 160..210, green 110..210, blue 180..210; x 460/510/560.
-            check(IsRed(Px(a, 480, 205)) && IsBg(Px(a, 480, 150)) && IsGreen(Px(a, 530, 115)) && IsBg(Px(a, 530, 105))
+            s.Check(IsRed(Px(a, 480, 205)) && IsBg(Px(a, 480, 150)) && IsGreen(Px(a, 530, 115)) && IsBg(Px(a, 530, 105))
                 && IsBlue(Px(a, 580, 185)) && IsBg(Px(a, 580, 175)) && IsBg(Px(a, 580, 215)),
-                $"05e: row Bottom ({Px(a, 480, 205)}, {Px(a, 530, 115)}, {Px(a, 580, 185)})");
-            check(IsBg(Px(a, 505, 205)) && IsBg(Px(a, 455, 205)), "05e: row spacing/padding on x");
+                $"row Bottom ({Px(a, 480, 205)}, {Px(a, 530, 115)}, {Px(a, 580, 185)})");
+            s.Check(IsBg(Px(a, 505, 205)) && IsBg(Px(a, 455, 205)), "row spacing/padding on x");
             // D: green rotated around its center -> 40x100 at x 50..90, y 310..410; red/blue keep their slots.
-            check(IsBlue(Px(a, 25, 405)) && IsRed(Px(a, 25, 305)), "05e: transform of a child does not move siblings");
-            check(IsBg(Px(a, 25, 360)) && IsGreen(Px(a, 70, 330)), $"05e: child transform is visual ({Px(a, 25, 360)}, {Px(a, 70, 330)})");
+            s.Check(IsBlue(Px(a, 25, 405)) && IsRed(Px(a, 25, 305)), "transform of a child does not move siblings");
+            s.Check(IsBg(Px(a, 25, 360)) && IsGreen(Px(a, 70, 330)), $"child transform is visual ({Px(a, 25, 360)}, {Px(a, 70, 330)})");
         }
 
         // Updates: alignment Right, child size change, spacing/padding change, appended child.
@@ -115,24 +120,24 @@ static class RowColumnTest
         cmd.SetF32(RowC, Protocol.Prop.Padding, 30);
         Rect(Child(ColA, 3), ColA, 80, 20, 1, 1, 0);
         CheckApply("row/column updates");
-        pump(2);
-        using (var a = grab(w, Path.Combine(outDir, "05_rowcolumn_update.png")))
+        s.Pump(2);
+        using (var a = s.Grab(w, "05_rowcolumn_update.png"))
         {
             // B Right: red x 310..410, green (20 wide) 390..410.
-            check(IsRed(Px(a, 405, 50)) && IsBg(Px(a, 305, 50)), $"05e: column Right ({Px(a, 305, 50)}, {Px(a, 405, 50)})");
-            check(IsGreen(Px(a, 400, 100)) && IsBg(Px(a, 385, 100)), "05e: resized child realigned");
+            s.Check(IsRed(Px(a, 405, 50)) && IsBg(Px(a, 305, 50)), $"column Right ({Px(a, 305, 50)}, {Px(a, 405, 50)})");
+            s.Check(IsGreen(Px(a, 400, 100)) && IsBg(Px(a, 385, 100)), "resized child realigned");
             // A spacing 0: red 30..70, green 70..110 (120 wide), blue 110..150, yellow 150..170.
-            check(IsGreen(Px(a, 35, 75)) && IsGreen(Px(a, 145, 100)) && IsBlue(Px(a, 35, 115)) && IsYellow(Px(a, 35, 160))
-                && IsBg(Px(a, 35, 175)), $"05e: column spacing 0 + appended child ({Px(a, 35, 75)}, {Px(a, 35, 160)})");
+            s.Check(IsGreen(Px(a, 35, 75)) && IsGreen(Px(a, 145, 100)) && IsBlue(Px(a, 35, 115)) && IsYellow(Px(a, 35, 160))
+                && IsBg(Px(a, 35, 175)), $"column spacing 0 + appended child ({Px(a, 35, 75)}, {Px(a, 35, 160)})");
             // C padding 30: red y 140..190, x 480..520.
-            check(IsRed(Px(a, 500, 185)) && IsBg(Px(a, 500, 195)) && IsBg(Px(a, 470, 185)), "05e: row padding 30");
+            s.Check(IsRed(Px(a, 500, 185)) && IsBg(Px(a, 500, 195)) && IsBg(Px(a, 470, 185)), "row padding 30");
         }
 
         // Errors: wrong alignment flag per type -> -7, wrong value type -> -7, Rectangle property -> -6.
         void Expect(int expected, string what)
         {
             var rc = Apply();
-            check(rc == expected, $"05e: {what} -> {expected} ({rc}: {Native.LastError()})");
+            s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
             cmd.Reset();
         }
         cmd.Reset();

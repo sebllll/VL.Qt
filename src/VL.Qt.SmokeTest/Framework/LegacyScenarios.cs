@@ -33,37 +33,11 @@ public static class LegacyScenarios
 
     internal static readonly Row[] All =
     {
-        new("apply", s => ApplyTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("elements", s => ElementsTest.Run(s.OutDir, s.Check, s.Pump, s.Grab, () => s.Log)),
-        new("perfstats", s => PerfStatsTest.Run(s.Check, s.Pump)),
         new("perfoverlay", s => PerfOverlayTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("shapes", s => ShapeTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("text", s => TextTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("image", s => ImageTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("image-preview", s => ImagePreviewTest.Run(s.OutDir, s.Check, s.Pump)),
-        new("image-share", s => ImageShareTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("video", s => VideoTest.Run(s.OutDir, s.Check, s.Pump, s.Grab, () => s.Log)),
-        new("videoaudio", s => VideoAudioTest.Run(s.Check, s.Pump)),
-        new("videostop", s => VideoStopTest.Run(s.Check, s.Pump)),
-        new("replay", s => ReplayTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("rowcolumn", s => RowColumnTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("sizereset", s => SizeResetTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("restart", s => RestartTest.Run(s.OutDir, s.Check, s.Pump)),
-        new("reconciler", s => ReconcilerTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("containernode", s => ContainerNodeTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("resync", s => ResyncTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("anchor", s => AnchorTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("debug", s => DebugOverlayTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
         new("resoverlay", s => PerfOverlayTest.RunResources(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("resources", s => ResourceTest.Run(s.Check, s.Pump, () => s.Log)),
-        new("image-resource", s => ImageResourceTest.Run(s.OutDir, s.Check, s.Pump, () => s.Log)),
-        new("imagewrite", s => ImageWriteTest.Run(s.OutDir, s.Check)),
-        new("qtimage", s => QtImageTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
         new("snapshot", s => SnapshotTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
         new("tooltip", s => TooltipTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("font", s => FontTest.Run(s.OutDir, s.Check, s.Pump, s.Grab, () => s.Log)),
         new("group-frame", s => GroupFrameTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
-        new("space", s => SpaceTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
         new("qttexture", s => QtTextureTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
 #if WINDOWS
         new("Msaa", s => MsaaTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)),
@@ -73,19 +47,11 @@ public static class LegacyScenarios
         // Leaves two VSync windows open on purpose (process end with open windows on the shared device).
         new("clear-pin", s => ClearPinTest.Run(s.OutDir, s.Check, s.Pump, s.Grab)) { Categories = new[] { "ClearPin" } },
         new("shared-device", s => SharedDeviceTest.Run(s.Check, s.Pump)),
-        // After the resources scenario: process end with busy workers (#359).
-        new("resources-leave-jobs", s => ResourceTest.LeaveRunningJobs(s.Check, s.Pump)) { Categories = new[] { "resources" } },
 
         // Only on request. About a minute; the render thread count is fixed at the first scene: own process (#116 5.4).
         new("qttextureperf", s => QtTexturePerfTest.Run(s.Check, s.Pump), Kind.Explicit | Kind.OwnProcess),
-        // 60 s by default; parameters StressSeconds / StressSeed (#365, sanitizer runs).
-        new("resource-stress", s => ResourceStressTest.Run(s.OutDir, s.Check, s.Pump, () => s.Log, SmokeParameters.StressSeconds, SmokeParameters.StressSeed), Kind.Explicit),
-        // Former --replay <trace> [--load N] [--frames a-b] [--paced] [--overlay N] [--loop N]: parameters ReplayTrace, ReplayArgs (01e).
-        new("replay-cli", s => s.Check(SmokeParameters.ReplayTrace is { } t && ReplayTest.RunCli(t, s.OutDir, s.Pump, SmokeParameters.ReplayArgs) == 0, "replay-cli (parameter ReplayTrace)"), Kind.Explicit),
         // Former --overlay-cost [rounds]: F5 overlay pump cost (#244), parameter OverlayCostRounds.
         new("overlay-cost", s => s.Check(PerfOverlayTest.RunCost(s.Pump, SmokeParameters.OverlayCostRounds) == 0, "overlay-cost"), Kind.Explicit),
-        // Former --video-stop: quick repro of #130 with 5 rounds.
-        new("video-stop-repro", s => VideoStopTest.Run(s.Check, s.Pump, 5), Kind.Explicit),
 
         // QtTexture in both thread modes, each in a process of its own with D3D11On12 (device-loss parts) and the debug layer
         // (leak check) from the start (former second and third run of build.ps1 -Test).

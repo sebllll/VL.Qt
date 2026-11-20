@@ -1,4 +1,5 @@
 ﻿using System;
+using NUnit.Framework;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -16,7 +17,8 @@ using VL.Qt;
 /// is deliberately no background thread calling vlqt_res_* (a stray call is only guarded against table corruption).
 /// Plain net10.0 (no System.Drawing): runs on Windows and Linux alike.
 /// </summary>
-static class ResourceStressTest
+[TestFixture, NonParallelizable]
+public static class ResourceStressTest
 {
     public const int DefaultSeconds = 60;
     const int MaxLive = 48, MaxStale = 256;
@@ -24,13 +26,17 @@ static class ResourceStressTest
 
     sealed record Elem(uint Id, IntPtr Win);
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<string> log, int seconds, int seed)
+    /// <summary>Random resource actions for StressSeconds (default 60 s) with StressSeed (#365, sanitizer runs).</summary>
+    [Test, Explicit("s by default; parameters StressSeconds / StressSeed"), Category("resource-stress")]
+    public static void ResourceStress() => Scenario.Run(s => Run(s, SmokeParameters.StressSeconds, SmokeParameters.StressSeed));
+
+    static void Run(Scenario s, int seconds, int seed)
     {
-        Console.WriteLine($"INFO 365: resource-stress {seconds} s, seed {seed} (repeat with --stress-seed {seed})");
-        var dir = Path.Combine(outDir, "resource-stress");
+        s.Info($"resource-stress {seconds} s, seed {seed} (repeat with --stress-seed {seed})");
+        var dir = Path.Combine(s.OutDir, "resource-stress");
         Directory.CreateDirectory(dir);
         var rng = new Random(seed);
-        var logStart = log().Length;
+        var logStart = s.Log.Length;
         var sw = Stopwatch.StartNew();
 
         // Watchdog: the run (incl. cleanup) must end within seconds + 30 s, else report the last action and abort.
@@ -55,7 +61,7 @@ static class ResourceStressTest
         foreach (var (name, w, h, weight) in new[] { ("s64.png", 64, 48, 4), ("m256.jpg", 256, 256, 4), ("m640.png", 640, 480, 3), ("l1080.png", 1920, 1080, 2), ("xl4k.jpg", 3840, 2160, 1) })
         {
             var path = Path.Combine(dir, name);
-            check(Native.vlqt_test_write_image(path, w, h, 90) == 0, $"365: test image {name} written");
+            s.Check(Native.vlqt_test_write_image(path, w, h, 90) == 0, $"test image {name} written");
             files.Add((path, weight));
         }
         var broken = Path.Combine(dir, "broken.png");
@@ -110,7 +116,7 @@ static class ResourceStressTest
         void Frame()
         {
             frame++;
-            pump(1);
+            s.Pump(1);
             Poll();
         }
 
@@ -325,14 +331,14 @@ static class ResourceStressTest
 
         // --- run ---
         var w1 = OpenWindow("VL.Qt resource-stress", 60);
-        check(w1 != IntPtr.Zero, "365: window " + (w1 == IntPtr.Zero ? Native.LastError() : ""));
+        s.Check(w1 != IntPtr.Zero, "window " + (w1 == IntPtr.Zero ? Native.LastError() : ""));
         if (w1 == IntPtr.Zero)
         {
             Volatile.Write(ref done, true);
             return;
         }
         var leftover = Native.ResList(new Native.vlqt_res_info[64]);
-        check(leftover == 0, $"365: no resources left from earlier scenarios ({leftover})");
+        s.Check(leftover == 0, $"no resources left from earlier scenarios ({leftover})");
         for (int i = 0; i < 5; i++) Frame();
 
         var forced = new[] { seconds / 3.0, seconds * 2 / 3.0 };
@@ -390,18 +396,18 @@ static class ResourceStressTest
         }
         Volatile.Write(ref done, true);
 
-        var text = log()[logStart..];
+        var text = s.Log[logStart..];
         var leakWarnings = text.Split('\n').Where(l => l.Contains("still referenced") || l.Contains("leaking ids")).ToList();
         var total = counts.Where(c => c.Key != "violation" && c.Key != "stale call, id still in the table" && !c.Key.StartsWith("apply")).Sum(c => c.Value);
-        Console.WriteLine($"INFO 365: seed {seed}, {runSeconds:F1} s, {frame} frames, {total} actions: " + string.Join(", ", counts.Select(c => $"{c.Key} {c.Value}")));
-        Console.WriteLine($"INFO 365: resource states reported (Pending {states[1]}, Decoding {states[2]}, Uploading {states[3]}, Ready {states[4]}, Failed {states[5]}), cleanup {settle.ElapsedMilliseconds} ms");
-        foreach (var v in violations) Console.WriteLine("INFO 365 violation: " + v);
+        s.Info($"seed {seed}, {runSeconds:F1} s, {frame} frames, {total} actions: " + string.Join(", ", counts.Select(c => $"{c.Key} {c.Value}")));
+        s.Info($"resource states reported (Pending {states[1]}, Decoding {states[2]}, Uploading {states[3]}, Ready {states[4]}, Failed {states[5]}), cleanup {settle.ElapsedMilliseconds} ms");
+        foreach (var v in violations) s.Info("violation: " + v);
 
-        check(counts.GetValueOrDefault("violation") == 0,
-            $"365: all calls with live ids ok, stale ids only errors, applies ok (seed {seed}, {counts.GetValueOrDefault("violation")} violations, first: {violations.FirstOrDefault()})");
-        check(left == 0, $"365: vlqt_res_list empty at the end ({left} left after {settle.ElapsedMilliseconds} ms, seed {seed})");
-        check(leakWarnings.Count == 0, $"365: no leak warning in the log ({leakWarnings.FirstOrDefault()})");
-        check(total > 100 && counts.GetValueOrDefault("hotswap") >= 1 && counts.GetValueOrDefault("window open") >= 1,
-            $"365: the run covered hotswap/second window ({total} actions, seed {seed})");
+        s.Check(counts.GetValueOrDefault("violation") == 0,
+            $"all calls with live ids ok, stale ids only errors, applies ok (seed {seed}, {counts.GetValueOrDefault("violation")} violations, first: {violations.FirstOrDefault()})");
+        s.Check(left == 0, $"vlqt_res_list empty at the end ({left} left after {settle.ElapsedMilliseconds} ms, seed {seed})");
+        s.Check(leakWarnings.Count == 0, $"no leak warning in the log ({leakWarnings.FirstOrDefault()})");
+        s.Check(total > 100 && counts.GetValueOrDefault("hotswap") >= 1 && counts.GetValueOrDefault("window open") >= 1,
+            $"the run covered hotswap/second window ({total} actions, seed {seed})");
     }
 }

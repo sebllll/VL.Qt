@@ -1,4 +1,5 @@
 ﻿using System;
+using NUnit.Framework;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Drawing;
@@ -6,12 +7,14 @@ using System.IO;
 using Stride.Core.Mathematics;
 using VL.Qt;
 using Color = System.Drawing.Color;
+using static Pixels;
 
 // Debug overlay (#279): VLQT_PROP_DEBUG per element and vlqt_window_set_debug for the whole window. The overlay is drawn
 // by QtNative on top of the scene (frame cyan, origin magenta, anchor yellow, overflow red, implicit orange, ...). Checks: layout, Measured Size,
 // Scene Bounds (Auto Size included) and hit-testing are identical with and without debug; the overlay appears in the
-// grab and disappears again. Grabs: <outDir>/30_debug_off.png, 30_debug_overlay.png, 30_debug_element.png.
-static class DebugOverlayTest
+// grab and disappears again. Grabs: <OutDir>/30_debug_off.png, 30_debug_overlay.png, 30_debug_element.png.
+[TestFixture, NonParallelizable]
+public static class DebugOverlayTest
 {
     const uint Col = 1, Txt = 5, Grp = 6, RowId = 8, Rot = 9, Ovf = 2;
     static uint Child(uint parent, uint i) => 10 + parent * 10 + i;
@@ -36,7 +39,6 @@ static class DebugOverlayTest
     }
 
     static Color Px(Bitmap a, int x, int y) => a.GetPixel(Math.Clamp(x * a.Width / 800, 0, a.Width - 1), Math.Clamp(y * a.Height / 600, 0, a.Height - 1));
-    static bool IsBg(Color c) => Math.Abs(c.R - 0x20) < 8 && Math.Abs(c.G - 0x20) < 8 && Math.Abs(c.B - 0x20) < 8;
     static bool IsCyan(Color c) => c.R < 90 && c.G > 150 && c.B > 150;
     // Any pixel within +-2 logical px (line width 1, HiDPI rounding). IsCyan needs a pixel fully covered by the frame
     // (alpha 235 over background or padding still has G, B > 150): QtNative snaps lines to whole device pixels and
@@ -49,24 +51,28 @@ static class DebugOverlayTest
         return false;
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    /// <summary>Debug overlay.</summary>
+    [Test, Category("debug")]
+    public static void Debug() => Scenario.Run(s => Run(s));
+
+    static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt debug overlay test");
-        check(w != IntPtr.Zero, "debug: window_create");
+        s.Check(w != IntPtr.Zero, "debug: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"debug: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"debug: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
         List<Rec> Frame(int n = 1)
         {
-            pump(n);
+            s.Pump(n);
             int len = Native.Poll(w, buf);
-            check(len >= 0, $"debug: poll ({len})");
+            s.Check(len >= 0, $"debug: poll ({len})");
             var recs = Parse(buf.AsSpan(0, Math.Max(len, 0)));
             recs.RemoveAll(r => r.Event == Protocol.Ev.WindowGeometry);
             return recs;
@@ -144,7 +150,7 @@ static class DebugOverlayTest
         foreach (var r in Frame(3))
             if (r.Event is Protocol.Ev.Measured or Protocol.Ev.SceneBounds)
                 baseline[(r.Event, r.Handle)] = Convert.ToHexString(r.Payload);
-        check(baseline.Count >= 2 * (all.Count - 1), $"debug: baseline measurements ({baseline.Count})");
+        s.Check(baseline.Count >= 2 * (all.Count - 1), $"debug: baseline measurements ({baseline.Count})");
 
         // Hit test: hover in/out of the green column child at (20+10+30, 20+10+40+20+20) = (60, 110).
         string Hover()
@@ -159,51 +165,51 @@ static class DebugOverlayTest
             return $"{F(outRecs)}|{F(inRecs)}|{F(out2)}";
         }
         var hoverOff = Hover();
-        check(hoverOff.EndsWith("|1|0"), $"debug: hover without debug ({hoverOff})");
+        s.Check(hoverOff.EndsWith("|1|0"), $"debug: hover without debug ({hoverOff})");
 
-        Bitmap off = grab(w, Path.Combine(outDir, "30_debug_off.png"));
-        check(!Near(off, 20, 100, IsCyan) && !Near(off, 300, 60, IsCyan) && !Near(off, 450, 330, IsCyan), "debug: no overlay without debug");
+        Bitmap off = s.Grab(w, "30_debug_off.png");
+        s.Check(!Near(off, 20, 100, IsCyan) && !Near(off, 300, 60, IsCyan) && !Near(off, 450, 330, IsCyan), "debug: no overlay without debug");
 
         // Per element: Debug on the column only.
         cmd.SetBool(Col, Protocol.Prop.Debug, true);
         CheckApply("debug on column");
         var recs = Frame(2);
-        check(!recs.Exists(r => r.Event is Protocol.Ev.Measured or Protocol.Ev.SceneBounds),
+        s.Check(!recs.Exists(r => r.Event is Protocol.Ev.Measured or Protocol.Ev.SceneBounds),
             $"debug: column debug changes no measurement ({recs.Count} records)");
-        using (var a = grab(w, Path.Combine(outDir, "30_debug_element.png")))
+        using (var a = s.Grab(w, "30_debug_element.png"))
         {
-            check(Near(a, 20, 100, IsCyan), $"debug: column frame drawn ({Px(a, 20, 100)})");
-            check(!Near(a, 450, 330, IsCyan) && !Near(a, 300, 60, IsCyan) && !Near(a, 60, 30, IsCyan), "debug: other elements and children not drawn (not recursive)");
+            s.Check(Near(a, 20, 100, IsCyan), $"debug: column frame drawn ({Px(a, 20, 100)})");
+            s.Check(!Near(a, 450, 330, IsCyan) && !Near(a, 300, 60, IsCyan) && !Near(a, 60, 30, IsCyan), "debug: other elements and children not drawn (not recursive)");
         }
 
         // Window-wide: everything.
-        check(Native.vlqt_window_set_debug(w, 1) == 0 && Native.vlqt_window_get_debug(w) == 1, "debug: set_debug(1)");
-        check(Native.vlqt_window_set_debug(IntPtr.Zero, 1) == -1, "debug: set_debug(null) -1");
+        s.Check(Native.vlqt_window_set_debug(w, 1) == 0 && Native.vlqt_window_get_debug(w) == 1, "debug: set_debug(1)");
+        s.Check(Native.vlqt_window_set_debug(IntPtr.Zero, 1) == -1, "debug: set_debug(null) -1");
         recs = Frame(2);
-        check(!recs.Exists(r => r.Event is Protocol.Ev.Measured or Protocol.Ev.SceneBounds),
+        s.Check(!recs.Exists(r => r.Event is Protocol.Ev.Measured or Protocol.Ev.SceneBounds),
             $"debug: window debug changes no measurement ({recs.Count} records)");
         var hoverOn = Hover();
-        check(hoverOn == hoverOff, $"debug: hit-testing identical ({hoverOff} vs {hoverOn})");
-        using (var a = grab(w, Path.Combine(outDir, "30_debug_overlay.png")))
+        s.Check(hoverOn == hoverOff, $"debug: hit-testing identical ({hoverOff} vs {hoverOn})");
+        using (var a = s.Grab(w, "30_debug_overlay.png"))
         {
-            check(Near(a, 20, 100, IsCyan) && Near(a, 300, 60, IsCyan) && Near(a, 450, 330, IsCyan), "debug: frames of column, text, row drawn");
+            s.Check(Near(a, 20, 100, IsCyan) && Near(a, 300, 60, IsCyan) && Near(a, 450, 330, IsCyan), "debug: frames of column, text, row drawn");
             // Rotated by 30 deg around its top left (640, 80): the right edge midpoint lands at 640 + cos30*100 - sin30*30.
             float rx = 640 + MathF.Cos(MathF.PI / 6) * 100 - MathF.Sin(MathF.PI / 6) * 30, ry = 80 + MathF.Sin(MathF.PI / 6) * 100 + MathF.Cos(MathF.PI / 6) * 30;
-            check(Near(a, (int)MathF.Round(rx), (int)MathF.Round(ry), IsCyan), $"debug: rotated frame follows the transform ({Px(a, (int)rx, (int)ry)})");
+            s.Check(Near(a, (int)MathF.Round(rx), (int)MathF.Round(ry), IsCyan), $"debug: rotated frame follows the transform ({Px(a, (int)rx, (int)ry)})");
             // Unchanged layout: pixels away from overlay lines equal the grab without debug (red child center, row child).
-            check(Px(a, 60, 40) == Px(off, 60, 40) && Px(a, 390, 360) == Px(off, 390, 360), $"debug: content unchanged under the overlay ({Px(a, 60, 40)}/{Px(off, 60, 40)}, {Px(a, 390, 360)}/{Px(off, 390, 360)})");
+            s.Check(Px(a, 60, 40) == Px(off, 60, 40) && Px(a, 390, 360) == Px(off, 390, 360), $"debug: content unchanged under the overlay ({Px(a, 60, 40)}/{Px(off, 60, 40)}, {Px(a, 390, 360)}/{Px(off, 390, 360)})");
             // Size smaller than the content (#473): solid frame at the SIZE, overflow tinted red, implicit size orange.
-            check(Near(a, 80, 390, IsCyan), $"debug: fixed frame at SIZE ({Px(a, 80, 390)})");
+            s.Check(Near(a, 80, 390, IsCyan), $"debug: fixed frame at SIZE ({Px(a, 80, 390)})");
             Color ov = Px(a, 80, 415), raw = Px(off, 80, 415);
-            check(ov.R > raw.R + 20 && ov.G <= raw.G, $"debug: overflow tinted red ({ov} over {raw})");
-            check(Near(a, 80, 440, c => c.R > 200 && c.G is > 100 and < 200 && c.B < 80), $"debug: implicit size orange ({Px(a, 80, 440)})");
+            s.Check(ov.R > raw.R + 20 && ov.G <= raw.G, $"debug: overflow tinted red ({ov} over {raw})");
+            s.Check(Near(a, 80, 440, c => c.R > 200 && c.G is > 100 and < 200 && c.B < 80), $"debug: implicit size orange ({Px(a, 80, 440)})");
         }
 
         // Changes while debug is on: measurements still flow (column child resized -> column measured changes).
         cmd.SetPlace(Child(Col, 2), 0, 0, 200, 40);
         CheckApply("resize child with debug on");
         recs = Frame(2);
-        check(recs.Exists(r => r.Event == Protocol.Ev.Measured && r.Handle == Col), "debug: measured still reported with debug on");
+        s.Check(recs.Exists(r => r.Event == Protocol.Ev.Measured && r.Handle == Col), "debug: measured still reported with debug on");
         cmd.SetPlace(Child(Col, 2), 0, 0, 140, 40);
         CheckApply("resize child back");
         Frame(2);
@@ -213,8 +219,8 @@ static class DebugOverlayTest
         cmd.SetBool(Col, Protocol.Prop.Debug, false);
         CheckApply("debug off");
         Frame(2);
-        using (var a = grab(w, Path.Combine(outDir, "30_debug_off2.png")))
-            check(IsBg(Px(a, 20, 100)) && Native.vlqt_window_get_debug(w) == 0, $"debug: overlay gone after off ({Px(a, 20, 100)})");
+        using (var a = s.Grab(w, "30_debug_off2.png"))
+            s.Check(IsBg(Px(a, 20, 100)) && Native.vlqt_window_get_debug(w) == 0, $"debug: overlay gone after off ({Px(a, 20, 100)})");
         // Re-bind every sink: the first poll after BIND reports the current values, compare with the baseline.
         foreach (var id in all)
         {
@@ -230,7 +236,7 @@ static class DebugOverlayTest
         int diff = 0;
         foreach (var kv in baseline)
             if (!after.TryGetValue(kv.Key, out var v) || v != kv.Value) diff++;
-        check(diff == 0 && after.Count == baseline.Count, $"debug: measurements identical after debug ({diff} differ, {after.Count}/{baseline.Count})");
+        s.Check(diff == 0 && after.Count == baseline.Count, $"debug: measurements identical after debug ({diff} differ, {after.Count}/{baseline.Count})");
         off.Dispose();
 
         // Debug on a destroyed element: overlay switches off (count drops), no crash.
@@ -240,8 +246,8 @@ static class DebugOverlayTest
         cmd.Destroy(Rot);
         CheckApply("destroy debugged element");
         Frame(1);
-        using (var a = grab(w, Path.Combine(outDir, "30_debug_destroyed.png")))
-            check(!Near(a, 20, 100, IsCyan), "debug: overlay off after the debugged element is destroyed");
+        using (var a = s.Grab(w, "30_debug_destroyed.png"))
+            s.Check(!Near(a, 20, 100, IsCyan), "debug: overlay off after the debugged element is destroyed");
 
         Native.vlqt_window_destroy(w);
     }
