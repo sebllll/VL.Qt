@@ -1,7 +1,9 @@
 # Records command traces (VLQT_TRACE_COMMANDS) from help patches and stores them in src/VL.Qt.SmokeTest/traces/<name>.bin.
 # The SmokeTest replays every trace against QtNative and compares the last frame with references/trace-<name>.png (TraceReplay,
-# category replay-traces). Patches with animation (rectangle, image) record time-dependent values, so a re-recorded trace needs
-# new references (update-refs); static patches reproduce byte for byte. A trace is bound to the wire format: re-record after every protocol change (and update the references,
+# category replay-traces). Every patch here is static: a patch with LFOs records wall-clock values and would not replay to the
+# same reference after a re-record (the point of the traces). If an animated one is ever unavoidable, mark it here as
+# "animated: re-record needs a new reference, compare by eye". A trace is bound to the wire format: re-record after every
+# protocol change; the references must stay the same (if they must change on purpose:
 # `dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=update-refs`).
 #   tools\record-traces.ps1                       # all traces
 #   tools\record-traces.ps1 -Only rectangle,text  # some
@@ -23,12 +25,12 @@ $arch = if ([Environment]::GetEnvironmentVariable('PROCESSOR_ARCHITECTURE', 'Mac
 
 # name -> help patch (+ image files the patch loads)
 $traces = [ordered]@{
-    'rectangle' = @{ Patch = 'HowTo Draw a Rectangle' }
+    'rectangle' = @{ Patch = 'HowTo Antialias Edges' }
     'text'      = @{ Patch = 'HowTo Draw Text' }
     'shape'     = @{ Patch = 'HowTo Draw a Polygon' }
     'layout'    = @{ Patch = 'HowTo Layout with Row and Column' }
     'widgets'   = @{ Patch = 'HowTo Use a Slider' }
-    'image'     = @{ Patch = 'HowTo Draw an Image'; Images = @('help/Qt/assets/qt-help-image.png') }
+    'image'     = @{ Patch = 'HowTo Use an IImage'; Images = @('help/Qt/assets/qt-help-image.png') }
     'effects'   = @{ Patch = 'HowTo Chain Effects' }
     'qml'       = @{ Patch = 'HowTo Use a QML file' }
 }
