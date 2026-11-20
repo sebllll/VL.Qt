@@ -25,7 +25,7 @@ For coding agents and contributors, the working conventions (build, tests, code 
 
 ## Design notes
 
-Why things are built the way they are. Each note states the goals, the decision and the alternatives that were rejected.
+Why things are built the way they are. Notes live in [design/](design/README.md): what a design note is, the rules for every note and the template ([design/_template.md](design/_template.md)). The pages below still sit in `decisions/` and `topics/` and move to `design/`; dated measurements stay in `research/`.
 
 | Note | Content |
 |---|---|
