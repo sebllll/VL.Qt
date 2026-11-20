@@ -29,6 +29,9 @@ SOFTWARE=0
 SKIP_NATIVE=0
 SMOKE=1
 UNIT=1
+# Timing limits (Perf category of the unit tests, SmokeTest PerfLimits) only warn in the gate (TEST-09); a measurement that runs
+# alone on a quiet machine sets VLQT_PERF_WARN_ONLY=0. VLQT_PERF_FACTOR scales every limit.
+export VLQT_PERF_WARN_ONLY="${VLQT_PERF_WARN_ONLY:-1}"
 OUT=''
 SMOKE_ARGS=()
 ONLY=''

@@ -156,8 +156,8 @@ public static class ImageShareTest
             s.Check(!ImageTest.IsBg(P1(a, 85, 15)), $"mipmapped resource draws ({P1(a, 85, 15)})");
 
         // 6. Perf: 50 preloaded 4K resources, one switched per frame (60 Hz pacing like ImageResourceTest).
-        if (PerfLimits.WarnOnly)
-            s.Skip("perf run 50 x 4K switch per frame: perf limits are warn-only (shared runner)");
+        if (PerfLimits.SkipHeavy)
+            s.Skip("perf run 50 x 4K switch per frame: heavy perf measurement skipped on shared CI runners");
         else
             RunPerf();
 

@@ -466,8 +466,8 @@ public static class TooltipTest
         // The target is a new instance every frame in both arms (colour and size of the small rectangle move, like an LFO in a patch).
         // Arms A (without the node) and B (tip.Update every frame, throttled to <= 5 Hz inside) alternate A B A B so drift and
         // load hit both. Hitch = interval > 1.5 x median of all A intervals.
-        if (PerfLimits.WarnOnly)
-            s.Skip("perf run tooltip preview hitches: perf limits are warn-only (shared runner)");
+        if (PerfLimits.SkipHeavy)
+            s.Skip("perf run tooltip preview hitches: heavy perf measurement skipped on shared CI runners");
         else
         {
             const double Period = 1000.0 / 60;

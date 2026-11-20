@@ -30,6 +30,11 @@ static class PerfLimits
     public static bool WarnOnly { get; private set; }
     public static int Warnings { get; private set; }
 
+    // Two different switches (P16/F4): WarnOnly = measure and report WARN instead of FAIL (the local gate and the CI set it).
+    // SkipHeavy = do not run a long perf measurement at all: only on a shared CI runner (CI is set), where it is too slow and
+    // too noisy to say anything. Locally every measurement runs, warn-only or not.
+    public static bool SkipHeavy { get; } = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI"));
+
     // Parses and removes the perf flags from args, so positional arguments stay as before.
     public static string[] Configure(string[] args)
     {
