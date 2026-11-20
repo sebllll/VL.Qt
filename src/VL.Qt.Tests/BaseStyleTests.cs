@@ -25,7 +25,7 @@ namespace VL.Qt.Tests
             var styles = _sink.OfOp("STYLE").ToArray();
             Assert.That(styles, Has.Length.EqualTo(1));
             Assert.That(styles[0], Does.StartWith("STYLE 1 " + Protocol.StyleSet.Clear));
-            Assert.That(_sink.Commands.IndexOf(styles[0]), Is.EqualTo(_sink.Commands.IndexOf("CREATE 1 10") + 1));
+            Assert.That(_sink.Commands.IndexOf(styles[0]), Is.EqualTo(_sink.Commands.IndexOf("CREATE 1 Button") + 1));
 
             _sink.Clear();
             _rec.Update(new Button(), Space.DIPTopLeft);

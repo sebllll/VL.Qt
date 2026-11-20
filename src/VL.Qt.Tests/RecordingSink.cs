@@ -1,17 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Reflection;
 using Stride.Core.Mathematics;
 
 namespace VL.Qt.Tests
 {
     /// <summary>
     /// Fake <see cref="ICommandSink"/> for reconciler tests: records every command as a readable line, e.g.
-    /// <c>CREATE 1 2</c>, <c>REPARENT 1 0 0</c>, <c>SET 1 256 color(1,0,0,1)</c>, <c>BIND 1 5 2</c>, <c>DESTROY 1</c>.
+    /// <c>CREATE 1 Rectangle</c>, <c>REPARENT 1 0 0</c>, <c>SET 1 Color color(1,0,0,1)</c>, <c>BIND 1 5 2</c>, <c>DESTROY 1</c>.
+    /// Element types and properties print by their <see cref="Protocol.Type"/> / <see cref="Protocol.Prop"/> name (the first
+    /// name of a value, see <c>ProtocolNamesAreUnique</c>), so a renumbered protocol leaves the expectations valid.
     /// Numbers use the invariant culture; floats in round-trip format ("R").
     /// </summary>
     internal sealed class RecordingSink : ICommandSink
     {
+        static readonly Dictionary<ushort, string> s_typeNames = NamesOf(typeof(Protocol.Type));
+        static readonly Dictionary<ushort, string> s_propNames = NamesOf(typeof(Protocol.Prop));
+
+        /// <summary>Maps each value of the ushort constants of <paramref name="holder"/> to its first name (declaration order).</summary>
+        internal static Dictionary<ushort, string> NamesOf(Type holder)
+        {
+            var map = new Dictionary<ushort, string>();
+            foreach (var f in holder.GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => f.IsLiteral && f.FieldType == typeof(ushort)).OrderBy(f => f.MetadataToken))
+                map.TryAdd((ushort)f.GetRawConstantValue()!, f.Name);
+            return map;
+        }
+
+        /// <summary>All names of the ushort constants of <paramref name="holder"/>, grouped by value.</summary>
+        internal static ILookup<ushort, string> AllNamesOf(Type holder) =>
+            holder.GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => f.IsLiteral && f.FieldType == typeof(ushort))
+                .ToLookup(f => (ushort)f.GetRawConstantValue()!, f => f.Name);
+
+        static string TypeName(ushort type) => s_typeNames.TryGetValue(type, out var n) ? n : type.ToString(CultureInfo.InvariantCulture);
+        internal static string PropName(ushort prop) => s_propNames.TryGetValue(prop, out var n) ? n : prop.ToString(CultureInfo.InvariantCulture);
+
         public List<string> Commands { get; } = new();
 
         public int Count => Commands.Count;
@@ -32,9 +56,9 @@ namespace VL.Qt.Tests
 
         void Add(string s) => Commands.Add(s);
 
-        void AddSet(uint id, ushort prop, string value) => Add($"SET {id} {prop} {value}");
+        void AddSet(uint id, ushort prop, string value) => Add($"SET {id} {PropName(prop)} {value}");
 
-        public void Create(uint id, ushort type) => Add($"CREATE {id} {type}");
+        public void Create(uint id, ushort type) => Add($"CREATE {id} {TypeName(type)}");
         public void Destroy(uint id) => Add($"DESTROY {id}");
         public void Reparent(uint id, uint parent, uint index) => Add($"REPARENT {id} {parent} {index}");
         public void Bind(uint id, uint sinkHandle, ushort flags) => Add($"BIND {id} {sinkHandle} {flags}");
@@ -100,12 +124,12 @@ namespace VL.Qt.Tests
         // Uniform entries of a shader link go through the Uniform* methods into the same builder.
         public void BeginEffectChain(uint id) => _uniforms.Clear().Append($"CHAIN {id}");
         public void BeginMultiLink() => _uniforms.Append(" | multi");
-        public void EffectBool(ushort prop, bool value) => _uniforms.Append($" {prop}=bool({(value ? 1 : 0)})");
-        public void EffectF32(ushort prop, float value) => _uniforms.Append($" {prop}=f32({F(value)})");
-        public void EffectI32(ushort prop, int value) => _uniforms.Append($" {prop}=i32({value})");
-        public void EffectColor(ushort prop, float r, float g, float b, float a) => _uniforms.Append($" {prop}=color({F(r)},{F(g)},{F(b)},{F(a)})");
-        public void EffectRect(ushort prop, float x, float y, float width, float height) => _uniforms.Append($" {prop}=rect({F(x)},{F(y)},{F(width)},{F(height)})");
-        public void EffectRef(ushort prop, uint refId) => _uniforms.Append($" {prop}=ref({refId})");
+        public void EffectBool(ushort prop, bool value) => _uniforms.Append($" {PropName(prop)}=bool({(value ? 1 : 0)})");
+        public void EffectF32(ushort prop, float value) => _uniforms.Append($" {PropName(prop)}=f32({F(value)})");
+        public void EffectI32(ushort prop, int value) => _uniforms.Append($" {PropName(prop)}=i32({value})");
+        public void EffectColor(ushort prop, float r, float g, float b, float a) => _uniforms.Append($" {PropName(prop)}=color({F(r)},{F(g)},{F(b)},{F(a)})");
+        public void EffectRect(ushort prop, float x, float y, float width, float height) => _uniforms.Append($" {PropName(prop)}=rect({F(x)},{F(y)},{F(width)},{F(height)})");
+        public void EffectRef(ushort prop, uint refId) => _uniforms.Append($" {PropName(prop)}=ref({refId})");
 
         public void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
             float paddingRight, float paddingBottom, float strength)

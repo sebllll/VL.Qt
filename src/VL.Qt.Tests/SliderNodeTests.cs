@@ -59,7 +59,7 @@ namespace VL.Qt.Tests
 
         void UserChanges(float value) => _registry.Dispatch(new SinkRegistryTests.Poll().Value(_handle, Protocol.Vt.F32, BitConverter.GetBytes(value)).Bytes);
 
-        static string SetValue(float v) => $"SET 1 {P.Value} f32({v.ToString("R", System.Globalization.CultureInfo.InvariantCulture)})";
+        static string SetValue(float v) => $"SET 1 Value f32({v.ToString("R", System.Globalization.CultureInfo.InvariantCulture)})";
 
         [Test]
         public void Defaults_ZeroToOne_Continuous()
@@ -77,8 +77,8 @@ namespace VL.Qt.Tests
         public void Reconciler_SendsOnlyNonDefaults_ChangeDetection()
         {
             var cmds = Frame();
-            Assert.That(cmds, Does.Contain($"CREATE 1 {Protocol.Type.Slider}"));
-            Assert.That(cmds.Where(c => c.StartsWith("SET 1 7", StringComparison.Ordinal) || c.StartsWith($"SET 1 {P.AutoSize} ", StringComparison.Ordinal)),
+            Assert.That(cmds, Does.Contain($"CREATE 1 Slider"));
+            Assert.That(cmds.Where(c => c.StartsWith("SET 1 Debug", StringComparison.Ordinal) || c.StartsWith($"SET 1 AutoSize ", StringComparison.Ordinal)),
                 Is.Empty, "QtNative defaults are not sent");
 
             var a = Update();
@@ -88,7 +88,7 @@ namespace VL.Qt.Tests
             _reconciler.Update(Update(out _, out _, step: 0.25f, orientation: SliderOrientation.Vertical, enabled: false, autoSize: false), Space.DIPTopLeft);
             Assert.That(_sink.Commands, Is.EquivalentTo(new[]
             {
-                $"SET 1 {P.AutoSize} bool(0)", $"SET 1 {P.Step} f32(0.25)", $"SET 1 {P.Orientation} i32(2)", $"SET 1 {P.Enabled} bool(0)",
+                $"SET 1 AutoSize bool(0)", $"SET 1 Step f32(0.25)", $"SET 1 Orientation i32(2)", $"SET 1 Enabled bool(0)",
             }));
         }
 
@@ -168,7 +168,7 @@ namespace VL.Qt.Tests
 
             var cmds = Frame(out float value, out _, ch, 0f, 10f);
             Assert.That(value, Is.EqualTo(10f));
-            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 {P.Maximum} f32(10)", SetValue(10f) }), "Maximum before Value");
+            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 Maximum f32(10)", SetValue(10f) }), "Maximum before Value");
 
             ch.Value = -5f;
             Frame(out value, out _, ch, 0f, 10f);
@@ -179,7 +179,7 @@ namespace VL.Qt.Tests
 
             // a bound change resends Value even if it stayed the same
             cmds = Frame(out value, out _, ch, 0f, 20f);
-            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 {P.Minimum} f32(0)", $"SET 1 {P.Maximum} f32(20)", SetValue(0f) }));
+            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 Minimum f32(0)", $"SET 1 Maximum f32(20)", SetValue(0f) }));
         }
 
         [Test]
@@ -188,8 +188,8 @@ namespace VL.Qt.Tests
             var ch = Channel.Create(7f);
             var cmds = Frame(out float value, out _, ch, -10f, 10f);
             Assert.That(value, Is.EqualTo(7f));
-            var sets = cmds.Where(c => c.StartsWith("SET 1 70", StringComparison.Ordinal) || c.StartsWith("SET 1 706", StringComparison.Ordinal)).ToArray();
-            Assert.That(sets, Is.EqualTo(new[] { $"SET 1 {P.Minimum} f32(-10)", $"SET 1 {P.Maximum} f32(10)", SetValue(7f) }));
+            var sets = cmds.Where(c => c.StartsWith("SET 1 Minimum ", StringComparison.Ordinal) || c.StartsWith("SET 1 Maximum ", StringComparison.Ordinal) || c.StartsWith("SET 1 Value ", StringComparison.Ordinal)).ToArray();
+            Assert.That(sets, Is.EqualTo(new[] { $"SET 1 Minimum f32(-10)", $"SET 1 Maximum f32(10)", SetValue(7f) }));
         }
 
         [Test]

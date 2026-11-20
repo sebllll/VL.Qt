@@ -55,7 +55,7 @@ namespace VL.Qt.Tests
 
         void UserChanges(string value) => _registry.Dispatch(new SinkRegistryTests.Poll().ValueString(_handle, value).Bytes);
 
-        static string SetValue(string v) => $"SET 1 {P.Value} string({v})";
+        static string SetValue(string v) => $"SET 1 Value string({v})";
 
         [Test]
         public void Defaults_EmptyEditable()
@@ -72,9 +72,9 @@ namespace VL.Qt.Tests
         public void Reconciler_SendsOnlyNonDefaults_ChangeDetection()
         {
             var cmds = Frame();
-            Assert.That(cmds, Does.Contain($"CREATE 1 {Protocol.Type.TextField}"));
-            Assert.That(cmds.Where(c => c.StartsWith($"SET 1 {P.Value} ", StringComparison.Ordinal) || c.StartsWith($"SET 1 {P.Placeholder} ", StringComparison.Ordinal)
-                || c.StartsWith($"SET 1 {P.AutoSize} ", StringComparison.Ordinal)), Is.Empty, "QtNative defaults are not sent");
+            Assert.That(cmds, Does.Contain($"CREATE 1 TextField"));
+            Assert.That(cmds.Where(c => c.StartsWith($"SET 1 Value ", StringComparison.Ordinal) || c.StartsWith($"SET 1 Placeholder ", StringComparison.Ordinal)
+                || c.StartsWith($"SET 1 AutoSize ", StringComparison.Ordinal)), Is.Empty, "QtNative defaults are not sent");
 
             var a = Update();
             Assert.That(Update(), Is.SameAs(a));
@@ -83,7 +83,7 @@ namespace VL.Qt.Tests
             _reconciler.Update(Update(out _, out _, placeholder: "Name", editable: false, enabled: false, autoSize: false), Space.DIPTopLeft);
             Assert.That(_sink.Commands, Is.EquivalentTo(new[]
             {
-                $"SET 1 {P.AutoSize} bool(0)", $"SET 1 {P.Placeholder} string(Name)", $"SET 1 {P.Editable} bool(0)", $"SET 1 {P.Enabled} bool(0)",
+                $"SET 1 AutoSize bool(0)", $"SET 1 Placeholder string(Name)", $"SET 1 Editable bool(0)", $"SET 1 Enabled bool(0)",
             }));
         }
 

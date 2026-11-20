@@ -108,27 +108,27 @@ namespace VL.Qt.Tests
             rec.Update(new Video { Path = new Path("c:/a.mp4"), Playing = true, Loop = true, KeepLastFrame = true, Rate = 0.5f, Volume = 0.25f, FillMode = VideoFillMode.Stretch }, Space.DIPTopLeft);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[]
             {
-                $"SET 1 {P.Source} string(c:/a.mp4)",
-                $"SET 1 {P.FillMode} i32(0)",
-                $"SET 1 {P.Loop} bool(1)",
-                $"SET 1 {P.KeepLastFrame} bool(1)",
-                $"SET 1 {P.PlaybackRate} f32(0.5)",
-                $"SET 1 {P.Volume} f32(0.25)",
-                $"SET 1 {P.Playing} bool(1)",
+                $"SET 1 Source string(c:/a.mp4)",
+                $"SET 1 FillMode i32(0)",
+                $"SET 1 Loop bool(1)",
+                $"SET 1 KeepLastFrame bool(1)",
+                $"SET 1 PlaybackRate f32(0.5)",
+                $"SET 1 Volume f32(0.25)",
+                $"SET 1 Playing bool(1)",
             }));
-            Assert.That(sink.Commands[0], Is.EqualTo($"CREATE 1 {Protocol.Type.Video}"));
+            Assert.That(sink.Commands[0], Is.EqualTo($"CREATE 1 Video"));
 
             sink.Clear();
             rec.Update(new Video(), Space.DIPTopLeft);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[]
             {
-                $"SET 1 {P.Source} string()",
-                $"SET 1 {P.FillMode} i32(1)",
-                $"SET 1 {P.Loop} bool(0)",
-                $"SET 1 {P.KeepLastFrame} bool(0)",
-                $"SET 1 {P.PlaybackRate} f32(1)",
-                $"SET 1 {P.Volume} f32(1)",
-                $"SET 1 {P.Playing} bool(0)",
+                $"SET 1 Source string()",
+                $"SET 1 FillMode i32(1)",
+                $"SET 1 Loop bool(0)",
+                $"SET 1 KeepLastFrame bool(0)",
+                $"SET 1 PlaybackRate f32(1)",
+                $"SET 1 Volume f32(1)",
+                $"SET 1 Playing bool(0)",
             }));
         }
 
@@ -139,13 +139,13 @@ namespace VL.Qt.Tests
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
             rec.Update(new Video { Playing = true, AudioTap = 5 }, Space.DIPTopLeft);
-            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 {P.AudioTap} u64(5)", $"SET 1 {P.Playing} bool(1)" }));
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 AudioTap u64(5)", $"SET 1 Playing bool(1)" }));
             sink.Clear();
             rec.Update(new Video { Playing = true, AudioTap = 6 }, Space.DIPTopLeft);
-            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 {P.AudioTap} u64(6)" }));
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 AudioTap u64(6)" }));
             sink.Clear();
             rec.Update(new Video { Playing = true }, Space.DIPTopLeft);
-            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 {P.AudioTap} u64(0)" }));
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 AudioTap u64(0)" }));
         }
 
         [Test]
@@ -154,13 +154,13 @@ namespace VL.Qt.Tests
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
             rec.Update(new Video { Rate = -1, Volume = 3 }, Space.DIPTopLeft);
-            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 {P.PlaybackRate} f32(0.01)" }), "volume 3 clamps to the default 1");
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 PlaybackRate f32(0.01)" }), "volume 3 clamps to the default 1");
             sink.Clear();
             rec.Update(new Video { Rate = 0, Volume = float.NaN }, Space.DIPTopLeft);
-            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 {P.Volume} f32(0)" }), "rate 0 = still MinRate");
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 Volume f32(0)" }), "rate 0 = still MinRate");
             sink.Clear();
             rec.Update(new Video { Rate = float.PositiveInfinity, Volume = -1 }, Space.DIPTopLeft);
-            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 {P.PlaybackRate} f32(1)" }));
+            Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 PlaybackRate f32(1)" }));
         }
 
         [Test]

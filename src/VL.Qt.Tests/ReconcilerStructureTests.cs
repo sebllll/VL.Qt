@@ -44,11 +44,11 @@ namespace VL.Qt.Tests
 
             Assert.That(Structural, Is.EqualTo(new[]
             {
-                "CREATE 1 1", "REPARENT 1 0 0",
-                "CREATE 2 3", "REPARENT 2 1 0",
-                "CREATE 3 7", "REPARENT 3 1 1",
-                "CREATE 4 4", "REPARENT 4 3 0",
-                "CREATE 5 3", "REPARENT 5 3 1",
+                "CREATE 1 Item", "REPARENT 1 0 0",
+                "CREATE 2 Rectangle", "REPARENT 2 1 0",
+                "CREATE 3 Column", "REPARENT 3 1 1",
+                "CREATE 4 Text", "REPARENT 4 3 0",
+                "CREATE 5 Rectangle", "REPARENT 5 3 1",
             }));
             Assert.That(_ids.Count, Is.EqualTo(5));
         }
@@ -92,7 +92,7 @@ namespace VL.Qt.Tests
             Assert.That(Structural, Is.EqualTo(new[]
             {
                 "DESTROY 3",                          // top of the subtree only
-                "CREATE 3 4", "REPARENT 3 1 1",       // freed ids reused (LIFO)
+                "CREATE 3 Text", "REPARENT 3 1 1",       // freed ids reused (LIFO)
             }));
             Assert.That(_ids.Count, Is.EqualTo(4));
             Assert.That(_rec.Root!.Children[1].Type, Is.EqualTo(ElementType.Text));
@@ -105,7 +105,7 @@ namespace VL.Qt.Tests
             Frame(C(R()));
             Assert.That(Structural, Is.EqualTo(new[]
             {
-                "DESTROY 1", "CREATE 1 7", "REPARENT 1 0 0", "CREATE 2 3", "REPARENT 2 1 0",
+                "DESTROY 1", "CREATE 1 Column", "REPARENT 1 0 0", "CREATE 2 Rectangle", "REPARENT 2 1 0",
             }));
             Assert.That(_ids.Count, Is.EqualTo(2));
         }
@@ -134,7 +134,7 @@ namespace VL.Qt.Tests
         {
             Frame(G(R(1), R(2)));
             Frame(G(R(1), R(5), R(2)));
-            Assert.That(Structural, Is.EqualTo(new[] { "CREATE 4 3", "REPARENT 4 1 2" }));
+            Assert.That(Structural, Is.EqualTo(new[] { "CREATE 4 Rectangle", "REPARENT 4 1 2" }));
             Assert.That(_rec.Root!.Children.Select(n => n.Id), Is.EqualTo(new uint[] { 2, 3, 4 }));
         }
 
@@ -152,7 +152,7 @@ namespace VL.Qt.Tests
             var rect = R();
             Frame(G(G(rect), G()));                    // 1 { 2 { 3 }, 4 }
             Frame(G(G(), G(rect)));
-            Assert.That(Structural, Is.EqualTo(new[] { "DESTROY 3", "CREATE 3 3", "REPARENT 3 4 0" }));
+            Assert.That(Structural, Is.EqualTo(new[] { "DESTROY 3", "CREATE 3 Rectangle", "REPARENT 3 4 0" }));
         }
 
         [Test]
@@ -175,9 +175,9 @@ namespace VL.Qt.Tests
         public void ShaderEffectInput_IsChildAtIndexZero()
         {
             Frame(new ShaderEffect { Input = R() });
-            Assert.That(Structural, Is.EqualTo(new[] { "CREATE 1 24", "REPARENT 1 0 0", "CREATE 2 3", "REPARENT 2 1 0" }));
+            Assert.That(Structural, Is.EqualTo(new[] { "CREATE 1 ShaderEffect", "REPARENT 1 0 0", "CREATE 2 Rectangle", "REPARENT 2 1 0" }));
             Frame(new ShaderEffect { Input = T() });
-            Assert.That(Structural, Is.EqualTo(new[] { "DESTROY 2", "CREATE 2 4", "REPARENT 2 1 0" }));
+            Assert.That(Structural, Is.EqualTo(new[] { "DESTROY 2", "CREATE 2 Text", "REPARENT 2 1 0" }));
             Frame(new ShaderEffect());
             Assert.That(Structural, Is.EqualTo(new[] { "DESTROY 2" }));
         }

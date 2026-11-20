@@ -61,8 +61,8 @@ namespace VL.Qt.Tests
             var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
             rec.Update(new Rectangle { Effect = Blur(null, false, new RectangleF(1, 2, 3, 4)) }, Space.DIPTopLeft);
             var chain = sink.OfOp("CHAIN").Single();
-            Assert.That(chain, Does.Contain($" {P.EffectAutoPadding}=bool(0)"));
-            Assert.That(chain, Does.Contain($" {P.EffectPaddingRect}=rect(100,200,300,400)"), "units to DIP");
+            Assert.That(chain, Does.Contain($" {nameof(P.EffectAutoPadding)}=bool(0)"));
+            Assert.That(chain, Does.Contain($" {nameof(P.EffectPaddingRect)}=rect(100,200,300,400)"), "units to DIP");
             Assert.That(sink.OfOp("SET").Count(), Is.EqualTo(0));
         }
     }

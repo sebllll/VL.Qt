@@ -149,18 +149,18 @@ namespace VL.Qt.Tests
             Frame(0.1f, 0);
             Assert.That(sink.OfOp("CREATE").Count(), Is.EqualTo(4));
             Assert.That(sink.OfOp("REPARENT"), Is.EqualTo(new[] { "REPARENT 1 0 0", "REPARENT 2 1 0", "REPARENT 3 1 1", "REPARENT 4 1 2" }));
-            Assert.That(sink.Commands, Does.Contain($"SET 1 {P.Spacing} f32(10)"), "units → DIP in Geometry");
-            Assert.That(sink.Commands, Does.Contain($"SET 1 {P.ChildAlignment} i32({(int)HorizontalAlignment.Center})"));
+            Assert.That(sink.Commands, Does.Contain($"SET 1 Spacing f32(10)"), "units → DIP in Geometry");
+            Assert.That(sink.Commands, Does.Contain($"SET 1 ChildAlignment i32({(int)HorizontalAlignment.Center})"));
             // Layout children: only the size goes out (04c).
-            Assert.That(sink.OfOp("SET").Where(s => s.Split(' ')[2] == P.Size.ToString()),
-                Is.EqualTo(new[] { $"SET 2 {P.Size} vec2(100,50)", $"SET 3 {P.Size} vec2(100,50)", $"SET 4 {P.Size} vec2(100,50)" }));
+            Assert.That(sink.OfOp("SET").Where(s => s.Split(' ')[2] == nameof(P.Size)),
+                Is.EqualTo(new[] { $"SET 2 Size vec2(100,50)", $"SET 3 Size vec2(100,50)", $"SET 4 Size vec2(100,50)" }));
 
             Frame(0.1f, 0);
             Assert.That(sink.Count, Is.EqualTo(0), "unchanged → nothing");
             Frame(0.1f, 2);
             Assert.That(sink.Count, Is.EqualTo(0), "position of a layout child is ignored");
             Frame(0.2f, 2);
-            Assert.That(sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.Spacing} f32(20)" }));
+            Assert.That(sink.Commands, Is.EqualTo(new[] { $"SET 1 Spacing f32(20)" }));
 
             foreach (var r in rects) r.Dispose();
         }
@@ -195,23 +195,23 @@ namespace VL.Qt.Tests
 
             // Default (on): nothing is sent for it, also not for Size 0, 0.
             rec.Update(Row(row, S(A)), Space.DIPTopLeft);
-            Assert.That(sink.Commands.Any(x => x.Contains($" {P.AutoSize} ")), Is.False, "default on → no SET");
+            Assert.That(sink.Commands.Any(x => x.Contains($" {nameof(P.AutoSize)} ")), Is.False, "default on → no SET");
             sink.Clear();
             rec.Update(Row(row, S(A)), Space.DIPTopLeft);
             Assert.That(sink.Count, Is.EqualTo(0), "unchanged → 0 commands");
 
             rec.Update(Row(row, S(A), autoSize: false), Space.DIPTopLeft);
-            Assert.That(sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.AutoSize} bool(0)" }), "flip off: only the flag, Size is not resent");
+            Assert.That(sink.Commands, Is.EqualTo(new[] { $"SET 1 AutoSize bool(0)" }), "flip off: only the flag, Size is not resent");
             sink.Clear();
             rec.Update(Row(row, S(A), autoSize: false), Space.DIPTopLeft);
             Assert.That(sink.Count, Is.EqualTo(0));
             rec.Update(Row(row, S(A)), Space.DIPTopLeft);
-            Assert.That(sink.Commands, Is.EqualTo(new[] { $"SET 1 {P.AutoSize} bool(1)" }));
+            Assert.That(sink.Commands, Is.EqualTo(new[] { $"SET 1 AutoSize bool(1)" }));
 
             // Created with Auto Size off: flag goes out with the other initial values.
             sink.Clear();
             rec.Update(Group(group, S(A), autoSize: false), Space.DIPTopLeft);
-            Assert.That(sink.Commands, Does.Contain($"SET 1 {P.AutoSize} bool(0)"));
+            Assert.That(sink.Commands, Does.Contain($"SET 1 AutoSize bool(0)"));
         }
     }
 }
