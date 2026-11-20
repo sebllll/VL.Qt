@@ -62,7 +62,7 @@ namespace VL.Qt.Wire
 
         public void Create(uint id, ushort type)
         {
-            var p = Begin(Protocol.Op.Create, 6);
+            var p = Begin(Protocol.Op.Create, Protocol.CreatePayload);
             WriteU32(p, id);
             WriteU16(p.Slice(4), type);
         }
@@ -80,7 +80,7 @@ namespace VL.Qt.Wire
 
         public void Reparent(uint id, uint parent, uint index)
         {
-            var p = Begin(Protocol.Op.Reparent, 12);
+            var p = Begin(Protocol.Op.Reparent, Protocol.ReparentPayload);
             WriteU32(p, id);
             WriteU32(p.Slice(4), parent);
             WriteU32(p.Slice(8), index);
@@ -89,7 +89,7 @@ namespace VL.Qt.Wire
         /// <summary>BIND: feedbackId 0 = unbind; flags = <see cref="Protocol.Bind"/> bit mask.</summary>
         public void Bind(uint id, uint feedbackId, ushort flags)
         {
-            var p = Begin(Protocol.Op.Bind, 10);
+            var p = Begin(Protocol.Op.Bind, Protocol.BindPayload);
             WriteU32(p, id);
             WriteU32(p.Slice(4), feedbackId);
             WriteU16(p.Slice(8), flags);
@@ -235,8 +235,6 @@ namespace VL.Qt.Wire
 
         // --- SET_STYLE: u32 id, u16 count, u16 flags, entries (u16 field, u8 state, u8 valueType, value), each 4-byte aligned ---
 
-        private const int StyleFieldsSize = 8; // u32 id, u16 count, u16 flags
-        private const int StyleEntryHeaderSize = 4; // u16 field, u8 state, u8 valueType
         private int _styleStart = -1; // offset of the open SET_STYLE command, -1 = none
         private int _styleEntries;
 
@@ -247,7 +245,7 @@ namespace VL.Qt.Wire
                 throw new InvalidOperationException("SET_STYLE already open, call EndStyle first.");
             _styleStart = _length;
             _styleEntries = 0;
-            var p = Begin(Protocol.Op.SetStyle, StyleFieldsSize);
+            var p = Begin(Protocol.Op.SetStyle, Protocol.ListFieldsSize);
             WriteU32(p, id);
             WriteU16(p.Slice(4), 0);
             WriteU16(p.Slice(6), flags);
@@ -299,7 +297,7 @@ namespace VL.Qt.Wire
         {
             if (_styleStart < 0)
                 throw new InvalidOperationException("Style entry without BeginStyle.");
-            int total = Align(StyleEntryHeaderSize + valueSize);
+            int total = Align(Protocol.EntryHeaderSize + valueSize);
             EnsureCapacity(_length + total);
             var e = new Span<byte>(_buffer, _length, total);
             e.Clear();
@@ -308,12 +306,11 @@ namespace VL.Qt.Wire
             e[3] = (byte)valueType;
             _length += total;
             _styleEntries++;
-            return e.Slice(StyleEntryHeaderSize, valueSize);
+            return e.Slice(Protocol.EntryHeaderSize, valueSize);
         }
 
         // --- SET_UNIFORMS: u32 id, u16 count, u16 flags, entries (u16 valueType, u16 nameLen, name, pad 4, value, pad 4) ---
 
-        private const int UniformFieldsSize = 8; // u32 id, u16 count, u16 flags
         private int _uniformsStart = -1; // offset of the open SET_UNIFORMS command, -1 = none
         private int _uniformEntries;
 
@@ -335,7 +332,7 @@ namespace VL.Qt.Wire
                 throw new InvalidOperationException("SET_UNIFORMS or SET_QML_PROPERTIES already open, call EndUniforms first.");
             _uniformsStart = _length;
             _uniformEntries = 0;
-            var p = Begin(op, UniformFieldsSize);
+            var p = Begin(op, Protocol.ListFieldsSize);
             WriteU32(p, id);
             WriteU16(p.Slice(4), 0);
             WriteU16(p.Slice(6), flags);
@@ -436,7 +433,7 @@ namespace VL.Qt.Wire
             int nameBytes = Encoding.UTF8.GetByteCount(name);
             if (nameBytes < 1 || nameBytes > Protocol.UniformNameMax)
                 throw new ArgumentException($"Uniform name must be 1..{Protocol.UniformNameMax} UTF-8 bytes, got {nameBytes}.", nameof(name));
-            int nameBlock = Align(4 + nameBytes);
+            int nameBlock = Align(Protocol.EntryHeaderSize + nameBytes);
             int total = nameBlock + Align(valueSize);
             EnsureCapacity(_length + total);
             var e = new Span<byte>(_buffer, _length, total);
@@ -454,9 +451,6 @@ namespace VL.Qt.Wire
 
         // --- SET_EFFECT_CHAIN: u32 id, u16 linkCount, u16 flags, links (u16 kind, u16 count, u32 bodyLen, body) ---
 
-        private const int ChainFieldsSize = 8; // u32 id, u16 linkCount, u16 flags
-        private const int LinkHeaderSize = 8; // u16 kind, u16 count, u32 bodyLen
-        private const int ShaderLinkFixedSize = 4 + 24; // u16 template, u16 shaderCount | 4 x f32 padding, f32 strength, u16 nameLen, u16 0
         private int _chainStart = -1; // offset of the open SET_EFFECT_CHAIN command, -1 = none
         private int _chainLinks;
         private int _linkStart = -1; // offset of the open link header, -1 = none
@@ -470,7 +464,7 @@ namespace VL.Qt.Wire
                 throw new InvalidOperationException("SET_EFFECT_CHAIN already open, call EndEffectChain first.");
             _chainStart = _length;
             _chainLinks = 0;
-            var p = Begin(Protocol.Op.SetEffectChain, ChainFieldsSize);
+            var p = Begin(Protocol.Op.SetEffectChain, Protocol.ListFieldsSize);
             WriteU32(p, id);
             WriteU16(p.Slice(4), 0);
             WriteU16(p.Slice(6), 0);
@@ -502,7 +496,7 @@ namespace VL.Qt.Wire
             float paddingRight, float paddingBottom, float strength)
         {
             int ids = shaderIds.Length * 8;
-            var head = BeginLink(Protocol.EffectLink.Shader, ShaderLinkFixedSize + ids);
+            var head = BeginLink(Protocol.EffectLink.Shader, 4 + ids + Protocol.ShaderLinkFixedSize);
             WriteU16(head, template);
             WriteU16(head.Slice(2), (ushort)shaderIds.Length);
             for (int i = 0; i < shaderIds.Length; i++)
@@ -520,7 +514,7 @@ namespace VL.Qt.Wire
             if (_linkStart < 0)
                 throw new InvalidOperationException("EndLink without BeginMultiLink or BeginShaderLink.");
             WriteU16(new Span<byte>(_buffer, _linkStart + 2, 2), (ushort)_linkEntries);
-            WriteU32(new Span<byte>(_buffer, _linkStart + 4, 4), (uint)(_length - _linkStart - LinkHeaderSize));
+            WriteU32(new Span<byte>(_buffer, _linkStart + 4, 4), (uint)(_length - _linkStart - Protocol.LinkHeaderSize));
             _linkStart = -1;
             _linkKind = 0;
             _chainLinks++;
@@ -553,7 +547,7 @@ namespace VL.Qt.Wire
                 throw new InvalidOperationException("Effect link without BeginEffectChain.");
             if (_linkStart >= 0)
                 throw new InvalidOperationException("Effect link still open, call EndLink first.");
-            int total = LinkHeaderSize + headSize;
+            int total = Protocol.LinkHeaderSize + headSize;
             EnsureCapacity(_length + total);
             var e = new Span<byte>(_buffer, _length, total);
             e.Clear();
@@ -562,7 +556,7 @@ namespace VL.Qt.Wire
             _linkKind = kind;
             _linkEntries = 0;
             _length += total;
-            return e.Slice(LinkHeaderSize, headSize);
+            return e.Slice(Protocol.LinkHeaderSize, headSize);
         }
 
         /// <summary>Appends one MULTI entry (u16 prop, u16 value type, value, zero padded to 4) and returns the value span.</summary>

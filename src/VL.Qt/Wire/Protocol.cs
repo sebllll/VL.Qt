@@ -3,19 +3,35 @@
     /// <summary>
     /// Mirror of src/VL.Qt.Native/protocol.h (the single source of truth). Keep in sync:
     /// VLQT_&lt;GROUP&gt;_&lt;UPPER_SNAKE&gt; maps to Protocol.&lt;Group&gt;.&lt;PascalCase&gt;, plain defines to Protocol.&lt;PascalCase&gt;.
-    /// The SmokeTest drift check (--drift) fails on any mismatch in name or value.
+    /// The unit test ProtocolDriftTests fails on any mismatch in name or value.
     /// </summary>
     internal static class Protocol
     {
         /// <summary>Version of the command protocol and the C ABI of vlqt.h; QtApp refuses a vlqt.dll with another one. Bump with every change (see protocol.h).</summary>
-        public const int AbiVersion = 15;
+        public const int AbiVersion = 16;
         public const int CommandAlign = 4;
         public const int HeaderSize = 4;
         public const uint RootId = 0;
         /// <summary>Max UTF-8 bytes of a uniform name in <see cref="Op.SetUniforms"/>.</summary>
         public const int UniformNameMax = 255;
+        /// <summary>CREATE: u32 id, u16 type (the whole payload).</summary>
+        public const int CreatePayload = 6;
+        /// <summary>REPARENT: u32 id, u32 parent, u32 index (the whole payload).</summary>
+        public const int ReparentPayload = 12;
+        /// <summary>BIND: u32 id, u32 sinkHandle, u16 flags (the whole payload).</summary>
+        public const int BindPayload = 10;
         /// <summary>u32 id, u16 prop, u16 valueType in front of the value of a SET.</summary>
-        internal const int SetFieldsSize = 8;
+        public const int SetFieldsSize = 8;
+        /// <summary>u32 id, u16 count, u16 flags in front of the entries of SET_STYLE, SET_UNIFORMS, SET_QML_PROPERTIES and SET_EFFECT_CHAIN.</summary>
+        public const int ListFieldsSize = 8;
+        /// <summary>Entry header of SET_STYLE (u16 field, u8 state, u8 valueType), SET_UNIFORMS and SET_QML_PROPERTIES (u16 valueType, u16 nameLen).</summary>
+        public const int EntryHeaderSize = 4;
+        /// <summary>Header of an effect chain link: u16 kind, u16 count, u32 bodyLen.</summary>
+        public const int LinkHeaderSize = 8;
+        /// <summary>Part of a SHADER link body after u16 template, u16 shaderCount and the shader ids: 4 x f32 padding, f32 strength, u16 reserved, u16 0.</summary>
+        public const int ShaderLinkFixedSize = 24;
+        /// <summary>u32 handle, u32 index after the header of a poll record, in front of the payload.</summary>
+        public const int EventFieldsSize = 8;
         /// <summary>Max floats of a <see cref="Vt.F32Array"/> value: the 4-byte count and the floats fit the payload of a SET (8190 points).</summary>
         internal const int MaxF32ArrayCount = (CommandWriter.MaxPayload - SetFieldsSize - 4) / 4;
 
@@ -30,7 +46,7 @@
         }
 
         /// <summary>Opcodes (u16).</summary>
-        public static class Op
+        internal static class Op
         {
             public const ushort Create = 1;
             public const ushort Destroy = 2;
@@ -79,7 +95,7 @@
         }
 
         /// <summary>Value types of SET (u16).</summary>
-        public static class Vt
+        internal static class Vt
         {
             public const ushort F32 = 1;
             public const ushort I32 = 2;
@@ -108,7 +124,7 @@
         }
 
         /// <summary>Path verbs of <see cref="Vt.Path"/> (u8).</summary>
-        public static class Verb
+        internal static class Verb
         {
             /// <summary>1 point.</summary>
             public const byte Move = 0;
@@ -123,7 +139,7 @@
         }
 
         /// <summary>Element type ids of CREATE (u16). 2 was TestRect (removed in 07a), keep it unused.</summary>
-        public static class Type
+        internal static class Type
         {
             public const ushort Item = 1;
             public const ushort Rectangle = 3;
@@ -175,7 +191,7 @@
         /// 768 input handlers (only on handler objects), 800 reserved (RectangularShadow, removed in #459),
         /// 832 keys of the Effect chain's MULTI entries (not via SET, see protocol.h "Effect chain"), 896 ShaderEffect (also takes Source ref and AutoSize), 928 QmlElement, 960 Shape.
         /// </summary>
-        public static class Prop
+        internal static class Prop
         {
             /// <summary>vec2 (w, h): item size; position comes from <see cref="Anchor"/> + <see cref="Transform"/> (see protocol.h "Geometry").</summary>
             public const ushort Size = 1;
@@ -351,14 +367,14 @@
         /// (CancelPress): no effect in QtNative any more (a new feedback of a Tap handler cancels its press itself), the
         /// reconciler does not send it. Keep unused.
         /// </summary>
-        public static class Bind
+        internal static class Bind
         {
             /// <summary>Reserved: no effect, not sent. Kept for the writer tests and the drift check.</summary>
             public const ushort CancelPress = 2;
         }
 
         /// <summary>Link kinds of <see cref="Op.SetEffectChain"/> (u16).</summary>
-        public static class EffectLink
+        internal static class EffectLink
         {
             /// <summary>One MultiEffect run: entries u16 prop (EffectBlurEnabled..EffectMaskInverted), u16 value type, value.</summary>
             public const ushort Multi = 1;
@@ -367,7 +383,7 @@
         }
 
         /// <summary>Pass templates of a shader link (u16); passes: docs/effects-and-shaders.md.</summary>
-        public static class EffectTemplate
+        internal static class EffectTemplate
         {
             /// <summary>One pass of the shader over the input; shader ids [fragment].</summary>
             public const ushort Single = 1;
@@ -378,21 +394,21 @@
         }
 
         /// <summary>SET_UNIFORMS flags (u16, bit mask).</summary>
-        public static class UniformSet
+        internal static class UniformSet
         {
             /// <summary>Empty the element's uniform table before applying the entries (full send).</summary>
             public const ushort Clear = 1;
         }
 
         /// <summary>SET_STYLE flags (u16, bit mask).</summary>
-        public static class StyleSet
+        internal static class StyleSet
         {
             /// <summary>Empty the element's style table before applying the entries (full send).</summary>
             public const ushort Clear = 1;
         }
 
         /// <summary>Style states (u8 of a SET_STYLE entry). Rank when several apply: Disabled &gt; Pressed &gt; Hovered &gt; Checked &gt; Normal.</summary>
-        public static class StyleState
+        internal static class StyleState
         {
             public const byte Normal = 0;
             public const byte Hovered = 1;
@@ -402,7 +418,7 @@
         }
 
         /// <summary>Style fields (u16 of a SET_STYLE entry). Value type per field: see protocol.h.</summary>
-        public static class StyleField
+        internal static class StyleField
         {
             public const ushort FrameColor = 1;
             public const ushort BorderColor = 2;
@@ -427,7 +443,7 @@
         }
 
         /// <summary>Event ids of the poll buffer (u16). Payloads: events.h (plan 06).</summary>
-        public static class Ev
+        internal static class Ev
         {
             public const ushort Measured = 1;
             public const ushort SceneBounds = 2;
@@ -473,7 +489,7 @@
         }
 
         /// <summary>Flags of EV_WINDOW_GEOMETRY (u32 bit mask).</summary>
-        public static class Window
+        internal static class Window
         {
             public const uint Minimized = 1;
             public const uint Maximized = 2;
@@ -482,14 +498,14 @@
         }
 
         /// <summary>Window modes: bit mask of vlqt_window_set_mode (Borderless, Fullscreen).</summary>
-        public static class WindowMode
+        internal static class WindowMode
         {
             public const uint Borderless = 1;
             public const uint Fullscreen = 2;
         }
 
         /// <summary>Spaces of <see cref="Op.SetSpace"/>, the order of <see cref="VL.Qt.Space"/>.</summary>
-        public static class Space
+        internal static class Space
         {
             public const uint Normalized = 0;
             public const uint Dip = 1;
@@ -498,7 +514,7 @@
         }
 
         /// <summary>Modes of the TEST export vlqt_test_device_lost, see protocol.h.</summary>
-        public static class DeviceLost
+        internal static class DeviceLost
         {
             /// <summary>Real removal of the shared device; needs VLQT_TEST_D3D11ON12=1 before the device is created.</summary>
             public const int Remove = 1;
@@ -507,7 +523,7 @@
         }
 
         /// <summary>Return codes of the offscreen exports vlqt_offscreen_* (QtTexture), see protocol.h.</summary>
-        public static class Offscreen
+        internal static class Offscreen
         {
             public const int Ok = 0;
             /// <summary>Null handle, or a window handle that is no offscreen scene.</summary>
@@ -531,7 +547,7 @@
         }
 
         /// <summary>Mouse event types of the TEST export vlqt_test_send_mouse, not part of the command buffer.</summary>
-        public static class Mouse
+        internal static class Mouse
         {
             public const int Move = 1;
             public const int Press = 2;
@@ -545,7 +561,7 @@
         }
 
         /// <summary>Touch point events of the TEST export vlqt_test_send_touch, not part of the command buffer.</summary>
-        public static class Touch
+        internal static class Touch
         {
             public const int Press = 1;
             public const int Move = 2;
@@ -553,7 +569,7 @@
         }
 
         /// <summary>Pointer events of vlqt_offscreen_send_pointer (QtTexture input), not part of the command buffer.</summary>
-        public static class Pointer
+        internal static class Pointer
         {
             public const int Press = 1;
             public const int Move = 2;
@@ -565,7 +581,7 @@
         }
 
         /// <summary>Pointing devices of vlqt_offscreen_send_pointer. Pen is delivered as a stylus, as in a window on Windows.</summary>
-        public static class PointerDevice
+        internal static class PointerDevice
         {
             public const int Mouse = 0;
             public const int Touch = 1;
@@ -573,14 +589,14 @@
         }
 
         /// <summary>Key event types of vlqt_offscreen_send_key.</summary>
-        public static class KeyEvent
+        internal static class KeyEvent
         {
             public const int Press = 1;
             public const int Release = 2;
         }
 
         /// <summary>Resource kinds of vlqt_res_create.</summary>
-        public static class ResKind
+        internal static class ResKind
         {
             /// <summary>Test only: decode sleeps in a worker, upload uses budget (vlqt_test_res_start).</summary>
             public const int Test = 1;
@@ -595,7 +611,7 @@
         }
 
         /// <summary>Audio tap (protocol.h "Audio tap"): flags of <see cref="Native.vlqt_audio_tap_state.flags"/> and the limits of vlqt_res_audio_tap_init.</summary>
-        public static class AudioTap
+        internal static class AudioTap
         {
             /// <summary>A Video element (player) writes into the tap.</summary>
             public const int Attached = 1;
@@ -607,14 +623,14 @@
         }
 
         /// <summary>Shader stages of vlqt_res_load_shader.</summary>
-        public static class ShaderStage
+        internal static class ShaderStage
         {
             public const int Vertex = 1;
             public const int Fragment = 2;
         }
 
         /// <summary>Flags of vlqt_res_load_image.</summary>
-        public static class Img
+        internal static class Img
         {
             /// <summary>Generate mipmaps after the upload (+33 % VRAM).</summary>
             public const uint Mipmaps = 1;
@@ -623,7 +639,7 @@
         }
 
         /// <summary>Resource states (u8 of ResEv.State, return value of vlqt_res_wait).</summary>
-        public static class ResState
+        internal static class ResState
         {
             public const byte Pending = 1;
             public const byte Decoding = 2;
@@ -635,7 +651,7 @@
         }
 
         /// <summary>Event ids of the resource status queue (u16), vlqt_res_poll: u16 event, u16 len, u64 id, payload.</summary>
-        public static class ResEv
+        internal static class ResEv
         {
             /// <summary>u8 state (<see cref="ResState"/>).</summary>
             public const ushort State = 1;

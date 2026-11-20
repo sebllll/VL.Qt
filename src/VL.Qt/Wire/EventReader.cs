@@ -12,8 +12,6 @@ namespace VL.Qt.Wire
     /// </summary>
     internal ref struct EventReader
     {
-        public const int RecordFieldsSize = 8; // u32 feedbackId, u32 index
-
         private readonly ReadOnlySpan<byte> _data;
         private int _offset;
 
@@ -53,12 +51,12 @@ namespace VL.Qt.Wire
                 return false;
 
             var rest = _data.Slice(_offset);
-            if (rest.Length < Protocol.HeaderSize + RecordFieldsSize)
+            if (rest.Length < Protocol.HeaderSize + Protocol.EventFieldsSize)
                 return Fail("truncated event header");
 
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(rest);
             int len = BinaryPrimitives.ReadUInt16LittleEndian(rest.Slice(2));
-            if (len < RecordFieldsSize)
+            if (len < Protocol.EventFieldsSize)
                 return Fail("event length smaller than feedbackId + index");
             if (Protocol.HeaderSize + len > rest.Length)
                 return Fail("event length exceeds buffer");
@@ -67,7 +65,7 @@ namespace VL.Qt.Wire
             Event = ev;
             FeedbackId = BinaryPrimitives.ReadUInt32LittleEndian(rest.Slice(4));
             Index = BinaryPrimitives.ReadUInt32LittleEndian(rest.Slice(8));
-            Payload = rest.Slice(Protocol.HeaderSize + RecordFieldsSize, len - RecordFieldsSize);
+            Payload = rest.Slice(Protocol.HeaderSize + Protocol.EventFieldsSize, len - Protocol.EventFieldsSize);
 
             int total = (Protocol.HeaderSize + len + (Protocol.CommandAlign - 1)) & ~(Protocol.CommandAlign - 1);
             _offset += Math.Min(total, rest.Length); // tolerate missing padding after the last record

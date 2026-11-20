@@ -375,7 +375,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                     cmdProp = rd<quint16>(p + 4);
                 switch (op) {
                 case VLQT_OP_CREATE:
-                    if (expect(6))
+                    if (expect(VLQT_CREATE_PAYLOAD))
                         rc = create(rd<quint32>(p), rd<quint16>(p + 4), reason);
                     break;
                 case VLQT_OP_DESTROY:
@@ -383,7 +383,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                         rc = destroy(rd<quint32>(p), reason);
                     break;
                 case VLQT_OP_REPARENT:
-                    if (expect(12))
+                    if (expect(VLQT_REPARENT_PAYLOAD))
                         rc = reparent(rd<quint32>(p), rd<quint32>(p + 4), rd<quint32>(p + 8), reason);
                     break;
                 case VLQT_OP_SET:
@@ -402,7 +402,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                     rc = setQmlProperties(p, plen, reason);
                     break;
                 case VLQT_OP_BIND:
-                    if (expect(10)) {
+                    if (expect(VLQT_BIND_PAYLOAD)) {
                         const quint32 id = rd<quint32>(p);
                         auto it = nodes.find(id);
                         auto hit = it == nodes.end() ? handlerNodes.find(id) : handlerNodes.end();
@@ -677,16 +677,16 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
 
 int Scene::set(const unsigned char* p, int plen, std::string& err)
 {
-    if (plen < 8) {
-        err = "payloadLen " + std::to_string(plen) + " too short for SET (>= 8)";
+    if (plen < VLQT_SET_FIELDS_SIZE) {
+        err = "payloadLen " + std::to_string(plen) + " too short for SET (>= " + std::to_string(VLQT_SET_FIELDS_SIZE) + ")";
         return ApplyBadLength;
     }
     const quint32 id = rd<quint32>(p);
     const quint16 prop = rd<quint16>(p + 4);
     Value v;
     v.type = rd<quint16>(p + 6);
-    const unsigned char* vp = p + 8;
-    const int vlen = plen - 8;
+    const unsigned char* vp = p + VLQT_SET_FIELDS_SIZE;
+    const int vlen = plen - VLQT_SET_FIELDS_SIZE;
     const int fixed = valueSize(v.type);
     if (fixed < 0) {
         err = "unknown value type " + std::to_string(v.type);
@@ -779,8 +779,8 @@ int Scene::set(const unsigned char* p, int plen, std::string& err)
 
 int Scene::setStyle(const unsigned char* p, int plen, std::string& err)
 {
-    if (plen < 8) {
-        err = "payloadLen " + std::to_string(plen) + " too short for SET_STYLE (>= 8)";
+    if (plen < VLQT_LIST_FIELDS_SIZE) {
+        err = "payloadLen " + std::to_string(plen) + " too short for SET_STYLE (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
     }
     const quint32 id = rd<quint32>(p);
@@ -806,8 +806,8 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
 {
     // Interface stub (task 1): validates the command completely (wire format: protocol.h head comment), applies
     // nothing yet. Task 3 hands the entries to the ShaderEffect item (table by name, CLEAR = full send).
-    if (plen < 8) {
-        err = "payloadLen " + std::to_string(plen) + " too short for SET_UNIFORMS (>= 8)";
+    if (plen < VLQT_LIST_FIELDS_SIZE) {
+        err = "payloadLen " + std::to_string(plen) + " too short for SET_UNIFORMS (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
     }
     const quint32 id = rd<quint32>(p);
@@ -826,9 +826,9 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
         return ApplyUnknownProperty;
     }
     const int count = rd<quint16>(p + 4);
-    int off = 8;
+    int off = VLQT_LIST_FIELDS_SIZE;
     for (int i = 0; i < count; ++i) {
-        if (plen - off < 4) {
+        if (plen - off < VLQT_ENTRY_HEADER_SIZE) {
             err = "uniform #" + std::to_string(i) + ": truncated entry";
             return ApplyBadLength;
         }
@@ -844,7 +844,7 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
                 + std::to_string(VLQT_UNIFORM_NAME_MAX);
             return ApplyBadValue;
         }
-        const int valueOff = off + align4(4 + nameLen);
+        const int valueOff = off + align4(VLQT_ENTRY_HEADER_SIZE + nameLen);
         const int next = valueOff + align4(size);
         if (next > plen) {
             err = "uniform #" + std::to_string(i) + ": entry exceeds the payload";
@@ -870,17 +870,17 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
     // Valid as a whole: apply (content problems become the element's error text, ShaderEffectItem::rebuild).
     auto* item = static_cast<ShaderEffectItem*>(it->second.item);
     item->beginUniforms((rd<quint16>(p + 6) & VLQT_UNIFORM_SET_CLEAR) != 0);
-    off = 8;
+    off = VLQT_LIST_FIELDS_SIZE;
     for (int i = 0; i < count; ++i) {
         const quint16 vt = rd<quint16>(p + off);
         const int nameLen = rd<quint16>(p + off + 2);
-        const int valueOff = off + align4(4 + nameLen);
+        const int valueOff = off + align4(VLQT_ENTRY_HEADER_SIZE + nameLen);
         QQuickItem* ref = nullptr;
         if (vt == VLQT_VT_REF) {
             const auto r = nodes.find(rd<quint32>(p + valueOff));
             ref = r != nodes.end() ? r->second.item : nullptr; // 0 (root) = no texture
         }
-        item->setUniform(reinterpret_cast<const char*>(p + off + 4), nameLen, vt, p + valueOff, ref);
+        item->setUniform(reinterpret_cast<const char*>(p + off + VLQT_ENTRY_HEADER_SIZE), nameLen, vt, p + valueOff, ref);
         off = valueOff + align4(fixedValueSize(vt));
     }
     item->endUniforms();
@@ -894,8 +894,8 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
     // Wire format: protocol.h head comment (entries like SET_UNIFORMS; a STRING value is u32 length + UTF-8). The command is
     // validated as a whole first; content problems (unknown name, failed conversion, unsupported value type) do not fail
     // the apply: they are error lines of the element (QmlItem::error, EV_ERROR).
-    if (plen < 8) {
-        err = "payloadLen " + std::to_string(plen) + " too short for SET_QML_PROPERTIES (>= 8)";
+    if (plen < VLQT_LIST_FIELDS_SIZE) {
+        err = "payloadLen " + std::to_string(plen) + " too short for SET_QML_PROPERTIES (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
     }
     const quint32 id = rd<quint32>(p);
@@ -914,9 +914,9 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
         return ApplyUnknownProperty;
     }
     const int count = rd<quint16>(p + 4);
-    int off = 8;
+    int off = VLQT_LIST_FIELDS_SIZE;
     for (int i = 0; i < count; ++i) {
-        if (plen - off < 4) {
+        if (plen - off < VLQT_ENTRY_HEADER_SIZE) {
             err = "QML property #" + std::to_string(i) + ": truncated entry";
             return ApplyBadLength;
         }
@@ -936,7 +936,7 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
                 + std::to_string(VLQT_UNIFORM_NAME_MAX);
             return ApplyBadValue;
         }
-        const int valueOff = off + align4(4 + nameLen);
+        const int valueOff = off + align4(VLQT_ENTRY_HEADER_SIZE + nameLen);
         qint64 vlen = size;
         if (vt == VLQT_VT_STRING) {
             if (valueOff + 4 > plen) {
@@ -957,12 +957,12 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
         return ApplyBadLength;
     }
     auto* item = static_cast<QmlItem*>(it->second.item);
-    off = 8;
+    off = VLQT_LIST_FIELDS_SIZE;
     for (int i = 0; i < count; ++i) {
         const quint16 vt = rd<quint16>(p + off);
         const int nameLen = rd<quint16>(p + off + 2);
-        const QString name = QString::fromUtf8(reinterpret_cast<const char*>(p + off + 4), nameLen);
-        const unsigned char* vp = p + off + align4(4 + nameLen);
+        const QString name = QString::fromUtf8(reinterpret_cast<const char*>(p + off + VLQT_ENTRY_HEADER_SIZE), nameLen);
+        const unsigned char* vp = p + off + align4(VLQT_ENTRY_HEADER_SIZE + nameLen);
         int vlen = valueSize(vt);
         if (vt == VLQT_VT_STRING)
             vlen += int(rd<quint32>(vp));
@@ -1006,8 +1006,8 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
 int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
 {
     // Validates the whole command first (wire format: protocol.h "Effect chain"), so a bad one changes nothing.
-    if (plen < 8) {
-        err = "payloadLen " + std::to_string(plen) + " too short for SET_EFFECT_CHAIN (>= 8)";
+    if (plen < VLQT_LIST_FIELDS_SIZE) {
+        err = "payloadLen " + std::to_string(plen) + " too short for SET_EFFECT_CHAIN (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
     }
     const quint32 id = rd<quint32>(p);
@@ -1025,10 +1025,10 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
     const int linkCount = rd<quint16>(p + 4);
     EffectChainDesc chain;
     chain.links.reserve(size_t(linkCount));
-    int off = 8;
+    int off = VLQT_LIST_FIELDS_SIZE;
     for (int l = 0; l < linkCount; ++l) {
         const std::string at = "link #" + std::to_string(l);
-        if (plen - off < 8) {
+        if (plen - off < VLQT_LINK_HEADER_SIZE) {
             err = at + ": truncated link header";
             return ApplyBadLength;
         }
@@ -1036,7 +1036,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
         link.kind = rd<quint16>(p + off);
         const int count = rd<quint16>(p + off + 2);
         const quint32 bodyLen = rd<quint32>(p + off + 4);
-        const int body = off + 8;
+        const int body = off + VLQT_LINK_HEADER_SIZE;
         if ((bodyLen & (VLQT_COMMAND_ALIGN - 1)) != 0 || bodyLen > quint32(plen - body)) {
             err = at + ": bodyLen " + std::to_string(bodyLen) + " not aligned or exceeds the payload";
             return ApplyBadLength;
@@ -1097,7 +1097,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
                 return ApplyBadValue;
             }
             e += 4;
-            if (end - e < shaderCount * 8 + 24) {
+            if (end - e < shaderCount * 8 + VLQT_SHADER_LINK_FIXED_SIZE) {
                 err = at + ": truncated SHADER head";
                 return ApplyBadLength;
             }
@@ -1111,7 +1111,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
                 err = at + ": reserved field " + std::to_string(reserved) + ", expected 0";
                 return ApplyBadValue;
             }
-            e += 24;
+            e += VLQT_SHADER_LINK_FIXED_SIZE;
             for (int i = 0; i < count; ++i) {
                 const std::string ue = at + " uniform #" + std::to_string(i);
                 if (end - e < 4) {
@@ -1275,7 +1275,7 @@ int Scene::poll(unsigned char* out, int cap)
 
 void Scene::pushEvent(quint16 ev, quint32 handle, quint32 index, const void* payload, quint16 payloadLen)
 {
-    const quint16 len = quint16(8 + payloadLen); // handle + index + payload, without padding
+    const quint16 len = quint16(VLQT_EVENT_FIELDS_SIZE + payloadLen); // handle + index + payload, without padding
     const qsizetype at = events.size();
     events.resize(at + align4(VLQT_HEADER_SIZE + len), '\0');
     char* d = events.data() + at;
@@ -1284,7 +1284,7 @@ void Scene::pushEvent(quint16 ev, quint32 handle, quint32 index, const void* pay
     std::memcpy(d + 4, &handle, 4);
     std::memcpy(d + 8, &index, 4);
     if (payloadLen)
-        std::memcpy(d + 12, payload, payloadLen);
+        std::memcpy(d + VLQT_HEADER_SIZE + VLQT_EVENT_FIELDS_SIZE, payload, payloadLen);
 }
 
 } // namespace vlqt
