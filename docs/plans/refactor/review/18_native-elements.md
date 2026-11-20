@@ -93,6 +93,7 @@ The changes that matter most: NELM-01 (nested Group frame), NELM-04 (type traits
 - **Touches:** `src/VL.Qt.Native/elements.cpp`, `elements.h`, `commands.cpp`, `debug.cpp`, `perf.cpp`
 - **Depends on:** NELM-05 (can be done before it inside `elements.cpp`)
 - **Verification:** `tools/build.ps1 -Test` (all element SmokeTests: `ElementsTest`, `ButtonTest`, `SpinBoxTest`, `ValueInputsTest`, `VideoTest`, `VideoStopTest`, `StyleTest`, `DebugOverlayTest`, `PerfStatsTest`)
+- **Wave 1 (W1-22):** cause: a process that ends within about 1 s of a Video's first `AudioOutput` hangs in `Qt6Multimedia`'s atexit destructor of the WASAPI probe pool (`~QThreadPool` waits for workers `ExitProcess` already killed); details and the fix under NCMD-16. The Video `beforeDestroy` hook gets the wait for the audio format probes (`QAudioDevice::preferredFormat()` of every `QMediaDevices::audioOutputs()`) after `vlqtRelease` and the audio tap release.
 
 ### NELM-05 Cut `elements.cpp` and the `Elements` class by responsibility
 - **Kind:** structure
