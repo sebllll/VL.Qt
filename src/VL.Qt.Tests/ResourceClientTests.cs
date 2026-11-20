@@ -218,6 +218,31 @@ namespace VL.Qt.Tests
             _client.AfterEvents();
         }
 
+        [Test, Ignore("SIP-03: a Settled handler that calls Wait polls into the buffer the outer Poll still parses; the remaining records of the batch are lost")]
+        public void Settled_HandlerCallsWait_TheRestOfTheBatchIsStillApplied()
+        {
+            var a = _client.CreateImage();
+            var b = _client.CreateImage();
+            var c = _client.CreateImage();
+            var d = _client.CreateImage();
+            _client.Load(a, "C:/a.png", false);
+            _client.Load(b, "C:/b.png", false);
+            _client.Load(c, "C:/c.png", false);
+            _client.Load(d, "C:/d.png", false);
+            // What a patch does in On Loaded: a synchronous load, which Waits and so polls again.
+            a.Settled = _ => _client.Wait(d);
+            // The inner poll brings more bytes than the outer batch has already read.
+            _api.OnWait = id => { _api.Ready(id, 4, 4); _api.Ready(id, 4, 4); _api.Ready(id, 4, 4); };
+
+            _api.Ready(a.Id, 1, 1);
+            _api.Ready(b.Id, 2, 2);
+            _api.Ready(c.Id, 3, 3);
+            Pump();
+
+            Assert.That(new[] { a.State, b.State, c.State, d.State }, Is.All.EqualTo(QtImageState.Ready));
+            Assert.That((b.Width, c.Width, d.Width), Is.EqualTo((2, 3, 4)));
+        }
+
         [Test]
         public void States_LoadingToReady_WithSize()
         {

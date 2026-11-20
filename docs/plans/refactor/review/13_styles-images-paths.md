@@ -73,6 +73,7 @@ The three folders are in good shape. The maths of the path helpers checks out: S
 - **Touches:** `src/VL.Qt/Images/ResourceClient.cs`, `src/VL.Qt/Images/QtImage.cs`, `src/VL.Qt.Tests/ResourceClientTests.cs`
 - **Depends on:** none
 - **Verification:** a new test in `ResourceClientTests`: a `Settled` handler that calls `Wait` on another resource while the fake queue holds three records; every resource ends Ready. SmokeTest `QtImageTest`.
+- **Wave 1 (W1-14):** confirmed by `Settled_HandlerCallsWait_TheRestOfTheBatchIsStillApplied` (a Settled handler that Waits polls into the shared buffer; the remaining records of the outer batch are overwritten, B and C stay Loading).
 
 ### SIP-04 Every failed start settles the resource
 - **Kind:** correctness
