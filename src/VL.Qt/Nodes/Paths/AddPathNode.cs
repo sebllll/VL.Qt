@@ -2,7 +2,7 @@
 using VL.Core.Import;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     /// <summary>Adds the segments of another path (Skia AddPath).</summary>
     [ProcessNode(Name = "AddPath", Category = Categories.Paths)]

@@ -5,7 +5,7 @@ using VL.Core.Import;
 using VL.Lib.Collections;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     /// <summary>Adds a Catmull-Rom spline that passes through every point, as exact cubic Béziers.</summary>
     [ProcessNode(Name = "Spline (CatmullRom)", Category = Categories.Paths)]

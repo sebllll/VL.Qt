@@ -3,7 +3,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     /// <summary>Adds a closed circle as a new contour (Skia AddCircle).</summary>
     [ProcessNode(Name = "AddCircle", Category = Categories.Paths)]
