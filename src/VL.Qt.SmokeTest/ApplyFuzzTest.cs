@@ -130,5 +130,9 @@ public static class ApplyFuzzTest
         s.Pump(2);
         Native.vlqt_window_destroy(w);
         s.Pump(1);
+        // Later in-process scenarios (image-resource, image-share, resoverlay) expect no resources left.
+        foreach (var id in images)
+            Native.vlqt_res_release(id);
+        s.Pump(2);
     }
 }
