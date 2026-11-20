@@ -1,0 +1,22 @@
+# Renamed VL.Qt nodes and pins and moved categories, for the patches of this repository.
+# python tools/vl-patch-migrate.py applies the rows to every patch (help/, VL.Qt.vl, VL.Qt.Stride, VL.Qt.Audio, tests/,
+# src/); --check lists what would change. A patch is derived from this file: never rename by hand in a .vl file.
+#
+# One row per line, five fields separated by "|":   step | kind | scope | old | new
+#   step   the task that adds the rows (W4-17). The rows of one step are applied together, so swaps work; the steps
+#          in the order of this file. Keep the rows of a step together and append a new step at the end.
+#   kind   node      rename a node.   scope: its category, or * for any category
+#          pin       rename a pin.    scope: Category/Node, Node, or * for every VL.Qt node
+#          category  move a category. scope: * moves the category with its subcategories, nodes and types;
+#                                     a node or type name moves only that one, which must be in exactly that category
+#   old    the name before the step; new: the name after it. Scope names the node as it is called before the step.
+#          Pins in vvvv spelling (Fill Color) or as the C# parameter (fillColor -> Fill Color, the rule of
+#          tools/vl_pin_catalog.py). The new names must be in src/VL.Qt.Tests/Api/node-api.txt after all steps.
+#
+# Never change or remove a row once it is merged: the script reads from each node which steps it has seen, by the
+# names the rows give. On a merge conflict, keep the rows of both sides (the side merged first comes first), take
+# either side of each conflicting patch and run the script again.
+#
+# Example, the swap of a setter and a getter in one step:
+#   W4-20 | pin | Qt.Elements/Rectangle | Radius     | Set Radius
+#   W4-20 | pin | Qt.Elements/Rectangle | Get Radius | Radius
