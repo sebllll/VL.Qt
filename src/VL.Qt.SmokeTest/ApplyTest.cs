@@ -217,6 +217,7 @@ public static class ApplyTest
             return times[times.Length / 2];
         }, cpuBound: true);
         s.Info($"apply 10000 SET (size, {b.Length} bytes): median {median:F3} ms, min {times[0]:F3}, max {times[^1]:F3}");
+        s.Perf("apply.apply_10000_set_size", median);
         PerfLimits.Below(s, median, 2.0, $"apply: 10000 SET < 2 ms (median {median:F3} ms)", cpuBound: true);
 
         b.Clear();

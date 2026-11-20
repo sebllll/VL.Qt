@@ -16,6 +16,7 @@ sealed class Scenario
 {
     static readonly object s_syncRoot = new();
     static bool s_tsvStarted;
+    static bool s_perfStarted;
 
     readonly TextWriter _out;
     readonly List<string> _failures = new();
@@ -68,6 +69,36 @@ sealed class Scenario
 
     /// <summary>Measurement or note for the log (no check).</summary>
     public void Info(string what) => Write("INFO", what);
+
+    /// <summary>
+    /// Measured value for the perf baseline (tools/perf-baseline.ps1): one "PERF" line in the test output and one line
+    /// (scenario, name, value, unit) in &lt;SmokeDir&gt;/perf.tsv. Not a check; it never fails a scenario.
+    /// </summary>
+    public void Perf(string name, double value, string unit = "ms")
+    {
+        var v = value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+        lock (s_syncRoot)
+        {
+            _out.WriteLine($"PERF {name} {v} {unit}");
+            if (!WriteTsv)
+                return;
+            try
+            {
+                var path = Path.Combine(SmokeParameters.SmokeDir, "perf.tsv");
+                if (!s_perfStarted)
+                {
+                    Directory.CreateDirectory(SmokeParameters.SmokeDir);
+                    File.WriteAllText(path, "");
+                    s_perfStarted = true;
+                }
+                File.AppendAllText(path, $"{Name}\t{name}\t{v}\t{unit}\n");
+            }
+            catch (IOException)
+            {
+                // Convenience output like checks.tsv.
+            }
+        }
+    }
 
     /// <summary>Check that needs a QRhi scenegraph (ShaderEffect/MultiEffect, video output): SKIP under the software backend.</summary>
     public void NeedsRhi(bool ok, string what, string why)

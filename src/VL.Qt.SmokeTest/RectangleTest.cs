@@ -100,6 +100,8 @@ public static class RectangleTest
         s.Check(rcp == 0, $"create 1000 rectangles ({rcp})");
         // Software backend rasterizes the first frame on the CPU (140-185 ms on arm64), so it gets a looser limit.
         var firstFrameMs = s.QuickSoftware ? 500 : 50;
+        s.Perf("rectangle.create_1000_apply", applyMs);
+        s.Perf("rectangle.create_1000_first_frame_total", totalMs);
         PerfLimits.Below(s, totalMs, firstFrameMs, $"1000 rectangles create + first frame < {firstFrameMs} ms ({totalMs:F2} ms)");
         s.Info($"1000 RECTANGLE create+bounds+color+reparent: apply {applyMs:F2} ms, incl. first frame {totalMs:F2} ms");
 
@@ -118,6 +120,7 @@ public static class RectangleTest
         }
         Array.Sort(times);
         var median = times[times.Length / 2];
+        s.Perf("rectangle.set_color_1000_median", median);
         PerfLimits.Below(s, median, 1, $"1000 SET color per frame < 1 ms (median {median:F3} ms)");
         s.Info($"1000 SET Color/frame: median {median:F3} ms, min {times[0]:F3} ms, max {times[^1]:F3} ms");
         using (s.Grab(w, "05_rect_1000.png")) { }

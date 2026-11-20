@@ -206,6 +206,7 @@ public static class ImageShareTest
             var setMedian = setMs.OrderBy(x => x).ElementAt(setMs.Count / 2);
             s.Info($"perf 50x4K switch per frame: apply with SET median {setMedian * 1000:F0} us, max {setMs.Max():F2} ms; "
                 + $"hitches background {Rate(background):F1} %, switching {Rate(switching):F1} %");
+            s.Perf("image-share.apply_set_image_median", setMedian);
             PerfLimits.Below(s, setMedian, 0.1, "apply with SET image (switch between preloaded 4K), median ms");
             PerfLimits.Below(s, Rate(switching), Math.Max(Rate(background) * 3, 5), "hitch rate while switching 50 x 4K per frame in the range of the background, %");
             cmd.Reset();

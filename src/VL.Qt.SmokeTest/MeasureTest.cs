@@ -248,6 +248,8 @@ public static class MeasureTest
         Array.Sort(moved);
         s.Info($"poll 1000 bound items: unchanged median {idleMedian:F3} ms (last round max {idle[^1]:F3}), " +
             $"all bounds changed median {moved[50]:F3} ms (max {moved[^1]:F3})");
+        s.Perf("measure.poll_idle_1000_median", idleMedian);
+        s.Perf("measure.poll_moved_1000_median", moved[50]);
         PerfLimits.Below(s, idleMedian, 0.2, $"change check < 0.2 ms / 1000 items (median {idleMedian:F3} ms)", cpuBound: true);
         Native.vlqt_window_destroy(w);
 
