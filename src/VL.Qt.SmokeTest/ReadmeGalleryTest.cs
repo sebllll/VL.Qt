@@ -7,9 +7,9 @@ using VL.Qt;
 using VL.Qt.Styles;
 using static Pixels;
 
-// README pictures of the other sections (not a test of behaviour): styles, layout, images and the basic effects, rendered
-// with raw commands and copied to docs/images/ like ReadmeImagesTest. Dark ground 0x16, one window per picture in DIP;
-// the grab is scaled to the target width on Windows. Checks only that the picture is not empty.
+// Pictures of the other README sections: styles, layout, images and the basic effects, rendered with raw commands and
+// compared with src/VL.Qt.SmokeTest/references/ like ReadmeImagesTest (WARP, own process). Dark ground 0x16, one window per
+// picture in DIP; the grab is scaled to the target width. Text uses the bundled DejaVu Sans.
 //   styles.png         the same widgets in the base style and in a light style (Style pin on a Group in the patch)
 //   layout.png         Column (centered), Row (bottom aligned) and nested Row/Column with spacing and padding
 //   images.png         one image in the four fill modes Stretch, PreserveAspectFit, PreserveAspectCrop, Tile
@@ -17,8 +17,13 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class ReadmeGalleryTest
 {
-    [Test, Explicit("runs only when selected (writes docs/images)"), Category("readme-gallery")]
-    public static void ReadmeGallery() => Scenario.Run(Run);
+    /// <summary>Style, layout, image and effect pictures against the references (WARP, own process).</summary>
+    [Test, Category("readme-gallery"), Category("image-compare"), Category("own-process")]
+    public static void ReadmeGallery() => Scenario.RunLocal(s => ImageCompare.Run(s, new[] { "readme-gallery" }));
+
+    /// <summary>Writes the README pictures into docs/images on the normal renderer (not the references).</summary>
+    [Test, Explicit("writes docs/images"), Category("readme-docs"), Category("own-process")]
+    public static void ReadmeGalleryDocs() => Scenario.RunLocal(s => ImageCompare.RunDocs(s, new[] { "readme-gallery" }));
 
     const float Bg = 0x16 / 255f;
 
@@ -51,13 +56,13 @@ public static class ReadmeGalleryTest
         };
     }
 
-    static void Run(Scenario s)
+    internal static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "the effects are ShaderEffects");
         Directory.CreateDirectory(s.OutDir);
-        var imagesDir = ReadmeImagesTest.FindUp("docs", "images");
-        s.Check(imagesDir != null, $"readme-gallery: docs/images found ({imagesDir})");
-        if (imagesDir == null) return;
+        var family = ImageCompare.LoadFont(s);
+        var baseStyle = ImageCompare.WithFont(BaseStyle.Default, family);
+        var lightStyle = ImageCompare.WithFont(Light(), family);
 
         var cmd = new CommandWriter();
         uint next = 1, order = 0;
@@ -79,6 +84,7 @@ public static class ReadmeGalleryTest
             cmd.Create(id, Protocol.Type.Text);
             cmd.SetPlace(id, x, y, w, h);
             cmd.SetString(id, Protocol.Prop.Text, text);
+            cmd.SetString(id, Protocol.Prop.FontFamily, family);
             cmd.SetF32(id, Protocol.Prop.FontSize, size);
             cmd.SetI32(id, Protocol.Prop.FontWeight, weight);
             cmd.SetI32(id, Protocol.Prop.HorizontalAlignment, align);
@@ -119,11 +125,10 @@ public static class ReadmeGalleryTest
             var grabPath = Path.Combine(s.OutDir, $"readme-gallery_{name}.png");
             using (var a = s.Grab(w, grabPath))
             {
-                var ink = ReadmeImagesTest.Ink(a);
+                var ink = ImageCompare.Ink(a);
                 s.Check(ink > 0.02, $"readme-gallery {name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
             }
-            var target = ReadmeImagesTest.Save(grabPath, Path.Combine(imagesDir!, name + ".png"), width);
-            s.Info($"readme-gallery: {target} ({new FileInfo(target).Length / 1024} KB)");
+            ImageCompare.Check(s, "readme-gallery_" + name, grabPath, width);
             Native.vlqt_window_destroy(w);
             s.Pump(1);
         }
@@ -137,7 +142,7 @@ public static class ReadmeGalleryTest
             {
                 var id = next++;
                 cmd.Create(id, type);
-                if (style == null) BaseStyle.Write(cmd, id); else StyleWriter.Write(cmd, id, style, null);
+                StyleWriter.Write(cmd, id, style ?? baseStyle, null);
                 cmd.SetPlace(id, ox + x, y, w, h);
                 if (!enabled) cmd.SetBool(id, Protocol.Prop.Enabled, false);
                 cmd.Reparent(id, 0, order++);
@@ -165,7 +170,7 @@ public static class ReadmeGalleryTest
         Render("styles", 820, 820, 250, () =>
         {
             Panel(0, "VLQt (base style)", null, 0x1E2128, 0xE0E0E0);
-            Panel(420, "Light style", Light(), 0xF6F6F6, 0x202020);
+            Panel(420, "Light style", lightStyle, 0xF6F6F6, 0x202020);
         });
 
         // --- layout.png
