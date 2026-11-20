@@ -29,7 +29,7 @@ public static class ClearPinTest
         var cmd = new CommandWriter();
         cmd.Reset();
         cmd.ClearColor(grey, grey, grey, alpha);
-        s_bg = alpha > 0 ? 0x20 : 0;
+        s_bg = ExpectedBg(alpha);
         return Native.Apply(w, cmd.EndFrame());
     }
 
@@ -40,9 +40,13 @@ public static class ClearPinTest
         cmd.Reset();
         cmd.ClearColor(grey, grey, grey, alpha);
         cmd.SetClear(clear);
-        s_bg = alpha > 0 ? 0x20 : 0;
+        s_bg = ExpectedBg(alpha);
         return Native.Apply(w, cmd.EndFrame());
     }
+
+    // The OpenGL window (Linux) has no alpha buffer (alphaBufferSize 0), so a grab with Clear off and alpha 0 keeps the RGB of the
+    // clear colour; only D3D11 clears to transparent black there.
+    static int ExpectedBg(float alpha) => alpha > 0 || !OperatingSystem.IsWindows() ? 0x20 : 0;
 
     const float WindowGrey = 0x20 / 255f;
     const float OffscreenGrey = 0.125f;
@@ -424,7 +428,10 @@ public static class ClearPinTest
             edges.Add($"{name} {n}");
         }
         Console.WriteLine($"clear-pin: distinct edge values (n samples: n - 1): {string.Join(", ", edges)}");
-        layer(edgeValues[0] > 0 && edgeValues[0] == edgeValues[1], $"clear-pin: window MSAA edges with Clear off as with Clear on ({edgeValues[0]} vs {edgeValues[1]} distinct values)");
+        if (edgeValues[0] == 0 && !OperatingSystem.IsWindows())
+            s.Skip("clear-pin: window MSAA edges with Clear off as with Clear on: Clear on shows no edge values (the GL window gets no MSAA buffer under llvmpipe/GLX although Qt reports 4 samples)");
+        else
+            layer(edgeValues[0] > 0 && edgeValues[0] == edgeValues[1], $"clear-pin: window MSAA edges with Clear off as with Clear on ({edgeValues[0]} vs {edgeValues[1]} distinct values)");
         SetMode(w, WindowGrey, true, 1);
         Frame();
 
