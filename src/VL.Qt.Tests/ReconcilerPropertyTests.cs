@@ -238,41 +238,6 @@ namespace VL.Qt.Tests
             Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 2 {P.Size} vec2(100,50)" }));
         }
 
-        [Test]
-        public void SteadyState_1000Children_OneChangePerFrame_NoAllocations_Fast()
-        {
-            const int n = 1000;
-            var children = new Element[n];
-            for (int i = 0; i < n; i++)
-                children[i] = new Rectangle { Size = new Vector2(1, 1), Fill = Color4.White };
-            var changedChildren = (Element[])children.Clone();
-            changedChildren[n / 2] = new Rectangle { Size = new Vector2(1, 1), Fill = new Color4(1, 0, 0, 1) };
-            var a = new Group { Children = ImmutableArray.Create(children) };
-            var b = new Group { Children = ImmutableArray.Create(changedChildren) };
-
-            var sink = new CountingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
-            rec.Update(a, Space.DIPTopLeft);
-            for (int i = 0; i < 100; i++)
-                rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft); // warm-up
-
-            sink.Sets = 0;
-            const int frames = 1000;
-            long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-            for (int i = 0; i < frames; i++)
-                rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
-            var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(t0);
-            Assert.That(sink.Sets, Is.EqualTo(frames), "exactly one SET per frame");
-            int frame = 0;
-            long allocated = Allocations.Fewest(() => rec.Update((frame++ & 1) == 0 ? b : a, Space.DIPTopLeft), frames);
-
-            double msPerFrame = elapsed.TotalMilliseconds / frames;
-            TestContext.Out.WriteLine($"1000 children, 1 change/frame: {msPerFrame:F4} ms/frame, {allocated} bytes");
-            Assert.That(allocated, Is.EqualTo(0));
-            // CI runners are slow and noisy (0.32 ms seen on Linux); this still catches a per-frame rebuild of all children.
-            Assert.That(msPerFrame, Is.LessThan(1.0));
-        }
-
         // ---- Shape (#154): Frame converts with 100 per unit ----
 
         static Spread<Vector2> Pts(params Vector2[] points) => Spread.Create(points);

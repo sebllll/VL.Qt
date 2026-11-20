@@ -62,7 +62,12 @@ void main() {
                     Directory.CreateSymbolicLink(target, source);
                 return;
             }
-            Assert.Ignore($"{lib} for {rid} not built (tools/build.ps1)");
+            // On the CI a missing library is a broken build, not a reason to skip; locally the test is ignored with the reason
+            // (tools/build.ps1 prints it in its summary).
+            var reason = $"{lib} for {rid} not built (tools/build.ps1)";
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")))
+                Assert.Fail(reason);
+            Assert.Ignore(reason);
         }
 
         static string Reflect(string source, int stage)

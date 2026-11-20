@@ -240,8 +240,16 @@ namespace VL.Qt.Tests
             var path = Write("Gauge.qml");
             var fired = 0;
             using var _ = QmlNodeFactory.WatchSignature(File_(path, "Gauge"), () => null).Subscribe(_ => fired++);
+
+            // A probe with a stale signature fires on every real change: waiting for it (positive wait, with a timeout) proves that
+            // the watcher saw the writes, instead of asserting "nothing happened" after a fixed sleep. Two writes, so the first
+            // one has certainly been delivered to the silent subscription when the second probe event arrives.
+            using var probed = new System.Threading.SemaphoreSlim(0);
+            using var probe = QmlNodeFactory.WatchSignature(File_(path, "Gauge"), () => "stale").Subscribe(_ => probed.Release());
             File.WriteAllText(path, "Item { property real a }\n");
-            System.Threading.Thread.Sleep(300);
+            Assert.That(probed.Wait(TimeSpan.FromSeconds(10)), "the watcher reports the first write");
+            File.WriteAllText(path, "Item { property real a; property real b }\n");
+            Assert.That(probed.Wait(TimeSpan.FromSeconds(10)), "the watcher reports the second write");
             Assert.That(fired, Is.Zero);
         }
 

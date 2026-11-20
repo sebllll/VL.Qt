@@ -74,9 +74,29 @@ Invoke-Step "VL.Qt.Audio ($Configuration)" {
 
 if ($Test)
 {
+    # Timing limits (Perf category of the unit tests, SmokeTest PerfLimits) only warn in the gate (TEST-09); a measurement that
+    # runs alone on a quiet machine sets VLQT_PERF_WARN_ONLY=0 to make them hard. VLQT_PERF_FACTOR scales every limit.
+    if (-not $env:VLQT_PERF_WARN_ONLY) { $env:VLQT_PERF_WARN_ONLY = '1' }
     Invoke-Step 'unit tests' {
         dotnet test "$repo\src\VL.Qt.Tests" -c $Configuration -nologo --logger "console;verbosity=normal" --logger "trx;LogFileName=unit.trx" --results-directory "$repo\build\test-results"
         Assert-Exit 'dotnet test'
+        # Ignored tests (with the reason) and Perf warnings are easy to overlook in a green run: list them.
+        $trx = "$repo\build\test-results\unit.trx"
+        if (Test-Path $trx)
+        {
+            $ns = @{ t = 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010' }
+            foreach ($r in (Select-Xml -Path $trx -XPath '//t:UnitTestResult' -Namespace $ns).Node)
+            {
+                $text = "$($r.Output.StdOut)`n$($r.Output.ErrorInfo.Message)"
+                if ($r.outcome -eq 'NotExecuted' -and $text -notmatch '(?m)^\s*WARN ')
+                {
+                    $why = ($text -split "`n" | Where-Object { $_.Trim() } | Select-Object -First 1)
+                    Write-Host "IGNORED $($r.testName): $why" -ForegroundColor Yellow
+                }
+                foreach ($l in ($text -split "`n" | Where-Object { $_ -match '^\s*WARN ' }))
+                    { Write-Host "WARN $($r.testName): $($l.Trim() -replace '^WARN ', '')" -ForegroundColor Yellow }
+            }
+        }
     }
     Invoke-Step 'audio unit tests' {
         dotnet test "$repo\src\VL.Qt.Audio.Tests" -c $Configuration -nologo --logger "console;verbosity=normal" --logger "trx;LogFileName=audio.trx" --results-directory "$repo\build\test-results"
@@ -101,6 +121,18 @@ if ($Test)
         $trx = "$out\smoke.trx"
         $counters = $null
         if (Test-Path $trx) { $counters = ([xml](Get-Content $trx -Raw)).TestRun.ResultSummary.Counters }
+        # A test with a warning (a Perf limit in warn-only mode) is NotExecuted in the trx, but it ran: list its WARN lines.
+        $warned = 0
+        if (Test-Path $trx)
+        {
+            $wns = @{ t = 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010' }
+            foreach ($r in (Select-Xml -Path $trx -XPath '//t:UnitTestResult[@outcome="NotExecuted"]' -Namespace $wns).Node)
+            {
+                $wl = @("$($r.Output.StdOut)" -split "`n" | Where-Object { $_ -match '^\s*WARN ' })
+                if ($wl.Count) { $warned++ }
+                foreach ($l in $wl) { Write-Host "WARN $($r.testName): $($l.Trim() -replace '^WARN ', '')" -ForegroundColor Yellow }
+            }
+        }
         # Failing tests with their message, then the failing check lines.
         if (Test-Path $trx)
         {
@@ -120,7 +152,7 @@ if ($Test)
         if ($counters) { Write-Host ('{0} passed, {1} failed, {2} not executed of {3} tests; trx + grabs + logs: {4}' -f $counters.passed, $counters.failed, $counters.notExecuted, $counters.total, $out) }
         if ($exit) { throw "dotnet test exit $exit, see $out\dotnet-test.log" }
         # an unknown -Only name selects nothing, and dotnet test would still exit 0
-        if (-not $counters -or [int]$counters.executed -eq 0) { throw "no SmokeTest ran (filter: $Only), see $out\dotnet-test.log" }
+        if (-not $counters -or ([int]$counters.executed + $warned) -eq 0) { throw "no SmokeTest ran (filter: $Only), see $out\dotnet-test.log" }
         if ([int]$counters.failed -gt 0) { throw "$($counters.failed) tests failed, see $trx" }
     }
 }

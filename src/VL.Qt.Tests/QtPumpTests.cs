@@ -199,7 +199,9 @@ namespace VL.Qt.Tests
             clock.Tick();
             Thread.Sleep(10);
             clock.Frame();
-            Assert.That(app.VvvvMs[^1], Is.GreaterThanOrEqualTo(9.5).And.LessThan(500));
+            Assert.That(app.VvvvMs[^1], Is.GreaterThanOrEqualTo(9.5), "at least the sleep");
+            // The upper bound is a timing limit (a loaded machine delays the thread): warn-only in the gate.
+            PerfLimit.Below(app.VvvvMs[^1], 500, "vvvv phase of a 10 ms spike [ms]");
 
             // No tick (first frame / clock without ticks): the clock's update time.
             clock.Frame(updateSeconds: 0.004);
