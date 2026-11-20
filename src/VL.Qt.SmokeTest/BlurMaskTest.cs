@@ -25,7 +25,7 @@ public static class BlurMaskTest
     const uint Img = 1, Pass1 = 2, Pass2 = 3, Dot = 4;
     // CI (VLQT_PERF_WARN_ONLY, shared runners often without GPU = WARP): the numbers carry no meaning there, so only a
     // short run at 1920x1080 checks that the chain renders; the full measurement (both sizes, 60 frames) runs locally.
-    static bool Quick => PerfLimits.WarnOnly;
+    static bool Quick => PerfLimits.SkipHeavy;
     static int Frames => Quick ? 5 : 60;
     static int Warmup => Quick ? 2 : 15;
 
