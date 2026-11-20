@@ -65,7 +65,7 @@ static class ImageCompare
 
     /// <summary>
     /// Writes all references: the scenes of <see cref="Scenes"/> in one helper process, every recorded trace (TEST-04) in a
-    /// process of its own, exactly like the compare runs them (a trace rendered after other scenes in one process can differ).
+    /// process of its own, exactly like the compare runs them.
     /// </summary>
     public static void UpdateAll(Scenario s)
     {

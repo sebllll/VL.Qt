@@ -37,6 +37,13 @@ public static class TraceReplay
     [Test, TestCaseSource(nameof(TraceNames)), Category("replay-traces"), Category("image-compare"), Category("own-process")]
     public static void ReplayTraces(string name) => Scenario.RunLocal(s => ImageCompare.Run(s, new[] { "trace-" + name }));
 
+    /// <summary>
+    /// The effects trace replayed after readme-images in one process (W1-20): readme-images creates shader resources whose
+    /// ids the trace used to refer to, so its effect chains ran the glow shaders instead of RGBSplit.
+    /// </summary>
+    [Test, Category("replay-traces"), Category("image-compare"), Category("own-process")]
+    public static void ReplayTraceAfterReadmeImages() => Scenario.RunLocal(s => ImageCompare.Run(s, new[] { "readme-images", "trace-effects" }));
+
     /// <summary>Body of the compare scene "trace-&lt;name&gt;" (runs in the helper process).</summary>
     internal static void Run(Scenario s, string name)
     {
@@ -46,7 +53,6 @@ public static class TraceReplay
             s.Check(false, $"trace-{name}: traces folder not found");
             return;
         }
-        var repo = Path.GetFullPath(Path.Combine(traces, "..", "..", ".."));
         List<byte[]> frames;
         try { frames = ReplayTest.ReadFrames(Path.Combine(traces, name + ".bin")); }
         catch (Exception e) when (e is IOException or InvalidDataException)
@@ -57,22 +63,7 @@ public static class TraceReplay
         s.Check(frames.Count > 0, $"trace-{name}: {frames.Count} frames");
         if (frames.Count == 0)
             return;
-
-        // Image resources the patch had loaded: the trace holds only their ids, the files are listed in <name>.images.
-        var images = new List<ulong>();
-        var imagesFile = Path.Combine(traces, name + ".images");
-        if (File.Exists(imagesFile))
-            foreach (var line in File.ReadAllLines(imagesFile))
-            {
-                var rel = line.Trim();
-                if (rel.Length == 0)
-                    continue;
-                var path = Path.GetFullPath(Path.Combine(repo, rel));
-                s.Check(File.Exists(path), $"trace-{name}: image file {rel} exists");
-                images.Add(ImageTest.Load(path, (ok, what) => s.Check(ok, $"trace-{name}: {what}"), rel));
-            }
-        frames = Rewrite(frames, Path.Combine(repo, "help", "Qt"), images, out var unmapped);
-        s.Check(unmapped == 0, $"trace-{name}: every image id of the trace has a file in {name}.images ({unmapped} without)");
+        frames = Prepare(s, traces, name, frames, "trace-" + name, checkMapped: true, out _);
 
         var w = Native.vlqt_window_create(Width, Height, "VL.Qt trace " + name);
         s.Check(w != IntPtr.Zero, $"trace-{name}: window_create");
@@ -110,14 +101,84 @@ public static class TraceReplay
     }
 
     /// <summary>
-    /// Makes a trace portable: image ids (Prop.Image) become, in order of first appearance, the ids of the resources created
-    /// here; strings that point into the help/Qt folder of the recording machine (QmlElement source) point into
-    /// <paramref name="helpQtDir"/>. Walks the commands (u16 op, u16 payload length, payload, padded to 4).
+    /// Creates the resources the patch had loaded (the trace holds only their ids): the image files listed in
+    /// <c>&lt;name&gt;.images</c> and the shader files listed in <c>&lt;name&gt;.shaders</c> (one path relative to the
+    /// repository per line, in order of first appearance of the ids in the trace), then rewrites the trace to their ids.
+    /// Without this a trace refers to ids that do not exist in the replaying process, or, after another scene in the same
+    /// process created resources, to that scene's resources (W1-20: readme-images before trace-effects).
     /// </summary>
-    internal static List<byte[]> Rewrite(List<byte[]> frames, string helpQtDir, IReadOnlyList<ulong> images, out int unmapped)
+    /// <param name="resources">The created image and shader resources, for the caller to release.</param>
+    internal static List<byte[]> Prepare(Scenario s, string traces, string name, List<byte[]> frames, string label, bool checkMapped,
+        out List<ulong> resources)
+    {
+        var repo = Path.GetFullPath(Path.Combine(traces, "..", "..", ".."));
+        var images = new List<ulong>();
+        foreach (var rel in ListFile(Path.Combine(traces, name + ".images")))
+        {
+            var path = Path.GetFullPath(Path.Combine(repo, rel));
+            s.Check(File.Exists(path), $"{label}: image file {rel} exists");
+            images.Add(ImageTest.Load(path, (ok, what) => s.Check(ok, $"{label}: {what}"), rel));
+        }
+        var shaders = new List<ulong>();
+        foreach (var rel in ListFile(Path.Combine(traces, name + ".shaders")))
+        {
+            var path = Path.GetFullPath(Path.Combine(repo, rel));
+            var exists = File.Exists(path);
+            s.Check(exists, $"{label}: shader file {rel} exists");
+            if (!exists)
+            {
+                shaders.Add(0);
+                continue;
+            }
+            var stage = path.EndsWith(".vert", StringComparison.OrdinalIgnoreCase) ? Protocol.ShaderStage.Vertex : Protocol.ShaderStage.Fragment;
+            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
+            Native.vlqt_res_load_shader_source(id, File.ReadAllText(path), stage);
+            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResState.Ready, $"{label}: shader {rel} baked, Ready");
+            shaders.Add(id);
+        }
+        resources = new List<ulong>(images);
+        resources.AddRange(shaders.FindAll(id => id != 0));
+        var result = Rewrite(frames, Path.Combine(repo, "help", "Qt"), images, shaders, out var unmappedImages, out var unmappedShaders);
+        if (checkMapped)
+        {
+            s.Check(unmappedImages == 0, $"{label}: every image id of the trace has a file in {name}.images ({unmappedImages} without)");
+            s.Check(unmappedShaders == 0, $"{label}: every shader id of the trace has a file in {name}.shaders ({unmappedShaders} without)");
+        }
+        return result;
+    }
+
+    static IEnumerable<string> ListFile(string file)
+    {
+        if (!File.Exists(file))
+            yield break;
+        foreach (var line in File.ReadAllLines(file))
+            if (line.Trim() is { Length: > 0 } rel)
+                yield return rel;
+    }
+
+    /// <summary>
+    /// Makes a trace portable: image ids (Prop.Image) and shader ids (Prop.FragmentShader / VertexShader, shader links of
+    /// SET_EFFECT_CHAIN) become, in order of first appearance, the ids of the resources created here; strings that point
+    /// into the help/Qt folder of the recording machine (QmlElement source) point into <paramref name="helpQtDir"/>. Walks
+    /// the commands (u16 op, u16 payload length, payload, padded to 4). An id without a resource becomes 0 (counted).
+    /// </summary>
+    internal static List<byte[]> Rewrite(List<byte[]> frames, string helpQtDir, IReadOnlyList<ulong> images, IReadOnlyList<ulong> shaders,
+        out int unmappedImages, out int unmappedShaders)
     {
         var map = new Dictionary<ulong, ulong>();
+        var shaderMap = new Dictionary<ulong, ulong>();
         var missing = 0;
+        var missingShaders = 0;
+        ulong MapShader(ulong id)
+        {
+            if (id == 0)
+                return 0;
+            if (!shaderMap.TryGetValue(id, out var mapped))
+                shaderMap[id] = mapped = shaderMap.Count < shaders.Count ? shaders[shaderMap.Count] : 0;
+            if (mapped == 0)
+                missingShaders++;
+            return mapped;
+        }
         var result = new List<byte[]>(frames.Count);
         foreach (var frame in frames)
         {
@@ -131,10 +192,42 @@ public static class TraceReplay
                     throw new InvalidDataException($"command at {pos} exceeds the frame");
                 var cmd = frame.AsSpan(pos, total);
                 pos += total;
+                if (op == Protocol.Op.SetEffectChain && payload >= 8)
+                {
+                    // u32 id, u16 linkCount, u16 flags; per link u16 kind, u16 count, u32 body length, body. A shader link
+                    // body starts with u16 template, u16 shaderCount, u64 shaderIds[shaderCount].
+                    var copy = cmd.ToArray();
+                    var links = BitConverter.ToUInt16(copy, Protocol.HeaderSize + 4);
+                    var at = Protocol.HeaderSize + 8;
+                    for (var i = 0; i < links && at + 8 <= Protocol.HeaderSize + payload; i++)
+                    {
+                        var kind = BitConverter.ToUInt16(copy, at);
+                        var body = (int)BitConverter.ToUInt32(copy, at + 4);
+                        if (kind == Protocol.EffectLink.Shader && body >= 4)
+                        {
+                            var count = BitConverter.ToUInt16(copy, at + 10);
+                            for (var k = 0; k < count && 4 + (k + 1) * 8 <= body; k++)
+                            {
+                                var p = at + 12 + k * 8;
+                                BitConverter.TryWriteBytes(copy.AsSpan(p), MapShader(BitConverter.ToUInt64(copy, p)));
+                            }
+                        }
+                        at += 8 + body;
+                    }
+                    o.AddRange(copy);
+                    continue;
+                }
                 if (op == Protocol.Op.Set && payload >= 12)
                 {
                     var prop = BitConverter.ToUInt16(cmd.Slice(8));
                     var vt = BitConverter.ToUInt16(cmd.Slice(10));
+                    if (vt == Protocol.Vt.U64 && (prop == Protocol.Prop.FragmentShader || prop == Protocol.Prop.VertexShader))
+                    {
+                        var copy = cmd.ToArray();
+                        BitConverter.TryWriteBytes(copy.AsSpan(12), MapShader(BitConverter.ToUInt64(copy, 12)));
+                        o.AddRange(copy);
+                        continue;
+                    }
                     if (vt == Protocol.Vt.U64 && prop == Protocol.Prop.Image)
                     {
                         var id = BitConverter.ToUInt64(cmd.Slice(12));
@@ -174,7 +267,8 @@ public static class TraceReplay
             }
             result.Add(o.ToArray());
         }
-        unmapped = missing;
+        unmappedImages = missing;
+        unmappedShaders = missingShaders;
         return result;
     }
 }

@@ -15,4 +15,4 @@ A FAIL names the grab and writes `<name>_diff.png` next to it in `build/smoke/gr
 Change a reference only on purpose: commit the PNGs on their own and put the diff images of the failing compare into the pull
 request description.
 
-`trace-<name>.png` are the last frames of the command traces in `../traces/` (TEST-04, `TraceReplay`, category `replay-traces`): each trace recorded from a help patch by `tools/record-traces.ps1` is replayed against QtNative (shaders settled) and compared like the other references. Re-record the traces after a protocol change, then `update-refs`.
+`trace-<name>.png` are the last frames of the command traces in `../traces/` (TEST-04, `TraceReplay`, category `replay-traces`): each trace recorded from a help patch by `tools/record-traces.ps1` is replayed against QtNative (shaders settled) and compared like the other references. The resources the patch had loaded are listed next to the trace (`<name>.images`, `<name>.shaders`); the replay creates them and rewrites the trace's ids to them, so a trace does not depend on the resources other scenes of the same process created. Re-record the traces after a protocol change, then `update-refs`.
