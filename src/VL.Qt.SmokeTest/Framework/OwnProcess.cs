@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 /// <summary>
 /// Scenarios that need a process of their own (device loss needs D3D11On12 before the first window, QtTexture runs in both
@@ -26,7 +27,9 @@ static class OwnProcess
 
     /// <summary>Body of a scenario the helper executable can run, or null.</summary>
     public static Action<Scenario>? Find(string name) =>
-        s_bodies.TryGetValue(name, out var body) ? body : null;
+        s_bodies.TryGetValue(name, out var body) ? body
+        : name.StartsWith("trace-", StringComparison.Ordinal) ? (s => TraceReplay.Run(s, name["trace-".Length..])) // recorded traces (TEST-04)
+        : null;
 
     /// <summary>
     /// Runs <paramref name="scenarios"/> (in this order, in one fresh process) and records their checks in <paramref name="s"/>.
@@ -39,7 +42,7 @@ static class OwnProcess
     public static void Run(Scenario s, string[] scenarios, IReadOnlyDictionary<string, string>? env = null, string? outDir = null, string? expectInQtLog = null)
     {
         var label = string.Join("+", scenarios);
-        var qtLog = Path.Combine(SmokeParameters.SmokeDir, $"{s.Name}.log");
+        var qtLog = Path.Combine(SmokeParameters.SmokeDir, $"{string.Concat(s.Name.Select(c => char.IsLetterOrDigit(c) || c is '-' or '_' or '.' ? c : '_'))}.log");
         Directory.CreateDirectory(SmokeParameters.SmokeDir);
         var exe = Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? "VL.Qt.SmokeTest.exe" : "VL.Qt.SmokeTest");
         var dll = Path.Combine(AppContext.BaseDirectory, "VL.Qt.SmokeTest.dll");

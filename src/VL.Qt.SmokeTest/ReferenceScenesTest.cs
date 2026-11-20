@@ -25,7 +25,7 @@ public static class ReferenceScenesTest
     /// images of the failing compare into the pull request description.
     /// </summary>
     [Test, Explicit("writes src/VL.Qt.SmokeTest/references"), Category("update-refs")]
-    public static void UpdateRefs() => Scenario.RunLocal(s => ImageCompare.Run(s, ImageCompare.Scenes, update: true));
+    public static void UpdateRefs() => Scenario.RunLocal(ImageCompare.UpdateAll);
 
     const float Bg = 0x16 / 255f;
     const uint Orange = 0xFF8C33, Cyan = 0x26C7FF, Pink = 0xFF5C9E, Green = 0x7CD66B, Panel = 0x1E2128;

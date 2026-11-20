@@ -60,6 +60,17 @@ static class ImageCompare
     }
 
     /// <summary>
+    /// Writes all references: the scenes of <see cref="Scenes"/> in one helper process, every recorded trace (TEST-04) in a
+    /// process of its own, exactly like the compare runs them (a trace rendered after other scenes in one process can differ).
+    /// </summary>
+    public static void UpdateAll(Scenario s)
+    {
+        Run(s, Scenes, update: true);
+        foreach (var scene in TraceReplay.TraceScenes())
+            Run(s, new[] { scene }, update: true);
+    }
+
+    /// <summary>
     /// Registers the bundled DejaVu Sans (the text of the compare scenes must not depend on the installed fonts) and returns
     /// its family name, "" if it is not found.
     /// </summary>

@@ -14,3 +14,5 @@ dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=readme-docs    
 A FAIL names the grab and writes `<name>_diff.png` next to it in `build/smoke/grabs/` (difference x4, differing pixels red).
 Change a reference only on purpose: commit the PNGs on their own and put the diff images of the failing compare into the pull
 request description.
+
+`trace-<name>.png` are the last frames of the command traces in `../traces/` (TEST-04, `TraceReplay`, category `replay-traces`): each trace recorded from a help patch by `tools/record-traces.ps1` is replayed against QtNative (shaders settled) and compared like the other references. Re-record the traces after a protocol change, then `update-refs`.
