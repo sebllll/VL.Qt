@@ -4,19 +4,24 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using NUnit.Framework;
 using VL.Qt;
+using static Pixels;
 
 // Glow (#438 A1): blur pyramid as nested ShaderEffects, pass templates in protocol.h.
 // glow_prefilter (1/2) -> pyramid_down (1/4 .. 1/2^n) -> pyramid_up (.. 1/2, base = the down step of that size)
 // -> glow_composite (full size, element + glow). The pass graph is fixed, the radius only changes the weights.
 // Source: transparent 800 x 600 rectangle (room for the glow) with an orange box 160 x 100 at (320, 250) and a white
 // bar 6 x 100 at (200, 250). Raw commands (DIP). Grabs: <outDir>/glow_*.png; the radius sweep goes to the log.
-static class GlowTest
+[TestFixture, NonParallelizable]
+public static class GlowTest
 {
+    [Test, Category("glow")]
+    public static void Glow() => Scenario.Run(Run);
+
     const uint Fx = 1, Src = 2, Box = 3, Bar = 4;
     const uint Down = 100, Up = 200; // + step k (Down + k is 1 / 2^k of the effect size)
 
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
     static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
     // Glow strength at (x, y): mean green above the background #202020 over 5 x 5 samples (1 DIP apart).
@@ -37,14 +42,14 @@ static class GlowTest
     }
     static float RadiusOf(float level, float dpr) => 2 / dpr * MathF.Sqrt((MathF.Pow(4, level) - 1) * 7 / 6);
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
-        var gpu = Program.NeedsRhi(check, "ShaderEffect needs a QRhi scenegraph");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         ulong Shader(string path)
         {
             Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
             Native.vlqt_res_load_shader(id, path, Protocol.ShaderStage.Fragment);
-            check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"438: shader {path} Ready");
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"shader {path} Ready");
             return id;
         }
         var prefilter = Shader("builtin:glow_prefilter");
@@ -53,11 +58,11 @@ static class GlowTest
         var composite = Shader("builtin:glow_composite");
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt glow test");
-        check(w != IntPtr.Zero, "438: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
-        pump(4);
+        s.Pump(4);
         float dpr;
-        using (var probe = grab(w, Path.Combine(outDir, "glow_probe.png")))
+        using (var probe = s.Grab(w, "glow_probe.png"))
             dpr = Math.Max(1f, probe.Width / 800f);
 
         // Step sizes in pixels (each the ceiling of half the one above); steps up to the one radius 256 needs, at least 2 px.
@@ -66,7 +71,7 @@ static class GlowTest
         for (int k = 1; k <= n && px[k - 1].H >= 4; k++)
             px.Add(((px[k - 1].W + 1) / 2, (px[k - 1].H + 1) / 2));
         n = px.Count - 1;
-        Console.WriteLine($"INFO glow: device pixel ratio {dpr:F2}, {n} steps, smallest {px[n].W} x {px[n].H} px");
+        s.Info($"glow: device pixel ratio {dpr:F2}, {n} steps, smallest {px[n].W} x {px[n].H} px");
 
         var cmd = new CommandWriter();
         var evBuf = new byte[1 << 16];
@@ -74,7 +79,7 @@ static class GlowTest
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"438: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
         void DrainErrors()
         {
@@ -168,7 +173,7 @@ static class GlowTest
         cmd.Reparent(Fx, 0, 1000);
         SetGlow(4);
         CheckApply("glow scene");
-        pump(8);
+        s.Pump(8);
 
         // Points right of the box (edge x = 480, y = 300) at a distance of 3 / 10 / 25 / 40 / 100 / 200 DIP, and its centre.
         const int y0 = 300;
@@ -177,9 +182,9 @@ static class GlowTest
             cmd.Reset();
             SetGlow(radius, spread, intensity, additive);
             CheckApply($"glow {name}");
-            pump(4);
-            var a = grab(w, Path.Combine(outDir, $"glow_{name}.png"));
-            Console.WriteLine($"INFO glow {name}: d3 {Glow(a, 483, y0):F1}, d10 {Glow(a, 490, y0):F1}, d25 {Glow(a, 505, y0):F1}, d40 {Glow(a, 520, y0):F1}, " +
+            s.Pump(4);
+            var a = s.Grab(w, $"glow_{name}.png");
+            s.Info($"glow {name}: d3 {Glow(a, 483, y0):F1}, d10 {Glow(a, 490, y0):F1}, d25 {Glow(a, 505, y0):F1}, d40 {Glow(a, 520, y0):F1}, " +
                 $"d100 {Glow(a, 580, y0):F1}, d200 {Glow(a, 680, y0):F1}, box {Px(a, 400, y0)}");
             return a;
         }
@@ -187,26 +192,26 @@ static class GlowTest
         using (var a = Shot("r4", 4))
         {
             gpu(Glow(a, 483, y0) > 6 && Glow(a, 490, y0) < 3 && Glow(a, 520, y0) < 1,
-                $"438: radius 4: glow at the edge only ({Glow(a, 483, y0):F1}, {Glow(a, 490, y0):F1}, {Glow(a, 520, y0):F1})");
-            gpu(Near(Px(a, 400, y0), 255, 153, 0), $"438: glow behind the element: box unchanged ({Px(a, 400, y0)})");
-            gpu(Glow(a, 209, y0) > 6, $"438: thin bar glows too ({Glow(a, 209, y0):F1})");
+                $"radius 4: glow at the edge only ({Glow(a, 483, y0):F1}, {Glow(a, 490, y0):F1}, {Glow(a, 520, y0):F1})");
+            gpu(Near(Px(a, 400, y0), 255, 153, 0), $"glow behind the element: box unchanged ({Px(a, 400, y0)})");
+            gpu(Glow(a, 209, y0) > 6, $"thin bar glows too ({Glow(a, 209, y0):F1})");
         }
         using (var a = Shot("r32", 32))
             gpu(Glow(a, 490, y0) > 20 && Glow(a, 505, y0) > 5 && Glow(a, 580, y0) < 1,
-                $"438: radius 32: glow reaches ~30 DIP, not 100 ({Glow(a, 490, y0):F1}, {Glow(a, 505, y0):F1}, {Glow(a, 580, y0):F1})");
+                $"radius 32: glow reaches ~30 DIP, not 100 ({Glow(a, 490, y0):F1}, {Glow(a, 505, y0):F1}, {Glow(a, 580, y0):F1})");
         using (var a = Shot("r256", 256))
         {
             gpu(Glow(a, 580, y0) > 8 && Glow(a, 680, y0) > 2,
-                $"438: radius 256: glow reaches 200 DIP ({Glow(a, 580, y0):F1}, {Glow(a, 680, y0):F1})");
-            gpu(Near(Px(a, 400, y0), 255, 153, 0), $"438: radius 256: box unchanged ({Px(a, 400, y0)})");
+                $"radius 256: glow reaches 200 DIP ({Glow(a, 580, y0):F1}, {Glow(a, 680, y0):F1})");
+            gpu(Near(Px(a, 400, y0), 255, 153, 0), $"radius 256: box unchanged ({Px(a, 400, y0)})");
             // Rings in the far field (x 520 .. 780 DIP): runs of equal values, 18.9 px without the dither of the passes, ~6 with.
             var cy = y0 * a.Height / 600;
             var band = InnerShadowTest.Banding(a, 520 * a.Width / 800, 780 * a.Width / 800, new[] { cy - 10, cy, cy + 10 }, c => c.G);
-            Console.WriteLine($"INFO glow banding: radius 256 far field, mean run {band:F1} px");
-            gpu(band < 10, $"438: radius 256: no rings in the glow (mean run of equal values {band:F1} px)");
+            s.Info($"glow banding: radius 256 far field, mean run {band:F1} px");
+            gpu(band < 10, $"radius 256: no rings in the glow (mean run of equal values {band:F1} px)");
         }
         using (var a = Shot("r0", 0))
-            gpu(Glow(a, 483, y0) < 1, $"438: radius 0 behind the element: nothing outside ({Glow(a, 483, y0):F1})");
+            gpu(Glow(a, 483, y0) < 1, $"radius 0 behind the element: nothing outside ({Glow(a, 483, y0):F1})");
 
         // Spread, intensity, additive at radius 32.
         float g25, g10;
@@ -216,13 +221,13 @@ static class GlowTest
             g10 = Glow(a, 490, y0);
         }
         using (var a = Shot("r32_spread", 32, spread: 0.6f, intensity: 1))
-            gpu(Glow(a, 505, y0) > g25 * 1.5f + 3, $"438: spread 0.6 makes the glow denser ({g25:F1} -> {Glow(a, 505, y0):F1})");
+            gpu(Glow(a, 505, y0) > g25 * 1.5f + 3, $"spread 0.6 makes the glow denser ({g25:F1} -> {Glow(a, 505, y0):F1})");
         using (var a = Shot("r32_i3", 32, intensity: 3))
-            gpu(Glow(a, 490, y0) > g10 * 2 + 2, $"438: intensity 3 brighter than 1 ({g10:F1} -> {Glow(a, 490, y0):F1})");
+            gpu(Glow(a, 490, y0) > g10 * 2 + 2, $"intensity 3 brighter than 1 ({g10:F1} -> {Glow(a, 490, y0):F1})");
         using (var a = Shot("r32_additive", 32, additive: true))
         {
             var c = Px(a, 400, y0);
-            gpu(c.G > 153 + 40 && c.B > 60, $"438: additive: glow added on top of the box ({c})");
+            gpu(c.G > 153 + 40 && c.B > 60, $"additive: glow added on top of the box ({c})");
         }
 
         // Radius sweep across two step boundaries (step 4.5 .. 6.5 in 0.1): every value changes in small steps, no jump
@@ -236,32 +241,32 @@ static class GlowTest
             cmd.Reset();
             SetGlow(radius);
             CheckApply("glow sweep");
-            pump(3);
-            using var a = grab(w, Path.Combine(outDir, "glow_sweep.png"));
+            s.Pump(3);
+            using var a = s.Grab(w, "glow_sweep.png");
             var v = points.Select(p => Glow(a, p.X, y0)).ToArray();
             rows.Add(v);
-            Console.WriteLine($"INFO glow sweep: step {level:F1} radius {radius,6:F1} DIP: " + string.Join(", ", points.Select((p, j) => $"{p.Name} {v[j]:F1}")));
+            s.Info($"glow sweep: step {level:F1} radius {radius,6:F1} DIP: " + string.Join(", ", points.Select((p, j) => $"{p.Name} {v[j]:F1}")));
         }
         for (int j = 0; j < points.Length; j++)
         {
             var col = rows.Select(r => r[j]).ToArray();
             var range = col.Max() - col.Min();
             var maxStep = col.Zip(col.Skip(1), (a, b) => Math.Abs(b - a)).Max();
-            gpu(maxStep <= Math.Max(0.25f * range, 3), $"438: sweep {points[j].Name}: no jump (largest step {maxStep:F1} of range {range:F1})");
+            gpu(maxStep <= Math.Max(0.25f * range, 3), $"sweep {points[j].Name}: no jump (largest step {maxStep:F1} of range {range:F1})");
         }
         var far = rows.Select(r => r[2]).ToArray();
         gpu(far.Zip(far.Skip(1), (a, b) => b - a).All(d => d > -1.5f) && far[^1] > far[0] + 5,
-            $"438: sweep d100 grows with the radius ({far[0]:F1} -> {far[^1]:F1})");
+            $"sweep d100 grows with the radius ({far[0]:F1} -> {far[^1]:F1})");
 
         DrainErrors();
-        check(errors.Count == 0, $"438: no EV_ERROR from the passes ({string.Join("; ", errors)})");
+        s.Check(errors.Count == 0, $"no EV_ERROR from the passes ({string.Join("; ", errors)})");
 
         cmd.Reset();
         cmd.Destroy(Fx);
         CheckApply("destroy");
-        pump(3);
+        s.Pump(3);
         Native.vlqt_window_destroy(w);
         foreach (var id in new[] { prefilter, down, up, composite }) Native.vlqt_res_release(id);
-        pump(2);
+        s.Pump(2);
     }
 }

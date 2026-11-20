@@ -1,7 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- SmokeTest of QtNative without vvvv, as an NUnit project (F5): `dotnet test src/VL.Qt.SmokeTest -c Release`.
+       It stays an Exe: the same assembly is the helper executable of the scenarios that need a process of their own
+       (Program.cs, OwnProcess.cs), so the generated test entry point is switched off. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
     <SelfContained>false</SelfContained>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
@@ -22,42 +28,24 @@
 
   <ItemGroup>
     <Compile Remove="PngImage.cs" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
-    <Compile Include="..\VL.Qt\Native.cs" Link="Native.cs" />
-    <Compile Include="..\VL.Qt\Protocol.cs" Link="Protocol.cs" />
-    <Compile Include="..\VL.Qt\CommandWriter.cs" Link="CommandWriter.cs" />
-    <Compile Include="..\VL.Qt\Reconciler\ICommandSink.cs" Link="ICommandSink.cs" />
-    <!-- Renderer core (07a): WindowRenderer + reconciler + element model. -->
-    <Compile Include="..\VL.Qt\WindowRenderer.cs" Link="WindowRenderer.cs" />
-    <Compile Include="..\VL.Qt\SceneCore.cs" Link="SceneCore.cs" />
-    <Compile Include="..\VL.Qt\OffscreenRenderer.cs" Link="OffscreenRenderer.cs" />
-    <Compile Include="..\VL.Qt\InputMapping.cs" Link="InputMapping.cs" />
-    <Compile Include="..\VL.Qt\WindowPlacement.cs" Link="WindowPlacement.cs" />
-    <Compile Include="..\VL.Qt\WindowSettings.cs" Link="WindowSettings.cs" />
-    <Compile Include="..\VL.Qt\PerfStats.cs" Link="PerfStats.cs" />
-    <Compile Include="..\VL.Qt\Geometry.cs" Link="Geometry.cs" />
-    <Compile Include="..\VL.Qt\Space.cs" Link="Space.cs" />
-    <Compile Include="..\VL.Qt\SpaceMapping.cs" Link="SpaceMapping.cs" />
-    <Compile Include="..\VL.Qt\MultisampleCount.cs" Link="MultisampleCount.cs" />
-    <Compile Include="..\VL.Qt\EventReader.cs" Link="EventReader.cs" />
-    <Compile Include="..\VL.Qt\Elements\*.cs" Link="Elements\%(Filename)%(Extension)" />
-    <Compile Include="..\VL.Qt\Reconciler\*.cs" Exclude="..\VL.Qt\Reconciler\ICommandSink.cs" Link="Reconciler\%(Filename)%(Extension)" />
-    <Compile Include="..\VL.Qt\Styles\*.cs" Link="Styles\%(Filename)%(Extension)" />
-    <Compile Include="..\VL.Qt\Paths\*.cs" Link="Paths\%(Filename)%(Extension)" />
-    <Compile Include="..\VL.Qt\QtApp.cs" Link="QtApp.cs" />
-    <Compile Include="..\VL.Qt\QtLog.cs" Link="QtLog.cs" />
-    <Compile Include="..\VL.Qt\NodeErrors.cs" Link="NodeErrors.cs" />
-    <!-- Element nodes (07d smoke: Group/Row/Column + Rectangle nodes through the real QtNative). -->
-    <Compile Include="..\VL.Qt\Categories.cs" Link="Categories.cs" />
-    <Compile Include="..\VL.Qt\Images\*.cs" Link="Images\%(Filename)%(Extension)" />
-    <Compile Include="..\VL.Qt\Nodes\*.cs" Link="Nodes\%(Filename)%(Extension)" />
-    <Compile Include="..\VL.Qt\Nodes\Interaction\*.cs" Link="Nodes\Interaction\%(Filename)%(Extension)" />
-    <Compile Include="..\VL.Qt\Nodes\Effects\*.cs" Link="Nodes\Effects\%(Filename)%(Extension)" />
-    <Compile Include="..\VL.Qt\Nodes\Paths\*.cs" Link="Nodes\Paths\%(Filename)%(Extension)" />
-    <!-- QtApp (02b) + CommandWriter Stride overloads: real assemblies are copied next to the exe. -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="NUnit" Version="4.*" />
+    <PackageReference Include="NUnit3TestAdapter" Version="5.*" />
+  </ItemGroup>
+
+  <!-- The library as it ships (TEST-10); its package references are compile-only, the real assemblies come from here. -->
+  <ItemGroup>
+    <ProjectReference Include="..\VL.Qt\VL.Qt.csproj" />
     <PackageReference Include="VL.Core" Version="$(VvvvVersion)" />
     <PackageReference Include="Stride.Core.Mathematics" Version="$(StrideMathematicsVersion)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="$(LoggingAbstractionsVersion)" />
     <PackageReference Include="System.Reactive" Version="$(SystemReactiveVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\VL.Qt.Native\protocol.h" Link="protocol.h" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\runtimes\$(RuntimeIdentifier)\native\**" Link="runtimes\$(RuntimeIdentifier)\native\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

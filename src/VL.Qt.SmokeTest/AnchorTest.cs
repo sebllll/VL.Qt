@@ -1,4 +1,5 @@
 ﻿using System;
+using NUnit.Framework;
 using System.Drawing;
 using System.IO;
 using Stride.Core.Mathematics;
@@ -8,30 +9,34 @@ using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using Color = System.Drawing.Color;
+using static Pixels;
 
 // Anchor against the actual item size (#88, #469): like VL.Skia a point v of the element lands at (v - anchor) * M in its
 // parent (outside Row/Column); in Row/Column the layout places it and the anchor is only the pivot of Transform.
 // Row/Group with Auto Size on use the center of their implicit size; a Group with Auto Size off keeps its children at its
 // origin and places only its frame (Size) by the anchor (#475), so Transform pivots around the origin. The
 // anchor follows a size change without a matrix resend. Nodes → Reconciler → CommandWriter → real QtNative. Grabs go to
-// <outDir>/88_*.png (pixel checks in DIP); the analytic expectations use the Skia formula (v - anchor) * M.
+// <OutDir>/88_*.png (pixel checks in DIP); the analytic expectations use the Skia formula (v - anchor) * M.
 // Stride RotationZ(+90) turns clockwise on screen (y down): (x, y) → (-y, x); the left child goes up, the right child down.
-static class AnchorTest
+[TestFixture, NonParallelizable]
+public static class AnchorTest
 {
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
     static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
     static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
-    static bool IsBg(Color c) => Math.Abs(c.R - 0x20) < 8 && Math.Abs(c.G - 0x20) < 8 && Math.Abs(c.B - 0x20) < 8;
 
     static IDisposable NoWarning(string _) => throw new InvalidOperationException("unexpected node warning");
 
     static readonly Color4 Red = new(1, 0, 0, 1), Green = new(0, 1, 0, 1);
     static readonly Matrix Rot90 = Matrix.RotationZ(MathUtil.PiOverTwo);
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    /// <summary>Anchors.</summary>
+    [Test, Category("anchor")]
+    public static void Anchor() => Scenario.Run(s => Run(s));
+
+    static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt anchor test");
-        check(w != IntPtr.Zero, "88: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -66,20 +71,20 @@ static class AnchorTest
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
-                check(rc == 0, $"88: apply {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+                s.Check(rc == 0, $"apply {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
-            pump(3);
+            s.Pump(3);
         }
 
         // Unrotated, both cases are red 100..200 / green 200..300 (x) at y 100..200, implicit size 200 x 100 at (100, 100).
         // 90 deg around the center (200, 150): red x 150..250 / y 50..150, green x 150..250 / y 150..250.
         void CheckCenter200x150(string name, string what)
         {
-            using var a = grab(w, Path.Combine(outDir, name));
-            check(IsRed(Px(a, 200, 60)) && IsRed(Px(a, 155, 145)) && IsGreen(Px(a, 200, 240)) && IsGreen(Px(a, 245, 155)),
-                $"88: {what}: rotated around (200, 150) ({Px(a, 200, 60)}, {Px(a, 200, 240)})");
-            check(IsBg(Px(a, 120, 150)) && IsBg(Px(a, 280, 150)) && IsBg(Px(a, 200, 40)) && IsBg(Px(a, 200, 260)),
-                $"88: {what}: nothing outside the rotated box ({Px(a, 120, 150)}, {Px(a, 280, 150)}, {Px(a, 200, 40)})");
+            using var a = s.Grab(w, name);
+            s.Check(IsRed(Px(a, 200, 60)) && IsRed(Px(a, 155, 145)) && IsGreen(Px(a, 200, 240)) && IsGreen(Px(a, 245, 155)),
+                $"{what}: rotated around (200, 150) ({Px(a, 200, 60)}, {Px(a, 200, 240)})");
+            s.Check(IsBg(Px(a, 120, 150)) && IsBg(Px(a, 280, 150)) && IsBg(Px(a, 200, 40)) && IsBg(Px(a, 200, 260)),
+                $"{what}: nothing outside the rotated box ({Px(a, 120, 150)}, {Px(a, 280, 150)}, {Px(a, 200, 40)})");
         }
 
         // 1) Row, Auto Size on, anchor Center: the anchor is the center of the implicit size (200 x 100), placed at (200, 150).
@@ -90,12 +95,12 @@ static class AnchorTest
         //    item coordinates, still at (200, 150)): red x 150..250 / y 0..200, green x 150..250 / y 200..300.
         //    Only the child size is sent, no new matrix.
         Frame(Row(redWidth: 2), "row grows");
-        using (var a = grab(w, Path.Combine(outDir, "88_row_grown.png")))
+        using (var a = s.Grab(w, "88_row_grown.png"))
         {
-            check(IsRed(Px(a, 200, 10)) && IsRed(Px(a, 200, 190)) && IsGreen(Px(a, 200, 210)) && IsGreen(Px(a, 200, 290)),
-                $"88: row grown: anchor follows the implicit size ({Px(a, 200, 10)}, {Px(a, 200, 290)})");
-            check(IsBg(Px(a, 140, 100)) && IsBg(Px(a, 260, 100)) && IsBg(Px(a, 200, 310)),
-                $"88: row grown: nothing outside ({Px(a, 140, 100)}, {Px(a, 260, 100)}, {Px(a, 200, 310)})");
+            s.Check(IsRed(Px(a, 200, 10)) && IsRed(Px(a, 200, 190)) && IsGreen(Px(a, 200, 210)) && IsGreen(Px(a, 200, 290)),
+                $"row grown: anchor follows the implicit size ({Px(a, 200, 10)}, {Px(a, 200, 290)})");
+            s.Check(IsBg(Px(a, 140, 100)) && IsBg(Px(a, 260, 100)) && IsBg(Px(a, 200, 310)),
+                $"row grown: nothing outside ({Px(a, 140, 100)}, {Px(a, 260, 100)}, {Px(a, 200, 310)})");
         }
 
         // 3) Group, Auto Size on, children at (0, 0) and (1, 0): implicit size 200 x 100 as in 1).
@@ -106,38 +111,38 @@ static class AnchorTest
         //    The origin (= anchor point of the frame, #475) is placed at (400, 300): red x 350..450 / y 200..300,
         //    green y 300..400.
         Frame(Group(new Vector2(8, 6), false, RectangleAnchor.Center, RotAround(4, 3), -1, -0.5f), "group auto size off");
-        using (var a = grab(w, Path.Combine(outDir, "88_group_size_center.png")))
+        using (var a = s.Grab(w, "88_group_size_center.png"))
         {
-            check(IsRed(Px(a, 400, 210)) && IsRed(Px(a, 355, 295)) && IsGreen(Px(a, 400, 390)) && IsGreen(Px(a, 445, 305)),
-                $"88: group auto size off, anchor Center: rotated around (400, 300) ({Px(a, 400, 210)}, {Px(a, 400, 390)})");
-            check(IsBg(Px(a, 320, 300)) && IsBg(Px(a, 480, 300)),
-                $"88: group auto size off: unrotated positions empty ({Px(a, 320, 300)}, {Px(a, 480, 300)})");
+            s.Check(IsRed(Px(a, 400, 210)) && IsRed(Px(a, 355, 295)) && IsGreen(Px(a, 400, 390)) && IsGreen(Px(a, 445, 305)),
+                $"group auto size off, anchor Center: rotated around (400, 300) ({Px(a, 400, 210)}, {Px(a, 400, 390)})");
+            s.Check(IsBg(Px(a, 320, 300)) && IsBg(Px(a, 480, 300)),
+                $"group auto size off: unrotated positions empty ({Px(a, 320, 300)}, {Px(a, 480, 300)})");
         }
 
         // 5) Same group with Anchor TopLeft: Auto Size off moves only the frame (#475), the children stay at the origin,
         //    the picture is the same as in 4).
         Frame(Group(new Vector2(8, 6), false, RectangleAnchor.TopLeft, RotAround(4, 3), -1, -0.5f), "group anchor top left");
-        using (var a = grab(w, Path.Combine(outDir, "88_group_size_topleft.png")))
-            check(IsRed(Px(a, 400, 210)) && IsGreen(Px(a, 400, 390)) && IsBg(Px(a, 320, 300)) && IsBg(Px(a, 480, 300)),
-                $"88: group auto size off, anchor TopLeft: children unmoved, rotated around the origin ({Px(a, 400, 210)}, {Px(a, 400, 390)})");
+        using (var a = s.Grab(w, "88_group_size_topleft.png"))
+            s.Check(IsRed(Px(a, 400, 210)) && IsGreen(Px(a, 400, 390)) && IsBg(Px(a, 320, 300)) && IsBg(Px(a, 480, 300)),
+                $"group auto size off, anchor TopLeft: children unmoved, rotated around the origin ({Px(a, 400, 210)}, {Px(a, 400, 390)})");
 
         // 6) Back to Center: only ANCHOR changes, the group is rotated around (400, 300) again.
         Frame(Group(new Vector2(8, 6), false, RectangleAnchor.Center, RotAround(4, 3), -1, -0.5f), "group anchor back to center");
-        using (var a = grab(w, Path.Combine(outDir, "88_group_size_center2.png")))
-            check(IsRed(Px(a, 400, 210)) && IsGreen(Px(a, 400, 390)),
-                $"88: group anchor back to Center ({Px(a, 400, 210)}, {Px(a, 400, 390)})");
+        using (var a = s.Grab(w, "88_group_size_center2.png"))
+            s.Check(IsRed(Px(a, 400, 210)) && IsGreen(Px(a, 400, 390)),
+                $"group anchor back to Center ({Px(a, 400, 210)}, {Px(a, 400, 390)})");
 
         // 7) Placement through the anchor, Identity transform, a 2 x 1 units (200 x 100 DIP) rectangle at the root.
         Frame(Rect(red, Red, 0, 0, 2, 1), "identity top left", clear: true);
-        using (var a = grab(w, Path.Combine(outDir, "88_identity_topleft.png")))
-            check(IsRed(Px(a, 10, 10)) && IsRed(Px(a, 190, 90)) && IsBg(Px(a, 210, 50)) && IsBg(Px(a, 100, 110)),
-                $"88: Identity + Anchor TopLeft: rectangle in the top left corner ({Px(a, 10, 10)}, {Px(a, 190, 90)}, {Px(a, 210, 50)}, {Px(a, 100, 110)})");
+        using (var a = s.Grab(w, "88_identity_topleft.png"))
+            s.Check(IsRed(Px(a, 10, 10)) && IsRed(Px(a, 190, 90)) && IsBg(Px(a, 210, 50)) && IsBg(Px(a, 100, 110)),
+                $"Identity + Anchor TopLeft: rectangle in the top left corner ({Px(a, 10, 10)}, {Px(a, 190, 90)}, {Px(a, 210, 50)}, {Px(a, 100, 110)})");
 
         Frame(red.Update(new Vector2(2, 1), Matrix.Identity, RectangleAnchor.Center, Red, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
             null, null, out _, out _), "identity center");
-        using (var a = grab(w, Path.Combine(outDir, "88_identity_center.png")))
-            check(IsRed(Px(a, 10, 10)) && IsRed(Px(a, 90, 40)) && IsBg(Px(a, 110, 25)) && IsBg(Px(a, 50, 60)),
-                $"88: Identity + Anchor Center: center at the origin, a quarter visible ({Px(a, 10, 10)}, {Px(a, 90, 40)}, {Px(a, 110, 25)}, {Px(a, 50, 60)})");
+        using (var a = s.Grab(w, "88_identity_center.png"))
+            s.Check(IsRed(Px(a, 10, 10)) && IsRed(Px(a, 90, 40)) && IsBg(Px(a, 110, 25)) && IsBg(Px(a, 50, 60)),
+                $"Identity + Anchor Center: center at the origin, a quarter visible ({Px(a, 10, 10)}, {Px(a, 90, 40)}, {Px(a, 110, 25)}, {Px(a, 50, 60)})");
 
         // 8) Translate + Rotate + Scale, expectation = Skia (v - anchor) · M, computed independently of QtNative:
         //    M = Scale(1.5) · RotationZ(90°) · Translate(4, 2.5 units), the rectangle is 2 x 1 units.
@@ -155,7 +160,7 @@ static class AnchorTest
             }
             var corners = new[] { new Vector2(0, 0), new Vector2(200, 0), new Vector2(200, 100), new Vector2(0, 100) };
             var centroid = Map(new Vector2(100, 50));
-            using var g = grab(w, Path.Combine(outDir, $"88_srt_{anchor}.png"));
+            using var g = s.Grab(w, $"88_srt_{anchor}.png");
             bool inside = true, outside = true;
             string what = "";
             foreach (var c in corners)
@@ -169,7 +174,7 @@ static class AnchorTest
                 outside &= IsBg(co);
                 what += $" [{p.X:F0},{p.Y:F0}: in {ci.R:X2}{ci.G:X2}{ci.B:X2}, out {co.R:X2}{co.G:X2}{co.B:X2}]";
             }
-            check(inside && outside, $"88: Skia semantics, Anchor {anchor}, Translate + Rotate + Scale: corners at (v - anchor) · M{what}");
+            s.Check(inside && outside, $"Skia semantics, Anchor {anchor}, Translate + Rotate + Scale: corners at (v - anchor) · M{what}");
         }
 
         // 9) Row child: the anchor is only the pivot. Row at (100, 100) (Anchor TopLeft), red 1 x 1 units, green 2 x 1 units
@@ -180,9 +185,9 @@ static class AnchorTest
                 null, null, out _, out _);
             Frame(row.Update(Spread.Create<IElement?>(Rect(red, Red), greenRot), new Vector2(0, 0), true, Matrix.Translation(1, 1, 0),
                 RectangleAnchor.TopLeft, 0, 0, VerticalAlignment.Top, 1, false, false, null, null, out _, out _), "row child anchor", clear: true);
-            using var a = grab(w, Path.Combine(outDir, "88_row_child_anchor.png"));
-            check(IsRed(Px(a, 150, 150)) && IsGreen(Px(a, 300, 60)) && IsGreen(Px(a, 300, 240)) && IsBg(Px(a, 220, 150)) && IsBg(Px(a, 380, 150)),
-                $"88: Row child: anchor Center = pivot only, rotated in its cell ({Px(a, 150, 150)}, {Px(a, 300, 60)}, {Px(a, 300, 240)}, {Px(a, 220, 150)}, {Px(a, 380, 150)})");
+            using var a = s.Grab(w, "88_row_child_anchor.png");
+            s.Check(IsRed(Px(a, 150, 150)) && IsGreen(Px(a, 300, 60)) && IsGreen(Px(a, 300, 240)) && IsBg(Px(a, 220, 150)) && IsBg(Px(a, 380, 150)),
+                $"Row child: anchor Center = pivot only, rotated in its cell ({Px(a, 150, 150)}, {Px(a, 300, 60)}, {Px(a, 300, 240)}, {Px(a, 220, 150)}, {Px(a, 380, 150)})");
         }
 
         foreach (var n in new IDisposable[] { red, green, row, group })
@@ -194,7 +199,7 @@ static class AnchorTest
         void Expect(int expected, string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == expected, $"88: {what} -> {expected} ({rc}: {Native.LastError()})");
+            s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
             cmd.Reset();
         }
         const uint Raw = 900;
@@ -214,6 +219,6 @@ static class AnchorTest
         Expect(0, "destroy");
 
         Native.vlqt_window_destroy(w);
-        pump(2);
+        s.Pump(2);
     }
 }

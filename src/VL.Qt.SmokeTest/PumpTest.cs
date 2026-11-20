@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reactive.Linq;
@@ -9,8 +10,13 @@ using VL.Lib.Animation;
 using VL.Qt;
 
 // Global pump (plan 02a/02b) without vvvv: simulated IFrameClock, two windows, 120 frames.
-static class PumpTest
+[TestFixture, NonParallelizable]
+public static class PumpTest
 {
+    /// <summary>Frame pump with several windows.</summary>
+    [Test, Category("pump")]
+    public static void Pump() => Scenario.Run(Run);
+
     const float U = 100f;
 
     // Like vvvv's (WinForms) main loop between two frames: dispatches every Win32 message of the thread,
@@ -171,20 +177,20 @@ static class PumpTest
         public void AfterEvents() { Calls++; throw new InvalidOperationException("test"); }
     }
 
-    public static void Run(Action<bool, string> check)
+    static void Run(Scenario s)
     {
         var clock = new SimClock();
         var log = new CollectingLogger();
         var app = QtApp.CreateForTest(log);
         var pump = new QtPump(app, clock);
-        check(app.ParticipantCount == 0, "pump: no participants at start");
+        s.Check(app.ParticipantCount == 0, "pump: no participants at start");
 
         var a = new TestWindow("pump A");
         var b = new TestWindow("pump B");
         pump.Register(a);
         pump.Register(b);
         pump.Register(a); // duplicate is ignored
-        check(app.ParticipantCount == 2, $"pump: 2 participants ({app.ParticipantCount})");
+        s.Check(app.ParticipantCount == 2, $"pump: 2 participants ({app.ParticipantCount})");
 
         // 1. 120 frames, 2 windows: exactly one advance + processEvents per frame, 1 swap per window and pump.
         var ms = new double[120];
@@ -211,7 +217,7 @@ static class PumpTest
                 if (w.Last.swaps > 0) { if (w == a) aSwapped = true; else bSwapped = true; }
                 var minSwaps = !OperatingSystem.IsWindows() && first ? 0 : 1;
                 var expect = Math.Min(f + 1, 60);
-                if (w.Last.swaps != 1) Console.WriteLine($"INFO pump frame {f} {w.Perf.samples} samples, swaps in this pump {w.Last.swaps}");
+                if (w.Last.swaps != 1) s.Info($"pump frame {f} {w.Perf.samples} samples, swaps in this pump {w.Last.swaps}");
                 if (w.Last.swaps < minSwaps || w.Last.swaps > 1 || w.Perf.samples != expect)
                 {
                     swapsOk = false;
@@ -219,18 +225,18 @@ static class PumpTest
                 }
             }
         }
-        check(app.Pumps == 120 && app.Advances == 120 && app.ProcessEventsCount == 120,
+        s.Check(app.Pumps == 120 && app.Advances == 120 && app.ProcessEventsCount == 120,
             $"pump: 120 frames -> pumps {app.Pumps}, advances {app.Advances}, processEvents {app.ProcessEventsCount}");
-        check(a.Applies == 120 && b.Applies == 120 && a.Afters == 120 && b.Afters == 120,
+        s.Check(a.Applies == 120 && b.Applies == 120 && a.Afters == 120 && b.Afters == 120,
             $"pump: each window 120 apply / 120 after-events ({a.Applies}/{a.Afters}, {b.Applies}/{b.Afters})");
-        check(swapsOk, "pump: exactly 1 swap per window and frame (perf ring)" + swapErr);
+        s.Check(swapsOk, "pump: exactly 1 swap per window and frame (perf ring)" + swapErr);
         // #245: QtApp reports apply/host/interval/GC per pump, the window adds its ops.
         var hrc = Native.vlqt_window_get_host_frame(a.Handle, out var hf);
         Native.vlqt_window_get_host_stats(a.Handle, out var hs);
-        check(hrc == 0 && hf.apply > 0 && hf.host >= hf.apply && hf.interval > 0 && hf.ops == 1 && hf.alloc_bytes >= 0
+        s.Check(hrc == 0 && hf.apply > 0 && hf.host >= hf.apply && hf.interval > 0 && hf.ops == 1 && hf.alloc_bytes >= 0
               && hs.samples == 60 && hs.ops == 1 && hs.host_ms > 0,
             $"pump: host frame reported (rc {hrc}, apply {hf.apply:F3}, host {hf.host:F2}, interval {hf.interval:F1}, ops {hf.ops}, alloc {hf.alloc_bytes}; stats samples {hs.samples}, ops {hs.ops}, gen0/s {hs.gc0_per_s:F1})");
-        check(hf.vvvv == 0 && hf.wait == 0, $"pump: no tick, no clock update time -> vvvv/wait unknown (vvvv {hf.vvvv}, wait {hf.wait})");
+        s.Check(hf.vvvv == 0 && hf.wait == 0, $"pump: no tick, no clock update time -> vvvv/wait unknown (vvvv {hf.vvvv}, wait {hf.wait})");
 
         // #260: host-side 10 ms spike in the vvvv update (tick -> frame finished) shows up as vvvv, not in the Qt phases.
         for (int f = 0; f < 2; f++)
@@ -245,20 +251,20 @@ static class PumpTest
         Native.vlqt_window_get_host_stats(a.Handle, out hs);
         var qt = a.Last.events + a.Last.sync + a.Last.render + a.Last.present;
         // WSLg: Present copies to the host compositor (L4e, #214) -> the Qt/host limits without the Present share.
-        var wslgPresent = Program.Wslg ? a.Last.present + b.Last.present : 0;
-        check(hrc == 0 && hf.vvvv >= 9.5f && hf.vvvv < 100 && hf.wait >= 10 && hf.wait < 200
-              && qt - (Program.Wslg ? a.Last.present : 0) < 9 && hf.host - wslgPresent < 9
+        var wslgPresent = QtHost.Wslg ? a.Last.present + b.Last.present : 0;
+        s.Check(hrc == 0 && hf.vvvv >= 9.5f && hf.vvvv < 100 && hf.wait >= 10 && hf.wait < 200
+              && qt - (QtHost.Wslg ? a.Last.present : 0) < 9 && hf.host - wslgPresent < 9
               && hs.vvvv_ms_max >= 9.5 && hs.wait_ms_max >= 10 && hf.interval >= hf.vvvv + hf.wait,
-            $"pump: 10 ms vvvv spike -> vvvv phase (vvvv {hf.vvvv:F2}, wait {hf.wait:F2}, host {hf.host:F2}, interval {hf.interval:F2}, Qt phases {qt:F2}{(Program.Wslg ? $", WSLg present {wslgPresent:F2}" : "")}; stats vvvv max {hs.vvvv_ms_max:F2}, wait max {hs.wait_ms_max:F2})");
+            $"pump: 10 ms vvvv spike -> vvvv phase (vvvv {hf.vvvv:F2}, wait {hf.wait:F2}, host {hf.host:F2}, interval {hf.interval:F2}, Qt phases {qt:F2}{(QtHost.Wslg ? $", WSLg present {wslgPresent:F2}" : "")}; stats vvvv max {hs.vvvv_ms_max:F2}, wait max {hs.wait_ms_max:F2})");
 
         var warm = ms[10..];
         var sorted = (double[])warm.Clone();
         Array.Sort(sorted);
         var mean = Average(warm);
-        Console.WriteLine($"INFO pump time (2 windows, rect moves each frame), frames 10..119: mean {mean:F3} ms, median {sorted[sorted.Length / 2]:F3} ms, max {sorted[^1]:F3} ms; " +
+        s.Info($"pump time (2 windows, rect moves each frame), frames 10..119: mean {mean:F3} ms, median {sorted[sorted.Length / 2]:F3} ms, max {sorted[^1]:F3} ms; " +
             $"all 120 frames mean {Average(ms):F3} ms, first frame {ms[0]:F3} ms");
         // Acceptance 02a "pump < 2 ms for the test rect" is a per-window figure (spike: one window); with 2 windows the cost adds up.
-        PumpLimit(check, mean / 2, Average(present[10..]) / 2, "per window",
+        PumpLimit(s, mean / 2, Average(present[10..]) / 2, "per window",
             $"2 windows: {mean:F3} ms total, {mean / 2:F3} ms per window");
 
         // 1b. One window only, same pacing.
@@ -282,12 +288,12 @@ static class PumpTest
             var sorted1 = ms1[10..];
             var roundMean = Average(sorted1);
             Array.Sort(sorted1);
-            Console.WriteLine($"INFO pump time (1 window, round {round + 1}), frames 10..59: mean {roundMean:F3} ms, median {sorted1[sorted1.Length / 2]:F3} ms, max {sorted1[^1]:F3} ms");
+            s.Info($"pump time (1 window, round {round + 1}), frames 10..59: mean {roundMean:F3} ms, median {sorted1[sorted1.Length / 2]:F3} ms, max {sorted1[^1]:F3} ms");
             if (roundMean < mean1) (mean1, presentMean1) = (roundMean, Average(present1[10..]));
             if (mean1 < 2.0 * PerfLimits.Factor) break; // within the limit, no need for another round
         }
         pump.Register(b);
-        PumpLimit(check, mean1, presentMean1, "1 window", $"{mean1:F3} ms");
+        PumpLimit(s, mean1, presentMean1, "1 window", $"{mean1:F3} ms");
 
         // 1c. Moving content inside an effect layer source (#137): exactly one swap per pump, no overlay needed,
         // no second render right after the first (that showed ~1100 fps in vvvv). Swaps are counted by the perf ring.
@@ -310,13 +316,13 @@ static class PumpTest
                 if (fxBad++ == 0) fxErr = $" (first mismatch frame {f}: swaps {swaps} in {expect} pumps, frame {fx.Perf.frame_ms:F2} ms)";
             }
         }
-        check(fxBad == 0, "pump: effect layer source moving -> 1 swap per pump, frame >= 10 ms" + fxErr);
+        s.Check(fxBad == 0, "pump: effect layer source moving -> 1 swap per pump, frame >= 10 ms" + fxErr);
         pump.Unregister(fx);
         fx.Destroy();
 
         // 1d. Two vvvv apps (two entry points, #314): each app has its own clock and pump, both pump the one QtApp once
         // per vvvv frame. Each window must render once per frame (in its own app's pump), not once per app (~120 fps).
-        RunTwoApps(app, check);
+        RunTwoApps(app, s);
         pump.Register(a);
         pump.Register(b);
 
@@ -325,10 +331,10 @@ static class PumpTest
         var pumps = app.Pumps;
         var advances = app.Advances;
         System.Threading.Thread.Sleep(300);
-        check(app.Pumps == pumps && app.Advances == advances, "pause: no pump while the clock stands still");
+        s.Check(app.Pumps == pumps && app.Advances == advances, "pause: no pump while the clock stands still");
         a.Update(); b.Update();
         clock.Frame(1.0 / 60);
-        check(app.Pumps == pumps + 1 && app.Advances == advances + 1, "play: pumping continues with the next frame, one advance");
+        s.Check(app.Pumps == pumps + 1 && app.Advances == advances + 1, "play: pumping continues with the next frame, one advance");
 
         // 3. Register/unregister stress: 10x create + destroy a window between frames.
         for (int i = 0; i < 10; i++)
@@ -337,13 +343,13 @@ static class PumpTest
             pump.Register(w);
             a.Update(); b.Update(); w.Update();
             clock.Frame(1.0 / 60);
-            check(w.Applies == 1 && w.Afters == 1, $"stress {i}: new window pumped once");
+            s.Check(w.Applies == 1 && w.Afters == 1, $"stress {i}: new window pumped once");
             pump.Unregister(w);
             w.Destroy();
             pump.Unregister(w); // second unregister is a no-op
             a.Update(); b.Update();
             clock.Frame(1.0 / 60);
-            check(app.ParticipantCount == 2, $"stress {i}: participants back to 2 ({app.ParticipantCount})");
+            s.Check(app.ParticipantCount == 2, $"stress {i}: participants back to 2 ({app.ParticipantCount})");
         }
 
         // 4. A failing participant does not stop the others.
@@ -352,21 +358,21 @@ static class PumpTest
         var aBefore = a.Afters;
         a.Update(); b.Update();
         clock.Frame(1.0 / 60);
-        check(a.Afters == aBefore + 1 && bad.Calls == 2, "pump: a throwing participant does not stop the others");
+        s.Check(a.Afters == aBefore + 1 && bad.Calls == 2, "pump: a throwing participant does not stop the others");
         pump.Unregister(bad);
 
         pump.Unregister(a);
         pump.Unregister(b);
         a.Destroy();
         b.Destroy();
-        check(app.ParticipantCount == 0, "pump: all unregistered");
+        s.Check(app.ParticipantCount == 0, "pump: all unregistered");
         var pumpErrors = log.Lines.FindAll(l => l.Contains("Qt is not pumped"));
-        check(pumpErrors.Count == 0, "pump: no thread/pump errors logged");
-        RunRestart(app, pump, clock, check);
-        foreach (var l in log.Lines) Console.WriteLine("INFO pump log " + l);
+        s.Check(pumpErrors.Count == 0, "pump: no thread/pump errors logged");
+        RunRestart(app, pump, clock, s);
+        foreach (var l in log.Lines) s.Info("pump log " + l);
     }
 
-    static void RunTwoApps(QtApp app, Action<bool, string> check)
+    static void RunTwoApps(QtApp app, Scenario s)
     {
         var clockA = new SimClock();
         var clockB = new SimClock();
@@ -395,8 +401,8 @@ static class PumpTest
                 }
             }
         }
-        check(bad == 0, "two apps: each window 1 swap per vvvv frame, frame >= 10 ms (not one render per app)" + err);
-        check(wa.Applies == 100 && wb.Applies == 100 && wa.Afters == 100 && wb.Afters == 100,
+        s.Check(bad == 0, "two apps: each window 1 swap per vvvv frame, frame >= 10 ms (not one render per app)" + err);
+        s.Check(wa.Applies == 100 && wb.Applies == 100 && wa.Afters == 100 && wb.Afters == 100,
             $"two apps: each window pumped once per frame by its own app ({wa.Applies}/{wa.Afters}, {wb.Applies}/{wb.Afters})");
         pumpA.Unregister(wa);
         pumpB.Unregister(wb);
@@ -408,13 +414,13 @@ static class PumpTest
 
     // #58: F8/F5 in vvvv stops the app (its app host disposes the pump service and the renderers) and starts a new app
     // with a new frame clock. QtApp (QGuiApplication) stays; the new app's pump must drive the new windows.
-    static void RunRestart(QtApp app, QtPump pump, SimClock clock, Action<bool, string> check)
+    static void RunRestart(QtApp app, QtPump pump, SimClock clock, Scenario s)
     {
         // F8: the app host disposes its services (pump) - the old clock may still exist but no longer drives anything.
         pump.Dispose();
         var pumps = app.Pumps;
         clock.Frame(1.0 / 60);
-        check(app.Pumps == pumps && app.ActivePumps == 0, $"restart: stopped app no longer pumps (pumps +{app.Pumps - pumps}, active {app.ActivePumps})");
+        s.Check(app.Pumps == pumps && app.ActivePumps == 0, $"restart: stopped app no longer pumps (pumps +{app.Pumps - pumps}, active {app.ActivePumps})");
 
         for (int i = 0; i < 10; i++)
         {
@@ -431,37 +437,37 @@ static class PumpTest
                 clock2.Frame(1.0 / 60);
             }
             var visible = Native.vlqt_window_is_visible(w.Handle) != 0;
-            check(w.Applies == 10 && w.Afters == 10 && visible && w.Perf.samples > 0,
+            s.Check(w.Applies == 10 && w.Afters == 10 && visible && w.Perf.samples > 0,
                 $"restart {i}: window of the new app is pumped and renders (apply {w.Applies}, after {w.Afters}, visible {visible}, perf samples {w.Perf.samples})");
-            check(app.DriverSeconds > driverBefore, $"restart {i}: driver time monotonic ({driverBefore:F3} -> {app.DriverSeconds:F3})");
-            check(app.ActivePumps == 1 && app.ParticipantCount == 1, $"restart {i}: 1 pump, 1 participant ({app.ActivePumps}, {app.ParticipantCount})");
+            s.Check(app.DriverSeconds > driverBefore, $"restart {i}: driver time monotonic ({driverBefore:F3} -> {app.DriverSeconds:F3})");
+            s.Check(app.ActivePumps == 1 && app.ParticipantCount == 1, $"restart {i}: 1 pump, 1 participant ({app.ActivePumps}, {app.ParticipantCount})");
 
             // The old clock (previous app) must not drive the new app's window.
             var applies = w.Applies;
             clock.Frame(1.0 / 60);
-            check(w.Applies == applies, $"restart {i}: old clock does not pump the new app");
+            s.Check(w.Applies == applies, $"restart {i}: old clock does not pump the new app");
 
             // F8 again: renderer disposed (unregister + destroy), then the app host disposes the pump.
             // Every other round the pump goes first (renderer not unregistered cleanly) - no leftovers either way.
             if (i % 2 == 0) { pump2.Unregister(w); pump2.Dispose(); }
             else { pump2.Dispose(); pump2.Unregister(w); }
             w.Destroy();
-            check(app.ActivePumps == 0 && app.ParticipantCount == 0, $"restart {i}: stopped app leaves no pump/participant ({app.ActivePumps}, {app.ParticipantCount})");
+            s.Check(app.ActivePumps == 0 && app.ParticipantCount == 0, $"restart {i}: stopped app leaves no pump/participant ({app.ActivePumps}, {app.ParticipantCount})");
         }
     }
 
     // Acceptance 02a: pump < 2 ms. WSLg (L4e, #214): Present copies to the host compositor (4.6 ms d3d12, 12 ms
     // llvmpipe) -> hard limit on QtNative/Qt share (pump - present), the total stays visible as WARN.
-    static void PumpLimit(Action<bool, string> check, double pump, double present, string what, string detail)
+    static void PumpLimit(Scenario s, double pump, double present, string what, string detail)
     {
-        if (!Program.Wslg)
+        if (!QtHost.Wslg)
         {
-            PerfLimits.Below(check, pump, 2.0, $"pump: mean pump time {what} < 2 ms ({detail})");
+            PerfLimits.Below(s, pump, 2.0, $"pump: mean pump time {what} < 2 ms ({detail})");
             return;
         }
-        PerfLimits.Below(check, pump - present, 2.0, $"pump: mean pump time minus present {what} < 2 ms (WSLg; {pump - present:F3} ms, {detail})");
+        PerfLimits.Below(s, pump - present, 2.0, $"pump: mean pump time minus present {what} < 2 ms (WSLg; {pump - present:F3} ms, {detail})");
         if (pump >= 2.0 * PerfLimits.Factor)
-            Console.WriteLine($"WARN pump: mean pump time {what} {pump:F3} ms >= 2 ms, present {present:F3} ms (WSLg)");
+            s.Warn($"pump: mean pump time {what} {pump:F3} ms >= 2 ms, present {present:F3} ms (WSLg)");
     }
 
     static double Average(double[] v) { double s = 0; foreach (var x in v) s += x; return s / v.Length; }

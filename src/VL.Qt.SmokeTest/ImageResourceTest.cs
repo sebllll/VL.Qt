@@ -1,4 +1,5 @@
 ﻿using System;
+using NUnit.Framework;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -16,21 +17,26 @@ using VL.Qt;
 /// same loads, info, readback, failures and replacement, but no stripes.
 /// Numbers are printed as INFO for the PR; VLQT_IMG_UPLOAD=worker runs the same with the worker upload path.
 /// </summary>
-static class ImageResourceTest
+[TestFixture, NonParallelizable]
+public static class ImageResourceTest
 {
     const uint Rect = 1;
 
     sealed record Rec(ushort Ev, ulong Id, byte[] Payload);
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<string> log)
+    /// <summary>Image resources.</summary>
+    [Test, Category("image-resource")]
+    public static void ImageResource() => Scenario.Run(s => Run(s));
+
+    static void Run(Scenario s)
     {
-        var dir = Path.Combine(outDir, "image-resource");
+        var dir = Path.Combine(s.OutDir, "image-resource");
         Directory.CreateDirectory(dir);
         var cmd = new CommandWriter();
         // Window with a moving rect. The perf parts pace the frames to 60 Hz like the vvvv frame clock (spin, the pump
         // itself never waits for VSync); a frame whose interval exceeds 1.5 x 16.7 ms is a hitch.
         var w = Native.vlqt_window_create_at(60, 60, 480, 270, "VL.Qt image resources", 0);
-        check(w != IntPtr.Zero, "360: window " + (w == IntPtr.Zero ? Native.LastError() : ""));
+        s.Check(w != IntPtr.Zero, "window " + (w == IntPtr.Zero ? Native.LastError() : ""));
         cmd.Reset();
         cmd.ClearColor(0.1f, 0.1f, 0.1f, 1);
         cmd.Create(Rect, Protocol.Type.Rectangle);
@@ -60,7 +66,7 @@ static class ImageResourceTest
             cmd.Reset();
             cmd.SetPlace(Rect, 20 + frame++ % 300, 20, 80, 60);
             Native.Apply(w, cmd.EndFrame());
-            pump(1);
+            s.Pump(1);
             var now = sw.Elapsed.TotalMilliseconds;
             intervals.Add(now - last);
             last = now;
@@ -100,7 +106,7 @@ static class ImageResourceTest
         ulong Create()
         {
             var rc = Native.vlqt_res_create(Protocol.ResKind.Image, out var id);
-            if (rc != 0) check(false, $"360: create ({rc})");
+            if (rc != 0) s.Check(false, $"create ({rc})");
             return id;
         }
         byte[] Read(ulong id, out int rw, out int rh)
@@ -120,14 +126,14 @@ static class ImageResourceTest
         // Decodes run FIFO; with a single worker (2-core CI runners) a leftover job of an earlier scenario delays every load.
         var leftover = new Native.vlqt_res_info[64];
         var leftoverCount = Native.ResList(leftover);
-        check(leftoverCount == 0, $"360: no resources left from earlier scenarios ({leftoverCount})");
+        s.Check(leftoverCount == 0, $"no resources left from earlier scenarios ({leftoverCount})");
         // Upload path: GPU textures only with the shared upload QRhi (Windows D3D11); otherwise (Linux, software backend)
         // the CPU copy is the image, Ready right after the decode, without stripes.
         var gpuUpload = Native.vlqt_test_device_info(IntPtr.Zero, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
-        Console.WriteLine($"INFO 360 upload path: {(gpuUpload ? "GPU (shared upload QRhi)" : "CPU copy (no upload QRhi)")}");
-        check(Native.vlqt_res_load_image(1, "x.png", 0) == -9, "360: load_image on an unknown id -> -9");
+        s.Info($"upload path: {(gpuUpload ? "GPU (shared upload QRhi)" : "CPU copy (no upload QRhi)")}");
+        s.Check(Native.vlqt_res_load_image(1, "x.png", 0) == -9, "load_image on an unknown id -> -9");
         var testKind = Native.vlqt_res_create(Protocol.ResKind.Test, out var tid) == 0 ? tid : 0;
-        check(Native.vlqt_res_load_image(testKind, "x.png", 0) == -7, "360: load_image on a test resource -> -7 (wrong kind)");
+        s.Check(Native.vlqt_res_load_image(testKind, "x.png", 0) == -7, "load_image on a test resource -> -7 (wrong kind)");
         Native.vlqt_res_release(testKind);
 
         // 1. Files: PNG/JPG 1080p + 4K async, missing and broken file.
@@ -136,33 +142,33 @@ static class ImageResourceTest
             foreach (var ext in new[] { "png", "jpg" })
             {
                 var path = Path.Combine(dir, $"{name}.{ext}");
-                check(Native.vlqt_test_write_image(path, fw, fh, 90) == 0, $"360: test image {name}.{ext} written");
+                s.Check(Native.vlqt_test_write_image(path, fw, fh, 90) == 0, $"test image {name}.{ext} written");
                 files.Add((path, fw, fh, ext == "jpg" ? 12 : 0));
             }
         var broken = Path.Combine(dir, "broken.png");
         File.WriteAllBytes(broken, [0x89, (byte)'P', (byte)'N', (byte)'G', 1, 2, 3, 4, 5, 6, 7, 8]);
         var fileIds = files.Select(f => { var id = Create(); Native.vlqt_res_load_image(id, f.path, 0); return id; }).ToList();
         var missing = Create();
-        check(Native.vlqt_res_load_image(missing, Path.Combine(dir, "does-not-exist.png"), 0) == 0, "360: load of a missing file starts (fails async)");
+        s.Check(Native.vlqt_res_load_image(missing, Path.Combine(dir, "does-not-exist.png"), 0) == 0, "load of a missing file starts (fails async)");
         var brokenId = Create();
         Native.vlqt_res_load_image(brokenId, broken, 0);
-        check(Settle(20000, fileIds.Append(missing).Append(brokenId)), "360: all file loads settle");
+        s.Check(Settle(20000, fileIds.Append(missing).Append(brokenId)), "all file loads settle");
         for (int i = 0; i < files.Count; i++)
         {
             var (path, fw, fh, tol) = files[i];
             var name = Path.GetFileName(path);
             var info = Info(fileIds[i]);
-            check(Last(fileIds[i]) == Protocol.ResState.Ready && info.w == fw && info.h == fh,
-                $"360: {name} Ready {info.w}x{info.h}, format {info.fmt}, {info.bytes >> 20} MB ({Text(fileIds[i], Protocol.ResEv.Error)})");
+            s.Check(Last(fileIds[i]) == Protocol.ResState.Ready && info.w == fw && info.h == fh,
+                $"{name} Ready {info.w}x{info.h}, format {info.fmt}, {info.bytes >> 20} MB ({Text(fileIds[i], Protocol.ResEv.Error)})");
             var px = Read(fileIds[i], out var rw, out var rh);
-            check(rw == fw && Near(px, rw, fw / 8, fh / 2, 255, 0, 0, tol) && Near(px, rw, fw * 3 / 8, fh / 2, 0, 255, 0, tol)
+            s.Check(rw == fw && Near(px, rw, fw / 8, fh / 2, 255, 0, 0, tol) && Near(px, rw, fw * 3 / 8, fh / 2, 0, 255, 0, tol)
                 && Near(px, rw, fw * 5 / 8, fh / 2, 0, 0, 255, tol) && Near(px, rw, fw * 7 / 8, fh / 2, 255, 255, 255, tol),
-                $"360: {name} readback shows the red/green/blue/white stripes");
+                $"{name} readback shows the red/green/blue/white stripes");
         }
-        check(Last(missing) == Protocol.ResState.Failed && Text(missing, Protocol.ResEv.Error).Length > 0,
-            $"360: missing file -> Failed ({Text(missing, Protocol.ResEv.Error)})");
-        check(Last(brokenId) == Protocol.ResState.Failed && Text(brokenId, Protocol.ResEv.Error).Length > 0,
-            $"360: broken file -> Failed ({Text(brokenId, Protocol.ResEv.Error)})");
+        s.Check(Last(missing) == Protocol.ResState.Failed && Text(missing, Protocol.ResEv.Error).Length > 0,
+            $"missing file -> Failed ({Text(missing, Protocol.ResEv.Error)})");
+        s.Check(Last(brokenId) == Protocol.ResState.Failed && Text(brokenId, Protocol.ResEv.Error).Length > 0,
+            $"broken file -> Failed ({Text(brokenId, Protocol.ResEv.Error)})");
 
         // 2. Pixel formats: 4 pixels per row (red, green, blue, a colour with alpha 128), 3 rows, 8 bytes padding.
         (byte r, byte g, byte b, byte a)[] colours = [(255, 0, 0, 255), (0, 255, 0, 255), (0, 0, 255, 255), (200, 100, 50, 128)];
@@ -215,10 +221,10 @@ static class ImageResourceTest
                     if (px.Length < i + 4 || Math.Abs(px[i] - e.r) > tol || Math.Abs(px[i + 1] - e.g) > tol || Math.Abs(px[i + 2] - e.b) > tol || Math.Abs(px[i + 3] - e.a) > tol)
                         bad.Add(px.Length < i + 4 ? $"({x},{y}) missing" : $"({x},{y}) {px[i]},{px[i + 1]},{px[i + 2]},{px[i + 3]} != {e}");
                 }
-            check(rc == 0 && state == Protocol.ResState.Ready && rw == Pw && rh == Ph && bad.Count == 0,
-                $"360: {name} pixel exact{(tol > 0 ? $" (±{tol}, premultiply)" : "")} with row padding (rc {rc}, state {state}{(bad.Count > 0 ? ", " + string.Join("; ", bad.Take(3)) : "")})");
+            s.Check(rc == 0 && state == Protocol.ResState.Ready && rw == Pw && rh == Ph && bad.Count == 0,
+                $"{name} pixel exact{(tol > 0 ? $" (±{tol}, premultiply)" : "")} with row padding (rc {rc}, state {state}{(bad.Count > 0 ? ", " + string.Join("; ", bad.Take(3)) : "")})");
             var warnings = Of(id, Protocol.ResEv.Warning).Count();
-            check(warnings == (warn ? 1 : 0), $"360: {name}: {warnings} warning(s), expected {(warn ? 1 : 0)} {Text(id, Protocol.ResEv.Warning)}");
+            s.Check(warnings == (warn ? 1 : 0), $"{name}: {warnings} warning(s), expected {(warn ? 1 : 0)} {Text(id, Protocol.ResEv.Warning)}");
             if (warn) deepIds.Add(id);
             else Native.vlqt_res_release(id);
         }
@@ -232,7 +238,7 @@ static class ImageResourceTest
             Native.vlqt_res_wait(deep, 5000);
             Frame();
         }
-        check(Of(deep, Protocol.ResEv.Warning).Count() == 1, $"360: {deepCase.name} replaced twice: still one warning");
+        s.Check(Of(deep, Protocol.ResEv.Warning).Count() == 1, $"{deepCase.name} replaced twice: still one warning");
         foreach (var id in deepIds) Native.vlqt_res_release(id);
         foreach (var fmt in new[] { 0, 13 })
         {
@@ -240,13 +246,13 @@ static class ImageResourceTest
             var rc = Native.ResSetPixels(id, new Native.vlqt_pixel_desc { width = 2, height = 2, format = fmt }, new byte[64]);
             var state = Native.vlqt_res_wait(id, 5000);
             Frame();
-            check(rc == 0 && state == Protocol.ResState.Failed && Text(id, Protocol.ResEv.Error).Contains("format"),
-                $"360: unknown pixel format {fmt} -> Failed ({Text(id, Protocol.ResEv.Error)})");
+            s.Check(rc == 0 && state == Protocol.ResState.Failed && Text(id, Protocol.ResEv.Error).Contains("format"),
+                $"unknown pixel format {fmt} -> Failed ({Text(id, Protocol.ResEv.Error)})");
             Native.vlqt_res_release(id);
         }
         var shortId = Create();
-        check(Native.ResSetPixels(shortId, new Native.vlqt_pixel_desc { width = 4, height = 4, format = 7 }, new byte[10]) == -7,
-            "360: set_pixels with too few bytes -> -7");
+        s.Check(Native.ResSetPixels(shortId, new Native.vlqt_pixel_desc { width = 4, height = 4, format = 7 }, new byte[10]) == -7,
+            "set_pixels with too few bytes -> -7");
         Native.vlqt_res_release(shortId);
 
         // 3. Replacement: the old content stays readable until the new one is uploaded, no STATE record, new INFO.
@@ -263,12 +269,12 @@ static class ImageResourceTest
         var statesBefore = Of(rep, Protocol.ResEv.State).Count();
         Native.ResSetPixels(rep, new Native.vlqt_pixel_desc { width = 128, height = 64, format = 7, premultiplied = 1 }, Solid(128, 64, 0, 255, 0));
         var old = Read(rep, out var ow, out _);
-        check(ow == 64 && Near(old, ow, 10, 10, 255, 0, 0, 0), "360: replacement: old content still there right after set_pixels");
+        s.Check(ow == 64 && Near(old, ow, 10, 10, 255, 0, 0, 0), "replacement: old content still there right after set_pixels");
         var t0 = Stopwatch.StartNew();
         while (Info(rep).w != 128 && t0.ElapsedMilliseconds < 5000) Frame();
         var neu = Read(rep, out var nw, out _);
-        check(nw == 128 && Near(neu, nw, 10, 10, 0, 255, 0, 0) && Of(rep, Protocol.ResEv.State).Count() == statesBefore && Last(rep) == Protocol.ResState.Ready,
-            $"360: replacement: new content {nw} wide after the upload, state stayed Ready without a STATE record");
+        s.Check(nw == 128 && Near(neu, nw, 10, 10, 0, 255, 0, 0) && Of(rep, Protocol.ResEv.State).Count() == statesBefore && Last(rep) == Protocol.ResState.Ready,
+            $"replacement: new content {nw} wide after the upload, state stayed Ready without a STATE record");
         Native.vlqt_res_release(rep);
 
         // 4. Release during the upload (pixels: small budget = many stripes; files: during the worker upload) and sync wait.
@@ -281,30 +287,30 @@ static class ImageResourceTest
         while (Last(rel) != Protocol.ResState.Uploading && !Settled(rel) && t1.ElapsedMilliseconds < 10000) Frame();
         Frame();
         if (stripes)
-            check(Last(rel) == Protocol.ResState.Uploading, "360: 4K pixels with 1 MB budget: still Uploading after a frame (stripes)");
+            s.Check(Last(rel) == Protocol.ResState.Uploading, "4K pixels with 1 MB budget: still Uploading after a frame (stripes)");
         else if (!gpuUpload)
-            check(Last(rel) == Protocol.ResState.Ready, $"360: 4K pixels without upload QRhi: Ready after the decode (CPU copy, no stripes; state {Last(rel)})");
-        check(Native.vlqt_res_release(rel) == 0, $"360: release {(stripes ? "while Uploading" : "after the upload")} (1 MB budget, 4K pixels)");
+            s.Check(Last(rel) == Protocol.ResState.Ready, $"4K pixels without upload QRhi: Ready after the decode (CPU copy, no stripes; state {Last(rel)})");
+        s.Check(Native.vlqt_res_release(rel) == 0, $"release {(stripes ? "while Uploading" : "after the upload")} (1 MB budget, 4K pixels)");
         var relFile = Create();
         Native.vlqt_res_load_image(relFile, files[2].path, 0);
         Frame();
-        check(Native.vlqt_res_release(relFile) == 0, "360: release while the 4K PNG is decoded/uploaded in the worker");
+        s.Check(Native.vlqt_res_release(relFile) == 0, "release while the 4K PNG is decoded/uploaded in the worker");
         for (int i = 0; i < 3; i++) Frame();
         var listed = new Native.vlqt_res_info[256];
         var cnt = Native.ResList(listed);
         var t2 = Stopwatch.StartNew();
         while (Native.ResList(listed) is var c && listed.Take(Math.Min(c, listed.Length)).Any(r => r.id == relFile) && t2.ElapsedMilliseconds < 5000) Frame();
         cnt = Native.ResList(listed);
-        check(!listed.Take(Math.Min(cnt, listed.Length)).Any(r => r.id == rel || r.id == relFile) && Native.vlqt_res_wait(rel, 0) == -9
-            && !events.Any(e => e.Id == relFile && e.Ev == Protocol.ResEv.State && e.Payload[0] == Protocol.ResState.Ready), "360: released during the upload: freed, id stale, no Ready");
+        s.Check(!listed.Take(Math.Min(cnt, listed.Length)).Any(r => r.id == rel || r.id == relFile) && Native.vlqt_res_wait(rel, 0) == -9
+            && !events.Any(e => e.Id == relFile && e.Ev == Protocol.ResEv.State && e.Payload[0] == Protocol.ResState.Ready), "released during the upload: freed, id stale, no Ready");
         Native.vlqt_res_set_budget(8 << 20);
         var syncId = Create();
         var tw = Stopwatch.StartNew();
         Native.vlqt_res_load_image(syncId, files[2].path, 0);
         var syncState = Native.vlqt_res_wait(syncId, 10000);
         var syncMs = tw.Elapsed.TotalMilliseconds;
-        check(syncState == Protocol.ResState.Ready, $"360: vlqt_res_wait 4K PNG -> Ready in {syncMs:F0} ms (decode + full upload)");
-        Console.WriteLine($"INFO 360 sync load 4K PNG: {syncMs:F0} ms");
+        s.Check(syncState == Protocol.ResState.Ready, $"vlqt_res_wait 4K PNG -> Ready in {syncMs:F0} ms (decode + full upload)");
+        s.Info($"sync load 4K PNG: {syncMs:F0} ms");
         Native.vlqt_res_release(syncId);
         foreach (var id in fileIds.Append(missing).Append(brokenId)) Native.vlqt_res_release(id);
         for (int i = 0; i < 3; i++) Frame();
@@ -312,12 +318,12 @@ static class ImageResourceTest
         // The perf runs (~10 s locally, much more on a 2-core runner) only where their limits count: with warn-only
         // (shared CI runners, VLQT_PERF_WARN_ONLY=1) they would only cost time in the 2-minute budget of the smoke job.
         if (PerfLimits.WarnOnly)
-            Console.WriteLine("SKIP 360: perf runs 20 x 4K async + set_pixels 1080p per frame: perf limits are warn-only (shared runner)");
+            s.Skip("perf runs 20 x 4K async + set_pixels 1080p per frame: perf limits are warn-only (shared runner)");
         else
             RunPerf();
-        check(!log().Contains("without a resource"), "360: no worker result without a resource");
+        s.Check(!s.Log.Contains("without a resource"), "no worker result without a resource");
         Native.vlqt_window_destroy(w);
-        pump(2);
+        s.Pump(2);
 
         void RunPerf()
         {
@@ -338,10 +344,10 @@ static class ImageResourceTest
             var loading = intervals.Skip(1).ToList();
             int Hitches(List<double> l) => l.Count(x => x > limit);
             double Rate(List<double> l) => l.Count == 0 ? 0 : 100.0 * Hitches(l) / l.Count;
-            check(allReady && loadIds.All(i => Last(i) == Protocol.ResState.Ready), $"360: 20 x 4K async Ready in {loadMs:F0} ms ({mode})");
-            Console.WriteLine($"INFO 360 perf 20x4K ({mode}): background {Hitches(background)}/{background.Count} hitches ({Rate(background):F1} %), "
+            s.Check(allReady && loadIds.All(i => Last(i) == Protocol.ResState.Ready), $"x 4K async Ready in {loadMs:F0} ms ({mode})");
+            s.Info($"perf 20x4K ({mode}): background {Hitches(background)}/{background.Count} hitches ({Rate(background):F1} %), "
                 + $"load frames {Hitches(loading)}/{loading.Count} ({Rate(loading):F1} %), median {median:F2} ms, max load {loading.DefaultIfEmpty().Max():F1} ms");
-            PerfLimits.Below(check, Rate(loading), Math.Max(Rate(background) * 3, 5), $"360: hitch rate while loading 20 x 4K ({mode}) in the range of the background, %");
+            PerfLimits.Below(s, Rate(loading), Math.Max(Rate(background) * 3, 5), $"hitch rate while loading 20 x 4K ({mode}) in the range of the background, %");
             foreach (var id in loadIds) Native.vlqt_res_release(id);
             for (int i = 0; i < 3; i++) Frame();
 
@@ -362,10 +368,10 @@ static class ImageResourceTest
             var vint = intervals.Skip(1).ToList();
             var vfps = 1000.0 / vint.Average();
             var infos = Of(video, Protocol.ResEv.Info).Count();
-            Console.WriteLine($"INFO 360 set_pixels 1080p per frame ({mode}): {vfps:F1} fps, set_pixels median {setMs.OrderBy(x => x).ElementAt(setMs.Count / 2):F2} ms, "
+            s.Info($"set_pixels 1080p per frame ({mode}): {vfps:F1} fps, set_pixels median {setMs.OrderBy(x => x).ElementAt(setMs.Count / 2):F2} ms, "
                 + $"{infos} uploads in 180 frames, {Hitches(vint)} hitches");
-            check(infos > (stripes ? 170 : 100), $"360: set_pixels per frame: {infos} of 180 frames uploaded");
-            PerfLimits.Below(check, 1000.0 / vfps, 1000.0 / 55, $"360: set_pixels 1080p per frame holds ~60 fps ({mode}), mean interval ms");
+            s.Check(infos > (stripes ? 170 : 100), $"set_pixels per frame: {infos} of 180 frames uploaded");
+            PerfLimits.Below(s, 1000.0 / vfps, 1000.0 / 55, $"set_pixels 1080p per frame holds ~60 fps ({mode}), mean interval ms");
             Native.vlqt_res_release(video);
             paced = false;
             Frame();

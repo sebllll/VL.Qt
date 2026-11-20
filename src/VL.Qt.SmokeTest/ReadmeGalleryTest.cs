@@ -2,8 +2,10 @@
 using System.Drawing;
 using System.IO;
 using Stride.Core.Mathematics;
+using NUnit.Framework;
 using VL.Qt;
 using VL.Qt.Styles;
+using static Pixels;
 
 // README pictures of the other sections (not a test of behaviour): styles, layout, images and the basic effects, rendered
 // with raw commands and copied to docs/images/ like ReadmeImagesTest. Dark ground 0x16, one window per picture in DIP;
@@ -12,8 +14,12 @@ using VL.Qt.Styles;
 //   layout.png         Column (centered), Row (bottom aligned) and nested Row/Column with spacing and padding
 //   images.png         one image in the four fill modes Stretch, PreserveAspectFit, PreserveAspectCrop, Tile
 //   effects-basic.png  Blur, DropShadow, ColorAdjust, Colorize and Mask on the same element
-static class ReadmeGalleryTest
+[TestFixture, NonParallelizable]
+public static class ReadmeGalleryTest
 {
+    [Test, Explicit("runs only when selected (writes docs/images)"), Category("readme-gallery")]
+    public static void ReadmeGallery() => Scenario.Run(Run);
+
     const float Bg = 0x16 / 255f;
 
     static Color4 C(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
@@ -45,12 +51,12 @@ static class ReadmeGalleryTest
         };
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
-        Program.NeedsRhi(check, "the effects are ShaderEffects");
-        Directory.CreateDirectory(outDir);
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "the effects are ShaderEffects");
+        Directory.CreateDirectory(s.OutDir);
         var imagesDir = ReadmeImagesTest.FindUp("docs", "images");
-        check(imagesDir != null, $"readme-gallery: docs/images found ({imagesDir})");
+        s.Check(imagesDir != null, $"readme-gallery: docs/images found ({imagesDir})");
         if (imagesDir == null) return;
 
         var cmd = new CommandWriter();
@@ -101,25 +107,25 @@ static class ReadmeGalleryTest
             next = 1;
             order = 0;
             var w = Native.vlqt_window_create((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme gallery");
-            check(w != IntPtr.Zero, $"readme-gallery {name}: window_create");
+            s.Check(w != IntPtr.Zero, $"readme-gallery {name}: window_create");
             Native.vlqt_window_show(w);
-            pump(4);
+            s.Pump(4);
             cmd.ClearColor(Bg, Bg, Bg, 1);
             build();
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"readme-gallery {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"readme-gallery {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
-            pump(10);
-            var grabPath = Path.Combine(outDir, $"readme-gallery_{name}.png");
-            using (var a = grab(w, grabPath))
+            s.Pump(10);
+            var grabPath = Path.Combine(s.OutDir, $"readme-gallery_{name}.png");
+            using (var a = s.Grab(w, grabPath))
             {
                 var ink = ReadmeImagesTest.Ink(a);
-                check(ink > 0.02, $"readme-gallery {name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
+                s.Check(ink > 0.02, $"readme-gallery {name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
             }
             var target = ReadmeImagesTest.Save(grabPath, Path.Combine(imagesDir!, name + ".png"), width);
-            Console.WriteLine($"INFO readme-gallery: {target} ({new FileInfo(target).Length / 1024} KB)");
+            s.Info($"readme-gallery: {target} ({new FileInfo(target).Length / 1024} KB)");
             Native.vlqt_window_destroy(w);
-            pump(1);
+            s.Pump(1);
         }
 
         // --- styles.png: the same panel twice
@@ -147,8 +153,8 @@ static class ReadmeGalleryTest
             cmd.SetBool(c, Protocol.Prop.Value, true);
             c = Add(Protocol.Type.Switch, 320, 50);
             cmd.SetBool(c, Protocol.Prop.Value, false);
-            var s = Add(Protocol.Type.Slider, 20, 110, 360, 30);
-            cmd.SetF32(s, Protocol.Prop.Value, 0.35f);
+            var slider = Add(Protocol.Type.Slider, 20, 110, 360, 30);
+            cmd.SetF32(slider, Protocol.Prop.Value, 0.35f);
             var t = Add(Protocol.Type.TextField, 20, 170);
             cmd.SetString(t, Protocol.Prop.Value, "Some text");
             var n = Add(Protocol.Type.SpinBox, 250, 170);
@@ -191,10 +197,10 @@ static class ReadmeGalleryTest
 
         // --- images.png
         var asset = ImageTest.FindAsset();
-        check(asset != null, "readme-gallery: stripes asset found");
+        s.Check(asset != null, "readme-gallery: stripes asset found");
         if (asset != null)
         {
-            var stripes = ImageTest.Load(asset, check, "stripes");
+            var stripes = ImageTest.Load(asset, s.Check, "stripes");
             Render("images", 820, 810, 230, () =>
             {
                 var modes = new[] { ("Stretch", 0), ("PreserveAspectFit", 1), ("PreserveAspectCrop", 2), ("Tile", 3) };

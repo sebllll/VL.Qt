@@ -1,13 +1,16 @@
 ﻿using System;
+using NUnit.Framework;
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using VL.Qt;
+using static Pixels;
 
 // Tests of vlqt_window_apply / vlqt_window_poll (plan 01c). Buffers are built by a tiny local
 // encoder so this test does not depend on CommandWriter (01b).
-static class ApplyTest
+[TestFixture, NonParallelizable]
+public static class ApplyTest
 {
     sealed class Buf
     {
@@ -90,14 +93,16 @@ static class ApplyTest
     }
 
     // Grabs are in device pixels (HiDPI); test coordinates are logical (800x600).
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
 
-    static bool Near(Color c, int r, int g, int b) => Math.Abs(c.R - r) < 8 && Math.Abs(c.G - g) < 8 && Math.Abs(c.B - b) < 8;
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    /// <summary>Apply: tree commands, ordering, errors and the cost of 10000 SET.</summary>
+    [Test, Category("apply")]
+    public static void Apply() => Scenario.Run(Run);
+
+    static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt apply test");
-        check(w != IntPtr.Zero, "apply: window_create");
+        s.Check(w != IntPtr.Zero, "apply: window_create");
         Native.vlqt_window_show(w);
         var b = new Buf();
         int Apply(Buf buf) => Native.Apply(w, buf.Span);
@@ -111,37 +116,37 @@ static class ApplyTest
             .Create(4, Protocol.Type.Rectangle).Place(4, 150, 120, 100, 100).Color(4, 0, 0, 1).Reparent(4, 0, 0)
             .SetFloats(1, Protocol.Prop.Opacity, Protocol.Vt.F32, 1f).SetBool(2, Protocol.Prop.Clip, false)
             .Bind(1, 42, 0));
-        check(rc == 0, $"apply: build scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-        pump(5);
-        using (var a = grab(w, Path.Combine(outDir, "apply1.png")))
+        s.Check(rc == 0, $"apply: build scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        s.Pump(5);
+        using (var a = s.Grab(w, "apply1.png"))
         {
-            check(Near(Px(a, 200, 175), 255, 0, 0), $"apply: red rect on top of blue (index 0) ({Px(a, 200, 175)})");
-            check(Near(Px(a, 450, 350), 0, 255, 0), $"apply: green rect inside group at 400,300 ({Px(a, 450, 350)})");
-            check(Near(Px(a, 5, 5), 32, 32, 32), $"apply: CLEAR_COLOR background ({Px(a, 5, 5)})");
+            s.Check(Near(Px(a, 200, 175), 255, 0, 0), $"apply: red rect on top of blue (index 0) ({Px(a, 200, 175)})");
+            s.Check(Near(Px(a, 450, 350), 0, 255, 0), $"apply: green rect inside group at 400,300 ({Px(a, 450, 350)})");
+            s.Check(Near(Px(a, 5, 5), 32, 32, 32), $"apply: CLEAR_COLOR background ({Px(a, 5, 5)})");
         }
 
         // Stacking: blue to the top; mat4 row-major like Stride (translation in row 4) moves the group (anchor TopLeft: 400,300 -> 500,300).
         rc = Apply(b.Clear().Reparent(4, 0, 99)
             .SetFloats(2, Protocol.Prop.Transform, Protocol.Vt.Mat4, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 500, 300, 0, 1));
-        check(rc == 0, $"apply: reparent to top + transform ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-        pump(3);
-        using (var a = grab(w, Path.Combine(outDir, "apply2.png")))
+        s.Check(rc == 0, $"apply: reparent to top + transform ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        s.Pump(3);
+        using (var a = s.Grab(w, "apply2.png"))
         {
-            check(Near(Px(a, 200, 175), 0, 0, 255), $"apply: blue on top after REPARENT index 99 ({Px(a, 200, 175)})");
-            check(Near(Px(a, 550, 350), 0, 255, 0) && Near(Px(a, 450, 350), 32, 32, 32), $"apply: transform translates group ({Px(a, 550, 350)})");
+            s.Check(Near(Px(a, 200, 175), 0, 0, 255), $"apply: blue on top after REPARENT index 99 ({Px(a, 200, 175)})");
+            s.Check(Near(Px(a, 550, 350), 0, 255, 0) && Near(Px(a, 450, 350), 32, 32, 32), $"apply: transform translates group ({Px(a, 550, 350)})");
         }
 
         // DESTROY is recursive: child 3 is released together with group 2.
-        check(Apply(b.Clear().Destroy(2)) == 0, "apply: destroy group");
+        s.Check(Apply(b.Clear().Destroy(2)) == 0, "apply: destroy group");
         rc = Apply(b.Clear().Color(3, 1, 1, 1));
-        check(rc == -4, $"apply: child id released by recursive DESTROY ({rc}: {Native.LastError()})");
+        s.Check(rc == -4, $"apply: child id released by recursive DESTROY ({rc}: {Native.LastError()})");
 
         // Error cases: rc < 0, message names command index + reason, no crash.
         void Err(string what, Buf buf, int expected, string mustContain)
         {
             var r = Apply(buf);
             var e = Native.LastError();
-            check(r == expected && e.Contains(mustContain), $"apply error: {what} -> {r} \"{e}\"");
+            s.Check(r == expected && e.Contains(mustContain), $"apply error: {what} -> {r} \"{e}\"");
         }
         Err("truncated buffer", b.Clear().Raw(Protocol.Op.Destroy, 40, 4), -2, "exceeds buffer");
         Err("wrong payloadLen", b.Clear().Raw(Protocol.Op.Destroy, 8, 8), -2, "expected 4");
@@ -157,43 +162,43 @@ static class ApplyTest
         Err("create id 0", b.Clear().Create(0, Protocol.Type.Item), -8, "window root");
         Err("reparent into own subtree", b.Clear().Create(8, Protocol.Type.Item).Reparent(8, 1, 0).Reparent(1, 8, 0), -8, "command #2");
         Err("bind unknown id", b.Clear().Bind(777, 1, 0), -4, "command #0");
-        check(Native.Apply(IntPtr.Zero, b.Span) == -1, "apply: null window -> -1");
+        s.Check(Native.Apply(IntPtr.Zero, b.Span) == -1, "apply: null window -> -1");
 
         // Structured error (#92/#275): object id, op and property of the bad command, reason without prefix.
         Native.vlqt_apply_error ae = default;
         rc = Apply(b.Clear().Create(9, Protocol.Type.Item).SetFloats(9, Protocol.Prop.Size, Protocol.Vt.F32, 1));
-        check(rc == -7 && Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.rc == -7 && ae.command == 1 && ae.id == 9
+        s.Check(rc == -7 && Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.rc == -7 && ae.command == 1 && ae.id == 9
             && ae.op == Protocol.Op.Set && ae.prop == Protocol.Prop.Size && ae.Reason.StartsWith("property ")
             && Native.LastError().Contains("id 9"), $"apply error id: SET -> id {ae.id} op {ae.op} prop {ae.prop} \"{ae.Reason}\"");
         Err("unknown property id", b.Clear().Color(9, 1, 1, 1), -6, "id 9");
-        check(Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.id == 9 && ae.prop == Protocol.Prop.Color, $"apply error id: -6 -> {ae.id}/{ae.prop}");
+        s.Check(Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.id == 9 && ae.prop == Protocol.Prop.Color, $"apply error id: -6 -> {ae.id}/{ae.prop}");
         Err("clear color, no id", b.Clear().Raw(Protocol.Op.ClearColor, 4, 4), -2, "expected 16");
-        check(Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.id == 0 && ae.op == Protocol.Op.ClearColor, $"apply error id: CLEAR_COLOR -> id {ae.id}");
-        check(Apply(b.Clear().Destroy(9)) == 0 && Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.rc == 0 && ae.id == 0 && ae.Reason.Length == 0,
+        s.Check(Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.id == 0 && ae.op == Protocol.Op.ClearColor, $"apply error id: CLEAR_COLOR -> id {ae.id}");
+        s.Check(Apply(b.Clear().Destroy(9)) == 0 && Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.rc == 0 && ae.id == 0 && ae.Reason.Length == 0,
             "apply error id: cleared by a successful apply");
-        check(Native.vlqt_window_get_apply_error(IntPtr.Zero, out _) == -1, "apply error id: null window -> -1");
-        check(Apply(b.Clear()) == 0, "apply: empty buffer ok");
+        s.Check(Native.vlqt_window_get_apply_error(IntPtr.Zero, out _) == -1, "apply error id: null window -> -1");
+        s.Check(Apply(b.Clear()) == 0, "apply: empty buffer ok");
 
         // Earlier commands of a failing buffer stay applied.
         rc = Apply(b.Clear().Color(4, 1, 1, 0).Place(777, 0, 0, 1, 1).Color(4, 1, 0, 1));
-        check(rc == -4 && Native.LastError().Contains("command #1"), $"apply: stops at bad command #1 ({rc})");
-        pump(3);
-        using (var a = grab(w, Path.Combine(outDir, "apply3.png")))
-            check(Near(Px(a, 200, 175), 255, 255, 0), $"apply: command before the error stays applied (yellow) ({Px(a, 200, 175)})");
+        s.Check(rc == -4 && Native.LastError().Contains("command #1"), $"apply: stops at bad command #1 ({rc})");
+        s.Pump(3);
+        using (var a = s.Grab(w, "apply3.png"))
+            s.Check(Near(Px(a, 200, 175), 255, 255, 0), $"apply: command before the error stays applied (yellow) ({Px(a, 200, 175)})");
 
         // Poll: id 1 is bound (handle 42) -> EV_MEASURED + EV_SCENE_BOUNDS once (06b), plus the first
         // EV_WINDOW_GEOMETRY of the window (40 bytes, #100, client position #465), then nothing.
         var ev = new byte[128];
         int need = Native.Poll(w, Span<byte>.Empty);
-        check(need == -(20 + 28 + 40), $"poll: cap 0 -> -required ({need})");
-        check(Native.Poll(w, ev) == 20 + 28 + 40, "poll: measured + scene bounds of the bound item + window geometry");
-        check(Native.Poll(w, ev) == 0, "poll: 0 bytes (nothing changed)");
-        check(Native.Poll(IntPtr.Zero, ev) == -1, "poll: null window -> -1");
+        s.Check(need == -(20 + 28 + 40), $"poll: cap 0 -> -required ({need})");
+        s.Check(Native.Poll(w, ev) == 20 + 28 + 40, "poll: measured + scene bounds of the bound item + window geometry");
+        s.Check(Native.Poll(w, ev) == 0, "poll: 0 bytes (nothing changed)");
+        s.Check(Native.Poll(IntPtr.Zero, ev) == -1, "poll: null window -> -1");
 
         // Perf: 10 000 SETs (SIZE on 100 items) per apply.
         b.Clear();
         for (uint i = 0; i < 100; i++) b.Create(1000 + i, Protocol.Type.Rectangle).Reparent(1000 + i, 0, 1000);
-        check(Apply(b) == 0, "apply: create 100 perf items");
+        s.Check(Apply(b) == 0, "apply: create 100 perf items");
         var times = new double[20];
         // #64: best of up to 3 rounds (see PerfLimits.Best); the INFO line shows the last round's spread.
         var median = PerfLimits.Best(2.0, () =>
@@ -206,36 +211,36 @@ static class ApplyTest
                 var sw = Stopwatch.StartNew();
                 rc = Apply(b);
                 times[run] = sw.Elapsed.TotalMilliseconds;
-                if (rc != 0) { check(false, "apply perf " + Native.LastError()); break; }
+                if (rc != 0) { s.Check(false, "apply perf " + Native.LastError()); break; }
             }
             Array.Sort(times);
             return times[times.Length / 2];
         }, cpuBound: true);
-        Console.WriteLine($"INFO apply 10000 SET (size, {b.Length} bytes): median {median:F3} ms, min {times[0]:F3}, max {times[^1]:F3}");
-        PerfLimits.Below(check, median, 2.0, $"apply: 10000 SET < 2 ms (median {median:F3} ms)", cpuBound: true);
+        s.Info($"apply 10000 SET (size, {b.Length} bytes): median {median:F3} ms, min {times[0]:F3}, max {times[^1]:F3}");
+        PerfLimits.Below(s, median, 2.0, $"apply: 10000 SET < 2 ms (median {median:F3} ms)", cpuBound: true);
 
         b.Clear();
         for (int i = 0; i < 10_000; i++)
             b.Color(1000 + (uint)(i % 100), (i % 256) / 255f, 0.5f, 0.5f);
         var sw2 = Stopwatch.StartNew();
         rc = Apply(b);
-        Console.WriteLine($"INFO apply 10000 SET (color via QML property): {sw2.Elapsed.TotalMilliseconds:F3} ms (rc {rc})");
+        s.Info($"apply 10000 SET (color via QML property): {sw2.Elapsed.TotalMilliseconds:F3} ms (rc {rc})");
 
         // RESET (#92): every object goes at once (nested and unparented ones too), ids are free again, the clear color stays.
         b.Clear().ClearColor(0.5f, 0, 0).Create(2000, Protocol.Type.Item).Reparent(2000, 0, 0).Create(2001, Protocol.Type.Rectangle)
             .Reparent(2001, 2000, 0).Place(2001, 0, 0, 800, 600).Color(2001, 0, 1, 0).Create(2002, Protocol.Type.Rectangle);
-        check(Apply(b) == 0, "reset: build nested + unparented objects");
+        s.Check(Apply(b) == 0, "reset: build nested + unparented objects");
         rc = Apply(b.Clear().Raw(Protocol.Op.Reset, 0, 0));
-        check(rc == 0, $"reset: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        s.Check(rc == 0, $"reset: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         foreach (uint id in new uint[] { 1, 1000, 2000, 2001, 2002 })
-            check(Apply(b.Clear().Destroy(id)) == -4, $"reset: id {id} gone");
-        check(Apply(b.Clear().Create(2001, Protocol.Type.Item).Create(1, Protocol.Type.Item)) == 0, "reset: ids reusable");
+            s.Check(Apply(b.Clear().Destroy(id)) == -4, $"reset: id {id} gone");
+        s.Check(Apply(b.Clear().Create(2001, Protocol.Type.Item).Create(1, Protocol.Type.Item)) == 0, "reset: ids reusable");
         Err("reset with payload", b.Clear().Raw(Protocol.Op.Reset, 4, 4), -2, "expected 0");
-        pump(3);
-        using (var a = grab(w, Path.Combine(outDir, "apply_reset.png")))
-            check(Near(Px(a, 400, 300), 128, 0, 0), $"reset: scene empty, clear color kept ({Px(a, 400, 300)})");
+        s.Pump(3);
+        using (var a = s.Grab(w, "apply_reset.png"))
+            s.Check(Near(Px(a, 400, 300), 128, 0, 0), $"reset: scene empty, clear color kept ({Px(a, 400, 300)})");
 
-        pump(2);
+        s.Pump(2);
         Native.vlqt_window_destroy(w); // releases all remaining ids
     }
 }

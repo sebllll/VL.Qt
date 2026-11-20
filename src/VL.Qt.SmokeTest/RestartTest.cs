@@ -1,4 +1,5 @@
 ﻿using System;
+using NUnit.Framework;
 using System.Runtime.InteropServices;
 using VL.Qt;
 
@@ -9,7 +10,8 @@ using VL.Qt;
 // creates the next one at once (a restart), several rounds without waiting. Part 2: restarts while a new shader text
 // with one more uniform still bakes, in the orders vvvv may dispose in, with the resource workers shut down.
 // Passes when nothing crashes.
-static class RestartTest
+[TestFixture, NonParallelizable]
+public static class RestartTest
 {
     const uint Effect = 10;
     const int rounds = 24;
@@ -71,15 +73,19 @@ static class RestartTest
         return id;
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump)
+    /// <summary>Restart of the app.</summary>
+    [Test, Category("restart")]
+    public static void Restart() => Scenario.Run(s => Run(s));
+
+    static void Run(Scenario s)
     {
         if (OperatingSystem.IsWindows())
-            RunReentrant(check);
-        RunBaking(check, pump);
+            RunReentrant(s);
+        RunBaking(s);
     }
 
     // Part 1: the window of the pump is destroyed (and the next one created) inside vlqt_app_process_events_for.
-    static void RunReentrant(Action<bool, string> check)
+    static void RunReentrant(Scenario s)
     {
         var cmd = new CommandWriter();
         var current = IntPtr.Zero;
@@ -100,7 +106,7 @@ static class RestartTest
             return IntPtr.Zero;
         };
         var hwnd = CreateWindowExW(0, "Message", null, 0, 0, 0, 0, 0, s_hwndMessage, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
-        check(hwnd != IntPtr.Zero, "526: message-only window for the reentrant restart");
+        s.Check(hwnd != IntPtr.Zero, "message-only window for the reentrant restart");
         if (hwnd == IntPtr.Zero)
             return;
         previous = SetWindowLongPtrW(hwnd, gwlpWndProc, Marshal.GetFunctionPointerForDelegate(proc));
@@ -116,8 +122,8 @@ static class RestartTest
         }
         windows[0] = current;
         Native.vlqt_app_process_events_for(windows, 1);
-        check(restarts == rounds, $"526: {restarts} of {rounds} restarts ran inside the pump");
-        check(true, "526: window destroyed inside vlqt_app_process_events_for, no crash");
+        s.Check(restarts == rounds, $"{restarts} of {rounds} restarts ran inside the pump");
+        s.Check(true, "window destroyed inside vlqt_app_process_events_for, no crash");
 
         Native.vlqt_window_destroy(current);
         Native.vlqt_res_release(shader);
@@ -128,15 +134,15 @@ static class RestartTest
     }
 
     // Part 2: restarts while a new shader text with one more uniform bakes.
-    static void RunBaking(Action<bool, string> check, Action<int> pump)
+    static void RunBaking(Scenario s)
     {
         var cmd = new CommandWriter();
         for (int round = 0; round < rounds; round++)
         {
             var a = Load(false, round);
-            check(Native.vlqt_res_wait(a, 20000) == Protocol.ResState.Ready, $"526: round {round}: text A Ready");
+            s.Check(Native.vlqt_res_wait(a, 20000) == Protocol.ResState.Ready, $"round {round}: text A Ready");
             var w = Scene(cmd, a, false);
-            pump(2);
+            s.Pump(2);
 
             // Live edit: text B with one more uniform, set while it bakes.
             var b = Load(true, round);
@@ -147,7 +153,7 @@ static class RestartTest
             cmd.UniformF32("thickness", 0.5f);
             cmd.EndUniforms();
             Native.Apply(w, cmd.EndFrame());
-            pump(round % 2); // with or without a frame between the edit and the restart
+            s.Pump(round % 2); // with or without a frame between the edit and the restart
 
             switch (round % 3)
             {
@@ -174,8 +180,8 @@ static class RestartTest
                     break;
             }
             Native.vlqt_res_shutdown();
-            pump(1);
+            s.Pump(1);
         }
-        check(true, $"526: {rounds} restarts while a new shader text bakes, no crash");
+        s.Check(true, $"{rounds} restarts while a new shader text bakes, no crash");
     }
 }

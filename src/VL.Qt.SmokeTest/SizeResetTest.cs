@@ -1,45 +1,50 @@
 ﻿using System;
+using NUnit.Framework;
 using System.Drawing;
 using System.IO;
 using VL.Qt;
 using Color = System.Drawing.Color;
+using static Pixels;
 
 // SIZE and AUTO_SIZE (#83, #469). Size 0 stays 0 (SIZE always sets width/height explicitly). Containers
 // (Group, Row, Column, ShaderEffect) have AUTO_SIZE, default on: the SIZE is ignored, the implicit size
 // applies. Off: the SIZE counts, also 0.
-static class SizeResetTest
+[TestFixture, NonParallelizable]
+public static class SizeResetTest
 {
     const uint RowId = 1, A = 2, B = 3, GroupId = 4, G1 = 5, RectId = 6, EffectId = 7, EffectSrc = 8;
     const uint HRow = 21, HGroup = 22, HRect = 23, HEffect = 24;
 
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
     static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
     static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
-    static bool IsBg(Color c) => Math.Abs(c.R - 0x20) < 8 && Math.Abs(c.G - 0x20) < 8 && Math.Abs(c.B - 0x20) < 8;
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    /// <summary>Size reset.</summary>
+    [Test, Category("sizereset")]
+    public static void SizeReset() => Scenario.Run(s => Run(s));
+
+    static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt size / auto size test");
-        check(w != IntPtr.Zero, "83: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"83: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
         void Expect(int expected, string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == expected, $"83: {what} -> {expected} ({rc}: {Native.LastError()})");
+            s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
             cmd.Reset();
         }
         MeasureTest.Rec? Bounds(uint handle)
         {
             int n = Native.Poll(w, buf);
-            foreach (var r in MeasureTest.Parse(buf.AsSpan(0, Math.Max(n, 0)), check))
+            foreach (var r in MeasureTest.Parse(buf.AsSpan(0, Math.Max(n, 0)), s.Check))
                 if (r.Event == Protocol.Ev.SceneBounds && r.Handle == handle) return r;
             return null;
         }
@@ -83,94 +88,94 @@ static class SizeResetTest
         Rect(EffectSrc, EffectId, 0, 0, 40, 30, 0, 1);
         cmd.SetRef(EffectId, Protocol.Prop.Source, EffectSrc);
         CheckApply("row, group, rectangle, effect with size 0");
-        pump(3);
+        s.Pump(3);
         var recs = Bounds(HRow);
-        check(Is(recs, 100, 100, 110, 50), $"83: Auto Size (default) row: SCENE_BOUNDS = implicit size ({S(recs)})");
+        s.Check(Is(recs, 100, 100, 110, 50), $"Auto Size (default) row: SCENE_BOUNDS = implicit size ({S(recs)})");
         recs = Bounds(HGroup);
-        check(recs == null || Is(recs, 400, 100, 40, 50), $"83: group: implicit size = extent of the children ({S(recs)})");
-        using (var a = grab(w, Path.Combine(outDir, "83_autosize.png")))
+        s.Check(recs == null || Is(recs, 400, 100, 40, 50), $"group: implicit size = extent of the children ({S(recs)})");
+        using (var a = s.Grab(w, "83_autosize.png"))
         {
             // VCenter in 50: red y 110..140 at x 100..140, green y 100..150 at x 150..210.
-            check(IsRed(Px(a, 120, 112)) && IsRed(Px(a, 120, 138)) && IsBg(Px(a, 120, 105)) && IsBg(Px(a, 120, 145)),
-                $"83: row VCenter uses implicit height ({Px(a, 120, 105)}, {Px(a, 120, 112)}, {Px(a, 120, 145)})");
-            check(IsGreen(Px(a, 180, 102)) && IsGreen(Px(a, 180, 148)), "83: row green fills implicit height");
-            check(IsRed(Px(a, 415, 125)) && IsBg(Px(a, 405, 125)), $"83: group child at (410, 120) ({Px(a, 405, 125)}, {Px(a, 415, 125)})");
-            check(IsBg(Px(a, 600, 100)) && IsBg(Px(a, 601, 101)), "83: rectangle with size 0 is not drawn");
+            s.Check(IsRed(Px(a, 120, 112)) && IsRed(Px(a, 120, 138)) && IsBg(Px(a, 120, 105)) && IsBg(Px(a, 120, 145)),
+                $"row VCenter uses implicit height ({Px(a, 120, 105)}, {Px(a, 120, 112)}, {Px(a, 120, 145)})");
+            s.Check(IsGreen(Px(a, 180, 102)) && IsGreen(Px(a, 180, 148)), "row green fills implicit height");
+            s.Check(IsRed(Px(a, 415, 125)) && IsBg(Px(a, 405, 125)), $"group child at (410, 120) ({Px(a, 405, 125)}, {Px(a, 415, 125)})");
+            s.Check(IsBg(Px(a, 600, 100)) && IsBg(Px(a, 601, 101)), "rectangle with size 0 is not drawn");
         }
 
         // Auto Size on: the size is ignored.
         RowSize(300, 200);
         CheckApply("row size 300 x 200 (Auto Size on)");
-        pump(2);
+        s.Pump(2);
         recs = Bounds(HRow);
-        check(recs == null || Is(recs, 100, 100, 110, 50), $"83: Auto Size on ignores size ({S(recs)})");
+        s.Check(recs == null || Is(recs, 100, 100, 110, 50), $"Auto Size on ignores size ({S(recs)})");
 
         // Auto Size off: size 300 x 200 counts. VCenter in 200 -> red y 185..215.
         cmd.SetBool(RowId, Protocol.Prop.AutoSize, false);
         CheckApply("row Auto Size off");
-        pump(2);
+        s.Pump(2);
         recs = Bounds(HRow);
-        check(Is(recs, 100, 100, 300, 200), $"83: Auto Size off re-applies the size (100, 100, 300, 200) ({S(recs)})");
-        using (var a = grab(w, Path.Combine(outDir, "83_autosize_off.png")))
-            check(IsRed(Px(a, 120, 190)) && IsBg(Px(a, 120, 150)) && IsBg(Px(a, 120, 222)), "83: explicit size centers children in 200");
+        s.Check(Is(recs, 100, 100, 300, 200), $"Auto Size off re-applies the size (100, 100, 300, 200) ({S(recs)})");
+        using (var a = s.Grab(w, "83_autosize_off.png"))
+            s.Check(IsRed(Px(a, 120, 190)) && IsBg(Px(a, 120, 150)) && IsBg(Px(a, 120, 222)), "explicit size centers children in 200");
 
         // Auto Size off + size 0: stays 0 (no jump to the implicit size).
         RowSize(0, 0);
         CheckApply("row size 0 (Auto Size off)");
-        pump(2);
+        s.Pump(2);
         recs = Bounds(HRow);
-        check(Is(recs, 100, 100, 0, 0), $"83: Auto Size off + size 0 -> 0 x 0 ({S(recs)})");
+        s.Check(Is(recs, 100, 100, 0, 0), $"Auto Size off + size 0 -> 0 x 0 ({S(recs)})");
 
         // 0 -> 300 x 200 -> 0 without a jump.
         RowSize(300, 200);
         CheckApply("row 300 x 200 again");
-        pump(2);
-        check(Is(Bounds(HRow), 100, 100, 300, 200), "83: 0 -> 300 x 200");
+        s.Pump(2);
+        s.Check(Is(Bounds(HRow), 100, 100, 300, 200), "0 -> 300 x 200");
         RowSize(0, 0);
         CheckApply("row 0 again");
-        pump(2);
+        s.Pump(2);
         recs = Bounds(HRow);
-        check(Is(recs, 100, 100, 0, 0), $"83: 300 x 200 -> 0 stays 0 ({S(recs)})");
+        s.Check(Is(recs, 100, 100, 0, 0), $"x 200 -> 0 stays 0 ({S(recs)})");
 
         // Auto Size on again: implicit size.
         cmd.SetBool(RowId, Protocol.Prop.AutoSize, true);
         CheckApply("row Auto Size on again");
-        pump(2);
+        s.Pump(2);
         recs = Bounds(HRow);
-        check(Is(recs, 100, 100, 110, 50), $"83: Auto Size on again -> implicit (100, 100, 110, 50) ({S(recs)})");
-        using (var a = grab(w, Path.Combine(outDir, "83_autosize_on_again.png")))
-            check(IsRed(Px(a, 120, 112)) && IsBg(Px(a, 120, 105)) && IsBg(Px(a, 120, 150)), "83: row aligned in implicit height again");
+        s.Check(Is(recs, 100, 100, 110, 50), $"Auto Size on again -> implicit (100, 100, 110, 50) ({S(recs)})");
+        using (var a = s.Grab(w, "83_autosize_on_again.png"))
+            s.Check(IsRed(Px(a, 120, 112)) && IsBg(Px(a, 120, 105)) && IsBg(Px(a, 120, 150)), "row aligned in implicit height again");
 
         // Rectangle: 0 -> 50 x 50 (visible) -> 0 (gone).
         cmd.SetPlace(RectId, 600, 100, 50, 50);
         CheckApply("rectangle 50 x 50");
-        pump(2);
-        using (var a = grab(w, Path.Combine(outDir, "83_rect_size.png")))
-            check(IsRed(Px(a, 620, 120)), "83: rectangle 50 x 50 is drawn");
-        check(Is(Bounds(HRect), 600, 100, 50, 50), "83: rectangle SCENE_BOUNDS 50 x 50");
+        s.Pump(2);
+        using (var a = s.Grab(w, "83_rect_size.png"))
+            s.Check(IsRed(Px(a, 620, 120)), "rectangle 50 x 50 is drawn");
+        s.Check(Is(Bounds(HRect), 600, 100, 50, 50), "rectangle SCENE_BOUNDS 50 x 50");
         cmd.SetPlace(RectId, 600, 100, 0, 0);
         CheckApply("rectangle 0 again");
-        pump(2);
-        using (var a = grab(w, Path.Combine(outDir, "83_rect_zero.png")))
-            check(IsBg(Px(a, 620, 120)), "83: rectangle back to size 0 is not drawn");
+        s.Pump(2);
+        using (var a = s.Grab(w, "83_rect_zero.png"))
+            s.Check(IsBg(Px(a, 620, 120)), "rectangle back to size 0 is not drawn");
         recs = Bounds(HRect);
-        check(Is(recs, 600, 100, 0, 0), $"83: rectangle SCENE_BOUNDS 0 x 0 ({S(recs)})");
+        s.Check(Is(recs, 600, 100, 0, 0), $"rectangle SCENE_BOUNDS 0 x 0 ({S(recs)})");
 
         // ShaderEffect: implicit size = size of the input.
         recs = null;
         cmd.SetPlace(EffectId, 500, 300, 0, 0);
         CheckApply("effect size again");
-        pump(2);
+        s.Pump(2);
         cmd.SetBool(EffectId, Protocol.Prop.AutoSize, false);
         CheckApply("effect Auto Size off");
-        pump(2);
+        s.Pump(2);
         recs = Bounds(HEffect);
-        check(Is(recs, 500, 300, 0, 0), $"83: ShaderEffect Auto Size off + size 0 -> 0 x 0 ({S(recs)})");
+        s.Check(Is(recs, 500, 300, 0, 0), $"ShaderEffect Auto Size off + size 0 -> 0 x 0 ({S(recs)})");
         cmd.SetBool(EffectId, Protocol.Prop.AutoSize, true);
         CheckApply("effect Auto Size on");
-        pump(2);
+        s.Pump(2);
         recs = Bounds(HEffect);
-        check(Is(recs, 500, 300, 40, 30), $"83: ShaderEffect Auto Size on -> input size 40 x 30 ({S(recs)})");
+        s.Check(Is(recs, 500, 300, 40, 30), $"ShaderEffect Auto Size on -> input size 40 x 30 ({S(recs)})");
 
         // Errors: AUTO_SIZE is valid for containers only (-6), value type bool (-7).
         cmd.SetBool(RectId, Protocol.Prop.AutoSize, false);
@@ -179,6 +184,6 @@ static class SizeResetTest
         Expect(-7, "AUTO_SIZE as f32");
 
         Native.vlqt_window_destroy(w);
-        pump(2);
+        s.Pump(2);
     }
 }

@@ -5,31 +5,45 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using NUnit.Framework;
 using VL.Qt;
 
 /// <summary>
 /// #367 (images package 10): the shared D3D11 device is removed for real (D3D11On12 + RemoveDevice, needs
-/// VLQT_TEST_D3D11ON12=1 before the first window, set by Program for "--only device-lost"). QtNative rebuilds device,
+/// VLQT_TEST_D3D11ON12=1 before the first window, so it runs in a helper process of its own). QtNative rebuilds device,
 /// upload QRhi, windows and resources: both windows end up on the new device, same as the upload QRhi, and draw their
 /// rect and 20 images again (10 PNG files + 10 via set_pixels, both windows show all of them). Twice in a row.
 /// After each loss: vlqt_res_list has the same resources, all Ready, same bytes (no leaks), the Ready snapshot has
 /// unchanged pixels. INFO lines carry the time until everything is visible again (for the docs).
 /// </summary>
-static class DeviceLostTest
+[TestFixture, NonParallelizable]
+public static class DeviceLostTest
 {
     const uint Rect = 1;
     const int TimeoutMs = 5000;
     const int Images = 20;
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump)
+    /// <summary>Real removal of the shared D3D11 device, twice: windows, images and snapshot come back (own process).</summary>
+    [Test, Category("device-lost"), Category("own-process")]
+    public static void DeviceLost() => Scenario.RunLocal(s =>
     {
-        if (!OperatingSystem.IsWindows() || Program.QuickSoftware)
+        var env = new Dictionary<string, string> { ["VLQT_TEST_D3D11ON12"] = "1" };
+        // CI (GitHub sets CI=true) has no GPU: the device is removed on the software adapter (WARP), only in this process.
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")))
+            env["QSG_RHI_PREFER_SOFTWARE_RENDERER"] = "1";
+        OwnProcess.Run(s, new[] { "device-lost" }, env);
+    });
+
+    // Body, run by the helper executable (OwnProcess).
+    internal static void Run(Scenario s)
+    {
+        if (!OperatingSystem.IsWindows() || s.QuickSoftware)
         {
-            Console.WriteLine("SKIP device-lost: D3D11 only");
+            s.Skip("device-lost: D3D11 only");
             return;
         }
         var cmd = new CommandWriter();
-        var dir = Path.Combine(outDir, "device-lost");
+        var dir = Path.Combine(s.OutDir, "device-lost");
         Directory.CreateDirectory(dir);
 
         // 20 distinct colors; tile i sits in a 5 x 4 grid from y = 100 of a 400 x 400 window.
@@ -39,7 +53,7 @@ static class DeviceLostTest
         {
             if (Native.vlqt_res_create(Protocol.ResKind.Image, out var id) != 0)
             {
-                check(false, $"367: res_create {i}");
+                s.Check(false, $"res_create {i}");
                 return;
             }
             ids.Add(id);
@@ -68,12 +82,12 @@ static class DeviceLostTest
             }
         }
         foreach (var id in ids)
-            check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"367: image {id} ready before the loss");
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"image {id} ready before the loss");
 
         IntPtr Open(string title, float x)
         {
             var w = Native.vlqt_window_create_at(x, 100, 400, 400, title, 0);
-            check(w != IntPtr.Zero, $"367: create {title} " + (w == IntPtr.Zero ? Native.LastError() : ""));
+            s.Check(w != IntPtr.Zero, $"create {title} " + (w == IntPtr.Zero ? Native.LastError() : ""));
             cmd.Reset();
             cmd.ClearColor(0.1f, 0.1f, 0.1f, 1);
             cmd.Create(Rect, Protocol.Type.Rectangle);
@@ -88,7 +102,7 @@ static class DeviceLostTest
                 cmd.SetU64(el, Protocol.Prop.Image, ids[i]);
                 cmd.Reparent(el, 0, (uint)(1000 + i));
             }
-            check(Native.Apply(w, cmd.EndFrame()) == 0, $"367: apply {title}");
+            s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"apply {title}");
             Native.vlqt_window_show(w);
             return w;
         }
@@ -142,7 +156,7 @@ static class DeviceLostTest
         }
         void Pump()
         {
-            pump(1);
+            s.Pump(1);
             Poll();
         }
 
@@ -153,7 +167,7 @@ static class DeviceLostTest
             {
                 if (Shows(w, path))
                     return true;
-                pump(1);
+                s.Pump(1);
             }
             return false;
         }
@@ -162,19 +176,19 @@ static class DeviceLostTest
         var b = Open("VL.Qt device lost B", 500);
         var sw = Stopwatch.StartNew();
         while (sw.ElapsedMilliseconds < TimeoutMs && (Device(a) == IntPtr.Zero || Device(b) == IntPtr.Zero))
-            pump(1);
+            s.Pump(1);
         var dev = Device(a);
-        check(dev != IntPtr.Zero && dev == Device(b), $"367: both windows on the shared device ({dev:X})");
-        check(Settled(a, Path.Combine(dir, "before_a.png")), $"367: rect + 20 images visible before the loss in A (bad tiles {badTiles})");
-        check(Settled(b, Path.Combine(dir, "before_b.png")), $"367: rect + 20 images visible before the loss in B (bad tiles {badTiles})");
+        s.Check(dev != IntPtr.Zero && dev == Device(b), $"both windows on the shared device ({dev:X})");
+        s.Check(Settled(a, Path.Combine(dir, "before_a.png")), $"rect + 20 images visible before the loss in A (bad tiles {badTiles})");
+        s.Check(Settled(b, Path.Combine(dir, "before_b.png")), $"rect + 20 images visible before the loss in B (bad tiles {badTiles})");
 
         // Ready snapshot of A and the resource table before the loss.
         Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var snap);
-        check(Native.vlqt_res_snapshot(snap, a, 0, 1) == 0, "367: snapshot started");
+        s.Check(Native.vlqt_res_snapshot(snap, a, 0, 1) == 0, "snapshot started");
         var snapSw = Stopwatch.StartNew();
         while (snapSw.ElapsedMilliseconds < TimeoutMs && SnapState() != Protocol.ResState.Ready)
-            pump(1);
-        check(SnapState() == Protocol.ResState.Ready, "367: snapshot Ready before the loss");
+            s.Pump(1);
+        s.Check(SnapState() == Protocol.ResState.Ready, "snapshot Ready before the loss");
         int SnapState()
         {
             var l = new Native.vlqt_res_info[128];
@@ -197,15 +211,15 @@ static class DeviceLostTest
             return (n, ours.Count(r => r.state != Protocol.ResState.Ready) + (Images + 1 - ours.Length), ours.Sum(r => r.bytes));
         }
         var snapBefore = ReadSnap(out var snapDesc);
-        check(snapBefore.Length > 0 && snapDesc.width > 0, $"367: snapshot pixels before the loss ({snapBefore.Length} bytes)");
+        s.Check(snapBefore.Length > 0 && snapDesc.width > 0, $"snapshot pixels before the loss ({snapBefore.Length} bytes)");
         var before = Table();
-        check(before.count == Images + 1 && before.notReady == 0, $"367: {Images + 1} resources, all Ready before the loss ({before.count}, not ready {before.notReady})");
-        Console.WriteLine($"INFO 367 before: {before.count} resources, {before.bytes} bytes");
+        s.Check(before.count == Images + 1 && before.notReady == 0, $"{Images + 1} resources, all Ready before the loss ({before.count}, not ready {before.notReady})");
+        s.Info($"before: {before.count} resources, {before.bytes} bytes");
 
         for (int round = 1; round <= 2; round++)
         {
             var rc = Native.vlqt_test_device_lost(Protocol.DeviceLost.Remove);
-            check(rc == 0, $"367: round {round}: vlqt_test_device_lost(REMOVE) = {rc} (needs VLQT_TEST_D3D11ON12=1)");
+            s.Check(rc == 0, $"round {round}: vlqt_test_device_lost(REMOVE) = {rc} (needs VLQT_TEST_D3D11ON12=1)");
             if (rc != 0)
                 return;
             sw.Restart();
@@ -227,7 +241,7 @@ static class DeviceLostTest
                     break;
             }
             var moved = sw.Elapsed.TotalMilliseconds;
-            check(Moved(), $"367: round {round}: new device {upload:X} (old {dev:X}{(upload == dev ? ", address reused" : "")}) in upload QRhi and both windows ({da:X}, {db:X})");
+            s.Check(Moved(), $"round {round}: new device {upload:X} (old {dev:X}{(upload == dev ? ", address reused" : "")}) in upload QRhi and both windows ({da:X}, {db:X})");
             bool visible = false;
             while (sw.ElapsedMilliseconds < TimeoutMs && !visible)
             {
@@ -236,7 +250,7 @@ static class DeviceLostTest
                     Pump();
             }
             var visibleMs = sw.Elapsed.TotalMilliseconds;
-            check(visible, $"367: round {round}: rect + 20 images visible again in both windows (bad tiles {badTiles}) " + (visible ? "" : Native.LastError()));
+            s.Check(visible, $"round {round}: rect + 20 images visible again in both windows (bad tiles {badTiles}) " + (visible ? "" : Native.LastError()));
             Native.vlqt_window_grab(a, Path.Combine(dir, $"after{round}_a.png"));
             Native.vlqt_window_grab(b, Path.Combine(dir, $"after{round}_b.png"));
 
@@ -250,14 +264,14 @@ static class DeviceLostTest
             for (int i = 0; i < 5 && ids.Any(id => infos.GetValueOrDefault(id) == 0); i++)
                 Pump();
             var replaced = ids.Count(id => infos.GetValueOrDefault(id) >= 1);
-            check(replaced == Images, $"367: round {round}: every image resource got a replacement INFO record ({replaced} of {Images})");
-            check(after.count == before.count, $"367: round {round}: vlqt_res_list count {after.count} (before {before.count})");
-            check(after.notReady == 0, $"367: round {round}: all resources Ready again (not ready/missing {after.notReady})");
-            check(after.bytes == before.bytes, $"367: round {round}: resource bytes {after.bytes} (before {before.bytes})");
+            s.Check(replaced == Images, $"round {round}: every image resource got a replacement INFO record ({replaced} of {Images})");
+            s.Check(after.count == before.count, $"round {round}: vlqt_res_list count {after.count} (before {before.count})");
+            s.Check(after.notReady == 0, $"round {round}: all resources Ready again (not ready/missing {after.notReady})");
+            s.Check(after.bytes == before.bytes, $"round {round}: resource bytes {after.bytes} (before {before.bytes})");
             var snapAfter = ReadSnap(out var desc2);
-            check(snapAfter.AsSpan().SequenceEqual(snapBefore) && desc2.width == snapDesc.width && desc2.height == snapDesc.height,
-                $"367: round {round}: snapshot pixels unchanged ({snapAfter.Length} bytes)");
-            Console.WriteLine($"INFO 367 round {round}: windows on the new device after {moved:F1} ms ({pumps} pumps), rect + images visible after {visibleMs:F1} ms, resources Ready after {sw.Elapsed.TotalMilliseconds:F1} ms");
+            s.Check(snapAfter.AsSpan().SequenceEqual(snapBefore) && desc2.width == snapDesc.width && desc2.height == snapDesc.height,
+                $"round {round}: snapshot pixels unchanged ({snapAfter.Length} bytes)");
+            s.Info($"round {round}: windows on the new device after {moved:F1} ms ({pumps} pumps), rect + images visible after {visibleMs:F1} ms, resources Ready after {sw.Elapsed.TotalMilliseconds:F1} ms");
             dev = upload;
         }
         Native.vlqt_res_release(snap);
@@ -265,7 +279,7 @@ static class DeviceLostTest
             Native.vlqt_res_release(id);
         Native.vlqt_window_destroy(a);
         Native.vlqt_window_destroy(b);
-        pump(2);
+        s.Pump(2);
     }
 }
 #endif

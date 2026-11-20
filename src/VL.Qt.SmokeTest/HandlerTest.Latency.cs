@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Reactive.Subjects;
 using Microsoft.Extensions.Logging;
@@ -10,7 +11,7 @@ using VL.Qt;
 // frame. Before #24 it reached them at the frame end, so the patch saw it one frame later. Measured in both modes on a
 // simulated clock (QtPump.DeliverInputAtFrameStart), plus: no event twice or lost (press/release pairs, multitouch), no
 // render in the delivery, a window destroyed or created between two frames.
-static partial class HandlerTest
+public static partial class HandlerTest
 {
     sealed class LatencyClock : IFrameClock
     {
@@ -45,17 +46,17 @@ static partial class HandlerTest
     sealed class LatencyWindow : IQtFrameParticipant
     {
         readonly byte[] _buf = new byte[1 << 16];
-        readonly Action<bool, string> _check;
+        readonly Scenario _s;
         public readonly IntPtr W;
         public readonly List<Rec> Sinks = new(); // since the last Clear (one measurement)
         public readonly List<Rec> All = new();   // the whole run (pairs, duplicates)
         public bool Destroyed;
 
-        public LatencyWindow(Action<bool, string> check, string title)
+        public LatencyWindow(Scenario s, string title)
         {
-            _check = check;
+            _s = s;
             W = Native.vlqt_window_create(800, 600, title);
-            check(W != IntPtr.Zero, $"input-latency: window_create {title}");
+            s.Check(W != IntPtr.Zero, $"input-latency: window_create {title}");
             Native.vlqt_window_show(W);
         }
 
@@ -70,8 +71,8 @@ static partial class HandlerTest
                 return;
             int n = Native.Poll(W, _buf);
             if (n < 0)
-                _check(false, $"input-latency: poll ({n}) {Native.LastError()}");
-            var recs = Parse(_buf.AsSpan(0, Math.Max(n, 0)), _check).FindAll(r => IsPointerEvent(r.Event));
+                _s.Check(false, $"input-latency: poll ({n}) {Native.LastError()}");
+            var recs = Parse(_buf.AsSpan(0, Math.Max(n, 0)), _s).FindAll(r => IsPointerEvent(r.Event));
             Sinks.AddRange(recs);
             All.AddRange(recs);
         }
@@ -83,34 +84,34 @@ static partial class HandlerTest
         }
     }
 
-    public static void RunInputLatency(Action<bool, string> check)
+    static void RunInputLatency(Scenario s)
     {
         var log = new LatencyLogger();
         var app = QtApp.CreateForTest(log);
-        var before = MeasureLatency(app, check, atFrameStart: false, out var recsBefore);
-        var after = MeasureLatency(app, check, atFrameStart: true, out var recsAfter);
-        Console.WriteLine($"INFO input-latency: frames from the frame start after the input to the node update that sees it (mouse press, release, touch press, move, release): before {string.Join(",", before)}, now {string.Join(",", after)}");
+        var before = MeasureLatency(app, s, atFrameStart: false, out var recsBefore);
+        var after = MeasureLatency(app, s, atFrameStart: true, out var recsAfter);
+        s.Info($"input-latency: frames from the frame start after the input to the node update that sees it (mouse press, release, touch press, move, release): before {string.Join(",", before)}, now {string.Join(",", after)}");
         // Before #24 the touch move (index 3) waits for the render: Qt Quick holds it back and requests an update. Windows
         // delivers that update request within the same pump; Linux (QPlatformWindow::requestUpdate: a timer of one refresh
         // interval, ~16 ms) delivers it after this test's next pump (2 ms apart), so the move may take two frames there.
         var beforeOk = true;
         for (int i = 0; i < before.Length; i++)
             beforeOk &= before[i] == 1 || (i == 3 && before[i] == 2 && !OperatingSystem.IsWindows());
-        check(beforeOk, $"input-latency: before #24 the patch sees queued input one frame later, the touch move up to two on Linux ({string.Join(",", before)})");
-        check(Array.TrueForAll(after, l => l == 0), $"input-latency: input reaches the patch in the frame it arrived before ({string.Join(",", after)})");
+        s.Check(beforeOk, $"input-latency: before #24 the patch sees queued input one frame later, the touch move up to two on Linux ({string.Join(",", before)})");
+        s.Check(Array.TrueForAll(after, l => l == 0), $"input-latency: input reaches the patch in the frame it arrived before ({string.Join(",", after)})");
         // Nothing twice, nothing lost: the sinks get the same records in the same order as with the poll at the frame end only.
-        check(Dump(recsBefore) == Dump(recsAfter), $"input-latency: same records as before #24 (before: {Dump(recsBefore)} | now: {Dump(recsAfter)})");
-        LatencyLifecycle(app, check);
-        check(log.Errors.Count == 0, $"input-latency: no errors logged ({string.Join(" | ", log.Errors)})");
+        s.Check(Dump(recsBefore) == Dump(recsAfter), $"input-latency: same records as before #24 (before: {Dump(recsBefore)} | now: {Dump(recsAfter)})");
+        LatencyLifecycle(app, s);
+        s.Check(log.Errors.Count == 0, $"input-latency: no errors logged ({string.Join(" | ", log.Errors)})");
     }
 
     // Latencies in frames of: mouse press, mouse release, two fingers down, finger 1 moves, both fingers up.
-    static int[] MeasureLatency(QtApp app, Action<bool, string> check, bool atFrameStart, out List<Rec> records)
+    static int[] MeasureLatency(QtApp app, Scenario s, bool atFrameStart, out List<Rec> records)
     {
         var tag = atFrameStart ? "now" : "before";
         var clock = new LatencyClock();
         var pump = new QtPump(app, clock) { DeliverInputAtFrameStart = atFrameStart };
-        var w = new LatencyWindow(check, $"VL.Qt input-latency {tag}");
+        var w = new LatencyWindow(s, $"VL.Qt input-latency {tag}");
         const uint A = 1, TA = 10, TP = 11, STA = 41, STP = 42;
         var cmd = new CommandWriter();
         cmd.Create(A, Protocol.Type.Rectangle);
@@ -123,7 +124,7 @@ static partial class HandlerTest
             cmd.Bind(id, sink, 0);
         }
         var rc = Native.Apply(w.W, cmd.EndFrame());
-        check(rc == 0, $"input-latency {tag}: scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        s.Check(rc == 0, $"input-latency {tag}: scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         pump.Register(w);
         for (int i = 0; i < 3; i++)
             Frame(clock);
@@ -146,8 +147,8 @@ static partial class HandlerTest
             }
             return -1;
         }
-        void Mouse(int type, float x, float y) => check(Native.vlqt_test_queue_mouse(w.W, type, x, y) == 0, $"input-latency {tag}: queue_mouse {type}");
-        void Touch(int type, int id, float x, float y) => check(Native.vlqt_test_queue_touch(w.W, type, id, x, y) == 0, $"input-latency {tag}: queue_touch {type} {id}");
+        void Mouse(int type, float x, float y) => s.Check(Native.vlqt_test_queue_mouse(w.W, type, x, y) == 0, $"input-latency {tag}: queue_mouse {type}");
+        void Touch(int type, int id, float x, float y) => s.Check(Native.vlqt_test_queue_touch(w.W, type, id, x, y) == 0, $"input-latency {tag}: queue_touch {type} {id}");
 
         var lat = new int[5];
         lat[0] = Latency(() => { Mouse(Protocol.Mouse.Move, 200, 200); Mouse(Protocol.Mouse.Press, 200, 200); },
@@ -168,9 +169,9 @@ static partial class HandlerTest
         int presses = mouse.FindAll(r => r.Event == Protocol.Ev.Press && r.Handle == STA && r.Flag).Count;
         int releases = mouse.FindAll(r => r.Event == Protocol.Ev.Press && r.Handle == STA && !r.Flag).Count;
         int clicks = mouse.FindAll(r => r.Event == Protocol.Ev.Click && r.Handle == STA).Count;
-        check(presses == 1 && releases == 1 && clicks == 1,
+        s.Check(presses == 1 && releases == 1 && clicks == 1,
             $"input-latency {tag}: mouse press/release pair and one click (press {presses}, release {releases}, click {clicks}; {Dump(mouse)})");
-        check(LastTouch(w.All, STP) is { Length: 0 }, $"input-latency {tag}: all touch points released ({Pts(w.All, STP)})");
+        s.Check(LastTouch(w.All, STP) is { Length: 0 }, $"input-latency {tag}: all touch points released ({Pts(w.All, STP)})");
         records = new List<Rec>(w.All);
 
         pump.Unregister(w);
@@ -187,42 +188,42 @@ static partial class HandlerTest
     }
 
     // Lifecycle: a window destroyed with queued input, a renderer without window, a window created between two frames.
-    static void LatencyLifecycle(QtApp app, Action<bool, string> check)
+    static void LatencyLifecycle(QtApp app, Scenario s)
     {
         var clock = new LatencyClock();
         var pump = new QtPump(app, clock);
-        var a = new LatencyWindow(check, "VL.Qt input-latency lifecycle A");
-        var gone = new LatencyWindow(check, "VL.Qt input-latency lifecycle B");
+        var a = new LatencyWindow(s, "VL.Qt input-latency lifecycle A");
+        var gone = new LatencyWindow(s, "VL.Qt input-latency lifecycle B");
         pump.Register(a);
         pump.Register(gone);
         for (int i = 0; i < 3; i++)
             Frame(clock);
 
         // Input queued for a window that is destroyed before the next frame starts: Qt drops it, A still gets its own.
-        check(Native.vlqt_test_queue_touch(gone.W, Protocol.Touch.Press, 7, 50, 50) == 0, "input-latency: queue_touch for B");
-        check(Native.vlqt_test_queue_mouse(a.W, Protocol.Mouse.Move, 20, 20) == 0, "input-latency: queue_mouse for A");
+        s.Check(Native.vlqt_test_queue_touch(gone.W, Protocol.Touch.Press, 7, 50, 50) == 0, "input-latency: queue_touch for B");
+        s.Check(Native.vlqt_test_queue_mouse(a.W, Protocol.Mouse.Move, 20, 20) == 0, "input-latency: queue_mouse for A");
         gone.Destroy(); // still registered: a renderer whose window is gone (Window zero, PollInput skips it)
         clock.Tick();
-        check(app.LastDeliveredInput >= 0, $"input-latency: deliver with a destroyed window -> no crash ({app.LastDeliveredInput})");
+        s.Check(app.LastDeliveredInput >= 0, $"input-latency: deliver with a destroyed window -> no crash ({app.LastDeliveredInput})");
         Frame(clock);
         pump.Unregister(gone);
 
         // A window created and shown between two frames, input queued for it right away: the delivery at the frame start
         // renders nothing (a render there would count into the pump's sample), the first pump renders it exactly once.
-        var born = new LatencyWindow(check, "VL.Qt input-latency lifecycle C");
+        var born = new LatencyWindow(s, "VL.Qt input-latency lifecycle C");
         pump.Register(born);
-        check(Native.vlqt_test_queue_mouse(born.W, Protocol.Mouse.Move, 30, 30) == 0, "input-latency: queue_mouse for C");
+        s.Check(Native.vlqt_test_queue_mouse(born.W, Protocol.Mouse.Move, 30, 30) == 0, "input-latency: queue_mouse for C");
         clock.Tick();
         Frame(clock);
         var src = Native.vlqt_window_get_perf_sample(born.W, out var first);
-        check(src == 0 && first.swaps <= 1 && (first.swaps == 1 || !OperatingSystem.IsWindows()),
+        s.Check(src == 0 && first.swaps <= 1 && (first.swaps == 1 || !OperatingSystem.IsWindows()),
             $"input-latency: new window rendered once in its first pump, not in the delivery (rc {src}, swaps {first.swaps})");
 
         // Not in a pump: the native call alone delivers and returns >= 0; a second call has nothing left.
-        check(Native.vlqt_test_queue_mouse(a.W, Protocol.Mouse.Move, 40, 40) == 0, "input-latency: queue_mouse for A again");
+        s.Check(Native.vlqt_test_queue_mouse(a.W, Protocol.Mouse.Move, 40, 40) == 0, "input-latency: queue_mouse for A again");
         var delivered = Native.vlqt_app_deliver_input();
         var again = Native.vlqt_app_deliver_input();
-        check(delivered >= 1 && again == 0, $"input-latency: deliver_input -> queued events once ({delivered}, then {again})");
+        s.Check(delivered >= 1 && again == 0, $"input-latency: deliver_input -> queued events once ({delivered}, then {again})");
 
         pump.Unregister(a);
         pump.Unregister(born);

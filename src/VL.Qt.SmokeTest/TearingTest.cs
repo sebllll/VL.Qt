@@ -5,29 +5,35 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using NUnit.Framework;
 using VL.Qt;
 
 /// <summary>
-/// Manual scenario (#90 T0b), not part of --all: <c>--tearing [--windows N] [--interval 0|1] [--fullscreen] [--pump-hz N]
-/// [--seconds N]</c>. N windows with a vertical bar sweeping fast across the whole width (tearing shows as a broken
+/// Manual scenario (#90 T0b), explicit NUnit test (category tearing). Its flags come from the run parameter TearingArgs:
+/// <c>[--windows N] [--interval 0|1] [--fullscreen] [--pump-hz N] [--seconds N]</c>. N windows with a vertical bar sweeping fast across the whole width (tearing shows as a broken
 /// bar), pumped like the vvvv main loop. Once per second a line per window (fps = swaps/s, present and pump p50/p99 from
 /// vlqt_perf_sample, refresh rate of the screen) and one for the whole host pump; at the end a TEARING SUMMARY line per
 /// window over the run without the first second (warm-up). Plausibility warnings: fps ~ 0, refresh n/a, locked session.
 /// Windows: the display is kept awake (SetThreadExecutionState) and a locked session is detected (OpenInputDesktop).
 /// </summary>
-static class TearingTest
+[TestFixture, NonParallelizable]
+public static class TearingTest
 {
     sealed record Options(int Windows, int Interval, bool Fullscreen, int PumpHz, int Seconds);
 
     const float BarFraction = 0.05f; // bar width relative to the window width
     const float SweepSeconds = 0.6f; // one way across the window, ~3000 px/s on 1920 px: a clear tear line
 
-    public static int Run(string[] args)
+    /// <summary>Manual swap/tearing measurement; the TEARING lines are in the test output.</summary>
+    [Test, Explicit("manual measurement (#90)"), Category("tearing")]
+    public static void Tearing() => Scenario.Run(s => s.Check(Run(SmokeParameters.TearingArgs) == 0, "tearing run"));
+
+    static int Run(string[] args)
     {
         if (!TryParse(args, out var o, out var error))
         {
             Console.WriteLine("TEARING " + error);
-            Console.WriteLine("usage: --tearing [--windows N (1)] [--interval 0|1 (1)] [--fullscreen] [--pump-hz N (60, 0 = as fast as possible)] [--seconds N (20, 0 = until a window is closed / Ctrl+C)]");
+            Console.WriteLine("usage (parameter TearingArgs): [--windows N (1)] [--interval 0|1 (1)] [--fullscreen] [--pump-hz N (60, 0 = as fast as possible)] [--seconds N (20, 0 = until a window is closed / Ctrl+C)]");
             return 2;
         }
 

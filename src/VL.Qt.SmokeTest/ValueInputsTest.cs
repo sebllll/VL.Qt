@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -10,8 +11,13 @@ using VL.Qt;
 // changes (click/Space, press/drag/wheel/arrow keys, Enter/focus loss with changed text), never for SET, the user value
 // captured at the signal survives a stale SET before the poll, several changes in one frame = one event, a rebind drops
 // a change not polled. Input comes from the TEST exports vlqt_test_send_mouse / _wheel / _key_text.
-static class ValueInputsTest
+[TestFixture, NonParallelizable]
+public static class ValueInputsTest
 {
+    /// <summary>Value input controls.</summary>
+    [Test, Category("valueinputs")]
+    public static void ValueInputs() => Scenario.Run(Run);
+
     // Slider: distance of the handle centre at 0 / 1 from the Bounds edge. Base style (#292): frame padding + handle radius.
     const float SliderInset = 8 + 14 / 2; // BaseStyle FramePaddingX + IndicatorSize / 2
     const float StyleMin = 24; // BaseStyle FrameMinWidth/FrameMinHeight: lower bound of every implicit size (#292)
@@ -49,34 +55,34 @@ static class ValueInputsTest
         return list;
     }
 
-    public static void Run(Action<bool, string> check, Action<int> pump, Func<string> log)
+    static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt value inputs test");
-        check(w != IntPtr.Zero, "301: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"301: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
         List<Rec> Frame()
         {
-            pump(1);
+            s.Pump(1);
             int n = Native.Poll(w, buf);
-            check(n >= 0, $"301: poll ({n})");
+            s.Check(n >= 0, $"poll ({n})");
             return Parse(buf.AsSpan(0, Math.Max(n, 0)));
         }
-        void Mouse(int type, float x, float y) => check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"301: test_send_mouse {type}");
+        void Mouse(int type, float x, float y) => s.Check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
         void Click(float x, float y)
         {
             Mouse(Protocol.Mouse.Move, x, y);
             Mouse(Protocol.Mouse.Press, x, y);
             Mouse(Protocol.Mouse.Release, x, y);
         }
-        void Key(int key, int modifiers, string? text) => check(vlqt_test_send_key_text(w, key, modifiers, text) == 0, $"301: send_key_text {key}");
+        void Key(int key, int modifiers, string? text) => s.Check(vlqt_test_send_key_text(w, key, modifiers, text) == 0, $"send_key_text {key}");
         void Type(string s)
         {
             Key(KeyA, ControlModifier, null); // select all, typing replaces the text
@@ -85,24 +91,24 @@ static class ValueInputsTest
         }
         static List<Rec> Values(List<Rec> recs, uint handle) => recs.FindAll(r => r.Event == Protocol.Ev.Value && r.Handle == handle);
         static string S(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
-        void ExpectNone(List<Rec> recs, uint h, string what) => check(Values(recs, h).Count == 0, $"301: {what} -> no EV_VALUE ({S(recs)})");
+        void ExpectNone(List<Rec> recs, uint h, string what) => s.Check(Values(recs, h).Count == 0, $"{what} -> no EV_VALUE ({S(recs)})");
         void ExpectBool(List<Rec> recs, uint h, bool expected, string what)
         {
             var v = Values(recs, h);
-            check(v.Count == 1 && v[0].ValueType == Protocol.Vt.Bool && v[0].Payload.Length == 5 && v[0].Payload[4] == (expected ? 1 : 0),
-                $"301: {what} -> one EV_VALUE bool {expected} ({S(recs)})");
+            s.Check(v.Count == 1 && v[0].ValueType == Protocol.Vt.Bool && v[0].Payload.Length == 5 && v[0].Payload[4] == (expected ? 1 : 0),
+                $"{what} -> one EV_VALUE bool {expected} ({S(recs)})");
         }
         void ExpectF32(List<Rec> recs, uint h, float expected, float tolerance, string what)
         {
             var v = Values(recs, h);
-            check(v.Count == 1 && v[0].ValueType == Protocol.Vt.F32 && v[0].Payload.Length == 8 && Math.Abs(v[0].F32 - expected) <= tolerance,
-                $"301: {what} -> one EV_VALUE f32 {expected}±{tolerance} ({S(recs)})");
+            s.Check(v.Count == 1 && v[0].ValueType == Protocol.Vt.F32 && v[0].Payload.Length == 8 && Math.Abs(v[0].F32 - expected) <= tolerance,
+                $"{what} -> one EV_VALUE f32 {expected}±{tolerance} ({S(recs)})");
         }
         void ExpectString(List<Rec> recs, uint h, string expected, string what)
         {
             var v = Values(recs, h);
-            check(v.Count == 1 && v[0].ValueType == Protocol.Vt.String && v[0].Payload.Length >= 8 && v[0].Str == expected,
-                $"301: {what} -> one EV_VALUE string \"{expected}\" ({S(recs)})");
+            s.Check(v.Count == 1 && v[0].ValueType == Protocol.Vt.String && v[0].Payload.Length >= 8 && v[0].Str == expected,
+                $"{what} -> one EV_VALUE string \"{expected}\" ({S(recs)})");
         }
         Rec? Measured(List<Rec> recs, uint h)
         {
@@ -127,13 +133,13 @@ static class ValueInputsTest
         cmd.Bind(Sw, HS, 0);
         CheckApply("checkbox + switch create");
         Mouse(Protocol.Mouse.Move, 790, 590);
-        pump(2);
+        s.Pump(2);
         var recs = Frame();
         recs.AddRange(Frame());
         var mc = Measured(recs, HC);
         var ms = Measured(recs, HS);
-        check(mc is { } a && a.F(0) >= StyleMin && a.F(0) <= 48 && a.F(1) >= StyleMin && a.F(1) <= 48, $"301: checkbox implicit size without text ({S(recs)})");
-        check(ms is { } b && b.F(0) >= StyleMin && b.F(0) <= 80 && b.F(1) >= StyleMin && b.F(1) <= 48, $"301: switch implicit size without text ({S(recs)})");
+        s.Check(mc is { } a && a.F(0) >= StyleMin && a.F(0) <= 48 && a.F(1) >= StyleMin && a.F(1) <= 48, $"checkbox implicit size without text ({S(recs)})");
+        s.Check(ms is { } b && b.F(0) >= StyleMin && b.F(0) <= 80 && b.F(1) >= StyleMin && b.F(1) <= 48, $"switch implicit size without text ({S(recs)})");
         ExpectNone(recs, HC, "checkbox SET VALUE on creation");
         ExpectNone(recs, HS, "switch SET VALUE on creation");
         float cx = 100 + (mc?.F(0) ?? 40) / 2, cy = 100 + (mc?.F(1) ?? 40) / 2;
@@ -166,7 +172,7 @@ static class ValueInputsTest
         cmd.Bind(C, HC2, 0);
         CheckApply("checkbox rebind");
         recs = Frame();
-        check(Values(recs, HC).Count == 0 && Values(recs, HC2).Count == 0, $"301: checkbox rebind drops the unpolled change ({S(recs)})");
+        s.Check(Values(recs, HC).Count == 0 && Values(recs, HC2).Count == 0, $"checkbox rebind drops the unpolled change ({S(recs)})");
         Click(cx, cy);
         ExpectBool(Frame(), HC2, true, "checkbox new handle gets the next change");
 
@@ -206,7 +212,7 @@ static class ValueInputsTest
         recs = Frame();
         recs.AddRange(Frame());
         var ml = Measured(recs, HL);
-        check(ml is { } c && c.F(0) >= StyleMin && c.F(1) >= StyleMin && c.F(1) <= 60, $"301: slider implicit size horizontal ({S(recs)})");
+        s.Check(ml is { } c && c.F(0) >= StyleMin && c.F(1) >= StyleMin && c.F(1) <= 60, $"slider implicit size horizontal ({S(recs)})");
         ExpectNone(recs, HL, "slider creation");
         cmd.SetBool(Sl, Protocol.Prop.AutoSize, false);
         cmd.SetPlace(Sl, 100, 200, 400, 40);
@@ -236,12 +242,12 @@ static class ValueInputsTest
         CheckApply("slider set 0.1");
         ExpectNone(Frame(), HL, "slider SET VALUE 0.1");
         Mouse(Protocol.Mouse.Move, X(0.5f), y);
-        check(Native.vlqt_test_send_wheel(w, X(0.5f), y, 0, 120) == 0, "301: slider send_wheel");
+        s.Check(Native.vlqt_test_send_wheel(w, X(0.5f), y, 0, 120) == 0, "slider send_wheel");
         ExpectF32(Frame(), HL, 0.2f, 0.001f, "slider wheel up with step 0 (Qt: 0.1)");
         Key(KeyRight, 0, null); // focus from the clicks above
         recs = Frame();
         var keyValues = Values(recs, HL);
-        check(keyValues.Count == 1 && keyValues[0].F32 > 0.2f, $"301: slider arrow key -> one EV_VALUE above 0.2 ({S(recs)})");
+        s.Check(keyValues.Count == 1 && keyValues[0].F32 > 0.2f, $"slider arrow key -> one EV_VALUE above 0.2 ({S(recs)})");
 
         // Range and step: -10..10, step 2.5: drag snaps, wheel steps; SET MAXIMUM below the value clamps without echo.
         cmd.SetF32(Sl, Protocol.Prop.Minimum, -10);
@@ -253,7 +259,7 @@ static class ValueInputsTest
         Click(X(0.6f), y); // 2.0 -> snaps to 2.5
         ExpectF32(Frame(), HL, 2.5f, 0.001f, "slider click snaps to the step");
         Mouse(Protocol.Mouse.Move, X(0.5f), y);
-        check(Native.vlqt_test_send_wheel(w, X(0.5f), y, 0, 120) == 0, "301: slider send_wheel step");
+        s.Check(Native.vlqt_test_send_wheel(w, X(0.5f), y, 0, 120) == 0, "slider send_wheel step");
         ExpectF32(Frame(), HL, 5f, 0.001f, "slider wheel up with step 2.5");
         Click(X(0.85f), y); // 7.0 -> 7.5
         ExpectF32(Frame(), HL, 7.5f, 0.001f, "slider click at 7 snaps to 7.5");
@@ -275,7 +281,7 @@ static class ValueInputsTest
         cmd.SetBool(Sl, Protocol.Prop.Enabled, false);
         CheckApply("slider enabled false");
         Click(X(0.75f), y);
-        check(Native.vlqt_test_send_wheel(w, X(0.75f), y, 0, 120) == 0, "301: slider send_wheel disabled");
+        s.Check(Native.vlqt_test_send_wheel(w, X(0.75f), y, 0, 120) == 0, "slider send_wheel disabled");
         ExpectNone(Frame(), HL, "slider click + wheel with Enabled false");
         cmd.SetBool(Sl, Protocol.Prop.Enabled, true);
         CheckApply("slider enabled true");
@@ -285,7 +291,7 @@ static class ValueInputsTest
         cmd.Bind(Sl, HL2, 0);
         CheckApply("slider rebind");
         recs = Frame();
-        check(Values(recs, HL).Count == 0 && Values(recs, HL2).Count == 0, $"301: slider rebind drops the unpolled change ({S(recs)})");
+        s.Check(Values(recs, HL).Count == 0 && Values(recs, HL2).Count == 0, $"slider rebind drops the unpolled change ({S(recs)})");
 
         // Vertical: implicit size swaps, top = maximum. Invalid orientation -> error.
         cmd.SetI32(Sl, Protocol.Prop.Orientation, 2);
@@ -294,7 +300,7 @@ static class ValueInputsTest
         recs = Frame();
         recs.AddRange(Frame());
         ml = Measured(recs, HL2);
-        check(ml is { } d && d.F(1) >= StyleMin && d.F(0) >= StyleMin && d.F(0) <= 60, $"301: slider implicit size vertical ({S(recs)})");
+        s.Check(ml is { } d && d.F(1) >= StyleMin && d.F(0) >= StyleMin && d.F(0) <= 60, $"slider implicit size vertical ({S(recs)})");
         cmd.SetBool(Sl, Protocol.Prop.AutoSize, false);
         cmd.SetPlace(Sl, 600, 100, 40, 400);
         CheckApply("slider vertical bounds");
@@ -304,7 +310,7 @@ static class ValueInputsTest
         cmd.SetI32(Sl, Protocol.Prop.Orientation, 3);
         var badRc = Native.Apply(w, cmd.EndFrame());
         cmd.Reset();
-        check(badRc != 0, $"301: slider orientation 3 is rejected ({badRc})");
+        s.Check(badRc != 0, $"slider orientation 3 is rejected ({badRc})");
         cmd.Destroy(Sl);
         CheckApply("slider destroy");
         Frame();
@@ -329,7 +335,7 @@ static class ValueInputsTest
         recs = Frame();
         recs.AddRange(Frame());
         var mt = Measured(recs, HT);
-        check(mt is { } e && e.F(0) >= StyleMin && e.F(1) >= StyleMin && e.F(1) <= 60, $"301: textfield implicit size ({S(recs)})");
+        s.Check(mt is { } e && e.F(0) >= StyleMin && e.F(1) >= StyleMin && e.F(1) <= 60, $"textfield implicit size ({S(recs)})");
         ExpectNone(recs, HT, "textfield SET VALUE on creation");
         cmd.SetBool(T1, Protocol.Prop.AutoSize, false);
         cmd.SetPlace(T1, 100, 300, 300, 40);
@@ -419,24 +425,24 @@ static class ValueInputsTest
         cmd.Bind(T1, HT3, 0);
         CheckApply("textfield rebind");
         recs = Frame();
-        check(Values(recs, HT).Count == 0 && Values(recs, HT3).Count == 0, $"301: textfield rebind drops the unpolled change ({S(recs)})");
+        s.Check(Values(recs, HT).Count == 0 && Values(recs, HT3).Count == 0, $"textfield rebind drops the unpolled change ({S(recs)})");
         Type("kept");
         Key(KeyReturn, 0, "\r");
         ExpectString(Frame(), HT3, "kept", "textfield new handle gets the next change");
 
         // Context menu (right click, Qt 6.9+ TextEditingContextMenu from the Basic impl plugin): no QML warning in the
         // log (the loose .qml is trimmed, the plugin's compiled copy must load); Escape closes it, then typing works.
-        int logStart = log().Length;
+        int logStart = s.Log.Length;
         Mouse(Protocol.Mouse.Move, t1x, t1y);
         Mouse(Protocol.Mouse.PressRight, t1x, t1y);
         Mouse(Protocol.Mouse.ReleaseRight, t1x, t1y);
-        pump(3);
-        var menuLog = log().Substring(logStart);
-        check(menuLog.IndexOf("qml", StringComparison.OrdinalIgnoreCase) < 0 && menuLog.IndexOf("warn", StringComparison.OrdinalIgnoreCase) < 0,
-            $"301: textfield right click -> no QML warning ({menuLog.Trim()})");
+        s.Pump(3);
+        var menuLog = s.Log.Substring(logStart);
+        s.Check(menuLog.IndexOf("qml", StringComparison.OrdinalIgnoreCase) < 0 && menuLog.IndexOf("warn", StringComparison.OrdinalIgnoreCase) < 0,
+            $"textfield right click -> no QML warning ({menuLog.Trim()})");
         ExpectNone(Frame(), HT3, "textfield right click");
         Key(KeyEscape, 0, null);
-        pump(2);
+        s.Pump(2);
         Click(t1x, t1y);
         Type("after menu");
         Key(KeyReturn, 0, "\r");
@@ -446,7 +452,7 @@ static class ValueInputsTest
         cmd.Destroy(T2);
         CheckApply("textfield destroy");
         Native.vlqt_window_destroy(w);
-        pump(1);
+        s.Pump(1);
     }
 
     const uint C = 1;

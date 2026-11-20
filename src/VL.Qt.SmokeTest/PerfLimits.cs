@@ -103,4 +103,15 @@ static class PerfLimits
         Warnings++;
         Console.WriteLine($"WARN {what} [limit x{fx} exceeded, warn-only]");
     }
+
+    // Same for a converted scenario: a check, or an NUnit warning in warn-only mode.
+    public static void Below(Scenario s, double value, double limit, string what, bool cpuBound = false)
+    {
+        var scale = Factor * (cpuBound ? CpuFactor : 1.0);
+        bool ok = value < limit * scale;
+        var fx = scale.ToString("0.##", CultureInfo.InvariantCulture);
+        if (ok || !WarnOnly) { s.Check(ok, what + (scale != 1.0 ? $" [limit x{fx}]" : "")); return; }
+        Warnings++;
+        s.Warn($"{what} [limit x{fx} exceeded, warn-only]");
+    }
 }

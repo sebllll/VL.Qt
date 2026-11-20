@@ -7,21 +7,25 @@ using System.Text.RegularExpressions;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Lib.Mathematics;
+using NUnit.Framework;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
+using static Pixels;
 
 // Effect chain through the real nodes (plan effects/01, Task 5): Text/Rectangle/Row nodes + DropShadow/Blur/ColorAdjust/Mask
 // nodes -> Reconciler -> CommandWriter -> real QtNative. One MultiEffect per chain, order of the chain without effect on the image,
 // unchanged chain -> no commands, effect removed -> no layer, Row layout unchanged, mask at a position, duplicate kind -> warning.
 // Node inputs are units (DIPTopLeft, 1 unit = 100 DIP), pixel checks are DIP. Grabs: <outDir>/effect_chain*.png.
-static class EffectChainTest
+[TestFixture, NonParallelizable]
+public static class EffectChainTest
 {
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
+    [Test, Category("effect-chain")]
+    public static void EffectChain() => Scenario.Run(Run);
+
     static bool Near(Color c, int r, int g, int b, int tol = 12) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
-    static bool IsBg(Color c) => Near(c, 0x20, 0x20, 0x20, 8);
 
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
     static extern int vlqt_test_perf_text(IntPtr w, int page, byte[]? out_, int cap);
@@ -65,11 +69,11 @@ static class EffectChainTest
         return diff;
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
-        var gpu = Program.NeedsRhi(check, "MultiEffect is a ShaderEffect");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "MultiEffect is a ShaderEffect");
         var w = Native.vlqt_window_create(800, 600, "VL.Qt effect chain test");
-        check(w != IntPtr.Zero, "effect-chain: window_create");
+        s.Check(w != IntPtr.Zero, "effect-chain: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -98,9 +102,9 @@ static class EffectChainTest
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
-                check(rc == 0, $"effect-chain: apply {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+                s.Check(rc == 0, $"effect-chain: apply {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
-            pump(4);
+            s.Pump(4);
         }
 
         Element Text(TextNode n, string s, RectangleF bounds, float size, Effect? effect)
@@ -132,15 +136,15 @@ static class EffectChainTest
         // 1) Plain text.
         Frame(Text(text, "Fx", textBounds, 1.5f, null), "plain", clear: true);
         var c0 = Counts(w);
-        check(c0.layers == 0 && c0.effects == 0, $"effect-chain: no Effect -> no layer ({c0})");
-        using var plain = grab(w, Path.Combine(outDir, "effect_chain_off.png"));
+        s.Check(c0.layers == 0 && c0.effects == 0, $"effect-chain: no Effect -> no layer ({c0})");
+        using var plain = s.Grab(w, "effect_chain_off.png");
         var plainStats = TextStats(plain);
 
         // 2) DropShadow <- Blur <- ColorAdjust: exactly one MultiEffect, blur + shadow visible.
         Frame(Text(text, "Fx", textBounds, 1.5f, Chain(true)), "chain");
         var c1 = Counts(w);
-        check(c1.layers == 1 && c1.effects == 1, $"effect-chain: three effect nodes -> exactly one MultiEffect ({c1})");
-        using var chainA = grab(w, Path.Combine(outDir, "effect_chain.png"));
+        s.Check(c1.layers == 1 && c1.effects == 1, $"effect-chain: three effect nodes -> exactly one MultiEffect ({c1})");
+        using var chainA = s.Grab(w, "effect_chain.png");
         var st = TextStats(chainA);
         gpu(st.green > 50 && st.soft > plainStats.soft + 50, $"effect-chain: blur + shadow visible ({st} vs plain {plainStats})");
 
@@ -151,29 +155,29 @@ static class EffectChainTest
             cmd.Reset();
             rec.Update(Text(text, "Fx", textBounds, 1.5f, Chain(true)), Space.DIPTopLeft);
             sent += cmd.Length;
-            pump(1);
+            s.Pump(1);
         }
-        check(sent == 0, $"effect-chain: unchanged chain over 5 frames sends no commands ({sent} bytes)");
-        check(Counts(w) == c1, "effect-chain: still one MultiEffect after 5 frames");
+        s.Check(sent == 0, $"effect-chain: unchanged chain over 5 frames sends no commands ({sent} bytes)");
+        s.Check(Counts(w) == c1, "effect-chain: still one MultiEffect after 5 frames");
 
         // 4) Reversed order: same image.
         Frame(Text(text, "Fx", textBounds, 1.5f, Chain(false)), "reversed chain");
         var c2 = Counts(w);
-        check(c2.layers == 1 && c2.effects == 1, $"effect-chain: reversed chain -> still one MultiEffect ({c2})");
-        using (var b = grab(w, Path.Combine(outDir, "effect_chain_reversed.png")))
+        s.Check(c2.layers == 1 && c2.effects == 1, $"effect-chain: reversed chain -> still one MultiEffect ({c2})");
+        using (var b = s.Grab(w, "effect_chain_reversed.png"))
         {
             var d = Diff(chainA, b);
-            check(d <= 20, $"effect-chain: reversed order -> same image ({d} differing samples)");
+            s.Check(d <= 20, $"effect-chain: reversed order -> same image ({d} differing samples)");
         }
 
         // 5) Effect removed: no layer, image as plain.
         Frame(Text(text, "Fx", textBounds, 1.5f, null), "effect removed");
         var c3 = Counts(w);
-        check(c3.layers == 0 && c3.effects == 0, $"effect-chain: Effect removed -> no layer ({c3})");
-        using (var b = grab(w, Path.Combine(outDir, "effect_chain_removed.png")))
+        s.Check(c3.layers == 0 && c3.effects == 0, $"effect-chain: Effect removed -> no layer ({c3})");
+        using (var b = s.Grab(w, "effect_chain_removed.png"))
         {
             var d = Diff(plain, b);
-            check(d <= 20, $"effect-chain: removed -> image as without effect ({d} differing samples)");
+            s.Check(d <= 20, $"effect-chain: removed -> image as without effect ({d} differing samples)");
         }
 
         // 6) Row layout: element with effect keeps layout and bounds (A with shadow, B next to it).
@@ -199,18 +203,18 @@ static class EffectChainTest
             return (bl, rd);
         }
         Frame(RowOf(null, out _, out _, out _), "row plain");
-        using var rowPlain = grab(w, Path.Combine(outDir, "effect_chain_row_off.png"));
+        using var rowPlain = s.Grab(w, "effect_chain_row_off.png");
         var e0 = Extent(rowPlain);
         var shadowFx = shadow2.Update(null, new Color4(0, 1, 0, 1), new Vector2(0.3f, 0.3f), 0, 1, true, default);
         Frame(RowOf(shadowFx, out _, out _, out _), "row with effect");
         var cRowOn = Counts(w);
-        check(cRowOn.layers == 1 && cRowOn.effects == 1, $"effect-chain: one effect in the Row -> one MultiEffect ({cRowOn})");
-        using (var a = grab(w, Path.Combine(outDir, "effect_chain_row.png")))
+        s.Check(cRowOn.layers == 1 && cRowOn.effects == 1, $"effect-chain: one effect in the Row -> one MultiEffect ({cRowOn})");
+        using (var a = s.Grab(w, "effect_chain_row.png"))
         {
             var e1 = Extent(a);
             // B (no effect) is drawn on every backend; A sits in its effect layer, which the software backend does not
             // draw (MultiEffect is a ShaderEffect), so A's extent and pixels are only checked with RHI.
-            check(e0.blue > 0 && e0.red > e0.blue && e1.red == e0.red && Near(Px(a, 350, 100), 255, 0, 0, 40),
+            s.Check(e0.blue > 0 && e0.red > e0.blue && e1.red == e0.red && Near(Px(a, 350, 100), 255, 0, 0, 40),
                 $"effect-chain: Row layout equal with effect, B in place (B..x {e0.red} vs {e1.red}, {Px(a, 350, 100)})");
             gpu(e1 == e0 && Near(Px(a, 100, 100), 0, 0, 255, 40),
                 $"effect-chain: A drawn in place through its layer (A..x {e0.blue} vs {e1.blue}, {Px(a, 100, 100)})");
@@ -218,7 +222,7 @@ static class EffectChainTest
         }
         Frame(RowOf(null, out _, out _, out _), "row effect off");
         var cRow = Counts(w);
-        check(cRow.layers == 0, $"effect-chain: Row child effect removed -> no layer ({cRow})");
+        s.Check(cRow.layers == 0, $"effect-chain: Row child effect removed -> no layer ({cRow})");
 
         // 7) Mask node with a Text element at a position: window there (mask lies in the parent's coordinates, like a sibling).
         // Red 300 x 200 at (200, 200); text mask "MASK" at (220, 220), glyphs ~225..435 x 245..310 (to ~450 with the wider
@@ -226,7 +230,7 @@ static class EffectChainTest
         Element Masked(Element? m)
             => Rect(rectM, red, new RectangleF(2, 2, 3, 2), m is null ? null : mask.Update(null, m, 0, 0, 1, 0, false), out _);
         Frame(Masked(Text(maskText, "MASK", new RectangleF(2.2f, 2.2f, 2, 1), 0.8f, null)), "mask");
-        using (var a = grab(w, Path.Combine(outDir, "effect_chain_mask.png")))
+        using (var a = s.Grab(w, "effect_chain_mask.png"))
         {
             int inside = 0, outside = 0;
             for (int y = 200; y < 400; y += 2)
@@ -242,25 +246,25 @@ static class EffectChainTest
         }
         Frame(Rect(rectM, red, new RectangleF(2, 2, 3, 2), null, out _), "mask removed");
         var cMask = Counts(w);
-        check(cMask.layers == 0, $"effect-chain: Mask removed -> no layer ({cMask})");
+        s.Check(cMask.layers == 0, $"effect-chain: Mask removed -> no layer ({cMask})");
 
         // 8) Duplicate kind in the chain: warning at the element node (read at the next Update, from the last frame's sink).
         warnings.Clear();
         var dup = blur2.Update(blur2.Update(null, 0.3f, 32, 0, true, default), 0.6f, 32, 0, true, default);
         Frame(Text(text, "Fx", textBounds, 1.5f, dup), "duplicate");
         Text(text, "Fx", textBounds, 1.5f, dup);
-        check(warnings.Count == 1 && warnings[0].Contains("Blur"), $"effect-chain: duplicate Blur -> warning at the Text node ({string.Join("|", warnings)})");
+        s.Check(warnings.Count == 1 && warnings[0].Contains("Blur"), $"effect-chain: duplicate Blur -> warning at the Text node ({string.Join("|", warnings)})");
         var single = blur2.Update(null, 0.6f, 32, 0, true, default);
         Frame(Text(text, "Fx", textBounds, 1.5f, single), "duplicate gone");
         Text(text, "Fx", textBounds, 1.5f, single);
-        check(warnings.Count == 0, $"effect-chain: warning gone with the duplicate ({warnings.Count})");
+        s.Check(warnings.Count == 0, $"effect-chain: warning gone with the duplicate ({warnings.Count})");
 
         text.Dispose(); rectA.Dispose(); rectB.Dispose(); rectM.Dispose(); maskText.Dispose(); row.Dispose();
         cmd.Reset();
         rec.Clear();
         Native.Apply(w, cmd.EndFrame());
         Native.vlqt_window_destroy(w);
-        pump(2);
+        s.Pump(2);
     }
 
     sealed class Remove(List<string> list, string message) : IDisposable
