@@ -191,7 +191,7 @@ namespace VL.Qt.Tests
             Assert.That(n.Type, Is.EqualTo(ElementType.Rectangle));
             Assert.That(n.Last, Is.Null);
             Assert.That(n.Children, Is.Empty);
-            Assert.That(n.BoundSink.IsNone, Is.True);
+            Assert.That(n.BoundFeedback.IsNone, Is.True);
         }
     }
 }

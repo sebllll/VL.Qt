@@ -31,7 +31,7 @@ namespace VL.Qt.Nodes
         internal HoverNode(Func<string, IDisposable> addWarning)
             => _node = new InteractionNode<Props>(addWarning, Create);
 
-        private static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new HoverInteraction(previous, slot);
 
         internal InteractionNode<Props> Core => _node;
@@ -47,9 +47,9 @@ namespace VL.Qt.Nodes
             var output = _node.Describe(input, default(Props));
 
             // Pull: state of the last pump (1 frame latency); writes only on change.
-            var sink = _node.Sink;
+            var feedback = _node.Feedback;
             if (isHovered.IsValid())
-                InteractionNode<Props>.Write(isHovered, ref _hovered, ref _lastHovered, sink.IsHovered());
+                InteractionNode<Props>.Write(isHovered, ref _hovered, ref _lastHovered, feedback.IsHovered());
             else
                 _hovered = null;
 

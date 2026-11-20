@@ -155,15 +155,15 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void Reconciler_DuplicateKind_WritesWarningIntoSink()
+        public void Reconciler_DuplicateKind_WritesWarningIntoFeedback()
         {
-            var sink = new ElementSink();
-            var slot = new SinkSlot(sink, 0);
-            Frame(new Rectangle { Sink = slot, Effect = Blur(Blur()) });
-            Assert.That(sink.Warning, Does.Contain("Blur"));
+            var feedback = new ElementFeedback();
+            var slot = new FeedbackSlot(feedback, 0);
+            Frame(new Rectangle { Feedback = slot, Effect = Blur(Blur()) });
+            Assert.That(feedback.Warning, Does.Contain("Blur"));
 
-            Frame(new Rectangle { Sink = slot, Effect = Blur() });
-            Assert.That(sink.Warning, Is.Null);
+            Frame(new Rectangle { Feedback = slot, Effect = Blur() });
+            Assert.That(feedback.Warning, Is.Null);
         }
     }
 }

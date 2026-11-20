@@ -2,7 +2,7 @@
 {
     /// <summary>
     /// Push button (QtQuick.Controls Button, style Basic). Clicks come from Qt's <c>clicked</c> signal into
-    /// <see cref="Element.Sink"/> (release over the button; AutoRepeat repeats while held).
+    /// <see cref="Element.Feedback"/> (release over the button; AutoRepeat repeats while held).
     /// Lengths in units.
     /// </summary>
     public sealed class Button : Element

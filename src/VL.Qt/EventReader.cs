@@ -6,13 +6,13 @@ namespace VL.Qt
     /// <summary>
     /// Iterates the poll buffer filled by vlqt_window_poll (QtNative → C#). Record layout, little-endian,
     /// every record padded to <see cref="Protocol.CommandAlign"/> bytes like the commands:
-    /// <c>u16 event, u16 len, u32 handle, u32 index, payload</c> with <c>len</c> = bytes after the 4-byte header
-    /// (handle + index + payload, excluding padding). Payloads per event are defined in plan 06.
+    /// <c>u16 event, u16 len, u32 feedbackId, u32 index, payload</c> with <c>len</c> = bytes after the 4-byte header
+    /// (feedbackId + index + payload, excluding padding). Payloads per event are defined in plan 06.
     /// Allocation-free; a malformed record stops the iteration and sets <see cref="Error"/>.
     /// </summary>
     internal ref struct EventReader
     {
-        public const int RecordFieldsSize = 8; // u32 handle, u32 index
+        public const int RecordFieldsSize = 8; // u32 feedbackId, u32 index
 
         private readonly ReadOnlySpan<byte> _data;
         private int _offset;
@@ -22,7 +22,7 @@ namespace VL.Qt
             _data = data;
             _offset = 0;
             Event = 0;
-            Handle = 0;
+            FeedbackId = 0;
             Index = 0;
             Payload = default;
             Error = null;
@@ -31,10 +31,10 @@ namespace VL.Qt
         /// <summary>Event id of the current record (<see cref="Protocol.Ev"/>).</summary>
         public ushort Event { get; private set; }
 
-        /// <summary>Sink handle given in BIND.</summary>
-        public uint Handle { get; private set; }
+        /// <summary>Feedback id given in BIND.</summary>
+        public uint FeedbackId { get; private set; }
 
-        /// <summary>Instance index within the sink (e.g. spread slice).</summary>
+        /// <summary>Instance index within the feedback (e.g. spread slice).</summary>
         public uint Index { get; private set; }
 
         /// <summary>Event-specific payload of the current record.</summary>
@@ -59,13 +59,13 @@ namespace VL.Qt
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(rest);
             int len = BinaryPrimitives.ReadUInt16LittleEndian(rest.Slice(2));
             if (len < RecordFieldsSize)
-                return Fail("event length smaller than handle + index");
+                return Fail("event length smaller than feedbackId + index");
             if (Protocol.HeaderSize + len > rest.Length)
                 return Fail("event length exceeds buffer");
 
             RecordOffset = _offset;
             Event = ev;
-            Handle = BinaryPrimitives.ReadUInt32LittleEndian(rest.Slice(4));
+            FeedbackId = BinaryPrimitives.ReadUInt32LittleEndian(rest.Slice(4));
             Index = BinaryPrimitives.ReadUInt32LittleEndian(rest.Slice(8));
             Payload = rest.Slice(Protocol.HeaderSize + RecordFieldsSize, len - RecordFieldsSize);
 

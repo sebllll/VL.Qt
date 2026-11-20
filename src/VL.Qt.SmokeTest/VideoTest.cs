@@ -348,7 +348,7 @@ public static class VideoTest
 
     private static IDisposable NoWarning(string _) => throw new InvalidOperationException("unexpected node warning");
 
-    /// <summary>Video node → Reconciler → QtNative → poll → SinkRegistry → node outputs Position/Duration.</summary>
+    /// <summary>Video node → Reconciler → QtNative → poll → FeedbackRouter → node outputs Position/Duration.</summary>
     private static void RunNode(Scenario s, string a, string b)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt video node test");
@@ -374,7 +374,7 @@ public static class VideoTest
             }
             s.Pump(1);
             int n = Native.Poll(w, buf);
-            rec.Sinks.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
+            rec.FeedbackRouter.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
             Thread.Sleep(15);
         }
         bool WaitFor(string path, Func<bool> cond, int ms)

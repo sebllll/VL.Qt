@@ -57,8 +57,8 @@ public static class EffectLayerTest
         return (white, green, soft);
     }
 
-    // Hover events (EV_HOVER) for sink in the poll buffer: last flag, or null if none.
-    private static bool? HoverFlag(ReadOnlySpan<byte> b, uint sink)
+    // Hover events (EV_HOVER) for feedbackId in the poll buffer: last flag, or null if none.
+    private static bool? HoverFlag(ReadOnlySpan<byte> b, uint feedbackId)
     {
         bool? flag = null;
         int off = 0;
@@ -67,14 +67,14 @@ public static class EffectLayerTest
             var ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
             var len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
             if (len < 8 || off + 4 + len > b.Length) break;
-            if (ev == Protocol.Ev.Hover && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)) == sink && len > 8)
+            if (ev == Protocol.Ev.Hover && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)) == feedbackId && len > 8)
                 flag = b[off + 12] != 0;
             off += (4 + len + 3) & ~3;
         }
         return flag;
     }
 
-    private const uint Row = 1, A = 2, B = 3, T = 4, H = 10, SinkH = 31;
+    private const uint Row = 1, A = 2, B = 3, T = 4, H = 10, FeedbackIdH = 31;
 
     private static void Run(Scenario s)
     {
@@ -95,7 +95,7 @@ public static class EffectLayerTest
             Native.vlqt_test_send_mouse(w, Protocol.Mouse.Move, x, y);
             s.Pump(1);
             var n = Native.Poll(w, poll);
-            return HoverFlag(poll.AsSpan(0, Math.Max(n, 0)), SinkH);
+            return HoverFlag(poll.AsSpan(0, Math.Max(n, 0)), FeedbackIdH);
         }
         // A = hard red shadow (30, 30) + saturation -1 (grey); T = blur + green shadow + brightness.
         static void RunA(CommandWriter c)
@@ -137,7 +137,7 @@ public static class EffectLayerTest
         cmd.SetColor(B, Protocol.Prop.Color, 0, 1, 0, 1);
         cmd.Reparent(B, Row, 1);
         cmd.Create(H, Protocol.Type.HoverHandler);
-        cmd.Bind(H, SinkH, 0);
+        cmd.Bind(H, FeedbackIdH, 0);
         cmd.Reparent(H, A, 0);
         cmd.Create(T, Protocol.Type.Text);
         cmd.SetPlace(T, 450, 300, 300, 220);

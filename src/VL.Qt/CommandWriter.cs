@@ -86,12 +86,12 @@ namespace VL.Qt
             WriteU32(p.Slice(8), index);
         }
 
-        /// <summary>BIND: sinkHandle 0 = unbind; flags = <see cref="Protocol.Bind"/> bit mask.</summary>
-        public void Bind(uint id, uint sinkHandle, ushort flags)
+        /// <summary>BIND: feedbackId 0 = unbind; flags = <see cref="Protocol.Bind"/> bit mask.</summary>
+        public void Bind(uint id, uint feedbackId, ushort flags)
         {
             var p = Begin(Protocol.Op.Bind, 10);
             WriteU32(p, id);
-            WriteU32(p.Slice(4), sinkHandle);
+            WriteU32(p.Slice(4), feedbackId);
             WriteU16(p.Slice(8), flags);
         }
 

@@ -6,8 +6,8 @@ using VL.Lib.Collections;
 
 namespace VL.Qt.Elements
 {
-    /// <summary>State of one sink slot (one element instance of a spread output). Main thread only.</summary>
-    public sealed class SinkState
+    /// <summary>State of one feedback slot (one element instance of a spread output). Main thread only.</summary>
+    public sealed class FeedbackState
     {
         public bool IsHovered { get; set; }
         public bool IsPressed { get; set; }
@@ -19,19 +19,19 @@ namespace VL.Qt.Elements
         /// <summary>Video: media duration in seconds (0 until loaded).</summary>
         public float MediaDuration { get; set; }
 
-        /// <summary>Clicks not yet taken by <see cref="ElementSink.TakeClicks"/>.</summary>
+        /// <summary>Clicks not yet taken by <see cref="ElementFeedback.TakeClicks"/>.</summary>
         public int PendingClicks { get; set; }
 
         /// <summary>Tap handler: tap count of the last tap (2 = double click), 0 before the first tap.</summary>
         public int TapCount { get; set; }
 
-        /// <summary>Tap handler: long presses not yet taken by <see cref="ElementSink.TakeLongPresses"/>.</summary>
+        /// <summary>Tap handler: long presses not yet taken by <see cref="ElementFeedback.TakeLongPresses"/>.</summary>
         public int PendingLongPresses { get; set; }
 
         /// <summary>Point handler: a point (mouse button, finger, pen) is down on the item.</summary>
         public bool IsActive { get; set; }
 
-        /// <summary>Wheel handler: notches not yet taken by <see cref="ElementSink.TakeWheel"/>.</summary>
+        /// <summary>Wheel handler: notches not yet taken by <see cref="ElementFeedback.TakeWheel"/>.</summary>
         public Vector2 PendingWheel { get; set; }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace VL.Qt.Elements
         public int PinchUpdates { get; set; }
 
         /// <summary>
-        /// Value input: the last user change (EV_VALUE) not yet taken by <see cref="ElementSink.TakeValue{T}"/>.
+        /// Value input: the last user change (EV_VALUE) not yet taken by <see cref="ElementFeedback.TakeValue{T}"/>.
         /// Several changes between two takes keep the last one.
         /// </summary>
         internal bool HasPendingValue { get; set; }
@@ -79,13 +79,13 @@ namespace VL.Qt.Elements
         /// <summary>Pending user value for <see cref="Protocol.Vt.String"/>.</summary>
         internal string? PendingString { get; set; }
 
-        /// <summary>QmlElement: last value of each root property that QML changed, by name; null until the first change. Cleared by <see cref="ElementSink.ResetQml"/>.</summary>
+        /// <summary>QmlElement: last value of each root property that QML changed, by name; null until the first change. Cleared by <see cref="ElementFeedback.ResetQml"/>.</summary>
         internal Dictionary<string, object>? QmlProperties { get; set; }
 
         /// <summary>QmlElement: number of changes written into <see cref="QmlProperties"/> (also by a reset), so a node sees that there is something new.</summary>
         internal int QmlPropertyUpdates { get; set; }
 
-        /// <summary>QmlElement: signals not yet taken by <see cref="ElementSink.TakeQmlSignals"/>, in order of arrival.</summary>
+        /// <summary>QmlElement: signals not yet taken by <see cref="ElementFeedback.TakeQmlSignals"/>, in order of arrival.</summary>
         internal List<QmlSignal>? PendingQmlSignals { get; set; }
 
         public string? Warning { get; set; }
@@ -108,29 +108,29 @@ namespace VL.Qt.Elements
 
     /// <summary>
     /// Stable per-node-instance receiver of runtime state (hover, press, measured size, ...), one
-    /// <see cref="SinkState"/> per slot index. Plain data: filled by the event reader (plan 06),
+    /// <see cref="FeedbackState"/> per slot index. Plain data: filled by the event reader (plan 06),
     /// read by the element node. No reference to Qt or native objects. Main thread only.
     /// </summary>
-    public sealed class ElementSink
+    public sealed class ElementFeedback
     {
-        private readonly List<SinkState> _states = new();
+        private readonly List<FeedbackState> _states = new();
 
         /// <summary>Number of slots currently allocated.</summary>
         public int Count => _states.Count;
 
         /// <summary>Returns the state for <paramref name="index"/>, growing the slot list if needed.</summary>
-        public SinkState this[int index]
+        public FeedbackState this[int index]
         {
             get
             {
                 if (index < 0) throw new ArgumentOutOfRangeException(nameof(index));
-                while (_states.Count <= index) _states.Add(new SinkState());
+                while (_states.Count <= index) _states.Add(new FeedbackState());
                 return _states[index];
             }
         }
 
         /// <summary>Returns the state if the slot exists, without allocating.</summary>
-        public bool TryGet(int index, out SinkState state)
+        public bool TryGet(int index, out FeedbackState state)
         {
             if (index >= 0 && index < _states.Count) { state = _states[index]; return true; }
             state = null!;
@@ -144,13 +144,13 @@ namespace VL.Qt.Elements
             if (count < _states.Count) _states.RemoveRange(count, _states.Count - count);
         }
 
-        // --- API for the element nodes (plan 06). Values are written by the SinkRegistry after each poll,
+        // --- API for the element nodes (plan 06). Values are written by the FeedbackRouter after each poll,
         // i.e. 1 frame latency. Reading a slot that never received an event returns the default. ---
 
-        /// <summary>Pointer is over the item (Hover node and handler sinks).</summary>
+        /// <summary>Pointer is over the item (Hover node and handler feedback).</summary>
         public bool IsHovered(int index = 0) => TryGet(index, out var s) && s.IsHovered;
 
-        /// <summary>Item is pressed (Hover node and handler sinks).</summary>
+        /// <summary>Item is pressed (Hover node and handler feedback).</summary>
         public bool IsPressed(int index = 0) => TryGet(index, out var s) && s.IsPressed;
 
         /// <summary>
@@ -346,12 +346,12 @@ namespace VL.Qt.Elements
         }
     }
 
-    /// <summary>Reference from an element description to one slot of a sink. Default = no sink.</summary>
-    public readonly record struct SinkSlot(ElementSink? Sink, int Index)
+    /// <summary>Reference from an element description to one slot of a feedback. Default = no feedback.</summary>
+    public readonly record struct FeedbackSlot(ElementFeedback? Feedback, int Index)
     {
-        public bool IsNone => Sink is null;
+        public bool IsNone => Feedback is null;
 
         /// <summary>State of the slot, or null for <c>default</c>.</summary>
-        public SinkState? State => Sink?[Index];
+        public FeedbackState? State => Feedback?[Index];
     }
 }

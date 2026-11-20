@@ -39,7 +39,7 @@ namespace VL.Qt.Nodes
         internal ToggleNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Element, Props>(addWarning, Create);
 
-        private static readonly Func<CommonInputs, Props, SinkSlot, Element> Create = static (c, p, slot) => p.Look == ToggleLook.Switch
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Element> Create = static (c, p, slot) => p.Look == ToggleLook.Switch
             ? new Switch
             {
                 Size = c.Size,
@@ -51,7 +51,7 @@ namespace VL.Qt.Nodes
                 Interaction = c.Interaction,
                 Effect = c.Effect,
                 Style = p.Style,
-                Sink = slot,
+                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Value = p.Value,
                 Enabled = p.Enabled,
@@ -67,7 +67,7 @@ namespace VL.Qt.Nodes
                 Interaction = c.Interaction,
                 Effect = c.Effect,
                 Style = p.Style,
-                Sink = slot,
+                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Value = p.Value,
                 Enabled = p.Enabled,
@@ -113,7 +113,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            value = _value.Update(channel, _node.Sink);
+            value = _value.Update(channel, _node.Feedback);
             bang = _value.Bang;
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),

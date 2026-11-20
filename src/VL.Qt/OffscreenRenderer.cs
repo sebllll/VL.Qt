@@ -116,7 +116,7 @@ namespace VL.Qt
             _core.Apply();
         }
 
-        /// <summary>Events and measured values of the scene into the sinks (read by the element nodes in the next Update).</summary>
+        /// <summary>Events and measured values of the scene into the feedback (read by the element nodes in the next Update).</summary>
         public void PollEvents()
         {
             if (_disposed || _scene == IntPtr.Zero)

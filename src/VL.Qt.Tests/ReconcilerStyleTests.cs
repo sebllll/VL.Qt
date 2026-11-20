@@ -72,7 +72,7 @@ namespace VL.Qt.Tests
         public void GroupStyleChange_WithSameChildren_SendsOnlyStyleDiffs()
         {
             var children = Kids(new Column { Children = Kids(new Button(), new Slider(), new Rectangle()) },
-                new Button { Interaction = new HoverInteraction(null, new SinkSlot(new ElementSink(), 0)) });
+                new Button { Interaction = new HoverInteraction(null, new FeedbackSlot(new ElementFeedback(), 0)) });
             Update(new Group { Style = Radius(13), Children = children });
             _sink.Clear();
 

@@ -24,7 +24,7 @@ namespace VL.Qt.Nodes
     /// Lengths of Size in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP); property values are passed on unchanged (QML units).
     /// </summary>
     // The reconciler sends the properties (SET_QML_PROPERTIES, only what changed) and the reload counter; this node owns the
-    // file watcher (hot reload) and the sink that receives the events of QtNative (1 frame latency).
+    // file watcher (hot reload) and the feedback that receives the events of QtNative (1 frame latency).
     [ProcessNode(Name = "QmlElement", Category = Categories.Elements), Smell(SymbolSmell.Experimental)]
     public sealed class QmlElementNode : IDisposable
     {
@@ -61,7 +61,7 @@ namespace VL.Qt.Nodes
             _watcher = watchDir is null ? new QmlFileWatcher() : new QmlFileWatcher(watchDir);
         }
 
-        private static readonly Func<CommonInputs, Props, SinkSlot, QmlElement> Create = static (c, p, slot) => new QmlElement
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, QmlElement> Create = static (c, p, slot) => new QmlElement
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -71,7 +71,7 @@ namespace VL.Qt.Nodes
                 Debug = c.Debug,
                 Interaction = c.Interaction,
                 Effect = c.Effect,
-                Sink = slot,
+                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Source = p.Source,
                 Reload = p.Reload,
@@ -116,7 +116,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds,
             out string error)
         {
-            var sink = _node.Sink;
+            var feedback = _node.Feedback;
             var source = ResolveSource(file?.Value);
             bool sourceChanged = !string.Equals(source, _source, StringComparison.Ordinal);
             _watcher.Update(source);
@@ -124,7 +124,7 @@ namespace VL.Qt.Nodes
             if (reloaded)
                 unchecked { _reload++; }
             if (sourceChanged || reloaded)
-                sink.ResetQml(); // outputs belong to the old instance
+                feedback.ResetQml(); // outputs belong to the old instance
             _source = source;
 
             _properties = QmlProperties.Update(_properties, properties);
@@ -133,14 +133,14 @@ namespace VL.Qt.Nodes
                 new Props(source, _reload, _properties, autoSize));
             _node.ReadOutputs(out measuredSize, out sceneBounds);
 
-            int updates = sink.QmlPropertyUpdates();
+            int updates = feedback.QmlPropertyUpdates();
             if (updates != _seenPropertyUpdates)
             {
                 _seenPropertyUpdates = updates;
-                _changedProperties = sink.QmlPropertyValues() is { Count: > 0 } values ? new Dictionary<string, object>(values, StringComparer.Ordinal) : new Dictionary<string, object>();
+                _changedProperties = feedback.QmlPropertyValues() is { Count: > 0 } values ? new Dictionary<string, object>(values, StringComparer.Ordinal) : new Dictionary<string, object>();
             }
             changedProperties = _changedProperties;
-            signals = sink.TakeQmlSignals();
+            signals = feedback.TakeQmlSignals();
             error = UpdateError();
             return element;
         }

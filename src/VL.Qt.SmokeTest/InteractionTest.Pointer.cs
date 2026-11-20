@@ -12,7 +12,7 @@ using VL.Qt.Nodes;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 // Click / Point / Wheel nodes at a Rectangle, node level (nodes -> reconciler -> QtNative ->
-// SinkRegistry -> pull -> channels). One window per scenario; the rectangle covers (100, 100, 200, 100) DIP. The raw
+// FeedbackRouter -> pull -> channels). One window per scenario; the rectangle covers (100, 100, 200, 100) DIP. The raw
 // QtNative side of the handlers is HandlerTest (scenarios tap / point / wheel).
 public static partial class InteractionTest
 {
@@ -55,7 +55,7 @@ public static partial class InteractionTest
             _s.Pump(1);
             int n = Native.Poll(W, _buf);
             _s.Check(n >= 0, $"{_tag}: poll ({n})");
-            var res = _rec.Sinks.Dispatch(_buf.AsSpan(0, Math.Max(n, 0)));
+            var res = _rec.FeedbackRouter.Dispatch(_buf.AsSpan(0, Math.Max(n, 0)));
             _s.Check(res.Error is null, $"{_tag}: dispatch ({res.Error})");
         }
 

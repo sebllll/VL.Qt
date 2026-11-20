@@ -31,117 +31,117 @@ VL.Qt | VL.Qt.Elements.Element | property Children | virtual System.Collections.
 VL.Qt | VL.Qt.Elements.Element | property Clip | bool { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Debug | bool { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Effect | VL.Qt.Elements.Effect { get; init }
+VL.Qt | VL.Qt.Elements.Element | property Feedback | VL.Qt.Elements.FeedbackSlot { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Interaction | VL.Qt.Elements.Interaction { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Opacity | float { get; init }
-VL.Qt | VL.Qt.Elements.Element | property Sink | VL.Qt.Elements.SinkSlot { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Size | Stride.Core.Mathematics.Vector2 { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Style | VL.Qt.Styles.Style { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Transform | Stride.Core.Mathematics.Matrix { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Type | VL.Qt.Elements.ElementType { get }
 VL.Qt | VL.Qt.Elements.Element | type abstract class
-VL.Qt | VL.Qt.Elements.ElementSink | ctor | new
-VL.Qt | VL.Qt.Elements.ElementSink | method DragDelta | Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.ElementSink | method DragDelta | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method DragDelta | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method DragDelta | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method DragUpdates | int
-VL.Qt | VL.Qt.Elements.ElementSink | method DragUpdates | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method DragUpdates | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method DragUpdates | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method IsActive | bool
-VL.Qt | VL.Qt.Elements.ElementSink | method IsActive | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method IsActive | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method IsActive | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method IsHovered | bool
-VL.Qt | VL.Qt.Elements.ElementSink | method IsHovered | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method IsHovered | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method IsHovered | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method IsPressed | bool
-VL.Qt | VL.Qt.Elements.ElementSink | method IsPressed | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method IsPressed | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method IsPressed | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method MeasuredSize | Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.ElementSink | method MeasuredSize | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method MeasuredSize | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method MeasuredSize | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method MediaDuration | float
-VL.Qt | VL.Qt.Elements.ElementSink | method MediaDuration | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method MediaDuration | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method MediaDuration | pin Output | out float | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method MediaPosition | float
-VL.Qt | VL.Qt.Elements.ElementSink | method MediaPosition | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method MediaPosition | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method MediaPosition | pin Output | out float | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchPivot | Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchPivot | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchPivot | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchPivot | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchRotation | float
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchRotation | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchRotation | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchRotation | pin Output | out float | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchScale | float
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchScale | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchScale | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchScale | pin Output | out float | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchTranslation | Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchTranslation | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchTranslation | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchTranslation | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchUpdates | int
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchUpdates | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchUpdates | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method PinchUpdates | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method PointerPosition | Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.ElementSink | method PointerPosition | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method PointerPosition | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method PointerPosition | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method Resize | order Count
-VL.Qt | VL.Qt.Elements.ElementSink | method Resize | pin Count | in int | (count)
-VL.Qt | VL.Qt.Elements.ElementSink | method Resize | void
-VL.Qt | VL.Qt.Elements.ElementSink | method SceneBounds | Stride.Core.Mathematics.RectangleF
-VL.Qt | VL.Qt.Elements.ElementSink | method SceneBounds | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method SceneBounds | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method SceneBounds | pin Output | out Stride.Core.Mathematics.RectangleF | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeClicks | int
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeClicks | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeClicks | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeClicks | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeLongPresses | int
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeLongPresses | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeLongPresses | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeLongPresses | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeValue<T> | bool
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeValue<T> | order Value, Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeValue<T> | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeValue<T> | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeValue<T> | pin Value | out T | (value)
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeWheel | Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeWheel | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeWheel | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method TakeWheel | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method TapCount | int
-VL.Qt | VL.Qt.Elements.ElementSink | method TapCount | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method TapCount | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method TapCount | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method TouchPoints | VL.Lib.Collections.Spread<VL.Qt.Elements.TouchPoint>
-VL.Qt | VL.Qt.Elements.ElementSink | method TouchPoints | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method TouchPoints | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method TouchPoints | pin Output | out VL.Lib.Collections.Spread<VL.Qt.Elements.TouchPoint> | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method TouchUpdates | int
-VL.Qt | VL.Qt.Elements.ElementSink | method TouchUpdates | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method TouchUpdates | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method TouchUpdates | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method TryGet | bool
-VL.Qt | VL.Qt.Elements.ElementSink | method TryGet | order Index, State, Output
-VL.Qt | VL.Qt.Elements.ElementSink | method TryGet | pin Index | in int | (index)
-VL.Qt | VL.Qt.Elements.ElementSink | method TryGet | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.ElementSink | method TryGet | pin State | out VL.Qt.Elements.SinkState | (state)
-VL.Qt | VL.Qt.Elements.ElementSink | property Count | int { get }
-VL.Qt | VL.Qt.Elements.ElementSink | property Error | string { get }
-VL.Qt | VL.Qt.Elements.ElementSink | property Item[int] | VL.Qt.Elements.SinkState { get }
-VL.Qt | VL.Qt.Elements.ElementSink | property Warning | string { get }
-VL.Qt | VL.Qt.Elements.ElementSink | type sealed class
+VL.Qt | VL.Qt.Elements.ElementFeedback | ctor | new
+VL.Qt | VL.Qt.Elements.ElementFeedback | method DragDelta | Stride.Core.Mathematics.Vector2
+VL.Qt | VL.Qt.Elements.ElementFeedback | method DragDelta | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method DragDelta | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method DragDelta | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method DragUpdates | int
+VL.Qt | VL.Qt.Elements.ElementFeedback | method DragUpdates | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method DragUpdates | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method DragUpdates | pin Output | out int | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method IsActive | bool
+VL.Qt | VL.Qt.Elements.ElementFeedback | method IsActive | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method IsActive | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method IsActive | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method IsHovered | bool
+VL.Qt | VL.Qt.Elements.ElementFeedback | method IsHovered | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method IsHovered | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method IsHovered | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method IsPressed | bool
+VL.Qt | VL.Qt.Elements.ElementFeedback | method IsPressed | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method IsPressed | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method IsPressed | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method MeasuredSize | Stride.Core.Mathematics.Vector2
+VL.Qt | VL.Qt.Elements.ElementFeedback | method MeasuredSize | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method MeasuredSize | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method MeasuredSize | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaDuration | float
+VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaDuration | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaDuration | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaDuration | pin Output | out float | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaPosition | float
+VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaPosition | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaPosition | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaPosition | pin Output | out float | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchPivot | Stride.Core.Mathematics.Vector2
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchPivot | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchPivot | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchPivot | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchRotation | float
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchRotation | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchRotation | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchRotation | pin Output | out float | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchScale | float
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchScale | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchScale | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchScale | pin Output | out float | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchTranslation | Stride.Core.Mathematics.Vector2
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchTranslation | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchTranslation | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchTranslation | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchUpdates | int
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchUpdates | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchUpdates | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchUpdates | pin Output | out int | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PointerPosition | Stride.Core.Mathematics.Vector2
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PointerPosition | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PointerPosition | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method PointerPosition | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method Resize | order Count
+VL.Qt | VL.Qt.Elements.ElementFeedback | method Resize | pin Count | in int | (count)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method Resize | void
+VL.Qt | VL.Qt.Elements.ElementFeedback | method SceneBounds | Stride.Core.Mathematics.RectangleF
+VL.Qt | VL.Qt.Elements.ElementFeedback | method SceneBounds | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method SceneBounds | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method SceneBounds | pin Output | out Stride.Core.Mathematics.RectangleF | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeClicks | int
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeClicks | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeClicks | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeClicks | pin Output | out int | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeLongPresses | int
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeLongPresses | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeLongPresses | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeLongPresses | pin Output | out int | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeValue<T> | bool
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeValue<T> | order Value, Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeValue<T> | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeValue<T> | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeValue<T> | pin Value | out T | (value)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeWheel | Stride.Core.Mathematics.Vector2
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeWheel | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeWheel | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeWheel | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TapCount | int
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TapCount | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TapCount | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TapCount | pin Output | out int | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchPoints | VL.Lib.Collections.Spread<VL.Qt.Elements.TouchPoint>
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchPoints | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchPoints | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchPoints | pin Output | out VL.Lib.Collections.Spread<VL.Qt.Elements.TouchPoint> | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchUpdates | int
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchUpdates | order Index, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchUpdates | pin Index | in int = 0 | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchUpdates | pin Output | out int | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TryGet | bool
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TryGet | order Index, State, Output
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TryGet | pin Index | in int | (index)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TryGet | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.ElementFeedback | method TryGet | pin State | out VL.Qt.Elements.FeedbackState | (state)
+VL.Qt | VL.Qt.Elements.ElementFeedback | property Count | int { get }
+VL.Qt | VL.Qt.Elements.ElementFeedback | property Error | string { get }
+VL.Qt | VL.Qt.Elements.ElementFeedback | property Item[int] | VL.Qt.Elements.FeedbackState { get }
+VL.Qt | VL.Qt.Elements.ElementFeedback | property Warning | string { get }
+VL.Qt | VL.Qt.Elements.ElementFeedback | type sealed class
 VL.Qt | VL.Qt.Elements.ElementType | member Button = 10
 VL.Qt | VL.Qt.Elements.ElementType | member CheckBox = 12
 VL.Qt | VL.Qt.Elements.ElementType | member Column = 7
@@ -159,6 +159,71 @@ VL.Qt | VL.Qt.Elements.ElementType | member Text = 4
 VL.Qt | VL.Qt.Elements.ElementType | member TextField = 15
 VL.Qt | VL.Qt.Elements.ElementType | member Video = 9
 VL.Qt | VL.Qt.Elements.ElementType | type enum
+VL.Qt | VL.Qt.Elements.FeedbackSlot | ctor | new
+VL.Qt | VL.Qt.Elements.FeedbackSlot | ctor | order Feedback, Index
+VL.Qt | VL.Qt.Elements.FeedbackSlot | ctor | pin Feedback | in VL.Qt.Elements.ElementFeedback | (Feedback)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | ctor | pin Index | in int | (Index)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | implements System.IEquatable<VL.Qt.Elements.FeedbackSlot>
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method Deconstruct | order Feedback, Index
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method Deconstruct | pin Feedback | out VL.Qt.Elements.ElementFeedback | (Feedback)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method Deconstruct | pin Index | out int | (Index)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method Deconstruct | void
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(VL.Qt.Elements.FeedbackSlot) | bool
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(VL.Qt.Elements.FeedbackSlot) | order Other, Output
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(VL.Qt.Elements.FeedbackSlot) | pin Other | in VL.Qt.Elements.FeedbackSlot | (other)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(VL.Qt.Elements.FeedbackSlot) | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(object) | order Obj, Output
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(object) | override bool
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(object) | pin Obj | in object | (obj)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(object) | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method GetHashCode | order Output
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method GetHashCode | override int
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method GetHashCode | pin Output | out int | (return)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method ToString | order Output
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method ToString | override string
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method ToString | pin Output | out string | (return)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Equality | order Left, Right, Output
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Equality | pin Left | in VL.Qt.Elements.FeedbackSlot | (left)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Equality | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Equality | pin Right | in VL.Qt.Elements.FeedbackSlot | (right)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Equality | static bool
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Inequality | order Left, Right, Output
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Inequality | pin Left | in VL.Qt.Elements.FeedbackSlot | (left)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Inequality | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Inequality | pin Right | in VL.Qt.Elements.FeedbackSlot | (right)
+VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Inequality | static bool
+VL.Qt | VL.Qt.Elements.FeedbackSlot | property Feedback | VL.Qt.Elements.ElementFeedback { get; init }
+VL.Qt | VL.Qt.Elements.FeedbackSlot | property Index | int { get; init }
+VL.Qt | VL.Qt.Elements.FeedbackSlot | property IsNone | bool { get }
+VL.Qt | VL.Qt.Elements.FeedbackSlot | property State | VL.Qt.Elements.FeedbackState { get }
+VL.Qt | VL.Qt.Elements.FeedbackSlot | type struct
+VL.Qt | VL.Qt.Elements.FeedbackState | ctor | new
+VL.Qt | VL.Qt.Elements.FeedbackState | property ApplyError | string { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property BuildError | string { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property DragDelta | Stride.Core.Mathematics.Vector2 { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property DragUpdates | int { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property Error | string { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property IsActive | bool { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property IsHovered | bool { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property IsPressed | bool { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property MeasuredSize | Stride.Core.Mathematics.Vector2 { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property MediaDuration | float { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property MediaPosition | float { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property PendingClicks | int { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property PendingLongPresses | int { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property PendingWheel | Stride.Core.Mathematics.Vector2 { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property PinchPivot | Stride.Core.Mathematics.Vector2 { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property PinchRotation | float { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property PinchScale | float { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property PinchTranslation | Stride.Core.Mathematics.Vector2 { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property PinchUpdates | int { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property PointerPosition | Stride.Core.Mathematics.Vector2 { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property SceneBounds | Stride.Core.Mathematics.RectangleF { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property TapCount | int { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property TouchPoints | VL.Lib.Collections.Spread<VL.Qt.Elements.TouchPoint> { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property TouchUpdates | int { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | property Warning | string { get; set }
+VL.Qt | VL.Qt.Elements.FeedbackState | type sealed class
 VL.Qt | VL.Qt.Elements.FontWeight | member Black = 900
 VL.Qt | VL.Qt.Elements.FontWeight | member Bold = 700
 VL.Qt | VL.Qt.Elements.FontWeight | member DemiBold = 600
@@ -188,8 +253,8 @@ VL.Qt | VL.Qt.Elements.ImageFillMode | member Fit = 1
 VL.Qt | VL.Qt.Elements.ImageFillMode | member Stretch = 0
 VL.Qt | VL.Qt.Elements.ImageFillMode | member Tile = 3
 VL.Qt | VL.Qt.Elements.ImageFillMode | type enum
+VL.Qt | VL.Qt.Elements.Interaction | property Feedback | VL.Qt.Elements.FeedbackSlot { get }
 VL.Qt | VL.Qt.Elements.Interaction | property Previous | VL.Qt.Elements.Interaction { get }
-VL.Qt | VL.Qt.Elements.Interaction | property Sink | VL.Qt.Elements.SinkSlot { get }
 VL.Qt | VL.Qt.Elements.Interaction | type abstract class
 VL.Qt | VL.Qt.Elements.PointerButtons | attr Flags
 VL.Qt | VL.Qt.Elements.PointerButtons | member Back = 8
@@ -347,71 +412,6 @@ VL.Qt | VL.Qt.Elements.ShapeJoin | member Bevel = 1
 VL.Qt | VL.Qt.Elements.ShapeJoin | member Miter = 0
 VL.Qt | VL.Qt.Elements.ShapeJoin | member Round = 2
 VL.Qt | VL.Qt.Elements.ShapeJoin | type enum
-VL.Qt | VL.Qt.Elements.SinkSlot | ctor | new
-VL.Qt | VL.Qt.Elements.SinkSlot | ctor | order Sink, Index
-VL.Qt | VL.Qt.Elements.SinkSlot | ctor | pin Index | in int | (Index)
-VL.Qt | VL.Qt.Elements.SinkSlot | ctor | pin Sink | in VL.Qt.Elements.ElementSink | (Sink)
-VL.Qt | VL.Qt.Elements.SinkSlot | implements System.IEquatable<VL.Qt.Elements.SinkSlot>
-VL.Qt | VL.Qt.Elements.SinkSlot | method Deconstruct | order Sink, Index
-VL.Qt | VL.Qt.Elements.SinkSlot | method Deconstruct | pin Index | out int | (Index)
-VL.Qt | VL.Qt.Elements.SinkSlot | method Deconstruct | pin Sink | out VL.Qt.Elements.ElementSink | (Sink)
-VL.Qt | VL.Qt.Elements.SinkSlot | method Deconstruct | void
-VL.Qt | VL.Qt.Elements.SinkSlot | method Equals(VL.Qt.Elements.SinkSlot) | bool
-VL.Qt | VL.Qt.Elements.SinkSlot | method Equals(VL.Qt.Elements.SinkSlot) | order Other, Output
-VL.Qt | VL.Qt.Elements.SinkSlot | method Equals(VL.Qt.Elements.SinkSlot) | pin Other | in VL.Qt.Elements.SinkSlot | (other)
-VL.Qt | VL.Qt.Elements.SinkSlot | method Equals(VL.Qt.Elements.SinkSlot) | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.SinkSlot | method Equals(object) | order Obj, Output
-VL.Qt | VL.Qt.Elements.SinkSlot | method Equals(object) | override bool
-VL.Qt | VL.Qt.Elements.SinkSlot | method Equals(object) | pin Obj | in object | (obj)
-VL.Qt | VL.Qt.Elements.SinkSlot | method Equals(object) | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.SinkSlot | method GetHashCode | order Output
-VL.Qt | VL.Qt.Elements.SinkSlot | method GetHashCode | override int
-VL.Qt | VL.Qt.Elements.SinkSlot | method GetHashCode | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.SinkSlot | method ToString | order Output
-VL.Qt | VL.Qt.Elements.SinkSlot | method ToString | override string
-VL.Qt | VL.Qt.Elements.SinkSlot | method ToString | pin Output | out string | (return)
-VL.Qt | VL.Qt.Elements.SinkSlot | method op_Equality | order Left, Right, Output
-VL.Qt | VL.Qt.Elements.SinkSlot | method op_Equality | pin Left | in VL.Qt.Elements.SinkSlot | (left)
-VL.Qt | VL.Qt.Elements.SinkSlot | method op_Equality | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.SinkSlot | method op_Equality | pin Right | in VL.Qt.Elements.SinkSlot | (right)
-VL.Qt | VL.Qt.Elements.SinkSlot | method op_Equality | static bool
-VL.Qt | VL.Qt.Elements.SinkSlot | method op_Inequality | order Left, Right, Output
-VL.Qt | VL.Qt.Elements.SinkSlot | method op_Inequality | pin Left | in VL.Qt.Elements.SinkSlot | (left)
-VL.Qt | VL.Qt.Elements.SinkSlot | method op_Inequality | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.SinkSlot | method op_Inequality | pin Right | in VL.Qt.Elements.SinkSlot | (right)
-VL.Qt | VL.Qt.Elements.SinkSlot | method op_Inequality | static bool
-VL.Qt | VL.Qt.Elements.SinkSlot | property Index | int { get; init }
-VL.Qt | VL.Qt.Elements.SinkSlot | property IsNone | bool { get }
-VL.Qt | VL.Qt.Elements.SinkSlot | property Sink | VL.Qt.Elements.ElementSink { get; init }
-VL.Qt | VL.Qt.Elements.SinkSlot | property State | VL.Qt.Elements.SinkState { get }
-VL.Qt | VL.Qt.Elements.SinkSlot | type struct
-VL.Qt | VL.Qt.Elements.SinkState | ctor | new
-VL.Qt | VL.Qt.Elements.SinkState | property ApplyError | string { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property BuildError | string { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property DragDelta | Stride.Core.Mathematics.Vector2 { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property DragUpdates | int { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property Error | string { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property IsActive | bool { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property IsHovered | bool { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property IsPressed | bool { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property MeasuredSize | Stride.Core.Mathematics.Vector2 { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property MediaDuration | float { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property MediaPosition | float { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property PendingClicks | int { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property PendingLongPresses | int { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property PendingWheel | Stride.Core.Mathematics.Vector2 { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property PinchPivot | Stride.Core.Mathematics.Vector2 { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property PinchRotation | float { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property PinchScale | float { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property PinchTranslation | Stride.Core.Mathematics.Vector2 { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property PinchUpdates | int { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property PointerPosition | Stride.Core.Mathematics.Vector2 { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property SceneBounds | Stride.Core.Mathematics.RectangleF { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property TapCount | int { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property TouchPoints | VL.Lib.Collections.Spread<VL.Qt.Elements.TouchPoint> { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property TouchUpdates | int { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | property Warning | string { get; set }
-VL.Qt | VL.Qt.Elements.SinkState | type sealed class
 VL.Qt | VL.Qt.Elements.Slider | ctor | new
 VL.Qt | VL.Qt.Elements.Slider | property AutoSize | bool { get; init }
 VL.Qt | VL.Qt.Elements.Slider | property Enabled | bool { get; init }

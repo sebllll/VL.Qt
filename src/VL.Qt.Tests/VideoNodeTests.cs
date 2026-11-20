@@ -73,7 +73,7 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void Node_Describes_Video_WithSink()
+        public void Node_Describes_Video_WithFeedback()
         {
             var v = (Video)Update("c:/a.mp4", rate: 2, volume: 0.5f, fill: VideoFillMode.Crop);
             Assert.That(v.Path.Value, Is.EqualTo("c:/a.mp4"));
@@ -82,7 +82,7 @@ namespace VL.Qt.Tests
             Assert.That(v.Rate, Is.EqualTo(2f));
             Assert.That(v.Volume, Is.EqualTo(0.5f));
             Assert.That(v.FillMode, Is.EqualTo(VideoFillMode.Crop));
-            Assert.That(v.Sink.Sink, Is.SameAs(_node.Core.Sink));
+            Assert.That(v.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
         }
 
         [Test]
@@ -174,7 +174,7 @@ namespace VL.Qt.Tests
 
             var bind = sink.OfOp("BIND").Single().Split(' ');
             uint handle = uint.Parse(bind[2]);
-            var res = rec.Sinks.Dispatch(MediaRecord(handle, 0.5f, 2f));
+            var res = rec.FeedbackRouter.Dispatch(MediaRecord(handle, 0.5f, 2f));
             Assert.That(res.Applied, Is.EqualTo(1));
             Update(out pos, out dur, "c:/a.mp4");
             Assert.That(pos, Is.EqualTo(0.5f), "seconds, not converted to units");
@@ -183,7 +183,7 @@ namespace VL.Qt.Tests
             // Too short payload is ignored.
             var shortRec = MediaRecord(handle, 1, 1)[..16];
             BinaryPrimitives.WriteUInt16LittleEndian(shortRec.AsSpan(2), 12);
-            Assert.That(rec.Sinks.Dispatch(shortRec).Ignored, Is.EqualTo(1));
+            Assert.That(rec.FeedbackRouter.Dispatch(shortRec).Ignored, Is.EqualTo(1));
         }
 
         [Test]
@@ -195,11 +195,11 @@ namespace VL.Qt.Tests
             Assert.That(_node.Core.Error, Is.Null);
 
             uint handle = uint.Parse(sink.OfOp("BIND").Single().Split(' ')[2]);
-            rec.Sinks.Dispatch(ErrorRecord(handle, "Could not open file (c:/missing.mp4)"));
+            rec.FeedbackRouter.Dispatch(ErrorRecord(handle, "Could not open file (c:/missing.mp4)"));
             Update("c:/missing.mp4");
             Assert.That(_node.Core.Error, Is.EqualTo("Could not open file (c:/missing.mp4)"));
 
-            rec.Sinks.Dispatch(ErrorRecord(handle, ""));
+            rec.FeedbackRouter.Dispatch(ErrorRecord(handle, ""));
             Update("c:/missing.mp4");
             Assert.That(_node.Core.Error, Is.Null);
         }

@@ -13,7 +13,7 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 
 // One element instance at several places of one tree through the real QtNative: the same Rectangle and Button
 // description in two Groups at different positions. Both places are drawn, clicks from both places reach the shared
-// sink, state values (Measured, SceneBounds) come from the first occurrence only and move to the remaining one when
+// feedback, state values (Measured, SceneBounds) come from the first occurrence only and move to the remaining one when
 // the first is removed. Grabs go to <outDir>/455_*.png. Node inputs are units (DIPTopLeft, 1 unit = 100 DIP).
 [TestFixture, NonParallelizable]
 public static class MultiPlacementTest
@@ -73,7 +73,7 @@ public static class MultiPlacementTest
             s.Pump(1);
             int n = Native.Poll(w, buf);
             s.Check(n >= 0, $"poll ({n})");
-            var res = rec.Sinks.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
+            var res = rec.FeedbackRouter.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
             s.Check(res.Error is null, $"dispatch ({res.Error})");
         }
         void Frames(int count) { for (int i = 0; i < count; i++) Frame(); }
@@ -94,14 +94,14 @@ public static class MultiPlacementTest
         using (var a = s.Grab(w, "455_multi.png"))
             s.Check(IsRed(Px(a, 150, 150)) && IsRed(Px(a, 450, 350)) && IsBg(Px(a, 250, 150)) && IsBg(Px(a, 350, 350)),
                 $"the same rectangle is drawn at both places ({Px(a, 150, 150)}, {Px(a, 450, 350)}, {Px(a, 250, 150)}, {Px(a, 350, 350)})");
-        s.Check(rec.Sinks.Count >= 4, $"one sink handle per occurrence ({rec.Sinks.Count})");
+        s.Check(rec.FeedbackRouter.Count >= 4, $"one feedback id per occurrence ({rec.FeedbackRouter.Count})");
 
         // 2) State values come from the first occurrence (group A at (1, 1), button at y + 1.5).
         s.Check(measured.X > 0.2f && measured.Y > 0.1f, $"measured size reported ({measured})");
         s.Check(Close(sceneBounds.X, 1) && Close(sceneBounds.Y, 2.5f),
             $"SceneBounds of the first occurrence ({sceneBounds})");
 
-        // 3) Clicks on each place arrive in the shared sink.
+        // 3) Clicks on each place arrive in the shared feedback.
         Click(120, 260);
         s.Check(clicks == 1, $"click at the first place ({clicks})");
         Click(420, 460);

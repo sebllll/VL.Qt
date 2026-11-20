@@ -12,7 +12,7 @@ using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 
 // One element tree in two renderers of one SceneRegistry: a WindowRenderer (registered first, owns the element)
-// and an OffscreenRenderer (D3D11, Windows only). Both draw it, no warning in the sink; state values (SceneBounds,
+// and an OffscreenRenderer (D3D11, Windows only). Both draw it, no warning in the feedback; state values (SceneBounds,
 // Measured) come from the window; after the window renderer is disposed the offscreen renderer takes over (after its
 // next update), state values keep arriving and Snapshot / TryLocate find the element in the offscreen scene.
 // The window shows the tree inside a translated Group, the offscreen scene shows it at its origin: SceneBounds tell
@@ -66,17 +66,17 @@ public static class MultiRendererTest
         Native.vlqt_test_close_handle(handle);
         check(rc == Protocol.Offscreen.Ok && offscreen.IsBound, $"offscreen bind ({rc}) {offscreen.Error}");
 
-        // Rectangle (120 x 80 DIP at (20, 20), orange) and Text below it; Sink slots 0 (rectangle) and 1 (text).
-        var sink = new ElementSink();
+        // Rectangle (120 x 80 DIP at (20, 20), orange) and Text below it; Feedback slots 0 (rectangle) and 1 (text).
+        var feedback = new ElementFeedback();
         var rect = new VL.Qt.Elements.Rectangle
         {
             Size = new Vector2(1.2f, 0.8f), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0.2f, 0.2f, 0),
-            Fill = new Color4(1, 0.6f, 0, 1), Sink = new SinkSlot(sink, 0),
+            Fill = new Color4(1, 0.6f, 0, 1), Feedback = new FeedbackSlot(feedback, 0),
         };
         var text = new Text
         {
             Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0.2f, 1.1f, 0), Content = "Multi", FontSize = 0.4f,
-            Color = new Color4(1, 1, 1, 1), Sink = new SinkSlot(sink, 1),
+            Color = new Color4(1, 1, 1, 1), Feedback = new FeedbackSlot(feedback, 1),
         };
         var content = new Group { Anchor = RectangleAnchor.TopLeft, Children = [rect, text] };
         // The window shows the same group one unit right and half a unit down.
@@ -120,9 +120,9 @@ public static class MultiRendererTest
         static (int R, int G, int B) ToRgb(Color c) => (c.R, c.G, c.B);
         static bool HasInk((int R, int G, int B) c) => c.R > 150 && c.G > 150 && c.B > 150;
 
-        // 1) Both renderers draw the tree; no warning, no error, one sink for both.
-        bool measured = Until(() => sink[1].MeasuredSize.X > 0.1f && sink[0].SceneBounds.Width > 0);
-        check(measured, $"state values arrive ({sink[1].MeasuredSize}, {sink[0].SceneBounds})");
+        // 1) Both renderers draw the tree; no warning, no error, one feedback for both.
+        bool measured = Until(() => feedback[1].MeasuredSize.X > 0.1f && feedback[0].SceneBounds.Width > 0);
+        check(measured, $"state values arrive ({feedback[1].MeasuredSize}, {feedback[0].SceneBounds})");
         Until(() => false, 4);
         var pixels = new byte[TexW * TexH * 4];
         check(Native.TestReadTexture(texture, pixels, out _, out _, out _) == pixels.Length, "read back the texture");
@@ -151,34 +151,34 @@ public static class MultiRendererTest
             check(IsOrange(c.R, c.G, c.B) && IsBg(bg.R, bg.G, bg.B) && IsBg(offBg.R, offBg.G, offBg.B), $"window draws the rectangle shifted ({c}, {bg}, {offBg})");
             check(ink > 50, $"window draws the text ({ink} light pixels)");
         }
-        check(sink[0].Warning is null && sink[1].Warning is null, $"no warning in the sink ({sink[0].Warning} / {sink[1].Warning})");
+        check(feedback[0].Warning is null && feedback[1].Warning is null, $"no warning in the feedback ({feedback[0].Warning} / {feedback[1].Warning})");
         check(window.Error.Length == 0 && offscreen.Error.Length == 0, $"no renderer error ('{window.Error}' '{offscreen.Error}')");
         check(registry.OccurrencesOf(rect) == 2 && registry.DuplicatesOf(rect) == 0, $"two occurrences of the rectangle, no duplicate ({registry.OccurrencesOf(rect)})");
 
         // 2) State values come from the primary: the window renderer, which shows the group at (1, 0.5) units.
         check(registry.OwnerReconcilerOf(rect) == window.Reconciler, "the window renderer owns the rectangle");
-        check(Close(sink[0].SceneBounds.X, 1.2f) && Close(sink[0].SceneBounds.Y, 0.7f) && Close(sink[0].SceneBounds.Width, 1.2f),
-            $"SceneBounds from the window ({sink[0].SceneBounds}, want 1.2, 0.7, 1.2 x 0.8)");
+        check(Close(feedback[0].SceneBounds.X, 1.2f) && Close(feedback[0].SceneBounds.Y, 0.7f) && Close(feedback[0].SceneBounds.Width, 1.2f),
+            $"SceneBounds from the window ({feedback[0].SceneBounds}, want 1.2, 0.7, 1.2 x 0.8)");
         check(registry.TryLocate(rect, out var located, out _) && located == window.Window, "TryLocate finds the rectangle in the window");
 
         // 3) The window renderer goes away: the offscreen renderer takes over in its next update.
         windowAlive = false;
         window.Dispose();
-        bool tookOver = Until(() => registry.OwnerReconcilerOf(rect) == offscreen.Reconciler && Close(sink[0].SceneBounds.X, 0.2f));
-        check(tookOver, $"offscreen renderer owns the rectangle after the dispose ({sink[0].SceneBounds})");
-        check(Close(sink[0].SceneBounds.X, 0.2f) && Close(sink[0].SceneBounds.Y, 0.2f) && Close(sink[0].SceneBounds.Width, 1.2f),
-            $"SceneBounds from the offscreen scene ({sink[0].SceneBounds}, want 0.2, 0.2, 1.2 x 0.8)");
-        check(sink[1].MeasuredSize.X > 0.1f, $"Measured keeps arriving ({sink[1].MeasuredSize})");
-        check(registry.OccurrencesOf(rect) == 1 && sink[0].Warning is null && offscreen.Error.Length == 0,
-            $"one occurrence left, no warning, no error ({registry.OccurrencesOf(rect)}, {sink[0].Warning}, '{offscreen.Error}')");
+        bool tookOver = Until(() => registry.OwnerReconcilerOf(rect) == offscreen.Reconciler && Close(feedback[0].SceneBounds.X, 0.2f));
+        check(tookOver, $"offscreen renderer owns the rectangle after the dispose ({feedback[0].SceneBounds})");
+        check(Close(feedback[0].SceneBounds.X, 0.2f) && Close(feedback[0].SceneBounds.Y, 0.2f) && Close(feedback[0].SceneBounds.Width, 1.2f),
+            $"SceneBounds from the offscreen scene ({feedback[0].SceneBounds}, want 0.2, 0.2, 1.2 x 0.8)");
+        check(feedback[1].MeasuredSize.X > 0.1f, $"Measured keeps arriving ({feedback[1].MeasuredSize})");
+        check(registry.OccurrencesOf(rect) == 1 && feedback[0].Warning is null && offscreen.Error.Length == 0,
+            $"one occurrence left, no warning, no error ({registry.OccurrencesOf(rect)}, {feedback[0].Warning}, '{offscreen.Error}')");
         // The measured size changes with the text of a new instance: values still come in after the hand-over.
         var longer = new Text
         {
             Anchor = RectangleAnchor.TopLeft, Transform = text.Transform, Content = "Multi renderer", FontSize = 0.4f,
-            Color = text.Color, Sink = text.Sink,
+            Color = text.Color, Feedback = text.Feedback,
         };
         var content2 = new Group { Anchor = RectangleAnchor.TopLeft, Children = [rect, longer] };
-        float before = sink[1].MeasuredSize.X;
+        float before = feedback[1].MeasuredSize.X;
         void FrameOffscreen(Element tree)
         {
             offscreen.Update(tree, Space.DIPTopLeft, clear, true, true);
@@ -190,9 +190,9 @@ public static class MultiRendererTest
             offscreen.PollEvents();
         }
         int n = 0;
-        for (; n < MaxFrames && sink[1].MeasuredSize.X <= before + 0.05f; n++)
+        for (; n < MaxFrames && feedback[1].MeasuredSize.X <= before + 0.05f; n++)
             FrameOffscreen(content2);
-        check(sink[1].MeasuredSize.X > before + 0.05f, $"Measured follows the offscreen scene ({before} -> {sink[1].MeasuredSize.X} after {n} frames)");
+        check(feedback[1].MeasuredSize.X > before + 0.05f, $"Measured follows the offscreen scene ({before} -> {feedback[1].MeasuredSize.X} after {n} frames)");
 
         // 4) TryLocate and Snapshot find the rectangle in the offscreen scene.
         check(registry.TryLocate(rect, out var located2, out _) && located2 == offscreen.Scene, "TryLocate finds the rectangle in the offscreen scene");

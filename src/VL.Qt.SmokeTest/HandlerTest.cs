@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using VL.Qt;
 
 // Input handlers as protocol objects: CREATE / REPARENT / SET / BIND / DESTROY / RESET of
-// a Hover handler, error codes, EV_HOVER / EV_POINTER per handler sink, Text containment mask, id reuse, and the TEST
+// a Hover handler, error codes, EV_HOVER / EV_POINTER per handler feedback, Text containment mask, id reuse, and the TEST
 // export vlqt_test_send_touch (touch tap on a Tap handler clicks, multitouch bookkeeping). Scenarios tap / point / wheel
 // (#320): the Tap, Point and Wheel handlers (RunTap, RunPoint, RunWheel).
 // Mouse input via vlqt_test_send_mouse; real (OS) pointer input is ignored (VLQT_TEST_SYNTHETIC_INPUT=1, set by QtHost).
@@ -191,7 +191,7 @@ public static partial class HandlerTest
         var recs = Frame();
         s.Check(recs.Count == 0, $"handlers: nothing hovered -> no events ({S(recs)})");
 
-        // Hover in: both sinks HOVER 1, no POINTER (positions come from the Point handler).
+        // Hover in: both feedback HOVER 1, no POINTER (positions come from the Point handler).
         Mouse(Protocol.Mouse.Move, 150, 150);
         recs = Frame();
         s.Check(Flag(recs, Protocol.Ev.Hover, S1, true) && Flag(recs, Protocol.Ev.Hover, S2, true),
@@ -203,14 +203,14 @@ public static partial class HandlerTest
         recs = Frame();
         s.Check(recs.Count == 0, $"handlers: move inside -> no records ({S(recs)})");
 
-        // New sink while hovered: old handle HOVER 0, new handle HOVER 1.
+        // New feedback while hovered: old handle HOVER 0, new handle HOVER 1.
         cmd.Bind(H2, S2b, 0);
         CheckApply("rebind H2");
         recs = Frame();
         s.Check(Flag(recs, Protocol.Ev.Hover, S2, false) && Flag(recs, Protocol.Ev.Hover, S2b, true) && Find(recs, Protocol.Ev.Hover, S1) is null,
-            $"handlers: sink change -> old HOVER 0, new HOVER 1 ({S(recs)})");
+            $"handlers: feedback change -> old HOVER 0, new HOVER 1 ({S(recs)})");
 
-        // Over B (no handler): A's sinks HOVER 0, nothing for B.
+        // Over B (no handler): A's feedback HOVER 0, nothing for B.
         Mouse(Protocol.Mouse.Move, 450, 150);
         recs = Frame();
         s.Check(Flag(recs, Protocol.Ev.Hover, S1, false) && Flag(recs, Protocol.Ev.Hover, S2b, false) && Find(recs, Protocol.Ev.Hover, SB) is null
@@ -373,7 +373,7 @@ public static partial class HandlerTest
             return rc;
         }
 
-        /// <summary>Last EV_SCENE_BOUNDS per sink of bound elements (x, y, w, h), updated by every Frame.</summary>
+        /// <summary>Last EV_SCENE_BOUNDS per feedback of bound elements (x, y, w, h), updated by every Frame.</summary>
         public readonly Dictionary<uint, (float X, float Y, float W, float H)> Bounds = new();
 
         public List<Rec> Frame()
@@ -417,11 +417,11 @@ public static partial class HandlerTest
             Cmd.Reparent(id, 0, (uint)index);
         }
 
-        public void Handler(uint id, ushort type, uint owner, uint sink)
+        public void Handler(uint id, ushort type, uint owner, uint feedbackId)
         {
             Cmd.Create(id, type);
             Cmd.Reparent(id, owner, 0);
-            Cmd.Bind(id, sink, 0);
+            Cmd.Bind(id, feedbackId, 0);
         }
 
         public void Dispose()
@@ -445,7 +445,7 @@ public static partial class HandlerTest
     private static bool None(List<Rec> recs, uint h) => !recs.Exists(r => r.Handle == h);
     private static string Dump(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
 
-    // Tap handler: PRESS / CLICK / TAP_COUNT / LONG_PRESS, buttons, devices, touch, stacking, sink change, lifetime.
+    // Tap handler: PRESS / CLICK / TAP_COUNT / LONG_PRESS, buttons, devices, touch, stacking, feedback change, lifetime.
     private static void RunTap(Scenario s)
     {
         using var h = new Harness("tap", s);
@@ -563,21 +563,21 @@ public static partial class HandlerTest
         s.Check(HasFlag(recs, Protocol.Ev.Press, SA, false) && FindRec(recs, Protocol.Ev.LongPress, SA) is null,
             $"tap: release after long press -> PRESS 0, no second LONG_PRESS ({Dump(recs)})");
 
-        // New sink while pressed: old PRESS 0, the running press is cancelled (no PRESS 1 / click for the new sink).
+        // New feedback while pressed: old PRESS 0, the running press is cancelled (no PRESS 1 / click for the new feedback).
         System.Threading.Thread.Sleep(1000);
         h.Mouse(Protocol.Mouse.Press, 150, 150);
         recs = h.Frame();
-        s.Check(HasFlag(recs, Protocol.Ev.Press, SA, true), $"tap: pressed before the sink change ({Dump(recs)})");
+        s.Check(HasFlag(recs, Protocol.Ev.Press, SA, true), $"tap: pressed before the feedback change ({Dump(recs)})");
         h.Cmd.Bind(TA, SA2, 0);
         h.Apply("rebind while pressed");
         recs = h.Frame();
-        s.Check(HasFlag(recs, Protocol.Ev.Press, SA, false) && None(recs, SA2), $"tap: sink change -> old PRESS 0, new silent ({Dump(recs)})");
+        s.Check(HasFlag(recs, Protocol.Ev.Press, SA, false) && None(recs, SA2), $"tap: feedback change -> old PRESS 0, new silent ({Dump(recs)})");
         h.Mouse(Protocol.Mouse.Release, 150, 150);
         recs = h.Frame();
         s.Check(FindRec(recs, Protocol.Ev.Click, SA2) is null && None(recs, SA), $"tap: release of the cancelled press -> no click ({Dump(recs)})");
         h.Click(150, 150);
         recs = h.Frame();
-        s.Check(HasU32(recs, Protocol.Ev.Click, SA2, 1), $"tap: next tap after the sink change clicks ({Dump(recs)})");
+        s.Check(HasU32(recs, Protocol.Ev.Click, SA2, 1), $"tap: next tap after the feedback change clicks ({Dump(recs)})");
 
         // DESTROY while pressed: PRESS 0, release silent.
         h.Mouse(Protocol.Mouse.Press, 150, 150);
@@ -637,14 +637,14 @@ public static partial class HandlerTest
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP, false) && HasU32(recs, Protocol.Ev.Click, SE, 1),
             $"point: finger up -> ACTIVE 0, touch tap passes through ({Dump(recs)})");
 
-        // New sink while active: old ACTIVE 0, new ACTIVE 1 + current POINTER.
+        // New feedback while active: old ACTIVE 0, new ACTIVE 1 + current POINTER.
         h.Mouse(Protocol.Mouse.Press, 150, 150);
         h.Frame();
         h.Cmd.Bind(PP, SP2, 0);
         h.Apply("rebind while active");
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.Ev.Active, SP, false) && HasFlag(recs, Protocol.Ev.Active, SP2, true) && HasVec(recs, Protocol.Ev.Pointer, SP2, 50, 50),
-            $"point: sink change -> old ACTIVE 0, new ACTIVE 1 + POINTER ({Dump(recs)})");
+            $"point: feedback change -> old ACTIVE 0, new ACTIVE 1 + POINTER ({Dump(recs)})");
         h.Mouse(Protocol.Mouse.Release, 150, 150);
         h.Frame();
 
@@ -826,15 +826,15 @@ public static partial class HandlerTest
             $"point-tap: Point before Tap -> release: ACTIVE 0, CLICK 1 ({Dump(recs)})");
 
         // Point alone, default buttons (Y) and SET left (Z).
-        foreach (var (y, sink, name) in new[] { (300f, SPY, "default buttons"), (450f, SPZ, "SET left") })
+        foreach (var (y, feedbackId, name) in new[] { (300f, SPY, "default buttons"), (450f, SPZ, "SET left") })
         {
             h.Mouse(Protocol.Mouse.Press, 150, y);
             recs = h.Frame();
-            s.Check(HasFlag(recs, Protocol.Ev.Active, sink, true) && HasVec(recs, Protocol.Ev.Pointer, sink, 50, 50),
+            s.Check(HasFlag(recs, Protocol.Ev.Active, feedbackId, true) && HasVec(recs, Protocol.Ev.Pointer, feedbackId, 50, 50),
                 $"point-tap: Point alone, {name}: left press -> ACTIVE 1, POINTER (50, 50) ({Dump(recs)})");
             h.Mouse(Protocol.Mouse.Release, 150, y);
             recs = h.Frame();
-            s.Check(HasFlag(recs, Protocol.Ev.Active, sink, false), $"point-tap: Point alone, {name}: release -> ACTIVE 0 ({Dump(recs)})");
+            s.Check(HasFlag(recs, Protocol.Ev.Active, feedbackId, false), $"point-tap: Point alone, {name}: release -> ACTIVE 0 ({Dump(recs)})");
         }
 
         // Stacked: V (Tap + Point) over U (Tap). The top item clicks and its Point is active, U does not click.
@@ -867,7 +867,7 @@ public static partial class HandlerTest
             $"point-tap: stacked touch without Point -> only the top item clicks ({Dump(recs)})");
     }
 
-    // Wheel handler: notches (angleDelta / 120) summed per poll, then once (0, 0); devices; sink change.
+    // Wheel handler: notches (angleDelta / 120) summed per poll, then once (0, 0); devices; feedback change.
     private static void RunWheel(Scenario s)
     {
         using var h = new Harness("wheel", s);
@@ -900,19 +900,19 @@ public static partial class HandlerTest
         recs = h.Frame();
         s.Check(recs.Count == 0, $"wheel: outside the item -> nothing ({Dump(recs)})");
 
-        // Sink change: unpolled motion is dropped, the old sink gets (0, 0) after motion.
+        // Feedback change: unpolled motion is dropped, the old feedback gets (0, 0) after motion.
         h.Wheel(150, 150, 0, 120);
         h.Cmd.Bind(WR, SW2, 0);
         h.Apply("rebind");
         recs = h.Frame();
-        s.Check(recs.Count == 0, $"wheel: motion before the sink change is dropped ({Dump(recs)})");
+        s.Check(recs.Count == 0, $"wheel: motion before the feedback change is dropped ({Dump(recs)})");
         h.Wheel(150, 150, 0, 240);
         recs = h.Frame();
-        s.Check(HasVec(recs, Protocol.Ev.Wheel, SW2, 0, 2), $"wheel: new sink -> WHEEL (0, 2) ({Dump(recs)})");
+        s.Check(HasVec(recs, Protocol.Ev.Wheel, SW2, 0, 2), $"wheel: new feedback -> WHEEL (0, 2) ({Dump(recs)})");
         h.Cmd.Bind(WR, SW, 0);
         h.Apply("rebind after motion");
         recs = h.Frame();
-        s.Check(HasVec(recs, Protocol.Ev.Wheel, SW2, 0, 0) && None(recs, SW), $"wheel: sink change after motion -> old (0, 0) ({Dump(recs)})");
+        s.Check(HasVec(recs, Protocol.Ev.Wheel, SW2, 0, 0) && None(recs, SW), $"wheel: feedback change after motion -> old (0, 0) ({Dump(recs)})");
 
         // ACCEPTED_DEVICES touchscreen only: the mouse wheel is ignored.
         h.Cmd.SetI32(WR, Protocol.Prop.AcceptedDevices, 0x2);
@@ -928,8 +928,8 @@ public static partial class HandlerTest
     }
 
     private static bool Near(float a, float b) => Math.Abs(a - b) < 0.01f;
-    private static bool At(Harness h, uint sink, float x, float y) => h.Bounds.TryGetValue(sink, out var b) && Near(b.X, x) && Near(b.Y, y);
-    private static string Pos(Harness h, uint sink) => h.Bounds.TryGetValue(sink, out var b) ? $"{b.X}, {b.Y}, {b.W}, {b.H}" : "no bounds";
+    private static bool At(Harness h, uint feedbackId, float x, float y) => h.Bounds.TryGetValue(feedbackId, out var b) && Near(b.X, x) && Near(b.Y, y);
+    private static string Pos(Harness h, uint feedbackId) => h.Bounds.TryGetValue(feedbackId, out var b) ? $"{b.X}, {b.Y}, {b.W}, {b.H}" : "no bounds";
     private static bool HasDrag(List<Rec> recs, uint h, float x, float y) => FindRec(recs, Protocol.Ev.Drag, h) is { } r && r.Payload.Length == 8
         && r.Index == 0 && Near(r.F(0), x) && Near(r.F(1), y);
 
@@ -1045,11 +1045,11 @@ public static partial class HandlerTest
         recs = h.Drag(150, 150, 40, 20);
         s.Check(HasDrag(recs, SD, 40, 20) && At(h, SR, 100, 100), $"drag: MOVES_ELEMENT off -> DRAG (40, 20), item stays ({Dump(recs)}; {Pos(h, SR)})");
 
-        // Sink change after a drag: the new sink starts without a drag value; DESTROY sends ACTIVE 0 while dragging.
+        // Feedback change after a drag: the new feedback starts without a drag value; DESTROY sends ACTIVE 0 while dragging.
         h.Cmd.Bind(D, 43, 0);
         h.Apply("rebind");
         recs = h.Frame();
-        s.Check(None(recs, 43), $"drag: new sink after a drag -> nothing ({Dump(recs)})");
+        s.Check(None(recs, 43), $"drag: new feedback after a drag -> nothing ({Dump(recs)})");
         h.Cmd.SetBool(D, Protocol.Prop.MovesElement, true);
         h.Apply("moves element on");
         h.Drag(150, 150, 40, 0, release: false);
@@ -1073,12 +1073,12 @@ public static partial class HandlerTest
         h.Cmd.Reparent(Row, 0, 0);
         h.Cmd.Bind(Row, SRow, 0);
         uint i = 0;
-        foreach (var (id, sink) in new[] { (A, SA), (B, SB), (C, SC) })
+        foreach (var (id, feedbackId) in new[] { (A, SA), (B, SB), (C, SC) })
         {
             h.Cmd.Create(id, Protocol.Type.Rectangle);
             h.Cmd.SetPlace(id, 0, 0, 50, 50);
             h.Cmd.Reparent(id, Row, i++);
-            h.Cmd.Bind(id, sink, 0);
+            h.Cmd.Bind(id, feedbackId, 0);
         }
         h.Handler(D, Protocol.Type.DragHandler, B, SD);
         h.Apply("scene");

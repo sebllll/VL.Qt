@@ -347,7 +347,7 @@
 
         /// <summary>
         /// BIND flags (u16, bit mask). 1 (Interactive) and 4 (Pointer) of #208 are reserved, as is 2
-        /// (CancelPress): no effect in QtNative any more (a new sink of a Tap handler cancels its press itself), the
+        /// (CancelPress): no effect in QtNative any more (a new feedback of a Tap handler cancels its press itself), the
         /// reconciler does not send it. Keep unused.
         /// </summary>
         public static class Bind

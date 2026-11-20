@@ -91,19 +91,19 @@ public static class ResyncTest
         using (var a = s.Grab(r.Window, "76_after.png"))
             s.Check(Near(Px(a, 150, 150), 255, 0, 0) && Near(Px(a, 550, 150), 0x20, 0x20, 0x20), "normal diff updates work again");
 
-        // a failing command on an element with a sink goes to that element (sink), not to the renderer's Error.
-        var sink = new ElementSink();
-        QtRect Bound(float x) => new() { Size = new Vector2(2, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(x, 1, 0), Fill = new Color4(0, 1, 0, 1), Sink = new SinkSlot(sink, 0) };
+        // a failing command on an element with a feedback goes to that element (feedback), not to the renderer's Error.
+        var feedback = new ElementFeedback();
+        QtRect Bound(float x) => new() { Size = new Vector2(2, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(x, 1, 0), Fill = new Color4(0, 1, 0, 1), Feedback = new FeedbackSlot(feedback, 0) };
         var t3 = new Group { Size = new Vector2(8, 6), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0), Children = ImmutableArray.Create<Element>(Bound(1)) };
         Frame(t3);
         uint boundId = r.Reconciler.Root!.Children[0].Id;
         r.Commands.SetF32(boundId, Protocol.Prop.Color, 1f); // → -7 on the bound rect
         Frame(t3);
         s.Check(r.Error.Length == 0, "apply error of a bound element is not at the renderer: " + r.Error);
-        s.Check(sink.Error is { } se && se.StartsWith("Qt rejected Color:"), "apply error at the element sink: " + sink.Error);
+        s.Check(feedback.Error is { } se && se.StartsWith("Qt rejected Color:"), "apply error at the element feedback: " + feedback.Error);
         s.Check(r.Resyncs == 2, $"resync as before ({r.Resyncs})");
         Frame(t3); // rebuild with the unchanged input succeeds (the bad command was injected once)
-        s.Check(r.Error.Length == 0 && sink.Error is null, "successful rebuild clears the element's apply error: " + sink.Error);
+        s.Check(r.Error.Length == 0 && feedback.Error is null, "successful rebuild clears the element's apply error: " + feedback.Error);
 
         r.Dispose();
         s.Check(scene.Count == 0, "Dispose frees the registry");

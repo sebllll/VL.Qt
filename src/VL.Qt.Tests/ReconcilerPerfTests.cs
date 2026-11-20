@@ -138,14 +138,14 @@ namespace VL.Qt.Tests
 
         private static Scenario BoundChildrenOneChange()
         {
-            // A fresh Group per frame; one bound child alternates its description, the sink slot stays the same.
-            var sink = new ElementSink();
+            // A fresh Group per frame; one bound child alternates its description, the feedback slot stays the same.
+            var feedback = new ElementFeedback();
             var children = new Element[N];
             var alt = new Element[N];
             for (int i = 0; i < N; i++)
             {
-                children[i] = new Rectangle { Size = new Vector2(1, 1), Sink = new SinkSlot(sink, i) };
-                alt[i] = new Rectangle { Size = new Vector2(2, 1), Sink = new SinkSlot(sink, i) };
+                children[i] = new Rectangle { Size = new Vector2(1, 1), Feedback = new FeedbackSlot(feedback, i) };
+                alt[i] = new Rectangle { Size = new Vector2(2, 1), Feedback = new FeedbackSlot(feedback, i) };
             }
             var writer = new CommandWriter();
             var rec = new Reconciler(writer, new IdAllocator(), new SceneRegistry());
@@ -199,8 +199,8 @@ namespace VL.Qt.Tests
         private static Scenario HandlersChangingEveryFrame()
         {
             // Tap + Drag on one element; both handlers are new instances every frame with changed properties, the slots stay.
-            var tapSlot = new SinkSlot(new ElementSink(), 0);
-            var dragSlot = new SinkSlot(new ElementSink(), 0);
+            var tapSlot = new FeedbackSlot(new ElementFeedback(), 0);
+            var dragSlot = new FeedbackSlot(new ElementFeedback(), 0);
             Element Make(PointerButtons buttons, DragAxis axis) => new Group
             {
                 Children = [new Rectangle
@@ -216,7 +216,7 @@ namespace VL.Qt.Tests
         private static Scenario TwoRenderersSharedElement(bool aFirst)
         {
             var scene = new SceneRegistry();
-            var slot = new SinkSlot(new ElementSink(), 0);
+            var slot = new FeedbackSlot(new ElementFeedback(), 0);
             var wa = new CommandWriter();
             var wb = new CommandWriter();
             var ra = new Reconciler(wa, new IdAllocator(), scene);
@@ -247,7 +247,7 @@ namespace VL.Qt.Tests
             return Warm(new Scenario($"Two renderers, shared element changing, {(aFirst ? "A then B" : "B then A")}:", step, () => wa.Count + wb.Count, 2));
         }
 
-        private static Group SharedRoot(SinkSlot slot, float width) => new() { Children = [new Rectangle { Size = new Vector2(width, 1), Sink = slot }] };
+        private static Group SharedRoot(FeedbackSlot slot, float width) => new() { Children = [new Rectangle { Size = new Vector2(width, 1), Feedback = slot }] };
 
         [Test]
         public void Group_1000Rectangles_OneChangePerFrame_NoAllocations() => AssertNoAllocation(GroupOneColorChange());
@@ -313,7 +313,7 @@ namespace VL.Qt.Tests
         {
             // A2: the element is keyed by its slot; whichever renderer updates first after a change, A (first to show it) stays the owner.
             var scene = new SceneRegistry();
-            var slot = new SinkSlot(new ElementSink(), 0);
+            var slot = new FeedbackSlot(new ElementFeedback(), 0);
             var ra = new Reconciler(new CommandWriter(), new IdAllocator(), scene);
             var rb = new Reconciler(new CommandWriter(), new IdAllocator(), scene);
             var first = SharedRoot(slot, 1);

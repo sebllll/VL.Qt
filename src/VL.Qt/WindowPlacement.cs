@@ -123,7 +123,7 @@ namespace VL.Qt
             var r = new EventReader(poll);
             while (r.MoveNext())
             {
-                if (r.Event != Protocol.Ev.WindowGeometry || r.Handle != 0 || r.Payload.Length < 20)
+                if (r.Event != Protocol.Ev.WindowGeometry || r.FeedbackId != 0 || r.Payload.Length < 20)
                     continue;
                 var bounds = new RectangleF(r.ReadF32(0), r.ReadF32(4), r.ReadF32(8), r.ReadF32(12));
                 // Client top-left since #465 (28 bytes); an older record has none: client = outer position.

@@ -116,19 +116,19 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void Warnings_OnePerRun_WrittenIntoSink()
+        public void Warnings_OnePerRun_WrittenIntoFeedback()
         {
-            var sink = new ElementSink();
-            var slot = new SinkSlot(sink, 0);
+            var feedback = new ElementFeedback();
+            var slot = new FeedbackSlot(feedback, 0);
             Effect chain = Blur(Blur());
             chain = new TestShaderLink(chain);
             chain = Blur(Blur(chain));
-            Frame(new Rectangle { Sink = slot, Effect = chain });
-            Assert.That(sink.Warning, Is.Not.Null);
-            Assert.That(sink.Warning!.Split("Blur is used more than once").Length - 1, Is.EqualTo(2), sink.Warning);
+            Frame(new Rectangle { Feedback = slot, Effect = chain });
+            Assert.That(feedback.Warning, Is.Not.Null);
+            Assert.That(feedback.Warning!.Split("Blur is used more than once").Length - 1, Is.EqualTo(2), feedback.Warning);
 
-            Frame(new Rectangle { Sink = slot, Effect = new TestShaderLink(Blur()) });
-            Assert.That(sink.Warning, Is.Null);
+            Frame(new Rectangle { Feedback = slot, Effect = new TestShaderLink(Blur()) });
+            Assert.That(feedback.Warning, Is.Null);
         }
 
         [Test]

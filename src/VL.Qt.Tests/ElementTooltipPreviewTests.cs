@@ -83,12 +83,12 @@ namespace VL.Qt.Tests
         [Test]
         public void NewInstanceEveryFrame_BeforeRendererUpdate_FoundByItsSlot()
         {
-            // an animated Group is a new instance every frame (same sink slot); the tooltip runs before the renderer.
-            var slot = new SinkSlot(new ElementSink(), 0);
-            Show(new Group { Sink = slot, Size = new Vector2(10, 10) });
+            // an animated Group is a new instance every frame (same feedback slot); the tooltip runs before the renderer.
+            var slot = new FeedbackSlot(new ElementFeedback(), 0);
+            Show(new Group { Feedback = slot, Size = new Vector2(10, 10) });
             for (var frame = 0; frame < 3; frame++)
             {
-                var next = new Group { Sink = slot, Size = new Vector2(10, 10), Opacity = 0.5f + frame * 0.1f };
+                var next = new Group { Feedback = slot, Size = new Vector2(10, 10), Opacity = 0.5f + frame * 0.1f };
                 Update(out var text, next);
                 Assert.That(text, Is.EqualTo("Item 10 x 10"), $"frame {frame}");
                 if (frame == 0)

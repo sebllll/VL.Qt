@@ -61,11 +61,11 @@ public static class ApplyTest
             BinaryPrimitives.WriteUInt32LittleEndian(s[8..], index);
             return this;
         }
-        public Buf Bind(uint id, uint sink, ushort flags)
+        public Buf Bind(uint id, uint feedbackId, ushort flags)
         {
             var s = Begin(Protocol.Op.Bind, 10);
             BinaryPrimitives.WriteUInt32LittleEndian(s, id);
-            BinaryPrimitives.WriteUInt32LittleEndian(s[4..], sink);
+            BinaryPrimitives.WriteUInt32LittleEndian(s[4..], feedbackId);
             BinaryPrimitives.WriteUInt16LittleEndian(s[8..], flags);
             return this;
         }

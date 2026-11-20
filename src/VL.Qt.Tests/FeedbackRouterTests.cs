@@ -9,8 +9,8 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>SinkRegistry: handles, routing of poll records into sinks, pulse logic, rebind (06a).</summary>
-    public class SinkRegistryTests
+    /// <summary>FeedbackRouter: feedback ids, routing of poll records into feedback, pulse logic, rebind (06a).</summary>
+    public class FeedbackRouterTests
     {
         /// <summary>Builds a synthetic poll buffer like QtNative: u16 event, u16 len, u32 handle, u32 index, payload, 4-aligned.</summary>
         internal sealed class Poll
@@ -93,9 +93,9 @@ namespace VL.Qt.Tests
         [Test]
         public void AllEventTypes_WrittenIntoSlot_InUnits()
         {
-            var reg = new SinkRegistry();
-            var sink = new ElementSink();
-            uint h = reg.Acquire(new SinkSlot(sink, 2));
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 2));
             var res = reg.Dispatch(new Poll()
                 .Measured(h, 120, 40)
                 .Bounds(h, 10, 20, 120, 40)
@@ -105,42 +105,42 @@ namespace VL.Qt.Tests
                 .Click(h, 1).Bytes);
 
             Assert.That(res, Is.EqualTo(new DispatchResult(6, 0, null)));
-            Assert.That(sink.MeasuredSize(2), Is.EqualTo(new Vector2(1.2f, 0.4f)));
-            Assert.That(sink.SceneBounds(2), Is.EqualTo(new RectangleF(0.1f, 0.2f, 1.2f, 0.4f)));
-            Assert.That(sink.IsHovered(2) && sink.IsPressed(2), Is.True);
-            Assert.That(sink.PointerPosition(2), Is.EqualTo(new Vector2(0.5f, 0.25f)));
-            Assert.That(sink.TakeClicks(2), Is.EqualTo(1));
+            Assert.That(feedback.MeasuredSize(2), Is.EqualTo(new Vector2(1.2f, 0.4f)));
+            Assert.That(feedback.SceneBounds(2), Is.EqualTo(new RectangleF(0.1f, 0.2f, 1.2f, 0.4f)));
+            Assert.That(feedback.IsHovered(2) && feedback.IsPressed(2), Is.True);
+            Assert.That(feedback.PointerPosition(2), Is.EqualTo(new Vector2(0.5f, 0.25f)));
+            Assert.That(feedback.TakeClicks(2), Is.EqualTo(1));
             // Other slots untouched.
-            Assert.That(sink.IsHovered(0) || sink.IsHovered(), Is.False);
+            Assert.That(feedback.IsHovered(0) || feedback.IsHovered(), Is.False);
 
             reg.Dispatch(new Poll().Hover(h, false).Press(h, false).Bytes);
-            Assert.That(sink.IsHovered(2) || sink.IsPressed(2), Is.False);
+            Assert.That(feedback.IsHovered(2) || feedback.IsPressed(2), Is.False);
         }
 
         [Test]
         public void Value_DecodesEachTypeAndKeepsTheLast()
         {
-            var reg = new SinkRegistry();
-            var sink = new ElementSink();
-            uint h = reg.Acquire(new SinkSlot(sink, 0));
-            Assert.That(sink.TakeValue<int>(out _), Is.False);
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 0));
+            Assert.That(feedback.TakeValue<int>(out _), Is.False);
 
             reg.Dispatch(new Poll().ValueI32(h, 3).ValueI32(h, -7).Bytes);
-            Assert.That(sink.TakeValue<int>(out int i), Is.True);
+            Assert.That(feedback.TakeValue<int>(out int i), Is.True);
             Assert.That(i, Is.EqualTo(-7), "last change wins");
-            Assert.That(sink.TakeValue<int>(out _), Is.False, "taken");
+            Assert.That(feedback.TakeValue<int>(out _), Is.False, "taken");
 
             reg.Dispatch(new Poll().Value(h, Protocol.Vt.F32, BitConverter.GetBytes(0.25f)).Bytes);
-            Assert.That(sink.TakeValue<float>(out float f) && f == 0.25f, Is.True);
+            Assert.That(feedback.TakeValue<float>(out float f) && f == 0.25f, Is.True);
             reg.Dispatch(new Poll().Value(h, Protocol.Vt.Bool, new byte[] { 1 }).Bytes);
-            Assert.That(sink.TakeValue<bool>(out bool b) && b, Is.True);
+            Assert.That(feedback.TakeValue<bool>(out bool b) && b, Is.True);
             reg.Dispatch(new Poll().ValueString(h, "ä b").Bytes);
-            Assert.That(sink.TakeValue<string>(out string? str), Is.True);
+            Assert.That(feedback.TakeValue<string>(out string? str), Is.True);
             Assert.That(str, Is.EqualTo("ä b"));
 
             reg.Dispatch(new Poll().ValueI32(h, 5).Bytes);
-            Assert.That(sink.TakeValue<float>(out _), Is.False, "type mismatch is dropped");
-            Assert.That(sink.TakeValue<int>(out _), Is.False);
+            Assert.That(feedback.TakeValue<float>(out _), Is.False, "type mismatch is dropped");
+            Assert.That(feedback.TakeValue<int>(out _), Is.False);
 
             var res = reg.Dispatch(new Poll().Value(h, Protocol.Vt.I32, new byte[2]).Value(h, Protocol.Vt.Color, new byte[16])
                 .Value(h, Protocol.Vt.String, new byte[] { 9, 0, 0, 0, 65 }).Bytes);
@@ -150,57 +150,57 @@ namespace VL.Qt.Tests
         [Test]
         public void TakeClicks_ReturnsPendingOnce()
         {
-            var reg = new SinkRegistry();
-            var sink = new ElementSink();
-            uint h = reg.Acquire(new SinkSlot(sink, 0));
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 0));
 
-            Assert.That(sink.TakeClicks(0), Is.Zero);
+            Assert.That(feedback.TakeClicks(0), Is.Zero);
 
             reg.Dispatch(new Poll().Click(h, 1).Click(h, 2).Bytes);
-            Assert.That(sink.TakeClicks(0), Is.EqualTo(3));
-            Assert.That(sink.TakeClicks(0), Is.Zero); // taken
+            Assert.That(feedback.TakeClicks(0), Is.EqualTo(3));
+            Assert.That(feedback.TakeClicks(0), Is.Zero); // taken
 
             // Empty frame: nothing.
             reg.Dispatch(ReadOnlySpan<byte>.Empty);
-            Assert.That(sink.TakeClicks(0), Is.Zero);
+            Assert.That(feedback.TakeClicks(0), Is.Zero);
 
             // Pending clicks survive frames nobody takes them in.
             reg.Dispatch(new Poll().Click(h, 1).Bytes);
             reg.Dispatch(ReadOnlySpan<byte>.Empty);
-            Assert.That(sink.TakeClicks(0), Is.EqualTo(1));
+            Assert.That(feedback.TakeClicks(0), Is.EqualTo(1));
 
             // Delta 0 does nothing.
             reg.Dispatch(new Poll().Click(h, 0).Bytes);
-            Assert.That(sink.TakeClicks(0), Is.Zero);
+            Assert.That(feedback.TakeClicks(0), Is.Zero);
         }
 
         [Test]
         public void UnknownHandle_Index_Event_ShortPayload_Ignored()
         {
-            var reg = new SinkRegistry();
-            var sink = new ElementSink();
-            uint h = reg.Acquire(new SinkSlot(sink, 0));
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 0));
             var res = reg.Dispatch(new Poll()
                 .Hover(h + 1, true)                                     // unknown handle
                 .Hover(0, true)                                         // handle 0
-                .Add(Protocol.Ev.Hover, h, new byte[] { 1 }, index: SinkRegistry.MaxIndexOffset + 1) // index too large
+                .Add(Protocol.Ev.Hover, h, new byte[] { 1 }, index: FeedbackRouter.MaxIndexOffset + 1) // index too large
                 .Add(Protocol.Ev.Hover, h, new byte[] { 1 }, index: uint.MaxValue)
                 .Add(99, h, new byte[] { 1 })                           // unknown event
                 .Add(Protocol.Ev.Measured, h, new byte[4])              // payload too short
                 .Bytes);
 
             Assert.That(res, Is.EqualTo(new DispatchResult(0, 6, null)));
-            Assert.That(sink.IsHovered(), Is.False);
-            Assert.That(sink.MeasuredSize(), Is.EqualTo(Vector2.Zero));
-            Assert.That(sink.Count, Is.Zero); // nothing allocated for ignored records
+            Assert.That(feedback.IsHovered(), Is.False);
+            Assert.That(feedback.MeasuredSize(), Is.EqualTo(Vector2.Zero));
+            Assert.That(feedback.Count, Is.Zero); // nothing allocated for ignored records
         }
 
         [Test]
         public void MalformedRecord_StopsWithError_EarlierRecordsApplied()
         {
-            var reg = new SinkRegistry();
-            var sink = new ElementSink();
-            uint h = reg.Acquire(new SinkSlot(sink, 0));
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 0));
             var bytes = new Poll().Hover(h, true).Bytes;
             var buf = new byte[bytes.Length + 6];
             bytes.CopyTo(buf, 0); // + truncated header
@@ -208,81 +208,81 @@ namespace VL.Qt.Tests
             var res = reg.Dispatch(buf);
             Assert.That(res.Applied, Is.EqualTo(1));
             Assert.That(res.Error, Is.Not.Null);
-            Assert.That(sink.IsHovered(), Is.True);
+            Assert.That(feedback.IsHovered(), Is.True);
         }
 
         [Test]
         public void Error_SetClearedByEmpty_ClearedOnRelease()
         {
-            var reg = new SinkRegistry();
-            var sink = new ElementSink();
-            uint h = reg.Acquire(new SinkSlot(sink, 0));
-            Assert.That(sink.Error, Is.Null);
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 0));
+            Assert.That(feedback.Error, Is.Null);
 
             Assert.That(reg.Dispatch(new Poll().Error(h, "Cannot open C:/ä b.png").Bytes).Applied, Is.EqualTo(1));
-            Assert.That(sink.Error, Is.EqualTo("Cannot open C:/ä b.png"), "UTF-8");
+            Assert.That(feedback.Error, Is.EqualTo("Cannot open C:/ä b.png"), "UTF-8");
 
             reg.Dispatch(new Poll().Error(h, "").Bytes);
-            Assert.That(sink.Error, Is.Null, "empty = cleared");
+            Assert.That(feedback.Error, Is.Null, "empty = cleared");
 
             reg.Dispatch(new Poll().Error(h, "x").Bytes);
             reg.Release(h);
-            Assert.That(sink.Error, Is.Null, "the element is gone");
+            Assert.That(feedback.Error, Is.Null, "the element is gone");
         }
 
         [Test]
         public void NotPrimary_DropsStateKeepsEvents_ReleaseLeavesSlot()
         {
-            var reg = new SinkRegistry();
-            var sink = new ElementSink();
-            uint p = reg.Acquire(new SinkSlot(sink, 0));
-            uint o = reg.Acquire(new SinkSlot(sink, 0), primary: false);
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint p = reg.Acquire(new FeedbackSlot(feedback, 0));
+            uint o = reg.Acquire(new FeedbackSlot(feedback, 0), primary: false);
             var res = reg.Dispatch(new Poll().Measured(o, 5, 5).Error(o, "o").Click(o, 1).ValueI32(o, 7).Error(p, "p").Bytes);
             Assert.That(res.Applied, Is.EqualTo(3));
-            Assert.That(sink.Error, Is.EqualTo("p"));
-            Assert.That(sink[0].MeasuredSize, Is.EqualTo(default(Vector2)));
-            Assert.That(sink[0].PendingClicks, Is.EqualTo(1));
-            Assert.That(sink[0].HasPendingValue, Is.True);
+            Assert.That(feedback.Error, Is.EqualTo("p"));
+            Assert.That(feedback[0].MeasuredSize, Is.EqualTo(default(Vector2)));
+            Assert.That(feedback[0].PendingClicks, Is.EqualTo(1));
+            Assert.That(feedback[0].HasPendingValue, Is.True);
 
             reg.Release(o);
-            Assert.That(sink.Error, Is.EqualTo("p"), "a further occurrence leaves the slot alone");
+            Assert.That(feedback.Error, Is.EqualTo("p"), "a further occurrence leaves the slot alone");
 
             reg.SetPrimary(p, false);
             Assert.That(reg.IsPrimary(p), Is.False);
             reg.Release(p);
-            Assert.That(sink.Error, Is.EqualTo("p"));
+            Assert.That(feedback.Error, Is.EqualTo("p"));
         }
 
         [Test]
         public void ApplyError_TakesPrecedence_SurvivesRelease()
         {
-            var reg = new SinkRegistry();
-            var sink = new ElementSink();
-            uint h = reg.Acquire(new SinkSlot(sink, 0));
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 0));
             reg.Dispatch(new Poll().Error(h, "Cannot open x.png").Bytes);
-            sink[0].ApplyError = "Qt rejected Color: bad";
-            Assert.That(sink.Error, Is.EqualTo("Qt rejected Color: bad"), "#275: apply error first");
+            feedback[0].ApplyError = "Qt rejected Color: bad";
+            Assert.That(feedback.Error, Is.EqualTo("Qt rejected Color: bad"), "#275: apply error first");
 
             reg.Release(h); // resync: the mirror drops its bindings, the apply error stays until the renderer clears it
-            Assert.That(sink.Error, Is.EqualTo("Qt rejected Color: bad"));
-            sink[0].ApplyError = null;
-            Assert.That(sink.Error, Is.Null);
+            Assert.That(feedback.Error, Is.EqualTo("Qt rejected Color: bad"));
+            feedback[0].ApplyError = null;
+            Assert.That(feedback.Error, Is.Null);
         }
 
         [Test]
         public void Release_ResetsHoverPress_DropsLateEvents_HandlesNotReused()
         {
-            var reg = new SinkRegistry();
-            var a = new ElementSink();
-            var b = new ElementSink();
-            uint ha = reg.Acquire(new SinkSlot(a, 0));
+            var reg = new FeedbackRouter();
+            var a = new ElementFeedback();
+            var b = new ElementFeedback();
+            uint ha = reg.Acquire(new FeedbackSlot(a, 0));
             reg.Dispatch(new Poll().Hover(ha, true).Press(ha, true).Bytes);
 
             reg.Release(ha);
             Assert.That(a.IsHovered() || a.IsPressed(), Is.False);
             Assert.That(reg.Count, Is.Zero);
 
-            uint hb = reg.Acquire(new SinkSlot(b, 0));
+            uint hb = reg.Acquire(new FeedbackSlot(b, 0));
             Assert.That(hb, Is.Not.EqualTo(ha));
             // QtNative's late EV_HOVER/EV_PRESS for the old handle (and a stale click) reach nobody.
             var res = reg.Dispatch(new Poll().Hover(ha, true).Click(ha, 1).Bytes);
@@ -297,36 +297,36 @@ namespace VL.Qt.Tests
         [Test]
         public void HandleWrapAround_SkipsZeroAndLiveHandles()
         {
-            var reg = new SinkRegistry();
-            var sink = new ElementSink();
-            uint first = reg.Acquire(new SinkSlot(sink, 0)); // 1, stays live
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint first = reg.Acquire(new FeedbackSlot(feedback, 0)); // 1, stays live
             Assert.That(first, Is.EqualTo(1u));
-            typeof(SinkRegistry).GetField("_last", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            typeof(FeedbackRouter).GetField("_last", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
                 .SetValue(reg, uint.MaxValue - 1);
-            Assert.That(reg.Acquire(new SinkSlot(sink, 1)), Is.EqualTo(uint.MaxValue));
-            Assert.That(reg.Acquire(new SinkSlot(sink, 2)), Is.EqualTo(2u)); // skips 0 and live 1
+            Assert.That(reg.Acquire(new FeedbackSlot(feedback, 1)), Is.EqualTo(uint.MaxValue));
+            Assert.That(reg.Acquire(new FeedbackSlot(feedback, 2)), Is.EqualTo(2u)); // skips 0 and live 1
         }
 
         [Test]
         public void Warning_FirstSlotWithWarning()
         {
-            var sink = new ElementSink();
-            Assert.That(sink.Warning, Is.Null);
-            sink[1].Warning = "dup";
-            Assert.That(sink.Warning, Is.EqualTo("dup"));
-            sink[1].Warning = null;
-            Assert.That(sink.Warning, Is.Null);
+            var feedback = new ElementFeedback();
+            Assert.That(feedback.Warning, Is.Null);
+            feedback[1].Warning = "dup";
+            Assert.That(feedback.Warning, Is.EqualTo("dup"));
+            feedback[1].Warning = null;
+            Assert.That(feedback.Warning, Is.Null);
         }
 
         [Test]
         public void Missing_Slot_ReturnsDefaults_WithoutAllocating()
         {
-            var sink = new ElementSink();
-            Assert.That(sink.IsHovered(3) || sink.IsPressed(3) || sink.TakeClicks(3) > 0, Is.False);
-            Assert.That(sink.MeasuredSize(3), Is.EqualTo(Vector2.Zero));
-            Assert.That(sink.SceneBounds(3), Is.EqualTo(default(RectangleF)));
-            Assert.That(sink.PointerPosition(-1), Is.EqualTo(Vector2.Zero));
-            Assert.That(sink.Count, Is.Zero);
+            var feedback = new ElementFeedback();
+            Assert.That(feedback.IsHovered(3) || feedback.IsPressed(3) || feedback.TakeClicks(3) > 0, Is.False);
+            Assert.That(feedback.MeasuredSize(3), Is.EqualTo(Vector2.Zero));
+            Assert.That(feedback.SceneBounds(3), Is.EqualTo(default(RectangleF)));
+            Assert.That(feedback.PointerPosition(-1), Is.EqualTo(Vector2.Zero));
+            Assert.That(feedback.Count, Is.Zero);
         }
 
         // --- with the reconciler ---
@@ -334,20 +334,20 @@ namespace VL.Qt.Tests
         [Test]
         public void HandlerEvents_TapPointWheel_LandInTheSlot()
         {
-            var sink = new ElementSink();
-            var reg = new SinkRegistry();
-            uint h = reg.Acquire(new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var reg = new FeedbackRouter();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 0));
 
             var res = reg.Dispatch(new Poll().Press(h, true).TapCount(h, 2).LongPress(h, 1).LongPress(h, 2).Active(h, true)
                 .Pointer(h, 100, 200).Wheel(h, 0, 1).Wheel(h, 0.5f, 1).Bytes);
             Assert.That(res.Ignored, Is.Zero);
-            Assert.That(sink.IsPressed() && sink.IsActive(), Is.True);
-            Assert.That(sink.TapCount(), Is.EqualTo(2));
-            Assert.That(sink.TakeLongPresses(), Is.EqualTo(3), "summed until taken");
-            Assert.That(sink.TakeLongPresses(), Is.Zero);
-            Assert.That(sink.PointerPosition(), Is.EqualTo(new Vector2(1, 2)), "pixels -> units");
-            Assert.That(sink.TakeWheel(), Is.EqualTo(new Vector2(0.5f, 2)), "notches summed, not converted");
-            Assert.That(sink.TakeWheel(), Is.EqualTo(Vector2.Zero));
+            Assert.That(feedback.IsPressed() && feedback.IsActive(), Is.True);
+            Assert.That(feedback.TapCount(), Is.EqualTo(2));
+            Assert.That(feedback.TakeLongPresses(), Is.EqualTo(3), "summed until taken");
+            Assert.That(feedback.TakeLongPresses(), Is.Zero);
+            Assert.That(feedback.PointerPosition(), Is.EqualTo(new Vector2(1, 2)), "pixels -> units");
+            Assert.That(feedback.TakeWheel(), Is.EqualTo(new Vector2(0.5f, 2)), "notches summed, not converted");
+            Assert.That(feedback.TakeWheel(), Is.EqualTo(Vector2.Zero));
 
             // Too short payloads are ignored.
             res = reg.Dispatch(new Poll().Add(Protocol.Ev.Wheel, h, new byte[4]).Add(Protocol.Ev.TapCount, h, new byte[2]).Add(Protocol.Ev.Active, h, new byte[0]).Bytes);
@@ -358,44 +358,44 @@ namespace VL.Qt.Tests
         [Test]
         public void DragEvents_LandInTheSlot_CountedPerEvent()
         {
-            var sink = new ElementSink();
-            var reg = new SinkRegistry();
-            uint h = reg.Acquire(new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var reg = new FeedbackRouter();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 0));
 
             var res = reg.Dispatch(new Poll().Active(h, true).Drag(h, 100, -50).Drag(h, 100, -50).Bytes);
             Assert.That(res.Ignored, Is.Zero);
-            Assert.That(sink.IsActive(), Is.True);
-            Assert.That(sink.DragDelta(), Is.EqualTo(new Vector2(1, -0.5f)), "pixels -> units");
-            Assert.That(sink.DragUpdates(), Is.EqualTo(2), "equal values count too");
+            Assert.That(feedback.IsActive(), Is.True);
+            Assert.That(feedback.DragDelta(), Is.EqualTo(new Vector2(1, -0.5f)), "pixels -> units");
+            Assert.That(feedback.DragUpdates(), Is.EqualTo(2), "equal values count too");
 
             res = reg.Dispatch(new Poll().Add(Protocol.Ev.Drag, h, new byte[4]).Bytes);
             Assert.That(res.Ignored, Is.EqualTo(1), "too short");
 
             reg.Release(h);
-            Assert.That(sink.IsActive(), Is.False);
-            Assert.That(sink.DragDelta(), Is.EqualTo(new Vector2(1, -0.5f)), "the last drag stays until the next one");
+            Assert.That(feedback.IsActive(), Is.False);
+            Assert.That(feedback.DragDelta(), Is.EqualTo(new Vector2(1, -0.5f)), "the last drag stays until the next one");
         }
 
         [Test]
         public void TouchPointsEvent_BecomesSpread_InUnits_EmptyOnZero()
         {
-            var sink = new ElementSink();
-            var reg = new SinkRegistry();
-            uint h = reg.Acquire(new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var reg = new FeedbackRouter();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 0));
 
             var res = reg.Dispatch(new Poll().TouchPoints(h, (3, 50, 25, 0.5f, 10, 20), (7, 100, 0, 1, 0, 0)).Bytes);
             Assert.That(res, Is.EqualTo(new DispatchResult(1, 0, null)));
-            var points = sink.TouchPoints();
+            var points = feedback.TouchPoints();
             Assert.That(points, Has.Count.EqualTo(2));
             Assert.That(points[0], Is.EqualTo(new Elements.TouchPoint(3, new Vector2(0.5f, 0.25f), 0.5f, new Vector2(0.1f, 0.2f))), "pixels -> units");
             Assert.That(points[1].Id, Is.EqualTo(7));
-            Assert.That(sink.TouchUpdates(), Is.EqualTo(1));
+            Assert.That(feedback.TouchUpdates(), Is.EqualTo(1));
 
             reg.Dispatch(new Poll().TouchPoints(h).Bytes);
-            Assert.That(sink.TouchPoints(), Is.Empty);
-            Assert.That(sink.TouchUpdates(), Is.EqualTo(2));
+            Assert.That(feedback.TouchPoints(), Is.Empty);
+            Assert.That(feedback.TouchUpdates(), Is.EqualTo(2));
             reg.Dispatch(new Poll().TouchPoints(h).Bytes);
-            Assert.That(sink.TouchUpdates(), Is.EqualTo(2), "empty again: no change");
+            Assert.That(feedback.TouchUpdates(), Is.EqualTo(2), "empty again: no change");
 
             // Too short / too many points are ignored.
             res = reg.Dispatch(new Poll().Add(Protocol.Ev.TouchPoints, h, new byte[3])
@@ -407,148 +407,148 @@ namespace VL.Qt.Tests
             // Release clears the points of a handle that still holds some.
             reg.Dispatch(new Poll().TouchPoints(h, (1, 0, 0, 0, 0, 0)).Bytes);
             reg.Release(h);
-            Assert.That(sink.TouchPoints(), Is.Empty);
+            Assert.That(feedback.TouchPoints(), Is.Empty);
         }
 
         [Test]
         public void PinchEvent_DegreesToCycles_TranslationInUnits_KeptAfterRelease()
         {
-            var sink = new ElementSink();
-            var reg = new SinkRegistry();
-            uint h = reg.Acquire(new SinkSlot(sink, 0));
-            Assert.That(sink.PinchScale(), Is.EqualTo(1f), "no gesture yet");
+            var feedback = new ElementFeedback();
+            var reg = new FeedbackRouter();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 0));
+            Assert.That(feedback.PinchScale(), Is.EqualTo(1f), "no gesture yet");
 
             var res = reg.Dispatch(new Poll().Active(h, true).Pinch(h, 1.5f, 90, 20, -40, 100, 50).Bytes);
             Assert.That(res.Ignored, Is.Zero);
-            Assert.That(sink.PinchScale(), Is.EqualTo(1.5f));
-            Assert.That(sink.PinchRotation(), Is.EqualTo(0.25f).Within(1e-6f), "90 degrees = 0.25 cycles");
-            Assert.That(sink.PinchTranslation(), Is.EqualTo(new Vector2(0.2f, -0.4f)));
-            Assert.That(sink.PinchPivot(), Is.EqualTo(new Vector2(1f, 0.5f)));
-            Assert.That(sink.PinchUpdates(), Is.EqualTo(1));
+            Assert.That(feedback.PinchScale(), Is.EqualTo(1.5f));
+            Assert.That(feedback.PinchRotation(), Is.EqualTo(0.25f).Within(1e-6f), "90 degrees = 0.25 cycles");
+            Assert.That(feedback.PinchTranslation(), Is.EqualTo(new Vector2(0.2f, -0.4f)));
+            Assert.That(feedback.PinchPivot(), Is.EqualTo(new Vector2(1f, 0.5f)));
+            Assert.That(feedback.PinchUpdates(), Is.EqualTo(1));
 
             reg.Dispatch(new Poll().Active(h, false).Bytes);
-            Assert.That(sink.PinchScale(), Is.EqualTo(1.5f), "the last value stays");
+            Assert.That(feedback.PinchScale(), Is.EqualTo(1.5f), "the last value stays");
             Assert.That(reg.Dispatch(new Poll().Add(Protocol.Ev.Pinch, h, new byte[16]).Bytes).Ignored, Is.EqualTo(1), "too short");
         }
 
         [Test]
         public void ReleaseHandle_ResetsHandlerState()
         {
-            var sink = new ElementSink();
-            var reg = new SinkRegistry();
-            uint h = reg.Acquire(new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var reg = new FeedbackRouter();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 0));
             reg.Dispatch(new Poll().Press(h, true).Active(h, true).TapCount(h, 3).LongPress(h, 1).Wheel(h, 1, 1).Bytes);
 
             reg.Release(h);
-            Assert.That(sink.IsPressed() || sink.IsActive(), Is.False);
-            Assert.That(sink.TapCount(), Is.Zero);
-            Assert.That(sink.TakeLongPresses(), Is.Zero);
-            Assert.That(sink.TakeWheel(), Is.EqualTo(Vector2.Zero));
+            Assert.That(feedback.IsPressed() || feedback.IsActive(), Is.False);
+            Assert.That(feedback.TapCount(), Is.Zero);
+            Assert.That(feedback.TakeLongPresses(), Is.Zero);
+            Assert.That(feedback.TakeWheel(), Is.EqualTo(Vector2.Zero));
         }
 
-        private static Rectangle R(float w, SinkSlot sink)
-            => new() { Size = new Vector2(w, 1), Sink = sink };
+        private static Rectangle R(float w, FeedbackSlot feedback)
+            => new() { Size = new Vector2(w, 1), Feedback = feedback };
 
         [Test]
-        public void Rebind_SinkChange_RoutesToNewSink_OldSinkReset()
+        public void Rebind_FeedbackChange_RoutesToNewFeedback_OldFeedbackReset()
         {
             var cmds = new RecordingSink();
             var rec = new Reconciler(cmds, new IdAllocator(), new SceneRegistry());
-            var a = new ElementSink();
-            var b = new ElementSink();
+            var a = new ElementFeedback();
+            var b = new ElementFeedback();
 
-            rec.Update(R(1, new SinkSlot(a, 0)), Space.DIPTopLeft);
-            uint ha = rec.Root!.BoundHandle;
-            rec.Sinks.Dispatch(new Poll().Hover(ha, true).Press(ha, true).Bytes);
+            rec.Update(R(1, new FeedbackSlot(a, 0)), Space.DIPTopLeft);
+            uint ha = rec.Root!.BoundFeedbackId;
+            rec.FeedbackRouter.Dispatch(new Poll().Hover(ha, true).Press(ha, true).Bytes);
             Assert.That(a.IsHovered() && a.IsPressed(), Is.True);
 
-            // Same object, other sink: BIND with a new handle (flags 0, CancelPress is reserved); old sink loses hover/press right away.
+            // Same object, other feedback: BIND with a new handle (flags 0, CancelPress is reserved); old feedback loses hover/press right away.
             cmds.Clear();
-            rec.Update(R(1, new SinkSlot(b, 0)), Space.DIPTopLeft);
-            uint hb = rec.Root!.BoundHandle;
+            rec.Update(R(1, new FeedbackSlot(b, 0)), Space.DIPTopLeft);
+            uint hb = rec.Root!.BoundFeedbackId;
             Assert.That(hb, Is.Not.EqualTo(ha));
             Assert.That(cmds.Commands, Does.Contain($"BIND {rec.Root.Id} {hb} 0"));
             Assert.That(a.IsHovered() || a.IsPressed(), Is.False);
 
             // Next poll: QtNative's reset for the old handle is dropped, new events go to b.
-            rec.Sinks.Dispatch(new Poll().Hover(ha, false).Press(ha, false).Hover(hb, true).Click(hb, 1).Bytes);
+            rec.FeedbackRouter.Dispatch(new Poll().Hover(ha, false).Press(ha, false).Hover(hb, true).Click(hb, 1).Bytes);
             Assert.That(b.IsHovered(), Is.True);
             Assert.That(b.TakeClicks(0), Is.EqualTo(1));
             Assert.That(a.TakeClicks(0), Is.Zero);
 
             // Unbind and destroy release the handle.
             rec.Update(R(1, default), Space.DIPTopLeft);
-            Assert.That(rec.Sinks.Count, Is.Zero);
+            Assert.That(rec.FeedbackRouter.Count, Is.Zero);
             Assert.That(b.IsHovered(), Is.False);
-            rec.Update(R(1, new SinkSlot(b, 0)), Space.DIPTopLeft);
-            Assert.That(rec.Sinks.Count, Is.EqualTo(1));
+            rec.Update(R(1, new FeedbackSlot(b, 0)), Space.DIPTopLeft);
+            Assert.That(rec.FeedbackRouter.Count, Is.EqualTo(1));
             rec.Update(null, Space.DIPTopLeft);
-            Assert.That(rec.Sinks.Count, Is.Zero);
+            Assert.That(rec.FeedbackRouter.Count, Is.Zero);
         }
 
         [Test]
         public void RecordIndex_IsOffsetToSlotIndex()
         {
-            var reg = new SinkRegistry();
-            var sink = new ElementSink();
-            uint h = reg.Acquire(new SinkSlot(sink, 2));
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint h = reg.Acquire(new FeedbackSlot(feedback, 2));
             var res = reg.Dispatch(new Poll()
                 .Add(Protocol.Ev.Hover, h, new byte[] { 1 }, index: 1)
-                .Add(Protocol.Ev.Measured, h, new byte[8], index: SinkRegistry.MaxIndexOffset)
+                .Add(Protocol.Ev.Measured, h, new byte[8], index: FeedbackRouter.MaxIndexOffset)
                 .Bytes);
 
             Assert.That(res, Is.EqualTo(new DispatchResult(2, 0, null)));
-            Assert.That(sink.IsHovered(3), Is.True);
-            Assert.That(sink.IsHovered(2), Is.False);
-            Assert.That(sink.Count, Is.EqualTo(2 + SinkRegistry.MaxIndexOffset + 1));
+            Assert.That(feedback.IsHovered(3), Is.True);
+            Assert.That(feedback.IsHovered(2), Is.False);
+            Assert.That(feedback.Count, Is.EqualTo(2 + FeedbackRouter.MaxIndexOffset + 1));
         }
 
         [Test]
-        public void MultiElementSink_EachElementRoutedToItsSlot()
+        public void MultiElementFeedback_EachElementRoutedToItsSlot()
         {
-            // One sink for a spread of three elements (slot index = spread index), like a ForEach in vvvv.
+            // One feedback for a spread of three elements (slot index = spread index), like a ForEach in vvvv.
             var rec = new Reconciler(new RecordingSink(), new IdAllocator(), new SceneRegistry());
-            var sink = new ElementSink();
-            var col = new Column { Children = ImmutableArray.Create<Element>(R(1, new SinkSlot(sink, 0)), R(2, new SinkSlot(sink, 1)), R(3, new SinkSlot(sink, 2))) };
+            var feedback = new ElementFeedback();
+            var col = new Column { Children = ImmutableArray.Create<Element>(R(1, new FeedbackSlot(feedback, 0)), R(2, new FeedbackSlot(feedback, 1)), R(3, new FeedbackSlot(feedback, 2))) };
             rec.Update(col, Space.DIPTopLeft);
 
             var kids = rec.Root!.Children;
             var poll = new Poll();
             for (int i = 0; i < 3; i++)
-                poll.Measured(kids[i].BoundHandle, 100 * (i + 1), 50).Bounds(kids[i].BoundHandle, 0, 100 * i, 100 * (i + 1), 50)
-                    .Hover(kids[i].BoundHandle, i == 1);
-            var res = rec.Sinks.Dispatch(poll.Bytes);
+                poll.Measured(kids[i].BoundFeedbackId, 100 * (i + 1), 50).Bounds(kids[i].BoundFeedbackId, 0, 100 * i, 100 * (i + 1), 50)
+                    .Hover(kids[i].BoundFeedbackId, i == 1);
+            var res = rec.FeedbackRouter.Dispatch(poll.Bytes);
 
             Assert.That(res, Is.EqualTo(new DispatchResult(9, 0, null)));
-            Assert.That(rec.Sinks.Count, Is.EqualTo(3));
+            Assert.That(rec.FeedbackRouter.Count, Is.EqualTo(3));
             for (int i = 0; i < 3; i++)
             {
-                Assert.That(sink.MeasuredSize(i), Is.EqualTo(new Vector2(i + 1, 0.5f)));
-                Assert.That(sink.SceneBounds(i), Is.EqualTo(new RectangleF(0, i, i + 1, 0.5f)));
-                Assert.That(sink.IsHovered(i), Is.EqualTo(i == 1));
+                Assert.That(feedback.MeasuredSize(i), Is.EqualTo(new Vector2(i + 1, 0.5f)));
+                Assert.That(feedback.SceneBounds(i), Is.EqualTo(new RectangleF(0, i, i + 1, 0.5f)));
+                Assert.That(feedback.IsHovered(i), Is.EqualTo(i == 1));
             }
 
             // Spread order changes: slots move with the elements, new handles, late records of old handles dropped.
-            uint old0 = kids[0].BoundHandle;
-            col = new Column { Children = ImmutableArray.Create<Element>(R(1, new SinkSlot(sink, 1)), R(2, new SinkSlot(sink, 0)), R(3, new SinkSlot(sink, 2))) };
+            uint old0 = kids[0].BoundFeedbackId;
+            col = new Column { Children = ImmutableArray.Create<Element>(R(1, new FeedbackSlot(feedback, 1)), R(2, new FeedbackSlot(feedback, 0)), R(3, new FeedbackSlot(feedback, 2))) };
             rec.Update(col, Space.DIPTopLeft);
-            Assert.That(sink.IsHovered(1), Is.False); // released slot loses hover
-            res = rec.Sinks.Dispatch(new Poll().Measured(old0, 9, 9).Measured(rec.Root!.Children[0].BoundHandle, 700, 50).Bytes);
+            Assert.That(feedback.IsHovered(1), Is.False); // released slot loses hover
+            res = rec.FeedbackRouter.Dispatch(new Poll().Measured(old0, 9, 9).Measured(rec.Root!.Children[0].BoundFeedbackId, 700, 50).Bytes);
             Assert.That(res, Is.EqualTo(new DispatchResult(1, 1, null)));
-            Assert.That(sink.MeasuredSize(1), Is.EqualTo(new Vector2(7, 0.5f)));
-            Assert.That(sink.MeasuredSize(0), Is.EqualTo(new Vector2(1, 0.5f))); // kept until QtNative resends
+            Assert.That(feedback.MeasuredSize(1), Is.EqualTo(new Vector2(7, 0.5f)));
+            Assert.That(feedback.MeasuredSize(0), Is.EqualTo(new Vector2(1, 0.5f))); // kept until QtNative resends
         }
 
         [Test]
         public void Dispatch_1000Records_NoAllocations()
         {
             const int n = 1000;
-            var reg = new SinkRegistry();
-            var sink = new ElementSink();
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
             var p = new Poll();
             for (int i = 0; i < n; i++)
             {
-                uint h = reg.Acquire(new SinkSlot(sink, i));
+                uint h = reg.Acquire(new FeedbackSlot(feedback, i));
                 p.Bounds(h, i, 0, 10, 10).Hover(h, (i & 1) == 0);
             }
             var buf = p.Bytes;

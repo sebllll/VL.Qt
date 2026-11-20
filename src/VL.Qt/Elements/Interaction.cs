@@ -7,27 +7,27 @@ namespace VL.Qt.Elements
     /// interaction node adds one link and keeps a reference to the rest of the chain in <see cref="Previous"/>. One link
     /// becomes one Qt Quick input handler at the element's item (a protocol object of its own, see protocol.h).
     /// <para>
-    /// Identity is the <see cref="Sink"/> of the interaction node: the reconciler keys the handlers of an element by it.
+    /// Identity is the <see cref="Feedback"/> of the interaction node: the reconciler keys the handlers of an element by it.
     /// Create a new instance only when an input of the node changes; an unchanged chain is the same instance (the
     /// reconciler compares by reference). The order of the chain has no meaning (Qt decides by its grab rules).
     /// </para>
     /// </summary>
     public abstract class Interaction
     {
-        private protected Interaction(ushort handlerType, Interaction? previous, SinkSlot sink)
+        private protected Interaction(ushort handlerType, Interaction? previous, FeedbackSlot feedback)
         {
-            if (sink.IsNone)
-                throw new ArgumentException("An interaction needs a sink.", nameof(sink));
+            if (feedback.IsNone)
+                throw new ArgumentException("An interaction needs feedback.", nameof(feedback));
             HandlerType = handlerType;
             Previous = previous;
-            Sink = sink;
+            Feedback = feedback;
         }
 
         /// <summary>The rest of the chain (the interactions connected before this one), null at the start.</summary>
         public Interaction? Previous { get; }
 
-        /// <summary>Receives the handler's events (one slot of the interaction node's sink); key of the handler.</summary>
-        public SinkSlot Sink { get; }
+        /// <summary>Receives the handler's events (one slot of the interaction node's feedback); key of the handler.</summary>
+        public FeedbackSlot Feedback { get; }
 
         /// <summary>CREATE type of the handler (<see cref="Protocol.Type"/>, from 32).</summary>
         internal ushort HandlerType { get; }
@@ -44,8 +44,8 @@ namespace VL.Qt.Elements
     /// <summary>Hover handler (Qt Quick HoverHandler): reports hover only; positions come from the Point handler.</summary>
     internal sealed class HoverInteraction : Interaction
     {
-        public HoverInteraction(Interaction? previous, SinkSlot sink)
-            : base(Protocol.Type.HoverHandler, previous, sink)
+        public HoverInteraction(Interaction? previous, FeedbackSlot feedback)
+            : base(Protocol.Type.HoverHandler, previous, feedback)
         {
         }
 
@@ -97,8 +97,8 @@ namespace VL.Qt.Elements
     /// <summary>Tap handler (Qt Quick TapHandler): press, click, tap count, long press.</summary>
     internal sealed class ClickInteraction : Interaction
     {
-        public ClickInteraction(Interaction? previous, SinkSlot sink, PointerButtons buttons, PointerDevices devices)
-            : base(Protocol.Type.TapHandler, previous, sink)
+        public ClickInteraction(Interaction? previous, FeedbackSlot feedback, PointerButtons buttons, PointerDevices devices)
+            : base(Protocol.Type.TapHandler, previous, feedback)
         {
             Buttons = buttons;
             Devices = devices;
@@ -115,8 +115,8 @@ namespace VL.Qt.Elements
     /// <summary>Point handler (Qt Quick PointHandler): position of a pressed point; a passive grab, presses pass through.</summary>
     internal sealed class PointInteraction : Interaction
     {
-        public PointInteraction(Interaction? previous, SinkSlot sink, PointerButtons buttons, PointerDevices devices)
-            : base(Protocol.Type.PointHandler, previous, sink)
+        public PointInteraction(Interaction? previous, FeedbackSlot feedback, PointerButtons buttons, PointerDevices devices)
+            : base(Protocol.Type.PointHandler, previous, feedback)
         {
             Buttons = buttons;
             Devices = devices;
@@ -133,8 +133,8 @@ namespace VL.Qt.Elements
     /// <summary>Wheel handler (Qt Quick WheelHandler, target null): wheel and trackpad scroll in notches.</summary>
     internal sealed class WheelInteraction : Interaction
     {
-        public WheelInteraction(Interaction? previous, SinkSlot sink, PointerDevices devices)
-            : base(Protocol.Type.WheelHandler, previous, sink)
+        public WheelInteraction(Interaction? previous, FeedbackSlot feedback, PointerDevices devices)
+            : base(Protocol.Type.WheelHandler, previous, feedback)
             => Devices = devices;
 
         public PointerDevices Devices { get; }
@@ -162,9 +162,9 @@ namespace VL.Qt.Elements
     /// </summary>
     internal sealed class DragInteraction : Interaction
     {
-        public DragInteraction(Interaction? previous, SinkSlot sink, bool movesElement, DragAxis axis, DragLimits limits,
+        public DragInteraction(Interaction? previous, FeedbackSlot feedback, bool movesElement, DragAxis axis, DragLimits limits,
             PointerButtons buttons, PointerDevices devices)
-            : base(Protocol.Type.DragHandler, previous, sink)
+            : base(Protocol.Type.DragHandler, previous, feedback)
         {
             MovesElement = movesElement;
             Axis = axis;
@@ -208,8 +208,8 @@ namespace VL.Qt.Elements
     /// <summary>Touch Points handler (own QtNative handler, passive grabs): all points pressed in the item.</summary>
     internal sealed class TouchPointsInteraction : Interaction
     {
-        public TouchPointsInteraction(Interaction? previous, SinkSlot sink, bool occlusion, PointerDevices devices)
-            : base(Protocol.Type.TouchPointsHandler, previous, sink)
+        public TouchPointsInteraction(Interaction? previous, FeedbackSlot feedback, bool occlusion, PointerDevices devices)
+            : base(Protocol.Type.TouchPointsHandler, previous, feedback)
         {
             Occlusion = occlusion;
             Devices = devices;
@@ -236,8 +236,8 @@ namespace VL.Qt.Elements
     {
         internal const int DefaultPointCount = 2;
 
-        public PinchInteraction(Interaction? previous, SinkSlot sink, int minimumPointCount, int maximumPointCount, PointerDevices devices)
-            : base(Protocol.Type.PinchHandler, previous, sink)
+        public PinchInteraction(Interaction? previous, FeedbackSlot feedback, int minimumPointCount, int maximumPointCount, PointerDevices devices)
+            : base(Protocol.Type.PinchHandler, previous, feedback)
         {
             MinimumPointCount = minimumPointCount;
             MaximumPointCount = maximumPointCount;

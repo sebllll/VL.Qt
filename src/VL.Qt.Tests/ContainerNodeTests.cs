@@ -38,14 +38,14 @@ namespace VL.Qt.Tests
                 null, null, out _, out _);
 
         [Test]
-        public void Group_UnconnectedInputsSkipped_DefaultsAndSink()
+        public void Group_UnconnectedInputsSkipped_DefaultsAndFeedback()
         {
             using var n = new GroupNode(NoWarning);
             var g = (Group)Group(n, S(null, A, null, B));
             Assert.That(g.Children, Is.EqualTo(new Element[] { A, B }));
             Assert.That(g.Size, Is.EqualTo(default(Vector2)), "no own extent");
             Assert.That(g.Transform, Is.EqualTo(Matrix.Identity));
-            Assert.That(g.Sink.Sink, Is.SameAs(n.Core.Sink));
+            Assert.That(g.Feedback.Feedback, Is.SameAs(n.Core.Feedback));
 
             var empty = (Group)Group(n, S(null, null));
             Assert.That(empty.Children.IsEmpty, Is.True);

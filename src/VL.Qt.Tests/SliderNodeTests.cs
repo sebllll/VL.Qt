@@ -21,7 +21,7 @@ namespace VL.Qt.Tests
         private sealed class Nop : IDisposable { public void Dispose() { } }
 
         private SliderNode _node = null!;
-        private SinkRegistry _registry = null!;
+        private FeedbackRouter _registry = null!;
         private uint _handle;
         private RecordingSink _sink = null!;
         private Reconciler _reconciler = null!;
@@ -30,8 +30,8 @@ namespace VL.Qt.Tests
         public void SetUp()
         {
             _node = new SliderNode(_ => NoWarning);
-            _registry = new SinkRegistry();
-            _handle = _registry.Acquire(new SinkSlot(_node.Core.Sink, 0));
+            _registry = new FeedbackRouter();
+            _handle = _registry.Acquire(new FeedbackSlot(_node.Core.Feedback, 0));
             _sink = new RecordingSink();
             _reconciler = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
         }
@@ -57,7 +57,7 @@ namespace VL.Qt.Tests
         private string[] Frame(IChannel<float>? channel = null, Optional<float> min = default, Optional<float> max = default)
             => Frame(out _, out _, channel, min, max);
 
-        private void UserChanges(float value) => _registry.Dispatch(new SinkRegistryTests.Poll().Value(_handle, Protocol.Vt.F32, BitConverter.GetBytes(value)).Bytes);
+        private void UserChanges(float value) => _registry.Dispatch(new FeedbackRouterTests.Poll().Value(_handle, Protocol.Vt.F32, BitConverter.GetBytes(value)).Bytes);
 
         private static string SetValue(float v) => $"SET 1 Value f32({v.ToString("R", System.Globalization.CultureInfo.InvariantCulture)})";
 
@@ -70,7 +70,7 @@ namespace VL.Qt.Tests
             Assert.That((s.Value, s.Minimum, s.Maximum, s.Step, s.Orientation, s.Enabled, s.AutoSize),
                 Is.EqualTo((0f, 0f, 1f, 0f, SliderOrientation.Horizontal, true, true)));
             Assert.That((value, bang), Is.EqualTo((0f, false)));
-            Assert.That(s.Sink.Sink, Is.SameAs(_node.Core.Sink));
+            Assert.That(s.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
         }
 
         [Test]

@@ -193,25 +193,25 @@ namespace VL.Qt.Tests
         // 5 ---------------------------------------------------------------
 
         [Test]
-        public void Exception_SiblingsStillReconciled_ErrorAtParentSink_LastElementStays()
+        public void Exception_SiblingsStillReconciled_ErrorAtParentFeedback_LastElementStays()
         {
-            var sink = new ElementSink();
-            _ = sink[0]; // the container node allocates its slots before the reconciler runs
+            var feedback = new ElementFeedback();
+            _ = feedback[0]; // the container node allocates its slots before the reconciler runs
             var s = new TestStylable();
             var sibling1 = new Rectangle { Fill = Color4.White };
-            Update(new Group { Sink = new SinkSlot(sink, 0), Children = Kids(Wrap(s), sibling1) });
+            Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = Kids(Wrap(s), sibling1) });
             var stylableNode = _rec.Root!.Children[0];
             var shownId = stylableNode.Id;
             var shown = stylableNode.Last;
-            Assert.That(sink.Error, Is.Null);
+            Assert.That(feedback.Error, Is.Null);
             _sink.Clear();
 
             s.Throw = true;
             var sibling2 = new Rectangle { Fill = new Color4(0, 1, 0, 1) };
-            Update(new Group { Sink = new SinkSlot(sink, 0), Children = Kids(Wrap(s), sibling2) });
+            Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = Kids(Wrap(s), sibling2) });
 
-            Assert.That(sink[0].BuildError, Is.Not.Null.And.Contains("boom"));
-            Assert.That(sink.Error, Is.EqualTo(sink[0].BuildError));
+            Assert.That(feedback[0].BuildError, Is.Not.Null.And.Contains("boom"));
+            Assert.That(feedback.Error, Is.EqualTo(feedback[0].BuildError));
             Assert.That(_sink.OfOp("DESTROY"), Is.Empty);
             Assert.That(_rec.Root.Children[0].Id, Is.EqualTo(shownId));
             Assert.That(_rec.Root.Children[0].Last, Is.SameAs(shown));
@@ -220,73 +220,73 @@ namespace VL.Qt.Tests
 
             // keeps failing: nothing more is sent, error stays
             _sink.Clear();
-            Update(new Group { Sink = new SinkSlot(sink, 0), Children = Kids(Wrap(s), sibling2) });
+            Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = Kids(Wrap(s), sibling2) });
             Assert.That(_sink.Commands, Is.Empty);
-            Assert.That(sink.Error, Is.Not.Null);
+            Assert.That(feedback.Error, Is.Not.Null);
         }
 
         [Test]
         public void SuccessAfterException_ClearsError()
         {
-            var sink = new ElementSink();
-            _ = sink[0]; // the container node allocates its slots before the reconciler runs
+            var feedback = new ElementFeedback();
+            _ = feedback[0]; // the container node allocates its slots before the reconciler runs
             var s = new TestStylable();
             var kids = Kids(Wrap(s));
             s.Throw = true;
-            Update(new Group { Sink = new SinkSlot(sink, 0), Children = kids });
-            Assert.That(sink.Error, Is.Not.Null);
+            Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = kids });
+            Assert.That(feedback.Error, Is.Not.Null);
 
             s.Throw = false;
-            Update(new Group { Sink = new SinkSlot(sink, 0), Children = kids });
+            Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = kids });
 
-            Assert.That(sink.Error, Is.Null);
-            Assert.That(sink[0].BuildError, Is.Null);
+            Assert.That(feedback.Error, Is.Null);
+            Assert.That(feedback[0].BuildError, Is.Null);
         }
 
         [Test]
         public void RemovingFailedChild_ClearsError()
         {
-            var sink = new ElementSink();
-            _ = sink[0]; // the container node allocates its slots before the reconciler runs
+            var feedback = new ElementFeedback();
+            _ = feedback[0]; // the container node allocates its slots before the reconciler runs
             var s = new TestStylable { Throw = true };
-            Update(new Group { Sink = new SinkSlot(sink, 0), Children = Kids(Wrap(s), new Rectangle()) });
-            Assert.That(sink.Error, Is.Not.Null);
+            Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = Kids(Wrap(s), new Rectangle()) });
+            Assert.That(feedback.Error, Is.Not.Null);
 
-            Update(new Group { Sink = new SinkSlot(sink, 0), Children = Kids(new Rectangle()) });
+            Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = Kids(new Rectangle()) });
 
-            Assert.That(sink.Error, Is.Null);
+            Assert.That(feedback.Error, Is.Null);
         }
 
         [Test]
-        public void RemovingParentOfFailedChild_ClearsErrorOfItsSink()
+        public void RemovingParentOfFailedChild_ClearsErrorOfItsFeedback()
         {
-            var sink = new ElementSink();
-            _ = sink[0]; // the container node allocates its slots before the reconciler runs
+            var feedback = new ElementFeedback();
+            _ = feedback[0]; // the container node allocates its slots before the reconciler runs
             var s = new TestStylable { Throw = true };
-            Update(new Group { Children = Kids(new Group { Sink = new SinkSlot(sink, 0), Children = Kids(Wrap(s)) }) });
-            Assert.That(sink.Error, Is.Not.Null);
+            Update(new Group { Children = Kids(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = Kids(Wrap(s)) }) });
+            Assert.That(feedback.Error, Is.Not.Null);
 
             Update(new Group());
 
-            Assert.That(sink.Error, Is.Null);
+            Assert.That(feedback.Error, Is.Null);
         }
 
         [Test]
         public void ExceptionOnFirstBuild_ShowsEmptyGroup()
         {
-            var sink = new ElementSink();
-            _ = sink[0]; // the container node allocates its slots before the reconciler runs
+            var feedback = new ElementFeedback();
+            _ = feedback[0]; // the container node allocates its slots before the reconciler runs
             var s = new TestStylable { Throw = true };
-            Update(new Group { Sink = new SinkSlot(sink, 0), Children = Kids(Wrap(s)) });
+            Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = Kids(Wrap(s)) });
 
             Assert.That(_rec.Root!.Children, Has.Count.EqualTo(1));
             Assert.That(_rec.Root.Children[0].Type, Is.EqualTo(ElementType.Item));
             Assert.That(_rec.Root.Children[0].Last, Is.TypeOf<Group>());
-            Assert.That(sink.Error, Does.Contain("boom"));
+            Assert.That(feedback.Error, Does.Contain("boom"));
         }
 
         [Test]
-        public void Exception_WithoutParentSink_DoesNotThrow()
+        public void Exception_WithoutParentFeedback_DoesNotThrow()
         {
             var s = new TestStylable { Throw = true };
             Assert.DoesNotThrow(() => Update(new Group { Children = Kids(Wrap(s)) }));
@@ -297,13 +297,13 @@ namespace VL.Qt.Tests
         [Test]
         public void Null_ShowsEmptyGroup_NoError()
         {
-            var sink = new ElementSink();
-            _ = sink[0]; // the container node allocates its slots before the reconciler runs
+            var feedback = new ElementFeedback();
+            _ = feedback[0]; // the container node allocates its slots before the reconciler runs
             var s = new TestStylable { ReturnNull = true };
-            Update(new Group { Sink = new SinkSlot(sink, 0), Children = Kids(Wrap(s)) });
+            Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = Kids(Wrap(s)) });
 
             Assert.That(_rec.Root!.Children[0].Type, Is.EqualTo(ElementType.Item));
-            Assert.That(sink.Error, Is.Null);
+            Assert.That(feedback.Error, Is.Null);
         }
 
         [Test]

@@ -30,7 +30,7 @@ namespace VL.Qt.Nodes
         internal ImageNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Image, Props>(addWarning, Create);
 
-        private static readonly Func<CommonInputs, Props, SinkSlot, Image> Create = static (c, p, slot) => new Image
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Image> Create = static (c, p, slot) => new Image
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -40,7 +40,7 @@ namespace VL.Qt.Nodes
                 Debug = c.Debug,
                 Interaction = c.Interaction,
                 Effect = c.Effect,
-                Sink = slot,
+                Feedback = slot,
                 Source = p.Image,
                 FillMode = p.FillMode,
                 Smooth = p.Smooth,

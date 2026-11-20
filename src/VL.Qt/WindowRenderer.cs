@@ -187,7 +187,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// frame start, after QtNative delivered the queued input: events into the sinks, so the element nodes see them
+        /// frame start, after QtNative delivered the queued input: events into the feedback, so the element nodes see them
         /// in this frame. The frame end (<see cref="AfterEvents"/>) polls again; each event is in exactly one of both polls.
         /// </summary>
         public void PollInput()
@@ -214,7 +214,7 @@ namespace VL.Qt
             return !_disposed && _window != IntPtr.Zero && Native.vlqt_window_get_perf_sample(_window, out sample) == 0;
         }
 
-        // Events and measured values into the sinks (read by the element nodes in the next Update).
+        // Events and measured values into the feedback (read by the element nodes in the next Update).
         private void PollEvents(bool frameStart = false)
         {
             var events = _core.ReadEvents(frameStart);

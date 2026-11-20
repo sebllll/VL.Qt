@@ -54,17 +54,17 @@ namespace VL.Qt.Nodes
 
         // The label box is Width x Height: the text is aligned left and vertically centered in it, so it stays
         // centered next to elements that are taller than the text.
-        private static readonly Func<CommonInputs, TextProps, SinkSlot, Text> CreateText = static (c, p, slot) => new Text
+        private static readonly Func<CommonInputs, TextProps, FeedbackSlot, Text> CreateText = static (c, p, slot) => new Text
             {
                 Size = new Vector2(p.Width, p.Height),
                 Anchor = RectangleAnchor.TopLeft,
-                Sink = slot,
+                Feedback = slot,
                 Content = p.Content,
                 Color = Color4.White,
                 VAlign = VerticalAlignment.Center,
             };
 
-        private static readonly Func<CommonInputs, LayoutProps, SinkSlot, Row> CreateRow = static (c, p, slot) => new Row
+        private static readonly Func<CommonInputs, LayoutProps, FeedbackSlot, Row> CreateRow = static (c, p, slot) => new Row
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -72,13 +72,13 @@ namespace VL.Qt.Nodes
                 Opacity = c.Opacity,
                 Interaction = c.Interaction,
                 Effect = c.Effect,
-                Sink = slot,
+                Feedback = slot,
                 Children = p.Children,
                 Spacing = p.Spacing,
                 ChildAlignment = VerticalAlignment.Center,
             };
 
-        private static readonly Func<CommonInputs, LayoutProps, SinkSlot, Column> CreateColumn = static (c, p, slot) => new Column
+        private static readonly Func<CommonInputs, LayoutProps, FeedbackSlot, Column> CreateColumn = static (c, p, slot) => new Column
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -86,7 +86,7 @@ namespace VL.Qt.Nodes
                 Opacity = c.Opacity,
                 Interaction = c.Interaction,
                 Effect = c.Effect,
-                Sink = slot,
+                Feedback = slot,
                 Children = p.Children,
                 Spacing = p.Spacing,
                 ChildAlignment = HorizontalAlignment.Left,

@@ -21,7 +21,7 @@ namespace VL.Qt.Tests
         private string _file = null!;
         private readonly Subject<FileSystemEventArgs> _events = new();
         private QmlElementNode _element = null!;
-        private SinkRegistry _registry = null!;
+        private FeedbackRouter _registry = null!;
         private uint _handle;
         private QmlNodeInstance? _instance;
 
@@ -33,8 +33,8 @@ namespace VL.Qt.Tests
             _dir = Directory.CreateTempSubdirectory("vlqt-qmlinst").FullName;
             _file = System.IO.Path.Combine(_dir, "Gauge.qml");
             _element = new QmlElementNode(_ => new Nop(), _ => _events);
-            _registry = new SinkRegistry();
-            _handle = _registry.Acquire(new SinkSlot(_element.Core.Sink, 0));
+            _registry = new FeedbackRouter();
+            _handle = _registry.Acquire(new FeedbackSlot(_element.Core.Feedback, 0));
         }
 
         [TearDown]
@@ -91,9 +91,9 @@ namespace VL.Qt.Tests
 
         private static string[] Names(QmlElement e) => Sent(e).Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray();
 
-        private SinkRegistryTests.Poll NewPoll() => new();
+        private FeedbackRouterTests.Poll NewPoll() => new();
 
-        private void Dispatch(SinkRegistryTests.Poll poll) => _registry.Dispatch(poll.Bytes);
+        private void Dispatch(FeedbackRouterTests.Poll poll) => _registry.Dispatch(poll.Bytes);
 
         // --- pins ---
 

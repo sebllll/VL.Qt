@@ -248,7 +248,7 @@ public static class EffectChainTest
         var cMask = Counts(w);
         s.Check(cMask.layers == 0, $"effect-chain: Mask removed -> no layer ({cMask})");
 
-        // 8) Duplicate kind in the chain: warning at the element node (read at the next Update, from the last frame's sink).
+        // 8) Duplicate kind in the chain: warning at the element node (read at the next Update, from the last frame's feedback).
         warnings.Clear();
         var dup = blur2.Update(blur2.Update(null, 0.3f, 32, 0, true, default), 0.6f, 32, 0, true, default);
         Frame(Text(text, "Fx", textBounds, 1.5f, dup), "duplicate");

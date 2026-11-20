@@ -6,22 +6,22 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Place fallback of <see cref="SceneRegistry.TryLocate"/>: a new instance is found by its sink slot.</summary>
+    /// <summary>Place fallback of <see cref="SceneRegistry.TryLocate"/>: a new instance is found by its feedback slot.</summary>
     public class SceneRegistrySlotTests
     {
         private SceneRegistry _scene = null!;
         private Reconciler _reconciler = null!;
-        private SinkSlot _slot;
+        private FeedbackSlot _slot;
 
         [SetUp]
         public void SetUp()
         {
             _scene = new SceneRegistry();
             _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene) { Window = new IntPtr(1) };
-            _slot = new SinkSlot(new ElementSink(), 0);
+            _slot = new FeedbackSlot(new ElementFeedback(), 0);
         }
 
-        private Group Child(float opacity) => new() { Sink = _slot, Opacity = opacity };
+        private Group Child(float opacity) => new() { Feedback = _slot, Opacity = opacity };
 
         private Group Root(Element child) => new() { Children = [new Rectangle { Size = new Vector2(1, 1) }, child] };
 
@@ -46,8 +46,8 @@ namespace VL.Qt.Tests
         {
             _reconciler.Update(Root(Child(1)), Space.DIPTopLeft);
             Assert.That(_scene.TryLocate(new Rectangle(), out _, out _), Is.False);
-            Assert.That(_scene.TryLocate(new Group { Sink = new SinkSlot(new ElementSink(), 0) }, out _, out _), Is.False);
-            Assert.That(_scene.TryLocate(new Group { Sink = new SinkSlot(_slot.Sink, 1) }, out _, out _), Is.False, "other index of the sink");
+            Assert.That(_scene.TryLocate(new Group { Feedback = new FeedbackSlot(new ElementFeedback(), 0) }, out _, out _), Is.False);
+            Assert.That(_scene.TryLocate(new Group { Feedback = new FeedbackSlot(_slot.Feedback, 1) }, out _, out _), Is.False, "other index of the feedback");
         }
 
         [Test]

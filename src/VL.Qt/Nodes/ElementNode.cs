@@ -54,12 +54,12 @@ namespace VL.Qt.Nodes
     /// by the public <c>[ProcessNode]</c> class (composition: a public node cannot derive from an internal base,
     /// and a public base would show up as a node).
     /// <list type="bullet">
-    /// <item>one <see cref="ElementSink"/> per node instance (slot 0), set on every description;</item>
+    /// <item>one <see cref="ElementFeedback"/> per node instance (slot 0), set on every description;</item>
     /// <item>change detection: a new description only if <see cref="CommonInputs"/> or the element specific
     /// <typeparamref name="TProps"/> changed, otherwise the last instance (reference equal → the reconciler skips it);</item>
-    /// <item>measurement outputs and the clicks of a Button from the sink (state of the last pump, 1 frame latency);</item>
-    /// <item>the sink warning (e.g. a Video at several places, an Interaction at a later place) as persistent node warning; the element itself may hang at several places of one tree and in several renderers;</item>
-    /// <item>the sink error (reported by Qt for the element, e.g. file not found, or a rejected apply) as persistent node warning,
+    /// <item>measurement outputs and the clicks of a Button from the feedback (state of the last pump, 1 frame latency);</item>
+    /// <item>the feedback warning (e.g. a Video at several places, an Interaction at a later place) as persistent node warning; the element itself may hang at several places of one tree and in several renderers;</item>
+    /// <item>the feedback error (reported by Qt for the element, e.g. file not found, or a rejected apply) as persistent node warning,
     /// logged with the node's logger (<see cref="NodeErrors"/>).</item>
     /// </list>
     /// No static state; nothing here depends on the app (F8/F5 just creates new node instances). Main thread only.
@@ -74,7 +74,7 @@ namespace VL.Qt.Nodes
 
         private readonly Func<string, IDisposable> _addWarning;
         private readonly NodeErrors? _errors;
-        private readonly Func<CommonInputs, TProps, SinkSlot, TElement> _create;
+        private readonly Func<CommonInputs, TProps, FeedbackSlot, TElement> _create;
         private TElement? _last;
         private CommonInputs _common;
         private TProps _props;
@@ -84,7 +84,7 @@ namespace VL.Qt.Nodes
 
         /// <param name="nodeContext">Context of the public node (warning and error are shown there).</param>
         /// <param name="create">Builds a description; use a static lambda (no capture → no allocation).</param>
-        public ElementNode(NodeContext nodeContext, Func<CommonInputs, TProps, SinkSlot, TElement> create)
+        public ElementNode(NodeContext nodeContext, Func<CommonInputs, TProps, FeedbackSlot, TElement> create)
             : this(w => nodeContext.AddPersistentMessage(MessageSeverity.Warning, w), create)
         {
             _errors = new NodeErrors(nodeContext);
@@ -93,16 +93,16 @@ namespace VL.Qt.Nodes
         /// <param name="addWarning">Shows a warning, the result removes it (tests: no NodeContext/AppHost needed; the
         /// error is then only tracked in <see cref="Error"/>).</param>
         /// <param name="create">Builds a description; use a static lambda (no capture → no allocation).</param>
-        public ElementNode(Func<string, IDisposable> addWarning, Func<CommonInputs, TProps, SinkSlot, TElement> create)
+        public ElementNode(Func<string, IDisposable> addWarning, Func<CommonInputs, TProps, FeedbackSlot, TElement> create)
         {
             _addWarning = addWarning;
             _create = create;
         }
 
-        public ElementSink Sink { get; } = new();
+        public ElementFeedback Feedback { get; } = new();
 
         /// <summary>Slot written into every description (v1 nodes output one element → index 0).</summary>
-        public SinkSlot Slot => new(Sink, 0);
+        public FeedbackSlot Slot => new(Feedback, 0);
 
         /// <summary>Warning currently shown at the node, null if none.</summary>
         public string? Warning => _warning;
@@ -115,7 +115,7 @@ namespace VL.Qt.Nodes
 
         /// <summary>
         /// Returns the description for the inputs: the last instance if nothing changed, else a new one.
-        /// Also updates the node warning and error from the sink. Call once per Update.
+        /// Also updates the node warning and error from the feedback. Call once per Update.
         /// </summary>
         public TElement Describe(in CommonInputs common, in TProps props)
         {
@@ -135,31 +135,31 @@ namespace VL.Qt.Nodes
         public const string Author = "Qt";
 
         /// <summary>
-        /// Takes the clicks (Qt <c>clicked</c>) the sink received since the last call, writes one <see cref="Unit"/> per
+        /// Takes the clicks (Qt <c>clicked</c>) the feedback received since the last call, writes one <see cref="Unit"/> per
         /// click into <paramref name="isClicked"/> if connected (author <see cref="Author"/>) and returns their number.
         /// Button only; call once per Update. Unconnected pins arrive as null (<c>[DefaultValue(null)] IChannel&lt;T&gt;?</c>,
         /// otherwise vvvv lifts them to a private channel).
         /// </summary>
         public int TakeClicks(IChannel<Unit>? isClicked)
         {
-            var clicks = Sink.TakeClicks();
+            var clicks = Feedback.TakeClicks();
             if (isClicked.IsValid())
                 for (int i = 0; i < clicks; i++)
                     isClicked.SetValueAndAuthor(Unit.Default, Author);
             return clicks;
         }
 
-        /// <summary>Outputs from the sink (state of the last pump, in units).</summary>
+        /// <summary>Outputs from the feedback (state of the last pump, in units).</summary>
         public void ReadOutputs(out Vector2 measuredSize, out RectangleF sceneBounds)
         {
-            var sink = Sink;
-            measuredSize = sink.MeasuredSize();
-            sceneBounds = sink.SceneBounds();
+            var feedback = Feedback;
+            measuredSize = feedback.MeasuredSize();
+            sceneBounds = feedback.SceneBounds();
         }
 
         private void UpdateWarning()
         {
-            var warning = Sink.Warning;
+            var warning = Feedback.Warning;
             if (ReferenceEquals(warning, _warning) || warning == _warning)
                 return;
             _warningMessage?.Dispose();
@@ -169,7 +169,7 @@ namespace VL.Qt.Nodes
 
         private void UpdateError()
         {
-            var error = Sink.Error;
+            var error = Feedback.Error;
             if (ReferenceEquals(error, _error) || error == _error)
                 return;
             _error = error;

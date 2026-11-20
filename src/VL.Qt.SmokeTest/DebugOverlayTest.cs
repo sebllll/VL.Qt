@@ -18,8 +18,8 @@ public static class DebugOverlayTest
 {
     private const uint Col = 1, Txt = 5, Grp = 6, RowId = 8, Rot = 9, Ovf = 2;
     private static uint Child(uint parent, uint i) => 10 + parent * 10 + i;
-    private const uint HHover = 100; // element sink of the green column child
-    private const uint HoverId = 900, HHoverHandler = 101; // its Hover handler and that handler's sink
+    private const uint HHover = 100; // element feedback of the green column child
+    private const uint HoverId = 900, HHoverHandler = 101; // its Hover handler and that handler's feedback
 
     private readonly record struct Rec(ushort Event, uint Handle, byte[] Payload);
 
@@ -140,12 +140,12 @@ public static class DebugOverlayTest
         cmd.SetMat4(Rot, Protocol.Prop.Transform, in rot);
         all.AddRange(new[] { Col, Child(Col, 0), Child(Col, 1), Child(Col, 2), Txt, Grp, Child(Grp, 0), Child(Grp, 1), RowId,
             Child(RowId, 0), Child(RowId, 1), Child(RowId, 2), Rot });
-        // Measure sinks on every element (handle = id); the green child keeps its interactive sink.
+        // Measure feedback on every element (handle = id); the green child keeps its interactive feedback.
         foreach (var id in all)
             if (id != Child(Col, 1)) cmd.Bind(id, id, 0);
         CheckApply("scene");
 
-        // Baseline: measured values (MEASURED + SCENE_BOUNDS of every sink).
+        // Baseline: measured values (MEASURED + SCENE_BOUNDS of every feedback).
         var baseline = new Dictionary<(ushort, uint), string>();
         foreach (var r in Frame(3))
             if (r.Event is Protocol.Ev.Measured or Protocol.Ev.SceneBounds)
@@ -221,7 +221,7 @@ public static class DebugOverlayTest
         Frame(2);
         using (var a = s.Grab(w, "30_debug_off2.png"))
             s.Check(IsBg(Px(a, 20, 100)) && Native.vlqt_window_get_debug(w) == 0, $"debug: overlay gone after off ({Px(a, 20, 100)})");
-        // Re-bind every sink: the first poll after BIND reports the current values, compare with the baseline.
+        // Re-bind every feedback: the first poll after BIND reports the current values, compare with the baseline.
         foreach (var id in all)
         {
             cmd.Bind(id, 0, 0);

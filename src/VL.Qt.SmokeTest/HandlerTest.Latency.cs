@@ -7,7 +7,7 @@ using VL.Lib.Animation;
 using VL.Qt;
 
 // Input latency: input queued like platform input between two frames (vlqt_test_queue_mouse / _touch) reaches the
-// sinks at the frame start (QtPump tick: vlqt_app_deliver_input, then PollInput), i.e. before the node updates of that
+// feedback at the frame start (QtPump tick: vlqt_app_deliver_input, then PollInput), i.e. before the node updates of that
 // frame. Before #24 it reached them at the frame end, so the patch saw it one frame later. Measured in both modes on a
 // simulated clock (QtPump.DeliverInputAtFrameStart), plus: no event twice or lost (press/release pairs, multitouch), no
 // render in the delivery, a window destroyed or created between two frames.
@@ -42,13 +42,13 @@ public static partial class HandlerTest
         }
     }
 
-    // A renderer of the pump: the polled pointer records stand for the sinks the element nodes read in their update.
+    // A renderer of the pump: the polled pointer records stand for the feedback the element nodes read in their update.
     private sealed class LatencyWindow : IQtFrameParticipant
     {
         private readonly byte[] _buf = new byte[1 << 16];
         private readonly Scenario _s;
         public readonly IntPtr W;
-        public readonly List<Rec> Sinks = new(); // since the last Clear (one measurement)
+        public readonly List<Rec> Feedback = new(); // since the last Clear (one measurement)
         public readonly List<Rec> All = new();   // the whole run (pairs, duplicates)
         public bool Destroyed;
 
@@ -73,7 +73,7 @@ public static partial class HandlerTest
             if (n < 0)
                 _s.Check(false, $"input-latency: poll ({n}) {Native.LastError()}");
             var recs = Parse(_buf.AsSpan(0, Math.Max(n, 0)), _s).FindAll(r => IsPointerEvent(r.Event));
-            Sinks.AddRange(recs);
+            Feedback.AddRange(recs);
             All.AddRange(recs);
         }
 
@@ -99,7 +99,7 @@ public static partial class HandlerTest
             beforeOk &= before[i] == 1 || (i == 3 && before[i] == 2 && !OperatingSystem.IsWindows());
         s.Check(beforeOk, $"input-latency: before #24 the patch sees queued input one frame later, the touch move up to two on Linux ({string.Join(",", before)})");
         s.Check(Array.TrueForAll(after, l => l == 0), $"input-latency: input reaches the patch in the frame it arrived before ({string.Join(",", after)})");
-        // Nothing twice, nothing lost: the sinks get the same records in the same order as with the poll at the frame end only.
+        // Nothing twice, nothing lost: the feedback gets the same records in the same order as with the poll at the frame end only.
         s.Check(Dump(recsBefore) == Dump(recsAfter), $"input-latency: same records as before #24 (before: {Dump(recsBefore)} | now: {Dump(recsAfter)})");
         LatencyLifecycle(app, s);
         s.Check(log.Errors.Count == 0, $"input-latency: no errors logged ({string.Join(" | ", log.Errors)})");
@@ -117,11 +117,11 @@ public static partial class HandlerTest
         cmd.Create(A, Protocol.Type.Rectangle);
         cmd.SetPlace(A, 100, 100, 300, 300);
         cmd.Reparent(A, 0, 0);
-        foreach (var (id, type, sink) in new[] { (TA, Protocol.Type.TapHandler, STA), (TP, Protocol.Type.TouchPointsHandler, STP) })
+        foreach (var (id, type, feedbackId) in new[] { (TA, Protocol.Type.TapHandler, STA), (TP, Protocol.Type.TouchPointsHandler, STP) })
         {
             cmd.Create(id, type);
             cmd.Reparent(id, A, 0);
-            cmd.Bind(id, sink, 0);
+            cmd.Bind(id, feedbackId, 0);
         }
         var rc = Native.Apply(w.W, cmd.EndFrame());
         s.Check(rc == 0, $"input-latency {tag}: scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
@@ -132,13 +132,13 @@ public static partial class HandlerTest
         // Frames from the first frame start after the input until the "node update" (between tick and frame end) sees it.
         int Latency(Action input, Func<List<Rec>, bool> seen)
         {
-            w.Sinks.Clear();
+            w.Feedback.Clear();
             input();
             PumpTest.ForeignMessageLoop(2); // vvvv's message loop between two frames
             for (int k = 0; k < 4; k++)
             {
                 clock.Tick();
-                if (seen(w.Sinks))
+                if (seen(w.Feedback))
                 {
                     Frame(clock);
                     return k;

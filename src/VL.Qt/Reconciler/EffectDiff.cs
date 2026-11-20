@@ -41,7 +41,7 @@ namespace VL.Qt
             var links = Effect.Segment(chain, out var warnings);
             node.EffectChain = chain;
             node.EffectLinks = links;
-            SetEffectWarning(node, next.Sink, warnings.IsEmpty ? null : string.Join(" ", warnings));
+            SetEffectWarning(node, next.Feedback, warnings.IsEmpty ? null : string.Join(" ", warnings));
 
             var elements = CollectEffectElements(links);
             var old = node.EffectObjects;
@@ -290,7 +290,7 @@ namespace VL.Qt
         }
 
         /// <summary>Writes the fold warning of <paramref name="node"/> into <paramref name="slot"/> (null clears what this node wrote).</summary>
-        private static void SetEffectWarning(Node node, SinkSlot slot, string? warning)
+        private static void SetEffectWarning(Node node, FeedbackSlot slot, string? warning)
         {
             if (warning == node.EffectWarning)
                 return;

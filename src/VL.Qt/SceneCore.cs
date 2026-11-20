@@ -10,14 +10,14 @@ namespace VL.Qt
     /// <summary>
     /// What a Qt scene handle needs on the managed side, whether it is a window (<see cref="WindowRenderer"/>) or an
     /// offscreen scene (<see cref="OffscreenRenderer"/>): reconciler, command buffer, resync after a failed apply,
-    /// apply errors at the element nodes, event poll into the sinks and the clear color. Both handles go through the
+    /// apply errors at the element nodes, event poll into the feedback and the clear color. Both handles go through the
     /// same vlqt_window_* functions. Main thread only.
     /// </summary>
     internal sealed class SceneCore
     {
         private readonly CommandWriter _commands = new CommandWriter();
         private readonly CommandWriter _wipe = new CommandWriter(); // RESET of the resync
-        private readonly List<SinkState> _applyErrorSlots = new(); // slots showing an apply error
+        private readonly List<FeedbackState> _applyErrorSlots = new(); // slots showing an apply error
         private readonly Reconciler _reconciler;
         private readonly ResyncController _resync;
         private IntPtr _handle;
@@ -164,7 +164,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// the failing object id (vlqt_window_get_apply_error) resolved to its sink slot shows the error at the
+        /// the failing object id (vlqt_window_get_apply_error) resolved to its feedback slot shows the error at the
         /// element node; returns the text for the renderer's Error output, empty if the element took it.
         /// </summary>
         private string ReportApplyError()
@@ -235,11 +235,11 @@ namespace VL.Qt
             return new ReadOnlySpan<byte>(_poll, 0, n);
         }
 
-        /// <summary>Events of <see cref="ReadEvents"/> into the sinks (read by the element nodes in the next Update).</summary>
+        /// <summary>Events of <see cref="ReadEvents"/> into the feedback (read by the element nodes in the next Update).</summary>
         public void Dispatch(ReadOnlySpan<byte> events, bool frameStart)
         {
             // Window records (handle 0) count as ignored there.
-            var result = _reconciler.Sinks.Dispatch(events);
+            var result = _reconciler.FeedbackRouter.Dispatch(events);
             if (result.Error is { } e)
                 _pollError = "poll: " + e;
             else if (!frameStart)

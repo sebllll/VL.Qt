@@ -8,7 +8,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Occurrences and duplicates (SceneRegistry) and sink binding (BIND without flags) of the reconciler (04d).</summary>
+    /// <summary>Occurrences and duplicates (SceneRegistry) and feedback binding (BIND without flags) of the reconciler (04d).</summary>
     public class ReconcilerSceneTests
     {
         private RecordingSink _sink = null!;
@@ -24,8 +24,8 @@ namespace VL.Qt.Tests
         }
 
         private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
-        private static Rectangle R(float w = 1, SinkSlot sink = default)
-            => new() { Size = new Vector2(w, 1), Sink = sink };
+        private static Rectangle R(float w = 1, FeedbackSlot feedback = default)
+            => new() { Size = new Vector2(w, 1), Feedback = feedback };
 
         private string[] Structural => _sink.Commands.Where(c => !c.StartsWith("SET ", StringComparison.Ordinal)).ToArray();
 
@@ -37,15 +37,15 @@ namespace VL.Qt.Tests
 
 ﻿        // --- several occurrences in one tree ---
 
-        private static Video V(SinkSlot sink = default) => new() { Size = new Vector2(1, 1), Sink = sink };
+        private static Video V(FeedbackSlot feedback = default) => new() { Size = new Vector2(1, 1), Feedback = feedback };
 
-        private bool IsPrimaryHandle(Node n) => _rec.Sinks.IsPrimary(n.BoundHandle);
+        private bool IsPrimaryHandle(Node n) => _rec.FeedbackRouter.IsPrimary(n.BoundFeedbackId);
 
         [Test]
         public void TwoOccurrences_TwoObjects_OwnHandlesOnSameSlot()
         {
-            var sink = new ElementSink();
-            var e = R(1, new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var e = R(1, new FeedbackSlot(feedback, 0));
             var x = R(2);
             Frame(G(e, e, x));
 
@@ -53,12 +53,12 @@ namespace VL.Qt.Tests
             Assert.That(_sink.OfOp("CREATE").Count(), Is.EqualTo(4)); // root, e twice, x
             Assert.That(c.Any(n => n.IsIgnored), Is.False);
             Assert.That(c[0].Id, Is.Not.EqualTo(c[1].Id));
-            Assert.That(c[0].BoundHandle, Is.Not.EqualTo(c[1].BoundHandle));
-            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {c[0].Id} {c[0].BoundHandle} 0", $"BIND {c[1].Id} {c[1].BoundHandle} 0" }));
-            Assert.That(_rec.Sinks.TryResolve(c[1].BoundHandle, out var slot) && slot == new SinkSlot(sink, 0), Is.True);
+            Assert.That(c[0].BoundFeedbackId, Is.Not.EqualTo(c[1].BoundFeedbackId));
+            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {c[0].Id} {c[0].BoundFeedbackId} 0", $"BIND {c[1].Id} {c[1].BoundFeedbackId} 0" }));
+            Assert.That(_rec.FeedbackRouter.TryResolve(c[1].BoundFeedbackId, out var slot) && slot == new FeedbackSlot(feedback, 0), Is.True);
             Assert.That(_rec.Bindings.Count, Is.EqualTo(2));
             Assert.That(Structural, Does.Contain($"REPARENT {c[2].Id} {_rec.Root.Id} 2"));
-            Assert.That(sink[0].Warning, Is.Null);
+            Assert.That(feedback[0].Warning, Is.Null);
             Assert.That(_scene.OccurrencesOf(e), Is.EqualTo(2));
             Assert.That(_scene.OwnerOf(e), Is.SameAs(c[0]), "first in traversal order is primary");
             Assert.That(IsPrimaryHandle(c[0]) && !IsPrimaryHandle(c[1]), Is.True);
@@ -86,45 +86,45 @@ namespace VL.Qt.Tests
         [Test]
         public void StateOnlyFromPrimary_EventsFromEvery()
         {
-            var sink = new ElementSink();
-            var e = R(1, new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var e = R(1, new FeedbackSlot(feedback, 0));
             Frame(G(e, e));
-            uint h0 = _rec.Root!.Children[0].BoundHandle, h1 = _rec.Root.Children[1].BoundHandle;
+            uint h0 = _rec.Root!.Children[0].BoundFeedbackId, h1 = _rec.Root.Children[1].BoundFeedbackId;
 
-            var res = _rec.Sinks.Dispatch(new SinkRegistryTests.Poll()
+            var res = _rec.FeedbackRouter.Dispatch(new FeedbackRouterTests.Poll()
                 .Measured(h1, 9, 9).Bounds(h1, 9, 9, 9, 9).Error(h1, "second")
                 .Measured(h0, 1, 2).Error(h0, "first")
                 .Click(h0, 1).Click(h1, 2).Bytes);
             Assert.That(res.Applied, Is.EqualTo(4));
             Assert.That(res.Ignored, Is.EqualTo(3));
-            Assert.That(sink[0].MeasuredSize, Is.EqualTo(SpaceMapping.Default.FromQt(new Vector2(1, 2))));
-            Assert.That(sink[0].SceneBounds, Is.EqualTo(default(RectangleF)));
-            Assert.That(sink[0].Error, Is.EqualTo("first"));
-            Assert.That(sink[0].PendingClicks, Is.EqualTo(3), "clicks of both occurrences add up");
+            Assert.That(feedback[0].MeasuredSize, Is.EqualTo(SpaceMapping.Default.FromQt(new Vector2(1, 2))));
+            Assert.That(feedback[0].SceneBounds, Is.EqualTo(default(RectangleF)));
+            Assert.That(feedback[0].Error, Is.EqualTo("first"));
+            Assert.That(feedback[0].PendingClicks, Is.EqualTo(3), "clicks of both occurrences add up");
 
             // Removing the second occurrence leaves the state of the first alone.
             Frame(G(e));
-            Assert.That(sink[0].Error, Is.EqualTo("first"));
+            Assert.That(feedback[0].Error, Is.EqualTo("first"));
         }
 
         [Test]
         public void FirstRemoved_SecondBecomesPrimary_ReboundWithNewHandle()
         {
-            var sink = new ElementSink();
-            var e = R(1, new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var e = R(1, new FeedbackSlot(feedback, 0));
             Frame(G(e, e));
             var second = _rec.Root!.Children[1];
-            uint old = second.BoundHandle;
-            _rec.Sinks.Dispatch(new SinkRegistryTests.Poll().Error(_rec.Root.Children[0].BoundHandle, "x").Bytes);
+            uint old = second.BoundFeedbackId;
+            _rec.FeedbackRouter.Dispatch(new FeedbackRouterTests.Poll().Error(_rec.Root.Children[0].BoundFeedbackId, "x").Bytes);
 
             // Position 0 gets another element; position 1 is skipped (reference-equal) but takes over.
             Frame(G(R(5), e));
             Assert.That(_scene.OwnerOf(e), Is.SameAs(second));
-            Assert.That(second.BoundHandle, Is.Not.EqualTo(old));
+            Assert.That(second.BoundFeedbackId, Is.Not.EqualTo(old));
             Assert.That(IsPrimaryHandle(second), Is.True);
-            Assert.That(_rec.Sinks.TryResolve(old, out _), Is.False, "old handle released");
-            Assert.That(_sink.OfOp("BIND"), Does.Contain($"BIND {second.Id} {second.BoundHandle} 0"), "QtNative sends its state again");
-            Assert.That(sink[0].Error, Is.Null, "reset with the old primary; the new one reports its own");
+            Assert.That(_rec.FeedbackRouter.TryResolve(old, out _), Is.False, "old handle released");
+            Assert.That(_sink.OfOp("BIND"), Does.Contain($"BIND {second.Id} {second.BoundFeedbackId} 0"), "QtNative sends its state again");
+            Assert.That(feedback[0].Error, Is.Null, "reset with the old primary; the new one reports its own");
 
             Frame(G(R(5), e));
             Assert.That(_sink.Commands, Is.Empty);
@@ -133,7 +133,7 @@ namespace VL.Qt.Tests
         [Test]
         public void FirstDestroyed_SecondBecomesPrimary()
         {
-            var e = R(1, new SinkSlot(new ElementSink(), 0));
+            var e = R(1, new FeedbackSlot(new ElementFeedback(), 0));
             var tail = G(e);
             Frame(G(G(e), tail));
             var second = _rec.Root!.Children[1].Children[0];
@@ -148,12 +148,12 @@ namespace VL.Qt.Tests
         [Test]
         public void NewOccurrenceBeforeSkippedSubtree_TakesPrimary_NoDestroy()
         {
-            var sink = new ElementSink();
-            var e = R(1, new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var e = R(1, new FeedbackSlot(feedback, 0));
             var s = G(e);
             Frame(G(R(5), s));
             var inS = _rec.Root!.Children[1].Children[0];
-            uint inSHandle = inS.BoundHandle;
+            uint inSHandle = inS.BoundFeedbackId;
 
             // e appears in front of the unchanged (reference-equal, skipped) subtree s, which still contains e.
             Frame(G(e, s));
@@ -161,10 +161,10 @@ namespace VL.Qt.Tests
             Assert.That(_scene.OwnerOf(e), Is.SameAs(first));
             Assert.That(inS.IsIgnored, Is.False);
             Assert.That(_sink.OfOp("DESTROY"), Is.Empty);
-            Assert.That(inS.BoundHandle, Is.EqualTo(inSHandle), "demoted without BIND");
+            Assert.That(inS.BoundFeedbackId, Is.EqualTo(inSHandle), "demoted without BIND");
             Assert.That(IsPrimaryHandle(inS), Is.False);
             Assert.That(IsPrimaryHandle(first), Is.True);
-            Assert.That(sink[0].Warning, Is.Null);
+            Assert.That(feedback[0].Warning, Is.Null);
 
             // Stable afterwards.
             Frame(G(e, s));
@@ -174,13 +174,13 @@ namespace VL.Qt.Tests
             Frame(G(R(5), s));
             Assert.That(_scene.OwnerOf(e), Is.SameAs(inS));
             Assert.That(IsPrimaryHandle(inS), Is.True);
-            Assert.That(_sink.OfOp("BIND"), Does.Contain($"BIND {inS.Id} {inS.BoundHandle} 0"));
+            Assert.That(_sink.OfOp("BIND"), Does.Contain($"BIND {inS.Id} {inS.BoundFeedbackId} 0"));
         }
 
         [Test]
         public void MaskCountsAtItsPlace_BeforeChildren()
         {
-            var e = R(1, new SinkSlot(new ElementSink(), 0));
+            var e = R(1, new FeedbackSlot(new ElementFeedback(), 0));
             var inner = new Group { Effect = new MaskEffect(null, e, 0, 0, 1, 0, false), Children = ImmutableArray.Create<Element>(e) };
             Frame(G(e, inner));
             Assert.That(_scene.OccurrencesOf(e), Is.EqualTo(3));
@@ -193,7 +193,7 @@ namespace VL.Qt.Tests
         [Test]
         public void NewInstanceEveryFrame_NoRebind()
         {
-            var slot = new SinkSlot(new ElementSink(), 0);
+            var slot = new FeedbackSlot(new ElementFeedback(), 0);
             var e = R(1, slot);
             Frame(G(e, e));
             for (int i = 2; i < 5; i++)
@@ -210,16 +210,16 @@ namespace VL.Qt.Tests
         // --- video: shown once only ---
 
         [Test]
-        public void VideoTwiceInTree_SecondIgnored_WarningInSink()
+        public void VideoTwiceInTree_SecondIgnored_WarningInFeedback()
         {
-            var sink = new ElementSink();
-            var v = V(new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var v = V(new FeedbackSlot(feedback, 0));
             var x = R(2);
             Frame(G(v, v, x));
 
             Assert.That(_sink.OfOp("CREATE").Count(), Is.EqualTo(3)); // root, v, x
             Assert.That(_rec.Root!.Children[1].IsIgnored, Is.True);
-            Assert.That(sink[0].Warning, Is.EqualTo(SceneRegistry.VideoDuplicateWarning));
+            Assert.That(feedback[0].Warning, Is.EqualTo(SceneRegistry.VideoDuplicateWarning));
             Assert.That(Structural, Does.Contain($"REPARENT {_rec.Root.Children[2].Id} {_rec.Root.Id} 1"));
             Assert.That(_sink.OfOp("BIND").Count(), Is.EqualTo(1));
 
@@ -227,15 +227,15 @@ namespace VL.Qt.Tests
             Assert.That(Structural, Is.Empty);
 
             Frame(G(v, x));
-            Assert.That(sink[0].Warning, Is.Null);
+            Assert.That(feedback[0].Warning, Is.Null);
             Assert.That(_scene.DuplicatesOf(v), Is.EqualTo(0));
         }
 
         [Test]
         public void Video_FirstOccurrenceWins_TakesOverFromSkippedSubtree()
         {
-            var sink = new ElementSink();
-            var v = V(new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var v = V(new FeedbackSlot(feedback, 0));
             var s = G(v);
             Frame(G(R(5), s));
             uint oldId = _rec.Root!.Children[1].Children[0].Id;
@@ -244,7 +244,7 @@ namespace VL.Qt.Tests
             Assert.That(_scene.OwnerOf(v), Is.SameAs(_rec.Root.Children[0]));
             Assert.That(_rec.Root.Children[1].Children[0].IsIgnored, Is.True);
             Assert.That(Structural, Does.Contain($"DESTROY {oldId}"));
-            Assert.That(sink[0].Warning, Is.EqualTo(SceneRegistry.VideoDuplicateWarning));
+            Assert.That(feedback[0].Warning, Is.EqualTo(SceneRegistry.VideoDuplicateWarning));
 
             Frame(G(v, s));
             Assert.That(Structural, Is.Empty);
@@ -255,8 +255,8 @@ namespace VL.Qt.Tests
         [Test]
         public void TwoReconcilers_BothCreate_PrimaryMovesToSecondWhenFirstLetsGo()
         {
-            var sink = new ElementSink();
-            var e = R(1, new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var e = R(1, new FeedbackSlot(feedback, 0));
             var sink2 = new RecordingSink();
             var rec2 = new Reconciler(sink2, new IdAllocator(), _scene);
 
@@ -267,11 +267,11 @@ namespace VL.Qt.Tests
             var n2 = rec2.Root!.Children[0];
             Assert.That(sink2.OfOp("CREATE").Count(), Is.EqualTo(2)); // group and e
             Assert.That(n2.IsIgnored, Is.False);
-            Assert.That(sink[0].Warning, Is.Null);
+            Assert.That(feedback[0].Warning, Is.Null);
             Assert.That(_scene.OccurrencesOf(e), Is.EqualTo(3));
             Assert.That(_scene.OwnerOf(e), Is.SameAs(_rec.Root!.Children[0]));
             Assert.That(_scene.OwnerReconcilerOf(e), Is.SameAs(_rec));
-            Assert.That(n2.IsPrimary || rec2.Sinks.IsPrimary(n2.BoundHandle), Is.False);
+            Assert.That(n2.IsPrimary || rec2.FeedbackRouter.IsPrimary(n2.BoundFeedbackId), Is.False);
 
             // Steady: nothing to send, regardless of order.
             sink2.Clear();
@@ -293,7 +293,7 @@ namespace VL.Qt.Tests
             Assert.That(sink2.OfOp("CREATE").Count(), Is.EqualTo(0));
             Assert.That(sink2.OfOp("BIND").Count(), Is.EqualTo(1)); // re-bound: QtNative sends its state again
             Assert.That(_scene.OwnerOf(e), Is.SameAs(n2));
-            Assert.That(n2.IsPrimary && rec2.Sinks.IsPrimary(n2.BoundHandle), Is.True);
+            Assert.That(n2.IsPrimary && rec2.FeedbackRouter.IsPrimary(n2.BoundFeedbackId), Is.True);
 
             // The first renderer shows it again → a further occurrence there (registration order).
             Frame(G(e));
@@ -310,7 +310,7 @@ namespace VL.Qt.Tests
         [Test]
         public void TwoReconcilers_MoveInsideOwnerTree_KeepsPrimaryThere()
         {
-            var e = R(1, new SinkSlot(new ElementSink(), 0));
+            var e = R(1, new FeedbackSlot(new ElementFeedback(), 0));
             var x = R(2);
             var rec2 = new Reconciler(new RecordingSink(), new IdAllocator(), _scene);
             Frame(G(e, x));
@@ -326,7 +326,7 @@ namespace VL.Qt.Tests
         [Test]
         public void TwoReconcilers_ClearOfOwner_HandsOver()
         {
-            var e = R(1, new SinkSlot(new ElementSink(), 0));
+            var e = R(1, new FeedbackSlot(new ElementFeedback(), 0));
             var rec2 = new Reconciler(new RecordingSink(), new IdAllocator(), _scene);
             var root2 = G(e);
             Frame(G(e));
@@ -335,14 +335,14 @@ namespace VL.Qt.Tests
             _rec.Clear();
             rec2.Update(root2, Space.DIPTopLeft);
             Assert.That(_scene.OwnerOf(e), Is.SameAs(rec2.Root!.Children[0]));
-            Assert.That(rec2.Sinks.IsPrimary(rec2.Root.Children[0].BoundHandle), Is.True);
+            Assert.That(rec2.FeedbackRouter.IsPrimary(rec2.Root.Children[0].BoundFeedbackId), Is.True);
         }
 
         [Test]
         public void VideoAcrossTwoReconcilers_FirstWins_SecondTakesOverWhenFree()
         {
-            var sink = new ElementSink();
-            var v = V(new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var v = V(new FeedbackSlot(feedback, 0));
             var sink2 = new RecordingSink();
             var rec2 = new Reconciler(sink2, new IdAllocator(), _scene);
 
@@ -352,7 +352,7 @@ namespace VL.Qt.Tests
 
             Assert.That(sink2.OfOp("CREATE").Count(), Is.EqualTo(1)); // only the group
             Assert.That(rec2.Root!.Children[0].IsIgnored, Is.True);
-            Assert.That(sink[0].Warning, Is.EqualTo(SceneRegistry.VideoDuplicateWarning));
+            Assert.That(feedback[0].Warning, Is.EqualTo(SceneRegistry.VideoDuplicateWarning));
 
             // Steady: the first owner keeps it, regardless of order.
             sink2.Clear();
@@ -367,7 +367,7 @@ namespace VL.Qt.Tests
             rec2.Update(root2, Space.DIPTopLeft);
             Assert.That(sink2.OfOp("CREATE").Count(), Is.EqualTo(1));
             Assert.That(rec2.Root.Children[0].IsIgnored, Is.False);
-            Assert.That(sink[0].Warning, Is.Null);
+            Assert.That(feedback[0].Warning, Is.Null);
             Assert.That(_scene.OwnerOf(v), Is.SameAs(rec2.Root.Children[0]));
         }
 
@@ -375,8 +375,8 @@ namespace VL.Qt.Tests
         public void AppRestart_NewRegistry_StaleOwnerIsNoDuplicate()
         {
             // App 1: a renderer owns the video e and is never disposed/cleared (unclean F8).
-            var sink = new ElementSink();
-            var e = V(new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var e = V(new FeedbackSlot(feedback, 0));
             Frame(G(e));
             Assert.That(_scene.OwnerOf(e), Is.Not.Null);
 
@@ -388,7 +388,7 @@ namespace VL.Qt.Tests
             Assert.That(sink2.OfOp("CREATE").Count(), Is.EqualTo(2));
             Assert.That(rec2.Root!.Children[0].IsIgnored, Is.False);
             Assert.That(scene2.OwnerOf(e), Is.SameAs(rec2.Root.Children[0]));
-            Assert.That(sink[0].Warning, Is.Null);
+            Assert.That(feedback[0].Warning, Is.Null);
         }
 
         [Test]
@@ -420,68 +420,68 @@ namespace VL.Qt.Tests
         // --- binding ---
 
         [Test]
-        public void SinkBoundOnCreate_ChangeSendsNoFlags_UnbindSendsZero()
+        public void FeedbackBoundOnCreate_ChangeSendsNoFlags_UnbindSendsZero()
         {
-            var sinkA = new ElementSink();
-            var sinkB = new ElementSink();
-            Frame(R(1, new SinkSlot(sinkA, 0)));
+            var feedbackA = new ElementFeedback();
+            var feedbackB = new ElementFeedback();
+            Frame(R(1, new FeedbackSlot(feedbackA, 0)));
             uint id = _rec.Root!.Id;
-            uint h = _rec.Root!.BoundHandle;
+            uint h = _rec.Root!.BoundFeedbackId;
             Assert.That(h, Is.Not.Zero);
             Assert.That(Structural, Is.EqualTo(new[] { $"CREATE {id} Rectangle", $"REPARENT {id} 0 0", $"BIND {id} {h} 0" }));
-            Assert.That(_rec.Bindings[id], Is.EqualTo(new SinkSlot(sinkA, 0)));
+            Assert.That(_rec.Bindings[id], Is.EqualTo(new FeedbackSlot(feedbackA, 0)));
 
-            // Same sink on a new description → no BIND.
-            Frame(R(2, new SinkSlot(sinkA, 0)));
+            // Same feedback on a new description → no BIND.
+            Frame(R(2, new FeedbackSlot(feedbackA, 0)));
             Assert.That(_sink.OfOp("BIND"), Is.Empty);
 
-            // Sink change → new BIND without flags (CancelPress is reserved), old sink loses hover/press.
-            sinkA[0].IsHovered = true;
-            sinkA[0].IsPressed = true;
-            Frame(R(2, new SinkSlot(sinkB, 0)));
-            Assert.That(_rec.Root!.BoundHandle, Is.Not.EqualTo(h)); // new handle per slot change
-            h = _rec.Root!.BoundHandle;
+            // Feedback change → new BIND without flags (CancelPress is reserved), old feedback loses hover/press.
+            feedbackA[0].IsHovered = true;
+            feedbackA[0].IsPressed = true;
+            Frame(R(2, new FeedbackSlot(feedbackB, 0)));
+            Assert.That(_rec.Root!.BoundFeedbackId, Is.Not.EqualTo(h)); // new handle per slot change
+            h = _rec.Root!.BoundFeedbackId;
             Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {id} {h} 0" }));
-            Assert.That(_rec.Bindings[id], Is.EqualTo(new SinkSlot(sinkB, 0)));
-            Assert.That(sinkA[0].IsHovered || sinkA[0].IsPressed, Is.False);
+            Assert.That(_rec.Bindings[id], Is.EqualTo(new FeedbackSlot(feedbackB, 0)));
+            Assert.That(feedbackA[0].IsHovered || feedbackA[0].IsPressed, Is.False);
 
-            // Other slot of the same sink is a sink change too.
-            Frame(R(2, new SinkSlot(sinkB, 1)));
-            h = _rec.Root!.BoundHandle;
+            // Other slot of the same feedback is a feedback change too.
+            Frame(R(2, new FeedbackSlot(feedbackB, 1)));
+            h = _rec.Root!.BoundFeedbackId;
             Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {id} {h} 0" }));
 
-            // No sink → unbind.
+            // No feedback → unbind.
             Frame(R(2));
             Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {id} 0 0" }));
             Assert.That(_rec.Bindings, Is.Empty);
-            Assert.That(_rec.Sinks.Count, Is.Zero);
+            Assert.That(_rec.FeedbackRouter.Count, Is.Zero);
         }
 
         [Test]
-        public void SinksFollowPositions_InsertInMiddle_RebindWithoutFlags()
+        public void FeedbackFollowsPositions_InsertInMiddle_RebindWithoutFlags()
         {
-            var sink = new ElementSink();
-            Element E(int i) => R(i, new SinkSlot(sink, i));
+            var feedback = new ElementFeedback();
+            Element E(int i) => R(i, new FeedbackSlot(feedback, i));
             Frame(G(E(0), E(2)));
             Frame(G(E(0), E(1), E(2)));
             var c = _rec.Root!.Children;
             // Position 1 keeps its object, gets slot 1 (was 2) → new BIND without flags (CancelPress is reserved); position 2 is new → plain BIND.
-            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {c[1].Id} {c[1].BoundHandle} 0", $"BIND {c[2].Id} {c[2].BoundHandle} 0" }));
+            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {c[1].Id} {c[1].BoundFeedbackId} 0", $"BIND {c[2].Id} {c[2].BoundFeedbackId} 0" }));
             Assert.That(_rec.Bindings.Count, Is.EqualTo(3));
         }
 
         [Test]
         public void DestroyRemovesBindings()
         {
-            var sink = new ElementSink();
-            Frame(G(R(1, new SinkSlot(sink, 0)), G(R(2, new SinkSlot(sink, 1)))));
+            var feedback = new ElementFeedback();
+            Frame(G(R(1, new FeedbackSlot(feedback, 0)), G(R(2, new FeedbackSlot(feedback, 1)))));
             Assert.That(_rec.Bindings.Count, Is.EqualTo(2));
 
-            sink[1].IsHovered = true;
-            Frame(G(R(1, new SinkSlot(sink, 0))));
+            feedback[1].IsHovered = true;
+            Frame(G(R(1, new FeedbackSlot(feedback, 0))));
             Assert.That(_rec.Bindings.Count, Is.EqualTo(1));
             Assert.That(_sink.OfOp("BIND"), Is.Empty); // QtNative drops bindings of destroyed items itself
-            Assert.That(sink[1].IsHovered, Is.False);
+            Assert.That(feedback[1].IsHovered, Is.False);
 
             Frame(null);
             Assert.That(_rec.Bindings, Is.Empty);
@@ -490,25 +490,25 @@ namespace VL.Qt.Tests
 ﻿        [Test]
         public void EveryOccurrenceIsBound()
         {
-            var sink = new ElementSink();
-            var e = R(1, new SinkSlot(sink, 0));
+            var feedback = new ElementFeedback();
+            var e = R(1, new FeedbackSlot(feedback, 0));
             Frame(G(e, e));
             Assert.That(_sink.OfOp("BIND").Count(), Is.EqualTo(2));
             Assert.That(_rec.Bindings.Count, Is.EqualTo(2));
-            Assert.That(_rec.Sinks.Count, Is.EqualTo(2));
+            Assert.That(_rec.FeedbackRouter.Count, Is.EqualTo(2));
         }
 
         [Test]
         public void SteadyState_1000BoundChildren_OneChangePerFrame_NoAllocations()
         {
             const int n = 1000;
-            var sink = new ElementSink();
+            var feedback = new ElementFeedback();
             var children = new Element[n];
             for (int i = 0; i < n; i++)
-                children[i] = R(1, new SinkSlot(sink, i));
-            var alt = new Element[n]; // alternative description per child, same sink slot
+                children[i] = R(1, new FeedbackSlot(feedback, i));
+            var alt = new Element[n]; // alternative description per child, same feedback slot
             for (int i = 0; i < n; i++)
-                alt[i] = R(2, new SinkSlot(sink, i));
+                alt[i] = R(2, new FeedbackSlot(feedback, i));
             var rec = new Reconciler(new RecordingSinkNull(), new IdAllocator(), new SceneRegistry());
             var arr = ImmutableArray.Create(children);
             rec.Update(new Group { Children = arr }, Space.DIPTopLeft);
@@ -569,7 +569,7 @@ namespace VL.Qt.Tests
             var sink = new ThrowingSink();
             var scene = new SceneRegistry();
             var rec = new Reconciler(sink, new IdAllocator(), scene);
-            var slot = new SinkSlot(new ElementSink(), 0);
+            var slot = new FeedbackSlot(new ElementFeedback(), 0);
             var before = R(1, slot);
             rec.Update(G(before), Space.DIPTopLeft);
             var node = rec.Root!.Children[0];
@@ -588,7 +588,7 @@ namespace VL.Qt.Tests
             // The registry shows one occurrence, and it still reports state (REC-01: registered twice, demoted).
             Assert.That(scene.OccurrencesOf(after), Is.EqualTo(1));
             Assert.That(scene.OwnerOf(after), Is.SameAs(node));
-            Assert.That(rec.Sinks.IsPrimary(node.BoundHandle), Is.True);
+            Assert.That(rec.FeedbackRouter.IsPrimary(node.BoundFeedbackId), Is.True);
             Assert.That(node.IsPrimary, Is.True);
 
             // And stays stable.
@@ -604,7 +604,7 @@ namespace VL.Qt.Tests
             var scene = new SceneRegistry();
             var rec = new Reconciler(sink, new IdAllocator(), scene);
             rec.Update(G(), Space.DIPTopLeft);
-            var added = R(1, new SinkSlot(new ElementSink(), 0));
+            var added = R(1, new FeedbackSlot(new ElementFeedback(), 0));
             sink.Restart();
             sink.ThrowAt = 2; // CREATE of the rectangle is written, its first SET throws
 
@@ -648,7 +648,7 @@ namespace VL.Qt.Tests
             public void Create(uint id, ushort type) { }
             public void Destroy(uint id) { }
             public void Reparent(uint id, uint parent, uint index) { }
-            public void Bind(uint id, uint sinkHandle, ushort flags) { }
+            public void Bind(uint id, uint feedbackId, ushort flags) { }
             public void SetF32(uint id, ushort prop, float value) { }
             public void SetI32(uint id, ushort prop, int value) { }
             public void SetBool(uint id, ushort prop, bool value) { }

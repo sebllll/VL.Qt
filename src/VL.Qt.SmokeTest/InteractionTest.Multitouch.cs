@@ -10,7 +10,7 @@ using VL.Qt.Elements;
 using VL.Qt.Nodes;
 
 // Touch Points and Pinch nodes at a Rectangle, node level (nodes -> reconciler -> QtNative ->
-// SinkRegistry -> pull -> channels). The rectangle covers (100, 100, 200, 100) DIP. The raw QtNative side is HandlerTest
+// FeedbackRouter -> pull -> channels). The rectangle covers (100, 100, 200, 100) DIP. The raw QtNative side is HandlerTest
 // (scenarios touch-points, pinch). Qt compresses touch moves until the next pump: gestures move in steps with a frame each.
 public static partial class InteractionTest
 {

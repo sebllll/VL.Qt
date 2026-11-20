@@ -46,7 +46,7 @@ namespace VL.Qt.Tests
             Assert.That(b.AutoRepeat, Is.False);
             Assert.That(b.AutoSize, Is.True);
             Assert.That(b.Interaction, Is.Null);
-            Assert.That(b.Sink.Sink, Is.SameAs(_node.Core.Sink));
+            Assert.That(b.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
         }
 
         [Test]
@@ -85,7 +85,7 @@ namespace VL.Qt.Tests
         {
             Update(out bool bang);
             Assert.That(bang, Is.False);
-            var s = _node.Core.Sink[0];
+            var s = _node.Core.Feedback[0];
             s.PendingClicks = 2;
             Update(out bang);
             Assert.That(bang, Is.True);
@@ -104,7 +104,7 @@ namespace VL.Qt.Tests
             var b = Update(out _, isClicked: clicked);
             Assert.That(b.Interaction, Is.Null, "clicks come from Qt clicked, no handler");
 
-            _node.Core.Sink[0].PendingClicks = 3;
+            _node.Core.Feedback[0].PendingClicks = 3;
             Update(out bool bang, isClicked: clicked);
             Assert.That(clicks, Is.EqualTo(3));
             Assert.That(bang, Is.True);

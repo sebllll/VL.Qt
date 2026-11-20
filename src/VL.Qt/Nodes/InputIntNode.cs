@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
         internal InputIntNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<SpinBox, Props>(addWarning, Create);
 
-        private static readonly Func<CommonInputs, Props, SinkSlot, SpinBox> Create = static (c, p, slot) => new SpinBox
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, SpinBox> Create = static (c, p, slot) => new SpinBox
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -43,7 +43,7 @@ namespace VL.Qt.Nodes
                 Interaction = c.Interaction,
                 Effect = c.Effect,
                 Style = p.Style,
-                Sink = slot,
+                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Value = p.Value,
                 Minimum = p.Minimum,
@@ -99,7 +99,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            _value.Update(channel, _node.Sink);
+            _value.Update(channel, _node.Feedback);
             int minimum = _value.Min(min, int.MinValue);
             int maximum = _value.Max(max, int.MaxValue);
             value = _value.Clamp(minimum, maximum);

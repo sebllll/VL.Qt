@@ -545,79 +545,79 @@ namespace VL.Qt.Tests
 
         // --- through the registry into the slot ---
 
-        private static (SinkRegistry Registry, ElementSink Sink, uint Handle) Bound()
+        private static (FeedbackRouter Registry, ElementFeedback Feedback, uint FeedbackId) Bound()
         {
-            var registry = new SinkRegistry();
-            var sink = new ElementSink();
-            return (registry, sink, registry.Acquire(new SinkSlot(sink, 0)));
+            var registry = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            return (registry, feedback, registry.Acquire(new FeedbackSlot(feedback, 0)));
         }
 
         [Test]
         public void Dispatch_Property_LastValuePerName()
         {
-            var (reg, sink, h) = Bound();
-            var res = reg.Dispatch(new SinkRegistryTests.Poll()
+            var (reg, feedback, h) = Bound();
+            var res = reg.Dispatch(new FeedbackRouterTests.Poll()
                 .Add(Protocol.Ev.QmlProperty, h, QmlWire.Property("a", Protocol.Vt.F32, QmlWire.F(1)))
                 .Add(Protocol.Ev.QmlProperty, h, QmlWire.Property("b", Protocol.Vt.String, QmlWire.Str("x")))
                 .Add(Protocol.Ev.QmlProperty, h, QmlWire.Property("a", Protocol.Vt.F32, QmlWire.F(2))).Bytes);
             Assert.That(res, Is.EqualTo(new DispatchResult(3, 0, null)));
-            var values = sink.QmlPropertyValues()!;
+            var values = feedback.QmlPropertyValues()!;
             Assert.That(values, Has.Count.EqualTo(2));
             Assert.That(values["a"], Is.EqualTo(2f));
             Assert.That(values["b"], Is.EqualTo("x"));
-            Assert.That(sink.QmlPropertyUpdates(), Is.EqualTo(3));
+            Assert.That(feedback.QmlPropertyUpdates(), Is.EqualTo(3));
         }
 
         [Test]
         public void Dispatch_Signals_InOrder_TakenOnce()
         {
-            var (reg, sink, h) = Bound();
-            reg.Dispatch(new SinkRegistryTests.Poll()
+            var (reg, feedback, h) = Bound();
+            reg.Dispatch(new FeedbackRouterTests.Poll()
                 .Add(Protocol.Ev.QmlSignal, h, QmlWire.Signal("clicked", (Protocol.Vt.I32, QmlWire.I32(1))))
                 .Add(Protocol.Ev.QmlSignal, h, QmlWire.Signal("clicked", (Protocol.Vt.I32, QmlWire.I32(2))))
                 .Add(Protocol.Ev.QmlSignal, h, QmlWire.Signal("reset")).Bytes);
-            var taken = sink.TakeQmlSignals();
+            var taken = feedback.TakeQmlSignals();
             Assert.That(taken.Select(s => s.Name), Is.EqualTo(new[] { "clicked", "clicked", "reset" }));
             Assert.That(taken[1].Arguments[0], Is.EqualTo(2));
-            Assert.That(sink.TakeQmlSignals().Count, Is.EqualTo(0));
+            Assert.That(feedback.TakeQmlSignals().Count, Is.EqualTo(0));
         }
 
         [Test]
         public void Dispatch_MalformedPayload_IsIgnored_NotApplied()
         {
-            var (reg, sink, h) = Bound();
-            var res = reg.Dispatch(new SinkRegistryTests.Poll()
+            var (reg, feedback, h) = Bound();
+            var res = reg.Dispatch(new FeedbackRouterTests.Poll()
                 .Add(Protocol.Ev.QmlProperty, h, QmlWire.Property("", Protocol.Vt.F32, QmlWire.F(1)))
                 .Add(Protocol.Ev.QmlSignal, h, new byte[] { 1, 0 }).Bytes);
             Assert.That(res.Applied, Is.EqualTo(0));
             Assert.That(res.Ignored, Is.EqualTo(2));
-            Assert.That(sink.QmlPropertyValues(), Is.Null);
-            Assert.That(sink.TakeQmlSignals().Count, Is.EqualTo(0));
+            Assert.That(feedback.QmlPropertyValues(), Is.Null);
+            Assert.That(feedback.TakeQmlSignals().Count, Is.EqualTo(0));
         }
 
         [Test]
         public void ResetQml_ForgetsValuesAndSignals_AndCountsAsUpdate()
         {
-            var (reg, sink, h) = Bound();
-            reg.Dispatch(new SinkRegistryTests.Poll()
+            var (reg, feedback, h) = Bound();
+            reg.Dispatch(new FeedbackRouterTests.Poll()
                 .Add(Protocol.Ev.QmlProperty, h, QmlWire.Property("a", Protocol.Vt.F32, QmlWire.F(1)))
                 .Add(Protocol.Ev.QmlSignal, h, QmlWire.Signal("s")).Bytes);
-            int before = sink.QmlPropertyUpdates();
-            sink.ResetQml();
-            Assert.That(sink.QmlPropertyValues(), Is.Empty);
-            Assert.That(sink.TakeQmlSignals().Count, Is.EqualTo(0));
-            Assert.That(sink.QmlPropertyUpdates(), Is.Not.EqualTo(before));
+            int before = feedback.QmlPropertyUpdates();
+            feedback.ResetQml();
+            Assert.That(feedback.QmlPropertyValues(), Is.Empty);
+            Assert.That(feedback.TakeQmlSignals().Count, Is.EqualTo(0));
+            Assert.That(feedback.QmlPropertyUpdates(), Is.Not.EqualTo(before));
         }
 
         [Test]
         public void Signals_BeyondTheCap_AreDropped()
         {
-            var (reg, sink, h) = Bound();
-            var poll = new SinkRegistryTests.Poll();
-            for (int i = 0; i < ElementSink.MaxPendingQmlSignals + 10; i++)
+            var (reg, feedback, h) = Bound();
+            var poll = new FeedbackRouterTests.Poll();
+            for (int i = 0; i < ElementFeedback.MaxPendingQmlSignals + 10; i++)
                 poll.Add(Protocol.Ev.QmlSignal, h, QmlWire.Signal("s"));
             reg.Dispatch(poll.Bytes);
-            Assert.That(sink.TakeQmlSignals().Count, Is.EqualTo(ElementSink.MaxPendingQmlSignals));
+            Assert.That(feedback.TakeQmlSignals().Count, Is.EqualTo(ElementFeedback.MaxPendingQmlSignals));
         }
     }
 
@@ -750,7 +750,7 @@ namespace VL.Qt.Tests
         private string _file = null!;
         private readonly Subject<FileSystemEventArgs> _events = new();
         private QmlElementNode _node = null!;
-        private SinkRegistry _registry = null!;
+        private FeedbackRouter _registry = null!;
         private uint _handle;
         private RecordingSink _sink = null!;
         private Reconciler _reconciler = null!;
@@ -765,8 +765,8 @@ namespace VL.Qt.Tests
             _file = System.IO.Path.Combine(_dir, "a.qml");
             _warnings.Clear();
             _node = new QmlElementNode(w => { _warnings.Add(w); return new Nop(); }, _ => _events);
-            _registry = new SinkRegistry();
-            _handle = _registry.Acquire(new SinkSlot(_node.Core.Sink, 0));
+            _registry = new FeedbackRouter();
+            _handle = _registry.Acquire(new FeedbackSlot(_node.Core.Feedback, 0));
             _sink = new RecordingSink();
             _reconciler = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
         }
@@ -794,7 +794,7 @@ namespace VL.Qt.Tests
             return _sink.Commands.ToArray();
         }
 
-        private SinkRegistryTests.Poll NewPoll() => new();
+        private FeedbackRouterTests.Poll NewPoll() => new();
 
         [Test]
         public void Defaults()
@@ -804,7 +804,7 @@ namespace VL.Qt.Tests
             Assert.That((ushort)ElementType.Qml, Is.EqualTo(Protocol.Type.Qml));
             Assert.That((e.AutoSize, e.Source, e.Reload), Is.EqualTo((true, string.Empty, 0)));
             Assert.That(e.Properties, Is.SameAs(QmlProperties.Empty));
-            Assert.That(e.Sink.Sink, Is.SameAs(_node.Core.Sink));
+            Assert.That(e.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
         }
 
         [Test]

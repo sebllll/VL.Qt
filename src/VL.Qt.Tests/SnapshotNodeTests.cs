@@ -68,14 +68,14 @@ namespace VL.Qt.Tests
         [Test]
         public void Grab_NewInstanceBeforeRendererUpdate_FoundByItsSlot()
         {
-            // Like a Group with an animated input: the node outputs a new instance every frame with the same sink
+            // Like a Group with an animated input: the node outputs a new instance every frame with the same feedback
             // slot, and Snapshot runs before the renderer of that frame.
-            var slot = new SinkSlot(new ElementSink(), 0);
+            var slot = new FeedbackSlot(new ElementFeedback(), 0);
             _reconciler.Window = new IntPtr(1);
-            _reconciler.Update(new Group { Sink = slot }, Space.DIPTopLeft);
+            _reconciler.Update(new Group { Feedback = slot }, Space.DIPTopLeft);
             for (var frame = 0; frame < 3; frame++)
             {
-                var next = new Group { Sink = slot, Opacity = 0.5f + frame * 0.1f };
+                var next = new Group { Feedback = slot, Opacity = 0.5f + frame * 0.1f };
                 _node.Update(next, out _, out var error, 1, grab: true);
                 Assert.That(error, Is.Empty, $"frame {frame}");
                 _reconciler.Update(next, Space.DIPTopLeft);
@@ -91,7 +91,7 @@ namespace VL.Qt.Tests
             _node.Update(other, out _, out var error, 1, grab: true);
             Assert.That(error, Is.EqualTo(SnapshotNode.NotShownError), "no slot: no place to fall back to");
 
-            var foreign = new Rectangle { Sink = new SinkSlot(new ElementSink(), 0) };
+            var foreign = new Rectangle { Feedback = new FeedbackSlot(new ElementFeedback(), 0) };
             _node.Update(foreign, out _, out error, 1, grab: true);
             Assert.That(error, Is.EqualTo(SnapshotNode.NotShownError), "a slot no renderer has shown");
         }

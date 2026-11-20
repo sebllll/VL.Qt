@@ -31,7 +31,7 @@ namespace VL.Qt.Nodes
         internal TextNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNode<Text, Props>(addWarning, Create);
 
-        private static readonly Func<CommonInputs, Props, SinkSlot, Text> Create = static (c, p, slot) => new Text
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Text> Create = static (c, p, slot) => new Text
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -41,7 +41,7 @@ namespace VL.Qt.Nodes
                 Debug = c.Debug,
                 Interaction = c.Interaction,
                 Effect = c.Effect,
-                Sink = slot,
+                Feedback = slot,
                 Content = p.Content,
                 FontFamily = p.FontFamily,
                 FontSize = p.FontSize,
