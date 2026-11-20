@@ -156,7 +156,7 @@ The decisions name these in many places (0.2, C16, D1, A6, E8, F5, F6 and the ta
 2. TEST-01 with the scope of P6. The perf baseline for A4, taken on the NUnit runner.
 3. Tests that findings name as a condition for their refactoring: REC-16, QML-12, NCMD-15, NELM-12, NFX-23, COMP-08, COMP-09; TEST-03 with P9.
 4. Confirm or drop: REC-01, CAPI-01, NDIAG-01; SIP-03, COMP-03, COMP-04, NAPP-10; and five suspicions QUESTIONS.md does not list: QML-06, NCMD-17, NELM-14, NDIAG-06, NODW-03.
-5. Measurements and checks: C16 (Clip grab), E8 (video texture), D1 (`<include>` as pin help; low risk, `VL.Qt.vl` references the compiled DLL, so the compiler expands the include), A6 (tooltip of an `IElement` link).
+5. Measurements and checks: C16 (Clip grab), E8 (video texture), D1 (`<include>` as pin help; low risk, `VL.Qt.vl` references the compiled DLL, so the compiler expands the include), A6 (tooltip of an `IElement` link). Both checked in vvvv by Sebastian, 2026-11-20 (W1-18): D1 works (an `<include>` must replace the whole `<param>`, CS1589 inside it); A6 works today; `ElementViewer` (`IValueViewer<Element>`, `VL.Qt.HDE.vl`) must move to `IElement` in W4-16.
 
 ## Stale lines in DECISIONS.md
 
