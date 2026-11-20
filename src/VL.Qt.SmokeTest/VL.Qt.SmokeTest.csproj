@@ -45,6 +45,11 @@
     <PackageReference Include="System.Reactive" Version="$(SystemReactiveVersion)" />
   </ItemGroup>
 
+  <!-- VideoAudioOwnedTapTest (COMP-03): the Windows audio session meter shows whether Qt itself plays sound. -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Include="..\VL.Qt.Native\protocol.h" Link="protocol.h" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\runtimes\$(RuntimeIdentifier)\native\**" Link="runtimes\$(RuntimeIdentifier)\native\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
