@@ -12,8 +12,6 @@
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
-    <!-- VL.Audio from nuget.org (net8.0-windows7.0 build, usable from net10); vvvv gamma 8.0 loads it as a package dependency. -->
-    <VlAudioVersion>1.9.21</VlAudioVersion>
   </PropertyGroup>
 
   <ItemGroup>

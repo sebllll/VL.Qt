@@ -15,6 +15,7 @@ namespace VL.Qt.Nodes
     /// Video from a file (Qt MediaPlayer + VideoOutput, FFmpeg backend). Connect to Renderer [Qt] or a Group.
     /// Plays on its own clock: no seek, no frame accuracy, no sync to vvvv (use VL.Video for that).
     /// Lengths in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP).
+    /// Video (VL.Audio) in VL.Qt.Audio mirrors these pins (test VideoAudioNodePinTests).
     /// </summary>
     [ProcessNode(Name = "Video", Category = Categories.Elements)]
     public sealed class VideoNode : IDisposable
