@@ -20,11 +20,15 @@ using VL.Qt.Styles;
 /// </remarks>
 static class ImageCompare
 {
+    // The limits were set from x64 WARP runs, which are deterministic (difference 0.000 in every scene, 0.002 in the collage).
+    // Keep them tight: a 20 x 20 block on a 400 x 300 picture (0.33 %) must fail. If WARP on arm64 does not fit, the arm64
+    // WARP check of P9 decides about a second reference set (win-arm64); do not loosen the limits instead.
+
     /// <summary>Limit of the mean absolute difference per channel (0..255) over the whole picture.</summary>
-    public const double MaxMeanDifference = 0.75;
+    public const double MaxMeanDifference = 0.25;
 
     /// <summary>Limit of the share of pixels in which any channel differs by more than <see cref="PixelThreshold"/>.</summary>
-    public const double MaxDifferingShare = 0.004;
+    public const double MaxDifferingShare = 0.001;
 
     /// <summary>Per-channel difference from which a pixel counts as differing.</summary>
     public const int PixelThreshold = 24;
