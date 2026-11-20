@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,11 +8,18 @@ using VL.Qt;
 
 // Back channel EV_MEASURED / EV_SCENE_BOUNDS (plan 06b). Values are DIP (logical pixels), the C# SinkRegistry
 // converts them to units. Bound items report on the first poll after BIND, afterwards only on change.
-static class MeasureTest
+[TestFixture, NonParallelizable]
+public static class MeasureTest
 {
+    /// <summary>Measuring of items and the cost of polling.</summary>
+    [Test, Category("measure")]
+    public static void Measure() => Scenario.Run(Run);
+
     internal readonly record struct Rec(ushort Event, uint Handle, uint Index, float[] V);
 
     // Own reader (EventReader is internal): u16 event, u16 len, u32 handle, u32 index, payload, 4-aligned.
+    internal static List<Rec> Parse(ReadOnlySpan<byte> b, Scenario s) => Parse(b, s.Check);
+
     internal static List<Rec> Parse(ReadOnlySpan<byte> b, Action<bool, string> check)
     {
         var list = new List<Rec>();
@@ -20,7 +28,7 @@ static class MeasureTest
         {
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
             int len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
-            if (len < 8 || off + 4 + len > b.Length) { check(false, $"06b: malformed record at {off}"); break; }
+            if (len < 8 || off + 4 + len > b.Length) { check(false, $"malformed record at {off}"); break; }
             var v = new float[(len - 8) / 4];
             for (int i = 0; i < v.Length; i++)
                 v[i] = BinaryPrimitives.ReadSingleLittleEndian(b.Slice(off + 12 + 4 * i));
@@ -47,24 +55,24 @@ static class MeasureTest
         return text;
     }
 
-    public static void Run(Action<bool, string> check, Action<int> pump)
+    static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt measure test");
-        check(w != IntPtr.Zero, "06b: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 20];
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"06b: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
         List<Rec> Poll()
         {
             int n = Native.Poll(w, buf);
-            check(n >= 0, $"06b: poll ({n})");
-            var recs = Parse(buf.AsSpan(0, Math.Max(n, 0)), check);
+            s.Check(n >= 0, $"poll ({n})");
+            var recs = Parse(buf.AsSpan(0, Math.Max(n, 0)), s);
             recs.RemoveAll(r => r.Event == Protocol.Ev.WindowGeometry); // window record (handle 0, #100), not an item
             return recs;
         }
@@ -102,93 +110,93 @@ static class MeasureTest
             cmd.Bind(10 + i, 11 + i, 0);
         }
         CheckApply("measure scene");
-        pump(2);
+        s.Pump(2);
 
         var recs = Poll();
         var m = Find(recs, Protocol.Ev.Measured, HText);
-        check(m is { } mm && mm.V.Length == 2 && mm.V[0] > 40 && mm.V[1] > 30 && mm.Index == 0,
-            $"06b: Text 'Hello' 40 -> MEASURED > 0 ({S(m)})");
+        s.Check(m is { } mm && mm.V.Length == 2 && mm.V[0] > 40 && mm.V[1] > 30 && mm.Index == 0,
+            $"Text 'Hello' 40 -> MEASURED > 0 ({S(m)})");
         var tb = Find(recs, Protocol.Ev.SceneBounds, HText);
-        check(tb is { } tbx && tbx.V.Length == 4 && tbx.V[0] == 50 && tbx.V[1] == 40 && tbx.V[2] == 400 && tbx.V[3] == 60,
-            $"06b: Text SCENE_BOUNDS = bounds (50, 40, 400, 60) ({S(tb)})");
+        s.Check(tb is { } tbx && tbx.V.Length == 4 && tbx.V[0] == 50 && tbx.V[1] == 40 && tbx.V[2] == 400 && tbx.V[3] == 60,
+            $"Text SCENE_BOUNDS = bounds (50, 40, 400, 60) ({S(tb)})");
         bool colOk = true;
         for (uint i = 0; i < 3; i++)
         {
             var b = Find(recs, Protocol.Ev.SceneBounds, 11 + i);
             colOk &= b is { } bb && bb.V[0] == 105 && bb.V[1] == 205 + 50 * i && bb.V[2] == 120 && bb.V[3] == 40;
-            if (!colOk) { check(false, $"06b: column child {i} SCENE_BOUNDS = layout position ({S(b)})"); break; }
+            if (!colOk) { s.Check(false, $"column child {i} SCENE_BOUNDS = layout position ({S(b)})"); break; }
         }
-        if (colOk) check(true, "06b: column children SCENE_BOUNDS = layout position (105, 205/255/305)");
-        check(recs.Count == 8, $"06b: one MEASURED + SCENE_BOUNDS per bound item, unbound item silent ({recs.Count} records)");
+        if (colOk) s.Check(true, "column children SCENE_BOUNDS = layout position (105, 205/255/305)");
+        s.Check(recs.Count == 8, $"one MEASURED + SCENE_BOUNDS per bound item, unbound item silent ({recs.Count} records)");
 
         bool stable = true;
-        for (int f = 0; f < 5; f++) { pump(1); stable &= Poll().Count == 0; }
-        check(stable, "06b: values stable over 5 frames -> no records");
+        for (int f = 0; f < 5; f++) { s.Pump(1); stable &= Poll().Count == 0; }
+        s.Check(stable, "values stable over 5 frames -> no records");
 
         // Text change -> new MEASURED in the next poll (same frame after processEvents), bounds unchanged.
         cmd.SetString(TextId, Protocol.Prop.Text, "Hello World");
         CheckApply("text change");
-        pump(1);
+        s.Pump(1);
         recs = Poll();
         var m2 = Find(recs, Protocol.Ev.Measured, HText);
-        check(m2 is { } x2 && m is { } x1 && x2.V[0] > x1.V[0] && x2.V[1] == x1.V[1] && recs.Count == 1,
-            $"06b: text change -> new MEASURED only ({S(m)} -> {S(m2)}, {recs.Count} records)");
+        s.Check(m2 is { } x2 && m is { } x1 && x2.V[0] > x1.V[0] && x2.V[1] == x1.V[1] && recs.Count == 1,
+            $"text change -> new MEASURED only ({S(m)} -> {S(m2)}, {recs.Count} records)");
 
         // Layout change: spacing 0 moves children 1 and 2; child 0 stays.
         cmd.SetF32(ColId, Protocol.Prop.Spacing, 0);
         CheckApply("spacing change");
-        pump(1);
+        s.Pump(1);
         recs = Poll();
         var c1 = Find(recs, Protocol.Ev.SceneBounds, 12);
         var c2 = Find(recs, Protocol.Ev.SceneBounds, 13);
-        check(recs.Count == 2 && c1 is { } y1 && y1.V[1] == 245 && c2 is { } y2 && y2.V[1] == 285,
-            $"06b: column relayout -> SCENE_BOUNDS of moved children only ({S(c1)}; {S(c2)}; {recs.Count} records)");
+        s.Check(recs.Count == 2 && c1 is { } y1 && y1.V[1] == 245 && c2 is { } y2 && y2.V[1] == 285,
+            $"column relayout -> SCENE_BOUNDS of moved children only ({S(c1)}; {S(c2)}; {recs.Count} records)");
 
         // Rebind: flags only -> silent; new handle -> current values again; unbind -> silent; rebind after unbind -> resend.
         cmd.Bind(10, 11, 0);
         CheckApply("bind flags only");
-        pump(1);
-        check(Poll().Count == 0, "06b: flag-only BIND (same handle) -> no records");
+        s.Pump(1);
+        s.Check(Poll().Count == 0, "flag-only BIND (same handle) -> no records");
         cmd.Bind(10, 21, Protocol.Bind.CancelPress);
         cmd.Bind(11, 0, 0);
         CheckApply("rebind + unbind");
-        pump(1);
+        s.Pump(1);
         recs = Poll();
-        check(recs.Count == 2 && Find(recs, Protocol.Ev.Measured, 21) is { } nm && nm.V[0] == 0 && nm.V[1] == 0
+        s.Check(recs.Count == 2 && Find(recs, Protocol.Ev.Measured, 21) is { } nm && nm.V[0] == 0 && nm.V[1] == 0
             && Find(recs, Protocol.Ev.SceneBounds, 21) is { } nb && nb.V[1] == 205,
-            $"06b: new handle gets current values, unbound child silent ({recs.Count} records)");
+            $"new handle gets current values, unbound child silent ({recs.Count} records)");
         cmd.SetPlace(11, 0, 0, 130, 40);
         cmd.Bind(11, 22, 0);
         CheckApply("rebind after unbind");
-        pump(1);
+        s.Pump(1);
         recs = Poll();
-        check(recs.Count == 2 && Find(recs, Protocol.Ev.SceneBounds, 22) is { } rb && rb.V[2] == 130,
-            $"06b: rebind after unbind -> resend ({recs.Count} records)");
+        s.Check(recs.Count == 2 && Find(recs, Protocol.Ev.SceneBounds, 22) is { } rb && rb.V[2] == 130,
+            $"rebind after unbind -> resend ({recs.Count} records)");
 
         // Transform: SCENE_BOUNDS is the axis-aligned box in the scene (rotated 90 deg about its center).
         var rot = Stride.Core.Mathematics.Matrix.RotationZ(Stride.Core.Mathematics.MathUtil.PiOverTwo); // ANCHOR Center via SetPlaceXf (#88, #469)
 
         cmd.SetPlaceXf(TextId, 50, 40, 400, 60, rot);
         CheckApply("text transform");
-        pump(1);
+        s.Pump(1);
         var tr = Find(Poll(), Protocol.Ev.SceneBounds, HText);
-        check(tr is { } r && Math.Abs(r.V[0] - 220) < 0.01f && Math.Abs(r.V[1] + 130) < 0.01f && Math.Abs(r.V[2] - 60) < 0.01f && Math.Abs(r.V[3] - 400) < 0.01f,
-            $"06b: rotated item -> axis-aligned scene box (220, -130, 60, 400) ({S(tr)})");
+        s.Check(tr is { } r && Math.Abs(r.V[0] - 220) < 0.01f && Math.Abs(r.V[1] + 130) < 0.01f && Math.Abs(r.V[2] - 60) < 0.01f && Math.Abs(r.V[3] - 400) < 0.01f,
+            $"rotated item -> axis-aligned scene box (220, -130, 60, 400) ({S(tr)})");
 
         // -required: events stay queued until the buffer is big enough.
         cmd.SetString(TextId, Protocol.Prop.Text, "Hi");
         CheckApply("text change 2");
-        pump(1);
+        s.Pump(1);
         int need = Native.Poll(w, buf.AsSpan(0, 4));
         int got = Native.Poll(w, buf);
-        check(need <= -8 && got == -need && Poll().Count == 0, $"06b: poll with small cap -> -required ({need}), then {got} bytes, then empty");
+        s.Check(need <= -8 && got == -need && Poll().Count == 0, $"poll with small cap -> -required ({need}), then {got} bytes, then empty");
 
         // Destroy: bound items vanish silently.
         cmd.Destroy(ColId);
         cmd.Destroy(TextId);
         CheckApply("destroy bound");
-        pump(1);
-        check(Poll().Count == 0, "06b: destroyed bound items -> no records");
+        s.Pump(1);
+        s.Check(Poll().Count == 0, "destroyed bound items -> no records");
 
         // Cost: 1000 bound rectangles in groups of 10 (depth 2). Check after processEvents, no change vs. all moved.
         cmd.Create(ColId, Protocol.Type.Item);
@@ -208,9 +216,9 @@ static class MeasureTest
             }
         }
         CheckApply("1000 bound items");
-        pump(2);
+        s.Pump(2);
         int first = Native.Poll(w, buf);
-        check(first == 1000 * (20 + 28), $"06b: 1000 bound items -> 2000 records on the first poll ({first} bytes)");
+        s.Check(first == 1000 * (20 + 28), $"1000 bound items -> 2000 records on the first poll ({first} bytes)");
         var idle = new double[101];
         var moved = new double[101];
         // #64: best of up to 3 rounds of the idle polls (see PerfLimits.Best); the moved polls run once.
@@ -218,11 +226,11 @@ static class MeasureTest
         {
             for (int f = 0; f < idle.Length; f++)
             {
-                pump(1);
+                s.Pump(1);
                 var t = Stopwatch.StartNew();
                 int n = Native.Poll(w, buf);
                 idle[f] = t.Elapsed.TotalMilliseconds;
-                if (n != 0) { check(false, $"06b: idle poll returned {n}"); break; }
+                if (n != 0) { s.Check(false, $"idle poll returned {n}"); break; }
             }
             Array.Sort(idle);
             return idle[50];
@@ -231,46 +239,46 @@ static class MeasureTest
         {
             cmd.SetPlace(ColId, 1 - f % 2, 0, 0, 0); // starts at x 0 -> every frame moves
             CheckApply("move all");
-            pump(1);
+            s.Pump(1);
             var t = Stopwatch.StartNew();
             int n = Native.Poll(w, buf);
             moved[f] = t.Elapsed.TotalMilliseconds;
-            if (n != 1000 * 28) { check(false, $"06b: moved poll returned {n}, expected {1000 * 28}"); break; }
+            if (n != 1000 * 28) { s.Check(false, $"moved poll returned {n}, expected {1000 * 28}"); break; }
         }
         Array.Sort(moved);
-        Console.WriteLine($"INFO 06b poll 1000 bound items: unchanged median {idleMedian:F3} ms (last round max {idle[^1]:F3}), " +
+        s.Info($"poll 1000 bound items: unchanged median {idleMedian:F3} ms (last round max {idle[^1]:F3}), " +
             $"all bounds changed median {moved[50]:F3} ms (max {moved[^1]:F3})");
-        PerfLimits.Below(check, idleMedian, 0.2, $"06b: change check < 0.2 ms / 1000 items (median {idleMedian:F3} ms)", cpuBound: true);
+        PerfLimits.Below(s, idleMedian, 0.2, $"change check < 0.2 ms / 1000 items (median {idleMedian:F3} ms)", cpuBound: true);
         Native.vlqt_window_destroy(w);
 
         foreach (int count in new[] { 500, 2000 })
-            RunStaticCost(check, pump, count);
-        RunPolishWithoutRender(check, pump);
-        RunEffectGroups(check, pump);
+            RunStaticCost(s, count);
+        RunPolishWithoutRender(s);
+        RunEffectGroups(s);
     }
 
     // #71: a poll after a pump without a render polishes the scene itself (#215), but only when something changed
     // since the last poll. An apply between two polls without a pump in between (Qt did not render) must still give
     // the new layout: Row after a Button text change (implicit size), Column after a spacing change, Text measure.
     // The next poll without a change reports nothing, and the following render agrees with the polished layout.
-    static void RunPolishWithoutRender(Action<bool, string> check, Action<int> pump)
+    static void RunPolishWithoutRender(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt measure polish without render");
-        check(w != IntPtr.Zero, "71: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
         void Apply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"71: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
         List<Rec> Poll()
         {
             int n = Native.Poll(w, buf);
-            check(n >= 0, $"71: poll ({n})");
-            var recs = Parse(buf.AsSpan(0, Math.Max(n, 0)), check);
+            s.Check(n >= 0, $"poll ({n})");
+            var recs = Parse(buf.AsSpan(0, Math.Max(n, 0)), s);
             recs.RemoveAll(r => r.Event == Protocol.Ev.WindowGeometry);
             return recs;
         }
@@ -315,72 +323,72 @@ static class MeasureTest
         cmd.Reparent(Txt, 0, 2);
         cmd.Bind(Txt, Txt, 0);
         Apply("scene");
-        pump(2);
+        s.Pump(2);
         var recs = Poll();
         var rowRect0 = Find(recs, Protocol.Ev.SceneBounds, RowRect);
         var colRect0 = Find(recs, Protocol.Ev.SceneBounds, ColRect1);
         var text0 = Find(recs, Protocol.Ev.Measured, Txt);
-        check(rowRect0 is { } a && a.V[0] > 110 && colRect0 is { } c && c.V[1] == 330 && text0 is { } t && t.V[0] > 0,
-            $"71: first values (Row child {S(rowRect0)}, Column child {S(colRect0)}, Text {S(text0)})");
+        s.Check(rowRect0 is { } a && a.V[0] > 110 && colRect0 is { } c && c.V[1] == 330 && text0 is { } t && t.V[0] > 0,
+            $"first values (Row child {S(rowRect0)}, Column child {S(colRect0)}, Text {S(text0)})");
         bool stable = true;
-        for (int f = 0; f < 3; f++) { pump(1); stable &= Poll().Count == 0; }
-        check(stable, "71: static scene -> no records (Qt does not render)");
+        for (int f = 0; f < 3; f++) { s.Pump(1); stable &= Poll().Count == 0; }
+        s.Check(stable, "static scene -> no records (Qt does not render)");
 
         // From here no pump between apply and poll: the last pump did not render, so the poll polishes.
         cmd.SetString(Btn, Protocol.Prop.Text, "A much longer label");
         Apply("button text");
         recs = Poll();
         var rowRect1 = Find(recs, Protocol.Ev.SceneBounds, RowRect);
-        check(rowRect1 is { } b && rowRect0 is { } a0 && b.V[0] > a0.V[0] + 20 && b.V[1] == a0.V[1],
-            $"71: Button text change, no render -> Row moves the next child ({S(rowRect0)} -> {S(rowRect1)})");
-        check(Poll().Count == 0, "71: next poll without a change -> no records");
+        s.Check(rowRect1 is { } b && rowRect0 is { } a0 && b.V[0] > a0.V[0] + 20 && b.V[1] == a0.V[1],
+            $"Button text change, no render -> Row moves the next child ({S(rowRect0)} -> {S(rowRect1)})");
+        s.Check(Poll().Count == 0, "next poll without a change -> no records");
 
         cmd.SetF32(ColId, Protocol.Prop.Spacing, 30);
         Apply("column spacing");
         recs = Poll();
         var colRect1 = Find(recs, Protocol.Ev.SceneBounds, ColRect1);
-        check(colRect1 is { } d && d.V[1] == 350, $"71: Column spacing change, no render -> child moves to y 350 ({S(colRect1)})");
-        check(Poll().Count == 0, "71: next poll without a change -> no records");
+        s.Check(colRect1 is { } d && d.V[1] == 350, $"Column spacing change, no render -> child moves to y 350 ({S(colRect1)})");
+        s.Check(Poll().Count == 0, "next poll without a change -> no records");
 
         cmd.SetString(Txt, Protocol.Prop.Text, "Hello World");
         Apply("text");
         recs = Poll();
         var text1 = Find(recs, Protocol.Ev.Measured, Txt);
-        check(text1 is { } e && text0 is { } t0 && e.V[0] > t0.V[0], $"71: Text change, no render -> new MEASURED ({S(text0)} -> {S(text1)})");
-        check(Poll().Count == 0, "71: next poll without a change -> no records");
+        s.Check(text1 is { } e && text0 is { } t0 && e.V[0] > t0.V[0], $"Text change, no render -> new MEASURED ({S(text0)} -> {S(text1)})");
+        s.Check(Poll().Count == 0, "next poll without a change -> no records");
 
         // Qt renders the changes now: its own polish gives the same layout, so nothing is reported again.
-        pump(2);
+        s.Pump(2);
         recs = Poll();
-        check(recs.Count == 0, $"71: render after the polished polls -> same layout, no records ({recs.Count} records)");
+        s.Check(recs.Count == 0, $"render after the polished polls -> same layout, no records ({recs.Count} records)");
         Native.vlqt_window_destroy(w);
     }
 
     // #20 review: an element inside a Group with an effect chain, and inside a Group used as ShaderEffect Input (frame
     // proxy under the root, #486), still reports new SCENE_BOUNDS when the Group moves (TRANSFORM: translation = x/y
     // path, scale = Matrix4x4 path) or the ShaderEffect holding the Group moves.
-    static void RunEffectGroups(Action<bool, string> check, Action<int> pump)
+    static void RunEffectGroups(Scenario s)
     {
-        check = Program.NeedsRhi(check, "ShaderEffect/effect chain need a QRhi scenegraph");
+        void Check(bool ok, string what) => s.NeedsRhi(ok, what, "ShaderEffect/effect chain need a QRhi scenegraph");
         Native.vlqt_res_create(Protocol.ResKind.Shader, out var wave);
         Native.vlqt_res_load_shader(wave, "builtin:wave", Protocol.ShaderStage.Fragment);
-        check(Native.vlqt_res_wait(wave, 10000) == Protocol.ResState.Ready, "20: shader builtin:wave Ready");
+        Check(Native.vlqt_res_wait(wave, 10000) == Protocol.ResState.Ready, "shader builtin:wave Ready");
         var w = Native.vlqt_window_create(800, 600, "VL.Qt measure effect groups");
-        check(w != IntPtr.Zero, "20: window_create (effect groups)");
+        Check(w != IntPtr.Zero, "window_create (effect groups)");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
         void Apply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"20: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
         Rec? Bounds(uint handle)
         {
             int n = Native.Poll(w, buf);
             Rec? found = null;
-            foreach (var r in Parse(buf.AsSpan(0, Math.Max(n, 0)), check))
+            foreach (var r in Parse(buf.AsSpan(0, Math.Max(n, 0)), Check))
                 if (r.Event == Protocol.Ev.SceneBounds && r.Handle == handle) found = r;
             return found;
         }
@@ -417,26 +425,26 @@ static class MeasureTest
         cmd.UniformF32("frequency", 2);
         cmd.EndUniforms();
         Apply("effect groups");
-        pump(3);
+        s.Pump(3);
         Native.Poll(w, buf); // first values
 
         void Move(uint group, uint rect, Stride.Core.Mathematics.Matrix m, string what, Func<float[], bool> expect)
         {
             cmd.SetMat4(group, Protocol.Prop.Transform, m);
             Apply(what);
-            pump(2);
+            s.Pump(2);
             var b = Bounds(rect);
-            check(b is { } x && expect(x.V), $"20: {what} -> new SCENE_BOUNDS of the element inside ({S(b)})");
+            Check(b is { } x && expect(x.V), $"{what} -> new SCENE_BOUNDS of the element inside ({S(b)})");
         }
         var t = Stride.Core.Mathematics.Matrix.Translation(100, 50, 0);
-        var s = Stride.Core.Mathematics.Matrix.Scaling(2, 2, 1);
+        var scale = Stride.Core.Mathematics.Matrix.Scaling(2, 2, 1);
         Move(ChainGroup, ChainRect, t, "Group with effect chain translated", v => v[0] == 110 && v[1] == 60 && v[2] == 20);
-        Move(ChainGroup, ChainRect, s, "Group with effect chain scaled", v => v[0] == 20 && v[1] == 20 && v[2] == 40);
+        Move(ChainGroup, ChainRect, scale, "Group with effect chain scaled", v => v[0] == 20 && v[1] == 20 && v[2] == 40);
         Move(InputGroup, InputRect, t, "Group as ShaderEffect Input translated", v => v[2] == 20 && v[0] > 100);
         var before = Bounds(InputRect);
-        Move(InputGroup, InputRect, s, "Group as ShaderEffect Input scaled", v => v[2] == 40);
+        Move(InputGroup, InputRect, scale, "Group as ShaderEffect Input scaled", v => v[2] == 40);
         Move(Fx, InputRect, Stride.Core.Mathematics.Matrix.Translation(320, 70, 0), "ShaderEffect holding the Group translated", v => v[2] == 40);
-        check(before == null, $"20: no bounds without a change ({S(before)})");
+        Check(before == null, $"no bounds without a change ({S(before)})");
         Native.vlqt_window_destroy(w);
         Native.vlqt_res_release(wave);
     }
@@ -446,10 +454,10 @@ static class MeasureTest
 
     // #20: cost of the measurement path for a static scene of count bound rectangles (flat in one Group, like the
     // Elements500/2000 profile scenarios), and with one of them moving. Poll time = Stopwatch around vlqt_window_poll.
-    static void RunStaticCost(Action<bool, string> check, Action<int> pump, int count)
+    static void RunStaticCost(Scenario s, int count)
     {
         var w = Native.vlqt_window_create(800, 600, $"VL.Qt measure cost {count}");
-        check(w != IntPtr.Zero, $"20: window_create ({count})");
+        s.Check(w != IntPtr.Zero, $"window_create ({count})");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 20];
@@ -465,27 +473,27 @@ static class MeasureTest
             cmd.Bind(id, id, 0);
         }
         var rc = Native.Apply(w, cmd.EndFrame());
-        check(rc == 0, $"20: {count} bound rectangles ({rc})");
+        s.Check(rc == 0, $"{count} bound rectangles ({rc})");
         cmd.Reset();
-        pump(2);
+        s.Pump(2);
         int first = Native.Poll(w, buf);
-        var firstRecs = Parse(buf.AsSpan(0, Math.Max(first, 0)), check);
+        var firstRecs = Parse(buf.AsSpan(0, Math.Max(first, 0)), s);
         int measured = firstRecs.FindAll(x => x.Event == Protocol.Ev.Measured).Count;
         int bounds = firstRecs.FindAll(x => x.Event == Protocol.Ev.SceneBounds).Count;
-        check(measured == count && bounds == count, $"20: {count} bound items -> MEASURED + SCENE_BOUNDS each on the first poll ({measured}, {bounds})");
-        check(vlqt_test_measure_count(w) == count, $"20: first poll measures all {count} items ({vlqt_test_measure_count(w)})");
+        s.Check(measured == count && bounds == count, $"{count} bound items -> MEASURED + SCENE_BOUNDS each on the first poll ({measured}, {bounds})");
+        s.Check(vlqt_test_measure_count(w) == count, $"first poll measures all {count} items ({vlqt_test_measure_count(w)})");
 
         const int frames = 201;
         var idle = new double[frames];
         int idleMeasured = 0;
         for (int f = 0; f < frames; f++)
         {
-            pump(1);
+            s.Pump(1);
             var t = Stopwatch.StartNew();
             int n = Native.Poll(w, buf);
             idle[f] = t.Elapsed.TotalMilliseconds;
             idleMeasured = Math.Max(idleMeasured, vlqt_test_measure_count(w));
-            if (n != 0) { check(false, $"20: static poll returned {n} bytes ({count})"); break; }
+            if (n != 0) { s.Check(false, $"static poll returned {n} bytes ({count})"); break; }
         }
         var one = new double[frames];
         int oneMeasured = 0;
@@ -494,19 +502,19 @@ static class MeasureTest
             cmd.SetPlace(10, 1 + f % 2, 0, 12, 10); // starts at x 0 -> every frame moves
             Native.Apply(w, cmd.EndFrame());
             cmd.Reset();
-            pump(1);
+            s.Pump(1);
             var t = Stopwatch.StartNew();
             int n = Native.Poll(w, buf);
             one[f] = t.Elapsed.TotalMilliseconds;
             oneMeasured = Math.Max(oneMeasured, vlqt_test_measure_count(w));
-            if (n != 28) { check(false, $"20: one moved -> one SCENE_BOUNDS, got {n} bytes ({count})"); break; }
+            if (n != 28) { s.Check(false, $"one moved -> one SCENE_BOUNDS, got {n} bytes ({count})"); break; }
         }
         Array.Sort(idle);
         Array.Sort(one);
-        Console.WriteLine($"INFO 20 poll {count} bound rectangles: static median {idle[frames / 2]:F4} ms (max {idle[^1]:F4}), " +
+        s.Info($"poll {count} bound rectangles: static median {idle[frames / 2]:F4} ms (max {idle[^1]:F4}), " +
             $"measured/frame max {idleMeasured}; one moving median {one[frames / 2]:F4} ms (max {one[^1]:F4}), measured/frame max {oneMeasured}");
-        check(idleMeasured == 0, $"20: static scene of {count} -> no item measured ({idleMeasured} per frame)");
-        check(oneMeasured == 1, $"20: one of {count} moving -> only it measured ({oneMeasured} per frame)");
+        s.Check(idleMeasured == 0, $"static scene of {count} -> no item measured ({idleMeasured} per frame)");
+        s.Check(oneMeasured == 1, $"one of {count} moving -> only it measured ({oneMeasured} per frame)");
         Native.vlqt_window_destroy(w);
     }
 }

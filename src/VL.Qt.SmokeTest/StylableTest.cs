@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Collections.Immutable;
 using System.Drawing;
 using System.IO;
@@ -14,8 +15,13 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 // Text from the resolved style. Left Group with a style, right Group without (base style), each with the widget and a built-in
 // Button. Group style changed at runtime, a field of the widget changed (same reference, no style change), a throwing
 // IStylable next to a sibling. Images <outDir>/stylable.png and stylable2.png.
-static class StylableTest
+[TestFixture, NonParallelizable]
+public static class StylableTest
 {
+    /// <summary>IStylable elements.</summary>
+    [Test, Category("stylable")]
+    public static void Stylable() => Scenario.Run(Run);
+
     const float BgGray = 0x10 / 255f;
 
     // Grabs are in device pixels (HiDPI); test coordinates are logical (800x600).
@@ -90,13 +96,13 @@ static class StylableTest
         public Element? Build(Style style) => throw new InvalidOperationException("boom");
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    static void Run(Scenario s)
     {
         const uint frame1 = 0xC04000, border1 = 0x00FF00, text1 = 0xFFFF00;
         const uint frame2 = 0x8000C0, border2 = 0x00A0FF, text2 = 0xFF8080;
 
         var w = Native.vlqt_window_create(800, 600, "VL.Qt stylable test");
-        check(w != IntPtr.Zero, "413: stylable window_create");
+        s.Check(w != IntPtr.Zero, "stylable window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -130,55 +136,55 @@ static class StylableTest
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
-                check(rc == 0, $"413: stylable apply {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+                s.Check(rc == 0, $"stylable apply {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
-            pump(5);
+            s.Pump(5);
         }
 
         void Probes(Bitmap a, uint frame, uint border, uint text, string when)
         {
             // Left group: widget fill, border (6 px, inside the bounds, straight edge at mid height), text color, built-in Button.
-            check(Near(Px(a, 200, 60), frame), $"413: {when}: widget fill follows the group style ({Px(a, 200, 60)})");
-            check(Near(Px(a, 22, 45), border), $"413: {when}: widget border color follows the group style ({Px(a, 22, 45)})");
-            check(HasColor(a, 28, 22, 140, 66, text), $"413: {when}: widget text color follows the group style");
-            check(Near(Px(a, 40, 110), frame), $"413: {when}: built-in Button has the same frame color ({Px(a, 40, 110)})");
+            s.Check(Near(Px(a, 200, 60), frame), $"{when}: widget fill follows the group style ({Px(a, 200, 60)})");
+            s.Check(Near(Px(a, 22, 45), border), $"{when}: widget border color follows the group style ({Px(a, 22, 45)})");
+            s.Check(HasColor(a, 28, 22, 140, 66, text), $"{when}: widget text color follows the group style");
+            s.Check(Near(Px(a, 40, 110), frame), $"{when}: built-in Button has the same frame color ({Px(a, 40, 110)})");
             // Throwing IStylable next to the sibling: the sibling shows.
-            check(Near(Px(a, 280, 220), 0xFF00FF), $"413: {when}: sibling of the throwing IStylable shown ({Px(a, 280, 220)})");
+            s.Check(Near(Px(a, 280, 220), 0xFF00FF), $"{when}: sibling of the throwing IStylable shown ({Px(a, 280, 220)})");
             // Right group: base style (same frame color as its built-in Button).
-            check(Near(Px(a, 440, 110), 0x383838), $"413: {when}: unstyled group: Button with base style ({Px(a, 440, 110)})");
-            check(Near(Px(a, 600, 60), 0x383838), $"413: {when}: unstyled group: widget fill = base frame color ({Px(a, 600, 60)})");
-            check(!HasColor(a, 428, 22, 540, 66, text), $"413: {when}: unstyled group: widget text not in the group color");
+            s.Check(Near(Px(a, 440, 110), 0x383838), $"{when}: unstyled group: Button with base style ({Px(a, 440, 110)})");
+            s.Check(Near(Px(a, 600, 60), 0x383838), $"{when}: unstyled group: widget fill = base frame color ({Px(a, 600, 60)})");
+            s.Check(!HasColor(a, 428, 22, 540, 66, text), $"{when}: unstyled group: widget text not in the group color");
         }
 
         Frame(Root(GroupStyle(frame1, border1, text1, 14)), "initial", clear: true);
-        check(!string.IsNullOrEmpty(leftSink[0].BuildError) && leftSink[0].BuildError!.Contains("boom"), $"413: throwing IStylable: error at the group sink ({leftSink[0].BuildError})");
-        using (var a = grab(w, Path.Combine(outDir, "stylable.png")))
+        s.Check(!string.IsNullOrEmpty(leftSink[0].BuildError) && leftSink[0].BuildError!.Contains("boom"), $"throwing IStylable: error at the group sink ({leftSink[0].BuildError})");
+        using (var a = s.Grab(w, "stylable.png"))
             Probes(a, frame1, border1, text1, "initial");
 
         // Unchanged frames: Build is called every frame, the widget rebuilds nothing.
         var rebuilds = leftWidget.Rebuilds;
         var calls = leftWidget.Calls;
         Frame(Root(GroupStyle(frame1, border1, text1, 14)), "unchanged");
-        check(leftWidget.Calls > calls && leftWidget.Rebuilds == rebuilds, $"413: unchanged style: Build called ({leftWidget.Calls - calls}), no rebuild ({leftWidget.Rebuilds - rebuilds})");
+        s.Check(leftWidget.Calls > calls && leftWidget.Rebuilds == rebuilds, $"unchanged style: Build called ({leftWidget.Calls - calls}), no rebuild ({leftWidget.Rebuilds - rebuilds})");
 
         // Group style changed at runtime: the widget follows.
         Frame(Root(GroupStyle(frame2, border2, text2, 4)), "group style changed");
-        check(leftWidget.Rebuilds == rebuilds + 1, $"413: group style changed: one rebuild ({leftWidget.Rebuilds - rebuilds})");
-        using (var a = grab(w, Path.Combine(outDir, "stylable2.png")))
+        s.Check(leftWidget.Rebuilds == rebuilds + 1, $"group style changed: one rebuild ({leftWidget.Rebuilds - rebuilds})");
+        using (var a = s.Grab(w, "stylable2.png"))
         {
             Probes(a, frame2, border2, text2, "group style changed");
-            check(IsBg(Px(a, 300, 40)), $"413: field change: area right of the widget empty before ({Px(a, 300, 40)})");
+            s.Check(IsBg(Px(a, 300, 40)), $"field change: area right of the widget empty before ({Px(a, 300, 40)})");
         }
 
         // Field changed on the same reference, style unchanged: wider widget and new text become visible.
         leftWidget.Width = 3.4f;
         leftWidget.Text = "Changed";
         Frame(Root(GroupStyle(frame2, border2, text2, 4)), "field changed");
-        using (var a = grab(w, Path.Combine(outDir, "stylable3.png")))
-            check(Near(Px(a, 300, 40), frame2), $"413: field change on the same reference becomes visible ({Px(a, 300, 40)})");
-        check(leftWidget.Rebuilds == rebuilds + 2, $"413: field change: one more rebuild ({leftWidget.Rebuilds - rebuilds})");
+        using (var a = s.Grab(w, "stylable3.png"))
+            s.Check(Near(Px(a, 300, 40), frame2), $"field change on the same reference becomes visible ({Px(a, 300, 40)})");
+        s.Check(leftWidget.Rebuilds == rebuilds + 2, $"field change: one more rebuild ({leftWidget.Rebuilds - rebuilds})");
 
         Native.vlqt_window_destroy(w);
-        pump(1);
+        s.Pump(1);
     }
 }

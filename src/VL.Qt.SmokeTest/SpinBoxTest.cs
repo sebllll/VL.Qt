@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -9,8 +10,13 @@ using VL.Qt;
 // loss), never for SET VALUE/MINIMUM/MAXIMUM, the captured user value survives a stale SET before the poll, several
 // changes in one frame = one event with the last value, full int range, Editable/Enabled false, rebind drops a change
 // not polled. Input comes from the TEST exports vlqt_test_send_mouse / _wheel / _key_text.
-static class SpinBoxTest
+[TestFixture, NonParallelizable]
+public static class SpinBoxTest
 {
+    /// <summary>SpinBox control.</summary>
+    [Test, Category("spinbox")]
+    public static void SpinBox() => Scenario.Run(Run);
+
     [DllImport("vlqt", CallingConvention = CallingConvention.Cdecl)]
     static extern int vlqt_test_send_key_text(IntPtr w, int key, int modifiers, [MarshalAs(UnmanagedType.LPUTF8Str)] string? text);
 
@@ -42,34 +48,34 @@ static class SpinBoxTest
         return list;
     }
 
-    public static void Run(Action<bool, string> check, Action<int> pump)
+    static void Run(Scenario s)
     {
         var w = Native.vlqt_window_create(800, 600, "VL.Qt spinbox test");
-        check(w != IntPtr.Zero, "210: window_create");
+        s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"210: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
         List<Rec> Frame()
         {
-            pump(1);
+            s.Pump(1);
             int n = Native.Poll(w, buf);
-            check(n >= 0, $"210: poll ({n})");
+            s.Check(n >= 0, $"poll ({n})");
             return Parse(buf.AsSpan(0, Math.Max(n, 0)));
         }
-        void Mouse(int type, float x, float y) => check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"210: test_send_mouse {type}");
+        void Mouse(int type, float x, float y) => s.Check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
         void Click(float x, float y)
         {
             Mouse(Protocol.Mouse.Move, x, y);
             Mouse(Protocol.Mouse.Press, x, y);
             Mouse(Protocol.Mouse.Release, x, y);
         }
-        void Key(int key, int modifiers, string? text) => check(vlqt_test_send_key_text(w, key, modifiers, text) == 0, $"210: send_key_text {key}");
+        void Key(int key, int modifiers, string? text) => s.Check(vlqt_test_send_key_text(w, key, modifiers, text) == 0, $"send_key_text {key}");
         void Type(string s)
         {
             Key(KeyA, ControlModifier, null); // select all, typing replaces the text
@@ -81,10 +87,10 @@ static class SpinBoxTest
         void ExpectValue(List<Rec> recs, int expected, string what)
         {
             var v = Values(recs, H);
-            check(v.Count == 1 && v[0].ValueType == Protocol.Vt.I32 && v[0].Payload.Length == 8 && v[0].I32 == expected,
-                $"210: {what} -> one EV_VALUE i32 {expected} ({S(recs)})");
+            s.Check(v.Count == 1 && v[0].ValueType == Protocol.Vt.I32 && v[0].Payload.Length == 8 && v[0].I32 == expected,
+                $"{what} -> one EV_VALUE i32 {expected} ({S(recs)})");
         }
-        void ExpectNone(List<Rec> recs, string what) => check(Values(recs, H).Count == 0, $"210: {what} -> no EV_VALUE ({S(recs)})");
+        void ExpectNone(List<Rec> recs, string what) => s.Check(Values(recs, H).Count == 0, $"{what} -> no EV_VALUE ({S(recs)})");
 
         // Created with a large range and a value, bound without flags; AUTO_SIZE default on -> implicit size; SET no echo.
         cmd.Reset();
@@ -101,11 +107,11 @@ static class SpinBoxTest
         cmd.Bind(S1, H, 0);
         CheckApply("spinbox create + range/value/step/editable/enabled");
         Mouse(Protocol.Mouse.Move, 700, 500);
-        pump(2);
+        s.Pump(2);
         var recs = Frame();
         recs.AddRange(Frame());
         var m = recs.FindLast(r => r.Event == Protocol.Ev.Measured && r.Handle == H);
-        check(m.Payload != null && m.F(0) >= StyleMin && m.F(1) >= StyleMin, $"210: implicit size ({S(recs)})");
+        s.Check(m.Payload != null && m.F(0) >= StyleMin && m.F(1) >= StyleMin, $"implicit size ({S(recs)})");
         ExpectNone(recs, "SET VALUE/MINIMUM/MAXIMUM on creation");
 
         // Fixed Bounds from here (AUTO_SIZE off): text left, down and up buttons right.
@@ -142,7 +148,7 @@ static class SpinBoxTest
 
         // Wheel one notch up over the spinbox -> 101 at once.
         Mouse(Protocol.Mouse.Move, textX, y1);
-        check(Native.vlqt_test_send_wheel(w, textX, y1, 0, 120) == 0, "210: send_wheel");
+        s.Check(Native.vlqt_test_send_wheel(w, textX, y1, 0, 120) == 0, "send_wheel");
         ExpectValue(Frame(), 101, "wheel up");
 
         // Step 1000: + -> 1101.
@@ -164,7 +170,7 @@ static class SpinBoxTest
         Click(textX, y2);
         recs = Frame();
         ExpectValue(recs, 123, "typed value + focus loss");
-        check(Values(recs, H2).Count == 0, $"210: focusing the second spinbox sends nothing for it ({S(recs)})");
+        s.Check(Values(recs, H2).Count == 0, $"focusing the second spinbox sends nothing for it ({S(recs)})");
 
         // User wins over a stale SET between change and poll: the captured user value still arrives.
         Click(upX, y1); // step 1000 -> 1123
@@ -212,7 +218,7 @@ static class SpinBoxTest
         cmd.SetBool(S1, Protocol.Prop.Enabled, false);
         CheckApply("enabled false");
         Click(upX, y1);
-        check(Native.vlqt_test_send_wheel(w, textX, y1, 0, 120) == 0, "210: send_wheel disabled");
+        s.Check(Native.vlqt_test_send_wheel(w, textX, y1, 0, 120) == 0, "send_wheel disabled");
         ExpectNone(Frame(), "+ and wheel with Enabled false");
 
         // A new sink handle drops a change not polled yet (like Button clicks).
@@ -222,17 +228,17 @@ static class SpinBoxTest
         cmd.Bind(S1, H3, 0);
         CheckApply("rebind");
         recs = Frame();
-        check(Values(recs, H).Count == 0 && Values(recs, H3).Count == 0, $"210: rebind drops the unpolled change ({S(recs)})");
+        s.Check(Values(recs, H).Count == 0 && Values(recs, H3).Count == 0, $"rebind drops the unpolled change ({S(recs)})");
         Click(upX, y1);
         recs = Frame();
         var v3 = Values(recs, H3);
-        check(v3.Count == 1 && v3[0].I32 == 12, $"210: new handle gets the next change ({S(recs)})");
+        s.Check(v3.Count == 1 && v3[0].I32 == 12, $"new handle gets the next change ({S(recs)})");
 
         cmd.Destroy(S1);
         cmd.Destroy(S2);
         CheckApply("spinbox destroy");
         Native.vlqt_window_destroy(w);
-        pump(1);
+        s.Pump(1);
     }
 
     const uint S1 = 1;

@@ -1,4 +1,5 @@
-﻿#if WINDOWS
+﻿using NUnit.Framework;
+#if WINDOWS
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -12,8 +13,13 @@ using VL.Qt;
 // unless the window answers WM_GETDLGCODE with DLGC_WANT*, so Enter never reached a TextField or SpinBox in vvvv.
 // The test posts WM_KEYDOWN/WM_KEYUP to the Qt window and lets Application.DoEvents (the same PreTranslateMessage)
 // dispatch them before Qt's own pump can. Typing uses digits, so the keyboard layout does not matter.
-static class KeyRouteTest
+[TestFixture, NonParallelizable]
+public static class KeyRouteTest
 {
+    /// <summary>Key routing to the Qt window.</summary>
+    [Test, Category("keyroute")]
+    public static void KeyRoute() => Scenario.Run(Run);
+
     const uint WM_KEYDOWN = 0x0100;
     const uint WM_KEYUP = 0x0101;
     const uint WM_GETDLGCODE = 0x0087;
@@ -50,23 +56,34 @@ static class KeyRouteTest
         return list;
     }
 
-    public static void Run(Action<bool, string> check, Action<int> pump)
+    static void Run(Scenario s)
     {
+        var hwnd = IntPtr.Zero;
+        // Locally the key checks failed in runs beside other sessions (18 FAIL), the same develop commit passed in the
+        // CI and in a later local run. Windows does not hand the foreground to a process started in the background,
+        // and Qt Quick types into the active window only. Outside the CI a failure without the foreground is a SKIP.
+        void Check(bool ok, string what)
+        {
+            if (ok || hwnd == IntPtr.Zero || GetForegroundWindow() == hwnd || Environment.GetEnvironmentVariable("CI") != null)
+                s.Check(ok, what);
+            else
+                s.Skip($"{what}: the test window is not in the foreground (another window holds it)");
+        }
         const string title = "VL.Qt key route test";
         var w = Native.vlqt_window_create(600, 400, title);
-        check(w != IntPtr.Zero, "301: key route window_create");
+        Check(w != IntPtr.Zero, "key route window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"301: key route {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            Check(rc == 0, $"key route {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
         List<Rec> Frame()
         {
-            pump(1);
+            s.Pump(1);
             int n = Native.Poll(w, buf);
             return Parse(buf.AsSpan(0, Math.Max(n, 0)));
         }
@@ -94,26 +111,15 @@ static class KeyRouteTest
         cmd.Reparent(S1, 0, 1);
         cmd.Bind(S1, HS, 0);
         CheckApply("create");
-        pump(3);
+        s.Pump(3);
         Frame();
 
-        var hwnd = FindWindowW(null, title);
-        check(hwnd != IntPtr.Zero, "301: key route Qt window found by title");
+        hwnd = FindWindowW(null, title);
+        Check(hwnd != IntPtr.Zero, "key route Qt window found by title");
         // The Qt window itself, not IsDialogMessage, must handle Enter, Tab, Escape and the arrows.
         var code = (long)SendMessageW(hwnd, WM_GETDLGCODE, (IntPtr)VK_RETURN, IntPtr.Zero);
-        check((code & DLGC_WANTALLKEYS) != 0, $"301: key route WM_GETDLGCODE -> DLGC_WANTALLKEYS (0x{code:x})");
+        Check((code & DLGC_WANTALLKEYS) != 0, $"key route WM_GETDLGCODE -> DLGC_WANTALLKEYS (0x{code:x})");
 
-        // Locally the key checks failed in runs beside other sessions (18 FAIL), the same develop commit passed in the
-        // CI and in a later local run. Windows does not hand the foreground to a process started in the background,
-        // and Qt Quick types into the active window only. Outside the CI a failure without the foreground is a SKIP.
-        var strict = check;
-        check = (ok, what) =>
-        {
-            if (ok || hwnd == IntPtr.Zero || GetForegroundWindow() == hwnd || Environment.GetEnvironmentVariable("CI") != null)
-                strict(ok, what);
-            else
-                Console.WriteLine($"SKIP {what}: the test window is not in the foreground (another window holds it)");
-        };
 
         // One key like a keyboard: WM_KEYDOWN + WM_KEYUP to the Qt HWND, dispatched by WinForms (TranslateMessage adds
         // WM_CHAR); numpad Enter = VK_RETURN with the extended-key bit.
@@ -136,23 +142,23 @@ static class KeyRouteTest
         Frame();
         TypeDigits("42");
         var recs = Frame();
-        check(Values(recs, HT).Count == 0, $"301: key route textfield typing without Enter -> no EV_VALUE ({S(recs)})");
+        Check(Values(recs, HT).Count == 0, $"key route textfield typing without Enter -> no EV_VALUE ({S(recs)})");
         PostKey(VK_RETURN);
         recs = Frame();
         var v = Values(recs, HT);
-        check(v.Count == 1 && v[0].ValueType == Protocol.Vt.String && v[0].Str == "42", $"301: key route textfield Enter (WinForms loop) -> \"42\" ({S(recs)})");
+        Check(v.Count == 1 && v[0].ValueType == Protocol.Vt.String && v[0].Str == "42", $"key route textfield Enter (WinForms loop) -> \"42\" ({S(recs)})");
         TypeDigits("7");
         PostKey(VK_RETURN, extended: true);
         recs = Frame();
         v = Values(recs, HT);
-        check(v.Count == 1 && v[0].ValueType == Protocol.Vt.String && v[0].Str == "427", $"301: key route textfield numpad Enter -> \"427\" ({S(recs)})");
+        Check(v.Count == 1 && v[0].ValueType == Protocol.Vt.String && v[0].Str == "427", $"key route textfield numpad Enter -> \"427\" ({S(recs)})");
         // An arrow key moves the cursor in the field instead of the dialog focus: 4 2 7 -> left -> 4 2 9 7.
         PostKey(VK_LEFT);
         TypeDigits("9");
         PostKey(VK_RETURN);
         recs = Frame();
         v = Values(recs, HT);
-        check(v.Count == 1 && v[0].ValueType == Protocol.Vt.String && v[0].Str == "4297", $"301: key route textfield arrow left + Enter -> \"4297\" ({S(recs)})");
+        Check(v.Count == 1 && v[0].ValueType == Protocol.Vt.String && v[0].Str == "4297", $"key route textfield arrow left + Enter -> \"4297\" ({S(recs)})");
 
         // SpinBox (Input (Int)): typed digits + Enter -> valueModified.
         Click(170, 170); // text area between the indicators
@@ -161,22 +167,22 @@ static class KeyRouteTest
         TypeDigits("5");
         PostKey(VK_RETURN);
         recs = Frame();
-        var s = Values(recs, HS);
-        check(s.Count == 1 && s[0].ValueType == Protocol.Vt.I32 && s[0].I32 == 5, $"301: key route spinbox Enter (WinForms loop) -> 5 ({S(recs)})");
+        var sv = Values(recs, HS);
+        Check(sv.Count == 1 && sv[0].ValueType == Protocol.Vt.I32 && sv[0].I32 == 5, $"key route spinbox Enter (WinForms loop) -> 5 ({S(recs)})");
         TypeDigits("3");
         PostKey(VK_RETURN, extended: true);
         recs = Frame();
-        s = Values(recs, HS);
-        check(s.Count == 1 && s[0].ValueType == Protocol.Vt.I32 && s[0].I32 == 53, $"301: key route spinbox numpad Enter -> 53 ({S(recs)})");
+        sv = Values(recs, HS);
+        Check(sv.Count == 1 && sv[0].ValueType == Protocol.Vt.I32 && sv[0].I32 == 53, $"key route spinbox numpad Enter -> 53 ({S(recs)})");
 
-        RunFocus(check, w, cmd, CheckApply, Frame, PostKey, TypeDigits, Click);
+        RunFocus(Check, w, cmd, CheckApply, Frame, PostKey, TypeDigits, Click);
 
         cmd.Destroy(T);
         cmd.Destroy(S1);
         cmd.Destroy(R);
         CheckApply("destroy");
         Native.vlqt_window_destroy(w);
-        pump(1);
+        s.Pump(1);
     }
 
     // #374: Esc discards the edit and releases the focus (no EV_VALUE), a press outside the focused element (mouse,
@@ -226,7 +232,7 @@ static class KeyRouteTest
         cmd.Create(RT, Protocol.Type.TapHandler);
         cmd.Reparent(RT, R, 0);
         cmd.Bind(RT, HR, 0);
-        apply("374 tap rect");
+        apply("tap rect");
         frame();
 
         // Enter keeps the focus: a second edit + Enter commits again without a click.
@@ -234,35 +240,35 @@ static class KeyRouteTest
         type("1");
         Key(VK_RETURN);
         var recs = frame();
-        check(Text(recs, "42971"), $"374: textfield Enter commits \"42971\" ({S(recs)})");
+        check(Text(recs, "42971"), $"textfield Enter commits \"42971\" ({S(recs)})");
         type("2");
         Key(VK_RETURN);
         recs = frame();
-        check(Text(recs, "429712"), $"374: textfield Enter keeps the focus, next Enter commits \"429712\" ({S(recs)})");
+        check(Text(recs, "429712"), $"textfield Enter keeps the focus, next Enter commits \"429712\" ({S(recs)})");
 
         // Esc: discard, no EV_VALUE, focus gone; the text is back to the committed one.
         type("99");
         Key(VK_ESCAPE);
         recs = frame();
-        check(Values(recs, HT).Count == 0, $"374: textfield Esc -> no EV_VALUE ({S(recs)})");
-        check(FocusGone(HT, out var fr), $"374: textfield Esc releases the focus ({fr})");
+        check(Values(recs, HT).Count == 0, $"textfield Esc -> no EV_VALUE ({S(recs)})");
+        check(FocusGone(HT, out var fr), $"textfield Esc releases the focus ({fr})");
         Focus(200, 70);
         type("3");
         Key(VK_RETURN);
         recs = frame();
-        check(Text(recs, "4297123"), $"374: textfield Esc restored the committed text, \"4297123\" ({S(recs)})");
+        check(Text(recs, "4297123"), $"textfield Esc restored the committed text, \"4297123\" ({S(recs)})");
         // Esc without an edit: still no EV_VALUE.
         Key(VK_ESCAPE);
         recs = frame();
-        check(Values(recs, HT).Count == 0, $"374: textfield Esc without an edit -> no EV_VALUE ({S(recs)})");
+        check(Values(recs, HT).Count == 0, $"textfield Esc without an edit -> no EV_VALUE ({S(recs)})");
 
         // Mouse press into the empty window: commit (focus loss) + focus gone.
         Focus(200, 70);
         type("4");
         Click(500, 120);
         recs = frame();
-        check(Text(recs, "42971234"), $"374: textfield mouse click into the empty window commits \"42971234\" ({S(recs)})");
-        check(FocusGone(HT, out fr), $"374: textfield mouse click into the empty window releases the focus ({fr})");
+        check(Text(recs, "42971234"), $"textfield mouse click into the empty window commits \"42971234\" ({S(recs)})");
+        check(FocusGone(HT, out fr), $"textfield mouse click into the empty window releases the focus ({fr})");
         // Pressing into the focused field itself keeps the focus.
         Focus(200, 70);
         Click(120, 70);
@@ -270,73 +276,73 @@ static class KeyRouteTest
         type("5");
         Key(VK_RETURN);
         recs = frame();
-        check(Text(recs, "429712345"), $"374: textfield click into the focused field keeps the focus ({S(recs)})");
+        check(Text(recs, "429712345"), $"textfield click into the focused field keeps the focus ({S(recs)})");
 
         // Touch tap into the empty window.
         type("7");
         Tap(500, 120);
         recs = frame();
-        check(Text(recs, "4297123457"), $"374: textfield touch tap into the empty window commits ({S(recs)})");
-        check(FocusGone(HT, out fr), $"374: textfield touch tap into the empty window releases the focus ({fr})");
+        check(Text(recs, "4297123457"), $"textfield touch tap into the empty window commits ({S(recs)})");
+        check(FocusGone(HT, out fr), $"textfield touch tap into the empty window releases the focus ({fr})");
 
         // Click on an element with a Tap handler: commits, releases the focus and still clicks.
         Focus(200, 70);
         type("8");
         Click(470, 300);
         recs = frame();
-        check(Text(recs, "42971234578"), $"374: textfield click on a Tap handler commits ({S(recs)})");
-        check(recs.Exists(r => r.Event == Protocol.Ev.Click && r.Handle == HR), $"374: click on a Tap handler still clicks ({S(recs)})");
-        check(FocusGone(HT, out fr), $"374: textfield click on a Tap handler releases the focus ({fr})");
+        check(Text(recs, "42971234578"), $"textfield click on a Tap handler commits ({S(recs)})");
+        check(recs.Exists(r => r.Event == Protocol.Ev.Click && r.Handle == HR), $"click on a Tap handler still clicks ({S(recs)})");
+        check(FocusGone(HT, out fr), $"textfield click on a Tap handler releases the focus ({fr})");
         // Same with touch.
         Focus(200, 70);
         type("9");
         Tap(470, 300);
         recs = frame();
         check(Text(recs, "429712345789") && recs.Exists(r => r.Event == Protocol.Ev.Click && r.Handle == HR),
-            $"374: textfield touch tap on a Tap handler commits and clicks ({S(recs)})");
-        check(FocusGone(HT, out fr), $"374: textfield touch tap on a Tap handler releases the focus ({fr})");
+            $"textfield touch tap on a Tap handler commits and clicks ({S(recs)})");
+        check(FocusGone(HT, out fr), $"textfield touch tap on a Tap handler releases the focus ({fr})");
 
         // SpinBox (53): Esc discards the typed text without valueModified, the display shows the value again.
         Focus(170, 170);
         type("9");
         Key(VK_ESCAPE);
         recs = frame();
-        check(Values(recs, HS).Count == 0, $"374: spinbox Esc -> no EV_VALUE ({S(recs)})");
-        check(FocusGone(HS, out fr), $"374: spinbox Esc releases the focus ({fr})");
+        check(Values(recs, HS).Count == 0, $"spinbox Esc -> no EV_VALUE ({S(recs)})");
+        check(FocusGone(HS, out fr), $"spinbox Esc releases the focus ({fr})");
         Focus(170, 170);
         type("1");
         Key(VK_RETURN);
         recs = frame();
-        check(Int(recs, 531), $"374: spinbox Esc restored the text of the value, 531 ({S(recs)})");
+        check(Int(recs, 531), $"spinbox Esc restored the text of the value, 531 ({S(recs)})");
         // Enter keeps the focus.
         type("2");
         Key(VK_RETURN);
         recs = frame();
-        check(Int(recs, 5312), $"374: spinbox Enter keeps the focus, 5312 ({S(recs)})");
+        check(Int(recs, 5312), $"spinbox Enter keeps the focus, 5312 ({S(recs)})");
         // After an Esc a SET VALUE still shows (the text binding survives the revert).
         type("4");
         Key(VK_ESCAPE);
         frame();
         cmd.SetI32(S1, Protocol.Prop.Value, 7);
-        apply("374 spinbox set 7");
+        apply("spinbox set 7");
         frame();
         Focus(170, 170);
         type("2");
         Key(VK_RETURN);
         recs = frame();
-        check(Int(recs, 72), $"374: spinbox SET VALUE after Esc shows, typed -> 72 ({S(recs)})");
+        check(Int(recs, 72), $"spinbox SET VALUE after Esc shows, typed -> 72 ({S(recs)})");
         // Mouse and touch into the empty window commit and release.
         type("1");
         Click(500, 120);
         recs = frame();
-        check(Int(recs, 721), $"374: spinbox mouse click into the empty window commits 721 ({S(recs)})");
-        check(FocusGone(HS, out fr), $"374: spinbox mouse click into the empty window releases the focus ({fr})");
+        check(Int(recs, 721), $"spinbox mouse click into the empty window commits 721 ({S(recs)})");
+        check(FocusGone(HS, out fr), $"spinbox mouse click into the empty window releases the focus ({fr})");
         Focus(170, 170);
         type("3");
         Tap(500, 120);
         recs = frame();
-        check(Int(recs, 7213), $"374: spinbox touch tap into the empty window commits 7213 ({S(recs)})");
-        check(FocusGone(HS, out fr), $"374: spinbox touch tap into the empty window releases the focus ({fr})");
+        check(Int(recs, 7213), $"spinbox touch tap into the empty window commits 7213 ({S(recs)})");
+        check(FocusGone(HS, out fr), $"spinbox touch tap into the empty window releases the focus ({fr})");
     }
 
     const uint R = 3;
