@@ -13,8 +13,8 @@
 #include "perf.h"
 #include "protocol.h"
 #include "qtimageitem.h"
-#include "resources.h"
-#include "shader_item.h"
+#include "resources/resources.h"
+#include "effects/shader_item.h"
 #include "vlqt.h"
 #include "vlstyle.h"
 

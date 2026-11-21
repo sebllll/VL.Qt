@@ -6,7 +6,7 @@
 #include "app/log.h"
 #include "app/render_gate.h"
 #include "test/test_hooks.h"
-#include "commands.h"
+#include "scene/scene.h"
 #include "device.h"
 #include "offscreen.h"
 #include "perf.h"

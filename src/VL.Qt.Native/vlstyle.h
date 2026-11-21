@@ -1,5 +1,5 @@
 /* vlstyle.h - attached object VlStyle: the resolved style of one Controls element as a table field x state,
- * written by SET_STYLE (commands.cpp) and read by the VL.Qt base style (style/VLQt/*.qml, embedded module "VLQt").
+ * written by SET_STYLE (scene/commands.cpp) and read by the VL.Qt base style (style/VLQt/*.qml, embedded module "VLQt").
  *
  * QML API (see docs/styles.md):
  *   VlStyle.state                 int, writable, default STYLE_STATE_NORMAL; the style binds it to stateOf(...)
@@ -146,7 +146,7 @@ public:
     static int slotOf(quint16 field);
     static quint16 valueTypeOf(int slot);
 
-    /* SET_STYLE (commands.cpp): clear() and setCell() edit the table, commit() refreshes the groups and signals.
+    /* SET_STYLE (scene/commands.cpp): clear() and setCell() edit the table, commit() refreshes the groups and signals.
      * v must have the slot's value type (checked by the caller). */
     void clear();
     void setCell(int slot, int state, const Value& v);

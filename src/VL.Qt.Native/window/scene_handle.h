@@ -14,7 +14,7 @@ struct vlqt_scene;
 
 namespace vlqt {
 
-struct Scene;
+class Scene;
 class CloseFilter;
 class UpdateGate;
 

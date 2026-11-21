@@ -18,15 +18,15 @@
 //
 // Fade: with 0 < alpha of the clear colour, the view draws a full-size fill with the clear colour over the
 // previous frame (premultiplied "over": out = C·a + prev·(1 − a)), so trails fade toward the clear colour; alpha 0
-// draws no fill (pure accumulation). The window then clears to the clear colour made opaque (Scene::applyClearColor):
+// draws no fill (pure accumulation). The window then clears to the clear colour made opaque (ClearState::applyColor):
 // the texture's alpha only grows toward 1 under the fill, and "texture over opaque C" keeps every pixel's colour
 // exactly where the texture is not opaque yet (first frames: the background is C, not C·a or C twice), whatever Qt
 // does with the alpha of a frame clear.
 //
-// Attachment: the vlqt::Scene owns the layer and holds the Clear state; the layer's items belong to one QQuickWindow
-// (source under its content item, view under Scene::root, size from the window's signals, textures in its QRhi). It
-// never moves to another window: Scene::releasePreviousFrame / restorePreviousFrame rebuild it from the state when the window
-// is replaced.
+// Attachment: the ClearState of a vlqt::Scene (scene/clear_state.h) owns the layer and holds the Clear state; the layer's
+// items belong to one QQuickWindow (source under its content item, view under Scene::root, size from the window's signals,
+// textures in its QRhi). It never moves to another window: ClearState::release / restore rebuild it from the state when
+// the window is replaced.
 
 #include <QtCore/QPointer>
 #include <QtGui/QColor>
@@ -54,7 +54,7 @@ public:
 
 private:
     QPointer<QQuickItem> m_source; // QQuickShaderEffectSource, child of the content item
-    QPointer<QQuickItem> m_view; // FeedbackView, child of the root
+    QPointer<QQuickItem> m_view; // PreviousFrameView, child of the root
 };
 
 } // namespace vlqt

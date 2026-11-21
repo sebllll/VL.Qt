@@ -64,17 +64,26 @@ target_sources(vlqt PRIVATE
     window/window_filters.cpp
     window/window_filters.h
 
-    # scene/: commands, events, input, previous-frame layer
-    commands.cpp
-    commands.h
-    events.cpp
-    events.h
-    touch.cpp
-    touch.h
-    previous_frame_layer.cpp
-    previous_frame_layer.h
+    # scene/: object table, command decoder, event queue, measurement, input handlers, previous-frame layer
+    scene/clear_state.cpp
+    scene/clear_state.h
+    scene/commands.cpp
+    scene/commands.h
+    scene/event_queue.cpp
+    scene/event_queue.h
+    scene/handlers.cpp
+    scene/handlers.h
+    scene/measure.cpp
+    scene/measure.h
+    scene/previous_frame_layer.cpp
+    scene/previous_frame_layer.h
+    scene/scene.cpp
+    scene/scene.h
+    scene/touch_handler.cpp
+    scene/touch_handler.h
 
     # elements/
+    elements/element_entry.h
     elements.cpp
     elements.h
     shape_path_element.cpp
@@ -83,8 +92,12 @@ target_sources(vlqt PRIVATE
     # effects/ and user_qml/
     effectchain.cpp
     effectchain.h
-    shader_item.cpp
-    shader_item.h
+    effects/layer_requests.cpp
+    effects/layer_requests.h
+    effects/shader_item.cpp
+    effects/shader_item.h
+    effects/shader_material.cpp
+    effects/shader_material.h
     qmlitem.cpp
     qmlitem.h
 
@@ -93,8 +106,19 @@ target_sources(vlqt PRIVATE
     vlstyle.h
 
     # resources/
-    resources.cpp
-    resources.h
+    resources/pixel_format.cpp
+    resources/pixel_format.h
+    resources/resource_events.cpp
+    resources/resource_events.h
+    resources/resource_exports.cpp
+    resources/resource_kind.h
+    resources/resource_manager.cpp
+    resources/resource_manager.h
+    resources/resource_registry.cpp
+    resources/resource_workers.cpp
+    resources/resource_workers.h
+    resources/resources.cpp
+    resources/resources.h
     image_resource.cpp
     image_resource.h
     qtimageitem.cpp
@@ -107,7 +131,6 @@ target_sources(vlqt PRIVATE
     shader_resource.h
     audio_tap.cpp
     audio_tap.h
-    resources/resource_exports.cpp
 
     # device/
     device.cpp
@@ -175,7 +198,7 @@ if(VLQT_SANITIZE)
     target_compile_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE} -fno-omit-frame-pointer -g)
     target_link_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE})
 endif()
-# GuiPrivate: QRhi (GPU timestamps). QuickPrivate: QQuickPointerDeviceHandler (touch.h, check on Qt updates).
+# GuiPrivate: QRhi (GPU timestamps). QuickPrivate: QQuickPointerDeviceHandler (scene/touch_handler.h, check on Qt updates).
 # QuickControls2: QQuickStyle. Multimedia: QAudioBufferOutput of the audio tap (deployed for the Video element anyway).
 target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick Qt6::QuickPrivate Qt6::QuickControls2 Qt6::Multimedia)
 # ShaderToolsPrivate: QShaderBaker (runtime bake of ShaderEffect sources). rhi/qshaderbaker.h lies only in the

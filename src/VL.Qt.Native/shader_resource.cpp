@@ -294,7 +294,7 @@ class ShaderKind final : public Kind
 public:
     const char* name() const override { return "shader"; }
 
-    std::string decode(Work& work) override
+    std::string decode(Content& work) override
     {
         auto& w = static_cast<ShaderResource&>(work);
         if (!w.m_code.isEmpty())
@@ -375,12 +375,12 @@ public:
         return baker.bake();
     }
 
-    std::string takeWarning(Work& work) override
+    std::string takeWarning(Content& work) override
     {
         return std::move(static_cast<ShaderResource&>(work).m_warning);
     }
 
-    int64_t upload(Work&, int64_t, bool& done, std::string&) override
+    int64_t upload(Content&, int64_t, bool& done, std::string&) override
     {
         done = true; // no GPU upload for shaders
         return 0;
@@ -518,7 +518,7 @@ int reflect(const char* utf8Source, int stage, char* buf, int bufLen, int* writt
 
 std::shared_ptr<ShaderResource> ready(uint64_t id)
 {
-    return std::static_pointer_cast<ShaderResource>(readyWork(id, VLQT_RESOURCE_KIND_SHADER));
+    return std::static_pointer_cast<ShaderResource>(readyContent(id, VLQT_RESOURCE_KIND_SHADER));
 }
 
 const QShader& defaultVertexShader()

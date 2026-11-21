@@ -1,7 +1,7 @@
 // Test exports of vlqt_test.h: probes into a window handle, the perf computations, the shared device, image resources,
 // fonts and offscreen scenes (SmokeTest, unit tests).
 #include "../vlqt_test.h"
-#include "../commands.h"
+#include "scene/scene.h"
 #include "../device.h"
 #include "../image_resource.h"
 #include "../app/exports.h"

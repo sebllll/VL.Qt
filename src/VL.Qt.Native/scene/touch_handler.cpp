@@ -1,4 +1,4 @@
-#include "touch.h"
+#include "scene/touch_handler.h"
 
 #include <QtCore/QMetaObject>
 #include <QtCore/QVariant>
@@ -147,7 +147,7 @@ void PinchState::onValuesChanged()
     // Translation from the centroid, not activeTranslation: after a change of the finger count Qt 6.12 reports
     // activeTranslation as the centroid's scene position (press position lost, SmokeTest pinch), a jump of hundreds of
     // pixels. Centroid movement since the activation in scene coordinates, mapped into the parent's space like the Drag
-    // handler (events.h).
+    // handler (scene/handlers.h).
     const QQuickItem* item = points_->parentItem(); // the tracker sits at the pinch's item
     const QQuickItem* parent = item ? item->parentItem() : nullptr;
     const auto toParent = [parent](const QPointF& scene) { return parent ? parent->mapFromScene(scene) : scene; };

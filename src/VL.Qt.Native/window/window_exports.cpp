@@ -5,7 +5,7 @@
 #include "app/app.h"
 #include "app/exports.h"
 #include "app/render_gate.h"
-#include "commands.h"
+#include "scene/scene.h"
 #include "offscreen.h"
 #include "perf.h"
 #include "protocol.h"
@@ -324,7 +324,7 @@ VLQT_API int vlqt_scene_get_apply_error(vlqt_scene* p, vlqt_apply_error* out)
             return fail(VLQT_ERR_NULL_HANDLE, "get_apply_error: null window");
         if (!out)
             return fail(VLQT_ERR_BAD_ARGUMENT, "get_apply_error: null out");
-        const vlqt::Scene::ApplyError& e = w->scene->lastApplyError;
+        const vlqt::ApplyError& e = w->scene->lastApplyError;
         *out = vlqt_apply_error{e.rc, e.command, e.id, e.op, e.prop, e.reason.c_str()};
         return VLQT_OK;
     });

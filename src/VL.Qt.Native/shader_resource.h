@@ -18,11 +18,11 @@
  *           a .qsb, or for a source on another backend on an extra GLSL 150 translation (cached with the bake).
  *   upload: nothing (no GPU object, RESOURCE_EVENT_INFO all 0); each ShaderEffect item builds its pipeline from the QShader.
  * Device lost: CPU data only, nothing to restore. A new load on a Ready id keeps the old shader until the new one is
- * Ready (resources.h, replacement). Main thread only, except decode (like image_resource.h).
+ * Ready (docs/design/resources.md, replacement). Main thread only, except decode (like image_resource.h).
  */
 #pragma once
 
-#include "resources.h"
+#include "resources/resources.h"
 
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
@@ -35,9 +35,9 @@
 
 namespace vlqt::res::shader {
 
-// One shader (the Work of the kind). Input fields are set before start, the decode result by the worker; after Ready
+// One shader (the Content of the kind). Input fields are set before start, the decode result by the worker; after Ready
 // the content is immutable and read on the main thread (QShader is implicitly shared, copies are cheap).
-class ShaderResource final : public Work
+class ShaderResource final : public Content
 {
 public:
     // --- for the ShaderEffect item, main thread, on a Ready resource ---
@@ -62,7 +62,7 @@ private:
     std::string m_warning; // a uniform or sampler the GLSL translation renamed, for Kind::takeWarning
 };
 
-// The kind for the manager (resources.cpp kindOf).
+// The kind for the manager (resources/resource_registry.cpp kindOf).
 Kind* kind();
 
 // vlqt_shader_load: utf8Path = .qsb file or "builtin:<name>", stage = VLQT_SHADER_STAGE_*. 0 / -7 / -9.
