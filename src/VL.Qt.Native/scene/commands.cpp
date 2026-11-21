@@ -166,6 +166,11 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
     // their new sources, so nothing refers to them any more (see destroySubtree).
     deleteRetired();
     appliedSincePoll = true; // also a failed apply may have applied its first commands
+    // QML files are compiled once all commands of the frame have set their properties (also after a failed apply).
+    struct BuildQml {
+        Elements& elements;
+        ~BuildQml() { elements.buildQml(); }
+    } buildQml{elements};
     if (len < 0 || (len > 0 && !buf)) {
         err = "invalid buffer (null or negative length)";
         return ApplyBadLength;

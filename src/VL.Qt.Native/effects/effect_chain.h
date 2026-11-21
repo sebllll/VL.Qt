@@ -17,6 +17,7 @@
 #include <QtCore/QtTypes>
 #include <QtQuick/QQuickItem>
 
+#include <array>
 #include <functional>
 #include <string>
 #include <utility>
@@ -97,6 +98,8 @@ public:
         std::vector<EffectUniform> uniforms; // table without the reserved and broken entries
         QStringList problems;                // content problems of the link itself (reserved names, refs, ...)
         QString shaderError;                 // setShader refused the id
+        std::array<float, 4> elementRect{};  // elementRect last written to the passes (SINGLE / TWO_PASS), valid if ...
+        bool elementRectKnown = false;       // ... set: false after the table was cleared and on a fresh stage
     };
 
     /* SHADER PYRAMID: the passes under the stage and the layout they were made for. */
@@ -129,10 +132,10 @@ public:
     EffectChain(EffectComponents& components, QQuickItem* element);
 
     /* Takes the links of desc (masks: mask item per link, nullptr = none). Same structure (link count and kinds) with a
-     * root: the stages stay, only changed values are written (no shader switch, no new item). Otherwise the stages
-     * are rebuilt; the old ones are hidden and go to retired (deleted by the caller after the next frame). A mask
-     * that stays attached keeps its frame (moved to its new link); the others go to dropped. false + err: a stage could
-     * not be created (QML error). */
+     * root: the stages stay, only changed values are written (no shader switch, no new item, no allocation, no
+     * repaint when nothing changed). Otherwise the stages are rebuilt; the old ones are hidden and go to retired (deleted
+     * by the caller after the next frame). A mask that stays attached keeps its frame (moved to its new link); the
+     * others go to dropped. false + err: a stage could not be created (QML error). */
     bool apply(const EffectChainDesc& desc, const std::vector<QQuickItem*>& masks, std::vector<QPointer<QQuickItem>>& retired,
         std::vector<DroppedMask>& dropped, std::string& err);
     /* Writes link(i).multi.maskFrame to its stage (nullptr = no mask). */
@@ -154,20 +157,25 @@ private:
     friend class EffectChainItem;
     void attach(QQuickItem* root);
     bool buildStages(std::string& err);
-    /* Writes the values of l to its stage that differ from old (nullptr: from a fresh stage, i.e. Qt's defaults). */
-    void writeLink(Link& l, const Link* old);
-    void writeShaderLink(Link& l, const Link* old);
-    void writePyramidLink(Link& l, const Link* old);
+    /* Writes the values of l to its stage that differ from old (nullptr: from a fresh stage, i.e. Qt's defaults).
+     * true if anything was written. */
+    bool writeLink(Link& l, const Link* old);
+    bool writeShaderLink(Link& l, const Link* old);
+    bool writePyramidLink(Link& l, const Link* old);
     /* Step count, pass sizes and wiring from the stage size and dpr (no-op if both are unchanged). */
     void layoutPyramid(Link& l);
-    void writePyramidWeights(Link& l);
-    void writeElementRect(Link& l); // elementRect auto uniform of SINGLE / TWO_PASS passes (stage geometry)
+    bool writePyramidWeights(Link& l);
+    bool writeElementRect(Link& l); // elementRect auto uniform of SINGLE / TWO_PASS passes (stage geometry), on change only
+    /* update() on every ShaderItem pass of the links from `first` on: a pass whose own values stayed the same still has to
+     * draw again when a layer it samples changed. */
+    void updatePasses(size_t first);
     void updateError();
 
     EffectComponents& m_components;
     QPointer<QQuickItem> m_root;
     QString m_error;
     std::vector<Link> m_links;
+    std::vector<Link> m_next; // apply scratch: the parsed links, then the previous ones; the capacity of the tables survives
     std::function<void(QQuickItem* first)> m_built;
 };
 
