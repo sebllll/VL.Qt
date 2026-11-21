@@ -3,6 +3,7 @@
 #include "app/exports.h"
 #include "device.h"
 #include "protocol.h"
+#include "resources/pixel_format.h"
 #include "vlqt.h"
 
 #include <QtCore/QElapsedTimer>
@@ -23,40 +24,12 @@ namespace vlqt::res::image {
 
 namespace {
 
-Q_LOGGING_CATEGORY(lcImg, "VL.Qt.Resources")
-
 /* VL PixelFormat (VL.Core PixelFormat.cs, append-only) -> what QtNative does with it. Same table as protocol.h.
  *   direct:              R8G8B8A8 (7), B8G8R8A8 (9), R8G8B8X8 (6), B8G8R8X8 (8)   X: alpha forced to 255
  *   converted to RGBA8:  R8G8B8 (4), B8G8R8 (5), R8 (1, grey)
  *   reduced to 8 bit:    R16 (2, grey), R32F (3, grey, [0,1]), R32G32F (11, R, G, 0), R32G32B32A32F (10),
  *                        R16G16B16A16F (12); one warning per resource
  *   else (Unknown = 0, newer numbers): Failed */
-enum PixelFormat
-{
-    R8 = 1, R16 = 2, R32F = 3, R8G8B8 = 4, B8G8R8 = 5, R8G8B8X8 = 6, R8G8B8A8 = 7, B8G8R8X8 = 8, B8G8R8A8 = 9,
-    R32G32B32A32F = 10, R32G32F = 11, R16G16B16A16F = 12
-};
-
-// Bytes per pixel of a VL PixelFormat, 0 = unknown.
-int bytesPerPixel(int format)
-{
-    switch (format) {
-    case R8:            return 1;
-    case R16:           return 2;
-    case R8G8B8:
-    case B8G8R8:        return 3;
-    case R32F:
-    case R8G8B8X8:
-    case R8G8B8A8:
-    case B8G8R8X8:
-    case B8G8R8A8:      return 4;
-    case R32G32F:
-    case R16G16B16A16F: return 8;
-    case R32G32B32A32F: return 16;
-    default:            return 0;
-    }
-}
-
 constexpr const char* reducedWarning = "warning: %1 has more than 8 bits per channel, reduced to 8 bit (HDR is lost)";
 
 bool deepQtFormat(QImage::Format f)
@@ -138,7 +111,7 @@ class ImageKind final : public Kind
 public:
     const char* name() const override { return "image"; }
 
-    std::string decode(Work& work) override
+    std::string decode(Content& work) override
     {
         auto& r = static_cast<ImageResource&>(work);
         // Pixels restored after a device loss bring their converted copy along: nothing to convert.
@@ -154,21 +127,21 @@ public:
             if (!createWorkerTextures(r) && !deviceRemoved(r.m_device)) {
                 if (!(r.m_flags & VLQT_IMAGE_LOAD_MIPMAPS))
                     return "CreateTexture2D failed";
-                qCDebug(lcImg, "worker textures with mipmaps failed, uploading in stripes");
+                qCDebug(lcRes, "worker textures with mipmaps failed, uploading in stripes");
             }
         }
 #endif
         return {};
     }
 
-    int64_t upload(Work& work, int64_t budget, bool& done, std::string& error) override
+    int64_t upload(Content& work, int64_t budget, bool& done, std::string& error) override
     {
         auto& r = static_cast<ImageResource&>(work);
         const int64_t used = uploadNow(r, budget, done, error);
 #ifdef Q_OS_WIN
         // Removed device: no Failed, the rebuild after checkLost uploads again on the new device.
         if (!error.empty() && (deviceRemoved(r.m_device) || deviceRemoved(device::nativeDevice(device::uploadRhi())))) {
-            qCDebug(lcImg, "upload on a removed device (%s), waiting for the rebuild", error.c_str());
+            qCDebug(lcRes, "upload on a removed device (%s), waiting for the rebuild", error.c_str());
             error.clear();
             done = false;
             return 0;
@@ -177,13 +150,13 @@ public:
         return used;
     }
 
-    void destroy(Work& work) override
+    void destroy(Content& work) override
     {
         releaseDevice(work);
     }
 
     // Device lost: the textures, the staging texture and a running copy go, the source stays.
-    void releaseDevice(Work& work) override
+    void releaseDevice(Content& work) override
     {
         auto& r = static_cast<ImageResource&>(work);
         if (r.m_texture) {
@@ -207,7 +180,7 @@ public:
 
     // Files: the path again (decoded anew, the CPU copy is gone after the upload); pixels: the converted copy (and its
     // raw buffer, the copy may point into it), only uploaded again.
-    std::shared_ptr<Work> restore(const Work& work) override
+    std::shared_ptr<Content> restore(const Content& work) override
     {
         const auto& old = static_cast<const ImageResource&>(work);
         auto r = std::make_shared<ImageResource>();
@@ -229,19 +202,19 @@ public:
         return r;
     }
 
-    bool stale(const Work& work) const override
+    bool stale(const Content& work) const override
     {
         return static_cast<const ImageResource&>(work).m_generation != device::generation();
     }
 
-    Info info(const Work& work) const override
+    Info info(const Content& work) const override
     {
         const auto& r = static_cast<const ImageResource&>(work);
         return {uint32_t(r.m_size.width()), uint32_t(r.m_size.height()), r.format()};
     }
 
     // F5 Resources page: rows not yet uploaded (a worker texture goes up in one call: all of it until then).
-    int64_t pendingBytes(const Work& work) const override
+    int64_t pendingBytes(const Content& work) const override
     {
         const auto& r = static_cast<const ImageResource&>(work);
         if (r.m_workerTexture)
@@ -250,7 +223,7 @@ public:
         return int64_t(r.m_image.bytesPerLine()) * rows;
     }
 
-    std::string takeWarning(Work& work) override
+    std::string takeWarning(Content& work) override
     {
         return std::move(static_cast<ImageResource&>(work).m_warning);
     }
@@ -320,7 +293,7 @@ private:
             cb->resourceUpdate(batch);
             rhi->endOffscreenFrame();
         }
-        qCDebug(lcImg, "upload %dx%d rows %d-%d: %.2f ms (create %.2f ms)", r.m_size.width(), h, r.m_uploadedRows - rows,
+        qCDebug(lcRes, "upload %dx%d rows %d-%d: %.2f ms (create %.2f ms)", r.m_size.width(), h, r.m_uploadedRows - rows,
             r.m_uploadedRows, timer.nsecsElapsed() / 1e6, createNs / 1e6);
         if (r.m_uploadedRows == h) {
             done = true;
@@ -488,8 +461,8 @@ private:
 
     // Tooltip preview: longest edge <= 256 px (never upscaled), BGRA8 premultiplied. Made right after m_image is
     // set (files: readFile, pixels: convertPixels, restored pixels: the copied m_image), before the upload drops m_image;
-    // m_preview lives until the Work is destroyed. A deep copy: m_image may share its data with m_raw / the file buffer.
-    // A restore takes the preview of the old Work over and skips this. Large images first go down to 4 x 256 px
+    // m_preview lives until the Content is destroyed. A deep copy: m_image may share its data with m_raw / the file buffer.
+    // A restore takes the preview of the old Content over and skips this. Large images first go down to 4 x 256 px
     // with the fast filter (a single smooth step from 8k costs tens of ms in the worker, which a synchronous LoadImage
     // waits for), then smooth to 256.
     static void makePreview(ImageResource& r)
@@ -547,6 +520,7 @@ private:
 
     static std::string convertPixels(ImageResource& r)
     {
+        using F = VlPixelFormat;
         const int w = r.m_rawWidth, h = r.m_rawHeight, fmt = r.m_rawFormat;
         const int bpp = bytesPerPixel(fmt);
         if (bpp == 0)
@@ -560,63 +534,63 @@ private:
         QImage img;
         bool keepRaw = false; // img points into m_raw
         r.m_bgra = false;
-        switch (fmt) {
-        case R8G8B8X8:
+        switch (F(fmt)) {
+        case F::R8G8B8X8:
             forceAlpha(r.m_raw);
             img = QImage(d, w, h, bpl, QImage::Format_RGBA8888_Premultiplied);
             keepRaw = true;
             break;
-        case R8G8B8A8:
+        case F::R8G8B8A8:
             img = QImage(d, w, h, bpl, pm ? QImage::Format_RGBA8888_Premultiplied : QImage::Format_RGBA8888);
             keepRaw = pm;
             if (!pm)
                 img = img.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case B8G8R8X8:
+        case F::B8G8R8X8:
             forceAlpha(r.m_raw);
             img = QImage(d, w, h, bpl, QImage::Format_ARGB32_Premultiplied);
             keepRaw = true;
             r.m_bgra = true;
             break;
-        case B8G8R8A8:
+        case F::B8G8R8A8:
             img = QImage(d, w, h, bpl, pm ? QImage::Format_ARGB32_Premultiplied : QImage::Format_ARGB32);
             keepRaw = pm;
             if (!pm)
                 img = img.convertToFormat(QImage::Format_ARGB32_Premultiplied);
             r.m_bgra = true;
             break;
-        case R8G8B8:
+        case F::R8G8B8:
             img = QImage(d, w, h, bpl, QImage::Format_RGB888).convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case B8G8R8:
+        case F::B8G8R8:
             img = QImage(d, w, h, bpl, QImage::Format_BGR888).convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case R8:
+        case F::R8:
             img = QImage(d, w, h, bpl, QImage::Format_Grayscale8).convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case R16:
+        case F::R16:
             reduced("R16");
             img = QImage(d, w, h, bpl, QImage::Format_Grayscale16).convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case R16G16B16A16F:
+        case F::R16G16B16A16F:
             reduced("R16G16B16A16F");
             img = QImage(d, w, h, bpl, pm ? QImage::Format_RGBA16FPx4_Premultiplied : QImage::Format_RGBA16FPx4)
                       .convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case R32G32B32A32F:
+        case F::R32G32B32A32F:
             reduced("R32G32B32A32F");
             img = QImage(d, w, h, bpl, pm ? QImage::Format_RGBA32FPx4_Premultiplied : QImage::Format_RGBA32FPx4)
                       .convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case R32F:
-        case R32G32F: {
-            reduced(fmt == R32F ? "R32F" : "R32G32F");
+        case F::R32F:
+        case F::R32G32F: {
+            reduced(F(fmt) == F::R32F ? "R32F" : "R32G32F");
             img = QImage(w, h, QImage::Format_RGBA8888_Premultiplied);
             for (int y = 0; y < h; y++) {
                 const auto* src = reinterpret_cast<const float*>(d + bpl * y);
                 uchar* dst = img.scanLine(y);
                 for (int x = 0; x < w; x++, dst += 4) {
-                    if (fmt == R32F) {
+                    if (F(fmt) == F::R32F) {
                         dst[0] = dst[1] = dst[2] = unitToByte(src[x]);
                     } else {
                         dst[0] = unitToByte(src[2 * x]);
@@ -649,7 +623,7 @@ Kind* kind()
 int load(uint64_t id, const char* utf8Path, unsigned flags, int upload)
 {
     if (!utf8Path || !*utf8Path) {
-        qCWarning(lcImg, "load_image: empty path");
+        qCWarning(lcRes, "load_image: empty path");
         return badValueRc;
     }
     if (!validUpload(upload))
@@ -666,7 +640,7 @@ int load(uint64_t id, const char* utf8Path, unsigned flags, int upload)
 int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int len, int upload)
 {
     if (!desc || !data || desc->width <= 0 || desc->height <= 0) {
-        qCWarning(lcImg, "set_pixels: %s", !desc ? "null desc" : !data ? "null data" : "size <= 0");
+        qCWarning(lcRes, "set_pixels: %s", !desc ? "null desc" : !data ? "null data" : "size <= 0");
         return badValueRc;
     }
     if (!validUpload(upload))
@@ -686,7 +660,7 @@ int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int le
         const qsizetype row = qsizetype(desc->width) * bpp;
         const qsizetype stride = desc->row_bytes > 0 ? desc->row_bytes : row;
         if (stride < row || qsizetype(len) < stride * (desc->height - 1) + row) {
-            qCWarning(lcImg, "set_pixels: %d bytes do not hold %dx%d pixels of format %d with %d row bytes", len,
+            qCWarning(lcRes, "set_pixels: %d bytes do not hold %dx%d pixels of format %d with %d row bytes", len,
                 desc->width, desc->height, desc->format, desc->row_bytes);
             return badValueRc;
         }
@@ -704,7 +678,7 @@ int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int le
 
 std::shared_ptr<ImageResource> ready(uint64_t id)
 {
-    return std::static_pointer_cast<ImageResource>(readyWork(id, VLQT_RESOURCE_KIND_IMAGE));
+    return std::static_pointer_cast<ImageResource>(readyContent(id, VLQT_RESOURCE_KIND_IMAGE));
 }
 
 int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc, int* written, int* required)
@@ -715,16 +689,16 @@ int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc,
     if (k < 0)
         return k;
     if (k != VLQT_RESOURCE_KIND_IMAGE) {
-        qCWarning(lcImg, "read_preview: id %llu is not an image resource", static_cast<unsigned long long>(id));
+        qCWarning(lcRes, "read_preview: id %llu is not an image resource", static_cast<unsigned long long>(id));
         return badValueRc;
     }
-    // Replacement of a Ready resource: readyWork is the visible content (the replacement is the separate Slot::next
+    // Replacement of a Ready resource: readyContent is the visible content (the replacement is the separate Slot::replacement
     // until its swap), so the preview always belongs to what ready() shows.
     const auto r = ready(id);
     if (!r || r->m_preview.isNull())
         return noDataRc; // not Ready yet / Failed / loaded without VLQT_IMAGE_LOAD_PREVIEW
     // No lock: the worker wrote m_preview in decode, before the Ready transition (made under the manager's mutex,
-    // which readyWork takes as well); afterwards nothing touches it until the Work is destroyed.
+    // which readyContent takes as well); afterwards nothing touches it until the Content is destroyed.
     const QImage& img = r->m_preview;
     const int rowBytes = img.width() * 4;
     const int64_t size = int64_t(rowBytes) * img.height();

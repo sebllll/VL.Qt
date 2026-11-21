@@ -20,7 +20,7 @@ race:libgallium-*.so
 # construction. Seen: QQmlThread's QDaemonThread allocated on the main thread (vlqt::Scene::create -> QQmlEngine),
 # freed by the thread itself at exit. called_from_lib (not race:) ignores only interceptor calls (new/delete, memmove,
 # pthread_*) made from inside QtCore; accesses by instrumented libvlqt code stay checked, so QtNative races between its
-# own threads (std::mutex/std::atomic, resources.cpp) or on Qt objects are not hidden.
+# own threads (std::mutex/std::atomic, resources/resource_manager.cpp) or on Qt objects are not hidden.
 called_from_lib:libQt6Core.so.6
 # QtQml: same reason, the QML type loader hands QML data blobs from the main thread (QQmlTypeLoader::doLoad, under
 # vlqt::Scene::create) to its QQmlThread (QQmlJS::Parser frees them) via QtCore's invisible locks/event queue.

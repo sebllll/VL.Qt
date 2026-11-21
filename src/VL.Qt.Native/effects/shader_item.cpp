@@ -6,7 +6,7 @@
 #include "image_resource.h"
 #include "protocol.h"
 #include "qtimageitem.h"
-#include "resources.h"
+#include "resources/resources.h"
 #include "shader_resource.h"
 
 #include <QtCore/QDirIterator>

@@ -6,7 +6,7 @@
 #include "offscreen.h"
 #include "protocol.h"
 #include "qtimageitem.h"
-#include "resources.h"
+#include "resources/resources.h"
 #include "shader_resource.h"
 #include "audio_tap.h"
 #include "effects/shader_item.h"
@@ -1817,13 +1817,13 @@ VLQT_API int vlqt_snapshot_start(unsigned long long id, vlqt_scene* p, unsigned 
         auto* w = asWindow(p);
         if (!w)
             return fail(VLQT_ERR_NULL_HANDLE, "snapshot: null window");
-        return vlqt::res::snap::start(id, *w->scene, elementId, scale);
+        return vlqt::res::snapshot::start(id, *w->scene, elementId, scale);
     });
 }
 
 VLQT_API int vlqt_snapshot_read(unsigned long long id, void* dst, int cap, vlqt_pixel_desc* out, int* written, int* required)
 {
-    return guarded([&] { return vlqt::res::snap::readPixels(id, dst, cap, out, written, required); });
+    return guarded([&] { return vlqt::res::snapshot::readPixels(id, dst, cap, out, written, required); });
 }
 
 VLQT_API int vlqt_image_read_preview(unsigned long long id, unsigned char* dst, int cap, vlqt_pixel_desc* desc, int* written,
@@ -1873,7 +1873,7 @@ VLQT_API int vlqt_snapshot_start_fit(unsigned long long id, vlqt_scene* p, unsig
         auto* w = asWindow(p);
         if (!w)
             return fail(VLQT_ERR_NULL_HANDLE, "snapshot_fit: null window");
-        return vlqt::res::snap::startFit(id, *w->scene, elementId, maxEdgePx);
+        return vlqt::res::snapshot::startFit(id, *w->scene, elementId, maxEdgePx);
     });
 }
 
