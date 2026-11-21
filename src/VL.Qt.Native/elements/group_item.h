@@ -29,7 +29,7 @@ public:
     int proxyRefs = 0;                  // Input/texture uniform uses of proxy
     QMetaObject::Connection proxyRetire; // destroyed -> retire proxy (acquireGroupProxy), dropped on release
 
-    // The effect chain's padding covers the part of the frame left of / above the origin (effectchain.cpp); the
+    // The effect chain's padding covers the part of the frame left of / above the origin (effects/effect_chain.cpp); the
     // ShaderEffect proxy samples exactly the frame. Called on every frame change (origin, size, anchor, Auto Size).
     void syncEffectFrame();
 

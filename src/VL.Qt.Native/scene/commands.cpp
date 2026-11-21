@@ -1,5 +1,5 @@
 #include "scene/commands.h"
-#include "effectchain.h"
+#include "effects/effect_chain_desc.h"
 #include "effects/shader_item.h"
 #include "elements/group_item.h"
 #include "qmlitem.h"

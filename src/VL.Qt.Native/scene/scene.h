@@ -88,7 +88,7 @@ private:
     int set(const unsigned char* p, int len, std::string& err);
     int setStyle(const unsigned char* p, int len, std::string& err); // SET_STYLE (vlstyle.h)
     int setUniforms(const unsigned char* p, int len, std::string& err); // SET_UNIFORMS (ShaderEffect)
-    int setEffectChain(const unsigned char* p, int len, std::string& err); // SET_EFFECT_CHAIN, effectchain.h
+    int setEffectChain(const unsigned char* p, int len, std::string& err); // SET_EFFECT_CHAIN, effects/effect_chain_desc.h
     int setQmlProperties(const unsigned char* p, int len, std::string& err); // SET_QML_PROPERTIES (QmlElement)
     /* root under window's content item, size follow, window-geometry watch (constructor, moveToWindow). */
     void attachRoot();

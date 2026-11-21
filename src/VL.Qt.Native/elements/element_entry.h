@@ -14,7 +14,7 @@ class QQuickItem;
 
 namespace vlqt {
 
-class EffectChain;     // effectchain.h
+class EffectChain;     // effects/effect_chain.h
 struct TransformState; // elements/geometry.h
 
 /* State of one created element (owned by the Scene's id table). */

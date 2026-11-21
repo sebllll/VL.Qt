@@ -106,8 +106,11 @@ target_sources(vlqt PRIVATE
     elements/type_video.cpp
 
     # effects/ and user_qml/
-    effectchain.cpp
-    effectchain.h
+    effects/effect_chain.cpp
+    effects/effect_chain.h
+    effects/effect_chain_desc.h
+    effects/effect_chain_item.cpp
+    effects/effect_chain_item.h
     effects/layer_requests.cpp
     effects/layer_requests.h
     effects/shader_item.cpp

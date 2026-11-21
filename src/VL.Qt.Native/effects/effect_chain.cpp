@@ -1,17 +1,22 @@
-#include "effectchain.h"
+#include "effects/effect_chain.h"
 
-#include "shader_resource.h"
+#include "effects/effect_chain_item.h"
 #include "effects/shader_item.h"
+#include "elements/elements.h"
+#include "elements/geometry.h"
+#include "elements/group_item.h"
+#include "shader_resource.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QUrl>
 #include <QtGui/QColor>
+#include <QtGui/QMatrix4x4>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
+#include <QtQml/QQmlListReference>
 #include <QtQml/QQmlProperty>
 #include <QtQml/qqml.h>
 #include <QtQuick/QQuickWindow>
-#include <QtQuick/private/qquickshadereffectsource_p.h> // the layer's texture source: its sourceItem is the element
 
 #include <algorithm>
 #include <cmath>
@@ -20,51 +25,6 @@
 Q_LOGGING_CATEGORY(lcEffectChain, "vlqt.effectchain")
 
 namespace vlqt {
-
-/* Root of a chain = the item layer.effect creates (registered as VLQt.EffectChain/VlqtEffectChain). The layer sets
- * source (its ShaderEffectSource of the element) before completing it; the root then hands itself to the EffectChain
- * child of that element, which builds the stages under it. Created and deleted by the layer only. */
-class EffectChainItem : public QQuickItem // not final: qmlRegisterType derives from it
-{
-    Q_OBJECT
-    Q_PROPERTY(QObject* source READ source WRITE setSource NOTIFY sourceChanged)
-public:
-    explicit EffectChainItem(QQuickItem* parent = nullptr) : QQuickItem(parent) {}
-
-    QObject* source() const { return m_source; }
-    void setSource(QObject* s)
-    {
-        if (m_source == s)
-            return;
-        m_source = s;
-        emit sourceChanged();
-        if (isComponentComplete())
-            attach();
-    }
-
-signals:
-    void sourceChanged();
-
-protected:
-    void componentComplete() override
-    {
-        QQuickItem::componentComplete();
-        attach();
-    }
-
-private:
-    void attach()
-    {
-        auto* src = qobject_cast<QQuickShaderEffectSource*>(m_source.data());
-        QQuickItem* element = src ? src->sourceItem() : nullptr;
-        if (auto* chain = element ? element->findChild<EffectChain*>(QString(), Qt::FindDirectChildrenOnly) : nullptr)
-            chain->attach(this);
-        else
-            qCWarning(lcEffectChain, "effect chain root without chain (source %p)", static_cast<void*>(m_source.data()));
-    }
-
-    QPointer<QObject> m_source;
-};
 
 namespace {
 
@@ -208,8 +168,9 @@ QQmlComponent* compile(QQmlEngine* engine, QQmlComponent*& slot, const char* qml
     return slot;
 }
 
-void setLayer(QQuickItem* item, bool on)
+void setLayerEnabled(QQuickItem* item, bool on)
 {
+    // Once per structure or source change, not per frame: QQmlProperty resolves the grouped "layer.enabled".
     QQmlProperty(item, QStringLiteral("layer.enabled")).write(on);
 }
 
@@ -513,7 +474,7 @@ bool EffectChain::buildStages(std::string& err)
         const bool last = i + 1 == links.size();
         stage->setVisible(last);
         if (!last)
-            setLayer(stage, true); // texture provider of the next link
+            setLayerEnabled(stage, true); // texture provider of the next link
         prev = stage;
     }
     if (built)
@@ -704,7 +665,7 @@ void EffectChain::layoutPyramid(Link& l)
         auto* p = new ShaderItem(stage);
         p->setVisible(false);
         p->setChainPass(true);
-        setLayer(p, true);
+        setLayerEnabled(p, true);
         if (shader)
             p->setShader(VLQT_SHADER_STAGE_FRAGMENT, shader, ignored);
         return p;
@@ -797,6 +758,184 @@ void EffectChain::updateError()
     m_error = lines.join(u'\n');
 }
 
-} // namespace vlqt
+// ---------------------------------------------------------------------------------------------
+// Effect layer (SET_EFFECT_CHAIN) and the mask frames of its links.
 
-#include "effectchain.moc"
+int Elements::setEffectChain(ElementEntry& node, const EffectChainDesc& chain, const std::vector<QQuickItem*>& masks, std::string& err)
+{
+    if (chain.links.empty()) {
+        releaseEffectLayer(node);
+        return ApplyOk;
+    }
+    if (!effectComponents)
+        effectComponents = std::make_unique<EffectComponents>(engine);
+    EffectChain* ec = node.effectChain;
+    if (!ec) {
+        ec = node.effectChain = new EffectChain(*effectComponents, node.item); // dies with the item at the latest
+        if (auto* group = dynamic_cast<GroupItem*>(node.item))
+            ec->built = [group](QQuickItem* first) { // the chain is a child of the group: never outlives it
+                group->effectHolder = first;
+                group->syncEffectFrame();
+            };
+    }
+    std::vector<QPointer<QQuickItem>> retired;
+    std::vector<EffectChain::DroppedMask> dropped;
+    const bool ok = ec->apply(chain, masks, retired, dropped, err);
+    for (const QPointer<QQuickItem>& stage : retired)
+        frameDelete.emplace_back(stage); // may still be sampled this frame
+    for (const EffectChain::DroppedMask& d : dropped)
+        retireMaskFrame(node, d.mask, d.frame);
+    if (!ok)
+        return ApplyBadValue;
+    for (size_t i = 0; i < ec->links.size(); ++i) {
+        EffectChain::Link& l = ec->links[i];
+        if (!l.mask || l.maskFrame)
+            continue;
+        l.maskFrame = createMaskFrame(node, l.mask, l.maskFrameXf, err);
+        if (!l.maskFrame) {
+            l.mask = nullptr;
+            return ApplyBadValue;
+        }
+        ec->syncMaskFrame(i);
+    }
+    if (!effectLayers.count(node.item)) {
+        QQmlComponent* root = ec->rootComponent(err);
+        // Component first, then enabled: activating the layer creates the root once, the root builds the stages.
+        if (!root || !QQmlProperty(node.item, QStringLiteral("layer.effect")).write(QVariant::fromValue(root))) {
+            if (err.empty())
+                err = "setting layer.effect failed";
+            return ApplyBadValue;
+        }
+        setLayerEnabled(node.item, true);
+        effectLayers.insert(node.item);
+    }
+    updateMaskFrame(node);
+    return ApplyOk;
+}
+
+void Elements::releaseEffectLayer(ElementEntry& node)
+{
+    EffectChain* ec = node.effectChain;
+    if (!ec)
+        return;
+    for (QQuickItem* mask : effectMasks(node))
+        detachEffectMask(node, mask);
+    effectLayers.erase(node.item);
+    // A SHADER source or an attached mask keeps its layer (an effect samples it), only the layer effect goes;
+    // a Group source is sampled through its frame proxy, not its layer. The root and its stages go with it.
+    if ((!isEffectSource(node.item) || isGroup(node.item)) && !isMaskLayer(node.item))
+        setLayerEnabled(node.item, false);
+    QQmlProperty(node.item, QStringLiteral("layer.effect")).write(QVariant::fromValue<QQmlComponent*>(nullptr));
+    if (auto* group = dynamic_cast<GroupItem*>(node.item))
+        group->effectHolder = nullptr;
+    node.effectChain = nullptr;
+    delete ec;
+}
+
+void Elements::detachEffectMask(ElementEntry& node, QQuickItem* mask)
+{
+    if (!node.effectChain || !mask)
+        return;
+    std::vector<EffectChain::Link>& links = node.effectChain->links;
+    for (size_t i = 0; i < links.size(); ++i) {
+        EffectChain::Link& l = links[i];
+        if (l.mask != mask)
+            continue;
+        QQuickItem* frame = l.maskFrame;
+        l.mask = nullptr;
+        l.maskFrame = nullptr;
+        l.maskFrameXf = nullptr;
+        node.effectChain->syncMaskFrame(i); // detach before the frame goes: MultiEffect keeps a raw maskSource pointer
+        retireMaskFrame(node, mask, frame);
+    }
+}
+
+std::vector<QQuickItem*> Elements::effectMasks(const ElementEntry& node) const
+{
+    std::vector<QQuickItem*> masks;
+    if (node.effectChain)
+        for (const EffectChain::Link& l : node.effectChain->links)
+            if (l.mask)
+                masks.push_back(l.mask);
+    return masks;
+}
+
+QQuickItem* Elements::createMaskFrame(ElementEntry& node, QQuickItem* mask, QObject*& xfOut, std::string& err)
+{
+    // Mask rule (protocol.h): the mask lies in the element's parent coordinates like a sibling, with its own SIZE,
+    // ANCHOR and TRANSFORM. frame (hidden, layer on, the link's maskSource) > inner (Matrix4x4 = inverse of the
+    // element's parent mapping, updateMaskFrame) > mask: frame coordinates are the element's own, so the layer's
+    // sourceRect is the link's effect area as it is (stage Binding) and the texture lands exactly where a sibling would be.
+    QObject* xf = createTransform(err);
+    if (!xf)
+        return nullptr;
+    auto* frame = new QQuickItem(mask->parentItem()); // next to the parked mask (window root): outside every layout
+    frame->setVisible(false);                         // texture source only, the effect draws it as alpha
+    frame->setSize(QSizeF(1, 1)); // a 0-sized source item gives no texture, whatever sourceRect says
+    auto* inner = new QQuickItem(frame);
+    xf->setParent(inner);
+    QQmlListReference list(inner, "transform");
+    if (!list.isValid() || !list.append(xf)) {
+        delete frame;
+        err = "appending Matrix4x4 to the mask frame failed";
+        return nullptr;
+    }
+    mask->setParentItem(inner);
+    mask->setVisible(true); // inside the hidden frame: rendered into its layer only
+    maskLayers.insert(frame);
+    // Linear filtering: a rotated/scaled element samples the texture off the pixel grid.
+    QQmlProperty(frame, QStringLiteral("layer.smooth")).write(true);
+    setLayerEnabled(frame, true);
+    // Position (anchor placement or Row/Column layout) and size (anchor) of the element; TRANSFORM/ANCHOR/drag offset call
+    // updateMaskFrame themselves. Context = frame: disconnected on detach, gone with it. The Scene detaches the
+    // masks before it erases the node, so the pointer never dangles.
+    ElementEntry* n = &node;
+    auto update = [this, n]() { updateMaskFrame(*n); };
+    QObject::connect(node.item, &QQuickItem::xChanged, frame, update);
+    QObject::connect(node.item, &QQuickItem::yChanged, frame, update);
+    QObject::connect(node.item, &QQuickItem::widthChanged, frame, update);
+    QObject::connect(node.item, &QQuickItem::heightChanged, frame, update);
+    xfOut = xf;
+    return frame;
+}
+
+void Elements::retireMaskFrame(ElementEntry& node, QQuickItem* mask, QQuickItem* frame)
+{
+    if (!frame)
+        return;
+    maskLayers.erase(frame);
+    QObject::disconnect(node.item, nullptr, frame, nullptr);
+    if (mask && frame->isAncestorOf(mask)) {
+        mask->setParentItem(frame->parentItem()); // parked next to it again, hidden
+        mask->setVisible(false);
+    }
+    // The effect may sample the frame until it polishes: layer off and delete after the next frame.
+    layerOff.emplace_back(frame);
+    frameDelete.emplace_back(frame);
+}
+
+void Elements::updateMaskFrame(ElementEntry& node)
+{
+    if (!node.effectChain)
+        return;
+    const auto& links = node.effectChain->links;
+    if (std::none_of(links.begin(), links.end(), [](const EffectChain::Link& l) { return l.maskFrameXf; }))
+        return;
+    // Element -> parent, as Qt maps it: T(x, y) * item.transform (x/y = -anchor or the layout position; our Matrix4x4:
+    // TRANSFORM around the anchor + drag offset). Its inverse brings parent coordinates (the mask's) into the element's (the effect area's).
+    QMatrix4x4 m;
+    m.translate(float(node.item->x()), float(node.item->y()));
+    if (node.transform && node.xf)
+        m *= pivoted(*node.xf, node.item);
+    const QMatrix4x4 inv = m.inverted();
+    for (const EffectChain::Link& l : links)
+        if (l.maskFrameXf)
+            setMatrixValue(l.maskFrameXf, inv);
+}
+
+QQuickItem* Elements::effectLayerItem(const ElementEntry& node)
+{
+    return node.effectChain ? node.effectChain->root() : nullptr;
+}
+
+} // namespace vlqt

@@ -38,9 +38,9 @@ Q_DECLARE_LOGGING_CATEGORY(lcElements)
 
 namespace vlqt {
 
-struct EffectChainDesc;  // effectchain.h
-struct EffectComponents; // effectchain.h
-class EffectChain;       // effectchain.h
+struct EffectChainDesc;  // effects/effect_chain_desc.h
+struct EffectComponents; // effects/effect_chain.h
+class EffectChain;       // effects/effect_chain.h
 
 /* Per engine (= per window): component cache, resolved property cache, Matrix4x4 component. */
 class Elements

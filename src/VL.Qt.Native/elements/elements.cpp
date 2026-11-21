@@ -1,5 +1,5 @@
 #include "elements/elements.h"
-#include "effectchain.h"
+#include "effects/effect_chain.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QUrl>
@@ -15,7 +15,7 @@ namespace vlqt {
 
 namespace {
 
-// EFFECT_* (block 832): keys of SET_EFFECT_CHAIN MULTI entries only (effectchain.cpp); SET with one is -6.
+// EFFECT_* (block 832): keys of SET_EFFECT_CHAIN MULTI entries only (effects/effect_chain.cpp); SET with one is -6.
 bool isEffectProp(quint16 prop) { return prop >= 832 && prop <= VLQT_MULTI_EFFECT_KEY_MASK_INVERTED; }
 
 const PropDef* findProp(const TypeDef& type, quint16 prop)

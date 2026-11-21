@@ -1,13 +1,12 @@
-/* effectchain.h - parsed SET_EFFECT_CHAIN (plan effects/08): the links of an element's Effect chain in the order
- * they apply (first = applied first to the element). Built by Scene::setEffectChain (scene/commands.cpp) after the whole
- * command was validated (wire format: protocol.h head comment "Effect chain"), handed to Elements::setEffectChain.
- * The description owns its data (names, values), so it may be kept beyond the apply; refs are element ids, resolved
- * by the Scene (0 = none). EffectChain (below, effectchain.cpp) renders it as an item tree in the element's layer.effect. */
+/* effects/effect_chain.h - the Effect chain of one element (EffectChain) and the QML components its items are made of
+ * (EffectComponents). The chain renders a parsed SET_EFFECT_CHAIN (effects/effect_chain_desc.h) as an item tree in the
+ * element's layer.effect; its root is an EffectChainItem (effects/effect_chain_item.h). */
 #pragma once
 
+#include "effects/effect_chain_desc.h"
 #include "protocol.h"
 
-#include <QtCore/QByteArray>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QMetaProperty>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -25,52 +24,11 @@
 class QQmlComponent;
 class QQmlEngine;
 
+Q_DECLARE_LOGGING_CATEGORY(lcEffectChain)
+
 namespace vlqt {
 
 class ShaderItem;
-
-/* One value of a MULTI entry or a uniform: raw value bytes as on the wire (like SET), refs as element ids. */
-struct EffectValue {
-    quint16 type = 0;     // VLQT_VALUE_TYPE_*
-    float f[16] = {};     // f32 (f[0]), color, rectf, vec2/3/4, mat4 (row-major like Stride)
-    qint32 i = 0;         // i32, ivec2 x
-    qint32 i2 = 0;        // ivec2 y
-    bool b = false;       // bool
-    quint64 u = 0;        // u64 (image resource id)
-    quint32 ref = 0;      // ref: element id (0 = none)
-};
-
-/* MULTI entry: an EFFECT_* property (833..855) of the run's MultiEffect, value type already checked. */
-struct EffectMultiEntry {
-    quint16 prop = 0;
-    EffectValue value;
-};
-
-/* SHADER uniform entry, like a SET_UNIFORMS entry (content checks such as unknown names come later, by EVENT_ERROR). */
-struct EffectUniform {
-    QByteArray name; // UTF-8, 1..VLQT_UNIFORM_NAME_MAX bytes
-    EffectValue value;
-    QPointer<QQuickItem> refItem; // REF: the texture element, resolved and parked by the Scene (null = none or refError)
-    const char* refError = nullptr; // REF: why the element cannot be a texture (an EVENT_ERROR line), static text
-};
-
-struct EffectLinkDesc {
-    quint16 kind = 0; // VLQT_EFFECT_CHAIN_LINK_*
-
-    /* kind MULTI: one MultiEffect run */
-    std::vector<EffectMultiEntry> multi;
-
-    /* kind SHADER */
-    quint16 templ = 0;              // VLQT_EFFECT_TEMPLATE_*
-    std::vector<quint64> shaders;   // shader resource ids by role (SINGLE/TWO_PASS: frag; PYRAMID: prefilter, composite)
-    float padding[4] = {};          // DIP: left, top, right, bottom
-    float strength = 0.f;           // PYRAMID: radius in DIP; SINGLE / TWO_PASS: unused
-    std::vector<EffectUniform> uniforms;
-};
-
-struct EffectChainDesc {
-    std::vector<EffectLinkDesc> links; // application order; empty = no chain (layer off)
-};
 
 /* Number of MULTI keys (EFFECT_* 833..855); index of a key = prop - VLQT_MULTI_EFFECT_KEY_BLUR_ENABLED. */
 constexpr int kEffectMultiKeys = VLQT_MULTI_EFFECT_KEY_MASK_INVERTED - VLQT_MULTI_EFFECT_KEY_BLUR_ENABLED + 1;
@@ -83,7 +41,7 @@ struct EffectComponents {
     EffectComponents& operator=(const EffectComponents&) = delete;
 
     QQmlEngine* engine;
-    QQmlComponent* root = nullptr;  // holder of the layer.effect component (VlqtEffectChain, EffectChainItem in effectchain.cpp)
+    QQmlComponent* root = nullptr;  // holder of the layer.effect component (VlqtEffectChain, effects/effect_chain_item.h)
     QObject* rootHolder = nullptr;  // its instance: fx = the inline Component (layer.effect needs a creation context)
     QQmlComponent* multi = nullptr; // stage of a MULTI link: MultiEffect in an Item covering its effect area
     QQmlComponent* pass = nullptr;  // stage of a SHADER link: one or two ShaderItem passes (VlqtShaderPass)

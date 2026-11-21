@@ -1,5 +1,5 @@
 #include "scene/measure.h"
-#include "effectchain.h"
+#include "effects/effect_chain.h"
 #include "qmlitem.h"
 #include "scene/scene.h"
 

@@ -41,7 +41,7 @@ void render(OffscreenScene* s, ID3D11DeviceContext4* foreign)
     rc->endFrame();
     if (s->linearPass.source)
         vlqt::linear_pass::run(s->qtContext, s->linearPass);
-    // TODO: GPU time of the frame: perf.cpp afterRendering reads it only from a swap chain; a scene has
+    // TODO: GPU time of the frame: diagnostics/perf_monitor.cpp afterRendering reads it only from a swap chain; a scene has
     // renderControl->commandBuffer() (and its QRhi needs EnableTimestamps).
 
     s->qtContext->Signal(s->qtWrite, ++s->writeValue);
