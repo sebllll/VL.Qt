@@ -85,15 +85,26 @@ private:
     int destroy(quint32 id, std::string& err);
     int reparent(quint32 id, quint32 parent, quint32 index, std::string& err);
     void reset();
-    // Payload decoders (scene/commands.cpp).
+    // Command decoder (scene/commands.cpp): the op table has one row per opcode (Op, looked up by findOp) and names one
+    // decoder per row, which gets the payload of the command with its length checked against the row.
+    struct Op;
+    static const Op* findOp(quint16 op); // nullptr = unknown opcode
     /* The element of id; nullptr with rc and err set for the window root and input handlers ("has no <what>") or an
      * unknown id. */
     ElementEntry* findElement(quint32 id, const char* what, int& rc, std::string& err);
-    int setProperty(const unsigned char* p, int len, std::string& err); // SET
-    int setStyle(const unsigned char* p, int len, std::string& err); // SET_STYLE (vlstyle.h)
-    int setUniforms(const unsigned char* p, int len, std::string& err); // SET_UNIFORMS (ShaderEffect)
-    int setEffectChain(const unsigned char* p, int len, std::string& err); // SET_EFFECT_CHAIN, effects/effect_chain_desc.h
-    int setQmlProperties(const unsigned char* p, int len, std::string& err); // SET_QML_PROPERTIES (QmlElement)
+    int opCreate(WireReader& payload, std::string& err);
+    int opDestroy(WireReader& payload, std::string& err);
+    int opReparent(WireReader& payload, std::string& err);
+    int opSet(WireReader& payload, std::string& err); // elements or input handlers (scene/handlers.h)
+    int opBind(WireReader& payload, std::string& err);
+    int opSetClearColor(WireReader& payload, std::string& err);
+    int opReset(WireReader& payload, std::string& err);
+    int opSetStyle(WireReader& payload, std::string& err); // vlstyle.h
+    int opSetClear(WireReader& payload, std::string& err);
+    int opSetSpace(WireReader& payload, std::string& err);
+    int opSetUniforms(WireReader& payload, std::string& err); // ShaderEffect
+    int opSetEffectChain(WireReader& payload, std::string& err); // effects/effect_chain_desc.h
+    int opSetQmlProperties(WireReader& payload, std::string& err); // QmlElement
     /* root under window's content item, size follow, window-geometry watch (constructor, moveToWindow). */
     void attachRoot();
     void destroySubtree(QQuickItem* item);

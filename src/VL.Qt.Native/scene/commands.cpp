@@ -21,26 +21,6 @@
 namespace vlqt {
 namespace {
 
-const char* opName(quint16 op)
-{
-    switch (op) {
-    case VLQT_OP_CREATE: return "CREATE";
-    case VLQT_OP_DESTROY: return "DESTROY";
-    case VLQT_OP_REPARENT: return "REPARENT";
-    case VLQT_OP_SET: return "SET";
-    case VLQT_OP_BIND: return "BIND";
-    case VLQT_OP_SET_CLEAR_COLOR: return "CLEAR_COLOR";
-    case VLQT_OP_RESET: return "RESET";
-    case VLQT_OP_SET_STYLE: return "SET_STYLE";
-    case VLQT_OP_SET_CLEAR: return "SET_CLEAR";
-    case VLQT_OP_SET_SPACE: return "SET_SPACE";
-    case VLQT_OP_SET_UNIFORMS: return "SET_UNIFORMS";
-    case VLQT_OP_SET_EFFECT_CHAIN: return "SET_EFFECT_CHAIN";
-    case VLQT_OP_SET_QML_PROPERTIES: return "SET_QML_PROPERTIES";
-    default: return "?";
-    }
-}
-
 /* Value type of a MULTI entry key (EFFECT_* 833..855), 0 = not a key (protocol.h "Effect chain"). */
 quint16 effectValueType(quint16 prop)
 {
@@ -90,6 +70,43 @@ EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
 } // namespace
 
 // ---------------------------------------------------------------------------------------------
+// The op table: one row per opcode of protocol.h. apply checks the payload length of a command against its row, takes
+// the id (and property) for the structured error from it and calls its decoder. A new command adds its opcode to
+// protocol.h and Protocol.cs, one row here and its decoder (docs/architecture.md "Adding a command").
+
+struct Scene::Op {
+    quint16 op;
+    const char* name; // in the error text: "op 4 SET"
+    bool hasId; // the payload starts with the u32 id of the object it addresses (ApplyError::id)
+    bool hasProp; // the id is followed by the u16 property it sets (ApplyError::prop)
+    int payloadLen; // exact payload length, or the minimum when variable is true
+    bool variable; // the decoder checks the length beyond payloadLen
+    int (Scene::*decode)(WireReader& payload, std::string& err); // gets the payload only, the length checked as above
+};
+
+const Scene::Op* Scene::findOp(quint16 op)
+{
+    static constexpr Op ops[] = {
+        // op, name, hasId, hasProp, payloadLen, variable, decode
+        {VLQT_OP_CREATE, "CREATE", true, false, VLQT_CREATE_PAYLOAD, false, &Scene::opCreate},
+        {VLQT_OP_DESTROY, "DESTROY", true, false, 4, false, &Scene::opDestroy},
+        {VLQT_OP_REPARENT, "REPARENT", true, false, VLQT_REPARENT_PAYLOAD, false, &Scene::opReparent},
+        {VLQT_OP_SET, "SET", true, true, VLQT_SET_FIELDS_SIZE, true, &Scene::opSet},
+        {VLQT_OP_BIND, "BIND", true, false, VLQT_BIND_PAYLOAD, false, &Scene::opBind},
+        {VLQT_OP_SET_CLEAR_COLOR, "CLEAR_COLOR", false, false, 16, false, &Scene::opSetClearColor},
+        {VLQT_OP_RESET, "RESET", false, false, 0, false, &Scene::opReset},
+        {VLQT_OP_SET_STYLE, "SET_STYLE", true, false, VLQT_LIST_FIELDS_SIZE, true, &Scene::opSetStyle},
+        {VLQT_OP_SET_CLEAR, "SET_CLEAR", false, false, 4, false, &Scene::opSetClear},
+        {VLQT_OP_SET_SPACE, "SET_SPACE", false, false, 4, false, &Scene::opSetSpace},
+        {VLQT_OP_SET_UNIFORMS, "SET_UNIFORMS", true, false, VLQT_LIST_FIELDS_SIZE, true, &Scene::opSetUniforms},
+        {VLQT_OP_SET_EFFECT_CHAIN, "SET_EFFECT_CHAIN", true, false, VLQT_LIST_FIELDS_SIZE, true, &Scene::opSetEffectChain},
+        {VLQT_OP_SET_QML_PROPERTIES, "SET_QML_PROPERTIES", true, false, VLQT_LIST_FIELDS_SIZE, true, &Scene::opSetQmlProperties},
+    };
+    for (const Op& o : ops)
+        if (o.op == op)
+            return &o;
+    return nullptr;
+}
 
 ElementEntry* Scene::findElement(quint32 id, const char* what, int& rc, std::string& err)
 {
@@ -127,6 +144,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
     int index = 0;
     while (stream.remaining() > 0) {
         const int off = stream.offset();
+        const Op* info = nullptr;
         quint16 op = 0;
         quint32 cmdId = 0;
         quint16 cmdProp = 0;
@@ -144,13 +162,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
             const bool overCap = plen32 > quint32(VLQT_MAX_COMMAND_PAYLOAD);
             const int plen = overCap ? 0 : int(plen32);
             const int size = align4(VLQT_HEADER_SIZE + plen);
-            auto expect = [&](int n) {
-                if (plen == n)
-                    return true;
-                rc = ApplyBadLength;
-                reason = "payloadLen " + std::to_string(plen) + ", expected " + std::to_string(n);
-                return false;
-            };
+            info = findOp(op);
             if (overCap) {
                 rc = ApplyBadLength;
                 reason = "payloadLen " + std::to_string(plen32) + " above VLQT_MAX_COMMAND_PAYLOAD ("
@@ -163,99 +175,32 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                 rc = ApplyBadValue;
                 reason = "header flags " + std::to_string(flags) + ", expected 0 (reserved)";
             } else {
-                const unsigned char* p = header.cursor();
-                WireReader payload(p, plen);
-                // Object addressed by the command, for the structured error: first u32 of every op with an id.
-                const bool hasId = op == VLQT_OP_CREATE || op == VLQT_OP_DESTROY || op == VLQT_OP_REPARENT
-                    || op == VLQT_OP_SET || op == VLQT_OP_BIND || op == VLQT_OP_SET_STYLE || op == VLQT_OP_SET_UNIFORMS
-                    || op == VLQT_OP_SET_EFFECT_CHAIN || op == VLQT_OP_SET_QML_PROPERTIES;
-                if (hasId) {
+                WireReader payload = header.sub(plen); // fits: size checked against remaining() above
+                if (info && info->hasId) {
                     WireReader probe = payload; // a payload too short for them leaves the id and the property 0
                     cmdId = probe.u32();
-                    if (op == VLQT_OP_SET)
+                    if (info->hasProp)
                         cmdProp = probe.u16();
                 }
-                switch (op) {
-                case VLQT_OP_CREATE:
-                    if (expect(VLQT_CREATE_PAYLOAD)) {
-                        const quint32 id = payload.u32();
-                        const quint16 type = payload.u16();
-                        rc = create(id, type, reason);
-                    }
-                    break;
-                case VLQT_OP_DESTROY:
-                    if (expect(4))
-                        rc = destroy(payload.u32(), reason);
-                    break;
-                case VLQT_OP_REPARENT:
-                    if (expect(VLQT_REPARENT_PAYLOAD)) {
-                        const quint32 id = payload.u32();
-                        const quint32 parent = payload.u32();
-                        const quint32 at = payload.u32();
-                        rc = reparent(id, parent, at, reason);
-                    }
-                    break;
-                case VLQT_OP_SET:
-                    rc = setProperty(p, plen, reason);
-                    break;
-                case VLQT_OP_SET_STYLE:
-                    rc = setStyle(p, plen, reason);
-                    break;
-                case VLQT_OP_SET_UNIFORMS:
-                    rc = setUniforms(p, plen, reason);
-                    break;
-                case VLQT_OP_SET_EFFECT_CHAIN:
-                    rc = setEffectChain(p, plen, reason);
-                    break;
-                case VLQT_OP_SET_QML_PROPERTIES:
-                    rc = setQmlProperties(p, plen, reason);
-                    break;
-                case VLQT_OP_BIND:
-                    if (expect(VLQT_BIND_PAYLOAD)) {
-                        const quint32 id = payload.u32();
-                        const quint32 feedbackId = payload.u32();
-                        auto it = nodes.find(id);
-                        auto hit = it == nodes.end() ? handlerNodes.find(id) : handlerNodes.end();
-                        if (it != nodes.end()) {
-                            bindNode(*this, it->second, feedbackId);
-                        } else if (hit != handlerNodes.end()) {
-                            bindHandler(*this, hit->second, feedbackId);
-                        } else {
-                            rc = ApplyUnknownId;
-                            reason = "unknown id " + std::to_string(id);
-                        }
-                    }
-                    break;
-                case VLQT_OP_SET_CLEAR_COLOR:
-                    if (expect(16)) {
-                        float f[4];
-                        payload.copy(f, sizeof f);
-                        clearState.setColor(toColor(f), window);
-                    }
-                    break;
-                case VLQT_OP_SET_CLEAR:
-                    if (expect(4))
-                        clearState.setClear(payload.u32() != 0, window, root);
-                    break;
-                case VLQT_OP_SET_SPACE:
-                    if (expect(4))
-                        rc = setSpace(payload.u32(), reason);
-                    break;
-                case VLQT_OP_RESET:
-                    if (expect(0))
-                        reset();
-                    break;
-                default:
+                if (!info) {
                     rc = ApplyUnknownOp;
                     reason = "unknown opcode";
-                    break;
+                } else if (!info->variable && plen != info->payloadLen) {
+                    rc = ApplyBadLength;
+                    reason = "payloadLen " + std::to_string(plen) + ", expected " + std::to_string(info->payloadLen);
+                } else if (info->variable && plen < info->payloadLen) {
+                    rc = ApplyBadLength;
+                    reason = "payloadLen " + std::to_string(plen) + " too short for " + info->name + " (>= "
+                        + std::to_string(info->payloadLen) + ")";
+                } else {
+                    rc = (this->*info->decode)(payload, reason);
                 }
             }
             if (rc == ApplyOk)
                 stream.bytes(size); // fits: checked against remaining() above
         }
         if (rc != ApplyOk) {
-            err = "apply: command #" + std::to_string(index) + " (op " + std::to_string(op) + " " + opName(op)
+            err = "apply: command #" + std::to_string(index) + " (op " + std::to_string(op) + " " + (info ? info->name : "?")
                 + (cmdId ? ", id " + std::to_string(cmdId) : std::string()) + ", offset " + std::to_string(off)
                 + "): " + reason;
             lastApplyError = ApplyError{rc, index, cmdId, op, cmdProp, std::move(reason)};
@@ -266,13 +211,31 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
     return ApplyOk;
 }
 
-int Scene::setProperty(const unsigned char* p, int plen, std::string& err)
+// ---------------------------------------------------------------------------------------------
+// Decoders of the op table.
+
+int Scene::opCreate(WireReader& r, std::string& err)
 {
-    if (plen < VLQT_SET_FIELDS_SIZE) {
-        err = "payloadLen " + std::to_string(plen) + " too short for SET (>= " + std::to_string(VLQT_SET_FIELDS_SIZE) + ")";
-        return ApplyBadLength;
-    }
-    WireReader r(p, plen);
+    const quint32 id = r.u32();
+    const quint16 type = r.u16();
+    return create(id, type, err);
+}
+
+int Scene::opDestroy(WireReader& r, std::string& err)
+{
+    return destroy(r.u32(), err);
+}
+
+int Scene::opReparent(WireReader& r, std::string& err)
+{
+    const quint32 id = r.u32();
+    const quint32 parent = r.u32();
+    const quint32 at = r.u32();
+    return reparent(id, parent, at, err);
+}
+
+int Scene::opSet(WireReader& r, std::string& err)
+{
     const quint32 id = r.u32();
     const quint16 prop = r.u16();
     Value v;
@@ -375,14 +338,40 @@ int Scene::setProperty(const unsigned char* p, int plen, std::string& err)
     return elements.set(it->second, prop, v, err);
 }
 
-int Scene::setStyle(const unsigned char* p, int plen, std::string& err)
+int Scene::opBind(WireReader& r, std::string& err)
 {
-    if (plen < VLQT_LIST_FIELDS_SIZE) {
-        err = "payloadLen " + std::to_string(plen) + " too short for SET_STYLE (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
-        return ApplyBadLength;
+    const quint32 id = r.u32();
+    const quint32 feedbackId = r.u32();
+    if (auto it = nodes.find(id); it != nodes.end()) {
+        bindNode(*this, it->second, feedbackId);
+        return ApplyOk;
     }
+    if (auto hit = handlerNodes.find(id); hit != handlerNodes.end()) {
+        bindHandler(*this, hit->second, feedbackId);
+        return ApplyOk;
+    }
+    err = "unknown id " + std::to_string(id);
+    return ApplyUnknownId;
+}
+
+int Scene::opSetClearColor(WireReader& r, std::string&)
+{
+    float f[4];
+    r.copy(f, sizeof f);
+    clearState.setColor(toColor(f), window);
+    return ApplyOk;
+}
+
+int Scene::opReset(WireReader&, std::string&)
+{
+    reset();
+    return ApplyOk;
+}
+
+int Scene::opSetStyle(WireReader& r, std::string& err)
+{
     int rc = ApplyOk;
-    ElementEntry* entry = findElement(WireReader(p, plen).u32(), "style (Controls elements only)", rc, err);
+    ElementEntry* entry = findElement(r.peek<quint32>(), "style (Controls elements only)", rc, err);
     if (!entry)
         return rc;
     const quint16 type = entry->type;
@@ -390,18 +379,24 @@ int Scene::setStyle(const unsigned char* p, int plen, std::string& err)
         err = "type " + std::to_string(type) + " has no style (Controls elements only)";
         return ApplyUnknownProperty;
     }
-    return applySetStyle(entry->item, p, plen, err);
+    return applySetStyle(entry->item, r.cursor(), r.remaining(), err);
 }
 
-int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
+int Scene::opSetClear(WireReader& r, std::string&)
+{
+    clearState.setClear(r.u32() != 0, window, root);
+    return ApplyOk;
+}
+
+int Scene::opSetSpace(WireReader& r, std::string& err)
+{
+    return setSpace(r.u32(), err);
+}
+
+int Scene::opSetUniforms(WireReader& r, std::string& err)
 {
     // Validates all entries first (wire format: protocol.h "SET_UNIFORMS"), then hands them to the ShaderItem;
     // unknown names or wrong types become the element's error text (ShaderItem::rebuild).
-    if (plen < VLQT_LIST_FIELDS_SIZE) {
-        err = "payloadLen " + std::to_string(plen) + " too short for SET_UNIFORMS (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
-        return ApplyBadLength;
-    }
-    WireReader r(p, plen);
     const quint32 id = r.u32();
     const int count = r.u16();
     const quint16 flags = r.u16();
@@ -452,16 +447,11 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
     return ApplyOk;
 }
 
-int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
+int Scene::opSetQmlProperties(WireReader& r, std::string& err)
 {
     // Wire format: protocol.h head comment (entries like SET_UNIFORMS; a STRING value is u32 length + UTF-8). The command is
     // validated as a whole first; content problems (unknown name, failed conversion, unsupported value type) do not fail
     // the apply: they are error lines of the element (QmlItem::error, EVENT_ERROR).
-    if (plen < VLQT_LIST_FIELDS_SIZE) {
-        err = "payloadLen " + std::to_string(plen) + " too short for SET_QML_PROPERTIES (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
-        return ApplyBadLength;
-    }
-    WireReader r(p, plen);
     const quint32 id = r.u32();
     const int count = r.u16();
     r.u16(); // flags, reserved
@@ -530,17 +520,12 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
     return ApplyOk;
 }
 
-int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
+int Scene::opSetEffectChain(WireReader& r, std::string& err)
 {
     // Validates the whole command first (wire format: protocol.h "Effect chain", ids, masks), so a rejected one changes
     // nothing. A texture problem is no rejection but an EVENT_ERROR line of the chain. Elements::setEffectChain fails
     // only when an item of the chain cannot be created (QML error); the old chain is gone by then, so the chain is
     // switched off and the masks and textures this command parked leave the tree again.
-    if (plen < VLQT_LIST_FIELDS_SIZE) {
-        err = "payloadLen " + std::to_string(plen) + " too short for SET_EFFECT_CHAIN (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
-        return ApplyBadLength;
-    }
-    WireReader r(p, plen);
     const quint32 id = r.u32();
     const int linkCount = r.u16();
     r.u16(); // flags, reserved
