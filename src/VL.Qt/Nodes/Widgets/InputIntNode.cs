@@ -22,28 +22,19 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(int Value, int Minimum, int Maximum, int Step, bool Editable, bool Enabled, bool AutoSize, Style? Style);
 
-        private readonly ElementNode<SpinBox, Props> _node;
+        private readonly ElementNodeCore<SpinBox, Props> _node;
         private readonly ValueChannel<int> _value = new(0);
 
         public InputIntNode(NodeContext nodeContext)
-            => _node = new ElementNode<SpinBox, Props>(nodeContext, Create);
+            => _node = new ElementNodeCore<SpinBox, Props>(nodeContext, s_create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal InputIntNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<SpinBox, Props>(addWarning, Create);
+            => _node = new ElementNodeCore<SpinBox, Props>(addWarning, s_create);
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, SpinBox> Create = static (c, p, slot) => new SpinBox
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, SpinBox> s_create = static (c, p, slot) => new SpinBox(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
                 Style = p.Style,
-                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Value = p.Value,
                 Minimum = p.Minimum,
@@ -53,7 +44,7 @@ namespace VL.Qt.Nodes
                 Enabled = p.Enabled,
             };
 
-        internal ElementNode<SpinBox, Props> Core => _node;
+        internal ElementNodeCore<SpinBox, Props> Core => _node;
 
         /// <summary>Describes the input. A new description is only created when an input or the value changes.</summary>
         /// <param name="size">Size of the element (width, height), only with Auto Size off. The position comes from Transform and Anchor.</param>
@@ -104,11 +95,10 @@ namespace VL.Qt.Nodes
             int maximum = _value.Max(max, int.MaxValue);
             value = _value.Clamp(minimum, maximum);
             bang = _value.Bang;
-            var element = _node.Describe(
+            return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(value, minimum, maximum, step, editable, enabled, autoSize, style));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+                new Props(value, minimum, maximum, step, editable, enabled, autoSize, style),
+                out measuredSize, out sceneBounds);
         }
 
         public void Dispose() => _node.Dispose();

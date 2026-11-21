@@ -20,33 +20,24 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Color4 Color, float Radius, Color4 StrokeColor, float StrokeWidth);
 
-        private readonly ElementNode<Rectangle, Props> _node;
+        private readonly ElementNodeCore<Rectangle, Props> _node;
 
         public RectangleNode(NodeContext nodeContext)
-            => _node = new ElementNode<Rectangle, Props>(nodeContext, Create);
+            => _node = new ElementNodeCore<Rectangle, Props>(nodeContext, Create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal RectangleNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<Rectangle, Props>(addWarning, Create);
+            => _node = new ElementNodeCore<Rectangle, Props>(addWarning, Create);
 
-        internal static readonly Func<CommonInputs, Props, FeedbackSlot, Rectangle> Create = static (c, p, slot) => new Rectangle
+        internal static readonly Func<CommonInputs, Props, FeedbackSlot, Rectangle> Create = static (c, p, slot) => new Rectangle(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
-                Feedback = slot,
                 Fill = p.Color,
                 Radius = p.Radius,
                 StrokeColor = p.StrokeColor,
                 StrokeWidth = p.StrokeWidth,
             };
 
-        internal ElementNode<Rectangle, Props> Core => _node;
+        internal ElementNodeCore<Rectangle, Props> Core => _node;
 
         /// <summary>Describes the rectangle. A new description is only created when an input changes.</summary>
         /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor.</param>
@@ -84,11 +75,10 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            var element = _node.Describe(
+            return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(color, radius, strokeColor, strokeWidth));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+                new Props(color, radius, strokeColor, strokeWidth),
+                out measuredSize, out sceneBounds);
         }
 
         public void Dispose() => _node.Dispose();

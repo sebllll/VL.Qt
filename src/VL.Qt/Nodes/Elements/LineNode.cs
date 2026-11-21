@@ -18,6 +18,8 @@ namespace VL.Qt.Nodes
     public sealed class LineNode : IDisposable
     {
         private readonly ShapeNodeCore _core;
+        private Spread<Vector2> _points = Spread<Vector2>.Empty;
+        private Vector2 _from, _to;
 
         public LineNode(NodeContext nodeContext) => _core = new ShapeNodeCore(nodeContext);
 
@@ -68,10 +70,25 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
             var props = new ShapeNodeCore.Props(
-                _core.LinePoints(from, to), false, new Color4(0, 0, 0, 0), strokeColor, strokeWidth,
+                Points(from, to), false, new Color4(0, 0, 0, 0), strokeColor, strokeWidth,
                 cap, ShapeJoin.Miter, 4f, dash ?? Spread<float>.Empty, dashOffset,
                 trimStart, trimEnd, trimOffset, ShapeFillRule.NonZero);
             return _core.Describe(new CommonInputs(Vector2.Zero, transform, RectangleAnchor.TopLeft, opacity, clip, debug, interaction, effect), props, out measuredSize, out sceneBounds);
+        }
+
+        /// <summary>
+        /// Returns the two points of the line: the same instance as long as <paramref name="from"/> and <paramref name="to"/> stay the
+        /// same, so an unchanged Line allocates nothing per frame.
+        /// </summary>
+        private Spread<Vector2> Points(Vector2 from, Vector2 to)
+        {
+            if (_points.Count == 0 || _from != from || _to != to)
+            {
+                _points = new[] { from, to }.ToSpread();
+                _from = from;
+                _to = to;
+            }
+            return _points;
         }
 
         public void Dispose() => _core.Dispose();

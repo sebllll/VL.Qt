@@ -22,32 +22,23 @@ namespace VL.Qt.Nodes
         // The image is compared by reference: a new QtImage is a new image.
         internal readonly record struct Props(QtImage? Image, ImageFillMode FillMode, bool Smooth);
 
-        private readonly ElementNode<Image, Props> _node;
+        private readonly ElementNodeCore<Image, Props> _node;
 
         public ImageNode(NodeContext nodeContext)
-            => _node = new ElementNode<Image, Props>(nodeContext, Create);
+            => _node = new ElementNodeCore<Image, Props>(nodeContext, s_create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal ImageNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<Image, Props>(addWarning, Create);
+            => _node = new ElementNodeCore<Image, Props>(addWarning, s_create);
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, Image> Create = static (c, p, slot) => new Image
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Image> s_create = static (c, p, slot) => new Image(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
-                Feedback = slot,
                 Source = p.Image,
                 FillMode = p.FillMode,
                 Smooth = p.Smooth,
             };
 
-        internal ElementNode<Image, Props> Core => _node;
+        internal ElementNodeCore<Image, Props> Core => _node;
 
         /// <summary>Describes the image. A new description is only created when an input changes.</summary>
         /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor.</param>
@@ -80,11 +71,10 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            var element = _node.Describe(
+            return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(image, fillMode, smooth));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+                new Props(image, fillMode, smooth),
+                out measuredSize, out sceneBounds);
         }
 
         public void Dispose() => _node.Dispose();

@@ -22,7 +22,7 @@ namespace VL.Qt.Audio
     [ProcessNode(Name = "Video (VL.Audio)", Category = Categories.Elements)]
     public sealed class VideoAudioNode : IDisposable
     {
-        private readonly ElementNode<Video, VideoNode.Props> _node;
+        private readonly ElementNodeCore<Video, VideoNode.Props> _node;
         private readonly VideoAudioSignal _signal;
         private readonly ResourceClient _client;
         private readonly NodeErrors _errors;
@@ -32,7 +32,7 @@ namespace VL.Qt.Audio
 
         public VideoAudioNode(NodeContext nodeContext)
         {
-            _node = new ElementNode<Video, VideoNode.Props>(nodeContext, VideoNode.Create);
+            _node = new ElementNodeCore<Video, VideoNode.Props>(nodeContext, VideoNode.Create);
             _client = ResourceClient.ForApp(nodeContext.AppHost);
             _errors = new NodeErrors(nodeContext);
             _signal = new VideoAudioSignal(NativeAudioTapReader.Instance);
@@ -97,8 +97,8 @@ namespace VL.Qt.Audio
             // muted, so the sound never comes out of two places.
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new VideoNode.Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, _tap is null ? 0f : 1f, fillMode, _tap?.Id ?? 0));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
+                new VideoNode.Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, _tap is null ? 0f : 1f, fillMode, _tap?.Id ?? 0),
+                out measuredSize, out sceneBounds);
             position = _node.Feedback.MediaPosition();
             duration = _node.Feedback.MediaDuration();
             audio = _signal.Outputs;

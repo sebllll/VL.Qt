@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
             Element? Input, ulong FragmentShaderId, ulong VertexShaderId, Spread<Uniform>? Uniforms, bool Blending,
             Int2 MeshResolution, bool AutoSize, Sampler? InputSampler);
 
-        private readonly ElementNode<Shader, Props> _node;
+        private readonly ElementNodeCore<Shader, Props> _node;
         private readonly ShaderSlot _fragment, _vertex;
         private readonly ElementInput _input;
         private readonly NodeErrors? _errors;
@@ -43,7 +43,7 @@ namespace VL.Qt.Nodes
         public ShaderNode(NodeContext nodeContext)
         {
             var client = ResourceClient.ForApp(nodeContext.AppHost);
-            _node = new ElementNode<Shader, Props>(nodeContext, Create);
+            _node = new ElementNodeCore<Shader, Props>(nodeContext, s_create);
             _input = new ElementInput(_node.AddWarning);
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
@@ -59,23 +59,14 @@ namespace VL.Qt.Nodes
         /// <summary>For tests: a client on a fake resource API; warnings go to <paramref name="addWarning"/>, nothing is logged.</summary>
         internal ShaderNode(ResourceClient? client, Func<string, IDisposable> addWarning)
         {
-            _node = new ElementNode<Shader, Props>(addWarning, Create);
+            _node = new ElementNodeCore<Shader, Props>(addWarning, s_create);
             _input = new ElementInput(addWarning);
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
         }
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, Shader> Create = static (c, p, slot) => new Shader
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Shader> s_create = static (c, p, slot) => new Shader(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
-                Feedback = slot,
                 Input = p.Input,
                 InputSampler = p.InputSampler,
                 FragmentShaderId = p.FragmentShaderId,
@@ -86,7 +77,7 @@ namespace VL.Qt.Nodes
                 AutoSize = p.AutoSize,
             };
 
-        internal ElementNode<Shader, Props> Core => _node;
+        internal ElementNodeCore<Shader, Props> Core => _node;
 
         /// <summary>Describes the shader effect. A new description is only created when an input changes.</summary>
         /// <param name="input">Element sampled as sampler2D "source" (hidden itself, only the effect output is drawn). Unconnected = generative shader.</param>
@@ -144,8 +135,8 @@ namespace VL.Qt.Nodes
             }
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(_input.Update(input), fragmentId, vertexId, uniforms, blending, mesh, autoSize, inputSampler));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
+                new Props(_input.Update(input), fragmentId, vertexId, uniforms, blending, mesh, autoSize, inputSampler),
+                out measuredSize, out sceneBounds);
             error = UpdateError();
             return element;
         }

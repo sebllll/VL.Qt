@@ -222,10 +222,10 @@ public static class TooltipTest
         foreach (var j in new[] { jBig, jSmall, jGroup, jEdge, jExact }) client.Release(j.Resource);
         Step(2);
 
-        // 2b) ElementTooltipPreview on the real QtNative: an image <= 256 px, no further grabs in a static scene,
+        // 2b) ElementTooltipPreviewNode on the real QtNative: an image <= 256 px, no further grabs in a static scene,
         // a new one after the scene changed (hover), a text for an element no renderer shows, release on Dispose.
         {
-            var tip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_scene_get_change_count(window),
+            var tip = new ElementTooltipPreviewNode(client, scene, static window => Native.vlqt_scene_get_change_count(window),
                 static () => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
             IImage? tipImage = null;
             string tipText = "";
@@ -282,10 +282,10 @@ public static class TooltipTest
             Step(3);
         }
 
-        // 2c) ElementTooltipPreview: a target that is a new instance every frame at the same place (an LFO on colour and size
+        // 2c) ElementTooltipPreviewNode: a target that is a new instance every frame at the same place (an LFO on colour and size
         // in a patch). The place is the identity, so the first image arrives, stays, and gets replaced by newer ones, never null in between.
         {
-            var tip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_scene_get_change_count(window),
+            var tip = new ElementTooltipPreviewNode(client, scene, static window => Native.vlqt_scene_get_change_count(window),
                 static () => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
             IImage? lastImage = null;
             int arrivals = 0, flickers = 0;
@@ -330,7 +330,7 @@ public static class TooltipTest
         // TryLocate falls back to the place of the slot, so both find the group and deliver an image.
         {
             var slot = new FeedbackSlot(new ElementFeedback(), 0);
-            var tip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_scene_get_change_count(window),
+            var tip = new ElementTooltipPreviewNode(client, scene, static window => Native.vlqt_scene_get_change_count(window),
                 static () => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
             var snap = new SnapshotNode(client, scene);
             IImage? tipImage = null, snapImage = null;
@@ -353,7 +353,7 @@ public static class TooltipTest
                 // grab is an edge: once, in the first pass (the point of the test); every further grab would supersede the running one
                 // (only the newest grab of an id counts), and with the software backend a grab needs more than one pump.
                 snapImage = snap.Update(target, out _, out snapError, 1, grab: i == 1) ?? snapImage;
-                if (tipText.Contains(ElementTooltipPreview.NotShownSuffix) || snapError == SnapshotNode.NotShownError)
+                if (tipText.Contains(ElementTooltipPreviewNode.NotShownSuffix) || snapError == SnapshotNode.NotShownError)
                     notShown++;
                 current = new Group { Anchor = RectangleAnchor.TopLeft, Children = [target, small] };
                 Step(1, 15);
@@ -429,7 +429,7 @@ public static class TooltipTest
         Native.vlqt_scene_set_overlay(w, 0);
         Step(10);
 
-        // 3b) ElementTooltipPreview and video. (a) A tree with a Video gets only text and never a grab (a grab of a running
+        // 3b) ElementTooltipPreviewNode and video. (a) A tree with a Video gets only text and never a grab (a grab of a running
         // hardware-decoded video costs the frame 25-57 ms). (b) Hitch rate of the preview on an element without a video.
         {
             var videoGroup = new Group
@@ -441,7 +441,7 @@ public static class TooltipTest
                     new Group { Children = [new Video { Size = new Vector2(4.8f, 2.7f), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(1, 1, 0), Path = videoPath is null ? VPath.Default : new VPath(videoPath), Playing = true, Loop = true }] }
                 ]
             };
-            var videoTip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_scene_get_change_count(window),
+            var videoTip = new ElementTooltipPreviewNode(client, scene, static window => Native.vlqt_scene_get_change_count(window),
                 static () => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
             var liveBefore = client.LiveCount;
             current = videoGroup;
@@ -465,7 +465,7 @@ public static class TooltipTest
             Step(5);
         }
 
-        // Hitch rate of ElementTooltipPreview: paced to 60 Hz, a moving rectangle next to the tooltip target (a group with a
+        // Hitch rate of ElementTooltipPreviewNode: paced to 60 Hz, a moving rectangle next to the tooltip target (a group with a
         // big rectangle and a small one, 1000 x 500 DIP, scaled down to 256 px); the moving one changes the scene every frame.
         // The target is a new instance every frame in both arms (colour and size of the small rectangle move, like an LFO in a patch).
         // Arms A (without the node) and B (tip.Update every frame, throttled to <= 5 Hz inside) alternate A B A B so drift and
@@ -477,7 +477,7 @@ public static class TooltipTest
             const double Period = 1000.0 / 60;
             const int BlockFrames = 200;
             Element targetGroup = null!;
-            var perfTip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_scene_get_change_count(window),
+            var perfTip = new ElementTooltipPreviewNode(client, scene, static window => Native.vlqt_scene_get_change_count(window),
                 static () => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
             var intervalsA = new List<double>();
             var intervalsB = new List<double>();
@@ -529,7 +529,7 @@ public static class TooltipTest
             s.Info($"perf: ohne Tooltip {Hitches(intervalsA)}/{intervalsA.Count} hitches ({HitchRate(intervalsA):F1} %), "
                 + $"mit Tooltip {Hitches(intervalsB)}/{intervalsB.Count} ({HitchRate(intervalsB):F1} %), median {medianA:F2} ms, max {intervalsB.Max():F1} ms, {previews} previews");
             s.Check(previews >= 10, $"previews arrived while running ({previews} new images)");
-            PerfLimits.Below(s, HitchRate(intervalsB), Math.Max(HitchRate(intervalsA) * 3, 5), "hitch rate with ElementTooltipPreview on an animated element in the range of the background, %");
+            PerfLimits.Below(s, HitchRate(intervalsB), Math.Max(HitchRate(intervalsA) * 3, 5), "hitch rate with ElementTooltipPreviewNode on an animated element in the range of the background, %");
 
             // F5 Resources page after the B run: the snapshot line of package 01 shows the previews' rate and cost.
             s.Check(Native.vlqt_scene_set_overlay(w, 2 | ((PerfOverlayTest.ResourcesPage + 1) << 4)) == 0, "F5 overlay Resources opens");

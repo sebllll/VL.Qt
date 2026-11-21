@@ -22,26 +22,17 @@ namespace VL.Qt.Nodes
             TextHorizontalAlignment HAlign, VerticalAlignment VAlign, TextWrap Wrap, TextElide Elide,
             float LineHeight, float LetterSpacing, TextAutofit Autofit);
 
-        private readonly ElementNode<Text, Props> _node;
+        private readonly ElementNodeCore<Text, Props> _node;
 
         public TextNode(NodeContext nodeContext)
-            => _node = new ElementNode<Text, Props>(nodeContext, Create);
+            => _node = new ElementNodeCore<Text, Props>(nodeContext, s_create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal TextNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<Text, Props>(addWarning, Create);
+            => _node = new ElementNodeCore<Text, Props>(addWarning, s_create);
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, Text> Create = static (c, p, slot) => new Text
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Text> s_create = static (c, p, slot) => new Text(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
-                Feedback = slot,
                 Content = p.Content,
                 FontFamily = p.FontFamily,
                 FontSize = p.FontSize,
@@ -57,7 +48,7 @@ namespace VL.Qt.Nodes
                 Autofit = p.Autofit,
             };
 
-        internal ElementNode<Text, Props> Core => _node;
+        internal ElementNodeCore<Text, Props> Core => _node;
 
         /// <summary>Describes the text. A new description is only created when an input changes.</summary>
         /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor. The size is the box for alignment, wrapping and eliding.</param>
@@ -111,12 +102,11 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            var element = _node.Describe(
+            return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
                 new Props(text ?? string.Empty, fontFamily ?? string.Empty, fontSize, weight, italic, color,
-                    horizontalAlignment, verticalAlignment, wrap, elide, lineHeight, letterSpacing, autofit));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+                    horizontalAlignment, verticalAlignment, wrap, elide, lineHeight, letterSpacing, autofit),
+                out measuredSize, out sceneBounds);
         }
 
         public void Dispose() => _node.Dispose();

@@ -30,7 +30,7 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(string Source, int Reload, QmlProperties Properties, bool AutoSize);
 
-        private readonly ElementNode<QmlElement, Props> _node;
+        private readonly ElementNodeCore<QmlElement, Props> _node;
         private readonly QmlFileWatcher _watcher;
         private readonly NodeErrors? _errors;
         private string? _file, _fileResolved;
@@ -43,7 +43,7 @@ namespace VL.Qt.Nodes
 
         public QmlElementNode(NodeContext nodeContext)
         {
-            _node = new ElementNode<QmlElement, Props>(nodeContext, Create);
+            _node = new ElementNodeCore<QmlElement, Props>(nodeContext, s_create);
             _watcher = new QmlFileWatcher();
             _errors = new NodeErrors(nodeContext);
         }
@@ -57,28 +57,19 @@ namespace VL.Qt.Nodes
         /// <summary>For tests: the folder watch comes from <paramref name="watchDir"/> (null = the real one).</summary>
         internal QmlElementNode(Func<string, IDisposable> addWarning, Func<string, IObservable<FileSystemEventArgs>>? watchDir)
         {
-            _node = new ElementNode<QmlElement, Props>(addWarning, Create);
+            _node = new ElementNodeCore<QmlElement, Props>(addWarning, s_create);
             _watcher = watchDir is null ? new QmlFileWatcher() : new QmlFileWatcher(watchDir);
         }
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, QmlElement> Create = static (c, p, slot) => new QmlElement
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, QmlElement> s_create = static (c, p, slot) => new QmlElement(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
-                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Source = p.Source,
                 Reload = p.Reload,
                 Properties = p.Properties,
             };
 
-        internal ElementNode<QmlElement, Props> Core => _node;
+        internal ElementNodeCore<QmlElement, Props> Core => _node;
 
         /// <summary>Describes the QML element. A new description is only created when an input changes (also when the file was reloaded).</summary>
         /// <param name="file">The .qml file, its root must be an Item. A relative path is taken from the working directory of the app (vvvv resolves a Path IOBox against the document). Empty = nothing loaded. The file and the *.qml and qmldir next to it are watched: saving one reloads the element and sends all properties again; the outputs start empty again.</param>
@@ -130,8 +121,8 @@ namespace VL.Qt.Nodes
             _properties = QmlProperties.Update(_properties, properties);
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(source, _reload, _properties, autoSize));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
+                new Props(source, _reload, _properties, autoSize),
+                out measuredSize, out sceneBounds);
 
             int updates = feedback.QmlPropertyUpdates();
             if (updates != _seenPropertyUpdates)
