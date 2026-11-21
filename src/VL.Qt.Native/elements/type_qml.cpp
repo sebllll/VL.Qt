@@ -1,7 +1,7 @@
 #include "elements/element_types.h"
 #include "elements/elements.h"
 #include "elements/geometry.h"
-#include "qmlitem.h"
+#include "user_qml/qml_item.h"
 
 #include <algorithm>
 
@@ -9,7 +9,7 @@ namespace vlqt {
 
 namespace {
 
-// QmlElement (protocol.h "QmlElement"): QmlItem (qmlitem.h), own QQuickItem that holds the instance of a user .qml file.
+// QmlElement (protocol.h "QmlElement"): QmlItem (user_qml/qml_item.h), own QQuickItem that holds the instance of a user .qml file.
 QQuickItem* makeQml() { return new QmlItem(); }
 
 bool setQmlSource(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
