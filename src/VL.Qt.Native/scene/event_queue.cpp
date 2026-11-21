@@ -1,6 +1,7 @@
 #include "scene/event_queue.h"
 #include "app/exports.h"
 #include "protocol.h"
+#include "wire.h"
 
 #include <cstring>
 
@@ -16,12 +17,12 @@ void EventQueue::push(quint16 ev, quint32 feedbackId, const void* payload, qsize
     const quint32 len = quint32(VLQT_EVENT_FIELDS_SIZE + payloadLen); // feedbackId + payload, without padding
     const quint16 flags = 0;
     const qsizetype at = records.size();
-    records.resize(at + ((qsizetype(VLQT_HEADER_SIZE) + len + 3) & ~qsizetype(3)), '\0');
+    records.resize(at + qsizetype(align4(qint64(VLQT_HEADER_SIZE) + len)), '\0');
     char* d = records.data() + at;
-    std::memcpy(d, &ev, 2);
-    std::memcpy(d + 2, &flags, 2);
-    std::memcpy(d + 4, &len, 4);
-    std::memcpy(d + VLQT_HEADER_SIZE, &feedbackId, 4);
+    writeLE(d, ev);
+    writeLE(d + 2, flags);
+    writeLE(d + 4, len);
+    writeLE(d + VLQT_HEADER_SIZE, feedbackId);
     if (payloadLen)
         std::memcpy(d + VLQT_HEADER_SIZE + VLQT_EVENT_FIELDS_SIZE, payload, size_t(payloadLen));
 }
