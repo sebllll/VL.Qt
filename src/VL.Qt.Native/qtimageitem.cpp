@@ -16,9 +16,6 @@
 #include <vector>
 
 #ifdef Q_OS_WIN
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
 #include <unknwn.h>
 #endif
 

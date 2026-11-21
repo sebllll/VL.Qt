@@ -2,13 +2,26 @@
   "version": 3,
   "configurePresets": [
     {
-      "name": "dev-win-arm64",
-      "displayName": "Dev win-arm64 (local Qt)",
+      "name": "dev-win-x64",
+      "displayName": "Dev win-x64 (Qt from $VLQT_QT_DIR, see docs/development.md)",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/../../build/win-arm64",
+      "binaryDir": "${sourceDir}/../../build/win-x64",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "CMAKE_PREFIX_PATH": "C:/Qt/6.12.0/msvc2022_arm64",
+        "CMAKE_PREFIX_PATH": "$env{VLQT_QT_DIR}",
+        "VLQT_RID": "win-x64"
+      }
+    },
+    {
+      "name": "dev-win-arm64",
+      "displayName": "Dev win-arm64 (Qt from $VLQT_QT_DIR, see docs/development.md)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/../../build/win-arm64",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_PREFIX_PATH": "$env{VLQT_QT_DIR}",
         "VLQT_RID": "win-arm64"
       }
     },
@@ -86,6 +99,7 @@
     }
   ],
   "buildPresets": [
+    { "name": "dev-win-x64", "configurePreset": "dev-win-x64" },
     { "name": "dev-win-arm64", "configurePreset": "dev-win-arm64" },
     { "name": "dev-linux-x64", "configurePreset": "dev-linux-x64" },
     { "name": "dev-linux-arm64", "configurePreset": "dev-linux-arm64" },

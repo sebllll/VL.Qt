@@ -52,7 +52,6 @@
 #include <QtQuick/private/qquickdeliveryagent_p_p.h>
 
 #ifdef _WIN32
-#define NOMINMAX
 #include <windows.h>
 #else
 #include <QtGui/private/qhighdpiscaling_p.h>
