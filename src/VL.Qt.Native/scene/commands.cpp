@@ -5,6 +5,7 @@
 #include "user_qml/qml_item.h"
 #include "scene/scene.h"
 #include "vlstyle.h"
+#include "wire.h"
 
 #include <QtCore/QRectF>
 #include <QtGui/QColor>
@@ -14,25 +15,11 @@
 #include <QtQuick/QQuickItem>
 
 #include <algorithm>
-#include <cstring>
 #include <utility>
 #include <vector>
 
 namespace vlqt {
 namespace {
-
-// ---------------------------------------------------------------------------------------------
-// Wire helpers (little-endian host: Windows x64/arm64)
-
-template <class T>
-T rd(const unsigned char* p)
-{
-    T v;
-    std::memcpy(&v, p, sizeof(T));
-    return v;
-}
-
-constexpr int align4(int n) { return (n + (VLQT_COMMAND_ALIGN - 1)) & ~(VLQT_COMMAND_ALIGN - 1); }
 
 const char* opName(quint16 op)
 {
@@ -51,56 +38,6 @@ const char* opName(quint16 op)
     case VLQT_OP_SET_EFFECT_CHAIN: return "SET_EFFECT_CHAIN";
     case VLQT_OP_SET_QML_PROPERTIES: return "SET_QML_PROPERTIES";
     default: return "?";
-    }
-}
-
-/* Payload size of a SET value, -1 = unknown value type. Variable length (string, f32 array, path): fixed part only. */
-int valueSize(quint16 vt)
-{
-    switch (vt) {
-    case VLQT_VALUE_TYPE_F32_ARRAY: return 4;
-    case VLQT_VALUE_TYPE_PATH: return 8;
-    case VLQT_VALUE_TYPE_F32: return 4;
-    case VLQT_VALUE_TYPE_I32: return 4;
-    case VLQT_VALUE_TYPE_BOOL: return 1;
-    case VLQT_VALUE_TYPE_COLOR: return 16;
-    case VLQT_VALUE_TYPE_RECTF: return 16;
-    case VLQT_VALUE_TYPE_MAT4: return 64;
-    case VLQT_VALUE_TYPE_STRING: return 4;
-    case VLQT_VALUE_TYPE_REF: return 4;
-    case VLQT_VALUE_TYPE_U64: return 8;
-    case VLQT_VALUE_TYPE_SAMPLER: return 8;
-    case VLQT_VALUE_TYPE_VEC2: return 8;
-    case VLQT_VALUE_TYPE_VEC3: return 12;
-    case VLQT_VALUE_TYPE_VEC4: return 16;
-    case VLQT_VALUE_TYPE_IVEC2: return 8;
-    default: return -1;
-    }
-}
-
-/* Payload size of a fixed-size value, -1 = unknown or variable length (string, f32 array, path). The commands with
- * entries of their own (uniforms, effect chain) take only these. */
-int fixedValueSize(quint16 vt)
-{
-    switch (vt) {
-    case VLQT_VALUE_TYPE_STRING:
-    case VLQT_VALUE_TYPE_F32_ARRAY:
-    case VLQT_VALUE_TYPE_PATH:
-        return -1;
-    default: return valueSize(vt);
-    }
-}
-
-/* Points a path verb takes, -1 = unknown verb (protocol.h "Values"). */
-int verbPoints(unsigned char verb)
-{
-    switch (verb) {
-    case VLQT_VERB_MOVE:
-    case VLQT_VERB_LINE: return 1;
-    case VLQT_VERB_QUAD: return 2;
-    case VLQT_VERB_CUBIC: return 3;
-    case VLQT_VERB_CLOSE: return 0;
-    default: return -1;
     }
 }
 
@@ -124,34 +61,28 @@ quint16 effectValueType(quint16 prop)
     }
 }
 
-/* SAMPLER value (protocol.h "Sampler"): bytes filter, mip filter, address U, address V, 0, 0, 0, 0. */
-bool samplerValueOk(const unsigned char* v)
-{
-    return v[0] <= 1 && v[1] <= 2 && v[2] <= 2 && v[3] <= 2 && v[4] == 0 && v[5] == 0 && v[6] == 0 && v[7] == 0;
-}
-
-/* Copies a value (type already checked, size = fixedValueSize >= 0) from the wire; refs stay ids. */
+/* Copies a value (type already checked, size = fixedValueSize >= 0, vp holds it padded) from the wire; refs stay ids. */
 EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
 {
     EffectValue v;
     v.type = vt;
+    const int size = fixedValueSize(vt);
+    WireReader r(vp, size);
     switch (vt) {
-    case VLQT_VALUE_TYPE_I32: v.i = rd<qint32>(vp); break;
+    case VLQT_VALUE_TYPE_I32: v.i = r.i32(); break;
     case VLQT_VALUE_TYPE_IVEC2:
-        v.i = rd<qint32>(vp);
-        v.i2 = rd<qint32>(vp + 4);
+        v.i = r.i32();
+        v.i2 = r.i32();
         break;
-    case VLQT_VALUE_TYPE_BOOL: v.b = vp[0] != 0; break;
-    case VLQT_VALUE_TYPE_U64: v.u = rd<quint64>(vp); break;
-    case VLQT_VALUE_TYPE_SAMPLER: v.u = rd<quint64>(vp); break;
-    case VLQT_VALUE_TYPE_REF: v.ref = rd<quint32>(vp); break;
-    default: {
+    case VLQT_VALUE_TYPE_BOOL: v.b = r.u8() != 0; break;
+    case VLQT_VALUE_TYPE_U64:
+    case VLQT_VALUE_TYPE_SAMPLER: v.u = r.u64(); break;
+    case VLQT_VALUE_TYPE_REF: v.ref = r.u32(); break;
+    default:
         // f32, color, rectf, mat4, vec2/3/4; variable-length types never get here (fixedValueSize < 0 is rejected)
-        const int size = fixedValueSize(vt);
         if (size > 0)
-            std::memcpy(v.f, vp, size_t(size));
+            r.copy(v.f, size);
         break;
-    }
     }
     return v;
 }
@@ -159,6 +90,21 @@ EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
 } // namespace
 
 // ---------------------------------------------------------------------------------------------
+
+ElementEntry* Scene::findElement(quint32 id, const char* what, int& rc, std::string& err)
+{
+    auto it = nodes.find(id);
+    if (it != nodes.end())
+        return &it->second;
+    if (id == VLQT_ROOT_ID || handlerNodes.count(id)) {
+        err = (id == VLQT_ROOT_ID ? std::string("the window root") : "input handler " + std::to_string(id)) + " has no " + what;
+        rc = ApplyUnknownProperty;
+    } else {
+        err = "unknown id " + std::to_string(id);
+        rc = ApplyUnknownId;
+    }
+    return nullptr;
+}
 
 int Scene::apply(const unsigned char* buf, int len, std::string& err)
 {
@@ -177,24 +123,26 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
         lastApplyError = ApplyError{ApplyBadLength, 0, 0, 0, 0, "invalid buffer (null or negative length)"};
         return ApplyBadLength;
     }
-    int off = 0, index = 0;
-    while (off < len) {
+    WireReader stream(buf, len);
+    int index = 0;
+    while (stream.remaining() > 0) {
+        const int off = stream.offset();
         quint16 op = 0;
         quint32 cmdId = 0;
         quint16 cmdProp = 0;
         int rc = ApplyOk;
         std::string reason;
-        if (len - off < VLQT_HEADER_SIZE) {
+        if (stream.remaining() < VLQT_HEADER_SIZE) {
             rc = ApplyBadLength;
-            reason = "truncated header (" + std::to_string(len - off) + " bytes left)";
+            reason = "truncated header (" + std::to_string(stream.remaining()) + " bytes left)";
         } else {
-            op = rd<quint16>(buf + off);
-            const quint16 flags = rd<quint16>(buf + off + 2);
-            const quint32 plen32 = rd<quint32>(buf + off + 4);
+            WireReader header = stream;
+            op = header.u16();
+            const quint16 flags = header.u16();
+            const quint32 plen32 = header.u32();
             // Within the cap, so plen and size fit an int (len is an int).
             const bool overCap = plen32 > quint32(VLQT_MAX_COMMAND_PAYLOAD);
             const int plen = overCap ? 0 : int(plen32);
-            const unsigned char* p = buf + off + VLQT_HEADER_SIZE;
             const int size = align4(VLQT_HEADER_SIZE + plen);
             auto expect = [&](int n) {
                 if (plen == n)
@@ -207,37 +155,48 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                 rc = ApplyBadLength;
                 reason = "payloadLen " + std::to_string(plen32) + " above VLQT_MAX_COMMAND_PAYLOAD ("
                     + std::to_string(VLQT_MAX_COMMAND_PAYLOAD) + ")";
-            } else if (size > len - off) {
+            } else if (size > stream.remaining()) {
                 rc = ApplyBadLength;
                 reason = "command (" + std::to_string(size) + " bytes incl. padding) exceeds buffer ("
-                    + std::to_string(len - off) + " bytes left)";
+                    + std::to_string(stream.remaining()) + " bytes left)";
             } else if (flags != 0) {
                 rc = ApplyBadValue;
                 reason = "header flags " + std::to_string(flags) + ", expected 0 (reserved)";
             } else {
+                const unsigned char* p = header.cursor();
+                WireReader payload(p, plen);
                 // Object addressed by the command, for the structured error: first u32 of every op with an id.
                 const bool hasId = op == VLQT_OP_CREATE || op == VLQT_OP_DESTROY || op == VLQT_OP_REPARENT
                     || op == VLQT_OP_SET || op == VLQT_OP_BIND || op == VLQT_OP_SET_STYLE || op == VLQT_OP_SET_UNIFORMS
                     || op == VLQT_OP_SET_EFFECT_CHAIN || op == VLQT_OP_SET_QML_PROPERTIES;
-                if (hasId && plen >= 4)
-                    cmdId = rd<quint32>(p);
-                if (op == VLQT_OP_SET && plen >= 6)
-                    cmdProp = rd<quint16>(p + 4);
+                if (hasId) {
+                    WireReader probe = payload; // a payload too short for them leaves the id and the property 0
+                    cmdId = probe.u32();
+                    if (op == VLQT_OP_SET)
+                        cmdProp = probe.u16();
+                }
                 switch (op) {
                 case VLQT_OP_CREATE:
-                    if (expect(VLQT_CREATE_PAYLOAD))
-                        rc = create(rd<quint32>(p), rd<quint16>(p + 4), reason);
+                    if (expect(VLQT_CREATE_PAYLOAD)) {
+                        const quint32 id = payload.u32();
+                        const quint16 type = payload.u16();
+                        rc = create(id, type, reason);
+                    }
                     break;
                 case VLQT_OP_DESTROY:
                     if (expect(4))
-                        rc = destroy(rd<quint32>(p), reason);
+                        rc = destroy(payload.u32(), reason);
                     break;
                 case VLQT_OP_REPARENT:
-                    if (expect(VLQT_REPARENT_PAYLOAD))
-                        rc = reparent(rd<quint32>(p), rd<quint32>(p + 4), rd<quint32>(p + 8), reason);
+                    if (expect(VLQT_REPARENT_PAYLOAD)) {
+                        const quint32 id = payload.u32();
+                        const quint32 parent = payload.u32();
+                        const quint32 at = payload.u32();
+                        rc = reparent(id, parent, at, reason);
+                    }
                     break;
                 case VLQT_OP_SET:
-                    rc = set(p, plen, reason);
+                    rc = setProperty(p, plen, reason);
                     break;
                 case VLQT_OP_SET_STYLE:
                     rc = setStyle(p, plen, reason);
@@ -253,13 +212,14 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                     break;
                 case VLQT_OP_BIND:
                     if (expect(VLQT_BIND_PAYLOAD)) {
-                        const quint32 id = rd<quint32>(p);
+                        const quint32 id = payload.u32();
+                        const quint32 feedbackId = payload.u32();
                         auto it = nodes.find(id);
                         auto hit = it == nodes.end() ? handlerNodes.find(id) : handlerNodes.end();
                         if (it != nodes.end()) {
-                            bindNode(*this, it->second, rd<quint32>(p + 4));
+                            bindNode(*this, it->second, feedbackId);
                         } else if (hit != handlerNodes.end()) {
-                            bindHandler(*this, hit->second, rd<quint32>(p + 4));
+                            bindHandler(*this, hit->second, feedbackId);
                         } else {
                             rc = ApplyUnknownId;
                             reason = "unknown id " + std::to_string(id);
@@ -269,17 +229,17 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                 case VLQT_OP_SET_CLEAR_COLOR:
                     if (expect(16)) {
                         float f[4];
-                        std::memcpy(f, p, sizeof f);
+                        payload.copy(f, sizeof f);
                         clearState.setColor(toColor(f), window);
                     }
                     break;
                 case VLQT_OP_SET_CLEAR:
                     if (expect(4))
-                        clearState.setClear(rd<quint32>(p) != 0, window, root);
+                        clearState.setClear(payload.u32() != 0, window, root);
                     break;
                 case VLQT_OP_SET_SPACE:
                     if (expect(4))
-                        rc = setSpace(rd<quint32>(p), reason);
+                        rc = setSpace(payload.u32(), reason);
                     break;
                 case VLQT_OP_RESET:
                     if (expect(0))
@@ -292,7 +252,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                 }
             }
             if (rc == ApplyOk)
-                off += size;
+                stream.bytes(size); // fits: checked against remaining() above
         }
         if (rc != ApplyOk) {
             err = "apply: command #" + std::to_string(index) + " (op " + std::to_string(op) + " " + opName(op)
@@ -306,32 +266,36 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
     return ApplyOk;
 }
 
-int Scene::set(const unsigned char* p, int plen, std::string& err)
+int Scene::setProperty(const unsigned char* p, int plen, std::string& err)
 {
     if (plen < VLQT_SET_FIELDS_SIZE) {
         err = "payloadLen " + std::to_string(plen) + " too short for SET (>= " + std::to_string(VLQT_SET_FIELDS_SIZE) + ")";
         return ApplyBadLength;
     }
-    const quint32 id = rd<quint32>(p);
-    const quint16 prop = rd<quint16>(p + 4);
+    WireReader r(p, plen);
+    const quint32 id = r.u32();
+    const quint16 prop = r.u16();
     Value v;
-    v.type = rd<quint16>(p + 6);
-    const unsigned char* vp = p + VLQT_SET_FIELDS_SIZE;
-    const int vlen = plen - VLQT_SET_FIELDS_SIZE;
+    v.type = r.u16();
+    const int vlen = r.remaining();
     const int fixed = valueSize(v.type);
     if (fixed < 0) {
         err = "unknown value type " + std::to_string(v.type);
         return ApplyBadValue;
     }
-    // Variable length: the fixed part holds the counts (64 bit, a u32 count must not overflow the comparison).
+    // Variable length: the fixed part holds the counts (64 bit, a u32 count must not overflow the comparison). A value
+    // shorter than its fixed part reads the counts as 0 and fails the comparison below.
+    WireReader counts = r;
     qint64 expected = fixed;
-    if (v.type == VLQT_VALUE_TYPE_STRING && vlen >= 4)
-        expected = 4 + qint64(rd<quint32>(vp));
-    else if (v.type == VLQT_VALUE_TYPE_F32_ARRAY && vlen >= 4)
-        expected = 4 + 4 * qint64(rd<quint32>(vp));
-    else if (v.type == VLQT_VALUE_TYPE_PATH && vlen >= 8)
-        expected = 8 + ((qint64(rd<quint32>(vp)) + (VLQT_COMMAND_ALIGN - 1)) & ~qint64(VLQT_COMMAND_ALIGN - 1))
-            + 8 * qint64(rd<quint32>(vp + 4));
+    if (v.type == VLQT_VALUE_TYPE_STRING) {
+        expected = 4 + qint64(counts.peek<quint32>());
+    } else if (v.type == VLQT_VALUE_TYPE_F32_ARRAY) {
+        expected = 4 + 4 * qint64(counts.peek<quint32>());
+    } else if (v.type == VLQT_VALUE_TYPE_PATH) {
+        const qint64 verbs = counts.u32();
+        const qint64 points = counts.u32();
+        expected = 8 + align4(verbs) + 8 * points;
+    }
     if (vlen != expected) {
         err = "value length " + std::to_string(vlen) + ", expected " + std::to_string(expected)
             + " for value type " + std::to_string(v.type);
@@ -345,6 +309,7 @@ int Scene::set(const unsigned char* p, int plen, std::string& err)
         return id == VLQT_ROOT_ID ? ApplyInvalid : ApplyUnknownId;
     }
 
+    // The length is exact now, so the reads below stay inside the value.
     switch (v.type) {
     case VLQT_VALUE_TYPE_F32:
     case VLQT_VALUE_TYPE_COLOR:
@@ -353,27 +318,29 @@ int Scene::set(const unsigned char* p, int plen, std::string& err)
     case VLQT_VALUE_TYPE_VEC2:
     case VLQT_VALUE_TYPE_VEC3:
     case VLQT_VALUE_TYPE_VEC4:
-        std::memcpy(v.f, vp, size_t(fixed));
+        r.copy(v.f, fixed);
         break;
-    case VLQT_VALUE_TYPE_I32: v.i = rd<qint32>(vp); break;
+    case VLQT_VALUE_TYPE_I32: v.i = r.i32(); break;
     case VLQT_VALUE_TYPE_IVEC2:
-        v.i = rd<qint32>(vp);
-        v.i2 = rd<qint32>(vp + 4);
+        v.i = r.i32();
+        v.i2 = r.i32();
         break;
-    case VLQT_VALUE_TYPE_BOOL: v.b = vp[0] != 0; break;
-    case VLQT_VALUE_TYPE_U64: v.u = rd<quint64>(vp); break;
-    case VLQT_VALUE_TYPE_STRING:
-        v.utf8 = QByteArray::fromRawData(reinterpret_cast<const char*>(vp + 4), vlen - 4);
+    case VLQT_VALUE_TYPE_BOOL: v.b = r.u8() != 0; break;
+    case VLQT_VALUE_TYPE_U64: v.u = r.u64(); break;
+    case VLQT_VALUE_TYPE_STRING: {
+        const quint32 n = r.u32();
+        v.utf8 = QByteArray::fromRawData(reinterpret_cast<const char*>(r.bytes(n)), qsizetype(n));
         break;
+    }
     case VLQT_VALUE_TYPE_F32_ARRAY:
-        v.floatCount = rd<quint32>(vp);
-        v.floats = vp + 4;
+        v.floatCount = r.u32();
+        v.floats = r.cursor();
         break;
     case VLQT_VALUE_TYPE_PATH: {
-        v.verbCount = rd<quint32>(vp);
-        v.pointCount = rd<quint32>(vp + 4);
-        v.verbs = vp + 8;
-        v.points = vp + 8 + align4(int(v.verbCount));
+        v.verbCount = r.u32();
+        v.pointCount = r.u32();
+        v.verbs = r.bytes(v.verbCount, true);
+        v.points = r.cursor();
         quint32 points = 0;
         for (quint32 i = 0; i < v.verbCount; ++i) {
             const int n = verbPoints(v.verbs[i]);
@@ -390,7 +357,7 @@ int Scene::set(const unsigned char* p, int plen, std::string& err)
         break;
     }
     case VLQT_VALUE_TYPE_REF: {
-        const quint32 ref = rd<quint32>(vp);
+        const quint32 ref = r.u32();
         if (ref != VLQT_ROOT_ID) {
             auto rit = nodes.find(ref);
             if (rit == nodes.end()) {
@@ -414,23 +381,16 @@ int Scene::setStyle(const unsigned char* p, int plen, std::string& err)
         err = "payloadLen " + std::to_string(plen) + " too short for SET_STYLE (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
     }
-    const quint32 id = rd<quint32>(p);
-    auto it = nodes.find(id);
-    if (it == nodes.end()) {
-        if (id == VLQT_ROOT_ID || handlerNodes.count(id)) {
-            err = (id == VLQT_ROOT_ID ? std::string("the window root") : "input handler " + std::to_string(id))
-                + " has no style (Controls elements only)";
-            return ApplyUnknownProperty;
-        }
-        err = "unknown id " + std::to_string(id);
-        return ApplyUnknownId;
-    }
-    const quint16 type = it->second.type;
+    int rc = ApplyOk;
+    ElementEntry* entry = findElement(WireReader(p, plen).u32(), "style (Controls elements only)", rc, err);
+    if (!entry)
+        return rc;
+    const quint16 type = entry->type;
     if (type < VLQT_ELEMENT_TYPE_BUTTON || type > VLQT_ELEMENT_TYPE_TEXT_FIELD) {
         err = "type " + std::to_string(type) + " has no style (Controls elements only)";
         return ApplyUnknownProperty;
     }
-    return applySetStyle(it->second.item, p, plen, err);
+    return applySetStyle(entry->item, p, plen, err);
 }
 
 int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
@@ -441,81 +401,53 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
         err = "payloadLen " + std::to_string(plen) + " too short for SET_UNIFORMS (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
     }
-    const quint32 id = rd<quint32>(p);
-    auto it = nodes.find(id);
-    if (it == nodes.end()) {
-        if (id == VLQT_ROOT_ID || handlerNodes.count(id)) {
-            err = (id == VLQT_ROOT_ID ? std::string("the window root") : "input handler " + std::to_string(id))
-                + " has no uniforms (ShaderEffect only)";
-            return ApplyUnknownProperty;
-        }
-        err = "unknown id " + std::to_string(id);
-        return ApplyUnknownId;
-    }
-    if (it->second.type != VLQT_ELEMENT_TYPE_SHADER) {
-        err = "type " + std::to_string(it->second.type) + " has no uniforms (ShaderEffect only)";
+    WireReader r(p, plen);
+    const quint32 id = r.u32();
+    const int count = r.u16();
+    const quint16 flags = r.u16();
+    int rc = ApplyOk;
+    ElementEntry* entry = findElement(id, "uniforms (ShaderEffect only)", rc, err);
+    if (!entry)
+        return rc;
+    if (entry->type != VLQT_ELEMENT_TYPE_SHADER) {
+        err = "type " + std::to_string(entry->type) + " has no uniforms (ShaderEffect only)";
         return ApplyUnknownProperty;
     }
-    const int count = rd<quint16>(p + 4);
-    int off = VLQT_LIST_FIELDS_SIZE;
+    NamedEntryRules rules;
+    rules.noun = "uniform";
+    rules.sampler = true;
+    entryScratch.clear();
     for (int i = 0; i < count; ++i) {
-        if (plen - off < VLQT_ENTRY_HEADER_SIZE) {
-            err = "uniform #" + std::to_string(i) + ": truncated entry";
-            return ApplyBadLength;
-        }
-        const quint16 vt = rd<quint16>(p + off);
-        const int nameLen = rd<quint16>(p + off + 2);
-        const int size = fixedValueSize(vt);
-        if (size < 0) {
-            err = "uniform #" + std::to_string(i) + ": value type " + std::to_string(vt) + " not allowed";
-            return ApplyBadValue;
-        }
-        if (nameLen < 1 || nameLen > VLQT_UNIFORM_NAME_MAX) {
-            err = "uniform #" + std::to_string(i) + ": name length " + std::to_string(nameLen) + " not in 1.."
-                + std::to_string(VLQT_UNIFORM_NAME_MAX);
-            return ApplyBadValue;
-        }
-        const int valueOff = off + align4(VLQT_ENTRY_HEADER_SIZE + nameLen);
-        const int next = valueOff + align4(size);
-        if (next > plen) {
-            err = "uniform #" + std::to_string(i) + ": entry exceeds the payload";
-            return ApplyBadLength;
-        }
-        if (vt == VLQT_VALUE_TYPE_REF) {
-            const quint32 ref = rd<quint32>(p + valueOff);
+        NamedEntry e;
+        rc = readNamedEntry(r, rules, i, e, err);
+        if (rc != ApplyOk)
+            return rc;
+        if (e.type == VLQT_VALUE_TYPE_REF) {
+            const quint32 ref = readLE<quint32>(e.value);
             if (ref != VLQT_ROOT_ID && !nodes.count(ref)) {
                 err = "uniform #" + std::to_string(i) + ": unknown ref id " + std::to_string(ref);
                 return ApplyUnknownId;
             }
         }
-        if (vt == VLQT_VALUE_TYPE_SAMPLER && !samplerValueOk(p + valueOff)) {
-            err = "uniform #" + std::to_string(i) + ": sampler state out of range";
-            return ApplyBadValue;
-        }
-        off = next;
+        entryScratch.push_back(e);
     }
-    if (off != plen) {
-        err = "SET_UNIFORMS: " + std::to_string(plen - off) + " bytes after the last entry";
+    if (r.remaining() != 0) {
+        err = "SET_UNIFORMS: " + std::to_string(r.remaining()) + " bytes after the last entry";
         return ApplyBadLength;
     }
     // Valid as a whole: apply (content problems become the element's error text, ShaderItem::rebuild).
-    auto* item = static_cast<ShaderItem*>(it->second.item);
-    item->beginUniforms((rd<quint16>(p + 6) & VLQT_UNIFORM_SET_CLEAR) != 0);
-    off = VLQT_LIST_FIELDS_SIZE;
-    for (int i = 0; i < count; ++i) {
-        const quint16 vt = rd<quint16>(p + off);
-        const int nameLen = rd<quint16>(p + off + 2);
-        const int valueOff = off + align4(VLQT_ENTRY_HEADER_SIZE + nameLen);
+    auto* item = static_cast<ShaderItem*>(entry->item);
+    item->beginUniforms((flags & VLQT_UNIFORM_SET_CLEAR) != 0);
+    for (const NamedEntry& e : entryScratch) {
         QQuickItem* ref = nullptr;
-        if (vt == VLQT_VALUE_TYPE_REF) {
-            const auto r = nodes.find(rd<quint32>(p + valueOff));
-            ref = r != nodes.end() ? r->second.item : nullptr; // 0 (root) = no texture
+        if (e.type == VLQT_VALUE_TYPE_REF) {
+            const auto it = nodes.find(readLE<quint32>(e.value));
+            ref = it != nodes.end() ? it->second.item : nullptr; // 0 (root) = no texture
         }
-        item->setUniform(reinterpret_cast<const char*>(p + off + VLQT_ENTRY_HEADER_SIZE), nameLen, vt, p + valueOff, ref);
-        off = valueOff + align4(fixedValueSize(vt));
+        item->setUniform(reinterpret_cast<const char*>(e.name), e.nameLen, e.type, e.value, ref);
     }
     item->endUniforms();
-    elements.syncTextureGroups(it->second); // Groups as textures go through their frame proxy
+    elements.syncTextureGroups(*entry); // Groups as textures go through their frame proxy
     item->refreshLayerRequests(true); // their proxies carry the layer mipmaps / format of the samplers
     return ApplyOk;
 }
@@ -529,105 +461,69 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
         err = "payloadLen " + std::to_string(plen) + " too short for SET_QML_PROPERTIES (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
     }
-    const quint32 id = rd<quint32>(p);
-    auto it = nodes.find(id);
-    if (it == nodes.end()) {
-        if (id == VLQT_ROOT_ID || handlerNodes.count(id)) {
-            err = (id == VLQT_ROOT_ID ? std::string("the window root") : "input handler " + std::to_string(id))
-                + " has no QML properties (QmlElement only)";
-            return ApplyUnknownProperty;
-        }
-        err = "unknown id " + std::to_string(id);
-        return ApplyUnknownId;
-    }
-    if (it->second.type != VLQT_ELEMENT_TYPE_QML) {
-        err = "type " + std::to_string(it->second.type) + " has no QML properties (QmlElement only)";
+    WireReader r(p, plen);
+    const quint32 id = r.u32();
+    const int count = r.u16();
+    r.u16(); // flags, reserved
+    int rc = ApplyOk;
+    ElementEntry* entry = findElement(id, "QML properties (QmlElement only)", rc, err);
+    if (!entry)
+        return rc;
+    if (entry->type != VLQT_ELEMENT_TYPE_QML) {
+        err = "type " + std::to_string(entry->type) + " has no QML properties (QmlElement only)";
         return ApplyUnknownProperty;
     }
-    const int count = rd<quint16>(p + 4);
-    int off = VLQT_LIST_FIELDS_SIZE;
+    NamedEntryRules rules;
+    rules.noun = "QML property";
+    rules.string = true;
+    entryScratch.clear();
     for (int i = 0; i < count; ++i) {
-        if (plen - off < VLQT_ENTRY_HEADER_SIZE) {
-            err = "QML property #" + std::to_string(i) + ": truncated entry";
-            return ApplyBadLength;
-        }
-        const quint16 vt = rd<quint16>(p + off);
-        const int nameLen = rd<quint16>(p + off + 2);
-        const int size = valueSize(vt);
-        if (size < 0) {
-            err = "QML property #" + std::to_string(i) + ": unknown value type " + std::to_string(vt);
-            return ApplyBadValue;
-        }
-        if (vt == VLQT_VALUE_TYPE_F32_ARRAY || vt == VLQT_VALUE_TYPE_PATH) {
-            err = "QML property #" + std::to_string(i) + ": value type " + std::to_string(vt) + " not allowed";
-            return ApplyBadValue;
-        }
-        if (nameLen < 1 || nameLen > VLQT_UNIFORM_NAME_MAX) {
-            err = "QML property #" + std::to_string(i) + ": name length " + std::to_string(nameLen) + " not in 1.."
-                + std::to_string(VLQT_UNIFORM_NAME_MAX);
-            return ApplyBadValue;
-        }
-        const int valueOff = off + align4(VLQT_ENTRY_HEADER_SIZE + nameLen);
-        qint64 vlen = size;
-        if (vt == VLQT_VALUE_TYPE_STRING) {
-            if (valueOff + 4 > plen) {
-                err = "QML property #" + std::to_string(i) + ": entry exceeds the payload";
-                return ApplyBadLength;
-            }
-            vlen += rd<quint32>(p + valueOff);
-        }
-        const qint64 next = valueOff + ((vlen + (VLQT_COMMAND_ALIGN - 1)) & ~qint64(VLQT_COMMAND_ALIGN - 1));
-        if (next > plen) {
-            err = "QML property #" + std::to_string(i) + ": entry exceeds the payload";
-            return ApplyBadLength;
-        }
-        off = int(next);
+        NamedEntry e;
+        rc = readNamedEntry(r, rules, i, e, err);
+        if (rc != ApplyOk)
+            return rc;
+        entryScratch.push_back(e);
     }
-    if (off != plen) {
-        err = "SET_QML_PROPERTIES: " + std::to_string(plen - off) + " bytes after the last entry";
+    if (r.remaining() != 0) {
+        err = "SET_QML_PROPERTIES: " + std::to_string(r.remaining()) + " bytes after the last entry";
         return ApplyBadLength;
     }
-    auto* item = static_cast<QmlItem*>(it->second.item);
-    off = VLQT_LIST_FIELDS_SIZE;
-    for (int i = 0; i < count; ++i) {
-        const quint16 vt = rd<quint16>(p + off);
-        const int nameLen = rd<quint16>(p + off + 2);
-        const QString name = QString::fromUtf8(reinterpret_cast<const char*>(p + off + VLQT_ENTRY_HEADER_SIZE), nameLen);
-        const unsigned char* vp = p + off + align4(VLQT_ENTRY_HEADER_SIZE + nameLen);
-        int vlen = valueSize(vt);
-        if (vt == VLQT_VALUE_TYPE_STRING)
-            vlen += int(rd<quint32>(vp));
-        off = int(vp - p) + align4(vlen);
+    auto* item = static_cast<QmlItem*>(entry->item);
+    for (const NamedEntry& e : entryScratch) {
+        const QString name = QString::fromUtf8(reinterpret_cast<const char*>(e.name), e.nameLen);
+        WireReader v(e.value, e.valueLen);
         float f[4] = {};
-        switch (vt) {
-        case VLQT_VALUE_TYPE_F32: item->setRootProperty(name, double(rd<float>(vp))); break;
-        case VLQT_VALUE_TYPE_I32: item->setRootProperty(name, int(rd<qint32>(vp))); break;
-        case VLQT_VALUE_TYPE_BOOL: item->setRootProperty(name, vp[0] != 0); break;
-        case VLQT_VALUE_TYPE_STRING:
-            item->setRootProperty(name, QString::fromUtf8(reinterpret_cast<const char*>(vp + 4), qsizetype(rd<quint32>(vp))));
+        switch (e.type) {
+        case VLQT_VALUE_TYPE_F32: item->setRootProperty(name, double(v.f32())); break;
+        case VLQT_VALUE_TYPE_I32: item->setRootProperty(name, int(v.i32())); break;
+        case VLQT_VALUE_TYPE_BOOL: item->setRootProperty(name, v.u8() != 0); break;
+        case VLQT_VALUE_TYPE_STRING: {
+            const quint32 n = v.u32();
+            item->setRootProperty(name, QString::fromUtf8(reinterpret_cast<const char*>(v.bytes(n)), qsizetype(n)));
             break;
+        }
         case VLQT_VALUE_TYPE_COLOR:
-            std::memcpy(f, vp, 16);
+            v.copy(f, 16);
             item->setRootProperty(name, QColor::fromRgbF(f[0], f[1], f[2], f[3]));
             break;
         case VLQT_VALUE_TYPE_RECTF:
-            std::memcpy(f, vp, 16);
+            v.copy(f, 16);
             item->setRootProperty(name, QRectF(f[0], f[1], f[2], f[3]));
             break;
         case VLQT_VALUE_TYPE_VEC2:
-            std::memcpy(f, vp, 8);
+            v.copy(f, 8);
             item->setRootProperty(name, QVector2D(f[0], f[1]));
             break;
         case VLQT_VALUE_TYPE_VEC3:
-            std::memcpy(f, vp, 12);
+            v.copy(f, 12);
             item->setRootProperty(name, QVector3D(f[0], f[1], f[2]));
             break;
         case VLQT_VALUE_TYPE_VEC4:
-            std::memcpy(f, vp, 16);
+            v.copy(f, 16);
             item->setRootProperty(name, QVector4D(f[0], f[1], f[2], f[3]));
             break;
         default:
-            item->rejectRootProperty(name, QStringLiteral("value type %1 is not supported for QML properties").arg(vt));
+            item->rejectRootProperty(name, QStringLiteral("value type %1 is not supported for QML properties").arg(e.type));
             break;
         }
     }
@@ -644,78 +540,70 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
         err = "payloadLen " + std::to_string(plen) + " too short for SET_EFFECT_CHAIN (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
     }
-    const quint32 id = rd<quint32>(p);
-    auto it = nodes.find(id);
-    if (it == nodes.end()) {
-        if (id == VLQT_ROOT_ID || handlerNodes.count(id)) {
-            err = (id == VLQT_ROOT_ID ? std::string("the window root") : "input handler " + std::to_string(id))
-                + " has no effect chain (elements only)";
-            return ApplyUnknownProperty;
-        }
-        err = "unknown id " + std::to_string(id);
-        return ApplyUnknownId;
-    }
+    WireReader r(p, plen);
+    const quint32 id = r.u32();
+    const int linkCount = r.u16();
+    r.u16(); // flags, reserved
+    int rc = ApplyOk;
+    ElementEntry* entry = findElement(id, "effect chain (elements only)", rc, err);
+    if (!entry)
+        return rc;
     auto knownRef = [&](quint32 ref) { return ref == VLQT_ROOT_ID || nodes.count(ref) != 0; };
-    const int linkCount = rd<quint16>(p + 4);
     EffectChainDesc chain;
     chain.links.reserve(size_t(linkCount));
-    int off = VLQT_LIST_FIELDS_SIZE;
     for (int l = 0; l < linkCount; ++l) {
         const std::string at = "link #" + std::to_string(l);
-        if (plen - off < VLQT_EFFECT_CHAIN_LINK_HEADER_SIZE) {
+        if (r.remaining() < VLQT_EFFECT_CHAIN_LINK_HEADER_SIZE) {
             err = at + ": truncated link header";
             return ApplyBadLength;
         }
         EffectLinkDesc link;
-        link.kind = rd<quint16>(p + off);
-        const int count = rd<quint16>(p + off + 2);
-        const quint32 bodyLen = rd<quint32>(p + off + 4);
-        const int body = off + VLQT_EFFECT_CHAIN_LINK_HEADER_SIZE;
-        if ((bodyLen & (VLQT_COMMAND_ALIGN - 1)) != 0 || bodyLen > quint32(plen - body)) {
+        link.kind = r.u16();
+        const int count = r.u16();
+        const quint32 bodyLen = r.u32();
+        if ((bodyLen & (VLQT_COMMAND_ALIGN - 1)) != 0 || bodyLen > quint32(r.remaining())) {
             err = at + ": bodyLen " + std::to_string(bodyLen) + " not aligned or exceeds the payload";
             return ApplyBadLength;
         }
-        const int end = body + int(bodyLen);
-        int e = body;
+        WireReader body = r.sub(bodyLen);
         if (link.kind == VLQT_EFFECT_CHAIN_LINK_MULTI) {
             for (int i = 0; i < count; ++i) {
-                if (end - e < 4) {
-                    err = at + " entry #" + std::to_string(i) + ": truncated entry";
+                const std::string ie = at + " entry #" + std::to_string(i);
+                if (body.remaining() < 4) {
+                    err = ie + ": truncated entry";
                     return ApplyBadLength;
                 }
-                const quint16 prop = rd<quint16>(p + e);
-                const quint16 vt = rd<quint16>(p + e + 2);
+                const quint16 prop = body.u16();
+                const quint16 vt = body.u16();
                 const quint16 expected = effectValueType(prop);
                 if (!expected) {
-                    err = at + " entry #" + std::to_string(i) + ": property " + std::to_string(prop)
-                        + " is no MULTI key (EFFECT_* 833..855)";
+                    err = ie + ": property " + std::to_string(prop) + " is no MULTI key (EFFECT_* 833..855)";
                     return ApplyUnknownProperty;
                 }
                 if (vt != expected) {
-                    err = at + " entry #" + std::to_string(i) + ": value type " + std::to_string(vt)
-                        + ", property " + std::to_string(prop) + " takes " + std::to_string(expected);
+                    err = ie + ": value type " + std::to_string(vt) + ", property " + std::to_string(prop) + " takes "
+                        + std::to_string(expected);
                     return ApplyBadValue;
                 }
-                const int next = e + 4 + align4(fixedValueSize(vt));
-                if (next > end) {
-                    err = at + " entry #" + std::to_string(i) + ": entry exceeds the body";
+                const unsigned char* vp = body.bytes(fixedValueSize(vt), true);
+                if (!vp) {
+                    err = ie + ": entry exceeds the body";
                     return ApplyBadLength;
                 }
-                EffectMultiEntry entry{prop, readEffectValue(vt, p + e + 4)};
-                if (vt == VLQT_VALUE_TYPE_REF && !knownRef(entry.value.ref)) {
-                    err = at + " entry #" + std::to_string(i) + ": unknown ref id " + std::to_string(entry.value.ref);
+                EffectMultiEntry multi{prop, readEffectValue(vt, vp)};
+                if (vt == VLQT_VALUE_TYPE_REF && !knownRef(multi.value.ref)) {
+                    err = ie + ": unknown ref id " + std::to_string(multi.value.ref);
                     return ApplyUnknownId;
                 }
-                link.multi.push_back(entry);
-                e = next;
+                link.multi.push_back(multi);
             }
         } else if (link.kind == VLQT_EFFECT_CHAIN_LINK_SHADER) {
-            if (end - e < 4) {
+            if (body.remaining() < 4) {
                 err = at + ": truncated SHADER head";
                 return ApplyBadLength;
             }
-            link.templ = rd<quint16>(p + e);
-            const int shaderCount = rd<quint16>(p + e + 2);
+            link.templ = body.u16();
+            const int shaderCount = body.u16();
             int roles = 0;
             switch (link.templ) {
             case VLQT_EFFECT_TEMPLATE_SINGLE:
@@ -730,69 +618,48 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
                     + " shader id(s), got " + std::to_string(shaderCount);
                 return ApplyBadValue;
             }
-            e += 4;
-            if (end - e < shaderCount * 8 + VLQT_EFFECT_CHAIN_LINK_SHADER_FIXED_SIZE) {
+            static_assert(VLQT_EFFECT_CHAIN_LINK_SHADER_FIXED_SIZE == sizeof(link.padding) + sizeof(float), "padding and strength");
+            if (body.remaining() < shaderCount * 8 + VLQT_EFFECT_CHAIN_LINK_SHADER_FIXED_SIZE) {
                 err = at + ": truncated SHADER head";
                 return ApplyBadLength;
             }
-            for (int s = 0; s < shaderCount; ++s, e += 8)
-                link.shaders.push_back(rd<quint64>(p + e));
-            std::memcpy(link.padding, p + e, sizeof link.padding);
-            link.strength = rd<float>(p + e + 16);
-            e += VLQT_EFFECT_CHAIN_LINK_SHADER_FIXED_SIZE;
+            for (int s = 0; s < shaderCount; ++s)
+                link.shaders.push_back(body.u64());
+            body.copy(link.padding, sizeof link.padding);
+            link.strength = body.f32();
+            NamedEntryRules rules;
+            rules.noun = "uniform";
+            rules.scope = &at;
+            rules.region = "body";
+            rules.sampler = true;
             for (int i = 0; i < count; ++i) {
-                const std::string ue = at + " uniform #" + std::to_string(i);
-                if (end - e < 4) {
-                    err = ue + ": truncated entry";
-                    return ApplyBadLength;
-                }
-                const quint16 vt = rd<quint16>(p + e);
-                const int uNameLen = rd<quint16>(p + e + 2);
-                const int size = fixedValueSize(vt);
-                if (size < 0) {
-                    err = ue + ": value type " + std::to_string(vt) + " not allowed";
-                    return ApplyBadValue;
-                }
-                if (uNameLen < 1 || uNameLen > VLQT_UNIFORM_NAME_MAX) {
-                    err = ue + ": name length " + std::to_string(uNameLen) + " not in 1.."
-                        + std::to_string(VLQT_UNIFORM_NAME_MAX);
-                    return ApplyBadValue;
-                }
-                const int valueOff = e + align4(4 + uNameLen);
-                const int next = valueOff + align4(size);
-                if (next > end) {
-                    err = ue + ": entry exceeds the body";
-                    return ApplyBadLength;
-                }
-                if (vt == VLQT_VALUE_TYPE_SAMPLER && !samplerValueOk(p + valueOff)) {
-                    err = ue + ": sampler state out of range";
-                    return ApplyBadValue;
-                }
-                EffectUniform u{QByteArray(reinterpret_cast<const char*>(p + e + 4), uNameLen), readEffectValue(vt, p + valueOff)};
-                if (vt == VLQT_VALUE_TYPE_REF && !knownRef(u.value.ref)) {
-                    err = ue + ": unknown ref id " + std::to_string(u.value.ref);
+                NamedEntry e;
+                rc = readNamedEntry(body, rules, i, e, err);
+                if (rc != ApplyOk)
+                    return rc;
+                EffectUniform u{QByteArray(reinterpret_cast<const char*>(e.name), e.nameLen), readEffectValue(e.type, e.value)};
+                if (e.type == VLQT_VALUE_TYPE_REF && !knownRef(u.value.ref)) {
+                    err = at + " uniform #" + std::to_string(i) + ": unknown ref id " + std::to_string(u.value.ref);
                     return ApplyUnknownId;
                 }
                 link.uniforms.push_back(std::move(u));
-                e = next;
             }
         } else {
             err = at + ": unknown kind " + std::to_string(link.kind);
             return ApplyBadValue;
         }
-        if (e != end) {
-            err = at + ": " + std::to_string(end - e) + " bytes after the last entry of the body";
+        if (body.remaining() != 0) {
+            err = at + ": " + std::to_string(body.remaining()) + " bytes after the last entry of the body";
             return ApplyBadLength;
         }
         chain.links.push_back(std::move(link));
-        off = end;
     }
-    if (off != plen) {
-        err = "SET_EFFECT_CHAIN: " + std::to_string(plen - off) + " bytes after the last link";
+    if (r.remaining() != 0) {
+        err = "SET_EFFECT_CHAIN: " + std::to_string(r.remaining()) + " bytes after the last link";
         return ApplyBadLength;
     }
     // Masks (protocol.h "Effect chain", one per MULTI run): all checked before anything changes.
-    ElementEntry& host = it->second;
+    ElementEntry& host = *entry;
     std::vector<QQuickItem*> masks(chain.links.size(), nullptr);
     for (size_t l = 0; l < chain.links.size(); ++l)
         for (const EffectMultiEntry& e : chain.links[l].multi) {
@@ -859,7 +726,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
             park(tex); // until the chain lets it go and a REPARENT or DESTROY comes (deleted one frame late, like a former source)
             u.refItem = tex.item;
         }
-    const int rc = elements.setEffectChain(host, chain, masks, err);
+    rc = elements.setEffectChain(host, chain, masks, err);
     if (rc != ApplyOk) {
         elements.releaseEffectLayer(host); // detaches the masks: parked next to their frames again
         for (const auto& [item, visible] : parked) {

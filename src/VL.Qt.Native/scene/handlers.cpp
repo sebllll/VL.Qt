@@ -271,31 +271,31 @@ QObject* Handlers::createHandler(quint16 type, QQuickItem* item)
     QObject* obj = nullptr;
     switch (type) {
     case VLQT_ELEMENT_TYPE_HOVER_HANDLER:
-        obj = create(comps[0], kHoverQml, "vlqt_hoverhandler.qml", item);
+        obj = create(component(HandlerComponent::Hover), kHoverQml, "vlqt_hoverhandler.qml", item);
         if (obj && !props.hovered.isValid())
             props.hovered = metaProperty(obj, "hovered");
         break;
     case VLQT_ELEMENT_TYPE_TAP_HANDLER:
-        obj = create(comps[1], kTapQml, "vlqt_taphandler.qml", item);
+        obj = create(component(HandlerComponent::Tap), kTapQml, "vlqt_taphandler.qml", item);
         if (obj && !props.pressed.isValid())
             props.pressed = metaProperty(obj, "pressed");
         break;
     case VLQT_ELEMENT_TYPE_POINT_HANDLER:
-        obj = create(comps[2], kPointQml, "vlqt_pointhandler.qml", item);
+        obj = create(component(HandlerComponent::Point), kPointQml, "vlqt_pointhandler.qml", item);
         break;
     case VLQT_ELEMENT_TYPE_WHEEL_HANDLER:
-        obj = create(comps[3], kWheelQml, "vlqt_wheelhandler.qml", item);
+        obj = create(component(HandlerComponent::Wheel), kWheelQml, "vlqt_wheelhandler.qml", item);
         if (obj && !props.wheelDelta.isValid())
             props.wheelDelta = metaProperty(obj, "vlqtDelta");
         break;
     case VLQT_ELEMENT_TYPE_DRAG_HANDLER:
-        obj = create(comps[4], kDragQml, "vlqt_draghandler.qml", item);
+        obj = create(component(HandlerComponent::Drag), kDragQml, "vlqt_draghandler.qml", item);
         break;
     case VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER:
         obj = new TouchPointsHandler(item); // no QML type: own C++ handler (scene/touch_handler.h)
         break;
     case VLQT_ELEMENT_TYPE_PINCH_HANDLER:
-        obj = create(comps[5], kPinchQml, "vlqt_pinchhandler.qml", item);
+        obj = create(component(HandlerComponent::Pinch), kPinchQml, "vlqt_pinchhandler.qml", item);
         break;
     default:
         return nullptr;
@@ -311,7 +311,7 @@ QObject* Handlers::createHandler(quint16 type, QQuickItem* item)
 
 QObject* Handlers::createHover(QQuickItem* item, qint32 devices)
 {
-    QObject* obj = create(comps[0], kHoverQml, "vlqt_hoverhandler.qml", item);
+    QObject* obj = create(component(HandlerComponent::Hover), kHoverQml, "vlqt_hoverhandler.qml", item);
     if (!obj)
         return nullptr;
     if (!props.hovered.isValid())
