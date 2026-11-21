@@ -6,8 +6,8 @@ namespace VL.Qt.Wire
     /// <summary>
     /// Iterates the poll buffer filled by vlqt_scene_poll (QtNative → C#). Record layout, little-endian,
     /// every record padded to <see cref="Protocol.CommandAlign"/> bytes like the commands:
-    /// <c>u16 event, u16 len, u32 feedbackId, u32 index, payload</c> with <c>len</c> = bytes after the 4-byte header
-    /// (feedbackId + index + payload, excluding padding). Payloads per event are defined in plan 06.
+    /// <c>u16 event, u16 flags (0), u32 len, u32 feedbackId, payload</c> with <c>len</c> = bytes after the 8-byte header
+    /// (feedbackId + payload, excluding padding). Payloads per event are defined in protocol.h.
     /// Allocation-free; a malformed record stops the iteration and sets <see cref="Error"/>.
     /// </summary>
     internal ref struct EventReader
@@ -21,7 +21,6 @@ namespace VL.Qt.Wire
             _offset = 0;
             Event = 0;
             FeedbackId = 0;
-            Index = 0;
             Payload = default;
             Error = null;
         }
@@ -29,17 +28,11 @@ namespace VL.Qt.Wire
         /// <summary>Event id of the current record (<see cref="Protocol.EventId"/>).</summary>
         public ushort Event { get; private set; }
 
-        /// <summary>Feedback id given in BIND.</summary>
+        /// <summary>Feedback id given in BIND; the record goes to the slot it is bound to.</summary>
         public uint FeedbackId { get; private set; }
-
-        /// <summary>Instance index within the feedback (e.g. spread slice).</summary>
-        public uint Index { get; private set; }
 
         /// <summary>Event-specific payload of the current record.</summary>
         public ReadOnlySpan<byte> Payload { get; private set; }
-
-        /// <summary>Byte offset of the current record in the buffer.</summary>
-        public int RecordOffset { get; private set; }
 
         /// <summary>Null, or the reason the iteration stopped early (truncated/malformed record).</summary>
         public string? Error { get; private set; }
@@ -55,19 +48,18 @@ namespace VL.Qt.Wire
                 return Fail("truncated event header");
 
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(rest);
-            int len = BinaryPrimitives.ReadUInt16LittleEndian(rest.Slice(2));
+            // Flags (rest.Slice(2)) are reserved and 0; QtNative never sends anything else.
+            uint len = BinaryPrimitives.ReadUInt32LittleEndian(rest.Slice(4));
             if (len < Protocol.EventFieldsSize)
-                return Fail("event length smaller than feedbackId + index");
-            if (Protocol.HeaderSize + len > rest.Length)
+                return Fail("event length smaller than feedbackId");
+            if (len > rest.Length - Protocol.HeaderSize)
                 return Fail("event length exceeds buffer");
 
-            RecordOffset = _offset;
             Event = ev;
-            FeedbackId = BinaryPrimitives.ReadUInt32LittleEndian(rest.Slice(4));
-            Index = BinaryPrimitives.ReadUInt32LittleEndian(rest.Slice(8));
-            Payload = rest.Slice(Protocol.HeaderSize + Protocol.EventFieldsSize, len - Protocol.EventFieldsSize);
+            FeedbackId = BinaryPrimitives.ReadUInt32LittleEndian(rest.Slice(Protocol.HeaderSize));
+            Payload = rest.Slice(Protocol.HeaderSize + Protocol.EventFieldsSize, (int)len - Protocol.EventFieldsSize);
 
-            int total = (Protocol.HeaderSize + len + (Protocol.CommandAlign - 1)) & ~(Protocol.CommandAlign - 1);
+            int total = (Protocol.HeaderSize + (int)len + (Protocol.CommandAlign - 1)) & ~(Protocol.CommandAlign - 1);
             _offset += Math.Min(total, rest.Length); // tolerate missing padding after the last record
             return true;
         }

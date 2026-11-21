@@ -20,6 +20,7 @@ namespace VL.Qt.Tests
         private static string U16(int v) => Convert.ToHexString(BitConverter.GetBytes((ushort)v));
         private static string U32(uint v) => Convert.ToHexString(BitConverter.GetBytes(v));
         private static string F32(float v) => Convert.ToHexString(BitConverter.GetBytes(v));
+        private static string Hdr(ushort op, int payloadLen) => U16(op) + U16(0) + U32((uint)payloadLen);
 
         // --- wire format ---
 
@@ -35,7 +36,7 @@ namespace VL.Qt.Tests
 
             var payload = 8 + (8 + 4) + (8 + 4) + (8 + 12);
             var expected =
-                U16(Protocol.Op.SetUniforms) + U16(payload) + U32(5) + U16(3) + U16(Protocol.UniformSet.Clear)
+                Hdr(Protocol.Op.SetUniforms, payload) + U32(5) + U16(3) + U16(Protocol.UniformSet.Clear)
                 + U16(Protocol.ValueType.F32) + U16(1) + "7400" + "0000" + F32(1.5f)
                 + U16(Protocol.ValueType.Bool) + U16(2) + "6F6E" + "0000" + "01000000"
                 + U16(Protocol.ValueType.Vec3) + U16(4) + "61626364" + F32(1) + F32(2) + F32(3);
@@ -52,7 +53,7 @@ namespace VL.Qt.Tests
             w.UniformU64("img", 0x0000000700000003);
             w.EndUniforms();
             var expected =
-                U16(Protocol.Op.SetUniforms) + U16(8 + (8 + 4) + (8 + 8)) + U32(1) + U16(2) + U16(0)
+                Hdr(Protocol.Op.SetUniforms, 8 + (8 + 4) + (8 + 8)) + U32(1) + U16(2) + U16(0)
                 + U16(Protocol.ValueType.Ref) + U16(2) + "C3A9" + "0000" + U32(9)
                 + U16(Protocol.ValueType.U64) + U16(3) + "696D67" + "00" + Convert.ToHexString(BitConverter.GetBytes(0x0000000700000003UL));
             Assert.That(Convert.ToHexString(w.Written), Is.EqualTo(expected));
@@ -76,7 +77,7 @@ namespace VL.Qt.Tests
             var w = new CommandWriter();
             w.SetIvec2(3, P.MeshResolution, 4, -2);
             Assert.That(Convert.ToHexString(w.Written), Is.EqualTo(
-                U16(Protocol.Op.Set) + U16(16) + U32(3) + U16(P.MeshResolution) + U16(Protocol.ValueType.Ivec2)
+                Hdr(Protocol.Op.Set, 16) + U32(3) + U16(P.MeshResolution) + U16(Protocol.ValueType.Ivec2)
                 + Convert.ToHexString(BitConverter.GetBytes(4)) + Convert.ToHexString(BitConverter.GetBytes(-2))));
         }
 

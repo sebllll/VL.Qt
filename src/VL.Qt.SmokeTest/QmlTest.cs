@@ -63,11 +63,11 @@ public static class QmlTest
         while (off + 12 <= b.Length)
         {
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
-            int len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
-            if (len < 8 || off + 4 + len > b.Length)
+            int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4));
+            if (len < 4 || off + 8 + len > b.Length)
                 break;
-            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)), b.Slice(off + 12, len - 8).ToArray()));
-            off += (4 + len + 3) & ~3;
+            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)), b.Slice(off + 12, len - 4).ToArray()));
+            off += (8 + len + 3) & ~3;
         }
         return list;
     }
@@ -177,7 +177,7 @@ public static class QmlTest
             cmd.SetI32(id, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
             cmd.SetMat4(id, Protocol.PropertyId.Transform, Matrix.Translation(x, y, 0));
             cmd.Reparent(id, 0, 1000);
-            cmd.Bind(id, handle, 0);
+            cmd.Bind(id, handle);
         }
         void SetProps(uint id, Action<QmlProps> write)
         {

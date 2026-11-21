@@ -143,7 +143,7 @@ public static class ElementTableTest
     // (SET of them is UnknownProperty, protocol.h "Effect chain").
     private static bool IsExempt(ushort prop) =>
         prop >= Protocol.PropertyId.AcceptedButtons && prop <= Protocol.PropertyId.Occlusion
-        || prop >= Protocol.MultiEffectKey.Enabled && prop <= Protocol.MultiEffectKey.MaskInverted;
+        || prop >= Protocol.MultiEffectKey.BlurEnabled && prop <= Protocol.MultiEffectKey.MaskInverted;
 
     private static ushort TypeValueType(ushort type, ushort prop)
     {

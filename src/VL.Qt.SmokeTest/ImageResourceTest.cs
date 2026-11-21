@@ -79,9 +79,9 @@ public static class ImageResourceTest
             }
             for (int at = 0; at < n;)
             {
-                var len = BitConverter.ToUInt16(buf, at + 2);
-                events.Add(new Rec(BitConverter.ToUInt16(buf, at), BitConverter.ToUInt64(buf, at + 4), buf.AsSpan(at + 12, len - 8).ToArray()));
-                at += (4 + len + 3) & ~3;
+                var len = (int)BitConverter.ToUInt32(buf, at + 4);
+                events.Add(new Rec(BitConverter.ToUInt16(buf, at), BitConverter.ToUInt64(buf, at + 8), buf.AsSpan(at + 16, len - 8).ToArray()));
+                at += (8 + len + 3) & ~3;
             }
         }
 

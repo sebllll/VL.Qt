@@ -35,7 +35,7 @@ namespace VL.Qt
     /// </para>
     /// <para>
     /// Every visited object is bound to the feedback slot of its description (BIND with a feedback id from
-    /// <see cref="FeedbackRouter"/>, a new feedback id per slot change, no BIND flags), no feedback sends an unbind (feedback id 0).
+    /// <see cref="FeedbackRouter"/>, a new feedback id per slot change), no feedback sends an unbind (feedback id 0).
     /// </para>
     /// <para>
     /// Input handlers: the interaction chain of an element (<see cref="Element.Interaction"/>) becomes a list of
@@ -522,7 +522,7 @@ namespace VL.Qt
             {
                 _feedbackRouter.Release(node.BoundFeedbackId); // not primary: leaves the slot alone
                 node.BoundFeedbackId = _feedbackRouter.Acquire(node.BoundFeedback, primary: true);
-                _sink.Bind(node.Id, node.BoundFeedbackId, 0);
+                _sink.Bind(node.Id, node.BoundFeedbackId);
             }
             else
             {
@@ -593,8 +593,7 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// BIND when the feedback slot changed (no flags: input comes from handlers since #319; QtNative cancels the press of a
-        /// Tap handler with a new feedback itself since #320). The feedback id is primary or not after <see cref="Node.IsPrimary"/>;
+        /// BIND when the feedback slot changed (QtNative cancels the press of a Tap handler with a new feedback itself). The feedback id is primary or not after <see cref="Node.IsPrimary"/>;
         /// a node that became primary with an unchanged slot is re-bound too (<see cref="SyncPrimary"/>).
         /// </summary>
         private void BindFeedback(Node node, Element next)
@@ -610,7 +609,7 @@ namespace VL.Qt
 
             if (slot.IsNone)
             {
-                _sink.Bind(node.Id, 0, 0);
+                _sink.Bind(node.Id, 0);
                 _bindings.Remove(node.Id);
                 _feedbackRouter.Release(node.BoundFeedbackId);
                 node.BoundFeedbackId = 0;
@@ -622,7 +621,7 @@ namespace VL.Qt
                 _feedbackRouter.Release(node.BoundFeedbackId);
                 node.BoundFeedbackId = _feedbackRouter.Acquire(slot, node.IsPrimary);
                 node.BoundPrimary = node.IsPrimary;
-                _sink.Bind(node.Id, node.BoundFeedbackId, 0);
+                _sink.Bind(node.Id, node.BoundFeedbackId);
                 _bindings[node.Id] = slot;
             }
             node.BoundFeedback = slot;
@@ -779,7 +778,7 @@ namespace VL.Qt
             link.WriteProperties(_sink, h.Id, null, _mapping);
             _sink.Reparent(h.Id, node.Id, 0);
             h.BoundFeedbackId = _feedbackRouter.Acquire(h.Key);
-            _sink.Bind(h.Id, h.BoundFeedbackId, 0);
+            _sink.Bind(h.Id, h.BoundFeedbackId);
             _bindings[h.Id] = h.Key;
             return h;
         }

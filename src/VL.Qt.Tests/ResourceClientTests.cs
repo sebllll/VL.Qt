@@ -168,10 +168,10 @@ namespace VL.Qt.Tests
         private void Record(ushort ev, ulong id, ReadOnlySpan<byte> payload)
         {
             var len = 8 + payload.Length;
-            Span<byte> head = stackalloc byte[12];
+            Span<byte> head = stackalloc byte[Protocol.HeaderSize + 8];
             BinaryPrimitives.WriteUInt16LittleEndian(head, ev);
-            BinaryPrimitives.WriteUInt16LittleEndian(head[2..], (ushort)len);
-            BinaryPrimitives.WriteUInt64LittleEndian(head[4..], id);
+            BinaryPrimitives.WriteUInt32LittleEndian(head[4..], (uint)len);
+            BinaryPrimitives.WriteUInt64LittleEndian(head[Protocol.HeaderSize..], id);
             _queue.AddRange(head.ToArray());
             _queue.AddRange(payload.ToArray());
             while (_queue.Count % 4 != 0)

@@ -87,10 +87,10 @@ public static class GlowTest
             int len = NativeCalls.Poll(w, evBuf);
             for (int at = 0; at < len;)
             {
-                ushort ev = BitConverter.ToUInt16(evBuf, at), l = BitConverter.ToUInt16(evBuf, at + 2);
+                ushort ev = BitConverter.ToUInt16(evBuf, at), l = (ushort)BitConverter.ToUInt32(evBuf, at + 4);
                 if (ev == Protocol.EventId.Error)
-                    errors.Add($"{BitConverter.ToUInt32(evBuf, at + 4)}: {Encoding.UTF8.GetString(evBuf, at + 12, l - 8)}");
-                at += (4 + l + 3) & ~3;
+                    errors.Add($"{BitConverter.ToUInt32(evBuf, at + 8)}: {Encoding.UTF8.GetString(evBuf, at + 12, l - 4)}");
+                at += (8 + l + 3) & ~3;
             }
         }
         void Rect(uint id, float x, float y, float rw, float rh, float r, float g, float b, float a)
@@ -106,7 +106,7 @@ public static class GlowTest
             cmd.SetBool(id, Protocol.PropertyId.AutoSize, false); // SIZE counts: with Input the size would follow the Input (full size)
             cmd.SetU64(id, Protocol.PropertyId.FragmentShader, shader);
             cmd.SetRef(id, Protocol.PropertyId.Source, source);
-            cmd.Bind(id, id, 0);
+            cmd.Bind(id, id);
         }
         uint UpOrDown(int k) => k == n ? Down + (uint)k : Up + (uint)k; // the top of the chain at step k
 
@@ -162,7 +162,7 @@ public static class GlowTest
         cmd.SetPlace(Fx, 0, 0, 800, 600);
         cmd.SetU64(Fx, Protocol.PropertyId.FragmentShader, composite);
         cmd.SetRef(Fx, Protocol.PropertyId.Source, Src);
-        cmd.Bind(Fx, Fx, 0);
+        cmd.Bind(Fx, Fx);
         // Tree (ownership only, the effects draw their children through layers): Fx -> Src, top of the up chain ->
         // ... -> Down+n -> ... -> Down+1.
         cmd.Reparent(Src, Fx, 0);

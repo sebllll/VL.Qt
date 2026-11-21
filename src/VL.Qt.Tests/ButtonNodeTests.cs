@@ -71,7 +71,7 @@ namespace VL.Qt.Tests
             Assert.That(sink.Commands, Does.Contain($"SET 1 Text string(Button)"));
             Assert.That(sink.Commands.Any(c => c.StartsWith($"SET 1 Enabled ") || c.StartsWith($"SET 1 AutoRepeat ")
                 || c.StartsWith($"SET 1 AutoSize ")), Is.False, "Qt defaults are not sent");
-            Assert.That(sink.Commands.Single(c => c.StartsWith("BIND 1 ")), Does.EndWith(" 0"), "bound without flags");
+            Assert.That(sink.Commands.Single(c => c.StartsWith("BIND 1 ")), Does.Match(@"^BIND 1 \d+$"), "BIND carries only id and feedback id");
 
             sink.Clear();
             rec.Update(Update(text: "OK", enabled: false, autoRepeat: true, autoSize: false), Space.DIPTopLeft);

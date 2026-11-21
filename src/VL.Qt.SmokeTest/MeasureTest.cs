@@ -16,9 +16,9 @@ public static class MeasureTest
     [Test, Category("measure")]
     public static void Measure() => Scenario.Run(Run);
 
-    internal readonly record struct Rec(ushort Event, uint Handle, uint Index, float[] V);
+    internal readonly record struct Rec(ushort Event, uint Handle, float[] V);
 
-    // Own reader (EventReader is internal): u16 event, u16 len, u32 handle, u32 index, payload, 4-aligned.
+    // Own reader (EventReader is internal): u16 event, u16 flags, u32 len, u32 handle, payload, 4-aligned.
     internal static List<Rec> Parse(ReadOnlySpan<byte> b, Scenario s) => Parse(b, s.Check);
 
     internal static List<Rec> Parse(ReadOnlySpan<byte> b, Action<bool, string> check)
@@ -28,13 +28,13 @@ public static class MeasureTest
         while (off < b.Length)
         {
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
-            int len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
-            if (len < 8 || off + 4 + len > b.Length) { check(false, $"malformed record at {off}"); break; }
-            var v = new float[(len - 8) / 4];
+            int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4));
+            if (len < 4 || off + 8 + len > b.Length) { check(false, $"malformed record at {off}"); break; }
+            var v = new float[(len - 4) / 4];
             for (int i = 0; i < v.Length; i++)
                 v[i] = BinaryPrimitives.ReadSingleLittleEndian(b.Slice(off + 12 + 4 * i));
-            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)), BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)), v));
-            off += (4 + len + 3) & ~3;
+            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)), v));
+            off += (8 + len + 3) & ~3;
         }
         return list;
     }
@@ -47,11 +47,11 @@ public static class MeasureTest
         while (off + 12 <= b.Length)
         {
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
-            int len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
-            if (len < 8 || off + 4 + len > b.Length) break;
-            if (ev == Protocol.EventId.Error && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)) == handle)
-                text = System.Text.Encoding.UTF8.GetString(b.Slice(off + 12, len - 8));
-            off += (4 + len + 3) & ~3;
+            int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4));
+            if (len < 4 || off + 8 + len > b.Length) break;
+            if (ev == Protocol.EventId.Error && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)) == handle)
+                text = System.Text.Encoding.UTF8.GetString(b.Slice(off + 12, len - 4));
+            off += (8 + len + 3) & ~3;
         }
         return text;
     }
@@ -93,7 +93,7 @@ public static class MeasureTest
         cmd.SetString(TextId, Protocol.PropertyId.Text, "Hello");
         cmd.SetF32(TextId, Protocol.PropertyId.FontSize, 40);
         cmd.Reparent(TextId, 0, 0);
-        cmd.Bind(TextId, HText, 0);
+        cmd.Bind(TextId, HText);
         cmd.Create(PlainId, Protocol.ElementType.Rectangle); // not bound: never reports
         cmd.SetPlace(PlainId, 600, 40, 50, 50);
         cmd.Reparent(PlainId, 0, 1);
@@ -108,14 +108,14 @@ public static class MeasureTest
             cmd.Create(10 + i, Protocol.ElementType.Rectangle);
             cmd.SetPlace(10 + i, 0, 0, 120, 40);
             cmd.Reparent(10 + i, ColId, i);
-            cmd.Bind(10 + i, 11 + i, 0);
+            cmd.Bind(10 + i, 11 + i);
         }
         CheckApply("measure scene");
         s.Pump(2);
 
         var recs = Poll();
         var m = Find(recs, Protocol.EventId.Measured, HText);
-        s.Check(m is { } mm && mm.V.Length == 2 && mm.V[0] > 40 && mm.V[1] > 30 && mm.Index == 0,
+        s.Check(m is { } mm && mm.V.Length == 2 && mm.V[0] > 40 && mm.V[1] > 30,
             $"Text 'Hello' 40 -> MEASURED > 0 ({S(m)})");
         var tb = Find(recs, Protocol.EventId.SceneBounds, HText);
         s.Check(tb is { } tbx && tbx.V.Length == 4 && tbx.V[0] == 50 && tbx.V[1] == 40 && tbx.V[2] == 400 && tbx.V[3] == 60,
@@ -153,13 +153,13 @@ public static class MeasureTest
         s.Check(recs.Count == 2 && c1 is { } y1 && y1.V[1] == 245 && c2 is { } y2 && y2.V[1] == 285,
             $"column relayout -> SCENE_BOUNDS of moved children only ({S(c1)}; {S(c2)}; {recs.Count} records)");
 
-        // Rebind: flags only -> silent; new handle -> current values again; unbind -> silent; rebind after unbind -> resend.
-        cmd.Bind(10, 11, 0);
-        CheckApply("bind flags only");
+        // Rebind: same handle -> silent; new handle -> current values again; unbind -> silent; rebind after unbind -> resend.
+        cmd.Bind(10, 11);
+        CheckApply("bind same handle");
         s.Pump(1);
-        s.Check(Poll().Count == 0, "flag-only BIND (same handle) -> no records");
-        cmd.Bind(10, 21, Protocol.Bind.CancelPress);
-        cmd.Bind(11, 0, 0);
+        s.Check(Poll().Count == 0, "BIND again with the same handle -> no records");
+        cmd.Bind(10, 21);
+        cmd.Bind(11, 0);
         CheckApply("rebind + unbind");
         s.Pump(1);
         recs = Poll();
@@ -167,7 +167,7 @@ public static class MeasureTest
             && Find(recs, Protocol.EventId.SceneBounds, 21) is { } nb && nb.V[1] == 205,
             $"new handle gets current values, unbound child silent ({recs.Count} records)");
         cmd.SetPlace(11, 0, 0, 130, 40);
-        cmd.Bind(11, 22, 0);
+        cmd.Bind(11, 22);
         CheckApply("rebind after unbind");
         s.Pump(1);
         recs = Poll();
@@ -213,7 +213,7 @@ public static class MeasureTest
                 cmd.Create(id, Protocol.ElementType.Rectangle);
                 cmd.SetPlace(id, i * 7, 0, 6, 6);
                 cmd.Reparent(id, 100 + g, i);
-                cmd.Bind(id, id, 0);
+                cmd.Bind(id, id);
             }
         }
         CheckApply("1000 bound items");
@@ -307,7 +307,7 @@ public static class MeasureTest
         cmd.Create(RowRect, Protocol.ElementType.Rectangle);
         cmd.SetPlace(RowRect, 0, 0, 30, 20);
         cmd.Reparent(RowRect, RowId, 1);
-        cmd.Bind(RowRect, RowRect, 0);
+        cmd.Bind(RowRect, RowRect);
         cmd.Create(ColId, Protocol.ElementType.Column);
         cmd.SetPlace(ColId, 100, 300, 0, 0);
         cmd.SetF32(ColId, Protocol.PropertyId.Spacing, 10);
@@ -318,13 +318,13 @@ public static class MeasureTest
         cmd.Create(ColRect1, Protocol.ElementType.Rectangle);
         cmd.SetPlace(ColRect1, 0, 0, 40, 20);
         cmd.Reparent(ColRect1, ColId, 1);
-        cmd.Bind(ColRect1, ColRect1, 0);
+        cmd.Bind(ColRect1, ColRect1);
         cmd.Create(Txt, Protocol.ElementType.Text);
         cmd.SetPlace(Txt, 400, 100, 300, 60);
         cmd.SetString(Txt, Protocol.PropertyId.Text, "Hi");
         cmd.SetF32(Txt, Protocol.PropertyId.FontSize, 40);
         cmd.Reparent(Txt, 0, 2);
-        cmd.Bind(Txt, Txt, 0);
+        cmd.Bind(Txt, Txt);
         Apply("scene");
         s.Pump(2);
         var recs = Poll();
@@ -403,7 +403,7 @@ public static class MeasureTest
         cmd.Create(ChainRect, Protocol.ElementType.Rectangle);
         cmd.SetPlace(ChainRect, 10, 10, 20, 20);
         cmd.Reparent(ChainRect, ChainGroup, 0);
-        cmd.Bind(ChainRect, ChainRect, 0);
+        cmd.Bind(ChainRect, ChainRect);
         cmd.BeginEffectChain(ChainGroup);
         cmd.BeginMultiLink();
         cmd.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
@@ -420,7 +420,7 @@ public static class MeasureTest
         cmd.Create(InputRect, Protocol.ElementType.Rectangle);
         cmd.SetPlace(InputRect, 10, 10, 20, 20);
         cmd.Reparent(InputRect, InputGroup, 0);
-        cmd.Bind(InputRect, InputRect, 0);
+        cmd.Bind(InputRect, InputRect);
         cmd.SetRef(Fx, Protocol.PropertyId.Source, InputGroup);
         cmd.BeginUniforms(Fx, Protocol.UniformSet.Clear);
         cmd.UniformF32("time", 0);
@@ -474,7 +474,7 @@ public static class MeasureTest
             cmd.Create(id, Protocol.ElementType.Rectangle);
             cmd.SetPlace(id, i % 50 * 16, i / 50 * 14, 12, 10);
             cmd.Reparent(id, group, i);
-            cmd.Bind(id, id, 0);
+            cmd.Bind(id, id);
         }
         var rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"{count} bound rectangles ({rc})");

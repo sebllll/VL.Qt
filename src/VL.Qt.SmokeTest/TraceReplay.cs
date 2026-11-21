@@ -187,11 +187,13 @@ public static class TraceReplay
             for (var pos = 0; pos + Protocol.HeaderSize <= frame.Length;)
             {
                 var op = BitConverter.ToUInt16(frame, pos);
-                var payload = BitConverter.ToUInt16(frame, pos + 2);
+                var payload = (int)BitConverter.ToUInt32(frame, pos + 4);
                 var total = (Protocol.HeaderSize + payload + 3) & ~3;
                 if (pos + total > frame.Length)
                     throw new InvalidDataException($"command at {pos} exceeds the frame");
                 var cmd = frame.AsSpan(pos, total);
+                // The value of a SET starts after the header and u32 id, u16 prop, u16 valueType.
+                const int valueAt = Protocol.HeaderSize + 8;
                 pos += total;
                 if (op == Protocol.Op.SetEffectChain && payload >= 8)
                 {
@@ -220,18 +222,19 @@ public static class TraceReplay
                 }
                 if (op == Protocol.Op.Set && payload >= 12)
                 {
-                    var prop = BitConverter.ToUInt16(cmd.Slice(8));
-                    var vt = BitConverter.ToUInt16(cmd.Slice(10));
+                    // SET: header, u32 id, u16 prop, u16 valueType, value.
+                    var prop = BitConverter.ToUInt16(cmd.Slice(Protocol.HeaderSize + 4));
+                    var vt = BitConverter.ToUInt16(cmd.Slice(Protocol.HeaderSize + 6));
                     if (vt == Protocol.ValueType.U64 && (prop == Protocol.PropertyId.FragmentShader || prop == Protocol.PropertyId.VertexShader))
                     {
                         var copy = cmd.ToArray();
-                        BitConverter.TryWriteBytes(copy.AsSpan(12), MapShader(BitConverter.ToUInt64(copy, 12)));
+                        BitConverter.TryWriteBytes(copy.AsSpan(valueAt), MapShader(BitConverter.ToUInt64(copy, valueAt)));
                         o.AddRange(copy);
                         continue;
                     }
                     if (vt == Protocol.ValueType.U64 && prop == Protocol.PropertyId.Image)
                     {
-                        var id = BitConverter.ToUInt64(cmd.Slice(12));
+                        var id = BitConverter.ToUInt64(cmd.Slice(valueAt));
                         var copy = cmd.ToArray();
                         if (id != 0)
                         {
@@ -239,14 +242,14 @@ public static class TraceReplay
                                 map[id] = map.Count < images.Count ? images[map.Count] : 0;
                             if (map[id] == 0)
                                 missing++;
-                            BitConverter.TryWriteBytes(copy.AsSpan(12), map[id]);
+                            BitConverter.TryWriteBytes(copy.AsSpan(valueAt), map[id]);
                         }
                         o.AddRange(copy);
                         continue;
                     }
                     if (vt == Protocol.ValueType.String)
                     {
-                        var text = System.Text.Encoding.UTF8.GetString(cmd.Slice(16, (int)BitConverter.ToUInt32(cmd.Slice(12))));
+                        var text = System.Text.Encoding.UTF8.GetString(cmd.Slice(valueAt + 4, (int)BitConverter.ToUInt32(cmd.Slice(valueAt))));
                         var marker = "help" + (text.Contains('\\') ? "\\Qt\\" : "/Qt/");
                         var at = text.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
                         if (at > 0 && Path.IsPathRooted(text))
@@ -255,10 +258,10 @@ public static class TraceReplay
                             var bytes = System.Text.Encoding.UTF8.GetBytes(Path.Combine(helpQtDir, rest));
                             var newPayload = 12 + bytes.Length;
                             var buf = new byte[(Protocol.HeaderSize + newPayload + 3) & ~3];
-                            cmd.Slice(0, 16).CopyTo(buf);
-                            BitConverter.TryWriteBytes(buf.AsSpan(2), (ushort)newPayload);
-                            BitConverter.TryWriteBytes(buf.AsSpan(12), (uint)bytes.Length);
-                            bytes.CopyTo(buf, 16);
+                            cmd.Slice(0, valueAt + 4).CopyTo(buf);
+                            BitConverter.TryWriteBytes(buf.AsSpan(4), (uint)newPayload);
+                            BitConverter.TryWriteBytes(buf.AsSpan(valueAt), (uint)bytes.Length);
+                            bytes.CopyTo(buf, valueAt + 4);
                             o.AddRange(buf);
                             continue;
                         }

@@ -51,8 +51,8 @@ namespace VL.Qt.Tests
         {
             var b = new byte[Protocol.HeaderSize + Protocol.EventFieldsSize + 28];
             BinaryPrimitives.WriteUInt16LittleEndian(b, ev);
-            BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(2), (ushort)(Protocol.EventFieldsSize + 28));
-            BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), handle);
+            BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), (uint)(Protocol.EventFieldsSize + 28));
+            BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(8), handle);
             int p = Protocol.HeaderSize + Protocol.EventFieldsSize;
             BinaryPrimitives.WriteSingleLittleEndian(b.AsSpan(p), x);
             BinaryPrimitives.WriteSingleLittleEndian(b.AsSpan(p + 4), y);

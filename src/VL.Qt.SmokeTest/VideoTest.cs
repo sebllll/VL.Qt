@@ -126,7 +126,7 @@ public static class VideoTest
         cmd.SetBool(VideoId, Protocol.PropertyId.Loop, true);
         cmd.SetBool(VideoId, Protocol.PropertyId.Playing, true);
         cmd.Reparent(VideoId, 0, 0);
-        cmd.Bind(VideoId, Handle, 0);
+        cmd.Bind(VideoId, Handle);
         var loadWatch = Stopwatch.StartNew();
         CheckApply("create video, source, loop, playing");
         Frame();
@@ -309,7 +309,7 @@ public static class VideoTest
             cmd.SetString(id, Protocol.PropertyId.Source, a);
             cmd.SetBool(id, Protocol.PropertyId.Playing, true);
             cmd.Reparent(id, 0, 0);
-            cmd.Bind(id, Handle, 0);
+            cmd.Bind(id, Handle);
             Apply();
             WaitFor(() => dur > 0, 3000);
             Run(100);

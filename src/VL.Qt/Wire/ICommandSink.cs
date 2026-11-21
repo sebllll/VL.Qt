@@ -14,8 +14,8 @@ namespace VL.Qt.Wire
         void Destroy(uint id);
         void Reparent(uint id, uint parent, uint index);
 
-        /// <summary>BIND: feedbackId 0 = unbind; flags = <see cref="Protocol.Bind"/> bit mask.</summary>
-        void Bind(uint id, uint feedbackId, ushort flags);
+        /// <summary>BIND: feedbackId 0 = unbind.</summary>
+        void Bind(uint id, uint feedbackId);
 
         void SetF32(uint id, ushort prop, float value);
         void SetI32(uint id, ushort prop, int value);
@@ -104,17 +104,16 @@ namespace VL.Qt.Wire
         /// <see cref="UniformBool"/>, <see cref="UniformVec2"/>, <see cref="UniformVec3"/>, <see cref="UniformVec4"/>,
         /// <see cref="UniformColor"/>) and <see cref="QmlRect"/>, then <see cref="EndQmlProperties"/>; no other command in between.
         /// </summary>
-        /// <remarks>Default members so fakes that predate #104 keep compiling; they fail loudly when a QmlElement is applied.</remarks>
-        void BeginQmlProperties(uint id, ushort flags) => throw new NotSupportedException("SET_QML_PROPERTIES is not supported by this sink.");
+        void BeginQmlProperties(uint id, ushort flags);
 
         /// <summary>QML entry of value type rect (x, y, width, height); between <see cref="BeginQmlProperties"/> and <see cref="EndQmlProperties"/>.</summary>
-        void QmlRect(ReadOnlySpan<char> name, float x, float y, float width, float height) => throw new NotSupportedException("SET_QML_PROPERTIES is not supported by this sink.");
+        void QmlRect(ReadOnlySpan<char> name, float x, float y, float width, float height);
 
         /// <summary>QML entry of value type string (u32 length + UTF-8); between <see cref="BeginQmlProperties"/> and <see cref="EndQmlProperties"/>.</summary>
-        void QmlString(ReadOnlySpan<char> name, ReadOnlySpan<char> value) => throw new NotSupportedException("SET_QML_PROPERTIES is not supported by this sink.");
+        void QmlString(ReadOnlySpan<char> name, ReadOnlySpan<char> value);
 
         /// <summary>Closes the SET_QML_PROPERTIES started by <see cref="BeginQmlProperties"/> (entry count, payload length).</summary>
-        void EndQmlProperties() => throw new NotSupportedException("SET_QML_PROPERTIES is not supported by this sink.");
+        void EndQmlProperties();
 
         /// <summary>
         /// SET_EFFECT_CHAIN: starts the whole Effect chain of element <paramref name="id"/>. Followed by the links in
@@ -153,15 +152,5 @@ namespace VL.Qt.Wire
 
         /// <summary>Closes the SET_EFFECT_CHAIN started by <see cref="BeginEffectChain"/> (link count, payload length).</summary>
         void EndEffectChain();
-    }
-
-    /// <summary>Stride-typed convenience overloads for any <see cref="ICommandSink"/>.</summary>
-    internal static class CommandSinkExtensions
-    {
-        public static void SetColor(this ICommandSink sink, uint id, ushort prop, in Color4 c) => sink.SetColor(id, prop, c.R, c.G, c.B, c.A);
-
-        public static void SetRect(this ICommandSink sink, uint id, ushort prop, in RectangleF r) => sink.SetRect(id, prop, r.X, r.Y, r.Width, r.Height);
-
-        public static void SetString(this ICommandSink sink, uint id, ushort prop, string? value) => sink.SetString(id, prop, value.AsSpan());
     }
 }

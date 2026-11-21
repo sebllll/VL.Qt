@@ -223,17 +223,17 @@ public static class GroupFrameTest
             while (off + 12 <= b.Length)
             {
                 ushort ev = System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(b[off..]);
-                int len = System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(b[(off + 2)..]);
-                if (len < 8 || off + 4 + len > b.Length)
+                int len = (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..]);
+                if (len < 4 || off + 8 + len > b.Length)
                     break;
-                uint handle = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..]);
-                var p = b.Slice(off + 12, len - 8).ToArray();
+                uint handle = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 8)..]);
+                var p = b.Slice(off + 12, len - 4).ToArray();
                 float F(int i) => BitConverter.ToSingle(p, 4 * i);
                 if (handle == hg && ev == Protocol.EventId.Measured && p.Length >= 8)
                     measured = (F(0), F(1));
                 else if (handle == hg && ev == Protocol.EventId.SceneBounds && p.Length >= 16)
                     bounds = (F(0), F(1), F(2), F(3));
-                off += (4 + len + 3) & ~3;
+                off += (8 + len + 3) & ~3;
             }
         }
         void Apply(string what)
@@ -248,7 +248,7 @@ public static class GroupFrameTest
         cmd.SetI32(g, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
         cmd.SetMat4(g, Protocol.PropertyId.Transform, Matrix.Translation(200, 150, 0));
         cmd.Reparent(g, 0, 0);
-        cmd.Bind(g, hg, 0);
+        cmd.Bind(g, hg);
         cmd.Create(r, Protocol.ElementType.Rectangle);
         cmd.SetPlace(r, 0, 0, 100, 100);
         cmd.SetColor(r, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);

@@ -55,7 +55,7 @@ namespace VL.Qt.Tests
             Assert.That(c.Any(n => n.IsIgnored), Is.False);
             Assert.That(c[0].Id, Is.Not.EqualTo(c[1].Id));
             Assert.That(c[0].BoundFeedbackId, Is.Not.EqualTo(c[1].BoundFeedbackId));
-            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {c[0].Id} {c[0].BoundFeedbackId} 0", $"BIND {c[1].Id} {c[1].BoundFeedbackId} 0" }));
+            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {c[0].Id} {c[0].BoundFeedbackId}", $"BIND {c[1].Id} {c[1].BoundFeedbackId}" }));
             Assert.That(_rec.FeedbackRouter.TryResolve(c[1].BoundFeedbackId, out var slot) && slot == new FeedbackSlot(feedback, 0), Is.True);
             Assert.That(_rec.Bindings.Count, Is.EqualTo(2));
             Assert.That(Structural, Does.Contain($"REPARENT {c[2].Id} {_rec.Root.Id} 2"));
@@ -124,7 +124,7 @@ namespace VL.Qt.Tests
             Assert.That(second.BoundFeedbackId, Is.Not.EqualTo(old));
             Assert.That(IsPrimaryHandle(second), Is.True);
             Assert.That(_rec.FeedbackRouter.TryResolve(old, out _), Is.False, "old handle released");
-            Assert.That(_sink.OfOp("BIND"), Does.Contain($"BIND {second.Id} {second.BoundFeedbackId} 0"), "QtNative sends its state again");
+            Assert.That(_sink.OfOp("BIND"), Does.Contain($"BIND {second.Id} {second.BoundFeedbackId}"), "QtNative sends its state again");
             Assert.That(feedback[0].Error, Is.Null, "reset with the old primary; the new one reports its own");
 
             Frame(G(R(5), e));
@@ -175,7 +175,7 @@ namespace VL.Qt.Tests
             Frame(G(R(5), s));
             Assert.That(_scene.OwnerOf(e), Is.SameAs(inS));
             Assert.That(IsPrimaryHandle(inS), Is.True);
-            Assert.That(_sink.OfOp("BIND"), Does.Contain($"BIND {inS.Id} {inS.BoundFeedbackId} 0"));
+            Assert.That(_sink.OfOp("BIND"), Does.Contain($"BIND {inS.Id} {inS.BoundFeedbackId}"));
         }
 
         [Test]
@@ -429,31 +429,31 @@ namespace VL.Qt.Tests
             uint id = _rec.Root!.Id;
             uint h = _rec.Root!.BoundFeedbackId;
             Assert.That(h, Is.Not.Zero);
-            Assert.That(Structural, Is.EqualTo(new[] { $"CREATE {id} Rectangle", $"REPARENT {id} 0 0", $"BIND {id} {h} 0" }));
+            Assert.That(Structural, Is.EqualTo(new[] { $"CREATE {id} Rectangle", $"REPARENT {id} 0 0", $"BIND {id} {h}" }));
             Assert.That(_rec.Bindings[id], Is.EqualTo(new FeedbackSlot(feedbackA, 0)));
 
             // Same feedback on a new description → no BIND.
             Frame(R(2, new FeedbackSlot(feedbackA, 0)));
             Assert.That(_sink.OfOp("BIND"), Is.Empty);
 
-            // Feedback change → new BIND without flags (CancelPress is reserved), old feedback loses hover/press.
+            // Feedback change → new BIND , old feedback loses hover/press.
             feedbackA[0].IsHovered = true;
             feedbackA[0].IsPressed = true;
             Frame(R(2, new FeedbackSlot(feedbackB, 0)));
             Assert.That(_rec.Root!.BoundFeedbackId, Is.Not.EqualTo(h)); // new handle per slot change
             h = _rec.Root!.BoundFeedbackId;
-            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {id} {h} 0" }));
+            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {id} {h}" }));
             Assert.That(_rec.Bindings[id], Is.EqualTo(new FeedbackSlot(feedbackB, 0)));
             Assert.That(feedbackA[0].IsHovered || feedbackA[0].IsPressed, Is.False);
 
             // Other slot of the same feedback is a feedback change too.
             Frame(R(2, new FeedbackSlot(feedbackB, 1)));
             h = _rec.Root!.BoundFeedbackId;
-            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {id} {h} 0" }));
+            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {id} {h}" }));
 
             // No feedback → unbind.
             Frame(R(2));
-            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {id} 0 0" }));
+            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {id} 0" }));
             Assert.That(_rec.Bindings, Is.Empty);
             Assert.That(_rec.FeedbackRouter.Count, Is.Zero);
         }
@@ -466,8 +466,8 @@ namespace VL.Qt.Tests
             Frame(G(E(0), E(2)));
             Frame(G(E(0), E(1), E(2)));
             var c = _rec.Root!.Children;
-            // Position 1 keeps its object, gets slot 1 (was 2) → new BIND without flags (CancelPress is reserved); position 2 is new → plain BIND.
-            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {c[1].Id} {c[1].BoundFeedbackId} 0", $"BIND {c[2].Id} {c[2].BoundFeedbackId} 0" }));
+            // Position 1 keeps its object, gets slot 1 (was 2) → new BIND without flags; position 2 is new → plain BIND.
+            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {c[1].Id} {c[1].BoundFeedbackId}", $"BIND {c[2].Id} {c[2].BoundFeedbackId}" }));
             Assert.That(_rec.Bindings.Count, Is.EqualTo(3));
         }
 
@@ -620,12 +620,12 @@ namespace VL.Qt.Tests
             Assert.That(scene.OccurrencesOf(added), Is.EqualTo(1));
         }
 
-        [Test, Ignore("REC-01: a Text with 100,000 characters makes CommandWriter.SetString throw ArgumentOutOfRangeException out of Reconciler.Update")]
-        public void OversizedString_WithARealCommandWriter_DoesNotThrowOutOfUpdate()
+        [Test]
+        public void LongString_WithARealCommandWriter_DoesNotThrowOutOfUpdate()
         {
+            // 100,000 characters do not fit a u16 payload length; the u32 length of the command header carries them (PROTO-02).
             var rec = new Reconciler(new CommandWriter(), new IdAllocator(), new SceneRegistry());
             var text = new Text { Content = new string('x', 100_000) };
-            // B7: the target is a failed reconcile handled by the caller (log, mark, resync); the unit shows at least that no ArgumentOutOfRangeException escapes.
             Assert.DoesNotThrow(() => rec.Update(G(text), Space.DIPTopLeft));
         }
 
@@ -644,57 +644,6 @@ namespace VL.Qt.Tests
             Assert.That(sink.Recorded.OfOp("CREATE").Select(c => c.Split(' ')[2]).ToArray(), Is.EqualTo(new[] { "Group", "Rectangle" }), sink.Recorded.ToString());
         }
 
-        private sealed class RecordingSinkNull : ICommandSink
-        {
-            public void Create(uint id, ushort type) { }
-            public void Destroy(uint id) { }
-            public void Reparent(uint id, uint parent, uint index) { }
-            public void Bind(uint id, uint feedbackId, ushort flags) { }
-            public void SetF32(uint id, ushort prop, float value) { }
-            public void SetI32(uint id, ushort prop, int value) { }
-            public void SetBool(uint id, ushort prop, bool value) { }
-            public void SetColor(uint id, ushort prop, float r, float g, float b, float a) { }
-            public void SetVec2(uint id, ushort prop, float x, float y) { }
-            public void SetRect(uint id, ushort prop, float x, float y, float width, float height) { }
-            public void SetMat4(uint id, ushort prop, in Matrix m) { }
-            public void SetString(uint id, ushort prop, ReadOnlySpan<char> value) { }
-            public void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values) { }
-            public void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points) { }
-            public void SetRef(uint id, ushort prop, uint refId) { }
-            public void SetU64(uint id, ushort prop, ulong value) { }
-            public void BeginStyle(uint id, ushort flags) { }
-            public void StyleColor(ushort field, byte state, float r, float g, float b, float a) { }
-            public void StyleF32(ushort field, byte state, float value) { }
-            public void StyleI32(ushort field, byte state, int value) { }
-            public void StyleString(ushort field, byte state, ReadOnlySpan<char> value) { }
-            public void EndStyle() { }
-            public void SetIvec2(uint id, ushort prop, int x, int y) { }
-            public void BeginUniforms(uint id, ushort flags) { }
-            public void UniformF32(ReadOnlySpan<char> name, float value) { }
-            public void UniformI32(ReadOnlySpan<char> name, int value) { }
-            public void UniformBool(ReadOnlySpan<char> name, bool value) { }
-            public void UniformVec2(ReadOnlySpan<char> name, float x, float y) { }
-            public void UniformVec3(ReadOnlySpan<char> name, float x, float y, float z) { }
-            public void UniformVec4(ReadOnlySpan<char> name, float x, float y, float z, float w) { }
-            public void UniformIvec2(ReadOnlySpan<char> name, int x, int y) { }
-            public void UniformColor(ReadOnlySpan<char> name, float r, float g, float b, float a) { }
-            public void UniformMat4(ReadOnlySpan<char> name, in Matrix m) { }
-            public void UniformRef(ReadOnlySpan<char> name, uint refId) { }
-            public void UniformU64(ReadOnlySpan<char> name, ulong value) { }
-            public void UniformSampler(ReadOnlySpan<char> name, ulong packed) { }
-            public void EndUniforms() { }
-            public void BeginEffectChain(uint id) { }
-            public void BeginMultiLink() { }
-            public void EffectBool(ushort prop, bool value) { }
-            public void EffectF32(ushort prop, float value) { }
-            public void EffectI32(ushort prop, int value) { }
-            public void EffectColor(ushort prop, float r, float g, float b, float a) { }
-            public void EffectRect(ushort prop, float x, float y, float width, float height) { }
-            public void EffectRef(ushort prop, uint refId) { }
-            public void BeginEffectChainLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
-                float paddingRight, float paddingBottom, float strength) { }
-            public void EndLink() { }
-            public void EndEffectChain() { }
-        }
+        private sealed class RecordingSinkNull : NullCommandSink { }
     }
 }

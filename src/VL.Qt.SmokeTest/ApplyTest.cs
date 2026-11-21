@@ -18,26 +18,34 @@ public static class ApplyTest
     {
         private byte[] _b = new byte[1 << 16];
         public int Length;
+        private int _lastStart;
         public ReadOnlySpan<byte> Span => _b.AsSpan(0, Length);
         public Buf Clear() { Length = 0; return this; }
 
         private Span<byte> Begin(ushort op, int payloadLen)
         {
-            var size = (4 + payloadLen + 3) & ~3;
+            var size = (Protocol.HeaderSize + payloadLen + 3) & ~3;
             if (Length + size > _b.Length) Array.Resize(ref _b, Math.Max(_b.Length * 2, Length + size));
             var s = _b.AsSpan(Length, size);
+            _lastStart = Length;
             s.Clear();
             BinaryPrimitives.WriteUInt16LittleEndian(s, op);
-            BinaryPrimitives.WriteUInt16LittleEndian(s[2..], (ushort)payloadLen);
+            BinaryPrimitives.WriteUInt32LittleEndian(s[4..], (uint)payloadLen);
             Length += size;
-            return s[4..];
+            return s[Protocol.HeaderSize..];
         }
 
         /// <summary>Raw command with an arbitrary declared payloadLen (for error tests).</summary>
         public Buf Raw(ushort op, int declaredLen, int actualLen)
         {
             var s = Begin(op, actualLen);
-            BinaryPrimitives.WriteUInt16LittleEndian(_b.AsSpan(Length - ((4 + actualLen + 3) & ~3) + 2), (ushort)declaredLen);
+            BinaryPrimitives.WriteUInt32LittleEndian(_b.AsSpan(Length - ((Protocol.HeaderSize + actualLen + 3) & ~3) + 4), (uint)declaredLen);
+            return this;
+        }
+        /// <summary>Sets the reserved header flags of the last command (QtNative rejects anything but 0).</summary>
+        public Buf Flags(ushort flags)
+        {
+            BinaryPrimitives.WriteUInt16LittleEndian(_b.AsSpan(_lastStart + 2), flags);
             return this;
         }
         /// <summary>Command with a hand-built payload (declared length = payload length).</summary>
@@ -62,12 +70,11 @@ public static class ApplyTest
             BinaryPrimitives.WriteUInt32LittleEndian(s[8..], index);
             return this;
         }
-        public Buf Bind(uint id, uint feedbackId, ushort flags)
+        public Buf Bind(uint id, uint feedbackId)
         {
-            var s = Begin(Protocol.Op.Bind, 10);
+            var s = Begin(Protocol.Op.Bind, Protocol.BindPayload);
             BinaryPrimitives.WriteUInt32LittleEndian(s, id);
             BinaryPrimitives.WriteUInt32LittleEndian(s[4..], feedbackId);
-            BinaryPrimitives.WriteUInt16LittleEndian(s[8..], flags);
             return this;
         }
         public Buf ClearColor(float r, float g, float b, float a = 1)
@@ -129,12 +136,12 @@ public static class ApplyTest
         public static Pay ChainHead(uint id, int links) => new Pay().U32(id).U16(links).U16(0);
         /// <summary>Link header + body: u16 kind, u16 count, u32 body length, body.</summary>
         public Pay Link(ushort kind, int count, Pay body, uint? bodyLen = null) => U16(kind).U16(count).U32(bodyLen ?? (uint)body.Length).Bytes(body.ToArray());
-        /// <summary>SHADER link body head: u16 template, u16 shader count, shader ids, 16 bytes padding, f32 strength, u16 reserved, u16 0.</summary>
-        public static Pay ShaderBody(ushort templ, int shaderCount, int reserved = 0)
+        /// <summary>SHADER link body head: u16 template, u16 shader count, shader ids, 16 bytes padding, f32 strength.</summary>
+        public static Pay ShaderBody(ushort templ, int shaderCount)
         {
             var p = new Pay().U16(templ).U16(shaderCount);
             for (int i = 0; i < shaderCount; i++) p.U64(0);
-            return p.Zeros(16).F32(0).U16(reserved).U16(0);
+            return p.Zeros(16).F32(0);
         }
         /// <summary>SET of a Shape path: u32 id, u16 prop, u16 value type, u32 verbCount, u32 pointCount, verbs (padded), points.</summary>
         public static Pay PathSet(uint id, byte[] verbs, uint pointCount)
@@ -208,7 +215,6 @@ public static class ApplyTest
         Case("chain: SINGLE with 2 shaders", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 2)), Native.Result.BadArgument, "takes 1 shader id");
         Case("chain: PYRAMID with 1 shader", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(Protocol.EffectTemplate.Pyramid, 1)), Native.Result.BadArgument, "takes 2 shader id");
         Case("chain: truncated SHADER head", chain, Pay.ChainHead(rect, 1).Link(shader, 0, new Pay().U16(single).U16(1).Zeros(8)), Native.Result.BadLength, "truncated SHADER head");
-        Case("chain: reserved field not 0", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1, reserved: 7)), Native.Result.BadArgument, "reserved field 7");
         Case("chain: shader uniform name length 0", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).Entry(F, "a", new byte[4], nameLen: 0)), Native.Result.BadArgument, "name length 0");
         Case("chain: shader uniform name length 256", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).Entry(F, name256, new byte[4])), Native.Result.BadArgument, "name length 256");
         Case("chain: shader uniform past the body", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).U16(V4).U16(1).Bytes((byte)'a', 0, 0, 0).Zeros(4)), Native.Result.BadLength, "exceeds the body");
@@ -259,7 +265,7 @@ public static class ApplyTest
             .Create(3, Protocol.ElementType.Rectangle).Place(3, 0, 0, 100, 100).Color(3, 0, 1, 0).Reparent(3, 2, 0)
             .Create(4, Protocol.ElementType.Rectangle).Place(4, 150, 120, 100, 100).Color(4, 0, 0, 1).Reparent(4, 0, 0)
             .SetFloats(1, Protocol.PropertyId.Opacity, Protocol.ValueType.F32, 1f).SetBool(2, Protocol.PropertyId.Clip, false)
-            .Bind(1, 42, 0));
+            .Bind(1, 42));
         s.Check(rc == 0, $"apply: build scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         s.Pump(5);
         using (var a = s.Grab(w, "apply1.png"))
@@ -293,6 +299,8 @@ public static class ApplyTest
             s.Check(r == expected && e.Contains(mustContain), $"apply error: {what} -> {r} \"{e}\"");
         }
         Err("truncated buffer", b.Clear().Raw(Protocol.Op.Destroy, 40, 4), Native.Result.BadLength, "exceeds buffer");
+        Err("payloadLen over the cap", b.Clear().Raw(Protocol.Op.Destroy, Protocol.MaxCommandPayload + 1, 4), Native.Result.BadLength, "");
+        Err("header flags not 0", b.Clear().Destroy(1).Flags(1), Native.Result.BadArgument, "header flags 1");
         Err("wrong payloadLen", b.Clear().Raw(Protocol.Op.Destroy, 8, 8), Native.Result.BadLength, "expected 4");
         Err("wrong value length", b.Clear().Create(5, Protocol.ElementType.Rectangle).SetFloats(5, Protocol.PropertyId.Size, Protocol.ValueType.Vec2, 1, 2, 3), Native.Result.BadLength, "command #1");
         Err("unknown op", b.Clear().Raw(99, 0, 0), Native.Result.UnknownOp, "unknown opcode");
@@ -305,7 +313,7 @@ public static class ApplyTest
         Err("duplicate id", b.Clear().Create(1, Protocol.ElementType.Group), Native.Result.Invalid, "already exists");
         Err("create id 0", b.Clear().Create(0, Protocol.ElementType.Group), Native.Result.Invalid, "window root");
         Err("reparent into own subtree", b.Clear().Create(8, Protocol.ElementType.Group).Reparent(8, 1, 0).Reparent(1, 8, 0), Native.Result.Invalid, "command #2");
-        Err("bind unknown id", b.Clear().Bind(777, 1, 0), Native.Result.UnknownObject, "command #0");
+        Err("bind unknown id", b.Clear().Bind(777, 1), Native.Result.UnknownObject, "command #0");
         s.Check(Native.Apply(SceneHandle.Null, b.Span) == Native.Result.NullHandle, "apply: null window -> NullHandle");
 
         // Structured error: object id, op and property of the bad command, reason without prefix.

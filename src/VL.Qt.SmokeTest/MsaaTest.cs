@@ -303,7 +303,7 @@ public static class MsaaTest
         cmd.SetPlace(T, 50, 50, 300, 40);
         cmd.SetString(T, Protocol.PropertyId.Value, "");
         cmd.Reparent(T, 0, 0);
-        cmd.Bind(T, HT, 0);
+        cmd.Bind(T, HT);
         s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "msaa: input scene");
         Native.vlqt_window_show(w);
         s.Pump(3);
@@ -317,14 +317,14 @@ public static class MsaaTest
             for (int off = 0; off + 12 <= n;)
             {
                 ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(buf.AsSpan(off));
-                int len = BinaryPrimitives.ReadUInt16LittleEndian(buf.AsSpan(off + 2));
-                if (len < 8 || off + 4 + len > n)
+                int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(buf.AsSpan(off + 4));
+                if (len < 4 || off + 8 + len > n)
                     break;
-                var payload = buf.AsSpan(off + 12, len - 8);
-                if (ev == Protocol.EventId.Value && BinaryPrimitives.ReadUInt32LittleEndian(buf.AsSpan(off + 4)) == HT
+                var payload = buf.AsSpan(off + 12, len - 4);
+                if (ev == Protocol.EventId.Value && BinaryPrimitives.ReadUInt32LittleEndian(buf.AsSpan(off + 8)) == HT
                     && BinaryPrimitives.ReadUInt16LittleEndian(payload) == Protocol.ValueType.String)
                     value = Encoding.UTF8.GetString(payload.Slice(8, (int)BinaryPrimitives.ReadUInt32LittleEndian(payload.Slice(4))));
-                off += (4 + len + 3) & ~3;
+                off += (8 + len + 3) & ~3;
             }
             return value;
         }

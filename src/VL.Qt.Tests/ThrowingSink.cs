@@ -45,7 +45,7 @@ namespace VL.Qt.Tests
         public void Create(uint id, ushort type) { Tick(); _inner.Create(id, type); }
         public void Destroy(uint id) { Tick(); _inner.Destroy(id); }
         public void Reparent(uint id, uint parent, uint index) { Tick(); _inner.Reparent(id, parent, index); }
-        public void Bind(uint id, uint sinkHandle, ushort flags) { Tick(); _inner.Bind(id, sinkHandle, flags); }
+        public void Bind(uint id, uint feedbackId) { Tick(); _inner.Bind(id, feedbackId); }
 
         public void SetF32(uint id, ushort prop, float value) { Tick(); _inner.SetF32(id, prop, value); }
         public void SetI32(uint id, ushort prop, int value) { Tick(); _inner.SetI32(id, prop, value); }

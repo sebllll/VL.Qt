@@ -45,12 +45,12 @@ public static class QmlStaleComponentTest
             while (off + 12 <= b.Length)
             {
                 ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b[off..]);
-                int len = BinaryPrimitives.ReadUInt16LittleEndian(b[(off + 2)..]);
-                if (len < 8 || off + 4 + len > b.Length)
+                int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..]);
+                if (len < 4 || off + 8 + len > b.Length)
                     break;
                 if (ev == Protocol.EventId.Error)
-                    errors[BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..])] = System.Text.Encoding.UTF8.GetString(b.Slice(off + 12, len - 8));
-                off += (4 + len + 3) & ~3;
+                    errors[BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 8)..])] = System.Text.Encoding.UTF8.GetString(b.Slice(off + 12, len - 4));
+                off += (8 + len + 3) & ~3;
             }
         }
         string Err(uint h) => errors.TryGetValue(h, out var e) ? e : "";
@@ -67,7 +67,7 @@ public static class QmlStaleComponentTest
             cmd.SetI32(id, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
             cmd.SetMat4(id, Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation(x, 100, 0));
             cmd.Reparent(id, 0, 1000);
-            cmd.Bind(id, handle, 0);
+            cmd.Bind(id, handle);
         }
 
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);

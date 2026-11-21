@@ -27,8 +27,8 @@ public static class StyleCommandsTest
     private static bool Near(Color c, uint rgb) =>
         Math.Abs(c.R - (int)((rgb >> 16) & 0xFF)) < 8 && Math.Abs(c.G - (int)((rgb >> 8) & 0xFF)) < 8 && Math.Abs(c.B - (int)(rgb & 0xFF)) < 8;
 
-    private static int PayloadLen(byte[] b) => BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(2));
-    private static void SetPayloadLen(byte[] b, int len) => BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(2), (ushort)len);
+    private static int PayloadLen(byte[] b) => (int)BinaryPrimitives.ReadUInt32LittleEndian(b.AsSpan(4));
+    private static void SetPayloadLen(byte[] b, int len) => BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), (uint)len);
 
     private static void Run(Scenario s)
     {
@@ -108,19 +108,19 @@ public static class StyleCommandsTest
             {
                 int len = PayloadLen(b) - 8;
                 SetPayloadLen(b, len);
-                return b.AsSpan(0, 4 + len).ToArray();
+                return b.AsSpan(0, Protocol.HeaderSize + len).ToArray();
             });
         // declared count (2) greater than the entries that are there (1)
         Rejected("count too high", BadLength, c => { }, b =>
         {
-            BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(4 + 4), 2);
+            BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(Protocol.HeaderSize + 4), 2);
             return b;
         });
         // payload with a word more than the entries need
         Rejected("payload too long", BadLength, c => c.StyleF32(Protocol.StyleField.FrameRadius, Protocol.StyleState.Normal, 4), b =>
         {
             int len = PayloadLen(b) + 4;
-            var longer = new byte[4 + len];
+            var longer = new byte[Protocol.HeaderSize + len];
             b.CopyTo(longer, 0);
             SetPayloadLen(longer, len);
             return longer;
@@ -130,7 +130,7 @@ public static class StyleCommandsTest
         {
             int len = PayloadLen(b) - 4;
             SetPayloadLen(b, len);
-            return b.AsSpan(0, 4 + len).ToArray();
+            return b.AsSpan(0, Protocol.HeaderSize + len).ToArray();
         });
 
         // padded end: the last entry is a string of 3 bytes (4 + 4 + 3 = 11 bytes, padded to 12). Both payloadLen forms are

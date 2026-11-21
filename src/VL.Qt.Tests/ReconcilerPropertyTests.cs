@@ -399,58 +399,23 @@ namespace VL.Qt.Tests
             Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
         }
 
-        private sealed class CountingSink : ICommandSink
+        private sealed class CountingSink : NullCommandSink
         {
             public int Sets;
-            public void Create(uint id, ushort type) { }
-            public void Destroy(uint id) { }
-            public void Reparent(uint id, uint parent, uint index) { }
-            public void Bind(uint id, uint feedbackId, ushort flags) { }
-            public void SetF32(uint id, ushort prop, float value) => Sets++;
-            public void SetI32(uint id, ushort prop, int value) => Sets++;
-            public void SetBool(uint id, ushort prop, bool value) => Sets++;
-            public void SetColor(uint id, ushort prop, float r, float g, float b, float a) => Sets++;
-            public void SetVec2(uint id, ushort prop, float x, float y) => Sets++;
-            public void SetRect(uint id, ushort prop, float x, float y, float width, float height) => Sets++;
-            public void SetMat4(uint id, ushort prop, in Matrix m) => Sets++;
-            public void SetString(uint id, ushort prop, ReadOnlySpan<char> value) => Sets++;
-            public void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values) => Sets++;
-            public void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points) => Sets++;
-            public void SetRef(uint id, ushort prop, uint refId) => Sets++;
-            public void SetU64(uint id, ushort prop, ulong value) => Sets++;
-            public void BeginStyle(uint id, ushort flags) { }
-            public void StyleColor(ushort field, byte state, float r, float g, float b, float a) { }
-            public void StyleF32(ushort field, byte state, float value) { }
-            public void StyleI32(ushort field, byte state, int value) { }
-            public void StyleString(ushort field, byte state, ReadOnlySpan<char> value) { }
-            public void EndStyle() { }
-            public void SetIvec2(uint id, ushort prop, int x, int y) => Sets++;
-            public void BeginUniforms(uint id, ushort flags) => Sets++;
-            public void UniformF32(ReadOnlySpan<char> name, float value) { }
-            public void UniformI32(ReadOnlySpan<char> name, int value) { }
-            public void UniformBool(ReadOnlySpan<char> name, bool value) { }
-            public void UniformVec2(ReadOnlySpan<char> name, float x, float y) { }
-            public void UniformVec3(ReadOnlySpan<char> name, float x, float y, float z) { }
-            public void UniformVec4(ReadOnlySpan<char> name, float x, float y, float z, float w) { }
-            public void UniformIvec2(ReadOnlySpan<char> name, int x, int y) { }
-            public void UniformColor(ReadOnlySpan<char> name, float r, float g, float b, float a) { }
-            public void UniformMat4(ReadOnlySpan<char> name, in Matrix m) { }
-            public void UniformRef(ReadOnlySpan<char> name, uint refId) { }
-            public void UniformU64(ReadOnlySpan<char> name, ulong value) { }
-            public void UniformSampler(ReadOnlySpan<char> name, ulong packed) { }
-            public void EndUniforms() { }
-            public void BeginEffectChain(uint id) { }
-            public void BeginMultiLink() { }
-            public void EffectBool(ushort prop, bool value) { }
-            public void EffectF32(ushort prop, float value) { }
-            public void EffectI32(ushort prop, int value) { }
-            public void EffectColor(ushort prop, float r, float g, float b, float a) { }
-            public void EffectRect(ushort prop, float x, float y, float width, float height) { }
-            public void EffectRef(ushort prop, uint refId) { }
-            public void BeginEffectChainLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
-                float paddingRight, float paddingBottom, float strength) { }
-            public void EndLink() { }
-            public void EndEffectChain() { }
+            public override void SetF32(uint id, ushort prop, float value) => Sets++;
+            public override void SetI32(uint id, ushort prop, int value) => Sets++;
+            public override void SetBool(uint id, ushort prop, bool value) => Sets++;
+            public override void SetColor(uint id, ushort prop, float r, float g, float b, float a) => Sets++;
+            public override void SetVec2(uint id, ushort prop, float x, float y) => Sets++;
+            public override void SetRect(uint id, ushort prop, float x, float y, float width, float height) => Sets++;
+            public override void SetMat4(uint id, ushort prop, in Matrix m) => Sets++;
+            public override void SetString(uint id, ushort prop, ReadOnlySpan<char> value) => Sets++;
+            public override void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values) => Sets++;
+            public override void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points) => Sets++;
+            public override void SetRef(uint id, ushort prop, uint refId) => Sets++;
+            public override void SetU64(uint id, ushort prop, ulong value) => Sets++;
+            public override void SetIvec2(uint id, ushort prop, int x, int y) => Sets++;
+            public override void BeginUniforms(uint id, ushort flags) => Sets++;
         }
     }
 }

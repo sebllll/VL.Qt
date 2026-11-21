@@ -73,9 +73,9 @@ public static class ShaderEffectTest
             var n = NativeCalls.ResPoll(resBuf);
             for (int at = 0; at < n;)
             {
-                var len = BitConverter.ToUInt16(resBuf, at + 2);
-                resEvents.Add(new Res(BitConverter.ToUInt16(resBuf, at), BitConverter.ToUInt64(resBuf, at + 4), resBuf.AsSpan(at + 12, len - 8).ToArray()));
-                at += (4 + len + 3) & ~3;
+                var len = (int)BitConverter.ToUInt32(resBuf, at + 4);
+                resEvents.Add(new Res(BitConverter.ToUInt16(resBuf, at), BitConverter.ToUInt64(resBuf, at + 8), resBuf.AsSpan(at + 16, len - 8).ToArray()));
+                at += (8 + len + 3) & ~3;
             }
         }
         string ResError(ulong id)
@@ -127,10 +127,10 @@ public static class ShaderEffectTest
             int n = NativeCalls.Poll(w, evBuf);
             for (int at = 0; at < n;)
             {
-                ushort ev = BitConverter.ToUInt16(evBuf, at), len = BitConverter.ToUInt16(evBuf, at + 2);
+                ushort ev = BitConverter.ToUInt16(evBuf, at), len = (ushort)BitConverter.ToUInt32(evBuf, at + 4);
                 if (ev == Protocol.EventId.Error)
-                    errors[BitConverter.ToUInt32(evBuf, at + 4)] = Encoding.UTF8.GetString(evBuf, at + 12, len - 8);
-                at += (4 + len + 3) & ~3;
+                    errors[BitConverter.ToUInt32(evBuf, at + 8)] = Encoding.UTF8.GetString(evBuf, at + 12, len - 4);
+                at += (8 + len + 3) & ~3;
             }
             return errors.TryGetValue(handle, out var s) ? s : "";
         }
@@ -188,8 +188,8 @@ public static class ShaderEffectTest
         // 2) generative gradient at (400, 50) 300 x 200, no input
         Effect(Grad, 400, 50, 300, 200, gradient);
         Gradient();
-        cmd.Bind(Wave, HWave, 0);
-        cmd.Bind(Grad, HGrad, 0);
+        cmd.Bind(Wave, HWave);
+        cmd.Bind(Grad, HGrad);
         // 3a) fixture, element as texture: input red, overlay (child 1) blue, amount 0.5 -> purple at (50, 300) 200 x 150
         Effect(DualTex, 50, 300, 200, 150, dual);
         Input(DualTex, DualTexIn, 200, 150, 0, false, 1, 0, 0);
@@ -220,7 +220,7 @@ public static class ShaderEffectTest
         // 4) failed shader (missing file) and no shader at all: draw nothing, input hidden, at (50, 470) and (250, 470)
         Effect(Broken, 50, 470, 150, 100, missing);
         Input(Broken, BrokenIn, 150, 100, 0, true, 0, 0, 0);
-        cmd.Bind(Broken, HBroken, 0);
+        cmd.Bind(Broken, HBroken);
         Effect(NoShader, 250, 470, 150, 100, 0);
         Input(NoShader, NoShaderIn, 150, 100, 0, true, 0, 0, 0);
         CheckApply("shader effect scene");

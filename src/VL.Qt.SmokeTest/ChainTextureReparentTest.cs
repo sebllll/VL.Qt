@@ -48,12 +48,12 @@ public static class ChainTextureReparentTest
             while (off + 12 <= b.Length)
             {
                 ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b[off..]);
-                int len = BinaryPrimitives.ReadUInt16LittleEndian(b[(off + 2)..]);
-                if (len < 8 || off + 4 + len > b.Length)
+                int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..]);
+                if (len < 4 || off + 8 + len > b.Length)
                     break;
                 if (ev == Protocol.EventId.Error && len > 8)
-                    errors += $"[h{BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..])}] " + System.Text.Encoding.UTF8.GetString(b.Slice(off + 12, len - 8)) + " ";
-                off += (4 + len + 3) & ~3;
+                    errors += $"[h{BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 8)..])}] " + System.Text.Encoding.UTF8.GetString(b.Slice(off + 12, len - 4)) + " ";
+                off += (8 + len + 3) & ~3;
             }
         }
 
@@ -62,11 +62,11 @@ public static class ChainTextureReparentTest
         cmd.SetPlace(R, RX, RY, RW, RH);
         cmd.SetColor(R, Protocol.PropertyId.Color, 1, 0.5f, 0.1f, 1);
         cmd.Reparent(R, 0, 0);
-        cmd.Bind(R, HR, 0);
+        cmd.Bind(R, HR);
         cmd.Create(L, Protocol.ElementType.Rectangle);
         cmd.SetPlace(L, 0, 0, RW, RH);
         cmd.SetColor(L, Protocol.PropertyId.Color, 0, 0.4f, 1, 1);
-        cmd.Bind(L, HL, 0);
+        cmd.Bind(L, HL);
         cmd.BeginEffectChain(R);
         cmd.BeginEffectChainLink(Protocol.EffectTemplate.Single, [blend], 0, 0, 0, 0, 0);
         cmd.UniformI32("mode", 0);

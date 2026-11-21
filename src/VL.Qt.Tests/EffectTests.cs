@@ -83,7 +83,7 @@ namespace VL.Qt.Tests
             Assert.That(Chains, Has.Length.EqualTo(1));
             Assert.That(Chains[0], Does.StartWith("CHAIN 1 | multi BlurEnabled=bool(1) Blur=f32(0.5) "));
             Assert.That(Chains[0], Does.Contain(" ShadowVerticalOffset=f32(20)"));
-            Assert.That(Sets(K.Enabled), Is.EqualTo(0));
+            Assert.That(Sets(K.BlurEnabled), Is.EqualTo(0));
 
             // New description with the same chain instance: nothing.
             Frame(new Rectangle { Effect = chain, Opacity = 1 });
@@ -118,7 +118,7 @@ namespace VL.Qt.Tests
         {
             Frame(new Rectangle());
             Assert.That(Chains, Is.Empty);
-            Assert.That(_sink.Commands.Any(c => c.StartsWith("SET ") && c.Split(' ')[2] == nameof(K.Enabled)), Is.False);
+            Assert.That(_sink.Commands.Any(c => c.StartsWith("SET ") && c.Split(' ')[2] == nameof(K.BlurEnabled)), Is.False);
         }
 
         [Test]

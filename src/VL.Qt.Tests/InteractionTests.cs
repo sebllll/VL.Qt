@@ -62,7 +62,7 @@ namespace VL.Qt.Tests
             Assert.That(Commands, Is.EqualTo(new[]
             {
                 "CREATE 1 Rectangle", "REPARENT 1 0 0",
-                $"CREATE 2 {hover}", "REPARENT 2 1 0", "BIND 2 1 0",
+                $"CREATE 2 {hover}", "REPARENT 2 1 0", "BIND 2 1",
             }));
             Assert.That(_rec.Bindings[2], Is.EqualTo(new FeedbackSlot(a, 0)));
             Assert.That(_rec.FeedbackRouter.Count, Is.EqualTo(1));
@@ -98,7 +98,7 @@ namespace VL.Qt.Tests
             Frame(R(first));
 
             Frame(R(H(b, first)));
-            Assert.That(Commands, Is.EqualTo(new[] { $"CREATE 3 {hover}", "REPARENT 3 1 0", "BIND 3 2 0" }));
+            Assert.That(Commands, Is.EqualTo(new[] { $"CREATE 3 {hover}", "REPARENT 3 1 0", "BIND 3 2" }));
             Assert.That(_ids.Count, Is.EqualTo(3));
         }
 
@@ -153,7 +153,7 @@ namespace VL.Qt.Tests
             Frame(G(R(null), second));
             Assert.That(Commands, Is.EqualTo(new[] { "DESTROY 3" }));
             Frame(G(R(null), second));
-            Assert.That(Commands, Is.EqualTo(new[] { $"CREATE 3 {hover}", "REPARENT 3 4 0", "BIND 3 2 0" }));
+            Assert.That(Commands, Is.EqualTo(new[] { $"CREATE 3 {hover}", "REPARENT 3 4 0", "BIND 3 2" }));
             Assert.That(a.Warning, Is.Null, "warning cleared");
 
             Frame(G(R(null), second));
@@ -240,7 +240,7 @@ namespace VL.Qt.Tests
             Assert.That(_scene.HandlerCount, Is.Zero);
             Assert.That(_rec.FeedbackRouter.Count, Is.Zero);
             Frame(root);
-            Assert.That(Commands.Select(c => c.Replace("BIND 2 2 0", "BIND 2 1 0")), Is.EqualTo(first), "same commands, new feedback handle");
+            Assert.That(Commands.Select(c => c.Replace("BIND 2 2", "BIND 2 1")), Is.EqualTo(first), "same commands, new feedback handle");
         }
 
         [Test]
@@ -254,7 +254,7 @@ namespace VL.Qt.Tests
             Assert.That(c[0], Is.EqualTo("DESTROY 2"));
             Assert.That(c[1], Does.StartWith("CREATE ").And.EndWith(" 99"));
             Assert.That(c[2], Does.EndWith(" 1 0").And.StartWith("REPARENT "));
-            Assert.That(c[3], Does.EndWith(" 2 0").And.StartWith("BIND "));
+            Assert.That(c[3], Does.EndWith(" 2").And.StartWith("BIND "));
         }
 
         // --- Interaction pin at every element node (pkg 03) ---

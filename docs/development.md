@@ -222,6 +222,7 @@ src/VL.Qt/                  # C# library
   Nodes/                    # vvvv node wrappers, one folder per category (Elements/, Widgets/, ...)
   Reconciler/               # scene diffing and sync
   Wire/                     # the protocol to QtNative (namespace VL.Qt.Wire, internal)
+    CommandSinkExtensions.cs  # Stride-typed overloads (Color4, RectangleF, string) for any ICommandSink
     CommandWriter.cs        # binary command encoder
     EventReader.cs          # event buffer parser
     ICommandSink.cs         # target of the reconciler's commands

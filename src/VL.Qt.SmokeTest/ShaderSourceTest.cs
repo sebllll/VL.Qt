@@ -80,9 +80,9 @@ public static class ShaderSourceTest
             var n = NativeCalls.ResPoll(resBuf);
             for (int at = 0; at < n;)
             {
-                var len = BitConverter.ToUInt16(resBuf, at + 2);
-                resEvents.Add(new Res(BitConverter.ToUInt16(resBuf, at), BitConverter.ToUInt64(resBuf, at + 4), resBuf.AsSpan(at + 12, len - 8).ToArray()));
-                at += (4 + len + 3) & ~3;
+                var len = (int)BitConverter.ToUInt32(resBuf, at + 4);
+                resEvents.Add(new Res(BitConverter.ToUInt16(resBuf, at), BitConverter.ToUInt64(resBuf, at + 8), resBuf.AsSpan(at + 16, len - 8).ToArray()));
+                at += (8 + len + 3) & ~3;
             }
             var e = resEvents.FindLast(r => r.Id == id && r.Ev == Protocol.ResourceEventId.Error);
             return e == null ? "" : Encoding.UTF8.GetString(e.Payload);

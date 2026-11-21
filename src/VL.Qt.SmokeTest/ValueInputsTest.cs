@@ -44,11 +44,11 @@ public static class ValueInputsTest
         while (off + 12 <= b.Length)
         {
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
-            int len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
-            if (len < 8 || off + 4 + len > b.Length)
+            int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4));
+            if (len < 4 || off + 8 + len > b.Length)
                 break;
-            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)), b.Slice(off + 12, len - 8).ToArray()));
-            off += (4 + len + 3) & ~3;
+            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)), b.Slice(off + 12, len - 4).ToArray()));
+            off += (8 + len + 3) & ~3;
         }
         return list;
     }
@@ -122,13 +122,13 @@ public static class ValueInputsTest
         cmd.SetBool(C, Protocol.PropertyId.Value, false);
         cmd.SetBool(C, Protocol.PropertyId.Enabled, true);
         cmd.Reparent(C, 0, 0);
-        cmd.Bind(C, HC, 0);
+        cmd.Bind(C, HC);
         cmd.Create(Sw, Protocol.ElementType.Switch);
         VL.Qt.Styles.BaseStyle.Write(cmd, Sw); // like the Reconciler
         cmd.SetPlace(Sw, 300, 100, 0, 0);
         cmd.SetBool(Sw, Protocol.PropertyId.Value, true);
         cmd.Reparent(Sw, 0, 1);
-        cmd.Bind(Sw, HS, 0);
+        cmd.Bind(Sw, HS);
         CheckApply("checkbox + switch create");
         Mouse(TestProtocol.Mouse.Move, 790, 590);
         s.Pump(2);
@@ -167,7 +167,7 @@ public static class ValueInputsTest
         cmd.SetBool(C, Protocol.PropertyId.Enabled, true);
         CheckApply("checkbox enabled true");
         Click(cx, cy);
-        cmd.Bind(C, HC2, 0);
+        cmd.Bind(C, HC2);
         CheckApply("checkbox rebind");
         recs = Frame();
         s.Check(Values(recs, HC).Count == 0 && Values(recs, HC2).Count == 0, $"checkbox rebind drops the unpolled change ({S(recs)})");
@@ -205,7 +205,7 @@ public static class ValueInputsTest
         VL.Qt.Styles.BaseStyle.Write(cmd, Sl); // like the Reconciler
         cmd.SetPlace(Sl, 100, 200, 0, 0);
         cmd.Reparent(Sl, 0, 0);
-        cmd.Bind(Sl, HL, 0);
+        cmd.Bind(Sl, HL);
         CheckApply("slider create");
         recs = Frame();
         recs.AddRange(Frame());
@@ -286,7 +286,7 @@ public static class ValueInputsTest
 
         // Rebind drops a change not polled.
         Click(X(0.75f), y);
-        cmd.Bind(Sl, HL2, 0);
+        cmd.Bind(Sl, HL2);
         CheckApply("slider rebind");
         recs = Frame();
         s.Check(Values(recs, HL).Count == 0 && Values(recs, HL2).Count == 0, $"slider rebind drops the unpolled change ({S(recs)})");
@@ -322,13 +322,13 @@ public static class ValueInputsTest
         cmd.SetBool(T1, Protocol.PropertyId.Editable, true);
         cmd.SetBool(T1, Protocol.PropertyId.Enabled, true);
         cmd.Reparent(T1, 0, 0);
-        cmd.Bind(T1, HT, 0);
+        cmd.Bind(T1, HT);
         cmd.Create(T2, Protocol.ElementType.TextField);
         VL.Qt.Styles.BaseStyle.Write(cmd, T2); // like the Reconciler
         cmd.SetBool(T2, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(T2, 100, 400, 300, 40);
         cmd.Reparent(T2, 0, 1);
-        cmd.Bind(T2, HT2, 0);
+        cmd.Bind(T2, HT2);
         CheckApply("textfield create");
         recs = Frame();
         recs.AddRange(Frame());
@@ -420,7 +420,7 @@ public static class ValueInputsTest
         Click(t1x, t1y);
         Type("lost");
         Key(KeyReturn, 0, "\r");
-        cmd.Bind(T1, HT3, 0);
+        cmd.Bind(T1, HT3);
         CheckApply("textfield rebind");
         recs = Frame();
         s.Check(Values(recs, HT).Count == 0 && Values(recs, HT3).Count == 0, $"textfield rebind drops the unpolled change ({S(recs)})");

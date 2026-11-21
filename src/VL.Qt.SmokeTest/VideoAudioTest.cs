@@ -233,7 +233,7 @@ public static class VideoAudioTest
         cmd.SetU64(VideoId, Protocol.PropertyId.AudioTap, tap1);
         cmd.SetBool(VideoId, Protocol.PropertyId.Playing, true);
         cmd.Reparent(VideoId, 0, 0);
-        cmd.Bind(VideoId, Handle, 0);
+        cmd.Bind(VideoId, Handle);
         Apply("create video with tap, playing");
 
         // 1. Playback: samples, rate, sync.

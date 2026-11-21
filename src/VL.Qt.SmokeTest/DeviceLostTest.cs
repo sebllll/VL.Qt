@@ -146,13 +146,13 @@ public static class DeviceLostTest
             }
             for (int at = 0; at < n;)
             {
-                var len = BitConverter.ToUInt16(resBuf, at + 2);
+                var len = (int)BitConverter.ToUInt32(resBuf, at + 4);
                 if (BitConverter.ToUInt16(resBuf, at) == Protocol.ResourceEventId.Info)
                 {
-                    var id = BitConverter.ToUInt64(resBuf, at + 4);
+                    var id = BitConverter.ToUInt64(resBuf, at + 8);
                     infos[id] = infos.GetValueOrDefault(id) + 1;
                 }
-                at += (4 + len + 3) & ~3;
+                at += (8 + len + 3) & ~3;
             }
         }
         void Pump()
