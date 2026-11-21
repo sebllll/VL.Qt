@@ -6,7 +6,7 @@ using VL.Qt.Interop;
 using VL.Qt.Styles;
 using VL.Qt.Wire;
 
-namespace VL.Qt
+namespace VL.Qt.Reconciliation
 {
     /// <summary>
     /// Compares the element tree of one window with the tree of the last frame and writes the minimal
@@ -20,7 +20,7 @@ namespace VL.Qt
     /// its whole subtree.
     /// </para>
     /// <para>
-    /// An element may hang at several places of this tree (<see cref="SceneRegistry"/>): every occurrence gets
+    /// An element may hang at several places of this tree (<see cref="OccurrenceRegistry"/>): every occurrence gets
     /// its own Qt object and its own feedback id on the element's feedback. The first occurrence in traversal order
     /// (depth-first, children in order; an effect mask counts at its place, before the children) is the primary one
     /// (<see cref="Node.IsPrimary"/>): only its feedback id reports state values. A new occurrence is primary if the current
@@ -29,7 +29,7 @@ namespace VL.Qt
     /// new feedback id, so QtNative sends its current state again. Other renderers may show the same element at the same
     /// time, each with its own Qt objects; only the owner renderer (the first one) has the primary occurrence.
     /// When this tree lets go of the last occurrence of an element it owns, it hands the element over at the end of the
-    /// update (<see cref="SceneRegistry.HandOver"/>); the next renderer picks its primary in its next update
+    /// update (<see cref="OccurrenceRegistry.HandOver"/>); the next renderer picks its primary in its next update
     /// (<see cref="TakeOver"/>). A video is shown once only, app-wide (inside this tree the first occurrence in traversal
     /// order wins and takes it over from a later position if needed): an ignored occurrence becomes a placeholder node
     /// without Qt object and sets a warning in the element's feedback. REPARENT indices count only the real objects.
@@ -77,7 +77,7 @@ namespace VL.Qt
     {
         private readonly ICommandSink _sink;
         private readonly IdAllocator _ids;
-        private readonly SceneRegistry _scene;
+        private readonly OccurrenceRegistry _scene;
         private readonly Dictionary<uint, FeedbackSlot> _bindings = new();
         private readonly FeedbackRouter _feedbackRouter = new();
         private readonly List<Element> _pendingPrimary = new(); // elements whose primary occurrence let go in this pass
@@ -91,8 +91,8 @@ namespace VL.Qt
 
         /// <param name="sink">Target of the commands.</param>
         /// <param name="ids">Object id allocator of the window.</param>
-        /// <param name="scene">Occurrence registry of the app (<see cref="SceneRegistry.ForApp"/>), shared by its renderers.</param>
-        public Reconciler(ICommandSink sink, IdAllocator ids, SceneRegistry scene)
+        /// <param name="scene">Occurrence registry of the app (<see cref="OccurrenceRegistry.ForApp"/>), shared by its renderers.</param>
+        public Reconciler(ICommandSink sink, IdAllocator ids, OccurrenceRegistry scene)
         {
             _sink = sink ?? throw new ArgumentNullException(nameof(sink));
             _ids = ids ?? throw new ArgumentNullException(nameof(ids));
@@ -118,7 +118,7 @@ namespace VL.Qt
         public void Invalidate() => _invalidated = true;
 
         /// <summary>
-        /// <paramref name="element"/> was handed over to this renderer (<see cref="SceneRegistry.HandOver"/>): the next
+        /// <paramref name="element"/> was handed over to this renderer (<see cref="OccurrenceRegistry.HandOver"/>): the next
         /// <see cref="Update(Element?, in SpaceMapping)"/> picks the first of its occurrences in this tree as the primary one.
         /// </summary>
         internal void TakeOver(Element element) => _pendingPrimary.Add(element);
@@ -283,7 +283,7 @@ namespace VL.Qt
 
                 existing.Dirty = false;
                 existing.VisitedPass = _pass;
-                if (!same || (SceneRegistry.IsExclusive(next) && _scene.OwnerOf(next) != existing))
+                if (!same || (OccurrenceRegistry.IsExclusive(next) && _scene.OwnerOf(next) != existing))
                 {
                     if (!CanOwn(next, existing))
                     {
@@ -414,7 +414,7 @@ namespace VL.Qt
         private bool CanOwn(Element element, Node? self)
         {
             var ownerReconciler = _scene.OwnerReconcilerOf(element);
-            if (ownerReconciler is null || !SceneRegistry.IsExclusive(element))
+            if (ownerReconciler is null || !OccurrenceRegistry.IsExclusive(element))
                 return true;
             if (!ReferenceEquals(ownerReconciler, this))
                 return false;
@@ -431,7 +431,7 @@ namespace VL.Qt
 
         /// <summary>Whether a placeholder of <paramref name="element"/> has to stay one: it is a video shown at another node.</summary>
         private bool IsShownElsewhere(Element element)
-            => SceneRegistry.IsExclusive(element) && _scene.OwnerReconcilerOf(element) is not null;
+            => OccurrenceRegistry.IsExclusive(element) && _scene.OwnerReconcilerOf(element) is not null;
 
         /// <summary>
         /// Registers <paramref name="node"/> as an occurrence of <paramref name="element"/> and decides whether it is the
@@ -483,7 +483,7 @@ namespace VL.Qt
         /// Picks the new primary occurrence of every element whose primary let go in this pass, or that was handed over to
         /// this renderer: the first of the remaining occurrences in traversal order (<see cref="IsBefore"/>), re-bound with
         /// a new feedback id so QtNative sends its state. An element without occurrences left in this tree goes to the next
-        /// renderer that shows it (<see cref="SceneRegistry.HandOver"/>). Runs once per update after the whole tree (and
+        /// renderer that shows it (<see cref="OccurrenceRegistry.HandOver"/>). Runs once per update after the whole tree (and
         /// after a clear); nothing to do (and no allocation) in the steady state.
         /// </summary>
         private void ResolvePrimaries()
@@ -680,7 +680,7 @@ namespace VL.Qt
         /// handler (CREATE, property SETs, REPARENT to the item, BIND to a new feedback id), the same instance costs
         /// nothing, a changed instance sends the changed properties, a missing key is destroyed (ids and feedback id freed).
         /// An interaction that is already active at another handler (another element, the same chain twice, another
-        /// renderer) gets a placeholder and the duplicate warning (<see cref="SceneRegistry"/>); it takes over once
+        /// renderer) gets a placeholder and the duplicate warning (<see cref="OccurrenceRegistry"/>); it takes over once
         /// the owner lets go (next update). A reference-equal chain is skipped unless the whole tree is forced.
         /// </summary>
         private void ReconcileHandlers(Node node, Interaction? previous, Interaction? next)

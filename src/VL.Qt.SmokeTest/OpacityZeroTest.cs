@@ -5,6 +5,7 @@ using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Lib.Reactive;
 using NUnit.Framework;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -33,7 +34,7 @@ public static class OpacityZeroTest
         s.Check(w != SceneHandle.Null, "opacity-zero: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
         var buf = new byte[1 << 16];
         using var rectA = new RectangleNode(_ => new NoMessage());
         using var rectB = new RectangleNode(_ => new NoMessage());

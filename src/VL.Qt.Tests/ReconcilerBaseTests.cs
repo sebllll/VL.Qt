@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Tests

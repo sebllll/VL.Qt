@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 using VL.Qt.Elements;
 using VL.Qt.Styles;
 
-namespace VL.Qt
+namespace VL.Qt.Reconciliation
 {
     /// <summary>
     /// Mirror of one Qt item as the reconciler last sent it: its id, type, the description it was last
@@ -24,7 +24,7 @@ namespace VL.Qt
         /// </summary>
         public uint Id { get; }
 
-        /// <summary>Placeholder for a video that is shown elsewhere (<see cref="SceneRegistry"/>).</summary>
+        /// <summary>Placeholder for a video that is shown elsewhere (<see cref="OccurrenceRegistry"/>).</summary>
         public bool IsIgnored => Id == 0;
 
         /// <summary>CREATE type; a different type at this position means destroy + create.</summary>
@@ -44,7 +44,7 @@ namespace VL.Qt
 
         /// <summary>
         /// This node is the primary occurrence of its element (first in traversal order of the owner renderer,
-        /// see <see cref="SceneRegistry"/>): only its feedback id reports state values.
+        /// see <see cref="OccurrenceRegistry"/>): only its feedback id reports state values.
         /// </summary>
         public bool IsPrimary { get; set; }
 
@@ -126,7 +126,7 @@ namespace VL.Qt
     /// <summary>
     /// Mirror of one input handler object as the reconciler last sent it: id, type, key (the feedback of the
     /// interaction node), the description it was last updated from and its feedback id. Id 0 marks a placeholder for
-    /// an ignored occurrence (the interaction is active elsewhere, see <see cref="SceneRegistry"/>).
+    /// an ignored occurrence (the interaction is active elsewhere, see <see cref="OccurrenceRegistry"/>).
     /// </summary>
     internal sealed class HandlerNode
     {

@@ -7,6 +7,7 @@ using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Diagnostics;
 using VL.Qt.Elements;
+using VL.Qt.Reconciliation;
 using VL.Qt.Shaders;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
@@ -300,7 +301,7 @@ void main() { fragColor = vec4(phase); }
             var id = ((ShaderEffect)Output(instance)!).ShaderIds[0];
 
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
             rec.Update(new Rectangle { Effect = Output(instance) }, Space.DIPTopLeft);
 
             var chain = sink.OfOp("CHAIN").Single().Split(" | ").Skip(1).ToArray();

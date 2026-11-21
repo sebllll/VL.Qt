@@ -6,6 +6,7 @@ using System.IO;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Lib.Reactive;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -50,7 +51,7 @@ public static class SpaceTest
 
     private static void Run(Scenario s)
     {
-        var scene = new SceneRegistry();
+        var scene = new OccurrenceRegistry();
         var r = new WindowScene(scene, "VL.Qt space test", new RectangleF(100, 100, 800, 600));
         s.Check(r.Window != SceneHandle.Null, "window created " + r.Error);
         if (r.Window == SceneHandle.Null)

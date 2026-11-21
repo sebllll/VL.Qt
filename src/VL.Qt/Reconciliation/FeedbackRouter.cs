@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 using VL.Lib.Collections;
 using Stride.Core.Mathematics;
+using VL.Qt.Elements;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Elements
+namespace VL.Qt.Reconciliation
 {
     /// <summary>Counts of one <see cref="FeedbackRouter.Dispatch"/> call.</summary>
     internal readonly record struct DispatchResult(int Applied, int Ignored, string? Error);
@@ -25,7 +26,7 @@ namespace VL.Qt.Elements
     /// <para>
     /// Several ids may point to the same slot (one element at several places of the tree, one Qt object and
     /// id per occurrence). Only the primary id (the first occurrence in traversal order, see
-    /// <see cref="SceneRegistry"/>) writes state values (Measured, SceneBounds, Media, Error) and resets the slot when
+    /// <see cref="OccurrenceRegistry"/>) writes state values (Measured, SceneBounds, Media, Error) and resets the slot when
     /// it is released; events (Click, Value) count from every id. Ids of input handlers are always primary.
     /// </para>
     /// </summary>

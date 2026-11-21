@@ -7,7 +7,7 @@ using VL.Qt.Styles;
 using VL.Qt.Wire;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 
-namespace VL.Qt
+namespace VL.Qt.Reconciliation
 {
     /// <summary>
     /// Effect chain (plan effects/08): the Effect chain of an element is segmented (<see cref="Effect.Segment"/>) into

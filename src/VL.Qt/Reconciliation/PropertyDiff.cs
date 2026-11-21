@@ -7,7 +7,7 @@ using VL.Qt.Wire;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt
+namespace VL.Qt.Reconciliation
 {
     /// <summary>
     /// Property diff (04c): per element type one hand-written method that compares the previous description

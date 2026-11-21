@@ -5,7 +5,7 @@ using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
 
-namespace VL.Qt
+namespace VL.Qt.Reconciliation
 {
     /// <summary>
     /// One uniform as QtNative holds it: wire value type, the value and, for samplers, the resolved id (element

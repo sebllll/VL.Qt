@@ -4,6 +4,7 @@ using System.Linq;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
@@ -21,7 +22,7 @@ namespace VL.Qt.Tests
         {
             _sink = new RecordingSink();
             _ids = new IdAllocator();
-            _rec = new Reconciler(_sink, _ids, new SceneRegistry());
+            _rec = new Reconciler(_sink, _ids, new OccurrenceRegistry());
         }
 
         private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };

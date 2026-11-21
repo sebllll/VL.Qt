@@ -7,6 +7,7 @@ using VL.Lib.Mathematics;
 using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 
@@ -65,7 +66,7 @@ namespace VL.Qt.Tests
         public void Reconciler_SendsTypeAndChangedProps()
         {
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
             rec.Update(Update(), Space.DIPTopLeft);
             Assert.That(sink.Commands, Does.Contain($"CREATE 1 Button"));
             Assert.That(sink.Commands, Does.Contain($"SET 1 Text string(Button)"));

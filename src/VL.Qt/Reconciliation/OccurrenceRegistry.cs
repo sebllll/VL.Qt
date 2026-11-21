@@ -6,7 +6,7 @@ using VL.Core;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
 
-namespace VL.Qt
+namespace VL.Qt.Reconciliation
 {
 ﻿    /// <summary>
     /// App-wide record of where each element instance is shown (docs/decisions/reconciler-identity.md).
@@ -45,7 +45,7 @@ namespace VL.Qt
     /// One instance per vvvv app (<see cref="ForApp"/>); tests and the SmokeTest create their own.
     /// Main thread only. Allocation-free as long as the set of occurrences does not change.
     /// </summary>
-    internal sealed class SceneRegistry
+    internal sealed class OccurrenceRegistry
     {
         /// <summary>Warning written to the feedback slot of a video that is used more than once.</summary>
         public const string VideoDuplicateWarning = "Video is used more than once (in one tree or across renderers); only the first occurrence plays.";
@@ -56,8 +56,8 @@ namespace VL.Qt
         /// renderer that was not disposed cleanly would turn videos of the restarted app into false duplicates.
         /// A new app host gets a new, empty registry.
         /// </summary>
-        public static SceneRegistry ForApp(AppHost appHost)
-            => appHost.Services.GetOrAddService(_ => new SceneRegistry(), allowToAskParent: false);
+        public static OccurrenceRegistry ForApp(AppHost appHost)
+            => appHost.Services.GetOrAddService(_ => new OccurrenceRegistry(), allowToAskParent: false);
 
         /// <summary>Whether <paramref name="element"/> may be shown at one place only (app-wide, inside one tree, too).</summary>
         public static bool IsExclusive(Element element) => element.Type == ElementType.Video;

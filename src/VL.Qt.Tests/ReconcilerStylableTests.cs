@@ -7,6 +7,7 @@ using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Reconciliation;
 using VL.Qt.Styles;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
@@ -62,7 +63,7 @@ namespace VL.Qt.Tests
         public void SetUp()
         {
             _sink = new RecordingSink();
-            _rec = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
+            _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry());
         }
 
         private static Style Radius(float r) => new() { Frame = new FrameStyle { Radius = default(StateValues<float>).With(StyleStates.Normal, r) } };
@@ -471,7 +472,7 @@ namespace VL.Qt.Tests
             var s = new TestStylable();
             var root = new Group { Style = Radius(13), Children = Kids(new Row { Children = Kids(Wrap(s), new Button()) }, new Rectangle()) };
             var writer = new CommandWriter();
-            var rec = new Reconciler(writer, new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry());
             for (int i = 0; i < 50; i++)
             {
                 writer.Reset();

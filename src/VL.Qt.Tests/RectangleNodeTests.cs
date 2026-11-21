@@ -7,6 +7,7 @@ using VL.Lib.Mathematics;
 using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Reconciliation;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
@@ -135,7 +136,7 @@ namespace VL.Qt.Tests
         public void SeveralRenderers_NoWarning_FeedbackWarningShownAtNode()
         {
             // Several times in one tree and in two renderers is fine.
-            var scene = new SceneRegistry();
+            var scene = new OccurrenceRegistry();
             var rec = new Reconciler(new RecordingSink(), new IdAllocator(), scene);
             var rec2 = new Reconciler(new RecordingSink(), new IdAllocator(), scene);
             var e = Update();
@@ -146,7 +147,7 @@ namespace VL.Qt.Tests
             Assert.That(_warnings, Is.EqualTo(0));
 
             // A warning in the feedback slot (e.g. a video duplicate) is shown at the node once and removed with it.
-            _node.Core.Feedback[0].Warning = SceneRegistry.VideoDuplicateWarning;
+            _node.Core.Feedback[0].Warning = OccurrenceRegistry.VideoDuplicateWarning;
             Update();
             Assert.That(_warnings, Is.EqualTo(1));
             Update();
@@ -156,7 +157,7 @@ namespace VL.Qt.Tests
             Update();
             Assert.That(_warnings, Is.EqualTo(0), "removed");
 
-            _node.Core.Feedback[0].Warning = SceneRegistry.VideoDuplicateWarning;
+            _node.Core.Feedback[0].Warning = OccurrenceRegistry.VideoDuplicateWarning;
             Update();
             Assert.That(_warnings, Is.EqualTo(1));
             _node.Dispose();

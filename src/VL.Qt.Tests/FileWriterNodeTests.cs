@@ -7,6 +7,7 @@ using VL.Lib.Basics.Imaging;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
 using VL.Qt.Nodes;
+using VL.Qt.Reconciliation;
 using Path = VL.Lib.IO.Path;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
@@ -25,7 +26,7 @@ namespace VL.Qt.Tests
 
         private FakeResourceApi _api = null!;
         private ResourceClient _client = null!;
-        private SceneRegistry _scene = null!;
+        private OccurrenceRegistry _scene = null!;
         private Reconciler _reconciler = null!;
         private ImageFileWriter _elementWriter = null!;
         private FileWriterElementNode _elementNode = null!;
@@ -50,7 +51,7 @@ namespace VL.Qt.Tests
             _api = new FakeResourceApi();
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
             _client.SetPumping(true);
-            _scene = new SceneRegistry();
+            _scene = new OccurrenceRegistry();
             _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene);
             _elementWriter = NewWriter();
             _elementNode = new FileWriterElementNode(_client, _scene, _elementWriter);

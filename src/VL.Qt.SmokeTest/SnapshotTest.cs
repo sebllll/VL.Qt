@@ -11,6 +11,7 @@ using System.Threading;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Lib.Basics.Imaging;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -118,7 +119,7 @@ public static class SnapshotTest
         s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var scene = new SceneRegistry();
+        var scene = new OccurrenceRegistry();
         var rec = new Reconciler(cmd, new IdAllocator(), scene) { Window = w };
 
         // Group at (100, 100) DIP, 300 x 200 (fixed size): orange rectangle 100 x 100 at its origin, white text right of it.
