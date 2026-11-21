@@ -76,6 +76,7 @@
 #include <QtCore/QMetaProperty>
 #include <QtCore/QObject>
 #include <QtCore/QPointF>
+#include <QtCore/QPointer>
 #include <QtCore/QtTypes>
 
 #include <limits>
@@ -153,39 +154,67 @@ private:
     quint32 epoch_ = 0;      // ElementEntry::transformEpoch at the start / last re-base
 };
 
-/* Input handler object: CREATE reserves the id, REPARENT attaches the QML handler to an element item. */
-struct HandlerEntry {
-    quint16 type = 0;            // VLQT_ELEMENT_TYPE_*_HANDLER
-    quint32 owner = 0;           // element id the handler is attached to, 0 = not attached yet
-    QObject* object = nullptr;   // QML handler (QObject child of the owner's item), nullptr until the REPARENT
-    TapState* tap = nullptr;     // Tap handler: signal counters (child of object)
-    DragState* drag = nullptr;   // Drag handler: offset bookkeeping (child of object)
+/* The stored properties of an input handler (kHandlerProps): set before or after the REPARENT, applied to the Qt
+ * objects when they exist. */
+struct HandlerConfig {
+    std::optional<qint32> acceptedButtons; // VLQT_PROPERTY_ACCEPTED_BUTTONS, Qt default (left) while unset
+    std::optional<qint32> acceptedDevices; // VLQT_PROPERTY_ACCEPTED_DEVICES, Qt default while unset
     bool movesElement = true;    // VLQT_PROPERTY_MOVES_ELEMENT (Drag)
     qint32 dragAxis = 0;         // VLQT_PROPERTY_DRAG_AXIS (Drag): 0 both, 1 x only, 2 y only
     float dragLimits[4] = {-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(),
         std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()}; // VLQT_PROPERTY_DRAG_LIMITS (Drag): minX, minY, maxX, maxY
-    float sentDrag[2] = {};      // last EVENT_DRAG sent (0, 0 = nothing sent)
-    quint32 sentDrags = 0;       // DragState::drags at the last EVENT_DRAG
-    QObject* hover = nullptr;    // Point handler with ACCEPTED_BUTTONS 0: internal HoverHandler for the mouse
-    TouchPointsHandler* points = nullptr; // Touch Points: the handler itself; Pinch: internal point counter
-    PinchState* pinch = nullptr; // Pinch handler: gesture bookkeeping (child of object)
     bool occlusion = true;       // VLQT_PROPERTY_OCCLUSION (Touch Points)
     std::optional<qint32> minimumPointCount; // VLQT_PROPERTY_MINIMUM_POINT_COUNT (Pinch), Qt default (2) while unset
     std::optional<qint32> maximumPointCount; // VLQT_PROPERTY_MAXIMUM_POINT_COUNT (Pinch), Qt default (2) while unset
-    QByteArray sentTouch;        // last EVENT_TOUCH_POINTS payload (empty or count 0 = no point sent)
-    float sentPinch[6] = {};     // last EVENT_PINCH sent
-    quint32 sentGestures = 0;    // PinchState::gestures at the last EVENT_PINCH
-    quint32 feedbackId = 0;            // BIND feedbackId, 0 = unbound
-    std::optional<qint32> acceptedButtons; // VLQT_PROPERTY_ACCEPTED_BUTTONS, Qt default (left) while unset
-    std::optional<qint32> acceptedDevices; // VLQT_PROPERTY_ACCEPTED_DEVICES, Qt default while unset
-    // Last values sent to sink.
-    bool sentHover = false;
-    bool sentPress = false;
-    bool sentActive = false;
-    bool sentWheel = false;      // EVENT_WHEEL with motion sent: the next poll without motion sends (0, 0)
-    bool hasPointer = false;
-    quint32 sentTapCount = 0;
-    float sentPointer[2] = {};
+};
+
+/* The Qt side of an input handler, from the REPARENT on; all null before. HandlerObjects owns object, hover and
+ * pinchTracker (QObject children of the owner's item, so the item deletes them too: the QPointers then read null):
+ * release() and the destructor delete them in the one safe order. tap, drag and pinch are QObject children of object
+ * and go with it. Not copyable: the handler table keeps each entry in place. */
+struct HandlerObjects {
+    QPointer<QObject> object;    // QML handler; Touch Points: the TouchPointsHandler (touch_handler.h)
+    QPointer<QObject> hover;     // Point handler with ACCEPTED_BUTTONS 0: internal HoverHandler for the mouse
+    QPointer<TouchPointsHandler> pinchTracker; // Pinch handler: internal point counter that PinchState reads
+    QPointer<TapState> tap;      // Tap handler: signal counters (child of object)
+    QPointer<DragState> drag;    // Drag handler: offset bookkeeping (child of object)
+    QPointer<PinchState> pinch;  // Pinch handler: gesture bookkeeping (child of object, reads pinchTracker)
+
+    HandlerObjects() = default;
+    ~HandlerObjects();
+    HandlerObjects(const HandlerObjects&) = delete;
+    HandlerObjects& operator=(const HandlerObjects&) = delete;
+
+    /* Deletes the Qt objects: object first (takes tap, drag and pinch along, so PinchState never sees a deleted
+     * pinchTracker), then pinchTracker and hover. */
+    void release();
+};
+
+/* What the sink of an input handler got last: the next poll sends only changes against it. A sink change or DESTROY
+ * pushes the 0 records for what was set (resetSent in scene/handlers.cpp), then resets it with `sent = {}`. */
+struct HandlerSent {
+    bool hover = false;          // EVENT_HOVER 1
+    bool press = false;          // EVENT_PRESS 1
+    bool active = false;         // EVENT_ACTIVE 1
+    bool wheel = false;          // EVENT_WHEEL with motion: the next poll without motion sends (0, 0)
+    bool hasPointer = false;     // pointer holds the last EVENT_POINTER
+    float pointer[2] = {};       // last EVENT_POINTER
+    quint32 tapCount = 0;        // last EVENT_TAP_COUNT (0 = none)
+    float drag[2] = {};          // last EVENT_DRAG (0, 0 = nothing sent)
+    quint32 drags = 0;           // DragState::drags at the last EVENT_DRAG
+    QByteArray touch;            // last EVENT_TOUCH_POINTS payload (empty or count 0 = no point sent)
+    float pinch[6] = {};         // last EVENT_PINCH
+    quint32 gestures = 0;        // PinchState::gestures at the last EVENT_PINCH
+};
+
+/* Input handler object: CREATE reserves the id, REPARENT attaches the QML handler to an element item. */
+struct HandlerEntry {
+    quint16 type = 0;            // VLQT_ELEMENT_TYPE_*_HANDLER
+    quint32 owner = 0;           // element id the handler is attached to, 0 = not attached yet
+    quint32 feedbackId = 0;      // BIND feedbackId, 0 = unbound
+    HandlerConfig config;
+    HandlerObjects objects;
+    HandlerSent sent;
 };
 
 /* The cached QML component of each input handler type (Handlers::comps); Touch Points has none. */
@@ -212,6 +241,9 @@ public:
     bool pointerPosition(QObject* handler, float out[2]);
     /* Wheel handler: notches accumulated since the last call (angleDelta / 120), reset to 0. False if none. */
     bool takeWheel(QObject* wheel, float out[2]);
+
+    /* collectTouchPoints: the payload being built, swapped with HandlerSent::touch on change (capacity reused). */
+    QByteArray touchScratch;
 
 private:
     QObject* create(QQmlComponent*& comp, const char* qml, const char* url, QQuickItem* item);

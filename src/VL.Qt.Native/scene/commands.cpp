@@ -480,7 +480,7 @@ int Scene::opSetQmlProperties(WireReader& r, std::string& err)
     }
     auto* item = static_cast<QmlItem*>(entry->item);
     for (const NamedEntry& e : entryScratch) {
-        const QString name = QString::fromUtf8(reinterpret_cast<const char*>(e.name), e.nameLen);
+        const QByteArrayView name(reinterpret_cast<const char*>(e.name), e.nameLen);
         WireReader v(e.value, e.valueLen);
         float f[4] = {};
         switch (e.type) {
@@ -513,7 +513,7 @@ int Scene::opSetQmlProperties(WireReader& r, std::string& err)
             item->setRootProperty(name, QVector4D(f[0], f[1], f[2], f[3]));
             break;
         default:
-            item->rejectRootProperty(name, QStringLiteral("value type %1 is not supported for QML properties").arg(e.type));
+            item->rejectRootProperty(QString::fromUtf8(name), QStringLiteral("value type %1 is not supported for QML properties").arg(e.type));
             break;
         }
     }
@@ -553,31 +553,32 @@ int Scene::opSetEffectChain(WireReader& r, std::string& err)
         WireReader body = r.sub(bodyLen);
         if (link.kind == VLQT_EFFECT_CHAIN_LINK_MULTI) {
             for (int i = 0; i < count; ++i) {
-                const std::string ie = at + " entry #" + std::to_string(i);
+                // Built on the error path only: the text is longer than the small-string buffer.
+                auto ie = [&] { return at + " entry #" + std::to_string(i); };
                 if (body.remaining() < 4) {
-                    err = ie + ": truncated entry";
+                    err = ie() + ": truncated entry";
                     return ApplyBadLength;
                 }
                 const quint16 prop = body.u16();
                 const quint16 vt = body.u16();
                 const quint16 expected = effectValueType(prop);
                 if (!expected) {
-                    err = ie + ": property " + std::to_string(prop) + " is no MULTI key (EFFECT_* 833..855)";
+                    err = ie() + ": property " + std::to_string(prop) + " is no MULTI key (EFFECT_* 833..855)";
                     return ApplyUnknownProperty;
                 }
                 if (vt != expected) {
-                    err = ie + ": value type " + std::to_string(vt) + ", property " + std::to_string(prop) + " takes "
+                    err = ie() + ": value type " + std::to_string(vt) + ", property " + std::to_string(prop) + " takes "
                         + std::to_string(expected);
                     return ApplyBadValue;
                 }
                 const unsigned char* vp = body.bytes(fixedValueSize(vt), true);
                 if (!vp) {
-                    err = ie + ": entry exceeds the body";
+                    err = ie() + ": entry exceeds the body";
                     return ApplyBadLength;
                 }
                 EffectMultiEntry multi{prop, readEffectValue(vt, vp)};
                 if (vt == VLQT_VALUE_TYPE_REF && !knownRef(multi.value.ref)) {
-                    err = ie + ": unknown ref id " + std::to_string(multi.value.ref);
+                    err = ie() + ": unknown ref id " + std::to_string(multi.value.ref);
                     return ApplyUnknownId;
                 }
                 link.multi.push_back(multi);
@@ -651,22 +652,23 @@ int Scene::opSetEffectChain(WireReader& r, std::string& err)
             if (e.prop != VLQT_MULTI_EFFECT_KEY_MASK_SOURCE || e.value.ref == VLQT_ROOT_ID)
                 continue;
             const ElementEntry& mask = nodes[e.value.ref]; // existence checked above (knownRef)
-            const std::string at = "link #" + std::to_string(l) + ": mask " + std::to_string(e.value.ref);
+            // Built on the error path only (a heap allocation per mask otherwise).
+            auto at = [&] { return "link #" + std::to_string(l) + ": mask " + std::to_string(e.value.ref); };
             for (QQuickItem* a = host.item; a; a = a->parentItem())
                 if (a == mask.item) {
-                    err = at + " is the element itself or one of its ancestors";
+                    err = at() + " is the element itself or one of its ancestors";
                     return ApplyInvalid;
                 }
             if (mask.maskHost && mask.maskHost != host.item) {
-                err = at + " is attached to another element";
+                err = at() + " is attached to another element";
                 return ApplyInvalid;
             }
             if (!mask.maskHost && mask.item->parentItem() && !mask.maskHidden) {
-                err = at + " already has a parent (REPARENT)";
+                err = at() + " already has a parent (REPARENT)";
                 return ApplyInvalid;
             }
             if (std::find(masks.begin(), masks.end(), mask.item) != masks.end()) {
-                err = at + " is the mask of another link";
+                err = at() + " is the mask of another link";
                 return ApplyInvalid;
             }
             masks[l] = mask.item;

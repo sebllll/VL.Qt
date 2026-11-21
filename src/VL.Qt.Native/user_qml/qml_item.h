@@ -57,8 +57,10 @@ public:
     /* AUTO_SIZE (see the head comment). */
     void setAutoSize(bool on);
     /* SET_QML_PROPERTIES: remembers the value (re-applied after a reload) and writes it to the root if one is loaded. A
-     * property that does not exist, is read-only or cannot take the value shows in vlqtError, nothing else happens. */
-    void setRootProperty(const QString& name, const QVariant& value);
+     * property that does not exist, is read-only or cannot take the value shows in vlqtError, nothing else happens.
+     * The name is UTF-8 as on the wire (it is copied only for a name seen the first time: no allocation per frame for an
+     * animated number). */
+    void setRootProperty(QByteArrayView name, const QVariant& value);
     /* The patch sent something that cannot be a QML value (unsupported value type): error line for that name. */
     void rejectRootProperty(const QString& name, const QString& message);
 
@@ -79,8 +81,9 @@ private:
     void teardown();
     void retire(QQuickItem* old);
     void flushRetired();
-    /* Writes the value to the root; creating = the component whose root is not completed yet (initial property). */
-    void applyProperty(const QString& name, const QVariant& value, QQmlComponent* creating = nullptr);
+    /* Writes the value to the root; creating = the component whose root is not completed yet (initial property).
+     * name: UTF-8, the key of m_values (NUL-terminated). */
+    void applyProperty(const QByteArray& name, const QVariant& value, QQmlComponent* creating = nullptr);
     void setPropertyError(const QString& name, const QString& message);
     void syncSize();
     void syncImplicit();
@@ -100,8 +103,9 @@ private:
     QString m_loadError;
     QMap<QString, QString> m_propErrors; // name -> message
     QString m_errorText;
-    QList<QString> m_order;              // names in the order first set
-    QHash<QString, QVariant> m_values;   // last value per name
+    bool m_errorTextStale = false;       // m_propErrors changed since updateErrorText
+    QList<QByteArray> m_order;           // names (UTF-8) in the order first set
+    QHash<QByteArray, QVariant> m_values; // last value per name
     // Former instances, deleted one frame later like other items: age 0 = retired this frame.
     std::vector<std::pair<QPointer<QQuickItem>, int>> m_retired;
     QMetaObject::Connection m_frameConnection;
