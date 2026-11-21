@@ -105,7 +105,7 @@ private:
     int opBind(WireReader& payload, std::string& err);
     int opSetClearColor(WireReader& payload, std::string& err);
     int opReset(WireReader& payload, std::string& err);
-    int opSetStyle(WireReader& payload, std::string& err); // vlstyle.h
+    int opSetStyle(WireReader& payload, std::string& err); // style/vl_style.h
     int opSetClear(WireReader& payload, std::string& err);
     int opSetSpace(WireReader& payload, std::string& err);
     int opSetUniforms(WireReader& payload, std::string& err); // ShaderEffect

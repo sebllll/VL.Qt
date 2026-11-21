@@ -16,7 +16,7 @@
 #include "resources/resources.h"
 #include "effects/shader_item.h"
 #include "vlqt.h"
-#include "vlstyle.h"
+#include "style/vl_style.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
@@ -129,7 +129,7 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
             qputenv("QT_QUICK_ALLOW_SYNTHETIC_RIGHT_CLICK", "0");
 
         // Qt Quick Controls style: the own base style "VLQt" on QtQuick.Templates, embedded in QtNative
-        // (qrc:/qt/qml/VLQt, CMakeLists.txt), values from the attached VlStyle (vlstyle.h). Controls without an own file
+        // (qrc:/qt/qml/VLQt, CMakeLists.txt), values from the attached VlStyle (style/vl_style.h). Controls without an own file
         // fall back to Basic, the only Qt style deployed (trim-deploy/trim-linux). The single place that picks it.
         QQuickStyle::setStyle(QStringLiteral("VLQt"));
 

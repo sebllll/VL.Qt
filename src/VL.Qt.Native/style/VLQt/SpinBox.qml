@@ -10,12 +10,6 @@ import VLQt.Style
 T.SpinBox {
     id: control
 
-    // Field ids of the table (protocol.h vlqt_style_field), for VlStyle.value of the buttons.
-    readonly property int fieldBorderColor: 2
-    readonly property int fieldTextColor: 3
-    readonly property int fieldIndicatorColor: 4
-    readonly property int fieldIndicatorRadius: 97
-    readonly property int fieldIndicatorBorderWidth: 98
     // Button edge: box height inside the frame border.
     readonly property real buttonSize: Math.max(0, height - 2 * VlStyle.frame.borderWidth)
     // Radius of the frame's inner edge (inside the border): the outer corners of the + button follow it, so the
@@ -68,17 +62,17 @@ T.SpinBox {
     up.indicator: Rectangle {
         id: upButton
         readonly property int vlState: control.VlStyle.stateOf(control.enabled, control.up.pressed, control.up.hovered, false)
-        readonly property color mark: (control.VlStyle.revision, control.VlStyle.value(control.fieldTextColor, vlState))
+        readonly property color mark: (control.VlStyle.revision, control.VlStyle.value(VlStyle.TextColor, vlState))
         x: control.width - control.VlStyle.frame.borderWidth - width
         y: control.VlStyle.frame.borderWidth
         width: control.buttonSize
         height: control.buttonSize
-        color: (control.VlStyle.revision, control.VlStyle.value(control.fieldIndicatorColor, vlState))
-        radius: (control.VlStyle.revision, control.VlStyle.value(control.fieldIndicatorRadius, vlState))
+        color: (control.VlStyle.revision, control.VlStyle.value(VlStyle.IndicatorColor, vlState))
+        radius: (control.VlStyle.revision, control.VlStyle.value(VlStyle.IndicatorRadius, vlState))
         topRightRadius: control.innerRadius
         bottomRightRadius: control.innerRadius
-        border.color: (control.VlStyle.revision, control.VlStyle.value(control.fieldBorderColor, vlState))
-        border.width: (control.VlStyle.revision, control.VlStyle.value(control.fieldIndicatorBorderWidth, vlState))
+        border.color: (control.VlStyle.revision, control.VlStyle.value(VlStyle.BorderColor, vlState))
+        border.width: (control.VlStyle.revision, control.VlStyle.value(VlStyle.IndicatorBorderWidth, vlState))
 
         Rectangle {
             x: (parent.width - width) / 2
@@ -99,15 +93,15 @@ T.SpinBox {
     down.indicator: Rectangle {
         id: downButton
         readonly property int vlState: control.VlStyle.stateOf(control.enabled, control.down.pressed, control.down.hovered, false)
-        readonly property color mark: (control.VlStyle.revision, control.VlStyle.value(control.fieldTextColor, vlState))
+        readonly property color mark: (control.VlStyle.revision, control.VlStyle.value(VlStyle.TextColor, vlState))
         x: control.width - control.VlStyle.frame.borderWidth - 2 * width
         y: control.VlStyle.frame.borderWidth
         width: control.buttonSize
         height: control.buttonSize
-        color: (control.VlStyle.revision, control.VlStyle.value(control.fieldIndicatorColor, vlState))
-        radius: (control.VlStyle.revision, control.VlStyle.value(control.fieldIndicatorRadius, vlState))
-        border.color: (control.VlStyle.revision, control.VlStyle.value(control.fieldBorderColor, vlState))
-        border.width: (control.VlStyle.revision, control.VlStyle.value(control.fieldIndicatorBorderWidth, vlState))
+        color: (control.VlStyle.revision, control.VlStyle.value(VlStyle.IndicatorColor, vlState))
+        radius: (control.VlStyle.revision, control.VlStyle.value(VlStyle.IndicatorRadius, vlState))
+        border.color: (control.VlStyle.revision, control.VlStyle.value(VlStyle.BorderColor, vlState))
+        border.width: (control.VlStyle.revision, control.VlStyle.value(VlStyle.IndicatorBorderWidth, vlState))
 
         Rectangle {
             x: (parent.width - width) / 2
