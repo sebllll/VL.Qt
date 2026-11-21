@@ -17,7 +17,8 @@ using VL.Qt;
 /// perf runs (skipped with warn-only perf limits, CI): 20 x 4K async while an animation runs (hitches vs. background)
 /// and set_pixels 1080p per frame. Without the shared upload QRhi (Linux, software backend) the CPU copy is the image:
 /// same loads, info, readback, failures and replacement, but no stripes.
-/// Numbers are printed as INFO for the PR; VLQT_IMG_UPLOAD=worker runs the same with the worker upload path.
+/// Each upload path forced through the upload argument (the pin Upload) on a file and on pixels. Numbers are printed
+/// as INFO for the PR.
 /// </summary>
 [TestFixture, NonParallelizable]
 public static class ImageResourceTest
@@ -279,8 +280,30 @@ public static class ImageResourceTest
             $"replacement: new content {nw} wide after the upload, state stayed Ready without a STATE record");
         Native.vlqt_res_release(rep);
 
+        // 3b. Upload modes (the pin Upload of the image nodes): each path forced on pixels and on a file, same content as Auto.
+        var reference = Read(fileIds[0], out _, out _);
+        foreach (var (mode, label) in new[] { (Protocol.ImageUpload.MainThread, "main thread"), (Protocol.ImageUpload.Worker, "worker") })
+        {
+            var px = Create();
+            s.Check(Native.ImageSetPixels(px, new Native.vlqt_pixel_desc { width = 64, height = 32, format = 7, premultiplied = 1 }, Solid(64, 32, 0, 0, 255), mode) == 0,
+                $"upload {label}: set_pixels started");
+            var file = Create();
+            s.Check(Native.vlqt_image_load(file, files[0].path, 0, mode) == 0, $"upload {label}: load started");
+            s.Check(Settle(20000, new[] { px, file }) && Last(px) == Protocol.ResourceState.Ready && Last(file) == Protocol.ResourceState.Ready,
+                $"upload {label}: pixels and {Path.GetFileName(files[0].path)} Ready ({Text(px, Protocol.ResourceEventId.Error)}{Text(file, Protocol.ResourceEventId.Error)})");
+            var pxRead = Read(px, out var pxw, out _);
+            s.Check(pxw == 64 && Near(pxRead, pxw, 10, 10, 0, 0, 255, 0), $"upload {label}: pixels read back");
+            var fileRead = Read(file, out _, out _);
+            s.Check(fileRead.Length > 0 && fileRead.AsSpan().SequenceEqual(reference), $"upload {label}: file reads back like Auto");
+            Native.vlqt_res_release(px);
+            Native.vlqt_res_release(file);
+        }
+        var badMode = Create();
+        s.Check(Native.vlqt_image_load(badMode, files[0].path, 0, 3) == Native.Result.BadArgument, "unknown upload mode -> BadArgument");
+        Native.vlqt_res_release(badMode);
+
         // 4. Release during the upload (pixels: small budget = many stripes; files: during the worker upload) and sync wait.
-        var stripes = gpuUpload && Environment.GetEnvironmentVariable("VLQT_IMG_UPLOAD") != "worker";
+        var stripes = gpuUpload; // pixels with upload Auto: the main-thread path
         Native.vlqt_res_set_budget(1 << 20);
         var rel = Create();
         Native.ImageSetPixels(rel, new Native.vlqt_pixel_desc { width = 3840, height = 2160, format = 7, premultiplied = 1 }, Solid(3840, 2160, 9, 9, 9));
@@ -330,7 +353,7 @@ public static class ImageResourceTest
         void RunPerf()
         {
             // 5. Perf: 20 x 4K async while the rect moves. Hitch = interval > 1.5 x median of the background run.
-            var mode = !gpuUpload ? "CPU copy, no upload QRhi" : Environment.GetEnvironmentVariable("VLQT_IMG_UPLOAD") switch { "worker" => "worker", "stripes" => "stripes", _ => "auto: files worker, pixels stripes" };
+            var mode = !gpuUpload ? "CPU copy, no upload QRhi" : "auto: files worker, pixels stripes";
             paced = true;
             next = sw.Elapsed.TotalMilliseconds;
             intervals.Clear();

@@ -17,7 +17,7 @@ namespace VL.Qt.Interop
 
         /// <summary>
         /// Starts or replaces the content of an image resource from a file (flags <see cref="Protocol.ImageLoadFlags"/>); upload:
-        /// <see cref="Protocol.ImageUpload"/>, Auto until the Upload pin exists.
+        /// <see cref="Protocol.ImageUpload"/> (the pin Upload of the image nodes).
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Result vlqt_image_load(ulong id, [MarshalAs(UnmanagedType.LPUTF8Str)] string path, uint flags, int upload = Protocol.ImageUpload.Auto);

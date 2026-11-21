@@ -4,7 +4,7 @@
 #include "effects/shader_material.h"
 #include "elements/elements.h"
 #include "elements/group_item.h"
-#include "image_resource.h"
+#include "resources/image_resource.h"
 #include "protocol.h"
 #include "resources/change_watch.h"
 #include "resources/image_texture_cache.h"

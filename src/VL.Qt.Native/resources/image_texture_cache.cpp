@@ -1,7 +1,7 @@
 #include "resources/image_texture_cache.h"
 
 #include "device/device.h"
-#include "image_resource.h"
+#include "resources/image_resource.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QThread>
@@ -35,7 +35,7 @@ void warnNotShared(QQuickWindow* window)
         static_cast<void*>(window));
 }
 
-std::shared_ptr<ImageTexture> createTexture(QQuickWindow* window, const std::shared_ptr<res::image::ImageResource>& content)
+std::shared_ptr<ImageTexture> createTexture(QQuickWindow* window, const std::shared_ptr<res::image::ImageContent>& content)
 {
     // Content of an older device generation (device lost): its texture is gone, the replacement follows (the
     // item gets it through res::changedThisFrame). Never wrap it, never fall back to the CPU copy.
@@ -102,12 +102,12 @@ ImageTexture::~ImageTexture()
 #endif
 }
 
-bool ImageTexture::fits(const QQuickWindow* w, const std::shared_ptr<res::image::ImageResource>& c) const
+bool ImageTexture::fits(const QQuickWindow* w, const std::shared_ptr<res::image::ImageContent>& c) const
 {
     return window == w && content == c && rhi == w->rhi();
 }
 
-std::shared_ptr<ImageTexture> imageTextureFor(QQuickWindow* window, const std::shared_ptr<res::image::ImageResource>& content)
+std::shared_ptr<ImageTexture> imageTextureFor(QQuickWindow* window, const std::shared_ptr<res::image::ImageContent>& content)
 {
     if (!window || !content)
         return nullptr;

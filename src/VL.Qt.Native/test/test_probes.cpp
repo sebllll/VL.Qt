@@ -3,7 +3,7 @@
 #include "../vlqt_test.h"
 #include "scene/scene.h"
 #include "../device/device.h"
-#include "../image_resource.h"
+#include "../resources/image_resource.h"
 #include "../app/exports.h"
 #include "offscreen/offscreen.h"
 #include "diagnostics/perf.h"

@@ -60,7 +60,7 @@ class QSGTextureProvider;
 namespace vlqt {
 
 namespace res::image {
-class ImageResource;
+class ImageContent;
 }
 namespace res::shader {
 class ShaderResource;
@@ -149,7 +149,7 @@ private:
         QPointer<QQuickItem> ref;       // REF
         uint64_t image = 0;             // U64 image resource id (element reference held)
         bool badImage = false;          // U64 id that is no live image resource (error line)
-        std::shared_ptr<res::image::ImageResource> imageContent; // Ready content of image
+        std::shared_ptr<res::image::ImageContent> imageContent; // Ready content of image
         std::shared_ptr<ImageTexture> imageTexture;              // its texture in window()
     };
     struct Write
