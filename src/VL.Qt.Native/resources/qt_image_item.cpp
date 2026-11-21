@@ -2,9 +2,11 @@
 
 #include "device.h"
 #include "image_resource.h"
+#include "render_thread.h"
 #include "resources/resources.h"
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QThread>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGImageNode>
 #include <QtQuick/private/qsgplaintexture_p.h>
@@ -31,12 +33,16 @@ struct ImageTexture
     QSGTexture* texture = nullptr;
     void* native = nullptr; // own reference on the native texture (shared device), released after the wrapper
     bool mipmaps = false;
+    QThread* thread = QThread::currentThread(); // the window's render thread (made in updatePaintNode), frees it
 
     ImageTexture() = default;
     ImageTexture(const ImageTexture&) = delete;
     ImageTexture& operator=(const ImageTexture&) = delete;
     ~ImageTexture()
     {
+        // Another thread may run a frame with it on the window's QRhi right now (render_thread::retire).
+        if (texture && QThread::currentThread() != thread)
+            qCWarning(lcImageItem, "texture of window %p freed off its render thread", static_cast<void*>(window));
         delete texture; // owns its QRhiTexture (wrapper only, the native texture is not destroyed by it)
 #ifdef Q_OS_WIN
         if (native)
@@ -49,7 +55,7 @@ namespace {
 
 constexpr int kMaxTiles = 4096; // Tile: one image node per tile
 
-std::vector<std::weak_ptr<ImageTexture>> s_textures; // main thread
+std::vector<std::weak_ptr<ImageTexture>> s_textures; // updatePaintNode: one window syncs at a time, the main thread waits
 std::unordered_set<QtImageItem*> s_items;            // every live item, main thread
 uint64_t s_epoch = 0;                                // res::contentEpoch seen by afterResourceFrame
 
@@ -189,8 +195,23 @@ QtImageItem::QtImageItem(QQuickItem* parent) : QQuickItem(parent)
     s_items.insert(this);
 }
 
+namespace {
+
+// Drops the item's reference on its texture where the texture's window renders.
+void retireTexture(std::shared_ptr<ImageTexture>& t)
+{
+    if (!t)
+        return;
+    QQuickWindow* window = t->window;
+    render_thread::retire(window, std::move(t));
+    t.reset();
+}
+
+} // namespace
+
 QtImageItem::~QtImageItem()
 {
+    retireTexture(m_texture);
     s_items.erase(this);
     if (m_wantId && m_wantId != m_shownId)
         res::releaseElement(m_wantId);
@@ -255,14 +276,16 @@ void QtImageItem::afterResourceFrame()
             item->advance();
 }
 
+// The window's render thread, its QRhi still alive.
 void QtImageItem::invalidateSceneGraph()
 {
     m_texture.reset();
 }
 
+// Main thread.
 void QtImageItem::releaseResources()
 {
-    m_texture.reset();
+    retireTexture(m_texture);
 }
 
 void QtImageItem::geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry)
@@ -288,7 +311,7 @@ QSGNode* QtImageItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
     }
     QSGTexture* tex = m_texture->texture;
     const QSize ts = tex->textureSize();
-    thread_local std::vector<Quad> quads; // render loop basic: main thread, no allocation per update
+    thread_local std::vector<Quad> quads; // one per render thread, no allocation per update
     layout(m_fillMode, w, h, float(ts.width()), float(ts.height()), quads);
 
     QSGNode* root = old ? old : new QSGNode;

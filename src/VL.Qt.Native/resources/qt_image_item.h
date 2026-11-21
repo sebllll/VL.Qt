@@ -10,8 +10,12 @@
  *     as the wrapper lives, so a resource freed or replaced meanwhile never leaves a dangling texture.
  *   - no shared device (Linux, VLQT_SHARED_DEVICE=0) or no QRhi (software backend): createTextureFromImage of the
  *     resource's CPU copy, once per window.
- * Everything runs on the main thread (render loop basic). Textures go in releaseResources/invalidateSceneGraph,
- * before the window's QRhi.
+ * Threads: the item lives on the main thread. updatePaintNode and invalidateSceneGraph run on the window's render thread
+ * (the main thread for on-screen windows and offscreen scenes without one), updatePaintNode while the main thread waits
+ * (sync), so it may read the device and the window as the main thread would. A texture belongs to the thread that made
+ * it: the item lets it go in updatePaintNode and invalidateSceneGraph directly, from the main thread (releaseResources,
+ * destructor) through render_thread::retire, always before the window's QRhi. A texture freed on another thread logs
+ * a warning.
  *
  * Device lost: content of an older device generation (ImageResource::generation) is skipped silently until its
  * replacement is Ready; so is a window that still renders with its old QRhi right after device::rebuild.
@@ -39,7 +43,8 @@ class ImageResource;
 struct ImageTexture;
 
 // Texture of an image resource in a window from the shared cache (also used for ShaderEffect samplers);
-// nullptr if it cannot be drawn there (device generation, no shared device). Main thread.
+// nullptr if it cannot be drawn there (device generation, no shared device). In updatePaintNode (see Threads above);
+// a reference held from the main thread goes through render_thread::retire.
 std::shared_ptr<ImageTexture> imageTextureFor(QQuickWindow* window, const std::shared_ptr<res::image::ImageResource>& content);
 QSGTexture* textureOf(const ImageTexture& t);
 

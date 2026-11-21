@@ -66,7 +66,7 @@ public static partial class QtTextureTest
     }
 
     // The leak test reads ReportLiveDeviceObjects of QtNative's device, which needs the D3D SDK layers.
-    private static bool DebugLayerAvailable() => OperatingSystem.IsWindows()
+    internal static bool DebugLayerAvailable() => OperatingSystem.IsWindows()
         && (File.Exists(Path.Combine(Environment.SystemDirectory, "d3d11sdklayers.dll"))
             || File.Exists(Path.Combine(Environment.SystemDirectory, "d3d11_3sdklayers.dll")));
 
