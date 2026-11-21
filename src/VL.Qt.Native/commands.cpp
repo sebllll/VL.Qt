@@ -5,7 +5,7 @@
 #include "effectchain.h"
 #include "previous_frame_layer.h"
 #include "qmlitem.h"
-#include "shader_item.h"
+#include "effects/shader_item.h"
 #include "vlstyle.h"
 
 #include <QtCore/QLoggingCategory>
