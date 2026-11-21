@@ -72,7 +72,7 @@ The optional pins (`Cap`, `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Trim St
 - Angles are in cycles (1 is a full turn), as on Skia's nodes.
 - Queries and operations (`Op`, `Simplify`, sampling) are not part of `Qt.Paths`.
 
-**Limits.** A path that does not fit one command to QtNative (about 7270 line segments) is not drawn; `Path` shows a warning. Arcs and ovals become cubics and count as such.
+**Limits.** The number of segments is not limited by the protocol; the cost is the limit (see [Limits](#limits) of the point shapes). Arcs and ovals become cubics and count as such.
 
 Help patches: `HowTo Build a Path` (the builder nodes), `HowTo Draw a Path` (the element).
 
@@ -107,14 +107,14 @@ Three nodes in `Qt.Paths` create curves from spreads of points. Like the builder
 
 **Few points.** With fewer than two points (anchors) all three return `Input` unchanged. An open spline with two points is a straight line.
 
-**Limits.** The limit of the `Path` element (about 7270 line segments) applies to the result: every span is one cubic, and a closed curve counts its closing segment.
+**Limits.** Every span is one cubic and a closed curve counts its closing segment; the cost of the `Path` element grows with that number of segments.
 
 Help patches: `HowTo Draw a Bezier Curve with Handles` (handles and modes), `HowTo Draw Splines` (Catmull-Rom with `Alpha` 0, 0.5 and 1, and B-spline, with the control polygon).
 
 ## Limits
 
-- **At most 8190 points per element.** More points are cut off at the 8190th, and the node shows a warning. The limit comes from the size of one command to QtNative.
-- **About 4000 points** for a polyline whose points change every frame. Above that the frame time grows steeply (measured on a loaded arm64 notebook: 1.3 ms at 2000 points, 5.3 ms at 4000, 16 ms at 8190). Static shapes and shapes that only move through `Transform` use the full 8190 points at no cost.
+- **No limit on the number of points**: a command carries up to 64 MB, so every point is drawn. The practical limit is the cost of changing points (next two points).
+- **About 4000 points** for a polyline whose points change every frame. Above that the frame time grows steeply (measured on a loaded arm64 notebook: 1.3 ms at 2000 points, 5.3 ms at 4000, 16 ms at 8190). Static shapes and shapes that only move through `Transform` can have many more points at no cost per frame.
 - Prefer `Transform`, `Trim` and `Opacity` to changing points for animation; animated trim costs 2.5 ms at 8190 points, 0.3 ms at 100.
 - Many small shapes are fine: 100 polylines of 100 points, each rotated every frame, take 0.3 ms.
 

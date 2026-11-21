@@ -362,26 +362,23 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void Shape_TooManyPoints_AreCutToTheLimit()
+        public void Shape_ManyPoints_AreSentWhole()
         {
-            var many = new Vector2[Protocol.MaxF32ArrayCount];   // twice as many floats as fit
-            Frame(new Shape { Points = Spread.Create(many) });
+            Frame(new Shape { Points = Spread.Create(new Vector2[50_000]) });
             var set = _sink.Commands.Single(c => c.Contains($" {nameof(P.ShapePoints)} "));
-            Assert.That(set.Split(',').Length, Is.EqualTo(Protocol.MaxF32ArrayCount));
+            Assert.That(set.Split(',').Length, Is.EqualTo(100_000));
         }
 
         [Test]
-        public void Shape_TooLongPath_IsCutToTheVerbsThatFit()
+        public void Shape_LongPath_IsSentWhole()
         {
             var path = QtPath.Empty.MoveTo(0, 0);
-            for (int i = 0; i < 9000; i++)
+            for (int i = 0; i < 50_000; i++)
                 path = path.LineTo(i, 1);
-            Assert.That(Protocol.PathFits(9001, 9001), Is.False);
-            Assert.DoesNotThrow(() => Frame(new Shape { Path = path }));
+            Frame(new Shape { Path = path });
             var set = _sink.Commands.Single(c => c.Contains($" {nameof(P.ShapePath)} "));
             int verbs = set.Substring(set.IndexOf("path(") + 5, set.IndexOf(';') - set.IndexOf("path(") - 5).Split(',').Length;
-            Assert.That(Protocol.PathFits(verbs, verbs), Is.True);
-            Assert.That(Protocol.PathFits(verbs + 1, verbs + 1), Is.False);
+            Assert.That(verbs, Is.EqualTo(50_001));
         }
 
         [Test]

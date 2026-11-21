@@ -38,7 +38,6 @@ std::atomic<uint64_t> s_failureEpoch{0};
 
 constexpr uint32_t maxSlots = 1u << 20;      // ~1M live resources; more is a leak in the host
 constexpr int64_t defaultBudget = 8 << 20;   // bytes uploaded per frame
-constexpr int maxErrorText = 4000;           // ERROR payload cap (u16 len)
 
 uint32_t indexOf(uint64_t id) { return uint32_t(id & 0xffffffffu); }
 uint32_t generationOf(uint64_t id) { return uint32_t(id >> 32); }
@@ -678,8 +677,7 @@ private:
             return;
         qCWarning(lcRes, "%s %s failed: %s", idText(id).constData(), kindOf(s.kind)->name(), error.c_str());
         if (s.hostRefs > 0) {
-            const int len = std::min(int(error.size()), maxErrorText);
-            pushEvent(VLQT_RESOURCE_EVENT_ERROR, id, error.data(), len);
+            pushEvent(VLQT_RESOURCE_EVENT_ERROR, id, error.data(), int(error.size()));
         }
     }
 
@@ -780,7 +778,7 @@ private:
         if (s.warned || s.hostRefs == 0)
             return;
         s.warned = true;
-        pushEvent(VLQT_RESOURCE_EVENT_WARNING, id, text.data(), std::min(int(text.size()), maxErrorText));
+        pushEvent(VLQT_RESOURCE_EVENT_WARNING, id, text.data(), int(text.size()));
     }
 
     // A decode or upload of the resource runs (first content or replacement).

@@ -31,7 +31,7 @@ namespace VL.Qt.Wire
 
         void SetString(uint id, ushort prop, ReadOnlySpan<char> value);
 
-        /// <summary>f32 array (<see cref="Protocol.ValueType.F32Array"/>): at most <see cref="Protocol.MaxF32ArrayCount"/> floats.</summary>
+        /// <summary>f32 array (<see cref="Protocol.ValueType.F32Array"/>): count and floats.</summary>
         void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values);
 
         /// <summary>path (<see cref="Protocol.ValueType.Path"/>): verbs (<see cref="Protocol.Verb"/>) and points as x,y pairs (2 floats per point).</summary>

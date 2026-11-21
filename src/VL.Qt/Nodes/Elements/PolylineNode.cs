@@ -27,7 +27,7 @@ namespace VL.Qt.Nodes
         internal ShapeNodeCore Core => _core;
 
         /// <summary>Describes the polyline. A new description is only created when an input changes.</summary>
-        /// <param name="points">Vertices in units, in the parent space (at most 8190 are drawn, the node warns about more). Transform acts around the origin of the parent space, not around the shape; the shape reports (max X, max Y) of the points as its size.</param>
+        /// <param name="points">Vertices in units, in the parent space. Transform acts around the origin of the parent space, not around the shape; the shape reports (max X, max Y) of the points as its size.</param>
         /// <param name="closed">Connects the last point to the first.</param>
         /// <param name="transform">Position, rotation and scale; applied around the origin of the parent space (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
         /// <param name="strokeColor">Color of the stroke.</param>
