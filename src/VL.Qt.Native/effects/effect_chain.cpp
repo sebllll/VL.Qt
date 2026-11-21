@@ -184,13 +184,6 @@ void registerTypes()
     Q_UNUSED(registered);
 }
 
-// Names QtNative sets in a SHADER link (protocol.h "Effect chain"): an entry from C# is an error line.
-bool reservedName(const QByteArray& n)
-{
-    return n == "qt_Matrix" || n == "qt_Opacity" || n == "source" || n == "texelSize" || n == "dpr" || n == "weight" || n == "elementRect"
-        || n == "passIndex" || n == "base" || n == "glow" || n == "shadow";
-}
-
 // Wire layout of a value (like SET) for ShaderItem::setUniform; out holds at least 64 bytes.
 void wireValue(const EffectValue& v, unsigned char* out)
 {
@@ -360,7 +353,7 @@ bool EffectChain::apply(const EffectChainDesc& desc, const std::vector<QQuickIte
                 l.shader.problems << QStringLiteral("strength must not be negative (0 is used)");
             for (const EffectUniform& u : d.uniforms) {
                 // The text is built for a problem only.
-                if (reservedName(u.name))
+                if (isChainReservedUniform(std::string_view(u.name.constData(), size_t(u.name.size()))))
                     l.shader.problems << QStringLiteral("uniform '%1' is reserved (set by VL.Qt)").arg(QString::fromUtf8(u.name));
                 else if (u.refError)
                     l.shader.problems << QStringLiteral("uniform '%1': %2").arg(QString::fromUtf8(u.name), QString::fromUtf8(u.refError));
