@@ -69,7 +69,7 @@ Scene::~Scene()
         kv.second.item->setParentItem(nullptr);
     for (auto& kv : nodes)
         delete kv.second.item; // attached input handlers are QObject children of their items
-    handlerNodes.clear();
+    handlerNodes.clear(); // their QPointers read null now: HandlerObjects deletes nothing twice
     deleteRetired(); // destroyed former effect sources of the last frame (not in nodes any more)
     nodes.clear();
     ids.clear();
@@ -115,6 +115,17 @@ void Scene::updateDebug()
     debug->refresh();
 }
 
+ElementEntry Scene::makeEntry(QQuickItem* item, quint16 type)
+{
+    // Member assignments, not a designated initializer (C++20; the build is C++17): a new field cannot shift the others.
+    ElementEntry entry;
+    entry.item = item;
+    entry.type = type;
+    elements.initGeometry(entry); // xf, anchor placement, follows size changes
+    entry.polled = elements.pollsState(type);
+    return entry;
+}
+
 int Scene::create(quint32 id, quint16 type, std::string& err)
 {
     if (id == VLQT_ROOT_ID || nodes.count(id) || handlerNodes.count(id)) {
@@ -123,9 +134,7 @@ int Scene::create(quint32 id, quint16 type, std::string& err)
     }
     if (isHandlerType(type)) {
         // Only the id, type and properties: the QML handler needs its parent item before completeCreate (REPARENT).
-        HandlerEntry h;
-        h.type = type;
-        handlerNodes[id] = h;
+        handlerNodes[id].type = type; // in place: HandlerEntry owns its Qt objects and is not copyable
         return ApplyOk;
     }
     const TypeDef* ti = findType(type);
@@ -136,9 +145,7 @@ int Scene::create(quint32 id, quint16 type, std::string& err)
     QQuickItem* item = elements.create(*ti, err);
     if (!item)
         return ApplyInvalid;
-    ElementEntry& node = nodes[id] = ElementEntry{item, type, 0, 0, nullptr};
-    elements.initGeometry(node); // anchor placement, follows size changes
-    node.polled = elements.pollsState(type);
+    ElementEntry& node = nodes[id] = makeEntry(item, type);
     ids[item] = id;
     watchGeometry(*this, id, node); // measure on change
     return ApplyOk;
