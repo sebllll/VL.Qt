@@ -1,6 +1,6 @@
 #include "scene/scene.h"
 #include "app/exports.h"
-#include "audio_tap.h"
+#include "resources/audio_tap.h"
 #include "diagnostics/debug_overlay.h"
 #include "effects/effect_chain.h"
 
@@ -149,7 +149,7 @@ void Scene::releaseVideo(ElementEntry& node)
     if (node.type != VLQT_ELEMENT_TYPE_VIDEO)
         return;
     // Stop the player and drop its source first, so the decoder and audio threads end before the item goes;
-    // then the audio tap, while the player still exists (audio_tap.h releaseVideo).
+    // then the audio tap, while the player still exists (resources/audio_tap.h releaseVideo).
     QMetaObject::invokeMethod(node.item, "vlqtRelease");
     res::audio::releaseVideo(node.item);
 }

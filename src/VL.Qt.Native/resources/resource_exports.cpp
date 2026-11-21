@@ -2,10 +2,10 @@
 // warnings (category VL.Qt.Resources). Main thread unless vlqt.h says "any thread".
 #include "window/scene_handle.h"
 #include "app/exports.h"
-#include "audio_tap.h"
 #include "scene/scene.h"
 #include "image_resource.h"
 #include "image_writer.h"
+#include "resources/audio_tap.h"
 #include "resources/resources.h"
 #include "shader_resource.h"
 #include "snapshot_resource.h"
@@ -109,7 +109,7 @@ VLQT_API int vlqt_image_read_preview(unsigned long long id, unsigned char* dst, 
     return guarded([&] { return vlqt::res::image::readPreview(id, dst, cap, desc, written, required); });
 }
 
-// Audio taps: audio_tap.h; read runs on VL.Audio's audio thread.
+// Audio taps: resources/audio_tap.h; read runs on VL.Audio's audio thread (no lock, one reader per tap).
 VLQT_API int vlqt_audio_tap_init(unsigned long long id, int channels, int sampleRate)
 {
     return guarded([&] { return vlqt::res::audio::init(id, channels, sampleRate); });

@@ -1,6 +1,6 @@
 # Resources
 
-The resource manager of QtNative: one process-wide table of resources (images, snapshots, shaders, audio taps) that is independent of any window. Code: `src/VL.Qt.Native/resources/` (`resources.h` is the interface that the exports in `resource_exports.cpp` and the pump in `app/app.cpp` call, `resource_kind.h` the interface of a resource kind), the kinds in `image_resource.*`, `snapshot_resource.*`, `shader_resource.*` and `audio_tap.*`. User pages: [images.md](../images.md), [video-audio.md](../video-audio.md).
+The resource manager of QtNative: one process-wide table of resources (images, snapshots, shaders, audio taps) that is independent of any window. Code: `src/VL.Qt.Native/resources/` (`resources.h` is the interface that the exports in `resource_exports.cpp` and the pump in `app/app.cpp` call, `resource_kind.h` the interface of a resource kind), the kinds in `image_resource.*`, `snapshot_resource.*`, `shader_resource.*` and `resources/audio_tap.*`. User pages: [images.md](../images.md), [video-audio.md](../video-audio.md).
 
 ## Context
 

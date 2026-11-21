@@ -148,6 +148,8 @@ target_sources(vlqt PRIVATE
     resources/image_texture_cache.h
     resources/qt_image_item.cpp
     resources/qt_image_item.h
+    resources/audio_tap.cpp
+    resources/audio_tap.h
     image_resource.cpp
     image_resource.h
     snapshot_resource.cpp
@@ -156,8 +158,6 @@ target_sources(vlqt PRIVATE
     image_writer.h
     shader_resource.cpp
     shader_resource.h
-    audio_tap.cpp
-    audio_tap.h
 
     # device/
     device/device.cpp
