@@ -236,7 +236,7 @@ src/VL.Qt.Native/           # QtNative (C++)
   elements.h/cpp            # element implementations
   events.h/cpp              # event polling
   device.h/cpp              # shared D3D11 device, device loss
-  resources.h/cpp, *_resource.h/cpp  # images, shaders, snapshots
+  resources/resources.h/cpp, *_resource.h/cpp  # images, shaders, snapshots
   perf.h/cpp                # perf counters/overlays
 src/VL.Qt.Tests/            # C# unit tests
 src/VL.Qt.SmokeTest/        # native smoke + perf tests

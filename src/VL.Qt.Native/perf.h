@@ -1,6 +1,6 @@
 #pragma once
 
-#include "resources.h"
+#include "resources/resources.h"
 #include "vlqt.h"
 
 #include <QtCore/QElapsedTimer>

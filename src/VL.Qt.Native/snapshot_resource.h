@@ -17,7 +17,7 @@
  */
 #pragma once
 
-#include "resources.h"
+#include "resources/resources.h"
 
 #include <QtGui/QImage>
 

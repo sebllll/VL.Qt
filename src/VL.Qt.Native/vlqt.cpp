@@ -6,7 +6,7 @@
 #include "offscreen.h"
 #include "protocol.h"
 #include "qtimageitem.h"
-#include "resources.h"
+#include "resources/resources.h"
 #include "shader_resource.h"
 #include "audio_tap.h"
 #include "shader_item.h"

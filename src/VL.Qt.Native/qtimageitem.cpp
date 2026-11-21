@@ -2,7 +2,7 @@
 
 #include "device.h"
 #include "image_resource.h"
-#include "resources.h"
+#include "resources/resources.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtQuick/QQuickWindow>

@@ -28,7 +28,7 @@
  */
 #pragma once
 
-#include "resources.h"
+#include "resources/resources.h"
 
 #include <QtCore/QByteArray>
 #include <QtCore/QSize>

@@ -2,7 +2,7 @@
 // and direct access to the state machine and the element references of the resource manager (resources.h).
 #include "../vlqt_test.h"
 #include "../app/exports.h"
-#include "../resources.h"
+#include "resources/resources.h"
 
 #include <QtCore/QLoggingCategory>
 
