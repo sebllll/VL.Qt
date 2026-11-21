@@ -18,8 +18,6 @@ namespace vlqt::res {
 
 namespace {
 
-Q_LOGGING_CATEGORY(lcRes, "VL.Qt.Resources")
-
 struct TestContent final : Content
 {
     int decodeMs = 0;

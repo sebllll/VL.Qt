@@ -24,7 +24,7 @@
  * resource keeps the converted QImage and is Ready after the decode (image()).
  *
  * A new load/set_pixels on the same id replaces the content: the old texture stays until the new one is complete
- * (resources.h, replacement), so elements never show an empty frame.
+ * (docs/design/resources.md, replacement), so elements never show an empty frame.
  */
 #pragma once
 
@@ -44,7 +44,7 @@ struct vlqt_pixel_desc;
 
 namespace vlqt::res::image {
 
-// One image (the Content of the kind). The fields are owned by the manager's threads as resources.h describes: input
+// One image (the Content of the kind). The fields are owned by the manager's threads as docs/design/resources.md describes: input
 // fields are set before start, the decode fields by the worker, the texture fields only on the main thread.
 class ImageResource final : public Content
 {
@@ -60,7 +60,7 @@ public:
     // Converted pixels without a shared device; empty after the upload of a file.
     const QImage& image() const { return m_image; }
     // device::generation() this content was made for. Content of another generation lost its texture with the
-    // old device and must not be drawn; its replacement for the new device follows (resources.h, device lost).
+    // old device and must not be drawn; its replacement for the new device follows (docs/design/resources.md, device lost).
     unsigned generation() const { return m_generation; }
 
 private:
@@ -97,7 +97,7 @@ private:
     std::future<void> m_copy;        // copy task m_image -> mapped staging texture (worker upload path)
 };
 
-// The kind for the manager (resources.cpp kindOf).
+// The kind for the manager (resources/resource_registry.cpp kindOf).
 Kind* kind();
 
 // --- C API backends (vlqt.h), main thread ---

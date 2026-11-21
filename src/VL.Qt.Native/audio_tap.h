@@ -95,7 +95,7 @@ struct TapContent final : Content
     std::atomic<int> flags{0}; // VLQT_AUDIO_TAP_* (protocol.h), set by the main thread (attach) and the player state
 };
 
-// The kind for the manager (resources.cpp kindOf).
+// The kind for the manager (resources/resource_registry.cpp kindOf).
 Kind* kind();
 
 // --- C API backends (vlqt.h) ---

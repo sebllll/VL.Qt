@@ -37,7 +37,7 @@ struct SnapshotContent final : Content
     QImage image;
 };
 
-// The kind for the manager (resources.cpp kindOf).
+// The kind for the manager (resources/resource_registry.cpp kindOf).
 Kind* kind();
 
 // --- C API backends (vlqt.h), main thread ---

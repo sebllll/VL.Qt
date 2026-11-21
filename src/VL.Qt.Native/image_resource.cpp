@@ -3,6 +3,7 @@
 #include "app/exports.h"
 #include "device.h"
 #include "protocol.h"
+#include "resources/pixel_format.h"
 #include "vlqt.h"
 
 #include <QtCore/QElapsedTimer>
@@ -23,40 +24,12 @@ namespace vlqt::res::image {
 
 namespace {
 
-Q_LOGGING_CATEGORY(lcImg, "VL.Qt.Resources")
-
 /* VL PixelFormat (VL.Core PixelFormat.cs, append-only) -> what QtNative does with it. Same table as protocol.h.
  *   direct:              R8G8B8A8 (7), B8G8R8A8 (9), R8G8B8X8 (6), B8G8R8X8 (8)   X: alpha forced to 255
  *   converted to RGBA8:  R8G8B8 (4), B8G8R8 (5), R8 (1, grey)
  *   reduced to 8 bit:    R16 (2, grey), R32F (3, grey, [0,1]), R32G32F (11, R, G, 0), R32G32B32A32F (10),
  *                        R16G16B16A16F (12); one warning per resource
  *   else (Unknown = 0, newer numbers): Failed */
-enum PixelFormat
-{
-    R8 = 1, R16 = 2, R32F = 3, R8G8B8 = 4, B8G8R8 = 5, R8G8B8X8 = 6, R8G8B8A8 = 7, B8G8R8X8 = 8, B8G8R8A8 = 9,
-    R32G32B32A32F = 10, R32G32F = 11, R16G16B16A16F = 12
-};
-
-// Bytes per pixel of a VL PixelFormat, 0 = unknown.
-int bytesPerPixel(int format)
-{
-    switch (format) {
-    case R8:            return 1;
-    case R16:           return 2;
-    case R8G8B8:
-    case B8G8R8:        return 3;
-    case R32F:
-    case R8G8B8X8:
-    case R8G8B8A8:
-    case B8G8R8X8:
-    case B8G8R8A8:      return 4;
-    case R32G32F:
-    case R16G16B16A16F: return 8;
-    case R32G32B32A32F: return 16;
-    default:            return 0;
-    }
-}
-
 constexpr const char* reducedWarning = "warning: %1 has more than 8 bits per channel, reduced to 8 bit (HDR is lost)";
 
 bool deepQtFormat(QImage::Format f)
@@ -154,7 +127,7 @@ public:
             if (!createWorkerTextures(r) && !deviceRemoved(r.m_device)) {
                 if (!(r.m_flags & VLQT_IMAGE_LOAD_MIPMAPS))
                     return "CreateTexture2D failed";
-                qCDebug(lcImg, "worker textures with mipmaps failed, uploading in stripes");
+                qCDebug(lcRes, "worker textures with mipmaps failed, uploading in stripes");
             }
         }
 #endif
@@ -168,7 +141,7 @@ public:
 #ifdef Q_OS_WIN
         // Removed device: no Failed, the rebuild after checkLost uploads again on the new device.
         if (!error.empty() && (deviceRemoved(r.m_device) || deviceRemoved(device::nativeDevice(device::uploadRhi())))) {
-            qCDebug(lcImg, "upload on a removed device (%s), waiting for the rebuild", error.c_str());
+            qCDebug(lcRes, "upload on a removed device (%s), waiting for the rebuild", error.c_str());
             error.clear();
             done = false;
             return 0;
@@ -320,7 +293,7 @@ private:
             cb->resourceUpdate(batch);
             rhi->endOffscreenFrame();
         }
-        qCDebug(lcImg, "upload %dx%d rows %d-%d: %.2f ms (create %.2f ms)", r.m_size.width(), h, r.m_uploadedRows - rows,
+        qCDebug(lcRes, "upload %dx%d rows %d-%d: %.2f ms (create %.2f ms)", r.m_size.width(), h, r.m_uploadedRows - rows,
             r.m_uploadedRows, timer.nsecsElapsed() / 1e6, createNs / 1e6);
         if (r.m_uploadedRows == h) {
             done = true;
@@ -547,6 +520,7 @@ private:
 
     static std::string convertPixels(ImageResource& r)
     {
+        using F = VlPixelFormat;
         const int w = r.m_rawWidth, h = r.m_rawHeight, fmt = r.m_rawFormat;
         const int bpp = bytesPerPixel(fmt);
         if (bpp == 0)
@@ -560,63 +534,63 @@ private:
         QImage img;
         bool keepRaw = false; // img points into m_raw
         r.m_bgra = false;
-        switch (fmt) {
-        case R8G8B8X8:
+        switch (F(fmt)) {
+        case F::R8G8B8X8:
             forceAlpha(r.m_raw);
             img = QImage(d, w, h, bpl, QImage::Format_RGBA8888_Premultiplied);
             keepRaw = true;
             break;
-        case R8G8B8A8:
+        case F::R8G8B8A8:
             img = QImage(d, w, h, bpl, pm ? QImage::Format_RGBA8888_Premultiplied : QImage::Format_RGBA8888);
             keepRaw = pm;
             if (!pm)
                 img = img.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case B8G8R8X8:
+        case F::B8G8R8X8:
             forceAlpha(r.m_raw);
             img = QImage(d, w, h, bpl, QImage::Format_ARGB32_Premultiplied);
             keepRaw = true;
             r.m_bgra = true;
             break;
-        case B8G8R8A8:
+        case F::B8G8R8A8:
             img = QImage(d, w, h, bpl, pm ? QImage::Format_ARGB32_Premultiplied : QImage::Format_ARGB32);
             keepRaw = pm;
             if (!pm)
                 img = img.convertToFormat(QImage::Format_ARGB32_Premultiplied);
             r.m_bgra = true;
             break;
-        case R8G8B8:
+        case F::R8G8B8:
             img = QImage(d, w, h, bpl, QImage::Format_RGB888).convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case B8G8R8:
+        case F::B8G8R8:
             img = QImage(d, w, h, bpl, QImage::Format_BGR888).convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case R8:
+        case F::R8:
             img = QImage(d, w, h, bpl, QImage::Format_Grayscale8).convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case R16:
+        case F::R16:
             reduced("R16");
             img = QImage(d, w, h, bpl, QImage::Format_Grayscale16).convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case R16G16B16A16F:
+        case F::R16G16B16A16F:
             reduced("R16G16B16A16F");
             img = QImage(d, w, h, bpl, pm ? QImage::Format_RGBA16FPx4_Premultiplied : QImage::Format_RGBA16FPx4)
                       .convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case R32G32B32A32F:
+        case F::R32G32B32A32F:
             reduced("R32G32B32A32F");
             img = QImage(d, w, h, bpl, pm ? QImage::Format_RGBA32FPx4_Premultiplied : QImage::Format_RGBA32FPx4)
                       .convertToFormat(QImage::Format_RGBA8888_Premultiplied);
             break;
-        case R32F:
-        case R32G32F: {
-            reduced(fmt == R32F ? "R32F" : "R32G32F");
+        case F::R32F:
+        case F::R32G32F: {
+            reduced(F(fmt) == F::R32F ? "R32F" : "R32G32F");
             img = QImage(w, h, QImage::Format_RGBA8888_Premultiplied);
             for (int y = 0; y < h; y++) {
                 const auto* src = reinterpret_cast<const float*>(d + bpl * y);
                 uchar* dst = img.scanLine(y);
                 for (int x = 0; x < w; x++, dst += 4) {
-                    if (fmt == R32F) {
+                    if (F(fmt) == F::R32F) {
                         dst[0] = dst[1] = dst[2] = unitToByte(src[x]);
                     } else {
                         dst[0] = unitToByte(src[2 * x]);
@@ -649,7 +623,7 @@ Kind* kind()
 int load(uint64_t id, const char* utf8Path, unsigned flags, int upload)
 {
     if (!utf8Path || !*utf8Path) {
-        qCWarning(lcImg, "load_image: empty path");
+        qCWarning(lcRes, "load_image: empty path");
         return badValueRc;
     }
     if (!validUpload(upload))
@@ -666,7 +640,7 @@ int load(uint64_t id, const char* utf8Path, unsigned flags, int upload)
 int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int len, int upload)
 {
     if (!desc || !data || desc->width <= 0 || desc->height <= 0) {
-        qCWarning(lcImg, "set_pixels: %s", !desc ? "null desc" : !data ? "null data" : "size <= 0");
+        qCWarning(lcRes, "set_pixels: %s", !desc ? "null desc" : !data ? "null data" : "size <= 0");
         return badValueRc;
     }
     if (!validUpload(upload))
@@ -686,7 +660,7 @@ int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int le
         const qsizetype row = qsizetype(desc->width) * bpp;
         const qsizetype stride = desc->row_bytes > 0 ? desc->row_bytes : row;
         if (stride < row || qsizetype(len) < stride * (desc->height - 1) + row) {
-            qCWarning(lcImg, "set_pixels: %d bytes do not hold %dx%d pixels of format %d with %d row bytes", len,
+            qCWarning(lcRes, "set_pixels: %d bytes do not hold %dx%d pixels of format %d with %d row bytes", len,
                 desc->width, desc->height, desc->format, desc->row_bytes);
             return badValueRc;
         }
@@ -715,7 +689,7 @@ int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc,
     if (k < 0)
         return k;
     if (k != VLQT_RESOURCE_KIND_IMAGE) {
-        qCWarning(lcImg, "read_preview: id %llu is not an image resource", static_cast<unsigned long long>(id));
+        qCWarning(lcRes, "read_preview: id %llu is not an image resource", static_cast<unsigned long long>(id));
         return badValueRc;
     }
     // Replacement of a Ready resource: readyContent is the visible content (the replacement is the separate Slot::replacement

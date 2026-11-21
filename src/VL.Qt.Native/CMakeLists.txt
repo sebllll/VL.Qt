@@ -68,6 +68,16 @@ target_sources(vlqt PRIVATE
     vlstyle.h
 
     # resources/
+    resources/pixel_format.cpp
+    resources/pixel_format.h
+    resources/resource_events.cpp
+    resources/resource_events.h
+    resources/resource_kind.h
+    resources/resource_manager.cpp
+    resources/resource_manager.h
+    resources/resource_registry.cpp
+    resources/resource_workers.cpp
+    resources/resource_workers.h
     resources/resources.cpp
     resources/resources.h
     image_resource.cpp

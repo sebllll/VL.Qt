@@ -1,6 +1,7 @@
 #include "image_writer.h"
 
 #include "app/last_error.h"
+#include "resources/pixel_format.h"
 
 #include <QByteArray>
 #include <QDir>
@@ -18,39 +19,6 @@ namespace vlqt::imagewriter
     {
         constexpr int okRc = VLQT_OK, badValueRc = VLQT_ERR_BAD_ARGUMENT, unsupportedFormatRc = VLQT_ERR_UNSUPPORTED,
                       writeFailedRc = VLQT_ERR_IO;
-
-        // VL PixelFormat numbers (VL.Core PixelFormat.cs, same table as image_resource.cpp and protocol.h).
-        enum PixelFormat
-        {
-            R8 = 1, R16 = 2, R32F = 3, R8G8B8 = 4, B8G8R8 = 5, R8G8B8X8 = 6, R8G8B8A8 = 7, B8G8R8X8 = 8, B8G8R8A8 = 9,
-            R32G32B32A32F = 10, R32G32F = 11, R16G16B16A16F = 12
-        };
-
-        struct FormatInfo
-        {
-            int bytesPerPixel = 0;
-            QImage::Format qt = QImage::Format_Invalid;
-            bool hasAlpha = false;
-        };
-
-        // Formats the writer supports; R32F and R32G32F have no QImage counterpart (0 = unsupported).
-        FormatInfo formatInfo(int format, bool premultiplied)
-        {
-            switch (format)
-            {
-            case R8:            return {1, QImage::Format_Grayscale8, false};
-            case R16:           return {2, QImage::Format_Grayscale16, false};
-            case R8G8B8:        return {3, QImage::Format_RGB888, false};
-            case B8G8R8:        return {3, QImage::Format_BGR888, false};
-            case R8G8B8X8:      return {4, QImage::Format_RGBX8888, false};
-            case B8G8R8X8:      return {4, QImage::Format_RGB32, false};
-            case R8G8B8A8:      return {4, premultiplied ? QImage::Format_RGBA8888_Premultiplied : QImage::Format_RGBA8888, true};
-            case B8G8R8A8:      return {4, premultiplied ? QImage::Format_ARGB32_Premultiplied : QImage::Format_ARGB32, true};
-            case R16G16B16A16F: return {8, premultiplied ? QImage::Format_RGBA16FPx4_Premultiplied : QImage::Format_RGBA16FPx4, true};
-            case R32G32B32A32F: return {16, premultiplied ? QImage::Format_RGBA32FPx4_Premultiplied : QImage::Format_RGBA32FPx4, true};
-            default:            return {};
-            }
-        }
 
         // File formats that store alpha; every other format gets the pixels over black.
         bool formatHasAlpha(const QByteArray& suffix)
@@ -71,10 +39,11 @@ namespace vlqt::imagewriter
         if (desc->width <= 0 || desc->height <= 0)
             return fail(badValueRc, QStringLiteral("image size must be > 0"));
 
-        const FormatInfo info = formatInfo(desc->format, desc->premultiplied != 0);
-        if (info.bytesPerPixel == 0)
+        const QImage::Format qtFormat = res::qimageFormat(desc->format, desc->premultiplied != 0);
+        if (qtFormat == QImage::Format_Invalid)
             return fail(badValueRc, QStringLiteral("unsupported pixel format %1").arg(desc->format));
-        const qsizetype row = qsizetype(desc->width) * info.bytesPerPixel;
+        const bool hasAlpha = res::hasAlpha(desc->format);
+        const qsizetype row = qsizetype(desc->width) * res::bytesPerPixel(desc->format);
         const qsizetype stride = desc->row_bytes > 0 ? desc->row_bytes : row;
         if (stride < row || len < 0 || qsizetype(len) < stride * desc->height)
             return fail(badValueRc,
@@ -88,9 +57,9 @@ namespace vlqt::imagewriter
                 QStringLiteral("unsupported image file format \"%1\" (by extension)").arg(QString::fromLatin1(suffix)));
 
         // The QImage only wraps the caller's pixels; every conversion below makes a copy.
-        const QImage source(static_cast<const uchar*>(data), desc->width, desc->height, stride, info.qt);
+        const QImage source(static_cast<const uchar*>(data), desc->width, desc->height, stride, qtFormat);
         QImage image;
-        if (formatHasAlpha(suffix) && info.hasAlpha)
+        if (formatHasAlpha(suffix) && hasAlpha)
         {
             // Straight alpha in the file; the writer does not un-premultiply for us in every format.
             image = source.convertToFormat(QImage::Format_ARGB32);
@@ -98,7 +67,7 @@ namespace vlqt::imagewriter
         else
         {
             // No alpha in the file: premultiplied color is color over black, so alpha is just dropped.
-            if (info.hasAlpha)
+            if (hasAlpha)
             {
                 image = source.convertToFormat(QImage::Format_ARGB32_Premultiplied);
                 for (int y = 0; y < image.height(); y++)

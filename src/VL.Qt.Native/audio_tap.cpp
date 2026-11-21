@@ -27,8 +27,6 @@ namespace vlqt::res::audio {
 
 namespace {
 
-Q_LOGGING_CATEGORY(lcTap, "VL.Qt.Resources")
-
 static_assert(std::atomic<double>::is_always_lock_free && std::atomic<uint64_t>::is_always_lock_free,
     "the audio thread must not take a lock");
 
@@ -73,7 +71,7 @@ public:
         tap.attachGen.fetch_add(1, std::memory_order_acq_rel);
         std::lock_guard lock(s_mutex);
         s_taps.erase(tap.id);
-        qCDebug(lcTap, "audio tap %llx destroyed", static_cast<unsigned long long>(tap.id));
+        qCDebug(lcRes, "audio tap %llx destroyed", static_cast<unsigned long long>(tap.id));
     }
     Info info(const Content& work) const override
     {
@@ -281,7 +279,7 @@ public:
         // raw pointer to its player (QAudioBufferOutputPrivate::mediaPlayer) that ~QMediaPlayer does not clear, so
         // one still set on a destroyed player must never be deleted: leak it rather than crash.
         if (m_output && !m_player) {
-            qCWarning(lcTap, "audio tap: player destroyed before the tap was detached, its buffer output is leaked");
+            qCWarning(lcRes, "audio tap: player destroyed before the tap was detached, its buffer output is leaked");
             m_output->setParent(nullptr);
             m_output = nullptr;
         }
@@ -346,7 +344,7 @@ public:
                     if (f.isValid() && raw->attachGen.load(std::memory_order_acquire) == gen)
                         storeVideoFrame(*raw, f.startTime());
                 }, Qt::DirectConnection));
-        qCDebug(lcTap, "audio tap %llx attached (%d channels, %d Hz)", static_cast<unsigned long long>(tap->id),
+        qCDebug(lcRes, "audio tap %llx attached (%d channels, %d Hz)", static_cast<unsigned long long>(tap->id),
             tap->channels, tap->sampleRate);
         return true;
     }
@@ -391,7 +389,7 @@ private:
         const uint64_t id = m_tap->id;
         m_tap.reset();
         releaseElement(id);
-        qCDebug(lcTap, "audio tap %llx detached", static_cast<unsigned long long>(id));
+        qCDebug(lcRes, "audio tap %llx detached", static_cast<unsigned long long>(id));
     }
 
     std::shared_ptr<TapContent> m_tap;
@@ -420,13 +418,13 @@ int init(uint64_t id, int channels, int sampleRate)
 {
     if (channels < 1 || channels > VLQT_AUDIO_TAP_MAX_CHANNELS || sampleRate < VLQT_AUDIO_TAP_MIN_SAMPLE_RATE
         || sampleRate > VLQT_AUDIO_TAP_MAX_SAMPLE_RATE) {
-        qCWarning(lcTap, "audio tap %llx: bad format (%d channels, %d Hz)", static_cast<unsigned long long>(id), channels,
+        qCWarning(lcRes, "audio tap %llx: bad format (%d channels, %d Hz)", static_cast<unsigned long long>(id), channels,
             sampleRate);
         return badValueRc;
     }
     // Once per tap: the format never changes (a new sample rate = a new tap).
     if (findTap(id)) {
-        qCWarning(lcTap, "audio tap %llx: already initialised", static_cast<unsigned long long>(id));
+        qCWarning(lcRes, "audio tap %llx: already initialised", static_cast<unsigned long long>(id));
         return badValueRc;
     }
     const int rc = beginExternal(id, VLQT_RESOURCE_KIND_AUDIO_TAP);
@@ -451,7 +449,7 @@ int init(uint64_t id, int channels, int sampleRate)
         s_taps.erase(id);
         return finished;
     }
-    qCDebug(lcTap, "audio tap %llx: %d channels, %d Hz, %d frames", static_cast<unsigned long long>(id), channels,
+    qCDebug(lcRes, "audio tap %llx: %d channels, %d Hz, %d frames", static_cast<unsigned long long>(id), channels,
         sampleRate, tap->capacity);
     return okRc;
 }
@@ -503,7 +501,7 @@ bool setVideoTap(Elements&, Node& node, const ResolvedProp&, const Value& v, std
     if (a->tap() == work)
         return true;
     if (work->owner && work->owner != a) {
-        qCWarning(lcTap, "audio tap %llx: already attached to another Video, ignored until it detaches",
+        qCWarning(lcRes, "audio tap %llx: already attached to another Video, ignored until it detaches",
             static_cast<unsigned long long>(v.u));
         return true;
     }

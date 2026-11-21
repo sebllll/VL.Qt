@@ -30,16 +30,9 @@ namespace vlqt::res::snapshot {
 
 namespace {
 
-Q_LOGGING_CATEGORY(lcSnap, "VL.Qt.Resources")
-
 constexpr int maxSide = 16384;          // pixels per side; more is a wrong scale
 constexpr int64_t timeoutMs = 10000;    // no ready within this time: Failed (the window does not render)
 constexpr int64_t abandonMs = 60000;    // a given up grab Qt still holds is deleted after this time
-
-int64_t steadyMs()
-{
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-}
 
 int64_t steadyUs()
 {
@@ -64,11 +57,6 @@ void recordDelivery(int64_t startUs)
     s_deliveries[s_deliveryHead] = {now, now - startUs};
     s_deliveryHead = (s_deliveryHead + 1) % statsCap;
     s_deliveryCount = std::min(s_deliveryCount + 1, statsCap);
-}
-
-QByteArray idText(uint64_t id)
-{
-    return '#' + QByteArray::number(uint32_t(id & 0xffffffffu)) + '.' + QByteArray::number(uint32_t(id >> 32));
 }
 
 class SnapshotKind final : public Kind
@@ -145,14 +133,14 @@ void onReady(Grab& g)
         // The request was divided by the window's device pixel ratio (start); where no integer size times the ratio
         // hits the wanted pixel size exactly (e.g. odd sizes at 1.5), Qt's result is off by about one pixel and is
         // scaled to the exact size of the contract (DIP * scale, independent of the DPR).
-        qCDebug(lcSnap, "%s: snapshot is %dx%d, scaled to the requested %dx%d", idText(g.id).constData(), img.width(),
+        qCDebug(lcRes, "%s: snapshot is %dx%d, scaled to the requested %dx%d", idText(g.id).constData(), img.width(),
             img.height(), g.size.width(), g.size.height());
         img = img.scaled(g.size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
     auto work = std::make_shared<SnapshotContent>();
     const int64_t bytes = int64_t(img.width()) * img.height() * 4;
     work->image = std::move(img);
-    qCDebug(lcSnap, "%s: snapshot %dx%d after %lld ms", idText(g.id).constData(), work->image.width(),
+    qCDebug(lcRes, "%s: snapshot %dx%d after %lld ms", idText(g.id).constData(), work->image.width(),
         work->image.height(), (long long)(steadyMs() - g.startMs));
     recordDelivery(g.startUs);
     finishExternal(g.id, std::move(work), bytes, {});
@@ -315,7 +303,7 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
     if (!s_softwareWarned && scene.window->rendererInterface()
         && scene.window->rendererInterface()->graphicsApi() == QSGRendererInterface::Software) {
         s_softwareWarned = true;
-        qCWarning(lcSnap, "snapshot: Qt Quick software backend, snapshots have no alpha (transparent areas are opaque black)");
+        qCWarning(lcRes, "snapshot: Qt Quick software backend, snapshots have no alpha (transparent areas are opaque black)");
     }
 
     auto g = std::make_unique<Grab>();
@@ -331,7 +319,7 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
     Grab* raw = g.get();
     raw->connection = QObject::connect(result.data(), &QQuickItemGrabResult::ready, result.data(), [raw] { onReady(*raw); });
     s_grabs.push_back(std::move(g));
-    qCDebug(lcSnap, "%s: snapshot of element %u started (%dx%d)", idText(id).constData(), elementId, size.width(),
+    qCDebug(lcRes, "%s: snapshot of element %u started (%dx%d)", idText(id).constData(), elementId, size.width(),
         size.height());
     return okRc;
 }
@@ -341,7 +329,7 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
 int start(uint64_t id, Scene& scene, unsigned elementId, float scale)
 {
     if (!(scale > 0.0f) || !std::isfinite(scale)) {
-        qCWarning(lcSnap, "snapshot: %s: scale %g rejected (must be > 0)", idText(id).constData(), double(scale));
+        qCWarning(lcRes, "snapshot: %s: scale %g rejected (must be > 0)", idText(id).constData(), double(scale));
         return badValueRc;
     }
     return startImpl(id, scene, elementId, double(scale), 0);
@@ -350,7 +338,7 @@ int start(uint64_t id, Scene& scene, unsigned elementId, float scale)
 int startFit(uint64_t id, Scene& scene, unsigned elementId, int maxEdgePx)
 {
     if (maxEdgePx <= 0) {
-        qCWarning(lcSnap, "snapshot_fit: %s: maxEdgePx %d rejected (must be > 0)", idText(id).constData(), maxEdgePx);
+        qCWarning(lcRes, "snapshot_fit: %s: maxEdgePx %d rejected (must be > 0)", idText(id).constData(), maxEdgePx);
         return badValueRc;
     }
     return startImpl(id, scene, elementId, 1.0, maxEdgePx);
@@ -364,7 +352,7 @@ int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out, int* writt
     if (k < 0)
         return k;
     if (k != VLQT_RESOURCE_KIND_SNAPSHOT) {
-        qCWarning(lcSnap, "read_pixels: %s is not a snapshot resource", idText(id).constData());
+        qCWarning(lcRes, "read_pixels: %s is not a snapshot resource", idText(id).constData());
         return badValueRc;
     }
     const auto work = std::static_pointer_cast<SnapshotContent>(readyContent(id, VLQT_RESOURCE_KIND_SNAPSHOT));
@@ -419,7 +407,7 @@ void endFrame()
             continue;
         if (g.current && kindOfId(g.id, nullptr) < 0) { // released during the grab: result dropped
             g.current = false;
-            qCDebug(lcSnap, "%s: snapshot dropped (released during the grab)", idText(g.id).constData());
+            qCDebug(lcRes, "%s: snapshot dropped (released during the grab)", idText(g.id).constData());
         }
         if (!g.window || !g.item) { // Qt never finishes it: delete now
             if (g.current)
@@ -445,7 +433,7 @@ void endFrame()
 void shutdown()
 {
     if (!s_grabs.empty())
-        qCInfo(lcSnap, "shutdown: %d snapshot grab(s) dropped", int(s_grabs.size()));
+        qCInfo(lcRes, "shutdown: %d snapshot grab(s) dropped", int(s_grabs.size()));
     s_grabs.clear();
 }
 
