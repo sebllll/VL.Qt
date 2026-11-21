@@ -9,10 +9,10 @@ namespace VL.Qt.Nodes
     /// Tints the element with a color (Qt MultiEffect colorization). Connect Output to the Effect pin of an element, or
     /// chain it with other effect nodes; the order of the nodes
     /// does not matter within a run.
-    /// Neighboring MultiEffect nodes are merged into one layer with one shader, Qt's fixed order applies inside it; a
-    /// shader effect (e.g. Glow) ends the run, between runs the patch order applies.
+    /// Blur, DropShadow, ColorAdjust, Colorize and Mask next to each other in a chain are merged into one layer with one
+    /// shader, Qt's fixed order applies inside it; a shader effect (e.g. Glow) ends the run, between runs the patch order applies.
     /// </summary>
-    [ProcessNode(Name = "Colorize", Category = Categories.MultiEffect)]
+    [ProcessNode(Name = "Colorize", Category = Categories.Effects)]
     public sealed class ColorizeNode
     {
         internal readonly record struct Props(Color4 Color, float Amount);

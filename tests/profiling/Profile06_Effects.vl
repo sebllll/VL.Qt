@@ -151,12 +151,10 @@
             <Pin Id="GNBRbRnQ9cEMWh43z22b6u" Name="Result" Kind="OutputPin" />
           </Node>
 <Node Bounds="330,690,66,19" Id="GOicq7yzBnzH5mGIIHxqhQ">
-            <p:NodeReference LastCategoryFullName="Qt.Effects.MultiEffect" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Effects" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="MultiEffect" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Effects" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
-                </p:OuterCategoryReference>
+              <CategoryReference Kind="Category" Name="Effects" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Blur" />
             </p:NodeReference>
@@ -169,12 +167,10 @@
             <Pin Id="GPXezsxKnLuMdLMrTCoQuR" Name="Padding" Kind="InputPin" IsHidden="true" />
           </Node>
 <Node Bounds="330,750,105,19" Id="Gj4nIFnQizQDIjMHh4RGxF">
-            <p:NodeReference LastCategoryFullName="Qt.Effects.MultiEffect" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Effects" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="MultiEffect" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Effects" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
-                </p:OuterCategoryReference>
+              <CategoryReference Kind="Category" Name="Effects" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="DropShadow" />
             </p:NodeReference>

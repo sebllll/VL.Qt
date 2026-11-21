@@ -16,7 +16,7 @@ namespace VL.Qt.Stride
     /// Renders the element tree at Input offscreen into a Stride texture (no window), on the GPU and in the same frame:
     /// Stride waits GPU-side until Qt has written the texture. The output is premultiplied alpha; 1 DIP = 1 pixel.
     /// </summary>
-    [ProcessNode(Name = "QtTexture", Category = Categories.Qt)]
+    [ProcessNode(Name = "QtTexture", Category = "Stride.Textures.Source")]
     [Smell(SymbolSmell.Experimental)]
     [SupportedOSPlatform("windows")]
     public sealed class QtTextureNode : IDisposable

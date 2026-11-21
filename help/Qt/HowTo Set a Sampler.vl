@@ -78,10 +78,12 @@
             <Pin Id="1IRupwNjNhzJCMAW95OEAg" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
           <Node Bounds="100,780,145,19" Id="MTrFuAhTkCyRsBfrGC3Qp5">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
@@ -112,9 +114,9 @@
             <Pin Id="zoCaxvuJeYXWh9OO7LS2U3" Name="Error" Kind="OutputPin" />
           </Node>
           <Node Bounds="310,466,200,19" Id="y6qYhP6s7MNN4fMhvh4t03">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
                   <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
                 </p:OuterCategoryReference>

@@ -50,7 +50,7 @@
             </p:TypeAnnotation>
           </Pad>
           <Node Bounds="363,364,66,19" Id="7nNduIIJ7NU7mxmMkmnOiJ">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="ToQtImage" />
             </p:NodeReference>

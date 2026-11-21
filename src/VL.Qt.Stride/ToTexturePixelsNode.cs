@@ -13,7 +13,7 @@ namespace VL.Qt.Stride
     /// quad, for its Input Notifications pin. The quad is Stride's unit quad (-0.5 ... 0.5 in its local XY plane, +Y up)
     /// placed by World and seen through View and Projection; fullscreen: World = Scaling (2, 2, 1), View and Projection identity.
     /// </summary>
-    [ProcessNode(Name = "ToTexturePixels", Category = Categories.Qt)]
+    [ProcessNode(Name = "ToTexturePixels", Category = "Stride.Input")]
     [Smell(SymbolSmell.Experimental)]
     public sealed class ToTexturePixelsNode : IDisposable
     {

@@ -25,7 +25,7 @@ namespace VL.Qt.Nodes
     /// </summary>
     // The reconciler sends the properties (SET_QML_PROPERTIES, only what changed) and the reload counter; this node owns the
     // file watcher (hot reload) and the feedback that receives the events of QtNative (1 frame latency).
-    [ProcessNode(Name = "QmlElement", Category = Categories.Elements), Smell(SymbolSmell.Experimental)]
+    [ProcessNode(Name = "QmlElement", Category = Categories.Qml), Smell(SymbolSmell.Experimental)]
     public sealed class QmlElementNode : IDisposable
     {
         internal readonly record struct Props(string Source, int Reload, QmlProperties Properties, bool AutoSize);

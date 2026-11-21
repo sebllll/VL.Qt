@@ -10,7 +10,7 @@ namespace VL.Qt.Nodes
     /// Loads an image file (PNG, JPG, ...) into a QtImage for the Image element. Blocks the frame – use at startup or in
     /// Create. Use LoadImage (Async) while running.
     /// </summary>
-    [ProcessNode(Name = "LoadImage", Category = Categories.Qt)]
+    [ProcessNode(Name = "LoadImage", Category = Categories.Images)]
     public sealed class LoadImageNode : IDisposable
     {
         private readonly ResourceClient _client;

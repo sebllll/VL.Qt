@@ -129,12 +129,10 @@
             </p:TypeAnnotation>
           </Pad>
           <Node Bounds="567,789,45,19" Id="yVcJtOO8lK1oKFTHq7BQRK">
-            <p:NodeReference LastCategoryFullName="Qt.Effects.MultiEffect" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Effects" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="MultiEffect" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Effects" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
-                </p:OuterCategoryReference>
+              <CategoryReference Kind="Category" Name="Effects" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Mask" />
             </p:NodeReference>

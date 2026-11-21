@@ -13,7 +13,7 @@ namespace VL.Qt.Nodes
     /// processing in Skia/OpenCV. Asynchronous: Is Ready typically comes one frame after Grab (never in the same frame). Not a frame stream.
     /// The element has to be shown in a renderer.
     /// </summary>
-    [ProcessNode(Name = "Snapshot", Category = Categories.Qt)]
+    [ProcessNode(Name = "Snapshot", Category = Categories.Images)]
     public sealed class SnapshotNode : IDisposable
     {
         /// <summary>Error at the node when Grab is hit for an element that no renderer shows.</summary>
