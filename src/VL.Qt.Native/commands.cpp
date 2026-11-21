@@ -1,4 +1,5 @@
 #include "commands.h"
+#include "app/exports.h"
 #include "audio_tap.h"
 #include "debug.h"
 #include "effectchain.h"
@@ -1257,20 +1258,18 @@ void Scene::polish()
                 kv.second.item->ensurePolished();
 }
 
-int Scene::poll(unsigned char* out, int cap)
+int Scene::poll(unsigned char* out, int cap, int* written, int* required)
 {
+    if (const int rc = beginBuffer(out, cap, written, required); rc != VLQT_OK)
+        return rc;
     deleteRetired(); // poll runs after processEvents: the effects have moved off retired sources
     appliedSincePoll = false; // polish (if Qt did not render) ran before this poll
     collectWindowGeometry(*this);
     collectMeasurements(*this);
-    const int n = int(events.size());
-    if (n == 0)
-        return 0;
-    if (!out || cap < n)
-        return -n;
-    std::memcpy(out, events.constData(), size_t(n));
-    events.resize(0);
-    return n;
+    const int rc = copyOut(events.constData(), int(events.size()), out, cap, written, required);
+    if (rc == VLQT_OK)
+        events.resize(0);
+    return rc;
 }
 
 void Scene::pushEvent(quint16 ev, quint32 handle, quint32 index, const void* payload, quint16 payloadLen)

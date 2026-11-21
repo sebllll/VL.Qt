@@ -197,7 +197,7 @@ public static class AnchorTest
         rec.Clear();
 
         // 10) ANCHOR errors (raw): one horizontal and one vertical Qt::AlignmentFlag, i32 only. Valid on every type.
-        void Expect(int expected, string what)
+        void Expect(Native.Result expected, string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
@@ -209,13 +209,13 @@ public static class AnchorTest
         cmd.SetI32(Raw, Protocol.Prop.Anchor, 0x42);
         Expect(0, "ANCHOR BottomRight on a Rectangle");
         cmd.SetI32(Raw, Protocol.Prop.Anchor, 0x03);
-        Expect(-7, "ANCHOR Left|Right without vertical flag");
+        Expect(Native.Result.BadArgument, "ANCHOR Left|Right without vertical flag");
         cmd.SetI32(Raw, Protocol.Prop.Anchor, 0x84 | 0x100);
-        Expect(-7, "ANCHOR with a flag outside left/right/hcenter/top/bottom/vcenter");
+        Expect(Native.Result.BadArgument, "ANCHOR with a flag outside left/right/hcenter/top/bottom/vcenter");
         cmd.SetF32(Raw, Protocol.Prop.Anchor, 0.5f);
-        Expect(-7, "ANCHOR as f32");
+        Expect(Native.Result.BadArgument, "ANCHOR as f32");
         cmd.SetF32(Raw, Protocol.Prop.Size, 1);
-        Expect(-7, "SIZE as f32 (vec2 only)");
+        Expect(Native.Result.BadArgument, "SIZE as f32 (vec2 only)");
         cmd.Destroy(Raw);
         Expect(0, "destroy");
 

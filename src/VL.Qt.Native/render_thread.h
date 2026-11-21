@@ -77,9 +77,9 @@ private:
 };
 
 // Sets the pool size: 0 = offscreen scenes render on the main thread, n = on n render threads. Only before the first
-// assign; afterwards only the size in use is accepted. Returns a vlqt_offscreen_result code (protocol.h): OK,
-// BAD_ARGUMENT (count < 0 or > maxThreads), NOT_SUPPORTED (too late; message in error). Main thread.
-int setThreadCount(int count, const char** error);
+// assign; afterwards only the size in use is accepted. Returns VLQT_OK, VLQT_ERR_BAD_ARGUMENT (count < 0 or >
+// maxThreads), VLQT_ERR_UNSUPPORTED (too late); a failure sets vlqt_last_error. Main thread.
+int setThreadCount(int count);
 inline constexpr int maxThreads = 16;
 
 // The render thread of a new scene: the next one of the pool, round robin; nullptr = main thread. The first call fixes

@@ -98,11 +98,11 @@ public static class ResourceStressTest
 
         void Poll()
         {
-            var n = Native.ResPoll(buf);
-            if (n < 0)
+            var n = NativeCalls.ResPoll(buf, out var required);
+            if (n == (int)Native.Result.BufferTooSmall)
             {
-                buf = new byte[-n * 2];
-                n = Native.ResPoll(buf);
+                buf = new byte[required * 2];
+                n = NativeCalls.ResPoll(buf);
             }
             for (int at = 0; at < n;)
             {
@@ -134,7 +134,7 @@ public static class ResourceStressTest
             return w;
         }
 
-        void Apply(IntPtr w, string what, params int[] okCodes)
+        void Apply(IntPtr w, string what, params Native.Result[] okCodes)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             if (rc != 0 && !okCodes.Contains(rc)) Violation($"apply {what} -> {rc} ({Native.LastError()})");
@@ -145,7 +145,7 @@ public static class ResourceStressTest
         ulong PickAnyId()
         {
             var r = rng.Next(100);
-            if (r < 8 && stale.Count > 0) return stale[rng.Next(stale.Count)].id; // an element on a stale id: -7, nothing drawn
+            if (r < 8 && stale.Count > 0) return stale[rng.Next(stale.Count)].id; // an element on a stale id: BadArgument, nothing drawn
             if (r < 12) return 0;
             return PickLive();
         }
@@ -231,14 +231,14 @@ public static class ResourceStressTest
             int rc;
             switch (rng.Next(6))
             {
-                case 0: name = "release"; rc = Native.vlqt_res_release(id); break;
-                case 1: name = "load_image"; rc = Native.vlqt_res_load_image(id, files[rng.Next(files.Count)].path, 0); break;
-                case 2: name = "set_pixels"; rc = Native.ResSetPixels(id, new Native.vlqt_pixel_desc { width = 8, height = 8, format = 7 }, pixelBuf.AsSpan(0, 8 * 8 * 4)); break;
+                case 0: name = "release"; rc = (int)Native.vlqt_res_release(id); break;
+                case 1: name = "load_image"; rc = (int)Native.vlqt_res_load_image(id, files[rng.Next(files.Count)].path, 0); break;
+                case 2: name = "set_pixels"; rc = (int)Native.ResSetPixels(id, new Native.vlqt_pixel_desc { width = 8, height = 8, format = 7 }, pixelBuf.AsSpan(0, 8 * 8 * 4)); break;
                 case 3: name = "wait"; rc = Native.vlqt_res_wait(id, 0); break;
-                case 4: name = "read_pixels"; rc = NativeTest.ResReadPixels(id, new byte[64], out _, out _); break;
-                default: name = "snapshot"; rc = windows.Count > 0 ? Native.vlqt_res_snapshot(id, windows[0], FirstElement, 1) : -9; break;
+                case 4: name = "read_pixels"; rc = NativeCalls.ReadPixels(id, new byte[64], out _, out _); break;
+                default: name = "snapshot"; rc = windows.Count > 0 ? (int)Native.vlqt_res_snapshot(id, windows[0], FirstElement, 1) : (int)Native.Result.UnknownId; break;
             }
-            // Also while the id is still in the table (element ref or running decode): vlqt.h promises -9 for every call.
+            // Also while the id is still in the table (element ref or running decode): vlqt.h promises UnknownId for every call.
             if (strict && aliveBefore)
                 Count("stale call, id still in the table");
             if (strict && rc >= 0)
@@ -264,7 +264,7 @@ public static class ResourceStressTest
             var img = PickAnyId();
             if (img != 0) cmd.SetU64(e.Id, Protocol.Prop.Image, img);
             cmd.Reparent(e.Id, 0, 0);
-            Apply(w, "element create", -7); // -7: the stale id of the property
+            Apply(w, "element create", Native.Result.BadArgument); // the stale id of the property
             elements.Add(e);
         }
 
@@ -275,7 +275,7 @@ public static class ResourceStressTest
             var e = elements[rng.Next(elements.Count)];
             cmd.Reset();
             cmd.SetU64(e.Id, Protocol.Prop.Image, PickAnyId());
-            Apply(e.Win, "element retarget", -7);
+            Apply(e.Win, "element retarget", Native.Result.BadArgument);
         }
 
         void DestroyElement()

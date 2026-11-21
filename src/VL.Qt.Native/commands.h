@@ -41,8 +41,8 @@ struct Scene {
     /* Applies all commands; stops at the first bad one (earlier ones stay applied). err names index + reason. */
     int apply(const unsigned char* buf, int len, std::string& err);
     /* Queues changed measured values of bound items (events.h), then copies queued events into out and clears
-     * the queue; returns bytes written, -required if cap is too small (events stay queued). */
-    int poll(unsigned char* out, int cap);
+     * the queue: a buffer export (vlqt.h); on VLQT_ERR_BUFFER_TOO_SMALL the events stay queued. */
+    int poll(unsigned char* out, int cap, int* written, int* required);
     /* Runs pending polish (layouts/positioners) of all scene items without a render, so poll measures current
      * geometry also when Qt did not render this pump. Skipped when nothing changed since the last poll
      * (#71): no apply, no marked geometry, no window geometry change and no polish request pending in the window. */

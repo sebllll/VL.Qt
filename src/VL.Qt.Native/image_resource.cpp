@@ -1,5 +1,6 @@
 #include "image_resource.h"
 
+#include "app/exports.h"
 #include "device.h"
 #include "protocol.h"
 #include "vlqt.h"
@@ -688,8 +689,10 @@ std::shared_ptr<ImageResource> ready(uint64_t id)
     return std::static_pointer_cast<ImageResource>(readyWork(id, VLQT_RES_KIND_IMAGE));
 }
 
-int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc)
+int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc, int* written, int* required)
 {
+    if (const int rc = beginBuffer(dst, cap, written, required); rc != okRc)
+        return rc;
     const int k = kindOfId(id, "read_preview");
     if (k < 0)
         return k;
@@ -701,12 +704,12 @@ int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc)
     // until its swap), so the preview always belongs to what ready() shows.
     const auto r = ready(id);
     if (!r || r->m_preview.isNull())
-        return badValueRc; // not Ready yet / Failed / loaded without VLQT_IMG_PREVIEW
+        return noDataRc; // not Ready yet / Failed / loaded without VLQT_IMG_PREVIEW
     // No lock: the worker wrote m_preview in decode, before the Ready transition (made under the manager's mutex,
     // which readyWork takes as well); afterwards nothing touches it until the Work is destroyed.
     const QImage& img = r->m_preview;
     const int rowBytes = img.width() * 4;
-    const int64_t required = int64_t(rowBytes) * img.height();
+    const int64_t size = int64_t(rowBytes) * img.height();
     if (desc) {
         desc->width = img.width();
         desc->height = img.height();
@@ -715,36 +718,43 @@ int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc)
         desc->premultiplied = 1;
         desc->flags = 0;
     }
-    if (!dst || cap < required)
-        return -int(required);
+    if (const int rc = bufferFits(size, cap, written, required); rc != okRc)
+        return rc;
     for (int y = 0; y < img.height(); y++)
         std::memcpy(dst + size_t(y) * rowBytes, img.constScanLine(y), size_t(rowBytes));
-    return int(required);
+    return okRc;
 }
 
 // test hook: vlqt_test_res_read_pixels (test/test_probes.cpp).
-int testRead(uint64_t id, unsigned char* out, int cap, int* width, int* height)
+int testRead(uint64_t id, unsigned char* out, int cap, int* width, int* height, int* written, int* required)
 {
+    if (const int rc = beginBuffer(out, cap, written, required); rc != okRc)
+        return rc;
     if (kindOfId(id, "test read_pixels") < 0) // unknown, stale or released by the host; ready() does not check
         return staleIdRc;
     auto r = ready(id);
     if (!r)
-        return staleIdRc;
+        return noDataRc;
     const int w = r->m_size.width(), h = r->m_size.height();
     if (width)
         *width = w;
     if (height)
         *height = h;
     const int n = w * h * 4;
-    if (!out || cap < n)
-        return -n;
+    if (const int rc = bufferFits(n, cap, written, required); rc != okRc)
+        return rc;
+    // A readback failure below must not leave the counts of a success.
+    auto failed = [&](const char* what) {
+        beginBuffer(out, cap, written, required);
+        return fail(errorRc, std::string("test read_pixels: ") + what);
+    };
     // rb outlives result: convertToFormat returns a shallow copy when the format already matches (RGBA8
     // readback), so result may point into rb.data; freed at the end of the else block, the copy below read freed memory.
     QRhiReadbackResult rb;
     QImage result;
     if (!r->m_texture) {
         if (r->m_image.isNull()) // file content whose texture went with a lost device, until its replacement
-            return errorRc;
+            return failed("no texture and no image (lost device)");
         result = r->m_image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
     } else {
         QRhi* rhi = device::uploadRhi();
@@ -752,14 +762,14 @@ int testRead(uint64_t id, unsigned char* out, int cap, int* width, int* height)
             device::ContextLock lock; // as in uploadNow
             QRhiCommandBuffer* cb = nullptr;
             if (rhi->beginOffscreenFrame(&cb) != QRhi::FrameOpSuccess)
-                return errorRc;
+                return failed("beginOffscreenFrame failed");
             QRhiResourceUpdateBatch* batch = rhi->nextResourceUpdateBatch();
             batch->readBackTexture(QRhiReadbackDescription(r->m_texture), &rb);
             cb->resourceUpdate(batch);
             rhi->endOffscreenFrame(); // waits for the readback
         }
         if (rb.data.size() < qsizetype(n))
-            return errorRc;
+            return failed("readback returned too few bytes");
         const qsizetype bpl = rb.data.size() / h;
         const auto* src = reinterpret_cast<const uchar*>(rb.data.constData());
         result = QImage(src, w, h, bpl, rb.format == QRhiTexture::BGRA8 ? QImage::Format_ARGB32_Premultiplied
@@ -768,7 +778,7 @@ int testRead(uint64_t id, unsigned char* out, int cap, int* width, int* height)
     }
     for (int y = 0; y < h; y++)
         std::memcpy(out + size_t(w) * 4 * y, result.constScanLine(y), size_t(w) * 4);
-    return n;
+    return okRc;
 }
 
 } // namespace vlqt::res::image

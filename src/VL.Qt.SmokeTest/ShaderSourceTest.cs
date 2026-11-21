@@ -77,7 +77,7 @@ public static class ShaderSourceTest
         var resBuf = new byte[16 * 1024];
         string ResError(ulong id)
         {
-            var n = Native.ResPoll(resBuf);
+            var n = NativeCalls.ResPoll(resBuf);
             for (int at = 0; at < n;)
             {
                 var len = BitConverter.ToUInt16(resBuf, at + 2);
@@ -131,7 +131,7 @@ public static class ShaderSourceTest
         s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        int Apply() => Native.Apply(w, cmd.EndFrame());
+        Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
         void CheckApply(string what)
         {
             var rc = Apply();

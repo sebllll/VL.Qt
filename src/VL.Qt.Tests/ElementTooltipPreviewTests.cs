@@ -334,12 +334,12 @@ namespace VL.Qt.Tests
         public void Refused_ShownInText_NoException()
         {
             Show();
-            _api.SnapshotRc = -7;
+            _api.SnapshotRc = Native.Result.BadArgument;
             var image = Update(out var text);
             Assert.That(image, Is.Null);
             Assert.That(text, Does.Contain("refused"));
 
-            _api.SnapshotRc = 0;
+            _api.SnapshotRc = Native.Result.Ok;
             _changes++;
             _clock += 1;
             Update(out _);

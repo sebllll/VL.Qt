@@ -46,6 +46,8 @@
  */
 #pragma once
 
+#include "vlqt.h"
+
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -111,17 +113,18 @@ public:
     virtual bool stale(const Work& work) const { (void)work; return false; }
 };
 
-// Return codes of the C API (vlqt.h).
-constexpr int okRc = 0;
-constexpr int errorRc = -1;      // internal error, details in the log
-constexpr int badValueRc = -7;   // argument out of range / transition rejected
-constexpr int staleIdRc = -9;    // unknown, stale or already released id
+// Return codes of the C API: short names for the codes of vlqt_result (vlqt.h) that the resources return.
+constexpr int okRc = VLQT_OK;
+constexpr int errorRc = VLQT_ERR_INTERNAL;      // internal error, details in the log
+constexpr int badValueRc = VLQT_ERR_BAD_ARGUMENT; // argument out of range / transition rejected
+constexpr int staleIdRc = VLQT_ERR_UNKNOWN_ID;  // unknown, stale or already released id
+constexpr int noDataRc = VLQT_ERR_NO_DATA;      // nothing to read yet (no snapshot, no preview, not Ready)
 
 // --- C API backends (vlqt.h vlqt_res_*), main thread ---
 int create(int kind, uint64_t* outId);
 int release(uint64_t id);
 int setBudget(int bytes);
-int poll(unsigned char* out, int cap);
+int poll(unsigned char* out, int cap, int* written, int* required); // a buffer export (vlqt.h)
 int wait(uint64_t id, int timeoutMs);
 int list(void* out, int cap); // vlqt_res_info*
 void shutdown();

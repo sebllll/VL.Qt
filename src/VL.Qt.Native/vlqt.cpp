@@ -12,7 +12,7 @@
 #include "shadereffectitem.h"
 #include "snapshot_resource.h"
 #include "image_writer.h"
-#include "last_error.h"
+#include "app/exports.h"
 #include "test/test_hooks.h"
 #include "threadname.h"
 #include "vlstyle.h"
@@ -106,11 +106,9 @@ namespace {
 std::atomic<vlqt_log_fn> g_log{nullptr};
 QString g_nativeDir;
 QString g_pipelineCachePath; // vlqt_set_pipeline_cache, empty = Qt's pipeline cache off
-std::string g_lastError;
 QGuiApplication* g_app = nullptr;
 
-void setError(const std::string& e) { g_lastError = e; }
-void setErrorQ(const QString& e) { g_lastError = e.toStdString(); }
+using vlqt::fail;
 using vlqt::guarded;
 
 // every message of QtNative and of Qt goes to the managed logger (vvvv Log window, logging providers).
@@ -867,7 +865,7 @@ bool sendTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<
     const bool known = it != active.end();
     const bool press = state == QEventPoint::State::Pressed;
     if (known == press) {
-        ::setError(std::string(function) + ": point " + std::to_string(id) + (known ? " is already pressed" : " is not pressed"));
+        vlqt::setLastError(std::string(function) + ": point " + std::to_string(id) + (known ? " is already pressed" : " is not pressed"));
         return false;
     }
     if (known)
@@ -930,17 +928,7 @@ QQuickWindow* quickWindow(void* handle)
     return handle ? static_cast<Window*>(handle)->window : nullptr;
 }
 
-void setError(const std::string& message)
-{
-    ::setError(message);
-}
-
 } // namespace vlqt::offscreen
-
-void vlqt::setLastError(const std::string& message)
-{
-    ::setError(message);
-}
 
 // test hooks: the parts of a window handle the test exports read (test/test_hooks.h).
 namespace vlqt::test {
@@ -963,7 +951,7 @@ InputState* input(void* handle)
 int fontRefs(unsigned long long handle)
 {
     const FontEntry* e = findFont(handle);
-    return e ? e->refs : -9;
+    return e ? e->refs : fail(VLQT_ERR_UNKNOWN_ID, "test_font_refs: unknown handle " + std::to_string(handle));
 }
 
 } // namespace vlqt::test
@@ -1054,16 +1042,16 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
     });
 }
 
-VLQT_API void vlqt_app_process_events(void)
+VLQT_API int vlqt_app_process_events(void)
 {
-    vlqt_app_process_events_for(nullptr, 0);
+    return vlqt_app_process_events_for(nullptr, 0);
 }
 
-VLQT_API void vlqt_app_process_events_for(void* const* windows, int count)
+VLQT_API int vlqt_app_process_events_for(void* const* windows, int count)
 {
-    guarded([&]() -> int {
+    return guarded([&]() -> int {
         if (!g_app)
-            return -1;
+            return fail(VLQT_ERR_NOT_INITIALIZED, "process_events: app not initialized");
         QElapsedTimer t;
         t.start();
         static std::vector<UpdateGate*> s_active; // reused, no allocation per pump
@@ -1105,10 +1093,8 @@ VLQT_API void vlqt_app_process_events_for(void* const* windows, int count)
 VLQT_API int vlqt_app_deliver_input(void)
 {
     return guarded([&]() -> int {
-        if (!g_app) {
-            setError("app not initialized");
-            return -1;
-        }
+        if (!g_app)
+            return fail(VLQT_ERR_NOT_INITIALIZED, "deliver_input: app not initialized");
         // From inside the pump (a host callback in processEvents) the pump itself delivers.
         if (UpdateGate::inPump())
             return 0;
@@ -1131,10 +1117,8 @@ VLQT_API int vlqt_app_deliver_input(void)
 VLQT_API int vlqt_driver_advance(double seconds)
 {
     return guarded([&]() -> int {
-        if (!g_driver) {
-            setError("app not initialized");
-            return -1;
-        }
+        if (!g_driver)
+            return fail(VLQT_ERR_NOT_INITIALIZED, "driver_advance: app not initialized");
         // An animation started since the last tick (in the apply, e.g. a QML Behavior retargeted by a property set every
         // frame) enters the running list of QAnimationTimer only through a queued startAnimations() call. Without this the
         // call ran in processEvents after the tick, so an animation restarted every frame was never advanced and stood
@@ -1148,7 +1132,7 @@ VLQT_API int vlqt_driver_advance(double seconds)
 
 VLQT_API const char* vlqt_last_error(void)
 {
-    return g_lastError.c_str();
+    return vlqt::lastError();
 }
 
 VLQT_API void* vlqt_window_create(int width, int height, const char* title)
@@ -1159,18 +1143,18 @@ VLQT_API void* vlqt_window_create(int width, int height, const char* title)
 
 VLQT_API int vlqt_set_pipeline_cache(const char* utf8Path)
 {
-    g_pipelineCachePath = QString::fromUtf8(utf8Path ? utf8Path : "");
-    return 0;
+    return guarded([&]() -> int {
+        g_pipelineCachePath = QString::fromUtf8(utf8Path ? utf8Path : "");
+        return VLQT_OK;
+    });
 }
 
 VLQT_API void* vlqt_window_create_at(float x, float y, int width, int height, const char* title, int swapInterval)
 {
     Window* result = nullptr;
     guarded([&]() -> int {
-        if (!g_app) {
-            setError("app not initialized");
-            return -1;
-        }
+        if (!g_app)
+            return fail(VLQT_ERR_NOT_INITIALIZED, "window_create: app not initialized");
         auto* w = new Window();
         w->engine = newEngine();
         w->window = new QQuickWindow();
@@ -1235,10 +1219,8 @@ VLQT_API int vlqt_window_set_icon(void* p, const char* utf8Path)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("null window");
-            return -1;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
         if (w->offscreen)
             return 0;
         const QString path = QString::fromUtf8(utf8Path ? utf8Path : "");
@@ -1253,8 +1235,7 @@ VLQT_API int vlqt_window_set_icon(void* p, const char* utf8Path)
         if (icon.isNull()) {
             // The default icon is shown instead (also replaces a custom icon set before).
             w->window->setIcon(defaultIcon());
-            setErrorQ(QStringLiteral("icon not loadable: %1").arg(path));
-            return -7;
+            return fail(VLQT_ERR_IO, QStringLiteral("icon not loadable: %1").arg(path));
         }
         w->window->setIcon(icon);
         return 0;
@@ -1265,10 +1246,8 @@ VLQT_API int vlqt_window_set_title(void* p, const char* title)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("null window");
-            return -1;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
         if (!w->offscreen)
             w->window->setTitle(QString::fromUtf8(title ? title : ""));
         return 0;
@@ -1279,14 +1258,10 @@ VLQT_API int vlqt_window_resize(void* p, int width, int height)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("null window");
-            return -1;
-        }
-        if (w->offscreen) {
-            setError("resize: an offscreen scene takes its size from vlqt_offscreen_bind");
-            return VLQT_OFFSCREEN_BAD_ARGUMENT;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
+        if (w->offscreen)
+            return fail(VLQT_ERR_UNSUPPORTED, "resize: an offscreen scene takes its size from vlqt_offscreen_bind");
         w->window->resize(width, height);
         return 0;
     });
@@ -1303,27 +1278,35 @@ VLQT_API void vlqt_window_hide(void* p)
 
 VLQT_API int vlqt_window_take_close_request(void* p)
 {
-    auto* w = static_cast<Window*>(p);
-    if (!w || !w->closeFilter || !w->closeFilter->requested) // a scene has no close filter
-        return 0;
-    w->closeFilter->requested = false;
-    return 1;
+    return guarded([&]() -> int {
+        auto* w = static_cast<Window*>(p);
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "take_close_request: null window");
+        if (!w->closeFilter || !w->closeFilter->requested) // a scene has no close filter
+            return 0;
+        w->closeFilter->requested = false;
+        return 1;
+    });
 }
 
 VLQT_API int vlqt_window_is_visible(void* p)
 {
-    auto* w = static_cast<Window*>(p);
-    return (w && !w->offscreen && w->window->isVisible()) ? 1 : 0;
+    return guarded([&]() -> int {
+        auto* w = static_cast<Window*>(p);
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "is_visible: null window");
+        return !w->offscreen && w->window->isVisible() ? 1 : 0;
+    });
 }
 
 VLQT_API int vlqt_window_get_perf(void* p, vlqt_perf* out)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w || !out) {
-            setError("null window or out");
-            return -1;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
+        if (!out)
+            return fail(VLQT_ERR_BAD_ARGUMENT, "null out");
         w->perf->summary(out);
         return 0;
     });
@@ -1333,15 +1316,14 @@ VLQT_API int vlqt_window_get_perf_sample(void* p, vlqt_perf_sample* out)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w || !out) {
-            setError("null window or out");
-            return -1;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
+        if (!out)
+            return fail(VLQT_ERR_BAD_ARGUMENT, "null out");
         PerfSample s;
         if (!w->perf->lastSample(&s)) {
             *out = vlqt_perf_sample{};
-            setError("no pump yet");
-            return -2;
+            return fail(VLQT_ERR_NO_DATA, "get_perf_sample: no pump yet");
         }
         *out = vlqt_perf_sample{s.frame, s.pump, s.sync, s.render, s.present, s.gpu, s.events, s.swaps, s.vsync};
         return 0;
@@ -1352,10 +1334,10 @@ VLQT_API int vlqt_window_get_perf_stats(void* p, vlqt_perf_stats* out)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w || !out) {
-            setError("null window or out");
-            return -1;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
+        if (!out)
+            return fail(VLQT_ERR_BAD_ARGUMENT, "null out");
         w->perf->stats(out);
         return 0;
     });
@@ -1365,14 +1347,12 @@ VLQT_API int vlqt_window_report_host_frame(void* p, const vlqt_host_frame* in)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w || !in) {
-            setError("null window or in");
-            return -1;
-        }
-        if (!w->perf->reportHostFrame(*in)) {
-            setError("no pump yet");
-            return -2;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
+        if (!in)
+            return fail(VLQT_ERR_BAD_ARGUMENT, "null in");
+        if (!w->perf->reportHostFrame(*in))
+            return fail(VLQT_ERR_NO_DATA, "report_host_frame: no pump yet");
         return 0;
     });
 }
@@ -1381,14 +1361,13 @@ VLQT_API int vlqt_window_get_host_frame(void* p, vlqt_host_frame* out)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w || !out) {
-            setError("null window or out");
-            return -1;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
+        if (!out)
+            return fail(VLQT_ERR_BAD_ARGUMENT, "null out");
         if (!w->perf->lastHostFrame(out)) {
             *out = vlqt_host_frame{};
-            setError("no host frame reported for the last pump");
-            return -2;
+            return fail(VLQT_ERR_NO_DATA, "get_host_frame: no host frame reported for the last pump");
         }
         return 0;
     });
@@ -1398,10 +1377,10 @@ VLQT_API int vlqt_window_get_host_stats(void* p, vlqt_host_stats* out)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w || !out) {
-            setError("null window or out");
-            return -1;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
+        if (!out)
+            return fail(VLQT_ERR_BAD_ARGUMENT, "null out");
         w->perf->hostStats(out);
         return 0;
     });
@@ -1411,10 +1390,8 @@ VLQT_API int vlqt_window_set_overlay(void* p, int flags)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("null window");
-            return -1;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
         w->perf->setOverlay(flags);
         return 0;
     });
@@ -1422,18 +1399,20 @@ VLQT_API int vlqt_window_set_overlay(void* p, int flags)
 
 VLQT_API int vlqt_window_get_overlay(void* p)
 {
-    auto* w = static_cast<Window*>(p);
-    return w ? w->perf->overlay() : 0;
+    return guarded([&]() -> int {
+        auto* w = static_cast<Window*>(p);
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "get_overlay: null window");
+        return w->perf->overlay();
+    });
 }
 
 VLQT_API int vlqt_window_set_debug(void* p, int on)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("null window");
-            return -1;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
         w->scene->setDebugAll(on != 0);
         w->window->update();
         return 0;
@@ -1442,8 +1421,12 @@ VLQT_API int vlqt_window_set_debug(void* p, int on)
 
 VLQT_API int vlqt_window_get_debug(void* p)
 {
-    auto* w = static_cast<Window*>(p);
-    return w && w->scene->debugAll ? 1 : 0;
+    return guarded([&]() -> int {
+        auto* w = static_cast<Window*>(p);
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "get_debug: null window");
+        return w->scene->debugAll ? 1 : 0;
+    });
 }
 
 // Window modes (vlqt_window_set_mode): each applies one bit, w->mode already holds the new modes.
@@ -1574,10 +1557,8 @@ VLQT_API int vlqt_window_set_mode(void* p, unsigned int mask, unsigned int value
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("null window");
-            return -1;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
         if (w->offscreen)
             return 0;
         mask &= VLQT_WINDOW_MODE_BORDERLESS | VLQT_WINDOW_MODE_FULLSCREEN;
@@ -1651,14 +1632,10 @@ VLQT_API int vlqt_window_set_samples(void* p, int requested)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("null window");
-            return -1;
-        }
-        if (w->offscreen) {
-            setError("set_samples: an offscreen scene takes its sample count from vlqt_offscreen_bind");
-            return VLQT_OFFSCREEN_BAD_ARGUMENT;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "null window");
+        if (w->offscreen)
+            return fail(VLQT_ERR_UNSUPPORTED, "set_samples: an offscreen scene takes its sample count from vlqt_offscreen_bind");
         const int samples = clampWindowSamples(requested, w->window);
         QSurfaceFormat f = w->window->requestedFormat();
         if (qMax(1, f.samples()) == samples)
@@ -1675,45 +1652,55 @@ VLQT_API int vlqt_window_set_samples(void* p, int requested)
 
 VLQT_API int vlqt_window_samples(void* p)
 {
-    auto* w = static_cast<Window*>(p);
-    if (!w || w->offscreen)
-        return 0;
-    if (const QRhiSwapChain* sc = w->window->swapChain())
-        return sc->sampleCount();
-    return qMax(1, w->window->requestedFormat().samples());
+    return guarded([&]() -> int {
+        auto* w = static_cast<Window*>(p);
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "samples: null window");
+        if (w->offscreen)
+            return 0;
+        if (const QRhiSwapChain* sc = w->window->swapChain())
+            return sc->sampleCount();
+        return qMax(1, w->window->requestedFormat().samples());
+    });
 }
 
-VLQT_API unsigned int vlqt_window_get_mode(void* p)
+VLQT_API int vlqt_window_get_mode(void* p)
 {
-    auto* w = static_cast<Window*>(p);
-    return w ? w->mode : 0;
+    return guarded([&]() -> int {
+        auto* w = static_cast<Window*>(p);
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "get_mode: null window");
+        return int(w->mode);
+    });
 }
 
 VLQT_API int vlqt_window_get_scene_metrics(void* p, vlqt_scene_metrics* out)
 {
-    auto* w = static_cast<Window*>(p);
-    if (!w || !w->scene || !out)
-        return -1;
-    // The root is sized to the window (Scene::attachRoot), also offscreen where the content item stays 0 x 0.
-    const QQuickItem* root = w->scene->root;
-    out->width = float(root->width());
-    out->height = float(root->height());
-    out->dpr = w->offscreen ? 1.f : float(w->window->effectiveDevicePixelRatio());
-    return 0;
+    return guarded([&]() -> int {
+        auto* w = static_cast<Window*>(p);
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "get_scene_metrics: null window");
+        if (!out)
+            return fail(VLQT_ERR_BAD_ARGUMENT, "get_scene_metrics: null out");
+        // The root is sized to the window (Scene::attachRoot), also offscreen where the content item stays 0 x 0.
+        const QQuickItem* root = w->scene->root;
+        out->width = float(root->width());
+        out->height = float(root->height());
+        out->dpr = w->offscreen ? 1.f : float(w->window->effectiveDevicePixelRatio());
+        return VLQT_OK;
+    });
 }
 
 VLQT_API int vlqt_window_apply(void* p, const unsigned char* buf, int len)
 {
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("apply: null window");
-            return vlqt::ApplyNullWindow;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "apply: null window");
         std::string err;
         const int rc = w->scene->apply(buf, len, err);
         if (rc != 0)
-            setError(err);
+            vlqt::setLastError(std::move(err));
         w->scene->updateDebug(); // show/hide/repaint the debug overlay, no-op while debug was never used
         // Commands changed the scene: request the render ourselves. Inside a MultiEffect source (layer)
         // Qt stops requesting updates for changed items after the first frames; the UpdateGate keeps it at one per pump.
@@ -1727,27 +1714,31 @@ VLQT_API int vlqt_window_apply(void* p, const unsigned char* buf, int len)
 
 VLQT_API int vlqt_window_get_apply_error(void* p, vlqt_apply_error* out)
 {
-    auto* w = static_cast<Window*>(p);
-    if (!w || !out)
-        return -1;
-    const vlqt::Scene::ApplyError& e = w->scene->lastApplyError;
-    *out = vlqt_apply_error{e.rc, e.command, e.id, e.op, e.prop, e.reason.c_str()};
-    return 0;
-}
-
-VLQT_API int vlqt_window_poll(void* p, unsigned char* out, int cap)
-{
     return guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
-        if (!w) {
-            setError("poll: null window");
-            return -1;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "get_apply_error: null window");
+        if (!out)
+            return fail(VLQT_ERR_BAD_ARGUMENT, "get_apply_error: null out");
+        const vlqt::Scene::ApplyError& e = w->scene->lastApplyError;
+        *out = vlqt_apply_error{e.rc, e.command, e.id, e.op, e.prop, e.reason.c_str()};
+        return VLQT_OK;
+    });
+}
+
+VLQT_API int vlqt_window_poll(void* p, unsigned char* out, int cap, int* written, int* required)
+{
+    return guarded([&]() -> int {
+        if (const int rc = vlqt::beginBuffer(out, cap, written, required); rc != VLQT_OK)
+            return rc;
+        auto* w = static_cast<Window*>(p);
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "poll: null window");
         // No render in this pump (Wayland: UpdateRequest only on the compositor's frame callback; not exposed,
         // e.g. minimized): Qt has not polished, layouts would report stale geometry.
         if (!w->gate->rendered())
             w->scene->polish();
-        return w->scene->poll(out, cap);
+        return w->scene->poll(out, cap, written, required);
     });
 }
 
@@ -1773,9 +1764,9 @@ VLQT_API int vlqt_res_set_budget(int bytes)
     return guarded([&] { return vlqt::res::setBudget(bytes); });
 }
 
-VLQT_API int vlqt_res_poll(unsigned char* out, int cap)
+VLQT_API int vlqt_res_poll(unsigned char* out, int cap, int* written, int* required)
 {
-    return guarded([&] { return vlqt::res::poll(out, cap); });
+    return guarded([&] { return vlqt::res::poll(out, cap, written, required); });
 }
 
 VLQT_API int vlqt_res_wait(unsigned long long id, int timeoutMs)
@@ -1816,31 +1807,30 @@ VLQT_API int vlqt_res_load_shader_source(unsigned long long id, const char* utf8
     return guarded([&] { return vlqt::res::shader::loadSource(id, utf8Source, stage); });
 }
 
-VLQT_API int vlqt_shader_reflect(const char* utf8Source, int stage, char* buf, int bufLen)
+VLQT_API int vlqt_shader_reflect(const char* utf8Source, int stage, char* buf, int bufLen, int* written, int* required)
 {
-    return guarded([&] { return vlqt::res::shader::reflect(utf8Source, stage, buf, bufLen); });
+    return guarded([&] { return vlqt::res::shader::reflect(utf8Source, stage, buf, bufLen, written, required); });
 }
 
 VLQT_API int vlqt_res_snapshot(unsigned long long id, void* p, unsigned elementId, float scale)
 {
     return guarded([&] {
         auto* w = static_cast<Window*>(p);
-        if (!w || !w->scene) {
-            setError("snapshot: null window");
-            return vlqt::res::badValueRc;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "snapshot: null window");
         return vlqt::res::snap::start(id, *w->scene, elementId, scale);
     });
 }
 
-VLQT_API int vlqt_res_read_pixels(unsigned long long id, void* dst, int cap, vlqt_pixel_desc* out)
+VLQT_API int vlqt_res_read_pixels(unsigned long long id, void* dst, int cap, vlqt_pixel_desc* out, int* written, int* required)
 {
-    return guarded([&] { return vlqt::res::snap::readPixels(id, dst, cap, out); });
+    return guarded([&] { return vlqt::res::snap::readPixels(id, dst, cap, out, written, required); });
 }
 
-VLQT_API int vlqt_res_read_preview(unsigned long long id, unsigned char* dst, int cap, vlqt_pixel_desc* desc)
+VLQT_API int vlqt_res_read_preview(unsigned long long id, unsigned char* dst, int cap, vlqt_pixel_desc* desc, int* written,
+    int* required)
 {
-    return guarded([&] { return vlqt::res::image::readPreview(id, dst, cap, desc); });
+    return guarded([&] { return vlqt::res::image::readPreview(id, dst, cap, desc, written, required); });
 }
 
 // Audio taps: audio_tap.h; read runs on VL.Audio's audio thread.
@@ -1859,21 +1849,21 @@ VLQT_API long long vlqt_now_ns(void)
     return vlqt::res::audio::nowNs();
 }
 
-VLQT_API int vlqt_image_write(const vlqt_pixel_desc* desc, const void* data, int len, const char* utf8Path, int quality, char* err, int errCap)
+VLQT_API int vlqt_image_write(const vlqt_pixel_desc* desc, const void* data, int len, const char* utf8Path, int quality)
 {
-    return guarded([&] { return vlqt::imagewriter::write(desc, data, len, utf8Path, quality, err, errCap); });
+    return guarded([&] { return vlqt::imagewriter::write(desc, data, len, utf8Path, quality); });
 }
 
 // Tooltip previews (package 01).
 VLQT_API long long vlqt_window_change_count(void* p)
 {
-    long long count = vlqt::res::staleIdRc;
+    long long count = 0;
     const int rc = guarded([&]() -> int {
         auto* w = static_cast<Window*>(p);
         if (!w)
-            return vlqt::res::staleIdRc;
+            return fail(VLQT_ERR_NULL_HANDLE, "change_count: null window");
         count = w->gate->changeCount();
-        return 0;
+        return VLQT_OK;
     });
     return rc < 0 ? rc : count;
 }
@@ -1882,38 +1872,29 @@ VLQT_API int vlqt_res_snapshot_fit(unsigned long long id, void* p, unsigned elem
 {
     return guarded([&] {
         auto* w = static_cast<Window*>(p);
-        if (!w || !w->scene) {
-            setError("snapshot_fit: null window");
-            return vlqt::res::badValueRc;
-        }
+        if (!w)
+            return fail(VLQT_ERR_NULL_HANDLE, "snapshot_fit: null window");
         return vlqt::res::snap::startFit(id, *w->scene, elementId, maxEdgePx);
     });
 }
 
-VLQT_API int vlqt_font_add(const char* utf8Path, unsigned long long* outHandle, char* families, int familiesCap)
+VLQT_API int vlqt_font_add(const char* utf8Path, unsigned long long* outHandle, char* families, int familiesCap,
+    int* written, int* required)
 {
     return guarded([&]() -> int {
         if (outHandle)
             *outHandle = 0;
-        if (families && familiesCap > 0)
-            families[0] = 0;
-        if (!g_app) {
-            setError("font_add: app not initialized");
-            return -1;
-        }
-        if (QThread::currentThread() != g_app->thread()) {
-            setError("font_add: not on the Qt GUI thread (the vvvv main thread)");
-            return -1;
-        }
-        if (!utf8Path || !outHandle) {
-            setError("font_add: null argument");
-            return -1;
-        }
+        if (const int rc = vlqt::beginBuffer(families, familiesCap, written, required); rc != VLQT_OK)
+            return rc;
+        if (!g_app)
+            return fail(VLQT_ERR_NOT_INITIALIZED, "font_add: app not initialized");
+        if (QThread::currentThread() != g_app->thread())
+            return fail(VLQT_ERR_WRONG_THREAD, "font_add: not on the Qt GUI thread (the vvvv main thread)");
+        if (!utf8Path || !outHandle)
+            return fail(VLQT_ERR_BAD_ARGUMENT, "font_add: null argument");
         const QFileInfo info(QString::fromUtf8(utf8Path));
-        if (!info.isFile()) {
-            setErrorQ(QStringLiteral("font file not found: %1").arg(info.filePath()));
-            return -1;
-        }
+        if (!info.isFile())
+            return fail(VLQT_ERR_IO, QStringLiteral("font file not found: %1").arg(info.filePath()));
         QString key = info.canonicalFilePath();
 #ifdef _WIN32
         key = key.toLower(); // NTFS paths are case-insensitive
@@ -1933,8 +1914,7 @@ VLQT_API int vlqt_font_add(const char* utf8Path, unsigned long long* outHandle, 
             if (names.isEmpty()) {
                 if (id >= 0)
                     QFontDatabase::removeApplicationFont(id);
-                setErrorQ(QStringLiteral("not a font file Qt can read: %1").arg(info.filePath()));
-                return -1;
+                return fail(VLQT_ERR_UNSUPPORTED, QStringLiteral("not a font file Qt can read: %1").arg(info.filePath()));
             }
             FontEntry e;
             e.key = key;
@@ -1945,31 +1925,28 @@ VLQT_API int vlqt_font_add(const char* utf8Path, unsigned long long* outHandle, 
             entry = &g_fonts.back().second;
             emitLog(1, "vlqt.font", "Font registered: " + entry->families + " (" + info.filePath().toUtf8() + ")");
         }
+        // Too small: no reference taken; an entry registered just now without one is removed at the end of the pump
+        // unless the call with a larger buffer finds it first.
+        if (const int rc = vlqt::copyText(entry->families.constData(), int(entry->families.size()), families, familiesCap,
+                written, required);
+            rc != VLQT_OK)
+            return rc;
         entry->refs++;
         *outHandle = handle;
-        if (families && familiesCap > 0) {
-            const int n = std::min(int(entry->families.size()), familiesCap - 1);
-            std::memcpy(families, entry->families.constData(), size_t(n));
-            families[n] = 0;
-        }
-        return 0;
+        return VLQT_OK;
     });
 }
 
 VLQT_API int vlqt_font_release(unsigned long long handle)
 {
     return guarded([&]() -> int {
-        if (g_app && QThread::currentThread() != g_app->thread()) {
-            setError("font_release: not on the Qt GUI thread (the vvvv main thread)");
-            return -1;
-        }
+        if (g_app && QThread::currentThread() != g_app->thread())
+            return fail(VLQT_ERR_WRONG_THREAD, "font_release: not on the Qt GUI thread (the vvvv main thread)");
         FontEntry* e = findFont(handle);
-        if (!e || e->refs <= 0) {
-            setError("font_release: unknown handle " + std::to_string(handle));
-            return -9;
-        }
+        if (!e || e->refs <= 0)
+            return fail(VLQT_ERR_UNKNOWN_ID, "font_release: unknown handle " + std::to_string(handle));
         e->refs--; // removed at the end of the pump if still 0 (fontsEndFrame)
-        return 0;
+        return VLQT_OK;
     });
 }
 

@@ -8,7 +8,7 @@
     internal static class Protocol
     {
         /// <summary>Version of the command protocol and the C ABI of vlqt.h; QtApp refuses a vlqt.dll with another one. Bump with every change (see protocol.h).</summary>
-        public const int AbiVersion = 17;
+        public const int AbiVersion = 18;
         public const int CommandAlign = 4;
         public const int HeaderSize = 4;
         public const uint RootId = 0;
@@ -269,7 +269,7 @@
             /// <summary>bool, Touch Points handler: ignore presses that an element on top grabs (default true).</summary>
             public const ushort Occlusion = 776;
             // 832.. keys of MULTI entries of SET_EFFECT_CHAIN, values of one MultiEffect run, Qt defaults. Not settable
-            // by SET (-6) once plan effects/08 task 2 lands; until then the old single layer still takes them.
+            // by SET (UnknownProperty) once plan effects/08 task 2 lands; until then the old single layer still takes them.
             /// <summary>Reserved (was: layer on/off of the single Effect layer, plan effects/01).</summary>
             public const ushort EffectEnabled = 832;
             /// <summary>bool (default false).</summary>
@@ -511,30 +511,6 @@
             public const uint Dip = 1;
             public const uint DipTopLeft = 2;
             public const uint PixelTopLeft = 3;
-        }
-
-        /// <summary>Return codes of the offscreen exports vlqt_offscreen_* (QtTexture), see protocol.h.</summary>
-        internal static class Offscreen
-        {
-            public const int Ok = 0;
-            /// <summary>Null handle, or a window handle that is no offscreen scene.</summary>
-            public const int NullScene = -1;
-            /// <summary>Null device, handle or context, or a size out of range or not the texture's.</summary>
-            public const int BadArgument = -7;
-            /// <summary>The scene has no texture.</summary>
-            public const int Unbound = -20;
-            /// <summary>The foreign device is on another adapter than QtNative's device.</summary>
-            public const int AdapterMismatch = -21;
-            /// <summary>OpenSharedResource1 failed or the handle is no usable Texture2D.</summary>
-            public const int OpenFailed = -22;
-            /// <summary>The render target view format is not allowed or does not fit the texture.</summary>
-            public const int FormatUnsupported = -23;
-            /// <summary>No ID3D11Device5/ID3D11DeviceContext4, or a fence could not be created, shared or opened.</summary>
-            public const int FenceFailed = -24;
-            /// <summary>QtNative's device is lost or being rebuilt; try again next frame.</summary>
-            public const int DeviceLost = -25;
-            /// <summary>No D3D11 (Linux, other graphics API) or not available on an offscreen scene.</summary>
-            public const int NotSupported = -26;
         }
 
         /// <summary>Pointer events of vlqt_offscreen_send_pointer (QtTexture input), not part of the command buffer.</summary>

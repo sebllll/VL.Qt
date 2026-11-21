@@ -36,7 +36,7 @@ public static class SizeResetTest
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
-        void Expect(int expected, string what)
+        void Expect(Native.Result expected, string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
@@ -44,7 +44,7 @@ public static class SizeResetTest
         }
         MeasureTest.Rec? Bounds(uint handle)
         {
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             foreach (var r in MeasureTest.Parse(buf.AsSpan(0, Math.Max(n, 0)), s.Check))
                 if (r.Event == Protocol.Ev.SceneBounds && r.Handle == handle) return r;
             return null;
@@ -178,11 +178,11 @@ public static class SizeResetTest
         recs = Bounds(HEffect);
         s.Check(Is(recs, 500, 300, 40, 30), $"ShaderEffect Auto Size on -> input size 40 x 30 ({S(recs)})");
 
-        // Errors: AUTO_SIZE is valid for containers only (-6), value type bool (-7).
+        // Errors: AUTO_SIZE is valid for containers only (UnknownProperty), value type bool (BadArgument).
         cmd.SetBool(RectId, Protocol.Prop.AutoSize, false);
-        Expect(-6, "AUTO_SIZE on Rectangle");
+        Expect(Native.Result.UnknownProperty, "AUTO_SIZE on Rectangle");
         cmd.SetF32(RowId, Protocol.Prop.AutoSize, 1);
-        Expect(-7, "AUTO_SIZE as f32");
+        Expect(Native.Result.BadArgument, "AUTO_SIZE as f32");
 
         Native.vlqt_window_destroy(w);
         s.Pump(2);

@@ -62,7 +62,7 @@ public static class SpinBoxTest
         List<Rec> Frame()
         {
             s.Pump(1);
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             s.Check(n >= 0, $"poll ({n})");
             return Parse(buf.AsSpan(0, Math.Max(n, 0)));
         }

@@ -185,7 +185,7 @@ namespace VL.Qt.Tests
         public void Refused_ShowsErrorAtOnce()
         {
             Show();
-            _api.SnapshotRc = -7;
+            _api.SnapshotRc = Native.Result.BadArgument;
             var image = Update(out var ready, out var error, grab: true, scale: 0);
             Assert.That(image, Is.Null);
             Assert.That(ready, Is.False);

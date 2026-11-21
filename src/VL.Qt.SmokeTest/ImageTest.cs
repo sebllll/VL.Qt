@@ -72,7 +72,7 @@ public static class ImageTest
         s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        int Apply() => Native.Apply(w, cmd.EndFrame());
+        Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
         void CheckApply(string what)
         {
             var rc = Apply();
@@ -142,31 +142,31 @@ public static class ImageTest
             s.Check(IsRed(Px(a, 25, 310)) && IsBlue(Px(a, 115, 310)), "failed -> Ready resource draws");
         }
 
-        // Errors: invalid fillMode / smooth as i32 -> -7, Rectangle property / Source -> -6, unknown resource id /
-        // image as i32 -> -7, no crash.
-        void Expect(int expected, string what)
+        // Errors: invalid fillMode / smooth as i32 -> BadArgument, Rectangle property / Source -> UnknownProperty, unknown resource id /
+        // image as i32 -> BadArgument, no crash.
+        void Expect(Native.Result expected, string what)
         {
             var rc = Apply();
             s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
         }
         cmd.Reset();
         cmd.SetI32(Fit, Protocol.Prop.FillMode, 4);
-        Expect(-7, "fillMode 4");
+        Expect(Native.Result.BadArgument, "fillMode 4");
         cmd.Reset();
         cmd.SetI32(Fit, Protocol.Prop.Smooth, 1);
-        Expect(-7, "smooth as i32");
+        Expect(Native.Result.BadArgument, "smooth as i32");
         cmd.Reset();
         cmd.SetF32(Fit, Protocol.Prop.Radius, 1);
-        Expect(-6, "radius on image");
+        Expect(Native.Result.UnknownProperty, "radius on image");
         cmd.Reset();
         cmd.SetString(Fit, Protocol.Prop.Source, asset);
-        Expect(-6, "source on image");
+        Expect(Native.Result.UnknownProperty, "source on image");
         cmd.Reset();
         cmd.SetU64(Fit, Protocol.Prop.Image, 0xDEAD_0000_BEEFUL);
-        Expect(-7, "unknown resource id");
+        Expect(Native.Result.BadArgument, "unknown resource id");
         cmd.Reset();
         cmd.SetI32(Fit, Protocol.Prop.Image, 1);
-        Expect(-7, "image as i32");
+        Expect(Native.Result.BadArgument, "image as i32");
 
         Native.vlqt_window_destroy(w);
         Native.vlqt_res_release(stripes);

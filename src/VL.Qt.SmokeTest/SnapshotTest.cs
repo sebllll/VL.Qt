@@ -273,11 +273,11 @@ public static class SnapshotTest
         var buf = new byte[64 * 1024];
         void Poll()
         {
-            var n = Native.ResPoll(buf);
-            if (n < 0)
+            var n = NativeCalls.ResPoll(buf, out var required);
+            if (n == (int)Native.Result.BufferTooSmall)
             {
-                buf = new byte[-n * 2];
-                n = Native.ResPoll(buf);
+                buf = new byte[required * 2];
+                n = NativeCalls.ResPoll(buf);
             }
             for (int at = 0; at < n;)
             {
@@ -324,7 +324,7 @@ public static class SnapshotTest
         events.Clear(); // what came before the release call is not interesting, only what comes after
         RawFrames(10);
         s.Check(!events.Any(e => e.Id == rel), $"release during the grab: no record afterwards ({events.Count(e => e.Id == rel)})");
-        s.Check(Native.vlqt_res_wait(rel, 0) == -9, "released snapshot id is stale");
+        s.Check(Native.vlqt_res_wait(rel, 0) == (int)Native.Result.UnknownId, "released snapshot id is stale");
         var viaNode = new SnapshotNode(client, scene);
         viaNode.Update(group, out _, out _, 1, true);
         var liveBefore = client.LiveCount;

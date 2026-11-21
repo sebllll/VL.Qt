@@ -25,12 +25,12 @@ namespace VL.Qt.Tests
 
         public readonly List<string> Calls = new();
         public readonly List<ulong> Released = new();
-        public int CreateRc, LoadRc, SnapshotRc;
-        /// <summary>Size of the last finished snapshot as ReadSnapshot reports it (null = none yet, -7); its bytes are <see cref="SnapshotByte"/>.</summary>
+        public Native.Result CreateRc, LoadRc, SnapshotRc;
+        /// <summary>Size of the last finished snapshot as ReadSnapshot reports it (null = none yet: NoData); its bytes are <see cref="SnapshotByte"/>.</summary>
         public (int Width, int Height)? SnapshotSize;
         public byte SnapshotByte = 0x7F;
         public int Shutdowns;
-        /// <summary>Size of the preview ReadPreview reports (null = none, -7); its bytes are <see cref="PreviewByte"/>.</summary>
+        /// <summary>Size of the preview ReadPreview reports (null = none: NoData); its bytes are <see cref="PreviewByte"/>.</summary>
         public (int Width, int Height)? PreviewSize;
         public byte PreviewByte = 0x55;
         public int PreviewCalls;
@@ -42,39 +42,42 @@ namespace VL.Qt.Tests
         public Native.vlqt_res_info[] Listed = Array.Empty<Native.vlqt_res_info>();
         public int Polls;
 
-        public int AudioTapInit(ulong id, int channels, int sampleRate)
+        public Native.Result AudioTapInit(ulong id, int channels, int sampleRate)
         {
             Calls.Add($"audio tap init {id:X} {channels} {sampleRate}");
-            return 0;
+            return Native.Result.Ok;
         }
 
-        public int Create(int kind, out ulong id)
+        public Native.Result Create(int kind, out ulong id)
         {
             id = 0;
-            if (CreateRc != 0)
+            if (CreateRc != Native.Result.Ok)
                 return CreateRc;
             id = ++_next | (7UL << 32); // index | generation
             Calls.Add($"create {kind}");
-            return 0;
+            return Native.Result.Ok;
         }
 
-        public int Release(ulong id)
+        public Native.Result Release(ulong id)
         {
             Released.Add(id);
             Calls.Add($"release {id:X}");
-            return 0;
+            return Native.Result.Ok;
         }
 
-        public int Poll(Span<byte> buffer)
+        public Native.Result Poll(Span<byte> buffer, out int written, out int required)
         {
             Polls++;
+            written = 0;
+            required = _queue.Count;
             if (_queue.Count > buffer.Length)
-                return -_queue.Count;
+                return Native.Result.BufferTooSmall;
             var n = _queue.Count;
             for (int i = 0; i < n; i++)
                 buffer[i] = _queue[i];
             _queue.Clear();
-            return n;
+            written = n;
+            return Native.Result.Ok;
         }
 
         public int Wait(ulong id, int timeoutMs)
@@ -84,30 +87,30 @@ namespace VL.Qt.Tests
             return Protocol.ResState.Ready;
         }
 
-        public int LoadImage(ulong id, string utf8Path, uint flags)
+        public Native.Result LoadImage(ulong id, string utf8Path, uint flags)
         {
             Calls.Add($"load {id:X} {utf8Path} {flags}");
             LoadFlags.Add(flags);
             return LoadRc;
         }
 
-        public int LoadShader(ulong id, string utf8Path, int stage)
+        public Native.Result LoadShader(ulong id, string utf8Path, int stage)
         {
             Calls.Add($"shader {id:X} {utf8Path} {stage}");
             return LoadRc;
         }
 
-        public int LoadShaderSource(ulong id, string source, int stage)
+        public Native.Result LoadShaderSource(ulong id, string source, int stage)
         {
             Calls.Add($"source {id:X} {source.Length} {stage}");
             return LoadRc;
         }
 
-        public int SetPixels(ulong id, in Native.vlqt_pixel_desc desc, ReadOnlySpan<byte> data)
+        public Native.Result SetPixels(ulong id, in Native.vlqt_pixel_desc desc, ReadOnlySpan<byte> data)
         {
             Calls.Add($"pixels {id:X} {desc.width}x{desc.height} row {desc.row_bytes} fmt {desc.format} pm {desc.premultiplied} len {data.Length}");
             PixelFlags.Add(desc.flags);
-            return 0;
+            return Native.Result.Ok;
         }
 
         public int List(Span<Native.vlqt_res_info> buffer)
@@ -119,43 +122,47 @@ namespace VL.Qt.Tests
 
         public void Shutdown() => Shutdowns++;
 
-        public int Snapshot(ulong id, IntPtr window, uint elementId, float scale)
+        public Native.Result Snapshot(ulong id, IntPtr window, uint elementId, float scale)
         {
             Calls.Add($"snapshot {id:X} {elementId} {scale}");
             return SnapshotRc;
         }
 
-        public int SnapshotFit(ulong id, IntPtr window, uint elementId, int maxEdgePx)
+        public Native.Result SnapshotFit(ulong id, IntPtr window, uint elementId, int maxEdgePx)
         {
             Calls.Add($"snapshot_fit {id:X} {elementId} {maxEdgePx}");
             return SnapshotRc;
         }
 
-        public int ReadSnapshot(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc)
+        public Native.Result ReadSnapshot(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int written, out int required)
         {
             desc = default;
+            written = required = 0;
             if (SnapshotSize is not { } size)
-                return -7;
-            var required = size.Width * size.Height * 4;
+                return Native.Result.NoData;
+            required = size.Width * size.Height * 4;
             desc = new Native.vlqt_pixel_desc { width = size.Width, height = size.Height, row_bytes = size.Width * 4, format = 9, premultiplied = 1 };
             if (buffer.Length < required)
-                return -required;
+                return Native.Result.BufferTooSmall;
             buffer[..required].Fill(SnapshotByte);
-            return required;
+            written = required;
+            return Native.Result.Ok;
         }
 
-        public int ReadPreview(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc)
+        public Native.Result ReadPreview(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int written, out int required)
         {
             PreviewCalls++;
             desc = default;
+            written = required = 0;
             if (PreviewSize is not { } size)
-                return -7;
-            var required = size.Width * size.Height * 4;
+                return Native.Result.NoData;
+            required = size.Width * size.Height * 4;
             desc = new Native.vlqt_pixel_desc { width = size.Width, height = size.Height, row_bytes = size.Width * 4, format = 9, premultiplied = 1 };
             if (buffer.Length < required)
-                return -required;
+                return Native.Result.BufferTooSmall;
             buffer[..required].Fill(PreviewByte);
-            return required;
+            written = required;
+            return Native.Result.Ok;
         }
 
         private void Record(ushort ev, ulong id, ReadOnlySpan<byte> payload)
@@ -311,20 +318,20 @@ namespace VL.Qt.Tests
         [Test]
         public void Load_Refused_FailsAndSettles()
         {
-            _api.LoadRc = -7;
+            _api.LoadRc = Native.Result.BadArgument;
             var r = _client.CreateImage();
             var settled = 0;
             r.Settled = _ => settled++;
             Assert.That(_client.Load(r, "C:/a.png", false), Is.False);
             Assert.That(r.State, Is.EqualTo(QtImageState.Failed));
-            Assert.That(r.Error, Does.Contain("-7"));
+            Assert.That(r.Error, Does.Contain("BadArgument"));
             Assert.That(settled, Is.EqualTo(1));
         }
 
         [Test]
         public void Create_Refused_Throws()
         {
-            _api.CreateRc = -1;
+            _api.CreateRc = Native.Result.Internal;
             Assert.Throws<InvalidOperationException>(() => _client.CreateImage());
             Assert.That(_client.LiveCount, Is.Zero);
         }

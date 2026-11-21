@@ -85,7 +85,7 @@ public static class KeyRouteTest
         List<Rec> Frame()
         {
             s.Pump(1);
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             return Parse(buf.AsSpan(0, Math.Max(n, 0)));
         }
         void Click(float x, float y)

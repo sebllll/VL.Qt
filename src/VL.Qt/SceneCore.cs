@@ -115,7 +115,7 @@ namespace VL.Qt
         /// </summary>
         private SpaceMapping CurrentMapping(Space space)
         {
-            if (_handle != IntPtr.Zero && Native.vlqt_window_get_scene_metrics(_handle, out var m) == 0)
+            if (_handle != IntPtr.Zero && Native.vlqt_window_get_scene_metrics(_handle, out var m) == Native.Result.Ok)
                 return new SpaceMapping(space, new Vector2(m.width, m.height), m.dpr);
             return new SpaceMapping(space, default, 1f);
         }
@@ -124,7 +124,7 @@ namespace VL.Qt
         {
             _wipe.Reset();
             _wipe.ResetScene();
-            return Native.Apply(_handle, _wipe.EndFrame());
+            return (int)Native.Apply(_handle, _wipe.EndFrame());
         }
 
         /// <summary>Sends the written commands to QtNative; a failure starts the resync.</summary>
@@ -134,9 +134,9 @@ namespace VL.Qt
             if (_handle == IntPtr.Zero || _commands.Length == 0)
                 return;
             _appliedOps = _commands.Count;
-            int rc = Native.Apply(_handle, _commands.EndFrame());
+            var rc = Native.Apply(_handle, _commands.EndFrame());
             _commands.Reset();
-            if (rc == 0)
+            if (rc == Native.Result.Ok)
             {
                 ApplyError = "";
                 // Rebuilt or applied normally: the elements' apply errors are over (not while the resync gave up,
@@ -147,7 +147,7 @@ namespace VL.Qt
             else
                 // Before the resync: its RESET overwrites QtNative's last error, Discard drops the bindings.
                 ApplyError = ReportApplyError();
-            if (_resync.OnApplyResult(rc))
+            if (_resync.OnApplyResult((int)rc))
             {
                 // QtNative may have lost them with the aborted batch (RESET keeps them); sent again with the rebuild.
                 _hasClearColor = false;
@@ -172,7 +172,7 @@ namespace VL.Qt
         {
             var text = Native.LastError();
             ClearApplyErrors(); // only the latest failure is shown (the retry after a resync reports it again)
-            if (Native.vlqt_window_get_apply_error(_handle, out var e) != 0 || e.id == 0
+            if (Native.vlqt_window_get_apply_error(_handle, out var e) != Native.Result.Ok || e.id == 0
                 || !_reconciler.Bindings.TryGetValue(e.id, out var slot) || slot.State is not { } state)
                 return text;
             state.ApplyError = DescribeApplyError(e);
@@ -219,14 +219,14 @@ namespace VL.Qt
         /// </summary>
         public ReadOnlySpan<byte> ReadEvents(bool frameStart)
         {
-            int n = Native.Poll(_handle, _poll);
-            if (n < -1)
+            var rc = Native.Poll(_handle, _poll, out var n, out var required);
+            if (rc == Native.Result.BufferTooSmall)
             {
-                // Buffer too small: -n bytes needed, the events stay queued.
-                _poll = new byte[Math.Max(-n, _poll.Length * 2)];
-                n = Native.Poll(_handle, _poll);
+                // The events stay queued; once more with the size QtNative asked for.
+                _poll = new byte[Math.Max(required, _poll.Length * 2)];
+                rc = Native.Poll(_handle, _poll, out n, out _);
             }
-            if (n < 0)
+            if (rc != Native.Result.Ok)
             {
                 _pollError = "poll: " + Native.LastError();
                 return default;

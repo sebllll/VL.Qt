@@ -82,8 +82,8 @@ public static class VideoAudioOwnedTapTest
             while (sw.ElapsedMilliseconds < ms)
             {
                 s.Pump(1);
-                Native.Poll(w, buf);
-                Native.ResPoll(resBuf);
+                NativeCalls.Poll(w, buf);
+                NativeCalls.ResPoll(resBuf);
                 peak = Math.Max(peak, ProcessPeak());
                 System.Threading.Thread.Sleep(10);
             }

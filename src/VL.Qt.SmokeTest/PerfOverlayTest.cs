@@ -20,10 +20,7 @@ public static class PerfOverlayTest
     // plain text of the Scene/System page, single spaces (columns collapsed) for robust Contains checks.
     internal static string PageText(IntPtr w, int page)
     {
-        var need = -NativeTest.vlqt_test_perf_text(w, page, null, 0);
-        var buf = new byte[Math.Max(need, 1)];
-        var n = NativeTest.vlqt_test_perf_text(w, page, buf, buf.Length);
-        var text = n > 0 ? System.Text.Encoding.UTF8.GetString(buf, 0, n) : "";
+        var text = NativeCalls.PerfPageText(w, page);
         return System.Text.RegularExpressions.Regex.Replace(text, " +", " ");
     }
 
@@ -411,7 +408,7 @@ public static class PerfOverlayTest
         var w = Native.vlqt_window_create(800, 600, "VL.Qt resources overlay");
         Native.vlqt_window_show(w);
         var poll = new byte[256 * 1024];
-        void Run(int n) { for (int i = 0; i < n; i++) { s.Pump(1); Native.ResPoll(poll); Thread.Sleep(15); } }
+        void Run(int n) { for (int i = 0; i < n; i++) { s.Pump(1); NativeCalls.ResPoll(poll); Thread.Sleep(15); } }
         var ids = new List<ulong>();
         ulong Start(int decodeMs, long bytes, int flags)
         {
@@ -464,10 +461,10 @@ public static class PerfOverlayTest
         for (int i = 0; i < 996; i++) Native.vlqt_res_wait(Start(0, 4096, 0), 5000);
         Run(10);
         var probe = new byte[1 << 16];
-        for (int i = 0; i < 5; i++) NativeTest.vlqt_test_perf_text(w, ResourcesPage, probe, probe.Length); // warm up
+        for (int i = 0; i < 5; i++) NativeTest.vlqt_test_perf_text(w, ResourcesPage, probe, probe.Length, out _, out _); // warm up
         const int Builds = 50;
         var t0 = Stopwatch.GetTimestamp();
-        for (int i = 0; i < Builds; i++) NativeTest.vlqt_test_perf_text(w, ResourcesPage, probe, probe.Length);
+        for (int i = 0; i < Builds; i++) NativeTest.vlqt_test_perf_text(w, ResourcesPage, probe, probe.Length, out _, out _);
         var perBuild = Stopwatch.GetElapsedTime(t0).TotalMilliseconds / Builds;
         Console.WriteLine($"  resources page with 1000 resources: {perBuild:F3} ms per build (incl. plain text), every 250 ms");
         // The page's own build time (footer, without the plain text conversion of this test export): best of a few.

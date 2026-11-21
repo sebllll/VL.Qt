@@ -182,7 +182,7 @@ public static class ClipVideoPerfTest
             }
             cmd.SetU64(1, Protocol.Prop.Image, res);
             s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"video-upload-perf: apply {name}");
-            for (int i = 0; i < 30; i++) { s.Pump(1); Native.ResPoll(buf); }
+            for (int i = 0; i < 30; i++) { s.Pump(1); NativeCalls.ResPoll(buf); }
 
             var staticRuns = new List<Result>();
             var videoRuns = new List<Result>();
@@ -206,7 +206,7 @@ public static class ClipVideoPerfTest
             s.Perf($"video-upload-perf {name} set_pixels", Med(x => x.SetMedian, videoRuns));
 
             Native.vlqt_res_release(res);
-            for (int i = 0; i < 5; i++) { s.Pump(1); Native.ResPoll(buf); }
+            for (int i = 0; i < 5; i++) { s.Pump(1); NativeCalls.ResPoll(buf); }
             Thread.Sleep(200);
         }
         Native.vlqt_window_destroy(w);
@@ -242,7 +242,7 @@ public static class ClipVideoPerfTest
             var t1 = Stopwatch.GetTimestamp();
             s.Pump(1);
             var t2 = Stopwatch.GetTimestamp();
-            var n = Native.ResPoll(buf);
+            var n = NativeCalls.ResPoll(buf);
             if (n < 0)
             {
                 // 64 KB hold far more events than one frame produces; a bigger need is dropped, not counted.

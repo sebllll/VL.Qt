@@ -44,8 +44,8 @@ public static partial class QtTextureTest
     {
         int expected = ExpectedThreads;
         int other = expected == 0 ? 1 : 0;
-        bool same = Native.vlqt_offscreen_set_threaded(expected) == Protocol.Offscreen.Ok;
-        bool differs = Native.vlqt_offscreen_set_threaded(other) == Protocol.Offscreen.NotSupported;
+        bool same = Native.vlqt_offscreen_set_threaded(expected) == Native.Result.Ok;
+        bool differs = Native.vlqt_offscreen_set_threaded(other) == Native.Result.Unsupported;
         s.Check(same && differs, $"mode: offscreen scenes render on {(expected == 0 ? "the main thread" : $"{expected} Qt render thread(s)")} ({(same ? "count in use accepted" : "count in use refused")}, {(differs ? "other refused" : "other accepted")})");
         s.Info($"mode: {(expected == 0 ? "main thread" : $"{expected} Qt render thread(s)")} (VLQT_OFFSCREEN_THREAD={Environment.GetEnvironmentVariable("VLQT_OFFSCREEN_THREAD") ?? "unset"})");
     }
@@ -84,9 +84,9 @@ public static partial class QtTextureTest
                 continue;
             }
             NewTarget(warp, w, h, B8G8R8A8Typeless, out var tex, out var handle);
-            int rc = Native.vlqt_offscreen_bind(scene, warp, handle, w, h, B8G8R8A8Unorm, 1, out _);
+            int rc = (int)Native.vlqt_offscreen_bind(scene, warp, handle, w, h, B8G8R8A8Unorm, 1, out _);
             NativeTest.vlqt_test_close_handle(handle);
-            if (rc == Protocol.Offscreen.AdapterMismatch)
+            if (rc == (int)Native.Result.AdapterMismatch)
             {
                 // A window has rendered on QtNative's device: it cannot move to WARP (the qttexture run of its own: -Only qttexture).
                 s.Info("warp: skipped, a window renders on QtNative's device (-Only qttexture checks it)");
@@ -123,7 +123,7 @@ public static partial class QtTextureTest
             // QtNative moves back to the hardware adapter, as later parts of the suite expect.
             s.Pump(2);
             var scene = RectScene(w, h, s, "warp: back on the hardware adapter");
-            int rc = scene == IntPtr.Zero ? -1 : Native.vlqt_offscreen_bind(scene, hw, hwHandle, w, h, B8G8R8A8Unorm, 1, out _);
+            int rc = scene == IntPtr.Zero ? (int)Native.Result.NullHandle : (int)Native.vlqt_offscreen_bind(scene, hw, hwHandle, w, h, B8G8R8A8Unorm, 1, out _);
             int rendered = rc == 0 ? Native.OffscreenRenderBatch(hwCtx, new[] { scene }, 0) : rc;
             check(rendered == 1 && Centre(hwTex, w, h) == "255,0,0,255", $"warp: QtNative moved back to the hardware adapter and renders (bind {rc}, rendered {rendered}) {ErrIf(rendered < 1)}");
             if (scene != IntPtr.Zero)
@@ -165,7 +165,7 @@ public static partial class QtTextureTest
                 check(false, "never-signalled: setup " + Native.LastError());
                 break;
             }
-            int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
+            int rc = (int)Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
             NativeTest.vlqt_test_close_handle(handle);
             int rendered = rc == 0 ? Native.OffscreenRenderBatch(context, new[] { scene }, 0) : rc;
             if (!check(rendered == 1 && Centre(tex, w, h) == "255,0,0,255", $"never-signalled: first frame renders red ({rc}, {rendered}) {ErrIf(rendered != 1)}"))
@@ -179,7 +179,7 @@ public static partial class QtTextureTest
                 renderedGreen = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
                 if (round % 3 > 0)
                     Thread.Sleep(round % 3);
-                int lost = NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.Remove);
+                var lost = NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.Remove);
                 if (lost != 0)
                 {
                     s.Info($"never-signalled: skipped ({lost}, needs VLQT_TEST_D3D11ON12=1: -Only qttexture)");
@@ -280,14 +280,14 @@ public static partial class QtTextureTest
         }
         check(WindowPixels("qttexture_windowloss_before.png") == "ok", "window loss: the window renders before the loss");
 
-        int rc = Native.vlqt_offscreen_bind(scene, device, handle, 64, 48, B8G8R8A8Unorm, 1, out _);
+        int rc = (int)Native.vlqt_offscreen_bind(scene, device, handle, 64, 48, B8G8R8A8Unorm, 1, out _);
         NativeTest.vlqt_test_close_handle(handle);
         int rendered = rc == 0 ? Native.OffscreenRenderBatch(context, new[] { scene }, 0) : rc;
         check(rendered == 1 && Centre(tex, 64, 48) == "255,0,0,255", $"window loss: scene renders red next to the window ({rc}, {rendered}) {ErrIf(rendered != 1)}");
         Recolor(scene, 1, 0, 0, 1, 1, s, "window loss");
         Native.OffscreenRenderBatch(context, new[] { scene }, 0);
 
-        int lost = NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.Remove);
+        var lost = NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.Remove);
         if (lost != 0)
             s.Info($"window loss: device loss skipped ({lost}, needs VLQT_TEST_D3D11ON12=1: -Only qttexture)");
         else
@@ -308,7 +308,7 @@ public static partial class QtTextureTest
             check(slowestMs < 5000, $"window loss: the main thread returned within 5 s on every pump and render_batch (slowest {slowestMs} ms)");
 
             NewTarget(device, 64, 48, B8G8R8A8Typeless, out var fresh, out var freshHandle);
-            rc = Native.vlqt_offscreen_bind(scene, device, freshHandle, 64, 48, B8G8R8A8Unorm, 1, out _);
+            rc = (int)Native.vlqt_offscreen_bind(scene, device, freshHandle, 64, 48, B8G8R8A8Unorm, 1, out _);
             NativeTest.vlqt_test_close_handle(freshHandle);
             // The scene kept its elements (blue by the last recolour): red again after one more change.
             Recolor(scene, 1, 1, 0, 0, 1, s, "window loss");

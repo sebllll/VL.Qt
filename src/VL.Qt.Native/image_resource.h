@@ -65,8 +65,8 @@ private:
     friend class ImageKind;
     friend int load(uint64_t, const char*, unsigned);
     friend int setPixels(uint64_t, const vlqt_pixel_desc*, const void*, int);
-    friend int readPreview(uint64_t, unsigned char*, int, vlqt_pixel_desc*);
-    friend int testRead(uint64_t, unsigned char*, int, int*, int*);
+    friend int readPreview(uint64_t, unsigned char*, int, vlqt_pixel_desc*, int*, int*);
+    friend int testRead(uint64_t, unsigned char*, int, int*, int*, int*, int*);
 
     // input
     QString m_path;              // file source (empty for pixels)
@@ -101,7 +101,7 @@ Kind* kind();
 int load(uint64_t id, const char* utf8Path, unsigned flags);
 int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int len);
 // vlqt_res_read_preview: the preview the worker made for VLQT_IMG_PREVIEW, read only on a Ready resource.
-int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc);
+int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc, int* written, int* required);
 
 // Current content of a Ready image resource, nullptr otherwise (also during the first load). Package 04 takes an
 // element reference (res::acquire) for as long as it draws it.
@@ -109,6 +109,6 @@ std::shared_ptr<ImageResource> ready(uint64_t id);
 
 // test hook (vlqt_test_res_read_pixels, test/test_probes.cpp): reads the content back as RGBA8 premultiplied (texture
 // readback through the upload QRhi, else the CPU copy).
-int testRead(uint64_t id, unsigned char* out, int cap, int* width, int* height);
+int testRead(uint64_t id, unsigned char* out, int cap, int* width, int* height, int* written, int* required);
 
 } // namespace vlqt::res::image

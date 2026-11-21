@@ -22,7 +22,7 @@ public static class RectangleTest
         s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        int Apply() => Native.Apply(w, cmd.EndFrame());
+        Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
         void CheckApply(string what)
         {
             var rc = Apply();
@@ -77,11 +77,11 @@ public static class RectangleTest
                 && Near(Px(a, 430, 175), 0, 255, 0),
                 $"border width 0 / radius 0 / new border ({Px(a, 105, 175)}, {Px(a, 104, 354)}, {Px(a, 410, 175)}, {Px(a, 430, 175)})");
 
-        // Wrong value type -> -7, no crash.
+        // Wrong value type -> BadArgument, no crash.
         cmd.Reset();
         cmd.SetColor(Rounded, Protocol.Prop.Radius, 1, 1, 1, 1);
         var rcv = Apply();
-        s.Check(rcv == -7, $"radius as color -> -7 ({rcv}: {Native.LastError()})");
+        s.Check(rcv == Native.Result.BadArgument, $"radius as color -> BadArgument ({rcv}: {Native.LastError()})");
 
         // Perf: 1000 rectangles (QQmlComponent::create) + bounds + color + reparent, then the first frame.
         cmd.Reset();

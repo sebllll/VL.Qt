@@ -149,7 +149,7 @@ namespace VL.Qt
                     premultiplied = info.IsPremultipliedAlpha ? 1 : 0,
                 };
                 var rc = Native.ImageWrite(in desc, data.Bytes.Span, fullPath, quality, out var error);
-                if (rc == 0)
+                if (rc == Native.Result.Ok)
                     return string.Empty;
                 return error.Length > 0 ? error : $"Writing '{fullPath}' failed ({rc})";
             }

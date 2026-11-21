@@ -39,7 +39,7 @@ public static class QmlStaleComponentTest
         var errors = new Dictionary<uint, string>();
         void Poll()
         {
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             var b = buf.AsSpan(0, Math.Max(n, 0));
             int off = 0;
             while (off + 12 <= b.Length)

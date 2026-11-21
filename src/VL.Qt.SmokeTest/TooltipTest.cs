@@ -539,11 +539,11 @@ public static class TooltipTest
         }
 
         // 4) Error paths: null window, bad edge, unknown element.
-        s.Check(Native.vlqt_window_change_count(IntPtr.Zero) == -9, $"change_count of a null window = -9 ({Native.vlqt_window_change_count(IntPtr.Zero)})");
+        s.Check(Native.vlqt_window_change_count(IntPtr.Zero) == (long)Native.Result.NullHandle, $"change_count of a null window = NullHandle ({Native.vlqt_window_change_count(IntPtr.Zero)})");
         var bad = client.CreateSnapshot();
-        s.Check(Native.vlqt_res_snapshot_fit(bad.Id, IntPtr.Zero, 0, 256) == -7, "snapshot_fit with a null window = -7");
-        s.Check(Native.vlqt_res_snapshot_fit(bad.Id, w, 0, 0) == -7, "snapshot_fit maxEdge 0 = -7");
-        s.Check(Native.vlqt_res_snapshot_fit(bad.Id, w, 0, -5) == -7, "snapshot_fit maxEdge -5 = -7");
+        s.Check(Native.vlqt_res_snapshot_fit(bad.Id, IntPtr.Zero, 0, 256) == Native.Result.NullHandle, "snapshot_fit with a null window = NullHandle");
+        s.Check(Native.vlqt_res_snapshot_fit(bad.Id, w, 0, 0) == Native.Result.BadArgument, "snapshot_fit maxEdge 0 = BadArgument");
+        s.Check(Native.vlqt_res_snapshot_fit(bad.Id, w, 0, -5) == Native.Result.BadArgument, "snapshot_fit maxEdge -5 = BadArgument");
         client.Release(bad);
         Step(3);
         s.Check(client.LiveCount == 0, $"all snapshot resources released (live {client.LiveCount})");
@@ -553,11 +553,11 @@ public static class TooltipTest
         var buf = new byte[64 * 1024];
         void Poll()
         {
-            var n = Native.ResPoll(buf);
-            if (n < 0)
+            var n = NativeCalls.ResPoll(buf, out var required);
+            if (n == (int)Native.Result.BufferTooSmall)
             {
-                buf = new byte[-n * 2];
-                n = Native.ResPoll(buf);
+                buf = new byte[required * 2];
+                n = NativeCalls.ResPoll(buf);
             }
             for (int at = 0; at < n;)
             {

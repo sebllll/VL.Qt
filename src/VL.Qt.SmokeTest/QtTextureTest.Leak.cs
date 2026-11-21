@@ -99,7 +99,7 @@ public static partial class QtTextureTest
             IntPtr tex1 = IntPtr.Zero, tex2 = IntPtr.Zero;
             if (ok && NewTarget(foreignDevice, w1, h1, f1.Texture, out tex1, out var handle1))
             {
-                int rc = Native.vlqt_offscreen_bind(scene, foreignDevice, handle1, w1, h1, f1.View, 1, out _);
+                int rc = (int)Native.vlqt_offscreen_bind(scene, foreignDevice, handle1, w1, h1, f1.View, 1, out _);
                 NativeTest.vlqt_test_close_handle(handle1);
                 int rendered = rc == 0 ? Native.OffscreenRenderBatch(foreignContext, new[] { scene }, 0) : rc;
                 if (rc != 0 || rendered != 1)
@@ -122,7 +122,7 @@ public static partial class QtTextureTest
             // Size and format change: the second bind replaces the first (a new texture, as QtTexture does on a change).
             if (ok && NewTarget(foreignDevice, w2, h2, f2.Texture, out tex2, out var handle2))
             {
-                int rc = Native.vlqt_offscreen_bind(scene, foreignDevice, handle2, w2, h2, f2.View, 1, out _);
+                int rc = (int)Native.vlqt_offscreen_bind(scene, foreignDevice, handle2, w2, h2, f2.View, 1, out _);
                 NativeTest.vlqt_test_close_handle(handle2);
                 int rendered = rc == 0 ? Native.OffscreenRenderBatch(foreignContext, new[] { scene }, 0) : rc;
                 if (rc != 0 || rendered != 1)
@@ -252,7 +252,7 @@ public static partial class QtTextureTest
                 cmd.Reparent(1, 0, 0);
                 Native.Apply(scenes[k], cmd.EndFrame());
                 NewTarget(device, 32, 24, f.Texture, out textures[k], out var handle);
-                int rc = Native.vlqt_offscreen_bind(scenes[k], device, handle, 32, 24, f.View, 1, out _);
+                int rc = (int)Native.vlqt_offscreen_bind(scenes[k], device, handle, 32, 24, f.View, 1, out _);
                 NativeTest.vlqt_test_close_handle(handle);
                 if (rc != 0)
                     Fail($"device loss round {round} bind {k}", rc);
@@ -260,7 +260,7 @@ public static partial class QtTextureTest
             int rendered = Native.OffscreenRenderBatch(context, scenes, 0);
             if (rendered != 3)
                 Fail($"device loss round {round} first render", rendered);
-            int lost = NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.Remove);
+            var lost = NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.Remove);
             if (lost != 0)
             {
                 s.Info($"leak: device loss of QtNative's device skipped ({lost}, needs VLQT_TEST_D3D11ON12=1: -Only qttexture)");
@@ -287,7 +287,7 @@ public static partial class QtTextureTest
             {
                 var f = s_leakFormats[k];
                 NewTarget(device, 32, 24, f.Texture, out var fresh, out var handle);
-                int rc = Native.vlqt_offscreen_bind(scenes[k], device, handle, 32, 24, f.View, 1, out _);
+                int rc = (int)Native.vlqt_offscreen_bind(scenes[k], device, handle, 32, 24, f.View, 1, out _);
                 NativeTest.vlqt_test_close_handle(handle);
                 rendered = rc == 0 ? 1 : 0;
                 if (rc != 0)

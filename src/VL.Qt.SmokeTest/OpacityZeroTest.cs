@@ -71,7 +71,7 @@ public static class OpacityZeroTest
                 s.Check(rc == 0, $"opacity-zero: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
             s.Pump(1);
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             s.Check(n >= 0, $"opacity-zero: poll ({n})");
             var res = rec.FeedbackRouter.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
             s.Check(res.Error is null, $"opacity-zero: dispatch ({res.Error})");

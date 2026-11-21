@@ -1,5 +1,7 @@
 #include "image_writer.h"
 
+#include "app/last_error.h"
+
 #include <QByteArray>
 #include <QDir>
 #include <QFileInfo>
@@ -8,14 +10,14 @@
 #include <QString>
 
 #include <algorithm>
-#include <cstring>
 
 // Image file writer. Any thread, no QObject / GUI-thread-only API: QImage and QImageWriter only.
 namespace vlqt::imagewriter
 {
     namespace
     {
-        constexpr int okRc = 0, badValueRc = -1, unsupportedFormatRc = -2, writeFailedRc = -3;
+        constexpr int okRc = VLQT_OK, badValueRc = VLQT_ERR_BAD_ARGUMENT, unsupportedFormatRc = VLQT_ERR_UNSUPPORTED,
+                      writeFailedRc = VLQT_ERR_IO;
 
         // VL PixelFormat numbers (VL.Core PixelFormat.cs, same table as image_resource.cpp and protocol.h).
         enum PixelFormat
@@ -60,47 +62,30 @@ namespace vlqt::imagewriter
         {
             return suffix == "jpg" || suffix == "jpeg" || suffix == "webp";
         }
-
-        int fail(int rc, const QString& message, char* err, int errCap)
-        {
-            if (err && errCap > 0)
-            {
-                const QByteArray utf8 = message.toUtf8();
-                auto n = static_cast<size_t>(std::min<qsizetype>(utf8.size(), errCap - 1));
-                // Do not cut a UTF-8 sequence in half.
-                while (n > 0 && n < static_cast<size_t>(utf8.size()) && (static_cast<uchar>(utf8[static_cast<qsizetype>(n)]) & 0xC0) == 0x80)
-                    n--;
-                std::memcpy(err, utf8.constData(), n);
-                err[n] = '\0';
-            }
-            return rc;
-        }
     }
 
-    int write(const vlqt_pixel_desc* desc, const void* data, int len, const char* utf8Path, int quality, char* err, int errCap)
+    int write(const vlqt_pixel_desc* desc, const void* data, int len, const char* utf8Path, int quality)
     {
-        if (err && errCap > 0)
-            err[0] = '\0';
         if (!desc || !data || !utf8Path || !*utf8Path)
-            return fail(badValueRc, QStringLiteral("null argument or empty path"), err, errCap);
+            return fail(badValueRc, QStringLiteral("null argument or empty path"));
         if (desc->width <= 0 || desc->height <= 0)
-            return fail(badValueRc, QStringLiteral("image size must be > 0"), err, errCap);
+            return fail(badValueRc, QStringLiteral("image size must be > 0"));
 
         const FormatInfo info = formatInfo(desc->format, desc->premultiplied != 0);
         if (info.bytesPerPixel == 0)
-            return fail(badValueRc, QStringLiteral("unsupported pixel format %1").arg(desc->format), err, errCap);
+            return fail(badValueRc, QStringLiteral("unsupported pixel format %1").arg(desc->format));
         const qsizetype row = qsizetype(desc->width) * info.bytesPerPixel;
         const qsizetype stride = desc->row_bytes > 0 ? desc->row_bytes : row;
         if (stride < row || len < 0 || qsizetype(len) < stride * desc->height)
             return fail(badValueRc,
                 QStringLiteral("%1 bytes do not hold %2x%3 pixels of format %4 with %5 row bytes")
-                    .arg(len).arg(desc->width).arg(desc->height).arg(desc->format).arg(desc->row_bytes), err, errCap);
+                    .arg(len).arg(desc->width).arg(desc->height).arg(desc->format).arg(desc->row_bytes));
 
         const QString path = QString::fromUtf8(utf8Path);
         const QByteArray suffix = QFileInfo(path).suffix().toLower().toLatin1();
         if (suffix.isEmpty() || !QImageWriter::supportedImageFormats().contains(suffix))
             return fail(unsupportedFormatRc,
-                QStringLiteral("unsupported image file format \"%1\" (by extension)").arg(QString::fromLatin1(suffix)), err, errCap);
+                QStringLiteral("unsupported image file format \"%1\" (by extension)").arg(QString::fromLatin1(suffix)));
 
         // The QImage only wraps the caller's pixels; every conversion below makes a copy.
         const QImage source(static_cast<const uchar*>(data), desc->width, desc->height, stride, info.qt);
@@ -128,11 +113,11 @@ namespace vlqt::imagewriter
                 image = source.convertToFormat(QImage::Format_RGB32);
         }
         if (image.isNull())
-            return fail(writeFailedRc, QStringLiteral("could not convert the pixels (out of memory?)"), err, errCap);
+            return fail(VLQT_ERR_INTERNAL, QStringLiteral("could not convert the pixels (out of memory?)"));
 
         const QString folder = QFileInfo(path).absolutePath();
         if (!QDir().mkpath(folder))
-            return fail(writeFailedRc, QStringLiteral("could not create the folder \"%1\"").arg(QDir::toNativeSeparators(folder)), err, errCap);
+            return fail(writeFailedRc, QStringLiteral("could not create the folder \"%1\"").arg(QDir::toNativeSeparators(folder)));
 
         QImageWriter writer(path, suffix);
         if (formatIsLossy(suffix) && quality >= 0)
@@ -140,7 +125,7 @@ namespace vlqt::imagewriter
         if (!writer.write(image))
         {
             const int rc = writer.error() == QImageWriter::UnsupportedFormatError ? unsupportedFormatRc : writeFailedRc;
-            return fail(rc, writer.errorString(), err, errCap);
+            return fail(rc, writer.errorString());
         }
         return okRc;
     }

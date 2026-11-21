@@ -69,7 +69,7 @@ public static class CoreTest
         cmd.SetPlace(777, 0, 0, 1, 1);
         var rc = Native.Apply(w, cmd.EndFrame());
         var err = Native.LastError();
-        s.Check(rc == -4 && err.Contains("777"), $"broken buffer returns error ({rc}: {err})");
+        s.Check(rc == Native.Result.UnknownObject && err.Contains("777"), $"broken buffer returns error ({rc}: {err})");
 
         // DESTROY (recursive): group and rect gone.
         cmd.Reset();
@@ -80,7 +80,7 @@ public static class CoreTest
             s.Check(IsBg(Px(a, 500, 400)), $"rect: gone after DESTROY ({Px(a, 500, 400)})");
         cmd.Reset();
         cmd.SetColor(RectId, Protocol.Prop.Color, 1, 1, 1, 1);
-        s.Check(Native.Apply(w, cmd.EndFrame()) == -4, "rect id released with its group");
+        s.Check(Native.Apply(w, cmd.EndFrame()) == Native.Result.UnknownObject, "rect id released with its group");
         Native.vlqt_window_destroy(w);
     });
 

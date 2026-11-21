@@ -105,9 +105,9 @@ namespace VL.Qt.Stride
                 var device = _game.GraphicsDevice;
                 var context = device is null ? IntPtr.Zero : StrideInterop.GetNativeImmediateContext(device);
                 var rc = context == IntPtr.Zero
-                    ? Protocol.Offscreen.BadArgument
+                    ? (int)Native.Result.BadArgument
                     : OffscreenRenderer.RenderBatch(context, new ReadOnlySpan<OffscreenRenderer>(_batch, 0, count), DriverSeconds());
-                var batchError = rc < 0 ? OffscreenRenderer.Describe(rc) : "";
+                var batchError = rc < 0 ? OffscreenRenderer.Describe((Native.Result)rc) : "";
                 for (int i = 0; i < count; i++)
                     _scheduled[i].AfterRender(batchError);
             }

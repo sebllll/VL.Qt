@@ -59,27 +59,27 @@ public static class FontTest
 
         // Sharing: the same file is one handle (also spelled differently), every add takes a reference.
         var rc = Native.FontAdd(fontPath, out var h1, out var families);
-        s.Check(rc == 0 && h1 != 0, $"font_add ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        s.Check(rc == Native.Result.Ok && h1 != 0, $"font_add ({rc}) {(rc != Native.Result.Ok ? Native.LastError() : "")}");
         var family = families.Split('\n')[0];
         s.Check(family.Length > 0 && family.Contains("DejaVu"), $"family names of the file ('{families.Replace('\n', '|')}')");
         s.Check(NativeTest.vlqt_test_font_refs(h1) == 1, "one reference after the first add");
 
         var alt = Path.Combine(Path.GetDirectoryName(fontPath)!, "..", "fonts", Path.GetFileName(fontPath));
         rc = Native.FontAdd(alt, out var h2, out var families2);
-        s.Check(rc == 0 && h2 == h1 && families2 == families, $"same file spelled differently shares the handle ({h1} / {h2})");
+        s.Check(rc == Native.Result.Ok && h2 == h1 && families2 == families, $"same file spelled differently shares the handle ({h1} / {h2})");
         s.Check(NativeTest.vlqt_test_font_refs(h1) == 2, "two references after the second add");
 
         // Release: the entry stays while a reference is left; without one it is removed only at the end of the pump.
-        s.Check(Native.vlqt_font_release(h1) == 0, "release one reference");
+        s.Check(Native.vlqt_font_release(h1) == Native.Result.Ok, "release one reference");
         s.Pump(1);
         s.Check(NativeTest.vlqt_test_font_refs(h1) == 1, "still registered with one reference after a pump");
-        s.Check(Native.vlqt_font_release(h1) == 0, "release the last reference");
+        s.Check(Native.vlqt_font_release(h1) == Native.Result.Ok, "release the last reference");
         s.Check(NativeTest.vlqt_test_font_refs(h1) == 0, "no reference, removal pending until the end of the pump");
-        s.Check(Native.vlqt_font_release(h1) == -9, "release without a reference left -> -9");
+        s.Check(Native.vlqt_font_release(h1) == Native.Result.UnknownId, "release without a reference left -> UnknownId");
 
         // Reuse inside the same pump: added again before the pump ends, the entry (and Qt's registration) survives.
         rc = Native.FontAdd(fontPath, out var h3, out _);
-        s.Check(rc == 0 && h3 == h1, $"add in the same pump reuses the pending entry ({h1} / {h3})");
+        s.Check(rc == Native.Result.Ok && h3 == h1, $"add in the same pump reuses the pending entry ({h1} / {h3})");
         s.Check(NativeTest.vlqt_test_font_refs(h3) == 1, "one reference after the reuse");
         s.Pump(2);
         s.Check(NativeTest.vlqt_test_font_refs(h3) == 1, "reused entry survives the pump");
@@ -148,30 +148,30 @@ public static class FontTest
 
         // Errors: file not found, a file that is no font, wrong thread, null path; the failed adds leave no entry behind.
         rc = Native.FontAdd(Path.Combine(s.OutDir, "no-such-font.ttf"), out var hMissing, out _);
-        s.Check(rc == -1 && hMissing == 0 && Native.LastError().Contains("not found"), $"missing file -> -1 with text ({rc}: {Native.LastError()})");
+        s.Check(rc == Native.Result.Io && hMissing == 0 && Native.LastError().Contains("not found"), $"missing file -> Io with text ({rc}: {Native.LastError()})");
         if (notAFont != null)
         {
             rc = Native.FontAdd(notAFont, out var hPng, out _);
-            s.Check(rc == -1 && hPng == 0 && Native.LastError().Contains("not a font"), $"file that is no font -> -1 with text ({rc}: {Native.LastError()})");
+            s.Check(rc == Native.Result.Unsupported && hPng == 0 && Native.LastError().Contains("not a font"), $"file that is no font -> Unsupported with text ({rc}: {Native.LastError()})");
         }
-        var threadRc = 0;
+        var threadRc = Native.Result.Ok;
         ulong threadHandle = 1;
         Task.Run(() => threadRc = Native.FontAdd(fontPath, out threadHandle, out _)).Wait();
-        s.Check(threadRc == -1 && threadHandle == 0 && Native.LastError().Contains("thread"), $"add from another thread -> -1 with text ({threadRc}: {Native.LastError()})");
-        var releaseRc = 0;
+        s.Check(threadRc == Native.Result.WrongThread && threadHandle == 0, $"add from another thread -> WrongThread ({threadRc})");
+        var releaseRc = Native.Result.Ok;
         Task.Run(() => releaseRc = Native.vlqt_font_release(h3)).Wait();
-        s.Check(releaseRc == -1 && NativeTest.vlqt_test_font_refs(h3) == 1, $"release from another thread -> -1, reference kept ({releaseRc})");
-        s.Check(Native.vlqt_font_release(0) == -9 && Native.vlqt_font_release(987654) == -9, "release of an unknown handle -> -9");
+        s.Check(releaseRc == Native.Result.WrongThread && NativeTest.vlqt_test_font_refs(h3) == 1, $"release from another thread -> WrongThread, reference kept ({releaseRc})");
+        s.Check(Native.vlqt_font_release(0) == Native.Result.UnknownId && Native.vlqt_font_release(987654) == Native.Result.UnknownId, "release of an unknown handle -> UnknownId");
 
         // Final release: gone after the pump; a later add registers it anew under a new handle.
-        s.Check(Native.vlqt_font_release(h3) == 0, "final release");
+        s.Check(Native.vlqt_font_release(h3) == Native.Result.Ok, "final release");
         s.Pump(2);
-        s.Check(NativeTest.vlqt_test_font_refs(h3) == -9, "removed at the end of the pump");
+        s.Check(NativeTest.vlqt_test_font_refs(h3) == (int)Native.Result.UnknownId, "removed at the end of the pump");
         rc = Native.FontAdd(fontPath, out var h4, out _);
-        s.Check(rc == 0 && h4 != 0 && h4 != h3 && NativeTest.vlqt_test_font_refs(h4) == 1, $"add after the removal registers anew ({h3} -> {h4})");
-        s.Check(Native.vlqt_font_release(h4) == 0, "release again");
+        s.Check(rc == Native.Result.Ok && h4 != 0 && h4 != h3 && NativeTest.vlqt_test_font_refs(h4) == 1, $"add after the removal registers anew ({h3} -> {h4})");
+        s.Check(Native.vlqt_font_release(h4) == Native.Result.Ok, "release again");
         s.Pump(2);
-        s.Check(NativeTest.vlqt_test_font_refs(h4) == -9, "removed again");
+        s.Check(NativeTest.vlqt_test_font_refs(h4) == (int)Native.Result.UnknownId, "removed again");
 
         cmd.Reset();
         cmd.Destroy(Line);

@@ -13,7 +13,7 @@ using static Pixels;
 // Inverted, detach (ref 0), position rule (Task 3c: the mask lies in the parent's coordinates like a sibling, with its
 // own Bounds and Transform: same pixels as the sibling; moving/transforming the element, blur/auto padding and explicit
 // padding leave the window in place; Row layout position counts; unstretched), DESTROY of the attached mask without
-// ref 0, DESTROY of the masked element (takes its mask, id free again), -8 cases, RESET.
+// ref 0, DESTROY of the masked element (takes its mask, id free again), Invalid cases, RESET.
 // Grabs: <outDir>/effect_mask*.png.
 [TestFixture, NonParallelizable]
 public static class EffectMaskTest
@@ -111,7 +111,7 @@ public static class EffectMaskTest
             s.Check(rc == 0, $"effect-mask: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
-        int Rc()
+        Native.Result Rc()
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             cmd.Reset();
@@ -164,7 +164,7 @@ public static class EffectMaskTest
         // A REPARENT of the attached mask is -8.
         cmd.Reparent(T, 0, 0);
         var rcRe = Rc();
-        s.Check(rcRe == -8, $"effect-mask: REPARENT of an attached mask -> -8 ({rcRe})");
+        s.Check(rcRe == Native.Result.Invalid, $"effect-mask: REPARENT of an attached mask -> Invalid ({rcRe})");
 
         // Inverted: the complement of the text.
         r.Inverted = true;
@@ -376,7 +376,7 @@ public static class EffectMaskTest
         var rcSelf = Rc();
         Fx(R, new FxRun { Mask = Row });
         var rcAnc = Rc();
-        s.Check(rcParent == -8 && rcSelf == -8 && rcAnc == -8, $"effect-mask: parented/self/ancestor -> -8 ({rcParent}, {rcSelf}, {rcAnc})");
+        s.Check(rcParent == Native.Result.Invalid && rcSelf == Native.Result.Invalid && rcAnc == Native.Result.Invalid, $"effect-mask: parented/self/ancestor -> Invalid ({rcParent}, {rcSelf}, {rcAnc})");
         cmd.Create(T2, Protocol.Type.Text);
         cmd.SetString(T2, Protocol.Prop.Text, "Q");
         cmd.SetF32(T2, Protocol.Prop.FontSize, 120);
@@ -386,7 +386,7 @@ public static class EffectMaskTest
         CheckApply("attach T2");
         cmd.Chain(R, r.Write, r.Write);
         var rcTwoRuns = Rc();
-        s.Check(rcTwoRuns == -8, $"effect-mask: same mask in two runs -> -8 ({rcTwoRuns})");
+        s.Check(rcTwoRuns == Native.Result.Invalid, $"effect-mask: same mask in two runs -> Invalid ({rcTwoRuns})");
         cmd.Create(R2, Protocol.Type.Rectangle);
         cmd.SetPlace(R2, 50, 350, 100, 100);
         cmd.SetColor(R2, Protocol.Prop.Color, 0, 0, 1, 1);
@@ -394,7 +394,7 @@ public static class EffectMaskTest
         CheckApply("R2");
         Fx(R2, new FxRun { Mask = T2 });
         var rcTwice = Rc();
-        s.Check(rcTwice == -8, $"effect-mask: mask attached to another element -> -8 ({rcTwice})");
+        s.Check(rcTwice == Native.Result.Invalid, $"effect-mask: mask attached to another element -> Invalid ({rcTwice})");
         s.Pump(3);
 
         // REPARENT index on the root ignores the parked mask: R2 to index 0 = before the Row.
@@ -407,7 +407,7 @@ public static class EffectMaskTest
         s.Pump(3);
         cmd.Destroy(T2);
         var rcGone = Rc();
-        s.Check(rcGone == -4, $"effect-mask: mask went with its element ({rcGone})");
+        s.Check(rcGone == Native.Result.UnknownObject, $"effect-mask: mask went with its element ({rcGone})");
         cmd.Create(T2, Protocol.Type.Text);
         CheckApply("mask id free again");
 

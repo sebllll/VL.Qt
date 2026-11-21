@@ -79,13 +79,13 @@ public static partial class QtTextureTest
         s.Info("qttexture: #116 test exports");
 
         // Invalid arguments.
-        s.Check(NativeTest.CreateDevice(2, out var none, out var noneCtx) == Protocol.Offscreen.BadArgument
+        s.Check(NativeTest.CreateDevice(2, out var none, out var noneCtx) == Native.Result.BadArgument
               && none == IntPtr.Zero && noneCtx == IntPtr.Zero, "create_device with an unknown adapter = bad argument");
-        s.Check(NativeTest.vlqt_test_d3d11_release_device(IntPtr.Zero, IntPtr.Zero) == Protocol.Offscreen.BadArgument, "release_device(null) = bad argument");
-        s.Check(NativeTest.vlqt_test_com_ref_count(IntPtr.Zero) == Protocol.Offscreen.BadArgument, "com_ref_count(null) = bad argument");
-        s.Check(NativeTest.vlqt_test_com_release(IntPtr.Zero) == Protocol.Offscreen.BadArgument, "com_release(null) = bad argument");
-        s.Check(NativeTest.vlqt_test_close_handle(IntPtr.Zero) == Protocol.Offscreen.BadArgument, "close_handle(null) = bad argument");
-        s.Check(NativeTest.vlqt_test_d3d11_create_shared_texture(IntPtr.Zero, 16, 16, B8G8R8A8Typeless, out var t0, out var h0) == Protocol.Offscreen.BadArgument
+        s.Check(NativeTest.vlqt_test_d3d11_release_device(IntPtr.Zero, IntPtr.Zero) == (int)Native.Result.BadArgument, "release_device(null) = bad argument");
+        s.Check(NativeTest.vlqt_test_com_ref_count(IntPtr.Zero) == (int)Native.Result.BadArgument, "com_ref_count(null) = bad argument");
+        s.Check(NativeTest.vlqt_test_com_release(IntPtr.Zero) == (int)Native.Result.BadArgument, "com_release(null) = bad argument");
+        s.Check(NativeTest.vlqt_test_close_handle(IntPtr.Zero) == Native.Result.BadArgument, "close_handle(null) = bad argument");
+        s.Check(NativeTest.vlqt_test_d3d11_create_shared_texture(IntPtr.Zero, 16, 16, B8G8R8A8Typeless, out var t0, out var h0) == Native.Result.BadArgument
               && t0 == IntPtr.Zero && h0 == IntPtr.Zero, "create_shared_texture(null device) = bad argument");
 
         // One round per adapter warms up lazily created process state (D3D runtime, driver), so the baseline below is stable.
@@ -146,7 +146,7 @@ public static partial class QtTextureTest
         cmd.SetPlace(1, 16, 12, 32, 24);
         cmd.SetColor(1, Protocol.Prop.Color, 1, 0, 0, 1);
         cmd.Reparent(1, 0, 0);
-        int rc = Native.Apply(scene, cmd.EndFrame());
+        int rc = (int)Native.Apply(scene, cmd.EndFrame());
         s.Check(rc == 0, $"{label}: apply rectangle ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         return scene;
     }
@@ -155,7 +155,7 @@ public static partial class QtTextureTest
     private static string Centre(IntPtr texture, int w, int h)
     {
         var pixels = new byte[w * h * 4];
-        if (NativeTest.TestReadTexture(texture, pixels, out _, out _, out _) != pixels.Length)
+        if (NativeCalls.ReadTexture(texture, pixels, out _, out _, out _) != pixels.Length)
             return "read failed";
         int i = (h / 2 * w + w / 2) * 4;
         return $"{pixels[i + 2]},{pixels[i + 1]},{pixels[i]},{pixels[i + 3]}";
@@ -194,8 +194,8 @@ public static partial class QtTextureTest
         // (i) A WARP texture: QtNative moves its device to WARP while nothing renders on it (no on-screen window has
         // rendered, no scene bound; so with -Only qttexture), else ADAPTER_MISMATCH.
         var qtBefore = QtDevice();
-        int rc = Native.vlqt_offscreen_bind(a, warp, warpHandle, w, h, B8G8R8A8Unorm, 1, out _);
-        if (rc == Protocol.Offscreen.Ok)
+        int rc = (int)Native.vlqt_offscreen_bind(a, warp, warpHandle, w, h, B8G8R8A8Unorm, 1, out _);
+        if (rc == (int)Native.Result.Ok)
         {
             var qtWarp = QtDevice();
             check(qtWarp != IntPtr.Zero && qtWarp != qtBefore, $"adapter: bind to WARP moved QtNative's device ({qtBefore:X} -> {qtWarp:X})");
@@ -203,15 +203,15 @@ public static partial class QtTextureTest
             check(rc == 1 && Centre(warpTex, w, h) == red, $"adapter: scene renders on WARP (rc {rc}, centre {Centre(warpTex, w, h)}) {Err(rc)}");
             Native.vlqt_offscreen_unbind(a);
             s.Pump(2); // releases the retired device
-            rc = Native.vlqt_offscreen_bind(a, hw, hwHandle, w, h, B8G8R8A8Unorm, 1, out _);
+            rc = (int)Native.vlqt_offscreen_bind(a, hw, hwHandle, w, h, B8G8R8A8Unorm, 1, out _);
             check(rc == 0 && QtDevice() != qtWarp, $"adapter: bind to the first adapter moves back ({rc}) {Err(rc)}");
             s.Pump(2);
         }
         else
         {
-            check(rc == Protocol.Offscreen.AdapterMismatch && Native.vlqt_offscreen_is_bound(a) == 0,
+            check(rc == (int)Native.Result.AdapterMismatch && Native.vlqt_offscreen_is_bound(a) == 0,
                 $"adapter: bind to WARP = ADAPTER_MISMATCH (a window renders on QtNative's device) ({rc}) {Err(rc)}");
-            rc = Native.vlqt_offscreen_bind(a, hw, hwHandle, w, h, B8G8R8A8Unorm, 1, out _);
+            rc = (int)Native.vlqt_offscreen_bind(a, hw, hwHandle, w, h, B8G8R8A8Unorm, 1, out _);
             check(rc == 0, $"adapter: bind A on QtNative's adapter ({rc}) {Err(rc)}");
         }
         rc = Native.OffscreenRenderBatch(hwCtx, new[] { a }, 0);
@@ -219,18 +219,18 @@ public static partial class QtTextureTest
 
         // A bound: a second scene on WARP must not move the device under it.
         var qtBound = QtDevice();
-        rc = Native.vlqt_offscreen_bind(b, warp, warpHandle, w, h, B8G8R8A8Unorm, 1, out _);
-        check(rc == Protocol.Offscreen.AdapterMismatch && Native.vlqt_offscreen_is_bound(b) == 0 && Native.vlqt_offscreen_is_bound(a) == 1
+        rc = (int)Native.vlqt_offscreen_bind(b, warp, warpHandle, w, h, B8G8R8A8Unorm, 1, out _);
+        check(rc == (int)Native.Result.AdapterMismatch && Native.vlqt_offscreen_is_bound(b) == 0 && Native.vlqt_offscreen_is_bound(a) == 1
               && QtDevice() == qtBound, $"adapter: B on WARP while A is bound = ADAPTER_MISMATCH, A stays bound ({rc})");
 
         // (ii) Device loss of QtNative's device while A is bound.
-        rc = NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.Remove);
+        rc = (int)NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.Remove);
         if (rc != 0)
             s.Info($"device lost: skipped ({rc}, needs VLQT_TEST_D3D11ON12=1: -Only qttexture)");
         else
         {
             rc = Native.OffscreenRenderBatch(hwCtx, new[] { a }, 0);
-            check(rc == Protocol.Offscreen.DeviceLost || rc == 0, $"device lost: render_batch before the rebuild = DEVICE_LOST or nothing ({rc})");
+            check(rc == (int)Native.Result.DeviceLost || rc == 0, $"device lost: render_batch before the rebuild = DEVICE_LOST or nothing ({rc})");
             var sw = System.Diagnostics.Stopwatch.StartNew();
             while (Native.vlqt_offscreen_is_bound(a) != 0 && sw.ElapsedMilliseconds < 5000)
                 s.Pump(1);
@@ -238,7 +238,7 @@ public static partial class QtTextureTest
             check(QtDevice() != qtBound && QtDevice() != IntPtr.Zero, $"device lost: new QtNative device ({qtBound:X} -> {QtDevice():X})");
             // A new (zeroed) texture: the red must come from a render on the new device, with the scene's elements kept.
             NativeTest.vlqt_test_d3d11_create_shared_texture(hw, w, h, B8G8R8A8Typeless, out var fresh, out var freshHandle);
-            rc = Native.vlqt_offscreen_bind(a, hw, freshHandle, w, h, B8G8R8A8Unorm, 1, out _);
+            rc = (int)Native.vlqt_offscreen_bind(a, hw, freshHandle, w, h, B8G8R8A8Unorm, 1, out _);
             check(rc == 0, $"device lost: rebind A ({rc}) {Err(rc)}");
             rc = Native.OffscreenRenderBatch(hwCtx, new[] { a }, 0);
             check(rc == 1 && Centre(fresh, w, h) == red, $"device lost: A renders again (rc {rc}, centre {Centre(fresh, w, h)}) {Err(rc)}");
@@ -252,7 +252,7 @@ public static partial class QtTextureTest
         if (check(NativeTest.CreateDevice(0, out var gone, out var goneCtx) == 0, "foreign release: create device"))
         {
             NativeTest.vlqt_test_d3d11_create_shared_texture(gone, w, h, B8G8R8A8Typeless, out var goneTex, out var goneHandle);
-            rc = Native.vlqt_offscreen_bind(b, gone, goneHandle, w, h, B8G8R8A8Unorm, 1, out _);
+            rc = (int)Native.vlqt_offscreen_bind(b, gone, goneHandle, w, h, B8G8R8A8Unorm, 1, out _);
             int rendered = Native.OffscreenRenderBatch(goneCtx, new[] { b }, 0);
             check(rc == 0 && rendered == 1, $"foreign release: bind and render B ({rc}, {rendered}) {Err(rc)}");
             NativeTest.vlqt_test_close_handle(goneHandle);
@@ -300,7 +300,7 @@ public static partial class QtTextureTest
             return;
         }
         check(Native.vlqt_offscreen_is_bound(scene) == 0, "scene: new scene is unbound");
-        check(NativeTest.vlqt_test_offscreen_state(scene, out _, out _, out _) == Protocol.Offscreen.Unbound, "scene: state of an unbound scene = unbound");
+        check(NativeTest.vlqt_test_offscreen_state(scene, out _, out _, out _) == Native.Result.Unbound, "scene: state of an unbound scene = unbound");
 
         var cmd = new CommandWriter();
         cmd.Reset();
@@ -309,15 +309,15 @@ public static partial class QtTextureTest
         cmd.SetPlace(rect, rx, ry, rw, rh);
         cmd.SetColor(rect, Protocol.Prop.Color, 1, 0, 0, 1);
         cmd.Reparent(rect, 0, 0);
-        int rc = Native.Apply(scene, cmd.EndFrame());
+        int rc = (int)Native.Apply(scene, cmd.EndFrame());
         check(rc == 0, $"scene: apply rectangle ({rc}) {(rc != 0 ? Native.LastError() : "")}");
 
-        rc = NativeTest.vlqt_test_d3d11_create_shared_texture(device, w, h, B8G8R8A8Typeless, out var texture, out var handle);
+        rc = (int)NativeTest.vlqt_test_d3d11_create_shared_texture(device, w, h, B8G8R8A8Typeless, out var texture, out var handle);
         if (check(rc == 0, "scene: create shared texture " + rc))
         {
             int deviceRefs = NativeTest.vlqt_test_com_ref_count(device);
-            rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
-            check(rc == Protocol.Offscreen.Ok, $"scene: bind ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            rc = (int)Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
+            check(rc == (int)Native.Result.Ok, $"scene: bind ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             check(Native.vlqt_offscreen_is_bound(scene) == 1, "scene: is_bound after bind");
 
             rc = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
@@ -326,7 +326,7 @@ public static partial class QtTextureTest
                 $"scene: first render_batch renders once (rc {rc}, read {read1}, write {write1}, renders {renders1}) {(rc < 0 ? Native.LastError() : "")}");
 
             var pixels = new byte[w * h * 4];
-            int read = NativeTest.TestReadTexture(texture, pixels, out _, out _, out _);
+            int read = NativeCalls.ReadTexture(texture, pixels, out _, out _, out _);
             check(read == pixels.Length, $"scene: read back {read} bytes");
             // B8G8R8A8: bytes B, G, R, A (premultiplied).
             string Px(int x, int y) { int i = (y * w + x) * 4; return $"{pixels[i + 2]},{pixels[i + 1]},{pixels[i]},{pixels[i + 3]}"; }
@@ -342,14 +342,14 @@ public static partial class QtTextureTest
                 $"scene: unchanged scene renders nothing (rc {rc}, read {read2}, write {write2}, renders {renders2})");
             OffscreenSnapshot(scene, rect, rw, rh, context, s);
 
-            check(Native.vlqt_offscreen_unbind(scene) == Protocol.Offscreen.Ok && Native.vlqt_offscreen_is_bound(scene) == 0, "scene: unbind");
-            check(NativeTest.vlqt_test_offscreen_state(scene, out _, out _, out _) == Protocol.Offscreen.Unbound, "scene: state after unbind = unbound");
+            check(Native.vlqt_offscreen_unbind(scene) == Native.Result.Ok && Native.vlqt_offscreen_is_bound(scene) == 0, "scene: unbind");
+            check(NativeTest.vlqt_test_offscreen_state(scene, out _, out _, out _) == Native.Result.Unbound, "scene: state after unbind = unbound");
             int deviceRefsAfter = NativeTest.vlqt_test_com_ref_count(device);
             check(deviceRefsAfter == deviceRefs, $"scene: test device references back after unbind ({deviceRefs} -> {deviceRefsAfter})");
             int qtRefsUnbound = QtRefs();
 
             // A second binding (a just bound scene renders) leaves no reference behind on either device.
-            rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
+            rc = (int)Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
             int rendered = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
             NativeTest.vlqt_test_offscreen_state(scene, out var read3, out var write3, out var renders3);
             check(rc == 0 && rendered == 1 && read3 == 1 && write3 == 1 && renders3 == 1,
@@ -381,7 +381,7 @@ public static partial class QtTextureTest
         }
         if (!check(Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var id) == 0, "snapshot: create resource"))
             return;
-        int rc = Native.vlqt_res_snapshot(id, scene, element, 1);
+        var rc = Native.vlqt_res_snapshot(id, scene, element, 1);
         s.Check(rc == 0, $"snapshot: start on the offscreen scene ({rc})");
         int state = 0, frames = 0, rendered = 0;
         for (; frames < 120 && state is not (Protocol.ResState.Ready or Protocol.ResState.Failed); frames++)
@@ -394,7 +394,7 @@ public static partial class QtTextureTest
         s.Check(state == Protocol.ResState.Ready && rendered >= 1,
             $"snapshot: Ready after {frames} frame(s), {rendered} render(s) (state {state}) {error}");
         var pixels = new byte[rw * rh * 4];
-        int read = Native.ResReadSnapshot(id, pixels, out var desc);
+        int read = NativeCalls.ReadSnapshot(id, pixels, out var desc);
         // BGRA8 premultiplied: bytes B, G, R, A.
         string Px(int x, int y) { int i = (y * rw + x) * 4; return read == pixels.Length ? $"{pixels[i + 2]},{pixels[i + 1]},{pixels[i]},{pixels[i + 3]}" : "-"; }
         s.Check(read == pixels.Length && desc.width == rw && desc.height == rh && Px(rw / 2, rh / 2) == "255,0,0,255" && Px(0, 0) == "255,0,0,255"
@@ -409,7 +409,7 @@ public static partial class QtTextureTest
     {
         var error = "";
         var buf = new byte[64 * 1024];
-        int n = Native.ResPoll(buf);
+        int n = NativeCalls.ResPoll(buf);
         for (int at = 0; at < n;)
         {
             var ev = BitConverter.ToUInt16(buf, at);
@@ -444,7 +444,7 @@ public static partial class QtTextureTest
             return ok;
         }
 
-        int hr = NativeTest.CreateDevice(adapter, out var device, out var context);
+        int hr = (int)NativeTest.CreateDevice(adapter, out var device, out var context);
         if (!Check(hr == 0 && device != IntPtr.Zero && context != IntPtr.Zero, "create device " + hr))
             return;
         int deviceRefs = NativeTest.vlqt_test_com_ref_count(device);
@@ -455,20 +455,21 @@ public static partial class QtTextureTest
         foreach (var (format, bpp, label) in new[] { (B8G8R8A8Typeless, 4, "B8G8R8A8_TYPELESS"), (R16G16B16A16Float, 8, "R16G16B16A16_FLOAT") })
         {
             const int w = 37, h = 21; // odd sizes: the staging row pitch is not the packed row size
-            hr = NativeTest.vlqt_test_d3d11_create_shared_texture(device, w, h, format, out var texture, out var handle);
+            hr = (int)NativeTest.vlqt_test_d3d11_create_shared_texture(device, w, h, format, out var texture, out var handle);
             if (!Check(hr == 0 && texture != IntPtr.Zero && handle != IntPtr.Zero, $"{label}: create shared texture {hr}"))
                 continue;
             Check(NativeTest.vlqt_test_com_ref_count(texture) == 1, $"{label}: texture ref count 1");
 
             var pixels = new byte[w * h * bpp];
-            int read = NativeTest.TestReadTexture(texture, pixels, out var rw, out var rh, out var rf);
+            int read = NativeCalls.ReadTexture(texture, pixels, out var rw, out var rh, out var rf);
             Check(read == pixels.Length && rw == w && rh == h && rf == format, $"{label}: read {read} bytes of {rw}x{rh} format {rf}");
             Check(Array.TrueForAll(pixels, b => b == 0), $"{label}: new texture reads back as zeros");
 
             var small = new byte[pixels.Length - 1];
-            read = NativeTest.TestReadTexture(texture, small, out rw, out rh, out rf);
-            Check(read == -pixels.Length && rw == w && rh == h && rf == format, $"{label}: too small buffer reports -{pixels.Length} (got {read})");
-            Check(NativeTest.TestReadTexture(texture, Span<byte>.Empty, out _, out _, out _) == -pixels.Length, $"{label}: empty buffer reports the required size");
+            read = NativeCalls.ReadTexture(texture, small, out rw, out rh, out rf, out var required);
+            Check(read == (int)Native.Result.BufferTooSmall && required == pixels.Length && rw == w && rh == h && rf == format, $"{label}: too small buffer: BufferTooSmall, required {required} of {pixels.Length} (got {read})");
+            read = NativeCalls.ReadTexture(texture, Span<byte>.Empty, out _, out _, out _, out required);
+            Check(read == (int)Native.Result.BufferTooSmall && required == pixels.Length, $"{label}: empty buffer reports the required size");
 
             Check(NativeTest.vlqt_test_close_handle(handle) == 0, $"{label}: close handle");
             Check(NativeTest.vlqt_test_close_handle(handle) != 0, $"{label}: closing a closed handle fails");
@@ -476,20 +477,20 @@ public static partial class QtTextureTest
         }
 
         // A format without a readback (16 bytes per pixel) is rejected, the texture itself is fine.
-        hr = NativeTest.vlqt_test_d3d11_create_shared_texture(device, 8, 8, R32G32B32A32Float, out var wide, out var wideHandle);
+        hr = (int)NativeTest.vlqt_test_d3d11_create_shared_texture(device, 8, 8, R32G32B32A32Float, out var wide, out var wideHandle);
         if (Check(hr == 0, "R32G32B32A32_FLOAT: create " + hr))
         {
-            Check(NativeTest.TestReadTexture(wide, new byte[8 * 8 * 16], out _, out _, out _) == Protocol.Offscreen.BadArgument, "unsupported readback format = bad argument");
+            Check(NativeCalls.ReadTexture(wide, new byte[8 * 8 * 16], out _, out _, out _) == (int)Native.Result.Unsupported, "unsupported readback format = Unsupported");
             NativeTest.vlqt_test_close_handle(wideHandle);
             NativeTest.vlqt_test_com_release(wide);
         }
 
         // Two readbacks in a row on one texture (the staging copy is per call and freed).
-        hr = NativeTest.vlqt_test_d3d11_create_shared_texture(device, 4, 4, R8G8B8A8Unorm, out var again, out var againHandle);
+        hr = (int)NativeTest.vlqt_test_d3d11_create_shared_texture(device, 4, 4, R8G8B8A8Unorm, out var again, out var againHandle);
         if (Check(hr == 0, "R8G8B8A8_UNORM: create " + hr))
         {
             var buf = new byte[64];
-            Check(NativeTest.TestReadTexture(again, buf, out _, out _, out _) == 64 && NativeTest.TestReadTexture(again, buf, out _, out _, out _) == 64, "read twice");
+            Check(NativeCalls.ReadTexture(again, buf, out _, out _, out _) == 64 && NativeCalls.ReadTexture(again, buf, out _, out _, out _) == 64, "read twice");
             NativeTest.vlqt_test_close_handle(againHandle);
             Check(NativeTest.vlqt_test_com_release(again) == 0, "release texture -> 0 references");
         }

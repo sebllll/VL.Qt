@@ -72,7 +72,7 @@ public static class MultiPlacementTest
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             s.Pump(1);
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             s.Check(n >= 0, $"poll ({n})");
             var res = rec.FeedbackRouter.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
             s.Check(res.Error is null, $"dispatch ({res.Error})");

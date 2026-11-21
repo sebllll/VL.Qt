@@ -10,6 +10,7 @@
 
 #include "events.h"
 #include "protocol.h"
+#include "vlqt.h"
 
 #include <QtCore/QByteArray>
 #include <QtCore/QMetaProperty>
@@ -39,17 +40,16 @@ struct EffectChainDesc;  // effectchain.h
 struct EffectComponents; // effectchain.h
 class EffectChain;       // effectchain.h
 
-/* Return codes of Scene::apply / vlqt_window_apply (0 = ok). */
+/* Return codes of Scene::apply / vlqt_window_apply: short names for the apply range of vlqt_result (vlqt.h). */
 enum ApplyResult {
-    ApplyOk = 0,
-    ApplyNullWindow = -1,
-    ApplyBadLength = -2,      // truncated buffer, wrong payloadLen for op / value type, bad alignment
-    ApplyUnknownOp = -3,
-    ApplyUnknownId = -4,
-    ApplyUnknownType = -5,
-    ApplyUnknownProperty = -6, // property not supported by the element type (also logged once per type)
-    ApplyBadValue = -7,        // value type does not match the property, or the setter rejected the value
-    ApplyInvalid = -8          // e.g. CREATE with id 0 / existing id, REPARENT into own subtree
+    ApplyOk = VLQT_OK,
+    ApplyBadLength = VLQT_ERR_BAD_LENGTH,           // truncated buffer, wrong payloadLen for op / value type, bad alignment
+    ApplyUnknownOp = VLQT_ERR_UNKNOWN_OP,
+    ApplyUnknownId = VLQT_ERR_UNKNOWN_OBJECT,
+    ApplyUnknownType = VLQT_ERR_UNKNOWN_TYPE,
+    ApplyUnknownProperty = VLQT_ERR_UNKNOWN_PROPERTY, // property not supported by the element type (also logged once per type)
+    ApplyBadValue = VLQT_ERR_BAD_ARGUMENT,          // value type does not match the property, or the setter rejected the value
+    ApplyInvalid = VLQT_ERR_INVALID                 // e.g. CREATE with id 0 / existing id, REPARENT into own subtree
 };
 
 /* Decoded SET value. Pointers/strings are only valid during the setter call. */

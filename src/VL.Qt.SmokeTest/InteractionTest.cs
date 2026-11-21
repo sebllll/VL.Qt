@@ -88,7 +88,7 @@ public static partial class InteractionTest
                 s.Check(rc == 0, $"chain: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
             s.Pump(1);
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             s.Check(n >= 0, $"chain: poll ({n})");
             var res = rec.FeedbackRouter.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
             s.Check(res.Error is null, $"chain: dispatch ({res.Error})");
@@ -186,7 +186,7 @@ public static partial class InteractionTest
                     s.Check(rc == 0, $"elements {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
                 }
                 s.Pump(1);
-                int n = Native.Poll(w, buf);
+                int n = NativeCalls.Poll(w, buf);
                 var res = rec.FeedbackRouter.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
                 s.Check(res.Error is null, $"elements {name}: dispatch ({res.Error})");
             }

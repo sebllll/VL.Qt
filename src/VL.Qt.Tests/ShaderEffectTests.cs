@@ -340,7 +340,7 @@ namespace VL.Qt.Tests
         public void Node_QtNativeRefusesLoad_ErrorOutput()
         {
             CreateNode();
-            _api.LoadRc = -7;
+            _api.LoadRc = Native.Result.BadArgument;
             Update("a.qsb", out _);
             Update("a.qsb", out var error);
             Assert.That(error, Does.StartWith("Fragment shader: Loading shader"));
@@ -350,7 +350,7 @@ namespace VL.Qt.Tests
         public void Node_CreateRefused_ErrorOutput_NoId()
         {
             CreateNode();
-            _api.CreateRc = -9;
+            _api.CreateRc = Native.Result.UnknownId;
             var e = Update("a.qsb", out var error);
             Assert.That(e.FragmentShaderId, Is.EqualTo(0UL));
             Assert.That(error, Does.StartWith("Fragment shader: vlqt_res_create failed"));

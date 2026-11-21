@@ -138,8 +138,8 @@ public static class RendererTest
             s.Check(Near(Px(a, 550, 150), 255, 0, 0), "scene survives the resize");
         }
         s.Check(Native.vlqt_window_set_title(r.Window, title) == 0, "set_title ok");
-        s.Check(Native.vlqt_window_set_title(IntPtr.Zero, "x") == -1, "set_title null window -> -1");
-        s.Check(Native.vlqt_window_resize(IntPtr.Zero, 1, 1) == -1, "resize null window -> -1");
+        s.Check(Native.vlqt_window_set_title(IntPtr.Zero, "x") == Native.Result.NullHandle, "set_title null window -> NullHandle");
+        s.Check(Native.vlqt_window_resize(IntPtr.Zero, 1, 1) == Native.Result.NullHandle, "resize null window -> NullHandle");
 
         // Null input = empty scene: everything destroyed, registry empty.
         Frame(null);

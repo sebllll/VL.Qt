@@ -59,11 +59,11 @@ public static class ApplyFuzzTest
             var got = Native.vlqt_window_get_apply_error(w, out var ae);
             applies++;
             string? problem = null;
-            if (rc > 0 || rc < -8 || rc == -1)
+            if (rc > Native.Result.Ok || rc < Native.Result.Invalid || rc == Native.Result.NullHandle)
                 problem = $"return code {rc} is not 0 or a negative ApplyResult";
-            else if (got != 0)
+            else if (got != Native.Result.Ok)
                 problem = $"apply_error returned {got}";
-            else if (ae.rc != rc)
+            else if (ae.rc != (int)rc)
                 problem = $"apply_error.rc {ae.rc} differs from the return code {rc}";
             else if (rc == 0 && (ae.Reason.Length != 0 || ae.id != 0 || ae.command != 0))
                 problem = $"success, but apply_error holds \"{ae.Reason}\" (id {ae.id}, command {ae.command})";

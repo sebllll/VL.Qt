@@ -54,7 +54,7 @@ public static partial class InteractionTest
                 _s.Check(rc == 0, $"{_tag}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
             _s.Pump(1);
-            int n = Native.Poll(W, _buf);
+            int n = NativeCalls.Poll(W, _buf);
             _s.Check(n >= 0, $"{_tag}: poll ({n})");
             var res = _rec.FeedbackRouter.Dispatch(_buf.AsSpan(0, Math.Max(n, 0)));
             _s.Check(res.Error is null, $"{_tag}: dispatch ({res.Error})");

@@ -56,7 +56,7 @@ public static class ShaderErrorsTest
         // Everything the status queue holds right now (one pump of the resources).
         int Poll()
         {
-            var n = Native.ResPoll(buf);
+            var n = NativeCalls.ResPoll(buf);
             var count = 0;
             for (int at = 0; at < n; count++)
             {

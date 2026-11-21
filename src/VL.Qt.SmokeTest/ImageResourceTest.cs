@@ -71,11 +71,11 @@ public static class ImageResourceTest
             var now = sw.Elapsed.TotalMilliseconds;
             intervals.Add(now - last);
             last = now;
-            var n = Native.ResPoll(buf);
-            if (n < 0)
+            var n = NativeCalls.ResPoll(buf, out var required);
+            if (n == (int)Native.Result.BufferTooSmall)
             {
-                buf = new byte[-n * 2];
-                n = Native.ResPoll(buf);
+                buf = new byte[required * 2];
+                n = NativeCalls.ResPoll(buf);
             }
             for (int at = 0; at < n;)
             {
@@ -112,10 +112,10 @@ public static class ImageResourceTest
         }
         byte[] Read(ulong id, out int rw, out int rh)
         {
-            var n = NativeTest.ResReadPixels(id, Span<byte>.Empty, out rw, out rh);
-            if (n >= 0) return [];
-            var px = new byte[-n];
-            return NativeTest.ResReadPixels(id, px, out rw, out rh) == px.Length ? px : [];
+            var rc = NativeCalls.ReadPixels(id, Span<byte>.Empty, out rw, out rh, out var required);
+            if (rc != (int)Native.Result.BufferTooSmall) return [];
+            var px = new byte[required];
+            return NativeCalls.ReadPixels(id, px, out rw, out rh) == px.Length ? px : [];
         }
         static bool Near(byte[] px, int width, int x, int y, int r, int g, int b, int tol)
         {
@@ -132,9 +132,9 @@ public static class ImageResourceTest
         // the CPU copy is the image, Ready right after the decode, without stripes.
         var gpuUpload = NativeTest.vlqt_test_device_info(IntPtr.Zero, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
         s.Info($"upload path: {(gpuUpload ? "GPU (shared upload QRhi)" : "CPU copy (no upload QRhi)")}");
-        s.Check(Native.vlqt_res_load_image(1, "x.png", 0) == -9, "load_image on an unknown id -> -9");
+        s.Check(Native.vlqt_res_load_image(1, "x.png", 0) == Native.Result.UnknownId, "load_image on an unknown id -> UnknownId");
         var testKind = Native.vlqt_res_create(TestProtocol.ResKind.Test, out var tid) == 0 ? tid : 0;
-        s.Check(Native.vlqt_res_load_image(testKind, "x.png", 0) == -7, "load_image on a test resource -> -7 (wrong kind)");
+        s.Check(Native.vlqt_res_load_image(testKind, "x.png", 0) == Native.Result.BadArgument, "load_image on a test resource -> BadArgument (wrong kind)");
         Native.vlqt_res_release(testKind);
 
         // 1. Files: PNG/JPG 1080p + 4K async, missing and broken file.
@@ -252,8 +252,8 @@ public static class ImageResourceTest
             Native.vlqt_res_release(id);
         }
         var shortId = Create();
-        s.Check(Native.ResSetPixels(shortId, new Native.vlqt_pixel_desc { width = 4, height = 4, format = 7 }, new byte[10]) == -7,
-            "set_pixels with too few bytes -> -7");
+        s.Check(Native.ResSetPixels(shortId, new Native.vlqt_pixel_desc { width = 4, height = 4, format = 7 }, new byte[10]) == Native.Result.BadArgument,
+            "set_pixels with too few bytes -> BadArgument");
         Native.vlqt_res_release(shortId);
 
         // 3. Replacement: the old content stays readable until the new one is uploaded, no STATE record, new INFO.
@@ -302,7 +302,7 @@ public static class ImageResourceTest
         var t2 = Stopwatch.StartNew();
         while (Native.ResList(listed) is var c && listed.Take(Math.Min(c, listed.Length)).Any(r => r.id == relFile) && t2.ElapsedMilliseconds < 5000) Frame();
         cnt = Native.ResList(listed);
-        s.Check(!listed.Take(Math.Min(cnt, listed.Length)).Any(r => r.id == rel || r.id == relFile) && Native.vlqt_res_wait(rel, 0) == -9
+        s.Check(!listed.Take(Math.Min(cnt, listed.Length)).Any(r => r.id == rel || r.id == relFile) && Native.vlqt_res_wait(rel, 0) == (int)Native.Result.UnknownId
             && !events.Any(e => e.Id == relFile && e.Ev == Protocol.ResEv.State && e.Payload[0] == Protocol.ResState.Ready), "released during the upload: freed, id stale, no Ready");
         Native.vlqt_res_set_budget(8 << 20);
         var syncId = Create();

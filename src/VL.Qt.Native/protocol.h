@@ -251,7 +251,7 @@
 /* One number for the command protocol (this file) and the C ABI (vlqt.h, vlqt_test.h): vlqt_app_get_abi_version() returns it, VL.Qt.dll
  * compares it with Protocol.AbiVersion before the first window or resource and refuses a vlqt.dll with another one.
  * Bump it on EVERY change to a constant, a struct layout or an exported signature (also additions); mirror it in Protocol.cs. */
-#define VLQT_ABI_VERSION 17
+#define VLQT_ABI_VERSION 18
 #define VLQT_COMMAND_ALIGN 4
 #define VLQT_HEADER_SIZE 4
 #define VLQT_ROOT_ID 0
@@ -597,22 +597,6 @@ enum vlqt_space {
     VLQT_SPACE_PIXEL_TOP_LEFT = 3 /* origin at the top left */
 };
 
-/* Return codes of the offscreen exports vlqt_offscreen_* (vlqt.h, QtTexture) and vlqt_test_offscreen_state
- * (vlqt_test.h), not part of the command buffer. -1 and -7 as in the rest of vlqt.h; the own codes start at -20 so they never collide
- * with apply's -1..-8 or the resources' -9. vlqt_offscreen_render_batch returns >= 0 (scenes rendered) on success. */
-enum vlqt_offscreen_result {
-    VLQT_OFFSCREEN_OK = 0,
-    VLQT_OFFSCREEN_NULL_SCENE = -1,          /* null handle, or a window handle that is no offscreen scene */
-    VLQT_OFFSCREEN_BAD_ARGUMENT = -7,        /* null device/handle/context, size out of range or not the texture's */
-    VLQT_OFFSCREEN_UNBOUND = -20,            /* the scene has no texture (vlqt_test_offscreen_state) */
-    VLQT_OFFSCREEN_ADAPTER_MISMATCH = -21,   /* foreign device on another adapter than QtNative's device (warning once) */
-    VLQT_OFFSCREEN_OPEN_FAILED = -22,        /* OpenSharedResource1 failed or the handle is no usable Texture2D */
-    VLQT_OFFSCREEN_FORMAT_UNSUPPORTED = -23, /* format not allowed or not compatible with the texture's format */
-    VLQT_OFFSCREEN_FENCE_FAILED = -24,       /* no ID3D11Device5/ID3D11DeviceContext4, or fence create/share/open failed */
-    VLQT_OFFSCREEN_DEVICE_LOST = -25,        /* QtNative's device is lost or being rebuilt: try again next frame */
-    VLQT_OFFSCREEN_NOT_SUPPORTED = -26       /* no D3D11 (Linux, other graphics API) or not available on a scene */
-};
-
 /* Pointer events of vlqt_offscreen_send_pointer (vlqt.h, QtTexture input), not part of the command buffer. */
 enum vlqt_pointer {
     VLQT_POINTER_PRESS = 1,
@@ -699,7 +683,7 @@ enum vlqt_img {
  * Decoding -> Ready at once (external content, no worker, no upload), RES_EV_INFO w = channels, h = sample rate,
  * format 0, bytes = ring size. The format never changes: a new VL.Audio sample rate means a new tap, C# sets the new id
  * on the Video and releases the old one (vlqt_res_release); no request flag. A tap is freed like any resource (host
- * release + no element reference); reads of a freed id return -9 and never touch freed memory.
+ * release + no element reference); reads of a freed id return VLQT_ERR_UNKNOWN_ID (-9) and never touch freed memory.
  *
  * VLQT_PROP_AUDIO_TAP (Video). A tap id != 0 attaches a QAudioBufferOutput in the tap's format to the element's
  * QMediaPlayer and sets the player's audioOutput to null: Qt's own sound is off, the player runs on the system clock

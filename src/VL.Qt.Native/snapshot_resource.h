@@ -46,7 +46,7 @@ int start(uint64_t id, Scene& scene, unsigned elementId, float scale);
 // Like start, with the scale chosen from the element's frame: longest edge <= maxEdgePx, scale <= 1 (DIP * scale,
 // independent of the DPR). 0 / -7 (maxEdgePx <= 0) / -9.
 int startFit(uint64_t id, Scene& scene, unsigned elementId, int maxEdgePx);
-int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out);
+int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out, int* written, int* required);
 
 // --- Cost of the snapshots for the F5 Resources page ---
 // Grab start (startImpl) to a successful delivery (onReady), over the last ~10 s; every snapshot counts.

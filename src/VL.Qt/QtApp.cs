@@ -292,7 +292,7 @@ namespace VL.Qt
                     + "Move the package or exported app to a shorter path (base path {NativeDir}, {BaseLength} characters).",
                     Native.maxPath, Native.LongestPath.Length, Native.LongestPath.Path, Native.NativeDir, Native.NativeDir.Length);
             }
-            if (Native.vlqt_app_init(Native.NativeDir, QtLog.Fn) != 0)
+            if (Native.vlqt_app_init(Native.NativeDir, QtLog.Fn) != Native.Result.Ok)
                 throw new InvalidOperationException("VL.Qt: vlqt_app_init failed: " + Native.LastError());
             _statsStartTicks = Environment.TickCount64;
             _resources = new ResourceClient(new NativeResourceApi(), _threadId, static () => Logger);
@@ -532,7 +532,7 @@ namespace VL.Qt
             }
         }
 
-        /// <summary>Queued window system events of the last <see cref="DeliverInput"/> (SmokeTest), -1 = error.</summary>
+        /// <summary>Queued window system events of the last <see cref="DeliverInput"/> (SmokeTest), a negative <see cref="Native.Result"/> = error.</summary>
         internal int LastDeliveredInput { get; private set; }
 
         /// <summary>Fills <see cref="_windows"/> with QtNative windows of the participants, returns the count.</summary>

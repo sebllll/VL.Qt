@@ -64,7 +64,7 @@ public static class VideoStopTest
         void Frame()
         {
             s.Pump(1);
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             foreach (var r in MeasureTest.Parse(buf.AsSpan(0, Math.Max(n, 0)), s.Check))
                 if (r.Handle == Handle && r.Event == Protocol.Ev.Media) { pos = r.V[0]; dur = r.V[1]; }
             Thread.Sleep(15);

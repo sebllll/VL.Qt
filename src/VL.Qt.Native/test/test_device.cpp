@@ -1,7 +1,9 @@
 // Test device of vlqt_test_device_lost (test_device.h), Windows only.
 #include "test_device.h"
 
+#include "../app/last_error.h"
 #include "../device.h"
+#include "../vlqt.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QGuiApplication>
@@ -118,9 +120,8 @@ int removeDevice(ID3D12Device* dev12)
 {
     ID3D12Device5* dev5 = nullptr;
     if (!dev12 || FAILED(dev12->QueryInterface(__uuidof(ID3D12Device5), reinterpret_cast<void**>(&dev5)))) {
-        qCWarning(lcDevice, "vlqt_test_device_lost(REMOVE) needs the shared device on D3D11On12 "
-            "(VLQT_TEST_D3D11ON12=1 before the first window or resource)");
-        return -2;
+        return vlqt::fail(VLQT_ERR_UNSUPPORTED, "test_device_lost(REMOVE) needs the shared device on D3D11On12 "
+                                                "(VLQT_TEST_D3D11ON12=1 before the first window or resource)");
     }
     qCInfo(lcDevice, "test: removing the D3D12 device %p of the shared device", static_cast<void*>(dev12));
     dev5->RemoveDevice();

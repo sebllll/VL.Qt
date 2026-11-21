@@ -44,11 +44,8 @@ public static class EffectPassesTest
     // deleted one frame late, at the next poll or apply.
     private static int Items(IntPtr w)
     {
-        Native.Poll(w, new byte[1 << 16]);
-        var need = -NativeTest.vlqt_test_perf_text(w, 2, null, 0);
-        var buf = new byte[Math.Max(need, 1)];
-        var n = NativeTest.vlqt_test_perf_text(w, 2, buf, buf.Length);
-        var m = Regex.Match(n > 0 ? Encoding.UTF8.GetString(buf, 0, n) : "", @"QML items\s+(\d+)");
+        NativeCalls.Poll(w, new byte[1 << 16]);
+        var m = Regex.Match(NativeCalls.PerfPageText(w, 2), @"QML items\s+(\d+)");
         return m.Success ? int.Parse(m.Groups[1].Value) : -1;
     }
 
@@ -136,7 +133,7 @@ public static class EffectPassesTest
         string? PollError()
         {
             s.Pump(2);
-            var n = Native.Poll(w, poll);
+            var n = NativeCalls.Poll(w, poll);
             return ErrorText(poll.AsSpan(0, Math.Max(n, 0)), FeedbackIdR);
         }
         Bitmap Shot(string name) { s.Pump(5); return s.Grab(w, $"effect-passes_{name}.png"); }
@@ -424,7 +421,7 @@ public static class EffectPassesTest
         string? PollError()
         {
             s.Pump(2);
-            var n = Native.Poll(w, poll);
+            var n = NativeCalls.Poll(w, poll);
             return ErrorText(poll.AsSpan(0, Math.Max(n, 0)), FeedbackIdG);
         }
         Bitmap Shot(string name) { s.Pump(6); return s.Grab(w, $"effect-passes_{name}.png"); }

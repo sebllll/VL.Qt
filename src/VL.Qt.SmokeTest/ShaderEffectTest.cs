@@ -70,7 +70,7 @@ public static class ShaderEffectTest
         var resBuf = new byte[16 * 1024];
         void DrainRes()
         {
-            var n = Native.ResPoll(resBuf);
+            var n = NativeCalls.ResPoll(resBuf);
             for (int at = 0; at < n;)
             {
                 var len = BitConverter.ToUInt16(resBuf, at + 2);
@@ -116,7 +116,7 @@ public static class ShaderEffectTest
         var cmd = new CommandWriter();
         var evBuf = new byte[1 << 16];
         var errors = new Dictionary<uint, string>(); // last EV_ERROR text per handle (empty = cleared)
-        int Apply() => Native.Apply(w, cmd.EndFrame());
+        Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
         void CheckApply(string what)
         {
             var rc = Apply();
@@ -124,7 +124,7 @@ public static class ShaderEffectTest
         }
         string Err(uint handle)
         {
-            int n = Native.Poll(w, evBuf);
+            int n = NativeCalls.Poll(w, evBuf);
             for (int at = 0; at < n;)
             {
                 ushort ev = BitConverter.ToUInt16(evBuf, at), len = BitConverter.ToUInt16(evBuf, at + 2);
@@ -286,7 +286,7 @@ public static class ShaderEffectTest
         cmd.Reset();
         cmd.SetIvec2(Mesh, Protocol.Prop.MeshResolution, 0, 3);
         var rcMesh = Apply();
-        s.Check(rcMesh == -7, $"mesh resolution < 1 -> -7 ({rcMesh}: {Native.LastError()})");
+        s.Check(rcMesh == Native.Result.BadArgument, $"mesh resolution < 1 -> BadArgument ({rcMesh}: {Native.LastError()})");
 
         // --- 4) failed shader / no shader: nothing drawn, no crash ---
         using (var a = s.Grab(w, "shader-effect_broken.png"))
@@ -367,19 +367,19 @@ public static class ShaderEffectTest
         s.Pump(3);
         gpu(Err(HGrad).Length == 0, "second correction clears the error");
 
-        // Not a ShaderEffect: SET_UNIFORMS on a rectangle -> -6; unknown ref -> -4.
+        // Not a ShaderEffect: SET_UNIFORMS on a rectangle -> UnknownProperty; unknown ref -> UnknownObject.
         cmd.Reset();
         cmd.BeginUniforms(WaveIn, 0);
         cmd.UniformF32("time", 1);
         cmd.EndUniforms();
         var rc6 = Apply();
-        s.Check(rc6 == -6, $"SET_UNIFORMS on an image -> -6 ({rc6}: {Native.LastError()})");
+        s.Check(rc6 == Native.Result.UnknownProperty, $"SET_UNIFORMS on an image -> UnknownProperty ({rc6}: {Native.LastError()})");
         cmd.Reset();
         cmd.BeginUniforms(DualTex, 0);
         cmd.UniformRef("overlay", 999);
         cmd.EndUniforms();
         var rc4 = Apply();
-        s.Check(rc4 == -4, $"texture uniform with an unknown element id -> -4 ({rc4}: {Native.LastError()})");
+        s.Check(rc4 == Native.Result.UnknownObject, $"texture uniform with an unknown element id -> UnknownObject ({rc4}: {Native.LastError()})");
 
         // Lifetime: destroy the effects with children, release the resources, window down (no crash, no leak message).
         cmd.Reset();

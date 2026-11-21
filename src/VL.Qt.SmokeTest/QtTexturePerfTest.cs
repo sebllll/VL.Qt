@@ -54,7 +54,7 @@ public static class QtTexturePerfTest
         var env = Environment.GetEnvironmentVariable("VLQT_OFFSCREEN_THREAD");
         if (!string.IsNullOrEmpty(env) && int.TryParse(env, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n >= 0)
             threads = n;
-        int rc = Native.vlqt_offscreen_set_threaded(threads);
+        var rc = Native.vlqt_offscreen_set_threaded(threads);
         s.Check(rc == 0, $"qttextureperf: set_threaded({threads}) before the first scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         if (rc != 0)
             return;
@@ -149,7 +149,7 @@ public static class QtTexturePerfTest
             }
             s.Check(Native.Apply(scenes[k], cmd.EndFrame()) == 0, $"qttextureperf {config.Name}: apply scene {k}");
             NativeTest.vlqt_test_d3d11_create_shared_texture(device, W, H, B8G8R8A8Typeless, out textures[k], out var handle);
-            int rc = Native.vlqt_offscreen_bind(scenes[k], device, handle, W, H, B8G8R8A8Unorm, 1, out _);
+            var rc = Native.vlqt_offscreen_bind(scenes[k], device, handle, W, H, B8G8R8A8Unorm, 1, out _);
             NativeTest.vlqt_test_close_handle(handle);
             s.Check(rc == 0, $"qttextureperf {config.Name}: bind scene {k} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
@@ -178,7 +178,7 @@ public static class QtTexturePerfTest
             if (state is not (Protocol.ResState.Ready or Protocol.ResState.Failed))
                 return;
             snapLatency.Add(f - snapRequestFrame);
-            int got = Native.ResReadSnapshot(snap, snapPixels, out var desc);
+            int got = NativeCalls.ReadSnapshot(snap, snapPixels, out var desc);
             int r = snapPixels[(MarkerSize / 2 * MarkerSize + MarkerSize / 2) * 4 + 2], a = snapPixels[(MarkerSize / 2 * MarkerSize + MarkerSize / 2) * 4 + 3];
             bool markerSince = Enumerable.Range(snapRequestFrame, f - snapRequestFrame + 1).Any(g => r == g % 251 + 1);
             if (state != Protocol.ResState.Ready || got != snapPixels.Length || desc.width != MarkerSize || desc.height != MarkerSize || a != 255 || !markerSince)
@@ -229,12 +229,12 @@ public static class QtTexturePerfTest
             while (sw.Elapsed.TotalMilliseconds < 6) { }
             var t3 = Stopwatch.GetTimestamp();
             // Stride's draw reads scene 0's texture; Map waits for the GPU (and so for Qt's write signal).
-            NativeTest.TestReadTexture(textures[0], pixels, out _, out _, out _);
+            NativeCalls.ReadTexture(textures[0], pixels, out _, out _, out _);
             var t4 = Stopwatch.GetTimestamp();
             for (int k = 0; k < count; k++)
             {
                 if (k > 0)
-                    NativeTest.TestReadTexture(textures[k], pixels, out _, out _, out _);
+                    NativeCalls.ReadTexture(textures[k], pixels, out _, out _, out _);
                 int red = pixels[(8 * W + 8) * 4 + 2]; // BGRA
                 if (red == marker)
                     continue;
