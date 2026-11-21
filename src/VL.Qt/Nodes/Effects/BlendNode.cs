@@ -37,14 +37,18 @@ namespace VL.Qt.Nodes
                 default);
 
         private readonly ShaderEffectBuilder<Props> _link;
+        private readonly ElementInput _layer;
 
         public BlendNode(NodeContext nodeContext)
-            : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
+            : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext), ElementInput.WarningsOf(nodeContext))
         {
         }
 
-        internal BlendNode(ResourceClient? client, NodeErrors? errors = null)
-            => _link = new ShaderEffectBuilder<Props>(client, s_shaders, s_create, errors);
+        internal BlendNode(ResourceClient? client, NodeErrors? errors = null, Func<string, IDisposable>? addWarning = null)
+        {
+            _link = new ShaderEffectBuilder<Props>(client, s_shaders, s_create, errors);
+            _layer = new ElementInput(addWarning);
+        }
 
         internal ShaderEffectBuilder<Props> Core => _link;
 
@@ -57,12 +61,19 @@ namespace VL.Qt.Nodes
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
-            Element? layer,
+            IElement? layer,
             [Pin(Visibility = PinVisibility.Optional)] Sampler? layerSampler,
             BlendMode mode,
             [DefaultValue(1f)] float opacity)
-            => layer is null ? input : _link.Describe(input, new Props(layer, layerSampler, mode, opacity));
+        {
+            var element = _layer.Update(layer);
+            return element is null ? input : _link.Describe(input, new Props(element, layerSampler, mode, opacity));
+        }
 
-        public void Dispose() => _link.Dispose();
+        public void Dispose()
+        {
+            _layer.Dispose();
+            _link.Dispose();
+        }
     }
 }

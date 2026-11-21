@@ -47,7 +47,7 @@ public static class ContainerNodeTest
         var group = new GroupNode(NoWarning);
 
         Element Rect(RectangleNode n, Color4 fill, float w = 1, float h = 1, float x = 0, float y = 0)
-            => n.Update(new Vector2(w, h), Matrix.Translation(x, y, 0), RectangleAnchor.TopLeft, fill, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
+            => (Element)n.Update(new Vector2(w, h), Matrix.Translation(x, y, 0), RectangleAnchor.TopLeft, fill, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
                 null, null, out _, out _);
 
         void Frame(Element root, string what, bool clear = false)
@@ -68,7 +68,7 @@ public static class ContainerNodeTest
         var e = column.Update(Spread.Create<IElement?>(Rect(red, Red), null, Rect(green, Green), Rect(blue, Blue)),
             default, true, Matrix.Identity, RectangleAnchor.TopLeft, 0.1f, 0, HorizontalAlignment.Left, 1, false, false,
             null, null, out _, out _);
-        Frame(e, "column of 3 rectangle nodes", clear: true);
+        Frame((Element)e, "column of 3 rectangle nodes", clear: true);
         using (var a = s.Grab(w, "07d_column.png"))
         {
             s.Check(IsRed(Px(a, 3, 3)) && IsRed(Px(a, 97, 97)) && IsBg(Px(a, 50, 105)) && IsBg(Px(a, 103, 50)),
@@ -84,7 +84,7 @@ public static class ContainerNodeTest
         e = column.Update(Spread.Create<IElement?>(Rect(red, Red, w: 2), Rect(green, Green), Rect(blue, Blue, w: 0.5f)),
             default, true, Matrix.Identity, RectangleAnchor.TopLeft, 0.1f, 0, HorizontalAlignment.Center, 1, false, false,
             null, null, out _, out _);
-        Frame(e, "column centered");
+        Frame((Element)e, "column centered");
         using (var a = s.Grab(w, "07d_column_center.png"))
         {
             s.Check(IsRed(Px(a, 3, 50)) && IsRed(Px(a, 197, 50)) && IsBg(Px(a, 203, 50)), $"center: red 0..200 DIP ({Px(a, 197, 50)})");
@@ -100,7 +100,7 @@ public static class ContainerNodeTest
         e = row.Update(Spread.Create<IElement?>(Rect(red, Red), Rect(green, Green, h: 0.5f), Rect(blue, Blue, h: 0.25f)),
             new Vector2(0, 0), true, Matrix.Translation(1, 1, 0), RectangleAnchor.TopLeft, 0.2f, 0.1f, VerticalAlignment.Bottom, 1, false, false,
             null, null, out _, out _);
-        Frame(e, "row bottom");
+        Frame((Element)e, "row bottom");
         using (var a = s.Grab(w, "07d_row.png"))
         {
             s.Check(IsRed(Px(a, 113, 113)) && IsRed(Px(a, 207, 207)) && IsBg(Px(a, 105, 150)) && IsBg(Px(a, 215, 150)),
@@ -115,7 +115,7 @@ public static class ContainerNodeTest
         e = group.Update(Spread.Create<IElement?>(Rect(red, Red), null, Rect(green, Green, x: 1, y: 1)),
             new Vector2(0, 0), true, Matrix.Translation(2, 1, 0), RectangleAnchor.TopLeft, 1, false, false,
             null, null, null, out _, out _);
-        Frame(e, "group");
+        Frame((Element)e, "group");
         using (var a = s.Grab(w, "07d_group.png"))
         {
             s.Check(IsBg(Px(a, 197, 103)) && IsRed(Px(a, 203, 103)) && IsRed(Px(a, 297, 197)) && IsBg(Px(a, 150, 50)),

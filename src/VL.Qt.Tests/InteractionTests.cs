@@ -262,7 +262,7 @@ namespace VL.Qt.Tests
 
         private static IEnumerable<Type> ElementNodeTypes() => typeof(RectangleNode).Assembly.GetTypes()
             .Where(t => t.IsPublic && t.Name.EndsWith("Node", StringComparison.Ordinal)
-                && t.GetMethod("Update") is { } m && typeof(Element).IsAssignableFrom(m.ReturnType));
+                && t.GetMethod("Update") is { } m && m.ReturnType == typeof(IElement));
 
         [Test]
         public void ElementNodes_AllHaveInteractionPin_NoIsHoveredPins()
@@ -333,7 +333,7 @@ namespace VL.Qt.Tests
                 var chain = hoverNode.Update(null, hovered);
                 var e = rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false, chain, null, out _, out _);
                 writer.Reset();
-                rec.Update(e, Space.DIPTopLeft);
+                rec.Update((Element)e, Space.DIPTopLeft);
                 writer.EndFrame();
             }
 
@@ -406,7 +406,7 @@ namespace VL.Qt.Tests
         {
             using var rect = new RectangleNode(_ => new Removal());
             using var hoverNode = new HoverNode(_ => new Removal());
-            Element Run(Interaction? i) => rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0,
+            Element Run(Interaction? i) => (Element)rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0,
                 Color4.Black, 0, 1, false, false, i, null, out _, out _);
 
             var chain = hoverNode.Update(null, null);
@@ -977,7 +977,7 @@ namespace VL.Qt.Tests
                     PointerButtons.Left, PointerDevices.All);
                 var e = rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false, chain, null, out _, out _);
                 writer.Reset();
-                rec.Update(e, Space.DIPTopLeft);
+                rec.Update((Element)e, Space.DIPTopLeft);
                 writer.EndFrame();
             }
 

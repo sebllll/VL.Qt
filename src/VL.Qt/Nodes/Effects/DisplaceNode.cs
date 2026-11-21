@@ -40,14 +40,18 @@ namespace VL.Qt.Nodes
         };
 
         private readonly ShaderEffectBuilder<Props> _link;
+        private readonly ElementInput _map;
 
         public DisplaceNode(NodeContext nodeContext)
-            : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
+            : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext), ElementInput.WarningsOf(nodeContext))
         {
         }
 
-        internal DisplaceNode(ResourceClient? client, NodeErrors? errors = null)
-            => _link = new ShaderEffectBuilder<Props>(client, s_shaders, s_create, errors);
+        internal DisplaceNode(ResourceClient? client, NodeErrors? errors = null, Func<string, IDisposable>? addWarning = null)
+        {
+            _link = new ShaderEffectBuilder<Props>(client, s_shaders, s_create, errors);
+            _map = new ElementInput(addWarning);
+        }
 
         internal ShaderEffectBuilder<Props> Core => _link;
 
@@ -59,11 +63,18 @@ namespace VL.Qt.Nodes
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
-            Element? map,
+            IElement? map,
             [Pin(Visibility = PinVisibility.Optional)] Sampler? mapSampler,
             [DefaultValue(0.1f)] float displacement)
-            => map is null ? input : _link.Describe(input, new Props(map, mapSampler, displacement));
+        {
+            var element = _map.Update(map);
+            return element is null ? input : _link.Describe(input, new Props(element, mapSampler, displacement));
+        }
 
-        public void Dispose() => _link.Dispose();
+        public void Dispose()
+        {
+            _map.Dispose();
+            _link.Dispose();
+        }
     }
 }

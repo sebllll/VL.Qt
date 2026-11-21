@@ -69,31 +69,38 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>Returns the last finished preview of Element and starts a new grab if the scene changed.</summary>
-        /// <param name="element">The element to preview; null gives no image and an empty text.</param>
+        /// <param name="element">The element to preview (a self-made widget: the element of its last Build); null gives no image and an empty text.</param>
         /// <param name="text">Type and size of the element; says so if no renderer shows it, or why a grab failed.</param>
         /// <returns>The last finished preview (BGRA8 premultiplied, longest edge up to 256 px); null before the first one.</returns>
         [return: Pin(Name = "Image")]
-        public IImage? Update(Element? element, out string text)
+        public IImage? Update(IElement? element, out string text)
         {
-            if (element is null)
+            if (ElementConversion.IsForeign(element))
+            {
+                ForgetPlace();
+                text = ElementConversion.ForeignWarning(element!.GetType());
+                return null;
+            }
+            var shown = ElementConversion.Shown(ElementConversion.ToElement(element));
+            if (shown is null)
             {
                 ForgetPlace();
                 text = string.Empty;
                 return null;
             }
 
-            var description = Describe(element);
-            if (!_scene.TryLocate(element, out var window, out var elementId))
+            var description = Describe(shown);
+            if (!_scene.TryLocate(shown, out var window, out var elementId))
             {
                 ForgetPlace();
                 text = $"{description} – {NotShownSuffix}";
                 return null;
             }
 
-            if (!ReferenceEquals(element, _videoChecked))
+            if (!ReferenceEquals(shown, _videoChecked))
             {
-                _videoChecked = element;
-                _hasVideo = ContainsVideo(element);
+                _videoChecked = shown;
+                _hasVideo = ContainsVideo(shown);
             }
             if (_hasVideo)
             {
@@ -121,11 +128,11 @@ namespace VL.Qt.Nodes
                     _image = _client.ReadSnapshot(_resource) ?? _image;
             }
 
-            if (!_grabbing && NeedsGrab(element, window))
+            if (!_grabbing && NeedsGrab(shown, window))
             {
                 var now = _clockSeconds();
                 if (now - _lastGrabTime >= minGrabInterval)
-                    Grab(element, window, elementId, now);
+                    Grab(shown, window, elementId, now);
             }
 
             var error = _error.Length > 0 ? _error : _resource is { State: QtImageState.Failed } ? _resource.Error : string.Empty;
@@ -133,7 +140,7 @@ namespace VL.Qt.Nodes
             return _image;
         }
 
-        /// <summary>The element is gone, not shown or not grabbed: no image, and the next shown place gets a grab.</summary>
+        /// <summary>The shown is gone, not shown or not grabbed: no image, and the next shown place gets a grab.</summary>
         private void ForgetPlace()
         {
             _image = null;
@@ -182,10 +189,10 @@ namespace VL.Qt.Nodes
             if (element is Video)
                 return true;
             foreach (var child in element.Children)
-                if (child is not null && ContainsVideo(child))
+                if (ElementConversion.Shown(child) is { } shown && ContainsVideo(shown))
                     return true;
             for (var effect = element.Effect; effect is not null; effect = effect.Previous)
-                if (effect is MaskEffect { Source: { } source } && ContainsVideo(source))
+                if (effect is MaskEffect { Source: { } source } && ElementConversion.Shown(source) is { } shownSource && ContainsVideo(shownSource))
                     return true;
             return false;
         }

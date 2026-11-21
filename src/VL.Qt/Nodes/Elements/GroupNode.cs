@@ -24,14 +24,20 @@ namespace VL.Qt.Nodes
         internal readonly record struct Props(ImmutableArray<Element> Children, bool AutoSize, Style? Style);
 
         private readonly ElementNode<Group, Props> _node;
-        private readonly ChildrenInput _children = new();
+        private readonly ChildrenInput _children;
 
         public GroupNode(NodeContext nodeContext)
-            => _node = new ElementNode<Group, Props>(nodeContext, Create);
+        {
+            _node = new ElementNode<Group, Props>(nodeContext, Create);
+            _children = new ChildrenInput(_node.AddWarning);
+        }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal GroupNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<Group, Props>(addWarning, Create);
+        {
+            _node = new ElementNode<Group, Props>(addWarning, Create);
+            _children = new ChildrenInput(_node.AddWarning);
+        }
 
         private static readonly Func<CommonInputs, Props, FeedbackSlot, Group> Create = static (c, p, slot) => new Group
             {
@@ -67,7 +73,7 @@ namespace VL.Qt.Nodes
         /// <param name="measuredSize">Implicit size reported by Qt, in units (Group: size of its frame, see Auto Size).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [Pin(Name = "Input", PinGroupKind = PinGroupKind.Collection, PinGroupDefaultCount = 2)] Spread<IElement?> children,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
@@ -96,6 +102,10 @@ namespace VL.Qt.Nodes
             return element;
         }
 
-        public void Dispose() => _node.Dispose();
+        public void Dispose()
+        {
+            _children.Dispose();
+            _node.Dispose();
+        }
     }
 }

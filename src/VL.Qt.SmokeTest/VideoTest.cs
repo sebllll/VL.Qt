@@ -369,7 +369,7 @@ public static class VideoTest
             var e = node.Update(new Vector2(3.2f, 1.8f), Matrix.Translation(0.2f, 0.2f, 0), RectangleAnchor.TopLeft, new VPath(path), play, true, true, 1, 1,
                 VideoFillMode.Fit, 1, false, false, null, null, out pos, out dur, out size, out _);
             cmd.Reset();
-            rec.Update(e, Space.DIPTopLeft);
+            rec.Update((Element)e, Space.DIPTopLeft);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());

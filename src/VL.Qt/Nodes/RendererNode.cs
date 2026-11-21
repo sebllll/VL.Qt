@@ -26,12 +26,14 @@ namespace VL.Qt.Nodes
     {
         private const string IconPhase = "Window Icon";
         private const string SamplesPhase = "Multisample Count";
+        private const string BuildPhase = "Build";
 
         // Pump and scene registry of this vvvv app (new per F8/F5); QtApp itself is process-wide.
         private readonly QtPump _pump;
         private readonly QtApp _app;
         private readonly NodeContext _nodeContext;
         private readonly NodeErrors _errors; // node logger + pump exceptions at the node
+        private readonly ElementInput _input;
         private readonly bool _boundToDocument;
         private readonly bool _dialogIfDocumentChanged;
         private readonly RectangleF _bounds;
@@ -76,6 +78,7 @@ namespace VL.Qt.Nodes
         {
             _nodeContext = nodeContext;
             _errors = new NodeErrors(nodeContext);
+            _input = new ElementInput(ElementInput.WarningsOf(nodeContext));
             _bounds = WindowPlacement.CreateBounds(bounds, nodeContext.AppHost.GetDefaultValue<RectangleF>());
             _vSync = vSync;
             _boundToDocument = boundToDocument;
@@ -176,7 +179,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] out PerfStats perf,
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] out RectangleF clientBounds,
             out string error,
-            Element? input,
+            IElement? input,
             [DefaultValue(typeof(Space), nameof(Space.DIPTopLeft))] Space space,
             [DefaultValue("0.1254902, 0.1254902, 0.1254902, 1")] Color4 clearColor,
             [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(true)] bool clear,
@@ -237,7 +240,8 @@ namespace VL.Qt.Nodes
                 _view.SetDebug(debug);
             }
             // Only written here; the pump applies the buffer once per frame (ApplyCommands) after all node updates.
-            _view?.Update(input, space, clearColor, clear, enabled, title);
+            _view?.Update(_input.Update(input), space, clearColor, clear, enabled, title);
+            ReportBuild(_view?.Reconciler.RootBuildError);
 
             // Is Visible is live; Perf, Client Bounds and Error reflect the last pump (previous frame).
             isVisible = _view?.IsVisible ?? false;
@@ -246,6 +250,15 @@ namespace VL.Qt.Nodes
             var qtNativeError = _view?.Error ?? "";
             _errors.LogOnly(qtNativeError);
             error = _errors.Current ?? qtNativeError;
+        }
+
+        // A stylable linked to Input failed to build (exception, cycle, foreign result): warning until a Build succeeds.
+        private void ReportBuild(string? error)
+        {
+            if (error is not null)
+                _errors.Warn(error, BuildPhase);
+            else
+                _errors.Clear(BuildPhase);
         }
 
         // Not loadable (Io): QtNative keeps the default icon, the node shows a warning until the next icon applies.
@@ -403,6 +416,7 @@ namespace VL.Qt.Nodes
             _view = null;
             _pump.Unregister(this);
             _errors.Dispose();
+            _input.Dispose();
             _keepAlive?.Dispose();
             _keepAlive = null;
         }

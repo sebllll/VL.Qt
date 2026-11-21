@@ -47,7 +47,7 @@ public static class OpacityZeroTest
         bool clear = true;
 
         Element Rect(RectangleNode n, Color4 fill, float opacity, Interaction? interaction, Effect? effect)
-            => n.Update(new Vector2(2, 2), Matrix.Identity, RectangleAnchor.TopLeft, fill, 0, new Color4(0, 0, 0, 1), 0, opacity, false, false,
+            => (Element)n.Update(new Vector2(2, 2), Matrix.Identity, RectangleAnchor.TopLeft, fill, 0, new Color4(0, 0, 0, 1), 0, opacity, false, false,
                 interaction, effect, out _, out _);
 
         // One vvvv frame: nodes update (pull the state of the last pump), reconcile + apply, Qt pumps, poll + dispatch.
@@ -66,7 +66,7 @@ public static class OpacityZeroTest
                 cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
                 clear = false;
             }
-            rec.Update(e, Space.DIPTopLeft);
+            rec.Update((Element)e, Space.DIPTopLeft);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());

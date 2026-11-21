@@ -81,7 +81,7 @@ namespace VL.Qt.Qml
             new FilePinDescription("Effect", typeof(Effect), null, "Chain of effect nodes (Blur, DropShadow, …), drawn as one effect layer on the element.", isVisible: false),
         };
 
-        private static readonly IVLPinDescription s_output = new FilePinDescription("Output", typeof(Element), null, null);
+        private static readonly IVLPinDescription s_output = new FilePinDescription("Output", typeof(IElement), null, null);
 
         private static readonly IVLPinDescription[] s_trailingOutputs =
         {

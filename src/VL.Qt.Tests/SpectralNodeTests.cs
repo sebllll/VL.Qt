@@ -23,7 +23,7 @@ namespace VL.Qt.Tests
         public void Group_SpreadChildren_NullsSkipped_SameInstanceWhenUnchanged()
         {
             using var n = new GroupSpectralNode(NoWarning);
-            Element Run(Spread<IElement?> c) => n.Update(c, default, true, default, RectangleAnchor.Center, 1, false, false,
+            Element Run(Spread<IElement?> c) => (Element)n.Update(c, default, true, default, RectangleAnchor.Center, 1, false, false,
                 null, null, null, out _, out _);
             var first = (Group)Run(S(A, null, B));
             Assert.That(first.Children, Is.EqualTo(new Element[] { A, B }));

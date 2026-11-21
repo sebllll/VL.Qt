@@ -65,7 +65,7 @@ namespace VL.Qt.Stride
         [return: Pin(Name = "Output")]
         public IGraphicsRendererBase Update(
             out string error,
-            Element? input,
+            IElement? input,
             [DefaultValue(typeof(Space), nameof(Space.DIPTopLeft))] Space space,
             [DefaultValue("0, 0, 0, 0")] Color4 clearColor,
             [DefaultValue(true)] bool enabled,

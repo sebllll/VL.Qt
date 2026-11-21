@@ -101,6 +101,9 @@ namespace VL.Qt.Nodes
 
         public ElementFeedback Feedback { get; } = new();
 
+        /// <summary>Shows a warning at the node, the result removes it (for the element inputs of the node, <see cref="ElementInput"/>).</summary>
+        public Func<string, IDisposable> AddWarning => _addWarning;
+
         /// <summary>Slot written into every description (v1 nodes output one element → index 0).</summary>
         public FeedbackSlot Slot => new(Feedback, 0);
 

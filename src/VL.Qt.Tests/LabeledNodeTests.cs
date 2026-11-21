@@ -17,7 +17,7 @@ namespace VL.Qt.Tests
 
         private static Element Labeled(LabeledNode n, Element? element, string text = "Volume", float labelWidth = 1.5f,
             LabelPosition position = LabelPosition.Left)
-            => n.Update(element, text, labelWidth, position, 0.1f, default, RectangleAnchor.Center, 0.2f, 1, null,
+            => (Element)n.Update(element, text, labelWidth, position, 0.1f, default, RectangleAnchor.Center, 0.2f, 1, null,
                 null, out _, out _);
 
         [Test]

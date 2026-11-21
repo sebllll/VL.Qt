@@ -50,19 +50,19 @@ public static class AnchorTest
 
         // Child rectangle (Row/Group child: Anchor TopLeft, position via Transform; inside a Row only the size counts).
         Element Rect(RectangleNode n, Color4 fill, float x = 0, float y = 0, float w = 1, float h = 1)
-            => n.Update(new Vector2(w, h), Matrix.Translation(x, y, 0), RectangleAnchor.TopLeft, fill, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
+            => (Element)n.Update(new Vector2(w, h), Matrix.Translation(x, y, 0), RectangleAnchor.TopLeft, fill, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
                 null, null, out _, out _);
 
         // Rotated by 90 degrees around the point (cx, cy) in units, the anchor at its center: Rot90 · T(c).
         static Matrix RotAround(float cx, float cy) => Rot90 * Matrix.Translation(cx, cy, 0);
 
         // Row (implicit size, 2 children): anchor Center + Rot90 · T(2, 1.5) rotates around (200, 150) DIP.
-        Element Row(float redWidth = 1) => row.Update(Spread.Create<IElement?>(Rect(red, Red, w: redWidth), Rect(green, Green)),
+        Element Row(float redWidth = 1) => (Element)row.Update(Spread.Create<IElement?>(Rect(red, Red, w: redWidth), Rect(green, Green)),
             new Vector2(0, 0), true, RotAround(2, 1.5f), RectangleAnchor.Center, 0, 0, VerticalAlignment.Top, 1, false, false,
             null, null, out _, out _);
 
         Element Group(Vector2 size, bool autoSize, RectangleAnchor anchor, Matrix m, float cx, float cy)
-            => group.Update(Spread.Create<IElement?>(Rect(red, Red, cx, cy), Rect(green, Green, cx + 1, cy)),
+            => (Element)group.Update(Spread.Create<IElement?>(Rect(red, Red, cx, cy), Rect(green, Green, cx + 1, cy)),
                 size, autoSize, m, anchor, 1, false, false,
                 null, null, null, out _, out _);
 
@@ -141,7 +141,7 @@ public static class AnchorTest
             s.Check(IsRed(Px(a, 10, 10)) && IsRed(Px(a, 190, 90)) && IsBg(Px(a, 210, 50)) && IsBg(Px(a, 100, 110)),
                 $"Identity + Anchor TopLeft: rectangle in the top left corner ({Px(a, 10, 10)}, {Px(a, 190, 90)}, {Px(a, 210, 50)}, {Px(a, 100, 110)})");
 
-        Frame(red.Update(new Vector2(2, 1), Matrix.Identity, RectangleAnchor.Center, Red, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
+        Frame((Element)red.Update(new Vector2(2, 1), Matrix.Identity, RectangleAnchor.Center, Red, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
             null, null, out _, out _), "identity center");
         using (var a = s.Grab(w, "88_identity_center.png"))
             s.Check(IsRed(Px(a, 10, 10)) && IsRed(Px(a, 90, 40)) && IsBg(Px(a, 110, 25)) && IsBg(Px(a, 50, 60)),
@@ -153,7 +153,7 @@ public static class AnchorTest
         foreach (var anchor in new[] { RectangleAnchor.Center, RectangleAnchor.TopLeft })
         {
             var m = Matrix.Scaling(1.5f) * Rot90 * Matrix.Translation(4, 2.5f, 0);
-            Frame(red.Update(new Vector2(2, 1), m, anchor, Red, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
+            Frame((Element)red.Update(new Vector2(2, 1), m, anchor, Red, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
                 null, null, out _, out _), $"srt {anchor}", clear: true);
             Vector2 A() => anchor == RectangleAnchor.Center ? new Vector2(100, 50) : Vector2.Zero;
             Vector2 Map(Vector2 v)
@@ -186,7 +186,7 @@ public static class AnchorTest
         {
             var greenRot = green.Update(new Vector2(2, 1), Rot90, RectangleAnchor.Center, Green, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
                 null, null, out _, out _);
-            Frame(row.Update(Spread.Create<IElement?>(Rect(red, Red), greenRot), new Vector2(0, 0), true, Matrix.Translation(1, 1, 0),
+            Frame((Element)row.Update(Spread.Create<IElement?>(Rect(red, Red), greenRot), new Vector2(0, 0), true, Matrix.Translation(1, 1, 0),
                 RectangleAnchor.TopLeft, 0, 0, VerticalAlignment.Top, 1, false, false, null, null, out _, out _), "row child anchor", clear: true);
             using var a = s.Grab(w, "88_row_child_anchor.png");
             s.Check(IsRed(Px(a, 150, 150)) && IsGreen(Px(a, 300, 60)) && IsGreen(Px(a, 300, 240)) && IsBg(Px(a, 220, 150)) && IsBg(Px(a, 380, 150)),

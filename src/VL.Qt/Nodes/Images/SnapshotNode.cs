@@ -45,7 +45,7 @@ namespace VL.Qt.Nodes
         /// <param name="error">Why the last snapshot failed, empty otherwise.</param>
         /// <returns>The last finished snapshot as BGRA8 premultiplied (own copy, not volatile); null before the first one.</returns>
         [return: Pin(Name = "Image")]
-        public IImage? Update(Element? element, out bool isReady, out string error, float scale = 1, bool grab = false)
+        public IImage? Update(IElement? element, out bool isReady, out string error, float scale = 1, bool grab = false)
         {
             if (grab)
                 // Every attempt starts clean: an error of an earlier attempt (e.g. not shown yet at the start) does not stay.
@@ -91,10 +91,15 @@ namespace VL.Qt.Nodes
         /// <summary>The snapshot resource, null until the first <see cref="Start"/> got that far.</summary>
         public ImageResource? Resource { get; private set; }
 
-        /// <summary>Starts a snapshot of <paramref name="element"/>; returns the error at once (not shown, refused by QtNative), empty on success.</summary>
-        public string Start(Element? element, float scale)
+        /// <summary>
+        /// Starts a snapshot of <paramref name="element"/> (a stylable: the element of its last Build); returns the error at
+        /// once (foreign IElement, not shown, refused by QtNative), empty on success.
+        /// </summary>
+        public string Start(IElement? element, float scale)
         {
-            if (element is null || !_scene.TryLocate(element, out var window, out var elementId))
+            if (ElementConversion.IsForeign(element))
+                return ElementConversion.ForeignWarning(element!.GetType());
+            if (ElementConversion.Shown(ElementConversion.ToElement(element)) is not { } shown || !_scene.TryLocate(shown, out var window, out var elementId))
                 return SnapshotNode.NotShownError;
             try
             {

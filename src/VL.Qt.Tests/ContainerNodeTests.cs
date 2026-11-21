@@ -25,17 +25,17 @@ namespace VL.Qt.Tests
         private static Spread<IElement?> S(params IElement?[] e) => Spread.Create(e);
 
         private static Element Group(GroupNode n, Spread<IElement?> children, float opacity = 1, bool autoSize = true)
-            => n.Update(children, default, autoSize, default, RectangleAnchor.Center, opacity, false, false,
+            => (Element)n.Update(children, default, autoSize, default, RectangleAnchor.Center, opacity, false, false,
                 null, null, null, out _, out _);
 
         private static Element Column(ColumnNode n, Spread<IElement?> children, float spacing = 0, float padding = 0,
             HorizontalAlignment align = HorizontalAlignment.Left, bool autoSize = true)
-            => n.Update(children, default, autoSize, default, RectangleAnchor.Center, spacing, padding, align, 1, false, false,
+            => (Element)n.Update(children, default, autoSize, default, RectangleAnchor.Center, spacing, padding, align, 1, false, false,
                 null, null, out _, out _);
 
         private static Element Row(RowNode n, Spread<IElement?> children, float spacing = 0, float padding = 0,
             VerticalAlignment align = VerticalAlignment.Top, bool autoSize = true)
-            => n.Update(children, default, autoSize, default, RectangleAnchor.Center, spacing, padding, align, 1, false, false,
+            => (Element)n.Update(children, default, autoSize, default, RectangleAnchor.Center, spacing, padding, align, 1, false, false,
                 null, null, out _, out _);
 
         [Test]

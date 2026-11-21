@@ -33,7 +33,7 @@ namespace VL.Qt.Tests
             Color4? fill = null, float radius = 0, Color4? strokeColor = null, float strokeWidth = 0,
             float opacity = 1, bool clip = false, bool debug = false,
             Interaction? interaction = null)
-            => _node.Update(size ?? DefaultSize, transform, anchor, fill ?? Color4.White, radius, strokeColor ?? Color4.Black,
+            => (Element)_node.Update(size ?? DefaultSize, transform, anchor, fill ?? Color4.White, radius, strokeColor ?? Color4.Black,
                 strokeWidth, opacity, clip, debug, interaction, null, out _, out _);
 
         [Test]

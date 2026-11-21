@@ -24,6 +24,7 @@ namespace VL.Qt.Nodes
         private readonly ElementNode<Text, TextProps> _text;
         private readonly ElementNode<Row, LayoutProps> _row;
         private readonly ElementNode<Column, LayoutProps> _column;
+        private readonly ElementInput _element;
         private Element? _lastElement;
         private Text? _lastText;
         private ImmutableArray<Element> _children = ImmutableArray<Element>.Empty;
@@ -33,6 +34,7 @@ namespace VL.Qt.Nodes
             _text = new ElementNode<Text, TextProps>(nodeContext, CreateText);
             _row = new ElementNode<Row, LayoutProps>(nodeContext, CreateRow);
             _column = new ElementNode<Column, LayoutProps>(nodeContext, CreateColumn);
+            _element = new ElementInput(_text.AddWarning);
         }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
@@ -41,6 +43,7 @@ namespace VL.Qt.Nodes
             _text = new ElementNode<Text, TextProps>(addWarning, CreateText);
             _row = new ElementNode<Row, LayoutProps>(addWarning, CreateRow);
             _column = new ElementNode<Column, LayoutProps>(addWarning, CreateColumn);
+            _element = new ElementInput(addWarning);
         }
 
         // The label box is Width x Height: the text is aligned left and vertically centered in it, so it stays
@@ -98,8 +101,8 @@ namespace VL.Qt.Nodes
         /// <param name="measuredSize">Implicit size reported by Qt (label + spacing + element), in units (last frame).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         [return: Pin(Name = "Output")]
-        public Element Update(
-            Element? element,
+        public IElement Update(
+            IElement? element,
             [DefaultValue("Label")] string text,
             [DefaultValue(1.5f)] float labelWidth,
             [DefaultValue(typeof(LabelPosition), nameof(LabelPosition.Left))] LabelPosition labelPosition,
@@ -113,16 +116,17 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
+            var shown = _element.Update(element);
             var label = _text.Describe(
                 new CommonInputs(default, Matrix.Identity, RectangleAnchor.TopLeft, 1, false, false, null, null),
                 new TextProps(text ?? string.Empty, labelWidth, labelHeight));
-            if (!ReferenceEquals(label, _lastText) || !ReferenceEquals(element, _lastElement))
+            if (!ReferenceEquals(label, _lastText) || !ReferenceEquals(shown, _lastElement))
             {
                 _lastText = label;
-                _lastElement = element;
-                _children = element is null
+                _lastElement = shown;
+                _children = shown is null
                     ? ImmutableArray.Create<Element>(label)
-                    : ImmutableArray.Create(label, element);
+                    : ImmutableArray.Create(label, shown);
             }
 
             var common = new CommonInputs(default, transform, anchor, opacity, false, false, interaction, effect);
@@ -143,6 +147,7 @@ namespace VL.Qt.Nodes
             _text.Dispose();
             _row.Dispose();
             _column.Dispose();
+            _element.Dispose();
         }
     }
 }
