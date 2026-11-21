@@ -129,8 +129,8 @@ target_sources(vlqt PRIVATE
     user_qml/qml_wire.h
 
     # style/
-    vlstyle.cpp
-    vlstyle.h
+    style/vl_style.cpp
+    style/vl_style.h
 
     # resources/
     resources/pixel_format.cpp
@@ -197,7 +197,7 @@ target_compile_definitions(vlqt PRIVATE VLQT_BUILD
     $<$<PLATFORM_ID:Windows>:NOMINMAX;WIN32_LEAN_AND_MEAN>)
 # Base style "VLQt": Qt Quick Controls style module embedded in QtNative (qrc:/qt/qml/VLQt, on the engine's
 # default import path), nothing to deploy. Plain resources + hand-written qmldir: no qmlcachegen/plugin target; the
-# C++ part (attached VlStyle) is registered at app start as module VLQt.Style (vlstyle.cpp). Controls without a file
+# C++ part (attached VlStyle) is registered at app start as module VLQt.Style (style/vl_style.cpp). Controls without a file
 # here fall back to Basic (qmldir "import QtQuick.Controls.Basic auto"). A new control = <Control>.qml in style/VLQt,
 # a line "<Control> 1.0 <Control>.qml" in its qmldir and the file in FILES below.
 qt_add_resources(vlqt "vlqt_style"
