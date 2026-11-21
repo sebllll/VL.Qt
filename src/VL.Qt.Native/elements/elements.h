@@ -8,7 +8,8 @@
  * Hot setters call the typed setters of Qt's private classes (QtQuick/private, QtQuickShapes/private): still LGPL, but
  * private API, so check them on every Qt update. In use here: QQuickItemPrivate (group_item.cpp), QQuickRectangle and
  * QQuickText (element_types.cpp), QQuickMatrix4x4 (geometry.cpp), QQuickShaderEffectSource (group_item.cpp,
- * effect_sources.cpp), QQuickShape, QQuickShapePath and QQuickShapeTrim (type_shape.cpp), QQuickCurve and
+ * effect_sources.cpp, snapshot_resource.cpp), QWindowPrivate (QtGui/private, snapshot_resource.cpp: grab of an offscreen
+ * scene), QQuickShape, QQuickShapePath and QQuickShapeTrim (type_shape.cpp), QQuickCurve and
  * QQuickPathData (shape_path_element.h). The animation clock (app/animation_clock.cpp) uses QUnifiedTimer and
  * QAbstractAnimationTimer of QtCore/private for its keep-alive timer; if that class changes, an endless
  * QAbstractAnimation subclass (duration() == -1, empty updateCurrentTime), started once and never paused, keeps the
