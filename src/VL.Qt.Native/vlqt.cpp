@@ -14,7 +14,7 @@
 #include "image_writer.h"
 #include "app/exports.h"
 #include "test/test_hooks.h"
-#include "threadname.h"
+#include "app/thread_name.h"
 #include "vlstyle.h"
 
 #include <QtCore/QAbstractAnimation>

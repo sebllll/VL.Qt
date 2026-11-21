@@ -7,7 +7,7 @@
 #include "protocol.h"
 #include "shader_resource.h"
 #include "snapshot_resource.h"
-#include "threadname.h"
+#include "app/thread_name.h"
 #include "vlqt.h"
 #include "vlqt_test.h" // test hook: VLQT_RESOURCE_KIND_TEST
 

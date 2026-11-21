@@ -1,7 +1,7 @@
 #include "render_thread.h"
 
 #include "app/last_error.h"
-#include "threadname.h"
+#include "app/thread_name.h"
 #include "vlqt.h"
 
 #include <QtCore/QLoggingCategory>
@@ -39,7 +39,7 @@ int fromEnvironment()
 
 RenderThread::RenderThread(int index)
 {
-    // The same name for Qt and for the OS (profilers, dumps): threadname.h, docs/profiling.md.
+    // The same name for Qt and for the OS (profilers, dumps): app/thread_name.h, docs/profiling.md.
     const QByteArray name = "vlqt-render-" + QByteArray::number(index);
     m_thread.setObjectName(QString::fromLatin1(name));
     m_thread.start();
