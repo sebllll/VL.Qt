@@ -27,16 +27,16 @@
  * payload (4-byte aligned, len = 8 + payload bytes). STATE u8 state, ERROR UTF-8 text, INFO u32 w, u32 h, u32 format, u64 bytes, WARNING
  * UTF-8 text (Kind::takeWarning after a decode, at most one per resource).
  *
- * Replacement: start on a Ready resource decodes and uploads a second Work next to the current one; the state
- * stays Ready (no STATE record) and the current Work is swapped (old one destroyed) when the new upload is complete,
+ * Replacement: start on a Ready resource decodes and uploads a second Content next to the current one; the state
+ * stays Ready (no STATE record) and the current Content is swapped (old one destroyed) when the new upload is complete,
  * with a new INFO record. A failed replacement makes the resource Failed. start on a Failed resource starts over
- * (Failed -> Decoding). start while a decode/upload runs keeps only the newest Work and starts it afterwards.
+ * (Failed -> Decoding). start while a decode/upload runs keeps only the newest Content and starts it afterwards.
  *
  * External content (snapshot, snapshot_resource.h): made on the main thread (beginExternal / finishExternal),
  * no worker and no upload, so Decoding -> Ready is allowed for that kind only; vlqt_res_wait does not block on it.
  *
  * Device lost (device.h): the manager is a device listener. lost: Kind::releaseDevice on every
- * Work no worker holds (textures, staging, running uploads of the old device go, the sources stay). restored: every
+ * Content no worker holds (textures, staging, running uploads of the old device go, the sources stay). restored: every
  * Ready resource with GPU content gets a replacement from Kind::restore (decode + upload within the budget, the state
  * stays Ready, INFO after the swap, C# sees no change); a running replacement or queued content is renewed the same
  * way; a first upload restarts its decode (Uploading -> Decoding, allowed only here). A decode that ran for the old
@@ -70,9 +70,9 @@ const char* stateName(State s);
 
 // Data of one resource shared between the main thread and a worker. A worker gets it only while the resource is in
 // Decoding and touches nothing else; the main thread reads the decode result after the worker handed it back.
-struct Work
+struct Content
 {
-    virtual ~Work() = default;
+    virtual ~Content() = default;
     std::atomic<bool> cancel{false}; // set on release / shutdown; decode should check it and return early
 };
 
@@ -81,7 +81,7 @@ struct Info
     uint32_t width = 0, height = 0, format = 0;
 };
 
-// One resource kind (VLQT_RESOURCE_KIND_*). Stateless, registered once; the per resource data lives in its Work.
+// One resource kind (VLQT_RESOURCE_KIND_*). Stateless, registered once; the per resource data lives in its Content.
 class Kind
 {
 public:
@@ -89,28 +89,28 @@ public:
     virtual const char* name() const = 0;
     // Worker thread, pure data only. Returns an empty string on success, else the error text (cancel: any text,
     // the result is dropped anyway).
-    virtual std::string decode(Work& work) = 0;
+    virtual std::string decode(Content& work) = 0;
     // Main thread: uploads at most budget bytes (budget < 0 = no limit, vlqt_res_wait). Returns the bytes used,
     // sets done when the upload is complete, error on failure. May be called several times (stripes). A removed
     // device is no error: return 0 with done false, the rebuild (device lost) restarts the upload.
-    virtual int64_t upload(Work& work, int64_t budget, bool& done, std::string& error) = 0;
+    virtual int64_t upload(Content& work, int64_t budget, bool& done, std::string& error) = 0;
     // Main thread: frees everything of the resource (GPU objects too). Called once, also after Failed.
-    virtual void destroy(Work& work) { (void)work; }
+    virtual void destroy(Content& work) { (void)work; }
     // Main thread, before Ready: values of the INFO event.
-    virtual Info info(const Work& work) const { (void)work; return {}; }
+    virtual Info info(const Content& work) const { (void)work; return {}; }
     // Main thread, after a successful decode: a warning for the host (WARNING record), empty = none.
-    virtual std::string takeWarning(Work& work) { (void)work; return {}; }
+    virtual std::string takeWarning(Content& work) { (void)work; return {}; }
     // Main thread, while Uploading: bytes still to upload (F5 Resources page; 0 = unknown).
-    virtual int64_t pendingBytes(const Work& work) const { (void)work; return 0; }
+    virtual int64_t pendingBytes(const Content& work) const { (void)work; return 0; }
 
     // --- Device lost (see above), main thread ---
-    // Frees every object of the old device, keeps the source. Called on every Work no worker holds; destroy may follow.
-    virtual void releaseDevice(Work& work) { (void)work; }
-    // A new Work that makes the same content again on the current device (decode + upload) from the source of work,
+    // Frees every object of the old device, keeps the source. Called on every Content no worker holds; destroy may follow.
+    virtual void releaseDevice(Content& work) { (void)work; }
+    // A new Content that makes the same content again on the current device (decode + upload) from the source of work,
     // nullptr = nothing to restore (no GPU content).
-    virtual std::shared_ptr<Work> restore(const Work& work) { (void)work; return nullptr; }
-    // The Work was started for an older device: its decode result must not be uploaded.
-    virtual bool stale(const Work& work) const { (void)work; return false; }
+    virtual std::shared_ptr<Content> restore(const Content& work) { (void)work; return nullptr; }
+    // The Content was started for an older device: its decode result must not be uploaded.
+    virtual bool stale(const Content& work) const { (void)work; return false; }
 };
 
 // Return codes of the C API: short names for the codes of vlqt_result (vlqt.h) that the resources return.
@@ -129,12 +129,12 @@ int wait(uint64_t id, int timeoutMs);
 int list(void* out, int cap); // vlqt_res_info*
 void shutdown();
 
-// Starts the decode of a resource with its Work (package 03: LOAD / SET_PIXELS), or a replacement (see above). The
-// Work must be the one the kind expects; kind != 0 is checked against the resource's kind. 0 / -9 / -7 (wrong kind).
-int start(uint64_t id, std::shared_ptr<Work> work, int kind = 0);
+// Starts the decode of a resource with its Content (package 03: LOAD / SET_PIXELS), or a replacement (see above). The
+// Content must be the one the kind expects; kind != 0 is checked against the resource's kind. 0 / -9 / -7 (wrong kind).
+int start(uint64_t id, std::shared_ptr<Content> work, int kind = 0);
 
-// Current Work of a Ready resource of kind, else nullptr (main thread).
-std::shared_ptr<Work> readyWork(uint64_t id, int kind);
+// Current Content of a Ready resource of kind, else nullptr (main thread).
+std::shared_ptr<Content> readyContent(uint64_t id, int kind);
 
 // Kind (VLQT_RESOURCE_KIND_*) of a live, not host released id, else -9 (warning with what, nullptr = silent).
 int kindOfId(uint64_t id, const char* what);
@@ -143,13 +143,13 @@ int kindOfId(uint64_t id, const char* what);
 bool isFailed(uint64_t id);
 
 // Content made on the main thread without worker and upload (snapshot): Pending -> Decoding -> Ready | Failed.
-// beginExternal: Pending/Failed -> Decoding (Failed: the old Work goes); Ready stays Ready (replacement, the current
-// Work stays readable); Decoding stays Decoding (the caller keeps only its newest request). 0 / -9 / -7 (wrong kind).
+// beginExternal: Pending/Failed -> Decoding (Failed: the old Content goes); Ready stays Ready (replacement, the current
+// Content stays readable); Decoding stays Decoding (the caller keeps only its newest request). 0 / -9 / -7 (wrong kind).
 int beginExternal(uint64_t id, int kind);
 // finishExternal: result of beginExternal. work != nullptr: new content with bytes (CPU bytes, INFO u64), Decoding ->
 // Ready or swap on a Ready resource, INFO before STATE Ready / after the swap. work == nullptr: Failed with error
 // (RESOURCE_EVENT_ERROR). Returns 0, -9 if the id is gone or released by the host (result dropped, work destroyed).
-int finishExternal(uint64_t id, std::shared_ptr<Work> work, int64_t bytes, const std::string& error);
+int finishExternal(uint64_t id, std::shared_ptr<Content> work, int64_t bytes, const std::string& error);
 
 // Changes whenever a resource gets new Ready content (first Ready or a replacement swap). Elements compare it once
 // per pump instead of asking every resource (QtImageItem::afterResourceFrame). Main thread.
@@ -166,7 +166,7 @@ void beginFrame(); // takes worker results, uploads within the budget (before th
 void endFrame();   // frees resources whose references are all gone
 
 // --- F5 overlay, Resources page, main thread ---
-struct Row
+struct OverviewRow
 {
     uint64_t id;
     const char* kind; // Kind::name()
@@ -175,14 +175,14 @@ struct Row
     int hostRefs, elementRefs;
     int64_t ageMs;    // time in the current state (Ready: since the current content)
 };
-struct Overview
+struct OverviewTotals
 {
     int64_t budget = 0, usedLastFrame = 0; // upload bytes per frame / used in the last beginFrame
     int64_t uploadBytes = 0;               // still to upload (Kind::pendingBytes of the queued uploads)
     int uploadJobs = 0, decodeJobs = 0;    // queued uploads / decodes waiting for a worker
 };
 // Live resources into rows (cleared, capacity kept) and the upload totals, under one lock.
-void snapshot(std::vector<Row>& rows, Overview& out);
+void overview(std::vector<OverviewRow>& rows, OverviewTotals& out);
 
 // --- Test hooks (test/test_resource_kind.cpp) ---
 // The kind VLQT_RESOURCE_KIND_TEST (vlqt_test.h), defined in test/test_resource_kind.cpp.

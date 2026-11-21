@@ -4,8 +4,8 @@
  *
  * A tap is external content of the resource manager (resources.h beginExternal / finishExternal): init makes it Ready
  * at once, there is no worker and no upload. Besides the manager's table the taps live in a registry of this file
- * (id -> shared_ptr<TapWork>) that the audio thread can read without the manager's mutex; Kind::destroy (main thread,
- * after the host release and the last element reference) removes it there. A reader that holds a TapWork keeps it alive
+ * (id -> shared_ptr<TapContent>) that the audio thread can read without the manager's mutex; Kind::destroy (main thread,
+ * after the host release and the last element reference) removes it there. A reader that holds a TapContent keeps it alive
  * past destroy, so a read never touches freed memory.
  *
  * Threads: init, the Video prop and destroy on the main thread; the producer (audioBufferReceived) on a worker thread
@@ -48,14 +48,14 @@ struct Segment
     double rate = 1;            // playback rate of the player at the signal
 };
 
-// The Work of a tap: format (fixed at init) and the ring. Shared by the main thread (attach/detach), the producer
+// The Content of a tap: format (fixed at init) and the ring. Shared by the main thread (attach/detach), the producer
 // (player worker thread) and the reader (audio thread); everything the producer and the reader touch is atomic or
 // owned by one side.
 //
 // Ring (single producer, single reader, lock free): samples and segment records are allocated in init. The producer
 // writes samples, then the record, then publishes recordWrite (release); the reader consumes and publishes readFrame
 // and recordRead (release), which free the space for the producer.
-struct TapWork final : Work
+struct TapContent final : Content
 {
     static constexpr int recordCapacity = 512; // Qt buffers are 10-40 ms: far more than 500 ms of them
 

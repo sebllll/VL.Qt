@@ -77,12 +77,12 @@ struct Slot
     bool used = false;
     int kind = 0;
     State state = State::Released;
-    std::shared_ptr<Work> work;
-    std::shared_ptr<Work> next;   // replacement of a Ready resource in Decoding/Uploading
-    std::shared_ptr<Work> queued; // newest start while a decode/upload runs, started afterwards
-    bool nextUploading = false;   // next is decoded and in m_uploads
-    bool warned = false;          // a WARNING record was sent (at most one per resource)
-    int64_t nextBytes = 0;        // uploaded bytes of next
+    std::shared_ptr<Content> work;
+    std::shared_ptr<Content> replacement; // new content of a Ready resource, in Decoding/Uploading next to `work`
+    std::shared_ptr<Content> waiting;     // newest start while a decode/upload runs, started afterwards
+    bool replacementUploading = false;    // the replacement is decoded and in m_uploads
+    bool warned = false;                  // a WARNING record was sent (at most one per resource)
+    int64_t replacementBytes = 0;         // uploaded bytes of the replacement
     int hostRefs = 0, elementRefs = 0;
     bool inWorker = false;     // a job of this resource is queued or running in a worker
     bool freeQueued = false;   // in toFree: both refs are zero, freed at a frame end
@@ -99,7 +99,7 @@ struct Job
 {
     uint64_t id;
     Kind* kind;
-    std::shared_ptr<Work> work;
+    std::shared_ptr<Content> work;
 };
 
 struct Result
@@ -157,10 +157,10 @@ public:
         s.kind = kind;
         s.state = State::Pending;
         s.work.reset();
-        s.next.reset();
-        s.queued.reset();
-        s.nextUploading = s.warned = false;
-        s.nextBytes = 0;
+        s.replacement.reset();
+        s.waiting.reset();
+        s.replacementUploading = s.warned = false;
+        s.replacementBytes = 0;
         s.hostRefs = 1;
         s.elementRefs = 0;
         s.inWorker = false;
@@ -215,7 +215,7 @@ public:
         return rc;
     }
 
-    int start(uint64_t id, std::shared_ptr<Work> work, int kind)
+    int start(uint64_t id, std::shared_ptr<Content> work, int kind)
     {
         std::lock_guard lock(m_mutex);
         Slot* s = find(id, "start");
@@ -231,16 +231,16 @@ public:
             return badValueRc;
         }
         if (busy(*s)) { // keep only the newest content, started when the running one is done
-            if (s->queued)
-                kindOf(s->kind)->destroy(*s->queued);
-            s->queued = std::move(work);
+            if (s->waiting)
+                kindOf(s->kind)->destroy(*s->waiting);
+            s->waiting = std::move(work);
             qCDebug(lcRes, "%s: new content queued (%s)", idText(id).constData(), stateName(s->state));
             return okRc;
         }
         return begin(id, *s, std::move(work)) ? okRc : badValueRc;
     }
 
-    std::shared_ptr<Work> readyWork(uint64_t id, int kind)
+    std::shared_ptr<Content> readyContent(uint64_t id, int kind)
     {
         std::lock_guard lock(m_mutex);
         Slot* s = find(id, nullptr);
@@ -300,7 +300,7 @@ public:
         }
     }
 
-    int finishExternal(uint64_t id, std::shared_ptr<Work> work, int64_t bytes, const std::string& error)
+    int finishExternal(uint64_t id, std::shared_ptr<Content> work, int64_t bytes, const std::string& error)
     {
         std::lock_guard lock(m_mutex);
         Slot* s = find(id, nullptr);
@@ -412,7 +412,7 @@ public:
             std::lock_guard lock(m_mutex);
             m_stop = true;
             for (Slot& s : m_slots)
-                for (Work* w : {s.work.get(), s.next.get()})
+                for (Content* w : {s.work.get(), s.replacement.get()})
                     if (s.used && w)
                         w->cancel = true;
             threads.swap(m_threads);
@@ -500,7 +500,7 @@ public:
     }
 
     // F5 Resources page: live resources and the upload totals under one lock; rows keeps its capacity.
-    void snapshot(std::vector<Row>& rows, Overview& out)
+    void overview(std::vector<OverviewRow>& rows, OverviewTotals& out)
     {
         std::lock_guard lock(m_mutex);
         const int64_t now = steadyMs();
@@ -518,7 +518,7 @@ public:
             const Slot* s = find(id, nullptr);
             if (!s || !uploading(*s) || s->freeQueued) // same filter as beginFrame
                 continue;
-            const Work* w = s->next ? s->next.get() : s->work.get(); // a replacement uploads next
+            const Content* w = s->replacement ? s->replacement.get() : s->work.get(); // a replacement uploads its own content
             if (!w)
                 continue;
             out.uploadJobs++;
@@ -548,7 +548,7 @@ public:
 
     // --- Device lost (device.h listener, main thread inside device::rebuild) ---
 
-    // Frees every object of the old device; Works a worker holds are restarted when their result comes back.
+    // Frees every object of the old device; Contents a worker holds are restarted when their result comes back.
     void deviceLost()
     {
         std::lock_guard lock(m_mutex);
@@ -556,8 +556,8 @@ public:
             if (!s.used)
                 continue;
             Kind* kind = kindOf(s.kind);
-            const Work* inWorker = s.inWorker ? (s.next ? s.next.get() : s.work.get()) : nullptr;
-            for (Work* w : {s.work.get(), s.next.get(), s.queued.get()})
+            const Content* inWorker = s.inWorker ? (s.replacement ? s.replacement.get() : s.work.get()) : nullptr;
+            for (Content* w : {s.work.get(), s.replacement.get(), s.waiting.get()})
                 if (w && w != inWorker)
                     kind->releaseDevice(*w);
         }
@@ -574,25 +574,25 @@ public:
                 continue;
             const uint64_t id = makeId(uint32_t(i), s.generation);
             Kind* kind = kindOf(s.kind);
-            if (s.queued)
-                renew(kind, s.queued);
+            if (s.waiting)
+                renew(kind, s.waiting);
             if (s.inWorker) // handleResult restarts it (stale)
                 continue;
-            if (s.next) { // replacement in its upload: start it over
-                if (!renew(kind, s.next))
+            if (s.replacement) { // replacement in its upload: start it over
+                if (!renew(kind, s.replacement))
                     continue;
                 m_uploads.erase(std::remove(m_uploads.begin(), m_uploads.end(), id), m_uploads.end());
-                s.nextUploading = false;
-                s.nextBytes = 0;
-                enqueue(id, s, s.next);
+                s.replacementUploading = false;
+                s.replacementBytes = 0;
+                enqueue(id, s, s.replacement);
             } else if (s.state == State::Ready) { // replacement, the state stays Ready
-                std::shared_ptr<Work> fresh = kind->restore(*s.work);
+                std::shared_ptr<Content> fresh = kind->restore(*s.work);
                 if (!fresh)
                     continue;
-                s.next = std::move(fresh);
-                s.nextBytes = 0;
-                s.nextUploading = false;
-                enqueue(id, s, s.next);
+                s.replacement = std::move(fresh);
+                s.replacementBytes = 0;
+                s.replacementUploading = false;
+                enqueue(id, s, s.replacement);
             } else if (s.state == State::Uploading) { // first upload: decode again
                 if (!renew(kind, s.work))
                     continue;
@@ -633,7 +633,7 @@ private:
         switch (kind) {
         case VLQT_RESOURCE_KIND_TEST:  return testKind(); // test hook: test/test_resource_kind.cpp
         case VLQT_RESOURCE_KIND_IMAGE: return image::kind();
-        case VLQT_RESOURCE_KIND_SNAPSHOT: return snap::kind();
+        case VLQT_RESOURCE_KIND_SNAPSHOT: return snapshot::kind();
         case VLQT_RESOURCE_KIND_SHADER: return shader::kind();
         case VLQT_RESOURCE_KIND_AUDIO_TAP: return audio::kind();
         default:                  return nullptr;
@@ -695,23 +695,23 @@ private:
         }
         Kind* kind = kindOf(s->kind);
         // Decoded for a device that is gone meanwhile: decode again, also after an error (the old device).
-        if (std::shared_ptr<Work>& decoded = s->next ? s->next : s->work; decoded && kind->stale(*decoded)
+        if (std::shared_ptr<Content>& decoded = s->replacement ? s->replacement : s->work; decoded && kind->stale(*decoded)
             && renew(kind, decoded)) {
             qCDebug(lcRes, "%s: decode for the old device dropped, decoding again", idText(r.id).constData());
             enqueue(r.id, *s, decoded);
             return;
         }
         if (!r.error.empty()) {
-            if (s->next)
+            if (s->replacement)
                 failReplacement(r.id, *s, r.error);
             else
                 fail(r.id, *s, r.error);
             startQueued(r.id, *s);
             return;
         }
-        warn(r.id, *s, kind->takeWarning(s->next ? *s->next : *s->work));
-        if (s->next) {
-            s->nextUploading = true;
+        warn(r.id, *s, kind->takeWarning(s->replacement ? *s->replacement : *s->work));
+        if (s->replacement) {
+            s->replacementUploading = true;
             m_uploads.push_back(r.id);
         } else if (transition(r.id, *s, State::Decoding, State::Uploading)) {
             m_uploads.push_back(r.id);
@@ -723,11 +723,11 @@ private:
     int64_t uploadStep(uint64_t id, Slot& s, int64_t budget)
     {
         Kind* kind = kindOf(s.kind);
-        const bool replacing = s.next != nullptr;
+        const bool replacing = s.replacement != nullptr;
         bool done = false;
         std::string error;
-        const int64_t used = std::max<int64_t>(0, kind->upload(replacing ? *s.next : *s.work, budget, done, error));
-        (replacing ? s.nextBytes : s.bytes) += used;
+        const int64_t used = std::max<int64_t>(0, kind->upload(replacing ? *s.replacement : *s.work, budget, done, error));
+        (replacing ? s.replacementBytes : s.bytes) += used;
         if (!error.empty()) {
             if (replacing)
                 failReplacement(id, s, error);
@@ -737,10 +737,10 @@ private:
         } else if (done) {
             if (replacing) { // swap: the old content is visible up to here
                 kind->destroy(*s.work);
-                s.work = std::move(s.next);
-                s.bytes = s.nextBytes;
-                s.nextBytes = 0;
-                s.nextUploading = false;
+                s.work = std::move(s.replacement);
+                s.bytes = s.replacementBytes;
+                s.replacementBytes = 0;
+                s.replacementUploading = false;
                 s.sinceMs = steadyMs(); // still Ready, but the age on the F5 page counts from the new content
                 pushInfo(id, s);
                 s_contentEpoch++;
@@ -782,20 +782,20 @@ private:
     }
 
     // A decode or upload of the resource runs (first content or replacement).
-    static bool busy(const Slot& s) { return s.state == State::Decoding || s.state == State::Uploading || s.next; }
-    static bool decoding(const Slot& s) { return s.state == State::Decoding || (s.next && !s.nextUploading); }
-    static bool uploading(const Slot& s) { return s.state == State::Uploading || (s.next && s.nextUploading); }
+    static bool busy(const Slot& s) { return s.state == State::Decoding || s.state == State::Uploading || s.replacement; }
+    static bool decoding(const Slot& s) { return s.state == State::Decoding || (s.replacement && !s.replacementUploading); }
+    static bool uploading(const Slot& s) { return s.state == State::Uploading || (s.replacement && s.replacementUploading); }
 
     // New content: Pending/Failed -> Decoding, or a replacement next to the current content of a Ready resource.
-    bool begin(uint64_t id, Slot& s, std::shared_ptr<Work> work)
+    bool begin(uint64_t id, Slot& s, std::shared_ptr<Content> work)
     {
         Kind* kind = kindOf(s.kind);
         if (s.state == State::Ready) {
-            s.next = std::move(work);
-            s.nextBytes = 0;
-            s.nextUploading = false;
+            s.replacement = std::move(work);
+            s.replacementBytes = 0;
+            s.replacementUploading = false;
             qCDebug(lcRes, "%s: replacement started", idText(id).constData());
-            enqueue(id, s, s.next);
+            enqueue(id, s, s.replacement);
             return true;
         }
         if (s.state != State::Pending && s.state != State::Failed) {
@@ -812,7 +812,7 @@ private:
         return true;
     }
 
-    void enqueue(uint64_t id, Slot& s, const std::shared_ptr<Work>& work)
+    void enqueue(uint64_t id, Slot& s, const std::shared_ptr<Content>& work)
     {
         ensureWorkers();
         s.inWorker = true;
@@ -822,27 +822,27 @@ private:
 
     void startQueued(uint64_t id, Slot& s)
     {
-        if (!s.queued || s.freeQueued || busy(s))
+        if (!s.waiting || s.freeQueued || busy(s))
             return;
-        std::shared_ptr<Work> work = std::move(s.queued);
+        std::shared_ptr<Content> work = std::move(s.waiting);
         begin(id, s, std::move(work));
     }
 
-    // The replacement failed: its Work becomes the current one (without texture), the resource Failed.
+    // The replacement failed: its Content becomes the current one (without texture), the resource Failed.
     void failReplacement(uint64_t id, Slot& s, const std::string& error)
     {
         kindOf(s.kind)->destroy(*s.work);
-        s.work = std::move(s.next);
-        s.bytes = s.nextBytes;
-        s.nextBytes = 0;
-        s.nextUploading = false;
+        s.work = std::move(s.replacement);
+        s.bytes = s.replacementBytes;
+        s.replacementBytes = 0;
+        s.replacementUploading = false;
         fail(id, s, error);
     }
 
-    // Replaces w by a new Work for the current device (Kind::restore); false = nothing to restore, w stays.
-    static bool renew(Kind* kind, std::shared_ptr<Work>& w)
+    // Replaces w by a new Content for the current device (Kind::restore); false = nothing to restore, w stays.
+    static bool renew(Kind* kind, std::shared_ptr<Content>& w)
     {
-        std::shared_ptr<Work> fresh = kind->restore(*w);
+        std::shared_ptr<Content> fresh = kind->restore(*w);
         if (!fresh)
             return false;
         kind->destroy(*w);
@@ -857,24 +857,24 @@ private:
         s.freeQueued = true;
         if (s.work)
             s.work->cancel = true;
-        if (s.next)
-            s.next->cancel = true;
+        if (s.replacement)
+            s.replacement->cancel = true;
         m_toFree.push_back(id);
     }
 
-    // Main thread, never while a worker holds the Work.
+    // Main thread, never while a worker holds the Content.
     void free(uint64_t id, Slot& s)
     {
         Kind* kind = kindOf(s.kind);
-        for (std::shared_ptr<Work>* w : {&s.work, &s.next, &s.queued})
+        for (std::shared_ptr<Content>* w : {&s.work, &s.replacement, &s.waiting})
             if (*w)
                 kind->destroy(**w);
         transition(id, s, s.state, State::Released);
         s.work.reset();
-        s.next.reset();
-        s.queued.reset();
-        s.nextUploading = false;
-        s.nextBytes = 0;
+        s.replacement.reset();
+        s.waiting.reset();
+        s.replacementUploading = false;
+        s.replacementBytes = 0;
         s.used = false;
         s.hostRefs = s.elementRefs = 0;
         s.freeQueued = false;
@@ -957,7 +957,7 @@ private:
             m_jobs.pop_front();
             lock.unlock();
             std::string error = runDecode(job);
-            job.work.reset(); // the main thread owns the Work again
+            job.work.reset(); // the main thread owns the Content again
             lock.lock();
             if (m_stop)
                 return; // shutdown frees everything itself
@@ -1019,16 +1019,16 @@ int setBudget(int bytes) { return manager().setBudget(bytes); }
 int poll(unsigned char* out, int cap, int* written, int* required) { return manager().poll(out, cap, written, required); }
 int wait(uint64_t id, int timeoutMs) { return manager().wait(id, timeoutMs); }
 int list(void* out, int cap) { return manager().list(static_cast<vlqt_res_info*>(out), std::max(0, cap)); }
-int start(uint64_t id, std::shared_ptr<Work> work, int kind) { return manager().start(id, std::move(work), kind); }
-std::shared_ptr<Work> readyWork(uint64_t id, int kind) { return manager().readyWork(id, kind); }
+int start(uint64_t id, std::shared_ptr<Content> work, int kind) { return manager().start(id, std::move(work), kind); }
+std::shared_ptr<Content> readyContent(uint64_t id, int kind) { return manager().readyContent(id, kind); }
 int kindOfId(uint64_t id, const char* what) { return manager().kindOfId(id, what); }
 bool isFailed(uint64_t id) { return manager().isFailed(id); }
 int beginExternal(uint64_t id, int kind) { return manager().beginExternal(id, kind); }
-int finishExternal(uint64_t id, std::shared_ptr<Work> work, int64_t bytes, const std::string& error)
+int finishExternal(uint64_t id, std::shared_ptr<Content> work, int64_t bytes, const std::string& error)
 {
     return manager().finishExternal(id, std::move(work), bytes, error);
 }
-void snapshot(std::vector<Row>& rows, Overview& out) { manager().snapshot(rows, out); }
+void overview(std::vector<OverviewRow>& rows, OverviewTotals& out) { manager().overview(rows, out); }
 uint64_t contentEpoch() { return s_contentEpoch.load(std::memory_order_relaxed); }
 uint64_t failureEpoch() { return s_failureEpoch.load(std::memory_order_relaxed); }
 
@@ -1037,7 +1037,7 @@ int releaseElement(uint64_t id) { return manager().releaseElement(id); }
 
 void shutdown()
 {
-    snap::shutdown(); // running grabs first: they report into the manager
+    snapshot::shutdown(); // running grabs first: they report into the manager
     if (Manager* m = s_manager.load())
         m->shutdown();
 }
@@ -1050,7 +1050,7 @@ void beginFrame()
 
 void endFrame()
 {
-    snap::endFrame(); // finished / hanging grabs -> Ready or Failed, before released resources are freed
+    snapshot::endFrame(); // finished / hanging grabs -> Ready or Failed, before released resources are freed
     if (Manager* m = s_manager.load())
         m->endFrame();
 }

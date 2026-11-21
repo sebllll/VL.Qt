@@ -44,9 +44,9 @@ constexpr long long wallGapNs = 150'000'000;
 // holds the mutex only to insert (init) and erase (destroy), never while allocating ring memory, so a reader waits at
 // most for a hash map insert, once per tap.
 std::mutex s_mutex;
-std::unordered_map<uint64_t, std::shared_ptr<TapWork>> s_taps;
+std::unordered_map<uint64_t, std::shared_ptr<TapContent>> s_taps;
 
-std::shared_ptr<TapWork> findTap(uint64_t id)
+std::shared_ptr<TapContent> findTap(uint64_t id)
 {
     std::lock_guard lock(s_mutex);
     const auto it = s_taps.find(id);
@@ -58,16 +58,16 @@ class AudioTapKind final : public Kind
 public:
     const char* name() const override { return "audio tap"; }
     // External content (init on the main thread): never decoded or uploaded.
-    std::string decode(Work&) override { return "audio tap: no decode"; }
-    int64_t upload(Work&, int64_t, bool& done, std::string& error) override
+    std::string decode(Content&) override { return "audio tap: no decode"; }
+    int64_t upload(Content&, int64_t, bool& done, std::string& error) override
     {
         done = true;
         error = "audio tap: no upload";
         return 0;
     }
-    void destroy(Work& work) override
+    void destroy(Content& work) override
     {
-        auto& tap = static_cast<TapWork&>(work);
+        auto& tap = static_cast<TapContent&>(work);
         // The element reference keeps the tap alive while a player is attached, so nothing writes any more here; a
         // QAudioBufferOutput still being deleted ignores the tap by its generation.
         tap.attachGen.fetch_add(1, std::memory_order_acq_rel);
@@ -75,16 +75,16 @@ public:
         s_taps.erase(tap.id);
         qCDebug(lcTap, "audio tap %llx destroyed", static_cast<unsigned long long>(tap.id));
     }
-    Info info(const Work& work) const override
+    Info info(const Content& work) const override
     {
-        const auto& tap = static_cast<const TapWork&>(work);
+        const auto& tap = static_cast<const TapContent&>(work);
         return {static_cast<uint32_t>(tap.channels), static_cast<uint32_t>(tap.sampleRate), 0};
     }
 };
 
 // --- Producer (player worker thread: no QObjects, no locks, no allocation) ---
 
-void copyIn(TapWork& t, uint64_t frame, const float* src, int frames)
+void copyIn(TapContent& t, uint64_t frame, const float* src, int frames)
 {
     const int at = static_cast<int>(frame % static_cast<uint64_t>(t.capacity));
     const int first = std::min(frames, t.capacity - at);
@@ -93,7 +93,7 @@ void copyIn(TapWork& t, uint64_t frame, const float* src, int frames)
         std::memcpy(t.samples.get(), src + static_cast<size_t>(first) * t.channels, sizeof(float) * (frames - first) * t.channels);
 }
 
-void produce(TapWork& t, uint32_t gen, const QAudioBuffer& buffer)
+void produce(TapContent& t, uint32_t gen, const QAudioBuffer& buffer)
 {
     const long long emitNs = nowNs();
     const QAudioFormat fmt = buffer.format();
@@ -122,7 +122,7 @@ void produce(TapWork& t, uint32_t gen, const QAudioBuffer& buffer)
     const uint64_t records = t.recordWrite.load(std::memory_order_relaxed);
     const uint64_t used = t.writeFrame - t.readFrame.load(std::memory_order_acquire);
     if (used + frames > static_cast<uint64_t>(t.capacity)
-        || records - t.recordRead.load(std::memory_order_acquire) >= TapWork::recordCapacity) {
+        || records - t.recordRead.load(std::memory_order_acquire) >= TapContent::recordCapacity) {
         t.overrunFrames.fetch_add(static_cast<uint64_t>(frames), std::memory_order_relaxed);
         t.lastDropped = true; // the next buffer starts a new segment
         t.writing.store(false, std::memory_order_release);
@@ -132,14 +132,14 @@ void produce(TapWork& t, uint32_t gen, const QAudioBuffer& buffer)
     if (fresh)
         t.segment = t.discontinuity.fetch_add(1, std::memory_order_acq_rel) + 1;
     copyIn(t, t.writeFrame, buffer.constData<float>(), frames);
-    Segment& s = t.records[records % TapWork::recordCapacity];
+    Segment& s = t.records[records % TapContent::recordCapacity];
     s = {t.writeFrame, frames, t.segment, emitNs, mediaUs, rate};
     t.writeFrame += static_cast<uint64_t>(frames);
     t.recordWrite.store(records + 1, std::memory_order_release);
     t.writing.store(false, std::memory_order_release);
 }
 
-void storeVideoFrame(TapWork& t, long long mediaUs)
+void storeVideoFrame(TapContent& t, long long mediaUs)
 {
     const uint32_t seq = t.videoSeq.load(std::memory_order_relaxed);
     t.videoSeq.store(seq + 1, std::memory_order_relaxed);
@@ -151,7 +151,7 @@ void storeVideoFrame(TapWork& t, long long mediaUs)
 
 // --- Reader (any thread, allocation free) ---
 
-void fillState(const TapWork& tap, vlqt_audio_tap_state& s)
+void fillState(const TapContent& tap, vlqt_audio_tap_state& s)
 {
     std::memset(&s, 0, sizeof s);
     s.now_ns = nowNs();
@@ -178,7 +178,7 @@ void fillState(const TapWork& tap, vlqt_audio_tap_state& s)
 }
 
 // The first frame of a call: due time, media time, rate and segment of frame offset k of record s.
-void describe(const TapWork& t, const Segment& s, uint64_t k, vlqt_audio_tap_state& state)
+void describe(const TapContent& t, const Segment& s, uint64_t k, vlqt_audio_tap_state& state)
 {
     state.due_ns = s.emitNs + static_cast<long long>(static_cast<double>(k) * 1e9 / (t.sampleRate * s.rate));
     state.media_us = s.mediaUs + static_cast<long long>(k * 1'000'000 / static_cast<uint64_t>(t.sampleRate));
@@ -186,12 +186,12 @@ void describe(const TapWork& t, const Segment& s, uint64_t k, vlqt_audio_tap_sta
     state.discontinuity = s.discontinuity;
 }
 
-int readRing(TapWork& t, float* dst, int maxFrames, vlqt_audio_tap_state& state)
+int readRing(TapContent& t, float* dst, int maxFrames, vlqt_audio_tap_state& state)
 {
     uint64_t rec = t.recordRead.load(std::memory_order_relaxed);
     uint64_t frame = t.readFrame.load(std::memory_order_relaxed);
     const uint64_t published = t.recordWrite.load(std::memory_order_acquire);
-    const auto record = [&](uint64_t i) -> const Segment& { return t.records[i % TapWork::recordCapacity]; };
+    const auto record = [&](uint64_t i) -> const Segment& { return t.records[i % TapContent::recordCapacity]; };
 
     // Flush: frames of segments older than the newest one go before new ones are delivered.
     if (rec < published) {
@@ -258,7 +258,7 @@ int readRing(TapWork& t, float* dst, int maxFrames, vlqt_audio_tap_state& state)
 
 constexpr const char* attachmentName = "vlqtAudioTap";
 
-void setFlag(TapWork& t, int flag, bool on)
+void setFlag(TapContent& t, int flag, bool on)
 {
     if (on)
         t.flags.fetch_or(flag, std::memory_order_relaxed);
@@ -289,7 +289,7 @@ public:
     }
 
     // Attaches tap to the player (replacing the current tap without a moment of Qt sound). false + err on failure.
-    bool attach(const std::shared_ptr<TapWork>& tap, QMediaPlayer* player, QVideoSink* sink, std::string& err)
+    bool attach(const std::shared_ptr<TapContent>& tap, QMediaPlayer* player, QVideoSink* sink, std::string& err)
     {
         if (acquire(tap->id) != okRc) {
             err = "audio tap has no references left";
@@ -317,8 +317,8 @@ public:
         // Owned by this attachment, not by the player: its lifetime does not depend on the order in which the item's
         // children (player, attachment) are destroyed.
         auto* output = new QAudioBufferOutput(fmt, this);
-        TapWork* raw = tap.get();
-        // DirectConnection: runs on the player's audio thread. The lambda keeps the Work alive while it may run.
+        TapContent* raw = tap.get();
+        // DirectConnection: runs on the player's audio thread. The lambda keeps the Content alive while it may run.
         connect(output, &QAudioBufferOutput::audioBufferReceived, output,
             [keep = tap, raw, gen](const QAudioBuffer& b) { produce(*raw, gen, b); }, Qt::DirectConnection);
         QAudioBufferOutput* old = std::exchange(m_output, output);
@@ -374,7 +374,7 @@ public:
         m_qtOutput = nullptr;
     }
 
-    const std::shared_ptr<TapWork>& tap() const { return m_tap; }
+    const std::shared_ptr<TapContent>& tap() const { return m_tap; }
 
 private:
     // Lets go of the current tap (flags, generation, element reference); keeps the player and its outputs.
@@ -394,7 +394,7 @@ private:
         qCDebug(lcTap, "audio tap %llx detached", static_cast<unsigned long long>(id));
     }
 
-    std::shared_ptr<TapWork> m_tap;
+    std::shared_ptr<TapContent> m_tap;
     QPointer<QMediaPlayer> m_player;
     QPointer<QAudioOutput> m_qtOutput;          // the wrapper's AudioOutput, restored on detach
     QAudioBufferOutput* m_output = nullptr;    // child of this attachment
@@ -432,14 +432,14 @@ int init(uint64_t id, int channels, int sampleRate)
     const int rc = beginExternal(id, VLQT_RESOURCE_KIND_AUDIO_TAP);
     if (rc != okRc)
         return rc;
-    auto tap = std::make_shared<TapWork>();
+    auto tap = std::make_shared<TapContent>();
     tap->id = id;
     tap->channels = channels;
     tap->sampleRate = sampleRate;
     tap->capacity = static_cast<int>(static_cast<int64_t>(sampleRate) * ringMs / 1000);
     // The whole ring here, never on the producer thread.
     tap->samples = std::make_unique<float[]>(static_cast<size_t>(tap->capacity) * channels);
-    tap->records = std::make_unique<Segment[]>(TapWork::recordCapacity);
+    tap->records = std::make_unique<Segment[]>(TapContent::recordCapacity);
     {
         std::lock_guard lock(s_mutex);
         s_taps[id] = tap;
@@ -494,7 +494,7 @@ bool setVideoTap(Elements&, Node& node, const ResolvedProp&, const Value& v, std
             a->detach(true);
         return true;
     }
-    const auto work = std::static_pointer_cast<TapWork>(readyWork(v.u, VLQT_RESOURCE_KIND_AUDIO_TAP));
+    const auto work = std::static_pointer_cast<TapContent>(readyContent(v.u, VLQT_RESOURCE_KIND_AUDIO_TAP));
     if (!work) {
         err = "not a Ready audio tap";
         return false;

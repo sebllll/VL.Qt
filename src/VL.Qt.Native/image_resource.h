@@ -19,7 +19,7 @@
  *           the pin Upload replaces it (E10).
  *
  * Source kept for the re-upload after a device loss (package 10): the path for files (no CPU copy after the
- * upload, restore decodes the file again), the converted CPU copy for pixels (restore only uploads it again). A Work
+ * upload, restore decodes the file again), the converted CPU copy for pixels (restore only uploads it again). A Content
  * remembers the device generation it was made for (generation()); QtImageItem draws only content of the current one. Without a shared device (Linux, VLQT_SHARED_DEVICE=0) there is no texture: the
  * resource keeps the converted QImage and is Ready after the decode (image()).
  *
@@ -44,9 +44,9 @@ struct vlqt_pixel_desc;
 
 namespace vlqt::res::image {
 
-// One image (the Work of the kind). The fields are owned by the manager's threads as resources.h describes: input
+// One image (the Content of the kind). The fields are owned by the manager's threads as resources.h describes: input
 // fields are set before start, the decode fields by the worker, the texture fields only on the main thread.
-class ImageResource final : public Work
+class ImageResource final : public Content
 {
 public:
     // --- for elements (package 04), main thread, on a Ready resource ---

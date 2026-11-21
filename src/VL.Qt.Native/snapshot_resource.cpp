@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace vlqt::res::snap {
+namespace vlqt::res::snapshot {
 
 namespace {
 
@@ -76,16 +76,16 @@ class SnapshotKind final : public Kind
 public:
     const char* name() const override { return "snapshot"; }
     // Never queued: snapshots come through beginExternal / finishExternal.
-    std::string decode(Work&) override { return "snapshot: no decode"; }
-    int64_t upload(Work&, int64_t, bool& done, std::string&) override
+    std::string decode(Content&) override { return "snapshot: no decode"; }
+    int64_t upload(Content&, int64_t, bool& done, std::string&) override
     {
         done = true;
         return 0;
     }
-    void destroy(Work& work) override { static_cast<SnapshotWork&>(work).image = QImage(); }
-    Info info(const Work& work) const override
+    void destroy(Content& work) override { static_cast<SnapshotContent&>(work).image = QImage(); }
+    Info info(const Content& work) const override
     {
-        const QImage& img = static_cast<const SnapshotWork&>(work).image;
+        const QImage& img = static_cast<const SnapshotContent&>(work).image;
         return {uint32_t(img.width()), uint32_t(img.height()), 9u};
     }
 };
@@ -149,7 +149,7 @@ void onReady(Grab& g)
             img.height(), g.size.width(), g.size.height());
         img = img.scaled(g.size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
-    auto work = std::make_shared<SnapshotWork>();
+    auto work = std::make_shared<SnapshotContent>();
     const int64_t bytes = int64_t(img.width()) * img.height() * 4;
     work->image = std::move(img);
     qCDebug(lcSnap, "%s: snapshot %dx%d after %lld ms", idText(g.id).constData(), work->image.width(),
@@ -367,7 +367,7 @@ int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out, int* writt
         qCWarning(lcSnap, "read_pixels: %s is not a snapshot resource", idText(id).constData());
         return badValueRc;
     }
-    const auto work = std::static_pointer_cast<SnapshotWork>(readyWork(id, VLQT_RESOURCE_KIND_SNAPSHOT));
+    const auto work = std::static_pointer_cast<SnapshotContent>(readyContent(id, VLQT_RESOURCE_KIND_SNAPSHOT));
     if (!work || work->image.isNull())
         return noDataRc; // no finished snapshot yet (or Failed)
     const QImage& img = work->image;
@@ -449,4 +449,4 @@ void shutdown()
     s_grabs.clear();
 }
 
-} // namespace vlqt::res::snap
+} // namespace vlqt::res::snapshot

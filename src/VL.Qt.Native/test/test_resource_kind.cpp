@@ -20,7 +20,7 @@ namespace {
 
 Q_LOGGING_CATEGORY(lcRes, "VL.Qt.Resources")
 
-struct TestWork final : Work
+struct TestContent final : Content
 {
     int decodeMs = 0;
     int64_t remaining = 0; // bytes still to upload
@@ -32,9 +32,9 @@ class TestKind final : public Kind
 public:
     const char* name() const override { return "test"; }
 
-    std::string decode(Work& work) override
+    std::string decode(Content& work) override
     {
-        auto& w = static_cast<TestWork&>(work);
+        auto& w = static_cast<TestContent&>(work);
         const auto end = std::chrono::steady_clock::now() + std::chrono::milliseconds(w.decodeMs);
         while (std::chrono::steady_clock::now() < end) {
             if (w.cancel.load())
@@ -44,9 +44,9 @@ public:
         return w.failDecode ? "test: decode failed (requested)" : std::string();
     }
 
-    int64_t upload(Work& work, int64_t budget, bool& done, std::string& error) override
+    int64_t upload(Content& work, int64_t budget, bool& done, std::string& error) override
     {
-        auto& w = static_cast<TestWork&>(work);
+        auto& w = static_cast<TestContent&>(work);
         if (w.failUpload) {
             error = "test: upload failed (requested)";
             return 0;
@@ -57,7 +57,7 @@ public:
         return used;
     }
 
-    int64_t pendingBytes(const Work& work) const override { return static_cast<const TestWork&>(work).remaining; }
+    int64_t pendingBytes(const Content& work) const override { return static_cast<const TestContent&>(work).remaining; }
 };
 
 } // namespace
@@ -79,7 +79,7 @@ VLQT_API int vlqt_test_res_start(unsigned long long id, int decodeMs, long long 
             qCWarning(vlqt::res::lcRes, "test start: negative argument (%d ms, %lld bytes)", decodeMs, uploadBytes);
             return vlqt::res::badValueRc;
         }
-        auto work = std::make_shared<vlqt::res::TestWork>();
+        auto work = std::make_shared<vlqt::res::TestContent>();
         work->decodeMs = decodeMs;
         work->remaining = uploadBytes;
         work->failDecode = (flags & 1) != 0;

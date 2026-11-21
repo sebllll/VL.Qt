@@ -29,10 +29,10 @@ namespace vlqt {
 struct Scene;
 }
 
-namespace vlqt::res::snap {
+namespace vlqt::res::snapshot {
 
-// The Work of a Ready snapshot: the pixels, ARGB32_Premultiplied, devicePixelRatio 1.
-struct SnapshotWork final : Work
+// The Content of a Ready snapshot: the pixels, ARGB32_Premultiplied, devicePixelRatio 1.
+struct SnapshotContent final : Content
 {
     QImage image;
 };
@@ -63,4 +63,4 @@ void stats(Stats& out); // main thread, no allocation
 void endFrame(); // gives up hanging grabs, deletes finished ones
 void shutdown(); // drops every grab (before the manager frees the resources)
 
-} // namespace vlqt::res::snap
+} // namespace vlqt::res::snapshot

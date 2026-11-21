@@ -35,9 +35,9 @@
 
 namespace vlqt::res::shader {
 
-// One shader (the Work of the kind). Input fields are set before start, the decode result by the worker; after Ready
+// One shader (the Content of the kind). Input fields are set before start, the decode result by the worker; after Ready
 // the content is immutable and read on the main thread (QShader is implicitly shared, copies are cheap).
-class ShaderResource final : public Work
+class ShaderResource final : public Content
 {
 public:
     // --- for the ShaderEffect item, main thread, on a Ready resource ---

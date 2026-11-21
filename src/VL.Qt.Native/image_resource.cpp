@@ -138,7 +138,7 @@ class ImageKind final : public Kind
 public:
     const char* name() const override { return "image"; }
 
-    std::string decode(Work& work) override
+    std::string decode(Content& work) override
     {
         auto& r = static_cast<ImageResource&>(work);
         // Pixels restored after a device loss bring their converted copy along: nothing to convert.
@@ -161,7 +161,7 @@ public:
         return {};
     }
 
-    int64_t upload(Work& work, int64_t budget, bool& done, std::string& error) override
+    int64_t upload(Content& work, int64_t budget, bool& done, std::string& error) override
     {
         auto& r = static_cast<ImageResource&>(work);
         const int64_t used = uploadNow(r, budget, done, error);
@@ -177,13 +177,13 @@ public:
         return used;
     }
 
-    void destroy(Work& work) override
+    void destroy(Content& work) override
     {
         releaseDevice(work);
     }
 
     // Device lost: the textures, the staging texture and a running copy go, the source stays.
-    void releaseDevice(Work& work) override
+    void releaseDevice(Content& work) override
     {
         auto& r = static_cast<ImageResource&>(work);
         if (r.m_texture) {
@@ -207,7 +207,7 @@ public:
 
     // Files: the path again (decoded anew, the CPU copy is gone after the upload); pixels: the converted copy (and its
     // raw buffer, the copy may point into it), only uploaded again.
-    std::shared_ptr<Work> restore(const Work& work) override
+    std::shared_ptr<Content> restore(const Content& work) override
     {
         const auto& old = static_cast<const ImageResource&>(work);
         auto r = std::make_shared<ImageResource>();
@@ -229,19 +229,19 @@ public:
         return r;
     }
 
-    bool stale(const Work& work) const override
+    bool stale(const Content& work) const override
     {
         return static_cast<const ImageResource&>(work).m_generation != device::generation();
     }
 
-    Info info(const Work& work) const override
+    Info info(const Content& work) const override
     {
         const auto& r = static_cast<const ImageResource&>(work);
         return {uint32_t(r.m_size.width()), uint32_t(r.m_size.height()), r.format()};
     }
 
     // F5 Resources page: rows not yet uploaded (a worker texture goes up in one call: all of it until then).
-    int64_t pendingBytes(const Work& work) const override
+    int64_t pendingBytes(const Content& work) const override
     {
         const auto& r = static_cast<const ImageResource&>(work);
         if (r.m_workerTexture)
@@ -250,7 +250,7 @@ public:
         return int64_t(r.m_image.bytesPerLine()) * rows;
     }
 
-    std::string takeWarning(Work& work) override
+    std::string takeWarning(Content& work) override
     {
         return std::move(static_cast<ImageResource&>(work).m_warning);
     }
@@ -488,8 +488,8 @@ private:
 
     // Tooltip preview: longest edge <= 256 px (never upscaled), BGRA8 premultiplied. Made right after m_image is
     // set (files: readFile, pixels: convertPixels, restored pixels: the copied m_image), before the upload drops m_image;
-    // m_preview lives until the Work is destroyed. A deep copy: m_image may share its data with m_raw / the file buffer.
-    // A restore takes the preview of the old Work over and skips this. Large images first go down to 4 x 256 px
+    // m_preview lives until the Content is destroyed. A deep copy: m_image may share its data with m_raw / the file buffer.
+    // A restore takes the preview of the old Content over and skips this. Large images first go down to 4 x 256 px
     // with the fast filter (a single smooth step from 8k costs tens of ms in the worker, which a synchronous LoadImage
     // waits for), then smooth to 256.
     static void makePreview(ImageResource& r)
@@ -704,7 +704,7 @@ int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int le
 
 std::shared_ptr<ImageResource> ready(uint64_t id)
 {
-    return std::static_pointer_cast<ImageResource>(readyWork(id, VLQT_RESOURCE_KIND_IMAGE));
+    return std::static_pointer_cast<ImageResource>(readyContent(id, VLQT_RESOURCE_KIND_IMAGE));
 }
 
 int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc, int* written, int* required)
@@ -718,13 +718,13 @@ int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc,
         qCWarning(lcImg, "read_preview: id %llu is not an image resource", static_cast<unsigned long long>(id));
         return badValueRc;
     }
-    // Replacement of a Ready resource: readyWork is the visible content (the replacement is the separate Slot::next
+    // Replacement of a Ready resource: readyContent is the visible content (the replacement is the separate Slot::replacement
     // until its swap), so the preview always belongs to what ready() shows.
     const auto r = ready(id);
     if (!r || r->m_preview.isNull())
         return noDataRc; // not Ready yet / Failed / loaded without VLQT_IMAGE_LOAD_PREVIEW
     // No lock: the worker wrote m_preview in decode, before the Ready transition (made under the manager's mutex,
-    // which readyWork takes as well); afterwards nothing touches it until the Work is destroyed.
+    // which readyContent takes as well); afterwards nothing touches it until the Content is destroyed.
     const QImage& img = r->m_preview;
     const int rowBytes = img.width() * 4;
     const int64_t size = int64_t(rowBytes) * img.height();
