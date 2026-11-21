@@ -60,7 +60,7 @@ namespace VL.Qt.Shaders
     /// warnings, defaults. Order: further samplers (Image) first, then uniforms, each in source order.
     /// </summary>
     /// <param name="HasInput">The fragment (or vertex) shader declares sampler2D source → node has an Input pin.</param>
-    /// <param name="Pins">Uniform pins in pin order, without Input and without the fixed ShaderEffect pins.</param>
+    /// <param name="Pins">Uniform pins in pin order, without Input and without the fixed Shader pins.</param>
     /// <param name="Warnings">Skipped uniforms, bad annotation values, plus the warnings of the annotations (orange).</param>
     /// <param name="Error">Compile error of frag or vert (red), empty if none; Pins is then empty.</param>
     internal sealed record ShaderPinModel(

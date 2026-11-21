@@ -150,7 +150,7 @@ VL.Qt | VL.Qt.Elements.ElementType | member Item = 1
 VL.Qt | VL.Qt.Elements.ElementType | member Qml = 25
 VL.Qt | VL.Qt.Elements.ElementType | member Rectangle = 3
 VL.Qt | VL.Qt.Elements.ElementType | member Row = 6
-VL.Qt | VL.Qt.Elements.ElementType | member ShaderEffect = 24
+VL.Qt | VL.Qt.Elements.ElementType | member Shader = 24
 VL.Qt | VL.Qt.Elements.ElementType | member Shape = 26
 VL.Qt | VL.Qt.Elements.ElementType | member Slider = 14
 VL.Qt | VL.Qt.Elements.ElementType | member SpinBox = 11
@@ -367,15 +367,15 @@ VL.Qt | VL.Qt.Elements.SamplerMipFilter | member Linear = 2
 VL.Qt | VL.Qt.Elements.SamplerMipFilter | member None = 0
 VL.Qt | VL.Qt.Elements.SamplerMipFilter | member Point = 1
 VL.Qt | VL.Qt.Elements.SamplerMipFilter | type enum
-VL.Qt | VL.Qt.Elements.ShaderEffect | ctor | new
-VL.Qt | VL.Qt.Elements.ShaderEffect | property AutoSize | bool { get; init }
-VL.Qt | VL.Qt.Elements.ShaderEffect | property Blending | bool { get; init }
-VL.Qt | VL.Qt.Elements.ShaderEffect | property Children | override System.Collections.Immutable.ImmutableArray<VL.Qt.Elements.Element> { get }
-VL.Qt | VL.Qt.Elements.ShaderEffect | property Input | VL.Qt.Elements.Element { get; init }
-VL.Qt | VL.Qt.Elements.ShaderEffect | property InputSampler | VL.Qt.Elements.Sampler { get; init }
-VL.Qt | VL.Qt.Elements.ShaderEffect | property MeshResolution | Stride.Core.Mathematics.Int2 { get; init }
-VL.Qt | VL.Qt.Elements.ShaderEffect | property Uniforms | VL.Lib.Collections.Spread<VL.Qt.Elements.Uniform> { get; init }
-VL.Qt | VL.Qt.Elements.ShaderEffect | type sealed class : VL.Qt.Elements.Element
+VL.Qt | VL.Qt.Elements.Shader | ctor | new
+VL.Qt | VL.Qt.Elements.Shader | property AutoSize | bool { get; init }
+VL.Qt | VL.Qt.Elements.Shader | property Blending | bool { get; init }
+VL.Qt | VL.Qt.Elements.Shader | property Children | override System.Collections.Immutable.ImmutableArray<VL.Qt.Elements.Element> { get }
+VL.Qt | VL.Qt.Elements.Shader | property Input | VL.Qt.Elements.Element { get; init }
+VL.Qt | VL.Qt.Elements.Shader | property InputSampler | VL.Qt.Elements.Sampler { get; init }
+VL.Qt | VL.Qt.Elements.Shader | property MeshResolution | Stride.Core.Mathematics.Int2 { get; init }
+VL.Qt | VL.Qt.Elements.Shader | property Uniforms | VL.Lib.Collections.Spread<VL.Qt.Elements.Uniform> { get; init }
+VL.Qt | VL.Qt.Elements.Shader | type sealed class : VL.Qt.Elements.Element
 VL.Qt | VL.Qt.Elements.Shape | ctor | new
 VL.Qt | VL.Qt.Elements.Shape | method ExtentOf(VL.Lib.Collections.Spread<Stride.Core.Mathematics.Vector2>) | order Points, Output
 VL.Qt | VL.Qt.Elements.Shape | method ExtentOf(VL.Lib.Collections.Spread<Stride.Core.Mathematics.Vector2>) | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
@@ -1605,38 +1605,38 @@ VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Size | in Stride.Core.
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Spacing | in float | Pin(Visibility = PinVisibility.Optional) | (spacing)
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Transform | in Stride.Core.Mathematics.Matrix | Pin(Visibility = PinVisibility.Optional) | (transform)
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | type sealed class
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | attr ProcessNode(Name = "ShaderEffect", Category = "Qt.Elements")
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | ctor | new
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | ctor | order Node Context
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | implements System.IDisposable
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Dispose | void
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | VL.Qt.Elements.Element
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | order Input, Input Sampler, Fragment Code, Fragment Shader, Vertex Code, Vertex Shader, Uniforms, Blending, Mesh Resolution, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Error, Output
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Blending | in bool = true | Pin(Visibility = PinVisibility.Optional) | (blending)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Error | out string | (error)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Fragment Code | in string = "#version 440\n// Fragment shader for the ShaderEffect node: full Qt GLSL (Vulkan style, like Qt's qsb tool takes it).\n// Edit the text and the effect updates while you type; errors show at the Error pin, the last\n// working version keeps drawing meanwhile.\n\n// Position inside the element, 0..1 (x to the right, y down).\nlayout(location = 0) in vec2 qt_TexCoord0;\nlayout(location = 0) out vec4 fragColor;\n\n// All uniforms live in this one block. It must start with qt_Matrix and qt_Opacity.\n// Below them add your own: a uniform gets its value from a Uniform node (Qt.Elements) with\n// the same name and type; without such a node the value is 0.\nlayout(std140, binding = 0) uniform buf {\n    mat4 qt_Matrix;\n    float qt_Opacity;\n    float time;   // seconds, drive it with a Float uniform named \"time\"\n    vec4 color;   // tint, drive it with a Color uniform named \"color\"\n};\n\n// The element at the Input pin (without Input it is transparent).\nlayout(binding = 1) uniform sampler2D source;\n\nvoid main()\n{\n    vec2 uv = qt_TexCoord0;\n\n    // Moving gradient, visible even without Input and without uniforms.\n    float wave = 0.5 + 0.5 * sin((uv.x + uv.y) * 6.0 + time * 2.0);\n    vec4 gradient = vec4(uv, wave, 1.0) * wave;\n\n    // Sample the input (premultiplied alpha). Warp the lookup for a ripple.\n    vec2 warped = uv + 0.02 * vec2(sin(uv.y * 20.0 + time), cos(uv.x * 20.0 + time));\n    vec4 src = texture(source, warped);\n\n    // Input on top of the gradient, tinted by color (premultiplied, so scale all channels; alpha 0 = no tint).\n    vec4 result = src + gradient * (1.0 - src.a);\n    fragColor = result * (color + step(color.a, 0.0)) * qt_Opacity;\n}" | (fragmentCode)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Fragment Shader | in VL.Lib.IO.Path | (fragmentShader)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Input Sampler | in VL.Qt.Elements.Sampler | Pin(Visibility = PinVisibility.Optional) | (inputSampler)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Input | in VL.Qt.Elements.Element | (input)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Mesh Resolution | in VL.Core.Optional<Stride.Core.Mathematics.Int2> | Pin(Visibility = PinVisibility.Optional) | (meshResolution)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Opacity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (opacity)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Output | out VL.Qt.Elements.Element | Pin(Name = "Output") | (return)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Scene Bounds | out Stride.Core.Mathematics.RectangleF | Pin(Visibility = PinVisibility.Optional) | (sceneBounds)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Size | in Stride.Core.Mathematics.Vector2 = 1, 1 | (size)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Transform | in Stride.Core.Mathematics.Matrix | (transform)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Uniforms | in VL.Lib.Collections.Spread<VL.Qt.Elements.Uniform> | (uniforms)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Vertex Code | in string | Pin(Visibility = PinVisibility.Optional) | (vertexCode)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | method Update | pin Vertex Shader | in VL.Lib.IO.Path | Pin(Visibility = PinVisibility.Optional) | (vertexShader)
-VL.Qt | VL.Qt.Nodes.ShaderEffectNode | type sealed class
+VL.Qt | VL.Qt.Nodes.ShaderNode | attr ProcessNode(Name = "ShaderEffect", Category = "Qt.Elements")
+VL.Qt | VL.Qt.Nodes.ShaderNode | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Nodes.ShaderNode | ctor | new
+VL.Qt | VL.Qt.Nodes.ShaderNode | ctor | order Node Context
+VL.Qt | VL.Qt.Nodes.ShaderNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
+VL.Qt | VL.Qt.Nodes.ShaderNode | implements System.IDisposable
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Dispose | void
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | VL.Qt.Elements.Element
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | order Input, Input Sampler, Fragment Code, Fragment Shader, Vertex Code, Vertex Shader, Uniforms, Blending, Mesh Resolution, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Error, Output
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Blending | in bool = true | Pin(Visibility = PinVisibility.Optional) | (blending)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Error | out string | (error)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Fragment Code | in string = "#version 440\n// Fragment shader for the ShaderEffect node: full Qt GLSL (Vulkan style, like Qt's qsb tool takes it).\n// Edit the text and the effect updates while you type; errors show at the Error pin, the last\n// working version keeps drawing meanwhile.\n\n// Position inside the element, 0..1 (x to the right, y down).\nlayout(location = 0) in vec2 qt_TexCoord0;\nlayout(location = 0) out vec4 fragColor;\n\n// All uniforms live in this one block. It must start with qt_Matrix and qt_Opacity.\n// Below them add your own: a uniform gets its value from a Uniform node (Qt.Elements) with\n// the same name and type; without such a node the value is 0.\nlayout(std140, binding = 0) uniform buf {\n    mat4 qt_Matrix;\n    float qt_Opacity;\n    float time;   // seconds, drive it with a Float uniform named \"time\"\n    vec4 color;   // tint, drive it with a Color uniform named \"color\"\n};\n\n// The element at the Input pin (without Input it is transparent).\nlayout(binding = 1) uniform sampler2D source;\n\nvoid main()\n{\n    vec2 uv = qt_TexCoord0;\n\n    // Moving gradient, visible even without Input and without uniforms.\n    float wave = 0.5 + 0.5 * sin((uv.x + uv.y) * 6.0 + time * 2.0);\n    vec4 gradient = vec4(uv, wave, 1.0) * wave;\n\n    // Sample the input (premultiplied alpha). Warp the lookup for a ripple.\n    vec2 warped = uv + 0.02 * vec2(sin(uv.y * 20.0 + time), cos(uv.x * 20.0 + time));\n    vec4 src = texture(source, warped);\n\n    // Input on top of the gradient, tinted by color (premultiplied, so scale all channels; alpha 0 = no tint).\n    vec4 result = src + gradient * (1.0 - src.a);\n    fragColor = result * (color + step(color.a, 0.0)) * qt_Opacity;\n}" | (fragmentCode)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Fragment Shader | in VL.Lib.IO.Path | (fragmentShader)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Input Sampler | in VL.Qt.Elements.Sampler | Pin(Visibility = PinVisibility.Optional) | (inputSampler)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Input | in VL.Qt.Elements.Element | (input)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Mesh Resolution | in VL.Core.Optional<Stride.Core.Mathematics.Int2> | Pin(Visibility = PinVisibility.Optional) | (meshResolution)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Opacity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (opacity)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Output | out VL.Qt.Elements.Element | Pin(Name = "Output") | (return)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Scene Bounds | out Stride.Core.Mathematics.RectangleF | Pin(Visibility = PinVisibility.Optional) | (sceneBounds)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Size | in Stride.Core.Mathematics.Vector2 = 1, 1 | (size)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Transform | in Stride.Core.Mathematics.Matrix | (transform)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Uniforms | in VL.Lib.Collections.Spread<VL.Qt.Elements.Uniform> | (uniforms)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Vertex Code | in string | Pin(Visibility = PinVisibility.Optional) | (vertexCode)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Vertex Shader | in VL.Lib.IO.Path | Pin(Visibility = PinVisibility.Optional) | (vertexShader)
+VL.Qt | VL.Qt.Nodes.ShaderNode | type sealed class
 VL.Qt | VL.Qt.Nodes.SliderNode | attr ProcessNode(Name = "Slider", Category = "Qt.Widgets")
 VL.Qt | VL.Qt.Nodes.SliderNode | ctor | new
 VL.Qt | VL.Qt.Nodes.SliderNode | ctor | order Node Context

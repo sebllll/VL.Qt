@@ -27,12 +27,12 @@ namespace VL.Qt.Nodes
         private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
         {
             var pad = Math.Max(p.Padding, 0f);
-            return new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
+            return new BuiltinShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
                 new[] { Uniform.Vector2("center", p.Center), Uniform.Float("angle", Math.Max(p.Angle, 0f)) }.ToSpread(),
                 new RectangleF(pad, pad, pad, pad));
         };
 
-        private readonly BuiltinShaderLink<Props> _link;
+        private readonly ShaderEffectBuilder<Props> _link;
 
         public RadialBlurNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
@@ -40,9 +40,9 @@ namespace VL.Qt.Nodes
         }
 
         internal RadialBlurNode(ResourceClient? client, NodeErrors? errors = null)
-            => _link = new BuiltinShaderLink<Props>(client, s_shaders, s_create, errors);
+            => _link = new ShaderEffectBuilder<Props>(client, s_shaders, s_create, errors);
 
-        internal BuiltinShaderLink<Props> Core => _link;
+        internal ShaderEffectBuilder<Props> Core => _link;
 
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>

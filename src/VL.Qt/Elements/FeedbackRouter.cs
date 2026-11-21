@@ -18,7 +18,7 @@ namespace VL.Qt.Elements
     /// Ids are counted up and not reused (wrap-around skips 0 and live ids): events QtNative still
     /// sends for a released id (e.g. EVENT_HOVER 0 / EVENT_PRESS 0 after an unbind, 1 frame later) are dropped
     /// instead of landing in another slot. Releasing resets hover/press of the slot right away
-    /// (docs/decisions/events.md); this also holds for the ids of input handlers (a removed Hover node's
+    /// (docs/design/events.md); this also holds for the ids of input handlers (a removed Hover node's
     /// channel falls back to not hovered). Lives with the reconciler (one per window), so a restarted app (F8/F5)
     /// starts empty. Main thread only, allocation-free in the steady state.
     /// </para>

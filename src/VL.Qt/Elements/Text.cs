@@ -2,48 +2,6 @@
 
 namespace VL.Qt.Elements
 {
-    /// <summary>Font weight. Values are QFont::Weight.</summary>
-    public enum FontWeight
-    {
-        Thin = 100,
-        ExtraLight = 200,
-        Light = 300,
-        Normal = 400,
-        Medium = 500,
-        DemiBold = 600,
-        Bold = 700,
-        ExtraBold = 800,
-        Black = 900,
-    }
-
-    /// <summary>Values are Qt Text.WrapMode.</summary>
-    public enum TextWrap
-    {
-        NoWrap = 0,
-        WordWrap = 1,
-        WrapAnywhere = 3,
-        /// <summary>Word wrap, falls back to anywhere if a word does not fit.</summary>
-        Wrap = 4,
-    }
-
-    /// <summary>Values are Qt::TextElideMode.</summary>
-    public enum TextElide
-    {
-        Left = 0,
-        Right = 1,
-        Middle = 2,
-        None = 3,
-    }
-
-    /// <summary>Font size fitting (Qt Text.fontSizeMode). Values are Qt's.</summary>
-    public enum TextAutofit
-    {
-        Fixed = 0,
-        HorizontalFit = 1,
-        VerticalFit = 2,
-        Fit = 3,
-    }
-
     /// <summary>Plain text, one style per element (Qt Text). Lengths in units.</summary>
     public sealed class Text : Element
     {

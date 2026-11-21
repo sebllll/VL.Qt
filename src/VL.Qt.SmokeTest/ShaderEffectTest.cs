@@ -9,7 +9,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 
-// ShaderEffect (effects package 03, task 5): shipped shaders builtin:wave / builtin:gradient, a fixture shader with a
+// Shader (effects package 03, task 5): shipped shaders builtin:wave / builtin:gradient, a fixture shader with a
 // second sampler (shaders/dual.frag.qsb: Texture uniform = element, Image uniform = image resource), mesh resolution,
 // broken / missing shader paths, unknown uniform name / wrong type -> EVENT_ERROR and its correction.
 // Raw commands (DIP). Grabs go to <outDir>/shader-effect_*.png.
@@ -17,7 +17,7 @@ using static Pixels;
 public static class ShaderEffectTest
 {
     [Test, Category("shader-effect")]
-    public static void ShaderEffect() => Scenario.Run(Run);
+    public static void Shader() => Scenario.Run(Run);
 
     // Case 1: wave
     private const uint Wave = 10, WaveIn = 11;
@@ -60,7 +60,7 @@ public static class ShaderEffectTest
 
     private static void Run(Scenario s)
     {
-        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "Shader needs a QRhi scenegraph");
         var stripes = FindFile("src", "VL.Qt.SmokeTest", "assets", "stripes_rgb_30x10.png");
         var dualQsb = FindFile("src", "VL.Qt.SmokeTest", "shaders", "dual.frag.qsb");
         s.Check(stripes != null && dualQsb != null, $"test files found ({stripes}, {dualQsb})");
@@ -368,7 +368,7 @@ public static class ShaderEffectTest
         s.Pump(3);
         gpu(Err(HGrad).Length == 0, "second correction clears the error");
 
-        // Not a ShaderEffect: SET_UNIFORMS on a rectangle -> UnknownProperty; unknown ref -> UnknownObject.
+        // Not a Shader: SET_UNIFORMS on a rectangle -> UnknownProperty; unknown ref -> UnknownObject.
         cmd.Reset();
         cmd.BeginUniforms(WaveIn, 0);
         cmd.UniformF32("time", 1);

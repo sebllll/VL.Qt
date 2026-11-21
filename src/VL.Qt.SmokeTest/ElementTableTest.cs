@@ -94,7 +94,7 @@ public static class ElementTableTest
         [Protocol.PropertyId.LineHeight] = Protocol.ValueType.F32,
         [Protocol.PropertyId.LetterSpacing] = Protocol.ValueType.F32,
         [Protocol.PropertyId.FontSizeMode] = Protocol.ValueType.I32,
-        [Protocol.PropertyId.Source] = Protocol.ValueType.String, // ShaderEffect: Ref
+        [Protocol.PropertyId.Source] = Protocol.ValueType.String, // Shader: Ref
         [Protocol.PropertyId.FillMode] = Protocol.ValueType.I32,
         [Protocol.PropertyId.Smooth] = Protocol.ValueType.Bool,
         [Protocol.PropertyId.Image] = Protocol.ValueType.U64,
@@ -201,7 +201,7 @@ public static class ElementTableTest
             {
                 var typeName = typeNames.TryGetValue(type, out var tn) ? tn : type.ToString();
                 var logStart = QtHost.LogLength;
-                // The helper is the Input of a ShaderEffect (REF value).
+                // The helper is the Input of a Shader (REF value).
                 var rc = Native.Apply(w, buf.Clear().Create(helper, Protocol.ElementType.Rectangle).Reparent(helper, 0, 0)
                     .Create(id, type).Reparent(id, 0, 1).Span);
                 s.Check(rc == 0, $"element-table: {typeName} create ({rc}) {(rc != 0 ? Native.LastError() : "")}");

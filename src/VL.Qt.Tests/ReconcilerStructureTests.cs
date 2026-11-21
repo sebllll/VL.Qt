@@ -173,13 +173,13 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void ShaderEffectInput_IsChildAtIndexZero()
+        public void ShaderInput_IsChildAtIndexZero()
         {
-            Frame(new ShaderEffect { Input = R() });
+            Frame(new Shader { Input = R() });
             Assert.That(Structural, Is.EqualTo(new[] { "CREATE 1 Shader", "REPARENT 1 0 0", "CREATE 2 Rectangle", "REPARENT 2 1 0" }));
-            Frame(new ShaderEffect { Input = T() });
+            Frame(new Shader { Input = T() });
             Assert.That(Structural, Is.EqualTo(new[] { "DESTROY 2", "CREATE 2 Text", "REPARENT 2 1 0" }));
-            Frame(new ShaderEffect());
+            Frame(new Shader());
             Assert.That(Structural, Is.EqualTo(new[] { "DESTROY 2" }));
         }
 

@@ -31,7 +31,7 @@ How comparable systems handle identity:
   - When the primary lets go, the first remaining occurrence in the owner's tree takes over. When the owner has no occurrence left at the end of its update, the next renderer in registration order becomes the owner and picks its first occurrence as primary in its next update; in between there is no primary for one update (no new state values). Deciding at the end of the update keeps a move inside the owner's tree from handing the element to another renderer.
   - `Video` stays exclusive app-wide (one player): the first occurrence of the first renderer plays, every other occurrence is a placeholder with a warning until it becomes free.
   - Interaction handlers are not covered: an interaction node is active at one handler only, app-wide (see the open question below).
-- **Feedback binding per frame** (see `events.md`): identity stays position plus type. The feedback comes from the description every frame and is bound to the Qt object at that position. A key pin would only affect the identity of Qt objects, not the sink binding.
+- **Feedback binding per frame** (see `../design/events.md`): identity stays position plus type. The feedback comes from the description every frame and is bound to the Qt object at that position. A key pin would only affect the identity of Qt objects, not the sink binding.
 
 ## Open questions
 - **Optional `Key` pin** (among siblings only). It would also remove the state jump (hover/pressed) when inserting or reordering. It becomes necessary with Qt-native animations/transitions or enter/exit effects.

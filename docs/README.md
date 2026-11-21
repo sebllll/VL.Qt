@@ -32,8 +32,8 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [design/resources.md](design/resources.md) | The resource manager of QtNative: ids, states, threads, reference counts, replacement, external content and device loss. |
 | [decisions/device-sharing.md](decisions/device-sharing.md) | One QtNative D3D11 device per process shared by all windows and images, device loss, and why Qt does not render on Stride's device. |
 | [decisions/render-texture.md](decisions/render-texture.md) | `QtTexture` and the layer `QtRenderer` in the companion package `VL.Qt.Stride`: a Qt scene rendered offscreen into a Stride texture or drawn into a render target, with shared fences, ownership, format and alpha, frame timing and package layout. |
-| [decisions/element-catalog-v1.md](decisions/element-catalog-v1.md) | Conventions shared by all elements: geometry pins, coordinate space, colours, image sources and pin design. |
-| [decisions/events.md](decisions/events.md) | How events and measured values travel from Qt back to the element nodes through feedback objects. |
+| [design/element-catalog-v1.md](design/element-catalog-v1.md) | Conventions shared by all elements: geometry pins, coordinate space, colours, image sources and pin design. |
+| [design/events.md](design/events.md) | How events and measured values travel from Qt back to the element nodes through feedback objects. |
 | [decisions/qtnative-deployment.md](decisions/qtnative-deployment.md) | How QtNative is built, licensed (LGPL), packaged and located at runtime. |
 | [decisions/qt-bridges.md](decisions/qt-bridges.md) | Qt Bridge for C# compared with VL.Qt: no switch, no redundant features (research in [research/01_qt-bridge-csharp.md](research/01_qt-bridge-csharp.md)). |
 | [decisions/user-qml.md](decisions/user-qml.md) | Loading a user `.qml` file as an element (`QmlElement`, issue #104) and the QML node factory (#107); background in [topics/user-qml.md](topics/user-qml.md). |

@@ -195,7 +195,7 @@ namespace VL.Qt.Wire
                 WriteF32(pts.Slice(4 * i), points[i]);
         }
 
-        /// <summary>ref: id of another element (e.g. ShaderEffect source), 0 = none/root.</summary>
+        /// <summary>ref: id of another element (e.g. Shader source), 0 = none/root.</summary>
         public void SetRef(uint id, ushort prop, uint refId)
         {
             WriteU32(BeginSet(id, prop, Protocol.ValueType.Ref, 4), refId);

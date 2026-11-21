@@ -14,7 +14,7 @@ namespace VL.Qt
     internal readonly record struct UniformValue(ushort ValueType, Matrix Numbers, int Integer, ulong Handle);
 
     /// <summary>
-    /// Writes SET_UNIFORMS for a ShaderEffect as a diff by name against what was sent last: changed or new
+    /// Writes SET_UNIFORMS for a Shader as a diff by name against what was sent last: changed or new
     /// entries only, nothing at all if the table is equal. The protocol cannot remove a single name, so a removed
     /// uniform sends the whole table with <see cref="Protocol.UniformSet.Clear"/>. Entries with an invalid name (empty,
     /// more than <see cref="Protocol.UniformNameMax"/> UTF-8 bytes) are skipped; the node reports them.
@@ -35,7 +35,7 @@ namespace VL.Qt
         /// is sent as 0 = none.
         /// </summary>
         public static Dictionary<string, UniformValue>? Write(
-            ICommandSink sink, uint id, ShaderEffect effect, IReadOnlyList<Node> children, Dictionary<string, UniformValue>? sent)
+            ICommandSink sink, uint id, Shader effect, IReadOnlyList<Node> children, Dictionary<string, UniformValue>? sent)
         {
             Dictionary<string, UniformValue>? next = null;
             foreach (var u in effect.Uniforms)
@@ -106,7 +106,7 @@ namespace VL.Qt
             sink.EndUniforms();
         }
 
-        private static UniformValue Resolve(Uniform u, ShaderEffect effect, IReadOnlyList<Node> children)
+        private static UniformValue Resolve(Uniform u, Shader effect, IReadOnlyList<Node> children)
         {
             ulong handle = 0;
             if (u.Texture is { } texture)

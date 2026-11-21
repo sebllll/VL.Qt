@@ -63,7 +63,7 @@ namespace VL.Qt.Wire
             /// </summary>
             public const ushort SetSpace = 10;
             /// <summary>
-            /// ShaderEffect uniforms by name: u32 id, u16 count, u16 flags (<see cref="UniformSet"/>), then per
+            /// Shader uniforms by name: u32 id, u16 count, u16 flags (<see cref="UniformSet"/>), then per
             /// entry (4-byte aligned) u16 value type (<see cref="ValueType"/>), u16 name length (1..<see cref="UniformNameMax"/>),
             /// UTF-8 name, padding to 4, value like SET, padding to 4. Diff by name, full send with <see cref="UniformSet.Clear"/>.
             /// Unknown names / wrong types come back as <see cref="EventId.Error"/> text, not as apply error. Details: protocol.h.
@@ -179,10 +179,10 @@ namespace VL.Qt.Wire
 
         /// <summary>
         /// Property ids of SET (u16). 1..255 common to all items; type-specific ids start at 256, looked up per type
-        /// (Color: Rectangle fill + Text; Source: Video string, ShaderEffect ref). Blocks: 256 Rectangle, 512 Text,
+        /// (Color: Rectangle fill + Text; Source: Video string, Shader ref). Blocks: 256 Rectangle, 512 Text,
         /// 544 Image, 576 Row/Column, 608 reserved (MultiEffect, removed in #459), 640 AutoSize, 672 Video (shares Source/FillMode with Image), 704 Button,
         /// 768 input handlers (only on handler objects), 800 reserved (RectangularShadow, removed in #459),
-        /// 832 <see cref="MultiEffectKey"/> (833..855, 832 unused; the MULTI entries of the Effect chain, not via SET, see protocol.h "Effect chain"), 896 ShaderEffect (also takes Source ref and AutoSize), 928 QmlElement, 960 Shape.
+        /// 832 <see cref="MultiEffectKey"/> (833..855, 832 unused; the MULTI entries of the Effect chain, not via SET, see protocol.h "Effect chain"), 896 Shader (also takes Source ref and AutoSize), 928 QmlElement, 960 Shape.
         /// </summary>
         internal static class PropertyId
         {
@@ -261,13 +261,13 @@ namespace VL.Qt.Wire
             public const ushort MaximumPointCount = 775;
             /// <summary>bool, Touch Points handler: ignore presses that an element on top grabs (default true).</summary>
             public const ushort Occlusion = 776;
-            /// <summary>u64 shader resource id (<see cref="ResourceKind.Shader"/>, stage fragment), 0 = none: the ShaderEffect draws nothing.</summary>
+            /// <summary>u64 shader resource id (<see cref="ResourceKind.Shader"/>, stage fragment), 0 = none: the Shader draws nothing.</summary>
             public const ushort FragmentShader = 896;
             /// <summary>u64 shader resource id (stage vertex), 0 = Qt's default vertex shader.</summary>
             public const ushort VertexShader = 897;
-            /// <summary>bool, ShaderEffect: premultiplied alpha blending (default true).</summary>
+            /// <summary>bool, Shader: premultiplied alpha blending (default true).</summary>
             public const ushort Blending = 898;
-            /// <summary>ivec2, ShaderEffect: grid subdivisions x, y &gt;= 1 (default 1, 1).</summary>
+            /// <summary>ivec2, Shader: grid subdivisions x, y &gt;= 1 (default 1, 1).</summary>
             public const ushort MeshResolution = 899;
             /// <summary>string, QmlElement: absolute path of the .qml file, empty = nothing loaded.</summary>
             public const ushort QmlSource = 928;
@@ -534,7 +534,7 @@ namespace VL.Qt.Wire
             public const int Image = 2;
             /// <summary>CPU copy of an element (vlqt_snapshot_start / vlqt_snapshot_read), no texture.</summary>
             public const int Snapshot = 3;
-            /// <summary>.qsb shader of one stage (vlqt_shader_load), for ShaderEffect.</summary>
+            /// <summary>.qsb shader of one stage (vlqt_shader_load), for Shader.</summary>
             public const int Shader = 4;
             /// <summary>Sound of a Video as float samples (vlqt_audio_tap_init / vlqt_audio_tap_read).</summary>
             public const int AudioTap = 5;

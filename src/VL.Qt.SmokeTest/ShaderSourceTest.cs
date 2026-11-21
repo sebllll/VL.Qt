@@ -12,7 +12,7 @@ using VL.Qt.Nodes;
 using VL.Qt.Wire;
 using static Pixels;
 
-// ShaderEffect Phase 2: GLSL text baked at runtime in the worker (vlqt_shader_load_source).
+// Shader Phase 2: GLSL text baked at runtime in the worker (vlqt_shader_load_source).
 // A text shader (wave.frag) draws, the default template of the node bakes and draws, a syntax error ends Failed with a line
 // number while the last good version keeps drawing, going back to an earlier text comes from the bake cache.
 // Raw commands (DIP). Grabs go to <outDir>/shader-source_*.png.
@@ -67,7 +67,7 @@ public static class ShaderSourceTest
 
     private static void Run(Scenario s)
     {
-        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect source needs a QRhi scenegraph");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "Shader source needs a QRhi scenegraph");
         var stripes = FindFile("src", "VL.Qt.SmokeTest", "assets", "stripes_rgb_30x10.png");
         var waveFile = FindFile("src", "VL.Qt.Native", "shaders", "wave.frag");
         s.Check(stripes != null && waveFile != null, $"test files found ({stripes}, {waveFile})");

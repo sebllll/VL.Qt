@@ -102,7 +102,7 @@ public static class BlurMaskTest
 
     private static void Run(Scenario s)
     {
-        Action<bool, string> gpuCheck = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
+        Action<bool, string> gpuCheck = (ok, what) => s.NeedsRhi(ok, what, "Shader needs a QRhi scenegraph");
         var shaderFile = FindFile("help", "Qt", "shaders", "blur_mask.frag");
         s.Check(shaderFile != null, $"blur_mask.frag found ({shaderFile})");
         if (shaderFile == null) return;

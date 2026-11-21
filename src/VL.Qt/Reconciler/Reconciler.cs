@@ -817,7 +817,7 @@ namespace VL.Qt
 
         /// <summary>
         /// Hook after the children of <paramref name="node"/> were reconciled (their ids are final), e.g. to
-        /// reference the ShaderEffect input child (04c).
+        /// reference the Shader input child (04c).
         /// </summary>
         partial void ChildrenReconciled(Node node, Element next);
     }

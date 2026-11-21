@@ -28,7 +28,7 @@ namespace VL.Qt.Nodes
         {
             var radius = Math.Max(p.Radius, 0f);
             var pad = 1.5f * radius;
-            return new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.Pyramid, ids,
+            return new BuiltinShaderEffect(previous, Protocol.EffectTemplate.Pyramid, ids,
                 new[]
                 {
                     Uniform.Color("color", p.Color),
@@ -39,7 +39,7 @@ namespace VL.Qt.Nodes
                 new RectangleF(pad, pad, pad, pad), radius);
         };
 
-        private readonly BuiltinShaderLink<Props> _link;
+        private readonly ShaderEffectBuilder<Props> _link;
 
         public GlowNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
@@ -47,9 +47,9 @@ namespace VL.Qt.Nodes
         }
 
         internal GlowNode(ResourceClient? client, NodeErrors? errors = null)
-            => _link = new BuiltinShaderLink<Props>(client, s_shaders, s_create, errors);
+            => _link = new ShaderEffectBuilder<Props>(client, s_shaders, s_create, errors);
 
-        internal BuiltinShaderLink<Props> Core => _link;
+        internal ShaderEffectBuilder<Props> Core => _link;
 
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
