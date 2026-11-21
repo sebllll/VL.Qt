@@ -10,17 +10,17 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 namespace VL.Qt.Reconciliation
 {
     /// <summary>
-    /// Property diff (04c): per element type one hand-written method that compares the previous description
+    /// Property diff: per element type one hand-written method that compares the previous description
     /// with the new one and writes a SET only for values that changed. A just created object is compared
     /// against a default instance of its type, so only non-default values are sent (Qt defaults = element
-    /// defaults, see 03c). No reflection, no allocation in the steady state.
+    /// defaults). No reflection, no allocation in the steady state.
     /// <para>
-    /// Units → Qt logical pixels only via the <see cref="SpaceMapping"/> of the scene (<c>_mapping</c>; angles,
-    /// opacity, scale factors and other ratios unchanged). A length is written again when the unit scale changed
-    /// (<c>_rescale</c>), whether or not its value did.
+    /// Units → Qt logical pixels only via the <see cref="SpaceMapping"/> of the scene (angles, opacity, scale factors and
+    /// other ratios unchanged). A length is written again when the unit scale changed, whether or not its value did.
     /// </para>
+    /// One per reconciler.
     /// </summary>
-    internal sealed partial class Reconciler
+    internal sealed class PropertyDiff
     {
         private static readonly Group s_group = new();
         private static readonly Rectangle s_rectangle = new();
@@ -59,11 +59,29 @@ namespace VL.Qt.Reconciliation
             _ => s_group,
         };
 
-        partial void DiffProperties(Node node, Element? previous, Element next, Element? parent)
+        private readonly ICommandSink _sink;
+        // Mapping and rescale flag of the current Write call; the Diff methods read them.
+        private SpaceMapping _mapping = SpaceMapping.Default;
+        private bool _rescale;
+
+        /// <param name="sink">Target of the SETs.</param>
+        public PropertyDiff(ICommandSink sink)
         {
+            _sink = sink;
+        }
+
+        /// <summary>
+        /// Writes the SETs for the properties of <paramref name="next"/> that differ from <paramref name="previous"/>
+        /// (null = just created, send all non-default values) to the object <paramref name="id"/>. Lengths are converted
+        /// with <paramref name="mapping"/> and all written again when <paramref name="rescale"/> is set. Called before
+        /// REPARENT for new objects.
+        /// </summary>
+        public void Write(uint id, Element? previous, Element next, in SpaceMapping mapping, bool rescale)
+        {
+            _mapping = mapping;
+            _rescale = rescale;
             bool created = previous is null;
             var prev = previous ?? DefaultOf(next.Type);
-            uint id = node.Id;
 
             DiffCommon(id, prev, next);
 
@@ -485,7 +503,7 @@ namespace VL.Qt.Reconciliation
 
         /// <summary>
         /// Shader: shader resource ids (0 = none), Blending, MeshResolution (clamped to &gt;= 1, QtNative rejects
-        /// smaller values with -7). Source and the uniforms follow in <see cref="ChildrenReconciled"/>.
+        /// smaller values with -7). Source and the uniforms follow in <see cref="WriteShader"/>.
         /// </summary>
         private void DiffShader(uint id, Shader p, Shader n)
         {
@@ -502,24 +520,21 @@ namespace VL.Qt.Reconciliation
         }
 
         /// <summary>
-        /// Shader: SET Source ref(input id) whenever the input child object changed (0 = none), then the uniforms (texture uniforms need the ids of their children).
+        /// Shader, after the children of <paramref name="item"/> were reconciled (their ids are final): SET Source ref(input id)
+        /// whenever the input child object changed (0 = none), then the uniforms (texture uniforms need the ids of their children).
         /// </summary>
-        partial void ChildrenReconciled(Node node, Element next)
+        public void WriteShader(ItemMirror item, Shader next)
         {
-            if (node.Type != ElementType.Shader)
-                return;
+            var shader = item.Shader ??= new ShaderMirror();
+            var kids = item.Children;
+            // Input is the first child (Shader.Children), texture elements follow.
+            ItemMirror? source = next.Input is not null && kids.Count > 0 ? kids[0] : null;
+            if (!ReferenceEquals(source, shader.Source))
             {
-                var effect = (Shader)next;
-                var kids = node.Children;
-                // Input is the first child (Shader.Children), texture elements follow.
-                Node? source = effect.Input is not null && kids.Count > 0 ? kids[0] : null;
-                if (!ReferenceEquals(source, node.EffectSource))
-                {
-                    node.EffectSource = source;
-                    _sink.SetRef(node.Id, P.Source, source?.Id ?? IdAllocator.Root);
-                }
-                node.SentUniforms = UniformWriter.Write(_sink, node.Id, effect, kids, node.SentUniforms);
+                shader.Source = source;
+                _sink.SetRef(item.Id, P.Source, source?.Id ?? IdAllocator.Root);
             }
+            shader.SentUniforms = UniformWriter.Write(_sink, item.Id, next, kids, shader.SentUniforms);
         }
 
         /// <summary>Exact component-wise equality (any change, however small, is sent).</summary>

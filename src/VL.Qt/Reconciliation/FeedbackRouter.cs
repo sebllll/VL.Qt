@@ -8,9 +8,6 @@ using VL.Qt.Wire;
 
 namespace VL.Qt.Reconciliation
 {
-    /// <summary>Counts of one <see cref="FeedbackRouter.Dispatch"/> call.</summary>
-    internal readonly record struct DispatchResult(int Applied, int Ignored, string? Error);
-
     /// <summary>
     /// Feedback ids of one window: <c>uint feedbackId ↔ FeedbackSlot</c>. The reconciler acquires an id per binding
     /// (BIND feedbackId) and releases it on unbind, feedback change or destroy; <see cref="Dispatch"/> writes the

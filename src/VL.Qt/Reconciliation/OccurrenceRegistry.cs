@@ -14,7 +14,7 @@ namespace VL.Qt.Reconciliation
     /// An element may hang at several places, inside one renderer and in several renderers: every occurrence is a Qt
     /// object of its own and binds the element's feedback. The primary occurrence (<see cref="OwnerOf(Element)"/>) is the
     /// first occurrence in traversal order in the owner renderer, the first renderer that showed the element (registration
-    /// order): only it reports state values into the feedback (<see cref="Elements.FeedbackRouter"/>), Snapshot and
+    /// order): only it reports state values into the feedback (<see cref="FeedbackRouter"/>), Snapshot and
     /// TooltipPreview locate it (<see cref="TryLocate"/>). Events of all occurrences in all renderers reach the feedback. The
     /// owner's reconciler keeps the primary up to date inside its tree (see <see cref="Reconciler"/>).
     /// </para>
@@ -63,17 +63,17 @@ namespace VL.Qt.Reconciliation
         public static bool IsExclusive(Element element) => element.Type == ElementType.Video;
 
         /// <summary>Occurrences of an element in one renderer that is not (yet) its owner.</summary>
-        private sealed class RendererOccurrences(Reconciler reconciler, List<Node> nodes)
+        private sealed class RendererOccurrences(Reconciler reconciler, List<ItemMirror> nodes)
         {
             public readonly Reconciler Reconciler = reconciler;
-            public readonly List<Node> Nodes = nodes; // unordered
+            public readonly List<ItemMirror> Nodes = nodes; // unordered
         }
 
         private struct Entry
         {
             public Reconciler? OwnerReconciler; // set while the element has at least one occurrence
-            public Node? Primary;               // null only inside an update after the primary let go, or after a hand-over
-            public List<Node>? Others;          // further occurrences in the owner's tree, unordered
+            public ItemMirror? Primary;               // null only inside an update after the primary let go, or after a hand-over
+            public List<ItemMirror>? Others;          // further occurrences in the owner's tree, unordered
             public List<RendererOccurrences>? Elsewhere;  // occurrences in other renderers, in registration order
             public List<Reconciler>? Waiting;   // one entry per ignored occurrence of a video (placeholder)
 
@@ -81,7 +81,7 @@ namespace VL.Qt.Reconciliation
         }
 
         private readonly Dictionary<Element, Entry> _entries = new(ReferenceEqualityComparer.Instance);
-        private readonly Stack<List<Node>> _lists = new();
+        private readonly Stack<List<ItemMirror>> _lists = new();
         private readonly Dictionary<FeedbackSlot, Element> _shownBySlot = new(); // feedback slot → last instance shown with it
 
         /// <summary>Number of elements currently shown or waiting as duplicates (tests).</summary>
@@ -91,7 +91,7 @@ namespace VL.Qt.Reconciliation
         public int SlotCount => _shownBySlot.Count;
 
         /// <summary>Primary occurrence of <paramref name="element"/> or null; <paramref name="reconciler"/> = the owner renderer's reconciler.</summary>
-        public Node? OwnerOf(Element element, out Reconciler? reconciler)
+        public ItemMirror? OwnerOf(Element element, out Reconciler? reconciler)
         {
             if (_entries.TryGetValue(element, out var e))
             {
@@ -103,7 +103,7 @@ namespace VL.Qt.Reconciliation
         }
 
         /// <summary>Primary occurrence of <paramref name="element"/> or null.</summary>
-        public Node? OwnerOf(Element element) => OwnerOf(element, out _);
+        public ItemMirror? OwnerOf(Element element) => OwnerOf(element, out _);
 
         /// <summary>Reconciler of the owner renderer of <paramref name="element"/> (the one with the primary occurrence), or null if it is not shown.</summary>
         public Reconciler? OwnerReconcilerOf(Element element)
@@ -124,7 +124,7 @@ namespace VL.Qt.Reconciliation
         }
 
         /// <summary>Further (not primary) occurrences of <paramref name="element"/> in the owner's tree, unordered; null if none.</summary>
-        public List<Node>? OthersOf(Element element)
+        public List<ItemMirror>? OthersOf(Element element)
             => _entries.TryGetValue(element, out var e) ? e.Others : null;
 
         /// <summary>
@@ -159,7 +159,7 @@ namespace VL.Qt.Reconciliation
         /// (in the owner's tree, or in the list of its own renderer) and the owner's reconciler decides about the order.
         /// A video must not be registered from a second renderer (the caller checks <see cref="IsExclusive"/>).
         /// </summary>
-        public bool AddOccurrence(Element element, Node node, Reconciler reconciler)
+        public bool AddOccurrence(Element element, ItemMirror node, Reconciler reconciler)
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_entries, element, out _);
             if (element.Feedback.Feedback is not null)
@@ -192,7 +192,7 @@ namespace VL.Qt.Reconciliation
         }
 
         /// <summary>Makes the occurrence <paramref name="node"/> of the owner's tree the primary one; the former primary (if any) becomes a further occurrence.</summary>
-        public void SetPrimary(Element element, Node node)
+        public void SetPrimary(Element element, ItemMirror node)
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrNullRef(_entries, element);
             if (Unsafe.IsNullRef(ref entry) || ReferenceEquals(entry.Primary, node))
@@ -212,7 +212,7 @@ namespace VL.Qt.Reconciliation
         /// their reconcilers invalidated (unless <paramref name="invalidateWaiting"/> is false: a video taken over inside one
         /// tree keeps its waiters).
         /// </summary>
-        public bool RemoveOccurrence(Element element, Node node, Reconciler reconciler, bool invalidateWaiting = true)
+        public bool RemoveOccurrence(Element element, ItemMirror node, Reconciler reconciler, bool invalidateWaiting = true)
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrNullRef(_entries, element);
             if (Unsafe.IsNullRef(ref entry))
@@ -257,7 +257,7 @@ namespace VL.Qt.Reconciliation
         }
 
         /// <summary>Removes <paramref name="node"/> from the occurrences of <paramref name="reconciler"/>, which is not the owner.</summary>
-        private void RemoveElsewhere(ref Entry entry, Node node, Reconciler reconciler)
+        private void RemoveElsewhere(ref Entry entry, ItemMirror node, Reconciler reconciler)
         {
             if (entry.Elsewhere is not { } elsewhere)
                 return;
@@ -333,9 +333,9 @@ namespace VL.Qt.Reconciliation
                 _shownBySlot.Remove(slot);
         }
 
-        private List<Node> RentList() => _lists.Count > 0 ? _lists.Pop() : new List<Node>(2);
+        private List<ItemMirror> RentList() => _lists.Count > 0 ? _lists.Pop() : new List<ItemMirror>(2);
 
-        private void ReturnList(List<Node> list)
+        private void ReturnList(List<ItemMirror> list)
         {
             list.Clear();
             if (_lists.Count < 16)
@@ -351,7 +351,7 @@ namespace VL.Qt.Reconciliation
 
         private struct HandlerEntry
         {
-            public HandlerNode? Owner;
+            public HandlerMirror? Owner;
             public List<Reconciler>? Waiting; // one entry per ignored occurrence (placeholder)
         }
 
@@ -361,17 +361,17 @@ namespace VL.Qt.Reconciliation
         public int HandlerCount => _handlers.Count;
 
         /// <summary>Handler that currently serves the interaction with feedback <paramref name="key"/>, or null.</summary>
-        public HandlerNode? HandlerOwnerOf(FeedbackSlot key) => _handlers.TryGetValue(key, out var e) ? e.Owner : null;
+        public HandlerMirror? HandlerOwnerOf(FeedbackSlot key) => _handlers.TryGetValue(key, out var e) ? e.Owner : null;
 
         /// <summary>Makes <paramref name="handler"/> the owner of its key (the caller checked that there is none).</summary>
-        public void SetHandlerOwner(HandlerNode handler)
+        public void SetHandlerOwner(HandlerMirror handler)
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_handlers, handler.Key, out _);
             entry.Owner = handler;
         }
 
         /// <summary>Gives up the ownership of <paramref name="handler"/>; waiting duplicates get their reconcilers invalidated.</summary>
-        public void ReleaseHandler(HandlerNode handler)
+        public void ReleaseHandler(HandlerMirror handler)
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrNullRef(_handlers, handler.Key);
             if (Unsafe.IsNullRef(ref entry) || !ReferenceEquals(entry.Owner, handler))

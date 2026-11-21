@@ -183,17 +183,17 @@ namespace VL.Qt.Tests
         }
     }
 
-    public class NodeTests
+    public class ItemMirrorTests
     {
         [Test]
-        public void NewNodeIsEmptyAndUnbound()
+        public void NewMirrorIsEmptyAndUnbound()
         {
-            var n = new Node(3, ElementType.Rectangle);
+            var n = new ItemMirror(3, ElementType.Rectangle);
             Assert.That(n.Id, Is.EqualTo(3u));
             Assert.That(n.Type, Is.EqualTo(ElementType.Rectangle));
-            Assert.That(n.Last, Is.Null);
+            Assert.That(n.Element, Is.Null);
             Assert.That(n.Children, Is.Empty);
-            Assert.That(n.BoundFeedback.IsNone, Is.True);
+            Assert.That(n.BoundSlot.IsNone, Is.True);
         }
     }
 }

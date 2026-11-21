@@ -78,11 +78,11 @@ namespace VL.Qt.Tests
         {
             var shared = C(T(), R());
             Frame(G(R(), shared));
-            var lastBefore = _rec.Root!.Children[1].Children[0].Last;
+            var lastBefore = _rec.Root!.Children[1].Children[0].Element;
             Frame(G(R(), shared));
             Assert.That(_sink.Count, Is.EqualTo(0));
-            Assert.That(_rec.Root!.Children[1].Last, Is.SameAs(shared));
-            Assert.That(_rec.Root!.Children[1].Children[0].Last, Is.SameAs(lastBefore));
+            Assert.That(_rec.Root!.Children[1].Element, Is.SameAs(shared));
+            Assert.That(_rec.Root!.Children[1].Children[0].Element, Is.SameAs(lastBefore));
         }
 
         [Test]

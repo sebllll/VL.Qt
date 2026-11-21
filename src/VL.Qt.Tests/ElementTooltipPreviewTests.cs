@@ -97,7 +97,7 @@ namespace VL.Qt.Tests
                     Finish();
                 Show(next);
             }
-            Assert.That(Update(out _, _reconciler.Root!.Last), Is.Not.Null, "the place keeps its image");
+            Assert.That(Update(out _, _reconciler.Root!.Element), Is.Not.Null, "the place keeps its image");
             Assert.That(Grabs, Is.GreaterThanOrEqualTo(1));
         }
 

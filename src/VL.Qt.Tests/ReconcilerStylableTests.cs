@@ -204,7 +204,7 @@ namespace VL.Qt.Tests
             Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = Kids(Wrap(s), sibling1) });
             var stylableNode = _rec.Root!.Children[0];
             var shownId = stylableNode.Id;
-            var shown = stylableNode.Last;
+            var shown = stylableNode.Element;
             Assert.That(feedback.Error, Is.Null);
             _sink.Clear();
 
@@ -216,8 +216,8 @@ namespace VL.Qt.Tests
             Assert.That(feedback.Error, Is.EqualTo(feedback[0].BuildError));
             Assert.That(_sink.OfOp("DESTROY"), Is.Empty);
             Assert.That(_rec.Root.Children[0].Id, Is.EqualTo(shownId));
-            Assert.That(_rec.Root.Children[0].Last, Is.SameAs(shown));
-            Assert.That(_rec.Root.Children[1].Last, Is.SameAs(sibling2));
+            Assert.That(_rec.Root.Children[0].Element, Is.SameAs(shown));
+            Assert.That(_rec.Root.Children[1].Element, Is.SameAs(sibling2));
             Assert.That(_sink.OfOp("SET").Count(), Is.GreaterThan(0), "sibling update was sent");
 
             // keeps failing: nothing more is sent, error stays
@@ -283,7 +283,7 @@ namespace VL.Qt.Tests
 
             Assert.That(_rec.Root!.Children, Has.Count.EqualTo(1));
             Assert.That(_rec.Root.Children[0].Type, Is.EqualTo(ElementType.Item));
-            Assert.That(_rec.Root.Children[0].Last, Is.TypeOf<Group>());
+            Assert.That(_rec.Root.Children[0].Element, Is.TypeOf<Group>());
             Assert.That(feedback.Error, Does.Contain("boom"));
         }
 

@@ -41,7 +41,7 @@ namespace VL.Qt.Tests
 
         private static Video V(FeedbackSlot feedback = default) => new() { Size = new Vector2(1, 1), Feedback = feedback };
 
-        private bool IsPrimaryHandle(Node n) => _rec.FeedbackRouter.IsPrimary(n.BoundFeedbackId);
+        private bool IsPrimaryHandle(ItemMirror n) => _rec.FeedbackRouter.IsPrimary(n.BoundFeedbackId);
 
         [Test]
         public void TwoOccurrences_TwoObjects_OwnHandlesOnSameSlot()
@@ -189,7 +189,7 @@ namespace VL.Qt.Tests
 
             Frame(G(R(5), inner));
             var innerNode = _rec.Root!.Children[1];
-            Assert.That(_scene.OwnerOf(e), Is.SameAs(innerNode.EffectObjects![0]));
+            Assert.That(_scene.OwnerOf(e), Is.SameAs(innerNode.Effect!.Objects![0]));
         }
 
         [Test]

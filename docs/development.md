@@ -220,10 +220,11 @@ If a diff shows whole files as changed, the cause is line endings or BOM: run `g
 
 ```
 src/VL.Qt/                  # C# library
-  Elements/                 # element types (Rectangle, Text, ..., FeedbackRouter); subfolders Effects/, Interactions/,
+  Elements/                 # element types (Rectangle, Text, ...); subfolders Effects/, Interactions/,
                             # Feedback/, Shaders/, Qml/, Enums/ share the namespace VL.Qt.Elements
   Nodes/                    # vvvv node wrappers, one folder per category (Elements/, Widgets/, ...)
-  Reconciler/               # scene diffing and sync
+  Reconciliation/           # scene diffing (namespace VL.Qt.Reconciliation, internal): Reconciler walks the tree,
+                            # PropertyDiff writes the SETs, ItemMirror is what QtNative holds, FeedbackRouter routes events
   Wire/                     # the protocol to QtNative (namespace VL.Qt.Wire, internal)
     CommandSinkExtensions.cs  # Stride-typed overloads (Color4, RectangleF, string) for any ICommandSink
     CommandWriter.cs        # binary command encoder
@@ -260,13 +261,13 @@ tools/                      # build, export, license and test scripts
 2. Mirror the change in `src/VL.Qt/Wire/Protocol.cs` by hand (`VLQT_<GROUP>_<NAME>` is `Protocol.<Group>.<Name>`; a group name ending in `Id` or `Flags` drops that word in C: `Protocol.EventId.Hover` is `VLQT_EVENT_HOVER`, `Protocol.ImageLoadFlags.Mipmaps` is `VLQT_IMAGE_LOAD_MIPMAPS`)
 3. Bump `VLQT_ABI_VERSION` and `Protocol.AbiVersion` (every change to a constant, a layout or an exported signature; `QtApp` refuses a `vlqt.dll` with another number)
 4. Run `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"` to check that header and C# agree: constants and fixed wire sizes of `protocol.h` and the constants of `vlqt_test.h` (`ProtocolDriftTests`, against `Protocol.cs` and `TestProtocol.cs`), struct layouts of `vlqt.h` (`NativeLayoutTests`, numbers also in the `static_assert`s of `vlqt.cpp`) and the `VLQT_API` exports of `vlqt.h`, `vlqt_test.h` and `testkit/testkit.h` against the `[DllImport]`s of `Native` and `NativeTest` (`ApiDriftTests`)
-5. Implement both sides (`elements.cpp`, `Elements/`, `Reconciler/`)
+5. Implement both sides (`elements.cpp`, `Elements/`, `Reconciliation/`)
 
 **Add a new element type:**
 1. Add IDs to `protocol.h` and `Protocol.cs`
 2. Implement the QML item in `elements.cpp`
 3. Add the `Element` class in `src/VL.Qt/Elements/`
-4. Add property diffing in `Reconciler/PropertyDiff.cs`
+4. Add property diffing in `Reconciliation/PropertyDiff.cs`
 5. Add the node in `src/VL.Qt/Nodes/`
 6. Write unit and smoke tests
 

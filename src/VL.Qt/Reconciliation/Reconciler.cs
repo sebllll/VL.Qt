@@ -23,16 +23,17 @@ namespace VL.Qt.Reconciliation
     /// An element may hang at several places of this tree (<see cref="OccurrenceRegistry"/>): every occurrence gets
     /// its own Qt object and its own feedback id on the element's feedback. The first occurrence in traversal order
     /// (depth-first, children in order; an effect mask counts at its place, before the children) is the primary one
-    /// (<see cref="Node.IsPrimary"/>): only its feedback id reports state values. A new occurrence is primary if the current
-    /// primary was not reached yet in this pass (positions of existing nodes never change their order); when the
-    /// primary lets go, the first of the remaining occurrences is picked at the end of the update and re-bound with a
-    /// new feedback id, so QtNative sends its current state again. Other renderers may show the same element at the same
-    /// time, each with its own Qt objects; only the owner renderer (the first one) has the primary occurrence.
+    /// (<see cref="ItemMirror.IsPrimary"/>): only its feedback id reports state values. A new occurrence is primary if
+    /// the current primary was not reached yet in this pass (positions of existing mirrors never change their order);
+    /// when the primary lets go, the first of the remaining occurrences is picked at the end of the update and re-bound
+    /// with a new feedback id, so QtNative sends its current state again. Other renderers may show the same element at
+    /// the same time, each with its own Qt objects; only the owner renderer (the first one) has the primary occurrence.
     /// When this tree lets go of the last occurrence of an element it owns, it hands the element over at the end of the
     /// update (<see cref="OccurrenceRegistry.HandOver"/>); the next renderer picks its primary in its next update
     /// (<see cref="TakeOver"/>). A video is shown once only, app-wide (inside this tree the first occurrence in traversal
-    /// order wins and takes it over from a later position if needed): an ignored occurrence becomes a placeholder node
+    /// order wins and takes it over from a later position if needed): an ignored occurrence becomes a placeholder mirror
     /// without Qt object and sets a warning in the element's feedback. REPARENT indices count only the real objects.
+    /// <see cref="PrimaryOccurrences"/> does this bookkeeping.
     /// </para>
     /// <para>
     /// Every visited object is bound to the feedback slot of its description (BIND with a feedback id from
@@ -40,8 +41,8 @@ namespace VL.Qt.Reconciliation
     /// </para>
     /// <para>
     /// Input handlers: the interaction chain of an element (<see cref="Element.Interaction"/>) becomes a list of
-    /// handler objects per item (<see cref="Node.Handlers"/>, not children), diffed by the feedback of each interaction
-    /// node (see ReconcileHandlers); they are written after the item's BIND and before its children.
+    /// handler objects per item (<see cref="ItemMirror.Handlers"/>, not children), diffed by <see cref="HandlerReconciler"/>;
+    /// they are written after the item's BIND and before its children.
     /// </para>
     /// <para>
     /// Commands are written parent before child (CREATE, property SETs, REPARENT, BIND, then the children).
@@ -52,42 +53,48 @@ namespace VL.Qt.Reconciliation
     /// Styles are resolved top-down: the base style (<see cref="BaseStyle.Default"/>) under the window root, each
     /// Group and widget merges its <see cref="Element.Style"/> over the style it inherited (<see cref="StyleMerge"/>),
     /// all other elements pass the inherited style on unchanged. A resolved style that stays equal keeps its reference
-    /// (<see cref="Node.ResolvedStyle"/>), so a reference-equal subtree is skipped only if its inherited style is
-    /// reference-equal too (<see cref="Node.InheritedStyle"/>); otherwise it is visited and only SET_STYLE diffs go out.
-    /// Widgets send their resolved style right after CREATE and later as diff against <see cref="Node.SentStyle"/>
-    /// (<see cref="StyleWriter"/>); primitives never get SET_STYLE.
+    /// (<see cref="ItemMirror.ResolvedStyle"/>), so a reference-equal subtree is skipped only if its inherited style is
+    /// reference-equal too (<see cref="ItemMirror.InheritedStyle"/>); otherwise it is visited and only SET_STYLE diffs
+    /// go out. Widgets send their resolved style right after CREATE and later as diff against
+    /// <see cref="ItemMirror.SentStyle"/> (<see cref="StyleWriter"/>); primitives never get SET_STYLE.
     /// </para>
     /// <para>
     /// Self-made widgets: a child that is an <see cref="IStylable"/> (a <see cref="StylableElement"/> in the
     /// children array) is built with the style inherited at its position, and the returned element is reconciled in its
     /// place. Build runs on every pass, because a patched widget is usually a mutable instance whose reference does not
-    /// change; subtrees containing one are therefore never skipped (<see cref="Node.ContainsStylable"/>), the elements
-    /// around them still are. Exceptions are caught per call and shown at the parent's feedback (<see cref="FeedbackState.BuildError"/>).
+    /// change; subtrees containing one are therefore never skipped (<see cref="ItemMirror.ContainsStylable"/>), the
+    /// elements around them still are. Exceptions are caught per call and shown at the parent's feedback
+    /// (<see cref="FeedbackState.BuildError"/>).
     /// </para>
     /// <para>
-    /// Thread: <see cref="Update(Element?, in SpaceMapping)"/> runs on the vvvv main thread inside the Update of the Renderer [Qt] node
-    /// (<see cref="WindowScene.Update"/>), once per frame and window, after the element tree of that frame was
-    /// evaluated; it only writes commands. The pump applies them later in the same frame (frame finished, after all node
-    /// updates, <see cref="WindowScene.ApplyCommands"/>). An exception here is not caught by the renderer: it ends at the
-    /// node like any exception of its Update.
+    /// Effect chain: the Effect pin of an element is segmented (<see cref="Effect.Segment"/>) into links in application
+    /// order and sent as one SET_EFFECT_CHAIN (<see cref="EffectChainWriter"/>), only when the chain instance changed
+    /// (reference comparison, a new instance sends the whole chain again, no chain = linkCount 0). Elements the links refer
+    /// to (the mask of a MULTI run, the texture of a shader uniform) are objects of their own, reconciled without REPARENT
+    /// before the chain is sent and destroyed after it (<see cref="EffectChainMirror.Objects"/>).
+    /// </para>
+    /// <para>
+    /// Thread: <see cref="Update(Element?, in SpaceMapping)"/> runs on the vvvv main thread inside the Update of the
+    /// Renderer [Qt] node (<see cref="WindowScene.Update"/>), once per frame and window, after the element tree of that
+    /// frame was evaluated; it only writes commands. The pump applies them later in the same frame (frame finished, after
+    /// all node updates, <see cref="WindowScene.ApplyCommands"/>). An exception here is not caught by the renderer: it
+    /// ends at the node like any exception of its Update.
     /// </para>
     /// Allocation-free in the steady state (no structural change). Not thread-safe; one per window.
     /// </summary>
-    internal sealed partial class Reconciler
+    internal sealed class Reconciler
     {
         private readonly ICommandSink _sink;
         private readonly IdAllocator _ids;
-        private readonly OccurrenceRegistry _scene;
         private readonly Dictionary<uint, FeedbackSlot> _bindings = new();
         private readonly FeedbackRouter _feedbackRouter = new();
-        private readonly List<Element> _pendingPrimary = new(); // elements whose primary occurrence let go in this pass
-        private Node? _root;
-        private SpaceMapping _mapping = SpaceMapping.Default;
+        private readonly PrimaryOccurrences _primaries;
+        private readonly HandlerReconciler _handlers;
+        private readonly PropertyDiff _properties;
+        private ItemMirror? _root;
+        private PassInfo _pass = new(0, false, false, SpaceMapping.Default);
         private bool _hasMapping;
-        private bool _force;
-        private bool _rescale; // the unit scale changed in this pass: every length is written again
         private bool _invalidated;
-        private int _pass;
 
         /// <param name="sink">Target of the commands.</param>
         /// <param name="ids">Object id allocator of the window.</param>
@@ -96,14 +103,17 @@ namespace VL.Qt.Reconciliation
         {
             _sink = sink ?? throw new ArgumentNullException(nameof(sink));
             _ids = ids ?? throw new ArgumentNullException(nameof(ids));
-            _scene = scene ?? throw new ArgumentNullException(nameof(scene));
+            ArgumentNullException.ThrowIfNull(scene);
+            _primaries = new PrimaryOccurrences(this, scene, _feedbackRouter, sink);
+            _handlers = new HandlerReconciler(this, sink, ids, _feedbackRouter, scene, _bindings);
+            _properties = new PropertyDiff(sink);
         }
 
         /// <summary>Native window of the renderer (vlqt_window_*), Zero in tests; used by Snapshot to find an element.</summary>
         public SceneHandle Window { get; set; }
 
         /// <summary>Mirror of the object under the window root (index 0); null = empty scene.</summary>
-        internal Node? Root => _root;
+        internal ItemMirror? Root => _root;
 
         /// <summary>Object id → feedback slot of every bound object.</summary>
         public IReadOnlyDictionary<uint, FeedbackSlot> Bindings => _bindings;
@@ -121,10 +131,10 @@ namespace VL.Qt.Reconciliation
         /// <paramref name="element"/> was handed over to this renderer (<see cref="OccurrenceRegistry.HandOver"/>): the next
         /// <see cref="Update(Element?, in SpaceMapping)"/> picks the first of its occurrences in this tree as the primary one.
         /// </summary>
-        internal void TakeOver(Element element) => _pendingPrimary.Add(element);
+        internal void TakeOver(Element element) => _primaries.TakeOver(element);
 
         /// <summary>Mapping of the last <see cref="Update(Element?, in SpaceMapping)"/>: units ↔ logical pixels of this scene.</summary>
-        public SpaceMapping Mapping => _mapping;
+        public SpaceMapping Mapping => _pass.Mapping;
 
         /// <summary>
         /// <see cref="Update(Element?, in SpaceMapping)"/> without scene metrics (size 0, dpr 1): for tests and callers in
@@ -140,13 +150,11 @@ namespace VL.Qt.Reconciliation
         /// </summary>
         public void Update(Element? root, in SpaceMapping mapping)
         {
-            _rescale = _hasMapping && mapping.UnitScale != _mapping.UnitScale;
-            _force = !_hasMapping || _rescale || _invalidated;
+            var rescale = _hasMapping && mapping.UnitScale != _pass.Mapping.UnitScale;
+            _pass = new PassInfo(_pass.Pass + 1, Force: !_hasMapping || rescale || _invalidated, Rescale: rescale, mapping);
             _invalidated = false;
-            _mapping = mapping;
             _feedbackRouter.Mapping = mapping;
             _hasMapping = true;
-            _pass++;
 
             if (root is null)
             {
@@ -155,12 +163,12 @@ namespace VL.Qt.Reconciliation
                     DestroySubtree(_root);
                     _root = null;
                 }
-                ResolvePrimaries();
+                _primaries.ResolveAtEndOfUpdate();
                 return;
             }
 
-            _root = Reconcile(_root, root, null, null, 0, BaseStyle.Default);
-            ResolvePrimaries();
+            _root = Reconcile(_root, root, new Position(null, default, 0, BaseStyle.Default, false));
+            _primaries.ResolveAtEndOfUpdate();
         }
 
         /// <summary>
@@ -175,7 +183,7 @@ namespace VL.Qt.Reconciliation
                 Forget(_root);
                 _root = null;
             }
-            ResolvePrimaries();
+            _primaries.ResolveAtEndOfUpdate();
             _bindings.Clear();
             _ids.Reset();
             _hasMapping = false;
@@ -192,183 +200,184 @@ namespace VL.Qt.Reconciliation
                 DestroySubtree(_root);
                 _root = null;
             }
-            ResolvePrimaries();
+            _primaries.ResolveAtEndOfUpdate();
             _hasMapping = false;
         }
 
         /// <summary>
-        /// Reconciles one position. Returns the node now living at that position (the same instance when the
-        /// type matched, a new one or a placeholder otherwise). <paramref name="index"/> = REPARENT index
-        /// (number of real objects before this position). <paramref name="inherited"/> = resolved style of the parent
-        /// chain (the base style under the window root).
+        /// Reconciles one position. Returns the mirror now living at that position (the same instance when the
+        /// type matched, a new one or a placeholder otherwise).
         /// </summary>
-        private Node Reconcile(Node? existing, Element next, Element? parent, Node? parentNode, int index, Style inherited, bool attached = false)
+        private ItemMirror Reconcile(ItemMirror? existing, Element next, in Position at)
         {
             if (next is StylableElement stylable)
-                return ReconcileStylable(existing, stylable, parent, parentNode, index, inherited, attached);
+                return ReconcileStylable(existing, stylable, at);
 
-            var node = ReconcileElement(existing, next, parent, parentNode, index, inherited, attached);
-            node.Stylable = null;
-            return node;
+            var item = ReconcileElement(existing, next, at);
+            item.Stylable = null;
+            return item;
         }
 
         /// <summary>
-        /// Position of an <see cref="IStylable"/>: calls its Build with <paramref name="inherited"/> (every pass that
-        /// reaches it; its ancestors are never skipped, see <see cref="Node.ContainsStylable"/>) and reconciles the returned
-        /// element in its place. A reference-equal result costs nothing more than the call. An exception is caught and shown
-        /// at the parent's feedback (<see cref="FeedbackState.BuildError"/>); the element of the last successful Build of the same
+        /// Position of an <see cref="IStylable"/>: calls its Build with the inherited style (every pass that reaches it; its
+        /// ancestors are never skipped, see <see cref="ItemMirror.ContainsStylable"/>) and reconciles the returned element
+        /// in its place. A reference-equal result costs nothing more than the call. An exception is caught and shown at the
+        /// parent's feedback (<see cref="FeedbackState.BuildError"/>); the element of the last successful Build of the same
         /// stylable stays. Null (or a failure without such an element) shows the placeholder's empty Group.
         /// </summary>
-        private Node ReconcileStylable(Node? existing, StylableElement next, Element? parent, Node? parentNode, int index, Style inherited, bool attached)
+        private ItemMirror ReconcileStylable(ItemMirror? existing, StylableElement next, in Position at)
         {
             Element built;
             string? error = null;
             try
             {
-                built = next.Stylable.Build(inherited) ?? next.Empty;
+                built = next.Stylable.Build(at.Inherited) ?? next.Empty;
             }
             catch (Exception e)
             {
                 error = $"Build of {next.Stylable.GetType().Name} failed: {e.GetType().Name}: {e.Message}";
-                var previous = existing?.Stylable is { } s && ReferenceEquals(s.Stylable, next.Stylable) ? existing.Last : null;
+                var previous = existing?.Stylable is { } s && ReferenceEquals(s.Stylable, next.Stylable) ? existing.Element : null;
                 built = previous ?? next.Empty;
             }
 
-            var node = ReconcileElement(existing, built, parent, parentNode, index, inherited, attached);
-            node.Stylable = next;
-            SetBuildError(parent?.Feedback ?? default, node, error);
-            return node;
+            var item = ReconcileElement(existing, built, at);
+            item.Stylable = next;
+            SetBuildError(at.ParentSlot, item, error);
+            return item;
         }
 
         /// <summary>
-        /// Shows <paramref name="error"/> of the Build at <paramref name="node"/> in <paramref name="slot"/> (the parent's), or
-        /// clears what this node showed there (null). An error of a sibling that is already shown is kept.
+        /// Shows <paramref name="error"/> of the Build at <paramref name="item"/> in <paramref name="slot"/> (the parent's), or
+        /// clears what this mirror showed there (null). An error of a sibling that is already shown is kept.
         /// </summary>
-        private static void SetBuildError(FeedbackSlot slot, Node node, string? error)
+        private static void SetBuildError(FeedbackSlot slot, ItemMirror item, string? error)
         {
-            if (error == node.BuildError)
+            if (error == item.BuildError)
                 return;
             if (error is null)
             {
-                if (slot.Feedback is { } feedback && feedback.TryGet(slot.Index, out var state) && state.BuildError == node.BuildError)
+                if (slot.Feedback is { } feedback && feedback.TryGet(slot.Index, out var state) && state.BuildError == item.BuildError)
                     state.BuildError = null;
             }
-            else if (slot.State is { } shown && (shown.BuildError is null || shown.BuildError == node.BuildError))
+            else if (slot.State is { } shown && (shown.BuildError is null || shown.BuildError == item.BuildError))
             {
                 shown.BuildError = error;
             }
-            node.BuildError = error;
+            item.BuildError = error;
         }
 
         /// <summary>Reconciles a plain element at one position (see <see cref="Reconcile"/>).</summary>
-        private Node ReconcileElement(Node? existing, Element next, Element? parent, Node? parentNode, int index, Style inherited, bool attached = false)
+        private ItemMirror ReconcileElement(ItemMirror? existing, Element next, in Position at)
         {
+            var pass = _pass.Pass;
             if (existing is not null && existing.IsIgnored)
             {
-                // Still a duplicate as long as another node (in this or another renderer) shows the video.
-                if (!_force && ReferenceEquals(existing.Last, next) && IsShownElsewhere(next))
+                // Still a duplicate as long as another mirror (in this or another renderer) shows the video.
+                if (!_pass.Force && ReferenceEquals(existing.Element, next) && _primaries.IsShownElsewhere(next))
                     return existing;
-                _scene.RemoveDuplicate(existing.Last!, this);
+                _primaries.RemovePlaceholder(existing.Element!);
                 existing = null;
             }
 
             if (existing is not null && existing.Type == next.Type)
             {
-                bool same = ReferenceEquals(existing.Last, next);
-                if (same && !_force && !existing.Dirty && !existing.ContainsStylable && ReferenceEquals(inherited, existing.InheritedStyle))
+                bool same = ReferenceEquals(existing.Element, next);
+                if (same && !_pass.Force && !existing.MustVisit && !existing.ContainsStylable && ReferenceEquals(at.Inherited, existing.InheritedStyle))
                 {
-                    existing.SkippedPass = _pass;
+                    existing.SkippedPass = pass;
                     return existing;
                 }
 
-                existing.Dirty = false;
-                existing.VisitedPass = _pass;
-                if (!same || (OccurrenceRegistry.IsExclusive(next) && _scene.OwnerOf(next) != existing))
+                existing.MustVisit = false;
+                existing.VisitedPass = pass;
+                if (!same || (OccurrenceRegistry.IsExclusive(next) && !_primaries.IsPrimaryOf(next, existing)))
                 {
-                    if (!CanOwn(next, existing))
+                    if (!_primaries.TryClaimExclusive(next, existing, pass))
                     {
                         DestroySubtree(existing);
-                        return Ignore(next, parentNode);
+                        return _primaries.CreatePlaceholder(next, at.Parent, pass);
                     }
                     if (!same)
-                        Release(existing.Last!, existing);
-                    Register(next, existing);
+                        _primaries.Release(existing.Element!, existing);
+                    _primaries.Register(next, existing, pass);
                 }
 
-                var resolved = ResolveStyle(existing, next, inherited);
-                DiffProperties(existing, existing.Last, next, parent);
+                var resolved = ResolveStyle(existing, next, at.Inherited);
+                _properties.Write(existing.Id, existing.Element, next, _pass.Mapping, _pass.Rescale);
                 BindFeedback(existing, next);
-                ReconcileHandlers(existing, existing.Last?.Interaction, next.Interaction);
+                _handlers.Reconcile(existing, existing.Element?.Interaction, next.Interaction, _pass);
                 ReconcileEffect(existing, next, resolved);
                 ReconcileChildren(existing, next, resolved);
-                ChildrenReconciled(existing, next);
-                existing.Last = next;
+                if (next.Type == ElementType.Shader)
+                    _properties.WriteShader(existing, (Shader)next);
+                existing.Element = next;
                 return existing;
             }
 
             if (existing is not null)
                 DestroySubtree(existing);
 
-            if (!CanOwn(next, null))
-                return Ignore(next, parentNode);
+            if (!_primaries.TryClaimExclusive(next, null, pass))
+                return _primaries.CreatePlaceholder(next, at.Parent, pass);
 
-            var node = new Node(_ids.Allocate(), next.Type) { Parent = parentNode, VisitedPass = _pass };
-            Register(next, node);
-            _sink.Create(node.Id, (ushort)node.Type);
-            var childStyle = ResolveStyle(node, next, inherited);
-            DiffProperties(node, null, next, parent);
-            if (!attached)
-                _sink.Reparent(node.Id, parentNode?.Id ?? IdAllocator.Root, (uint)index);
-            BindFeedback(node, next);
-            ReconcileHandlers(node, null, next.Interaction);
-            ReconcileEffect(node, next, childStyle);
-            ReconcileChildren(node, next, childStyle);
-            ChildrenReconciled(node, next);
-            node.Last = next;
-            return node;
+            var item = new ItemMirror(_ids.Allocate(), next.Type) { Parent = at.Parent, VisitedPass = pass };
+            _primaries.Register(next, item, pass);
+            _sink.Create(item.Id, (ushort)item.Type);
+            var childStyle = ResolveStyle(item, next, at.Inherited);
+            _properties.Write(item.Id, null, next, _pass.Mapping, _pass.Rescale);
+            if (!at.Attached)
+                _sink.Reparent(item.Id, at.Parent?.Id ?? IdAllocator.Root, (uint)at.Index);
+            BindFeedback(item, next);
+            _handlers.Reconcile(item, null, next.Interaction, _pass);
+            ReconcileEffect(item, next, childStyle);
+            ReconcileChildren(item, next, childStyle);
+            if (next.Type == ElementType.Shader)
+                _properties.WriteShader(item, (Shader)next);
+            item.Element = next;
+            return item;
         }
 
         /// <summary>
-        /// Resolves the style of <paramref name="node"/> and returns the style its children inherit. Group and
+        /// Resolves the style of <paramref name="item"/> and returns the style its children inherit. Group and
         /// widgets merge their own style over <paramref name="inherited"/> (only when one of both changed by reference;
         /// an equal result keeps the old reference, so unchanged children can still be skipped); widgets send the
         /// resolved style as SET_STYLE diff against what QtNative holds. Other elements pass <paramref name="inherited"/> on.
         /// </summary>
-        private Style ResolveStyle(Node node, Element next, Style inherited)
+        private Style ResolveStyle(ItemMirror item, Element next, Style inherited)
         {
-            var styled = next is Group || BaseStyle.AppliesTo((ushort)node.Type);
+            var styled = next is Group || BaseStyle.AppliesTo((ushort)item.Type);
             if (!styled)
             {
-                node.InheritedStyle = inherited;
+                item.InheritedStyle = inherited;
                 return inherited;
             }
 
-            var resolved = node.ResolvedStyle;
+            var resolved = item.ResolvedStyle;
             if (resolved is null
-                || !ReferenceEquals(inherited, node.InheritedStyle)
-                || !ReferenceEquals(next.Style, node.Last?.Style))
+                || !ReferenceEquals(inherited, item.InheritedStyle)
+                || !ReferenceEquals(next.Style, item.Element?.Style))
             {
                 var merged = StyleMerge.Merge(inherited, next.Style);
                 if (resolved is null || !merged.Equals(resolved))
                     resolved = merged;
             }
-            node.InheritedStyle = inherited;
-            node.ResolvedStyle = resolved;
+            item.InheritedStyle = inherited;
+            item.ResolvedStyle = resolved;
 
             if (next is not Group)
             {
                 // Writes nothing when QtNative already holds an equal style.
-                StyleWriter.Write(_sink, node.Id, resolved, node.SentStyle);
-                node.SentStyle = resolved;
+                StyleWriter.Write(_sink, item.Id, resolved, item.SentStyle);
+                item.SentStyle = resolved;
             }
             return resolved;
         }
 
-        /// <summary>Reconciles the children and updates <see cref="Node.ContainsStylable"/> of <paramref name="node"/>.</summary>
-        private void ReconcileChildren(Node node, Element next, Style inherited)
+        /// <summary>Reconciles the children and updates <see cref="ItemMirror.ContainsStylable"/> of <paramref name="item"/>.</summary>
+        private void ReconcileChildren(ItemMirror item, Element next, Style inherited)
         {
             ImmutableArray<Element> children = next.Children;
-            List<Node> old = node.Children;
+            List<ItemMirror> old = item.Children;
             int newCount = children.Length;
             int oldCount = old.Count;
             int common = Math.Min(newCount, oldCount);
@@ -377,7 +386,7 @@ namespace VL.Qt.Reconciliation
 
             for (int i = 0; i < common; i++)
             {
-                var child = Reconcile(old[i], children[i], next, node, live, inherited);
+                var child = Reconcile(old[i], children[i], new Position(item, next.Feedback, live, inherited, false));
                 old[i] = child;
                 if (!child.IsIgnored)
                     live++;
@@ -394,431 +403,236 @@ namespace VL.Qt.Reconciliation
             {
                 for (int i = oldCount; i < newCount; i++)
                 {
-                    var child = Reconcile(null, children[i], next, node, live, inherited);
+                    var child = Reconcile(null, children[i], new Position(item, next.Feedback, live, inherited, false));
                     old.Add(child);
                     if (!child.IsIgnored)
                         live++;
                     stylable |= child.Stylable is not null || child.ContainsStylable;
                 }
             }
-            node.ContainsStylable = stylable;
+            item.ContainsStylable = stylable;
         }
 
         /// <summary>
-        /// Whether <paramref name="self"/> (null = a node about to be created) may show <paramref name="element"/>.
-        /// Always true, except for a video (shown once only, app-wide): false if another renderer shows it; true if nobody
-        /// shows it, or its occurrence is a node of this tree that comes later in this pass (not visited yet,
-        /// or about to be destroyed); then the video is taken over and the old occurrence's subtree is marked dirty, so
-        /// it is not skipped and turns into a placeholder when it is visited.
+        /// BIND when the feedback slot changed (QtNative cancels the press of a Tap handler with a new feedback itself).
+        /// The feedback id is primary or not after <see cref="ItemMirror.IsPrimary"/>; a mirror that became primary with an
+        /// unchanged slot is re-bound too (<see cref="PrimaryOccurrences.SyncPrimary"/>).
         /// </summary>
-        private bool CanOwn(Element element, Node? self)
-        {
-            var ownerReconciler = _scene.OwnerReconcilerOf(element);
-            if (ownerReconciler is null || !OccurrenceRegistry.IsExclusive(element))
-                return true;
-            if (!ReferenceEquals(ownerReconciler, this))
-                return false;
-            var owner = _scene.OwnerOf(element);
-            if (owner is null || ReferenceEquals(owner, self))
-                return true;
-            if (IsVisitedThisPass(owner))
-                return false;
-            for (var n = owner; n is not null && !n.Dirty && n.VisitedPass != _pass; n = n.Parent)
-                n.Dirty = true;
-            _scene.RemoveOccurrence(element, owner, this, invalidateWaiting: false);
-            return true;
-        }
-
-        /// <summary>Whether a placeholder of <paramref name="element"/> has to stay one: it is a video shown at another node.</summary>
-        private bool IsShownElsewhere(Element element)
-            => OccurrenceRegistry.IsExclusive(element) && _scene.OwnerReconcilerOf(element) is not null;
-
-        /// <summary>
-        /// Registers <paramref name="node"/> as an occurrence of <paramref name="element"/> and decides whether it is the
-        /// primary one: it is if it is the only one, or if this renderer owns the element and the current primary was not
-        /// reached yet in this pass (it comes later in traversal order or is about to be destroyed); the old primary is
-        /// then demoted. While the primary is pending (it let go earlier in this pass, or the element was just handed over)
-        /// the node waits for <see cref="ResolvePrimaries"/>. In a renderer that does not own the element it stays a
-        /// further occurrence.
-        /// </summary>
-        private void Register(Element element, Node node)
-        {
-            if (_scene.AddOccurrence(element, node, this))
-            {
-                node.IsPrimary = true;
-                return;
-            }
-            node.IsPrimary = false;
-            var primary = _scene.OwnerOf(element, out var owner);
-            if (!ReferenceEquals(owner, this) || primary is null || IsVisitedThisPass(primary))
-                return;
-            Demote(primary);
-            _scene.SetPrimary(element, node);
-            node.IsPrimary = true;
-        }
-
-        /// <summary>
-        /// Removes the occurrence <paramref name="node"/> of <paramref name="element"/>; a primary that leaves others behind
-        /// (here or in other renderers) is re-picked or handed over at the end of the update.
-        /// </summary>
-        private void Release(Element element, Node node)
-        {
-            if (_scene.RemoveOccurrence(element, node, this))
-                _pendingPrimary.Add(element);
-            node.IsPrimary = false;
-        }
-
-        /// <summary>Makes <paramref name="node"/> a further occurrence; its feedback id stops reporting state values right away (no BIND needed).</summary>
-        private void Demote(Node node)
-        {
-            node.IsPrimary = false;
-            if (node.BoundPrimary)
-            {
-                _feedbackRouter.SetPrimary(node.BoundFeedbackId, false);
-                node.BoundPrimary = false;
-            }
-        }
-
-        /// <summary>
-        /// Picks the new primary occurrence of every element whose primary let go in this pass, or that was handed over to
-        /// this renderer: the first of the remaining occurrences in traversal order (<see cref="IsBefore"/>), re-bound with
-        /// a new feedback id so QtNative sends its state. An element without occurrences left in this tree goes to the next
-        /// renderer that shows it (<see cref="OccurrenceRegistry.HandOver"/>). Runs once per update after the whole tree (and
-        /// after a clear); nothing to do (and no allocation) in the steady state.
-        /// </summary>
-        private void ResolvePrimaries()
-        {
-            for (int i = 0; i < _pendingPrimary.Count; i++)
-            {
-                var element = _pendingPrimary[i];
-                if (!ReferenceEquals(_scene.OwnerReconcilerOf(element), this) || _scene.OwnerOf(element) is not null)
-                    continue;
-                if (_scene.OthersOf(element) is not { Count: > 0 } others)
-                {
-                    _scene.HandOver(element, this);
-                    continue;
-                }
-                var first = others[0];
-                for (int k = 1; k < others.Count; k++)
-                {
-                    if (IsBefore(others[k], first))
-                        first = others[k];
-                }
-                _scene.SetPrimary(element, first);
-                first.IsPrimary = true;
-                if (!first.BoundFeedback.IsNone)
-                    SyncPrimary(first);
-            }
-            _pendingPrimary.Clear();
-        }
-
-        /// <summary>
-        /// Brings the feedback id of <paramref name="node"/> in line with <see cref="Node.IsPrimary"/>: a promotion takes a
-        /// new primary feedback id and sends BIND (QtNative then sends the current Measured/SceneBounds/Media/Error again), a
-        /// demotion only flips the flag of the feedback id.
-        /// </summary>
-        private void SyncPrimary(Node node)
-        {
-            if (node.IsPrimary)
-            {
-                _feedbackRouter.Release(node.BoundFeedbackId); // not primary: leaves the slot alone
-                node.BoundFeedbackId = _feedbackRouter.Acquire(node.BoundFeedback, primary: true);
-                _sink.Bind(node.Id, node.BoundFeedbackId);
-            }
-            else
-            {
-                _feedbackRouter.SetPrimary(node.BoundFeedbackId, false);
-            }
-            node.BoundPrimary = node.IsPrimary;
-        }
-
-        /// <summary>True if <paramref name="a"/> comes before <paramref name="b"/> in traversal order (both in this tree, not equal).</summary>
-        private static bool IsBefore(Node a, Node b)
-        {
-            int da = Depth(a), db = Depth(b);
-            var x = a;
-            var y = b;
-            for (; da > db; da--)
-                x = x.Parent!;
-            for (; db > da; db--)
-                y = y.Parent!;
-            if (ReferenceEquals(x, y))
-                return ReferenceEquals(x, a); // an ancestor comes first
-            while (!ReferenceEquals(x.Parent, y.Parent))
-            {
-                x = x.Parent!;
-                y = y.Parent!;
-            }
-            return Position(x) < Position(y);
-        }
-
-        private static int Depth(Node node)
-        {
-            int d = 0;
-            for (var p = node.Parent; p is not null; p = p.Parent)
-                d++;
-            return d;
-        }
-
-        /// <summary>Order among siblings: the effect objects (negative, in chain order) before the children (index).</summary>
-        private static int Position(Node node)
-        {
-            if (node.Parent is not { } parent)
-                return 0;
-            if (parent.EffectObjects is { } objects)
-            {
-                var i = objects.IndexOf(node);
-                if (i >= 0)
-                    return i - objects.Count;
-            }
-            return parent.Children.IndexOf(node);
-        }
-
-        /// <summary>True if <paramref name="node"/> was reached earlier in this pass (itself or a skipped ancestor).</summary>
-        private bool IsVisitedThisPass(Node node)
-        {
-            if (node.VisitedPass == _pass)
-                return true;
-            for (var n = node; n is not null; n = n.Parent)
-                if (n.SkippedPass == _pass)
-                    return true;
-            return false;
-        }
-
-        /// <summary>Placeholder for an occurrence of a video that is shown elsewhere (in this or another renderer).</summary>
-        private Node Ignore(Element next, Node? parentNode)
-        {
-            var node = new Node(0, next.Type) { Parent = parentNode, VisitedPass = _pass, Last = next };
-            _scene.AddDuplicate(next, this);
-            return node;
-        }
-
-        /// <summary>
-        /// BIND when the feedback slot changed (QtNative cancels the press of a Tap handler with a new feedback itself). The feedback id is primary or not after <see cref="Node.IsPrimary"/>;
-        /// a node that became primary with an unchanged slot is re-bound too (<see cref="SyncPrimary"/>).
-        /// </summary>
-        private void BindFeedback(Node node, Element next)
+        private void BindFeedback(ItemMirror item, Element next)
         {
             FeedbackSlot slot = next.Feedback;
-            FeedbackSlot old = node.BoundFeedback;
+            FeedbackSlot old = item.BoundSlot;
             if (slot == old)
             {
-                if (!slot.IsNone && node.IsPrimary != node.BoundPrimary)
-                    SyncPrimary(node);
+                if (!slot.IsNone && item.IsPrimary != item.BoundPrimary)
+                    _primaries.SyncPrimary(item);
                 return;
             }
 
             if (slot.IsNone)
             {
-                _sink.Bind(node.Id, 0);
-                _bindings.Remove(node.Id);
-                _feedbackRouter.Release(node.BoundFeedbackId);
-                node.BoundFeedbackId = 0;
-                node.BoundPrimary = false;
+                _sink.Bind(item.Id, 0);
+                _bindings.Remove(item.Id);
+                _feedbackRouter.Release(item.BoundFeedbackId);
+                item.BoundFeedbackId = 0;
+                item.BoundPrimary = false;
             }
             else
             {
                 // New feedback id: late events of the old binding are dropped, the old slot loses hover/press.
-                _feedbackRouter.Release(node.BoundFeedbackId);
-                node.BoundFeedbackId = _feedbackRouter.Acquire(slot, node.IsPrimary);
-                node.BoundPrimary = node.IsPrimary;
-                _sink.Bind(node.Id, node.BoundFeedbackId);
-                _bindings[node.Id] = slot;
+                _feedbackRouter.Release(item.BoundFeedbackId);
+                item.BoundFeedbackId = _feedbackRouter.Acquire(slot, item.IsPrimary);
+                item.BoundPrimary = item.IsPrimary;
+                _sink.Bind(item.Id, item.BoundFeedbackId);
+                _bindings[item.Id] = slot;
             }
-            node.BoundFeedback = slot;
+            item.BoundSlot = slot;
         }
 
-        /// <summary>DESTROY for the top node only (QtNative destroys its children), all ids freed.</summary>
-        private void DestroySubtree(Node node)
+        /// <summary>DESTROY for the top mirror only (QtNative destroys its children), all ids freed.</summary>
+        private void DestroySubtree(ItemMirror item)
         {
-            if (!node.IsIgnored)
-                _sink.Destroy(node.Id);
-            Forget(node);
+            if (!item.IsIgnored)
+                _sink.Destroy(item.Id);
+            Forget(item);
         }
 
         /// <summary>Frees ids, ownership, duplicate registrations and bindings of the whole subtree.</summary>
-        private void Forget(Node node)
+        private void Forget(ItemMirror item)
         {
-            if (node.BuildError is not null)
-                SetBuildError(node.Parent?.Last?.Feedback ?? default, node, null);
-            if (node.IsIgnored)
+            if (item.BuildError is not null)
+                SetBuildError(item.Parent?.Element?.Feedback ?? default, item, null);
+            if (item.IsIgnored)
             {
-                _scene.RemoveDuplicate(node.Last!, this);
+                _primaries.RemovePlaceholder(item.Element!);
                 return;
             }
-            var children = node.Children;
+            var children = item.Children;
             for (int i = 0; i < children.Count; i++)
                 Forget(children[i]);
-            if (node.EffectObjects is { } objects)
+            if (item.Effect is { } effect)
             {
-                for (int i = 0; i < objects.Count; i++)
-                    Forget(objects[i]);
-                node.EffectObjects = null;
+                if (effect.Objects is { } objects)
+                {
+                    for (int i = 0; i < objects.Count; i++)
+                        Forget(objects[i]);
+                    effect.Objects = null;
+                }
+                if (effect.Warning is not null)
+                    SetEffectWarning(effect, item.Element?.Feedback ?? default, null);
             }
-            if (node.EffectWarning is not null)
-                SetEffectWarning(node, node.Last?.Feedback ?? default, null);
-            if (node.Last is not null)
-                Release(node.Last, node);
-            if (!node.BoundFeedback.IsNone)
+            if (item.Element is not null)
+                _primaries.Release(item.Element, item);
+            if (!item.BoundSlot.IsNone)
             {
-                _bindings.Remove(node.Id);
-                _feedbackRouter.Release(node.BoundFeedbackId);
+                _bindings.Remove(item.Id);
+                _feedbackRouter.Release(item.BoundFeedbackId);
             }
-            if (node.Handlers is { } handlers)
-            {
-                // QtNative removes the handlers with their item (or with the RESET of a resync).
-                for (int i = 0; i < handlers.Count; i++)
-                    ForgetHandler(handlers[i]);
-                handlers.Clear();
-            }
-            _ids.Free(node.Id);
+            _handlers.Forget(item);
+            _ids.Free(item.Id);
         }
 
         /// <summary>
-        /// Diffs the input handlers of <paramref name="node"/> against the interaction chain <paramref name="next"/>
-        /// (#319). Key = <see cref="Interaction.Feedback"/>; the order of the chain does not matter. A new key creates the
-        /// handler (CREATE, property SETs, REPARENT to the item, BIND to a new feedback id), the same instance costs
-        /// nothing, a changed instance sends the changed properties, a missing key is destroyed (ids and feedback id freed).
-        /// An interaction that is already active at another handler (another element, the same chain twice, another
-        /// renderer) gets a placeholder and the duplicate warning (<see cref="OccurrenceRegistry"/>); it takes over once
-        /// the owner lets go (next update). A reference-equal chain is skipped unless the whole tree is forced.
+        /// Reconciles the Effect pin of <paramref name="item"/>: a new chain instance is segmented and sent, an unchanged one
+        /// only retries its objects (and is sent again for a new unit scale).
         /// </summary>
-        private void ReconcileHandlers(Node node, Interaction? previous, Interaction? next)
+        private void ReconcileEffect(ItemMirror item, Element next, Style inherited)
         {
-            var list = node.Handlers;
-            if (next is null && (list is null || list.Count == 0))
-                return;
-            if (!_force && ReferenceEquals(previous, next) && list is not null)
+            var chain = next.Effect;
+            if (chain is null && item.Effect?.Chain is null)
                 return;
 
-            list ??= node.Handlers = new List<HandlerNode>();
-            if (next is not null)
-                ReconcileLink(node, list, next);
-
-            for (int i = list.Count - 1; i >= 0; i--)
+            var effect = item.Effect ??= new EffectChainMirror();
+            if (ReferenceEquals(chain, effect.Chain))
             {
-                if (list[i].SeenPass != _pass)
-                {
-                    DestroyHandler(list[i]);
-                    list.RemoveAt(i);
-                }
+                var sent = RetryEffectObjects(item, effect, inherited);
+                // A new unit scale changes the lengths of the chain.
+                if (_pass.Rescale && !sent && chain is not null)
+                    EffectChainWriter.Send(_sink, item.Id, effect, _pass.Mapping);
+                return;
+            }
+
+            ChangeEffectChain(item, effect, next, chain, inherited);
+        }
+
+        /// <summary>The chain instance changed: segments it, reconciles the objects, sends it and destroys the objects it no longer uses.</summary>
+        private void ChangeEffectChain(ItemMirror item, EffectChainMirror effect, Element next, Effect? chain, Style inherited)
+        {
+            var links = Effect.Segment(chain, out var warnings);
+            effect.Chain = chain;
+            effect.Links = links;
+            SetEffectWarning(effect, next.Feedback, warnings.IsEmpty ? null : string.Join(" ", warnings));
+
+            var elements = CollectEffectElements(links);
+            var old = effect.Objects;
+            var used = old is { Count: > 0 } ? new bool[old.Count] : null;
+            var matches = new ItemMirror?[elements.Count];
+            if (used is not null)
+            {
+                // The same element keeps its object; leftovers of the same type are updated in place.
+                for (int i = 0; i < elements.Count; i++)
+                    matches[i] = TakeObject(old!, used, elements[i], sameElement: true);
+                for (int i = 0; i < elements.Count; i++)
+                    matches[i] ??= TakeObject(old!, used, elements[i], sameElement: false);
+            }
+
+            var objects = new List<ItemMirror>(elements.Count);
+            for (int i = 0; i < elements.Count; i++)
+                objects.Add(Reconcile(matches[i], elements[i], new Position(item, default, 0, inherited, Attached: true)));
+            effect.Elements = objects.Count > 0 ? elements : null;
+            effect.Objects = objects.Count > 0 ? objects : null;
+
+            EffectChainWriter.Send(_sink, item.Id, effect, _pass.Mapping);
+
+            // The chain no longer refers to the objects it did not reuse.
+            if (used is not null)
+            {
+                for (int i = 0; i < old!.Count; i++)
+                    if (!used[i])
+                        DestroySubtree(old[i]);
             }
         }
 
         /// <summary>
-        /// Matches one link (after the links before it, so ids and the first occurrence of a duplicate follow the patch
-        /// order; recursion depth = chain length).
+        /// Unchanged chain: the objects are reconciled again (their element may have changed inside, and a video shown
+        /// elsewhere stays a placeholder that is retried every pass); the chain is sent again when an object got
+        /// another id (returns true then).
         /// </summary>
-        private void ReconcileLink(Node node, List<HandlerNode> list, Interaction link)
+        private bool RetryEffectObjects(ItemMirror item, EffectChainMirror effect, Style inherited)
         {
-            if (link.Previous is { } previous)
-                ReconcileLink(node, list, previous);
+            if (effect.Objects is not { } objects || effect.Elements is not { } elements)
+                return false;
 
-            int k = IndexOfUnseen(list, link.Feedback);
-            if (k < 0)
+            var resend = false;
+            for (int i = 0; i < objects.Count; i++)
             {
-                list.Add(CreateHandler(node, link));
+                var o = Reconcile(objects[i], elements[i], new Position(item, default, 0, inherited, Attached: true));
+                objects[i] = o;
+                if (o.Id != effect.SentIds![i])
+                    resend = true;
+            }
+            if (resend)
+                EffectChainWriter.Send(_sink, item.Id, effect, _pass.Mapping);
+            return resend;
+        }
+
+        /// <summary>First unused old object of <paramref name="element"/> itself (<paramref name="sameElement"/>) or of its type.</summary>
+        private static ItemMirror? TakeObject(List<ItemMirror> old, bool[] used, Element element, bool sameElement)
+        {
+            for (int i = 0; i < old.Count; i++)
+            {
+                if (used[i])
+                    continue;
+                if (sameElement ? ReferenceEquals(old[i].Element, element) : old[i].Type == element.Type)
+                {
+                    used[i] = true;
+                    return old[i];
+                }
+            }
+            return null;
+        }
+
+        /// <summary>The elements the links refer to (mask sources and uniform textures), each once by reference, in chain order.</summary>
+        private static List<Element> CollectEffectElements(ImmutableArray<EffectChainLink> links)
+        {
+            var elements = new List<Element>();
+            foreach (var link in links)
+            {
+                if (link.Shader is { } shader)
+                {
+                    foreach (var u in shader.Uniforms)
+                        if (u?.Texture is { } texture)
+                            AddOnce(elements, texture);
+                }
+                else if (link.Multi.MaskSource is { } mask)
+                {
+                    AddOnce(elements, mask);
+                }
+            }
+            return elements;
+        }
+
+        private static void AddOnce(List<Element> elements, Element element)
+        {
+            foreach (var e in elements)
+                if (ReferenceEquals(e, element))
+                    return;
+            elements.Add(element);
+        }
+
+        /// <summary>Writes the fold warning of <paramref name="effect"/> into <paramref name="slot"/> (null clears what it wrote).</summary>
+        private static void SetEffectWarning(EffectChainMirror effect, FeedbackSlot slot, string? warning)
+        {
+            if (warning == effect.Warning)
                 return;
-            }
-
-            var h = list[k];
-            if (h.IsIgnored)
+            if (slot.State is { } state)
             {
-                if (_scene.HandlerOwnerOf(link.Feedback) is null)
-                {
-                    _scene.RemoveHandlerDuplicate(h.Key, this);
-                    list[k] = CreateHandler(node, link);
-                }
-                else
-                {
-                    h.SeenPass = _pass;
-                    h.Last = link;
-                }
+                if (warning is not null && state.Warning is null)
+                    state.Warning = warning;
+                else if (warning is null && state.Warning == effect.Warning)
+                    state.Warning = null;
             }
-            else if (h.Type != link.HandlerType)
-            {
-                DestroyHandler(h);
-                list[k] = CreateHandler(node, link);
-            }
-            else
-            {
-                h.SeenPass = _pass;
-                if (_rescale || !ReferenceEquals(h.Last, link))
-                {
-                    // A new scale sends the limits again: previous = null writes every non-default value.
-                    link.WriteProperties(_sink, h.Id, _rescale ? null : h.Last, _mapping);
-                    h.Last = link;
-                }
-            }
+            effect.Warning = warning;
         }
-
-        /// <summary>Index of the handler with <paramref name="key"/> not yet matched in this pass, -1 if none.</summary>
-        private int IndexOfUnseen(List<HandlerNode> list, FeedbackSlot key)
-        {
-            for (int i = 0; i < list.Count; i++)
-            {
-                var h = list[i];
-                if (h.SeenPass != _pass && h.Key == key)
-                    return i;
-            }
-            return -1;
-        }
-
-        /// <summary>New handler at the item of <paramref name="node"/>, or a placeholder if the interaction is active elsewhere.</summary>
-        private HandlerNode CreateHandler(Node node, Interaction link)
-        {
-            if (_scene.HandlerOwnerOf(link.Feedback) is not null)
-            {
-                _scene.AddHandlerDuplicate(link.Feedback, this);
-                return new HandlerNode(0, link.HandlerType, link.Feedback) { SeenPass = _pass, Last = link };
-            }
-
-            var h = new HandlerNode(_ids.Allocate(), link.HandlerType, link.Feedback) { SeenPass = _pass, Last = link };
-            _scene.SetHandlerOwner(h);
-            _sink.Create(h.Id, h.Type);
-            link.WriteProperties(_sink, h.Id, null, _mapping);
-            _sink.Reparent(h.Id, node.Id, 0);
-            h.BoundFeedbackId = _feedbackRouter.Acquire(h.Key);
-            _sink.Bind(h.Id, h.BoundFeedbackId);
-            _bindings[h.Id] = h.Key;
-            return h;
-        }
-
-        /// <summary>DESTROY of one handler (placeholders have no QtNative object), then <see cref="ForgetHandler"/>.</summary>
-        private void DestroyHandler(HandlerNode h)
-        {
-            if (!h.IsIgnored)
-                _sink.Destroy(h.Id);
-            ForgetHandler(h);
-        }
-
-        /// <summary>Frees id, feedback id (resets the slot: not hovered), binding and ownership of a handler.</summary>
-        private void ForgetHandler(HandlerNode h)
-        {
-            if (h.IsIgnored)
-            {
-                _scene.RemoveHandlerDuplicate(h.Key, this);
-                return;
-            }
-            _scene.ReleaseHandler(h);
-            _bindings.Remove(h.Id);
-            _feedbackRouter.Release(h.BoundFeedbackId);
-            h.BoundFeedbackId = 0;
-            _ids.Free(h.Id);
-        }
-
-        /// <summary>
-        /// Hook for the property diff (04c): writes the SETs for the properties of <paramref name="next"/>
-        /// that differ from <paramref name="previous"/> (null = just created, send all non-default values).
-        /// <paramref name="parent"/> is the new parent description (null under the window root), needed e.g.
-        /// to treat the anchor only as pivot for children of Row/Column. Called before REPARENT for new objects.
-        /// </summary>
-        partial void DiffProperties(Node node, Element? previous, Element next, Element? parent);
-
-        /// <summary>
-        /// Hook after the children of <paramref name="node"/> were reconciled (their ids are final), e.g. to
-        /// reference the Shader input child (04c).
-        /// </summary>
-        partial void ChildrenReconciled(Node node, Element next);
     }
 }
