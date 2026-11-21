@@ -43,9 +43,12 @@ public:
     /* Applies all commands; stops at the first bad one (earlier ones stay applied). err names index + reason. */
     int apply(const unsigned char* buf, int len, std::string& err);
     /* Queues changed measured values of bound items (scene/measure.h) and the events of the bound input handlers
-     * (scene/handlers.h), then copies queued events into out and clears the queue: a buffer export (vlqt.h); on
-     * VLQT_ERR_BUFFER_TOO_SMALL the events stay queued. */
+     * (scene/handlers.h), then copies queued events into out and clears the queue: a buffer export (vlqt.h). On
+     * VLQT_ERR_BUFFER_TOO_SMALL the events stay queued and eventsCollected stays set: the next poll only drains
+     * (no collecting, no polish), so *required of the failed call is what the retry needs. */
     int poll(unsigned char* out, int cap, int* written, int* required);
+    /* True between a poll that collected and the drain that succeeded. */
+    bool eventsCollected = false;
     /* Runs pending polish (layouts/positioners) of all scene items without a render, so poll measures current
      * geometry also when Qt did not render this pump. Skipped when nothing changed since the last poll:
      * no apply, no marked geometry, no window geometry change and no polish request pending in the window. */
@@ -103,7 +106,7 @@ private:
     int opBind(WireReader& payload, std::string& err);
     int opSetClearColor(WireReader& payload, std::string& err);
     int opReset(WireReader& payload, std::string& err);
-    int opSetStyle(WireReader& payload, std::string& err); // vlstyle.h
+    int opSetStyle(WireReader& payload, std::string& err); // style/vl_style.h
     int opSetClear(WireReader& payload, std::string& err);
     int opSetSpace(WireReader& payload, std::string& err);
     int opSetUniforms(WireReader& payload, std::string& err); // ShaderEffect

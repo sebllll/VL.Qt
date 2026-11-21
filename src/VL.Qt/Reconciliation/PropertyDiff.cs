@@ -158,8 +158,8 @@ namespace VL.Qt.Reconciliation
 
         /// <summary>
         /// Common item properties. Size, Anchor and Transform are sent as they are, also for children of Row/Column
-        /// (there the layout places them and QtNative uses the anchor only as pivot, protocol.h "Geometry"). Visibility is QtNative's: it hides the
-        /// children of a Shader (drawn through their layers), Opacity 0 = not drawn.
+        /// (there the layout places them and QtNative uses the anchor only as pivot, protocol.h "Geometry"). Visible is the Enabled pin; QtNative
+        /// still hides the children of a Shader itself (drawn through their layers). Opacity 0 = not drawn, input stays.
         /// </summary>
         private void DiffCommon(uint id, Element p, Element n)
         {
@@ -174,6 +174,9 @@ namespace VL.Qt.Reconciliation
 
             if (p.Debug != n.Debug)
                 _sink.SetBool(id, P.Debug, n.Debug);
+
+            if (p.Visible != n.Visible)
+                _sink.SetBool(id, P.Visible, n.Visible);
 
             // Transform and Anchor are sent separately; QtNative resolves the anchor against the item's actual size
             // (follows Auto Size, layout and Size changes without a resend from here). Every TRANSFORM resets a drag

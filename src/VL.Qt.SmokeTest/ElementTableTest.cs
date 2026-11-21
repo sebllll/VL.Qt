@@ -73,6 +73,7 @@ public static class ElementTableTest
         [Protocol.PropertyId.Size] = Protocol.ValueType.Vec2,
         [Protocol.PropertyId.Transform] = Protocol.ValueType.Mat4,
         [Protocol.PropertyId.Opacity] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.Visible] = Protocol.ValueType.Bool,
         [Protocol.PropertyId.Clip] = Protocol.ValueType.Bool,
         [Protocol.PropertyId.Anchor] = Protocol.ValueType.I32,
         [Protocol.PropertyId.Debug] = Protocol.ValueType.Bool,

@@ -19,41 +19,44 @@ namespace VL.Qt.Nodes
     {
         private readonly SnapshotGrab _grab;
         private readonly ImageFileWriter _writer;
-        private readonly ImageNodeReport _report;
+        private readonly ResourceNodeReport _report;
         // Target of the grab in flight (the newest Write wins, like the snapshot itself).
         private string _path = string.Empty;
         private int _quality;
         private bool _grabbing;
         private string _error = string.Empty;
+        private bool _success;
 
         public FileWriterElementNode(NodeContext nodeContext)
+            : this(ResourceClient.ForApp(nodeContext.AppHost), OccurrenceRegistry.ForApp(nodeContext.AppHost), ImageFileWriter.CreateNative(),
+                new NodeErrors(nodeContext))
         {
-            _grab = new SnapshotGrab(ResourceClient.ForApp(nodeContext.AppHost), OccurrenceRegistry.ForApp(nodeContext.AppHost));
-            _writer = ImageFileWriter.CreateNative();
-            _report = new ImageNodeReport(new NodeErrors(nodeContext));
         }
 
-        /// <summary>For tests: a client on a fake API, an own scene registry and a writer on a fake write function.</summary>
-        internal FileWriterElementNode(ResourceClient client, OccurrenceRegistry scene, ImageFileWriter writer)
+        /// <summary>
+        /// For tests: a client on a fake API, an own scene registry and a writer on a fake write function; null
+        /// <paramref name="messages"/> reports nothing.
+        /// </summary>
+        internal FileWriterElementNode(ResourceClient client, OccurrenceRegistry scene, ImageFileWriter writer, NodeErrors? messages = null)
         {
             _grab = new SnapshotGrab(client, scene);
             _writer = writer;
-            _report = new ImageNodeReport(null);
+            _report = new ResourceNodeReport(messages, lasting: false);
         }
 
         /// <summary>Grabs Element on Write and writes it to File Path.</summary>
         /// <param name="element">Element or Group to write; it has to be shown in a renderer.</param>
         /// <param name="filePath">Target file; the extension picks the format (png, jpg, bmp, ...). Missing folders are created, an existing file is overwritten.</param>
-        /// <param name="isDone">True in the frame the file was written (also when it failed, then Error says why).</param>
-        /// <param name="error">Why the last grab or write failed, empty otherwise.</param>
+        /// <param name="isDone">True in the frame the write ended, also when the grab or the write failed (see Success).</param>
+        /// <param name="success">True if the last write that ended wrote the file; set in the frame of Is Done and held until the next one. A failure is logged.</param>
         /// <param name="scale">Pixels per DIP: pixel size = element size in DIP * Scale, independent of the screen's DPI scaling.</param>
         /// <param name="quality">0..100 for lossy formats (JPG, WebP); ignored for PNG and BMP.</param>
         /// <param name="write">Grabs the element and writes it (a write while one runs waits, only the newest one).</param>
         public void Update(
-            Element? element,
+            IElement? element,
             Path filePath,
             out bool isDone,
-            out string error,
+            out bool success,
             float scale = 1,
             [Pin(Visibility = PinVisibility.Optional)] int quality = 90,
             bool write = false)
@@ -73,7 +76,7 @@ namespace VL.Qt.Nodes
                 _grabbing = false;
                 _error = _path.Length == 0 ? FileWriterNode.NoPathError : _grab.Start(element, scale);
                 if (_error.Length > 0)
-                    // Nothing is written: Done and Error in the same frame, so a patch waiting for Is Done does not hang.
+                    // Nothing is written: Done without Success in the same frame, so a patch waiting for Is Done does not hang.
                     isDone = true;
                 else
                     _grabbing = true;
@@ -89,8 +92,10 @@ namespace VL.Qt.Nodes
                     isDone = true;
                 }
             }
-            error = _error;
-            _report.Update(null, error);
+            if (isDone)
+                _success = _error.Length == 0;
+            success = _success;
+            _report.Update(null, _error);
         }
 
         public void Dispose()

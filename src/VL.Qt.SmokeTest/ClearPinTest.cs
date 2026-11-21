@@ -250,12 +250,15 @@ public static class ClearPinTest
         s.Grab(w, P("debug_off")).Dispose();
 
         // 5) Snapshot of the blurred rectangle with Clear off: only the element, no feedback in it.
-        var snap = new SnapshotNode(client, scene);
-        var image = snap.Update(blurred, out var ready, out var error, 1, true);
+        var snapLog = new NodeLog();
+        var snap = new SnapshotNode(client, scene, snapLog.Errors);
+        var image = snap.Update(blurred, out var ready, 1, true);
+        var error = snapLog.Take();
         for (int i = 0; i < 60 && !ready && error.Length == 0; i++)
         {
             Pump(1);
-            image = snap.Update(blurred, out ready, out error, 1);
+            image = snap.Update(blurred, out ready, 1);
+            error = snapLog.Take();
         }
         s.Check(ready && image != null, $"clear-pin: snapshot ready with Clear off ('{error}')");
         if (image != null)

@@ -235,24 +235,25 @@ src/VL.Qt.Native/           # QtNative (C++)
   vlqt.h                    # C API (the exports of all groups)
   vlqt_test.h               # test exports, in every build
   protocol.h                # shared type/property/event IDs
-  app/                      # app lifecycle, pump, logging, last error, fonts, animation clock, render gate
+  app/                      # app lifecycle, pump, logging, last error, fonts, animation clock, render gate, scene change count
   window/                   # windows and their exports, event filters, focus, touch input
   platform/                 # platform code (Windows, Linux)
   scene/                    # scene of a window: object table, command decoder, events, input handlers
   elements/                 # element types (type_*.cpp), their table, geometry, Group frame, effect sources
   effects/                  # effect chain, Shader item and its material, layer requests
   user_qml/                 # QmlElement: loads a user .qml file (qml_item), watches its root (qml_watcher), wire values (qml_wire)
+  style/                    # VlStyle (vl_style), the attached style of the Controls, and the base style VLQt/*.qml
   resources/                # resource manager (resources.h, resource_*.h/cpp), pixel formats
   offscreen/                # QtTexture scenes: binding, rendering, input, exports, linear pass
   diagnostics/              # perf monitor (perf_*), F2/F5 overlays, debug overlay
   test/                     # the test exports of vlqt_test.h
   testkit/                  # vlqt_testkit, the stand-in D3D11 device of the SmokeTest (not packed)
+  tools/glprobe.c           # vlqt-glprobe, the OpenGL check under WSLg (Linux)
   device.h/cpp              # shared D3D11 device, device loss
   render_thread.h/cpp       # Qt render threads of the QtTexture scenes
   *_resource.h/cpp          # images, shaders, snapshots
   qtimageitem.h/cpp         # Image element: draws an image resource
   image_writer.h/cpp        # writes pixels to an image file (vlqt_image_write_file)
-  vlstyle.h/cpp             # VlStyle, the attached style of the Controls
   audio_tap.h/cpp           # audio tap: the sound of a Video element as samples
 src/VL.Qt.Tests/            # C# unit tests
 src/VL.Qt.SmokeTest/        # native smoke + perf tests

@@ -1,4 +1,6 @@
+// Private Qt API: QQuickMatrix4x4 (setMatrix without QVariant); check on Qt updates (list: elements/elements.h).
 #include "elements/geometry.h"
+#include "effects/shader_item.h"
 #include "elements/elements.h"
 #include "elements/group_item.h"
 
@@ -80,6 +82,16 @@ bool setDebug(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& 
     els.setDebug(n, v.b);
     return true;
 }
+// VISIBLE (Enabled pin): off takes the item out of the scene (not drawn, no input, no space in Row/Column). An item that
+// QtNative hides itself (a child of a SHADER, drawn through its layer; a parked mask or chain texture) stays hidden:
+// the value is only remembered, Scene::reparent applies it when the item comes back into the tree.
+bool setVisible(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
+{
+    n.enabled = v.b;
+    if (!n.maskHidden && !qobject_cast<const ShaderItem*>(n.item->parentItem()))
+        n.item->setVisible(v.b);
+    return true;
+}
 
 } // namespace
 
@@ -92,6 +104,7 @@ const std::vector<PropDef>& commonProps()
         {VLQT_PROPERTY_CLIP, VLQT_VALUE_TYPE_BOOL, setClip, nullptr},
         {VLQT_PROPERTY_ANCHOR, VLQT_VALUE_TYPE_I32, setAnchor, nullptr},
         {VLQT_PROPERTY_DEBUG, VLQT_VALUE_TYPE_BOOL, setDebug, nullptr},
+        {VLQT_PROPERTY_VISIBLE, VLQT_VALUE_TYPE_BOOL, setVisible, nullptr},
     };
     return t;
 }

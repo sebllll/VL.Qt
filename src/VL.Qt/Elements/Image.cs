@@ -1,4 +1,5 @@
 ﻿using VL.Qt.Images;
+using VL.Qt.Nodes;
 
 namespace VL.Qt.Elements
 {
@@ -6,6 +7,7 @@ namespace VL.Qt.Elements
     internal sealed class Image : Element
     {
         public Image() : base(ElementType.Image) { }
+        internal Image(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Image, common, feedback) { }
 
         /// <summary>The image to draw, null = nothing. Compared by reference; QtNative gets its resource id.</summary>
         public QtImage? Source { get; init; }

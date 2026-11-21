@@ -69,12 +69,15 @@ public static class GroupFrameTest
         Pump(3);
 
         // 1) Snapshot of the Group = its frame, 250 x 150, orange in the top left corner, blue in the bottom right one.
-        var node = new SnapshotNode(client, scene);
-        var image = node.Update(group, out var ready, out var error, 1, true);
+        var log = new NodeLog();
+        var node = new SnapshotNode(client, scene, log.Errors);
+        var image = node.Update(group, out var ready, 1, true);
+        var error = log.Take();
         for (int frames = 0; !ready && error.Length == 0 && frames < 120; frames++)
         {
             Pump(1);
-            image = node.Update(group, out ready, out error, 1);
+            image = node.Update(group, out ready, 1);
+            error = log.Take();
         }
         s.Check(ready && image is not null && error.Length == 0, $"snapshot of the group is ready ('{error}')");
         if (ready && image is not null)
@@ -122,11 +125,13 @@ public static class GroupFrameTest
         //    they are (Group = pure transform container). Snapshot, effect layer and debug frame use that frame.
         IImage? Snap(Element element, out string err)
         {
-            var img = node.Update(element, out var ok, out err, 1, true);
+            var img = node.Update(element, out var ok, 1, true);
+            err = log.Take();
             for (int frames = 0; !ok && err.Length == 0 && frames < 120; frames++)
             {
                 Pump(1);
-                img = node.Update(element, out ok, out err, 1);
+                img = node.Update(element, out ok, 1);
+                err = log.Take();
             }
             return ok ? img : null;
         }

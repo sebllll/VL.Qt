@@ -45,11 +45,12 @@ namespace VL.Qt.Nodes
         /// <param name="debug">Debug overlay for this element (see Rectangle).</param>
         /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input. Hit-testing uses the extent (0, 0) to (max X, max Y) of the points, not the stroke.</param>
         /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
+        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
         /// <param name="measuredSize">Implicit size reported by Qt, in units (0, 0).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         /// <returns>The element for Renderer [Qt] or a Group.</returns>
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             Spread<Vector2> points,
             [DefaultValue(false)] bool closed,
             Matrix transform,
@@ -68,6 +69,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
@@ -75,7 +77,7 @@ namespace VL.Qt.Nodes
                 points ?? Spread<Vector2>.Empty, closed, new Color4(0, 0, 0, 0), strokeColor, strokeWidth,
                 cap, join, miterLimit, dash ?? Spread<float>.Empty, dashOffset,
                 trimStart, trimEnd, trimOffset, ShapeFillRule.NonZero);
-            return _core.Describe(new CommonInputs(Vector2.Zero, transform, RectangleAnchor.TopLeft, opacity, clip, debug, interaction, effect), props, out measuredSize, out sceneBounds);
+            return _core.Describe(new CommonInputs(Vector2.Zero, transform, RectangleAnchor.TopLeft, opacity, clip, debug, interaction, effect, enabled), props, out measuredSize, out sceneBounds);
         }
 
         public void Dispose() => _core.Dispose();

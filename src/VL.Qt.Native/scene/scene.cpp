@@ -1,3 +1,4 @@
+// Private Qt API: QQuickWindowPrivate::itemsToPolish (poll); check on Qt updates (list: elements/elements.h).
 #include "scene/scene.h"
 #include "app/exports.h"
 #include "diagnostics/debug_overlay.h"
@@ -324,9 +325,9 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
         elements.placeAfterReparent(it->second);
     }
     it->second.maskHidden = false; // a detached mask comes back into the tree
-    // Visibility is QtNative's alone (there is no VISIBLE property): children of a ShaderEffect (Input, texture
-    // elements) are drawn only through their layers, every other element is shown (Opacity 0 = not drawn, input stays).
-    item->setVisible(!underShaderEffect); // no-op when the explicit value is unchanged
+    // Children of a ShaderEffect (Input, texture elements) are drawn only through their layers; every other element is
+    // shown unless its Enabled pin (VISIBLE) is off (Opacity 0 = not drawn, input stays).
+    item->setVisible(!underShaderEffect && it->second.enabled); // no-op when the explicit value is unchanged
 
     // Stacking order: index = position among the element siblings (clamped). Untracked items do not count: the
     // root of an effect chain (a sibling, kept right after its item by Qt), retired items, QML internals.
@@ -372,12 +373,20 @@ int Scene::poll(unsigned char* out, int cap, int* written, int* required)
 {
     if (const int rc = beginBuffer(out, cap, written, required); rc != VLQT_OK)
         return rc;
-    deleteRetired(); // poll runs after processEvents: the effects have moved off retired sources
-    appliedSincePoll = false; // polish (if Qt did not render) ran before this poll
-    collectWindowGeometry(*this);
-    collectMeasurements(*this);
-    collectHandlers(*this);
-    return events.drain(out, cap, written, required);
+    // Collect once per poll cycle: a buffer that was too small leaves the records queued and `eventsCollected` set, so
+    // the retry only drains and *required is exactly what it needs (collecting again would add records).
+    if (!eventsCollected) {
+        deleteRetired(); // poll runs after processEvents: the effects have moved off retired sources
+        appliedSincePoll = false; // polish (if Qt did not render) ran before this poll
+        collectWindowGeometry(*this);
+        collectMeasurements(*this);
+        collectHandlers(*this);
+        eventsCollected = true;
+    }
+    const int rc = events.drain(out, cap, written, required);
+    if (rc == VLQT_OK)
+        eventsCollected = false;
+    return rc;
 }
 
 } // namespace vlqt

@@ -65,11 +65,12 @@ namespace VL.Qt.Nodes
         public static Uniform Matrix(string name, Matrix value) => Uniform.Matrix(name, value);
 
         /// <summary>sampler2D from an element: the element is rendered offscreen (not drawn itself) and sampled, premultiplied.</summary>
-        /// <param name="name">Name of the sampler2D in the shader ("source" is reserved for the Input of the ShaderEffect).</param>
-        /// <param name="element">The element sampled as texture. Nothing = transparent.</param>
+        /// <param name="name">Name of the sampler2D in the shader ("source" is reserved for the Input of the ShaderEffect, so are qt_Matrix and qt_Opacity: an error at the node).</param>
+        /// <param name="element">The element sampled as texture (a self-made widget is built with the style at the shader). Nothing, or an IElement that is not of VL.Qt, = transparent.</param>
         /// <param name="sampler">How the shader reads the texture (filter, wrap, mipmaps), from the Sampler node. Nothing = as the element's layer is (Nearest, Clamp).</param>
         [Smell(SymbolSmell.Advanced)]
-        public static Uniform Texture(string name, Element? element, [Pin(Visibility = PinVisibility.Optional)] Sampler? sampler = null) => Uniform.FromTexture(name, element, sampler);
+        public static Uniform Texture(string name, IElement? element, [Pin(Visibility = PinVisibility.Optional)] Sampler? sampler = null)
+            => Uniform.FromTexture(name, ElementConversion.ToElement(element), sampler);
 
         /// <summary>sampler2D from a QtImage (LoadImage, ToQtImage, …).</summary>
         /// <param name="name">Name of the sampler2D in the shader.</param>

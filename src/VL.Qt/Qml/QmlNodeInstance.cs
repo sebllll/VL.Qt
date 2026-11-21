@@ -48,8 +48,9 @@ namespace VL.Qt.Qml
         private readonly ValuePin<bool> _debug = new(false);
         private readonly ValuePin<Interaction?> _interaction = new(null);
         private readonly ValuePin<Effect?> _effect = new(null);
+        private readonly ValuePin<bool> _enabled = new(true);
 
-        private readonly ValuePin<Element?> _output = new(null);
+        private readonly ValuePin<IElement?> _output = new(null);
         private readonly ValuePin<Vector2> _measuredSize = new(Vector2.Zero);
         private readonly ValuePin<RectangleF> _sceneBounds = new(RectangleF.Empty);
         private readonly ValuePin<string> _error = new(string.Empty);
@@ -84,11 +85,11 @@ namespace VL.Qt.Qml
             for (var i = 0; i < _signalOutputs.Length; i++)
                 _signalOutputs[i] = SignalOutput.Create(layout.SignalOutputs[i]);
 
-            var inputs = new List<IVLPin>(_slots.Length + 10);
+            var inputs = new List<IVLPin>(_slots.Length + 11);
             foreach (var slot in _slots)
                 inputs.Add(slot.Pin);
             inputs.Add(_propertiesPin);
-            inputs.AddRange(new IVLPin[] { _size, _autoSize, _transform, _anchor, _opacity, _clip, _debug, _interaction, _effect });
+            inputs.AddRange(new IVLPin[] { _size, _autoSize, _transform, _anchor, _opacity, _clip, _debug, _interaction, _effect, _enabled });
             _inputs = inputs.ToArray();
 
             var outputs = new List<IVLPin>(_propertyOutputs.Length + _signalOutputs.Length + 4) { _output };
@@ -118,7 +119,7 @@ namespace VL.Qt.Qml
                 RebuildProperties();
 
             var element = _element.Update(_file, _properties, _size.Value, _autoSize.Value, _transform.Value, _anchor.Value, _opacity.Value,
-                _clip.Value, _debug.Value, _interaction.Value, _effect.Value,
+                _clip.Value, _debug.Value, _interaction.Value, _effect.Value, _enabled.Value,
                 out var changed, out var signals, out var measuredSize, out var sceneBounds, out var error);
 
             _output.Value = element;

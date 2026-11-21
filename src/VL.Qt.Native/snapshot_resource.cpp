@@ -1,3 +1,5 @@
+// Private Qt API: QWindowPrivate::visible (grab of an offscreen scene), QQuickShaderEffectSource (frame grab of a Group);
+// check on Qt updates (list: elements/elements.h).
 #include "snapshot_resource.h"
 
 #include "app/exports.h"

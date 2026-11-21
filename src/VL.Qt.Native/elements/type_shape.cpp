@@ -1,3 +1,4 @@
+// Private Qt API: QQuickShape, QQuickShapePath, QQuickShapeTrim (typed setters); check on Qt updates (list: elements/elements.h).
 #include "elements/element_types.h"
 #include "elements/shape_path_element.h"
 

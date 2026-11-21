@@ -1,4 +1,5 @@
 #include "diagnostics/debug_overlay.h"
+#include "app/scene_change.h"
 #include "scene/scene.h"
 
 #include <QtGui/QFont>
@@ -172,6 +173,7 @@ bool same(const QRectF& a, const QRectF& b)
 
 DebugOverlay::DebugOverlay(QQuickItem* contentItem, const Scene& scene) : QQuickItem(contentItem), m_scene(scene)
 {
+    setObjectName(QLatin1String(overlayObjectName)); // not counted as a scene change (app/scene_change.h)
     setFlag(ItemHasContents, true);
     setEnabled(false);
     setAcceptedMouseButtons(Qt::NoButton);
@@ -189,7 +191,30 @@ void DebugOverlay::setActive(bool on)
         return;
     m_active = on;
     setVisible(on);
+    follow(window());
     refresh();
+}
+
+// While active, repaint in every frame whose polish left an item of the scene to sync (afterAnimating: after polish,
+// before sync, GUI thread in both the basic loop and the render control of an offscreen scene). The overlay's own
+// repaint is no such item, so a static scene renders nothing.
+void DebugOverlay::follow(QQuickWindow* win)
+{
+    QObject::disconnect(m_follow);
+    if (m_active && win) {
+        m_follow = QObject::connect(win, &QQuickWindow::afterAnimating, this, [this, win] {
+            if (SceneChangeCounter::itemsDirty(win))
+                update();
+        }, Qt::DirectConnection);
+    }
+}
+
+// A window swap (Scene::moveToWindow) moves the overlay to the new window.
+void DebugOverlay::itemChange(ItemChange change, const ItemChangeData& data)
+{
+    if (change == ItemSceneChange)
+        follow(data.window);
+    QQuickItem::itemChange(change, data);
 }
 
 void DebugOverlay::refresh()

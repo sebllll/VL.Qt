@@ -120,7 +120,6 @@
             <Pin Id="13MnLmFViVJ0PIoxLqXR2I" Name="Title" Kind="InputPin" />
             <Pin Id="140kfuMGgGTnw1k3fZpSCH" Name="Is Visible" Kind="OutputPin" />
             <Pin Id="F30pM32esWwMH8HIR1eJ1k" Name="Perf" Kind="OutputPin" />
-            <Pin Id="3a7O7vwhNRWASjznI32QFX" Name="Error" Kind="OutputPin" />
           </Node>
           <Pad Id="Bd2DcQt7Lk4Mn9Pq3Rs6Tv" Comment="Bound To Document" Bounds="60,409,35,35" ShowValueBox="true" isIOBox="true" Value="True">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
@@ -133,11 +132,6 @@
           <Pad Id="3dnYhQu4JSHH9S9xhcwel0" Comment="Is Visible" Bounds="100,529,35,35" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
-            </p:TypeAnnotation>
-          </Pad>
-          <Pad Id="3rmKtndyuODDGpjZZNszWz" Comment="Error" Bounds="200,529,420,60" ShowValueBox="true" isIOBox="true">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
-              <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
           <Pad Id="Tpw5oLqqPK1MFTMHWBbMS2" Comment="Clear Color" Bounds="291,339,136,15" ShowValueBox="true" isIOBox="true" Value="0, 0, 0, 1">
@@ -166,7 +160,6 @@
         <Link Id="2unrhXiSQBiTxXzML8QyO9" Ids="2AkAjjlOojg8Lnh2RYccug,13MnLmFViVJ0PIoxLqXR2I" />
         <Link Id="Bd2LnkQt7Lk4Mn9Pq3Rs6Tw" Ids="Bd2DcQt7Lk4Mn9Pq3Rs6Tv,MkOwES2CySSQa2PuHBDGvN" />
         <Link Id="77auLDgkouo4SifXgN6jUS" Ids="140kfuMGgGTnw1k3fZpSCH,3dnYhQu4JSHH9S9xhcwel0" />
-        <Link Id="6M58j6VQvWbk6m0sORj0qG" Ids="3a7O7vwhNRWASjznI32QFX,3rmKtndyuODDGpjZZNszWz" />
         <Link Id="Hw5Lnk4Kq7Lm2Np5Rs8Ta" Ids="Hw1Rect4Kq7Lm2Np5Rs8Te,Hw3Grp4Kq7Lm2Np5Rs8Tb" />
         <Link Id="Hw5Lnk4Kq7Lm2Np5Rs8Tb" Ids="Hw2Text4Kq7Lm2Np5Rs8Th,Hw3Grp4Kq7Lm2Np5Rs8Tc" />
         <Link Id="Hw5Lnk4Kq7Lm2Np5Rs8Tc" Ids="Hw3Grp4Kq7Lm2Np5Rs8Td,Hw4Rnd4Kq7Lm2Np5Rs8Tb" />

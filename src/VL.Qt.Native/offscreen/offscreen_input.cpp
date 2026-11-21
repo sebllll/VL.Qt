@@ -1,5 +1,6 @@
 // Input of an offscreen scene: the render control that gives a scene the keyboard focus, the scene's own pointing
 // devices, and the events of the vlqt_offscreen_send_* exports (vlqt.h, render-texture.md "Input").
+// Private Qt API: QQuickRenderControlPrivate (scene focus), QWindowSystemInterface (qpa); check on Qt updates (list: elements/elements.h).
 #include "offscreen/offscreen_scene.h"
 #include "app/exports.h"
 #include "protocol.h"

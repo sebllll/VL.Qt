@@ -2,17 +2,34 @@
 using System.Collections.Immutable;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
+using VL.Qt.Nodes;
 using VL.Qt.Styles;
 
 namespace VL.Qt.Elements
 {
     /// <summary>
     /// Immutable description of one UI element. Create a new instance only when an input changes
-    /// (the reconciler uses reference equality as a shortcut). Subclasses should be sealed.
+    /// (the reconciler uses reference equality as a shortcut). Pins carry it as <see cref="IElement"/>.
     /// </summary>
-    public abstract class Element : IElement
+    internal abstract class Element : IElement
     {
         private protected Element(ElementType type) => Type = type;
+
+        /// <summary>Takes the common inputs of an element node and the feedback slot of the node (the element node constructor of every concrete element).</summary>
+        private protected Element(ElementType type, in CommonInputs common, FeedbackSlot feedback)
+        {
+            Type = type;
+            Size = common.Size;
+            Transform = common.Transform;
+            Anchor = common.Anchor;
+            Opacity = common.Opacity;
+            Clip = common.Clip;
+            Debug = common.Debug;
+            Visible = common.Enabled;
+            Interaction = common.Interaction;
+            Effect = common.Effect;
+            Feedback = feedback;
+        }
 
         internal ElementType Type { get; }
         /// <summary>Item size in units (containers/widgets: only with Auto Size off). Position comes from <see cref="Transform"/>.</summary>
@@ -31,6 +48,12 @@ namespace VL.Qt.Elements
 
         /// <summary>Draws the debug overlay for this element only (not recursive).</summary>
         public bool Debug { get; init; }
+
+        /// <summary>
+        /// The Enabled pin: false takes the element out of the scene (Qt's visible: not drawn, no input, no space in
+        /// Row/Column). Named after the Qt property because the widgets already have an <c>Enabled</c> of their own (greyed out).
+        /// </summary>
+        public bool Visible { get; init; } = true;
         internal FeedbackSlot Feedback { get; init; }
 
         /// <summary>
