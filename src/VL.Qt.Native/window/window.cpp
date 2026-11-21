@@ -25,6 +25,9 @@
 #include <QtQuick/QQuickWindow>
 
 #include <cmath>
+#include <memory>
+#include <optional>
+#include <utility>
 
 using vlqt::log::emitLog;
 
@@ -85,13 +88,27 @@ void placeWindow(QQuickWindow* win, float x, float y, int width, int height)
         win->setFramePosition(pos);
 }
 
-// The parts of a window handle that windows and offscreen scenes share: the QML engine with QtNative's imports.
-QQmlEngine* newEngine()
+// The parts of a scene handle that windows and offscreen scenes share: the QML engine with QtNative's imports.
+std::unique_ptr<QQmlEngine> newEngine()
 {
-    auto* engine = new QQmlEngine();
+    auto engine = std::make_unique<QQmlEngine>();
     if (!g_nativeDir.isEmpty())
         engine->addImportPath(g_nativeDir + QStringLiteral("/qml"));
     return engine;
+}
+
+SceneHandle::SceneHandle() = default;
+
+SceneHandle::~SceneHandle()
+{
+    // The order of the parts is explained at the struct (window/scene_handle.h).
+    if (offscreen)
+        vlqt::offscreen::release(offscreen.get());
+}
+
+void OffscreenSceneDeleter::operator()(OffscreenScene* scene) const
+{
+    vlqt::offscreen::destroy(scene);
 }
 
 // The event filters and the frame lock of an on-screen window, all children of win: close, update gate, frame lock,
@@ -133,10 +150,10 @@ void initShared(SceneHandle* w)
         }
     }
     w->window->setGraphicsConfiguration(cfg);
-    vlqt::device::attach(w->window); // one D3D11 device for all windows, before the first expose
-    w->scene = new vlqt::Scene(w->window, w->engine);
-    w->perf = new PerfMonitor(w->window, w->engine);
-    w->perf->setScene(w->scene); // F5 Scene page; perf is deleted before scene
+    vlqt::device::attach(w->window.get()); // one D3D11 device for all windows, before the first expose
+    w->scene = std::make_unique<vlqt::Scene>(w->window.get(), w->engine.get());
+    w->perf = std::make_unique<PerfMonitor>(w->window.get(), w->engine.get());
+    w->perf->setScene(w->scene.get()); // F5 Scene page; perf is deleted before scene
 }
 
 // Window modes (vlqt_window_set_mode): each applies one bit, w->mode already holds the new modes.
@@ -150,7 +167,7 @@ void initShared(SceneHandle* w)
 // state, only the flag changes.
 static void applyFrameless(SceneHandle* w, bool on)
 {
-    QQuickWindow* win = w->window;
+    QQuickWindow* win = w->window.get();
     const Qt::WindowFlags flags = on ? (win->flags() | Qt::FramelessWindowHint) : (win->flags() & ~Qt::FramelessWindowHint);
     if (flags == win->flags())
         return;
@@ -192,15 +209,13 @@ static QScreen* screenWithLargestShare(QWindow* win)
 // below covers xcb, where the window manager answers asynchronously. eglfs is always fullscreen, nothing changes.
 void applyFullscreen(SceneHandle* w, bool on)
 {
-    QQuickWindow* win = w->window;
+    QQuickWindow* win = w->window.get();
     const bool isFs = win->windowStates().testFlag(Qt::WindowFullScreen);
     if (on) {
         if (isFs)
             return;
-        w->fsFramePos = win->framePosition();
-        w->fsSize = win->size();
-        w->fsStates = win->windowStates() & ~(Qt::WindowFullScreen | Qt::WindowMinimized);
-        w->fsSaved = true;
+        w->fullscreenRestore = FullscreenRestore{win->framePosition(), win->size(),
+            win->windowStates() & ~(Qt::WindowFullScreen | Qt::WindowMinimized)};
         QScreen* target = screenWithLargestShare(win);
         if (target && target != win->screen()) {
             emitLog(1, "vlqt.window", (QStringLiteral("fullscreen: screen ") + target->name()
@@ -214,17 +229,17 @@ void applyFullscreen(SceneHandle* w, bool on)
             win->requestActivate(); // like showFullScreen; Windows hides the taskbar only for the active window
         return;
     }
-    if (!isFs && !w->fsSaved)
+    const std::optional<FullscreenRestore> restore = std::exchange(w->fullscreenRestore, std::nullopt);
+    if (!isFs && !restore)
         return;
-    win->setWindowStates(w->fsSaved ? w->fsStates : Qt::WindowNoState);
-    if (w->fsSaved) {
+    win->setWindowStates(restore ? restore->states : Qt::WindowNoState);
+    if (restore) {
         // Borderless state from w->mode (changes during fullscreen are only kept there).
         applyFrameless(w, w->mode & VLQT_WINDOW_MODE_BORDERLESS);
-        if (!w->fsStates.testFlag(Qt::WindowMaximized)) { // maximized: Qt keeps the normal geometry itself
-            win->setFramePosition(w->fsFramePos);
-            win->resize(w->fsSize);
+        if (!restore->states.testFlag(Qt::WindowMaximized)) { // maximized: Qt keeps the normal geometry itself
+            win->setFramePosition(restore->framePos);
+            win->resize(restore->size);
         }
-        w->fsSaved = false;
     }
 }
 
@@ -238,7 +253,8 @@ void applyFullscreen(SceneHandle* w, bool on)
 // per message. The new native window is shown without activation unless the old one was active.
 void replaceWindow(SceneHandle* w, const QSurfaceFormat& f)
 {
-    QQuickWindow* old = w->window;
+    // The old window lives until the end: the new one takes its scene, filters' state, perf overlay and popups first.
+    std::unique_ptr<QQuickWindow> old = std::move(w->window);
     const bool visible = old->isVisible();
     const bool active = old->isActive();
     auto* nw = new QQuickWindow();
@@ -252,7 +268,7 @@ void replaceWindow(SceneHandle* w, const QSurfaceFormat& f)
     nw->setColor(old->color());
     const bool closeRequested = w->closeFilter->requested;
     const UpdateGate* oldGate = w->gate;
-    w->window = nw;
+    w->window.reset(nw);
     installWindowFilters(w, nw);
     w->closeFilter->requested = closeRequested;
     w->gate->continueFrom(*oldGate);
@@ -260,13 +276,13 @@ void replaceWindow(SceneHandle* w, const QSurfaceFormat& f)
     vlqt::device::attach(nw);
     w->scene->moveToWindow(nw);
     const int overlay = w->perf->overlay();
-    delete w->perf;
-    w->perf = new PerfMonitor(nw, w->engine);
-    w->perf->setScene(w->scene);
+    w->perf.reset();
+    w->perf = std::make_unique<PerfMonitor>(nw, w->engine.get());
+    w->perf->setScene(w->scene.get());
     if (overlay & (PerfMonitor::Meter | PerfMonitor::Stats))
         w->perf->setOverlay(overlay);
     for (QWindow* t : QGuiApplication::topLevelWindows())
-        if (t->transientParent() == old)
+        if (t->transientParent() == old.get())
             t->setTransientParent(nw);
     if (w->mode & VLQT_WINDOW_MODE_BORDERLESS)
         applyBorderless(w, true);
@@ -280,7 +296,7 @@ void replaceWindow(SceneHandle* w, const QSurfaceFormat& f)
             nw->show();
         nw->setProperty("_q_showWithoutActivating", QVariant());
     }
-    delete old;
+    old.reset();
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
 }
 
@@ -291,10 +307,10 @@ namespace vlqt::offscreen {
 
 vlqt_scene* createHandle(QQuickWindow* window, OffscreenScene* state)
 {
-    auto* w = new SceneHandle();
-    w->offscreen = state;
+    auto w = std::make_unique<SceneHandle>();
+    w->offscreen.reset(state);
+    w->window.reset(window);
     w->engine = newEngine();
-    w->window = window;
     // Transparent until the first VLQT_OP_SET_CLEAR_COLOR: the QtTexture default (render-texture.md), unlike a window.
     window->setColor(Qt::transparent);
     // Change count (vlqt_scene_get_change_count) only: without a platform window a scene gets no UpdateRequest or Expose,
@@ -302,18 +318,18 @@ vlqt_scene* createHandle(QQuickWindow* window, OffscreenScene* state)
     w->gate = new UpdateGate(window); // child of the window
     // Input comes from vlqt_offscreen_send_*; Esc and a press outside release the focus as in a window.
     window->installEventFilter(new FocusRelease(window)); // child of the window
-    initShared(w);
-    return asHandle(w);
+    initShared(w.get());
+    return asHandle(w.release());
 }
 
 OffscreenScene* stateOf(vlqt_scene* handle)
 {
-    return handle ? asWindow(handle)->offscreen : nullptr;
+    return handle ? asWindow(handle)->offscreen.get() : nullptr;
 }
 
 QQuickWindow* quickWindow(vlqt_scene* handle)
 {
-    return handle ? asWindow(handle)->window : nullptr;
+    return handle ? asWindow(handle)->window.get() : nullptr;
 }
 
 } // namespace vlqt::offscreen
@@ -323,15 +339,15 @@ namespace vlqt::test {
 
 Scene* scene(vlqt_scene* handle)
 {
-    return handle ? asWindow(handle)->scene : nullptr;
+    return handle ? asWindow(handle)->scene.get() : nullptr;
 }
 
 PerfMonitor* perf(vlqt_scene* handle)
 {
-    return handle ? asWindow(handle)->perf : nullptr;
+    return handle ? asWindow(handle)->perf.get() : nullptr;
 }
 
-InputState* input(vlqt_scene* handle)
+std::unique_ptr<TestInput>* input(vlqt_scene* handle)
 {
     return handle ? &asWindow(handle)->testInput : nullptr;
 }

@@ -7,6 +7,7 @@
 #include <QtCore/QPointF>
 #include <QtCore/qnamespace.h>
 
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -20,8 +21,8 @@ class Scene;
 
 namespace vlqt::test {
 
-// Synthetic input state of one window handle (test/test_input.cpp); every handle carries one.
-struct InputState
+// Synthetic input state of one scene handle, created by its first test input (test/test_input.cpp).
+struct TestInput
 {
     Qt::MouseButtons buttons = Qt::NoButton;          // vlqt_test_send_mouse: buttons held between test events
     QElapsedTimer clock;                              // vlqt_test_send_* / _queue_*: event timestamps
@@ -33,7 +34,8 @@ struct InputState
 // --- window/window.cpp: parts of a scene handle (a window or an offscreen scene); null for a null handle ---
 Scene* scene(vlqt_scene* handle);
 PerfMonitor* perf(vlqt_scene* handle);
-InputState* input(vlqt_scene* handle);
+// The handle's slot for its test input state, empty until test/test_input.cpp fills it.
+std::unique_ptr<TestInput>* input(vlqt_scene* handle);
 // app/fonts.cpp: references of a font handle of vlqt_font_add, 0 = removal pending (end of pump), -9 = removed or unknown.
 int fontRefs(unsigned long long handle);
 

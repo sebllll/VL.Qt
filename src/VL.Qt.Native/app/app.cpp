@@ -151,7 +151,7 @@ VLQT_API int vlqt_app_process_events_for(vlqt_scene* const* windows, int count)
         for (int i = 0; windows && i < count; i++)
             if (auto* w = asWindow(windows[i])) {
                 s_active.push_back(w->gate);
-                s_perf.emplace_back(w->perf);
+                s_perf.emplace_back(w->perf.get());
             }
         // Device lost: also before anything renders, so no window builds a new QRhi on the removed device.
         vlqt::device::checkLost();

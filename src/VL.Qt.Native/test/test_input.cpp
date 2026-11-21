@@ -17,6 +17,7 @@
 #include <QtGui/private/qhighdpiscaling_p.h>
 
 #include <algorithm>
+#include <memory>
 #include <string>
 
 using vlqt::fail;
@@ -109,6 +110,15 @@ const QPointingDevice* testMouseDevice()
     return s_device;
 }
 
+// Synthetic input state of a scene handle (not null), created by its first test input.
+vlqt::test::TestInput& inputOf(vlqt_scene* p)
+{
+    std::unique_ptr<vlqt::test::TestInput>& slot = *vlqt::test::input(p);
+    if (!slot)
+        slot = std::make_unique<vlqt::test::TestInput>();
+    return *slot;
+}
+
 } // namespace
 
 namespace vlqt::test {
@@ -131,7 +141,7 @@ VLQT_API int vlqt_test_send_mouse(vlqt_scene* p, int type, float x, float y)
         if (vlqt::offscreen::stateOf(p))
             return notOnScene("test_send_mouse");
         QQuickWindow* window = vlqt::offscreen::quickWindow(p);
-        vlqt::test::InputState& in = *vlqt::test::input(p);
+        vlqt::test::TestInput& in = inputOf(p);
         if (type == VLQT_MOUSE_LEAVE) {
             QEvent ev(QEvent::Leave);
             QCoreApplication::sendEvent(window, &ev);
@@ -175,7 +185,7 @@ VLQT_API int vlqt_test_send_wheel(vlqt_scene* p, float x, float y, int dx, int d
         if (vlqt::offscreen::stateOf(p))
             return notOnScene("test_send_wheel");
         QQuickWindow* window = vlqt::offscreen::quickWindow(p);
-        vlqt::test::InputState& in = *vlqt::test::input(p);
+        vlqt::test::TestInput& in = inputOf(p);
         const QPointF local(x, y);
         QWheelEvent ev(local, window->mapToGlobal(local), QPoint(), QPoint(dx, dy), in.buttons, Qt::NoModifier,
             Qt::NoScrollPhase, false);
@@ -194,7 +204,7 @@ VLQT_API int vlqt_test_send_touch(vlqt_scene* p, int type, int id, float x, floa
             return fail(VLQT_ERR_NULL_HANDLE, "test_send_touch: null window");
         if (vlqt::offscreen::stateOf(p))
             return notOnScene("test_send_touch");
-        vlqt::test::InputState& in = *vlqt::test::input(p);
+        vlqt::test::TestInput& in = inputOf(p);
         QEventPoint::State state;
         switch (type) {
         case VLQT_TOUCH_PRESS: state = QEventPoint::State::Pressed; break;
@@ -221,7 +231,7 @@ VLQT_API int vlqt_test_queue_mouse(vlqt_scene* p, int type, float x, float y)
         if (vlqt::offscreen::stateOf(p))
             return notOnScene("test_queue_mouse");
         QQuickWindow* window = vlqt::offscreen::quickWindow(p);
-        vlqt::test::InputState& in = *vlqt::test::input(p);
+        vlqt::test::TestInput& in = inputOf(p);
         QEvent::Type t;
         Qt::MouseButton button = Qt::NoButton;
         Qt::MouseButtons buttons = in.queuedButtons;
@@ -252,7 +262,7 @@ VLQT_API int vlqt_test_queue_touch(vlqt_scene* p, int type, int id, float x, flo
         if (vlqt::offscreen::stateOf(p))
             return notOnScene("test_queue_touch");
         QQuickWindow* window = vlqt::offscreen::quickWindow(p);
-        vlqt::test::InputState& in = *vlqt::test::input(p);
+        vlqt::test::TestInput& in = inputOf(p);
         auto& active = in.queuedTouch;
         auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
         const bool known = it != active.end();
