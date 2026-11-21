@@ -127,3 +127,4 @@ if ($DebugSymbols) {
     if ($missing) { throw "Qt debug symbols missing in bin: $($missing -join ', ')" }
 }
 Write-Host "Qt $v OK: $qtDir"
+Write-Host "For the CMake presets (dev-win-*): VLQT_QT_DIR=$qtDir"

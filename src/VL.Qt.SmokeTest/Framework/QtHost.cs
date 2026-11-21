@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using VL.Qt;
+using VL.Qt.Interop;
 
 /// <summary>
 /// The one Qt application of a test run: the thread that owns it, the Qt log, the frame clock of <see cref="Pump"/>.
@@ -153,7 +154,7 @@ internal static class QtHost
     /// <summary>Second vlqt_app_init: must be a no-op returning 0 (core-app check).</summary>
     public static Native.Result InitAgain() => AppInit();
 
-    private static unsafe Native.Result AppInit() => Native.vlqt_app_init(Native.NativeDir, &OnLog);
+    private static unsafe Native.Result AppInit() => Native.vlqt_app_init(QtNativeLibrary.Directory, &OnLog);
 
     /// <summary>Runs <paramref name="work"/> on the Qt thread and waits up to <paramref name="timeout"/>; false on timeout.</summary>
     public static bool Invoke(Action work, TimeSpan timeout)

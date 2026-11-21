@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 

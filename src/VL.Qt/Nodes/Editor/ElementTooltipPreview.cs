@@ -5,6 +5,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Lib.Basics.Imaging;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 
 namespace VL.Qt.Nodes
 {

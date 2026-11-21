@@ -1,4 +1,5 @@
 ﻿using VL.Core.Import;
+using VL.Qt.Interop;
 
 namespace VL.Qt
 {

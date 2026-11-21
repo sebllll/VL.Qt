@@ -1,4 +1,6 @@
-﻿namespace VL.Qt.Audio
+﻿using VL.Qt.Interop;
+
+namespace VL.Qt.Audio
 {
     /// <summary>
     /// Read side of a QtNative audio tap (protocol.h "Audio tap", vlqt.h vlqt_audio_tap_read), as an interface so

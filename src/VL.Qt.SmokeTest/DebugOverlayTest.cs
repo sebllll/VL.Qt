@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using Stride.Core.Mathematics;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 using Color = System.Drawing.Color;

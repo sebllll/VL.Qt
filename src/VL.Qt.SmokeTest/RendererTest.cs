@@ -10,6 +10,7 @@ using VL.Qt.Elements;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 using QtRect = VL.Qt.Elements.Rectangle;
+using VL.Qt.Interop;
 
 // Renderer [Qt] core (07a) without vvvv: WindowScene = reconciler + command buffer + poll dispatch of one window.
 // Element tree → real QtNative, Clear Color, Enabled (frozen scene), Title at runtime, Dispose frees the registry.

@@ -7,6 +7,7 @@ using Stride.Games;
 using Stride.Graphics;
 using VL.Core;
 using VL.Lib.Animation;
+using VL.Qt.Interop;
 using VL.Stride.Games;
 using VL.Qt.Wire;
 using IServiceRegistry = global::Stride.Core.IServiceRegistry;

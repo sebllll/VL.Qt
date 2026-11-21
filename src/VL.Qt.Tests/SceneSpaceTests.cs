@@ -3,6 +3,7 @@ using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
+using VL.Qt.Interop;
 
 namespace VL.Qt.Tests
 {

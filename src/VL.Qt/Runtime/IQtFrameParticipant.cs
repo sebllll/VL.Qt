@@ -1,4 +1,6 @@
-﻿namespace VL.Qt
+﻿using VL.Qt.Interop;
+
+namespace VL.Qt
 {
     /// <summary>
     /// A window (renderer) that takes part in the global pump. Called on the Qt thread, once per vvvv frame,

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using VL.Qt.Interop;
 
 namespace VL.Qt
 {

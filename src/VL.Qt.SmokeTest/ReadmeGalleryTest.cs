@@ -4,6 +4,7 @@ using System.IO;
 using Stride.Core.Mathematics;
 using NUnit.Framework;
 using VL.Qt;
+using VL.Qt.Interop;
 using VL.Qt.Styles;
 using VL.Qt.Wire;
 using static Pixels;

@@ -7,6 +7,7 @@ using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Qt;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
 using Color = System.Drawing.Color;

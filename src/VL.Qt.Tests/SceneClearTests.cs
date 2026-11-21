@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Wire;
+using VL.Qt.Interop;
 
 namespace VL.Qt.Tests
 {

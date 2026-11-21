@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Shaders

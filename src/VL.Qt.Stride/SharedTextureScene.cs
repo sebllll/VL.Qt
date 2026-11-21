@@ -6,6 +6,7 @@ using VL.Core;
 using VL.Lang;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Stride
