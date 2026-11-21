@@ -73,9 +73,47 @@ void resetSent(Scene& scene, HandlerEntry& hn)
     hn.sentDrag[0] = hn.sentDrag[1] = 0;
 }
 
-bool supportsButtons(quint16 type)
+/* Bit of an input-handler type (VLQT_ELEMENT_TYPE_*_HANDLER) in HandlerProp::types. */
+constexpr quint32 handlerBit(int type)
 {
-    return type == VLQT_ELEMENT_TYPE_TAP_HANDLER || type == VLQT_ELEMENT_TYPE_POINT_HANDLER || type == VLQT_ELEMENT_TYPE_DRAG_HANDLER;
+    return 1u << (type - VLQT_ELEMENT_TYPE_HOVER_HANDLER);
+}
+static_assert(VLQT_ELEMENT_TYPE_DRAG_HANDLER - VLQT_ELEMENT_TYPE_HOVER_HANDLER < 32, "handler types fit HandlerProp::types");
+
+/* The properties of the input handlers: one row per property. setHandler checks a SET against this table (handler
+ * type, value type), then applies it in one switch. A new property adds its id to protocol.h and Protocol.cs, one row
+ * here and its case in setHandler. */
+struct HandlerProp {
+    quint16 prop;
+    quint16 valueType;
+    quint32 types; // handlerBit of every handler type that takes it
+};
+
+constexpr quint32 kButtonHandlers = handlerBit(VLQT_ELEMENT_TYPE_TAP_HANDLER) | handlerBit(VLQT_ELEMENT_TYPE_POINT_HANDLER)
+    | handlerBit(VLQT_ELEMENT_TYPE_DRAG_HANDLER);
+constexpr quint32 kDrag = handlerBit(VLQT_ELEMENT_TYPE_DRAG_HANDLER);
+constexpr quint32 kPinch = handlerBit(VLQT_ELEMENT_TYPE_PINCH_HANDLER);
+
+// 768 (the former REPORT_POSITION of the Hover handler) is reserved: unknown like any other id.
+constexpr HandlerProp kHandlerProps[] = {
+    {VLQT_PROPERTY_ACCEPTED_BUTTONS, VLQT_VALUE_TYPE_I32, kButtonHandlers},
+    {VLQT_PROPERTY_ACCEPTED_DEVICES, VLQT_VALUE_TYPE_I32, kButtonHandlers | kPinch | handlerBit(VLQT_ELEMENT_TYPE_WHEEL_HANDLER)
+            | handlerBit(VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER)},
+    {VLQT_PROPERTY_MOVES_ELEMENT, VLQT_VALUE_TYPE_BOOL, kDrag},
+    {VLQT_PROPERTY_DRAG_AXIS, VLQT_VALUE_TYPE_I32, kDrag},
+    {VLQT_PROPERTY_DRAG_LIMITS, VLQT_VALUE_TYPE_RECTF, kDrag},
+    {VLQT_PROPERTY_MINIMUM_POINT_COUNT, VLQT_VALUE_TYPE_I32, kPinch},
+    {VLQT_PROPERTY_MAXIMUM_POINT_COUNT, VLQT_VALUE_TYPE_I32, kPinch},
+    {VLQT_PROPERTY_OCCLUSION, VLQT_VALUE_TYPE_BOOL, handlerBit(VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER)},
+};
+
+/* The row of prop if handler type takes it, else nullptr. */
+const HandlerProp* findHandlerProp(quint16 prop, quint16 type)
+{
+    for (const HandlerProp& p : kHandlerProps)
+        if (p.prop == prop)
+            return (p.types & handlerBit(type)) ? &p : nullptr;
+    return nullptr;
 }
 
 /* DRAG_AXIS on the QML handler: xAxis/yAxis.enabled. Qt then also ignores a drag that runs more than 45 degrees off
@@ -88,10 +126,13 @@ void applyDragAxis(QObject* obj, qint32 axis)
         qCWarning(lcEvents, "drag handler axis could not be set to %d", int(axis));
 }
 
-bool supportsDevices(quint16 type)
+/* MINIMUM_POINT_COUNT / MAXIMUM_POINT_COUNT on the QML PinchHandler. */
+bool applyPointCount(QObject* obj, quint16 prop, qint32 v)
 {
-    return supportsButtons(type) || type == VLQT_ELEMENT_TYPE_WHEEL_HANDLER || type == VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER
-        || type == VLQT_ELEMENT_TYPE_PINCH_HANDLER;
+    const bool ok = obj->setProperty(prop == VLQT_PROPERTY_MINIMUM_POINT_COUNT ? "minimumPointCount" : "maximumPointCount", v);
+    if (!ok)
+        qCWarning(lcEvents, "input handler property %d could not be set to %d", int(prop), int(v));
+    return ok;
 }
 
 /* ACCEPTED_BUTTONS / ACCEPTED_DEVICES on the QML handler (QFlags properties need their exact type in the QVariant). */
@@ -419,9 +460,9 @@ int reparentHandler(Scene& scene, HandlerEntry& handler, quint32 handlerId, quin
     }
     if (handler.type == VLQT_ELEMENT_TYPE_PINCH_HANDLER) {
         if (handler.minimumPointCount)
-            obj->setProperty("minimumPointCount", *handler.minimumPointCount);
+            applyPointCount(obj, VLQT_PROPERTY_MINIMUM_POINT_COUNT, *handler.minimumPointCount);
         if (handler.maximumPointCount)
-            obj->setProperty("maximumPointCount", *handler.maximumPointCount);
+            applyPointCount(obj, VLQT_PROPERTY_MAXIMUM_POINT_COUNT, *handler.maximumPointCount);
         // Internal point counter: keeps the gesture running while the finger count changes (PinchState, scene/touch_handler.h).
         handler.points = new TouchPointsHandler(owner.item);
         handler.points->setOcclusion(false);
@@ -447,23 +488,15 @@ int reparentHandler(Scene& scene, HandlerEntry& handler, quint32 handlerId, quin
 
 int setHandler(Scene& scene, HandlerEntry& handler, quint16 prop, const Value& v, std::string& err)
 {
-    // 768 (the former REPORT_POSITION of the Hover handler) is reserved: unknown like any other id.
-    const quint16 t = handler.type;
-    const bool drag = t == VLQT_ELEMENT_TYPE_DRAG_HANDLER;
-    const bool pinch = t == VLQT_ELEMENT_TYPE_PINCH_HANDLER;
-    const bool known = (prop == VLQT_PROPERTY_ACCEPTED_BUTTONS && supportsButtons(t))
-        || (prop == VLQT_PROPERTY_ACCEPTED_DEVICES && supportsDevices(t))
-        || (drag && (prop == VLQT_PROPERTY_MOVES_ELEMENT || prop == VLQT_PROPERTY_DRAG_AXIS || prop == VLQT_PROPERTY_DRAG_LIMITS))
-        || (pinch && (prop == VLQT_PROPERTY_MINIMUM_POINT_COUNT || prop == VLQT_PROPERTY_MAXIMUM_POINT_COUNT))
-        || (prop == VLQT_PROPERTY_OCCLUSION && t == VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER);
-    if (!known) {
-        err = "property " + std::to_string(prop) + " is not supported by input handler type " + std::to_string(t);
+    // A value goes to the Qt object first (when there is one) and is stored only when Qt accepted it: a SET that fails
+    // leaves the stored value as it was, so the next REPARENT does not apply the rejected one.
+    const HandlerProp* row = findHandlerProp(prop, handler.type);
+    if (!row) {
+        err = "property " + std::to_string(prop) + " is not supported by input handler type " + std::to_string(handler.type);
         return ApplyUnknownProperty;
     }
-    const quint16 expected = prop == VLQT_PROPERTY_MOVES_ELEMENT || prop == VLQT_PROPERTY_OCCLUSION ? quint16(VLQT_VALUE_TYPE_BOOL)
-        : prop == VLQT_PROPERTY_DRAG_LIMITS ? quint16(VLQT_VALUE_TYPE_RECTF) : quint16(VLQT_VALUE_TYPE_I32);
-    if (v.type != expected) {
-        err = "property " + std::to_string(prop) + " expects value type " + std::to_string(int(expected)) + ", got "
+    if (v.type != row->valueType) {
+        err = "property " + std::to_string(prop) + " expects value type " + std::to_string(int(row->valueType)) + ", got "
             + std::to_string(v.type);
         return ApplyBadValue;
     }
@@ -501,12 +534,11 @@ int setHandler(Scene& scene, HandlerEntry& handler, quint16 prop, const Value& v
             err = "point count " + std::to_string(v.i) + " of a pinch handler is less than 2";
             return ApplyBadValue;
         }
-        const bool min = prop == VLQT_PROPERTY_MINIMUM_POINT_COUNT;
-        (min ? handler.minimumPointCount : handler.maximumPointCount) = v.i;
-        if (handler.object && !handler.object->setProperty(min ? "minimumPointCount" : "maximumPointCount", v.i)) {
+        if (handler.object && !applyPointCount(handler.object, prop, v.i)) {
             err = "property " + std::to_string(prop) + " could not be set to " + std::to_string(v.i);
             return ApplyBadValue;
         }
+        (prop == VLQT_PROPERTY_MINIMUM_POINT_COUNT ? handler.minimumPointCount : handler.maximumPointCount) = v.i;
         if (handler.pinch)
             handler.pinch->onPointsChanged(); // a paused gesture ends when the new minimum is not reached
         return ApplyOk;
@@ -514,11 +546,12 @@ int setHandler(Scene& scene, HandlerEntry& handler, quint16 prop, const Value& v
     default:
         break;
     }
-    (prop == VLQT_PROPERTY_ACCEPTED_BUTTONS ? handler.acceptedButtons : handler.acceptedDevices) = v.i;
+    // ACCEPTED_BUTTONS, ACCEPTED_DEVICES
     if (handler.object && !applyAccepted(handler.object, prop, v.i)) {
         err = "property " + std::to_string(prop) + " could not be set to " + std::to_string(v.i);
         return ApplyBadValue;
     }
+    (prop == VLQT_PROPERTY_ACCEPTED_BUTTONS ? handler.acceptedButtons : handler.acceptedDevices) = v.i;
     if (handler.pinch) // the internal point counter of a pinch takes the same devices
         applyAccepted(handler.points, prop, v.i);
     auto oit = scene.nodes.find(handler.owner);

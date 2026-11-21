@@ -332,6 +332,13 @@ public static class ApplyTest
         s.Check(Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.id == 9 && ae.prop == Protocol.PropertyId.Color, $"apply error id: -6 -> {ae.id}/{ae.prop}");
         Err("clear color, no id", b.Clear().Raw(Protocol.Op.SetClearColor, 4, 4), Native.Result.BadLength, "expected 16");
         s.Check(Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.id == 0 && ae.op == Protocol.Op.SetClearColor, $"apply error id: CLEAR_COLOR -> id {ae.id}");
+        // The op table checks the minimum length of a variable payload; id and property still come from the row (W4-33).
+        var shortSet = new byte[6];
+        BinaryPrimitives.WriteUInt32LittleEndian(shortSet, 9);
+        BinaryPrimitives.WriteUInt16LittleEndian(shortSet.AsSpan(4), Protocol.PropertyId.Color);
+        Err("SET shorter than its fields", b.Clear().Cmd(Protocol.Op.Set, shortSet), Native.Result.BadLength, "(op 4 SET, id 9, offset 0)");
+        s.Check(Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.id == 9 && ae.op == Protocol.Op.Set && ae.prop == Protocol.PropertyId.Color
+            && ae.Reason == $"payloadLen 6 too short for SET (>= {Protocol.SetFieldsSize})", $"apply error id: short SET -> {ae.id}/{ae.prop} \"{ae.Reason}\"");
         s.Check(Apply(b.Clear().Destroy(9)) == 0 && Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.rc == 0 && ae.id == 0 && ae.Reason.Length == 0,
             "apply error id: cleared by a successful apply");
         s.Check(Native.vlqt_scene_get_apply_error(SceneHandle.Null, out _) == Native.Result.NullHandle, "apply error id: null window -> NullHandle");

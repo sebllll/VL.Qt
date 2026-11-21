@@ -231,6 +231,8 @@ void updateTextMask(ElementEntry& node);
 bool isHandlerType(quint16 type);
 /* Handler ops, called by the Scene for ids of its handler table. Return an ApplyResult (+ err). */
 int reparentHandler(Scene& scene, HandlerEntry& handler, quint32 handlerId, quint32 parentId, std::string& err);
+/* SET of a handler property: checked against the property table (kHandlerProps in scene/handlers.cpp); a value the Qt
+ * object rejects fails the SET and is not stored. */
 int setHandler(Scene& scene, HandlerEntry& handler, quint16 prop, const Value& v, std::string& err);
 void bindHandler(Scene& scene, HandlerEntry& handler, quint32 handle);
 /* Removes the handler (QML object, owner list, table entry); resets the sent state of its sink (EVENT_HOVER 0 ...). */
