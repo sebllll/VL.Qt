@@ -145,8 +145,10 @@ target_sources(vlqt PRIVATE
     resources/resources.h
     image_resource.cpp
     image_resource.h
-    qtimageitem.cpp
-    qtimageitem.h
+    resources/image_texture_cache.cpp
+    resources/image_texture_cache.h
+    resources/qt_image_item.cpp
+    resources/qt_image_item.h
     snapshot_resource.cpp
     snapshot_resource.h
     image_writer.cpp
@@ -157,8 +159,8 @@ target_sources(vlqt PRIVATE
     audio_tap.h
 
     # device/
-    device.cpp
-    device.h
+    device/device.cpp
+    device/device.h
     render_thread.cpp
     render_thread.h
 

@@ -10,7 +10,7 @@
 #include <algorithm>
 
 #ifdef _WIN32
-#include "device.h"
+#include "device/device.h"
 
 // dropRhi: QQuickRenderControlPrivate and QQuickWindowPrivate. Private API, check on Qt updates.
 #include <QtQuick/private/qquickrendercontrol_p.h>
@@ -92,7 +92,7 @@ vlqt_scene* create(int width, int height)
     window->setGeometry(0, 0, std::max(width, 1), std::max(height, 1));
     vlqt_scene* handle = createHandle(window, state);
     // device::attach marks a window that got the shared device; without it initialize would create a device of its own.
-    if (!window->property("_vlqt_shared_device").toBool()) {
+    if (!vlqt::device::isOnSharedDevice(window)) {
         vlqt_scene_destroy(handle);
         vlqt::setLastError("offscreen scene: QtNative has no shared D3D11 device (VLQT_SHARED_DEVICE=0 or creation failed, see the log)");
         return nullptr;

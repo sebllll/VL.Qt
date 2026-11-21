@@ -2,7 +2,7 @@
 // the main thread or per render thread. Windows only (CMakeLists.txt).
 #include "offscreen/offscreen_scene.h"
 #include "app/exports.h"
-#include "device.h"
+#include "device/device.h"
 #include "vlqt.h"
 
 #include <QtGui/QGuiApplication>

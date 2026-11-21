@@ -7,7 +7,7 @@
 #include "app/render_gate.h"
 #include "test/test_hooks.h"
 #include "scene/scene.h"
-#include "device.h"
+#include "device/device.h"
 #include "offscreen/offscreen.h"
 #include "diagnostics/perf.h"
 #include "protocol.h"

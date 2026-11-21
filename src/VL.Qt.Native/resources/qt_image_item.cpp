@@ -1,127 +1,27 @@
-#include "qtimageitem.h"
+#include "resources/qt_image_item.h"
 
-#include "device.h"
 #include "image_resource.h"
 #include "resources/change_watch.h"
+#include "resources/image_texture_cache.h"
 #include "resources/resources.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGImageNode>
-#include <QtQuick/private/qsgplaintexture_p.h>
-#include <rhi/qrhi.h>
 
 #include <algorithm>
 #include <cmath>
 #include <vector>
 
-#ifdef Q_OS_WIN
-#include <unknwn.h>
-#endif
-
 Q_LOGGING_CATEGORY(lcImageItem, "VL.Qt.Image.Item")
 
 namespace vlqt {
-
-// Texture of one content in one window, shared by every item there (see qtimageitem.h).
-struct ImageTexture
-{
-    QQuickWindow* window = nullptr;
-    std::shared_ptr<res::image::ImageResource> content; // keeps the address unique while the entry lives
-    QSGTexture* texture = nullptr;
-    void* native = nullptr; // own reference on the native texture (shared device), released after the wrapper
-    bool mipmaps = false;
-
-    ImageTexture() = default;
-    ImageTexture(const ImageTexture&) = delete;
-    ImageTexture& operator=(const ImageTexture&) = delete;
-    ~ImageTexture()
-    {
-        delete texture; // owns its QRhiTexture (wrapper only, the native texture is not destroyed by it)
-#ifdef Q_OS_WIN
-        if (native)
-            static_cast<IUnknown*>(native)->Release();
-#endif
-    }
-};
 
 namespace {
 
 constexpr int kMaxTiles = 4096; // Tile: one image node per tile
 
-std::vector<std::weak_ptr<ImageTexture>> s_textures; // main thread
-res::ChangeWatch<QtImageItem> s_watch;              // items by the id they wait for, main thread
-
-std::shared_ptr<ImageTexture> createTexture(QQuickWindow* window, const std::shared_ptr<res::image::ImageResource>& content)
-{
-    auto t = std::make_shared<ImageTexture>();
-    t->window = window;
-    t->content = content;
-    QRhi* rhi = window->rhi();
-    // Content of an older device generation (device lost): its texture is gone, the replacement follows (the
-    // item gets it through res::changedThisFrame). Never wrap it, never fall back to the CPU copy.
-    if (content->generation() != device::generation())
-        return nullptr;
-    if (QRhiTexture* src = content->texture()) {
-        // Shared device: a wrapper of the native texture in the window's QRhi (same device, see device.h).
-        void* native = content->nativeTexture();
-        void* dev = device::nativeDevice(rhi);
-        if (!native || !dev || dev != device::nativeDevice(device::uploadRhi())) {
-            // A window moved to the new device renders once more with its old QRhi before Qt notices the loss
-            // (device::rebuild): skip silently, Qt rebuilds the scene graph afterwards. Otherwise warn once per window.
-            if (window->property("_vlqt_shared_device").toBool() || window->property("_vlqt_device_warned").toBool())
-                return nullptr;
-            window->setProperty("_vlqt_device_warned", true);
-            qCWarning(lcImageItem, "window %p is not on the shared device: image resources are not drawn there",
-                static_cast<void*>(window));
-            return nullptr;
-        }
-        const auto flags = src->flags() & (QRhiTexture::MipMapped | QRhiTexture::UsedWithGenerateMips);
-        QRhiTexture* wrapper = rhi->newTexture(src->format(), src->pixelSize(), 1, flags);
-        if (!wrapper->createFrom({quint64(native), 0})) {
-            delete wrapper;
-            qCWarning(lcImageItem, "wrapping texture %p for window %p failed", native, static_cast<void*>(window));
-            return nullptr;
-        }
-#ifdef Q_OS_WIN
-        static_cast<IUnknown*>(native)->AddRef();
-        t->native = native;
-#endif
-        auto* plain = new QSGPlainTexture;
-        plain->setOwnsTexture(true);
-        plain->setTexture(wrapper);
-        plain->setTextureSize(src->pixelSize());
-        plain->setHasAlphaChannel(true);
-        t->texture = plain;
-        t->mipmaps = (flags & QRhiTexture::MipMapped) != 0;
-    } else if (!content->image().isNull()) {
-        // No shared device (Linux, VLQT_SHARED_DEVICE=0, software backend): the CPU copy, once per window.
-        t->texture = window->createTextureFromImage(content->image(), QQuickWindow::TextureHasAlphaChannel);
-    }
-    if (!t->texture)
-        return nullptr;
-    qCDebug(lcImageItem, "texture %dx%d for window %p (%s)", t->texture->textureSize().width(),
-        t->texture->textureSize().height(), static_cast<void*>(window), t->native ? "shared" : "copy");
-    return t;
-}
-
-std::shared_ptr<ImageTexture> textureFor(QQuickWindow* window, const std::shared_ptr<res::image::ImageResource>& content)
-{
-    for (auto it = s_textures.begin(); it != s_textures.end();) {
-        auto t = it->lock();
-        if (!t) {
-            it = s_textures.erase(it);
-            continue;
-        }
-        if (t->window == window && t->content == content)
-            return t;
-        ++it;
-    }
-    auto t = createTexture(window, content);
-    if (t)
-        s_textures.push_back(t);
-    return t;
-}
+res::ChangeWatch<QtImageItem> s_watch; // items by the id they wait for, main thread
 
 struct Quad
 {
@@ -173,13 +73,6 @@ void layout(int fillMode, float w, float h, float iw, float ih, std::vector<Quad
 }
 
 } // namespace
-
-std::shared_ptr<ImageTexture> imageTextureFor(QQuickWindow* window, const std::shared_ptr<res::image::ImageResource>& content)
-{
-    return window && content ? textureFor(window, content) : nullptr;
-}
-
-QSGTexture* textureOf(const ImageTexture& t) { return t.texture; }
 
 QtImageItem::QtImageItem(QQuickItem* parent) : QQuickItem(parent)
 {
@@ -272,8 +165,8 @@ QSGNode* QtImageItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
     const std::shared_ptr<ImageTexture> previous = m_texture;
     if (!m_content)
         m_texture.reset();
-    else if (!m_texture || m_texture->window != window() || m_texture->content != m_content)
-        m_texture = textureFor(window(), m_content);
+    else if (!m_texture || !m_texture->fits(window(), m_content))
+        m_texture = imageTextureFor(window(), m_content);
 
     const float w = float(width()), h = float(height());
     if (!m_texture || w <= 0 || h <= 0) {

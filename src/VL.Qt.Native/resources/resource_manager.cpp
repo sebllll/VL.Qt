@@ -1,7 +1,7 @@
 #include "resources/resource_manager.h"
 
 #include "app/exports.h"
-#include "device.h"
+#include "device/device.h"
 #include "protocol.h"
 #include "vlqt.h"
 

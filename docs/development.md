@@ -242,15 +242,14 @@ src/VL.Qt.Native/           # QtNative (C++)
   elements/                 # element types (type_*.cpp), their table, geometry, Group frame, effect sources
   effects/                  # effect chain, Shader item and its material, layer requests
   user_qml/                 # QmlElement: loads a user .qml file (qml_item), watches its root (qml_watcher), wire values (qml_wire)
-  resources/                # resource manager (resources.h, resource_*.h/cpp), pixel formats
+  resources/                # resource manager (resources.h, resource_*.h/cpp), pixel formats, Image element (qt_image_item)
   offscreen/                # QtTexture scenes: binding, rendering, input, exports, linear pass
   diagnostics/              # perf monitor (perf_*), F2/F5 overlays, debug overlay
   test/                     # the test exports of vlqt_test.h
   testkit/                  # vlqt_testkit, the stand-in D3D11 device of the SmokeTest (not packed)
-  device.h/cpp              # shared D3D11 device, device loss
+  device/                   # shared D3D11 device, device loss
   render_thread.h/cpp       # Qt render threads of the QtTexture scenes
   *_resource.h/cpp          # images, shaders, snapshots
-  qtimageitem.h/cpp         # Image element: draws an image resource
   image_writer.h/cpp        # writes pixels to an image file (vlqt_image_write_file)
   vlstyle.h/cpp             # VlStyle, the attached style of the Controls
   audio_tap.h/cpp           # audio tap: the sound of a Video element as samples

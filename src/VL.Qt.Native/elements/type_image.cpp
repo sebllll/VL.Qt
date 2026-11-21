@@ -1,5 +1,5 @@
 #include "elements/element_types.h"
-#include "qtimageitem.h"
+#include "resources/qt_image_item.h"
 
 namespace vlqt {
 

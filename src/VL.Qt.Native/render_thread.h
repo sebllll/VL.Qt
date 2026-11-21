@@ -13,7 +13,7 @@
  */
 #pragma once
 
-#include "device.h"
+#include "device/device.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QThread>
