@@ -3,6 +3,7 @@
 #include "protocol.h"
 
 #include <QtCore/QDebug>
+#include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QMetaMethod>
@@ -54,6 +55,40 @@ QString errorLines(const QQmlComponent& component)
     }
     return lines.join(u'\n');
 }
+
+// Per engine: size and modification time of each file at its last compile. The engine keeps compiled components by URL
+// and does not look at the file again before clearComponentCache(), so a new item of a file that changed on disk would
+// get the old component (QML-06). Owned by the engine (child object), so it goes with it.
+class FileStamps : public QObject
+{
+public:
+    static FileStamps* of(QQmlEngine* engine)
+    {
+        // No Q_OBJECT (this class is not in a header for moc), so the child is found by its name.
+        auto* s = engine->findChild<QObject*>(QLatin1String("vlqtQmlFileStamps"), Qt::FindDirectChildrenOnly);
+        return s ? static_cast<FileStamps*>(s) : new FileStamps(engine);
+    }
+
+    /* Records the file as compiled now. true = it differs from the last record (a record exists). */
+    bool changedSince(const QFileInfo& file)
+    {
+        const Stamp now{file.lastModified(), file.size()};
+        const auto it = m_stamps.find(file.canonicalFilePath());
+        const bool changed = it != m_stamps.end() && !(it.value() == now);
+        m_stamps.insert(file.canonicalFilePath(), now);
+        return changed;
+    }
+
+private:
+    explicit FileStamps(QObject* parent) : QObject(parent) { setObjectName(QLatin1String("vlqtQmlFileStamps")); }
+
+    struct Stamp {
+        QDateTime modified;
+        qint64 size = 0;
+        bool operator==(const Stamp& o) const { return modified == o.modified && size == o.size; }
+    };
+    QHash<QString, Stamp> m_stamps;
+};
 
 QString nativeClassName(const QObject* obj)
 {
@@ -342,7 +377,7 @@ void QmlItem::setSource(QQmlEngine* engine, const QString& path)
         return;
     m_engine = engine;
     m_path = path;
-    rebuild(false);
+    m_buildPending = true;
 }
 
 void QmlItem::setReload(qint32 counter)
@@ -350,8 +385,20 @@ void QmlItem::setReload(qint32 counter)
     // The initial 0 counts as applied, so the first bump (0 -> 1) already reloads.
     const bool changed = m_reload != counter;
     m_reload = counter;
-    if (changed && m_engine && !m_path.isEmpty())
-        rebuild(true);
+    if (changed && m_engine && !m_path.isEmpty()) {
+        m_buildPending = true;
+        m_clearCache = true;
+    }
+}
+
+void QmlItem::build()
+{
+    if (!m_buildPending)
+        return;
+    const bool clearCache = m_clearCache;
+    m_buildPending = false;
+    m_clearCache = false;
+    rebuild(clearCache);
 }
 
 void QmlItem::setAutoSize(bool on)
@@ -447,7 +494,10 @@ void QmlItem::rebuild(bool clearCache)
         m_loadError = QStringLiteral("%1: file not found").arg(m_path);
         return finish();
     }
-    if (clearCache)
+    // A file that changed on disk is read again even when no reload came (see FileStamps); one that did not change keeps
+    // its compiled component, so that creating QML elements does not clear the cache of the other items.
+    const bool changedOnDisk = FileStamps::of(m_engine)->changedSince(QFileInfo(m_path));
+    if (clearCache || changedOnDisk)
         m_engine->clearComponentCache(); // components the file imports by relative path are read again as well
     // Windows/macOS: Qt compares the case of the file name with the one on disk; the canonical path has it right.
     const QString canonical = QFileInfo(m_path).canonicalFilePath();
@@ -471,14 +521,26 @@ void QmlItem::rebuild(bool clearCache)
         m_loadError = QStringLiteral("%1: the file did not load synchronously").arg(m_path);
         return finish();
     }
-    QObject* obj = component.isError() ? nullptr : component.create();
+    // Creation in three steps instead of component.create(): the root exists, the watcher is connected and the values set so
+    // far go in as initial properties (Qt refuses a root with a `required property` that has no value at completeCreate),
+    // and only then the bindings and handlers of the file run, so that what QML derives from the values is reported.
+    QObject* obj = component.isError() ? nullptr : component.beginCreate(m_engine->rootContext());
+    auto* item = qobject_cast<QQuickItem*>(obj);
+    if (item) {
+        QQmlEngine::setObjectOwnership(item, QQmlEngine::CppOwnership);
+        m_root = item;
+        m_watcher = new QmlWatcher(this, item);
+        for (const QString& name : std::as_const(m_order))
+            applyProperty(name, m_values.value(name), &component);
+    }
+    if (obj)
+        component.completeCreate();
     if (!obj) {
         m_loadError = errorLines(component);
         if (m_loadError.isEmpty())
             m_loadError = QStringLiteral("%1: the file could not be created").arg(m_path);
         return finish();
     }
-    auto* item = qobject_cast<QQuickItem*>(obj);
     if (!item) {
         const QString type = nativeClassName(obj);
         delete obj;
@@ -488,16 +550,11 @@ void QmlItem::rebuild(bool clearCache)
     // Runtime errors of the creation (e.g. a failing binding) stay in the component's error list.
     if (component.isError())
         m_loadError = errorLines(component);
-    QQmlEngine::setObjectOwnership(item, QQmlEngine::CppOwnership);
     item->setParentItem(this);
-    m_root = item;
     connect(item, &QQuickItem::widthChanged, this, &QmlItem::syncImplicit);
     connect(item, &QQuickItem::heightChanged, this, &QmlItem::syncImplicit);
-    m_watcher = new QmlWatcher(this, item);
     syncSize();
     syncImplicit();
-    for (const QString& name : std::as_const(m_order))
-        applyProperty(name, m_values.value(name));
     finish();
 }
 
@@ -523,7 +580,7 @@ void QmlItem::setPropertyError(const QString& name, const QString& message)
     m_propErrors.insert(name, message);
 }
 
-void QmlItem::applyProperty(const QString& name, const QVariant& value)
+void QmlItem::applyProperty(const QString& name, const QVariant& value, QQmlComponent* creating)
 {
     const QMetaObject* mo = m_root->metaObject();
     const int index = mo->indexOfProperty(name.toUtf8().constData());
@@ -548,7 +605,12 @@ void QmlItem::applyProperty(const QString& name, const QVariant& value)
     const int watched = m_watcher ? m_watcher->watchedIndex(index) : -1;
     if (m_watcher)
         m_watcher->suppress(watched);
-    const bool ok = p.write(m_root, v);
+    // While the root is created Qt wants the values through the component (this is what satisfies a required property).
+    bool ok = true;
+    if (creating)
+        creating->setInitialProperties(m_root, QVariantMap{{name, v}});
+    else
+        ok = p.write(m_root, v);
     if (m_watcher)
         m_watcher->suppress(-1);
     if (!ok)
