@@ -4,13 +4,13 @@ using VL.Qt.Wire;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Clear color and Clear flag of SceneCore.Update go to QtNative only when they change.</summary>
-    public class SceneCoreClearTests
+    /// <summary>Clear color and Clear flag of Scene.Update go to QtNative only when they change.</summary>
+    public class SceneClearTests
     {
         private static readonly Color4 c = new Color4(0.1f, 0.2f, 0.3f, 1f);
 
         // Written commands of the next Update, without a native handle (Apply does not run).
-        private static int Written(SceneCore core, bool clear, Color4 color)
+        private static int Written(Scene core, bool clear, Color4 color)
         {
             core.Commands.Reset();
             core.Update(null, Space.DIPTopLeft, color, clear);
@@ -24,14 +24,14 @@ namespace VL.Qt.Tests
         [Test]
         public void FirstUpdate_SendsClearColorClearAndSpace()
         {
-            var core = new SceneCore(new SceneRegistry());
+            var core = new Scene(new SceneRegistry(), SceneHandle.Null);
             Assert.That(Written(core, true, c), Is.EqualTo(clearColorBytes + setClearBytes + setSpaceBytes));
         }
 
         [Test]
         public void UnchangedValues_SendNothing()
         {
-            var core = new SceneCore(new SceneRegistry());
+            var core = new Scene(new SceneRegistry(), SceneHandle.Null);
             Written(core, false, c);
             Assert.That(Written(core, false, c), Is.EqualTo(0));
         }
@@ -39,7 +39,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ClearChange_SendsOnlySetClear()
         {
-            var core = new SceneCore(new SceneRegistry());
+            var core = new Scene(new SceneRegistry(), SceneHandle.Null);
             Written(core, true, c);
             Assert.That(Written(core, false, c), Is.EqualTo(setClearBytes), "off");
             Assert.That(Written(core, true, c), Is.EqualTo(setClearBytes), "on again");
@@ -48,7 +48,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ClearColorChange_DoesNotSendSetClear()
         {
-            var core = new SceneCore(new SceneRegistry());
+            var core = new Scene(new SceneRegistry(), SceneHandle.Null);
             Written(core, false, c);
             Assert.That(Written(core, false, new Color4(1, 0, 0, 1)), Is.EqualTo(clearColorBytes));
         }

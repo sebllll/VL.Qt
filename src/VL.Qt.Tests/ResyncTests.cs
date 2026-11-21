@@ -183,12 +183,12 @@ namespace VL.Qt.Tests
             try
             {
                 var e = new Native.vlqt_apply_error { rc = -7, id = 3, op = Protocol.Op.Set, prop = Protocol.PropertyId.FillMode, reason = reason };
-                Assert.That(SceneCore.DescribeApplyError(e), Is.EqualTo("Qt rejected FillMode: property 545: value 4 not allowed"));
+                Assert.That(Scene.DescribeApplyError(e), Is.EqualTo("Qt rejected FillMode: property 545: value 4 not allowed"));
                 e.op = Protocol.Op.Reparent;
-                Assert.That(SceneCore.DescribeApplyError(e), Does.StartWith("Qt rejected Reparent: "));
+                Assert.That(Scene.DescribeApplyError(e), Does.StartWith("Qt rejected Reparent: "));
                 e.op = Protocol.Op.Set;
                 e.prop = 9999;
-                Assert.That(SceneCore.DescribeApplyError(e), Does.StartWith("Qt rejected property 9999: "));
+                Assert.That(Scene.DescribeApplyError(e), Does.StartWith("Qt rejected property 9999: "));
             }
             finally
             {

@@ -12,8 +12,8 @@ using VL.Qt.Wire;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 
-// One element tree in two renderers of one SceneRegistry: a WindowRenderer (registered first, owns the element)
-// and an OffscreenRenderer (D3D11, Windows only). Both draw it, no warning in the feedback; state values (SceneBounds,
+// One element tree in two renderers of one SceneRegistry: a WindowScene (registered first, owns the element)
+// and an OffscreenScene (D3D11, Windows only). Both draw it, no warning in the feedback; state values (SceneBounds,
 // Measured) come from the window; after the window renderer is disposed the offscreen renderer takes over (after its
 // next update), state values keep arriving and Snapshot / TryLocate find the element in the offscreen scene.
 // The window shows the tree inside a translated Group, the offscreen scene shows it at its origin: SceneBounds tell
@@ -60,9 +60,9 @@ public static class MultiRendererTest
         client.SetPumping(true);
 
         var registry = new SceneRegistry();
-        var window = new WindowRenderer(registry, "VL.Qt multi renderer test", new RectangleF(0, 0, WindowW, WindowH));
-        var offscreen = new OffscreenRenderer(registry, TexW, TexH);
-        check(window.Window != SceneHandle.Null && offscreen.Scene != SceneHandle.Null, $"renderers created ({window.Error}{offscreen.Error})");
+        var window = new WindowScene(registry, "VL.Qt multi renderer test", new RectangleF(0, 0, WindowW, WindowH));
+        var offscreen = new OffscreenScene(registry, TexW, TexH);
+        check(window.Window != SceneHandle.Null && offscreen.Handle != SceneHandle.Null, $"renderers created ({window.Error}{offscreen.Error})");
         var rc = offscreen.Bind(device, handle, new Int2(TexW, TexH), B8G8R8A8Unorm);
         NativeTest.vlqt_test_close_handle(handle);
         check(rc == Native.Result.Ok && offscreen.IsBound, $"offscreen bind ({rc}) {offscreen.Error}");
@@ -94,9 +94,9 @@ public static class MultiRendererTest
             if (windowAlive)
                 window.ApplyCommands();
             offscreen.ApplyCommands();
-            var rendered = OffscreenRenderer.RenderBatch(context, new[] { offscreen }, 0);
+            var rendered = OffscreenScene.RenderBatch(context, new[] { offscreen.Handle }, 0);
             if (rendered < 0)
-                check(false, $"render batch ({rendered}) {OffscreenRenderer.Describe((Native.Result)rendered)}");
+                check(false, $"render batch ({rendered}) {OffscreenScene.Describe((Native.Result)rendered)}");
             client.BeforeEvents();
             s.Pump(1);
             client.AfterEvents();
@@ -184,7 +184,7 @@ public static class MultiRendererTest
         {
             offscreen.Update(tree, Space.DIPTopLeft, clear, true, true);
             offscreen.ApplyCommands();
-            OffscreenRenderer.RenderBatch(context, new[] { offscreen }, 0);
+            OffscreenScene.RenderBatch(context, new[] { offscreen.Handle }, 0);
             client.BeforeEvents();
             s.Pump(1);
             client.AfterEvents();
@@ -196,7 +196,7 @@ public static class MultiRendererTest
         check(feedback[1].MeasuredSize.X > before + 0.05f, $"Measured follows the offscreen scene ({before} -> {feedback[1].MeasuredSize.X} after {n} frames)");
 
         // 4) TryLocate and Snapshot find the rectangle in the offscreen scene.
-        check(registry.TryLocate(rect, out var located2, out _) && located2 == offscreen.Scene, "TryLocate finds the rectangle in the offscreen scene");
+        check(registry.TryLocate(rect, out var located2, out _) && located2 == offscreen.Handle, "TryLocate finds the rectangle in the offscreen scene");
         var snapshot = new SnapshotNode(client, registry);
         IImage? image = snapshot.Update(rect, out var ready, out var error, 1, true);
         for (int i = 0; i < MaxFrames && !ready && error.Length == 0; i++)

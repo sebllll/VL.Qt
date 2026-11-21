@@ -20,7 +20,7 @@ namespace VL.Qt.Stride
     {
         private readonly NodeErrors _errors;
         private readonly QtTextureRenderer _renderer;
-        private readonly OffscreenRenderer _scene;
+        private readonly OffscreenScene _scene;
         private readonly NotificationQueue _input;
         private Texture? _texture;
         private GraphicsDevice? _device;
@@ -39,8 +39,8 @@ namespace VL.Qt.Stride
         {
             _errors = new NodeErrors(nodeContext);
             _renderer = QtTextureRenderer.ForApp(nodeContext.AppHost);
-            _scene = new OffscreenRenderer(SceneRegistry.ForApp(nodeContext.AppHost), 1920, 1080);
-            _input = new NotificationQueue(_scene.Notify);
+            _scene = new OffscreenScene(SceneRegistry.ForApp(nodeContext.AppHost), 1920, 1080);
+            _input = new NotificationQueue(_scene.Input.Notify);
             _renderer.StrideDeviceGone += OnStrideDeviceGone;
         }
 
@@ -88,10 +88,10 @@ namespace VL.Qt.Stride
             if (enabled)
                 EnsureTexture(size, format, samples);
 
-            if (debug != _debug && !_scene.Scene.IsNull)
+            if (debug != _debug && _scene.IsOpen)
             {
                 _debug = debug;
-                Native.vlqt_scene_set_debug(_scene.Scene, debug ? 1 : 0);
+                Native.vlqt_scene_set_debug(_scene.Handle, debug ? 1 : 0);
             }
             // Qt does not premultiply the clear colour itself (render-texture.md, task 1.8).
             var premultiplied = new Color4(clearColor.R * clearColor.A, clearColor.G * clearColor.A, clearColor.B * clearColor.A, clearColor.A);
@@ -236,7 +236,7 @@ namespace VL.Qt.Stride
         }
 
         // Called by QtTextureRenderer at the start of the draw, before the batch: sends this frame's commands to QtNative.
-        internal OffscreenRenderer ApplyCommands()
+        internal SceneHandle ApplyCommands()
         {
             _scheduled = false;
             try
@@ -248,7 +248,7 @@ namespace VL.Qt.Stride
             {
                 _errors.Report(e, nameof(ApplyCommands));
             }
-            return _scene;
+            return _scene.Handle;
         }
 
         // Called by QtTextureRenderer after the batch: its error (empty if ok) and the events of the scene.

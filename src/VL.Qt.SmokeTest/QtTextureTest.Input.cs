@@ -18,7 +18,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 /// <summary>
 /// task 6, scenario <c>QtTextureInput</c>: input into an offscreen scene, no window involved. One scene (400 x 300 DIP) bound to
 /// a texture of the test D3D11 device, built from the element nodes (Hover, Click, Wheel, Drag, Pinch, Touch Points, Slider,
-/// TextInput) and fed through <see cref="OffscreenRenderer"/>: vvvv notifications (<c>Notify</c>: mouse, wheel, touch, keyboard) and
+/// TextInput) and fed through <see cref="OffscreenScene"/>: vvvv notifications (<c>Notify</c>: mouse, wheel, touch, keyboard) and
 /// the <c>Send*</c> calls (pen, which vvvv has no notification for, horizontal wheel, text, focus). The frame order is the one of
 /// QtTexture: input, update, apply, render batch, s, poll events. Layout in DIP:
 /// A (20, 20, 100 x 80) Hover + Click + Wheel; P (140, 20, 100 x 80) three Click nodes (mouse / touch screen / pen);
@@ -36,8 +36,8 @@ public static partial class QtTextureTest
 
         private readonly Scenario _s;
         private readonly IntPtr _device, _context, _texture;
-        public readonly OffscreenRenderer R;
-        private readonly OffscreenRenderer[] _batch;
+        public readonly OffscreenScene R;
+        private readonly SceneHandle[] _batch;
         public readonly bool Ok;
 
         private readonly RectangleNode _rectA = new(_ => new NoMessage()), _rectP = new(_ => new NoMessage()), _rectB = new(_ => new NoMessage()), _rectC = new(_ => new NoMessage());
@@ -73,13 +73,13 @@ public static partial class QtTextureTest
             {
                 s.Check(false, "input: create test device");
                 R = null!;
-                _batch = Array.Empty<OffscreenRenderer>();
+                _batch = Array.Empty<SceneHandle>();
                 _subs = Array.Empty<IDisposable>();
                 return;
             }
             NativeTest.vlqt_test_d3d11_create_shared_texture(_device, W, H, B8G8R8A8Typeless, out _texture, out var handle);
-            R = new OffscreenRenderer(new SceneRegistry(), W, H);
-            _batch = new[] { R };
+            R = new OffscreenScene(new SceneRegistry(), W, H);
+            _batch = new[] { R.Handle };
             var rc = R.Bind(_device, handle, new Int2(W, H), B8G8R8A8Unorm);
             NativeTest.vlqt_test_close_handle(handle);
             Ok = rc == (int)Native.Result.Ok && R.IsBound;
@@ -132,9 +132,9 @@ public static partial class QtTextureTest
         {
             R.Update(Describe(), Space.DIPTopLeft, new Color4(0, 0, 0, 0), true, true);
             R.ApplyCommands();
-            int rc = OffscreenRenderer.RenderBatch(_context, _batch, 0);
+            int rc = global::VL.Qt.OffscreenScene.RenderBatch(_context, _batch, 0);
             if (rc < 0)
-                _s.Check(false, $"input: render batch ({rc}) {OffscreenRenderer.Describe((Native.Result)rc)}");
+                _s.Check(false, $"input: render batch ({rc}) {(global::VL.Qt.OffscreenScene.Describe((Native.Result)rc))}");
             _s.Pump(1);
             R.PollEvents();
             if (R.Error.Length > 0)
@@ -145,25 +145,25 @@ public static partial class QtTextureTest
         public void Frames(int count = 3) { for (int i = 0; i < count; i++) Frame(); }
 
         // vvvv notifications, positions in texture pixels.
-        public void Move(float x, float y) => R.Notify(new MouseMoveNotification(new Vector2(x, y), s_client, Keys.None, this));
-        public void Down(float x, float y, MouseButtons b = MouseButtons.Left) => R.Notify(new MouseDownNotification(new Vector2(x, y), s_client, b, Keys.None, this));
-        public void Up(float x, float y, MouseButtons b = MouseButtons.Left) => R.Notify(new MouseUpNotification(new Vector2(x, y), s_client, b, Keys.None, this));
+        public void Move(float x, float y) => R.Input.Notify(new MouseMoveNotification(new Vector2(x, y), s_client, Keys.None, this));
+        public void Down(float x, float y, MouseButtons b = MouseButtons.Left) => R.Input.Notify(new MouseDownNotification(new Vector2(x, y), s_client, b, Keys.None, this));
+        public void Up(float x, float y, MouseButtons b = MouseButtons.Left) => R.Input.Notify(new MouseUpNotification(new Vector2(x, y), s_client, b, Keys.None, this));
         public void Click(float x, float y) { Move(x, y); Down(x, y); Up(x, y); }
-        public void Lost(float x, float y) => R.Notify(new MouseLostNotification(new Vector2(x, y), s_client, Keys.None, this));
-        public void Wheel(float x, float y, int delta) => R.Notify(new MouseWheelNotification(new Vector2(x, y), s_client, delta, Keys.None, this));
-        public void HWheel(float x, float y, int delta) => R.Notify(new MouseHorizontalWheelNotification(new Vector2(x, y), s_client, delta, Keys.None, this));
+        public void Lost(float x, float y) => R.Input.Notify(new MouseLostNotification(new Vector2(x, y), s_client, Keys.None, this));
+        public void Wheel(float x, float y, int delta) => R.Input.Notify(new MouseWheelNotification(new Vector2(x, y), s_client, delta, Keys.None, this));
+        public void HWheel(float x, float y, int delta) => R.Input.Notify(new MouseHorizontalWheelNotification(new Vector2(x, y), s_client, delta, Keys.None, this));
         public void Touch(TouchNotificationKind kind, int id, float x, float y)
-            => R.Notify(new TouchNotification(kind, new Vector2(x, y), s_client, id, id == 11, new Vector2(10, 10), 7, Keys.None, this));
+            => R.Input.Notify(new TouchNotification(kind, new Vector2(x, y), s_client, id, id == 11, new Vector2(10, 10), 7, Keys.None, this));
         public void Key(Keys key)
         {
-            R.Notify(new KeyDownNotification(key, Keys.None, this));
-            R.Notify(new KeyUpNotification(key, Keys.None, this));
+            R.Input.Notify(new KeyDownNotification(key, Keys.None, this));
+            R.Input.Notify(new KeyUpNotification(key, Keys.None, this));
         }
         // Typed characters as vvvv sends them: KeyPress carries the character.
         public void Type(string text)
         {
             foreach (var c in text)
-                R.Notify(new KeyPressNotification(c, Keys.None, this));
+                R.Input.Notify(new KeyPressNotification(c, Keys.None, this));
         }
 
         /// <summary>The texture as premultiplied B8G8R8A8 rows; null if the readback failed.</summary>

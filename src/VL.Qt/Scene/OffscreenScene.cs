@@ -1,60 +1,53 @@
 ﻿using System;
 using System.Text;
 using Stride.Core.Mathematics;
-using VL.Lib.IO;
-using VL.Lib.IO.Notifications;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
 
 namespace VL.Qt
 {
     /// <summary>
-    /// The window-free sibling of <see cref="WindowRenderer"/> (QtTexture): one offscreen Qt scene, its reconciler
-    /// and command buffer, rendered into a texture of a foreign D3D11 device (Stride's) shared by NT handle. Stride-free:
+    /// A native offscreen scene, the window-free sibling of <see cref="WindowScene"/> (QtTexture): a <see cref="Scene"/>
+    /// rendered into a texture of a foreign D3D11 device (Stride's) shared by NT handle. Stride-free:
     /// <c>VL.Qt.Stride</c> passes native pointers. Not rendered by the window pump (<see cref="QtPump"/>): the caller runs
-    /// <see cref="Update"/> and <see cref="ApplyCommands"/> per frame, then <see cref="RenderBatch"/> once for all renderers
+    /// <see cref="Update"/> and <see cref="ApplyCommands"/> per frame, then <see cref="RenderBatch"/> once for all scenes
     /// of the host frame, then <see cref="PollEvents"/>. Main thread only. Native side: vlqt_offscreen_* in vlqt.h.
     /// </summary>
-    internal sealed class OffscreenRenderer : IDisposable
+    internal sealed class OffscreenScene : IDisposable
     {
-        // Scene handles of one RenderBatch: reused, so a frame allocates nothing (main thread only).
-        private static SceneHandle[] s_scenes = new SceneHandle[8];
-
-        private readonly SceneCore _core;
-        private SceneHandle _scene;
-        private bool _disposed;
-        // Input state (Notify): vvvv notifications carry the changed mouse button, Qt wants the buttons held after the event;
-        // _keysDown detects auto-repeat (a KeyDown of a key that is already down); _highSurrogate joins the two KeyPress
-        // notifications of a character outside the BMP.
-        private int _mouseButtons;
-        private readonly bool[] _keysDown = new bool[256];
-        private char _highSurrogate;
+        private readonly Scene _scene;
         private string _createError = "", _bindError = "";
         private int _usedSamples;
 
-        /// <param name="scene">Duplicate registry of the app (<see cref="SceneRegistry.ForApp"/>).</param>
+        /// <param name="registry">Duplicate registry of the app (<see cref="SceneRegistry.ForApp"/>).</param>
         /// <param name="width">Initial scene width in DIP (1 DIP = 1 texture pixel); <see cref="Bind"/> sets the final size.</param>
         /// <param name="height">Initial scene height in DIP.</param>
-        public OffscreenRenderer(SceneRegistry scene, int width, int height)
+        public OffscreenScene(SceneRegistry registry, int width, int height)
         {
-            _core = new SceneCore(scene);
-            _scene = Native.vlqt_offscreen_create(width, height);
-            _core.Handle = _scene;
-            if (_scene.IsNull)
+            var handle = Native.vlqt_offscreen_create(width, height);
+            if (handle.IsNull)
             {
                 var text = Native.LastError();
                 _createError = text.Length > 0 ? text : "Qt could not create the offscreen scene";
             }
+            _scene = new Scene(registry, handle);
+            Input = new OffscreenInput(this);
         }
 
-        /// <summary>The native scene handle (also a window handle for the vlqt_window_* functions), a null handle if creation failed or after <see cref="Dispose"/>.</summary>
-        public SceneHandle Scene => _scene;
+        /// <summary>The native scene handle, a null handle if creation failed or after <see cref="Dispose"/>.</summary>
+        public SceneHandle Handle => _scene.Handle;
+
+        /// <summary>Translates vvvv notifications into the Send* calls of this scene.</summary>
+        public OffscreenInput Input { get; }
+
+        /// <summary>Returns true if the native scene exists and is not disposed.</summary>
+        public bool IsOpen => _scene.IsOpen;
 
         /// <summary>
         /// Returns true if the scene is bound to a texture. False before <see cref="Bind"/>, after a failed bind and after a
         /// device loss of QtNative (it unbinds the scene): bind again.
         /// </summary>
-        public bool IsBound => !_disposed && !_scene.IsNull && Native.vlqt_offscreen_is_bound(_scene) == 1;
+        public bool IsBound => _scene.IsOpen && Native.vlqt_offscreen_is_bound(Handle) == 1;
 
         /// <summary>MSAA count of the last successful <see cref="Bind"/> (what QtNative used, clamped to the device); 0 while unbound.</summary>
         public int UsedSamples => _usedSamples;
@@ -63,10 +56,10 @@ namespace VL.Qt
         public string Error =>
             _createError.Length > 0 ? _createError
             : _bindError.Length > 0 ? _bindError
-            : _core.ApplyError.Length > 0 ? _core.ApplyError
-            : _core.PollError;
+            : _scene.ApplyError.Length > 0 ? _scene.ApplyError
+            : _scene.PollError;
 
-        internal Reconciler Reconciler => _core.Reconciler;
+        internal Reconciler Reconciler => _scene.Reconciler;
 
         /// <summary>
         /// Binds the scene to a shared texture. <paramref name="device"/> is the foreign ID3D11Device*,
@@ -79,9 +72,9 @@ namespace VL.Qt
         /// </summary>
         public Native.Result Bind(IntPtr device, IntPtr ntHandle, Int2 size, int format, MultisampleCount samples = MultisampleCount.None)
         {
-            if (_disposed || _scene.IsNull)
+            if (!_scene.IsOpen)
                 return Native.Result.NullHandle;
-            var rc = Native.vlqt_offscreen_bind(_scene, device, ntHandle, size.X, size.Y, format, (int)samples, out var used);
+            var rc = Native.vlqt_offscreen_bind(Handle, device, ntHandle, size.X, size.Y, format, (int)samples, out var used);
             _usedSamples = rc == Native.Result.Ok ? used : 0;
             _bindError = rc == Native.Result.Ok ? "" : Describe(rc);
             return rc;
@@ -90,9 +83,9 @@ namespace VL.Qt
         /// <summary>Frees the binding; the scene and its elements stay.</summary>
         public void Unbind()
         {
-            if (_disposed || _scene.IsNull)
+            if (!_scene.IsOpen)
                 return;
-            Native.vlqt_offscreen_unbind(_scene);
+            Native.vlqt_offscreen_unbind(Handle);
             _bindError = "";
             _usedSamples = 0;
         }
@@ -104,186 +97,75 @@ namespace VL.Qt
         /// </summary>
         public void Update(Element? input, Space space, Color4 clearColor, bool clear, bool enabled)
         {
-            if (_disposed || _scene.IsNull || !enabled)
+            if (!_scene.IsOpen || !enabled)
                 return;
-            _core.Update(input, space, clearColor, clear);
+            _scene.Update(input, space, clearColor, clear);
         }
 
         /// <summary>Sends the commands written by <see cref="Update"/> to QtNative; call before <see cref="RenderBatch"/>.</summary>
         public void ApplyCommands()
         {
-            if (_disposed || _scene.IsNull)
+            if (!_scene.IsOpen)
                 return;
-            _core.Apply();
+            _scene.Apply();
         }
 
         /// <summary>Events and measured values of the scene into the feedback (read by the element nodes in the next Update).</summary>
         public void PollEvents()
         {
-            if (_disposed || _scene.IsNull)
+            if (!_scene.IsOpen)
                 return;
-            var events = _core.ReadEvents(frameStart: false);
+            var events = _scene.ReadEvents(frameStart: false);
             if (!events.IsEmpty)
-                _core.Dispatch(events, frameStart: false);
+                _scene.Dispatch(events, frameStart: false);
         }
 
         // Input (render-texture.md "Input"): positions in texture pixels (top-left origin, 1 DIP = 1 pixel), call
         // between two RenderBatch calls; the scene shows the result in the next batch, its events arrive in PollEvents.
         // Each returns a Native.Result code.
 
-        /// <summary>
-        /// Translates a vvvv notification (mouse, touch, keyboard, focus; positions already in texture pixels) into the
-        /// Send* calls below. Main thread. Allocates nothing. Not translated: <see cref="MouseClickNotification"/> (Qt derives
-        /// clicks and double clicks itself), <see cref="GotFocusNotification"/> (a press gives the scene focus) and gestures.
-        /// Errors of the Send* calls are dropped: a rejected event (e.g. a touch id in the wrong state) must not stop the stream.
-        /// </summary>
-        public void Notify(INotification notification)
-        {
-            if (_disposed || _scene.IsNull)
-                return;
-            switch (notification)
-            {
-                case MouseDownNotification down:
-                    _mouseButtons |= InputMapping.ToQtButtons(down.Buttons);
-                    SendPointer(Protocol.PointerDevice.Mouse, Protocol.Pointer.Press, 0, down.Position, _mouseButtons, InputMapping.ToQtModifiers(down.ModifierKeys));
-                    break;
-                case MouseUpNotification up:
-                    _mouseButtons &= ~InputMapping.ToQtButtons(up.Buttons);
-                    SendPointer(Protocol.PointerDevice.Mouse, Protocol.Pointer.Release, 0, up.Position, _mouseButtons, InputMapping.ToQtModifiers(up.ModifierKeys));
-                    break;
-                case MouseMoveNotification move:
-                    SendPointer(Protocol.PointerDevice.Mouse, Protocol.Pointer.Move, 0, move.Position, _mouseButtons, InputMapping.ToQtModifiers(move.ModifierKeys));
-                    break;
-                case MouseWheelNotification wheel:
-                    SendWheel(wheel.Position, 0, wheel.WheelDelta, InputMapping.ToQtModifiers(wheel.ModifierKeys));
-                    break;
-                case MouseHorizontalWheelNotification hwheel:
-                    SendWheel(hwheel.Position, hwheel.WheelDelta, 0, InputMapping.ToQtModifiers(hwheel.ModifierKeys));
-                    break;
-                case MouseLostNotification lost:
-                    // The mouse left the window: hover ends. Held buttons stay: vvvv still delivers their release.
-                    SendPointer(Protocol.PointerDevice.Mouse, Protocol.Pointer.Leave, 0, lost.Position, _mouseButtons, InputMapping.ToQtModifiers(lost.ModifierKeys));
-                    break;
-                case TouchNotification touch:
-                    SendPointer(Protocol.PointerDevice.Touch, touch.Kind switch
-                    {
-                        TouchNotificationKind.TouchDown => Protocol.Pointer.Press,
-                        TouchNotificationKind.TouchUp => Protocol.Pointer.Release,
-                        _ => Protocol.Pointer.Move,
-                    }, touch.Id, touch.Position, 0, InputMapping.ToQtModifiers(touch.ModifierKeys));
-                    break;
-                case KeyDownNotification keyDown:
-                    SendKeyCode(Protocol.KeyEvent.Press, keyDown);
-                    break;
-                case KeyUpNotification keyUp:
-                    SendKeyCode(Protocol.KeyEvent.Release, keyUp);
-                    break;
-                case KeyPressNotification press:
-                    SendKeyChar(press.KeyChar);
-                    break;
-                case KeyboardLostNotification:
-                    Array.Clear(_keysDown);
-                    _highSurrogate = ' ';
-                    break;
-                case LostFocusNotification:
-                    // The host window lost the focus: unfocus the scene, forget pressed keys.
-                    Array.Clear(_keysDown);
-                    _highSurrogate = ' ';
-                    SetFocus(false);
-                    break;
-            }
-        }
-
-        private void SendKeyCode(int type, KeyCodeNotification notification)
-        {
-            var code = notification.KeyCode & Keys.KeyCode;
-            var key = InputMapping.ToQtKey(code);
-            if (key == InputMapping.QtKeyUnknown)
-                return;
-            var modifiers = InputMapping.ToQtModifiers(notification.ModifierKeys);
-            if (InputMapping.IsKeypad(code))
-                modifiers |= InputMapping.QtKeypad;
-            var index = (int)code;
-            var autoRepeat = false;
-            if (index < _keysDown.Length)
-            {
-                autoRepeat = type == Protocol.KeyEvent.Press && _keysDown[index];
-                _keysDown[index] = type == Protocol.KeyEvent.Press;
-            }
-            SendKey(type, key, modifiers, autoRepeat);
-        }
-
-        // KeyPress carries the typed character (layout, shift and dead keys applied). Control characters (Enter, Tab, Backspace,
-        // Ctrl+letter) come as key events already and are not text. A character outside the BMP arrives as two notifications.
-        private void SendKeyChar(char c)
-        {
-            if (char.IsHighSurrogate(c))
-            {
-                _highSurrogate = c;
-                return;
-            }
-            if (char.IsLowSurrogate(c))
-            {
-                if (_highSurrogate != ' ')
-                {
-                    Span<char> pair = stackalloc char[2] { _highSurrogate, c };
-                    SendText(pair);
-                }
-                _highSurrogate = ' ';
-                return;
-            }
-            _highSurrogate = ' ';
-            if (char.IsControl(c))
-                return;
-            SendText(new ReadOnlySpan<char>(in c));
-        }
-
-        /// <summary>Pointer event (<see cref="Protocol.Pointer"/>) of <paramref name="device"/> (<see cref="Protocol.PointerDevice"/>); mouse: <paramref name="buttons"/> = Qt::MouseButtons held after the event; touch/pen: <paramref name="id"/> of the point.</summary>
+        /// <summary>Pointer event (<see cref="Protocol.Pointer"/>) of <paramref name="device"/> (<see
+        /// cref="Protocol.PointerDevice"/>); mouse: <paramref name="buttons"/> = Qt::MouseButtons held after the event;
+        /// touch/pen: <paramref name="id"/> of the point.</summary>
         public Native.Result SendPointer(int device, int type, int id, Vector2 position, int buttons, int modifiers)
-            => _disposed || _scene.IsNull ? Native.Result.NullHandle
-            : Native.vlqt_offscreen_send_pointer(_scene, device, type, id, position.X, position.Y, buttons, modifiers);
+            => !_scene.IsOpen ? Native.Result.NullHandle
+            : Native.vlqt_offscreen_send_pointer(Handle, device, type, id, position.X, position.Y, buttons, modifiers);
 
         /// <summary>Wheel at <paramref name="position"/>; angle delta in eighths of a degree (120 = one notch).</summary>
         public Native.Result SendWheel(Vector2 position, int dx, int dy, int modifiers)
-            => _disposed || _scene.IsNull ? Native.Result.NullHandle
-            : Native.vlqt_offscreen_send_wheel(_scene, position.X, position.Y, dx, dy, modifiers);
+            => !_scene.IsOpen ? Native.Result.NullHandle
+            : Native.vlqt_offscreen_send_wheel(Handle, position.X, position.Y, dx, dy, modifiers);
 
         /// <summary>Key press or release (<see cref="Protocol.KeyEvent"/>) of a Qt::Key, without text.</summary>
         public Native.Result SendKey(int type, int key, int modifiers, bool autoRepeat)
-            => _disposed || _scene.IsNull ? Native.Result.NullHandle
-            : Native.vlqt_offscreen_send_key(_scene, type, key, modifiers, autoRepeat ? 1 : 0);
+            => !_scene.IsOpen ? Native.Result.NullHandle
+            : Native.vlqt_offscreen_send_key(Handle, type, key, modifiers, autoRepeat ? 1 : 0);
 
         /// <summary>Typed text to the focus item (e.g. one character of a KeyPress).</summary>
         public Native.Result SendText(ReadOnlySpan<char> text)
         {
-            if (_disposed || _scene.IsNull)
+            if (!_scene.IsOpen)
                 return Native.Result.NullHandle;
             if (text.Length > 64)
                 text = text[..64];
             Span<byte> utf8 = stackalloc byte[64 * 3];
             var length = Encoding.UTF8.GetBytes(text, utf8);
-            return Native.OffscreenSendText(_scene, utf8[..length]);
+            return Native.OffscreenSendText(Handle, utf8[..length]);
         }
 
         /// <summary>Gives the scene keyboard focus (FocusIn) or takes it (FocusOut); QtNative also does it on a press inside or outside the texture.</summary>
         public Native.Result SetFocus(bool focused)
-            => _disposed || _scene.IsNull ? Native.Result.NullHandle
-            : Native.vlqt_offscreen_set_focus(_scene, focused ? 1 : 0);
+            => !_scene.IsOpen ? Native.Result.NullHandle
+            : Native.vlqt_offscreen_set_focus(Handle, focused ? 1 : 0);
 
         /// <summary>
-        /// Renders the changed, bound scenes of <paramref name="renderers"/> in one native call, ordered against
-        /// <paramref name="context"/> (the foreign immediate ID3D11DeviceContext*) by fences. Returns the number of scenes
-        /// rendered or a negative <see cref="Native.Result"/> (<see cref="Describe"/> gives the text).
+        /// Renders the changed, bound scenes of <paramref name="scenes"/> (<see cref="Handle"/>s; a disposed scene is a null
+        /// entry, skipped by QtNative) in one native call, ordered against <paramref name="context"/> (the foreign immediate
+        /// ID3D11DeviceContext*) by fences. Returns the number of scenes rendered or a negative <see cref="Native.Result"/>
+        /// (<see cref="Describe"/> gives the text).
         /// </summary>
-        public static int RenderBatch(IntPtr context, ReadOnlySpan<OffscreenRenderer> renderers, double driverSeconds)
-        {
-            if (s_scenes.Length < renderers.Length)
-                s_scenes = new SceneHandle[Math.Max(renderers.Length, s_scenes.Length * 2)];
-            // A disposed renderer has no scene: a null entry, skipped by QtNative.
-            for (int i = 0; i < renderers.Length; i++)
-                s_scenes[i] = renderers[i]._scene;
-            return Native.OffscreenRenderBatch(context, new ReadOnlySpan<SceneHandle>(s_scenes, 0, renderers.Length), driverSeconds);
-        }
+        public static int RenderBatch(IntPtr context, ReadOnlySpan<SceneHandle> scenes, double driverSeconds)
+            => Native.OffscreenRenderBatch(context, scenes, driverSeconds);
 
         /// <summary>Returns the text of a <see cref="Native.Result"/>, empty for <see cref="Native.Result.Ok"/>.</summary>
         public static string Describe(Native.Result code) => code switch
@@ -302,15 +184,6 @@ namespace VL.Qt
         };
 
         /// <summary>Clear (releases the elements in the app's registry), apply, free the native scene (unbinding first).</summary>
-        public void Dispose()
-        {
-            if (_disposed)
-                return;
-            var scene = _core.Close();
-            if (!scene.IsNull)
-                Native.vlqt_scene_destroy(scene);
-            _scene = SceneHandle.Null;
-            _disposed = true;
-        }
+        public void Dispose() => _scene.Dispose();
     }
 }

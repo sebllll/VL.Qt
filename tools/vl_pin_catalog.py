@@ -5,7 +5,7 @@ MCP interface. `tools/vl-patch-check.py` is its first user.
 
 Usage: python tools/vl_pin_catalog.py [--json]   (prints the catalog)
 
-Reads every node class in src/VL.Qt/Nodes/**/*Node.cs, src/VL.Qt/Renderer.cs , src/VL.Qt.Stride/*Node.cs and src/VL.Qt.Audio/*Node.cs (classes with
+Reads every node class in src/VL.Qt/Nodes/**/*Node.cs, src/VL.Qt.Stride/*Node.cs and src/VL.Qt.Audio/*Node.cs (classes with
 [ProcessNode(...)]):
   - the pins of the public constructor (create pins) and of Update(...); the hidden NodeContext is skipped;
   - per pin: vvvv name ([Pin(Name = "...")], otherwise the C# name in title case with spaces), type, input/output,
@@ -18,7 +18,7 @@ Reads every node class in src/VL.Qt/Nodes/**/*Node.cs, src/VL.Qt/Renderer.cs , s
 import glob, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-NODE_SOURCES = ('src/VL.Qt/Nodes/**/*Node.cs', 'src/VL.Qt/Renderer.cs', 'src/VL.Qt.Stride/*Node.cs', 'src/VL.Qt.Audio/*Node.cs')
+NODE_SOURCES = ('src/VL.Qt/Nodes/**/*Node.cs', 'src/VL.Qt.Stride/*Node.cs', 'src/VL.Qt.Audio/*Node.cs')
 # Folders whose constants and enums resolve pin defaults (Stride's own enums, like PixelFormat, are not here: their
 # defaults are written as nameof(...) and need no lookup).
 CONSTANT_SOURCES = ('src/VL.Qt/**/*.cs', 'src/VL.Qt.Stride/**/*.cs', 'src/VL.Qt.Audio/**/*.cs')
