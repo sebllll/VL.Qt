@@ -28,7 +28,7 @@
  *                   echo). A new handle drops a change not polled yet. Schema and guarantees: protocol.h, elements/type_controls.cpp.
  * QmlElement items additionally report the changes of the properties and signals declared in the root of their QML
  * file: EVENT_QML_PROPERTY (the last value of each changed property, never for the patch's own SET_QML_PROPERTIES) and
- * EVENT_QML_SIGNAL (every emitted signal, cap 256 per poll, QmlItem in qmlitem.h), formats in protocol.h; their errors (load,
+ * EVENT_QML_SIGNAL (every emitted signal, cap 256 per poll, QmlItem in user_qml/qml_item.h), formats in protocol.h; their errors (load,
  * type, rejected properties) arrive as EVENT_ERROR like those of Image/Video.
  * Window-level (feedbackId 0, not a sink), queued by the poll after a move/resize/state change
  * (QWindow x/y/width/height/windowState/screen/visible changed) and once after creation:

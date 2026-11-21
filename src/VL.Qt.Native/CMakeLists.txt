@@ -120,8 +120,12 @@ target_sources(vlqt PRIVATE
     effects/shader_item.h
     effects/shader_material.cpp
     effects/shader_material.h
-    qmlitem.cpp
-    qmlitem.h
+    user_qml/qml_item.cpp
+    user_qml/qml_item.h
+    user_qml/qml_watcher.cpp
+    user_qml/qml_watcher.h
+    user_qml/qml_wire.cpp
+    user_qml/qml_wire.h
 
     # style/
     vlstyle.cpp

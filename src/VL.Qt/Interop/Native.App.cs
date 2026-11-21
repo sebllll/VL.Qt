@@ -43,6 +43,10 @@ namespace VL.Qt.Interop
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_app_deliver_input();
 
+        /// <summary>
+        /// Advances the QML animations to the host time. They follow it forward and hold with it; a jump back does not rewind them.
+        /// <see cref="Result.NotInitialized"/> = app not initialized, <see cref="Result.BadArgument"/> = seconds is NaN, infinite or out of range.
+        /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Result vlqt_app_advance_animations(double seconds);
     }

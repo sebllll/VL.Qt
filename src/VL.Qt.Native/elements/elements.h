@@ -61,6 +61,9 @@
  *       and versioned include directories with limited compatibility guarantees (device.cpp, image_resource.cpp,
  *       qtimageitem.cpp, diagnostics/perf_*.cpp, effects/shader_*, shader_resource.cpp).
  *
+ * Not an include but a behaviour of Qt core that user_qml/qml_watcher.h relies on: QMetaObjectPrivate, raw method ids
+ * through QMetaObject::connect. Check it on a Qt update as well.
+ *
  * A new private include goes into this list and into the head comment of its file in the same change. */
 #pragma once
 
@@ -90,7 +93,7 @@ Q_DECLARE_LOGGING_CATEGORY(lcElements)
 
 namespace vlqt {
 
-class QmlItem;          // qmlitem.h
+class QmlItem;          // user_qml/qml_item.h
 struct EffectChainDesc;  // effects/effect_chain_desc.h
 struct EffectComponents; // effects/effect_chain.h
 class EffectChain;       // effects/effect_chain.h
