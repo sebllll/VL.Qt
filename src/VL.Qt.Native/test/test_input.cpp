@@ -4,6 +4,7 @@
 #include "offscreen/offscreen.h"
 #include "../protocol.h"
 #include "test_hooks.h"
+#include "platform/platform.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QPointer>
@@ -17,10 +18,6 @@
 
 #include <algorithm>
 #include <string>
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 using vlqt::fail;
 using vlqt::guarded;
@@ -63,21 +60,6 @@ protected:
         return QObject::eventFilter(o, e);
     }
 };
-
-#ifdef _WIN32
-// Win32 process environment, not the CRT copy (qgetenv): the .NET host sets the variable at runtime.
-bool testSyntheticInputOnly()
-{
-    wchar_t v[4] = {};
-    return GetEnvironmentVariableW(L"VLQT_TEST_SYNTHETIC_INPUT", v, 4) == 1 && v[0] == L'1';
-}
-#else
-// libc environ (getenv).
-bool testSyntheticInputOnly()
-{
-    return qgetenv("VLQT_TEST_SYNTHETIC_INPUT") == "1";
-}
-#endif
 
 // vlqt_test_send_key*: deliver like the platform does, to the focus window. A Qt Quick popup of type Popup.Window
 // (e.g. the TextField context menu under Linux offscreen) is its own Qt::Popup window and holds the keyboard
@@ -133,7 +115,7 @@ namespace vlqt::test {
 
 void installInputFilter(QQuickWindow* window)
 {
-    if (testSyntheticInputOnly())
+    if (vlqt::platform::testSyntheticInputOnly())
         window->installEventFilter(new SystemInputFilter(window));
 }
 

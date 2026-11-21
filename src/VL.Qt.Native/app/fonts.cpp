@@ -2,6 +2,7 @@
 #include "app/app.h"
 #include "app/exports.h"
 #include "app/log.h"
+#include "platform/platform.h"
 #include "test/test_hooks.h"
 #include "vlqt.h"
 
@@ -34,7 +35,7 @@ namespace {
 // Thread: QFontDatabase app fonts and every text layout belong to the Qt GUI thread, which is the vvvv main thread
 // (vlqt_app_init, basic render loop, no render thread). Adding there means the next layout in the same pump already
 // sees the family, so no queue to another thread is needed; calls from other threads are rejected.
-// Key: canonical path + size + last-modified time. Qt reads the file when it is registered; a later change on disk is
+// Key: path key (canonical path, case-folded on Windows: platform::pathKey) + size + last-modified time. Qt reads the file when it is registered; a later change on disk is
 // not watched, but the next add after a change (path edit, app restart) registers the new version as its own entry.
 // A deleted file keeps working until its entry is removed.
 // Removal: refs 0 only marks the entry; fontsEndFrame removes it at the end of the pump if nobody took it again, so a
@@ -127,11 +128,7 @@ VLQT_API int vlqt_font_add(const char* utf8Path, unsigned long long* outHandle, 
         const QFileInfo info(QString::fromUtf8(utf8Path));
         if (!info.isFile())
             return fail(VLQT_ERR_IO, QStringLiteral("font file not found: %1").arg(info.filePath()));
-        QString key = info.canonicalFilePath();
-#ifdef _WIN32
-        key = key.toLower(); // NTFS paths are case-insensitive
-#endif
-        key += QStringLiteral("|%1|%2").arg(info.size()).arg(info.lastModified().toMSecsSinceEpoch());
+        const QString key = vlqt::platform::pathKey(info) + QStringLiteral("|%1|%2").arg(info.size()).arg(info.lastModified().toMSecsSinceEpoch());
         unsigned long long handle = 0;
         FontEntry* entry = nullptr;
         for (auto& [h, e] : g_fonts)

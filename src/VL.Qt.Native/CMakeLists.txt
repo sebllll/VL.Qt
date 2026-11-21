@@ -241,7 +241,7 @@ target_link_libraries(vlqt PRIVATE Qt6::ShaderTools Qt6::ShaderToolsPrivate)
 target_link_libraries(vlqt PRIVATE Qt6::QuickShapes Qt6::QuickShapesPrivate)
 if(WIN32)
     target_sources(vlqt PRIVATE
-        # platform/: dialog keys for vvvv's message loop, DllMain
+        # platform/: D3D11, dialog keys for vvvv's message loop, borderless, DllMain
         platform/platform_win.cpp
         # offscreen/: the D3D11 binding and the frames of a scene; linear_pass converts QtTexture into SRGB and float textures;
         # d3dcompiler_47.dll ships with Windows 10 and up
@@ -256,12 +256,21 @@ if(WIN32)
     target_link_libraries(vlqt PRIVATE d3d11 dxgi d3dcompiler)
 else()
     target_sources(vlqt PRIVATE
-        # platform/: WSLg GPU default and probe, display check, fallback font, unload hook
+        # platform/: WSLg GPU default and its OpenGL check (runs vlqt-glprobe, below), display check, fallback font,
+        # borderless, unload hook
         platform/platform_linux.cpp
         # offscreen/: X geometry of the offscreen platform's GLX drawable for window grabs. Uses the X11 headers that Qt's
         # OpenGL dependency brings (libgl-dev); libX11/libGL are looked up at run time, not linked.
         offscreen/offscreen_glx.cpp
         offscreen/offscreen_glx.h)
+    # vlqt-glprobe (tools/glprobe.c): the OpenGL check under WSLg as a process of its own, next to libvlqt.so. Plain C,
+    # no Qt; libX11/libGL are looked up at run time, not linked.
+    enable_language(C)
+    add_executable(vlqt-glprobe tools/glprobe.c)
+    target_link_libraries(vlqt-glprobe PRIVATE ${CMAKE_DL_LIBS})
+    set_target_properties(vlqt-glprobe PROPERTIES
+        AUTOMOC OFF AUTOUIC OFF AUTORCC OFF
+        RUNTIME_OUTPUT_DIRECTORY "${VLQT_OUT_DIR}")
 endif()
 set_target_properties(vlqt PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${VLQT_OUT_DIR}"   # vlqt.dll
