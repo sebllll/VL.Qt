@@ -33,7 +33,8 @@ target_sources(vlqt PRIVATE
     vlqt_test.h
     protocol.h
 
-    # app/: start and pump, exports and last error, log, animation clock, render gate, input delivery, app fonts
+    # app/: start and pump, exports and last error, log, animation clock, render gate, scene change count, input delivery,
+    # app fonts
     app/animation_clock.cpp
     app/animation_clock.h
     app/app.cpp
@@ -48,6 +49,8 @@ target_sources(vlqt PRIVATE
     app/log.h
     app/render_gate.cpp
     app/render_gate.h
+    app/scene_change.cpp
+    app/scene_change.h
     app/thread_name.h
 
     # platform/: platform.h here, the sources of one platform in the if(WIN32) block below

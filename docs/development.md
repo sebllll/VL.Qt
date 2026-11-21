@@ -235,7 +235,7 @@ src/VL.Qt.Native/           # QtNative (C++)
   vlqt.h                    # C API (the exports of all groups)
   vlqt_test.h               # test exports, in every build
   protocol.h                # shared type/property/event IDs
-  app/                      # app lifecycle, pump, logging, last error, fonts, animation clock, render gate
+  app/                      # app lifecycle, pump, logging, last error, fonts, animation clock, render gate, scene change count
   window/                   # windows and their exports, event filters, focus, touch input
   platform/                 # platform code (Windows, Linux)
   scene/                    # scene of a window: object table, command decoder, events, input handlers

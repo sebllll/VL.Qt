@@ -32,7 +32,7 @@ HRESULT createOn12(IDXGIAdapter1* adapter, UINT flags, ID3D11Device** dev, ID3D1
 
 // D3D12 singleton (no device factory): the removed D3D12 device lives on as long as a window QRhi holds it, so a new
 // D3D11On12 device would sit on the removed one. Lets each window whose QRhi is on one of devices (ID3D11Device*)
-// render now (past the update gate): Qt notices the loss at Present and drops its QRhi. The windows get no device until
+// render now (past the render gate): Qt notices the loss at Present and drops its QRhi. The windows get no device until
 // rebuild imports the new one; an empty one meanwhile is safer than the released pointer. Returns the windows whose QRhi
 // was dropped.
 int dropWindowRhisOn(const std::vector<void*>& devices);

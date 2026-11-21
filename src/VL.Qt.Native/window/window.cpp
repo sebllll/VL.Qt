@@ -5,6 +5,7 @@
 #include "app/app.h"
 #include "app/log.h"
 #include "app/render_gate.h"
+#include "app/scene_change.h"
 #include "test/test_hooks.h"
 #include "scene/scene.h"
 #include "device.h"
@@ -119,14 +120,16 @@ void OffscreenSceneDeleter::operator()(OffscreenScene* scene) const
     vlqt::offscreen::destroy(scene);
 }
 
-// The event filters and the frame lock of an on-screen window, all children of win: close, update gate, frame lock,
-// fullscreen keys, focus release, test input. At creation and for the window swap (replaceWindow).
+// The event filters, the change counter and the frame lock of an on-screen window, all children of win: close, render
+// gate, change counter, frame lock, fullscreen keys, focus release, test input. At creation and for the window swap
+// (replaceWindow).
 void installWindowFilters(SceneHandle* w, QQuickWindow* win)
 {
     w->closeFilter = new CloseFilter(win);
     win->installEventFilter(w->closeFilter);
-    w->gate = new UpdateGate(win);
+    w->gate = new RenderGate(win);
     win->installEventFilter(w->gate);
+    w->changes = new SceneChangeCounter(win);
     vlqt::device::lockFrames(win); // windows only: a scene's render thread locks itself (offscreen/offscreen_render.cpp)
     win->installEventFilter(new FullscreenKeys(win, asHandle(w)));
     win->installEventFilter(new FocusRelease(win));
@@ -311,11 +314,11 @@ void replaceWindow(SceneHandle* w, const QSurfaceFormat& f)
     nw->setIcon(old->icon());
     nw->setColor(old->color());
     const bool closeRequested = w->closeFilter->requested;
-    const UpdateGate* oldGate = w->gate;
+    const SceneChangeCounter* oldChanges = w->changes;
     w->window.reset(nw);
     installWindowFilters(w, nw);
     w->closeFilter->requested = closeRequested;
-    w->gate->continueFrom(*oldGate);
+    w->changes->continueFrom(*oldChanges);
     nw->setGraphicsConfiguration(old->graphicsConfiguration());
     vlqt::device::attach(nw);
     w->scene->moveToWindow(nw);
@@ -357,9 +360,9 @@ vlqt_scene* createHandle(QQuickWindow* window, OffscreenScene* state)
     w->engine = newEngine();
     // Transparent until the first VLQT_OP_SET_CLEAR_COLOR: the QtTexture default (render-texture.md), unlike a window.
     window->setColor(Qt::transparent);
-    // Change count (vlqt_scene_get_change_count) only: without a platform window a scene gets no UpdateRequest or Expose,
-    // so the gate's event filter is not installed.
-    w->gate = new UpdateGate(window); // child of the window
+    // Change count (vlqt_scene_get_change_count); no render gate: without a platform window a scene gets no
+    // UpdateRequest or Expose.
+    w->changes = new SceneChangeCounter(window); // child of the window
     // Input comes from vlqt_offscreen_send_*; Esc and a press outside release the focus as in a window.
     window->installEventFilter(new FocusRelease(window)); // child of the window
     initShared(w.get());

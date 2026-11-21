@@ -61,7 +61,7 @@ using vlqt::g_app;
 using vlqt::g_nativeDir;
 using vlqt::g_pipelineCachePath;
 using vlqt::guarded;
-using vlqt::UpdateGate;
+using vlqt::RenderGate;
 using vlqt::log::emitLog;
 using vlqt::PerfMonitor;
 using vlqt::registerPerfTypes;
@@ -154,7 +154,7 @@ VLQT_API int vlqt_app_process_events_for(vlqt_scene* const* windows, int count)
             return fail(VLQT_ERR_NOT_INITIALIZED, "process_events: app not initialized");
         QElapsedTimer t;
         t.start();
-        static std::vector<UpdateGate*> s_active; // reused, no allocation per pump
+        static std::vector<RenderGate*> s_active; // reused, no allocation per pump
         // processEvents also dispatches the Win32 messages of the host thread; a host callback in there (vvvv
         // restart) may destroy a window of this list, so its frame is ended only if the monitor is still alive.
         static std::vector<QPointer<PerfMonitor>> s_perf;
@@ -162,7 +162,8 @@ VLQT_API int vlqt_app_process_events_for(vlqt_scene* const* windows, int count)
         s_perf.clear();
         for (int i = 0; windows && i < count; i++)
             if (auto* w = asWindow(windows[i])) {
-                s_active.push_back(w->gate);
+                if (w->gate) // windows only: an offscreen scene has no gate
+                    s_active.push_back(w->gate);
                 s_perf.emplace_back(w->perf.get());
             }
         // Device lost: also before anything renders, so no window builds a new QRhi on the removed device.
@@ -170,10 +171,10 @@ VLQT_API int vlqt_app_process_events_for(vlqt_scene* const* windows, int count)
         vlqt::res::beginFrame(); // worker results + uploads within the budget, before the windows render
         vlqt::QtImageItem::afterResourceFrame(); // Image elements take new Ready content, drawn in this pump
         vlqt::ShaderItem::afterResourceFrame(); // ShaderEffects take new Ready / Failed shaders
-        UpdateGate::beginPump(!windows, s_active.data(), int(s_active.size()));
+        RenderGate::beginPump(!windows, s_active.data(), int(s_active.size()));
         QCoreApplication::sendPostedEvents();
         QCoreApplication::processEvents(QEventLoop::AllEvents);
-        UpdateGate::endPump();
+        RenderGate::endPump();
         // Every window frame of this pump has ended: no lock may outlive it (device.h, lock order).
         vlqt::device::releaseFrameLocks();
         vlqt::res::endFrame(); // frees resources without references, never in a worker

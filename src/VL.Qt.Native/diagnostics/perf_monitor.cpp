@@ -2,6 +2,7 @@
 #include "diagnostics/perf.h"
 #include "diagnostics/perf_items.h"
 #include "diagnostics/perf_pages.h"
+#include "app/scene_change.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QKeyEvent>
@@ -451,7 +452,7 @@ void PerfMonitor::ensureOverlay()
     if (QQuickWindow::sceneGraphBackend() == QLatin1String("software")
         || (ri && ri->graphicsApi() == QSGRendererInterface::Software))
         item->setProperty("layered", false);
-    item->setObjectName(QLatin1String(vlqt::perfOverlayName)); // not counted as a scene change (app/render_gate.cpp)
+    item->setObjectName(QLatin1String(vlqt::overlayObjectName)); // not counted as a scene change (app/scene_change.h)
     item->setParentItem(m_window->contentItem());
     item->setZ(1e9); // above the user root
     auto* graph = item->findChild<PerfGraph*>(QStringLiteral("graph"));
