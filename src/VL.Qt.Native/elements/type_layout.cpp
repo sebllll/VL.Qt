@@ -16,8 +16,8 @@ namespace {
 // setters, no QML file and no JavaScript. They only set the main-axis coordinate (Column: y, Row: x) and never touch
 // child sizes, so the SIZE of a child stays its size. Positioners have no cross-axis alignment: PositionerAlign (a child
 // object of the positioner) adds it, CHILD_ALIGNMENT (Qt::AlignmentFlag, = C# HorizontalAlignment / VerticalAlignment)
-// sets its factor. Children with width or height 0 or visible false are skipped by Qt (not laid out) and by
-// PositionerAlign. The layout owns x/y of its children (no anchor placement, ANCHOR is only the pivot).
+// sets its factor. Children with width or height 0 or visible false take no space (Qt skips them); PositionerAlign
+// skips the invisible ones as well. The layout owns x/y of its children (no anchor placement, ANCHOR is only the pivot).
 // TRANSFORM of a child stays visual: it acts in the child's local coordinates after positioning
 // and does not move siblings.
 
