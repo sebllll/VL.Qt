@@ -10,20 +10,20 @@ namespace VL.Qt.Nodes
     /// worker made while loading, without touching the GPU. Only images loaded while the editor runs have one.
     /// </summary>
     [ProcessNode(Name = "TooltipPreview", Category = Categories.Qt), Smell(SymbolSmell.Hidden)]
-    public sealed class QtImageTooltipPreview
+    public sealed class QtImageTooltipPreviewNode
     {
         private readonly ResourceClient _client;
         private QtImage? _image;
         private int _version = -1;
         private IImage? _preview;
 
-        public QtImageTooltipPreview(NodeContext nodeContext)
+        public QtImageTooltipPreviewNode(NodeContext nodeContext)
         {
             _client = ResourceClient.ForApp(nodeContext.AppHost);
         }
 
         /// <summary>For tests: a client on a fake API.</summary>
-        internal QtImageTooltipPreview(ResourceClient client)
+        internal QtImageTooltipPreviewNode(ResourceClient client)
         {
             _client = client;
         }

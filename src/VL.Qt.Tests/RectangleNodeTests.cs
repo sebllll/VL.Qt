@@ -32,16 +32,16 @@ namespace VL.Qt.Tests
         private Element Update(Vector2? size = null, Matrix transform = default, RectangleAnchor anchor = RectangleAnchor.Center,
             Color4? fill = null, float radius = 0, Color4? strokeColor = null, float strokeWidth = 0,
             float opacity = 1, bool clip = false, bool debug = false,
-            Interaction? interaction = null)
-            => _node.Update(size ?? DefaultSize, transform, anchor, fill ?? Color4.White, radius, strokeColor ?? Color4.Black,
-                strokeWidth, opacity, clip, debug, interaction, null, out _, out _);
+            Interaction? interaction = null, bool enabled = true)
+            => (Element)_node.Update(size ?? DefaultSize, transform, anchor, fill ?? Color4.White, radius, strokeColor ?? Color4.Black,
+                strokeWidth, opacity, clip, debug, interaction, null, enabled, out _, out _);
 
         [Test]
         public void Circle_SizeIsTwiceRadius_NoCenterPin_RadiusIsRadius()
         {
             using var circle = new CircleNode(w => { _warnings++; return new Removal(this); });
             Rectangle Circle(float radius, RectangleAnchor anchor = RectangleAnchor.Center)
-                => (Rectangle)circle.Update(radius, default, anchor, Color4.White, Color4.Black, 0, 1, false, false, null, null, out _, out _);
+                => (Rectangle)circle.Update(radius, default, anchor, Color4.White, Color4.Black, 0, 1, false, false, null, null, true, out _, out _);
 
             var c = Circle(0.5f);
             Assert.That(c.Size, Is.EqualTo(new Vector2(1, 1)));
@@ -73,6 +73,7 @@ namespace VL.Qt.Tests
             Assert.That(r.Clip, Is.False);
             Assert.That(r.Interaction, Is.Null);
             Assert.That(r.Debug, Is.False);
+            Assert.That(r.Visible, Is.True, "Enabled defaults to true");
             Assert.That(r.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
             Assert.That(r.Feedback.Index, Is.EqualTo(0));
         }
@@ -114,6 +115,8 @@ namespace VL.Qt.Tests
             var chain = new HoverNode(_ => new Removal(this)).Update(null, null);
             Changed(Update(interaction: chain), r => ReferenceEquals(r.Interaction, chain), "interaction");
             Changed(Update(debug: true), r => r.Debug, "debug");
+            Changed(Update(enabled: false), r => !r.Visible, "enabled");
+            Assert.That(Update(enabled: false), Is.SameAs(last), "enabled unchanged: same instance");
             // Back to defaults → new description again; the feedback stays the same.
             Changed(Update(), r => r.Feedback.Feedback == _node.Core.Feedback, "back to defaults");
             Assert.That(Update(), Is.SameAs(last));
@@ -127,7 +130,7 @@ namespace VL.Qt.Tests
             s.MeasuredSize = new Vector2(0.3f, 0.4f);
             s.SceneBounds = new RectangleF(1, 2, 3, 4);
             _node.Update(DefaultSize, default, RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false,
-                null, null, out var measured, out var scene);
+                null, null, true, out var measured, out var scene);
             Assert.That(measured, Is.EqualTo(new Vector2(0.3f, 0.4f)));
             Assert.That(scene, Is.EqualTo(new RectangleF(1, 2, 3, 4)));
         }

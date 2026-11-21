@@ -58,7 +58,6 @@
             <Pin Id="5DHYjYfNui0hqkhONZDgfb" Name="Path" Kind="InputPin" />
             <Pin Id="RC1KPA9o4xtNfZjCOC8EP5" Name="Mipmaps" Kind="InputPin" DefaultValue="False" />
             <Pin Id="PSEAT103rnYBA8nYQkxSzQ" Name="Image" Kind="OutputPin" />
-            <Pin Id="2LBpf39NJqwhwH8AoG8qAt" Name="Error" Kind="OutputPin" />
           </Node>
           <Pad Id="B2fgrbeHAA8MDUdIdAPIRh" Comment="Anchor" Bounds="244,541,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
@@ -176,7 +175,6 @@
               <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GeBUX2IUOyRNtVaL84RsM0" Comment="Error" Bounds="376,430,35,15" ShowValueBox="true" isIOBox="true" />
         </Canvas>
         <Link Id="Np4IepaqGa5LFSw8bOgWwm" Ids="B2fgrbeHAA8MDUdIdAPIRh,UfPRxv2E4Z1PuBU6hOoX6S" />
         <Link Id="OyOMDnIiutalkwlFC5aXM8" Ids="2gbWxQDEY3QAaCg0cR4v1V,5DHYjYfNui0hqkhONZDgfb" />
@@ -195,7 +193,6 @@
         </ProcessDefinition>
         <Link Id="UNAZHDy2yVdMYJKGh3ZCd6" Ids="OnuZZvLIda5Lz2WYqBqdpK,1xAHt8wT7H6nBlQ56Voc3B" />
         <Link Id="UTM9YSrToaAOocvVQ9xHRw" Ids="AoqeC1LKn7eL3tmxhg9w0R,RC1KPA9o4xtNfZjCOC8EP5" />
-        <Link Id="FCYATxRSePQPRUpBrwOMu0" Ids="2LBpf39NJqwhwH8AoG8qAt,GeBUX2IUOyRNtVaL84RsM0" />
         <Link Id="N1PJEjGk7k8LdTImZ9Dxgg" Ids="kG6xfoDOOkZRd8FSeg0z3A,MkEtss8jFvrLau2JRjl3xn" />
       </Patch>
     </Node>

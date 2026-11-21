@@ -26,7 +26,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="zeQlIkMmxprqR7DEPIFej8" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="ToQtImage [Qt]&#xD;&#xA;- Input: IImage of vvvv (from Skia, OpenCV, a camera, ...)&#xD;&#xA;- Output: QtImage for the Image element&#xD;&#xA;- Error: why the upload failed, empty otherwise&#xD;&#xA;- Here: Skia reads a file, ToImage [Skia] makes the IImage">
+          <Pad Id="zeQlIkMmxprqR7DEPIFej8" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="ToQtImage [Qt]&#xD;&#xA;- Input: IImage of vvvv (from Skia, OpenCV, a camera, ...)&#xD;&#xA;- Output: QtImage for the Image element&#xD;&#xA;- A failed upload shows at the node and in the log&#xD;&#xA;- Here: Skia reads a file, ToImage [Skia] makes the IImage">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -58,7 +58,6 @@
             <Pin Id="M2gY1g1juhzgqUUGZRzJkZ" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="A2uEOPctTfRjVQgHbccJ7a" Name="Input" Kind="InputPin" />
             <Pin Id="IQ5AFX7C0mSDr0fVQl9iVE" Name="Image" Kind="OutputPin" />
-            <Pin Id="AITyXQsepDkxKNDveORGZU" Name="Error" Kind="OutputPin" />
           </Node>
           <Node Bounds="100,577,399,19" Id="JzYRI9rRXv2FLZ0m5L37sE">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
@@ -126,7 +125,6 @@
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="i7Seu7PhPNIgZqc5b4G3gf" Comment="Error" Bounds="426,404,420,60" ShowValueBox="true" isIOBox="true" />
           <Node Bounds="231,505,80,19" Id="MwMdsXa1AGMQL1NlH2hOBV">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
@@ -187,7 +185,6 @@
         <Link Id="iXELpc3IWFugull8vscLDm" Ids="qE0lZM9QdJAT28FqBqAiPr,puclwZZK1herSrhtXY3Emv" />
         <Link Id="ljzfvZfOsYe7vWNBTvBrXS" Ids="iSw2Ui9RVFv7gvMx11NXf1,UHMqrPrkERARGpO5iNtlor" />
         <Link Id="kNwRlkWsizCdF0O62PSvVQ" Ids="IQ5AFX7C0mSDr0fVQl9iVE,FIiCIOjh4G9dYJFMZtxK7H" />
-        <Link Id="hENbNmdfXjHYLKfcHMp5qv" Ids="AITyXQsepDkxKNDveORGZU,i7Seu7PhPNIgZqc5b4G3gf" />
         <Patch Id="iqIinRgUpod4EjamJ8KL1v" Name="Create" />
         <Patch Id="olFNFIDT0uLd871YMnrBc3" Name="Update" />
         <ProcessDefinition Id="Snz9P2xVYvEEwhvgSsDqz7">

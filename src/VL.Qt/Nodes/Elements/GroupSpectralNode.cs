@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.ComponentModel;
 using Stride.Core.Mathematics;
 using VL.Core;
@@ -21,14 +20,21 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Group (Spectral)", Category = Categories.Elements)]
     public sealed class GroupSpectralNode : IDisposable
     {
-        private readonly GroupNode _inner;
+        private readonly ElementNodeCore<Group, GroupNode.Props> _node;
+        private readonly ChildrenInput _children;
 
-        public GroupSpectralNode(NodeContext nodeContext) => _inner = new GroupNode(nodeContext);
+        public GroupSpectralNode(NodeContext nodeContext)
+        {
+            _node = new ElementNodeCore<Group, GroupNode.Props>(nodeContext, GroupNode.Create);
+            _children = new ChildrenInput(_node.Messages);
+        }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal GroupSpectralNode(Func<string, IDisposable> addWarning) => _inner = new GroupNode(addWarning);
-
-        internal GroupNode Inner => _inner;
+        internal GroupSpectralNode(Func<string, IDisposable> addWarning)
+        {
+            _node = new ElementNodeCore<Group, GroupNode.Props>(addWarning, GroupNode.Create);
+            _children = new ChildrenInput(_node.Messages);
+        }
 
         /// <summary>Describes the group. A new description is only created when an input changes.</summary>
         /// <param name="children">Spread (or any sequence) of child elements, e.g. a Spread of Element or of a self-made widget; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
@@ -42,10 +48,11 @@ namespace VL.Qt.Nodes
         /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
         /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
         /// <param name="style">Style passed on to the widgets inside (field by field; a widget's own style overrides it). The group itself draws nothing.</param>
+        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
         /// <param name="measuredSize">Implicit size reported by Qt, in units (Group: size of its frame, see Auto Size).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             IEnumerable<IElement?> children,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
@@ -57,12 +64,20 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
             [Pin(Visibility = PinVisibility.Optional)] Style? style,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            return _inner.Describe(children, size, autoSize, transform, anchor, opacity, clip, debug, interaction, effect, style, out measuredSize, out sceneBounds);
+            return _node.Describe(
+                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
+                new GroupNode.Props(_children.Update(children), autoSize, style),
+                out measuredSize, out sceneBounds);
         }
 
-        public void Dispose() => _inner.Dispose();
+        public void Dispose()
+        {
+            _children.Dispose();
+            _node.Dispose();
+        }
     }
 }

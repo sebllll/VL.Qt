@@ -32,7 +32,7 @@ namespace VL.Qt.Tests
             public bool Throw { get; set; }
             public bool ReturnNull { get; set; }
 
-            public Element? Build(Style style)
+            public IElement? Build(Style style)
             {
                 Builds++;
                 LastStyle = style;

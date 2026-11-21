@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using VL.Qt.Nodes;
 
 namespace VL.Qt.Elements
 {
@@ -8,6 +9,7 @@ namespace VL.Qt.Elements
         private readonly ImmutableArray<Element> children = ImmutableArray<Element>.Empty;
 
         public Column() : base(ElementType.Column) { }
+        internal Column(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Column, common, feedback) { }
 
         /// <summary>On (default): Size is ignored and the implicit size applies. Off: Size counts, also 0.</summary>
         public bool AutoSize { get; init; } = true;

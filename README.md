@@ -164,7 +164,7 @@ More: [Images](docs/images.md) (all nodes, mipmaps, frame budget, errors, device
 
 ## Write to a file
 
-`FileWriter (Element)` grabs an element (or a Group with its children) on `Write` and saves it; the extension of `File Path` picks the format (PNG, JPG, BMP, WebP). `Scale` sets the pixels per DIP, so `Scale` 2 doubles the resolution regardless of the screen. Writing is asynchronous: `Is Done` comes in a later frame, `Error` says why a write failed. To save an `IImage` you already have (for example from `Snapshot`), use `FileWriter`.
+`FileWriter (Element)` grabs an element (or a Group with its children) on `Write` and saves it; the extension of `File Path` picks the format (PNG, JPG, BMP, WebP). `Scale` sets the pixels per DIP, so `Scale` 2 doubles the resolution regardless of the screen. Writing is asynchronous: `Is Done` comes in a later frame and `Success` says whether the file was written; why a write failed goes to the log. To save an `IImage` you already have (for example from `Snapshot`), use `FileWriter`.
 
 The pictures of the help patches in this README were made with it: the element that goes into the `Renderer` also goes into a `FileWriter (Element)`, and the patch writes its own picture.
 
