@@ -130,8 +130,8 @@ public static class SharedDeviceTest
     private static void MeasureVSync(List<SceneHandle> windows, Scenario s, bool shared, Action animate)
     {
         var n = windows.Count;
-        Native.vlqt_scene_get_perf_stats(windows[0], out var st);
-        var budget = st.budget_ms > 0 ? st.budget_ms : 1000.0 / 60;
+        // One refresh of the screen (budget_ms is vvvv's frame interval, 60 Hz in the SmokeTest).
+        var budget = NativeCalls.ScreenRefreshMs(windows[0]) ?? 1000.0 / 60;
         var refreshHz = 1000.0 / budget;
         var (minFps, p99, p50) = (0.0, double.MaxValue, double.MaxValue);
         for (int round = 0; round < 3; round++)

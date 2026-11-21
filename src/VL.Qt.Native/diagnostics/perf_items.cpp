@@ -37,7 +37,7 @@ struct GraphSeries { QRgb color; const char* html; float (*value)(const PerfSamp
 constexpr QRgb kGraphGuide = qRgba(255, 255, 255, 60);
 const GraphSeries kGraphSeries[] = {
     {qRgb(255, 110, 180), "#ff6eb4", [](const PerfSample& s) { return s.hostReported ? s.host.vvvv : 0.f; }},
-    {qRgb(255, 160, 40), "#ffa028", [](const PerfSample& s) { return s.pump; }},
+    {qRgb(255, 160, 40), "#ffa028", [](const PerfSample& s) { return s.workMs(); }},
     {qRgb(80, 220, 120), "#50dc78", [](const PerfSample& s) { return s.gpu; }},
     {qRgb(255, 255, 255), "#ffffff", [](const PerfSample& s) { return s.frameInterval; }},
 };
@@ -49,7 +49,7 @@ float graphYMax(const PerfMonitor* m)
     float yMax = 33.4f;
     for (int i = 0; i < (m ? m->count() : 0); i++) {
         const PerfSample& s = m->sample(i);
-        yMax = std::max({yMax, s.frameInterval, s.pump, s.gpu, s.hostReported ? s.host.vvvv : 0.f});
+        yMax = std::max({yMax, s.frameInterval, s.workMs(), s.gpu, s.hostReported ? s.host.vvvv : 0.f});
     }
     return std::min(yMax * 1.1f, 1000.f / 15); // spikes above 66 ms clip at the top
 }
@@ -220,10 +220,10 @@ void PerfTimeline::buildPrims()
 
     float maxPump = 0;
     int peaks[3] = {-1, -1, -1};
-    for (int i = 0; i < n; i++) { // over-budget pumps: full-height red background, one quad per run
+    for (int i = 0; i < n; i++) { // over-budget pumps (Qt work): full-height red background, one quad per run
         const PerfSample& s = m_monitor->viewSample(i);
-        if (s.pump > budget) {
-            if (i > 0 && m_monitor->viewSample(i - 1).pump > budget)
+        if (s.workMs() > budget) {
+            if (i > 0 && m_monitor->viewSample(i - 1).workMs() > budget)
                 m_prims.back().r = x0(i) + step;
             else
                 m_prims.push_back({x0(i), 0, x0(i) + step, h, qRgba(255, 60, 60, 110), false});

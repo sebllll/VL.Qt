@@ -62,8 +62,10 @@ public:
     // last completed pump (false = none yet) and percentiles/counters/budget.
     bool lastSample(PerfSample* out) const;
     void stats(vlqt_perf_stats* out) const;
-    // 1000 / refresh rate of the window's screen, 60 Hz if unknown.
-    double budgetMs() const;
+    // The frame budget: vvvv's frame interval (vlqt_app_set_frame_budget), taken at the end of each pump of the window.
+    double budgetMs() const { return m_budgetMs; }
+    // vlqt_app_set_frame_budget: the budget the next pumps take (process-wide, 1000 / 60 until set).
+    static void setFrameBudget(double ms) { s_frameBudgetMs = ms; }
     int overlay() const { return m_flags | (m_frozen ? Freeze : 0) | ((m_page + 1) << kPageShift); }
     void setOverlay(int flags);
     int page() const { return m_page; }
@@ -110,6 +112,8 @@ private:
     int m_count = 0;
     PerfSample m_cur; // main thread: endPump fills it from m_done
     PerfCounters m_counters;
+    static inline double s_frameBudgetMs = 1000.0 / 60;
+    double m_budgetMs = s_frameBudgetMs;
     // Frame signals fire on the GUI thread for a window and on the scene's render thread for an offscreen scene,
     // concurrently with endPump. They fill m_pending and the timestamps (only that thread touches them);
     // afterFrameEnd adds the finished frame to m_done under m_doneLock, and endPump takes m_done. A sample therefore holds

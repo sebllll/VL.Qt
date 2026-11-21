@@ -36,7 +36,7 @@ public static class PerfStatsTest
         // Frames: 1..100 without x1 and x2 (80 values, 8 per decade): ranks 40 / 76 / 80 -> 50 / 96 / 100.
         s.Check(st.frame_p50 == 50 && st.frame_p95 == 96 && st.frame_p99 == 100 && st.frame_max == 100,
             $"perfstats: frame p50/p95/p99/max = 50/96/100/100 ({st.frame_p50}/{st.frame_p95}/{st.frame_p99}/{st.frame_max})");
-        // Over budget: pump 17..100 = 84 (recent 51..100 = 50). Long frames (> 25 ms, swap in this and the previous
+        // Over budget (Qt work = pump here: no vsync wait, no present): pump 17..100 = 84 (recent 51..100 = 50). Long frames (> 25 ms, swap in this and the previous
         // pump): i 25..99 minus i % 10 == 0 or 1 = 61 (recent i 50..99: 40). Idle / multi: 10 each (recent 5).
         s.Check(st.pumps == 100 && st.over_budget == 84 && st.long_frames == 61 && st.idle == 10 && st.multi_swap == 10,
             $"perfstats: counters since start 100/84/61/10/10 ({st.pumps}/{st.over_budget}/{st.long_frames}/{st.idle}/{st.multi_swap})");

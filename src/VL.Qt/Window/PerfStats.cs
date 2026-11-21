@@ -6,8 +6,8 @@ namespace VL.Qt
     /// <summary>
     /// Timings of a Qt window, averaged over the last ~1 s (max = worst pump in that range). All times in ms.
     /// Pump is the time Qt takes inside the vvvv frame (events, animation, vsync wait, sync, render, present). The vsync wait
-    /// (VsyncMs, the start of the frame) and Present are shown separately: they wait for the display refresh or the GPU,
-    /// which is not Qt work.
+    /// (VsyncMs, the start of the frame) and Present wait for the display refresh or the GPU, which is not Qt work: Qt work
+    /// (WorkMs) is the pump without them, and only Qt work counts against the budget (OverBudget).
     /// GPU is 0 when the backend delivers no timestamps.
     /// </summary>
     public sealed record PerfStats(
@@ -31,7 +31,7 @@ namespace VL.Qt
         // additive (init-only, 0 when unknown): percentiles/counters/budget of the window's ring and the host side
         // (apply/reconcile, commands, .NET GC) over the last ~1 s.
 
-        /// <summary>Frame budget in ms: 1000 / refresh rate of the window's screen (fallback 60 Hz).</summary>
+        /// <summary>Frame budget in ms: vvvv's frame interval, which Qt renders in step with (60 Hz before the first frame).</summary>
         public float BudgetMs { get; init; }
         /// <summary>Frame interval percentiles over the last up to 240 pumps (ms, nearest rank; only intervals between
         /// consecutive frames, not after idle pumps).</summary>
@@ -45,7 +45,7 @@ namespace VL.Qt
 
         /// <summary>Pumps since the window was created.</summary>
         public long Pumps { get; init; }
-        /// <summary>Pumps longer than the budget, since start.</summary>
+        /// <summary>Pumps whose Qt work (events, sync, render; not the vsync wait and Present) took longer than the budget, since start.</summary>
         public long OverBudget { get; init; }
         /// <summary>Frame intervals longer than 1.5 x budget between consecutive frames (missed frames; not after idle
         /// pumps of on-demand rendering), since start.</summary>
@@ -54,7 +54,7 @@ namespace VL.Qt
         public long IdlePumps { get; init; }
         /// <summary>Pumps with more than one frame, since start.</summary>
         public long MultiSwaps { get; init; }
-        /// <summary>The same counters over the last 10 s.</summary>
+        /// <summary>The same counters over the last 10 s (RecentOverBudget: Qt work above the budget, like OverBudget).</summary>
         public long RecentPumps { get; init; }
         public long RecentOverBudget { get; init; }
         public long RecentLongFrames { get; init; }
@@ -91,6 +91,10 @@ namespace VL.Qt
         /// Direct3D 11 waits for the display refresh; without VSync it waits there when the GPU is behind. Not Qt
         /// work.</summary>
         public float VsyncMs { get; init; }
+
+        /// <summary>Qt work in ms per pump, average over ~1 s: events, sync and render, i.e. the pump without the vsync wait
+        /// and Present. OverBudget counts the pumps where it exceeds the budget.</summary>
+        public float WorkMs { get; init; }
 
         // VL imports the primary-constructor parameters as the pins of `Split`, but not the init-only properties above.
         // These explicit operations read them in a patch (PerfStats (Split Percentiles) etc.); `Split` itself is unchanged.
@@ -159,6 +163,7 @@ namespace VL.Qt
             VvvvMs = (float)h.vvvv_ms, VvvvMsMax = (float)h.vvvv_ms_max,
             WaitMs = (float)h.wait_ms, WaitMsMax = (float)h.wait_ms_max,
             VsyncMs = (float)p.vsync_ms,
+            WorkMs = (float)p.work_ms,
         };
     }
 }

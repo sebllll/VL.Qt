@@ -62,18 +62,18 @@ namespace VL.Qt
             var ms = Stopwatch.GetElapsedTime(start, tEnd).TotalMilliseconds;
             var now = Environment.TickCount64;
 
-            // Warn only when Qt eats more than half a vvvv frame; single small spikes are normal. The VSync wait (in
-            // QRhi::beginFrame with D3D11) and Present are not Qt work: the sample is read only after the cheap checks, so a
-            // normal frame costs nothing extra.
-            double waitMs = 0;
+            // Warn only when Qt works more than half a vvvv frame; single small spikes are normal. Qt work is the one
+            // definition of QtNative (vlqt_perf_sample.work: without the VSync wait and Present), never more than the host
+            // pump: the samples are read only after the cheap checks, so a normal frame costs nothing extra.
+            double workMs = 0;
             if (ms > budgetMs * 0.5 && now - _lastWarningTicks > WarningIntervalMs
-                && ExceedsBudget(ms, waitMs = SumWaitMs(participants), budgetMs))
+                && ExceedsBudget(workMs = MaxWorkMs(participants), budgetMs))
             {
                 _lastWarningTicks = now;
                 // Phase breakdown: which part of the pump, and did a .NET GC run meanwhile? Plus the Qt phases of each
                 // window's last pump (is a spike in sync, render, present, gpu or events?).
-                QtApp.Logger?.LogWarning("Qt frame took {Ms:F1} ms of {Budget:F1} ms (pump {Pump:F1} ms minus vsync wait and present {Wait:F1} ms), vvvv before it {Vvvv:F1} ms (apply {Apply:F1}, advance {Advance:F1}, processEvents {Process:F1}, after {After:F1}; GC gen0 +{Gc0}, gen1 +{Gc1}, gen2 +{Gc2}, pause {GcPause:F1} ms; alloc {AllocKb:F0} KB/frame){Phases}",
-                    ms - Math.Min(waitMs, ms), budgetMs, ms, waitMs, host.vvvv,
+                QtApp.Logger?.LogWarning("Qt work took {Ms:F1} ms of {Budget:F1} ms (host pump {Pump:F1} ms incl. vsync wait and present), vvvv before it {Vvvv:F1} ms (apply {Apply:F1}, advance {Advance:F1}, processEvents {Process:F1}, after {After:F1}; GC gen0 +{Gc0}, gen1 +{Gc1}, gen2 +{Gc2}, pause {GcPause:F1} ms; alloc {AllocKb:F0} KB/frame){Phases}",
+                    workMs, budgetMs, ms, host.vvvv,
                     Stopwatch.GetElapsedTime(start, tApplied).TotalMilliseconds,
                     Stopwatch.GetElapsedTime(tApplied, tAdvanced).TotalMilliseconds,
                     Stopwatch.GetElapsedTime(tAdvanced, tProcessed).TotalMilliseconds,
@@ -93,30 +93,30 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// VSync wait plus Present time of the last pump summed over the windows of the participants (ms, 0 without samples).
-        /// Both may wait for the display refresh or the GPU, so they do not count as Qt work. No allocation.
+        /// Returns the largest Qt work (vlqt_perf_sample.work, ms) of the last pump over the windows of the participants, 0
+        /// without samples. QtNative computes it once per window (events, sync and render; not the VSync wait and Present,
+        /// which wait for the display refresh or the GPU), the same value its over budget counter judges. No allocation.
         /// </summary>
-        internal static double SumWaitMs(IQtFrameParticipant[] participants)
+        internal static double MaxWorkMs(IQtFrameParticipant[] participants)
         {
-            double sum = 0;
+            double max = 0;
             for (int i = 0; i < participants.Length; i++)
             {
                 try
                 {
-                    if (participants[i].TryGetLastSample(out var s))
-                        sum += s.vsync + s.present;
+                    if (participants[i].TryGetLastSample(out var s) && s.work > max)
+                        max = s.work;
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
-                    // Diagnostics only: a failing sample counts as no waiting time.
+                    // Diagnostics only: a failing sample counts as no work.
                 }
             }
-            return sum;
+            return max;
         }
 
-        /// <summary>True if the pump took more than half a frame budget of Qt work, i.e. without the VSync wait and the Present time.</summary>
-        internal static bool ExceedsBudget(double pumpMs, double waitMs, double budgetMs) =>
-            pumpMs - Math.Min(waitMs, pumpMs) > budgetMs * 0.5;
+        /// <summary>Returns true if the Qt work of a pump is more than half the frame budget (the threshold of the slow-frame warning).</summary>
+        internal static bool ExceedsBudget(double workMs, double budgetMs) => workMs > budgetMs * 0.5;
 
         /// <summary>
         /// " · Qt last pump: vsync wait … sync … render … present … gpu … events … ms (n swaps)" per window with a sample;

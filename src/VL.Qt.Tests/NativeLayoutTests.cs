@@ -17,8 +17,8 @@ namespace VL.Qt.Tests
     {
         private static IEnumerable<TestCaseData> Layouts()
         {
-            yield return Case<Native.vlqt_perf>(104, "vsync_ms", 96);
-            yield return Case<Native.vlqt_perf_sample>(36, "vsync", 32);
+            yield return Case<Native.vlqt_perf>(112, "work_ms", 104);
+            yield return Case<Native.vlqt_perf_sample>(40, "work", 36);
             yield return Case<Native.vlqt_perf_stats>(160, "recent_multi_swap", 152);
             yield return Case<Native.vlqt_apply_error>(24, "reason", 16);
             yield return Case<Native.vlqt_host_pump>(56, "wait", 52);
@@ -44,8 +44,8 @@ namespace VL.Qt.Tests
         [Test]
         public void ManagedSizesEqualMarshalledSizes()
         {
-            Assert.That(Unsafe.SizeOf<Native.vlqt_perf>(), Is.EqualTo(104));
-            Assert.That(Unsafe.SizeOf<Native.vlqt_perf_sample>(), Is.EqualTo(36));
+            Assert.That(Unsafe.SizeOf<Native.vlqt_perf>(), Is.EqualTo(112));
+            Assert.That(Unsafe.SizeOf<Native.vlqt_perf_sample>(), Is.EqualTo(40));
             Assert.That(Unsafe.SizeOf<Native.vlqt_perf_stats>(), Is.EqualTo(160));
             Assert.That(Unsafe.SizeOf<Native.vlqt_apply_error>(), Is.EqualTo(24));
             Assert.That(Unsafe.SizeOf<Native.vlqt_host_pump>(), Is.EqualTo(56));

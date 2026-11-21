@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 
 #ifdef Q_OS_WIN
 #include <dxgi1_5.h>
@@ -111,8 +112,8 @@ namespace {
 
 const char* segName(int seg) { return seg < SegQt ? kHostName[seg] : kPhaseName[kPhaseOrder[seg - SegQt]]; }
 
-// Pump (Qt's share of a vvvv frame): green < half the budget, yellow < budget, red above.
-const char* pumpColor(double ms, double budget) { return ms < 0.5 * budget ? kGreen : ms < budget ? kYellow : kRed; }
+// A duration in the vvvv frame (Qt work, a phase, vvvv, apply): green < half the budget, yellow < budget, red above.
+const char* budgetColor(double ms, double budget) { return ms < 0.5 * budget ? kGreen : ms < budget ? kYellow : kRed; }
 // Frame interval: green up to 1.1 x budget, yellow up to 1.5 x (one refresh late), red above.
 const char* frameColor(double ms, double budget) { return ms <= 1.1 * budget ? kGreen : ms <= 1.5 * budget ? kYellow : kRed; }
 
@@ -196,7 +197,8 @@ QString PerfMonitor::summaryPage(QString* body) const
 
     // avg over the last ~1 s, max over the whole view (same window as the percentiles).
     const int first = std::max(0, n - kSummaryPumps);
-    double frameSum = 0, pumpSum = 0, gpuSum = 0, gpuMax = 0, swaps = 0;
+    double frameSum = 0, pumpSum = 0, workSum = 0, workMax = 0, gpuSum = 0, gpuMax = 0, swaps = 0;
+    std::array<float, kHistory> work; // Qt work over the view, for the p95 tick of the bar
     double phSum[PhaseCount] = {}, phMax[PhaseCount] = {};
     double rowSum = 0; // frame row: consecutive frames only, like the percentiles
     int frames = 0, rowFrames = 0, gpus = 0, idle = 0;
@@ -205,9 +207,12 @@ QString PerfMonitor::summaryPage(QString* body) const
         for (int ph = 0; ph < PhaseCount; ph++)
             phMax[ph] = std::max(phMax[ph], double(phaseMs(s, ph)));
         gpuMax = std::max(gpuMax, double(s.gpu));
+        work[i] = s.workMs();
+        workMax = std::max(workMax, double(work[i]));
         if (i < first)
             continue;
         pumpSum += s.pump;
+        workSum += work[i];
         swaps += s.swaps;
         for (int ph = 0; ph < PhaseCount; ph++)
             phSum[ph] += phaseMs(s, ph);
@@ -220,6 +225,13 @@ QString PerfMonitor::summaryPage(QString* body) const
     const double frameAvg = frames ? frameSum / frames : 0;
     const double rowAvg = rowFrames ? rowSum / rowFrames : 0;
     const double pumpAvg = na ? pumpSum / na : 0;
+    const double workAvg = na ? workSum / na : 0;
+    double workP95 = 0; // nearest rank, as the percentiles of vlqt_perf_stats
+    if (n > 0) {
+        const int k = std::clamp(int(std::ceil(0.95 * n)) - 1, 0, n - 1);
+        std::nth_element(work.begin(), work.begin() + k, work.begin() + n);
+        workP95 = work[k];
+    }
     // Qt renders only on changes; a low fps from idle pumps is not a slowdown -> neutral, no traffic light.
     const bool onDemand = na > 0 && idle > kOnDemandIdleShare * na;
 
@@ -237,11 +249,11 @@ QString PerfMonitor::summaryPage(QString* body) const
         if (vvvv)
             h.t(", ").c(kHostColor[SegVvvv].html, QStringLiteral("vvvv %1%").arg(qRound(100.0 * hs.vvvv_ms / frameAvg)));
     }
-    h.br().c(kGrey, QStringLiteral("pump avg vs. budget, tick = p95"));
+    h.br().c(kGrey, QStringLiteral("work avg vs. budget, tick = p95"));
     if (m_overlay) { // null for pageText without overlay
-        m_overlay->setProperty("barUse", budget > 0 ? pumpAvg / budget : 0.0);
-        m_overlay->setProperty("barP95", budget > 0 ? st.pump_p95 / budget : 0.0);
-        m_overlay->setProperty("barColor", QColor(QLatin1String(pumpColor(pumpAvg, budget))));
+        m_overlay->setProperty("barUse", budget > 0 ? workAvg / budget : 0.0);
+        m_overlay->setProperty("barP95", budget > 0 ? workP95 / budget : 0.0);
+        m_overlay->setProperty("barColor", QColor(QLatin1String(budgetColor(workAvg, budget))));
     }
 
     constexpr int L = 12, W = 8;
@@ -254,12 +266,16 @@ QString PerfMonitor::summaryPage(QString* body) const
     };
     pRow("frame", rowAvg, st.frame_p50, st.frame_p95, st.frame_p99, st.frame_max,
         [&](double v) { return onDemand ? kGrey : frameColor(v, budget); });
-    pRow("pump", pumpAvg, st.pump_p50, st.pump_p95, st.pump_p99, st.pump_max,
-        [&](double v) { return pumpColor(v, budget); });
+    // The pump includes the vsync wait and the present: what the frame costs on the host thread, not judged against the
+    // budget. Qt work (PerfSample::workMs) is, like the over budget counter.
+    b.t(lab("pump", L)).t(num(pumpAvg, W)).t(num(st.pump_p50, W)).t(num(st.pump_p95, W)).t(num(st.pump_p99, W))
+        .t(num(st.pump_max, W)).br();
+    b.t(lab("work", L)).c(budgetColor(workAvg, budget), num(workAvg, W)).t(QString(3 * W, u' '))
+        .c(budgetColor(workMax, budget), num(workMax, W)).br();
     for (int ph : kPhaseOrder) {
         b.t("  ").c(kPhaseColor[ph].html, lab(kPhaseName[ph], L - 2));
-        b.c(pumpColor(na ? phSum[ph] / na : 0, budget), num(na ? phSum[ph] / na : 0, W));
-        b.t(QString(3 * W, u' ')).c(pumpColor(phMax[ph], budget), num(phMax[ph], W)).br();
+        b.c(budgetColor(na ? phSum[ph] / na : 0, budget), num(na ? phSum[ph] / na : 0, W));
+        b.t(QString(3 * W, u' ')).c(budgetColor(phMax[ph], budget), num(phMax[ph], W)).br();
     }
     b.c(kGpuColor.html, lab("GPU", L));
     if (gpus)
@@ -269,10 +285,10 @@ QString PerfMonitor::summaryPage(QString* body) const
     b.t(lab("swaps/pump", L)).t(num(na ? swaps / na : 0, W)).br();
     if (hs.samples > 0) {
         if (vvvv) // the vvvv update before the pump, same columns as the phases (avg, max)
-            b.c(kHostColor[SegVvvv].html, lab("vvvv", L)).c(pumpColor(hs.vvvv_ms, budget), num(hs.vvvv_ms, W))
-                .t(QString(3 * W, u' ')).c(pumpColor(hs.vvvv_ms_max, budget), num(hs.vvvv_ms_max, W)).br();
-        b.c(kHostColor[SegApply].html, lab("apply", L)).c(pumpColor(hs.apply_ms, budget), num(hs.apply_ms, W)).t(QString(3 * W, u' '))
-            .c(pumpColor(hs.apply_ms_max, budget), num(hs.apply_ms_max, W)).c(kGrey, QStringLiteral("  ops %1").arg(num(hs.ops, 0, 0))).br();
+            b.c(kHostColor[SegVvvv].html, lab("vvvv", L)).c(budgetColor(hs.vvvv_ms, budget), num(hs.vvvv_ms, W))
+                .t(QString(3 * W, u' ')).c(budgetColor(hs.vvvv_ms_max, budget), num(hs.vvvv_ms_max, W)).br();
+        b.c(kHostColor[SegApply].html, lab("apply", L)).c(budgetColor(hs.apply_ms, budget), num(hs.apply_ms, W)).t(QString(3 * W, u' '))
+            .c(budgetColor(hs.apply_ms_max, budget), num(hs.apply_ms_max, W)).c(kGrey, QStringLiteral("  ops %1").arg(num(hs.ops, 0, 0))).br();
         b.t(lab("reconcile", L)).t(num(hs.reconcile_ms, W)).t(QString(3 * W, u' ')).t(num(hs.reconcile_ms_max, W)).br();
         b.c(kHostColor[SegGc].html, lab("GC /s", L)).c(hs.gc2_per_s > 0 ? kRed : hs.gc1_per_s > 0 ? kYellow : kGreen,
             QStringLiteral("gen0 %1  gen1 %2  gen2 %3  pause %4 ms").arg(num(hs.gc0_per_s, 0, 1), num(hs.gc1_per_s, 0, 1),
@@ -306,7 +322,7 @@ QString PerfMonitor::timelinePage(QString* foot) const
     Html f;
     for (int seg = firstSeg(); seg < SegCount; seg++)
         f.c(segColor(seg).html, QStringLiteral("■ ")).t(segName(seg)).t("  ");
-    f.br().c(kGpuColor.html, "- GPU  ").c(kBudgetColor.html, QStringLiteral("- budget %1 (pump > budget: red)").arg(num(budget, 0)));
+    f.br().c(kGpuColor.html, "- GPU  ").c(kBudgetColor.html, QStringLiteral("- budget %1 (work > budget: red)").arg(num(budget, 0)));
     f.t("  ").c(kGrey, "- max").br();
     // Peaks: the 3 largest bars (shown segments) with their dominant segment and age.
     int peaks[3] = {-1, -1, -1};
@@ -328,7 +344,8 @@ QString PerfMonitor::timelinePage(QString* foot) const
             if (segMs(s, seg) > segMs(s, dom))
                 dom = seg;
         const float total = stackMs(s);
-        f.t(k == 0 ? "peaks " : "      ").c(pumpColor(total, budget), num(total, 6) + QStringLiteral(" ms"));
+        // The colour judges the pump's Qt work, like the red highlight; the bar total also holds the waits (and vvvv).
+        f.t(k == 0 ? "peaks " : "      ").c(budgetColor(s.workMs(), budget), num(total, 6) + QStringLiteral(" ms"));
         f.t("  ").c(segColor(dom).html, lab(segName(dom), 10)).t(num(segMs(s, dom), 6));
         f.c(kGrey, QStringLiteral("  %1 pumps ago").arg(n - 1 - peaks[k]));
         if (k < 2 && peaks[k + 1] >= 0)
@@ -477,7 +494,8 @@ QString PerfMonitor::systemPage() const
         h.t(QStringLiteral("%1 Hz").arg(num(hz, 0, 1)));
     else
         h.t(kNa);
-    h.c(kGrey, QStringLiteral("  budget %1 ms").arg(num(budgetMs(), 0)) + (screen ? QStringLiteral("  ") + screen->name() : QString()));
+    h.c(kGrey, (screen ? QStringLiteral("  ") + screen->name() : QString())
+        + QStringLiteral("  budget %1 ms (vvvv frame)").arg(num(budgetMs(), 0)));
     // Actual swap chain flag where there is one; the requested QSurfaceFormat value otherwise (software: n/a).
     h.br().t(lab("swap int.", L));
     if (QRhiSwapChain* sc = m_window->swapChain()) {

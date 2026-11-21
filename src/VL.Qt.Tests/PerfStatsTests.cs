@@ -55,6 +55,16 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void From_MapsWork_PumpStaysWithTheWaits()
+        {
+            var perf = Perf();
+            perf.vsync_ms = 0.25;
+            perf.work_ms = 1.45; // pump 2 - vsync 0.25 - present 0.3
+            var p = PerfStats.From(perf, default, default);
+            Assert.That((p.PumpMs, p.VsyncMs, p.WorkMs), Is.EqualTo((2f, 0.25f, 1.45f)), "pump incl. waits, vsync wait and Qt work as QtNative measured them");
+        }
+
+        [Test]
         public void OldFromAndEmpty_NewValuesZero_RecordEquality()
         {
             var old = PerfStats.From(Perf());
@@ -99,25 +109,28 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void SumWaitMs_SumsVsyncAndPresentOfTheWindowsWithSample()
+        public void MaxWorkMs_ReadsTheWorkQtNativeFilled()
         {
-            var a = new Native.vlqt_perf_sample { vsync = 12f, present = 0.5f };
-            var b = new Native.vlqt_perf_sample { present = 4f };
-            var c = new Native.vlqt_perf_sample { vsync = 3f, sync = 7f, render = 9f, events = 5f };
-            Assert.That(PumpDiagnostics.SumWaitMs(new IQtFrameParticipant[] { new Window(a), new Window(null), new Plain(), new Window(b), new Window(c) }), Is.EqualTo(19.5).Within(1e-6));
-            Assert.That(PumpDiagnostics.SumWaitMs(Array.Empty<IQtFrameParticipant>()), Is.Zero);
+            // The slow-frame warning reads vlqt_perf_sample.work, the value QtNative's over budget counter judges; it does
+            // not compute Qt work again from the phases (c has phases but work 0: nothing counts).
+            var a = new Native.vlqt_perf_sample { pump = 18f, vsync = 14f, present = 0.5f, work = 3.5f };
+            var b = new Native.vlqt_perf_sample { pump = 9f, work = 9f };
+            var c = new Native.vlqt_perf_sample { pump = 30f, sync = 7f, render = 9f, events = 5f };
+            Assert.That(PumpDiagnostics.MaxWorkMs(new IQtFrameParticipant[] { new Window(a), new Window(null), new Plain(), new Window(b), new Window(c) }), Is.EqualTo(9).Within(1e-6));
+            Assert.That(PumpDiagnostics.MaxWorkMs(new IQtFrameParticipant[] { new Window(a) }), Is.EqualTo(3.5).Within(1e-6));
+            Assert.That(PumpDiagnostics.MaxWorkMs(Array.Empty<IQtFrameParticipant>()), Is.Zero);
         }
 
         [Test]
-        public void ExceedsBudget_DoesNotCountTheWait()
+        public void ExceedsBudget_JudgesQtWorkAgainstHalfTheBudget()
         {
             // 60 Hz: budget 16.7 ms, threshold 8.35 ms of Qt work.
-            Assert.That(PumpDiagnostics.ExceedsBudget(20, 0, 16.7), Is.True, "20 ms of work");
-            Assert.That(PumpDiagnostics.ExceedsBudget(20, 15, 16.7), Is.False, "20 ms pump, 15 ms of it waiting for VSync in beginFrame and Present");
-            Assert.That(PumpDiagnostics.ExceedsBudget(20, 10, 16.7), Is.True, "10 ms left over");
-            Assert.That(PumpDiagnostics.ExceedsBudget(5, 30, 16.7), Is.False, "present longer than the pump (stale sample): clamped, no negative work");
-            Assert.That(PumpDiagnostics.ExceedsBudget(9, 0, 16.7), Is.True);
-            Assert.That(PumpDiagnostics.ExceedsBudget(8, 0, 16.7), Is.False);
+            Assert.That(PumpDiagnostics.ExceedsBudget(9, 16.7), Is.True);
+            Assert.That(PumpDiagnostics.ExceedsBudget(8, 16.7), Is.False);
+            // An 18 ms pump with 14 ms VSync wait and 0.5 ms present has 3.5 ms of Qt work: no warning.
+            Assert.That(PumpDiagnostics.ExceedsBudget(3.5, 16.7), Is.False);
+            // 30 Hz vvvv frame: the same 9 ms of Qt work are within half the budget.
+            Assert.That(PumpDiagnostics.ExceedsBudget(9, 1000.0 / 30), Is.False);
         }
 
         [Test]

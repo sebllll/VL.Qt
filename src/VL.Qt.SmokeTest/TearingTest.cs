@@ -248,14 +248,14 @@ public static class TearingTest
         }
     }
 
-    // Refresh rate of the screen of the window: Windows API (the real mode of the monitor), else 1000 / budget_ms of the
-    // window stats (QtNative falls back to 60 Hz there, so that is the second choice). n/a = unknown.
+    // Refresh rate of the screen of the window: Windows API (the real mode of the monitor), else QScreen::refreshRate from
+    // the F5 System page (Qt falls back to 60 Hz there, so that is the second choice). n/a = unknown.
     private static string Refresh(SceneHandle w, string title)
     {
         if (OperatingSystem.IsWindows() && Win.RefreshHz(title) is { } hz and > 1)
             return hz.ToString("F1", CultureInfo.InvariantCulture);
-        if (!OperatingSystem.IsWindows() && Native.vlqt_scene_get_perf_stats(w, out var st) == 0 && st.budget_ms > 0)
-            return (1000.0 / st.budget_ms).ToString("F1", CultureInfo.InvariantCulture);
+        if (!OperatingSystem.IsWindows() && NativeCalls.ScreenRefreshMs(w) is { } ms)
+            return (1000.0 / ms).ToString("F1", CultureInfo.InvariantCulture);
         return "n/a";
     }
 
