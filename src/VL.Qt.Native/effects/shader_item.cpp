@@ -1,4 +1,4 @@
-#include "shader_item.h"
+#include "effects/shader_item.h"
 
 #include "elements.h"
 #include "image_resource.h"

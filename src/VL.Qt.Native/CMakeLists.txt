@@ -24,6 +24,7 @@ find_package(Qt6 6.12 REQUIRED COMPONENTS Gui GuiPrivate Qml Quick QuickPrivate 
 qt_standard_project_setup()
 
 add_library(vlqt SHARED)
+target_include_directories(vlqt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 # One file per line, grouped by the folders of the target layout. Files that still lie at the top level move into
 # their group folder as the cuts of the native layer land.
 target_sources(vlqt PRIVATE
@@ -57,8 +58,8 @@ target_sources(vlqt PRIVATE
     # effects/ and user_qml/
     effectchain.cpp
     effectchain.h
-    shader_item.cpp
-    shader_item.h
+    effects/shader_item.cpp
+    effects/shader_item.h
     qmlitem.cpp
     qmlitem.h
 

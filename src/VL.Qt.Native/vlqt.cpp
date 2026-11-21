@@ -9,7 +9,7 @@
 #include "resources.h"
 #include "shader_resource.h"
 #include "audio_tap.h"
-#include "shader_item.h"
+#include "effects/shader_item.h"
 #include "snapshot_resource.h"
 #include "image_writer.h"
 #include "app/exports.h"
