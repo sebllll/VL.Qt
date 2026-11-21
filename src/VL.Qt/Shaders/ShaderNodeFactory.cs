@@ -7,42 +7,15 @@ using System.Reactive.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using VL.Core;
+using VL.Qt.NodeFactories;
 
 namespace VL.Qt.Shaders
 {
-    /// <summary>A shader file found in a qtshaders/ tree: one .frag = one node, a .vert with the same name belongs to it.</summary>
-    /// <param name="FragmentPath">Full path of the .frag.</param>
-    /// <param name="VertexPath">Full path of the .vert next to it (same folder, same base name), null if there is none.</param>
-    /// <param name="Name">Node name from the file name (variant split off, see <see cref="ShaderNodeFactory.GetNodeName"/>).</param>
-    /// <param name="Version">Variant ("Glitch_RGB.frag" → "RGB"), null if none.</param>
-    /// <param name="Category">@category of the file head, else <see cref="ShaderNodeFactory.DefaultCategory"/>.</param>
-    /// <param name="Summary">@summary of the file head (node help), null if not given.</param>
-    /// <param name="DuplicateError">Error if another .frag with the same file name exists in the same qtshaders/ tree (both paths), else null.</param>
-    /// <param name="IsFilter">The .frag declares <c>sampler2D source</c>: besides the element node it gets a link node for the effect chain (<see cref="ShaderNodeFactory.LinkCategory"/>).</param>
-    /// <param name="ChainOnly">The file head has <c>@chainonly</c>: only the link node of a filter is created, no element node.</param>
-    internal sealed record ShaderFile(
-        string FragmentPath,
-        string? VertexPath,
-        string Name,
-        string? Version,
-        string Category,
-        string? Summary,
-        string? DuplicateError,
-        bool IsFilter = false,
-        bool ChainOnly = false)
-    {
-        /// <summary>Name as vvvv shows it: "Glitch (RGB)", or just "Glitch" without variant.</summary>
-        public string FullName => Version is null ? Name : $"{Name} ({Version})";
-
-        /// <summary>Category of the effect chain node: the @category of a @chainonly file (it has no element node), else always <see cref="ShaderNodeFactory.LinkCategory"/>.</summary>
-        public string LinkCategory => ChainOnly ? Category : ShaderNodeFactory.LinkCategory;
-    }
-
     /// <summary>
-    /// Node factory for qtshaders/**/*.frag next to a document or in a package. Model: VL.Stride EffectShaderNodes.Init/TrackChanges. The scan reads only the
-    /// annotations (category/summary); bake + reflection happen lazily in the init of the node description
-    /// (<see cref="ShaderNodeDescription"/>). The node instance wraps a <see cref="Nodes.ShaderNode"/> and feeds the
-    /// file content over the source path.
+    /// Node factory for qtshaders/**/*.frag next to a document or in a package, built on <see cref="FolderNodeFactory"/>
+    /// (model: VL.Stride EffectShaderNodes.Init/TrackChanges). The scan reads only the annotations (category/summary); bake
+    /// and reflection happen lazily in the init of the node description (<see cref="ShaderNodeDescription"/>). The node
+    /// instance wraps a <see cref="Nodes.ShaderNode"/> and feeds the file content over the source path.
     /// </summary>
     internal static class ShaderNodeFactory
     {
@@ -69,62 +42,29 @@ namespace VL.Qt.Shaders
         /// <summary>
         /// Registers the factory at the app host (called from <see cref="Initialization.Configure"/>). Like VL.Stride over
         /// the app host's NodeFactoryCache, so the factory (and its file watchers) lives across compilations and only
-        /// invalidates itself when files change.
+        /// invalidates itself when files change; one sub factory per document/package folder.
         /// </summary>
         public static void Register(AppHost appHost)
         {
             var logger = appHost.LoggerFactory?.CreateLogger(Identifier) ?? NullLogger.Instance;
-            appHost.NodeFactoryRegistry.RegisterNodeFactory(appHost.NodeFactoryCache.GetOrAdd(Identifier, f => Init(f, logger)));
+            appHost.RegisterNodeFactory(Identifier, (path, f) => ForPath(path, f, logger));
         }
-
-        /// <summary>Factory without nodes of its own; forPath creates one sub factory per document/package folder.</summary>
-        public static NodeBuilding.FactoryImpl Init(IVLNodeDescriptionFactory factory, ILogger logger) =>
-            NodeBuilding.NewFactoryImpl(forPath: path => f => ForPath(path, f, logger));
 
         /// <summary>
         /// Nodes of &lt;path&gt;/qtshaders/ (recursive). invalidated: qtshaders/ created/deleted or .frag/.vert files
         /// added/deleted/renamed (NodeBuilding.WatchDir). Without the folder: empty factory that still watches path for it.
         /// </summary>
-        public static NodeBuilding.FactoryImpl ForPath(string path, IVLNodeDescriptionFactory factory, ILogger logger)
-        {
-            // qtshaders/ created or deleted: the whole factory again.
-            var invalidated = FileSystemUtils.WatchDir(path)
-                .Where(e => e.ChangeType is WatcherChangeTypes.Created or WatcherChangeTypes.Deleted or WatcherChangeTypes.Renamed
-                    && string.Equals(e.Name, FolderName, StringComparison.OrdinalIgnoreCase))
-                .Select(static e => (object)e);
-
-            var shadersPath = Path.Combine(path, FolderName);
-            if (Directory.Exists(shadersPath))
-            {
-                try
-                {
-                    var files = Scan(shadersPath);
-                    foreach (var file in files)
-                    {
-                        if (file.DuplicateError != null)
-                            logger.LogError("{Error}", file.DuplicateError);
-                    }
-                    var nodes = CreateDescriptions(files, factory, logger);
-                    // Files added, deleted or renamed: the node list again (content changes go to the node itself).
-                    invalidated = invalidated.Merge(FileSystemUtils.WatchDir(shadersPath, includeSubdirectories: true)
-                        .Where(IsNewOrDeletedShaderFile)
-                        .Select(static e => (object)e));
-                    // A content change that turns a generator into a filter or back, or adds or removes @chainonly, adds or removes a node: the node list again.
-                    foreach (var file in files)
-                        invalidated = invalidated.Merge(WatchContent(file)
-                            .Where(_ => ReadIsFilter(file.FragmentPath) is { } isFilter
-                                && (isFilter != file.IsFilter || ReadHead(file.FragmentPath).ChainOnly != file.ChainOnly)));
-                    return NodeBuilding.NewFactoryImpl(nodes, invalidated);
-                }
-                catch (Exception e) when (e is UnauthorizedAccessException or IOException)
-                {
-                    // Folder deleted while scanning; the watcher above brings the factory back.
-                    logger.LogWarning(e, "Scanning {Path} failed: {Message}", shadersPath, e.Message);
-                }
-            }
-
-            return NodeBuilding.NewFactoryImpl(invalidated: invalidated);
-        }
+        public static NodeBuilding.FactoryImpl ForPath(string path, IVLNodeDescriptionFactory factory, ILogger logger) =>
+            FolderNodeFactory.ForPath(
+                path,
+                FolderName,
+                logger,
+                scan: Scan,
+                duplicateError: static file => file.DuplicateError,
+                createDescriptions: files => CreateDescriptions(files, factory, logger),
+                isNewOrDeleted: IsNewOrDeletedShaderFile,
+                watchContent: WatchContent,
+                headChanged: HeadChanged);
 
         /// <summary>One element node per file (none for @chainonly), plus the link node of the effect chain for every filter.</summary>
         internal static ImmutableArray<IVLNodeDescription> CreateDescriptions(IEnumerable<ShaderFile> files, IVLNodeDescriptionFactory factory, ILogger logger)
@@ -162,7 +102,7 @@ namespace VL.Qt.Shaders
             foreach (var fragment in fragments)
             {
                 var vertex = Path.ChangeExtension(fragment, vertexExtension);
-                var (name, version) = GetNodeName(Path.GetFileNameWithoutExtension(fragment));
+                var (name, version) = FileNodeNames.Split(Path.GetFileNameWithoutExtension(fragment));
                 var annotations = ReadHead(fragment);
                 var isFilter = ReadIsFilter(fragment) ?? false;
                 var hasCategory = !string.IsNullOrWhiteSpace(annotations.Category);
@@ -212,19 +152,13 @@ namespace VL.Qt.Shaders
             }
         }
 
-        /// <summary>Node name and variant from a file name like VL.Stride: "Glitch_RGB.frag" → ("Glitch", "RGB").</summary>
-        /// <remarks>Further parts are joined with spaces ("Levels_Clamp_Both" → ("Levels", "Clamp Both")); an empty name part keeps the whole name.</remarks>
-        public static (string Name, string? Version) GetNodeName(string fileName)
-        {
-            var name = fileName.EndsWith(fragmentExtension, StringComparison.OrdinalIgnoreCase)
-                ? fileName[..^fragmentExtension.Length]
-                : fileName;
-            var parts = name.Split('_', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length == 0 || name.StartsWith('_'))
-                return (name, null);
-            var version = string.Join(' ', parts.Skip(1));
-            return (parts[0], version.Length > 0 ? version : null);
-        }
+        /// <summary>
+        /// True if a content change turned a generator into a filter or back, or added or removed @chainonly: that adds or
+        /// removes a node. False if the file cannot be read now.
+        /// </summary>
+        private static bool HeadChanged(ShaderFile file) =>
+            ReadIsFilter(file.FragmentPath) is { } isFilter
+                && (isFilter != file.IsFilter || ReadHead(file.FragmentPath).ChainOnly != file.ChainOnly);
 
         /// <summary>Content change of <paramref name="file"/>'s own .frag/.vert (filtered NodeBuilding.WatchDir of its folder).</summary>
         public static IObservable<object> WatchContent(ShaderFile file)
@@ -232,10 +166,7 @@ namespace VL.Qt.Shaders
             var dir = Path.GetDirectoryName(file.FragmentPath)!;
             var fragmentName = Path.GetFileName(file.FragmentPath);
             var vertexName = Path.ChangeExtension(fragmentName, vertexExtension);
-            return NodeBuilding.WatchDir(dir)
-                .Where(e => string.Equals(e.Name, fragmentName, StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(e.Name, vertexName, StringComparison.OrdinalIgnoreCase))
-                .Select(static e => (object)e);
+            return FolderNodeFactory.WatchFiles(dir, fragmentName, vertexName).Select(static e => (object)e);
         }
 
         private static bool HasExtension(string path, string extension) => path.EndsWith(extension, StringComparison.OrdinalIgnoreCase);
@@ -243,16 +174,7 @@ namespace VL.Qt.Shaders
         private static bool IsShaderFile(string? name) =>
             name != null && (HasExtension(name, fragmentExtension) || HasExtension(name, vertexExtension));
 
-        /// <summary>
-        /// Like VL.Stride, editors create lots of temporary files: only .frag/.vert count. Unlike VL.Stride a rename counts
-        /// if either name is a shader file, so "New Text Document.txt" → "Foo.frag" (Explorer) adds the node; an editor
-        /// saving over a temp file then rebuilds the node list once more, which is cheap.
-        /// </summary>
-        internal static bool IsNewOrDeletedShaderFile(FileSystemEventArgs e) => e.ChangeType switch
-        {
-            WatcherChangeTypes.Created or WatcherChangeTypes.Deleted => IsShaderFile(e.Name),
-            WatcherChangeTypes.Renamed => IsShaderFile(e.Name) || (e is RenamedEventArgs r && IsShaderFile(r.OldName)),
-            _ => false,
-        };
+        /// <summary>Like VL.Stride, only .frag/.vert files count (see <see cref="FolderNodeFactory.IsNewOrDeleted"/>).</summary>
+        internal static bool IsNewOrDeletedShaderFile(FileSystemEventArgs e) => FolderNodeFactory.IsNewOrDeleted(e, IsShaderFile);
     }
 }
