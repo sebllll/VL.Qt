@@ -1,5 +1,5 @@
 #include "app/render_gate.h"
-#include "perf.h"
+#include "diagnostics/perf.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QEvent>
@@ -124,7 +124,7 @@ bool UpdateGate::isGrabSource(QQuickItem* i) const
     return i->parentItem() == m_window->contentItem() && !i->isVisible() && i->inherits("QQuickShaderEffectSource");
 }
 
-// The F5 overlay (perf.cpp, objectName perfOverlayName under the content item) is no scene change: its graphs
+// The F5 overlay (diagnostics/perf_monitor.cpp, objectName perfOverlayName under the content item) is no scene change: its graphs
 // repaint every frame, and the tooltip's snapshot rate is measured with the overlay open.
 bool UpdateGate::inPerfOverlay(QQuickItem* i) const
 {

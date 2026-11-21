@@ -1,12 +1,13 @@
 // The perf exports of a scene handle (vlqt.h, "scene": overlay, perf getters, host pump). Qt GUI thread.
 #include "window/scene_handle.h"
 #include "app/exports.h"
-#include "perf.h"
+#include "diagnostics/perf.h"
 #include "vlqt.h"
 
 using vlqt::asWindow;
 using vlqt::fail;
 using vlqt::guarded;
+using vlqt::PerfSample;
 
 extern "C" {
 

@@ -6,7 +6,7 @@
 #include "../image_resource.h"
 #include "../app/exports.h"
 #include "../offscreen.h"
-#include "../perf.h"
+#include "diagnostics/perf.h"
 #include "../protocol.h"
 #include "test_hooks.h"
 #ifdef _WIN32
@@ -33,6 +33,8 @@
 
 using vlqt::fail;
 using vlqt::guarded;
+using vlqt::perfEval;
+using vlqt::perfHostStats;
 
 namespace {
 

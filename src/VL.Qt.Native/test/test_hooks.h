@@ -10,11 +10,11 @@
 #include <utility>
 #include <vector>
 
-class PerfMonitor;
 class QQuickWindow;
 struct vlqt_scene;
 
 namespace vlqt {
+class PerfMonitor;
 class Scene;
 }
 

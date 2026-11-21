@@ -1,4 +1,4 @@
-#include "debug.h"
+#include "diagnostics/debug_overlay.h"
 #include "scene/scene.h"
 
 #include <QtGui/QFont>
@@ -17,7 +17,7 @@
 namespace vlqt {
 namespace {
 
-// Colors (straight alpha, premultiplied when written). Legend: debug.h.
+// Colors (straight alpha, premultiplied when written). Legend: debug_overlay.h.
 const QRgb kFrame = qRgba(0, 215, 215, 235);
 const QRgb kOrigin = qRgba(255, 0, 200, 255);
 const QRgb kAnchor = qRgba(255, 220, 0, 255);

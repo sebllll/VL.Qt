@@ -142,12 +142,19 @@ target_sources(vlqt PRIVATE
     offscreen.cpp
     offscreen.h
 
-    # diagnostics/
-    perf.cpp
-    perf.h
-    debug.cpp
-    debug.h
+    # diagnostics/: perf monitor (statistics, hooks, pages, graph and timeline items) and debug overlay
+    diagnostics/debug_overlay.cpp
+    diagnostics/debug_overlay.h
+    diagnostics/perf.h
     diagnostics/perf_exports.cpp
+    diagnostics/perf_items.cpp
+    diagnostics/perf_items.h
+    diagnostics/perf_monitor.cpp
+    diagnostics/perf_monitor.h
+    diagnostics/perf_pages.cpp
+    diagnostics/perf_pages.h
+    diagnostics/perf_stats.cpp
+    diagnostics/perf_stats.h
 
     # test/: the test exports of vlqt_test.h are in every build; only the SmokeTest and the unit tests call them
     test/test_hooks.h
