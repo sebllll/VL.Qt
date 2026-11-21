@@ -301,7 +301,8 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
     connect(window, &QQuickWindow::frameSwapped, this, &PerfMonitor::detectRenderer,
         Qt::ConnectionType(Qt::DirectConnection | Qt::SingleShotConnection));
     // Windows (basic render loop): all signals arrive on the GUI (vvvv) thread inside processEvents. Offscreen scenes:
-    // on the scene's render thread (offscreen.cpp); afterFrameEnd hands the frame to endPump (perf.h, m_done).
+    // on the scene's render thread (offscreen/offscreen_render.cpp); afterFrameEnd hands the frame to endPump (perf.h,
+    // m_done).
     // m_spikePhase >= 0 only after vlqt_test_perf_spike (test hook).
     // vsync wait: beforeFrameBegin -> beforeSynchronizing. QSGGuiThreadRenderLoop::renderWindow emits
     // beforeFrameBegin right before QRhi::beginFrame, and syncSceneGraph emits beforeSynchronizing right after it; Qt has

@@ -6,7 +6,7 @@
 #include "app/exports.h"
 #include "app/render_gate.h"
 #include "scene/scene.h"
-#include "offscreen.h"
+#include "offscreen/offscreen.h"
 #include "perf.h"
 #include "protocol.h"
 #include "vlqt.h"
