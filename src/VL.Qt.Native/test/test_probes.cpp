@@ -156,6 +156,14 @@ VLQT_API int vlqt_test_handler_count(vlqt_scene* p, unsigned int id)
     });
 }
 
+VLQT_API int vlqt_test_set_overlay(vlqt_scene* p, int flags)
+{
+    return withScene(p, "vlqt_test_set_overlay", [&](SceneHandle& h) -> int {
+        h.perf->setOverlay(flags);
+        return VLQT_OK;
+    });
+}
+
 VLQT_API int vlqt_test_perf_spike(vlqt_scene* p, int phase, float ms)
 {
     return withScene(p, "vlqt_test_perf_spike", [&](SceneHandle& h) -> int {

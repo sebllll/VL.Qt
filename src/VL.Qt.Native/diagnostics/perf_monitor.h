@@ -32,11 +32,11 @@ QString softwareRendererName(QQuickWindow* window);
 inline constexpr int kSummaryPumps = 60;
 
 // Per-window measurement, overlay (F2 perfmeter, F5 stats pages) and key handling.
-// Keys (window focused, no other modifiers): F2 meter on/off; F5 Summary -> Timeline -> Scene -> System -> Resources -> off;
+// Keys (window focused, no other modifiers; setKeysEnabled(false) turns all of them off): F2 meter on/off; F5 Summary -> Timeline -> Scene -> System -> Resources -> off;
 // Shift+F5 hides/shows the stats keeping the page; F6 (only while the stats are visible) freezes the overlay; F7 (same)
 // hides/shows the host segments (vvvv, GC, apply) of the timeline, process-wide.
 // The last page is remembered process-wide (new windows open on it).
-// vlqt_scene_set_overlay / get_overlay flags: bit0 meter, bit1 stats, bit3 freeze, bits 4..6 = page + 1
+// vlqt_test_set_overlay / vlqt_scene_get_overlay flags: bit0 meter, bit1 stats, bit3 freeze, bits 4..6 = page + 1
 // (set: 0 = keep the remembered page).
 class PerfMonitor : public QObject
 {
@@ -67,6 +67,10 @@ public:
     int overlay() const { return m_flags | (m_frozen ? Freeze : 0) | ((m_page + 1) << kPageShift); }
     void setOverlay(int flags);
     int page() const { return m_page; }
+    // The diagnostic keys (F2, F5, Shift+F5, F6, F7): on = the event filter swallows them, off = it is removed and the
+    // keys reach the scene (Renderer [Qt] Enable Keyboard Shortcuts). On by default; the overlay itself is unchanged.
+    void setKeysEnabled(bool on);
+    bool keysEnabled() const { return m_keys; }
 
     // test hook: busy-waits ms inside the given phase of the next rendered frame (vlqt_test_perf_spike).
     void injectSpike(int phase, float ms);
@@ -119,6 +123,7 @@ private:
     std::mutex m_doneLock;
     double m_tFrameBegin = -1, m_tSyncBegin = 0, m_tRenderBegin = 0, m_tRenderEnd = 0, m_tLastSwap = -1;
     int m_flags = 0;
+    bool m_keys = true; // the event filter is installed on the window
     QString m_software; // softwareRendererName() after scenegraph init
     bool m_rendererKnown = false; // m_software is valid
     QPointer<QQuickItem> m_overlay;

@@ -19,7 +19,7 @@ namespace VL.Qt.Nodes
     /// <summary>
     /// Opens a Qt Quick window and shows the element tree at Input (Qt.Elements: Rectangle, Text, Group, ...).
     /// The tree is diffed against the last frame; only changes go to Qt (once per frame, in the global pump).
-    /// In the Qt window: F2 toggles the perfmeter panel, F5 the timing stats.
+    /// In the Qt window: F2 toggles the perfmeter panel, F5 the timing stats (see Enable Keyboard Shortcuts).
     /// </summary>
     [ProcessNode(Name = "Renderer", Category = Categories.Qt)]
     public sealed class RendererNode : IDisposable, IQtFrameParticipant
@@ -47,6 +47,7 @@ namespace VL.Qt.Nodes
         private WindowScene? _view; // created in the first Update (Title/Size are update pins)
         private bool _disposed;
         private bool _debug; // last Debug pin value sent to the window
+        private bool _keys = true; // last Enable Keyboard Shortcuts pin value sent to the window (QtNative default: on)
         private bool _borderless; // last Borderless pin value sent to the window
         private MultisampleCount _samples; // last Multisample Count pin value sent to the window
         private string? _iconPath; // last window icon sent to the window (full path, null = default)
@@ -172,6 +173,10 @@ namespace VL.Qt.Nodes
         /// shapes); a count the device does not support is lowered to the next supported one, with a warning at the
         /// node. Effect layers and snapshots in the window use the same count. A change recreates the window on screen
         /// once (tens of ms).</param>
+        /// <param name="enableKeyboardShortcuts">On: the window takes the diagnostic keys F2 (perfmeter), F5 and Shift+F5
+        /// (timing stats), F6 (freeze) and F7 (host segments of the timeline); the scene never sees them. Off: none of
+        /// them is taken, the keys reach the elements and handlers of the scene (e.g. a TextField or your own F5
+        /// shortcut); an overlay that is open stays open. Live. F11 / Alt+Enter (Fullscreen) are not affected.</param>
         // Pin defaults: string-valued [DefaultValue] (Color4/RectangleF have no TypeConverter, so the (Type, string) form is
         // silently ignored by vvvvc and the pin becomes default(T)); no C# defaults on the pins. #202020 = 0.1254902.
         public void Update(
@@ -188,7 +193,8 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(false)] bool fullscreen,
             [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(false)] bool debug,
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] WindowSettings? window,
-            [Pin(Name = "Multisample Count", Visibility = VL.Model.PinVisibility.Optional), DefaultValue(typeof(MultisampleCount), nameof(MultisampleCount.X4))] MultisampleCount multisampleCount)
+            [Pin(Name = "Multisample Count", Visibility = VL.Model.PinVisibility.Optional), DefaultValue(typeof(MultisampleCount), nameof(MultisampleCount.X4))] MultisampleCount multisampleCount,
+            [Pin(Name = "Enable Keyboard Shortcuts", Visibility = VL.Model.PinVisibility.Optional), DefaultValue(true)] bool enableKeyboardShortcuts)
         {
             Debug.Assert(_app.IsQtThread, "VL.Qt must be used from the thread that created the QGuiApplication");
 
@@ -237,6 +243,11 @@ namespace VL.Qt.Nodes
             {
                 _debug = debug;
                 _view.SetDebug(debug);
+            }
+            if (enableKeyboardShortcuts != _keys && _view is not null)
+            {
+                _keys = enableKeyboardShortcuts;
+                _view.SetKeys(enableKeyboardShortcuts);
             }
             // Only written here; the pump applies the buffer once per frame (ApplyCommands) after all node updates.
             _view?.Update(_input.Update(input), space, clearColor, clear, enabled, title);

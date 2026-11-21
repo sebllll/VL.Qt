@@ -19,6 +19,8 @@ Press these keys in a Qt window (no modifiers). Both overlays are drawn by QtNat
 | F6 | Freeze the stats (only while the stats are visible, otherwise F6 goes to the scene) |
 | F7 | Timeline: show/hide the host segments (vvvv, GC, apply), only while the stats are visible |
 
+The keys belong to QtNative: the scene never sees them. A patch that needs F2, F5, F6 or F7 itself (a text field, its own shortcut) switches them off with the optional `Enable Keyboard Shortcuts` pin of `Renderer [Qt]` (default on); the keys then reach the elements and an open overlay stays as it is.
+
 The Qt phases of a frame are events, vsync wait, sync, render and present. "vsync wait" is the start of the frame (`QRhi::beginFrame`): with the Renderer's `VSync` pin on (the default) Direct3D 11 waits there for the display refresh, not in Present; with `VSync` off it waits there only when the GPU is behind. The wait and the present are not counted as Qt work. The System page also shows "allow tearing yes/no" and "refresh N Hz". Several VSync windows keep the refresh rate on Windows as long as the host dispatches window messages between the pumps (vvvv does); see the [timing decision](decisions/timing.md).
 
 The same numbers are available in a patch: `Renderer [Qt]` has an optional `Perf` output (`PerfStats`), see `help/Qt/HowTo Read Performance.vl`. `PerfStats (Split)` exposes the frame, pump, sync, render, present and GPU timings; `Split Vsync` the vsync wait, `Split Percentiles`, `Split Counters`, `Split Host` (vvvv, wait, apply, reconcile, ops) and `Split Gc` read the further fields.

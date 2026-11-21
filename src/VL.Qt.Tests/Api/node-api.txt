@@ -1215,12 +1215,13 @@ VL.Qt | VL.Qt.Nodes.RendererNode | ctor | pin V Sync | in bool = true | Pin(Visi
 VL.Qt | VL.Qt.Nodes.RendererNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.RendererNode | implements VL.Qt.IQtFrameParticipant
 VL.Qt | VL.Qt.Nodes.RendererNode | method Dispose | void
-VL.Qt | VL.Qt.Nodes.RendererNode | method Update | order Is Visible, Perf, Client Bounds, Input, Space, Clear Color, Clear, Enabled, Title, Borderless, Fullscreen, Debug, Window, Multisample Count
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | order Is Visible, Perf, Client Bounds, Input, Space, Clear Color, Clear, Enabled, Title, Borderless, Fullscreen, Debug, Window, Multisample Count, Enable Keyboard Shortcuts
 VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Borderless | in bool = false | Pin(Visibility = PinVisibility.Optional) | (borderless)
 VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Clear Color | in Stride.Core.Mathematics.Color4 = 0.1254902, 0.1254902, 0.1254902, 1 | (clearColor)
 VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Clear | in bool = true | Pin(Visibility = PinVisibility.Optional) | (clear)
 VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Client Bounds | out Stride.Core.Mathematics.RectangleF | Pin(Visibility = PinVisibility.Optional) | (clientBounds)
 VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Debug | in bool = false | Pin(Visibility = PinVisibility.Optional) | (debug)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Enable Keyboard Shortcuts | in bool = true | Pin(Name = "Enable Keyboard Shortcuts", Visibility = PinVisibility.Optional) | (enableKeyboardShortcuts)
 VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Enabled | in bool = true | (enabled)
 VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Fullscreen | in bool = false | Pin(Visibility = PinVisibility.Optional) | (fullscreen)
 VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Input | in VL.Qt.Elements.IElement | (input)

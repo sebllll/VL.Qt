@@ -80,14 +80,6 @@ VLQT_API int vlqt_scene_get_host_pump_stats(vlqt_scene* p, vlqt_host_pump_stats*
     });
 }
 
-VLQT_API int vlqt_scene_set_overlay(vlqt_scene* p, int flags)
-{
-    return withScene(p, "vlqt_scene_set_overlay", [&](SceneHandle& w) -> int {
-        w.perf->setOverlay(flags);
-        return 0;
-    });
-}
-
 VLQT_API int vlqt_scene_get_overlay(vlqt_scene* p)
 {
     return withScene(p, "vlqt_scene_get_overlay", [&](SceneHandle& w) -> int {

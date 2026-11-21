@@ -362,6 +362,17 @@ void PerfMonitor::setOverlay(int flags)
     m_window->update();
 }
 
+void PerfMonitor::setKeysEnabled(bool on)
+{
+    if (on == m_keys)
+        return;
+    m_keys = on;
+    if (on)
+        m_window->installEventFilter(this);
+    else
+        m_window->removeEventFilter(this);
+}
+
 void PerfMonitor::setFrozen(bool on)
 {
     if (on == m_frozen)

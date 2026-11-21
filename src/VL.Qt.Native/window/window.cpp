@@ -252,7 +252,7 @@ void applyFullscreen(SceneHandle* w, bool on)
 // render context that layers use); QWindow::destroy()/show() recreates the swap chain with the old count. So the handle
 // gets a new QQuickWindow with format f: same screen, geometry, window states, flags, title, icon, colour, filters,
 // graphics configuration and shared device. The scene moves over (items, their state and the QML engine stay), a new
-// PerfMonitor takes the overlay state, windows with the old one as transient parent (Popup.Window popups, QML windows)
+// PerfMonitor takes the overlay state and the keys switch, windows with the old one as transient parent (Popup.Window popups, QML windows)
 // get the new one, then the old window is deleted. Input needs nothing else: the WM_GETDLGCODE filter looks the HWND up
 // per message. The new native window is shown without activation unless the old one was active.
 void replaceWindow(SceneHandle* w, const QSurfaceFormat& f)
@@ -280,9 +280,11 @@ void replaceWindow(SceneHandle* w, const QSurfaceFormat& f)
     vlqt::device::attach(nw);
     w->scene->moveToWindow(nw);
     const int overlay = w->perf->overlay();
+    const bool keys = w->perf->keysEnabled();
     w->perf.reset();
     w->perf = std::make_unique<PerfMonitor>(nw, w->engine.get());
     w->perf->setScene(w->scene.get());
+    w->perf->setKeysEnabled(keys);
     if (overlay & (PerfMonitor::Meter | PerfMonitor::Stats))
         w->perf->setOverlay(overlay);
     for (QWindow* t : QGuiApplication::topLevelWindows())

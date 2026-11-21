@@ -59,8 +59,7 @@ namespace VL.Qt.Interop
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_scene_get_debug(SceneHandle w);
 
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Result vlqt_scene_set_overlay(SceneHandle w, int flags);
+        /// <summary>Perf overlay flags of the window (bit0 meter F2, bit1 stats F5, bit3 freeze F6, bits 4..6 = page + 1).</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_scene_get_overlay(SceneHandle w);
     }
