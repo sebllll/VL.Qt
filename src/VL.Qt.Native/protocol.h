@@ -662,7 +662,7 @@ enum vlqt_image_load {
 
 /* Upload path of an image, the upload argument of vlqt_image_load and vlqt_image_set_pixels (pin Upload, E10) */
 enum vlqt_image_upload {
-    VLQT_IMAGE_UPLOAD_AUTO = 0,        /* a file takes the worker path, pixels the main-thread path (image_resource.cpp) */
+    VLQT_IMAGE_UPLOAD_AUTO = 0,        /* a file takes the worker path, pixels the main-thread path (resources/image_kind.cpp) */
     VLQT_IMAGE_UPLOAD_MAIN_THREAD = 1, /* stripes within the frame budget through an offscreen frame of the upload QRhi */
     VLQT_IMAGE_UPLOAD_WORKER = 2       /* textures created in a worker, pixels copied through a staging texture (D3D11) */
 };

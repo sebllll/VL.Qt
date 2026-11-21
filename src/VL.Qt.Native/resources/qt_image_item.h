@@ -31,7 +31,7 @@ class QQuickWindow;
 namespace vlqt {
 
 namespace res::image {
-class ImageResource;
+class ImageContent;
 }
 struct ImageTexture;
 
@@ -72,7 +72,7 @@ private:
 
     uint64_t m_wantId = 0;  // last PROP_IMAGE (element reference held)
     uint64_t m_shownId = 0; // id of m_content (element reference held; == m_wantId once that is Ready)
-    std::shared_ptr<res::image::ImageResource> m_content;
+    std::shared_ptr<res::image::ImageContent> m_content;
     std::shared_ptr<ImageTexture> m_texture; // texture of m_content in window()
     int m_fillMode = 0;
 };

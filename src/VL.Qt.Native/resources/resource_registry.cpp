@@ -2,7 +2,7 @@
 #include "resources/resource_kind.h"
 
 #include "audio_tap.h"
-#include "image_resource.h"
+#include "resources/image_resource.h"
 #include "protocol.h"
 #include "resources/resources.h"
 #include "shader_resource.h"

@@ -1,6 +1,6 @@
 #include "resources/qt_image_item.h"
 
-#include "image_resource.h"
+#include "resources/image_resource.h"
 #include "render_thread.h"
 #include "resources/change_watch.h"
 #include "resources/image_texture_cache.h"

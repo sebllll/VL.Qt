@@ -4,7 +4,7 @@
 #include "app/exports.h"
 #include "audio_tap.h"
 #include "scene/scene.h"
-#include "image_resource.h"
+#include "resources/image_resource.h"
 #include "image_writer.h"
 #include "resources/resources.h"
 #include "shader_resource.h"

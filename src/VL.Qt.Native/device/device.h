@@ -112,8 +112,9 @@ void* testDevice12();
 // (every rebuild too), so single calls need no lock; a sequence whose context state must not interleave with another
 // thread's does (a QRhi frame, Wait + beginFrame, endFrame + Signal + Flush, Map + Unmap). No-op for a null context and
 // on other platforms. Main-thread holders: window frames (lockFrames), upload QRhi frames and staging copies
-// (image_resource.cpp). Lock order: never wait for another thread while holding it, above all never for a blocking
-// render-thread job (RenderThread::call, drain): that job may take the lock too and both threads would wait forever.
+// (resources/image_upload_rhi.cpp, image_upload_d3d11.cpp). Lock order: never wait for another thread while holding it,
+// above all never for a blocking render-thread job (RenderThread::call, drain): that job may take the lock too and both
+// threads would wait forever.
 class ContextLock
 {
 public:
