@@ -20,7 +20,7 @@ namespace vlqt {
 void applySize(ElementEntry& n)
 {
     if (n.type == VLQT_ELEMENT_TYPE_GROUP)
-        setGroupAutoSize(n.item, n.autoSize); // frame origin: extent with Auto Size, (0, 0) with SIZE
+        setGroupAutoSize(n.item, n.autoSize); // origin of the bounds: extent with Auto Size, anchor-placed SIZE without
     if (n.type == VLQT_ELEMENT_TYPE_QML)
         static_cast<QmlItem*>(n.item)->setAutoSize(n.autoSize); // root = implicit size of the QML, or this item's SIZE
     if (isAutoSized(n)) {
@@ -217,21 +217,21 @@ bool takesAutoSize(const ElementEntry& n)
         || (n.type == VLQT_ELEMENT_TYPE_SHADER && n.effectSource); // implicit size = Input; without Input the SIZE
 }
 
-QRectF itemFrame(const TransformState& s, const QQuickItem* item)
+QRectF itemBounds(const TransformState& s, const QQuickItem* item)
 {
     const qreal w = item->width(), h = item->height();
-    if (s.sizedFrame)
+    if (s.sizedBounds)
         return QRectF(-s.fx * w, -s.fy * h, w, h);
     return QRectF(s.ox, s.oy, w, h);
 }
 
 QPointF anchorPoint(const TransformState& s, const QQuickItem* item)
 {
-    // Group with Auto Size off: the frame is placed around the origin, the item and its children stay.
-    if (s.sizedFrame)
+    // Group with Auto Size off: the bounds are placed around the origin, the item and its children stay.
+    if (s.sizedBounds)
         return QPointF(0, 0);
     // Left/Top (0) is always the origin: an auto-sized Group stays a pure transform container (its origin = that of
-    // its children) even when they reach into negative coordinates; Center/Right/Bottom resolve against the frame.
+    // its children) even when they reach into negative coordinates; Center/Right/Bottom resolve against the bounds.
     const qreal x = s.fx == 0 ? 0 : s.ox + s.fx * item->width();
     const qreal y = s.fy == 0 ? 0 : s.oy + s.fy * item->height();
     return QPointF(x, y);
@@ -245,20 +245,20 @@ void Elements::initGeometry(ElementEntry& node)
     placeItem(*node.xf, node.item);
     // Placement and the anchor of TRANSFORM follow every size change (Auto Size, layout, text, children extent), not
     // only the SIZE sent by C#. Connected at creation, i.e. before the mask frame's connections (createMaskFrame), so
-    // the frame always sees the final x/y and matrix. Context = the item: the connection ends with it, xf is shared.
+    // the mask frame always sees the final x/y and matrix. Context = the item: the connection ends with it, xf is shared.
     auto update = [xf = node.xf, item = node.item]() {
         placeItem(*xf, item);
         writeMatrix(*xf, item);
-        markGeometry(*xf); // size and frame changed
+        markGeometry(*xf); // size and bounds changed
     };
     QObject::connect(node.item, &QQuickItem::widthChanged, node.item, update);
     QObject::connect(node.item, &QQuickItem::heightChanged, node.item, update);
     if (group) {
         group->xf = node.xf;
-        group->placed = update; // a mask frame follows through x/y (the anchor moves with the frame origin)
-        // Auto Size off: the frame origin depends on the size (-fx * w), the effect padding follows.
-        QObject::connect(group, &QQuickItem::widthChanged, group, [group] { group->syncEffectFrame(); });
-        QObject::connect(group, &QQuickItem::heightChanged, group, [group] { group->syncEffectFrame(); });
+        group->placed = update; // a mask frame follows through x/y (the anchor moves with the origin of the bounds)
+        // Auto Size off: the origin of the bounds depends on the size (-fx * w), the effect padding follows.
+        QObject::connect(group, &QQuickItem::widthChanged, group, [group] { group->syncEffectBounds(); });
+        QObject::connect(group, &QQuickItem::heightChanged, group, [group] { group->syncEffectBounds(); });
     }
 }
 
@@ -326,12 +326,12 @@ bool Elements::setAnchor(ElementEntry& node, float fx, float fy, std::string& er
     node.xf->fy = fy;
     placeItem(*node.xf, node.item);
     if (node.type == VLQT_ELEMENT_TYPE_GROUP)
-        static_cast<GroupItem*>(node.item)->syncEffectFrame(); // Auto Size off: the frame moves with the anchor
+        static_cast<GroupItem*>(node.item)->syncEffectBounds(); // Auto Size off: the bounds move with the anchor
     if (node.transform)
         setMatrixValue(node.transform, pivoted(*node.xf, node.item));
     updateMaskFrame(node);
     pokeGroup(node.item);
-    markGeometry(*node.xf); // matrix pivot or Group frame (Auto Size off) moved, maybe without an x/y change
+    markGeometry(*node.xf); // matrix pivot or group bounds (Auto Size off) moved, maybe without an x/y change
     return true;
 }
 

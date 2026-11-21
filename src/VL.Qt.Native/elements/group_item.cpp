@@ -3,25 +3,25 @@
 #include "elements/geometry.h"
 
 #include <QtQuick/private/qquickitem_p.h>               // explicitVisible of Group children
-#include <QtQuick/private/qquickshadereffectsource_p.h> // Group frame proxy
+#include <QtQuick/private/qquickshadereffectsource_p.h> // group bounds proxy
 
 #include <algorithm>
 #include <typeinfo>
 
 namespace vlqt {
 
-void GroupItem::syncEffectFrame()
+void GroupItem::syncEffectBounds()
 {
     if ((!effectHolder && !proxy) || !xf)
         return;
-    const QRectF f = itemFrame(*xf, this);
+    const QRectF b = itemBounds(*xf, this);
     if (effectHolder) {
-        effectHolder->setProperty("frameLeft", std::max<qreal>(0, -f.left()));
-        effectHolder->setProperty("frameTop", std::max<qreal>(0, -f.top()));
+        effectHolder->setProperty("frameLeft", std::max<qreal>(0, -b.left()));
+        effectHolder->setProperty("frameTop", std::max<qreal>(0, -b.top()));
     }
     if (proxy) {
-        proxy->setSourceRect(f);
-        proxy->setSize(f.size()); // = implicit size of the ShaderEffect (Auto Size)
+        proxy->setSourceRect(b);
+        proxy->setSize(b.size()); // = implicit size of the ShaderEffect (Auto Size)
     }
 }
 
@@ -38,10 +38,11 @@ void GroupItem::setAutoSize(bool on)
         return;
     autoSize_ = on;
     if (xf) {
-        xf->sizedFrame = !on;
+        xf->sizedBounds = !on;
         if (placed)
-            placed(); // anchor placement and pivot change with the frame kind
-        syncEffectFrame(); // the frame kind changes even if origin and size stay
+            placed(); // anchor placement and pivot change with the kind of bounds
+        syncEffectBounds(); // the kind of bounds changes even if origin and size stay
+        pokeGroup(this);    // a parent Group counts these bounds, maybe without an x/y/size signal of this item
         markGeometry(*xf);
     }
     invalidate();
@@ -73,19 +74,22 @@ void GroupItem::updatePolish()
         return;
     dirty_ = false;
     // Children with an empty rect (size 0 = not drawn) and hidden ones do not count. Hidden = the child's own flag:
-    // isVisible() is false for every child of a hidden Group, e.g. the Input of a ShaderEffect.
+    // isVisible() is false for every child of a hidden Group, e.g. the Input of a ShaderEffect. A child Group counts
+    // with its own group bounds, which may start left of / above its origin; every other child with (0, 0, w, h).
     QRectF e;
     bool any = false;
     for (QQuickItem* c : childItems()) {
         if (!QQuickItemPrivate::get(c)->explicitVisible || c->width() <= 0 || c->height() <= 0)
             continue;
-        const QRectF r = c->mapRectToItem(this, QRectF(0, 0, c->width(), c->height()));
+        const auto* g = isGroup(c) ? static_cast<const GroupItem*>(c) : nullptr;
+        const QRectF local = g && g->xf ? itemBounds(*g->xf, c) : QRectF(0, 0, c->width(), c->height());
+        const QRectF r = c->mapRectToItem(this, local);
         e = any ? e.united(r) : r;
         any = true;
     }
     const qreal l = any ? std::min<qreal>(0, e.left()) : 0, t = any ? std::min<qreal>(0, e.top()) : 0;
     const qreal r = any ? std::max<qreal>(0, e.right()) : 0, b = any ? std::max<qreal>(0, e.bottom()) : 0;
-    // Origin first: the width/height connection of initGeometry re-places with the new frame.
+    // Origin first: the width/height connection of initGeometry re-places with the new bounds.
     bool moved = false;
     if (xf) {
         const float ox = autoSize_ ? float(l) : 0.f, oy = autoSize_ ? float(t) : 0.f;
@@ -95,10 +99,13 @@ void GroupItem::updatePolish()
     }
     setImplicitSize(r - l, b - t);
     if (moved) {
-        syncEffectFrame();
+        syncEffectBounds();
         if (placed)
             placed();
-        markGeometry(*xf); // the frame moved inside the item: no x/y/size signal for that
+        // The bounds moved inside the item: with the anchor Left/Top no x/y/size signal tells a parent Group or the
+        // measure for that.
+        pokeGroup(this);
+        markGeometry(*xf);
     }
 }
 
@@ -106,10 +113,10 @@ bool GroupItem::contains(const QPointF& point) const
 {
     if (containmentMask() || !xf)
         return QQuickItem::contains(point);
-    return itemFrame(*xf, this).contains(point);
+    return itemBounds(*xf, this).contains(point);
 }
 
-QRectF GroupItem::clipRect() const { return xf ? itemFrame(*xf, this) : QQuickItem::clipRect(); }
+QRectF GroupItem::clipRect() const { return xf ? itemBounds(*xf, this) : QQuickItem::clipRect(); }
 
 namespace {
 
@@ -123,7 +130,7 @@ void setGroupAutoSize(QQuickItem* item, bool on)
         static_cast<GroupItem*>(item)->setAutoSize(on);
 }
 
-// A child's matrix changed: its parent Group recomputes the frame (no-op for other parents).
+// A child's matrix or own bounds changed: its parent Group recomputes its bounds (no-op for other parents).
 void pokeGroup(const QQuickItem* item)
 {
     // typeid instead of dynamic_cast: hot path (every TRANSFORM, 10000 per apply in the perf test), GroupItem is final.
@@ -142,7 +149,7 @@ QQuickItem* groupTextureSource(const QQuickItem* item)
     return isGroup(item) ? static_cast<const GroupItem*>(item)->proxy.data() : nullptr;
 }
 
-// Group (C#) = GroupItem: implicit size/frame from the children incl. their transform.
+// Group (C#) = GroupItem: implicit size and group bounds from the children incl. their transform.
 TypeDef groupType()
 {
     return {VLQT_ELEMENT_TYPE_GROUP, "GROUP", nullptr, {{VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr}}, makeGroup};
