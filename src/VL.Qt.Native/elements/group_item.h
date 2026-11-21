@@ -26,9 +26,17 @@ public:
     std::shared_ptr<TransformState> xf; // Elements::initGeometry
     std::function<void()> placed;       // re-places the group after the origin of its bounds changed (initGeometry)
     QPointer<QObject> effectHolder;     // first stage of the effect chain (Elements::setEffectChain): frameLeft/frameTop follow the bounds
-    QPointer<QQuickShaderEffectSource> proxy; // texture of the whole group bounds for ShaderEffects (Elements::acquireGroupProxy)
-    int proxyRefs = 0;                  // Input/texture uniform uses of proxy
-    QMetaObject::Connection proxyRetire; // destroyed -> retire proxy (acquireGroupProxy), dropped on release
+
+    // Takes a proxy that the effects may still sample in this frame; its owner deletes it after the next frame.
+    using RetireProxy = std::function<void(QQuickItem*)>;
+    // Group as texture (ShaderEffect Input or texture uniform): one hidden QQuickShaderEffectSource whose sourceRect is the
+    // group bounds, shared by all uses and refcounted. The first acquire creates it under proxyParent; a destroyed Group
+    // hands it to retire. Returns the proxy.
+    QQuickItem* acquireProxy(QQuickItem* proxyParent, const RetireProxy& retire);
+    // Drops one use; the last one hands the proxy to retire. A release without an acquire is a programming error.
+    void releaseProxy(const RetireProxy& retire);
+    // The proxy while it is acquired, else nullptr.
+    QQuickItem* proxy() const;
 
     // The effect chain's padding covers the part of the bounds left of / above the origin (effects/effect_chain.cpp); the
     // ShaderEffect proxy samples exactly the bounds. Called on every change of the bounds (origin, size, anchor, Auto Size).
@@ -54,12 +62,16 @@ protected:
 private:
     bool autoSize_ = true;
     bool dirty_ = true;
+    // Kept here alone: proxyRefs_ >= 0, proxy_ only while proxyRefs_ > 0, proxyRetire_ connected while proxy_ exists.
+    QPointer<QQuickShaderEffectSource> proxy_; // texture of the whole group bounds for ShaderEffects
+    int proxyRefs_ = 0;                        // Input/texture uniform uses of proxy_
+    QMetaObject::Connection proxyRetire_;      // destroyed -> retire proxy_, dropped on the last release
 };
 
 /* The item is a Group (GROUP, GroupItem). */
 bool isGroup(const QQuickItem* item);
 /* Texture source of a Group used as ShaderEffect Input or texture uniform: a hidden QQuickShaderEffectSource
- * whose sourceRect is the group bounds (Elements::acquireGroupProxy); nullptr for other items or a Group without one.
+ * whose sourceRect is the group bounds (GroupItem::acquireProxy); nullptr for other items or a Group without one.
  * Read by ShaderItem on the render thread during sync (GUI thread blocked). */
 QQuickItem* groupTextureSource(const QQuickItem* item);
 /* Group: kind of bounds of AUTO_SIZE (applySize); no-op for other items. */

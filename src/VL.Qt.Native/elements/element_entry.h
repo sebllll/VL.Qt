@@ -40,7 +40,7 @@ struct ElementEntry {
     bool autoSize = true;        // AUTO_SIZE (containers + Button, see applySize in geometry.cpp)
     float size[2] = {0, 0};      // last SIZE (w, h), so AUTO_SIZE can re-apply it
     quint32 transformEpoch = 0;  // counts SET TRANSFORM: a running drag re-bases its offset on 0 after one
-    bool debug = false;          // DEBUG: drawn by the window's debug overlay (diagnostics/debug_overlay.h), counted in Elements::debugCount
+    bool debug = false;          // DEBUG: drawn by the window's debug overlay (diagnostics/debug_overlay.h), set through Elements::setDebug
     bool enabled = true;         // VISIBLE (Enabled pin): Scene::reparent and setVisible in geometry.cpp combine it with QtNative's own hiding
     bool polled = false;         // Elements::pollsState: the poll reads media/error/clicks/user value of this type
     bool pollListed = false;     // its id is in MeasureState::pollIds (listPolled, scene/measure.h)

@@ -57,7 +57,7 @@ public:
     bool appliedSincePoll = true;
 
     /* Debug overlay (diagnostics/debug_overlay.h): window-wide switch (vlqt_scene_set_debug) and the refresh after commands. The
-     * overlay is created on first use and shown while debugAll is on or any node has DEBUG (Elements::debugCount). */
+     * overlay is created on first use and shown while debugAll is on or any node has DEBUG (Elements::anyDebug). */
     void setDebugAll(bool on);
     void updateDebug();
     const QQuickItem* debugOverlay() const; // nullptr until first used (perf: skipped in the item count)

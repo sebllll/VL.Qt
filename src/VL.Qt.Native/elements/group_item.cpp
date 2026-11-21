@@ -1,4 +1,4 @@
-// Private Qt API: QQuickItemPrivate::explicitVisible, QQuickShaderEffectSource (frame proxy); check on Qt updates (list: elements/elements.h).
+// Private Qt API: QQuickItemPrivate::explicitVisible, QQuickShaderEffectSource (group bounds proxy); check on Qt updates (list: elements/elements.h).
 #include "elements/group_item.h"
 #include "elements/element_types.h"
 #include "elements/geometry.h"
@@ -13,18 +13,65 @@ namespace vlqt {
 
 void GroupItem::syncEffectBounds()
 {
-    if ((!effectHolder && !proxy) || !xf)
+    if ((!effectHolder && !proxy_) || !xf)
         return;
     const QRectF b = itemBounds(*xf, this);
     if (effectHolder) {
         effectHolder->setProperty("frameLeft", std::max<qreal>(0, -b.left()));
         effectHolder->setProperty("frameTop", std::max<qreal>(0, -b.top()));
     }
-    if (proxy) {
-        proxy->setSourceRect(b);
-        proxy->setSize(b.size()); // = implicit size of the ShaderEffect (Auto Size)
+    if (proxy_) {
+        proxy_->setSourceRect(b);
+        proxy_->setSize(b.size()); // = implicit size of the ShaderEffect (Auto Size)
     }
 }
+
+QQuickItem* GroupItem::acquireProxy(QQuickItem* proxyParent, const RetireProxy& retire)
+{
+    ++proxyRefs_;
+    if (proxy_)
+        return proxy_;
+    // A ShaderEffectSource renders its source item (also a hidden one: it refs it, refFromEffectItem) into its own
+    // texture with sourceRect = the group bounds (like the snapshot's frameTarget). Hidden itself, so it never draws on
+    // screen; it still gets updatePaintNode and its texture is rendered by the consuming ShaderItem's preprocess
+    // without an extra refFromEffectItem on the proxy (checked by grab in the smoke test group-shader-source, also
+    // live changes). Under the root, never under the Group (it would be part of its own texture) or an element (layout,
+    // REPARENT indices count tracked items only). hideSource off: the host hides the Group already (REPARENT under the
+    // ShaderEffect, Elements::setEffectSource). Not smooth, like the item layers used before (layer.smooth default false).
+    auto* proxy = new QQuickShaderEffectSource();
+    proxy->setParent(proxyParent); // deleted with the root at the latest
+    proxy->setVisible(false);
+    proxy->setLive(true);
+    proxy->setHideSource(false);
+    proxy->setSmooth(false);
+    proxy->setParentItem(proxyParent);
+    proxy->setSourceItem(this);
+    proxy_ = proxy;
+    syncEffectBounds();
+    // A destroyed Group (DESTROY of a texture element, RESET) retires its proxy: the effects still sample it this frame.
+    proxyRetire_ = QObject::connect(this, &QObject::destroyed, proxy, [retire, proxy] { retire(proxy); });
+    return proxy;
+}
+
+void GroupItem::releaseProxy(const RetireProxy& retire)
+{
+    Q_ASSERT(proxyRefs_ > 0);
+    if (proxyRefs_ <= 0 || --proxyRefs_ > 0)
+        return;
+    // The proxy goes earlier only with its QObject parent, the root, which ~Scene deletes after every element; the
+    // connection went with it.
+    if (!proxy_)
+        return;
+    QQuickShaderEffectSource* proxy = proxy_;
+    proxy_ = nullptr;
+    // Only our own connection: disconnecting every destroyed -> proxy connection would also drop the proxy's
+    // sourceItemDestroyed, and ~QQuickShaderEffectSource would then use the deleted Group (window_destroy, or the Input
+    // released and the Group destroyed in one apply).
+    QObject::disconnect(proxyRetire_);
+    retire(proxy); // the effect may sample it until it syncs onto the new texture
+}
+
+QQuickItem* GroupItem::proxy() const { return proxy_.data(); }
 
 GroupItem::~GroupItem()
 {
@@ -147,7 +194,7 @@ bool isGroup(const QQuickItem* item)
 
 QQuickItem* groupTextureSource(const QQuickItem* item)
 {
-    return isGroup(item) ? static_cast<const GroupItem*>(item)->proxy.data() : nullptr;
+    return isGroup(item) ? static_cast<const GroupItem*>(item)->proxy() : nullptr;
 }
 
 // Group (C#) = GroupItem: implicit size and group bounds from the children incl. their transform.

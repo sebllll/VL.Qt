@@ -79,9 +79,7 @@ bool setClip(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, st
 // DEBUG: only a flag for the debug overlay (diagnostics/debug_overlay.h), the item itself is not touched.
 bool setDebug(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
-    if (n.debug != v.b)
-        els.debugCount += v.b ? 1 : -1;
-    n.debug = v.b;
+    els.setDebug(n, v.b);
     return true;
 }
 // VISIBLE (Enabled pin): off takes the item out of the scene (not drawn, no input, no space in Row/Column). An item that
