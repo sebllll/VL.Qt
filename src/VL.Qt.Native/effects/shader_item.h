@@ -1,4 +1,4 @@
-/* shader_item.h - the ShaderEffect element (effects package 03, protocol.h "ShaderEffect").
+/* shader_item.h - the ShaderEffect element (protocol.h "ShaderEffect").
  *
  * Own QQuickItem with a QSGGeometryNode + QSGMaterial/QSGMaterialShader instead of QML's ShaderEffect: the uniforms
  * of SET_UNIFORMS are mapped by name through the reflection of the shaders (QShaderDescription of the .qsb).
@@ -157,7 +157,6 @@ private:
         int binding;
         int uniform;  // index into m_uniforms, -1 = none
         bool source;  // the Input
-        QPointer<QSGTextureProvider> provider; // current provider (updatePaintNode)
         QByteArray name;
     };
 

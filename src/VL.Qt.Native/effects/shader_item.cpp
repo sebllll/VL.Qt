@@ -1,5 +1,7 @@
-#include "shader_item.h"
+#include "effects/shader_item.h"
 
+#include "effects/layer_requests.h"
+#include "effects/shader_material.h"
 #include "elements.h"
 #include "image_resource.h"
 #include "protocol.h"
@@ -13,18 +15,14 @@
 #include <QtGui/QImage>
 #include <QtQml/QQmlProperty>
 #include <QtQuick/QQuickWindow>
-#include <private/qquickshadereffectsource_p.h>
 #include <QtQuick/QSGGeometryNode>
 #include <QtQuick/QSGMaterial>
-#include <QtQuick/QSGMaterialShader>
 #include <QtQuick/QSGTexture>
 #include <QtQuick/QSGTextureProvider>
 #include <rhi/qshaderdescription.h>
 
 #include <algorithm>
-#include <array>
 #include <cstring>
-#include <unordered_map>
 #include <unordered_set>
 
 Q_LOGGING_CATEGORY(lcShaderItem, "VL.Qt.ShaderEffect")
@@ -33,264 +31,15 @@ namespace vlqt {
 
 namespace {
 
-constexpr int kMaxBindings = 16;   // sampler bindings 1..15 (0 = uniform block)
 constexpr int kMaxMesh = 1024;     // MESH_RESOLUTION per axis (vertex count stays below ~1M)
 
 std::unordered_set<ShaderItem*> s_items; // main thread
 uint64_t s_contentEpoch = 0, s_failureEpoch = 0;
 
-// Layer requests of the samplers: a mip filter other than None needs the layer of the sampled element rendered with
-// mipmaps. Several ShaderItems can sample one element, so the layer has mipmaps while any of them asks.
-struct LayerUser
-{
-    const ShaderItem* owner;
-    bool mip;
-};
-struct LayerEntry
-{
-    std::vector<LayerUser> users;
-    bool mip = false;
-};
-std::unordered_map<QQuickItem*, LayerEntry> s_layers; // main thread
-
-void writeLayer(QQuickItem* item, bool mip)
-{
-    // A group frame proxy is the ShaderEffectSource itself, every other element has it as its layer.
-    const QString prefix = qobject_cast<QQuickShaderEffectSource*>(item) ? QString() : QStringLiteral("layer.");
-    QQmlProperty(item, prefix + QStringLiteral("mipmap")).write(mip);
-}
-
-// Applies the union of the requests of one element, drops the entry when nobody asks.
-void settleLayer(QQuickItem* item)
-{
-    const auto it = s_layers.find(item);
-    if (it == s_layers.end())
-        return;
-    LayerEntry& e = it->second;
-    bool mip = false;
-    for (const LayerUser& u : e.users)
-        mip = mip || u.mip;
-    if (e.users.empty()) {
-        writeLayer(item, false);
-        s_layers.erase(it);
-    } else if (mip != e.mip) {
-        e.mip = mip;
-        writeLayer(item, mip);
-    }
-}
-
-void requestLayer(QQuickItem* item, const ShaderItem* owner, bool mip)
-{
-    auto [it, added] = s_layers.try_emplace(item);
-    if (added)
-        QObject::connect(item, &QObject::destroyed, [item] { s_layers.erase(item); });
-    auto& users = it->second.users;
-    const auto u = std::find_if(users.begin(), users.end(), [&](const LayerUser& x) { return x.owner == owner; });
-    if (u == users.end())
-        users.push_back({owner, mip});
-    else
-        u->mip = mip;
-    settleLayer(item);
-}
-
-void releaseLayer(QQuickItem* item, const ShaderItem* owner)
-{
-    const auto it = s_layers.find(item);
-    if (it == s_layers.end())
-        return;
-    auto& users = it->second.users;
-    users.erase(std::remove_if(users.begin(), users.end(), [&](const LayerUser& x) { return x.owner == owner; }), users.end());
-    settleLayer(item);
-}
-
 std::string idText(uint64_t id)
 {
     return std::to_string(uint32_t(id)) + "/" + std::to_string(uint32_t(id >> 32));
 }
-
-// --- Material -------------------------------------------------------------------------------------------------------
-
-// One type per shader pair: the renderer caches one QSGMaterialShader per type (and render mode).
-struct TypeEntry
-{
-    QShader vs, fs;
-    std::unique_ptr<QSGMaterialType> type;
-};
-std::vector<TypeEntry> s_types; // sync (GUI blocked) only; grows with distinct shader pairs, never shrinks
-
-QSGMaterialType* typeFor(const QShader& vs, const QShader& fs)
-{
-    for (const TypeEntry& e : s_types)
-        if (e.fs == fs && e.vs == vs)
-            return e.type.get();
-    s_types.push_back({vs, fs, std::make_unique<QSGMaterialType>()});
-    return s_types.back().type.get();
-}
-
-// A texture seen through a sampler state: the sampler Qt creates for a draw comes from the filtering and wrap
-// modes of the QSGTexture it gets, and the texture of a layer or an image is shared with other items, so its own modes
-// are never touched. The view carries the modes and forwards everything else.
-class SamplerView final : public QSGTexture
-{
-public:
-    void configure(QSGTexture* inner, quint64 st)
-    {
-        m_inner = inner;
-        const auto b = [&](int i) { return int((st >> (8 * i)) & 0xff); };
-        setFiltering(b(0) == 1 ? QSGTexture::Nearest : QSGTexture::Linear);
-        setMipmapFiltering(b(1) == 2 ? QSGTexture::Linear : b(1) == 1 ? QSGTexture::Nearest : QSGTexture::None);
-        const auto wrap = [](int a) {
-            return a == 1 ? QSGTexture::Repeat : a == 2 ? QSGTexture::MirroredRepeat : QSGTexture::ClampToEdge;
-        };
-        setHorizontalWrapMode(wrap(b(2)));
-        setVerticalWrapMode(wrap(b(3)));
-    }
-    qint64 comparisonKey() const override { return m_inner->comparisonKey(); }
-    QRhiTexture* rhiTexture() const override { return m_inner->rhiTexture(); }
-    QSize textureSize() const override { return m_inner->textureSize(); }
-    bool hasAlphaChannel() const override { return m_inner->hasAlphaChannel(); }
-    bool hasMipmaps() const override { return m_inner->hasMipmaps(); }
-    QRectF normalizedTextureSubRect() const override { return m_inner->normalizedTextureSubRect(); }
-    bool isAtlasTexture() const override { return m_inner->isAtlasTexture(); }
-    void commitTextureOperations(QRhi* rhi, QRhiResourceUpdateBatch* batch) override
-    {
-        m_inner->commitTextureOperations(rhi, batch);
-    }
-
-private:
-    QSGTexture* m_inner = nullptr;
-};
-
-class EffectMaterial final : public QSGMaterial
-{
-public:
-    QShader vs, fs;
-    QSGMaterialType* materialType = nullptr;
-    QByteArray ubuf;                 // std140 image of the block (qt_Matrix / qt_Opacity filled by the shader)
-    int matrixOffset = -1, opacityOffset = -1;
-    std::array<QSGTexture*, kMaxBindings> tex{};
-    std::array<quint64, kMaxBindings> state{};                       // sampler state per binding (0 = the texture as it is)
-    std::array<std::unique_ptr<SamplerView>, kMaxBindings> view{};   // the texture with that state, made at the first draw
-    bool blending = true;
-    int texelOffset = -1, dprOffset = -1, sourceBinding = -1; // chain pass auto uniforms (-1 = none)
-
-    QSGMaterialType* type() const override { return materialType; }
-    QSGMaterialShader* createShader(QSGRendererInterface::RenderMode) const override;
-    int compare(const QSGMaterial* other) const override
-    {
-        const auto* o = static_cast<const EffectMaterial*>(other);
-        for (int i = 0; i < kMaxBindings; ++i) {
-            if (tex[i] != o->tex[i])
-                return tex[i] < o->tex[i] ? -1 : 1;
-            if (state[i] != o->state[i])
-                return state[i] < o->state[i] ? -1 : 1;
-        }
-        if (blending != o->blending)
-            return blending ? 1 : -1;
-        if (ubuf.size() != o->ubuf.size())
-            return ubuf.size() < o->ubuf.size() ? -1 : 1;
-        return std::memcmp(ubuf.constData(), o->ubuf.constData(), size_t(ubuf.size()));
-    }
-};
-
-class EffectShader final : public QSGMaterialShader
-{
-public:
-    EffectShader(const QShader& vs, const QShader& fs)
-    {
-        setShader(VertexStage, vs);
-        setShader(FragmentStage, fs);
-        setFlag(UpdatesGraphicsPipelineState);
-    }
-
-    bool updateUniformData(RenderState& state, QSGMaterial* newMaterial, QSGMaterial*) override
-    {
-        auto* m = static_cast<EffectMaterial*>(newMaterial);
-        QByteArray* buf = state.uniformData();
-        const int size = int(buf->size());
-        char* dst = buf->data();
-        std::memcpy(dst, m->ubuf.constData(), size_t(std::min(size, int(m->ubuf.size()))));
-        if (m->matrixOffset >= 0 && m->matrixOffset + 64 <= size) {
-            const QMatrix4x4 mat = state.combinedMatrix();
-            std::memcpy(dst + m->matrixOffset, mat.constData(), 64);
-        }
-        if (m->opacityOffset >= 0 && m->opacityOffset + 4 <= size) {
-            const float op = state.opacity();
-            std::memcpy(dst + m->opacityOffset, &op, 4);
-        }
-        return true;
-    }
-
-    void updateSampledImage(RenderState& state, int binding, QSGTexture** texture, QSGMaterial* newMaterial,
-        QSGMaterial*) override
-    {
-        auto* m = static_cast<EffectMaterial*>(newMaterial);
-        if (binding < 0 || binding >= kMaxBindings || !m->tex[binding])
-            return;
-        QSGTexture* t = m->tex[binding];
-        if (const quint64 st = m->state[binding]) {
-            auto& v = m->view[size_t(binding)];
-            if (!v)
-                v = std::make_unique<SamplerView>();
-            v->configure(t, st);
-            t = v.get();
-        }
-        // Uploads a texture made from a QImage (the CPU copy of an image resource without a shared device, Linux):
-        // without it rhiTexture() stays null and Qt binds a transparent dummy. No-op for layers and wrappers.
-        t->commitTextureOperations(state.rhi(), state.resourceUpdateBatch());
-        *texture = t;
-    }
-
-    bool updateGraphicsPipelineState(RenderState&, GraphicsPipelineState* ps, QSGMaterial* newMaterial,
-        QSGMaterial*) override
-    {
-        auto* m = static_cast<EffectMaterial*>(newMaterial);
-        ps->blendEnable = m->blending;
-        ps->srcColor = GraphicsPipelineState::One; // premultiplied
-        ps->dstColor = GraphicsPipelineState::OneMinusSrcAlpha;
-        ps->cullMode = GraphicsPipelineState::CullNone;
-        return true;
-    }
-};
-
-QSGMaterialShader* EffectMaterial::createShader(QSGRendererInterface::RenderMode) const
-{
-    return new EffectShader(vs, fs);
-}
-
-// Chain pass: texelSize = 1 / pixel size of the sampled source texture (no-op without the uniform or a texture).
-void writeTexelSize(EffectMaterial& m)
-{
-    if (m.texelOffset < 0 || m.texelOffset + 8 > m.ubuf.size() || m.sourceBinding < 0 || !m.tex[size_t(m.sourceBinding)])
-        return;
-    const QSize s = m.tex[size_t(m.sourceBinding)]->textureSize();
-    if (s.width() <= 0 || s.height() <= 0)
-        return;
-    const float v[2] = {1.f / float(s.width()), 1.f / float(s.height())};
-    std::memcpy(m.ubuf.data() + m.texelOffset, v, 8);
-}
-
-// Layers (QSGDynamicTexture) render their source in preprocess, like Qt's ShaderEffect node.
-class EffectNode final : public QSGGeometryNode
-{
-public:
-    EffectNode()
-    {
-        setFlag(UsePreprocess, true);
-        setMaterial(new EffectMaterial);
-        setFlag(OwnsMaterial, true);
-    }
-    EffectMaterial& mat() { return *static_cast<EffectMaterial*>(material()); }
-    void preprocess() override
-    {
-        for (QSGTexture* t : mat().tex)
-            if (auto* dt = qobject_cast<QSGDynamicTexture*>(t))
-                dt->updateTexture();
-        writeTexelSize(mat()); // a layer resized in updateTexture: the size of this frame, not the one of the sync
-    }
-    int meshX = 0, meshY = 0;
-    float w = -1, h = -1;
-};
 
 int valueBytes(quint16 vt)
 {
@@ -407,19 +156,10 @@ ShaderItem::~ShaderItem()
         if (s->shown)
             res::releaseElement(s->shown);
     }
-    // Gives back the layer requests. The element may be in its own destruction (the Scene deletes in any order): the layer
-    // goes back to its defaults later, on the event loop of the element, which drops the call if the element is gone.
-    for (const auto& held : m_layerItems) {
-        if (!held)
-            continue;
-        QQuickItem* item = held.data();
-        const auto it = s_layers.find(item);
-        if (it == s_layers.end())
-            continue;
-        auto& users = it->second.users;
-        users.erase(std::remove_if(users.begin(), users.end(), [&](const LayerUser& x) { return x.owner == this; }), users.end());
-        QMetaObject::invokeMethod(item, [item] { settleLayer(item); }, Qt::QueuedConnection);
-    }
+    // Gives back the layer requests (queued: the element may be in its own destruction).
+    for (const auto& held : m_layerItems)
+        if (held)
+            LayerRequests::releaseQueued(held.data(), this);
     for (Uniform& u : m_uniforms)
         releaseUniform(u);
     delete m_transparent;
@@ -790,7 +530,7 @@ void ShaderItem::rebuild()
                 continue; // rejected by the resource check already
             if (s.array)
                 errors << QStringLiteral("sampler '%1': sampler arrays are not supported").arg(QString::fromUtf8(s.name));
-            m_samplers.push_back({s.binding, -1, s.name == "source", nullptr, s.name});
+            m_samplers.push_back({s.binding, -1, s.name == "source", s.name});
             if (s.name == "source" && m_texelBinding < 0)
                 m_texelBinding = s.binding;
         }
@@ -942,12 +682,12 @@ void ShaderItem::refreshLayerRequests(bool force)
         const bool mip = ((st >> 8) & 0xff) != 0;
         if (!mip && std::find_if(m_layerItems.begin(), m_layerItems.end(), [&](const auto& p) { return p == item; }) == m_layerItems.end())
             continue; // defaults need no request (and no write to the layer)
-        requestLayer(item, this, mip);
+        LayerRequests::request(item, this, mip);
         now.push_back(item);
     }
     for (const auto& held : m_layerItems)
         if (held && std::find(now.begin(), now.end(), held.data()) == now.end())
-            releaseLayer(held, this);
+            LayerRequests::release(held, this);
     m_layerItems.assign(now.begin(), now.end());
 }
 
@@ -963,7 +703,6 @@ QSGTexture* ShaderItem::samplerTexture(Sampler& s)
         if (QQuickItem* proxy = groupTextureSource(item)) // a Group texture is its whole frame
             item = proxy;
         QSGTextureProvider* p = item->isTextureProvider() ? item->textureProvider() : nullptr;
-        s.provider = p;
         if (!p)
             return nullptr;
         watchProvider(p);
@@ -1031,7 +770,7 @@ QSGNode* ShaderItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
         m_shaderChanged = false;
         mat.vs = m_vs;
         mat.fs = m_fs;
-        mat.materialType = typeFor(m_vs, m_fs);
+        mat.materialType = materialTypeFor(m_vs, m_fs);
         mat.matrixOffset = m_matrixOffset;
         mat.opacityOffset = m_opacityOffset;
         mat.ubuf.fill(0, m_ubufSize); // removed uniforms go back to 0; sized here only (no allocation per frame)
@@ -1056,7 +795,6 @@ QSGNode* ShaderItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
             mat.sourceBinding = s.binding;
     }
     mat.texelOffset = m_texelOffset;
-    mat.dprOffset = m_dprOffset;
     if (m_dprOffset >= 0) {
         const float dpr = float(window()->effectiveDevicePixelRatio());
         std::memcpy(ub + m_dprOffset, &dpr, 4);
