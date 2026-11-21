@@ -122,7 +122,7 @@ public static partial class HandlerTest
         {
             cmd.Create(id, type);
             cmd.Reparent(id, A, 0);
-            cmd.Bind(id, feedbackId, 0);
+            cmd.Bind(id, feedbackId);
         }
         var rc = Native.Apply(w.W, cmd.EndFrame());
         s.Check(rc == 0, $"input-latency {tag}: scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");

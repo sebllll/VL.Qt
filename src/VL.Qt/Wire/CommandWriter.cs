@@ -11,8 +11,8 @@ namespace VL.Qt.Wire
     /// Reusable byte buffer holding the commands of one window for one frame (format: see protocol.h).
     /// Usage per frame: <see cref="Reset"/>, write commands, <see cref="EndFrame"/> → span for vlqt_scene_apply.
     /// The buffer only grows; writing does not allocate on the managed heap once it has reached its working size.
-    /// Every command is little-endian and padded with zeros to <see cref="Protocol.CommandAlign"/> bytes;
-    /// the header's payloadLen excludes that padding.
+    /// Every command is little-endian (header: u16 op, u16 flags 0, u32 payloadLen) and padded with zeros to
+    /// <see cref="Protocol.CommandAlign"/> bytes; payloadLen excludes that padding.
     /// Tracing: if the environment variable VLQT_TRACE_COMMANDS is set (non-empty, not "0"), <see cref="EndFrame"/>
     /// appends every frame buffer as <c>u32 length + bytes</c> to <c>%TEMP%/vlqt-trace-&lt;pid&gt;.bin</c>.
     /// Not thread-safe; one writer per window, used from the main thread.
@@ -86,13 +86,12 @@ namespace VL.Qt.Wire
             WriteU32(p.Slice(8), index);
         }
 
-        /// <summary>BIND: feedbackId 0 = unbind; flags = <see cref="Protocol.Bind"/> bit mask.</summary>
-        public void Bind(uint id, uint feedbackId, ushort flags)
+        /// <summary>BIND: feedbackId 0 = unbind.</summary>
+        public void Bind(uint id, uint feedbackId)
         {
             var p = Begin(Protocol.Op.Bind, Protocol.BindPayload);
             WriteU32(p, id);
             WriteU32(p.Slice(4), feedbackId);
-            WriteU16(p.Slice(8), flags);
         }
 
         /// <summary>CLEAR_COLOR with straight alpha.</summary>
@@ -133,14 +132,10 @@ namespace VL.Qt.Wire
             WriteF32x4(BeginSet(id, prop, Protocol.ValueType.Color, 16), r, g, b, a);
         }
 
-        public void SetColor(uint id, ushort prop, in Color4 c) => SetColor(id, prop, c.R, c.G, c.B, c.A);
-
         public void SetRect(uint id, ushort prop, float x, float y, float width, float height)
         {
             WriteF32x4(BeginSet(id, prop, Protocol.ValueType.Rectf, 16), x, y, width, height);
         }
-
-        public void SetRect(uint id, ushort prop, in RectangleF r) => SetRect(id, prop, r.X, r.Y, r.Width, r.Height);
 
         /// <summary>4x4 matrix, 16 floats in row-major order (M11, M12, ..., M44 like Stride).</summary>
         public void SetMat4(uint id, ushort prop, ReadOnlySpan<float> rowMajor16)
@@ -165,9 +160,7 @@ namespace VL.Qt.Wire
             WriteF32x4(p.Slice(48), m.M41, m.M42, m.M43, m.M44);
         }
 
-        public void SetString(uint id, ushort prop, string? value) => SetString(id, prop, value.AsSpan());
-
-        /// <summary>string: u32 byte length + UTF-8 (no terminator). Payload incl. SET fields must fit in u16.</summary>
+        /// <summary>string: u32 byte length + UTF-8 (no terminator). Payload incl. SET fields must fit in <see cref="Protocol.MaxCommandPayload"/>.</summary>
         public void SetString(uint id, ushort prop, ReadOnlySpan<char> value)
         {
             int byteCount = Encoding.UTF8.GetByteCount(value);
@@ -282,13 +275,13 @@ namespace VL.Qt.Wire
             int payload = _length - _styleStart - Protocol.HeaderSize;
             int start = _styleStart;
             _styleStart = -1;
-            if (payload > MaxPayload || _styleEntries > ushort.MaxValue)
+            if (payload > Protocol.MaxCommandPayload || _styleEntries > ushort.MaxValue)
             {
                 _length = start; // drop the half written command
                 _count--;
-                throw new InvalidOperationException($"SET_STYLE payload exceeds {MaxPayload} bytes.");
+                throw new InvalidOperationException($"SET_STYLE payload exceeds {Protocol.MaxCommandPayload} bytes.");
             }
-            WriteU16(new Span<byte>(_buffer, start + 2, 2), (ushort)payload);
+            WriteU32(new Span<byte>(_buffer, start + 4, 4), (uint)payload);
             WriteU16(new Span<byte>(_buffer, start + Protocol.HeaderSize + 4, 2), (ushort)_styleEntries);
         }
 
@@ -411,13 +404,13 @@ namespace VL.Qt.Wire
             int payload = _length - _uniformsStart - Protocol.HeaderSize;
             int start = _uniformsStart;
             _uniformsStart = -1;
-            if (payload > MaxPayload || _uniformEntries > ushort.MaxValue)
+            if (payload > Protocol.MaxCommandPayload || _uniformEntries > ushort.MaxValue)
             {
                 _length = start; // drop the half written command
                 _count--;
-                throw new InvalidOperationException($"SET_UNIFORMS or SET_QML_PROPERTIES payload exceeds {MaxPayload} bytes.");
+                throw new InvalidOperationException($"SET_UNIFORMS or SET_QML_PROPERTIES payload exceeds {Protocol.MaxCommandPayload} bytes.");
             }
-            WriteU16(new Span<byte>(_buffer, start + 2, 2), (ushort)payload);
+            WriteU32(new Span<byte>(_buffer, start + 4, 4), (uint)payload);
             WriteU16(new Span<byte>(_buffer, start + Protocol.HeaderSize + 4, 2), (ushort)_uniformEntries);
         }
 
@@ -504,8 +497,6 @@ namespace VL.Qt.Wire
             var rest = head.Slice(4 + ids);
             WriteF32x4(rest, paddingLeft, paddingTop, paddingRight, paddingBottom);
             WriteF32(rest.Slice(16), strength);
-            // Reserved (formerly the length of the strength uniform name): 0.
-            WriteU16(rest.Slice(20), 0);
         }
 
         /// <summary>Closes the open link: writes its entry count and body length.</summary>
@@ -530,13 +521,13 @@ namespace VL.Qt.Wire
             int payload = _length - _chainStart - Protocol.HeaderSize;
             int start = _chainStart;
             _chainStart = -1;
-            if (payload > MaxPayload || _chainLinks > ushort.MaxValue)
+            if (payload > Protocol.MaxCommandPayload || _chainLinks > ushort.MaxValue)
             {
                 _length = start; // drop the half written command
                 _count--;
-                throw new InvalidOperationException($"SET_EFFECT_CHAIN payload exceeds {MaxPayload} bytes.");
+                throw new InvalidOperationException($"SET_EFFECT_CHAIN payload exceeds {Protocol.MaxCommandPayload} bytes.");
             }
-            WriteU16(new Span<byte>(_buffer, start + 2, 2), (ushort)payload);
+            WriteU32(new Span<byte>(_buffer, start + 4, 4), (uint)payload);
             WriteU16(new Span<byte>(_buffer, start + Protocol.HeaderSize + 4, 2), (ushort)_chainLinks);
         }
 
@@ -577,9 +568,6 @@ namespace VL.Qt.Wire
 
         // --- encoding ---
 
-        /// <summary>Largest payload a single command can carry (u16 payloadLen).</summary>
-        public const int MaxPayload = ushort.MaxValue;
-
         private Span<byte> BeginSet(uint id, ushort prop, ushort valueType, int valueSize)
         {
             var p = Begin(Protocol.Op.Set, Protocol.SetFieldsSize + valueSize);
@@ -592,15 +580,17 @@ namespace VL.Qt.Wire
         /// <summary>Writes the header, reserves payload + padding (zeroed) and returns the payload span.</summary>
         private Span<byte> Begin(ushort op, int payloadLen)
         {
-            if ((uint)payloadLen > MaxPayload)
-                throw new ArgumentOutOfRangeException(nameof(payloadLen), payloadLen, $"Command payload exceeds {MaxPayload} bytes (op {op}).");
+            if ((uint)payloadLen > Protocol.MaxCommandPayload)
+                throw new ArgumentOutOfRangeException(nameof(payloadLen), payloadLen, $"Command payload exceeds {Protocol.MaxCommandPayload} bytes (op {op}).");
 
             int total = Align(Protocol.HeaderSize + payloadLen);
             EnsureCapacity(_length + total);
 
             var cmd = new Span<byte>(_buffer, _length, total);
             WriteU16(cmd, op);
-            WriteU16(cmd.Slice(2), (ushort)payloadLen);
+            // Flags (reserved, 0): written explicitly, the buffer is reused and only the padding is cleared.
+            WriteU16(cmd.Slice(2), 0);
+            WriteU32(cmd.Slice(4), (uint)payloadLen);
             cmd.Slice(Protocol.HeaderSize + payloadLen).Clear(); // padding
             _length += total;
             _count++;

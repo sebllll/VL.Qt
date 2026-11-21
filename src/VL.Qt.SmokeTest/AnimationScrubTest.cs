@@ -55,16 +55,16 @@ public static class AnimationScrubTest
             while (off + 12 <= b.Length)
             {
                 ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b[off..]);
-                int len = BinaryPrimitives.ReadUInt16LittleEndian(b[(off + 2)..]);
-                if (len < 8 || off + 4 + len > b.Length)
+                int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..]);
+                if (len < 4 || off + 8 + len > b.Length)
                     break;
-                uint handle = BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..]);
-                var payload = b.Slice(off + 12, len - 8);
+                uint handle = BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 8)..]);
+                var payload = b.Slice(off + 12, len - 4);
                 if (handle == HQ && ev == Protocol.EventId.QmlProperty && QmlEvents.TryDecodeProperty(payload, out var name, out var value) && name == "v" && value is float f)
                     v = f;
                 else if (handle == HQ && ev == Protocol.EventId.Error)
                     error = System.Text.Encoding.UTF8.GetString(payload);
-                off += (4 + len + 3) & ~3;
+                off += (8 + len + 3) & ~3;
             }
         }
         var time = QtHost.Time;
@@ -88,7 +88,7 @@ public static class AnimationScrubTest
         cmd.SetString(Q, Protocol.PropertyId.QmlSource, file);
         cmd.SetI32(Q, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
         cmd.Reparent(Q, 0, 0);
-        cmd.Bind(Q, HQ, 0);
+        cmd.Bind(Q, HQ);
         var rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"create QmlElement ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         RunTo(time + 2.0 / 60, false);

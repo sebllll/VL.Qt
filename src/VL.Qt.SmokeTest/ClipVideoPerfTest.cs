@@ -251,9 +251,9 @@ public static class ClipVideoPerfTest
             for (int at = 0; at < n;)
             {
                 var ev = BitConverter.ToUInt16(buf, at);
-                var len = BitConverter.ToUInt16(buf, at + 2);
+                var len = (int)BitConverter.ToUInt32(buf, at + 4);
                 if (ev == Protocol.ResourceEventId.Info) infos++;
-                at += (4 + len + 3) & ~3;
+                at += (8 + len + 3) & ~3;
             }
             var t3 = Stopwatch.GetTimestamp();
             if (i < 20) continue; // warm-up of the run

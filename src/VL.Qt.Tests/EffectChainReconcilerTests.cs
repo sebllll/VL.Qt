@@ -97,7 +97,7 @@ namespace VL.Qt.Tests
             // A new instance is a change: the whole chain once.
             Frame(new Rectangle { Effect = new TestShaderLink(Blur()) });
             Assert.That(Chains, Has.Length.EqualTo(1));
-            // The MULTI keys (832..855) are no properties of SET; Enabled is also a property of its own (704).
+            // The MULTI keys (833..855) are no properties of SET; Enabled is also a property of its own (704).
             var keyNames = typeof(Protocol.MultiEffectKey).GetFields().Select(f => f.Name).Except(typeof(Protocol.PropertyId).GetFields().Select(f => f.Name)).ToHashSet();
             Assert.That(_sink.OfOp("SET").Any(c => keyNames.Contains(c.Split(' ')[2])), Is.False, "no MULTI key SET");
         }

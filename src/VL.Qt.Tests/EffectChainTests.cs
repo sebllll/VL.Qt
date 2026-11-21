@@ -23,6 +23,7 @@ namespace VL.Qt.Tests
         private static string Hex(byte[] b) => Convert.ToHexString(b);
         private static string U16(int v) => $"{v & 0xFF:X2}{(v >> 8) & 0xFF:X2}";
         private static string U32(uint v) => Hex(BitConverter.GetBytes(v));
+        private static string Hdr(ushort op, int payloadLen) => U16(op) + U16(0) + U32((uint)payloadLen);
         private static string U64(ulong v) => Hex(BitConverter.GetBytes(v));
         private static string F32(float v) => Hex(BitConverter.GetBytes(v));
         private static string Ascii(string s) => Hex(Encoding.ASCII.GetBytes(s));
@@ -42,7 +43,7 @@ namespace VL.Qt.Tests
                 w.BeginEffectChain(9);
                 w.EndEffectChain();
             });
-            Assert.That(hex, Is.EqualTo(U16(Protocol.Op.SetEffectChain) + U16(8) + U32(9) + U16(0) + U16(0)));
+            Assert.That(hex, Is.EqualTo(Hdr(Protocol.Op.SetEffectChain, 8) + U32(9) + U16(0) + U16(0)));
         }
 
         [Test]
@@ -63,11 +64,11 @@ namespace VL.Qt.Tests
             var multi = U16(Protocol.EffectChainLink.Multi) + U16(2) + U32(16)
                 + U16(Protocol.MultiEffectKey.BlurEnabled) + U16(Protocol.ValueType.Bool) + "01000000"
                 + U16(Protocol.MultiEffectKey.Blur) + U16(Protocol.ValueType.F32) + F32(0.5f);
-            var shader = U16(Protocol.EffectChainLink.Shader) + U16(1) + U32(52)
+            var shader = U16(Protocol.EffectChainLink.Shader) + U16(1) + U32(48)
                 + U16(Protocol.EffectTemplate.TwoPass) + U16(1) + U64(5)
-                + F32(1) + F32(2) + F32(3) + F32(4) + F32(0) + U16(0) + U16(0)
+                + F32(1) + F32(2) + F32(3) + F32(4) + F32(0)
                 + U16(Protocol.ValueType.F32) + U16(5) + Ascii("angle") + "000000" + F32(45);
-            Assert.That(hex, Is.EqualTo(U16(Protocol.Op.SetEffectChain) + U16(92) + U32(3) + U16(2) + U16(0) + multi + shader));
+            Assert.That(hex, Is.EqualTo(Hdr(Protocol.Op.SetEffectChain, 88) + U32(3) + U16(2) + U16(0) + multi + shader));
         }
 
         [Test]
@@ -80,10 +81,10 @@ namespace VL.Qt.Tests
                 w.EndLink();
                 w.EndEffectChain();
             });
-            var shader = U16(Protocol.EffectChainLink.Shader) + U16(0) + U32(44)
+            var shader = U16(Protocol.EffectChainLink.Shader) + U16(0) + U32(40)
                 + U16(Protocol.EffectTemplate.Pyramid) + U16(2) + U64(11) + U64(12)
-                + F32(0) + F32(0) + F32(0) + F32(0) + F32(32) + U16(0) + U16(0);
-            Assert.That(hex, Is.EqualTo(U16(Protocol.Op.SetEffectChain) + U16(60) + U32(1) + U16(1) + U16(0) + shader));
+                + F32(0) + F32(0) + F32(0) + F32(0) + F32(32);
+            Assert.That(hex, Is.EqualTo(Hdr(Protocol.Op.SetEffectChain, 56) + U32(1) + U16(1) + U16(0) + shader));
         }
 
         [Test]

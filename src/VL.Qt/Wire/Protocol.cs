@@ -8,9 +8,12 @@
     internal static class Protocol
     {
         /// <summary>Version of the command protocol and the C ABI of vlqt.h; QtApp refuses a vlqt.dll with another one. Bump with every change (see protocol.h).</summary>
-        public const int AbiVersion = 19;
+        public const int AbiVersion = 20;
         public const int CommandAlign = 4;
-        public const int HeaderSize = 4;
+        /// <summary>Header of a command, a poll record and a resource record: u16 op/event, u16 flags (0, reserved), u32 length.</summary>
+        public const int HeaderSize = 8;
+        /// <summary>Sanity cap of the payload length of one command (64 MB); above it the apply fails and nothing of the command is applied.</summary>
+        public const int MaxCommandPayload = 67108864;
         public const uint RootId = 0;
         /// <summary>Max UTF-8 bytes of a uniform name in <see cref="Op.SetUniforms"/>.</summary>
         public const int UniformNameMax = 255;
@@ -18,8 +21,8 @@
         public const int CreatePayload = 6;
         /// <summary>REPARENT: u32 id, u32 parent, u32 index (the whole payload).</summary>
         public const int ReparentPayload = 12;
-        /// <summary>BIND: u32 id, u32 feedbackId, u16 flags (the whole payload).</summary>
-        public const int BindPayload = 10;
+        /// <summary>BIND: u32 id, u32 feedbackId (the whole payload).</summary>
+        public const int BindPayload = 8;
         /// <summary>u32 id, u16 prop, u16 valueType in front of the value of a SET.</summary>
         public const int SetFieldsSize = 8;
         /// <summary>u32 id, u16 count, u16 flags in front of the entries of SET_STYLE, SET_UNIFORMS, SET_QML_PROPERTIES and SET_EFFECT_CHAIN.</summary>
@@ -28,12 +31,15 @@
         public const int EntryHeaderSize = 4;
         /// <summary>Header of an effect chain link: u16 kind, u16 count, u32 bodyLen.</summary>
         public const int EffectChainLinkHeaderSize = 8;
-        /// <summary>Part of a SHADER link body after u16 template, u16 shaderCount and the shader ids: 4 x f32 padding, f32 strength, u16 reserved, u16 0.</summary>
-        public const int EffectChainLinkShaderFixedSize = 24;
-        /// <summary>u32 feedbackId, u32 index after the header of a poll record, in front of the payload.</summary>
-        public const int EventFieldsSize = 8;
+        /// <summary>Part of a SHADER link body after u16 template, u16 shaderCount and the shader ids: 4 x f32 padding, f32 strength.</summary>
+        public const int EffectChainLinkShaderFixedSize = 20;
+        /// <summary>u32 feedbackId after the header of a poll record, in front of the payload.</summary>
+        public const int EventFieldsSize = 4;
+        /// <summary>Payload size the caps below still keep a SET under (the former u16 payload length of a command).</summary>
+        // TODO: remove with MaxF32ArrayCount, PathFits and the other point caps (W3-15).
+        internal const int CappedSetPayload = ushort.MaxValue;
         /// <summary>Max floats of a <see cref="ValueType.F32Array"/> value: the 4-byte count and the floats fit the payload of a SET (8190 points).</summary>
-        internal const int MaxF32ArrayCount = (CommandWriter.MaxPayload - SetFieldsSize - 4) / 4;
+        internal const int MaxF32ArrayCount = (CappedSetPayload - SetFieldsSize - 4) / 4;
 
         /// <summary>Returns true if a <see cref="ValueType.Path"/> with this many verbs and points fits the payload of a SET.</summary>
         internal static bool PathFits(int verbs, int points)
@@ -42,7 +48,7 @@
                 return false;
             // u32 verbCount, u32 pointCount, verbs padded to 4 bytes, points as 2 x f32.
             long size = 8 + ((verbs + 3L) & ~3L) + 8L * points;
-            return size <= CommandWriter.MaxPayload - SetFieldsSize;
+            return size <= CappedSetPayload - SetFieldsSize;
         }
 
         /// <summary>Opcodes (u16).</summary>
@@ -189,7 +195,7 @@
         /// (Color: Rectangle fill + Text; Source: Video string, ShaderEffect ref). Blocks: 256 Rectangle, 512 Text,
         /// 544 Image, 576 Row/Column, 608 reserved (MultiEffect, removed in #459), 640 AutoSize, 672 Video (shares Source/FillMode with Image), 704 Button,
         /// 768 input handlers (only on handler objects), 800 reserved (RectangularShadow, removed in #459),
-        /// 832 <see cref="MultiEffectKey"/> (the MULTI entries of the Effect chain, not via SET, see protocol.h "Effect chain"), 896 ShaderEffect (also takes Source ref and AutoSize), 928 QmlElement, 960 Shape.
+        /// 832 <see cref="MultiEffectKey"/> (833..855, 832 unused; the MULTI entries of the Effect chain, not via SET, see protocol.h "Effect chain"), 896 ShaderEffect (also takes Source ref and AutoSize), 928 QmlElement, 960 Shape.
         /// </summary>
         internal static class PropertyId
         {
@@ -313,13 +319,12 @@
         }
 
         /// <summary>
-        /// Keys of the MULTI entries of <see cref="Op.SetEffectChain"/> (u16, 832..855): the values of one MultiEffect run, Qt
+        /// Keys of the MULTI entries of <see cref="Op.SetEffectChain"/> (u16, 833..855): the values of one MultiEffect run, Qt
         /// defaults. Not settable by SET (UnknownProperty).
         /// </summary>
         internal static class MultiEffectKey
         {
-            /// <summary>Reserved (was: layer on/off of the single Effect layer, plan effects/01).</summary>
-            public const ushort Enabled = 832;
+            // 832 unused (was Enabled: layer on/off of the single Effect layer, plan effects/01).
             /// <summary>bool (default false).</summary>
             public const ushort BlurEnabled = 833;
             /// <summary>f32 0..1.</summary>
@@ -366,17 +371,6 @@
             public const ushort MaskSpreadAtMax = 854;
             /// <summary>bool (default false).</summary>
             public const ushort MaskInverted = 855;
-        }
-
-        /// <summary>
-        /// BIND flags (u16, bit mask). 1 (Interactive) and 4 (Pointer) of #208 are reserved, as is 2
-        /// (CancelPress): no effect in QtNative any more (a new feedback of a Tap handler cancels its press itself), the
-        /// reconciler does not send it. Keep unused.
-        /// </summary>
-        internal static class Bind
-        {
-            /// <summary>Reserved: no effect, not sent. Kept for the writer tests and the drift check.</summary>
-            public const ushort CancelPress = 2;
         }
 
         /// <summary>Link kinds of <see cref="Op.SetEffectChain"/> (u16).</summary>

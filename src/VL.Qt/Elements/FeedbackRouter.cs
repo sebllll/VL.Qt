@@ -130,16 +130,11 @@ namespace VL.Qt.Elements
             _slots.Clear();
         }
 
-        /// <summary>Largest accepted record index (offset to the slot index of the binding); larger ones are ignored.</summary>
-        public const uint MaxIndexOffset = ushort.MaxValue;
-
         /// <summary>
         /// Writes the records of a poll buffer (<see cref="EventReader"/>) into the bound slots. The id resolves
-        /// to the slot of the binding (feedback + slot index); the record index is an offset to that slot index
-        /// (target = <c>slot.Index + index</c>). QtNative sends 0 (one item = one binding, so several elements on
-        /// one feedback are told apart by their ids); offsets &gt; 0 are for items that serve several slots.
-        /// Records with an unknown id, an index above <see cref="MaxIndexOffset"/> (or a target beyond
-        /// int.MaxValue), an unknown event or a too short payload are ignored. Values from Qt (logical pixels)
+        /// to the slot of the binding (feedback + slot index); one item = one binding, so several elements on
+        /// one feedback are told apart by their ids.
+        /// Records with an unknown id, an unknown event or a too short payload are ignored. Values from Qt (logical pixels)
         /// are converted to units (<see cref="Mapping"/>; SceneBounds is in root coordinates, QtNative maps it). State values
         /// (Measured, SceneBounds, Media, Error) of an id that is not primary are ignored too.
         /// </summary>
@@ -150,7 +145,7 @@ namespace VL.Qt.Elements
             while (r.MoveNext())
             {
                 if (_slots.TryGetValue(r.FeedbackId, out var b) && (b.Primary || !IsState(r.Event))
-                    && Target(b.Slot, r.Index, out int index) && Apply(ref r, b.Slot.Feedback!, index, Mapping))
+                    && Apply(ref r, b.Slot.Feedback!, b.Slot.Index, Mapping))
                     applied++;
                 else
                     ignored++;
@@ -161,13 +156,6 @@ namespace VL.Qt.Elements
         /// <summary>Events that report the state of an element (only the primary occurrence writes them).</summary>
         private static bool IsState(ushort ev)
             => ev == Protocol.EventId.Measured || ev == Protocol.EventId.SceneBounds || ev == Protocol.EventId.Media || ev == Protocol.EventId.Error;
-
-        private static bool Target(FeedbackSlot slot, uint offset, out int index)
-        {
-            long target = slot.Index + (long)offset;
-            index = (int)target;
-            return offset <= MaxIndexOffset && target <= int.MaxValue;
-        }
 
         private static float ReadF32(ReadOnlySpan<byte> p, int offset)
             => System.Buffers.Binary.BinaryPrimitives.ReadSingleLittleEndian(p.Slice(offset));

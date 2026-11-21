@@ -81,10 +81,10 @@ public static class SamplerTest
             int n = NativeCalls.Poll(w, evBuf);
             for (int at = 0; at < n;)
             {
-                ushort ev = BitConverter.ToUInt16(evBuf, at), len = BitConverter.ToUInt16(evBuf, at + 2);
+                ushort ev = BitConverter.ToUInt16(evBuf, at), len = (ushort)BitConverter.ToUInt32(evBuf, at + 4);
                 if (ev == Protocol.EventId.Error)
-                    errors[BitConverter.ToUInt32(evBuf, at + 4)] = Encoding.UTF8.GetString(evBuf, at + 12, len - 8);
-                at += (4 + len + 3) & ~3;
+                    errors[BitConverter.ToUInt32(evBuf, at + 8)] = Encoding.UTF8.GetString(evBuf, at + 12, len - 4);
+                at += (8 + len + 3) & ~3;
             }
             return errors.TryGetValue(handle, out var s) ? s : "";
         }
@@ -201,7 +201,7 @@ public static class SamplerTest
             StripeGroup(mip[i]);
             Uniforms(mip[i], Protocol.UniformSet.Clear, 0.5f, 0.5f, 14f, "source", i == 0 ? S(0, 0, 1, 1) : S(0, 2, 1, 1));
         }
-        cmd.Bind(edge[0], 1, 0);
+        cmd.Bind(edge[0], 1);
         Apply("sampler scene");
         s.Pump(10);
 

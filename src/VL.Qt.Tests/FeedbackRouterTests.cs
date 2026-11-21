@@ -13,18 +13,17 @@ namespace VL.Qt.Tests
     /// <summary>FeedbackRouter: feedback ids, routing of poll records into feedback, pulse logic, rebind (06a).</summary>
     public class FeedbackRouterTests
     {
-        /// <summary>Builds a synthetic poll buffer like QtNative: u16 event, u16 len, u32 handle, u32 index, payload, 4-aligned.</summary>
+        /// <summary>Builds a synthetic poll buffer like QtNative: u16 event, u16 flags, u32 len, u32 feedbackId, payload, 4-aligned.</summary>
         internal sealed class Poll
         {
             private readonly List<byte> _b = new();
 
-            public Poll Add(ushort ev, uint handle, byte[] payload, uint index = 0)
+            public Poll Add(ushort ev, uint handle, byte[] payload)
             {
-                var rec = new byte[12 + payload.Length];
+                var rec = new byte[Protocol.HeaderSize + Protocol.EventFieldsSize + payload.Length];
                 BinaryPrimitives.WriteUInt16LittleEndian(rec, ev);
-                BinaryPrimitives.WriteUInt16LittleEndian(rec.AsSpan(2), (ushort)(8 + payload.Length));
-                BinaryPrimitives.WriteUInt32LittleEndian(rec.AsSpan(4), handle);
-                BinaryPrimitives.WriteUInt32LittleEndian(rec.AsSpan(8), index);
+                BinaryPrimitives.WriteUInt32LittleEndian(rec.AsSpan(4), (uint)(Protocol.EventFieldsSize + payload.Length));
+                BinaryPrimitives.WriteUInt32LittleEndian(rec.AsSpan(8), handle);
                 payload.CopyTo(rec, 12);
                 _b.AddRange(rec);
                 while (_b.Count % 4 != 0) _b.Add(0);
@@ -176,7 +175,7 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void UnknownHandle_Index_Event_ShortPayload_Ignored()
+        public void UnknownHandle_Event_ShortPayload_Ignored()
         {
             var reg = new FeedbackRouter();
             var feedback = new ElementFeedback();
@@ -184,13 +183,11 @@ namespace VL.Qt.Tests
             var res = reg.Dispatch(new Poll()
                 .Hover(h + 1, true)                                     // unknown handle
                 .Hover(0, true)                                         // handle 0
-                .Add(Protocol.EventId.Hover, h, new byte[] { 1 }, index: FeedbackRouter.MaxIndexOffset + 1) // index too large
-                .Add(Protocol.EventId.Hover, h, new byte[] { 1 }, index: uint.MaxValue)
                 .Add(99, h, new byte[] { 1 })                           // unknown event
                 .Add(Protocol.EventId.Measured, h, new byte[4])              // payload too short
                 .Bytes);
 
-            Assert.That(res, Is.EqualTo(new DispatchResult(0, 6, null)));
+            Assert.That(res, Is.EqualTo(new DispatchResult(0, 4, null)));
             Assert.That(feedback.IsHovered(), Is.False);
             Assert.That(feedback.MeasuredSize(), Is.EqualTo(Vector2.Zero));
             Assert.That(feedback.Count, Is.Zero); // nothing allocated for ignored records
@@ -463,12 +460,12 @@ namespace VL.Qt.Tests
             rec.FeedbackRouter.Dispatch(new Poll().Hover(ha, true).Press(ha, true).Bytes);
             Assert.That(a.IsHovered() && a.IsPressed(), Is.True);
 
-            // Same object, other feedback: BIND with a new handle (flags 0, CancelPress is reserved); old feedback loses hover/press right away.
+            // Same object, other feedback: BIND with a new handle (no flags); old feedback loses hover/press right away.
             cmds.Clear();
             rec.Update(R(1, new FeedbackSlot(b, 0)), Space.DIPTopLeft);
             uint hb = rec.Root!.BoundFeedbackId;
             Assert.That(hb, Is.Not.EqualTo(ha));
-            Assert.That(cmds.Commands, Does.Contain($"BIND {rec.Root.Id} {hb} 0"));
+            Assert.That(cmds.Commands, Does.Contain($"BIND {rec.Root.Id} {hb}"));
             Assert.That(a.IsHovered() || a.IsPressed(), Is.False);
 
             // Next poll: QtNative's reset for the old handle is dropped, new events go to b.
@@ -488,20 +485,16 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void RecordIndex_IsOffsetToSlotIndex()
+        public void Record_GoesToTheBoundSlot()
         {
             var reg = new FeedbackRouter();
             var feedback = new ElementFeedback();
             uint h = reg.Acquire(new FeedbackSlot(feedback, 2));
-            var res = reg.Dispatch(new Poll()
-                .Add(Protocol.EventId.Hover, h, new byte[] { 1 }, index: 1)
-                .Add(Protocol.EventId.Measured, h, new byte[8], index: FeedbackRouter.MaxIndexOffset)
-                .Bytes);
+            var res = reg.Dispatch(new Poll().Hover(h, true).Bytes);
 
-            Assert.That(res, Is.EqualTo(new DispatchResult(2, 0, null)));
-            Assert.That(feedback.IsHovered(3), Is.True);
-            Assert.That(feedback.IsHovered(2), Is.False);
-            Assert.That(feedback.Count, Is.EqualTo(2 + FeedbackRouter.MaxIndexOffset + 1));
+            Assert.That(res, Is.EqualTo(new DispatchResult(1, 0, null)));
+            Assert.That(feedback.IsHovered(2), Is.True);
+            Assert.That(feedback.IsHovered(3), Is.False);
         }
 
         [Test]

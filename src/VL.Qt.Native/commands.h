@@ -50,9 +50,9 @@ struct Scene {
     /* Set by apply, cleared by poll: the next polish must run. */
     bool appliedSincePoll = true;
 
-    /* Appends one record u16 event, u16 len, u32 handle, u32 index, payload (padded to 4);
-     * len = 8 + payloadLen (handle + index + payload, without padding). */
-    void pushEvent(quint16 ev, quint32 handle, quint32 index, const void* payload, quint16 payloadLen);
+    /* Appends one record u16 event, u16 flags (0), u32 len, u32 feedbackId, payload (padded to 4);
+     * len = 4 + payloadLen (feedbackId + payload, without padding). A payload whose len would not fit a u32 is dropped. */
+    void pushEvent(quint16 ev, quint32 feedbackId, const void* payload, qsizetype payloadLen);
 
     /* Debug overlay (debug.h): window-wide switch (vlqt_scene_set_debug) and the refresh after commands. The
      * overlay is created on first use and shown while debugAll is on or any node has DEBUG (Elements::debugCount). */

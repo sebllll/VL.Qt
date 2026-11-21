@@ -77,7 +77,7 @@ public static class VideoStopTest
         cmd.SetBool(Id, Protocol.PropertyId.Loop, true);
         cmd.SetBool(Id, Protocol.PropertyId.Playing, true);
         cmd.Reparent(Id, 0, 0);
-        cmd.Bind(Id, Handle, 0);
+        cmd.Bind(Id, Handle);
         s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"{tag}: create playing video");
         cmd.Reset();
         var sw = Stopwatch.StartNew();

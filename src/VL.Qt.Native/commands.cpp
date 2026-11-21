@@ -131,7 +131,7 @@ quint16 effectValueType(quint16 prop)
     case VLQT_MULTI_EFFECT_KEY_PADDING_RECT: return VLQT_VALUE_TYPE_RECTF;
     case VLQT_MULTI_EFFECT_KEY_MASK_SOURCE: return VLQT_VALUE_TYPE_REF;
     default:
-        return prop > VLQT_MULTI_EFFECT_KEY_ENABLED && prop <= VLQT_MULTI_EFFECT_KEY_MASK_INVERTED ? VLQT_VALUE_TYPE_F32 : 0;
+        return prop >= VLQT_MULTI_EFFECT_KEY_BLUR_ENABLED && prop <= VLQT_MULTI_EFFECT_KEY_MASK_INVERTED ? VLQT_VALUE_TYPE_F32 : 0;
     }
 }
 
@@ -351,7 +351,11 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
             reason = "truncated header (" + std::to_string(len - off) + " bytes left)";
         } else {
             op = rd<quint16>(buf + off);
-            const int plen = rd<quint16>(buf + off + 2);
+            const quint16 flags = rd<quint16>(buf + off + 2);
+            const quint32 plen32 = rd<quint32>(buf + off + 4);
+            // Within the cap, so plen and size fit an int (len is an int).
+            const bool overCap = plen32 > quint32(VLQT_MAX_COMMAND_PAYLOAD);
+            const int plen = overCap ? 0 : int(plen32);
             const unsigned char* p = buf + off + VLQT_HEADER_SIZE;
             const int size = align4(VLQT_HEADER_SIZE + plen);
             auto expect = [&](int n) {
@@ -361,10 +365,17 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                 reason = "payloadLen " + std::to_string(plen) + ", expected " + std::to_string(n);
                 return false;
             };
-            if (off + size > len) {
+            if (overCap) {
+                rc = ApplyBadLength;
+                reason = "payloadLen " + std::to_string(plen32) + " above VLQT_MAX_COMMAND_PAYLOAD ("
+                    + std::to_string(VLQT_MAX_COMMAND_PAYLOAD) + ")";
+            } else if (size > len - off) {
                 rc = ApplyBadLength;
                 reason = "command (" + std::to_string(size) + " bytes incl. padding) exceeds buffer ("
                     + std::to_string(len - off) + " bytes left)";
+            } else if (flags != 0) {
+                rc = ApplyBadValue;
+                reason = "header flags " + std::to_string(flags) + ", expected 0 (reserved)";
             } else {
                 // Object addressed by the command, for the structured error: first u32 of every op with an id.
                 const bool hasId = op == VLQT_OP_CREATE || op == VLQT_OP_DESTROY || op == VLQT_OP_REPARENT
@@ -408,9 +419,9 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                         auto it = nodes.find(id);
                         auto hit = it == nodes.end() ? handlerNodes.find(id) : handlerNodes.end();
                         if (it != nodes.end()) {
-                            bindNode(*this, it->second, rd<quint32>(p + 4)); // flags ignored
+                            bindNode(*this, it->second, rd<quint32>(p + 4));
                         } else if (hit != handlerNodes.end()) {
-                            bindHandler(*this, hit->second, rd<quint32>(p + 4)); // flags: none for handlers
+                            bindHandler(*this, hit->second, rd<quint32>(p + 4));
                         } else {
                             rc = ApplyUnknownId;
                             reason = "unknown id " + std::to_string(id);
@@ -1106,12 +1117,6 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
                 link.shaders.push_back(rd<quint64>(p + e));
             std::memcpy(link.padding, p + e, sizeof link.padding);
             link.strength = rd<float>(p + e + 16);
-            // Reserved u16 (was the strength uniform name length, replaced by passIndex) and u16 0.
-            const int reserved = rd<quint16>(p + e + 20);
-            if (reserved != 0) {
-                err = at + ": reserved field " + std::to_string(reserved) + ", expected 0";
-                return ApplyBadValue;
-            }
             e += VLQT_EFFECT_CHAIN_LINK_SHADER_FIXED_SIZE;
             for (int i = 0; i < count; ++i) {
                 const std::string ue = at + " uniform #" + std::to_string(i);
@@ -1272,18 +1277,24 @@ int Scene::poll(unsigned char* out, int cap, int* written, int* required)
     return rc;
 }
 
-void Scene::pushEvent(quint16 ev, quint32 handle, quint32 index, const void* payload, quint16 payloadLen)
+void Scene::pushEvent(quint16 ev, quint32 feedbackId, const void* payload, qsizetype payloadLen)
 {
-    const quint16 len = quint16(VLQT_EVENT_FIELDS_SIZE + payloadLen); // handle + index + payload, without padding
+    // The record length is a u32: a payload that does not fit is dropped, never cut or wrapped.
+    if (payloadLen < 0 || quint64(payloadLen) > quint64(0xffffffffu) - VLQT_EVENT_FIELDS_SIZE) {
+        qWarning("vlqt: event %u with %lld payload bytes dropped (record length is a u32)", unsigned(ev), qint64(payloadLen));
+        return;
+    }
+    const quint32 len = quint32(VLQT_EVENT_FIELDS_SIZE + payloadLen); // feedbackId + payload, without padding
+    const quint16 flags = 0;
     const qsizetype at = events.size();
-    events.resize(at + align4(VLQT_HEADER_SIZE + len), '\0');
+    events.resize(at + ((qsizetype(VLQT_HEADER_SIZE) + len + 3) & ~qsizetype(3)), '\0');
     char* d = events.data() + at;
     std::memcpy(d, &ev, 2);
-    std::memcpy(d + 2, &len, 2);
-    std::memcpy(d + 4, &handle, 4);
-    std::memcpy(d + 8, &index, 4);
+    std::memcpy(d + 2, &flags, 2);
+    std::memcpy(d + 4, &len, 4);
+    std::memcpy(d + VLQT_HEADER_SIZE, &feedbackId, 4);
     if (payloadLen)
-        std::memcpy(d + VLQT_HEADER_SIZE + VLQT_EVENT_FIELDS_SIZE, payload, payloadLen);
+        std::memcpy(d + VLQT_HEADER_SIZE + VLQT_EVENT_FIELDS_SIZE, payload, size_t(payloadLen));
 }
 
 } // namespace vlqt

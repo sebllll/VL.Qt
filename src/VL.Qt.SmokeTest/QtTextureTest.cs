@@ -413,10 +413,10 @@ public static partial class QtTextureTest
         for (int at = 0; at < n;)
         {
             var ev = BitConverter.ToUInt16(buf, at);
-            var len = BitConverter.ToUInt16(buf, at + 2);
-            if (ev == Protocol.ResourceEventId.Error && BitConverter.ToUInt64(buf, at + 4) == id)
-                error = System.Text.Encoding.UTF8.GetString(buf, at + 12, len - 8);
-            at += (4 + len + 3) & ~3;
+            var len = (int)BitConverter.ToUInt32(buf, at + 4);
+            if (ev == Protocol.ResourceEventId.Error && BitConverter.ToUInt64(buf, at + 8) == id)
+                error = System.Text.Encoding.UTF8.GetString(buf, at + 16, len - 8);
+            at += (8 + len + 3) & ~3;
         }
         return error;
     }

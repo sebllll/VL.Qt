@@ -107,7 +107,7 @@ namespace VL.Qt.Tests
             s.SetMat4(1, Protocol.PropertyId.Transform, in s_mat);
             s.SetString(1, 301, "Hällo".AsSpan());
             s.SetRef(1, 302, 2);
-            s.Bind(1, 5, Protocol.Bind.CancelPress);
+            s.Bind(1, 5);
             s.Destroy(1);
         }
 
@@ -128,7 +128,7 @@ namespace VL.Qt.Tests
             direct.SetMat4(1, Protocol.PropertyId.Transform, in s_mat);
             direct.SetString(1, 301, "Hällo");
             direct.SetRef(1, 302, 2);
-            direct.Bind(1, 5, Protocol.Bind.CancelPress);
+            direct.Bind(1, 5);
             direct.Destroy(1);
 
             Assert.That(viaInterface.Count, Is.EqualTo(12));
@@ -176,7 +176,7 @@ namespace VL.Qt.Tests
             Assert.That(rec.Commands[5], Is.EqualTo($"SET 1 Color color(1,0,0,1)"));
             Assert.That(rec.Commands[6], Is.EqualTo($"SET 1 PaddingRect rect(1,2,3,4)"));
             Assert.That(rec.Commands[8], Is.EqualTo("SET 1 301 string(Hällo)"));
-            Assert.That(rec.Commands[10], Is.EqualTo("BIND 1 5 2"));
+            Assert.That(rec.Commands[10], Is.EqualTo("BIND 1 5"));
             Assert.That(rec.Commands[11], Is.EqualTo("DESTROY 1"));
             Assert.That(rec.OfOp("SET"), Has.Exactly(8).Items);
         }

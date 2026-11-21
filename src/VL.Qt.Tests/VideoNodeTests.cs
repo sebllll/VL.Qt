@@ -41,8 +41,8 @@ namespace VL.Qt.Tests
             var t = System.Text.Encoding.UTF8.GetBytes(text);
             var b = new byte[(12 + t.Length + 3) & ~3];
             BinaryPrimitives.WriteUInt16LittleEndian(b, Protocol.EventId.Error);
-            BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(2), (ushort)(8 + t.Length));
-            BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), handle);
+            BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), (uint)(4 + t.Length));
+            BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(8), handle);
             t.CopyTo(b, 12);
             return b;
         }
@@ -51,8 +51,8 @@ namespace VL.Qt.Tests
         {
             var b = new byte[20];
             BinaryPrimitives.WriteUInt16LittleEndian(b, Protocol.EventId.Media);
-            BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(2), 16);
-            BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), handle);
+            BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), 12);
+            BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(8), handle);
             BinaryPrimitives.WriteSingleLittleEndian(b.AsSpan(12), position);
             BinaryPrimitives.WriteSingleLittleEndian(b.AsSpan(16), duration);
             return b;
@@ -183,7 +183,7 @@ namespace VL.Qt.Tests
 
             // Too short payload is ignored.
             var shortRec = MediaRecord(handle, 1, 1)[..16];
-            BinaryPrimitives.WriteUInt16LittleEndian(shortRec.AsSpan(2), 12);
+            BinaryPrimitives.WriteUInt32LittleEndian(shortRec.AsSpan(4), 8);
             Assert.That(rec.FeedbackRouter.Dispatch(shortRec).Ignored, Is.EqualTo(1));
         }
 

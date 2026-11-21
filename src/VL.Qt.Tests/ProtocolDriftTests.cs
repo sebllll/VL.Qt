@@ -109,7 +109,7 @@ namespace VL.Qt.Tests
         public void ComparerFindsEachKindOfMismatch()
         {
             // Sample data, so the self-test does not depend on the state of the real files.
-            var header = new Dictionary<string, long> { ["OP_CREATE"] = 1, ["HEADER_SIZE"] = 4 };
+            var header = new Dictionary<string, long> { ["OP_CREATE"] = 1, ["HEADER_SIZE"] = 8 };
             var mirror = new Dictionary<string, long>(header);
             Assert.That(Compare("protocol.h", "Protocol.cs", header, mirror), Is.Empty);
             var first = "HEADER_SIZE";

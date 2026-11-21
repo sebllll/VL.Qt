@@ -46,8 +46,8 @@ public static class ApplyFuzzTest
         Native.vlqt_window_show(w);
         s.Pump(2);
 
-        var reset = new byte[4];
-        reset[0] = (byte)Protocol.Op.Reset; // u16 op, u16 payload length 0
+        var reset = new byte[Protocol.HeaderSize];
+        reset[0] = (byte)Protocol.Op.Reset; // u16 op, u16 flags 0, u32 payload length 0
         var rng = new Random(Seed);
         var clock = Stopwatch.StartNew();
         int applies = 0, accepted = 0, violations = 0;

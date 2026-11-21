@@ -154,7 +154,7 @@ const std::vector<PropDef>& commonProps()
 }
 
 // EFFECT_* (block 832): keys of SET_EFFECT_CHAIN MULTI entries only (effectchain.cpp); SET with one is -6.
-bool isEffectProp(quint16 prop) { return prop >= VLQT_MULTI_EFFECT_KEY_ENABLED && prop <= VLQT_MULTI_EFFECT_KEY_MASK_INVERTED; }
+bool isEffectProp(quint16 prop) { return prop >= 832 && prop <= VLQT_MULTI_EFFECT_KEY_MASK_INVERTED; }
 
 // ---------------------------------------------------------------------------------------------
 // Generic setters for QML properties (resolved QMetaProperty, optionally grouped).

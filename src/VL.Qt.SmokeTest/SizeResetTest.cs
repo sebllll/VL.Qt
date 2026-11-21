@@ -69,23 +69,23 @@ public static class SizeResetTest
         cmd.SetF32(RowId, Protocol.PropertyId.Spacing, 10);
         cmd.SetI32(RowId, Protocol.PropertyId.ChildAlignment, 0x80);
         cmd.Reparent(RowId, 0, 1000);
-        cmd.Bind(RowId, HRow, 0);
+        cmd.Bind(RowId, HRow);
         Rect(A, RowId, 0, 0, 40, 30, 1, 0);
         Rect(B, RowId, 0, 0, 60, 50, 0, 1);
         // Group at (400, 100), size 0, Auto Size on, one child at (10, 20) 30x30 -> implicit 40 x 50.
         cmd.Create(GroupId, Protocol.ElementType.Group);
         cmd.SetPlace(GroupId, 400, 100, 0, 0);
         cmd.Reparent(GroupId, 0, 1001);
-        cmd.Bind(GroupId, HGroup, 0);
+        cmd.Bind(GroupId, HGroup);
         Rect(G1, GroupId, 10, 20, 30, 30, 1, 0);
         // Rectangle at (600, 100), size 0, bound: is not drawn (0 stays 0).
         Rect(RectId, 0, 600, 100, 0, 0, 1, 0);
-        cmd.Bind(RectId, HRect, 0);
+        cmd.Bind(RectId, HRect);
         // ShaderEffect at (500, 300), Auto Size on: implicit size = size of the input (40 x 30).
         cmd.Create(EffectId, Protocol.ElementType.Shader);
         cmd.SetPlace(EffectId, 500, 300, 0, 0);
         cmd.Reparent(EffectId, 0, 1002);
-        cmd.Bind(EffectId, HEffect, 0);
+        cmd.Bind(EffectId, HEffect);
         Rect(EffectSrc, EffectId, 0, 0, 40, 30, 0, 1);
         cmd.SetRef(EffectId, Protocol.PropertyId.Source, EffectSrc);
         CheckApply("row, group, rectangle, effect with size 0");

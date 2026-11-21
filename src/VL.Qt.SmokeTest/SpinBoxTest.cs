@@ -37,11 +37,11 @@ public static class SpinBoxTest
         while (off + 12 <= b.Length)
         {
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
-            int len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
-            if (len < 8 || off + 4 + len > b.Length)
+            int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4));
+            if (len < 4 || off + 8 + len > b.Length)
                 break;
-            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)), b.Slice(off + 12, len - 8).ToArray()));
-            off += (4 + len + 3) & ~3;
+            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)), b.Slice(off + 12, len - 4).ToArray()));
+            off += (8 + len + 3) & ~3;
         }
         return list;
     }
@@ -102,7 +102,7 @@ public static class SpinBoxTest
         cmd.SetBool(S1, Protocol.PropertyId.Editable, true);
         cmd.SetBool(S1, Protocol.PropertyId.Enabled, true);
         cmd.Reparent(S1, 0, 0);
-        cmd.Bind(S1, H, 0);
+        cmd.Bind(S1, H);
         CheckApply("spinbox create + range/value/step/editable/enabled");
         Mouse(TestProtocol.Mouse.Move, 700, 500);
         s.Pump(2);
@@ -120,7 +120,7 @@ public static class SpinBoxTest
         cmd.SetBool(S2, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(S2, 100, 200, 240, 40);
         cmd.Reparent(S2, 0, 1);
-        cmd.Bind(S2, H2, 0);
+        cmd.Bind(S2, H2);
         CheckApply("spinbox bounds + second spinbox");
         Frame();
         // Base style: both buttons at the right, squares of the box height minus the border (BaseStyle FrameBorderWidth 1).
@@ -223,7 +223,7 @@ public static class SpinBoxTest
         cmd.SetBool(S1, Protocol.PropertyId.Enabled, true);
         CheckApply("enabled true");
         Click(upX, y1);
-        cmd.Bind(S1, H3, 0);
+        cmd.Bind(S1, H3);
         CheckApply("rebind");
         recs = Frame();
         s.Check(Values(recs, H).Count == 0 && Values(recs, H3).Count == 0, $"rebind drops the unpolled change ({S(recs)})");

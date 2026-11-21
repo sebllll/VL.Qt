@@ -10,7 +10,7 @@ namespace VL.Qt.Tests
 {
     /// <summary>
     /// Fake <see cref="ICommandSink"/> for reconciler tests: records every command as a readable line, e.g.
-    /// <c>CREATE 1 Rectangle</c>, <c>REPARENT 1 0 0</c>, <c>SET 1 Color color(1,0,0,1)</c>, <c>BIND 1 5 2</c>, <c>DESTROY 1</c>.
+    /// <c>CREATE 1 Rectangle</c>, <c>REPARENT 1 0 0</c>, <c>SET 1 Color color(1,0,0,1)</c>, <c>BIND 1 5</c>, <c>DESTROY 1</c>.
     /// Element types and properties print by their <see cref="Protocol.ElementType"/> / <see cref="Protocol.PropertyId"/> (<see cref="Protocol.MultiEffectKey"/>) name (the first
     /// name of a value, see <c>ProtocolNamesAreUnique</c>), so a renumbered protocol leaves the expectations valid.
     /// Numbers use the invariant culture; floats in round-trip format ("R").
@@ -18,7 +18,7 @@ namespace VL.Qt.Tests
     internal sealed class RecordingSink : ICommandSink
     {
         private static readonly Dictionary<ushort, string> s_typeNames = NamesOf(typeof(Protocol.ElementType));
-        // The keys of the MULTI entries (832..855) are no properties of SET, but print by name too.
+        // The keys of the MULTI entries (833..855) are no properties of SET, but print by name too.
         private static readonly Dictionary<ushort, string> s_propNames = Merge(NamesOf(typeof(Protocol.PropertyId)), NamesOf(typeof(Protocol.MultiEffectKey)));
 
         private static Dictionary<ushort, string> Merge(Dictionary<ushort, string> first, Dictionary<ushort, string> second)
@@ -70,7 +70,7 @@ namespace VL.Qt.Tests
         public void Create(uint id, ushort type) => Add($"CREATE {id} {TypeName(type)}");
         public void Destroy(uint id) => Add($"DESTROY {id}");
         public void Reparent(uint id, uint parent, uint index) => Add($"REPARENT {id} {parent} {index}");
-        public void Bind(uint id, uint sinkHandle, ushort flags) => Add($"BIND {id} {sinkHandle} {flags}");
+        public void Bind(uint id, uint feedbackId) => Add($"BIND {id} {feedbackId}");
 
         public void SetF32(uint id, ushort prop, float value) => AddSet(id, prop, $"f32({F(value)})");
         public void SetI32(uint id, ushort prop, int value) => AddSet(id, prop, $"i32({value})");

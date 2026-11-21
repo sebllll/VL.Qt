@@ -34,7 +34,7 @@ public static partial class HandlerTest
     /// <summary>The last EVENT_TOUCH_POINTS of the feedback in the records; null if none.</summary>
     private static TouchPoint[]? LastTouch(List<Rec> recs, uint h)
     {
-        var r = recs.LastOrDefault(r => r.Event == Protocol.EventId.TouchPoints && r.Handle == h && r.Index == 0);
+        var r = recs.LastOrDefault(r => r.Event == Protocol.EventId.TouchPoints && r.Handle == h);
         return r.Payload is null ? null : TouchPoints(r) ?? Array.Empty<TouchPoint>();
     }
 
@@ -148,7 +148,7 @@ public static partial class HandlerTest
         // Feedback change while a finger lies: the old feedback sees count 0, the new one gets the point.
         h.Touch(TestProtocol.Touch.Press, 6, 150, 150);
         h.Frame();
-        h.Cmd.Bind(TP, 44, 0);
+        h.Cmd.Bind(TP, 44);
         h.Apply("rebind");
         recs = h.Frame();
         s.Check(HasPoints(recs, STP) && HasPoints(recs, 44, (6, 50, 50)), $"touch-points: feedback change -> old count 0, new gets the point ({Dump(recs)})");
@@ -162,7 +162,7 @@ public static partial class HandlerTest
         s.Check(None(recs, 44), $"touch-points: release after DESTROY -> silent ({Dump(recs)})");
     }
 
-    private static bool IsPinch(Rec r, uint h) => r.Event == Protocol.EventId.Pinch && r.Handle == h && r.Payload.Length == 24 && r.Index == 0;
+    private static bool IsPinch(Rec r, uint h) => r.Event == Protocol.EventId.Pinch && r.Handle == h && r.Payload.Length == 24;
     private static string Pinch(Rec r) => $"({r.F(0):0.###}, {r.F(1):0.#}, {r.F(2):0.#}, {r.F(3):0.#}; pivot {r.F(4):0.#}, {r.F(5):0.#})";
     // Where the gesture (scale, rotation, translation about the pivot) takes a point: pivot + t + s R (p - pivot).
     private static (float X, float Y) Apply(Rec r, float x, float y)
@@ -234,7 +234,7 @@ public static partial class HandlerTest
         const uint P = 1, PH = 10, TA = 11, TP = 12;
         const uint SE = 30, SP = 41, STA = 42, STP = 43;
         h.Rect(P, 100, 100, 400, 400, 0);
-        h.Cmd.Bind(P, SE, 0);
+        h.Cmd.Bind(P, SE);
         h.Handler(TA, Protocol.ElementType.TapHandler, P, STA);
         h.Handler(PH, Protocol.ElementType.PinchHandler, P, SP);
         h.Handler(TP, Protocol.ElementType.TouchPointsHandler, P, STP);
@@ -366,7 +366,7 @@ public static partial class HandlerTest
         h.Touch(TestProtocol.Touch.Press, 2, 350, 300);
         h.Frame();
         Gesture(h, (1, 250, 300, 220, 300), (2, 350, 300, 380, 300));
-        h.Cmd.Bind(PH, 44, 0);
+        h.Cmd.Bind(PH, 44);
         h.Apply("rebind");
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.EventId.Active, SP, false) && HasFlag(recs, Protocol.EventId.Active, 44, true) && LastPinch(recs, 44) is not null,

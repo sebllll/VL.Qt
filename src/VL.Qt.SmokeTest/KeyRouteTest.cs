@@ -48,11 +48,11 @@ public static class KeyRouteTest
         while (off + 12 <= b.Length)
         {
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
-            int len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
-            if (len < 8 || off + 4 + len > b.Length)
+            int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4));
+            if (len < 4 || off + 8 + len > b.Length)
                 break;
-            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)), b.Slice(off + 12, len - 8).ToArray()));
-            off += (4 + len + 3) & ~3;
+            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)), b.Slice(off + 12, len - 4).ToArray()));
+            off += (8 + len + 3) & ~3;
         }
         return list;
     }
@@ -104,13 +104,13 @@ public static class KeyRouteTest
         cmd.SetPlace(T, 50, 50, 300, 40);
         cmd.SetString(T, Protocol.PropertyId.Value, "");
         cmd.Reparent(T, 0, 0);
-        cmd.Bind(T, HT, 0);
+        cmd.Bind(T, HT);
         cmd.Create(S1, Protocol.ElementType.SpinBox);
         VL.Qt.Styles.BaseStyle.Write(cmd, S1); // like the Reconciler
         cmd.SetBool(S1, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(S1, 50, 150, 240, 40);
         cmd.Reparent(S1, 0, 1);
-        cmd.Bind(S1, HS, 0);
+        cmd.Bind(S1, HS);
         CheckApply("create");
         s.Pump(3);
         Frame();
@@ -232,7 +232,7 @@ public static class KeyRouteTest
         cmd.Reparent(R, 0, 2);
         cmd.Create(RT, Protocol.ElementType.TapHandler);
         cmd.Reparent(RT, R, 0);
-        cmd.Bind(RT, HR, 0);
+        cmd.Bind(RT, HR);
         apply("tap rect");
         frame();
 

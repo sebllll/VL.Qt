@@ -21,7 +21,7 @@ namespace VL.Qt.Tests
         private static string U16(int v) => $"{v & 0xFF:X2}{(v >> 8) & 0xFF:X2}";
         private static string U32(uint v) => Hex(BitConverter.GetBytes(v));
         private static string F32(float v) => Hex(BitConverter.GetBytes(v));
-        private static string Hdr(ushort op, int len) => U16(op) + U16(len);
+        private static string Hdr(ushort op, int len) => U16(op) + U16(0) + U32((uint)len);
         private static string SetHdr(int valueLen, uint id, ushort prop, ushort vt) => Hdr(Protocol.Op.Set, 8 + valueLen) + U32(id) + U16(prop) + U16(vt);
 
         [Test]
@@ -31,7 +31,7 @@ namespace VL.Qt.Tests
 
         [Test]
         public void Destroy() =>
-            Assert.That(Hex(Write(w => w.Destroy(0x01020304))), Is.EqualTo("0200" + "0400" + "04030201"));
+            Assert.That(Hex(Write(w => w.Destroy(0x01020304))), Is.EqualTo(Hdr(Protocol.Op.Destroy, 4) + "04030201"));
 
         [Test]
         public void Reparent() =>
@@ -40,8 +40,8 @@ namespace VL.Qt.Tests
 
         [Test]
         public void Bind() =>
-            Assert.That(Hex(Write(w => w.Bind(9, 42, Protocol.Bind.CancelPress))),
-                Is.EqualTo(Hdr(Protocol.Op.Bind, 10) + U32(9) + U32(42) + U16(2) + "0000"));
+            Assert.That(Hex(Write(w => w.Bind(9, 42))),
+                Is.EqualTo(Hdr(Protocol.Op.Bind, 8) + U32(9) + U32(42)));
 
         [Test]
         public void ClearColor() =>
@@ -105,7 +105,7 @@ namespace VL.Qt.Tests
             var w = new CommandWriter();
             w.SetF32Array(1, Protocol.PropertyId.ShapePoints, new float[Protocol.MaxF32ArrayCount]);
             var before = w.Length;
-            Assert.That(before, Is.GreaterThan(CommandWriter.MaxPayload), "the largest array fills the payload to the last 4-byte unit");
+            Assert.That(before, Is.GreaterThan(Protocol.CappedSetPayload), "the largest array fills the payload to the last 4-byte unit");
             Assert.Throws<ArgumentOutOfRangeException>(() => w.SetF32Array(1, Protocol.PropertyId.ShapePoints, new float[Protocol.MaxF32ArrayCount + 1]));
             Assert.That(w.Length, Is.EqualTo(before), "failed command must not leave partial bytes");
         }
@@ -224,7 +224,7 @@ namespace VL.Qt.Tests
             w.Create(1, Protocol.ElementType.Group);
             w.SetBool(1, Protocol.PropertyId.Debug, true);
             w.SetString(1, 257, "abcde");
-            w.Bind(1, 2, 0);
+            w.Bind(1, 2);
             Assert.That(w.Length % Protocol.CommandAlign, Is.Zero);
             Assert.That(w.Count, Is.EqualTo(4));
             for (int i = 0; i < 100; i++) w.SetF32(1, 1, i); // forces growth
@@ -235,10 +235,23 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void PayloadOverU16_Throws()
+        public void LongString_IsOneCommand()
+        {
+            // 100 KB does not fit a u16 payload length; the u32 length of the header carries it.
+            var text = new string('x', 100_000);
+            var bytes = Write(w => w.SetString(2, 257, text));
+            Assert.That(bytes.Length, Is.EqualTo(Protocol.HeaderSize + 8 + 4 + 100_000));
+            Assert.That(Hex(bytes.AsSpan(0, Protocol.HeaderSize + 8 + 4).ToArray()),
+                Is.EqualTo(SetHdr(4 + 100_000, 2, 257, Protocol.ValueType.String) + U32(100_000)));
+        }
+
+        [Test]
+        public void PayloadOverSanityCap_Throws()
         {
             var w = new CommandWriter();
-            Assert.Throws<ArgumentOutOfRangeException>(() => w.SetString(1, 257, new string('x', 70000)));
+            // 8 bytes of SET fields + 4 of length + the string: one byte over the cap.
+            var text = new string('x', Protocol.MaxCommandPayload - 12 + 1);
+            Assert.Throws<ArgumentOutOfRangeException>(() => w.SetString(1, 257, text));
             Assert.That(w.Length, Is.Zero, "failed command must not leave partial bytes");
         }
 
@@ -263,7 +276,7 @@ namespace VL.Qt.Tests
                     w.SetString(i, 257, text);
                     w.SetRef(i, 258, i + 1);
                     w.Reparent(i, 0, i);
-                    w.Bind(i, i, Protocol.Bind.CancelPress);
+                    w.Bind(i, i);
                 }
                 w.EndFrame();
             }
@@ -285,17 +298,34 @@ namespace VL.Qt.Tests
         public void IteratesRecords_WithPaddingAndPayload()
         {
             var buf = Convert.FromHexString(
-                  "0300" + "0800" + "2A000000" + "01000000"                       // HOVER, no payload
-                + "0500" + "0C00" + "07000000" + "02000000" + "03000000"          // CLICK, i32 3
-                + "0100" + "0900" + "01000000" + "00000000" + "FF" + "000000");   // 1-byte payload + padding
+                  "0300" + "0000" + "04000000" + "2A000000"                       // HOVER, no payload
+                + "0500" + "0000" + "08000000" + "07000000" + "03000000"          // CLICK, i32 3
+                + "0100" + "0000" + "05000000" + "01000000" + "FF" + "000000");   // 1-byte payload + padding
 
             var r = new EventReader(buf);
             Assert.That(r.MoveNext(), Is.True);
-            Assert.That((r.Event, r.FeedbackId, r.Index, r.Payload.Length), Is.EqualTo((Protocol.EventId.Hover, 42u, 1u, 0)));
+            Assert.That((r.Event, r.FeedbackId, r.Payload.Length), Is.EqualTo((Protocol.EventId.Hover, 42u, 0)));
             Assert.That(r.MoveNext(), Is.True);
-            Assert.That((r.Event, r.FeedbackId, r.Index, r.ReadI32(0)), Is.EqualTo((Protocol.EventId.Click, 7u, 2u, 3)));
+            Assert.That((r.Event, r.FeedbackId, r.ReadI32(0)), Is.EqualTo((Protocol.EventId.Click, 7u, 3)));
             Assert.That(r.MoveNext(), Is.True);
             Assert.That((r.Event, r.Payload.Length, r.Payload[0]), Is.EqualTo((Protocol.EventId.Measured, 1, (byte)0xFF)));
+            Assert.That(r.MoveNext(), Is.False);
+            Assert.That(r.Error, Is.Null);
+        }
+
+        [Test]
+        public void RecordLongerThan64K()
+        {
+            // The length is a u32: a payload of 70000 bytes is one record.
+            var payload = new byte[70_000];
+            var buf = new byte[Protocol.HeaderSize + Protocol.EventFieldsSize + payload.Length];
+            BitConverter.GetBytes((ushort)Protocol.EventId.Error).CopyTo(buf, 0);
+            BitConverter.GetBytes((uint)(Protocol.EventFieldsSize + payload.Length)).CopyTo(buf, 4);
+            BitConverter.GetBytes(9u).CopyTo(buf, Protocol.HeaderSize);
+
+            var r = new EventReader(buf);
+            Assert.That(r.MoveNext(), Is.True);
+            Assert.That((r.Event, r.FeedbackId, r.Payload.Length), Is.EqualTo((Protocol.EventId.Error, 9u, 70_000)));
             Assert.That(r.MoveNext(), Is.False);
             Assert.That(r.Error, Is.Null);
         }
@@ -308,9 +338,9 @@ namespace VL.Qt.Tests
             Assert.That(r.Error, Is.Null);
         }
 
-        [TestCase("0300" + "0800" + "2A000000")]                 // truncated header
-        [TestCase("0300" + "0400" + "2A000000" + "01000000")]    // len < handle + index
-        [TestCase("0300" + "1000" + "2A000000" + "01000000")]    // len exceeds buffer
+        [TestCase("0300" + "0000" + "04000000")]                 // truncated header
+        [TestCase("0300" + "0000" + "00000000" + "2A000000")]    // len < feedbackId
+        [TestCase("0300" + "0000" + "10000000" + "2A000000")]    // len exceeds buffer
         public void MalformedRecord_StopsWithError(string hex)
         {
             var r = new EventReader(Convert.FromHexString(hex));

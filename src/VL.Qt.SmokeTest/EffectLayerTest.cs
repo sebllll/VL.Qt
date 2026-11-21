@@ -60,11 +60,11 @@ public static class EffectLayerTest
         while (off + 12 <= b.Length)
         {
             var ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
-            var len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
-            if (len < 8 || off + 4 + len > b.Length) break;
-            if (ev == Protocol.EventId.Hover && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)) == feedbackId && len > 8)
+            var len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4));
+            if (len < 4 || off + 8 + len > b.Length) break;
+            if (ev == Protocol.EventId.Hover && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)) == feedbackId && len > 4)
                 flag = b[off + 12] != 0;
-            off += (4 + len + 3) & ~3;
+            off += (8 + len + 3) & ~3;
         }
         return flag;
     }
@@ -132,7 +132,7 @@ public static class EffectLayerTest
         cmd.SetColor(B, Protocol.PropertyId.Color, 0, 1, 0, 1);
         cmd.Reparent(B, Row, 1);
         cmd.Create(H, Protocol.ElementType.HoverHandler);
-        cmd.Bind(H, FeedbackIdH, 0);
+        cmd.Bind(H, FeedbackIdH);
         cmd.Reparent(H, A, 0);
         cmd.Create(T, Protocol.ElementType.Text);
         cmd.SetPlace(T, 450, 300, 300, 220);

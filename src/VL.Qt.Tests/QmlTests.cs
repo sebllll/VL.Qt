@@ -377,7 +377,7 @@ namespace VL.Qt.Tests
         }
 
         private static string Command(uint id, int count, string entries) =>
-            U16(Protocol.Op.SetQmlProperties) + U16(8 + entries.Length / 2) + U32(id) + U16(count) + U16(0) + entries;
+            U16(Protocol.Op.SetQmlProperties) + U16(0) + U32((uint)(8 + entries.Length / 2)) + U32(id) + U16(count) + U16(0) + entries;
 
         private static string Encode(params (string Name, object Value)[] entries)
         {

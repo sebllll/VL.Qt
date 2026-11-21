@@ -57,11 +57,11 @@ public static class EffectPassesTest
         while (off + 12 <= b.Length)
         {
             var ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
-            var len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
-            if (len < 8 || off + 4 + len > b.Length) break;
-            if (ev == Protocol.EventId.Error && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)) == feedbackId)
-                text = Encoding.UTF8.GetString(b.Slice(off + 12, len - 8));
-            off += (4 + len + 3) & ~3;
+            var len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4));
+            if (len < 4 || off + 8 + len > b.Length) break;
+            if (ev == Protocol.EventId.Error && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)) == feedbackId)
+                text = Encoding.UTF8.GetString(b.Slice(off + 12, len - 4));
+            off += (8 + len + 3) & ~3;
         }
         return text;
     }
@@ -189,7 +189,7 @@ public static class EffectPassesTest
         cmd.SetPlace(R, RX, RY, RW, RH);
         cmd.SetColor(R, Protocol.PropertyId.Color, 1, 1, 1, 1);
         cmd.Reparent(R, 0, 0);
-        cmd.Bind(R, FeedbackIdR, 0);
+        cmd.Bind(R, FeedbackIdR);
         cmd.Create(T, Protocol.ElementType.Text);
         cmd.SetPlace(T, 300, 260, 200, 140);
         cmd.SetString(T, Protocol.PropertyId.Text, "MO");
@@ -463,7 +463,7 @@ public static class EffectPassesTest
         cmd.SetPlace(G, GX, GY, GW, GH);
         cmd.SetColor(G, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
         cmd.Reparent(G, 0, 0);
-        cmd.Bind(G, FeedbackIdG, 0);
+        cmd.Bind(G, FeedbackIdG);
         CheckApply("scene");
         s.Pump(4);
         var itemsPlain = Items(w);

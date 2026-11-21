@@ -31,10 +31,10 @@ public static class DebugOverlayTest
         while (off + 12 <= b.Length)
         {
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
-            int len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
-            if (len < 8 || off + 4 + len > b.Length) break;
-            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)), b.Slice(off + 12, len - 8).ToArray()));
-            off += (4 + len + 3) & ~3;
+            int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4));
+            if (len < 4 || off + 8 + len > b.Length) break;
+            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)), b.Slice(off + 12, len - 4).ToArray()));
+            off += (8 + len + 3) & ~3;
         }
         return list;
     }
@@ -97,10 +97,10 @@ public static class DebugOverlayTest
         Rect(Child(Col, 0), Col, 0, 0, 100, 40, 1, 0, 0);
         Rect(Child(Col, 1), Col, 0, 0, 60, 40, 0, 1, 0);
         Rect(Child(Col, 2), Col, 0, 0, 140, 40, 0, 0, 1);
-        cmd.Bind(Child(Col, 1), HHover, 0);
+        cmd.Bind(Child(Col, 1), HHover);
         cmd.Create(HoverId, Protocol.ElementType.HoverHandler);
         cmd.Reparent(HoverId, Child(Col, 1), 0);
-        cmd.Bind(HoverId, HHoverHandler, 0);
+        cmd.Bind(HoverId, HHoverHandler);
         // Text
         cmd.Create(Txt, Protocol.ElementType.Text);
         cmd.SetPlace(Txt, 300, 30, 300, 70);
@@ -143,7 +143,7 @@ public static class DebugOverlayTest
             Child(RowId, 0), Child(RowId, 1), Child(RowId, 2), Rot });
         // Measure feedback on every element (handle = id); the green child keeps its interactive feedback.
         foreach (var id in all)
-            if (id != Child(Col, 1)) cmd.Bind(id, id, 0);
+            if (id != Child(Col, 1)) cmd.Bind(id, id);
         CheckApply("scene");
 
         // Baseline: measured values (MEASURED + SCENE_BOUNDS of every feedback).
@@ -225,9 +225,9 @@ public static class DebugOverlayTest
         // Re-bind every feedback: the first poll after BIND reports the current values, compare with the baseline.
         foreach (var id in all)
         {
-            cmd.Bind(id, 0, 0);
-            if (id == Child(Col, 1)) cmd.Bind(id, HHover, 0);
-            else cmd.Bind(id, id, 0);
+            cmd.Bind(id, 0);
+            if (id == Child(Col, 1)) cmd.Bind(id, HHover);
+            else cmd.Bind(id, id);
         }
         CheckApply("rebind");
         var after = new Dictionary<(ushort, uint), string>();

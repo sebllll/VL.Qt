@@ -587,18 +587,20 @@ namespace VL.Qt
                 return;
             }
             var span = _buffer.AsSpan(0, n);
-            while (span.Length >= 12)
+            // Record: u16 event, u16 flags (0), u32 len, u64 id, payload; len = 8 + payload bytes (see protocol.h).
+            const int idSize = 8;
+            while (span.Length >= Protocol.HeaderSize + idSize)
             {
                 var ev = BinaryPrimitives.ReadUInt16LittleEndian(span);
-                var len = BinaryPrimitives.ReadUInt16LittleEndian(span[2..]);
-                var size = (4 + len + 3) & ~3;
-                if (len < 8 || 4 + len > span.Length)
+                var len = BinaryPrimitives.ReadUInt32LittleEndian(span[4..]);
+                if (len < idSize || len > span.Length - Protocol.HeaderSize)
                 {
                     Logger?.LogError("Malformed resource status record (event {Event}, len {Len}, {Left} bytes left)", ev, len, span.Length);
                     return;
                 }
-                var id = BinaryPrimitives.ReadUInt64LittleEndian(span[4..]);
-                var payload = span.Slice(12, len - 8);
+                var size = (Protocol.HeaderSize + (int)len + 3) & ~3;
+                var id = BinaryPrimitives.ReadUInt64LittleEndian(span[Protocol.HeaderSize..]);
+                var payload = span.Slice(Protocol.HeaderSize + idSize, (int)len - idSize);
                 if (_live.TryGetValue(id, out var resource))
                     Dispatch(resource, ev, payload);
                 span = span[Math.Min(size, span.Length)..];

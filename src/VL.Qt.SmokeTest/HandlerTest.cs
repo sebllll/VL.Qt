@@ -65,14 +65,14 @@ public static partial class HandlerTest
     [Test, Category("input-latency")]
     public static void InputLatency() => Scenario.Run(RunInputLatency);
 
-    private readonly record struct Rec(ushort Event, uint Handle, uint Index, byte[] Payload)
+    private readonly record struct Rec(ushort Event, uint Handle, byte[] Payload)
     {
         public float F(int i) => BinaryPrimitives.ReadSingleLittleEndian(Payload.AsSpan(4 * i));
         public uint U32 => BinaryPrimitives.ReadUInt32LittleEndian(Payload);
         public bool Flag => Payload[0] != 0;
     }
 
-    // u16 event, u16 len, u32 handle, u32 index, payload, 4-aligned.
+    // u16 event, u16 flags, u32 len, u32 handle, payload, 4-aligned.
     private static List<Rec> Parse(ReadOnlySpan<byte> b, Scenario s)
     {
         var list = new List<Rec>();
@@ -80,11 +80,11 @@ public static partial class HandlerTest
         while (off < b.Length)
         {
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
-            int len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
-            if (len < 8 || off + 4 + len > b.Length) { s.Check(false, $"handlers: malformed record at {off}"); break; }
-            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)),
-                BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)), b.Slice(off + 12, len - 8).ToArray()));
-            off += (4 + len + 3) & ~3;
+            int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4));
+            if (len < 4 || off + 8 + len > b.Length) { s.Check(false, $"handlers: malformed record at {off}"); break; }
+            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)),
+                b.Slice(off + 12, len - 4).ToArray()));
+            off += (8 + len + 3) & ~3;
         }
         return list;
     }
@@ -133,7 +133,7 @@ public static partial class HandlerTest
             return null;
         }
         static string S(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
-        bool Flag(List<Rec> recs, ushort ev, uint h, bool v) => Find(recs, ev, h) is { } r && r.Flag == v && r.Index == 0;
+        bool Flag(List<Rec> recs, ushort ev, uint h, bool v) => Find(recs, ev, h) is { } r && r.Flag == v;
         int Count(uint id) => NativeTest.vlqt_test_handler_count(w, id);
 
         // A: two hover handlers (H1 bound before the REPARENT, H2 after). B: no handler (transparent).
@@ -146,13 +146,13 @@ public static partial class HandlerTest
         cmd.Create(B, Protocol.ElementType.Rectangle);
         cmd.SetPlace(B, 400, 100, 100, 100);
         cmd.Reparent(B, 0, 1);
-        cmd.Bind(B, SB, 0); // bound element without handler: no pointer events
+        cmd.Bind(B, SB); // bound element without handler: no pointer events
         cmd.Create(H1, Protocol.ElementType.HoverHandler);
-        cmd.Bind(H1, S1, 0);
+        cmd.Bind(H1, S1);
         cmd.Reparent(H1, A, 7); // index ignored
         cmd.Create(H2, Protocol.ElementType.HoverHandler);
         cmd.Reparent(H2, A, 0);
-        cmd.Bind(H2, S2, 0);
+        cmd.Bind(H2, S2);
         CheckApply("handler scene");
         s.Check(Count(A) == 2 && Count(B) == 0, $"handlers: two handlers at A, none at B ({Count(A)}, {Count(B)})");
 
@@ -205,7 +205,7 @@ public static partial class HandlerTest
         s.Check(recs.Count == 0, $"handlers: move inside -> no records ({S(recs)})");
 
         // New feedback while hovered: old handle HOVER 0, new handle HOVER 1.
-        cmd.Bind(H2, S2b, 0);
+        cmd.Bind(H2, S2b);
         CheckApply("rebind H2");
         recs = Frame();
         s.Check(Flag(recs, Protocol.EventId.Hover, S2, false) && Flag(recs, Protocol.EventId.Hover, S2b, true) && Find(recs, Protocol.EventId.Hover, S1) is null,
@@ -218,7 +218,7 @@ public static partial class HandlerTest
             && Find(recs, Protocol.EventId.Pointer, S1) is null, $"handlers: hover out -> HOVER 0, element without handler silent ({S(recs)})");
 
         // Unbind: no events while hovered; DESTROY of a hovered handler sends HOVER 0.
-        cmd.Bind(H1, 0, 0);
+        cmd.Bind(H1, 0);
         CheckApply("unbind H1");
         Mouse(TestProtocol.Mouse.Move, 150, 150);
         recs = Frame();
@@ -238,7 +238,7 @@ public static partial class HandlerTest
         cmd.Reparent(T, 0, 2);
         cmd.Create(HT, Protocol.ElementType.HoverHandler);
         cmd.Reparent(HT, T, 0);
-        cmd.Bind(HT, ST, 0);
+        cmd.Bind(HT, ST);
         CheckApply("text with hover handler");
         Mouse(TestProtocol.Mouse.Move, 420, 310); // inside the item, left of the right-aligned text
         recs = Frame();
@@ -260,7 +260,7 @@ public static partial class HandlerTest
         cmd.Reparent(H1, 0, 0);
         cmd.Create(A, Protocol.ElementType.HoverHandler); // element id now a handler
         cmd.Reparent(A, H1, 0);
-        cmd.Bind(A, S1, 0);
+        cmd.Bind(A, S1);
         cmd.Create(HT, Protocol.ElementType.HoverHandler);
         cmd.Reparent(HT, H1, 0);
         CheckApply("reuse ids after DESTROY");
@@ -306,7 +306,7 @@ public static partial class HandlerTest
         cmd.Reparent(E, 0, 0);
         cmd.Create(TE, Protocol.ElementType.TapHandler);
         cmd.Reparent(TE, E, 0);
-        cmd.Bind(TE, SE, 0);
+        cmd.Bind(TE, SE);
         var rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"touch: scene ({rc}) {Native.LastError()}");
         cmd.Reset();
@@ -422,7 +422,7 @@ public static partial class HandlerTest
         {
             Cmd.Create(id, type);
             Cmd.Reparent(id, owner, 0);
-            Cmd.Bind(id, feedbackId, 0);
+            Cmd.Bind(id, feedbackId);
         }
 
         public void Dispose()
@@ -439,10 +439,10 @@ public static partial class HandlerTest
             if (r.Event == ev && r.Handle == handle) return r;
         return null;
     }
-    private static bool HasFlag(List<Rec> recs, ushort ev, uint h, bool v) => FindRec(recs, ev, h) is { } r && r.Flag == v && r.Index == 0;
-    private static bool HasU32(List<Rec> recs, ushort ev, uint h, uint v) => FindRec(recs, ev, h) is { } r && r.Payload.Length == 4 && r.U32 == v && r.Index == 0;
+    private static bool HasFlag(List<Rec> recs, ushort ev, uint h, bool v) => FindRec(recs, ev, h) is { } r && r.Flag == v;
+    private static bool HasU32(List<Rec> recs, ushort ev, uint h, uint v) => FindRec(recs, ev, h) is { } r && r.Payload.Length == 4 && r.U32 == v;
     private static bool HasVec(List<Rec> recs, ushort ev, uint h, float x, float y) => FindRec(recs, ev, h) is { } r && r.Payload.Length == 8
-        && r.Index == 0 && r.F(0) == x && r.F(1) == y;
+        && r.F(0) == x && r.F(1) == y;
     private static bool None(List<Rec> recs, uint h) => !recs.Exists(r => r.Handle == h);
     private static string Dump(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
 
@@ -458,7 +458,7 @@ public static partial class HandlerTest
         h.Cmd.Create(TA, Protocol.ElementType.TapHandler);
         h.Cmd.SetI32(TA, Protocol.PropertyId.AcceptedDevices, 0x7FFFFFFF); // set before the REPARENT: applied on creation
         h.Cmd.Reparent(TA, A, 0);
-        h.Cmd.Bind(TA, SA, 0);
+        h.Cmd.Bind(TA, SA);
         h.Handler(TB, Protocol.ElementType.TapHandler, B, SB);
         h.Apply("scene");
         s.Check(h.Count(A) == 1 && h.Count(B) == 1, $"tap: one handler per item ({h.Count(A)}, {h.Count(B)})");
@@ -569,7 +569,7 @@ public static partial class HandlerTest
         h.Mouse(TestProtocol.Mouse.Press, 150, 150);
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.EventId.Press, SA, true), $"tap: pressed before the feedback change ({Dump(recs)})");
-        h.Cmd.Bind(TA, SA2, 0);
+        h.Cmd.Bind(TA, SA2);
         h.Apply("rebind while pressed");
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.EventId.Press, SA, false) && None(recs, SA2), $"tap: feedback change -> old PRESS 0, new silent ({Dump(recs)})");
@@ -641,7 +641,7 @@ public static partial class HandlerTest
         // New feedback while active: old ACTIVE 0, new ACTIVE 1 + current POINTER.
         h.Mouse(TestProtocol.Mouse.Press, 150, 150);
         h.Frame();
-        h.Cmd.Bind(PP, SP2, 0);
+        h.Cmd.Bind(PP, SP2);
         h.Apply("rebind while active");
         recs = h.Frame();
         s.Check(HasFlag(recs, Protocol.EventId.Active, SP, false) && HasFlag(recs, Protocol.EventId.Active, SP2, true) && HasVec(recs, Protocol.EventId.Pointer, SP2, 50, 50),
@@ -728,7 +728,7 @@ public static partial class HandlerTest
         h.Cmd.Create(PN, Protocol.ElementType.PointHandler);
         h.Cmd.SetI32(PN, Protocol.PropertyId.AcceptedButtons, 0);
         h.Cmd.Reparent(PN, P, 0);
-        h.Cmd.Bind(PN, SPN, 0);
+        h.Cmd.Bind(PN, SPN);
         h.Apply("point none created");
         h.Mouse(TestProtocol.Mouse.Move, 150, 150);
         recs = h.Frame();
@@ -772,7 +772,7 @@ public static partial class HandlerTest
         h.Cmd.Create(PZ, Protocol.ElementType.PointHandler);
         h.Cmd.SetI32(PZ, Protocol.PropertyId.AcceptedButtons, 0x1);
         h.Cmd.Reparent(PZ, Z, 0);
-        h.Cmd.Bind(PZ, SPZ, 0);
+        h.Cmd.Bind(PZ, SPZ);
         h.Handler(TU, Protocol.ElementType.TapHandler, U, STU);
         h.Handler(TV, Protocol.ElementType.TapHandler, V, STV);
         h.Handler(PV, Protocol.ElementType.PointHandler, V, SPV);
@@ -903,14 +903,14 @@ public static partial class HandlerTest
 
         // Feedback change: unpolled motion is dropped, the old feedback gets (0, 0) after motion.
         h.Wheel(150, 150, 0, 120);
-        h.Cmd.Bind(WR, SW2, 0);
+        h.Cmd.Bind(WR, SW2);
         h.Apply("rebind");
         recs = h.Frame();
         s.Check(recs.Count == 0, $"wheel: motion before the feedback change is dropped ({Dump(recs)})");
         h.Wheel(150, 150, 0, 240);
         recs = h.Frame();
         s.Check(HasVec(recs, Protocol.EventId.Wheel, SW2, 0, 2), $"wheel: new feedback -> WHEEL (0, 2) ({Dump(recs)})");
-        h.Cmd.Bind(WR, SW, 0);
+        h.Cmd.Bind(WR, SW);
         h.Apply("rebind after motion");
         recs = h.Frame();
         s.Check(HasVec(recs, Protocol.EventId.Wheel, SW2, 0, 0) && None(recs, SW), $"wheel: feedback change after motion -> old (0, 0) ({Dump(recs)})");
@@ -932,7 +932,7 @@ public static partial class HandlerTest
     private static bool At(Harness h, uint feedbackId, float x, float y) => h.Bounds.TryGetValue(feedbackId, out var b) && Near(b.X, x) && Near(b.Y, y);
     private static string Pos(Harness h, uint feedbackId) => h.Bounds.TryGetValue(feedbackId, out var b) ? $"{b.X}, {b.Y}, {b.W}, {b.H}" : "no bounds";
     private static bool HasDrag(List<Rec> recs, uint h, float x, float y) => FindRec(recs, Protocol.EventId.Drag, h) is { } r && r.Payload.Length == 8
-        && r.Index == 0 && Near(r.F(0), x) && Near(r.F(1), y);
+        && Near(r.F(0), x) && Near(r.F(1), y);
 
     // Row-major like Stride: rotation by 90 degrees around z.
     // Rotation by 90 degrees around the center of the 100 x 100 rectangles R (150, 150) / R2 (450, 150), anchor Center.
@@ -947,10 +947,10 @@ public static partial class HandlerTest
         const uint R = 1, R2 = 2, D = 10, D2 = 11;
         const uint SR = 31, SR2 = 32, SD = 41, SD2 = 42;
         h.Rect(R, 100, 100, 100, 100, 0);
-        h.Cmd.Bind(R, SR, 0);
+        h.Cmd.Bind(R, SR);
         h.Handler(D, Protocol.ElementType.DragHandler, R, SD);
         h.Rect(R2, 400, 100, 100, 100, 1);
-        h.Cmd.Bind(R2, SR2, 0);
+        h.Cmd.Bind(R2, SR2);
         h.Handler(D2, Protocol.ElementType.DragHandler, R2, SD2);
         h.Apply("scene");
         h.Frame();
@@ -1047,7 +1047,7 @@ public static partial class HandlerTest
         s.Check(HasDrag(recs, SD, 40, 20) && At(h, SR, 100, 100), $"drag: MOVES_ELEMENT off -> DRAG (40, 20), item stays ({Dump(recs)}; {Pos(h, SR)})");
 
         // Feedback change after a drag: the new feedback starts without a drag value; DESTROY sends ACTIVE 0 while dragging.
-        h.Cmd.Bind(D, 43, 0);
+        h.Cmd.Bind(D, 43);
         h.Apply("rebind");
         recs = h.Frame();
         s.Check(None(recs, 43), $"drag: new feedback after a drag -> nothing ({Dump(recs)})");
@@ -1072,14 +1072,14 @@ public static partial class HandlerTest
         h.Cmd.Create(Row, Protocol.ElementType.Row);
         h.Cmd.SetPlace(Row, 100, 100, 0, 0);
         h.Cmd.Reparent(Row, 0, 0);
-        h.Cmd.Bind(Row, SRow, 0);
+        h.Cmd.Bind(Row, SRow);
         uint i = 0;
         foreach (var (id, feedbackId) in new[] { (A, SA), (B, SB), (C, SC) })
         {
             h.Cmd.Create(id, Protocol.ElementType.Rectangle);
             h.Cmd.SetPlace(id, 0, 0, 50, 50);
             h.Cmd.Reparent(id, Row, i++);
-            h.Cmd.Bind(id, feedbackId, 0);
+            h.Cmd.Bind(id, feedbackId);
         }
         h.Handler(D, Protocol.ElementType.DragHandler, B, SD);
         h.Apply("scene");
@@ -1112,15 +1112,15 @@ public static partial class HandlerTest
         h.Cmd.Create(G, Protocol.ElementType.Group);
         h.Cmd.SetPlace(G, 100, 100, 0, 0);
         h.Cmd.Reparent(G, 0, 0);
-        h.Cmd.Bind(G, SG, 0);
+        h.Cmd.Bind(G, SG);
         h.Cmd.Create(A, Protocol.ElementType.Rectangle);
         h.Cmd.SetPlace(A, 0, 0, 100, 100);
         h.Cmd.Reparent(A, G, 0);
-        h.Cmd.Bind(A, SA, 0);
+        h.Cmd.Bind(A, SA);
         h.Cmd.Create(B, Protocol.ElementType.Rectangle);
         h.Cmd.SetPlace(B, 150, 50, 50, 50);
         h.Cmd.Reparent(B, G, 1);
-        h.Cmd.Bind(B, SB, 0);
+        h.Cmd.Bind(B, SB);
         h.Handler(DG, Protocol.ElementType.DragHandler, G, SDG);
         h.Handler(DB, Protocol.ElementType.DragHandler, B, SDB);
         h.Apply("scene");
@@ -1147,11 +1147,11 @@ public static partial class HandlerTest
         const uint P = 1, K = 2, DP = 10, DK = 11;
         const uint SP = 30, SK = 31, SDP = 41, SDK = 42;
         h.Rect(P, 100, 100, 300, 200, 0);
-        h.Cmd.Bind(P, SP, 0);
+        h.Cmd.Bind(P, SP);
         h.Cmd.Create(K, Protocol.ElementType.Rectangle);
         h.Cmd.SetPlace(K, 50, 50, 50, 50);
         h.Cmd.Reparent(K, P, 0);
-        h.Cmd.Bind(K, SK, 0);
+        h.Cmd.Bind(K, SK);
         h.Handler(DP, Protocol.ElementType.DragHandler, P, SDP);
         h.Handler(DK, Protocol.ElementType.DragHandler, K, SDK);
         h.Apply("scene");
