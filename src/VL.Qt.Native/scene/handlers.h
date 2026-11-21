@@ -242,6 +242,9 @@ public:
     /* Wheel handler: notches accumulated since the last call (angleDelta / 120), reset to 0. False if none. */
     bool takeWheel(QObject* wheel, float out[2]);
 
+    /* collectTouchPoints: the payload being built, swapped with HandlerSent::touch on change (capacity reused). */
+    QByteArray touchScratch;
+
 private:
     QObject* create(QQmlComponent*& comp, const char* qml, const char* url, QQuickItem* item);
 
