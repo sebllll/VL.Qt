@@ -232,14 +232,28 @@ src/VL.Qt/                  # C# library
     ICommandSink.cs         # target of the reconciler's commands
     Protocol.cs             # IDs mirrored from protocol.h
 src/VL.Qt.Native/           # QtNative (C++)
+  vlqt.h                    # C API (the exports of all groups)
+  vlqt_test.h               # test exports, in every build
   protocol.h                # shared type/property/event IDs
-  vlqt.h/cpp                # C API (app, window, rendering)
+  app/                      # app lifecycle, pump, logging, last error, fonts, animation clock, render gate
+  window/                   # windows and their exports, event filters, focus, touch input
+  platform/                 # platform code (Windows, Linux)
   scene/                    # scene of a window: object table, command decoder, events, input handlers
   elements/                 # element types (type_*.cpp), their table, geometry, Group frame, effect sources
-  device.h/cpp              # shared D3D11 device, device loss
+  effects/                  # effect chain, Shader item and its material, layer requests
   resources/                # resource manager (resources.h, resource_*.h/cpp), pixel formats
-  *_resource.h/cpp          # images, shaders, snapshots
+  offscreen/                # QtTexture scenes: binding, rendering, input, exports, linear pass
   diagnostics/              # perf monitor (perf_*), F2/F5 overlays, debug overlay
+  test/                     # the test exports of vlqt_test.h
+  testkit/                  # vlqt_testkit, the stand-in D3D11 device of the SmokeTest (not packed)
+  device.h/cpp              # shared D3D11 device, device loss
+  render_thread.h/cpp       # Qt render threads of the QtTexture scenes
+  *_resource.h/cpp          # images, shaders, snapshots
+  qtimageitem.h/cpp         # Image element: draws an image resource
+  image_writer.h/cpp        # writes pixels to an image file (vlqt_image_write_file)
+  qmlitem.h/cpp             # QmlElement: loads a user .qml file
+  vlstyle.h/cpp             # VlStyle, the attached style of the Controls
+  audio_tap.h/cpp           # audio tap: the sound of a Video element as samples
 src/VL.Qt.Tests/            # C# unit tests
 src/VL.Qt.SmokeTest/        # native smoke + perf tests
 src/VL.Qt.Probe/            # one Qt window from C# without vvvv
