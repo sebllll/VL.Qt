@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 
 class QQmlComponent;
@@ -72,35 +73,51 @@ struct EffectComponents {
  * (layoutPyramid on a size / dpr change; passes beyond n stay in the pool, unsampled, until the stage goes); the radius
  * writes the weights only. Values only on the same structure (kind and template): no new item.
  *
- * links is the desired state; the stages exist while the root does (a recreated root rebuilds them). The mask fields of
- * a link are kept by Elements (frame items, protocol.h mask rule); a stage binds its mask frame's layer.sourceRect to the
- * stage's effect area. */
+ * The links are the desired state; the stages exist while the root does (a recreated root rebuilds them). The mask fields
+ * of a link (MultiPart) are kept by Elements (frame items, protocol.h mask rule); a stage binds its mask frame's
+ * layer.sourceRect to the stage's effect area. */
 class EffectChain final : public QObject
 {
     Q_OBJECT
 public:
+    /* MULTI: the values of one MultiEffect run and its mask (kept by Elements, see link()). */
+    struct MultiPart {
+        QVariant values[kEffectMultiKeys]; // values as written to the MultiEffect (Qt defaults if unset)
+        QQuickItem* mask = nullptr;        // attached mask element's item (Elements, Scene::setEffectChain)
+        QQuickItem* maskFrame = nullptr;   // hidden layer item holding mask in the element's parent coordinates
+        QObject* maskFrameXf = nullptr;    // Matrix4x4 of the frame's inner item (Elements::updateMaskFrame)
+    };
+
+    /* SHADER (every template): shaders, uniform table and the link's own problems. */
+    struct ShaderPart {
+        quint16 templ = 0;                   // VLQT_EFFECT_TEMPLATE_*
+        quint64 shader = 0;                  // fragment shader resource id (0 = pass-through; PYRAMID: prefilter)
+        quint64 shader2 = 0;                 // PYRAMID: composite
+        float strength = 0.f;                // PYRAMID: radius in DIP
+        std::vector<EffectUniform> uniforms; // table without the reserved and broken entries
+        QStringList problems;                // content problems of the link itself (reserved names, refs, ...)
+        QString shaderError;                 // setShader refused the id
+    };
+
+    /* SHADER PYRAMID: the passes under the stage and the layout they were made for. */
+    struct PyramidPasses {
+        std::vector<ShaderItem*> down; // D1 .. (pool, children of stage), down[0] = prefilter
+        std::vector<ShaderItem*> up;   // U1 .. (pool)
+        int levels = 0;                // n in use (0 = not laid out)
+        QSize px;                      // p_0 of the layout
+        qreal dpr = 0;                 // dpr of the layout
+    };
+
+    /* One link of the chain: what every kind has, and one part per kind (the parts of other kinds stay empty). */
     struct Link {
-        quint16 kind = 0;                   // VLQT_EFFECT_CHAIN_LINK_*
-        QVariant values[kEffectMultiKeys];  // MULTI: values as written to the MultiEffect (Qt defaults if unset)
-        QRectF padding;                     // MULTI PADDING_RECT / SHADER padding: x left, y top, w right, h bottom (DIP)
-        QQuickItem* mask = nullptr;         // MULTI: attached mask element's item (Elements, Scene::setEffectChain)
-        QQuickItem* maskFrame = nullptr;    // hidden layer item holding mask in the element's parent coordinates
-        QObject* maskFrameXf = nullptr;     // Matrix4x4 of the frame's inner item (Elements::updateMaskFrame)
-        QPointer<QQuickItem> stage;         // item of the link under the root (null while there is no root)
-        QQuickItem* fx = nullptr;           // MultiEffect / ShaderItem (SHADER pass 1) inside stage
-        QQuickItem* fx2 = nullptr;          // SHADER: pass 2 (drawn for TWO_PASS)
-        quint16 templ = 0;                  // SHADER: VLQT_EFFECT_TEMPLATE_*
-        quint64 shader = 0;                 // SHADER: fragment shader resource id (0 = pass-through; PYRAMID: prefilter)
-        quint64 shader2 = 0;                // PYRAMID: composite
-        std::vector<ShaderItem*> down; // PYRAMID: D1 .. (pool, children of stage), down[0] = prefilter
-        std::vector<ShaderItem*> up;   // PYRAMID: U1 .. (pool)
-        int levels = 0;                     // PYRAMID: n in use (0 = not laid out)
-        QSize px;                           // PYRAMID: p_0 of the layout
-        qreal dpr = 0;                      // PYRAMID: dpr of the layout
-        float strength = 0.f;               // PYRAMID: radius in DIP
-        std::vector<EffectUniform> uniforms; // SHADER: table without the reserved and broken entries
-        QStringList problems;               // SHADER: content problems of the link itself (reserved names, refs, ...)
-        QString shaderError;                // SHADER: setShader refused the id
+        quint16 kind = 0;           // VLQT_EFFECT_CHAIN_LINK_*
+        QRectF padding;             // MULTI PADDING_RECT / SHADER padding: x left, y top, w right, h bottom (DIP)
+        QPointer<QQuickItem> stage; // item of the link under the root (null while there is no root)
+        QQuickItem* fx = nullptr;   // MultiEffect / ShaderItem (SHADER pass 1) inside stage
+        QQuickItem* fx2 = nullptr;  // SHADER: pass 2 (drawn for TWO_PASS)
+        MultiPart multi;            // kind MULTI
+        ShaderPart shader;          // kind SHADER
+        PyramidPasses pyramid;      // kind SHADER, template PYRAMID
     };
 
     /* Mask state a link gave up (Elements retires the frame). */
@@ -118,7 +135,7 @@ public:
      * not be created (QML error). */
     bool apply(const EffectChainDesc& desc, const std::vector<QQuickItem*>& masks, std::vector<QPointer<QQuickItem>>& retired,
         std::vector<DroppedMask>& dropped, std::string& err);
-    /* Writes links[i].maskFrame to its stage (nullptr = no mask). */
+    /* Writes link(i).multi.maskFrame to its stage (nullptr = no mask). */
     void syncMaskFrame(size_t i);
     /* layer.effect component (registers the root type once). nullptr + err on a QML error. */
     QQmlComponent* rootComponent(std::string& err);
@@ -126,9 +143,12 @@ public:
     /* Content problems of the links (EVENT_ERROR text: one line each, "link N: ..."), empty = none. */
     const QString& error() const { return m_error; }
 
-    std::vector<Link> links;
+    /* The links in application order (the desired state); Elements keeps the mask fields of MultiPart through link(). */
+    size_t linkCount() const { return m_links.size(); }
+    Link& link(size_t i) { return m_links[i]; }
+    const Link& link(size_t i) const { return m_links[i]; }
     /* Called after the stages were (re)built, with the first stage (Group frame: frameLeft/frameTop). */
-    std::function<void(QQuickItem* first)> built;
+    void setBuiltHandler(std::function<void(QQuickItem* first)> handler) { m_built = std::move(handler); }
 
 private:
     friend class EffectChainItem;
@@ -147,6 +167,8 @@ private:
     EffectComponents& m_components;
     QPointer<QQuickItem> m_root;
     QString m_error;
+    std::vector<Link> m_links;
+    std::function<void(QQuickItem* first)> m_built;
 };
 
 } // namespace vlqt

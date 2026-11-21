@@ -293,19 +293,19 @@ bool EffectChain::apply(const EffectChainDesc& desc, const std::vector<QQuickIte
         l.kind = d.kind;
         if (d.kind == VLQT_EFFECT_CHAIN_LINK_MULTI) {
             for (int k = 0; k < kEffectMultiKeys; ++k)
-                l.values[k] = multiDefault(k);
+                l.multi.values[k] = multiDefault(k);
             for (const EffectMultiEntry& e : d.multi) {
                 if (e.prop == VLQT_MULTI_EFFECT_KEY_PADDING_RECT)
                     l.padding = QRectF(e.value.f[0], e.value.f[1], e.value.f[2], e.value.f[3]);
                 else if (e.prop != VLQT_MULTI_EFFECT_KEY_MASK_SOURCE)
-                    l.values[multiIndex(e.prop)] = toVariant(e.value);
+                    l.multi.values[multiIndex(e.prop)] = toVariant(e.value);
             }
-            l.mask = i < masks.size() ? masks[i] : nullptr;
+            l.multi.mask = i < masks.size() ? masks[i] : nullptr;
         } else {
-            l.templ = d.templ;
-            l.shader = d.shaders.empty() ? 0 : d.shaders[0]; // PYRAMID: prefilter
+            l.shader.templ = d.templ;
+            l.shader.shader = d.shaders.empty() ? 0 : d.shaders[0]; // PYRAMID: prefilter
             if (d.templ == VLQT_EFFECT_TEMPLATE_PYRAMID)
-                l.shader2 = d.shaders.size() > 1 ? d.shaders[1] : 0;
+                l.shader.shader2 = d.shaders.size() > 1 ? d.shaders[1] : 0;
             float pad[4];
             bool negative = false;
             for (int k = 0; k < 4; ++k) {
@@ -313,60 +313,56 @@ bool EffectChain::apply(const EffectChainDesc& desc, const std::vector<QQuickIte
                 negative = negative || !(d.padding[k] >= 0.f);
             }
             if (negative)
-                l.problems << QStringLiteral("padding must not be negative (0 is used)");
+                l.shader.problems << QStringLiteral("padding must not be negative (0 is used)");
             l.padding = QRectF(pad[0], pad[1], pad[2], pad[3]);
-            l.strength = d.strength >= 0.f ? d.strength : 0.f;
+            l.shader.strength = d.strength >= 0.f ? d.strength : 0.f;
             if (!(d.strength >= 0.f))
-                l.problems << QStringLiteral("strength must not be negative (0 is used)");
+                l.shader.problems << QStringLiteral("strength must not be negative (0 is used)");
             for (const EffectUniform& u : d.uniforms) {
                 const QString name = QString::fromUtf8(u.name);
                 if (reservedName(u.name))
-                    l.problems << QStringLiteral("uniform '%1' is reserved (set by VL.Qt)").arg(name);
+                    l.shader.problems << QStringLiteral("uniform '%1' is reserved (set by VL.Qt)").arg(name);
                 else if (u.refError)
-                    l.problems << QStringLiteral("uniform '%1': %2").arg(name, QString::fromUtf8(u.refError));
+                    l.shader.problems << QStringLiteral("uniform '%1': %2").arg(name, QString::fromUtf8(u.refError));
                 else
-                    l.uniforms.push_back(u);
+                    l.shader.uniforms.push_back(u);
             }
         }
     }
     // A mask that stays attached keeps its frame, also in another link.
-    for (const Link& o : links) {
-        if (!o.mask)
+    for (const Link& o : m_links) {
+        if (!o.multi.mask)
             continue;
-        auto it = std::find_if(next.begin(), next.end(), [&](const Link& n) { return n.mask == o.mask; });
+        auto it = std::find_if(next.begin(), next.end(), [&](const Link& n) { return n.multi.mask == o.multi.mask; });
         if (it != next.end()) {
-            it->maskFrame = o.maskFrame;
-            it->maskFrameXf = o.maskFrameXf;
+            it->multi.maskFrame = o.multi.maskFrame;
+            it->multi.maskFrameXf = o.multi.maskFrameXf;
         } else {
-            dropped.push_back({o.mask, o.maskFrame});
+            dropped.push_back({o.multi.mask, o.multi.maskFrame});
         }
     }
 
-    bool same = m_root && next.size() == links.size();
+    bool same = m_root && next.size() == m_links.size();
     for (size_t i = 0; same && i < next.size(); ++i)
-        same = next[i].kind == links[i].kind && next[i].templ == links[i].templ && links[i].stage;
+        same = next[i].kind == m_links[i].kind && next[i].shader.templ == m_links[i].shader.templ && m_links[i].stage;
     if (same) {
         // Same structure: values only, where they changed (no new item, no shader switch). Swapped first: a PYRAMID
-        // stage lays out again on a size change of its own (layoutPyramid finds its link in links).
+        // stage lays out again on a size change of its own (layoutPyramid finds its link in m_links).
         for (size_t i = 0; i < next.size(); ++i) {
             Link& n = next[i];
-            const Link& o = links[i];
+            const Link& o = m_links[i];
             n.stage = o.stage;
             n.fx = o.fx;
             n.fx2 = o.fx2;
-            n.down = o.down;
-            n.up = o.up;
-            n.levels = o.levels;
-            n.px = o.px;
-            n.dpr = o.dpr;
+            n.pyramid = o.pyramid;
         }
-        links.swap(next);
-        for (size_t i = 0; i < links.size(); ++i)
-            writeLink(links[i], &next[i]);
+        m_links.swap(next);
+        for (size_t i = 0; i < m_links.size(); ++i)
+            writeLink(m_links[i], &next[i]);
         updateError();
         return true;
     }
-    for (Link& o : links) {
+    for (Link& o : m_links) {
         if (!o.stage)
             continue;
         if (o.kind == VLQT_EFFECT_CHAIN_LINK_MULTI)
@@ -376,7 +372,7 @@ bool EffectChain::apply(const EffectChainDesc& desc, const std::vector<QQuickIte
         o.stage->setVisible(false);
         retired.emplace_back(o.stage);
     }
-    links.swap(next);
+    m_links.swap(next);
     const bool ok = !m_root || buildStages(err);
     updateError();
     return ok;
@@ -384,9 +380,9 @@ bool EffectChain::apply(const EffectChainDesc& desc, const std::vector<QQuickIte
 
 void EffectChain::syncMaskFrame(size_t i)
 {
-    Link& l = links[i];
+    Link& l = m_links[i];
     if (l.stage && l.kind == VLQT_EFFECT_CHAIN_LINK_MULTI)
-        l.stage->setProperty("maskFrame", QVariant::fromValue<QQuickItem*>(l.maskFrame));
+        l.stage->setProperty("maskFrame", QVariant::fromValue<QQuickItem*>(l.multi.maskFrame));
 }
 
 void EffectChain::attach(QQuickItem* root)
@@ -404,8 +400,8 @@ bool EffectChain::buildStages(std::string& err)
     QQuickItem* root = m_root;
     auto* src = qobject_cast<QQuickItem*>(static_cast<EffectChainItem*>(root)->source());
     QQuickItem* prev = nullptr;
-    for (size_t i = 0; i < links.size(); ++i) {
-        Link& l = links[i];
+    for (size_t i = 0; i < m_links.size(); ++i) {
+        Link& l = m_links[i];
         const bool multi = l.kind == VLQT_EFFECT_CHAIN_LINK_MULTI;
         QQmlComponent* c = multi
             ? compile(m_components.engine, m_components.multi, kMultiStageQml, "vlqt_effect_multi.qml", err)
@@ -430,18 +426,18 @@ bool EffectChain::buildStages(std::string& err)
             l.fx->setProperty("source", QVariant::fromValue<QQuickItem*>(input));
         } else {
             stage->setProperty("tex", QVariant::fromValue<QQuickItem*>(input));
-            stage->setProperty("twoPass", l.templ == VLQT_EFFECT_TEMPLATE_TWO_PASS);
+            stage->setProperty("twoPass", l.shader.templ == VLQT_EFFECT_TEMPLATE_TWO_PASS);
             auto* p1 = static_cast<ShaderItem*>(l.fx);
             p1->setChainPass(true);
             p1->setSource(input);
             connect(p1, &ShaderItem::errorChanged, this, &EffectChain::updateError);
-            if (l.templ == VLQT_EFFECT_TEMPLATE_PYRAMID) {
+            if (l.shader.templ == VLQT_EFFECT_TEMPLATE_PYRAMID) {
                 // p1 = composite; its texelSize is the one of the glow / shadow texture. The passes follow the stage.
                 p1->setTexelSamplers({QByteArrayLiteral("glow"), QByteArrayLiteral("shadow")});
                 connect(p1, &ShaderItem::rebuilt, this, &EffectChain::updateError);
                 const QPointer<QQuickItem> st = stage;
                 const auto relayout = [this, st] {
-                    for (Link& x : links)
+                    for (Link& x : m_links)
                         if (x.stage == st) {
                             layoutPyramid(x);
                             return;
@@ -458,7 +454,7 @@ bool EffectChain::buildStages(std::string& err)
                 // elementRect follows the stage area (grows with the padding of earlier links) and the element's size
                 const QPointer<QQuickItem> st = stage;
                 const auto place = [this, st] {
-                    for (Link& x : links)
+                    for (Link& x : m_links)
                         if (x.stage == st) {
                             writeElementRect(x);
                             return;
@@ -471,14 +467,14 @@ bool EffectChain::buildStages(std::string& err)
             }
         }
         writeLink(l, nullptr);
-        const bool last = i + 1 == links.size();
+        const bool last = i + 1 == m_links.size();
         stage->setVisible(last);
         if (!last)
             setLayerEnabled(stage, true); // texture provider of the next link
         prev = stage;
     }
-    if (built)
-        built(links.empty() ? nullptr : links.front().stage.data());
+    if (m_built)
+        m_built(m_links.empty() ? nullptr : m_links.front().stage.data());
     return true;
 }
 
@@ -500,13 +496,13 @@ void EffectChain::writeLink(Link& l, const Link* old)
             if (!p.isValid())
                 continue;
             // Only on change: blurEnabled/shadowEnabled/blurMax switch the MultiEffect's shaders.
-            if (l.values[k] == (old ? old->values[k] : multiDefault(k)))
+            if (l.multi.values[k] == (old ? old->multi.values[k] : multiDefault(k)))
                 continue;
-            if (!p.write(l.fx, l.values[k]))
+            if (!p.write(l.fx, l.multi.values[k]))
                 qCWarning(lcEffectChain, "writing MultiEffect.%s failed", p.name());
         }
-        if (l.maskFrame != (old ? old->maskFrame : nullptr))
-            l.stage->setProperty("maskFrame", QVariant::fromValue<QQuickItem*>(l.maskFrame));
+        if (l.multi.maskFrame != (old ? old->multi.maskFrame : nullptr))
+            l.stage->setProperty("maskFrame", QVariant::fromValue<QQuickItem*>(l.multi.maskFrame));
     } else {
         writeShaderLink(l, old);
     }
@@ -516,36 +512,36 @@ void EffectChain::writeLink(Link& l, const Link* old)
 
 void EffectChain::writeShaderLink(Link& l, const Link* old)
 {
-    if (l.templ == VLQT_EFFECT_TEMPLATE_PYRAMID) {
+    if (l.shader.templ == VLQT_EFFECT_TEMPLATE_PYRAMID) {
         writePyramidLink(l, old);
         return;
     }
     auto* p1 = static_cast<ShaderItem*>(l.fx);
     auto* p2 = static_cast<ShaderItem*>(l.fx2);
-    const bool two = l.templ == VLQT_EFFECT_TEMPLATE_TWO_PASS;
-    if (!old || old->shader != l.shader) {
+    const bool two = l.shader.templ == VLQT_EFFECT_TEMPLATE_TWO_PASS;
+    if (!old || old->shader.shader != l.shader.shader) {
         std::string err, ignored;
-        l.shaderError.clear();
-        if (!p1->setShader(VLQT_SHADER_STAGE_FRAGMENT, l.shader, err)) {
-            l.shaderError = QString::fromStdString(err);
+        l.shader.shaderError.clear();
+        if (!p1->setShader(VLQT_SHADER_STAGE_FRAGMENT, l.shader.shader, err)) {
+            l.shader.shaderError = QString::fromStdString(err);
             p1->setShader(VLQT_SHADER_STAGE_FRAGMENT, 0, ignored); // pass-through
         }
         if (two)
-            p2->setShader(VLQT_SHADER_STAGE_FRAGMENT, l.shaderError.isEmpty() ? l.shader : 0, ignored);
+            p2->setShader(VLQT_SHADER_STAGE_FRAGMENT, l.shader.shaderError.isEmpty() ? l.shader.shader : 0, ignored);
     } else {
-        l.shaderError = old->shaderError;
+        l.shader.shaderError = old->shader.shaderError;
     }
     // Same names and types as before: values only (no layout rebuild in the passes).
-    bool sameTable = old && old->uniforms.size() == l.uniforms.size();
-    for (size_t i = 0; sameTable && i < l.uniforms.size(); ++i)
-        sameTable = old->uniforms[i].name == l.uniforms[i].name && old->uniforms[i].value.type == l.uniforms[i].value.type;
+    bool sameTable = old && old->shader.uniforms.size() == l.shader.uniforms.size();
+    for (size_t i = 0; sameTable && i < l.shader.uniforms.size(); ++i)
+        sameTable = old->shader.uniforms[i].name == l.shader.uniforms[i].name && old->shader.uniforms[i].value.type == l.shader.uniforms[i].value.type;
     unsigned char value[sizeof(EffectValue::f)];
     for (ShaderItem* p : {p1, p2}) {
         if (p == p2 && !two)
             break;
         p->setOptionalUniforms({QByteArrayLiteral("elementRect"), QByteArrayLiteral("passIndex")});
         p->beginUniforms(!sameTable);
-        for (const EffectUniform& u : l.uniforms) {
+        for (const EffectUniform& u : l.shader.uniforms) {
             wireValue(u.value, value);
             p->setUniform(u.name.constData(), int(u.name.size()), u.value.type, value, u.refItem);
         }
@@ -562,14 +558,14 @@ void EffectChain::writeShaderLink(Link& l, const Link* old)
 // in element coordinates (x, y negative where earlier links grew it). A texture that sits on the element maps itself with it.
 void EffectChain::writeElementRect(Link& l)
 {
-    if (!l.stage || !m_root || l.kind != VLQT_EFFECT_CHAIN_LINK_SHADER || l.templ == VLQT_EFFECT_TEMPLATE_PYRAMID)
+    if (!l.stage || !m_root || l.kind != VLQT_EFFECT_CHAIN_LINK_SHADER || l.shader.templ == VLQT_EFFECT_TEMPLATE_PYRAMID)
         return;
     const qreal w = l.stage->width(), h = l.stage->height();
     if (w <= 0 || h <= 0)
         return;
     const float rect[4] = {float(-l.stage->x() / w), float(-l.stage->y() / h), float(m_root->width() / w), float(m_root->height() / h)};
     for (QQuickItem* item : {l.fx, l.fx2}) {
-        if (!item || (item == l.fx2 && l.templ != VLQT_EFFECT_TEMPLATE_TWO_PASS))
+        if (!item || (item == l.fx2 && l.shader.templ != VLQT_EFFECT_TEMPLATE_TWO_PASS))
             continue;
         auto* p = static_cast<ShaderItem*>(item);
         p->beginUniforms(false);
@@ -584,31 +580,31 @@ void EffectChain::writePyramidLink(Link& l, const Link* old)
 {
     auto* c = static_cast<ShaderItem*>(l.fx);
     layoutPyramid(l); // the first write creates the passes
-    if (l.down.empty())
+    if (l.pyramid.down.empty())
         return;
-    ShaderItem* d1 = l.down[0];
-    if (!old || old->shader != l.shader || old->shader2 != l.shader2) {
+    ShaderItem* d1 = l.pyramid.down[0];
+    if (!old || old->shader.shader != l.shader.shader || old->shader.shader2 != l.shader.shader2) {
         std::string err, ignored;
         QStringList errors;
-        if (!d1->setShader(VLQT_SHADER_STAGE_FRAGMENT, l.shader, err)) {
+        if (!d1->setShader(VLQT_SHADER_STAGE_FRAGMENT, l.shader.shader, err)) {
             errors << QStringLiteral("prefilter: ") + QString::fromStdString(err);
             d1->setShader(VLQT_SHADER_STAGE_FRAGMENT, 0, ignored); // pass-through
         }
         err.clear();
-        if (!c->setShader(VLQT_SHADER_STAGE_FRAGMENT, l.shader2, err)) {
+        if (!c->setShader(VLQT_SHADER_STAGE_FRAGMENT, l.shader.shader2, err)) {
             errors << QStringLiteral("composite: ") + QString::fromStdString(err);
             c->setShader(VLQT_SHADER_STAGE_FRAGMENT, 0, ignored);
         }
-        l.shaderError = errors.join(QStringLiteral("; "));
+        l.shader.shaderError = errors.join(QStringLiteral("; "));
     } else {
-        l.shaderError = old->shaderError;
+        l.shader.shaderError = old->shader.shaderError;
     }
-    bool sameTable = old && old->uniforms.size() == l.uniforms.size();
-    for (size_t i = 0; sameTable && i < l.uniforms.size(); ++i)
-        sameTable = old->uniforms[i].name == l.uniforms[i].name && old->uniforms[i].value.type == l.uniforms[i].value.type;
+    bool sameTable = old && old->shader.uniforms.size() == l.shader.uniforms.size();
+    for (size_t i = 0; sameTable && i < l.shader.uniforms.size(); ++i)
+        sameTable = old->shader.uniforms[i].name == l.shader.uniforms[i].name && old->shader.uniforms[i].value.type == l.shader.uniforms[i].value.type;
     if (!sameTable) {
         std::vector<QByteArray> names;
-        for (const EffectUniform& u : l.uniforms)
+        for (const EffectUniform& u : l.shader.uniforms)
             names.push_back(u.name);
         d1->setOptionalUniforms(names);
         names.push_back(QByteArrayLiteral("glow"));
@@ -616,11 +612,11 @@ void EffectChain::writePyramidLink(Link& l, const Link* old)
         c->setOptionalUniforms(std::move(names));
     }
     unsigned char value[sizeof(EffectValue::f)];
-    const double level = pyramidLevel(l.strength, l.dpr);
-    QQuickItem* top = l.levels > 1 ? static_cast<QQuickItem*>(l.up[0]) : d1;
+    const double level = pyramidLevel(l.shader.strength, l.pyramid.dpr);
+    QQuickItem* top = l.pyramid.levels > 1 ? static_cast<QQuickItem*>(l.pyramid.up[0]) : d1;
     for (ShaderItem* p : {d1, c}) {
         p->beginUniforms(!sameTable);
-        for (const EffectUniform& u : l.uniforms) {
+        for (const EffectUniform& u : l.shader.uniforms) {
             wireValue(u.value, value);
             p->setUniform(u.name.constData(), int(u.name.size()), u.value.type, value, u.refItem);
         }
@@ -631,7 +627,7 @@ void EffectChain::writePyramidLink(Link& l, const Link* old)
         }
         p->endUniforms();
     }
-    if (!old || old->strength != l.strength)
+    if (!old || old->shader.strength != l.shader.strength)
         writePyramidWeights(l);
 }
 
@@ -642,15 +638,15 @@ void EffectChain::layoutPyramid(Link& l)
         return;
     // Without a window only the first layout (the passes must exist for writePyramidLink); a stage leaving its window
     // (layer off, root going) keeps its passes as they are.
-    if (!stage->window() && l.levels > 0)
+    if (!stage->window() && l.pyramid.levels > 0)
         return;
     auto* c = static_cast<ShaderItem*>(l.fx);
     const qreal dpr = stage->window() ? stage->window()->effectiveDevicePixelRatio() : 1.0;
     const QSize p0(std::max(1, qRound(stage->width() * dpr)), std::max(1, qRound(stage->height() * dpr)));
-    if (l.levels > 0 && p0 == l.px && dpr == l.dpr)
+    if (l.pyramid.levels > 0 && p0 == l.pyramid.px && dpr == l.pyramid.dpr)
         return;
-    l.px = p0;
-    l.dpr = dpr;
+    l.pyramid.px = p0;
+    l.pyramid.dpr = dpr;
     // Step sizes in pixels: each the ceiling of half the one above, down to the first under 4 px on the smaller side.
     QSize px[kMaxLevels + 1];
     px[0] = p0;
@@ -670,37 +666,37 @@ void EffectChain::layoutPyramid(Link& l)
             p->setShader(VLQT_SHADER_STAGE_FRAGMENT, shader, ignored);
         return p;
     };
-    if (l.down.empty()) {
+    if (l.pyramid.down.empty()) {
         ShaderItem* d1 = make(0); // prefilter: shader and table by writePyramidLink
         connect(d1, &ShaderItem::errorChanged, this, &EffectChain::updateError);
         connect(d1, &ShaderItem::rebuilt, this, &EffectChain::updateError);
-        l.down.push_back(d1);
+        l.pyramid.down.push_back(d1);
     }
-    while (int(l.down.size()) < n)
-        l.down.push_back(make(builtinShader(m_components.pyramidDown, "builtin:pyramid_down")));
-    while (int(l.up.size()) < n - 1)
-        l.up.push_back(make(builtinShader(m_components.pyramidUp, "builtin:pyramid_up")));
+    while (int(l.pyramid.down.size()) < n)
+        l.pyramid.down.push_back(make(builtinShader(m_components.pyramidDown, "builtin:pyramid_down")));
+    while (int(l.pyramid.up.size()) < n - 1)
+        l.pyramid.up.push_back(make(builtinShader(m_components.pyramidUp, "builtin:pyramid_up")));
 
     QQuickItem* input = c->source();
     for (int k = 1; k <= n; ++k) {
-        ShaderItem* d = l.down[size_t(k - 1)];
-        d->setSource(k == 1 ? input : l.down[size_t(k - 2)]);
+        ShaderItem* d = l.pyramid.down[size_t(k - 1)];
+        d->setSource(k == 1 ? input : l.pyramid.down[size_t(k - 2)]);
         d->setSize(QSizeF(px[k]) / dpr);
     }
-    for (size_t k = size_t(n); k < l.down.size(); ++k)
-        l.down[k]->setSource(nullptr);
+    for (size_t k = size_t(n); k < l.pyramid.down.size(); ++k)
+        l.pyramid.down[k]->setSource(nullptr);
     for (int k = 1; k < n; ++k) {
-        ShaderItem* u = l.up[size_t(k - 1)];
-        u->setSource(k == n - 1 ? static_cast<QQuickItem*>(l.down[size_t(n - 1)]) : l.up[size_t(k)]);
+        ShaderItem* u = l.pyramid.up[size_t(k - 1)];
+        u->setSource(k == n - 1 ? static_cast<QQuickItem*>(l.pyramid.down[size_t(n - 1)]) : l.pyramid.up[size_t(k)]);
         u->setSize(QSizeF(px[k]) / dpr);
         u->beginUniforms(false);
-        setRef(u, "base", l.down[size_t(k - 1)]);
+        setRef(u, "base", l.pyramid.down[size_t(k - 1)]);
         u->endUniforms();
     }
-    for (size_t k = size_t(n - 1); k < l.up.size(); ++k)
-        l.up[k]->setSource(nullptr);
-    l.levels = n;
-    QQuickItem* top = n > 1 ? static_cast<QQuickItem*>(l.up[0]) : l.down[0];
+    for (size_t k = size_t(n - 1); k < l.pyramid.up.size(); ++k)
+        l.pyramid.up[k]->setSource(nullptr);
+    l.pyramid.levels = n;
+    QQuickItem* top = n > 1 ? static_cast<QQuickItem*>(l.pyramid.up[0]) : l.pyramid.down[0];
     c->beginUniforms(false);
     setRef(c, "glow", top);
     setRef(c, "shadow", top);
@@ -713,11 +709,11 @@ void EffectChain::layoutPyramid(Link& l)
 // Weights of the radius (doc 21): weight_k = clamp(L - k, 0, 1), k = 0 the composite.
 void EffectChain::writePyramidWeights(Link& l)
 {
-    if (l.levels <= 0)
+    if (l.pyramid.levels <= 0)
         return;
-    const double level = pyramidLevel(l.strength, l.dpr);
-    for (int k = 1; k < l.levels; ++k) {
-        ShaderItem* u = l.up[size_t(k - 1)];
+    const double level = pyramidLevel(l.shader.strength, l.pyramid.dpr);
+    for (int k = 1; k < l.pyramid.levels; ++k) {
+        ShaderItem* u = l.pyramid.up[size_t(k - 1)];
         u->beginUniforms(false);
         setF32(u, "weight", float(std::clamp(level - k, 0.0, 1.0)));
         u->endUniforms();
@@ -731,26 +727,26 @@ void EffectChain::writePyramidWeights(Link& l)
 void EffectChain::updateError()
 {
     QStringList lines;
-    for (size_t i = 0; i < links.size(); ++i) {
-        const Link& l = links[i];
+    for (size_t i = 0; i < m_links.size(); ++i) {
+        const Link& l = m_links[i];
         if (l.kind != VLQT_EFFECT_CHAIN_LINK_SHADER)
             continue;
         const QString prefix = QStringLiteral("link %1: ").arg(i);
-        for (const QString& p : l.problems)
+        for (const QString& p : l.shader.problems)
             lines << prefix + p;
-        if (!l.shaderError.isEmpty())
-            lines << prefix + l.shaderError;
+        if (!l.shader.shaderError.isEmpty())
+            lines << prefix + l.shader.shaderError;
         if (l.stage && l.fx)
             for (const QString& e : static_cast<ShaderItem*>(l.fx)->error().split(u'\n', Qt::SkipEmptyParts))
                 lines << prefix + e;
-        if (l.stage && l.templ == VLQT_EFFECT_TEMPLATE_PYRAMID && !l.down.empty()) {
-            const ShaderItem* d1 = l.down[0];
+        if (l.stage && l.shader.templ == VLQT_EFFECT_TEMPLATE_PYRAMID && !l.pyramid.down.empty()) {
+            const ShaderItem* d1 = l.pyramid.down[0];
             const auto* c = static_cast<const ShaderItem*>(l.fx);
             for (const QString& e : d1->error().split(u'\n', Qt::SkipEmptyParts))
                 lines << prefix + QStringLiteral("prefilter: ") + e;
             // The table goes to both: a name is unknown only if neither declares it.
             if (d1->hasShader() && c->hasShader())
-                for (const EffectUniform& u : l.uniforms)
+                for (const EffectUniform& u : l.shader.uniforms)
                     if (!d1->declares(u.name) && !c->declares(u.name))
                         lines << prefix + QStringLiteral("unknown uniform '%1' (not in the shaders)").arg(QString::fromUtf8(u.name));
         }
@@ -773,10 +769,10 @@ int Elements::setEffectChain(ElementEntry& node, const EffectChainDesc& chain, c
     if (!ec) {
         ec = node.effectChain = new EffectChain(*effectComponents, node.item); // dies with the item at the latest
         if (auto* group = dynamic_cast<GroupItem*>(node.item))
-            ec->built = [group](QQuickItem* first) { // the chain is a child of the group: never outlives it
+            ec->setBuiltHandler([group](QQuickItem* first) { // the chain is a child of the group: never outlives it
                 group->effectHolder = first;
                 group->syncEffectFrame();
-            };
+            });
     }
     std::vector<QPointer<QQuickItem>> retired;
     std::vector<EffectChain::DroppedMask> dropped;
@@ -787,13 +783,13 @@ int Elements::setEffectChain(ElementEntry& node, const EffectChainDesc& chain, c
         retireMaskFrame(node, d.mask, d.frame);
     if (!ok)
         return ApplyBadValue;
-    for (size_t i = 0; i < ec->links.size(); ++i) {
-        EffectChain::Link& l = ec->links[i];
-        if (!l.mask || l.maskFrame)
+    for (size_t i = 0; i < ec->linkCount(); ++i) {
+        EffectChain::MultiPart& m = ec->link(i).multi;
+        if (!m.mask || m.maskFrame)
             continue;
-        l.maskFrame = createMaskFrame(node, l.mask, l.maskFrameXf, err);
-        if (!l.maskFrame) {
-            l.mask = nullptr;
+        m.maskFrame = createMaskFrame(node, m.mask, m.maskFrameXf, err);
+        if (!m.maskFrame) {
+            m.mask = nullptr;
             return ApplyBadValue;
         }
         ec->syncMaskFrame(i);
@@ -836,16 +832,16 @@ void Elements::detachEffectMask(ElementEntry& node, QQuickItem* mask)
 {
     if (!node.effectChain || !mask)
         return;
-    std::vector<EffectChain::Link>& links = node.effectChain->links;
-    for (size_t i = 0; i < links.size(); ++i) {
-        EffectChain::Link& l = links[i];
-        if (l.mask != mask)
+    EffectChain* ec = node.effectChain;
+    for (size_t i = 0; i < ec->linkCount(); ++i) {
+        EffectChain::MultiPart& m = ec->link(i).multi;
+        if (m.mask != mask)
             continue;
-        QQuickItem* frame = l.maskFrame;
-        l.mask = nullptr;
-        l.maskFrame = nullptr;
-        l.maskFrameXf = nullptr;
-        node.effectChain->syncMaskFrame(i); // detach before the frame goes: MultiEffect keeps a raw maskSource pointer
+        QQuickItem* frame = m.maskFrame;
+        m.mask = nullptr;
+        m.maskFrame = nullptr;
+        m.maskFrameXf = nullptr;
+        ec->syncMaskFrame(i); // detach before the frame goes: MultiEffect keeps a raw maskSource pointer
         retireMaskFrame(node, mask, frame);
     }
 }
@@ -853,10 +849,10 @@ void Elements::detachEffectMask(ElementEntry& node, QQuickItem* mask)
 std::vector<QQuickItem*> Elements::effectMasks(const ElementEntry& node) const
 {
     std::vector<QQuickItem*> masks;
-    if (node.effectChain)
-        for (const EffectChain::Link& l : node.effectChain->links)
-            if (l.mask)
-                masks.push_back(l.mask);
+    if (const EffectChain* ec = node.effectChain)
+        for (size_t i = 0; i < ec->linkCount(); ++i)
+            if (QQuickItem* mask = ec->link(i).multi.mask)
+                masks.push_back(mask);
     return masks;
 }
 
@@ -916,10 +912,13 @@ void Elements::retireMaskFrame(ElementEntry& node, QQuickItem* mask, QQuickItem*
 
 void Elements::updateMaskFrame(ElementEntry& node)
 {
-    if (!node.effectChain)
+    const EffectChain* ec = node.effectChain;
+    if (!ec)
         return;
-    const auto& links = node.effectChain->links;
-    if (std::none_of(links.begin(), links.end(), [](const EffectChain::Link& l) { return l.maskFrameXf; }))
+    bool anyFrame = false;
+    for (size_t i = 0; i < ec->linkCount() && !anyFrame; ++i)
+        anyFrame = ec->link(i).multi.maskFrameXf != nullptr;
+    if (!anyFrame)
         return;
     // Element -> parent, as Qt maps it: T(x, y) * item.transform (x/y = -anchor or the layout position; our Matrix4x4:
     // TRANSFORM around the anchor + drag offset). Its inverse brings parent coordinates (the mask's) into the element's (the effect area's).
@@ -928,9 +927,9 @@ void Elements::updateMaskFrame(ElementEntry& node)
     if (node.transform && node.xf)
         m *= pivoted(*node.xf, node.item);
     const QMatrix4x4 inv = m.inverted();
-    for (const EffectChain::Link& l : links)
-        if (l.maskFrameXf)
-            setMatrixValue(l.maskFrameXf, inv);
+    for (size_t i = 0; i < ec->linkCount(); ++i)
+        if (QObject* xf = ec->link(i).multi.maskFrameXf)
+            setMatrixValue(xf, inv);
 }
 
 QQuickItem* Elements::effectLayerItem(const ElementEntry& node)
