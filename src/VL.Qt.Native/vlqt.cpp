@@ -1,15 +1,15 @@
 #include "vlqt.h"
-#include "commands.h"
+#include "scene/scene.h"
 #include "device.h"
 #include "perf.h"
 #include "image_resource.h"
 #include "offscreen.h"
 #include "protocol.h"
 #include "qtimageitem.h"
-#include "resources.h"
+#include "resources/resources.h"
 #include "shader_resource.h"
 #include "audio_tap.h"
-#include "shader_item.h"
+#include "effects/shader_item.h"
 #include "snapshot_resource.h"
 #include "image_writer.h"
 #include "app/exports.h"
@@ -1719,7 +1719,7 @@ VLQT_API int vlqt_scene_get_apply_error(vlqt_scene* p, vlqt_apply_error* out)
             return fail(VLQT_ERR_NULL_HANDLE, "get_apply_error: null window");
         if (!out)
             return fail(VLQT_ERR_BAD_ARGUMENT, "get_apply_error: null out");
-        const vlqt::Scene::ApplyError& e = w->scene->lastApplyError;
+        const vlqt::ApplyError& e = w->scene->lastApplyError;
         *out = vlqt_apply_error{e.rc, e.command, e.id, e.op, e.prop, e.reason.c_str()};
         return VLQT_OK;
     });
@@ -1817,13 +1817,13 @@ VLQT_API int vlqt_snapshot_start(unsigned long long id, vlqt_scene* p, unsigned 
         auto* w = asWindow(p);
         if (!w)
             return fail(VLQT_ERR_NULL_HANDLE, "snapshot: null window");
-        return vlqt::res::snap::start(id, *w->scene, elementId, scale);
+        return vlqt::res::snapshot::start(id, *w->scene, elementId, scale);
     });
 }
 
 VLQT_API int vlqt_snapshot_read(unsigned long long id, void* dst, int cap, vlqt_pixel_desc* out, int* written, int* required)
 {
-    return guarded([&] { return vlqt::res::snap::readPixels(id, dst, cap, out, written, required); });
+    return guarded([&] { return vlqt::res::snapshot::readPixels(id, dst, cap, out, written, required); });
 }
 
 VLQT_API int vlqt_image_read_preview(unsigned long long id, unsigned char* dst, int cap, vlqt_pixel_desc* desc, int* written,
@@ -1873,7 +1873,7 @@ VLQT_API int vlqt_snapshot_start_fit(unsigned long long id, vlqt_scene* p, unsig
         auto* w = asWindow(p);
         if (!w)
             return fail(VLQT_ERR_NULL_HANDLE, "snapshot_fit: null window");
-        return vlqt::res::snap::startFit(id, *w->scene, elementId, maxEdgePx);
+        return vlqt::res::snapshot::startFit(id, *w->scene, elementId, maxEdgePx);
     });
 }
 

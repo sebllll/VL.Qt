@@ -33,8 +33,8 @@
 
 namespace vlqt {
 
-struct Scene;
-struct Node;
+class Scene;
+struct ElementEntry;
 
 class DebugOverlay : public QQuickItem
 {
@@ -57,7 +57,7 @@ protected:
 private:
     using Vertex = QSGGeometry::ColoredPoint2D;
     void build();
-    void drawNode(const Node& node);
+    void drawNode(const ElementEntry& node);
     QSGNode* paintSoftware(QSGNode* old);
 
     const Scene& m_scene;

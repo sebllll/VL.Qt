@@ -1,4 +1,4 @@
-#include "previous_frame_layer.h"
+#include "scene/previous_frame_layer.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QSize>
@@ -16,10 +16,10 @@ namespace vlqt {
 // Draws the source's current texture, which while the source renders is the previous frame (recursive layers render
 // into a second texture and swap), and the fade fill over it. Draws no texture in the first frame after the texture
 // got a new size (switch off, resize): that texture was never rendered, its contents are undefined.
-class FeedbackView : public QQuickItem
+class PreviousFrameView : public QQuickItem
 {
 public:
-    FeedbackView(QQuickItem* parent, QQuickShaderEffectSource* source) : QQuickItem(parent), m_source(source)
+    PreviousFrameView(QQuickItem* parent, QQuickShaderEffectSource* source) : QQuickItem(parent), m_source(source)
     {
         setFlag(ItemHasContents);
         // Below every element of the root (they stay at z 0); the view is untracked, REPARENT does not count it.
@@ -121,7 +121,7 @@ PreviousFrameLayer::PreviousFrameLayer(QQuickWindow* window, QQuickItem* root)
     source->setTextureMirroring(QQuickShaderEffectSource::NoMirroring);
     m_source = source;
 
-    auto* view = new FeedbackView(root, source);
+    auto* view = new PreviousFrameView(root, source);
     m_view = view;
 
     // Sized to the root, which Scene sizes to the window (also offscreen, where the content item stays 0 x 0). The root
@@ -146,7 +146,7 @@ PreviousFrameLayer::PreviousFrameLayer(QQuickWindow* window, QQuickItem* root)
 
 void PreviousFrameLayer::setFill(const QColor& color)
 {
-    if (auto* view = static_cast<FeedbackView*>(m_view.data()))
+    if (auto* view = static_cast<PreviousFrameView*>(m_view.data()))
         view->setFill(color);
 }
 
