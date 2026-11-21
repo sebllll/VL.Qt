@@ -6,7 +6,7 @@
  *  - sets properties of the root by name (SET_QML_PROPERTIES, QVariant conversion, errors stay with the name until the
  *    entry is set again or the file is reloaded),
  *  - watches the properties and signals declared in the root (QmlWatcher in qmlitem.cpp) and keeps their changes as wire
- *    records for the poll (events.cpp collectQml): the last value of each changed property, every emitted signal
+ *    records for the poll (scene/measure.cpp collectQml): the last value of each changed property, every emitted signal
  *    (cap kQmlMaxSignalsPerPoll). A change caused by the patch's own set is not recorded (no echo, like EVENT_VALUE).
  *  - reports problems as the QML property vlqtError (load/compile/type errors with file:line, rejected properties), which
  *    the poll sends as EVENT_ERROR like for Image and Video (Elements::readError).

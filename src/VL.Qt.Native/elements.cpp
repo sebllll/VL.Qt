@@ -70,7 +70,7 @@ QColor toColor(const float* f) { return QColor::fromRgbF(f[0], f[1], f[2], f[3])
 // #213).
 void setGroupAutoSize(QQuickItem* item, bool on); // GroupItem, below
 
-void applySize(Node& n)
+void applySize(ElementEntry& n)
 {
     if (n.type == VLQT_ELEMENT_TYPE_GROUP)
         setGroupAutoSize(n.item, n.autoSize); // frame origin: extent with Auto Size, (0, 0) with SIZE
@@ -87,7 +87,7 @@ void applySize(Node& n)
 
 // SIZE: width/height only; the position comes from ANCHOR + TRANSFORM (see "Geometry" in protocol.h). The
 // anchor placement follows the size change by itself (Elements::initGeometry), also for implicit sizes.
-bool setSize(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&)
+bool setSize(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     n.size[0] = v.f[0];
     n.size[1] = v.f[1];
@@ -97,14 +97,14 @@ bool setSize(Elements&, Node& n, const ResolvedProp&, const Value& v, std::strin
 
 // AUTO_SIZE (containers only, default on): SIZE is ignored and the implicit size applies (Row/Column:
 // content + padding, Group: extent of the children). Off: SIZE counts, 0 stays 0.
-bool setAutoSize(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&)
+bool setAutoSize(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     n.autoSize = v.b;
     applySize(n);
     return true;
 }
 
-bool setTransform(Elements& els, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setTransform(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     // Wire: row-major like Stride, row vectors (translation in M41..M43). QMatrix4x4(const float*)
     // reads row-major too, but Qt uses column vectors -> transpose (translation lands in column 4).
@@ -118,7 +118,7 @@ bool setTransform(Elements& els, Node& n, const ResolvedProp&, const Value& v, s
 
 // ANCHOR: Qt::Alignment with exactly one horizontal (Left/Right/HCenter) and one vertical flag (Top/Bottom/VCenter).
 // Outside Row/Column it places the item (x/y = -anchor) and is the pivot of TRANSFORM, inside only the pivot.
-bool setAnchor(Elements& els, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setAnchor(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     const int h = v.i & 0x0F, vert = v.i & 0xF0;
     const float fx = h == 0x1 ? 0.f : h == 0x2 ? 1.f : h == 0x4 ? 0.5f : -1.f;
@@ -129,10 +129,10 @@ bool setAnchor(Elements& els, Node& n, const ResolvedProp&, const Value& v, std:
     }
     return els.setAnchor(n, fx, fy, err);
 }
-bool setOpacity(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&) { n.item->setOpacity(v.f[0]); return true; }
-bool setClip(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&) { n.item->setClip(v.b); return true; }
+bool setOpacity(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&) { n.item->setOpacity(v.f[0]); return true; }
+bool setClip(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&) { n.item->setClip(v.b); return true; }
 // DEBUG: only a flag for the debug overlay (debug.h), the item itself is not touched.
-bool setDebug(Elements& els, Node& n, const ResolvedProp&, const Value& v, std::string&)
+bool setDebug(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     if (n.debug != v.b)
         els.debugCount += v.b ? 1 : -1;
@@ -159,7 +159,7 @@ bool isEffectProp(quint16 prop) { return prop >= 832 && prop <= VLQT_MULTI_EFFEC
 // ---------------------------------------------------------------------------------------------
 // Generic setters for QML properties (resolved QMetaProperty, optionally grouped).
 
-bool setQmlColor(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setQmlColor(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     // Typed setters (perf): QMetaProperty::write(QVariant(QColor)) per element and frame costs several percent
     // CPU. The Qt setters compare first, so an unchanged color stays a no-op. Everything else takes the QML property.
@@ -178,22 +178,22 @@ bool setQmlColor(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std
     return writeQml(n.item, rp, c, err);
 }
 
-bool setQmlBool(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setQmlBool(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     return writeQml(n.item, rp, v.b, err);
 }
 
-bool setQmlReal(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setQmlReal(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     return writeQml(n.item, rp, qreal(v.f[0]), err);
 }
 
-bool setQmlRect(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setQmlRect(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     return writeQml(n.item, rp, QRectF(v.f[0], v.f[1], v.f[2], v.f[3]), err);
 }
 
-bool setQmlInt(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setQmlInt(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     return writeQml(n.item, rp, int(v.i), err);
 }
@@ -224,14 +224,14 @@ constexpr const char* kTextQml =
 
 QString toQString(const Value& v) { return QString::fromUtf8(v.utf8.constData(), v.utf8.size()); }
 
-bool setQmlString(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setQmlString(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     return writeQml(n.item, rp, toQString(v), err);
 }
 
 /* i32 enum property: only the listed Qt values are accepted (others -> ApplyBadValue). */
 template <int... Allowed>
-bool setQmlEnum(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setQmlEnum(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     if (((v.i != Allowed) && ...)) {
         err = "invalid enum value " + std::to_string(v.i);
@@ -240,7 +240,7 @@ bool setQmlEnum(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std:
     return writeQml(n.item, rp, v.i, err);
 }
 
-bool setFontFamily(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setFontFamily(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     // Empty = default family (QGuiApplication font, like a fresh Text).
     const QString family = v.utf8.isEmpty() ? QGuiApplication::font().family() : toQString(v);
@@ -249,7 +249,7 @@ bool setFontFamily(Elements&, Node& n, const ResolvedProp& rp, const Value& v, s
     return modifyFont(n.item, rp, [&](QFont& f) { f.setFamily(family); }, err);
 }
 
-bool setFontPixelSize(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setFontPixelSize(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     // QFont pixel sizes are integers; fractional sizes are rounded (scale via TRANSFORM for smooth zooms).
     if (!(v.f[0] > 0)) {
@@ -260,7 +260,7 @@ bool setFontPixelSize(Elements&, Node& n, const ResolvedProp& rp, const Value& v
     return modifyFont(n.item, rp, [&](QFont& f) { f.setPixelSize(px); }, err);
 }
 
-bool setFontWeight(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setFontWeight(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     if (v.i < 1 || v.i > 1000) {
         err = "font weight must be 1..1000";
@@ -269,12 +269,12 @@ bool setFontWeight(Elements&, Node& n, const ResolvedProp& rp, const Value& v, s
     return modifyFont(n.item, rp, [&](QFont& f) { f.setWeight(QFont::Weight(v.i)); }, err);
 }
 
-bool setFontItalic(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setFontItalic(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     return modifyFont(n.item, rp, [&](QFont& f) { f.setItalic(v.b); }, err);
 }
 
-bool setLetterSpacing(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setLetterSpacing(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     return modifyFont(n.item, rp, [&](QFont& f) { f.setLetterSpacing(QFont::AbsoluteSpacing, v.f[0]); }, err);
 }
@@ -311,7 +311,7 @@ std::vector<PropDef> textProps()
 
 // Video source: empty = no media. Relative paths resolve against the process working directory (C# sends
 // absolute paths); QUrl::fromLocalFile handles drive letters, spaces and non-ASCII names.
-bool setMediaSource(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setMediaSource(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     const QUrl url = v.utf8.isEmpty() ? QUrl() : QUrl::fromLocalFile(QFileInfo(toQString(v)).absoluteFilePath());
     return writeQml(n.item, rp, url, err);
@@ -323,7 +323,7 @@ bool setMediaSource(Elements&, Node& n, const ResolvedProp& rp, const Value& v, 
 
 QQuickItem* makeImage() { return new QtImageItem(); }
 
-bool setImageResource(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setImageResource(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     return static_cast<QtImageItem*>(n.item)->setResource(v.u, err);
 }
@@ -335,14 +335,14 @@ QQuickItem* makeShaderEffect() { return new ShaderItem(); }
 // QmlElement (protocol.h "QmlElement"): QmlItem (qmlitem.h), own QQuickItem that holds the instance of a user .qml file.
 QQuickItem* makeQml() { return new QmlItem(); }
 
-bool setQmlSource(Elements& els, Node& n, const ResolvedProp&, const Value& v, std::string&)
+bool setQmlSource(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     static_cast<QmlItem*>(n.item)->setSource(els.qmlEngine(), QString::fromUtf8(v.utf8));
     applySize(n); // Auto Size / SIZE reach the new root
     return true;
 }
 
-bool setQmlReload(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&)
+bool setQmlReload(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     static_cast<QmlItem*>(n.item)->setReload(v.i);
     return true;
@@ -357,25 +357,25 @@ std::vector<PropDef> qmlProps()
     };
 }
 
-ShaderItem* shaderItem(Node& n) { return static_cast<ShaderItem*>(n.item); }
+ShaderItem* shaderItem(ElementEntry& n) { return static_cast<ShaderItem*>(n.item); }
 
-bool setFragmentShader(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setFragmentShader(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     return shaderItem(n)->setShader(VLQT_SHADER_STAGE_FRAGMENT, v.u, err);
 }
 
-bool setVertexShader(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setVertexShader(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     return shaderItem(n)->setShader(VLQT_SHADER_STAGE_VERTEX, v.u, err);
 }
 
-bool setBlending(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&)
+bool setBlending(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     shaderItem(n)->setBlending(v.b);
     return true;
 }
 
-bool setMeshResolution(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setMeshResolution(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     if (v.i < 1 || v.i2 < 1) {
         err = "mesh resolution must be >= 1, 1";
@@ -385,9 +385,9 @@ bool setMeshResolution(Elements&, Node& n, const ResolvedProp&, const Value& v, 
     return true;
 }
 
-bool setEffectSourceRef(Elements& els, Node& n, const ResolvedProp& rp, const Value& v, std::string& err);
+bool setEffectSourceRef(Elements& els, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err);
 
-bool setShaderSourceRef(Elements& els, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setShaderSourceRef(Elements& els, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     if (!setEffectSourceRef(els, n, rp, v, err))
         return false;
@@ -629,7 +629,7 @@ void pokeGroup(const QQuickItem* item)
         static_cast<GroupItem*>(p)->invalidate();
 }
 
-bool setEffectSourceRef(Elements& els, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setEffectSourceRef(Elements& els, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     QQuickItem* src = qobject_cast<QQuickItem*>(v.ref);
     if (v.ref && !src) {
@@ -708,7 +708,7 @@ constexpr const char* kVideoQml =
     "}\n";
 
 /* f32 that must be finite and > 0 (playback rate; reverse/zero playback is not supported by the backend). */
-bool setQmlPositiveReal(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setQmlPositiveReal(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     if (!(v.f[0] > 0) || !std::isfinite(v.f[0])) {
         err = "value must be finite and > 0";
@@ -718,7 +718,7 @@ bool setQmlPositiveReal(Elements&, Node& n, const ResolvedProp& rp, const Value&
 }
 
 /* Linear volume 0..1 (Qt AudioOutput); outside -> ApplyBadValue. */
-bool setVolume(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setVolume(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     if (!(v.f[0] >= 0 && v.f[0] <= 1)) {
         err = "volume must be 0..1";
@@ -777,7 +777,7 @@ std::vector<PropDef> buttonProps()
 // and sets both in the handler of the control's user-only signal (SpinBox valueModified, CheckBox/Switch toggled,
 // Slider moved, TextField editingFinished with changed text). SET VALUE from C# never fires these signals (no echo), and the value is
 // captured when the signal fires: a later SET VALUE with a stale value cannot hide it from the poll. The poll sends
-// EVENT_VALUE for every bound item of such a type (events.cpp collectMeasurements), independent of input handlers.
+// EVENT_VALUE for every bound item of such a type (scene/measure.cpp collectMeasurements), independent of input handlers.
 //
 // SpinBox: full int range instead of Qt's 0..99, editable and wheel on; text <-> value locale-free (plain digits,
 // optional '-', no group separators, like vvvv's IOBoxes), the validator too (locale C). Qt commits a typed value on
@@ -892,7 +892,7 @@ constexpr const char* kTextFieldQml =
     "}\n";
 
 // SET VALUE of TextField: text + vlqtCommitted (by name; only on SET, not per frame).
-bool setTextFieldValue(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setTextFieldValue(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     const QString s = toQString(v);
     if (!writeQml(n.item, rp, s, err))
@@ -901,7 +901,7 @@ bool setTextFieldValue(Elements&, Node& n, const ResolvedProp& rp, const Value& 
     return true;
 }
 
-bool setQmlBoolNot(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setQmlBoolNot(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
     return writeQml(n.item, rp, !v.b, err);
 }
@@ -960,7 +960,7 @@ QQuickItem* makeShape()
     return shape;
 }
 
-QQuickShapePath* shapePath(const Node& n) { return static_cast<ShapeItem*>(n.item)->path; }
+QQuickShapePath* shapePath(const ElementEntry& n) { return static_cast<ShapeItem*>(n.item)->path; }
 
 bool finiteF32(const Value& v, std::string& err)
 {
@@ -970,7 +970,7 @@ bool finiteF32(const Value& v, std::string& err)
     return false;
 }
 
-bool setShapePoints(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapePoints(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     if (v.floatCount % 2) {
         err = "point list needs x, y pairs, got " + std::to_string(v.floatCount) + " values";
@@ -980,13 +980,13 @@ bool setShapePoints(Elements&, Node& n, const ResolvedProp&, const Value& v, std
     return true;
 }
 
-bool setShapeClosed(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&)
+bool setShapeClosed(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     static_cast<ShapeItem*>(n.item)->element->setClosed(v.b);
     return true;
 }
 
-bool setShapePath(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapePath(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     // Verbs and point count are checked in Scene::set already; the element checks again before it touches the data.
     if (static_cast<ShapeItem*>(n.item)->element->setPath(v.verbs, v.verbCount, v.points, v.pointCount))
@@ -995,20 +995,20 @@ bool setShapePath(Elements&, Node& n, const ResolvedProp&, const Value& v, std::
     return false;
 }
 
-bool setShapeFill(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&)
+bool setShapeFill(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     shapePath(n)->setFillColor(toColor(v.f));
     return true;
 }
 
-bool setShapeStrokeColor(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string&)
+bool setShapeStrokeColor(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     shapePath(n)->setStrokeColor(toColor(v.f));
     return true;
 }
 
 // < 0 = no stroke (Qt draws none for a negative width).
-bool setShapeStrokeWidth(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapeStrokeWidth(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     if (!finiteF32(v, err))
         return false;
@@ -1016,7 +1016,7 @@ bool setShapeStrokeWidth(Elements&, Node& n, const ResolvedProp&, const Value& v
     return true;
 }
 
-bool setShapeCap(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapeCap(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     static constexpr QQuickShapePath::CapStyle caps[] = {QQuickShapePath::FlatCap, QQuickShapePath::SquareCap,
                                                          QQuickShapePath::RoundCap};
@@ -1028,7 +1028,7 @@ bool setShapeCap(Elements&, Node& n, const ResolvedProp&, const Value& v, std::s
     return true;
 }
 
-bool setShapeJoin(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapeJoin(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     static constexpr QQuickShapePath::JoinStyle joins[] = {QQuickShapePath::MiterJoin, QQuickShapePath::BevelJoin,
                                                            QQuickShapePath::RoundJoin};
@@ -1041,7 +1041,7 @@ bool setShapeJoin(Elements&, Node& n, const ResolvedProp&, const Value& v, std::
 }
 
 // ShapePath.miterLimit is an int: the f32 is rounded (docs/decisions/paths.md).
-bool setShapeMiterLimit(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapeMiterLimit(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     if (!finiteF32(v, err))
         return false;
@@ -1050,7 +1050,7 @@ bool setShapeMiterLimit(Elements&, Node& n, const ResolvedProp&, const Value& v,
 }
 
 // Dash lengths in stroke-width units (C# divides by the width). Empty or all zero = solid line.
-bool setShapeDash(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapeDash(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     QList<qreal> pattern;
     pattern.reserve(qsizetype(v.floatCount));
@@ -1075,7 +1075,7 @@ bool setShapeDash(Elements&, Node& n, const ResolvedProp&, const Value& v, std::
     return true;
 }
 
-bool setShapeDashOffset(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapeDashOffset(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     if (!finiteF32(v, err))
         return false;
@@ -1085,7 +1085,7 @@ bool setShapeDashOffset(Elements&, Node& n, const ResolvedProp&, const Value& v,
 
 // Trim (QQuickShapeTrim, Qt 6.10): created on the first trim value, a pure trim change draws without changed().
 template <void (QQuickShapeTrim::*Set)(qreal)>
-bool setShapeTrim(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapeTrim(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     if (!finiteF32(v, err))
         return false;
@@ -1093,7 +1093,7 @@ bool setShapeTrim(Elements&, Node& n, const ResolvedProp&, const Value& v, std::
     return true;
 }
 
-bool setShapeFillRule(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapeFillRule(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     if (v.i < 0 || v.i > 1) {
         err = "fill rule must be 0 (NonZero) or 1 (EvenOdd), got " + std::to_string(v.i);
@@ -1244,7 +1244,7 @@ QQuickItem* Elements::create(const TypeDef& type, std::string& err)
     return item;
 }
 
-bool Elements::readMedia(const Node& node, float out[2]) const
+bool Elements::readMedia(const ElementEntry& node, float out[2]) const
 {
     if (node.type != VLQT_ELEMENT_TYPE_VIDEO || !mediaPosition.isValid())
         return false;
@@ -1254,7 +1254,7 @@ bool Elements::readMedia(const Node& node, float out[2]) const
     return true;
 }
 
-QString Elements::readError(const Node& node) const
+QString Elements::readError(const ElementEntry& node) const
 {
     const auto it = types.find(node.type);
     QString own;
@@ -1266,7 +1266,7 @@ QString Elements::readError(const Node& node) const
     return own.isEmpty() ? node.effectChain->error() : own + u'\n' + node.effectChain->error();
 }
 
-quint32 Elements::takeClicks(const Node& node)
+quint32 Elements::takeClicks(const ElementEntry& node)
 {
     const auto it = types.find(node.type);
     if (it == types.end() || !it->second.clicks.isValid())
@@ -1288,7 +1288,7 @@ bool Elements::pollsState(quint16 type) const
     return c.error.isValid() || c.clicks.isValid() || (c.userCount.isValid() && c.userValue.isValid());
 }
 
-bool Elements::takeUserValue(const Node& node, QVariant& out)
+bool Elements::takeUserValue(const ElementEntry& node, QVariant& out)
 {
     const auto it = types.find(node.type);
     if (it == types.end() || !it->second.userCount.isValid() || !it->second.userValue.isValid())
@@ -1339,7 +1339,7 @@ void Elements::resolve(const TypeDef& type, TypeCache& cache, QQuickItem* first)
     }
 }
 
-int Elements::set(Node& node, quint16 prop, const Value& v, std::string& err)
+int Elements::set(ElementEntry& node, quint16 prop, const Value& v, std::string& err)
 {
     const TypeDef* type = findType(node.type);
     const PropDef* def = type ? findProp(*type, prop) : nullptr;
@@ -1468,7 +1468,7 @@ void writeMatrix(const TransformState& s, QQuickItem* item)
 }
 } // namespace
 
-bool takesAutoSize(const Node& n)
+bool takesAutoSize(const ElementEntry& n)
 {
     return n.type == VLQT_ELEMENT_TYPE_GROUP || n.type == VLQT_ELEMENT_TYPE_ROW || n.type == VLQT_ELEMENT_TYPE_COLUMN
         || n.type == VLQT_ELEMENT_TYPE_BUTTON || n.type == VLQT_ELEMENT_TYPE_SPIN_BOX
@@ -1497,7 +1497,7 @@ QPointF anchorPoint(const TransformState& s, const QQuickItem* item)
     return QPointF(x, y);
 }
 
-void Elements::initGeometry(Node& node)
+void Elements::initGeometry(ElementEntry& node)
 {
     node.xf = std::make_shared<TransformState>();
     // Default ANCHOR AlignLeft|AlignTop for all elements (fx = fy = 0, TransformState default).
@@ -1522,7 +1522,7 @@ void Elements::initGeometry(Node& node)
     }
 }
 
-bool Elements::placeAfterReparent(Node& node, std::string& err)
+bool Elements::placeAfterReparent(ElementEntry& node, std::string& err)
 {
     if (!node.xf)
         return true;
@@ -1534,7 +1534,7 @@ bool Elements::placeAfterReparent(Node& node, std::string& err)
     return true;
 }
 
-bool Elements::setMatrix(Node& node, const QMatrix4x4& m, std::string& err)
+bool Elements::setMatrix(ElementEntry& node, const QMatrix4x4& m, std::string& err)
 {
     TransformState& s = *node.xf;
     if (!node.transform && isTranslation2D(m) && s.dx == 0 && s.dy == 0 && (!inPositioner(node.item) || m.isIdentity())) {
@@ -1547,7 +1547,7 @@ bool Elements::setMatrix(Node& node, const QMatrix4x4& m, std::string& err)
     return writeTransform(node, err);
 }
 
-bool Elements::setDragOffset(Node& node, float dx, float dy, std::string& err)
+bool Elements::setDragOffset(ElementEntry& node, float dx, float dy, std::string& err)
 {
     if (node.xf->dx == dx && node.xf->dy == dy)
         return true; // unchanged: no Matrix4x4 for items that were never transformed or dragged
@@ -1556,7 +1556,7 @@ bool Elements::setDragOffset(Node& node, float dx, float dy, std::string& err)
     return writeTransform(node, err);
 }
 
-bool Elements::writeTransform(Node& node, std::string& err)
+bool Elements::writeTransform(ElementEntry& node, std::string& err)
 {
     if (!node.transform) {
         QObject* t = createTransform(err);
@@ -1580,7 +1580,7 @@ bool Elements::writeTransform(Node& node, std::string& err)
     return true;
 }
 
-bool Elements::setAnchor(Node& node, float fx, float fy, std::string& err)
+bool Elements::setAnchor(ElementEntry& node, float fx, float fy, std::string& err)
 {
     if (node.xf->fx == fx && node.xf->fy == fy)
         return true;
@@ -1596,7 +1596,7 @@ bool Elements::setAnchor(Node& node, float fx, float fy, std::string& err)
     markGeometry(*node.xf); // matrix pivot or Group frame (Auto Size off) moved, maybe without an x/y change
     return true;
 }
-bool Elements::setEffectSource(Node& effect, const ResolvedProp& rp, QQuickItem* source, std::string& err)
+bool Elements::setEffectSource(ElementEntry& effect, const ResolvedProp& rp, QQuickItem* source, std::string& err)
 {
     QQuickItem* old = effect.effectSource;
     if (old == source)
@@ -1631,7 +1631,7 @@ bool Elements::setEffectSource(Node& effect, const ResolvedProp& rp, QQuickItem*
     return true;
 }
 
-int Elements::setEffectChain(Node& node, const EffectChainDesc& chain, const std::vector<QQuickItem*>& masks, std::string& err)
+int Elements::setEffectChain(ElementEntry& node, const EffectChainDesc& chain, const std::vector<QQuickItem*>& masks, std::string& err)
 {
     if (chain.links.empty()) {
         releaseEffectLayer(node);
@@ -1683,7 +1683,7 @@ int Elements::setEffectChain(Node& node, const EffectChainDesc& chain, const std
     return ApplyOk;
 }
 
-void Elements::releaseEffectLayer(Node& node)
+void Elements::releaseEffectLayer(ElementEntry& node)
 {
     EffectChain* ec = node.effectChain;
     if (!ec)
@@ -1702,7 +1702,7 @@ void Elements::releaseEffectLayer(Node& node)
     delete ec;
 }
 
-void Elements::detachEffectMask(Node& node, QQuickItem* mask)
+void Elements::detachEffectMask(ElementEntry& node, QQuickItem* mask)
 {
     if (!node.effectChain || !mask)
         return;
@@ -1720,7 +1720,7 @@ void Elements::detachEffectMask(Node& node, QQuickItem* mask)
     }
 }
 
-std::vector<QQuickItem*> Elements::effectMasks(const Node& node) const
+std::vector<QQuickItem*> Elements::effectMasks(const ElementEntry& node) const
 {
     std::vector<QQuickItem*> masks;
     if (node.effectChain)
@@ -1730,7 +1730,7 @@ std::vector<QQuickItem*> Elements::effectMasks(const Node& node) const
     return masks;
 }
 
-QQuickItem* Elements::createMaskFrame(Node& node, QQuickItem* mask, QObject*& xfOut, std::string& err)
+QQuickItem* Elements::createMaskFrame(ElementEntry& node, QQuickItem* mask, QObject*& xfOut, std::string& err)
 {
     // Mask rule (protocol.h): the mask lies in the element's parent coordinates like a sibling, with its own SIZE,
     // ANCHOR and TRANSFORM. frame (hidden, layer on, the link's maskSource) > inner (Matrix4x4 = inverse of the
@@ -1759,7 +1759,7 @@ QQuickItem* Elements::createMaskFrame(Node& node, QQuickItem* mask, QObject*& xf
     // Position (anchor placement or Row/Column layout) and size (anchor) of the element; TRANSFORM/ANCHOR/drag offset call
     // updateMaskFrame themselves. Context = frame: disconnected on detach, gone with it. The Scene detaches the
     // masks before it erases the node, so the pointer never dangles.
-    Node* n = &node;
+    ElementEntry* n = &node;
     auto update = [this, n]() { updateMaskFrame(*n); };
     QObject::connect(node.item, &QQuickItem::xChanged, frame, update);
     QObject::connect(node.item, &QQuickItem::yChanged, frame, update);
@@ -1769,7 +1769,7 @@ QQuickItem* Elements::createMaskFrame(Node& node, QQuickItem* mask, QObject*& xf
     return frame;
 }
 
-void Elements::retireMaskFrame(Node& node, QQuickItem* mask, QQuickItem* frame)
+void Elements::retireMaskFrame(ElementEntry& node, QQuickItem* mask, QQuickItem* frame)
 {
     if (!frame)
         return;
@@ -1784,7 +1784,7 @@ void Elements::retireMaskFrame(Node& node, QQuickItem* mask, QQuickItem* frame)
     frameDelete.emplace_back(frame);
 }
 
-void Elements::updateMaskFrame(Node& node)
+void Elements::updateMaskFrame(ElementEntry& node)
 {
     if (!node.effectChain)
         return;
@@ -1803,7 +1803,7 @@ void Elements::updateMaskFrame(Node& node)
             setMatrixValue(l.maskFrameXf, inv);
 }
 
-QQuickItem* Elements::effectLayerItem(const Node& node)
+QQuickItem* Elements::effectLayerItem(const ElementEntry& node)
 {
     return node.effectChain ? node.effectChain->root() : nullptr;
 }
@@ -1862,7 +1862,7 @@ void Elements::releaseGroupProxy(QQuickItem* item)
     frameDelete.emplace_back(proxy); // the effect may sample it until it syncs onto the new texture
 }
 
-void Elements::syncTextureGroups(Node& effect)
+void Elements::syncTextureGroups(ElementEntry& effect)
 {
     auto* fx = static_cast<ShaderItem*>(effect.item);
     if (!fx->takeRefsChanged())
@@ -1888,7 +1888,7 @@ void Elements::syncTextureGroups(Node& effect)
     effect.textureGroups.swap(now);
 }
 
-void Elements::releaseTextureGroups(Node& effect)
+void Elements::releaseTextureGroups(ElementEntry& effect)
 {
     for (const QPointer<QQuickItem>& g : effect.textureGroups)
         if (g) { // a deleted Group retired its proxy already
@@ -1898,7 +1898,7 @@ void Elements::releaseTextureGroups(Node& effect)
     effect.textureGroups.clear();
 }
 
-void Elements::clearEffectSource(Node& effect)
+void Elements::clearEffectSource(ElementEntry& effect)
 {
     if (!effect.effectSource)
         return;

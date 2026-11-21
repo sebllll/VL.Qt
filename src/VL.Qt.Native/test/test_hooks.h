@@ -15,7 +15,7 @@ class QQuickWindow;
 struct vlqt_scene;
 
 namespace vlqt {
-struct Scene;
+class Scene;
 }
 
 namespace vlqt::test {

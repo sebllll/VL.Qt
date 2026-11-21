@@ -26,7 +26,7 @@
 struct vlqt_pixel_desc;
 
 namespace vlqt {
-struct Scene;
+class Scene;
 }
 
 namespace vlqt::res::snapshot {

@@ -51,7 +51,7 @@ To compare with another renderer, build the same scenario as a patch with the ot
 
 ## Measurement path (#20)
 
-`Measured Size` and `Scene Bounds` of every bound element come from the poll (`collectMeasurements`, `src/VL.Qt.Native/events.cpp`). Since #20 it reads the geometry only of elements whose geometry changed since the last poll (x/y, size, implicit size, parent, Matrix4x4, anchor, Group frame) and of everything below them; a static scene reads none. Media, error, clicks and user values are read only for element types that have them.
+`Measured Size` and `Scene Bounds` of every bound element come from the poll (`collectMeasurements`, `src/VL.Qt.Native/scene/measure.cpp`). Since #20 it reads the geometry only of elements whose geometry changed since the last poll (x/y, size, implicit size, parent, Matrix4x4, anchor, Group frame) and of everything below them; a static scene reads none. Media, error, clicks and user values are read only for element types that have them.
 
 Measured without a profiler by the SmokeTest (`tools/build.ps1 -Test -Only measure`, lines `INFO 20` in `build/smoke/stdout.log`): N bound `Rectangle` in one Group, median of 201 polls, Stopwatch around `vlqt_scene_poll`, items measured per poll counted as EVENT_MEASURED / EVENT_SCENE_BOUNDS records in the poll buffer. win-x64, Release.
 

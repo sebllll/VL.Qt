@@ -485,7 +485,7 @@ void releaseVideo(QQuickItem* item)
     qDeleteAll(a->findChildren<QAudioBufferOutput*>(Qt::FindDirectChildrenOnly));
 }
 
-bool setVideoTap(Elements&, Node& node, const ResolvedProp&, const Value& v, std::string& err)
+bool setVideoTap(Elements&, ElementEntry& node, const ResolvedProp&, const Value& v, std::string& err)
 {
     if (v.u == 0) {
         if (TapAttachment* a = attachmentOf(node.item, false))

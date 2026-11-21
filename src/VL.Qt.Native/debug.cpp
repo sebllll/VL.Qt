@@ -1,5 +1,5 @@
 #include "debug.h"
-#include "commands.h"
+#include "scene/scene.h"
 
 #include <QtGui/QFont>
 #include <QtGui/QFontMetricsF>
@@ -203,7 +203,7 @@ void DebugOverlay::refresh()
         update();
 }
 
-void DebugOverlay::drawNode(const Node& n)
+void DebugOverlay::drawNode(const ElementEntry& n)
 {
     const QQuickItem* item = n.item;
     Painter p{m_verts, m_lines, item, m_dpr};
@@ -295,7 +295,7 @@ void DebugOverlay::build()
     m_lines.clear();
     m_dpr = window() ? window()->effectiveDevicePixelRatio() : 1;
     for (const auto& kv : m_scene.nodes) {
-        const Node& n = kv.second;
+        const ElementEntry& n = kv.second;
         if ((m_all || n.debug) && n.item->isVisible()) // isVisible: effective (also hidden ancestors, effect sources)
             drawNode(n);
     }
