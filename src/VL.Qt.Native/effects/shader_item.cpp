@@ -6,8 +6,8 @@
 #include "elements/group_item.h"
 #include "image_resource.h"
 #include "protocol.h"
-#include "resources/image_texture_cache.h"
 #include "resources/change_watch.h"
+#include "resources/image_texture_cache.h"
 #include "resources/resources.h"
 #include "shader_resource.h"
 

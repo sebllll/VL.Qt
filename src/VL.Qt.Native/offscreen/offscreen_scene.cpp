@@ -156,6 +156,12 @@ bool isScene(const QQuickWindow* window)
     return window && sceneOf(window);
 }
 
+render_thread::RenderThread* renderThreadOf(const QQuickWindow* window)
+{
+    const OffscreenScene* s = window ? sceneOf(window) : nullptr;
+    return s ? s->thread : nullptr;
+}
+
 bool requestFrame(const QQuickWindow* window)
 {
     OffscreenScene* s = sceneOf(window);

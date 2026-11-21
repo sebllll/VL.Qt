@@ -431,6 +431,15 @@ bool EffectChain::apply(const EffectChainDesc& desc, const std::vector<QQuickIte
     return ok;
 }
 
+bool EffectChain::samples(const QQuickItem* item) const
+{
+    for (const Link& l : m_links)
+        for (const EffectUniform& u : l.shader.uniforms)
+            if (u.refItem == item)
+                return true;
+    return false;
+}
+
 void EffectChain::syncMaskFrame(size_t i)
 {
     Link& l = m_links[i];

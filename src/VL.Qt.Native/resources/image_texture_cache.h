@@ -15,7 +15,9 @@
  * replacement is Ready; neither does a window on the shared device that still renders with its old QRhi right after
  * device::rebuild. A window that is not on the shared device draws no image resources (warning once per window).
  *
- * Threads: the thread that renders the window, the main thread blocked meanwhile (updatePaintNode).
+ * Threads: the thread that renders the window, the main thread waiting meanwhile (updatePaintNode, see
+ * qt_image_item.h). A texture belongs to the thread that made it; a holder on the main thread lets it go through
+ * render_thread::retire.
  */
 #pragma once
 
@@ -24,6 +26,7 @@
 class QQuickWindow;
 class QRhi;
 class QSGTexture;
+class QThread;
 
 namespace vlqt {
 
@@ -40,6 +43,7 @@ struct ImageTexture
     QSGTexture* texture = nullptr;
     bool mipmaps = false;
     void* native = nullptr; // own reference on the native texture (shared device), released after the wrapper
+    QThread* thread = nullptr; // the window's render thread (made in updatePaintNode), frees it
 
     ImageTexture() = default;
     ImageTexture(const ImageTexture&) = delete;

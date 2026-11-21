@@ -32,6 +32,7 @@ target_sources(vlqt PRIVATE
     vlqt.h
     vlqt_test.h
     protocol.h
+    wire.h
 
     # app/: start and pump, exports and last error, log, animation clock, render gate, input delivery, app fonts
     app/animation_clock.cpp
@@ -143,12 +144,12 @@ target_sources(vlqt PRIVATE
     resources/resource_workers.h
     resources/resources.cpp
     resources/resources.h
-    image_resource.cpp
-    image_resource.h
     resources/image_texture_cache.cpp
     resources/image_texture_cache.h
     resources/qt_image_item.cpp
     resources/qt_image_item.h
+    image_resource.cpp
+    image_resource.h
     snapshot_resource.cpp
     snapshot_resource.h
     image_writer.cpp

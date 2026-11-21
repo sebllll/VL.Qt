@@ -5,8 +5,12 @@
  * the old image stays (no empty frame); a replacement of the same id shows up the same way (res::changedThisFrame).
  *
  * Textures: from the cache of resources/image_texture_cache.h, one per window, QRhi and content.
- * Everything runs on the main thread (render loop basic). Textures go in releaseResources/invalidateSceneGraph,
- * before the window's QRhi.
+ * Threads: the item lives on the main thread. updatePaintNode and invalidateSceneGraph run on the window's render thread
+ * (the main thread for on-screen windows and offscreen scenes without one), updatePaintNode while the main thread waits
+ * (sync), so it may read the device and the window as the main thread would. A texture belongs to the thread that made
+ * it: the item lets it go in updatePaintNode and invalidateSceneGraph directly, from the main thread (releaseResources,
+ * destructor) through render_thread::retire, always before the window's QRhi. A texture freed on another thread logs
+ * a warning.
  *
  * Device lost: the old image is not drawn until its replacement is Ready (image_texture_cache.h).
  *
@@ -21,6 +25,8 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+
+class QQuickWindow;
 
 namespace vlqt {
 

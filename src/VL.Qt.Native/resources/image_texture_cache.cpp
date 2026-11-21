@@ -4,6 +4,7 @@
 #include "image_resource.h"
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QThread>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/private/qsgplaintexture_p.h>
 #include <rhi/qrhi.h>
@@ -21,7 +22,7 @@ namespace vlqt {
 
 namespace {
 
-std::vector<std::weak_ptr<ImageTexture>> s_textures; // see the header for the thread
+std::vector<std::weak_ptr<ImageTexture>> s_textures; // updatePaintNode: one window syncs at a time, the main thread waits
 std::unordered_set<const QQuickWindow*> s_warned;     // windows told they are not on the shared device
 
 // Warns once per window that it draws no image resources.
@@ -44,6 +45,7 @@ std::shared_ptr<ImageTexture> createTexture(QQuickWindow* window, const std::sha
     auto t = std::make_shared<ImageTexture>();
     t->window = window;
     t->rhi = rhi;
+    t->thread = QThread::currentThread();
     t->content = content;
     if (QRhiTexture* src = content->texture()) {
         // Shared device: a wrapper of the native texture in the window's QRhi (same device, see device.h).
@@ -90,6 +92,9 @@ std::shared_ptr<ImageTexture> createTexture(QQuickWindow* window, const std::sha
 
 ImageTexture::~ImageTexture()
 {
+    // Another thread may run a frame with it on the window's QRhi right now (render_thread::retire).
+    if (texture && QThread::currentThread() != thread)
+        qCWarning(lcImageTexture, "texture of window %p freed off its render thread", static_cast<void*>(window));
     delete texture; // owns its QRhiTexture (wrapper only, the native texture is not destroyed by it)
 #ifdef Q_OS_WIN
     if (native)

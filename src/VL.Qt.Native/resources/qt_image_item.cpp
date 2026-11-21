@@ -1,6 +1,7 @@
 #include "resources/qt_image_item.h"
 
 #include "image_resource.h"
+#include "render_thread.h"
 #include "resources/change_watch.h"
 #include "resources/image_texture_cache.h"
 #include "resources/resources.h"
@@ -80,8 +81,23 @@ QtImageItem::QtImageItem(QQuickItem* parent) : QQuickItem(parent)
     connect(this, &QQuickItem::smoothChanged, this, &QQuickItem::update);
 }
 
+namespace {
+
+// Drops the item's reference on its texture where the texture's window renders.
+void retireTexture(std::shared_ptr<ImageTexture>& t)
+{
+    if (!t)
+        return;
+    QQuickWindow* window = t->window;
+    render_thread::retire(window, std::move(t));
+    t.reset();
+}
+
+} // namespace
+
 QtImageItem::~QtImageItem()
 {
+    retireTexture(m_texture);
     s_watch.remove(m_wantId, this);
     if (m_wantId && m_wantId != m_shownId)
         res::releaseElement(m_wantId);
@@ -142,14 +158,16 @@ void QtImageItem::afterResourceFrame()
     s_watch.forChanged([](QtImageItem* item) { item->advance(); });
 }
 
+// The window's render thread, its QRhi still alive.
 void QtImageItem::invalidateSceneGraph()
 {
     m_texture.reset();
 }
 
+// Main thread.
 void QtImageItem::releaseResources()
 {
-    m_texture.reset();
+    retireTexture(m_texture);
 }
 
 void QtImageItem::geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry)
@@ -175,7 +193,7 @@ QSGNode* QtImageItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
     }
     QSGTexture* tex = m_texture->texture;
     const QSize ts = tex->textureSize();
-    thread_local std::vector<Quad> quads; // render loop basic: main thread, no allocation per update
+    thread_local std::vector<Quad> quads; // one per render thread, no allocation per update
     layout(m_fillMode, w, h, float(ts.width()), float(ts.height()), quads);
 
     QSGNode* root = old ? old : new QSGNode;
