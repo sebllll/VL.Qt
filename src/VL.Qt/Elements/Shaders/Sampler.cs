@@ -1,36 +1,5 @@
 ﻿namespace VL.Qt.Elements
 {
-    /// <summary>Minification and magnification filter of a <see cref="Sampler"/> (Stride: TextureFilter, Point or Linear).</summary>
-    public enum SamplerFilter
-    {
-        /// <summary>Bilinear interpolation between texels (smooth; Qt default).</summary>
-        Linear,
-        /// <summary>The nearest texel (hard pixel edges when magnified).</summary>
-        Point,
-    }
-
-    /// <summary>How a <see cref="Sampler"/> picks between mipmap levels.</summary>
-    public enum SamplerMipFilter
-    {
-        /// <summary>No mipmaps, always the full resolution (Qt default).</summary>
-        None,
-        /// <summary>The nearest mipmap level.</summary>
-        Point,
-        /// <summary>Interpolation between the two nearest mipmap levels (trilinear together with Filter Linear).</summary>
-        Linear,
-    }
-
-    /// <summary>What a <see cref="Sampler"/> returns for texture coordinates outside 0..1 (Stride: TextureAddressMode; Border and MirrorOnce do not exist in Qt).</summary>
-    public enum SamplerAddress
-    {
-        /// <summary>The edge texel is repeated (ClampToEdge; Qt default).</summary>
-        Clamp,
-        /// <summary>The texture tiles (Repeat).</summary>
-        Wrap,
-        /// <summary>The texture tiles, every second copy mirrored (MirroredRepeat).</summary>
-        Mirror,
-    }
-
     /// <summary>
     /// How a shader reads a texture (sampler2D): filter, mipmaps and behaviour outside 0..1. Immutable; create
     /// it with the Sampler node and connect it to the Sampler pin of a texture input (Input Sampler of ShaderEffect,
