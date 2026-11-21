@@ -30,7 +30,7 @@ namespace VL.Qt.Tests
         [Test]
         public void SamplerNode_BuildsRecordFromPins()
         {
-            var s = UniformNodes.Sampler(SamplerFilter.Point, SamplerMipFilter.Point, SamplerAddress.Mirror, SamplerAddress.Wrap);
+            var s = SamplerNodes.Sampler(SamplerFilter.Point, SamplerMipFilter.Point, SamplerAddress.Mirror, SamplerAddress.Wrap);
             Assert.That(s, Is.EqualTo(new Sampler
             {
                 Filter = SamplerFilter.Point,

@@ -25,7 +25,7 @@ namespace VL.Qt.Nodes
     // VertexShaderId); the reconciler sends the properties and the uniform diff (SET_UNIFORMS), only on change.
     // "builtin:<name>" (a shader shipped with VL.Qt) reaches QtNative as such; vvvv resolves a Path IOBox against the document directory, so
     // ResourceClient.TryGetBuiltinShader also accepts "C:\dir\builtin:<name>" and normalizes it.
-    [ProcessNode(Name = "ShaderEffect", Category = Categories.Elements), Smell(SymbolSmell.Advanced)]
+    [ProcessNode(Name = "ShaderEffect", Category = Categories.Shaders), Smell(SymbolSmell.Advanced)]
     public sealed class ShaderNode : IDisposable
     {
         internal readonly record struct Props(
@@ -92,7 +92,7 @@ namespace VL.Qt.Nodes
         /// <param name="fragmentShader">Baked fragment shader (.qsb or builtin:&lt;name&gt;). Set: used instead of Fragment Code. A broken file = message at Error.</param>
         /// <param name="vertexCode">Vertex shader as full Qt GLSL (#version 440), optional. Empty = Qt's default vertex shader. Ignored while Vertex Shader is set.</param>
         /// <param name="vertexShader">Baked vertex shader (.qsb), optional. Set: used instead of Vertex Code.</param>
-        /// <param name="uniforms">Uniform values by name (nodes of Qt.Elements.Uniform). Unknown names or wrong types show as warning.</param>
+        /// <param name="uniforms">Uniform values by name (nodes of Qt.Elements.Shaders.Uniform). Unknown names or wrong types show as warning.</param>
         /// <param name="blending">Premultiplied alpha blending with what is behind. Off: the shader output replaces it.</param>
         /// <param name="meshResolution">Grid subdivisions (x, y &gt;= 1) for vertex shaders that deform the element. Unconnected = 1, 1 (one quad).</param>
         /// <param name="size">Size of the element (width, height), only with Auto Size off or without Input. The position comes from Transform and Anchor.</param>

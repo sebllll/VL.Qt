@@ -55,10 +55,14 @@ class Finding:
 def node_name(node, catalog):
     """Catalog name of a vvvv node, or None if it is not a VL.Qt process node."""
     ref = node.find(P + 'NodeReference')
-    if ref is None or not (ref.get('LastCategoryFullName') or '').startswith('Qt'):
+    if ref is None:
         return None
     names = [c.get('Name') for c in ref.findall('Choice') if c.get('Kind') == 'ProcessAppFlag']
-    return names[-1] if names and names[-1] in catalog else None
+    if not names or names[-1] not in catalog:
+        return None
+    # VL.Qt nodes sit under Qt, except those of VL.Qt.Stride in Stride's categories (QtTexture in Stride.Textures.Source).
+    category = ref.get('LastCategoryFullName') or ''
+    return names[-1] if category.startswith('Qt') or category == catalog[names[-1]]['category'] else None
 
 
 def check_patch(raw, catalog):

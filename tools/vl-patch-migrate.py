@@ -233,6 +233,9 @@ def load_api(path):
         if len(f) < 3:
             continue
         typ = f[1]
+        if f[2].startswith('attr Category('):
+            # [Category] of a static class of operations (UniformNodes): the category of its nodes.
+            cats.add(re.search(r'"([^"]*)"', f[2]).group(1))
         if f[2].startswith('type '):
             ns, _, name = typ.rpartition('.')
             cat = import_category(imports.get(f[0], ('', '')), ns)

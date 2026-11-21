@@ -96,10 +96,12 @@
             <Pin Id="MMQAdauw315QZYN1NpWJrE" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
           <Node Bounds="100,887,105,19" Id="xIGgQKRZ0BfxyFGiMPw4gb">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
@@ -145,11 +147,13 @@
             <Pin Id="xm2bWppSZTV8d962Dueogh" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="160,690,45,19" Id="mSralsJuTVvh5A3Pe4lmlY">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
@@ -160,11 +164,13 @@
             <Pin Id="hNxPe0YCwGj9WIPe8sNEfV" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="240,690,45,19" Id="1zIYketZlV4qPwMoWz7Ys7">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
@@ -174,11 +180,13 @@
             <Pin Id="xzEzf11kPsn0gtfRuXyAQP" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="320,690,45,19" Id="0xuZlwLptoQwkd4GHPonNH">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
@@ -237,10 +245,12 @@
             <Pin Id="RJOUsUMTxL5LpEcK9dQjAO" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
           <Node Bounds="620,887,105,19" Id="0ZZXowb9HQk38hazetA8Af">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
@@ -279,11 +289,13 @@
             <Pin Id="MLGGweiV7hFGNLkRfKvxwh" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="680,690,45,19" Id="e8tbtSxerFHvwZkZpBKx9O">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Color" />
@@ -294,11 +306,13 @@
             <Pin Id="zqAT1l28CfcayVY3xcFsO2" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="800,705,45,19" Id="1tgDlB2gD4Hkht5MWbn0I3">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
@@ -468,11 +482,13 @@
             <Pin Id="nkhU2AmuSjHhWDr8CQEjhk" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="1200,690,45,19" Id="kiRyGFUB2ZJeFthIxyumuy">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
@@ -505,10 +521,12 @@
             <Pin Id="wSlWoYdczkcFEpF46JqFyn" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="1140,887,105,19" Id="h5RYSelhNP6Douh6Xql2Za">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
@@ -658,10 +676,12 @@
             <Pin Id="pPXVOrhXw9IZW38ybloMgI" Name="Style" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="1660,887,185,19" Id="nDU1YYIE5foRNB3AhA8hIW">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
@@ -714,11 +734,13 @@
             <Pin Id="6j0UP4Nief28H5HwZLMKH2" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="1720,724,41,19" Id="Rh3NeNoUNQySGfF1G5Hzml">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Color" />
@@ -728,11 +750,13 @@
             <Pin Id="rFpWJiT7WrnnfsArpCCmfW" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="1760,724,39,19" Id="gh0R9byIWgYbFpnwCswMMf">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />

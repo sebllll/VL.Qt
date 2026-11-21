@@ -27,9 +27,10 @@ FORBIDDEN_IOBOX = {'Interaction'}
 # Pins whose value the node itself writes into the document (node name, pin name): Save Bounds of the Renderer stores
 # the window geometry in the hidden Bounds pin (#143), so a value there is expected.
 WRITTEN_BY_NODE = {('Renderer', 'Bounds')}
-CATEGORIES = {  # src/VL.Qt/Categories.cs (QtTexture of VL.Qt.Stride uses Categories.Qt too)
+CATEGORIES = {  # src/VL.Qt/Categories.cs (the nodes of VL.Qt.Stride name their Stride categories as text)
     'Qt': 'Qt', 'Elements': 'Qt.Elements', 'Widgets': 'Qt.Widgets', 'Interaction': 'Qt.Interaction',
-    'Effects': 'Qt.Effects', 'MultiEffect': 'Qt.Effects.MultiEffect', 'Paths': 'Qt.Paths',
+    'Effects': 'Qt.Effects', 'Paths': 'Qt.Paths', 'Images': 'Qt.Images', 'Shaders': 'Qt.Elements.Shaders',
+    'Qml': 'Qt.Elements.Qml',
 }
 # Value of a pin without a default, as vvvv writes it in an IOBox (None: unknown, never compared).
 TYPE_DEFAULTS = {

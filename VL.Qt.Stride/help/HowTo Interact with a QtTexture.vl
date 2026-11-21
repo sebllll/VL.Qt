@@ -183,7 +183,7 @@
             </p:TypeAnnotation>
           </Pad>
           <Node Bounds="120,995,445,19" Id="KnBXUP1j5fDMOHtpm2X9ld">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.Stride.dll">
+            <p:NodeReference LastCategoryFullName="Stride.Textures.Source" LastDependency="VL.Qt.Stride.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="QtTexture" />
             </p:NodeReference>
@@ -268,7 +268,7 @@
             <Pin Id="JeO3Xrtyfj3NnVZQkW7Tam" Name="Interest" Kind="OutputPin" />
           </Node>
           <Node Bounds="560,960,89,19" Id="OqbUQRHK8aFLkKgqQ6dXX6">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.Stride.dll">
+            <p:NodeReference LastCategoryFullName="Stride.Input" LastDependency="VL.Qt.Stride.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="ToTexturePixels" />
             </p:NodeReference>

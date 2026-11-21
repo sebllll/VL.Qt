@@ -87,10 +87,12 @@
             <Pin Id="Elfvmb7vEmlP0j1PffEFhe" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="100,424,71,19" Id="K0SI0MFZtreNlpIyD7PWWz">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Qml" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Qml" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="QmlElement" />
             </p:NodeReference>
