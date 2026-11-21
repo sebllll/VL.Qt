@@ -472,7 +472,7 @@ int Scene::opSetStyle(WireReader& r, std::string& err)
     if (!entry)
         return rc;
     const quint16 type = entry->type;
-    if (type < VLQT_ELEMENT_TYPE_BUTTON || type > VLQT_ELEMENT_TYPE_TEXT_FIELD) {
+    if (!entry->def->styled) {
         err = "type " + std::to_string(type) + " has no style (Controls elements only)";
         return ApplyUnknownProperty;
     }

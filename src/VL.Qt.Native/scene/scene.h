@@ -85,9 +85,10 @@ public:
 private:
     // Structural ops (scene/scene.cpp).
     int create(quint32 id, quint16 type, std::string& err);
-    /* The one creation point of an ElementEntry (scene/scene.cpp create): item and type, the geometry state (xf, never
-     * null in the table) and the poll flag. The caller inserts it into nodes and ids and calls watchGeometry. */
-    ElementEntry makeEntry(QQuickItem* item, quint16 type);
+    /* The one creation point of an ElementEntry (scene/scene.cpp create): item and type (def, never null in the table),
+     * the geometry state (xf, never null in the table) and the poll flag. The caller inserts it into nodes and ids and
+     * calls watchGeometry. */
+    ElementEntry makeEntry(QQuickItem* item, const TypeDef& def);
     int destroy(quint32 id, std::string& err);
     int reparent(quint32 id, quint32 parent, quint32 index, std::string& err);
     void reset();
@@ -114,8 +115,8 @@ private:
     /* root under window's content item, size follow, window-geometry watch (constructor, moveToWindow). */
     void attachRoot();
     void destroySubtree(QQuickItem* item);
-    /* A Video: stops the player and releases its audio tap before the item is deleted; other types: nothing. */
-    void releaseVideo(ElementEntry& node);
+    /* The type's beforeDestroy hook (Video: stops the player, releases the audio tap) before the item is deleted. */
+    void beforeDestroy(ElementEntry& node);
     void destroyHandlersOf(ElementEntry& node);
     /* Detaches mask from the link of host's chain that uses it (DESTROY of the mask); the mask stays parked hidden
      * under the root until REPARENT or DESTROY. Masks are attached by SET_EFFECT_CHAIN (protocol.h "Effect chain"). */

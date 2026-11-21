@@ -23,6 +23,8 @@ const PropDef* findProp(const TypeDef& type, quint16 prop)
 {
     if (isEffectProp(prop))
         return nullptr; // only via SET_EFFECT_CHAIN
+    if (prop == VLQT_PROPERTY_AUTO_SIZE)
+        return type.autoSize != AutoSize::None ? &autoSizeProp() : nullptr;
     const auto& list = prop >= 256 ? type.props : commonProps();
     for (const PropDef& p : list)
         if (p.id == prop)
@@ -79,24 +81,18 @@ QQuickItem* Elements::create(const TypeDef& type, std::string& err)
     }
     if (!cache.resolved)
         resolve(type, cache, item);
-    if (type.id == VLQT_ELEMENT_TYPE_VIDEO && !mediaPosition.isValid()) {
-        const QMetaObject* mo = item->metaObject();
-        const int ip = mo->indexOfProperty("vlqtPosition"), idur = mo->indexOfProperty("vlqtDuration");
-        if (ip >= 0 && idur >= 0) {
-            mediaPosition = mo->property(ip);
-            mediaDuration = mo->property(idur);
-        }
-    }
     return item;
 }
 
 bool Elements::readMedia(const ElementEntry& node, float out[2]) const
 {
-    if (node.type != VLQT_ELEMENT_TYPE_VIDEO || !mediaPosition.isValid())
+    const auto it = types.find(node.type);
+    if (it == types.end() || !it->second.position.isValid() || !it->second.duration.isValid())
         return false;
+    const TypeCache& c = it->second;
     // MediaPlayer reports milliseconds (qint64); 0 until the media is loaded.
-    out[0] = float(mediaPosition.read(node.item).toLongLong() / 1000.0);
-    out[1] = float(mediaDuration.read(node.item).toLongLong() / 1000.0);
+    out[0] = float(c.position.read(node.item).toLongLong() / 1000.0);
+    out[1] = float(c.duration.read(node.item).toLongLong() / 1000.0);
     return true;
 }
 
@@ -125,13 +121,11 @@ quint32 Elements::takeClicks(const ElementEntry& node)
 
 bool Elements::pollsState(quint16 type) const
 {
-    if (type == VLQT_ELEMENT_TYPE_VIDEO)
-        return true;
     const auto it = types.find(type);
     if (it == types.end())
         return false;
     const TypeCache& c = it->second;
-    return c.error.isValid() || c.clicks.isValid() || (c.userCount.isValid() && c.userValue.isValid());
+    return (c.position.isValid() && c.duration.isValid()) || c.error.isValid() || c.clicks.isValid() || (c.userCount.isValid() && c.userValue.isValid());
 }
 
 bool Elements::takeUserValue(const ElementEntry& node, QVariant& out)
@@ -153,6 +147,10 @@ void Elements::resolve(const TypeDef& type, TypeCache& cache, QQuickItem* first)
     // property once, on the first item.
     cache.resolved = true;
     const QMetaObject* mo = first->metaObject();
+    if (const int ip = mo->indexOfProperty("vlqtPosition"); ip >= 0)
+        cache.position = mo->property(ip);
+    if (const int idur = mo->indexOfProperty("vlqtDuration"); idur >= 0)
+        cache.duration = mo->property(idur);
     if (const int ie = mo->indexOfProperty("vlqtError"); ie >= 0)
         cache.error = mo->property(ie);
     if (const int ic = mo->indexOfProperty("vlqtClicks"); ic >= 0)
@@ -188,8 +186,8 @@ void Elements::resolve(const TypeDef& type, TypeCache& cache, QQuickItem* first)
 
 int Elements::set(ElementEntry& node, quint16 prop, const Value& v, std::string& err)
 {
-    const TypeDef* type = findType(node.type);
-    const PropDef* def = type ? findProp(*type, prop) : nullptr;
+    const TypeDef* type = node.def;
+    const PropDef* def = findProp(*type, prop);
     TypeCache& cache = types[node.type];
     const ResolvedProp* rp = nullptr;
     ResolvedProp api; // properties without a QML name (C++ API): only def is set
@@ -202,7 +200,7 @@ int Elements::set(ElementEntry& node, quint16 prop, const Value& v, std::string&
         rp = &api;
     }
     if (!rp) {
-        err = "property " + std::to_string(prop) + " not supported by type " + (type ? type->name : "?")
+        err = "property " + std::to_string(prop) + " not supported by type " + type->name
             + (isEffectProp(prop) ? " (EFFECT_* only via SET_EFFECT_CHAIN)" : "");
         if (cache.warned.insert(prop).second)
             qCWarning(lcElements, "%s", err.c_str());

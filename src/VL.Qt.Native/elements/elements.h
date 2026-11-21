@@ -173,7 +173,8 @@ public:
     /* Root item of the node's chain in its layer.effect (nullptr without a chain). */
     static QQuickItem* effectLayerItem(const ElementEntry& node);
 
-    /* VIDEO: position + duration in seconds (0 until loaded). false for other types. */
+    /* VIDEO: position + duration in seconds (0 until loaded; QML properties vlqtPosition/vlqtDuration of the type).
+     * false for types without them. */
     bool readMedia(const ElementEntry& node, float out[2]) const;
     /* Error text of the item (QML property vlqtError of the type: the Video player failed, ...) and of its effect
      * chain, joined; empty if there is no error or the type has no error state. */
@@ -184,8 +185,8 @@ public:
      * bool or string) if there was one since the last call (QML vlqtUserCount, reset to 0); false otherwise and for
      * other types. See "Value inputs" in type_controls.cpp. */
     bool takeUserValue(const ElementEntry& node, QVariant& out);
-    /* The type has state the poll reads every frame (VIDEO media, vlqtError, vlqtClicks, vlqtUserCount); resolved once
-     * the first item of the type exists (Elements::create). */
+    /* The type has state the poll reads every frame (vlqtPosition/vlqtDuration, vlqtError, vlqtClicks, vlqtUserCount);
+     * resolved once the first item of the type exists (Elements::create). */
     bool pollsState(quint16 type) const;
 
     /* Number of live nodes with DEBUG on (set by the DEBUG setter, decremented by the Scene when such a node goes);
@@ -200,6 +201,7 @@ private:
         bool resolved = false;
         std::unordered_map<quint16, ResolvedProp> props; // only successfully resolved QML properties
         std::unordered_set<quint16> warned;              // unknown property ids already logged
+        QMetaProperty position, duration;                // vlqtPosition/vlqtDuration (qint64 ms, Video); invalid if none
         QMetaProperty error;                             // vlqtError (string); invalid if the type has none
         QMetaProperty clicks;                            // vlqtClicks (int, Button); invalid if the type has none
         QMetaProperty userCount;                         // vlqtUserCount (int, value inputs); invalid if none
@@ -228,7 +230,6 @@ private:
     std::unordered_set<const QQuickItem*> maskLayers;   // mask frames attached to a link (their layer stays on)
     std::vector<QPointer<QQuickItem>> frameDelete;      // detached mask frames, Group proxies, retired chain stages: deleted after the next frame
     std::unique_ptr<EffectComponents> effectComponents; // chain items, compiled on first use
-    QMetaProperty mediaPosition, mediaDuration; // VIDEO wrapper vlqtPosition/vlqtDuration, resolved once
 };
 
 } // namespace vlqt

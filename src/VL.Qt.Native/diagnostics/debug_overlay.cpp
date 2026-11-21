@@ -162,11 +162,6 @@ QRectF padded(const QQuickItem* item, const QRectF& r)
     return r.adjusted(prop(item, "leftPadding"), prop(item, "topPadding"), -prop(item, "rightPadding"), -prop(item, "bottomPadding"));
 }
 
-bool isContainer(quint16 type)
-{
-    return type == VLQT_ELEMENT_TYPE_GROUP || type == VLQT_ELEMENT_TYPE_ROW || type == VLQT_ELEMENT_TYPE_COLUMN;
-}
-
 // Equal up to half a logical pixel (layout rounding): a line drawn twice on top of each other only hides the first.
 bool same(const QRectF& a, const QRectF& b)
 {
@@ -236,7 +231,7 @@ void DebugOverlay::drawNode(const ElementEntry& n)
     // Frame = actual size: (0, 0, w, h) = SIZE, or the Auto Size result; for an auto-sized Group with children in
     // negative coordinates it starts there. Everything else is drawn relative to it.
     const QRectF frame = itemBounds(*n.xf, item);
-    const bool container = isContainer(n.type);
+    const bool container = n.def->container;
 
     // Children extent (tracked, visible, non-empty children incl. their x/y and TRANSFORM; like the Group frame, not
     // Qt's childrenRect; internals like the MultiEffect inner item are not tracked).
@@ -261,9 +256,9 @@ void DebugOverlay::drawNode(const ElementEntry& n)
 
     // Padding, spacing and overflow into the fill layer (under the lines of all nodes), all relative to the frame.
     p.area = true;
-    if (n.type == VLQT_ELEMENT_TYPE_ROW || n.type == VLQT_ELEMENT_TYPE_COLUMN || n.type == VLQT_ELEMENT_TYPE_TEXT)
+    if (n.def->layout || n.type == VLQT_ELEMENT_TYPE_TEXT)
         p.ring(frame, padded(item, frame), kPadding);
-    if (n.type == VLQT_ELEMENT_TYPE_ROW || n.type == VLQT_ELEMENT_TYPE_COLUMN) {
+    if (n.def->layout) {
         // Gaps between consecutive laid-out children (Qt skips invisible and zero-size ones).
         const bool column = n.type == VLQT_ELEMENT_TYPE_COLUMN;
         const QRectF inner = padded(item, frame);

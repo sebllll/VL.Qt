@@ -30,7 +30,7 @@ struct TransformState {
                                 // the item (and so the children) stays at the origin
     QQuickMatrix4x4* matrix = nullptr; // = ElementEntry::transform (child of the item), null while TRANSFORM is a pure x/y translation
                                 // folded into x/y (placeItem in geometry.cpp) and there was no drag offset
-    bool inLayout = false;      // the parent is a Row/Column (isLayoutType): the layout owns x/y; set by Scene::reparent
+    bool inLayout = false;      // the parent is a Row/Column (TypeDef::layout): the layout owns x/y; set by Scene::reparent
     // Measure on change (scene/measure.h "Measure on change"): the scene and id of the node, set by watchGeometry,
     // null once the node is erased or the scene goes; queued = the id is in MeasureState::measureQueue.
     Scene* scene = nullptr;
@@ -47,20 +47,19 @@ QRectF itemBounds(const TransformState& s, const QQuickItem* item);
  * (Center, Right/Bottom). Equal to f * size whenever the bounds start at the origin (every element but the Group). */
 QPointF anchorPoint(const TransformState& s, const QQuickItem* item);
 
-/* The element type takes AUTO_SIZE (containers, Button, value inputs, ShaderEffect with Input), see applySize. */
+/* The element takes AUTO_SIZE right now: the autoSize trait of its type (Shader: only with an Input). */
 bool takesAutoSize(const ElementEntry& n);
 /* Its size currently follows the implicit size (takesAutoSize and AUTO_SIZE on); otherwise SIZE counts. */
 inline bool isAutoSized(const ElementEntry& n) { return n.autoSize && takesAutoSize(n); }
-/* Applies SIZE or, while auto-sized (isAutoSized), the implicit size; Group and QmlElement also get the kind of bounds. */
+/* Applies SIZE or, while auto-sized (isAutoSized), the implicit size; the type's applyAutoSize hook (Group, QmlElement)
+ * also gets the kind of bounds. */
 void applySize(ElementEntry& n);
-/* AUTO_SIZE setter of the types that take it (takesAutoSize). */
-bool setAutoSize(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&);
+/* The AUTO_SIZE property: not in the tables of the types, Elements::set offers it to every type whose autoSize is not None. */
+const PropDef& autoSizeProp();
 /* Common properties (ids 1..255): SIZE, TRANSFORM, OPACITY, CLIP, ANCHOR, DEBUG; every element type takes them. */
 const std::vector<PropDef>& commonProps();
 /* TRANSFORM around the anchor, then the drag offset: the matrix of the item's Matrix4x4 (see geometry.cpp). */
 QMatrix4x4 pivoted(const TransformState& s, const QQuickItem* item);
-/* A Row/Column (Qt positioner) owns the x/y of its children (TransformState::inLayout of the children). */
-bool isLayoutType(quint16 type);
 /* Creates a Matrix4x4 as a child of item and appends it to item.transform. */
 QQuickMatrix4x4* attachMatrix(QQuickItem* item);
 /* Writes m into a Matrix4x4 of attachMatrix (typed, no QVariant). */

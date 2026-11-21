@@ -263,10 +263,10 @@ public static class PerfOverlayTest
         Run(2);
         s.Check(Visible(w) && Page(w) == Scene, $"perfoverlay: F5 -> Scene (page {Page(w)})");
         using (var a = s.Grab(w, Path.Combine(s.OutDir, $"perf_f5_scene{sw}.png"))) { }
-        // element count from the reconciler (1 rect), ops/apply from the reported host frames (ops = 1),
+        // element count from the reconciler (1 rectangle), ops/apply from the reported host frames (ops = 1),
         // draw calls n/a; GPU memory and pipelines n/a without QRhi.
         var scene = PageText(w, Scene);
-        s.Check(scene.Contains("elements 1 rect 1"), $"perfoverlay: scene counts 1 rect element ({Line(scene, "elements")})");
+        s.Check(scene.Contains("elements 1 rectangle 1"), $"perfoverlay: scene counts 1 rectangle element ({Line(scene, "elements")})");
         s.Check(scene.Contains("QML items") && scene.Contains("animations 0"), $"perfoverlay: scene items/animations ({Line(scene, "QML items")} | {Line(scene, "animations")})");
         s.Check(scene.Contains("last 1"), $"perfoverlay: scene ops/apply from host frames ({Line(scene, "ops/apply")})");
         s.Check(scene.Contains("draw calls n/a"), "perfoverlay: scene draw calls n/a");

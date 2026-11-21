@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <array>
+#include <map>
 
 #ifdef Q_OS_WIN
 #include <dxgi1_5.h>
@@ -341,21 +342,6 @@ QString PerfMonitor::timelinePage(QString* foot) const
 
 namespace {
 
-const char* typeName(quint16 type)
-{
-    switch (type) {
-    case VLQT_ELEMENT_TYPE_GROUP: return "group";
-    case VLQT_ELEMENT_TYPE_RECTANGLE: return "rect";
-    case VLQT_ELEMENT_TYPE_TEXT: return "text";
-    case VLQT_ELEMENT_TYPE_IMAGE: return "image";
-    case VLQT_ELEMENT_TYPE_ROW: return "row";
-    case VLQT_ELEMENT_TYPE_COLUMN: return "column";
-    case VLQT_ELEMENT_TYPE_SHADER: return "shader";
-    case VLQT_ELEMENT_TYPE_VIDEO: return "video";
-    default: return "other";
-    }
-}
-
 QString mb(quint64 bytes) { return QString::number(double(bytes) / (1024.0 * 1024.0), 'f', 1) + QStringLiteral(" MB"); }
 
 const char* deviceTypeName(QRhiDriverInfo::DeviceType t)
@@ -384,13 +370,12 @@ QString PerfMonitor::scenePage() const
     h.br().t(lab("elements", L));
     if (m_scene) {
         h.t(QString::number(qulonglong(m_scene->nodes.size())).rightJustified(8));
-        int byType[16] = {};
+        std::map<const TypeDef*, int> byType; // TypeDef::name is the type's name, lower case here
         for (const auto& kv : m_scene->nodes)
-            byType[kv.second.type < 16 ? kv.second.type : 0]++;
+            byType[kv.second.def]++;
         QString parts;
-        for (int t = 0; t < 16; t++)
-            if (byType[t])
-                parts += QStringLiteral("  %1 %2").arg(QString::fromLatin1(typeName(quint16(t)))).arg(byType[t]);
+        for (const auto& [def, count] : byType)
+            parts += QStringLiteral("  %1 %2").arg(QString::fromLatin1(def->name).toLower()).arg(count);
         h.c(kGrey, parts);
     } else {
         h.t(kNa.rightJustified(8));

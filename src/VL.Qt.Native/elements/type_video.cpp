@@ -2,7 +2,11 @@
 #include "audio_tap.h"
 
 #include <QtCore/QFileInfo>
+#include <QtCore/QMetaObject>
 #include <QtCore/QUrl>
+#include <QtMultimedia/QAudioDevice>
+#include <QtMultimedia/QMediaDevices>
+#include <QtQuick/QQuickItem>
 
 namespace vlqt {
 
@@ -99,6 +103,19 @@ bool setVolume(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& 
     return writeQml(n.item, rp, qreal(v.f[0]), err);
 }
 
+// Before the item goes: stop the player and drop its source first, so the decoder and audio threads end; then the
+// audio tap, while the player still exists (audio_tap.h releaseVideo).
+void releaseVideo(QQuickItem* item)
+{
+    QMetaObject::invokeMethod(item, "vlqtRelease");
+    res::audio::releaseVideo(item);
+    // The AudioOutput made QMediaDevices probe the WASAPI formats of every device asynchronously in a process-wide pool.
+    // A process that ends during a probe hangs in Qt6Multimedia's atexit destructor of that pool (~QThreadPool waits for
+    // workers ExitProcess already killed). preferredFormat() blocks only while a probe runs.
+    for (const QAudioDevice& d : QMediaDevices::audioOutputs())
+        (void)d.preferredFormat();
+}
+
 std::vector<PropDef> videoProps()
 {
     return {
@@ -120,7 +137,9 @@ std::vector<PropDef> videoProps()
 
 TypeDef videoType()
 {
-    return {VLQT_ELEMENT_TYPE_VIDEO, "VIDEO", kVideoQml, videoProps()};
+    TypeDef t{VLQT_ELEMENT_TYPE_VIDEO, "VIDEO", kVideoQml, videoProps()};
+    t.beforeDestroy = releaseVideo;
+    return t;
 }
 
 } // namespace vlqt

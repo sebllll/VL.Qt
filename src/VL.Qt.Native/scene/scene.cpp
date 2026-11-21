@@ -1,7 +1,6 @@
 // Private Qt API: QQuickWindowPrivate::itemsToPolish (poll); check on Qt updates (list: elements/elements.h).
 #include "scene/scene.h"
 #include "app/exports.h"
-#include "audio_tap.h"
 #include "diagnostics/debug_overlay.h"
 #include "effects/effect_chain.h"
 
@@ -64,7 +63,7 @@ Scene::~Scene()
         kv.second.xf->scene = nullptr; // the unparenting and deletes below emit geometry signals
     for (auto& kv : nodes) {
         elements.clearEffectSource(kv.second);
-        releaseVideo(kv.second);
+        beforeDestroy(kv.second);
     }
     for (auto& kv : nodes)
         kv.second.item->setParentItem(nullptr);
@@ -116,14 +115,15 @@ void Scene::updateDebug()
     debug->refresh();
 }
 
-ElementEntry Scene::makeEntry(QQuickItem* item, quint16 type)
+ElementEntry Scene::makeEntry(QQuickItem* item, const TypeDef& def)
 {
     // Member assignments, not a designated initializer (C++20; the build is C++17): a new field cannot shift the others.
     ElementEntry entry;
     entry.item = item;
-    entry.type = type;
+    entry.type = def.id;
+    entry.def = &def;
     elements.initGeometry(entry); // xf, anchor placement, follows size changes
-    entry.polled = elements.pollsState(type);
+    entry.polled = elements.pollsState(def.id);
     return entry;
 }
 
@@ -146,20 +146,16 @@ int Scene::create(quint32 id, quint16 type, std::string& err)
     QQuickItem* item = elements.create(*ti, err);
     if (!item)
         return ApplyInvalid;
-    ElementEntry& node = nodes[id] = makeEntry(item, type);
+    ElementEntry& node = nodes[id] = makeEntry(item, *ti);
     ids[item] = id;
     watchGeometry(*this, id, node); // measure on change
     return ApplyOk;
 }
 
-void Scene::releaseVideo(ElementEntry& node)
+void Scene::beforeDestroy(ElementEntry& node)
 {
-    if (node.type != VLQT_ELEMENT_TYPE_VIDEO)
-        return;
-    // Stop the player and drop its source first, so the decoder and audio threads end before the item goes;
-    // then the audio tap, while the player still exists (audio_tap.h releaseVideo).
-    QMetaObject::invokeMethod(node.item, "vlqtRelease");
-    res::audio::releaseVideo(node.item);
+    if (node.def->beforeDestroy)
+        node.def->beforeDestroy(node.item);
 }
 
 void Scene::destroySubtree(QQuickItem* item)
@@ -171,7 +167,7 @@ void Scene::destroySubtree(QQuickItem* item)
     auto it = ids.find(item);
     ElementEntry& node = nodes[it->second];
     destroyHandlersOf(node); // before the item goes: handler QML objects, ids free again
-    releaseVideo(node);
+    beforeDestroy(node);
     // Effect chain off first (layer, its root and stages; the masks of its links are detached and parked); a
     // SHADER source keeps its layer until flushLayerOff.
     const std::vector<QQuickItem*> masks = elements.effectMasks(node);
@@ -303,7 +299,7 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
         }
         parent = pit->second.item;
         underShaderEffect = pit->second.type == VLQT_ELEMENT_TYPE_SHADER;
-        parentIsLayout = isLayoutType(pit->second.type);
+        parentIsLayout = pit->second.def->layout;
     }
     QQuickItem* item = it->second.item;
     if (it->second.maskHost) {
