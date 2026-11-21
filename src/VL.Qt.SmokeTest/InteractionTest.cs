@@ -7,6 +7,7 @@ using VL.Lib.Mathematics;
 using VL.Lib.Reactive;
 using VL.Qt;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;

@@ -7,6 +7,7 @@ using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Qt;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
@@ -30,7 +31,7 @@ public static class ResyncTest
         var scene = new SceneRegistry();
         var clear = new Color4(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         var bounds = new RectangleF(100, 100, 800, 600);
-        var r = new WindowRenderer(scene, "VL.Qt resync test", bounds);
+        var r = new WindowScene(scene, "VL.Qt resync test", bounds);
         s.Check(r.Window != SceneHandle.Null, "window created " + r.Error);
         if (r.Window == SceneHandle.Null)
             return;

@@ -1,7 +1,7 @@
 ﻿using System;
 using VL.Qt.Wire;
 
-namespace VL.Qt
+namespace VL.Qt.Interop
 {
     /// <summary>
     /// Compares the ABI version of vlqt.dll with the one of this VL.Qt.dll (<see cref="Protocol.AbiVersion"/>, PROTO-01).
@@ -19,11 +19,5 @@ namespace VL.Qt
 
         /// <summary>The actual version for the message; a null (the export is missing) is a library older than the check.</summary>
         internal static string ActualText(int? actual) => actual?.ToString() ?? "none (no vlqt_app_get_abi_version)";
-    }
-
-    /// <summary>vlqt.dll has another ABI version than this VL.Qt.dll: QtApp is not created, no window opens.</summary>
-    internal sealed class AbiMismatchException : InvalidOperationException
-    {
-        public AbiMismatchException(string message) : base(message) { }
     }
 }

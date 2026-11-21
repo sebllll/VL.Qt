@@ -1,4 +1,6 @@
-﻿namespace VL.Qt.Wire
+﻿using VL.Qt.Interop;
+
+namespace VL.Qt.Wire
 {
     /// <summary>
     /// Mirror of src/VL.Qt.Native/protocol.h (the single source of truth). Keep in sync:

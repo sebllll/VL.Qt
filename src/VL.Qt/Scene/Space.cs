@@ -17,7 +17,8 @@
         /// <summary>Device independent pixels. One unit equals 100 DIP. The origin is located at the top left.</summary>
         DIPTopLeft,
 
-        /// <summary>Device pixels. One unit equals 100 device pixels (100 / dpr DIP, independent of the DPI scale). The origin is located at the top left.</summary>
+        /// <summary>Device pixels. One unit equals 100 device pixels (100 / dpr DIP, independent of the DPI scale). The
+        /// origin is located at the top left.</summary>
         PixelTopLeft,
     }
 }

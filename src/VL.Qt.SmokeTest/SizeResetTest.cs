@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using System.Drawing;
 using System.IO;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 using Color = System.Drawing.Color;

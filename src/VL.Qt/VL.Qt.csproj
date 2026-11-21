@@ -49,7 +49,7 @@
     <PackageReference Include="System.Reactive" Version="$(SystemReactiveVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
   </ItemGroup>
 
-  <!-- Repo: lib/net10.0/VL.Qt.dll + runtimes/<rid>/native; Native.cs resolves ../../runtimes (see package layout below). -->
+  <!-- Repo: lib/net10.0/VL.Qt.dll + runtimes/<rid>/native; Interop/QtNativeLibrary.cs resolves ../../runtimes (see package layout below). -->
 
   <!-- NuGet package (vvvv source-package layout). CI: download the native-<rid> artifacts into <repo>/runtimes/<rid>/native,
        then `dotnet pack -c Release -p:Version=...`. Layout: VL.Qt.vl, VL.Qt.HDE.vl (editor-only tooltip viewers), VL.Qt.vl.targets, lib/net10.0/VL.Qt.dll (the .vl references

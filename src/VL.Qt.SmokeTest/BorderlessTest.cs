@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using Stride.Core.Mathematics;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
@@ -34,7 +35,7 @@ public static class BorderlessTest
             Math.Abs(a.X - b.X) <= posTol && Math.Abs(a.Y - b.Y) <= posTol
             && Math.Abs(a.Width - b.Width) <= 1 && Math.Abs(a.Height - b.Height) <= 1;
 
-        WindowGeometry? Shown(WindowRenderer r, string title)
+        WindowGeometry? Shown(WindowScene r, string title)
         {
             WindowGeometry? last = null;
             for (int i = 0, stable = 0; i < 200 && stable < 5; i++)
@@ -62,7 +63,7 @@ public static class BorderlessTest
 
         const string title = "VL.Qt borderless test";
         var bounds = new RectangleF(200, 160, 400, 300);
-        var r = new WindowRenderer(new SceneRegistry(), title, bounds);
+        var r = new WindowScene(new SceneRegistry(), title, bounds);
         var g0 = Shown(r, title);
         var c0 = Client(title);
         s.Check(g0 is { } a0 && Close(a0.Bounds, bounds), $"framed window at Bounds ({g0?.Bounds})");
@@ -107,7 +108,7 @@ public static class BorderlessTest
         // Created borderless (mode before show): reported geometry = Bounds, small size possible right away.
         const string title2 = "VL.Qt borderless on create";
         var small = new RectangleF(260, 220, 100, 60);
-        var r2 = new WindowRenderer(new SceneRegistry(), title2, small, mode: Protocol.WindowMode.Borderless);
+        var r2 = new WindowScene(new SceneRegistry(), title2, small, mode: Protocol.WindowMode.Borderless);
         var g5 = Shown(r2, title2);
         var c5 = Client(title2);
         s.Check(g5 is { } s5 && s5.Bounds.Width == small.Width && s5.Bounds.Height == small.Height, $"created borderless: size 100x60 ({g5?.Bounds} vs {small})");

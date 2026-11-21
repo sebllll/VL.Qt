@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using VL.Qt;
+using VL.Qt.Interop;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
 using static Pixels;

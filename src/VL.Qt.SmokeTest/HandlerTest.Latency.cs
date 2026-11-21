@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reactive.Subjects;
 using Microsoft.Extensions.Logging;
 using VL.Lib.Animation;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 

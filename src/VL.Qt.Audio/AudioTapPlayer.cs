@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Audio

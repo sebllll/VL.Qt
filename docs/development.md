@@ -17,6 +17,8 @@ tools/start-vvvv.ps1 -Help "Draw a Rectangle"
 
 vvvv is taken from `-VvvvDir`, else `%VVVV_DIR%`, else the newest `C:\vvvv\vvvv_gamma_*-win-<arch>`. Only the Qt of your machine's architecture is needed locally; the other one is built by the CI.
 
+To build QtNative from Visual Studio or Rider (open `src/VL.Qt.Native` as a CMake folder) or with `cmake --preset`, the presets `dev-win-x64` and `dev-win-arm64` read the Qt folder from the environment variable `VLQT_QT_DIR` (for example `C:\Qt\6.12.0\msvc2022_64`); `tools/setup-qt.ps1` prints the value at its end. Without a preset, CMake picks `win-x64` or `win-arm64` from the compiler's architecture. `tools/build-native.ps1` does not need the variable (`-QtDir` or `C:\Qt`).
+
 ## Visual Studio solution
 
 Open `src/VL.Qt.slnx` in Visual Studio 2026 (or 2022 from 17.14) or Rider. It contains:
@@ -107,7 +109,7 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 
 | Script | Use |
 |---|---|
-| `setup-qt.ps1` | Installs the pinned Qt version (LGPL modules only, plus Qt Multimedia and Shader Tools) via aqtinstall. `-OutDir` (default `C:\Qt`). |
+| `setup-qt.ps1` | Installs the pinned Qt version (LGPL modules only, plus Qt Multimedia and Shader Tools) via aqtinstall. `-OutDir` (default `C:\Qt`). Prints the value for `VLQT_QT_DIR`. |
 | `build-native.ps1` | Builds only QtNative and deploys Qt into `runtimes/<rid>/native` (windeployqt). `-QtDir` for another Qt location, `-ForceDeploy` to redeploy. |
 | `trim-deploy.ps1` | Removes Qt parts VL.Qt never loads from `runtimes/<rid>/native`. Idempotent, `-WhatIf` shows what would go. |
 | `check-licenses.ps1` | Checks that the deployed runtime contains only LGPL-compatible Qt parts (whitelist). Exit 1 on a violation. |

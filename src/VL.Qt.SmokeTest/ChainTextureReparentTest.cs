@@ -2,6 +2,7 @@
 using System.Buffers.Binary;
 using System.Drawing;
 using NUnit.Framework;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 

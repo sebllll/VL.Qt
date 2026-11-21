@@ -1525,6 +1525,36 @@ VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | pin Stroke Color | in Stride
 VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | pin Stroke Width | in float | Pin(Visibility = PinVisibility.Optional) | (strokeWidth)
 VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | pin Transform | in Stride.Core.Mathematics.Matrix | (transform)
 VL.Qt | VL.Qt.Nodes.RectangleNode | type sealed class
+VL.Qt | VL.Qt.Nodes.RendererNode | attr ProcessNode(Name = "Renderer", Category = "Qt")
+VL.Qt | VL.Qt.Nodes.RendererNode | ctor | new
+VL.Qt | VL.Qt.Nodes.RendererNode | ctor | order Node Context, Bounds, V Sync, Bound To Document, Dialog If Document Changed, Save Bounds
+VL.Qt | VL.Qt.Nodes.RendererNode | ctor | pin Bound To Document | in bool = true | Pin(Visibility = PinVisibility.Optional) | (boundToDocument)
+VL.Qt | VL.Qt.Nodes.RendererNode | ctor | pin Bounds | in Stride.Core.Mathematics.RectangleF = 1000, 40, 786, 432 | Pin(Visibility = PinVisibility.Optional) | (bounds)
+VL.Qt | VL.Qt.Nodes.RendererNode | ctor | pin Dialog If Document Changed | in bool = false | Pin(Visibility = PinVisibility.Optional) | (dialogIfDocumentChanged)
+VL.Qt | VL.Qt.Nodes.RendererNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
+VL.Qt | VL.Qt.Nodes.RendererNode | ctor | pin Save Bounds | in bool = true | Pin(Visibility = PinVisibility.Optional) | (saveBounds)
+VL.Qt | VL.Qt.Nodes.RendererNode | ctor | pin V Sync | in bool = true | Pin(Visibility = PinVisibility.Optional) | (vSync)
+VL.Qt | VL.Qt.Nodes.RendererNode | implements System.IDisposable
+VL.Qt | VL.Qt.Nodes.RendererNode | implements VL.Qt.IQtFrameParticipant
+VL.Qt | VL.Qt.Nodes.RendererNode | method Dispose | void
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | order Is Visible, Perf, Client Bounds, Error, Input, Space, Clear Color, Clear, Enabled, Title, Borderless, Fullscreen, Debug, Window, Multisample Count
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Borderless | in bool = false | Pin(Visibility = PinVisibility.Optional) | (borderless)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Clear Color | in Stride.Core.Mathematics.Color4 = 0.1254902, 0.1254902, 0.1254902, 1 | (clearColor)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Clear | in bool = true | Pin(Visibility = PinVisibility.Optional) | (clear)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Client Bounds | out Stride.Core.Mathematics.RectangleF | Pin(Visibility = PinVisibility.Optional) | (clientBounds)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Debug | in bool = false | Pin(Visibility = PinVisibility.Optional) | (debug)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Enabled | in bool = true | (enabled)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Error | out string | (error)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Fullscreen | in bool = false | Pin(Visibility = PinVisibility.Optional) | (fullscreen)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Input | in VL.Qt.Elements.Element | (input)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Is Visible | out bool | Pin(Visibility = PinVisibility.Optional) | (isVisible)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Multisample Count | in VL.Qt.MultisampleCount = X4 | Pin(Name = "Multisample Count", Visibility = PinVisibility.Optional) | (multisampleCount)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Perf | out VL.Qt.PerfStats | Pin(Visibility = PinVisibility.Optional) | (perf)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Space | in VL.Qt.Space = DIPTopLeft | (space)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Title | in string = "VL.Qt" | (title)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | pin Window | in VL.Qt.WindowSettings | Pin(Visibility = PinVisibility.Optional) | (window)
+VL.Qt | VL.Qt.Nodes.RendererNode | method Update | void
+VL.Qt | VL.Qt.Nodes.RendererNode | type sealed class
 VL.Qt | VL.Qt.Nodes.RowNode | attr ProcessNode(Name = "Row", Category = "Qt.Elements")
 VL.Qt | VL.Qt.Nodes.RowNode | ctor | new
 VL.Qt | VL.Qt.Nodes.RowNode | ctor | order Node Context
@@ -2110,36 +2140,6 @@ VL.Qt | VL.Qt.QtImageState | member Failed = 2
 VL.Qt | VL.Qt.QtImageState | member Loading = 0
 VL.Qt | VL.Qt.QtImageState | member Ready = 1
 VL.Qt | VL.Qt.QtImageState | type enum
-VL.Qt | VL.Qt.Renderer | attr ProcessNode(Name = "Renderer", Category = "Qt")
-VL.Qt | VL.Qt.Renderer | ctor | new
-VL.Qt | VL.Qt.Renderer | ctor | order Node Context, Bounds, V Sync, Bound To Document, Dialog If Document Changed, Save Bounds
-VL.Qt | VL.Qt.Renderer | ctor | pin Bound To Document | in bool = true | Pin(Visibility = PinVisibility.Optional) | (boundToDocument)
-VL.Qt | VL.Qt.Renderer | ctor | pin Bounds | in Stride.Core.Mathematics.RectangleF = 1000, 40, 786, 432 | Pin(Visibility = PinVisibility.Optional) | (bounds)
-VL.Qt | VL.Qt.Renderer | ctor | pin Dialog If Document Changed | in bool = false | Pin(Visibility = PinVisibility.Optional) | (dialogIfDocumentChanged)
-VL.Qt | VL.Qt.Renderer | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
-VL.Qt | VL.Qt.Renderer | ctor | pin Save Bounds | in bool = true | Pin(Visibility = PinVisibility.Optional) | (saveBounds)
-VL.Qt | VL.Qt.Renderer | ctor | pin V Sync | in bool = true | Pin(Visibility = PinVisibility.Optional) | (vSync)
-VL.Qt | VL.Qt.Renderer | implements System.IDisposable
-VL.Qt | VL.Qt.Renderer | implements VL.Qt.IQtFrameParticipant
-VL.Qt | VL.Qt.Renderer | method Dispose | void
-VL.Qt | VL.Qt.Renderer | method Update | order Is Visible, Perf, Client Bounds, Error, Input, Space, Clear Color, Clear, Enabled, Title, Borderless, Fullscreen, Debug, Window, Multisample Count
-VL.Qt | VL.Qt.Renderer | method Update | pin Borderless | in bool = false | Pin(Visibility = PinVisibility.Optional) | (borderless)
-VL.Qt | VL.Qt.Renderer | method Update | pin Clear Color | in Stride.Core.Mathematics.Color4 = 0.1254902, 0.1254902, 0.1254902, 1 | (clearColor)
-VL.Qt | VL.Qt.Renderer | method Update | pin Clear | in bool = true | Pin(Visibility = PinVisibility.Optional) | (clear)
-VL.Qt | VL.Qt.Renderer | method Update | pin Client Bounds | out Stride.Core.Mathematics.RectangleF | Pin(Visibility = PinVisibility.Optional) | (clientBounds)
-VL.Qt | VL.Qt.Renderer | method Update | pin Debug | in bool = false | Pin(Visibility = PinVisibility.Optional) | (debug)
-VL.Qt | VL.Qt.Renderer | method Update | pin Enabled | in bool = true | (enabled)
-VL.Qt | VL.Qt.Renderer | method Update | pin Error | out string | (error)
-VL.Qt | VL.Qt.Renderer | method Update | pin Fullscreen | in bool = false | Pin(Visibility = PinVisibility.Optional) | (fullscreen)
-VL.Qt | VL.Qt.Renderer | method Update | pin Input | in VL.Qt.Elements.Element | (input)
-VL.Qt | VL.Qt.Renderer | method Update | pin Is Visible | out bool | Pin(Visibility = PinVisibility.Optional) | (isVisible)
-VL.Qt | VL.Qt.Renderer | method Update | pin Multisample Count | in VL.Qt.MultisampleCount = X4 | Pin(Name = "Multisample Count", Visibility = PinVisibility.Optional) | (multisampleCount)
-VL.Qt | VL.Qt.Renderer | method Update | pin Perf | out VL.Qt.PerfStats | Pin(Visibility = PinVisibility.Optional) | (perf)
-VL.Qt | VL.Qt.Renderer | method Update | pin Space | in VL.Qt.Space = DIPTopLeft | (space)
-VL.Qt | VL.Qt.Renderer | method Update | pin Title | in string = "VL.Qt" | (title)
-VL.Qt | VL.Qt.Renderer | method Update | pin Window | in VL.Qt.WindowSettings | Pin(Visibility = PinVisibility.Optional) | (window)
-VL.Qt | VL.Qt.Renderer | method Update | void
-VL.Qt | VL.Qt.Renderer | type sealed class
 VL.Qt | VL.Qt.Space | member DIP = 1
 VL.Qt | VL.Qt.Space | member DIPTopLeft = 2
 VL.Qt | VL.Qt.Space | member Normalized = 0

@@ -5,6 +5,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Lib.Basics.Imaging;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Nodes;
 using Path = VL.Lib.IO.Path;
 using Rectangle = VL.Qt.Elements.Rectangle;

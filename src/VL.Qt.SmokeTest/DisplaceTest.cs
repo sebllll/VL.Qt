@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.IO;
 using NUnit.Framework;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;

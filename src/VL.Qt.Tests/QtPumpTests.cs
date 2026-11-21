@@ -42,7 +42,7 @@ namespace VL.Qt.Tests
             public int Participants, Pumps, Frames, Registered, Unregistered;
             public readonly List<IQtFrameParticipant[]> Calls = new();
             public readonly List<double> VvvvMs = new(); // vvvv frame start → pump, -1 = unknown
-            public void PumpFrame(IQtFrameParticipant[] participants, double driverSeconds, double budgetMs, long vvvvStart, HostPumpMeter history)
+            public void PumpFrame(IQtFrameParticipant[] participants, double driverSeconds, double budgetMs, long vvvvStart, HostPumpMeter meter)
             {
                 VvvvMs.Add(vvvvStart != 0 ? Stopwatch.GetElapsedTime(vvvvStart).TotalMilliseconds : -1);
                 // Like QtApp: the driver only moves forward; a pump may be slightly behind (another app's clock).

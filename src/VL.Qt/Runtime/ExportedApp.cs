@@ -40,7 +40,7 @@ namespace VL.Qt
         public static void Attach(NodeContext nodeContext)
         {
             var appHost = nodeContext.AppHost;
-            if (!appHost.IsExported || Renderer.IsWindowsFormsHost(appHost))
+            if (!appHost.IsExported || Nodes.RendererNode.IsWindowsFormsHost(appHost))
                 return;
             lock (s_syncRoot)
             {
@@ -63,7 +63,7 @@ namespace VL.Qt
         /// <summary>Ends the exported app (Bound To Document, signals). Call on the main (Qt) thread.</summary>
         public static void Exit(AppHost appHost)
         {
-            if (OperatingSystem.IsWindows() && Renderer.IsWindowsFormsHost(appHost)
+            if (OperatingSystem.IsWindows() && Nodes.RendererNode.IsWindowsFormsHost(appHost)
                 && Type.GetType("System.Windows.Forms.Application, System.Windows.Forms") is { } application
                 && application.GetProperty("MessageLoop")?.GetValue(null) is true
                 && application.GetMethod("Exit", Type.EmptyTypes) is { } exit)

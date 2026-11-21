@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using NUnit.Framework;
+using VL.Qt.Interop;
 
 namespace VL.Qt.Tests
 {
     /// <summary>
-    /// The structs of vlqt.h and their mirrors in Native.cs have the same size and the same offset of the last field.
+    /// The structs of vlqt.h and their mirrors in `Interop/Native.*.cs` have the same size and the same offset of the last field.
     /// The numbers are the ones of the static_asserts at the top of vlqt.cpp (a C++ compiler checks the header, this test
     /// the mirror); change all three places together. They hold on every 64-bit target, so also on Windows arm64 and Linux.
     /// </summary>

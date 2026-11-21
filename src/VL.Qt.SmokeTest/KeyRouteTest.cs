@@ -5,6 +5,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
