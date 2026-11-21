@@ -1,13 +1,14 @@
 /* elements/elements.h - the elements of one window (class Elements): creates the items and sets their properties.
  *
- * Every element type is an entry of the type table (element_types.h, one type file each): type id, QML file or
- * C++ factory, property table. QML properties are resolved once per type and engine to a QMetaProperty (on the first
- * item), never looked up by name per frame; grouped ones ("border.color") go through the group object, QFont fields
- * through a read-modify-write (type_text.cpp). A new element property is a table entry only, no new export.
+ * Every element type is an entry of the type table (element_types.h, one type file each): type id, C++ factory or QML
+ * file, property table. Rectangle, Text, Image and Shape are built in C++ and written through typed setters (no
+ * QVariant per SET); the QML types (Row, Column, Video, the controls) have their QML properties resolved once per type
+ * and engine to a QMetaProperty (on the first item), never looked up by name per frame. A new element property is a
+ * table entry only, no new export.
  *
  * Hot setters call the typed setters of Qt's private classes (QtQuick/private, QtQuickShapes/private): still LGPL, but
- * private API, so check them on every Qt update. In use here: QQuickItemPrivate (group_item.cpp), QQuickRectangle and
- * QQuickText (element_types.cpp), QQuickMatrix4x4 (geometry.cpp), QQuickShaderEffectSource (group_item.cpp,
+ * private API, so check them on every Qt update. In use here: QQuickItemPrivate (group_item.cpp), QQuickRectangle
+ * (type_rectangle.cpp), QQuickText (type_text.cpp), QQuickMatrix4x4 (geometry.cpp), QQuickShaderEffectSource (group_item.cpp,
  * effect_sources.cpp), QQuickShape, QQuickShapePath and QQuickShapeTrim (type_shape.cpp), QQuickCurve and
  * QQuickPathData (shape_path_element.h). The animation clock (app/animation_clock.cpp) uses QUnifiedTimer and
  * QAbstractAnimationTimer of QtCore/private for its keep-alive timer; if that class changes, an endless
