@@ -24,4 +24,13 @@ QImage::Format qimageFormat(int format, bool premultiplied);
 // The format has an alpha channel (R8G8B8A8, B8G8R8A8, R16G16B16A16F, R32G32B32A32F).
 bool hasAlpha(int format);
 
+// The format has more than 8 bits per channel and QImage can hold it (R16, R16G16B16A16F, R32G32B32A32F; not R32F and
+// R32G32F, which have no QImage format).
+bool isDeep(int format);
+
+// len bytes hold width x height pixels of the (known) format, rows rowBytes apart (<= 0 = width * bytes per pixel): the
+// last row needs only its pixels, not its padding. The one size rule of vlqt_image_set_pixels and
+// vlqt_image_write_file.
+bool holdsPixels(int len, int width, int height, int rowBytes, int format);
+
 } // namespace vlqt::res

@@ -507,10 +507,13 @@ VLQT_API int vlqt_image_read_preview(unsigned long long id, unsigned char* dst, 
  * desc.format a VL PixelFormat number as in vlqt_image_set_pixels: 1, 2, 4-10 and 12, e.g. 9 B8G8R8A8, 7 R8G8B8A8; not
  * 3 R32F and 11 R32G32F; premultiplied 0/1, flags ignored) to utf8Path. The file format comes from the extension (png,
  * jpg/jpeg, bmp, ... what QImageWriter can write); premultiplied pixels are un-premultiplied for formats with alpha,
- * formats without alpha get the pixels over black. quality 0..100 applies to lossy formats (jpg, webp) only, -1 = Qt's
- * default. Missing folders are created, an existing file is overwritten. Returns 0; VLQT_ERR_BAD_ARGUMENT (null, size
- * <= 0, row_bytes or len too small, unsupported pixel format), VLQT_ERR_UNSUPPORTED unknown or unsupported file format
- * (extension), VLQT_ERR_IO folder could not be created or the write failed; vlqt_last_error says why. */
+ * formats without alpha get the pixels over black. More than 8 bits per channel (2 R16, 10 and 12 float RGBA) are
+ * written as a 16-bit PNG (float values clamped to 0..1); every other file format gets 8 bit and a warning in the log.
+ * quality 0..100 applies to lossy formats (jpg, webp) only, -1 = Qt's default. Missing folders are created, an
+ * existing file is overwritten. len needs only the pixels of the last row, as in vlqt_image_set_pixels. Returns 0;
+ * VLQT_ERR_BAD_ARGUMENT (null, size <= 0, row_bytes or len too small, unsupported pixel format), VLQT_ERR_UNSUPPORTED
+ * unknown or unsupported file format (extension), VLQT_ERR_IO folder could not be created or the write failed;
+ * vlqt_last_error says why. */
 VLQT_API int vlqt_image_write_file(const vlqt_pixel_desc* desc, const void* data, int len, const char* utf8Path,
                                    int quality);
 

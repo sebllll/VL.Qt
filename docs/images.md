@@ -12,6 +12,7 @@ Images are GPU resources (`QtImage`), separate from the `Image [Qt]` element tha
 | `LoadImage (Async)` | Same without blocking: decoding runs in a worker, the GPU upload is spread over frames. The previous image stays until the new one is ready (`Keep Previous`); `Is Loaded` and `On Loaded` tell when it is. |
 | `ToQtImage` | Uploads an `IImage` of vvvv (Skia, OpenCV, camera, …). Uploads only when a new image arrives; 16 bit and float are reduced to 8 bit with a warning. |
 | `VideoSourceToQtImage` | Shows a VL.Video source (VideoPlayer, camera, …) in the Image element. Each new frame replaces the content of the same `QtImage`; frames are copied from CPU memory. |
+| `FileWriter` | Writes an `IImage` to a file, the format comes from the extension (PNG, JPG, BMP, …). 16 bit (`R16`) and half/full float RGBA go to a 16-bit PNG (float values clamped to 0..1); every other file format gets 8 bit and a warning in the log. |
 | `Snapshot` | The other way: grabs an element or Group (with children) as an `IImage` on `Grab`, e.g. for thumbnails, export or processing in Skia/OpenCV. Asynchronous, `Is Ready` comes one frame later. `Scale` sets pixels per DIP independent of the screen scaling. |
 
 ## Mipmaps, frame budget, errors, device loss
