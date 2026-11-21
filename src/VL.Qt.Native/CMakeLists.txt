@@ -130,6 +130,7 @@ target_sources(vlqt PRIVATE
 
     # resources/
     resources/pixel_format.cpp
+    resources/change_watch.h
     resources/pixel_format.h
     resources/resource_events.cpp
     resources/resource_events.h
