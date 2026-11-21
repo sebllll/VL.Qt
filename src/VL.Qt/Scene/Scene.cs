@@ -224,7 +224,7 @@ namespace VL.Qt
             var rc = Native.Poll(_handle, _poll, out var n, out var required);
             if (rc == Native.Result.BufferTooSmall)
             {
-                // The events stay queued; once more with the size QtNative asked for.
+                // The events stay queued and QtNative collects nothing more: the retry needs exactly `required`.
                 _poll = new byte[Math.Max(required, _poll.Length * 2)];
                 rc = Native.Poll(_handle, _poll, out n, out _);
             }

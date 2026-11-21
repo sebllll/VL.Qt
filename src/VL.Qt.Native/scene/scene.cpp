@@ -377,12 +377,20 @@ int Scene::poll(unsigned char* out, int cap, int* written, int* required)
 {
     if (const int rc = beginBuffer(out, cap, written, required); rc != VLQT_OK)
         return rc;
-    deleteRetired(); // poll runs after processEvents: the effects have moved off retired sources
-    appliedSincePoll = false; // polish (if Qt did not render) ran before this poll
-    collectWindowGeometry(*this);
-    collectMeasurements(*this);
-    collectHandlers(*this);
-    return events.drain(out, cap, written, required);
+    // Collect once per poll cycle: a buffer that was too small leaves the records queued and `eventsCollected` set, so
+    // the retry only drains and *required is exactly what it needs (collecting again would add records).
+    if (!eventsCollected) {
+        deleteRetired(); // poll runs after processEvents: the effects have moved off retired sources
+        appliedSincePoll = false; // polish (if Qt did not render) ran before this poll
+        collectWindowGeometry(*this);
+        collectMeasurements(*this);
+        collectHandlers(*this);
+        eventsCollected = true;
+    }
+    const int rc = events.drain(out, cap, written, required);
+    if (rc == VLQT_OK)
+        eventsCollected = false;
+    return rc;
 }
 
 } // namespace vlqt
