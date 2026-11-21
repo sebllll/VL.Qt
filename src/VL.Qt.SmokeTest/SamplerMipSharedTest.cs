@@ -7,16 +7,15 @@ using VL.Qt;
 using static Pixels;
 
 // NFX-02: two samplers of one Shader read the same element, the lower binding with a mip filter and the higher one
-// with a state that has none (Nearest filter, no mips). The layer request of the element must be the OR of both: refreshLayerRequests
-// asks once per sampler and requestLayer overwrites the one entry of the owner, so the last sampler wins and the mip filter is lost
-// after the second refresh. Read from a minified read (stripes, uv * 14): with mips every pixel is the purple mean, without they alias.
+// with a state that has none (Nearest filter, no mips). The layer request of the element must be the OR of both, also after
+// the second refresh, when the element already holds a request (before the fix the last sampler won there). The sampler with
+// the mip filter is read, minified (stripes, uv * 14): with mips every pixel is the purple mean, without they alias.
 // A control cell with no state for the higher binding (no conflict) must show the mean at any time.
 [TestFixture, NonParallelizable]
 public static class SamplerMipSharedTest
 {
     /// <summary>NFX-02: one element read by two samplers, the mip filter only on the lower binding.</summary>
     [Test, Category("sampler-mip-shared")]
-    [Ignore("NFX-02: refreshLayerRequests lets the last sampler overwrite the owner's mip request, the mip filter of the other sampler on the same element is lost (fails: mip on the higher binding b, plain a)")]
     public static void SamplerMipShared() => Scenario.Run(Run);
 
     private const float CellW = 150, CellH = 120;
@@ -30,8 +29,8 @@ public static class SamplerMipSharedTest
         "layout(binding = 1) uniform sampler2D a;\n" +
         "layout(binding = 2) uniform sampler2D b;\n" +
         "void main() {\n" +
-        "    vec4 col = texture(a, c + (qt_TexCoord0 - 0.5) * k);\n" +
-        "    col.a += texture(b, vec2(0.5)).a * 0.000001;\n" +
+        "    vec2 uv = c + (qt_TexCoord0 - 0.5) * k;\n" +
+        "    vec4 col = which < 0.5 ? texture(a, uv) : texture(b, uv);\n" +
         "    fragColor = col * qt_Opacity;\n" +
         "}\n";
 
@@ -58,8 +57,8 @@ public static class SamplerMipSharedTest
         }
 
         // Cell 0: mip on a (binding 1), b Nearest without mips, a is read. Cell 1: the other way round, b has the mip filter and is
-        // read (one of the two loses its mip request today). Cell 2: no mip anywhere (the aliasing reference). Cell 3: control,
-        // mip on a, no sampler state for b (nothing to overwrite).
+        // read. Cell 2: no mip anywhere (the aliasing reference). Cells 3 and 4: controls, the mip filter on one sampler, no
+        // sampler state for the other (nothing to overwrite).
         uint next = 10;
         (uint fx, uint group)[] cells = new (uint, uint)[5];
         ulong[][] states = { new[] { S(0, 2, 1, 1), S(1, 0, 1, 1) }, new[] { S(1, 0, 1, 1), S(0, 2, 1, 1) }, new[] { S(1, 0, 1, 1), S(1, 0, 1, 1) }, new[] { S(0, 2, 1, 1), 0UL }, new[] { 0UL, S(0, 2, 1, 1) } };
