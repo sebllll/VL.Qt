@@ -28,7 +28,7 @@ public static class EffectLayerTest
     private const int ScenePage = 2;
 
     // Scene page (F5): "effects <layers> effect layers, <n> MultiEffect items" and "QML items <n>".
-    private static (int layers, int effects, int items) Counts(IntPtr w)
+    private static (int layers, int effects, int items) Counts(SceneHandle w)
     {
         var text = NativeCalls.PerfPageText(w, ScenePage);
         var fx = Regex.Match(text, @"effects\s+(\d+)\s+effect layers, (\d+) MultiEffect items");
@@ -52,7 +52,7 @@ public static class EffectLayerTest
         return (white, green, soft);
     }
 
-    // Hover events (EV_HOVER) for feedbackId in the poll buffer: last flag, or null if none.
+    // Hover events (EVENT_HOVER) for feedbackId in the poll buffer: last flag, or null if none.
     private static bool? HoverFlag(ReadOnlySpan<byte> b, uint feedbackId)
     {
         bool? flag = null;
@@ -62,7 +62,7 @@ public static class EffectLayerTest
             var ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
             var len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
             if (len < 8 || off + 4 + len > b.Length) break;
-            if (ev == Protocol.Ev.Hover && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)) == feedbackId && len > 8)
+            if (ev == Protocol.EventId.Hover && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)) == feedbackId && len > 8)
                 flag = b[off + 12] != 0;
             off += (4 + len + 3) & ~3;
         }
@@ -74,8 +74,8 @@ public static class EffectLayerTest
     private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "MultiEffect is a ShaderEffect");
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt effect layer test");
-        s.Check(w != IntPtr.Zero, "effect-layer: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt effect layer test");
+        s.Check(w != SceneHandle.Null, "effect-layer: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var poll = new byte[1 << 16];
@@ -95,24 +95,24 @@ public static class EffectLayerTest
         // A = hard red shadow (30, 30) + saturation -1 (grey); T = blur + green shadow + brightness.
         static void RunA(CommandWriter c)
         {
-            c.EffectBool(Protocol.Prop.EffectShadowEnabled, true);
-            c.EffectColor(Protocol.Prop.EffectShadowColor, 1, 0, 0, 1);
-            c.EffectF32(Protocol.Prop.EffectShadowHorizontalOffset, 30);
-            c.EffectF32(Protocol.Prop.EffectShadowVerticalOffset, 30);
-            c.EffectF32(Protocol.Prop.EffectShadowBlur, 0);
-            c.EffectF32(Protocol.Prop.EffectSaturation, -1);
+            c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.EffectColor(Protocol.MultiEffectKey.ShadowColor, 1, 0, 0, 1);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 30);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 30);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowBlur, 0);
+            c.EffectF32(Protocol.MultiEffectKey.Saturation, -1);
         }
         static void RunT(CommandWriter c)
         {
-            c.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
-            c.EffectF32(Protocol.Prop.EffectBlur, 0.6f);
-            c.EffectI32(Protocol.Prop.EffectBlurMax, 16);
-            c.EffectBool(Protocol.Prop.EffectShadowEnabled, true);
-            c.EffectColor(Protocol.Prop.EffectShadowColor, 0, 1, 0, 1);
-            c.EffectF32(Protocol.Prop.EffectShadowHorizontalOffset, 20);
-            c.EffectF32(Protocol.Prop.EffectShadowVerticalOffset, 20);
-            c.EffectF32(Protocol.Prop.EffectShadowBlur, 0);
-            c.EffectF32(Protocol.Prop.EffectBrightness, 0.2f);
+            c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.EffectF32(Protocol.MultiEffectKey.Blur, 0.6f);
+            c.EffectI32(Protocol.MultiEffectKey.BlurMax, 16);
+            c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.EffectColor(Protocol.MultiEffectKey.ShadowColor, 0, 1, 0, 1);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 20);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 20);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowBlur, 0);
+            c.EffectF32(Protocol.MultiEffectKey.Brightness, 0.2f);
         }
         void EffectA(bool on) { if (on) cmd.Chain(A, RunA); else cmd.Chain(A); }
         void EffectT(bool on) { if (on) cmd.Chain(T, RunT); else cmd.Chain(T); }
@@ -120,25 +120,25 @@ public static class EffectLayerTest
         // Scene: Row (50, 50) with A (blue 200x150, hover handler) and B (green 100x150); Text "Fx" at (450, 300).
         cmd.Reset();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        cmd.Create(Row, Protocol.Type.Row);
+        cmd.Create(Row, Protocol.ElementType.Row);
         cmd.SetPlace(Row, 50, 50, 0, 0);
         cmd.Reparent(Row, 0, 0);
-        cmd.Create(A, Protocol.Type.Rectangle);
+        cmd.Create(A, Protocol.ElementType.Rectangle);
         cmd.SetPlace(A, 0, 0, 200, 150);
-        cmd.SetColor(A, Protocol.Prop.Color, 0, 0, 1, 1);
+        cmd.SetColor(A, Protocol.PropertyId.Color, 0, 0, 1, 1);
         cmd.Reparent(A, Row, 0);
-        cmd.Create(B, Protocol.Type.Rectangle);
+        cmd.Create(B, Protocol.ElementType.Rectangle);
         cmd.SetPlace(B, 0, 0, 100, 150);
-        cmd.SetColor(B, Protocol.Prop.Color, 0, 1, 0, 1);
+        cmd.SetColor(B, Protocol.PropertyId.Color, 0, 1, 0, 1);
         cmd.Reparent(B, Row, 1);
-        cmd.Create(H, Protocol.Type.HoverHandler);
+        cmd.Create(H, Protocol.ElementType.HoverHandler);
         cmd.Bind(H, FeedbackIdH, 0);
         cmd.Reparent(H, A, 0);
-        cmd.Create(T, Protocol.Type.Text);
+        cmd.Create(T, Protocol.ElementType.Text);
         cmd.SetPlace(T, 450, 300, 300, 220);
-        cmd.SetString(T, Protocol.Prop.Text, "Fx");
-        cmd.SetF32(T, Protocol.Prop.FontSize, 150);
-        cmd.SetColor(T, Protocol.Prop.Color, 1, 1, 1, 1);
+        cmd.SetString(T, Protocol.PropertyId.Text, "Fx");
+        cmd.SetF32(T, Protocol.PropertyId.FontSize, 150);
+        cmd.SetColor(T, Protocol.PropertyId.Color, 1, 1, 1, 1);
         cmd.Reparent(T, 0, 1);
         CheckApply("scene");
         s.Pump(5);
@@ -232,13 +232,13 @@ public static class EffectLayerTest
         static void BlueShadowRun(CommandWriter c) => Shadow(c, 0, 0, 1);
         static void Shadow(CommandWriter c, float r, float g, float b)
         {
-            c.EffectBool(Protocol.Prop.EffectShadowEnabled, true);
-            c.EffectColor(Protocol.Prop.EffectShadowColor, r, g, b, 1);
-            c.EffectF32(Protocol.Prop.EffectShadowHorizontalOffset, 30);
-            c.EffectF32(Protocol.Prop.EffectShadowVerticalOffset, 30);
-            c.EffectF32(Protocol.Prop.EffectShadowBlur, 0);
+            c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.EffectColor(Protocol.MultiEffectKey.ShadowColor, r, g, b, 1);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 30);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 30);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowBlur, 0);
         }
-        static void GreyRun(CommandWriter c) => c.EffectF32(Protocol.Prop.EffectSaturation, -1);
+        static void GreyRun(CommandWriter c) => c.EffectF32(Protocol.MultiEffectKey.Saturation, -1);
         cmd.Chain(A, ShadowRun, GreyRun);
         CheckApply("two runs");
         s.Pump(5);
@@ -273,7 +273,7 @@ public static class EffectLayerTest
         s.Pump(3);
 
         // Errors: SET with an EFFECT_* property -> UnknownProperty (only via SET_EFFECT_CHAIN); a chain on a handler -> UnknownProperty.
-        cmd.SetBool(A, Protocol.Prop.EffectShadowEnabled, true);
+        cmd.SetBool(A, Protocol.MultiEffectKey.ShadowEnabled, true);
         var rc1 = Native.Apply(w, cmd.EndFrame());
         cmd.Reset();
         s.Check(rc1 == Native.Result.UnknownProperty, $"effect-layer: SET EFFECT_SHADOW_ENABLED -> UnknownProperty ({rc1})");
@@ -291,6 +291,6 @@ public static class EffectLayerTest
         EffectT(true);
         CheckApply("T on before window destroy");
         s.Pump(2);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 }

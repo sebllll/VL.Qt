@@ -9,7 +9,7 @@ namespace VL.Qt.Wire
 {
     /// <summary>
     /// Reusable byte buffer holding the commands of one window for one frame (format: see protocol.h).
-    /// Usage per frame: <see cref="Reset"/>, write commands, <see cref="EndFrame"/> → span for vlqt_window_apply.
+    /// Usage per frame: <see cref="Reset"/>, write commands, <see cref="EndFrame"/> → span for vlqt_scene_apply.
     /// The buffer only grows; writing does not allocate on the managed heap once it has reached its working size.
     /// Every command is little-endian and padded with zeros to <see cref="Protocol.CommandAlign"/> bytes;
     /// the header's payloadLen excludes that padding.
@@ -49,7 +49,7 @@ namespace VL.Qt.Wire
             _count = 0;
         }
 
-        /// <summary>Finishes the frame: traces the buffer if enabled and returns it for vlqt_window_apply.</summary>
+        /// <summary>Finishes the frame: traces the buffer if enabled and returns it for vlqt_scene_apply.</summary>
         public ReadOnlySpan<byte> EndFrame()
         {
             var span = Written;
@@ -98,7 +98,7 @@ namespace VL.Qt.Wire
         /// <summary>CLEAR_COLOR with straight alpha.</summary>
         public void ClearColor(float r, float g, float b, float a)
         {
-            var p = Begin(Protocol.Op.ClearColor, 16);
+            var p = Begin(Protocol.Op.SetClearColor, 16);
             WriteF32x4(p, r, g, b, a);
         }
 
@@ -114,30 +114,30 @@ namespace VL.Qt.Wire
 
         public void SetF32(uint id, ushort prop, float value)
         {
-            WriteF32(BeginSet(id, prop, Protocol.Vt.F32, 4), value);
+            WriteF32(BeginSet(id, prop, Protocol.ValueType.F32, 4), value);
         }
 
         public void SetI32(uint id, ushort prop, int value)
         {
-            BinaryPrimitives.WriteInt32LittleEndian(BeginSet(id, prop, Protocol.Vt.I32, 4), value);
+            BinaryPrimitives.WriteInt32LittleEndian(BeginSet(id, prop, Protocol.ValueType.I32, 4), value);
         }
 
         public void SetBool(uint id, ushort prop, bool value)
         {
-            BeginSet(id, prop, Protocol.Vt.Bool, 1)[0] = value ? (byte)1 : (byte)0;
+            BeginSet(id, prop, Protocol.ValueType.Bool, 1)[0] = value ? (byte)1 : (byte)0;
         }
 
         /// <summary>Color with straight (non-premultiplied) alpha.</summary>
         public void SetColor(uint id, ushort prop, float r, float g, float b, float a)
         {
-            WriteF32x4(BeginSet(id, prop, Protocol.Vt.Color, 16), r, g, b, a);
+            WriteF32x4(BeginSet(id, prop, Protocol.ValueType.Color, 16), r, g, b, a);
         }
 
         public void SetColor(uint id, ushort prop, in Color4 c) => SetColor(id, prop, c.R, c.G, c.B, c.A);
 
         public void SetRect(uint id, ushort prop, float x, float y, float width, float height)
         {
-            WriteF32x4(BeginSet(id, prop, Protocol.Vt.Rectf, 16), x, y, width, height);
+            WriteF32x4(BeginSet(id, prop, Protocol.ValueType.Rectf, 16), x, y, width, height);
         }
 
         public void SetRect(uint id, ushort prop, in RectangleF r) => SetRect(id, prop, r.X, r.Y, r.Width, r.Height);
@@ -147,7 +147,7 @@ namespace VL.Qt.Wire
         {
             if (rowMajor16.Length != 16)
                 throw new ArgumentException("mat4 needs exactly 16 floats", nameof(rowMajor16));
-            var p = BeginSet(id, prop, Protocol.Vt.Mat4, 64);
+            var p = BeginSet(id, prop, Protocol.ValueType.Mat4, 64);
             for (int i = 0; i < 16; i++)
                 WriteF32(p.Slice(i * 4), rowMajor16[i]);
         }
@@ -158,7 +158,7 @@ namespace VL.Qt.Wire
         /// </summary>
         public void SetMat4(uint id, ushort prop, in Matrix m)
         {
-            var p = BeginSet(id, prop, Protocol.Vt.Mat4, 64);
+            var p = BeginSet(id, prop, Protocol.ValueType.Mat4, 64);
             WriteF32x4(p, m.M11, m.M12, m.M13, m.M14);
             WriteF32x4(p.Slice(16), m.M21, m.M22, m.M23, m.M24);
             WriteF32x4(p.Slice(32), m.M31, m.M32, m.M33, m.M34);
@@ -171,7 +171,7 @@ namespace VL.Qt.Wire
         public void SetString(uint id, ushort prop, ReadOnlySpan<char> value)
         {
             int byteCount = Encoding.UTF8.GetByteCount(value);
-            var p = BeginSet(id, prop, Protocol.Vt.String, 4 + byteCount);
+            var p = BeginSet(id, prop, Protocol.ValueType.String, 4 + byteCount);
             WriteU32(p, (uint)byteCount);
             Encoding.UTF8.GetBytes(value, p.Slice(4));
         }
@@ -181,7 +181,7 @@ namespace VL.Qt.Wire
         {
             if (values.Length > Protocol.MaxF32ArrayCount)
                 throw new ArgumentOutOfRangeException(nameof(values), values.Length, $"F32 array exceeds {Protocol.MaxF32ArrayCount} floats.");
-            var p = BeginSet(id, prop, Protocol.Vt.F32Array, 4 + 4 * values.Length);
+            var p = BeginSet(id, prop, Protocol.ValueType.F32Array, 4 + 4 * values.Length);
             WriteU32(p, (uint)values.Length);
             for (int i = 0; i < values.Length; i++)
                 WriteF32(p.Slice(4 + 4 * i), values[i]);
@@ -196,7 +196,7 @@ namespace VL.Qt.Wire
             if (!Protocol.PathFits(verbs.Length, pointCount))
                 throw new ArgumentOutOfRangeException(nameof(verbs), verbs.Length, $"Path with {verbs.Length} verbs and {pointCount} points exceeds the payload of a SET.");
             int paddedVerbs = Align(verbs.Length);
-            var p = BeginSet(id, prop, Protocol.Vt.Path, 8 + paddedVerbs + 8 * pointCount);
+            var p = BeginSet(id, prop, Protocol.ValueType.Path, 8 + paddedVerbs + 8 * pointCount);
             WriteU32(p, (uint)verbs.Length);
             WriteU32(p.Slice(4), (uint)pointCount);
             // The padding bytes are already zero (Begin clears the reserved area).
@@ -209,26 +209,26 @@ namespace VL.Qt.Wire
         /// <summary>ref: id of another element (e.g. ShaderEffect source), 0 = none/root.</summary>
         public void SetRef(uint id, ushort prop, uint refId)
         {
-            WriteU32(BeginSet(id, prop, Protocol.Vt.Ref, 4), refId);
+            WriteU32(BeginSet(id, prop, Protocol.ValueType.Ref, 4), refId);
         }
 
-        /// <summary>u64, e.g. an image resource id (Prop.Image), 0 = none.</summary>
+        /// <summary>u64, e.g. an image resource id (PropertyId.Image), 0 = none.</summary>
         public void SetU64(uint id, ushort prop, ulong value)
         {
-            BinaryPrimitives.WriteUInt64LittleEndian(BeginSet(id, prop, Protocol.Vt.U64, 8), value);
+            BinaryPrimitives.WriteUInt64LittleEndian(BeginSet(id, prop, Protocol.ValueType.U64, 8), value);
         }
 
-        /// <summary>ivec2, e.g. <see cref="Protocol.Prop.MeshResolution"/>.</summary>
+        /// <summary>ivec2, e.g. <see cref="Protocol.PropertyId.MeshResolution"/>.</summary>
         public void SetVec2(uint id, ushort prop, float x, float y)
         {
-            var p = BeginSet(id, prop, Protocol.Vt.Vec2, 8);
+            var p = BeginSet(id, prop, Protocol.ValueType.Vec2, 8);
             WriteF32(p, x);
             WriteF32(p.Slice(4), y);
         }
 
         public void SetIvec2(uint id, ushort prop, int x, int y)
         {
-            var p = BeginSet(id, prop, Protocol.Vt.Ivec2, 8);
+            var p = BeginSet(id, prop, Protocol.ValueType.Ivec2, 8);
             BinaryPrimitives.WriteInt32LittleEndian(p, x);
             BinaryPrimitives.WriteInt32LittleEndian(p.Slice(4), y);
         }
@@ -253,23 +253,23 @@ namespace VL.Qt.Wire
 
         public void StyleColor(ushort field, byte state, float r, float g, float b, float a)
         {
-            WriteF32x4(StyleEntry(field, state, Protocol.Vt.Color, 16), r, g, b, a);
+            WriteF32x4(StyleEntry(field, state, Protocol.ValueType.Color, 16), r, g, b, a);
         }
 
         public void StyleF32(ushort field, byte state, float value)
         {
-            WriteF32(StyleEntry(field, state, Protocol.Vt.F32, 4), value);
+            WriteF32(StyleEntry(field, state, Protocol.ValueType.F32, 4), value);
         }
 
         public void StyleI32(ushort field, byte state, int value)
         {
-            BinaryPrimitives.WriteInt32LittleEndian(StyleEntry(field, state, Protocol.Vt.I32, 4), value);
+            BinaryPrimitives.WriteInt32LittleEndian(StyleEntry(field, state, Protocol.ValueType.I32, 4), value);
         }
 
         public void StyleString(ushort field, byte state, ReadOnlySpan<char> value)
         {
             int byteCount = Encoding.UTF8.GetByteCount(value);
-            var p = StyleEntry(field, state, Protocol.Vt.String, 4 + byteCount);
+            var p = StyleEntry(field, state, Protocol.ValueType.String, 4 + byteCount);
             WriteU32(p, (uint)byteCount);
             Encoding.UTF8.GetBytes(value, p.Slice(4));
         }
@@ -338,70 +338,70 @@ namespace VL.Qt.Wire
             WriteU16(p.Slice(6), flags);
         }
 
-        public void UniformF32(ReadOnlySpan<char> name, float value) => WriteF32(UniformEntry(name, Protocol.Vt.F32, 4), value);
+        public void UniformF32(ReadOnlySpan<char> name, float value) => WriteF32(UniformEntry(name, Protocol.ValueType.F32, 4), value);
 
         public void UniformI32(ReadOnlySpan<char> name, int value)
-            => BinaryPrimitives.WriteInt32LittleEndian(UniformEntry(name, Protocol.Vt.I32, 4), value);
+            => BinaryPrimitives.WriteInt32LittleEndian(UniformEntry(name, Protocol.ValueType.I32, 4), value);
 
-        public void UniformBool(ReadOnlySpan<char> name, bool value) => UniformEntry(name, Protocol.Vt.Bool, 1)[0] = value ? (byte)1 : (byte)0;
+        public void UniformBool(ReadOnlySpan<char> name, bool value) => UniformEntry(name, Protocol.ValueType.Bool, 1)[0] = value ? (byte)1 : (byte)0;
 
         public void UniformVec2(ReadOnlySpan<char> name, float x, float y)
         {
-            var p = UniformEntry(name, Protocol.Vt.Vec2, 8);
+            var p = UniformEntry(name, Protocol.ValueType.Vec2, 8);
             WriteF32(p, x);
             WriteF32(p.Slice(4), y);
         }
 
         public void UniformVec3(ReadOnlySpan<char> name, float x, float y, float z)
         {
-            var p = UniformEntry(name, Protocol.Vt.Vec3, 12);
+            var p = UniformEntry(name, Protocol.ValueType.Vec3, 12);
             WriteF32(p, x);
             WriteF32(p.Slice(4), y);
             WriteF32(p.Slice(8), z);
         }
 
         public void UniformVec4(ReadOnlySpan<char> name, float x, float y, float z, float w)
-            => WriteF32x4(UniformEntry(name, Protocol.Vt.Vec4, 16), x, y, z, w);
+            => WriteF32x4(UniformEntry(name, Protocol.ValueType.Vec4, 16), x, y, z, w);
 
         public void UniformColor(ReadOnlySpan<char> name, float r, float g, float b, float a)
-            => WriteF32x4(UniformEntry(name, Protocol.Vt.Color, 16), r, g, b, a);
+            => WriteF32x4(UniformEntry(name, Protocol.ValueType.Color, 16), r, g, b, a);
 
         /// <summary>Entry of value type rect (x, y, width, height) of an open SET_QML_PROPERTIES.</summary>
         public void QmlRect(ReadOnlySpan<char> name, float x, float y, float width, float height)
-            => WriteF32x4(UniformEntry(name, Protocol.Vt.Rectf, 16), x, y, width, height);
+            => WriteF32x4(UniformEntry(name, Protocol.ValueType.Rectf, 16), x, y, width, height);
 
         /// <summary>Entry of value type string (u32 byte length + UTF-8) of an open SET_QML_PROPERTIES.</summary>
         public void QmlString(ReadOnlySpan<char> name, ReadOnlySpan<char> value)
         {
             int byteCount = Encoding.UTF8.GetByteCount(value);
-            var p = UniformEntry(name, Protocol.Vt.String, 4 + byteCount);
+            var p = UniformEntry(name, Protocol.ValueType.String, 4 + byteCount);
             WriteU32(p, (uint)byteCount);
             Encoding.UTF8.GetBytes(value, p.Slice(4));
         }
 
         public void UniformIvec2(ReadOnlySpan<char> name, int x, int y)
         {
-            var p = UniformEntry(name, Protocol.Vt.Ivec2, 8);
+            var p = UniformEntry(name, Protocol.ValueType.Ivec2, 8);
             BinaryPrimitives.WriteInt32LittleEndian(p, x);
             BinaryPrimitives.WriteInt32LittleEndian(p.Slice(4), y);
         }
 
         public void UniformMat4(ReadOnlySpan<char> name, in Matrix m)
         {
-            var p = UniformEntry(name, Protocol.Vt.Mat4, 64);
+            var p = UniformEntry(name, Protocol.ValueType.Mat4, 64);
             WriteF32x4(p, m.M11, m.M12, m.M13, m.M14);
             WriteF32x4(p.Slice(16), m.M21, m.M22, m.M23, m.M24);
             WriteF32x4(p.Slice(32), m.M31, m.M32, m.M33, m.M34);
             WriteF32x4(p.Slice(48), m.M41, m.M42, m.M43, m.M44);
         }
 
-        public void UniformRef(ReadOnlySpan<char> name, uint refId) => WriteU32(UniformEntry(name, Protocol.Vt.Ref, 4), refId);
+        public void UniformRef(ReadOnlySpan<char> name, uint refId) => WriteU32(UniformEntry(name, Protocol.ValueType.Ref, 4), refId);
 
         public void UniformU64(ReadOnlySpan<char> name, ulong value)
-            => BinaryPrimitives.WriteUInt64LittleEndian(UniformEntry(name, Protocol.Vt.U64, 8), value);
+            => BinaryPrimitives.WriteUInt64LittleEndian(UniformEntry(name, Protocol.ValueType.U64, 8), value);
 
         public void UniformSampler(ReadOnlySpan<char> name, ulong packed)
-            => BinaryPrimitives.WriteUInt64LittleEndian(UniformEntry(name, Protocol.Vt.Sampler, 8), packed);
+            => BinaryPrimitives.WriteUInt64LittleEndian(UniformEntry(name, Protocol.ValueType.Sampler, 8), packed);
 
         /// <summary>Closes the SET_UNIFORMS: writes the entry count and the payload length (entries incl. their padding).</summary>
         public void EndUniforms()
@@ -428,8 +428,8 @@ namespace VL.Qt.Wire
         private Span<byte> UniformEntry(ReadOnlySpan<char> name, ushort valueType, int valueSize)
         {
             var inLink = _uniformsStart < 0;
-            if (inLink && _linkKind != Protocol.EffectLink.Shader)
-                throw new InvalidOperationException("Uniform entry without BeginUniforms or BeginShaderLink.");
+            if (inLink && _linkKind != Protocol.EffectChainLink.Shader)
+                throw new InvalidOperationException("Uniform entry without BeginUniforms or BeginEffectChainLink.");
             int nameBytes = Encoding.UTF8.GetByteCount(name);
             if (nameBytes < 1 || nameBytes > Protocol.UniformNameMax)
                 throw new ArgumentException($"Uniform name must be 1..{Protocol.UniformNameMax} UTF-8 bytes, got {nameBytes}.", nameof(name));
@@ -471,32 +471,32 @@ namespace VL.Qt.Wire
         }
 
         /// <summary>Starts a MULTI link (one MultiEffect run); Effect* entries follow, then <see cref="EndLink"/>.</summary>
-        public void BeginMultiLink() => BeginLink(Protocol.EffectLink.Multi, 0);
+        public void BeginMultiLink() => BeginLink(Protocol.EffectChainLink.Multi, 0);
 
-        public void EffectBool(ushort prop, bool value) => EffectEntry(prop, Protocol.Vt.Bool, 1)[0] = value ? (byte)1 : (byte)0;
+        public void EffectBool(ushort prop, bool value) => EffectEntry(prop, Protocol.ValueType.Bool, 1)[0] = value ? (byte)1 : (byte)0;
 
-        public void EffectF32(ushort prop, float value) => WriteF32(EffectEntry(prop, Protocol.Vt.F32, 4), value);
+        public void EffectF32(ushort prop, float value) => WriteF32(EffectEntry(prop, Protocol.ValueType.F32, 4), value);
 
         public void EffectI32(ushort prop, int value)
-            => BinaryPrimitives.WriteInt32LittleEndian(EffectEntry(prop, Protocol.Vt.I32, 4), value);
+            => BinaryPrimitives.WriteInt32LittleEndian(EffectEntry(prop, Protocol.ValueType.I32, 4), value);
 
         public void EffectColor(ushort prop, float r, float g, float b, float a)
-            => WriteF32x4(EffectEntry(prop, Protocol.Vt.Color, 16), r, g, b, a);
+            => WriteF32x4(EffectEntry(prop, Protocol.ValueType.Color, 16), r, g, b, a);
 
         public void EffectRect(ushort prop, float x, float y, float width, float height)
-            => WriteF32x4(EffectEntry(prop, Protocol.Vt.Rectf, 16), x, y, width, height);
+            => WriteF32x4(EffectEntry(prop, Protocol.ValueType.Rectf, 16), x, y, width, height);
 
-        public void EffectRef(ushort prop, uint refId) => WriteU32(EffectEntry(prop, Protocol.Vt.Ref, 4), refId);
+        public void EffectRef(ushort prop, uint refId) => WriteU32(EffectEntry(prop, Protocol.ValueType.Ref, 4), refId);
 
         /// <summary>
         /// Starts a SHADER link: template (<see cref="Protocol.EffectTemplate"/>), shader resource ids by role, padding in DIP,
         /// and strength (Pyramid: radius). Uniform* entries follow, then <see cref="EndLink"/>.
         /// </summary>
-        public void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
+        public void BeginEffectChainLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
             float paddingRight, float paddingBottom, float strength)
         {
             int ids = shaderIds.Length * 8;
-            var head = BeginLink(Protocol.EffectLink.Shader, 4 + ids + Protocol.ShaderLinkFixedSize);
+            var head = BeginLink(Protocol.EffectChainLink.Shader, 4 + ids + Protocol.EffectChainLinkShaderFixedSize);
             WriteU16(head, template);
             WriteU16(head.Slice(2), (ushort)shaderIds.Length);
             for (int i = 0; i < shaderIds.Length; i++)
@@ -512,9 +512,9 @@ namespace VL.Qt.Wire
         public void EndLink()
         {
             if (_linkStart < 0)
-                throw new InvalidOperationException("EndLink without BeginMultiLink or BeginShaderLink.");
+                throw new InvalidOperationException("EndLink without BeginMultiLink or BeginEffectChainLink.");
             WriteU16(new Span<byte>(_buffer, _linkStart + 2, 2), (ushort)_linkEntries);
-            WriteU32(new Span<byte>(_buffer, _linkStart + 4, 4), (uint)(_length - _linkStart - Protocol.LinkHeaderSize));
+            WriteU32(new Span<byte>(_buffer, _linkStart + 4, 4), (uint)(_length - _linkStart - Protocol.EffectChainLinkHeaderSize));
             _linkStart = -1;
             _linkKind = 0;
             _chainLinks++;
@@ -547,7 +547,7 @@ namespace VL.Qt.Wire
                 throw new InvalidOperationException("Effect link without BeginEffectChain.");
             if (_linkStart >= 0)
                 throw new InvalidOperationException("Effect link still open, call EndLink first.");
-            int total = Protocol.LinkHeaderSize + headSize;
+            int total = Protocol.EffectChainLinkHeaderSize + headSize;
             EnsureCapacity(_length + total);
             var e = new Span<byte>(_buffer, _length, total);
             e.Clear();
@@ -556,13 +556,13 @@ namespace VL.Qt.Wire
             _linkKind = kind;
             _linkEntries = 0;
             _length += total;
-            return e.Slice(Protocol.LinkHeaderSize, headSize);
+            return e.Slice(Protocol.EffectChainLinkHeaderSize, headSize);
         }
 
         /// <summary>Appends one MULTI entry (u16 prop, u16 value type, value, zero padded to 4) and returns the value span.</summary>
         private Span<byte> EffectEntry(ushort prop, ushort valueType, int valueSize)
         {
-            if (_linkKind != Protocol.EffectLink.Multi)
+            if (_linkKind != Protocol.EffectChainLink.Multi)
                 throw new InvalidOperationException("Effect entry without BeginMultiLink.");
             int total = 4 + Align(valueSize);
             EnsureCapacity(_length + total);

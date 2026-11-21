@@ -43,15 +43,15 @@ namespace VL.Qt
                 if (u is null || !IsValidName(u.Name))
                     continue;
                 next ??= new Dictionary<string, UniformValue>(StringComparer.Ordinal);
-                if (u.ValueType != Protocol.Vt.Sampler)
+                if (u.ValueType != Protocol.ValueType.Sampler)
                     next[u.Name] = Resolve(u, effect, children);
                 if (u.Sampler is { } sampler)
-                    next[u.Name + SamplerKey] = new UniformValue(Protocol.Vt.Sampler, default, 0, sampler.Pack());
+                    next[u.Name + SamplerKey] = new UniformValue(Protocol.ValueType.Sampler, default, 0, sampler.Pack());
             }
             if (effect.InputSampler is { } inputSampler)
             {
                 next ??= new Dictionary<string, UniformValue>(StringComparer.Ordinal);
-                next["source" + SamplerKey] = new UniformValue(Protocol.Vt.Sampler, default, 0, inputSampler.Pack());
+                next["source" + SamplerKey] = new UniformValue(Protocol.ValueType.Sampler, default, 0, inputSampler.Pack());
             }
 
             bool clear = false;
@@ -133,17 +133,17 @@ namespace VL.Qt
             var m = v.Numbers;
             switch (v.ValueType)
             {
-                case Protocol.Vt.F32: sink.UniformF32(name, m.M11); break;
-                case Protocol.Vt.I32: sink.UniformI32(name, v.Integer); break;
-                case Protocol.Vt.Bool: sink.UniformBool(name, v.Integer != 0); break;
-                case Protocol.Vt.Vec2: sink.UniformVec2(name, m.M11, m.M12); break;
-                case Protocol.Vt.Vec3: sink.UniformVec3(name, m.M11, m.M12, m.M13); break;
-                case Protocol.Vt.Vec4: sink.UniformVec4(name, m.M11, m.M12, m.M13, m.M14); break;
-                case Protocol.Vt.Color: sink.UniformColor(name, m.M11, m.M12, m.M13, m.M14); break;
-                case Protocol.Vt.Mat4: sink.UniformMat4(name, in m); break;
-                case Protocol.Vt.Ref: sink.UniformRef(name, (uint)v.Handle); break;
-                case Protocol.Vt.U64: sink.UniformU64(name, v.Handle); break;
-                case Protocol.Vt.Sampler: sink.UniformSampler(name.TrimEnd(SamplerKey), v.Handle); break;
+                case Protocol.ValueType.F32: sink.UniformF32(name, m.M11); break;
+                case Protocol.ValueType.I32: sink.UniformI32(name, v.Integer); break;
+                case Protocol.ValueType.Bool: sink.UniformBool(name, v.Integer != 0); break;
+                case Protocol.ValueType.Vec2: sink.UniformVec2(name, m.M11, m.M12); break;
+                case Protocol.ValueType.Vec3: sink.UniformVec3(name, m.M11, m.M12, m.M13); break;
+                case Protocol.ValueType.Vec4: sink.UniformVec4(name, m.M11, m.M12, m.M13, m.M14); break;
+                case Protocol.ValueType.Color: sink.UniformColor(name, m.M11, m.M12, m.M13, m.M14); break;
+                case Protocol.ValueType.Mat4: sink.UniformMat4(name, in m); break;
+                case Protocol.ValueType.Ref: sink.UniformRef(name, (uint)v.Handle); break;
+                case Protocol.ValueType.U64: sink.UniformU64(name, v.Handle); break;
+                case Protocol.ValueType.Sampler: sink.UniformSampler(name.TrimEnd(SamplerKey), v.Handle); break;
             }
         }
     }

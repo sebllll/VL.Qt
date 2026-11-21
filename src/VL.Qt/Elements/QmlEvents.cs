@@ -17,7 +17,7 @@ namespace VL.Qt.Elements
         private const int maxArguments = 64;
 
         /// <summary>
-        /// EV_QML_PROPERTY: u16 name length, u16 value type, name (UTF-8), padding to 4, value. False for a short or
+        /// EVENT_QML_PROPERTY: u16 name length, u16 value type, name (UTF-8), padding to 4, value. False for a short or
         /// malformed payload, an empty name or a value type that is not supported.
         /// </summary>
         public static bool TryDecodeProperty(ReadOnlySpan<byte> payload, out string name, out object value)
@@ -39,7 +39,7 @@ namespace VL.Qt.Elements
         }
 
         /// <summary>
-        /// EV_QML_SIGNAL: u16 name length, u16 argument count, name, padding to 4, then per argument u16 value type, u16 0,
+        /// EVENT_QML_SIGNAL: u16 name length, u16 argument count, name, padding to 4, then per argument u16 value type, u16 0,
         /// value, padding to 4. False for a short or malformed payload, an empty name or an argument of an unknown type
         /// (QtNative sends unsupported QML types as strings).
         /// </summary>
@@ -85,49 +85,49 @@ namespace VL.Qt.Elements
             size = 0;
             switch (type)
             {
-                case Protocol.Vt.F32:
+                case Protocol.ValueType.F32:
                     if (p.Length < 4) return false;
                     value = F(p, 0);
                     size = 4;
                     return true;
-                case Protocol.Vt.I32:
+                case Protocol.ValueType.I32:
                     if (p.Length < 4) return false;
                     value = BinaryPrimitives.ReadInt32LittleEndian(p);
                     size = 4;
                     return true;
-                case Protocol.Vt.Bool:
+                case Protocol.ValueType.Bool:
                     if (p.Length < 1) return false;
                     value = p[0] != 0;
                     size = 1;
                     return true;
-                case Protocol.Vt.String:
+                case Protocol.ValueType.String:
                     if (p.Length < 4) return false;
                     uint n = BinaryPrimitives.ReadUInt32LittleEndian(p);
                     if (n > (uint)(p.Length - 4)) return false;
                     value = Encoding.UTF8.GetString(p.Slice(4, (int)n));
                     size = 4 + (int)n;
                     return true;
-                case Protocol.Vt.Color:
+                case Protocol.ValueType.Color:
                     if (p.Length < 16) return false;
                     value = new Color4(F(p, 0), F(p, 4), F(p, 8), F(p, 12));
                     size = 16;
                     return true;
-                case Protocol.Vt.Rectf:
+                case Protocol.ValueType.Rectf:
                     if (p.Length < 16) return false;
                     value = new RectangleF(F(p, 0), F(p, 4), F(p, 8), F(p, 12));
                     size = 16;
                     return true;
-                case Protocol.Vt.Vec2:
+                case Protocol.ValueType.Vec2:
                     if (p.Length < 8) return false;
                     value = new Vector2(F(p, 0), F(p, 4));
                     size = 8;
                     return true;
-                case Protocol.Vt.Vec3:
+                case Protocol.ValueType.Vec3:
                     if (p.Length < 12) return false;
                     value = new Vector3(F(p, 0), F(p, 4), F(p, 8));
                     size = 12;
                     return true;
-                case Protocol.Vt.Vec4:
+                case Protocol.ValueType.Vec4:
                     if (p.Length < 16) return false;
                     value = new Vector4(F(p, 0), F(p, 4), F(p, 8), F(p, 12));
                     size = 16;

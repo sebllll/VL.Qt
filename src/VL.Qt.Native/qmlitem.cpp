@@ -75,7 +75,7 @@ bool toWireValue(const QVariant& in, QmlWireValue& out)
     out.bytes.clear();
     switch (v.typeId()) {
     case QMetaType::Bool:
-        out.type = VLQT_VT_BOOL;
+        out.type = VLQT_VALUE_TYPE_BOOL;
         out.bytes.append(char(v.toBool() ? 1 : 0));
         return true;
     case QMetaType::Int:
@@ -89,19 +89,19 @@ bool toWireValue(const QVariant& in, QmlWireValue& out)
     case QMetaType::Char:
     case QMetaType::SChar:
     case QMetaType::UChar: {
-        out.type = VLQT_VT_I32;
+        out.type = VLQT_VALUE_TYPE_I32;
         const qint32 i = qint32(std::clamp<qint64>(v.toLongLong(), INT32_MIN, INT32_MAX));
         append(out.bytes, i);
         return true;
     }
     case QMetaType::Double:
     case QMetaType::Float:
-        out.type = VLQT_VT_F32;
+        out.type = VLQT_VALUE_TYPE_F32;
         append(out.bytes, float(v.toDouble()));
         return true;
     case QMetaType::QString:
     case QMetaType::QUrl: {
-        out.type = VLQT_VT_STRING;
+        out.type = VLQT_VALUE_TYPE_STRING;
         QByteArray utf8 = v.toString().toUtf8();
         qsizetype n = utf8.size();
         if (n > kMaxWireString) {
@@ -115,32 +115,32 @@ bool toWireValue(const QVariant& in, QmlWireValue& out)
     }
     case QMetaType::QColor: {
         const QColor c = v.value<QColor>();
-        out.type = VLQT_VT_COLOR;
+        out.type = VLQT_VALUE_TYPE_COLOR;
         appendFloats(out.bytes, {float(c.redF()), float(c.greenF()), float(c.blueF()), float(c.alphaF())});
         return true;
     }
     case QMetaType::QVector2D: {
         const QVector2D q = v.value<QVector2D>();
-        out.type = VLQT_VT_VEC2;
+        out.type = VLQT_VALUE_TYPE_VEC2;
         appendFloats(out.bytes, {q.x(), q.y()});
         return true;
     }
     case QMetaType::QVector3D: {
         const QVector3D q = v.value<QVector3D>();
-        out.type = VLQT_VT_VEC3;
+        out.type = VLQT_VALUE_TYPE_VEC3;
         appendFloats(out.bytes, {q.x(), q.y(), q.z()});
         return true;
     }
     case QMetaType::QVector4D: {
         const QVector4D q = v.value<QVector4D>();
-        out.type = VLQT_VT_VEC4;
+        out.type = VLQT_VALUE_TYPE_VEC4;
         appendFloats(out.bytes, {q.x(), q.y(), q.z(), q.w()});
         return true;
     }
     case QMetaType::QRectF:
     case QMetaType::QRect: {
         const QRectF r = v.toRectF();
-        out.type = VLQT_VT_RECTF;
+        out.type = VLQT_VALUE_TYPE_RECTF;
         appendFloats(out.bytes, {float(r.x()), float(r.y()), float(r.width()), float(r.height())});
         return true;
     }

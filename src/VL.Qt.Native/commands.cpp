@@ -3,9 +3,9 @@
 #include "audio_tap.h"
 #include "debug.h"
 #include "effectchain.h"
-#include "feedback.h"
+#include "previous_frame_layer.h"
 #include "qmlitem.h"
-#include "shadereffectitem.h"
+#include "shader_item.h"
 #include "vlstyle.h"
 
 #include <QtCore/QLoggingCategory>
@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-Q_LOGGING_CATEGORY(lcFeedback, "vlqt.feedback")
+Q_LOGGING_CATEGORY(lcPreviousFrame, "vlqt.previousframe")
 
 namespace vlqt {
 namespace {
@@ -51,7 +51,7 @@ const char* opName(quint16 op)
     case VLQT_OP_REPARENT: return "REPARENT";
     case VLQT_OP_SET: return "SET";
     case VLQT_OP_BIND: return "BIND";
-    case VLQT_OP_CLEAR_COLOR: return "CLEAR_COLOR";
+    case VLQT_OP_SET_CLEAR_COLOR: return "CLEAR_COLOR";
     case VLQT_OP_RESET: return "RESET";
     case VLQT_OP_SET_STYLE: return "SET_STYLE";
     case VLQT_OP_SET_CLEAR: return "SET_CLEAR";
@@ -67,22 +67,22 @@ const char* opName(quint16 op)
 int valueSize(quint16 vt)
 {
     switch (vt) {
-    case VLQT_VT_F32_ARRAY: return 4;
-    case VLQT_VT_PATH: return 8;
-    case VLQT_VT_F32: return 4;
-    case VLQT_VT_I32: return 4;
-    case VLQT_VT_BOOL: return 1;
-    case VLQT_VT_COLOR: return 16;
-    case VLQT_VT_RECTF: return 16;
-    case VLQT_VT_MAT4: return 64;
-    case VLQT_VT_STRING: return 4;
-    case VLQT_VT_REF: return 4;
-    case VLQT_VT_U64: return 8;
-    case VLQT_VT_SAMPLER: return 8;
-    case VLQT_VT_VEC2: return 8;
-    case VLQT_VT_VEC3: return 12;
-    case VLQT_VT_VEC4: return 16;
-    case VLQT_VT_IVEC2: return 8;
+    case VLQT_VALUE_TYPE_F32_ARRAY: return 4;
+    case VLQT_VALUE_TYPE_PATH: return 8;
+    case VLQT_VALUE_TYPE_F32: return 4;
+    case VLQT_VALUE_TYPE_I32: return 4;
+    case VLQT_VALUE_TYPE_BOOL: return 1;
+    case VLQT_VALUE_TYPE_COLOR: return 16;
+    case VLQT_VALUE_TYPE_RECTF: return 16;
+    case VLQT_VALUE_TYPE_MAT4: return 64;
+    case VLQT_VALUE_TYPE_STRING: return 4;
+    case VLQT_VALUE_TYPE_REF: return 4;
+    case VLQT_VALUE_TYPE_U64: return 8;
+    case VLQT_VALUE_TYPE_SAMPLER: return 8;
+    case VLQT_VALUE_TYPE_VEC2: return 8;
+    case VLQT_VALUE_TYPE_VEC3: return 12;
+    case VLQT_VALUE_TYPE_VEC4: return 16;
+    case VLQT_VALUE_TYPE_IVEC2: return 8;
     default: return -1;
     }
 }
@@ -92,9 +92,9 @@ int valueSize(quint16 vt)
 int fixedValueSize(quint16 vt)
 {
     switch (vt) {
-    case VLQT_VT_STRING:
-    case VLQT_VT_F32_ARRAY:
-    case VLQT_VT_PATH:
+    case VLQT_VALUE_TYPE_STRING:
+    case VLQT_VALUE_TYPE_F32_ARRAY:
+    case VLQT_VALUE_TYPE_PATH:
         return -1;
     default: return valueSize(vt);
     }
@@ -119,19 +119,19 @@ QColor toColor(const float* f) { return QColor::fromRgbF(f[0], f[1], f[2], f[3])
 quint16 effectValueType(quint16 prop)
 {
     switch (prop) {
-    case VLQT_PROP_EFFECT_BLUR_ENABLED:
-    case VLQT_PROP_EFFECT_SHADOW_ENABLED:
-    case VLQT_PROP_EFFECT_AUTO_PADDING:
-    case VLQT_PROP_EFFECT_MASK_INVERTED:
-        return VLQT_VT_BOOL;
-    case VLQT_PROP_EFFECT_BLUR_MAX: return VLQT_VT_I32;
-    case VLQT_PROP_EFFECT_SHADOW_COLOR:
-    case VLQT_PROP_EFFECT_COLORIZATION_COLOR:
-        return VLQT_VT_COLOR;
-    case VLQT_PROP_EFFECT_PADDING_RECT: return VLQT_VT_RECTF;
-    case VLQT_PROP_EFFECT_MASK_SOURCE: return VLQT_VT_REF;
+    case VLQT_MULTI_EFFECT_KEY_BLUR_ENABLED:
+    case VLQT_MULTI_EFFECT_KEY_SHADOW_ENABLED:
+    case VLQT_MULTI_EFFECT_KEY_AUTO_PADDING:
+    case VLQT_MULTI_EFFECT_KEY_MASK_INVERTED:
+        return VLQT_VALUE_TYPE_BOOL;
+    case VLQT_MULTI_EFFECT_KEY_BLUR_MAX: return VLQT_VALUE_TYPE_I32;
+    case VLQT_MULTI_EFFECT_KEY_SHADOW_COLOR:
+    case VLQT_MULTI_EFFECT_KEY_COLORIZATION_COLOR:
+        return VLQT_VALUE_TYPE_COLOR;
+    case VLQT_MULTI_EFFECT_KEY_PADDING_RECT: return VLQT_VALUE_TYPE_RECTF;
+    case VLQT_MULTI_EFFECT_KEY_MASK_SOURCE: return VLQT_VALUE_TYPE_REF;
     default:
-        return prop > VLQT_PROP_EFFECT_ENABLED && prop <= VLQT_PROP_EFFECT_MASK_INVERTED ? VLQT_VT_F32 : 0;
+        return prop > VLQT_MULTI_EFFECT_KEY_ENABLED && prop <= VLQT_MULTI_EFFECT_KEY_MASK_INVERTED ? VLQT_VALUE_TYPE_F32 : 0;
     }
 }
 
@@ -147,15 +147,15 @@ EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
     EffectValue v;
     v.type = vt;
     switch (vt) {
-    case VLQT_VT_I32: v.i = rd<qint32>(vp); break;
-    case VLQT_VT_IVEC2:
+    case VLQT_VALUE_TYPE_I32: v.i = rd<qint32>(vp); break;
+    case VLQT_VALUE_TYPE_IVEC2:
         v.i = rd<qint32>(vp);
         v.i2 = rd<qint32>(vp + 4);
         break;
-    case VLQT_VT_BOOL: v.b = vp[0] != 0; break;
-    case VLQT_VT_U64: v.u = rd<quint64>(vp); break;
-    case VLQT_VT_SAMPLER: v.u = rd<quint64>(vp); break;
-    case VLQT_VT_REF: v.ref = rd<quint32>(vp); break;
+    case VLQT_VALUE_TYPE_BOOL: v.b = vp[0] != 0; break;
+    case VLQT_VALUE_TYPE_U64: v.u = rd<quint64>(vp); break;
+    case VLQT_VALUE_TYPE_SAMPLER: v.u = rd<quint64>(vp); break;
+    case VLQT_VALUE_TYPE_REF: v.ref = rd<quint32>(vp); break;
     default: {
         // f32, color, rectf, mat4, vec2/3/4; variable-length types never get here (fixedValueSize < 0 is rejected)
         const int size = fixedValueSize(vt);
@@ -185,7 +185,7 @@ void Scene::attachRoot()
 {
     root->setParentItem(window->contentItem());
     // Sized to the window, not to the content item: Qt sizes the content item only for a shown window, so the root of
-    // an offscreen scene would stay 0 x 0 (the feedback layer of Clear off draws nothing of an empty item).
+    // an offscreen scene would stay 0 x 0 (the previous-frame layer of Clear off draws nothing of an empty item).
     root->setSize(window->size());
     QObject::connect(window, &QWindow::widthChanged, root, [this](int width) { root->setWidth(width); });
     QObject::connect(window, &QWindow::heightChanged, root, [this](int height) { root->setHeight(height); });
@@ -195,15 +195,15 @@ void Scene::attachRoot()
 
 void Scene::moveToWindow(QQuickWindow* newWindow)
 {
-    // The feedback layer of Clear off belongs to the old window: dropped here, rebuilt for the new one below.
+    // The previous-frame layer of Clear off belongs to the old window: dropped here, rebuilt for the new one below.
     // The trail is lost; the first frame starts from the clear colour, as after a resize.
-    releaseFeedback();
+    releasePreviousFrame();
     // Cut the connections to the old window now: its deletion must not resize the root or mark the geometry.
     QObject::disconnect(window, nullptr, &geometryWatch, nullptr);
     QObject::disconnect(window, nullptr, root, nullptr);
     window = newWindow;
     attachRoot();
-    restoreFeedback();
+    restorePreviousFrame();
     geometryDirty = true;
     // The overlay is a QObject child of the old content item: rebuilt under the new one if it was in use.
     delete std::exchange(debug, nullptr);
@@ -219,7 +219,7 @@ Scene::~Scene()
         kv.second.xf->scene = nullptr; // the unparenting and deletes below emit geometry signals
     for (auto& kv : nodes) {
         elements.clearEffectSource(kv.second);
-        if (kv.second.type == VLQT_TYPE_VIDEO) { // see destroySubtree
+        if (kv.second.type == VLQT_ELEMENT_TYPE_VIDEO) { // see destroySubtree
             QMetaObject::invokeMethod(kv.second.item, "vlqtRelease");
             res::audio::releaseVideo(kv.second.item);
         }
@@ -241,8 +241,8 @@ void Scene::setClear(bool clear)
     if (clear == clearFrames)
         return;
     clearFrames = clear;
-    releaseFeedback();
-    restoreFeedback();
+    releasePreviousFrame();
+    restorePreviousFrame();
 }
 
 int Scene::setSpace(quint32 space, std::string& err)
@@ -263,14 +263,14 @@ void Scene::updateRootOrigin()
     root->setPosition(centre ? QPointF(root->width() / 2, root->height() / 2) : QPointF());
 }
 
-void Scene::releaseFeedback()
+void Scene::releasePreviousFrame()
 {
     feedback.reset();
     applyClearColor();
     window->update();
 }
 
-void Scene::restoreFeedback()
+void Scene::restorePreviousFrame()
 {
     if (!clearFrames && !feedback) {
         // The software backend draws no ShaderEffectSource (the layer would show a black frame): Clear off is ignored
@@ -279,10 +279,10 @@ void Scene::restoreFeedback()
         if (ri && ri->graphicsApi() == QSGRendererInterface::Software) {
             if (!feedbackSoftwareWarned) {
                 feedbackSoftwareWarned = true;
-                qCWarning(lcFeedback, "Clear off needs a QRhi scenegraph; ignored on the Qt Quick software backend");
+                qCWarning(lcPreviousFrame, "Clear off needs a QRhi scenegraph; ignored on the Qt Quick software backend");
             }
         } else {
-            feedback = std::make_unique<FeedbackLayer>(window, root);
+            feedback = std::make_unique<PreviousFrameLayer>(window, root);
         }
     }
     // Also for Clear on: after a window swap the new window takes the clear colour from here.
@@ -301,7 +301,7 @@ void Scene::applyClearColor()
     const float alpha = clearColor.alphaF();
     if (feedback)
         feedback->setFill(alpha > 0 ? clearColor : QColor(Qt::transparent));
-    // Fade (feedback.h): under the layer the window clears to the colour made opaque.
+    // Fade (previous_frame_layer.h): under the layer the window clears to the colour made opaque.
     QColor frame = clearColor;
     if (feedback && alpha > 0 && alpha < 1)
         frame.setAlphaF(1);
@@ -417,7 +417,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
                         }
                     }
                     break;
-                case VLQT_OP_CLEAR_COLOR:
+                case VLQT_OP_SET_CLEAR_COLOR:
                     if (expect(16)) {
                         float f[4];
                         std::memcpy(f, p, sizeof f);
@@ -497,12 +497,12 @@ void Scene::destroySubtree(QQuickItem* item)
     destroyHandlersOf(node); // before the item goes: handler QML objects, ids free again
     // stop the player and drop its source first, so the decoder and audio threads end before the item goes.
     // then the audio tap, while the player still exists (audio_tap.h releaseVideo).
-    if (node.type == VLQT_TYPE_VIDEO) {
+    if (node.type == VLQT_ELEMENT_TYPE_VIDEO) {
         QMetaObject::invokeMethod(item, "vlqtRelease");
         res::audio::releaseVideo(item);
     }
     // Effect chain off first (layer, its root and stages; the masks of its links are detached and parked); a
-    // SHADER_EFFECT source keeps its layer until flushLayerOff.
+    // SHADER source keeps its layer until flushLayerOff.
     const std::vector<QQuickItem*> masks = elements.effectMasks(node);
     elements.releaseEffectLayer(node);
     // QQuickMultiEffect holds a raw pointer to its source: detach before anything is deleted.
@@ -631,7 +631,7 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
             return handler ? ApplyInvalid : ApplyUnknownId;
         }
         parent = pit->second.item;
-        underShaderEffect = pit->second.type == VLQT_TYPE_SHADER_EFFECT;
+        underShaderEffect = pit->second.type == VLQT_ELEMENT_TYPE_SHADER;
     }
     QQuickItem* item = it->second.item;
     if (it->second.maskHost) {
@@ -695,11 +695,11 @@ int Scene::set(const unsigned char* p, int plen, std::string& err)
     }
     // Variable length: the fixed part holds the counts (64 bit, a u32 count must not overflow the comparison).
     qint64 expected = fixed;
-    if (v.type == VLQT_VT_STRING && vlen >= 4)
+    if (v.type == VLQT_VALUE_TYPE_STRING && vlen >= 4)
         expected = 4 + qint64(rd<quint32>(vp));
-    else if (v.type == VLQT_VT_F32_ARRAY && vlen >= 4)
+    else if (v.type == VLQT_VALUE_TYPE_F32_ARRAY && vlen >= 4)
         expected = 4 + 4 * qint64(rd<quint32>(vp));
-    else if (v.type == VLQT_VT_PATH && vlen >= 8)
+    else if (v.type == VLQT_VALUE_TYPE_PATH && vlen >= 8)
         expected = 8 + ((qint64(rd<quint32>(vp)) + (VLQT_COMMAND_ALIGN - 1)) & ~qint64(VLQT_COMMAND_ALIGN - 1))
             + 8 * qint64(rd<quint32>(vp + 4));
     if (vlen != expected) {
@@ -716,30 +716,30 @@ int Scene::set(const unsigned char* p, int plen, std::string& err)
     }
 
     switch (v.type) {
-    case VLQT_VT_F32:
-    case VLQT_VT_COLOR:
-    case VLQT_VT_RECTF:
-    case VLQT_VT_MAT4:
-    case VLQT_VT_VEC2:
-    case VLQT_VT_VEC3:
-    case VLQT_VT_VEC4:
+    case VLQT_VALUE_TYPE_F32:
+    case VLQT_VALUE_TYPE_COLOR:
+    case VLQT_VALUE_TYPE_RECTF:
+    case VLQT_VALUE_TYPE_MAT4:
+    case VLQT_VALUE_TYPE_VEC2:
+    case VLQT_VALUE_TYPE_VEC3:
+    case VLQT_VALUE_TYPE_VEC4:
         std::memcpy(v.f, vp, size_t(fixed));
         break;
-    case VLQT_VT_I32: v.i = rd<qint32>(vp); break;
-    case VLQT_VT_IVEC2:
+    case VLQT_VALUE_TYPE_I32: v.i = rd<qint32>(vp); break;
+    case VLQT_VALUE_TYPE_IVEC2:
         v.i = rd<qint32>(vp);
         v.i2 = rd<qint32>(vp + 4);
         break;
-    case VLQT_VT_BOOL: v.b = vp[0] != 0; break;
-    case VLQT_VT_U64: v.u = rd<quint64>(vp); break;
-    case VLQT_VT_STRING:
+    case VLQT_VALUE_TYPE_BOOL: v.b = vp[0] != 0; break;
+    case VLQT_VALUE_TYPE_U64: v.u = rd<quint64>(vp); break;
+    case VLQT_VALUE_TYPE_STRING:
         v.utf8 = QByteArray::fromRawData(reinterpret_cast<const char*>(vp + 4), vlen - 4);
         break;
-    case VLQT_VT_F32_ARRAY:
+    case VLQT_VALUE_TYPE_F32_ARRAY:
         v.floatCount = rd<quint32>(vp);
         v.floats = vp + 4;
         break;
-    case VLQT_VT_PATH: {
+    case VLQT_VALUE_TYPE_PATH: {
         v.verbCount = rd<quint32>(vp);
         v.pointCount = rd<quint32>(vp + 4);
         v.verbs = vp + 8;
@@ -759,7 +759,7 @@ int Scene::set(const unsigned char* p, int plen, std::string& err)
         }
         break;
     }
-    case VLQT_VT_REF: {
+    case VLQT_VALUE_TYPE_REF: {
         const quint32 ref = rd<quint32>(vp);
         if (ref != VLQT_ROOT_ID) {
             auto rit = nodes.find(ref);
@@ -796,7 +796,7 @@ int Scene::setStyle(const unsigned char* p, int plen, std::string& err)
         return ApplyUnknownId;
     }
     const quint16 type = it->second.type;
-    if (type < VLQT_TYPE_BUTTON || type > VLQT_TYPE_TEXT_FIELD) {
+    if (type < VLQT_ELEMENT_TYPE_BUTTON || type > VLQT_ELEMENT_TYPE_TEXT_FIELD) {
         err = "type " + std::to_string(type) + " has no style (Controls elements only)";
         return ApplyUnknownProperty;
     }
@@ -822,7 +822,7 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
         err = "unknown id " + std::to_string(id);
         return ApplyUnknownId;
     }
-    if (it->second.type != VLQT_TYPE_SHADER_EFFECT) {
+    if (it->second.type != VLQT_ELEMENT_TYPE_SHADER) {
         err = "type " + std::to_string(it->second.type) + " has no uniforms (ShaderEffect only)";
         return ApplyUnknownProperty;
     }
@@ -851,14 +851,14 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
             err = "uniform #" + std::to_string(i) + ": entry exceeds the payload";
             return ApplyBadLength;
         }
-        if (vt == VLQT_VT_REF) {
+        if (vt == VLQT_VALUE_TYPE_REF) {
             const quint32 ref = rd<quint32>(p + valueOff);
             if (ref != VLQT_ROOT_ID && !nodes.count(ref)) {
                 err = "uniform #" + std::to_string(i) + ": unknown ref id " + std::to_string(ref);
                 return ApplyUnknownId;
             }
         }
-        if (vt == VLQT_VT_SAMPLER && !samplerValueOk(p + valueOff)) {
+        if (vt == VLQT_VALUE_TYPE_SAMPLER && !samplerValueOk(p + valueOff)) {
             err = "uniform #" + std::to_string(i) + ": sampler state out of range";
             return ApplyBadValue;
         }
@@ -868,8 +868,8 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
         err = "SET_UNIFORMS: " + std::to_string(plen - off) + " bytes after the last entry";
         return ApplyBadLength;
     }
-    // Valid as a whole: apply (content problems become the element's error text, ShaderEffectItem::rebuild).
-    auto* item = static_cast<ShaderEffectItem*>(it->second.item);
+    // Valid as a whole: apply (content problems become the element's error text, ShaderItem::rebuild).
+    auto* item = static_cast<ShaderItem*>(it->second.item);
     item->beginUniforms((rd<quint16>(p + 6) & VLQT_UNIFORM_SET_CLEAR) != 0);
     off = VLQT_LIST_FIELDS_SIZE;
     for (int i = 0; i < count; ++i) {
@@ -877,7 +877,7 @@ int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
         const int nameLen = rd<quint16>(p + off + 2);
         const int valueOff = off + align4(VLQT_ENTRY_HEADER_SIZE + nameLen);
         QQuickItem* ref = nullptr;
-        if (vt == VLQT_VT_REF) {
+        if (vt == VLQT_VALUE_TYPE_REF) {
             const auto r = nodes.find(rd<quint32>(p + valueOff));
             ref = r != nodes.end() ? r->second.item : nullptr; // 0 (root) = no texture
         }
@@ -894,7 +894,7 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
 {
     // Wire format: protocol.h head comment (entries like SET_UNIFORMS; a STRING value is u32 length + UTF-8). The command is
     // validated as a whole first; content problems (unknown name, failed conversion, unsupported value type) do not fail
-    // the apply: they are error lines of the element (QmlItem::error, EV_ERROR).
+    // the apply: they are error lines of the element (QmlItem::error, EVENT_ERROR).
     if (plen < VLQT_LIST_FIELDS_SIZE) {
         err = "payloadLen " + std::to_string(plen) + " too short for SET_QML_PROPERTIES (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
@@ -910,7 +910,7 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
         err = "unknown id " + std::to_string(id);
         return ApplyUnknownId;
     }
-    if (it->second.type != VLQT_TYPE_QML) {
+    if (it->second.type != VLQT_ELEMENT_TYPE_QML) {
         err = "type " + std::to_string(it->second.type) + " has no QML properties (QmlElement only)";
         return ApplyUnknownProperty;
     }
@@ -928,7 +928,7 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
             err = "QML property #" + std::to_string(i) + ": unknown value type " + std::to_string(vt);
             return ApplyBadValue;
         }
-        if (vt == VLQT_VT_F32_ARRAY || vt == VLQT_VT_PATH) {
+        if (vt == VLQT_VALUE_TYPE_F32_ARRAY || vt == VLQT_VALUE_TYPE_PATH) {
             err = "QML property #" + std::to_string(i) + ": value type " + std::to_string(vt) + " not allowed";
             return ApplyBadValue;
         }
@@ -939,7 +939,7 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
         }
         const int valueOff = off + align4(VLQT_ENTRY_HEADER_SIZE + nameLen);
         qint64 vlen = size;
-        if (vt == VLQT_VT_STRING) {
+        if (vt == VLQT_VALUE_TYPE_STRING) {
             if (valueOff + 4 > plen) {
                 err = "QML property #" + std::to_string(i) + ": entry exceeds the payload";
                 return ApplyBadLength;
@@ -965,34 +965,34 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
         const QString name = QString::fromUtf8(reinterpret_cast<const char*>(p + off + VLQT_ENTRY_HEADER_SIZE), nameLen);
         const unsigned char* vp = p + off + align4(VLQT_ENTRY_HEADER_SIZE + nameLen);
         int vlen = valueSize(vt);
-        if (vt == VLQT_VT_STRING)
+        if (vt == VLQT_VALUE_TYPE_STRING)
             vlen += int(rd<quint32>(vp));
         off = int(vp - p) + align4(vlen);
         float f[4] = {};
         switch (vt) {
-        case VLQT_VT_F32: item->setRootProperty(name, double(rd<float>(vp))); break;
-        case VLQT_VT_I32: item->setRootProperty(name, int(rd<qint32>(vp))); break;
-        case VLQT_VT_BOOL: item->setRootProperty(name, vp[0] != 0); break;
-        case VLQT_VT_STRING:
+        case VLQT_VALUE_TYPE_F32: item->setRootProperty(name, double(rd<float>(vp))); break;
+        case VLQT_VALUE_TYPE_I32: item->setRootProperty(name, int(rd<qint32>(vp))); break;
+        case VLQT_VALUE_TYPE_BOOL: item->setRootProperty(name, vp[0] != 0); break;
+        case VLQT_VALUE_TYPE_STRING:
             item->setRootProperty(name, QString::fromUtf8(reinterpret_cast<const char*>(vp + 4), qsizetype(rd<quint32>(vp))));
             break;
-        case VLQT_VT_COLOR:
+        case VLQT_VALUE_TYPE_COLOR:
             std::memcpy(f, vp, 16);
             item->setRootProperty(name, QColor::fromRgbF(f[0], f[1], f[2], f[3]));
             break;
-        case VLQT_VT_RECTF:
+        case VLQT_VALUE_TYPE_RECTF:
             std::memcpy(f, vp, 16);
             item->setRootProperty(name, QRectF(f[0], f[1], f[2], f[3]));
             break;
-        case VLQT_VT_VEC2:
+        case VLQT_VALUE_TYPE_VEC2:
             std::memcpy(f, vp, 8);
             item->setRootProperty(name, QVector2D(f[0], f[1]));
             break;
-        case VLQT_VT_VEC3:
+        case VLQT_VALUE_TYPE_VEC3:
             std::memcpy(f, vp, 12);
             item->setRootProperty(name, QVector3D(f[0], f[1], f[2]));
             break;
-        case VLQT_VT_VEC4:
+        case VLQT_VALUE_TYPE_VEC4:
             std::memcpy(f, vp, 16);
             item->setRootProperty(name, QVector4D(f[0], f[1], f[2], f[3]));
             break;
@@ -1029,7 +1029,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
     int off = VLQT_LIST_FIELDS_SIZE;
     for (int l = 0; l < linkCount; ++l) {
         const std::string at = "link #" + std::to_string(l);
-        if (plen - off < VLQT_LINK_HEADER_SIZE) {
+        if (plen - off < VLQT_EFFECT_CHAIN_LINK_HEADER_SIZE) {
             err = at + ": truncated link header";
             return ApplyBadLength;
         }
@@ -1037,14 +1037,14 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
         link.kind = rd<quint16>(p + off);
         const int count = rd<quint16>(p + off + 2);
         const quint32 bodyLen = rd<quint32>(p + off + 4);
-        const int body = off + VLQT_LINK_HEADER_SIZE;
+        const int body = off + VLQT_EFFECT_CHAIN_LINK_HEADER_SIZE;
         if ((bodyLen & (VLQT_COMMAND_ALIGN - 1)) != 0 || bodyLen > quint32(plen - body)) {
             err = at + ": bodyLen " + std::to_string(bodyLen) + " not aligned or exceeds the payload";
             return ApplyBadLength;
         }
         const int end = body + int(bodyLen);
         int e = body;
-        if (link.kind == VLQT_EFFECT_LINK_MULTI) {
+        if (link.kind == VLQT_EFFECT_CHAIN_LINK_MULTI) {
             for (int i = 0; i < count; ++i) {
                 if (end - e < 4) {
                     err = at + " entry #" + std::to_string(i) + ": truncated entry";
@@ -1069,14 +1069,14 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
                     return ApplyBadLength;
                 }
                 EffectMultiEntry entry{prop, readEffectValue(vt, p + e + 4)};
-                if (vt == VLQT_VT_REF && !knownRef(entry.value.ref)) {
+                if (vt == VLQT_VALUE_TYPE_REF && !knownRef(entry.value.ref)) {
                     err = at + " entry #" + std::to_string(i) + ": unknown ref id " + std::to_string(entry.value.ref);
                     return ApplyUnknownId;
                 }
                 link.multi.push_back(entry);
                 e = next;
             }
-        } else if (link.kind == VLQT_EFFECT_LINK_SHADER) {
+        } else if (link.kind == VLQT_EFFECT_CHAIN_LINK_SHADER) {
             if (end - e < 4) {
                 err = at + ": truncated SHADER head";
                 return ApplyBadLength;
@@ -1098,7 +1098,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
                 return ApplyBadValue;
             }
             e += 4;
-            if (end - e < shaderCount * 8 + VLQT_SHADER_LINK_FIXED_SIZE) {
+            if (end - e < shaderCount * 8 + VLQT_EFFECT_CHAIN_LINK_SHADER_FIXED_SIZE) {
                 err = at + ": truncated SHADER head";
                 return ApplyBadLength;
             }
@@ -1112,7 +1112,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
                 err = at + ": reserved field " + std::to_string(reserved) + ", expected 0";
                 return ApplyBadValue;
             }
-            e += VLQT_SHADER_LINK_FIXED_SIZE;
+            e += VLQT_EFFECT_CHAIN_LINK_SHADER_FIXED_SIZE;
             for (int i = 0; i < count; ++i) {
                 const std::string ue = at + " uniform #" + std::to_string(i);
                 if (end - e < 4) {
@@ -1137,12 +1137,12 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
                     err = ue + ": entry exceeds the body";
                     return ApplyBadLength;
                 }
-                if (vt == VLQT_VT_SAMPLER && !samplerValueOk(p + valueOff)) {
+                if (vt == VLQT_VALUE_TYPE_SAMPLER && !samplerValueOk(p + valueOff)) {
                     err = ue + ": sampler state out of range";
                     return ApplyBadValue;
                 }
                 EffectUniform u{QByteArray(reinterpret_cast<const char*>(p + e + 4), uNameLen), readEffectValue(vt, p + valueOff)};
-                if (vt == VLQT_VT_REF && !knownRef(u.value.ref)) {
+                if (vt == VLQT_VALUE_TYPE_REF && !knownRef(u.value.ref)) {
                     err = ue + ": unknown ref id " + std::to_string(u.value.ref);
                     return ApplyUnknownId;
                 }
@@ -1169,7 +1169,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
     std::vector<QQuickItem*> masks(chain.links.size(), nullptr);
     for (size_t l = 0; l < chain.links.size(); ++l)
         for (const EffectMultiEntry& e : chain.links[l].multi) {
-            if (e.prop != VLQT_PROP_EFFECT_MASK_SOURCE || e.value.ref == VLQT_ROOT_ID)
+            if (e.prop != VLQT_MULTI_EFFECT_KEY_MASK_SOURCE || e.value.ref == VLQT_ROOT_ID)
                 continue;
             const Node& mask = nodes[e.value.ref]; // existence checked above (knownRef)
             const std::string at = "link #" + std::to_string(l) + ": mask " + std::to_string(e.value.ref);
@@ -1203,10 +1203,10 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
             nodes[ids[m]].maskHidden = true;
         }
     // Texture uniforms of SHADER links (REF): an element of its own that the host never REPARENTs, parked hidden under the
-    // root like a mask (rendered through its layer, ShaderEffectItem::setUniform); problems are EV_ERROR lines.
+    // root like a mask (rendered through its layer, ShaderItem::setUniform); problems are EVENT_ERROR lines.
     for (EffectLinkDesc& link : chain.links)
         for (EffectUniform& u : link.uniforms) {
-            if (u.value.type != VLQT_VT_REF || u.value.ref == VLQT_ROOT_ID)
+            if (u.value.type != VLQT_VALUE_TYPE_REF || u.value.ref == VLQT_ROOT_ID)
                 continue;
             Node& tex = nodes[u.value.ref]; // existence checked above (knownRef)
             bool ancestor = false;
@@ -1229,7 +1229,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
             u.refItem = tex.item;
         }
     const int rc = elements.setEffectChain(host, chain, masks, err);
-    listPolled(*this, host); // a chain reports its content errors (EV_ERROR)
+    listPolled(*this, host); // a chain reports its content errors (EVENT_ERROR)
     const std::vector<QQuickItem*> after = elements.effectMasks(host);
     for (QQuickItem* m : before)
         if (std::find(after.begin(), after.end(), m) == after.end())

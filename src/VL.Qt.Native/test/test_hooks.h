@@ -12,6 +12,7 @@
 
 class PerfMonitor;
 class QQuickWindow;
+struct vlqt_scene;
 
 namespace vlqt {
 struct Scene;
@@ -30,9 +31,9 @@ struct InputState
 };
 
 // --- vlqt.cpp: parts of a window handle (a window or an offscreen scene); null for a null handle ---
-Scene* scene(void* handle);
-PerfMonitor* perf(void* handle);
-InputState* input(void* handle);
+Scene* scene(vlqt_scene* handle);
+PerfMonitor* perf(vlqt_scene* handle);
+InputState* input(vlqt_scene* handle);
 // References of a font handle of vlqt_font_add, 0 = removal pending (end of pump), -9 = removed or unknown.
 int fontRefs(unsigned long long handle);
 

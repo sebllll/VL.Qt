@@ -1,4 +1,4 @@
-/* commands.h - decoder/dispatcher of the command buffer (vlqt_window_apply) and the poll queue.
+/* commands.h - decoder/dispatcher of the command buffer (vlqt_scene_apply) and the poll queue.
  * Protocol constants live in protocol.h. Element types and their properties are table entries
  * (elements.h/.cpp); plan 05 only adds entries, no new exports. */
 #pragma once
@@ -24,7 +24,7 @@ class QQuickWindow;
 namespace vlqt {
 
 class DebugOverlay;
-class FeedbackLayer;
+class PreviousFrameLayer;
 
 /* One scene per window: id table, bindings, event queue. Root id 0 = an item filling contentItem. */
 struct Scene {
@@ -34,7 +34,7 @@ struct Scene {
     Scene& operator=(const Scene&) = delete;
 
     /* Window swap (vlqt_window_set_samples): the root item moves to window's content item (size follow and
-     * window-geometry watch reconnected, EV_WINDOW_GEOMETRY queued), the debug overlay is rebuilt there. Items, nodes,
+     * window-geometry watch reconnected, EVENT_WINDOW_GEOMETRY queued), the debug overlay is rebuilt there. Items, nodes,
      * bindings and the engine stay. Call before the old window is deleted (it owns the old debug overlay). */
     void moveToWindow(QQuickWindow* newWindow);
 
@@ -54,14 +54,14 @@ struct Scene {
      * len = 8 + payloadLen (handle + index + payload, without padding). */
     void pushEvent(quint16 ev, quint32 handle, quint32 index, const void* payload, quint16 payloadLen);
 
-    /* Debug overlay (debug.h): window-wide switch (vlqt_window_set_debug) and the refresh after commands. The
+    /* Debug overlay (debug.h): window-wide switch (vlqt_scene_set_debug) and the refresh after commands. The
      * overlay is created on first use and shown while debugAll is on or any node has DEBUG (Elements::debugCount). */
     void setDebugAll(bool on);
     void updateDebug();
     const QQuickItem* debugOverlay() const; // nullptr until first used (perf: skipped in the item count)
     bool debugAll = false;
 
-    /* Clear (feedback.h): false keeps the previous frame through the feedback layer, which exists only while
+    /* Clear (previous_frame_layer.h): false keeps the previous frame through the previous-frame layer, which exists only while
      * clear is false; the first frame after switching off starts from the clear colour. Set by VLQT_OP_SET_CLEAR, kept
      * by RESET. The layer is derived state: clearFrames is the state, the layer is built from it for the current
      * window. */
@@ -73,17 +73,17 @@ struct Scene {
     quint32 space() const { return sceneSpace; }
     /* Root position from the space and the root size: top left, or the centre of the scene (follows resizes). */
     void updateRootOrigin();
-    /* Clear colour (VLQT_OP_CLEAR_COLOR, straight alpha; kept by RESET and across a window swap). With Clear on, or
+    /* Clear colour (VLQT_OP_SET_CLEAR_COLOR, straight alpha; kept by RESET and across a window swap). With Clear on, or
      * Clear off and alpha 0 or 1, the window clears to it. With Clear off its alpha is the fade strength: the
      * layer draws it over the previous frame (alpha > 0), and for 0 < alpha < 1 the window clears to it opaque
-     * (feedback.h "Fade"). Runtime changes keep the layer. */
+     * (previous_frame_layer.h "Fade"). Runtime changes keep the layer. */
     void setClearColor(const QColor& color);
     /* Before the QQuickWindow is replaced (MSAA change): drops the layer (its source is a child of the old
      * content item, its textures belong to the old window's QRhi), keeps the state. After the root moved to the new
      * window (and `window` points to it): rebuilds the layer from the state; the first frame starts from the clear
      * colour, as after a resize. */
-    void releaseFeedback();
-    void restoreFeedback();
+    void releasePreviousFrame();
+    void restorePreviousFrame();
 
     QQuickWindow* window;
     QQmlEngine* engine;
@@ -94,7 +94,7 @@ struct Scene {
     QByteArray events;
     Elements elements; // component + property caches of this window's engine
     Handlers handlers; // QML components of the input handlers, events.h
-    /* EV_WINDOW_GEOMETRY (events.h): set by the window's geometry/state signals (context = geometryWatch, so the
+    /* EVENT_WINDOW_GEOMETRY (events.h): set by the window's geometry/state signals (context = geometryWatch, so the
      * connections end with the scene), cleared by the poll that queues the record. */
     bool geometryDirty = true;
     /* Frame position of the last record: X11 delivers the frame margins (_NET_FRAME_EXTENTS) later than the
@@ -113,7 +113,7 @@ struct Scene {
 
     /* Details of the last apply: rc 0 = it succeeded. id = object id the bad command addresses (0 = none:
      * CLEAR_COLOR, RESET, truncated header, root), prop = property of a bad SET (else 0), reason = message without
-     * the "apply: command #n ..." prefix. Read by vlqt_window_get_apply_error. */
+     * the "apply: command #n ..." prefix. Read by vlqt_scene_get_apply_error. */
     struct ApplyError {
         int rc = 0;
         int command = 0;
@@ -142,10 +142,10 @@ private:
     void detachMask(Node& host, QQuickItem* mask);
     void deleteRetired();
     DebugOverlay* debug = nullptr; // child of contentItem, deleted in ~Scene
-    std::unique_ptr<FeedbackLayer> feedback; // Clear off only
+    std::unique_ptr<PreviousFrameLayer> feedback; // Clear off only
     bool clearFrames = true; // Clear pin state
     quint32 sceneSpace = VLQT_SPACE_DIP_TOP_LEFT; // Space pin state
-    QColor clearColor; // VLQT_OP_CLEAR_COLOR; initially the colour the window was created with
+    QColor clearColor; // VLQT_OP_SET_CLEAR_COLOR; initially the colour the window was created with
     void applyClearColor(); // window clear and layer fill from clearColor and the layer
     bool feedbackSoftwareWarned = false; // Clear off ignored on the software backend, logged once per scene
     std::vector<QQuickItem*> retired; // destroyed former effect sources, deleted after the next frame

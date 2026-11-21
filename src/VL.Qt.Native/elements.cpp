@@ -1,11 +1,11 @@
 #include "elements.h"
 #include "audio_tap.h"
 #include "effectchain.h"
-#include "pathelement.h"
+#include "shape_path_element.h"
 
 #include "qtimageitem.h"
 #include "qmlitem.h"
-#include "shadereffectitem.h"
+#include "shader_item.h"
 
 #include <QtCore/QFileInfo>
 #include <QtCore/QLoggingCategory>
@@ -72,9 +72,9 @@ void setGroupAutoSize(QQuickItem* item, bool on); // GroupItem, below
 
 void applySize(Node& n)
 {
-    if (n.type == VLQT_TYPE_ITEM)
+    if (n.type == VLQT_ELEMENT_TYPE_GROUP)
         setGroupAutoSize(n.item, n.autoSize); // frame origin: extent with Auto Size, (0, 0) with SIZE
-    if (n.type == VLQT_TYPE_QML)
+    if (n.type == VLQT_ELEMENT_TYPE_QML)
         static_cast<QmlItem*>(n.item)->setAutoSize(n.autoSize); // root = implicit size of the QML, or this item's SIZE
     if (isAutoSized(n)) {
         n.item->resetWidth();
@@ -143,18 +143,18 @@ bool setDebug(Elements& els, Node& n, const ResolvedProp&, const Value& v, std::
 const std::vector<PropDef>& commonProps()
 {
     static const std::vector<PropDef> t = {
-        {VLQT_PROP_SIZE, VLQT_VT_VEC2, setSize, nullptr},
-        {VLQT_PROP_TRANSFORM, VLQT_VT_MAT4, setTransform, nullptr},
-        {VLQT_PROP_OPACITY, VLQT_VT_F32, setOpacity, nullptr},
-        {VLQT_PROP_CLIP, VLQT_VT_BOOL, setClip, nullptr},
-        {VLQT_PROP_ANCHOR, VLQT_VT_I32, setAnchor, nullptr},
-        {VLQT_PROP_DEBUG, VLQT_VT_BOOL, setDebug, nullptr},
+        {VLQT_PROPERTY_SIZE, VLQT_VALUE_TYPE_VEC2, setSize, nullptr},
+        {VLQT_PROPERTY_TRANSFORM, VLQT_VALUE_TYPE_MAT4, setTransform, nullptr},
+        {VLQT_PROPERTY_OPACITY, VLQT_VALUE_TYPE_F32, setOpacity, nullptr},
+        {VLQT_PROPERTY_CLIP, VLQT_VALUE_TYPE_BOOL, setClip, nullptr},
+        {VLQT_PROPERTY_ANCHOR, VLQT_VALUE_TYPE_I32, setAnchor, nullptr},
+        {VLQT_PROPERTY_DEBUG, VLQT_VALUE_TYPE_BOOL, setDebug, nullptr},
     };
     return t;
 }
 
 // EFFECT_* (block 832): keys of SET_EFFECT_CHAIN MULTI entries only (effectchain.cpp); SET with one is -6.
-bool isEffectProp(quint16 prop) { return prop >= VLQT_PROP_EFFECT_ENABLED && prop <= VLQT_PROP_EFFECT_MASK_INVERTED; }
+bool isEffectProp(quint16 prop) { return prop >= VLQT_MULTI_EFFECT_KEY_ENABLED && prop <= VLQT_MULTI_EFFECT_KEY_MASK_INVERTED; }
 
 // ---------------------------------------------------------------------------------------------
 // Generic setters for QML properties (resolved QMetaProperty, optionally grouped).
@@ -207,10 +207,10 @@ constexpr const char* kRectangleQml = "import QtQuick\nRectangle { border.width:
 std::vector<PropDef> rectangleProps()
 {
     return {
-        {VLQT_PROP_COLOR, VLQT_VT_COLOR, setQmlColor, "color"},
-        {VLQT_PROP_RADIUS, VLQT_VT_F32, setQmlReal, "radius"},
-        {VLQT_PROP_BORDER_COLOR, VLQT_VT_COLOR, setQmlColor, "border.color"},
-        {VLQT_PROP_BORDER_WIDTH, VLQT_VT_F32, setQmlReal, "border.width"},
+        {VLQT_PROPERTY_COLOR, VLQT_VALUE_TYPE_COLOR, setQmlColor, "color"},
+        {VLQT_PROPERTY_RADIUS, VLQT_VALUE_TYPE_F32, setQmlReal, "radius"},
+        {VLQT_PROPERTY_BORDER_COLOR, VLQT_VALUE_TYPE_COLOR, setQmlColor, "border.color"},
+        {VLQT_PROPERTY_BORDER_WIDTH, VLQT_VALUE_TYPE_F32, setQmlReal, "border.width"},
     };
 }
 
@@ -282,29 +282,29 @@ bool setLetterSpacing(Elements&, Node& n, const ResolvedProp& rp, const Value& v
 std::vector<PropDef> textProps()
 {
     return {
-        {VLQT_PROP_TEXT, VLQT_VT_STRING, setQmlString, "text"},
-        {VLQT_PROP_FONT_FAMILY, VLQT_VT_STRING, setFontFamily, "font"},
-        {VLQT_PROP_FONT_SIZE, VLQT_VT_F32, setFontPixelSize, "font"},
-        {VLQT_PROP_FONT_WEIGHT, VLQT_VT_I32, setFontWeight, "font"},
-        {VLQT_PROP_FONT_ITALIC, VLQT_VT_BOOL, setFontItalic, "font"},
-        {VLQT_PROP_COLOR, VLQT_VT_COLOR, setQmlColor, "color"},
+        {VLQT_PROPERTY_TEXT, VLQT_VALUE_TYPE_STRING, setQmlString, "text"},
+        {VLQT_PROPERTY_FONT_FAMILY, VLQT_VALUE_TYPE_STRING, setFontFamily, "font"},
+        {VLQT_PROPERTY_FONT_SIZE, VLQT_VALUE_TYPE_F32, setFontPixelSize, "font"},
+        {VLQT_PROPERTY_FONT_WEIGHT, VLQT_VALUE_TYPE_I32, setFontWeight, "font"},
+        {VLQT_PROPERTY_FONT_ITALIC, VLQT_VALUE_TYPE_BOOL, setFontItalic, "font"},
+        {VLQT_PROPERTY_COLOR, VLQT_VALUE_TYPE_COLOR, setQmlColor, "color"},
         // Qt::AlignLeft/Right/HCenter/Justify, Qt::AlignTop/Bottom/VCenter
-        {VLQT_PROP_HORIZONTAL_ALIGNMENT, VLQT_VT_I32, setQmlEnum<0x1, 0x2, 0x4, 0x8>, "horizontalAlignment"},
-        {VLQT_PROP_VERTICAL_ALIGNMENT, VLQT_VT_I32, setQmlEnum<0x20, 0x40, 0x80>, "verticalAlignment"},
+        {VLQT_PROPERTY_HORIZONTAL_ALIGNMENT, VLQT_VALUE_TYPE_I32, setQmlEnum<0x1, 0x2, 0x4, 0x8>, "horizontalAlignment"},
+        {VLQT_PROPERTY_VERTICAL_ALIGNMENT, VLQT_VALUE_TYPE_I32, setQmlEnum<0x20, 0x40, 0x80>, "verticalAlignment"},
         // Text.NoWrap/WordWrap/WrapAnywhere/Wrap
-        {VLQT_PROP_WRAP_MODE, VLQT_VT_I32, setQmlEnum<0, 1, 3, 4>, "wrapMode"},
+        {VLQT_PROPERTY_WRAP_MODE, VLQT_VALUE_TYPE_I32, setQmlEnum<0, 1, 3, 4>, "wrapMode"},
         // Text.ElideLeft/Right/Middle/None
-        {VLQT_PROP_ELIDE, VLQT_VT_I32, setQmlEnum<0, 1, 2, 3>, "elide"},
-        {VLQT_PROP_LINE_HEIGHT, VLQT_VT_F32, setQmlReal, "lineHeight"},
-        {VLQT_PROP_LETTER_SPACING, VLQT_VT_F32, setLetterSpacing, "font"},
+        {VLQT_PROPERTY_ELIDE, VLQT_VALUE_TYPE_I32, setQmlEnum<0, 1, 2, 3>, "elide"},
+        {VLQT_PROPERTY_LINE_HEIGHT, VLQT_VALUE_TYPE_F32, setQmlReal, "lineHeight"},
+        {VLQT_PROPERTY_LETTER_SPACING, VLQT_VALUE_TYPE_F32, setLetterSpacing, "font"},
         // Text.FixedSize/HorizontalFit/VerticalFit/Fit
-        {VLQT_PROP_FONT_SIZE_MODE, VLQT_VT_I32, setQmlEnum<0, 1, 2, 3>, "fontSizeMode"},
+        {VLQT_PROPERTY_FONT_SIZE_MODE, VLQT_VALUE_TYPE_I32, setQmlEnum<0, 1, 2, 3>, "fontSizeMode"},
     };
 }
 
 // ---------------------------------------------------------------------------------------------
 // Error state of an element: a QML string property vlqtError on the root item, empty = no error. Read by
-// the poll (Elements::readError) and sent as EV_ERROR to the bound sink, i.e. shown at the element's vvvv node.
+// the poll (Elements::readError) and sent as EVENT_ERROR to the bound sink, i.e. shown at the element's vvvv node.
 // vlqtPath: local path of a file URL for messages (file:///C:/a%20b.png -> C:/a b.png, file:///home/x -> /home/x).
 #define VLQT_QML_PATH_FN \
     "  function vlqtPath(u) { return decodeURIComponent(String(u).replace(/^file:\\/\\/(\\/(?=[A-Za-z]:))?/, \"\")); }\n"
@@ -319,7 +319,7 @@ bool setMediaSource(Elements&, Node& n, const ResolvedProp& rp, const Value& v, 
 
 // ---------------------------------------------------------------------------------------------
 // Image: QtImageItem draws an image resource (vlqt_res_*, image_resource.h) instead of a file URL, so one
-// upload serves every element and window. No SOURCE any more (-6); load errors belong to the resource (RES_EV_ERROR).
+// upload serves every element and window. No SOURCE any more (-6); load errors belong to the resource (RESOURCE_EVENT_ERROR).
 
 QQuickItem* makeImage() { return new QtImageItem(); }
 
@@ -328,9 +328,9 @@ bool setImageResource(Elements&, Node& n, const ResolvedProp&, const Value& v, s
     return static_cast<QtImageItem*>(n.item)->setResource(v.u, err);
 }
 
-// ShaderEffect (protocol.h "ShaderEffect"): ShaderEffectItem (shadereffectitem.h), own QQuickItem with a
+// ShaderEffect (protocol.h "ShaderEffect"): ShaderItem (shader_item.h), own QQuickItem with a
 // QSGMaterialShader. SOURCE goes through the effect source bookkeeping (layer, hidden, cleared before deletion).
-QQuickItem* makeShaderEffect() { return new ShaderEffectItem(); }
+QQuickItem* makeShaderEffect() { return new ShaderItem(); }
 
 // QmlElement (protocol.h "QmlElement"): QmlItem (qmlitem.h), own QQuickItem that holds the instance of a user .qml file.
 QQuickItem* makeQml() { return new QmlItem(); }
@@ -351,13 +351,13 @@ bool setQmlReload(Elements&, Node& n, const ResolvedProp&, const Value& v, std::
 std::vector<PropDef> qmlProps()
 {
     return {
-        {VLQT_PROP_QML_SOURCE, VLQT_VT_STRING, setQmlSource, nullptr},
-        {VLQT_PROP_QML_RELOAD, VLQT_VT_I32, setQmlReload, nullptr},
-        {VLQT_PROP_AUTO_SIZE, VLQT_VT_BOOL, setAutoSize, nullptr},
+        {VLQT_PROPERTY_QML_SOURCE, VLQT_VALUE_TYPE_STRING, setQmlSource, nullptr},
+        {VLQT_PROPERTY_QML_RELOAD, VLQT_VALUE_TYPE_I32, setQmlReload, nullptr},
+        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
-ShaderEffectItem* shaderItem(Node& n) { return static_cast<ShaderEffectItem*>(n.item); }
+ShaderItem* shaderItem(Node& n) { return static_cast<ShaderItem*>(n.item); }
 
 bool setFragmentShader(Elements&, Node& n, const ResolvedProp&, const Value& v, std::string& err)
 {
@@ -398,22 +398,22 @@ bool setShaderSourceRef(Elements& els, Node& n, const ResolvedProp& rp, const Va
 std::vector<PropDef> shaderEffectProps()
 {
     return {
-        {VLQT_PROP_FRAGMENT_SHADER, VLQT_VT_U64, setFragmentShader, nullptr},
-        {VLQT_PROP_VERTEX_SHADER, VLQT_VT_U64, setVertexShader, nullptr},
-        {VLQT_PROP_BLENDING, VLQT_VT_BOOL, setBlending, nullptr},
-        {VLQT_PROP_MESH_RESOLUTION, VLQT_VT_IVEC2, setMeshResolution, nullptr},
-        {VLQT_PROP_SOURCE, VLQT_VT_REF, setShaderSourceRef, "source"},
-        {VLQT_PROP_AUTO_SIZE, VLQT_VT_BOOL, setAutoSize, nullptr},
+        {VLQT_PROPERTY_FRAGMENT_SHADER, VLQT_VALUE_TYPE_U64, setFragmentShader, nullptr},
+        {VLQT_PROPERTY_VERTEX_SHADER, VLQT_VALUE_TYPE_U64, setVertexShader, nullptr},
+        {VLQT_PROPERTY_BLENDING, VLQT_VALUE_TYPE_BOOL, setBlending, nullptr},
+        {VLQT_PROPERTY_MESH_RESOLUTION, VLQT_VALUE_TYPE_IVEC2, setMeshResolution, nullptr},
+        {VLQT_PROPERTY_SOURCE, VLQT_VALUE_TYPE_REF, setShaderSourceRef, "source"},
+        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
 std::vector<PropDef> imageProps()
 {
     return {
-        {VLQT_PROP_IMAGE, VLQT_VT_U64, setImageResource, nullptr},
+        {VLQT_PROPERTY_IMAGE, VLQT_VALUE_TYPE_U64, setImageResource, nullptr},
         // Stretch/PreserveAspectFit/PreserveAspectCrop/Tile (= C# ImageFillMode, values of QML Image.fillMode)
-        {VLQT_PROP_FILL_MODE, VLQT_VT_I32, setQmlEnum<0, 1, 2, 3>, "fillMode"},
-        {VLQT_PROP_SMOOTH, VLQT_VT_BOOL, setQmlBool, "smooth"},
+        {VLQT_PROPERTY_FILL_MODE, VLQT_VALUE_TYPE_I32, setQmlEnum<0, 1, 2, 3>, "fillMode"},
+        {VLQT_PROPERTY_SMOOTH, VLQT_VALUE_TYPE_BOOL, setQmlBool, "smooth"},
     };
 }
 
@@ -460,22 +460,22 @@ constexpr const char* kRowQml =
 std::vector<PropDef> columnProps()
 {
     return {
-        {VLQT_PROP_SPACING, VLQT_VT_F32, setQmlReal, "spacing"},
-        {VLQT_PROP_PADDING, VLQT_VT_F32, setQmlReal, "padding"},
+        {VLQT_PROPERTY_SPACING, VLQT_VALUE_TYPE_F32, setQmlReal, "spacing"},
+        {VLQT_PROPERTY_PADDING, VLQT_VALUE_TYPE_F32, setQmlReal, "padding"},
         // Qt::AlignLeft/Right/HCenter (= C# HorizontalAlignment)
-        {VLQT_PROP_CHILD_ALIGNMENT, VLQT_VT_I32, setQmlEnum<0x1, 0x2, 0x4>, "childAlignment"},
-        {VLQT_PROP_AUTO_SIZE, VLQT_VT_BOOL, setAutoSize, nullptr},
+        {VLQT_PROPERTY_CHILD_ALIGNMENT, VLQT_VALUE_TYPE_I32, setQmlEnum<0x1, 0x2, 0x4>, "childAlignment"},
+        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
 std::vector<PropDef> rowProps()
 {
     return {
-        {VLQT_PROP_SPACING, VLQT_VT_F32, setQmlReal, "spacing"},
-        {VLQT_PROP_PADDING, VLQT_VT_F32, setQmlReal, "padding"},
+        {VLQT_PROPERTY_SPACING, VLQT_VALUE_TYPE_F32, setQmlReal, "spacing"},
+        {VLQT_PROPERTY_PADDING, VLQT_VALUE_TYPE_F32, setQmlReal, "padding"},
         // Qt::AlignTop/Bottom/VCenter (= C# VerticalAlignment)
-        {VLQT_PROP_CHILD_ALIGNMENT, VLQT_VT_I32, setQmlEnum<0x20, 0x40, 0x80>, "childAlignment"},
-        {VLQT_PROP_AUTO_SIZE, VLQT_VT_BOOL, setAutoSize, nullptr},
+        {VLQT_PROPERTY_CHILD_ALIGNMENT, VLQT_VALUE_TYPE_I32, setQmlEnum<0x20, 0x40, 0x80>, "childAlignment"},
+        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -730,17 +730,17 @@ bool setVolume(Elements&, Node& n, const ResolvedProp& rp, const Value& v, std::
 std::vector<PropDef> videoProps()
 {
     return {
-        {VLQT_PROP_SOURCE, VLQT_VT_STRING, setMediaSource, "source"},
+        {VLQT_PROPERTY_SOURCE, VLQT_VALUE_TYPE_STRING, setMediaSource, "source"},
         // VideoOutput.Stretch/PreserveAspectFit/PreserveAspectCrop (= C# VideoFillMode)
-        {VLQT_PROP_FILL_MODE, VLQT_VT_I32, setQmlEnum<0, 1, 2>, "fillMode"},
-        {VLQT_PROP_PLAYING, VLQT_VT_BOOL, setQmlBool, "playing"},
-        {VLQT_PROP_LOOP, VLQT_VT_BOOL, setQmlBool, "loop"},
+        {VLQT_PROPERTY_FILL_MODE, VLQT_VALUE_TYPE_I32, setQmlEnum<0, 1, 2>, "fillMode"},
+        {VLQT_PROPERTY_PLAYING, VLQT_VALUE_TYPE_BOOL, setQmlBool, "playing"},
+        {VLQT_PROPERTY_LOOP, VLQT_VALUE_TYPE_BOOL, setQmlBool, "loop"},
         // VideoOutput.endOfStreamPolicy (Qt 6.9+): KeepLastFrame / ClearOutput (Qt default)
-        {VLQT_PROP_KEEP_LAST_FRAME, VLQT_VT_BOOL, setQmlBool, "keepLastFrame"},
-        {VLQT_PROP_PLAYBACK_RATE, VLQT_VT_F32, setQmlPositiveReal, "playbackRate"},
-        {VLQT_PROP_VOLUME, VLQT_VT_F32, setVolume, "volume"},
+        {VLQT_PROPERTY_KEEP_LAST_FRAME, VLQT_VALUE_TYPE_BOOL, setQmlBool, "keepLastFrame"},
+        {VLQT_PROPERTY_PLAYBACK_RATE, VLQT_VALUE_TYPE_F32, setQmlPositiveReal, "playbackRate"},
+        {VLQT_PROPERTY_VOLUME, VLQT_VALUE_TYPE_F32, setVolume, "volume"},
         // Sound to VL.Audio instead of Qt's output (audio_tap.h)
-        {VLQT_PROP_AUDIO_TAP, VLQT_VT_U64, res::audio::setVideoTap, nullptr},
+        {VLQT_PROPERTY_AUDIO_TAP, VLQT_VALUE_TYPE_U64, res::audio::setVideoTap, nullptr},
     };
 }
 
@@ -748,7 +748,7 @@ std::vector<PropDef> videoProps()
 // Button (QtQuick.Controls, first Controls element). Base style VLQt (style/VLQt/Button.qml), values from
 // SET_STYLE (vlstyle.h); style picked once at startup (vlqt.cpp). Clicks are
 // Qt's clicked signal (release over the button; autoRepeat repeats it while held; disabled = none), counted in
-// vlqtClicks and sent as EV_CLICK by the poll for every bound Button (input handlers report their own clicks)
+// vlqtClicks and sent as EVENT_CLICK by the poll for every bound Button (input handlers report their own clicks)
 // (Elements::takeClicks). AUTO_SIZE on (default): implicit size from text + padding, else the SIZE.
 
 constexpr const char* kButtonQml =
@@ -762,10 +762,10 @@ constexpr const char* kButtonQml =
 std::vector<PropDef> buttonProps()
 {
     return {
-        {VLQT_PROP_TEXT, VLQT_VT_STRING, setQmlString, "text"},
-        {VLQT_PROP_ENABLED, VLQT_VT_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROP_AUTO_REPEAT, VLQT_VT_BOOL, setQmlBool, "autoRepeat"},
-        {VLQT_PROP_AUTO_SIZE, VLQT_VT_BOOL, setAutoSize, nullptr},
+        {VLQT_PROPERTY_TEXT, VLQT_VALUE_TYPE_STRING, setQmlString, "text"},
+        {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
+        {VLQT_PROPERTY_AUTO_REPEAT, VLQT_VALUE_TYPE_BOOL, setQmlBool, "autoRepeat"},
+        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -773,11 +773,11 @@ std::vector<PropDef> buttonProps()
 // Value inputs (SpinBox; CheckBox, Switch, Slider, TextField). Generic user-value channel: the QML
 // snippet declares
 //   property int vlqtUserCount   user changes since the last poll (reset to 0 by Elements::takeUserValue)
-//   property <T> vlqtUserValue   value of the last user change, T = int | real | bool | string (= EV_VALUE value type)
+//   property <T> vlqtUserValue   value of the last user change, T = int | real | bool | string (= EVENT_VALUE value type)
 // and sets both in the handler of the control's user-only signal (SpinBox valueModified, CheckBox/Switch toggled,
 // Slider moved, TextField editingFinished with changed text). SET VALUE from C# never fires these signals (no echo), and the value is
 // captured when the signal fires: a later SET VALUE with a stale value cannot hide it from the poll. The poll sends
-// EV_VALUE for every bound item of such a type (events.cpp collectMeasurements), independent of input handlers.
+// EVENT_VALUE for every bound item of such a type (events.cpp collectMeasurements), independent of input handlers.
 //
 // SpinBox: full int range instead of Qt's 0..99, editable and wheel on; text <-> value locale-free (plain digits,
 // optional '-', no group separators, like vvvv's IOBoxes), the validator too (locale C). Qt commits a typed value on
@@ -803,13 +803,13 @@ constexpr const char* kSpinBoxQml =
 std::vector<PropDef> spinBoxProps()
 {
     return {
-        {VLQT_PROP_VALUE, VLQT_VT_I32, setQmlInt, "value"},
-        {VLQT_PROP_MINIMUM, VLQT_VT_I32, setQmlInt, "from"},
-        {VLQT_PROP_MAXIMUM, VLQT_VT_I32, setQmlInt, "to"},
-        {VLQT_PROP_STEP, VLQT_VT_I32, setQmlInt, "stepSize"},
-        {VLQT_PROP_EDITABLE, VLQT_VT_BOOL, setQmlBool, "editable"},
-        {VLQT_PROP_ENABLED, VLQT_VT_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROP_AUTO_SIZE, VLQT_VT_BOOL, setAutoSize, nullptr},
+        {VLQT_PROPERTY_VALUE, VLQT_VALUE_TYPE_I32, setQmlInt, "value"},
+        {VLQT_PROPERTY_MINIMUM, VLQT_VALUE_TYPE_I32, setQmlInt, "from"},
+        {VLQT_PROPERTY_MAXIMUM, VLQT_VALUE_TYPE_I32, setQmlInt, "to"},
+        {VLQT_PROPERTY_STEP, VLQT_VALUE_TYPE_I32, setQmlInt, "stepSize"},
+        {VLQT_PROPERTY_EDITABLE, VLQT_VALUE_TYPE_BOOL, setQmlBool, "editable"},
+        {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
+        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -841,15 +841,15 @@ constexpr const char* kSwitchQml =
 std::vector<PropDef> toggleProps()
 {
     return {
-        {VLQT_PROP_VALUE, VLQT_VT_BOOL, setQmlBool, "checked"},
-        {VLQT_PROP_ENABLED, VLQT_VT_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROP_AUTO_SIZE, VLQT_VT_BOOL, setAutoSize, nullptr},
+        {VLQT_PROPERTY_VALUE, VLQT_VALUE_TYPE_BOOL, setQmlBool, "checked"},
+        {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
+        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
 // Slider: f32 value, Qt defaults 0..1, step 0 (continuous). moved = user only (press/drag, arrow keys, wheel;
 // live, so every drag step), SET VALUE/MINIMUM/MAXIMUM never fire it (also not Qt's clamp). Several moves between two
-// polls give one EV_VALUE with the last value. snapMode SnapAlways: with STEP > 0 a drag lands on from + k * step like
+// polls give one EVENT_VALUE with the last value. snapMode SnapAlways: with STEP > 0 a drag lands on from + k * step like
 // keys and wheel; STEP 0 stays continuous. Wheel on (like SpinBox). ORIENTATION Qt::Horizontal 1 | Qt::Vertical 2.
 
 constexpr const char* kSliderQml =
@@ -866,13 +866,13 @@ constexpr const char* kSliderQml =
 std::vector<PropDef> sliderProps()
 {
     return {
-        {VLQT_PROP_VALUE, VLQT_VT_F32, setQmlReal, "value"},
-        {VLQT_PROP_MINIMUM, VLQT_VT_F32, setQmlReal, "from"},
-        {VLQT_PROP_MAXIMUM, VLQT_VT_F32, setQmlReal, "to"},
-        {VLQT_PROP_STEP, VLQT_VT_F32, setQmlReal, "stepSize"},
-        {VLQT_PROP_ORIENTATION, VLQT_VT_I32, setQmlEnum<Qt::Horizontal, Qt::Vertical>, "orientation"},
-        {VLQT_PROP_ENABLED, VLQT_VT_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROP_AUTO_SIZE, VLQT_VT_BOOL, setAutoSize, nullptr},
+        {VLQT_PROPERTY_VALUE, VLQT_VALUE_TYPE_F32, setQmlReal, "value"},
+        {VLQT_PROPERTY_MINIMUM, VLQT_VALUE_TYPE_F32, setQmlReal, "from"},
+        {VLQT_PROPERTY_MAXIMUM, VLQT_VALUE_TYPE_F32, setQmlReal, "to"},
+        {VLQT_PROPERTY_STEP, VLQT_VALUE_TYPE_F32, setQmlReal, "stepSize"},
+        {VLQT_PROPERTY_ORIENTATION, VLQT_VALUE_TYPE_I32, setQmlEnum<Qt::Horizontal, Qt::Vertical>, "orientation"},
+        {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
+        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -909,24 +909,24 @@ bool setQmlBoolNot(Elements&, Node& n, const ResolvedProp& rp, const Value& v, s
 std::vector<PropDef> textFieldProps()
 {
     return {
-        {VLQT_PROP_VALUE, VLQT_VT_STRING, setTextFieldValue, "text"},
-        {VLQT_PROP_PLACEHOLDER, VLQT_VT_STRING, setQmlString, "placeholderText"},
-        {VLQT_PROP_EDITABLE, VLQT_VT_BOOL, setQmlBoolNot, "readOnly"},
-        {VLQT_PROP_ENABLED, VLQT_VT_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROP_AUTO_SIZE, VLQT_VT_BOOL, setAutoSize, nullptr},
+        {VLQT_PROPERTY_VALUE, VLQT_VALUE_TYPE_STRING, setTextFieldValue, "text"},
+        {VLQT_PROPERTY_PLACEHOLDER, VLQT_VALUE_TYPE_STRING, setQmlString, "placeholderText"},
+        {VLQT_PROPERTY_EDITABLE, VLQT_VALUE_TYPE_BOOL, setQmlBoolNot, "readOnly"},
+        {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
+        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
 // ---------------------------------------------------------------------------------------------
 // Shape (protocol.h 960..): QQuickShape with the CurveRenderer and one QQuickShapePath whose only path element is
-// a VlPathElement (pathelement.h). Built in C++ (no QML snippet), so the setters reach the ShapePath and the element
+// a ShapePathElement (shape_path_element.h). Built in C++ (no QML snippet), so the setters reach the ShapePath and the element
 // directly (typed, no QVariant writes). Defaults as the C# Shape element: no geometry, not closed, fill
 // transparent, stroke white with width -1 (no stroke), cap Flat, join Miter, miter limit 4, solid, trim 0/1/0, NonZero.
 // The item keeps width/height 0: the shape draws outside its frame, the element size is the extent of the geometry.
 
 struct ShapeItem final : QQuickShape {
     QQuickShapePath* path = nullptr;   // child of the item
-    VlPathElement* element = nullptr;  // child of path
+    ShapePathElement* element = nullptr;  // child of path
 };
 
 QQuickItem* makeShape()
@@ -948,7 +948,7 @@ QQuickItem* makeShape()
     sp->setJoinStyle(QQuickShapePath::MiterJoin);
     sp->setMiterLimit(4);
     sp->setFillRule(QQuickShapePath::WindingFill);
-    auto* element = new VlPathElement(sp);
+    auto* element = new ShapePathElement(sp);
     auto elements = sp->pathElements();
     elements.append(&elements, element);
     pathStatus->componentComplete();
@@ -1106,21 +1106,21 @@ bool setShapeFillRule(Elements&, Node& n, const ResolvedProp&, const Value& v, s
 std::vector<PropDef> shapeProps()
 {
     return {
-        {VLQT_PROP_SHAPE_POINTS, VLQT_VT_F32_ARRAY, setShapePoints, nullptr},
-        {VLQT_PROP_SHAPE_CLOSED, VLQT_VT_BOOL, setShapeClosed, nullptr},
-        {VLQT_PROP_SHAPE_PATH, VLQT_VT_PATH, setShapePath, nullptr},
-        {VLQT_PROP_SHAPE_FILL, VLQT_VT_COLOR, setShapeFill, nullptr},
-        {VLQT_PROP_SHAPE_STROKE_COLOR, VLQT_VT_COLOR, setShapeStrokeColor, nullptr},
-        {VLQT_PROP_SHAPE_STROKE_WIDTH, VLQT_VT_F32, setShapeStrokeWidth, nullptr},
-        {VLQT_PROP_SHAPE_CAP, VLQT_VT_I32, setShapeCap, nullptr},
-        {VLQT_PROP_SHAPE_JOIN, VLQT_VT_I32, setShapeJoin, nullptr},
-        {VLQT_PROP_SHAPE_MITER_LIMIT, VLQT_VT_F32, setShapeMiterLimit, nullptr},
-        {VLQT_PROP_SHAPE_DASH, VLQT_VT_F32_ARRAY, setShapeDash, nullptr},
-        {VLQT_PROP_SHAPE_DASH_OFFSET, VLQT_VT_F32, setShapeDashOffset, nullptr},
-        {VLQT_PROP_SHAPE_TRIM_START, VLQT_VT_F32, setShapeTrim<&QQuickShapeTrim::setStart>, nullptr},
-        {VLQT_PROP_SHAPE_TRIM_END, VLQT_VT_F32, setShapeTrim<&QQuickShapeTrim::setEnd>, nullptr},
-        {VLQT_PROP_SHAPE_TRIM_OFFSET, VLQT_VT_F32, setShapeTrim<&QQuickShapeTrim::setOffset>, nullptr},
-        {VLQT_PROP_SHAPE_FILL_RULE, VLQT_VT_I32, setShapeFillRule, nullptr},
+        {VLQT_PROPERTY_SHAPE_POINTS, VLQT_VALUE_TYPE_F32_ARRAY, setShapePoints, nullptr},
+        {VLQT_PROPERTY_SHAPE_CLOSED, VLQT_VALUE_TYPE_BOOL, setShapeClosed, nullptr},
+        {VLQT_PROPERTY_SHAPE_PATH, VLQT_VALUE_TYPE_PATH, setShapePath, nullptr},
+        {VLQT_PROPERTY_SHAPE_FILL, VLQT_VALUE_TYPE_COLOR, setShapeFill, nullptr},
+        {VLQT_PROPERTY_SHAPE_STROKE_COLOR, VLQT_VALUE_TYPE_COLOR, setShapeStrokeColor, nullptr},
+        {VLQT_PROPERTY_SHAPE_STROKE_WIDTH, VLQT_VALUE_TYPE_F32, setShapeStrokeWidth, nullptr},
+        {VLQT_PROPERTY_SHAPE_CAP, VLQT_VALUE_TYPE_I32, setShapeCap, nullptr},
+        {VLQT_PROPERTY_SHAPE_JOIN, VLQT_VALUE_TYPE_I32, setShapeJoin, nullptr},
+        {VLQT_PROPERTY_SHAPE_MITER_LIMIT, VLQT_VALUE_TYPE_F32, setShapeMiterLimit, nullptr},
+        {VLQT_PROPERTY_SHAPE_DASH, VLQT_VALUE_TYPE_F32_ARRAY, setShapeDash, nullptr},
+        {VLQT_PROPERTY_SHAPE_DASH_OFFSET, VLQT_VALUE_TYPE_F32, setShapeDashOffset, nullptr},
+        {VLQT_PROPERTY_SHAPE_TRIM_START, VLQT_VALUE_TYPE_F32, setShapeTrim<&QQuickShapeTrim::setStart>, nullptr},
+        {VLQT_PROPERTY_SHAPE_TRIM_END, VLQT_VALUE_TYPE_F32, setShapeTrim<&QQuickShapeTrim::setEnd>, nullptr},
+        {VLQT_PROPERTY_SHAPE_TRIM_OFFSET, VLQT_VALUE_TYPE_F32, setShapeTrim<&QQuickShapeTrim::setOffset>, nullptr},
+        {VLQT_PROPERTY_SHAPE_FILL_RULE, VLQT_VALUE_TYPE_I32, setShapeFillRule, nullptr},
     };
 }
 
@@ -1131,22 +1131,22 @@ const std::unordered_map<quint16, TypeDef>& typeTable()
 {
     static const std::unordered_map<quint16, TypeDef> t = {
         // Group (C#) = GroupItem: implicit size/frame from the children incl. their transform.
-        {VLQT_TYPE_ITEM, {VLQT_TYPE_ITEM, "ITEM", nullptr, {{VLQT_PROP_AUTO_SIZE, VLQT_VT_BOOL, setAutoSize, nullptr}}, makeGroup}},
-        {VLQT_TYPE_RECTANGLE, {VLQT_TYPE_RECTANGLE, "RECTANGLE", kRectangleQml, rectangleProps()}},
-        {VLQT_TYPE_TEXT, {VLQT_TYPE_TEXT, "TEXT", kTextQml, textProps()}},
-        {VLQT_TYPE_IMAGE, {VLQT_TYPE_IMAGE, "IMAGE", nullptr, imageProps(), makeImage}},
-        {VLQT_TYPE_ROW, {VLQT_TYPE_ROW, "ROW", kRowQml, rowProps()}},
-        {VLQT_TYPE_COLUMN, {VLQT_TYPE_COLUMN, "COLUMN", kColumnQml, columnProps()}},
-        {VLQT_TYPE_VIDEO, {VLQT_TYPE_VIDEO, "VIDEO", kVideoQml, videoProps()}},
-        {VLQT_TYPE_BUTTON, {VLQT_TYPE_BUTTON, "BUTTON", kButtonQml, buttonProps()}},
-        {VLQT_TYPE_SPIN_BOX, {VLQT_TYPE_SPIN_BOX, "SPIN_BOX", kSpinBoxQml, spinBoxProps()}},
-        {VLQT_TYPE_CHECK_BOX, {VLQT_TYPE_CHECK_BOX, "CHECK_BOX", kCheckBoxQml, toggleProps()}},
-        {VLQT_TYPE_SWITCH, {VLQT_TYPE_SWITCH, "SWITCH", kSwitchQml, toggleProps()}},
-        {VLQT_TYPE_SLIDER, {VLQT_TYPE_SLIDER, "SLIDER", kSliderQml, sliderProps()}},
-        {VLQT_TYPE_TEXT_FIELD, {VLQT_TYPE_TEXT_FIELD, "TEXT_FIELD", kTextFieldQml, textFieldProps()}},
-        {VLQT_TYPE_SHADER_EFFECT, {VLQT_TYPE_SHADER_EFFECT, "SHADER_EFFECT", nullptr, shaderEffectProps(), makeShaderEffect}},
-        {VLQT_TYPE_QML, {VLQT_TYPE_QML, "QML", nullptr, qmlProps(), makeQml}},
-        {VLQT_TYPE_SHAPE, {VLQT_TYPE_SHAPE, "SHAPE", nullptr, shapeProps(), makeShape}},
+        {VLQT_ELEMENT_TYPE_GROUP, {VLQT_ELEMENT_TYPE_GROUP, "GROUP", nullptr, {{VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr}}, makeGroup}},
+        {VLQT_ELEMENT_TYPE_RECTANGLE, {VLQT_ELEMENT_TYPE_RECTANGLE, "RECTANGLE", kRectangleQml, rectangleProps()}},
+        {VLQT_ELEMENT_TYPE_TEXT, {VLQT_ELEMENT_TYPE_TEXT, "TEXT", kTextQml, textProps()}},
+        {VLQT_ELEMENT_TYPE_IMAGE, {VLQT_ELEMENT_TYPE_IMAGE, "IMAGE", nullptr, imageProps(), makeImage}},
+        {VLQT_ELEMENT_TYPE_ROW, {VLQT_ELEMENT_TYPE_ROW, "ROW", kRowQml, rowProps()}},
+        {VLQT_ELEMENT_TYPE_COLUMN, {VLQT_ELEMENT_TYPE_COLUMN, "COLUMN", kColumnQml, columnProps()}},
+        {VLQT_ELEMENT_TYPE_VIDEO, {VLQT_ELEMENT_TYPE_VIDEO, "VIDEO", kVideoQml, videoProps()}},
+        {VLQT_ELEMENT_TYPE_BUTTON, {VLQT_ELEMENT_TYPE_BUTTON, "BUTTON", kButtonQml, buttonProps()}},
+        {VLQT_ELEMENT_TYPE_SPIN_BOX, {VLQT_ELEMENT_TYPE_SPIN_BOX, "SPIN_BOX", kSpinBoxQml, spinBoxProps()}},
+        {VLQT_ELEMENT_TYPE_CHECK_BOX, {VLQT_ELEMENT_TYPE_CHECK_BOX, "CHECK_BOX", kCheckBoxQml, toggleProps()}},
+        {VLQT_ELEMENT_TYPE_SWITCH, {VLQT_ELEMENT_TYPE_SWITCH, "SWITCH", kSwitchQml, toggleProps()}},
+        {VLQT_ELEMENT_TYPE_SLIDER, {VLQT_ELEMENT_TYPE_SLIDER, "SLIDER", kSliderQml, sliderProps()}},
+        {VLQT_ELEMENT_TYPE_TEXT_FIELD, {VLQT_ELEMENT_TYPE_TEXT_FIELD, "TEXT_FIELD", kTextFieldQml, textFieldProps()}},
+        {VLQT_ELEMENT_TYPE_SHADER, {VLQT_ELEMENT_TYPE_SHADER, "SHADER", nullptr, shaderEffectProps(), makeShaderEffect}},
+        {VLQT_ELEMENT_TYPE_QML, {VLQT_ELEMENT_TYPE_QML, "QML", nullptr, qmlProps(), makeQml}},
+        {VLQT_ELEMENT_TYPE_SHAPE, {VLQT_ELEMENT_TYPE_SHAPE, "SHAPE", nullptr, shapeProps(), makeShape}},
     };
     return t;
 }
@@ -1233,7 +1233,7 @@ QQuickItem* Elements::create(const TypeDef& type, std::string& err)
     }
     if (!cache.resolved)
         resolve(type, cache, item);
-    if (type.id == VLQT_TYPE_VIDEO && !mediaPosition.isValid()) {
+    if (type.id == VLQT_ELEMENT_TYPE_VIDEO && !mediaPosition.isValid()) {
         const QMetaObject* mo = item->metaObject();
         const int ip = mo->indexOfProperty("vlqtPosition"), idur = mo->indexOfProperty("vlqtDuration");
         if (ip >= 0 && idur >= 0) {
@@ -1246,7 +1246,7 @@ QQuickItem* Elements::create(const TypeDef& type, std::string& err)
 
 bool Elements::readMedia(const Node& node, float out[2]) const
 {
-    if (node.type != VLQT_TYPE_VIDEO || !mediaPosition.isValid())
+    if (node.type != VLQT_ELEMENT_TYPE_VIDEO || !mediaPosition.isValid())
         return false;
     // MediaPlayer reports milliseconds (qint64); 0 until the media is loaded.
     out[0] = float(mediaPosition.read(node.item).toLongLong() / 1000.0);
@@ -1279,7 +1279,7 @@ quint32 Elements::takeClicks(const Node& node)
 
 bool Elements::pollsState(quint16 type) const
 {
-    if (type == VLQT_TYPE_VIDEO)
+    if (type == VLQT_ELEMENT_TYPE_VIDEO)
         return true;
     const auto it = types.find(type);
     if (it == types.end())
@@ -1470,11 +1470,11 @@ void writeMatrix(const TransformState& s, QQuickItem* item)
 
 bool takesAutoSize(const Node& n)
 {
-    return n.type == VLQT_TYPE_ITEM || n.type == VLQT_TYPE_ROW || n.type == VLQT_TYPE_COLUMN
-        || n.type == VLQT_TYPE_BUTTON || n.type == VLQT_TYPE_SPIN_BOX
-        || n.type == VLQT_TYPE_CHECK_BOX || n.type == VLQT_TYPE_SWITCH || n.type == VLQT_TYPE_SLIDER
-        || n.type == VLQT_TYPE_TEXT_FIELD || n.type == VLQT_TYPE_QML
-        || (n.type == VLQT_TYPE_SHADER_EFFECT && n.effectSource); // implicit size = Input; without Input the SIZE
+    return n.type == VLQT_ELEMENT_TYPE_GROUP || n.type == VLQT_ELEMENT_TYPE_ROW || n.type == VLQT_ELEMENT_TYPE_COLUMN
+        || n.type == VLQT_ELEMENT_TYPE_BUTTON || n.type == VLQT_ELEMENT_TYPE_SPIN_BOX
+        || n.type == VLQT_ELEMENT_TYPE_CHECK_BOX || n.type == VLQT_ELEMENT_TYPE_SWITCH || n.type == VLQT_ELEMENT_TYPE_SLIDER
+        || n.type == VLQT_ELEMENT_TYPE_TEXT_FIELD || n.type == VLQT_ELEMENT_TYPE_QML
+        || (n.type == VLQT_ELEMENT_TYPE_SHADER && n.effectSource); // implicit size = Input; without Input the SIZE
 }
 
 QRectF itemFrame(const TransformState& s, const QQuickItem* item)
@@ -1691,7 +1691,7 @@ void Elements::releaseEffectLayer(Node& node)
     for (QQuickItem* mask : effectMasks(node))
         detachEffectMask(node, mask);
     effectLayers.erase(node.item);
-    // A SHADER_EFFECT source or an attached mask keeps its layer (an effect samples it), only the layer effect goes;
+    // A SHADER source or an attached mask keeps its layer (an effect samples it), only the layer effect goes;
     // a Group source is sampled through its frame proxy, not its layer. The root and its stages go with it.
     if ((!isEffectSource(node.item) || isGroup(node.item)) && !isMaskLayer(node.item))
         setLayerEnabled(node.item, false);
@@ -1827,7 +1827,7 @@ QQuickItem* Elements::acquireGroupProxy(QQuickItem* item)
         return group->proxy;
     // A ShaderEffectSource renders its source item (also a hidden one: it refs it, refFromEffectItem) into its own
     // texture with sourceRect = the frame (like the snapshot's frameTarget). Hidden itself, so it never draws on
-    // screen; it still gets updatePaintNode and its texture is rendered by the consuming ShaderEffectItem's preprocess
+    // screen; it still gets updatePaintNode and its texture is rendered by the consuming ShaderItem's preprocess
     // without an extra refFromEffectItem on the proxy (checked by grab in the smoke test group-shader-source, also
     // live changes). Under the root, never under the Group (it would be part of its own texture) or an element (layout,
     // REPARENT indices count tracked items only). hideSource off: the host hides the Group already (REPARENT under the
@@ -1864,7 +1864,7 @@ void Elements::releaseGroupProxy(QQuickItem* item)
 
 void Elements::syncTextureGroups(Node& effect)
 {
-    auto* fx = static_cast<ShaderEffectItem*>(effect.item);
+    auto* fx = static_cast<ShaderItem*>(effect.item);
     if (!fx->takeRefsChanged())
         return;
     std::vector<QPointer<QQuickItem>> now;
@@ -1902,7 +1902,7 @@ void Elements::clearEffectSource(Node& effect)
 {
     if (!effect.effectSource)
         return;
-    auto it = types[effect.type].props.find(VLQT_PROP_SOURCE);
+    auto it = types[effect.type].props.find(VLQT_PROPERTY_SOURCE);
     std::string err;
     if (it == types[effect.type].props.end() || !setEffectSource(effect, it->second, nullptr, err)) {
         // Should not happen (the source was set through the same property); never keep a dangling pointer.

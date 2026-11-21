@@ -7,11 +7,11 @@
  * Ids: u64 = index (low 32 bits) | generation (high 32 bits), assigned by vlqt_res_create. After Released the index is
  * reused with a higher generation, so an old id never reaches a new resource. Unknown or stale ids: warning + -9.
  *
- * States (protocol.h vlqt_res_state): Pending -> Decoding -> Uploading -> Ready | Failed -> Released. Every change goes
+ * States (protocol.h vlqt_resource_state): Pending -> Decoding -> Uploading -> Ready | Failed -> Released. Every change goes
  * through one function (transition) that rejects and logs invalid ones and logs valid ones on debug level.
  *
  * Threads:
- *   - Every entry point runs on the vvvv main thread (the thread of vlqt_app_process_events); one mutex still guards
+ *   - Every entry point runs on the vvvv main thread (the thread of vlqt_app_process_events_for); one mutex still guards
  *     the table, so a stray call from another thread cannot corrupt it.
  *   - A fixed worker pool (default min(4, cores - 1), env VLQT_RES_WORKERS, started at the first job) runs only
  *     Kind::decode on pure data (bytes, QImage); workers never touch Qt Quick, the RHI or the table and never log.
@@ -81,7 +81,7 @@ struct Info
     uint32_t width = 0, height = 0, format = 0;
 };
 
-// One resource kind (VLQT_RES_KIND_*). Stateless, registered once; the per resource data lives in its Work.
+// One resource kind (VLQT_RESOURCE_KIND_*). Stateless, registered once; the per resource data lives in its Work.
 class Kind
 {
 public:
@@ -136,7 +136,7 @@ int start(uint64_t id, std::shared_ptr<Work> work, int kind = 0);
 // Current Work of a Ready resource of kind, else nullptr (main thread).
 std::shared_ptr<Work> readyWork(uint64_t id, int kind);
 
-// Kind (VLQT_RES_KIND_*) of a live, not host released id, else -9 (warning with what, nullptr = silent).
+// Kind (VLQT_RESOURCE_KIND_*) of a live, not host released id, else -9 (warning with what, nullptr = silent).
 int kindOfId(uint64_t id, const char* what);
 
 // The id is live and Failed (silent for unknown ids). Main thread.
@@ -148,7 +148,7 @@ bool isFailed(uint64_t id);
 int beginExternal(uint64_t id, int kind);
 // finishExternal: result of beginExternal. work != nullptr: new content with bytes (CPU bytes, INFO u64), Decoding ->
 // Ready or swap on a Ready resource, INFO before STATE Ready / after the swap. work == nullptr: Failed with error
-// (RES_EV_ERROR). Returns 0, -9 if the id is gone or released by the host (result dropped, work destroyed).
+// (RESOURCE_EVENT_ERROR). Returns 0, -9 if the id is gone or released by the host (result dropped, work destroyed).
 int finishExternal(uint64_t id, std::shared_ptr<Work> work, int64_t bytes, const std::string& error);
 
 // Changes whenever a resource gets new Ready content (first Ready or a replacement swap). Elements compare it once
@@ -185,9 +185,9 @@ struct Overview
 void snapshot(std::vector<Row>& rows, Overview& out);
 
 // --- Test hooks (test/test_resource_kind.cpp) ---
-// The kind VLQT_RES_KIND_TEST (vlqt_test.h), defined in test/test_resource_kind.cpp.
+// The kind VLQT_RESOURCE_KIND_TEST (vlqt_test.h), defined in test/test_resource_kind.cpp.
 Kind* testKind();
-// vlqt_test_res_transition: the state machine's transition (VLQT_RES_STATE_*). 0 / -7 (rejected, logged) / -9.
+// vlqt_test_res_transition: the state machine's transition (VLQT_RESOURCE_STATE_*). 0 / -7 (rejected, logged) / -9.
 int testTransition(uint64_t id, int from, int to);
 
 } // namespace vlqt::res

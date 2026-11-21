@@ -236,9 +236,9 @@ namespace VL.Qt
             }
         }
 
-        IntPtr IQtFrameParticipant.Window => _disposed ? IntPtr.Zero : _view?.Window ?? IntPtr.Zero;
+        SceneHandle IQtFrameParticipant.Window => _disposed ? SceneHandle.Null : _view?.Window ?? SceneHandle.Null;
 
-        void IQtFrameParticipant.ReportHostFrame(Native.vlqt_host_frame frame)
+        void IQtFrameParticipant.ReportHostFrame(Native.vlqt_host_pump frame)
         {
             if (_disposed)
                 return;

@@ -29,12 +29,12 @@ public static class ImageTest
     /// <summary>Image resource from a file, loaded synchronously (vlqt_res_wait); 0 if create failed.</summary>
     internal static ulong Load(string path, Action<bool, string> check, string what, uint flags = 0)
     {
-        if (Native.vlqt_res_create(Protocol.ResKind.Image, out var id) != 0)
+        if (Native.vlqt_res_create(Protocol.ResourceKind.Image, out var id) != 0)
         {
             check(false, $"res_create for {what} ({Native.LastError()})");
             return 0;
         }
-        Native.vlqt_res_load_image(id, path, flags);
+        Native.vlqt_image_load(id, path, flags);
         Native.vlqt_res_wait(id, 10000);
         return id;
     }
@@ -65,11 +65,11 @@ public static class ImageTest
         var stripes = Load(asset, s.Check, "stripes");
         var unicode = Load(unicodePath, s.Check, "unicode path");
         var missing = Load(missingPath, s.Check, "missing file");
-        s.Check(Native.vlqt_res_wait(stripes, 0) == Protocol.ResState.Ready && Native.vlqt_res_wait(unicode, 0) == Protocol.ResState.Ready
-            && Native.vlqt_res_wait(missing, 0) == Protocol.ResState.Failed, "resources Ready (2) / Failed (missing file)");
+        s.Check(Native.vlqt_res_wait(stripes, 0) == Protocol.ResourceState.Ready && Native.vlqt_res_wait(unicode, 0) == Protocol.ResourceState.Ready
+            && Native.vlqt_res_wait(missing, 0) == Protocol.ResourceState.Failed, "resources Ready (2) / Failed (missing file)");
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt image test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt image test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
@@ -80,13 +80,13 @@ public static class ImageTest
         }
         void Image(uint id, ulong image, float x, float y, float width, float height, int fillMode, bool smooth)
         {
-            cmd.Create(id, Protocol.Type.Image);
+            cmd.Create(id, Protocol.ElementType.Image);
             cmd.SetPlace(id, x, y, width, height);
-            cmd.SetU64(id, Protocol.Prop.Image, image);
+            cmd.SetU64(id, Protocol.PropertyId.Image, image);
             if (fillMode != 0)
-                cmd.SetI32(id, Protocol.Prop.FillMode, fillMode);
+                cmd.SetI32(id, Protocol.PropertyId.FillMode, fillMode);
             if (!smooth)
-                cmd.SetBool(id, Protocol.Prop.Smooth, false);
+                cmd.SetBool(id, Protocol.PropertyId.Smooth, false);
             cmd.Reparent(id, 0, 1000);
         }
 
@@ -130,9 +130,9 @@ public static class ImageTest
 
         // Updates: image 0, fillMode change, failed -> Ready resource.
         cmd.Reset();
-        cmd.SetU64(Smooth, Protocol.Prop.Image, 0);
-        cmd.SetI32(Crop, Protocol.Prop.FillMode, 0);
-        cmd.SetU64(Missing, Protocol.Prop.Image, stripes);
+        cmd.SetU64(Smooth, Protocol.PropertyId.Image, 0);
+        cmd.SetI32(Crop, Protocol.PropertyId.FillMode, 0);
+        cmd.SetU64(Missing, Protocol.PropertyId.Image, stripes);
         CheckApply("image updates");
         s.Pump(2);
         using (var a = s.Grab(w, "05_image_update.png"))
@@ -150,25 +150,25 @@ public static class ImageTest
             s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
         }
         cmd.Reset();
-        cmd.SetI32(Fit, Protocol.Prop.FillMode, 4);
+        cmd.SetI32(Fit, Protocol.PropertyId.FillMode, 4);
         Expect(Native.Result.BadArgument, "fillMode 4");
         cmd.Reset();
-        cmd.SetI32(Fit, Protocol.Prop.Smooth, 1);
+        cmd.SetI32(Fit, Protocol.PropertyId.Smooth, 1);
         Expect(Native.Result.BadArgument, "smooth as i32");
         cmd.Reset();
-        cmd.SetF32(Fit, Protocol.Prop.Radius, 1);
+        cmd.SetF32(Fit, Protocol.PropertyId.Radius, 1);
         Expect(Native.Result.UnknownProperty, "radius on image");
         cmd.Reset();
-        cmd.SetString(Fit, Protocol.Prop.Source, asset);
+        cmd.SetString(Fit, Protocol.PropertyId.Source, asset);
         Expect(Native.Result.UnknownProperty, "source on image");
         cmd.Reset();
-        cmd.SetU64(Fit, Protocol.Prop.Image, 0xDEAD_0000_BEEFUL);
+        cmd.SetU64(Fit, Protocol.PropertyId.Image, 0xDEAD_0000_BEEFUL);
         Expect(Native.Result.BadArgument, "unknown resource id");
         cmd.Reset();
-        cmd.SetI32(Fit, Protocol.Prop.Image, 1);
+        cmd.SetI32(Fit, Protocol.PropertyId.Image, 1);
         Expect(Native.Result.BadArgument, "image as i32");
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         Native.vlqt_res_release(stripes);
         Native.vlqt_res_release(unicode);
         Native.vlqt_res_release(missing);

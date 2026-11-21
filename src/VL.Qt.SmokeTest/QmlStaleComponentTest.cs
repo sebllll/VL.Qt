@@ -31,8 +31,8 @@ public static class QmlStaleComponentTest
         var file = Path.Combine(dir, "A.qml");
         File.WriteAllText(file, "import QtQuick\n\nRectangle {\n    implicitWidth: 100\n    implicitHeight: 100\n    color: \"#ff0000\"\n}\n");
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt QML stale component test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt QML stale component test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
@@ -48,7 +48,7 @@ public static class QmlStaleComponentTest
                 int len = BinaryPrimitives.ReadUInt16LittleEndian(b[(off + 2)..]);
                 if (len < 8 || off + 4 + len > b.Length)
                     break;
-                if (ev == Protocol.Ev.Error)
+                if (ev == Protocol.EventId.Error)
                     errors[BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..])] = System.Text.Encoding.UTF8.GetString(b.Slice(off + 12, len - 8));
                 off += (4 + len + 3) & ~3;
             }
@@ -62,10 +62,10 @@ public static class QmlStaleComponentTest
         }
         void Qml(uint id, uint handle, float x)
         {
-            cmd.Create(id, Protocol.Type.Qml);
-            cmd.SetString(id, Protocol.Prop.QmlSource, file);
-            cmd.SetI32(id, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
-            cmd.SetMat4(id, Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation(x, 100, 0));
+            cmd.Create(id, Protocol.ElementType.Qml);
+            cmd.SetString(id, Protocol.PropertyId.QmlSource, file);
+            cmd.SetI32(id, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
+            cmd.SetMat4(id, Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation(x, 100, 0));
             cmd.Reparent(id, 0, 1000);
             cmd.Bind(id, handle, 0);
         }
@@ -100,6 +100,6 @@ public static class QmlStaleComponentTest
         cmd.Destroy(Q2);
         Apply("destroy");
         s.Pump(2);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 }

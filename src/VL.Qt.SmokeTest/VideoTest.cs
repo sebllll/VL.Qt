@@ -16,7 +16,7 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 using VPath = VL.Lib.IO.Path;
 using static Pixels;
 
-// Video element: QtMultimedia MediaPlayer + VideoOutput (FFmpeg backend) in QtNative, EV_MEDIA back channel,
+// Video element: QtMultimedia MediaPlayer + VideoOutput (FFmpeg backend) in QtNative, EVENT_MEDIA back channel,
 // Video node through the reconciler. The player runs on its own (wall) clock, so this test pumps frames in real time.
 // Assets (self-made with ffmpeg testsrc/testsrc2, H.264 baseline, no audio): assets/testsrc_160x90_2s.mp4,
 // assets/testsrc_96x96_1s.mp4. Grabs go to <OutDir>/115_video*.png. Values are DIP.
@@ -64,15 +64,15 @@ public static class VideoTest
         if (a == null || b == null)
             return;
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt video test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt video test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
         float pos = 0, dur = 0, mw = 0, mh = 0;
         int mediaRecords = 0;
-        float firstPos = -1, firstDur = -1; // first EV_MEDIA record of Handle
-        var error = ""; // last EV_ERROR text of Handle
+        float firstPos = -1, firstDur = -1; // first EVENT_MEDIA record of Handle
+        var error = ""; // last EVENT_ERROR text of Handle
 
         Native.Result Apply()
         {
@@ -85,7 +85,7 @@ public static class VideoTest
             var rc = Apply();
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
-        // One real-time frame: pump + poll (EV_MEDIA / EV_MEASURED of Handle).
+        // One real-time frame: pump + poll (EVENT_MEDIA / EVENT_MEASURED of Handle).
         void Frame()
         {
             s.Pump(1);
@@ -94,13 +94,13 @@ public static class VideoTest
             foreach (var r in MeasureTest.Parse(buf.AsSpan(0, Math.Max(n, 0)), s.Check))
             {
                 if (r.Handle != Handle) continue;
-                if (r.Event == Protocol.Ev.Media)
+                if (r.Event == Protocol.EventId.Media)
                 {
                     pos = r.V[0];
                     dur = r.V[1];
                     if (mediaRecords++ == 0) { firstPos = pos; firstDur = dur; }
                 }
-                if (r.Event == Protocol.Ev.Measured) { mw = r.V[0]; mh = r.V[1]; }
+                if (r.Event == Protocol.EventId.Measured) { mw = r.V[0]; mh = r.V[1]; }
             }
             Thread.Sleep(15);
         }
@@ -119,12 +119,12 @@ public static class VideoTest
         // --- 1) Load + play: duration after the asynchronous load, natural size, pixels change, position rises.
         cmd.Reset();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        cmd.Create(VideoId, Protocol.Type.Video);
+        cmd.Create(VideoId, Protocol.ElementType.Video);
         cmd.SetPlace(VideoId, 20, 20, 320, 180);
-        cmd.SetI32(VideoId, Protocol.Prop.FillMode, 0);
-        cmd.SetString(VideoId, Protocol.Prop.Source, a);
-        cmd.SetBool(VideoId, Protocol.Prop.Loop, true);
-        cmd.SetBool(VideoId, Protocol.Prop.Playing, true);
+        cmd.SetI32(VideoId, Protocol.PropertyId.FillMode, 0);
+        cmd.SetString(VideoId, Protocol.PropertyId.Source, a);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Loop, true);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Playing, true);
         cmd.Reparent(VideoId, 0, 0);
         cmd.Bind(VideoId, Handle, 0);
         var loadWatch = Stopwatch.StartNew();
@@ -168,17 +168,17 @@ public static class VideoTest
             return (float)(sum / sw.Elapsed.TotalSeconds);
         }
         float speed1 = Advance(600);
-        cmd.SetF32(VideoId, Protocol.Prop.PlaybackRate, 2);
+        cmd.SetF32(VideoId, Protocol.PropertyId.PlaybackRate, 2);
         CheckApply("rate 2");
         Run(100);
         float speed2 = Advance(600);
         s.Info($"playback speed: rate 1 {speed1:F2} s/s, rate 2 {speed2:F2} s/s");
         s.Check(speed1 > 0.6f && speed2 > 1.4f * speed1, $"rate 2 plays faster ({speed1:F2} -> {speed2:F2} s/s)");
-        cmd.SetF32(VideoId, Protocol.Prop.PlaybackRate, 1);
+        cmd.SetF32(VideoId, Protocol.PropertyId.PlaybackRate, 1);
         CheckApply("rate 1");
 
         // --- 4) Pause: position and pixels stay; play resumes.
-        cmd.SetBool(VideoId, Protocol.Prop.Playing, false);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Playing, false);
         CheckApply("playing false");
         Run(200);
         var paused = pos;
@@ -189,7 +189,7 @@ public static class VideoTest
             s.Check(pos == paused && Diff(g0, g1, 24, 24, 336, 196) == 0, $"paused: position and pixels stay ({paused:F3} -> {pos:F3})");
             gpu(!IsBg(Px(g1, 180, 110)), "paused video keeps its frame");
         }
-        cmd.SetBool(VideoId, Protocol.Prop.Playing, true);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Playing, true);
         CheckApply("playing true");
         s.Check(WaitFor(() => pos > paused + 0.1f || pos < paused - 0.5f, 1500), $"play resumes ({paused:F3} -> {pos:F3})");
 
@@ -212,17 +212,17 @@ public static class VideoTest
         }
         s.Check(WaitFor(() => pos > 0.8f && pos < 1.2f, 3000), $"mid-pass before loop off ({pos:F3})");
         float remaining = dur - pos;
-        cmd.SetBool(VideoId, Protocol.Prop.Loop, false);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Loop, false);
         CheckApply("loop false");
         long stopMs = StopAfter(2 * 2000 + 2500);
         s.Info($"loop switched off during playback ({remaining:F2} s left): stopped after {stopMs} ms, {wraps} wrap(s)");
         s.Check(stopMs >= 0 && wraps == 0 && stopMs < remaining * 1000 + 700 && Math.Abs(pos - dur) < 0.2f,
             $"loop off during playback: the running pass ends, then stop ({pos:F3}, duration {dur:F3}, {stopMs} ms, {wraps} wraps)");
         // Play again after the end: restarts at 0 and stops after exactly one pass (loop was off from the start).
-        cmd.SetBool(VideoId, Protocol.Prop.Playing, false);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Playing, false);
         CheckApply("playing false at the end");
         Frame();
-        cmd.SetBool(VideoId, Protocol.Prop.Playing, true);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Playing, true);
         CheckApply("playing true at the end");
         s.Check(WaitFor(() => pos < 1f, 1000), $"play after the end restarts at 0 ({pos:F3})");
         stopMs = StopAfter(4500);
@@ -233,11 +233,11 @@ public static class VideoTest
         Frame();
         using (var gc = s.Grab(w, "115_video_end_clear.png"))
             gpu(IsBg(Px(gc, 180, 110)), $"keepLastFrame off (Qt default): output cleared at the end ({Px(gc, 180, 110)})");
-        cmd.SetBool(VideoId, Protocol.Prop.KeepLastFrame, true);
-        cmd.SetBool(VideoId, Protocol.Prop.Playing, false);
+        cmd.SetBool(VideoId, Protocol.PropertyId.KeepLastFrame, true);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Playing, false);
         CheckApply("keepLastFrame true");
         Frame();
-        cmd.SetBool(VideoId, Protocol.Prop.Playing, true);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Playing, true);
         CheckApply("playing true with keepLastFrame");
         s.Check(WaitFor(() => pos < 1f, 1000), $"play after the end restarts at 0 ({pos:F3})");
         stopMs = StopAfter(4500);
@@ -247,7 +247,7 @@ public static class VideoTest
             gpu(!IsBg(Px(gk, 180, 110)), $"keepLastFrame on: last frame stays at the end ({Px(gk, 180, 110)})");
 
         // --- 6) Volume and errors.
-        cmd.SetF32(VideoId, Protocol.Prop.Volume, 0.5f);
+        cmd.SetF32(VideoId, Protocol.PropertyId.Volume, 0.5f);
         CheckApply("volume 0.5");
         void Expect(Native.Result code, string what, Action write)
         {
@@ -255,21 +255,21 @@ public static class VideoTest
             var rc = Apply();
             s.Check(rc == code, $"{what} -> {code} ({rc}: {Native.LastError()})");
         }
-        Expect(Native.Result.BadArgument, "volume 2", () => cmd.SetF32(VideoId, Protocol.Prop.Volume, 2));
-        Expect(Native.Result.BadArgument, "rate 0", () => cmd.SetF32(VideoId, Protocol.Prop.PlaybackRate, 0));
-        Expect(Native.Result.BadArgument, "fillMode 3 (no Tile)", () => cmd.SetI32(VideoId, Protocol.Prop.FillMode, 3));
-        Expect(Native.Result.BadArgument, "playing as i32", () => cmd.SetI32(VideoId, Protocol.Prop.Playing, 1));
-        Expect(Native.Result.UnknownProperty, "radius on video", () => cmd.SetF32(VideoId, Protocol.Prop.Radius, 1));
-        cmd.Create(ImageId, Protocol.Type.Image);
+        Expect(Native.Result.BadArgument, "volume 2", () => cmd.SetF32(VideoId, Protocol.PropertyId.Volume, 2));
+        Expect(Native.Result.BadArgument, "rate 0", () => cmd.SetF32(VideoId, Protocol.PropertyId.PlaybackRate, 0));
+        Expect(Native.Result.BadArgument, "fillMode 3 (no Tile)", () => cmd.SetI32(VideoId, Protocol.PropertyId.FillMode, 3));
+        Expect(Native.Result.BadArgument, "playing as i32", () => cmd.SetI32(VideoId, Protocol.PropertyId.Playing, 1));
+        Expect(Native.Result.UnknownProperty, "radius on video", () => cmd.SetF32(VideoId, Protocol.PropertyId.Radius, 1));
+        cmd.Create(ImageId, Protocol.ElementType.Image);
         cmd.Reparent(ImageId, 0, 1);
         CheckApply("image for -6");
-        Expect(Native.Result.UnknownProperty, "playing on image", () => cmd.SetBool(ImageId, Protocol.Prop.Playing, true));
+        Expect(Native.Result.UnknownProperty, "playing on image", () => cmd.SetBool(ImageId, Protocol.PropertyId.Playing, true));
         cmd.Destroy(ImageId);
         CheckApply("destroy image");
 
         // --- 7) File change: duration and size of the new file, playback continues with Playing.
-        cmd.SetString(VideoId, Protocol.Prop.Source, b);
-        cmd.SetBool(VideoId, Protocol.Prop.Loop, true);
+        cmd.SetString(VideoId, Protocol.PropertyId.Source, b);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Loop, true);
         CheckApply("source B");
         s.Check(WaitFor(() => Math.Abs(dur - 1f) < 0.1f, 5000), $"file change: duration of B ~1 s ({dur})");
         s.Check(WaitFor(() => mw == 96 && mh == 96, 2000), $"file change: measured size 96x96 ({mw}x{mh})");
@@ -277,21 +277,21 @@ public static class VideoTest
         Run(300);
         s.Check(pos != pb, $"file change: new file plays ({pb:F3} -> {pos:F3})");
 
-        // --- 8) Missing file: EV_ERROR with the path (shown at the Video node), duration back to 0, no crash;
+        // --- 8) Missing file: EVENT_ERROR with the path (shown at the Video node), duration back to 0, no crash;
         // a valid file loads again and clears the error.
         s.Check(error == "", $"no error for valid files ({error})");
         var missing = Path.Combine(s.OutDir, "missing_vlqt_115.mp4");
-        cmd.SetString(VideoId, Protocol.Prop.Source, missing);
+        cmd.SetString(VideoId, Protocol.PropertyId.Source, missing);
         CheckApply("missing source");
         WaitFor(() => error.Contains("missing_vlqt_115"), 3000);
-        s.Check(error.Contains("missing_vlqt_115"), $"missing file -> EV_ERROR with the path ({error})");
+        s.Check(error.Contains("missing_vlqt_115"), $"missing file -> EVENT_ERROR with the path ({error})");
         s.Check(!error.Contains("file:"), $"error shows a local path, not a URL ({error})");
         s.Check(dur == 0, $"missing file: duration 0 ({dur})");
-        cmd.SetString(VideoId, Protocol.Prop.Source, a);
+        cmd.SetString(VideoId, Protocol.PropertyId.Source, a);
         CheckApply("source A again");
         s.Check(WaitFor(() => dur > 1.9f, 5000), $"valid file after a missing one loads ({dur})");
         s.Check(error == "", $"source change clears the error ({error})");
-        cmd.SetString(VideoId, Protocol.Prop.Source, "");
+        cmd.SetString(VideoId, Protocol.PropertyId.Source, "");
         CheckApply("empty source");
         s.Check(WaitFor(() => dur == 0, 2000), $"empty source: duration 0 ({dur})");
         Run(200);
@@ -304,16 +304,16 @@ public static class VideoTest
         void Cycle(uint id)
         {
             dur = 0;
-            cmd.Create(id, Protocol.Type.Video);
+            cmd.Create(id, Protocol.ElementType.Video);
             cmd.SetPlace(id, 400, 20, 160, 90);
-            cmd.SetString(id, Protocol.Prop.Source, a);
-            cmd.SetBool(id, Protocol.Prop.Playing, true);
+            cmd.SetString(id, Protocol.PropertyId.Source, a);
+            cmd.SetBool(id, Protocol.PropertyId.Playing, true);
             cmd.Reparent(id, 0, 0);
             cmd.Bind(id, Handle, 0);
             Apply();
             WaitFor(() => dur > 0, 3000);
             Run(100);
-            cmd.SetString(id, Protocol.Prop.Source, b);
+            cmd.SetString(id, Protocol.PropertyId.Source, b);
             Apply();
             WaitFor(() => Math.Abs(dur - 1f) < 0.1f, 3000);
             Run(100);
@@ -341,7 +341,7 @@ public static class VideoTest
         s.Check(u1.threads - u0.threads <= 3, $"no thread leak ({u0.threads} -> {u1.threads})");
         s.Check(u1.priv - u0.priv < 40L << 20, $"no memory leak ({(u1.priv - u0.priv) / 1048576.0:F1} MB)");
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
 
         RunNode(s, a, b);
@@ -352,8 +352,8 @@ public static class VideoTest
     /// <summary>Video node → Reconciler → QtNative → poll → FeedbackRouter → node outputs Position/Duration.</summary>
     private static void RunNode(Scenario s, string a, string b)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt video node test");
-        s.Check(w != IntPtr.Zero, "node: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt video node test");
+        s.Check(w != SceneHandle.Null, "node: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -397,7 +397,7 @@ public static class VideoTest
         cmd.Reset();
         rec.Clear();
         Native.Apply(w, cmd.EndFrame());
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
     }
 }

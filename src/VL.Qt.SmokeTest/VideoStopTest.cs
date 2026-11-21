@@ -53,8 +53,8 @@ public static class VideoStopTest
     private static void Round(Scenario s, string a, int round, bool destroyWindowOnly)
     {
         var tag = $"round {round}{(destroyWindowOnly ? " (window only)" : "")}";
-        var w = Native.vlqt_window_create(400, 300, "VL.Qt video stop test");
-        s.Check(w != IntPtr.Zero, $"{tag}: window_create");
+        var w = NativeCalls.CreateWindow(400, 300, "VL.Qt video stop test");
+        s.Check(w != SceneHandle.Null, $"{tag}: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
@@ -66,16 +66,16 @@ public static class VideoStopTest
             s.Pump(1);
             int n = NativeCalls.Poll(w, buf);
             foreach (var r in MeasureTest.Parse(buf.AsSpan(0, Math.Max(n, 0)), s.Check))
-                if (r.Handle == Handle && r.Event == Protocol.Ev.Media) { pos = r.V[0]; dur = r.V[1]; }
+                if (r.Handle == Handle && r.Event == Protocol.EventId.Media) { pos = r.V[0]; dur = r.V[1]; }
             Thread.Sleep(15);
         }
 
         cmd.Reset();
-        cmd.Create(Id, Protocol.Type.Video);
+        cmd.Create(Id, Protocol.ElementType.Video);
         cmd.SetPlace(Id, 0, 0, 320, 180);
-        cmd.SetString(Id, Protocol.Prop.Source, a);
-        cmd.SetBool(Id, Protocol.Prop.Loop, true);
-        cmd.SetBool(Id, Protocol.Prop.Playing, true);
+        cmd.SetString(Id, Protocol.PropertyId.Source, a);
+        cmd.SetBool(Id, Protocol.PropertyId.Loop, true);
+        cmd.SetBool(Id, Protocol.PropertyId.Playing, true);
         cmd.Reparent(Id, 0, 0);
         cmd.Bind(Id, Handle, 0);
         s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"{tag}: create playing video");
@@ -104,7 +104,7 @@ public static class VideoStopTest
             cmd.Reset();
         }
         step = "window_destroy";
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         done.Set();
         s.Check(t.ElapsedMilliseconds < 2000, $"{tag}: destroy without hang ({t.ElapsedMilliseconds} ms)");
         s.Pump(2);

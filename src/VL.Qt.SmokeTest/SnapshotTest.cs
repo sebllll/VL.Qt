@@ -113,8 +113,8 @@ public static class SnapshotTest
             }
         }
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt snapshot test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt snapshot test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var scene = new SceneRegistry();
@@ -297,7 +297,7 @@ public static class SnapshotTest
         }
         ulong RawCreate()
         {
-            var rc = Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var id);
+            var rc = Native.vlqt_res_create(Protocol.ResourceKind.Snapshot, out var id);
             s.Check(rc == 0 && id != 0, $"raw create ({rc})");
             return id;
         }
@@ -307,8 +307,8 @@ public static class SnapshotTest
             for (int i = 0; i < 120; i++)
             {
                 RawFrames(1);
-                var s = events.Skip(from).Where(e => e.Id == id && e.Ev == Protocol.ResEv.State).Select(e => e.Payload[0]).LastOrDefault();
-                if (s is Protocol.ResState.Ready or Protocol.ResState.Failed)
+                var s = events.Skip(from).Where(e => e.Id == id && e.Ev == Protocol.ResourceEventId.State).Select(e => e.Payload[0]).LastOrDefault();
+                if (s is Protocol.ResourceState.Ready or Protocol.ResourceState.Failed)
                     return s;
             }
             return 0;
@@ -318,7 +318,7 @@ public static class SnapshotTest
         RawFrames(1); // empty queue
         events.Clear();
         var rel = RawCreate();
-        var rc4 = Native.vlqt_res_snapshot(rel, w, 0, 1);
+        var rc4 = Native.vlqt_snapshot_start(rel, w, 0, 1);
         s.Check(rc4 == 0, $"raw snapshot of the window root ({rc4})");
         Native.vlqt_res_release(rel);
         events.Clear(); // what came before the release call is not interesting, only what comes after
@@ -334,39 +334,39 @@ public static class SnapshotTest
 
         // 4b) Window destroyed during the grab: Failed (or Ready if the grab was done first), never a hang; afterwards a
         // new grab on the same id works.
-        var w2 = Native.vlqt_window_create(320, 200, "VL.Qt snapshot test 2");
+        var w2 = NativeCalls.CreateWindow(320, 200, "VL.Qt snapshot test 2");
         Native.vlqt_window_show(w2);
         cmd.Reset();
         cmd.ClearColor(0.2f, 0.2f, 0.2f, 1);
-        cmd.Create(1, Protocol.Type.Rectangle);
+        cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetPlace(1, 10, 10, 100, 100);
-        cmd.SetColor(1, Protocol.Prop.Color, 1, 0, 0, 1);
+        cmd.SetColor(1, Protocol.PropertyId.Color, 1, 0, 0, 1);
         cmd.Reparent(1, 0, 0);
         Native.Apply(w2, cmd.EndFrame());
         RawFrames(3);
         events.Clear();
         var id2 = RawCreate();
-        var rcA = Native.vlqt_res_snapshot(id2, w2, 1, 1);
-        Native.vlqt_window_destroy(w2);
+        var rcA = Native.vlqt_snapshot_start(id2, w2, 1, 1);
+        Native.vlqt_scene_destroy(w2);
         var from = events.Count;
         var state = Settle(id2, from);
-        s.Check(rcA == 0 && state is Protocol.ResState.Failed or Protocol.ResState.Ready, $"window destroyed during the grab settles ({rcA}, state {state})");
+        s.Check(rcA == 0 && state is Protocol.ResourceState.Failed or Protocol.ResourceState.Ready, $"window destroyed during the grab settles ({rcA}, state {state})");
         s.Info($"window destroyed during the grab: state {state} (4 = Ready, 5 = Failed)");
-        if (state == Protocol.ResState.Failed)
-            s.Check(events.Any(e => e.Id == id2 && e.Ev == Protocol.ResEv.Error && e.Payload.Length > 0), "Failed carries an error text");
+        if (state == Protocol.ResourceState.Failed)
+            s.Check(events.Any(e => e.Id == id2 && e.Ev == Protocol.ResourceEventId.Error && e.Payload.Length > 0), "Failed carries an error text");
         from = events.Count;
-        var rcB = Native.vlqt_res_snapshot(id2, w, 0, 1);
+        var rcB = Native.vlqt_snapshot_start(id2, w, 0, 1);
         s.Check(rcB == 0, $"new grab on the id after the window died ({rcB})");
         var state2 = Settle(id2, from);
-        s.Check(state2 == Protocol.ResState.Ready, $"new grab on a window that lives: Ready (state {state2})");
+        s.Check(state2 == Protocol.ResourceState.Ready, $"new grab on a window that lives: Ready (state {state2})");
         // And after a Failed one: unknown element → Failed, the next one starts over.
         from = events.Count;
-        Native.vlqt_res_snapshot(id2, w, 4_000_000, 1);
+        Native.vlqt_snapshot_start(id2, w, 4_000_000, 1);
         var state3 = Settle(id2, from);
         from = events.Count;
-        Native.vlqt_res_snapshot(id2, w, 0, 1);
+        Native.vlqt_snapshot_start(id2, w, 0, 1);
         var state4 = Settle(id2, from);
-        s.Check(state3 == Protocol.ResState.Failed && state4 == Protocol.ResState.Ready, $"unknown element fails, the grab after the Failed works (states {state3}, {state4})");
+        s.Check(state3 == Protocol.ResourceState.Failed && state4 == Protocol.ResourceState.Ready, $"unknown element fails, the grab after the Failed works (states {state3}, {state4})");
         Native.vlqt_res_release(id2);
         RawFrames(2);
 
@@ -430,8 +430,8 @@ public static class SnapshotTest
             {
                 var sid = RawCreate();
                 var from6 = events.Count;
-                Native.vlqt_res_snapshot(sid, w, 0, 1);
-                s.Check(Settle(sid, from6) == Protocol.ResState.Ready, $"burst snapshot {i} is Ready");
+                Native.vlqt_snapshot_start(sid, w, 0, 1);
+                s.Check(Settle(sid, from6) == Protocol.ResourceState.Ready, $"burst snapshot {i} is Ready");
                 Native.vlqt_res_release(sid);
             }
             var burst = SnapLine();
@@ -453,7 +453,7 @@ public static class SnapshotTest
             cmd.Reset();
             rec.Clear();
             Native.Apply(w, cmd.EndFrame());
-            Native.vlqt_window_destroy(w);
+            Native.vlqt_scene_destroy(w);
             client.SetPumping(false);
             s.Pump(2);
         }

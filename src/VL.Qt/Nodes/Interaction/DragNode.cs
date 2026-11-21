@@ -98,7 +98,7 @@ namespace VL.Qt.Nodes
             }
             else if (updates != _lastDragUpdates)
             {
-                // Every EV_DRAG counts, also one equal to the last value (a new drag with the same movement).
+                // Every EVENT_DRAG counts, also one equal to the last value (a new drag with the same movement).
                 _lastDragUpdates = updates;
                 delta.SetValueAndAuthor(feedback.DragDelta(), InteractionNode<Props>.Author);
             }

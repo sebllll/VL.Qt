@@ -6,7 +6,7 @@ namespace VL.Qt
 {
     /// <summary>
     /// Conversion between the VL units of one scene and Qt logical pixels (DIP). Built per frame from the
-    /// <see cref="Space"/> pin and the scene metrics (vlqt_window_get_scene_metrics: size in DIP, device pixel ratio).
+    /// <see cref="Space"/> pin and the scene metrics (vlqt_scene_get_metrics: size in DIP, device pixel ratio).
     /// </summary>
     /// <remarks>
     /// Plan B of #143: C# scales, QtNative only moves the origin of the window root (SET_SPACE: top left, or the centre

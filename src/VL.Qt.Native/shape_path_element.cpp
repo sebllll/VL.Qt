@@ -1,4 +1,4 @@
-#include "pathelement.h"
+#include "shape_path_element.h"
 #include "protocol.h"
 
 #include <cstring>
@@ -17,7 +17,7 @@ QPointF pointAt(const unsigned char* xy, quint32 i)
 
 } // namespace
 
-void VlPathElement::setPoints(const unsigned char* xy, quint32 count)
+void ShapePathElement::setPoints(const unsigned char* xy, quint32 count)
 {
     m_points.resize(size_t(count) * 2);
     if (count)
@@ -26,7 +26,7 @@ void VlPathElement::setPoints(const unsigned char* xy, quint32 count)
     rebuildPoints();
 }
 
-void VlPathElement::setClosed(bool closed)
+void ShapePathElement::setClosed(bool closed)
 {
     if (m_closed == closed)
         return;
@@ -35,7 +35,7 @@ void VlPathElement::setClosed(bool closed)
         rebuildPoints();
 }
 
-void VlPathElement::rebuildPoints()
+void ShapePathElement::rebuildPoints()
 {
     QPainterPath p;
     const size_t count = m_points.size() / 2;
@@ -52,7 +52,7 @@ void VlPathElement::rebuildPoints()
     emit changed();
 }
 
-bool VlPathElement::setPath(const unsigned char* verbs, quint32 verbCount, const unsigned char* xy, quint32 pointCount)
+bool ShapePathElement::setPath(const unsigned char* verbs, quint32 verbCount, const unsigned char* xy, quint32 pointCount)
 {
     QPainterPath p;
     p.reserve(int(pointCount + verbCount));
@@ -80,7 +80,7 @@ bool VlPathElement::setPath(const unsigned char* verbs, quint32 verbCount, const
     return true;
 }
 
-void VlPathElement::addToPath(QPainterPath& path, const QQuickPathData&)
+void ShapePathElement::addToPath(QPainterPath& path, const QQuickPathData&)
 {
     // QQuickPath::createPath starts with moveTo(startX, startY); as the only element we replace that path (implicitly
     // shared, O(1)). Behind other elements the path is appended.

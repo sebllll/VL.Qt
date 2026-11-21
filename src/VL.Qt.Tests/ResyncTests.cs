@@ -51,7 +51,7 @@ namespace VL.Qt.Tests
                             break;
                         case "SET":
                             if (!_items.TryGetValue(id, out var s)) return -4;
-                            if (t[2] == nameof(Protocol.Prop.Radius))
+                            if (t[2] == nameof(Protocol.PropertyId.Radius))
                             {
                                 float v = float.Parse(t[3][4..^1], CultureInfo.InvariantCulture);
                                 if (v < 0) return -7;
@@ -182,7 +182,7 @@ namespace VL.Qt.Tests
             var reason = System.Runtime.InteropServices.Marshal.StringToCoTaskMemUTF8("property 545: value 4 not allowed");
             try
             {
-                var e = new Native.vlqt_apply_error { rc = -7, id = 3, op = Protocol.Op.Set, prop = Protocol.Prop.FillMode, reason = reason };
+                var e = new Native.vlqt_apply_error { rc = -7, id = 3, op = Protocol.Op.Set, prop = Protocol.PropertyId.FillMode, reason = reason };
                 Assert.That(SceneCore.DescribeApplyError(e), Is.EqualTo("Qt rejected FillMode: property 545: value 4 not allowed"));
                 e.op = Protocol.Op.Reparent;
                 Assert.That(SceneCore.DescribeApplyError(e), Does.StartWith("Qt rejected Reparent: "));

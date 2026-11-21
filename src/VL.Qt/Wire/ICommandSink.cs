@@ -5,7 +5,7 @@ namespace VL.Qt.Wire
 {
     /// <summary>
     /// Target of the reconciler: the item commands of the protocol (see protocol.h), one SET method per value type.
-    /// Implemented by <see cref="CommandWriter"/> (byte buffer for vlqt_window_apply) and by a recording fake in the tests.
+    /// Implemented by <see cref="CommandWriter"/> (byte buffer for vlqt_scene_apply) and by a recording fake in the tests.
     /// Implementations must not allocate per call in the steady state.
     /// </summary>
     internal interface ICommandSink
@@ -31,22 +31,22 @@ namespace VL.Qt.Wire
 
         void SetString(uint id, ushort prop, ReadOnlySpan<char> value);
 
-        /// <summary>f32 array (<see cref="Protocol.Vt.F32Array"/>): at most <see cref="Protocol.MaxF32ArrayCount"/> floats.</summary>
+        /// <summary>f32 array (<see cref="Protocol.ValueType.F32Array"/>): at most <see cref="Protocol.MaxF32ArrayCount"/> floats.</summary>
         void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values);
 
-        /// <summary>path (<see cref="Protocol.Vt.Path"/>): verbs (<see cref="Protocol.Verb"/>) and points as x,y pairs (2 floats per point).</summary>
+        /// <summary>path (<see cref="Protocol.ValueType.Path"/>): verbs (<see cref="Protocol.Verb"/>) and points as x,y pairs (2 floats per point).</summary>
         void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points);
 
         /// <summary>ref: id of another element (e.g. ShaderEffect source), 0 = none/root.</summary>
         void SetRef(uint id, ushort prop, uint refId);
 
-        /// <summary>u64, e.g. an image resource id (<see cref="Protocol.Prop.Image"/>), 0 = none.</summary>
+        /// <summary>u64, e.g. an image resource id (<see cref="Protocol.PropertyId.Image"/>), 0 = none.</summary>
         void SetU64(uint id, ushort prop, ulong value);
 
-        /// <summary>vec2 (2 x f32), e.g. <see cref="Protocol.Prop.Size"/>.</summary>
+        /// <summary>vec2 (2 x f32), e.g. <see cref="Protocol.PropertyId.Size"/>.</summary>
         void SetVec2(uint id, ushort prop, float x, float y);
 
-        /// <summary>ivec2 (2 x i32), e.g. <see cref="Protocol.Prop.MeshResolution"/>.</summary>
+        /// <summary>ivec2 (2 x i32), e.g. <see cref="Protocol.PropertyId.MeshResolution"/>.</summary>
         void SetIvec2(uint id, ushort prop, int x, int y);
 
         /// <summary>
@@ -119,12 +119,12 @@ namespace VL.Qt.Wire
         /// <summary>
         /// SET_EFFECT_CHAIN: starts the whole Effect chain of element <paramref name="id"/>. Followed by the links in
         /// application order (first = applied first), each <see cref="BeginMultiLink"/> + Effect* entries or
-        /// <see cref="BeginShaderLink"/> + Uniform* entries, then <see cref="EndLink"/>; closed by <see cref="EndEffectChain"/>.
+        /// <see cref="BeginEffectChainLink"/> + Uniform* entries, then <see cref="EndLink"/>; closed by <see cref="EndEffectChain"/>.
         /// No links = no chain. No other command in between.
         /// </summary>
         void BeginEffectChain(uint id);
 
-        /// <summary>Starts a MULTI link: one MultiEffect run, entries keyed by <see cref="Protocol.Prop"/> EffectBlurEnabled..EffectMaskInverted.</summary>
+        /// <summary>Starts a MULTI link: one MultiEffect run, entries keyed by <see cref="Protocol.MultiEffectKey"/> BlurEnabled..MaskInverted.</summary>
         void BeginMultiLink();
 
         void EffectBool(ushort prop, bool value);
@@ -134,10 +134,10 @@ namespace VL.Qt.Wire
         /// <summary>Color with straight alpha.</summary>
         void EffectColor(ushort prop, float r, float g, float b, float a);
 
-        /// <summary>x = left, y = top, width = right, height = bottom (EffectPaddingRect).</summary>
+        /// <summary>x = left, y = top, width = right, height = bottom (<see cref="Protocol.MultiEffectKey.PaddingRect"/>).</summary>
         void EffectRect(ushort prop, float x, float y, float width, float height);
 
-        /// <summary>EffectMaskSource: id of the mask element object (0 = none).</summary>
+        /// <summary>MaskSource: id of the mask element object (0 = none).</summary>
         void EffectRef(ushort prop, uint refId);
 
         /// <summary>
@@ -145,10 +145,10 @@ namespace VL.Qt.Wire
         /// role (Single/TwoPass: fragment; Pyramid: prefilter, composite), padding in DIP and strength (Pyramid: radius in
         /// DIP, else unused). Uniform* entries follow.
         /// </summary>
-        void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
+        void BeginEffectChainLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
             float paddingRight, float paddingBottom, float strength);
 
-        /// <summary>Closes the link started by <see cref="BeginMultiLink"/> or <see cref="BeginShaderLink"/>.</summary>
+        /// <summary>Closes the link started by <see cref="BeginMultiLink"/> or <see cref="BeginEffectChainLink"/>.</summary>
         void EndLink();
 
         /// <summary>Closes the SET_EFFECT_CHAIN started by <see cref="BeginEffectChain"/> (link count, payload length).</summary>

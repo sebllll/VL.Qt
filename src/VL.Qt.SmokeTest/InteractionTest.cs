@@ -58,8 +58,8 @@ public static partial class InteractionTest
     // Reconciler (handler objects) -> QtNative -> FeedbackRouter.Dispatch -> pull in Hover.Update -> channels.
     private static void RunChain(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt interaction chain test");
-        s.Check(w != IntPtr.Zero, "chain: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt interaction chain test");
+        s.Check(w != SceneHandle.Null, "chain: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -143,15 +143,15 @@ public static partial class InteractionTest
         hover.Dispose();
         hover2.Dispose();
         rect.Dispose();
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
     }
 
     // the Interaction pin works at Text, Group and Button as well (Hover -> Is Hovered).
     private static void RunElements(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt interaction elements test");
-        s.Check(w != IntPtr.Zero, "elements: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt interaction elements test");
+        s.Check(w != SceneHandle.Null, "elements: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -208,7 +208,7 @@ public static partial class InteractionTest
                 s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"elements {name}: clear");
         }
         hover.Dispose();
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
     }
 }

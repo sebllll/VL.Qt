@@ -45,7 +45,7 @@ namespace VL.Qt.Tests
 
             Assert.That(Structural, Is.EqualTo(new[]
             {
-                "CREATE 1 Item", "REPARENT 1 0 0",
+                "CREATE 1 Group", "REPARENT 1 0 0",
                 "CREATE 2 Rectangle", "REPARENT 2 1 0",
                 "CREATE 3 Column", "REPARENT 3 1 1",
                 "CREATE 4 Text", "REPARENT 4 3 0",
@@ -176,7 +176,7 @@ namespace VL.Qt.Tests
         public void ShaderEffectInput_IsChildAtIndexZero()
         {
             Frame(new ShaderEffect { Input = R() });
-            Assert.That(Structural, Is.EqualTo(new[] { "CREATE 1 ShaderEffect", "REPARENT 1 0 0", "CREATE 2 Rectangle", "REPARENT 2 1 0" }));
+            Assert.That(Structural, Is.EqualTo(new[] { "CREATE 1 Shader", "REPARENT 1 0 0", "CREATE 2 Rectangle", "REPARENT 2 1 0" }));
             Frame(new ShaderEffect { Input = T() });
             Assert.That(Structural, Is.EqualTo(new[] { "DESTROY 2", "CREATE 2 Text", "REPARENT 2 1 0" }));
             Frame(new ShaderEffect());
@@ -245,7 +245,7 @@ namespace VL.Qt.Tests
             public void EffectColor(ushort prop, float r, float g, float b, float a) { }
             public void EffectRect(ushort prop, float x, float y, float width, float height) { }
             public void EffectRef(ushort prop, uint refId) { }
-            public void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
+            public void BeginEffectChainLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
                 float paddingRight, float paddingBottom, float strength) { }
             public void EndLink() { }
             public void EndEffectChain() { }

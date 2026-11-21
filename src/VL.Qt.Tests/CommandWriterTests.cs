@@ -26,8 +26,8 @@ namespace VL.Qt.Tests
 
         [Test]
         public void Create() =>
-            Assert.That(Hex(Write(w => w.Create(7, Protocol.Type.Rectangle))),
-                Is.EqualTo(Hdr(Protocol.Op.Create, 6) + U32(7) + U16(Protocol.Type.Rectangle) + "0000"));
+            Assert.That(Hex(Write(w => w.Create(7, Protocol.ElementType.Rectangle))),
+                Is.EqualTo(Hdr(Protocol.Op.Create, 6) + U32(7) + U16(Protocol.ElementType.Rectangle) + "0000"));
 
         [Test]
         public void Destroy() =>
@@ -46,67 +46,67 @@ namespace VL.Qt.Tests
         [Test]
         public void ClearColor() =>
             Assert.That(Hex(Write(w => w.ClearColor(new Color4(0.1f, 0.2f, 0.3f, 1f)))),
-                Is.EqualTo(Hdr(Protocol.Op.ClearColor, 16) + F32(0.1f) + F32(0.2f) + F32(0.3f) + F32(1f)));
+                Is.EqualTo(Hdr(Protocol.Op.SetClearColor, 16) + F32(0.1f) + F32(0.2f) + F32(0.3f) + F32(1f)));
 
         [Test]
         public void SetF32() =>
-            Assert.That(Hex(Write(w => w.SetF32(1, Protocol.Prop.Opacity, 0.5f))),
-                Is.EqualTo(SetHdr(4, 1, Protocol.Prop.Opacity, Protocol.Vt.F32) + "0000003F"));
+            Assert.That(Hex(Write(w => w.SetF32(1, Protocol.PropertyId.Opacity, 0.5f))),
+                Is.EqualTo(SetHdr(4, 1, Protocol.PropertyId.Opacity, Protocol.ValueType.F32) + "0000003F"));
 
         [Test]
         public void SetI32() =>
             Assert.That(Hex(Write(w => w.SetI32(1, 300, -2))),
-                Is.EqualTo(SetHdr(4, 1, 300, Protocol.Vt.I32) + "FEFFFFFF"));
+                Is.EqualTo(SetHdr(4, 1, 300, Protocol.ValueType.I32) + "FEFFFFFF"));
 
         [Test]
         public void SetBool() =>
-            Assert.That(Hex(Write(w => { w.SetBool(1, Protocol.Prop.Debug, true); w.SetBool(2, Protocol.Prop.Clip, false); })),
-                Is.EqualTo(SetHdr(1, 1, Protocol.Prop.Debug, Protocol.Vt.Bool) + "01000000"
-                         + SetHdr(1, 2, Protocol.Prop.Clip, Protocol.Vt.Bool) + "00000000"));
+            Assert.That(Hex(Write(w => { w.SetBool(1, Protocol.PropertyId.Debug, true); w.SetBool(2, Protocol.PropertyId.Clip, false); })),
+                Is.EqualTo(SetHdr(1, 1, Protocol.PropertyId.Debug, Protocol.ValueType.Bool) + "01000000"
+                         + SetHdr(1, 2, Protocol.PropertyId.Clip, Protocol.ValueType.Bool) + "00000000"));
 
         [Test]
         public void SetColor() =>
-            Assert.That(Hex(Write(w => w.SetColor(3, Protocol.Prop.Color, new Color4(1f, 0.5f, 0.25f, 0.75f)))),
-                Is.EqualTo(SetHdr(16, 3, Protocol.Prop.Color, Protocol.Vt.Color) + F32(1f) + F32(0.5f) + F32(0.25f) + F32(0.75f)));
+            Assert.That(Hex(Write(w => w.SetColor(3, Protocol.PropertyId.Color, new Color4(1f, 0.5f, 0.25f, 0.75f)))),
+                Is.EqualTo(SetHdr(16, 3, Protocol.PropertyId.Color, Protocol.ValueType.Color) + F32(1f) + F32(0.5f) + F32(0.25f) + F32(0.75f)));
 
         [Test]
         public void SetRect() =>
-            Assert.That(Hex(Write(w => w.SetRect(3, Protocol.Prop.EffectPaddingRect, new RectangleF(10, 20, 300, 400)))),
-                Is.EqualTo(SetHdr(16, 3, Protocol.Prop.EffectPaddingRect, Protocol.Vt.Rectf) + F32(10) + F32(20) + F32(300) + F32(400)));
+            Assert.That(Hex(Write(w => w.SetRect(3, Protocol.MultiEffectKey.PaddingRect, new RectangleF(10, 20, 300, 400)))),
+                Is.EqualTo(SetHdr(16, 3, Protocol.MultiEffectKey.PaddingRect, Protocol.ValueType.Rectf) + F32(10) + F32(20) + F32(300) + F32(400)));
 
         [Test]
         public void SetVec2_Size() =>
-            Assert.That(Hex(Write(w => w.SetVec2(3, Protocol.Prop.Size, 300, 400))),
-                Is.EqualTo(SetHdr(8, 3, Protocol.Prop.Size, Protocol.Vt.Vec2) + F32(300) + F32(400)));
+            Assert.That(Hex(Write(w => w.SetVec2(3, Protocol.PropertyId.Size, 300, 400))),
+                Is.EqualTo(SetHdr(8, 3, Protocol.PropertyId.Size, Protocol.ValueType.Vec2) + F32(300) + F32(400)));
 
         [Test]
         public void SetMat4_RowMajorLikeStride()
         {
             var m = Matrix.Translation(1, 2, 3); // row-major: translation in M41..M43
-            var expected = SetHdr(64, 4, Protocol.Prop.Transform, Protocol.Vt.Mat4);
+            var expected = SetHdr(64, 4, Protocol.PropertyId.Transform, Protocol.ValueType.Mat4);
             foreach (var f in m.ToArray()) expected += F32(f);
-            Assert.That(Hex(Write(w => w.SetMat4(4, Protocol.Prop.Transform, m))), Is.EqualTo(expected));
+            Assert.That(Hex(Write(w => w.SetMat4(4, Protocol.PropertyId.Transform, m))), Is.EqualTo(expected));
             Assert.That(m.M41, Is.EqualTo(1f)); // sanity: ToArray order M11..M44
-            Assert.That(Hex(Write(w => w.SetMat4(4, Protocol.Prop.Transform, m.ToArray()))), Is.EqualTo(expected));
+            Assert.That(Hex(Write(w => w.SetMat4(4, Protocol.PropertyId.Transform, m.ToArray()))), Is.EqualTo(expected));
         }
 
         [Test]
         public void SetF32Array_CountAndFloats()
         {
-            Assert.That(Hex(Write(w => w.SetF32Array(3, Protocol.Prop.ShapePoints, new[] { 1f, 2f, 3f }))),
-                Is.EqualTo(SetHdr(16, 3, Protocol.Prop.ShapePoints, Protocol.Vt.F32Array) + U32(3) + F32(1f) + F32(2f) + F32(3f)));
-            Assert.That(Hex(Write(w => w.SetF32Array(3, Protocol.Prop.ShapeDash, ReadOnlySpan<float>.Empty))),
-                Is.EqualTo(SetHdr(4, 3, Protocol.Prop.ShapeDash, Protocol.Vt.F32Array) + U32(0)));
+            Assert.That(Hex(Write(w => w.SetF32Array(3, Protocol.PropertyId.ShapePoints, new[] { 1f, 2f, 3f }))),
+                Is.EqualTo(SetHdr(16, 3, Protocol.PropertyId.ShapePoints, Protocol.ValueType.F32Array) + U32(3) + F32(1f) + F32(2f) + F32(3f)));
+            Assert.That(Hex(Write(w => w.SetF32Array(3, Protocol.PropertyId.ShapeDash, ReadOnlySpan<float>.Empty))),
+                Is.EqualTo(SetHdr(4, 3, Protocol.PropertyId.ShapeDash, Protocol.ValueType.F32Array) + U32(0)));
         }
 
         [Test]
         public void SetF32Array_Limit()
         {
             var w = new CommandWriter();
-            w.SetF32Array(1, Protocol.Prop.ShapePoints, new float[Protocol.MaxF32ArrayCount]);
+            w.SetF32Array(1, Protocol.PropertyId.ShapePoints, new float[Protocol.MaxF32ArrayCount]);
             var before = w.Length;
             Assert.That(before, Is.GreaterThan(CommandWriter.MaxPayload), "the largest array fills the payload to the last 4-byte unit");
-            Assert.Throws<ArgumentOutOfRangeException>(() => w.SetF32Array(1, Protocol.Prop.ShapePoints, new float[Protocol.MaxF32ArrayCount + 1]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => w.SetF32Array(1, Protocol.PropertyId.ShapePoints, new float[Protocol.MaxF32ArrayCount + 1]));
             Assert.That(w.Length, Is.EqualTo(before), "failed command must not leave partial bytes");
         }
 
@@ -125,11 +125,11 @@ namespace VL.Qt.Tests
             for (int i = 0; i < points.Length; i++)
                 points[i] = i + 0.5f;
             int paddedVerbs = (verbCount + 3) & ~3;
-            var expected = SetHdr(8 + paddedVerbs + 8 * verbCount, 5, Protocol.Prop.ShapePath, Protocol.Vt.Path)
+            var expected = SetHdr(8 + paddedVerbs + 8 * verbCount, 5, Protocol.PropertyId.ShapePath, Protocol.ValueType.Path)
                 + U32((uint)verbCount) + U32((uint)verbCount) + Hex(verbs) + padding;
             foreach (var f in points)
                 expected += F32(f);
-            Assert.That(Hex(Write(w => w.SetPath(5, Protocol.Prop.ShapePath, verbs, points))), Is.EqualTo(expected));
+            Assert.That(Hex(Write(w => w.SetPath(5, Protocol.PropertyId.ShapePath, verbs, points))), Is.EqualTo(expected));
         }
 
         [Test]
@@ -141,11 +141,11 @@ namespace VL.Qt.Tests
             while (Protocol.PathFits(verbs + 1, points))
                 verbs++;
             var w = new CommandWriter();
-            w.SetPath(1, Protocol.Prop.ShapePath, new byte[verbs], new float[points * 2]);
+            w.SetPath(1, Protocol.PropertyId.ShapePath, new byte[verbs], new float[points * 2]);
             var before = w.Length;
-            Assert.Throws<ArgumentOutOfRangeException>(() => w.SetPath(1, Protocol.Prop.ShapePath, new byte[verbs + 1], new float[points * 2]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => w.SetPath(1, Protocol.PropertyId.ShapePath, new byte[verbs + 1], new float[points * 2]));
             Assert.That(w.Length, Is.EqualTo(before), "failed command must not leave partial bytes");
-            Assert.Throws<ArgumentException>(() => w.SetPath(1, Protocol.Prop.ShapePath, new byte[1], new float[3]));
+            Assert.Throws<ArgumentException>(() => w.SetPath(1, Protocol.PropertyId.ShapePath, new byte[1], new float[3]));
         }
 
         [Test]
@@ -153,9 +153,9 @@ namespace VL.Qt.Tests
         {
             // "Aä" = 41 C3 A4 → 3 bytes: payload 8 + 4 + 3 = 15, padded to 20 total.
             Assert.That(Hex(Write(w => w.SetString(2, 257, "Aä"))),
-                Is.EqualTo(SetHdr(7, 2, 257, Protocol.Vt.String) + U32(3) + "41C3A4" + "00"));
+                Is.EqualTo(SetHdr(7, 2, 257, Protocol.ValueType.String) + U32(3) + "41C3A4" + "00"));
             Assert.That(Hex(Write(w => w.SetString(2, 257, (string?)null))),
-                Is.EqualTo(SetHdr(4, 2, 257, Protocol.Vt.String) + U32(0)));
+                Is.EqualTo(SetHdr(4, 2, 257, Protocol.ValueType.String) + U32(0)));
         }
 
         // SET_STYLE: header, u32 id, u16 count, u16 flags, entries (u16 field, u8 state, u8 vt, value), 4-byte aligned.
@@ -170,7 +170,7 @@ namespace VL.Qt.Tests
                 w.EndStyle();
             })),
             Is.EqualTo(Hdr(Protocol.Op.SetStyle, 8 + 20) + U32(5) + U16(1) + U16(Protocol.StyleSet.Clear)
-                + Entry(Protocol.StyleField.FrameColor, 1, Protocol.Vt.Color, F32(0.1f) + F32(0.2f) + F32(0.3f) + F32(1f))));
+                + Entry(Protocol.StyleField.FrameColor, 1, Protocol.ValueType.Color, F32(0.1f) + F32(0.2f) + F32(0.3f) + F32(1f))));
 
         [Test]
         public void SetStyle_MultipleEntries_AllTypes_AreAligned()
@@ -183,19 +183,19 @@ namespace VL.Qt.Tests
             w.StyleString(Protocol.StyleField.TextFontFamily, Protocol.StyleState.Checked, "");
             w.StyleColor(Protocol.StyleField.TextColor, Protocol.StyleState.Pressed, 1f, 0f, 0f, 0.5f);
             w.EndStyle();
-            w.Create(1, Protocol.Type.Button); // the next command starts right after the style
+            w.Create(1, Protocol.ElementType.Button); // the next command starts right after the style
 
             var expectedEntries =
-                Entry(Protocol.StyleField.FrameRadius, 0, Protocol.Vt.F32, F32(2f))
-                + Entry(Protocol.StyleField.TextFontWeight, 3, Protocol.Vt.I32, "BC020000")
-                + Entry(Protocol.StyleField.TextFontFamily, 0, Protocol.Vt.String, U32(3) + "41C3A4" + "00")
-                + Entry(Protocol.StyleField.TextFontFamily, 4, Protocol.Vt.String, U32(0))
-                + Entry(Protocol.StyleField.TextColor, 2, Protocol.Vt.Color, F32(1f) + F32(0f) + F32(0f) + F32(0.5f));
+                Entry(Protocol.StyleField.FrameRadius, 0, Protocol.ValueType.F32, F32(2f))
+                + Entry(Protocol.StyleField.TextFontWeight, 3, Protocol.ValueType.I32, "BC020000")
+                + Entry(Protocol.StyleField.TextFontFamily, 0, Protocol.ValueType.String, U32(3) + "41C3A4" + "00")
+                + Entry(Protocol.StyleField.TextFontFamily, 4, Protocol.ValueType.String, U32(0))
+                + Entry(Protocol.StyleField.TextColor, 2, Protocol.ValueType.Color, F32(1f) + F32(0f) + F32(0f) + F32(0.5f));
             int payload = 8 + expectedEntries.Length / 2;
             Assert.That(payload % 4, Is.EqualTo(0));
             Assert.That(Hex(w.Written.ToArray()), Is.EqualTo(
                 Hdr(Protocol.Op.SetStyle, payload) + U32(9) + U16(5) + U16(0) + expectedEntries
-                + Hdr(Protocol.Op.Create, 6) + U32(1) + U16(Protocol.Type.Button) + "0000"));
+                + Hdr(Protocol.Op.Create, 6) + U32(1) + U16(Protocol.ElementType.Button) + "0000"));
             Assert.That(w.Count, Is.EqualTo(2));
         }
 
@@ -215,14 +215,14 @@ namespace VL.Qt.Tests
         [Test]
         public void SetRef() =>
             Assert.That(Hex(Write(w => w.SetRef(6, 300, 11))),
-                Is.EqualTo(SetHdr(4, 6, 300, Protocol.Vt.Ref) + U32(11)));
+                Is.EqualTo(SetHdr(4, 6, 300, Protocol.ValueType.Ref) + U32(11)));
 
         [Test]
         public void EveryCommandIsAligned_AndResetKeepsCapacity()
         {
             var w = new CommandWriter(64);
-            w.Create(1, Protocol.Type.Item);
-            w.SetBool(1, Protocol.Prop.Debug, true);
+            w.Create(1, Protocol.ElementType.Group);
+            w.SetBool(1, Protocol.PropertyId.Debug, true);
             w.SetString(1, 257, "abcde");
             w.Bind(1, 2, 0);
             Assert.That(w.Length % Protocol.CommandAlign, Is.Zero);
@@ -254,12 +254,12 @@ namespace VL.Qt.Tests
                 w.Reset();
                 for (uint i = 1; i <= 10; i++)
                 {
-                    w.SetVec2(i, Protocol.Prop.Size, 100, 50 + f);
-                    w.SetColor(i, Protocol.Prop.Color, 1, 0, 0, 1);
-                    w.SetF32(i, Protocol.Prop.Opacity, 0.5f);
-                    w.SetBool(i, Protocol.Prop.Debug, true);
+                    w.SetVec2(i, Protocol.PropertyId.Size, 100, 50 + f);
+                    w.SetColor(i, Protocol.PropertyId.Color, 1, 0, 0, 1);
+                    w.SetF32(i, Protocol.PropertyId.Opacity, 0.5f);
+                    w.SetBool(i, Protocol.PropertyId.Debug, true);
                     w.SetI32(i, 300, f);
-                    w.SetMat4(i, Protocol.Prop.Transform, m);
+                    w.SetMat4(i, Protocol.PropertyId.Transform, m);
                     w.SetString(i, 257, text);
                     w.SetRef(i, 258, i + 1);
                     w.Reparent(i, 0, i);
@@ -291,11 +291,11 @@ namespace VL.Qt.Tests
 
             var r = new EventReader(buf);
             Assert.That(r.MoveNext(), Is.True);
-            Assert.That((r.Event, r.FeedbackId, r.Index, r.Payload.Length), Is.EqualTo((Protocol.Ev.Hover, 42u, 1u, 0)));
+            Assert.That((r.Event, r.FeedbackId, r.Index, r.Payload.Length), Is.EqualTo((Protocol.EventId.Hover, 42u, 1u, 0)));
             Assert.That(r.MoveNext(), Is.True);
-            Assert.That((r.Event, r.FeedbackId, r.Index, r.ReadI32(0)), Is.EqualTo((Protocol.Ev.Click, 7u, 2u, 3)));
+            Assert.That((r.Event, r.FeedbackId, r.Index, r.ReadI32(0)), Is.EqualTo((Protocol.EventId.Click, 7u, 2u, 3)));
             Assert.That(r.MoveNext(), Is.True);
-            Assert.That((r.Event, r.Payload.Length, r.Payload[0]), Is.EqualTo((Protocol.Ev.Measured, 1, (byte)0xFF)));
+            Assert.That((r.Event, r.Payload.Length, r.Payload[0]), Is.EqualTo((Protocol.EventId.Measured, 1, (byte)0xFF)));
             Assert.That(r.MoveNext(), Is.False);
             Assert.That(r.Error, Is.Null);
         }

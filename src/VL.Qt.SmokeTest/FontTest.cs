@@ -85,8 +85,8 @@ public static class FontTest
         s.Check(NativeTest.vlqt_test_font_refs(h3) == 1, "reused entry survives the pump");
 
         // Text with the loaded family: grabs differ from a family that is not installed (see the SKIP below).
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt font test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt font test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         void Apply(string what)
@@ -96,25 +96,25 @@ public static class FontTest
         }
         cmd.Reset();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        cmd.Create(Line, Protocol.Type.Text);
+        cmd.Create(Line, Protocol.ElementType.Text);
         cmd.SetPlace(Line, 20, 40, 760, 100);
-        cmd.SetString(Line, Protocol.Prop.Text, Sample);
-        cmd.SetF32(Line, Protocol.Prop.FontSize, 56);
-        cmd.SetColor(Line, Protocol.Prop.Color, 1, 1, 1, 1);
-        cmd.SetString(Line, Protocol.Prop.FontFamily, family);
+        cmd.SetString(Line, Protocol.PropertyId.Text, Sample);
+        cmd.SetF32(Line, Protocol.PropertyId.FontSize, 56);
+        cmd.SetColor(Line, Protocol.PropertyId.Color, 1, 1, 1, 1);
+        cmd.SetString(Line, Protocol.PropertyId.FontFamily, family);
         cmd.Reparent(Line, 0, 0);
         Apply("text with the loaded family");
         s.Pump(3);
         using var loaded = s.Grab(w, "15_font_loaded.png");
 
         cmd.Reset();
-        cmd.SetString(Line, Protocol.Prop.FontFamily, Missing);
+        cmd.SetString(Line, Protocol.PropertyId.FontFamily, Missing);
         Apply("family that is not installed");
         s.Pump(3);
         using var missing = s.Grab(w, "15_font_missing.png");
 
         cmd.Reset();
-        cmd.SetString(Line, Protocol.Prop.FontFamily, "");
+        cmd.SetString(Line, Protocol.PropertyId.FontFamily, "");
         Apply("empty family (default font)");
         s.Pump(3);
         using var plain = s.Grab(w, "15_font_default.png");
@@ -132,12 +132,12 @@ public static class FontTest
         for (var i = 0; i < 3; i++)
         {
             cmd.Reset();
-            cmd.SetString(Line, Protocol.Prop.FontFamily, i % 2 == 0 ? Missing : family);
+            cmd.SetString(Line, Protocol.PropertyId.FontFamily, i % 2 == 0 ? Missing : family);
             Apply("family switched " + i);
             s.Pump(2);
         }
         cmd.Reset();
-        cmd.SetString(Line, Protocol.Prop.FontFamily, Missing);
+        cmd.SetString(Line, Protocol.PropertyId.FontFamily, Missing);
         Apply("family missing again");
         s.Pump(2);
         var text = s.Log;
@@ -176,7 +176,7 @@ public static class FontTest
         cmd.Reset();
         cmd.Destroy(Line);
         Apply("destroy text");
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
     }
 }

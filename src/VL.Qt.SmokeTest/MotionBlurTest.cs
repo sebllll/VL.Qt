@@ -104,17 +104,17 @@ public static class MotionBlurTest
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         ulong Shader(string name)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-            Native.vlqt_res_load_shader(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
-            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"shader builtin:{name} Ready");
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+            Native.vlqt_shader_load(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResourceState.Ready, $"shader builtin:{name} Ready");
             return id;
         }
         var directional = Shader("directional_blur");
         var zoom = Shader("zoom_blur");
         var radial = Shader("radial_blur");
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt motion blur test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt motion blur test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         s.Pump(4);
         float dpr; // device pixels per DIP: the layers are DIP size x dpr pixels, texelSize = 1 / that, the lengths stay in DIP
@@ -163,38 +163,38 @@ public static class MotionBlurTest
         // (id + 2), the text (id + 3) at textX and, with shape, the white rectangle (id + 4).
         void Cell(uint id, uint row, float x, float y, float width, float textX, ulong shader, float amount, float angle = 0, bool shape = true)
         {
-            cmd.Create(id, Protocol.Type.ShaderEffect);
+            cmd.Create(id, Protocol.ElementType.Shader);
             cmd.SetPlace(id, x, y, width, CellH);
-            cmd.SetU64(id, Protocol.Prop.FragmentShader, shader);
+            cmd.SetU64(id, Protocol.PropertyId.FragmentShader, shader);
             cmd.Reparent(id, 0, id);
-            cmd.Create(id + 5, Protocol.Type.ShaderEffect);
+            cmd.Create(id + 5, Protocol.ElementType.Shader);
             cmd.SetPlace(id + 5, 0, 0, width, CellH);
-            cmd.SetU64(id + 5, Protocol.Prop.FragmentShader, shader);
+            cmd.SetU64(id + 5, Protocol.PropertyId.FragmentShader, shader);
             cmd.Reparent(id + 5, id, 0);
-            cmd.Create(id + 1, Protocol.Type.Item);
-            cmd.SetI32(id + 1, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
+            cmd.Create(id + 1, Protocol.ElementType.Group);
+            cmd.SetI32(id + 1, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
             // transparent frame rectangle: the Group frame (and with it the effect area) is the whole cell
-            cmd.Create(id + 2, Protocol.Type.Rectangle);
-            cmd.SetColor(id + 2, Protocol.Prop.Color, 0, 0, 0, 0);
+            cmd.Create(id + 2, Protocol.ElementType.Rectangle);
+            cmd.SetColor(id + 2, Protocol.PropertyId.Color, 0, 0, 0, 0);
             cmd.SetPlace(id + 2, 0, 0, width, CellH);
             cmd.Reparent(id + 2, id + 1, 0);
-            cmd.Create(id + 3, Protocol.Type.Text);
-            cmd.SetString(id + 3, Protocol.Prop.Text, "MOTION");
-            cmd.SetF32(id + 3, Protocol.Prop.FontSize, 44);
-            cmd.SetColor(id + 3, Protocol.Prop.Color, 1, 1, 1, 1);
-            cmd.SetI32(id + 3, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
-            cmd.SetMat4(id + 3, Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation(textX, 60, 0));
+            cmd.Create(id + 3, Protocol.ElementType.Text);
+            cmd.SetString(id + 3, Protocol.PropertyId.Text, "MOTION");
+            cmd.SetF32(id + 3, Protocol.PropertyId.FontSize, 44);
+            cmd.SetColor(id + 3, Protocol.PropertyId.Color, 1, 1, 1, 1);
+            cmd.SetI32(id + 3, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
+            cmd.SetMat4(id + 3, Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation(textX, 60, 0));
             cmd.Reparent(id + 3, id + 1, 1);
             if (shape)
             {
-                cmd.Create(id + 4, Protocol.Type.Rectangle);
-                cmd.SetColor(id + 4, Protocol.Prop.Color, 1, 1, 1, 1);
+                cmd.Create(id + 4, Protocol.ElementType.Rectangle);
+                cmd.SetColor(id + 4, Protocol.PropertyId.Color, 1, 1, 1, 1);
                 cmd.SetPlace(id + 4, 290, 70, 60, 50);
                 cmd.Reparent(id + 4, id + 1, 2);
             }
             cmd.Reparent(id + 1, id + 5, 0);
-            cmd.SetRef(id + 5, Protocol.Prop.Source, id + 1);
-            cmd.SetRef(id, Protocol.Prop.Source, id + 5);
+            cmd.SetRef(id + 5, Protocol.PropertyId.Source, id + 1);
+            cmd.SetRef(id, Protocol.PropertyId.Source, id + 5);
             Uniforms(id, row, amount, angle, width);
         }
 
@@ -339,7 +339,7 @@ public static class MotionBlurTest
             cmd.Destroy(LongId + row);
         CheckApply("destroy");
         s.Pump(3);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         Native.vlqt_res_release(directional);
         Native.vlqt_res_release(zoom);
         Native.vlqt_res_release(radial);

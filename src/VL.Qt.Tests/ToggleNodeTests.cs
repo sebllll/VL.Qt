@@ -8,11 +8,11 @@ using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
-using P = VL.Qt.Wire.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.PropertyId;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Toggle node: description for both looks, property diff, look change, value channel and EV_VALUE (bool).</summary>
+    /// <summary>Toggle node: description for both looks, property diff, look change, value channel and EVENT_VALUE (bool).</summary>
     public class ToggleNodeTests
     {
         private static readonly Vector2 DefaultSize = new(0.68f, 0.4f);
@@ -56,7 +56,7 @@ namespace VL.Qt.Tests
         private string[] Frame(IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox)
             => Frame(out _, out _, channel, look);
 
-        private void UserChanges(bool value) => _registry.Dispatch(new FeedbackRouterTests.Poll().Value(_handle, Protocol.Vt.Bool, new byte[] { (byte)(value ? 1 : 0) }).Bytes);
+        private void UserChanges(bool value) => _registry.Dispatch(new FeedbackRouterTests.Poll().Value(_handle, Protocol.ValueType.Bool, new byte[] { (byte)(value ? 1 : 0) }).Bytes);
 
         private static string SetValue(int id, bool v) => $"SET {id} Value bool({(v ? 1 : 0)})";
 
@@ -66,7 +66,7 @@ namespace VL.Qt.Tests
             var e = Update(out bool value, out bool bang);
             var c = (CheckBox)e;
             Assert.That(c.Type, Is.EqualTo(ElementType.CheckBox));
-            Assert.That((ushort)ElementType.CheckBox, Is.EqualTo(Protocol.Type.CheckBox));
+            Assert.That((ushort)ElementType.CheckBox, Is.EqualTo(Protocol.ElementType.CheckBox));
             Assert.That((c.Value, c.Enabled, c.AutoSize), Is.EqualTo((false, true, true)));
             Assert.That((value, bang), Is.EqualTo((false, false)));
             Assert.That(c.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
@@ -77,7 +77,7 @@ namespace VL.Qt.Tests
         {
             var s = (Switch)Update(look: ToggleLook.Switch);
             Assert.That(s.Type, Is.EqualTo(ElementType.Switch));
-            Assert.That((ushort)ElementType.Switch, Is.EqualTo(Protocol.Type.Switch));
+            Assert.That((ushort)ElementType.Switch, Is.EqualTo(Protocol.ElementType.Switch));
             Assert.That((s.Value, s.Enabled, s.AutoSize), Is.EqualTo((false, true, true)));
             Assert.That(s.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
         }

@@ -61,14 +61,14 @@ public static class BlendTest
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         Directory.CreateDirectory(s.OutDir);
 
-        Native.vlqt_res_create(Protocol.ResKind.Shader, out var blend);
-        var rcLoad = Native.vlqt_res_load_shader(blend, "builtin:blend", Protocol.ShaderStage.Fragment);
+        Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var blend);
+        var rcLoad = Native.vlqt_shader_load(blend, "builtin:blend", Protocol.ShaderStage.Fragment);
         var sLoad = Native.vlqt_res_wait(blend, 10000);
-        s.Check(rcLoad == 0 && sLoad == Protocol.ResState.Ready, $"builtin:blend loads -> Ready ({sLoad}, rc {rcLoad})");
-        if (sLoad != Protocol.ResState.Ready) return;
+        s.Check(rcLoad == 0 && sLoad == Protocol.ResourceState.Ready, $"builtin:blend loads -> Ready ({sLoad}, rc {rcLoad})");
+        if (sLoad != Protocol.ResourceState.Ready) return;
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt blend test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt blend test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         s.Pump(4);
         var cmd = new CommandWriter();
@@ -83,18 +83,18 @@ public static class BlendTest
         {
             var (x, y) = Cell(i);
             uint fx = next++, bas = next++, layer = next++;
-            cmd.Create(fx, Protocol.Type.ShaderEffect);
+            cmd.Create(fx, Protocol.ElementType.Shader);
             cmd.SetPlace(fx, x, y, CellW, CellH);
-            cmd.SetU64(fx, Protocol.Prop.FragmentShader, blend);
+            cmd.SetU64(fx, Protocol.PropertyId.FragmentShader, blend);
             cmd.Reparent(fx, 0, (uint)i);
-            cmd.Create(bas, Protocol.Type.Rectangle);
+            cmd.Create(bas, Protocol.ElementType.Rectangle);
             cmd.SetPlace(bas, 0, 0, CellW, CellH);
-            cmd.SetColor(bas, Protocol.Prop.Color, Base[0], Base[1], Base[2], 1);
+            cmd.SetColor(bas, Protocol.PropertyId.Color, Base[0], Base[1], Base[2], 1);
             cmd.Reparent(bas, fx, 0);
-            cmd.SetRef(fx, Protocol.Prop.Source, bas);
-            cmd.Create(layer, Protocol.Type.Rectangle);
+            cmd.SetRef(fx, Protocol.PropertyId.Source, bas);
+            cmd.Create(layer, Protocol.ElementType.Rectangle);
             cmd.SetPlace(layer, 0, 0, CellW, CellH);
-            cmd.SetColor(layer, Protocol.Prop.Color, Layer[0], Layer[1], Layer[2], layerAlpha);
+            cmd.SetColor(layer, Protocol.PropertyId.Color, Layer[0], Layer[1], Layer[2], layerAlpha);
             cmd.Reparent(layer, fx, 1);
             cmd.BeginUniforms(fx, Protocol.UniformSet.Clear);
             cmd.UniformI32("mode", mode);
@@ -136,7 +136,7 @@ public static class BlendTest
         for (uint id = 10; id < next; id += 3) cmd.Destroy(id);
         Apply("destroy");
         s.Pump(3);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         Native.vlqt_res_release(blend);
         s.Pump(2);
     }

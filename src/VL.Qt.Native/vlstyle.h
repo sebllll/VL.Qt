@@ -142,7 +142,7 @@ public:
     explicit VlStyle(QObject* owner);
     static VlStyle* qmlAttachedProperties(QObject* owner);
 
-    /* Protocol field id -> slot, -1 = unknown field. valueTypeOf: the field's fixed VLQT_VT_*. */
+    /* Protocol field id -> slot, -1 = unknown field. valueTypeOf: the field's fixed VLQT_VALUE_TYPE_*. */
     static int slotOf(quint16 field);
     static quint16 valueTypeOf(int slot);
 

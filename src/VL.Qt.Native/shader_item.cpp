@@ -1,4 +1,4 @@
-#include "shadereffectitem.h"
+#include "shader_item.h"
 
 #include "elements.h"
 #include "image_resource.h"
@@ -36,14 +36,14 @@ namespace {
 constexpr int kMaxBindings = 16;   // sampler bindings 1..15 (0 = uniform block)
 constexpr int kMaxMesh = 1024;     // MESH_RESOLUTION per axis (vertex count stays below ~1M)
 
-std::unordered_set<ShaderEffectItem*> s_items; // main thread
+std::unordered_set<ShaderItem*> s_items; // main thread
 uint64_t s_contentEpoch = 0, s_failureEpoch = 0;
 
 // Layer requests of the samplers: a mip filter other than None needs the layer of the sampled element rendered with
-// mipmaps. Several ShaderEffectItems can sample one element, so the layer has mipmaps while any of them asks.
+// mipmaps. Several ShaderItems can sample one element, so the layer has mipmaps while any of them asks.
 struct LayerUser
 {
-    const ShaderEffectItem* owner;
+    const ShaderItem* owner;
     bool mip;
 };
 struct LayerEntry
@@ -79,7 +79,7 @@ void settleLayer(QQuickItem* item)
     }
 }
 
-void requestLayer(QQuickItem* item, const ShaderEffectItem* owner, bool mip)
+void requestLayer(QQuickItem* item, const ShaderItem* owner, bool mip)
 {
     auto [it, added] = s_layers.try_emplace(item);
     if (added)
@@ -93,7 +93,7 @@ void requestLayer(QQuickItem* item, const ShaderEffectItem* owner, bool mip)
     settleLayer(item);
 }
 
-void releaseLayer(QQuickItem* item, const ShaderEffectItem* owner)
+void releaseLayer(QQuickItem* item, const ShaderItem* owner)
 {
     const auto it = s_layers.find(item);
     if (it == s_layers.end())
@@ -295,11 +295,11 @@ public:
 int valueBytes(quint16 vt)
 {
     switch (vt) {
-    case VLQT_VT_F32: case VLQT_VT_I32: case VLQT_VT_BOOL: return 4;
-    case VLQT_VT_VEC2: case VLQT_VT_IVEC2: return 8;
-    case VLQT_VT_VEC3: return 12;
-    case VLQT_VT_VEC4: case VLQT_VT_COLOR: return 16;
-    case VLQT_VT_MAT4: return 64;
+    case VLQT_VALUE_TYPE_F32: case VLQT_VALUE_TYPE_I32: case VLQT_VALUE_TYPE_BOOL: return 4;
+    case VLQT_VALUE_TYPE_VEC2: case VLQT_VALUE_TYPE_IVEC2: return 8;
+    case VLQT_VALUE_TYPE_VEC3: return 12;
+    case VLQT_VALUE_TYPE_VEC4: case VLQT_VALUE_TYPE_COLOR: return 16;
+    case VLQT_VALUE_TYPE_MAT4: return 64;
     default: return 0;
     }
 }
@@ -307,17 +307,17 @@ int valueBytes(quint16 vt)
 const char* valueTypeName(quint16 vt)
 {
     switch (vt) {
-    case VLQT_VT_F32: return "Float";
-    case VLQT_VT_I32: return "Int";
-    case VLQT_VT_BOOL: return "Bool";
-    case VLQT_VT_COLOR: return "Color";
-    case VLQT_VT_MAT4: return "Matrix";
-    case VLQT_VT_REF: return "Texture";
-    case VLQT_VT_U64: return "Image";
-    case VLQT_VT_VEC2: return "Vector2";
-    case VLQT_VT_VEC3: return "Vector3";
-    case VLQT_VT_VEC4: return "Vector4";
-    case VLQT_VT_IVEC2: return "Int2";
+    case VLQT_VALUE_TYPE_F32: return "Float";
+    case VLQT_VALUE_TYPE_I32: return "Int";
+    case VLQT_VALUE_TYPE_BOOL: return "Bool";
+    case VLQT_VALUE_TYPE_COLOR: return "Color";
+    case VLQT_VALUE_TYPE_MAT4: return "Matrix";
+    case VLQT_VALUE_TYPE_REF: return "Texture";
+    case VLQT_VALUE_TYPE_U64: return "Image";
+    case VLQT_VALUE_TYPE_VEC2: return "Vector2";
+    case VLQT_VALUE_TYPE_VEC3: return "Vector3";
+    case VLQT_VALUE_TYPE_VEC4: return "Vector4";
+    case VLQT_VALUE_TYPE_IVEC2: return "Int2";
     default: return "?";
     }
 }
@@ -342,15 +342,15 @@ const char* glslName(QShaderDescription::VariableType t)
 bool accepts(QShaderDescription::VariableType t, quint16 vt)
 {
     switch (t) {
-    case QShaderDescription::Float: return vt == VLQT_VT_F32;
-    case QShaderDescription::Int: return vt == VLQT_VT_I32;
-    case QShaderDescription::Bool: return vt == VLQT_VT_BOOL;
-    case QShaderDescription::Uint: return vt == VLQT_VT_BOOL; // bool (0/1) into the uint a GLSL bool reflects as
-    case QShaderDescription::Vec2: return vt == VLQT_VT_VEC2;
-    case QShaderDescription::Vec3: return vt == VLQT_VT_VEC3;
-    case QShaderDescription::Vec4: return vt == VLQT_VT_VEC4 || vt == VLQT_VT_COLOR;
-    case QShaderDescription::Int2: return vt == VLQT_VT_IVEC2;
-    case QShaderDescription::Mat4: return vt == VLQT_VT_MAT4;
+    case QShaderDescription::Float: return vt == VLQT_VALUE_TYPE_F32;
+    case QShaderDescription::Int: return vt == VLQT_VALUE_TYPE_I32;
+    case QShaderDescription::Bool: return vt == VLQT_VALUE_TYPE_BOOL;
+    case QShaderDescription::Uint: return vt == VLQT_VALUE_TYPE_BOOL; // bool (0/1) into the uint a GLSL bool reflects as
+    case QShaderDescription::Vec2: return vt == VLQT_VALUE_TYPE_VEC2;
+    case QShaderDescription::Vec3: return vt == VLQT_VALUE_TYPE_VEC3;
+    case QShaderDescription::Vec4: return vt == VLQT_VALUE_TYPE_VEC4 || vt == VLQT_VALUE_TYPE_COLOR;
+    case QShaderDescription::Int2: return vt == VLQT_VALUE_TYPE_IVEC2;
+    case QShaderDescription::Mat4: return vt == VLQT_VALUE_TYPE_MAT4;
     default: return false;
     }
 }
@@ -392,13 +392,13 @@ bool reserved(const QByteArray& name)
 
 // --- Item -----------------------------------------------------------------------------------------------------------
 
-ShaderEffectItem::ShaderEffectItem(QQuickItem* parent) : QQuickItem(parent)
+ShaderItem::ShaderItem(QQuickItem* parent) : QQuickItem(parent)
 {
     setFlag(ItemHasContents, true);
     s_items.insert(this);
 }
 
-ShaderEffectItem::~ShaderEffectItem()
+ShaderItem::~ShaderItem()
 {
     s_items.erase(this);
     for (ShaderSlot* s : {&m_frag, &m_vert}) {
@@ -425,7 +425,7 @@ ShaderEffectItem::~ShaderEffectItem()
     delete m_transparent;
 }
 
-void ShaderEffectItem::setSource(QQuickItem* source)
+void ShaderItem::setSource(QQuickItem* source)
 {
     if (source == m_source)
         return;
@@ -433,8 +433,8 @@ void ShaderEffectItem::setSource(QQuickItem* source)
     disconnect(m_sourceH);
     m_source = source;
     if (source) {
-        m_sourceW = connect(source, &QQuickItem::widthChanged, this, &ShaderEffectItem::updateImplicitSize);
-        m_sourceH = connect(source, &QQuickItem::heightChanged, this, &ShaderEffectItem::updateImplicitSize);
+        m_sourceW = connect(source, &QQuickItem::widthChanged, this, &ShaderItem::updateImplicitSize);
+        m_sourceH = connect(source, &QQuickItem::heightChanged, this, &ShaderItem::updateImplicitSize);
     }
     updateImplicitSize();
     m_layersDirty = true;
@@ -443,7 +443,7 @@ void ShaderEffectItem::setSource(QQuickItem* source)
     emit sourceChanged();
 }
 
-void ShaderEffectItem::updateImplicitSize()
+void ShaderItem::updateImplicitSize()
 {
     if (m_source)
         setImplicitSize(m_source->width(), m_source->height());
@@ -451,13 +451,13 @@ void ShaderEffectItem::updateImplicitSize()
         setImplicitSize(0, 0);
 }
 
-bool ShaderEffectItem::setShader(int stage, uint64_t id, std::string& err)
+bool ShaderItem::setShader(int stage, uint64_t id, std::string& err)
 {
     ShaderSlot& s = stage == VLQT_SHADER_STAGE_VERTEX ? m_vert : m_frag;
     if (id == s.want)
         return true;
     if (id && id != s.shown) {
-        if (res::kindOfId(id, nullptr) != VLQT_RES_KIND_SHADER) {
+        if (res::kindOfId(id, nullptr) != VLQT_RESOURCE_KIND_SHADER) {
             err = "unknown, released or non shader resource " + idText(id);
             return false;
         }
@@ -483,7 +483,7 @@ bool ShaderEffectItem::setShader(int stage, uint64_t id, std::string& err)
     return true;
 }
 
-void ShaderEffectItem::setChainPass(bool on)
+void ShaderItem::setChainPass(bool on)
 {
     if (on == m_chain)
         return;
@@ -492,14 +492,14 @@ void ShaderEffectItem::setChainPass(bool on)
     update();
 }
 
-void ShaderEffectItem::setTexelSamplers(std::vector<QByteArray> names)
+void ShaderItem::setTexelSamplers(std::vector<QByteArray> names)
 {
     m_texelSamplers = std::move(names);
     rebuild();
     update();
 }
 
-void ShaderEffectItem::setOptionalUniforms(std::vector<QByteArray> names)
+void ShaderItem::setOptionalUniforms(std::vector<QByteArray> names)
 {
     if (names == m_optional)
         return;
@@ -507,12 +507,12 @@ void ShaderEffectItem::setOptionalUniforms(std::vector<QByteArray> names)
     rebuild();
 }
 
-bool ShaderEffectItem::declares(const QByteArray& name) const
+bool ShaderItem::declares(const QByteArray& name) const
 {
     return std::find(m_declared.begin(), m_declared.end(), name) != m_declared.end();
 }
 
-void ShaderEffectItem::setBlending(bool on)
+void ShaderItem::setBlending(bool on)
 {
     if (on == m_blending)
         return;
@@ -520,7 +520,7 @@ void ShaderEffectItem::setBlending(bool on)
     update();
 }
 
-void ShaderEffectItem::setMeshResolution(int x, int y)
+void ShaderItem::setMeshResolution(int x, int y)
 {
     x = std::clamp(x, 1, kMaxMesh);
     y = std::clamp(y, 1, kMaxMesh);
@@ -532,7 +532,7 @@ void ShaderEffectItem::setMeshResolution(int x, int y)
     update();
 }
 
-bool ShaderEffectItem::advance(ShaderSlot& s)
+bool ShaderItem::advance(ShaderSlot& s)
 {
     if (!s.want)
         return false;
@@ -554,7 +554,7 @@ bool ShaderEffectItem::advance(ShaderSlot& s)
     return false; // the shown content (if any) keeps drawing, nothing to rebuild
 }
 
-void ShaderEffectItem::advanceAll()
+void ShaderItem::advanceAll()
 {
     const bool frag = advance(m_frag);
     const bool vert = advance(m_vert);
@@ -574,18 +574,18 @@ void ShaderEffectItem::advanceAll()
         update();
 }
 
-void ShaderEffectItem::afterResourceFrame()
+void ShaderItem::afterResourceFrame()
 {
     const uint64_t content = res::contentEpoch(), failure = res::failureEpoch();
     if (content == s_contentEpoch && failure == s_failureEpoch)
         return;
     s_contentEpoch = content;
     s_failureEpoch = failure;
-    for (ShaderEffectItem* item : s_items)
+    for (ShaderItem* item : s_items)
         item->advanceAll();
 }
 
-void ShaderEffectItem::releaseUniform(Uniform& u)
+void ShaderItem::releaseUniform(Uniform& u)
 {
     if (u.image)
         res::releaseElement(u.image);
@@ -595,7 +595,7 @@ void ShaderEffectItem::releaseUniform(Uniform& u)
     u.ref = nullptr;
 }
 
-void ShaderEffectItem::beginUniforms(bool clear)
+void ShaderItem::beginUniforms(bool clear)
 {
     if (!clear)
         return;
@@ -607,10 +607,10 @@ void ShaderEffectItem::beginUniforms(bool clear)
     m_structureChanged = true;
 }
 
-void ShaderEffectItem::setUniform(const char* name, int nameLen, quint16 vt, const unsigned char* value, QQuickItem* ref)
+void ShaderItem::setUniform(const char* name, int nameLen, quint16 vt, const unsigned char* value, QQuickItem* ref)
 {
     const QByteArrayView key(name, nameLen);
-    if (vt == VLQT_VT_SAMPLER) { // own table: the texture of the same name keeps its entry
+    if (vt == VLQT_VALUE_TYPE_SAMPLER) { // own table: the texture of the same name keeps its entry
         quint64 st;
         std::memcpy(&st, value, 8);
         st |= quint64(1) << 63;
@@ -638,25 +638,25 @@ void ShaderEffectItem::setUniform(const char* name, int nameLen, quint16 vt, con
         m_structureChanged = true;
     }
     switch (vt) {
-    case VLQT_VT_F32: case VLQT_VT_VEC2: case VLQT_VT_VEC3: case VLQT_VT_VEC4: case VLQT_VT_MAT4:
+    case VLQT_VALUE_TYPE_F32: case VLQT_VALUE_TYPE_VEC2: case VLQT_VALUE_TYPE_VEC3: case VLQT_VALUE_TYPE_VEC4: case VLQT_VALUE_TYPE_MAT4:
         std::memcpy(u.f, value, size_t(valueBytes(vt)));
         break;
-    case VLQT_VT_COLOR: // straight on the wire, premultiplied like QML's ShaderEffect
+    case VLQT_VALUE_TYPE_COLOR: // straight on the wire, premultiplied like QML's ShaderEffect
         std::memcpy(u.f, value, 16);
         u.f[0] *= u.f[3];
         u.f[1] *= u.f[3];
         u.f[2] *= u.f[3];
         break;
-    case VLQT_VT_I32:
+    case VLQT_VALUE_TYPE_I32:
         std::memcpy(u.i, value, 4);
         break;
-    case VLQT_VT_IVEC2:
+    case VLQT_VALUE_TYPE_IVEC2:
         std::memcpy(u.i, value, 8);
         break;
-    case VLQT_VT_BOOL:
+    case VLQT_VALUE_TYPE_BOOL:
         u.i[0] = value[0] != 0 ? 1 : 0;
         break;
-    case VLQT_VT_REF:
+    case VLQT_VALUE_TYPE_REF:
         if (u.ref != ref) {
             u.ref = ref;
             // A texture child is drawn through its layer (hidden on REPARENT); the layer stays while it lives. A Group
@@ -666,7 +666,7 @@ void ShaderEffectItem::setUniform(const char* name, int nameLen, quint16 vt, con
             m_structureChanged = true;
         }
         break;
-    case VLQT_VT_U64: {
+    case VLQT_VALUE_TYPE_U64: {
         uint64_t id;
         std::memcpy(&id, value, 8);
         if (id != u.image) {
@@ -675,7 +675,7 @@ void ShaderEffectItem::setUniform(const char* name, int nameLen, quint16 vt, con
             u.image = 0;
             u.imageContent.reset();
             u.imageTexture.reset();
-            if (id && res::kindOfId(id, nullptr) == VLQT_RES_KIND_IMAGE && res::acquire(id) == res::okRc) {
+            if (id && res::kindOfId(id, nullptr) == VLQT_RESOURCE_KIND_IMAGE && res::acquire(id) == res::okRc) {
                 u.image = id;
                 u.imageContent = res::image::ready(id);
             }
@@ -689,7 +689,7 @@ void ShaderEffectItem::setUniform(const char* name, int nameLen, quint16 vt, con
     }
 }
 
-void ShaderEffectItem::endUniforms()
+void ShaderItem::endUniforms()
 {
     if (m_structureChanged) {
         m_structureChanged = false;
@@ -701,7 +701,7 @@ void ShaderEffectItem::endUniforms()
     update();
 }
 
-void ShaderEffectItem::rebuild()
+void ShaderItem::rebuild()
 {
     m_writes.clear();
     m_samplers.clear();
@@ -820,14 +820,14 @@ void ShaderEffectItem::rebuild()
             }
             const auto sit = std::find_if(samplers.begin(), samplers.end(), [&](const SamplerDesc& s) { return s.name == u.name; });
             if (sit != samplers.end()) {
-                if (u.type != VLQT_VT_REF && u.type != VLQT_VT_U64) {
+                if (u.type != VLQT_VALUE_TYPE_REF && u.type != VLQT_VALUE_TYPE_U64) {
                     errors << QStringLiteral("uniform '%1' is a sampler2D, got %2 (use Texture or Image)")
                                   .arg(name, QLatin1StringView(valueTypeName(u.type)));
                     continue;
                 }
-                if (u.type == VLQT_VT_U64 && u.badImage)
+                if (u.type == VLQT_VALUE_TYPE_U64 && u.badImage)
                     errors << QStringLiteral("uniform '%1': unknown or released image resource").arg(name);
-                if (u.type == VLQT_VT_REF && u.ref) {
+                if (u.type == VLQT_VALUE_TYPE_REF && u.ref) {
                     bool cyclic = false;
                     for (QQuickItem* a = this; a; a = a->parentItem())
                         cyclic = cyclic || a == u.ref;
@@ -892,7 +892,7 @@ void ShaderEffectItem::rebuild()
     emit rebuilt();
 }
 
-void ShaderEffectItem::watchProvider(QSGTextureProvider* p)
+void ShaderItem::watchProvider(QSGTextureProvider* p)
 {
     for (const auto& w : m_watched)
         if (w == p)
@@ -905,7 +905,7 @@ void ShaderEffectItem::watchProvider(QSGTextureProvider* p)
     connect(p, &QObject::destroyed, this, &QQuickItem::update);
 }
 
-quint64 ShaderEffectItem::samplerState(const Sampler& s) const
+quint64 ShaderItem::samplerState(const Sampler& s) const
 {
     for (const auto& e : m_samplerStates)
         if (e.first == s.name)
@@ -913,12 +913,12 @@ quint64 ShaderEffectItem::samplerState(const Sampler& s) const
     return 0;
 }
 
-QQuickItem* ShaderEffectItem::samplerElement(const Sampler& s) const
+QQuickItem* ShaderItem::samplerElement(const Sampler& s) const
 {
     QQuickItem* item = nullptr;
     if (s.source)
         item = m_source;
-    else if (s.uniform >= 0 && m_uniforms[size_t(s.uniform)].type == VLQT_VT_REF)
+    else if (s.uniform >= 0 && m_uniforms[size_t(s.uniform)].type == VLQT_VALUE_TYPE_REF)
         item = m_uniforms[size_t(s.uniform)].ref;
     if (item) {
         if (QQuickItem* proxy = groupTextureSource(item))
@@ -927,7 +927,7 @@ QQuickItem* ShaderEffectItem::samplerElement(const Sampler& s) const
     return item;
 }
 
-void ShaderEffectItem::refreshLayerRequests(bool force)
+void ShaderItem::refreshLayerRequests(bool force)
 {
     if (!m_layersDirty && !force)
         return;
@@ -951,13 +951,13 @@ void ShaderEffectItem::refreshLayerRequests(bool force)
     m_layerItems.assign(now.begin(), now.end());
 }
 
-QSGTexture* ShaderEffectItem::samplerTexture(Sampler& s)
+QSGTexture* ShaderItem::samplerTexture(Sampler& s)
 {
     QQuickItem* item = nullptr;
     const Uniform* u = s.uniform >= 0 ? &m_uniforms[size_t(s.uniform)] : nullptr;
     if (s.source)
         item = m_source;
-    else if (u && u->type == VLQT_VT_REF)
+    else if (u && u->type == VLQT_VALUE_TYPE_REF)
         item = u->ref;
     if (item) {
         if (QQuickItem* proxy = groupTextureSource(item)) // a Group texture is its whole frame
@@ -969,7 +969,7 @@ QSGTexture* ShaderEffectItem::samplerTexture(Sampler& s)
         watchProvider(p);
         return p->texture();
     }
-    if (u && u->type == VLQT_VT_U64 && u->imageContent) {
+    if (u && u->type == VLQT_VALUE_TYPE_U64 && u->imageContent) {
         auto& self = m_uniforms[size_t(s.uniform)];
         self.imageTexture = imageTextureFor(window(), self.imageContent);
         return self.imageTexture ? textureOf(*self.imageTexture) : nullptr;
@@ -977,7 +977,7 @@ QSGTexture* ShaderEffectItem::samplerTexture(Sampler& s)
     return nullptr;
 }
 
-void ShaderEffectItem::invalidateSceneGraph()
+void ShaderItem::invalidateSceneGraph()
 {
     for (Uniform& u : m_uniforms)
         u.imageTexture.reset();
@@ -985,19 +985,19 @@ void ShaderEffectItem::invalidateSceneGraph()
     m_transparent = nullptr;
 }
 
-void ShaderEffectItem::releaseResources()
+void ShaderItem::releaseResources()
 {
     invalidateSceneGraph();
 }
 
-void ShaderEffectItem::geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry)
+void ShaderItem::geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry)
 {
     QQuickItem::geometryChange(newGeometry, oldGeometry);
     if (newGeometry.size() != oldGeometry.size())
         update();
 }
 
-void ShaderEffectItem::itemChange(ItemChange change, const ItemChangeData& data)
+void ShaderItem::itemChange(ItemChange change, const ItemChangeData& data)
 {
     QQuickItem::itemChange(change, data);
     if (change == ItemDevicePixelRatioHasChanged || change == ItemSceneChange) {
@@ -1006,7 +1006,7 @@ void ShaderEffectItem::itemChange(ItemChange change, const ItemChangeData& data)
     }
 }
 
-QSGNode* ShaderEffectItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
+QSGNode* ShaderItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
 {
     const float w = float(width()), h = float(height());
     if (!m_drawable || w <= 0 || h <= 0 || !window()) {
@@ -1039,7 +1039,7 @@ QSGNode* ShaderEffectItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
     char* ub = mat.ubuf.data();
     for (const Write& wr : m_writes) {
         const Uniform& u = m_uniforms[size_t(wr.uniform)];
-        const bool ints = u.type == VLQT_VT_I32 || u.type == VLQT_VT_IVEC2 || u.type == VLQT_VT_BOOL;
+        const bool ints = u.type == VLQT_VALUE_TYPE_I32 || u.type == VLQT_VALUE_TYPE_IVEC2 || u.type == VLQT_VALUE_TYPE_BOOL;
         std::memcpy(ub + wr.offset, ints ? static_cast<const void*>(u.i) : static_cast<const void*>(u.f), size_t(wr.size));
     }
     mat.blending = m_blending;

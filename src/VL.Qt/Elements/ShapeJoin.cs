@@ -1,6 +1,6 @@
 ﻿namespace VL.Qt.Elements
 {
-    /// <summary>How two stroke segments are joined at a corner. Values are the protocol values of <see cref="Protocol.Prop.ShapeJoin"/>.</summary>
+    /// <summary>How two stroke segments are joined at a corner. Values are the protocol values of <see cref="Protocol.PropertyId.ShapeJoin"/>.</summary>
     public enum ShapeJoin
     {
         /// <summary>Sharp corner, cut off to a bevel beyond the miter limit.</summary>

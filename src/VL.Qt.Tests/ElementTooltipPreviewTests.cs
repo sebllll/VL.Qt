@@ -46,7 +46,7 @@ namespace VL.Qt.Tests
 
         private void Show(Element? element = null)
         {
-            _reconciler.Window = new IntPtr(1);
+            _reconciler.Window = new SceneHandle(1);
             _reconciler.Update(element ?? _element, Space.DIPTopLeft);
         }
 
@@ -107,7 +107,7 @@ namespace VL.Qt.Tests
             Finish();
             Assert.That(Update(out _), Is.Not.Null);
 
-            _reconciler.Window = IntPtr.Zero;
+            _reconciler.Window = SceneHandle.Null;
             var image = Update(out var text);
             Assert.That(image, Is.Null);
             Assert.That(text, Does.EndWith("not shown in a renderer"));

@@ -2,7 +2,7 @@
 {
     /// <summary>
     /// Single-line text input (QtQuick.Controls TextField, style Basic). User changes come from Qt's
-    /// <c>editingFinished</c> (Enter or focus loss, only if the text changed) as EV_VALUE (string) into
+    /// <c>editingFinished</c> (Enter or focus loss, only if the text changed) as EVENT_VALUE (string) into
     /// <see cref="Element.Feedback"/>; SET VALUE is never echoed.
     /// </summary>
     public sealed class TextField : Element

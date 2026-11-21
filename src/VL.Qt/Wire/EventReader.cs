@@ -4,7 +4,7 @@ using System.Buffers.Binary;
 namespace VL.Qt.Wire
 {
     /// <summary>
-    /// Iterates the poll buffer filled by vlqt_window_poll (QtNative → C#). Record layout, little-endian,
+    /// Iterates the poll buffer filled by vlqt_scene_poll (QtNative → C#). Record layout, little-endian,
     /// every record padded to <see cref="Protocol.CommandAlign"/> bytes like the commands:
     /// <c>u16 event, u16 len, u32 feedbackId, u32 index, payload</c> with <c>len</c> = bytes after the 4-byte header
     /// (feedbackId + index + payload, excluding padding). Payloads per event are defined in plan 06.
@@ -26,7 +26,7 @@ namespace VL.Qt.Wire
             Error = null;
         }
 
-        /// <summary>Event id of the current record (<see cref="Protocol.Ev"/>).</summary>
+        /// <summary>Event id of the current record (<see cref="Protocol.EventId"/>).</summary>
         public ushort Event { get; private set; }
 
         /// <summary>Feedback id given in BIND.</summary>

@@ -74,14 +74,14 @@ public static class VideoAudioTest
                     do
                     {
                         // Ask for what is there, like a reader that needs exactly that much (no underrun counted).
-                        n = Native.ResReadAudio(id, Span<float>.Empty, Channels, out var avail);
+                        n = Native.AudioTapRead(id, Span<float>.Empty, Channels, out var avail);
                         if (n < 0 || avail.available == 0)
                         {
                             if (n >= 0)
                                 Account(id, buf, 0, avail);
                             break;
                         }
-                        n = Native.ResReadAudio(id, buf.AsSpan(0, Math.Min(avail.available, buf.Length / Channels) * Channels), Channels, out var st);
+                        n = Native.AudioTapRead(id, buf.AsSpan(0, Math.Min(avail.available, buf.Length / Channels) * Channels), Channels, out var st);
                         if (n >= 0)
                             Account(id, buf, n, st);
                     } while (n > 0);
@@ -160,8 +160,8 @@ public static class VideoAudioTest
 
     private static ulong CreateTap(Scenario s, int sampleRate)
     {
-        var rc = Native.vlqt_res_create(Protocol.ResKind.AudioTap, out var id);
-        var init = rc == 0 ? Native.vlqt_res_audio_tap_init(id, Channels, sampleRate) : rc;
+        var rc = Native.vlqt_res_create(Protocol.ResourceKind.AudioTap, out var id);
+        var init = rc == 0 ? Native.vlqt_audio_tap_init(id, Channels, sampleRate) : rc;
         s.Check(rc == 0 && init == 0, $"videoaudio: tap {Channels} ch {sampleRate} Hz created ({rc}, {init})");
         return id;
     }
@@ -184,7 +184,7 @@ public static class VideoAudioTest
         s.Check(a != null && b != null, "videoaudio: assets found");
         if (a == null || b == null)
             return;
-        var w = Native.vlqt_window_create(640, 360, "VL.Qt video audio test");
+        var w = NativeCalls.CreateWindow(640, 360, "VL.Qt video audio test");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
@@ -205,7 +205,7 @@ public static class VideoAudioTest
                 s.Pump(1);
                 int n = NativeCalls.Poll(w, buf);
                 foreach (var r in MeasureTest.Parse(buf.AsSpan(0, Math.Max(n, 0)), s.Check))
-                    if (r.Handle == Handle && r.Event == Protocol.Ev.Media)
+                    if (r.Handle == Handle && r.Event == Protocol.EventId.Media)
                         dur = r.V[1];
                 NativeCalls.ResPoll(resBuf);
                 Thread.Sleep(10);
@@ -221,17 +221,17 @@ public static class VideoAudioTest
         }
 
         var tap1 = CreateTap(s, 48000);
-        Native.ResReadAudio(tap1, Span<float>.Empty, Channels, out var st0);
+        Native.AudioTapRead(tap1, Span<float>.Empty, Channels, out var st0);
         s.Check(st0.flags == 0 && st0.capacity == 24000 && st0.available == 0, $"videoaudio: fresh tap not attached, 500 ms ring (flags {st0.flags}, capacity {st0.capacity})");
         using var reader = new Reader { Id = tap1 };
 
         cmd.Reset();
-        cmd.Create(VideoId, Protocol.Type.Video);
+        cmd.Create(VideoId, Protocol.ElementType.Video);
         cmd.SetPlace(VideoId, 0, 0, 640, 360);
-        cmd.SetString(VideoId, Protocol.Prop.Source, a);
-        cmd.SetBool(VideoId, Protocol.Prop.Loop, true);
-        cmd.SetU64(VideoId, Protocol.Prop.AudioTap, tap1);
-        cmd.SetBool(VideoId, Protocol.Prop.Playing, true);
+        cmd.SetString(VideoId, Protocol.PropertyId.Source, a);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Loop, true);
+        cmd.SetU64(VideoId, Protocol.PropertyId.AudioTap, tap1);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Playing, true);
         cmd.Reparent(VideoId, 0, 0);
         cmd.Bind(VideoId, Handle, 0);
         Apply("create video with tap, playing");
@@ -257,12 +257,12 @@ public static class VideoAudioTest
         s.Check(wrap.Changes == snap.Changes && wrap.Gaps == 0, $"videoaudio: loop wrap without discontinuity ({snap.Changes} -> {wrap.Changes}) and gap ({wrap.Gaps}, max {wrap.MaxGapUs} us)");
 
         // 3. Pause -> play: PLAYING off, then a new segment.
-        cmd.SetBool(VideoId, Protocol.Prop.Playing, false);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Playing, false);
         Apply("pause");
         Frames(800);
         var paused = reader.Snapshot(tap1);
         s.Check(paused.Flags == Protocol.AudioTap.Attached, $"videoaudio: paused: flags attached only ({paused.Flags})");
-        cmd.SetBool(VideoId, Protocol.Prop.Playing, true);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Playing, true);
         Apply("play");
         Frames(800);
         var played = reader.Snapshot(tap1);
@@ -279,28 +279,28 @@ public static class VideoAudioTest
 
         // 5. Tap switch during playback (C# never sends 0 in between): the old tap stops, the new one runs at its rate.
         var tap2 = CreateTap(s, 44100);
-        cmd.SetU64(VideoId, Protocol.Prop.AudioTap, tap2);
+        cmd.SetU64(VideoId, Protocol.PropertyId.AudioTap, tap2);
         Apply("switch to tap 2 (44.1 kHz) while playing");
         reader.Id = tap2;
         Frames(300);
         var rate2 = RateOver(reader, tap2, 44100, 2000);
         var s2 = reader.Snapshot(tap2);
-        Native.ResReadAudio(tap1, Span<float>.Empty, Channels, out var st1);
+        Native.AudioTapRead(tap1, Span<float>.Empty, Channels, out var st1);
         var leftover = st1.available;
-        Native.ResDropAudio(tap1, 1 << 20, Channels, out _);
+        Native.AudioTapDrop(tap1, 1 << 20, Channels, out _);
         Frames(300);
-        Native.ResReadAudio(tap1, Span<float>.Empty, Channels, out st1);
+        Native.AudioTapRead(tap1, Span<float>.Empty, Channels, out st1);
         s.Check(st1.flags == 0 && st1.available == 0, $"videoaudio: old tap detached, no new frames (flags {st1.flags}, {leftover} frames left over, then {st1.available})");
         s.Check(rate2 > 0.97 && rate2 < 1.03 && s2.Peak > 0.01f && s2.Flags == (Protocol.AudioTap.Attached | Protocol.AudioTap.Playing),
             $"videoaudio: tap switch live: {rate2:F3} s/s at 44.1 kHz, peak {s2.Peak:F3}, flags {s2.Flags}");
 
         // 6. A second Video with the same tap is ignored (one player per tap): still 1 s per s, not 2.
-        cmd.Create(Video2Id, Protocol.Type.Video);
+        cmd.Create(Video2Id, Protocol.ElementType.Video);
         cmd.SetPlace(Video2Id, 0, 0, 160, 90);
-        cmd.SetString(Video2Id, Protocol.Prop.Source, a);
-        cmd.SetBool(Video2Id, Protocol.Prop.Loop, true);
-        cmd.SetU64(Video2Id, Protocol.Prop.AudioTap, tap2);
-        cmd.SetBool(Video2Id, Protocol.Prop.Playing, true);
+        cmd.SetString(Video2Id, Protocol.PropertyId.Source, a);
+        cmd.SetBool(Video2Id, Protocol.PropertyId.Loop, true);
+        cmd.SetU64(Video2Id, Protocol.PropertyId.AudioTap, tap2);
+        cmd.SetBool(Video2Id, Protocol.PropertyId.Playing, true);
         cmd.Reparent(Video2Id, 0, 1);
         Apply("second video on the same tap (warning, ignored)");
         Frames(500);
@@ -311,17 +311,17 @@ public static class VideoAudioTest
 
         // 7. Source change: new segment.
         var src0 = reader.Snapshot(tap2);
-        cmd.SetString(VideoId, Protocol.Prop.Source, b);
+        cmd.SetString(VideoId, Protocol.PropertyId.Source, b);
         Apply("source without audio");
         Frames(800);
-        cmd.SetString(VideoId, Protocol.Prop.Source, a);
+        cmd.SetString(VideoId, Protocol.PropertyId.Source, a);
         Apply("source with audio again");
         Frames(1500);
         var src1 = reader.Snapshot(tap2);
         s.Check(src1.Changes > src0.Changes && src1.Frames > src0.Frames + 44100 / 2, $"videoaudio: source change raises the discontinuity ({src0.Changes} -> {src1.Changes})");
 
         // 8. Detach (0): flags off, nothing written any more.
-        cmd.SetU64(VideoId, Protocol.Prop.AudioTap, 0);
+        cmd.SetU64(VideoId, Protocol.PropertyId.AudioTap, 0);
         Apply("tap 0 (Qt output again)");
         Frames(300);
         var det0 = reader.Snapshot(tap2);
@@ -330,7 +330,7 @@ public static class VideoAudioTest
         s.Check(det1.Flags == 0 && det1.Frames == det0.Frames, $"videoaudio: detached: flags {det1.Flags}, {det1.Frames - det0.Frames} frames after detach");
 
         // 9. Attach again, then DESTROY of the playing element: the element reference goes, the release frees the tap.
-        cmd.SetU64(VideoId, Protocol.Prop.AudioTap, tap2);
+        cmd.SetU64(VideoId, Protocol.PropertyId.AudioTap, tap2);
         Apply("attach tap 2 again");
         var reT = Stopwatch.StartNew();
         Frames(5000, () => reader.Snapshot(tap2).Frames > det1.Frames);
@@ -343,7 +343,7 @@ public static class VideoAudioTest
         Native.vlqt_res_release(tap1);
         Native.vlqt_res_release(tap2);
         Frames(100);
-        int r1 = Native.ResReadAudio(tap1, Span<float>.Empty, Channels, out _), r2 = Native.ResReadAudio(tap2, Span<float>.Empty, Channels, out _);
+        int r1 = Native.AudioTapRead(tap1, Span<float>.Empty, Channels, out _), r2 = Native.AudioTapRead(tap2, Span<float>.Empty, Channels, out _);
         s.Check(r1 == (int)Native.Result.UnknownId && r2 == (int)Native.Result.UnknownId, $"videoaudio: released taps are freed after DESTROY (read {r1}, {r2})");
         var end = reader.Snapshot(tap2);
         s.Info($"videoaudio: sync median {syncMedian:F2} ms |p90| {syncP90:F2} ms; rate 48k {rate1:F3}, msaa {rateMsaa:F3}, 44.1k {rate2:F3}; " +
@@ -358,22 +358,22 @@ public static class VideoAudioTest
         {
             ulong ta = CreateTap(s, 48000), tb = CreateTap(s, 44100);
             reader.Id = ta;
-            cmd.Create(VideoId, Protocol.Type.Video);
+            cmd.Create(VideoId, Protocol.ElementType.Video);
             cmd.SetPlace(VideoId, 0, 0, 320, 180);
-            cmd.SetString(VideoId, Protocol.Prop.Source, a);
-            cmd.SetBool(VideoId, Protocol.Prop.Loop, true);
-            cmd.SetU64(VideoId, Protocol.Prop.AudioTap, ta);
-            cmd.SetBool(VideoId, Protocol.Prop.Playing, true);
+            cmd.SetString(VideoId, Protocol.PropertyId.Source, a);
+            cmd.SetBool(VideoId, Protocol.PropertyId.Loop, true);
+            cmd.SetU64(VideoId, Protocol.PropertyId.AudioTap, ta);
+            cmd.SetBool(VideoId, Protocol.PropertyId.Playing, true);
             cmd.Reparent(VideoId, 0, 0);
             Apply($"stress {round}: create");
             Frames(250);
             if (round % 2 == 1)
             {
-                cmd.SetU64(VideoId, Protocol.Prop.AudioTap, 0);
+                cmd.SetU64(VideoId, Protocol.PropertyId.AudioTap, 0);
                 Apply($"stress {round}: tap 0");
                 Frames(50);
             }
-            cmd.SetU64(VideoId, Protocol.Prop.AudioTap, tb);
+            cmd.SetU64(VideoId, Protocol.PropertyId.AudioTap, tb);
             Apply($"stress {round}: tap b");
             reader.Id = tb;
             Frames(150 + 50 * round);
@@ -383,21 +383,21 @@ public static class VideoAudioTest
             Native.vlqt_res_release(ta);
             Native.vlqt_res_release(tb);
             Frames(30);
-            freed &= Native.ResReadAudio(ta, Span<float>.Empty, Channels, out _) == (int)Native.Result.UnknownId && Native.ResReadAudio(tb, Span<float>.Empty, Channels, out _) == (int)Native.Result.UnknownId;
+            freed &= Native.AudioTapRead(ta, Span<float>.Empty, Channels, out _) == (int)Native.Result.UnknownId && Native.AudioTapRead(tb, Span<float>.Empty, Channels, out _) == (int)Native.Result.UnknownId;
         }
         s.Check(freed, "videoaudio: 6 rounds of DESTROY while playing after a tap switch / re-attach: taps freed, no crash");
 
         var tw = CreateTap(s, 48000);
-        cmd.Create(VideoId, Protocol.Type.Video);
-        cmd.SetString(VideoId, Protocol.Prop.Source, a);
-        cmd.SetU64(VideoId, Protocol.Prop.AudioTap, tw);
-        cmd.SetBool(VideoId, Protocol.Prop.Playing, true);
+        cmd.Create(VideoId, Protocol.ElementType.Video);
+        cmd.SetString(VideoId, Protocol.PropertyId.Source, a);
+        cmd.SetU64(VideoId, Protocol.PropertyId.AudioTap, tw);
+        cmd.SetBool(VideoId, Protocol.PropertyId.Playing, true);
         cmd.Reparent(VideoId, 0, 0);
         Apply("video with tap for window destroy");
         Frames(300);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         Native.vlqt_res_release(tw);
         s.Pump(2);
-        s.Check(Native.ResReadAudio(tw, Span<float>.Empty, Channels, out _) == (int)Native.Result.UnknownId, "videoaudio: window destroy with an attached tap frees the tap");
+        s.Check(Native.AudioTapRead(tw, Span<float>.Empty, Channels, out _) == (int)Native.Result.UnknownId, "videoaudio: window destroy with an attached tap frees the tap");
     }
 }

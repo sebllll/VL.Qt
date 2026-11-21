@@ -18,8 +18,8 @@ public static class RectangleTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt rectangle test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt rectangle test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
@@ -30,9 +30,9 @@ public static class RectangleTest
         }
         void Rect(uint id, float x, float y, float r, float g, float b, float a = 1)
         {
-            cmd.Create(id, Protocol.Type.Rectangle);
+            cmd.Create(id, Protocol.ElementType.Rectangle);
             cmd.SetPlace(id, x, y, 200, 150);
-            cmd.SetColor(id, Protocol.Prop.Color, r, g, b, a);
+            cmd.SetColor(id, Protocol.PropertyId.Color, r, g, b, a);
             cmd.Reparent(id, 0, 1000);
         }
 
@@ -40,14 +40,14 @@ public static class RectangleTest
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // Blue fill, red border 10 (drawn inside the bounds).
         Rect(Stroked, 100, 100, 0, 0, 1);
-        cmd.SetColor(Stroked, Protocol.Prop.BorderColor, 1, 0, 0, 1);
-        cmd.SetF32(Stroked, Protocol.Prop.BorderWidth, 10);
+        cmd.SetColor(Stroked, Protocol.PropertyId.BorderColor, 1, 0, 0, 1);
+        cmd.SetF32(Stroked, Protocol.PropertyId.BorderWidth, 10);
         // Border color without width: no border (StrokeWidth default 0, unlike Qt's 1).
         Rect(ColorOnly, 400, 100, 0, 1, 0);
-        cmd.SetColor(ColorOnly, Protocol.Prop.BorderColor, 1, 0, 0, 1);
+        cmd.SetColor(ColorOnly, Protocol.PropertyId.BorderColor, 1, 0, 0, 1);
         // Radius 50: corners cut.
         Rect(Rounded, 100, 350, 1, 1, 1);
-        cmd.SetF32(Rounded, Protocol.Prop.Radius, 50);
+        cmd.SetF32(Rounded, Protocol.PropertyId.Radius, 50);
         // Straight alpha 0.5 red over background.
         Rect(Translucent, 400, 350, 1, 0, 0, 0.5f);
         CheckApply("rectangle scene");
@@ -66,10 +66,10 @@ public static class RectangleTest
 
         // Change border/radius later; width 0 removes the border again.
         cmd.Reset();
-        cmd.SetF32(Stroked, Protocol.Prop.BorderWidth, 0);
-        cmd.SetF32(Rounded, Protocol.Prop.Radius, 0);
-        cmd.SetColor(ColorOnly, Protocol.Prop.BorderColor, 0, 0, 1, 1);
-        cmd.SetF32(ColorOnly, Protocol.Prop.BorderWidth, 20);
+        cmd.SetF32(Stroked, Protocol.PropertyId.BorderWidth, 0);
+        cmd.SetF32(Rounded, Protocol.PropertyId.Radius, 0);
+        cmd.SetColor(ColorOnly, Protocol.PropertyId.BorderColor, 0, 0, 1, 1);
+        cmd.SetF32(ColorOnly, Protocol.PropertyId.BorderWidth, 20);
         CheckApply("rectangle update");
         s.Pump(3);
         using (var a = s.Grab(w, "05_rect_update.png"))
@@ -79,7 +79,7 @@ public static class RectangleTest
 
         // Wrong value type -> BadArgument, no crash.
         cmd.Reset();
-        cmd.SetColor(Rounded, Protocol.Prop.Radius, 1, 1, 1, 1);
+        cmd.SetColor(Rounded, Protocol.PropertyId.Radius, 1, 1, 1, 1);
         var rcv = Apply();
         s.Check(rcv == Native.Result.BadArgument, $"radius as color -> BadArgument ({rcv}: {Native.LastError()})");
 
@@ -88,9 +88,9 @@ public static class RectangleTest
         for (uint i = 0; i < 1000; i++)
         {
             uint id = 100 + i;
-            cmd.Create(id, Protocol.Type.Rectangle);
+            cmd.Create(id, Protocol.ElementType.Rectangle);
             cmd.SetPlace(id, i % 790, (i * 7) % 590, 10, 10);
-            cmd.SetColor(id, Protocol.Prop.Color, (i % 10) / 10f, 1, 0, 1);
+            cmd.SetColor(id, Protocol.PropertyId.Color, (i % 10) / 10f, 1, 0, 1);
             cmd.Reparent(id, 0, 1000);
         }
         var sw = Stopwatch.StartNew();
@@ -113,7 +113,7 @@ public static class RectangleTest
             cmd.Reset();
             float r = (run % 2) * 0.5f;
             for (uint i = 0; i < 1000; i++)
-                cmd.SetColor(100 + i, Protocol.Prop.Color, r, 0, 1, 1);
+                cmd.SetColor(100 + i, Protocol.PropertyId.Color, r, 0, 1, 1);
             sw.Restart();
             Apply();
             times[run] = sw.Elapsed.TotalMilliseconds;
@@ -126,6 +126,6 @@ public static class RectangleTest
         s.Info($"1000 SET Color/frame: median {median:F3} ms, min {times[0]:F3} ms, max {times[^1]:F3} ms");
         using (s.Grab(w, "05_rect_1000.png")) { }
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 }

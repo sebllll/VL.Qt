@@ -1,15 +1,15 @@
 /* events.h - back channel of QtNative (plan 06): bindings, measured values of bound items and input handlers.
  *
- * Every bound item (BIND with sinkHandle != 0) reports
- *   EV_MEASURED     (f32 w, f32 h)          implicitWidth/Height (Text: actual text size)
- *   EV_SCENE_BOUNDS (f32 x, f32 y, f32 w, f32 h)  mapRectToItem(root, 0, 0, width, height): item geometry in the
+ * Every bound item (BIND with feedbackId != 0) reports
+ *   EVENT_MEASURED     (f32 w, f32 h)          implicitWidth/Height (Text: actual text size)
+ *   EVENT_SCENE_BOUNDS (f32 x, f32 y, f32 w, f32 h)  mapRectToItem(root, 0, 0, width, height): item geometry in the
  *                   coordinates of the window root (origin of the Space, centre or top left), axis-aligned, incl.
  *                   transforms (not boundingRect: Text reports its painted rect there)
  * in logical pixels, and Video items additionally
- *   EV_MEDIA        (f32 position, f32 duration)  seconds, 0 until the media is loaded
+ *   EVENT_MEDIA        (f32 position, f32 duration)  seconds, 0 until the media is loaded
  * only when the value changed since the last record sent for the same handle. Items with an error state (QML
  * property vlqtError, see elements.cpp: Image could not be loaded, Video player error) additionally report
- *   EV_ERROR        (UTF-8 text, no terminator)  on change; empty = error cleared. Nothing is sent while there
+ *   EVENT_ERROR        (UTF-8 text, no terminator)  on change; empty = error cleared. Nothing is sent while there
  *                   is no error (initial state = no error)
  * Measure on change: MEASURED / SCENE_BOUNDS are read only for items whose geometry changed since the last
  * poll, and for everything below them (an ancestor's move moves the subtree in the scene). A change is the item's
@@ -22,15 +22,15 @@
  * slot index); index is an offset relative to that slot, reserved for items serving several slots.
  *
  * Button items additionally report Qt `clicked` as
- *   EV_CLICK (u32 count delta)              clicked signals since the last poll
+ *   EVENT_CLICK (u32 count delta)              clicked signals since the last poll
  * Value inputs (SpinBox; CheckBox, Switch, Slider, TextField) additionally report user changes as
- *   EV_VALUE (u16 valueType, u16 0, value like SET)  after a user change since the last poll, with the value of the
+ *   EVENT_VALUE (u16 valueType, u16 0, value like SET)  after a user change since the last poll, with the value of the
  *                   last one, captured when Qt's user-only signal fired (SpinBox valueModified); never for SET (no
  *                   echo). A new handle drops a change not polled yet. Schema and guarantees: protocol.h, elements.cpp.
  * QmlElement items additionally report the changes of the properties and signals declared in the root of their QML
- * file: EV_QML_PROPERTY (the last value of each changed property, never for the patch's own SET_QML_PROPERTIES) and
- * EV_QML_SIGNAL (every emitted signal, cap 256 per poll, QmlItem in qmlitem.h), formats in protocol.h; their errors (load,
- * type, rejected properties) arrive as EV_ERROR like those of Image/Video.
+ * file: EVENT_QML_PROPERTY (the last value of each changed property, never for the patch's own SET_QML_PROPERTIES) and
+ * EVENT_QML_SIGNAL (every emitted signal, cap 256 per poll, QmlItem in qmlitem.h), formats in protocol.h; their errors (load,
+ * type, rejected properties) arrive as EVENT_ERROR like those of Image/Video.
  * Elements have no pointer handlers of their own: without an attached input handler an item is transparent for input.
  * BIND flags are ignored for elements (CANCEL_PRESS has no effect since #320, the old Interactive/Pointer flags of
  * #208 are reserved).
@@ -40,23 +40,23 @@
  * and applies the properties set before, BIND routes its events to a sink handle (index 0), DESTROY of the handler or
  * of its element removes it. Several handlers per item are fine (each reports to its own sink). Events, only while
  * bound:
- *   Hover handler   EV_HOVER (u8) on change. Not blocking: hover reaches every handler under the cursor. No position
+ *   Hover handler   EVENT_HOVER (u8) on change. Not blocking: hover reaches every handler under the cursor. No position
  *                   (positions come from the Point handler only).
  *   Tap handler     (TapHandler, gesturePolicy ReleaseWithinBounds: exclusive grab on press, the topmost tap handler
- *                   wins, tap when released inside) EV_PRESS (u8) on change, EV_CLICK (u32) taps since the last poll,
- *                   EV_TAP_COUNT (u32) tapCount of the last tap on change (2 = double click; never 0: the value of
- *                   the last tap stays until the next one), EV_LONG_PRESS (u32) long
+ *                   wins, tap when released inside) EVENT_PRESS (u8) on change, EVENT_CLICK (u32) taps since the last poll,
+ *                   EVENT_TAP_COUNT (u32) tapCount of the last tap on change (2 = double click; never 0: the value of
+ *                   the last tap stays until the next one), EVENT_LONG_PRESS (u32) long
  *                   presses since the last poll. ACCEPTED_BUTTONS / ACCEPTED_DEVICES filter.
- *   Point handler   (PointHandler, passive grab: presses pass through to the handlers below) EV_ACTIVE (u8) on change,
- *                   EV_POINTER (f32 x, f32 y) item-local while active (mouse button down, finger, pen), on change.
+ *   Point handler   (PointHandler, passive grab: presses pass through to the handlers below) EVENT_ACTIVE (u8) on change,
+ *                   EVENT_POINTER (f32 x, f32 y) item-local while active (mouse button down, finger, pen), on change.
  *                   ACCEPTED_BUTTONS / ACCEPTED_DEVICES filter. ACCEPTED_BUTTONS 0: the PointHandler takes
  *                   touch and pen only, an internal HoverHandler (mouse + touchpad of ACCEPTED_DEVICES) makes the mouse
  *                   active while it is over the item and reports its position; created/removed when the property
  *                   changes (no ACTIVE 1 left hanging).
- *   Wheel handler   (WheelHandler, target null: moves nothing) EV_WHEEL (f32 x, f32 y) = sum of angleDelta / 120 since
+ *   Wheel handler   (WheelHandler, target null: moves nothing) EVENT_WHEEL (f32 x, f32 y) = sum of angleDelta / 120 since
  *                   the last poll (notches; trackpads fractional), only when != 0; after a poll with motion once (0, 0).
  *                   ACCEPTED_DEVICES filter.
- *   Drag handler    (DragHandler, target null) EV_ACTIVE (u8) on change, EV_DRAG (f32 x, f32 y) = translation of
+ *   Drag handler    (DragHandler, target null) EVENT_ACTIVE (u8) on change, EVENT_DRAG (f32 x, f32 y) = translation of
  *                   the running drag since the press in the parent's space, after DRAG_AXIS and DRAG_LIMITS, on change
  *                   and once per new drag. It keeps the last value after the release until the next drag; a new sink
  *                   gets nothing until the next drag. MOVES_ELEMENT on (default): the item's drag offset = offset at
@@ -77,7 +77,7 @@
  *                   offset itself. DRAG_AXIS sets xAxis/yAxis.enabled; a drag running more than 45 degrees off the
  *                   enabled axis is then not taken and reaches a parent's drag handler (child x only + vertical drag
  *                   moves the parent, tested).
- *   Touch Points    (TouchPointsHandler, touch.h) EV_TOUCH_POINTS = u32 count, then per point u32 id, f32 x, f32 y
+ *   Touch Points    (TouchPointsHandler, touch.h) EVENT_TOUCH_POINTS = u32 count, then per point u32 id, f32 x, f32 y
  *                   (item-local, logical pixels), f32 pressure, f32 w, f32 h (ellipse diameters; pressure and size are
  *                   device-dependent, often constant / 0x0), sorted by id, on change (press, move, release of one of its
  *                   points); count 0 once when the last point goes. At most 64 points are sent (the record length is
@@ -85,28 +85,28 @@
  *                   the item. Passive grab: Tap, Point, Drag and Pinch at the same item keep working. OCCLUSION on
  *                   (default): a press that an element on top already grabs (Tap/Drag handler, Button) is not taken.
  *                   ACCEPTED_DEVICES filter (Qt default: all, i.e. the mouse appears as point id 0).
- *   Pinch handler   (PinchHandler, target null) EV_ACTIVE (u8) on change, EV_PINCH (f32 scale, f32 rotation in
+ *   Pinch handler   (PinchHandler, target null) EVENT_ACTIVE (u8) on change, EVENT_PINCH (f32 scale, f32 rotation in
  *                   degrees clockwise, f32 x, f32 y translation, f32 x, f32 y pivot, in the parent's space) while
  *                   active, on change and once per new gesture. Values count from Qt's activation (SmokeTest: when the
  *                   second finger touches); the pivot is the centroid then, the translation the movement of the pivot
  *                   point (the centroid's movement without a change of the finger count; not Qt's activeTranslation,
  *                   which is wrong after a change of the finger count, touch.cpp). The
- *                   last EV_PINCH comes before EV_ACTIVE 0; the 1/0/0 Qt resets to at the end is never sent, a new sink
+ *                   last EVENT_PINCH comes before EVENT_ACTIVE 0; the 1/0/0 Qt resets to at the end is never sent, a new sink
  *                   gets nothing until the next gesture. MINIMUM_POINT_COUNT / MAXIMUM_POINT_COUNT (default 2/2),
  *                   ACCEPTED_DEVICES. The gesture runs while Qt's pinch is active or at least MINIMUM_POINT_COUNT points
  *                   lie on the item (PinchState, touch.h): a third finger (more than MAXIMUM_POINT_COUNT) pauses it,
  *                   lifting it goes on from the paused value, no jump.
- * A new handle or the DESTROY of a handler send EV_HOVER 0 / EV_PRESS 0 / EV_ACTIVE 0 to the old handle if 1 was sent
- * (EV_WHEEL (0, 0) after motion) and forget the sent state: the new handle gets the current state with the next poll.
- * A new handle during a press cancels it for the Tap handler: no EV_PRESS 1 and no tap until the next press; taps and
- * long presses not yet polled are dropped, as is wheel motion, and the new handle gets EV_TAP_COUNT only from its first tap. A Text item with at least one handler hit-tests against
+ * A new handle or the DESTROY of a handler send EVENT_HOVER 0 / EVENT_PRESS 0 / EVENT_ACTIVE 0 to the old handle if 1 was sent
+ * (EVENT_WHEEL (0, 0) after motion) and forget the sent state: the new handle gets the current state with the next poll.
+ * A new handle during a press cancels it for the Tap handler: no EVENT_PRESS 1 and no tap until the next press; taps and
+ * long presses not yet polled are dropped, as is wheel motion, and the new handle gets EVENT_TAP_COUNT only from its first tap. A Text item with at least one handler hit-tests against
  * the painted text rect (TextMask as containmentMask), not the item rectangle; line-/glyph-exact testing is not done.
  *
  * Window-level (handle 0, index 0, not a sink), queued by the poll after a move/resize/state change
  * (QWindow x/y/width/height/windowState/screen/visible changed) and once after creation:
- *   EV_WINDOW_GEOMETRY (f32 x, f32 y, f32 w, f32 h, u32 flags, f32 cx, f32 cy)
+ *   EVENT_WINDOW_GEOMETRY (f32 x, f32 y, f32 w, f32 h, u32 flags, f32 cx, f32 cy)
  *                   x/y = outer top-left incl. frame (QWindow::framePosition), w/h = client size, logical pixels (DIP)
- *                   = the convention of vlqt_window_create_at, so reading and setting round-trips. flags =
+ *                   = the convention of vlqt_window_create, so reading and setting round-trips. flags =
  *                   vlqt_window_state (minimized/maximized/fullscreen/visible): consumers persisting the geometry
  *                   skip minimized/fullscreen records (Windows reports -32000 positions for minimized windows).
  *                   cx/cy = client top-left (QWindow::position, DIP), for the Client Bounds output. */
@@ -142,7 +142,7 @@ struct SentState {
     float measured[2] = {};
     float bounds[4] = {};
     float media[2] = {};
-    QString error;      // last EV_ERROR text (empty = none sent or cleared)
+    QString error;      // last EVENT_ERROR text (empty = none sent or cleared)
     bool hasMeasured = false;
     bool hasBounds = false;
     bool hasMedia = false;
@@ -191,8 +191,8 @@ class DragState : public QObject
     Q_OBJECT
 public:
     DragState(QObject* drag, Scene& scene, quint32 handlerId) : QObject(drag), drag_(drag), scene_(scene), id_(handlerId) {}
-    float delta[2] = {};     // translation of the running (or last) drag since the press, after axis + limits (EV_DRAG)
-    quint32 drags = 0;       // drags started: a new drag sends EV_DRAG even with the same value as the last one
+    float delta[2] = {};     // translation of the running (or last) drag since the press, after axis + limits (EVENT_DRAG)
+    quint32 drags = 0;       // drags started: a new drag sends EVENT_DRAG even with the same value as the last one
 
 public Q_SLOTS:
     void onActiveChanged();
@@ -209,33 +209,33 @@ private:
 
 /* Input handler object: CREATE reserves the id, REPARENT attaches the QML handler to an element item. */
 struct HandlerNode {
-    quint16 type = 0;            // VLQT_TYPE_*_HANDLER
+    quint16 type = 0;            // VLQT_ELEMENT_TYPE_*_HANDLER
     quint32 owner = 0;           // element id the handler is attached to, 0 = not attached yet
     QObject* object = nullptr;   // QML handler (QObject child of the owner's item), nullptr until the REPARENT
     TapState* tap = nullptr;     // Tap handler: signal counters (child of object)
     DragState* drag = nullptr;   // Drag handler: offset bookkeeping (child of object)
-    bool movesElement = true;    // VLQT_PROP_MOVES_ELEMENT (Drag)
-    qint32 dragAxis = 0;         // VLQT_PROP_DRAG_AXIS (Drag): 0 both, 1 x only, 2 y only
-    float dragLimits[4] = {-kInf, -kInf, kInf, kInf}; // VLQT_PROP_DRAG_LIMITS (Drag): minX, minY, maxX, maxY
-    float sentDrag[2] = {};      // last EV_DRAG sent (0, 0 = nothing sent)
-    quint32 sentDrags = 0;       // DragState::drags at the last EV_DRAG
+    bool movesElement = true;    // VLQT_PROPERTY_MOVES_ELEMENT (Drag)
+    qint32 dragAxis = 0;         // VLQT_PROPERTY_DRAG_AXIS (Drag): 0 both, 1 x only, 2 y only
+    float dragLimits[4] = {-kInf, -kInf, kInf, kInf}; // VLQT_PROPERTY_DRAG_LIMITS (Drag): minX, minY, maxX, maxY
+    float sentDrag[2] = {};      // last EVENT_DRAG sent (0, 0 = nothing sent)
+    quint32 sentDrags = 0;       // DragState::drags at the last EVENT_DRAG
     QObject* hover = nullptr;    // Point handler with ACCEPTED_BUTTONS 0: internal HoverHandler for the mouse
     TouchPointsHandler* points = nullptr; // Touch Points: the handler itself; Pinch: internal point counter
     PinchState* pinch = nullptr; // Pinch handler: gesture bookkeeping (child of object)
-    bool occlusion = true;       // VLQT_PROP_OCCLUSION (Touch Points)
-    std::optional<qint32> minimumPointCount; // VLQT_PROP_MINIMUM_POINT_COUNT (Pinch), Qt default (2) while unset
-    std::optional<qint32> maximumPointCount; // VLQT_PROP_MAXIMUM_POINT_COUNT (Pinch), Qt default (2) while unset
-    QByteArray sentTouch;        // last EV_TOUCH_POINTS payload (empty or count 0 = no point sent)
-    float sentPinch[6] = {};     // last EV_PINCH sent
-    quint32 sentGestures = 0;    // PinchState::gestures at the last EV_PINCH
-    quint32 sink = 0;            // BIND sinkHandle, 0 = unbound
-    std::optional<qint32> acceptedButtons; // VLQT_PROP_ACCEPTED_BUTTONS, Qt default (left) while unset
-    std::optional<qint32> acceptedDevices; // VLQT_PROP_ACCEPTED_DEVICES, Qt default while unset
+    bool occlusion = true;       // VLQT_PROPERTY_OCCLUSION (Touch Points)
+    std::optional<qint32> minimumPointCount; // VLQT_PROPERTY_MINIMUM_POINT_COUNT (Pinch), Qt default (2) while unset
+    std::optional<qint32> maximumPointCount; // VLQT_PROPERTY_MAXIMUM_POINT_COUNT (Pinch), Qt default (2) while unset
+    QByteArray sentTouch;        // last EVENT_TOUCH_POINTS payload (empty or count 0 = no point sent)
+    float sentPinch[6] = {};     // last EVENT_PINCH sent
+    quint32 sentGestures = 0;    // PinchState::gestures at the last EVENT_PINCH
+    quint32 feedbackId = 0;            // BIND feedbackId, 0 = unbound
+    std::optional<qint32> acceptedButtons; // VLQT_PROPERTY_ACCEPTED_BUTTONS, Qt default (left) while unset
+    std::optional<qint32> acceptedDevices; // VLQT_PROPERTY_ACCEPTED_DEVICES, Qt default while unset
     // Last values sent to sink.
     bool sentHover = false;
     bool sentPress = false;
     bool sentActive = false;
-    bool sentWheel = false;      // EV_WHEEL with motion sent: the next poll without motion sends (0, 0)
+    bool sentWheel = false;      // EVENT_WHEEL with motion sent: the next poll without motion sends (0, 0)
     bool hasPointer = false;
     quint32 sentTapCount = 0;
     float sentPointer[2] = {};
@@ -250,7 +250,7 @@ public:
     Handlers(const Handlers&) = delete;
     Handlers& operator=(const Handlers&) = delete;
 
-    /* Creates the QML handler of a VLQT_TYPE_*_HANDLER type at item; nullptr on failure (logged). */
+    /* Creates the QML handler of a VLQT_ELEMENT_TYPE_*_HANDLER type at item; nullptr on failure (logged). */
     QObject* createHandler(quint16 type, QQuickItem* item);
 
     bool isHovered(const QObject* hover) const { return props.hovered.read(hover).toBool(); }
@@ -285,10 +285,10 @@ bool isHandlerType(quint16 type);
 int reparentHandler(Scene& scene, HandlerNode& handler, quint32 handlerId, quint32 parentId, std::string& err);
 int setHandler(Scene& scene, HandlerNode& handler, quint16 prop, const Value& v, std::string& err);
 void bindHandler(Scene& scene, HandlerNode& handler, quint32 handle);
-/* Removes the handler (QML object, owner list, table entry); resets the sent state of its sink (EV_HOVER 0 ...). */
+/* Removes the handler (QML object, owner list, table entry); resets the sent state of its sink (EVENT_HOVER 0 ...). */
 void destroyHandler(Scene& scene, quint32 handlerId);
 
-/* Queues EV_MEASURED / EV_SCENE_BOUNDS / EV_MEDIA / EV_ERROR / Button EV_CLICK / EV_VALUE for every bound item whose value changed
+/* Queues EVENT_MEASURED / EVENT_SCENE_BOUNDS / EVENT_MEDIA / EVENT_ERROR / Button EVENT_CLICK / EVENT_VALUE for every bound item whose value changed
  * and the events of the bound input handlers. Called by Scene::poll, i.e. after processEvents (polish/layout done)
  * when the host polls once per frame. Geometry only of the items marked since the last poll and their subtrees. */
 void collectMeasurements(Scene& scene);
@@ -301,7 +301,7 @@ void listPolled(Scene& scene, Node& node);
 
 /* Connects the window's geometry/state signals to Scene::geometryDirty (called by the Scene ctor). */
 void watchWindowGeometry(Scene& scene);
-/* Queues EV_WINDOW_GEOMETRY if the window moved, resized or changed state since the last poll. */
+/* Queues EVENT_WINDOW_GEOMETRY if the window moved, resized or changed state since the last poll. */
 void collectWindowGeometry(Scene& scene);
 
 } // namespace vlqt

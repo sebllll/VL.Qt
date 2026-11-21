@@ -25,7 +25,7 @@ public static class ResourceStressTest
     private const int MaxLive = 48, MaxStale = 256;
     private const uint FirstElement = 1000;
 
-    private sealed record Elem(uint Id, IntPtr Win);
+    private sealed record Elem(uint Id, SceneHandle Win);
 
     /// <summary>Random resource actions for StressSeconds (default 60 s) with StressSeed (sanitizer runs).</summary>
     [Test, Explicit("s by default; parameters StressSeconds / StressSeed"), Category("resource-stress")]
@@ -84,7 +84,7 @@ public static class ResourceStressTest
         var live = new List<ulong>();
         var stale = new List<(ulong id, long frame)>();
         var elements = new List<Elem>();
-        var windows = new List<IntPtr>();
+        var windows = new List<SceneHandle>();
         uint nextElement = FirstElement;
         var cmd = new CommandWriter();
         var buf = new byte[256 * 1024];
@@ -108,7 +108,7 @@ public static class ResourceStressTest
             {
                 var ev = BitConverter.ToUInt16(buf, at);
                 var len = BitConverter.ToUInt16(buf, at + 2);
-                if (ev == Protocol.ResEv.State && len >= 9)
+                if (ev == Protocol.ResourceEventId.State && len >= 9)
                     states[buf[at + 12] & 7]++;
                 at += (4 + len + 3) & ~3;
             }
@@ -121,20 +121,20 @@ public static class ResourceStressTest
             Poll();
         }
 
-        IntPtr OpenWindow(string title, float x)
+        SceneHandle OpenWindow(string title, float x)
         {
-            var w = Native.vlqt_window_create_at(x, 60, 320, 200, title, 0);
-            if (w == IntPtr.Zero)
+            var w = Native.vlqt_window_create(x, 60, 320, 200, title, 0);
+            if (w == SceneHandle.Null)
             {
                 Violation($"window {title}: {Native.LastError()}");
-                return IntPtr.Zero;
+                return SceneHandle.Null;
             }
             Native.vlqt_window_show(w);
             windows.Add(w);
             return w;
         }
 
-        void Apply(IntPtr w, string what, params Native.Result[] okCodes)
+        void Apply(SceneHandle w, string what, params Native.Result[] okCodes)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             if (rc != 0 && !okCodes.Contains(rc)) Violation($"apply {what} -> {rc} ({Native.LastError()})");
@@ -168,7 +168,7 @@ public static class ResourceStressTest
                 var pick = rng.Next(files.Sum(f => f.weight));
                 path = files.First(f => (pick -= f.weight) < 0).path;
             }
-            var rc = Native.vlqt_res_load_image(id, path, 0);
+            var rc = Native.vlqt_image_load(id, path, 0);
             if (rc != 0) Violation($"load_image {Path.GetFileName(path)} on a live id -> {rc}");
         }
 
@@ -178,14 +178,14 @@ public static class ResourceStressTest
             if (rng.Next(100) < 5) (w, h) = (1920, 1080);
             else (w, h) = (rng.Next(1, 400), rng.Next(1, 300));
             var desc = new Native.vlqt_pixel_desc { width = w, height = h, row_bytes = 0, format = 7, premultiplied = 0 };
-            var rc = Native.ResSetPixels(id, desc, pixelBuf.AsSpan(0, w * h * 4));
+            var rc = Native.ImageSetPixels(id, desc, pixelBuf.AsSpan(0, w * h * 4));
             if (rc != 0) Violation($"set_pixels {w}x{h} on a live id -> {rc}");
         }
 
         void NewResource()
         {
             if (live.Count >= MaxLive) return;
-            var rc = Native.vlqt_res_create(Protocol.ResKind.Image, out var id);
+            var rc = Native.vlqt_res_create(Protocol.ResourceKind.Image, out var id);
             if (rc != 0 || id == 0) { Violation($"res_create -> {rc}"); return; }
             live.Add(id);
             if (rng.Next(100) < 55)
@@ -232,11 +232,11 @@ public static class ResourceStressTest
             switch (rng.Next(6))
             {
                 case 0: name = "release"; rc = (int)Native.vlqt_res_release(id); break;
-                case 1: name = "load_image"; rc = (int)Native.vlqt_res_load_image(id, files[rng.Next(files.Count)].path, 0); break;
-                case 2: name = "set_pixels"; rc = (int)Native.ResSetPixels(id, new Native.vlqt_pixel_desc { width = 8, height = 8, format = 7 }, pixelBuf.AsSpan(0, 8 * 8 * 4)); break;
+                case 1: name = "load_image"; rc = (int)Native.vlqt_image_load(id, files[rng.Next(files.Count)].path, 0); break;
+                case 2: name = "set_pixels"; rc = (int)Native.ImageSetPixels(id, new Native.vlqt_pixel_desc { width = 8, height = 8, format = 7 }, pixelBuf.AsSpan(0, 8 * 8 * 4)); break;
                 case 3: name = "wait"; rc = Native.vlqt_res_wait(id, 0); break;
                 case 4: name = "read_pixels"; rc = NativeCalls.ReadPixels(id, new byte[64], out _, out _); break;
-                default: name = "snapshot"; rc = windows.Count > 0 ? (int)Native.vlqt_res_snapshot(id, windows[0], FirstElement, 1) : (int)Native.Result.UnknownId; break;
+                default: name = "snapshot"; rc = windows.Count > 0 ? (int)Native.vlqt_snapshot_start(id, windows[0], FirstElement, 1) : (int)Native.Result.UnknownId; break;
             }
             // Also while the id is still in the table (element ref or running decode): vlqt.h promises UnknownId for every call.
             if (strict && aliveBefore)
@@ -259,10 +259,10 @@ public static class ResourceStressTest
             var w = windows[rng.Next(windows.Count)];
             var e = new Elem(nextElement++, w);
             cmd.Reset();
-            cmd.Create(e.Id, Protocol.Type.Image);
+            cmd.Create(e.Id, Protocol.ElementType.Image);
             cmd.SetPlace(e.Id, rng.Next(0, 250), rng.Next(0, 150), rng.Next(10, 120), rng.Next(10, 100));
             var img = PickAnyId();
-            if (img != 0) cmd.SetU64(e.Id, Protocol.Prop.Image, img);
+            if (img != 0) cmd.SetU64(e.Id, Protocol.PropertyId.Image, img);
             cmd.Reparent(e.Id, 0, 0);
             Apply(w, "element create", Native.Result.BadArgument); // the stale id of the property
             elements.Add(e);
@@ -274,7 +274,7 @@ public static class ResourceStressTest
             Act("element retarget");
             var e = elements[rng.Next(elements.Count)];
             cmd.Reset();
-            cmd.SetU64(e.Id, Protocol.Prop.Image, PickAnyId());
+            cmd.SetU64(e.Id, Protocol.PropertyId.Image, PickAnyId());
             Apply(e.Win, "element retarget", Native.Result.BadArgument);
         }
 
@@ -296,7 +296,7 @@ public static class ResourceStressTest
             {
                 Act("window open");
                 var w = OpenWindow("VL.Qt resource-stress 2", 420);
-                if (w == IntPtr.Zero) return;
+                if (w == SceneHandle.Null) return;
                 for (int i = rng.Next(1, 6); i > 0; i--) NewElement();
             }
             else
@@ -305,7 +305,7 @@ public static class ResourceStressTest
                 var w = windows[1];
                 windows.RemoveAt(1);
                 elements.RemoveAll(e => e.Win == w);
-                Native.vlqt_window_destroy(w);
+                Native.vlqt_scene_destroy(w);
             }
         }
 
@@ -313,7 +313,7 @@ public static class ResourceStressTest
         void Hotswap()
         {
             Act("hotswap");
-            foreach (var w in windows.Skip(1)) Native.vlqt_window_destroy(w);
+            foreach (var w in windows.Skip(1)) Native.vlqt_scene_destroy(w);
             windows.RemoveRange(1, windows.Count - 1);
             cmd.Reset();
             foreach (var e in elements.Where(e => e.Win == windows[0])) cmd.Destroy(e.Id);
@@ -332,8 +332,8 @@ public static class ResourceStressTest
 
         // --- run ---
         var w1 = OpenWindow("VL.Qt resource-stress", 60);
-        s.Check(w1 != IntPtr.Zero, "window " + (w1 == IntPtr.Zero ? Native.LastError() : ""));
-        if (w1 == IntPtr.Zero)
+        s.Check(w1 != SceneHandle.Null, "window " + (w1 == SceneHandle.Null ? Native.LastError() : ""));
+        if (w1 == SceneHandle.Null)
         {
             Volatile.Write(ref done, true);
             return;
@@ -372,7 +372,7 @@ public static class ResourceStressTest
 
         // --- end: elements, windows and resources go, the table must run empty ---
         lastAction = "cleanup";
-        foreach (var w in windows.Skip(1)) Native.vlqt_window_destroy(w);
+        foreach (var w in windows.Skip(1)) Native.vlqt_scene_destroy(w);
         windows.RemoveRange(1, windows.Count - 1);
         cmd.Reset();
         foreach (var e in elements.Where(e => e.Win == windows[0])) cmd.Destroy(e.Id);
@@ -383,7 +383,7 @@ public static class ResourceStressTest
             if (Native.vlqt_res_release(id) != 0) Violation("cleanup release of a live id");
             Forget(id);
         }
-        Native.vlqt_window_destroy(windows[0]);
+        Native.vlqt_scene_destroy(windows[0]);
         windows.Clear();
         var list = new Native.vlqt_res_info[64];
         var left = -1;

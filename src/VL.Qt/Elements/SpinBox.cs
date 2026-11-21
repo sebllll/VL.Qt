@@ -2,7 +2,7 @@
 {
     /// <summary>
     /// Integer input (QtQuick.Controls SpinBox, style Basic). User changes come from Qt's <c>valueModified</c>
-    /// as EV_VALUE into <see cref="Element.Feedback"/>; SET VALUE is never echoed. Defaults match QtNative (full int range,
+    /// as EVENT_VALUE into <see cref="Element.Feedback"/>; SET VALUE is never echoed. Defaults match QtNative (full int range,
     /// not Qt's 0–99). Lengths in units.
     /// </summary>
     public sealed class SpinBox : Element

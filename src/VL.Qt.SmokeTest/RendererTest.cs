@@ -52,8 +52,8 @@ public static class RendererTest
         var clear = new Color4(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         var title = "VL.Qt renderer test";
         var r = new WindowRenderer(scene, title, new RectangleF(100, 100, 800, 600));
-        s.Check(r.Window != IntPtr.Zero && r.Error.Length == 0, "WindowRenderer creates the window " + r.Error);
-        if (r.Window == IntPtr.Zero)
+        s.Check(r.Window != SceneHandle.Null && r.Error.Length == 0, "WindowRenderer creates the window " + r.Error);
+        if (r.Window == SceneHandle.Null)
             return;
 
         // Bounds on create: outer top-left = Bounds.X/Y in DIP * DPI scale (the Skia rule).
@@ -138,8 +138,8 @@ public static class RendererTest
             s.Check(Near(Px(a, 550, 150), 255, 0, 0), "scene survives the resize");
         }
         s.Check(Native.vlqt_window_set_title(r.Window, title) == 0, "set_title ok");
-        s.Check(Native.vlqt_window_set_title(IntPtr.Zero, "x") == Native.Result.NullHandle, "set_title null window -> NullHandle");
-        s.Check(Native.vlqt_window_resize(IntPtr.Zero, 1, 1) == Native.Result.NullHandle, "resize null window -> NullHandle");
+        s.Check(Native.vlqt_window_set_title(SceneHandle.Null, "x") == Native.Result.NullHandle, "set_title null window -> NullHandle");
+        s.Check(Native.vlqt_window_resize(SceneHandle.Null, 1, 1) == Native.Result.NullHandle, "resize null window -> NullHandle");
 
         // Null input = empty scene: everything destroyed, registry empty.
         Frame(null);
@@ -152,14 +152,14 @@ public static class RendererTest
         s.Check(scene.Count == 3, "tree shown again");
         r.Dispose();
         s.Check(scene.Count == 0, $"Dispose clears the reconciler ({scene.Count})");
-        s.Check(r.Window == IntPtr.Zero, "Dispose destroys the window");
+        s.Check(r.Window == SceneHandle.Null, "Dispose destroys the window");
         r.AfterEvents(); // pump after dispose: no-op
         s.Check(!r.IsVisible, "not visible after Dispose");
         r.Dispose();      // idempotent
         s.Pump(2);
     }
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool PostMessage(IntPtr h, uint msg, IntPtr w, IntPtr l);
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool PostMessage(IntPtr h, uint msg, SceneHandle w, IntPtr l);
     private const uint WM_CLOSE = 0x0010;
 
     // Is Visible: live from Qt, true from the creation on (no pump needed), false after X/Hide, true again after
@@ -180,8 +180,8 @@ public static class RendererTest
         var r = vSync is bool v
             ? new WindowRenderer(new SceneRegistry(), title, bounds, vSync: v)
             : new WindowRenderer(new SceneRegistry(), title, bounds);
-        s.Check(r.Window != IntPtr.Zero, $"{what} window created " + r.Error);
-        if (r.Window == IntPtr.Zero)
+        s.Check(r.Window != SceneHandle.Null, $"{what} window created " + r.Error);
+        if (r.Window == SceneHandle.Null)
             return;
         var clear = new Color4(0, 0, 0, 1);
         for (int i = 0; i < 5; i++)
@@ -199,7 +199,7 @@ public static class RendererTest
     [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern uint GetDpiForSystem();
 
     /// <summary>
-    /// Geometry on create + EV_WINDOW_GEOMETRY (prep for #143): the reported geometry (outer top-left + client
+    /// Geometry on create + EVENT_WINDOW_GEOMETRY (prep for #143): the reported geometry (outer top-left + client
     /// size, DIP) equals the Bounds given on create, so it round-trips; a resize is reported; empty bounds (sentinel) and
     /// bounds on no screen are both centered on the primary working area with the fallback size.
     /// </summary>
@@ -322,8 +322,8 @@ public static class RendererTest
         var scene = new SceneRegistry();
         var clear = new Color4(0, 0, 0, 1);
         var r = new WindowRenderer(scene, title, new RectangleF(0, 0, 320, 240));
-        s.Check(r.Window != IntPtr.Zero, "window created " + r.Error);
-        if (r.Window == IntPtr.Zero)
+        s.Check(r.Window != SceneHandle.Null, "window created " + r.Error);
+        if (r.Window == SceneHandle.Null)
             return;
         void Frame(WindowRenderer w)
         {
@@ -343,7 +343,7 @@ public static class RendererTest
         if (OperatingSystem.IsWindows()) // Linux: no way to send the X (WM_CLOSE) without a test hook in QtNative -> Hide instead
         {
             var hwnd = FindWindow(null, title);
-            s.Check(hwnd != IntPtr.Zero && PostMessage(hwnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero), "WM_CLOSE posted (X)");
+            s.Check(hwnd != IntPtr.Zero && PostMessage(hwnd, WM_CLOSE, SceneHandle.Null, IntPtr.Zero), "WM_CLOSE posted (X)");
             Frame(r);
             s.Check(closes == 1 && !r.IsVisible, $"X hides, Is Visible false (closes {closes})");
         }

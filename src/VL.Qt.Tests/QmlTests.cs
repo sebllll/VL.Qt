@@ -13,7 +13,7 @@ using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
-using P = VL.Qt.Wire.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.PropertyId;
 
 namespace VL.Qt.Tests
 {
@@ -50,14 +50,14 @@ namespace VL.Qt.Tests
 
         private static byte[] U16(int v) => new[] { (byte)(v & 0xFF), (byte)(v >> 8) };
 
-        /// <summary>EV_QML_PROPERTY payload: u16 name length, u16 value type, name, padding to 4, value.</summary>
+        /// <summary>EVENT_QML_PROPERTY payload: u16 name length, u16 value type, name, padding to 4, value.</summary>
         public static byte[] Property(string name, ushort type, byte[] value)
         {
             var n = Encoding.UTF8.GetBytes(name);
             return U16(n.Length).Concat(U16(type)).Concat(Pad(n)).Concat(value).ToArray();
         }
 
-        /// <summary>EV_QML_SIGNAL payload: u16 name length, u16 argument count, name, padding to 4, per argument u16 type, u16 0, value, padding.</summary>
+        /// <summary>EVENT_QML_SIGNAL payload: u16 name length, u16 argument count, name, padding to 4, per argument u16 type, u16 0, value, padding.</summary>
         public static byte[] Signal(string name, params (ushort Type, byte[] Value)[] args)
         {
             var n = Encoding.UTF8.GetBytes(name);
@@ -73,17 +73,17 @@ namespace VL.Qt.Tests
     {
         private static IEnumerable<TestCaseData> Supported()
         {
-            yield return new TestCaseData(1.5f, Protocol.Vt.F32);
-            yield return new TestCaseData(2.25d, Protocol.Vt.F32);
-            yield return new TestCaseData(-7, Protocol.Vt.I32);
-            yield return new TestCaseData(true, Protocol.Vt.Bool);
-            yield return new TestCaseData("text", Protocol.Vt.String);
-            yield return new TestCaseData("", Protocol.Vt.String);
-            yield return new TestCaseData(new Color4(1, 0.5f, 0.25f, 0.75f), Protocol.Vt.Color);
-            yield return new TestCaseData(new Vector2(1, 2), Protocol.Vt.Vec2);
-            yield return new TestCaseData(new Vector3(1, 2, 3), Protocol.Vt.Vec3);
-            yield return new TestCaseData(new Vector4(1, 2, 3, 4), Protocol.Vt.Vec4);
-            yield return new TestCaseData(new RectangleF(1, 2, 3, 4), Protocol.Vt.Rectf);
+            yield return new TestCaseData(1.5f, Protocol.ValueType.F32);
+            yield return new TestCaseData(2.25d, Protocol.ValueType.F32);
+            yield return new TestCaseData(-7, Protocol.ValueType.I32);
+            yield return new TestCaseData(true, Protocol.ValueType.Bool);
+            yield return new TestCaseData("text", Protocol.ValueType.String);
+            yield return new TestCaseData("", Protocol.ValueType.String);
+            yield return new TestCaseData(new Color4(1, 0.5f, 0.25f, 0.75f), Protocol.ValueType.Color);
+            yield return new TestCaseData(new Vector2(1, 2), Protocol.ValueType.Vec2);
+            yield return new TestCaseData(new Vector3(1, 2, 3), Protocol.ValueType.Vec3);
+            yield return new TestCaseData(new Vector4(1, 2, 3, 4), Protocol.ValueType.Vec4);
+            yield return new TestCaseData(new RectangleF(1, 2, 3, 4), Protocol.ValueType.Rectf);
         }
 
         [TestCaseSource(nameof(Supported))]
@@ -186,7 +186,7 @@ namespace VL.Qt.Tests
                 ["null"] = null!,
             });
             Assert.That(p.Count, Is.EqualTo(1));
-            Assert.That(p.TryGetValue("ok", out var v) && v.ValueType == Protocol.Vt.F32, Is.True);
+            Assert.That(p.TryGetValue("ok", out var v) && v.ValueType == Protocol.ValueType.F32, Is.True);
             Assert.That(p.TryGetValue("long", out _), Is.False);
             var lines = p.Problems.Split('\n').Select(l => l.TrimEnd('\r')).ToArray();
             Assert.That(lines, Has.Length.EqualTo(3));
@@ -389,16 +389,16 @@ namespace VL.Qt.Tests
         [Test]
         public void Bytes_F32_AndDouble() =>
             Assert.That(Encode(("a", 1.5f), ("bb", 2d)), Is.EqualTo(Command(9, 2,
-                Entry(Protocol.Vt.F32, "a", F32(1.5f)) + Entry(Protocol.Vt.F32, "bb", F32(2f)))));
+                Entry(Protocol.ValueType.F32, "a", F32(1.5f)) + Entry(Protocol.ValueType.F32, "bb", F32(2f)))));
 
         [Test]
         public void Bytes_I32() =>
-            Assert.That(Encode(("count", -2)), Is.EqualTo(Command(9, 1, Entry(Protocol.Vt.I32, "count", "FEFFFFFF"))));
+            Assert.That(Encode(("count", -2)), Is.EqualTo(Command(9, 1, Entry(Protocol.ValueType.I32, "count", "FEFFFFFF"))));
 
         [Test]
         public void Bytes_Bool() =>
             Assert.That(Encode(("on", true), ("off", false)), Is.EqualTo(Command(9, 2,
-                Entry(Protocol.Vt.Bool, "on", "01") + Entry(Protocol.Vt.Bool, "off", "00"))));
+                Entry(Protocol.ValueType.Bool, "on", "01") + Entry(Protocol.ValueType.Bool, "off", "00"))));
 
         [Test]
         public void Bytes_String_Utf8_LengthInBytes()
@@ -407,33 +407,33 @@ namespace VL.Qt.Tests
             var utf8 = Encoding.UTF8.GetBytes(text);
             Assert.That(utf8.Length, Is.EqualTo(2 + 2 + 3 + 4));
             Assert.That(Encode(("label", text)), Is.EqualTo(Command(9, 1,
-                Entry(Protocol.Vt.String, "label", U32((uint)utf8.Length) + Hex(utf8)))));
+                Entry(Protocol.ValueType.String, "label", U32((uint)utf8.Length) + Hex(utf8)))));
         }
 
         [Test]
         public void Bytes_String_Empty() =>
-            Assert.That(Encode(("s", "")), Is.EqualTo(Command(9, 1, Entry(Protocol.Vt.String, "s", U32(0)))));
+            Assert.That(Encode(("s", "")), Is.EqualTo(Command(9, 1, Entry(Protocol.ValueType.String, "s", U32(0)))));
 
         [Test]
         public void Bytes_Color() =>
             Assert.That(Encode(("fill", new Color4(1f, 0.5f, 0.25f, 0.75f))), Is.EqualTo(Command(9, 1,
-                Entry(Protocol.Vt.Color, "fill", F32(1f) + F32(0.5f) + F32(0.25f) + F32(0.75f)))));
+                Entry(Protocol.ValueType.Color, "fill", F32(1f) + F32(0.5f) + F32(0.25f) + F32(0.75f)))));
 
         [Test]
         public void Bytes_Vectors() =>
             Assert.That(Encode(("v2", new Vector2(1, 2)), ("v3", new Vector3(1, 2, 3)), ("v4", new Vector4(1, 2, 3, 4))), Is.EqualTo(Command(9, 3,
-                Entry(Protocol.Vt.Vec2, "v2", F32(1) + F32(2))
-                + Entry(Protocol.Vt.Vec3, "v3", F32(1) + F32(2) + F32(3))
-                + Entry(Protocol.Vt.Vec4, "v4", F32(1) + F32(2) + F32(3) + F32(4)))));
+                Entry(Protocol.ValueType.Vec2, "v2", F32(1) + F32(2))
+                + Entry(Protocol.ValueType.Vec3, "v3", F32(1) + F32(2) + F32(3))
+                + Entry(Protocol.ValueType.Vec4, "v4", F32(1) + F32(2) + F32(3) + F32(4)))));
 
         [Test]
         public void Bytes_Rect() =>
             Assert.That(Encode(("box", new RectangleF(10, 20, 300, 400))), Is.EqualTo(Command(9, 1,
-                Entry(Protocol.Vt.Rectf, "box", F32(10) + F32(20) + F32(300) + F32(400)))));
+                Entry(Protocol.ValueType.Rectf, "box", F32(10) + F32(20) + F32(300) + F32(400)))));
 
         [Test]
         public void Bytes_NonAsciiName_PaddedByBytes() =>
-            Assert.That(Encode(("größe", 1f)), Is.EqualTo(Command(9, 1, Entry(Protocol.Vt.F32, "größe", F32(1f)))));
+            Assert.That(Encode(("größe", 1f)), Is.EqualTo(Command(9, 1, Entry(Protocol.ValueType.F32, "größe", F32(1f)))));
 
         [Test]
         public void Bytes_NothingToSend_WritesNoCommand()
@@ -444,22 +444,22 @@ namespace VL.Qt.Tests
         }
     }
 
-    /// <summary>QmlEvents: decoding of EV_QML_PROPERTY and EV_QML_SIGNAL, for every value type and for broken payloads.</summary>
+    /// <summary>QmlEvents: decoding of EVENT_QML_PROPERTY and EVENT_QML_SIGNAL, for every value type and for broken payloads.</summary>
     public class QmlEventsTests
     {
         private static IEnumerable<TestCaseData> Values()
         {
-            yield return new TestCaseData(Protocol.Vt.F32, QmlWire.F(1.5f), 1.5f);
-            yield return new TestCaseData(Protocol.Vt.I32, QmlWire.I32(-42), -42);
-            yield return new TestCaseData(Protocol.Vt.Bool, QmlWire.Bool(true), true);
-            yield return new TestCaseData(Protocol.Vt.Bool, QmlWire.Bool(false), false);
-            yield return new TestCaseData(Protocol.Vt.String, QmlWire.Str("hä€"), "hä€");
-            yield return new TestCaseData(Protocol.Vt.String, QmlWire.Str(""), "");
-            yield return new TestCaseData(Protocol.Vt.Color, QmlWire.F(1, 0.5f, 0.25f, 0.75f), new Color4(1, 0.5f, 0.25f, 0.75f));
-            yield return new TestCaseData(Protocol.Vt.Vec2, QmlWire.F(1, 2), new Vector2(1, 2));
-            yield return new TestCaseData(Protocol.Vt.Vec3, QmlWire.F(1, 2, 3), new Vector3(1, 2, 3));
-            yield return new TestCaseData(Protocol.Vt.Vec4, QmlWire.F(1, 2, 3, 4), new Vector4(1, 2, 3, 4));
-            yield return new TestCaseData(Protocol.Vt.Rectf, QmlWire.F(10, 20, 30, 40), new RectangleF(10, 20, 30, 40));
+            yield return new TestCaseData(Protocol.ValueType.F32, QmlWire.F(1.5f), 1.5f);
+            yield return new TestCaseData(Protocol.ValueType.I32, QmlWire.I32(-42), -42);
+            yield return new TestCaseData(Protocol.ValueType.Bool, QmlWire.Bool(true), true);
+            yield return new TestCaseData(Protocol.ValueType.Bool, QmlWire.Bool(false), false);
+            yield return new TestCaseData(Protocol.ValueType.String, QmlWire.Str("hä€"), "hä€");
+            yield return new TestCaseData(Protocol.ValueType.String, QmlWire.Str(""), "");
+            yield return new TestCaseData(Protocol.ValueType.Color, QmlWire.F(1, 0.5f, 0.25f, 0.75f), new Color4(1, 0.5f, 0.25f, 0.75f));
+            yield return new TestCaseData(Protocol.ValueType.Vec2, QmlWire.F(1, 2), new Vector2(1, 2));
+            yield return new TestCaseData(Protocol.ValueType.Vec3, QmlWire.F(1, 2, 3), new Vector3(1, 2, 3));
+            yield return new TestCaseData(Protocol.ValueType.Vec4, QmlWire.F(1, 2, 3, 4), new Vector4(1, 2, 3, 4));
+            yield return new TestCaseData(Protocol.ValueType.Rectf, QmlWire.F(10, 20, 30, 40), new RectangleF(10, 20, 30, 40));
         }
 
         [TestCaseSource(nameof(Values))]
@@ -476,7 +476,7 @@ namespace VL.Qt.Tests
         {
             foreach (var name in new[] { "a", "ab", "abc", "abcd", "abcde", "größe", "x€" })
             {
-                Assert.That(QmlEvents.TryDecodeProperty(QmlWire.Property(name, Protocol.Vt.I32, QmlWire.I32(9)), out var n, out var v), Is.True, name);
+                Assert.That(QmlEvents.TryDecodeProperty(QmlWire.Property(name, Protocol.ValueType.I32, QmlWire.I32(9)), out var n, out var v), Is.True, name);
                 Assert.That((n, v), Is.EqualTo((name, (object)9)), name);
             }
         }
@@ -484,16 +484,16 @@ namespace VL.Qt.Tests
         [Test]
         public void Property_Malformed_IsRejected()
         {
-            var good = QmlWire.Property("abc", Protocol.Vt.F32, QmlWire.F(1));
+            var good = QmlWire.Property("abc", Protocol.ValueType.F32, QmlWire.F(1));
             Assert.That(QmlEvents.TryDecodeProperty(good, out _, out _), Is.True);
             Assert.That(QmlEvents.TryDecodeProperty(good.AsSpan(0, 3), out _, out _), Is.False, "shorter than the header");
             Assert.That(QmlEvents.TryDecodeProperty(good.AsSpan(0, good.Length - 1), out _, out _), Is.False, "truncated value");
             Assert.That(QmlEvents.TryDecodeProperty(good.AsSpan(0, 6), out _, out _), Is.False, "name cut off");
-            Assert.That(QmlEvents.TryDecodeProperty(QmlWire.Property("", Protocol.Vt.F32, QmlWire.F(1)), out _, out _), Is.False, "empty name");
-            Assert.That(QmlEvents.TryDecodeProperty(QmlWire.Property("a", Protocol.Vt.Mat4, new byte[64]), out _, out _), Is.False, "unsupported value type");
+            Assert.That(QmlEvents.TryDecodeProperty(QmlWire.Property("", Protocol.ValueType.F32, QmlWire.F(1)), out _, out _), Is.False, "empty name");
+            Assert.That(QmlEvents.TryDecodeProperty(QmlWire.Property("a", Protocol.ValueType.Mat4, new byte[64]), out _, out _), Is.False, "unsupported value type");
             Assert.That(QmlEvents.TryDecodeProperty(QmlWire.Property("a", 0, new byte[4]), out _, out _), Is.False, "value type 0");
             // string whose length field points beyond the payload
-            var bad = QmlWire.Property("a", Protocol.Vt.String, QmlWire.Str("hello"));
+            var bad = QmlWire.Property("a", Protocol.ValueType.String, QmlWire.Str("hello"));
             Assert.That(QmlEvents.TryDecodeProperty(bad.AsSpan(0, bad.Length - 3), out _, out _), Is.False, "string cut off");
         }
 
@@ -518,11 +518,11 @@ namespace VL.Qt.Tests
         public void Signal_MixedArguments_AreAlignedIndividually()
         {
             var payload = QmlWire.Signal("finished",
-                (Protocol.Vt.String, QmlWire.Str("done")),
-                (Protocol.Vt.Bool, QmlWire.Bool(true)),
-                (Protocol.Vt.F32, QmlWire.F(1)),
-                (Protocol.Vt.Color, QmlWire.F(1, 0, 0, 1)),
-                (Protocol.Vt.I32, QmlWire.I32(7)));
+                (Protocol.ValueType.String, QmlWire.Str("done")),
+                (Protocol.ValueType.Bool, QmlWire.Bool(true)),
+                (Protocol.ValueType.F32, QmlWire.F(1)),
+                (Protocol.ValueType.Color, QmlWire.F(1, 0, 0, 1)),
+                (Protocol.ValueType.I32, QmlWire.I32(7)));
             Assert.That(QmlEvents.TryDecodeSignal(payload, out var s), Is.True);
             Assert.That(s.Name, Is.EqualTo("finished"));
             Assert.That(s.Arguments.ToArray(), Is.EqualTo(new object[] { "done", true, 1f, new Color4(1, 0, 0, 1), 7 }));
@@ -531,16 +531,16 @@ namespace VL.Qt.Tests
         [Test]
         public void Signal_Malformed_IsRejected()
         {
-            var good = QmlWire.Signal("clicked", (Protocol.Vt.I32, QmlWire.I32(1)), (Protocol.Vt.F32, QmlWire.F(2)));
+            var good = QmlWire.Signal("clicked", (Protocol.ValueType.I32, QmlWire.I32(1)), (Protocol.ValueType.F32, QmlWire.F(2)));
             Assert.That(QmlEvents.TryDecodeSignal(good, out _), Is.True);
             Assert.That(QmlEvents.TryDecodeSignal(good.AsSpan(0, 3), out _), Is.False, "shorter than the header");
             Assert.That(QmlEvents.TryDecodeSignal(good.AsSpan(0, good.Length - 4), out _), Is.False, "second argument missing");
             Assert.That(QmlEvents.TryDecodeSignal(good.AsSpan(0, good.Length - 1), out _), Is.False, "second argument truncated");
-            Assert.That(QmlEvents.TryDecodeSignal(QmlWire.Signal("", (Protocol.Vt.I32, QmlWire.I32(1))), out _), Is.False, "empty name");
-            Assert.That(QmlEvents.TryDecodeSignal(QmlWire.Signal("s", (Protocol.Vt.Mat4, new byte[64])), out _), Is.False, "unknown argument type");
-            var tooMany = QmlWire.Signal("s", Enumerable.Repeat((Protocol.Vt.I32, QmlWire.I32(1)), 65).ToArray());
+            Assert.That(QmlEvents.TryDecodeSignal(QmlWire.Signal("", (Protocol.ValueType.I32, QmlWire.I32(1))), out _), Is.False, "empty name");
+            Assert.That(QmlEvents.TryDecodeSignal(QmlWire.Signal("s", (Protocol.ValueType.Mat4, new byte[64])), out _), Is.False, "unknown argument type");
+            var tooMany = QmlWire.Signal("s", Enumerable.Repeat((Protocol.ValueType.I32, QmlWire.I32(1)), 65).ToArray());
             Assert.That(QmlEvents.TryDecodeSignal(tooMany, out _), Is.False, "more than 64 arguments");
-            var many = QmlWire.Signal("s", Enumerable.Repeat((Protocol.Vt.I32, QmlWire.I32(1)), 64).ToArray());
+            var many = QmlWire.Signal("s", Enumerable.Repeat((Protocol.ValueType.I32, QmlWire.I32(1)), 64).ToArray());
             Assert.That(QmlEvents.TryDecodeSignal(many, out var s) && s.Arguments.Count == 64, Is.True);
         }
 
@@ -558,9 +558,9 @@ namespace VL.Qt.Tests
         {
             var (reg, feedback, h) = Bound();
             var res = reg.Dispatch(new FeedbackRouterTests.Poll()
-                .Add(Protocol.Ev.QmlProperty, h, QmlWire.Property("a", Protocol.Vt.F32, QmlWire.F(1)))
-                .Add(Protocol.Ev.QmlProperty, h, QmlWire.Property("b", Protocol.Vt.String, QmlWire.Str("x")))
-                .Add(Protocol.Ev.QmlProperty, h, QmlWire.Property("a", Protocol.Vt.F32, QmlWire.F(2))).Bytes);
+                .Add(Protocol.EventId.QmlProperty, h, QmlWire.Property("a", Protocol.ValueType.F32, QmlWire.F(1)))
+                .Add(Protocol.EventId.QmlProperty, h, QmlWire.Property("b", Protocol.ValueType.String, QmlWire.Str("x")))
+                .Add(Protocol.EventId.QmlProperty, h, QmlWire.Property("a", Protocol.ValueType.F32, QmlWire.F(2))).Bytes);
             Assert.That(res, Is.EqualTo(new DispatchResult(3, 0, null)));
             var values = feedback.QmlPropertyValues()!;
             Assert.That(values, Has.Count.EqualTo(2));
@@ -574,9 +574,9 @@ namespace VL.Qt.Tests
         {
             var (reg, feedback, h) = Bound();
             reg.Dispatch(new FeedbackRouterTests.Poll()
-                .Add(Protocol.Ev.QmlSignal, h, QmlWire.Signal("clicked", (Protocol.Vt.I32, QmlWire.I32(1))))
-                .Add(Protocol.Ev.QmlSignal, h, QmlWire.Signal("clicked", (Protocol.Vt.I32, QmlWire.I32(2))))
-                .Add(Protocol.Ev.QmlSignal, h, QmlWire.Signal("reset")).Bytes);
+                .Add(Protocol.EventId.QmlSignal, h, QmlWire.Signal("clicked", (Protocol.ValueType.I32, QmlWire.I32(1))))
+                .Add(Protocol.EventId.QmlSignal, h, QmlWire.Signal("clicked", (Protocol.ValueType.I32, QmlWire.I32(2))))
+                .Add(Protocol.EventId.QmlSignal, h, QmlWire.Signal("reset")).Bytes);
             var taken = feedback.TakeQmlSignals();
             Assert.That(taken.Select(s => s.Name), Is.EqualTo(new[] { "clicked", "clicked", "reset" }));
             Assert.That(taken[1].Arguments[0], Is.EqualTo(2));
@@ -588,8 +588,8 @@ namespace VL.Qt.Tests
         {
             var (reg, feedback, h) = Bound();
             var res = reg.Dispatch(new FeedbackRouterTests.Poll()
-                .Add(Protocol.Ev.QmlProperty, h, QmlWire.Property("", Protocol.Vt.F32, QmlWire.F(1)))
-                .Add(Protocol.Ev.QmlSignal, h, new byte[] { 1, 0 }).Bytes);
+                .Add(Protocol.EventId.QmlProperty, h, QmlWire.Property("", Protocol.ValueType.F32, QmlWire.F(1)))
+                .Add(Protocol.EventId.QmlSignal, h, new byte[] { 1, 0 }).Bytes);
             Assert.That(res.Applied, Is.EqualTo(0));
             Assert.That(res.Ignored, Is.EqualTo(2));
             Assert.That(feedback.QmlPropertyValues(), Is.Null);
@@ -601,8 +601,8 @@ namespace VL.Qt.Tests
         {
             var (reg, feedback, h) = Bound();
             reg.Dispatch(new FeedbackRouterTests.Poll()
-                .Add(Protocol.Ev.QmlProperty, h, QmlWire.Property("a", Protocol.Vt.F32, QmlWire.F(1)))
-                .Add(Protocol.Ev.QmlSignal, h, QmlWire.Signal("s")).Bytes);
+                .Add(Protocol.EventId.QmlProperty, h, QmlWire.Property("a", Protocol.ValueType.F32, QmlWire.F(1)))
+                .Add(Protocol.EventId.QmlSignal, h, QmlWire.Signal("s")).Bytes);
             int before = feedback.QmlPropertyUpdates();
             feedback.ResetQml();
             Assert.That(feedback.QmlPropertyValues(), Is.Empty);
@@ -616,7 +616,7 @@ namespace VL.Qt.Tests
             var (reg, feedback, h) = Bound();
             var poll = new FeedbackRouterTests.Poll();
             for (int i = 0; i < ElementFeedback.MaxPendingQmlSignals + 10; i++)
-                poll.Add(Protocol.Ev.QmlSignal, h, QmlWire.Signal("s"));
+                poll.Add(Protocol.EventId.QmlSignal, h, QmlWire.Signal("s"));
             reg.Dispatch(poll.Bytes);
             Assert.That(feedback.TakeQmlSignals().Count, Is.EqualTo(ElementFeedback.MaxPendingQmlSignals));
         }
@@ -802,7 +802,7 @@ namespace VL.Qt.Tests
         {
             var e = Update(null, null);
             Assert.That(e.Type, Is.EqualTo(ElementType.Qml));
-            Assert.That((ushort)ElementType.Qml, Is.EqualTo(Protocol.Type.Qml));
+            Assert.That((ushort)ElementType.Qml, Is.EqualTo(Protocol.ElementType.Qml));
             Assert.That((e.AutoSize, e.Source, e.Reload), Is.EqualTo((true, string.Empty, 0)));
             Assert.That(e.Properties, Is.SameAs(QmlProperties.Empty));
             Assert.That(e.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
@@ -909,13 +909,13 @@ namespace VL.Qt.Tests
         {
             Frame();
             _registry.Dispatch(NewPoll()
-                .Add(Protocol.Ev.QmlProperty, _handle, QmlWire.Property("steps", Protocol.Vt.I32, QmlWire.I32(3)))
-                .Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("clicked", (Protocol.Vt.I32, QmlWire.I32(1)))).Bytes);
+                .Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("steps", Protocol.ValueType.I32, QmlWire.I32(3)))
+                .Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("clicked", (Protocol.ValueType.I32, QmlWire.I32(1)))).Bytes);
             Update(out var changed, out var signals, out _);
             Assert.That(changed["steps"], Is.EqualTo(3));
             Assert.That(signals.Count, Is.EqualTo(1));
 
-            _registry.Dispatch(NewPoll().Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("clicked")).Bytes);
+            _registry.Dispatch(NewPoll().Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("clicked")).Bytes);
             _events.OnNext(new FileSystemEventArgs(WatcherChangeTypes.Changed, _dir, "a.qml"));
             Update(out changed, out signals, out _);
             Assert.That(changed, Is.Empty, "the properties belonged to the old instance");
@@ -926,7 +926,7 @@ namespace VL.Qt.Tests
         public void NewFile_ResetsTheOutputs()
         {
             Update();
-            _registry.Dispatch(NewPoll().Add(Protocol.Ev.QmlProperty, _handle, QmlWire.Property("a", Protocol.Vt.F32, QmlWire.F(1))).Bytes);
+            _registry.Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("a", Protocol.ValueType.F32, QmlWire.F(1))).Bytes);
             Update(out var changed, out _, out _);
             Assert.That(changed, Has.Count.EqualTo(1));
             Update(out changed, out _, out _, file: System.IO.Path.Combine(_dir, "b.qml"));
@@ -938,12 +938,12 @@ namespace VL.Qt.Tests
         {
             Update(out var first, out _, out _);
             Assert.That(first, Is.Empty);
-            _registry.Dispatch(NewPoll().Add(Protocol.Ev.QmlProperty, _handle, QmlWire.Property("progress", Protocol.Vt.F32, QmlWire.F(0.5f))).Bytes);
+            _registry.Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("progress", Protocol.ValueType.F32, QmlWire.F(0.5f))).Bytes);
             Update(out var second, out _, out _);
             Assert.That(second, Is.EqualTo(new Dictionary<string, object> { ["progress"] = 0.5f }));
             Update(out var third, out _, out _);
             Assert.That(third, Is.SameAs(second), "nothing new: the same dictionary");
-            _registry.Dispatch(NewPoll().Add(Protocol.Ev.QmlProperty, _handle, QmlWire.Property("progress", Protocol.Vt.F32, QmlWire.F(0.75f))).Bytes);
+            _registry.Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("progress", Protocol.ValueType.F32, QmlWire.F(0.75f))).Bytes);
             Update(out var fourth, out _, out _);
             Assert.That(fourth, Is.Not.SameAs(second));
             Assert.That(fourth["progress"], Is.EqualTo(0.75f));
@@ -955,8 +955,8 @@ namespace VL.Qt.Tests
         {
             Update();
             _registry.Dispatch(NewPoll()
-                .Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("clicked", (Protocol.Vt.I32, QmlWire.I32(1))))
-                .Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("clicked", (Protocol.Vt.I32, QmlWire.I32(2)))).Bytes);
+                .Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("clicked", (Protocol.ValueType.I32, QmlWire.I32(1))))
+                .Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("clicked", (Protocol.ValueType.I32, QmlWire.I32(2)))).Bytes);
             Update(out _, out var signals, out _);
             Assert.That(signals.Select(s => (s.Name, s.Arguments[0])), Is.EqualTo(new[] { ("clicked", (object)1), ("clicked", 2) }));
             Update(out _, out signals, out _);

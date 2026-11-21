@@ -28,8 +28,8 @@ public static class ResourceTest
     private static void Run(Scenario s)
     {
         // A window as in vvvv: uploads run in the pump before the windows render.
-        var w = Native.vlqt_window_create(320, 200, "VL.Qt resources");
-        s.Check(w != IntPtr.Zero, "window " + (w == IntPtr.Zero ? Native.LastError() : ""));
+        var w = NativeCalls.CreateWindow(320, 200, "VL.Qt resources");
+        s.Check(w != SceneHandle.Null, "window " + (w == SceneHandle.Null ? Native.LastError() : ""));
         Native.vlqt_window_show(w);
         var events = new List<Rec>();
         var buf = new byte[64 * 1024];
@@ -58,13 +58,13 @@ public static class ResourceTest
             Poll();
         }
 
-        byte[] States(ulong id) => events.Where(e => e.Id == id && e.Ev == Protocol.ResEv.State).Select(e => e.Payload[0]).ToArray();
+        byte[] States(ulong id) => events.Where(e => e.Id == id && e.Ev == Protocol.ResourceEventId.State).Select(e => e.Payload[0]).ToArray();
         byte Last(ulong id) => States(id) is { Length: > 0 } s ? s[^1] : (byte)0;
         string Seq(ulong id) => string.Join(",", States(id));
 
         ulong Create()
         {
-            var rc = Native.vlqt_res_create(TestProtocol.ResKind.Test, out var id);
+            var rc = Native.vlqt_res_create(TestProtocol.ResourceKind.Test, out var id);
             if (rc != 0 || id == 0) s.Check(false, $"create ({rc}, {id:X})");
             return id;
         }
@@ -84,7 +84,7 @@ public static class ResourceTest
             while (sw.ElapsedMilliseconds < timeoutMs)
             {
                 Frame();
-                if (ids.All(i => Last(i) is Protocol.ResState.Ready or Protocol.ResState.Failed))
+                if (ids.All(i => Last(i) is Protocol.ResourceState.Ready or Protocol.ResourceState.Failed))
                     return true;
                 Thread.Sleep(1);
             }
@@ -109,24 +109,24 @@ public static class ResourceTest
         var badUp = Start(5, Mb, 2);
         s.Check(Settle(3000, a, bad, badUp), "test resources settle");
         s.Check(Seq(a) == "1,2,3,4", $"states Pending,Decoding,Uploading,Ready ({Seq(a)})");
-        var info = events.FirstOrDefault(e => e.Id == a && e.Ev == Protocol.ResEv.Info);
+        var info = events.FirstOrDefault(e => e.Id == a && e.Ev == Protocol.ResourceEventId.Info);
         s.Check(info != null && BitConverter.ToUInt64(info.Payload, 12) == Mb, "INFO with the uploaded bytes");
-        s.Check(events.FindIndex(e => e.Id == a && e.Ev == Protocol.ResEv.Info) < events.FindLastIndex(e => e.Id == a && e.Ev == Protocol.ResEv.State),
+        s.Check(events.FindIndex(e => e.Id == a && e.Ev == Protocol.ResourceEventId.Info) < events.FindLastIndex(e => e.Id == a && e.Ev == Protocol.ResourceEventId.State),
             "INFO before STATE Ready");
         s.Check(Seq(bad) == "1,2,5", $"decode failure -> Failed ({Seq(bad)})");
-        var err = events.FirstOrDefault(e => e.Id == bad && e.Ev == Protocol.ResEv.Error);
+        var err = events.FirstOrDefault(e => e.Id == bad && e.Ev == Protocol.ResourceEventId.Error);
         s.Check(err != null && Encoding.UTF8.GetString(err.Payload).Contains("decode failed"), "ERROR text of the failed decode");
         s.Check(Seq(badUp) == "1,2,3,5", $"upload failure -> Failed ({Seq(badUp)})");
 
-        s.Check(NativeTest.vlqt_test_res_transition(a, Protocol.ResState.Ready, Protocol.ResState.Decoding) == Native.Result.BadArgument, "Ready -> Decoding rejected");
-        s.Check(NativeTest.vlqt_test_res_transition(a, Protocol.ResState.Pending, Protocol.ResState.Decoding) == Native.Result.BadArgument, "wrong from-state rejected");
-        s.Check(NativeTest.vlqt_test_res_start(a, 0, 0, 0) == 0 && Native.vlqt_res_wait(a, 2000) == Protocol.ResState.Ready, "start of a Ready resource = replacement, stays Ready");
+        s.Check(NativeTest.vlqt_test_res_transition(a, Protocol.ResourceState.Ready, Protocol.ResourceState.Decoding) == Native.Result.BadArgument, "Ready -> Decoding rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(a, Protocol.ResourceState.Pending, Protocol.ResourceState.Decoding) == Native.Result.BadArgument, "wrong from-state rejected");
+        s.Check(NativeTest.vlqt_test_res_start(a, 0, 0, 0) == 0 && Native.vlqt_res_wait(a, 2000) == Protocol.ResourceState.Ready, "start of a Ready resource = replacement, stays Ready");
         var p = Create();
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Ready) == Native.Result.BadArgument, "Pending -> Ready rejected");
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Released) == Native.Result.BadArgument, "Released only by release + frame end");
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, 99) == Native.Result.BadArgument, "unknown state rejected");
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Failed) == 0, "Pending -> Failed allowed");
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Failed, Protocol.ResState.Ready) == Native.Result.BadArgument, "Failed -> Ready rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResourceState.Pending, Protocol.ResourceState.Ready) == Native.Result.BadArgument, "Pending -> Ready rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResourceState.Pending, Protocol.ResourceState.Released) == Native.Result.BadArgument, "Released only by release + frame end");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResourceState.Pending, 99) == Native.Result.BadArgument, "unknown state rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResourceState.Pending, Protocol.ResourceState.Failed) == 0, "Pending -> Failed allowed");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResourceState.Failed, Protocol.ResourceState.Ready) == Native.Result.BadArgument, "Failed -> Ready rejected");
         s.Check(s.Log.Contains("invalid transition Ready -> Decoding rejected"), "rejected transition logged");
         s.Check(s.Log.Contains("VL.Qt.Resources: #") && s.Log.Contains("Uploading -> Ready"), "transitions logged (debug, VL.Qt.Resources)");
 
@@ -144,7 +144,7 @@ public static class ResourceTest
         s.Check(Native.vlqt_res_release(a) == Native.Result.UnknownId && NativeTest.vlqt_test_res_start(a, 0, 0, 0) == Native.Result.UnknownId && Native.vlqt_res_wait(a, 10) == (int)Native.Result.UnknownId
             && NativeTest.vlqt_test_res_transition(a, 1, 5) == Native.Result.UnknownId && NativeTest.vlqt_test_res_element_ref(a, 1) == Native.Result.UnknownId, "stale id -> UnknownId everywhere");
         var e2Info = List().FirstOrDefault(r => r.id == e2);
-        s.Check(e2Info.state == Protocol.ResState.Pending && e2Info.host_refs == 1 && e2Info.element_refs == 0, "new resource untouched by the stale id");
+        s.Check(e2Info.state == Protocol.ResourceState.Pending && e2Info.host_refs == 1 && e2Info.element_refs == 0, "new resource untouched by the stale id");
         s.Check(s.Log.Contains("stale resource id"), "stale id logged as warning");
         Frame();
         s.Check(!events.Skip(before).Any(e => e.Id == a), "no event for the released id");
@@ -159,7 +159,7 @@ public static class ResourceTest
         {
             var mark = events.Count;
             Frame();
-            var now = events.Skip(mark).Count(e => e.Ev == Protocol.ResEv.State && e.Payload[0] == Protocol.ResState.Ready && batch.Contains(e.Id));
+            var now = events.Skip(mark).Count(e => e.Ev == Protocol.ResourceEventId.State && e.Payload[0] == Protocol.ResourceState.Ready && batch.Contains(e.Id));
             if (now > 0 || ready > 0) frames++;
             ready += now;
             maxPerFrame = Math.Max(maxPerFrame, now);
@@ -175,7 +175,7 @@ public static class ResourceTest
         // 4. Release while Decoding / Uploading: no event afterwards, freed at a frame end.
         var dec = Start(2000, Mb);
         sw.Restart();
-        while (Last(dec) != Protocol.ResState.Decoding && sw.ElapsedMilliseconds < 1000) Frame();
+        while (Last(dec) != Protocol.ResourceState.Decoding && sw.ElapsedMilliseconds < 1000) Frame();
         s.Check(Native.vlqt_res_release(dec) == 0, "release while Decoding");
         before = events.Count;
         sw.Restart();
@@ -185,10 +185,10 @@ public static class ResourceTest
 
         var up = Start(0, 40 * Mb);
         sw.Restart();
-        while (Last(up) != Protocol.ResState.Uploading && sw.ElapsedMilliseconds < 1000) { Frame(); Thread.Sleep(1); }
+        while (Last(up) != Protocol.ResourceState.Uploading && sw.ElapsedMilliseconds < 1000) { Frame(); Thread.Sleep(1); }
         Frame();
         var upInfo = List().FirstOrDefault(r => r.id == up);
-        s.Check(upInfo.state == Protocol.ResState.Uploading && upInfo.bytes > 0 && upInfo.bytes < 40 * Mb, $"upload in stripes ({upInfo.bytes} bytes)");
+        s.Check(upInfo.state == Protocol.ResourceState.Uploading && upInfo.bytes > 0 && upInfo.bytes < 40 * Mb, $"upload in stripes ({upInfo.bytes} bytes)");
         s.Check(Native.vlqt_res_release(up) == 0, "release while Uploading");
         var beforeUp = events.Count;
         Frame();
@@ -213,14 +213,14 @@ public static class ResourceTest
         var quick = Start(10, 16 * Mb); // 16 MB > budget: wait uploads outside the budget
         sw.Restart();
         var st = Native.vlqt_res_wait(quick, 5000);
-        s.Check(st == Protocol.ResState.Ready && sw.ElapsedMilliseconds < 350, $"wait -> Ready ({st}) in {sw.ElapsedMilliseconds} ms despite busy workers");
-        s.Check(Native.vlqt_res_wait(Start(5, Mb, 1), 5000) == Protocol.ResState.Failed, "wait -> Failed");
+        s.Check(st == Protocol.ResourceState.Ready && sw.ElapsedMilliseconds < 350, $"wait -> Ready ({st}) in {sw.ElapsedMilliseconds} ms despite busy workers");
+        s.Check(Native.vlqt_res_wait(Start(5, Mb, 1), 5000) == Protocol.ResourceState.Failed, "wait -> Failed");
         s.Check(Settle(3000, busy), "the other resources still reach Ready after the waits");
         var slow = Start(3000, Mb);
         Thread.Sleep(50); // in a worker by now (a queued decode would run inside the wait, without timeout)
         sw.Restart();
         st = Native.vlqt_res_wait(slow, 50);
-        s.Check(st == Protocol.ResState.Decoding && sw.ElapsedMilliseconds < 1000, $"wait timeout returns the current state ({st}, {sw.ElapsedMilliseconds} ms)");
+        s.Check(st == Protocol.ResourceState.Decoding && sw.ElapsedMilliseconds < 1000, $"wait timeout returns the current state ({st}, {sw.ElapsedMilliseconds} ms)");
         Native.vlqt_res_release(slow);
         foreach (var id in busy.Append(quick))
             Native.vlqt_res_release(id);
@@ -231,7 +231,7 @@ public static class ResourceTest
         var tooSmall = NativeCalls.ResPoll(small, out var req);
         s.Check(tooSmall == (int)Native.Result.BufferTooSmall && req >= 16, $"poll cap too small -> BufferTooSmall, required {req} ({tooSmall})");
         Poll();
-        s.Check(States(pc).SequenceEqual(new[] { Protocol.ResState.Pending }), "records kept after the too small poll");
+        s.Check(States(pc).SequenceEqual(new[] { Protocol.ResourceState.Pending }), "records kept after the too small poll");
         Native.vlqt_res_release(pc);
         Frame();
 
@@ -257,7 +257,7 @@ public static class ResourceTest
         Frame();
         s.Check(List().Length == 0, "no resource left at the end of the test");
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         Frame();
     }
 
@@ -270,7 +270,7 @@ public static class ResourceTest
     {
         for (int i = 0; i < 3; i++)
         {
-            var ok = Native.vlqt_res_create(TestProtocol.ResKind.Test, out var id) == 0 && NativeTest.vlqt_test_res_start(id, 10000, Mb, 0) == 0;
+            var ok = Native.vlqt_res_create(TestProtocol.ResourceKind.Test, out var id) == 0 && NativeTest.vlqt_test_res_start(id, 10000, Mb, 0) == 0;
             if (!ok) s.Check(false, $"running job {i} for the process end started");
         }
         s.Pump(1);

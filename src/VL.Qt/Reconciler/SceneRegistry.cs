@@ -132,18 +132,18 @@ namespace VL.Qt
         /// node's new instance before the renderer of this frame ran). False if it is not shown in a renderer (no
         /// occurrence, no shown instance of its slot, no primary right after a hand-over, or the reconciler has no window).
         /// </summary>
-        public bool TryLocate(Element element, out IntPtr window, out uint id)
+        public bool TryLocate(Element element, out SceneHandle window, out uint id)
         {
             if (!_entries.ContainsKey(element) && element.Feedback.Feedback is not null && _shownBySlot.TryGetValue(element.Feedback, out var shown))
                 element = shown;
             var node = OwnerOf(element, out var reconciler);
-            if (node is not null && !node.IsIgnored && reconciler is not null && reconciler.Window != IntPtr.Zero)
+            if (node is not null && !node.IsIgnored && reconciler is not null && !reconciler.Window.IsNull)
             {
                 window = reconciler.Window;
                 id = node.Id;
                 return true;
             }
-            window = IntPtr.Zero;
+            window = SceneHandle.Null;
             id = 0;
             return false;
         }

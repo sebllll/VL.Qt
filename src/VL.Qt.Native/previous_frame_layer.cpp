@@ -1,4 +1,4 @@
-#include "feedback.h"
+#include "previous_frame_layer.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QSize>
@@ -105,7 +105,7 @@ private:
     bool m_connected = false;
 };
 
-FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root)
+PreviousFrameLayer::PreviousFrameLayer(QQuickWindow* window, QQuickItem* root)
 {
     QQuickItem* content = window->contentItem();
     auto* source = new QQuickShaderEffectSource();
@@ -144,13 +144,13 @@ FeedbackLayer::FeedbackLayer(QQuickWindow* window, QQuickItem* root)
     }
 }
 
-void FeedbackLayer::setFill(const QColor& color)
+void PreviousFrameLayer::setFill(const QColor& color)
 {
     if (auto* view = static_cast<FeedbackView*>(m_view.data()))
         view->setFill(color);
 }
 
-FeedbackLayer::~FeedbackLayer()
+PreviousFrameLayer::~PreviousFrameLayer()
 {
     // The view first: it references the source's texture provider.
     if (m_view) {

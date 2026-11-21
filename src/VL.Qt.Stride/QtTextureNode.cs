@@ -63,7 +63,7 @@ namespace VL.Qt.Stride
 
             output = _scene.Texture;
             error = _scene.Error;
-            // TODO: Perf of offscreen scenes: QtNative has no perf ring for them (vlqt_window_get_perf needs a window).
+            // TODO: Perf of offscreen scenes: QtNative has no perf ring for them (vlqt_scene_get_perf needs a window).
             perf = PerfStats.Empty;
         }
 

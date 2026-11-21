@@ -45,11 +45,11 @@ public static partial class QtTextureTest
     }
 
     // A scene of w x h DIP with the boxes (element ids 1..n) on a clear colour; IntPtr.Zero on failure.
-    private static IntPtr NewScene(int w, int h, (float R, float G, float B, float A) clear, Box[] boxes, Scenario s, string label)
+    private static SceneHandle NewScene(int w, int h, (float R, float G, float B, float A) clear, Box[] boxes, Scenario s, string label)
     {
         var scene = Native.vlqt_offscreen_create(w, h);
-        s.Check(scene != IntPtr.Zero, $"{label}: offscreen_create {(scene == IntPtr.Zero ? Native.LastError() : "")}");
-        if (scene == IntPtr.Zero)
+        s.Check(scene != SceneHandle.Null, $"{label}: offscreen_create {(scene == SceneHandle.Null ? Native.LastError() : "")}");
+        if (scene == SceneHandle.Null)
             return scene;
         var cmd = new CommandWriter();
         cmd.Reset();
@@ -57,9 +57,9 @@ public static partial class QtTextureTest
         for (uint i = 0; i < boxes.Length; i++)
         {
             var b = boxes[i];
-            cmd.Create(i + 1, Protocol.Type.Rectangle);
+            cmd.Create(i + 1, Protocol.ElementType.Rectangle);
             cmd.SetPlace(i + 1, b.X, b.Y, b.W, b.H);
-            cmd.SetColor(i + 1, Protocol.Prop.Color, b.R, b.G, b.B, b.A);
+            cmd.SetColor(i + 1, Protocol.PropertyId.Color, b.R, b.G, b.B, b.A);
             cmd.Reparent(i + 1, 0, i);
         }
         int rc = (int)Native.Apply(scene, cmd.EndFrame());
@@ -68,11 +68,11 @@ public static partial class QtTextureTest
     }
 
     // Changes the colour of element id (1-based, as NewScene numbers them).
-    private static void Recolor(IntPtr scene, uint id, float r, float g, float b, float a, Scenario s, string label)
+    private static void Recolor(SceneHandle scene, uint id, float r, float g, float b, float a, Scenario s, string label)
     {
         var cmd = new CommandWriter();
         cmd.Reset();
-        cmd.SetColor(id, Protocol.Prop.Color, r, g, b, a);
+        cmd.SetColor(id, Protocol.PropertyId.Color, r, g, b, a);
         int rc = (int)Native.Apply(scene, cmd.EndFrame());
         s.Check(rc == 0, $"{label}: apply colour ({rc}) {(rc != 0 ? Native.LastError() : "")}");
     }
@@ -139,7 +139,7 @@ public static partial class QtTextureTest
         var blue = new[] { 0, 0, 128, 128 }; // premultiplied; the same in linear light (0 and 1 do not change)
         var clear = new[] { 0, 0, 0, 0 };
         var scene = NewScene(w, h, (0, 0, 0, 0), boxes, s, "formats");
-        if (scene == IntPtr.Zero)
+        if (scene == SceneHandle.Null)
         {
             NativeTest.vlqt_test_d3d11_release_device(device, context);
             return;
@@ -199,7 +199,7 @@ public static partial class QtTextureTest
             NativeTest.vlqt_test_com_release(tex);
         }
 
-        Native.vlqt_window_destroy(scene);
+        Native.vlqt_scene_destroy(scene);
         check(NativeTest.vlqt_test_d3d11_release_device(device, context) == 0, "formats: test device freed");
     }
 
@@ -221,7 +221,7 @@ public static partial class QtTextureTest
         var b = NewScene(80, 40, (0, 0, 0, 0), new[] { new Box(10, 6, 40, 28, 0, 1, 0, 1) }, s, "batch: scene B");
         var idle = Native.vlqt_offscreen_create(16, 16); // never bound
         IntPtr texA = default, handleA = default, texB = default, handleB = default;
-        if (a == IntPtr.Zero || b == IntPtr.Zero || idle == IntPtr.Zero
+        if (a == SceneHandle.Null || b == SceneHandle.Null || idle == SceneHandle.Null
             || !check(NewTarget(device, 64, 48, B8G8R8A8Typeless, out texA, out handleA), "batch: texture A")
             || !check(NewTarget(device, 80, 40, 27, out texB, out handleB), "batch: texture B"))
         {
@@ -235,7 +235,7 @@ public static partial class QtTextureTest
         check(rcA == 0 && rcB == 0, $"batch: bind both ({rcA}, {rcB}) {(rcA != 0 || rcB != 0 ? Native.LastError() : "")}");
 
         // A null entry and an unbound scene in the list are skipped.
-        int rc = Native.OffscreenRenderBatch(context, new[] { IntPtr.Zero, a, idle, b }, 0);
+        int rc = Native.OffscreenRenderBatch(context, new[] { SceneHandle.Null, a, idle, b }, 0);
         check(rc == 2, $"batch: two scenes in one batch render ({rc}) {(rc < 0 ? Native.LastError() : "")}");
         var pa = Read(texA, 64, 48, s_bgra);
         var pb = Read(texB, 80, 40, s_rgba);
@@ -273,9 +273,9 @@ public static partial class QtTextureTest
 
         Native.vlqt_offscreen_unbind(a);
         Native.vlqt_offscreen_unbind(b);
-        Native.vlqt_window_destroy(a);
-        Native.vlqt_window_destroy(b);
-        Native.vlqt_window_destroy(idle);
+        Native.vlqt_scene_destroy(a);
+        Native.vlqt_scene_destroy(b);
+        Native.vlqt_scene_destroy(idle);
         NativeTest.vlqt_test_com_release(texA);
         NativeTest.vlqt_test_com_release(texB);
         check(NativeTest.vlqt_test_d3d11_release_device(device, context) == 0, "batch: test device freed");
@@ -305,7 +305,7 @@ public static partial class QtTextureTest
         var scene = NewScene(w, h, (0, 0, 0, 0), boxes, s, "alpha");
         var clearScene = NewScene(16, 16, (1, 0, 0, 0.5f), Array.Empty<Box>(), s, "alpha clear colour");
         IntPtr tex = default, handle = default, clearTex = default, clearHandle = default;
-        if (scene == IntPtr.Zero || clearScene == IntPtr.Zero
+        if (scene == SceneHandle.Null || clearScene == SceneHandle.Null
             || !check(NewTarget(device, w, h, B8G8R8A8Typeless, out tex, out handle), "alpha: texture")
             || !check(NewTarget(device, 16, 16, B8G8R8A8Typeless, out clearTex, out clearHandle), "alpha: clear colour texture"))
         {
@@ -377,8 +377,8 @@ public static partial class QtTextureTest
 
         Native.vlqt_offscreen_unbind(scene);
         Native.vlqt_offscreen_unbind(clearScene);
-        Native.vlqt_window_destroy(scene);
-        Native.vlqt_window_destroy(clearScene);
+        Native.vlqt_scene_destroy(scene);
+        Native.vlqt_scene_destroy(clearScene);
         NativeTest.vlqt_test_com_release(tex);
         NativeTest.vlqt_test_com_release(clearTex);
         check(NativeTest.vlqt_test_d3d11_release_device(device, context) == 0, "alpha: test device freed");
@@ -422,10 +422,10 @@ public static partial class QtTextureTest
         };
         var clear = (0.125f, 0.25f, 0.5f, 1f);
         var scene = NewScene(w, h, clear, boxes, s, "window: texture scene");
-        var win = Native.vlqt_window_create(w, h, "VL.Qt QtTexture window match");
+        var win = NativeCalls.CreateWindow(w, h, "VL.Qt QtTexture window match");
         IntPtr tex = default, handle = default;
-        check(win != IntPtr.Zero, "window: window_create");
-        if (scene == IntPtr.Zero || win == IntPtr.Zero
+        check(win != SceneHandle.Null, "window: window_create");
+        if (scene == SceneHandle.Null || win == SceneHandle.Null
             || !check(NewTarget(device, w, h, B8G8R8A8Typeless, out tex, out handle), "window: texture"))
         {
             NativeTest.vlqt_test_d3d11_release_device(device, context);
@@ -438,9 +438,9 @@ public static partial class QtTextureTest
         for (uint i = 0; i < boxes.Length; i++)
         {
             var b = boxes[i];
-            cmd.Create(i + 1, Protocol.Type.Rectangle);
+            cmd.Create(i + 1, Protocol.ElementType.Rectangle);
             cmd.SetPlace(i + 1, b.X, b.Y, b.W, b.H);
-            cmd.SetColor(i + 1, Protocol.Prop.Color, b.R, b.G, b.B, b.A);
+            cmd.SetColor(i + 1, Protocol.PropertyId.Color, b.R, b.G, b.B, b.A);
             cmd.Reparent(i + 1, 0, i);
         }
         check(Native.Apply(win, cmd.EndFrame()) == 0, "window: apply to the window");
@@ -476,8 +476,8 @@ public static partial class QtTextureTest
         }
 
         Native.vlqt_offscreen_unbind(scene);
-        Native.vlqt_window_destroy(scene);
-        Native.vlqt_window_destroy(win);
+        Native.vlqt_scene_destroy(scene);
+        Native.vlqt_scene_destroy(win);
         NativeTest.vlqt_test_com_release(tex);
         check(NativeTest.vlqt_test_d3d11_release_device(device, context) == 0, "window: test device freed");
 #endif

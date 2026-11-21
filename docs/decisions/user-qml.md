@@ -10,7 +10,7 @@ Implemented as `QmlElement` (#104) unless noted.
 - **Minimal form**: one element `QmlElement` (`File`, `Properties` as `Dictionary<string, object>`; out `Properties`, `Signals`, `Error`), placed in the element tree like any other element. Only the properties and signals declared in the root of the user file come back, no echo of the patch's own sets. Hot reload on file change. Details and protocol: #104. (2026-11-11) *Done; deviations below.*
 - **Time**: QML animations follow vvvv's clock already (QtNative installs `VlqtAnimationDriver`, `src/VL.Qt.Native/vlqt.cpp:115`), so they are deterministic. QML `Timer` runs on wall time; documented, not fixed. (2026-11-11, corrects the first proposal "animations run free") *Done (documented).*
 - **Licensing**: no import filter; QtNative deploys only LGPL modules, other imports fail to load and show at the node. Documented. (2026-11-11) *Done (documented).*
-- **Qt Bridge reuse**: no; a hand-written path in QtNative (one op, two properties, two events) is smaller than the Bridge's build-time wrappers. (2026-11-11) *Done: `qmlitem.{h,cpp}`, `SET_QML_PROPERTIES`, `QML_SOURCE`/`QML_RELOAD`, `EV_QML_PROPERTY`/`EV_QML_SIGNAL`.*
+- **Qt Bridge reuse**: no; a hand-written path in QtNative (one op, two properties, two events) is smaller than the Bridge's build-time wrappers. (2026-11-11) *Done: `qmlitem.{h,cpp}`, `SET_QML_PROPERTIES`, `QML_SOURCE`/`QML_RELOAD`, `EVENT_QML_PROPERTY`/`EVENT_QML_SIGNAL`.*
 
 ## Where the implementation differs from the first design
 

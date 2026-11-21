@@ -14,14 +14,14 @@ namespace VL.Qt
     /// </summary>
     internal interface IQtFrameParticipant
     {
-        /// <summary>Hands the commands written in Update() to QtNative (vlqt_window_apply).</summary>
+        /// <summary>Hands the commands written in Update() to QtNative (vlqt_scene_apply).</summary>
         void ApplyCommands();
 
         /// <summary>
         /// QtNative window of this participant, zero = none. Only the windows of the pumping app may render in its
         /// pump, so with several vvvv apps a window still renders once per vvvv frame, not once per app.
         /// </summary>
-        IntPtr Window => IntPtr.Zero;
+        SceneHandle Window => SceneHandle.Null;
 
         /// <summary>After Qt processed its events (and rendered): poll the window, read perf, handle close requests.</summary>
         void AfterEvents();
@@ -36,7 +36,7 @@ namespace VL.Qt
         /// after <see cref="AfterEvents"/>, the host values of this pump for the window's native PerfMonitor. QtApp fills
         /// apply time and the shared values (host pump, interval, GC); the participant adds ops/reconcile and reports.
         /// </summary>
-        void ReportHostFrame(Native.vlqt_host_frame frame) { }
+        void ReportHostFrame(Native.vlqt_host_pump frame) { }
 
         /// <summary>Last native PerfSample of the window (budget warning). false = none.</summary>
         bool TryGetLastSample(out Native.vlqt_perf_sample sample)
@@ -57,7 +57,7 @@ namespace VL.Qt
         /// timestamp of the vvvv frame start before this pump, 0 = unknown. <paramref name="history"/>: host-frame
         /// state of the pumping app (interval and GC per app, not since another app's pump).
         /// </summary>
-        void PumpFrame(IQtFrameParticipant[] participants, double driverSeconds, double budgetMs, long vvvvStart, HostFrameHistory history);
+        void PumpFrame(IQtFrameParticipant[] participants, double driverSeconds, double budgetMs, long vvvvStart, HostPumpMeter history);
 
         /// <summary>
         /// start of the vvvv frame: Qt delivers the input queued since the last pump (without rendering), then every
@@ -102,7 +102,7 @@ namespace VL.Qt
         internal const double ResyncSeconds = 0.1;
 
         private readonly IQtPumpTarget _target;
-        private readonly HostFrameHistory _history = new();
+        private readonly HostPumpMeter _history = new();
         private readonly IDisposable _subscription, _ticks;
         private long _frameStart; // Stopwatch timestamp of the last tick (vvvv frame start), 0 = none since the last pump
         private IQtFrameParticipant[] _participants = Array.Empty<IQtFrameParticipant>();
@@ -241,7 +241,7 @@ namespace VL.Qt
     /// <summary>
     /// Host-frame state of one vvvv app between two of its pumps: interval and GC/alloc are per app frame.
     /// </summary>
-    internal sealed class HostFrameHistory
+    internal sealed class HostPumpMeter
     {
         public long PumpStart, AllocBytes;
         public int Gc0, Gc1, Gc2;
@@ -277,7 +277,7 @@ namespace VL.Qt
         private float[] _applyMs = Array.Empty<float>();
         private long _prevPumpEnd;
         // QtNative windows of the current pump, reused (no allocation per frame).
-        private IntPtr[] _windows = new IntPtr[4];
+        private SceneHandle[] _windows = new SceneHandle[4];
         private readonly ResourceClient _resources;
 
         private QtApp()
@@ -292,7 +292,12 @@ namespace VL.Qt
                     + "Move the package or exported app to a shorter path (base path {NativeDir}, {BaseLength} characters).",
                     Native.maxPath, Native.LongestPath.Length, Native.LongestPath.Path, Native.NativeDir, Native.NativeDir.Length);
             }
-            if (Native.vlqt_app_init(Native.NativeDir, QtLog.Fn) != Native.Result.Ok)
+            Native.Result initResult;
+            unsafe
+            {
+                initResult = Native.vlqt_app_init(Native.NativeDir, QtLog.Fn);
+            }
+            if (initResult != Native.Result.Ok)
                 throw new InvalidOperationException("VL.Qt: vlqt_app_init failed: " + Native.LastError());
             _statsStartTicks = Environment.TickCount64;
             _resources = new ResourceClient(new NativeResourceApi(), _threadId, static () => Logger);
@@ -369,7 +374,7 @@ namespace VL.Qt
         /// with several apps each pumps once per vvvv frame; only the windows of <paramref name="participants"/> render,
         /// and the process-wide animation driver only moves forward.
         /// </summary>
-        public void PumpFrame(IQtFrameParticipant[] participants, double driverSeconds, double budgetMs, long vvvvStart, HostFrameHistory history)
+        public void PumpFrame(IQtFrameParticipant[] participants, double driverSeconds, double budgetMs, long vvvvStart, HostPumpMeter history)
         {
             if (!IsQtThread)
             {
@@ -406,7 +411,7 @@ namespace VL.Qt
             if (!(driverSeconds <= _driverSeconds))
             {
                 _driverSeconds = driverSeconds;
-                Native.vlqt_driver_advance(driverSeconds);
+                Native.vlqt_app_advance_animations(driverSeconds);
                 _advances++;
             }
             var tAdvanced = Stopwatch.GetTimestamp();
@@ -428,7 +433,7 @@ namespace VL.Qt
             var now = Environment.TickCount64;
 
             // Host frame to every window's PerfMonitor: GC/alloc since the previous pump start (= one vvvv frame).
-            var host = new Native.vlqt_host_frame
+            var host = new Native.vlqt_host_pump
             {
                 host = (float)ms,
                 interval = history.PumpStart != 0 ? (float)Stopwatch.GetElapsedTime(history.PumpStart, start).TotalMilliseconds : 0,
@@ -539,14 +544,14 @@ namespace VL.Qt
         private int CollectWindows(IQtFrameParticipant[] participants)
         {
             if (_windows.Length < participants.Length)
-                _windows = new IntPtr[participants.Length * 2];
+                _windows = new SceneHandle[participants.Length * 2];
             var n = 0;
             for (int i = 0; i < participants.Length; i++)
             {
-                IntPtr window;
+                SceneHandle window;
                 try { window = participants[i].Window; }
                 catch (Exception e) { LogParticipantError(e, nameof(IQtFrameParticipant.Window)); continue; }
-                if (window != IntPtr.Zero)
+                if (!window.IsNull)
                     _windows[n++] = window;
             }
             return n;

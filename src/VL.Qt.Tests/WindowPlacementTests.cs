@@ -6,7 +6,7 @@ using VL.Qt.Wire;
 
 namespace VL.Qt.Tests
 {
-    // Bounds pin → vlqt_window_create_at arguments, and parsing of EV_WINDOW_GEOMETRY.
+    // Bounds pin → vlqt_window_create arguments, and parsing of EVENT_WINDOW_GEOMETRY.
     // The screen rules (rect on no screen → centered) live in QtNative (QScreen) and are checked by the SmokeTest.
     public class WindowPlacementTests
     {
@@ -68,9 +68,9 @@ namespace VL.Qt.Tests
         public void Geometry_LastWindowRecordWins()
         {
             var buf = new byte[0]
-                .Concat(Record(Protocol.Ev.WindowGeometry, 0, 1, 2, 3, 4, Protocol.Window.Visible))
-                .Concat(Record(Protocol.Ev.SceneBounds, 7, 9, 9, 9, 9, 0)) // sink record: not the window
-                .Concat(Record(Protocol.Ev.WindowGeometry, 0, -32000, -32000, 800, 600, Protocol.Window.Minimized | Protocol.Window.Visible, -31992, -31969));
+                .Concat(Record(Protocol.EventId.WindowGeometry, 0, 1, 2, 3, 4, Protocol.WindowState.Visible))
+                .Concat(Record(Protocol.EventId.SceneBounds, 7, 9, 9, 9, 9, 0)) // sink record: not the window
+                .Concat(Record(Protocol.EventId.WindowGeometry, 0, -32000, -32000, 800, 600, Protocol.WindowState.Minimized | Protocol.WindowState.Visible, -31992, -31969));
             Assert.That(WindowPlacement.TryReadGeometry(buf, out var g), Is.True);
             Assert.That(g.Bounds, Is.EqualTo(new RectangleF(-32000, -32000, 800, 600)));
             Assert.That(g.ClientBounds, Is.EqualTo(new RectangleF(-31992, -31969, 800, 600)));
@@ -80,7 +80,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Geometry_NoneInBuffer()
         {
-            Assert.That(WindowPlacement.TryReadGeometry(Record(Protocol.Ev.WindowGeometry, 3, 1, 2, 3, 4, 0), out _), Is.False);
+            Assert.That(WindowPlacement.TryReadGeometry(Record(Protocol.EventId.WindowGeometry, 3, 1, 2, 3, 4, 0), out _), Is.False);
             Assert.That(WindowPlacement.TryReadGeometry(ReadOnlySpan<byte>.Empty, out _), Is.False);
         }
 
@@ -120,9 +120,9 @@ namespace VL.Qt.Tests
             Assert.That(s.TryTake(S(5), out _), Is.False);
         }
 
-        [TestCase(Protocol.Window.Minimized | Protocol.Window.Visible)]
-        [TestCase(Protocol.Window.Maximized | Protocol.Window.Visible)]
-        [TestCase(Protocol.Window.Fullscreen | Protocol.Window.Visible)]
+        [TestCase(Protocol.WindowState.Minimized | Protocol.WindowState.Visible)]
+        [TestCase(Protocol.WindowState.Maximized | Protocol.WindowState.Visible)]
+        [TestCase(Protocol.WindowState.Fullscreen | Protocol.WindowState.Visible)]
         [TestCase(0u)] // hidden
         public void SaveBounds_SkipsNonNormalGeometry_KeepsPendingValue(uint flags)
         {

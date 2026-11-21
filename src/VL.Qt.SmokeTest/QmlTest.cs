@@ -17,11 +17,11 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 using static Pixels;
 
 // QmlElement: a user .qml file in the element tree, raw protocol against QtNative (CREATE, SET QML_SOURCE / QML_RELOAD,
-// SET_QML_PROPERTIES, EV_QML_PROPERTY / EV_QML_SIGNAL / EV_ERROR). Test files: assets/QmlTest.qml (red rectangle, white progress
+// SET_QML_PROPERTIES, EVENT_QML_PROPERTY / EVENT_QML_SIGNAL / EVENT_ERROR). Test files: assets/QmlTest.qml (red rectangle, white progress
 // bar, properties fill / progress / shown / steps / clicks, signals clicked(int) and finished(...)), assets/QmlTypes.qml (every
 // value type in a property and in a bound copy). Files that are edited at run time live in <outDir>/qml/.
 // What it covers: the picture, a property set by the patch is seen and is not echoed, what QML changes itself comes back once
-// per poll (steps, clicks, the Behavior animation of shown), signals with their arguments, animations follow vlqt_driver_advance
+// per poll (steps, clicks, the Behavior animation of shown), signals with their arguments, animations follow vlqt_app_advance_animations
 // (not the wall clock), a Behavior retargeted by a value set every frame follows it (help example, LFO), every value type both ways, property errors, compile / load errors (syntax, missing module, root is not
 // an Item, missing file) and recovery, reload after a file change (also a component next to the file), Auto Size.
 // Grabs go to <outDir>/qml_*.png.
@@ -83,12 +83,12 @@ public static class QmlTest
         Directory.CreateDirectory(work);
         var testText = File.ReadAllText(qmlTest);
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt QmlElement test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt QmlElement test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
-        var errors = new Dictionary<uint, string>(); // last EV_ERROR text per handle (empty = cleared)
+        var errors = new Dictionary<uint, string>(); // last EVENT_ERROR text per handle (empty = cleared)
         var measured = new Dictionary<uint, (float W, float H)>();
 
         void CheckApply(string what)
@@ -111,8 +111,8 @@ public static class QmlTest
             var recs = Parse(buf.AsSpan(0, Math.Max(n, 0)));
             foreach (var r in recs)
             {
-                if (r.Event == Protocol.Ev.Error) errors[r.Handle] = Encoding.UTF8.GetString(r.Payload);
-                else if (r.Event == Protocol.Ev.Measured && r.Payload.Length >= 8)
+                if (r.Event == Protocol.EventId.Error) errors[r.Handle] = Encoding.UTF8.GetString(r.Payload);
+                else if (r.Event == Protocol.EventId.Measured && r.Payload.Length >= 8)
                     measured[r.Handle] = (BinaryPrimitives.ReadSingleLittleEndian(r.Payload), BinaryPrimitives.ReadSingleLittleEndian(r.Payload.AsSpan(4)));
             }
             return recs;
@@ -122,7 +122,7 @@ public static class QmlTest
             s.Pump(1);
             return Poll();
         }
-        // n frames, every poll on its own: the per-frame lists keep "one EV_QML_PROPERTY per property per poll" checkable.
+        // n frames, every poll on its own: the per-frame lists keep "one EVENT_QML_PROPERTY per property per poll" checkable.
         List<List<Rec>> Frames(int n)
         {
             var all = new List<List<Rec>>();
@@ -135,7 +135,7 @@ public static class QmlTest
         {
             var l = new List<object>();
             foreach (var r in recs)
-                if (r.Event == Protocol.Ev.QmlProperty && r.Handle == h && QmlEvents.TryDecodeProperty(r.Payload, out var n, out var v) && n == name)
+                if (r.Event == Protocol.EventId.QmlProperty && r.Handle == h && QmlEvents.TryDecodeProperty(r.Payload, out var n, out var v) && n == name)
                     l.Add(v);
             return l;
         }
@@ -143,7 +143,7 @@ public static class QmlTest
         {
             var l = new List<string>();
             foreach (var r in recs)
-                if (r.Event == Protocol.Ev.QmlProperty && r.Handle == h && QmlEvents.TryDecodeProperty(r.Payload, out var n, out _))
+                if (r.Event == Protocol.EventId.QmlProperty && r.Handle == h && QmlEvents.TryDecodeProperty(r.Payload, out var n, out _))
                     l.Add(n);
             return l;
         }
@@ -151,13 +151,13 @@ public static class QmlTest
         {
             var l = new List<QmlSignal>();
             foreach (var r in recs)
-                if (r.Event == Protocol.Ev.QmlSignal && r.Handle == h && QmlEvents.TryDecodeSignal(r.Payload, out var s))
+                if (r.Event == Protocol.EventId.QmlSignal && r.Handle == h && QmlEvents.TryDecodeSignal(r.Payload, out var s))
                     l.Add(s);
             return l;
         }
-        static string S(List<Rec> recs) => string.Join("; ", recs.Select(r => r.Event == Protocol.Ev.QmlProperty && QmlEvents.TryDecodeProperty(r.Payload, out var n, out var v) ? $"prop h{r.Handle} {n}={v}"
-            : r.Event == Protocol.Ev.QmlSignal && QmlEvents.TryDecodeSignal(r.Payload, out var sg) ? $"signal h{r.Handle} {sg.Name}({string.Join(",", sg.Arguments)})"
-            : r.Event == Protocol.Ev.Error ? $"error h{r.Handle} '{Encoding.UTF8.GetString(r.Payload)}'"
+        static string S(List<Rec> recs) => string.Join("; ", recs.Select(r => r.Event == Protocol.EventId.QmlProperty && QmlEvents.TryDecodeProperty(r.Payload, out var n, out var v) ? $"prop h{r.Handle} {n}={v}"
+            : r.Event == Protocol.EventId.QmlSignal && QmlEvents.TryDecodeSignal(r.Payload, out var sg) ? $"signal h{r.Handle} {sg.Name}({string.Join(",", sg.Arguments)})"
+            : r.Event == Protocol.EventId.Error ? $"error h{r.Handle} '{Encoding.UTF8.GetString(r.Payload)}'"
             : $"ev{r.Event} h{r.Handle}"));
         string Err(uint h) => errors.TryGetValue(h, out var e) ? e : "";
         static bool Close(object? v, float expected, float tolerance = 0.002f) => v is float f && Math.Abs(f - expected) <= tolerance;
@@ -172,10 +172,10 @@ public static class QmlTest
 
         void Qml(uint id, uint handle, string path, float x, float y)
         {
-            cmd.Create(id, Protocol.Type.Qml);
-            cmd.SetString(id, Protocol.Prop.QmlSource, path);
-            cmd.SetI32(id, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
-            cmd.SetMat4(id, Protocol.Prop.Transform, Matrix.Translation(x, y, 0));
+            cmd.Create(id, Protocol.ElementType.Qml);
+            cmd.SetString(id, Protocol.PropertyId.QmlSource, path);
+            cmd.SetI32(id, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
+            cmd.SetMat4(id, Protocol.PropertyId.Transform, Matrix.Translation(x, y, 0));
             cmd.Reparent(id, 0, 1000);
             cmd.Bind(id, handle, 0);
         }
@@ -211,16 +211,16 @@ public static class QmlTest
         s.Check(!names.Contains("fill") && !names.Contains("progress"), $"no echo of the properties the patch set ({S(recs)})");
         s.Check(Props(recs, HQ, "steps") is [int st1] && st1 == 1,
             $"steps (counted by QML while progress was set) comes back once with 1 ({S(recs)})");
-        // Animations follow vlqt_driver_advance, not the wall clock: the animation to 0.5 that has just started does not move without it.
+        // Animations follow vlqt_app_advance_animations, not the wall clock: the animation to 0.5 that has just started does not move without it.
         var wall = System.Diagnostics.Stopwatch.StartNew();
         var wallRecs = new List<Rec>();
         while (wall.ElapsedMilliseconds < 400)
         {
-            Native.vlqt_app_process_events(); // events and rendering, but the driver's clock stays where it is
+            Native.vlqt_app_process_events_for(null, 0); // events and rendering, but the driver's clock stays where it is
             System.Threading.Thread.Sleep(20);
             wallRecs.AddRange(Poll());
         }
-        s.Check(Props(wallRecs, HQ, "shown").Count == 0, $"no animation progress on wall time (0.4 s passed, no vlqt_driver_advance) ({S(wallRecs)})");
+        s.Check(Props(wallRecs, HQ, "shown").Count == 0, $"no animation progress on wall time (0.4 s passed, no vlqt_app_advance_animations) ({S(wallRecs)})");
         // The animation runs on the frame clock: every poll has at most one value of shown, it rises, it ends at 0.5.
         var frames = new List<List<Rec>>();
         float shownAt30 = -1;
@@ -277,7 +277,7 @@ public static class QmlTest
 
         recs = Flat(Frames(80));
         shown = Props(recs, HQ, "shown").Cast<float>().ToList();
-        s.Check(shown.Count >= 5 && Close(shown[^1], 1f), $"the animation to 1 runs with vlqt_driver_advance and ends at 1 ({shown.Count} values)");
+        s.Check(shown.Count >= 5 && Close(shown[^1], 1f), $"the animation to 1 runs with vlqt_app_advance_animations and ends at 1 ({shown.Count} values)");
         using (var a = s.Grab(w, "qml_full.png"))
             s.Check(IsWhite(Px(a, 110, 190)) && IsWhite(Px(a, 295, 190)) && IsGreen(Px(a, 150, 150)), $"progress 1 = white bar over the whole width ({Px(a, 295, 190)})");
 
@@ -301,7 +301,7 @@ public static class QmlTest
         });
         CheckApply("SET_QML_PROPERTIES all value types");
         recs = Poll();
-        var back = recs.Where(r => r.Event == Protocol.Ev.QmlProperty && r.Handle == HT).Select(r => { QmlEvents.TryDecodeProperty(r.Payload, out var n, out var v); return (n, v); }).ToDictionary(x => x.n, x => x.v);
+        var back = recs.Where(r => r.Event == Protocol.EventId.QmlProperty && r.Handle == HT).Select(r => { QmlEvents.TryDecodeProperty(r.Payload, out var n, out var v); return (n, v); }).ToDictionary(x => x.n, x => x.v);
         s.Check(back.Count == 9 && back.Keys.All(k => k.EndsWith("Out")), $"the nine bound copies come back and nothing else ({string.Join(",", back.Keys)})");
         s.Check(back.TryGetValue("rOut", out var rOut) && Close(rOut, 0.25f), $"real round trip ({(back.TryGetValue("rOut", out var rv) ? rv : "none")})");
         s.Check(back.TryGetValue("iOut", out var iOut) && iOut is 7, $"int round trip ({(back.TryGetValue("iOut", out var iv) ? iv : "none")})");
@@ -347,7 +347,7 @@ public static class QmlTest
         s.Check(Err(HT).Contains("nope"), $"the error for a name stays until that name is set again or the file is reloaded ('{Err(HT)}')");
         // SET_QML_PROPERTIES on a non QML element is UnknownProperty, an unknown id UnknownObject (protocol.h).
         var other = Extra;
-        cmd.Create(other, Protocol.Type.Rectangle);
+        cmd.Create(other, Protocol.ElementType.Rectangle);
         cmd.Reparent(other, 0, 0);
         CheckApply("create a Rectangle");
         cmd.BeginQmlProperties(other, 0);
@@ -376,24 +376,24 @@ public static class QmlTest
         Qml(E, HE, syntax, 500, 300);
         CheckApply("create QmlElement with a syntax error");
         Flat(Frames(2));
-        s.Check(Regex.IsMatch(Err(HE), @"syntax\.qml:\d+:\d+: "), $"syntax error: EV_ERROR with file:line:column ('{Err(HE)}')");
-        cmd.SetString(E, Protocol.Prop.QmlSource, noModule);
+        s.Check(Regex.IsMatch(Err(HE), @"syntax\.qml:\d+:\d+: "), $"syntax error: EVENT_ERROR with file:line:column ('{Err(HE)}')");
+        cmd.SetString(E, Protocol.PropertyId.QmlSource, noModule);
         CheckApply("SET QML_SOURCE missing module");
         Flat(Frames(2));
-        s.Check(Err(HE).Contains("NoSuchModule") && Err(HE).Contains("nomodule.qml:"), $"missing module: EV_ERROR names the module and the file ('{Err(HE)}')");
-        cmd.SetString(E, Protocol.Prop.QmlSource, notItem);
+        s.Check(Err(HE).Contains("NoSuchModule") && Err(HE).Contains("nomodule.qml:"), $"missing module: EVENT_ERROR names the module and the file ('{Err(HE)}')");
+        cmd.SetString(E, Protocol.PropertyId.QmlSource, notItem);
         CheckApply("SET QML_SOURCE root is not an Item");
         Flat(Frames(2));
         s.Check(Err(HE).Contains("root must be an Item"), $"root that is not an Item: error ('{Err(HE)}')");
-        cmd.SetString(E, Protocol.Prop.QmlSource, missing);
+        cmd.SetString(E, Protocol.PropertyId.QmlSource, missing);
         CheckApply("SET QML_SOURCE missing file");
         Flat(Frames(2));
         s.Check(Err(HE).Contains("does-not-exist.qml") && Err(HE).Contains("not found"), $"missing file: error ('{Err(HE)}')");
-        cmd.SetString(E, Protocol.Prop.QmlSource, qmlTest);
+        cmd.SetString(E, Protocol.PropertyId.QmlSource, qmlTest);
         CheckApply("SET QML_SOURCE a good file");
         Flat(Frames(2));
         s.Check(Err(HE) == "", $"a good file clears the error ('{Err(HE)}')");
-        cmd.SetString(E, Protocol.Prop.QmlSource, "");
+        cmd.SetString(E, Protocol.PropertyId.QmlSource, "");
         CheckApply("SET QML_SOURCE empty");
         Flat(Frames(2));
         s.Check(Err(HE) == "", "empty source = nothing loaded, no error");
@@ -423,8 +423,8 @@ public static class QmlTest
         // The first reload of a fresh element and the next ones: the same checks.
         void ReloadChecks(string which, int counter)
         {
-            cmd.SetI32(R, Protocol.Prop.QmlReload, counter);
-            cmd.SetI32(O, Protocol.Prop.QmlReload, counter);
+            cmd.SetI32(R, Protocol.PropertyId.QmlReload, counter);
+            cmd.SetI32(O, Protocol.PropertyId.QmlReload, counter);
             CheckApply($"SET QML_RELOAD {counter}");
             var rs = Poll();
             rs.AddRange(Flat(Frames(80)));
@@ -442,28 +442,28 @@ public static class QmlTest
         ReloadChecks("second reload (counter 1 -> 2)", 2);
         // A broken file: error, nothing drawn; the fixed file comes back.
         File.WriteAllText(reloadFile, "import QtQuick\n\nItem {\n    width: 10 +\n}\n");
-        cmd.SetI32(R, Protocol.Prop.QmlReload, 3);
+        cmd.SetI32(R, Protocol.PropertyId.QmlReload, 3);
         CheckApply("SET QML_RELOAD 3 (broken file)");
         Flat(Frames(3));
-        s.Check(Regex.IsMatch(Err(HR), @"reload\.qml:\d+:\d+: "), $"reload of a broken file: EV_ERROR with file:line ('{Err(HR)}')");
+        s.Check(Regex.IsMatch(Err(HR), @"reload\.qml:\d+:\d+: "), $"reload of a broken file: EVENT_ERROR with file:line ('{Err(HR)}')");
         using (var a = s.Grab(w, "qml_broken.png"))
             s.Check(IsBg(Px(a, 150, 330)) && IsBg(Px(a, 150, 390)), $"nothing of the old instance is drawn ({Px(a, 150, 330)})");
         File.WriteAllText(reloadFile, testText);
-        cmd.SetI32(R, Protocol.Prop.QmlReload, 4);
+        cmd.SetI32(R, Protocol.PropertyId.QmlReload, 4);
         CheckApply("SET QML_RELOAD 4 (fixed file)");
         Flat(Frames(80));
         s.Check(Err(HR) == "", $"the fixed file loads, the error is cleared ('{Err(HR)}')");
         using (var a = s.Grab(w, "qml_fixed.png"))
             s.Check(IsBlue(Px(a, 150, 330)) && IsWhite(Px(a, 150, 390)) && IsBlue(Px(a, 250, 390)), $"the fixed file is drawn with the patch's properties ({Px(a, 150, 330)}, {Px(a, 150, 390)})");
         // The same counter again changes nothing; a new element with the same file still works (engine cache).
-        cmd.SetI32(R, Protocol.Prop.QmlReload, 4);
+        cmd.SetI32(R, Protocol.PropertyId.QmlReload, 4);
         CheckApply("SET QML_RELOAD 4 again");
         recs = Flat(Frames(3));
         s.Check(Err(HR) == "" && PropNames(recs, HR).Count == 0, "the same counter does not reload");
 
         // ---- 7. Auto Size off: the size of the element is the size of the root -------------------------------------------------
-        cmd.SetBool(Q, Protocol.Prop.AutoSize, false);
-        cmd.SetVec2(Q, Protocol.Prop.Size, 300, 150);
+        cmd.SetBool(Q, Protocol.PropertyId.AutoSize, false);
+        cmd.SetVec2(Q, Protocol.PropertyId.Size, 300, 150);
         CheckApply("Auto Size off, Size 300 x 150");
         Flat(Frames(3));
         using (var a = s.Grab(w, "qml_size.png"))
@@ -471,7 +471,7 @@ public static class QmlTest
             s.Check(IsGreen(Px(a, 390, 150)) && IsBg(Px(a, 410, 150)) && IsBg(Px(a, 390, 255)), $"Auto Size off: the root takes the Size 300 x 150 ({Px(a, 390, 150)}, {Px(a, 410, 150)}, {Px(a, 390, 255)})");
             s.Check(IsWhite(Px(a, 390, 240)) && IsGreen(Px(a, 390, 225)), $"... the full bar sits at the bottom of the 150 high root and is 300 wide ({Px(a, 390, 240)}, {Px(a, 390, 225)})");
         }
-        cmd.SetBool(Q, Protocol.Prop.AutoSize, true);
+        cmd.SetBool(Q, Protocol.PropertyId.AutoSize, true);
         CheckApply("Auto Size on");
         Flat(Frames(3));
         using (var a = s.Grab(w, "qml_autosize.png"))
@@ -533,7 +533,7 @@ public static class QmlTest
         cmd.Destroy(Q);
         CheckApply("destroy");
         Flat(Frames(3));
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
     }
 

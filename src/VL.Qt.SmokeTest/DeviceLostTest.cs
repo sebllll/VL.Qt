@@ -52,7 +52,7 @@ public static class DeviceLostTest
         var ids = new List<ulong>();
         for (int i = 0; i < Images; i++)
         {
-            if (Native.vlqt_res_create(Protocol.ResKind.Image, out var id) != 0)
+            if (Native.vlqt_res_create(Protocol.ResourceKind.Image, out var id) != 0)
             {
                 s.Check(false, $"res_create {i}");
                 return;
@@ -67,7 +67,7 @@ public static class DeviceLostTest
                         g.Clear(colors[i]);
                     bmp.Save(path, System.Drawing.Imaging.ImageFormat.Png);
                 }
-                Native.vlqt_res_load_image(id, path, 0);
+                Native.vlqt_image_load(id, path, 0);
             }
             else
             {
@@ -79,28 +79,28 @@ public static class DeviceLostTest
                     d[p + 2] = colors[i].B;
                     d[p + 3] = 255;
                 }
-                Native.ResSetPixels(id, new Native.vlqt_pixel_desc { width = 64, height = 48, format = 7, premultiplied = 1 }, d);
+                Native.ImageSetPixels(id, new Native.vlqt_pixel_desc { width = 64, height = 48, format = 7, premultiplied = 1 }, d);
             }
         }
         foreach (var id in ids)
-            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"image {id} ready before the loss");
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResourceState.Ready, $"image {id} ready before the loss");
 
-        IntPtr Open(string title, float x)
+        SceneHandle Open(string title, float x)
         {
-            var w = Native.vlqt_window_create_at(x, 100, 400, 400, title, 0);
-            s.Check(w != IntPtr.Zero, $"create {title} " + (w == IntPtr.Zero ? Native.LastError() : ""));
+            var w = Native.vlqt_window_create(x, 100, 400, 400, title, 0);
+            s.Check(w != SceneHandle.Null, $"create {title} " + (w == SceneHandle.Null ? Native.LastError() : ""));
             cmd.Reset();
             cmd.ClearColor(0.1f, 0.1f, 0.1f, 1);
-            cmd.Create(Rect, Protocol.Type.Rectangle);
+            cmd.Create(Rect, Protocol.ElementType.Rectangle);
             cmd.SetPlace(Rect, 20, 20, 100, 60);
-            cmd.SetColor(Rect, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+            cmd.SetColor(Rect, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
             cmd.Reparent(Rect, 0, 0);
             for (int i = 0; i < Images; i++)
             {
                 var el = (uint)(10 + i);
-                cmd.Create(el, Protocol.Type.Image);
+                cmd.Create(el, Protocol.ElementType.Image);
                 cmd.SetPlace(el, 10 + i % 5 * 76, 100 + i / 5 * 72, 72, 68);
-                cmd.SetU64(el, Protocol.Prop.Image, ids[i]);
+                cmd.SetU64(el, Protocol.PropertyId.Image, ids[i]);
                 cmd.Reparent(el, 0, (uint)(1000 + i));
             }
             s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"apply {title}");
@@ -108,12 +108,12 @@ public static class DeviceLostTest
             return w;
         }
 
-        IntPtr Device(IntPtr w) => NativeTest.vlqt_test_device_info(w, out var dev, out _) == 0 ? dev : IntPtr.Zero;
+        IntPtr Device(SceneHandle w) => NativeTest.vlqt_test_device_info(w, out var dev, out _) == 0 ? dev : IntPtr.Zero;
 
         // Grab succeeds and shows the orange rect (logical 20,20,100,60) on the dark background and every image tile
         // in its color.
         int badTiles = 0;
-        bool Shows(IntPtr w, string path)
+        bool Shows(SceneHandle w, string path)
         {
             badTiles = -1;
             if (NativeTest.vlqt_test_window_grab(w, path) != 0)
@@ -147,7 +147,7 @@ public static class DeviceLostTest
             for (int at = 0; at < n;)
             {
                 var len = BitConverter.ToUInt16(resBuf, at + 2);
-                if (BitConverter.ToUInt16(resBuf, at) == Protocol.ResEv.Info)
+                if (BitConverter.ToUInt16(resBuf, at) == Protocol.ResourceEventId.Info)
                 {
                     var id = BitConverter.ToUInt64(resBuf, at + 4);
                     infos[id] = infos.GetValueOrDefault(id) + 1;
@@ -161,7 +161,7 @@ public static class DeviceLostTest
             Poll();
         }
 
-        bool Settled(IntPtr w, string path)
+        bool Settled(SceneHandle w, string path)
         {
             var t = Stopwatch.StartNew();
             while (t.ElapsedMilliseconds < TimeoutMs)
@@ -184,12 +184,12 @@ public static class DeviceLostTest
         s.Check(Settled(b, Path.Combine(dir, "before_b.png")), $"rect + 20 images visible before the loss in B (bad tiles {badTiles})");
 
         // Ready snapshot of A and the resource table before the loss.
-        Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var snap);
-        s.Check(Native.vlqt_res_snapshot(snap, a, 0, 1) == 0, "snapshot started");
+        Native.vlqt_res_create(Protocol.ResourceKind.Snapshot, out var snap);
+        s.Check(Native.vlqt_snapshot_start(snap, a, 0, 1) == 0, "snapshot started");
         var snapSw = Stopwatch.StartNew();
-        while (snapSw.ElapsedMilliseconds < TimeoutMs && SnapState() != Protocol.ResState.Ready)
+        while (snapSw.ElapsedMilliseconds < TimeoutMs && SnapState() != Protocol.ResourceState.Ready)
             s.Pump(1);
-        s.Check(SnapState() == Protocol.ResState.Ready, "snapshot Ready before the loss");
+        s.Check(SnapState() == Protocol.ResourceState.Ready, "snapshot Ready before the loss");
         int SnapState()
         {
             var l = new Native.vlqt_res_info[128];
@@ -209,7 +209,7 @@ public static class DeviceLostTest
             var list = new Native.vlqt_res_info[128];
             var n = Native.ResList(list);
             var ours = list.Take(n).Where(r => r.id == snap || ids.Contains(r.id)).ToArray();
-            return (n, ours.Count(r => r.state != Protocol.ResState.Ready) + (Images + 1 - ours.Length), ours.Sum(r => r.bytes));
+            return (n, ours.Count(r => r.state != Protocol.ResourceState.Ready) + (Images + 1 - ours.Length), ours.Sum(r => r.bytes));
         }
         var snapBefore = ReadSnap(out var snapDesc);
         s.Check(snapBefore.Length > 0 && snapDesc.width > 0, $"snapshot pixels before the loss ({snapBefore.Length} bytes)");
@@ -235,7 +235,7 @@ public static class DeviceLostTest
             {
                 Pump();
                 pumps++;
-                NativeTest.vlqt_test_device_info(IntPtr.Zero, out upload, out _);
+                NativeTest.vlqt_test_device_info(SceneHandle.Null, out upload, out _);
                 da = Device(a);
                 db = Device(b);
                 if (Moved())
@@ -278,8 +278,8 @@ public static class DeviceLostTest
         Native.vlqt_res_release(snap);
         foreach (var id in ids)
             Native.vlqt_res_release(id);
-        Native.vlqt_window_destroy(a);
-        Native.vlqt_window_destroy(b);
+        Native.vlqt_scene_destroy(a);
+        Native.vlqt_scene_destroy(b);
         s.Pump(2);
     }
 }

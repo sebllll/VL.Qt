@@ -84,7 +84,7 @@ namespace VL.Qt.Tests
         {
             Calls.Add($"wait {id:X}");
             OnWait?.Invoke(id);
-            return Protocol.ResState.Ready;
+            return Protocol.ResourceState.Ready;
         }
 
         public Native.Result LoadImage(ulong id, string utf8Path, uint flags)
@@ -122,13 +122,13 @@ namespace VL.Qt.Tests
 
         public void Shutdown() => Shutdowns++;
 
-        public Native.Result Snapshot(ulong id, IntPtr window, uint elementId, float scale)
+        public Native.Result Snapshot(ulong id, SceneHandle window, uint elementId, float scale)
         {
             Calls.Add($"snapshot {id:X} {elementId} {scale}");
             return SnapshotRc;
         }
 
-        public Native.Result SnapshotFit(ulong id, IntPtr window, uint elementId, int maxEdgePx)
+        public Native.Result SnapshotFit(ulong id, SceneHandle window, uint elementId, int maxEdgePx)
         {
             Calls.Add($"snapshot_fit {id:X} {elementId} {maxEdgePx}");
             return SnapshotRc;
@@ -178,9 +178,9 @@ namespace VL.Qt.Tests
                 _queue.Add(0);
         }
 
-        public void State(ulong id, byte state) => Record(Protocol.ResEv.State, id, new[] { state });
-        public void Error(ulong id, string text) => Record(Protocol.ResEv.Error, id, Encoding.UTF8.GetBytes(text));
-        public void Warning(ulong id, string text) => Record(Protocol.ResEv.Warning, id, Encoding.UTF8.GetBytes(text));
+        public void State(ulong id, byte state) => Record(Protocol.ResourceEventId.State, id, new[] { state });
+        public void Error(ulong id, string text) => Record(Protocol.ResourceEventId.Error, id, Encoding.UTF8.GetBytes(text));
+        public void Warning(ulong id, string text) => Record(Protocol.ResourceEventId.Warning, id, Encoding.UTF8.GetBytes(text));
 
         public void Info(ulong id, int width, int height)
         {
@@ -189,19 +189,19 @@ namespace VL.Qt.Tests
             BinaryPrimitives.WriteUInt32LittleEndian(p.AsSpan(4), (uint)height);
             BinaryPrimitives.WriteUInt32LittleEndian(p.AsSpan(8), 7);
             BinaryPrimitives.WriteUInt64LittleEndian(p.AsSpan(12), (ulong)(width * height * 4));
-            Record(Protocol.ResEv.Info, id, p);
+            Record(Protocol.ResourceEventId.Info, id, p);
         }
 
         public void Ready(ulong id, int width = 64, int height = 32)
         {
             Info(id, width, height);
-            State(id, Protocol.ResState.Ready);
+            State(id, Protocol.ResourceState.Ready);
         }
 
         public void Failed(ulong id, string error)
         {
             Error(id, error);
-            State(id, Protocol.ResState.Failed);
+            State(id, Protocol.ResourceState.Failed);
         }
     }
 
@@ -261,7 +261,7 @@ namespace VL.Qt.Tests
             r.Settled = _ => settled++;
             var task = r.WhenSettled();
 
-            _api.State(r.Id, Protocol.ResState.Decoding);
+            _api.State(r.Id, Protocol.ResourceState.Decoding);
             Pump();
             Assert.That(r.State, Is.EqualTo(QtImageState.Loading));
             Assert.That(settled, Is.Zero);
@@ -341,7 +341,7 @@ namespace VL.Qt.Tests
         {
             var r = _client.CreateImage();
             _api.Ready(0xDEAD_0000_0001UL);
-            _api.State(r.Id, Protocol.ResState.Decoding);
+            _api.State(r.Id, Protocol.ResourceState.Decoding);
             Assert.DoesNotThrow(Pump);
             Assert.That(r.State, Is.EqualTo(QtImageState.Loading));
             Assert.That(r.Width, Is.Zero);
@@ -420,7 +420,7 @@ namespace VL.Qt.Tests
             Assert.That(_api.Polls, Is.Zero, "nothing to poll without images");
             var r = _client.CreateImage();
             _api.Error(r.Id, new string('x', 6000));
-            _api.State(r.Id, Protocol.ResState.Failed);
+            _api.State(r.Id, Protocol.ResourceState.Failed);
             Pump();
             Assert.That(r.Error, Has.Length.EqualTo(6000));
             Assert.That(r.State, Is.EqualTo(QtImageState.Failed));

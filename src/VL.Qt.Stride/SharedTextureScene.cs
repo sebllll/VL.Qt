@@ -88,10 +88,10 @@ namespace VL.Qt.Stride
             if (enabled)
                 EnsureTexture(size, format, samples);
 
-            if (debug != _debug && _scene.Scene != IntPtr.Zero)
+            if (debug != _debug && !_scene.Scene.IsNull)
             {
                 _debug = debug;
-                Native.vlqt_window_set_debug(_scene.Scene, debug ? 1 : 0);
+                Native.vlqt_scene_set_debug(_scene.Scene, debug ? 1 : 0);
             }
             // Qt does not premultiply the clear colour itself (render-texture.md, task 1.8).
             var premultiplied = new Color4(clearColor.R * clearColor.A, clearColor.G * clearColor.A, clearColor.B * clearColor.A, clearColor.A);

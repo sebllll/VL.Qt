@@ -102,8 +102,8 @@ public static class StylableTest
         const uint frame1 = 0xC04000, border1 = 0x00FF00, text1 = 0xFFFF00;
         const uint frame2 = 0x8000C0, border2 = 0x00A0FF, text2 = 0xFF8080;
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt stylable test");
-        s.Check(w != IntPtr.Zero, "stylable window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt stylable test");
+        s.Check(w != SceneHandle.Null, "stylable window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -185,7 +185,7 @@ public static class StylableTest
             s.Check(Near(Px(a, 300, 40), frame2), $"field change on the same reference becomes visible ({Px(a, 300, 40)})");
         s.Check(leftWidget.Rebuilds == rebuilds + 2, $"field change: one more rebuild ({leftWidget.Rebuilds - rebuilds})");
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
     }
 }

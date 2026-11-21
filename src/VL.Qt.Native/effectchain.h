@@ -27,11 +27,11 @@ class QQmlEngine;
 
 namespace vlqt {
 
-class ShaderEffectItem;
+class ShaderItem;
 
 /* One value of a MULTI entry or a uniform: raw value bytes as on the wire (like SET), refs as element ids. */
 struct EffectValue {
-    quint16 type = 0;     // VLQT_VT_*
+    quint16 type = 0;     // VLQT_VALUE_TYPE_*
     float f[16] = {};     // f32 (f[0]), color, rectf, vec2/3/4, mat4 (row-major like Stride)
     qint32 i = 0;         // i32, ivec2 x
     qint32 i2 = 0;        // ivec2 y
@@ -46,16 +46,16 @@ struct EffectMultiEntry {
     EffectValue value;
 };
 
-/* SHADER uniform entry, like a SET_UNIFORMS entry (content checks such as unknown names come later, by EV_ERROR). */
+/* SHADER uniform entry, like a SET_UNIFORMS entry (content checks such as unknown names come later, by EVENT_ERROR). */
 struct EffectUniform {
     QByteArray name; // UTF-8, 1..VLQT_UNIFORM_NAME_MAX bytes
     EffectValue value;
     QPointer<QQuickItem> refItem; // REF: the texture element, resolved and parked by the Scene (null = none or refError)
-    const char* refError = nullptr; // REF: why the element cannot be a texture (an EV_ERROR line), static text
+    const char* refError = nullptr; // REF: why the element cannot be a texture (an EVENT_ERROR line), static text
 };
 
 struct EffectLinkDesc {
-    quint16 kind = 0; // VLQT_EFFECT_LINK_*
+    quint16 kind = 0; // VLQT_EFFECT_CHAIN_LINK_*
 
     /* kind MULTI: one MultiEffect run */
     std::vector<EffectMultiEntry> multi;
@@ -72,8 +72,8 @@ struct EffectChainDesc {
     std::vector<EffectLinkDesc> links; // application order; empty = no chain (layer off)
 };
 
-/* Number of MULTI keys (EFFECT_* 833..855); index of a key = prop - VLQT_PROP_EFFECT_BLUR_ENABLED. */
-constexpr int kEffectMultiKeys = VLQT_PROP_EFFECT_MASK_INVERTED - VLQT_PROP_EFFECT_BLUR_ENABLED + 1;
+/* Number of MULTI keys (EFFECT_* 833..855); index of a key = prop - VLQT_MULTI_EFFECT_KEY_BLUR_ENABLED. */
+constexpr int kEffectMultiKeys = VLQT_MULTI_EFFECT_KEY_MASK_INVERTED - VLQT_MULTI_EFFECT_KEY_BLUR_ENABLED + 1;
 
 /* QML components of the chain items, compiled once per engine (owned by Elements). */
 struct EffectComponents {
@@ -86,7 +86,7 @@ struct EffectComponents {
     QQmlComponent* root = nullptr;  // holder of the layer.effect component (VlqtEffectChain, EffectChainItem in effectchain.cpp)
     QObject* rootHolder = nullptr;  // its instance: fx = the inline Component (layer.effect needs a creation context)
     QQmlComponent* multi = nullptr; // stage of a MULTI link: MultiEffect in an Item covering its effect area
-    QQmlComponent* pass = nullptr;  // stage of a SHADER link: one or two ShaderEffectItem passes (VlqtShaderPass)
+    QQmlComponent* pass = nullptr;  // stage of a SHADER link: one or two ShaderItem passes (VlqtShaderPass)
     QMetaProperty multiProps[kEffectMultiKeys]; // MultiEffect property per MULTI key (invalid: PADDING_RECT, MASK_SOURCE)
     bool resolved = false;
     quint64 pyramidDown = 0, pyramidUp = 0; // builtin:pyramid_down / pyramid_up, loaded on first use, shared by all links
@@ -105,11 +105,11 @@ struct EffectComponents {
  *
  * SHADER stage (SINGLE, TWO_PASS, PYRAMID): the stage covers its input plus the
  * link's padding; the input's texture covers the same area (the stage sets the sourceRect of the input's layer, or of the
- * element's layer source for the first link, to it), so each pass maps it 1:1 over UV 0..1. SINGLE = fx (ShaderEffectItem,
+ * element's layer source for the first link, to it), so each pass maps it 1:1 over UV 0..1. SINGLE = fx (ShaderItem,
  * chain pass) samples the input; TWO_PASS = fx (hidden, own layer) with passIndex = 0, fx2 samples fx
  * with passIndex = 1, same table otherwise. PYRAMID (doc 21 "Blur-Pyramide"): fx = composite (draws, source = input,
  * glow/shadow = U1 or D1), the passes D1 (prefilter, source = input) .. Dn (pyramid_down) and U(n-1) .. U1 (pyramid_up,
- * base = Dk) are hidden ShaderEffectItems with a layer under the stage, sized p_k / dpr (p_0 = stage x dpr, p_k =
+ * base = Dk) are hidden ShaderItems with a layer under the stage, sized p_k / dpr (p_0 = stage x dpr, p_k =
  * ceil(p_(k-1) / 2), n: steps until the smaller side is under 4 px). The step count follows the stage size and dpr only
  * (layoutPyramid on a size / dpr change; passes beyond n stay in the pool, unsampled, until the stage goes); the radius
  * writes the weights only. Values only on the same structure (kind and template): no new item.
@@ -122,20 +122,20 @@ class EffectChain final : public QObject
     Q_OBJECT
 public:
     struct Link {
-        quint16 kind = 0;                   // VLQT_EFFECT_LINK_*
+        quint16 kind = 0;                   // VLQT_EFFECT_CHAIN_LINK_*
         QVariant values[kEffectMultiKeys];  // MULTI: values as written to the MultiEffect (Qt defaults if unset)
         QRectF padding;                     // MULTI PADDING_RECT / SHADER padding: x left, y top, w right, h bottom (DIP)
         QQuickItem* mask = nullptr;         // MULTI: attached mask element's item (Elements, Scene::setEffectChain)
         QQuickItem* maskFrame = nullptr;    // hidden layer item holding mask in the element's parent coordinates
         QObject* maskFrameXf = nullptr;     // Matrix4x4 of the frame's inner item (Elements::updateMaskFrame)
         QPointer<QQuickItem> stage;         // item of the link under the root (null while there is no root)
-        QQuickItem* fx = nullptr;           // MultiEffect / ShaderEffectItem (SHADER pass 1) inside stage
+        QQuickItem* fx = nullptr;           // MultiEffect / ShaderItem (SHADER pass 1) inside stage
         QQuickItem* fx2 = nullptr;          // SHADER: pass 2 (drawn for TWO_PASS)
         quint16 templ = 0;                  // SHADER: VLQT_EFFECT_TEMPLATE_*
         quint64 shader = 0;                 // SHADER: fragment shader resource id (0 = pass-through; PYRAMID: prefilter)
         quint64 shader2 = 0;                // PYRAMID: composite
-        std::vector<ShaderEffectItem*> down; // PYRAMID: D1 .. (pool, children of stage), down[0] = prefilter
-        std::vector<ShaderEffectItem*> up;   // PYRAMID: U1 .. (pool)
+        std::vector<ShaderItem*> down; // PYRAMID: D1 .. (pool, children of stage), down[0] = prefilter
+        std::vector<ShaderItem*> up;   // PYRAMID: U1 .. (pool)
         int levels = 0;                     // PYRAMID: n in use (0 = not laid out)
         QSize px;                           // PYRAMID: p_0 of the layout
         qreal dpr = 0;                      // PYRAMID: dpr of the layout
@@ -165,7 +165,7 @@ public:
     /* layer.effect component (registers the root type once). nullptr + err on a QML error. */
     QQmlComponent* rootComponent(std::string& err);
     QQuickItem* root() const { return m_root; }
-    /* Content problems of the links (EV_ERROR text: one line each, "link N: ..."), empty = none. */
+    /* Content problems of the links (EVENT_ERROR text: one line each, "link N: ..."), empty = none. */
     const QString& error() const { return m_error; }
 
     std::vector<Link> links;

@@ -11,7 +11,7 @@ using VL.Qt.Nodes;
 using VL.Qt.Wire;
 using static Pixels;
 
-// ShaderEffect Phase 2: GLSL text baked at runtime in the worker (vlqt_res_load_shader_source).
+// ShaderEffect Phase 2: GLSL text baked at runtime in the worker (vlqt_shader_load_source).
 // A text shader (wave.frag) draws, the default template of the node bakes and draws, a syntax error ends Failed with a line
 // number while the last good version keeps drawing, going back to an earlier text comes from the bake cache.
 // Raw commands (DIP). Grabs go to <outDir>/shader-source_*.png.
@@ -84,35 +84,35 @@ public static class ShaderSourceTest
                 resEvents.Add(new Res(BitConverter.ToUInt16(resBuf, at), BitConverter.ToUInt64(resBuf, at + 4), resBuf.AsSpan(at + 12, len - 8).ToArray()));
                 at += (4 + len + 3) & ~3;
             }
-            var e = resEvents.FindLast(r => r.Id == id && r.Ev == Protocol.ResEv.Error);
+            var e = resEvents.FindLast(r => r.Id == id && r.Ev == Protocol.ResourceEventId.Error);
             return e == null ? "" : Encoding.UTF8.GetString(e.Payload);
         }
         string ResWarning(ulong id)
         {
             ResError(id); // polls
-            var e = resEvents.FindLast(r => r.Id == id && r.Ev == Protocol.ResEv.Warning);
+            var e = resEvents.FindLast(r => r.Id == id && r.Ev == Protocol.ResourceEventId.Warning);
             return e == null ? "" : Encoding.UTF8.GetString(e.Payload);
         }
         // Loads GLSL text; returns the id, the state after the wait, the time of the call itself and of call + wait.
         ulong Source(string code, out int state, out double callMs, out double totalMs)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
             var sw = Stopwatch.StartNew();
-            var rc = Native.vlqt_res_load_shader_source(id, code, Protocol.ShaderStage.Fragment);
+            var rc = Native.vlqt_shader_load_source(id, code, Protocol.ShaderStage.Fragment);
             callMs = sw.Elapsed.TotalMilliseconds;
-            state = rc == 0 ? Native.vlqt_res_wait(id, 20000) : Protocol.ResState.Failed;
+            state = rc == 0 ? Native.vlqt_res_wait(id, 20000) : Protocol.ResourceState.Failed;
             totalMs = sw.Elapsed.TotalMilliseconds;
             return id;
         }
 
-        Native.vlqt_res_create(Protocol.ResKind.Image, out var image);
-        Native.vlqt_res_load_image(image, stripes, 0);
-        s.Check(Native.vlqt_res_wait(image, 10000) == Protocol.ResState.Ready, "stripes image Ready");
+        Native.vlqt_res_create(Protocol.ResourceKind.Image, out var image);
+        Native.vlqt_image_load(image, stripes, 0);
+        s.Check(Native.vlqt_res_wait(image, 10000) == Protocol.ResourceState.Ready, "stripes image Ready");
 
         var green = Source(SolidSource("0.0, 1.0, 0.0"), out var sGreen, out var callGreen, out var bakeGreen);
         var waveShader = Source(waveText, out var sWave, out _, out _);
         var template = Source(ShaderTemplates.Fragment, out var sTemplate, out _, out _);
-        s.Check(sGreen == Protocol.ResState.Ready && sWave == Protocol.ResState.Ready && sTemplate == Protocol.ResState.Ready,
+        s.Check(sGreen == Protocol.ResourceState.Ready && sWave == Protocol.ResourceState.Ready && sTemplate == Protocol.ResourceState.Ready,
             $"GLSL texts (solid, wave.frag, default template) bake -> Ready ({sGreen}, {sWave}, {sTemplate}; {ResError(green)}{ResError(waveShader)}{ResError(template)})");
         s.Check(ResError(template).Length == 0 && ResError(waveShader).Length == 0, "no bake error for the default template and wave.frag");
 
@@ -121,14 +121,14 @@ public static class ShaderSourceTest
         var builtinName = Source(SolidSource("length, 0.0, 0.0").Replace("float qt_Opacity;\n", "float qt_Opacity;\n    float length;\n"),
             out var sBuiltinName, out _, out _);
         var builtinWarning = ResWarning(builtinName);
-        s.Check(sBuiltinName == Protocol.ResState.Ready && builtinWarning.Contains("'length'"),
+        s.Check(sBuiltinName == Protocol.ResourceState.Ready && builtinWarning.Contains("'length'"),
             $"uniform 'length' -> Ready with a rename warning ({sBuiltinName}, '{builtinWarning}' {ResError(builtinName)})");
         s.Check(ResWarning(template).Length == 0 && ResWarning(waveShader).Length == 0 && ResWarning(green).Length == 0,
             $"no rename warning for ordinary names ({ResWarning(template)}{ResWarning(waveShader)}{ResWarning(green)})");
         s.Check(callGreen < 250, $"the load call returns at once, the bake runs in the worker (call {callGreen:F1} ms of {bakeGreen:F1} ms)");
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt shader source test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt shader source test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
@@ -139,9 +139,9 @@ public static class ShaderSourceTest
         }
         void Effect(uint id, float x, float y, float ew, float eh, ulong frag)
         {
-            cmd.Create(id, Protocol.Type.ShaderEffect);
+            cmd.Create(id, Protocol.ElementType.Shader);
             cmd.SetPlace(id, x, y, ew, eh);
-            cmd.SetU64(id, Protocol.Prop.FragmentShader, frag);
+            cmd.SetU64(id, Protocol.PropertyId.FragmentShader, frag);
             cmd.Reparent(id, 0, 1000);
         }
 
@@ -151,12 +151,12 @@ public static class ShaderSourceTest
         Effect(Solid, 50, 50, 300, 200, green);
         // wave.frag text on the stripes image at (400, 50) 300 x 200, amplitude 0 -> stripes
         Effect(Wave, 400, 50, 300, 200, waveShader);
-        cmd.Create(WaveIn, Protocol.Type.Image);
-        cmd.SetU64(WaveIn, Protocol.Prop.Image, image);
-        cmd.SetI32(WaveIn, Protocol.Prop.FillMode, 0);
+        cmd.Create(WaveIn, Protocol.ElementType.Image);
+        cmd.SetU64(WaveIn, Protocol.PropertyId.Image, image);
+        cmd.SetI32(WaveIn, Protocol.PropertyId.FillMode, 0);
         cmd.SetPlace(WaveIn, 0, 0, 300, 200);
         cmd.Reparent(WaveIn, Wave, 0);
-        cmd.SetRef(Wave, Protocol.Prop.Source, WaveIn);
+        cmd.SetRef(Wave, Protocol.PropertyId.Source, WaveIn);
         cmd.BeginUniforms(Wave, Protocol.UniformSet.Clear);
         cmd.UniformF32("time", 0);
         cmd.UniformF32("amplitude", 0);
@@ -186,10 +186,10 @@ public static class ShaderSourceTest
         // --- (c)/(d) syntax error: Failed with a line number, last good version keeps drawing ---
         var broken = Source(SolidSource("foo, 1.0, 0.0"), out var sBroken, out _, out _);
         var error = ResError(broken);
-        s.Check(sBroken == Protocol.ResState.Failed && error.Length > 0, $"syntax error -> Failed with a message ('{error}')");
+        s.Check(sBroken == Protocol.ResourceState.Failed && error.Length > 0, $"syntax error -> Failed with a message ('{error}')");
         s.Check(Regex.IsMatch(error, @"line\s+\d+") && error.Contains("foo"), $"the message names the line and the identifier ('{error}')");
         cmd.Reset();
-        cmd.SetU64(Solid, Protocol.Prop.FragmentShader, broken);
+        cmd.SetU64(Solid, Protocol.PropertyId.FragmentShader, broken);
         CheckApply("good -> broken text");
         s.Pump(6);
         using (var a = s.Grab(w, "shader-source_error_keeps_last_good.png"))
@@ -201,19 +201,19 @@ public static class ShaderSourceTest
 
         // --- a fix: red text replaces green, then back to the green text (bake cache) ---
         var red = Source(SolidSource("1.0, 0.0, 0.0"), out var sRed, out _, out var bakeRed);
-        s.Check(sRed == Protocol.ResState.Ready, $"corrected text bakes -> Ready ({sRed}; {ResError(red)})");
+        s.Check(sRed == Protocol.ResourceState.Ready, $"corrected text bakes -> Ready ({sRed}; {ResError(red)})");
         cmd.Reset();
-        cmd.SetU64(Solid, Protocol.Prop.FragmentShader, red);
+        cmd.SetU64(Solid, Protocol.PropertyId.FragmentShader, red);
         CheckApply("broken -> red text");
         s.Pump(6);
         using (var a = s.Grab(w, "shader-source_fixed_red.png"))
             gpu(Near(Px(a, 200, 150), 255, 0, 0), $"a corrected text replaces the last good version ({Px(a, 200, 150)})");
 
         var greenAgain = Source(SolidSource("0.0, 1.0, 0.0"), out var sAgain, out _, out var cached);
-        s.Check(sAgain == Protocol.ResState.Ready, $"the earlier text is Ready again ({sAgain})");
+        s.Check(sAgain == Protocol.ResourceState.Ready, $"the earlier text is Ready again ({sAgain})");
         s.Check(cached < bakeGreen * 0.6 || cached < 30, $"back to an earlier text comes from the cache (first bake {bakeGreen:F1} ms, again {cached:F1} ms, red {bakeRed:F1} ms)");
         cmd.Reset();
-        cmd.SetU64(Solid, Protocol.Prop.FragmentShader, greenAgain);
+        cmd.SetU64(Solid, Protocol.PropertyId.FragmentShader, greenAgain);
         CheckApply("red -> earlier green text");
         s.Pump(6);
         using (var a = s.Grab(w, "shader-source_back_to_green.png"))
@@ -231,7 +231,7 @@ public static class ShaderSourceTest
         foreach (var id in new[] { Solid, Wave, Template, Fresh }) cmd.Destroy(id);
         CheckApply("destroy all effects");
         s.Pump(3);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         foreach (var id in new[] { image, green, waveShader, template, broken, red, greenAgain }) Native.vlqt_res_release(id);
         s.Pump(2);
         s.Check(true, "window destroyed, resources released");

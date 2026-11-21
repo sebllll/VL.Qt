@@ -38,8 +38,8 @@
             public const int Hang = 2;
         }
 
-        /// <summary>Resource kind of vlqt_res_create for vlqt_test_res_start; the product kinds are <see cref="Protocol.ResKind"/>.</summary>
-        internal static class ResKind
+        /// <summary>Resource kind of vlqt_res_create for vlqt_test_res_start; the product kinds are <see cref="Protocol.ResourceKind"/>.</summary>
+        internal static class ResourceKind
         {
             /// <summary>Decode sleeps in a worker, upload uses budget (vlqt_test_res_start).</summary>
             public const int Test = 1;

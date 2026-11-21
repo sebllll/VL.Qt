@@ -8,7 +8,7 @@ using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
-using P = VL.Qt.Wire.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.PropertyId;
 
 namespace VL.Qt.Tests
 {
@@ -41,7 +41,7 @@ namespace VL.Qt.Tests
         {
             var b = Update();
             Assert.That(b.Type, Is.EqualTo(ElementType.Button));
-            Assert.That((ushort)ElementType.Button, Is.EqualTo(Protocol.Type.Button));
+            Assert.That((ushort)ElementType.Button, Is.EqualTo(Protocol.ElementType.Button));
             Assert.That(b.Text, Is.EqualTo("Button"));
             Assert.That(b.Enabled, Is.True);
             Assert.That(b.AutoRepeat, Is.False);

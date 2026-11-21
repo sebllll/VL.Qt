@@ -16,8 +16,8 @@ using VL.Qt.Wire;
 using Color = System.Drawing.Color;
 using VPath = VL.Lib.IO.Path;
 
-// Tooltip previews (package 01): vlqt_window_change_count (counts scene changes only: not every pump, not the
-// render a grab triggers) and vlqt_res_snapshot_fit (scale so that the longest edge is <= maxEdgePx and <= 1 pixel per
+// Tooltip previews (package 01): vlqt_scene_get_change_count (counts scene changes only: not every pump, not the
+// render a grab triggers) and vlqt_snapshot_start_fit (scale so that the longest edge is <= maxEdgePx and <= 1 pixel per
 // DIP). Window 1200 x 700 DIP: a 1000 x 500 DIP blue rectangle, a 100 x 50 red one, a Button, a Group whose orange child
 // sits in negative coordinates (frame 250 x 150, see GroupFrameTest). Snapshots go to <OutDir>/544_*.png.
 // A device pixel ratio other than 1 needs its own run: $env:QT_SCALE_FACTOR=1.5; tools/build.ps1 -Test -Only tooltip.
@@ -55,8 +55,8 @@ public static class TooltipTest
         var client = new ResourceClient(new NativeResourceApi(), Environment.CurrentManagedThreadId, static () => null);
         client.SetPumping(true);
 
-        var w = Native.vlqt_window_create(1200, 700, "VL.Qt tooltip test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(1200, 700, "VL.Qt tooltip test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var scene = new SceneRegistry();
@@ -104,7 +104,7 @@ public static class TooltipTest
                 if (sleepMs > 0) Thread.Sleep(sleepMs);
             }
         }
-        long Count() => Native.vlqt_window_change_count(w);
+        long Count() => Native.vlqt_scene_get_change_count(w);
         void Mouse(int type, float x, float y) => s.Check(NativeTest.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
 
         Frame(clear: true);
@@ -222,7 +222,7 @@ public static class TooltipTest
         // 2b) ElementTooltipPreview on the real QtNative: an image <= 256 px, no further grabs in a static scene,
         // a new one after the scene changed (hover), a text for an element no renderer shows, release on Dispose.
         {
-            var tip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_window_change_count(window),
+            var tip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_scene_get_change_count(window),
                 static () => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
             IImage? tipImage = null;
             string tipText = "";
@@ -282,7 +282,7 @@ public static class TooltipTest
         // 2c) ElementTooltipPreview: a target that is a new instance every frame at the same place (an LFO on colour and size
         // in a patch). The place is the identity, so the first image arrives, stays, and gets replaced by newer ones, never null in between.
         {
-            var tip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_window_change_count(window),
+            var tip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_scene_get_change_count(window),
                 static () => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
             IImage? lastImage = null;
             int arrivals = 0, flickers = 0;
@@ -327,7 +327,7 @@ public static class TooltipTest
         // TryLocate falls back to the place of the slot, so both find the group and deliver an image.
         {
             var slot = new FeedbackSlot(new ElementFeedback(), 0);
-            var tip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_window_change_count(window),
+            var tip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_scene_get_change_count(window),
                 static () => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
             var snap = new SnapshotNode(client, scene);
             IImage? tipImage = null, snapImage = null;
@@ -415,7 +415,7 @@ public static class TooltipTest
         foreach (var (page, name) in new[] { (1, "Timeline"), (0, "Summary") })
         {
             const int Stats = 2, PageShift = 4;
-            s.Check(Native.vlqt_window_set_overlay(w, Stats | ((page + 1) << PageShift)) == 0, $"F5 overlay {name} opens");
+            s.Check(Native.vlqt_scene_set_overlay(w, Stats | ((page + 1) << PageShift)) == 0, $"F5 overlay {name} opens");
             Step(30);
             cNow = Count();
             Step(60);
@@ -423,7 +423,7 @@ public static class TooltipTest
             s.Info($"static scene, F5 overlay {name}, 60 pumps: change count {cNow} -> {cOverlay}");
             s.Check(cOverlay == cNow, $"static scene with the F5 overlay ({name}): change count stays over 60 pumps ({cNow} -> {cOverlay})");
         }
-        Native.vlqt_window_set_overlay(w, 0);
+        Native.vlqt_scene_set_overlay(w, 0);
         Step(10);
 
         // 3b) ElementTooltipPreview and video. (a) A tree with a Video gets only text and never a grab (a grab of a running
@@ -438,7 +438,7 @@ public static class TooltipTest
                     new Group { Children = [new Video { Size = new Vector2(4.8f, 2.7f), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(1, 1, 0), Path = videoPath is null ? VPath.Default : new VPath(videoPath), Playing = true, Loop = true }] }
                 ]
             };
-            var videoTip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_window_change_count(window),
+            var videoTip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_scene_get_change_count(window),
                 static () => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
             var liveBefore = client.LiveCount;
             current = videoGroup;
@@ -474,7 +474,7 @@ public static class TooltipTest
             const double Period = 1000.0 / 60;
             const int BlockFrames = 200;
             Element targetGroup = null!;
-            var perfTip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_window_change_count(window),
+            var perfTip = new ElementTooltipPreview(client, scene, static window => Native.vlqt_scene_get_change_count(window),
                 static () => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
             var intervalsA = new List<double>();
             var intervalsB = new List<double>();
@@ -529,26 +529,26 @@ public static class TooltipTest
             PerfLimits.Below(s, HitchRate(intervalsB), Math.Max(HitchRate(intervalsA) * 3, 5), "hitch rate with ElementTooltipPreview on an animated element in the range of the background, %");
 
             // F5 Resources page after the B run: the snapshot line of package 01 shows the previews' rate and cost.
-            s.Check(Native.vlqt_window_set_overlay(w, 2 | ((PerfOverlayTest.ResourcesPage + 1) << 4)) == 0, "F5 overlay Resources opens");
+            s.Check(Native.vlqt_scene_set_overlay(w, 2 | ((PerfOverlayTest.ResourcesPage + 1) << 4)) == 0, "F5 overlay Resources opens");
             for (int i = 0; i < BlockFrames; i++) PerfFrame(true, null);
             s.Info($"F5 Resources after the run: {PerfOverlayTest.PageText(w, PerfOverlayTest.ResourcesPage).Split('\n').FirstOrDefault(l => l.StartsWith("snapshots"))?.Trim() ?? "(missing)"}");
-            Native.vlqt_window_set_overlay(w, 0);
+            Native.vlqt_scene_set_overlay(w, 0);
             perfTip.Dispose();
             current = Tree(big, false);
             Step(10);
         }
 
         // 4) Error paths: null window, bad edge, unknown element.
-        s.Check(Native.vlqt_window_change_count(IntPtr.Zero) == (long)Native.Result.NullHandle, $"change_count of a null window = NullHandle ({Native.vlqt_window_change_count(IntPtr.Zero)})");
+        s.Check(Native.vlqt_scene_get_change_count(SceneHandle.Null) == (long)Native.Result.NullHandle, $"change_count of a null window = NullHandle ({Native.vlqt_scene_get_change_count(SceneHandle.Null)})");
         var bad = client.CreateSnapshot();
-        s.Check(Native.vlqt_res_snapshot_fit(bad.Id, IntPtr.Zero, 0, 256) == Native.Result.NullHandle, "snapshot_fit with a null window = NullHandle");
-        s.Check(Native.vlqt_res_snapshot_fit(bad.Id, w, 0, 0) == Native.Result.BadArgument, "snapshot_fit maxEdge 0 = BadArgument");
-        s.Check(Native.vlqt_res_snapshot_fit(bad.Id, w, 0, -5) == Native.Result.BadArgument, "snapshot_fit maxEdge -5 = BadArgument");
+        s.Check(Native.vlqt_snapshot_start_fit(bad.Id, SceneHandle.Null, 0, 256) == Native.Result.NullHandle, "snapshot_fit with a null window = NullHandle");
+        s.Check(Native.vlqt_snapshot_start_fit(bad.Id, w, 0, 0) == Native.Result.BadArgument, "snapshot_fit maxEdge 0 = BadArgument");
+        s.Check(Native.vlqt_snapshot_start_fit(bad.Id, w, 0, -5) == Native.Result.BadArgument, "snapshot_fit maxEdge -5 = BadArgument");
         client.Release(bad);
         Step(3);
         s.Check(client.LiveCount == 0, $"all snapshot resources released (live {client.LiveCount})");
 
-        // Raw: unknown element → Failed with an error text, same as vlqt_res_snapshot; the client does not poll here.
+        // Raw: unknown element → Failed with an error text, same as vlqt_snapshot_start; the client does not poll here.
         var events = new List<(ushort Ev, ulong Id, byte[] Payload)>();
         var buf = new byte[64 * 1024];
         void Poll()
@@ -569,19 +569,19 @@ public static class TooltipTest
         }
         string RawFailure(bool fit, out byte state)
         {
-            var rcCreate = Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var id);
+            var rcCreate = Native.vlqt_res_create(Protocol.ResourceKind.Snapshot, out var id);
             s.Check(rcCreate == 0 && id != 0, $"raw create ({rcCreate})");
             events.Clear();
-            var rc = fit ? Native.vlqt_res_snapshot_fit(id, w, 4_000_000, 256) : Native.vlqt_res_snapshot(id, w, 4_000_000, 1);
+            var rc = fit ? Native.vlqt_snapshot_start_fit(id, w, 4_000_000, 256) : Native.vlqt_snapshot_start(id, w, 4_000_000, 1);
             s.Check(rc == 0, $"raw {(fit ? "snapshot_fit" : "snapshot")} of an unknown element is accepted ({rc})");
             state = 0;
-            for (int i = 0; i < 120 && state is not (Protocol.ResState.Ready or Protocol.ResState.Failed); i++)
+            for (int i = 0; i < 120 && state is not (Protocol.ResourceState.Ready or Protocol.ResourceState.Failed); i++)
             {
                 s.Pump(1);
                 Poll();
-                state = events.Where(e => e.Id == id && e.Ev == Protocol.ResEv.State).Select(e => e.Payload[0]).LastOrDefault();
+                state = events.Where(e => e.Id == id && e.Ev == Protocol.ResourceEventId.State).Select(e => e.Payload[0]).LastOrDefault();
             }
-            var text = events.Where(e => e.Id == id && e.Ev == Protocol.ResEv.Error).Select(e => Encoding.UTF8.GetString(e.Payload)).LastOrDefault() ?? "";
+            var text = events.Where(e => e.Id == id && e.Ev == Protocol.ResourceEventId.Error).Select(e => Encoding.UTF8.GetString(e.Payload)).LastOrDefault() ?? "";
             Native.vlqt_res_release(id);
             s.Pump(1);
             Poll();
@@ -590,15 +590,15 @@ public static class TooltipTest
         var fitError = RawFailure(true, out var fitState);
         var plainError = RawFailure(false, out var plainState);
         s.Info($"unknown element: snapshot_fit '{fitError.TrimEnd('\0')}' (state {fitState}), snapshot '{plainError.TrimEnd('\0')}' (state {plainState})");
-        s.Check(fitState == Protocol.ResState.Failed && fitError.Length > 0, $"snapshot_fit of an unknown element: Failed with an error text (state {fitState}, '{fitError}')");
-        s.Check(fitError == plainError, $"the error text equals the one of vlqt_res_snapshot ('{fitError}' vs '{plainError}')");
+        s.Check(fitState == Protocol.ResourceState.Failed && fitError.Length > 0, $"snapshot_fit of an unknown element: Failed with an error text (state {fitState}, '{fitError}')");
+        s.Check(fitError == plainError, $"the error text equals the one of vlqt_snapshot_start ('{fitError}' vs '{plainError}')");
 
         // Cleanup: the window goes, the count of a destroyed window is not asked again.
         client.SetPumping(false);
         cmd.Reset();
         rec.Clear();
         Native.Apply(w, cmd.EndFrame());
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
     }
 }

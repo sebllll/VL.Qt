@@ -16,146 +16,146 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class ElementTableTest
 {
-    // Block 1..255 of Protocol.Prop: on every element type (commonProps() in elements.cpp).
+    // Block 1..255 of Protocol.PropertyId: on every element type (commonProps() in elements.cpp).
     private const ushort commonMax = 255;
 
     // Type-specific properties per element type, mirrored from the tables in elements.cpp and the protocol.h comments.
     private static readonly Dictionary<ushort, ushort[]> s_typeProps = new()
     {
-        [Protocol.Type.Item] = [Protocol.Prop.AutoSize],
-        [Protocol.Type.Rectangle] = [Protocol.Prop.Color, Protocol.Prop.Radius, Protocol.Prop.BorderColor, Protocol.Prop.BorderWidth],
-        [Protocol.Type.Text] =
+        [Protocol.ElementType.Group] = [Protocol.PropertyId.AutoSize],
+        [Protocol.ElementType.Rectangle] = [Protocol.PropertyId.Color, Protocol.PropertyId.Radius, Protocol.PropertyId.BorderColor, Protocol.PropertyId.BorderWidth],
+        [Protocol.ElementType.Text] =
         [
-            Protocol.Prop.Text, Protocol.Prop.FontFamily, Protocol.Prop.FontSize, Protocol.Prop.FontWeight, Protocol.Prop.FontItalic,
-            Protocol.Prop.Color, Protocol.Prop.HorizontalAlignment, Protocol.Prop.VerticalAlignment, Protocol.Prop.WrapMode,
-            Protocol.Prop.Elide, Protocol.Prop.LineHeight, Protocol.Prop.LetterSpacing, Protocol.Prop.FontSizeMode,
+            Protocol.PropertyId.Text, Protocol.PropertyId.FontFamily, Protocol.PropertyId.FontSize, Protocol.PropertyId.FontWeight, Protocol.PropertyId.FontItalic,
+            Protocol.PropertyId.Color, Protocol.PropertyId.HorizontalAlignment, Protocol.PropertyId.VerticalAlignment, Protocol.PropertyId.WrapMode,
+            Protocol.PropertyId.Elide, Protocol.PropertyId.LineHeight, Protocol.PropertyId.LetterSpacing, Protocol.PropertyId.FontSizeMode,
         ],
-        [Protocol.Type.Image] = [Protocol.Prop.Image, Protocol.Prop.FillMode, Protocol.Prop.Smooth],
-        [Protocol.Type.Row] = [Protocol.Prop.Spacing, Protocol.Prop.Padding, Protocol.Prop.ChildAlignment, Protocol.Prop.AutoSize],
-        [Protocol.Type.Column] = [Protocol.Prop.Spacing, Protocol.Prop.Padding, Protocol.Prop.ChildAlignment, Protocol.Prop.AutoSize],
-        [Protocol.Type.Video] =
+        [Protocol.ElementType.Image] = [Protocol.PropertyId.Image, Protocol.PropertyId.FillMode, Protocol.PropertyId.Smooth],
+        [Protocol.ElementType.Row] = [Protocol.PropertyId.Spacing, Protocol.PropertyId.Padding, Protocol.PropertyId.ChildAlignment, Protocol.PropertyId.AutoSize],
+        [Protocol.ElementType.Column] = [Protocol.PropertyId.Spacing, Protocol.PropertyId.Padding, Protocol.PropertyId.ChildAlignment, Protocol.PropertyId.AutoSize],
+        [Protocol.ElementType.Video] =
         [
-            Protocol.Prop.Source, Protocol.Prop.FillMode, Protocol.Prop.Playing, Protocol.Prop.Loop, Protocol.Prop.KeepLastFrame,
-            Protocol.Prop.PlaybackRate, Protocol.Prop.Volume, Protocol.Prop.AudioTap,
+            Protocol.PropertyId.Source, Protocol.PropertyId.FillMode, Protocol.PropertyId.Playing, Protocol.PropertyId.Loop, Protocol.PropertyId.KeepLastFrame,
+            Protocol.PropertyId.PlaybackRate, Protocol.PropertyId.Volume, Protocol.PropertyId.AudioTap,
         ],
-        [Protocol.Type.Button] = [Protocol.Prop.Text, Protocol.Prop.Enabled, Protocol.Prop.AutoRepeat, Protocol.Prop.AutoSize],
-        [Protocol.Type.SpinBox] =
+        [Protocol.ElementType.Button] = [Protocol.PropertyId.Text, Protocol.PropertyId.Enabled, Protocol.PropertyId.AutoRepeat, Protocol.PropertyId.AutoSize],
+        [Protocol.ElementType.SpinBox] =
         [
-            Protocol.Prop.Value, Protocol.Prop.Minimum, Protocol.Prop.Maximum, Protocol.Prop.Step, Protocol.Prop.Editable,
-            Protocol.Prop.Enabled, Protocol.Prop.AutoSize,
+            Protocol.PropertyId.Value, Protocol.PropertyId.Minimum, Protocol.PropertyId.Maximum, Protocol.PropertyId.Step, Protocol.PropertyId.Editable,
+            Protocol.PropertyId.Enabled, Protocol.PropertyId.AutoSize,
         ],
-        [Protocol.Type.CheckBox] = [Protocol.Prop.Value, Protocol.Prop.Enabled, Protocol.Prop.AutoSize],
-        [Protocol.Type.Switch] = [Protocol.Prop.Value, Protocol.Prop.Enabled, Protocol.Prop.AutoSize],
-        [Protocol.Type.Slider] =
+        [Protocol.ElementType.CheckBox] = [Protocol.PropertyId.Value, Protocol.PropertyId.Enabled, Protocol.PropertyId.AutoSize],
+        [Protocol.ElementType.Switch] = [Protocol.PropertyId.Value, Protocol.PropertyId.Enabled, Protocol.PropertyId.AutoSize],
+        [Protocol.ElementType.Slider] =
         [
-            Protocol.Prop.Value, Protocol.Prop.Minimum, Protocol.Prop.Maximum, Protocol.Prop.Step, Protocol.Prop.Orientation,
-            Protocol.Prop.Enabled, Protocol.Prop.AutoSize,
+            Protocol.PropertyId.Value, Protocol.PropertyId.Minimum, Protocol.PropertyId.Maximum, Protocol.PropertyId.Step, Protocol.PropertyId.Orientation,
+            Protocol.PropertyId.Enabled, Protocol.PropertyId.AutoSize,
         ],
-        [Protocol.Type.TextField] =
-            [Protocol.Prop.Value, Protocol.Prop.Placeholder, Protocol.Prop.Editable, Protocol.Prop.Enabled, Protocol.Prop.AutoSize],
-        [Protocol.Type.ShaderEffect] =
+        [Protocol.ElementType.TextField] =
+            [Protocol.PropertyId.Value, Protocol.PropertyId.Placeholder, Protocol.PropertyId.Editable, Protocol.PropertyId.Enabled, Protocol.PropertyId.AutoSize],
+        [Protocol.ElementType.Shader] =
         [
-            Protocol.Prop.FragmentShader, Protocol.Prop.VertexShader, Protocol.Prop.Blending, Protocol.Prop.MeshResolution,
-            Protocol.Prop.Source, Protocol.Prop.AutoSize,
+            Protocol.PropertyId.FragmentShader, Protocol.PropertyId.VertexShader, Protocol.PropertyId.Blending, Protocol.PropertyId.MeshResolution,
+            Protocol.PropertyId.Source, Protocol.PropertyId.AutoSize,
         ],
-        [Protocol.Type.Qml] = [Protocol.Prop.QmlSource, Protocol.Prop.QmlReload, Protocol.Prop.AutoSize],
-        [Protocol.Type.Shape] =
+        [Protocol.ElementType.Qml] = [Protocol.PropertyId.QmlSource, Protocol.PropertyId.QmlReload, Protocol.PropertyId.AutoSize],
+        [Protocol.ElementType.Shape] =
         [
-            Protocol.Prop.ShapePoints, Protocol.Prop.ShapeClosed, Protocol.Prop.ShapePath, Protocol.Prop.ShapeFill,
-            Protocol.Prop.ShapeStrokeColor, Protocol.Prop.ShapeStrokeWidth, Protocol.Prop.ShapeCap, Protocol.Prop.ShapeJoin,
-            Protocol.Prop.ShapeMiterLimit, Protocol.Prop.ShapeDash, Protocol.Prop.ShapeDashOffset, Protocol.Prop.ShapeTrimStart,
-            Protocol.Prop.ShapeTrimEnd, Protocol.Prop.ShapeTrimOffset, Protocol.Prop.ShapeFillRule,
+            Protocol.PropertyId.ShapePoints, Protocol.PropertyId.ShapeClosed, Protocol.PropertyId.ShapePath, Protocol.PropertyId.ShapeFill,
+            Protocol.PropertyId.ShapeStrokeColor, Protocol.PropertyId.ShapeStrokeWidth, Protocol.PropertyId.ShapeCap, Protocol.PropertyId.ShapeJoin,
+            Protocol.PropertyId.ShapeMiterLimit, Protocol.PropertyId.ShapeDash, Protocol.PropertyId.ShapeDashOffset, Protocol.PropertyId.ShapeTrimStart,
+            Protocol.PropertyId.ShapeTrimEnd, Protocol.PropertyId.ShapeTrimOffset, Protocol.PropertyId.ShapeFillRule,
         ],
     };
 
     // Default value type of each property (protocol.h comments); TypeValueType has the per-type exceptions.
     private static readonly Dictionary<ushort, ushort> s_valueType = new()
     {
-        [Protocol.Prop.Size] = Protocol.Vt.Vec2,
-        [Protocol.Prop.Transform] = Protocol.Vt.Mat4,
-        [Protocol.Prop.Opacity] = Protocol.Vt.F32,
-        [Protocol.Prop.Clip] = Protocol.Vt.Bool,
-        [Protocol.Prop.Anchor] = Protocol.Vt.I32,
-        [Protocol.Prop.Debug] = Protocol.Vt.Bool,
-        [Protocol.Prop.Color] = Protocol.Vt.Color,
-        [Protocol.Prop.Radius] = Protocol.Vt.F32,
-        [Protocol.Prop.BorderColor] = Protocol.Vt.Color,
-        [Protocol.Prop.BorderWidth] = Protocol.Vt.F32,
-        [Protocol.Prop.Text] = Protocol.Vt.String,
-        [Protocol.Prop.FontFamily] = Protocol.Vt.String,
-        [Protocol.Prop.FontSize] = Protocol.Vt.F32,
-        [Protocol.Prop.FontWeight] = Protocol.Vt.I32,
-        [Protocol.Prop.FontItalic] = Protocol.Vt.Bool,
-        [Protocol.Prop.HorizontalAlignment] = Protocol.Vt.I32,
-        [Protocol.Prop.VerticalAlignment] = Protocol.Vt.I32,
-        [Protocol.Prop.WrapMode] = Protocol.Vt.I32,
-        [Protocol.Prop.Elide] = Protocol.Vt.I32,
-        [Protocol.Prop.LineHeight] = Protocol.Vt.F32,
-        [Protocol.Prop.LetterSpacing] = Protocol.Vt.F32,
-        [Protocol.Prop.FontSizeMode] = Protocol.Vt.I32,
-        [Protocol.Prop.Source] = Protocol.Vt.String, // ShaderEffect: Ref
-        [Protocol.Prop.FillMode] = Protocol.Vt.I32,
-        [Protocol.Prop.Smooth] = Protocol.Vt.Bool,
-        [Protocol.Prop.Image] = Protocol.Vt.U64,
-        [Protocol.Prop.Spacing] = Protocol.Vt.F32,
-        [Protocol.Prop.Padding] = Protocol.Vt.F32,
-        [Protocol.Prop.ChildAlignment] = Protocol.Vt.I32,
-        [Protocol.Prop.AutoSize] = Protocol.Vt.Bool,
-        [Protocol.Prop.Playing] = Protocol.Vt.Bool,
-        [Protocol.Prop.Loop] = Protocol.Vt.Bool,
-        [Protocol.Prop.PlaybackRate] = Protocol.Vt.F32,
-        [Protocol.Prop.Volume] = Protocol.Vt.F32,
-        [Protocol.Prop.KeepLastFrame] = Protocol.Vt.Bool,
-        [Protocol.Prop.AudioTap] = Protocol.Vt.U64,
-        [Protocol.Prop.Enabled] = Protocol.Vt.Bool,
-        [Protocol.Prop.AutoRepeat] = Protocol.Vt.Bool,
-        [Protocol.Prop.Value] = Protocol.Vt.I32, // SpinBox; CheckBox/Switch Bool, Slider F32, TextField String
-        [Protocol.Prop.Minimum] = Protocol.Vt.I32, // SpinBox; Slider F32
-        [Protocol.Prop.Maximum] = Protocol.Vt.I32,
-        [Protocol.Prop.Step] = Protocol.Vt.I32,
-        [Protocol.Prop.Editable] = Protocol.Vt.Bool,
-        [Protocol.Prop.Orientation] = Protocol.Vt.I32,
-        [Protocol.Prop.Placeholder] = Protocol.Vt.String,
-        [Protocol.Prop.FragmentShader] = Protocol.Vt.U64,
-        [Protocol.Prop.VertexShader] = Protocol.Vt.U64,
-        [Protocol.Prop.Blending] = Protocol.Vt.Bool,
-        [Protocol.Prop.MeshResolution] = Protocol.Vt.Ivec2,
-        [Protocol.Prop.QmlSource] = Protocol.Vt.String,
-        [Protocol.Prop.QmlReload] = Protocol.Vt.I32,
-        [Protocol.Prop.ShapePoints] = Protocol.Vt.F32Array,
-        [Protocol.Prop.ShapeClosed] = Protocol.Vt.Bool,
-        [Protocol.Prop.ShapePath] = Protocol.Vt.Path,
-        [Protocol.Prop.ShapeFill] = Protocol.Vt.Color,
-        [Protocol.Prop.ShapeStrokeColor] = Protocol.Vt.Color,
-        [Protocol.Prop.ShapeStrokeWidth] = Protocol.Vt.F32,
-        [Protocol.Prop.ShapeCap] = Protocol.Vt.I32,
-        [Protocol.Prop.ShapeJoin] = Protocol.Vt.I32,
-        [Protocol.Prop.ShapeMiterLimit] = Protocol.Vt.F32,
-        [Protocol.Prop.ShapeDash] = Protocol.Vt.F32Array,
-        [Protocol.Prop.ShapeDashOffset] = Protocol.Vt.F32,
-        [Protocol.Prop.ShapeTrimStart] = Protocol.Vt.F32,
-        [Protocol.Prop.ShapeTrimEnd] = Protocol.Vt.F32,
-        [Protocol.Prop.ShapeTrimOffset] = Protocol.Vt.F32,
-        [Protocol.Prop.ShapeFillRule] = Protocol.Vt.I32,
+        [Protocol.PropertyId.Size] = Protocol.ValueType.Vec2,
+        [Protocol.PropertyId.Transform] = Protocol.ValueType.Mat4,
+        [Protocol.PropertyId.Opacity] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.Clip] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.Anchor] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.Debug] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.Color] = Protocol.ValueType.Color,
+        [Protocol.PropertyId.Radius] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.BorderColor] = Protocol.ValueType.Color,
+        [Protocol.PropertyId.BorderWidth] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.Text] = Protocol.ValueType.String,
+        [Protocol.PropertyId.FontFamily] = Protocol.ValueType.String,
+        [Protocol.PropertyId.FontSize] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.FontWeight] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.FontItalic] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.HorizontalAlignment] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.VerticalAlignment] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.WrapMode] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.Elide] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.LineHeight] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.LetterSpacing] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.FontSizeMode] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.Source] = Protocol.ValueType.String, // ShaderEffect: Ref
+        [Protocol.PropertyId.FillMode] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.Smooth] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.Image] = Protocol.ValueType.U64,
+        [Protocol.PropertyId.Spacing] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.Padding] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.ChildAlignment] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.AutoSize] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.Playing] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.Loop] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.PlaybackRate] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.Volume] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.KeepLastFrame] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.AudioTap] = Protocol.ValueType.U64,
+        [Protocol.PropertyId.Enabled] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.AutoRepeat] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.Value] = Protocol.ValueType.I32, // SpinBox; CheckBox/Switch Bool, Slider F32, TextField String
+        [Protocol.PropertyId.Minimum] = Protocol.ValueType.I32, // SpinBox; Slider F32
+        [Protocol.PropertyId.Maximum] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.Step] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.Editable] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.Orientation] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.Placeholder] = Protocol.ValueType.String,
+        [Protocol.PropertyId.FragmentShader] = Protocol.ValueType.U64,
+        [Protocol.PropertyId.VertexShader] = Protocol.ValueType.U64,
+        [Protocol.PropertyId.Blending] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.MeshResolution] = Protocol.ValueType.Ivec2,
+        [Protocol.PropertyId.QmlSource] = Protocol.ValueType.String,
+        [Protocol.PropertyId.QmlReload] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.ShapePoints] = Protocol.ValueType.F32Array,
+        [Protocol.PropertyId.ShapeClosed] = Protocol.ValueType.Bool,
+        [Protocol.PropertyId.ShapePath] = Protocol.ValueType.Path,
+        [Protocol.PropertyId.ShapeFill] = Protocol.ValueType.Color,
+        [Protocol.PropertyId.ShapeStrokeColor] = Protocol.ValueType.Color,
+        [Protocol.PropertyId.ShapeStrokeWidth] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.ShapeCap] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.ShapeJoin] = Protocol.ValueType.I32,
+        [Protocol.PropertyId.ShapeMiterLimit] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.ShapeDash] = Protocol.ValueType.F32Array,
+        [Protocol.PropertyId.ShapeDashOffset] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.ShapeTrimStart] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.ShapeTrimEnd] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.ShapeTrimOffset] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.ShapeFillRule] = Protocol.ValueType.I32,
     };
 
     // Not element table properties: input handler properties (only on handler objects) and the keys of the effect chain
     // (SET of them is UnknownProperty, protocol.h "Effect chain").
     private static bool IsExempt(ushort prop) =>
-        prop >= Protocol.Prop.AcceptedButtons && prop <= Protocol.Prop.Occlusion
-        || prop >= Protocol.Prop.EffectEnabled && prop <= Protocol.Prop.EffectMaskInverted;
+        prop >= Protocol.PropertyId.AcceptedButtons && prop <= Protocol.PropertyId.Occlusion
+        || prop >= Protocol.MultiEffectKey.Enabled && prop <= Protocol.MultiEffectKey.MaskInverted;
 
     private static ushort TypeValueType(ushort type, ushort prop)
     {
-        if (type == Protocol.Type.ShaderEffect && prop == Protocol.Prop.Source)
-            return Protocol.Vt.Ref;
-        if ((type == Protocol.Type.CheckBox || type == Protocol.Type.Switch) && prop == Protocol.Prop.Value)
-            return Protocol.Vt.Bool;
-        if (type == Protocol.Type.TextField && prop == Protocol.Prop.Value)
-            return Protocol.Vt.String;
-        if (type == Protocol.Type.Slider
-            && (prop == Protocol.Prop.Value || prop == Protocol.Prop.Minimum || prop == Protocol.Prop.Maximum || prop == Protocol.Prop.Step))
-            return Protocol.Vt.F32;
+        if (type == Protocol.ElementType.Shader && prop == Protocol.PropertyId.Source)
+            return Protocol.ValueType.Ref;
+        if ((type == Protocol.ElementType.CheckBox || type == Protocol.ElementType.Switch) && prop == Protocol.PropertyId.Value)
+            return Protocol.ValueType.Bool;
+        if (type == Protocol.ElementType.TextField && prop == Protocol.PropertyId.Value)
+            return Protocol.ValueType.String;
+        if (type == Protocol.ElementType.Slider
+            && (prop == Protocol.PropertyId.Value || prop == Protocol.PropertyId.Minimum || prop == Protocol.PropertyId.Maximum || prop == Protocol.PropertyId.Step))
+            return Protocol.ValueType.F32;
         return s_valueType[prop];
     }
 
@@ -171,14 +171,14 @@ public static class ElementTableTest
 
     private static void Run(Scenario s)
     {
-        var typeNames = Constants(typeof(Protocol.Type)).ToDictionary(c => c.Value, c => c.Name);
-        var propNames = Constants(typeof(Protocol.Prop)).ToDictionary(c => c.Value, c => c.Name);
+        var typeNames = Constants(typeof(Protocol.ElementType)).ToDictionary(c => c.Value, c => c.Name);
+        var propNames = Constants(typeof(Protocol.PropertyId)).ToDictionary(c => c.Value, c => c.Name);
 
         // Completeness: a new element type or property must get a row here.
-        foreach (var (name, typeId) in Constants(typeof(Protocol.Type)).Where(c => c.Value < Protocol.Type.HoverHandler))
+        foreach (var (name, typeId) in Constants(typeof(Protocol.ElementType)).Where(c => c.Value < Protocol.ElementType.HoverHandler))
             s.Check(s_typeProps.ContainsKey(typeId), $"element-table: type {name} ({typeId}) has a row in s_typeProps");
         var covered = s_typeProps.Values.SelectMany(p => p).ToHashSet();
-        foreach (var (name, propId) in Constants(typeof(Protocol.Prop)))
+        foreach (var (name, propId) in Constants(typeof(Protocol.PropertyId)))
         {
             if (propId <= commonMax)
                 s.Check(s_valueType.ContainsKey(propId), $"element-table: common property {name} ({propId}) has a value type");
@@ -187,9 +187,9 @@ public static class ElementTableTest
                     $"element-table: property {name} ({propId}) is in a type row and has a value type");
         }
 
-        var w = Native.vlqt_window_create(400, 300, "VL.Qt element table test");
-        s.Check(w != IntPtr.Zero, "element-table: window_create");
-        if (w == IntPtr.Zero)
+        var w = NativeCalls.CreateWindow(400, 300, "VL.Qt element table test");
+        s.Check(w != SceneHandle.Null, "element-table: window_create");
+        if (w == SceneHandle.Null)
             return;
         try
         {
@@ -201,7 +201,7 @@ public static class ElementTableTest
                 var typeName = typeNames.TryGetValue(type, out var tn) ? tn : type.ToString();
                 var logStart = QtHost.LogLength;
                 // The helper is the Input of a ShaderEffect (REF value).
-                var rc = Native.Apply(w, buf.Clear().Create(helper, Protocol.Type.Rectangle).Reparent(helper, 0, 0)
+                var rc = Native.Apply(w, buf.Clear().Create(helper, Protocol.ElementType.Rectangle).Reparent(helper, 0, 0)
                     .Create(id, type).Reparent(id, 0, 1).Span);
                 s.Check(rc == 0, $"element-table: {typeName} create ({rc}) {(rc != 0 ? Native.LastError() : "")}");
                 if (rc != 0)
@@ -220,7 +220,7 @@ public static class ElementTableTest
         }
         finally
         {
-            Native.vlqt_window_destroy(w);
+            Native.vlqt_scene_destroy(w);
             // The Video row starts QtMultimedia (player, audio output) only for a moment. A process that ends right after
             // that stays behind as an unkillable testhost (run alone: element-table is the last scenario). Like the video
             // test, let it settle for a while before the scenario ends.
@@ -240,37 +240,37 @@ public static class ElementTableTest
         void I(params int[] i) { foreach (var x in i) b.AddRange(BitConverter.GetBytes(x)); }
         switch (vt)
         {
-            case Protocol.Vt.F32: F(prop == Protocol.Prop.FontSize ? 12f : 1f); break;
-            case Protocol.Vt.I32:
+            case Protocol.ValueType.F32: F(prop == Protocol.PropertyId.FontSize ? 12f : 1f); break;
+            case Protocol.ValueType.I32:
                 switch (prop)
                 {
-                    case Protocol.Prop.Anchor: I(GeometryExtensions.AlignTopLeft); break;
-                    case Protocol.Prop.FontWeight: I(400); break;
-                    case Protocol.Prop.HorizontalAlignment: I(0x1); break; // AlignLeft
-                    case Protocol.Prop.VerticalAlignment: I(0x20); break; // AlignTop
-                    case Protocol.Prop.ChildAlignment: I(type == Protocol.Type.Row ? 0x20 : 0x1); break;
-                    case Protocol.Prop.Orientation: I(1); break;
-                    case Protocol.Prop.Maximum: I(10); break;
-                    case Protocol.Prop.Value: case Protocol.Prop.Step: I(1); break;
+                    case Protocol.PropertyId.Anchor: I(GeometryExtensions.AlignTopLeft); break;
+                    case Protocol.PropertyId.FontWeight: I(400); break;
+                    case Protocol.PropertyId.HorizontalAlignment: I(0x1); break; // AlignLeft
+                    case Protocol.PropertyId.VerticalAlignment: I(0x20); break; // AlignTop
+                    case Protocol.PropertyId.ChildAlignment: I(type == Protocol.ElementType.Row ? 0x20 : 0x1); break;
+                    case Protocol.PropertyId.Orientation: I(1); break;
+                    case Protocol.PropertyId.Maximum: I(10); break;
+                    case Protocol.PropertyId.Value: case Protocol.PropertyId.Step: I(1); break;
                     default: I(0); break; // enums: first value
                 }
                 break;
-            case Protocol.Vt.Bool: b.Add(prop == Protocol.Prop.Debug ? (byte)0 : (byte)1); break;
-            case Protocol.Vt.Color: F(1, 0, 0, 1); break;
-            case Protocol.Vt.Mat4: F(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1); break;
-            case Protocol.Vt.Vec2: F(100, 50); break;
-            case Protocol.Vt.Ivec2: I(1, 1); break;
-            case Protocol.Vt.U64: b.AddRange(new byte[8]); break; // 0 = none
-            case Protocol.Vt.Ref: I(2); break;
-            case Protocol.Vt.String:
-                var text = prop == Protocol.Prop.Source || prop == Protocol.Prop.QmlSource ? ""
-                    : prop == Protocol.Prop.FontFamily ? "Arial" : "x";
+            case Protocol.ValueType.Bool: b.Add(prop == Protocol.PropertyId.Debug ? (byte)0 : (byte)1); break;
+            case Protocol.ValueType.Color: F(1, 0, 0, 1); break;
+            case Protocol.ValueType.Mat4: F(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1); break;
+            case Protocol.ValueType.Vec2: F(100, 50); break;
+            case Protocol.ValueType.Ivec2: I(1, 1); break;
+            case Protocol.ValueType.U64: b.AddRange(new byte[8]); break; // 0 = none
+            case Protocol.ValueType.Ref: I(2); break;
+            case Protocol.ValueType.String:
+                var text = prop == Protocol.PropertyId.Source || prop == Protocol.PropertyId.QmlSource ? ""
+                    : prop == Protocol.PropertyId.FontFamily ? "Arial" : "x";
                 var utf8 = Encoding.UTF8.GetBytes(text);
                 I(utf8.Length);
                 b.AddRange(utf8);
                 break;
-            case Protocol.Vt.F32Array: I(4); F(0, 0, 10, 10); break;
-            case Protocol.Vt.Path:
+            case Protocol.ValueType.F32Array: I(4); F(0, 0, 10, 10); break;
+            case Protocol.ValueType.Path:
                 I(2, 2);
                 b.AddRange(new byte[] { Protocol.Verb.Move, Protocol.Verb.Line, 0, 0 });
                 F(0, 0, 10, 10);

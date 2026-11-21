@@ -83,8 +83,8 @@ public:
     PinchState(QObject* pinch, TouchPointsHandler* points);
 
     float value[6] = {1, 0, 0, 0, 0, 0}; // scale, rotation (degrees, clockwise), translation x, y, pivot x, y (parent space) of the gesture
-    bool running = false;          // gesture running (reported as EV_ACTIVE)
-    quint32 gestures = 0;          // gestures started: a new one sends EV_PINCH even with the same value
+    bool running = false;          // gesture running (reported as EVENT_ACTIVE)
+    quint32 gestures = 0;          // gestures started: a new one sends EVENT_PINCH even with the same value
 
 public Q_SLOTS:
     void onActiveChanged();

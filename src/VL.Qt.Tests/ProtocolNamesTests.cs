@@ -8,8 +8,8 @@ namespace VL.Qt.Tests
     [TestFixture]
     internal sealed class ProtocolNamesTests
     {
-        [TestCase(typeof(Protocol.Type))]
-        [TestCase(typeof(Protocol.Prop))]
+        [TestCase(typeof(Protocol.ElementType))]
+        [TestCase(typeof(Protocol.PropertyId))]
         public void ProtocolNamesAreUnique(System.Type holder)
         {
             var shared = RecordingSink.AllNamesOf(holder).Where(g => g.Count() > 1)

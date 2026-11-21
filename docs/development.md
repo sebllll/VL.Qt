@@ -86,7 +86,7 @@ Per second and window: `fps` (swaps/s), `present` and `pump` p50/p99 in ms (from
 TEARING SUMMARY win=0 windows=2 interval=1 fullscreen=0 fps=59.9 present_p50=0.36 present_p99=0.73 pump_p50=0.70 pump_p99=1.24 hostpump_p50=0.76 hostpump_p99=1.33 refresh=60.0 display=ok
 ```
 
-`pump` is the whole `vlqt_app_process_events`, so it is the same for every window of one run. On Windows the display is kept awake during the run (`SetThreadExecutionState`) and a locked session is detected (`display=ok|locked|unknown`). `TEARING WARNING` lines say when the numbers cannot be trusted: fps about 0, refresh `n/a`, or a locked session. The exit code is 0 after a completed run, 2 for bad arguments.
+`pump` is the whole `vlqt_app_process_events_for`, so it is the same for every window of one run. On Windows the display is kept awake during the run (`SetThreadExecutionState`) and a locked session is detected (`display=ok|locked|unknown`). `TEARING WARNING` lines say when the numbers cannot be trusted: fps about 0, refresh `n/a`, or a locked session. The exit code is 0 after a completed run, 2 for bad arguments.
 
 For the Linux runtime see [Linux](linux.md#building-the-linux-runtime-from-source).
 
@@ -253,7 +253,7 @@ tools/                      # build, export, license and test scripts
 
 **Change the protocol:**
 1. Edit `src/VL.Qt.Native/protocol.h` (type or property IDs)
-2. Mirror the change in `src/VL.Qt/Wire/Protocol.cs` by hand
+2. Mirror the change in `src/VL.Qt/Wire/Protocol.cs` by hand (`VLQT_<GROUP>_<NAME>` is `Protocol.<Group>.<Name>`; a group name ending in `Id` or `Flags` drops that word in C: `Protocol.EventId.Hover` is `VLQT_EVENT_HOVER`, `Protocol.ImageLoadFlags.Mipmaps` is `VLQT_IMAGE_LOAD_MIPMAPS`)
 3. Bump `VLQT_ABI_VERSION` and `Protocol.AbiVersion` (every change to a constant, a layout or an exported signature; `QtApp` refuses a `vlqt.dll` with another number)
 4. Run `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"` to check that header and C# agree: constants and fixed wire sizes of `protocol.h` and the constants of `vlqt_test.h` (`ProtocolDriftTests`, against `Protocol.cs` and `TestProtocol.cs`), struct layouts of `vlqt.h` (`NativeLayoutTests`, numbers also in the `static_assert`s of `vlqt.cpp`) and the `VLQT_API` exports of `vlqt.h`, `vlqt_test.h` and `testkit/testkit.h` against the `[DllImport]`s of `Native` and `NativeTest` (`ApiDriftTests`)
 5. Implement both sides (`elements.cpp`, `Elements/`, `Reconciler/`)

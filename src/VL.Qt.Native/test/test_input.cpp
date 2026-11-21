@@ -142,7 +142,7 @@ void installInputFilter(QQuickWindow* window)
 
 extern "C" {
 
-VLQT_API int vlqt_test_send_mouse(void* p, int type, float x, float y)
+VLQT_API int vlqt_test_send_mouse(vlqt_scene* p, int type, float x, float y)
 {
     return guarded([&]() -> int {
         if (!p)
@@ -186,7 +186,7 @@ VLQT_API int vlqt_test_send_mouse(void* p, int type, float x, float y)
     });
 }
 
-VLQT_API int vlqt_test_send_wheel(void* p, float x, float y, int dx, int dy)
+VLQT_API int vlqt_test_send_wheel(vlqt_scene* p, float x, float y, int dx, int dy)
 {
     return guarded([&]() -> int {
         if (!p)
@@ -206,7 +206,7 @@ VLQT_API int vlqt_test_send_wheel(void* p, float x, float y, int dx, int dy)
     });
 }
 
-VLQT_API int vlqt_test_send_touch(void* p, int type, int id, float x, float y)
+VLQT_API int vlqt_test_send_touch(vlqt_scene* p, int type, int id, float x, float y)
 {
     return guarded([&]() -> int {
         if (!p)
@@ -232,7 +232,7 @@ VLQT_API int vlqt_test_send_touch(void* p, int type, int id, float x, float y)
     });
 }
 
-VLQT_API int vlqt_test_queue_mouse(void* p, int type, float x, float y)
+VLQT_API int vlqt_test_queue_mouse(vlqt_scene* p, int type, float x, float y)
 {
     return guarded([&]() -> int {
         if (!p)
@@ -263,7 +263,7 @@ VLQT_API int vlqt_test_queue_mouse(void* p, int type, float x, float y)
     });
 }
 
-VLQT_API int vlqt_test_queue_touch(void* p, int type, int id, float x, float y)
+VLQT_API int vlqt_test_queue_touch(vlqt_scene* p, int type, int id, float x, float y)
 {
     return guarded([&]() -> int {
         if (!p)
@@ -313,7 +313,7 @@ VLQT_API int vlqt_test_queue_touch(void* p, int type, int id, float x, float y)
     });
 }
 
-VLQT_API int vlqt_test_send_key(void* p, int key, int modifiers)
+VLQT_API int vlqt_test_send_key(vlqt_scene* p, int key, int modifiers)
 {
     return guarded([&]() -> int {
         if (!p)
@@ -326,7 +326,7 @@ VLQT_API int vlqt_test_send_key(void* p, int key, int modifiers)
     });
 }
 
-VLQT_API int vlqt_test_send_key_text(void* p, int key, int modifiers, const char* text)
+VLQT_API int vlqt_test_send_key_text(vlqt_scene* p, int key, int modifiers, const char* text)
 {
     return guarded([&]() -> int {
         if (!p)

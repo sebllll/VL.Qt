@@ -5,6 +5,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
+    <!-- vlqt_app_init takes a function pointer (the log callback). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>VL.Qt</RootNamespace>
     <OutputPath>..\..\lib\net10.0\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>

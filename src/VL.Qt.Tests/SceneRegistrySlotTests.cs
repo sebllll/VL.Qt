@@ -17,7 +17,7 @@ namespace VL.Qt.Tests
         public void SetUp()
         {
             _scene = new SceneRegistry();
-            _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene) { Window = new IntPtr(1) };
+            _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene) { Window = new SceneHandle(1) };
             _slot = new FeedbackSlot(new ElementFeedback(), 0);
         }
 
@@ -34,7 +34,7 @@ namespace VL.Qt.Tests
             {
                 var next = Child(frame / 50f);
                 Assert.That(_scene.TryLocate(next, out var window, out var located), Is.True, $"frame {frame}");
-                Assert.That(window, Is.EqualTo(new IntPtr(1)));
+                Assert.That(window, Is.EqualTo(new SceneHandle(1)));
                 Assert.That(located, Is.EqualTo(id));
                 _reconciler.Update(Root(next), Space.DIPTopLeft);
             }
@@ -82,7 +82,7 @@ namespace VL.Qt.Tests
         public void WindowGone_NotLocated()
         {
             _reconciler.Update(Root(Child(1)), Space.DIPTopLeft);
-            _reconciler.Window = IntPtr.Zero;
+            _reconciler.Window = SceneHandle.Null;
             Assert.That(_scene.TryLocate(Child(0.5f), out _, out _), Is.False);
         }
 

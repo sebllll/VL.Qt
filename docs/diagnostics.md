@@ -29,7 +29,7 @@ The overlays are cheap: with a typical scene the native pump takes a few hundred
 
 ### Pump spikes: where they come from
 
-When a pump takes longer than the frame budget, the warning in the vvvv log ends with the Qt phases of each window's last pump (`vlqt_window_get_perf_sample`: vsync wait, sync, render, present, gpu, events, swaps; the time the warning reports is the pump minus vsync wait and present). Use them to find out which phase a spike is in.
+When a pump takes longer than the frame budget, the warning in the vvvv log ends with the Qt phases of each window's last pump (`vlqt_scene_get_perf_sample`: vsync wait, sync, render, present, gpu, events, swaps; the time the warning reports is the pump minus vsync wait and present). Use them to find out which phase a spike is in.
 
 The replay attributes spikes the same way: `dotnet run --project src/VL.Qt.SmokeTest -c Release -- --replay anim[:frames[:rects]] [outDir] --paced [--loop N] [--load N]` plays a built-in animated scene (moving semi-transparent rectangles plus texts that change every frame) at 60 fps. Every spike above 8 ms goes to its largest phase (apply, advance, events, sync, render, present), and the run ends with a `REPLAY spike attribution` line and the number of pumps whose present took longer than 4 ms. `--load N` keeps N threads busy on the CPU meanwhile.
 

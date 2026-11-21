@@ -23,8 +23,8 @@ public static class ShapeTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt shapes test");
-        s.Check(w != IntPtr.Zero, "shapes: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt shapes test");
+        s.Check(w != SceneHandle.Null, "shapes: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
@@ -35,7 +35,7 @@ public static class ShapeTest
         }
         void NewShape(uint id, float x, float y)
         {
-            cmd.Create(id, Protocol.Type.Shape);
+            cmd.Create(id, Protocol.ElementType.Shape);
             cmd.SetPlace(id, x, y, 0, 0);
             cmd.Reparent(id, 0, 1000);
         }
@@ -45,42 +45,42 @@ public static class ShapeTest
 
         // Open polyline (50,50) - (150,110) - (250,50), red stroke 10; no closing segment, no fill.
         NewShape(Polyline, 50, 50);
-        cmd.SetF32Array(Polyline, Protocol.Prop.ShapePoints, [0, 0, 100, 60, 200, 0]);
-        cmd.SetColor(Polyline, Protocol.Prop.ShapeStrokeColor, 1, 0, 0, 1);
-        cmd.SetF32(Polyline, Protocol.Prop.ShapeStrokeWidth, 10);
+        cmd.SetF32Array(Polyline, Protocol.PropertyId.ShapePoints, [0, 0, 100, 60, 200, 0]);
+        cmd.SetColor(Polyline, Protocol.PropertyId.ShapeStrokeColor, 1, 0, 0, 1);
+        cmd.SetF32(Polyline, Protocol.PropertyId.ShapeStrokeWidth, 10);
 
         // Closed rectangle 150 x 120 at (400,50): green fill, blue stroke 20 with miter joins.
         NewShape(Polygon, 400, 50);
-        cmd.SetF32Array(Polygon, Protocol.Prop.ShapePoints, [0, 0, 150, 0, 150, 120, 0, 120]);
-        cmd.SetBool(Polygon, Protocol.Prop.ShapeClosed, true);
-        cmd.SetColor(Polygon, Protocol.Prop.ShapeFill, 0, 1, 0, 1);
-        cmd.SetColor(Polygon, Protocol.Prop.ShapeStrokeColor, 0, 0, 1, 1);
-        cmd.SetF32(Polygon, Protocol.Prop.ShapeStrokeWidth, 20);
-        cmd.SetI32(Polygon, Protocol.Prop.ShapeJoin, 0);
+        cmd.SetF32Array(Polygon, Protocol.PropertyId.ShapePoints, [0, 0, 150, 0, 150, 120, 0, 120]);
+        cmd.SetBool(Polygon, Protocol.PropertyId.ShapeClosed, true);
+        cmd.SetColor(Polygon, Protocol.PropertyId.ShapeFill, 0, 1, 0, 1);
+        cmd.SetColor(Polygon, Protocol.PropertyId.ShapeStrokeColor, 0, 0, 1, 1);
+        cmd.SetF32(Polygon, Protocol.PropertyId.ShapeStrokeWidth, 20);
+        cmd.SetI32(Polygon, Protocol.PropertyId.ShapeJoin, 0);
 
         // Cubic S-curve at (50,250): (0,100) -> (200,100) with controls (0,0), (200,200); yellow stroke 8.
         NewShape(Cubic, 50, 250);
-        cmd.SetPath(Cubic, Protocol.Prop.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Cubic], [0, 100, 0, 0, 200, 200, 200, 100]);
-        cmd.SetColor(Cubic, Protocol.Prop.ShapeStrokeColor, 1, 1, 0, 1);
-        cmd.SetF32(Cubic, Protocol.Prop.ShapeStrokeWidth, 8);
+        cmd.SetPath(Cubic, Protocol.PropertyId.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Cubic], [0, 100, 0, 0, 200, 200, 200, 100]);
+        cmd.SetColor(Cubic, Protocol.PropertyId.ShapeStrokeColor, 1, 1, 0, 1);
+        cmd.SetF32(Cubic, Protocol.PropertyId.ShapeStrokeWidth, 8);
 
         // Trimmed line (400,300) - (600,300), white stroke 12, only 0.25 .. 0.75 is drawn (x 450 .. 550).
         NewShape(Trimmed, 400, 250);
-        cmd.SetF32Array(Trimmed, Protocol.Prop.ShapePoints, [0, 50, 200, 50]);
-        cmd.SetColor(Trimmed, Protocol.Prop.ShapeStrokeColor, 1, 1, 1, 1);
-        cmd.SetF32(Trimmed, Protocol.Prop.ShapeStrokeWidth, 12);
-        cmd.SetF32(Trimmed, Protocol.Prop.ShapeTrimStart, 0.25f);
-        cmd.SetF32(Trimmed, Protocol.Prop.ShapeTrimEnd, 0.75f);
+        cmd.SetF32Array(Trimmed, Protocol.PropertyId.ShapePoints, [0, 50, 200, 50]);
+        cmd.SetColor(Trimmed, Protocol.PropertyId.ShapeStrokeColor, 1, 1, 1, 1);
+        cmd.SetF32(Trimmed, Protocol.PropertyId.ShapeStrokeWidth, 12);
+        cmd.SetF32(Trimmed, Protocol.PropertyId.ShapeTrimStart, 0.25f);
+        cmd.SetF32(Trimmed, Protocol.PropertyId.ShapeTrimEnd, 0.75f);
 
         // Dashed line (50,450) - (350,450), magenta stroke 10, dash 2 on / 2 off in stroke widths = 20 px (x 50-70 on, 70-90 off, ...).
         NewShape(Dashed, 50, 450);
-        cmd.SetF32Array(Dashed, Protocol.Prop.ShapePoints, [0, 0, 300, 0]);
-        cmd.SetColor(Dashed, Protocol.Prop.ShapeStrokeColor, 1, 0, 1, 1);
-        cmd.SetF32(Dashed, Protocol.Prop.ShapeStrokeWidth, 10);
-        cmd.SetF32Array(Dashed, Protocol.Prop.ShapeDash, [2, 2]);
+        cmd.SetF32Array(Dashed, Protocol.PropertyId.ShapePoints, [0, 0, 300, 0]);
+        cmd.SetColor(Dashed, Protocol.PropertyId.ShapeStrokeColor, 1, 0, 1, 1);
+        cmd.SetF32(Dashed, Protocol.PropertyId.ShapeStrokeWidth, 10);
+        cmd.SetF32Array(Dashed, Protocol.PropertyId.ShapeDash, [2, 2]);
 
         // Rectangle for the "property of another type" error case.
-        cmd.Create(Rect, Protocol.Type.Rectangle);
+        cmd.Create(Rect, Protocol.ElementType.Rectangle);
         cmd.SetPlace(Rect, 600, 450, 100, 100);
         cmd.Reparent(Rect, 0, 1000);
 
@@ -130,23 +130,23 @@ public static class ShapeTest
         }
 
         cmd.Reset();
-        cmd.SetPath(Polyline, Protocol.Prop.ShapePath, [7], [0, 0]);
+        cmd.SetPath(Polyline, Protocol.PropertyId.ShapePath, [7], [0, 0]);
         Reject("PATH with unknown verb 7", Native.Result.BadArgument);
 
         cmd.Reset();
-        cmd.SetPath(Polyline, Protocol.Prop.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Line], [0, 0, 10, 10, 20, 20]);
+        cmd.SetPath(Polyline, Protocol.PropertyId.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Line], [0, 0, 10, 10, 20, 20]);
         Reject("PATH with 3 points for MOVE + LINE", Native.Result.BadArgument);
 
         cmd.Reset();
-        cmd.SetPath(Polyline, Protocol.Prop.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Cubic], [0, 0, 10, 10]);
+        cmd.SetPath(Polyline, Protocol.PropertyId.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Cubic], [0, 0, 10, 10]);
         Reject("PATH with CUBIC and too few points", Native.Result.BadArgument);
 
         cmd.Reset();
-        cmd.SetF32Array(Polyline, Protocol.Prop.ShapePath, [0, 0, 10, 10]);
+        cmd.SetF32Array(Polyline, Protocol.PropertyId.ShapePath, [0, 0, 10, 10]);
         Reject("F32_ARRAY on the PATH property", Native.Result.BadArgument);
 
         cmd.Reset();
-        cmd.SetPath(Polyline, Protocol.Prop.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Line], [0, 0, 10, 10]);
+        cmd.SetPath(Polyline, Protocol.PropertyId.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Line], [0, 0, 10, 10]);
         var good = cmd.EndFrame().ToArray();
         // SET payload: id u32, prop u16, vt u16, then verbCount u32 (offset 12 with the 4-byte header), pointCount u32 (offset 16).
         var badLength = (byte[])good.Clone();
@@ -155,29 +155,29 @@ public static class ShapeTest
         s.Check(rcLen == Native.Result.BadLength, $"shapes: PATH with a point count that does not match the payload length -> {rcLen} (expected -2) \"{Native.LastError()}\"");
 
         cmd.Reset();
-        cmd.SetF32Array(Polyline, Protocol.Prop.ShapePoints, [0, 0, 10, 10]);
+        cmd.SetF32Array(Polyline, Protocol.PropertyId.ShapePoints, [0, 0, 10, 10]);
         var badArray = cmd.EndFrame().ToArray();
         badArray[12] = 9;
         rcLen = Native.Apply(w, badArray);
         s.Check(rcLen == Native.Result.BadLength, $"shapes: F32_ARRAY with a count that does not match the payload length -> {rcLen} (expected -2) \"{Native.LastError()}\"");
 
         cmd.Reset();
-        cmd.SetF32Array(Rect, Protocol.Prop.ShapePoints, [0, 0, 10, 10]);
+        cmd.SetF32Array(Rect, Protocol.PropertyId.ShapePoints, [0, 0, 10, 10]);
         Reject("valid F32_ARRAY on a Rectangle (no Shape property)", Native.Result.UnknownProperty, Native.Result.BadArgument);
 
         cmd.Reset();
-        cmd.SetPath(Rect, Protocol.Prop.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Line], [0, 0, 10, 10]);
+        cmd.SetPath(Rect, Protocol.PropertyId.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Line], [0, 0, 10, 10]);
         Reject("valid PATH on a Rectangle (no Shape property)", Native.Result.UnknownProperty, Native.Result.BadArgument);
 
         // Scene still renders and the shape still shows the old geometry.
         cmd.Reset();
-        cmd.SetF32(Polyline, Protocol.Prop.ShapeStrokeWidth, 10);
+        cmd.SetF32(Polyline, Protocol.PropertyId.ShapeStrokeWidth, 10);
         CheckApply("apply after rejected payloads");
         s.Pump(3);
         using (var a = s.Grab(w, "shapes_after_errors.png"))
             s.Check(Near(Px(a, 100, 80), 255, 0, 0) && Near(Px(a, 500, 300), 255, 255, 255) && Near(Px(a, 475, 110), 0, 255, 0),
                 $"shapes: scene unchanged after rejected payloads ({Px(a, 100, 80)}, {Px(a, 500, 300)}, {Px(a, 475, 110)})");
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 }

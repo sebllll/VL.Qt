@@ -39,8 +39,8 @@ public static class GroupFrameTest
             }
         }
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt group frame test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt group frame test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var scene = new SceneRegistry();
@@ -192,7 +192,7 @@ public static class GroupFrameTest
         cmd.Reset();
         rec.Clear();
         Native.Apply(w, cmd.EndFrame());
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         client.SetPumping(false);
         s.Pump(2);
     }
@@ -208,8 +208,8 @@ public static class GroupFrameTest
     private static void RunEffect(Scenario s)
     {
         const uint g = 1, r = 2, hg = 101;
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt group frame effect test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt group frame effect test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
@@ -229,9 +229,9 @@ public static class GroupFrameTest
                 uint handle = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..]);
                 var p = b.Slice(off + 12, len - 8).ToArray();
                 float F(int i) => BitConverter.ToSingle(p, 4 * i);
-                if (handle == hg && ev == Protocol.Ev.Measured && p.Length >= 8)
+                if (handle == hg && ev == Protocol.EventId.Measured && p.Length >= 8)
                     measured = (F(0), F(1));
-                else if (handle == hg && ev == Protocol.Ev.SceneBounds && p.Length >= 16)
+                else if (handle == hg && ev == Protocol.EventId.SceneBounds && p.Length >= 16)
                     bounds = (F(0), F(1), F(2), F(3));
                 off += (4 + len + 3) & ~3;
             }
@@ -244,14 +244,14 @@ public static class GroupFrameTest
         }
 
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        cmd.Create(g, Protocol.Type.Item);
-        cmd.SetI32(g, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
-        cmd.SetMat4(g, Protocol.Prop.Transform, Matrix.Translation(200, 150, 0));
+        cmd.Create(g, Protocol.ElementType.Group);
+        cmd.SetI32(g, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
+        cmd.SetMat4(g, Protocol.PropertyId.Transform, Matrix.Translation(200, 150, 0));
         cmd.Reparent(g, 0, 0);
         cmd.Bind(g, hg, 0);
-        cmd.Create(r, Protocol.Type.Rectangle);
+        cmd.Create(r, Protocol.ElementType.Rectangle);
         cmd.SetPlace(r, 0, 0, 100, 100);
-        cmd.SetColor(r, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+        cmd.SetColor(r, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
         cmd.Reparent(r, g, 0);
         Apply("group and child");
         s.Pump(4);
@@ -263,9 +263,9 @@ public static class GroupFrameTest
         // Blur on the child: the MultiEffect grows the child's effect item by its padding (Blur Max 32).
         cmd.BeginEffectChain(r);
         cmd.BeginMultiLink();
-        cmd.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
-        cmd.EffectF32(Protocol.Prop.EffectBlur, 1f);
-        cmd.EffectI32(Protocol.Prop.EffectBlurMax, 32);
+        cmd.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+        cmd.EffectF32(Protocol.MultiEffectKey.Blur, 1f);
+        cmd.EffectI32(Protocol.MultiEffectKey.BlurMax, 32);
         cmd.EndLink();
         cmd.EndEffectChain();
         Apply("Blur chain on the child");
@@ -285,6 +285,6 @@ public static class GroupFrameTest
         cmd.Destroy(g);
         Apply("destroy");
         s.Pump(2);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 }

@@ -13,7 +13,7 @@ void setLastError(const char* message);
 void setLastError(std::string message);
 void setLastError(const QString& message);
 // Sets a text that lives as long as the process (a literal) without copying it: no allocation, so also on the audio
-// thread of vlqt_res_read_audio.
+// thread of vlqt_audio_tap_read.
 void setLastErrorStatic(const char* message);
 // The calling thread's text, empty if none; valid until the next setLastError* on the same thread.
 const char* lastError();

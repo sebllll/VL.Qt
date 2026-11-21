@@ -6,7 +6,7 @@ using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
 
-// NAPP-10 (b): QML animations follow vlqt_driver_advance. docs/architecture.md promises "same tree and time, same output"
+// NAPP-10 (b): QML animations follow vlqt_app_advance_animations. docs/architecture.md promises "same tree and time, same output"
 // and scrubbing; QUnifiedTimer advances animations only by positive deltas, so a clock that jumps back may not rewind them.
 // A QmlElement animates v from 0 to 100 in 10 s (10 per second of the frame clock). The clock runs 2 s, jumps back by 1 s
 // and runs forward again by 0.5 s: with scrubbing v goes back by about 10 and then rises again. Seen (W1-15): v keeps its
@@ -16,7 +16,7 @@ public static class AnimationScrubTest
 {
     /// <summary>NAPP-10: a backward jump of the frame clock rewinds a QML animation.</summary>
     [Test, Category("animation-scrub")]
-    [Ignore("NAPP-10: a backward jump of vlqt_driver_advance does not rewind QML animations, they keep their value and go on forward from it (fails: v 20.17 after the jump back to 1 s, 25.17 at 1.5 s)")]
+    [Ignore("NAPP-10: a backward jump of vlqt_app_advance_animations does not rewind QML animations, they keep their value and go on forward from it (fails: v 20.17 after the jump back to 1 s, 25.17 at 1.5 s)")]
     public static void AnimationScrub() => Scenario.Run(Run);
 
     private const uint Q = 10, HQ = 110;
@@ -38,8 +38,8 @@ public static class AnimationScrubTest
         var file = Path.Combine(dir, "Scrub.qml");
         File.WriteAllText(file, Qml);
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt animation scrub test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt animation scrub test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
@@ -60,9 +60,9 @@ public static class AnimationScrubTest
                     break;
                 uint handle = BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..]);
                 var payload = b.Slice(off + 12, len - 8);
-                if (handle == HQ && ev == Protocol.Ev.QmlProperty && QmlEvents.TryDecodeProperty(payload, out var name, out var value) && name == "v" && value is float f)
+                if (handle == HQ && ev == Protocol.EventId.QmlProperty && QmlEvents.TryDecodeProperty(payload, out var name, out var value) && name == "v" && value is float f)
                     v = f;
-                else if (handle == HQ && ev == Protocol.Ev.Error)
+                else if (handle == HQ && ev == Protocol.EventId.Error)
                     error = System.Text.Encoding.UTF8.GetString(payload);
                 off += (4 + len + 3) & ~3;
             }
@@ -76,17 +76,17 @@ public static class AnimationScrubTest
             {
                 time = jump ? t : Math.Min(t, time + 1.0 / 60);
                 latest = Math.Max(latest, time);
-                Native.vlqt_driver_advance(time);
-                Native.vlqt_app_process_events();
+                Native.vlqt_app_advance_animations(time);
+                Native.vlqt_app_process_events_for(null, 0);
                 Poll();
             }
             while (time < t - 1e-9);
         }
 
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        cmd.Create(Q, Protocol.Type.Qml);
-        cmd.SetString(Q, Protocol.Prop.QmlSource, file);
-        cmd.SetI32(Q, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
+        cmd.Create(Q, Protocol.ElementType.Qml);
+        cmd.SetString(Q, Protocol.PropertyId.QmlSource, file);
+        cmd.SetI32(Q, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
         cmd.Reparent(Q, 0, 0);
         cmd.Bind(Q, HQ, 0);
         var rc = Native.Apply(w, cmd.EndFrame());
@@ -117,6 +117,6 @@ public static class AnimationScrubTest
         // Later scenarios go on from the latest time used here: their clock never goes back.
         QtHost.Time = latest + 3;
         s.Pump(2);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 }

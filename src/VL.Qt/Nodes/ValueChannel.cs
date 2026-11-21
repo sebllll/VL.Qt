@@ -16,7 +16,7 @@ namespace VL.Qt.Nodes
     /// <item>Unconnected the pin is null (<c>[DefaultValue(null)] IChannel&lt;T&gt;?</c>); the node then keeps its own
     /// value, changed by the user only. A plain value or an IOBox on the pin is lifted by vvvv into a private channel:
     /// start value and setting from the patch.</item>
-    /// <item>A user change (EV_VALUE from the feedback) is written into the channel with author <see cref="Author"/> and sets
+    /// <item>A user change (EVENT_VALUE from the feedback) is written into the channel with author <see cref="Author"/> and sets
     /// <see cref="Bang"/> for one Update. It is not echoed as a channel change. If the patch changed the channel in the
     /// same frame, the user wins.</item>
     /// <item>The node describes <see cref="Value"/>; the reconciler diffs it against the last sent description as usual

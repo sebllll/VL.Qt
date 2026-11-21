@@ -163,7 +163,7 @@ QRectF padded(const QQuickItem* item, const QRectF& r)
 
 bool isContainer(quint16 type)
 {
-    return type == VLQT_TYPE_ITEM || type == VLQT_TYPE_ROW || type == VLQT_TYPE_COLUMN;
+    return type == VLQT_ELEMENT_TYPE_GROUP || type == VLQT_ELEMENT_TYPE_ROW || type == VLQT_ELEMENT_TYPE_COLUMN;
 }
 
 // Equal up to half a logical pixel (layout rounding): a line drawn twice on top of each other only hides the first.
@@ -229,18 +229,18 @@ void DebugOverlay::drawNode(const Node& n)
     // Implicit size = what Auto Size gives. Group: extent of the children and its origin (the frame it would get,
     // also while Auto Size is off and its frame is (0, 0, SIZE)); others start at the origin.
     QRectF implicit(0, 0, item->implicitWidth(), item->implicitHeight());
-    if (n.type == VLQT_TYPE_ITEM && any) {
+    if (n.type == VLQT_ELEMENT_TYPE_GROUP && any) {
         implicit = QRectF(QPointF(std::min<qreal>(0, children.left()), std::min<qreal>(0, children.top())),
                           QPointF(std::max<qreal>(0, children.right()), std::max<qreal>(0, children.bottom())));
     }
 
     // Padding, spacing and overflow into the fill layer (under the lines of all nodes), all relative to the frame.
     p.area = true;
-    if (n.type == VLQT_TYPE_ROW || n.type == VLQT_TYPE_COLUMN || n.type == VLQT_TYPE_TEXT)
+    if (n.type == VLQT_ELEMENT_TYPE_ROW || n.type == VLQT_ELEMENT_TYPE_COLUMN || n.type == VLQT_ELEMENT_TYPE_TEXT)
         p.ring(frame, padded(item, frame), kPadding);
-    if (n.type == VLQT_TYPE_ROW || n.type == VLQT_TYPE_COLUMN) {
+    if (n.type == VLQT_ELEMENT_TYPE_ROW || n.type == VLQT_ELEMENT_TYPE_COLUMN) {
         // Gaps between consecutive laid-out children (Qt skips invisible and zero-size ones).
-        const bool column = n.type == VLQT_TYPE_COLUMN;
+        const bool column = n.type == VLQT_ELEMENT_TYPE_COLUMN;
         const QRectF inner = padded(item, frame);
         const QQuickItem* prev = nullptr;
         for (const QQuickItem* c : item->childItems()) {
@@ -266,9 +266,9 @@ void DebugOverlay::drawNode(const Node& n)
 
     if (any && !same(children, frame) && !same(children, implicit))
         p.rect(children, kChildren, Stroke::Dot);
-    if ((takesAutoSize(n) || n.type == VLQT_TYPE_TEXT) && !same(implicit, frame) && !implicit.isEmpty())
+    if ((takesAutoSize(n) || n.type == VLQT_ELEMENT_TYPE_TEXT) && !same(implicit, frame) && !implicit.isEmpty())
         p.rect(implicit, kImplicit);
-    if (n.type == VLQT_TYPE_TEXT) {
+    if (n.type == VLQT_ELEMENT_TYPE_TEXT) {
         const qreal base = item->baselineOffset();
         const QFontMetricsF fm(item->property("font").value<QFont>());
         p.line(0, base - fm.ascent(), w, base - fm.ascent(), kAscent, Stroke::Dash);

@@ -50,11 +50,11 @@ public static class CoreTest
 
         // SET Bounds + Color, REPARENT into a group at (4,3) units: rect lands at (4.5,3.5)..(5.5,4.5).
         cmd.Reset();
-        cmd.Create(GroupId, Protocol.Type.Item);
+        cmd.Create(GroupId, Protocol.ElementType.Group);
         cmd.SetPlace(GroupId, 4 * U, 3 * U, 3 * U, 2 * U);
         cmd.Reparent(GroupId, 0, 0);
         cmd.SetPlace(RectId, 0.5f * U, 0.5f * U, 1 * U, 1 * U);
-        cmd.SetColor(RectId, Protocol.Prop.Color, 0, 0, 1, 1);
+        cmd.SetColor(RectId, Protocol.PropertyId.Color, 0, 0, 1, 1);
         cmd.Reparent(RectId, GroupId, 0);
         CheckApply(s, w, cmd, "apply set + reparent");
         s.Pump(3);
@@ -79,9 +79,9 @@ public static class CoreTest
         using (var a = s.Grab(w, "grab3.png"))
             s.Check(IsBg(Px(a, 500, 400)), $"rect: gone after DESTROY ({Px(a, 500, 400)})");
         cmd.Reset();
-        cmd.SetColor(RectId, Protocol.Prop.Color, 1, 1, 1, 1);
+        cmd.SetColor(RectId, Protocol.PropertyId.Color, 1, 1, 1, 1);
         s.Check(Native.Apply(w, cmd.EndFrame()) == Native.Result.UnknownObject, "rect id released with its group");
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     });
 
     /// <summary>Perf values and the overlay; 10 000 SETs in one apply; no managed allocation per frame.</summary>
@@ -106,7 +106,7 @@ public static class CoreTest
             s.Pump(1);
             System.Threading.Thread.Sleep(16);
         }
-        s.Check(Native.vlqt_window_get_perf(w, out var perf) == 0, "get_perf ok");
+        s.Check(Native.vlqt_scene_get_perf(w, out var perf) == 0, "get_perf ok");
         s.Info($"perf: fps {perf.fps:F1}, frame {perf.frame_ms:F2} (max {perf.frame_ms_max:F2}), pump {perf.pump_ms:F2} (max {perf.pump_ms_max:F2}), " +
             $"sync {perf.sync_ms:F2}, render {perf.render_ms:F2}, present {perf.present_ms:F2}, gpu {perf.gpu_ms:F3} (max {perf.gpu_ms_max:F3}), swaps/pump {perf.swaps_per_pump:F2}");
         s.Check(perf.samples > 0 && perf.fps > 0 && perf.pump_ms > 0 && perf.render_ms > 0, "perf values filled");
@@ -121,8 +121,8 @@ public static class CoreTest
             s.NeedsRhi(perf.gpu_ms > 0, "GPU timestamps delivered", "no QRhi, no GPU timestamps");
         using (var before = s.Grab(w, "perf0.png"))
         {
-            Native.vlqt_window_set_overlay(w, 3);
-            s.Check((Native.vlqt_window_get_overlay(w) & 3) == 3, "overlay flags set"); // bits 4..6: F5 page
+            Native.vlqt_scene_set_overlay(w, 3);
+            s.Check((Native.vlqt_scene_get_overlay(w) & 3) == 3, "overlay flags set"); // bits 4..6: F5 page
             s.Pump(20);
             using var after = s.Grab(w, "perf1.png");
             s.Check(!SameImage(before, after) && !IsBg(after.GetPixel(30, 30)), "overlay drawn top-left");
@@ -132,7 +132,7 @@ public static class CoreTest
         cmd.Reset();
         for (uint i = 0; i < 100; i++)
         {
-            cmd.Create(100 + i, Protocol.Type.Rectangle);
+            cmd.Create(100 + i, Protocol.ElementType.Rectangle);
             cmd.SetPlace(100 + i, 0, 0, 10, 10);
             cmd.Reparent(100 + i, 0, 1000);
         }
@@ -148,7 +148,7 @@ public static class CoreTest
                 cmd.Reset();
                 for (int i = 0; i < 10_000; i++)
                     // one SET per item like the old BOUNDS: the position = TRANSFORM translation (SIZE/ANCHOR set above).
-                    cmd.SetMat4(100 + (uint)(i % 100), Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation(i % 700, run, 0));
+                    cmd.SetMat4(100 + (uint)(i % 100), Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation(i % 700, run, 0));
                 var buf = cmd.EndFrame();
                 writeMs[run] = t.Elapsed.TotalMilliseconds;
                 t.Restart();
@@ -175,7 +175,7 @@ public static class CoreTest
             MoveRect(); // warm-up
         var alloc = AllocatedBy1000Frames(w, cmd);
         s.Check(alloc < 1024, $"1000 frames writer + apply allocate < 1 KB ({alloc} bytes)");
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     });
 
     /// <summary>The Qt log shows the swap interval 0 of a window without VSync and the expected graphics backend.</summary>
@@ -188,7 +188,7 @@ public static class CoreTest
         var cmd = new CommandWriter();
         var w = CreateWithScene(s, cmd);
         s.Pump(5);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         var log = s.Log;
         s.NeedsRhi(log.Contains("Swap interval is 0, attempting to disable vsync"), "log: swap interval 0 for the windows without VSync", "no swap chain");
         if (OperatingSystem.IsWindows())
@@ -201,7 +201,7 @@ public static class CoreTest
 
     // Bytes allocated by 1000 frames of 100 SETs + apply. A method of its own: inside the scenario lambda the JIT'ed loop
     // allocated 80 bytes per frame (on-stack replacement of the long lambda), which is not what the check is about.
-    private static long AllocatedBy1000Frames(IntPtr w, CommandWriter cmd)
+    private static long AllocatedBy1000Frames(SceneHandle w, CommandWriter cmd)
     {
         var alloc0 = GC.GetAllocatedBytesForCurrentThread();
         for (int f = 0; f < 1000; f++)
@@ -215,22 +215,22 @@ public static class CoreTest
     }
 
     // Same scene as Renderer [Qt]: #202020 background, orange test rect at (1,1) size (3,2) units.
-    private static IntPtr CreateWithScene(Scenario s, CommandWriter cmd)
+    private static SceneHandle CreateWithScene(Scenario s, CommandWriter cmd)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt SmokeTest");
-        s.Check(w != IntPtr.Zero, "window_create " + (w == IntPtr.Zero ? Native.LastError() : ""));
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt SmokeTest");
+        s.Check(w != SceneHandle.Null, "window_create " + (w == SceneHandle.Null ? Native.LastError() : ""));
         cmd.Reset();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        cmd.Create(RectId, Protocol.Type.Rectangle);
+        cmd.Create(RectId, Protocol.ElementType.Rectangle);
         cmd.SetPlace(RectId, 1 * U, 1 * U, 3 * U, 2 * U);
-        cmd.SetColor(RectId, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+        cmd.SetColor(RectId, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
         cmd.Reparent(RectId, 0, 0);
         CheckApply(s, w, cmd, "apply test scene");
         Native.vlqt_window_show(w);
         return w;
     }
 
-    private static void CheckApply(Scenario s, IntPtr w, CommandWriter cmd, string what)
+    private static void CheckApply(Scenario s, SceneHandle w, CommandWriter cmd, string what)
     {
         var rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");

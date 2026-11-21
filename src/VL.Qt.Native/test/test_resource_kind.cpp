@@ -1,4 +1,4 @@
-// Test exports of vlqt_test.h: the resource kind VLQT_RES_KIND_TEST (decode sleeps, upload consumes budget in stripes)
+// Test exports of vlqt_test.h: the resource kind VLQT_RESOURCE_KIND_TEST (decode sleeps, upload consumes budget in stripes)
 // and direct access to the state machine and the element references of the resource manager (resources.h).
 #include "../vlqt_test.h"
 #include "../app/exports.h"

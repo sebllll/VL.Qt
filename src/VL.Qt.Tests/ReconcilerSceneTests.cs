@@ -641,7 +641,7 @@ namespace VL.Qt.Tests
             sink.ThrowAt = 0;
             sink.Restart();
             rec.Update(G(R(1)), Space.DIPTopLeft);
-            Assert.That(sink.Recorded.OfOp("CREATE").Select(c => c.Split(' ')[2]).ToArray(), Is.EqualTo(new[] { "Item", "Rectangle" }), sink.Recorded.ToString());
+            Assert.That(sink.Recorded.OfOp("CREATE").Select(c => c.Split(' ')[2]).ToArray(), Is.EqualTo(new[] { "Group", "Rectangle" }), sink.Recorded.ToString());
         }
 
         private sealed class RecordingSinkNull : ICommandSink
@@ -691,7 +691,7 @@ namespace VL.Qt.Tests
             public void EffectColor(ushort prop, float r, float g, float b, float a) { }
             public void EffectRect(ushort prop, float x, float y, float width, float height) { }
             public void EffectRef(ushort prop, uint refId) { }
-            public void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
+            public void BeginEffectChainLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
                 float paddingRight, float paddingBottom, float strength) { }
             public void EndLink() { }
             public void EndEffectChain() { }

@@ -2,9 +2,10 @@
  * "Qt render thread").
  *
  * A pool of threads with a Qt event loop, shared by every offscreen scene of the process (scenes of every app host).
- * Its size is a QtNative setting: vlqt_offscreen_set_threaded (before the first scene), else the environment variable
- * VLQT_OFFSCREEN_THREAD (0 = main thread, n = n threads), else 1. A scene gets its thread at create (round robin) and
- * keeps it: its scene graph and QRhi live there (QQuickRenderControl::prepareThread). Jobs of one thread run in
+ * Its size is a QtNative setting: vlqt_offscreen_set_render_threads (any time, for the scenes created afterwards), else
+ * the environment variable VLQT_OFFSCREEN_THREAD (0 = main thread, n = n threads), else 1. The pool only grows: threads
+ * are created when a scene first needs them and live on when the size gets smaller. A scene gets its thread at create
+ * (round robin) and keeps it: its scene graph and QRhi live there (QQuickRenderControl::prepareThread). Jobs of one thread run in
  * queue order: a blocking job (call) therefore runs after every job posted before it, which is how the main thread
  * drains a thread before it unbinds or destroys a scene.
  *
@@ -76,14 +77,14 @@ private:
     QObject* m_context = nullptr; // lives on m_thread: the receiver of the jobs
 };
 
-// Sets the pool size: 0 = offscreen scenes render on the main thread, n = on n render threads. Only before the first
-// assign; afterwards only the size in use is accepted. Returns VLQT_OK, VLQT_ERR_BAD_ARGUMENT (count < 0 or >
-// maxThreads), VLQT_ERR_UNSUPPORTED (too late); a failure sets vlqt_last_error. Main thread.
+// Sets the pool size for the scenes created afterwards: 0 = they render on the main thread, n = on the first n render
+// threads (round robin). Scenes created before keep theirs. Returns VLQT_OK, VLQT_ERR_BAD_ARGUMENT (count < 0 or >
+// maxThreads); a failure sets vlqt_last_error. Main thread.
 int setThreadCount(int count);
 inline constexpr int maxThreads = 16;
 
-// The render thread of a new scene: the next one of the pool, round robin; nullptr = main thread. The first call fixes
-// the pool size (setThreadCount, else VLQT_OFFSCREEN_THREAD, else 1) and logs it. Main thread.
+// The render thread of a new scene: the next one of the pool, round robin; nullptr = main thread. Without
+// setThreadCount the first call takes the pool size from VLQT_OFFSCREEN_THREAD, else 1, and logs it. Main thread.
 RenderThread* assign();
 
 // Waits until every render thread of the pool ran the jobs queued before (none without a pool). Main thread.

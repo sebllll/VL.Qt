@@ -8,8 +8,8 @@ namespace vlqt {
 
 namespace {
 
-// Per thread (CAPI-01): exports documented for any thread (vlqt_shader_reflect, vlqt_res_read_audio,
-// vlqt_image_write, a vlqt_font_add on the wrong thread) fail without racing the main thread's text.
+// Per thread (CAPI-01): exports documented for any thread (vlqt_shader_reflect, vlqt_audio_tap_read,
+// vlqt_image_write_file, a vlqt_font_add on the wrong thread) fail without racing the main thread's text.
 thread_local std::string t_text;
 thread_local const char* t_static = nullptr; // set: t_text is unused
 thread_local unsigned t_failures = 0;

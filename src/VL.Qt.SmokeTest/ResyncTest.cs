@@ -31,8 +31,8 @@ public static class ResyncTest
         var clear = new Color4(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         var bounds = new RectangleF(100, 100, 800, 600);
         var r = new WindowRenderer(scene, "VL.Qt resync test", bounds);
-        s.Check(r.Window != IntPtr.Zero, "window created " + r.Error);
-        if (r.Window == IntPtr.Zero)
+        s.Check(r.Window != SceneHandle.Null, "window created " + r.Error);
+        if (r.Window == SceneHandle.Null)
             return;
 
         Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
@@ -62,7 +62,7 @@ public static class ResyncTest
         var t2 = Tree(5, 6);
         int redId = (int)r.Reconciler.Root!.Children[0].Id;
         r.Update(Tree(5, 4), Space.DIPTopLeft, clear, true, true, "VL.Qt resync test");
-        r.Commands.SetF32((uint)redId, Protocol.Prop.Color, 1f); // wrong value type for a color property → -7
+        r.Commands.SetF32((uint)redId, Protocol.PropertyId.Color, 1f); // wrong value type for a color property → -7
         r.Update(t2, Space.DIPTopLeft, clear, true, true, "VL.Qt resync test");
         r.ApplyCommands();
         s.Pump(3);
@@ -98,7 +98,7 @@ public static class ResyncTest
         var t3 = new Group { Size = new Vector2(8, 6), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0), Children = ImmutableArray.Create<Element>(Bound(1)) };
         Frame(t3);
         uint boundId = r.Reconciler.Root!.Children[0].Id;
-        r.Commands.SetF32(boundId, Protocol.Prop.Color, 1f); // → -7 on the bound rect
+        r.Commands.SetF32(boundId, Protocol.PropertyId.Color, 1f); // → -7 on the bound rect
         Frame(t3);
         s.Check(r.Error.Length == 0, "apply error of a bound element is not at the renderer: " + r.Error);
         s.Check(feedback.Error is { } se && se.StartsWith("Qt rejected Color:"), "apply error at the element feedback: " + feedback.Error);

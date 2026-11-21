@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using VL.Qt.Wire;
@@ -11,8 +12,18 @@ using VL.Qt;
 // Usage: VL.Qt.Probe [--seconds N] [--grab <png>]   (N = 0: run until the window is closed)
 internal static class Program
 {
-    private static readonly Native.LogFn s_logFn = (level, cat, msg) =>
-        Console.WriteLine($"[{level}] {Marshal.PtrToStringUTF8(cat)}: {Marshal.PtrToStringUTF8(msg)}");
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static unsafe void OnLog(int level, byte* category, byte* message)
+    {
+        // Called by QtNative on any thread; must not throw.
+        try
+        {
+            Console.WriteLine($"[{level}] {Marshal.PtrToStringUTF8((IntPtr)category)}: {Marshal.PtrToStringUTF8((IntPtr)message)}");
+        }
+        catch (Exception)
+        {
+        }
+    }
 
     [STAThread] // Windows: Qt's OleInitialize needs an STA thread; no effect on Linux.
     private static int Main(string[] args)
@@ -29,31 +40,36 @@ internal static class Program
         Console.WriteLine($"VL.Qt.dll:   {typeof(Native).Assembly.Location}");
         Native.EnsureLoaded();
         Console.WriteLine($"native dir:  {Native.NativeDir}");
-        if (Native.vlqt_app_init(Native.NativeDir, s_logFn) != 0)
+        Native.Result initResult;
+        unsafe
+        {
+            initResult = Native.vlqt_app_init(Native.NativeDir, &OnLog);
+        }
+        if (initResult != Native.Result.Ok)
             return Fail("vlqt_app_init: " + Native.LastError());
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt Probe (L3a)");
-        if (w == IntPtr.Zero)
+        var w = Native.vlqt_window_create(float.NaN, float.NaN, 800, 600, "VL.Qt Probe (L3a)", 0);
+        if (w == SceneHandle.Null)
             return Fail("vlqt_window_create: " + Native.LastError());
 
         // #202020 background, orange rounded rectangle, white text (DIP, top-left).
         var cmd = new CommandWriter();
         cmd.Reset();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        cmd.Create(1, Protocol.Type.Rectangle);
-        cmd.SetVec2(1, Protocol.Prop.Size, 300, 200);
-        cmd.SetI32(1, Protocol.Prop.Anchor, 0x1 | 0x20); // TopLeft; position = Transform translation
-        cmd.SetMat4(1, Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation(100, 100, 0));
-        cmd.SetColor(1, Protocol.Prop.Color, 1, 0.5f, 0, 1);
-        cmd.SetF32(1, Protocol.Prop.Radius, 20);
+        cmd.Create(1, Protocol.ElementType.Rectangle);
+        cmd.SetVec2(1, Protocol.PropertyId.Size, 300, 200);
+        cmd.SetI32(1, Protocol.PropertyId.Anchor, 0x1 | 0x20); // TopLeft; position = Transform translation
+        cmd.SetMat4(1, Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation(100, 100, 0));
+        cmd.SetColor(1, Protocol.PropertyId.Color, 1, 0.5f, 0, 1);
+        cmd.SetF32(1, Protocol.PropertyId.Radius, 20);
         cmd.Reparent(1, 0, 0);
-        cmd.Create(2, Protocol.Type.Text);
-        cmd.SetVec2(2, Protocol.Prop.Size, 600, 80);
-        cmd.SetI32(2, Protocol.Prop.Anchor, 0x1 | 0x20);
-        cmd.SetMat4(2, Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation(100, 350, 0));
-        cmd.SetString(2, Protocol.Prop.Text, "Hello from VL.Qt");
-        cmd.SetF32(2, Protocol.Prop.FontSize, 48);
-        cmd.SetColor(2, Protocol.Prop.Color, 1, 1, 1, 1);
+        cmd.Create(2, Protocol.ElementType.Text);
+        cmd.SetVec2(2, Protocol.PropertyId.Size, 600, 80);
+        cmd.SetI32(2, Protocol.PropertyId.Anchor, 0x1 | 0x20);
+        cmd.SetMat4(2, Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation(100, 350, 0));
+        cmd.SetString(2, Protocol.PropertyId.Text, "Hello from VL.Qt");
+        cmd.SetF32(2, Protocol.PropertyId.FontSize, 48);
+        cmd.SetColor(2, Protocol.PropertyId.Color, 1, 1, 1, 1);
         cmd.Reparent(2, 0, 1);
         var rc = Native.Apply(w, cmd.EndFrame());
         if (rc != 0)
@@ -66,8 +82,8 @@ internal static class Program
         int frames = 0;
         while (seconds <= 0 || sw.Elapsed.TotalSeconds < seconds)
         {
-            Native.vlqt_driver_advance(sw.Elapsed.TotalSeconds);
-            Native.vlqt_app_process_events();
+            Native.vlqt_app_advance_animations(sw.Elapsed.TotalSeconds);
+            Native.vlqt_app_process_events_for(null, 0);
             frames++;
             if (!grabbed && sw.Elapsed.TotalSeconds >= 1)
             {
@@ -80,7 +96,7 @@ internal static class Program
             Thread.Sleep(16);
         }
         var visible = Native.vlqt_window_is_visible(w) != 0;
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         Console.WriteLine($"done:        {frames} frames in {sw.Elapsed.TotalSeconds:F1} s, window visible {visible}");
         return grabbed ? 0 : Fail("window closed before the grab");
     }

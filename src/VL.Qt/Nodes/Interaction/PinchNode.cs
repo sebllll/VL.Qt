@@ -92,7 +92,7 @@ namespace VL.Qt.Nodes
                 ? new Props(minimumPointCount, maximumPointCount, devices)
                 : new Props(PinchInteraction.DefaultPointCount, PinchInteraction.DefaultPointCount, devices));
 
-            // Pull: state of the last pump (1 frame latency). The values are written once per EV_PINCH; a channel
+            // Pull: state of the last pump (1 frame latency). The values are written once per EVENT_PINCH; a channel
             // connected later gets the current value only if a gesture happened (the channel's own value stays otherwise).
             var feedback = _node.Feedback;
             if (isActive.IsValid())

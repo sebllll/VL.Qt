@@ -99,7 +99,7 @@ namespace VL.Qt
         }
 
         /// <summary>Native window of the renderer (vlqt_window_*), Zero in tests; used by Snapshot to find an element.</summary>
-        public IntPtr Window { get; set; }
+        public SceneHandle Window { get; set; }
 
         /// <summary>Mirror of the object under the window root (index 0); null = empty scene.</summary>
         internal Node? Root => _root;

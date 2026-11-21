@@ -84,8 +84,8 @@ public static class QtImageTest
         s.Check(failed is { State: QtImageState.Failed } && missingError.Length > 0, $"LoadImage missing file fails ('{missingError}')");
 
         // 2) One QtImage in 100 Image nodes (10 x 10 cells of 0.6 x 0.2 units) through the Reconciler.
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt QtImage test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt QtImage test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -172,7 +172,7 @@ public static class QtImageTest
             n.Dispose();
         Pump(2);
         s.Check(client.LiveCount == 0, "all images released");
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         client.SetPumping(false);
         Pump(1);
     }

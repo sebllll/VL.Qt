@@ -33,16 +33,16 @@ namespace VL.Qt.Nodes
 
         private readonly ResourceClient _client;
         private readonly SceneRegistry _scene;
-        private readonly Func<IntPtr, long> _changeCount;
+        private readonly Func<SceneHandle, long> _changeCount;
         private readonly Func<double> _clockSeconds;
         private ImageResource? _resource;
         private IImage? _image;
         private Element? _lastElement;      // the instance of the last grab (a new instance at the same place counts as a change)
         private Element? _videoChecked;     // the instance whose tree was searched for a Video
         private bool _hasVideo;
-        private IntPtr _imageWindow;        // the place the image (and the last grab) belongs to; zero = none
+        private SceneHandle _imageWindow;        // the place the image (and the last grab) belongs to; zero = none
         private uint _imageId;
-        private IntPtr _grabWindow;         // the place the running or finished grab belongs to
+        private SceneHandle _grabWindow;         // the place the running or finished grab belongs to
         private uint _grabId;
         private long _lastChangeCount;
         private double _lastGrabTime = double.NegativeInfinity;
@@ -52,12 +52,12 @@ namespace VL.Qt.Nodes
 
         public ElementTooltipPreview(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), SceneRegistry.ForApp(nodeContext.AppHost),
-                  static window => Native.vlqt_window_change_count(window), static () => Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency)
+                  static window => Native.vlqt_scene_get_change_count(window), static () => Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency)
         {
         }
 
         /// <summary>For tests: a client on a fake API, an own scene registry, and injected change counter and clock.</summary>
-        internal ElementTooltipPreview(ResourceClient client, SceneRegistry scene, Func<IntPtr, long> changeCount, Func<double> clockSeconds)
+        internal ElementTooltipPreview(ResourceClient client, SceneRegistry scene, Func<SceneHandle, long> changeCount, Func<double> clockSeconds)
         {
             _client = client;
             _scene = scene;
@@ -135,14 +135,14 @@ namespace VL.Qt.Nodes
         {
             _image = null;
             _lastElement = null;
-            _imageWindow = IntPtr.Zero;
+            _imageWindow = SceneHandle.Null;
             _imageId = 0;
         }
 
-        private bool NeedsGrab(Element element, IntPtr window)
+        private bool NeedsGrab(Element element, SceneHandle window)
             => !ReferenceEquals(element, _lastElement) || _changeCount(window) != _lastChangeCount;
 
-        private void Grab(Element element, IntPtr window, uint elementId, double now)
+        private void Grab(Element element, SceneHandle window, uint elementId, double now)
         {
             // Remember the state before the grab: a change during the grab counts for the next one.
             _lastElement = element;
@@ -199,7 +199,7 @@ namespace VL.Qt.Nodes
             _resource = null;
             ForgetPlace();
             _videoChecked = null;
-            _grabWindow = IntPtr.Zero;
+            _grabWindow = SceneHandle.Null;
             _grabId = 0;
         }
     }

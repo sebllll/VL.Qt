@@ -4,7 +4,7 @@ using VL.Lib.Collections;
 using VL.Qt.Elements;
 using VL.Qt.Paths;
 using VL.Qt.Wire;
-using P = VL.Qt.Wire.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt
@@ -372,8 +372,8 @@ namespace VL.Qt
         /// <summary>
         /// SpinBox: Minimum/Maximum before Value, otherwise Qt clamps the new value with the old bounds. Qt also
         /// clamps on every bound change, possibly against an intermediate range (new Minimum with old Maximum), so Value
-        /// is resent whenever a bound changed; an equal SET VALUE is a no-op in Qt and sends no EV_VALUE.
-        /// The diff is against the last sent description, also after a user change (EV_VALUE): the node then describes
+        /// is resent whenever a bound changed; an equal SET VALUE is a no-op in Qt and sends no EVENT_VALUE.
+        /// The diff is against the last sent description, also after a user change (EVENT_VALUE): the node then describes
         /// the user's value, the SET fixes a stale SET that Qt applied after the change.
         /// </summary>
         private void DiffSpinBox(uint id, SpinBox p, SpinBox n)

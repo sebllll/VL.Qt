@@ -21,7 +21,7 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 /// C16 / NODE-02: does <c>Clip</c> ever change a pixel on Rectangle and Circle? Rectangle and Circle with fill, stroke and a
 /// DropShadow, Clip off against Clip on, grabbed and compared pixel by pixel.
 /// E8 / NRES-02: main-thread cost of replacing the pixels of an image resource every frame (what a video source does):
-/// <c>vlqt_res_set_pixels</c> + pump + resource poll per frame, against the same loop with an unchanged image. The delta is the
+/// <c>vlqt_image_set_pixels</c> + pump + resource poll per frame, against the same loop with an unchanged image. The delta is the
 /// cost of the per-frame upload. 1080p and 4K, BGRA (the format of VL.Video), paced at 60 Hz like the vvvv frame clock.
 /// Parameters (run settings or VLQT_SMOKE_&lt;NAME&gt;): <c>VideoUploadRuns</c> (default 5), <c>VideoUploadFrames</c> (default 240).
 /// </summary>
@@ -40,8 +40,8 @@ public static class ClipVideoPerfTest
 
     private static void RunClip(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt clip grab");
-        s.Check(w != IntPtr.Zero, "clip-grab: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt clip grab");
+        s.Check(w != SceneHandle.Null, "clip-grab: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -106,17 +106,17 @@ public static class ClipVideoPerfTest
             cmd.Reset();
             if (!clip)
             {
-                cmd.Create(900001, Protocol.Type.Rectangle);
+                cmd.Create(900001, Protocol.ElementType.Rectangle);
                 cmd.SetPlace(900001, 20, 20, 150, 100);
-                cmd.SetColor(900001, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+                cmd.SetColor(900001, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
                 cmd.Reparent(900001, 0, 0);
-                cmd.Create(900002, Protocol.Type.Rectangle);
+                cmd.Create(900002, Protocol.ElementType.Rectangle);
                 cmd.SetPlace(900002, 100, 50, 150, 100);
-                cmd.SetColor(900002, Protocol.Prop.Color, 0, 0, 1, 1);
+                cmd.SetColor(900002, Protocol.PropertyId.Color, 0, 0, 1, 1);
                 cmd.Reparent(900002, 900001, 0);
             }
             else
-                cmd.SetBool(900001, Protocol.Prop.Clip, true);
+                cmd.SetBool(900001, Protocol.PropertyId.Clip, true);
             s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"clip-grab: apply control clip={clip} {Native.LastError()}");
             s.Pump(6);
         }
@@ -130,7 +130,7 @@ public static class ClipVideoPerfTest
             s.Perf("clip-grab control differing pixels", diff, "px");
             s.Check(diff > 0, "clip-grab: positive control, Clip on cuts a child that reaches outside");
         }
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
     }
 
@@ -147,13 +147,13 @@ public static class ClipVideoPerfTest
     {
         var runs = Math.Max(1, int.TryParse(Environment.GetEnvironmentVariable("VLQT_SMOKE_VIDEOUPLOADRUNS"), out var r) ? r : 5);
         var frames = Math.Max(60, int.TryParse(Environment.GetEnvironmentVariable("VLQT_SMOKE_VIDEOUPLOADFRAMES"), out var f) ? f : 240);
-        var gpu = NativeTest.vlqt_test_device_info(IntPtr.Zero, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
+        var gpu = NativeTest.vlqt_test_device_info(SceneHandle.Null, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
         s.Info($"video-upload-perf: {(gpu ? "GPU upload (shared upload QRhi)" : "CPU copy, no upload QRhi")}, {runs} runs of {frames} frames, paced 60 Hz, "
             + $"{System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture}, {Environment.ProcessorCount} cores, VLQT_IMG_UPLOAD={Environment.GetEnvironmentVariable("VLQT_IMG_UPLOAD") ?? "(auto)"}");
 
         using var timer = PumpTest.HighResTimer(); // 1 ms timer resolution like vvvv
-        var w = Native.vlqt_window_create_at(60, 60, 960, 540, "VL.Qt video upload", 0);
-        s.Check(w != IntPtr.Zero, "video-upload-perf: window " + (w == IntPtr.Zero ? Native.LastError() : ""));
+        var w = Native.vlqt_window_create(60, 60, 960, 540, "VL.Qt video upload", 0);
+        s.Check(w != SceneHandle.Null, "video-upload-perf: window " + (w == SceneHandle.Null ? Native.LastError() : ""));
         var cmd = new CommandWriter();
         cmd.ClearColor(0.1f, 0.1f, 0.1f, 1);
         Native.vlqt_window_show(w);
@@ -170,17 +170,17 @@ public static class ClipVideoPerfTest
             var desc = new Native.vlqt_pixel_desc { width = width, height = height, format = 9, premultiplied = premultiplied ? 1 : 0 };
             var name = $"{width}x{height}{(premultiplied ? " premultiplied" : "")}";
 
-            Native.vlqt_res_create(Protocol.ResKind.Image, out var res);
-            Native.ResSetPixels(res, desc, data);
+            Native.vlqt_res_create(Protocol.ResourceKind.Image, out var res);
+            Native.ImageSetPixels(res, desc, data);
             cmd.Reset();
             if (!created)
             {
-                cmd.Create(1, Protocol.Type.Image);
+                cmd.Create(1, Protocol.ElementType.Image);
                 cmd.SetPlace(1, 0, 0, 960, 540);
                 cmd.Reparent(1, 0, 0);
                 created = true;
             }
-            cmd.SetU64(1, Protocol.Prop.Image, res);
+            cmd.SetU64(1, Protocol.PropertyId.Image, res);
             s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"video-upload-perf: apply {name}");
             for (int i = 0; i < 30; i++) { s.Pump(1); NativeCalls.ResPoll(buf); }
 
@@ -209,7 +209,7 @@ public static class ClipVideoPerfTest
             for (int i = 0; i < 5; i++) { s.Pump(1); NativeCalls.ResPoll(buf); }
             Thread.Sleep(200);
         }
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
         // Let the process settle before it ends: a Video/Image resource still uploading when the process exits can leave an unkillable testhost.
         Thread.Sleep(2000);
@@ -237,7 +237,7 @@ public static class ClipVideoPerfTest
             if (newFrame)
             {
                 data[0] = (byte)i;
-                Native.ResSetPixels(res, desc, data);
+                Native.ImageSetPixels(res, desc, data);
             }
             var t1 = Stopwatch.GetTimestamp();
             s.Pump(1);
@@ -252,7 +252,7 @@ public static class ClipVideoPerfTest
             {
                 var ev = BitConverter.ToUInt16(buf, at);
                 var len = BitConverter.ToUInt16(buf, at + 2);
-                if (ev == Protocol.ResEv.Info) infos++;
+                if (ev == Protocol.ResourceEventId.Info) infos++;
                 at += (4 + len + 3) & ~3;
             }
             var t3 = Stopwatch.GetTimestamp();

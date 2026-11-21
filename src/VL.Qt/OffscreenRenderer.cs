@@ -18,10 +18,10 @@ namespace VL.Qt
     internal sealed class OffscreenRenderer : IDisposable
     {
         // Scene handles of one RenderBatch: reused, so a frame allocates nothing (main thread only).
-        private static IntPtr[] s_scenes = new IntPtr[8];
+        private static SceneHandle[] s_scenes = new SceneHandle[8];
 
         private readonly SceneCore _core;
-        private IntPtr _scene;
+        private SceneHandle _scene;
         private bool _disposed;
         // Input state (Notify): vvvv notifications carry the changed mouse button, Qt wants the buttons held after the event;
         // _keysDown detects auto-repeat (a KeyDown of a key that is already down); _highSurrogate joins the two KeyPress
@@ -40,21 +40,21 @@ namespace VL.Qt
             _core = new SceneCore(scene);
             _scene = Native.vlqt_offscreen_create(width, height);
             _core.Handle = _scene;
-            if (_scene == IntPtr.Zero)
+            if (_scene.IsNull)
             {
                 var text = Native.LastError();
                 _createError = text.Length > 0 ? text : "Qt could not create the offscreen scene";
             }
         }
 
-        /// <summary>The native scene handle (also a window handle for the vlqt_window_* functions), IntPtr.Zero if creation failed or after <see cref="Dispose"/>.</summary>
-        public IntPtr Scene => _scene;
+        /// <summary>The native scene handle (also a window handle for the vlqt_window_* functions), a null handle if creation failed or after <see cref="Dispose"/>.</summary>
+        public SceneHandle Scene => _scene;
 
         /// <summary>
         /// Returns true if the scene is bound to a texture. False before <see cref="Bind"/>, after a failed bind and after a
         /// device loss of QtNative (it unbinds the scene): bind again.
         /// </summary>
-        public bool IsBound => !_disposed && _scene != IntPtr.Zero && Native.vlqt_offscreen_is_bound(_scene) == 1;
+        public bool IsBound => !_disposed && !_scene.IsNull && Native.vlqt_offscreen_is_bound(_scene) == 1;
 
         /// <summary>MSAA count of the last successful <see cref="Bind"/> (what QtNative used, clamped to the device); 0 while unbound.</summary>
         public int UsedSamples => _usedSamples;
@@ -79,7 +79,7 @@ namespace VL.Qt
         /// </summary>
         public Native.Result Bind(IntPtr device, IntPtr ntHandle, Int2 size, int format, MultisampleCount samples = MultisampleCount.None)
         {
-            if (_disposed || _scene == IntPtr.Zero)
+            if (_disposed || _scene.IsNull)
                 return Native.Result.NullHandle;
             var rc = Native.vlqt_offscreen_bind(_scene, device, ntHandle, size.X, size.Y, format, (int)samples, out var used);
             _usedSamples = rc == Native.Result.Ok ? used : 0;
@@ -90,7 +90,7 @@ namespace VL.Qt
         /// <summary>Frees the binding; the scene and its elements stay.</summary>
         public void Unbind()
         {
-            if (_disposed || _scene == IntPtr.Zero)
+            if (_disposed || _scene.IsNull)
                 return;
             Native.vlqt_offscreen_unbind(_scene);
             _bindError = "";
@@ -104,7 +104,7 @@ namespace VL.Qt
         /// </summary>
         public void Update(Element? input, Space space, Color4 clearColor, bool clear, bool enabled)
         {
-            if (_disposed || _scene == IntPtr.Zero || !enabled)
+            if (_disposed || _scene.IsNull || !enabled)
                 return;
             _core.Update(input, space, clearColor, clear);
         }
@@ -112,7 +112,7 @@ namespace VL.Qt
         /// <summary>Sends the commands written by <see cref="Update"/> to QtNative; call before <see cref="RenderBatch"/>.</summary>
         public void ApplyCommands()
         {
-            if (_disposed || _scene == IntPtr.Zero)
+            if (_disposed || _scene.IsNull)
                 return;
             _core.Apply();
         }
@@ -120,7 +120,7 @@ namespace VL.Qt
         /// <summary>Events and measured values of the scene into the feedback (read by the element nodes in the next Update).</summary>
         public void PollEvents()
         {
-            if (_disposed || _scene == IntPtr.Zero)
+            if (_disposed || _scene.IsNull)
                 return;
             var events = _core.ReadEvents(frameStart: false);
             if (!events.IsEmpty)
@@ -139,7 +139,7 @@ namespace VL.Qt
         /// </summary>
         public void Notify(INotification notification)
         {
-            if (_disposed || _scene == IntPtr.Zero)
+            if (_disposed || _scene.IsNull)
                 return;
             switch (notification)
             {
@@ -240,23 +240,23 @@ namespace VL.Qt
 
         /// <summary>Pointer event (<see cref="Protocol.Pointer"/>) of <paramref name="device"/> (<see cref="Protocol.PointerDevice"/>); mouse: <paramref name="buttons"/> = Qt::MouseButtons held after the event; touch/pen: <paramref name="id"/> of the point.</summary>
         public Native.Result SendPointer(int device, int type, int id, Vector2 position, int buttons, int modifiers)
-            => _disposed || _scene == IntPtr.Zero ? Native.Result.NullHandle
+            => _disposed || _scene.IsNull ? Native.Result.NullHandle
             : Native.vlqt_offscreen_send_pointer(_scene, device, type, id, position.X, position.Y, buttons, modifiers);
 
         /// <summary>Wheel at <paramref name="position"/>; angle delta in eighths of a degree (120 = one notch).</summary>
         public Native.Result SendWheel(Vector2 position, int dx, int dy, int modifiers)
-            => _disposed || _scene == IntPtr.Zero ? Native.Result.NullHandle
+            => _disposed || _scene.IsNull ? Native.Result.NullHandle
             : Native.vlqt_offscreen_send_wheel(_scene, position.X, position.Y, dx, dy, modifiers);
 
         /// <summary>Key press or release (<see cref="Protocol.KeyEvent"/>) of a Qt::Key, without text.</summary>
         public Native.Result SendKey(int type, int key, int modifiers, bool autoRepeat)
-            => _disposed || _scene == IntPtr.Zero ? Native.Result.NullHandle
+            => _disposed || _scene.IsNull ? Native.Result.NullHandle
             : Native.vlqt_offscreen_send_key(_scene, type, key, modifiers, autoRepeat ? 1 : 0);
 
         /// <summary>Typed text to the focus item (e.g. one character of a KeyPress).</summary>
         public Native.Result SendText(ReadOnlySpan<char> text)
         {
-            if (_disposed || _scene == IntPtr.Zero)
+            if (_disposed || _scene.IsNull)
                 return Native.Result.NullHandle;
             if (text.Length > 64)
                 text = text[..64];
@@ -267,7 +267,7 @@ namespace VL.Qt
 
         /// <summary>Gives the scene keyboard focus (FocusIn) or takes it (FocusOut); QtNative also does it on a press inside or outside the texture.</summary>
         public Native.Result SetFocus(bool focused)
-            => _disposed || _scene == IntPtr.Zero ? Native.Result.NullHandle
+            => _disposed || _scene.IsNull ? Native.Result.NullHandle
             : Native.vlqt_offscreen_set_focus(_scene, focused ? 1 : 0);
 
         /// <summary>
@@ -278,11 +278,11 @@ namespace VL.Qt
         public static int RenderBatch(IntPtr context, ReadOnlySpan<OffscreenRenderer> renderers, double driverSeconds)
         {
             if (s_scenes.Length < renderers.Length)
-                s_scenes = new IntPtr[Math.Max(renderers.Length, s_scenes.Length * 2)];
+                s_scenes = new SceneHandle[Math.Max(renderers.Length, s_scenes.Length * 2)];
             // A disposed renderer has no scene: a null entry, skipped by QtNative.
             for (int i = 0; i < renderers.Length; i++)
                 s_scenes[i] = renderers[i]._scene;
-            return Native.OffscreenRenderBatch(context, new ReadOnlySpan<IntPtr>(s_scenes, 0, renderers.Length), driverSeconds);
+            return Native.OffscreenRenderBatch(context, new ReadOnlySpan<SceneHandle>(s_scenes, 0, renderers.Length), driverSeconds);
         }
 
         /// <summary>Returns the text of a <see cref="Native.Result"/>, empty for <see cref="Native.Result.Ok"/>.</summary>
@@ -307,9 +307,9 @@ namespace VL.Qt
             if (_disposed)
                 return;
             var scene = _core.Close();
-            if (scene != IntPtr.Zero)
-                Native.vlqt_window_destroy(scene);
-            _scene = IntPtr.Zero;
+            if (!scene.IsNull)
+                Native.vlqt_scene_destroy(scene);
+            _scene = SceneHandle.Null;
             _disposed = true;
         }
     }

@@ -25,7 +25,7 @@ public static class ClearPinTest
 {
     // The commands go in a buffer of their own (the scenario's writer belongs to the reconciler). 0 = ok.
     // Clear Color (grey, alpha) alone: the layer stays, as when vvvv changes the pin at runtime.
-    private static Native.Result SetClearColor(IntPtr w, float grey, float alpha)
+    private static Native.Result SetClearColor(SceneHandle w, float grey, float alpha)
     {
         var cmd = new CommandWriter();
         cmd.Reset();
@@ -35,7 +35,7 @@ public static class ClearPinTest
     }
 
     // Clear Color and Clear in one buffer. Clear off needs alpha < 1 to show a trail (alpha 1 is Clear on), 0 = pure accumulation.
-    private static Native.Result SetMode(IntPtr w, float grey, bool clear, float alpha)
+    private static Native.Result SetMode(SceneHandle w, float grey, bool clear, float alpha)
     {
         var cmd = new CommandWriter();
         cmd.Reset();
@@ -112,8 +112,8 @@ public static class ClearPinTest
                 client.AfterEvents();
             }
         }
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt clear spike");
-        s.Check(w != IntPtr.Zero, "clear-pin: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt clear spike");
+        s.Check(w != SceneHandle.Null, "clear-pin: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var scene = new SceneRegistry();
@@ -151,19 +151,19 @@ public static class ClearPinTest
         {
             double gpu = 0, render = 0;
             int samples = 0;
-            long c0 = Native.vlqt_window_change_count(w);
+            long c0 = Native.vlqt_scene_get_change_count(w);
             for (int i = 0; i < n; i++)
             {
                 x = 50 + (i % 20) * 25;
                 Frame();
-                if (Native.vlqt_window_get_perf_sample(w, out var s) == 0)
+                if (Native.vlqt_scene_get_perf_sample(w, out var s) == 0)
                 {
                     gpu += s.gpu;
                     render += s.render;
                     samples++;
                 }
             }
-            return (gpu / Math.Max(samples, 1), render / Math.Max(samples, 1), Native.vlqt_window_change_count(w) - c0);
+            return (gpu / Math.Max(samples, 1), render / Math.Max(samples, 1), Native.vlqt_scene_get_change_count(w) - c0);
         }
 
         // Best of 3 rounds: the GPU clock varies between runs, a regression is above the limit in every round.
@@ -182,9 +182,9 @@ public static class ClearPinTest
         var on = Best(3, 60);
         Console.WriteLine($"clear-pin: window Clear on (baseline): gpu {on.Gpu:F3} ms, render {on.Render:F3} ms, {on.Changes} changes / 60");
         // Static scene with Clear on: no change, no render.
-        long c0 = Native.vlqt_window_change_count(w);
+        long c0 = Native.vlqt_scene_get_change_count(w);
         Pump(30);
-        long idleBase = Native.vlqt_window_change_count(w) - c0;
+        long idleBase = Native.vlqt_scene_get_change_count(w) - c0;
         s.Check(idleBase == 0, $"clear-pin: idle with Clear on renders nothing ({idleBase} changes / 30 pumps)");
 
         // Checks of the feedback layer: QtNative ignores Clear off on the software backend (no ShaderEffectSource there),
@@ -220,9 +220,9 @@ public static class ClearPinTest
         }
 
         // 2) Idle: no scene change. Does the recursive live layer keep Qt rendering (continuous frames)?
-        long c1 = Native.vlqt_window_change_count(w);
+        long c1 = Native.vlqt_scene_get_change_count(w);
         Pump(30);
-        long idle = Native.vlqt_window_change_count(w) - c1;
+        long idle = Native.vlqt_scene_get_change_count(w) - c1;
         Console.WriteLine($"clear-pin: idle with Clear off: {idle} changes / 30 pumps");
         // The recursive layer requests frames itself: a fade keeps fading without a scene change (as Skia/Stride with Clear off).
         layer(idle > 0, $"clear-pin: Clear off keeps rendering without a scene change ({idle} changes / 30 pumps)");
@@ -239,10 +239,10 @@ public static class ClearPinTest
         Frame();
 
         // 4) Debug overlay on while moving, then off: its outlines are outside the root, never accumulated.
-        s.Check(Native.vlqt_window_set_debug(w, 1) == 0, "clear-pin: debug on");
+        s.Check(Native.vlqt_scene_set_debug(w, 1) == 0, "clear-pin: debug on");
         for (int i = 0; i < 6; i++) { x = 100 + i * 50; Frame(); }
         s.Grab(w, P("debug_on")).Dispose();
-        s.Check(Native.vlqt_window_set_debug(w, 0) == 0, "clear-pin: debug off");
+        s.Check(Native.vlqt_scene_set_debug(w, 0) == 0, "clear-pin: debug off");
         Frame();
         Frame();
         s.Grab(w, P("debug_off")).Dispose();
@@ -302,9 +302,9 @@ public static class ClearPinTest
         // Clear on costs nothing extra, also after Clear was off: GPU and CPU render time as in the baseline (noise margin).
         PerfLimits.Below(s, on2.Gpu, on.Gpu * 1.5 + 0.5, $"clear-pin: Clear on again GPU {on2.Gpu:F3} ms vs baseline {on.Gpu:F3} ms (limit 1.5 x + 0.5 ms)");
         PerfLimits.Below(s, on2.Render, on.Render * 2 + 0.1, $"clear-pin: Clear on again CPU render {on2.Render:F3} ms vs baseline {on.Render:F3} ms (limit 2 x + 0.1 ms)", cpuBound: true);
-        c0 = Native.vlqt_window_change_count(w);
+        c0 = Native.vlqt_scene_get_change_count(w);
         Pump(30);
-        long idleAgain = Native.vlqt_window_change_count(w) - c0;
+        long idleAgain = Native.vlqt_scene_get_change_count(w) - c0;
         s.Check(idleAgain == 0, $"clear-pin: idle with Clear on again renders nothing ({idleAgain} changes / 30 pumps)");
 
         // 7b) Alpha of Clear Color while Clear is off: the previous frame fades toward the clear colour by that alpha
@@ -466,7 +466,7 @@ public static class ClearPinTest
         rec.Update(null, Space.DIPTopLeft);
         if (cmd.Length > 0)
             Native.Apply(w, cmd.EndFrame());
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         Pump(1);
     }
 
@@ -482,9 +482,9 @@ public static class ClearPinTest
         var cmd = new CommandWriter();
         cmd.Reset();
         cmd.ClearColor(OffscreenGrey, OffscreenGrey, OffscreenGrey, 1);
-        cmd.Create(1, Protocol.Type.Rectangle);
+        cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetPlace(1, 0, 4, 8, 8);
-        cmd.SetColor(1, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+        cmd.SetColor(1, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
         cmd.Reparent(1, 0, 0);
         s.Check(Native.Apply(scene, cmd.EndFrame()) == 0, $"clear-pin offscreen: apply {Native.LastError()}");
         IntPtr tex = IntPtr.Zero;
@@ -578,9 +578,9 @@ public static class ClearPinTest
         Move(40);
         Render();
         cmd.Reset();
-        cmd.Create(3, Protocol.Type.Rectangle);
+        cmd.Create(3, Protocol.ElementType.Rectangle);
         cmd.SetPlace(3, 0, 0, w, h);
-        cmd.SetColor(3, Protocol.Prop.Color, 0, 0, 0, 0.25f);
+        cmd.SetColor(3, Protocol.PropertyId.Color, 0, 0, 0, 0.25f);
         cmd.Reparent(3, 0, 0);
         s.Check(Native.Apply(scene, cmd.EndFrame()) == 0, $"clear-pin offscreen: apply fade {Native.LastError()}");
         for (int i = 0; i < 30; i++) Render();
@@ -589,7 +589,7 @@ public static class ClearPinTest
         s.Check(At(pxFade, 12, 8).R < 20 && At(pxFade, 70, 30).R < 10 && At(pxFade, 44, 8).R == 255,
             $"clear-pin offscreen: fade: trail and clear colour fade to black, the box stays ({At(pxFade, 12, 8)}, {At(pxFade, 70, 30)}, {At(pxFade, 44, 8)})");
         cmd.Reset();
-        cmd.SetColor(3, Protocol.Prop.Color, 0, 0, 0, 0);
+        cmd.SetColor(3, Protocol.PropertyId.Color, 0, 0, 0, 0);
         Native.Apply(scene, cmd.EndFrame());
         s.Check(SetMode(scene, OffscreenGrey, true, 1) == 0, "clear-pin offscreen: set_clear 1 (after fade)");
 
@@ -662,10 +662,10 @@ public static class ClearPinTest
         // MSAA: the render target of a scene has 1 sample, the layer inherits it. A rotated white square on the grey clear
         // colour: distinct grey values on its edges, Clear on vs. Clear off.
         cmd.Reset();
-        cmd.Create(2, Protocol.Type.Rectangle);
+        cmd.Create(2, Protocol.ElementType.Rectangle);
         cmd.SetPlace(2, 0, 0, 20, 20);
-        cmd.SetColor(2, Protocol.Prop.Color, 1, 1, 1, 1);
-        cmd.SetMat4(2, Protocol.Prop.Transform, Matrix.RotationZ(0.5f) * Matrix.Translation(40, 14, 0));
+        cmd.SetColor(2, Protocol.PropertyId.Color, 1, 1, 1, 1);
+        cmd.SetMat4(2, Protocol.PropertyId.Transform, Matrix.RotationZ(0.5f) * Matrix.Translation(40, 14, 0));
         cmd.Reparent(2, 0, 1);
         s.Check(Native.Apply(scene, cmd.EndFrame()) == 0, $"clear-pin offscreen: apply rotated {Native.LastError()}");
         int Steps()
@@ -696,7 +696,7 @@ public static class ClearPinTest
 
         Native.vlqt_offscreen_unbind(scene);
         NativeTest.vlqt_test_com_release(tex);
-        Native.vlqt_window_destroy(scene);
+        Native.vlqt_scene_destroy(scene);
         NativeTest.vlqt_test_d3d11_release_device(device, context);
     }
 }

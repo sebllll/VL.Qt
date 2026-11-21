@@ -10,7 +10,7 @@ using VL.Qt;
 using Color = System.Drawing.Color;
 using static Pixels;
 
-// Debug overlay: VLQT_PROP_DEBUG per element and vlqt_window_set_debug for the whole window. The overlay is drawn
+// Debug overlay: VLQT_PROPERTY_DEBUG per element and vlqt_scene_set_debug for the whole window. The overlay is drawn
 // by QtNative on top of the scene (frame cyan, origin magenta, anchor yellow, overflow red, implicit orange, ...). Checks: layout, Measured Size,
 // Scene Bounds (Auto Size included) and hit-testing are identical with and without debug; the overlay appears in the
 // grab and disappears again. Grabs: <OutDir>/30_debug_off.png, 30_debug_overlay.png, 30_debug_element.png.
@@ -58,8 +58,8 @@ public static class DebugOverlayTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt debug overlay test");
-        s.Check(w != IntPtr.Zero, "debug: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt debug overlay test");
+        s.Check(w != SceneHandle.Null, "debug: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
@@ -75,70 +75,70 @@ public static class DebugOverlayTest
             int len = NativeCalls.Poll(w, buf);
             s.Check(len >= 0, $"debug: poll ({len})");
             var recs = Parse(buf.AsSpan(0, Math.Max(len, 0)));
-            recs.RemoveAll(r => r.Event == Protocol.Ev.WindowGeometry);
+            recs.RemoveAll(r => r.Event == Protocol.EventId.WindowGeometry);
             return recs;
         }
         void Rect(uint id, uint parent, float x, float y, float width, float height, float r, float g, float b)
         {
-            cmd.Create(id, Protocol.Type.Rectangle);
+            cmd.Create(id, Protocol.ElementType.Rectangle);
             cmd.SetPlace(id, x, y, width, height);
-            cmd.SetColor(id, Protocol.Prop.Color, r, g, b, 1);
+            cmd.SetColor(id, Protocol.PropertyId.Color, r, g, b, 1);
             cmd.Reparent(id, parent, 1000);
         }
         var all = new List<uint>();
         cmd.Reset();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // Column, Auto Size, padding 10, spacing 20.
-        cmd.Create(Col, Protocol.Type.Column);
+        cmd.Create(Col, Protocol.ElementType.Column);
         cmd.SetPlace(Col, 20, 20, 0, 0);
-        cmd.SetF32(Col, Protocol.Prop.Padding, 10);
-        cmd.SetF32(Col, Protocol.Prop.Spacing, 20);
+        cmd.SetF32(Col, Protocol.PropertyId.Padding, 10);
+        cmd.SetF32(Col, Protocol.PropertyId.Spacing, 20);
         cmd.Reparent(Col, 0, 1000);
         Rect(Child(Col, 0), Col, 0, 0, 100, 40, 1, 0, 0);
         Rect(Child(Col, 1), Col, 0, 0, 60, 40, 0, 1, 0);
         Rect(Child(Col, 2), Col, 0, 0, 140, 40, 0, 0, 1);
         cmd.Bind(Child(Col, 1), HHover, 0);
-        cmd.Create(HoverId, Protocol.Type.HoverHandler);
+        cmd.Create(HoverId, Protocol.ElementType.HoverHandler);
         cmd.Reparent(HoverId, Child(Col, 1), 0);
         cmd.Bind(HoverId, HHoverHandler, 0);
         // Text
-        cmd.Create(Txt, Protocol.Type.Text);
+        cmd.Create(Txt, Protocol.ElementType.Text);
         cmd.SetPlace(Txt, 300, 30, 300, 70);
-        cmd.SetString(Txt, Protocol.Prop.Text, "Debug Hgy");
-        cmd.SetF32(Txt, Protocol.Prop.FontSize, 40);
-        cmd.SetColor(Txt, Protocol.Prop.Color, 1, 1, 1, 1);
+        cmd.SetString(Txt, Protocol.PropertyId.Text, "Debug Hgy");
+        cmd.SetF32(Txt, Protocol.PropertyId.FontSize, 40);
+        cmd.SetColor(Txt, Protocol.PropertyId.Color, 1, 1, 1, 1);
         cmd.Reparent(Txt, 0, 1000);
         // Group, Auto Size: extent of two children.
-        cmd.Create(Grp, Protocol.Type.Item);
+        cmd.Create(Grp, Protocol.ElementType.Group);
         cmd.SetPlace(Grp, 300, 160, 0, 0);
         cmd.Reparent(Grp, 0, 1000);
         Rect(Child(Grp, 0), Grp, 0, 0, 80, 40, 0.8f, 0.4f, 0);
         Rect(Child(Grp, 1), Grp, 60, 60, 50, 50, 0.4f, 0.4f, 0.8f);
         // Row 300x120, Auto Size off, padding 10, spacing 15.
-        cmd.Create(RowId, Protocol.Type.Row);
-        cmd.SetBool(RowId, Protocol.Prop.AutoSize, false);
+        cmd.Create(RowId, Protocol.ElementType.Row);
+        cmd.SetBool(RowId, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(RowId, 300, 330, 300, 120);
-        cmd.SetF32(RowId, Protocol.Prop.Padding, 10);
-        cmd.SetF32(RowId, Protocol.Prop.Spacing, 15);
+        cmd.SetF32(RowId, Protocol.PropertyId.Padding, 10);
+        cmd.SetF32(RowId, Protocol.PropertyId.Spacing, 15);
         cmd.Reparent(RowId, 0, 1000);
         Rect(Child(RowId, 0), RowId, 0, 0, 50, 60, 0.6f, 0.6f, 0.6f);
         Rect(Child(RowId, 1), RowId, 0, 0, 50, 100, 0.6f, 0.6f, 0.6f);
         Rect(Child(RowId, 2), RowId, 0, 0, 50, 30, 0.6f, 0.6f, 0.6f);
         // Column 120x60, Auto Size off, padding 10, spacing 10, content 110 high: implicit size 120x110 orange,
         // children overflow below the frame (y 390..430) red, frame solid cyan at y 390.
-        cmd.Create(Ovf, Protocol.Type.Column);
-        cmd.SetBool(Ovf, Protocol.Prop.AutoSize, false);
+        cmd.Create(Ovf, Protocol.ElementType.Column);
+        cmd.SetBool(Ovf, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(Ovf, 20, 330, 120, 60);
-        cmd.SetF32(Ovf, Protocol.Prop.Padding, 10);
-        cmd.SetF32(Ovf, Protocol.Prop.Spacing, 10);
+        cmd.SetF32(Ovf, Protocol.PropertyId.Padding, 10);
+        cmd.SetF32(Ovf, Protocol.PropertyId.Spacing, 10);
         cmd.Reparent(Ovf, 0, 1000);
         Rect(Child(Ovf, 0), Ovf, 0, 0, 100, 40, 0.3f, 0.3f, 0.3f);
         Rect(Child(Ovf, 1), Ovf, 0, 0, 100, 40, 0.3f, 0.3f, 0.3f);
         // Rotated rectangle, anchor top left (rotation around its corner, then moved to (640, 80)).
         Rect(Rot, 0, 640, 80, 100, 60, 0.9f, 0.9f, 0.2f);
-        cmd.SetI32(Rot, Protocol.Prop.Anchor, 0x1 | 0x20);
+        cmd.SetI32(Rot, Protocol.PropertyId.Anchor, 0x1 | 0x20);
         var rot = Matrix.RotationZ(MathUtil.Pi / 6) * Matrix.Translation(640, 80, 0);
-        cmd.SetMat4(Rot, Protocol.Prop.Transform, in rot);
+        cmd.SetMat4(Rot, Protocol.PropertyId.Transform, in rot);
         all.AddRange(new[] { Col, Child(Col, 0), Child(Col, 1), Child(Col, 2), Txt, Grp, Child(Grp, 0), Child(Grp, 1), RowId,
             Child(RowId, 0), Child(RowId, 1), Child(RowId, 2), Rot });
         // Measure feedback on every element (handle = id); the green child keeps its interactive feedback.
@@ -149,7 +149,7 @@ public static class DebugOverlayTest
         // Baseline: measured values (MEASURED + SCENE_BOUNDS of every feedback).
         var baseline = new Dictionary<(ushort, uint), string>();
         foreach (var r in Frame(3))
-            if (r.Event is Protocol.Ev.Measured or Protocol.Ev.SceneBounds)
+            if (r.Event is Protocol.EventId.Measured or Protocol.EventId.SceneBounds)
                 baseline[(r.Event, r.Handle)] = Convert.ToHexString(r.Payload);
         s.Check(baseline.Count >= 2 * (all.Count - 1), $"debug: baseline measurements ({baseline.Count})");
 
@@ -162,7 +162,7 @@ public static class DebugOverlayTest
             var inRecs = Frame(2);
             NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, 780, 580);
             var out2 = Frame(2);
-            string F(List<Rec> recs) => string.Join(",", recs.FindAll(r => r.Event == Protocol.Ev.Hover && r.Handle == HHoverHandler).ConvertAll(r => r.Payload[0]));
+            string F(List<Rec> recs) => string.Join(",", recs.FindAll(r => r.Event == Protocol.EventId.Hover && r.Handle == HHoverHandler).ConvertAll(r => r.Payload[0]));
             return $"{F(outRecs)}|{F(inRecs)}|{F(out2)}";
         }
         var hoverOff = Hover();
@@ -172,10 +172,10 @@ public static class DebugOverlayTest
         s.Check(!Near(off, 20, 100, IsCyan) && !Near(off, 300, 60, IsCyan) && !Near(off, 450, 330, IsCyan), "debug: no overlay without debug");
 
         // Per element: Debug on the column only.
-        cmd.SetBool(Col, Protocol.Prop.Debug, true);
+        cmd.SetBool(Col, Protocol.PropertyId.Debug, true);
         CheckApply("debug on column");
         var recs = Frame(2);
-        s.Check(!recs.Exists(r => r.Event is Protocol.Ev.Measured or Protocol.Ev.SceneBounds),
+        s.Check(!recs.Exists(r => r.Event is Protocol.EventId.Measured or Protocol.EventId.SceneBounds),
             $"debug: column debug changes no measurement ({recs.Count} records)");
         using (var a = s.Grab(w, "30_debug_element.png"))
         {
@@ -184,10 +184,10 @@ public static class DebugOverlayTest
         }
 
         // Window-wide: everything.
-        s.Check(Native.vlqt_window_set_debug(w, 1) == 0 && Native.vlqt_window_get_debug(w) == 1, "debug: set_debug(1)");
-        s.Check(Native.vlqt_window_set_debug(IntPtr.Zero, 1) == Native.Result.NullHandle, "debug: set_debug(null) -1");
+        s.Check(Native.vlqt_scene_set_debug(w, 1) == 0 && Native.vlqt_scene_get_debug(w) == 1, "debug: set_debug(1)");
+        s.Check(Native.vlqt_scene_set_debug(SceneHandle.Null, 1) == Native.Result.NullHandle, "debug: set_debug(null) -1");
         recs = Frame(2);
-        s.Check(!recs.Exists(r => r.Event is Protocol.Ev.Measured or Protocol.Ev.SceneBounds),
+        s.Check(!recs.Exists(r => r.Event is Protocol.EventId.Measured or Protocol.EventId.SceneBounds),
             $"debug: window debug changes no measurement ({recs.Count} records)");
         var hoverOn = Hover();
         s.Check(hoverOn == hoverOff, $"debug: hit-testing identical ({hoverOff} vs {hoverOn})");
@@ -210,18 +210,18 @@ public static class DebugOverlayTest
         cmd.SetPlace(Child(Col, 2), 0, 0, 200, 40);
         CheckApply("resize child with debug on");
         recs = Frame(2);
-        s.Check(recs.Exists(r => r.Event == Protocol.Ev.Measured && r.Handle == Col), "debug: measured still reported with debug on");
+        s.Check(recs.Exists(r => r.Event == Protocol.EventId.Measured && r.Handle == Col), "debug: measured still reported with debug on");
         cmd.SetPlace(Child(Col, 2), 0, 0, 140, 40);
         CheckApply("resize child back");
         Frame(2);
 
         // Off again: overlay gone, measurements identical to the baseline.
-        Native.vlqt_window_set_debug(w, 0);
-        cmd.SetBool(Col, Protocol.Prop.Debug, false);
+        Native.vlqt_scene_set_debug(w, 0);
+        cmd.SetBool(Col, Protocol.PropertyId.Debug, false);
         CheckApply("debug off");
         Frame(2);
         using (var a = s.Grab(w, "30_debug_off2.png"))
-            s.Check(IsBg(Px(a, 20, 100)) && Native.vlqt_window_get_debug(w) == 0, $"debug: overlay gone after off ({Px(a, 20, 100)})");
+            s.Check(IsBg(Px(a, 20, 100)) && Native.vlqt_scene_get_debug(w) == 0, $"debug: overlay gone after off ({Px(a, 20, 100)})");
         // Re-bind every feedback: the first poll after BIND reports the current values, compare with the baseline.
         foreach (var id in all)
         {
@@ -232,7 +232,7 @@ public static class DebugOverlayTest
         CheckApply("rebind");
         var after = new Dictionary<(ushort, uint), string>();
         foreach (var r in Frame(2))
-            if (r.Event is Protocol.Ev.Measured or Protocol.Ev.SceneBounds)
+            if (r.Event is Protocol.EventId.Measured or Protocol.EventId.SceneBounds)
                 after[(r.Event, r.Handle)] = Convert.ToHexString(r.Payload);
         int diff = 0;
         foreach (var kv in baseline)
@@ -241,7 +241,7 @@ public static class DebugOverlayTest
         off.Dispose();
 
         // Debug on a destroyed element: overlay switches off (count drops), no crash.
-        cmd.SetBool(Rot, Protocol.Prop.Debug, true);
+        cmd.SetBool(Rot, Protocol.PropertyId.Debug, true);
         CheckApply("debug on rotated");
         Frame(1);
         cmd.Destroy(Rot);
@@ -250,6 +250,6 @@ public static class DebugOverlayTest
         using (var a = s.Grab(w, "30_debug_destroyed.png"))
             s.Check(!Near(a, 20, 100, IsCyan), "debug: overlay off after the debugged element is destroyed");
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 }

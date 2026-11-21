@@ -11,14 +11,22 @@ namespace VL.Qt.Tests
     /// <summary>
     /// Fake <see cref="ICommandSink"/> for reconciler tests: records every command as a readable line, e.g.
     /// <c>CREATE 1 Rectangle</c>, <c>REPARENT 1 0 0</c>, <c>SET 1 Color color(1,0,0,1)</c>, <c>BIND 1 5 2</c>, <c>DESTROY 1</c>.
-    /// Element types and properties print by their <see cref="Protocol.Type"/> / <see cref="Protocol.Prop"/> name (the first
+    /// Element types and properties print by their <see cref="Protocol.ElementType"/> / <see cref="Protocol.PropertyId"/> (<see cref="Protocol.MultiEffectKey"/>) name (the first
     /// name of a value, see <c>ProtocolNamesAreUnique</c>), so a renumbered protocol leaves the expectations valid.
     /// Numbers use the invariant culture; floats in round-trip format ("R").
     /// </summary>
     internal sealed class RecordingSink : ICommandSink
     {
-        private static readonly Dictionary<ushort, string> s_typeNames = NamesOf(typeof(Protocol.Type));
-        private static readonly Dictionary<ushort, string> s_propNames = NamesOf(typeof(Protocol.Prop));
+        private static readonly Dictionary<ushort, string> s_typeNames = NamesOf(typeof(Protocol.ElementType));
+        // The keys of the MULTI entries (832..855) are no properties of SET, but print by name too.
+        private static readonly Dictionary<ushort, string> s_propNames = Merge(NamesOf(typeof(Protocol.PropertyId)), NamesOf(typeof(Protocol.MultiEffectKey)));
+
+        private static Dictionary<ushort, string> Merge(Dictionary<ushort, string> first, Dictionary<ushort, string> second)
+        {
+            foreach (var (value, name) in second)
+                first.TryAdd(value, name);
+            return first;
+        }
 
         /// <summary>Maps each value of the ushort constants of <paramref name="holder"/> to its first name (declaration order).</summary>
         internal static Dictionary<ushort, string> NamesOf(Type holder)
@@ -132,7 +140,7 @@ namespace VL.Qt.Tests
         public void EffectRect(ushort prop, float x, float y, float width, float height) => _uniforms.Append($" {PropName(prop)}=rect({F(x)},{F(y)},{F(width)},{F(height)})");
         public void EffectRef(ushort prop, uint refId) => _uniforms.Append($" {PropName(prop)}=ref({refId})");
 
-        public void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
+        public void BeginEffectChainLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
             float paddingRight, float paddingBottom, float strength)
             => _uniforms.Append($" | shader {template} [{string.Join(",", shaderIds.ToArray())}] pad=({F(paddingLeft)},{F(paddingTop)},{F(paddingRight)},{F(paddingBottom)}) strength={F(strength)}");
 

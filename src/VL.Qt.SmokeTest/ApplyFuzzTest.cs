@@ -7,8 +7,8 @@ using VL.Qt.Wire;
 using VL.Qt;
 
 // Decoder robustness (NCMD-15): the recorded traces (src/VL.Qt.SmokeTest/traces) are damaged in two ways and applied to QtNative:
-// every command buffer truncated at every 4th byte, and single bytes flipped (fixed seed). Whatever arrives, vlqt_window_apply must
-// return 0 or a negative ApplyResult, never crash, and vlqt_window_get_apply_error must tell the same story as the return code.
+// every command buffer truncated at every 4th byte, and single bytes flipped (fixed seed). Whatever arrives, vlqt_scene_apply must
+// return 0 or a negative ApplyResult, never crash, and vlqt_scene_get_apply_error must tell the same story as the return code.
 // The damaged frame k is applied to the scene that frames 0..k-1 built; afterwards the scene is rebuilt (RESET + replay), so the
 // next frame starts from a clean state.
 [TestFixture, NonParallelizable]
@@ -39,9 +39,9 @@ public static class ApplyFuzzTest
         // Image and shader resources the trace refers to (same preparation as TraceReplay).
         frames = TraceReplay.Prepare(s, traces, name, frames, "fuzz-" + name, checkMapped: false, out var resources);
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt apply fuzz " + name);
-        s.Check(w != IntPtr.Zero, $"fuzz-{name}: window_create");
-        if (w == IntPtr.Zero)
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt apply fuzz " + name);
+        s.Check(w != SceneHandle.Null, $"fuzz-{name}: window_create");
+        if (w == SceneHandle.Null)
             return;
         Native.vlqt_window_show(w);
         s.Pump(2);
@@ -56,7 +56,7 @@ public static class ApplyFuzzTest
         void Probe(string what, byte[] buf)
         {
             var rc = Native.Apply(w, buf);
-            var got = Native.vlqt_window_get_apply_error(w, out var ae);
+            var got = Native.vlqt_scene_get_apply_error(w, out var ae);
             applies++;
             string? problem = null;
             if (rc > Native.Result.Ok || rc < Native.Result.Invalid || rc == Native.Result.NullHandle)
@@ -119,7 +119,7 @@ public static class ApplyFuzzTest
         s.Info($"apply fuzz {name}: {applies} damaged buffers ({accepted} accepted, {applies - accepted} rejected) in {clock.Elapsed.TotalSeconds:F1} s");
         s.Check(violations == 0, $"fuzz-{name}: {violations} violations of {applies} applies" + (violations > 0 ? " (" + string.Join("; ", firstViolations) + ")" : ""));
         s.Pump(2);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
         // Later in-process scenarios (image-resource, image-share, resoverlay) expect no resources left.
         foreach (var id in resources)

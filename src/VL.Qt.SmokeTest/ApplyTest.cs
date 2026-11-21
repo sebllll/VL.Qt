@@ -9,7 +9,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 
-// Tests of vlqt_window_apply / vlqt_window_poll (plan 01c). Buffers are built by a tiny local
+// Tests of vlqt_scene_apply / vlqt_scene_poll (plan 01c). Buffers are built by a tiny local
 // encoder so this test does not depend on CommandWriter (01b).
 [TestFixture, NonParallelizable]
 public static class ApplyTest
@@ -72,7 +72,7 @@ public static class ApplyTest
         }
         public Buf ClearColor(float r, float g, float b, float a = 1)
         {
-            var s = Begin(Protocol.Op.ClearColor, 16);
+            var s = Begin(Protocol.Op.SetClearColor, 16);
             WriteFloats(s, r, g, b, a);
             return this;
         }
@@ -85,14 +85,14 @@ public static class ApplyTest
             return s[8..];
         }
         public Buf SetFloats(uint id, ushort prop, ushort vt, params float[] f) { WriteFloats(SetHeader(id, prop, vt, f.Length * 4), f); return this; }
-        public Buf SetBool(uint id, ushort prop, bool b) { SetHeader(id, prop, Protocol.Vt.Bool, 1)[0] = (byte)(b ? 1 : 0); return this; }
-        public Buf SetRef(uint id, ushort prop, uint refId) { BinaryPrimitives.WriteUInt32LittleEndian(SetHeader(id, prop, Protocol.Vt.Ref, 4), refId); return this; }
-        public Buf SetI32(uint id, ushort prop, int v) { BinaryPrimitives.WriteInt32LittleEndian(SetHeader(id, prop, Protocol.Vt.I32, 4), v); return this; }
-        public Buf Size(uint id, float w, float h) => SetFloats(id, Protocol.Prop.Size, Protocol.Vt.Vec2, w, h);
+        public Buf SetBool(uint id, ushort prop, bool b) { SetHeader(id, prop, Protocol.ValueType.Bool, 1)[0] = (byte)(b ? 1 : 0); return this; }
+        public Buf SetRef(uint id, ushort prop, uint refId) { BinaryPrimitives.WriteUInt32LittleEndian(SetHeader(id, prop, Protocol.ValueType.Ref, 4), refId); return this; }
+        public Buf SetI32(uint id, ushort prop, int v) { BinaryPrimitives.WriteInt32LittleEndian(SetHeader(id, prop, Protocol.ValueType.I32, 4), v); return this; }
+        public Buf Size(uint id, float w, float h) => SetFloats(id, Protocol.PropertyId.Size, Protocol.ValueType.Vec2, w, h);
         // no position property any more: SIZE + ANCHOR TopLeft + TRANSFORM translation.
-        public Buf Place(uint id, float x, float y, float w, float h) => Size(id, w, h).SetI32(id, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft)
-            .SetFloats(id, Protocol.Prop.Transform, Protocol.Vt.Mat4, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, 0, 1);
-        public Buf Color(uint id, float r, float g, float b, float a = 1) => SetFloats(id, Protocol.Prop.Color, Protocol.Vt.Color, r, g, b, a);
+        public Buf Place(uint id, float x, float y, float w, float h) => Size(id, w, h).SetI32(id, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft)
+            .SetFloats(id, Protocol.PropertyId.Transform, Protocol.ValueType.Mat4, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, 0, 1);
+        public Buf Color(uint id, float r, float g, float b, float a = 1) => SetFloats(id, Protocol.PropertyId.Color, Protocol.ValueType.Color, r, g, b, a);
 
         private static void WriteFloats(Span<byte> s, params float[] f)
         {
@@ -139,30 +139,30 @@ public static class ApplyTest
         /// <summary>SET of a Shape path: u32 id, u16 prop, u16 value type, u32 verbCount, u32 pointCount, verbs (padded), points.</summary>
         public static Pay PathSet(uint id, byte[] verbs, uint pointCount)
         {
-            var p = new Pay().U32(id).U16(Protocol.Prop.ShapePath).U16(Protocol.Vt.Path).U32((uint)verbs.Length).U32(pointCount).Bytes(verbs).Pad();
+            var p = new Pay().U32(id).U16(Protocol.PropertyId.ShapePath).U16(Protocol.ValueType.Path).U32((uint)verbs.Length).U32(pointCount).Bytes(verbs).Pad();
             return p.Zeros((int)pointCount * 8);
         }
     }
 
     // Rejection branches of the entry-based commands and of path values (NCMD-15): each case asserts the return code and a part
     // of the reason. A malformed command changes nothing, so the elements stay valid across the cases.
-    private static void RejectCases(Scenario s, IntPtr w, Buf b)
+    private static void RejectCases(Scenario s, SceneHandle w, Buf b)
     {
         const uint fx = 3000, qml = 3001, shape = 3002, rect = 3003;
-        var rc = Native.Apply(w, b.Clear().Create(fx, Protocol.Type.ShaderEffect).Create(qml, Protocol.Type.Qml)
-            .Create(shape, Protocol.Type.Shape).Create(rect, Protocol.Type.Rectangle).Span);
+        var rc = Native.Apply(w, b.Clear().Create(fx, Protocol.ElementType.Shader).Create(qml, Protocol.ElementType.Qml)
+            .Create(shape, Protocol.ElementType.Shape).Create(rect, Protocol.ElementType.Rectangle).Span);
         s.Check(rc == 0, $"reject cases: create elements ({rc}) {(rc != 0 ? Native.LastError() : "")}");
 
         void Case(string what, ushort op, Pay p, Native.Result expected, string mustContain)
         {
             var r = Native.Apply(w, b.Clear().Cmd(op, p.ToArray()).Span);
             var e = Native.LastError();
-            var got = Native.vlqt_window_get_apply_error(w, out var ae);
+            var got = Native.vlqt_scene_get_apply_error(w, out var ae);
             var ok = r == expected && (expected == Native.Result.Ok || (e.Contains(mustContain) && got == 0 && ae.rc == (int)expected && ae.Reason.Contains(mustContain)));
             s.Check(ok, $"reject {what} -> {r} \"{(expected == 0 ? "" : e)}\"");
         }
         const ushort uni = Protocol.Op.SetUniforms, qop = Protocol.Op.SetQmlProperties, chain = Protocol.Op.SetEffectChain;
-        const ushort F = Protocol.Vt.F32, V4 = Protocol.Vt.Vec4, Str = Protocol.Vt.String;
+        const ushort F = Protocol.ValueType.F32, V4 = Protocol.ValueType.Vec4, Str = Protocol.ValueType.String;
         var name256 = new string('n', 256);
 
         // SET_UNIFORMS
@@ -175,8 +175,8 @@ public static class ApplyTest
         Case("uniforms: trailing bytes", uni, Pay.Head(fx, 1).F4Entry(F, "a", 1).Zeros(4), Native.Result.BadLength, "bytes after the last entry");
         Case("uniforms: STRING not allowed", uni, Pay.Head(fx, 1).Entry(Str, "a", new byte[4]), Native.Result.BadArgument, "not allowed");
         Case("uniforms: unknown value type", uni, Pay.Head(fx, 1).Entry(999, "a", new byte[4]), Native.Result.BadArgument, "not allowed");
-        Case("uniforms: sampler out of range", uni, Pay.Head(fx, 1).Entry(Protocol.Vt.Sampler, "a", new byte[] { 9, 0, 0, 0, 0, 0, 0, 0 }), Native.Result.BadArgument, "sampler state");
-        Case("uniforms: unknown ref", uni, Pay.Head(fx, 1).Entry(Protocol.Vt.Ref, "a", new byte[] { 0x39, 5, 0, 0 }), Native.Result.UnknownObject, "unknown ref id 1337");
+        Case("uniforms: sampler out of range", uni, Pay.Head(fx, 1).Entry(Protocol.ValueType.Sampler, "a", new byte[] { 9, 0, 0, 0, 0, 0, 0, 0 }), Native.Result.BadArgument, "sampler state");
+        Case("uniforms: unknown ref", uni, Pay.Head(fx, 1).Entry(Protocol.ValueType.Ref, "a", new byte[] { 0x39, 5, 0, 0 }), Native.Result.UnknownObject, "unknown ref id 1337");
         Case("uniforms: unknown id", uni, Pay.Head(9999, 0), Native.Result.UnknownObject, "unknown id 9999");
         Case("uniforms: not a ShaderEffect", uni, Pay.Head(rect, 0), Native.Result.UnknownProperty, "ShaderEffect only");
 
@@ -191,11 +191,11 @@ public static class ApplyTest
         Case("qml: count larger than the entries", qop, Pay.Head(qml, 2).F4Entry(F, "a", 1), Native.Result.BadLength, "truncated entry");
         Case("qml: trailing bytes", qop, Pay.Head(qml, 1).F4Entry(F, "a", 1).Zeros(4), Native.Result.BadLength, "bytes after the last entry");
         Case("qml: unknown value type", qop, Pay.Head(qml, 1).Entry(999, "a", new byte[4]), Native.Result.BadArgument, "unknown value type");
-        Case("qml: PATH not allowed", qop, Pay.Head(qml, 1).Entry(Protocol.Vt.Path, "a", new byte[8]), Native.Result.BadArgument, "not allowed");
+        Case("qml: PATH not allowed", qop, Pay.Head(qml, 1).Entry(Protocol.ValueType.Path, "a", new byte[8]), Native.Result.BadArgument, "not allowed");
         Case("qml: not a QmlElement", qop, Pay.Head(rect, 0), Native.Result.UnknownProperty, "QmlElement only");
 
         // SET_EFFECT_CHAIN
-        const ushort multi = Protocol.EffectLink.Multi, shader = Protocol.EffectLink.Shader, single = Protocol.EffectTemplate.Single;
+        const ushort multi = Protocol.EffectChainLink.Multi, shader = Protocol.EffectChainLink.Shader, single = Protocol.EffectTemplate.Single;
         Case("chain: empty chain (control)", chain, Pay.ChainHead(rect, 0), 0, "");
         Case("chain: SHADER link (control)", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1)), 0, "");
         Case("chain: payload < 8", chain, new Pay().U32(rect).U16(0), Native.Result.BadLength, "too short");
@@ -219,8 +219,8 @@ public static class ApplyTest
         Case("chain: link count larger than the links", chain, Pay.ChainHead(rect, 2).Link(shader, 0, Pay.ShaderBody(single, 1)), Native.Result.BadLength, "truncated link header");
         Case("chain: MULTI truncated entry", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay()), Native.Result.BadLength, "truncated entry");
         Case("chain: MULTI unknown key", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(1).U16(F).F32(0)), Native.Result.UnknownProperty, "is no MULTI key");
-        Case("chain: MULTI wrong value type", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(Protocol.Prop.EffectBlurEnabled).U16(F).F32(0)), Native.Result.BadArgument, "takes");
-        Case("chain: MULTI entry past the body", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(Protocol.Prop.EffectBlurEnabled).U16(Protocol.Vt.Bool)), Native.Result.BadLength, "exceeds the body");
+        Case("chain: MULTI wrong value type", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(Protocol.MultiEffectKey.BlurEnabled).U16(F).F32(0)), Native.Result.BadArgument, "takes");
+        Case("chain: MULTI entry past the body", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(Protocol.MultiEffectKey.BlurEnabled).U16(Protocol.ValueType.Bool)), Native.Result.BadLength, "exceeds the body");
         Case("chain: MULTI trailing bytes in the body", chain, Pay.ChainHead(rect, 1).Link(multi, 0, new Pay().Zeros(4)), Native.Result.BadLength, "bytes after the last entry of the body");
 
         // Path values (SET of ShapePath)
@@ -229,7 +229,7 @@ public static class ApplyTest
         Case("path: unknown verb", set, Pay.PathSet(shape, new byte[] { Protocol.Verb.Move, 9 }, 2), Native.Result.BadArgument, "unknown verb 9");
         Case("path: too few points", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Cubic }, 2), Native.Result.BadArgument, "the verbs take 4");
         Case("path: too many points", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Line }, 3), Native.Result.BadArgument, "the verbs take 2");
-        Case("path: counts past the payload", set, new Pay().U32(shape).U16(Protocol.Prop.ShapePath).U16(Protocol.Vt.Path).U32(0xFFFFFFFF).U32(0xFFFFFFFF), Native.Result.BadLength, "value length");
+        Case("path: counts past the payload", set, new Pay().U32(shape).U16(Protocol.PropertyId.ShapePath).U16(Protocol.ValueType.Path).U32(0xFFFFFFFF).U32(0xFFFFFFFF), Native.Result.BadLength, "value length");
 
         // Rejected commands changed nothing: the elements still take a valid command.
         rc = Native.Apply(w, b.Clear().Cmd(uni, Pay.Head(fx, 1).F4Entry(F, "a", 1).ToArray()).Span);
@@ -245,20 +245,20 @@ public static class ApplyTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt apply test");
-        s.Check(w != IntPtr.Zero, "apply: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt apply test");
+        s.Check(w != SceneHandle.Null, "apply: window_create");
         Native.vlqt_window_show(w);
         var b = new Buf();
         Native.Result Apply(Buf buf) => Native.Apply(w, buf.Span);
 
-        // Scene: grey background, red rect at root, green rect inside an empty ITEM group.
+        // Scene: grey background, red rect at root, green rect inside an empty GROUP.
         var rc = Apply(b.Clear()
             .ClearColor(0.125f, 0.125f, 0.125f)
-            .Create(1, Protocol.Type.Rectangle).Place(1, 100, 100, 200, 150).Color(1, 1, 0, 0).Reparent(1, 0, 0)
-            .Create(2, Protocol.Type.Item).Place(2, 400, 300, 300, 200).Reparent(2, 0, 1)
-            .Create(3, Protocol.Type.Rectangle).Place(3, 0, 0, 100, 100).Color(3, 0, 1, 0).Reparent(3, 2, 0)
-            .Create(4, Protocol.Type.Rectangle).Place(4, 150, 120, 100, 100).Color(4, 0, 0, 1).Reparent(4, 0, 0)
-            .SetFloats(1, Protocol.Prop.Opacity, Protocol.Vt.F32, 1f).SetBool(2, Protocol.Prop.Clip, false)
+            .Create(1, Protocol.ElementType.Rectangle).Place(1, 100, 100, 200, 150).Color(1, 1, 0, 0).Reparent(1, 0, 0)
+            .Create(2, Protocol.ElementType.Group).Place(2, 400, 300, 300, 200).Reparent(2, 0, 1)
+            .Create(3, Protocol.ElementType.Rectangle).Place(3, 0, 0, 100, 100).Color(3, 0, 1, 0).Reparent(3, 2, 0)
+            .Create(4, Protocol.ElementType.Rectangle).Place(4, 150, 120, 100, 100).Color(4, 0, 0, 1).Reparent(4, 0, 0)
+            .SetFloats(1, Protocol.PropertyId.Opacity, Protocol.ValueType.F32, 1f).SetBool(2, Protocol.PropertyId.Clip, false)
             .Bind(1, 42, 0));
         s.Check(rc == 0, $"apply: build scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         s.Pump(5);
@@ -271,7 +271,7 @@ public static class ApplyTest
 
         // Stacking: blue to the top; mat4 row-major like Stride (translation in row 4) moves the group (anchor TopLeft: 400,300 -> 500,300).
         rc = Apply(b.Clear().Reparent(4, 0, 99)
-            .SetFloats(2, Protocol.Prop.Transform, Protocol.Vt.Mat4, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 500, 300, 0, 1));
+            .SetFloats(2, Protocol.PropertyId.Transform, Protocol.ValueType.Mat4, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 500, 300, 0, 1));
         s.Check(rc == 0, $"apply: reparent to top + transform ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         s.Pump(3);
         using (var a = s.Grab(w, "apply2.png"))
@@ -294,33 +294,33 @@ public static class ApplyTest
         }
         Err("truncated buffer", b.Clear().Raw(Protocol.Op.Destroy, 40, 4), Native.Result.BadLength, "exceeds buffer");
         Err("wrong payloadLen", b.Clear().Raw(Protocol.Op.Destroy, 8, 8), Native.Result.BadLength, "expected 4");
-        Err("wrong value length", b.Clear().Create(5, Protocol.Type.Rectangle).SetFloats(5, Protocol.Prop.Size, Protocol.Vt.Vec2, 1, 2, 3), Native.Result.BadLength, "command #1");
+        Err("wrong value length", b.Clear().Create(5, Protocol.ElementType.Rectangle).SetFloats(5, Protocol.PropertyId.Size, Protocol.ValueType.Vec2, 1, 2, 3), Native.Result.BadLength, "command #1");
         Err("unknown op", b.Clear().Raw(99, 0, 0), Native.Result.UnknownOp, "unknown opcode");
         Err("unknown id", b.Clear().Place(777, 0, 0, 1, 1), Native.Result.UnknownObject, "unknown id 777");
         Err("unknown parent", b.Clear().Reparent(1, 777, 0), Native.Result.UnknownObject, "unknown parent id 777");
-        Err("unknown ref", b.Clear().SetRef(1, Protocol.Prop.Size, 777), Native.Result.UnknownObject, "unknown ref id 777");
+        Err("unknown ref", b.Clear().SetRef(1, Protocol.PropertyId.Size, 777), Native.Result.UnknownObject, "unknown ref id 777");
         Err("unknown type", b.Clear().Create(6, 999), Native.Result.UnknownType, "unknown type 999");
-        Err("unknown property", b.Clear().Create(7, Protocol.Type.Item).Color(7, 1, 1, 1), Native.Result.UnknownProperty, "not supported by type ITEM");
-        Err("value type mismatch", b.Clear().SetFloats(1, Protocol.Prop.Size, Protocol.Vt.F32, 1), Native.Result.BadArgument, "expects value type");
-        Err("duplicate id", b.Clear().Create(1, Protocol.Type.Item), Native.Result.Invalid, "already exists");
-        Err("create id 0", b.Clear().Create(0, Protocol.Type.Item), Native.Result.Invalid, "window root");
-        Err("reparent into own subtree", b.Clear().Create(8, Protocol.Type.Item).Reparent(8, 1, 0).Reparent(1, 8, 0), Native.Result.Invalid, "command #2");
+        Err("unknown property", b.Clear().Create(7, Protocol.ElementType.Group).Color(7, 1, 1, 1), Native.Result.UnknownProperty, "not supported by type GROUP");
+        Err("value type mismatch", b.Clear().SetFloats(1, Protocol.PropertyId.Size, Protocol.ValueType.F32, 1), Native.Result.BadArgument, "expects value type");
+        Err("duplicate id", b.Clear().Create(1, Protocol.ElementType.Group), Native.Result.Invalid, "already exists");
+        Err("create id 0", b.Clear().Create(0, Protocol.ElementType.Group), Native.Result.Invalid, "window root");
+        Err("reparent into own subtree", b.Clear().Create(8, Protocol.ElementType.Group).Reparent(8, 1, 0).Reparent(1, 8, 0), Native.Result.Invalid, "command #2");
         Err("bind unknown id", b.Clear().Bind(777, 1, 0), Native.Result.UnknownObject, "command #0");
-        s.Check(Native.Apply(IntPtr.Zero, b.Span) == Native.Result.NullHandle, "apply: null window -> NullHandle");
+        s.Check(Native.Apply(SceneHandle.Null, b.Span) == Native.Result.NullHandle, "apply: null window -> NullHandle");
 
         // Structured error: object id, op and property of the bad command, reason without prefix.
         Native.vlqt_apply_error ae = default;
-        rc = Apply(b.Clear().Create(9, Protocol.Type.Item).SetFloats(9, Protocol.Prop.Size, Protocol.Vt.F32, 1));
-        s.Check(rc == Native.Result.BadArgument && Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.rc == (int)Native.Result.BadArgument && ae.command == 1 && ae.id == 9
-            && ae.op == Protocol.Op.Set && ae.prop == Protocol.Prop.Size && ae.Reason.StartsWith("property ")
+        rc = Apply(b.Clear().Create(9, Protocol.ElementType.Group).SetFloats(9, Protocol.PropertyId.Size, Protocol.ValueType.F32, 1));
+        s.Check(rc == Native.Result.BadArgument && Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.rc == (int)Native.Result.BadArgument && ae.command == 1 && ae.id == 9
+            && ae.op == Protocol.Op.Set && ae.prop == Protocol.PropertyId.Size && ae.Reason.StartsWith("property ")
             && Native.LastError().Contains("id 9"), $"apply error id: SET -> id {ae.id} op {ae.op} prop {ae.prop} \"{ae.Reason}\"");
         Err("unknown property id", b.Clear().Color(9, 1, 1, 1), Native.Result.UnknownProperty, "id 9");
-        s.Check(Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.id == 9 && ae.prop == Protocol.Prop.Color, $"apply error id: -6 -> {ae.id}/{ae.prop}");
-        Err("clear color, no id", b.Clear().Raw(Protocol.Op.ClearColor, 4, 4), Native.Result.BadLength, "expected 16");
-        s.Check(Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.id == 0 && ae.op == Protocol.Op.ClearColor, $"apply error id: CLEAR_COLOR -> id {ae.id}");
-        s.Check(Apply(b.Clear().Destroy(9)) == 0 && Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.rc == 0 && ae.id == 0 && ae.Reason.Length == 0,
+        s.Check(Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.id == 9 && ae.prop == Protocol.PropertyId.Color, $"apply error id: -6 -> {ae.id}/{ae.prop}");
+        Err("clear color, no id", b.Clear().Raw(Protocol.Op.SetClearColor, 4, 4), Native.Result.BadLength, "expected 16");
+        s.Check(Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.id == 0 && ae.op == Protocol.Op.SetClearColor, $"apply error id: CLEAR_COLOR -> id {ae.id}");
+        s.Check(Apply(b.Clear().Destroy(9)) == 0 && Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.rc == 0 && ae.id == 0 && ae.Reason.Length == 0,
             "apply error id: cleared by a successful apply");
-        s.Check(Native.vlqt_window_get_apply_error(IntPtr.Zero, out _) == Native.Result.NullHandle, "apply error id: null window -> NullHandle");
+        s.Check(Native.vlqt_scene_get_apply_error(SceneHandle.Null, out _) == Native.Result.NullHandle, "apply error id: null window -> NullHandle");
         s.Check(Apply(b.Clear()) == 0, "apply: empty buffer ok");
 
         // Earlier commands of a failing buffer stay applied.
@@ -330,18 +330,18 @@ public static class ApplyTest
         using (var a = s.Grab(w, "apply3.png"))
             s.Check(Near(Px(a, 200, 175), 255, 255, 0), $"apply: command before the error stays applied (yellow) ({Px(a, 200, 175)})");
 
-        // Poll: id 1 is bound (handle 42) -> EV_MEASURED + EV_SCENE_BOUNDS once (06b), plus the first
-        // EV_WINDOW_GEOMETRY of the window (40 bytes, client position), then nothing.
+        // Poll: id 1 is bound (handle 42) -> EVENT_MEASURED + EVENT_SCENE_BOUNDS once (06b), plus the first
+        // EVENT_WINDOW_GEOMETRY of the window (40 bytes, client position), then nothing.
         var ev = new byte[128];
         var needRc = NativeCalls.Poll(w, Span<byte>.Empty, out var need);
         s.Check(needRc == (int)Native.Result.BufferTooSmall && need == 20 + 28 + 40, $"poll: cap 0 -> buffer too small, required {need} ({needRc})");
         s.Check(NativeCalls.Poll(w, ev) == 20 + 28 + 40, "poll: measured + scene bounds of the bound item + window geometry");
         s.Check(NativeCalls.Poll(w, ev) == 0, "poll: 0 bytes (nothing changed)");
-        s.Check(NativeCalls.Poll(IntPtr.Zero, ev) == (int)Native.Result.NullHandle, "poll: null window -> NullHandle");
+        s.Check(NativeCalls.Poll(SceneHandle.Null, ev) == (int)Native.Result.NullHandle, "poll: null window -> NullHandle");
 
         // Perf: 10 000 SETs (SIZE on 100 items) per apply.
         b.Clear();
-        for (uint i = 0; i < 100; i++) b.Create(1000 + i, Protocol.Type.Rectangle).Reparent(1000 + i, 0, 1000);
+        for (uint i = 0; i < 100; i++) b.Create(1000 + i, Protocol.ElementType.Rectangle).Reparent(1000 + i, 0, 1000);
         s.Check(Apply(b) == 0, "apply: create 100 perf items");
         var times = new double[20];
         // best of up to 3 rounds (see PerfLimits.Best); the INFO line shows the last round's spread.
@@ -372,14 +372,14 @@ public static class ApplyTest
         s.Info($"apply 10000 SET (color via QML property): {sw2.Elapsed.TotalMilliseconds:F3} ms (rc {rc})");
 
         // RESET: every object goes at once (nested and unparented ones too), ids are free again, the clear color stays.
-        b.Clear().ClearColor(0.5f, 0, 0).Create(2000, Protocol.Type.Item).Reparent(2000, 0, 0).Create(2001, Protocol.Type.Rectangle)
-            .Reparent(2001, 2000, 0).Place(2001, 0, 0, 800, 600).Color(2001, 0, 1, 0).Create(2002, Protocol.Type.Rectangle);
+        b.Clear().ClearColor(0.5f, 0, 0).Create(2000, Protocol.ElementType.Group).Reparent(2000, 0, 0).Create(2001, Protocol.ElementType.Rectangle)
+            .Reparent(2001, 2000, 0).Place(2001, 0, 0, 800, 600).Color(2001, 0, 1, 0).Create(2002, Protocol.ElementType.Rectangle);
         s.Check(Apply(b) == 0, "reset: build nested + unparented objects");
         rc = Apply(b.Clear().Raw(Protocol.Op.Reset, 0, 0));
         s.Check(rc == 0, $"reset: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         foreach (uint id in new uint[] { 1, 1000, 2000, 2001, 2002 })
             s.Check(Apply(b.Clear().Destroy(id)) == Native.Result.UnknownObject, $"reset: id {id} gone");
-        s.Check(Apply(b.Clear().Create(2001, Protocol.Type.Item).Create(1, Protocol.Type.Item)) == 0, "reset: ids reusable");
+        s.Check(Apply(b.Clear().Create(2001, Protocol.ElementType.Group).Create(1, Protocol.ElementType.Group)) == 0, "reset: ids reusable");
         Err("reset with payload", b.Clear().Raw(Protocol.Op.Reset, 4, 4), Native.Result.BadLength, "expected 0");
         s.Pump(3);
         using (var a = s.Grab(w, "apply_reset.png"))
@@ -388,6 +388,6 @@ public static class ApplyTest
         RejectCases(s, w, b);
 
         s.Pump(2);
-        Native.vlqt_window_destroy(w); // releases all remaining ids
+        Native.vlqt_scene_destroy(w); // releases all remaining ids
     }
 }

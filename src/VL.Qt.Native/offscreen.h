@@ -3,7 +3,7 @@
 // vlqt_offscreen_* exports in vlqt.h; design: docs/decisions/render-texture.md. Called on the main thread only; the
 // scene graph and QRhi of a scene may live on a render thread (render_thread.h, offscreen.cpp).
 //
-// A scene is a window handle (struct Window of vlqt.cpp) whose QQuickWindow is driven by a QQuickRenderControl:
+// A scene is a scene handle (vlqt_scene*, struct Window of vlqt.cpp) whose QQuickWindow is driven by a QQuickRenderControl:
 // vlqt.cpp owns the parts every handle shares (engine, scene, gate, perf, graphics configuration), this part owns the
 // render control and the binding.
 #pragma once
@@ -16,6 +16,7 @@
 
 class QPointingDevice;
 class QQuickWindow;
+struct vlqt_scene;
 
 namespace vlqt::offscreen {
 
@@ -27,11 +28,11 @@ struct State;
 // Window handle of a new scene around window, a QQuickWindow of state's render control: QML engine, scene (apply,
 // poll), change count, perf monitor and graphics configuration on the shared device (device::attach), the
 // FocusRelease filter and no other input filter. The handle owns window and state from here on;
-// vlqt_window_destroy frees them.
-void* createHandle(QQuickWindow* window, State* state);
+// vlqt_scene_destroy frees them.
+vlqt_scene* createHandle(QQuickWindow* window, State* state);
 // The offscreen part of handle; nullptr for a null handle or a window.
-State* stateOf(void* handle);
-QQuickWindow* quickWindow(void* handle);
+State* stateOf(vlqt_scene* handle);
+QQuickWindow* quickWindow(vlqt_scene* handle);
 // Clears the focus of the outermost focused item below window's root, so the active focus goes to the root: a running
 // edit commits as on any focus loss. Shared by the FocusRelease filter and the scene's focus loss.
 void releaseFocus(QQuickWindow* window);
@@ -46,7 +47,7 @@ bool sendTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<
 void cancelTouch(QQuickWindow* window, const QPointingDevice* device, std::vector<std::pair<int, QPointF>>& active,
     ulong timestamp, Qt::KeyboardModifiers modifiers);
 
-// --- offscreen.cpp, called by vlqt_window_destroy ---
+// --- offscreen.cpp, called by vlqt_scene_destroy ---
 
 // Before the QQuickWindow is deleted: frees the binding (render target, opened texture, fences); a scene on a render
 // thread also drops its scene graph and QRhi there (after every render posted before).
@@ -64,6 +65,6 @@ bool requestFrame(const QQuickWindow* window);
 
 // test hook: backend of vlqt_test_offscreen_state (test/test_probes.cpp): fence values and render count of a bound scene.
 // Out pointers may be null. Returns VLQT_OK, VLQT_ERR_NULL_HANDLE or VLQT_ERR_UNBOUND (vlqt_last_error set).
-int testState(void* scene, unsigned long long* readFence, unsigned long long* writeFence, long long* renders);
+int testState(vlqt_scene* scene, unsigned long long* readFence, unsigned long long* writeFence, long long* renders);
 
 } // namespace vlqt::offscreen

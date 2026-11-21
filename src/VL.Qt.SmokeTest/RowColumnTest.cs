@@ -31,8 +31,8 @@ public static class RowColumnTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt row/column test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt row/column test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
@@ -44,47 +44,47 @@ public static class RowColumnTest
         void Container(uint id, ushort type, RectangleF bounds, float spacing, float padding, int align)
         {
             cmd.Create(id, type);
-            if (bounds.Width > 0) cmd.SetBool(id, Protocol.Prop.AutoSize, false); // explicit size (Auto Size would ignore it)
+            if (bounds.Width > 0) cmd.SetBool(id, Protocol.PropertyId.AutoSize, false); // explicit size (Auto Size would ignore it)
             if (bounds.Width > 0 || bounds.X != 0 || bounds.Y != 0)
                 cmd.SetPlace(id, bounds.X, bounds.Y, bounds.Width, bounds.Height);
-            if (spacing != 0) cmd.SetF32(id, Protocol.Prop.Spacing, spacing);
-            if (padding != 0) cmd.SetF32(id, Protocol.Prop.Padding, padding);
-            if (align != 0) cmd.SetI32(id, Protocol.Prop.ChildAlignment, align);
+            if (spacing != 0) cmd.SetF32(id, Protocol.PropertyId.Spacing, spacing);
+            if (padding != 0) cmd.SetF32(id, Protocol.PropertyId.Padding, padding);
+            if (align != 0) cmd.SetI32(id, Protocol.PropertyId.ChildAlignment, align);
             cmd.Reparent(id, 0, 1000);
         }
         void Rect(uint id, uint parent, float width, float height, float r, float g, float b)
         {
-            cmd.Create(id, Protocol.Type.Rectangle);
+            cmd.Create(id, Protocol.ElementType.Rectangle);
             cmd.SetPlace(id, 0, 0, width, height);
-            cmd.SetColor(id, Protocol.Prop.Color, r, g, b, 1);
+            cmd.SetColor(id, Protocol.PropertyId.Color, r, g, b, 1);
             cmd.Reparent(id, parent, 1000);
         }
 
         cmd.Reset();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // A: Column without size (implicit), padding 10, spacing 20, Left.
-        Container(ColA, Protocol.Type.Column, new RectangleF(20, 20, 0, 0), 20, 10, 0);
+        Container(ColA, Protocol.ElementType.Column, new RectangleF(20, 20, 0, 0), 20, 10, 0);
         Rect(Child(ColA, 0), ColA, 100, 40, 1, 0, 0);
         Rect(Child(ColA, 1), ColA, 60, 40, 0, 1, 0);
         Rect(Child(ColA, 2), ColA, 140, 40, 0, 0, 1);
         // B: Column 200x300, padding 10, spacing 10, HCenter (0x4). Content width 180.
-        Container(ColB, Protocol.Type.Column, new RectangleF(220, 20, 200, 300), 10, 10, 0x4);
+        Container(ColB, Protocol.ElementType.Column, new RectangleF(220, 20, 200, 300), 10, 10, 0x4);
         Rect(Child(ColB, 0), ColB, 100, 40, 1, 0, 0);
         Rect(Child(ColB, 1), ColB, 60, 40, 0, 1, 0);
         Rect(Child(ColB, 2), ColB, 140, 40, 0, 0, 1);
         // C: Row 300x200, padding 10, spacing 10, Bottom (0x40). Content height 180.
-        Container(RowC, Protocol.Type.Row, new RectangleF(450, 20, 300, 200), 10, 10, 0x40);
+        Container(RowC, Protocol.ElementType.Row, new RectangleF(450, 20, 300, 200), 10, 10, 0x40);
         Rect(Child(RowC, 0), RowC, 40, 50, 1, 0, 0);
         Rect(Child(RowC, 1), RowC, 40, 100, 0, 1, 0);
         Rect(Child(RowC, 2), RowC, 40, 30, 0, 0, 1);
         // D: Column, spacing 0; the middle child is rotated 90 deg around its center (visual only).
-        Container(ColD, Protocol.Type.Column, new RectangleF(20, 300, 0, 0), 0, 0, 0);
+        Container(ColD, Protocol.ElementType.Column, new RectangleF(20, 300, 0, 0), 0, 0, 0);
         Rect(Child(ColD, 0), ColD, 100, 40, 1, 0, 0);
         Rect(Child(ColD, 1), ColD, 100, 40, 0, 1, 0);
         Rect(Child(ColD, 2), ColD, 100, 40, 0, 0, 1);
         var rot = Matrix.RotationZ(MathUtil.PiOverTwo); // around the default PIVOT (center, resolved by QtNative)
-        cmd.SetI32(Child(ColD, 1), Protocol.Prop.Anchor, GeometryExtensions.AlignCenter); // pivot only inside a Column
-        cmd.SetMat4(Child(ColD, 1), Protocol.Prop.Transform, in rot);
+        cmd.SetI32(Child(ColD, 1), Protocol.PropertyId.Anchor, GeometryExtensions.AlignCenter); // pivot only inside a Column
+        cmd.SetMat4(Child(ColD, 1), Protocol.PropertyId.Transform, in rot);
         CheckApply("row/column scene");
         s.Pump(3);
 
@@ -114,11 +114,11 @@ public static class RowColumnTest
 
         // Updates: alignment Right, child size change, spacing/padding change, appended child.
         cmd.Reset();
-        cmd.SetI32(ColB, Protocol.Prop.ChildAlignment, 0x2);
+        cmd.SetI32(ColB, Protocol.PropertyId.ChildAlignment, 0x2);
         cmd.SetPlace(Child(ColB, 1), 0, 0, 20, 40);
         cmd.SetPlace(Child(ColA, 1), 0, 0, 120, 40);
-        cmd.SetF32(ColA, Protocol.Prop.Spacing, 0);
-        cmd.SetF32(RowC, Protocol.Prop.Padding, 30);
+        cmd.SetF32(ColA, Protocol.PropertyId.Spacing, 0);
+        cmd.SetF32(RowC, Protocol.PropertyId.Padding, 30);
         Rect(Child(ColA, 3), ColA, 80, 20, 1, 1, 0);
         CheckApply("row/column updates");
         s.Pump(2);
@@ -142,15 +142,15 @@ public static class RowColumnTest
             cmd.Reset();
         }
         cmd.Reset();
-        cmd.SetI32(ColA, Protocol.Prop.ChildAlignment, 0x20);
+        cmd.SetI32(ColA, Protocol.PropertyId.ChildAlignment, 0x20);
         Expect(Native.Result.BadArgument, "column alignment AlignTop");
-        cmd.SetI32(RowC, Protocol.Prop.ChildAlignment, 0x1);
+        cmd.SetI32(RowC, Protocol.PropertyId.ChildAlignment, 0x1);
         Expect(Native.Result.BadArgument, "row alignment AlignLeft");
-        cmd.SetI32(ColA, Protocol.Prop.Spacing, 3);
+        cmd.SetI32(ColA, Protocol.PropertyId.Spacing, 3);
         Expect(Native.Result.BadArgument, "spacing as i32");
-        cmd.SetF32(ColA, Protocol.Prop.Radius, 1);
+        cmd.SetF32(ColA, Protocol.PropertyId.Radius, 1);
         Expect(Native.Result.UnknownProperty, "radius on column");
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 }

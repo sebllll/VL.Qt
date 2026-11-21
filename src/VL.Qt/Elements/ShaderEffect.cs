@@ -45,7 +45,7 @@ namespace VL.Qt.Elements
             }
         }
 
-        /// <summary>Shader resource id (VLQT_RES_KIND_SHADER, stage fragment) owned by the node; 0 = none, nothing drawn.</summary>
+        /// <summary>Shader resource id (VLQT_RESOURCE_KIND_SHADER, stage fragment) owned by the node; 0 = none, nothing drawn.</summary>
         internal ulong FragmentShaderId { get; init; }
 
         /// <summary>Shader resource id (stage vertex) owned by the node; 0 = Qt's default vertex shader.</summary>

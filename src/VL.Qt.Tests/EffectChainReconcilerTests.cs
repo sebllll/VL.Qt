@@ -5,7 +5,7 @@ using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
-using P = VL.Qt.Wire.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
@@ -62,16 +62,16 @@ namespace VL.Qt.Tests
             Frame(new Rectangle { Effect = chain });
             var links = Links();
             Assert.That(links, Has.Length.EqualTo(3));
-            Assert.That(links[0], Does.StartWith($"multi {nameof(P.EffectBlurEnabled)}=bool(1)"));
+            Assert.That(links[0], Does.StartWith($"multi {nameof(Protocol.MultiEffectKey.BlurEnabled)}=bool(1)"));
             Assert.That(links[1], Does.StartWith("shader 1 [7] pad=(100,200,300,400) strength=1000"));
-            Assert.That(links[2], Does.StartWith($"multi {nameof(P.EffectShadowEnabled)}=bool(1)"));
-            Assert.That(links[2], Does.Not.Contain($"{nameof(P.EffectBlurEnabled)}="));
+            Assert.That(links[2], Does.StartWith($"multi {nameof(Protocol.MultiEffectKey.ShadowEnabled)}=bool(1)"));
+            Assert.That(links[2], Does.Not.Contain($"{nameof(Protocol.MultiEffectKey.BlurEnabled)}="));
 
             // Swapping the order swaps the links.
             Frame(new Rectangle { Effect = Blur(new TestShaderLink(Shadow())) });
             links = Links();
-            Assert.That(links[0], Does.StartWith($"multi {nameof(P.EffectShadowEnabled)}=bool(1)"));
-            Assert.That(links[2], Does.StartWith($"multi {nameof(P.EffectBlurEnabled)}=bool(1)"));
+            Assert.That(links[0], Does.StartWith($"multi {nameof(Protocol.MultiEffectKey.ShadowEnabled)}=bool(1)"));
+            Assert.That(links[2], Does.StartWith($"multi {nameof(Protocol.MultiEffectKey.BlurEnabled)}=bool(1)"));
         }
 
         [Test]
@@ -97,7 +97,9 @@ namespace VL.Qt.Tests
             // A new instance is a change: the whole chain once.
             Frame(new Rectangle { Effect = new TestShaderLink(Blur()) });
             Assert.That(Chains, Has.Length.EqualTo(1));
-            Assert.That(_sink.OfOp("SET").Any(c => c.Split(' ')[2].StartsWith("Effect")), Is.False, "no EFFECT_* SET");
+            // The MULTI keys (832..855) are no properties of SET; Enabled is also a property of its own (704).
+            var keyNames = typeof(Protocol.MultiEffectKey).GetFields().Select(f => f.Name).Except(typeof(Protocol.PropertyId).GetFields().Select(f => f.Name)).ToHashSet();
+            Assert.That(_sink.OfOp("SET").Any(c => keyNames.Contains(c.Split(' ')[2])), Is.False, "no MULTI key SET");
         }
 
         [Test]
@@ -110,10 +112,10 @@ namespace VL.Qt.Tests
             Frame(new Rectangle { Effect = chain });
             var links = Links();
             Assert.That(links, Has.Length.EqualTo(3));
-            Assert.That(links[0], Does.Contain($"{nameof(P.EffectBlurEnabled)}=").And.Contain($"{nameof(P.EffectColorization)}="));
-            Assert.That(links[0], Does.Not.Contain($"{nameof(P.EffectShadowEnabled)}="));
-            Assert.That(links[2], Does.Contain($"{nameof(P.EffectShadowEnabled)}="));
-            Assert.That(links[2], Does.Not.Contain($"{nameof(P.EffectBlurEnabled)}="));
+            Assert.That(links[0], Does.Contain($"{nameof(Protocol.MultiEffectKey.BlurEnabled)}=").And.Contain($"{nameof(Protocol.MultiEffectKey.Colorization)}="));
+            Assert.That(links[0], Does.Not.Contain($"{nameof(Protocol.MultiEffectKey.ShadowEnabled)}="));
+            Assert.That(links[2], Does.Contain($"{nameof(Protocol.MultiEffectKey.ShadowEnabled)}="));
+            Assert.That(links[2], Does.Not.Contain($"{nameof(Protocol.MultiEffectKey.BlurEnabled)}="));
         }
 
         [Test]
@@ -141,8 +143,8 @@ namespace VL.Qt.Tests
             Frame(new Rectangle { Effect = chain });
 
             var links = Links();
-            Assert.That(links[0], Does.Contain($"{nameof(P.EffectMaskSource)}=ref(2)"));
-            Assert.That(links[2], Does.Contain($"{nameof(P.EffectMaskSource)}=ref(3)"));
+            Assert.That(links[0], Does.Contain($"{nameof(Protocol.MultiEffectKey.MaskSource)}=ref(2)"));
+            Assert.That(links[2], Does.Contain($"{nameof(Protocol.MultiEffectKey.MaskSource)}=ref(3)"));
             Assert.That(_sink.OfOp("CREATE").Count(), Is.EqualTo(3));
             Assert.That(_sink.OfOp("REPARENT").Count(), Is.EqualTo(1), "only the element itself");
             Assert.That(IndexOf("CREATE 3 "), Is.LessThan(IndexOf("CHAIN ")), "objects exist before the chain refers to them");
@@ -166,7 +168,7 @@ namespace VL.Qt.Tests
             Assert.That(_sink.OfOp("CREATE").Count(), Is.EqualTo(0));
             Assert.That(_sink.OfOp("DESTROY").Count(), Is.EqualTo(0));
             Assert.That(Links(), Has.Length.EqualTo(1));
-            Assert.That(Links()[0], Does.Contain($"{nameof(P.EffectMaskSource)}=ref(2)"));
+            Assert.That(Links()[0], Does.Contain($"{nameof(Protocol.MultiEffectKey.MaskSource)}=ref(2)"));
         }
 
         [Test]

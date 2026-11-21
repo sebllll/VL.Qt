@@ -25,8 +25,8 @@ public static class SizeResetTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt size / auto size test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt size / auto size test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
@@ -46,7 +46,7 @@ public static class SizeResetTest
         {
             int n = NativeCalls.Poll(w, buf);
             foreach (var r in MeasureTest.Parse(buf.AsSpan(0, Math.Max(n, 0)), s.Check))
-                if (r.Event == Protocol.Ev.SceneBounds && r.Handle == handle) return r;
+                if (r.Event == Protocol.EventId.SceneBounds && r.Handle == handle) return r;
             return null;
         }
         static string S(MeasureTest.Rec? r) => r is { } x ? string.Join(", ", x.V) : "none";
@@ -54,9 +54,9 @@ public static class SizeResetTest
             r is { } v && v.V[0] == x && v.V[1] == y && v.V[2] == bw && v.V[3] == bh;
         void Rect(uint id, uint parent, float x, float y, float rw, float rh, float r, float g)
         {
-            cmd.Create(id, Protocol.Type.Rectangle);
+            cmd.Create(id, Protocol.ElementType.Rectangle);
             cmd.SetPlace(id, x, y, rw, rh);
-            cmd.SetColor(id, Protocol.Prop.Color, r, g, 0, 1);
+            cmd.SetColor(id, Protocol.PropertyId.Color, r, g, 0, 1);
             cmd.Reparent(id, parent, 1000);
         }
         void RowSize(float rw, float rh) => cmd.SetPlace(RowId, 100, 100, rw, rh);
@@ -64,16 +64,16 @@ public static class SizeResetTest
         cmd.Reset();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // Row at (100, 100), size 0, Auto Size default (on), spacing 10, VCenter (0x80): implicit 110 x 50; red 40x30, green 60x50.
-        cmd.Create(RowId, Protocol.Type.Row);
+        cmd.Create(RowId, Protocol.ElementType.Row);
         RowSize(0, 0);
-        cmd.SetF32(RowId, Protocol.Prop.Spacing, 10);
-        cmd.SetI32(RowId, Protocol.Prop.ChildAlignment, 0x80);
+        cmd.SetF32(RowId, Protocol.PropertyId.Spacing, 10);
+        cmd.SetI32(RowId, Protocol.PropertyId.ChildAlignment, 0x80);
         cmd.Reparent(RowId, 0, 1000);
         cmd.Bind(RowId, HRow, 0);
         Rect(A, RowId, 0, 0, 40, 30, 1, 0);
         Rect(B, RowId, 0, 0, 60, 50, 0, 1);
         // Group at (400, 100), size 0, Auto Size on, one child at (10, 20) 30x30 -> implicit 40 x 50.
-        cmd.Create(GroupId, Protocol.Type.Item);
+        cmd.Create(GroupId, Protocol.ElementType.Group);
         cmd.SetPlace(GroupId, 400, 100, 0, 0);
         cmd.Reparent(GroupId, 0, 1001);
         cmd.Bind(GroupId, HGroup, 0);
@@ -82,12 +82,12 @@ public static class SizeResetTest
         Rect(RectId, 0, 600, 100, 0, 0, 1, 0);
         cmd.Bind(RectId, HRect, 0);
         // ShaderEffect at (500, 300), Auto Size on: implicit size = size of the input (40 x 30).
-        cmd.Create(EffectId, Protocol.Type.ShaderEffect);
+        cmd.Create(EffectId, Protocol.ElementType.Shader);
         cmd.SetPlace(EffectId, 500, 300, 0, 0);
         cmd.Reparent(EffectId, 0, 1002);
         cmd.Bind(EffectId, HEffect, 0);
         Rect(EffectSrc, EffectId, 0, 0, 40, 30, 0, 1);
-        cmd.SetRef(EffectId, Protocol.Prop.Source, EffectSrc);
+        cmd.SetRef(EffectId, Protocol.PropertyId.Source, EffectSrc);
         CheckApply("row, group, rectangle, effect with size 0");
         s.Pump(3);
         var recs = Bounds(HRow);
@@ -112,7 +112,7 @@ public static class SizeResetTest
         s.Check(recs == null || Is(recs, 100, 100, 110, 50), $"Auto Size on ignores size ({S(recs)})");
 
         // Auto Size off: size 300 x 200 counts. VCenter in 200 -> red y 185..215.
-        cmd.SetBool(RowId, Protocol.Prop.AutoSize, false);
+        cmd.SetBool(RowId, Protocol.PropertyId.AutoSize, false);
         CheckApply("row Auto Size off");
         s.Pump(2);
         recs = Bounds(HRow);
@@ -139,7 +139,7 @@ public static class SizeResetTest
         s.Check(Is(recs, 100, 100, 0, 0), $"x 200 -> 0 stays 0 ({S(recs)})");
 
         // Auto Size on again: implicit size.
-        cmd.SetBool(RowId, Protocol.Prop.AutoSize, true);
+        cmd.SetBool(RowId, Protocol.PropertyId.AutoSize, true);
         CheckApply("row Auto Size on again");
         s.Pump(2);
         recs = Bounds(HRow);
@@ -167,24 +167,24 @@ public static class SizeResetTest
         cmd.SetPlace(EffectId, 500, 300, 0, 0);
         CheckApply("effect size again");
         s.Pump(2);
-        cmd.SetBool(EffectId, Protocol.Prop.AutoSize, false);
+        cmd.SetBool(EffectId, Protocol.PropertyId.AutoSize, false);
         CheckApply("effect Auto Size off");
         s.Pump(2);
         recs = Bounds(HEffect);
         s.Check(Is(recs, 500, 300, 0, 0), $"ShaderEffect Auto Size off + size 0 -> 0 x 0 ({S(recs)})");
-        cmd.SetBool(EffectId, Protocol.Prop.AutoSize, true);
+        cmd.SetBool(EffectId, Protocol.PropertyId.AutoSize, true);
         CheckApply("effect Auto Size on");
         s.Pump(2);
         recs = Bounds(HEffect);
         s.Check(Is(recs, 500, 300, 40, 30), $"ShaderEffect Auto Size on -> input size 40 x 30 ({S(recs)})");
 
         // Errors: AUTO_SIZE is valid for containers only (UnknownProperty), value type bool (BadArgument).
-        cmd.SetBool(RectId, Protocol.Prop.AutoSize, false);
+        cmd.SetBool(RectId, Protocol.PropertyId.AutoSize, false);
         Expect(Native.Result.UnknownProperty, "AUTO_SIZE on Rectangle");
-        cmd.SetF32(RowId, Protocol.Prop.AutoSize, 1);
+        cmd.SetF32(RowId, Protocol.PropertyId.AutoSize, 1);
         Expect(Native.Result.BadArgument, "AUTO_SIZE as f32");
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
     }
 }

@@ -21,7 +21,7 @@ namespace VL.Qt
         private readonly List<FeedbackState> _applyErrorSlots = new(); // slots showing an apply error
         private readonly Reconciler _reconciler;
         private readonly ResyncController _resync;
-        private IntPtr _handle;
+        private SceneHandle _handle;
         private byte[] _poll = new byte[16 * 1024];
 
         // Last clear color and Clear flag sent to QtNative (change detection).
@@ -45,8 +45,8 @@ namespace VL.Qt
             _resync = new ResyncController(_reconciler, ResetInQtNative);
         }
 
-        /// <summary>The native scene handle, IntPtr.Zero before it exists and after <see cref="Close"/>. Set once after creation.</summary>
-        public IntPtr Handle
+        /// <summary>The native scene handle, a null handle before it exists and after <see cref="Close"/>. Set once after creation.</summary>
+        public SceneHandle Handle
         {
             get => _handle;
             set
@@ -115,7 +115,7 @@ namespace VL.Qt
         /// </summary>
         private SpaceMapping CurrentMapping(Space space)
         {
-            if (_handle != IntPtr.Zero && Native.vlqt_window_get_scene_metrics(_handle, out var m) == Native.Result.Ok)
+            if (!_handle.IsNull && Native.vlqt_scene_get_metrics(_handle, out var m) == Native.Result.Ok)
                 return new SpaceMapping(space, new Vector2(m.width, m.height), m.dpr);
             return new SpaceMapping(space, default, 1f);
         }
@@ -131,7 +131,7 @@ namespace VL.Qt
         public void Apply()
         {
             _appliedOps = 0;
-            if (_handle == IntPtr.Zero || _commands.Length == 0)
+            if (_handle.IsNull || _commands.Length == 0)
                 return;
             _appliedOps = _commands.Count;
             var rc = Native.Apply(_handle, _commands.EndFrame());
@@ -165,14 +165,14 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// the failing object id (vlqt_window_get_apply_error) resolved to its feedback slot shows the error at the
+        /// the failing object id (vlqt_scene_get_apply_error) resolved to its feedback slot shows the error at the
         /// element node; returns the text for the renderer's Error output, empty if the element took it.
         /// </summary>
         private string ReportApplyError()
         {
             var text = Native.LastError();
             ClearApplyErrors(); // only the latest failure is shown (the retry after a resync reports it again)
-            if (Native.vlqt_window_get_apply_error(_handle, out var e) != Native.Result.Ok || e.id == 0
+            if (Native.vlqt_scene_get_apply_error(_handle, out var e) != Native.Result.Ok || e.id == 0
                 || !_reconciler.Bindings.TryGetValue(e.id, out var slot) || slot.State is not { } state)
                 return text;
             state.ApplyError = DescribeApplyError(e);
@@ -201,7 +201,7 @@ namespace VL.Qt
                     reason += ". " + Native.PathTooLongHint;
                 return $"Qt rejected {ConstantName(typeof(Protocol.Op), e.op) ?? "command " + e.op}: {reason}";
             }
-            return $"Qt rejected {ConstantName(typeof(Protocol.Prop), e.prop) ?? "property " + e.prop}: {e.Reason}";
+            return $"Qt rejected {ConstantName(typeof(Protocol.PropertyId), e.prop) ?? "property " + e.prop}: {e.Reason}";
         }
 
         private static string? ConstantName(Type constants, ushort value)
@@ -249,18 +249,18 @@ namespace VL.Qt
 
         /// <summary>
         /// Clear (releases the elements in the app's registry), applies what is left and forgets the handle; returns it so
-        /// the caller can destroy the native scene (IntPtr.Zero if there was none).
+        /// the caller can destroy the native scene (a null handle if there was none).
         /// </summary>
-        public IntPtr Close()
+        public SceneHandle Close()
         {
             _reconciler.Clear();
-            _reconciler.Window = IntPtr.Zero;
+            _reconciler.Window = SceneHandle.Null;
             var handle = _handle;
-            if (handle != IntPtr.Zero)
+            if (!handle.IsNull)
             {
                 if (_commands.Length > 0)
                     Native.Apply(handle, _commands.EndFrame());
-                _handle = IntPtr.Zero;
+                _handle = SceneHandle.Null;
             }
             _commands.Reset();
             ClearApplyErrors(); // the element nodes may outlive the scene

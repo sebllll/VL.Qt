@@ -8,7 +8,7 @@
     }
 
     /// <summary>
-    /// Slider (QtQuick.Controls Slider, style Basic). User changes come from Qt's <c>moved</c> as EV_VALUE (f32)
+    /// Slider (QtQuick.Controls Slider, style Basic). User changes come from Qt's <c>moved</c> as EVENT_VALUE (f32)
     /// into <see cref="Element.Feedback"/>; SET VALUE is never echoed. Defaults match QtNative (0…1, continuous).
     /// </summary>
     public sealed class Slider : Element

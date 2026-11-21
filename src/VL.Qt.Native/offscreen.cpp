@@ -48,7 +48,7 @@
 
 namespace vlqt::offscreen {
 
-// Lifetime: vlqt_offscreen_create -> (bind -> render_batch ... -> unbind)* -> vlqt_window_destroy (release, then
+// Lifetime: vlqt_offscreen_create -> (bind -> render_batch ... -> unbind)* -> vlqt_scene_destroy (release, then
 // destroy after the QQuickWindow). The QRhi of the scene belongs to renderControl and lives on QtNative's shared device
 // from create on, so the scene is never bound to another device than the one its QRhi uses.
 //
@@ -70,13 +70,13 @@ namespace vlqt::offscreen {
 // endFrame + Signal + Flush (posted by render_batch). Items, polish, input, apply and bind stay on the main thread; the
 // render thread touches items only in sync, while the main thread waits. Every blocking job runs after the jobs posted
 // before it, so unbind, destroy, device loss and adapter move drain the thread first. Without a render thread
-// (vlqt_offscreen_set_threaded(0), VLQT_OFFSCREEN_THREAD=0) everything runs on the main thread as before.
+// (vlqt_offscreen_set_render_threads(0), VLQT_OFFSCREEN_THREAD=0) everything runs on the main thread as before.
 struct State
 {
     QQuickRenderControl* renderControl = nullptr;
     QQuickWindow* window = nullptr; // the scene's window, owned by the handle (vlqt.cpp)
     // The scene wants a frame: sceneChanged (items changed: polish, sync, render) or renderRequested (render only,
-    // e.g. QQuickWindow::update() in vlqt_window_apply); bind sets it too. render_batch renders a bound scene only
+    // e.g. QQuickWindow::update() in vlqt_scene_apply); bind sets it too. render_batch renders a bound scene only
     // while it is set, so an unchanged scene costs nothing.
     bool dirty = true;
     bool bound = false;
@@ -161,7 +161,7 @@ public:
     explicit SceneRenderControl(const State* state) : QQuickRenderControl(*new SceneRenderControlPrivate(this, state)) {}
 };
 
-void* create(int width, int height)
+vlqt_scene* create(int width, int height)
 {
     if (!qGuiApp) {
         vlqt::setLastError("offscreen scene: app not initialized");
@@ -178,10 +178,10 @@ void* create(int width, int height)
     state->window = window;
     // 1 DIP = 1 texture pixel; the size until the first bind, which sets the texture's.
     window->setGeometry(0, 0, std::max(width, 1), std::max(height, 1));
-    void* handle = createHandle(window, state);
+    vlqt_scene* handle = createHandle(window, state);
     // device::attach marks a window that got the shared device; without it initialize would create a device of its own.
     if (!window->property("_vlqt_shared_device").toBool()) {
-        vlqt_window_destroy(handle);
+        vlqt_scene_destroy(handle);
         vlqt::setLastError("offscreen scene: QtNative has no shared D3D11 device (VLQT_SHARED_DEVICE=0 or creation failed, see the log)");
         return nullptr;
     }
@@ -193,7 +193,7 @@ void* create(int width, int height)
     bool initialized = false;
     onRenderThread(state, [state, &initialized] { initialized = state->renderControl->initialize(); });
     if (!initialized) {
-        vlqt_window_destroy(handle);
+        vlqt_scene_destroy(handle);
         vlqt::setLastError("offscreen scene: QQuickRenderControl::initialize failed (see the log)");
         return nullptr;
     }
@@ -638,11 +638,11 @@ void renderThreaded(const std::vector<State*>& scenes, ID3D11DeviceContext4* for
                 foreign->Wait(s->foreignWrite, writeValue);
 }
 
-int renderBatch(void* context, void* const* scenes, int count, double driverSeconds)
+int renderBatch(void* context, vlqt_scene* const* scenes, int count, double driverSeconds)
 {
     if (!qGuiApp || QQuickWindow::graphicsApi() != QSGRendererInterface::Direct3D11)
         return fail(VLQT_ERR_UNSUPPORTED, "render_batch: needs Direct3D 11 and an initialized app");
-    vlqt_driver_advance(driverSeconds);
+    vlqt_app_advance_animations(driverSeconds);
     ComPtr<ID3D11DeviceContext4> foreign;
     int rendered = 0;
     static std::vector<State*> threaded; // reused: no allocation per frame
@@ -721,7 +721,7 @@ bool requestFrame(const QQuickWindow* window)
 }
 
 // test hook: vlqt_test_offscreen_state (test/test_probes.cpp).
-int testState(void* scene, unsigned long long* readFence, unsigned long long* writeFence, long long* renders)
+int testState(vlqt_scene* scene, unsigned long long* readFence, unsigned long long* writeFence, long long* renders)
 {
     State* s = stateOf(scene);
     if (!s)
@@ -749,7 +749,7 @@ namespace {
 using vlqt::guarded;
 
 // The offscreen part of handle for the export function; nullptr with vlqt_last_error set for a null handle or a window.
-State* sceneOrFail(void* handle, const char* function)
+State* sceneOrFail(vlqt_scene* handle, const char* function)
 {
     State* s = stateOf(handle);
     if (!s)
@@ -759,7 +759,7 @@ State* sceneOrFail(void* handle, const char* function)
 
 // --- Input (vlqt.h, render-texture.md "Input") ---
 // Events go with QCoreApplication::sendEvent to the scene's QQuickWindow, like vlqt_test_send_*: synchronous, so the
-// FocusRelease filter, handlers and vlqt_window_poll see them as window input.
+// FocusRelease filter, handlers and vlqt_scene_poll see them as window input.
 
 int badArgument(const std::string& what)
 {
@@ -1058,9 +1058,9 @@ int sendText(State* s, const char* utf8, int length)
 
 extern "C" {
 
-VLQT_API void* vlqt_offscreen_create(int width, int height)
+VLQT_API vlqt_scene* vlqt_offscreen_create(int width, int height)
 {
-    void* handle = nullptr;
+    vlqt_scene* handle = nullptr;
     guarded([&]() -> int {
         handle = create(width, height); // sets vlqt_last_error on nullptr
         return handle ? VLQT_OK : VLQT_ERR_INTERNAL;
@@ -1068,7 +1068,7 @@ VLQT_API void* vlqt_offscreen_create(int width, int height)
     return handle;
 }
 
-VLQT_API int vlqt_offscreen_bind(void* scene, void* device, void* ntHandle, int width, int height, int format, int samples,
+VLQT_API int vlqt_offscreen_bind(vlqt_scene* scene, void* device, void* ntHandle, int width, int height, int format, int samples,
     int* usedSamples)
 {
     return guarded([&]() -> int {
@@ -1092,7 +1092,7 @@ VLQT_API int vlqt_offscreen_bind(void* scene, void* device, void* ntHandle, int 
     });
 }
 
-VLQT_API int vlqt_offscreen_unbind(void* scene)
+VLQT_API int vlqt_offscreen_unbind(vlqt_scene* scene)
 {
     return guarded([&]() -> int {
         State* state = sceneOrFail(scene, "offscreen unbind");
@@ -1105,12 +1105,12 @@ VLQT_API int vlqt_offscreen_unbind(void* scene)
     });
 }
 
-VLQT_API int vlqt_offscreen_set_threaded(int threadCount)
+VLQT_API int vlqt_offscreen_set_render_threads(int threadCount)
 {
     return guarded([&] { return vlqt::render_thread::setThreadCount(threadCount); });
 }
 
-VLQT_API int vlqt_offscreen_is_bound(void* scene)
+VLQT_API int vlqt_offscreen_is_bound(vlqt_scene* scene)
 {
     return guarded([&]() -> int {
         State* state = sceneOrFail(scene, "offscreen is_bound");
@@ -1120,7 +1120,7 @@ VLQT_API int vlqt_offscreen_is_bound(void* scene)
     });
 }
 
-VLQT_API int vlqt_offscreen_render_batch(void* context, void* const* scenes, int count, double driverSeconds)
+VLQT_API int vlqt_offscreen_render_batch(void* context, vlqt_scene* const* scenes, int count, double driverSeconds)
 {
     return guarded([&]() -> int {
         if (!context || count < 0 || (!scenes && count > 0))
@@ -1134,7 +1134,7 @@ VLQT_API int vlqt_offscreen_render_batch(void* context, void* const* scenes, int
     });
 }
 
-VLQT_API int vlqt_offscreen_send_pointer(void* scene, int device, int type, int id, float x, float y, int buttons,
+VLQT_API int vlqt_offscreen_send_pointer(vlqt_scene* scene, int device, int type, int id, float x, float y, int buttons,
                                          int modifiers)
 {
     return guarded([&]() -> int {
@@ -1145,7 +1145,7 @@ VLQT_API int vlqt_offscreen_send_pointer(void* scene, int device, int type, int 
     });
 }
 
-VLQT_API int vlqt_offscreen_send_wheel(void* scene, float x, float y, int dx, int dy, int modifiers)
+VLQT_API int vlqt_offscreen_send_wheel(vlqt_scene* scene, float x, float y, int dx, int dy, int modifiers)
 {
     return guarded([&]() -> int {
         State* state = sceneOrFail(scene, "offscreen send_wheel");
@@ -1155,7 +1155,7 @@ VLQT_API int vlqt_offscreen_send_wheel(void* scene, float x, float y, int dx, in
     });
 }
 
-VLQT_API int vlqt_offscreen_send_key(void* scene, int type, int key, int modifiers, int autoRepeat)
+VLQT_API int vlqt_offscreen_send_key(vlqt_scene* scene, int type, int key, int modifiers, int autoRepeat)
 {
     return guarded([&]() -> int {
         State* state = sceneOrFail(scene, "offscreen send_key");
@@ -1165,7 +1165,7 @@ VLQT_API int vlqt_offscreen_send_key(void* scene, int type, int key, int modifie
     });
 }
 
-VLQT_API int vlqt_offscreen_send_text(void* scene, const char* utf8, int length)
+VLQT_API int vlqt_offscreen_send_text(vlqt_scene* scene, const char* utf8, int length)
 {
     return guarded([&]() -> int {
         State* state = sceneOrFail(scene, "offscreen send_text");
@@ -1175,7 +1175,7 @@ VLQT_API int vlqt_offscreen_send_text(void* scene, const char* utf8, int length)
     });
 }
 
-VLQT_API int vlqt_offscreen_set_focus(void* scene, int focused)
+VLQT_API int vlqt_offscreen_set_focus(vlqt_scene* scene, int focused)
 {
     return guarded([&]() -> int {
         State* state = sceneOrFail(scene, "offscreen set_focus");

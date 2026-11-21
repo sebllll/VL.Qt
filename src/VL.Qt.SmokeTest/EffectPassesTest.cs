@@ -19,12 +19,12 @@ using static Pixels;
 // 400 DIP on a Text T: no copies (much smoother than one pass of the same length), and on a rectangle S: the blur reaches
 // L / 2 into the padding in DIP (texelSize / dpr by QtNative; the extent is checked at the dpr of this display), padding 0
 // cuts it at the element. (c) A texture uniform (REF, builtin:displace with a map element that is never REPARENTed) shifts
-// R. (d) Reserved names and a REF with a parent are EV_ERROR lines ("link N: ..."), the apply succeeds. (e) Values only:
+// R. (d) Reserved names and a REF with a parent are EVENT_ERROR lines ("link N: ..."), the apply succeeds. (e) Values only:
 // no new items; live changes of the structure and back to no chain: QML item count as before (no leak).
 // (f) PYRAMID (Task 4, own window, Pyramid): builtin glow_prefilter/glow_composite and innershadow_* as links with radius
 // 4/32/256 DIP and padding ceil(1.5 r) (the glow is the one of GlowTest; a larger padding gives the same glow = nothing
 // cut), radius sweep over two step boundaries (no jump, the far point grows, no new item), size change of the element
-// (steps follow), MULTI -> PYRAMID -> SINGLE, a name neither shader declares is an EV_ERROR line, live changes without leak.
+// (steps follow), MULTI -> PYRAMID -> SINGLE, a name neither shader declares is an EVENT_ERROR line, live changes without leak.
 // Grabs: <outDir>/effect-passes_*.png.
 [TestFixture, NonParallelizable]
 public static class EffectPassesTest
@@ -42,14 +42,14 @@ public static class EffectPassesTest
 
     // Scene page (F5) of the perf overlay: "QML items <n>" (items in the window's tree). A poll first: retired stages are
     // deleted one frame late, at the next poll or apply.
-    private static int Items(IntPtr w)
+    private static int Items(SceneHandle w)
     {
         NativeCalls.Poll(w, new byte[1 << 16]);
         var m = Regex.Match(NativeCalls.PerfPageText(w, 2), @"QML items\s+(\d+)");
         return m.Success ? int.Parse(m.Groups[1].Value) : -1;
     }
 
-    // Last EV_ERROR text for feedbackId in the poll buffer, null if none.
+    // Last EVENT_ERROR text for feedbackId in the poll buffer, null if none.
     private static string? ErrorText(ReadOnlySpan<byte> b, uint feedbackId)
     {
         string? text = null;
@@ -59,7 +59,7 @@ public static class EffectPassesTest
             var ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
             var len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
             if (len < 8 || off + 4 + len > b.Length) break;
-            if (ev == Protocol.Ev.Error && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)) == feedbackId)
+            if (ev == Protocol.EventId.Error && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)) == feedbackId)
                 text = Encoding.UTF8.GetString(b.Slice(off + 12, len - 8));
             off += (4 + len + 3) & ~3;
         }
@@ -105,17 +105,17 @@ public static class EffectPassesTest
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "the passes are ShaderEffects");
         ulong Shader(string name)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-            Native.vlqt_res_load_shader(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
-            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"effect-passes: shader builtin:{name} Ready");
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+            Native.vlqt_shader_load(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResourceState.Ready, $"effect-passes: shader builtin:{name} Ready");
             return id;
         }
         var wave = Shader("wave");
         var blur = Shader("directional_blur");
         var displace = Shader("displace");
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt effect passes test");
-        s.Check(w != IntPtr.Zero, "effect-passes: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt effect passes test");
+        s.Check(w != SceneHandle.Null, "effect-passes: window_create");
         Native.vlqt_window_show(w);
         s.Pump(4);
         float dpr;
@@ -142,24 +142,24 @@ public static class EffectPassesTest
         static void Blur(CommandWriter c)
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
-            c.EffectF32(Protocol.Prop.EffectBlur, 0.5f);
-            c.EffectI32(Protocol.Prop.EffectBlurMax, 16);
+            c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.EffectF32(Protocol.MultiEffectKey.Blur, 0.5f);
+            c.EffectI32(Protocol.MultiEffectKey.BlurMax, 16);
             c.EndLink();
         }
         static void Shadow(CommandWriter c)
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.Prop.EffectShadowEnabled, true);
-            c.EffectColor(Protocol.Prop.EffectShadowColor, 1, 0, 0, 1);
-            c.EffectF32(Protocol.Prop.EffectShadowHorizontalOffset, 30);
-            c.EffectF32(Protocol.Prop.EffectShadowVerticalOffset, 30);
-            c.EffectF32(Protocol.Prop.EffectShadowBlur, 0);
+            c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.EffectColor(Protocol.MultiEffectKey.ShadowColor, 1, 0, 0, 1);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 30);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 30);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowBlur, 0);
             c.EndLink();
         }
         void Wave(CommandWriter c, float amplitude = 0.05f, string? extra = null)
         {
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [wave], 20, 20, 20, 20, 0);
+            c.BeginEffectChainLink(Protocol.EffectTemplate.Single, [wave], 20, 20, 20, 20, 0);
             c.UniformF32("time", 0);
             c.UniformF32("amplitude", amplitude);
             c.UniformF32("frequency", 3);
@@ -169,7 +169,7 @@ public static class EffectPassesTest
         }
         void Directional(CommandWriter c, ushort template, float pad)
         {
-            c.BeginShaderLink(template, [blur], pad, 0, pad, 0, 0);
+            c.BeginEffectChainLink(template, [blur], pad, 0, pad, 0, 0);
             c.UniformF32("angle", 0);
             c.UniformF32("blurLength", L);
             c.EndLink();
@@ -185,27 +185,27 @@ public static class EffectPassesTest
         // Scene: R white rectangle, T text "MO", S white rectangle, Map (red 1, green 0.5: shift along x) never REPARENTed,
         // Bad (a rectangle with a parent) for the REF error.
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        cmd.Create(R, Protocol.Type.Rectangle);
+        cmd.Create(R, Protocol.ElementType.Rectangle);
         cmd.SetPlace(R, RX, RY, RW, RH);
-        cmd.SetColor(R, Protocol.Prop.Color, 1, 1, 1, 1);
+        cmd.SetColor(R, Protocol.PropertyId.Color, 1, 1, 1, 1);
         cmd.Reparent(R, 0, 0);
         cmd.Bind(R, FeedbackIdR, 0);
-        cmd.Create(T, Protocol.Type.Text);
+        cmd.Create(T, Protocol.ElementType.Text);
         cmd.SetPlace(T, 300, 260, 200, 140);
-        cmd.SetString(T, Protocol.Prop.Text, "MO");
-        cmd.SetF32(T, Protocol.Prop.FontSize, 110);
-        cmd.SetColor(T, Protocol.Prop.Color, 1, 1, 1, 1);
+        cmd.SetString(T, Protocol.PropertyId.Text, "MO");
+        cmd.SetF32(T, Protocol.PropertyId.FontSize, 110);
+        cmd.SetColor(T, Protocol.PropertyId.Color, 1, 1, 1, 1);
         cmd.Reparent(T, 0, 1);
-        cmd.Create(S, Protocol.Type.Rectangle);
+        cmd.Create(S, Protocol.ElementType.Rectangle);
         cmd.SetPlace(S, SX, SY, SW, SH);
-        cmd.SetColor(S, Protocol.Prop.Color, 1, 1, 1, 1);
+        cmd.SetColor(S, Protocol.PropertyId.Color, 1, 1, 1, 1);
         cmd.Reparent(S, 0, 2);
-        cmd.Create(Map, Protocol.Type.Rectangle);
+        cmd.Create(Map, Protocol.ElementType.Rectangle);
         cmd.SetPlace(Map, 0, 0, 100, 100);
-        cmd.SetColor(Map, Protocol.Prop.Color, 1, 0.5f, 0, 1);
-        cmd.Create(Bad, Protocol.Type.Rectangle);
+        cmd.SetColor(Map, Protocol.PropertyId.Color, 1, 0.5f, 0, 1);
+        cmd.Create(Bad, Protocol.ElementType.Rectangle);
         cmd.SetPlace(Bad, 0, 0, 10, 10);
-        cmd.SetColor(Bad, Protocol.Prop.Color, 0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
+        cmd.SetColor(Bad, Protocol.PropertyId.Color, 0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         cmd.Reparent(Bad, 0, 3);
         CheckApply("scene");
         s.Pump(5);
@@ -249,19 +249,19 @@ public static class EffectPassesTest
         s.Pump(5);
         s.Check(Items(w) == itemsChain, $"effect-passes: values only -> no new item ({Items(w)} vs {itemsChain})");
 
-        // (d) reserved names and a REF with a parent: EV_ERROR lines with the link index, the apply succeeds.
+        // (d) reserved names and a REF with a parent: EVENT_ERROR lines with the link index, the apply succeeds.
         Chain(R, Blur, c => Wave(c, 0.05f, "texelSize"));
         CheckApply("reserved name");
         var err = PollError();
-        s.Check(err != null && err.Contains("link 1: uniform 'texelSize' is reserved"), $"effect-passes: reserved name -> EV_ERROR ({err})");
+        s.Check(err != null && err.Contains("link 1: uniform 'texelSize' is reserved"), $"effect-passes: reserved name -> EVENT_ERROR ({err})");
         // passIndex is set by QtNative (TWO_PASS: 0, then 1), so C# may not send it.
         Chain(R, Blur, c => Wave(c, 0.05f, "passIndex"));
         CheckApply("reserved passIndex");
         err = PollError();
-        s.Check(err != null && err.Contains("link 1: uniform 'passIndex' is reserved"), $"effect-passes: passIndex reserved -> EV_ERROR ({err})");
+        s.Check(err != null && err.Contains("link 1: uniform 'passIndex' is reserved"), $"effect-passes: passIndex reserved -> EVENT_ERROR ({err})");
         Chain(R, c =>
         {
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
+            c.BeginEffectChainLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
             c.UniformF32("displacement", 30);
             c.UniformRef("map", Bad);
             c.EndLink();
@@ -269,12 +269,12 @@ public static class EffectPassesTest
         CheckApply("REF with a parent");
         err = PollError();
         s.Check(err != null && err.StartsWith("link 0: uniform 'map': the texture element has a parent"),
-            $"effect-passes: REF with a parent -> EV_ERROR ({err})");
+            $"effect-passes: REF with a parent -> EVENT_ERROR ({err})");
 
         // (c) REF texture: Map (red 1 = shift) parked and sampled; R shifts left, Map itself is not drawn.
         Chain(R, c =>
         {
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
+            c.BeginEffectChainLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
             c.UniformF32("displacement", 30);
             c.UniformRef("map", Map);
             c.EndLink();
@@ -333,7 +333,7 @@ public static class EffectPassesTest
         s.Pump(3);
         Chain(R, c =>
         {
-            c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [wave, wave], 0, 0, 0, 0, 10);
+            c.BeginEffectChainLink(Protocol.EffectTemplate.Pyramid, [wave, wave], 0, 0, 0, 0, 10);
             c.EndLink();
         }, c => Wave(c));
         CheckApply("PYRAMID (pass-through) + wave");
@@ -358,7 +358,7 @@ public static class EffectPassesTest
         cmd.Destroy(Bad);
         CheckApply("destroy");
         s.Pump(3);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         Native.vlqt_res_release(blur);
         Native.vlqt_res_release(displace);
         s.Pump(2);
@@ -393,9 +393,9 @@ public static class EffectPassesTest
     {
         ulong Shader(string name)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-            Native.vlqt_res_load_shader(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
-            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"effect-passes: shader builtin:{name} Ready");
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+            Native.vlqt_shader_load(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResourceState.Ready, $"effect-passes: shader builtin:{name} Ready");
             return id;
         }
         var glowPre = Shader("glow_prefilter");
@@ -403,8 +403,8 @@ public static class EffectPassesTest
         var isPre = Shader("innershadow_prefilter");
         var isComp = Shader("innershadow_composite");
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt effect passes test (pyramid)");
-        s.Check(w != IntPtr.Zero, "effect-passes pyramid: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt effect passes test (pyramid)");
+        s.Check(w != SceneHandle.Null, "effect-passes pyramid: window_create");
         Native.vlqt_window_show(w);
         s.Pump(4);
         float dpr;
@@ -430,7 +430,7 @@ public static class EffectPassesTest
         Action<CommandWriter> GlowLink(float radius, float? pad = null, float intensity = 1.5f, string? extra = null) => c =>
         {
             var p = pad ?? MathF.Ceiling(1.5f * radius);
-            c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [glowPre, glowComp], p, p, p, p, radius);
+            c.BeginEffectChainLink(Protocol.EffectTemplate.Pyramid, [glowPre, glowComp], p, p, p, p, radius);
             c.UniformColor("color", 0.1f, 0.8f, 1, 1);
             c.UniformF32("spread", 0);
             c.UniformF32("intensity", intensity);
@@ -443,7 +443,7 @@ public static class EffectPassesTest
         Action<CommandWriter> ShadowLink(float radius, float ox, float oy) => c =>
         {
             var p = MathF.Ceiling(1.5f * radius);
-            c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [isPre, isComp], p, p, p, p, radius);
+            c.BeginEffectChainLink(Protocol.EffectTemplate.Pyramid, [isPre, isComp], p, p, p, p, radius);
             c.UniformVec2("offset", ox / (GW + 2 * p), oy / (GH + 2 * p));
             c.UniformColor("color", 0, 0, 0, 1);
             c.UniformF32("spread", 0);
@@ -459,9 +459,9 @@ public static class EffectPassesTest
         }
 
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        cmd.Create(G, Protocol.Type.Rectangle);
+        cmd.Create(G, Protocol.ElementType.Rectangle);
         cmd.SetPlace(G, GX, GY, GW, GH);
-        cmd.SetColor(G, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+        cmd.SetColor(G, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
         cmd.Reparent(G, 0, 0);
         cmd.Bind(G, FeedbackIdG, 0);
         CheckApply("scene");
@@ -498,7 +498,7 @@ public static class EffectPassesTest
             }
         }
         var err = PollError();
-        s.Check(string.IsNullOrEmpty(err), $"effect-passes: glow links without EV_ERROR ({err})");
+        s.Check(string.IsNullOrEmpty(err), $"effect-passes: glow links without EVENT_ERROR ({err})");
 
         // Radius sweep over two step boundaries (step 4.5 .. 6.5 in 0.1), padding fixed: weights only, no new item, no jump.
         var padMax = MathF.Ceiling(1.5f * RadiusOf(6.5f, dpr));
@@ -559,7 +559,7 @@ public static class EffectPassesTest
             gpu(Shade(a, GX + 4, y0) > Shade(a, GX + GW - 5, y0) + 20 && Shade(a, 400, GY + 4) > Shade(a, 400, GY + GH - 5) + 20,
                 $"effect-passes: innershadow offset (8, 8) at the left/top inner edge ({Shade(a, GX + 4, y0):F0} vs {Shade(a, GX + GW - 5, y0):F0}, {Shade(a, 400, GY + 4):F0} vs {Shade(a, 400, GY + GH - 5):F0})");
         err = PollError();
-        s.Check(string.IsNullOrEmpty(err), $"effect-passes: innershadow links without EV_ERROR ({err})");
+        s.Check(string.IsNullOrEmpty(err), $"effect-passes: innershadow links without EVENT_ERROR ({err})");
         // The node's way (phase B): the offset as offsetDip in DIP, converted by the shader (dpr, texture size); same picture as the UV offset above.
         float[] ShadeRow(Bitmap a) => new[] { GX + 2f, GX + 4f, GX + 10f, GX + GW - 5f }.Select(x => Shade(a, x, y0)).Concat(
             new[] { GY + 2f, GY + 4f, GY + 10f, GY + GH - 5f }.Select(y => Shade(a, 400, y))).ToArray();
@@ -571,7 +571,7 @@ public static class EffectPassesTest
         Chain(c =>
         {
             var p = MathF.Ceiling(1.5f * 8);
-            c.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [isPre, isComp], p, p, p, p, 8);
+            c.BeginEffectChainLink(Protocol.EffectTemplate.Pyramid, [isPre, isComp], p, p, p, p, 8);
             c.UniformVec2("offsetDip", 8, 8);
             c.UniformColor("color", 0, 0, 0, 1);
             c.UniformF32("spread", 0);
@@ -588,13 +588,13 @@ public static class EffectPassesTest
         Chain(c =>
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
-            c.EffectF32(Protocol.Prop.EffectBlur, 0.3f);
-            c.EffectI32(Protocol.Prop.EffectBlurMax, 8);
+            c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.EffectF32(Protocol.MultiEffectKey.Blur, 0.3f);
+            c.EffectI32(Protocol.MultiEffectKey.BlurMax, 8);
             c.EndLink();
         }, GlowLink(24), c =>
         {
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [wave], 20, 20, 20, 20, 0);
+            c.BeginEffectChainLink(Protocol.EffectTemplate.Single, [wave], 20, 20, 20, 20, 0);
             c.UniformF32("time", 0);
             c.UniformF32("amplitude", 0.03f);
             c.UniformF32("frequency", 3);
@@ -607,14 +607,14 @@ public static class EffectPassesTest
             gpu(Glow(a, edge + 12, y0) > 8 && Px(a, 400, y0).R > 200, $"effect-passes: mixed chain shows box and glow ({Profile(a)}, {Px(a, 400, y0)})");
         }
         err = PollError();
-        s.Check(string.IsNullOrEmpty(err), $"effect-passes: mixed chain without EV_ERROR ({err})");
+        s.Check(string.IsNullOrEmpty(err), $"effect-passes: mixed chain without EVENT_ERROR ({err})");
 
-        // A name neither prefilter nor composite declares: EV_ERROR line, the apply succeeds.
+        // A name neither prefilter nor composite declares: EVENT_ERROR line, the apply succeeds.
         Chain(GlowLink(16, extra: "bogus"));
         CheckApply("unknown name");
         err = PollError();
         s.Check(err != null && err.Contains("link 0: unknown uniform 'bogus'") && !err.Contains("'spread'"),
-            $"effect-passes: unknown PYRAMID uniform -> EV_ERROR, known ones not ({err})");
+            $"effect-passes: unknown PYRAMID uniform -> EVENT_ERROR, known ones not ({err})");
 
         // Live changes, then no chain: item count as before.
         Chain(GlowLink(64), ShadowLink(4, 0, 0));
@@ -635,7 +635,7 @@ public static class EffectPassesTest
         cmd.Destroy(G);
         CheckApply("destroy");
         s.Pump(3);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         foreach (var id in new[] { glowPre, glowComp, isPre, isComp })
             Native.vlqt_res_release(id);
         s.Pump(2);

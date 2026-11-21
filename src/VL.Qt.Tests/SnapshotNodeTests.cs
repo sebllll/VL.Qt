@@ -42,7 +42,7 @@ namespace VL.Qt.Tests
 
         private void Show()
         {
-            _reconciler.Window = new IntPtr(1);
+            _reconciler.Window = new SceneHandle(1);
             _reconciler.Update(_element, Space.DIPTopLeft);
         }
 
@@ -71,7 +71,7 @@ namespace VL.Qt.Tests
             // Like a Group with an animated input: the node outputs a new instance every frame with the same feedback
             // slot, and Snapshot runs before the renderer of that frame.
             var slot = new FeedbackSlot(new ElementFeedback(), 0);
-            _reconciler.Window = new IntPtr(1);
+            _reconciler.Window = new SceneHandle(1);
             _reconciler.Update(new Group { Feedback = slot }, Space.DIPTopLeft);
             for (var frame = 0; frame < 3; frame++)
             {

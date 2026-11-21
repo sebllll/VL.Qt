@@ -9,7 +9,7 @@
 #include "snapshot_resource.h"
 #include "threadname.h"
 #include "vlqt.h"
-#include "vlqt_test.h" // test hook: VLQT_RES_KIND_TEST
+#include "vlqt_test.h" // test hook: VLQT_RESOURCE_KIND_TEST
 
 #include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
@@ -53,7 +53,7 @@ QByteArray idText(uint64_t id)
 bool validState(int s) { return s >= int(State::Pending) && s <= int(State::Released); }
 
 // Kinds whose content is made on the main thread without worker and upload (beginExternal / finishExternal).
-bool externalKind(int kind) { return kind == VLQT_RES_KIND_SNAPSHOT || kind == VLQT_RES_KIND_AUDIO_TAP; }
+bool externalKind(int kind) { return kind == VLQT_RESOURCE_KIND_SNAPSHOT || kind == VLQT_RESOURCE_KIND_AUDIO_TAP; }
 
 // The allowed transitions; everything else is rejected by transition(). external = content made on the main thread
 // without upload (snapshot, audio tap): Decoding -> Ready directly. restart = device lost during the first upload:
@@ -632,11 +632,11 @@ private:
     Kind* kindOf(int kind)
     {
         switch (kind) {
-        case VLQT_RES_KIND_TEST:  return testKind(); // test hook: test/test_resource_kind.cpp
-        case VLQT_RES_KIND_IMAGE: return image::kind();
-        case VLQT_RES_KIND_SNAPSHOT: return snap::kind();
-        case VLQT_RES_KIND_SHADER: return shader::kind();
-        case VLQT_RES_KIND_AUDIO_TAP: return audio::kind();
+        case VLQT_RESOURCE_KIND_TEST:  return testKind(); // test hook: test/test_resource_kind.cpp
+        case VLQT_RESOURCE_KIND_IMAGE: return image::kind();
+        case VLQT_RESOURCE_KIND_SNAPSHOT: return snap::kind();
+        case VLQT_RESOURCE_KIND_SHADER: return shader::kind();
+        case VLQT_RESOURCE_KIND_AUDIO_TAP: return audio::kind();
         default:                  return nullptr;
         }
     }
@@ -679,7 +679,7 @@ private:
         qCWarning(lcRes, "%s %s failed: %s", idText(id).constData(), kindOf(s.kind)->name(), error.c_str());
         if (s.hostRefs > 0) {
             const int len = std::min(int(error.size()), maxErrorText);
-            pushEvent(VLQT_RES_EV_ERROR, id, error.data(), len);
+            pushEvent(VLQT_RESOURCE_EVENT_ERROR, id, error.data(), len);
         }
     }
 
@@ -768,7 +768,7 @@ private:
         std::memcpy(payload + 4, &info.height, 4);
         std::memcpy(payload + 8, &info.format, 4);
         std::memcpy(payload + 12, &bytes, 8);
-        pushEvent(VLQT_RES_EV_INFO, id, payload, 20);
+        pushEvent(VLQT_RESOURCE_EVENT_INFO, id, payload, 20);
     }
 
     // At most one WARNING record per resource; every warning is logged.
@@ -780,7 +780,7 @@ private:
         if (s.warned || s.hostRefs == 0)
             return;
         s.warned = true;
-        pushEvent(VLQT_RES_EV_WARNING, id, text.data(), std::min(int(text.size()), maxErrorText));
+        pushEvent(VLQT_RESOURCE_EVENT_WARNING, id, text.data(), std::min(int(text.size()), maxErrorText));
     }
 
     // A decode or upload of the resource runs (first content or replacement).
@@ -891,7 +891,7 @@ private:
         if (s.hostRefs == 0)
             return;
         const uint8_t state = uint8_t(s.state);
-        pushEvent(VLQT_RES_EV_STATE, id, &state, 1);
+        pushEvent(VLQT_RESOURCE_EVENT_STATE, id, &state, 1);
     }
 
     void pushEvent(uint16_t ev, uint64_t id, const void* payload, int payloadLen)

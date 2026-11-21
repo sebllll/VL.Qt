@@ -4,21 +4,21 @@ using VL.Qt.Wire;
 
 namespace VL.Qt
 {
-    /// <summary>State flags of a <see cref="WindowGeometry"/> (EV_WINDOW_GEOMETRY, <see cref="Protocol.Window"/>).</summary>
+    /// <summary>State flags of a <see cref="WindowGeometry"/> (EVENT_WINDOW_GEOMETRY, <see cref="Protocol.WindowState"/>).</summary>
     [Flags]
     internal enum WindowStates
     {
         None = 0,
-        Minimized = (int)Protocol.Window.Minimized,
-        Maximized = (int)Protocol.Window.Maximized,
-        Fullscreen = (int)Protocol.Window.Fullscreen,
-        Visible = (int)Protocol.Window.Visible,
+        Minimized = (int)Protocol.WindowState.Minimized,
+        Maximized = (int)Protocol.WindowState.Maximized,
+        Fullscreen = (int)Protocol.WindowState.Fullscreen,
+        Visible = (int)Protocol.WindowState.Visible,
     }
 
     /// <summary>
-    /// Window geometry reported by QtNative (EV_WINDOW_GEOMETRY) in DIP, same convention as the Renderer's Bounds pin on
+    /// Window geometry reported by QtNative (EVENT_WINDOW_GEOMETRY) in DIP, same convention as the Renderer's Bounds pin on
     /// create: <see cref="Bounds"/> position = outer top-left incl. frame, size = client size. Setting it back as Bounds
-    /// round-trips (vlqt_window_create_at). Minimized/fullscreen records carry no usable position (Windows: -32000).
+    /// round-trips (vlqt_window_create). Minimized/fullscreen records carry no usable position (Windows: -32000).
     /// <see cref="ClientBounds"/> = client top-left + client size (Renderer's Client Bounds output).
     /// </summary>
     internal readonly record struct WindowGeometry(RectangleF Bounds, WindowStates States, RectangleF ClientBounds = default)
@@ -81,7 +81,7 @@ namespace VL.Qt
 
     /// <summary>
     /// Pure parts of the window placement. Screen logic (rect on no screen → centered on the primary working
-    /// area, fallback size) lives in QtNative (vlqt_window_create_at, QScreen), so it is platform neutral.
+    /// area, fallback size) lives in QtNative (vlqt_window_create, QScreen), so it is platform neutral.
     /// </summary>
     internal static class WindowPlacement
     {
@@ -102,7 +102,7 @@ namespace VL.Qt
         public static RectangleF CreateBounds(RectangleF bounds, RectangleF typeDefault)
             => bounds == typeDefault ? DefaultBounds : bounds;
 
-        /// <summary>Arguments of vlqt_window_create_at.</summary>
+        /// <summary>Arguments of vlqt_window_create.</summary>
         public readonly record struct CreateArgs(float X, float Y, int Width, int Height);
 
         /// <summary>
@@ -116,7 +116,7 @@ namespace VL.Qt
             return new CreateArgs(bounds.X, bounds.Y, (int)MathF.Round(bounds.Width), (int)MathF.Round(bounds.Height));
         }
 
-        /// <summary>Last EV_WINDOW_GEOMETRY record (handle 0) of a poll buffer; false if there is none.</summary>
+        /// <summary>Last EVENT_WINDOW_GEOMETRY record (handle 0) of a poll buffer; false if there is none.</summary>
         public static bool TryReadGeometry(ReadOnlySpan<byte> poll, out WindowGeometry geometry)
         {
             geometry = default;
@@ -124,7 +124,7 @@ namespace VL.Qt
             var r = new EventReader(poll);
             while (r.MoveNext())
             {
-                if (r.Event != Protocol.Ev.WindowGeometry || r.FeedbackId != 0 || r.Payload.Length < 20)
+                if (r.Event != Protocol.EventId.WindowGeometry || r.FeedbackId != 0 || r.Payload.Length < 20)
                     continue;
                 var bounds = new RectangleF(r.ReadF32(0), r.ReadF32(4), r.ReadF32(8), r.ReadF32(12));
                 // Client top-left since #465 (28 bytes); an older record has none: client = outer position.

@@ -118,7 +118,7 @@ public static class PumpTest
     private sealed class TestWindow : IQtFrameParticipant
     {
         private readonly CommandWriter _cmd = new();
-        public readonly IntPtr Handle;
+        public readonly SceneHandle Handle;
         public int Applies, Afters, Frame;
         public Native.vlqt_perf Perf;
         public Native.vlqt_perf_sample Last;
@@ -126,18 +126,18 @@ public static class PumpTest
         // effect: the rect sits in a Group with an effect layer (hidden layer source).
         public TestWindow(string title, bool effect = false)
         {
-            Handle = Native.vlqt_window_create(400, 300, title);
-            if (Handle == IntPtr.Zero) throw new InvalidOperationException(Native.LastError());
+            Handle = NativeCalls.CreateWindow(400, 300, title);
+            if (Handle == SceneHandle.Null) throw new InvalidOperationException(Native.LastError());
             _cmd.Reset();
             _cmd.ClearColor(0.125f, 0.125f, 0.125f, 1);
-            _cmd.Create(RectId, Protocol.Type.Rectangle);
-            _cmd.SetColor(RectId, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+            _cmd.Create(RectId, Protocol.ElementType.Rectangle);
+            _cmd.SetColor(RectId, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
             if (effect)
             {
-                _cmd.Create(FxId, Protocol.Type.Item);
+                _cmd.Create(FxId, Protocol.ElementType.Group);
                 _cmd.SetPlace(FxId, 0, 0, 4 * U, 3 * U);
                 _cmd.Reparent(FxId, 0, 0);
-                _cmd.Chain(FxId, c => c.EffectBool(Protocol.Prop.EffectShadowEnabled, true));
+                _cmd.Chain(FxId, c => c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true));
                 _cmd.Reparent(RectId, FxId, 0);
             }
             else
@@ -150,25 +150,25 @@ public static class PumpTest
         }
 
         // Size + anchor once, then one SET per frame (TRANSFORM): the host frame reports ops 1.
-        private void Move() => _cmd.SetMat4(RectId, Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation((0.5f + (Frame++ % 100) * 0.01f) * U, 1 * U, 0));
+        private void Move() => _cmd.SetMat4(RectId, Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation((0.5f + (Frame++ % 100) * 0.01f) * U, 1 * U, 0));
 
         // "Update()": write the commands of this frame (before the pump).
         public void Update() { _cmd.Reset(); Move(); }
 
         // only the windows of the pumping app render in its pump.
-        public IntPtr Window => Handle;
+        public SceneHandle Window => Handle;
 
         public void ApplyCommands() { Applies++; var rc = Native.Apply(Handle, _cmd.EndFrame()); if (rc != 0 && Applies < 5) Console.WriteLine("INFO pump apply rc " + rc + " " + Native.LastError()); }
 
-        public void AfterEvents() { Afters++; Native.vlqt_window_get_perf(Handle, out Perf); Native.vlqt_window_get_perf_sample(Handle, out Last); }
+        public void AfterEvents() { Afters++; Native.vlqt_scene_get_perf(Handle, out Perf); Native.vlqt_scene_get_perf_sample(Handle, out Last); }
 
         // Like WindowRenderer: ops of this window, then to the native PerfMonitor.
-        public void ReportHostFrame(Native.vlqt_host_frame frame) { frame.ops = _cmd.Count; Native.vlqt_window_report_host_frame(Handle, frame); }
+        public void ReportHostFrame(Native.vlqt_host_pump frame) { frame.ops = _cmd.Count; Native.vlqt_scene_report_host_pump(Handle, frame); }
 
         // Qt phases in the budget warning.
-        public bool TryGetLastSample(out Native.vlqt_perf_sample sample) => Native.vlqt_window_get_perf_sample(Handle, out sample) == 0;
+        public bool TryGetLastSample(out Native.vlqt_perf_sample sample) => Native.vlqt_scene_get_perf_sample(Handle, out sample) == 0;
 
-        public void Destroy() => Native.vlqt_window_destroy(Handle);
+        public void Destroy() => Native.vlqt_scene_destroy(Handle);
     }
 
     private sealed class Throwing : IQtFrameParticipant
@@ -232,8 +232,8 @@ public static class PumpTest
             $"pump: each window 120 apply / 120 after-events ({a.Applies}/{a.Afters}, {b.Applies}/{b.Afters})");
         s.Check(swapsOk, "pump: exactly 1 swap per window and frame (perf ring)" + swapErr);
         // QtApp reports apply/host/interval/GC per pump, the window adds its ops.
-        var hrc = Native.vlqt_window_get_host_frame(a.Handle, out var hf);
-        Native.vlqt_window_get_host_stats(a.Handle, out var hs);
+        var hrc = Native.vlqt_scene_get_host_pump(a.Handle, out var hf);
+        Native.vlqt_scene_get_host_pump_stats(a.Handle, out var hs);
         s.Check(hrc == 0 && hf.apply > 0 && hf.host >= hf.apply && hf.interval > 0 && hf.ops == 1 && hf.alloc_bytes >= 0
               && hs.samples == 60 && hs.ops == 1 && hs.host_ms > 0,
             $"pump: host frame reported (rc {hrc}, apply {hf.apply:F3}, host {hf.host:F2}, interval {hf.interval:F1}, ops {hf.ops}, alloc {hf.alloc_bytes}; stats samples {hs.samples}, ops {hs.ops}, gen0/s {hs.gc0_per_s:F1})");
@@ -248,8 +248,8 @@ public static class PumpTest
             System.Threading.Thread.Sleep(f == 1 ? 10 : 0); // the "patch"
             clock.Frame(1.0 / 60);
         }
-        hrc = Native.vlqt_window_get_host_frame(a.Handle, out hf);
-        Native.vlqt_window_get_host_stats(a.Handle, out hs);
+        hrc = Native.vlqt_scene_get_host_pump(a.Handle, out hf);
+        Native.vlqt_scene_get_host_pump_stats(a.Handle, out hs);
         var qt = a.Last.events + a.Last.sync + a.Last.render + a.Last.present;
         // WSLg: Present copies to the host compositor (L4e) -> the Qt/host limits without the Present share.
         var wslgPresent = QtHost.Wslg ? a.Last.present + b.Last.present : 0;

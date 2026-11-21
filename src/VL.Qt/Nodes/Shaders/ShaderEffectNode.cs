@@ -20,7 +20,7 @@ namespace VL.Qt.Nodes
     /// ShaderEffect). Lengths in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP).
     /// The normal way to write an effect is a shader file in a qtshaders/ folder (it becomes a node of its own); use ShaderEffect for shader code that is built or loaded at runtime.
     /// </summary>
-    // The node owns the shader resources (path -> vlqt_res_load_shader, ids in ShaderEffect.FragmentShaderId/
+    // The node owns the shader resources (path -> vlqt_shader_load, ids in ShaderEffect.FragmentShaderId/
     // VertexShaderId); the reconciler sends the properties and the uniform diff (SET_UNIFORMS), only on change.
     // "builtin:<name>" (a shader shipped with VL.Qt) reaches QtNative as such; vvvv resolves a Path IOBox against the document directory, so
     // ResourceClient.TryGetBuiltinShader also accepts "C:\dir\builtin:<name>" and normalizes it.

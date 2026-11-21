@@ -16,7 +16,7 @@ public static class ChainTextureReparentTest
 {
     /// <summary>NCMD-17: REPARENT of the texture element of a chain link is refused or reported.</summary>
     [Test, Category("chain-texture-reparent")]
-    [Ignore("NCMD-17: REPARENT of a chain link's texture element is accepted without a check or error, the element is drawn in the tree and still sampled by the chain (fails: rc 0, no EV_ERROR, blue in both places)")]
+    [Ignore("NCMD-17: REPARENT of a chain link's texture element is accepted without a check or error, the element is drawn in the tree and still sampled by the chain (fails: rc 0, no EVENT_ERROR, blue in both places)")]
     public static void ChainTextureReparent() => Scenario.Run(Run);
 
     private const uint R = 1, L = 2, HR = 101, HL = 102;
@@ -29,12 +29,12 @@ public static class ChainTextureReparentTest
     private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "Blend is a ShaderEffect");
-        Native.vlqt_res_create(Protocol.ResKind.Shader, out var blend);
-        Native.vlqt_res_load_shader(blend, "builtin:blend", Protocol.ShaderStage.Fragment);
-        s.Check(Native.vlqt_res_wait(blend, 10000) == Protocol.ResState.Ready, "shader builtin:blend Ready");
+        Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var blend);
+        Native.vlqt_shader_load(blend, "builtin:blend", Protocol.ShaderStage.Fragment);
+        s.Check(Native.vlqt_res_wait(blend, 10000) == Protocol.ResourceState.Ready, "shader builtin:blend Ready");
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt chain texture reparent test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt chain texture reparent test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         s.Pump(2);
         var cmd = new CommandWriter();
@@ -51,24 +51,24 @@ public static class ChainTextureReparentTest
                 int len = BinaryPrimitives.ReadUInt16LittleEndian(b[(off + 2)..]);
                 if (len < 8 || off + 4 + len > b.Length)
                     break;
-                if (ev == Protocol.Ev.Error && len > 8)
+                if (ev == Protocol.EventId.Error && len > 8)
                     errors += $"[h{BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..])}] " + System.Text.Encoding.UTF8.GetString(b.Slice(off + 12, len - 8)) + " ";
                 off += (4 + len + 3) & ~3;
             }
         }
 
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        cmd.Create(R, Protocol.Type.Rectangle);
+        cmd.Create(R, Protocol.ElementType.Rectangle);
         cmd.SetPlace(R, RX, RY, RW, RH);
-        cmd.SetColor(R, Protocol.Prop.Color, 1, 0.5f, 0.1f, 1);
+        cmd.SetColor(R, Protocol.PropertyId.Color, 1, 0.5f, 0.1f, 1);
         cmd.Reparent(R, 0, 0);
         cmd.Bind(R, HR, 0);
-        cmd.Create(L, Protocol.Type.Rectangle);
+        cmd.Create(L, Protocol.ElementType.Rectangle);
         cmd.SetPlace(L, 0, 0, RW, RH);
-        cmd.SetColor(L, Protocol.Prop.Color, 0, 0.4f, 1, 1);
+        cmd.SetColor(L, Protocol.PropertyId.Color, 0, 0.4f, 1, 1);
         cmd.Bind(L, HL, 0);
         cmd.BeginEffectChain(R);
-        cmd.BeginShaderLink(Protocol.EffectTemplate.Single, [blend], 0, 0, 0, 0, 0);
+        cmd.BeginEffectChainLink(Protocol.EffectTemplate.Single, [blend], 0, 0, 0, 0, 0);
         cmd.UniformI32("mode", 0);
         cmd.UniformF32("layerOpacity", 1);
         cmd.UniformRef("layer", L);
@@ -112,7 +112,7 @@ public static class ChainTextureReparentTest
         cmd.Destroy(L);
         Native.Apply(w, cmd.EndFrame());
         s.Pump(3);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
         Native.vlqt_res_release(blend);
     }

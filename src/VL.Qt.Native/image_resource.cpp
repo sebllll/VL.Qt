@@ -100,11 +100,22 @@ uchar unitToByte(float v)
 // it, 20 x 4K: 22 % hitches), pixels -> stripes in the frame budget (set_pixels per frame). VLQT_IMG_UPLOAD=
 // stripes|worker forces one path (A/B). Mipmaps take the worker path too: the texture gets its mip chain in the
 // worker (GENERATE_MIPS), the main thread copies level 0 and records GenerateMips, without an offscreen frame (whose
-// endOffscreenFrame waited actively for the GPU: 2.2 ms per frame in the profile Images).
-[[maybe_unused]] bool workerUpload(bool file)
+// endOffscreenFrame waited actively for the GPU: 2.2 ms per frame in the profile Images). upload: vlqt_image_upload of
+// the image; AUTO keeps the choice above.
+// TODO: Remove the environment variable when the pin Upload sets the mode (E10, W4-54).
+[[maybe_unused]] bool workerUpload(bool file, int upload)
 {
+    if (upload == VLQT_IMAGE_UPLOAD_WORKER)
+        return true;
+    if (upload == VLQT_IMAGE_UPLOAD_MAIN_THREAD)
+        return false;
     static const QByteArray s_mode = qgetenv("VLQT_IMG_UPLOAD");
     return s_mode == "worker" || (s_mode != "stripes" && file);
+}
+
+bool validUpload(int upload)
+{
+    return upload == VLQT_IMAGE_UPLOAD_AUTO || upload == VLQT_IMAGE_UPLOAD_MAIN_THREAD || upload == VLQT_IMAGE_UPLOAD_WORKER;
 }
 
 #ifdef Q_OS_WIN
@@ -137,11 +148,11 @@ public:
         r.m_size = r.m_image.size();
         makePreview(r);
 #ifdef Q_OS_WIN
-        if (r.m_device && workerUpload(!r.m_path.isEmpty())) {
+        if (r.m_device && workerUpload(!r.m_path.isEmpty(), r.m_upload)) {
             // Removed device: no error, the rebuild decodes again for the new device (stale). Mipmaps that the
             // device cannot make this way fall back to the stripes (generateMips through the upload QRhi).
             if (!createWorkerTextures(r) && !deviceRemoved(r.m_device)) {
-                if (!(r.m_flags & VLQT_IMG_MIPMAPS))
+                if (!(r.m_flags & VLQT_IMAGE_LOAD_MIPMAPS))
                     return "CreateTexture2D failed";
                 qCDebug(lcImg, "worker textures with mipmaps failed, uploading in stripes");
             }
@@ -202,6 +213,7 @@ public:
         auto r = std::make_shared<ImageResource>();
         r->m_path = old.m_path;
         r->m_flags = old.m_flags;
+        r->m_upload = old.m_upload;
         r->m_preview = old.m_preview; // same content: no new scaling (implicitly shared, read-only after Ready)
         if (old.m_path.isEmpty()) {
             r->m_raw = old.m_raw;
@@ -265,7 +277,7 @@ private:
             // Worker texture: it has its mip chain already (the same level count as QRhi's mipLevelsForSize), the
             // flag lets QRhi and the windows' wrappers (qtimageitem.cpp) see all levels.
             QRhiTexture::Flags flags;
-            if (r.m_flags & VLQT_IMG_MIPMAPS)
+            if (r.m_flags & VLQT_IMAGE_LOAD_MIPMAPS)
                 flags = r.m_workerTexture ? QRhiTexture::MipMapped : QRhiTexture::MipMapped | QRhiTexture::UsedWithGenerateMips;
             r.m_texture = rhi->newTexture(format, r.m_size, 1, flags);
             const bool ok = r.m_workerTexture ? r.m_texture->createFrom({quint64(r.m_workerTexture), 0})
@@ -326,7 +338,7 @@ private:
     // level 0 only. Returns false (all released) on an error.
     static bool createWorkerTextures(ImageResource& r)
     {
-        const bool mips = (r.m_flags & VLQT_IMG_MIPMAPS) != 0;
+        const bool mips = (r.m_flags & VLQT_IMAGE_LOAD_MIPMAPS) != 0;
         D3D11_TEXTURE2D_DESC desc{};
         desc.Width = UINT(r.m_image.width());
         desc.Height = UINT(r.m_image.height());
@@ -482,7 +494,7 @@ private:
     // waits for), then smooth to 256.
     static void makePreview(ImageResource& r)
     {
-        if (!(r.m_flags & VLQT_IMG_PREVIEW) || r.m_image.isNull() || !r.m_preview.isNull())
+        if (!(r.m_flags & VLQT_IMAGE_LOAD_PREVIEW) || r.m_image.isNull() || !r.m_preview.isNull())
             return;
         constexpr int previewEdge = 256;
         constexpr int fastEdge = 4 * previewEdge;
@@ -634,28 +646,34 @@ Kind* kind()
     return &s_kind;
 }
 
-int load(uint64_t id, const char* utf8Path, unsigned flags)
+int load(uint64_t id, const char* utf8Path, unsigned flags, int upload)
 {
     if (!utf8Path || !*utf8Path) {
         qCWarning(lcImg, "load_image: empty path");
         return badValueRc;
     }
+    if (!validUpload(upload))
+        return fail(badValueRc, "image_load: unknown upload mode " + std::to_string(upload));
     auto r = std::make_shared<ImageResource>();
     r->m_path = QString::fromUtf8(utf8Path);
     r->m_flags = flags;
+    r->m_upload = upload;
     r->m_device = device::nativeDevice(device::uploadRhi());
     r->m_generation = device::generation();
-    return start(id, std::move(r), VLQT_RES_KIND_IMAGE);
+    return start(id, std::move(r), VLQT_RESOURCE_KIND_IMAGE);
 }
 
-int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int len)
+int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int len, int upload)
 {
     if (!desc || !data || desc->width <= 0 || desc->height <= 0) {
         qCWarning(lcImg, "set_pixels: %s", !desc ? "null desc" : !data ? "null data" : "size <= 0");
         return badValueRc;
     }
+    if (!validUpload(upload))
+        return fail(badValueRc, "image_set_pixels: unknown upload mode " + std::to_string(upload));
     auto r = std::make_shared<ImageResource>();
     r->m_flags = desc->flags;
+    r->m_upload = upload;
     r->m_rawWidth = desc->width;
     r->m_rawHeight = desc->height;
     r->m_rawFormat = desc->format;
@@ -681,12 +699,12 @@ int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int le
                 std::memcpy(r->m_raw.data() + row * y, src + stride * y, size_t(row));
         }
     }
-    return start(id, std::move(r), VLQT_RES_KIND_IMAGE);
+    return start(id, std::move(r), VLQT_RESOURCE_KIND_IMAGE);
 }
 
 std::shared_ptr<ImageResource> ready(uint64_t id)
 {
-    return std::static_pointer_cast<ImageResource>(readyWork(id, VLQT_RES_KIND_IMAGE));
+    return std::static_pointer_cast<ImageResource>(readyWork(id, VLQT_RESOURCE_KIND_IMAGE));
 }
 
 int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc, int* written, int* required)
@@ -696,7 +714,7 @@ int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc,
     const int k = kindOfId(id, "read_preview");
     if (k < 0)
         return k;
-    if (k != VLQT_RES_KIND_IMAGE) {
+    if (k != VLQT_RESOURCE_KIND_IMAGE) {
         qCWarning(lcImg, "read_preview: id %llu is not an image resource", static_cast<unsigned long long>(id));
         return badValueRc;
     }
@@ -704,7 +722,7 @@ int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc,
     // until its swap), so the preview always belongs to what ready() shows.
     const auto r = ready(id);
     if (!r || r->m_preview.isNull())
-        return noDataRc; // not Ready yet / Failed / loaded without VLQT_IMG_PREVIEW
+        return noDataRc; // not Ready yet / Failed / loaded without VLQT_IMAGE_LOAD_PREVIEW
     // No lock: the worker wrote m_preview in decode, before the Ready transition (made under the manager's mutex,
     // which readyWork takes as well); afterwards nothing touches it until the Work is destroyed.
     const QImage& img = r->m_preview;

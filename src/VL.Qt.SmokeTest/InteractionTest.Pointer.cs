@@ -25,7 +25,7 @@ public static partial class InteractionTest
         private readonly Reconciler _rec;
         private readonly byte[] _buf = new byte[1 << 16];
         private readonly RectangleNode _rect = new(_ => new NoMessage());
-        public readonly IntPtr W;
+        public readonly SceneHandle W;
         public Func<Interaction?> Chain = () => null;
         public RectangleF Bounds = new(1, 1, 2, 1);
         public RectangleF SceneBounds;
@@ -35,8 +35,8 @@ public static partial class InteractionTest
             _tag = tag;
             _s = s;
             _rec = new Reconciler(_cmd, new IdAllocator(), new SceneRegistry());
-            W = Native.vlqt_window_create(800, 600, "VL.Qt " + tag + " test");
-            s.Check(W != IntPtr.Zero, tag + ": window_create");
+            W = NativeCalls.CreateWindow(800, 600, "VL.Qt " + tag + " test");
+            s.Check(W != SceneHandle.Null, tag + ": window_create");
             Native.vlqt_window_show(W);
         }
 
@@ -74,7 +74,7 @@ public static partial class InteractionTest
             if (_cmd.Length > 0)
                 _s.Check(Native.Apply(W, _cmd.EndFrame()) == 0, _tag + ": clear");
             _rect.Dispose();
-            Native.vlqt_window_destroy(W);
+            Native.vlqt_scene_destroy(W);
             _s.Pump(1);
         }
     }

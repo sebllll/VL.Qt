@@ -96,9 +96,9 @@ namespace VL.Qt.Tests
         public void EffectColor(ushort prop, float r, float g, float b, float a) => _inner.EffectColor(prop, r, g, b, a);
         public void EffectRect(ushort prop, float x, float y, float width, float height) => _inner.EffectRect(prop, x, y, width, height);
         public void EffectRef(ushort prop, uint refId) => _inner.EffectRef(prop, refId);
-        public void BeginShaderLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
+        public void BeginEffectChainLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
             float paddingRight, float paddingBottom, float strength)
-            => _inner.BeginShaderLink(template, shaderIds, paddingLeft, paddingTop, paddingRight, paddingBottom, strength);
+            => _inner.BeginEffectChainLink(template, shaderIds, paddingLeft, paddingTop, paddingRight, paddingBottom, strength);
         public void EndLink() => _inner.EndLink();
         public void EndEffectChain() => _inner.EndEffectChain();
     }

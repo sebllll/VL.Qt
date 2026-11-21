@@ -1,6 +1,6 @@
 ﻿namespace VL.Qt.Elements
 {
-    /// <summary>Which areas of a self-overlapping path are filled. Values are the protocol values of <see cref="Protocol.Prop.ShapeFillRule"/>.</summary>
+    /// <summary>Which areas of a self-overlapping path are filled. Values are the protocol values of <see cref="Protocol.PropertyId.ShapeFillRule"/>.</summary>
     public enum ShapeFillRule
     {
         /// <summary>A point is inside if the winding number of the path around it is not zero (Skia Winding).</summary>

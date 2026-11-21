@@ -48,7 +48,7 @@ namespace VL.Qt.Tests
             w.EndUniforms();
             var hex = Convert.ToHexString(w.Written);
             Assert.That(hex, Does.EndWith("0102000000000000"));
-            Assert.That(hex, Does.Contain(Convert.ToHexString(BitConverter.GetBytes(Protocol.Vt.Sampler))));
+            Assert.That(hex, Does.Contain(Convert.ToHexString(BitConverter.GetBytes(Protocol.ValueType.Sampler))));
         }
 
         [Test]

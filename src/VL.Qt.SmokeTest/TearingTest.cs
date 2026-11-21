@@ -43,7 +43,7 @@ public static class TearingTest
         Console.CancelKeyPress += onCancel;
         using var timer = PumpTest.HighResTimer(); // 1 ms timer resolution like vvvv (Windows)
         var keepAwake = OperatingSystem.IsWindows() && Win.KeepDisplayOn(true);
-        var windows = new List<IntPtr>();
+        var windows = new List<SceneHandle>();
         try
         {
             var display = CheckDisplay();
@@ -68,8 +68,8 @@ public static class TearingTest
                 }
                 else if (!o.Fullscreen)
                     (x, y) = (10 + i * (width + 10), 60);
-                var w = Native.vlqt_window_create_at(x, y, (int)width, (int)height, titles[i], o.Interval);
-                if (w == IntPtr.Zero)
+                var w = Native.vlqt_window_create(x, y, (int)width, (int)height, titles[i], o.Interval);
+                if (w == SceneHandle.Null)
                 {
                     Console.WriteLine("TEARING window_create failed: " + Native.LastError());
                     return 1;
@@ -80,8 +80,8 @@ public static class TearingTest
                     Native.vlqt_window_set_mode(w, Protocol.WindowMode.Borderless | Protocol.WindowMode.Fullscreen, Protocol.WindowMode.Borderless | Protocol.WindowMode.Fullscreen);
                 var cmd = new CommandWriter();
                 cmd.ClearColor(0.06f, 0.06f, 0.06f, 1);
-                cmd.Create(1, Protocol.Type.Rectangle);
-                cmd.SetColor(1, Protocol.Prop.Color, 1, 1, 1, 1);
+                cmd.Create(1, Protocol.ElementType.Rectangle);
+                cmd.SetColor(1, Protocol.PropertyId.Color, 1, 1, 1, 1);
                 cmd.Reparent(1, 0, 0);
                 var rc = Native.Apply(w, cmd.EndFrame());
                 if (rc != 0)
@@ -96,14 +96,14 @@ public static class TearingTest
         }
         finally
         {
-            foreach (var w in windows) Native.vlqt_window_destroy(w);
-            for (int i = 0; i < 2; i++) Native.vlqt_app_process_events();
+            foreach (var w in windows) Native.vlqt_scene_destroy(w);
+            for (int i = 0; i < 2; i++) Native.vlqt_app_process_events_for(null, 0);
             if (keepAwake) Win.KeepDisplayOn(false);
             Console.CancelKeyPress -= onCancel;
         }
     }
 
-    private static int Loop(Options o, List<IntPtr> windows, string[] titles, (float W, float H)[] sizes, string display0, Func<bool> stopped)
+    private static int Loop(Options o, List<SceneHandle> windows, string[] titles, (float W, float H)[] sizes, string display0, Func<bool> stopped)
     {
         var n = windows.Count;
         var cmd = new CommandWriter();
@@ -157,8 +157,8 @@ public static class TearingTest
                 cmd.SetPlace(1, tri * (w - barW), 0, barW, h);
                 Native.Apply(windows[i], cmd.EndFrame());
             }
-            Native.vlqt_driver_advance(now);
-            Native.vlqt_app_process_events();
+            Native.vlqt_app_advance_animations(now);
+            Native.vlqt_app_process_events_for(null, 0);
             var hostMs = (float)Stopwatch.GetElapsedTime(h0).TotalMilliseconds;
             now = Stopwatch.GetElapsedTime(start).TotalSeconds;
             frame++;
@@ -182,7 +182,7 @@ public static class TearingTest
             var warm = sec >= 1; // the first second (window creation, first presents, shader setup) is warm-up
             for (int i = 0; i < n; i++)
             {
-                if (Native.vlqt_window_get_perf_sample(windows[i], out var s) != 0) continue;
+                if (Native.vlqt_scene_get_perf_sample(windows[i], out var s) != 0) continue;
                 secPump[i].Add(s.pump);
                 if (s.swaps > 0) secPresent[i].Add(s.present);
                 secSwaps[i] += s.swaps;
@@ -249,11 +249,11 @@ public static class TearingTest
 
     // Refresh rate of the screen of the window: Windows API (the real mode of the monitor), else 1000 / budget_ms of the
     // window stats (QtNative falls back to 60 Hz there, so that is the second choice). n/a = unknown.
-    private static string Refresh(IntPtr w, string title)
+    private static string Refresh(SceneHandle w, string title)
     {
         if (OperatingSystem.IsWindows() && Win.RefreshHz(title) is { } hz and > 1)
             return hz.ToString("F1", CultureInfo.InvariantCulture);
-        if (!OperatingSystem.IsWindows() && Native.vlqt_window_get_perf_stats(w, out var st) == 0 && st.budget_ms > 0)
+        if (!OperatingSystem.IsWindows() && Native.vlqt_scene_get_perf_stats(w, out var st) == 0 && st.budget_ms > 0)
             return (1000.0 / st.budget_ms).ToString("F1", CultureInfo.InvariantCulture);
         return "n/a";
     }

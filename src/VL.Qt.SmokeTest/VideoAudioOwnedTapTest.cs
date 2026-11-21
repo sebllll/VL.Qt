@@ -62,7 +62,7 @@ public static class VideoAudioOwnedTapTest
             Assert.Ignore("videoaudio-owned: no audio render device: " + e.Message);
         }
 
-        var w = Native.vlqt_window_create(640, 360, "VL.Qt audio owned tap test");
+        var w = NativeCalls.CreateWindow(640, 360, "VL.Qt audio owned tap test");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
@@ -91,19 +91,19 @@ public static class VideoAudioOwnedTapTest
         }
         void CreateVideo(uint id, ulong tap, float volume, int x)
         {
-            cmd.Create(id, Protocol.Type.Video);
+            cmd.Create(id, Protocol.ElementType.Video);
             cmd.SetPlace(id, x, 0, 200, 112);
-            cmd.SetString(id, Protocol.Prop.Source, a);
-            cmd.SetBool(id, Protocol.Prop.Loop, true);
-            cmd.SetF32(id, Protocol.Prop.Volume, volume);
+            cmd.SetString(id, Protocol.PropertyId.Source, a);
+            cmd.SetBool(id, Protocol.PropertyId.Loop, true);
+            cmd.SetF32(id, Protocol.PropertyId.Volume, volume);
             if (tap != 0)
-                cmd.SetU64(id, Protocol.Prop.AudioTap, tap);
-            cmd.SetBool(id, Protocol.Prop.Playing, true);
+                cmd.SetU64(id, Protocol.PropertyId.AudioTap, tap);
+            cmd.SetBool(id, Protocol.PropertyId.Playing, true);
             cmd.Reparent(id, 0, 0);
         }
 
-        var rc0 = Native.vlqt_res_create(Protocol.ResKind.AudioTap, out var tap);
-        var init = rc0 == 0 ? Native.vlqt_res_audio_tap_init(tap, 2, 48000) : rc0;
+        var rc0 = Native.vlqt_res_create(Protocol.ResourceKind.AudioTap, out var tap);
+        var init = rc0 == 0 ? Native.vlqt_audio_tap_init(tap, 2, 48000) : rc0;
         s.Check(rc0 == 0 && init == 0, $"videoaudio-owned: tap created ({rc0}, {init})");
 
         // Control 1: a Video with a tap (the owner) is silent for Qt, the meter stays at 0.
@@ -141,7 +141,7 @@ public static class VideoAudioOwnedTapTest
         Watch(200);
         Native.vlqt_res_release(tap);
         s.Pump(2);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 #else
     static void Run(Scenario s) => Assert.Ignore("Windows only (Core Audio session meter)");

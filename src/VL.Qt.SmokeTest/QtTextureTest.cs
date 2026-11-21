@@ -133,18 +133,18 @@ public static partial class QtTextureTest
     }
 
     // A scene of w x h DIP with a red rectangle (16, 12, 32, 24) on a transparent clear colour; null on failure.
-    private static IntPtr RectScene(int w, int h, Scenario s, string label)
+    private static SceneHandle RectScene(int w, int h, Scenario s, string label)
     {
         var scene = Native.vlqt_offscreen_create(w, h);
-        s.Check(scene != IntPtr.Zero, $"{label}: offscreen_create {(scene == IntPtr.Zero ? Native.LastError() : "")}");
-        if (scene == IntPtr.Zero)
+        s.Check(scene != SceneHandle.Null, $"{label}: offscreen_create {(scene == SceneHandle.Null ? Native.LastError() : "")}");
+        if (scene == SceneHandle.Null)
             return scene;
         var cmd = new CommandWriter();
         cmd.Reset();
         cmd.ClearColor(0, 0, 0, 0);
-        cmd.Create(1, Protocol.Type.Rectangle);
+        cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetPlace(1, 16, 12, 32, 24);
-        cmd.SetColor(1, Protocol.Prop.Color, 1, 0, 0, 1);
+        cmd.SetColor(1, Protocol.PropertyId.Color, 1, 0, 0, 1);
         cmd.Reparent(1, 0, 0);
         int rc = (int)Native.Apply(scene, cmd.EndFrame());
         s.Check(rc == 0, $"{label}: apply rectangle ({rc}) {(rc != 0 ? Native.LastError() : "")}");
@@ -171,7 +171,7 @@ public static partial class QtTextureTest
         }
         const int w = 64, h = 48;
         const string red = "255,0,0,255";
-        IntPtr QtDevice() => NativeTest.vlqt_test_device_info(IntPtr.Zero, out var d, out _) == 0 ? d : IntPtr.Zero;
+        IntPtr QtDevice() => NativeTest.vlqt_test_device_info(SceneHandle.Null, out var d, out _) == 0 ? d : IntPtr.Zero;
         string Err(int rc) => rc < 0 ? Native.LastError() : "";
 
         if (!check(NativeTest.CreateDevice(0, out var hw, out var hwCtx) == 0, "adapter: create device on QtNative's adapter"))
@@ -185,7 +185,7 @@ public static partial class QtTextureTest
         NativeTest.vlqt_test_d3d11_create_shared_texture(warp, w, h, B8G8R8A8Typeless, out var warpTex, out var warpHandle);
         var a = RectScene(w, h, s, "adapter: scene A");
         var b = RectScene(w, h, s, "adapter: scene B");
-        if (hwTex == IntPtr.Zero || warpTex == IntPtr.Zero || a == IntPtr.Zero || b == IntPtr.Zero)
+        if (hwTex == IntPtr.Zero || warpTex == IntPtr.Zero || a == SceneHandle.Null || b == SceneHandle.Null)
         {
             check(false, "adapter: setup " + Native.LastError());
             return;
@@ -262,8 +262,8 @@ public static partial class QtTextureTest
             check(Native.vlqt_offscreen_unbind(b) == 0 && Native.vlqt_offscreen_is_bound(b) == 0, "foreign release: unbind after the release");
         }
 
-        Native.vlqt_window_destroy(a);
-        Native.vlqt_window_destroy(b);
+        Native.vlqt_scene_destroy(a);
+        Native.vlqt_scene_destroy(b);
         NativeTest.vlqt_test_close_handle(hwHandle);
         NativeTest.vlqt_test_close_handle(warpHandle);
         NativeTest.vlqt_test_com_release(hwTex);
@@ -290,11 +290,11 @@ public static partial class QtTextureTest
             return;
         // Device children (textures, views, fences, Qt's scene graph resources) count on their device: compare counts
         // taken at the same point of the lifetime.
-        NativeTest.vlqt_test_device_info(IntPtr.Zero, out var qtDevice, out _);
+        NativeTest.vlqt_test_device_info(SceneHandle.Null, out var qtDevice, out _);
         int QtRefs() => qtDevice != IntPtr.Zero ? NativeTest.vlqt_test_com_ref_count(qtDevice) : -1;
         int qtRefsBefore = QtRefs();
         var scene = Native.vlqt_offscreen_create(w, h);
-        if (!check(scene != IntPtr.Zero, "scene: offscreen_create " + Native.LastError()))
+        if (!check(scene != SceneHandle.Null, "scene: offscreen_create " + Native.LastError()))
         {
             NativeTest.vlqt_test_d3d11_release_device(device, context);
             return;
@@ -305,9 +305,9 @@ public static partial class QtTextureTest
         var cmd = new CommandWriter();
         cmd.Reset();
         cmd.ClearColor(0, 0, 0, 0);
-        cmd.Create(rect, Protocol.Type.Rectangle);
+        cmd.Create(rect, Protocol.ElementType.Rectangle);
         cmd.SetPlace(rect, rx, ry, rw, rh);
-        cmd.SetColor(rect, Protocol.Prop.Color, 1, 0, 0, 1);
+        cmd.SetColor(rect, Protocol.PropertyId.Color, 1, 0, 0, 1);
         cmd.Reparent(rect, 0, 0);
         int rc = (int)Native.Apply(scene, cmd.EndFrame());
         check(rc == 0, $"scene: apply rectangle ({rc}) {(rc != 0 ? Native.LastError() : "")}");
@@ -364,7 +364,7 @@ public static partial class QtTextureTest
             check(NativeTest.vlqt_test_com_release(texture) == 0, "scene: texture released -> 0 references");
         }
 
-        Native.vlqt_window_destroy(scene);
+        Native.vlqt_scene_destroy(scene);
         int qtRefsAfter = QtRefs();
         check(qtRefsBefore > 0 && qtRefsAfter == qtRefsBefore, $"scene: QtNative device references back after destroy ({qtRefsBefore} -> {qtRefsAfter})");
         check(NativeTest.vlqt_test_d3d11_release_device(device, context) == 0, "scene: test device freed");
@@ -372,26 +372,26 @@ public static partial class QtTextureTest
 
     // snapshot of an element of a bound offscreen scene that has nothing to render (not dirty). The scene is never
     // exposed; the grab asks for a frame, the next render_batch renders it and the pump delivers the pixels (red, rw x rh).
-    private static void OffscreenSnapshot(IntPtr scene, uint element, int rw, int rh, IntPtr context, Scenario s)
+    private static void OffscreenSnapshot(SceneHandle scene, uint element, int rw, int rh, IntPtr context, Scenario s)
     {
         bool check(bool ok, string what)
         {
             s.Check(ok, what);
             return ok;
         }
-        if (!check(Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var id) == 0, "snapshot: create resource"))
+        if (!check(Native.vlqt_res_create(Protocol.ResourceKind.Snapshot, out var id) == 0, "snapshot: create resource"))
             return;
-        var rc = Native.vlqt_res_snapshot(id, scene, element, 1);
+        var rc = Native.vlqt_snapshot_start(id, scene, element, 1);
         s.Check(rc == 0, $"snapshot: start on the offscreen scene ({rc})");
         int state = 0, frames = 0, rendered = 0;
-        for (; frames < 120 && state is not (Protocol.ResState.Ready or Protocol.ResState.Failed); frames++)
+        for (; frames < 120 && state is not (Protocol.ResourceState.Ready or Protocol.ResourceState.Failed); frames++)
         {
             rendered += Math.Max(0, Native.OffscreenRenderBatch(context, new[] { scene }, 0));
             s.Pump(1);
             state = Native.vlqt_res_wait(id, 0);
         }
         var error = SnapshotError(id);
-        s.Check(state == Protocol.ResState.Ready && rendered >= 1,
+        s.Check(state == Protocol.ResourceState.Ready && rendered >= 1,
             $"snapshot: Ready after {frames} frame(s), {rendered} render(s) (state {state}) {error}");
         var pixels = new byte[rw * rh * 4];
         int read = NativeCalls.ReadSnapshot(id, pixels, out var desc);
@@ -414,7 +414,7 @@ public static partial class QtTextureTest
         {
             var ev = BitConverter.ToUInt16(buf, at);
             var len = BitConverter.ToUInt16(buf, at + 2);
-            if (ev == Protocol.ResEv.Error && BitConverter.ToUInt64(buf, at + 4) == id)
+            if (ev == Protocol.ResourceEventId.Error && BitConverter.ToUInt64(buf, at + 4) == id)
                 error = System.Text.Encoding.UTF8.GetString(buf, at + 12, len - 8);
             at += (4 + len + 3) & ~3;
         }

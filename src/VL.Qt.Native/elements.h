@@ -40,7 +40,7 @@ struct EffectChainDesc;  // effectchain.h
 struct EffectComponents; // effectchain.h
 class EffectChain;       // effectchain.h
 
-/* Return codes of Scene::apply / vlqt_window_apply: short names for the apply range of vlqt_result (vlqt.h). */
+/* Return codes of Scene::apply / vlqt_scene_apply: short names for the apply range of vlqt_result (vlqt.h). */
 enum ApplyResult {
     ApplyOk = VLQT_OK,
     ApplyBadLength = VLQT_ERR_BAD_LENGTH,           // truncated buffer, wrong payloadLen for op / value type, bad alignment
@@ -54,7 +54,7 @@ enum ApplyResult {
 
 /* Decoded SET value. Pointers/strings are only valid during the setter call. */
 struct Value {
-    quint16 type = 0;          // VLQT_VT_*
+    quint16 type = 0;          // VLQT_VALUE_TYPE_*
     float f[16] = {};          // f32 (f[0]), color (rgba), rectf (x, y, w, h), mat4 (row-major like Stride)
     qint32 i = 0;              // i32, ivec2 x
     qint32 i2 = 0;             // ivec2 y
@@ -103,23 +103,23 @@ QRectF itemFrame(const TransformState& s, const QQuickItem* item);
 /* Anchor point in item coordinates: per axis 0 for Left/Top (the item's origin), otherwise frame.left + f * width
  * (Center, Right/Bottom). Equal to f * size whenever the frame starts at the origin (every element but the Group). */
 QPointF anchorPoint(const TransformState& s, const QQuickItem* item);
-/* The item is a Group (ITEM, GroupItem in elements.cpp). */
+/* The item is a Group (GROUP, GroupItem in elements.cpp). */
 bool isGroup(const QQuickItem* item);
 /* Texture source of a Group used as ShaderEffect Input or texture uniform: a hidden QQuickShaderEffectSource
  * whose sourceRect is the Group's frame (Elements::acquireGroupProxy); nullptr for other items or a Group without one.
- * Read by ShaderEffectItem on the render thread during sync (GUI thread blocked). */
+ * Read by ShaderItem on the render thread during sync (GUI thread blocked). */
 QQuickItem* groupTextureSource(const QQuickItem* item);
 
 /* State of one created element (owned by the Scene's id table). */
 struct Node {
     QQuickItem* item = nullptr;
     quint16 type = 0;
-    quint32 sink = 0;            // BIND sinkHandle (0 = unbound), see events.h
+    quint32 feedbackId = 0;            // BIND feedbackId (0 = unbound), see events.h
     QObject* transform = nullptr; // QML Matrix4x4, appended to item.transform on the first TRANSFORM or drag offset
     std::shared_ptr<TransformState> xf; // TRANSFORM + ANCHOR as sent (Elements::initGeometry, right after CREATE)
-    SentState sent;              // last EV_MEASURED / EV_SCENE_BOUNDS sent for sink
-    QQuickItem* effectSource = nullptr; // SHADER_EFFECT: current source item (see Elements::clearEffectSource)
-    std::vector<QPointer<QQuickItem>> textureGroups; // SHADER_EFFECT: Groups of texture uniforms, one proxy reference each
+    SentState sent;              // last EVENT_MEASURED / EVENT_SCENE_BOUNDS sent for sink
+    QQuickItem* effectSource = nullptr; // SHADER: current source item (see Elements::clearEffectSource)
+    std::vector<QPointer<QQuickItem>> textureGroups; // SHADER: Groups of texture uniforms, one proxy reference each
     std::vector<quint32> handlers;      // ids of the input handlers attached to this item, events.h
     QObject* mask = nullptr;            // TextMask (Text items with input handlers), events.h updateTextMask
     EffectChain* effectChain = nullptr; // SET_EFFECT_CHAIN: QObject child of item, null = no chain (layer off)
@@ -156,14 +156,14 @@ class Elements;
 using Setter = bool (*)(Elements& els, Node& node, const ResolvedProp& rp, const Value& v, std::string& err);
 
 struct PropDef {
-    quint16 id;              // VLQT_PROP_*
-    quint16 valueType;       // expected VLQT_VT_*
+    quint16 id;              // VLQT_PROPERTY_*
+    quint16 valueType;       // expected VLQT_VALUE_TYPE_*
     Setter set;
     const char* qmlName;     // "color", "border.color" (group.sub), "font" (QFont, see modifyFont); nullptr = C++ API
 };
 
 struct TypeDef {
-    quint16 id;              // VLQT_TYPE_*
+    quint16 id;              // VLQT_ELEMENT_TYPE_*
     const char* name;
     const char* qml;         // QML one-liner (nullptr = plain QQuickItem, no component)
     std::vector<PropDef> props; // type-specific (ids >= 256); common ones (1..255) apply to every type
@@ -205,7 +205,7 @@ public:
      * use (not for an offset 0 of an item without one). */
     bool setDragOffset(Node& node, float dx, float dy, std::string& err);
 
-    /* Effect source bookkeeping (SHADER_EFFECT SOURCE). A QSGTextureProvider consumer keeps a pointer to its source, so the
+    /* Effect source bookkeeping (SHADER SOURCE). A QSGTextureProvider consumer keeps a pointer to its source, so the
      * Scene clears every effect referencing an item before deleting it (and before deleting an effect). */
     bool setEffectSource(Node& effect, const ResolvedProp& rp, QQuickItem* source, std::string& err);
     void clearEffectSource(Node& effect);

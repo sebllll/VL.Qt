@@ -28,8 +28,8 @@ public static class OpacityZeroTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt opacity zero test");
-        s.Check(w != IntPtr.Zero, "opacity-zero: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt opacity zero test");
+        s.Check(w != SceneHandle.Null, "opacity-zero: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -112,7 +112,7 @@ public static class OpacityZeroTest
         rec.Update(null, Space.DIPTopLeft);
         if (cmd.Length > 0)
             s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "opacity-zero: clear");
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
     }
 }

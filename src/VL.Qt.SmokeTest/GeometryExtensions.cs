@@ -13,21 +13,21 @@ internal static class GeometryExtensions
 
     public static void SetPlace(this ICommandSink s, uint id, float x, float y, float w, float h)
     {
-        s.SetVec2(id, Protocol.Prop.Size, w, h);
-        s.SetI32(id, Protocol.Prop.Anchor, AlignTopLeft);
-        s.SetMat4(id, Protocol.Prop.Transform, Matrix.Translation(x, y, 0));
+        s.SetVec2(id, Protocol.PropertyId.Size, w, h);
+        s.SetI32(id, Protocol.PropertyId.Anchor, AlignTopLeft);
+        s.SetMat4(id, Protocol.PropertyId.Transform, Matrix.Translation(x, y, 0));
     }
 
     /// <summary>Old "Bounds + Transform around the default pivot": ANCHOR Center, TRANSFORM = m · T(center of the rect), so m acts around the center of the rectangle (x, y, w, h).</summary>
     public static void SetPlaceXf(this ICommandSink s, uint id, float x, float y, float w, float h, in Matrix m)
     {
-        s.SetVec2(id, Protocol.Prop.Size, w, h);
-        s.SetI32(id, Protocol.Prop.Anchor, AlignCenter);
-        s.SetMat4(id, Protocol.Prop.Transform, m * Matrix.Translation(x + w / 2, y + h / 2, 0));
+        s.SetVec2(id, Protocol.PropertyId.Size, w, h);
+        s.SetI32(id, Protocol.PropertyId.Anchor, AlignCenter);
+        s.SetMat4(id, Protocol.PropertyId.Transform, m * Matrix.Translation(x + w / 2, y + h / 2, 0));
     }
 
     /// <summary>Same as <see cref="SetPlace"/> without the position: only SIZE (Row/Column children, size changes of an unmoved item).</summary>
-    public static void SetSize(this ICommandSink s, uint id, float w, float h) => s.SetVec2(id, Protocol.Prop.Size, w, h);
+    public static void SetSize(this ICommandSink s, uint id, float w, float h) => s.SetVec2(id, Protocol.PropertyId.Size, w, h);
 
     /// <summary>Node-level placement in units: size of the rectangle (use with <see cref="Tr"/> and anchor TopLeft).</summary>
     public static Vector2 Sz(this RectangleF b) => new(b.Width, b.Height);

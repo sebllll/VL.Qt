@@ -16,7 +16,7 @@ namespace VL.Qt
     internal sealed class WindowRenderer : IDisposable
     {
         private readonly SceneCore _core;
-        private IntPtr _window;
+        private SceneHandle _window;
         private bool _disposed;
 
         // Last title sent to QtNative (change detection; a resize by the user is not fought back).
@@ -29,7 +29,7 @@ namespace VL.Qt
         // (the ring spans ~1 s, ~4 updates per second are enough); the averages of _lastPerf stay per pump.
         private const long kPercentileIntervalMs = 250;
         private Native.vlqt_perf_stats _stats;
-        private Native.vlqt_host_stats _host;
+        private Native.vlqt_host_pump_stats _host;
         private long _statsAt = long.MinValue;
         private PerfStats _perf = PerfStats.Empty;
 
@@ -52,9 +52,9 @@ namespace VL.Qt
             _title = title ?? "";
             // Position and size are set in QtNative before show: no flash at Qt's default position.
             var a = WindowPlacement.FromBounds(bounds);
-            _window = Native.vlqt_window_create_at(a.X, a.Y, a.Width, a.Height, _title, vSync ? 1 : 0);
+            _window = Native.vlqt_window_create(a.X, a.Y, a.Width, a.Height, _title, vSync ? 1 : 0);
             _core.Handle = _window;
-            if (_window == IntPtr.Zero)
+            if (_window.IsNull)
                 _createError = Native.LastError();
             else
             {
@@ -68,7 +68,7 @@ namespace VL.Qt
             }
         }
 
-        public IntPtr Window => _window;
+        public SceneHandle Window => _window;
 
         /// <summary>
         /// MSAA count of the window as of the last <see cref="SetSamples"/> (what QtNative used, clamped to the device),
@@ -84,14 +84,14 @@ namespace VL.Qt
         /// (QWindow::isVisible, a plain getter), not cached in the pump: a cached value was false in the frame of the
         /// creation (node created, Undo, F5, Bounds changed) and stayed false whenever this window was not pumped.
         /// </summary>
-        public bool IsVisible => !_disposed && _window != IntPtr.Zero && Native.vlqt_window_is_visible(_window) == 1;
+        public bool IsVisible => !_disposed && !_window.IsNull && Native.vlqt_window_is_visible(_window) == 1;
 
         /// <summary>First of: window creation, last apply, last poll error. Empty if ok.</summary>
         public string Error =>
             _createError.Length > 0 ? _createError : _core.ApplyError.Length > 0 ? _core.ApplyError : _core.PollError;
 
         /// <summary>
-        /// Last window geometry reported by QtNative (EV_WINDOW_GEOMETRY, DIP, Bounds convention: outer top-left + client
+        /// Last window geometry reported by QtNative (EVENT_WINDOW_GEOMETRY, DIP, Bounds convention: outer top-left + client
         /// size, plus client bounds); null until the first pump after creation. Used by Save Bounds and the
         /// Client Bounds output.
         /// </summary>
@@ -121,11 +121,11 @@ namespace VL.Qt
                     _perfChanged = false;
                     // Percentiles sort the rings: queried only when read and at most every kPercentileIntervalMs.
                     var now = Environment.TickCount64;
-                    if (!_disposed && _window != IntPtr.Zero && now - _statsAt >= kPercentileIntervalMs)
+                    if (!_disposed && !_window.IsNull && now - _statsAt >= kPercentileIntervalMs)
                     {
                         _statsAt = now;
-                        Native.vlqt_window_get_perf_stats(_window, out _stats);
-                        Native.vlqt_window_get_host_stats(_window, out _host);
+                        Native.vlqt_scene_get_perf_stats(_window, out _stats);
+                        Native.vlqt_scene_get_host_pump_stats(_window, out _host);
                     }
                     _perf = PerfStats.From(_lastPerf, _stats, _host);
                 }
@@ -140,7 +140,7 @@ namespace VL.Qt
         /// </summary>
         public void Update(Element? input, Space space, Color4 clearColor, bool clear, bool enabled, string? title)
         {
-            if (_disposed || _window == IntPtr.Zero)
+            if (_disposed || _window.IsNull)
                 return;
 
             title ??= "";
@@ -158,14 +158,14 @@ namespace VL.Qt
 
         public void ApplyCommands()
         {
-            if (_disposed || _window == IntPtr.Zero)
+            if (_disposed || _window.IsNull)
                 return;
             _core.Apply();
         }
 
         public void AfterEvents()
         {
-            if (_disposed || _window == IntPtr.Zero)
+            if (_disposed || _window.IsNull)
                 return;
 
             if (Native.vlqt_window_take_close_request(_window) == 1)
@@ -176,7 +176,7 @@ namespace VL.Qt
             PollEvents();
 
             // Compare raw bytes: PerfStats is a record, only build a new one when the values changed.
-            if (Native.vlqt_window_get_perf(_window, out var p) == Native.Result.Ok)
+            if (Native.vlqt_scene_get_perf(_window, out var p) == Native.Result.Ok)
             {
                 if (!MemoryMarshal.AsBytes(new ReadOnlySpan<Native.vlqt_perf>(in p))
                         .SequenceEqual(MemoryMarshal.AsBytes(new ReadOnlySpan<Native.vlqt_perf>(in _lastPerf))))
@@ -193,26 +193,26 @@ namespace VL.Qt
         /// </summary>
         public void PollInput()
         {
-            if (_disposed || _window == IntPtr.Zero)
+            if (_disposed || _window.IsNull)
                 return;
             PollEvents(frameStart: true);
         }
 
         /// <summary>adds ops/reconcile of this window to the host frame and reports it to the native PerfMonitor.</summary>
-        public void ReportHostFrame(Native.vlqt_host_frame frame)
+        public void ReportHostFrame(Native.vlqt_host_pump frame)
         {
-            if (_disposed || _window == IntPtr.Zero)
+            if (_disposed || _window.IsNull)
                 return;
             frame.ops = _core.AppliedOps;
             frame.reconcile = (float)_core.TakeReconcileMs();
-            Native.vlqt_window_report_host_frame(_window, frame);
+            Native.vlqt_scene_report_host_pump(_window, frame);
         }
 
         /// <summary>Last native PerfSample (budget warning). false = none yet.</summary>
         public bool TryGetLastSample(out Native.vlqt_perf_sample sample)
         {
             sample = default;
-            return !_disposed && _window != IntPtr.Zero && Native.vlqt_window_get_perf_sample(_window, out sample) == Native.Result.Ok;
+            return !_disposed && !_window.IsNull && Native.vlqt_scene_get_perf_sample(_window, out sample) == Native.Result.Ok;
         }
 
         // Events and measured values into the feedback (read by the element nodes in the next Update).
@@ -232,7 +232,7 @@ namespace VL.Qt
         /// <summary>Switches one <see cref="Protocol.WindowMode"/> bit live (vlqt_window_set_mode).</summary>
         public void SetMode(uint mode, bool on)
         {
-            if (!_disposed && _window != IntPtr.Zero)
+            if (!_disposed && !_window.IsNull)
                 Native.vlqt_window_set_mode(_window, mode, on ? mode : 0u);
         }
 
@@ -243,7 +243,7 @@ namespace VL.Qt
         /// </summary>
         public Native.Result SetIcon(string? fullPath)
         {
-            IconResult = _disposed || _window == IntPtr.Zero ? Native.Result.NullHandle : Native.vlqt_window_set_icon(_window, fullPath);
+            IconResult = _disposed || _window.IsNull ? Native.Result.NullHandle : Native.vlqt_window_set_icon(_window, fullPath);
             return IconResult;
         }
 
@@ -254,21 +254,21 @@ namespace VL.Qt
         /// </summary>
         public int SetSamples(MultisampleCount samples)
         {
-            if (!_disposed && _window != IntPtr.Zero)
+            if (!_disposed && !_window.IsNull)
                 UsedSamples = Native.vlqt_window_set_samples(_window, (int)samples);
             return UsedSamples;
         }
 
-        /// <summary>Debug overlay for all elements live (vlqt_window_set_debug).</summary>
+        /// <summary>Debug overlay for all elements live (vlqt_scene_set_debug).</summary>
         public void SetDebug(bool on)
         {
-            if (!_disposed && _window != IntPtr.Zero)
-                Native.vlqt_window_set_debug(_window, on ? 1 : 0);
+            if (!_disposed && !_window.IsNull)
+                Native.vlqt_scene_set_debug(_window, on ? 1 : 0);
         }
 
         public void Hide()
         {
-            if (_window != IntPtr.Zero)
+            if (!_window.IsNull)
                 Native.vlqt_window_hide(_window);
         }
 
@@ -278,9 +278,9 @@ namespace VL.Qt
             if (_disposed)
                 return;
             var window = _core.Close();
-            if (window != IntPtr.Zero)
-                Native.vlqt_window_destroy(window);
-            _window = IntPtr.Zero;
+            if (!window.IsNull)
+                Native.vlqt_scene_destroy(window);
+            _window = SceneHandle.Null;
             _disposed = true;
         }
     }

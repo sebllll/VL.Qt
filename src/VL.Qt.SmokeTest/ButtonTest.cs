@@ -7,7 +7,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 
 // Button (package A): QtQuick.Controls Button with style Basic. Raw protocol against QtNative: creation, implicit
-// size from the text (AUTO_SIZE default on), Bounds size with AUTO_SIZE off, EV_CLICK per clicked signal without the
+// size from the text (AUTO_SIZE default on), Bounds size with AUTO_SIZE off, EVENT_CLICK per clicked signal without the
 // Interactive flag, Enabled false suppresses clicks, AutoRepeat repeats clicks while held. Mouse input comes from the
 // TEST export vlqt_test_send_mouse (see InteractionTest).
 [TestFixture, NonParallelizable]
@@ -41,8 +41,8 @@ public static class ButtonTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt button test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt button test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
@@ -71,19 +71,19 @@ public static class ButtonTest
         {
             uint c = 0;
             foreach (var r in recs)
-                if (r.Event == Protocol.Ev.Click && r.Handle == H) c += r.U32;
+                if (r.Event == Protocol.EventId.Click && r.Handle == H) c += r.U32;
             return c;
         }
         static string S(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
 
         // Created with text, bound without flags; Bounds size 0 + AUTO_SIZE default on -> implicit size.
         cmd.Reset();
-        cmd.Create(B, Protocol.Type.Button);
+        cmd.Create(B, Protocol.ElementType.Button);
         VL.Qt.Styles.BaseStyle.Write(cmd, B); // like the Reconciler
         cmd.SetPlace(B, 100, 100, 0, 0);
-        cmd.SetString(B, Protocol.Prop.Text, "Click me");
-        cmd.SetBool(B, Protocol.Prop.Enabled, true);
-        cmd.SetBool(B, Protocol.Prop.AutoRepeat, false);
+        cmd.SetString(B, Protocol.PropertyId.Text, "Click me");
+        cmd.SetBool(B, Protocol.PropertyId.Enabled, true);
+        cmd.SetBool(B, Protocol.PropertyId.AutoRepeat, false);
         cmd.Reparent(B, 0, 0);
         cmd.Bind(B, H, 0);
         CheckApply("button create + text/enabled/autoRepeat");
@@ -91,8 +91,8 @@ public static class ButtonTest
         s.Pump(2);
         var recs = Frame();
         recs.AddRange(Frame());
-        var m = Last(recs, Protocol.Ev.Measured);
-        var sb = Last(recs, Protocol.Ev.SceneBounds);
+        var m = Last(recs, Protocol.EventId.Measured);
+        var sb = Last(recs, Protocol.EventId.SceneBounds);
         float w0 = m?.F(0) ?? 0, h0 = m?.F(1) ?? 0;
         s.Check(w0 > 20 && h0 > 10, $"implicit size from text ({w0} x {h0}) ({S(recs)})");
         s.Check(sb is { } b0 && b0.F(0) == 100 && b0.F(1) == 100 && b0.F(2) == w0 && b0.F(3) == h0,
@@ -100,14 +100,14 @@ public static class ButtonTest
         s.Check(NativeTest.vlqt_test_handler_count(w, B) == 0, "no Interactive handlers needed for clicks");
 
         // Longer text -> wider implicit size, follows without a new Bounds.
-        cmd.SetString(B, Protocol.Prop.Text, "Click me, I am a much longer label");
+        cmd.SetString(B, Protocol.PropertyId.Text, "Click me, I am a much longer label");
         CheckApply("button longer text");
         recs = Frame();
-        var m1 = Last(recs, Protocol.Ev.Measured);
+        var m1 = Last(recs, Protocol.EventId.Measured);
         s.Check(m1 is { } mm && mm.F(0) > w0 + 50, $"longer text -> wider implicit width ({S(recs)})");
         float w1 = m1?.F(0) ?? w0;
 
-        // Click = press + release over the button -> EV_CLICK 1 without the Interactive flag.
+        // Click = press + release over the button -> EVENT_CLICK 1 without the Interactive flag.
         float cx = 100 + w1 / 2, cy = 100 + h0 / 2;
         Mouse(TestProtocol.Mouse.Move, cx, cy);
         Mouse(TestProtocol.Mouse.Press, cx, cy);
@@ -127,7 +127,7 @@ public static class ButtonTest
         s.Check(Clicks(recs) == 0, $"release outside -> no click ({S(recs)})");
 
         // Enabled false -> no clicks.
-        cmd.SetBool(B, Protocol.Prop.Enabled, false);
+        cmd.SetBool(B, Protocol.PropertyId.Enabled, false);
         CheckApply("button disabled");
         Mouse(TestProtocol.Mouse.Move, cx, cy);
         Mouse(TestProtocol.Mouse.Press, cx, cy);
@@ -136,8 +136,8 @@ public static class ButtonTest
         s.Check(Clicks(recs) == 0, $"disabled -> no click ({S(recs)})");
 
         // AutoRepeat: holding the press repeats clicked (Qt: delay 300 ms, interval 100 ms, wall clock timers).
-        cmd.SetBool(B, Protocol.Prop.Enabled, true);
-        cmd.SetBool(B, Protocol.Prop.AutoRepeat, true);
+        cmd.SetBool(B, Protocol.PropertyId.Enabled, true);
+        cmd.SetBool(B, Protocol.PropertyId.AutoRepeat, true);
         CheckApply("button autoRepeat");
         Mouse(TestProtocol.Mouse.Press, cx, cy);
         uint repeated = 0;
@@ -154,16 +154,16 @@ public static class ButtonTest
         s.Check(repeated >= 3, $"autoRepeat -> repeated clicks while held ({repeated})");
 
         // AUTO_SIZE off -> Bounds size counts.
-        cmd.SetBool(B, Protocol.Prop.AutoSize, false);
+        cmd.SetBool(B, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(B, 100, 100, 200, 60);
         CheckApply("button AUTO_SIZE off");
         recs = Frame();
-        var sb2 = Last(recs, Protocol.Ev.SceneBounds);
+        var sb2 = Last(recs, Protocol.EventId.SceneBounds);
         s.Check(sb2 is { } b2 && b2.F(2) == 200 && b2.F(3) == 60, $"AUTO_SIZE off -> Bounds size ({S(recs)})");
 
         cmd.Destroy(B);
         CheckApply("button destroy");
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
     }
 

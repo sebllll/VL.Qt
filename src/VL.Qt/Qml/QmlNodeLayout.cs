@@ -27,7 +27,7 @@ namespace VL.Qt.Qml
     }
 
     /// <summary>
-    /// Output pin of a declared property: the last value QML changed (EV_QML_PROPERTY), <see cref="QmlPropertyDecl.Default"/>
+    /// Output pin of a declared property: the last value QML changed (EVENT_QML_PROPERTY), <see cref="QmlPropertyDecl.Default"/>
     /// until the first change and again after a reload. Same name as its input pin (the pin kind tells them apart).
     /// </summary>
     /// <param name="Name">Pin name, the same as the input pin of the property.</param>
