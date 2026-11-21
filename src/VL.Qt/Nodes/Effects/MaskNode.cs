@@ -14,10 +14,10 @@ namespace VL.Qt.Nodes
     /// has no content the element is invisible (Inverted flips that).
     /// Connect Output to the Effect pin of an element, or chain it with other effect nodes; the order of the nodes
     /// does not matter within a run.
-    /// Neighboring MultiEffect nodes are merged into one layer with one shader, Qt's fixed order applies inside it; a
-    /// shader effect (e.g. Glow) ends the run, between runs the patch order applies.
+    /// Blur, DropShadow, ColorAdjust, Colorize and Mask next to each other in a chain are merged into one layer with one
+    /// shader, Qt's fixed order applies inside it; a shader effect (e.g. Glow) ends the run, between runs the patch order applies.
     /// </summary>
-    [ProcessNode(Name = "Mask", Category = Categories.MultiEffect)]
+    [ProcessNode(Name = "Mask", Category = Categories.Effects)]
     public sealed class MaskNode
     {
         internal readonly record struct Props(Element? Mask, float ThresholdMin, float SpreadAtMin, float ThresholdMax,

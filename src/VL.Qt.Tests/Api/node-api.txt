@@ -427,7 +427,7 @@ VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Mode | in VL.Qt.Elements.Ble
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Opacity | in float = 1 | (opacity)
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Output | out VL.Qt.Elements.Effect | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.BlendNode | type sealed class
-VL.Qt | VL.Qt.Nodes.BlurNode | attr ProcessNode(Name = "Blur", Category = "Qt.Effects.MultiEffect")
+VL.Qt | VL.Qt.Nodes.BlurNode | attr ProcessNode(Name = "Blur", Category = "Qt.Effects")
 VL.Qt | VL.Qt.Nodes.BlurNode | ctor | new
 VL.Qt | VL.Qt.Nodes.BlurNode | method Update | VL.Qt.Elements.Effect
 VL.Qt | VL.Qt.Nodes.BlurNode | method Update | order Input, Amount, Max, Multiplier, Auto Padding, Padding, Output
@@ -513,7 +513,7 @@ VL.Qt | VL.Qt.Nodes.CloseNode | method Update | order Input, Output
 VL.Qt | VL.Qt.Nodes.CloseNode | method Update | pin Input | in VL.Qt.Paths.QtPath | (input)
 VL.Qt | VL.Qt.Nodes.CloseNode | method Update | pin Output | out VL.Qt.Paths.QtPath | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.CloseNode | type sealed class
-VL.Qt | VL.Qt.Nodes.ColorAdjustNode | attr ProcessNode(Name = "ColorAdjust", Category = "Qt.Effects.MultiEffect")
+VL.Qt | VL.Qt.Nodes.ColorAdjustNode | attr ProcessNode(Name = "ColorAdjust", Category = "Qt.Effects")
 VL.Qt | VL.Qt.Nodes.ColorAdjustNode | ctor | new
 VL.Qt | VL.Qt.Nodes.ColorAdjustNode | method Update | VL.Qt.Elements.Effect
 VL.Qt | VL.Qt.Nodes.ColorAdjustNode | method Update | order Input, Brightness, Contrast, Saturation, Output
@@ -523,7 +523,7 @@ VL.Qt | VL.Qt.Nodes.ColorAdjustNode | method Update | pin Input | in VL.Qt.Eleme
 VL.Qt | VL.Qt.Nodes.ColorAdjustNode | method Update | pin Output | out VL.Qt.Elements.Effect | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.ColorAdjustNode | method Update | pin Saturation | in float = -1 | (saturation)
 VL.Qt | VL.Qt.Nodes.ColorAdjustNode | type sealed class
-VL.Qt | VL.Qt.Nodes.ColorizeNode | attr ProcessNode(Name = "Colorize", Category = "Qt.Effects.MultiEffect")
+VL.Qt | VL.Qt.Nodes.ColorizeNode | attr ProcessNode(Name = "Colorize", Category = "Qt.Effects")
 VL.Qt | VL.Qt.Nodes.ColorizeNode | ctor | new
 VL.Qt | VL.Qt.Nodes.ColorizeNode | method Update | VL.Qt.Elements.Effect
 VL.Qt | VL.Qt.Nodes.ColorizeNode | method Update | order Input, Color, Amount, Output
@@ -648,7 +648,7 @@ VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Minimum | in VL.Core.Optional
 VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Moves Element | in bool = true | (movesElement)
 VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Output | out VL.Qt.Elements.Interaction | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.DragNode | type sealed class
-VL.Qt | VL.Qt.Nodes.DropShadowNode | attr ProcessNode(Name = "DropShadow", Category = "Qt.Effects.MultiEffect")
+VL.Qt | VL.Qt.Nodes.DropShadowNode | attr ProcessNode(Name = "DropShadow", Category = "Qt.Effects")
 VL.Qt | VL.Qt.Nodes.DropShadowNode | ctor | new
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | VL.Qt.Elements.Effect
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | order Input, Color, Offset, Blur, Scale, Auto Padding, Padding, Output
@@ -674,7 +674,7 @@ VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | method Update | pin Element | in VL.
 VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | method Update | pin Image | out VL.Lib.Basics.Imaging.IImage | Pin(Name = "Image") | (return)
 VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | method Update | pin Text | out string | (text)
 VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | type sealed class
-VL.Qt | VL.Qt.Nodes.FileWriterElementNode | attr ProcessNode(Name = "FileWriter (Element)", Category = "Qt")
+VL.Qt | VL.Qt.Nodes.FileWriterElementNode | attr ProcessNode(Name = "FileWriter (Element)", Category = "Qt.Images")
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | ctor | new
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
@@ -690,7 +690,7 @@ VL.Qt | VL.Qt.Nodes.FileWriterElementNode | method Update | pin Scale | in float
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | method Update | pin Write | in bool = false | (write)
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | method Update | void
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | type sealed class
-VL.Qt | VL.Qt.Nodes.FileWriterNode | attr ProcessNode(Name = "FileWriter", Category = "Qt")
+VL.Qt | VL.Qt.Nodes.FileWriterNode | attr ProcessNode(Name = "FileWriter", Category = "Qt.Images")
 VL.Qt | VL.Qt.Nodes.FileWriterNode | ctor | new
 VL.Qt | VL.Qt.Nodes.FileWriterNode | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.FileWriterNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
@@ -927,7 +927,7 @@ VL.Qt | VL.Qt.Nodes.LoadFontNode | method Update | pin Family | out string | Pin
 VL.Qt | VL.Qt.Nodes.LoadFontNode | method Update | pin Path | in VL.Lib.IO.Path | (path)
 VL.Qt | VL.Qt.Nodes.LoadFontNode | method Update | string
 VL.Qt | VL.Qt.Nodes.LoadFontNode | type sealed class
-VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | attr ProcessNode(Name = "LoadImage (Async)", Category = "Qt")
+VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | attr ProcessNode(Name = "LoadImage (Async)", Category = "Qt.Images")
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | ctor | new
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
@@ -943,7 +943,7 @@ VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | pin Mipmaps | in bool |
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | pin On Loaded | out System.IObservable<VL.Qt.Images.QtImage> | Pin(Visibility = PinVisibility.Optional) | (onLoaded)
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | pin Path | in VL.Lib.IO.Path | (path)
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | type sealed class
-VL.Qt | VL.Qt.Nodes.LoadImageNode | attr ProcessNode(Name = "LoadImage", Category = "Qt")
+VL.Qt | VL.Qt.Nodes.LoadImageNode | attr ProcessNode(Name = "LoadImage", Category = "Qt.Images")
 VL.Qt | VL.Qt.Nodes.LoadImageNode | ctor | new
 VL.Qt | VL.Qt.Nodes.LoadImageNode | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.LoadImageNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
@@ -956,7 +956,7 @@ VL.Qt | VL.Qt.Nodes.LoadImageNode | method Update | pin Image | out VL.Qt.Images
 VL.Qt | VL.Qt.Nodes.LoadImageNode | method Update | pin Mipmaps | in bool | (mipmaps)
 VL.Qt | VL.Qt.Nodes.LoadImageNode | method Update | pin Path | in VL.Lib.IO.Path | (path)
 VL.Qt | VL.Qt.Nodes.LoadImageNode | type sealed class
-VL.Qt | VL.Qt.Nodes.MaskNode | attr ProcessNode(Name = "Mask", Category = "Qt.Effects.MultiEffect")
+VL.Qt | VL.Qt.Nodes.MaskNode | attr ProcessNode(Name = "Mask", Category = "Qt.Effects")
 VL.Qt | VL.Qt.Nodes.MaskNode | ctor | new
 VL.Qt | VL.Qt.Nodes.MaskNode | method Update | VL.Qt.Elements.Effect
 VL.Qt | VL.Qt.Nodes.MaskNode | method Update | order Input, Mask, Threshold Min, Spread At Min, Threshold Max, Spread At Max, Inverted, Output
@@ -1107,7 +1107,7 @@ VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Trim End | in float = 1 |
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Trim Offset | in float = 0 | Pin(Name = "Trim Offset", Visibility = PinVisibility.Optional) | (trimOffset)
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Trim Start | in float = 0 | Pin(Name = "Trim Start", Visibility = PinVisibility.Optional) | (trimStart)
 VL.Qt | VL.Qt.Nodes.PolylineNode | type sealed class
-VL.Qt | VL.Qt.Nodes.QmlElementNode | attr ProcessNode(Name = "QmlElement", Category = "Qt.Elements")
+VL.Qt | VL.Qt.Nodes.QmlElementNode | attr ProcessNode(Name = "QmlElement", Category = "Qt.Elements.Qml")
 VL.Qt | VL.Qt.Nodes.QmlElementNode | attr Smell(SymbolSmell.Experimental)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | ctor | new
 VL.Qt | VL.Qt.Nodes.QmlElementNode | ctor | order Node Context
@@ -1281,7 +1281,17 @@ VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Size | in Stride.Core.
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Spacing | in float | Pin(Visibility = PinVisibility.Optional) | (spacing)
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Transform | in Stride.Core.Mathematics.Matrix | Pin(Visibility = PinVisibility.Optional) | (transform)
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | type sealed class
-VL.Qt | VL.Qt.Nodes.ShaderNode | attr ProcessNode(Name = "ShaderEffect", Category = "Qt.Elements")
+VL.Qt | VL.Qt.Nodes.SamplerNodes | attr Category("Qt.Elements.Shaders")
+VL.Qt | VL.Qt.Nodes.SamplerNodes | attr SkipCategory
+VL.Qt | VL.Qt.Nodes.SamplerNodes | method Sampler | order Filter, Mip Filter, Address U, Address V, Output
+VL.Qt | VL.Qt.Nodes.SamplerNodes | method Sampler | pin Address U | in VL.Qt.Elements.SamplerAddress = SamplerAddress.Clamp | (addressU)
+VL.Qt | VL.Qt.Nodes.SamplerNodes | method Sampler | pin Address V | in VL.Qt.Elements.SamplerAddress = SamplerAddress.Clamp | (addressV)
+VL.Qt | VL.Qt.Nodes.SamplerNodes | method Sampler | pin Filter | in VL.Qt.Elements.SamplerFilter = SamplerFilter.Linear | (filter)
+VL.Qt | VL.Qt.Nodes.SamplerNodes | method Sampler | pin Mip Filter | in VL.Qt.Elements.SamplerMipFilter = SamplerMipFilter.None | Pin(Visibility = PinVisibility.Optional) | (mipFilter)
+VL.Qt | VL.Qt.Nodes.SamplerNodes | method Sampler | pin Output | out VL.Qt.Elements.Sampler | (return)
+VL.Qt | VL.Qt.Nodes.SamplerNodes | method Sampler | static VL.Qt.Elements.Sampler
+VL.Qt | VL.Qt.Nodes.SamplerNodes | type static class
+VL.Qt | VL.Qt.Nodes.ShaderNode | attr ProcessNode(Name = "ShaderEffect", Category = "Qt.Elements.Shaders")
 VL.Qt | VL.Qt.Nodes.ShaderNode | attr Smell(SymbolSmell.Advanced)
 VL.Qt | VL.Qt.Nodes.ShaderNode | ctor | new
 VL.Qt | VL.Qt.Nodes.ShaderNode | ctor | order Node Context
@@ -1343,7 +1353,7 @@ VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Style | in VL.Qt.Styles.Sty
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Transform | in Stride.Core.Mathematics.Matrix | (transform)
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Value | out float | (value)
 VL.Qt | VL.Qt.Nodes.SliderNode | type sealed class
-VL.Qt | VL.Qt.Nodes.SnapshotNode | attr ProcessNode(Name = "Snapshot", Category = "Qt")
+VL.Qt | VL.Qt.Nodes.SnapshotNode | attr ProcessNode(Name = "Snapshot", Category = "Qt.Images")
 VL.Qt | VL.Qt.Nodes.SnapshotNode | ctor | new
 VL.Qt | VL.Qt.Nodes.SnapshotNode | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.SnapshotNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
@@ -1439,7 +1449,7 @@ VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Vertical Alignment | in VL.Qt
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Weight | in VL.Qt.Elements.FontWeight = Normal | Pin(Visibility = PinVisibility.Optional) | (weight)
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Wrap | in VL.Qt.Elements.TextWrap = NoWrap | Pin(Visibility = PinVisibility.Optional) | (wrap)
 VL.Qt | VL.Qt.Nodes.TextNode | type sealed class
-VL.Qt | VL.Qt.Nodes.ToQtImageNode | attr ProcessNode(Name = "ToQtImage", Category = "Qt")
+VL.Qt | VL.Qt.Nodes.ToQtImageNode | attr ProcessNode(Name = "ToQtImage", Category = "Qt.Images")
 VL.Qt | VL.Qt.Nodes.ToQtImageNode | ctor | new
 VL.Qt | VL.Qt.Nodes.ToQtImageNode | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.ToQtImageNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
@@ -1492,7 +1502,7 @@ VL.Qt | VL.Qt.Nodes.TouchPointsNode | method Update | pin Occlusion | in bool = 
 VL.Qt | VL.Qt.Nodes.TouchPointsNode | method Update | pin Output | out VL.Qt.Elements.Interaction | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.TouchPointsNode | method Update | pin Points | in VL.Lib.Reactive.IChannel<VL.Lib.Collections.Spread<VL.Qt.Elements.TouchPoint>> = null | (points)
 VL.Qt | VL.Qt.Nodes.TouchPointsNode | type sealed class
-VL.Qt | VL.Qt.Nodes.UniformNodes | attr Category("Qt.Elements.Uniform")
+VL.Qt | VL.Qt.Nodes.UniformNodes | attr Category("Qt.Elements.Shaders.Uniform")
 VL.Qt | VL.Qt.Nodes.UniformNodes | attr SkipCategory
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Bool | attr Smell(SymbolSmell.Advanced)
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Bool | order Name, Value, Output
@@ -1531,13 +1541,6 @@ VL.Qt | VL.Qt.Nodes.UniformNodes | method Matrix | pin Name | in string | (name)
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Matrix | pin Output | out VL.Qt.Elements.Uniform | (return)
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Matrix | pin Value | in Stride.Core.Mathematics.Matrix | (value)
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Matrix | static VL.Qt.Elements.Uniform
-VL.Qt | VL.Qt.Nodes.UniformNodes | method Sampler | order Filter, Mip Filter, Address U, Address V, Output
-VL.Qt | VL.Qt.Nodes.UniformNodes | method Sampler | pin Address U | in VL.Qt.Elements.SamplerAddress = SamplerAddress.Clamp | (addressU)
-VL.Qt | VL.Qt.Nodes.UniformNodes | method Sampler | pin Address V | in VL.Qt.Elements.SamplerAddress = SamplerAddress.Clamp | (addressV)
-VL.Qt | VL.Qt.Nodes.UniformNodes | method Sampler | pin Filter | in VL.Qt.Elements.SamplerFilter = SamplerFilter.Linear | (filter)
-VL.Qt | VL.Qt.Nodes.UniformNodes | method Sampler | pin Mip Filter | in VL.Qt.Elements.SamplerMipFilter = SamplerMipFilter.None | Pin(Visibility = PinVisibility.Optional) | (mipFilter)
-VL.Qt | VL.Qt.Nodes.UniformNodes | method Sampler | pin Output | out VL.Qt.Elements.Sampler | (return)
-VL.Qt | VL.Qt.Nodes.UniformNodes | method Sampler | static VL.Qt.Elements.Sampler
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Texture | attr Smell(SymbolSmell.Advanced)
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Texture | order Name, Element, Sampler, Output
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Texture | pin Element | in VL.Qt.Elements.Element | (element)
@@ -1593,7 +1596,7 @@ VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Size | in Stride.Core.Mathem
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Transform | in Stride.Core.Mathematics.Matrix | (transform)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Volume | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (volume)
 VL.Qt | VL.Qt.Nodes.VideoNode | type sealed class
-VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | attr ProcessNode(Name = "VideoSourceToQtImage", Category = "Qt")
+VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | attr ProcessNode(Name = "VideoSourceToQtImage", Category = "Qt.Images")
 VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | ctor | new
 VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
@@ -2286,7 +2289,7 @@ VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | pin Input | in VL.Q
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | pin Output | out Stride.Rendering.IGraphicsRendererBase | Pin(Name = "Output") | (return)
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | pin Space | in VL.Qt.Space = DIPTopLeft | (space)
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | type sealed class : Stride.Rendering.RendererBase
-VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | attr ProcessNode(Name = "QtTexture", Category = "Qt")
+VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | attr ProcessNode(Name = "QtTexture", Category = "Stride.Textures.Source")
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | attr Smell(SymbolSmell.Experimental)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | ctor | new
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | ctor | order Node Context
@@ -2309,7 +2312,7 @@ VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Size | in Stride
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Space | in VL.Qt.Space = DIPTopLeft | (space)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | void
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | type sealed class
-VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | attr ProcessNode(Name = "ToTexturePixels", Category = "Qt")
+VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | attr ProcessNode(Name = "ToTexturePixels", Category = "Stride.Input")
 VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | attr Smell(SymbolSmell.Experimental)
 VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | ctor | new
 VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | ctor | order Node Context

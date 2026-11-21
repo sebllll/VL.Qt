@@ -67,7 +67,7 @@
             </p:TypeAnnotation>
           </Pad>
           <Node Bounds="100,695,125,19" Id="a0LNEUauQjWH75naHAxmFP">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.Stride.dll">
+            <p:NodeReference LastCategoryFullName="Stride.Textures.Source" LastDependency="VL.Qt.Stride.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="QtTexture" />
             </p:NodeReference>
