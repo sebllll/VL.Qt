@@ -5,6 +5,8 @@ using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
@@ -331,6 +333,15 @@ public static class ApplyTest
             "apply error id: cleared by a successful apply");
         s.Check(Native.vlqt_scene_get_apply_error(SceneHandle.Null, out _) == Native.Result.NullHandle, "apply error id: null window -> NullHandle");
         s.Check(Apply(b.Clear()) == 0, "apply: empty buffer ok");
+
+        // An invalid buffer resets the apply error too: it must not report the apply before it (here: rc -2, command 0).
+        Err("clear color, no id again", b.Clear().Raw(Protocol.Op.SetClearColor, 4, 4), Native.Result.BadLength, "expected 16");
+        var nullBuf = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.NullRef<byte>(), 4);
+        rc = Native.Apply(w, nullBuf);
+        s.Check(rc == Native.Result.BadLength && Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.rc == (int)Native.Result.BadLength
+            && ae.command == 0 && ae.id == 0 && ae.op == 0 && ae.Reason.Contains("invalid buffer"),
+            $"apply error id: null buffer after a failed apply -> rc {ae.rc} command {ae.command} op {ae.op} \"{ae.Reason}\" ({rc})");
+        s.Check(Apply(b.Clear()) == 0 && Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.rc == 0, "apply error id: empty buffer clears the error");
 
         // Earlier commands of a failing buffer stay applied.
         rc = Apply(b.Clear().Color(4, 1, 1, 0).Place(777, 0, 0, 1, 1).Color(4, 1, 0, 1));
