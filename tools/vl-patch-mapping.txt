@@ -22,8 +22,12 @@
 #   W4-20 | pin | Qt.Elements/Rectangle | Get Radius | Radius
 
 # W4-16: [assembly: ImportAsIs(Namespace = "VL.Qt", Category = "Qt")] puts the types of VL.Qt.* under Qt.*; the three
-# enums of VL.Qt.Nodes move to VL.Qt.Elements.
+# enums of VL.Qt.Nodes move to VL.Qt.Elements, QtImage and QtImageState to VL.Qt.Images (some patches name them under Qt).
 W4-16 | category | *             | VL.Qt       | Qt
 W4-16 | category | BlendMode     | VL.Qt.Nodes | Qt.Elements
 W4-16 | category | LabelPosition | VL.Qt.Nodes | Qt.Elements
 W4-16 | category | ToggleLook    | VL.Qt.Nodes | Qt.Elements
+W4-16 | category | QtImage       | VL.Qt       | Qt.Images
+W4-16 | category | QtImage       | Qt          | Qt.Images
+W4-16 | category | QtImageState  | VL.Qt       | Qt.Images
+W4-16 | category | QtImageState  | Qt          | Qt.Images
