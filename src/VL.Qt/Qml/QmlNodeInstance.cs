@@ -5,8 +5,8 @@ using VL.Core;
 using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.NodeFactories;
 using VL.Qt.Nodes;
-using VL.Qt.Shaders;
 using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Qml

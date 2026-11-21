@@ -7,6 +7,7 @@ using VL.Lib.Basics.Imaging;
 using VL.Qt.Elements;
 using VL.Qt.Images;
 using VL.Qt.Interop;
+using VL.Qt.Reconciliation;
 
 namespace VL.Qt.Nodes
 {
@@ -34,7 +35,7 @@ namespace VL.Qt.Nodes
         internal const string ContainsVideoSuffix = "contains video, no preview";
 
         private readonly ResourceClient _client;
-        private readonly SceneRegistry _scene;
+        private readonly OccurrenceRegistry _scene;
         private readonly Func<SceneHandle, long> _changeCount;
         private readonly Func<double> _clockSeconds;
         private ImageResource? _resource;
@@ -53,13 +54,13 @@ namespace VL.Qt.Nodes
         private string _error = string.Empty;
 
         public ElementTooltipPreview(NodeContext nodeContext)
-            : this(ResourceClient.ForApp(nodeContext.AppHost), SceneRegistry.ForApp(nodeContext.AppHost),
+            : this(ResourceClient.ForApp(nodeContext.AppHost), OccurrenceRegistry.ForApp(nodeContext.AppHost),
                   static window => Native.vlqt_scene_get_change_count(window), static () => Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency)
         {
         }
 
         /// <summary>For tests: a client on a fake API, an own scene registry, and injected change counter and clock.</summary>
-        internal ElementTooltipPreview(ResourceClient client, SceneRegistry scene, Func<SceneHandle, long> changeCount, Func<double> clockSeconds)
+        internal ElementTooltipPreview(ResourceClient client, OccurrenceRegistry scene, Func<SceneHandle, long> changeCount, Func<double> clockSeconds)
         {
             _client = client;
             _scene = scene;

@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Elements;
+using VL.Qt.Reconciliation;
 using VL.Qt.Styles;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
@@ -32,7 +33,7 @@ namespace VL.Qt.Tests
         private static Scenario Alternating(string label, Element a, Element b, int expectedSets, int minFirstFrame = N * 3)
         {
             var writer = new CommandWriter();
-            var rec = new Reconciler(writer, new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry());
             rec.Update(a, Space.DIPTopLeft);
             Assert.That(writer.Count, Is.GreaterThan(minFirstFrame), "first frame creates the whole tree");
             int frame = 0;
@@ -149,7 +150,7 @@ namespace VL.Qt.Tests
                 alt[i] = new Rectangle { Size = new Vector2(2, 1), Feedback = new FeedbackSlot(feedback, i) };
             }
             var writer = new CommandWriter();
-            var rec = new Reconciler(writer, new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry());
             var builder = ImmutableArray.Create(children).ToBuilder();
             rec.Update(new Group { Children = builder.ToImmutable() }, Space.DIPTopLeft);
             int f = 0;
@@ -216,7 +217,7 @@ namespace VL.Qt.Tests
         /// <summary>Two reconcilers (own writers) on one registry; the shared element is a new instance of one slot every frame.</summary>
         private static Scenario TwoRenderersSharedElement(bool aFirst)
         {
-            var scene = new SceneRegistry();
+            var scene = new OccurrenceRegistry();
             var slot = new FeedbackSlot(new ElementFeedback(), 0);
             var wa = new CommandWriter();
             var wb = new CommandWriter();
@@ -313,7 +314,7 @@ namespace VL.Qt.Tests
         public void TwoRenderers_SharedElementChangingInstance_OwnerStaysTheFirstRenderer(bool aFirst)
         {
             // A2: the element is keyed by its slot; whichever renderer updates first after a change, A (first to show it) stays the owner.
-            var scene = new SceneRegistry();
+            var scene = new OccurrenceRegistry();
             var slot = new FeedbackSlot(new ElementFeedback(), 0);
             var ra = new Reconciler(new CommandWriter(), new IdAllocator(), scene);
             var rb = new Reconciler(new CommandWriter(), new IdAllocator(), scene);

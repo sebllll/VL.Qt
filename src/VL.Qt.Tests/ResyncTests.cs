@@ -7,6 +7,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
@@ -95,7 +96,7 @@ namespace VL.Qt.Tests
         {
             _sink = new RecordingSink();
             _qtNative = new FakeQtNative();
-            _rec = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
+            _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry());
             _resync = new ResyncController(_rec, () => _qtNative.Apply(new[] { "RESET" }));
         }
 
@@ -208,7 +209,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Resync_ReleasesElementsAndIds()
         {
-            var scene = new SceneRegistry();
+            var scene = new OccurrenceRegistry();
             var ids = new IdAllocator();
             var rec = new Reconciler(_sink, ids, scene);
             var qtNative = new FakeQtNative();

@@ -9,6 +9,7 @@ using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Images;
 using VL.Qt.Paths;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
@@ -25,7 +26,7 @@ namespace VL.Qt.Tests
         public void SetUp()
         {
             _sink = new RecordingSink();
-            _rec = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
+            _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry());
         }
 
         private void Frame(Element? root)

@@ -4,6 +4,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Reconciliation;
 using K = VL.Qt.Wire.Protocol.MultiEffectKey;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
@@ -20,7 +21,7 @@ namespace VL.Qt.Tests
         public void SetUp()
         {
             _sink = new RecordingSink();
-            _rec = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
+            _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry());
         }
 
         private void Frame(Element? root)

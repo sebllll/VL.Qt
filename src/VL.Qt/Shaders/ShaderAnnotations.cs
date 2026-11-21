@@ -36,7 +36,10 @@ namespace VL.Qt.Shaders
     /// </summary>
     /// <param name="Category">@category of the file head, null = default category (Qt.Elements.Shaders).</param>
     /// <param name="Summary">@summary of the file head (node help), null if not given.</param>
-    /// <param name="Padding">Fixed @padding of the file head in DIP (x = left, y = top, width = right, height = bottom), zero if not given or if it names a uniform; only the effect chain node uses it.</param>
+    /// <param name="Padding">
+    /// Fixed @padding of the file head in DIP (x = left, y = top, width = right, height = bottom), zero if not given or if it
+    /// names a uniform; only the effect chain node uses it.
+    /// </param>
     /// <param name="Uniforms">Annotations per uniform name (ordinal), only uniforms that have at least one tag.</param>
     /// <param name="BoolUniforms">Names of uniforms declared as bool (regex on the source; SPIR-V reflects bool as uint).</param>
     /// <param name="Warnings">Unknown tags, tags in the wrong place, values that do not parse syntactically.</param>
@@ -44,7 +47,10 @@ namespace VL.Qt.Shaders
     /// <param name="PaddingUniform">Name of the float uniform in <c>@padding &lt;uniform&gt; [factor]</c>, null for a fixed or no padding.</param>
     /// <param name="PaddingFactor">Factor of <c>@padding &lt;uniform&gt; [factor]</c>, 1 if not given.</param>
     /// <param name="ChainOnly">@chainonly given: the factory creates only the effect chain node of this file, no element node.</param>
-    /// <param name="Errors">Head tags of the effect chain node that are wrong (@passes not 1 or 2, a broken @padding with a uniform), shown red at that node.</param>
+    /// <param name="Errors">
+    /// Head tags of the effect chain node that are wrong (@passes not 1 or 2, a broken @padding with a uniform), shown red at
+    /// that node.
+    /// </param>
     internal sealed record ShaderAnnotations(
         string? Category,
         string? Summary,

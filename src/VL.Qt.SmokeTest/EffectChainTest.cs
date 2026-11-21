@@ -8,6 +8,7 @@ using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using NUnit.Framework;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -72,7 +73,7 @@ public static class EffectChainTest
         s.Check(w != SceneHandle.Null, "effect-chain: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
 
         var warnings = new List<string>();
         IDisposable Warn(string m) { warnings.Add(m); return new Remove(warnings, m); }

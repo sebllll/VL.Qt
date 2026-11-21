@@ -6,6 +6,7 @@ using VL.Lib.Basics.Imaging;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
 using VL.Qt.Nodes;
+using VL.Qt.Reconciliation;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
@@ -15,7 +16,7 @@ namespace VL.Qt.Tests
     {
         private FakeResourceApi _api = null!;
         private ResourceClient _client = null!;
-        private SceneRegistry _scene = null!;
+        private OccurrenceRegistry _scene = null!;
         private Reconciler _reconciler = null!;
         private ElementTooltipPreview _node = null!;
         private Rectangle _element = null!;
@@ -28,7 +29,7 @@ namespace VL.Qt.Tests
             _api = new FakeResourceApi { SnapshotSize = (4, 4) };
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
             _client.SetPumping(true);
-            _scene = new SceneRegistry();
+            _scene = new OccurrenceRegistry();
             _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene);
             _changes = 0;
             _clock = 100;
@@ -96,7 +97,7 @@ namespace VL.Qt.Tests
                     Finish();
                 Show(next);
             }
-            Assert.That(Update(out _, _reconciler.Root!.Last), Is.Not.Null, "the place keeps its image");
+            Assert.That(Update(out _, _reconciler.Root!.Element), Is.Not.Null, "the place keeps its image");
             Assert.That(Grabs, Is.GreaterThanOrEqualTo(1));
         }
 

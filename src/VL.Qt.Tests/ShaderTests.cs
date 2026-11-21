@@ -9,6 +9,7 @@ using VL.Qt.Elements;
 using VL.Qt.Images;
 using VL.Qt.Interop;
 using VL.Qt.Nodes;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
 using P = VL.Qt.Wire.Protocol.PropertyId;
@@ -92,7 +93,7 @@ namespace VL.Qt.Tests
         public void SetUp()
         {
             _sink = new RecordingSink();
-            _rec = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
+            _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry());
         }
 
         private void Frame(Element root)

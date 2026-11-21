@@ -7,6 +7,7 @@ using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Reconciliation;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
@@ -131,7 +132,7 @@ namespace VL.Qt.Tests
         public void ColumnOfThreeRectangleNodes_ThroughReconciler()
         {
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
             var rects = Enumerable.Range(0, 3).Select(_ => new RectangleNode(NoWarning)).ToArray();
             using var column = new ColumnNode(NoWarning);
 
@@ -189,7 +190,7 @@ namespace VL.Qt.Tests
         public void AutoSize_ThroughReconciler_OnlyFlagIsSent_ZeroBytesWhenUnchanged()
         {
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
             using var row = new RowNode(NoWarning);
             using var group = new GroupNode(NoWarning);
 

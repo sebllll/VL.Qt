@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using NUnit.Framework;
 using VL.Qt.Elements;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Tests
@@ -15,7 +16,7 @@ namespace VL.Qt.Tests
         public void SetUp()
         {
             _sink = new RecordingSink();
-            _rec = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
+            _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry());
         }
 
         [Test]

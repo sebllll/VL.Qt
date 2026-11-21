@@ -4,23 +4,24 @@ using System.Linq;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Occurrences and duplicates (SceneRegistry) and feedback binding (BIND without flags) of the reconciler (04d).</summary>
+    /// <summary>Occurrences and duplicates (OccurrenceRegistry) and feedback binding (BIND without flags) of the reconciler (04d).</summary>
     public class ReconcilerSceneTests
     {
         private RecordingSink _sink = null!;
-        private SceneRegistry _scene = null!;
+        private OccurrenceRegistry _scene = null!;
         private Reconciler _rec = null!;
 
         [SetUp]
         public void SetUp()
         {
             _sink = new RecordingSink();
-            _scene = new SceneRegistry();
+            _scene = new OccurrenceRegistry();
             _rec = new Reconciler(_sink, new IdAllocator(), _scene);
         }
 
@@ -40,7 +41,7 @@ namespace VL.Qt.Tests
 
         private static Video V(FeedbackSlot feedback = default) => new() { Size = new Vector2(1, 1), Feedback = feedback };
 
-        private bool IsPrimaryHandle(Node n) => _rec.FeedbackRouter.IsPrimary(n.BoundFeedbackId);
+        private bool IsPrimaryHandle(ItemMirror n) => _rec.FeedbackRouter.IsPrimary(n.BoundFeedbackId);
 
         [Test]
         public void TwoOccurrences_TwoObjects_OwnHandlesOnSameSlot()
@@ -188,7 +189,7 @@ namespace VL.Qt.Tests
 
             Frame(G(R(5), inner));
             var innerNode = _rec.Root!.Children[1];
-            Assert.That(_scene.OwnerOf(e), Is.SameAs(innerNode.EffectObjects![0]));
+            Assert.That(_scene.OwnerOf(e), Is.SameAs(innerNode.Effect!.Objects![0]));
         }
 
         [Test]
@@ -220,7 +221,7 @@ namespace VL.Qt.Tests
 
             Assert.That(_sink.OfOp("CREATE").Count(), Is.EqualTo(3)); // root, v, x
             Assert.That(_rec.Root!.Children[1].IsIgnored, Is.True);
-            Assert.That(feedback[0].Warning, Is.EqualTo(SceneRegistry.VideoDuplicateWarning));
+            Assert.That(feedback[0].Warning, Is.EqualTo(OccurrenceRegistry.VideoDuplicateWarning));
             Assert.That(Structural, Does.Contain($"REPARENT {_rec.Root.Children[2].Id} {_rec.Root.Id} 1"));
             Assert.That(_sink.OfOp("BIND").Count(), Is.EqualTo(1));
 
@@ -245,7 +246,7 @@ namespace VL.Qt.Tests
             Assert.That(_scene.OwnerOf(v), Is.SameAs(_rec.Root.Children[0]));
             Assert.That(_rec.Root.Children[1].Children[0].IsIgnored, Is.True);
             Assert.That(Structural, Does.Contain($"DESTROY {oldId}"));
-            Assert.That(feedback[0].Warning, Is.EqualTo(SceneRegistry.VideoDuplicateWarning));
+            Assert.That(feedback[0].Warning, Is.EqualTo(OccurrenceRegistry.VideoDuplicateWarning));
 
             Frame(G(v, s));
             Assert.That(Structural, Is.Empty);
@@ -353,7 +354,7 @@ namespace VL.Qt.Tests
 
             Assert.That(sink2.OfOp("CREATE").Count(), Is.EqualTo(1)); // only the group
             Assert.That(rec2.Root!.Children[0].IsIgnored, Is.True);
-            Assert.That(feedback[0].Warning, Is.EqualTo(SceneRegistry.VideoDuplicateWarning));
+            Assert.That(feedback[0].Warning, Is.EqualTo(OccurrenceRegistry.VideoDuplicateWarning));
 
             // Steady: the first owner keeps it, regardless of order.
             sink2.Clear();
@@ -382,7 +383,7 @@ namespace VL.Qt.Tests
             Assert.That(_scene.OwnerOf(e), Is.Not.Null);
 
             // App 2 (F5): new app host → new registry; the same element instance is shown normally.
-            var scene2 = new SceneRegistry();
+            var scene2 = new OccurrenceRegistry();
             var sink2 = new RecordingSink();
             var rec2 = new Reconciler(sink2, new IdAllocator(), scene2);
             rec2.Update(G(e), Space.DIPTopLeft);
@@ -510,7 +511,7 @@ namespace VL.Qt.Tests
             var alt = new Element[n]; // alternative description per child, same feedback slot
             for (int i = 0; i < n; i++)
                 alt[i] = R(2, new FeedbackSlot(feedback, i));
-            var rec = new Reconciler(new RecordingSinkNull(), new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(new RecordingSinkNull(), new IdAllocator(), new OccurrenceRegistry());
             var arr = ImmutableArray.Create(children);
             rec.Update(new Group { Children = arr }, Space.DIPTopLeft);
 
@@ -552,7 +553,7 @@ namespace VL.Qt.Tests
         public void Fault_InUpdate_PropagatesToTheCaller_AndTheNextUpdateDoesNotThrow()
         {
             var sink = new ThrowingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
             rec.Update(G(R(1)), Space.DIPTopLeft);
             sink.Restart();
             sink.ThrowAt = 1; // the first command of the next frame: the Size SET of the changed rectangle
@@ -568,7 +569,7 @@ namespace VL.Qt.Tests
         public void Fault_AtSetOfAChangedElement_NextUpdateWithSameTree_SendsTheChangeAndStaysPrimary()
         {
             var sink = new ThrowingSink();
-            var scene = new SceneRegistry();
+            var scene = new OccurrenceRegistry();
             var rec = new Reconciler(sink, new IdAllocator(), scene);
             var slot = new FeedbackSlot(new ElementFeedback(), 0);
             var before = R(1, slot);
@@ -602,7 +603,7 @@ namespace VL.Qt.Tests
         public void Fault_AtANewElement_NextUpdate_LeavesNoOrphanObject()
         {
             var sink = new ThrowingSink();
-            var scene = new SceneRegistry();
+            var scene = new OccurrenceRegistry();
             var rec = new Reconciler(sink, new IdAllocator(), scene);
             rec.Update(G(), Space.DIPTopLeft);
             var added = R(1, new FeedbackSlot(new ElementFeedback(), 0));
@@ -624,7 +625,7 @@ namespace VL.Qt.Tests
         public void LongString_WithARealCommandWriter_DoesNotThrowOutOfUpdate()
         {
             // 100,000 characters do not fit a u16 payload length; the u32 length of the command header carries them (PROTO-02).
-            var rec = new Reconciler(new CommandWriter(), new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(new CommandWriter(), new IdAllocator(), new OccurrenceRegistry());
             var text = new Text { Content = new string('x', 100_000) };
             Assert.DoesNotThrow(() => rec.Update(G(text), Space.DIPTopLeft));
         }
@@ -633,7 +634,7 @@ namespace VL.Qt.Tests
         public void Fault_AtCreate_NextUpdate_BuildsTheTree()
         {
             var sink = new ThrowingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
             sink.ThrowAt = 1; // CREATE of the root
 
             Assert.Throws<ThrowingSink.InjectedFault>(() => rec.Update(G(R(1)), Space.DIPTopLeft));

@@ -1,6 +1,6 @@
 ﻿using VL.Qt.Wire;
 
-namespace VL.Qt
+namespace VL.Qt.Reconciliation
 {
     /// <summary>
     /// Writes SET_QML_PROPERTIES for a QmlElement as a diff by name against what was sent last: new or changed entries

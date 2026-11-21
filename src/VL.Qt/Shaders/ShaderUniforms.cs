@@ -103,7 +103,10 @@ namespace VL.Qt.Shaders
         }
     }
 
-    /// <summary>The uniform pins of a generated shader node and the Spread&lt;Uniform&gt; handed to the Shader (rebuilt only on a pin change, nothing allocated otherwise).</summary>
+    /// <summary>
+    /// The uniform pins of a generated shader node and the Spread&lt;Uniform&gt; handed to the Shader (rebuilt only on a pin
+    /// change, nothing allocated otherwise).
+    /// </summary>
     internal sealed class ShaderUniforms
     {
         private readonly UniformPin[] _pins;

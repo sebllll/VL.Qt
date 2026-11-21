@@ -4,20 +4,21 @@ using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using Rectangle = VL.Qt.Elements.Rectangle;
 using VL.Qt.Interop;
+using VL.Qt.Reconciliation;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Place fallback of <see cref="SceneRegistry.TryLocate"/>: a new instance is found by its feedback slot.</summary>
-    public class SceneRegistrySlotTests
+    /// <summary>Place fallback of <see cref="OccurrenceRegistry.TryLocate"/>: a new instance is found by its feedback slot.</summary>
+    public class OccurrenceRegistrySlotTests
     {
-        private SceneRegistry _scene = null!;
+        private OccurrenceRegistry _scene = null!;
         private Reconciler _reconciler = null!;
         private FeedbackSlot _slot;
 
         [SetUp]
         public void SetUp()
         {
-            _scene = new SceneRegistry();
+            _scene = new OccurrenceRegistry();
             _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene) { Window = new SceneHandle(1) };
             _slot = new FeedbackSlot(new ElementFeedback(), 0);
         }

@@ -6,6 +6,7 @@ using VL.Lib.Basics.Imaging;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
 using VL.Qt.Nodes;
+using VL.Qt.Reconciliation;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
@@ -15,7 +16,7 @@ namespace VL.Qt.Tests
     {
         private FakeResourceApi _api = null!;
         private ResourceClient _client = null!;
-        private SceneRegistry _scene = null!;
+        private OccurrenceRegistry _scene = null!;
         private Reconciler _reconciler = null!;
         private SnapshotNode _node = null!;
         private Rectangle _element = null!;
@@ -26,7 +27,7 @@ namespace VL.Qt.Tests
             _api = new FakeResourceApi();
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
             _client.SetPumping(true);
-            _scene = new SceneRegistry();
+            _scene = new OccurrenceRegistry();
             _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene);
             _node = new SnapshotNode(_client, _scene);
             _element = new Rectangle { Size = new Vector2(10, 10) };

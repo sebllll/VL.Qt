@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
@@ -451,7 +452,7 @@ namespace VL.Qt.Tests
         public void Rebind_FeedbackChange_RoutesToNewFeedback_OldFeedbackReset()
         {
             var cmds = new RecordingSink();
-            var rec = new Reconciler(cmds, new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(cmds, new IdAllocator(), new OccurrenceRegistry());
             var a = new ElementFeedback();
             var b = new ElementFeedback();
 
@@ -501,7 +502,7 @@ namespace VL.Qt.Tests
         public void MultiElementFeedback_EachElementRoutedToItsSlot()
         {
             // One feedback for a spread of three elements (slot index = spread index), like a ForEach in vvvv.
-            var rec = new Reconciler(new RecordingSink(), new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(new RecordingSink(), new IdAllocator(), new OccurrenceRegistry());
             var feedback = new ElementFeedback();
             var col = new Column { Children = ImmutableArray.Create<Element>(R(1, new FeedbackSlot(feedback, 0)), R(2, new FeedbackSlot(feedback, 1)), R(3, new FeedbackSlot(feedback, 2))) };
             rec.Update(col, Space.DIPTopLeft);
