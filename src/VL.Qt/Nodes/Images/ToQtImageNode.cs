@@ -2,6 +2,7 @@
 using VL.Core;
 using VL.Core.Import;
 using VL.Lib.Basics.Imaging;
+using VL.Qt.Images;
 
 namespace VL.Qt.Nodes
 {

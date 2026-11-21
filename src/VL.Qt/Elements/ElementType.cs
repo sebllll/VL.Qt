@@ -5,7 +5,7 @@ namespace VL.Qt.Elements
     /// Element kinds. Values are the CREATE type ids of the command protocol
     /// (<see cref="Protocol.ElementType"/>); the compiler keeps both in sync. <see cref="Item"/> is the protocol's Group.
     /// </summary>
-    public enum ElementType : ushort
+    internal enum ElementType : ushort
     {
         Item = Protocol.ElementType.Group,
         Rectangle = Protocol.ElementType.Rectangle,

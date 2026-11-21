@@ -6,7 +6,7 @@ using VL.Qt.Wire;
 namespace VL.Qt.Elements
 {
     /// <summary>State of one feedback slot (one element instance of a spread output). Main thread only.</summary>
-    public sealed class FeedbackState
+    internal sealed class FeedbackState
     {
         public bool IsHovered { get; set; }
         public bool IsPressed { get; set; }

@@ -165,7 +165,7 @@
             <Pin Id="tuQp6eN9ouGpe5Nl1IiXKA" Name="Multisample Count" Kind="InputPin" />
           </Node>
           <Pad Id="0Aqve2kjnxGeFwvulX2JNV" Comment="Multisample Count" Bounds="202,481,62,15" ShowValueBox="true" isIOBox="true" Value="None">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="MultisampleCount" />
             </p:TypeAnnotation>
           </Pad>

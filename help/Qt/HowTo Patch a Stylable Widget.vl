@@ -696,7 +696,7 @@
                 <ControlPoint Id="GKk2yX4lsnsMPIlRv9LF3Z" Bounds="177,645" />
                 <ControlPoint Id="DXf2q5b6IktOg84vQej7z3" Bounds="222,643" />
                 <Pad Id="UIPNpUJt91XPfZkrt9Wlum" Comment="Buttons" Bounds="342,861,68,15" ShowValueBox="true" isIOBox="true" Value="Left">
-                  <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+                  <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
                     <Choice Kind="TypeFlag" Name="PointerButtons" />
                   </p:TypeAnnotation>
                 </Pad>
@@ -787,7 +787,7 @@
                   <Pin Id="HCnvILqc2fMNqH9ivNZuKa" Name="Padding Char" Kind="InputPin" DefaultValue="0" />
                 </Node>
                 <Pad Id="AjZSrhSjKWrLBYfBk2ZBmy" Comment="Vertical Alignment" Bounds="1606,1191,63,15" ShowValueBox="true" isIOBox="true" Value="Top">
-                  <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+                  <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
                     <Choice Kind="TypeFlag" Name="VerticalAlignment" />
                   </p:TypeAnnotation>
                 </Pad>

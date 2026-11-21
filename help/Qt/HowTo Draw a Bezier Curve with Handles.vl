@@ -280,7 +280,7 @@
             <p:TypeAnnotation LastCategoryFullName="Collections" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Spread" />
               <p:TypeArguments>
-                <TypeReference LastCategoryFullName="VL.Qt.Paths" LastDependency="VL.Qt.vl">
+                <TypeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
                   <Choice Kind="TypeFlag" Name="HandleMode" />
                 </TypeReference>
               </p:TypeArguments>
