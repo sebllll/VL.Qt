@@ -7,6 +7,7 @@ using VL.Lang;
 using VL.Model;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Stride
@@ -40,7 +41,7 @@ namespace VL.Qt.Stride
         {
             _errors = new NodeErrors(nodeContext);
             _renderer = QtTextureRenderer.ForApp(nodeContext.AppHost);
-            _scene = new OffscreenScene(SceneRegistry.ForApp(nodeContext.AppHost), 1920, 1080);
+            _scene = new OffscreenScene(OccurrenceRegistry.ForApp(nodeContext.AppHost), 1920, 1080);
             _input = new NotificationQueue(_scene.Input.Notify);
             _renderer.StrideDeviceGone += OnStrideDeviceGone;
         }

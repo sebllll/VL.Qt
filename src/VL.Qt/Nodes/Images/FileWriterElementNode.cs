@@ -3,6 +3,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Reconciliation;
 using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Nodes
@@ -26,13 +27,13 @@ namespace VL.Qt.Nodes
 
         public FileWriterElementNode(NodeContext nodeContext)
         {
-            _grab = new SnapshotGrab(ResourceClient.ForApp(nodeContext.AppHost), SceneRegistry.ForApp(nodeContext.AppHost));
+            _grab = new SnapshotGrab(ResourceClient.ForApp(nodeContext.AppHost), OccurrenceRegistry.ForApp(nodeContext.AppHost));
             _writer = ImageFileWriter.CreateNative();
             _report = new ImageNodeReport(new NodeErrors(nodeContext));
         }
 
         /// <summary>For tests: a client on a fake API, an own scene registry and a writer on a fake write function.</summary>
-        internal FileWriterElementNode(ResourceClient client, SceneRegistry scene, ImageFileWriter writer)
+        internal FileWriterElementNode(ResourceClient client, OccurrenceRegistry scene, ImageFileWriter writer)
         {
             _grab = new SnapshotGrab(client, scene);
             _writer = writer;

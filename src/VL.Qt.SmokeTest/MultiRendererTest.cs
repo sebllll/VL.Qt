@@ -5,6 +5,7 @@ using System.IO;
 using Stride.Core.Mathematics;
 using VL.Lib.Basics.Imaging;
 using VL.Lib.Mathematics;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -13,7 +14,7 @@ using VL.Qt.Wire;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 
-// One element tree in two renderers of one SceneRegistry: a WindowScene (registered first, owns the element)
+// One element tree in two renderers of one OccurrenceRegistry: a WindowScene (registered first, owns the element)
 // and an OffscreenScene (D3D11, Windows only). Both draw it, no warning in the feedback; state values (SceneBounds,
 // Measured) come from the window; after the window renderer is disposed the offscreen renderer takes over (after its
 // next update), state values keep arriving and Snapshot / TryLocate find the element in the offscreen scene.
@@ -60,7 +61,7 @@ public static class MultiRendererTest
         var client = new ResourceClient(new NativeResourceApi(), Environment.CurrentManagedThreadId, static () => null);
         client.SetPumping(true);
 
-        var registry = new SceneRegistry();
+        var registry = new OccurrenceRegistry();
         var window = new WindowScene(registry, "VL.Qt multi renderer test", new RectangleF(0, 0, WindowW, WindowH));
         var offscreen = new OffscreenScene(registry, TexW, TexH);
         check(window.Window != SceneHandle.Null && offscreen.Handle != SceneHandle.Null, $"renderers created ({window.Error}{offscreen.Error})");

@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using Color = System.Drawing.Color;
@@ -49,7 +50,7 @@ public static class RendererTest
 
     private static void Run(Scenario s)
     {
-        var scene = new SceneRegistry();
+        var scene = new OccurrenceRegistry();
         var clear = new Color4(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         var title = "VL.Qt renderer test";
         var r = new WindowScene(scene, title, new RectangleF(100, 100, 800, 600));
@@ -179,8 +180,8 @@ public static class RendererTest
     {
         var bounds = new RectangleF(0, 0, 320, 240);
         var r = vSync is bool v
-            ? new WindowScene(new SceneRegistry(), title, bounds, vSync: v)
-            : new WindowScene(new SceneRegistry(), title, bounds);
+            ? new WindowScene(new OccurrenceRegistry(), title, bounds, vSync: v)
+            : new WindowScene(new OccurrenceRegistry(), title, bounds);
         s.Check(r.Window != SceneHandle.Null, $"{what} window created " + r.Error);
         if (r.Window == SceneHandle.Null)
             return;
@@ -235,7 +236,7 @@ public static class RendererTest
             && Math.Abs(a.Width - b.Width) <= tol && Math.Abs(a.Height - b.Height) <= tol;
 
         var bounds = new RectangleF(150, 120, 500, 300);
-        var r = new WindowScene(new SceneRegistry(), "VL.Qt geometry test", bounds);
+        var r = new WindowScene(new OccurrenceRegistry(), "VL.Qt geometry test", bounds);
         int events = 0;
         r.GeometryChanged += _ => events++;
         var g = Shown(r, "VL.Qt geometry test");
@@ -253,16 +254,16 @@ public static class RendererTest
         // Round trip: the reported geometry as Bounds of a new window gives the same geometry (no wandering).
         var reported = g!.Value.Bounds;
         r.Dispose();
-        var r2 = new WindowScene(new SceneRegistry(), "VL.Qt geometry round trip", reported);
+        var r2 = new WindowScene(new OccurrenceRegistry(), "VL.Qt geometry round trip", reported);
         var g2 = Shown(r2, "VL.Qt geometry round trip");
         s.Check(g2 is { } h2 && Close(h2.Bounds, reported, 0.01f), $"round trip stable ({g2?.Bounds} vs {reported})");
         r2.Dispose();
 
         // Sentinel (empty bounds) = 600x400 centered; bounds on no screen = centered as well.
-        var rc = new WindowScene(new SceneRegistry(), "VL.Qt geometry centered", default);
+        var rc = new WindowScene(new OccurrenceRegistry(), "VL.Qt geometry centered", default);
         var gc = Shown(rc, "VL.Qt geometry centered");
         rc.Dispose();
-        var ro = new WindowScene(new SceneRegistry(), "VL.Qt geometry off screen", new RectangleF(50000, 50000, 600, 400));
+        var ro = new WindowScene(new OccurrenceRegistry(), "VL.Qt geometry off screen", new RectangleF(50000, 50000, 600, 400));
         var go = Shown(ro, "VL.Qt geometry off screen");
         ro.Dispose();
         s.Check(gc is { } c && c.Bounds.Width == 600 && c.Bounds.Height == 400, $"empty bounds → 600x400 ({gc?.Bounds})");
@@ -299,13 +300,13 @@ public static class RendererTest
             }
             return r.Geometry;
         }
-        var first = new WindowScene(new SceneRegistry(), "VL.Qt hotswap first", new RectangleF(100, 100, 320, 240));
+        var first = new WindowScene(new OccurrenceRegistry(), "VL.Qt hotswap first", new RectangleF(100, 100, 320, 240));
         Frames(first, "VL.Qt hotswap first", 10);
         var want = WindowPlacement.DefaultBounds;
         for (int round = 0; round < 2; round++) // 0: added live, 1: Undo (dispose) + Redo (create again)
         {
             var what = round == 0 ? "added live" : "Undo/Redo";
-            var live = new WindowScene(new SceneRegistry(), "VL.Qt hotswap live", WindowPlacement.CreateBounds(vlDefault, vlDefault));
+            var live = new WindowScene(new OccurrenceRegistry(), "VL.Qt hotswap live", WindowPlacement.CreateBounds(vlDefault, vlDefault));
             var g = Frames(live, "VL.Qt hotswap live");
             s.Check(live.IsVisible && g is { } h && Math.Abs(h.Bounds.Width - want.Width) <= 1 && Math.Abs(h.Bounds.Height - want.Height) <= 1,
                 $"renderer {what} opens with the Bounds pin default size ({g?.Bounds} vs {want.Width}x{want.Height})");
@@ -320,7 +321,7 @@ public static class RendererTest
     private static void RunVisibility(Scenario s)
     {
         const string title = "VL.Qt visibility test";
-        var scene = new SceneRegistry();
+        var scene = new OccurrenceRegistry();
         var clear = new Color4(0, 0, 0, 1);
         var r = new WindowScene(scene, title, new RectangleF(0, 0, 320, 240));
         s.Check(r.Window != SceneHandle.Null, "window created " + r.Error);
@@ -375,7 +376,7 @@ public static class RendererTest
         // Recreated (Undo of a delete, Bounds changed: same registry; F8/F5: new app = new registry), several times.
         for (int i = 0; i < 3; i++)
         {
-            var reg = i == 0 ? scene : new SceneRegistry();
+            var reg = i == 0 ? scene : new OccurrenceRegistry();
             var n = new WindowScene(reg, title, new RectangleF(0, 0, 320, 240));
             bool before = n.IsVisible;
             Frame(n);

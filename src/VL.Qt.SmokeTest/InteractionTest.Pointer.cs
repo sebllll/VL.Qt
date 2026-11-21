@@ -6,6 +6,7 @@ using System.Threading;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Lib.Reactive;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -35,7 +36,7 @@ public static partial class InteractionTest
         {
             _tag = tag;
             _s = s;
-            _rec = new Reconciler(_cmd, new IdAllocator(), new SceneRegistry());
+            _rec = new Reconciler(_cmd, new IdAllocator(), new OccurrenceRegistry());
             W = NativeCalls.CreateWindow(800, 600, "VL.Qt " + tag + " test");
             s.Check(W != SceneHandle.Null, tag + ": window_create");
             Native.vlqt_window_show(W);

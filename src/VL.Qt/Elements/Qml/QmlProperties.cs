@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Elements

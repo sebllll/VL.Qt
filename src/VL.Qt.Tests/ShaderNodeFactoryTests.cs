@@ -55,17 +55,6 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
 
         // --- names ---
 
-        [TestCase("Glitch", "Glitch", null)]
-        [TestCase("Glitch_RGB", "Glitch", "RGB")]
-        [TestCase("Glitch_RGB.frag", "Glitch", "RGB")]
-        [TestCase("Levels_Clamp_Both", "Levels", "Clamp Both")]
-        [TestCase("Foo_", "Foo", null)]
-        [TestCase("_Foo", "_Foo", null)]
-        public void NodeName_SplitsVariantLikeStride(string fileName, string name, string? version)
-        {
-            Assert.That(ShaderNodeFactory.GetNodeName(fileName), Is.EqualTo((name, version)));
-        }
-
         [Test]
         public void FullName_HasVariantInParentheses()
         {

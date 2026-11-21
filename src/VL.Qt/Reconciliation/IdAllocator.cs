@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace VL.Qt
+namespace VL.Qt.Reconciliation
 {
     /// <summary>
     /// Hands out u32 object ids for one window. 0 is reserved for the window root and never returned.

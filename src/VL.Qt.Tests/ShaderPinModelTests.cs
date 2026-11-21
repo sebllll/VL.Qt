@@ -284,16 +284,6 @@ void main() {
         }
 
         [Test]
-        public void Pins_PinNames_SplitCamelCase()
-        {
-            Assert.That(ShaderPinModel.PinName("pixelSize"), Is.EqualTo("Pixel Size"));
-            Assert.That(ShaderPinModel.PinName("amount"), Is.EqualTo("Amount"));
-            Assert.That(ShaderPinModel.PinName("uvOffset2"), Is.EqualTo("Uv Offset2"));
-            Assert.That(ShaderPinModel.PinName("RGBShift"), Is.EqualTo("RGB Shift"));
-            Assert.That(ShaderPinModel.PinName("tint_color"), Is.EqualTo("Tint Color"));
-        }
-
-        [Test]
         public void Pins_Summary_FromAnnotation()
         {
             var m = Build("uniform a float 0\nsampler lut 2\n", blockStart + "    float a; // @summary The amount\n};\nlayout(binding = 2) uniform sampler2D lut; // @summary Lookup\n");

@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -117,7 +118,7 @@ public static class ClearPinTest
         s.Check(w != SceneHandle.Null, "clear-pin: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var scene = new SceneRegistry();
+        var scene = new OccurrenceRegistry();
         var rec = new Reconciler(cmd, new IdAllocator(), scene) { Window = w };
         string P(string name) => Path.Combine(s.OutDir, $"clear_pin_{name}.png");
 

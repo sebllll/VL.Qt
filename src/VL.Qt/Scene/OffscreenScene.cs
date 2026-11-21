@@ -3,6 +3,7 @@ using System.Text;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 
 namespace VL.Qt
@@ -20,10 +21,10 @@ namespace VL.Qt
         private string _createError = "", _bindError = "";
         private int _usedSamples;
 
-        /// <param name="registry">Duplicate registry of the app (<see cref="SceneRegistry.ForApp"/>).</param>
+        /// <param name="registry">Duplicate registry of the app (<see cref="OccurrenceRegistry.ForApp"/>).</param>
         /// <param name="width">Initial scene width in DIP (1 DIP = 1 texture pixel); <see cref="Bind"/> sets the final size.</param>
         /// <param name="height">Initial scene height in DIP.</param>
-        public OffscreenScene(SceneRegistry registry, int width, int height)
+        public OffscreenScene(OccurrenceRegistry registry, int width, int height)
         {
             var handle = Native.vlqt_offscreen_create(width, height);
             if (handle.IsNull)

@@ -11,6 +11,7 @@ using VL.Lib.Collections;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Qml;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Tests

@@ -7,6 +7,7 @@ using System.IO;
 using System.Threading;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -357,7 +358,7 @@ public static class VideoTest
         s.Check(w != SceneHandle.Null, "node: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
         var node = new VideoNode(NoWarning);
         var buf = new byte[1 << 16];
         float pos = 0, dur = 0;

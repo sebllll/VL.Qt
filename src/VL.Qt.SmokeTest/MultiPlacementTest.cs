@@ -5,6 +5,7 @@ using System.IO;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Lib.Mathematics;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -34,7 +35,7 @@ public static class MultiPlacementTest
         s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
         var buf = new byte[1 << 16];
         int warnings = 0;
         IDisposable Warn(string _) { warnings++; return new NoopDisposable(); }

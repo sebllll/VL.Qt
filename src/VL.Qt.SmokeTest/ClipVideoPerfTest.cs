@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
@@ -45,7 +46,7 @@ public static class ClipVideoPerfTest
         s.Check(w != SceneHandle.Null, "clip-grab: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
         var rect = new RectangleNode(_ => Disposable());
         var circle = new CircleNode(_ => Disposable());
         var shadow = new DropShadowNode();

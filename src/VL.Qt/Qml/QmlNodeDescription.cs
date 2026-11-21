@@ -1,8 +1,7 @@
-﻿using System;
-using System.Diagnostics;
-using System.Threading;
+﻿using System.Threading;
 using Microsoft.Extensions.Logging;
 using VL.Core;
+using VL.Qt.NodeFactories;
 
 namespace VL.Qt.Qml
 {
@@ -49,18 +48,6 @@ namespace VL.Qt.Qml
         }
 
         /// <summary>Middle click / Definition > Open: opens the .qml in the default editor, like the shader nodes.</summary>
-        internal static bool OpenEditor(QmlFile file, ILogger logger)
-        {
-            try
-            {
-                Process.Start(new ProcessStartInfo(file.FilePath) { UseShellExecute = true });
-                return true;
-            }
-            catch (Exception e)
-            {
-                logger.LogWarning(e, "Could not open QML file {Path}", file.FilePath);
-                return false;
-            }
-        }
+        internal static bool OpenEditor(QmlFile file, ILogger logger) => FileEditor.Open(logger, "QML", file.FilePath);
     }
 }

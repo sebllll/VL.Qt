@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 using VL.Qt.Interop;
@@ -30,7 +31,7 @@ namespace VL.Qt.Tests
         [Test]
         public void SpaceChange_WritesSetSpaceOnce()
         {
-            var core = new Scene(new SceneRegistry(), SceneHandle.Null);
+            var core = new Scene(new OccurrenceRegistry(), SceneHandle.Null);
             Written(core, Space.DIPTopLeft);
             Assert.That(Written(core, Space.DIPTopLeft), Is.EqualTo(0), "unchanged");
             Assert.That(Written(core, Space.DIP), Is.EqualTo(setSpaceBytes), "changed: only SET_SPACE");
@@ -43,7 +44,7 @@ namespace VL.Qt.Tests
         [TestCase(Space.PixelTopLeft, Space.DIPTopLeft)]
         public void SpaceChange_WithTheSameScale_RewritesNoProperties(Space from, Space to)
         {
-            var core = new Scene(new SceneRegistry(), SceneHandle.Null);
+            var core = new Scene(new OccurrenceRegistry(), SceneHandle.Null);
             Written(core, from);
             Assert.That(Written(core, to), Is.EqualTo(setSpaceBytes));
         }

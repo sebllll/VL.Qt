@@ -11,6 +11,7 @@ using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
 using P = VL.Qt.Wire.Protocol.PropertyId;
@@ -764,7 +765,7 @@ namespace VL.Qt.Tests
             _registry = new FeedbackRouter();
             _handle = _registry.Acquire(new FeedbackSlot(_node.Core.Feedback, 0));
             _sink = new RecordingSink();
-            _reconciler = new Reconciler(_sink, new IdAllocator(), new SceneRegistry());
+            _reconciler = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry());
         }
 
         [TearDown]
