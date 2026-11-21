@@ -239,6 +239,9 @@ public static class ApplyTest
         Case("path: too few points", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Cubic }, 2), Native.Result.BadArgument, "the verbs take 4");
         Case("path: too many points", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Line }, 3), Native.Result.BadArgument, "the verbs take 2");
         Case("path: counts past the payload", set, new Pay().U32(shape).U16(Protocol.PropertyId.ShapePath).U16(Protocol.ValueType.Path).U32(0xFFFFFFFF).U32(0xFFFFFFFF), Native.Result.BadLength, "value length");
+        Case("string: length past the payload", set, new Pay().U32(shape).U16(Protocol.PropertyId.ShapePath).U16(Protocol.ValueType.String).U32(0xFFFFFFFF).Bytes(1, 2, 3, 4), Native.Result.BadLength, "value length");
+        Case("string: without its length field", set, new Pay().U32(shape).U16(Protocol.PropertyId.ShapePath).U16(Protocol.ValueType.String).Bytes(1, 2), Native.Result.BadLength, "value length");
+        Case("f32 array: count past the payload", set, new Pay().U32(shape).U16(Protocol.PropertyId.ShapePath).U16(Protocol.ValueType.F32Array).U32(0x40000000).Zeros(8), Native.Result.BadLength, "value length");
 
         // Rejected commands changed nothing: the elements still take a valid command.
         rc = Native.Apply(w, b.Clear().Cmd(uni, Pay.Head(fx, 1).F4Entry(F, "a", 1).ToArray()).Span);

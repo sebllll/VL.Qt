@@ -10,6 +10,7 @@
 #include "scene/event_queue.h"
 #include "scene/handlers.h"
 #include "scene/measure.h"
+#include "wire.h"
 
 #include <QtCore/QtTypes>
 
@@ -85,7 +86,10 @@ private:
     int reparent(quint32 id, quint32 parent, quint32 index, std::string& err);
     void reset();
     // Payload decoders (scene/commands.cpp).
-    int set(const unsigned char* p, int len, std::string& err);
+    /* The element of id; nullptr with rc and err set for the window root and input handlers ("has no <what>") or an
+     * unknown id. */
+    ElementEntry* findElement(quint32 id, const char* what, int& rc, std::string& err);
+    int setProperty(const unsigned char* p, int len, std::string& err); // SET
     int setStyle(const unsigned char* p, int len, std::string& err); // SET_STYLE (vlstyle.h)
     int setUniforms(const unsigned char* p, int len, std::string& err); // SET_UNIFORMS (ShaderEffect)
     int setEffectChain(const unsigned char* p, int len, std::string& err); // SET_EFFECT_CHAIN, effects/effect_chain_desc.h
@@ -93,6 +97,8 @@ private:
     /* root under window's content item, size follow, window-geometry watch (constructor, moveToWindow). */
     void attachRoot();
     void destroySubtree(QQuickItem* item);
+    /* A Video: stops the player and releases its audio tap before the item is deleted; other types: nothing. */
+    void releaseVideo(ElementEntry& node);
     void destroyHandlersOf(ElementEntry& node);
     /* Detaches mask from the link of host's chain that uses it (DESTROY of the mask); the mask stays parked hidden
      * under the root until REPARENT or DESTROY. Masks are attached by SET_EFFECT_CHAIN (protocol.h "Effect chain"). */
@@ -102,6 +108,7 @@ private:
     ClearState clearState; // Clear pin, clear colour and the previous-frame layer of Clear off
     quint32 sceneSpace = VLQT_SPACE_DIP_TOP_LEFT; // Space pin state
     std::vector<QQuickItem*> retired; // destroyed former effect sources, deleted after the next frame
+    std::vector<NamedEntry> entryScratch; // the checked entries of the SET_UNIFORMS / SET_QML_PROPERTIES being applied
 };
 
 } // namespace vlqt

@@ -63,10 +63,7 @@ Scene::~Scene()
         kv.second.xf->scene = nullptr; // the unparenting and deletes below emit geometry signals
     for (auto& kv : nodes) {
         elements.clearEffectSource(kv.second);
-        if (kv.second.type == VLQT_ELEMENT_TYPE_VIDEO) { // see destroySubtree
-            QMetaObject::invokeMethod(kv.second.item, "vlqtRelease");
-            res::audio::releaseVideo(kv.second.item);
-        }
+        releaseVideo(kv.second);
     }
     for (auto& kv : nodes)
         kv.second.item->setParentItem(nullptr);
@@ -147,6 +144,16 @@ int Scene::create(quint32 id, quint16 type, std::string& err)
     return ApplyOk;
 }
 
+void Scene::releaseVideo(ElementEntry& node)
+{
+    if (node.type != VLQT_ELEMENT_TYPE_VIDEO)
+        return;
+    // Stop the player and drop its source first, so the decoder and audio threads end before the item goes;
+    // then the audio tap, while the player still exists (audio_tap.h releaseVideo).
+    QMetaObject::invokeMethod(node.item, "vlqtRelease");
+    res::audio::releaseVideo(node.item);
+}
+
 void Scene::destroySubtree(QQuickItem* item)
 {
     const auto children = item->childItems();
@@ -156,12 +163,7 @@ void Scene::destroySubtree(QQuickItem* item)
     auto it = ids.find(item);
     ElementEntry& node = nodes[it->second];
     destroyHandlersOf(node); // before the item goes: handler QML objects, ids free again
-    // stop the player and drop its source first, so the decoder and audio threads end before the item goes.
-    // then the audio tap, while the player still exists (audio_tap.h releaseVideo).
-    if (node.type == VLQT_ELEMENT_TYPE_VIDEO) {
-        QMetaObject::invokeMethod(item, "vlqtRelease");
-        res::audio::releaseVideo(item);
-    }
+    releaseVideo(node);
     // Effect chain off first (layer, its root and stages; the masks of its links are detached and parked); a
     // SHADER source keeps its layer until flushLayerOff.
     const std::vector<QQuickItem*> masks = elements.effectMasks(node);

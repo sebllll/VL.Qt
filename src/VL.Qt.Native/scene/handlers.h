@@ -94,8 +94,6 @@ struct ElementEntry;
 class Scene;
 struct Value;
 
-inline constexpr float kInf = std::numeric_limits<float>::infinity();
-
 /* containmentMask of Text items: hit test against the painted text rect (QQuickText::boundingRect, item-local,
  * alignment applied) instead of the whole item rectangle. Child of the item. */
 class TextMask : public QObject
@@ -164,7 +162,8 @@ struct HandlerEntry {
     DragState* drag = nullptr;   // Drag handler: offset bookkeeping (child of object)
     bool movesElement = true;    // VLQT_PROPERTY_MOVES_ELEMENT (Drag)
     qint32 dragAxis = 0;         // VLQT_PROPERTY_DRAG_AXIS (Drag): 0 both, 1 x only, 2 y only
-    float dragLimits[4] = {-kInf, -kInf, kInf, kInf}; // VLQT_PROPERTY_DRAG_LIMITS (Drag): minX, minY, maxX, maxY
+    float dragLimits[4] = {-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(),
+        std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()}; // VLQT_PROPERTY_DRAG_LIMITS (Drag): minX, minY, maxX, maxY
     float sentDrag[2] = {};      // last EVENT_DRAG sent (0, 0 = nothing sent)
     quint32 sentDrags = 0;       // DragState::drags at the last EVENT_DRAG
     QObject* hover = nullptr;    // Point handler with ACCEPTED_BUTTONS 0: internal HoverHandler for the mouse
@@ -188,6 +187,9 @@ struct HandlerEntry {
     quint32 sentTapCount = 0;
     float sentPointer[2] = {};
 };
+
+/* The cached QML component of each input handler type (Handlers::comps); Touch Points has none. */
+enum class HandlerComponent { Hover, Tap, Point, Wheel, Drag, Pinch, Count };
 
 /* Per window (engine): QML components of the handler types, created on first use, and their properties. */
 class Handlers
@@ -215,7 +217,8 @@ private:
     QObject* create(QQmlComponent*& comp, const char* qml, const char* url, QQuickItem* item);
 
     QQmlEngine* engine;
-    QQmlComponent* comps[6] = {}; // HOVER, TAP, POINT, WHEEL, DRAG, PINCH
+    QQmlComponent* comps[size_t(HandlerComponent::Count)] = {};
+    QQmlComponent*& component(HandlerComponent c) { return comps[size_t(c)]; }
     struct {
         QMetaProperty hovered, pressed, active, point, wheelDelta; // resolved on the first creation of each type
         QMetaProperty position;                                   // on the point gadget, resolved on first read
