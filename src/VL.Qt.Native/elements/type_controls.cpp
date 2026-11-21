@@ -9,7 +9,7 @@ namespace {
 
 // ---------------------------------------------------------------------------------------------
 // Button (QtQuick.Controls, first Controls element). Base style VLQt (style/VLQt/Button.qml), values from
-// SET_STYLE (vlstyle.h); style picked once at startup (app/app.cpp). Clicks are
+// SET_STYLE (style/vl_style.h); style picked once at startup (app/app.cpp). Clicks are
 // Qt's clicked signal (release over the button; autoRepeat repeats it while held; disabled = none), counted in
 // vlqtClicks and sent as EVENT_CLICK by the poll for every bound Button (input handlers report their own clicks)
 // (Elements::takeClicks). AUTO_SIZE on (default): implicit size from text + padding, else the SIZE.

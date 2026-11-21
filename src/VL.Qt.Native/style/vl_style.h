@@ -1,4 +1,4 @@
-/* vlstyle.h - attached object VlStyle: the resolved style of one Controls element as a table field x state,
+/* style/vl_style.h - attached object VlStyle: the resolved style of one Controls element as a table field x state,
  * written by SET_STYLE (scene/commands.cpp) and read by the VL.Qt base style (style/VLQt/*.qml, embedded module "VLQt").
  *
  * QML API (see docs/styles.md):
@@ -8,14 +8,15 @@
  *   VlStyle.text.{color, font}    font: QFont from FontFamily ("" = Qt default), FontSize (px), FontWeight
  *   VlStyle.indicator.{color, borderColor, size, radius, borderWidth}
  *   VlStyle.track.{color, fillColor, thickness, radius}
- *   VlStyle.value(field, state)   one value for a part with a state of its own (SpinBox arrows), see revision
+ *   VlStyle.value(VlStyle.<Field>, state)   one value for a part with a state of its own (SpinBox arrows), see
+ *                                 revision; Field = the protocol's style field ids as a Q_ENUM (VlStyle.IndicatorRadius)
  *   VlStyle.revision              int, counts table changes (NOTIFY), for bindings on value()
  * The groups hold the values for the current state. Unset (field, state) -> (field, NORMAL) -> 0 / transparent / "".
  * Signals only on a real change; nothing is allocated per frame (cells are compared before they are written).
  * Attached per object, never inherited by children (C# resolves the inheritance). */
 #pragma once
 
-#include "elements/element_types.h"
+#include "protocol.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -25,11 +26,12 @@
 #include <QtQml/qqml.h>
 
 #include <array>
-#include <string>
+#include <optional>
 
 namespace vlqt {
 
 class VlStyle;
+struct Value; // elements/element_types.h
 
 /* VlStyle.frame */
 class VlStyleFrame : public QObject
@@ -56,7 +58,7 @@ public:
 signals:
     void changed();
 private:
-    const VlStyle* _style;
+    const VlStyle* m_style;
 };
 
 /* VlStyle.text */
@@ -72,7 +74,7 @@ public:
 signals:
     void changed();
 private:
-    const VlStyle* _style;
+    const VlStyle* m_style;
 };
 
 /* VlStyle.indicator */
@@ -94,7 +96,7 @@ public:
 signals:
     void changed();
 private:
-    const VlStyle* _style;
+    const VlStyle* m_style;
 };
 
 /* VlStyle.track */
@@ -114,7 +116,7 @@ public:
 signals:
     void changed();
 private:
-    const VlStyle* _style;
+    const VlStyle* m_style;
 };
 
 class VlStyle : public QObject
@@ -128,45 +130,71 @@ class VlStyle : public QObject
     Q_PROPERTY(vlqt::VlStyleTrack* track READ track CONSTANT)
     QML_ATTACHED(VlStyle)
 public:
-    /* Slots of the table: one per VLQT_STYLE_FIELD_* (slotOf maps the protocol id). */
-    enum Slot {
+    /* Protocol field ids (protocol.h vlqt_style_field) for VlStyle.value() in QML: VlStyle.IndicatorRadius. */
+    enum Field : quint16 {
+        FrameColor = VLQT_STYLE_FIELD_FRAME_COLOR,
+        BorderColor = VLQT_STYLE_FIELD_BORDER_COLOR,
+        TextColor = VLQT_STYLE_FIELD_TEXT_COLOR,
+        IndicatorColor = VLQT_STYLE_FIELD_INDICATOR_COLOR,
+        TrackColor = VLQT_STYLE_FIELD_TRACK_COLOR,
+        TrackFillColor = VLQT_STYLE_FIELD_TRACK_FILL_COLOR,
+        FrameRadius = VLQT_STYLE_FIELD_FRAME_RADIUS,
+        FrameBorderWidth = VLQT_STYLE_FIELD_FRAME_BORDER_WIDTH,
+        FramePaddingX = VLQT_STYLE_FIELD_FRAME_PADDING_X,
+        FramePaddingY = VLQT_STYLE_FIELD_FRAME_PADDING_Y,
+        FrameMinWidth = VLQT_STYLE_FIELD_FRAME_MIN_WIDTH,
+        FrameMinHeight = VLQT_STYLE_FIELD_FRAME_MIN_HEIGHT,
+        FontFamily = VLQT_STYLE_FIELD_TEXT_FONT_FAMILY,
+        FontSize = VLQT_STYLE_FIELD_TEXT_FONT_SIZE,
+        FontWeight = VLQT_STYLE_FIELD_TEXT_FONT_WEIGHT,
+        IndicatorSize = VLQT_STYLE_FIELD_INDICATOR_SIZE,
+        IndicatorRadius = VLQT_STYLE_FIELD_INDICATOR_RADIUS,
+        IndicatorBorderWidth = VLQT_STYLE_FIELD_INDICATOR_BORDER_WIDTH,
+        TrackThickness = VLQT_STYLE_FIELD_TRACK_THICKNESS,
+        TrackRadius = VLQT_STYLE_FIELD_TRACK_RADIUS,
+    };
+    Q_ENUM(Field)
+
+    /* Row of the table: one per field, in the order of s_fieldOfSlot (vl_style.cpp), colors first. */
+    enum class Slot {
         FrameColor, BorderColor, TextColor, IndicatorColor, TrackColor, TrackFillColor,
         FrameRadius, FrameBorderWidth, FramePaddingX, FramePaddingY, FrameMinWidth, FrameMinHeight,
         FontFamily, FontSize, FontWeight,
         IndicatorSize, IndicatorRadius, IndicatorBorderWidth,
         TrackThickness, TrackRadius,
-        SlotCount
+        Count
     };
-    static constexpr int stateCount = 5; // VLQT_STYLE_STATE_NORMAL .. CHECKED
+    static constexpr int stateCount = VLQT_STYLE_STATE_CHECKED + 1; // NORMAL .. CHECKED
 
     explicit VlStyle(QObject* owner);
     static VlStyle* qmlAttachedProperties(QObject* owner);
 
-    /* Protocol field id -> slot, -1 = unknown field. valueTypeOf: the field's fixed VLQT_VALUE_TYPE_*. */
-    static int slotOf(quint16 field);
-    static quint16 valueTypeOf(int slot);
+    /* The slot of a protocol field id, nullopt = unknown field. valueTypeOf: the slot's fixed VLQT_VALUE_TYPE_*. */
+    static std::optional<Slot> slotOf(quint16 field);
+    static quint16 valueTypeOf(Slot slot);
 
     /* SET_STYLE (scene/commands.cpp): clear() and setCell() edit the table, commit() refreshes the groups and signals.
-     * v must have the slot's value type (checked by the caller). */
+     * v must have the slot's value type (checked by the caller). A new font family is reported once if the system
+     * does not have it. */
     void clear();
-    void setCell(int slot, int state, const Value& v);
+    void setCell(Slot slot, int state, const Value& v);
     void commit();
 
-    int state() const { return _state; }
+    int state() const { return m_state; }
     void setState(int state);
-    int revision() const { return _revision; }
-    VlStyleFrame* frame() { return &_frame; }
-    VlStyleText* text() { return &_text; }
-    VlStyleIndicator* indicator() { return &_indicator; }
-    VlStyleTrack* track() { return &_track; }
+    int revision() const { return m_revision; }
+    VlStyleFrame* frame() { return &m_frame; }
+    VlStyleText* text() { return &m_text; }
+    VlStyleIndicator* indicator() { return &m_indicator; }
+    VlStyleTrack* track() { return &m_track; }
 
     Q_INVOKABLE int stateOf(bool enabled, bool pressed, bool hovered, bool checked) const;
-    Q_INVOKABLE QVariant value(int field, int state) const;
+    Q_INVOKABLE QVariant value(Field field, int state) const;
 
     /* Resolved values of the current state (read by the groups). */
-    QColor color(int slot) const { return _colors[slot]; }
-    qreal number(int slot) const { return _numbers[slot]; }
-    const QFont& font() const { return _font; }
+    QColor color(Slot slot) const { return m_colors[size_t(slot)]; }
+    qreal number(Slot slot) const { return m_numbers[size_t(slot)]; }
+    const QFont& font() const { return m_font; }
 
 signals:
     void stateChanged();
@@ -179,31 +207,27 @@ private:
         qint32 i = 0;     // i32
         QString s;        // string
     };
-    const Cell* resolve(int slot, int state) const;
-    QColor colorAt(int slot, int state) const;
-    float numberAt(int slot, int state) const;
+    const Cell* resolve(Slot slot, int state) const;
+    QColor colorAt(Slot slot, int state) const;
+    float numberAt(Slot slot, int state) const;
     QFont fontAt(int state) const;
     void refresh(); // current-state values from the table, signals per changed group
 
-    std::array<std::array<Cell, stateCount>, SlotCount> _cells;
-    int _state = 0;
-    int _revision = 0;
-    bool _dirty = false;
-    std::array<QColor, SlotCount> _colors{};
-    std::array<qreal, SlotCount> _numbers{};
-    QFont _font;
-    VlStyleFrame _frame;
-    VlStyleText _text;
-    VlStyleIndicator _indicator;
-    VlStyleTrack _track;
+    std::array<std::array<Cell, stateCount>, size_t(Slot::Count)> m_cells;
+    int m_state = 0;
+    int m_revision = 0;
+    bool m_dirty = false;
+    std::array<QColor, size_t(Slot::Count)> m_colors{};
+    std::array<qreal, size_t(Slot::Count)> m_numbers{};
+    QFont m_font;
+    VlStyleFrame m_frame;
+    VlStyleText m_text;
+    VlStyleIndicator m_indicator;
+    VlStyleTrack m_track;
 };
 
 /* Registers VlStyle (uncreatable, attached only) as module "VLQt.Style" (C++ only, imported by the base style).
  * Once at app start. */
 void registerStyleTypes();
-
-/* SET_STYLE payload (u32 id, u16 count, u16 flags, entries) on the element item; returns an ApplyResult. The whole
- * command is checked before the table is touched, so a bad entry leaves the style as it was. */
-int applySetStyle(QQuickItem* item, const unsigned char* p, int plen, std::string& err);
 
 } // namespace vlqt
