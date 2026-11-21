@@ -1,8 +1,8 @@
 /* elements/elements.h - the elements of one window (class Elements): creates the items and sets their properties.
  *
  * Every element type is an entry of the type table (element_types.h, one type file each): type id, C++ factory or QML
- * file, property table. Rectangle, Text, Image and Shape are built in C++ and written through typed setters (no
- * QVariant per SET); the QML types (Row, Column, Video, the controls) have their QML properties resolved once per type
+ * file, property table. Rectangle, Text, Image, Shape, Row and Column are built in C++ and written through typed setters (no
+ * QVariant per SET); the QML types (Video, the controls) have their QML properties resolved once per type
  * and engine to a QMetaProperty (on the first item), never looked up by name per frame. A new element property is a
  * table entry only, no new export.
  *
@@ -18,7 +18,8 @@
  *       keeps the driver running, but counts as a running animation (the perf page must subtract it) and must never
  *       be paused.
  *   QtQuick/private/qquickitem_p.h          QQuickItemPrivate: dirtyAttributes, nextDirtyItem, childItems for the
- *       change count (app/scene_change.cpp); explicitVisible (elements/group_item.cpp). Public way: no.
+ *       change count (app/scene_change.cpp); explicitVisible (elements/group_item.cpp); childItems and explicitVisible
+ *       (elements/positioner_align.cpp). Public way: no.
  *   QtQuick/private/qquickwindow_p.h        QQuickWindowPrivate: dirtyItemList (app/scene_change.cpp),
  *       deliveryAgentPrivate() (app/input_delivery.cpp), itemsToPolish (scene/scene.cpp), renderControl (device.cpp),
  *       rhi, graphicsConfig, ensureCustomRenderTarget (offscreen/offscreen_scene.cpp, offscreen_binding.cpp). Public way: no.
@@ -33,6 +34,9 @@
  *       effects/layer_requests.cpp, scene/previous_frame_layer.cpp, snapshot_resource.cpp). Public way: only the QML type.
  *   QtQuick/private/qquickrectangle_p.h, qquicktext_p.h   QQuickRectangle and QQuickText built in C++ with typed
  *       setters (elements/type_rectangle.cpp, elements/type_text.cpp). Public way: the QML types, set through QMetaProperty.
+ *   QtQuick/private/qquickpositioners_p.h   QQuickRow and QQuickColumn built in C++ with typed setters
+ *       (elements/type_layout.cpp); QQuickBasePositioner paddings and positioningComplete (elements/positioner_align.cpp).
+ *       Public way: the QML types, set through QMetaProperty.
  *   QtQuick/private/qquicktranslate_p.h     QQuickMatrix4x4::setMatrix without QVariant (elements/geometry.cpp).
  *   QtQuick/private/qquickpath_p.h          QQuickCurve, QQuickPathData: base of ShapePathElement
  *       (elements/shape_path_element.h). Public way: no.
