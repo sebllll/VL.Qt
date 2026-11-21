@@ -75,15 +75,15 @@ namespace VL.Qt
         /// SRGB format or R16G16B16A16_FLOAT QtNative writes linear premultiplied values). <paramref name="samples"/> is the
         /// MSAA count (<see cref="MultisampleCount.None"/> = 1), clamped to the device; the count used is in <see cref="UsedSamples"/>.
         /// A different count is a new Bind (after <see cref="Unbind"/>).
-        /// Returns a <see cref="Protocol.Offscreen"/> code, 0 = bound; the text of an error is in <see cref="Error"/>.
+        /// Returns <see cref="Native.Result.Ok"/> when bound, else the code of the failure (<see cref="Describe"/>); its text is in <see cref="Error"/>.
         /// </summary>
-        public int Bind(IntPtr device, IntPtr ntHandle, Int2 size, int format, MultisampleCount samples = MultisampleCount.None)
+        public Native.Result Bind(IntPtr device, IntPtr ntHandle, Int2 size, int format, MultisampleCount samples = MultisampleCount.None)
         {
             if (_disposed || _scene == IntPtr.Zero)
-                return Protocol.Offscreen.NullScene;
-            int rc = Native.vlqt_offscreen_bind(_scene, device, ntHandle, size.X, size.Y, format, (int)samples, out var used);
-            _usedSamples = rc == Protocol.Offscreen.Ok ? used : 0;
-            _bindError = rc == Protocol.Offscreen.Ok ? "" : Describe(rc);
+                return Native.Result.NullHandle;
+            var rc = Native.vlqt_offscreen_bind(_scene, device, ntHandle, size.X, size.Y, format, (int)samples, out var used);
+            _usedSamples = rc == Native.Result.Ok ? used : 0;
+            _bindError = rc == Native.Result.Ok ? "" : Describe(rc);
             return rc;
         }
 
@@ -129,7 +129,7 @@ namespace VL.Qt
 
         // Input (render-texture.md "Input"): positions in texture pixels (top-left origin, 1 DIP = 1 pixel), call
         // between two RenderBatch calls; the scene shows the result in the next batch, its events arrive in PollEvents.
-        // Each returns a Protocol.Offscreen code.
+        // Each returns a Native.Result code.
 
         /// <summary>
         /// Translates a vvvv notification (mouse, touch, keyboard, focus; positions already in texture pixels) into the
@@ -239,25 +239,25 @@ namespace VL.Qt
         }
 
         /// <summary>Pointer event (<see cref="Protocol.Pointer"/>) of <paramref name="device"/> (<see cref="Protocol.PointerDevice"/>); mouse: <paramref name="buttons"/> = Qt::MouseButtons held after the event; touch/pen: <paramref name="id"/> of the point.</summary>
-        public int SendPointer(int device, int type, int id, Vector2 position, int buttons, int modifiers)
-            => _disposed || _scene == IntPtr.Zero ? Protocol.Offscreen.NullScene
+        public Native.Result SendPointer(int device, int type, int id, Vector2 position, int buttons, int modifiers)
+            => _disposed || _scene == IntPtr.Zero ? Native.Result.NullHandle
             : Native.vlqt_offscreen_send_pointer(_scene, device, type, id, position.X, position.Y, buttons, modifiers);
 
         /// <summary>Wheel at <paramref name="position"/>; angle delta in eighths of a degree (120 = one notch).</summary>
-        public int SendWheel(Vector2 position, int dx, int dy, int modifiers)
-            => _disposed || _scene == IntPtr.Zero ? Protocol.Offscreen.NullScene
+        public Native.Result SendWheel(Vector2 position, int dx, int dy, int modifiers)
+            => _disposed || _scene == IntPtr.Zero ? Native.Result.NullHandle
             : Native.vlqt_offscreen_send_wheel(_scene, position.X, position.Y, dx, dy, modifiers);
 
         /// <summary>Key press or release (<see cref="Protocol.KeyEvent"/>) of a Qt::Key, without text.</summary>
-        public int SendKey(int type, int key, int modifiers, bool autoRepeat)
-            => _disposed || _scene == IntPtr.Zero ? Protocol.Offscreen.NullScene
+        public Native.Result SendKey(int type, int key, int modifiers, bool autoRepeat)
+            => _disposed || _scene == IntPtr.Zero ? Native.Result.NullHandle
             : Native.vlqt_offscreen_send_key(_scene, type, key, modifiers, autoRepeat ? 1 : 0);
 
         /// <summary>Typed text to the focus item (e.g. one character of a KeyPress).</summary>
-        public int SendText(ReadOnlySpan<char> text)
+        public Native.Result SendText(ReadOnlySpan<char> text)
         {
             if (_disposed || _scene == IntPtr.Zero)
-                return Protocol.Offscreen.NullScene;
+                return Native.Result.NullHandle;
             if (text.Length > 64)
                 text = text[..64];
             Span<byte> utf8 = stackalloc byte[64 * 3];
@@ -266,14 +266,14 @@ namespace VL.Qt
         }
 
         /// <summary>Gives the scene keyboard focus (FocusIn) or takes it (FocusOut); QtNative also does it on a press inside or outside the texture.</summary>
-        public int SetFocus(bool focused)
-            => _disposed || _scene == IntPtr.Zero ? Protocol.Offscreen.NullScene
+        public Native.Result SetFocus(bool focused)
+            => _disposed || _scene == IntPtr.Zero ? Native.Result.NullHandle
             : Native.vlqt_offscreen_set_focus(_scene, focused ? 1 : 0);
 
         /// <summary>
         /// Renders the changed, bound scenes of <paramref name="renderers"/> in one native call, ordered against
         /// <paramref name="context"/> (the foreign immediate ID3D11DeviceContext*) by fences. Returns the number of scenes
-        /// rendered or a negative <see cref="Protocol.Offscreen"/> code (<see cref="Describe"/> gives the text).
+        /// rendered or a negative <see cref="Native.Result"/> (<see cref="Describe"/> gives the text).
         /// </summary>
         public static int RenderBatch(IntPtr context, ReadOnlySpan<OffscreenRenderer> renderers, double driverSeconds)
         {
@@ -285,20 +285,20 @@ namespace VL.Qt
             return Native.OffscreenRenderBatch(context, new ReadOnlySpan<IntPtr>(s_scenes, 0, renderers.Length), driverSeconds);
         }
 
-        /// <summary>Returns the text of a <see cref="Protocol.Offscreen"/> code, empty for 0 and for a count of rendered scenes (> 0).</summary>
-        public static string Describe(int code) => code switch
+        /// <summary>Returns the text of a <see cref="Native.Result"/>, empty for <see cref="Native.Result.Ok"/>.</summary>
+        public static string Describe(Native.Result code) => code switch
         {
-            >= 0 => "",
-            Protocol.Offscreen.NullScene => "No offscreen scene (null handle or not an offscreen scene)",
-            Protocol.Offscreen.BadArgument => "Bad argument (null device, texture handle or context, or a size out of range or not the texture's)",
-            Protocol.Offscreen.Unbound => "The offscreen scene has no texture",
-            Protocol.Offscreen.AdapterMismatch => "The graphics device is on another adapter than QtNative's",
-            Protocol.Offscreen.OpenFailed => "QtNative could not open the shared texture",
-            Protocol.Offscreen.FormatUnsupported => "Render target format not supported (use R8G8B8A8, B8G8R8A8 or R16G16B16A16_FLOAT)",
-            Protocol.Offscreen.FenceFailed => "Fences for the shared texture could not be created (ID3D11Device5 and ID3D11DeviceContext4 are required)",
-            Protocol.Offscreen.DeviceLost => "The graphics device of QtNative is lost or being rebuilt",
-            Protocol.Offscreen.NotSupported => "Offscreen scenes need Direct3D 11 (Windows)",
-            _ => $"Offscreen scene error {code}",
+            Native.Result.Ok => "",
+            Native.Result.NullHandle => "No offscreen scene (null handle or not an offscreen scene)",
+            Native.Result.BadArgument => "Bad argument (null device, texture handle or context, or a size out of range or not the texture's)",
+            Native.Result.Unbound => "The offscreen scene has no texture",
+            Native.Result.AdapterMismatch => "The graphics device is on another adapter than QtNative's",
+            Native.Result.OpenFailed => "QtNative could not open the shared texture",
+            Native.Result.FormatUnsupported => "Render target format not supported (use R8G8B8A8, B8G8R8A8 or R16G16B16A16_FLOAT)",
+            Native.Result.FenceFailed => "Fences for the shared texture could not be created (ID3D11Device5 and ID3D11DeviceContext4 are required)",
+            Native.Result.DeviceLost => "The graphics device of QtNative is lost or being rebuilt",
+            Native.Result.Unsupported => "Offscreen scenes need Direct3D 11 (Windows)",
+            _ => Enum.IsDefined(code) ? $"Offscreen scene error {code} ({(int)code})" : $"Offscreen scene error {(int)code}",
         };
 
         /// <summary>Clear (releases the elements in the app's registry), apply, free the native scene (unbinding first).</summary>

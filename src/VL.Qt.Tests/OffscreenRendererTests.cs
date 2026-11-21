@@ -9,24 +9,21 @@ namespace VL.Qt.Tests
     /// <summary>OffscreenRenderer (QtTexture): the error texts need no native device, the rest needs a built vlqt.dll.</summary>
     public class OffscreenRendererTests
     {
-        private static int[] ErrorCodes => typeof(Protocol.Offscreen).GetFields()
-            .Where(f => f.IsLiteral && f.GetRawConstantValue() is int v && v < 0)
-            .Select(f => (int)f.GetRawConstantValue()!)
-            .ToArray();
+        // The codes the offscreen exports return (vlqt_result: the shared ones and -20 ... -25).
+        private static readonly Native.Result[] s_errorCodes =
+        {
+            Native.Result.NullHandle, Native.Result.BadArgument, Native.Result.Unsupported, Native.Result.Unbound, Native.Result.AdapterMismatch,
+            Native.Result.OpenFailed, Native.Result.FormatUnsupported, Native.Result.FenceFailed, Native.Result.DeviceLost,
+        };
 
         [Test]
-        public void Describe_NoTextForSuccessAndRenderedCount()
-        {
-            Assert.That(OffscreenRenderer.Describe(Protocol.Offscreen.Ok), Is.Empty);
-            Assert.That(OffscreenRenderer.Describe(3), Is.Empty);
-        }
+        public void Describe_NoTextForSuccess()
+            => Assert.That(OffscreenRenderer.Describe(Native.Result.Ok), Is.Empty);
 
         [Test]
         public void Describe_EveryCodeHasItsOwnText()
         {
-            var codes = ErrorCodes;
-            Assert.That(codes, Is.Not.Empty);
-            var texts = codes.Select(OffscreenRenderer.Describe).ToArray();
+            var texts = s_errorCodes.Select(OffscreenRenderer.Describe).ToArray();
             Assert.That(texts, Has.All.Not.Empty);
             Assert.That(texts, Is.Unique);
             // Only a code of a newer QtNative falls back to the number.
@@ -35,7 +32,7 @@ namespace VL.Qt.Tests
 
         [Test]
         public void Describe_UnknownCodeShowsNumber()
-            => Assert.That(OffscreenRenderer.Describe(-999), Is.EqualTo("Offscreen scene error -999"));
+            => Assert.That(OffscreenRenderer.Describe((Native.Result)(-999)), Is.EqualTo("Offscreen scene error -999"));
 
         [Test]
         public void Lifecycle_WithoutOrWithNativeScene()
@@ -47,12 +44,12 @@ namespace VL.Qt.Tests
             {
                 // No scene (stub, or QtNative not started): the error says so, nothing throws.
                 Assert.That(r.Error, Is.Not.Empty);
-                Assert.That(r.Bind(IntPtr.Zero, IntPtr.Zero, new Int2(64, 32), 28), Is.EqualTo(Protocol.Offscreen.NullScene));
+                Assert.That(r.Bind(IntPtr.Zero, IntPtr.Zero, new Int2(64, 32), 28), Is.EqualTo(Native.Result.NullHandle));
             }
             else
             {
                 var rc = r.Bind(IntPtr.Zero, IntPtr.Zero, new Int2(64, 32), 28);
-                Assert.That(rc, Is.LessThan(0), "no device and no texture: no binding");
+                Assert.That(rc, Is.Not.EqualTo(Native.Result.Ok), "no device and no texture: no binding");
                 Assert.That(r.Error, Is.EqualTo(OffscreenRenderer.Describe(rc)));
                 Assert.That(r.IsBound, Is.False);
             }
@@ -60,7 +57,7 @@ namespace VL.Qt.Tests
             r.Dispose();
             Assert.That(r.Scene, Is.EqualTo(IntPtr.Zero));
             Assert.That(r.IsBound, Is.False);
-            Assert.That(r.Bind(IntPtr.Zero, IntPtr.Zero, new Int2(64, 32), 28), Is.EqualTo(Protocol.Offscreen.NullScene));
+            Assert.That(r.Bind(IntPtr.Zero, IntPtr.Zero, new Int2(64, 32), 28), Is.EqualTo(Native.Result.NullHandle));
             r.Dispose(); // twice is fine
         }
 

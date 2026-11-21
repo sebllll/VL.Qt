@@ -32,10 +32,7 @@ public static class EffectChainTest
 
     internal static (int layers, int effects) Counts(IntPtr w)
     {
-        var need = -NativeTest.vlqt_test_perf_text(w, ScenePage, null, 0);
-        var buf = new byte[Math.Max(need, 1)];
-        var n = NativeTest.vlqt_test_perf_text(w, ScenePage, buf, buf.Length);
-        var text = n > 0 ? System.Text.Encoding.UTF8.GetString(buf, 0, n) : "";
+        var text = NativeCalls.PerfPageText(w, ScenePage);
         var fx = Regex.Match(text, @"effects\s+(\d+)\s+effect layers, (\d+) MultiEffect items");
         return (fx.Success ? int.Parse(fx.Groups[1].Value) : -1, fx.Success ? int.Parse(fx.Groups[2].Value) : -1);
     }

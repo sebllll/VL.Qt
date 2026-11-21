@@ -50,7 +50,7 @@ public static class StyleTest
         s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        int Apply() => Native.Apply(w, cmd.EndFrame());
+        Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
         void CheckApply(string what)
         {
             var rc = Apply();
@@ -58,7 +58,7 @@ public static class StyleTest
             cmd.Reset();
         }
         void Mouse(int type, float x, float y) => s.Check(NativeTest.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
-        void ExpectRc(int expected, string what)
+        void ExpectRc(Native.Result expected, string what)
         {
             var rc = Apply();
             s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
@@ -133,15 +133,15 @@ public static class StyleTest
         cmd.BeginStyle(Rect, 0);
         cmd.StyleColor(Protocol.StyleField.FrameColor, Protocol.StyleState.Normal, 1, 0, 0, 1);
         cmd.EndStyle();
-        ExpectRc(-6, "SET_STYLE at a Rectangle");
+        ExpectRc(Native.Result.UnknownProperty, "SET_STYLE at a Rectangle");
         cmd.BeginStyle(Btn, 0);
         cmd.StyleF32(Protocol.StyleField.FrameColor, Protocol.StyleState.Normal, 1);
         cmd.EndStyle();
-        ExpectRc(-7, "SET_STYLE wrong value type (f32 for a color field)");
+        ExpectRc(Native.Result.BadArgument, "SET_STYLE wrong value type (f32 for a color field)");
         cmd.BeginStyle(Btn, 0);
         cmd.StyleF32(999, Protocol.StyleState.Normal, 1);
         cmd.EndStyle();
-        ExpectRc(-6, "SET_STYLE unknown field");
+        ExpectRc(Native.Result.UnknownProperty, "SET_STYLE unknown field");
         s.Pump(3);
         using (var a = s.Grab(w, "style6.png"))
             s.Check(Near(Px(a, 110, 110), 0x383838), $"failed SET_STYLE left the style alone ({Px(a, 110, 110)})");

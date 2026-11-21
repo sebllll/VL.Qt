@@ -84,7 +84,7 @@ public static class GlowTest
         }
         void DrainErrors()
         {
-            int len = Native.Poll(w, evBuf);
+            int len = NativeCalls.Poll(w, evBuf);
             for (int at = 0; at < len;)
             {
                 ushort ev = BitConverter.ToUInt16(evBuf, at), l = BitConverter.ToUInt16(evBuf, at + 2);

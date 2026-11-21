@@ -200,9 +200,9 @@ namespace VL.Qt
         }
 
         // Not loadable (-7): QtNative keeps the default icon, the node shows a warning until the next icon applies.
-        private void ReportIcon(int result)
+        private void ReportIcon(Native.Result result)
         {
-            if (result == -7 && _iconPath is not null)
+            if (result == Native.Result.Io && _iconPath is not null)
                 _errors.Warn($"Window icon '{_iconPath}' could not be loaded, the default icon is shown: {Native.LastError()}", IconPhase);
             else
                 _errors.Clear(IconPhase);

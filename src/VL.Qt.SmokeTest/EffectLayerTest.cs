@@ -30,10 +30,7 @@ public static class EffectLayerTest
     // Scene page (F5): "effects <layers> effect layers, <n> MultiEffect items" and "QML items <n>".
     private static (int layers, int effects, int items) Counts(IntPtr w)
     {
-        var need = -NativeTest.vlqt_test_perf_text(w, ScenePage, null, 0);
-        var buf = new byte[Math.Max(need, 1)];
-        var n = NativeTest.vlqt_test_perf_text(w, ScenePage, buf, buf.Length);
-        var text = n > 0 ? System.Text.Encoding.UTF8.GetString(buf, 0, n) : "";
+        var text = NativeCalls.PerfPageText(w, ScenePage);
         var fx = Regex.Match(text, @"effects\s+(\d+)\s+effect layers, (\d+) MultiEffect items");
         var it = Regex.Match(text, @"QML items\s+(\d+)");
         return (fx.Success ? int.Parse(fx.Groups[1].Value) : -1, fx.Success ? int.Parse(fx.Groups[2].Value) : -1,
@@ -92,7 +89,7 @@ public static class EffectLayerTest
         {
             NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, x, y);
             s.Pump(1);
-            var n = Native.Poll(w, poll);
+            var n = NativeCalls.Poll(w, poll);
             return HoverFlag(poll.AsSpan(0, Math.Max(n, 0)), FeedbackIdH);
         }
         // A = hard red shadow (30, 30) + saturation -1 (grey); T = blur + green shadow + brightness.
@@ -245,7 +242,7 @@ public static class EffectLayerTest
         cmd.Chain(A, ShadowRun, GreyRun);
         CheckApply("two runs");
         s.Pump(5);
-        Native.Poll(w, poll); // the old one-run stage is retired and deleted after the next frame, at poll/apply
+        NativeCalls.Poll(w, poll); // the old one-run stage is retired and deleted after the next frame, at poll/apply
         s.Pump(2);
         var two = Counts(w);
         s.Check(two.layers == 1 && two.effects == 2, $"effect-layer: two runs on A -> one layer, two MultiEffects ({two})");
@@ -279,11 +276,11 @@ public static class EffectLayerTest
         cmd.SetBool(A, Protocol.Prop.EffectShadowEnabled, true);
         var rc1 = Native.Apply(w, cmd.EndFrame());
         cmd.Reset();
-        s.Check(rc1 == -6, $"effect-layer: SET EFFECT_SHADOW_ENABLED -> -6 ({rc1})");
+        s.Check(rc1 == Native.Result.UnknownProperty, $"effect-layer: SET EFFECT_SHADOW_ENABLED -> -6 ({rc1})");
         cmd.Chain(H, RunA);
         var rc2 = Native.Apply(w, cmd.EndFrame());
         cmd.Reset();
-        s.Check(rc2 == -6, $"effect-layer: effect chain on a handler -> -6 ({rc2})");
+        s.Check(rc2 == Native.Result.UnknownProperty, $"effect-layer: effect chain on a handler -> -6 ({rc2})");
 
         // DESTROY with the effect on: its MultiEffect goes too.
         cmd.Destroy(A);

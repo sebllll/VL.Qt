@@ -25,7 +25,7 @@ public static class ClearPinTest
 {
     // The commands go in a buffer of their own (the scenario's writer belongs to the reconciler). 0 = ok.
     // Clear Color (grey, alpha) alone: the layer stays, as when vvvv changes the pin at runtime.
-    private static int SetClearColor(IntPtr w, float grey, float alpha)
+    private static Native.Result SetClearColor(IntPtr w, float grey, float alpha)
     {
         var cmd = new CommandWriter();
         cmd.Reset();
@@ -35,7 +35,7 @@ public static class ClearPinTest
     }
 
     // Clear Color and Clear in one buffer. Clear off needs alpha < 1 to show a trail (alpha 1 is Clear on), 0 = pure accumulation.
-    private static int SetMode(IntPtr w, float grey, bool clear, float alpha)
+    private static Native.Result SetMode(IntPtr w, float grey, bool clear, float alpha)
     {
         var cmd = new CommandWriter();
         cmd.Reset();
@@ -496,7 +496,7 @@ public static class ClearPinTest
                 NativeTest.vlqt_test_com_release(tex);
             }
             NativeTest.vlqt_test_d3d11_create_shared_texture(device, bw, bh, B8G8R8A8Typeless, out tex, out var handle);
-            int rc = Native.vlqt_offscreen_bind(scene, device, handle, bw, bh, B8G8R8A8Unorm, 1, out _);
+            var rc = Native.vlqt_offscreen_bind(scene, device, handle, bw, bh, B8G8R8A8Unorm, 1, out _);
             NativeTest.vlqt_test_close_handle(handle);
             s.Check(rc == 0, $"clear-pin offscreen: bind {bw}x{bh} ({rc}) {Native.LastError()}");
             (w, h) = (bw, bh);
@@ -505,7 +505,7 @@ public static class ClearPinTest
         byte[] Read()
         {
             var px = new byte[w * h * 4];
-            NativeTest.TestReadTexture(tex, px, out _, out _, out _);
+            NativeCalls.ReadTexture(tex, px, out _, out _, out _);
             return px;
         }
         (int R, int G, int B, int A) At(byte[] px, int x, int y) { int i = (y * w + x) * 4; return (px[i + 2], px[i + 1], px[i], px[i + 3]); }

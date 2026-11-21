@@ -312,7 +312,7 @@ public static class MsaaTest
         string? Committed()
         {
             s.Pump(1);
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             string? value = null;
             for (int off = 0; off + 12 <= n;)
             {
@@ -393,11 +393,11 @@ public static class MsaaTest
             foreach (var n in f.Counts)
             {
                 NativeTest.vlqt_test_d3d11_create_shared_texture(device, W, H, f.Tex, out var tex, out var handle);
-                int rc = Native.vlqt_offscreen_bind(scene, device, handle, W, H, f.View, n, out var used);
+                var rc = Native.vlqt_offscreen_bind(scene, device, handle, W, H, f.View, n, out var used);
                 NativeTest.vlqt_test_close_handle(handle);
                 int rendered = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
                 var px = new byte[W * H * f.Bytes];
-                int read = NativeTest.TestReadTexture(tex, px, out _, out _, out _);
+                int read = NativeCalls.ReadTexture(tex, px, out _, out _, out _);
                 int Red(int x, int y)
                 {
                     int i = y * W + x;
@@ -420,7 +420,7 @@ public static class MsaaTest
             foreach (var (request, ok) in new (int, Func<int, bool>)[] { (16, u => u is 4 or 8), (3, u => u == 2) })
             {
                 NativeTest.vlqt_test_d3d11_create_shared_texture(device, W, H, f.Tex, out var t, out var h);
-                int rc = Native.vlqt_offscreen_bind(scene, device, h, W, H, f.View, request, out var used);
+                var rc = Native.vlqt_offscreen_bind(scene, device, h, W, H, f.View, request, out var used);
                 NativeTest.vlqt_test_close_handle(h);
                 s.Check(rc == 0 && ok(used), $"msaa: offscreen {tag} request {request} clamped (used {used})");
                 Native.vlqt_offscreen_unbind(scene);

@@ -29,9 +29,10 @@ namespace VL.Qt.Stride
         private MultisampleCount _samples;
         private string _textureError = "", _batchError = "";
         // _created: the texture state matches the inputs seen last (also when it is an error); _hasContent: the scene was
-        // bound to the current texture once, so it holds content; _lastBindCode: result of the last Bind, 0 = ok.
+        // bound to the current texture once, so it holds content; _lastBindCode: result of the last Bind.
         private bool _created, _hasContent, _scheduled, _enabled, _debug, _disposed;
-        private int _lastBindCode, _rebindWait;
+        private Native.Result _lastBindCode;
+        private int _rebindWait;
         private const string SamplesPhase = "Multisample Count";
 
         public SharedTextureScene(NodeContext nodeContext)
@@ -175,7 +176,7 @@ namespace VL.Qt.Stride
         {
             if (_scene.IsBound)
                 return;
-            if (_lastBindCode is Protocol.Offscreen.Ok or Protocol.Offscreen.DeviceLost || ++_rebindWait >= 60)
+            if (_lastBindCode is Native.Result.Ok or Native.Result.DeviceLost || ++_rebindWait >= 60)
                 TryBind();
         }
 
@@ -194,7 +195,7 @@ namespace VL.Qt.Stride
                     // QtNative holds its own reference to the opened texture.
                     StrideInterop.CloseHandle(handle);
                 }
-                _hasContent |= _lastBindCode == Protocol.Offscreen.Ok;
+                _hasContent |= _lastBindCode == Native.Result.Ok;
                 ReportSamples();
             }
             catch (Exception e)
@@ -220,14 +221,14 @@ namespace VL.Qt.Stride
             _texture?.Dispose();
             _texture = null;
             _hasContent = false;
-            _lastBindCode = 0;
+            _lastBindCode = Native.Result.Ok;
             _batchError = "";
         }
 
         // The count QtNative used is lower than requested (device limit): warning at the node until the next bind fits.
         private void ReportSamples()
         {
-            var warning = _lastBindCode == Protocol.Offscreen.Ok ? Multisample.ClampWarning(_samples, _scene.UsedSamples) : null;
+            var warning = _lastBindCode == Native.Result.Ok ? Multisample.ClampWarning(_samples, _scene.UsedSamples) : null;
             if (warning is not null)
                 _errors.Warn(warning, SamplesPhase);
             else

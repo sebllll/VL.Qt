@@ -97,7 +97,7 @@ public static class QmlTest
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             cmd.Reset();
         }
-        int Expect(string what)
+        Native.Result Expect(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             cmd.Reset();
@@ -106,7 +106,7 @@ public static class QmlTest
         // One poll: everything that came since the last one (also tracks the last error and the measured size per handle).
         List<Rec> Poll()
         {
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             s.Check(n >= 0, $"poll ({n})");
             var recs = Parse(buf.AsSpan(0, Math.Max(n, 0)));
             foreach (var r in recs)
@@ -353,11 +353,11 @@ public static class QmlTest
         cmd.BeginQmlProperties(other, 0);
         cmd.UniformF32("a", 1);
         cmd.EndQmlProperties();
-        s.Check(Expect("") == -6, $"SET_QML_PROPERTIES on a Rectangle -> -6 ({Native.LastError()})");
+        s.Check(Expect("") == Native.Result.UnknownProperty, $"SET_QML_PROPERTIES on a Rectangle -> -6 ({Native.LastError()})");
         cmd.BeginQmlProperties(4242, 0);
         cmd.UniformF32("a", 1);
         cmd.EndQmlProperties();
-        s.Check(Expect("") == -4, $"SET_QML_PROPERTIES on an unknown id -> -4 ({Native.LastError()})");
+        s.Check(Expect("") == Native.Result.UnknownObject, $"SET_QML_PROPERTIES on an unknown id -> -4 ({Native.LastError()})");
         cmd.Destroy(other);
         CheckApply("destroy the Rectangle");
 

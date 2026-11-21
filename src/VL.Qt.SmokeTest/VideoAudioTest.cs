@@ -203,11 +203,11 @@ public static class VideoAudioTest
             while (sw.ElapsedMilliseconds < ms && !(until?.Invoke() ?? false))
             {
                 s.Pump(1);
-                int n = Native.Poll(w, buf);
+                int n = NativeCalls.Poll(w, buf);
                 foreach (var r in MeasureTest.Parse(buf.AsSpan(0, Math.Max(n, 0)), s.Check))
                     if (r.Handle == Handle && r.Event == Protocol.Ev.Media)
                         dur = r.V[1];
-                Native.ResPoll(resBuf);
+                NativeCalls.ResPoll(resBuf);
                 Thread.Sleep(10);
             }
         }
@@ -344,7 +344,7 @@ public static class VideoAudioTest
         Native.vlqt_res_release(tap2);
         Frames(100);
         int r1 = Native.ResReadAudio(tap1, Span<float>.Empty, Channels, out _), r2 = Native.ResReadAudio(tap2, Span<float>.Empty, Channels, out _);
-        s.Check(r1 == -9 && r2 == -9, $"videoaudio: released taps are freed after DESTROY (read {r1}, {r2})");
+        s.Check(r1 == (int)Native.Result.UnknownId && r2 == (int)Native.Result.UnknownId, $"videoaudio: released taps are freed after DESTROY (read {r1}, {r2})");
         var end = reader.Snapshot(tap2);
         s.Info($"videoaudio: sync median {syncMedian:F2} ms |p90| {syncP90:F2} ms; rate 48k {rate1:F3}, msaa {rateMsaa:F3}, 44.1k {rate2:F3}; " +
             $"overrun {end.Overrun}, underrun {end.Underrun}, reads {end.Calls}");
@@ -383,7 +383,7 @@ public static class VideoAudioTest
             Native.vlqt_res_release(ta);
             Native.vlqt_res_release(tb);
             Frames(30);
-            freed &= Native.ResReadAudio(ta, Span<float>.Empty, Channels, out _) == -9 && Native.ResReadAudio(tb, Span<float>.Empty, Channels, out _) == -9;
+            freed &= Native.ResReadAudio(ta, Span<float>.Empty, Channels, out _) == (int)Native.Result.UnknownId && Native.ResReadAudio(tb, Span<float>.Empty, Channels, out _) == (int)Native.Result.UnknownId;
         }
         s.Check(freed, "videoaudio: 6 rounds of DESTROY while playing after a tap switch / re-attach: taps freed, no crash");
 
@@ -398,6 +398,6 @@ public static class VideoAudioTest
         Native.vlqt_window_destroy(w);
         Native.vlqt_res_release(tw);
         s.Pump(2);
-        s.Check(Native.ResReadAudio(tw, Span<float>.Empty, Channels, out _) == -9, "videoaudio: window destroy with an attached tap frees the tap");
+        s.Check(Native.ResReadAudio(tw, Span<float>.Empty, Channels, out _) == (int)Native.Result.UnknownId, "videoaudio: window destroy with an attached tap frees the tap");
     }
 }

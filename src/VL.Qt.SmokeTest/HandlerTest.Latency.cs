@@ -70,7 +70,7 @@ public static partial class HandlerTest
         {
             if (Destroyed)
                 return;
-            int n = Native.Poll(W, _buf);
+            int n = NativeCalls.Poll(W, _buf);
             if (n < 0)
                 _s.Check(false, $"input-latency: poll ({n}) {Native.LastError()}");
             var recs = Parse(_buf.AsSpan(0, Math.Max(n, 0)), _s).FindAll(r => IsPointerEvent(r.Event));

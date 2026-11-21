@@ -53,7 +53,7 @@ namespace VL.Qt.Nodes
                 if (!_app.IsQtThread)
                     _error = "LoadFont must run on the thread of the Qt app (the vvvv main thread).";
                 // Add before releasing the previous handle: the same file stays registered when only the path spelling changed.
-                else if (Native.FontAdd(path, out var handle, out var families) == 0)
+                else if (Native.FontAdd(path, out var handle, out var families) == Native.Result.Ok)
                 {
                     _handle = handle;
                     var newline = families.IndexOf('\n');
@@ -71,7 +71,7 @@ namespace VL.Qt.Nodes
 
         private void Release(ulong handle)
         {
-            if (handle != 0 && Native.vlqt_font_release(handle) != 0)
+            if (handle != 0 && Native.vlqt_font_release(handle) != Native.Result.Ok)
                 _errors.LogOnly(Native.LastError());
         }
 

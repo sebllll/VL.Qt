@@ -74,7 +74,7 @@ public static class VideoTest
         float firstPos = -1, firstDur = -1; // first EV_MEDIA record of Handle
         var error = ""; // last EV_ERROR text of Handle
 
-        int Apply()
+        Native.Result Apply()
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             cmd.Reset();
@@ -89,7 +89,7 @@ public static class VideoTest
         void Frame()
         {
             s.Pump(1);
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             if (MeasureTest.ErrorText(buf.AsSpan(0, Math.Max(n, 0)), Handle) is { } e) error = e;
             foreach (var r in MeasureTest.Parse(buf.AsSpan(0, Math.Max(n, 0)), s.Check))
             {
@@ -249,21 +249,21 @@ public static class VideoTest
         // --- 6) Volume and errors.
         cmd.SetF32(VideoId, Protocol.Prop.Volume, 0.5f);
         CheckApply("volume 0.5");
-        void Expect(int code, string what, Action write)
+        void Expect(Native.Result code, string what, Action write)
         {
             write();
             var rc = Apply();
             s.Check(rc == code, $"{what} -> {code} ({rc}: {Native.LastError()})");
         }
-        Expect(-7, "volume 2", () => cmd.SetF32(VideoId, Protocol.Prop.Volume, 2));
-        Expect(-7, "rate 0", () => cmd.SetF32(VideoId, Protocol.Prop.PlaybackRate, 0));
-        Expect(-7, "fillMode 3 (no Tile)", () => cmd.SetI32(VideoId, Protocol.Prop.FillMode, 3));
-        Expect(-7, "playing as i32", () => cmd.SetI32(VideoId, Protocol.Prop.Playing, 1));
-        Expect(-6, "radius on video", () => cmd.SetF32(VideoId, Protocol.Prop.Radius, 1));
+        Expect(Native.Result.BadArgument, "volume 2", () => cmd.SetF32(VideoId, Protocol.Prop.Volume, 2));
+        Expect(Native.Result.BadArgument, "rate 0", () => cmd.SetF32(VideoId, Protocol.Prop.PlaybackRate, 0));
+        Expect(Native.Result.BadArgument, "fillMode 3 (no Tile)", () => cmd.SetI32(VideoId, Protocol.Prop.FillMode, 3));
+        Expect(Native.Result.BadArgument, "playing as i32", () => cmd.SetI32(VideoId, Protocol.Prop.Playing, 1));
+        Expect(Native.Result.UnknownProperty, "radius on video", () => cmd.SetF32(VideoId, Protocol.Prop.Radius, 1));
         cmd.Create(ImageId, Protocol.Type.Image);
         cmd.Reparent(ImageId, 0, 1);
         CheckApply("image for -6");
-        Expect(-6, "playing on image", () => cmd.SetBool(ImageId, Protocol.Prop.Playing, true));
+        Expect(Native.Result.UnknownProperty, "playing on image", () => cmd.SetBool(ImageId, Protocol.Prop.Playing, true));
         cmd.Destroy(ImageId);
         CheckApply("destroy image");
 
@@ -374,7 +374,7 @@ public static class VideoTest
                 s.Check(rc == 0, $"node: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
             s.Pump(1);
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             rec.FeedbackRouter.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
             Thread.Sleep(15);
         }

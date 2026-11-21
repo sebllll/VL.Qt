@@ -20,7 +20,7 @@ public static class StyleCommandsTest
 
     private const uint Btn = 1;
     private const float BgGray = 0x10 / 255f;
-    private const int BadLength = -2, UnknownProperty = -6, BadValue = -7;
+    private const Native.Result BadLength = Native.Result.BadLength, UnknownProperty = Native.Result.UnknownProperty, BadValue = Native.Result.BadArgument;
 
     // Grabs are in device pixels (HiDPI); test coordinates are logical (800x600).
     private static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
@@ -71,7 +71,7 @@ public static class StyleCommandsTest
         s.Check(Near(Frame("base"), 0x383838), "base style paints the frame grey");
 
         // SET_STYLE with the red FrameColor entry, then what the case adds; patch edits the command bytes; returns the apply result.
-        int Send(Action<CommandWriter> entries, Func<byte[], byte[]>? patch = null, ushort flags = 0)
+        Native.Result Send(Action<CommandWriter> entries, Func<byte[], byte[]>? patch = null, ushort flags = 0)
         {
             cmd.Reset();
             cmd.BeginStyle(Btn, flags);
@@ -84,7 +84,7 @@ public static class StyleCommandsTest
             return Native.Apply(w, bytes);
         }
 
-        void Rejected(string name, int expected, Action<CommandWriter> entries, Func<byte[], byte[]>? patch = null, ushort flags = 0)
+        void Rejected(string name, Native.Result expected, Action<CommandWriter> entries, Func<byte[], byte[]>? patch = null, ushort flags = 0)
         {
             var got = Send(entries, patch, flags);
             var error = Native.LastError();

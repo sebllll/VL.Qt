@@ -35,7 +35,7 @@ public static class RowColumnTest
         s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        int Apply() => Native.Apply(w, cmd.EndFrame());
+        Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
         void CheckApply(string what)
         {
             var rc = Apply();
@@ -135,7 +135,7 @@ public static class RowColumnTest
         }
 
         // Errors: wrong alignment flag per type -> -7, wrong value type -> -7, Rectangle property -> -6.
-        void Expect(int expected, string what)
+        void Expect(Native.Result expected, string what)
         {
             var rc = Apply();
             s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
@@ -143,13 +143,13 @@ public static class RowColumnTest
         }
         cmd.Reset();
         cmd.SetI32(ColA, Protocol.Prop.ChildAlignment, 0x20);
-        Expect(-7, "column alignment AlignTop");
+        Expect(Native.Result.BadArgument, "column alignment AlignTop");
         cmd.SetI32(RowC, Protocol.Prop.ChildAlignment, 0x1);
-        Expect(-7, "row alignment AlignLeft");
+        Expect(Native.Result.BadArgument, "row alignment AlignLeft");
         cmd.SetI32(ColA, Protocol.Prop.Spacing, 3);
-        Expect(-7, "spacing as i32");
+        Expect(Native.Result.BadArgument, "spacing as i32");
         cmd.SetF32(ColA, Protocol.Prop.Radius, 1);
-        Expect(-6, "radius on column");
+        Expect(Native.Result.UnknownProperty, "radius on column");
 
         Native.vlqt_window_destroy(w);
     }

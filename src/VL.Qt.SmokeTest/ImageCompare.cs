@@ -90,7 +90,7 @@ internal static class ImageCompare
             return "";
         var file = FindUp("src", "VL.Qt.Native", "fonts", "DejaVuSans.ttf");
         s.Check(file != null, "bundled font src/VL.Qt.Native/fonts/DejaVuSans.ttf found");
-        if (file == null || Native.FontAdd(file, out _, out var families) != 0)
+        if (file == null || Native.FontAdd(file, out _, out var families) != Native.Result.Ok)
             return "";
         return families.Split('\n')[0];
     }

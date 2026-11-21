@@ -25,7 +25,7 @@ internal static class QtHost
     private static bool s_started;
 
     /// <summary>Result of the first vlqt_app_init (0 = ok) and its error text.</summary>
-    public static int InitResult { get; private set; } = int.MinValue;
+    public static Native.Result InitResult { get; private set; } = (Native.Result)int.MinValue;
     public static string InitError { get; private set; } = "";
 
     /// <summary>Name of the scenario that did not return in time; the Qt thread is blocked by it and no later scenario can run.</summary>
@@ -142,7 +142,7 @@ internal static class QtHost
     }
 
     /// <summary>Second vlqt_app_init: must be a no-op returning 0 (core-app check).</summary>
-    public static int InitAgain() => Native.vlqt_app_init(Native.NativeDir, s_logFn);
+    public static Native.Result InitAgain() => Native.vlqt_app_init(Native.NativeDir, s_logFn);
 
     /// <summary>Runs <paramref name="work"/> on the Qt thread and waits up to <paramref name="timeout"/>; false on timeout.</summary>
     public static bool Invoke(Action work, TimeSpan timeout)

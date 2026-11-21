@@ -63,9 +63,9 @@ public static class MultiRendererTest
         var window = new WindowRenderer(registry, "VL.Qt multi renderer test", new RectangleF(0, 0, WindowW, WindowH));
         var offscreen = new OffscreenRenderer(registry, TexW, TexH);
         check(window.Window != IntPtr.Zero && offscreen.Scene != IntPtr.Zero, $"renderers created ({window.Error}{offscreen.Error})");
-        int rc = offscreen.Bind(device, handle, new Int2(TexW, TexH), B8G8R8A8Unorm);
+        var rc = offscreen.Bind(device, handle, new Int2(TexW, TexH), B8G8R8A8Unorm);
         NativeTest.vlqt_test_close_handle(handle);
-        check(rc == Protocol.Offscreen.Ok && offscreen.IsBound, $"offscreen bind ({rc}) {offscreen.Error}");
+        check(rc == Native.Result.Ok && offscreen.IsBound, $"offscreen bind ({rc}) {offscreen.Error}");
 
         // Rectangle (120 x 80 DIP at (20, 20), orange) and Text below it; Feedback slots 0 (rectangle) and 1 (text).
         var feedback = new ElementFeedback();
@@ -96,7 +96,7 @@ public static class MultiRendererTest
             offscreen.ApplyCommands();
             var rendered = OffscreenRenderer.RenderBatch(context, new[] { offscreen }, 0);
             if (rendered < 0)
-                check(false, $"render batch ({rendered}) {OffscreenRenderer.Describe(rendered)}");
+                check(false, $"render batch ({rendered}) {OffscreenRenderer.Describe((Native.Result)rendered)}");
             client.BeforeEvents();
             s.Pump(1);
             client.AfterEvents();
@@ -126,7 +126,7 @@ public static class MultiRendererTest
         check(measured, $"state values arrive ({feedback[1].MeasuredSize}, {feedback[0].SceneBounds})");
         Until(() => false, 4);
         var pixels = new byte[TexW * TexH * 4];
-        check(NativeTest.TestReadTexture(texture, pixels, out _, out _, out _) == pixels.Length, "read back the texture");
+        check(NativeCalls.ReadTexture(texture, pixels, out _, out _, out _) == pixels.Length, "read back the texture");
         {
             var c = Tex(pixels, 80, 60);
             var bg = Tex(pixels, 200, 60);

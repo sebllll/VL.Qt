@@ -149,16 +149,16 @@ public static class ApplyTest
     private static void RejectCases(Scenario s, IntPtr w, Buf b)
     {
         const uint fx = 3000, qml = 3001, shape = 3002, rect = 3003;
-        int rc = Native.Apply(w, b.Clear().Create(fx, Protocol.Type.ShaderEffect).Create(qml, Protocol.Type.Qml)
+        var rc = Native.Apply(w, b.Clear().Create(fx, Protocol.Type.ShaderEffect).Create(qml, Protocol.Type.Qml)
             .Create(shape, Protocol.Type.Shape).Create(rect, Protocol.Type.Rectangle).Span);
         s.Check(rc == 0, $"reject cases: create elements ({rc}) {(rc != 0 ? Native.LastError() : "")}");
 
-        void Case(string what, ushort op, Pay p, int expected, string mustContain)
+        void Case(string what, ushort op, Pay p, Native.Result expected, string mustContain)
         {
             var r = Native.Apply(w, b.Clear().Cmd(op, p.ToArray()).Span);
             var e = Native.LastError();
             var got = Native.vlqt_window_get_apply_error(w, out var ae);
-            var ok = r == expected && (expected == 0 || (e.Contains(mustContain) && got == 0 && ae.rc == expected && ae.Reason.Contains(mustContain)));
+            var ok = r == expected && (expected == Native.Result.Ok || (e.Contains(mustContain) && got == 0 && ae.rc == (int)expected && ae.Reason.Contains(mustContain)));
             s.Check(ok, $"reject {what} -> {r} \"{(expected == 0 ? "" : e)}\"");
         }
         const ushort uni = Protocol.Op.SetUniforms, qop = Protocol.Op.SetQmlProperties, chain = Protocol.Op.SetEffectChain;
@@ -167,69 +167,69 @@ public static class ApplyTest
 
         // SET_UNIFORMS
         Case("uniforms: valid entry (control)", uni, Pay.Head(fx, 1).F4Entry(F, "a", 1), 0, "");
-        Case("uniforms: payload < 8", uni, new Pay().U32(fx).U16(0), -2, "too short");
-        Case("uniforms: name length 0", uni, Pay.Head(fx, 1).Entry(F, "a", new byte[4], nameLen: 0), -7, "name length 0");
-        Case("uniforms: name length 256", uni, Pay.Head(fx, 1).Entry(F, name256, new byte[4]), -7, "name length 256");
-        Case("uniforms: entry past the payload", uni, Pay.Head(fx, 1).U16(V4).U16(1).Bytes((byte)'a', 0, 0, 0).Zeros(4), -2, "exceeds the payload");
-        Case("uniforms: count larger than the entries", uni, Pay.Head(fx, 2).F4Entry(F, "a", 1), -2, "truncated entry");
-        Case("uniforms: trailing bytes", uni, Pay.Head(fx, 1).F4Entry(F, "a", 1).Zeros(4), -2, "bytes after the last entry");
-        Case("uniforms: STRING not allowed", uni, Pay.Head(fx, 1).Entry(Str, "a", new byte[4]), -7, "not allowed");
-        Case("uniforms: unknown value type", uni, Pay.Head(fx, 1).Entry(999, "a", new byte[4]), -7, "not allowed");
-        Case("uniforms: sampler out of range", uni, Pay.Head(fx, 1).Entry(Protocol.Vt.Sampler, "a", new byte[] { 9, 0, 0, 0, 0, 0, 0, 0 }), -7, "sampler state");
-        Case("uniforms: unknown ref", uni, Pay.Head(fx, 1).Entry(Protocol.Vt.Ref, "a", new byte[] { 0x39, 5, 0, 0 }), -4, "unknown ref id 1337");
-        Case("uniforms: unknown id", uni, Pay.Head(9999, 0), -4, "unknown id 9999");
-        Case("uniforms: not a ShaderEffect", uni, Pay.Head(rect, 0), -6, "ShaderEffect only");
+        Case("uniforms: payload < 8", uni, new Pay().U32(fx).U16(0), Native.Result.BadLength, "too short");
+        Case("uniforms: name length 0", uni, Pay.Head(fx, 1).Entry(F, "a", new byte[4], nameLen: 0), Native.Result.BadArgument, "name length 0");
+        Case("uniforms: name length 256", uni, Pay.Head(fx, 1).Entry(F, name256, new byte[4]), Native.Result.BadArgument, "name length 256");
+        Case("uniforms: entry past the payload", uni, Pay.Head(fx, 1).U16(V4).U16(1).Bytes((byte)'a', 0, 0, 0).Zeros(4), Native.Result.BadLength, "exceeds the payload");
+        Case("uniforms: count larger than the entries", uni, Pay.Head(fx, 2).F4Entry(F, "a", 1), Native.Result.BadLength, "truncated entry");
+        Case("uniforms: trailing bytes", uni, Pay.Head(fx, 1).F4Entry(F, "a", 1).Zeros(4), Native.Result.BadLength, "bytes after the last entry");
+        Case("uniforms: STRING not allowed", uni, Pay.Head(fx, 1).Entry(Str, "a", new byte[4]), Native.Result.BadArgument, "not allowed");
+        Case("uniforms: unknown value type", uni, Pay.Head(fx, 1).Entry(999, "a", new byte[4]), Native.Result.BadArgument, "not allowed");
+        Case("uniforms: sampler out of range", uni, Pay.Head(fx, 1).Entry(Protocol.Vt.Sampler, "a", new byte[] { 9, 0, 0, 0, 0, 0, 0, 0 }), Native.Result.BadArgument, "sampler state");
+        Case("uniforms: unknown ref", uni, Pay.Head(fx, 1).Entry(Protocol.Vt.Ref, "a", new byte[] { 0x39, 5, 0, 0 }), Native.Result.UnknownObject, "unknown ref id 1337");
+        Case("uniforms: unknown id", uni, Pay.Head(9999, 0), Native.Result.UnknownObject, "unknown id 9999");
+        Case("uniforms: not a ShaderEffect", uni, Pay.Head(rect, 0), Native.Result.UnknownProperty, "ShaderEffect only");
 
         // SET_QML_PROPERTIES
         Case("qml: valid entries (control)", qop, Pay.Head(qml, 2).F4Entry(F, "a", 1).Entry(Str, "s", new Pay().U32(2).Bytes((byte)'h', (byte)'i').ToArray()), 0, "");
-        Case("qml: payload < 8", qop, new Pay().U32(qml).U16(0), -2, "too short");
-        Case("qml: name length 0", qop, Pay.Head(qml, 1).Entry(F, "a", new byte[4], nameLen: 0), -7, "name length 0");
-        Case("qml: name length 256", qop, Pay.Head(qml, 1).Entry(F, name256, new byte[4]), -7, "name length 256");
-        Case("qml: entry past the payload", qop, Pay.Head(qml, 1).U16(V4).U16(1).Bytes((byte)'a', 0, 0, 0).Zeros(4), -2, "exceeds the payload");
-        Case("qml: string length past the payload", qop, Pay.Head(qml, 1).Entry(Str, "s", new Pay().U32(1000).Bytes(1, 2, 3, 4).ToArray()), -2, "exceeds the payload");
-        Case("qml: string without its length field", qop, Pay.Head(qml, 1).U16(Str).U16(1).Bytes((byte)'s', 0, 0, 0), -2, "exceeds the payload");
-        Case("qml: count larger than the entries", qop, Pay.Head(qml, 2).F4Entry(F, "a", 1), -2, "truncated entry");
-        Case("qml: trailing bytes", qop, Pay.Head(qml, 1).F4Entry(F, "a", 1).Zeros(4), -2, "bytes after the last entry");
-        Case("qml: unknown value type", qop, Pay.Head(qml, 1).Entry(999, "a", new byte[4]), -7, "unknown value type");
-        Case("qml: PATH not allowed", qop, Pay.Head(qml, 1).Entry(Protocol.Vt.Path, "a", new byte[8]), -7, "not allowed");
-        Case("qml: not a QmlElement", qop, Pay.Head(rect, 0), -6, "QmlElement only");
+        Case("qml: payload < 8", qop, new Pay().U32(qml).U16(0), Native.Result.BadLength, "too short");
+        Case("qml: name length 0", qop, Pay.Head(qml, 1).Entry(F, "a", new byte[4], nameLen: 0), Native.Result.BadArgument, "name length 0");
+        Case("qml: name length 256", qop, Pay.Head(qml, 1).Entry(F, name256, new byte[4]), Native.Result.BadArgument, "name length 256");
+        Case("qml: entry past the payload", qop, Pay.Head(qml, 1).U16(V4).U16(1).Bytes((byte)'a', 0, 0, 0).Zeros(4), Native.Result.BadLength, "exceeds the payload");
+        Case("qml: string length past the payload", qop, Pay.Head(qml, 1).Entry(Str, "s", new Pay().U32(1000).Bytes(1, 2, 3, 4).ToArray()), Native.Result.BadLength, "exceeds the payload");
+        Case("qml: string without its length field", qop, Pay.Head(qml, 1).U16(Str).U16(1).Bytes((byte)'s', 0, 0, 0), Native.Result.BadLength, "exceeds the payload");
+        Case("qml: count larger than the entries", qop, Pay.Head(qml, 2).F4Entry(F, "a", 1), Native.Result.BadLength, "truncated entry");
+        Case("qml: trailing bytes", qop, Pay.Head(qml, 1).F4Entry(F, "a", 1).Zeros(4), Native.Result.BadLength, "bytes after the last entry");
+        Case("qml: unknown value type", qop, Pay.Head(qml, 1).Entry(999, "a", new byte[4]), Native.Result.BadArgument, "unknown value type");
+        Case("qml: PATH not allowed", qop, Pay.Head(qml, 1).Entry(Protocol.Vt.Path, "a", new byte[8]), Native.Result.BadArgument, "not allowed");
+        Case("qml: not a QmlElement", qop, Pay.Head(rect, 0), Native.Result.UnknownProperty, "QmlElement only");
 
         // SET_EFFECT_CHAIN
         const ushort multi = Protocol.EffectLink.Multi, shader = Protocol.EffectLink.Shader, single = Protocol.EffectTemplate.Single;
         Case("chain: empty chain (control)", chain, Pay.ChainHead(rect, 0), 0, "");
         Case("chain: SHADER link (control)", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1)), 0, "");
-        Case("chain: payload < 8", chain, new Pay().U32(rect).U16(0), -2, "too short");
-        Case("chain: unknown id", chain, Pay.ChainHead(9999, 0), -4, "unknown id 9999");
-        Case("chain: truncated link header", chain, Pay.ChainHead(rect, 1).U32(0), -2, "truncated link header");
-        Case("chain: misaligned bodyLen", chain, Pay.ChainHead(rect, 1).Link(multi, 0, new Pay().Zeros(4), bodyLen: 2), -2, "not aligned");
-        Case("chain: bodyLen past the payload", chain, Pay.ChainHead(rect, 1).Link(multi, 0, new Pay(), bodyLen: 64), -2, "exceeds the payload");
-        Case("chain: unknown link kind", chain, Pay.ChainHead(rect, 1).Link(3, 0, new Pay()), -7, "unknown kind 3");
-        Case("chain: unknown template", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(9, 1)), -7, "unknown template 9");
-        Case("chain: SINGLE with 2 shaders", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 2)), -7, "takes 1 shader id");
-        Case("chain: PYRAMID with 1 shader", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(Protocol.EffectTemplate.Pyramid, 1)), -7, "takes 2 shader id");
-        Case("chain: truncated SHADER head", chain, Pay.ChainHead(rect, 1).Link(shader, 0, new Pay().U16(single).U16(1).Zeros(8)), -2, "truncated SHADER head");
-        Case("chain: reserved field not 0", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1, reserved: 7)), -7, "reserved field 7");
-        Case("chain: shader uniform name length 0", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).Entry(F, "a", new byte[4], nameLen: 0)), -7, "name length 0");
-        Case("chain: shader uniform name length 256", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).Entry(F, name256, new byte[4])), -7, "name length 256");
-        Case("chain: shader uniform past the body", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).U16(V4).U16(1).Bytes((byte)'a', 0, 0, 0).Zeros(4)), -2, "exceeds the body");
-        Case("chain: shader uniform count larger", chain, Pay.ChainHead(rect, 1).Link(shader, 2, Pay.ShaderBody(single, 1).F4Entry(F, "a", 1)), -2, "truncated entry");
-        Case("chain: shader uniform STRING not allowed", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).Entry(Str, "a", new byte[4])), -7, "not allowed");
-        Case("chain: trailing bytes in a body", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1).Zeros(4)), -2, "bytes after the last entry of the body");
-        Case("chain: trailing bytes after the last link", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1)).Zeros(4), -2, "bytes after the last link");
-        Case("chain: link count larger than the links", chain, Pay.ChainHead(rect, 2).Link(shader, 0, Pay.ShaderBody(single, 1)), -2, "truncated link header");
-        Case("chain: MULTI truncated entry", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay()), -2, "truncated entry");
-        Case("chain: MULTI unknown key", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(1).U16(F).F32(0)), -6, "is no MULTI key");
-        Case("chain: MULTI wrong value type", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(Protocol.Prop.EffectBlurEnabled).U16(F).F32(0)), -7, "takes");
-        Case("chain: MULTI entry past the body", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(Protocol.Prop.EffectBlurEnabled).U16(Protocol.Vt.Bool)), -2, "exceeds the body");
-        Case("chain: MULTI trailing bytes in the body", chain, Pay.ChainHead(rect, 1).Link(multi, 0, new Pay().Zeros(4)), -2, "bytes after the last entry of the body");
+        Case("chain: payload < 8", chain, new Pay().U32(rect).U16(0), Native.Result.BadLength, "too short");
+        Case("chain: unknown id", chain, Pay.ChainHead(9999, 0), Native.Result.UnknownObject, "unknown id 9999");
+        Case("chain: truncated link header", chain, Pay.ChainHead(rect, 1).U32(0), Native.Result.BadLength, "truncated link header");
+        Case("chain: misaligned bodyLen", chain, Pay.ChainHead(rect, 1).Link(multi, 0, new Pay().Zeros(4), bodyLen: 2), Native.Result.BadLength, "not aligned");
+        Case("chain: bodyLen past the payload", chain, Pay.ChainHead(rect, 1).Link(multi, 0, new Pay(), bodyLen: 64), Native.Result.BadLength, "exceeds the payload");
+        Case("chain: unknown link kind", chain, Pay.ChainHead(rect, 1).Link(3, 0, new Pay()), Native.Result.BadArgument, "unknown kind 3");
+        Case("chain: unknown template", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(9, 1)), Native.Result.BadArgument, "unknown template 9");
+        Case("chain: SINGLE with 2 shaders", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 2)), Native.Result.BadArgument, "takes 1 shader id");
+        Case("chain: PYRAMID with 1 shader", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(Protocol.EffectTemplate.Pyramid, 1)), Native.Result.BadArgument, "takes 2 shader id");
+        Case("chain: truncated SHADER head", chain, Pay.ChainHead(rect, 1).Link(shader, 0, new Pay().U16(single).U16(1).Zeros(8)), Native.Result.BadLength, "truncated SHADER head");
+        Case("chain: reserved field not 0", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1, reserved: 7)), Native.Result.BadArgument, "reserved field 7");
+        Case("chain: shader uniform name length 0", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).Entry(F, "a", new byte[4], nameLen: 0)), Native.Result.BadArgument, "name length 0");
+        Case("chain: shader uniform name length 256", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).Entry(F, name256, new byte[4])), Native.Result.BadArgument, "name length 256");
+        Case("chain: shader uniform past the body", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).U16(V4).U16(1).Bytes((byte)'a', 0, 0, 0).Zeros(4)), Native.Result.BadLength, "exceeds the body");
+        Case("chain: shader uniform count larger", chain, Pay.ChainHead(rect, 1).Link(shader, 2, Pay.ShaderBody(single, 1).F4Entry(F, "a", 1)), Native.Result.BadLength, "truncated entry");
+        Case("chain: shader uniform STRING not allowed", chain, Pay.ChainHead(rect, 1).Link(shader, 1, Pay.ShaderBody(single, 1).Entry(Str, "a", new byte[4])), Native.Result.BadArgument, "not allowed");
+        Case("chain: trailing bytes in a body", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1).Zeros(4)), Native.Result.BadLength, "bytes after the last entry of the body");
+        Case("chain: trailing bytes after the last link", chain, Pay.ChainHead(rect, 1).Link(shader, 0, Pay.ShaderBody(single, 1)).Zeros(4), Native.Result.BadLength, "bytes after the last link");
+        Case("chain: link count larger than the links", chain, Pay.ChainHead(rect, 2).Link(shader, 0, Pay.ShaderBody(single, 1)), Native.Result.BadLength, "truncated link header");
+        Case("chain: MULTI truncated entry", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay()), Native.Result.BadLength, "truncated entry");
+        Case("chain: MULTI unknown key", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(1).U16(F).F32(0)), Native.Result.UnknownProperty, "is no MULTI key");
+        Case("chain: MULTI wrong value type", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(Protocol.Prop.EffectBlurEnabled).U16(F).F32(0)), Native.Result.BadArgument, "takes");
+        Case("chain: MULTI entry past the body", chain, Pay.ChainHead(rect, 1).Link(multi, 1, new Pay().U16(Protocol.Prop.EffectBlurEnabled).U16(Protocol.Vt.Bool)), Native.Result.BadLength, "exceeds the body");
+        Case("chain: MULTI trailing bytes in the body", chain, Pay.ChainHead(rect, 1).Link(multi, 0, new Pay().Zeros(4)), Native.Result.BadLength, "bytes after the last entry of the body");
 
         // Path values (SET of ShapePath)
         const ushort set = Protocol.Op.Set;
         Case("path: valid (control)", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Line, Protocol.Verb.Close }, 2), 0, "");
-        Case("path: unknown verb", set, Pay.PathSet(shape, new byte[] { Protocol.Verb.Move, 9 }, 2), -7, "unknown verb 9");
-        Case("path: too few points", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Cubic }, 2), -7, "the verbs take 4");
-        Case("path: too many points", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Line }, 3), -7, "the verbs take 2");
-        Case("path: counts past the payload", set, new Pay().U32(shape).U16(Protocol.Prop.ShapePath).U16(Protocol.Vt.Path).U32(0xFFFFFFFF).U32(0xFFFFFFFF), -2, "value length");
+        Case("path: unknown verb", set, Pay.PathSet(shape, new byte[] { Protocol.Verb.Move, 9 }, 2), Native.Result.BadArgument, "unknown verb 9");
+        Case("path: too few points", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Cubic }, 2), Native.Result.BadArgument, "the verbs take 4");
+        Case("path: too many points", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Line }, 3), Native.Result.BadArgument, "the verbs take 2");
+        Case("path: counts past the payload", set, new Pay().U32(shape).U16(Protocol.Prop.ShapePath).U16(Protocol.Vt.Path).U32(0xFFFFFFFF).U32(0xFFFFFFFF), Native.Result.BadLength, "value length");
 
         // Rejected commands changed nothing: the elements still take a valid command.
         rc = Native.Apply(w, b.Clear().Cmd(uni, Pay.Head(fx, 1).F4Entry(F, "a", 1).ToArray()).Span);
@@ -249,7 +249,7 @@ public static class ApplyTest
         s.Check(w != IntPtr.Zero, "apply: window_create");
         Native.vlqt_window_show(w);
         var b = new Buf();
-        int Apply(Buf buf) => Native.Apply(w, buf.Span);
+        Native.Result Apply(Buf buf) => Native.Apply(w, buf.Span);
 
         // Scene: grey background, red rect at root, green rect inside an empty ITEM group.
         var rc = Apply(b.Clear()
@@ -283,49 +283,49 @@ public static class ApplyTest
         // DESTROY is recursive: child 3 is released together with group 2.
         s.Check(Apply(b.Clear().Destroy(2)) == 0, "apply: destroy group");
         rc = Apply(b.Clear().Color(3, 1, 1, 1));
-        s.Check(rc == -4, $"apply: child id released by recursive DESTROY ({rc}: {Native.LastError()})");
+        s.Check(rc == Native.Result.UnknownObject, $"apply: child id released by recursive DESTROY ({rc}: {Native.LastError()})");
 
         // Error cases: rc < 0, message names command index + reason, no crash.
-        void Err(string what, Buf buf, int expected, string mustContain)
+        void Err(string what, Buf buf, Native.Result expected, string mustContain)
         {
             var r = Apply(buf);
             var e = Native.LastError();
             s.Check(r == expected && e.Contains(mustContain), $"apply error: {what} -> {r} \"{e}\"");
         }
-        Err("truncated buffer", b.Clear().Raw(Protocol.Op.Destroy, 40, 4), -2, "exceeds buffer");
-        Err("wrong payloadLen", b.Clear().Raw(Protocol.Op.Destroy, 8, 8), -2, "expected 4");
-        Err("wrong value length", b.Clear().Create(5, Protocol.Type.Rectangle).SetFloats(5, Protocol.Prop.Size, Protocol.Vt.Vec2, 1, 2, 3), -2, "command #1");
-        Err("unknown op", b.Clear().Raw(99, 0, 0), -3, "unknown opcode");
-        Err("unknown id", b.Clear().Place(777, 0, 0, 1, 1), -4, "unknown id 777");
-        Err("unknown parent", b.Clear().Reparent(1, 777, 0), -4, "unknown parent id 777");
-        Err("unknown ref", b.Clear().SetRef(1, Protocol.Prop.Size, 777), -4, "unknown ref id 777");
-        Err("unknown type", b.Clear().Create(6, 999), -5, "unknown type 999");
-        Err("unknown property", b.Clear().Create(7, Protocol.Type.Item).Color(7, 1, 1, 1), -6, "not supported by type ITEM");
-        Err("value type mismatch", b.Clear().SetFloats(1, Protocol.Prop.Size, Protocol.Vt.F32, 1), -7, "expects value type");
-        Err("duplicate id", b.Clear().Create(1, Protocol.Type.Item), -8, "already exists");
-        Err("create id 0", b.Clear().Create(0, Protocol.Type.Item), -8, "window root");
-        Err("reparent into own subtree", b.Clear().Create(8, Protocol.Type.Item).Reparent(8, 1, 0).Reparent(1, 8, 0), -8, "command #2");
-        Err("bind unknown id", b.Clear().Bind(777, 1, 0), -4, "command #0");
-        s.Check(Native.Apply(IntPtr.Zero, b.Span) == -1, "apply: null window -> -1");
+        Err("truncated buffer", b.Clear().Raw(Protocol.Op.Destroy, 40, 4), Native.Result.BadLength, "exceeds buffer");
+        Err("wrong payloadLen", b.Clear().Raw(Protocol.Op.Destroy, 8, 8), Native.Result.BadLength, "expected 4");
+        Err("wrong value length", b.Clear().Create(5, Protocol.Type.Rectangle).SetFloats(5, Protocol.Prop.Size, Protocol.Vt.Vec2, 1, 2, 3), Native.Result.BadLength, "command #1");
+        Err("unknown op", b.Clear().Raw(99, 0, 0), Native.Result.UnknownOp, "unknown opcode");
+        Err("unknown id", b.Clear().Place(777, 0, 0, 1, 1), Native.Result.UnknownObject, "unknown id 777");
+        Err("unknown parent", b.Clear().Reparent(1, 777, 0), Native.Result.UnknownObject, "unknown parent id 777");
+        Err("unknown ref", b.Clear().SetRef(1, Protocol.Prop.Size, 777), Native.Result.UnknownObject, "unknown ref id 777");
+        Err("unknown type", b.Clear().Create(6, 999), Native.Result.UnknownType, "unknown type 999");
+        Err("unknown property", b.Clear().Create(7, Protocol.Type.Item).Color(7, 1, 1, 1), Native.Result.UnknownProperty, "not supported by type ITEM");
+        Err("value type mismatch", b.Clear().SetFloats(1, Protocol.Prop.Size, Protocol.Vt.F32, 1), Native.Result.BadArgument, "expects value type");
+        Err("duplicate id", b.Clear().Create(1, Protocol.Type.Item), Native.Result.Invalid, "already exists");
+        Err("create id 0", b.Clear().Create(0, Protocol.Type.Item), Native.Result.Invalid, "window root");
+        Err("reparent into own subtree", b.Clear().Create(8, Protocol.Type.Item).Reparent(8, 1, 0).Reparent(1, 8, 0), Native.Result.Invalid, "command #2");
+        Err("bind unknown id", b.Clear().Bind(777, 1, 0), Native.Result.UnknownObject, "command #0");
+        s.Check(Native.Apply(IntPtr.Zero, b.Span) == Native.Result.NullHandle, "apply: null window -> -1");
 
         // Structured error: object id, op and property of the bad command, reason without prefix.
         Native.vlqt_apply_error ae = default;
         rc = Apply(b.Clear().Create(9, Protocol.Type.Item).SetFloats(9, Protocol.Prop.Size, Protocol.Vt.F32, 1));
-        s.Check(rc == -7 && Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.rc == -7 && ae.command == 1 && ae.id == 9
+        s.Check(rc == Native.Result.BadArgument && Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.rc == (int)Native.Result.BadArgument && ae.command == 1 && ae.id == 9
             && ae.op == Protocol.Op.Set && ae.prop == Protocol.Prop.Size && ae.Reason.StartsWith("property ")
             && Native.LastError().Contains("id 9"), $"apply error id: SET -> id {ae.id} op {ae.op} prop {ae.prop} \"{ae.Reason}\"");
-        Err("unknown property id", b.Clear().Color(9, 1, 1, 1), -6, "id 9");
+        Err("unknown property id", b.Clear().Color(9, 1, 1, 1), Native.Result.UnknownProperty, "id 9");
         s.Check(Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.id == 9 && ae.prop == Protocol.Prop.Color, $"apply error id: -6 -> {ae.id}/{ae.prop}");
-        Err("clear color, no id", b.Clear().Raw(Protocol.Op.ClearColor, 4, 4), -2, "expected 16");
+        Err("clear color, no id", b.Clear().Raw(Protocol.Op.ClearColor, 4, 4), Native.Result.BadLength, "expected 16");
         s.Check(Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.id == 0 && ae.op == Protocol.Op.ClearColor, $"apply error id: CLEAR_COLOR -> id {ae.id}");
         s.Check(Apply(b.Clear().Destroy(9)) == 0 && Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.rc == 0 && ae.id == 0 && ae.Reason.Length == 0,
             "apply error id: cleared by a successful apply");
-        s.Check(Native.vlqt_window_get_apply_error(IntPtr.Zero, out _) == -1, "apply error id: null window -> -1");
+        s.Check(Native.vlqt_window_get_apply_error(IntPtr.Zero, out _) == Native.Result.NullHandle, "apply error id: null window -> -1");
         s.Check(Apply(b.Clear()) == 0, "apply: empty buffer ok");
 
         // Earlier commands of a failing buffer stay applied.
         rc = Apply(b.Clear().Color(4, 1, 1, 0).Place(777, 0, 0, 1, 1).Color(4, 1, 0, 1));
-        s.Check(rc == -4 && Native.LastError().Contains("command #1"), $"apply: stops at bad command #1 ({rc})");
+        s.Check(rc == Native.Result.UnknownObject && Native.LastError().Contains("command #1"), $"apply: stops at bad command #1 ({rc})");
         s.Pump(3);
         using (var a = s.Grab(w, "apply3.png"))
             s.Check(Near(Px(a, 200, 175), 255, 255, 0), $"apply: command before the error stays applied (yellow) ({Px(a, 200, 175)})");
@@ -333,11 +333,11 @@ public static class ApplyTest
         // Poll: id 1 is bound (handle 42) -> EV_MEASURED + EV_SCENE_BOUNDS once (06b), plus the first
         // EV_WINDOW_GEOMETRY of the window (40 bytes, client position), then nothing.
         var ev = new byte[128];
-        int need = Native.Poll(w, Span<byte>.Empty);
-        s.Check(need == -(20 + 28 + 40), $"poll: cap 0 -> -required ({need})");
-        s.Check(Native.Poll(w, ev) == 20 + 28 + 40, "poll: measured + scene bounds of the bound item + window geometry");
-        s.Check(Native.Poll(w, ev) == 0, "poll: 0 bytes (nothing changed)");
-        s.Check(Native.Poll(IntPtr.Zero, ev) == -1, "poll: null window -> -1");
+        var needRc = NativeCalls.Poll(w, Span<byte>.Empty, out var need);
+        s.Check(needRc == (int)Native.Result.BufferTooSmall && need == 20 + 28 + 40, $"poll: cap 0 -> buffer too small, required {need} ({needRc})");
+        s.Check(NativeCalls.Poll(w, ev) == 20 + 28 + 40, "poll: measured + scene bounds of the bound item + window geometry");
+        s.Check(NativeCalls.Poll(w, ev) == 0, "poll: 0 bytes (nothing changed)");
+        s.Check(NativeCalls.Poll(IntPtr.Zero, ev) == (int)Native.Result.NullHandle, "poll: null window -> NullHandle");
 
         // Perf: 10 000 SETs (SIZE on 100 items) per apply.
         b.Clear();
@@ -378,9 +378,9 @@ public static class ApplyTest
         rc = Apply(b.Clear().Raw(Protocol.Op.Reset, 0, 0));
         s.Check(rc == 0, $"reset: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         foreach (uint id in new uint[] { 1, 1000, 2000, 2001, 2002 })
-            s.Check(Apply(b.Clear().Destroy(id)) == -4, $"reset: id {id} gone");
+            s.Check(Apply(b.Clear().Destroy(id)) == Native.Result.UnknownObject, $"reset: id {id} gone");
         s.Check(Apply(b.Clear().Create(2001, Protocol.Type.Item).Create(1, Protocol.Type.Item)) == 0, "reset: ids reusable");
-        Err("reset with payload", b.Clear().Raw(Protocol.Op.Reset, 4, 4), -2, "expected 0");
+        Err("reset with payload", b.Clear().Raw(Protocol.Op.Reset, 4, 4), Native.Result.BadLength, "expected 0");
         s.Pump(3);
         using (var a = s.Grab(w, "apply_reset.png"))
             s.Check(Near(Px(a, 400, 300), 128, 0, 0), $"reset: scene empty, clear color kept ({Px(a, 400, 300)})");

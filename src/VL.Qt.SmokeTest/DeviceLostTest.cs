@@ -138,11 +138,11 @@ public static class DeviceLostTest
         var resBuf = new byte[64 * 1024];
         void Poll()
         {
-            var n = Native.ResPoll(resBuf);
-            if (n < 0)
+            var n = NativeCalls.ResPoll(resBuf, out var required);
+            if (n == (int)Native.Result.BufferTooSmall)
             {
-                resBuf = new byte[-n * 2];
-                n = Native.ResPoll(resBuf);
+                resBuf = new byte[required * 2];
+                n = NativeCalls.ResPoll(resBuf);
             }
             for (int at = 0; at < n;)
             {
@@ -198,11 +198,11 @@ public static class DeviceLostTest
         }
         byte[] ReadSnap(out Native.vlqt_pixel_desc desc)
         {
-            var n = Native.ResReadSnapshot(snap, Span<byte>.Empty, out desc);
-            if (n >= 0)
+            var rc = NativeCalls.ReadSnapshot(snap, Span<byte>.Empty, out desc, out var required);
+            if (rc != (int)Native.Result.BufferTooSmall)
                 return [];
-            var px = new byte[-n];
-            return Native.ResReadSnapshot(snap, px, out desc) == px.Length ? px : [];
+            var px = new byte[required];
+            return NativeCalls.ReadSnapshot(snap, px, out desc) == px.Length ? px : [];
         }
         (int count, int notReady, long bytes) Table()
         {

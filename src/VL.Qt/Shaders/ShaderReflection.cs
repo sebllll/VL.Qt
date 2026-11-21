@@ -45,19 +45,23 @@ namespace VL.Qt.Shaders
 
         /// <summary>
         /// Bakes source (full Qt GLSL) to SPIR-V in QtNative and reflects it. Synchronous, any thread, serialized with the
-        /// runtime bakes in QtNative. A negative return code of QtNative becomes a failed reflection.
+        /// runtime bakes in QtNative. A failure of QtNative becomes a failed reflection.
         /// </summary>
         public static ShaderReflection Reflect(string source, ShaderStage stage)
         {
             var buffer = new byte[initialBufferSize];
             while (true)
             {
-                var length = Native.vlqt_shader_reflect(source, (int)stage, ref buffer[0], buffer.Length);
-                if (length < 0)
-                    return Failed($"vlqt_shader_reflect failed ({length})");
-                if (length <= buffer.Length)
-                    return Parse(Encoding.UTF8.GetString(buffer, 0, length));
-                buffer = new byte[length + 1];
+                var rc = Native.vlqt_shader_reflect(source, (int)stage, ref buffer[0], buffer.Length, out var written, out var required);
+                if (rc == Native.Result.BufferTooSmall)
+                {
+                    buffer = new byte[required];
+                    continue;
+                }
+                if (rc != Native.Result.Ok)
+                    return Failed($"vlqt_shader_reflect failed ({rc}): {Native.LastError()}");
+                // written includes the terminating NUL.
+                return Parse(Encoding.UTF8.GetString(buffer, 0, Math.Max(0, written - 1)));
             }
         }
 

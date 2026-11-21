@@ -49,7 +49,7 @@ public static class AnimationScrubTest
         // Last value of v and the last error of the element in everything polled so far.
         void Poll()
         {
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             var b = buf.AsSpan(0, Math.Max(n, 0));
             int off = 0;
             while (off + 12 <= b.Length)

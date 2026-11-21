@@ -36,11 +36,11 @@ public static class ResourceTest
 
         void Poll()
         {
-            var n = Native.ResPoll(buf);
-            if (n < 0)
+            var n = NativeCalls.ResPoll(buf, out var required);
+            if (n == (int)Native.Result.BufferTooSmall)
             {
-                buf = new byte[-n * 2];
-                n = Native.ResPoll(buf);
+                buf = new byte[required * 2];
+                n = NativeCalls.ResPoll(buf);
             }
             for (int at = 0; at < n;)
             {
@@ -100,8 +100,8 @@ public static class ResourceTest
         }
         bool Listed(ulong id) => List().Any(r => r.id == id);
 
-        s.Check(Native.vlqt_res_create(999, out _) == -7, "unknown kind rejected (-7)");
-        s.Check(Native.vlqt_res_set_budget(0) == -7, "budget 0 rejected (-7)");
+        s.Check(Native.vlqt_res_create(999, out _) == Native.Result.BadArgument, "unknown kind rejected (-7)");
+        s.Check(Native.vlqt_res_set_budget(0) == Native.Result.BadArgument, "budget 0 rejected (-7)");
 
         // 1. All states of the test kind, ERROR + INFO, rejected transitions.
         var a = Start(20, 1 * Mb);
@@ -118,15 +118,15 @@ public static class ResourceTest
         s.Check(err != null && Encoding.UTF8.GetString(err.Payload).Contains("decode failed"), "ERROR text of the failed decode");
         s.Check(Seq(badUp) == "1,2,3,5", $"upload failure -> Failed ({Seq(badUp)})");
 
-        s.Check(NativeTest.vlqt_test_res_transition(a, Protocol.ResState.Ready, Protocol.ResState.Decoding) == -7, "Ready -> Decoding rejected");
-        s.Check(NativeTest.vlqt_test_res_transition(a, Protocol.ResState.Pending, Protocol.ResState.Decoding) == -7, "wrong from-state rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(a, Protocol.ResState.Ready, Protocol.ResState.Decoding) == Native.Result.BadArgument, "Ready -> Decoding rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(a, Protocol.ResState.Pending, Protocol.ResState.Decoding) == Native.Result.BadArgument, "wrong from-state rejected");
         s.Check(NativeTest.vlqt_test_res_start(a, 0, 0, 0) == 0 && Native.vlqt_res_wait(a, 2000) == Protocol.ResState.Ready, "start of a Ready resource = replacement, stays Ready");
         var p = Create();
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Ready) == -7, "Pending -> Ready rejected");
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Released) == -7, "Released only by release + frame end");
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, 99) == -7, "unknown state rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Ready) == Native.Result.BadArgument, "Pending -> Ready rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Released) == Native.Result.BadArgument, "Released only by release + frame end");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, 99) == Native.Result.BadArgument, "unknown state rejected");
         s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Pending, Protocol.ResState.Failed) == 0, "Pending -> Failed allowed");
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Failed, Protocol.ResState.Ready) == -7, "Failed -> Ready rejected");
+        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResState.Failed, Protocol.ResState.Ready) == Native.Result.BadArgument, "Failed -> Ready rejected");
         s.Check(s.Log.Contains("invalid transition Ready -> Decoding rejected"), "rejected transition logged");
         s.Check(s.Log.Contains("VL.Qt.Resources: #") && s.Log.Contains("Uploading -> Ready"), "transitions logged (debug, VL.Qt.Resources)");
 
@@ -135,14 +135,14 @@ public static class ResourceTest
             s.Check(Native.vlqt_res_release(id) == 0, "release");
         Frame();
         s.Check(Native.vlqt_res_release(a) == 0, "release a");
-        s.Check(Native.vlqt_res_release(a) == -9, "double release -9");
+        s.Check(Native.vlqt_res_release(a) == Native.Result.UnknownId, "double release -9");
         var before = events.Count;
         Frame();
         s.Check(!Listed(a), "released resource gone after the frame end");
         var e2 = Create();
         s.Check((uint)e2 == (uint)a && e2 != a, $"index reused with a new generation ({a:X} -> {e2:X})");
-        s.Check(Native.vlqt_res_release(a) == -9 && NativeTest.vlqt_test_res_start(a, 0, 0, 0) == -9 && Native.vlqt_res_wait(a, 10) == -9
-            && NativeTest.vlqt_test_res_transition(a, 1, 5) == -9 && NativeTest.vlqt_test_res_element_ref(a, 1) == -9, "stale id -> -9 everywhere");
+        s.Check(Native.vlqt_res_release(a) == Native.Result.UnknownId && NativeTest.vlqt_test_res_start(a, 0, 0, 0) == Native.Result.UnknownId && Native.vlqt_res_wait(a, 10) == (int)Native.Result.UnknownId
+            && NativeTest.vlqt_test_res_transition(a, 1, 5) == Native.Result.UnknownId && NativeTest.vlqt_test_res_element_ref(a, 1) == Native.Result.UnknownId, "stale id -> -9 everywhere");
         var e2Info = List().FirstOrDefault(r => r.id == e2);
         s.Check(e2Info.state == Protocol.ResState.Pending && e2Info.host_refs == 1 && e2Info.element_refs == 0, "new resource untouched by the stale id");
         s.Check(s.Log.Contains("stale resource id"), "stale id logged as warning");
@@ -204,7 +204,7 @@ public static class ResourceTest
         Frame();
         var elInfo = List().FirstOrDefault(r => r.id == el);
         s.Check(elInfo.id == el && elInfo.host_refs == 0 && elInfo.element_refs == 1, "kept while an element holds it");
-        s.Check(NativeTest.vlqt_test_res_element_ref(el, -1) == 0 && NativeTest.vlqt_test_res_element_ref(el, -1) == -9, "element release, second one -9");
+        s.Check(NativeTest.vlqt_test_res_element_ref(el, -1) == 0 && NativeTest.vlqt_test_res_element_ref(el, -1) == Native.Result.UnknownId, "element release, second one -9");
         Frame();
         s.Check(!Listed(el), "freed after the last element release");
 
@@ -225,11 +225,11 @@ public static class ResourceTest
         foreach (var id in busy.Append(quick))
             Native.vlqt_res_release(id);
 
-        // Poll with a too small buffer: -required, records stay.
+        // Poll with a too small buffer: BufferTooSmall with the required size, records stay.
         var pc = Create();
         var small = new byte[4];
-        var req = Native.ResPoll(small);
-        s.Check(req <= -16, $"poll cap too small -> -required ({req})");
+        var tooSmall = NativeCalls.ResPoll(small, out var req);
+        s.Check(tooSmall == (int)Native.Result.BufferTooSmall && req >= 16, $"poll cap too small -> BufferTooSmall, required {req} ({tooSmall})");
         Poll();
         s.Check(States(pc).SequenceEqual(new[] { Protocol.ResState.Pending }), "records kept after the too small poll");
         Native.vlqt_res_release(pc);
@@ -250,7 +250,7 @@ public static class ResourceTest
         }
         s.Check(maxShutdown < 500, $"shutdown with running jobs took at most {maxShutdown} ms (< 500)");
         s.Check(s.Log.Contains("shutdown: 8 resource(s) still referenced"), "shutdown leak warning with the count");
-        s.Check(Native.vlqt_res_release(old) == -9, "ids from before the shutdown are stale");
+        s.Check(Native.vlqt_res_release(old) == Native.Result.UnknownId, "ids from before the shutdown are stale");
         var again = Start(5, Mb);
         s.Check(Settle(2000, again), "manager works again after shutdown");
         Native.vlqt_res_release(again);

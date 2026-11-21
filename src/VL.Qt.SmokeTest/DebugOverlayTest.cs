@@ -72,7 +72,7 @@ public static class DebugOverlayTest
         List<Rec> Frame(int n = 1)
         {
             s.Pump(n);
-            int len = Native.Poll(w, buf);
+            int len = NativeCalls.Poll(w, buf);
             s.Check(len >= 0, $"debug: poll ({len})");
             var recs = Parse(buf.AsSpan(0, Math.Max(len, 0)));
             recs.RemoveAll(r => r.Event == Protocol.Ev.WindowGeometry);
@@ -185,7 +185,7 @@ public static class DebugOverlayTest
 
         // Window-wide: everything.
         s.Check(Native.vlqt_window_set_debug(w, 1) == 0 && Native.vlqt_window_get_debug(w) == 1, "debug: set_debug(1)");
-        s.Check(Native.vlqt_window_set_debug(IntPtr.Zero, 1) == -1, "debug: set_debug(null) -1");
+        s.Check(Native.vlqt_window_set_debug(IntPtr.Zero, 1) == Native.Result.NullHandle, "debug: set_debug(null) -1");
         recs = Frame(2);
         s.Check(!recs.Exists(r => r.Event is Protocol.Ev.Measured or Protocol.Ev.SceneBounds),
             $"debug: window debug changes no measurement ({recs.Count} records)");

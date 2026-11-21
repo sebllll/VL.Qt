@@ -42,10 +42,10 @@ public static class ImagePreviewTest
         // rc, size and the first pixel (BGRA) of the preview.
         (int rc, int w, int h, byte[] px) Read(ulong id)
         {
-            var rc = Native.ResReadPreview(id, Span<byte>.Empty, out var d);
-            if (rc >= 0 || rc == -7 || rc == -9) return (rc, d.width, d.height, []);
-            var px = new byte[-rc];
-            var n = Native.ResReadPreview(id, px, out d);
+            var rc = NativeCalls.ReadPreview(id, Span<byte>.Empty, out var d, out var required);
+            if (rc != (int)Native.Result.BufferTooSmall) return (rc, d.width, d.height, []);
+            var px = new byte[required];
+            var n = NativeCalls.ReadPreview(id, px, out d);
             return (n, d.width, d.height, px);
         }
         bool Is(ulong id, int w, int h, string what)
@@ -67,19 +67,19 @@ public static class ImagePreviewTest
         var b = Load(small, Protocol.Img.Preview);
         Is(b, 100, 80, "100x80 file not upscaled");
         var c = Load(big, 0);
-        s.Check(Native.ResReadPreview(c, Span<byte>.Empty, out _) == -7, "without the flag -> -7");
-        s.Check(Native.ResReadPreview(c, dummy, out _) == -7, "without the flag, with a buffer -> -7");
+        s.Check(NativeCalls.ReadPreview(c, Span<byte>.Empty, out _) == (int)Native.Result.NoData, "without the flag -> NoData");
+        s.Check(NativeCalls.ReadPreview(c, dummy, out _) == (int)Native.Result.NoData, "without the flag, with a buffer -> NoData");
 
-        // cap too small: -required with the desc filled, nothing copied.
-        var rcSmall = Native.ResReadPreview(a, dummy, out var d);
-        s.Check(rcSmall == -256 * 128 * 4 && d.width == 256 && d.height == 128 && d.row_bytes == 256 * 4 && d.format == 9 && d.premultiplied == 1, $"small cap -> -required, desc filled ({rcSmall}, {d.width}x{d.height} rb {d.row_bytes} fmt {d.format} pm {d.premultiplied})");
+        // cap too small: BufferTooSmall with the required size and the desc filled, nothing copied.
+        var rcSmall = NativeCalls.ReadPreview(a, dummy, out var d, out var smallRequired);
+        s.Check(rcSmall == (int)Native.Result.BufferTooSmall && smallRequired == 256 * 128 * 4 && d.width == 256 && d.height == 128 && d.row_bytes == 256 * 4 && d.format == 9 && d.premultiplied == 1, $"small cap -> BufferTooSmall, required {smallRequired}, desc filled ({rcSmall}, {d.width}x{d.height} rb {d.row_bytes} fmt {d.format} pm {d.premultiplied})");
         s.Check(dummy[0] == 0 && dummy[15] == 0, "small cap: nothing copied");
 
-        // Unknown, released and wrong kind; not Ready (Pending) -> -7.
-        s.Check(Native.ResReadPreview(0xdeadbeefUL << 8, Span<byte>.Empty, out _) == -9, "unknown id -> -9");
+        // Unknown and released id; wrong kind: BadArgument; no preview (not Ready, no flag): NoData.
+        s.Check(NativeCalls.ReadPreview(0xdeadbeefUL << 8, Span<byte>.Empty, out _) == (int)Native.Result.UnknownId, "unknown id -> UnknownId");
         var pending = Create();
-        s.Check(Native.ResReadPreview(pending, Span<byte>.Empty, out _) == -7, "Pending resource -> -7");
-        s.Check(Native.vlqt_res_create(TestProtocol.ResKind.Test, out var testId) == 0 && Native.ResReadPreview(testId, Span<byte>.Empty, out _) == -7, "test resource (wrong kind) -> -7");
+        s.Check(NativeCalls.ReadPreview(pending, Span<byte>.Empty, out _) == (int)Native.Result.NoData, "Pending resource -> NoData");
+        s.Check(Native.vlqt_res_create(TestProtocol.ResKind.Test, out var testId) == Native.Result.Ok && NativeCalls.ReadPreview(testId, Span<byte>.Empty, out _) == (int)Native.Result.BadArgument, "test resource (wrong kind) -> BadArgument");
         Native.vlqt_res_release(testId);
         Native.vlqt_res_release(pending);
 
@@ -102,7 +102,7 @@ public static class ImagePreviewTest
             s.Check(px[0] == 255 && px[1] == 0 && px[2] == 0 && px[3] == 255, $"pixels preview blue, BGRA {px[0]},{px[1]},{px[2]},{px[3]}");
         }
         var p0 = Pixels(0);
-        s.Check(Native.ResReadPreview(p0, Span<byte>.Empty, out _) == -7, "set_pixels without the flag -> -7");
+        s.Check(NativeCalls.ReadPreview(p0, Span<byte>.Empty, out _) == (int)Native.Result.NoData, "set_pixels without the flag -> NoData");
 
         // Replacement of a Ready resource: the preview belongs to the visible content until the swap.
         s.Check(Native.vlqt_res_load_image(a, small, Protocol.Img.Preview) == 0, "replacement started");
@@ -112,13 +112,13 @@ public static class ImagePreviewTest
         Is(a, 100, 80, "replacement swapped: new preview");
         s.Check(Native.vlqt_res_load_image(a, big, 0) == 0, "replacement without the flag started");
         t.Restart();
-        while (Read(a).rc != -7 && t.ElapsedMilliseconds < 10000) s.Pump(1);
-        s.Check(Native.ResReadPreview(a, Span<byte>.Empty, out _) == -7, "replaced content without the flag -> -7");
+        while (Read(a).rc != (int)Native.Result.NoData && t.ElapsedMilliseconds < 10000) s.Pump(1);
+        s.Check(NativeCalls.ReadPreview(a, Span<byte>.Empty, out _) == (int)Native.Result.NoData, "replaced content without the flag -> NoData");
 
-        // Released: -9.
+        // Released: UnknownId.
         foreach (var id in new[] { a, b, c, p1, p0 })
             Native.vlqt_res_release(id);
         s.Pump(5);
-        s.Check(Native.ResReadPreview(a, Span<byte>.Empty, out _) == -9, "released id -> -9");
+        s.Check(NativeCalls.ReadPreview(a, Span<byte>.Empty, out _) == (int)Native.Result.UnknownId, "released id -> UnknownId");
     }
 }

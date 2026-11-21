@@ -168,7 +168,7 @@ public static class TearingTest
                 for (int i = 0; i < n; i++)
                 {
                     if (Native.vlqt_window_take_close_request(windows[i]) == 1) return Finish();
-                    if (Native.Poll(windows[i], poll) > 0 && WindowPlacement.TryReadGeometry(poll, out var g) && g.Bounds.Width >= 1 && g.Bounds.Height >= 1)
+                    if (NativeCalls.Poll(windows[i], poll) > 0 && WindowPlacement.TryReadGeometry(poll, out var g) && g.Bounds.Width >= 1 && g.Bounds.Height >= 1)
                         sizes[i] = (g.Bounds.Width, g.Bounds.Height);
                 }
 

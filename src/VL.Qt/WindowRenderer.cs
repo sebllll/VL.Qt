@@ -76,15 +76,15 @@ namespace VL.Qt
         /// </summary>
         public int UsedSamples { get; private set; }
 
-        /// <summary>Result of the last <see cref="SetIcon"/> (vlqt_window_set_icon): 0 ok, -7 not loadable (default icon shown), -1 no window.</summary>
-        public int IconResult { get; private set; }
+        /// <summary>Result of the last <see cref="SetIcon"/> (vlqt_window_set_icon): Ok, Io = not loadable (default icon shown), NullHandle = no window.</summary>
+        public Native.Result IconResult { get; private set; }
 
         /// <summary>
         /// Whether the window is shown (false after X/<see cref="Hide"/> and after <see cref="Dispose"/>). Queried live from Qt
         /// (QWindow::isVisible, a plain getter), not cached in the pump: a cached value was false in the frame of the
         /// creation (node created, Undo, F5, Bounds changed) and stayed false whenever this window was not pumped.
         /// </summary>
-        public bool IsVisible => !_disposed && _window != IntPtr.Zero && Native.vlqt_window_is_visible(_window) != 0;
+        public bool IsVisible => !_disposed && _window != IntPtr.Zero && Native.vlqt_window_is_visible(_window) == 1;
 
         /// <summary>First of: window creation, last apply, last poll error. Empty if ok.</summary>
         public string Error =>
@@ -168,7 +168,7 @@ namespace VL.Qt
             if (_disposed || _window == IntPtr.Zero)
                 return;
 
-            if (Native.vlqt_window_take_close_request(_window) != 0)
+            if (Native.vlqt_window_take_close_request(_window) == 1)
                 CloseRequested?.Invoke();
             if (_disposed)
                 return;
@@ -176,7 +176,7 @@ namespace VL.Qt
             PollEvents();
 
             // Compare raw bytes: PerfStats is a record, only build a new one when the values changed.
-            if (Native.vlqt_window_get_perf(_window, out var p) == 0)
+            if (Native.vlqt_window_get_perf(_window, out var p) == Native.Result.Ok)
             {
                 if (!MemoryMarshal.AsBytes(new ReadOnlySpan<Native.vlqt_perf>(in p))
                         .SequenceEqual(MemoryMarshal.AsBytes(new ReadOnlySpan<Native.vlqt_perf>(in _lastPerf))))
@@ -212,7 +212,7 @@ namespace VL.Qt
         public bool TryGetLastSample(out Native.vlqt_perf_sample sample)
         {
             sample = default;
-            return !_disposed && _window != IntPtr.Zero && Native.vlqt_window_get_perf_sample(_window, out sample) == 0;
+            return !_disposed && _window != IntPtr.Zero && Native.vlqt_window_get_perf_sample(_window, out sample) == Native.Result.Ok;
         }
 
         // Events and measured values into the feedback (read by the element nodes in the next Update).
@@ -239,11 +239,11 @@ namespace VL.Qt
         /// <summary>
         /// Sets the window icon live (vlqt_window_set_icon). <paramref name="fullPath"/> null = the built-in default
         /// icon; QtNative resolves a relative path against the working directory, so pass a full path. A file that cannot
-        /// be loaded leaves the default icon (<see cref="IconResult"/> -7, text in <see cref="Native.LastError"/>).
+        /// be loaded leaves the default icon (<see cref="IconResult"/> = <see cref="Native.Result.Io"/>, text in <see cref="Native.LastError"/>).
         /// </summary>
-        public int SetIcon(string? fullPath)
+        public Native.Result SetIcon(string? fullPath)
         {
-            IconResult = _disposed || _window == IntPtr.Zero ? -1 : Native.vlqt_window_set_icon(_window, fullPath);
+            IconResult = _disposed || _window == IntPtr.Zero ? Native.Result.NullHandle : Native.vlqt_window_set_icon(_window, fullPath);
             return IconResult;
         }
 

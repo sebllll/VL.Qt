@@ -71,7 +71,7 @@ public static class MeasureTest
         }
         List<Rec> Poll()
         {
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             s.Check(n >= 0, $"poll ({n})");
             var recs = Parse(buf.AsSpan(0, Math.Max(n, 0)), s);
             recs.RemoveAll(r => r.Event == Protocol.Ev.WindowGeometry); // window record (handle 0), not an item
@@ -184,13 +184,13 @@ public static class MeasureTest
         s.Check(tr is { } r && Math.Abs(r.V[0] - 220) < 0.01f && Math.Abs(r.V[1] + 130) < 0.01f && Math.Abs(r.V[2] - 60) < 0.01f && Math.Abs(r.V[3] - 400) < 0.01f,
             $"rotated item -> axis-aligned scene box (220, -130, 60, 400) ({S(tr)})");
 
-        // -required: events stay queued until the buffer is big enough.
+        // BufferTooSmall with the required size: events stay queued until the buffer is big enough.
         cmd.SetString(TextId, Protocol.Prop.Text, "Hi");
         CheckApply("text change 2");
         s.Pump(1);
-        int need = Native.Poll(w, buf.AsSpan(0, 4));
-        int got = Native.Poll(w, buf);
-        s.Check(need <= -8 && got == -need && Poll().Count == 0, $"poll with small cap -> -required ({need}), then {got} bytes, then empty");
+        int small = NativeCalls.Poll(w, buf.AsSpan(0, 4), out var need);
+        int got = NativeCalls.Poll(w, buf);
+        s.Check(small == (int)Native.Result.BufferTooSmall && need >= 8 && got == need && Poll().Count == 0, $"poll with small cap -> BufferTooSmall, required {need}, then {got} bytes, then empty");
 
         // Destroy: bound items vanish silently.
         cmd.Destroy(ColId);
@@ -218,7 +218,7 @@ public static class MeasureTest
         }
         CheckApply("1000 bound items");
         s.Pump(2);
-        int first = Native.Poll(w, buf);
+        int first = NativeCalls.Poll(w, buf);
         s.Check(first == 1000 * (20 + 28), $"1000 bound items -> 2000 records on the first poll ({first} bytes)");
         var idle = new double[101];
         var moved = new double[101];
@@ -229,7 +229,7 @@ public static class MeasureTest
             {
                 s.Pump(1);
                 var t = Stopwatch.StartNew();
-                int n = Native.Poll(w, buf);
+                int n = NativeCalls.Poll(w, buf);
                 idle[f] = t.Elapsed.TotalMilliseconds;
                 if (n != 0) { s.Check(false, $"idle poll returned {n}"); break; }
             }
@@ -242,7 +242,7 @@ public static class MeasureTest
             CheckApply("move all");
             s.Pump(1);
             var t = Stopwatch.StartNew();
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             moved[f] = t.Elapsed.TotalMilliseconds;
             if (n != 1000 * 28) { s.Check(false, $"moved poll returned {n}, expected {1000 * 28}"); break; }
         }
@@ -279,7 +279,7 @@ public static class MeasureTest
         }
         List<Rec> Poll()
         {
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             s.Check(n >= 0, $"poll ({n})");
             var recs = Parse(buf.AsSpan(0, Math.Max(n, 0)), s);
             recs.RemoveAll(r => r.Event == Protocol.Ev.WindowGeometry);
@@ -389,7 +389,7 @@ public static class MeasureTest
         }
         Rec? Bounds(uint handle)
         {
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             Rec? found = null;
             foreach (var r in Parse(buf.AsSpan(0, Math.Max(n, 0)), Check))
                 if (r.Event == Protocol.Ev.SceneBounds && r.Handle == handle) found = r;
@@ -429,7 +429,7 @@ public static class MeasureTest
         cmd.EndUniforms();
         Apply("effect groups");
         s.Pump(3);
-        Native.Poll(w, buf); // first values
+        NativeCalls.Poll(w, buf); // first values
 
         void Move(uint group, uint rect, Stride.Core.Mathematics.Matrix m, string what, Func<float[], bool> expect)
         {
@@ -480,7 +480,7 @@ public static class MeasureTest
         s.Check(rc == 0, $"{count} bound rectangles ({rc})");
         cmd.Reset();
         s.Pump(2);
-        int first = Native.Poll(w, buf);
+        int first = NativeCalls.Poll(w, buf);
         var firstRecs = Parse(buf.AsSpan(0, Math.Max(first, 0)), s);
         int measured = firstRecs.FindAll(x => x.Event == Protocol.Ev.Measured).Count;
         int bounds = firstRecs.FindAll(x => x.Event == Protocol.Ev.SceneBounds).Count;
@@ -493,7 +493,7 @@ public static class MeasureTest
         {
             s.Pump(1);
             var t = Stopwatch.StartNew();
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             idle[f] = t.Elapsed.TotalMilliseconds;
             idleMeasured = Math.Max(idleMeasured, Records(buf, n, Protocol.Ev.Measured, s) + Records(buf, n, Protocol.Ev.SceneBounds, s));
             if (n != 0) { s.Check(false, $"static poll returned {n} bytes ({count})"); break; }
@@ -507,7 +507,7 @@ public static class MeasureTest
             cmd.Reset();
             s.Pump(1);
             var t = Stopwatch.StartNew();
-            int n = Native.Poll(w, buf);
+            int n = NativeCalls.Poll(w, buf);
             one[f] = t.Elapsed.TotalMilliseconds;
             oneMeasured = Math.Max(oneMeasured, Records(buf, n, Protocol.Ev.SceneBounds, s));
             if (n != 28) { s.Check(false, $"one moved -> one SCENE_BOUNDS, got {n} bytes ({count})"); break; }

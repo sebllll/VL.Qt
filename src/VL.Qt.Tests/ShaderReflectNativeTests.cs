@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using NUnit.Framework;
@@ -74,9 +75,11 @@ void main() {
         private static string Reflect(string source, int stage)
         {
             var buf = new byte[4096];
-            var n = Native.vlqt_shader_reflect(source, stage, ref buf[0], buf.Length);
-            Assert.That(n, Is.GreaterThan(0));
-            return Encoding.UTF8.GetString(buf, 0, Math.Min(n, buf.Length));
+            var rc = Native.vlqt_shader_reflect(source, stage, ref buf[0], buf.Length, out var written, out _);
+            Assert.That(rc, Is.EqualTo(Native.Result.Ok));
+            Assert.That(written, Is.GreaterThan(1));
+            // written counts the terminating NUL.
+            return Encoding.UTF8.GetString(buf, 0, written - 1);
         }
 
         [Test]
@@ -100,13 +103,25 @@ void main() {
         }
 
         [Test]
-        public void SmallBuffer_ReturnsNeededLength()
+        public void SmallBuffer_ReturnsBufferTooSmallWithTheNeededSizeAndCopiesNothing()
         {
             var full = Reflect(good, Protocol.ShaderStage.Fragment);
             var buf = new byte[8];
-            var n = Native.vlqt_shader_reflect(good, Protocol.ShaderStage.Fragment, ref buf[0], buf.Length);
-            Assert.That(n, Is.EqualTo(Encoding.UTF8.GetByteCount(full)));
-            Assert.That(Encoding.UTF8.GetString(buf, 0, 2), Is.EqualTo("ok"));
+            var rc = Native.vlqt_shader_reflect(good, Protocol.ShaderStage.Fragment, ref buf[0], buf.Length, out var written, out var required);
+            Assert.That(rc, Is.EqualTo(Native.Result.BufferTooSmall));
+            Assert.That(required, Is.EqualTo(Encoding.UTF8.GetByteCount(full) + 1), "the text and its NUL");
+            Assert.That(written, Is.EqualTo(0));
+            Assert.That(buf, Is.All.EqualTo((byte)0), "nothing copied");
+        }
+
+        [Test]
+        public void SizeQuery_WithAnEmptyBuffer()
+        {
+            var full = Reflect(good, Protocol.ShaderStage.Fragment);
+            var rc = Native.vlqt_shader_reflect(good, Protocol.ShaderStage.Fragment, ref Unsafe.NullRef<byte>(), 0, out var written, out var required);
+            Assert.That(rc, Is.EqualTo(Native.Result.BufferTooSmall));
+            Assert.That(required, Is.EqualTo(Encoding.UTF8.GetByteCount(full) + 1));
+            Assert.That(written, Is.EqualTo(0));
         }
 
         [Test]
@@ -119,12 +134,14 @@ void main() {
         }
 
         [Test]
-        public void BadArguments_Return_Minus7()
+        public void BadArguments_ReturnBadArgument()
         {
             var buf = new byte[16];
-            Assert.That(Native.vlqt_shader_reflect("", Protocol.ShaderStage.Fragment, ref buf[0], buf.Length), Is.EqualTo(-7));
-            Assert.That(Native.vlqt_shader_reflect(good, 99, ref buf[0], buf.Length), Is.EqualTo(-7));
-            Assert.That(Native.vlqt_shader_reflect(good, Protocol.ShaderStage.Fragment, ref buf[0], -1), Is.EqualTo(-7));
+            Assert.That(Native.vlqt_shader_reflect("", Protocol.ShaderStage.Fragment, ref buf[0], buf.Length, out var written, out var required), Is.EqualTo(Native.Result.BadArgument));
+            Assert.That((written, required), Is.EqualTo((0, 0)), "an error sets both counts to 0");
+            Assert.That(Native.vlqt_shader_reflect(good, 99, ref buf[0], buf.Length, out _, out _), Is.EqualTo(Native.Result.BadArgument));
+            Assert.That(Native.vlqt_shader_reflect(good, Protocol.ShaderStage.Fragment, ref buf[0], -1, out _, out _), Is.EqualTo(Native.Result.BadArgument));
+            Assert.That(Native.LastError(), Is.Not.Empty);
         }
     }
 }

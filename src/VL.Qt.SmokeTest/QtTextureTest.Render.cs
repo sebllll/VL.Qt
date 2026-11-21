@@ -62,7 +62,7 @@ public static partial class QtTextureTest
             cmd.SetColor(i + 1, Protocol.Prop.Color, b.R, b.G, b.B, b.A);
             cmd.Reparent(i + 1, 0, i);
         }
-        int rc = Native.Apply(scene, cmd.EndFrame());
+        int rc = (int)Native.Apply(scene, cmd.EndFrame());
         s.Check(rc == 0, $"{label}: apply scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         return scene;
     }
@@ -73,7 +73,7 @@ public static partial class QtTextureTest
         var cmd = new CommandWriter();
         cmd.Reset();
         cmd.SetColor(id, Protocol.Prop.Color, r, g, b, a);
-        int rc = Native.Apply(scene, cmd.EndFrame());
+        int rc = (int)Native.Apply(scene, cmd.EndFrame());
         s.Check(rc == 0, $"{label}: apply colour ({rc}) {(rc != 0 ? Native.LastError() : "")}");
     }
 
@@ -81,7 +81,7 @@ public static partial class QtTextureTest
     private static byte[]? Read(IntPtr texture, int w, int h, Fmt f)
     {
         var pixels = new byte[w * h * f.Bytes];
-        return NativeTest.TestReadTexture(texture, pixels, out _, out _, out _) == pixels.Length ? pixels : null;
+        return NativeCalls.ReadTexture(texture, pixels, out _, out _, out _) == pixels.Length ? pixels : null;
     }
 
     // R, G, B, A (0..255, rounded) of pixel x, y of a readback in format f.
@@ -150,7 +150,7 @@ public static partial class QtTextureTest
         {
             if (!check(NewTarget(device, w, h, f.Texture, out var tex, out var handle), $"formats: {f.Name}: create texture"))
                 continue;
-            int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, f.View, 1, out _);
+            int rc = (int)Native.vlqt_offscreen_bind(scene, device, handle, w, h, f.View, 1, out _);
             NativeTest.vlqt_test_close_handle(handle);
             check(rc == 0, $"formats: {f.Name}: bind ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             rc = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
@@ -192,8 +192,8 @@ public static partial class QtTextureTest
         {
             if (!check(NewTarget(device, w, h, textureFormat, out var tex, out var handle), $"formats: {name}: create texture"))
                 continue;
-            int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, view, 1, out _);
-            check(rc == Protocol.Offscreen.FormatUnsupported && Native.vlqt_offscreen_is_bound(scene) == 0,
+            int rc = (int)Native.vlqt_offscreen_bind(scene, device, handle, w, h, view, 1, out _);
+            check(rc == (int)Native.Result.FormatUnsupported && Native.vlqt_offscreen_is_bound(scene) == 0,
                 $"formats: {name} = FORMAT_UNSUPPORTED, scene unbound ({rc}) {(rc < 0 ? Native.LastError() : "")}");
             NativeTest.vlqt_test_close_handle(handle);
             NativeTest.vlqt_test_com_release(tex);
@@ -228,8 +228,8 @@ public static partial class QtTextureTest
             NativeTest.vlqt_test_d3d11_release_device(device, context);
             return;
         }
-        int rcA = Native.vlqt_offscreen_bind(a, device, handleA, 64, 48, B8G8R8A8Unorm, 1, out _);
-        int rcB = Native.vlqt_offscreen_bind(b, device, handleB, 80, 40, R8G8B8A8Unorm, 1, out _);
+        var rcA = Native.vlqt_offscreen_bind(a, device, handleA, 64, 48, B8G8R8A8Unorm, 1, out _);
+        var rcB = Native.vlqt_offscreen_bind(b, device, handleB, 80, 40, R8G8B8A8Unorm, 1, out _);
         NativeTest.vlqt_test_close_handle(handleA);
         NativeTest.vlqt_test_close_handle(handleB);
         check(rcA == 0 && rcB == 0, $"batch: bind both ({rcA}, {rcB}) {(rcA != 0 || rcB != 0 ? Native.LastError() : "")}");
@@ -312,8 +312,8 @@ public static partial class QtTextureTest
             NativeTest.vlqt_test_d3d11_release_device(device, context);
             return;
         }
-        int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
-        int rc2 = Native.vlqt_offscreen_bind(clearScene, device, clearHandle, 16, 16, B8G8R8A8Unorm, 1, out _);
+        int rc = (int)Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
+        var rc2 = Native.vlqt_offscreen_bind(clearScene, device, clearHandle, 16, 16, B8G8R8A8Unorm, 1, out _);
         NativeTest.vlqt_test_close_handle(handle);
         NativeTest.vlqt_test_close_handle(clearHandle);
         check(rc == 0 && rc2 == 0, $"alpha: bind ({rc}, {rc2}) {(rc != 0 || rc2 != 0 ? Native.LastError() : "")}");
@@ -342,7 +342,7 @@ public static partial class QtTextureTest
         {
             if (!check(NewTarget(device, w, h, f.Texture, out var linTex, out var linHandle), $"alpha {f.Name}: texture"))
                 continue;
-            rc = Native.vlqt_offscreen_bind(scene, device, linHandle, w, h, f.View, 1, out _);
+            rc = (int)Native.vlqt_offscreen_bind(scene, device, linHandle, w, h, f.View, 1, out _);
             NativeTest.vlqt_test_close_handle(linHandle);
             check(rc == 0, $"alpha {f.Name}: bind ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             rc = Native.OffscreenRenderBatch(context, new[] { scene }, 0);
@@ -447,7 +447,7 @@ public static partial class QtTextureTest
         Native.vlqt_window_show(win);
         s.Pump(3);
 
-        int rc = Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
+        int rc = (int)Native.vlqt_offscreen_bind(scene, device, handle, w, h, B8G8R8A8Unorm, 1, out _);
         NativeTest.vlqt_test_close_handle(handle);
         check(rc == 0, $"window: bind ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         rc = Native.OffscreenRenderBatch(context, new[] { scene }, 0);

@@ -70,7 +70,7 @@ public static class SamplerTest
         var cmd = new CommandWriter();
         var evBuf = new byte[1 << 16];
         var errors = new Dictionary<uint, string>();
-        int ApplyRc() => Native.Apply(w, cmd.EndFrame());
+        Native.Result ApplyRc() => Native.Apply(w, cmd.EndFrame());
         void Apply(string what)
         {
             var rc = ApplyRc();
@@ -78,7 +78,7 @@ public static class SamplerTest
         }
         string Err(uint handle)
         {
-            int n = Native.Poll(w, evBuf);
+            int n = NativeCalls.Poll(w, evBuf);
             for (int at = 0; at < n;)
             {
                 ushort ev = BitConverter.ToUInt16(evBuf, at), len = BitConverter.ToUInt16(evBuf, at + 2);
@@ -284,7 +284,7 @@ public static class SamplerTest
         cmd.UniformSampler("source", S(0, 3, 0, 0));
         cmd.EndUniforms();
         var rc = ApplyRc();
-        s.Check(rc == -7, $"out of range state (mip 3) -> apply error -7 ({rc})");
+        s.Check(rc == Native.Result.BadArgument, $"out of range state (mip 3) -> apply error -7 ({rc})");
         Teardown();
     }
 

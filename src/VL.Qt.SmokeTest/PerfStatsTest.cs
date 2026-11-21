@@ -70,7 +70,7 @@ public static class PerfStatsTest
         // Live window: last sample and stats after a few pumps.
         var w = Native.vlqt_window_create(320, 240, "VL.Qt perfstats");
         rc = Native.vlqt_window_get_perf_sample(w, out var ls);
-        s.Check(rc == -2, $"perfstats: no sample before the first pump (rc {rc})");
+        s.Check(rc == Native.Result.NoData, $"perfstats: no sample before the first pump (rc {rc})");
         Native.vlqt_window_show(w);
         s.Pump(20);
         rc = Native.vlqt_window_get_perf_sample(w, out ls);
@@ -80,8 +80,8 @@ public static class PerfStatsTest
         rc = Native.vlqt_window_get_perf_stats(w, out st);
         s.Check(rc == 0 && st.budget_ms >= 1 && st.budget_ms <= 1000.0 / 23 && st.pumps >= 20 && st.samples >= 20 && st.pump_max >= st.pump_p50,
             $"perfstats: window stats (rc {rc}, budget {st.budget_ms:F2} ms, pumps {st.pumps}, samples {st.samples}, pump p50 {st.pump_p50:F2} max {st.pump_max:F2})");
-        s.Check(Native.vlqt_window_get_perf_sample(IntPtr.Zero, out _) == -1 && Native.vlqt_window_get_perf_stats(IntPtr.Zero, out _) == -1,
-            "perfstats: null window -> -1");
+        s.Check(Native.vlqt_window_get_perf_sample(IntPtr.Zero, out _) == Native.Result.NullHandle && Native.vlqt_window_get_perf_stats(IntPtr.Zero, out _) == Native.Result.NullHandle,
+            "perfstats: null window -> NullHandle");
 
         // host frames. Eval: 4 frames of 250 ms, apply 1..4, ops 10..40, alloc 100..400, gen0 1 each, gen2 once.
         var hf = new Native.vlqt_host_frame[4];
@@ -110,12 +110,12 @@ public static class PerfStatsTest
             $"perfstats: host frame report/read back (rc {rc}/{rc2}, ops {back.ops}, alloc {back.alloc_bytes}, stats n {hs.samples}, gen0/s {hs.gc0_per_s}, vvvv {back.vvvv}/{hs.vvvv_ms}/{ps.VvvvMs}, wait {back.wait}/{hs.wait_ms})");
         s.Pump(1);
         rc = Native.vlqt_window_get_host_frame(w, out _);
-        s.Check(rc == -2, $"perfstats: next pump without report -> -2 (rc {rc})");
-        s.Check(Native.vlqt_window_report_host_frame(IntPtr.Zero, f) == -1 && Native.vlqt_window_get_host_frame(IntPtr.Zero, out _) == -1
-              && Native.vlqt_window_get_host_stats(IntPtr.Zero, out _) == -1,
-            "perfstats: host API, null window -> -1");
+        s.Check(rc == Native.Result.NoData, $"perfstats: next pump without report -> NoData (rc {rc})");
+        s.Check(Native.vlqt_window_report_host_frame(IntPtr.Zero, f) == Native.Result.NullHandle && Native.vlqt_window_get_host_frame(IntPtr.Zero, out _) == Native.Result.NullHandle
+              && Native.vlqt_window_get_host_stats(IntPtr.Zero, out _) == Native.Result.NullHandle,
+            "perfstats: host API, null window -> NullHandle");
         var w2 = Native.vlqt_window_create(64, 64, "VL.Qt perfstats 2");
-        s.Check(Native.vlqt_window_report_host_frame(w2, f) == -2, "perfstats: host report before the first pump -> -2");
+        s.Check(Native.vlqt_window_report_host_frame(w2, f) == Native.Result.NoData, "perfstats: host report before the first pump -> NoData");
         Native.vlqt_window_destroy(w2);
 
         Native.vlqt_window_destroy(w);

@@ -80,9 +80,9 @@ public static partial class QtTextureTest
             NativeTest.vlqt_test_d3d11_create_shared_texture(_device, W, H, B8G8R8A8Typeless, out _texture, out var handle);
             R = new OffscreenRenderer(new SceneRegistry(), W, H);
             _batch = new[] { R };
-            int rc = R.Bind(_device, handle, new Int2(W, H), B8G8R8A8Unorm);
+            var rc = R.Bind(_device, handle, new Int2(W, H), B8G8R8A8Unorm);
             NativeTest.vlqt_test_close_handle(handle);
-            Ok = rc == Protocol.Offscreen.Ok && R.IsBound;
+            Ok = rc == (int)Native.Result.Ok && R.IsBound;
             s.Check(Ok, $"input: scene created and bound ({rc}) {R.Error}");
             _subs = new[]
             {
@@ -134,7 +134,7 @@ public static partial class QtTextureTest
             R.ApplyCommands();
             int rc = OffscreenRenderer.RenderBatch(_context, _batch, 0);
             if (rc < 0)
-                _s.Check(false, $"input: render batch ({rc}) {OffscreenRenderer.Describe(rc)}");
+                _s.Check(false, $"input: render batch ({rc}) {OffscreenRenderer.Describe((Native.Result)rc)}");
             _s.Pump(1);
             R.PollEvents();
             if (R.Error.Length > 0)
@@ -170,7 +170,7 @@ public static partial class QtTextureTest
         public byte[]? Pixels()
         {
             var pixels = new byte[W * H * 4];
-            return NativeTest.TestReadTexture(_texture, pixels, out _, out _, out _) == pixels.Length ? pixels : null;
+            return NativeCalls.ReadTexture(_texture, pixels, out _, out _, out _) == pixels.Length ? pixels : null;
         }
 
         public static string Px(byte[]? pixels, int x, int y)
@@ -335,7 +335,7 @@ public static partial class QtTextureTest
                 if (cmd.Length > 0)
                     s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "wheel reference: apply " + Native.LastError());
                 s.Pump(1);
-                int n = Native.Poll(w, buf);
+                int n = NativeCalls.Poll(w, buf);
                 rec.FeedbackRouter.Dispatch(buf.AsSpan(0, Math.Max(n, 0)));
             }
         }
@@ -443,8 +443,8 @@ public static partial class QtTextureTest
         // one (render-texture.md "Input"): tablet events from a stylus, so only the Click node with Devices = Pen takes it.
         Thread.Sleep(700);
         var p = new Vector2(190, 60);
-        s.Check(rig.R.SendPointer(Protocol.PointerDevice.Pen, Protocol.Pointer.Press, 3, p, 0, 0) == Protocol.Offscreen.Ok
-              && rig.R.SendPointer(Protocol.PointerDevice.Pen, Protocol.Pointer.Release, 3, p, 0, 0) == Protocol.Offscreen.Ok, "devices: pen press and release accepted");
+        s.Check(rig.R.SendPointer(Protocol.PointerDevice.Pen, Protocol.Pointer.Press, 3, p, 0, 0) == Native.Result.Ok
+              && rig.R.SendPointer(Protocol.PointerDevice.Pen, Protocol.Pointer.Release, 3, p, 0, 0) == Native.Result.Ok, "devices: pen press and release accepted");
         rig.Frames();
         Counts("pen tap (a stylus)", 1, 1, 1);
     }
@@ -551,8 +551,8 @@ public static partial class QtTextureTest
         s.Check(Commit("ab1") == 1 && Value() == "ab1" && rig.TextValue.LatestAuthor == "Qt", $"text: click focuses, typing + Enter commits \"ab1\" ({Value()}, author {rig.TextValue.LatestAuthor})");
 
         // SendText and SendKey directly, Enter keeps the focus.
-        s.Check(r.SendText("xy") == Protocol.Offscreen.Ok, "text: SendText accepted");
-        s.Check(r.SendKey(Protocol.KeyEvent.Press, 0x01000004, 0, false) == Protocol.Offscreen.Ok && r.SendKey(Protocol.KeyEvent.Release, 0x01000004, 0, false) == Protocol.Offscreen.Ok,
+        s.Check(r.SendText("xy") == Native.Result.Ok, "text: SendText accepted");
+        s.Check(r.SendKey(Protocol.KeyEvent.Press, 0x01000004, 0, false) == Native.Result.Ok && r.SendKey(Protocol.KeyEvent.Release, 0x01000004, 0, false) == Native.Result.Ok,
             "text: SendKey Enter accepted");
         rig.Frames();
         s.Check(Value() == "ab1xy", $"text: SendText + SendKey Enter commit \"ab1xy\", the focus stays ({Value()})");
@@ -588,9 +588,9 @@ public static partial class QtTextureTest
         rig.Frames();
         s.Check(Value() == "ab1xy789" && Commit("6") == 0, $"text: press outside the texture commits and releases ({Value()})");
         Focus();
-        s.Check(r.SetFocus(false) == Protocol.Offscreen.Ok, "text: SetFocus(false) accepted");
+        s.Check(r.SetFocus(false) == Native.Result.Ok, "text: SetFocus(false) accepted");
         s.Check(Commit("6") == 0, $"text: SetFocus(false) -> typing is dropped ({Value()})");
-        s.Check(r.SetFocus(true) == Protocol.Offscreen.Ok, "text: SetFocus(true) accepted");
+        s.Check(r.SetFocus(true) == Native.Result.Ok, "text: SetFocus(true) accepted");
         Focus();
         s.Check(Commit("!") == 1 && Value().EndsWith("!"), $"text: focused again by a click ({Value()})");
         // A press inside the focused field keeps the focus.

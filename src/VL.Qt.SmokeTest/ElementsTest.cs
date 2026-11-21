@@ -28,7 +28,7 @@ public static class ElementsTest
         s.Check(w != IntPtr.Zero, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        int Apply() => Native.Apply(w, cmd.EndFrame());
+        Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
         void CheckApply(string what)
         {
             var rc = Apply();
@@ -126,7 +126,7 @@ public static class ElementsTest
             cmd.SetColor(Group, Protocol.Prop.Color, 1, 1, 1, 1);
             var rc = Apply();
             var e = Native.LastError();
-            s.Check(rc == -6 && e.Contains("not supported by type ITEM"), $"unknown property -> -6 ({rc}: {e})");
+            s.Check(rc == Native.Result.UnknownProperty && e.Contains("not supported by type ITEM"), $"unknown property -> -6 ({rc}: {e})");
         }
         var hits = Hits() - hits0;
         s.Check(hits == 1, $"unknown property logged once (vlqt.elements, {hits}x)");

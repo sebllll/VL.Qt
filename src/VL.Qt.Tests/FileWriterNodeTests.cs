@@ -220,7 +220,7 @@ namespace VL.Qt.Tests
         public void Element_GrabRefused_ErrorAndDone()
         {
             Show();
-            _api.SnapshotRc = -7;
+            _api.SnapshotRc = Native.Result.BadArgument;
             UpdateElement("a.png", out var done, out var error, write: true, scale: 0);
             if (!done)
                 UpdateElement("a.png", out done, out error);

@@ -49,7 +49,7 @@ public static class WindowIconTest
         s.Check(!win || (custom != IntPtr.Zero && custom != def), "custom icon replaces the default (HWND)");
 
         rc = Native.vlqt_window_set_icon(w, Path.Combine(s.OutDir, "no-such-icon.png"));
-        s.Check(rc == -7, $"missing file -> -7 ({rc})");
+        s.Check(rc == Native.Result.Io, $"missing file -> Io ({rc})");
         s.Check(Native.LastError().Contains("not loadable"), $"error text ({Native.LastError()})");
         s.Pump(5);
         s.Check(!win || (Big() != IntPtr.Zero && Big() != custom), "default icon instead after a failed load");
@@ -57,7 +57,7 @@ public static class WindowIconTest
         var broken = Path.Combine(s.OutDir, "window-icon-broken.png");
         File.WriteAllText(broken, "not an image");
         rc = Native.vlqt_window_set_icon(w, broken);
-        s.Check(rc == -7, $"broken file -> -7 ({rc})");
+        s.Check(rc == Native.Result.Io, $"broken file -> Io ({rc})");
 
         Native.vlqt_window_set_icon(w, png);
         s.Pump(5);
@@ -69,7 +69,7 @@ public static class WindowIconTest
         rc = Native.vlqt_window_set_icon(w, "");
         s.Check(rc == 0, $"empty path -> default, 0 ({rc})");
 
-        s.Check(Native.vlqt_window_set_icon(IntPtr.Zero, png) == -1, "null window -> -1");
+        s.Check(Native.vlqt_window_set_icon(IntPtr.Zero, png) == Native.Result.NullHandle, "null window -> NullHandle");
 
         Native.vlqt_window_destroy(w);
         File.Delete(png);
