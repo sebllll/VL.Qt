@@ -48,7 +48,7 @@ struct EffectChainDesc;  // effects/effect_chain_desc.h
 struct EffectComponents; // effects/effect_chain.h
 class EffectChain;       // effects/effect_chain.h
 
-/* Per engine (= per window): component cache, resolved property cache, Matrix4x4 component. */
+/* Per engine (= per window): component cache, resolved property cache. */
 class Elements
 {
 public:
@@ -69,17 +69,17 @@ public:
     void initGeometry(ElementEntry& node);
     /* REPARENT: re-places the item for its new parent (free parent: x/y = -anchor; Row/Column: the layout's, a
      * translation folded into x/y moves to the Matrix4x4). */
-    bool placeAfterReparent(ElementEntry& node, std::string& err);
+    void placeAfterReparent(ElementEntry& node);
     /* TRANSFORM: a pure x/y translation of an item without Matrix4x4 (outside Row/Column, no drag offset) only moves
      * x/y (perf); otherwise attaches a Matrix4x4 to item.transform once, afterwards only writes its matrix. */
-    bool setMatrix(ElementEntry& node, const QMatrix4x4& m, std::string& err);
+    void setMatrix(ElementEntry& node, const QMatrix4x4& m);
     /* ANCHOR as fractions (0 / 0.5 / 1) of the item's width/height: re-places the item (outside Row/Column) and
      * re-applies the matrix if one is attached. */
-    bool setAnchor(ElementEntry& node, float fx, float fy, std::string& err);
+    void setAnchor(ElementEntry& node, float fx, float fy);
     /* Drag offset: composed into the same Matrix4x4 as T(offset) * TRANSFORM around the anchor, so the offset
      * moves the item in its parent's space, independent of its own rotation/scale. Attaches the Matrix4x4 on first
      * use (not for an offset 0 of an item without one). */
-    bool setDragOffset(ElementEntry& node, float dx, float dy, std::string& err);
+    void setDragOffset(ElementEntry& node, float dx, float dy);
 
     /* Effect source bookkeeping (SHADER SOURCE). A QSGTextureProvider consumer keeps a pointer to its source, so the
      * Scene clears every effect referencing an item before deleting it (and before deleting an effect). */
@@ -156,9 +156,8 @@ private:
         QMetaProperty userValue;                         // vlqtUserValue (value inputs); invalid if none
     };
     void resolve(const TypeDef& type, TypeCache& cache, QQuickItem* first);
-    QObject* createTransform(std::string& err);
     /* Attaches the Matrix4x4 to item.transform once (node.xf must exist) and writes the current matrix. */
-    bool writeTransform(ElementEntry& node, std::string& err);
+    void writeTransform(ElementEntry& node);
     /* Group as texture: one hidden QQuickShaderEffectSource per Group (sourceRect = group bounds, follows them, see
      * GroupItem::syncEffectBounds), shared by the Input and texture uniforms of all effects, refcounted; the last release
      * deletes it after the next frame (frameDelete), a destroyed Group retires it as well. */
@@ -167,12 +166,11 @@ private:
 
     QQmlEngine* engine;
     std::unordered_map<quint16, TypeCache> types;
-    QQmlComponent* matrixComponent = nullptr;
     std::unordered_map<const QQuickItem*, int> sourceRefs; // item -> number of effects using it as source
     std::vector<QPointer<QQuickItem>> layerOff; // former effect sources, layer disabled after the next frame
     std::vector<QPointer<QQuickItem>> qmlBuilds; // QmlItems whose Source or Reload changed in this apply
-    /* Mask frame of mask for node (protocol.h mask rule, setEffectChain); nullptr + err on failure. */
-    QQuickItem* createMaskFrame(ElementEntry& node, QQuickItem* mask, QObject*& xf, std::string& err);
+    /* Mask frame of mask for node (protocol.h mask rule, setEffectChain). */
+    QQuickItem* createMaskFrame(ElementEntry& node, QQuickItem* mask, QQuickMatrix4x4*& xf);
     /* Mask back next to frame, hidden; frame layer off + deleted after the next frame. */
     void retireMaskFrame(ElementEntry& node, QQuickItem* mask, QQuickItem* frame);
 

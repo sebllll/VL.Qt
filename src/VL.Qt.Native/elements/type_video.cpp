@@ -4,8 +4,6 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QUrl>
 
-#include <cmath>
-
 namespace vlqt {
 
 namespace {
@@ -81,11 +79,11 @@ constexpr const char* kVideoQml =
     "  }\n"
     "}\n";
 
-/* f32 that must be finite and > 0 (playback rate; reverse/zero playback is not supported by the backend). */
+/* f32 that must be > 0 (playback rate; reverse/zero playback is not supported by the backend). Finiteness is checked in Elements::set. */
 bool setQmlPositiveReal(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
-    if (!(v.f[0] > 0) || !std::isfinite(v.f[0])) {
-        err = "value must be finite and > 0";
+    if (!(v.f[0] > 0)) {
+        err = "value must be > 0";
         return false;
     }
     return writeQml(n.item, rp, qreal(v.f[0]), err);

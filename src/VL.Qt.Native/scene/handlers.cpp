@@ -270,9 +270,8 @@ void DragState::onTranslationChanged()
     const float oy = std::clamp(start_[1] + raw_[1], config.dragLimits[1], config.dragLimits[3]);
     delta[0] = ox - start_[0];
     delta[1] = oy - start_[1];
-    std::string err;
-    if (config.movesElement && !scene_.elements.setDragOffset(node, ox, oy, err))
-        qCWarning(lcEvents, "drag offset of item %u could not be set: %s", unsigned(hit->second.owner), err.c_str());
+    if (config.movesElement)
+        scene_.elements.setDragOffset(node, ox, oy);
 }
 
 HandlerObjects::~HandlerObjects()

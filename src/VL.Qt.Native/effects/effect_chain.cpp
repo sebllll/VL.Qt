@@ -13,7 +13,6 @@
 #include <QtGui/QMatrix4x4>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
-#include <QtQml/QQmlListReference>
 #include <QtQml/QQmlProperty>
 #include <QtQml/qqml.h>
 #include <QtQuick/QQuickWindow>
@@ -882,11 +881,7 @@ int Elements::setEffectChain(ElementEntry& node, const EffectChainDesc& chain, c
         EffectChain::MultiPart& m = ec->link(i).multi;
         if (!m.mask || m.maskFrame)
             continue;
-        m.maskFrame = createMaskFrame(node, m.mask, m.maskFrameXf, err);
-        if (!m.maskFrame) {
-            m.mask = nullptr;
-            return ApplyBadValue;
-        }
+        m.maskFrame = createMaskFrame(node, m.mask, m.maskFrameXf);
         ec->syncMaskFrame(i);
     }
     if (!effectLayers.count(node.item)) {
@@ -951,26 +946,17 @@ std::vector<QQuickItem*> Elements::effectMasks(const ElementEntry& node) const
     return masks;
 }
 
-QQuickItem* Elements::createMaskFrame(ElementEntry& node, QQuickItem* mask, QObject*& xfOut, std::string& err)
+QQuickItem* Elements::createMaskFrame(ElementEntry& node, QQuickItem* mask, QQuickMatrix4x4*& xfOut)
 {
     // Mask rule (protocol.h): the mask lies in the element's parent coordinates like a sibling, with its own SIZE,
     // ANCHOR and TRANSFORM. frame (hidden, layer on, the link's maskSource) > inner (Matrix4x4 = inverse of the
     // element's parent mapping, updateMaskFrame) > mask: frame coordinates are the element's own, so the layer's
     // sourceRect is the link's effect area as it is (stage Binding) and the texture lands exactly where a sibling would be.
-    QObject* xf = createTransform(err);
-    if (!xf)
-        return nullptr;
     auto* frame = new QQuickItem(mask->parentItem()); // next to the parked mask (window root): outside every layout
     frame->setVisible(false);                         // texture source only, the effect draws it as alpha
     frame->setSize(QSizeF(1, 1)); // a 0-sized source item gives no texture, whatever sourceRect says
     auto* inner = new QQuickItem(frame);
-    xf->setParent(inner);
-    QQmlListReference list(inner, "transform");
-    if (!list.isValid() || !list.append(xf)) {
-        delete frame;
-        err = "appending Matrix4x4 to the mask frame failed";
-        return nullptr;
-    }
+    QQuickMatrix4x4* xf = attachMatrix(inner);
     mask->setParentItem(inner);
     mask->setVisible(true); // inside the hidden frame: rendered into its layer only
     maskLayers.insert(frame);
@@ -1023,7 +1009,7 @@ void Elements::updateMaskFrame(ElementEntry& node)
         m *= pivoted(*node.xf, node.item);
     const QMatrix4x4 inv = m.inverted();
     for (size_t i = 0; i < ec->linkCount(); ++i)
-        if (QObject* xf = ec->link(i).multi.maskFrameXf)
+        if (QQuickMatrix4x4* xf = ec->link(i).multi.maskFrameXf)
             setMatrixValue(xf, inv);
 }
 
