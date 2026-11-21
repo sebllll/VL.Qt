@@ -227,8 +227,8 @@ void DragState::onActiveChanged()
         return;
     const ElementEntry& node = nit->second;
     // Several drag handlers at one item share its one offset: each starts from the offset as it is now.
-    start_[0] = node.xf ? node.xf->dx : 0.f;
-    start_[1] = node.xf ? node.xf->dy : 0.f;
+    start_[0] = node.xf->dx;
+    start_[1] = node.xf->dy;
     raw_[0] = raw_[1] = 0;
     delta[0] = delta[1] = 0;
     ++drags;
