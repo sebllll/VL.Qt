@@ -316,6 +316,15 @@ int clampSamples(int requested, int dxgiFormat, QRhi* rhi)
     return best;
 }
 
+int windowSwapChainFormat()
+{
+#ifdef Q_OS_WIN
+    return DXGI_FORMAT_R8G8B8A8_UNORM;
+#else
+    return 0;
+#endif
+}
+
 void checkLost()
 {
 #ifdef Q_OS_WIN

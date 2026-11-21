@@ -36,6 +36,8 @@ SO="$NATIVE/libvlqt.so"
 fail() { echo "$1" >&2; exit 1; }
 [ -f "$QT_DIR/lib/libQt6Core.so.6" ] || fail "Qt not found in $QT_DIR (run tools/setup-qt.sh)"
 [ -f "$SO" ] || fail "$SO missing (run tools/build-native.sh)"
+GLPROBE="$NATIVE/vlqt-glprobe"
+[ -f "$GLPROBE" ] || fail "$GLPROBE missing (run tools/build-native.sh)"
 for t in readelf ldd python3; do
     command -v "$t" >/dev/null || fail "$t not found (run tools/setup-wsl.sh)"
 done
@@ -110,6 +112,11 @@ done
 install -D -m 644 "$ROOT/src/VL.Qt.Native/fonts/DejaVuSans.ttf" "$NATIVE/fonts/DejaVuSans.ttf"
 install -D -m 644 "$ROOT/LICENSES/DejaVu-Fonts.txt" "$NATIVE/fonts/DejaVu-Fonts-LICENSE.txt"
 
+# --- OpenGL check under WSLg (platform/platform_linux.cpp, probeGlx): vlqt-glprobe, built by build-native.sh next to
+# libvlqt.so, needs no Qt and no RUNPATH. A package may lose the executable bit; QtNative then runs it through the
+# dynamic loader.
+chmod 755 "$GLPROBE"
+
 # --- RUNPATH: $ORIGIN for files in native/, $ORIGIN/../.. for plugins/<cat>/x.so etc. (decision: only $ORIGIN-relative).
 while read -r f; do
     rel="${f#"$NATIVE"/}"
@@ -129,6 +136,8 @@ while read -r f; do
     leak="$(env -u LD_LIBRARY_PATH ldd "$f" | grep -F "$QT_DIR" || true)"
     [ -z "$leak" ] || { echo "resolves into Qt install, not bundle: ${f#"$NATIVE"/}:"$'\n'"$leak" >&2; bad=1; }
 done < <(elfs)
+missing="$(env -u LD_LIBRARY_PATH ldd "$GLPROBE" | grep 'not found' || true)"
+[ -z "$missing" ] || { echo "unresolved in vlqt-glprobe:"$'\n'"$missing" >&2; bad=1; }
 [ "$bad" = 0 ] || fail "deploy check failed"
 
 # System libs the bundle relies on (resolved outside native/), with the Debian/Ubuntu package if dpkg knows it.

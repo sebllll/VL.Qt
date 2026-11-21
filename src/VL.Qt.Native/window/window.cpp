@@ -6,6 +6,7 @@
 #include "app/log.h"
 #include "app/render_gate.h"
 #include "app/scene_change.h"
+#include "platform/platform.h"
 #include "test/test_hooks.h"
 #include "scene/scene.h"
 #include "device.h"
@@ -23,15 +24,6 @@
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickGraphicsConfiguration>
 #include <QtQuick/QQuickWindow>
-
-#ifdef _WIN32
-#include <windows.h>
-#else
-// Borderless on Linux (applyFrameless): private API, check on Qt updates.
-#include <QtGui/private/qhighdpiscaling_p.h>
-#include <QtGui/private/qwindow_p.h>
-#include <QtGui/qpa/qplatformwindow.h>
-#endif
 
 #include <cmath>
 #include <memory>
@@ -136,11 +128,10 @@ void installWindowFilters(SceneHandle* w, QQuickWindow* win)
     vlqt::test::installInputFilter(win); // test hook: VLQT_TEST_SYNTHETIC_INPUT (test/test_input.cpp)
 }
 
-// MSAA count of a window's swap chain: R8G8B8A8_UNORM is the format of Qt's D3D11 swap chain (SDR).
+// MSAA count of a window's swap chain.
 int clampWindowSamples(int requested, QQuickWindow* win)
 {
-    constexpr int swapChainFormat = 28; // DXGI_FORMAT_R8G8B8A8_UNORM
-    return vlqt::device::clampSamples(requested, swapChainFormat, win->rhi());
+    return vlqt::device::clampSamples(requested, vlqt::device::windowSwapChainFormat(), win->rhi());
 }
 
 // ... and, once w->window, w->engine and the window's own event filters exist: GPU timings and pipeline cache, the
@@ -184,42 +175,7 @@ static void applyFrameless(SceneHandle* w, bool on)
     if (flags == win->flags())
         return;
     const bool keepClient = win->handle() && (win->windowStates() & (Qt::WindowMinimized | Qt::WindowMaximized | Qt::WindowFullScreen)) == 0;
-#ifdef _WIN32
-    // Windows: QWindow::setGeometry does not work right after setFlags (Qt still has the old frame margins and a stale
-    // cached geometry; frame on: the new style only takes effect later, the outer rect stays = old client rect). So the
-    // outer rect for the unchanged client rect is computed from the new style (AdjustWindowRectExForDpi, includes the
-    // invisible resize borders) and set with SWP_FRAMECHANGED; Qt follows from WM_NCCALCSIZE/WM_MOVE/WM_SIZE.
-    if (!keepClient) {
-        win->setFlags(flags);
-        return;
-    }
-    const HWND hwnd = reinterpret_cast<HWND>(win->winId());
-    RECT c {};
-    GetClientRect(hwnd, &c);
-    MapWindowPoints(hwnd, nullptr, reinterpret_cast<POINT*>(&c), 2);
-    win->setFlags(flags);
-    RECT r = c;
-    const DWORD style = DWORD(GetWindowLongPtrW(hwnd, GWL_STYLE)), exStyle = DWORD(GetWindowLongPtrW(hwnd, GWL_EXSTYLE));
-    AdjustWindowRectExForDpi(&r, style, FALSE, exStyle, GetDpiForWindow(hwnd));
-    SetWindowPos(hwnd, nullptr, r.left, r.top, r.right - r.left, r.bottom - r.top,
-        SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
-#else
-    const QRect client = win->geometry();
-    win->setFlags(flags);
-    if (!keepClient)
-        return;
-    // xcb: the window manager re-frames asynchronously; client geometry requested frame exclusive.
-    // QWindow::setGeometry returns early for an unchanged rect, so the platform window would never see it. offscreen
-    // (CI) recomputes its frame margins (2 px) only in QOffscreenWindow::setGeometry (no setWindowFlags), so the
-    // reported frame position kept the old margins and wandered by them on every toggle. The client rect is therefore
-    // passed to the platform window directly, frame exclusive, as QWindow::setGeometry would.
-    if (win->geometry() != client)
-        win->setGeometry(client);
-    else if (QPlatformWindow* pw = win->handle()) {
-        QWindowPrivate::get(win)->positionPolicy = QWindowPrivate::WindowFrameExclusive;
-        pw->setGeometry(QHighDpi::toNativeWindowGeometry(client, win));
-    }
-#endif
+    vlqt::platform::setFrameless(*win, on, keepClient);
 }
 
 // Borderless pin: while fullscreen only w->mode remembers it (applied by the fullscreen part on leaving fullscreen).

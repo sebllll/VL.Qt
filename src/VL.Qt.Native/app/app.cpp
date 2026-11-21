@@ -24,8 +24,6 @@
 #include <QtCore/QPointer>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QSurfaceFormat>
-#include <QtQuick/QQuickWindow>
-#include <QtQuick/QSGRendererInterface>
 #include <QtQuickControls2/QQuickStyle>
 
 #include <cstddef>
@@ -91,11 +89,10 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         if (!g_nativeDir.isEmpty())
             QCoreApplication::addLibraryPath(g_nativeDir + QStringLiteral("/plugins"));
 
-        // 3./4. Graphics API and default format.
-#ifdef _WIN32
-        QQuickWindow::setGraphicsApi(QSGRendererInterface::Direct3D11);
-#endif
-        // Linux: Qt's default RHI backend (OpenGL; QSG_RHI_BACKEND overrides). No other default is chosen yet.
+        // 3. Graphics API and the environment of the platform (Windows D3D11; Linux OpenGL, WSLg GPU default).
+        vlqt::platform::prepareBeforeApp();
+
+        // 4. Default format.
         QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
         fmt.setSwapInterval(0);
         // No MSAA samples here: Qt gives a swap chain max(default, window) samples
@@ -114,10 +111,6 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         if (!qEnvironmentVariableIsSet("QT_QUICK_ALLOW_SYNTHETIC_RIGHT_CLICK"))
             qputenv("QT_QUICK_ALLOW_SYNTHETIC_RIGHT_CLICK", "0");
 
-#ifndef _WIN32
-        vlqt::platform::applyWslGpuDefault();
-#endif
-
         // Qt Quick Controls style: the own base style "VLQt" on QtQuick.Templates, embedded in QtNative
         // (qrc:/qt/qml/VLQt, CMakeLists.txt), values from the attached VlStyle (vlstyle.h). Controls without an own file
         // fall back to Basic, the only Qt style deployed (trim-deploy/trim-linux). The single place that picks it.
@@ -131,12 +124,7 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         vlqt::nameGuiThreadIfUnnamed("vlqt-gui");
         QGuiApplication::setQuitOnLastWindowClosed(false);
         emitLog(1, "vlqt.app", "QPA platform: " + QGuiApplication::platformName().toUtf8());
-#ifndef _WIN32
-        vlqt::platform::ensureFonts();
-#endif
-#ifdef _WIN32
-        vlqt::platform::installDialogCodeFilter(*g_app); // Enter/Tab/Esc/arrows past IsDialogMessage
-#endif
+        vlqt::platform::initAfterApp(*g_app); // Windows: dialog keys; Linux: fallback font
 
         // 7. Animation driver bound to vvvv time.
         vlqt::clock::install();
