@@ -83,7 +83,7 @@ bool setAnchor(Elements& els, ElementEntry& n, const ResolvedProp&, const Value&
 }
 bool setOpacity(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&) { n.item->setOpacity(v.f[0]); return true; }
 bool setClip(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&) { n.item->setClip(v.b); return true; }
-// DEBUG: only a flag for the debug overlay (debug.h), the item itself is not touched.
+// DEBUG: only a flag for the debug overlay (diagnostics/debug_overlay.h), the item itself is not touched.
 bool setDebug(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     if (n.debug != v.b)
