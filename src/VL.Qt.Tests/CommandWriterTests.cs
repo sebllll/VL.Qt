@@ -100,14 +100,10 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void SetF32Array_Limit()
+        public void SetF32Array_AboveTheFormerU16Limit_IsOneCommand()
         {
-            var w = new CommandWriter();
-            w.SetF32Array(1, Protocol.PropertyId.ShapePoints, new float[Protocol.MaxF32ArrayCount]);
-            var before = w.Length;
-            Assert.That(before, Is.GreaterThan(Protocol.CappedSetPayload), "the largest array fills the payload to the last 4-byte unit");
-            Assert.Throws<ArgumentOutOfRangeException>(() => w.SetF32Array(1, Protocol.PropertyId.ShapePoints, new float[Protocol.MaxF32ArrayCount + 1]));
-            Assert.That(w.Length, Is.EqualTo(before), "failed command must not leave partial bytes");
+            var bytes = Write(w => w.SetF32Array(1, Protocol.PropertyId.ShapePoints, new float[100_000]));
+            Assert.That(bytes.Length, Is.EqualTo(Protocol.HeaderSize + Protocol.SetFieldsSize + 4 + 4 * 100_000));
         }
 
         [TestCase(0, "")]
@@ -133,18 +129,12 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void SetPath_Limit()
+        public void SetPath_AboveTheFormerU16Limit_IsOneCommand()
         {
-            // Grow the verb count until exactly one more would not fit.
-            int points = 4000;
-            int verbs = points;
-            while (Protocol.PathFits(verbs + 1, points))
-                verbs++;
+            int points = 50_000;
+            var bytes = Write(w => w.SetPath(1, Protocol.PropertyId.ShapePath, new byte[points], new float[points * 2]));
+            Assert.That(bytes.Length, Is.EqualTo(Protocol.HeaderSize + Protocol.SetFieldsSize + 8 + points + 8 * points));
             var w = new CommandWriter();
-            w.SetPath(1, Protocol.PropertyId.ShapePath, new byte[verbs], new float[points * 2]);
-            var before = w.Length;
-            Assert.Throws<ArgumentOutOfRangeException>(() => w.SetPath(1, Protocol.PropertyId.ShapePath, new byte[verbs + 1], new float[points * 2]));
-            Assert.That(w.Length, Is.EqualTo(before), "failed command must not leave partial bytes");
             Assert.Throws<ArgumentException>(() => w.SetPath(1, Protocol.PropertyId.ShapePath, new byte[1], new float[3]));
         }
 

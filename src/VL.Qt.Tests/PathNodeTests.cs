@@ -114,58 +114,12 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void PathAtTheLimit_IsDrawnWithoutWarning()
+        public void LongPath_IsDrawnWithoutWarning()
         {
             using var node = new PathNode(AddWarning);
-            var path = Long(7000);
-            var flat = path.Flatten();
-            Assert.That(Protocol.PathFits(flat.Verbs.Length, flat.Points.Length / 2), Is.True);
+            var path = Long(50_000);
             var s = (Shape)Path(node, path);
             Assert.That(s.Path, Is.SameAs(path));
-            Assert.That(_warnings, Is.EqualTo(0));
-        }
-
-        [Test]
-        public void PathOverTheLimit_WarnsAndDrawsNothing()
-        {
-            using var node = new PathNode(AddWarning);
-            var path = Long(9000);
-            var flat = path.Flatten();
-            Assert.That(Protocol.PathFits(flat.Verbs.Length, flat.Points.Length / 2), Is.False);
-            var s = (Shape)Path(node, path, out _);
-            Assert.That(s.Path!.IsEmpty, Is.True, "nothing is drawn");
-            Assert.That(_warnings, Is.EqualTo(1));
-            Assert.That(_warning, Is.EqualTo("Path: 9001 verbs and 9001 points do not fit one command; nothing is drawn."));
-            Assert.That(node.Core.PathLimitWarning, Is.EqualTo(_warning));
-
-            // Unchanged: no second warning, same element.
-            Assert.That(Path(node, path), Is.SameAs(s));
-            Assert.That(_warnings, Is.EqualTo(1));
-
-            // A path that fits removes the warning and is drawn.
-            var small = Triangle();
-            var t = (Shape)Path(node, small);
-            Assert.That(t.Path, Is.SameAs(small));
-            Assert.That(_warnings, Is.EqualTo(0));
-            Assert.That(node.Core.PathLimitWarning, Is.Null);
-        }
-
-        [Test]
-        public void PathOverTheLimit_ThenNull_RemovesWarning()
-        {
-            using var node = new PathNode(AddWarning);
-            Path(node, Long(9000));
-            Assert.That(_warnings, Is.EqualTo(1));
-            Path(node, null);
-            Assert.That(_warnings, Is.EqualTo(0));
-        }
-
-        [Test]
-        public void Dispose_RemovesWarning()
-        {
-            var node = new PathNode(AddWarning);
-            Path(node, Long(9000));
-            node.Dispose();
             Assert.That(_warnings, Is.EqualTo(0));
         }
     }

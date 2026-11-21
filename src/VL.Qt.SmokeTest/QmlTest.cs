@@ -87,7 +87,7 @@ public static class QmlTest
         s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var buf = new byte[1 << 16];
+        var buf = new byte[1 << 18];
         var errors = new Dictionary<uint, string>(); // last EVENT_ERROR text per handle (empty = cleared)
         var measured = new Dictionary<uint, (float W, float H)>();
 
@@ -320,12 +320,13 @@ public static class QmlTest
         recs = Poll();
         s.Check(Props(recs, HT, "iOut") is [int i3] && i3 == 3 && Props(recs, HT, "rOut") is [float r4] && r4 == 4f && Err(HT) == "",
             $"float 3 into an int property, int 4 into a real property ({S(recs)}; error '{Err(HT)}')");
-        // A long string takes the whole way.
-        var longText = string.Concat(Enumerable.Repeat("0123456789äöü€", 1000)); // 14000 characters, about 20 KB of UTF-8
+        // A long string takes the whole way, also past 64 KB (u32 lengths in the commands and in the event records).
+        var longText = string.Concat(Enumerable.Repeat("0123456789äöü€", 3700)); // 51800 characters, 70300 bytes of UTF-8
         SetProps(T, p => p.String("s", longText));
         CheckApply("SET long string");
         recs = Poll();
-        s.Check(Props(recs, HT, "sOut") is [string ls] && ls == longText, $"a string of {longText.Length} characters arrives complete");
+        s.Check(Encoding.UTF8.GetByteCount(longText) > 70000 && Props(recs, HT, "sOut") is [string ls] && ls == longText && Err(HT) == "",
+            $"a string of {Encoding.UTF8.GetByteCount(longText)} UTF-8 bytes arrives complete, no error ('{Err(HT)}')");
 
         // Property errors: a value that does not convert, an unknown name, a read-only property (width of Item is writable: use a bad name).
         SetProps(T, p => p.String("i", "abc"));

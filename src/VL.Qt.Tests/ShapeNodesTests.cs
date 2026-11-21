@@ -128,34 +128,15 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void TooManyPoints_WarnsAtTheNode_SizeCoversTheDrawnPoints_WarningGoesWhenFewer()
+        public void ManyPoints_NoWarning_SizeCoversAllPoints()
         {
-            using var node = new PolylineNode(AddWarning);
-            var s = (Shape)Polyline(node, Many(9000));
-            Assert.That(_warnings, Is.EqualTo(1));
-            Assert.That(_warning, Is.EqualTo("Points: only the first 8190 of 9000 points are drawn."));
-            Assert.That(node.Core.Warning, Is.EqualTo(_warning));
-            Assert.That(s.Size, Is.EqualTo(new Vector2(8189, 6)), "extent of the first 8190 points");
+            using var polyline = new PolylineNode(AddWarning);
+            var s = (Shape)Polyline(polyline, Many(100_000));
+            Assert.That(s.Points.Count, Is.EqualTo(100_000));
+            Assert.That(s.Size, Is.EqualTo(new Vector2(99_999, 6)));
 
-            Polyline(node, Many(100));
-            Assert.That(_warnings, Is.EqualTo(0));
-            Assert.That(node.Core.Warning, Is.Null);
-        }
-
-        [Test]
-        public void TooManyPoints_Polygon_Warns()
-        {
-            using var node = new PolygonNode(AddWarning);
-            Polygon(node, Many(9000));
-            Assert.That(_warnings, Is.EqualTo(1));
-        }
-
-        [Test]
-        public void Dispose_RemovesWarning()
-        {
-            var node = new PolylineNode(AddWarning);
-            Polyline(node, Many(9000));
-            node.Dispose();
+            using var polygon = new PolygonNode(AddWarning);
+            Polygon(polygon, Many(100_000));
             Assert.That(_warnings, Is.EqualTo(0));
         }
     }

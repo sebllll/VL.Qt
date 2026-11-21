@@ -52,8 +52,7 @@ struct QmlSignalEvent {
     std::vector<QmlWireValue> args;
 };
 
-/* QVariant (property value or signal argument) to wire form. false = type not supported. Strings are capped at 60000
- * bytes on a character boundary (the record length is u16). */
+/* QVariant (property value or signal argument) to wire form. false = type not supported. */
 bool toWireValue(const QVariant& v, QmlWireValue& out);
 
 class QmlItem : public QQuickItem

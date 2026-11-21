@@ -151,12 +151,11 @@
  *   last one goes; at most 64 points). Pinch handler: EVENT_ACTIVE u8 on change, EVENT_PINCH 6 x f32 while active, the
  *   last one before EVENT_ACTIVE 0 (never the 1/0/0 Qt resets to).
  *   Value inputs (SpinBox i32; CheckBox/Switch bool, Slider f32, TextField string): EVENT_VALUE = u16 valueType, u16 0,
- *   value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8; string capped at 60000 bytes on a character
- *   boundary). Sent for every bound value input, independent of input handlers, only after a user change (SpinBox:
- *   valueModified = +/-, arrow keys, wheel at once, typed text on Enter or focus loss; CheckBox/Switch: toggled = click,
- *   Space; Slider: moved = press/drag (every step), arrow keys, wheel; TextField: Enter or focus loss, only if the text
- *   differs from the last set or committed one), never for SET VALUE/MINIMUM/
- *   MAXIMUM (no echo, also not when Qt clamps the value). The payload is the value the user produced, captured when the
+ *   value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8). Sent for every bound value input, independent of
+ *   input handlers, only after a user change (SpinBox: valueModified = +/-, arrow keys, wheel at once, typed text on
+ *   Enter or focus loss; CheckBox/Switch: toggled = click, Space; Slider: moved = press/drag (every step), arrow
+ *   keys, wheel; TextField: Enter or focus loss, only if the text differs from the last set or committed one), never for
+ *   SET VALUE/MINIMUM/MAXIMUM (no echo, also not when Qt clamps the value). The payload is the value the user produced, captured when the
  *   signal fires, not the current value: a SET VALUE applied between the user change and the poll does not hide it.
  *   Several user changes between two polls: one EVENT_VALUE with the last one. A new feedbackId drops a change not polled.
  *

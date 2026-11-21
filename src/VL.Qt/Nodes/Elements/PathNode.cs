@@ -28,7 +28,7 @@ namespace VL.Qt.Nodes
         internal ShapeNodeCore Core => _core;
 
         /// <summary>Describes the path element. A new description is only created when an input changes.</summary>
-        /// <param name="path">Path to draw, in units, in the parent space. null = nothing is drawn. A path whose flattened form does not fit one command (about 65 000 bytes, roughly 7000 line segments) is not drawn at all and the node warns with the counts. Transform acts around the origin of the parent space, not around the shape; the shape reports (max X, max Y) of the path, control points included, as its size.</param>
+        /// <param name="path">Path to draw, in units, in the parent space. null = nothing is drawn. Transform acts around the origin of the parent space, not around the shape; the shape reports (max X, max Y) of the path, control points included, as its size.</param>
         /// <param name="transform">Position, rotation and scale; applied around the origin of the parent space (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
         /// <param name="fill">Fill color of the enclosed area. Transparent by default.</param>
         /// <param name="strokeColor">Color of the stroke.</param>

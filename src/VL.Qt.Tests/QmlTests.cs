@@ -120,15 +120,14 @@ namespace VL.Qt.Tests
             yield return new TestCaseData(new object());
             yield return new TestCaseData(DateTime.Now);
             yield return new TestCaseData(new Int2(1, 2));
-            yield return new TestCaseData(new string('x', QmlValue.MaxStringChars + 1));
         }
 
         [TestCaseSource(nameof(Unsupported))]
         public void TryConvert_Unsupported(object? value) => Assert.That(QmlValue.TryConvert(value, out _), Is.False);
 
         [Test]
-        public void TryConvert_LongestString_IsStillSupported() =>
-            Assert.That(QmlValue.TryConvert(new string('x', QmlValue.MaxStringChars), out _), Is.True);
+        public void TryConvert_LongString_IsSupported() =>
+            Assert.That(QmlValue.TryConvert(new string('x', 200_000), out _), Is.True);
 
         [Test]
         public void Equality_IsExact_NotNearEqual()
@@ -151,11 +150,6 @@ namespace VL.Qt.Tests
         [Test]
         public void Describe_Null() =>
             Assert.That(QmlValue.Describe("x", null), Is.EqualTo("Property 'x': the value is not set, ignored"));
-
-        [Test]
-        public void Describe_LongString() =>
-            Assert.That(QmlValue.Describe("s", new string('x', 30000)),
-                Is.EqualTo($"Property 's': the string is longer than {QmlValue.MaxStringChars} characters, ignored"));
 
         [Test]
         public void Describe_UnsupportedType() =>
@@ -340,24 +334,25 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void LargeTable_IsSplitIntoSeveralCommands_EveryEntryOnce()
+        public void LargeTable_IsOneCommand_EveryEntryOnce()
         {
             var entries = Enumerable.Range(0, 8).Select(i => ($"p{i}", (object)new string((char)('a' + i), 15000))).ToArray();
             var cmds = Write(Props(entries), null, out int sent);
             Assert.That(sent, Is.EqualTo(8));
-            Assert.That(cmds.Length, Is.GreaterThan(2));
-            Assert.That(cmds.All(c => c.StartsWith("QML 7 0 ")), Is.True);
+            Assert.That(cmds, Has.Length.EqualTo(1));
+            Assert.That(cmds[0], Does.StartWith("QML 7 0 "));
             for (int i = 0; i < 8; i++)
-                Assert.That(cmds.Count(c => c.Contains($" p{i}=")), Is.EqualTo(1), $"p{i}");
+                Assert.That(cmds[0], Does.Contain($" p{i}="), $"p{i}");
         }
 
         [Test]
-        public void LargeTable_FitsTheCommandLimit_OnTheRealWriter()
+        public void LargeTable_IsOneCommand_OnTheRealWriter()
         {
-            var entries = Enumerable.Range(0, 8).Select(i => ($"p{i}", (object)new string('€', 6000))).ToArray(); // 3 bytes per char
+            var entries = Enumerable.Range(0, 8).Select(i => ($"p{i}", (object)new string('€', 6000))).ToArray(); // 3 bytes per char, 144 KB
             var w = new CommandWriter();
             Assert.DoesNotThrow(() => QmlPropertyWriter.Write(w, 1, Props(entries), null));
-            Assert.That(w.Count, Is.GreaterThan(1));
+            Assert.That(w.Count, Is.EqualTo(1));
+            Assert.That(w.Length, Is.GreaterThan(ushort.MaxValue));
         }
 
         // --- bytes ---

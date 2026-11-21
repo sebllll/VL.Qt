@@ -113,7 +113,7 @@ Consequence: see the limits below.
 
 For the tooltips of the 1.0 nodes (`Line`, `Polyline`, `Polygon`, `Path`):
 
-- **Up to 8190 points per element** stays the hard limit (protocol, see [decisions/paths.md](../decisions/paths.md)).
+- **8190 points per element** was the hard limit then (size of one command, lifted since: see [decisions/paths.md](../decisions/paths.md)); the measurements below stay valid.
 - **Polylines whose points change every frame: about 4000 points** (5.3 ms of the 16.7 ms frame on this loaded arm64 machine; 8190 points take 16 ms and miss the frame). Static or only transformed polylines and paths can use the full 8190 points.
 - **Paths with curves** (`Path`, splines) cost a third per point; 8190 points (2729 segments) changing every frame take 4.9 ms and need no extra warning.
 - Animated trim is cheap up to the limit (2.5 ms at 8190 points, 0.3 ms at 100); trim and `Transform` are the cheap ways to animate, prefer them to changing points.

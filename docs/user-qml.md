@@ -37,7 +37,6 @@ The same types go both ways:
 
 - A value of another type, or `null`, is not sent: the node shows an error line and ignores the value.
 - Qt converts to the type of the QML property. A `float` set on an `int` property works, a string that is no number for a `real` property does not: error line, value ignored.
-- A string can be up to 20000 characters.
 - Back to the patch the same types arrive (integers outside the `int` range are clamped, a `url` arrives as a `string`, a `rect` as `RectangleF`). A signal argument of any other QML type (a list, an object) arrives as its string form. A property of such a type is not reported: `Error` shows one line for it.
 
 ## What comes back

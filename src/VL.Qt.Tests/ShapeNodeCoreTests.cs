@@ -10,7 +10,7 @@ using VL.Qt.Wire;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Shared core of Line, Polyline and Polygon (package 03): content equality, extent, closed, limit warning.</summary>
+    /// <summary>Shared core of Line, Polyline and Polygon (package 03): content equality, extent, closed.</summary>
     public class ShapeNodeCoreTests
     {
         private ShapeNodeCore _core = null!;
@@ -142,62 +142,12 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void MaxPoints_IsHalfTheFloatLimit()
+        public void ManyPoints_NoWarning_ElementKeepsAllPoints_SizeCoversAllPoints()
         {
-            Assert.That(ShapeNodeCore.MaxPoints, Is.EqualTo(8190));
-            Assert.That(ShapeNodeCore.MaxPoints, Is.EqualTo(Protocol.MaxF32ArrayCount / 2));
-        }
-
-        [Test]
-        public void ExactlyMaxPoints_NoWarning()
-        {
-            Describe(PropsOf(Many(ShapeNodeCore.MaxPoints)));
+            var shape = Describe(PropsOf(Many(100_000)));
             Assert.That(_warnings, Is.EqualTo(0));
-            Assert.That(_core.Warning, Is.Null);
-        }
-
-        [Test]
-        public void TooManyPoints_Warns_ElementKeepsAllPoints_SizeOfDrawnPoints()
-        {
-            var shape = Describe(PropsOf(Many(9000)));
-            Assert.That(_warnings, Is.EqualTo(1));
-            Assert.That(_lastWarning, Is.EqualTo("Points: only the first 8190 of 9000 points are drawn."));
-            Assert.That(_core.Warning, Is.EqualTo(_lastWarning));
-            Assert.That(shape.Points.Count, Is.EqualTo(9000), "the reconciler cuts, not the node");
-            Assert.That(shape.Size, Is.EqualTo(new Vector2(8189, 6)), "extent of the first 8190 points: x = 8189, y = max(i % 7) = 6");
-        }
-
-        [Test]
-        public void Warning_IsShownOncePerCount_UpdatedAndRemoved()
-        {
-            var many = Many(9000);
-            Describe(PropsOf(many));
-            Describe(PropsOf(many));
-            Describe(PropsOf(Many(9000)));
-            Assert.That(_warnings, Is.EqualTo(1), "same count: no new message");
-
-            Describe(PropsOf(Many(9001)));
-            Assert.That(_warnings, Is.EqualTo(1), "new text replaces the old message");
-            Assert.That(_lastWarning, Does.Contain("of 9001"));
-
-            Describe(PropsOf(Many(10)));
-            Assert.That(_warnings, Is.EqualTo(0));
-            Assert.That(_core.Warning, Is.Null);
-        }
-
-        [Test]
-        public void Dispose_RemovesWarning()
-        {
-            Describe(PropsOf(Many(9000)));
-            _core.Dispose();
-            Assert.That(_warnings, Is.EqualTo(0));
-        }
-
-        [Test]
-        public void PointsWarning_Text()
-        {
-            Assert.That(ShapeNodeCore.PointsWarning(8190), Is.Null);
-            Assert.That(ShapeNodeCore.PointsWarning(8191), Is.EqualTo("Points: only the first 8190 of 8191 points are drawn."));
+            Assert.That(shape.Points.Count, Is.EqualTo(100_000));
+            Assert.That(shape.Size, Is.EqualTo(new Vector2(99_999, 6)), "extent of all points: x = 99999, y = max(i % 7) = 6");
         }
     }
 }

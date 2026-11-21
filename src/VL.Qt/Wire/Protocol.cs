@@ -35,21 +35,6 @@
         public const int EffectChainLinkShaderFixedSize = 20;
         /// <summary>u32 feedbackId after the header of a poll record, in front of the payload.</summary>
         public const int EventFieldsSize = 4;
-        /// <summary>Payload size the caps below still keep a SET under (the former u16 payload length of a command).</summary>
-        // TODO: remove with MaxF32ArrayCount, PathFits and the other point caps (W3-15).
-        internal const int CappedSetPayload = ushort.MaxValue;
-        /// <summary>Max floats of a <see cref="ValueType.F32Array"/> value: the 4-byte count and the floats fit the payload of a SET (8190 points).</summary>
-        internal const int MaxF32ArrayCount = (CappedSetPayload - SetFieldsSize - 4) / 4;
-
-        /// <summary>Returns true if a <see cref="ValueType.Path"/> with this many verbs and points fits the payload of a SET.</summary>
-        internal static bool PathFits(int verbs, int points)
-        {
-            if (verbs < 0 || points < 0)
-                return false;
-            // u32 verbCount, u32 pointCount, verbs padded to 4 bytes, points as 2 x f32.
-            long size = 8 + ((verbs + 3L) & ~3L) + 8L * points;
-            return size <= CappedSetPayload - SetFieldsSize;
-        }
 
         /// <summary>Opcodes (u16).</summary>
         internal static class Op

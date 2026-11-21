@@ -28,8 +28,6 @@ namespace vlqt {
 
 namespace {
 
-constexpr qsizetype kMaxWireString = 60000;
-
 template <class T>
 void append(QByteArray& out, const T& v)
 {
@@ -102,15 +100,9 @@ bool toWireValue(const QVariant& in, QmlWireValue& out)
     case QMetaType::QString:
     case QMetaType::QUrl: {
         out.type = VLQT_VALUE_TYPE_STRING;
-        QByteArray utf8 = v.toString().toUtf8();
-        qsizetype n = utf8.size();
-        if (n > kMaxWireString) {
-            n = kMaxWireString;
-            while (n > 0 && (quint8(utf8[n]) & 0xC0) == 0x80) // utf8[n] is the first byte cut off
-                --n;
-        }
-        append(out.bytes, quint32(n));
-        out.bytes.append(utf8.constData(), n);
+        const QByteArray utf8 = v.toString().toUtf8();
+        append(out.bytes, quint32(utf8.size()));
+        out.bytes.append(utf8);
         return true;
     }
     case QMetaType::QColor: {

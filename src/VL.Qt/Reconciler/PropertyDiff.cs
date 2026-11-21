@@ -186,7 +186,7 @@ namespace VL.Qt
 
         /// <summary>
         /// Shape. The geometry (points or path) is sent when its reference and its content changed or the unit scale did; every
-        /// coordinate goes through the mapping. A point list or path that does not fit one command is cut to the part that does (the node warns).
+        /// coordinate goes through the mapping.
         /// QtNative takes dash and dash offset in stroke-width units, so both are divided by the stroke width and the dash is sent again
         /// when the stroke width changes. A stroke width of 0 is sent as -1 (no stroke).
         /// </summary>
@@ -239,7 +239,7 @@ namespace VL.Qt
 
         private void SendShapePoints(uint id, Spread<Vector2> points)
         {
-            int count = Math.Min(points.Count * 2, Protocol.MaxF32ArrayCount);
+            int count = points.Count * 2;
             var buffer = ShapeBuffer(count);
             for (int i = 0; i < count; i += 2)
             {
@@ -255,41 +255,15 @@ namespace VL.Qt
             var flat = path.Flatten();
             var verbs = flat.Verbs.AsSpan();
             var coordinates = flat.Points.AsSpan();
-            int verbCount = FitPath(verbs, coordinates.Length / 2, out int pointCount);
-            var buffer = ShapeBuffer(pointCount * 2);
-            for (int i = 0; i < pointCount * 2; i++)
+            var buffer = ShapeBuffer(coordinates.Length);
+            for (int i = 0; i < coordinates.Length; i++)
                 buffer[i] = _mapping.ToQt(coordinates[i]);
-            _sink.SetPath(id, P.ShapePath, verbs.Slice(0, verbCount), buffer.AsSpan(0, pointCount * 2));
-        }
-
-        /// <summary>Returns the number of verbs of the longest prefix that fits one command and the points that prefix takes.</summary>
-        private static int FitPath(ReadOnlySpan<byte> all, int available, out int pointCount)
-        {
-            pointCount = available;
-            if (Protocol.PathFits(all.Length, available))
-                return all.Length;
-            int points = 0;
-            int count = 0;
-            for (; count < all.Length; count++)
-            {
-                int next = points + all[count] switch
-                {
-                    Protocol.Verb.Quad => 2,
-                    Protocol.Verb.Cubic => 3,
-                    Protocol.Verb.Close => 0,
-                    _ => 1,
-                };
-                if (!Protocol.PathFits(count + 1, next))
-                    break;
-                points = next;
-            }
-            pointCount = points;
-            return count;
+            _sink.SetPath(id, P.ShapePath, verbs, buffer.AsSpan(0, coordinates.Length));
         }
 
         private void SendShapeDash(uint id, Spread<float> dash, float unit)
         {
-            int count = Math.Min(dash.Count, Protocol.MaxF32ArrayCount);
+            int count = dash.Count;
             var buffer = ShapeBuffer(count);
             for (int i = 0; i < count; i++)
                 buffer[i] = dash[i] / unit;

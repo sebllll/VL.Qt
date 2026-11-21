@@ -169,11 +169,9 @@ namespace VL.Qt.Wire
             Encoding.UTF8.GetBytes(value, p.Slice(4));
         }
 
-        /// <summary>f32 array: u32 count + floats. At most <see cref="Protocol.MaxF32ArrayCount"/> floats.</summary>
+        /// <summary>f32 array: u32 count + floats. Payload incl. SET fields must fit in <see cref="Protocol.MaxCommandPayload"/>.</summary>
         public void SetF32Array(uint id, ushort prop, ReadOnlySpan<float> values)
         {
-            if (values.Length > Protocol.MaxF32ArrayCount)
-                throw new ArgumentOutOfRangeException(nameof(values), values.Length, $"F32 array exceeds {Protocol.MaxF32ArrayCount} floats.");
             var p = BeginSet(id, prop, Protocol.ValueType.F32Array, 4 + 4 * values.Length);
             WriteU32(p, (uint)values.Length);
             for (int i = 0; i < values.Length; i++)
@@ -186,8 +184,6 @@ namespace VL.Qt.Wire
             if ((points.Length & 1) != 0)
                 throw new ArgumentException("Path points are x,y pairs: the float count must be even.", nameof(points));
             int pointCount = points.Length / 2;
-            if (!Protocol.PathFits(verbs.Length, pointCount))
-                throw new ArgumentOutOfRangeException(nameof(verbs), verbs.Length, $"Path with {verbs.Length} verbs and {pointCount} points exceeds the payload of a SET.");
             int paddedVerbs = Align(verbs.Length);
             var p = BeginSet(id, prop, Protocol.ValueType.Path, 8 + paddedVerbs + 8 * pointCount);
             WriteU32(p, (uint)verbs.Length);

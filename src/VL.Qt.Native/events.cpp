@@ -38,7 +38,7 @@ constexpr const char* kWheelQml = "import QtQuick\nWheelHandler {\n    target: n
 constexpr const char* kDragQml = "import QtQuick\nDragHandler { target: null }\n";
 // target null: the handler scales/rotates/moves nothing, PinchState reports its values.
 constexpr const char* kPinchQml = "import QtQuick\nPinchHandler { target: null }\n";
-// EVENT_TOUCH_POINTS: at most this many points (u16 record length; 8 + 4 + 64 * 24 bytes).
+// EVENT_TOUCH_POINTS: at most this many points (a count of fingers, not a length limit).
 constexpr int kMaxTouchPoints = 64;
 
 QMetaProperty metaProperty(const QObject* o, const char* name)
@@ -742,11 +742,8 @@ void collectHandlers(Scene& scene)
 }
 
 /* EVENT_VALUE: u16 value type, u16 0, value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8). The
- * value type follows the QML type of vlqtUserValue (int, real, bool, string); others are not sent. Strings are capped
- * at kMaxValueString bytes on a UTF-8 character boundary (the record length is u16). Only on user changes, so the
- * string copy does not allocate per frame. */
-constexpr qsizetype kMaxValueString = 60000;
-
+ * value type follows the QML type of vlqtUserValue (int, real, bool, string); others are not sent. Only on user
+ * changes, so the string copy does not allocate per frame. */
 void pushValue(Scene& scene, quint32 sink, const QVariant& v)
 {
     quint16 vt = 0;
@@ -778,12 +775,7 @@ void pushValue(Scene& scene, quint32 sink, const QVariant& v)
         return;
     }
     const QByteArray utf8 = v.toString().toUtf8();
-    qsizetype n = utf8.size();
-    if (n > kMaxValueString) {
-        n = kMaxValueString;
-        while (n > 0 && (quint8(utf8[n]) & 0xC0) == 0x80) // utf8[n] is the first byte cut off: not inside a character
-            --n;
-    }
+    const qsizetype n = utf8.size();
     QByteArray payload(8 + n, Qt::Uninitialized);
     const quint16 zero = 0;
     const quint32 n32 = quint32(n);
@@ -796,10 +788,8 @@ void pushValue(Scene& scene, quint32 sink, const QVariant& v)
 
 /* QmlElement (protocol.h "QmlElement"): the changes of the root since the last poll as EVENT_QML_PROPERTY (one per
  * changed property, its last value) and EVENT_QML_SIGNAL (every emitted signal, in order). Records are 4-byte aligned inside
- * (name, value, argument), the poll record is padded by pushEvent; one that would not fit the u16 length is skipped.
+ * (name, value, argument), the poll record is padded by pushEvent.
  * Taken (and dropped) also without a sink so that nothing piles up; "signals dropped" is shown by QmlItem::error. */
-constexpr int kMaxEventPayload = 65000;
-
 void pad4(QByteArray& b)
 {
     while (b.size() % 4)
@@ -830,8 +820,7 @@ void collectQml(Scene& scene, Node& n)
         payload.append(e.name);
         pad4(payload);
         payload.append(e.value.bytes);
-        if (payload.size() <= kMaxEventPayload)
-            scene.pushEvent(VLQT_EVENT_QML_PROPERTY, n.feedbackId, payload.constData(), payload.size());
+        scene.pushEvent(VLQT_EVENT_QML_PROPERTY, n.feedbackId, payload.constData(), payload.size());
     }
     for (const QmlSignalEvent& e : signalEvents) {
         payload.clear();
@@ -848,8 +837,7 @@ void collectQml(Scene& scene, Node& n)
             payload.append(a.bytes);
             pad4(payload);
         }
-        if (payload.size() <= kMaxEventPayload)
-            scene.pushEvent(VLQT_EVENT_QML_SIGNAL, n.feedbackId, payload.constData(), payload.size());
+        scene.pushEvent(VLQT_EVENT_QML_SIGNAL, n.feedbackId, payload.constData(), payload.size());
     }
 }
 
@@ -994,12 +982,12 @@ void collectMeasurements(Scene& scene)
             scene.pushEvent(VLQT_EVENT_MEDIA, n.feedbackId, md, sizeof md);
         }
 
-        // Error text: only on change; empty = cleared. Capped (record length is u16).
+        // Error text: only on change; empty = cleared.
         const QString error = scene.elements.readError(n);
         if (error != s.error) {
             s.error = error;
             const QByteArray utf8 = error.toUtf8();
-            scene.pushEvent(VLQT_EVENT_ERROR, n.feedbackId, utf8.constData(), qMin<qsizetype>(utf8.size(), 4096));
+            scene.pushEvent(VLQT_EVENT_ERROR, n.feedbackId, utf8.constData(), utf8.size());
         }
         if (n.type == VLQT_ELEMENT_TYPE_QML)
             static_cast<QmlItem*>(n.item)->clearDropNotice(); // "signals dropped" is shown for one poll
