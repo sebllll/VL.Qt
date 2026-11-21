@@ -51,13 +51,13 @@ T1 (this contract) owns nothing afterwards. T2–T4 run in parallel; each touche
 
 | Task | Content | Files it may touch |
 |---|---|---|
-| T2 parser | `QmlDeclarations.Parse`, `ParseHead`, `Signature`; root members at depth 1 only, literals, summaries, head tags, sibling root types with cycle guard, messages | `src/VL.Qt/Qml/QmlDeclarations.cs`, new `src/VL.Qt.Tests/QmlDeclarationsTests.cs` |
+| T2 parser | `QmlDeclarations.Parse`, `ParseHead`, `Signature`; root members at depth 1 only, literals, summaries, head tags, sibling root types with cycle guard, messages | `src/VL.Qt/Qml/QmlDeclarations.cs`, `src/VL.Qt/Qml/Parsing/`, new `src/VL.Qt.Tests/QmlDeclarationsTests.cs` |
 | T3 factory | `QmlNodeFactory` (ForPath, Scan, GetNodeName, CreateDescriptions, WatchSignature), `QmlNodeDescription` (New, OpenEditor, smell), registration in `Initialization.Configure`, `QmlNodeLayout` fixes if needed | `src/VL.Qt/Qml/QmlNodeFactory.cs`, `src/VL.Qt/Qml/QmlNodeDescription.cs`, `src/VL.Qt/Qml/QmlNodeLayout.cs`, `src/VL.Qt/Initialization.cs`, new `src/VL.Qt.Tests/QmlNodeFactoryTests.cs` (tests build `QmlDeclarations` by hand until T2 lands) |
 | T4 instance | `QmlNodeInstance`: typed pins → dictionary (send rule, required, Properties plan B), `QmlElementNode` underneath, property and signal outputs | `src/VL.Qt/Qml/QmlNodeInstance.cs`, new `src/VL.Qt.Tests/QmlNodeInstanceTests.cs` (layouts via `QmlNodeLayout.Build` with hand-made declarations) |
 | T5 docs | user docs of the QML nodes, this decision file updated after the merge | `docs/user-qml.md`, `docs/decisions/user-qml.md`, `docs/README.md` (index line) |
 | T6 help patch | `help/Qt/HowTo Create QML Nodes from Files.vl`, its line in `help/Help.xml`, example `.qml` files under `help/Qt/qml/`; written by an agent after T2–T4 are merged, the user corrects its layout in vvvv | `help/Qt/HowTo Create QML Nodes from Files.vl`, `help/Help.xml`, `help/Qt/qml/*.qml`, `help/.padlint.json` |
 
-Shared and read-only for T2–T4: `src/VL.Qt/Qml/QmlTypes.cs` (QML type → `QmlValueKind` → CLR type → wire), the records in `QmlDeclarations.cs` (T2 owns the file, but not the record shapes), `ShaderPinDescription`/`ValuePin`/`ShaderPinModel.PinName` (reused from `src/VL.Qt/Shaders/`, not moved), `QmlElementNode`.
+Shared and read-only for T2–T4: `src/VL.Qt/Qml/QmlTypes.cs` (QML type → `QmlValueKind` → CLR type → wire), the records of the declarations, one file each in `src/VL.Qt/Qml/` (T2 owns the parser in `Qml/Parsing/`, but not the record shapes), `ShaderPinDescription`/`ValuePin`/`ShaderPinModel.PinName` (reused from `src/VL.Qt/Shaders/`, not moved), `QmlElementNode`.
 
 ## Open
 
