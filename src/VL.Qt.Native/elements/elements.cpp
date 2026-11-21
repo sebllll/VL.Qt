@@ -163,19 +163,9 @@ void Elements::resolve(const TypeDef& type, TypeCache& cache, QQuickItem* first)
             continue;
         ResolvedProp rp;
         rp.def = &p;
-        const char* dot = std::strchr(p.qmlName, '.');
-        const QByteArray head = dot ? QByteArray(p.qmlName, int(dot - p.qmlName)) : QByteArray(p.qmlName);
-        const int idx = mo->indexOfProperty(head.constData());
+        const int idx = mo->indexOfProperty(p.qmlName);
         if (idx >= 0)
             rp.prop = mo->property(idx);
-        if (rp.prop.isValid() && dot) {
-            QObject* group = rp.prop.read(first).value<QObject*>();
-            const int sidx = group ? group->metaObject()->indexOfProperty(dot + 1) : -1;
-            if (sidx >= 0)
-                rp.sub = group->metaObject()->property(sidx);
-            else
-                rp.prop = QMetaProperty();
-        }
         if (rp.prop.isValid())
             cache.props[p.id] = rp;
         else

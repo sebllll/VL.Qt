@@ -1,9 +1,10 @@
 /* elements/elements.h - the elements of one window (class Elements): creates the items and sets their properties.
  *
- * Every element type is an entry of the type table (element_types.h, one type file each): type id, QML file or
- * C++ factory, property table. QML properties are resolved once per type and engine to a QMetaProperty (on the first
- * item), never looked up by name per frame; grouped ones ("border.color") go through the group object, QFont fields
- * through a read-modify-write (type_text.cpp). A new element property is a table entry only, no new export.
+ * Every element type is an entry of the type table (element_types.h, one type file each): type id, C++ factory or QML
+ * file, property table. Rectangle, Text, Image and Shape are built in C++ and written through typed setters (no
+ * QVariant per SET); the QML types (Row, Column, Video, the controls) have their QML properties resolved once per type
+ * and engine to a QMetaProperty (on the first item), never looked up by name per frame. A new element property is a
+ * table entry only, no new export.
  *
  * QT PRIVATE API - the one list, the checklist for a Qt update. Private classes are allowed here (LGPL; Qt promises no
  * compatibility for *_p.h, a limited one for qpa/ and rhi/), but every use is listed below and the file that has it
@@ -30,7 +31,8 @@
  *   QtQuick/private/qquickshadereffectsource_p.h   QQuickShaderEffectSource built and read in C++ (Group frame proxy,
  *       layers, previous frame, grabs: elements/group_item.cpp, elements/effect_sources.cpp, effects/effect_chain_item.cpp,
  *       effects/layer_requests.cpp, scene/previous_frame_layer.cpp, snapshot_resource.cpp). Public way: only the QML type.
- *   QtQuick/private/qquickrectangle_p.h, qquicktext_p.h   typed color setters without QVariant (elements/element_types.cpp).
+ *   QtQuick/private/qquickrectangle_p.h, qquicktext_p.h   QQuickRectangle and QQuickText built in C++ with typed
+ *       setters (elements/type_rectangle.cpp, elements/type_text.cpp). Public way: the QML types, set through QMetaProperty.
  *   QtQuick/private/qquicktranslate_p.h     QQuickMatrix4x4::setMatrix without QVariant (elements/geometry.cpp).
  *   QtQuick/private/qquickpath_p.h          QQuickCurve, QQuickPathData: base of ShapePathElement
  *       (elements/shape_path_element.h). Public way: no.

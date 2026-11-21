@@ -222,12 +222,10 @@ qt_add_resources(vlqt "vlqt_qml"
         qml/elements/ButtonElement.qml
         qml/elements/CheckBoxElement.qml
         qml/elements/ColumnElement.qml
-        qml/elements/RectangleElement.qml
         qml/elements/RowElement.qml
         qml/elements/SliderElement.qml
         qml/elements/SpinBoxElement.qml
         qml/elements/SwitchElement.qml
-        qml/elements/TextElement.qml
         qml/elements/TextFieldElement.qml
         qml/elements/VideoElement.qml
         qml/effects/ChainRoot.qml
@@ -265,7 +263,7 @@ if(VLQT_SANITIZE)
     target_compile_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE} -fno-omit-frame-pointer -g)
     target_link_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE})
 endif()
-# GuiPrivate: QRhi (GPU timestamps). QuickPrivate: QQuickPointerDeviceHandler (scene/touch_handler.h, check on Qt updates).
+# GuiPrivate: QRhi (GPU timestamps). QuickPrivate: QQuickRectangle, QQuickText (elements/type_*.cpp), QQuickPointerDeviceHandler (scene/touch_handler.h); the list of private classes is the head comment of elements/elements.h, check on Qt updates.
 # QuickControls2: QQuickStyle. Multimedia: QAudioBufferOutput of the audio tap (deployed for the Video element anyway).
 target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick Qt6::QuickPrivate Qt6::QuickControls2 Qt6::Multimedia)
 # ShaderToolsPrivate: QShaderBaker (runtime bake of ShaderEffect sources). rhi/qshaderbaker.h lies only in the
