@@ -231,7 +231,8 @@ VLQT_API int       vlqt_scene_apply(vlqt_scene* scene, const unsigned char* buf,
  * 0, VLQT_ERR_NULL_HANDLE, VLQT_ERR_BAD_ARGUMENT null out. */
 VLQT_API int       vlqt_scene_get_apply_error(vlqt_scene* scene, vlqt_apply_error* out);
 /* Copies the queued events into out (a buffer export, top of this file; 0 bytes = none) and clears the queue; on
- * VLQT_ERR_BUFFER_TOO_SMALL they stay queued. VLQT_ERR_NULL_HANDLE. Call once per frame after
+ * VLQT_ERR_BUFFER_TOO_SMALL they stay queued and *required is exact: the call that follows only copies (it collects
+ * nothing new, new changes come with the poll after it). VLQT_ERR_NULL_HANDLE. Call once per frame after
  * vlqt_app_process_events_for: the poll first queues EVENT_MEASURED / EVENT_SCENE_BOUNDS of bound items whose value
  * changed and EVENT_WINDOW_GEOMETRY of a window after a move/resize/state change (events.h). */
 VLQT_API int       vlqt_scene_poll(vlqt_scene* scene, unsigned char* out, int cap, int* written, int* required);
