@@ -122,7 +122,7 @@ public static class CoreTest
             s.NeedsRhi(perf.gpu_ms > 0, "GPU timestamps delivered", "no QRhi, no GPU timestamps");
         using (var before = s.Grab(w, "perf0.png"))
         {
-            Native.vlqt_scene_set_overlay(w, 3);
+            NativeTest.vlqt_test_set_overlay(w, 3);
             s.Check((Native.vlqt_scene_get_overlay(w) & 3) == 3, "overlay flags set"); // bits 4..6: F5 page
             s.Pump(20);
             using var after = s.Grab(w, "perf1.png");

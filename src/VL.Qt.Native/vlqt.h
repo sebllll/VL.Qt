@@ -247,9 +247,8 @@ VLQT_API long long vlqt_scene_get_change_count(vlqt_scene* scene);
  * 0 = off; both VLQT_ERR_NULL_HANDLE. */
 VLQT_API int       vlqt_scene_set_debug(vlqt_scene* scene, int on);
 VLQT_API int       vlqt_scene_get_debug(vlqt_scene* scene);
-/* bit0 = perfmeter panel (F2), bit1 = stats (F5); the keys toggle the same flags in a window. set: 0, get: the flags
- * (>= 0); both VLQT_ERR_NULL_HANDLE. */
-VLQT_API int       vlqt_scene_set_overlay(vlqt_scene* scene, int flags);
+/* The perf overlay flags: bit0 = perfmeter panel (F2), bit1 = stats (F5), bit3 = freeze (F6), bits 4..6 = stats page + 1;
+ * the keys of a window change them (vlqt_window_set_keys). >= 0, VLQT_ERR_NULL_HANDLE. */
 VLQT_API int       vlqt_scene_get_overlay(vlqt_scene* scene);
 /* The perf getters: 0, VLQT_ERR_NULL_HANDLE, VLQT_ERR_BAD_ARGUMENT null out/in. */
 VLQT_API int       vlqt_scene_get_perf(vlqt_scene* scene, vlqt_perf* out);
@@ -324,6 +323,12 @@ VLQT_API int   vlqt_window_set_samples(vlqt_scene* window, int requested);
 /* Sample count of the window: of its swap chain once it has one, else the count it will be created with. 0 on an
  * offscreen scene, VLQT_ERR_NULL_HANDLE. */
 VLQT_API int   vlqt_window_get_samples(vlqt_scene* window);
+/* The diagnostic keys of the window (Renderer [Qt] Enable Keyboard Shortcuts): on != 0 (default) = F2 (perfmeter), F5 and
+ * Shift+F5 (stats), F6 (freeze), F7 (host segments) are taken by QtNative and never reach the scene; 0 = none of them is
+ * taken, the keys reach the scene, and an open overlay stays as it is. Kept when the window is replaced by
+ * vlqt_window_set_samples. 0, VLQT_ERR_NULL_HANDLE; a no-op on an offscreen scene (it gets no keyboard focus). Main
+ * thread. */
+VLQT_API int   vlqt_window_set_keys(vlqt_scene* window, int on);
 
 /* ===== offscreen: only offscreen scenes (VLQT_ERR_NULL_HANDLE for a window) =====
  * QtTexture; design: docs/decisions/render-texture.md. A Qt scene without a native window (QQuickRenderControl) on

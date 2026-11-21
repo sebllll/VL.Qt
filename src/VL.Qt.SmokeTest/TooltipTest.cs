@@ -422,7 +422,7 @@ public static class TooltipTest
         foreach (var (page, name) in new[] { (1, "Timeline"), (0, "Summary") })
         {
             const int Stats = 2, PageShift = 4;
-            s.Check(Native.vlqt_scene_set_overlay(w, Stats | ((page + 1) << PageShift)) == 0, $"F5 overlay {name} opens");
+            s.Check(NativeTest.vlqt_test_set_overlay(w, Stats | ((page + 1) << PageShift)) == 0, $"F5 overlay {name} opens");
             Step(30);
             cNow = Count();
             Step(60);
@@ -430,7 +430,7 @@ public static class TooltipTest
             s.Info($"static scene, F5 overlay {name}, 60 pumps: change count {cNow} -> {cOverlay}");
             s.Check(cOverlay == cNow, $"static scene with the F5 overlay ({name}): change count stays over 60 pumps ({cNow} -> {cOverlay})");
         }
-        Native.vlqt_scene_set_overlay(w, 0);
+        NativeTest.vlqt_test_set_overlay(w, 0);
         Step(10);
 
         // 3b) ElementTooltipPreviewNode and video. (a) A tree with a Video gets only text and never a grab (a grab of a running
@@ -536,10 +536,10 @@ public static class TooltipTest
             PerfLimits.Below(s, HitchRate(intervalsB), Math.Max(HitchRate(intervalsA) * 3, 5), "hitch rate with ElementTooltipPreviewNode on an animated element in the range of the background, %");
 
             // F5 Resources page after the B run: the snapshot line of package 01 shows the previews' rate and cost.
-            s.Check(Native.vlqt_scene_set_overlay(w, 2 | ((PerfOverlayTest.ResourcesPage + 1) << 4)) == 0, "F5 overlay Resources opens");
+            s.Check(NativeTest.vlqt_test_set_overlay(w, 2 | ((PerfOverlayTest.ResourcesPage + 1) << 4)) == 0, "F5 overlay Resources opens");
             for (int i = 0; i < BlockFrames; i++) PerfFrame(true, null);
             s.Info($"F5 Resources after the run: {PerfOverlayTest.PageText(w, PerfOverlayTest.ResourcesPage).Split('\n').FirstOrDefault(l => l.StartsWith("snapshots"))?.Trim() ?? "(missing)"}");
-            Native.vlqt_scene_set_overlay(w, 0);
+            NativeTest.vlqt_test_set_overlay(w, 0);
             perfTip.Dispose();
             current = Tree(big, false);
             Step(10);
