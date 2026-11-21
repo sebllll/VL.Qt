@@ -1,7 +1,7 @@
 #include "snapshot_resource.h"
 
 #include "app/exports.h"
-#include "commands.h"
+#include "scene/scene.h"
 #include "offscreen.h"
 #include "protocol.h"
 #include "vlqt.h"

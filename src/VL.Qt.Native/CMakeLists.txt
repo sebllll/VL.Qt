@@ -39,15 +39,23 @@ target_sources(vlqt PRIVATE
     app/last_error.h
     vlqt.cpp
 
-    # scene/: commands, events, input, previous-frame layer
-    commands.cpp
-    commands.h
-    events.cpp
-    events.h
-    touch.cpp
-    touch.h
-    previous_frame_layer.cpp
-    previous_frame_layer.h
+    # scene/: object table, command decoder, event queue, measurement, input handlers, previous-frame layer
+    scene/clear_state.cpp
+    scene/clear_state.h
+    scene/commands.cpp
+    scene/commands.h
+    scene/event_queue.cpp
+    scene/event_queue.h
+    scene/handlers.cpp
+    scene/handlers.h
+    scene/measure.cpp
+    scene/measure.h
+    scene/previous_frame_layer.cpp
+    scene/previous_frame_layer.h
+    scene/scene.cpp
+    scene/scene.h
+    scene/touch_handler.cpp
+    scene/touch_handler.h
 
     # elements/
     elements/element_entry.h
@@ -149,7 +157,7 @@ if(VLQT_SANITIZE)
     target_compile_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE} -fno-omit-frame-pointer -g)
     target_link_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE})
 endif()
-# GuiPrivate: QRhi (GPU timestamps). QuickPrivate: QQuickPointerDeviceHandler (touch.h, check on Qt updates).
+# GuiPrivate: QRhi (GPU timestamps). QuickPrivate: QQuickPointerDeviceHandler (scene/touch_handler.h, check on Qt updates).
 # QuickControls2: QQuickStyle. Multimedia: QAudioBufferOutput of the audio tap (deployed for the Video element anyway).
 target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick Qt6::QuickPrivate Qt6::QuickControls2 Qt6::Multimedia)
 # ShaderToolsPrivate: QShaderBaker (runtime bake of ShaderEffect sources). rhi/qshaderbaker.h lies only in the

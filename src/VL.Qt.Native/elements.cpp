@@ -777,7 +777,7 @@ std::vector<PropDef> buttonProps()
 // and sets both in the handler of the control's user-only signal (SpinBox valueModified, CheckBox/Switch toggled,
 // Slider moved, TextField editingFinished with changed text). SET VALUE from C# never fires these signals (no echo), and the value is
 // captured when the signal fires: a later SET VALUE with a stale value cannot hide it from the poll. The poll sends
-// EVENT_VALUE for every bound item of such a type (events.cpp collectMeasurements), independent of input handlers.
+// EVENT_VALUE for every bound item of such a type (scene/measure.cpp collectMeasurements), independent of input handlers.
 //
 // SpinBox: full int range instead of Qt's 0..99, editable and wheel on; text <-> value locale-free (plain digits,
 // optional '-', no group separators, like vvvv's IOBoxes), the validator too (locale C). Qt commits a typed value on

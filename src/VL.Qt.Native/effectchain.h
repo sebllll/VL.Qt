@@ -1,5 +1,5 @@
 /* effectchain.h - parsed SET_EFFECT_CHAIN (plan effects/08): the links of an element's Effect chain in the order
- * they apply (first = applied first to the element). Built by Scene::setEffectChain (commands.cpp) after the whole
+ * they apply (first = applied first to the element). Built by Scene::setEffectChain (scene/commands.cpp) after the whole
  * command was validated (wire format: protocol.h head comment "Effect chain"), handed to Elements::setEffectChain.
  * The description owns its data (names, values), so it may be kept beyond the apply; refs are element ids, resolved
  * by the Scene (0 = none). EffectChain (below, effectchain.cpp) renders it as an item tree in the element's layer.effect. */

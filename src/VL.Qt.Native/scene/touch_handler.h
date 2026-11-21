@@ -1,8 +1,8 @@
-/* touch.h - Touch Points and Pinch handlers of QtNative.
+/* scene/touch_handler.h - Touch Points and Pinch handlers of QtNative.
  *
  * Touch Points has no QML counterpart: TouchPointsHandler is an own pointer handler (QQuickPointerDeviceHandler
  * subclass, Qt private API). Pinch is the QML PinchHandler (target null), PinchState composes its values into one
- * gesture that does not jump when the finger count changes. Protocol: protocol.h, events: events.h.
+ * gesture that does not jump when the finger count changes. Protocol: protocol.h, events: scene/handlers.h.
  */
 #pragma once
 

@@ -85,16 +85,12 @@ struct TransformState {
                                 // the item (and so the children) stays at the origin
     QObject* matrix = nullptr;  // = ElementEntry::transform (child of the item), null while TRANSFORM is a pure x/y translation
                                 // folded into x/y (placeItem in elements.cpp) and there was no drag offset
-    // Measure on change (events.h "Measure on change"): the scene and id of the node, set by watchGeometry, null
-    // once the node is erased or the scene goes; queued = the id is in Scene::measureQueue.
+    // Measure on change (scene/measure.h "Measure on change"): the scene and id of the node, set by watchGeometry,
+    // null once the node is erased or the scene goes; queued = the id is in MeasureState::measureQueue.
     Scene* scene = nullptr;
     quint32 id = 0;
     bool measureQueued = false;
 };
-
-/* The geometry of the node changed (frame, matrix, anchor, ...): queues it for the next poll, which measures it and its
- * subtree (events.cpp). Cheap and idempotent until that poll; no-op once the node is gone. */
-void markGeometry(TransformState& s);
 
 /* The item's frame: (ox, oy, width, height) in item coordinates, i.e. (0, 0, w, h) except for an auto-sized
  * Group whose children reach left of / above its origin, and (-fx * w, -fy * h, w, h) for a Group with AUTO_SIZE off

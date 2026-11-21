@@ -1,5 +1,5 @@
 #include "debug.h"
-#include "commands.h"
+#include "scene/scene.h"
 
 #include <QtGui/QFont>
 #include <QtGui/QFontMetricsF>

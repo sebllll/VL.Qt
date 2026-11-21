@@ -1,5 +1,5 @@
 #include "perf.h"
-#include "commands.h"
+#include "scene/scene.h"
 #include "snapshot_resource.h"
 
 #include <QtCore/QLoggingCategory>
