@@ -82,12 +82,28 @@ target_sources(vlqt PRIVATE
     scene/touch_handler.cpp
     scene/touch_handler.h
 
-    # elements/
+    # elements/: element types and their properties, geometry, Group frame, effect sources
+    elements/effect_sources.cpp
     elements/element_entry.h
+    elements/element_types.cpp
+    elements/element_types.h
     elements/elements.cpp
     elements/elements.h
+    elements/geometry.cpp
+    elements/geometry.h
+    elements/group_item.cpp
+    elements/group_item.h
     elements/shape_path_element.cpp
     elements/shape_path_element.h
+    elements/type_controls.cpp
+    elements/type_image.cpp
+    elements/type_layout.cpp
+    elements/type_qml.cpp
+    elements/type_rectangle.cpp
+    elements/type_shader.cpp
+    elements/type_shape.cpp
+    elements/type_text.cpp
+    elements/type_video.cpp
 
     # effects/ and user_qml/
     effectchain.cpp
@@ -206,7 +222,7 @@ target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick 
 # limited compatibility guarantees: check on Qt updates). Qt6ShaderTools is deployed next to QtNative.
 target_link_libraries(vlqt PRIVATE Qt6::ShaderTools Qt6::ShaderToolsPrivate)
 # QuickShapes: Shape/ShapePath for Line, Polyline, Polygon, Path. QuickShapesPrivate: QQuickShape/QQuickShapePath
-# (qquickshape_p.h) built from C++ with typed setters (makeShape in elements.cpp); ShapePathElement (shape_path_element.h)
+# (qquickshape_p.h) built from C++ with typed setters (makeShape in elements/type_shape.cpp); ShapePathElement (elements/shape_path_element.h)
 # subclasses the private QQuickCurve of QuickPrivate (qquickpath_p.h). Private API, limited compatibility guarantees:
 # check on Qt updates. Qt6QuickShapes and qml/QtQuick/Shapes are deployed next to QtNative (qml/deploy.qml).
 target_link_libraries(vlqt PRIVATE Qt6::QuickShapes Qt6::QuickShapesPrivate)

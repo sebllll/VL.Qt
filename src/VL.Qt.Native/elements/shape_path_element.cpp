@@ -48,7 +48,7 @@ void ShapePathElement::rebuildPoints()
             p.closeSubpath();
     }
     m_path = p;
-    // QQuickPath::processPath runs addToPath again on changed(); without it the old path stays on screen (spike Q2).
+    // QQuickPath::processPath runs addToPath again on changed(); without it the old path stays on screen.
     emit changed();
 }
 

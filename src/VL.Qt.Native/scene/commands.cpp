@@ -1,6 +1,7 @@
 #include "scene/commands.h"
 #include "effectchain.h"
 #include "effects/shader_item.h"
+#include "elements/group_item.h"
 #include "qmlitem.h"
 #include "scene/scene.h"
 #include "vlstyle.h"
@@ -102,8 +103,6 @@ int verbPoints(unsigned char verb)
     default: return -1;
     }
 }
-
-QColor toColor(const float* f) { return QColor::fromRgbF(f[0], f[1], f[2], f[3]); }
 
 /* Value type of a MULTI entry key (EFFECT_* 833..855), 0 = not a key (protocol.h "Effect chain"). */
 quint16 effectValueType(quint16 prop)

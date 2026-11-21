@@ -1,4 +1,5 @@
 #include "vlstyle.h"
+#include "app/fonts.h"
 
 #include "protocol.h"
 
@@ -65,8 +66,6 @@ T rd(const unsigned char* p)
 }
 
 constexpr int align4(int n) { return (n + 3) & ~3; }
-
-QColor toColor(const float* f) { return QColor::fromRgbF(f[0], f[1], f[2], f[3]); }
 
 } // namespace
 

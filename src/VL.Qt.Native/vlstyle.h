@@ -15,7 +15,7 @@
  * Attached per object, never inherited by children (C# resolves the inheritance). */
 #pragma once
 
-#include "elements/elements.h"
+#include "elements/element_types.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
