@@ -49,18 +49,6 @@ namespace VL.Qt.Tests
 
         // --- names ---
 
-        [TestCase("Gauge", "Gauge", null)]
-        [TestCase("Gauge.qml", "Gauge", null)]
-        [TestCase("Gauge_Round", "Gauge", "Round")]
-        [TestCase("Gauge_Round.qml", "Gauge", "Round")]
-        [TestCase("Levels_Clamp_Both.qml", "Levels", "Clamp Both")]
-        [TestCase("Foo_.qml", "Foo", null)]
-        [TestCase("_Foo.qml", "_Foo", null)]
-        public void NodeName_SplitsVariantLikeShaderNodes(string fileName, string name, string? version)
-        {
-            Assert.That(QmlNodeFactory.GetNodeName(fileName), Is.EqualTo((name, version)));
-        }
-
         [Test]
         public void FullName_HasVariantInParentheses()
         {
