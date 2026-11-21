@@ -35,6 +35,8 @@
  *
  * Threads: everything is collected on the GUI thread; updatePaintNode (GUI blocked) copies it into the material; the
  * material shader reads only the material. Values only: no allocation per frame (buffers are sized on a layout change).
+ * Which render loop runs and the one place here that relies on it: docs/design/render-loop.md, "Places that rely on
+ * the basic loop".
  */
 #pragma once
 
@@ -182,7 +184,7 @@ private:
     bool m_uniformsChanged = false; // a setUniform since the last endUniforms changed something
     std::vector<std::pair<QByteArray, quint64>> m_samplerStates; // SAMPLER entries by sampler2D name, bit 63 = present
     std::vector<QPointer<QQuickItem>> m_layerItems; // elements this item holds a layer request on (layer mipmap)
-    std::vector<QQuickItem*> m_layerNow;            // refreshLayerRequests scratch (capacity survives)
+    std::vector<std::pair<QQuickItem*, bool>> m_layerNow; // refreshLayerRequests scratch: element, ORed mip (capacity survives)
     bool m_layersDirty = false;
     bool m_refsChanged = false;
 
@@ -201,7 +203,6 @@ private:
     bool m_geometryChanged = true;
     QString m_error;
 
-    QSGTexture* m_transparent = nullptr; // 1x1 transparent in window()
     std::vector<QPointer<QSGTextureProvider>> m_watched; // providers with a connection to this item
     QShader m_vs, m_fs; // shader pair of the layout (rebuild)
 };
