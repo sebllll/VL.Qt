@@ -134,16 +134,16 @@ public:
         return {};
     }
 
-    int64_t upload(Content& work, int64_t budget, bool& done, std::string& error) override
+    int64_t upload(Content& work, int64_t budget, UploadStatus& status, std::string& error) override
     {
         auto& r = static_cast<ImageResource&>(work);
-        const int64_t used = uploadNow(r, budget, done, error);
+        const int64_t used = uploadNow(r, budget, status, error);
 #ifdef Q_OS_WIN
         // Removed device: no Failed, the rebuild after checkLost uploads again on the new device.
         if (!error.empty() && (deviceRemoved(r.m_device) || deviceRemoved(device::nativeDevice(device::uploadRhi())))) {
             qCDebug(lcRes, "upload on a removed device (%s), waiting for the rebuild", error.c_str());
             error.clear();
-            done = false;
+            status = UploadStatus::Waiting;
             return 0;
         }
 #endif
@@ -229,12 +229,12 @@ public:
     }
 
 private:
-    static int64_t uploadNow(ImageResource& r, int64_t budget, bool& done, std::string& error)
+    static int64_t uploadNow(ImageResource& r, int64_t budget, UploadStatus& status, std::string& error)
     {
         const int64_t total = bytes(r);
         QRhi* rhi = device::uploadRhi();
         if (!rhi) { // no shared device: the CPU copy is the image (image())
-            done = true;
+            status = UploadStatus::Done;
             return total;
         }
         const QRhiTexture::Format format = r.m_bgra ? QRhiTexture::BGRA8 : QRhiTexture::RGBA8;
@@ -243,8 +243,10 @@ private:
         qint64 createNs = 0;
 #ifdef Q_OS_WIN
         // Within the budget (vlqt_res_wait: -1, or a small image) the copy runs here, like a stripe would, else in a task.
-        if (r.m_staging && !fillFromStaging(r, budget < 0 || total <= budget, error))
-            return 0; // the copy task still runs (next pump), or error
+        if (r.m_staging && !fillFromStaging(r, budget < 0 || total <= budget, error)) {
+            status = UploadStatus::Waiting; // the copy task still runs (other uploads go first), or error
+            return 0;
+        }
 #endif
         if (!r.m_texture) {
             // Worker texture: it has its mip chain already (the same level count as QRhi's mipLevelsForSize), the
@@ -263,7 +265,7 @@ private:
             createNs = timer.nsecsElapsed();
         }
         if (r.m_workerTexture) { // complete already
-            done = true;
+            status = UploadStatus::Done;
             finishUpload(r);
             return total;
         }
@@ -295,10 +297,9 @@ private:
         }
         qCDebug(lcRes, "upload %dx%d rows %d-%d: %.2f ms (create %.2f ms)", r.m_size.width(), h, r.m_uploadedRows - rows,
             r.m_uploadedRows, timer.nsecsElapsed() / 1e6, createNs / 1e6);
-        if (r.m_uploadedRows == h) {
-            done = true;
+        status = r.m_uploadedRows == h ? UploadStatus::Done : UploadStatus::Progress;
+        if (status == UploadStatus::Done)
             finishUpload(r);
-        }
         return int64_t(bpl) * rows;
     }
 

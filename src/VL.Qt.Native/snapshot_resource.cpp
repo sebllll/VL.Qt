@@ -65,9 +65,9 @@ public:
     const char* name() const override { return "snapshot"; }
     // Never queued: snapshots come through beginExternal / finishExternal.
     std::string decode(Content&) override { return "snapshot: no decode"; }
-    int64_t upload(Content&, int64_t, bool& done, std::string&) override
+    int64_t upload(Content&, int64_t, UploadStatus& status, std::string&) override
     {
-        done = true;
+        status = UploadStatus::Done;
         return 0;
     }
     void destroy(Content& work) override { static_cast<SnapshotContent&>(work).image = QImage(); }

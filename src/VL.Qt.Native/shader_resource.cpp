@@ -380,9 +380,9 @@ public:
         return std::move(static_cast<ShaderResource&>(work).m_warning);
     }
 
-    int64_t upload(Content&, int64_t, bool& done, std::string&) override
+    int64_t upload(Content&, int64_t, UploadStatus& status, std::string&) override
     {
-        done = true; // no GPU upload for shaders
+        status = UploadStatus::Done; // no GPU upload for shaders
         return 0;
     }
 };

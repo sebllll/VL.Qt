@@ -57,9 +57,9 @@ public:
     const char* name() const override { return "audio tap"; }
     // External content (init on the main thread): never decoded or uploaded.
     std::string decode(Content&) override { return "audio tap: no decode"; }
-    int64_t upload(Content&, int64_t, bool& done, std::string& error) override
+    int64_t upload(Content&, int64_t, UploadStatus& status, std::string& error) override
     {
-        done = true;
+        status = UploadStatus::Done;
         error = "audio tap: no upload";
         return 0;
     }
