@@ -22,7 +22,7 @@ An offscreen scene (`QtTexture`, `QtRenderer`) has no render loop; `QQuickRender
 
 - The state of an item changes on the GUI thread only. Its node, the node's material and the textures the material points to are touched only in `updatePaintNode`, in `preprocess` and by the material shader.
 - A GPU object a material points to belongs to the node and is freed with it by the scene graph, never deleted from the GUI side. Example: the 1×1 transparent texture of the ShaderEffect element is owned by `EffectNode` (`shader_material.h`), not by `ShaderItem`.
-- A texture an item shares beyond one node (the image texture cache of `resources/qt_image_item.*`) is let go from the GUI side only through `render_thread::retire` (`render_thread.h`): in an offscreen scene on a render thread the reference drops there, after the render still running with it; in a window and in the main thread mode at once. `invalidateSceneGraph` and `updatePaintNode` run on the render thread and drop it directly.
+- A texture an item shares beyond one node (the image texture cache of `resources/image_texture_cache.*`) is let go from the GUI side only through `render_thread::retire` (`render_thread.h`): in an offscreen scene on a render thread the reference drops there, after the render still running with it; in a window and in the main thread mode at once. `invalidateSceneGraph` and `updatePaintNode` run on the render thread and drop it directly.
 - Code that is cheap to make correct under the `threaded` loop too is written that way; the rest relies on the basic loop and is listed below.
 
 ### Places that rely on the basic loop

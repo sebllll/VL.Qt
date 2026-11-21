@@ -7,7 +7,7 @@
 #include "image_resource.h"
 #include "protocol.h"
 #include "resources/change_watch.h"
-#include "resources/qt_image_item.h"
+#include "resources/image_texture_cache.h"
 #include "resources/resources.h"
 #include "shader_resource.h"
 
@@ -746,7 +746,7 @@ QSGTexture* ShaderItem::samplerTexture(Sampler& s)
     if (u && u->type == VLQT_VALUE_TYPE_U64 && u->imageContent) {
         auto& self = m_uniforms[size_t(s.uniform)];
         self.imageTexture = imageTextureFor(window(), self.imageContent);
-        return self.imageTexture ? textureOf(*self.imageTexture) : nullptr;
+        return self.imageTexture ? self.imageTexture->texture : nullptr;
     }
     return nullptr;
 }

@@ -38,6 +38,13 @@ namespace vlqt::device {
 // Gives the window the shared device; call before the window is shown. No-op without a shared device.
 void attach(QQuickWindow* window);
 
+// Returns true if attach or the last rebuild gave the window the shared device, also before the window has a QRhi.
+// Main thread, or a render thread while the main thread waits for it.
+bool isOnSharedDevice(const QQuickWindow* window);
+// Records whether the window is on the shared device (attach, rebuild); forgotten when the window is destroyed.
+// Main thread.
+void markOnSharedDevice(QQuickWindow* window, bool on);
+
 // Holds the shared device's immediate context (ContextLock) from beforeRendering to afterFrameEnd of every frame of
 // this on-screen window, so the render threads of offscreen scenes (phase 5) cannot change the context state while
 // QRhi D3D11 submits the frame (in endFrame). The vsync wait in beginFrame stays outside. Main thread, basic loop; not

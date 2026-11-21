@@ -2,7 +2,7 @@
 // fonts and offscreen scenes (SmokeTest, unit tests).
 #include "../vlqt_test.h"
 #include "scene/scene.h"
-#include "../device.h"
+#include "../device/device.h"
 #include "../image_resource.h"
 #include "../app/exports.h"
 #include "offscreen/offscreen.h"

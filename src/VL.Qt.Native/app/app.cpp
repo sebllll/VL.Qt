@@ -9,7 +9,7 @@
 #include "app/thread_name.h"
 #include "platform/platform.h"
 #include "window/scene_handle.h"
-#include "device.h"
+#include "device/device.h"
 #include "diagnostics/perf.h"
 #include "protocol.h"
 #include "resources/qt_image_item.h"

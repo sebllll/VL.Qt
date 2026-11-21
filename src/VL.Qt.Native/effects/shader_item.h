@@ -18,7 +18,7 @@
  *
  * Samplers (combinedImageSamplers of both stages, bindings 1..15): "source" = Input (SOURCE, layer of the item, the
  * texture provider of QQuickItem::layer), others from the table: REF = element (a hidden child; its layer gets
- * enabled), U64 = image resource (shared texture cache of resources/qt_image_item.h). A sampler without texture samples a 1x1
+ * enabled), U64 = image resource (resources/image_texture_cache.h). A sampler without texture samples a 1x1
  * transparent texture. Dynamic textures (layers) are updated in the node's preprocess like Qt's ShaderEffect does.
  *
  * Chain pass (setChainPass, effect chain, effects/effect_chain.cpp): the item is a pass of a SHADER link. QtNative sets
