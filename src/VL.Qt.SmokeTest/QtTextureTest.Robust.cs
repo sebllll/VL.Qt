@@ -39,14 +39,19 @@ public static partial class QtTextureTest
     // The thread count QtNative uses: VLQT_OFFSCREEN_THREAD, unset = 1 (render-texture.md, "Qt render thread").
     private static int ExpectedThreads => int.TryParse(Environment.GetEnvironmentVariable("VLQT_OFFSCREEN_THREAD"), out var n) ? n : 1;
 
-    // set_threaded after the first scene is OK only for the count in use: tells which mode the suite really runs in.
+    // The pool size may change at any time and applies to the scenes created afterwards (E7); the mode the suite runs in
+    // is the log line of its first scene (RunMode). Here the export takes the count in use, another one and an out-of-range
+    // one, and the count in use is set again for the scenes this run creates later.
     private static void ThreadMode(Scenario s)
     {
         int expected = ExpectedThreads;
         int other = expected == 0 ? 1 : 0;
         bool same = Native.vlqt_offscreen_set_render_threads(expected) == Native.Result.Ok;
-        bool differs = Native.vlqt_offscreen_set_render_threads(other) == Native.Result.Unsupported;
-        s.Check(same && differs, $"mode: offscreen scenes render on {(expected == 0 ? "the main thread" : $"{expected} Qt render thread(s)")} ({(same ? "count in use accepted" : "count in use refused")}, {(differs ? "other refused" : "other accepted")})");
+        bool otherOk = Native.vlqt_offscreen_set_render_threads(other) == Native.Result.Ok;
+        bool restored = Native.vlqt_offscreen_set_render_threads(expected) == Native.Result.Ok;
+        bool range = Native.vlqt_offscreen_set_render_threads(17) == Native.Result.BadArgument
+            && Native.vlqt_offscreen_set_render_threads(-1) == Native.Result.BadArgument;
+        s.Check(same && otherOk && restored && range, $"mode: offscreen scenes render on {(expected == 0 ? "the main thread" : $"{expected} Qt render thread(s)")} (count in use {(same ? "accepted" : "refused")}, other {(otherOk ? "accepted" : "refused")}, restored {(restored ? "yes" : "no")}, 17 and -1 {(range ? "refused" : "accepted")})");
         s.Info($"mode: {(expected == 0 ? "main thread" : $"{expected} Qt render thread(s)")} (VLQT_OFFSCREEN_THREAD={Environment.GetEnvironmentVariable("VLQT_OFFSCREEN_THREAD") ?? "unset"})");
     }
 

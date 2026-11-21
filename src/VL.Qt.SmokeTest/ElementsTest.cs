@@ -8,7 +8,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 
-// Element registry of QtNative (plan 05a): Group (= TYPE_ITEM, QML Item), common properties, Matrix4x4 transform,
+// Element registry of QtNative (plan 05a): Group (= ELEMENT_TYPE_GROUP, QML Item), common properties, Matrix4x4 transform,
 // unknown property -> error + log. Grabs go to <OutDir>/05_*.png.
 [TestFixture, NonParallelizable]
 public static class ElementsTest
@@ -118,7 +118,7 @@ public static class ElementsTest
             s.Check(IsBg(Px(a, 300, 250)), $"opacity 0 hides the group ({Px(a, 300, 250)})");
 
         // Unknown property: error code + message, logged once per type, no crash; the scene stays usable.
-        int Hits() => Array.FindAll(s.Log.Split('\n'), l => l.Contains("vlqt.elements") && l.Contains("not supported by type ITEM")).Length;
+        int Hits() => Array.FindAll(s.Log.Split('\n'), l => l.Contains("vlqt.elements") && l.Contains("not supported by type GROUP")).Length;
         var hits0 = Hits(); // ApplyTest logged the same message for its own window (cache is per engine)
         for (int i = 0; i < 2; i++)
         {
@@ -126,7 +126,7 @@ public static class ElementsTest
             cmd.SetColor(Group, Protocol.PropertyId.Color, 1, 1, 1, 1);
             var rc = Apply();
             var e = Native.LastError();
-            s.Check(rc == Native.Result.UnknownProperty && e.Contains("not supported by type ITEM"), $"unknown property -> UnknownProperty ({rc}: {e})");
+            s.Check(rc == Native.Result.UnknownProperty && e.Contains("not supported by type GROUP"), $"unknown property -> UnknownProperty ({rc}: {e})");
         }
         var hits = Hits() - hits0;
         s.Check(hits == 1, $"unknown property logged once (vlqt.elements, {hits}x)");

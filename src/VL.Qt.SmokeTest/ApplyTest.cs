@@ -251,7 +251,7 @@ public static class ApplyTest
         var b = new Buf();
         Native.Result Apply(Buf buf) => Native.Apply(w, buf.Span);
 
-        // Scene: grey background, red rect at root, green rect inside an empty ITEM group.
+        // Scene: grey background, red rect at root, green rect inside an empty GROUP.
         var rc = Apply(b.Clear()
             .ClearColor(0.125f, 0.125f, 0.125f)
             .Create(1, Protocol.ElementType.Rectangle).Place(1, 100, 100, 200, 150).Color(1, 1, 0, 0).Reparent(1, 0, 0)
@@ -300,7 +300,7 @@ public static class ApplyTest
         Err("unknown parent", b.Clear().Reparent(1, 777, 0), Native.Result.UnknownObject, "unknown parent id 777");
         Err("unknown ref", b.Clear().SetRef(1, Protocol.PropertyId.Size, 777), Native.Result.UnknownObject, "unknown ref id 777");
         Err("unknown type", b.Clear().Create(6, 999), Native.Result.UnknownType, "unknown type 999");
-        Err("unknown property", b.Clear().Create(7, Protocol.ElementType.Group).Color(7, 1, 1, 1), Native.Result.UnknownProperty, "not supported by type ITEM");
+        Err("unknown property", b.Clear().Create(7, Protocol.ElementType.Group).Color(7, 1, 1, 1), Native.Result.UnknownProperty, "not supported by type GROUP");
         Err("value type mismatch", b.Clear().SetFloats(1, Protocol.PropertyId.Size, Protocol.ValueType.F32, 1), Native.Result.BadArgument, "expects value type");
         Err("duplicate id", b.Clear().Create(1, Protocol.ElementType.Group), Native.Result.Invalid, "already exists");
         Err("create id 0", b.Clear().Create(0, Protocol.ElementType.Group), Native.Result.Invalid, "window root");

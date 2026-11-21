@@ -55,7 +55,7 @@ public static class QtTexturePerfTest
         if (!string.IsNullOrEmpty(env) && int.TryParse(env, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n >= 0)
             threads = n;
         var rc = Native.vlqt_offscreen_set_render_threads(threads);
-        s.Check(rc == 0, $"qttextureperf: set_threaded({threads}) before the first scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        s.Check(rc == 0, $"qttextureperf: set_render_threads({threads}) before the first scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         if (rc != 0)
             return;
 
