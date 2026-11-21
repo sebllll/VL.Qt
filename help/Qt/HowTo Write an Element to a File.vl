@@ -168,7 +168,7 @@
             </p:ValueBoxSettings>
           </Pad>
           <Node Bounds="620,330,365,19" Id="BQA4gazCWEUL6chpFcAeBL">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Snapshot" />
             </p:NodeReference>
@@ -198,7 +198,7 @@
             </p:ValueBoxSettings>
           </Pad>
           <Node Bounds="620,520,305,19" Id="NIyeK4Hmk5rPXy14dMiKDk">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="FileWriter" />
             </p:NodeReference>

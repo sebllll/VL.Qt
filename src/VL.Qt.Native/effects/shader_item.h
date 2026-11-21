@@ -114,7 +114,8 @@ public:
                 f(u.ref.data());
     }
 
-    // Once per pump after res::beginFrame: items take new Ready / Failed shaders and images.
+    // Once per pump after res::beginFrame: only the items whose shader or image changed (res::changedThisFrame)
+    // take new Ready / Failed shaders and images.
     static void afterResourceFrame();
 
 signals:

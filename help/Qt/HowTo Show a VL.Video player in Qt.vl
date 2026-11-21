@@ -85,7 +85,7 @@
             <Pin Id="D57LIzzop8HP9sOQoJVtAM" Name="Use Linear Texture Format" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="336,500,122,19" Id="6YprnB78mTz9u6ggdt1WMG">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="VideoSourceToQtImage" />
             </p:NodeReference>

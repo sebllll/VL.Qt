@@ -6,6 +6,7 @@
 #include "elements/group_item.h"
 #include "image_resource.h"
 #include "protocol.h"
+#include "resources/change_watch.h"
 #include "resources/qt_image_item.h"
 #include "resources/resources.h"
 #include "shader_resource.h"
@@ -24,7 +25,6 @@
 
 #include <algorithm>
 #include <cstring>
-#include <unordered_set>
 
 Q_LOGGING_CATEGORY(lcShaderItem, "VL.Qt.ShaderEffect")
 
@@ -34,8 +34,7 @@ namespace {
 
 constexpr int kMaxMesh = 1024;     // MESH_RESOLUTION per axis (vertex count stays below ~1M)
 
-std::unordered_set<ShaderItem*> s_items; // main thread
-uint64_t s_contentEpoch = 0, s_failureEpoch = 0;
+res::ChangeWatch<ShaderItem> s_watch; // items by the shader and image ids they wait for, main thread
 
 std::string idText(uint64_t id)
 {
@@ -154,13 +153,12 @@ bool reserved(const QByteArray& name)
 ShaderItem::ShaderItem(QQuickItem* parent) : QQuickItem(parent)
 {
     setFlag(ItemHasContents, true);
-    s_items.insert(this);
 }
 
 ShaderItem::~ShaderItem()
 {
-    s_items.erase(this);
     for (ShaderSlot* s : {&m_frag, &m_vert}) {
+        s_watch.remove(s->want, this);
         if (s->want && s->want != s->shown)
             res::releaseElement(s->want);
         if (s->shown)
@@ -217,7 +215,9 @@ bool ShaderItem::setShader(int stage, uint64_t id, std::string& err)
     }
     if (s.want && s.want != s.shown)
         res::releaseElement(s.want); // never shown: the one before stays
+    s_watch.remove(s.want, this);
     s.want = id;
+    s_watch.add(id, this);
     s.failed = false;
     if (!id) {
         if (s.shown)
@@ -325,19 +325,15 @@ void ShaderItem::advanceAll()
 
 void ShaderItem::afterResourceFrame()
 {
-    const uint64_t content = res::contentEpoch(), failure = res::failureEpoch();
-    if (content == s_contentEpoch && failure == s_failureEpoch)
-        return;
-    s_contentEpoch = content;
-    s_failureEpoch = failure;
-    for (ShaderItem* item : s_items)
-        item->advanceAll();
+    s_watch.forChanged([](ShaderItem* item) { item->advanceAll(); });
 }
 
 void ShaderItem::releaseUniform(Uniform& u)
 {
-    if (u.image)
+    if (u.image) {
+        s_watch.remove(u.image, this);
         res::releaseElement(u.image);
+    }
     u.image = 0;
     u.imageContent.reset();
     u.imageTexture.reset();
@@ -429,13 +425,16 @@ bool ShaderItem::setUniform(const char* name, int nameLen, quint16 vt, const uns
         uint64_t id;
         std::memcpy(&id, value, 8);
         if (id != u.image) {
-            if (u.image)
+            if (u.image) {
+                s_watch.remove(u.image, this);
                 res::releaseElement(u.image);
+            }
             u.image = 0;
             u.imageContent.reset();
             u.imageTexture.reset();
             if (id && res::kindOfId(id, nullptr) == VLQT_RESOURCE_KIND_IMAGE && res::acquire(id) == res::okRc) {
                 u.image = id;
+                s_watch.add(id, this);
                 u.imageContent = res::image::ready(id);
             }
             u.badImage = id && !u.image;

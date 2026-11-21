@@ -65,7 +65,7 @@
   <Pin Id="OTPDerYfjjWt3Msr5nhGJd" Name="Output" Kind="OutputPin" />
 </Node>
 <Node Bounds="100,380,105,19" Id="Fuo9QmZFgtmqndka6bKAqC">
-<p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.Stride.dll">
+<p:NodeReference LastCategoryFullName="Stride.Textures.Source" LastDependency="VL.Qt.Stride.dll">
   <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
   <Choice Kind="ProcessAppFlag" Name="QtTexture" />
 </p:NodeReference>

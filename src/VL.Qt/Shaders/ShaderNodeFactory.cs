@@ -26,7 +26,7 @@ namespace VL.Qt.Shaders
         public const string FolderName = "qtshaders";
 
         /// <summary>Category of a generated node without @category.</summary>
-        public const string DefaultCategory = Categories.Elements + ".Shaders";
+        public const string DefaultCategory = Categories.Shaders;
 
         /// <summary>
         /// Category of the effect chain node of a filter shader (same name as the element node). This one, @category
