@@ -1,7 +1,8 @@
 #include "scene/commands.h"
-#include "effectchain.h"
+#include "effects/effect_chain_desc.h"
 #include "effects/shader_item.h"
-#include "qmlitem.h"
+#include "elements/group_item.h"
+#include "user_qml/qml_item.h"
 #include "scene/scene.h"
 #include "vlstyle.h"
 
@@ -103,8 +104,6 @@ int verbPoints(unsigned char verb)
     }
 }
 
-QColor toColor(const float* f) { return QColor::fromRgbF(f[0], f[1], f[2], f[3]); }
-
 /* Value type of a MULTI entry key (EFFECT_* 833..855), 0 = not a key (protocol.h "Effect chain"). */
 quint16 effectValueType(quint16 prop)
 {
@@ -167,6 +166,11 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
     // their new sources, so nothing refers to them any more (see destroySubtree).
     deleteRetired();
     appliedSincePoll = true; // also a failed apply may have applied its first commands
+    // QML files are compiled once all commands of the frame have set their properties (also after a failed apply).
+    struct BuildQml {
+        Elements& elements;
+        ~BuildQml() { elements.buildQml(); }
+    } buildQml{elements};
     if (len < 0 || (len > 0 && !buf)) {
         err = "invalid buffer (null or negative length)";
         return ApplyBadLength;

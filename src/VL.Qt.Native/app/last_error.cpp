@@ -87,3 +87,12 @@ const char* resultText(int code)
 }
 
 } // namespace vlqt
+
+extern "C" {
+
+VLQT_API const char* vlqt_last_error(void)
+{
+    return vlqt::lastError();
+}
+
+} // extern "C"

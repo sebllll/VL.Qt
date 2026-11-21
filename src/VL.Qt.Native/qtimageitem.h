@@ -2,7 +2,7 @@
  *
  * PROP_IMAGE sets the resource id (0 = no image). The item takes an element reference (res::acquire) for the id it
  * shows and for the id it waits for, and drops it on a change or in the destructor. Until the new resource is Ready
- * the old image stays (no empty frame); a replacement of the same id shows up the same way (res::contentEpoch).
+ * the old image stays (no empty frame); a replacement of the same id shows up the same way (res::changedThisFrame).
  *
  * Textures: one per window and content, shared by every item of that window (cache in qtimageitem.cpp):
  *   - shared device (Windows/D3D11): a QRhiTexture of the window's QRhi created from the resource's native texture
@@ -58,7 +58,8 @@ public:
     // PROP_IMAGE: false + err for an unknown or released id (the current image stays).
     bool setResource(uint64_t id, std::string& err);
 
-    // Once per pump after res::beginFrame: items whose resource got new content draw it in this pump.
+    // Once per pump after res::beginFrame: only the items whose resource got new content (res::changedThisFrame)
+    // take it and draw it in this pump.
     static void afterResourceFrame();
 
 signals:

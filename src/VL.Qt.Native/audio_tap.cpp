@@ -1,6 +1,6 @@
 #include "audio_tap.h"
 
-#include "elements.h"
+#include "elements/elements.h"
 #include "protocol.h"
 #include "vlqt.h"
 

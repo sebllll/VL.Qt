@@ -75,7 +75,10 @@ namespace VL.Qt.Qml
                     }
                     return false;
                 case QmlValueKind.Vector2D:
-                    if (TryQtCall(t, s, e, out fn, out a) && fn == "vector2d" && a.Length == 2 && Finite(a))
+                case QmlValueKind.Point:
+                case QmlValueKind.Size:
+                    var constructor = kind switch { QmlValueKind.Point => "point", QmlValueKind.Size => "size", _ => "vector2d" };
+                    if (TryQtCall(t, s, e, out fn, out a) && fn == constructor && a.Length == 2 && Finite(a))
                     {
                         value = new Vector2((float)a[0], (float)a[1]);
                         return true;

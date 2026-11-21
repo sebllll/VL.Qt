@@ -1,6 +1,6 @@
-/* resources.h - the interface of the resource manager that vlqt.cpp and the kinds call: the C API backends, the frame
- * hooks, the F5 overview and the test hooks. A resource is one id for C#; the manager decodes, uploads and frees its
- * content. The contract (ids, states, threads, reference counts, replacement, device loss) is in
+/* resources.h - the interface of the resource manager that the exports (resource_exports.cpp), the pump (app/app.cpp)
+ * and the kinds call: the C API backends, the frame hooks, the F5 overview and the test hooks. A resource is one id for
+ * C#; the manager decodes, uploads and frees its content. The contract (ids, states, threads, reference counts, replacement, device loss) is in
  * docs/design/resources.md; the interface of a kind is in resource_kind.h.
  */
 #pragma once
@@ -45,11 +45,10 @@ int beginExternal(uint64_t id, int kind);
 // (RESOURCE_EVENT_ERROR). Returns 0, -9 if the id is gone or released by the host (result dropped, work destroyed).
 int finishExternal(uint64_t id, std::shared_ptr<Content> work, int64_t bytes, const std::string& error);
 
-// Changes whenever a resource gets new Ready content (first Ready or a replacement swap). Elements compare it once
-// per pump instead of asking every resource (QtImageItem::afterResourceFrame). Main thread.
-uint64_t contentEpoch();
-// Changes whenever a resource becomes Failed (first load or replacement), e.g. a ShaderEffect stops drawing.
-uint64_t failureEpoch();
+// Ids that got new Ready content (first Ready, replacement swap) or became Failed since the previous beginFrame, as of
+// the last beginFrame: the elements advance only those (ChangeWatch). An id may appear more than once; the list is
+// valid until the next beginFrame. Main thread.
+const std::vector<uint64_t>& changedThisFrame();
 
 // Element references. 0 / -9.
 int acquire(uint64_t id);

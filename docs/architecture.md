@@ -30,9 +30,11 @@ per vvvv frame:
   4. events are polled back (vlqt_scene_poll)
 ```
 
-- **Deterministic:** same tree and time, same output
-- **Scrubbing and pause:** no Qt timers or system clocks interfere
+- **Deterministic:** same tree and time, same output for everything vvvv computes from the time
+- **Pause:** no Qt timers or system clocks interfere; when the clock stands, QML animations stand
+- **Scrubbing:** only values from vvvv scrub. QML animations follow the clock forward and hold with it, but Qt never rewinds one: after the clock has jumped back, a running animation keeps its value and goes on forward from it with the next positive time steps
 - **Multiple windows:** the same clock drives all renderers
+- **Input:** `vlqt_app_advance_animations` refuses a time that is NaN, infinite or out of range (`VLQT_ERR_BAD_ARGUMENT`)
 - **Exception:** a QML `Timer` in a user file (`QmlElement`) runs on wall time. QML animations follow the clock.
 
 ## C# ↔ C++ interop
@@ -84,7 +86,7 @@ The same element instance can hang at several places of the tree; each place get
 
 ## User QML
 
-`QmlElement` (`src/VL.Qt/Elements/Qml/`, native side `src/VL.Qt.Native/qmlitem.{h,cpp}`) is the one place where Qt Quick content that VL.Qt did not build enters the tree. It follows the same path as every element (CREATE, properties, apply) with two additions: `SET_QML_PROPERTIES` sends the entries of the `Properties` dictionary by name (diffed in C#, converted through `QVariant` in QtNative), and the events `EVENT_QML_PROPERTY` / `EVENT_QML_SIGNAL` carry the declared properties and signals of the file's root back to the node's feedback. The node also owns the file watcher for hot reload (it bumps `QML_RELOAD`). The file is compiled on the per-window `QQmlEngine` from a `file:` URL, the instance lives as a child of the element's item. See [QML files as elements](user-qml.md) and [decisions/user-qml.md](decisions/user-qml.md).
+`QmlElement` (`src/VL.Qt/Elements/Qml/`, native side `src/VL.Qt.Native/user_qml/`) is the one place where Qt Quick content that VL.Qt did not build enters the tree. It follows the same path as every element (CREATE, properties, apply) with two additions: `SET_QML_PROPERTIES` sends the entries of the `Properties` dictionary by name (diffed in C#, converted through `QVariant` in QtNative), and the events `EVENT_QML_PROPERTY` / `EVENT_QML_SIGNAL` carry the declared properties and signals of the file's root back to the node's feedback. The node also owns the file watcher for hot reload (it bumps `QML_RELOAD`). The file is compiled on the per-window `QQmlEngine` from a `file:` URL, the instance lives as a child of the element's item. See [QML files as elements](user-qml.md) and [decisions/user-qml.md](decisions/user-qml.md).
 
 ## Performance
 
