@@ -4,6 +4,8 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QMetaObject>
 #include <QtCore/QUrl>
+#include <QtMultimedia/QAudioDevice>
+#include <QtMultimedia/QMediaDevices>
 #include <QtQuick/QQuickItem>
 
 namespace vlqt {
@@ -107,6 +109,11 @@ void releaseVideo(QQuickItem* item)
 {
     QMetaObject::invokeMethod(item, "vlqtRelease");
     res::audio::releaseVideo(item);
+    // The AudioOutput made QMediaDevices probe the WASAPI formats of every device asynchronously in a process-wide pool.
+    // A process that ends during a probe hangs in Qt6Multimedia's atexit destructor of that pool (~QThreadPool waits for
+    // workers ExitProcess already killed). preferredFormat() blocks only while a probe runs.
+    for (const QAudioDevice& d : QMediaDevices::audioOutputs())
+        (void)d.preferredFormat();
 }
 
 std::vector<PropDef> videoProps()
