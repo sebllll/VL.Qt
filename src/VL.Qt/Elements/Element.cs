@@ -40,8 +40,8 @@ namespace VL.Qt.Elements
         public Interaction? Interaction { get; init; }
 
         /// <summary>
-        /// Chain of effect descriptions (Blur, DropShadow, …), folded into one MultiEffect layer on the element's own item;
-        /// Size, Transform and layout stay the element's. Null = no effect layer (plan effects/01).
+        /// Chain of effects (Blur, DropShadow, …, shader effects), drawn as layers on the element's own item (see <see cref="Elements.Effect"/>);
+        /// Size, Transform and layout stay the element's. Null = no effect layer.
         /// </summary>
         public Effect? Effect { get; init; }
 

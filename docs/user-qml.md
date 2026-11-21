@@ -12,7 +12,7 @@ Experimental (`SymbolSmell.Experimental`): pins and behavior can still change, s
 | `Properties` | `Dictionary<string, object>` | Values for properties of the QML root, by name. Only entries that changed are sent. |
 | `Size` | `Vector2` | Width and height of the element, in units (1 unit = 100 DIP), only with `Auto Size` off. |
 | `Auto Size` | `bool` | On (default): the element takes the size of the QML root. Off: `Size` sets `width` and `height` of the root. |
-| common element pins | | `Transform`, `Anchor`, `Opacity`, `Clip`, `Debug`, `Interaction`, `Effect`, like every element ([element catalog](decisions/element-catalog-v1.md)). |
+| common element pins | | `Transform`, `Anchor`, `Opacity`, `Clip`, `Debug`, `Interaction`, `Effect`, like every element ([element catalog](design/element-catalog-v1.md)). |
 | out `Output` | `Element` | The element, connect it to a `Group` or `Renderer`. |
 | out `Properties` | `Dictionary<string, object>` | Last value of each root property that QML changed. |
 | out `Signals` | `Spread<QmlSignal>` | Signals of the root emitted since the last frame, in order. `QmlSignal` has `Name` and `Arguments` (`Spread<object>`). |

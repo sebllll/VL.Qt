@@ -110,13 +110,13 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void SegmentWithoutShaderIsOneRunLikeFold()
+        public void SegmentWithoutShaderIsOneRun()
         {
             var chain = new ColorAdjustEffect(new BlurEffect(null, 0.3f, 32, 0), 0.1f, 0, 0);
             var links = Effect.Segment(chain, out var warnings);
             Assert.That(links.Length, Is.EqualTo(1));
             Assert.That(links[0].IsShader, Is.False);
-            Assert.That(links[0].Multi, Is.EqualTo(Effect.Fold(chain, out _)));
+            Assert.That(links[0].Multi, Is.EqualTo(EffectDesc.Default with { BlurEnabled = true, Blur = 0.3f, Brightness = 0.1f }));
             Assert.That(warnings, Is.Empty);
         }
 

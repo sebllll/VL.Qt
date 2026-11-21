@@ -8,28 +8,29 @@ How events and measured values travel from Qt back to the element nodes in a pat
 - **Pin semantics.** One-off events are a bang/pulse plus a counter, so nothing is lost when several events occur in one frame. States are values (for example `IsHovered`, `MeasuredSize`).
 - **Latency.** Events and measured values arrive one frame late, because `processEvents` runs in the renderer after the element nodes have been evaluated. This is also accepted for measured sizes; there is no synchronous measuring.
 - **Threading.** Everything runs on the vvvv main thread (which is the Qt thread), without locks. The feedback only buffers between `processEvents` and the next `Update()`.
-- **Pointer handling is opt-in.** Only elements that ask for interaction get hover and tap handlers, so content elements pay for no unneeded handlers or hit testing.
-- **Always available:** `MeasuredSize` (implicit or actual size, mainly for text) and `SceneBounds` (position in the scene). With interaction enabled: `IsHovered`, `IsPressed`, `OnClick` (pulse plus counter) and `PointerPosition` (local).
+- **Pointer handling is opt-in.** Only elements that ask for interaction get handlers, so content elements pay for no unneeded handlers or hit testing. The Interaction nodes (Hover, Click, Point, Wheel, Drag, Touch Points, Pinch) chain on the `Interaction` pin; each one becomes one Qt input handler and reads its own feedback slot.
+- **Always available:** `MeasuredSize` (implicit or actual size, mainly for text) and `SceneBounds` (position in the scene). Pointer state and events (hover, press, click, position, drag, wheel, touch, pinch) are outputs of the Interaction nodes.
+- **Two-way values:** a value input (Slider, Toggle, InputString, …) sends a user change back as a value event; the node takes it once, like a pulse.
+- **Identity:** items by position and type; input handlers by their feedback slot (one handler per feedback slot).
 
 ### Feedback binding
-- Identity in the reconciler stays position plus type (see `reconciler-identity.md`). The description carries the feedback, and the reconciler binds it to the Qt object at that position every frame.
+- Identity of an item stays position plus type (see `reconciler-identity.md`). The description carries the feedback slot, and the reconciler binds it to the Qt object at that position every frame.
 - A Qt signal writes into the feedback that was bound at that moment, that is, the element that was visible in the last frame. This matches the one-frame latency.
 - In `ForEach` the node instance is positional anyway (state per iteration index), so feedback and Qt object move together. They only diverge if a patch reorders elements after creation, and rebinding every frame covers exactly that case.
 - Inserting or reordering can make state jump (hover, pressed). This behaves like any stateful node in `ForEach` and is accepted; a key pin would remove it (see `reconciler-identity.md`).
-- **Switching the feedback of a Qt object:** the reconciler cancels a running press (no `OnClick`). The old feedback receives hover/press = false, the new one the current state. Qt remembers hover/press in the object, so without cancelling there would be ghost clicks on the wrong sink.
-- **A node emitting a spread of elements:** the description holds a slot consisting of feedback and index, and the node's outputs are spreads (`IsHovered`, …).
+- **Switching the feedback of a Qt object:** the reconciler cancels a running press (no `OnClick`). The old feedback receives hover/press = false, the new one the current state. Qt remembers hover/press in the object, so without cancelling there would be ghost clicks on the wrong feedback slot.
+- **A node emitting a spread of elements:** the description holds a feedback slot (feedback and index), and the node's outputs are spreads (`Measured Size`, …).
 - **One feedback, several Qt objects:** if an element appears several times in the tree (see `reconciler-identity.md`), all occurrences bind the same feedback. Counters and events add up (a click on any occurrence counts), hover and pressed combine with OR, and state values (measured size, `SceneBounds`, error) come from the first occurrence in traversal order.
 
 ## Open questions
-- **Two-way values** (for example the text of a text input): via a channel on the element? Relevant once input elements exist.
 - **Animation events** (`OnAnimationFinished`, `IsAnimating`) belong to an animation node set built on Qt's animation system. The feedback would then carry them, and they depend on the timing decision (see `timing.md`).
-- **Further interaction events:** drag (`IsDragging`, `DragDelta`), wheel, keyboard/focus, text input, multitouch, drop.
+- **Further interaction events:** keyboard/focus, drop.
 - **Global renderer output:** raw mouse and keyboard data, or "element under the cursor".
 - **`IObservable` in addition to pins:** nice to have.
 
 ## Rejected alternatives
 - **Callbacks/delegates on the element:** they do not fit immutable descriptions, create a new delegate identity every frame, and would run patch code in the middle of `processEvents`.
 - **Channels as the default mechanism for events:** too heavy. Channels are only meant for true two-way values; distribution is done by the patch.
-- **Feedback as identity in the reconciler:** identity stays position plus type, the feedback is only bound.
+- **Feedback as identity of items:** an item's identity stays position plus type, its feedback slot is only bound. Input handlers are the exception: they are keyed by their feedback slot.
 - **A separate listener node by ID/tag:** covered by channels and bindings in the patch.
 - **Qt animations as part of the base element set:** a separate topic. Animation is driven per frame from vvvv.

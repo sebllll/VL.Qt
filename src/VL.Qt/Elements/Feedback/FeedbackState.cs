@@ -72,16 +72,25 @@ namespace VL.Qt.Elements
         /// <summary>Value type of <see cref="PendingValue"/> (<see cref="Protocol.ValueType"/>).</summary>
         internal ushort PendingValueType { get; set; }
 
-        /// <summary>Pending user value for <see cref="Protocol.ValueType.I32"/>, <see cref="Protocol.ValueType.F32"/> and <see cref="Protocol.ValueType.Bool"/> (the bits of the value).</summary>
+        /// <summary>
+        /// Pending user value for <see cref="Protocol.ValueType.I32"/>, <see cref="Protocol.ValueType.F32"/> and <see
+        /// cref="Protocol.ValueType.Bool"/> (the bits of the value).
+        /// </summary>
         internal int PendingValue { get; set; }
 
         /// <summary>Pending user value for <see cref="Protocol.ValueType.String"/>.</summary>
         internal string? PendingString { get; set; }
 
-        /// <summary>QmlElement: last value of each root property that QML changed, by name; null until the first change. Cleared by <see cref="ElementFeedback.ResetQml"/>.</summary>
+        /// <summary>
+        /// QmlElement: last value of each root property that QML changed, by name; null until the first change. Cleared by <see
+        /// cref="ElementFeedback.ResetQml"/>.
+        /// </summary>
         internal Dictionary<string, object>? QmlProperties { get; set; }
 
-        /// <summary>QmlElement: number of changes written into <see cref="QmlProperties"/> (also by a reset), so a node sees that there is something new.</summary>
+        /// <summary>
+        /// QmlElement: number of changes written into <see cref="QmlProperties"/> (also by a reset), so a node sees that there is
+        /// something new.
+        /// </summary>
         internal int QmlPropertyUpdates { get; set; }
 
         /// <summary>QmlElement: signals not yet taken by <see cref="ElementFeedback.TakeQmlSignals"/>, in order of arrival.</summary>

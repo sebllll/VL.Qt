@@ -21,16 +21,16 @@ Every element has an `Effect` pin. Chain the nodes of `Qt.Effects` to it, like t
 
 <img src="images/effects-basic.png" width="820" alt="Blur, DropShadow, ColorAdjust, Colorize and Mask on the same element">
 
-The chain runs in data flow order, like TextureFX in Stride: the top node acts first, the node at the `Effect` pin last. Neighbouring `Blur`, `DropShadow`, `ColorAdjust`, `Colorize` and `Mask` nodes are merged into one offscreen layer; inside such a run Qt applies them in its own fixed order, so their order among each other does not matter. A shader node (see [Shaders in the effect chain](#shaders-in-the-effect-chain)) ends the run and costs a layer of its own. Size, transform and layout stay with the element.
+The chain runs in data flow order, like TextureFX in Stride: the top node acts first, the node at the `Effect` pin last. `Blur`, `DropShadow`, `ColorAdjust`, `Colorize` and `Mask` are the **merged effects**: neighbours in the chain merge into one offscreen layer (Qt's MultiEffect). Inside such a run Qt applies them in its own fixed order, so their order among each other does not matter, and each kind counts once: for a duplicate the node nearest to the `Effect` pin wins and the element shows a warning. A **shader effect** (the other nodes of `Qt.Effects`, and the shader nodes of [Shaders in the effect chain](#shaders-in-the-effect-chain)) ends the run and costs a layer of its own. Size, transform and layout stay with the element.
 
 ### Mask and padding
 
 - **Mask:** any element works as mask, e.g. a Text. It lives in the coordinates of the parent, like a sibling: the mask covers exactly the place where it would be drawn on its own.
-- **Optional pins:** Blur `Max`, `Multiplier`, `Auto Padding`, `Padding`; DropShadow `Scale`, `Auto Padding`, `Padding`. With Auto Padding on (default) the layer grows automatically; if it is off on any Blur or DropShadow, the whole layer uses the largest Padding per side.
+- **Optional pins:** Blur `Max`, `Multiplier`, `Auto Padding`, `Padding`; DropShadow `Scale`, `Auto Padding`, `Padding`. With Auto Padding on (default) the layer grows automatically by what blur and shadow need. Qt knows one effect area per layer: if Auto Padding is off on any Blur or DropShadow of a run, it is off for the whole layer of that run, and the area is the largest Padding per side of those nodes, so it suffices for all of them.
 
 ### Shader effects
 
-`Glow`, `InnerShadow`, `DirectionalBlur`, `ZoomBlur`, `RadialBlur`, `Displace` and `Blend` are shader effects with their own passes; the pictures show the first six applied to the text `VL.Qt`. Lengths are in units of the renderer's space, angles in degrees. They end a run of merged layers and cost a layer of their own; Glow and InnerShadow use a blur pyramid, so their cost hardly depends on the radius.
+`Glow`, `InnerShadow`, `DirectionalBlur`, `ZoomBlur`, `RadialBlur`, `Displace` and `Blend` are shader effects with their own passes; the pictures show the first six applied to the text `VL.Qt`. Lengths are in units of the renderer's space, angles in degrees. They end a run of merged effects and cost a layer of their own; Glow and InnerShadow use a blur pyramid, so their cost hardly depends on the radius.
 
 <table>
 <tr><td align="center"><img src="images/effect-glow.png" width="260" alt="The text VL.Qt with Glow"><br>Glow</td><td align="center"><img src="images/effect-directional-blur.png" width="260" alt="The text VL.Qt with Directional Blur"><br>Directional Blur</td><td align="center"><img src="images/effect-zoom-blur.png" width="260" alt="The text VL.Qt with Zoom Blur"><br>Zoom Blur</td></tr>

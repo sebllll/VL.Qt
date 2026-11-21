@@ -5,13 +5,14 @@ Conventions shared by all elements: geometry pins, coordinate space, colours, im
 ## Design
 ### Pins
 - Each node has a fixed, typed set of pins with sensible defaults. There is no generic `Properties` pin. Reason: typed pins keep nodes discoverable in vvvv.
-- Pins common to all elements: Bounds, Transform, Pivot, Opacity, Visible, Clip. Children exist only on Group and Row/Column.
+- Pins common to all elements: Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect and, as the last input pin, the optional Enabled. Children exist only on Group and Row/Column.
 - Colours use Stride `Color4`, so `RGBA`/`HSVA` nodes connect directly.
 
 ### Geometry
-- **`Bounds`** (vvvv `RectangleF`), **`Transform`** (Stride `Matrix`, 4×4) and **`Pivot`** (vvvv enum `RectangleAnchor`, default Center). This matches the Skia nodes such as `Text (Bounds)`, existing vvvv rectangle nodes plug in directly, and the pivot points are the familiar ones.
-- `Bounds` is the layout value. Inside Row/Column the layout decides the position and only the size from `Bounds` is used.
-- `Transform` applies after layout and only visually, around the `Pivot` point of the bounds. The reconciler folds the pivot in, because Qt matrix transforms rotate around the top-left corner. This is why there are no separate rotation, scale or transform-origin pins.
+- **`Size`** (Stride `Vector2`, units), **`Transform`** (Stride `Matrix`, 4×4) and **`Anchor`** (vvvv enum `RectangleAnchor`, default TopLeft). The vvvv transform nodes plug in directly, and the anchor points are the familiar ones.
+- `Size` is the layout value; the position comes from `Transform`. A point v of the element lands at (v − anchor) · `Transform` in its parent, as in VL.Skia. Inside Row/Column the layout places the element.
+- `Anchor` is the pivot of `Transform`: rotation and scale act around it. The reconciler folds the anchor in, because Qt matrix transforms rotate around the top-left corner. This is why there are no separate rotation, scale or transform-origin pins.
+- There is no `Visible` pin. The optional `Enabled` pin (default true, the last input pin, as on a VL.Skia layer) removes the element from the scene, which also stops its input; `Opacity` 0 still costs and still takes input.
 - The transform is a pin on the element rather than a set of transform wrapper nodes. Qt supports it natively per item, so no wrapper items are needed, and the type is compatible with the vvvv transform nodes.
 
 ### Coordinate space
@@ -37,7 +38,7 @@ Conventions shared by all elements: geometry pins, coordinate space, colours, im
 
 ## Out of scope / possible extensions
 - Anchors: they need references to sibling elements, which is hard to express as dataflow.
-- Grid layouts and gradients. Shapes and paths: see [paths.md](paths.md).
+- Grid layouts and gradients. Shapes and paths: see [paths.md](../decisions/paths.md).
 - Generic property access, possibly through a node factory that creates pins from Qt metadata.
 
 ## Rejected alternatives

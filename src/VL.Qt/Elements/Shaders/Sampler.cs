@@ -12,7 +12,10 @@
         /// <summary>Minification and magnification filter.</summary>
         public SamplerFilter Filter { get; init; } = SamplerFilter.Linear;
 
-        /// <summary>Mipmap selection. Anything but None also renders the sampled element's layer with mipmaps (33 % more memory, a mip pass per frame). An image needs mipmaps from its load (LoadImage, Mipmaps).</summary>
+        /// <summary>
+        /// Mipmap selection. Anything but None also renders the sampled element's layer with mipmaps (33 % more memory, a mip pass
+        /// per frame). An image needs mipmaps from its load (LoadImage, Mipmaps).
+        /// </summary>
         public SamplerMipFilter MipFilter { get; init; } = SamplerMipFilter.None;
 
         /// <summary>Behaviour outside 0..1 in x (u).</summary>

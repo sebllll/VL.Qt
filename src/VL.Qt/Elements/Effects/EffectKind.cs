@@ -2,7 +2,7 @@
 
 namespace VL.Qt.Elements
 {
-    /// <summary>Kinds of effect links (bit mask, for the duplicate check of <see cref="Effect.Fold"/>).</summary>
+    /// <summary>Kinds of effect links (bit mask, for the duplicate check in a run of <see cref="Effect.Segment"/>).</summary>
     [Flags]
     internal enum EffectKind
     {

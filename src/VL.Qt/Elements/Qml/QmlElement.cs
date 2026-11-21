@@ -15,7 +15,10 @@
         /// <summary>Absolute path of the .qml file, empty = nothing loaded.</summary>
         public string Source { get; init; } = string.Empty;
 
-        /// <summary>Counter of the node's hot reload: a new value reloads the same file (QtNative clears its component cache) and sends all properties again.</summary>
+        /// <summary>
+        /// Counter of the node's hot reload: a new value reloads the same file (QtNative clears its component cache) and sends all
+        /// properties again.
+        /// </summary>
         internal int Reload { get; init; }
 
         /// <summary>Values for properties of the QML root by name; the reconciler sends the entries that changed (<see cref="QmlPropertyWriter"/>).</summary>

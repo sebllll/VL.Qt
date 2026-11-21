@@ -4,8 +4,8 @@ namespace VL.Qt.Elements
 {
     /// <summary>
     /// Drag handler (Qt Quick DragHandler, target null): reports the running drag and, with
-    /// <see cref="MovesElement"/>, moves the element by its drag offset in QtNative. Limits are in logical pixels
-    /// (minX, minY, maxX, maxY of the offset), ±infinity = none; the node validates min ≤ max before.
+    /// <see cref="MovesElement"/>, moves the element by its drag offset in QtNative. Limits are in units of the renderer's
+    /// space, ±infinity = none; the node validates min ≤ max before.
     /// </summary>
     internal sealed class DragInteraction : Interaction
     {

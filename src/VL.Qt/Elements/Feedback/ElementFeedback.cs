@@ -9,8 +9,8 @@ namespace VL.Qt.Elements
 {
     /// <summary>
     /// Stable per-node-instance receiver of runtime state (hover, press, measured size, ...), one
-    /// <see cref="FeedbackState"/> per slot index. Plain data: filled by the event reader (plan 06),
-    /// read by the element node. No reference to Qt or native objects. Main thread only.
+    /// <see cref="FeedbackState"/> per feedback slot. Plain data: filled from the events of Qt one frame after Qt produced
+    /// them, read by the element node. No reference to Qt or native objects. Main thread only.
     /// </summary>
     public sealed class ElementFeedback
     {
@@ -109,7 +109,10 @@ namespace VL.Qt.Elements
         /// <summary>QmlElement: the last value of each root property that QML changed. The live table: copy it, do not keep it. Null if none yet.</summary>
         internal Dictionary<string, object>? QmlPropertyValues(int index = 0) => TryGet(index, out var s) ? s.QmlProperties : null;
 
-        /// <summary>QmlElement: number of property changes (and resets) so far; differs from the last call when <see cref="QmlPropertyValues"/> has something new.</summary>
+        /// <summary>
+        /// QmlElement: number of property changes (and resets) so far; differs from the last call when <see
+        /// cref="QmlPropertyValues"/> has something new.
+        /// </summary>
         internal int QmlPropertyUpdates(int index = 0) => TryGet(index, out var s) ? s.QmlPropertyUpdates : 0;
 
         /// <summary>Stores a property change reported by QML (EVENT_QML_PROPERTY): the last value per name counts.</summary>

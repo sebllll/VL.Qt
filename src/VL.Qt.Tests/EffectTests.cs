@@ -10,7 +10,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Effect chain (plan effects/01): fold and the reconciler's effect layer SETs.</summary>
+    /// <summary>Effect chain: the folded MultiEffect run and the reconciler's effect layer SETs.</summary>
     public class EffectTests
     {
         private RecordingSink _sink = null!;
@@ -35,31 +35,32 @@ namespace VL.Qt.Tests
         private static DropShadowEffect Shadow(Effect? previous = null) => new(previous, Color4.Black, new Vector2(0.1f, 0.2f), 1, 1);
         private static ColorAdjustEffect Adjust(Effect? previous = null) => new(previous, 0.1f, 0.2f, 0.3f);
 
-        [Test]
-        public void Fold_NoChain_IsNull()
+        // A chain of merged effects only: one MultiEffect run.
+        private static EffectDesc SingleRun(Effect chain, out ImmutableArray<string> warnings)
         {
-            Assert.That(Effect.Fold(null, out var warning), Is.Null);
-            Assert.That(warning, Is.Null);
+            var links = Effect.Segment(chain, out warnings);
+            Assert.That(links.Length, Is.EqualTo(1));
+            return links[0].Multi;
         }
 
         [Test]
-        public void Fold_IsOrderIndependent()
+        public void Run_IsOrderIndependent()
         {
-            var a = Effect.Fold(Adjust(Shadow(Blur())), out var wa);
-            var b = Effect.Fold(Blur(Adjust(Shadow())), out var wb);
+            var a = SingleRun(Adjust(Shadow(Blur())), out var wa);
+            var b = SingleRun(Blur(Adjust(Shadow())), out var wb);
             Assert.That(a, Is.EqualTo(b));
-            Assert.That(wa, Is.Null);
-            Assert.That(wb, Is.Null);
-            Assert.That(a!.Value.BlurEnabled && a.Value.ShadowEnabled && a.Value.Brightness == 0.1f);
+            Assert.That(wa, Is.Empty);
+            Assert.That(wb, Is.Empty);
+            Assert.That(a.BlurEnabled && a.ShadowEnabled && a.Brightness == 0.1f);
         }
 
         [Test]
-        public void Fold_DuplicateKind_WarnsAndNearestToElementWins()
+        public void Run_DuplicateKind_WarnsAndNearestToElementWins()
         {
             // Head of the chain is nearest to the Effect pin.
-            var desc = Effect.Fold(Blur(Blur(null, 0.2f), 0.8f), out var warning);
-            Assert.That(warning, Does.Contain("Blur"));
-            Assert.That(desc!.Value.Blur, Is.EqualTo(0.8f));
+            var desc = SingleRun(Blur(Blur(null, 0.2f), 0.8f), out var warnings);
+            Assert.That(warnings.Single(), Does.Contain("Blur"));
+            Assert.That(desc.Blur, Is.EqualTo(0.8f));
         }
 
         [Test]

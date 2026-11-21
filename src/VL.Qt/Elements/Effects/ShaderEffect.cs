@@ -25,7 +25,10 @@ namespace VL.Qt.Elements
         /// <summary><see cref="Protocol.EffectTemplate"/>: Single, TwoPass or Pyramid.</summary>
         public ushort Template { get; }
 
-        /// <summary>Shader resource ids (stage fragment) owned by the node, by role: Single/TwoPass [fragment], Pyramid [prefilter, composite]; 0 = not loaded.</summary>
+        /// <summary>
+        /// Shader resource ids (stage fragment) owned by the node, by role: Single/TwoPass [fragment], Pyramid [prefilter,
+        /// composite]; 0 = not loaded.
+        /// </summary>
         public ImmutableArray<ulong> ShaderIds { get; }
 
         /// <summary>Uniform values by name, like <see cref="Shader.Uniforms"/>.</summary>

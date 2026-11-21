@@ -19,7 +19,10 @@ namespace VL.Qt.Elements
         /// <summary>Name of the uniform block member or sampler in the shader.</summary>
         public string Name { get; }
 
-        /// <summary>Wire value type of SET_UNIFORMS (<see cref="Protocol.ValueType"/>): F32, I32, Bool, Vec2/3/4, Color, Mat4, Ref (element texture), U64 (image).</summary>
+        /// <summary>
+        /// Wire value type of SET_UNIFORMS (<see cref="Protocol.ValueType"/>): F32, I32, Bool, Vec2/3/4, Color, Mat4, Ref (element
+        /// texture), U64 (image).
+        /// </summary>
         internal ushort ValueType { get; }
 
         /// <summary>Float, vector, color and matrix components (Float: M11; Vector2/3/4 and Color: M11..M14; Matrix: all).</summary>
