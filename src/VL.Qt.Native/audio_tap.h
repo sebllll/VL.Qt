@@ -106,7 +106,7 @@ int read(uint64_t id, float* dst, int maxFrames, int channels, vlqt_audio_tap_st
 // std::chrono::steady_clock in ns.
 long long nowNs();
 
-// --- Video element (elements.cpp videoProps), main thread ---
+// --- Video element (elements/type_video.cpp videoProps), main thread ---
 // Setter of VLQT_PROPERTY_AUDIO_TAP (u64): attaches the tap to the element's player and turns Qt's own output off, 0
 // detaches and restores it (protocol.h "Audio tap"). false + err: not a Ready tap (ApplyBadValue).
 bool setVideoTap(Elements& els, ElementEntry& node, const ResolvedProp& rp, const Value& v, std::string& err);

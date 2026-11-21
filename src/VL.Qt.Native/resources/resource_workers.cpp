@@ -1,6 +1,6 @@
 #include "resources/resource_workers.h"
 
-#include "threadname.h"
+#include "app/thread_name.h"
 
 #include <QtCore/QtGlobal>
 

@@ -1,0 +1,173 @@
+/* elements/elements.h - the elements of one window (class Elements): creates the items and sets their properties.
+ *
+ * Every element type is an entry of the type table (element_types.h, one type file each): type id, QML one-liner or
+ * C++ factory, property table. QML properties are resolved once per type and engine to a QMetaProperty (on the first
+ * item), never looked up by name per frame; grouped ones ("border.color") go through the group object, QFont fields
+ * through a read-modify-write (type_text.cpp). A new element property is a table entry only, no new export.
+ *
+ * Hot setters call the typed setters of Qt's private classes (QtQuick/private, QtQuickShapes/private): still LGPL, but
+ * private API, so check them on every Qt update. In use here: QQuickItemPrivate (group_item.cpp), QQuickRectangle and
+ * QQuickText (element_types.cpp), QQuickMatrix4x4 (geometry.cpp), QQuickShaderEffectSource (group_item.cpp,
+ * effect_sources.cpp), QQuickShape, QQuickShapePath and QQuickShapeTrim (type_shape.cpp), QQuickCurve and
+ * QQuickPathData (shape_path_element.h). */
+#pragma once
+
+#include "elements/element_entry.h"
+#include "elements/element_types.h"
+#include "elements/geometry.h"
+
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QMetaProperty>
+#include <QtCore/QPointer>
+#include <QtCore/QString>
+#include <QtCore/QVariant>
+#include <QtGui/QMatrix4x4>
+
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+class QObject;
+class QQmlComponent;
+class QQmlEngine;
+class QQuickItem;
+
+Q_DECLARE_LOGGING_CATEGORY(lcElements)
+
+namespace vlqt {
+
+struct EffectChainDesc;  // effects/effect_chain_desc.h
+struct EffectComponents; // effects/effect_chain.h
+class EffectChain;       // effects/effect_chain.h
+
+/* Per engine (= per window): component cache, resolved property cache, Matrix4x4 component. */
+class Elements
+{
+public:
+    explicit Elements(QQmlEngine* engine);
+    ~Elements();
+    Elements(const Elements&) = delete;
+    Elements& operator=(const Elements&) = delete;
+
+    /* The engine of this window (QmlItem compiles the user file on it). */
+    QQmlEngine* qmlEngine() const { return engine; }
+    /* Creates an item of the given type (no parent). nullptr + err on failure. */
+    QQuickItem* create(const TypeDef& type, std::string& err);
+    /* Sets one property; returns an ApplyResult. Unknown properties are logged once per type. */
+    int set(ElementEntry& node, quint16 prop, const Value& v, std::string& err);
+    /* Geometry state of a new node: node.xf, anchor placement (x/y = -anchor outside Row/Column) and a
+     * width/height connection that re-places the item and re-applies the matrix on every size change. Called by the
+     * Scene right after CREATE. */
+    void initGeometry(ElementEntry& node);
+    /* REPARENT: re-places the item for its new parent (free parent: x/y = -anchor; Row/Column: the layout's, a
+     * translation folded into x/y moves to the Matrix4x4). */
+    bool placeAfterReparent(ElementEntry& node, std::string& err);
+    /* TRANSFORM: a pure x/y translation of an item without Matrix4x4 (outside Row/Column, no drag offset) only moves
+     * x/y (perf); otherwise attaches a Matrix4x4 to item.transform once, afterwards only writes its matrix. */
+    bool setMatrix(ElementEntry& node, const QMatrix4x4& m, std::string& err);
+    /* ANCHOR as fractions (0 / 0.5 / 1) of the item's width/height: re-places the item (outside Row/Column) and
+     * re-applies the matrix if one is attached. */
+    bool setAnchor(ElementEntry& node, float fx, float fy, std::string& err);
+    /* Drag offset: composed into the same Matrix4x4 as T(offset) * TRANSFORM around the anchor, so the offset
+     * moves the item in its parent's space, independent of its own rotation/scale. Attaches the Matrix4x4 on first
+     * use (not for an offset 0 of an item without one). */
+    bool setDragOffset(ElementEntry& node, float dx, float dy, std::string& err);
+
+    /* Effect source bookkeeping (SHADER SOURCE). A QSGTextureProvider consumer keeps a pointer to its source, so the
+     * Scene clears every effect referencing an item before deleting it (and before deleting an effect). */
+    bool setEffectSource(ElementEntry& effect, const ResolvedProp& rp, QQuickItem* source, std::string& err);
+    void clearEffectSource(ElementEntry& effect);
+    /* Texture uniforms: after SET_UNIFORMS, a Group referenced by a REF uniform gets a frame proxy (one reference per
+     * effect and Group, acquired/released by diff); releaseTextureGroups drops them all (DESTROY of the effect). */
+    void syncTextureGroups(ElementEntry& effect);
+    void releaseTextureGroups(ElementEntry& effect);
+    bool isEffectSource(const QQuickItem* item) const { return sourceRefs.count(item) != 0; }
+    /* Disables the layer of former sources, deferred by one frame. Called by the Scene before apply/poll. */
+    void flushLayerOff();
+
+    /* SET_EFFECT_CHAIN (protocol.h "Effect chain"): replaces the node's chain with the validated description
+     * (links in application order, empty = layer off and chain gone, releaseEffectLayer). masks: mask item per link
+     * (nullptr = none), checked and parked under the root by the Scene (Scene::setEffectChain). The chain (EffectChain)
+     * renders as an item tree in the item's layer.effect; the same structure only writes changed values. Masks: a new
+     * one gets a hidden frame item created next to it with layer.enabled; the mask goes into an inner item whose
+     * Matrix4x4 is the inverse of the node's parent mapping (position + TRANSFORM), so the frame's coordinates are the
+     * node's own and the mask lies in the node's parent coordinates like a sibling (see updateMaskFrame). A mask no link
+     * uses any more goes back next to its frame, hidden; the frame is deleted after the next frame (flushLayerOff).
+     * Returns an ApplyResult. */
+    int setEffectChain(ElementEntry& node, const EffectChainDesc& chain, const std::vector<QQuickItem*>& masks, std::string& err);
+    /* Switches the effect layer off and drops the chain (linkCount 0, DESTROY/RESET): its masks are detached (parked
+     * hidden, see setEffectChain), stages and root go with the layer. */
+    void releaseEffectLayer(ElementEntry& node);
+    /* Detaches one mask from the link that uses it (DESTROY of the mask): that link runs without mask. */
+    void detachEffectMask(ElementEntry& node, QQuickItem* mask);
+    /* Masks attached to the node's chain. */
+    std::vector<QQuickItem*> effectMasks(const ElementEntry& node) const;
+    /* Re-computes the mask frames' inner matrix from the node's x/y and TRANSFORM (no-op without a mask). Called by
+     * the x/y/size connections of the frames and by setMatrix/setAnchor/setDragOffset. */
+    void updateMaskFrame(ElementEntry& node);
+    bool isMaskLayer(const QQuickItem* item) const { return maskLayers.count(item) != 0; }
+    /* Root item of the node's chain in its layer.effect (nullptr without a chain). */
+    static QQuickItem* effectLayerItem(const ElementEntry& node);
+
+    /* VIDEO: position + duration in seconds (0 until loaded). false for other types. */
+    bool readMedia(const ElementEntry& node, float out[2]) const;
+    /* Error text of the item (QML property vlqtError of the type: the Video player failed, ...) and of its effect
+     * chain, joined; empty if there is no error or the type has no error state. */
+    QString readError(const ElementEntry& node) const;
+    /* BUTTON: clicked signals since the last call (QML property vlqtClicks, reset to 0); 0 for other types. */
+    quint32 takeClicks(const ElementEntry& node);
+    /* Value inputs (SPIN_BOX; more): true + the value of the last user change (QML vlqtUserValue: int, real,
+     * bool or string) if there was one since the last call (QML vlqtUserCount, reset to 0); false otherwise and for
+     * other types. See "Value inputs" in type_controls.cpp. */
+    bool takeUserValue(const ElementEntry& node, QVariant& out);
+    /* The type has state the poll reads every frame (VIDEO media, vlqtError, vlqtClicks, vlqtUserCount); resolved once
+     * the first item of the type exists (Elements::create). */
+    bool pollsState(quint16 type) const;
+
+    /* Number of live nodes with DEBUG on (set by the DEBUG setter, decremented by the Scene when such a node goes);
+     * the Scene shows the debug overlay while it is > 0 or the window-wide switch is on. */
+    int debugCount = 0;
+    /* Parent of the Group frame proxies: the Scene's root (untracked children do not count for REPARENT). */
+    QQuickItem* proxyParent = nullptr;
+
+private:
+    struct TypeCache {
+        QQmlComponent* component = nullptr;
+        bool resolved = false;
+        std::unordered_map<quint16, ResolvedProp> props; // only successfully resolved QML properties
+        std::unordered_set<quint16> warned;              // unknown property ids already logged
+        QMetaProperty error;                             // vlqtError (string); invalid if the type has none
+        QMetaProperty clicks;                            // vlqtClicks (int, Button); invalid if the type has none
+        QMetaProperty userCount;                         // vlqtUserCount (int, value inputs); invalid if none
+        QMetaProperty userValue;                         // vlqtUserValue (value inputs); invalid if none
+    };
+    void resolve(const TypeDef& type, TypeCache& cache, QQuickItem* first);
+    QObject* createTransform(std::string& err);
+    /* Attaches the Matrix4x4 to item.transform once (node.xf must exist) and writes the current matrix. */
+    bool writeTransform(ElementEntry& node, std::string& err);
+    /* Group as texture: one hidden QQuickShaderEffectSource per Group (sourceRect = frame, follows it, see
+     * GroupItem::syncEffectFrame), shared by the Input and texture uniforms of all effects, refcounted; the last release
+     * deletes it after the next frame (frameDelete), a destroyed Group retires it as well. */
+    QQuickItem* acquireGroupProxy(QQuickItem* group);
+    void releaseGroupProxy(QQuickItem* group);
+
+    QQmlEngine* engine;
+    std::unordered_map<quint16, TypeCache> types;
+    QQmlComponent* matrixComponent = nullptr;
+    std::unordered_map<const QQuickItem*, int> sourceRefs; // item -> number of effects using it as source
+    std::vector<QPointer<QQuickItem>> layerOff; // former effect sources, layer disabled after the next frame
+    /* Mask frame of mask for node (protocol.h mask rule, setEffectChain); nullptr + err on failure. */
+    QQuickItem* createMaskFrame(ElementEntry& node, QQuickItem* mask, QObject*& xf, std::string& err);
+    /* Mask back next to frame, hidden; frame layer off + deleted after the next frame. */
+    void retireMaskFrame(ElementEntry& node, QQuickItem* mask, QQuickItem* frame);
+
+    std::unordered_set<const QQuickItem*> effectLayers; // items with an effect chain (their layer stays on)
+    std::unordered_set<const QQuickItem*> maskLayers;   // mask frames attached to a link (their layer stays on)
+    std::vector<QPointer<QQuickItem>> frameDelete;      // detached mask frames, Group proxies, retired chain stages: deleted after the next frame
+    std::unique_ptr<EffectComponents> effectComponents; // chain items, compiled on first use
+    QMetaProperty mediaPosition, mediaDuration; // VIDEO wrapper vlqtPosition/vlqtDuration, resolved once
+};
+
+} // namespace vlqt

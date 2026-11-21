@@ -1,5 +1,5 @@
 #include "scene/measure.h"
-#include "effectchain.h"
+#include "effects/effect_chain.h"
 #include "qmlitem.h"
 #include "scene/scene.h"
 
@@ -167,10 +167,10 @@ void collectGeometry(Scene& scene)
                 n.measuredStamp = stamp;
                 if (n.feedbackId != 0)
                     measureGeometry(scene, n);
-                if (n.effectChain)
-                    for (const EffectChain::Link& l : n.effectChain->links)
-                        if (l.mask)
-                            stack.push_back(l.mask);
+                if (const EffectChain* ec = n.effectChain)
+                    for (size_t i = 0; i < ec->linkCount(); ++i)
+                        if (QQuickItem* mask = ec->link(i).multi.mask)
+                            stack.push_back(mask);
             }
             const QList<QQuickItem*> children = item->childItems(); // shared copy; const: no detach, no allocation
             for (QQuickItem* c : children)

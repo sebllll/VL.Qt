@@ -1,6 +1,6 @@
-/* resources.h - the interface of the resource manager that vlqt.cpp and the kinds call: the C API backends, the frame
- * hooks, the F5 overview and the test hooks. A resource is one id for C#; the manager decodes, uploads and frees its
- * content. The contract (ids, states, threads, reference counts, replacement, device loss) is in
+/* resources.h - the interface of the resource manager that the exports (resource_exports.cpp), the pump (app/app.cpp)
+ * and the kinds call: the C API backends, the frame hooks, the F5 overview and the test hooks. A resource is one id for
+ * C#; the manager decodes, uploads and frees its content. The contract (ids, states, threads, reference counts, replacement, device loss) is in
  * docs/design/resources.md; the interface of a kind is in resource_kind.h.
  */
 #pragma once

@@ -232,14 +232,28 @@ src/VL.Qt/                  # C# library
     ICommandSink.cs         # target of the reconciler's commands
     Protocol.cs             # IDs mirrored from protocol.h
 src/VL.Qt.Native/           # QtNative (C++)
+  vlqt.h                    # C API (the exports of all groups)
+  vlqt_test.h               # test exports, in every build
   protocol.h                # shared type/property/event IDs
-  vlqt.h/cpp                # C API (app, window, rendering)
+  app/                      # app lifecycle, pump, logging, last error, fonts, animation clock, render gate
+  window/                   # windows and their exports, event filters, focus, touch input
+  platform/                 # platform code (Windows, Linux)
   scene/                    # scene of a window: object table, command decoder, events, input handlers
-  elements.h/cpp            # element implementations
-  device.h/cpp              # shared D3D11 device, device loss
+  elements/                 # element types (type_*.cpp), their table, geometry, Group frame, effect sources
+  effects/                  # effect chain, Shader item and its material, layer requests
   resources/                # resource manager (resources.h, resource_*.h/cpp), pixel formats
+  offscreen/                # QtTexture scenes: binding, rendering, input, exports, linear pass
+  diagnostics/              # perf monitor (perf_*), F2/F5 overlays, debug overlay
+  test/                     # the test exports of vlqt_test.h
+  testkit/                  # vlqt_testkit, the stand-in D3D11 device of the SmokeTest (not packed)
+  device.h/cpp              # shared D3D11 device, device loss
+  render_thread.h/cpp       # Qt render threads of the QtTexture scenes
   *_resource.h/cpp          # images, shaders, snapshots
-  perf.h/cpp                # perf counters/overlays
+  qtimageitem.h/cpp         # Image element: draws an image resource
+  image_writer.h/cpp        # writes pixels to an image file (vlqt_image_write_file)
+  qmlitem.h/cpp             # QmlElement: loads a user .qml file
+  vlstyle.h/cpp             # VlStyle, the attached style of the Controls
+  audio_tap.h/cpp           # audio tap: the sound of a Video element as samples
 src/VL.Qt.Tests/            # C# unit tests
 src/VL.Qt.SmokeTest/        # native smoke + perf tests
 src/VL.Qt.Probe/            # one Qt window from C# without vvvv
@@ -260,12 +274,12 @@ tools/                      # build, export, license and test scripts
 1. Edit `src/VL.Qt.Native/protocol.h` (type or property IDs)
 2. Mirror the change in `src/VL.Qt/Wire/Protocol.cs` by hand (`VLQT_<GROUP>_<NAME>` is `Protocol.<Group>.<Name>`; a group name ending in `Id` or `Flags` drops that word in C: `Protocol.EventId.Hover` is `VLQT_EVENT_HOVER`, `Protocol.ImageLoadFlags.Mipmaps` is `VLQT_IMAGE_LOAD_MIPMAPS`)
 3. Bump `VLQT_ABI_VERSION` and `Protocol.AbiVersion` (every change to a constant, a layout or an exported signature; `QtApp` refuses a `vlqt.dll` with another number)
-4. Run `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"` to check that header and C# agree: constants and fixed wire sizes of `protocol.h` and the constants of `vlqt_test.h` (`ProtocolDriftTests`, against `Protocol.cs` and `TestProtocol.cs`), struct layouts of `vlqt.h` (`NativeLayoutTests`, numbers also in the `static_assert`s of `vlqt.cpp`) and the `VLQT_API` exports of `vlqt.h`, `vlqt_test.h` and `testkit/testkit.h` against the `[DllImport]`s of `Native` and `NativeTest` (`ApiDriftTests`)
-5. Implement both sides (`elements.cpp`, `Elements/`, `Reconciliation/`)
+4. Run `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"` to check that header and C# agree: constants and fixed wire sizes of `protocol.h` and the constants of `vlqt_test.h` (`ProtocolDriftTests`, against `Protocol.cs` and `TestProtocol.cs`), struct layouts of `vlqt.h` (`NativeLayoutTests`, numbers also in the `static_assert`s of `app/app.cpp`) and the `VLQT_API` exports of `vlqt.h`, `vlqt_test.h` and `testkit/testkit.h` against the `[DllImport]`s of `Native` and `NativeTest` (`ApiDriftTests`)
+5. Implement both sides (`elements/`, `Elements/`, `Reconciliation/`)
 
 **Add a new element type:**
 1. Add IDs to `protocol.h` and `Protocol.cs`
-2. Implement the QML item in `elements.cpp`
+2. Implement the item and its property table in `elements/type_*.cpp` and add it to the type table (`elements/element_types.cpp`)
 3. Add the `Element` class in `src/VL.Qt/Elements/`
 4. Add property diffing in `Reconciliation/PropertyDiff.cs`
 5. Add the node in `src/VL.Qt/Nodes/`

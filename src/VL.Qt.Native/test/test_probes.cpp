@@ -5,15 +5,15 @@
 #include "../device.h"
 #include "../image_resource.h"
 #include "../app/exports.h"
-#include "../offscreen.h"
-#include "../perf.h"
+#include "offscreen/offscreen.h"
+#include "diagnostics/perf.h"
 #include "../protocol.h"
 #include "test_hooks.h"
 #ifdef _WIN32
 #include "../render_thread.h"
 #include "test_device.h"
 #else
-#include "../offscreen_glx.h"
+#include "offscreen/offscreen_glx.h"
 #endif
 
 #include <QtCore/QLoggingCategory>
@@ -33,6 +33,8 @@
 
 using vlqt::fail;
 using vlqt::guarded;
+using vlqt::perfEval;
+using vlqt::perfHostStats;
 
 namespace {
 
