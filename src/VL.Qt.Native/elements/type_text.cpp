@@ -5,6 +5,8 @@
 #include <QtGui/QGuiApplication>
 #include <QtQuick/QQuickItem>
 
+#include <algorithm>
+
 namespace vlqt {
 
 namespace {
@@ -41,12 +43,13 @@ bool setFontFamily(Elements&, ElementEntry& n, const ResolvedProp& rp, const Val
 
 bool setFontPixelSize(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
-    // QFont pixel sizes are integers; fractional sizes are rounded (scale via TRANSFORM for smooth zooms).
+    // QFont pixel sizes are integers; fractional sizes are rounded (scale via TRANSFORM for smooth zooms). Clamped
+    // before the rounding: qRound of a float above INT_MAX is undefined.
     if (!(v.f[0] > 0)) {
         err = "font size must be > 0";
         return false;
     }
-    const int px = qMax(1, qRound(v.f[0]));
+    const int px = qMax(1, qRound(std::min(v.f[0], 1e6f)));
     return modifyFont(n.item, rp, [&](QFont& f) { f.setPixelSize(px); }, err);
 }
 

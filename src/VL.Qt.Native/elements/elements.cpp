@@ -7,6 +7,7 @@
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 
+#include <cmath>
 #include <cstring>
 
 Q_LOGGING_CATEGORY(lcElements, "vlqt.elements")
@@ -29,6 +30,19 @@ const PropDef* findProp(const TypeDef& type, quint16 prop)
     return nullptr;
 }
 
+// Number of float components of a float value type that Qt would take unchecked (0 = no float value).
+int floatComponents(quint16 valueType)
+{
+    switch (valueType) {
+    case VLQT_VALUE_TYPE_F32: return 1;
+    case VLQT_VALUE_TYPE_VEC2: return 2;
+    case VLQT_VALUE_TYPE_COLOR:
+    case VLQT_VALUE_TYPE_RECTF: return 4;
+    case VLQT_VALUE_TYPE_MAT4: return 16;
+    default: return 0;
+    }
+}
+
 } // namespace
 
 Elements::Elements(QQmlEngine* e) : engine(e) {}
@@ -38,7 +52,6 @@ Elements::~Elements()
     // Items are deleted by the Scene before; components only hold compiled QML.
     for (auto& kv : types)
         delete kv.second.component;
-    delete matrixComponent;
 }
 
 QQuickItem* Elements::create(const TypeDef& type, std::string& err)
@@ -200,6 +213,12 @@ int Elements::set(ElementEntry& node, quint16 prop, const Value& v, std::string&
             + ", got " + std::to_string(v.type);
         return ApplyBadValue;
     }
+    // One rule for every float value: NaN/inf never reach a setter (Qt takes them unchecked, qRound is undefined for them).
+    for (int i = 0, n = floatComponents(v.type); i < n; ++i)
+        if (!std::isfinite(v.f[i])) {
+            err = "property " + std::to_string(prop) + ": value must be finite";
+            return ApplyBadValue;
+        }
     std::string reason;
     if (!def->set(*this, node, *rp, v, reason)) {
         err = "property " + std::to_string(prop) + ": " + reason;

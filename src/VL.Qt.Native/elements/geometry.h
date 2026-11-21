@@ -12,8 +12,8 @@
 #include <string>
 #include <vector>
 
-class QObject;
 class QQuickItem;
+class QQuickMatrix4x4; // QtQuick/private/qquicktranslate_p.h
 
 namespace vlqt {
 
@@ -28,8 +28,9 @@ struct TransformState {
                                 // Group with children left of / above its origin (GroupItem, "Group frame" in protocol.h)
     bool sizedBounds = false;   // Group with AUTO_SIZE off: bounds = SIZE with its anchor point at the origin,
                                 // the item (and so the children) stays at the origin
-    QObject* matrix = nullptr;  // = ElementEntry::transform (child of the item), null while TRANSFORM is a pure x/y translation
+    QQuickMatrix4x4* matrix = nullptr; // = ElementEntry::transform (child of the item), null while TRANSFORM is a pure x/y translation
                                 // folded into x/y (placeItem in geometry.cpp) and there was no drag offset
+    bool inLayout = false;      // the parent is a Row/Column (isLayoutType): the layout owns x/y; set by Scene::reparent
     // Measure on change (scene/measure.h "Measure on change"): the scene and id of the node, set by watchGeometry,
     // null once the node is erased or the scene goes; queued = the id is in MeasureState::measureQueue.
     Scene* scene = nullptr;
@@ -58,7 +59,11 @@ bool setAutoSize(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v
 const std::vector<PropDef>& commonProps();
 /* TRANSFORM around the anchor, then the drag offset: the matrix of the item's Matrix4x4 (see geometry.cpp). */
 QMatrix4x4 pivoted(const TransformState& s, const QQuickItem* item);
-/* Writes m into a Matrix4x4 created by Elements::createTransform (typed, no QVariant). */
-void setMatrixValue(QObject* t, const QMatrix4x4& m);
+/* A Row/Column (Qt positioner) owns the x/y of its children (TransformState::inLayout of the children). */
+bool isLayoutType(quint16 type);
+/* Creates a Matrix4x4 as a child of item and appends it to item.transform. */
+QQuickMatrix4x4* attachMatrix(QQuickItem* item);
+/* Writes m into a Matrix4x4 of attachMatrix (typed, no QVariant). */
+void setMatrixValue(QQuickMatrix4x4* t, const QMatrix4x4& m);
 
 } // namespace vlqt

@@ -316,6 +316,14 @@ public static class ApplyTest
         Err("unknown type", b.Clear().Create(6, 999), Native.Result.UnknownType, "unknown type 999");
         Err("unknown property", b.Clear().Create(7, Protocol.ElementType.Group).Color(7, 1, 1, 1), Native.Result.UnknownProperty, "not supported by type GROUP");
         Err("value type mismatch", b.Clear().SetFloats(1, Protocol.PropertyId.Size, Protocol.ValueType.F32, 1), Native.Result.BadArgument, "expects value type");
+        // One finite check in Elements::set for every float value (NELM-03): NaN/inf never reach a setter.
+        Err("NaN opacity", b.Clear().SetFloats(1, Protocol.PropertyId.Opacity, Protocol.ValueType.F32, float.NaN), Native.Result.BadArgument, "must be finite");
+        Err("NaN size component", b.Clear().SetFloats(1, Protocol.PropertyId.Size, Protocol.ValueType.Vec2, 1, float.NaN), Native.Result.BadArgument, "must be finite");
+        Err("infinite transform component", b.Clear().SetFloats(1, Protocol.PropertyId.Transform, Protocol.ValueType.Mat4,
+            1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, float.PositiveInfinity, 0, 0, 1), Native.Result.BadArgument, "must be finite");
+        s.Check(Apply(b.Clear().Create(10, Protocol.ElementType.Text)) == 0, "apply: create text for the font size");
+        Err("infinite font size", b.Clear().SetFloats(10, Protocol.PropertyId.FontSize, Protocol.ValueType.F32, float.PositiveInfinity), Native.Result.BadArgument, "must be finite");
+        s.Check(Apply(b.Clear().Destroy(10)) == 0, "apply: destroy text");
         Err("duplicate id", b.Clear().Create(1, Protocol.ElementType.Group), Native.Result.Invalid, "already exists");
         Err("create id 0", b.Clear().Create(0, Protocol.ElementType.Group), Native.Result.Invalid, "window root");
         Err("reparent into own subtree", b.Clear().Create(8, Protocol.ElementType.Group).Reparent(8, 1, 0).Reparent(1, 8, 0), Native.Result.Invalid, "command #2");

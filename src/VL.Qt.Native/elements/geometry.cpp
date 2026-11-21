@@ -6,9 +6,6 @@
 #include "user_qml/qml_item.h"
 
 #include <QtCore/Qt>
-#include <QtQml/QQmlComponent>
-#include <QtQml/QQmlEngine>
-#include <QtQml/QQmlListReference>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/private/qquicktranslate_p.h>          // QQuickMatrix4x4::setMatrix without QVariant
 
@@ -59,16 +56,16 @@ bool setAutoSize(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v
 
 namespace {
 
-bool setTransform(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setTransform(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     // Wire: row-major like Stride, row vectors (translation in M41..M43). QMatrix4x4(const float*)
     // reads row-major too, but Qt uses column vectors -> transpose (translation lands in column 4).
-    if (!els.setMatrix(n, QMatrix4x4(v.f).transposed(), err))
-        return false;
+    els.setMatrix(n, QMatrix4x4(v.f).transposed());
     // Pin wins: every TRANSFORM (also a resync) puts the item back where the pin says, the drag offset
     // goes to 0. SIZE/ANCHOR keep it.
     ++n.transformEpoch;
-    return els.setDragOffset(n, 0, 0, err);
+    els.setDragOffset(n, 0, 0);
+    return true;
 }
 
 // ANCHOR: Qt::Alignment with exactly one horizontal (Left/Right/HCenter) and one vertical flag (Top/Bottom/VCenter).
@@ -82,7 +79,8 @@ bool setAnchor(Elements& els, ElementEntry& n, const ResolvedProp&, const Value&
         err = "anchor must be one horizontal and one vertical Qt::AlignmentFlag";
         return false;
     }
-    return els.setAnchor(n, fx, fy, err);
+    els.setAnchor(n, fx, fy);
+    return true;
 }
 bool setOpacity(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&) { n.item->setOpacity(v.f[0]); return true; }
 bool setClip(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&) { n.item->setClip(v.b); return true; }
@@ -121,26 +119,6 @@ const std::vector<PropDef>& commonProps()
     return t;
 }
 
-QObject* Elements::createTransform(std::string& err)
-{
-    if (!matrixComponent) {
-        matrixComponent = new QQmlComponent(engine);
-        matrixComponent->setData(QByteArrayLiteral("import QtQuick\nMatrix4x4 {}\n"), QUrl(QStringLiteral("vlqt_matrix4x4.qml")));
-    }
-    QObject* obj = matrixComponent->isError() ? nullptr : matrixComponent->create();
-    if (!obj) {
-        err = "Matrix4x4 could not be created: " + matrixComponent->errorString().toStdString();
-        return nullptr;
-    }
-    if (!qobject_cast<QQuickMatrix4x4*>(obj)) {
-        delete obj;
-        err = "Matrix4x4 is not a QQuickMatrix4x4";
-        return nullptr;
-    }
-    QQmlEngine::setObjectOwnership(obj, QQmlEngine::CppOwnership);
-    return obj;
-}
-
 // Qt column vectors: v' = T(d) * T(p) * M * T(-p) * v with p = anchor in the item's local coordinates (actual size)
 // and d = drag offset: the offset comes last, i.e. it moves the item in the parent's space. One Matrix4x4 for
 // both instead of a Matrix4x4 + Translate pair: the order in item.transform can never be wrong.
@@ -159,24 +137,6 @@ QMatrix4x4 pivoted(const TransformState& s, const QQuickItem* item)
 
 namespace {
 
-// A Row/Column (Qt positioner) owns the position of its children: writing x/y there would overwrite the layout, and
-// the positioner only lays out again on a size change. The lookup runs once per meta object (hot path: every
-// size change of every element, 10000 per apply in the perf test).
-bool inPositioner(const QQuickItem* item)
-{
-    static thread_local const QMetaObject* lastMeta = nullptr;
-    static thread_local bool lastPositioned = false;
-    const QQuickItem* parent = item->parentItem();
-    if (!parent)
-        return false;
-    const QMetaObject* meta = parent->metaObject();
-    if (meta != lastMeta) {
-        lastMeta = meta;
-        lastPositioned = meta->indexOfSignal("positioningComplete()") >= 0;
-    }
-    return lastPositioned;
-}
-
 // TRANSFORM is a pure x/y translation (Qt column vectors: identity except m(0,3), m(1,3)).
 bool isTranslation2D(const QMatrix4x4& m)
 {
@@ -194,7 +154,7 @@ bool isTranslation2D(const QMatrix4x4& m)
 // mapToScene/sync. Elements::setMatrix decides when to attach the Matrix4x4 (from then on it carries TRANSFORM).
 void placeItem(const TransformState& s, QQuickItem* item)
 {
-    if (inPositioner(item))
+    if (s.inLayout)
         return;
     QPointF p = -anchorPoint(s, item);
     if (!s.matrix)
@@ -204,11 +164,24 @@ void placeItem(const TransformState& s, QQuickItem* item)
 
 } // namespace
 
-// Matrix4x4 objects only come from Elements::createTransform (checked with qobject_cast there). setMatrix compares
-// first and emits matrixChanged only on a real change; no QVariant/QMetaProperty detour (perf).
-void setMatrixValue(QObject* t, const QMatrix4x4& m)
+// Row/Column are the Qt positioners: they lay their children out and write x/y again on every size change.
+// W4-39: replaced by the type-table trait `layout`.
+bool isLayoutType(quint16 type)
 {
-    static_cast<QQuickMatrix4x4*>(t)->setMatrix(m);
+    return type == VLQT_ELEMENT_TYPE_ROW || type == VLQT_ELEMENT_TYPE_COLUMN;
+}
+
+QQuickMatrix4x4* attachMatrix(QQuickItem* item)
+{
+    auto* t = new QQuickMatrix4x4(item); // child of the item: deleted together with it
+    t->appendToItem(item);
+    return t;
+}
+
+// setMatrix compares first and emits matrixChanged only on a real change; no QVariant/QMetaProperty detour (perf).
+void setMatrixValue(QQuickMatrix4x4* t, const QMatrix4x4& m)
+{
+    t->setMatrix(m);
 }
 
 namespace {
@@ -275,66 +248,54 @@ void Elements::initGeometry(ElementEntry& node)
     }
 }
 
-bool Elements::placeAfterReparent(ElementEntry& node, std::string& err)
+void Elements::placeAfterReparent(ElementEntry& node)
 {
     // Into a Row/Column with a translation still folded into x/y (placeItem): the layout owns x/y now, the
     // translation moves to the Matrix4x4.
-    if (!node.transform && !node.xf->base.isIdentity() && inPositioner(node.item))
-        return writeTransform(node, err);
-    placeItem(*node.xf, node.item);
-    return true;
+    if (!node.transform && !node.xf->base.isIdentity() && node.xf->inLayout)
+        writeTransform(node);
+    else
+        placeItem(*node.xf, node.item);
 }
 
-bool Elements::setMatrix(ElementEntry& node, const QMatrix4x4& m, std::string& err)
+void Elements::setMatrix(ElementEntry& node, const QMatrix4x4& m)
 {
     TransformState& s = *node.xf;
-    if (!node.transform && isTranslation2D(m) && s.dx == 0 && s.dy == 0 && (!inPositioner(node.item) || m.isIdentity())) {
-        // Fast path (placeItem): x/y only. The x/y change itself pokes a parent Group and a mask frame.
-        s.base = m;
-        placeItem(s, node.item);
-        return true;
-    }
     s.base = m;
-    return writeTransform(node, err);
+    if (!node.transform && isTranslation2D(m) && s.dx == 0 && s.dy == 0 && (!s.inLayout || m.isIdentity())) {
+        // Fast path (placeItem): x/y only. The x/y change itself pokes a parent Group and a mask frame.
+        placeItem(s, node.item);
+        return;
+    }
+    writeTransform(node);
 }
 
-bool Elements::setDragOffset(ElementEntry& node, float dx, float dy, std::string& err)
+void Elements::setDragOffset(ElementEntry& node, float dx, float dy)
 {
     if (node.xf->dx == dx && node.xf->dy == dy)
-        return true; // unchanged: no Matrix4x4 for items that were never transformed or dragged
+        return; // unchanged: no Matrix4x4 for items that were never transformed or dragged
     node.xf->dx = dx;
     node.xf->dy = dy;
-    return writeTransform(node, err);
+    writeTransform(node);
 }
 
-bool Elements::writeTransform(ElementEntry& node, std::string& err)
+void Elements::writeTransform(ElementEntry& node)
 {
     if (!node.transform) {
-        QObject* t = createTransform(err);
-        if (!t)
-            return false;
-        t->setParent(node.item); // deleted together with the item
-        QQmlListReference list(node.item, "transform");
-        if (!list.isValid() || !list.append(t)) {
-            delete t;
-            err = "appending Matrix4x4 to 'transform' failed";
-            return false;
-        }
-        node.transform = t;
-        node.xf->matrix = t; // from now on written by the size connection of initGeometry too
+        node.transform = attachMatrix(node.item);
+        node.xf->matrix = node.transform; // from now on written by the size connection of initGeometry too
         placeItem(*node.xf, node.item); // the translation leaves x/y (fast path) and goes into the matrix below
     }
     setMatrixValue(node.transform, pivoted(*node.xf, node.item));
     updateMaskFrame(node);
     pokeGroup(node.item);
     markGeometry(*node.xf); // Qt has no public signal for a transform change
-    return true;
 }
 
-bool Elements::setAnchor(ElementEntry& node, float fx, float fy, std::string& err)
+void Elements::setAnchor(ElementEntry& node, float fx, float fy)
 {
     if (node.xf->fx == fx && node.xf->fy == fy)
-        return true;
+        return;
     node.xf->fx = fx;
     node.xf->fy = fy;
     placeItem(*node.xf, node.item);
@@ -345,7 +306,6 @@ bool Elements::setAnchor(ElementEntry& node, float fx, float fy, std::string& er
     updateMaskFrame(node);
     pokeGroup(node.item);
     markGeometry(*node.xf); // matrix pivot or group bounds (Auto Size off) moved, maybe without an x/y change
-    return true;
 }
 
 } // namespace vlqt

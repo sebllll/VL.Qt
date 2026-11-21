@@ -11,6 +11,7 @@
 
 class QObject;
 class QQuickItem;
+class QQuickMatrix4x4; // QtQuick/private/qquicktranslate_p.h
 
 namespace vlqt {
 
@@ -24,7 +25,7 @@ struct ElementEntry {
     QQuickItem* item = nullptr;
     quint16 type = 0;
     quint32 feedbackId = 0;            // BIND feedbackId (0 = unbound), see scene/measure.h
-    QObject* transform = nullptr; // QML Matrix4x4, appended to item.transform on the first TRANSFORM or drag offset
+    QQuickMatrix4x4* transform = nullptr; // Matrix4x4, appended to item.transform on the first TRANSFORM or drag offset
     std::shared_ptr<TransformState> xf; // TRANSFORM + ANCHOR as sent; never null for an entry in Scene::nodes (set by Scene::makeEntry via Elements::initGeometry), so no check
     SentState sent;              // last EVENT_MEASURED / EVENT_SCENE_BOUNDS sent for sink
     QQuickItem* effectSource = nullptr; // SHADER: current source item (see Elements::clearEffectSource)

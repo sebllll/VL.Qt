@@ -292,7 +292,7 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
         return id == VLQT_ROOT_ID ? ApplyInvalid : ApplyUnknownId;
     }
     QQuickItem* parent = root;
-    bool underShaderEffect = false;
+    bool underShaderEffect = false, parentIsLayout = false;
     if (parentId != VLQT_ROOT_ID) {
         auto pit = nodes.find(parentId);
         if (pit == nodes.end()) {
@@ -303,6 +303,7 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
         }
         parent = pit->second.item;
         underShaderEffect = pit->second.type == VLQT_ELEMENT_TYPE_SHADER;
+        parentIsLayout = isLayoutType(pit->second.type);
     }
     QQuickItem* item = it->second.item;
     if (it->second.maskHost) {
@@ -325,8 +326,8 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
     if (item->parentItem() != parent) {
         item->setParentItem(parent); // appended as last child
         // Free parent: x/y = -anchor; Row/Column: its layout owns x/y and lays out the new child itself.
-        if (!elements.placeAfterReparent(it->second, err))
-            return ApplyInvalid;
+        it->second.xf->inLayout = parentIsLayout; // also cleared again when the item leaves a Row/Column
+        elements.placeAfterReparent(it->second);
     }
     it->second.maskHidden = false; // a detached mask comes back into the tree
     // Children of a ShaderEffect (Input, texture elements) are drawn only through their layers; every other element is
