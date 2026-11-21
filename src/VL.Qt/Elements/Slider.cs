@@ -1,12 +1,5 @@
 ﻿namespace VL.Qt.Elements
 {
-    /// <summary>Direction of a slider (Qt::Orientation).</summary>
-    public enum SliderOrientation
-    {
-        Horizontal = 1,
-        Vertical = 2,
-    }
-
     /// <summary>
     /// Slider (QtQuick.Controls Slider, style Basic). User changes come from Qt's <c>moved</c> as EVENT_VALUE (f32)
     /// into <see cref="Element.Feedback"/>; SET VALUE is never echoed. Defaults match QtNative (0…1, continuous).

@@ -31,12 +31,12 @@ namespace VL.Qt.Nodes
             var a = MathF.PI / 180f * p.Angle;
             var padX = half * MathF.Abs(MathF.Cos(a));
             var padY = half * MathF.Abs(MathF.Sin(a));
-            return new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
+            return new BuiltinShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
                 new[] { Uniform.Float("angle", p.Angle), Uniform.Length("blurLength", length) }.ToSpread(),
                 new RectangleF(padX, padY, padX, padY));
         };
 
-        private readonly BuiltinShaderLink<Props> _link;
+        private readonly ShaderEffectBuilder<Props> _link;
 
         public DirectionalBlurNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
@@ -44,9 +44,9 @@ namespace VL.Qt.Nodes
         }
 
         internal DirectionalBlurNode(ResourceClient? client, NodeErrors? errors = null)
-            => _link = new BuiltinShaderLink<Props>(client, s_shaders, s_create, errors);
+            => _link = new ShaderEffectBuilder<Props>(client, s_shaders, s_create, errors);
 
-        internal BuiltinShaderLink<Props> Core => _link;
+        internal ShaderEffectBuilder<Props> Core => _link;
 
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>

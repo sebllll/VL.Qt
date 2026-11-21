@@ -2,17 +2,9 @@
 
 namespace VL.Qt.Elements
 {
-    /// <summary>Values are Qt VideoOutput.FillMode (Stretch, PreserveAspectFit, PreserveAspectCrop).</summary>
-    public enum VideoFillMode
-    {
-        Stretch = 0,
-        Fit = 1,
-        Crop = 2,
-    }
-
     /// <summary>
-    /// Video from a file (Qt MediaPlayer + VideoOutput, FFmpeg backend). v1: file path only, own clock (no seek,
-    /// no sync to vvvv). Position and duration come back through the feedback, 0 until the media is loaded.
+    /// Video from a file (Qt MediaPlayer + VideoOutput, FFmpeg backend). Plays a file with Qt's own clock; position and
+    /// duration come back through the feedback, 0 until the media is loaded.
     /// </summary>
     public sealed class Video : Element
     {

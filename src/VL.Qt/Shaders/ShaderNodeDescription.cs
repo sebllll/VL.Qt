@@ -58,13 +58,13 @@ namespace VL.Qt.Shaders
 
     /// <summary>
     /// Node description of one shader file. init (lazy, when vvvv needs the pins): read
-    /// the files, reflect, build the pins (Input if the shader samples source, image and uniform pins, fixed ShaderEffect
+    /// the files, reflect, build the pins (Input if the shader samples source, image and uniform pins, fixed Shader
     /// pins), errors and warnings as messages of the description. invalidated: content change of the own .frag/.vert;
     /// vvvv then asks for a new description and keeps links on pins with the same name.
     /// </summary>
     internal static class ShaderNodeDescription
     {
-        // Fixed pins like the ShaderEffect node (without Fragment/Vertex Code/Shader and Uniforms), help texts from there.
+        // Fixed pins like the Shader node (without Fragment/Vertex Code/Shader and Uniforms), help texts from there.
         private static readonly IVLPinDescription[] s_fixedInputs =
         {
             new ShaderPinDescription("Blending", typeof(bool), true, "Premultiplied alpha blending with what is behind. Off: the shader output replaces it."),
@@ -90,7 +90,7 @@ namespace VL.Qt.Shaders
 
         private const string inputSummary = "Element sampled as sampler2D \"source\" (hidden itself, only the effect output is drawn).";
 
-        /// <summary>Input pins: Input (if the shader samples source), image and uniform pins, fixed ShaderEffect pins.</summary>
+        /// <summary>Input pins: Input (if the shader samples source), image and uniform pins, fixed Shader pins.</summary>
         internal static List<IVLPinDescription> Inputs(ShaderNodeLayout layout)
         {
             var inputs = new List<IVLPinDescription>();
@@ -105,7 +105,7 @@ namespace VL.Qt.Shaders
             return inputs;
         }
 
-        /// <summary>Output pins like the ShaderEffect node.</summary>
+        /// <summary>Output pins like the Shader node.</summary>
         internal static IReadOnlyList<IVLPinDescription> Outputs => s_outputs;
 
         public static IVLNodeDescription New(IVLNodeDescriptionFactory factory, ShaderFile file, ILogger logger) =>
@@ -157,12 +157,12 @@ namespace VL.Qt.Shaders
     }
 
     /// <summary>
-    /// Instance of a generated shader node: a <see cref="ShaderEffectNode"/> fed with the file content (source path)
+    /// Instance of a generated shader node: a <see cref="ShaderNode"/> fed with the file content (source path)
     /// and the uniform pins as Spread&lt;Uniform&gt;, rebuilt only when a pin changed.
     /// </summary>
     internal sealed class ShaderNodeInstance : IDisposable
     {
-        private readonly ShaderEffectNode _effect;
+        private readonly ShaderNode _effect;
         private readonly string _fragmentSource;
         private readonly string? _vertexSource;
         private readonly ValuePin<Element?>? _input;
@@ -185,12 +185,12 @@ namespace VL.Qt.Shaders
         private readonly ValuePin<string> _error = new(string.Empty);
 
         public ShaderNodeInstance(NodeContext nodeContext, ShaderNodeLayout layout)
-            : this(new ShaderEffectNode(nodeContext), layout)
+            : this(new ShaderNode(nodeContext), layout)
         {
         }
 
-        /// <summary>For tests: with a ShaderEffectNode built on the test constructor.</summary>
-        internal ShaderNodeInstance(ShaderEffectNode effect, ShaderNodeLayout layout)
+        /// <summary>For tests: with a ShaderNode built on the test constructor.</summary>
+        internal ShaderNodeInstance(ShaderNode effect, ShaderNodeLayout layout)
         {
             _effect = effect;
             _fragmentSource = layout.FragmentSource;

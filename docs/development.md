@@ -220,7 +220,8 @@ If a diff shows whole files as changed, the cause is line endings or BOM: run `g
 
 ```
 src/VL.Qt/                  # C# library
-  Elements/                 # element types (Rectangle, Text, ..., FeedbackRouter)
+  Elements/                 # element types (Rectangle, Text, ..., FeedbackRouter); subfolders Effects/, Interactions/,
+                            # Feedback/, Shaders/, Qml/, Enums/ share the namespace VL.Qt.Elements
   Nodes/                    # vvvv node wrappers, one folder per category (Elements/, Widgets/, ...)
   Reconciler/               # scene diffing and sync
   Wire/                     # the protocol to QtNative (namespace VL.Qt.Wire, internal)

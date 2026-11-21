@@ -3,6 +3,7 @@ using System.IO;
 using Microsoft.Extensions.Logging;
 using VL.Core;
 using VL.Core.CompilerServices;
+using VL.Qt.Interop;
 
 [assembly: AssemblyInitializer(typeof(VL.Qt.Initialization))]
 

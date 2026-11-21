@@ -14,7 +14,7 @@ namespace VL.Qt.Tests
     public class ElementTypeTests
     {
         private static readonly Type[] AllTypes =
-            { typeof(Group), typeof(Elements.Rectangle), typeof(Text), typeof(Image), typeof(Row), typeof(Column), typeof(Video), typeof(Button), typeof(SpinBox), typeof(CheckBox), typeof(Elements.Switch), typeof(Elements.Slider), typeof(TextField), typeof(ShaderEffect), typeof(Shape) };
+            { typeof(Group), typeof(Elements.Rectangle), typeof(Text), typeof(Image), typeof(Row), typeof(Column), typeof(Video), typeof(Button), typeof(SpinBox), typeof(CheckBox), typeof(Elements.Switch), typeof(Elements.Slider), typeof(TextField), typeof(Shader), typeof(Shape) };
 
         [TestCaseSource(nameof(AllTypes))]
         public void SealedAndInitOnly(Type t)
@@ -54,7 +54,7 @@ namespace VL.Qt.Tests
             Assert.That(new Shape().Type, Is.EqualTo(ElementType.Shape));
             Assert.That((ushort)ElementType.Shape, Is.EqualTo(26));
             Assert.That((ushort)ElementType.Rectangle, Is.EqualTo(Protocol.ElementType.Rectangle));
-            Assert.That((ushort)ElementType.ShaderEffect, Is.EqualTo(Protocol.ElementType.Shader));
+            Assert.That((ushort)ElementType.Shader, Is.EqualTo(Protocol.ElementType.Shader));
         }
 
         [Test]

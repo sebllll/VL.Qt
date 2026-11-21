@@ -143,7 +143,7 @@ namespace VL.Qt.Tests
         [TestCase(Space.DIP, Space.DIPTopLeft)]
         public void SpaceChange_WithTheSameScale_RewritesNothing(Space from, Space to)
         {
-            // Only the origin of the root moves (SET_SPACE in QtNative, written by SceneCore): no property of the tree.
+            // Only the origin of the root moves (SET_SPACE in QtNative, written by Scene): no property of the tree.
             Frame(Tree, new SpaceMapping(from, new Vector2(800, 600), 1f));
             Frame(Tree, new SpaceMapping(to, new Vector2(800, 600), 1f));
             Assert.That(_sink.Count, Is.EqualTo(0));

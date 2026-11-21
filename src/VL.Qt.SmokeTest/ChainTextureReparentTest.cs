@@ -2,6 +2,7 @@
 using System.Buffers.Binary;
 using System.Drawing;
 using NUnit.Framework;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
@@ -28,7 +29,7 @@ public static class ChainTextureReparentTest
 
     private static void Run(Scenario s)
     {
-        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "Blend is a ShaderEffect");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "Blend is a shader effect");
         Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var blend);
         Native.vlqt_shader_load(blend, "builtin:blend", Protocol.ShaderStage.Fragment);
         s.Check(Native.vlqt_res_wait(blend, 10000) == Protocol.ResourceState.Ready, "shader builtin:blend Ready");

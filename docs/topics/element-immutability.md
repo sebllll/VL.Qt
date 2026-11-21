@@ -12,7 +12,7 @@ Why elements are immutable descriptions, what that guarantees, and where Qt-side
 ## Deliberate exceptions
 Some state exists only in Qt and changes without a new description arriving:
 - Video position.
-- Interaction state: hover, pressed, focus, text field input. It flows back through feedback or channels (see `decisions/events.md`).
+- Interaction state: hover, pressed, focus, text field input. It flows back through feedback or channels (see `design/events.md`).
 - `QtImage` as a handle: its loading state changes. It belongs to the node that created it and needs no dispose.
 
 Consequence: the same instance means "the same description", not "the same picture". Code that needs to detect visual change, for example a tooltip that has to follow an interaction state, cannot rely on reference equality alone.

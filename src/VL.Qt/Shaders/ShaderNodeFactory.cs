@@ -41,7 +41,7 @@ namespace VL.Qt.Shaders
     /// <summary>
     /// Node factory for qtshaders/**/*.frag next to a document or in a package. Model: VL.Stride EffectShaderNodes.Init/TrackChanges. The scan reads only the
     /// annotations (category/summary); bake + reflection happen lazily in the init of the node description
-    /// (<see cref="ShaderNodeDescription"/>). The node instance wraps a <see cref="Nodes.ShaderEffectNode"/> and feeds the
+    /// (<see cref="ShaderNodeDescription"/>). The node instance wraps a <see cref="Nodes.ShaderNode"/> and feeds the
     /// file content over the source path.
     /// </summary>
     internal static class ShaderNodeFactory
@@ -137,7 +137,7 @@ namespace VL.Qt.Shaders
                 if (!file.ChainOnly)
                     nodes.Add(ShaderNodeDescription.New(factory, file, logger));
                 if (file.IsFilter)
-                    nodes.Add(ShaderLinkDescription.New(factory, file, logger));
+                    nodes.Add(ShaderEffectDescription.New(factory, file, logger));
             }
             return nodes.ToImmutable();
         }

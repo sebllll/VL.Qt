@@ -35,7 +35,7 @@ namespace VL.Qt
         private static readonly Switch s_switch = new();
         private static readonly Slider s_slider = new();
         private static readonly TextField s_textField = new();
-        private static readonly ShaderEffect s_shaderEffect = new();
+        private static readonly Shader s_shader = new();
         private static readonly QmlElement s_qml = new();
         private static readonly Shape s_shape = new();
 
@@ -53,7 +53,7 @@ namespace VL.Qt
             ElementType.Switch => s_switch,
             ElementType.Slider => s_slider,
             ElementType.TextField => s_textField,
-            ElementType.ShaderEffect => s_shaderEffect,
+            ElementType.Shader => s_shader,
             ElementType.Qml => s_qml,
             ElementType.Shape => s_shape,
             _ => s_group,
@@ -107,9 +107,9 @@ namespace VL.Qt
                     DiffAutoSize(id, pc.AutoSize, nc.AutoSize);
                     DiffLayout(id, pc.Spacing, nc.Spacing, pc.Padding, nc.Padding, (int)pc.ChildAlignment, (int)nc.ChildAlignment);
                     break;
-                case ElementType.ShaderEffect:
-                    DiffAutoSize(id, ((ShaderEffect)prev).AutoSize, ((ShaderEffect)next).AutoSize);
-                    DiffShaderEffect(id, (ShaderEffect)prev, (ShaderEffect)next);
+                case ElementType.Shader:
+                    DiffAutoSize(id, ((Shader)prev).AutoSize, ((Shader)next).AutoSize);
+                    DiffShader(id, (Shader)prev, (Shader)next);
                     break;
                 case ElementType.Shape: DiffShape(id, (Shape)prev, (Shape)next); break;
                 case ElementType.Qml:
@@ -141,7 +141,7 @@ namespace VL.Qt
         /// <summary>
         /// Common item properties. Size, Anchor and Transform are sent as they are, also for children of Row/Column
         /// (there the layout places them and QtNative uses the anchor only as pivot, protocol.h "Geometry"). Visibility is QtNative's: it hides the
-        /// children of a ShaderEffect (drawn through their layers), Opacity 0 = not drawn.
+        /// children of a Shader (drawn through their layers), Opacity 0 = not drawn.
         /// </summary>
         private void DiffCommon(uint id, Element p, Element n)
         {
@@ -484,10 +484,10 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// ShaderEffect: shader resource ids (0 = none), Blending, MeshResolution (clamped to &gt;= 1, QtNative rejects
+        /// Shader: shader resource ids (0 = none), Blending, MeshResolution (clamped to &gt;= 1, QtNative rejects
         /// smaller values with -7). Source and the uniforms follow in <see cref="ChildrenReconciled"/>.
         /// </summary>
-        private void DiffShaderEffect(uint id, ShaderEffect p, ShaderEffect n)
+        private void DiffShader(uint id, Shader p, Shader n)
         {
             if (p.FragmentShaderId != n.FragmentShaderId)
                 _sink.SetU64(id, P.FragmentShader, n.FragmentShaderId);
@@ -502,16 +502,16 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// ShaderEffect: SET Source ref(input id) whenever the input child object changed (0 = none), then the uniforms (texture uniforms need the ids of their children).
+        /// Shader: SET Source ref(input id) whenever the input child object changed (0 = none), then the uniforms (texture uniforms need the ids of their children).
         /// </summary>
         partial void ChildrenReconciled(Node node, Element next)
         {
-            if (node.Type != ElementType.ShaderEffect)
+            if (node.Type != ElementType.Shader)
                 return;
             {
-                var effect = (ShaderEffect)next;
+                var effect = (Shader)next;
                 var kids = node.Children;
-                // Input is the first child (ShaderEffect.Children), texture elements follow.
+                // Input is the first child (Shader.Children), texture elements follow.
                 Node? source = effect.Input is not null && kids.Count > 0 ? kids[0] : null;
                 if (!ReferenceEquals(source, node.EffectSource))
                 {

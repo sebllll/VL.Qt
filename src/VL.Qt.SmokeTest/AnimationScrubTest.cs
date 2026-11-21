@@ -4,6 +4,7 @@ using System.IO;
 using NUnit.Framework;
 using VL.Qt;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 
 // NAPP-10 (b): QML animations follow vlqt_app_advance_animations. docs/architecture.md promises "same tree and time, same output"

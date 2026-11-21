@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Drawing;
 using NUnit.Framework;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 
-// NFX-02: two samplers of one ShaderEffect read the same element, the lower binding with a mip filter and the higher one
+// NFX-02: two samplers of one Shader read the same element, the lower binding with a mip filter and the higher one
 // with a state that has none (Nearest filter, no mips). The layer request of the element must be the OR of both: refreshLayerRequests
 // asks once per sampler and requestLayer overwrites the one entry of the owner, so the last sampler wins and the mip filter is lost
 // after the second refresh. Read from a minified read (stripes, uv * 14): with mips every pixel is the purple mean, without they alias.
@@ -40,7 +41,7 @@ public static class SamplerMipSharedTest
 
     private static void Run(Scenario s)
     {
-        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "Shader needs a QRhi scenegraph");
         Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var shader);
         var rc = Native.vlqt_shader_load_source(shader, Shader, Protocol.ShaderStage.Fragment);
         var st = rc == 0 ? Native.vlqt_res_wait(shader, 20000) : Protocol.ResourceState.Failed;

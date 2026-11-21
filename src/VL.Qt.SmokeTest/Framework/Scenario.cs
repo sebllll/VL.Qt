@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using NUnit.Framework;
 using VL.Qt;
+using VL.Qt.Interop;
 
 /// <summary>
 /// Context of one running scenario: soft checks, warnings, the frame pump, grabs and the Qt log. Replaces the delegates
@@ -100,7 +101,7 @@ internal sealed class Scenario
         }
     }
 
-    /// <summary>Check that needs a QRhi scenegraph (ShaderEffect/MultiEffect, video output): SKIP under the software backend.</summary>
+    /// <summary>Check that needs a QRhi scenegraph (Shader/MultiEffect, video output): SKIP under the software backend.</summary>
     public void NeedsRhi(bool ok, string what, string why)
     {
         if (QtHost.QuickSoftware)

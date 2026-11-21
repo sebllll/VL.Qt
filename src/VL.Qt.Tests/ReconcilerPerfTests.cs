@@ -170,16 +170,16 @@ namespace VL.Qt.Tests
 
         private static Style RadiusStyle(float r) => new() { Frame = new FrameStyle { Radius = default(StateValues<float>).With(StyleStates.Normal, r) } };
 
-        private static Scenario ShaderEffectAnimatedUniform()
+        private static Scenario ShaderAnimatedUniform()
         {
             // REC-08: three uniforms, one animated float; the effect is a new instance every frame, one UNIFORMS command.
             var input = new Rectangle { Size = new Vector2(1, 1) };
-            ShaderEffect Make(float time) => new()
+            Shader Make(float time) => new()
             {
                 Input = input, FragmentShaderId = 11,
                 Uniforms = new[] { Uniform.Float("time", time), Uniform.Vector2("size", new Vector2(2, 3)), Uniform.Color("tint", Color4.White) }.ToSpread(),
             };
-            return Alternating("ShaderEffect, 3 uniforms, 1 animated:", new Group { Children = [Make(0f)] }, new Group { Children = [Make(1f)] }, expectedSets: 1, minFirstFrame: 5);
+            return Alternating("Shader, 3 uniforms, 1 animated:", new Group { Children = [Make(0f)] }, new Group { Children = [Make(1f)] }, expectedSets: 1, minFirstFrame: 5);
         }
 
         private static Scenario AnimatedEffectChain()
@@ -281,10 +281,10 @@ namespace VL.Qt.Tests
         // --- REC-16 ---
 
         [Test, Ignore("REC-08: UniformWriter builds a Dictionary and key strings per visit (456 B/frame measured)")]
-        public void ShaderEffect_ThreeUniforms_OneAnimated_NoAllocations() => AssertNoAllocation(ShaderEffectAnimatedUniform());
+        public void Shader_ThreeUniforms_OneAnimated_NoAllocations() => AssertNoAllocation(ShaderAnimatedUniform());
 
         [Test, Category("Perf")]
-        public void ShaderEffect_ThreeUniforms_OneAnimated_Fast() => AssertFast(ShaderEffectAnimatedUniform());
+        public void Shader_ThreeUniforms_OneAnimated_Fast() => AssertFast(ShaderAnimatedUniform());
 
         [Test, Ignore("REC-09: ChangeEffectChain allocates Segment, lists and arrays when the chain instance changes (1472 B/frame measured)")]
         public void EffectChain_Animated_NoAllocations() => AssertNoAllocation(AnimatedEffectChain());

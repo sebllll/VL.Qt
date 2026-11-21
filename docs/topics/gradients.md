@@ -1,6 +1,6 @@
 # Topic: Gradient fills
 
-Handover from the brainstorm on lines, paths and splines ([../decisions/paths.md](../decisions/paths.md)), 2026-11-18. Gradients were out of scope in [../decisions/element-catalog-v1.md](../decisions/element-catalog-v1.md).
+Handover from the brainstorm on lines, paths and splines ([../decisions/paths.md](../decisions/paths.md)), 2026-11-18. Gradients were out of scope in [../design/element-catalog-v1.md](../design/element-catalog-v1.md).
 
 ## Context
 - Elements fill with a plain `Color4` today (`Rectangle`, `Circle`, `Text`).

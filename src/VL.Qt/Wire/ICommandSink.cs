@@ -37,7 +37,7 @@ namespace VL.Qt.Wire
         /// <summary>path (<see cref="Protocol.ValueType.Path"/>): verbs (<see cref="Protocol.Verb"/>) and points as x,y pairs (2 floats per point).</summary>
         void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points);
 
-        /// <summary>ref: id of another element (e.g. ShaderEffect source), 0 = none/root.</summary>
+        /// <summary>ref: id of another element (e.g. Shader source), 0 = none/root.</summary>
         void SetRef(uint id, ushort prop, uint refId);
 
         /// <summary>u64, e.g. an image resource id (<see cref="Protocol.PropertyId.Image"/>), 0 = none.</summary>
@@ -66,7 +66,7 @@ namespace VL.Qt.Wire
         void EndStyle();
 
         /// <summary>
-        /// SET_UNIFORMS: starts the command for the ShaderEffect <paramref name="id"/>, flags = <see cref="Protocol.UniformSet"/>
+        /// SET_UNIFORMS: starts the command for the Shader <paramref name="id"/>, flags = <see cref="Protocol.UniformSet"/>
         /// bit mask. Followed by Uniform* entries (name 1..<see cref="Protocol.UniformNameMax"/> UTF-8 bytes) and
         /// <see cref="EndUniforms"/>; no other command in between.
         /// </summary>
@@ -86,7 +86,7 @@ namespace VL.Qt.Wire
         /// <summary>Stride matrix, sent as M11, M12, ..., M44 (QtNative transposes for GLSL).</summary>
         void UniformMat4(ReadOnlySpan<char> name, in Matrix m);
 
-        /// <summary>sampler2D from an element: id of a child of the ShaderEffect (0 = none).</summary>
+        /// <summary>sampler2D from an element: id of a child of the Shader (0 = none).</summary>
         void UniformRef(ReadOnlySpan<char> name, uint refId);
 
         /// <summary>sampler2D from an image resource id (0 = none).</summary>

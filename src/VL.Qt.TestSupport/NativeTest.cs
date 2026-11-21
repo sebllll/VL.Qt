@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using VL.Qt.Interop;
 
 namespace VL.Qt
 {
@@ -20,7 +21,7 @@ namespace VL.Qt
         static NativeTest()
         {
             // Loads vlqt.dll and sets up the search path of its Qt DLLs before the first import is resolved.
-            Native.EnsureLoaded();
+            QtNativeLibrary.EnsureLoaded();
             NativeLibrary.SetDllImportResolver(typeof(NativeTest).Assembly, Resolve);
         }
 
@@ -28,11 +29,11 @@ namespace VL.Qt
         private static IntPtr Resolve(string name, Assembly assembly, DllImportSearchPath? searchPath)
         {
             if (name == Lib)
-                return Native.Handle;
+                return QtNativeLibrary.Handle;
             if (name == Kit && OperatingSystem.IsWindows())
             {
                 if (s_kit == IntPtr.Zero)
-                    s_kit = NativeLibrary.Load(Path.Combine(Native.NativeDir, Kit + ".dll"));
+                    s_kit = NativeLibrary.Load(Path.Combine(QtNativeLibrary.Directory, Kit + ".dll"));
                 return s_kit;
             }
             return IntPtr.Zero;

@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Linq;
 using NUnit.Framework;
 using VL.Qt;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 
 // Nothing is cut at 64 KB: the length of a command and of an event record is a u32 (protocol.h). A Text of more than

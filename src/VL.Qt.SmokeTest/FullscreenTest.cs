@@ -5,10 +5,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using Stride.Core.Mathematics;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// Fullscreen pin without vvvv: WindowRenderer.SetMode(Fullscreen) live and on create (before show).
+// Fullscreen pin without vvvv: WindowScene.SetMode(Fullscreen) live and on create (before show).
 // On → EVENT_WINDOW_GEOMETRY reports VLQT_WINDOW_FULLSCREEN and (Windows) the rect of the window's monitor in DIP;
 // off → the geometry from before. Save Bounds (BoundsSaver) writes nothing during or after the round trip.
 // A second monitor (Windows) is tested if present, otherwise skipped with INFO.
@@ -43,7 +44,7 @@ public static class FullscreenTest
     {
         var clear = new Color4(0, 0, 0, 1);
         var clock = Stopwatch.StartNew();
-        WindowGeometry? Settle(WindowRenderer r, string title)
+        WindowGeometry? Settle(WindowScene r, string title)
         {
             WindowGeometry? last = null;
             for (int i = 0, stable = 0; i < 200 && stable < 5; i++)
@@ -71,7 +72,7 @@ public static class FullscreenTest
         {
             string title = "VL.Qt fullscreen " + label;
             var saver = new BoundsSaver(bounds);
-            var r = new WindowRenderer(new SceneRegistry(), title, bounds, false, onCreate ? Protocol.WindowMode.Fullscreen : 0u);
+            var r = new WindowScene(new SceneRegistry(), title, bounds, false, onCreate ? Protocol.WindowMode.Fullscreen : 0u);
             r.GeometryChanged += g => saver.OnGeometry(g, clock.Elapsed);
             var g = Settle(r, title);
             if (!onCreate)

@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 using NUnit.Framework;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
@@ -44,7 +45,7 @@ public static class SamplerTest
 
     private static void Run(Scenario s)
     {
-        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "Shader needs a QRhi scenegraph");
         Directory.CreateDirectory(s.OutDir);
         var stripesPath = FindFile("src", "VL.Qt.SmokeTest", "assets", "stripes_rgb_30x10.png");
         s.Check(stripesPath != null, "stripes image found");

@@ -7,6 +7,7 @@ using System.Drawing.Imaging;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 

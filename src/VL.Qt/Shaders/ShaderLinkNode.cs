@@ -12,11 +12,11 @@ namespace VL.Qt.Shaders
 {
     /// <summary>
     /// A filter shader file as link of the Effect chain: template Single, or TwoPass with @passes 2, one fragment
-    /// shader resource owned by the node, the uniform pins as <see cref="ShaderLink.Uniforms"/>, @padding as padding.
+    /// shader resource owned by the node, the uniform pins as <see cref="ShaderEffect.Uniforms"/>, @padding as padding.
     /// </summary>
-    internal sealed class ShaderFileLink : ShaderLink
+    internal sealed class ShaderFileEffect : ShaderEffect
     {
-        public ShaderFileLink(Effect? previous, ushort template, ulong shaderId, Spread<Uniform> uniforms, RectangleF padding)
+        public ShaderFileEffect(Effect? previous, ushort template, ulong shaderId, Spread<Uniform> uniforms, RectangleF padding)
             : base(previous, template, ImmutableArray.Create(shaderId), uniforms, padding, 0f)
         {
         }
@@ -27,7 +27,7 @@ namespace VL.Qt.Shaders
     /// <see cref="ShaderFile.LinkCategory"/>. Same lifecycle as <see cref="ShaderNodeDescription"/> (lazy init, content
     /// change invalidates the node and keeps links on pins with the same name, errors red at the node).
     /// </summary>
-    internal static class ShaderLinkDescription
+    internal static class ShaderEffectDescription
     {
         private static readonly IVLPinDescription[] s_outputs =
         {
@@ -60,7 +60,7 @@ namespace VL.Qt.Shaders
                     return context.Node(
                         Inputs(layout),
                         Outputs,
-                        newNode: c => new ShaderLinkNodeInstance(c.NodeContext, layout).CreateNode(c),
+                        newNode: c => new ShaderEffectInstance(c.NodeContext, layout).CreateNode(c),
                         messages: layout.Messages,
                         openEditorAction: () => ShaderNodeDescription.OpenEditor(file, logger),
                         summary: layout.Summary ?? file.Summary,
@@ -70,10 +70,10 @@ namespace VL.Qt.Shaders
 
     /// <summary>
     /// Instance of a generated effect chain node: bakes its shader once (held until the node is disposed or rebuilt by a
-    /// file change), builds a new <see cref="ShaderFileLink"/> only when the chain at Input, the shader id or a pin changed
+    /// file change), builds a new <see cref="ShaderFileEffect"/> only when the chain at Input, the shader id or a pin changed
     /// (the reconciler compares by reference), passes the chain on unchanged while there is no shader id.
     /// </summary>
-    internal sealed class ShaderLinkNodeInstance : IDisposable
+    internal sealed class ShaderEffectInstance : IDisposable
     {
         private readonly ShaderSlot _fragment;
         private readonly NodeErrors? _errors;
@@ -88,18 +88,18 @@ namespace VL.Qt.Shaders
         private readonly ValuePin<Effect?> _input = new(null);
         private readonly ValuePin<Effect?> _output = new(null);
         private readonly ValuePin<string> _error = new(string.Empty);
-        private ShaderFileLink? _last;
+        private ShaderFileEffect? _last;
         private Effect? _lastInput;
         private ulong _lastId;
         private Spread<Uniform>? _lastUniforms;
 
-        public ShaderLinkNodeInstance(NodeContext nodeContext, ShaderNodeLayout layout)
+        public ShaderEffectInstance(NodeContext nodeContext, ShaderNodeLayout layout)
             : this(ResourceClient.ForApp(nodeContext.AppHost), layout, new NodeErrors(nodeContext))
         {
         }
 
         /// <summary>For tests: a client on a fake resource API, no node errors.</summary>
-        internal ShaderLinkNodeInstance(ResourceClient? client, ShaderNodeLayout layout, NodeErrors? errors = null)
+        internal ShaderEffectInstance(ResourceClient? client, ShaderNodeLayout layout, NodeErrors? errors = null)
         {
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _errors = errors;
@@ -158,7 +158,7 @@ namespace VL.Qt.Shaders
             {
                 if (_last is null || !ReferenceEquals(input, _lastInput) || id != _lastId || !ReferenceEquals(uniforms, _lastUniforms) || paddingChanged)
                 {
-                    _last = new ShaderFileLink(input, _template, id, uniforms, _padding);
+                    _last = new ShaderFileEffect(input, _template, id, uniforms, _padding);
                     _lastInput = input;
                     _lastId = id;
                     _lastUniforms = uniforms;
