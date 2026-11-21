@@ -7,7 +7,8 @@ using VL.Qt.Wire;
 using VL.Qt;
 
 // Input handlers as protocol objects: CREATE / REPARENT / SET / BIND / DESTROY / RESET of
-// a Hover handler, error codes, EVENT_HOVER / EVENT_POINTER per handler feedback, Text containment mask, id reuse, and the TEST
+// a Hover handler, error codes, EVENT_HOVER / EVENT_POINTER per handler feedback, Text containment mask, id reuse, DESTROY/BIND
+// churn of every handler type, and the TEST
 // export vlqt_test_send_touch (touch tap on a Tap handler clicks, multitouch bookkeeping). Scenarios tap / point / wheel
 // (#320): the Tap, Point and Wheel handlers (RunTap, RunPoint, RunWheel).
 // Mouse input via vlqt_test_send_mouse; real (OS) pointer input is ignored (VLQT_TEST_SYNTHETIC_INPUT=1, set by QtHost).
@@ -288,6 +289,63 @@ public static partial class HandlerTest
         cmd.ResetScene();
         CheckApply("reset 2");
         Frame();
+
+        // DESTROY/BIND churn: every handler type, with the internal objects (HoverHandler of a Point handler with
+        // ACCEPTED_BUTTONS 0, point counter of a Pinch handler), is attached, rebound and destroyed again and again. A
+        // DESTROY removes all Qt objects of the handler; the element DESTROY and the window destroy take attached ones along.
+        const uint C = 4, churnId = 40, churnSink = 60, churnSink2 = 70;
+        ushort[] churnTypes = { Protocol.ElementType.HoverHandler, Protocol.ElementType.TapHandler, Protocol.ElementType.PointHandler,
+            Protocol.ElementType.WheelHandler, Protocol.ElementType.DragHandler, Protocol.ElementType.TouchPointsHandler,
+            Protocol.ElementType.PinchHandler };
+        const uint hoverIx = 0, pointIx = 2;
+        cmd.Create(C, Protocol.ElementType.Rectangle);
+        cmd.SetPlace(C, 100, 100, 200, 100);
+        cmd.Reparent(C, 0, 0);
+        CheckApply("churn element");
+        void AttachChurn()
+        {
+            for (uint i = 0; i < churnTypes.Length; ++i)
+            {
+                cmd.Create(churnId + i, churnTypes[i]);
+                if (churnTypes[i] == Protocol.ElementType.PointHandler)
+                    cmd.SetI32(churnId + i, Protocol.PropertyId.AcceptedButtons, 0); // internal HoverHandler for the mouse
+                cmd.Reparent(churnId + i, C, 0);
+                cmd.Bind(churnId + i, churnSink + i);
+            }
+        }
+        for (int round = 0; round < 5; ++round)
+        {
+            AttachChurn();
+            CheckApply($"churn {round}: attach every handler type");
+            s.Check(Count(C) == churnTypes.Length + 2, $"handlers: churn {round}: handlers plus Point hover and Pinch counter ({Count(C)})");
+            Mouse(TestProtocol.Mouse.Move, 700, 500);
+            Frame();
+            Mouse(TestProtocol.Mouse.Move, 150 + round, 150);
+            recs = Frame();
+            s.Check(Flag(recs, Protocol.EventId.Hover, churnSink + hoverIx, true) && Flag(recs, Protocol.EventId.Active, churnSink + pointIx, true),
+                $"handlers: churn {round}: hovered -> HOVER 1, Point ACTIVE 1 ({S(recs)})");
+            for (uint i = 0; i < churnTypes.Length; ++i)
+                cmd.Bind(churnId + i, churnSink2 + i);
+            CheckApply($"churn {round}: rebind");
+            recs = Frame();
+            s.Check(Flag(recs, Protocol.EventId.Hover, churnSink + hoverIx, false) && Flag(recs, Protocol.EventId.Hover, churnSink2 + hoverIx, true)
+                && Flag(recs, Protocol.EventId.Active, churnSink + pointIx, false) && Flag(recs, Protocol.EventId.Active, churnSink2 + pointIx, true),
+                $"handlers: churn {round}: rebind -> old sinks 0, new sinks 1 ({S(recs)})");
+            for (uint i = 0; i < churnTypes.Length; ++i)
+                cmd.Destroy(churnId + i);
+            CheckApply($"churn {round}: destroy every handler");
+            recs = Frame();
+            s.Check(Count(C) == 0, $"handlers: churn {round}: DESTROY removes the internal objects too ({Count(C)})");
+            s.Check(Flag(recs, Protocol.EventId.Hover, churnSink2 + hoverIx, false) && Flag(recs, Protocol.EventId.Active, churnSink2 + pointIx, false),
+                $"handlers: churn {round}: DESTROY -> HOVER 0, ACTIVE 0 ({S(recs)})");
+        }
+        AttachChurn();
+        cmd.Destroy(C);
+        CheckApply("churn: element DESTROY with every handler type attached");
+        Frame();
+        for (uint i = 0; i < churnTypes.Length; ++i)
+            cmd.Destroy(churnId + i);
+        ExpectApply(Native.Result.UnknownObject, "churn: DESTROY of handlers removed with their element", "unknown id");
 
         RunTouch(s, w, cmd, Frame, Find, S);
 
