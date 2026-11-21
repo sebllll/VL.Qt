@@ -12,7 +12,9 @@
  * QQuickPathData (shape_path_element.h). The animation clock (app/animation_clock.cpp) uses QUnifiedTimer and
  * QAbstractAnimationTimer of QtCore/private for its keep-alive timer; if that class changes, an endless
  * QAbstractAnimation subclass (duration() == -1, empty updateCurrentTime), started once and never paused, keeps the
- * driver running as well, but counts as one running animation (the perf overlay must subtract it). */
+ * driver running as well, but counts as one running animation (the perf overlay must subtract it). QMetaObjectPrivate
+ * (Qt core) is no include but a behaviour the QML watcher relies on: raw method ids through QMetaObject::connect
+ * (user_qml/qml_watcher.h). */
 #pragma once
 
 #include "elements/element_entry.h"
@@ -41,7 +43,7 @@ Q_DECLARE_LOGGING_CATEGORY(lcElements)
 
 namespace vlqt {
 
-class QmlItem;          // qmlitem.h
+class QmlItem;          // user_qml/qml_item.h
 struct EffectChainDesc;  // effects/effect_chain_desc.h
 struct EffectComponents; // effects/effect_chain.h
 class EffectChain;       // effects/effect_chain.h
