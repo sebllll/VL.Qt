@@ -636,7 +636,10 @@ int Scene::setQmlProperties(const unsigned char* p, int plen, std::string& err)
 
 int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
 {
-    // Validates the whole command first (wire format: protocol.h "Effect chain"), so a bad one changes nothing.
+    // Validates the whole command first (wire format: protocol.h "Effect chain", ids, masks), so a rejected one changes
+    // nothing. A texture problem is no rejection but an EVENT_ERROR line of the chain. Elements::setEffectChain fails
+    // only when an item of the chain cannot be created (QML error); the old chain is gone by then, so the chain is
+    // switched off and the masks and textures this command parked leave the tree again.
     if (plen < VLQT_LIST_FIELDS_SIZE) {
         err = "payloadLen " + std::to_string(plen) + " too short for SET_EFFECT_CHAIN (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
@@ -817,15 +820,22 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
             masks[l] = mask.item;
         }
     const std::vector<QQuickItem*> before = elements.effectMasks(host);
+    // Elements this command parks that were not parked before, with their visibility. The checks above leave only
+    // elements without a parent for that, so a failed apply puts them back out of the tree as they were.
+    std::vector<std::pair<QQuickItem*, bool>> parked;
+    auto park = [&](ElementEntry& e) {
+        if (!e.maskHidden)
+            parked.emplace_back(e.item, e.item->isVisible());
+        if (e.item->parentItem() != root)
+            e.item->setParentItem(root);
+        e.item->setVisible(false);
+        e.maskHidden = true;
+    };
     // A new mask is parked hidden under the root: outside the element's children, so it never counts for its layout,
     // childrenRect/auto size, hit-test or REPARENT indices. Elements moves it into its frame there.
     for (QQuickItem* m : masks)
-        if (m && std::find(before.begin(), before.end(), m) == before.end()) {
-            if (m->parentItem() != root)
-                m->setParentItem(root);
-            m->setVisible(false);
-            nodes[ids[m]].maskHidden = true;
-        }
+        if (m && std::find(before.begin(), before.end(), m) == before.end())
+            park(nodes[ids[m]]);
     // Texture uniforms of SHADER links (REF): an element of its own that the host never REPARENTs, parked hidden under the
     // root like a mask (rendered through its layer, ShaderItem::setUniform); problems are EVENT_ERROR lines.
     for (EffectLinkDesc& link : chain.links)
@@ -846,13 +856,18 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
                 u.refError = "a Group as texture of a chain link is not supported yet";
             if (u.refError)
                 continue;
-            if (tex.item->parentItem() != root)
-                tex.item->setParentItem(root);
-            tex.item->setVisible(false);
-            tex.maskHidden = true; // parked until REPARENT or DESTROY (deleted one frame late, like a former source)
+            park(tex); // until the chain lets it go and a REPARENT or DESTROY comes (deleted one frame late, like a former source)
             u.refItem = tex.item;
         }
     const int rc = elements.setEffectChain(host, chain, masks, err);
+    if (rc != ApplyOk) {
+        elements.releaseEffectLayer(host); // detaches the masks: parked next to their frames again
+        for (const auto& [item, visible] : parked) {
+            item->setParentItem(nullptr);
+            item->setVisible(visible);
+            nodes[ids[item]].maskHidden = false;
+        }
+    }
     listPolled(*this, host); // a chain reports its content errors (EVENT_ERROR)
     const std::vector<QQuickItem*> after = elements.effectMasks(host);
     for (QQuickItem* m : before)

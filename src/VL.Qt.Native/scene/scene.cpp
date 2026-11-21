@@ -2,6 +2,7 @@
 #include "app/exports.h"
 #include "audio_tap.h"
 #include "diagnostics/debug_overlay.h"
+#include "effects/effect_chain.h"
 
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
@@ -298,6 +299,14 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
         err = "element " + std::to_string(id) + " is attached as an effect mask";
         return ApplyInvalid;
     }
+    // A texture of a chain link is parked like a mask and drawn only through its layer: in the tree it would be drawn
+    // twice. Only a parked element can be one, so the scan runs for those alone.
+    if (it->second.maskHidden)
+        for (const auto& [hostId, host] : nodes)
+            if (host.effectChain && host.effectChain->samples(item)) {
+                err = "element " + std::to_string(id) + " is the texture of a chain link of " + std::to_string(hostId);
+                return ApplyInvalid;
+            }
     for (QQuickItem* a = parent; a; a = a->parentItem())
         if (a == item) {
             err = "parent " + std::to_string(parentId) + " is inside the subtree of " + std::to_string(id);
