@@ -12,12 +12,9 @@ namespace vlqt {
 namespace {
 
 // ---------------------------------------------------------------------------------------------
-// Text. textFormat PlainText: the C# element is plain text, Qt's default AutoText would interpret
-// markup. minimumPixelSize 1 so fontSizeMode Fit can shrink freely; lineHeight is proportional.
-// font.* fields go through QFont read-modify-write (modifyFont).
+// Text (qml/elements/TextElement.qml). font.* fields go through QFont read-modify-write (modifyFont).
 
-constexpr const char* kTextQml =
-    "import QtQuick\nText { textFormat: Text.PlainText; minimumPixelSize: 1; lineHeightMode: Text.ProportionalHeight }\n";
+constexpr const char* kTextQml = "qrc:/vlqt/qml/elements/TextElement.qml";
 
 /* Read-modify-write of a QFont property (rp.prop = "font"). */
 template <class F>

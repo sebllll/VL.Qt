@@ -246,7 +246,7 @@ public:
     QByteArray touchScratch;
 
 private:
-    QObject* create(QQmlComponent*& comp, const char* qml, const char* url, QQuickItem* item);
+    QObject* create(QQmlComponent*& comp, const char* url, QQuickItem* item);
 
     QQmlEngine* engine;
     QQmlComponent* comps[size_t(HandlerComponent::Count)] = {};

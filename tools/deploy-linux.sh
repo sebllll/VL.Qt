@@ -2,7 +2,8 @@
 # Bundles the Qt runtime next to libvlqt.so in runtimes/<rid>/native (Linux counterpart of windeployqt in build-native.ps1).
 # Usage: tools/deploy-linux.sh [--rid linux-x64|linux-arm64] [--qt-dir ~/Qt/6.12.0/<gcc_64|gcc_arm64>] [--clean]
 # Run after tools/build-native.sh. Copies Qt libs (NEEDED closure), selected plugins/ and the qml/ modules imported by
-# src/VL.Qt.Native/qml/deploy.qml, then sets RUNPATH of every ELF to $ORIGIN-relative paths (patchelf).
+# the .qml files under src/VL.Qt.Native/qml/ (qml/deploy.qml lists the ones no file imports), then sets RUNPATH of
+# every ELF to $ORIGIN-relative paths (patchelf).
 # Checks afterwards: no RUNPATH outside the bundle, ldd finds everything; prints the system libs the bundle relies on.
 # Finally trims the bundle (tools/trim-linux.sh) and runs the license check (tools/check-licenses.sh); fails if it fails.
 set -euo pipefail
@@ -76,7 +77,7 @@ for p in "${plugins[@]}"; do
     done
 done
 
-# --- qml: modules imported by deploy.qml (qmlimportscanner resolves transitive imports). Only the files of each
+# --- qml: modules imported by the files under qml/ (qmlimportscanner resolves transitive imports). Only the files of each
 # module folder itself; nested folders are separate modules (e.g. QtQuick/Controls) and only come if imported.
 modules="$("$QT_DIR/libexec/qmlimportscanner" -rootPath "$ROOT/src/VL.Qt.Native/qml" -importPath "$QT_DIR/qml" \
     | python3 -c 'import json,sys

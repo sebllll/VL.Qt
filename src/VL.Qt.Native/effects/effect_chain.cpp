@@ -27,96 +27,13 @@ namespace vlqt {
 
 namespace {
 
-// Stage of a MULTI link: fx (MultiEffect) has the size of the input and lies where the input lies (input = the root
-// for the first link, whose layer texture covers the element's (0, 0, w, h); otherwise the previous stage, whose
-// x/y/size are its effect area in root coordinates); the stage covers fx.itemRect (input + padding), its area in root
-// = element coordinates. frameLeft/frameTop (first link only): how far an auto-sized Group's frame reaches left of /
-// above its origin; Qt's layer covers (0, 0, width, height) of the item, so that part goes into the left/top padding
-// (added to the automatic and the manual padding): the effect area includes the whole frame, unclipped. Mask: the
-// Binding points the frame's layer.sourceRect at the effect area of this link (protocol.h mask rule), maskEnabled
-// follows the frame; MultiEffect keeps a raw pointer to maskSource, so the frame is detached (null) before it goes.
-// The shader-switching values (blurEnabled, shadowEnabled, blurMax) are written by EffectChain::writeLink on change only.
-// fx stays at (0, 0) of an inner Item that is moved instead: MultiEffect reports itemRect again on every geometry change
-// of its own, so a position bound to it would be a binding loop.
-constexpr const char* kMultiStageQml =
-    "import QtQuick\n"
-    "import QtQuick.Effects\n"
-    "Item {\n"
-    "  id: s\n"
-    "  property Item input: null\n"
-    "  property bool first: true\n"
-    "  property Item maskFrame: null\n"
-    "  property real frameLeft: 0\n"
-    "  property real frameTop: 0\n"
-    "  property rect pad: Qt.rect(0, 0, 0, 0)\n"
-    "  readonly property Item fx: e\n"
-    "  readonly property real inX: first || !input ? 0 : input.x\n"
-    "  readonly property real inY: first || !input ? 0 : input.y\n"
-    "  readonly property rect area: Qt.rect(inX + e.itemRect.x, inY + e.itemRect.y, e.itemRect.width, e.itemRect.height)\n"
-    "  x: area.x; y: area.y; width: area.width; height: area.height\n"
-    "  Item {\n"
-    "    x: s.inX - s.area.x; y: s.inY - s.area.y\n"
-    "    MultiEffect {\n"
-    "      id: e\n"
-    "      width: s.input ? s.input.width : 0; height: s.input ? s.input.height : 0\n"
-    "      paddingRect: Qt.rect(s.pad.x + s.frameLeft, s.pad.y + s.frameTop, s.pad.width, s.pad.height)\n"
-    "      maskEnabled: s.maskFrame !== null; maskSource: s.maskFrame\n"
-    "      Binding {\n"
-    "        target: s.maskFrame ? s.maskFrame.layer : null; property: \"sourceRect\"; when: s.maskFrame !== null\n"
-    "        restoreMode: Binding.RestoreNone\n"
-    "        value: s.area\n"
-    "      }\n"
-    "    }\n"
-    "  }\n"
-    "}\n";
-
-// Stage of a SHADER link (pass driver, protocol.h "Effect chain"): the stage covers its input plus the link's padding
-// (pad: x left, y top, w right, h bottom; first link plus the Group frame, frameLeft/frameTop as for MULTI). The Binding
-// points the sourceRect of the input's layer (tex: the element's layer source for the first link, else the previous
-// stage) at that area, so the input arrives padded and transparent around it, 1:1 over UV 0..1 of the passes. Always
-// through layer.sourceRect, never on the layer's ShaderEffectSource itself: QQuickItemLayer caches the value and skips an
-// equal write, and a later MultiEffect on the same layer sets its padded rect there (else it kept our rect, hard edge).
-// SINGLE: e1 draws. TWO_PASS: e1 hidden with its own layer (texture provider of e2), e2 draws. PYRAMID: e1 = composite
-// draws, the pyramid passes are created by EffectChain::layoutPyramid under the stage, e2 is unused. active false: retired.
-constexpr const char* kPassStageQml =
-    "import QtQuick\n"
-    "import VLQt.EffectChain\n"
-    "Item {\n"
-    "  id: s\n"
-    "  property Item input: null\n"
-    "  property Item tex: null\n"
-    "  property bool first: true\n"
-    "  property bool active: true\n"
-    "  property bool twoPass: false\n"
-    "  property real frameLeft: 0\n"
-    "  property real frameTop: 0\n"
-    "  property rect pad: Qt.rect(0, 0, 0, 0)\n"
-    "  readonly property Item fx: e1\n"
-    "  readonly property Item fx2: e2\n"
-    "  readonly property real padL: pad.x + frameLeft\n"
-    "  readonly property real padT: pad.y + frameTop\n"
-    "  readonly property real inW: input ? input.width : 0\n"
-    "  readonly property real inH: input ? input.height : 0\n"
-    "  readonly property rect area: Qt.rect((first || !input ? 0 : input.x) - padL, (first || !input ? 0 : input.y) - padT,\n"
-    "    inW + padL + pad.width, inH + padT + pad.height)\n"
-    "  x: area.x; y: area.y; width: area.width; height: area.height\n"
-    "  Binding {\n"
-    "    target: !s.tex ? null : s.first ? s.tex.sourceItem.layer : s.tex.layer; property: \"sourceRect\"; when: s.active && s.tex !== null\n"
-    "    restoreMode: Binding.RestoreNone\n"
-    "    value: Qt.rect(-s.padL, -s.padT, s.area.width, s.area.height)\n"
-    "  }\n"
-    "  VlqtShaderPass { id: e1; width: s.width; height: s.height; visible: !s.twoPass; layer.enabled: s.twoPass }\n"
-    "  VlqtShaderPass { id: e2; width: s.width; height: s.height; visible: s.twoPass }\n"
-    "}\n";
+// Stage and root QML of the chain: qml/effects/MultiStage.qml (MULTI link), PassStage.qml (SHADER link), ChainRoot.qml.
+constexpr const char* kMultiStageUrl = "qrc:/vlqt/qml/effects/MultiStage.qml";
+constexpr const char* kPassStageUrl = "qrc:/vlqt/qml/effects/PassStage.qml";
+constexpr const char* kRootUrl = "qrc:/vlqt/qml/effects/ChainRoot.qml";
 
 // PYRAMID (doc 21): at most this many steps down (n); 16 halvings take any texture below 4 px.
 constexpr int kMaxLevels = 16;
-
-// layer.effect needs a component with a creation context: an inline Component of a holder object (one per engine).
-constexpr const char* kRootQml =
-    "import QtQuick\n"
-    "import VLQt.EffectChain\n"
-    "QtObject { property Component fx: Component { VlqtEffectChain {} } }\n";
 
 // MultiEffect property per MULTI key (index = prop - 833); nullptr: on the stage (PADDING_RECT pad, MASK_SOURCE maskFrame).
 constexpr const char* kMultiNames[kEffectMultiKeys] = {
@@ -154,14 +71,13 @@ QVariant toVariant(const EffectValue& v)
     }
 }
 
-QQmlComponent* compile(QQmlEngine* engine, QQmlComponent*& slot, const char* qml, const char* url, std::string& err)
+QQmlComponent* compile(QQmlEngine* engine, QQmlComponent*& slot, const char* url, std::string& err)
 {
-    if (!slot) {
-        slot = new QQmlComponent(engine);
-        slot->setData(QByteArray(qml), QUrl(QString::fromLatin1(url)));
-    }
+    if (!slot)
+        slot = new QQmlComponent(engine, QUrl(QString::fromLatin1(url)));
     if (slot->isError()) {
-        err = std::string(url) + ": " + slot->errorString().toStdString();
+        // errorString names the file (url:line:column).
+        err = slot->errorString().toStdString();
         return nullptr;
     }
     return slot;
@@ -301,7 +217,7 @@ QQmlComponent* EffectChain::rootComponent(std::string& err)
 {
     registerTypes();
     if (!m_components.rootHolder) {
-        QQmlComponent* c = compile(m_components.engine, m_components.root, kRootQml, "vlqt_effect_chain.qml", err);
+        QQmlComponent* c = compile(m_components.engine, m_components.root, kRootUrl, err);
         m_components.rootHolder = c ? c->create() : nullptr;
         if (!m_components.rootHolder) {
             if (err.empty())
@@ -458,8 +374,8 @@ bool EffectChain::buildStages(std::string& err)
         Link& l = m_links[i];
         const bool multi = l.kind == VLQT_EFFECT_CHAIN_LINK_MULTI;
         QQmlComponent* c = multi
-            ? compile(m_components.engine, m_components.multi, kMultiStageQml, "vlqt_effect_multi.qml", err)
-            : compile(m_components.engine, m_components.pass, kPassStageQml, "vlqt_effect_pass.qml", err);
+            ? compile(m_components.engine, m_components.multi, kMultiStageUrl, err)
+            : compile(m_components.engine, m_components.pass, kPassStageUrl, err);
         QObject* obj = c ? c->create() : nullptr;
         auto* stage = qobject_cast<QQuickItem*>(obj);
         if (!stage) {
