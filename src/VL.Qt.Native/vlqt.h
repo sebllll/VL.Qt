@@ -529,10 +529,15 @@ VLQT_API int vlqt_shader_load(unsigned long long id, const char* utf8Path, int s
  * VLQT_ERR_UNKNOWN_ID. Bake errors (compiler message with line numbers) and failed checks: Failed with
  * RESOURCE_EVENT_ERROR. Main thread, else VLQT_ERR_WRONG_THREAD. */
 VLQT_API int vlqt_shader_load_source(unsigned long long id, const char* utf8Source, int stage);
-/* Shader reflection (shader node factory): bakes utf8Source (full Qt GLSL, NUL-terminated) synchronously to
- * SPIR-V 100 only (under the same mutex as the runtime bakes, never in parallel) and writes the result as UTF-8 text
- * to buf (a buffer export, top of this file; a bake error is VLQT_OK with the text "error ..."). VLQT_ERR_BAD_ARGUMENT:
- * empty source, stage not VLQT_SHADER_STAGE_*. No QGuiApplication needed, any thread.
+/* Shader reflection (shader node factory): bakes utf8Source (full Qt GLSL, NUL-terminated) to SPIR-V 100 only (under
+ * the same mutex as the runtime bakes, never in parallel) and writes the result as UTF-8 text to buf (a buffer export,
+ * top of this file; a bake error is VLQT_OK with the text "error ..."). VLQT_ERR_BAD_ARGUMENT: empty source, stage not
+ * VLQT_SHADER_STAGE_*. No QGuiApplication needed.
+ * Thread: any, and it is synchronous on the calling thread (there is no async variant). The node factory calls it
+ * from the description of a shader node (ShaderNodeLayout.Load, a thread of vvvv's choosing): a source not seen
+ * before blocks the caller for one
+ * bake (and for a runtime bake that holds the mutex), the same source again is answered from the bake cache of
+ * QtNative (64 entries, a bake error too) without a bake.
  * Text: one entry per line, '\n'-separated, fields separated by one space:
  *   line 1: "ok" or "error"
  *   error:  the error lines as in a RESOURCE_EVENT_ERROR of a bake ("<stage> code, line <n>: <text>")

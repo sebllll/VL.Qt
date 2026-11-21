@@ -136,6 +136,13 @@ public static class ShaderErrorsTest
         s.Check(statePlain == Protocol.ResourceState.Ready && !Of(plain, Protocol.ResourceEventId.Warning).Any() && !Of(plain, Protocol.ResourceEventId.Error).Any(),
             $"an ordinary uniform name gives no warning and no error ({statePlain})");
 
+        // --- a uniform block that is not at binding 0 is rejected with a clear error (NFX-19) ---
+        var moved = Load(WithLength.Replace("std140, binding = 0", "std140, binding = 3"), out var stateMoved, out _);
+        ids.Add(moved);
+        var movedText = Of(moved, Protocol.ResourceEventId.Error).LastOrDefault()?.Text ?? "";
+        s.Check(stateMoved == Protocol.ResourceState.Failed && movedText.Contains("binding 0"),
+            $"uniform block at binding 3 -> Failed with an error about binding 0 ({stateMoved}, '{movedText.Replace("\n", " | ")}')");
+
         foreach (var id in ids)
             Native.vlqt_res_release(id);
         s.Pump(2);

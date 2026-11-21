@@ -97,6 +97,8 @@ std::string checkReflection(const QShader& s)
     const auto blocks = d.uniformBlocks();
     if (blocks.size() > 1)
         return "more than one uniform block (ShaderEffect takes one std140 block at binding 0, like Qt's ShaderEffect)";
+    if (!blocks.isEmpty() && blocks.first().binding != 0)
+        return "the uniform block must use binding 0 (like Qt's ShaderEffect; the samplers start at binding 1)";
     if (!d.pushConstantBlocks().isEmpty() || !d.storageBlocks().isEmpty() || !d.storageImages().isEmpty())
         return "push constants, storage buffers or storage images are not supported";
     if (!d.separateImages().isEmpty() || !d.separateSamplers().isEmpty())
@@ -173,15 +175,17 @@ std::string glslRenames(const QShader& s, const std::string& where)
 
 // --- runtime bake ----------------------------------------------------------------------------------------------
 
-// Targets QShaderBaker generates: only the shader language of the process backend (main thread, at loadSource).
-// Unknown backend: SPIR-V, HLSL and GLSL like qsb's usual set.
+// Targets QShaderBaker generates (main thread, at loadSource): the shader language of the process backend, and on a
+// backend other than OpenGL a GLSL 150 translation besides it, so that the one bake also gives glslRenames its GLSL code
+// (a patch may be exported to Linux). Unknown backend: SPIR-V, HLSL and GLSL like qsb's usual set.
 QList<QShaderBaker::GeneratedShader> bakeTargets(int source)
 {
     using G = QShaderBaker::GeneratedShader;
+    const G glslCheck(QShader::GlslShader, QShaderVersion(150));
     switch (source) {
-    case QShader::HlslShader: return {G(QShader::HlslShader, QShaderVersion(50))};
-    case QShader::SpirvShader: return {G(QShader::SpirvShader, QShaderVersion(100))};
-    case QShader::MslShader: return {G(QShader::MslShader, QShaderVersion(12))};
+    case QShader::HlslShader: return {G(QShader::HlslShader, QShaderVersion(50)), glslCheck};
+    case QShader::SpirvShader: return {G(QShader::SpirvShader, QShaderVersion(100)), glslCheck};
+    case QShader::MslShader: return {G(QShader::MslShader, QShaderVersion(12)), glslCheck};
     case QShader::GlslShader:
         // the GL backend of QRhi picks the best version the context supports from what is there
         if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES)
@@ -219,7 +223,8 @@ std::string cleanBakeErrors(const QString& name, const QString& log)
 }
 
 // Process wide bake cache: key = stage + backend source + SHA-1 of the source, value = the checked QShader or the
-// error text (a failing source is not baked again either). Worker threads: guarded by s_cacheMutex. FIFO with LRU
+// error text (a failing source is not baked again either); reflect() keeps its text under the backend source -2.
+// Worker threads: guarded by s_cacheMutex. FIFO with LRU
 // touch on hits, kMaxCache entries. Cancelled bakes are not stored.
 struct CacheEntry
 {
@@ -227,6 +232,7 @@ struct CacheEntry
     QShader shader;
     std::string error;
     std::string warning; // glslRenames
+    std::string reflection; // reflect(): the text for the pin model (shader and error empty)
 };
 constexpr size_t kMaxCache = 64;
 std::mutex s_cacheMutex;
@@ -238,7 +244,7 @@ QByteArray cacheKey(int stage, int source, const QByteArray& code)
         + QCryptographicHash::hash(code, QCryptographicHash::Sha1).toHex();
 }
 
-bool cacheFind(const QByteArray& key, QShader& shader, std::string& error, std::string& warning)
+bool cacheFind(const QByteArray& key, CacheEntry& out)
 {
     std::lock_guard lock(s_cacheMutex);
     for (auto it = s_cache.begin(); it != s_cache.end(); ++it) {
@@ -246,25 +252,23 @@ bool cacheFind(const QByteArray& key, QShader& shader, std::string& error, std::
             continue;
         CacheEntry e = std::move(*it);
         s_cache.erase(it);
-        shader = e.shader;
-        error = e.error;
-        warning = e.warning;
+        out = e;
         s_cache.push_back(std::move(e));
         return true;
     }
     return false;
 }
 
-void cacheStore(const QByteArray& key, const QShader& shader, const std::string& error, const std::string& warning)
+void cacheStore(CacheEntry entry)
 {
     std::lock_guard lock(s_cacheMutex);
     for (auto it = s_cache.begin(); it != s_cache.end(); ++it) {
-        if (it->key == key) {
+        if (it->key == entry.key) {
             s_cache.erase(it);
             break;
         }
     }
-    s_cache.push_back({key, shader, error, warning});
+    s_cache.push_back(std::move(entry));
     while (s_cache.size() > kMaxCache)
         s_cache.pop_front();
 }
@@ -323,13 +327,14 @@ public:
     static std::string bake(ShaderResource& w)
     {
         const QByteArray key = cacheKey(w.m_stage, w.m_source, w.m_code);
-        QShader s;
-        std::string err, warning;
-        if (cacheFind(key, s, err, warning)) {
+        CacheEntry entry;
+        if (cacheFind(key, entry)) {
             qCDebug(lcShader, "%s: bake cache hit", qPrintable(w.m_path));
         } else {
             if (w.cancel.load())
                 return "cancelled";
+            QShader s;
+            std::string err;
             {
                 std::lock_guard lock(s_bakeMutex);
                 if (w.cancel.load())
@@ -340,8 +345,14 @@ public:
                 baker.setGeneratedShaderVariants({QShader::StandardShader});
                 baker.setGeneratedShaders(w.m_targets);
                 s = baker.bake();
-                if (!s.isValid())
+                if (!s.isValid()) {
                     err = cleanBakeErrors(w.m_path, baker.errorMessage());
+                    // On a backend other than OpenGL the bake also translates to GLSL 150 (bakeTargets): a failure
+                    // that glslang did not locate in the source comes from that translation.
+                    if (w.m_source != QShader::GlslShader && err.find(", line ") == std::string::npos)
+                        err += "\n(the source is also translated to GLSL 150, the shader language of OpenGL on Linux; "
+                               "a patch that cannot be translated would not run there)";
+                }
             }
             if (w.cancel.load())
                 return "cancelled";
@@ -353,26 +364,17 @@ public:
             else if (w.cancel.load())
                 return "cancelled";
             else
-                warning = glslRenames(w.m_source == QShader::GlslShader ? s : glslCheckBake(w), where);
-            cacheStore(key, s, err, warning);
+                entry.warning = glslRenames(s, where);
+            entry.key = key;
+            entry.shader = s;
+            entry.error = err;
+            cacheStore(entry);
         }
-        if (!err.empty())
-            return err;
-        w.m_shader = s;
-        w.m_warning = std::move(warning);
+        if (!entry.error.empty())
+            return entry.error;
+        w.m_shader = entry.shader;
+        w.m_warning = std::move(entry.warning);
         return {};
-    }
-
-    // Another backend than OpenGL: a GLSL 150 translation only for glslRenames (the patch may be exported to Linux).
-    // A failure here is no error (the shader works on this backend), there is just nothing to check.
-    static QShader glslCheckBake(const ShaderResource& w)
-    {
-        std::lock_guard lock(s_bakeMutex);
-        QShaderBaker baker;
-        baker.setSourceString(w.m_code, w.m_stage == VLQT_SHADER_STAGE_VERTEX ? QShader::VertexStage : QShader::FragmentStage);
-        baker.setGeneratedShaderVariants({QShader::StandardShader});
-        baker.setGeneratedShaders({QShaderBaker::GeneratedShader(QShader::GlslShader, QShaderVersion(150))});
-        return baker.bake();
     }
 
     std::string takeWarning(Content& work) override
@@ -445,6 +447,9 @@ int loadSource(uint64_t id, const char* utf8Source, int stage)
 
 namespace {
 
+// Key part of the reflection entries in the bake cache (the backend sources are >= 0, -1 = unknown backend).
+constexpr int reflectSource = -2;
+
 // GLSL name of a reflected variable type, "other" for everything the pin model does not map.
 const char* glslTypeName(QShaderDescription::VariableType t)
 {
@@ -483,11 +488,14 @@ int reflect(const char* utf8Source, int stage, char* buf, int bufLen, int* writt
         return fail(badValueRc, "shader_reflect: unknown stage " + std::to_string(stage));
     const bool vertex = stage == VLQT_SHADER_STAGE_VERTEX;
 
-    std::string text;
-    {
+    const QByteArray code(utf8Source);
+    const QByteArray key = cacheKey(stage, reflectSource, code);
+    CacheEntry entry;
+    if (!cacheFind(key, entry)) {
         std::lock_guard lock(s_bakeMutex);
+        std::string& text = entry.reflection;
         QShaderBaker baker;
-        baker.setSourceString(QByteArray(utf8Source), vertex ? QShader::VertexStage : QShader::FragmentStage);
+        baker.setSourceString(code, vertex ? QShader::VertexStage : QShader::FragmentStage);
         baker.setGeneratedShaderVariants({QShader::StandardShader});
         baker.setGeneratedShaders({QShaderBaker::GeneratedShader(QShader::SpirvShader, QShaderVersion(100))});
         const QShader s = baker.bake();
@@ -512,7 +520,10 @@ int reflect(const char* utf8Source, int stage, char* buf, int bufLen, int* writt
             for (const auto& smp : samplers)
                 text += "\nsampler " + smp.name.toStdString() + ' ' + std::to_string(smp.binding);
         }
+        entry.key = key;
+        cacheStore(entry);
     }
+    const std::string& text = entry.reflection;
     return copyText(text.data(), static_cast<int>(text.size()), buf, bufLen, written, required);
 }
 
@@ -521,30 +532,46 @@ std::shared_ptr<ShaderResource> ready(uint64_t id)
     return std::static_pointer_cast<ShaderResource>(readyContent(id, VLQT_RESOURCE_KIND_SHADER));
 }
 
-const QShader& defaultVertexShader()
+namespace {
+
+// Qt Quick's own ShaderEffect default of one stage (qsgrhishadereffectnode.cpp); the path has been stable through Qt 6,
+// a search through Qt's resources is the fallback. Invalid QShader plus one warning if Qt does not have it.
+QShader loadQtDefaultShader(const char* fileName, const char* missing)
 {
-    static const QShader s = [] {
-        // Qt Quick's own ShaderEffect default (qsgrhishadereffectnode.cpp); the path has been stable through Qt 6.
-        const QString known = QStringLiteral(":/qt-project.org/scenegraph/shaders_ng/shadereffect.vert.qsb");
-        QString path = QFile::exists(known) ? known : QString();
-        if (path.isEmpty()) {
-            QDirIterator it(QStringLiteral(":/qt-project.org"), QDirIterator::Subdirectories);
-            while (it.hasNext()) {
-                const QString p = it.next();
-                if (p.endsWith(QStringLiteral("/shadereffect.vert.qsb"))) {
-                    path = p;
-                    break;
-                }
+    const QString name = QString::fromLatin1(fileName);
+    const QString known = QStringLiteral(":/qt-project.org/scenegraph/shaders_ng/") + name;
+    QString path = QFile::exists(known) ? known : QString();
+    if (path.isEmpty()) {
+        QDirIterator it(QStringLiteral(":/qt-project.org"), QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            const QString p = it.next();
+            if (p.endsWith(u'/' + name)) {
+                path = p;
+                break;
             }
         }
-        QFile f(path);
-        QShader r;
-        if (!path.isEmpty() && f.open(QIODevice::ReadOnly))
-            r = QShader::fromSerialized(f.readAll());
-        if (!r.isValid())
-            qCWarning(lcShader, "Qt's default ShaderEffect vertex shader not found: ShaderEffect needs a Vertex Shader");
-        return r;
-    }();
+    }
+    QFile f(path);
+    QShader r;
+    if (!path.isEmpty() && f.open(QIODevice::ReadOnly))
+        r = QShader::fromSerialized(f.readAll());
+    if (!r.isValid())
+        qCWarning(lcShader, "%s", missing);
+    return r;
+}
+
+} // namespace
+
+const QShader& qtDefaultShader(int stage)
+{
+    // One static per stage: each is read on the first use of its stage only.
+    if (stage == VLQT_SHADER_STAGE_VERTEX) {
+        static const QShader s = loadQtDefaultShader("shadereffect.vert.qsb",
+            "Qt's default ShaderEffect vertex shader not found: ShaderEffect needs a Vertex Shader");
+        return s;
+    }
+    static const QShader s = loadQtDefaultShader("shadereffect.frag.qsb",
+        "Qt's default ShaderEffect fragment shader not found: effect chain links without a Ready shader draw nothing");
     return s;
 }
 
