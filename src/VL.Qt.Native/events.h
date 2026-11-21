@@ -17,9 +17,8 @@
  * (marked by Elements, Qt has no public signal for these; markGeometry), CREATE and a new handle. Attached masks go
  * with their element (they lie in its coordinates, not below it). A static scene reads no geometry at all; media,
  * error, clicks and user values are still read every poll, but only for types that have them. A new
- * handle (sink change) forgets the sent state, so the new sink gets the current values right away. The poll
- * record index is always 0 here: one item = one binding, the C# side resolves handle -> sink slot (incl. the
- * slot index); index is an offset relative to that slot, reserved for items serving several slots.
+ * handle (sink change) forgets the sent state, so the new sink gets the current values right away. One item = one
+ * binding: the C# side resolves the feedbackId of a poll record to its sink slot.
  *
  * Button items additionally report Qt `clicked` as
  *   EVENT_CLICK (u32 count delta)              clicked signals since the last poll
@@ -32,12 +31,10 @@
  * EVENT_QML_SIGNAL (every emitted signal, cap 256 per poll, QmlItem in qmlitem.h), formats in protocol.h; their errors (load,
  * type, rejected properties) arrive as EVENT_ERROR like those of Image/Video.
  * Elements have no pointer handlers of their own: without an attached input handler an item is transparent for input.
- * BIND flags are ignored for elements (CANCEL_PRESS has no effect since #320, the old Interactive/Pointer flags of
- * #208 are reserved).
  *
  * Input handlers (protocol.h head comment) are protocol objects of their own (HandlerNode): CREATE reserves
  * the id, REPARENT creates the QML handler at the element item (appended to its data, like `Item { HoverHandler {} }`)
- * and applies the properties set before, BIND routes its events to a sink handle (index 0), DESTROY of the handler or
+ * and applies the properties set before, BIND routes its events to a sink handle, DESTROY of the handler or
  * of its element removes it. Several handlers per item are fine (each reports to its own sink). Events, only while
  * bound:
  *   Hover handler   EVENT_HOVER (u8) on change. Not blocking: hover reaches every handler under the cursor. No position
@@ -102,7 +99,7 @@
  * long presses not yet polled are dropped, as is wheel motion, and the new handle gets EVENT_TAP_COUNT only from its first tap. A Text item with at least one handler hit-tests against
  * the painted text rect (TextMask as containmentMask), not the item rectangle; line-/glyph-exact testing is not done.
  *
- * Window-level (handle 0, index 0, not a sink), queued by the poll after a move/resize/state change
+ * Window-level (feedbackId 0, not a sink), queued by the poll after a move/resize/state change
  * (QWindow x/y/width/height/windowState/screen/visible changed) and once after creation:
  *   EVENT_WINDOW_GEOMETRY (f32 x, f32 y, f32 w, f32 h, u32 flags, f32 cx, f32 cy)
  *                   x/y = outer top-left incl. frame (QWindow::framePosition), w/h = client size, logical pixels (DIP)

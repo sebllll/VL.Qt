@@ -23,8 +23,8 @@
  * from package 04). When both are zero the resource is freed at the end of the frame (endFrame), never in a worker; a
  * running decode is cancelled or finishes first. After the host release no event is sent for the id any more.
  *
- * Status queue: vlqt_res_poll, records like the window poll: u16 event, u16 len, u64 id, payload (4-byte aligned,
- * len = 8 + payload bytes). STATE u8 state, ERROR UTF-8 text, INFO u32 w, u32 h, u32 format, u64 bytes, WARNING
+ * Status queue: vlqt_res_poll, records with the header of the window poll: u16 event, u16 flags (0), u32 len, u64 id,
+ * payload (4-byte aligned, len = 8 + payload bytes). STATE u8 state, ERROR UTF-8 text, INFO u32 w, u32 h, u32 format, u64 bytes, WARNING
  * UTF-8 text (Kind::takeWarning after a decode, at most one per resource).
  *
  * Replacement: start on a Ready resource decodes and uploads a second Work next to the current one; the state

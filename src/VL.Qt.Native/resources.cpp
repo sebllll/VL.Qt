@@ -896,15 +896,17 @@ private:
 
     void pushEvent(uint16_t ev, uint64_t id, const void* payload, int payloadLen)
     {
-        const uint16_t len = uint16_t(8 + payloadLen);
+        const uint32_t len = uint32_t(8 + payloadLen); // id + payload, without padding
+        const uint16_t flags = 0;
         const qsizetype at = m_events.size();
-        m_events.resize(at + ((VLQT_HEADER_SIZE + len + 3) & ~3), '\0');
+        m_events.resize(at + ((qsizetype(VLQT_HEADER_SIZE) + len + 3) & ~qsizetype(3)), '\0');
         char* d = m_events.data() + at;
         std::memcpy(d, &ev, 2);
-        std::memcpy(d + 2, &len, 2);
-        std::memcpy(d + 4, &id, 8);
+        std::memcpy(d + 2, &flags, 2);
+        std::memcpy(d + 4, &len, 4);
+        std::memcpy(d + VLQT_HEADER_SIZE, &id, 8);
         if (payloadLen)
-            std::memcpy(d + 12, payload, size_t(payloadLen));
+            std::memcpy(d + VLQT_HEADER_SIZE + 8, payload, size_t(payloadLen));
     }
 
     // Removes the queued records of id (host release).
@@ -914,11 +916,11 @@ private:
         const qsizetype n = m_events.size();
         char* d = m_events.data();
         while (read + VLQT_HEADER_SIZE + 8 <= n) {
-            uint16_t len;
+            uint32_t len;
             uint64_t rid;
-            std::memcpy(&len, d + read + 2, 2);
-            std::memcpy(&rid, d + read + 4, 8);
-            const qsizetype size = (VLQT_HEADER_SIZE + len + 3) & ~3;
+            std::memcpy(&len, d + read + 4, 4);
+            std::memcpy(&rid, d + read + VLQT_HEADER_SIZE, 8);
+            const qsizetype size = (qsizetype(VLQT_HEADER_SIZE) + len + 3) & ~qsizetype(3);
             if (rid != id) {
                 if (write != read)
                     std::memmove(d + write, d + read, size_t(size));

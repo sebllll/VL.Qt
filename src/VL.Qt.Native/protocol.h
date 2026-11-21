@@ -11,12 +11,13 @@
  * Protocol.ImageLoadFlags.Mipmaps <-> VLQT_IMAGE_LOAD_MIPMAPS).
  *
  * Wire format (little-endian, every command 4-byte aligned):
- *   header  u16 op, u16 payloadLen (payload bytes after the header, excluding alignment padding)
+ *   header  u16 op, u16 flags (0, reserved, else -7), u32 payloadLen (payload bytes after the header, excluding alignment
+ *           padding; at most VLQT_MAX_COMMAND_PAYLOAD, else the apply fails with -2 and nothing of the command is applied)
  *   CREATE      u32 id, u16 type
  *   DESTROY     u32 id                       (recursive; child ids are released too)
  *   REPARENT    u32 id, u32 parent, u32 index (parent 0 = window root)
  *   SET         u32 id, u16 prop, u16 valueType, value
- *   BIND        u32 id, u32 feedbackId, u16 flags (feedbackId 0 = unbind)
+ *   BIND        u32 id, u32 feedbackId (feedbackId 0 = unbind)
  *   SET_CLEAR_COLOR color
  *   RESET       (no payload)                 destroys every object of the window (ids free again), like one DESTROY
  *                                            per top-level object; window root, clear color and clear stay
@@ -57,7 +58,7 @@
  *         vec2/vec3/vec4 (2/3/4 x f32), ivec2 (2 x i32),
  *         f32 array (u32 count, count x f32), path (u32 verbCount, u32 pointCount, verbCount x u8, zero padding to 4 bytes,
  *         pointCount x 2 x f32). Path verbs: 0 Move (1 point), 1 Line (1), 2 Quad (2), 3 Cubic (3), 4 Close (0); pointCount
- *         must equal the points the verbs take (SHAPE). Both are limited by the u16 payload length of a command.
+ *         must equal the points the verbs take (SHAPE).
  * Ids are u32, assigned by the C# reconciler; 0 = window root.
  *
  * Input handlers are objects of their own in the same id space (types from 32, see vlqt_element_type):
@@ -66,7 +67,7 @@
  *               ignored); a second REPARENT of an attached handler is -8 (the host re-attaches by DESTROY + CREATE)
  *   SET         handler properties from block 768 (set before the REPARENT = applied on creation); element
  *               properties on a handler and handler properties on an element are -6
- *   BIND        handler, feedbackId, 0: the handler's events go to feedbackId (index 0); a new id forgets the
+ *   BIND        handler, feedbackId: the handler's events go to feedbackId; a new id forgets the
  *               sent state, the current state is sent again (the old id gets HOVER/PRESS/ACTIVE 0 if 1 was sent,
  *               WHEEL (0, 0) after motion); a running press of a Tap handler is cancelled for the new id
  *   DESTROY     removes only the handler; DESTROY/RESET of an element removes its handlers too (ids free again)
@@ -82,7 +83,7 @@
  *   Link header u16 kind, u16 count (entries of the body), u32 bodyLen (multiple of 4; the body ends exactly there).
  *   Unknown kind -7, lengths that do not add up -2.
  *   kind MULTI: one MultiEffect run (consecutive built-in links, folded in C# per run). Body: count entries, each
- *     u16 key (vlqt_multi_effect_key 833..855, else -6; 832 ENABLED is no entry), u16 valueType (the property's type, else
+ *     u16 key (vlqt_multi_effect_key 833..855, else -6; 832 is unused), u16 valueType (the property's type, else
  *     -7), value like SET, padding to 4. Unset properties have Qt's defaults (all parts off, BLUR_MAX 32, SHADOW_BLUR
  *     1, SHADOW_SCALE 1, COLORIZATION_COLOR red, AUTO_PADDING on, MASK_THRESHOLD_MAX 1); a run is applied whole (a
  *     value missing in the next send is back at its default). Effect area of the run = its input (element or the
@@ -91,8 +92,8 @@
  *     docs/effects-and-shaders.md). Body: u16 template (vlqt_effect_template), u16 shaderCount, u64
  *     shaderIds[shaderCount] (stage FRAGMENT resources; roles per template: SINGLE and TWO_PASS [frag], PYRAMID
  *     [prefilter, composite]; another count -7; pyramid_down/pyramid_up are loaded by QtNative as builtin:), 4 x f32
- *     padding (DIP: left, top, right, bottom, >= 0), f32 strength, u16 0 (reserved, else -7), u16 0,
- *     then count uniform entries exactly like SET_UNIFORMS (STRING -7, nameLen 0 / > max -7).
+ *     padding (DIP: left, top, right, bottom, >= 0), f32 strength, then count uniform entries exactly like
+ *     SET_UNIFORMS (STRING -7, nameLen 0 / > max -7).
  *     strength: SINGLE / TWO_PASS unused (0); PYRAMID = radius in DIP
  *     (weights from radius and dpr; the step count follows the pixel size of the effect area only, so a radius change
  *     writes weights, a size / dpr change rebuilds the steps). PYRAMID gets the uniform entries in prefilter and
@@ -135,9 +136,8 @@
  *   DESTROY). DESTROY of an attached mask detaches it first; DESTROY/RESET of the element destroys its attached mask
  *   too (its ids are free). A used mask item is deleted one frame later. REPARENT of an attached mask, and
  *   attaching the element itself, an ancestor, an element with a parent or one attached elsewhere, is -8.
- * Poll buffer (QtNative -> C#), per record, 4-byte aligned: u16 event, u16 len, u32 feedbackId, u32 index, payload;
- *   len = bytes of feedbackId + index + payload (without padding). feedbackId = the one of BIND; index = offset to the
- *   slot index of that binding (0 = the bound slot itself; QtNative always sends 0, see events.h).
+ * Poll buffer (QtNative -> C#), per record, 4-byte aligned: u16 event, u16 flags (0), u32 len, u32 feedbackId, payload;
+ *   len = bytes of feedbackId + payload (without padding). feedbackId = the one of BIND; the record goes to the bound slot.
  *   MEASURED 2 x f32 (w, h), SCENE_BOUNDS 4 x f32 (x, y, w, h) in root coordinates, logical pixels; HOVER/PRESS u8 (0/1),
  *   CLICK u32 (Tap handler: taps since the last poll; Button: clicked signals), POINTER 2 x f32 (x, y) item-local logical pixels,
  *   MEDIA 2 x f32 (position, duration) in seconds (Video only, 0 until loaded); see events.h.
@@ -161,8 +161,8 @@
  *   Several user changes between two polls: one EVENT_VALUE with the last one. A new feedbackId drops a change not polled.
  *
  * Resources (resources.h): window independent, own status queue vlqt_res_poll (vlqt.h). Ids are u64 assigned by
- *   QtNative: index (low 32 bits) | generation (high 32 bits). Record per status, 4-byte aligned: u16 event, u16 len,
- *   u64 id, payload; len = 8 + payload bytes (without padding).
+ *   QtNative: index (low 32 bits) | generation (high 32 bits). Record per status, 4-byte aligned: u16 event, u16 flags
+ *   (0), u32 len, u64 id, payload; len = 8 + payload bytes (without padding).
  *   RESOURCE_EVENT_STATE u8 state (vlqt_resource_state), RESOURCE_EVENT_ERROR UTF-8 text (Failed, sent before its STATE), RESOURCE_EVENT_INFO
  *   u32 width, u32 height, u32 format, u64 uploaded bytes (sent before STATE Ready, and after each replacement),
  *   RESOURCE_EVENT_WARNING UTF-8 text (at most one per resource). No record after vlqt_res_release.
@@ -253,9 +253,10 @@
 /* One number for the command protocol (this file) and the C ABI (vlqt.h, vlqt_test.h): vlqt_app_get_abi_version() returns it, VL.Qt.dll
  * compares it with Protocol.AbiVersion before the first window or resource and refuses a vlqt.dll with another one.
  * Bump it on EVERY change to a constant, a struct layout or an exported signature (also additions); mirror it in Protocol.cs. */
-#define VLQT_ABI_VERSION 19
+#define VLQT_ABI_VERSION 20
 #define VLQT_COMMAND_ALIGN 4
-#define VLQT_HEADER_SIZE 4
+#define VLQT_HEADER_SIZE 8 /* command, poll record and resource record: u16 op/event, u16 flags (0), u32 len */
+#define VLQT_MAX_COMMAND_PAYLOAD 67108864 /* sanity cap of payloadLen (64 MB); above it the apply fails with VLQT_ERR_BAD_LENGTH */
 #define VLQT_ROOT_ID 0
 #define VLQT_UNIFORM_NAME_MAX 255 /* max UTF-8 bytes of a SET_UNIFORMS name */
 
@@ -263,13 +264,13 @@
  * lengths against them, CommandWriter and EventReader write and read with them, the unit tests compare the mirror. */
 #define VLQT_CREATE_PAYLOAD 6 /* CREATE: u32 id, u16 type (the whole payload) */
 #define VLQT_REPARENT_PAYLOAD 12 /* REPARENT: u32 id, u32 parent, u32 index (the whole payload) */
-#define VLQT_BIND_PAYLOAD 10 /* BIND: u32 id, u32 feedbackId, u16 flags (the whole payload) */
+#define VLQT_BIND_PAYLOAD 8 /* BIND: u32 id, u32 feedbackId (the whole payload) */
 #define VLQT_SET_FIELDS_SIZE 8 /* SET: u32 id, u16 prop, u16 valueType in front of the value */
 #define VLQT_LIST_FIELDS_SIZE 8 /* SET_STYLE, SET_UNIFORMS, SET_QML_PROPERTIES, SET_EFFECT_CHAIN: u32 id, u16 count, u16 flags in front of the entries */
 #define VLQT_ENTRY_HEADER_SIZE 4 /* entry of SET_STYLE (u16 field, u8 state, u8 valueType), SET_UNIFORMS and SET_QML_PROPERTIES (u16 valueType, u16 nameLen) in front of name and value */
 #define VLQT_EFFECT_CHAIN_LINK_HEADER_SIZE 8 /* effect chain link: u16 kind, u16 count, u32 bodyLen in front of the body */
-#define VLQT_EFFECT_CHAIN_LINK_SHADER_FIXED_SIZE 24 /* SHADER link body after u16 template, u16 shaderCount and the shader ids: 4 x f32 padding, f32 strength, u16 reserved, u16 0 */
-#define VLQT_EVENT_FIELDS_SIZE 8 /* poll record after its header: u32 feedbackId, u32 index in front of the payload */
+#define VLQT_EFFECT_CHAIN_LINK_SHADER_FIXED_SIZE 20 /* SHADER link body after u16 template, u16 shaderCount and the shader ids: 4 x f32 padding, f32 strength */
+#define VLQT_EVENT_FIELDS_SIZE 4 /* poll record after its header: u32 feedbackId in front of the payload */
 
 /* Opcodes (u16) */
 enum vlqt_op {
@@ -455,7 +456,7 @@ enum vlqt_property {
 /* Keys of the entries of a MULTI link of SET_EFFECT_CHAIN (u16): the values of one MultiEffect run, Qt's defaults.
  * Not settable by SET (-6, see the head comment "Effect chain"); the numbers continue the block 832 of vlqt_property. */
 enum vlqt_multi_effect_key {
-    VLQT_MULTI_EFFECT_KEY_ENABLED = 832,            /* reserved (was: layer on/off of the single Effect layer, plan effects/01) */
+    /* 832 unused (was ENABLED: layer on/off of the single Effect layer, plan effects/01) */
     VLQT_MULTI_EFFECT_KEY_BLUR_ENABLED = 833,       /* bool (default false) */
     VLQT_MULTI_EFFECT_KEY_BLUR = 834,               /* f32 0..1 */
     VLQT_MULTI_EFFECT_KEY_BLUR_MAX = 835,           /* i32 pixels (default 32), switches shaders */
@@ -488,13 +489,6 @@ enum vlqt_path_verb {
     VLQT_VERB_QUAD = 2,  /* 2 points: control, end */
     VLQT_VERB_CUBIC = 3, /* 3 points: control 1, control 2, end */
     VLQT_VERB_CLOSE = 4  /* 0 points */
-};
-
-/* BIND flags (u16, bit mask). Elements have no pointer handlers since #320: 1 (INTERACTIVE) and 4 (POINTER) of #208
- * are reserved, keep them unused. 2 (CANCEL_PRESS) is reserved as well: no effect any more (a new sink of a Tap
- * handler cancels its press itself), the C# reconciler does not send it. */
-enum vlqt_bind {
-    VLQT_BIND_CANCEL_PRESS = 2 /* reserved */
 };
 
 /* SET_UNIFORMS flags (u16, bit mask) */
