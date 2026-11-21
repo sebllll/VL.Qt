@@ -18,7 +18,7 @@ namespace VL.Qt.Stride
     /// Renders the QtTexture scenes of one app host (service of the <see cref="AppHost"/>, disposed with it): the scenes
     /// schedule themselves in Update; at the start of Stride's draw (a game system with the lowest DrawOrder, after all
     /// updates, before any other system draws) this applies their commands, renders all of them in one native call
-    /// (<see cref="OffscreenRenderer.RenderBatch"/>, ordered against Stride's immediate context by fences) and polls
+    /// (<see cref="OffscreenScene.RenderBatch"/>, ordered against Stride's immediate context by fences) and polls
     /// their events. Like SkiaTexture.DefaultRenderer, which hooks the internal VLGame.DrawStarted, raised right before
     /// the game systems draw. Also tells the scenes when Stride's device is reset or disposed. Main thread only.
     /// </summary>
@@ -32,8 +32,8 @@ namespace VL.Qt.Stride
         private readonly DrawStartSystem _system;
         private readonly IGraphicsDeviceService? _deviceService;
         private readonly List<SharedTextureScene> _scheduled = new();
-        // Renderers of one batch: reused, so a frame allocates nothing.
-        private OffscreenRenderer[] _batch = new OffscreenRenderer[8];
+        // Scene handles of one batch: reused, so a frame allocates nothing.
+        private SceneHandle[] _batch = new SceneHandle[8];
         private bool _disposed;
 
         private QtTextureRenderer(AppHost appHost)
@@ -99,7 +99,7 @@ namespace VL.Qt.Stride
             try
             {
                 if (_batch.Length < count)
-                    _batch = new OffscreenRenderer[Math.Max(count, _batch.Length * 2)];
+                    _batch = new SceneHandle[Math.Max(count, _batch.Length * 2)];
                 for (int i = 0; i < count; i++)
                     _batch[i] = _scheduled[i].ApplyCommands();
 
@@ -107,8 +107,8 @@ namespace VL.Qt.Stride
                 var context = device is null ? IntPtr.Zero : StrideInterop.GetNativeImmediateContext(device);
                 var rc = context == IntPtr.Zero
                     ? (int)Native.Result.BadArgument
-                    : OffscreenRenderer.RenderBatch(context, new ReadOnlySpan<OffscreenRenderer>(_batch, 0, count), DriverSeconds());
-                var batchError = rc < 0 ? OffscreenRenderer.Describe((Native.Result)rc) : "";
+                    : OffscreenScene.RenderBatch(context, new ReadOnlySpan<SceneHandle>(_batch, 0, count), DriverSeconds());
+                var batchError = rc < 0 ? OffscreenScene.Describe((Native.Result)rc) : "";
                 for (int i = 0; i < count; i++)
                     _scheduled[i].AfterRender(batchError);
             }

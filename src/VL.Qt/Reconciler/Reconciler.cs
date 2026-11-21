@@ -66,9 +66,9 @@ namespace VL.Qt
     /// </para>
     /// <para>
     /// Thread: <see cref="Update(Element?, in SpaceMapping)"/> runs on the vvvv main thread inside the Update of the Renderer [Qt] node
-    /// (<see cref="WindowRenderer.Update"/>), once per frame and window, after the element tree of that frame was
+    /// (<see cref="WindowScene.Update"/>), once per frame and window, after the element tree of that frame was
     /// evaluated; it only writes commands. The pump applies them later in the same frame (frame finished, after all node
-    /// updates, <see cref="WindowRenderer.ApplyCommands"/>). An exception here is not caught by the renderer: it ends at the
+    /// updates, <see cref="WindowScene.ApplyCommands"/>). An exception here is not caught by the renderer: it ends at the
     /// node like any exception of its Update.
     /// </para>
     /// Allocation-free in the steady state (no structural change). Not thread-safe; one per window.
@@ -136,7 +136,7 @@ namespace VL.Qt
         /// Reconciles the scene against <paramref name="root"/> (null = empty scene) and writes the commands, lengths
         /// converted with <paramref name="mapping"/>. A change of its <see cref="SpaceMapping.UnitScale"/> disables the
         /// reference-equality shortcut for this frame, so the property diff writes every length again; a change of the
-        /// space alone only moves the origin in QtNative (SET_SPACE, written by <see cref="SceneCore"/>).
+        /// space alone only moves the origin in QtNative (SET_SPACE, written by <see cref="Scene"/>).
         /// </summary>
         public void Update(Element? root, in SpaceMapping mapping)
         {

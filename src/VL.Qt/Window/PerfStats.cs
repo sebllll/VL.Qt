@@ -33,7 +33,8 @@ namespace VL.Qt
 
         /// <summary>Frame budget in ms: 1000 / refresh rate of the window's screen (fallback 60 Hz).</summary>
         public float BudgetMs { get; init; }
-        /// <summary>Frame interval percentiles over the last up to 240 pumps (ms, nearest rank; only intervals between consecutive frames, not after idle pumps).</summary>
+        /// <summary>Frame interval percentiles over the last up to 240 pumps (ms, nearest rank; only intervals between
+        /// consecutive frames, not after idle pumps).</summary>
         public float FrameMsP50 { get; init; }
         public float FrameMsP95 { get; init; }
         public float FrameMsP99 { get; init; }
@@ -46,7 +47,8 @@ namespace VL.Qt
         public long Pumps { get; init; }
         /// <summary>Pumps longer than the budget, since start.</summary>
         public long OverBudget { get; init; }
-        /// <summary>Frame intervals longer than 1.5 x budget between consecutive frames (missed frames; not after idle pumps of on-demand rendering), since start.</summary>
+        /// <summary>Frame intervals longer than 1.5 x budget between consecutive frames (missed frames; not after idle
+        /// pumps of on-demand rendering), since start.</summary>
         public long LongFrames { get; init; }
         /// <summary>Pumps without a frame (nothing changed), since start.</summary>
         public long IdlePumps { get; init; }
@@ -85,7 +87,9 @@ namespace VL.Qt
         public float WaitMs { get; init; }
         public float WaitMsMax { get; init; }
 
-        /// <summary>Start of the frame (QRhi::beginFrame) in ms per frame, average over ~1 s. With VSync this is where Direct3D 11 waits for the display refresh; without VSync it waits there when the GPU is behind. Not Qt work.</summary>
+        /// <summary>Start of the frame (QRhi::beginFrame) in ms per frame, average over ~1 s. With VSync this is where
+        /// Direct3D 11 waits for the display refresh; without VSync it waits there when the GPU is behind. Not Qt
+        /// work.</summary>
         public float VsyncMs { get; init; }
 
         // VL imports the primary-constructor parameters as the pins of `Split`, but not the init-only properties above.
@@ -118,7 +122,8 @@ namespace VL.Qt
             vsyncMs = VsyncMs;
         }
 
-        /// <summary>The host side of the frame (ms, average/max over ~1 s): vvvv patch update, wait for the next frame, applying commands and reconcile, and commands per frame.</summary>
+        /// <summary>The host side of the frame (ms, average/max over ~1 s): vvvv patch update, wait for the next frame,
+        /// applying commands and reconcile, and commands per frame.</summary>
         public void SplitHost(
             out float vvvvMs, out float vvvvMsMax, out float waitMs, out float waitMsMax,
             out float applyMs, out float applyMsMax, out float reconcileMs, out float reconcileMsMax, out float ops)
@@ -127,7 +132,8 @@ namespace VL.Qt
             applyMs = ApplyMs; applyMsMax = ApplyMsMax; reconcileMs = ReconcileMs; reconcileMsMax = ReconcileMsMax; ops = Ops;
         }
 
-        /// <summary>.NET garbage collector activity of the process over ~1 s: collections per second per generation, pause ms per second and allocated bytes per vvvv frame.</summary>
+        /// <summary>.NET garbage collector activity of the process over ~1 s: collections per second per generation,
+        /// pause ms per second and allocated bytes per vvvv frame.</summary>
         public void SplitGc(
             [Pin(Name = "Gen0 Per Second")] out float gen0PerSecond, [Pin(Name = "Gen1 Per Second")] out float gen1PerSecond, [Pin(Name = "Gen2 Per Second")] out float gen2PerSecond,
             out float gcPauseMsPerSecond, out float allocatedBytesPerFrame)

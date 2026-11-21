@@ -163,7 +163,7 @@ public static class PumpTest
 
         public void AfterEvents() { Afters++; Native.vlqt_scene_get_perf(Handle, out Perf); Native.vlqt_scene_get_perf_sample(Handle, out Last); }
 
-        // Like WindowRenderer: ops of this window, then to the native PerfMonitor.
+        // Like WindowScene: ops of this window, then to the native PerfMonitor.
         public void ReportHostFrame(Native.vlqt_host_pump frame) { frame.ops = _cmd.Count; Native.vlqt_scene_report_host_pump(Handle, frame); }
 
         // Qt phases in the budget warning.

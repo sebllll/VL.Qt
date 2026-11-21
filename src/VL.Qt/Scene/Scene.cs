@@ -10,12 +10,12 @@ using VL.Qt.Wire;
 namespace VL.Qt
 {
     /// <summary>
-    /// What a Qt scene handle needs on the managed side, whether it is a window (<see cref="WindowRenderer"/>) or an
-    /// offscreen scene (<see cref="OffscreenRenderer"/>): reconciler, command buffer, resync after a failed apply,
-    /// apply errors at the element nodes, event poll into the feedback and the clear color. Both handles go through the
-    /// same vlqt_window_* functions. Main thread only.
+    /// The managed side of one native scene (<c>vlqt::Scene</c>), whether it is a window (<see cref="WindowScene"/>) or an
+    /// offscreen scene (<see cref="OffscreenScene"/>): reconciler, command buffer, resync after a failed apply,
+    /// apply errors at the element nodes, event poll into the feedback and the clear color. Both kinds go through the
+    /// same vlqt_scene_* functions. Main thread only.
     /// </summary>
-    internal sealed class SceneCore
+    internal sealed class Scene : IDisposable
     {
         private readonly CommandWriter _commands = new CommandWriter();
         private readonly CommandWriter _wipe = new CommandWriter(); // RESET of the resync
@@ -23,6 +23,7 @@ namespace VL.Qt
         private readonly Reconciler _reconciler;
         private readonly ResyncController _resync;
         private SceneHandle _handle;
+        private bool _disposed;
         private byte[] _poll = new byte[16 * 1024];
 
         // Last clear color and Clear flag sent to QtNative (change detection).
@@ -40,22 +41,21 @@ namespace VL.Qt
         private int _appliedOps;
         private double _reconcileMs;
 
-        public SceneCore(SceneRegistry scene)
+        /// <param name="registry">Duplicate registry of the app (<see cref="SceneRegistry.ForApp"/>).</param>
+        /// <param name="handle">The created native scene; a null handle if the creation failed (tests: no QtNative).</param>
+        public Scene(SceneRegistry registry, SceneHandle handle)
         {
-            _reconciler = new Reconciler(_commands, new IdAllocator(), scene);
+            _reconciler = new Reconciler(_commands, new IdAllocator(), registry);
             _resync = new ResyncController(_reconciler, ResetInQtNative);
+            _handle = handle;
+            _reconciler.Window = handle;
         }
 
-        /// <summary>The native scene handle, a null handle before it exists and after <see cref="Close"/>. Set once after creation.</summary>
-        public SceneHandle Handle
-        {
-            get => _handle;
-            set
-            {
-                _handle = value;
-                _reconciler.Window = value;
-            }
-        }
+        /// <summary>The native scene handle, a null handle if the creation failed and after <see cref="Dispose"/>.</summary>
+        public SceneHandle Handle => _handle;
+
+        /// <summary>Returns true if the native scene exists and is not disposed.</summary>
+        public bool IsOpen => !_handle.IsNull;
 
         public Reconciler Reconciler => _reconciler;
 
@@ -248,12 +248,12 @@ namespace VL.Qt
                 _pollError = "";
         }
 
-        /// <summary>
-        /// Clear (releases the elements in the app's registry), applies what is left and forgets the handle; returns it so
-        /// the caller can destroy the native scene (a null handle if there was none).
-        /// </summary>
-        public SceneHandle Close()
+        /// <summary>Clear (releases the elements in the app's registry), applies what is left and destroys the native scene.</summary>
+        public void Dispose()
         {
+            if (_disposed)
+                return;
+            _disposed = true;
             _reconciler.Clear();
             _reconciler.Window = SceneHandle.Null;
             var handle = _handle;
@@ -265,7 +265,8 @@ namespace VL.Qt
             }
             _commands.Reset();
             ClearApplyErrors(); // the element nodes may outlive the scene
-            return handle;
+            if (!handle.IsNull)
+                Native.vlqt_scene_destroy(handle);
         }
     }
 }

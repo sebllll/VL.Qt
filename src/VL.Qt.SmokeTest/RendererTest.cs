@@ -12,7 +12,7 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 using QtRect = VL.Qt.Elements.Rectangle;
 using VL.Qt.Interop;
 
-// Renderer [Qt] core (07a) without vvvv: WindowRenderer = reconciler + command buffer + poll dispatch of one window.
+// Renderer [Qt] core (07a) without vvvv: WindowScene = reconciler + command buffer + poll dispatch of one window.
 // Element tree → real QtNative, Clear Color, Enabled (frozen scene), Title at runtime, Dispose frees the registry.
 // Grabs go to <outDir>/07a_*.png.
 [TestFixture, NonParallelizable]
@@ -52,8 +52,8 @@ public static class RendererTest
         var scene = new SceneRegistry();
         var clear = new Color4(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         var title = "VL.Qt renderer test";
-        var r = new WindowRenderer(scene, title, new RectangleF(100, 100, 800, 600));
-        s.Check(r.Window != SceneHandle.Null && r.Error.Length == 0, "WindowRenderer creates the window " + r.Error);
+        var r = new WindowScene(scene, title, new RectangleF(100, 100, 800, 600));
+        s.Check(r.Window != SceneHandle.Null && r.Error.Length == 0, "WindowScene creates the window " + r.Error);
         if (r.Window == SceneHandle.Null)
             return;
 
@@ -179,8 +179,8 @@ public static class RendererTest
     {
         var bounds = new RectangleF(0, 0, 320, 240);
         var r = vSync is bool v
-            ? new WindowRenderer(new SceneRegistry(), title, bounds, vSync: v)
-            : new WindowRenderer(new SceneRegistry(), title, bounds);
+            ? new WindowScene(new SceneRegistry(), title, bounds, vSync: v)
+            : new WindowScene(new SceneRegistry(), title, bounds);
         s.Check(r.Window != SceneHandle.Null, $"{what} window created " + r.Error);
         if (r.Window == SceneHandle.Null)
             return;
@@ -209,7 +209,7 @@ public static class RendererTest
         var clear = new Color4(0, 0, 0, 1);
         // Pumps until the reported geometry has settled: under X11 the window manager answers placement, resize and
         // the frame extents asynchronously; on Windows it is stable after the first frames.
-        WindowGeometry? Shown(WindowRenderer r, string title)
+        WindowGeometry? Shown(WindowScene r, string title)
         {
             WindowGeometry? last = null;
             for (int i = 0, stable = 0; i < 200 && stable < 5; i++)
@@ -235,7 +235,7 @@ public static class RendererTest
             && Math.Abs(a.Width - b.Width) <= tol && Math.Abs(a.Height - b.Height) <= tol;
 
         var bounds = new RectangleF(150, 120, 500, 300);
-        var r = new WindowRenderer(new SceneRegistry(), "VL.Qt geometry test", bounds);
+        var r = new WindowScene(new SceneRegistry(), "VL.Qt geometry test", bounds);
         int events = 0;
         r.GeometryChanged += _ => events++;
         var g = Shown(r, "VL.Qt geometry test");
@@ -253,16 +253,16 @@ public static class RendererTest
         // Round trip: the reported geometry as Bounds of a new window gives the same geometry (no wandering).
         var reported = g!.Value.Bounds;
         r.Dispose();
-        var r2 = new WindowRenderer(new SceneRegistry(), "VL.Qt geometry round trip", reported);
+        var r2 = new WindowScene(new SceneRegistry(), "VL.Qt geometry round trip", reported);
         var g2 = Shown(r2, "VL.Qt geometry round trip");
         s.Check(g2 is { } h2 && Close(h2.Bounds, reported, 0.01f), $"round trip stable ({g2?.Bounds} vs {reported})");
         r2.Dispose();
 
         // Sentinel (empty bounds) = 600x400 centered; bounds on no screen = centered as well.
-        var rc = new WindowRenderer(new SceneRegistry(), "VL.Qt geometry centered", default);
+        var rc = new WindowScene(new SceneRegistry(), "VL.Qt geometry centered", default);
         var gc = Shown(rc, "VL.Qt geometry centered");
         rc.Dispose();
-        var ro = new WindowRenderer(new SceneRegistry(), "VL.Qt geometry off screen", new RectangleF(50000, 50000, 600, 400));
+        var ro = new WindowScene(new SceneRegistry(), "VL.Qt geometry off screen", new RectangleF(50000, 50000, 600, 400));
         var go = Shown(ro, "VL.Qt geometry off screen");
         ro.Dispose();
         s.Check(gc is { } c && c.Bounds.Width == 600 && c.Bounds.Height == 400, $"empty bounds → 600x400 ({gc?.Bounds})");
@@ -288,7 +288,7 @@ public static class RendererTest
     {
         var clear = new Color4(0, 0, 0, 1);
         var vlDefault = new RectangleF(-0.5f, -0.5f, 1, 1); // AppHost.GetDefaultValue<RectangleF>() in vvvv 8.0-0156
-        WindowGeometry? Frames(WindowRenderer r, string title, int n = 40)
+        WindowGeometry? Frames(WindowScene r, string title, int n = 40)
         {
             for (int i = 0; i < n; i++)
             {
@@ -299,13 +299,13 @@ public static class RendererTest
             }
             return r.Geometry;
         }
-        var first = new WindowRenderer(new SceneRegistry(), "VL.Qt hotswap first", new RectangleF(100, 100, 320, 240));
+        var first = new WindowScene(new SceneRegistry(), "VL.Qt hotswap first", new RectangleF(100, 100, 320, 240));
         Frames(first, "VL.Qt hotswap first", 10);
         var want = WindowPlacement.DefaultBounds;
         for (int round = 0; round < 2; round++) // 0: added live, 1: Undo (dispose) + Redo (create again)
         {
             var what = round == 0 ? "added live" : "Undo/Redo";
-            var live = new WindowRenderer(new SceneRegistry(), "VL.Qt hotswap live", WindowPlacement.CreateBounds(vlDefault, vlDefault));
+            var live = new WindowScene(new SceneRegistry(), "VL.Qt hotswap live", WindowPlacement.CreateBounds(vlDefault, vlDefault));
             var g = Frames(live, "VL.Qt hotswap live");
             s.Check(live.IsVisible && g is { } h && Math.Abs(h.Bounds.Width - want.Width) <= 1 && Math.Abs(h.Bounds.Height - want.Height) <= 1,
                 $"renderer {what} opens with the Bounds pin default size ({g?.Bounds} vs {want.Width}x{want.Height})");
@@ -322,11 +322,11 @@ public static class RendererTest
         const string title = "VL.Qt visibility test";
         var scene = new SceneRegistry();
         var clear = new Color4(0, 0, 0, 1);
-        var r = new WindowRenderer(scene, title, new RectangleF(0, 0, 320, 240));
+        var r = new WindowScene(scene, title, new RectangleF(0, 0, 320, 240));
         s.Check(r.Window != SceneHandle.Null, "window created " + r.Error);
         if (r.Window == SceneHandle.Null)
             return;
-        void Frame(WindowRenderer w)
+        void Frame(WindowScene w)
         {
             w.Update(null, Space.DIPTopLeft, clear, true, true, title);
             w.ApplyCommands();
@@ -338,7 +338,7 @@ public static class RendererTest
         Frame(r);
         s.Check(r.IsVisible, "Is Visible true after the first pump");
 
-        // X: QtNative swallows the close, the Renderer hides on CloseRequested (as Renderer.OnCloseRequested).
+        // X: QtNative swallows the close, the Renderer hides on CloseRequested (as RendererNode.OnCloseRequested).
         int closes = 0;
         r.CloseRequested += () => { closes++; r.Hide(); };
         if (OperatingSystem.IsWindows()) // Linux: no way to send the X (WM_CLOSE) without a test hook in QtNative -> Hide instead
@@ -376,7 +376,7 @@ public static class RendererTest
         for (int i = 0; i < 3; i++)
         {
             var reg = i == 0 ? scene : new SceneRegistry();
-            var n = new WindowRenderer(reg, title, new RectangleF(0, 0, 320, 240));
+            var n = new WindowScene(reg, title, new RectangleF(0, 0, 320, 240));
             bool before = n.IsVisible;
             Frame(n);
             s.Check(before && n.IsVisible, $"recreated window #{i + 1} Is Visible true (before pump {before}, after {n.IsVisible})");
