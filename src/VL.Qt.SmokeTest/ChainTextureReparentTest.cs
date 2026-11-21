@@ -6,18 +6,15 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// NCMD-17: the texture element of a SHADER link (here the layer of a Blend) is parked hidden under the root like a mask,
-// but REPARENT does not check it (a mask attached to a chain is refused, commands.cpp maskHost). At SET time a texture
-// element with a parent is an error ("the texture element has a parent (REPARENT); a texture of a chain link is an
-// element of its own"). So a REPARENT of the parked texture must be refused, or detach it from the chain with that error
-// line; it must not leave the element in the tree while the chain still samples it. Orange R at (250, 150) 300 x 150 DIP
-// with Blend, blue layer L at (0, 0) 300 x 150. Grabs: <OutDir>/chain-texture-reparent_*.png.
+// NCMD-17: the texture element of a SHADER link (here the layer of a Blend) is parked hidden under the root like a mask.
+// A REPARENT of it while a chain samples it is refused (-8, like an attached mask), so the element is never in the tree
+// and the chain's texture at once; once no chain samples it, a REPARENT shows it again. Orange R at (250, 150)
+// 300 x 150 DIP with Blend, blue layer L at (0, 0) 300 x 150. Grabs: <OutDir>/chain-texture-reparent_*.png.
 [TestFixture, NonParallelizable]
 public static class ChainTextureReparentTest
 {
-    /// <summary>NCMD-17: REPARENT of the texture element of a chain link is refused or reported.</summary>
+    /// <summary>NCMD-17: REPARENT of the texture element of a chain link is refused while the chain samples it.</summary>
     [Test, Category("chain-texture-reparent")]
-    [Ignore("NCMD-17: REPARENT of a chain link's texture element is accepted without a check or error, the element is drawn in the tree and still sampled by the chain (fails: rc 0, no EVENT_ERROR, blue in both places)")]
     public static void ChainTextureReparent() => Scenario.Run(Run);
 
     private const uint R = 1, L = 2, HR = 101, HL = 102;
@@ -87,7 +84,7 @@ public static class ChainTextureReparentTest
             s.Check(!Blueish(c), $"the parked texture is not drawn in the tree ({c})");
         }
 
-        // The host REPARENTs the texture element under the root.
+        // The host REPARENTs the texture element under the root: refused, nothing changes.
         errors = "";
         cmd.Reset();
         cmd.Reparent(L, 0, 1);
@@ -95,20 +92,33 @@ public static class ChainTextureReparentTest
         var message = rc != 0 ? Native.LastError() : "";
         s.Pump(4);
         Poll();
-        s.Info($"REPARENT of the texture: rc {rc} '{message}', errors '{errors}'");
-        using (var a = s.Grab(w, "chain-texture-reparent_after.png"))
+        s.Check(rc == Native.Result.Invalid && message.Contains($"element {L} is the texture of a chain link of {R}"),
+            $"REPARENT of a chain's texture is refused (rc {rc}, '{message}')");
+        s.Check(errors == "", $"no chain error after the refused REPARENT ('{errors}')");
+        using (var a = s.Grab(w, "chain-texture-reparent_refused.png"))
         {
-            var inTree = Blueish(Px(a, 100, 75));
-            var sampled = Blueish(Px(a, RX + RW / 2, RY + RH / 2));
-            s.Info($"after REPARENT: texture drawn in the tree {inTree} ({Px(a, 100, 75)}), chain still samples it {sampled} ({Px(a, RX + RW / 2, RY + RH / 2)}), element base orange {Orangeish(Px(a, RX + RW / 2, RY + RH / 2))}");
-            s.Check(rc != 0 || errors.Contains("texture element"),
-                $"REPARENT of a chain's texture is refused or reported as a chain error (rc {rc}, errors '{errors}')");
-            gpu(!(inTree && sampled), $"the element is not both in the tree and the chain's texture (tree {inTree}, sampled {sampled})");
+            var c = Px(a, 100, 75);
+            s.Check(!Blueish(c), $"the refused texture is not drawn in the tree ({c})");
+            gpu(Blueish(Px(a, RX + RW / 2, RY + RH / 2)), $"the chain still samples the texture ({Px(a, RX + RW / 2, RY + RH / 2)})");
         }
 
+        // Chain off: no chain samples L any more, so a REPARENT shows it in the tree.
         cmd.Reset();
         cmd.BeginEffectChain(R);
         cmd.EndEffectChain();
+        cmd.Reparent(L, 0, 1);
+        rc = Native.Apply(w, cmd.EndFrame());
+        s.Check(rc == 0, $"chain off, then REPARENT of the former texture ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        s.Pump(4);
+        using (var a = s.Grab(w, "chain-texture-reparent_released.png"))
+        {
+            var c = Px(a, 100, 75);
+            s.Check(Blueish(c), $"the former texture is drawn in the tree ({c})");
+            var e = Px(a, RX + RW / 2, RY + RH / 2);
+            s.Check(Orangeish(e), $"the element is drawn without the chain ({e})");
+        }
+
+        cmd.Reset();
         cmd.Destroy(R);
         cmd.Destroy(L);
         Native.Apply(w, cmd.EndFrame());
