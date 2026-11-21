@@ -1,6 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 using VL.Qt;
+using VL.Qt.Interop;
 
 /// <summary>
 /// percentiles and counters of vlqt_perf_stats on known samples (vlqt_perf_eval), plus the live window API

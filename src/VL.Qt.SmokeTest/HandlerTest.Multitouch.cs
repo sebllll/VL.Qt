@@ -3,6 +3,7 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 

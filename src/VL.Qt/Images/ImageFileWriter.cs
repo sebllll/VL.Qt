@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using VL.Lib.Basics.Imaging;
+using VL.Qt.Interop;
 
 namespace VL.Qt
 {

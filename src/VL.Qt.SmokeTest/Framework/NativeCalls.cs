@@ -1,5 +1,6 @@
 ﻿using System;
 using VL.Qt;
+using VL.Qt.Interop;
 
 /// <summary>
 /// The buffer exports of QtNative in the shape most checks want: the bytes written (>= 0) on <see cref="Native.Result.Ok"/>, else the

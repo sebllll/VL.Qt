@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 
 namespace VL.Qt

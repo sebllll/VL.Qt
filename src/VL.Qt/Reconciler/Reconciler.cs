@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Styles;
 using VL.Qt.Wire;
 

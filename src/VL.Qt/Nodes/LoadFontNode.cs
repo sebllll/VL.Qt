@@ -2,6 +2,7 @@
 using VL.Core;
 using VL.Core.Import;
 using Path = VL.Lib.IO.Path;
+using VL.Qt.Interop;
 
 namespace VL.Qt.Nodes
 {

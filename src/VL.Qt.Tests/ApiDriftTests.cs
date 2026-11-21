@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using VL.Qt.Interop;
 
 namespace VL.Qt.Tests
 {

@@ -4,6 +4,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 

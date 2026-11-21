@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 

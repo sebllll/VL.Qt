@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
@@ -38,12 +39,12 @@ internal static class Program
 
         Console.WriteLine($"VL.Qt.Probe: {RuntimeInformation.OSDescription} {RuntimeInformation.ProcessArchitecture}, .NET {Environment.Version}");
         Console.WriteLine($"VL.Qt.dll:   {typeof(Native).Assembly.Location}");
-        Native.EnsureLoaded();
-        Console.WriteLine($"native dir:  {Native.NativeDir}");
+        QtNativeLibrary.EnsureLoaded();
+        Console.WriteLine($"native dir:  {QtNativeLibrary.Directory}");
         Native.Result initResult;
         unsafe
         {
-            initResult = Native.vlqt_app_init(Native.NativeDir, &OnLog);
+            initResult = Native.vlqt_app_init(QtNativeLibrary.Directory, &OnLog);
         }
         if (initResult != Native.Result.Ok)
             return Fail("vlqt_app_init: " + Native.LastError());
