@@ -1,9 +1,10 @@
 #include "diagnostics/perf_monitor.h"
+#include "device/renderer_info.h"
 #include "diagnostics/perf.h"
 #include "diagnostics/perf_items.h"
 #include "diagnostics/perf_pages.h"
 
-#include <QtCore/QLoggingCategory>
+#include <QtCore/QThread>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QScreen>
 #include <QtQml/QQmlComponent>
@@ -16,32 +17,11 @@
 #include <utility>
 #include <vector>
 
-Q_LOGGING_CATEGORY(lcGpu, "vlqt.gpu")
-
 namespace vlqt {
-
-QString softwareRendererName(QQuickWindow* window)
-{
-    if (!window)
-        return {};
-    if (window->rendererInterface() && window->rendererInterface()->graphicsApi() == QSGRendererInterface::Software)
-        return QStringLiteral("Qt Quick software backend");
-    QRhi* rhi = window->rhi();
-    if (!rhi)
-        return {};
-    const QRhiDriverInfo info = rhi->driverInfo();
-    const QString name = QString::fromUtf8(info.deviceName);
-    static const char* const kSoftware[] = {"llvmpipe", "softpipe", "Software Rasterizer", "SwiftShader"};
-    bool sw = info.deviceType == QRhiDriverInfo::CpuDevice;
-    for (const char* s : kSoftware)
-        sw = sw || name.contains(QLatin1String(s), Qt::CaseInsensitive);
-    return sw ? (name.isEmpty() ? QStringLiteral("CPU device") : name) : QString();
-}
 
 namespace {
 
 std::vector<PerfMonitor*> s_monitors;
-bool s_softwareWarned = false; // once per process
 
 constexpr double kTextIntervalMs = 250;
 constexpr double kTimelineIntervalMs = 50;
@@ -124,7 +104,6 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
     s_monitors.push_back(this);
     window->installEventFilter(this);
 
-    // GPU rendering is required (software rendering is not supported): warn loudly when Qt fell back to the CPU.
     // sceneGraphInitialized alone is not enough: the Qt Quick software render loop shares one render context and
     // emits it only for the first window, so later windows detect on their first swap.
     connect(window, &QQuickWindow::sceneGraphInitialized, this, &PerfMonitor::detectRenderer, Qt::DirectConnection);
@@ -190,17 +169,26 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
     }, Qt::DirectConnection);
 }
 
+// Signal or render thread (a scene's frame signals): reads the renderer there, where the QRhi is valid, and
+// publishes the result to the GUI thread; m_renderer and m_rendererKnown belong to that thread (perf_monitor.h).
 void PerfMonitor::detectRenderer()
 {
-    m_software = softwareRendererName(m_window);
+    RendererInfo info = describeRenderer(m_window);
+    warnSoftwareRendering(info);
+    if (QThread::currentThread() == thread()) {
+        publishRenderer(std::move(info));
+        return;
+    }
+    // A queued call does not outlive the monitor: it is dropped when the monitor is destroyed.
+    QMetaObject::invokeMethod(this, [this, info = std::move(info)]() mutable { publishRenderer(std::move(info)); },
+        Qt::QueuedConnection);
+}
+
+void PerfMonitor::publishRenderer(RendererInfo info)
+{
+    m_renderer = std::move(info);
     m_rendererKnown = true;
     updateRenderingBadge();
-    if (m_software.isEmpty() || s_softwareWarned)
-        return;
-    s_softwareWarned = true;
-    qCWarning(lcGpu, "SOFTWARE RENDERING: Qt Quick renders on the CPU (%s), not on the GPU. Expect low fps. "
-        "WSLg: GALLIUM_DRIVER=d3d12 selects the host GPU via Mesa d3d12.", qPrintable(m_software));
-    // no extra stderr line; exports see it via a logging provider or VLQT_LOG_STDERR (app/log.cpp emitLog).
 }
 
 PerfMonitor::~PerfMonitor()
@@ -470,7 +458,7 @@ void PerfMonitor::ensureOverlay()
 void PerfMonitor::updateRenderingBadge()
 {
     if (m_overlay && m_rendererKnown)
-        m_overlay->setProperty("rendering", m_software.isEmpty() ? 1 : 2);
+        m_overlay->setProperty("rendering", m_renderer.software.isEmpty() ? 1 : 2);
 }
 
 void PerfMonitor::updateOverlay()

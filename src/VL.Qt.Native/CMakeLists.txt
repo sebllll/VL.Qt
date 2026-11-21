@@ -160,6 +160,8 @@ target_sources(vlqt PRIVATE
     # device/
     device.cpp
     device.h
+    device/renderer_info.cpp
+    device/renderer_info.h
     render_thread.cpp
     render_thread.h
 
