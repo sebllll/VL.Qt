@@ -24,7 +24,10 @@ namespace VL.Qt.Shaders
     /// <param name="VertexSource">Content of the .vert, null without .vert.</param>
     /// <param name="Padding">Fixed @padding of the file head in DIP (effect chain node only), zero if not given.</param>
     /// <param name="Passes">@passes of the file head (effect chain node only): 1 = template Single, 2 = TwoPass.</param>
-    /// <param name="PaddingUniform">Uniform of <c>@padding &lt;uniform&gt; [factor]</c> (effect chain node only), null for a fixed padding; after <see cref="ForChain"/> only a valid float pin.</param>
+    /// <param name="PaddingUniform">
+    /// Uniform of <c>@padding &lt;uniform&gt; [factor]</c> (effect chain node only), null for a fixed padding; after
+    /// <see cref="ForChain"/> only a valid float pin.
+    /// </param>
     /// <param name="PaddingFactor">Factor of <c>@padding &lt;uniform&gt; [factor]</c>.</param>
     /// <param name="ChainErrors">Wrong head tags of the effect chain node (red there, see <see cref="ForChain"/>), empty if none.</param>
     internal sealed record ShaderNodeLayout(
@@ -133,7 +136,10 @@ namespace VL.Qt.Shaders
             return this with { Pins = pins.ToImmutable(), Messages = messages.ToImmutable(), PaddingUniform = paddingUniform, ChainErrors = ImmutableArray<string>.Empty };
         }
 
-        /// <summary>Reads, reflects (<paramref name="reflect"/>, normally <see cref="ShaderReflection.Reflect"/>) and builds the pins of <paramref name="file"/>.</summary>
+        /// <summary>
+        /// Reads, reflects (<paramref name="reflect"/>, normally <see cref="ShaderReflection.Reflect"/>) and builds the pins of
+        /// <paramref name="file"/>.
+        /// </summary>
         public static ShaderNodeLayout Load(ShaderFile file, Func<string, ShaderStage, ShaderReflection> reflect, ILogger logger)
         {
             var errors = new List<string>();
