@@ -4,23 +4,108 @@ project(vlqt LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Default RID from the architecture of the compiler (the build scripts and presets pass -DVLQT_RID anyway).
 if(WIN32)
-    set(VLQT_RID "win-arm64" CACHE STRING "Target runtime identifier")
+    if(CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64")
+        set(_vlqt_default_rid "win-arm64")
+    else()
+        set(_vlqt_default_rid "win-x64")
+    endif()
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
-    set(VLQT_RID "linux-arm64" CACHE STRING "Target runtime identifier")
+    set(_vlqt_default_rid "linux-arm64")
 else()
-    set(VLQT_RID "linux-x64" CACHE STRING "Target runtime identifier")
+    set(_vlqt_default_rid "linux-x64")
 endif()
+set(VLQT_RID "${_vlqt_default_rid}" CACHE STRING "Target runtime identifier")
 set(VLQT_OUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../runtimes/${VLQT_RID}/native" CACHE PATH "Deployment folder")
 cmake_path(NORMAL_PATH VLQT_OUT_DIR)
 
 find_package(Qt6 6.12 REQUIRED COMPONENTS Gui GuiPrivate Qml Quick QuickPrivate QuickControls2 Multimedia ShaderTools ShaderToolsPrivate QuickShapes QuickShapesPrivate)
 qt_standard_project_setup()
 
-add_library(vlqt SHARED vlqt.cpp vlqt.h device.cpp device.h perf.cpp perf.h commands.cpp commands.h effectchain.cpp effectchain.h elements.cpp elements.h events.cpp events.h touch.cpp touch.h debug.cpp debug.h previous_frame_layer.cpp previous_frame_layer.h resources.cpp resources.h image_resource.cpp image_resource.h qtimageitem.cpp qtimageitem.h snapshot_resource.cpp snapshot_resource.h image_writer.cpp image_writer.h audio_tap.cpp audio_tap.h shader_resource.cpp shader_resource.h shader_item.cpp shader_item.h qmlitem.cpp qmlitem.h vlstyle.cpp vlstyle.h offscreen.cpp offscreen.h render_thread.cpp render_thread.h shape_path_element.cpp shape_path_element.h protocol.h app/last_error.cpp app/last_error.h app/exports.h)
-# Test exports of vlqt_test.h, in every build (F1): only the SmokeTest and the unit tests call them.
-target_sources(vlqt PRIVATE vlqt_test.h test/test_hooks.h test/test_input.cpp test/test_probes.cpp test/test_resource_kind.cpp)
-target_compile_definitions(vlqt PRIVATE VLQT_BUILD)
+add_library(vlqt SHARED)
+# One file per line, grouped by the folders of the target layout. Files that still lie at the top level move into
+# their group folder as the cuts of the native layer land.
+target_sources(vlqt PRIVATE
+    # Contract headers
+    vlqt.h
+    vlqt_test.h
+    protocol.h
+
+    # app/: exports, last error; vlqt.cpp holds the app and window exports until they are split
+    app/exports.h
+    app/last_error.cpp
+    app/last_error.h
+    vlqt.cpp
+
+    # scene/: commands, events, input, previous-frame layer
+    commands.cpp
+    commands.h
+    events.cpp
+    events.h
+    touch.cpp
+    touch.h
+    previous_frame_layer.cpp
+    previous_frame_layer.h
+
+    # elements/
+    elements.cpp
+    elements.h
+    shape_path_element.cpp
+    shape_path_element.h
+
+    # effects/ and user_qml/
+    effectchain.cpp
+    effectchain.h
+    shader_item.cpp
+    shader_item.h
+    qmlitem.cpp
+    qmlitem.h
+
+    # style/
+    vlstyle.cpp
+    vlstyle.h
+
+    # resources/
+    resources.cpp
+    resources.h
+    image_resource.cpp
+    image_resource.h
+    qtimageitem.cpp
+    qtimageitem.h
+    snapshot_resource.cpp
+    snapshot_resource.h
+    image_writer.cpp
+    image_writer.h
+    shader_resource.cpp
+    shader_resource.h
+    audio_tap.cpp
+    audio_tap.h
+
+    # device/
+    device.cpp
+    device.h
+    render_thread.cpp
+    render_thread.h
+
+    # offscreen/
+    offscreen.cpp
+    offscreen.h
+
+    # diagnostics/
+    perf.cpp
+    perf.h
+    debug.cpp
+    debug.h
+
+    # test/: the test exports of vlqt_test.h are in every build; only the SmokeTest and the unit tests call them
+    test/test_hooks.h
+    test/test_input.cpp
+    test/test_probes.cpp
+    test/test_resource_kind.cpp)
+target_compile_definitions(vlqt PRIVATE VLQT_BUILD
+    # windows.h without the min/max macros (std::min/std::max) and without the rarely used APIs
+    $<$<PLATFORM_ID:Windows>:NOMINMAX;WIN32_LEAN_AND_MEAN>)
 # Base style "VLQt": Qt Quick Controls style module embedded in QtNative (qrc:/qt/qml/VLQt, on the engine's
 # default import path), nothing to deploy. Plain resources + hand-written qmldir: no qmlcachegen/plugin target; the
 # C++ part (attached VlStyle) is registered at app start as module VLQt.Style (vlstyle.cpp). Controls without a file
@@ -62,7 +147,9 @@ if(VLQT_SANITIZE)
     target_compile_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE} -fno-omit-frame-pointer -g)
     target_link_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE})
 endif()
-target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick Qt6::QuickPrivate Qt6::QuickControls2 Qt6::Multimedia) # GuiPrivate: QRhi (GPU timestamps); QuickPrivate: QQuickPointerDeviceHandler (touch.h, check on Qt updates); QuickControls2: QQuickStyle; Multimedia: QAudioBufferOutput of the audio tap (deployed for the Video element anyway)
+# GuiPrivate: QRhi (GPU timestamps). QuickPrivate: QQuickPointerDeviceHandler (touch.h, check on Qt updates).
+# QuickControls2: QQuickStyle. Multimedia: QAudioBufferOutput of the audio tap (deployed for the Video element anyway).
+target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick Qt6::QuickPrivate Qt6::QuickControls2 Qt6::Multimedia)
 # ShaderToolsPrivate: QShaderBaker (runtime bake of ShaderEffect sources). rhi/qshaderbaker.h lies only in the
 # versioned include dir (include/QtShaderTools/<ver>/QtShaderTools), which just the Private target adds (RHI API,
 # limited compatibility guarantees: check on Qt updates). Qt6ShaderTools is deployed next to QtNative.
@@ -73,16 +160,21 @@ target_link_libraries(vlqt PRIVATE Qt6::ShaderTools Qt6::ShaderToolsPrivate)
 # check on Qt updates. Qt6QuickShapes and qml/QtQuick/Shapes are deployed next to QtNative (qml/deploy.qml).
 target_link_libraries(vlqt PRIVATE Qt6::QuickShapes Qt6::QuickShapesPrivate)
 if(WIN32)
-    target_link_libraries(vlqt PRIVATE d3d11 dxgi) # device.cpp: one D3D11 device per process
-    # linear_pass.cpp: QtTexture into SRGB and float textures; d3dcompiler_47.dll ships with Windows 10 and up.
-    target_sources(vlqt PRIVATE linear_pass.cpp linear_pass.h)
-    target_link_libraries(vlqt PRIVATE d3dcompiler)
-    # D3D11On12 test device of vlqt_test_device_lost (NDEV-03); d3d12.dll is loaded at run time, not linked.
-    target_sources(vlqt PRIVATE test/test_device.cpp test/test_device.h)
+    target_sources(vlqt PRIVATE
+        # offscreen/: linear_pass converts QtTexture into SRGB and float textures; d3dcompiler_47.dll ships with Windows 10 and up
+        linear_pass.cpp
+        linear_pass.h
+        # test/: D3D11On12 test device of vlqt_test_device_lost; d3d12.dll is loaded at run time, not linked
+        test/test_device.cpp
+        test/test_device.h)
+    # device.cpp: one D3D11 device per process
+    target_link_libraries(vlqt PRIVATE d3d11 dxgi d3dcompiler)
 else()
-    # offscreen_glx.cpp: X geometry of the offscreen platform's GLX drawable for window grabs (W1-21). Uses the X11
-    # headers that Qt's OpenGL dependency brings (libgl-dev); libX11/libGL are looked up at run time, not linked.
-    target_sources(vlqt PRIVATE offscreen_glx.cpp offscreen_glx.h)
+    target_sources(vlqt PRIVATE
+        # offscreen/: X geometry of the offscreen platform's GLX drawable for window grabs. Uses the X11 headers that Qt's
+        # OpenGL dependency brings (libgl-dev); libX11/libGL are looked up at run time, not linked.
+        offscreen_glx.cpp
+        offscreen_glx.h)
 endif()
 set_target_properties(vlqt PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${VLQT_OUT_DIR}"   # vlqt.dll
@@ -95,7 +187,7 @@ if(NOT WIN32)
     set_target_properties(vlqt PROPERTIES
         CXX_VISIBILITY_PRESET hidden
         VISIBILITY_INLINES_HIDDEN ON
-        # Qt libs are deployed next to the .so (L3); CMake appends the Qt lib dir for builds in the tree.
+        # Qt libs are deployed next to the .so (tools/deploy-linux.sh); CMake appends the Qt lib dir for builds in the tree.
         BUILD_RPATH "\$ORIGIN"
         INSTALL_RPATH "\$ORIGIN"
         LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/vlqt.map")
@@ -104,13 +196,15 @@ if(NOT WIN32)
         "LINKER:--no-undefined")
 endif()
 
-# vlqt_testkit (testkit/testkit.h, F2): the stand-in "Stride" D3D11 device of the SmokeTest's QtTexture tests. A library
-# of its own, no Qt, next to vlqt.dll so the SmokeTest finds it; never packed (src/VL.Qt/VL.Qt.csproj excludes it).
-# Windows only.
+# vlqt_testkit (testkit/testkit.h): the stand-in "Stride" D3D11 device of the SmokeTest's QtTexture tests. A library of its own,
+# no Qt, next to vlqt.dll so the SmokeTest finds it; never packed (src/VL.Qt/VL.Qt.csproj excludes it). Windows only.
 option(VLQT_BUILD_TESTKIT "Build vlqt_testkit, the stand-in D3D11 device of the SmokeTest (Windows only)" ON)
 if(WIN32 AND VLQT_BUILD_TESTKIT)
-    add_library(vlqt_testkit SHARED testkit/testkit.cpp testkit/testkit.h)
-    target_compile_definitions(vlqt_testkit PRIVATE VLQT_TESTKIT_BUILD)
+    add_library(vlqt_testkit SHARED)
+    target_sources(vlqt_testkit PRIVATE
+        testkit/testkit.cpp
+        testkit/testkit.h)
+    target_compile_definitions(vlqt_testkit PRIVATE VLQT_TESTKIT_BUILD NOMINMAX WIN32_LEAN_AND_MEAN)
     target_link_libraries(vlqt_testkit PRIVATE d3d11 dxgi)
     set_target_properties(vlqt_testkit PROPERTIES
         AUTOMOC OFF AUTOUIC OFF AUTORCC OFF
@@ -138,7 +232,7 @@ foreach(_src IN LISTS _shader_srcs)
 endforeach()
 add_custom_target(vlqt_shaders ALL DEPENDS ${_shader_outs})
 
-if(WIN32) # Qt deploy (Linux: L3)
+if(WIN32) # Qt deploy (Linux: tools/deploy-linux.sh)
 # Deploy Qt DLLs, plugins/ and qml/ next to QtNative (LGPL: dynamic, unmodified).
 # qml/ holds only deploy.qml: windeployqt collects the QML modules it imports.
 # Own custom command (not POST_BUILD) so it also re-runs when deploy.qml changes; the stamp lives in
