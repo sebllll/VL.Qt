@@ -5,9 +5,11 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Lib.Collections;
 using VL.Lib.Mathematics;
+using VL.Lang;
 using VL.Model;
 using VL.Qt.Elements;
 using VL.Qt.Reconciliation;
+using VL.Qt.Shaders;
 using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
 
@@ -37,7 +39,7 @@ namespace VL.Qt.Nodes
         private readonly ElementInput _input;
         private readonly NodeErrors? _errors;
         private Spread<Uniform>? _checkedUniforms;
-        private string _uniformProblems = string.Empty, _shownUniformProblems = string.Empty;
+        private string _uniformProblems = string.Empty, _shownUniformProblems = string.Empty, _reservedUniforms = string.Empty;
         private string _fragmentError = string.Empty, _vertexError = string.Empty, _elementError = string.Empty, _error = string.Empty;
 
         public ShaderNode(NodeContext nodeContext)
@@ -86,7 +88,7 @@ namespace VL.Qt.Nodes
         /// <param name="fragmentShader">Baked fragment shader (.qsb or builtin:&lt;name&gt;). Set: used instead of Fragment Code. A broken file = message at Error.</param>
         /// <param name="vertexCode">Vertex shader as full Qt GLSL (#version 440), optional. Empty = Qt's default vertex shader. Ignored while Vertex Shader is set.</param>
         /// <param name="vertexShader">Baked vertex shader (.qsb), optional. Set: used instead of Vertex Code.</param>
-        /// <param name="uniforms">Uniform values by name (nodes of Qt.Elements.Shaders.Uniform). Unknown names or wrong types show as warning.</param>
+        /// <param name="uniforms">Uniform values by name (nodes of Qt.Elements.Shaders.Uniform). Unknown names or wrong types show as warning; a reserved name (qt_Matrix, qt_Opacity, source) is an error.</param>
         /// <param name="blending">Premultiplied alpha blending with what is behind. Off: the shader output replaces it.</param>
         /// <param name="meshResolution">Grid subdivisions (x, y &gt;= 1) for vertex shaders that deform the element. Unconnected = 1, 1 (one quad).</param>
         /// <param name="size">Size of the element (width, height), only with Auto Size off or without Input. The position comes from Transform and Anchor.</param>
@@ -101,7 +103,7 @@ namespace VL.Qt.Nodes
         /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
         /// <param name="measuredSize">Implicit size reported by Qt, in units (last frame).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
-        /// <param name="error">Shader load errors and uniform problems (unknown name, wrong type), empty if none.</param>
+        /// <param name="error">Shader load errors and uniform problems (unknown name, wrong type, reserved name), empty if none.</param>
         [return: Pin(Name = "Output")]
         public IElement Update(
             IElement? input,
@@ -134,6 +136,9 @@ namespace VL.Qt.Nodes
             {
                 _checkedUniforms = uniforms;
                 _uniformProblems = CheckUniforms(uniforms);
+                _reservedUniforms = CheckReserved(uniforms);
+                // At the node (and logged once), like every message of a node; the Error output carries it too.
+                _errors?.Set("Reserved uniforms", MessageSeverity.Error, _reservedUniforms);
             }
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
@@ -143,18 +148,19 @@ namespace VL.Qt.Nodes
             return element;
         }
 
-        /// <summary>Joins shader load errors, uniform name problems and the element error (Qt) into the Error output, one line each; recomputed only when a part changes.</summary>
+        /// <summary>Joins shader load errors, uniform name problems, reserved uniform names and the element error (Qt) into the Error output, one line each; recomputed only when a part changes.</summary>
         private string UpdateError()
         {
             string fragment = _fragment.Error, vertex = _vertex.Error, element = _node.Error ?? string.Empty;
-            if (fragment != _fragmentError || vertex != _vertexError || element != _elementError || _uniformProblems != _shownUniformProblems)
+            var problems = JoinLines(_reservedUniforms, _uniformProblems);
+            if (fragment != _fragmentError || vertex != _vertexError || element != _elementError || problems != _shownUniformProblems)
             {
                 _fragmentError = fragment;
                 _vertexError = vertex;
                 _elementError = element;
-                _shownUniformProblems = _uniformProblems;
-                _error = JoinLines(fragment, vertex, _uniformProblems, element);
-                // Qt's element error is already logged and shown as warning by the element node.
+                _shownUniformProblems = problems;
+                _error = JoinLines(fragment, vertex, problems, element);
+                // Qt's element error is already logged and shown as warning by the element node, the reserved names by Set in Update.
                 _errors?.LogOnly(JoinLines(fragment, vertex, _uniformProblems, string.Empty));
             }
             return _error;
@@ -181,6 +187,18 @@ namespace VL.Qt.Nodes
                 else if (!seen.Add(u.Name))
                     lines.Add($"Uniform '{u.Name}' is set more than once, the last one counts");
             }
+            return string.Join('\n', lines);
+        }
+
+        /// <summary>One line per uniform of a reserved name (<see cref="ReservedUniforms.Item"/>): QtNative would ignore it with an error line.</summary>
+        internal static string CheckReserved(Spread<Uniform>? uniforms)
+        {
+            if (uniforms is null || uniforms.Count == 0)
+                return string.Empty;
+            var lines = new System.Collections.Generic.List<string>();
+            foreach (var u in uniforms)
+                if (u?.Name is { } name && ReservedUniforms.IsItemReserved(name) && !lines.Contains(ReservedUniforms.Describe(name)))
+                    lines.Add(ReservedUniforms.Describe(name));
             return string.Join('\n', lines);
         }
 

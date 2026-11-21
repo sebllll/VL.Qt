@@ -45,6 +45,7 @@
   <ItemGroup>
     <None Include="..\VL.Qt.Native\protocol.h" Link="protocol.h" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\VL.Qt.Native\vlqt.h" Link="vlqt.h" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\VL.Qt.Native\effects\shader_item.h" Link="shader_item.h" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\VL.Qt.Native\vlqt_test.h" Link="vlqt_test.h" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\VL.Qt.Native\testkit\testkit.h" Link="testkit.h" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

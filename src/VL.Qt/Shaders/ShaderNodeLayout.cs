@@ -52,10 +52,6 @@ namespace VL.Qt.Shaders
         // Used only when the shader does not compile: keeps the Input pin (and its link) through a typo.
         private static readonly Regex s_sourceSampler = new(@"\buniform\s+sampler2D\s+source\b", RegexOptions.CultureInvariant);
 
-        // Uniforms QtNative sets itself in a SHADER link of the effect chain (protocol.h "Effect chain"); an entry from C# would be an error.
-        private static readonly ImmutableHashSet<string> s_chainAutomaticNames = ImmutableHashSet.Create(StringComparer.Ordinal, "texelSize", "dpr", "weight", "elementRect", "passIndex");
-        private static readonly ImmutableHashSet<string> s_chainReservedNames = ImmutableHashSet.Create(StringComparer.Ordinal, "base", "glow", "shadow");
-
         /// <summary>
         /// The shader declares <c>sampler2D source</c> (comments ignored): a filter, which also becomes a link of the effect
         /// chain. Cheap text check for the scan; the node's init reflects for real.
@@ -72,28 +68,33 @@ namespace VL.Qt.Shaders
         }
 
         /// <summary>
-        /// The layout for the effect chain node of the same file: without the uniforms QtNative sets itself (texelSize, dpr,
-        /// weight) and the names it reserves (base, glow, shadow, with a warning), plus messages for a file that is no filter
-        /// (any more) and for a .vert, which a chain link does not use. Errors too: a wrong @passes or @padding tag, and an
+        /// The layout for the effect chain node of the same file: without the uniforms QtNative sets itself
+        /// (<see cref="ReservedUniforms.ChainAutomatic"/>: texelSize, dpr, weight, ...), plus an error for each uniform of a
+        /// name the chain reserves (<see cref="ReservedUniforms.ChainReserved"/>: base, glow, shadow; no pin), messages for a
+        /// file that is no filter (any more) and for a .vert, which a chain link does not use. Errors too: a wrong @passes or @padding tag, and an
         /// @padding uniform the shader does not have or that is not a float (then <see cref="PaddingUniform"/> is null).
         /// </summary>
         public ShaderNodeLayout ForChain(ILogger logger, string path)
         {
             var warnings = new List<string>();
+            var errors = new List<string>();
             var pins = ImmutableArray.CreateBuilder<ShaderPin>(Pins.Length);
             foreach (var pin in Pins)
             {
-                if (s_chainAutomaticNames.Contains(pin.UniformName))
+                if (ReservedUniforms.ChainAutomatic.Contains(pin.UniformName))
                     continue;
-                if (s_chainReservedNames.Contains(pin.UniformName))
-                    warnings.Add($"uniform '{pin.UniformName}' is reserved in an effect chain, no pin");
+                if (ReservedUniforms.IsChainReserved(pin.UniformName))
+                {
+                    var text = $"uniform '{pin.UniformName}' is reserved in an effect chain (set by VL.Qt), no pin";
+                    if (!errors.Contains(text))
+                        errors.Add(text);
+                }
                 else
                     pins.Add(pin);
             }
             if (VertexSource != null)
                 warnings.Add("the vertex shader (.vert) is not used by an effect chain link");
 
-            var errors = new List<string>();
             if (!ChainErrors.IsDefault)
                 errors.AddRange(ChainErrors);
             var compiled = !Messages.Any(static m => m.Type == MessageType.Error);
