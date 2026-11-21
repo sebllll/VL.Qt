@@ -3,6 +3,7 @@
 // (POINTS + CLOSED: polyline or polygon) or a verb/point array (PATH) and builds the QPainterPath in addToPath, like
 // Qt's own PathPolyline. A closed point list ends with closeSubpath (a real join at the start point, no cap). The
 // latest of POINTS and PATH wins: each replaces the other.
+// Private Qt API: QQuickCurve, QQuickPathData; check on Qt updates (list: elements/elements.h).
 #include <QtGui/QPainterPath>
 #include <QtQuick/private/qquickpath_p.h>
 

@@ -1,3 +1,4 @@
+// Private Qt API: QQuickItemPrivate::explicitVisible, QQuickShaderEffectSource (frame proxy); check on Qt updates (list: elements/elements.h).
 #include "elements/group_item.h"
 #include "elements/element_types.h"
 #include "elements/geometry.h"

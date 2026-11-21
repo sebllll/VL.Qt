@@ -1,21 +1,32 @@
-// The parts of the start and of the unload that exist on one platform only: platform_win.cpp (Windows) and
-// platform_linux.cpp (Linux), selected in CMakeLists.txt. Qt GUI thread, inside vlqt_app_init.
+// What differs between Windows and Linux at the start of Qt, in windows and in the process: one interface, one
+// implementation per platform, platform_win.cpp (Windows) and platform_linux.cpp (Linux), selected in CMakeLists.txt.
+// The unload hook (DllMain, ELF destructor) lives in the same two files. Qt GUI thread.
 #pragma once
 
+class QFileInfo;
 class QGuiApplication;
+class QQuickWindow;
+class QString;
 
 namespace vlqt::platform {
 
-#ifdef _WIN32
-// After the QGuiApplication: lets Enter, Tab, Esc and the arrow keys reach the Qt windows past vvvv's dialog
-// navigation (WM_GETDLGCODE).
-void installDialogCodeFilter(QGuiApplication& app);
-#else
-// Before the QGuiApplication: Mesa's D3D12 driver as the default under WSLg (probed, with fallbacks), and a clear
-// message when there is no display server.
-void applyWslGpuDefault();
-// After the QGuiApplication: registers the bundled DejaVu Sans as the app font when the system has no font at all.
-void ensureFonts();
-#endif
+// Before the QGuiApplication (vlqt_app_init). Windows: Qt Quick on Direct3D 11. Linux: Qt's default backend (OpenGL,
+// QSG_RHI_BACKEND overrides); Mesa's D3D12 driver as the default under WSLg (checked by the helper vlqt-glprobe, with
+// fallbacks), and a clear message when there is no display server.
+void prepareBeforeApp();
+
+// After the QGuiApplication. Windows: lets Enter, Tab, Esc and the arrow keys reach the Qt windows past vvvv's dialog
+// navigation (WM_GETDLGCODE). Linux: registers the bundled DejaVu Sans as the app font when the system has no font.
+void initAfterApp(QGuiApplication& app);
+
+// True if VLQT_TEST_SYNTHETIC_INPUT=1 in the process environment (Windows: also when the .NET host set it at run time).
+bool testSyntheticInputOnly();
+
+// Turns the window frame on or off (Qt::FramelessWindowHint) without re-creating the window. keepClientRect: a shown
+// window keeps its client rect, the frame grows or disappears around it; otherwise only the flag changes.
+void setFrameless(QQuickWindow& window, bool on, bool keepClientRect);
+
+// Identity of a file for a registry: the canonical path, case-folded where the file system ignores case (Windows).
+QString pathKey(const QFileInfo& file);
 
 } // namespace vlqt::platform

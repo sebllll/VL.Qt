@@ -5,6 +5,8 @@
 #include "app/app.h"
 #include "app/log.h"
 #include "app/render_gate.h"
+#include "app/scene_change.h"
+#include "platform/platform.h"
 #include "test/test_hooks.h"
 #include "scene/scene.h"
 #include "device.h"
@@ -23,15 +25,6 @@
 #include <QtQuick/QQuickGraphicsConfiguration>
 #include <QtQuick/QQuickWindow>
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-// Borderless on Linux (applyFrameless): private API, check on Qt updates.
-#include <QtGui/private/qhighdpiscaling_p.h>
-#include <QtGui/private/qwindow_p.h>
-#include <QtGui/qpa/qplatformwindow.h>
-#endif
-
 #include <cmath>
 #include <memory>
 #include <optional>
@@ -41,13 +34,8 @@ using vlqt::log::emitLog;
 
 namespace vlqt {
 
-// Initial geometry, Qt logical pixels (DIP), applied before the first show so the window never
-// appears at Qt's default position. Same rules as VL.Skia's SkiaRenderer.SetBounds, but via QScreen (platform
-// neutral, no user32): a window rect that intersects no screen, and the NaN sentinel, are centered on the primary
-// screen's working area; size < 1 = 600x400. The position is the outer top-left: setFramePosition marks it frame
-// inclusive, the platform plugin adds the frame when it creates the native window (Windows: from the window style,
-// xcb: NorthWest gravity), so the frame size need not be known yet. Wayland ignores client positions.
-// embedded placeholder (CMakeLists.txt, :/vlqt/icon), several sizes so Windows picks title bar / taskbar / Alt-Tab sharp.
+// The embedded placeholder icon (CMakeLists.txt, :/vlqt/icon), several sizes so Windows picks title bar / taskbar /
+// Alt-Tab sharp.
 const QIcon& defaultIcon()
 {
     static const QIcon icon = [] {
@@ -59,6 +47,12 @@ const QIcon& defaultIcon()
     return icon;
 }
 
+// Initial geometry, Qt logical pixels (DIP), applied before the first show so the window never
+// appears at Qt's default position. Same rules as VL.Skia's SkiaRenderer.SetBounds, but via QScreen (platform
+// neutral, no user32): a window rect that intersects no screen, and the NaN sentinel, are centered on the primary
+// screen's working area; size < 1 = 600x400. The position is the outer top-left: setFramePosition marks it frame
+// inclusive, the platform plugin adds the frame when it creates the native window (Windows: from the window style,
+// xcb: NorthWest gravity), so the frame size need not be known yet. Wayland ignores client positions.
 void placeWindow(QQuickWindow* win, float x, float y, int width, int height)
 {
     if (width < 1 || height < 1) {
@@ -119,29 +113,30 @@ void OffscreenSceneDeleter::operator()(OffscreenScene* scene) const
     vlqt::offscreen::destroy(scene);
 }
 
-// The event filters and the frame lock of an on-screen window, all children of win: close, update gate, frame lock,
-// fullscreen keys, focus release, test input. At creation and for the window swap (replaceWindow).
+// The event filters, the change counter and the frame lock of an on-screen window, all children of win: close, render
+// gate, change counter, frame lock, fullscreen keys, focus release, test input. At creation and for the window swap
+// (replaceWindow).
 void installWindowFilters(SceneHandle* w, QQuickWindow* win)
 {
     w->closeFilter = new CloseFilter(win);
     win->installEventFilter(w->closeFilter);
-    w->gate = new UpdateGate(win);
+    w->gate = new RenderGate(win);
     win->installEventFilter(w->gate);
+    w->changes = new SceneChangeCounter(win);
     vlqt::device::lockFrames(win); // windows only: a scene's render thread locks itself (offscreen/offscreen_render.cpp)
     win->installEventFilter(new FullscreenKeys(win, asHandle(w)));
     win->installEventFilter(new FocusRelease(win));
     vlqt::test::installInputFilter(win); // test hook: VLQT_TEST_SYNTHETIC_INPUT (test/test_input.cpp)
 }
 
-// MSAA count of a window's swap chain: R8G8B8A8_UNORM is the format of Qt's D3D11 swap chain (SDR).
+// MSAA count of a window's swap chain.
 int clampWindowSamples(int requested, QQuickWindow* win)
 {
-    constexpr int swapChainFormat = 28; // DXGI_FORMAT_R8G8B8A8_UNORM
-    return vlqt::device::clampSamples(requested, swapChainFormat, win->rhi());
+    return vlqt::device::clampSamples(requested, vlqt::device::windowSwapChainFormat(), win->rhi());
 }
 
-// ... and, once w->window, w->engine and the window's own event filters exist: GPU timings and pipeline cache, the
-// shared D3D11 device, the scene (apply/poll) and the perf monitor (its event filter, installed last, runs first).
+// The setup of a window that needs the window, its engine and its own event filters: GPU timings and pipeline cache,
+// the shared D3D11 device, the scene (apply/poll) and the perf monitor (its event filter, installed last, runs first).
 void initShared(SceneHandle* w)
 {
     // GPU timings for the perf overlay; must be set before the scenegraph initializes.
@@ -181,42 +176,7 @@ static void applyFrameless(SceneHandle* w, bool on)
     if (flags == win->flags())
         return;
     const bool keepClient = win->handle() && (win->windowStates() & (Qt::WindowMinimized | Qt::WindowMaximized | Qt::WindowFullScreen)) == 0;
-#ifdef _WIN32
-    // Windows: QWindow::setGeometry does not work right after setFlags (Qt still has the old frame margins and a stale
-    // cached geometry; frame on: the new style only takes effect later, the outer rect stays = old client rect). So the
-    // outer rect for the unchanged client rect is computed from the new style (AdjustWindowRectExForDpi, includes the
-    // invisible resize borders) and set with SWP_FRAMECHANGED; Qt follows from WM_NCCALCSIZE/WM_MOVE/WM_SIZE.
-    if (!keepClient) {
-        win->setFlags(flags);
-        return;
-    }
-    const HWND hwnd = reinterpret_cast<HWND>(win->winId());
-    RECT c {};
-    GetClientRect(hwnd, &c);
-    MapWindowPoints(hwnd, nullptr, reinterpret_cast<POINT*>(&c), 2);
-    win->setFlags(flags);
-    RECT r = c;
-    const DWORD style = DWORD(GetWindowLongPtrW(hwnd, GWL_STYLE)), exStyle = DWORD(GetWindowLongPtrW(hwnd, GWL_EXSTYLE));
-    AdjustWindowRectExForDpi(&r, style, FALSE, exStyle, GetDpiForWindow(hwnd));
-    SetWindowPos(hwnd, nullptr, r.left, r.top, r.right - r.left, r.bottom - r.top,
-        SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE);
-#else
-    const QRect client = win->geometry();
-    win->setFlags(flags);
-    if (!keepClient)
-        return;
-    // xcb: the window manager re-frames asynchronously; client geometry requested frame exclusive.
-    // QWindow::setGeometry returns early for an unchanged rect, so the platform window would never see it. offscreen
-    // (CI) recomputes its frame margins (2 px) only in QOffscreenWindow::setGeometry (no setWindowFlags), so the
-    // reported frame position kept the old margins and wandered by them on every toggle. The client rect is therefore
-    // passed to the platform window directly, frame exclusive, as QWindow::setGeometry would.
-    if (win->geometry() != client)
-        win->setGeometry(client);
-    else if (QPlatformWindow* pw = win->handle()) {
-        QWindowPrivate::get(win)->positionPolicy = QWindowPrivate::WindowFrameExclusive;
-        pw->setGeometry(QHighDpi::toNativeWindowGeometry(client, win));
-    }
-#endif
+    vlqt::platform::setFrameless(*win, on, keepClient);
 }
 
 // Borderless pin: while fullscreen only w->mode remembers it (applied by the fullscreen part on leaving fullscreen).
@@ -311,11 +271,11 @@ void replaceWindow(SceneHandle* w, const QSurfaceFormat& f)
     nw->setIcon(old->icon());
     nw->setColor(old->color());
     const bool closeRequested = w->closeFilter->requested;
-    const UpdateGate* oldGate = w->gate;
+    const SceneChangeCounter* oldChanges = w->changes;
     w->window.reset(nw);
     installWindowFilters(w, nw);
     w->closeFilter->requested = closeRequested;
-    w->gate->continueFrom(*oldGate);
+    w->changes->continueFrom(*oldChanges);
     nw->setGraphicsConfiguration(old->graphicsConfiguration());
     vlqt::device::attach(nw);
     w->scene->moveToWindow(nw);
@@ -357,9 +317,9 @@ vlqt_scene* createHandle(QQuickWindow* window, OffscreenScene* state)
     w->engine = newEngine();
     // Transparent until the first VLQT_OP_SET_CLEAR_COLOR: the QtTexture default (render-texture.md), unlike a window.
     window->setColor(Qt::transparent);
-    // Change count (vlqt_scene_get_change_count) only: without a platform window a scene gets no UpdateRequest or Expose,
-    // so the gate's event filter is not installed.
-    w->gate = new UpdateGate(window); // child of the window
+    // Change count (vlqt_scene_get_change_count); no render gate: without a platform window a scene gets no
+    // UpdateRequest or Expose.
+    w->changes = new SceneChangeCounter(window); // child of the window
     // Input comes from vlqt_offscreen_send_*; Esc and a press outside release the focus as in a window.
     window->installEventFilter(new FocusRelease(window)); // child of the window
     initShared(w.get());
@@ -368,32 +328,7 @@ vlqt_scene* createHandle(QQuickWindow* window, OffscreenScene* state)
 
 OffscreenScene* stateOf(vlqt_scene* handle)
 {
-    return handle ? asWindow(handle)->offscreen.get() : nullptr;
-}
-
-QQuickWindow* quickWindow(vlqt_scene* handle)
-{
-    return handle ? asWindow(handle)->window.get() : nullptr;
+    return handle ? asSceneHandle(handle)->offscreen.get() : nullptr;
 }
 
 } // namespace vlqt::offscreen
-
-// test hooks: the parts of a scene handle the test exports read (test/test_hooks.h).
-namespace vlqt::test {
-
-Scene* scene(vlqt_scene* handle)
-{
-    return handle ? asWindow(handle)->scene.get() : nullptr;
-}
-
-PerfMonitor* perf(vlqt_scene* handle)
-{
-    return handle ? asWindow(handle)->perf.get() : nullptr;
-}
-
-std::unique_ptr<TestInput>* input(vlqt_scene* handle)
-{
-    return handle ? &asWindow(handle)->testInput : nullptr;
-}
-
-} // namespace vlqt::test

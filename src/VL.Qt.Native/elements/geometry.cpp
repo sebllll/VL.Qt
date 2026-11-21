@@ -1,3 +1,4 @@
+// Private Qt API: QQuickMatrix4x4 (setMatrix without QVariant); check on Qt updates (list: elements/elements.h).
 #include "elements/geometry.h"
 #include "effects/shader_item.h"
 #include "elements/elements.h"

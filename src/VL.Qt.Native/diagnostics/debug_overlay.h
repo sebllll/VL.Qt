@@ -8,6 +8,10 @@
  *
  * Shown for every element with VLQT_PROPERTY_DEBUG and for all elements while vlqt_scene_set_debug is on. Without
  * either the overlay is hidden and costs nothing per frame (no update, no geometry); it is created on first use.
+ * While shown it repaints after an apply and whenever an item of the scene waits for its sync at afterAnimating (after
+ * polish), so it follows a Row that re-lays out or a Text that changes its size without a command. In a window that
+ * costs one more render after each frame that changed the scene (the repaint is requested after Qt's polish). Its
+ * objectName is overlayObjectName (app/scene_change.h): its repaints are no scene change.
  *
  * Legend (no labels; one color per meaning, the line style carries the mode):
  *   cyan frame      = actual size (itemFrame: SIZE, or the Auto Size result); solid = fixed SIZE, dashed = Auto Size on
@@ -53,9 +57,11 @@ public:
 
 protected:
     QSGNode* updatePaintNode(QSGNode* old, UpdatePaintNodeData*) override;
+    void itemChange(ItemChange change, const ItemChangeData& data) override;
 
 private:
     using Vertex = QSGGeometry::ColoredPoint2D;
+    void follow(QQuickWindow* window);
     void build();
     void drawNode(const ElementEntry& node);
     QSGNode* paintSoftware(QSGNode* old);
@@ -63,6 +69,7 @@ private:
     const Scene& m_scene;
     bool m_active = false;
     bool m_all = false;
+    QMetaObject::Connection m_follow; // afterAnimating of the window while active
     std::vector<Vertex> m_verts; // triangles, premultiplied colors; rebuilt per paint (render thread, GUI blocked)
     std::vector<Vertex> m_lines; // line layer while building; appended after the fills (areas of all nodes) in m_verts
     qreal m_dpr = 1;             // device pixel ratio of the current build (line snapping)

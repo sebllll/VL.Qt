@@ -1,3 +1,4 @@
+// Private Qt API: QQuickWindowPrivate::itemsToPolish (poll); check on Qt updates (list: elements/elements.h).
 #include "scene/scene.h"
 #include "app/exports.h"
 #include "audio_tap.h"

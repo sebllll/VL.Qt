@@ -5,16 +5,66 @@
  * item), never looked up by name per frame; grouped ones ("border.color") go through the group object, QFont fields
  * through a read-modify-write (type_text.cpp). A new element property is a table entry only, no new export.
  *
- * Hot setters call the typed setters of Qt's private classes (QtQuick/private, QtQuickShapes/private): still LGPL, but
- * private API, so check them on every Qt update. In use here: QQuickItemPrivate (group_item.cpp), QQuickRectangle and
- * QQuickText (element_types.cpp), QQuickMatrix4x4 (geometry.cpp), QQuickShaderEffectSource (group_item.cpp,
- * effect_sources.cpp), QQuickShape, QQuickShapePath and QQuickShapeTrim (type_shape.cpp), QQuickCurve and
- * QQuickPathData (shape_path_element.h). The animation clock (app/animation_clock.cpp) uses QUnifiedTimer and
- * QAbstractAnimationTimer of QtCore/private for its keep-alive timer; if that class changes, an endless
- * QAbstractAnimation subclass (duration() == -1, empty updateCurrentTime), started once and never paused, keeps the
- * driver running as well, but counts as one running animation (the perf overlay must subtract it). QMetaObjectPrivate
- * (Qt core) is no include but a behaviour the QML watcher relies on: raw method ids through QMetaObject::connect
- * (user_qml/qml_watcher.h). */
+ * QT PRIVATE API - the one list, the checklist for a Qt update. Private classes are allowed here (LGPL; Qt promises no
+ * compatibility for *_p.h, a limited one for qpa/ and rhi/), but every use is listed below and the file that has it
+ * says so in its head comment. CMakeLists.txt links the modules GuiPrivate, QuickPrivate, QuickShapesPrivate and
+ * ShaderToolsPrivate for them. After a Qt update: build, run tools/build.ps1 -Test, and check each entry (header path,
+ * the members used). "Public way" is information only: nothing has to move to a public API.
+ *
+ *   QtCore/private/qabstractanimation_p.h   QAbstractAnimationTimer, QUnifiedTimer::startAnimationTimer: keep-alive of
+ *       the vvvv clock (app/animation_clock.cpp); QUnifiedTimer::runningAnimationCount (diagnostics/perf_pages.cpp).
+ *       Public way: partly, an endless QAbstractAnimation (duration() == -1, empty updateCurrentTime) started once also
+ *       keeps the driver running, but counts as a running animation (the perf page must subtract it) and must never
+ *       be paused.
+ *   QtQuick/private/qquickitem_p.h          QQuickItemPrivate: dirtyAttributes, nextDirtyItem, childItems for the
+ *       change count (app/scene_change.cpp); explicitVisible (elements/group_item.cpp). Public way: no.
+ *   QtQuick/private/qquickwindow_p.h        QQuickWindowPrivate: dirtyItemList (app/scene_change.cpp),
+ *       deliveryAgentPrivate() (app/input_delivery.cpp), itemsToPolish (scene/scene.cpp), renderControl (device.cpp),
+ *       rhi, graphicsConfig, ensureCustomRenderTarget (offscreen/offscreen_scene.cpp, offscreen_binding.cpp). Public way: no.
+ *   QtQuick/private/qquickdeliveryagent_p_p.h   QQuickDeliveryAgentPrivate::delayedTouch and
+ *       deliverDelayedTouchEvent(): input at the frame start (app/input_delivery.cpp). Public way: no; the most fragile
+ *       entry (a _p_p header).
+ *   QtQuick/private/qquickrendercontrol_p.h QQuickRenderControlPrivate: resetRhi (offscreen/offscreen_scene.cpp),
+ *       isRenderWindow, overridden by SceneRenderControlPrivate for the keyboard focus of a scene
+ *       (offscreen/offscreen_input.cpp). Public way: no.
+ *   QtQuick/private/qquickshadereffectsource_p.h   QQuickShaderEffectSource built and read in C++ (Group frame proxy,
+ *       layers, previous frame, grabs: elements/group_item.cpp, elements/effect_sources.cpp, effects/effect_chain_item.cpp,
+ *       effects/layer_requests.cpp, scene/previous_frame_layer.cpp, snapshot_resource.cpp). Public way: only the QML type.
+ *   QtQuick/private/qquickrectangle_p.h, qquicktext_p.h   typed color setters without QVariant (elements/element_types.cpp).
+ *   QtQuick/private/qquicktranslate_p.h     QQuickMatrix4x4::setMatrix without QVariant (elements/geometry.cpp).
+ *   QtQuick/private/qquickpath_p.h          QQuickCurve, QQuickPathData: base of ShapePathElement
+ *       (elements/shape_path_element.h). Public way: no.
+ *   QtQuickShapes/private/qquickshape_p.h   QQuickShape, QQuickShapePath, QQuickShapeTrim built in C++ with typed
+ *       setters (elements/type_shape.cpp). Public way: the QML types, set through QMetaProperty.
+ *   QtQuick/private/qquickpointerdevicehandler_p.h   QQuickPointerDeviceHandler, base of TouchPointsHandler
+ *       (scene/touch_handler.h). Public way: no.
+ *   QtQuick/private/qsgplaintexture_p.h     QSGPlainTexture around the wrapped QRhiTexture, which it owns
+ *       (qtimageitem.cpp). Public way: possibly QQuickWindow::createTextureFromRhiTexture (RHI API), which does not
+ *       take ownership; not tried.
+ *   QtQuick/private/qsgrenderloop_p.h       QSGRenderLoop::instance, to drop the window RHIs of a lost test device
+ *       (test/test_device.cpp). Test code only.
+ *   QtGui/private/qwindow_p.h               QWindowPrivate: positionPolicy (platform/platform_linux.cpp); visible,
+ *       to grab an offscreen scene (snapshot_resource.cpp). Public way: no.
+ *   QtGui/private/qhighdpiscaling_p.h       QHighDpi::toNativeWindowGeometry (platform/platform_linux.cpp);
+ *       toNativeLocalPosition / toNativeGlobalPosition (test/test_input.cpp). Public way: for the test, multiply by
+ *       devicePixelRatio(); for Linux borderless: no.
+ *   QtGui/private/qeventpoint_p.h, qpointingdevice_p.h   QMutableEventPoint, QPointingDevicePrivate::pointById /
+ *       removePointById: injected touch (window/touch_input.cpp, also the touch input of offscreen scenes, which
+ *       ships). Public way: possibly, QWindowSystemInterface::handleTouchEvent registers the points itself; not
+ *       verified for a render-control window without a platform window.
+ *   QtGui/qpa/qplatformwindow.h             QPlatformWindow::setGeometry (platform/platform_linux.cpp). Public way: no.
+ *   QtGui/qpa/qwindowsysteminterface.h      windowSystemEventsQueued / flushWindowSystemEvents (app/input_delivery.cpp),
+ *       registerInputDevice (offscreen/offscreen_input.cpp), handle*Event, registerInputDevice and
+ *       handleFocusWindowChanged for the tests (test/test_input.cpp). Public way: none to flush the queue without
+ *       rendering.
+ *   rhi/qrhi.h, qshader.h, qshaderdescription.h, qshaderbaker.h   RHI API (QRhi, QShader, QShaderBaker): in public
+ *       and versioned include directories with limited compatibility guarantees (device.cpp, image_resource.cpp,
+ *       qtimageitem.cpp, diagnostics/perf_*.cpp, effects/shader_*, shader_resource.cpp).
+ *
+ * Not an include but a behaviour of Qt core that user_qml/qml_watcher.h relies on: QMetaObjectPrivate, raw method ids
+ * through QMetaObject::connect. Check it on a Qt update as well.
+ *
+ * A new private include goes into this list and into the head comment of its file in the same change. */
 #pragma once
 
 #include "elements/element_entry.h"

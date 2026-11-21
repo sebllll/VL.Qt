@@ -235,7 +235,7 @@ src/VL.Qt.Native/           # QtNative (C++)
   vlqt.h                    # C API (the exports of all groups)
   vlqt_test.h               # test exports, in every build
   protocol.h                # shared type/property/event IDs
-  app/                      # app lifecycle, pump, logging, last error, fonts, animation clock, render gate
+  app/                      # app lifecycle, pump, logging, last error, fonts, animation clock, render gate, scene change count
   window/                   # windows and their exports, event filters, focus, touch input
   platform/                 # platform code (Windows, Linux)
   scene/                    # scene of a window: object table, command decoder, events, input handlers
@@ -247,6 +247,7 @@ src/VL.Qt.Native/           # QtNative (C++)
   diagnostics/              # perf monitor (perf_*), F2/F5 overlays, debug overlay
   test/                     # the test exports of vlqt_test.h
   testkit/                  # vlqt_testkit, the stand-in D3D11 device of the SmokeTest (not packed)
+  tools/glprobe.c           # vlqt-glprobe, the OpenGL check under WSLg (Linux)
   device.h/cpp              # shared D3D11 device, device loss
   render_thread.h/cpp       # Qt render threads of the QtTexture scenes
   *_resource.h/cpp          # images, shaders, snapshots
