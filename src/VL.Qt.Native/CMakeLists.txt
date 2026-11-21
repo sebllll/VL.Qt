@@ -97,6 +97,8 @@ target_sources(vlqt PRIVATE
     elements/geometry.h
     elements/group_item.cpp
     elements/group_item.h
+    elements/positioner_align.cpp
+    elements/positioner_align.h
     elements/shape_path_element.cpp
     elements/shape_path_element.h
     elements/type_controls.cpp
@@ -221,8 +223,6 @@ qt_add_resources(vlqt "vlqt_qml"
     FILES
         qml/elements/ButtonElement.qml
         qml/elements/CheckBoxElement.qml
-        qml/elements/ColumnElement.qml
-        qml/elements/RowElement.qml
         qml/elements/SliderElement.qml
         qml/elements/SpinBoxElement.qml
         qml/elements/SwitchElement.qml

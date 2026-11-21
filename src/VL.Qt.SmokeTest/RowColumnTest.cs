@@ -10,14 +10,15 @@ using Color = System.Drawing.Color;
 using RectangleF = System.Drawing.RectangleF;
 using static Pixels;
 
-// Row/Column in QtNative (plan 05e): Qt positioners + childAlignment, spacing, padding.
+// Row/Column in QtNative (plan 05e): Qt positioners + childAlignment, spacing, padding; a hidden child (Visible off)
+// takes no space and no alignment.
 // Grabs go to <OutDir>/05_rowcolumn*.png. Values are DIP. Children get Bounds (0, 0, w, h) like the
 // reconciler sends them (04c: Bounds.Position of layout children is ignored).
 [TestFixture, NonParallelizable]
 public static class RowColumnTest
 {
     // Containers
-    private const uint ColA = 1, ColB = 2, RowC = 3, ColD = 4;
+    private const uint ColA = 1, ColB = 2, RowC = 3, ColD = 4, ColE = 5;
     // Children: 10 + container * 10 + index
     private static uint Child(uint container, uint index) => 10 + container * 10 + index;
 
@@ -133,6 +134,52 @@ public static class RowColumnTest
                 && IsBg(Px(a, 35, 175)), $"column spacing 0 + appended child ({Px(a, 35, 75)}, {Px(a, 35, 160)})");
             // C padding 30: red y 140..190, x 480..520.
             s.Check(IsRed(Px(a, 500, 185)) && IsBg(Px(a, 500, 195)) && IsBg(Px(a, 470, 185)), "row padding 30");
+        }
+
+        // Hidden child: a Column 200 x 200 at (450, 300), padding 10, HCenter, with red (100 wide), green (60 wide) and
+        // blue (140 wide), each 40 high. Green is hidden: it takes no space, blue moves up under red and both stay
+        // centered; the alignment follows a width change of the Column; green coming back shifts blue down again.
+        cmd.Reset();
+        Container(ColE, Protocol.ElementType.Column, new RectangleF(450, 300, 200, 200), 0, 10, 0x4);
+        Rect(Child(ColE, 0), ColE, 100, 40, 1, 0, 0);
+        Rect(Child(ColE, 1), ColE, 60, 40, 0, 1, 0);
+        Rect(Child(ColE, 2), ColE, 140, 40, 0, 0, 1);
+        cmd.SetBool(Child(ColE, 1), Protocol.PropertyId.Visible, false);
+        CheckApply("hidden child scene");
+        s.Pump(3);
+        using (var a = s.Grab(w, "05_rowcolumn_hidden.png"))
+        {
+            // Content width 180: red x 500..600 y 310..350, blue x 480..620 y 350..390 (moved up), nothing below.
+            s.Check(IsRed(Px(a, 505, 330)) && IsRed(Px(a, 595, 330)) && IsBg(Px(a, 495, 330)) && IsBg(Px(a, 605, 330)),
+                $"hidden sibling: red centered ({Px(a, 495, 330)}, {Px(a, 505, 330)}, {Px(a, 595, 330)}, {Px(a, 605, 330)})");
+            s.Check(IsBlue(Px(a, 485, 370)) && IsBlue(Px(a, 615, 370)) && IsBg(Px(a, 475, 370)) && IsBg(Px(a, 625, 370)),
+                $"hidden sibling: blue moved up and centered ({Px(a, 475, 370)}, {Px(a, 485, 370)}, {Px(a, 615, 370)}, {Px(a, 625, 370)})");
+            s.Check(IsBg(Px(a, 550, 410)), $"hidden child takes no space ({Px(a, 550, 410)})");
+        }
+
+        cmd.Reset();
+        cmd.SetPlace(ColE, 450, 300, 300, 200);
+        CheckApply("hidden child, wider column");
+        s.Pump(2);
+        using (var a = s.Grab(w, "05_rowcolumn_hidden_wide.png"))
+        {
+            // Content width 280: red x 550..650, blue x 530..670.
+            s.Check(IsRed(Px(a, 555, 330)) && IsBg(Px(a, 545, 330)) && IsRed(Px(a, 645, 330)) && IsBg(Px(a, 655, 330)),
+                $"hidden sibling, wider column: red follows ({Px(a, 545, 330)}, {Px(a, 555, 330)}, {Px(a, 645, 330)}, {Px(a, 655, 330)})");
+            s.Check(IsBlue(Px(a, 535, 370)) && IsBg(Px(a, 525, 370)) && IsBlue(Px(a, 665, 370)) && IsBg(Px(a, 675, 370)),
+                $"hidden sibling, wider column: blue follows ({Px(a, 525, 370)}, {Px(a, 535, 370)}, {Px(a, 665, 370)}, {Px(a, 675, 370)})");
+        }
+
+        cmd.Reset();
+        cmd.SetBool(Child(ColE, 1), Protocol.PropertyId.Visible, true);
+        CheckApply("hidden child shown again");
+        s.Pump(2);
+        using (var a = s.Grab(w, "05_rowcolumn_shown.png"))
+        {
+            // Width 280 again: red y 310..350, green (60 wide) x 570..630 y 350..390, blue x 530..670 y 390..430.
+            s.Check(IsGreen(Px(a, 575, 370)) && IsBg(Px(a, 565, 370)) && IsGreen(Px(a, 625, 370)) && IsBg(Px(a, 635, 370)),
+                $"shown child is aligned ({Px(a, 565, 370)}, {Px(a, 575, 370)}, {Px(a, 625, 370)}, {Px(a, 635, 370)})");
+            s.Check(IsBlue(Px(a, 535, 410)) && IsBg(Px(a, 525, 410)), $"shown child pushes blue down ({Px(a, 525, 410)}, {Px(a, 535, 410)})");
         }
 
         // Errors: wrong alignment flag per type -> BadArgument, wrong value type -> BadArgument, Rectangle property -> UnknownProperty.
