@@ -3,6 +3,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Reconciliation;
 using K = VL.Qt.Wire.Protocol.MultiEffectKey;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
@@ -62,7 +63,7 @@ namespace VL.Qt.Tests
         public void Reconciler_SendsAutoPaddingAndPaddingRect()
         {
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
             rec.Update(new Rectangle { Effect = Blur(null, false, new RectangleF(1, 2, 3, 4)) }, Space.DIPTopLeft);
             var chain = sink.OfOp("CHAIN").Single();
             Assert.That(chain, Does.Contain($" {nameof(K.AutoPadding)}=bool(0)"));

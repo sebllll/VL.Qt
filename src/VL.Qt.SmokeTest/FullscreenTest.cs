@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Stride.Core.Mathematics;
 using VL.Qt.Interop;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using VL.Qt;
 
@@ -72,7 +73,7 @@ public static class FullscreenTest
         {
             string title = "VL.Qt fullscreen " + label;
             var saver = new BoundsSaver(bounds);
-            var r = new WindowScene(new SceneRegistry(), title, bounds, false, onCreate ? Protocol.WindowMode.Fullscreen : 0u);
+            var r = new WindowScene(new OccurrenceRegistry(), title, bounds, false, onCreate ? Protocol.WindowMode.Fullscreen : 0u);
             r.GeometryChanged += g => saver.OnGeometry(g, clock.Elapsed);
             var g = Settle(r, title);
             if (!onCreate)

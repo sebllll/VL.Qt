@@ -11,6 +11,7 @@ using VL.Lang.PublicAPI;
 using VL.Lib.Animation;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Nodes
@@ -200,7 +201,7 @@ namespace VL.Qt.Nodes
                 _borderless = borderless; // before show: no frame flash
                 _fullscreen = fullscreen;
                 _iconPath = resolved.IconPath;
-                _view = new WindowScene(SceneRegistry.ForApp(_nodeContext.AppHost), title, WindowSettings.ResolveBounds(window, _bounds), _vSync,
+                _view = new WindowScene(OccurrenceRegistry.ForApp(_nodeContext.AppHost), title, WindowSettings.ResolveBounds(window, _bounds), _vSync,
                     (borderless ? Protocol.WindowMode.Borderless : 0u) | (fullscreen ? Protocol.WindowMode.Fullscreen : 0u),
                     _iconPath, multisampleCount);
                 _samples = multisampleCount;
@@ -397,7 +398,7 @@ namespace VL.Qt.Nodes
             if (_disposed)
                 return;
             _disposed = true;
-            // Reconciler.Clear (frees the elements in the app's SceneRegistry), apply, destroy the window.
+            // Reconciler.Clear (frees the elements in the app's OccurrenceRegistry), apply, destroy the window.
             _view?.Dispose();
             _view = null;
             _pump.Unregister(this);

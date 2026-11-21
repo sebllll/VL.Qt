@@ -9,6 +9,7 @@ using System.Threading;
 using Stride.Core.Mathematics;
 using VL.Lib.Basics.Imaging;
 using VL.Lib.Mathematics;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -89,7 +90,7 @@ public static class QtImageTest
         s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
         var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(_ => throw new InvalidOperationException("unexpected warning"))).ToArray();
         var toQt = new ToQtImageNode(client);
 

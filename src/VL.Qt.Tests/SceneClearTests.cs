@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using Stride.Core.Mathematics;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using VL.Qt.Interop;
 
@@ -25,14 +26,14 @@ namespace VL.Qt.Tests
         [Test]
         public void FirstUpdate_SendsClearColorClearAndSpace()
         {
-            var core = new Scene(new SceneRegistry(), SceneHandle.Null);
+            var core = new Scene(new OccurrenceRegistry(), SceneHandle.Null);
             Assert.That(Written(core, true, c), Is.EqualTo(clearColorBytes + setClearBytes + setSpaceBytes));
         }
 
         [Test]
         public void UnchangedValues_SendNothing()
         {
-            var core = new Scene(new SceneRegistry(), SceneHandle.Null);
+            var core = new Scene(new OccurrenceRegistry(), SceneHandle.Null);
             Written(core, false, c);
             Assert.That(Written(core, false, c), Is.EqualTo(0));
         }
@@ -40,7 +41,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ClearChange_SendsOnlySetClear()
         {
-            var core = new Scene(new SceneRegistry(), SceneHandle.Null);
+            var core = new Scene(new OccurrenceRegistry(), SceneHandle.Null);
             Written(core, true, c);
             Assert.That(Written(core, false, c), Is.EqualTo(setClearBytes), "off");
             Assert.That(Written(core, true, c), Is.EqualTo(setClearBytes), "on again");
@@ -49,7 +50,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ClearColorChange_DoesNotSendSetClear()
         {
-            var core = new Scene(new SceneRegistry(), SceneHandle.Null);
+            var core = new Scene(new OccurrenceRegistry(), SceneHandle.Null);
             Written(core, false, c);
             Assert.That(Written(core, false, new Color4(1, 0, 0, 1)), Is.EqualTo(clearColorBytes));
         }

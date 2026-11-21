@@ -1,18 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
 
-namespace VL.Qt
+namespace VL.Qt.Reconciliation
 {
-    /// <summary>
-    /// One uniform as QtNative holds it: wire value type, the value and, for samplers, the resolved id (element
-    /// child id for a texture, image resource id for an image). Value equality decides what is sent again.
-    /// </summary>
-    internal readonly record struct UniformValue(ushort ValueType, Matrix Numbers, int Integer, ulong Handle);
-
     /// <summary>
     /// Writes SET_UNIFORMS for a Shader as a diff by name against what was sent last: changed or new
     /// entries only, nothing at all if the table is equal. The protocol cannot remove a single name, so a removed
@@ -30,12 +23,12 @@ namespace VL.Qt
 
         /// <summary>
         /// Sends the difference between the uniforms of <paramref name="effect"/> and <paramref name="sent"/> (null = nothing
-        /// sent yet) and returns the table QtNative holds afterwards. <paramref name="children"/> are the nodes of the
+        /// sent yet) and returns the table QtNative holds afterwards. <paramref name="children"/> are the mirrors of the
         /// effect's children (same order as <see cref="Element.Children"/>); a texture of an ignored (duplicate) element
         /// is sent as 0 = none.
         /// </summary>
         public static Dictionary<string, UniformValue>? Write(
-            ICommandSink sink, uint id, Shader effect, IReadOnlyList<Node> children, Dictionary<string, UniformValue>? sent)
+            ICommandSink sink, uint id, Shader effect, IReadOnlyList<ItemMirror> children, Dictionary<string, UniformValue>? sent)
         {
             Dictionary<string, UniformValue>? next = null;
             foreach (var u in effect.Uniforms)
@@ -106,7 +99,7 @@ namespace VL.Qt
             sink.EndUniforms();
         }
 
-        private static UniformValue Resolve(Uniform u, Shader effect, IReadOnlyList<Node> children)
+        private static UniformValue Resolve(Uniform u, Shader effect, IReadOnlyList<ItemMirror> children)
         {
             ulong handle = 0;
             if (u.Texture is { } texture)

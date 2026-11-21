@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -28,7 +29,7 @@ public static class ResyncTest
 
     private static void Run(Scenario s)
     {
-        var scene = new SceneRegistry();
+        var scene = new OccurrenceRegistry();
         var clear = new Color4(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         var bounds = new RectangleF(100, 100, 800, 600);
         var r = new WindowScene(scene, "VL.Qt resync test", bounds);

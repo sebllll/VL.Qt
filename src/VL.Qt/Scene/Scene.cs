@@ -5,6 +5,7 @@ using System.Reflection;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 
 namespace VL.Qt
@@ -41,9 +42,9 @@ namespace VL.Qt
         private int _appliedOps;
         private double _reconcileMs;
 
-        /// <param name="registry">Duplicate registry of the app (<see cref="SceneRegistry.ForApp"/>).</param>
+        /// <param name="registry">Duplicate registry of the app (<see cref="OccurrenceRegistry.ForApp"/>).</param>
         /// <param name="handle">The created native scene; a null handle if the creation failed (tests: no QtNative).</param>
-        public Scene(SceneRegistry registry, SceneHandle handle)
+        public Scene(OccurrenceRegistry registry, SceneHandle handle)
         {
             _reconciler = new Reconciler(_commands, new IdAllocator(), registry);
             _resync = new ResyncController(_reconciler, ResetInQtNative);

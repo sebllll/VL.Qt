@@ -4,6 +4,7 @@ using System.Linq;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
@@ -21,7 +22,7 @@ namespace VL.Qt.Tests
         {
             _sink = new RecordingSink();
             _ids = new IdAllocator();
-            _rec = new Reconciler(_sink, _ids, new SceneRegistry());
+            _rec = new Reconciler(_sink, _ids, new OccurrenceRegistry());
         }
 
         private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
@@ -77,11 +78,11 @@ namespace VL.Qt.Tests
         {
             var shared = C(T(), R());
             Frame(G(R(), shared));
-            var lastBefore = _rec.Root!.Children[1].Children[0].Last;
+            var lastBefore = _rec.Root!.Children[1].Children[0].Element;
             Frame(G(R(), shared));
             Assert.That(_sink.Count, Is.EqualTo(0));
-            Assert.That(_rec.Root!.Children[1].Last, Is.SameAs(shared));
-            Assert.That(_rec.Root!.Children[1].Children[0].Last, Is.SameAs(lastBefore));
+            Assert.That(_rec.Root!.Children[1].Element, Is.SameAs(shared));
+            Assert.That(_rec.Root!.Children[1].Children[0].Element, Is.SameAs(lastBefore));
         }
 
         [Test]

@@ -3,6 +3,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Lib.Basics.Imaging;
 using VL.Qt.Elements;
+using VL.Qt.Reconciliation;
 
 namespace VL.Qt.Nodes
 {
@@ -24,12 +25,12 @@ namespace VL.Qt.Nodes
 
         public SnapshotNode(NodeContext nodeContext)
         {
-            _grab = new SnapshotGrab(ResourceClient.ForApp(nodeContext.AppHost), SceneRegistry.ForApp(nodeContext.AppHost));
+            _grab = new SnapshotGrab(ResourceClient.ForApp(nodeContext.AppHost), OccurrenceRegistry.ForApp(nodeContext.AppHost));
             _report = new ImageNodeReport(new NodeErrors(nodeContext));
         }
 
         /// <summary>For tests: a client on a fake API and an own scene registry, nothing is reported.</summary>
-        internal SnapshotNode(ResourceClient client, SceneRegistry scene)
+        internal SnapshotNode(ResourceClient client, OccurrenceRegistry scene)
         {
             _grab = new SnapshotGrab(client, scene);
             _report = new ImageNodeReport(null);
@@ -77,10 +78,10 @@ namespace VL.Qt.Nodes
     internal sealed class SnapshotGrab : IDisposable
     {
         private readonly ResourceClient _client;
-        private readonly SceneRegistry _scene;
+        private readonly OccurrenceRegistry _scene;
         private bool _settled;
 
-        public SnapshotGrab(ResourceClient client, SceneRegistry scene)
+        public SnapshotGrab(ResourceClient client, OccurrenceRegistry scene)
         {
             _client = client;
             _scene = scene;

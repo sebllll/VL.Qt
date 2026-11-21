@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -107,7 +108,7 @@ public static class StylableTest
         s.Check(w != SceneHandle.Null, "stylable window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
 
         var leftWidget = new PatchedWidget();
         var rightWidget = new PatchedWidget();

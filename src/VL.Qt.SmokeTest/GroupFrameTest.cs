@@ -5,6 +5,7 @@ using System.IO;
 using Stride.Core.Mathematics;
 using VL.Lib.Basics.Imaging;
 using VL.Lib.Mathematics;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
@@ -44,7 +45,7 @@ public static class GroupFrameTest
         s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var scene = new SceneRegistry();
+        var scene = new OccurrenceRegistry();
         var rec = new Reconciler(cmd, new IdAllocator(), scene) { Window = w };
 
         var orange = new VL.Qt.Elements.Rectangle { Size = new Vector2(1, 1), Anchor = RectangleAnchor.Center, Transform = Matrix.Translation(0, 0, 0), Fill = new Color4(1, 0.6f, 0, 1) };
