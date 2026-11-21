@@ -113,8 +113,10 @@ public static class SamplerMipSharedTest
         }
 
         // A second refresh: the sampler state of the cells 0 and 1 is sent again (a diff entry, nothing changes).
-        // The defect shows only from the second refresh on, when the element is already in m_layerItems.
-        for (int frame = 0; frame < 2; frame++)
+        // The defect shows only from the second refresh on, when the element is already in m_layerItems. The stripes swap
+        // their colours at the same time (same mean), so the layers render again: a layer whose mipmap request was lost
+        // then has no mip levels any more instead of keeping the old ones.
+        for (int frame = 0; frame < 3; frame++)
         {
             using (var a = s.Grab(w, $"sampler-mip-shared_{frame}.png"))
             {
@@ -133,6 +135,13 @@ public static class SamplerMipSharedTest
                 cmd.UniformSampler(i == 0 ? "a" : "b", states[i][i]);
                 cmd.EndUniforms();
             }
+            // The stripes of a cell are the 80 ids after its Group.
+            foreach (var (_, g) in cells)
+                for (uint k = 0; k < 80; k++)
+                {
+                    var red = (k + (uint)frame + 1) % 2 == 0;
+                    cmd.SetColor(g + 1 + k, Protocol.PropertyId.Color, red ? 1 : 0, 0, red ? 0 : 1, 1);
+                }
             Apply($"second refresh {frame}");
             s.Pump(6);
         }
