@@ -4,8 +4,8 @@
  *
  * A tap is external content of the resource manager (resources.h beginExternal / finishExternal): init makes it Ready
  * at once, there is no worker and no upload. Besides the manager's table the taps live in a registry of this file
- * (id -> shared_ptr<TapWork>) that the audio thread can read without the manager's mutex; Kind::destroy (main thread,
- * after the host release and the last element reference) removes it there. A reader that holds a TapWork keeps it alive
+ * (id -> shared_ptr<TapContent>) that the audio thread can read without the manager's mutex; Kind::destroy (main thread,
+ * after the host release and the last element reference) removes it there. A reader that holds a TapContent keeps it alive
  * past destroy, so a read never touches freed memory.
  *
  * Threads: init, the Video prop and destroy on the main thread; the producer (audioBufferReceived) on a worker thread
@@ -17,7 +17,7 @@
  */
 #pragma once
 
-#include "resources.h"
+#include "resources/resources.h"
 
 #include <atomic>
 #include <cstdint>
@@ -30,7 +30,7 @@ class QQuickItem;
 
 namespace vlqt {
 class Elements;
-struct Node;
+struct ElementEntry;
 struct ResolvedProp;
 struct Value;
 }
@@ -48,14 +48,14 @@ struct Segment
     double rate = 1;            // playback rate of the player at the signal
 };
 
-// The Work of a tap: format (fixed at init) and the ring. Shared by the main thread (attach/detach), the producer
+// The Content of a tap: format (fixed at init) and the ring. Shared by the main thread (attach/detach), the producer
 // (player worker thread) and the reader (audio thread); everything the producer and the reader touch is atomic or
 // owned by one side.
 //
 // Ring (single producer, single reader, lock free): samples and segment records are allocated in init. The producer
 // writes samples, then the record, then publishes recordWrite (release); the reader consumes and publishes readFrame
 // and recordRead (release), which free the space for the producer.
-struct TapWork final : Work
+struct TapContent final : Content
 {
     static constexpr int recordCapacity = 512; // Qt buffers are 10-40 ms: far more than 500 ms of them
 
@@ -95,7 +95,7 @@ struct TapWork final : Work
     std::atomic<int> flags{0}; // VLQT_AUDIO_TAP_* (protocol.h), set by the main thread (attach) and the player state
 };
 
-// The kind for the manager (resources.cpp kindOf).
+// The kind for the manager (resources/resource_registry.cpp kindOf).
 Kind* kind();
 
 // --- C API backends (vlqt.h) ---
@@ -109,7 +109,7 @@ long long nowNs();
 // --- Video element (elements.cpp videoProps), main thread ---
 // Setter of VLQT_PROPERTY_AUDIO_TAP (u64): attaches the tap to the element's player and turns Qt's own output off, 0
 // detaches and restores it (protocol.h "Audio tap"). false + err: not a Ready tap (ApplyBadValue).
-bool setVideoTap(Elements& els, Node& node, const ResolvedProp& rp, const Value& v, std::string& err);
+bool setVideoTap(Elements& els, ElementEntry& node, const ResolvedProp& rp, const Value& v, std::string& err);
 // Before a Video item is deleted (DESTROY, scene teardown), with its player still alive: detaches the tap and
 // unlinks the QAudioBufferOutput from the player (~QMediaPlayer does not, deleting the output afterwards would call
 // into the dead player).

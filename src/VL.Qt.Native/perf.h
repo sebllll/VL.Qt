@@ -1,6 +1,6 @@
 #pragma once
 
-#include "resources.h"
+#include "resources/resources.h"
 #include "vlqt.h"
 
 #include <QtCore/QElapsedTimer>
@@ -17,7 +17,7 @@
 
 class QQmlEngine;
 class QQuickWindow;
-namespace vlqt { struct Scene; }
+namespace vlqt { class Scene; }
 
 namespace vlqt {
 // objectName of the F5 overlay item: its changes are no scene change (vlqt_scene_get_change_count).
@@ -184,7 +184,7 @@ private:
     int m_page = 0;
     bool m_frozen = false;
     std::vector<PerfSample> m_frozenRing; // filled while frozen
-    mutable std::vector<vlqt::res::Row> m_resRows; // Resources page: reused, no allocation once grown
+    mutable std::vector<vlqt::res::OverviewRow> m_resRows; // Resources page: reused, no allocation once grown
     std::atomic<int> m_spikePhase{-1}; // set on the main thread, taken in a frame signal (render thread for a scene)
     std::atomic<float> m_spikeMs{0};
 

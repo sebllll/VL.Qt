@@ -17,7 +17,7 @@
  */
 #pragma once
 
-#include "resources.h"
+#include "resources/resources.h"
 
 #include <QtGui/QImage>
 
@@ -26,18 +26,18 @@
 struct vlqt_pixel_desc;
 
 namespace vlqt {
-struct Scene;
+class Scene;
 }
 
-namespace vlqt::res::snap {
+namespace vlqt::res::snapshot {
 
-// The Work of a Ready snapshot: the pixels, ARGB32_Premultiplied, devicePixelRatio 1.
-struct SnapshotWork final : Work
+// The Content of a Ready snapshot: the pixels, ARGB32_Premultiplied, devicePixelRatio 1.
+struct SnapshotContent final : Content
 {
     QImage image;
 };
 
-// The kind for the manager (resources.cpp kindOf).
+// The kind for the manager (resources/resource_registry.cpp kindOf).
 Kind* kind();
 
 // --- C API backends (vlqt.h), main thread ---
@@ -63,4 +63,4 @@ void stats(Stats& out); // main thread, no allocation
 void endFrame(); // gives up hanging grabs, deletes finished ones
 void shutdown(); // drops every grab (before the manager frees the resources)
 
-} // namespace vlqt::res::snap
+} // namespace vlqt::res::snapshot

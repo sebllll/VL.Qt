@@ -2,7 +2,7 @@
 
 #include "device.h"
 #include "image_resource.h"
-#include "resources.h"
+#include "resources/resources.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtQuick/QQuickWindow>
@@ -52,11 +52,6 @@ constexpr int kMaxTiles = 4096; // Tile: one image node per tile
 std::vector<std::weak_ptr<ImageTexture>> s_textures; // main thread
 std::unordered_set<QtImageItem*> s_items;            // every live item, main thread
 uint64_t s_epoch = 0;                                // res::contentEpoch seen by afterResourceFrame
-
-std::string idText(uint64_t id)
-{
-    return std::to_string(uint32_t(id)) + "/" + std::to_string(uint32_t(id >> 32));
-}
 
 std::shared_ptr<ImageTexture> createTexture(QQuickWindow* window, const std::shared_ptr<res::image::ImageResource>& content)
 {
@@ -217,7 +212,7 @@ bool QtImageItem::setResource(uint64_t id, std::string& err)
     if (id == m_wantId)
         return true;
     if (id && id != m_shownId && res::acquire(id) != res::okRc) {
-        err = "unknown or released image resource " + idText(id);
+        err = "unknown or released image resource " + std::string(res::idText(id).constData());
         return false;
     }
     if (m_wantId && m_wantId != m_shownId)

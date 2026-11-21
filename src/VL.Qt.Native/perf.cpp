@@ -1,5 +1,5 @@
 #include "perf.h"
-#include "commands.h"
+#include "scene/scene.h"
 #include "snapshot_resource.h"
 
 #include <QtCore/QLoggingCategory>
@@ -1235,14 +1235,14 @@ QString ageText(int64_t ms)
     return QStringLiteral("%1 min").arg(ms / 60000);
 }
 
-bool resStuck(const vlqt::res::Row& r)
+bool resStuck(const vlqt::res::OverviewRow& r)
 {
     using vlqt::res::State;
     return (r.state == State::Decoding || r.state == State::Uploading) && r.ageMs > kResStuckMs;
 }
 
 // List order: Failed and stuck first, then the ones in progress, then Ready; the oldest first within each group.
-int resRank(const vlqt::res::Row& r)
+int resRank(const vlqt::res::OverviewRow& r)
 {
     using vlqt::res::State;
     if (r.state == State::Failed || resStuck(r))
@@ -1250,7 +1250,7 @@ int resRank(const vlqt::res::Row& r)
     return r.state == State::Ready ? 2 : 1;
 }
 
-const char* resColor(const vlqt::res::Row& r)
+const char* resColor(const vlqt::res::OverviewRow& r)
 {
     using vlqt::res::State;
     switch (r.state) {
@@ -1271,8 +1271,8 @@ QString PerfMonitor::resourcesPage() const
     using vlqt::res::State;
     QElapsedTimer timer; // own build time in the footer (< 0.5 ms with 1000 resources)
     timer.start();
-    vlqt::res::Overview ov;
-    vlqt::res::snapshot(m_resRows, ov);
+    vlqt::res::OverviewTotals ov;
+    vlqt::res::overview(m_resRows, ov);
     int byState[int(State::Released) + 1] = {};
     int64_t uploaded = 0;
     int stuck = 0;
@@ -1300,8 +1300,8 @@ QString PerfMonitor::resourcesPage() const
     h.br().t(lab("budget", L)).t(bytesText(ov.budget).rightJustified(10)).t(" / frame   last frame ")
         .c(use >= 1 ? kYellow : kGreen, QStringLiteral("%1 (%2%)").arg(bytesText(ov.usedLastFrame)).arg(qRound(100 * use)));
     // cost of the snapshots (grab start to delivery); grey with nothing in the last 10 s
-    vlqt::res::snap::Stats snap;
-    vlqt::res::snap::stats(snap);
+    vlqt::res::snapshot::Stats snap;
+    vlqt::res::snapshot::stats(snap);
     const QString none(QChar(0x2013));
     h.br().c(snap.inWindow ? kGreen : kGrey, QStringLiteral("%1%2/s   last %3 ms   max %4 ms")
         .arg(lab("snapshots", L)).arg(snap.perSecond, 3)
