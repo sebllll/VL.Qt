@@ -26,14 +26,14 @@ namespace VL.Qt.Nodes
         public RowSpectralNode(NodeContext nodeContext)
         {
             _node = new ElementNodeCore<Row, RowNode.Props>(nodeContext, RowNode.Create);
-            _children = new ChildrenInput(_node.AddWarning);
+            _children = new ChildrenInput(_node.Messages);
         }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal RowSpectralNode(Func<string, IDisposable> addWarning)
         {
             _node = new ElementNodeCore<Row, RowNode.Props>(addWarning, RowNode.Create);
-            _children = new ChildrenInput(_node.AddWarning);
+            _children = new ChildrenInput(_node.Messages);
         }
 
         /// <summary>Describes the row. A new description is only created when an input changes.</summary>

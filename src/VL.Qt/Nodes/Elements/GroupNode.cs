@@ -28,14 +28,14 @@ namespace VL.Qt.Nodes
         public GroupNode(NodeContext nodeContext)
         {
             _node = new ElementNodeCore<Group, Props>(nodeContext, Create);
-            _children = new ChildrenInput(_node.AddWarning);
+            _children = new ChildrenInput(_node.Messages);
         }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal GroupNode(Func<string, IDisposable> addWarning)
         {
             _node = new ElementNodeCore<Group, Props>(addWarning, Create);
-            _children = new ChildrenInput(_node.AddWarning);
+            _children = new ChildrenInput(_node.Messages);
         }
 
         internal static readonly Func<CommonInputs, Props, FeedbackSlot, Group> Create = static (c, p, slot) => new Group(c, slot)

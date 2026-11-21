@@ -114,7 +114,7 @@ namespace VL.Qt.Tests
         public void ElementInput_Foreign_WarnsOnce_RemovedWhenGone()
         {
             var warnings = new Warnings();
-            using var input = new ElementInput(warnings.Add);
+            using var input = new ElementInput(NodeErrors.ShownBy(warnings.Add));
 
             Assert.That(input.Update(new Foreign()), Is.Null);
             Assert.That(input.Update(new Foreign()), Is.Null);
@@ -132,7 +132,7 @@ namespace VL.Qt.Tests
         public void ChildrenInput_ForeignChild_Warns()
         {
             var warnings = new Warnings();
-            using var input = new ChildrenInput(warnings.Add);
+            using var input = new ChildrenInput(NodeErrors.ShownBy(warnings.Add));
             var r = new Rectangle();
 
             var children = input.Update(new IElement?[] { r, new Foreign() }.ToSpread());

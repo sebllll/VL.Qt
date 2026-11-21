@@ -21,6 +21,7 @@ namespace VL.Qt.Nodes
         internal readonly record struct TextProps(string Content);
         internal readonly record struct LayoutProps(ImmutableArray<Element> Children, float Spacing);
 
+        private readonly NodeErrors _messages;
         private readonly ElementNodeCore<Text, TextProps> _text;
         private readonly ElementNodeCore<Row, LayoutProps> _row;
         private readonly ElementNodeCore<Column, LayoutProps> _column;
@@ -30,20 +31,24 @@ namespace VL.Qt.Nodes
         private ImmutableArray<Element> _children = ImmutableArray<Element>.Empty;
 
         public LabeledNode(NodeContext nodeContext)
+            : this(new NodeErrors(nodeContext))
         {
-            _text = new ElementNodeCore<Text, TextProps>(nodeContext, s_createText);
-            _row = new ElementNodeCore<Row, LayoutProps>(nodeContext, s_createRow);
-            _column = new ElementNodeCore<Column, LayoutProps>(nodeContext, s_createColumn);
-            _element = new ElementInput(_text.AddWarning);
         }
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
+        /// <summary>For tests: the node's message goes to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal LabeledNode(Func<string, IDisposable> addWarning)
+            : this(NodeErrors.ShownBy(addWarning))
         {
-            _text = new ElementNodeCore<Text, TextProps>(addWarning, s_createText);
-            _row = new ElementNodeCore<Row, LayoutProps>(addWarning, s_createRow);
-            _column = new ElementNodeCore<Column, LayoutProps>(addWarning, s_createColumn);
-            _element = new ElementInput(addWarning);
+        }
+
+        // One store for the label, both layouts and the element input: one message at the node.
+        private LabeledNode(NodeErrors messages)
+        {
+            _messages = messages;
+            _text = new ElementNodeCore<Text, TextProps>(messages, s_createText, "Label ");
+            _row = new ElementNodeCore<Row, LayoutProps>(messages, s_createRow, "Row ");
+            _column = new ElementNodeCore<Column, LayoutProps>(messages, s_createColumn, "Column ");
+            _element = new ElementInput(messages, "Element");
         }
 
         // The label box is Label Width x Label Height (the Size of s_label): the text is aligned left and vertically
@@ -118,9 +123,14 @@ namespace VL.Qt.Nodes
             // Labeled has no Clip and no Debug pin (yet): the layout never clips and draws no debug overlay.
             var common = new CommonInputs(default, transform, anchor, opacity, false, false, interaction, effect);
             var props = new LayoutProps(_children, spacing);
-            return labelPosition == LabelPosition.Top
-                ? _column.Describe(common, props, out measuredSize, out sceneBounds)
-                : _row.Describe(common, props, out measuredSize, out sceneBounds);
+            // Only the active layout is described: the other one must not keep a message it showed before the switch.
+            if (labelPosition == LabelPosition.Top)
+            {
+                _row.ClearMessages();
+                return _column.Describe(common, props, out measuredSize, out sceneBounds);
+            }
+            _column.ClearMessages();
+            return _row.Describe(common, props, out measuredSize, out sceneBounds);
         }
 
         public void Dispose()
@@ -129,6 +139,7 @@ namespace VL.Qt.Nodes
             _row.Dispose();
             _column.Dispose();
             _element.Dispose();
+            _messages.Dispose();
         }
     }
 }

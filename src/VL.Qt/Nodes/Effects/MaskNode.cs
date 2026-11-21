@@ -28,15 +28,20 @@ namespace VL.Qt.Nodes
         private readonly EffectNode<Props> _node = new(static (previous, p)
             => new MaskEffect(previous, p.Mask, p.ThresholdMin, p.SpreadAtMin, p.ThresholdMax, p.SpreadAtMax, p.Inverted));
 
+        private readonly NodeErrors? _messages;
         private readonly ElementInput _mask;
 
         public MaskNode(NodeContext nodeContext)
-            : this(ElementInput.WarningsOf(nodeContext))
+            : this(new NodeErrors(nodeContext))
         {
         }
 
-        /// <param name="addWarning">Shows a warning at the node, the result removes it; null shows nothing (tests).</param>
-        internal MaskNode(Func<string, IDisposable>? addWarning = null) => _mask = new ElementInput(addWarning);
+        /// <param name="messages">Store of the node; null shows nothing (tests).</param>
+        internal MaskNode(NodeErrors? messages = null)
+        {
+            _messages = messages;
+            _mask = new ElementInput(messages, "Mask");
+        }
 
         internal EffectNode<Props> Core => _node;
 
@@ -59,6 +64,10 @@ namespace VL.Qt.Nodes
             bool inverted)
             => _node.Describe(input, new Props(_mask.Update(mask), thresholdMin, spreadAtMin, thresholdMax, spreadAtMax, inverted));
 
-        public void Dispose() => _mask.Dispose();
+        public void Dispose()
+        {
+            _mask.Dispose();
+            _messages?.Dispose();
+        }
     }
 }

@@ -53,6 +53,32 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void Warning_OfTheRow_GoneAfterSwitchingToTop()
+        {
+            string? shown = null;
+            using var n = new LabeledNode(w =>
+            {
+                shown = w;
+                return new Removal(() => shown = null);
+            });
+            var row = Labeled(n, A);
+            row.Feedback.Feedback![0].Warning = "row warning";
+            Labeled(n, A);
+            Assert.That(shown, Is.EqualTo("row warning"));
+
+            Labeled(n, A, position: LabelPosition.Top);
+            Assert.That(shown, Is.Null, "the inactive Row keeps no message at the node");
+
+            Labeled(n, A);
+            Assert.That(shown, Is.EqualTo("row warning"), "back with the Row");
+        }
+
+        private sealed class Removal(Action remove) : IDisposable
+        {
+            public void Dispose() => remove();
+        }
+
+        [Test]
         public void NoElement_OnlyLabel()
         {
             using var n = new LabeledNode(NoWarning);

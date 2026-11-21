@@ -18,9 +18,9 @@ namespace VL.Qt.Nodes
     /// <item>change detection: a new description only if <see cref="CommonInputs"/> or the element specific
     /// <typeparamref name="TProps"/> changed, otherwise the last instance (reference equal → the reconciler skips it);</item>
     /// <item>measurement outputs and the clicks of a Button from the feedback (state of the last pump, 1 frame latency);</item>
-    /// <item>the feedback warning (e.g. a Video at several places, an Interaction at a later place) as persistent node warning; the element itself may hang at several places of one tree and in several renderers;</item>
-    /// <item>the feedback error (reported by Qt for the element, e.g. file not found, or a rejected apply) as persistent node warning,
-    /// logged with the node's logger (<see cref="NodeErrors"/>).</item>
+    /// <item>the feedback warning (e.g. a Video at several places, an Interaction at a later place) and the feedback error
+    /// (reported by Qt for the element, e.g. file not found, or a rejected apply) as warnings in the node's
+    /// <see cref="NodeErrors"/>: shown at the node and logged; the element itself may hang at several places of one tree and in several renderers.</item>
     /// </list>
     /// No static state; nothing here depends on the app (F8/F5 just creates new node instances). Main thread only.
     /// </summary>
@@ -30,48 +30,58 @@ namespace VL.Qt.Nodes
         where TElement : Element
         where TProps : struct, IEquatable<TProps>
     {
-        private const string errorPhase = "Qt";
-
-        private readonly Func<string, IDisposable> _addWarning;
-        private readonly NodeErrors? _errors;
+        private readonly bool _ownsMessages;
+        private readonly NodeMessage _warning;
+        private readonly NodeMessage _error;
         private readonly Func<CommonInputs, TProps, FeedbackSlot, TElement> _create;
         private TElement? _last;
         private CommonInputs _common;
         private TProps _props;
-        private string? _warning;
-        private IDisposable? _warningMessage;
-        private string? _error;
 
         /// <param name="nodeContext">Context of the public node (warning and error are shown there).</param>
         /// <param name="create">Builds a description; use a static lambda (no capture → no allocation).</param>
         public ElementNodeCore(NodeContext nodeContext, Func<CommonInputs, TProps, FeedbackSlot, TElement> create)
-            : this(w => nodeContext.AddPersistentMessage(MessageSeverity.Warning, w), create)
+            : this(new NodeErrors(nodeContext), create, string.Empty, ownsMessages: true)
         {
-            _errors = new NodeErrors(nodeContext);
         }
 
-        /// <param name="addWarning">Shows a warning, the result removes it (tests: no NodeContext/AppHost needed; the
-        /// error is then only tracked in <see cref="Error"/>).</param>
+        /// <param name="addWarning">Shows the node's message, the result removes it (no NodeContext/AppHost needed).</param>
         /// <param name="create">Builds a description; use a static lambda (no capture → no allocation).</param>
         public ElementNodeCore(Func<string, IDisposable> addWarning, Func<CommonInputs, TProps, FeedbackSlot, TElement> create)
+            : this(NodeErrors.ShownBy(addWarning), create, string.Empty, ownsMessages: true)
         {
-            _addWarning = addWarning;
+        }
+
+        /// <param name="messages">Store of the node, shared with other cores of the same node; the caller disposes it.</param>
+        /// <param name="create">Builds a description; use a static lambda (no capture → no allocation).</param>
+        /// <param name="part">Distinguishes the phases of several cores in one store.</param>
+        public ElementNodeCore(NodeErrors messages, Func<CommonInputs, TProps, FeedbackSlot, TElement> create, string part)
+            : this(messages, create, part, ownsMessages: false)
+        {
+        }
+
+        private ElementNodeCore(NodeErrors messages, Func<CommonInputs, TProps, FeedbackSlot, TElement> create, string part, bool ownsMessages)
+        {
+            Messages = messages;
+            _ownsMessages = ownsMessages;
+            _warning = new NodeMessage(messages, part + "Warning");
+            _error = new NodeMessage(messages, part + "Qt");
             _create = create;
         }
 
         public ElementFeedback Feedback { get; } = new();
 
-        /// <summary>Shows a warning at the node, the result removes it (for the element inputs of the node, <see cref="ElementInput"/>).</summary>
-        public Func<string, IDisposable> AddWarning => _addWarning;
+        /// <summary>Message store of the node (for the element inputs of the node, <see cref="ElementInput"/>).</summary>
+        public NodeErrors Messages { get; }
 
         /// <summary>Slot written into every description (v1 nodes output one element → index 0).</summary>
         public FeedbackSlot Slot => new(Feedback, 0);
 
-        /// <summary>Warning currently shown at the node, null if none.</summary>
-        public string? Warning => _warning;
+        /// <summary>Feedback warning currently shown at the node, null if none.</summary>
+        public string? Warning => _warning.Text;
 
         /// <summary>Error currently shown at the node (reported by Qt for the element), null if none.</summary>
-        public string? Error => _error;
+        public string? Error => _error.Text;
 
         /// <summary>Number of descriptions created so far (for tests).</summary>
         public int Created { get; private set; }
@@ -90,8 +100,8 @@ namespace VL.Qt.Nodes
                 _props = props;
                 Created++;
             }
-            UpdateWarning();
-            UpdateError();
+            _warning.Set(Feedback.Warning);
+            _error.Set(Feedback.Error);
             measuredSize = Feedback.MeasuredSize();
             sceneBounds = Feedback.SceneBounds();
             return _last;
@@ -115,37 +125,21 @@ namespace VL.Qt.Nodes
             return clicks;
         }
 
-        private void UpdateWarning()
+        /// <summary>
+        /// Removes the warning and error of this core from the node (a core that is not described this frame, e.g. the
+        /// inactive layout of Labeled); the next <see cref="Describe"/> shows them again.
+        /// </summary>
+        public void ClearMessages()
         {
-            var warning = Feedback.Warning;
-            if (ReferenceEquals(warning, _warning) || warning == _warning)
-                return;
-            _warningMessage?.Dispose();
-            _warningMessage = warning is null ? null : _addWarning(warning);
-            _warning = warning;
-        }
-
-        private void UpdateError()
-        {
-            var error = Feedback.Error;
-            if (ReferenceEquals(error, _error) || error == _error)
-                return;
-            _error = error;
-            if (_errors is null)
-                return;
-            if (error is null)
-                _errors.Clear(errorPhase);
-            else
-                _errors.Warn(error, errorPhase);
+            _warning.Set(null);
+            _error.Set(null);
         }
 
         public void Dispose()
         {
-            _errors?.Dispose();
-            _error = null;
-            _warningMessage?.Dispose();
-            _warningMessage = null;
-            _warning = null;
+            ClearMessages();
+            if (_ownsMessages)
+                Messages.Dispose();
             _last = null;
         }
     }

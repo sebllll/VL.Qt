@@ -28,14 +28,14 @@ namespace VL.Qt.Nodes
         public RowNode(NodeContext nodeContext)
         {
             _node = new ElementNodeCore<Row, Props>(nodeContext, Create);
-            _children = new ChildrenInput(_node.AddWarning);
+            _children = new ChildrenInput(_node.Messages);
         }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal RowNode(Func<string, IDisposable> addWarning)
         {
             _node = new ElementNodeCore<Row, Props>(addWarning, Create);
-            _children = new ChildrenInput(_node.AddWarning);
+            _children = new ChildrenInput(_node.Messages);
         }
 
         internal static readonly Func<CommonInputs, Props, FeedbackSlot, Row> Create = static (c, p, slot) => new Row(c, slot)

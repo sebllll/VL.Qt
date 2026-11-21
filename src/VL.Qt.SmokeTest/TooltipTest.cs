@@ -332,7 +332,8 @@ public static class TooltipTest
             var slot = new FeedbackSlot(new ElementFeedback(), 0);
             var tip = new ElementTooltipPreviewNode(client, scene, static window => Native.vlqt_scene_get_change_count(window),
                 static () => System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
-            var snap = new SnapshotNode(client, scene);
+            var snapLog = new NodeLog();
+            var snap = new SnapshotNode(client, scene, snapLog.Errors);
             IImage? tipImage = null, snapImage = null;
             string tipText = "", snapError = "";
             int notShown = 0;
@@ -352,8 +353,11 @@ public static class TooltipTest
                 tipImage = tip.Update(target, out tipText) ?? tipImage;
                 // grab is an edge: once, in the first pass (the point of the test); every further grab would supersede the running one
                 // (only the newest grab of an id counts), and with the software backend a grab needs more than one pump.
-                snapImage = snap.Update(target, out _, out snapError, 1, grab: i == 1) ?? snapImage;
-                if (tipText.Contains(ElementTooltipPreviewNode.NotShownSuffix) || snapError == SnapshotNode.NotShownError)
+                snapImage = snap.Update(target, out _, 1, grab: i == 1) ?? snapImage;
+                var logged = snapLog.Take();
+                if (logged.Length > 0)
+                    snapError = logged;
+                if (tipText.Contains(ElementTooltipPreviewNode.NotShownSuffix) || logged == SnapshotNode.NotShownError)
                     notShown++;
                 current = new Group { Anchor = RectangleAnchor.TopLeft, Children = [target, small] };
                 Step(1, 15);

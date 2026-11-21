@@ -502,11 +502,13 @@ namespace VL.Qt.Tests
         public void LoadImage_Synchronous_ReadyAfterUpdate()
         {
             _api.OnWait = id => _api.Ready(id, 100, 50);
-            using var node = new LoadImageNode(_client);
-            var image = node.Update(P("C:/a.png"), false, out var error);
+            var messages = new RecordingMessages();
+            using var node = new LoadImageNode(_client, messages.Errors);
+            var image = node.Update(P("C:/a.png"), false);
             Assert.That(image, Is.Not.Null);
-            Assert.That((image!.State, image.Width, image.Height, error), Is.EqualTo((QtImageState.Ready, 100, 50, "")));
-            Assert.That(node.Update(P("C:/a.png"), false, out _), Is.SameAs(image), "unchanged path = same image, no reload");
+            Assert.That((image!.State, image.Width, image.Height, messages.Shown), Is.EqualTo((QtImageState.Ready, 100, 50, (string?)null)));
+            Assert.That(node.Update(P("C:/a.png"), false), Is.SameAs(image), "unchanged path = same image, no reload");
+            Assert.That(messages.Logged, Is.Empty);
             Assert.That(_api.Calls.Count(c => c.StartsWith("load")), Is.EqualTo(1));
         }
 
@@ -515,59 +517,67 @@ namespace VL.Qt.Tests
         {
             _api.OnWait = id => _api.Ready(id);
             using var node = new LoadImageNode(_client);
-            var a = node.Update(P("C:/a.png"), false, out _)!;
-            var b = node.Update(P("C:/b.png"), false, out _)!;
+            var a = node.Update(P("C:/a.png"), false)!;
+            var b = node.Update(P("C:/b.png"), false)!;
             Assert.That(b, Is.Not.SameAs(a));
             Assert.That(b.Id, Is.Not.EqualTo(a.Id));
             Assert.That(_api.Released, Is.Empty);
             Pump();
             Assert.That(_api.Released, Is.EqualTo(new[] { a.Id }));
-            Assert.That(node.Update(P(""), false, out _), Is.Null, "empty path = no image");
+            Assert.That(node.Update(P(""), false), Is.Null, "empty path = no image");
             node.Dispose();
             Pump();
             Assert.That(_api.Released, Is.EqualTo(new[] { a.Id, b.Id }));
         }
 
         [Test]
-        public void LoadImage_Failed_ErrorOutput()
+        public void LoadImage_Failed_MarksTheNodeAndLogsOnce()
         {
             _api.OnWait = id => _api.Failed(id, "cannot decode");
-            using var node = new LoadImageNode(_client);
-            var image = node.Update(P("C:/broken.png"), false, out var error);
+            var messages = new RecordingMessages();
+            using var node = new LoadImageNode(_client, messages.Errors);
+            var image = node.Update(P("C:/broken.png"), false);
             Assert.That(image!.State, Is.EqualTo(QtImageState.Failed));
-            Assert.That(error, Is.EqualTo("cannot decode"));
+            Assert.That(messages.Shown, Is.EqualTo("cannot decode"));
+            node.Update(P("C:/broken.png"), false);
+            Assert.That(messages.Logged, Is.EqualTo(new[] { "cannot decode" }), "logged once while it lasts");
+
+            _api.OnWait = id => _api.Ready(id);
+            node.Update(P("C:/a.png"), false);
+            Assert.That(messages.Shown, Is.Null, "gone with the next path that loads");
         }
 
         [Test]
         public void LoadImageAsync_KeepPrevious_SwitchesWhenReady()
         {
-            using var node = new LoadImageAsyncNode(_client);
+            var messages = new RecordingMessages();
+            using var node = new LoadImageAsyncNode(_client, messages.Errors);
             var loaded = new List<QtImage>();
-            QtImage? Update(string path, out bool isLoaded, out string error, bool keep = true)
+            QtImage? Update(string path, out bool isLoaded, bool keep = true)
             {
-                var image = node.Update(P(path), false, keep, out isLoaded, out error, out var onLoaded);
+                var image = node.Update(P(path), false, keep, out isLoaded, out var onLoaded);
                 if (loaded.Count == 0 && onLoaded is not null)
                     onLoaded.Subscribe(loaded.Add);
                 return image;
             }
 
-            var first = Update("C:/a.png", out var isLoaded, out _);
+            var first = Update("C:/a.png", out var isLoaded);
             Assert.That(first, Is.Not.Null, "nothing before: the loading image is the output");
             Assert.That(isLoaded, Is.False);
             var idA = _api.Calls.Count;
             _api.Ready(first!.Id);
             Pump();
             Assert.That(loaded, Is.EqualTo(new[] { first }));
-            Assert.That(Update("C:/a.png", out isLoaded, out _), Is.SameAs(first));
+            Assert.That(Update("C:/a.png", out isLoaded), Is.SameAs(first));
             Assert.That(isLoaded, Is.True);
 
-            var stillA = Update("C:/b.png", out isLoaded, out _);
+            var stillA = Update("C:/b.png", out isLoaded);
             Assert.That(stillA, Is.SameAs(first), "previous stays while B loads");
             Assert.That(isLoaded, Is.False);
             var pendingId = first.Id + 1;
             _api.Ready(pendingId);
             Pump();
-            var b = Update("C:/b.png", out isLoaded, out _);
+            var b = Update("C:/b.png", out isLoaded);
             Assert.That(b, Is.Not.SameAs(first));
             Assert.That(b!.Id, Is.EqualTo(pendingId));
             Assert.That(isLoaded, Is.True);
@@ -575,21 +585,22 @@ namespace VL.Qt.Tests
             Pump();
             Assert.That(_api.Released, Is.EqualTo(new[] { first.Id }), "A released after the switch");
 
-            // C fails: B stays, Error tells.
-            Update("C:/c.png", out _, out _);
+            // C fails: B stays, the node shows why.
+            Update("C:/c.png", out _);
             _api.Failed(pendingId + 1, "not found");
             Pump();
-            var stillB = Update("C:/c.png", out isLoaded, out var error);
+            var stillB = Update("C:/c.png", out isLoaded);
             Assert.That(stillB, Is.SameAs(b));
-            Assert.That((isLoaded, error), Is.EqualTo((false, "not found")));
+            Assert.That((isLoaded, messages.Shown), Is.EqualTo((false, "not found")));
+            Assert.That(messages.Logged, Is.EqualTo(new[] { "not found" }));
         }
 
         [Test]
         public void LoadImageAsync_WithoutKeepPrevious_SwitchesAtOnce()
         {
             using var node = new LoadImageAsyncNode(_client);
-            var a = node.Update(P("C:/a.png"), false, false, out _, out _, out _);
-            var b = node.Update(P("C:/b.png"), false, false, out var isLoaded, out _, out _);
+            var a = node.Update(P("C:/a.png"), false, false, out _, out _);
+            var b = node.Update(P("C:/b.png"), false, false, out var isLoaded, out _);
             Assert.That(b, Is.Not.SameAs(a));
             Assert.That(b!.State, Is.EqualTo(QtImageState.Loading));
             Assert.That(isLoaded, Is.False);
@@ -601,11 +612,11 @@ namespace VL.Qt.Tests
         public void LoadImageAsync_PathChangeWhileLoading_CancelsThePending()
         {
             using var node = new LoadImageAsyncNode(_client);
-            var a = node.Update(P("C:/a.png"), false, true, out _, out _, out _)!;
+            var a = node.Update(P("C:/a.png"), false, true, out _, out _)!;
             _api.Ready(a.Id);
             Pump();
-            node.Update(P("C:/b.png"), false, true, out _, out _, out _);
-            node.Update(P("C:/c.png"), false, true, out _, out _, out _);
+            node.Update(P("C:/b.png"), false, true, out _, out _);
+            node.Update(P("C:/c.png"), false, true, out _, out _);
             Pump();
             Assert.That(_api.Released, Is.EqualTo(new[] { a.Id + 1 }), "B released, A stays at the output");
         }
@@ -630,19 +641,20 @@ namespace VL.Qt.Tests
         [Test]
         public void ToQtImage_UploadsOnlyNewInstances_OneResource()
         {
-            using var node = new ToQtImageNode(_client);
+            var messages = new RecordingMessages();
+            using var node = new ToQtImageNode(_client, messages.Errors);
             var input = new TestImage(4, 2, PixelFormat.B8G8R8A8);
-            var a = node.Update(input, out var error)!;
-            Assert.That(error, Is.Empty);
+            var a = node.Update(input)!;
+            Assert.That(messages.Logged, Is.Empty);
             Assert.That(_api.Calls.Last(), Is.EqualTo($"pixels {a.Id:X} 4x2 row 16 fmt 9 pm 0 len 32"));
-            Assert.That(node.Update(input, out _), Is.SameAs(a));
+            Assert.That(node.Update(input), Is.SameAs(a));
             Assert.That(_api.Calls.Count(c => c.StartsWith("pixels")), Is.EqualTo(1), "same instance: no upload");
 
-            var b = node.Update(new TestImage(8, 8, PixelFormat.R8G8B8A8), out _)!;
+            var b = node.Update(new TestImage(8, 8, PixelFormat.R8G8B8A8))!;
             Assert.That(b, Is.Not.SameAs(a), "new instance = new QtImage");
             Assert.That(b.Id, Is.EqualTo(a.Id), "one resource per node, content replaced");
             Assert.That(_api.Calls.Count(c => c.StartsWith("create")), Is.EqualTo(1));
-            Assert.That(node.Update(null, out _), Is.Null);
+            Assert.That(node.Update(null), Is.Null);
             Pump();
             Assert.That(_api.Released, Is.Empty, "resource kept for the next input");
             node.Dispose();
@@ -655,18 +667,20 @@ namespace VL.Qt.Tests
         {
             using var node = new ToQtImageNode(_client);
             var input = new TestImage(4, 4, PixelFormat.R8G8B8A8, volatileImage: true);
-            var a = node.Update(input, out _);
-            Assert.That(node.Update(input, out _), Is.SameAs(a));
+            var a = node.Update(input);
+            Assert.That(node.Update(input), Is.SameAs(a));
             Assert.That(_api.Calls.Count(c => c.StartsWith("pixels")), Is.EqualTo(2));
         }
 
         [Test]
-        public void ToQtImage_UnsupportedFormat_Error()
+        public void ToQtImage_UnsupportedFormat_MarksTheNode()
         {
-            using var node = new ToQtImageNode(_client);
-            var image = node.Update(new TestImage(2, 2, PixelFormat.Unknown), out var error);
+            var messages = new RecordingMessages();
+            using var node = new ToQtImageNode(_client, messages.Errors);
+            var image = node.Update(new TestImage(2, 2, PixelFormat.Unknown));
             Assert.That(image!.State, Is.EqualTo(QtImageState.Failed));
-            Assert.That(error, Does.Contain("not supported"));
+            Assert.That(messages.Shown, Does.Contain("not supported"));
+            Assert.That(messages.Logged.Single(), Does.Contain("not supported"));
         }
 
         [Test]

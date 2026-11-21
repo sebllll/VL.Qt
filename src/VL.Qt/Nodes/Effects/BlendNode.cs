@@ -40,14 +40,14 @@ namespace VL.Qt.Nodes
         private readonly ElementInput _layer;
 
         public BlendNode(NodeContext nodeContext)
-            : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext), ElementInput.WarningsOf(nodeContext))
+            : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
         {
         }
 
-        internal BlendNode(ResourceClient? client, NodeErrors? errors = null, Func<string, IDisposable>? addWarning = null)
+        internal BlendNode(ResourceClient? client, NodeErrors? errors = null)
         {
             _link = new ShaderEffectBuilder<Props>(client, s_shaders, s_create, errors);
-            _layer = new ElementInput(addWarning);
+            _layer = new ElementInput(errors, "Layer");
         }
 
         internal ShaderEffectBuilder<Props> Core => _link;

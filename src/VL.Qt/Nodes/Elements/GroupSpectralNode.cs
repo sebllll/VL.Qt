@@ -26,14 +26,14 @@ namespace VL.Qt.Nodes
         public GroupSpectralNode(NodeContext nodeContext)
         {
             _node = new ElementNodeCore<Group, GroupNode.Props>(nodeContext, GroupNode.Create);
-            _children = new ChildrenInput(_node.AddWarning);
+            _children = new ChildrenInput(_node.Messages);
         }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal GroupSpectralNode(Func<string, IDisposable> addWarning)
         {
             _node = new ElementNodeCore<Group, GroupNode.Props>(addWarning, GroupNode.Create);
-            _children = new ChildrenInput(_node.AddWarning);
+            _children = new ChildrenInput(_node.Messages);
         }
 
         /// <summary>Describes the group. A new description is only created when an input changes.</summary>

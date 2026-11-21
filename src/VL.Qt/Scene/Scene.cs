@@ -168,7 +168,7 @@ namespace VL.Qt
 
         /// <summary>
         /// the failing object id (vlqt_scene_get_apply_error) resolved to its feedback slot shows the error at the
-        /// element node; returns the text for the renderer's Error output, empty if the element took it.
+        /// element node; returns the text for the renderer, empty if the element took it.
         /// </summary>
         private string ReportApplyError()
         {
