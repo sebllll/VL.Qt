@@ -291,7 +291,8 @@ public static class ElementTableTest
         {
             var len = parts.Sum(p => p.Length);
             _b.AddRange(BitConverter.GetBytes(op));
-            _b.AddRange(BitConverter.GetBytes((ushort)len));
+            _b.AddRange(BitConverter.GetBytes((ushort)0)); // flags (reserved)
+            _b.AddRange(BitConverter.GetBytes((uint)len));
             foreach (var p in parts)
                 _b.AddRange(p);
             while (_b.Count % 4 != 0)

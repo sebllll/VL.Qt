@@ -148,16 +148,16 @@ public static class ShapeTest
         cmd.Reset();
         cmd.SetPath(Polyline, Protocol.PropertyId.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Line], [0, 0, 10, 10]);
         var good = cmd.EndFrame().ToArray();
-        // SET payload: id u32, prop u16, vt u16, then verbCount u32 (offset 12 with the 4-byte header), pointCount u32 (offset 16).
+        // SET payload after the header: id u32, prop u16, vt u16, then verbCount u32, pointCount u32.
         var badLength = (byte[])good.Clone();
-        badLength[16]++;
+        badLength[Protocol.HeaderSize + 12]++;
         var rcLen = Native.Apply(w, badLength);
         s.Check(rcLen == Native.Result.BadLength, $"shapes: PATH with a point count that does not match the payload length -> {rcLen} (expected -2) \"{Native.LastError()}\"");
 
         cmd.Reset();
         cmd.SetF32Array(Polyline, Protocol.PropertyId.ShapePoints, [0, 0, 10, 10]);
         var badArray = cmd.EndFrame().ToArray();
-        badArray[12] = 9;
+        badArray[Protocol.HeaderSize + 8] = 9; // the count follows id, prop and value type
         rcLen = Native.Apply(w, badArray);
         s.Check(rcLen == Native.Result.BadLength, $"shapes: F32_ARRAY with a count that does not match the payload length -> {rcLen} (expected -2) \"{Native.LastError()}\"");
 
