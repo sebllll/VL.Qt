@@ -30,12 +30,16 @@ namespace VL.Qt.Qml
         Vector4D,
         /// <summary>QML <c>rect</c> → Stride RectangleF (x, y, width, height).</summary>
         Rect,
+        /// <summary>QML <c>point</c> → Stride Vector2 (x, y).</summary>
+        Point,
+        /// <summary>QML <c>size</c> → Stride Vector2 (width, height).</summary>
+        Size,
     }
 
     /// <summary>
     /// Pin model mapping of the QML node factory: QML type name → <see cref="QmlValueKind"/> → CLR pin type → wire value
-    /// (<see cref="QmlValue"/>). Everything not listed here (<c>alias</c>, <c>var</c>, <c>list&lt;…&gt;</c>, <c>url</c>, <c>point</c>,
-    /// <c>size</c>, <c>font</c>, enums, object types) gets no pin; the parser reports it as an info message.
+    /// (<see cref="QmlValue"/>). Everything not listed here (<c>alias</c>, <c>var</c>, <c>list&lt;…&gt;</c>, <c>url</c>,
+    /// <c>font</c>, enums, object types) gets no pin; the parser reports it as an info message.
     /// </summary>
     internal static class QmlTypes
     {
@@ -54,6 +58,8 @@ namespace VL.Qt.Qml
                 case "vector3d": kind = QmlValueKind.Vector3D; return true;
                 case "vector4d": kind = QmlValueKind.Vector4D; return true;
                 case "rect": kind = QmlValueKind.Rect; return true;
+                case "point": kind = QmlValueKind.Point; return true;
+                case "size": kind = QmlValueKind.Size; return true;
                 default: kind = default; return false;
             }
         }
@@ -66,7 +72,7 @@ namespace VL.Qt.Qml
             QmlValueKind.Bool => typeof(bool),
             QmlValueKind.String => typeof(string),
             QmlValueKind.Color => typeof(Color4),
-            QmlValueKind.Vector2D => typeof(Vector2),
+            QmlValueKind.Vector2D or QmlValueKind.Point or QmlValueKind.Size => typeof(Vector2),
             QmlValueKind.Vector3D => typeof(Vector3),
             QmlValueKind.Vector4D => typeof(Vector4),
             QmlValueKind.Rect => typeof(RectangleF),
@@ -75,7 +81,7 @@ namespace VL.Qt.Qml
 
         /// <summary>
         /// The value QML gives a property of this kind without initializer, used as pin default when the file has no literal:
-        /// 0, false, "", transparent (0, 0, 0, 0), zero vectors, empty rect.
+        /// 0, false, "", transparent (0, 0, 0, 0), zero vectors, point and size, empty rect.
         /// </summary>
         public static object TypeDefault(QmlValueKind kind) => kind switch
         {
@@ -84,7 +90,7 @@ namespace VL.Qt.Qml
             QmlValueKind.Bool => false,
             QmlValueKind.String => string.Empty,
             QmlValueKind.Color => new Color4(0f, 0f, 0f, 0f),
-            QmlValueKind.Vector2D => Vector2.Zero,
+            QmlValueKind.Vector2D or QmlValueKind.Point or QmlValueKind.Size => Vector2.Zero,
             QmlValueKind.Vector3D => Vector3.Zero,
             QmlValueKind.Vector4D => Vector4.Zero,
             QmlValueKind.Rect => RectangleF.Empty,
@@ -99,7 +105,7 @@ namespace VL.Qt.Qml
             QmlValueKind.Bool => Protocol.ValueType.Bool,
             QmlValueKind.String => Protocol.ValueType.String,
             QmlValueKind.Color => Protocol.ValueType.Color,
-            QmlValueKind.Vector2D => Protocol.ValueType.Vec2,
+            QmlValueKind.Vector2D or QmlValueKind.Point or QmlValueKind.Size => Protocol.ValueType.Vec2,
             QmlValueKind.Vector3D => Protocol.ValueType.Vec3,
             QmlValueKind.Vector4D => Protocol.ValueType.Vec4,
             QmlValueKind.Rect => Protocol.ValueType.Rectf,
@@ -123,7 +129,7 @@ namespace VL.Qt.Qml
                 case (QmlValueKind.Bool, bool b): result = b; return true;
                 case (QmlValueKind.String, string s): result = s; return true;
                 case (QmlValueKind.Color, Color4 c): result = c; return true;
-                case (QmlValueKind.Vector2D, Vector2 v): result = v; return true;
+                case (QmlValueKind.Vector2D or QmlValueKind.Point or QmlValueKind.Size, Vector2 v): result = v; return true;
                 case (QmlValueKind.Vector3D, Vector3 v): result = v; return true;
                 case (QmlValueKind.Vector4D, Vector4 v): result = v; return true;
                 case (QmlValueKind.Rect, RectangleF r): result = r; return true;

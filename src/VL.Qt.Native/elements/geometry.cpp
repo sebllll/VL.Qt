@@ -1,7 +1,7 @@
 #include "elements/geometry.h"
 #include "elements/elements.h"
 #include "elements/group_item.h"
-#include "qmlitem.h"
+#include "user_qml/qml_item.h"
 
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>

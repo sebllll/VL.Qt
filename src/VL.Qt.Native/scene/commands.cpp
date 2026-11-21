@@ -2,7 +2,7 @@
 #include "effects/effect_chain_desc.h"
 #include "effects/shader_item.h"
 #include "elements/group_item.h"
-#include "qmlitem.h"
+#include "user_qml/qml_item.h"
 #include "scene/scene.h"
 #include "vlstyle.h"
 #include "wire.h"

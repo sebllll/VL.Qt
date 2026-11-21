@@ -305,6 +305,21 @@ namespace VL.Qt.Tests
             Assert.That(Out(instance, 1).Value, Is.EqualTo(new Vector2(1, 2)));
         }
 
+        [Test]
+        public void PropertyOutput_Point_ArrivesAsVector2() => AssertVector2Output(QmlValueKind.Point);
+
+        [Test]
+        public void PropertyOutput_Size_ArrivesAsVector2() => AssertVector2Output(QmlValueKind.Size);
+
+        private void AssertVector2Output(QmlValueKind kind)
+        {
+            var instance = Create(new[] { Prop("value", kind) });
+            Frame(instance);
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("value", Protocol.ValueType.Vec2, QmlWire.F(3, -4))));
+            Frame(instance);
+            Assert.That(Out(instance, 1).Value, Is.EqualTo(new Vector2(3, -4)));
+        }
+
         // --- signal outputs ---
 
         [Test]
