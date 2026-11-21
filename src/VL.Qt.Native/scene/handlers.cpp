@@ -719,22 +719,22 @@ void collectTouchPoints(Scene& scene, HandlerEntry& hn)
     // No point and none sent: nothing to send (a new sink starts empty).
     if (count == 0 && hn.sent.touch.size() <= 4)
         return;
-    QByteArray payload;
-    payload.reserve(qsizetype(4 + count * 24));
-    payload.append(reinterpret_cast<const char*>(&count), 4);
+    // Built in the scene's scratch (capacity kept), compared with the last payload and swapped in on change: no
+    // allocation per frame while a finger is down and nothing changes.
+    QByteArray& payload = scene.handlers.touchScratch;
+    payload.resize(0);
+    WireWriter w(payload);
+    w.u32(count);
     quint32 n = 0;
     for (const auto& [id, p] : points) {
         if (n++ == count)
             break;
-        const quint32 uid = id;
-        const float f[5] = {float(p.pos.x()), float(p.pos.y()), p.pressure, float(p.size.width()), float(p.size.height())};
-        payload.append(reinterpret_cast<const char*>(&uid), 4);
-        payload.append(reinterpret_cast<const char*>(f), sizeof f);
+        w.u32(quint32(id)).f32(float(p.pos.x())).f32(float(p.pos.y())).f32(p.pressure).f32(float(p.size.width())).f32(float(p.size.height()));
     }
     if (payload == hn.sent.touch)
         return;
-    hn.sent.touch = payload;
-    scene.events.push(VLQT_EVENT_TOUCH_POINTS, hn.feedbackId, payload.constData(), payload.size());
+    std::swap(payload, hn.sent.touch);
+    scene.events.push(VLQT_EVENT_TOUCH_POINTS, hn.feedbackId, hn.sent.touch.constData(), hn.sent.touch.size());
 }
 
 void collectPinch(Scene& scene, HandlerEntry& hn)

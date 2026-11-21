@@ -52,8 +52,8 @@ void collectQml(Scene& scene, ElementEntry& n)
     auto* item = static_cast<QmlItem*>(n.item);
     if (!item->hasEvents())
         return;
-    thread_local std::vector<QmlPropertyEvent> props;
-    thread_local std::vector<QmlSignalEvent> signalEvents;
+    std::vector<QmlPropertyEvent>& props = scene.measure.qmlProperties;
+    std::vector<QmlSignalEvent>& signalEvents = scene.measure.qmlSignals;
     props.clear();
     signalEvents.clear();
     bool dropped = false;
@@ -62,15 +62,15 @@ void collectQml(Scene& scene, ElementEntry& n)
         return;
     if (dropped)
         item->noteDropped();
-    QByteArray payload;
+    QByteArray& payload = scene.measure.qmlPayload;
     WireWriter w(payload);
     for (const QmlPropertyEvent& e : props) {
-        payload.clear();
+        payload.resize(0);
         w.u16(quint16(e.name.size())).u16(e.value.type).bytes(e.name).align().bytes(e.value.bytes);
         scene.events.push(VLQT_EVENT_QML_PROPERTY, n.feedbackId, payload.constData(), payload.size());
     }
     for (const QmlSignalEvent& e : signalEvents) {
-        payload.clear();
+        payload.resize(0);
         w.u16(quint16(e.name.size())).u16(quint16(e.args.size())).bytes(e.name).align();
         for (const QmlWireValue& a : e.args)
             w.u16(a.type).u16(0).bytes(a.bytes).align();
