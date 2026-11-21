@@ -126,7 +126,7 @@ public static class ElementsTest
             cmd.SetColor(Group, Protocol.Prop.Color, 1, 1, 1, 1);
             var rc = Apply();
             var e = Native.LastError();
-            s.Check(rc == Native.Result.UnknownProperty && e.Contains("not supported by type ITEM"), $"unknown property -> -6 ({rc}: {e})");
+            s.Check(rc == Native.Result.UnknownProperty && e.Contains("not supported by type ITEM"), $"unknown property -> UnknownProperty ({rc}: {e})");
         }
         var hits = Hits() - hits0;
         s.Check(hits == 1, $"unknown property logged once (vlqt.elements, {hits}x)");

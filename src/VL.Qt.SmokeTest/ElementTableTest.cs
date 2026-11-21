@@ -140,7 +140,7 @@ public static class ElementTableTest
     };
 
     // Not element table properties: input handler properties (only on handler objects) and the keys of the effect chain
-    // (SET of them is -6, protocol.h "Effect chain").
+    // (SET of them is UnknownProperty, protocol.h "Effect chain").
     private static bool IsExempt(ushort prop) =>
         prop >= Protocol.Prop.AcceptedButtons && prop <= Protocol.Prop.Occlusion
         || prop >= Protocol.Prop.EffectEnabled && prop <= Protocol.Prop.EffectMaskInverted;

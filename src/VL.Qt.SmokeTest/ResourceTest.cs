@@ -100,8 +100,8 @@ public static class ResourceTest
         }
         bool Listed(ulong id) => List().Any(r => r.id == id);
 
-        s.Check(Native.vlqt_res_create(999, out _) == Native.Result.BadArgument, "unknown kind rejected (-7)");
-        s.Check(Native.vlqt_res_set_budget(0) == Native.Result.BadArgument, "budget 0 rejected (-7)");
+        s.Check(Native.vlqt_res_create(999, out _) == Native.Result.BadArgument, "unknown kind rejected (BadArgument)");
+        s.Check(Native.vlqt_res_set_budget(0) == Native.Result.BadArgument, "budget 0 rejected (BadArgument)");
 
         // 1. All states of the test kind, ERROR + INFO, rejected transitions.
         var a = Start(20, 1 * Mb);
@@ -142,7 +142,7 @@ public static class ResourceTest
         var e2 = Create();
         s.Check((uint)e2 == (uint)a && e2 != a, $"index reused with a new generation ({a:X} -> {e2:X})");
         s.Check(Native.vlqt_res_release(a) == Native.Result.UnknownId && NativeTest.vlqt_test_res_start(a, 0, 0, 0) == Native.Result.UnknownId && Native.vlqt_res_wait(a, 10) == (int)Native.Result.UnknownId
-            && NativeTest.vlqt_test_res_transition(a, 1, 5) == Native.Result.UnknownId && NativeTest.vlqt_test_res_element_ref(a, 1) == Native.Result.UnknownId, "stale id -> -9 everywhere");
+            && NativeTest.vlqt_test_res_transition(a, 1, 5) == Native.Result.UnknownId && NativeTest.vlqt_test_res_element_ref(a, 1) == Native.Result.UnknownId, "stale id -> UnknownId everywhere");
         var e2Info = List().FirstOrDefault(r => r.id == e2);
         s.Check(e2Info.state == Protocol.ResState.Pending && e2Info.host_refs == 1 && e2Info.element_refs == 0, "new resource untouched by the stale id");
         s.Check(s.Log.Contains("stale resource id"), "stale id logged as warning");
@@ -204,7 +204,7 @@ public static class ResourceTest
         Frame();
         var elInfo = List().FirstOrDefault(r => r.id == el);
         s.Check(elInfo.id == el && elInfo.host_refs == 0 && elInfo.element_refs == 1, "kept while an element holds it");
-        s.Check(NativeTest.vlqt_test_res_element_ref(el, -1) == 0 && NativeTest.vlqt_test_res_element_ref(el, -1) == Native.Result.UnknownId, "element release, second one -9");
+        s.Check(NativeTest.vlqt_test_res_element_ref(el, -1) == 0 && NativeTest.vlqt_test_res_element_ref(el, -1) == Native.Result.UnknownId, "element release, second one UnknownId");
         Frame();
         s.Check(!Listed(el), "freed after the last element release");
 

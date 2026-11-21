@@ -178,7 +178,7 @@ public static class SizeResetTest
         recs = Bounds(HEffect);
         s.Check(Is(recs, 500, 300, 40, 30), $"ShaderEffect Auto Size on -> input size 40 x 30 ({S(recs)})");
 
-        // Errors: AUTO_SIZE is valid for containers only (-6), value type bool (-7).
+        // Errors: AUTO_SIZE is valid for containers only (UnknownProperty), value type bool (BadArgument).
         cmd.SetBool(RectId, Protocol.Prop.AutoSize, false);
         Expect(Native.Result.UnknownProperty, "AUTO_SIZE on Rectangle");
         cmd.SetF32(RowId, Protocol.Prop.AutoSize, 1);

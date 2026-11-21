@@ -142,8 +142,8 @@ public static class ImageTest
             s.Check(IsRed(Px(a, 25, 310)) && IsBlue(Px(a, 115, 310)), "failed -> Ready resource draws");
         }
 
-        // Errors: invalid fillMode / smooth as i32 -> -7, Rectangle property / Source -> -6, unknown resource id /
-        // image as i32 -> -7, no crash.
+        // Errors: invalid fillMode / smooth as i32 -> BadArgument, Rectangle property / Source -> UnknownProperty, unknown resource id /
+        // image as i32 -> BadArgument, no crash.
         void Expect(Native.Result expected, string what)
         {
             var rc = Apply();

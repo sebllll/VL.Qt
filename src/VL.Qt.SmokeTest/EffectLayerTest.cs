@@ -272,15 +272,15 @@ public static class EffectLayerTest
         CheckApply("back to one run");
         s.Pump(3);
 
-        // Errors: SET with an EFFECT_* property -> -6 (only via SET_EFFECT_CHAIN); a chain on a handler -> -6.
+        // Errors: SET with an EFFECT_* property -> UnknownProperty (only via SET_EFFECT_CHAIN); a chain on a handler -> UnknownProperty.
         cmd.SetBool(A, Protocol.Prop.EffectShadowEnabled, true);
         var rc1 = Native.Apply(w, cmd.EndFrame());
         cmd.Reset();
-        s.Check(rc1 == Native.Result.UnknownProperty, $"effect-layer: SET EFFECT_SHADOW_ENABLED -> -6 ({rc1})");
+        s.Check(rc1 == Native.Result.UnknownProperty, $"effect-layer: SET EFFECT_SHADOW_ENABLED -> UnknownProperty ({rc1})");
         cmd.Chain(H, RunA);
         var rc2 = Native.Apply(w, cmd.EndFrame());
         cmd.Reset();
-        s.Check(rc2 == Native.Result.UnknownProperty, $"effect-layer: effect chain on a handler -> -6 ({rc2})");
+        s.Check(rc2 == Native.Result.UnknownProperty, $"effect-layer: effect chain on a handler -> UnknownProperty ({rc2})");
 
         // DESTROY with the effect on: its MultiEffect goes too.
         cmd.Destroy(A);

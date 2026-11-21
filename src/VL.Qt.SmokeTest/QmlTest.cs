@@ -345,7 +345,7 @@ public static class QmlTest
         CheckApply("SET another value");
         Poll();
         s.Check(Err(HT).Contains("nope"), $"the error for a name stays until that name is set again or the file is reloaded ('{Err(HT)}')");
-        // SET_QML_PROPERTIES on a non QML element is -6, an unknown id -4 (protocol.h).
+        // SET_QML_PROPERTIES on a non QML element is UnknownProperty, an unknown id UnknownObject (protocol.h).
         var other = Extra;
         cmd.Create(other, Protocol.Type.Rectangle);
         cmd.Reparent(other, 0, 0);
@@ -353,11 +353,11 @@ public static class QmlTest
         cmd.BeginQmlProperties(other, 0);
         cmd.UniformF32("a", 1);
         cmd.EndQmlProperties();
-        s.Check(Expect("") == Native.Result.UnknownProperty, $"SET_QML_PROPERTIES on a Rectangle -> -6 ({Native.LastError()})");
+        s.Check(Expect("") == Native.Result.UnknownProperty, $"SET_QML_PROPERTIES on a Rectangle -> UnknownProperty ({Native.LastError()})");
         cmd.BeginQmlProperties(4242, 0);
         cmd.UniformF32("a", 1);
         cmd.EndQmlProperties();
-        s.Check(Expect("") == Native.Result.UnknownObject, $"SET_QML_PROPERTIES on an unknown id -> -4 ({Native.LastError()})");
+        s.Check(Expect("") == Native.Result.UnknownObject, $"SET_QML_PROPERTIES on an unknown id -> UnknownObject ({Native.LastError()})");
         cmd.Destroy(other);
         CheckApply("destroy the Rectangle");
 

@@ -134,7 +134,7 @@ public static class RowColumnTest
             s.Check(IsRed(Px(a, 500, 185)) && IsBg(Px(a, 500, 195)) && IsBg(Px(a, 470, 185)), "row padding 30");
         }
 
-        // Errors: wrong alignment flag per type -> -7, wrong value type -> -7, Rectangle property -> -6.
+        // Errors: wrong alignment flag per type -> BadArgument, wrong value type -> BadArgument, Rectangle property -> UnknownProperty.
         void Expect(Native.Result expected, string what)
         {
             var rc = Apply();

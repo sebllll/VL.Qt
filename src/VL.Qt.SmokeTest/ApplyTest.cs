@@ -306,7 +306,7 @@ public static class ApplyTest
         Err("create id 0", b.Clear().Create(0, Protocol.Type.Item), Native.Result.Invalid, "window root");
         Err("reparent into own subtree", b.Clear().Create(8, Protocol.Type.Item).Reparent(8, 1, 0).Reparent(1, 8, 0), Native.Result.Invalid, "command #2");
         Err("bind unknown id", b.Clear().Bind(777, 1, 0), Native.Result.UnknownObject, "command #0");
-        s.Check(Native.Apply(IntPtr.Zero, b.Span) == Native.Result.NullHandle, "apply: null window -> -1");
+        s.Check(Native.Apply(IntPtr.Zero, b.Span) == Native.Result.NullHandle, "apply: null window -> NullHandle");
 
         // Structured error: object id, op and property of the bad command, reason without prefix.
         Native.vlqt_apply_error ae = default;
@@ -320,7 +320,7 @@ public static class ApplyTest
         s.Check(Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.id == 0 && ae.op == Protocol.Op.ClearColor, $"apply error id: CLEAR_COLOR -> id {ae.id}");
         s.Check(Apply(b.Clear().Destroy(9)) == 0 && Native.vlqt_window_get_apply_error(w, out ae) == 0 && ae.rc == 0 && ae.id == 0 && ae.Reason.Length == 0,
             "apply error id: cleared by a successful apply");
-        s.Check(Native.vlqt_window_get_apply_error(IntPtr.Zero, out _) == Native.Result.NullHandle, "apply error id: null window -> -1");
+        s.Check(Native.vlqt_window_get_apply_error(IntPtr.Zero, out _) == Native.Result.NullHandle, "apply error id: null window -> NullHandle");
         s.Check(Apply(b.Clear()) == 0, "apply: empty buffer ok");
 
         // Earlier commands of a failing buffer stay applied.

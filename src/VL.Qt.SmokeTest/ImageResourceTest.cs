@@ -132,9 +132,9 @@ public static class ImageResourceTest
         // the CPU copy is the image, Ready right after the decode, without stripes.
         var gpuUpload = NativeTest.vlqt_test_device_info(IntPtr.Zero, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
         s.Info($"upload path: {(gpuUpload ? "GPU (shared upload QRhi)" : "CPU copy (no upload QRhi)")}");
-        s.Check(Native.vlqt_res_load_image(1, "x.png", 0) == Native.Result.UnknownId, "load_image on an unknown id -> -9");
+        s.Check(Native.vlqt_res_load_image(1, "x.png", 0) == Native.Result.UnknownId, "load_image on an unknown id -> UnknownId");
         var testKind = Native.vlqt_res_create(TestProtocol.ResKind.Test, out var tid) == 0 ? tid : 0;
-        s.Check(Native.vlqt_res_load_image(testKind, "x.png", 0) == Native.Result.BadArgument, "load_image on a test resource -> -7 (wrong kind)");
+        s.Check(Native.vlqt_res_load_image(testKind, "x.png", 0) == Native.Result.BadArgument, "load_image on a test resource -> BadArgument (wrong kind)");
         Native.vlqt_res_release(testKind);
 
         // 1. Files: PNG/JPG 1080p + 4K async, missing and broken file.
@@ -253,7 +253,7 @@ public static class ImageResourceTest
         }
         var shortId = Create();
         s.Check(Native.ResSetPixels(shortId, new Native.vlqt_pixel_desc { width = 4, height = 4, format = 7 }, new byte[10]) == Native.Result.BadArgument,
-            "set_pixels with too few bytes -> -7");
+            "set_pixels with too few bytes -> BadArgument");
         Native.vlqt_res_release(shortId);
 
         // 3. Replacement: the old content stays readable until the new one is uploaded, no STATE record, new INFO.

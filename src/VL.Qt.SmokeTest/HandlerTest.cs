@@ -177,7 +177,7 @@ public static partial class HandlerTest
         ExpectApply(Native.Result.UnknownProperty, "ACCEPTED_DEVICES on a Hover handler", "not supported by input handler");
         cmd.SetBool(B, reportPosition, true);
         var rcElem = Native.Apply(w, cmd.EndFrame());
-        s.Check(rcElem == Native.Result.UnknownProperty, $"handlers: handler property on an element -> -6 ({rcElem}: {Native.LastError()})");
+        s.Check(rcElem == Native.Result.UnknownProperty, $"handlers: handler property on an element -> UnknownProperty ({rcElem}: {Native.LastError()})");
         cmd.Reset();
         cmd.Create(H1, Protocol.Type.HoverHandler);
         ExpectApply(Native.Result.Invalid, "CREATE handler with an existing id", "already exists");
@@ -466,14 +466,14 @@ public static partial class HandlerTest
         // Property errors: buttons on Hover / Wheel, wrong value type.
         h.Cmd.Create(90, Protocol.Type.HoverHandler);
         h.Cmd.SetI32(90, Protocol.Prop.AcceptedButtons, 1);
-        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"tap: ACCEPTED_BUTTONS on a Hover handler -> -6 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"tap: ACCEPTED_BUTTONS on a Hover handler -> UnknownProperty ({Native.LastError()})");
         h.Cmd.Create(91, Protocol.Type.WheelHandler);
         h.Cmd.SetI32(91, Protocol.Prop.AcceptedButtons, 1);
-        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"tap: ACCEPTED_BUTTONS on a Wheel handler -> -6 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"tap: ACCEPTED_BUTTONS on a Wheel handler -> UnknownProperty ({Native.LastError()})");
         h.Cmd.SetBool(TA, Protocol.Prop.AcceptedButtons, true);
-        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"tap: ACCEPTED_BUTTONS as bool -> -7 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"tap: ACCEPTED_BUTTONS as bool -> BadArgument ({Native.LastError()})");
         h.Cmd.SetBool(TA, 768, true); // REPORT_POSITION, reserved since #320
-        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"tap: REPORT_POSITION on a Tap handler -> -6 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"tap: REPORT_POSITION on a Tap handler -> UnknownProperty ({Native.LastError()})");
         h.Cmd.Destroy(90);
         h.Cmd.Destroy(91);
         h.Apply("destroy loose handlers");
@@ -958,14 +958,14 @@ public static partial class HandlerTest
 
         // Property errors.
         h.Cmd.SetI32(D, Protocol.Prop.DragAxis, 3);
-        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"drag: DRAG_AXIS 3 -> -7 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"drag: DRAG_AXIS 3 -> BadArgument ({Native.LastError()})");
         h.Cmd.SetRect(D, Protocol.Prop.DragLimits, 10, 0, -10, 0);
-        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"drag: DRAG_LIMITS min > max -> -7 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"drag: DRAG_LIMITS min > max -> BadArgument ({Native.LastError()})");
         h.Cmd.SetI32(D, Protocol.Prop.MovesElement, 1);
-        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"drag: MOVES_ELEMENT as i32 -> -7 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"drag: MOVES_ELEMENT as i32 -> BadArgument ({Native.LastError()})");
         h.Cmd.Create(90, Protocol.Type.TapHandler);
         h.Cmd.SetBool(90, Protocol.Prop.MovesElement, false);
-        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"drag: MOVES_ELEMENT on a Tap handler -> -6 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"drag: MOVES_ELEMENT on a Tap handler -> UnknownProperty ({Native.LastError()})");
         h.Cmd.Destroy(90);
         h.Apply("destroy loose handler");
 

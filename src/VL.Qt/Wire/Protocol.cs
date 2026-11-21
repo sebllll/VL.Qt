@@ -269,7 +269,7 @@
             /// <summary>bool, Touch Points handler: ignore presses that an element on top grabs (default true).</summary>
             public const ushort Occlusion = 776;
             // 832.. keys of MULTI entries of SET_EFFECT_CHAIN, values of one MultiEffect run, Qt defaults. Not settable
-            // by SET (-6) once plan effects/08 task 2 lands; until then the old single layer still takes them.
+            // by SET (UnknownProperty) once plan effects/08 task 2 lands; until then the old single layer still takes them.
             /// <summary>Reserved (was: layer on/off of the single Effect layer, plan effects/01).</summary>
             public const ushort EffectEnabled = 832;
             /// <summary>bool (default false).</summary>

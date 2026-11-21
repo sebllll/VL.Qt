@@ -63,13 +63,13 @@ public static partial class HandlerTest
 
         // Property errors.
         h.Cmd.SetI32(TP, Protocol.Prop.Occlusion, 1);
-        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"touch-points: OCCLUSION as i32 -> -7 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"touch-points: OCCLUSION as i32 -> BadArgument ({Native.LastError()})");
         h.Cmd.SetBool(TA, Protocol.Prop.Occlusion, false);
-        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"touch-points: OCCLUSION on a Tap handler -> -6 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"touch-points: OCCLUSION on a Tap handler -> UnknownProperty ({Native.LastError()})");
         h.Cmd.SetI32(TP, Protocol.Prop.MaximumPointCount, 3);
-        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"touch-points: MAXIMUM_POINT_COUNT on Touch Points -> -6 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"touch-points: MAXIMUM_POINT_COUNT on Touch Points -> UnknownProperty ({Native.LastError()})");
         h.Cmd.SetI32(TP, Protocol.Prop.AcceptedButtons, 1);
-        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"touch-points: ACCEPTED_BUTTONS on Touch Points -> -6 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"touch-points: ACCEPTED_BUTTONS on Touch Points -> UnknownProperty ({Native.LastError()})");
 
         // Two fingers: both ids with item-local positions; a move updates; release shrinks the list down to count 0.
         h.Touch(TestProtocol.Touch.Press, 1, 150, 150);
@@ -245,13 +245,13 @@ public static partial class HandlerTest
 
         // Property errors.
         h.Cmd.SetI32(PH, Protocol.Prop.MinimumPointCount, 1);
-        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"pinch: MINIMUM_POINT_COUNT 1 -> -7 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"pinch: MINIMUM_POINT_COUNT 1 -> BadArgument ({Native.LastError()})");
         h.Cmd.SetBool(PH, Protocol.Prop.MaximumPointCount, true);
-        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"pinch: MAXIMUM_POINT_COUNT as bool -> -7 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.BadArgument, $"pinch: MAXIMUM_POINT_COUNT as bool -> BadArgument ({Native.LastError()})");
         h.Cmd.SetBool(PH, Protocol.Prop.Occlusion, false);
-        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"pinch: OCCLUSION on Pinch -> -6 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"pinch: OCCLUSION on Pinch -> UnknownProperty ({Native.LastError()})");
         h.Cmd.SetI32(PH, Protocol.Prop.AcceptedButtons, 1);
-        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"pinch: ACCEPTED_BUTTONS on Pinch -> -6 ({Native.LastError()})");
+        s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"pinch: ACCEPTED_BUTTONS on Pinch -> UnknownProperty ({Native.LastError()})");
 
         // Spread: ACTIVE 1, scale > 1, the item does not move or scale.
         h.Touch(TestProtocol.Touch.Press, 1, 250, 300);

@@ -146,23 +146,23 @@ public static class TextTest
             s.Check(longer.MaxX > plain.MaxX + 40, $"new text is wider (maxX {plain.MaxX} -> {longer.MaxX})");
         }
 
-        // Errors: invalid enum / size -> -7, Rectangle-only property -> -6, no crash.
+        // Errors: invalid enum / size -> BadArgument, Rectangle-only property -> UnknownProperty, no crash.
         cmd.Reset();
         cmd.SetI32(Right, Protocol.Prop.HorizontalAlignment, 3);
         var rc = Apply();
-        s.Check(rc == Native.Result.BadArgument, $"invalid alignment -> -7 ({rc}: {Native.LastError()})");
+        s.Check(rc == Native.Result.BadArgument, $"invalid alignment -> BadArgument ({rc}: {Native.LastError()})");
         cmd.Reset();
         cmd.SetF32(Plain, Protocol.Prop.FontSize, 0);
         rc = Apply();
-        s.Check(rc == Native.Result.BadArgument, $"font size 0 -> -7 ({rc}: {Native.LastError()})");
+        s.Check(rc == Native.Result.BadArgument, $"font size 0 -> BadArgument ({rc}: {Native.LastError()})");
         cmd.Reset();
         cmd.SetF32(Plain, Protocol.Prop.Radius, 1);
         rc = Apply();
-        s.Check(rc == Native.Result.UnknownProperty, $"radius on text -> -6 ({rc}: {Native.LastError()})");
+        s.Check(rc == Native.Result.UnknownProperty, $"radius on text -> UnknownProperty ({rc}: {Native.LastError()})");
         cmd.Reset();
         cmd.SetF32(Plain, Protocol.Prop.FontWeight, 700);
         rc = Apply();
-        s.Check(rc == Native.Result.BadArgument, $"weight as f32 -> -7 ({rc}: {Native.LastError()})");
+        s.Check(rc == Native.Result.BadArgument, $"weight as f32 -> BadArgument ({rc}: {Native.LastError()})");
 
         // Real glyphs: without any font all characters are the same empty box (tofu), "iiiiiiii" would be as
         // wide as "WWWWWWWW". Own scene: the checks above scan regions this one would disturb.

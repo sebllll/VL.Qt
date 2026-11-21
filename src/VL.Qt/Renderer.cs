@@ -199,7 +199,7 @@ namespace VL.Qt
             error = _errors.Current ?? qtNativeError;
         }
 
-        // Not loadable (-7): QtNative keeps the default icon, the node shows a warning until the next icon applies.
+        // Not loadable (Io): QtNative keeps the default icon, the node shows a warning until the next icon applies.
         private void ReportIcon(Native.Result result)
         {
             if (result == Native.Result.Io && _iconPath is not null)
