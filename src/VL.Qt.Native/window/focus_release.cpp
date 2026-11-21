@@ -64,7 +64,7 @@ QQuickItem* FocusRelease::focusOwner() const
     return f;
 }
 
-// Esc: back to the last set or committed value, without a user signal (see "Value inputs" in elements.cpp).
+// Esc: back to the last set or committed value, without a user signal (see "Value inputs" in elements/type_controls.cpp).
 void FocusRelease::revert(QQuickItem* owner)
 {
     if (owner->inherits("QQuickTextField")) {

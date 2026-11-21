@@ -1,6 +1,6 @@
 /* scene/scene.h - one scene per window: the table of its elements and input handlers, the structural commands, the window
  * swap and the entry points of apply and poll. The decoder of the command buffer is scene/commands.cpp; protocol constants
- * live in protocol.h. Element types and their properties are table entries (elements.h/.cpp): a new element type or
+ * live in protocol.h. Element types and their properties are table entries (elements/element_types.h, type_*.cpp): a new element type or
  * property adds entries, no new exports. */
 #pragma once
 

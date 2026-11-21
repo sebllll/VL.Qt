@@ -233,7 +233,7 @@ src/VL.Qt.Native/           # QtNative (C++)
   protocol.h                # shared type/property/event IDs
   vlqt.h/cpp                # C API (app, window, rendering)
   scene/                    # scene of a window: object table, command decoder, events, input handlers
-  elements.h/cpp            # element implementations
+  elements/                 # element types (type_*.cpp), their table, geometry, Group frame, effect sources
   device.h/cpp              # shared D3D11 device, device loss
   resources/                # resource manager (resources.h, resource_*.h/cpp), pixel formats
   *_resource.h/cpp          # images, shaders, snapshots
@@ -259,11 +259,11 @@ tools/                      # build, export, license and test scripts
 2. Mirror the change in `src/VL.Qt/Wire/Protocol.cs` by hand (`VLQT_<GROUP>_<NAME>` is `Protocol.<Group>.<Name>`; a group name ending in `Id` or `Flags` drops that word in C: `Protocol.EventId.Hover` is `VLQT_EVENT_HOVER`, `Protocol.ImageLoadFlags.Mipmaps` is `VLQT_IMAGE_LOAD_MIPMAPS`)
 3. Bump `VLQT_ABI_VERSION` and `Protocol.AbiVersion` (every change to a constant, a layout or an exported signature; `QtApp` refuses a `vlqt.dll` with another number)
 4. Run `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"` to check that header and C# agree: constants and fixed wire sizes of `protocol.h` and the constants of `vlqt_test.h` (`ProtocolDriftTests`, against `Protocol.cs` and `TestProtocol.cs`), struct layouts of `vlqt.h` (`NativeLayoutTests`, numbers also in the `static_assert`s of `app/app.cpp`) and the `VLQT_API` exports of `vlqt.h`, `vlqt_test.h` and `testkit/testkit.h` against the `[DllImport]`s of `Native` and `NativeTest` (`ApiDriftTests`)
-5. Implement both sides (`elements.cpp`, `Elements/`, `Reconciler/`)
+5. Implement both sides (`elements/`, `Elements/`, `Reconciler/`)
 
 **Add a new element type:**
 1. Add IDs to `protocol.h` and `Protocol.cs`
-2. Implement the QML item in `elements.cpp`
+2. Implement the item and its property table in `elements/type_*.cpp` and add it to the type table (`elements/element_types.cpp`)
 3. Add the `Element` class in `src/VL.Qt/Elements/`
 4. Add property diffing in `Reconciler/PropertyDiff.cs`
 5. Add the node in `src/VL.Qt/Nodes/`
