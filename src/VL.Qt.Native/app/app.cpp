@@ -12,7 +12,7 @@
 #include "device.h"
 #include "diagnostics/perf.h"
 #include "protocol.h"
-#include "qtimageitem.h"
+#include "resources/qt_image_item.h"
 #include "resources/resources.h"
 #include "effects/shader_item.h"
 #include "vlqt.h"

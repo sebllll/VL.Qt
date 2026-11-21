@@ -1,10 +1,10 @@
-/* qtimageitem.h - the Image element (images package 04): draws an image resource (image_resource.h).
+/* qt_image_item.h - the Image element (images package 04): draws an image resource (image_resource.h).
  *
  * PROP_IMAGE sets the resource id (0 = no image). The item takes an element reference (res::acquire) for the id it
  * shows and for the id it waits for, and drops it on a change or in the destructor. Until the new resource is Ready
  * the old image stays (no empty frame); a replacement of the same id shows up the same way (res::contentEpoch).
  *
- * Textures: one per window and content, shared by every item of that window (cache in qtimageitem.cpp):
+ * Textures: one per window and content, shared by every item of that window (cache in qt_image_item.cpp):
  *   - shared device (Windows/D3D11): a QRhiTexture of the window's QRhi created from the resource's native texture
  *     (createFrom, same format and mip flags), no copy. The native texture gets an own reference (AddRef) for as long
  *     as the wrapper lives, so a resource freed or replaced meanwhile never leaves a dangling texture.

@@ -142,10 +142,10 @@ target_sources(vlqt PRIVATE
     resources/resource_workers.h
     resources/resources.cpp
     resources/resources.h
+    resources/qt_image_item.cpp
+    resources/qt_image_item.h
     image_resource.cpp
     image_resource.h
-    qtimageitem.cpp
-    qtimageitem.h
     snapshot_resource.cpp
     snapshot_resource.h
     image_writer.cpp

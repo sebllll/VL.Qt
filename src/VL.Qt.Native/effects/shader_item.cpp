@@ -6,7 +6,7 @@
 #include "elements/group_item.h"
 #include "image_resource.h"
 #include "protocol.h"
-#include "qtimageitem.h"
+#include "resources/qt_image_item.h"
 #include "resources/resources.h"
 #include "shader_resource.h"
 

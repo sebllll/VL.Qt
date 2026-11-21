@@ -248,7 +248,7 @@ private:
 #endif
         if (!r.m_texture) {
             // Worker texture: it has its mip chain already (the same level count as QRhi's mipLevelsForSize), the
-            // flag lets QRhi and the windows' wrappers (qtimageitem.cpp) see all levels.
+            // flag lets QRhi and the windows' wrappers (resources/qt_image_item.cpp) see all levels.
             QRhiTexture::Flags flags;
             if (r.m_flags & VLQT_IMAGE_LOAD_MIPMAPS)
                 flags = r.m_workerTexture ? QRhiTexture::MipMapped : QRhiTexture::MipMapped | QRhiTexture::UsedWithGenerateMips;

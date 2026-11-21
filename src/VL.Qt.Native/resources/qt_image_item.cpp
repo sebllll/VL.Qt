@@ -1,4 +1,4 @@
-#include "qtimageitem.h"
+#include "resources/qt_image_item.h"
 
 #include "device.h"
 #include "image_resource.h"
@@ -23,7 +23,7 @@ Q_LOGGING_CATEGORY(lcImageItem, "VL.Qt.Image.Item")
 
 namespace vlqt {
 
-// Texture of one content in one window, shared by every item there (see qtimageitem.h).
+// Texture of one content in one window, shared by every item there (see qt_image_item.h).
 struct ImageTexture
 {
     QQuickWindow* window = nullptr;
