@@ -87,10 +87,10 @@ namespace VL.Qt
         /// <summary>Fold warning currently written into the element's feedback slot, null if none.</summary>
         public string? EffectWarning { get; set; }
 
-        /// <summary>ShaderEffect only: the input child node last sent as SET Source (null = none sent).</summary>
+        /// <summary>Shader only: the input child node last sent as SET Source (null = none sent).</summary>
         public Node? EffectSource { get; set; }
 
-        /// <summary>ShaderEffect only: the uniform table QtNative holds (last SET_UNIFORMS), null = nothing sent.</summary>
+        /// <summary>Shader only: the uniform table QtNative holds (last SET_UNIFORMS), null = nothing sent.</summary>
         public Dictionary<string, UniformValue>? SentUniforms { get; set; }
 
         /// <summary>

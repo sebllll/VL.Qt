@@ -20,48 +20,48 @@ namespace VL.Qt.Nodes
     /// ShaderEffect). Lengths in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP).
     /// The normal way to write an effect is a shader file in a qtshaders/ folder (it becomes a node of its own); use ShaderEffect for shader code that is built or loaded at runtime.
     /// </summary>
-    // The node owns the shader resources (path -> vlqt_shader_load, ids in ShaderEffect.FragmentShaderId/
+    // The node owns the shader resources (path -> vlqt_shader_load, ids in Shader.FragmentShaderId/
     // VertexShaderId); the reconciler sends the properties and the uniform diff (SET_UNIFORMS), only on change.
     // "builtin:<name>" (a shader shipped with VL.Qt) reaches QtNative as such; vvvv resolves a Path IOBox against the document directory, so
     // ResourceClient.TryGetBuiltinShader also accepts "C:\dir\builtin:<name>" and normalizes it.
     [ProcessNode(Name = "ShaderEffect", Category = Categories.Elements), Smell(SymbolSmell.Advanced)]
-    public sealed class ShaderEffectNode : IDisposable
+    public sealed class ShaderNode : IDisposable
     {
         internal readonly record struct Props(
             Element? Input, ulong FragmentShaderId, ulong VertexShaderId, Spread<Uniform>? Uniforms, bool Blending,
             Int2 MeshResolution, bool AutoSize, Sampler? InputSampler);
 
-        private readonly ElementNode<ShaderEffect, Props> _node;
+        private readonly ElementNode<Shader, Props> _node;
         private readonly ShaderSlot _fragment, _vertex;
         private readonly NodeErrors? _errors;
         private Spread<Uniform>? _checkedUniforms;
         private string _uniformProblems = string.Empty, _shownUniformProblems = string.Empty;
         private string _fragmentError = string.Empty, _vertexError = string.Empty, _elementError = string.Empty, _error = string.Empty;
 
-        public ShaderEffectNode(NodeContext nodeContext)
+        public ShaderNode(NodeContext nodeContext)
         {
             var client = ResourceClient.ForApp(nodeContext.AppHost);
-            _node = new ElementNode<ShaderEffect, Props>(nodeContext, Create);
+            _node = new ElementNode<Shader, Props>(nodeContext, Create);
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
             _errors = new NodeErrors(nodeContext);
         }
 
         /// <summary>For tests without shader resources (no client, a path is reported as error): warnings go to <paramref name="addWarning"/>.</summary>
-        internal ShaderEffectNode(Func<string, IDisposable> addWarning)
+        internal ShaderNode(Func<string, IDisposable> addWarning)
             : this(null, addWarning)
         {
         }
 
         /// <summary>For tests: a client on a fake resource API; warnings go to <paramref name="addWarning"/>, nothing is logged.</summary>
-        internal ShaderEffectNode(ResourceClient? client, Func<string, IDisposable> addWarning)
+        internal ShaderNode(ResourceClient? client, Func<string, IDisposable> addWarning)
         {
-            _node = new ElementNode<ShaderEffect, Props>(addWarning, Create);
+            _node = new ElementNode<Shader, Props>(addWarning, Create);
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
         }
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, ShaderEffect> Create = static (c, p, slot) => new ShaderEffect
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Shader> Create = static (c, p, slot) => new Shader
             {
                 Size = c.Size,
                 Transform = c.Transform,
@@ -82,7 +82,7 @@ namespace VL.Qt.Nodes
                 AutoSize = p.AutoSize,
             };
 
-        internal ElementNode<ShaderEffect, Props> Core => _node;
+        internal ElementNode<Shader, Props> Core => _node;
 
         /// <summary>Describes the shader effect. A new description is only created when an input changes.</summary>
         /// <param name="input">Element sampled as sampler2D "source" (hidden itself, only the effect output is drawn). Unconnected = generative shader.</param>

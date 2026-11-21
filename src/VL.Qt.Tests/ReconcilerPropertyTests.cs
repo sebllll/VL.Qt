@@ -37,7 +37,7 @@ namespace VL.Qt.Tests
         private static Column C(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
 
         /// <summary>A tree using every type with non-default values everywhere. Ids: Group 1, Rectangle 2,
-        /// Column 3, Text 4, Image 5, Row 6, ShaderEffect 7, its input 8.</summary>
+        /// Column 3, Text 4, Image 5, Row 6, Shader 7, its input 8.</summary>
         private static Element BuildScene(float fill = 1, string text = "Hello", float spacing = 0.1f, bool blending = false,
             float width = 1, float opacity = 0.5f, float rotation = 0.3f) =>
             G(
@@ -61,7 +61,7 @@ namespace VL.Qt.Tests
                         new Image { Source = new QtImage(new ImageResource(0x1_0000_0005UL)), FillMode = ImageFillMode.Crop, Smooth = false }),
                 },
                 new Row { Spacing = 0.2f, Padding = 0.1f, ChildAlignment = VerticalAlignment.Center },
-                new ShaderEffect
+                new Shader
                 {
                     Input = new Rectangle { Size = new Vector2(1, 1) },
                     Blending = blending, MeshResolution = new Int2(2, 3),
@@ -83,7 +83,7 @@ namespace VL.Qt.Tests
         [Test]
         public void DefaultElements_SendNoSets_ExceptTextFontSize()
         {
-            Frame(G(new Rectangle(), new Image(), new Row(), new Column(), new ShaderEffect(), new Text()));
+            Frame(G(new Rectangle(), new Image(), new Row(), new Column(), new Shader(), new Text()));
             Assert.That(_sink.OfOp("SET"), Is.EqualTo(new[] { $"SET 7 FontSize f32(12)" }));
         }
 
@@ -122,7 +122,7 @@ namespace VL.Qt.Tests
             yield return new TestCaseData(new Func<Element>(() => BuildScene(width: 2)), $"SET 2 Size vec2(200,200)").SetName("Size");
             yield return new TestCaseData(new Func<Element>(() => BuildScene(text: "World")), $"SET 4 Text string(World)").SetName("Text.Content");
             yield return new TestCaseData(new Func<Element>(() => BuildScene(spacing: 0.25f)), $"SET 3 Spacing f32(25)").SetName("Column.Spacing");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(blending: true)), $"SET 7 Blending bool(1)").SetName("ShaderEffect.Blending");
+            yield return new TestCaseData(new Func<Element>(() => BuildScene(blending: true)), $"SET 7 Blending bool(1)").SetName("Shader.Blending");
         }
 
         [TestCaseSource(nameof(SingleChanges))]

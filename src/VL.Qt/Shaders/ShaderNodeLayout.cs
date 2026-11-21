@@ -40,7 +40,7 @@ namespace VL.Qt.Shaders
         float PaddingFactor = 1f,
         ImmutableArray<string> ChainErrors = default)
     {
-        /// <summary>Pin names a uniform pin must not take (the Input pin and the fixed ShaderEffect pins).</summary>
+        /// <summary>Pin names a uniform pin must not take (the Input pin and the fixed Shader pins).</summary>
         public static readonly ImmutableHashSet<string> ReservedPinNames = ImmutableHashSet.Create(
             StringComparer.OrdinalIgnoreCase,
             "Input", "Blending", "Mesh Resolution", "Size", "Auto Size", "Transform", "Anchor", "Opacity", "Clip", "Debug",

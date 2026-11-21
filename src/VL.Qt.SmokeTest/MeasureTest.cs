@@ -367,12 +367,12 @@ public static class MeasureTest
         Native.vlqt_scene_destroy(w);
     }
 
-    // review: an element inside a Group with an effect chain, and inside a Group used as ShaderEffect Input (frame
+    // review: an element inside a Group with an effect chain, and inside a Group used as Shader Input (frame
     // proxy under the root), still reports new SCENE_BOUNDS when the Group moves (TRANSFORM: translation = x/y
-    // path, scale = Matrix4x4 path) or the ShaderEffect holding the Group moves.
+    // path, scale = Matrix4x4 path) or the Shader holding the Group moves.
     private static void RunEffectGroups(Scenario s)
     {
-        void Check(bool ok, string what) => s.NeedsRhi(ok, what, "ShaderEffect/effect chain need a QRhi scenegraph");
+        void Check(bool ok, string what) => s.NeedsRhi(ok, what, "Shader/effect chain need a QRhi scenegraph");
         Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var wave);
         Native.vlqt_shader_load(wave, "builtin:wave", Protocol.ShaderStage.Fragment);
         Check(Native.vlqt_res_wait(wave, 10000) == Protocol.ResourceState.Ready, "shader builtin:wave Ready");
@@ -443,10 +443,10 @@ public static class MeasureTest
         var scale = Stride.Core.Mathematics.Matrix.Scaling(2, 2, 1);
         Move(ChainGroup, ChainRect, t, "Group with effect chain translated", v => v[0] == 110 && v[1] == 60 && v[2] == 20);
         Move(ChainGroup, ChainRect, scale, "Group with effect chain scaled", v => v[0] == 20 && v[1] == 20 && v[2] == 40);
-        Move(InputGroup, InputRect, t, "Group as ShaderEffect Input translated", v => v[2] == 20 && v[0] > 100);
+        Move(InputGroup, InputRect, t, "Group as Shader Input translated", v => v[2] == 20 && v[0] > 100);
         var before = Bounds(InputRect);
-        Move(InputGroup, InputRect, scale, "Group as ShaderEffect Input scaled", v => v[2] == 40);
-        Move(Fx, InputRect, Stride.Core.Mathematics.Matrix.Translation(320, 70, 0), "ShaderEffect holding the Group translated", v => v[2] == 40);
+        Move(InputGroup, InputRect, scale, "Group as Shader Input scaled", v => v[2] == 40);
+        Move(Fx, InputRect, Stride.Core.Mathematics.Matrix.Translation(320, 70, 0), "Shader holding the Group translated", v => v[2] == 40);
         Check(before == null, $"no bounds without a change ({S(before)})");
         Native.vlqt_scene_destroy(w);
         Native.vlqt_res_release(wave);

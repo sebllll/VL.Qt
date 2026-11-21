@@ -100,7 +100,7 @@ internal sealed class Scenario
         }
     }
 
-    /// <summary>Check that needs a QRhi scenegraph (ShaderEffect/MultiEffect, video output): SKIP under the software backend.</summary>
+    /// <summary>Check that needs a QRhi scenegraph (Shader/MultiEffect, video output): SKIP under the software backend.</summary>
     public void NeedsRhi(bool ok, string what, string why)
     {
         if (QtHost.QuickSoftware)

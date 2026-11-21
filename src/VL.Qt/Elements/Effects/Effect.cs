@@ -52,7 +52,7 @@ namespace VL.Qt.Elements
         /// <summary>
         /// Splits <paramref name="chain"/> into the links of SET_EFFECT_CHAIN in application order: the start of the chain
         /// (<see cref="Previous"/> == null) first, the link at the Effect pin last. Consecutive built-in links form one
-        /// MultiEffect run, folded like <see cref="Fold"/>; every <see cref="ShaderLink"/> is a link of its own and ends a run.
+        /// MultiEffect run, folded like <see cref="Fold"/>; every <see cref="ShaderEffect"/> is a link of its own and ends a run.
         /// Empty for no chain. <paramref name="warnings"/> has at most one duplicate warning per run.
         /// </summary>
         internal static ImmutableArray<EffectChainLink> Segment(Effect? chain, out ImmutableArray<string> warnings)
@@ -69,7 +69,7 @@ namespace VL.Qt.Elements
             var runStart = 0;
             for (var i = 0; i <= links.Count; i++)
             {
-                if (i < links.Count && links[i] is not ShaderLink)
+                if (i < links.Count && links[i] is not ShaderEffect)
                     continue;
                 if (i > runStart)
                 {
@@ -81,7 +81,7 @@ namespace VL.Qt.Elements
                         (warningList ??= ImmutableArray.CreateBuilder<string>()).Add(warning);
                 }
                 if (i < links.Count)
-                    result.Add(new EffectChainLink(default, (ShaderLink)links[i]));
+                    result.Add(new EffectChainLink(default, (ShaderEffect)links[i]));
                 runStart = i + 1;
             }
             if (warningList is not null)
@@ -106,7 +106,7 @@ namespace VL.Qt.Elements
                 }
                 seen |= e.Kind;
                 desc = e.Apply(desc);
-                if (e is IManualPadding { AutoPadding: false } manual)
+                if (e is IEffectPadding { AutoPadding: false } manual)
                 {
                     var p = manual.Padding;
                     if (!hasManual)

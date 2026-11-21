@@ -3,7 +3,7 @@
 namespace VL.Qt.Elements
 {
     /// <summary>Drop shadow link (MultiEffect shadow*).</summary>
-    internal sealed class DropShadowEffect : Effect, IManualPadding
+    internal sealed class DropShadowEffect : Effect, IEffectPadding
     {
         public DropShadowEffect(Effect? previous, Color4 color, Vector2 offset, float blur, float scale, bool autoPadding = true, RectangleF padding = default)
             : base(previous)

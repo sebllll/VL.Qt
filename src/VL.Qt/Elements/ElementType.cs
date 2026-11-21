@@ -20,7 +20,7 @@ namespace VL.Qt.Elements
         Switch = Protocol.ElementType.Switch,
         Slider = Protocol.ElementType.Slider,
         TextField = Protocol.ElementType.TextField,
-        ShaderEffect = Protocol.ElementType.Shader,
+        Shader = Protocol.ElementType.Shader,
         Qml = Protocol.ElementType.Qml,
         Shape = Protocol.ElementType.Shape,
     }

@@ -39,7 +39,7 @@ public static class DisplaceTest
 
     private static void Run(Scenario s)
     {
-        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "Shader needs a QRhi scenegraph");
         Directory.CreateDirectory(s.OutDir);
 
         Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var displace);

@@ -48,7 +48,7 @@ public static class RestartTest
         "}\n" +
         "// round " + round + "\n";
 
-    // A window with one ShaderEffect on shader text <paramref name="shader"/> (Ready or still baking).
+    // A window with one Shader on shader text <paramref name="shader"/> (Ready or still baking).
     private static SceneHandle Scene(CommandWriter cmd, ulong shader, bool thickness)
     {
         var w = NativeCalls.CreateWindow(400, 300, "VL.Qt shader restart test");

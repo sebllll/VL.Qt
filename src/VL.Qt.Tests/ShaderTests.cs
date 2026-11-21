@@ -14,8 +14,8 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>ShaderEffect: SET_UNIFORMS encoding, uniform diff, properties, shader resources of the node.</summary>
-    public class ShaderEffectTests
+    /// <summary>Shader: SET_UNIFORMS encoding, uniform diff, properties, shader resources of the node.</summary>
+    public class ShaderTests
     {
         private static string U16(int v) => Convert.ToHexString(BitConverter.GetBytes((ushort)v));
         private static string U32(uint v) => Convert.ToHexString(BitConverter.GetBytes(v));
@@ -105,7 +105,7 @@ namespace VL.Qt.Tests
         public void Create_SendsShadersBlendingMeshSourceAndUniforms()
         {
             var input = new Rectangle();
-            Frame(new ShaderEffect
+            Frame(new Shader
             {
                 Input = input, FragmentShaderId = 11, VertexShaderId = 12, Blending = false, MeshResolution = new Int2(4, 3),
                 Uniforms = U(Uniform.Float("time", 0.5f), Uniform.Vector2("size", new Vector2(2, 3))),
@@ -116,7 +116,7 @@ namespace VL.Qt.Tests
             Assert.That(text, Does.Contain($"SET 1 Blending bool(0)"));
             Assert.That(text, Does.Contain($"SET 1 MeshResolution ivec2(4,3)"));
             Assert.That(text, Does.Contain($"SET 1 Source ref(2)"));
-            // The input is hidden by QtNative on REPARENT under the ShaderEffect, nothing to send.
+            // The input is hidden by QtNative on REPARENT under the Shader, nothing to send.
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo("UNIFORMS 1 0 time=f32(0.5) size=vec2(2,3)"));
             Assert.That(text.IndexOf("CREATE 2", StringComparison.Ordinal), Is.LessThan(text.IndexOf("UNIFORMS", StringComparison.Ordinal)));
         }
@@ -124,7 +124,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Create_Defaults_SendNothingExtra()
         {
-            Frame(new ShaderEffect());
+            Frame(new Shader());
             Assert.That(_sink.Commands.Where(c => c.StartsWith("SET 1 " + P.FragmentShader) || c.StartsWith("SET 1 " + P.Blending)
                 || c.StartsWith("SET 1 " + P.MeshResolution) || c.StartsWith("SET 1 " + P.Source) || c.StartsWith("UNIFORMS")), Is.Empty);
         }
@@ -132,43 +132,43 @@ namespace VL.Qt.Tests
         [Test]
         public void Uniforms_OnlyChangesAreSent()
         {
-            Frame(new ShaderEffect { Uniforms = U(Uniform.Float("a", 1), Uniform.Int("b", 2), Uniform.Bool("c", true)) });
+            Frame(new Shader { Uniforms = U(Uniform.Float("a", 1), Uniform.Int("b", 2), Uniform.Bool("c", true)) });
 
             // new description, equal uniforms: nothing
-            Frame(new ShaderEffect { Uniforms = U(Uniform.Float("a", 1), Uniform.Int("b", 2), Uniform.Bool("c", true)) });
+            Frame(new Shader { Uniforms = U(Uniform.Float("a", 1), Uniform.Int("b", 2), Uniform.Bool("c", true)) });
             Assert.That(_sink.OfOp("UNIFORMS"), Is.Empty);
 
             // one value changes: only that entry, no clear
-            Frame(new ShaderEffect { Uniforms = U(Uniform.Float("a", 1), Uniform.Int("b", 3), Uniform.Bool("c", true)) });
+            Frame(new Shader { Uniforms = U(Uniform.Float("a", 1), Uniform.Int("b", 3), Uniform.Bool("c", true)) });
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo("UNIFORMS 1 0 b=i32(3)"));
 
             // a new name: only the new one
-            Frame(new ShaderEffect { Uniforms = U(Uniform.Float("a", 1), Uniform.Int("b", 3), Uniform.Bool("c", true), Uniform.Color("d", new Color4(1, 0, 0, 0.5f))) });
+            Frame(new Shader { Uniforms = U(Uniform.Float("a", 1), Uniform.Int("b", 3), Uniform.Bool("c", true), Uniform.Color("d", new Color4(1, 0, 0, 0.5f))) });
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo("UNIFORMS 1 0 d=color(1,0,0,0.5)"));
 
             // the type of a name changes: sent again by name
-            Frame(new ShaderEffect { Uniforms = U(Uniform.Float("a", 1), Uniform.Float("b", 3), Uniform.Bool("c", true), Uniform.Color("d", new Color4(1, 0, 0, 0.5f))) });
+            Frame(new Shader { Uniforms = U(Uniform.Float("a", 1), Uniform.Float("b", 3), Uniform.Bool("c", true), Uniform.Color("d", new Color4(1, 0, 0, 0.5f))) });
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo("UNIFORMS 1 0 b=f32(3)"));
         }
 
         [Test]
         public void Uniforms_Removal_SendsFullTableWithClear()
         {
-            Frame(new ShaderEffect { Uniforms = U(Uniform.Float("a", 1), Uniform.Float("b", 2)) });
-            Frame(new ShaderEffect { Uniforms = U(Uniform.Float("b", 2)) });
+            Frame(new Shader { Uniforms = U(Uniform.Float("a", 1), Uniform.Float("b", 2)) });
+            Frame(new Shader { Uniforms = U(Uniform.Float("b", 2)) });
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo($"UNIFORMS 1 {Protocol.UniformSet.Clear} b=f32(2)"));
 
-            Frame(new ShaderEffect());
+            Frame(new Shader());
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo($"UNIFORMS 1 {Protocol.UniformSet.Clear}"));
 
-            Frame(new ShaderEffect { Blending = false });
+            Frame(new Shader { Blending = false });
             Assert.That(_sink.OfOp("UNIFORMS"), Is.Empty, "nothing left to clear");
         }
 
         [Test]
         public void Uniforms_DuplicateName_LastCounts_InvalidNamesSkipped()
         {
-            Frame(new ShaderEffect { Uniforms = U(Uniform.Float("a", 1), Uniform.Float("", 5), Uniform.Float("a", 2)) });
+            Frame(new Shader { Uniforms = U(Uniform.Float("a", 1), Uniform.Float("", 5), Uniform.Float("a", 2)) });
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo("UNIFORMS 1 0 a=f32(2)"));
         }
 
@@ -178,7 +178,7 @@ namespace VL.Qt.Tests
             var input = new Rectangle();
             var tex = new Rectangle();
             var tex2 = new Rectangle();
-            Frame(new ShaderEffect
+            Frame(new Shader
             {
                 Input = input,
                 Uniforms = U(Uniform.FromTexture("mask", tex), Uniform.FromTexture("again", tex), Uniform.FromTexture("other", tex2)),
@@ -194,34 +194,34 @@ namespace VL.Qt.Tests
         {
             var a = new QtImage(new ImageResource(0x100000003));
             var b = new QtImage(new ImageResource(0x200000003));
-            Frame(new ShaderEffect { Uniforms = U(Uniform.FromImage("tex", a)) });
+            Frame(new Shader { Uniforms = U(Uniform.FromImage("tex", a)) });
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo($"UNIFORMS 1 0 tex=u64({a.Id})"));
-            Frame(new ShaderEffect { Uniforms = U(Uniform.FromImage("tex", b)) });
+            Frame(new Shader { Uniforms = U(Uniform.FromImage("tex", b)) });
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo($"UNIFORMS 1 0 tex=u64({b.Id})"));
-            Frame(new ShaderEffect { Uniforms = U(Uniform.FromImage("tex", null)) });
+            Frame(new Shader { Uniforms = U(Uniform.FromImage("tex", null)) });
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo("UNIFORMS 1 0 tex=u64(0)"));
         }
 
         [Test]
         public void Properties_OnlyChangesAreSent_MeshClamped()
         {
-            Frame(new ShaderEffect { FragmentShaderId = 1 });
-            Frame(new ShaderEffect { FragmentShaderId = 2, Blending = false, MeshResolution = new Int2(0, 5) });
+            Frame(new Shader { FragmentShaderId = 1 });
+            Frame(new Shader { FragmentShaderId = 2, Blending = false, MeshResolution = new Int2(0, 5) });
             Assert.That(_sink.OfOp("SET"), Is.EquivalentTo(new[]
             {
                 $"SET 1 FragmentShader u64(2)",
                 $"SET 1 Blending bool(0)",
                 $"SET 1 MeshResolution ivec2(1,5)",
             }));
-            Frame(new ShaderEffect { FragmentShaderId = 2, Blending = false, MeshResolution = new Int2(-3, 5) });
+            Frame(new Shader { FragmentShaderId = 2, Blending = false, MeshResolution = new Int2(-3, 5) });
             Assert.That(_sink.Commands, Is.Empty, "clamped value is unchanged");
         }
 
         [Test]
         public void InputRemoved_SourceReset()
         {
-            Frame(new ShaderEffect { Input = new Rectangle() });
-            Frame(new ShaderEffect());
+            Frame(new Shader { Input = new Rectangle() });
+            Frame(new Shader());
             Assert.That(_sink.ToString(), Does.Contain($"SET 1 Source ref(0)"));
         }
 
@@ -229,14 +229,14 @@ namespace VL.Qt.Tests
 
         private FakeResourceApi _api = null!;
         private ResourceClient _client = null!;
-        private ShaderEffectNode _node = null!;
+        private ShaderNode _node = null!;
 
         private void CreateNode()
         {
             _api = new FakeResourceApi();
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
             _client.SetPumping(true);
-            _node = new ShaderEffectNode(_client, static _ => new Noop());
+            _node = new ShaderNode(_client, static _ => new Noop());
         }
 
         private sealed class Noop : IDisposable
@@ -250,14 +250,14 @@ namespace VL.Qt.Tests
             _client.AfterEvents();
         }
 
-        private ShaderEffect Update(string? fragment, out string error) => Update(fragment, null, null, out error);
+        private Shader Update(string? fragment, out string error) => Update(fragment, null, null, out error);
 
-        private ShaderEffect Update(string? fragment, string? vertex, Spread<Uniform>? uniforms, out string error)
+        private Shader Update(string? fragment, string? vertex, Spread<Uniform>? uniforms, out string error)
         {
             var element = _node.Update(null, null, null, fragment is null ? null : new Path(fragment), null, vertex is null ? null : new Path(vertex), uniforms, true,
                 default, new Vector2(1, 1), true, Matrix.Identity, RectangleAnchor.Center, 1f, false, false, null, null,
                 out _, out _, out error);
-            return (ShaderEffect)element;
+            return (Shader)element;
         }
 
         [Test]
@@ -382,12 +382,12 @@ namespace VL.Qt.Tests
 
         // --- GLSL code ---
 
-        private ShaderEffect UpdateCode(string? fragmentCode, string? fragmentPath, string? vertexCode, out string error)
+        private Shader UpdateCode(string? fragmentCode, string? fragmentPath, string? vertexCode, out string error)
         {
             var element = _node.Update(null, null, fragmentCode, fragmentPath is null ? null : new Path(fragmentPath), vertexCode, null, null, true,
                 default, new Vector2(1, 1), true, Matrix.Identity, RectangleAnchor.Center, 1f, false, false, null, null,
                 out _, out _, out error);
-            return (ShaderEffect)element;
+            return (Shader)element;
         }
 
         [Test]

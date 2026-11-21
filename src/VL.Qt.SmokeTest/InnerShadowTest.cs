@@ -102,7 +102,7 @@ public static class InnerShadowTest
 
     private static void Run(Scenario s)
     {
-        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "Shader needs a QRhi scenegraph");
         ulong Shader(string path)
         {
             Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);

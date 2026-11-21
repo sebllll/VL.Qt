@@ -14,7 +14,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 namespace VL.Qt.Tests
 {
     /// <summary>Filter shader files as links of the effect chain: scan, @padding, pins, link, SET_EFFECT_CHAIN.</summary>
-    public class ShaderLinkNodeTests
+    public class ShaderEffectInstanceTests
     {
         private const string filterSource = @"// @summary Splits the channels.
 // @padding 4, 8, 12, 16
@@ -202,15 +202,15 @@ void main() { fragColor = vec4(phase); }
         public void Instance_PinsMatchDescription_InputIsEffect()
         {
             var layout = Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag");
-            using var instance = new ShaderLinkNodeInstance((ResourceClient?)null, layout);
+            using var instance = new ShaderEffectInstance((ResourceClient?)null, layout);
 
-            var inputs = ShaderLinkDescription.Inputs(layout);
+            var inputs = ShaderEffectDescription.Inputs(layout);
             Assert.That(inputs.Select(d => d.Name), Is.EqualTo(new[] { "Input", "Map", "Map Sampler", "Amount" }));
             Assert.That(inputs[0].Type, Is.EqualTo(typeof(Effect)));
             Assert.That(instance.Inputs.Select(PinType), Is.EqualTo(inputs.Select(d => d.Type)));
-            Assert.That(ShaderLinkDescription.Outputs.Select(d => d.Name), Is.EqualTo(new[] { "Output", "Error" }));
-            Assert.That(ShaderLinkDescription.Outputs[0].Type, Is.EqualTo(typeof(Effect)));
-            Assert.That(instance.Outputs.Select(PinType), Is.EqualTo(ShaderLinkDescription.Outputs.Select(d => d.Type)));
+            Assert.That(ShaderEffectDescription.Outputs.Select(d => d.Name), Is.EqualTo(new[] { "Output", "Error" }));
+            Assert.That(ShaderEffectDescription.Outputs[0].Type, Is.EqualTo(typeof(Effect)));
+            Assert.That(instance.Outputs.Select(PinType), Is.EqualTo(ShaderEffectDescription.Outputs.Select(d => d.Type)));
 
             static Type PinType(IVLPin pin) => pin.GetType().GetInterfaces()
                 .Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IVLPin<>)).GetGenericArguments()[0];
@@ -228,20 +228,20 @@ void main() { fragColor = vec4(phase); }
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
         }
 
-        private static Effect? Output(ShaderLinkNodeInstance instance) => (Effect?)instance.Outputs.First().Value;
+        private static Effect? Output(ShaderEffectInstance instance) => (Effect?)instance.Outputs.First().Value;
 
         [Test]
         public void Update_NewLinkOnlyOnChange()
         {
             var layout = Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag");
-            using var instance = new ShaderLinkNodeInstance(_client, layout);
+            using var instance = new ShaderEffectInstance(_client, layout);
             var input = new BlurEffect(null, 0.5f, 32, 0);
             ((IVLPin)instance.Inputs.First()).Value = input;
 
             instance.Update();
             var first = Output(instance);
-            Assert.That(first, Is.InstanceOf<ShaderLink>());
-            var link = (ShaderLink)first!;
+            Assert.That(first, Is.InstanceOf<ShaderEffect>());
+            var link = (ShaderEffect)first!;
             Assert.That(link.Previous, Is.SameAs(input));
             Assert.That(link.Template, Is.EqualTo(Protocol.EffectTemplate.Single));
             Assert.That(link.ShaderIds, Has.Length.EqualTo(1));
@@ -265,14 +265,14 @@ void main() { fragColor = vec4(phase); }
             ((IVLPin)instance.Inputs.First()).Value = null;
             instance.Update();
             Assert.That(Output(instance), Is.Not.SameAs(second));
-            Assert.That(((ShaderLink)Output(instance)!).Previous, Is.Null);
+            Assert.That(((ShaderEffect)Output(instance)!).Previous, Is.Null);
         }
 
         [Test]
         public void Dispose_ReleasesTheShader()
         {
             var layout = Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag");
-            var instance = new ShaderLinkNodeInstance(_client, layout);
+            var instance = new ShaderEffectInstance(_client, layout);
             instance.Update();
             Assert.That(_api.Released, Is.Empty);
             instance.Dispose();
@@ -283,7 +283,7 @@ void main() { fragColor = vec4(phase); }
         public void Update_WithoutShaderId_PassesTheChainOn()
         {
             var layout = Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag") with { FragmentSource = string.Empty };
-            using var instance = new ShaderLinkNodeInstance(_client, layout);
+            using var instance = new ShaderEffectInstance(_client, layout);
             var input = new BlurEffect(null, 0.5f, 32, 0);
             ((IVLPin)instance.Inputs.First()).Value = input;
             instance.Update();
@@ -291,13 +291,13 @@ void main() { fragColor = vec4(phase); }
         }
 
         [Test]
-        public void Link_SendsSingleShaderLinkInSetEffectChain()
+        public void Link_SendsSingleShaderEffectInSetEffectChain()
         {
             var layout = Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag");
-            using var instance = new ShaderLinkNodeInstance(_client, layout);
+            using var instance = new ShaderEffectInstance(_client, layout);
             ((IVLPin)instance.Inputs.First()).Value = new BlurEffect(null, 0.5f, 32, 0);
             instance.Update();
-            var id = ((ShaderLink)Output(instance)!).ShaderIds[0];
+            var id = ((ShaderEffect)Output(instance)!).ShaderIds[0];
 
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
@@ -450,28 +450,28 @@ void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
         [Test]
         public void Update_PassesTwoUsesTwoPassTemplate_DefaultIsSingle()
         {
-            using var two = new ShaderLinkNodeInstance(_client, LoadBlur("// @passes 2\n"));
+            using var two = new ShaderEffectInstance(_client, LoadBlur("// @passes 2\n"));
             two.Update();
-            Assert.That(((ShaderLink)Output(two)!).Template, Is.EqualTo(Protocol.EffectTemplate.TwoPass));
+            Assert.That(((ShaderEffect)Output(two)!).Template, Is.EqualTo(Protocol.EffectTemplate.TwoPass));
 
-            using var one = new ShaderLinkNodeInstance(_client, LoadBlur(""));
+            using var one = new ShaderEffectInstance(_client, LoadBlur(""));
             one.Update();
-            Assert.That(((ShaderLink)Output(one)!).Template, Is.EqualTo(Protocol.EffectTemplate.Single));
+            Assert.That(((ShaderEffect)Output(one)!).Template, Is.EqualTo(Protocol.EffectTemplate.Single));
         }
 
         [Test]
         public void Update_PaddingFollowsTheUniformAbsTimesFactor_RecomputedOnlyOnChange()
         {
-            using var instance = new ShaderLinkNodeInstance(_client, LoadBlur(blurHead));
+            using var instance = new ShaderEffectInstance(_client, LoadBlur(blurHead));
             var pin = (IVLPin<float>)instance.Uniforms.Pins[0];
 
             instance.Update();
-            var first = (ShaderLink)Output(instance)!;
+            var first = (ShaderEffect)Output(instance)!;
             Assert.That(first.Padding, Is.EqualTo(RectangleF.Empty), "default 0");
 
             pin.Value = -40f;
             instance.Update();
-            var second = (ShaderLink)Output(instance)!;
+            var second = (ShaderEffect)Output(instance)!;
             Assert.That(second, Is.Not.SameAs(first));
             Assert.That(second.Padding, Is.EqualTo(new RectangleF(20, 20, 20, 20)), "abs(-40) * 0.5, all sides");
 
@@ -482,33 +482,33 @@ void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
 
             pin.Value = 40f;
             instance.Update();
-            Assert.That(((ShaderLink)Output(instance)!).Padding, Is.EqualTo(new RectangleF(20, 20, 20, 20)));
+            Assert.That(((ShaderEffect)Output(instance)!).Padding, Is.EqualTo(new RectangleF(20, 20, 20, 20)));
 
             pin.Value = float.NaN;
             instance.Update();
-            Assert.That(((ShaderLink)Output(instance)!).Padding, Is.EqualTo(RectangleF.Empty), "not finite: no padding");
+            Assert.That(((ShaderEffect)Output(instance)!).Padding, Is.EqualTo(RectangleF.Empty), "not finite: no padding");
         }
 
         [Test]
         public void Update_FactorDefaultsToOne_FixedPaddingKeptWithoutUniform()
         {
-            using var instance = new ShaderLinkNodeInstance(_client, LoadBlur("// @padding blurLength\n"));
+            using var instance = new ShaderEffectInstance(_client, LoadBlur("// @padding blurLength\n"));
             ((IVLPin<float>)instance.Uniforms.Pins[0]).Value = 7f;
             instance.Update();
-            Assert.That(((ShaderLink)Output(instance)!).Padding, Is.EqualTo(new RectangleF(7, 7, 7, 7)));
+            Assert.That(((ShaderEffect)Output(instance)!).Padding, Is.EqualTo(new RectangleF(7, 7, 7, 7)));
 
-            using var fixedInstance = new ShaderLinkNodeInstance(_client, LoadBlur("// @padding 3\n"));
+            using var fixedInstance = new ShaderEffectInstance(_client, LoadBlur("// @padding 3\n"));
             ((IVLPin<float>)fixedInstance.Uniforms.Pins[0]).Value = 7f;
             fixedInstance.Update();
-            Assert.That(((ShaderLink)Output(fixedInstance)!).Padding, Is.EqualTo(new RectangleF(3, 3, 3, 3)));
+            Assert.That(((ShaderEffect)Output(fixedInstance)!).Padding, Is.EqualTo(new RectangleF(3, 3, 3, 3)));
         }
 
         [Test]
         public void Update_InvalidPaddingUniform_KeepsZeroPadding()
         {
-            using var instance = new ShaderLinkNodeInstance(_client, LoadBlur("// @padding offset\n"));
+            using var instance = new ShaderEffectInstance(_client, LoadBlur("// @padding offset\n"));
             instance.Update();
-            Assert.That(((ShaderLink)Output(instance)!).Padding, Is.EqualTo(RectangleF.Empty));
+            Assert.That(((ShaderEffect)Output(instance)!).Padding, Is.EqualTo(RectangleF.Empty));
         }
 
         [Test]

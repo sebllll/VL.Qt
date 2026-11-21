@@ -205,7 +205,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
         public void Instance_InputPinsMatchDescriptionOrder()
         {
             var layout = Load(fragmentSource, reflection);
-            using var instance = new ShaderNodeInstance(new Nodes.ShaderEffectNode(_ => System.Reactive.Disposables.Disposable.Empty), layout);
+            using var instance = new ShaderNodeInstance(new Nodes.ShaderNode(_ => System.Reactive.Disposables.Disposable.Empty), layout);
             // Same count, order and type as the description (Input + Input Sampler + 3 uniforms + 11 fixed pins; 4 outputs).
             Assert.That(instance.Inputs.Select(PinType), Is.EqualTo(ShaderNodeDescription.Inputs(layout).Select(d => d.Type)));
             Assert.That(instance.Outputs.Select(PinType), Is.EqualTo(ShaderNodeDescription.Outputs.Select(d => d.Type)));

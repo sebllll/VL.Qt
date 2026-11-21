@@ -8,7 +8,7 @@ using Color = System.Drawing.Color;
 using static Pixels;
 
 // SIZE and AUTO_SIZE. Size 0 stays 0 (SIZE always sets width/height explicitly). Containers
-// (Group, Row, Column, ShaderEffect) have AUTO_SIZE, default on: the SIZE is ignored, the implicit size
+// (Group, Row, Column, Shader) have AUTO_SIZE, default on: the SIZE is ignored, the implicit size
 // applies. Off: the SIZE counts, also 0.
 [TestFixture, NonParallelizable]
 public static class SizeResetTest
@@ -81,7 +81,7 @@ public static class SizeResetTest
         // Rectangle at (600, 100), size 0, bound: is not drawn (0 stays 0).
         Rect(RectId, 0, 600, 100, 0, 0, 1, 0);
         cmd.Bind(RectId, HRect);
-        // ShaderEffect at (500, 300), Auto Size on: implicit size = size of the input (40 x 30).
+        // Shader at (500, 300), Auto Size on: implicit size = size of the input (40 x 30).
         cmd.Create(EffectId, Protocol.ElementType.Shader);
         cmd.SetPlace(EffectId, 500, 300, 0, 0);
         cmd.Reparent(EffectId, 0, 1002);
@@ -162,7 +162,7 @@ public static class SizeResetTest
         recs = Bounds(HRect);
         s.Check(Is(recs, 600, 100, 0, 0), $"rectangle SCENE_BOUNDS 0 x 0 ({S(recs)})");
 
-        // ShaderEffect: implicit size = size of the input.
+        // Shader: implicit size = size of the input.
         recs = null;
         cmd.SetPlace(EffectId, 500, 300, 0, 0);
         CheckApply("effect size again");
@@ -171,12 +171,12 @@ public static class SizeResetTest
         CheckApply("effect Auto Size off");
         s.Pump(2);
         recs = Bounds(HEffect);
-        s.Check(Is(recs, 500, 300, 0, 0), $"ShaderEffect Auto Size off + size 0 -> 0 x 0 ({S(recs)})");
+        s.Check(Is(recs, 500, 300, 0, 0), $"Shader Auto Size off + size 0 -> 0 x 0 ({S(recs)})");
         cmd.SetBool(EffectId, Protocol.PropertyId.AutoSize, true);
         CheckApply("effect Auto Size on");
         s.Pump(2);
         recs = Bounds(HEffect);
-        s.Check(Is(recs, 500, 300, 40, 30), $"ShaderEffect Auto Size on -> input size 40 x 30 ({S(recs)})");
+        s.Check(Is(recs, 500, 300, 40, 30), $"Shader Auto Size on -> input size 40 x 30 ({S(recs)})");
 
         // Errors: AUTO_SIZE is valid for containers only (UnknownProperty), value type bool (BadArgument).
         cmd.SetBool(RectId, Protocol.PropertyId.AutoSize, false);

@@ -185,7 +185,7 @@ public static class ApplyTest
         Case("uniforms: sampler out of range", uni, Pay.Head(fx, 1).Entry(Protocol.ValueType.Sampler, "a", new byte[] { 9, 0, 0, 0, 0, 0, 0, 0 }), Native.Result.BadArgument, "sampler state");
         Case("uniforms: unknown ref", uni, Pay.Head(fx, 1).Entry(Protocol.ValueType.Ref, "a", new byte[] { 0x39, 5, 0, 0 }), Native.Result.UnknownObject, "unknown ref id 1337");
         Case("uniforms: unknown id", uni, Pay.Head(9999, 0), Native.Result.UnknownObject, "unknown id 9999");
-        Case("uniforms: not a ShaderEffect", uni, Pay.Head(rect, 0), Native.Result.UnknownProperty, "ShaderEffect only");
+        Case("uniforms: not a Shader", uni, Pay.Head(rect, 0), Native.Result.UnknownProperty, "Shader only");
 
         // SET_QML_PROPERTIES
         Case("qml: valid entries (control)", qop, Pay.Head(qml, 2).F4Entry(F, "a", 1).Entry(Str, "s", new Pay().U32(2).Bytes((byte)'h', (byte)'i').ToArray()), 0, "");

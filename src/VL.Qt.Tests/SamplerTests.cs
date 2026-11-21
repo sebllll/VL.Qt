@@ -55,7 +55,7 @@ namespace VL.Qt.Tests
         public void UniformWriter_SamplerNextToTexture_DiffAndRemove()
         {
             var sink = new RecordingSink();
-            var effect = new ShaderEffect
+            var effect = new Shader
             {
                 InputSampler = new Sampler { Filter = SamplerFilter.Point },
                 Uniforms = new[] { Uniform.FromImage("lut", null, new Sampler { AddressU = SamplerAddress.Wrap }) }.ToSpread(),
@@ -70,7 +70,7 @@ namespace VL.Qt.Tests
             Assert.That(UniformWriter.Write(sink, 5, effect, Array.Empty<Node>(), sent), Is.SameAs(sent));
             Assert.That(sink.Count, Is.EqualTo(0), "unchanged: nothing sent");
 
-            var changed = new ShaderEffect
+            var changed = new Shader
             {
                 InputSampler = new Sampler { Filter = SamplerFilter.Point },
                 Uniforms = new[] { Uniform.FromImage("lut", null, new Sampler { AddressU = SamplerAddress.Mirror }) }.ToSpread(),
@@ -81,7 +81,7 @@ namespace VL.Qt.Tests
             Assert.That(diff, Does.Not.Contain("source="), "only the changed sampler");
 
             sink.Clear();
-            var removed = new ShaderEffect { Uniforms = new[] { Uniform.FromImage("lut", null) }.ToSpread() };
+            var removed = new Shader { Uniforms = new[] { Uniform.FromImage("lut", null) }.ToSpread() };
             UniformWriter.Write(sink, 5, removed, Array.Empty<Node>(), sent);
             var clear = sink.Commands.Single(c => c.StartsWith("UNIFORMS", StringComparison.Ordinal));
             Assert.That(clear, Does.StartWith("UNIFORMS 5 1"), "a removed sampler needs the full table with CLEAR");
@@ -92,7 +92,7 @@ namespace VL.Qt.Tests
         public void SamplerOnlyUniform_SendsNoTextureEntry()
         {
             var sink = new RecordingSink();
-            var effect = new ShaderEffect { Uniforms = new[] { Uniform.FromSampler("lut", new Sampler()) }.ToSpread() };
+            var effect = new Shader { Uniforms = new[] { Uniform.FromSampler("lut", new Sampler()) }.ToSpread() };
             UniformWriter.Write(sink, 5, effect, Array.Empty<Node>(), null);
             var cmd = sink.Commands.Single(c => c.StartsWith("UNIFORMS", StringComparison.Ordinal));
             Assert.That(cmd, Does.Contain("lut=sampler(0)"));

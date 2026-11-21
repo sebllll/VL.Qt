@@ -160,7 +160,7 @@ namespace VL.Qt
             foreach (var link in node.EffectLinks)
             {
                 if (link.Shader is { } shader)
-                    WriteShaderLink(node, shader);
+                    WriteShaderEffect(node, shader);
                 else
                     WriteMultiLink(node, link.Multi);
                 sink.EndLink();
@@ -258,7 +258,7 @@ namespace VL.Qt
         /// Padding, strength and the length uniforms (<see cref="Uniform.IsLength"/>) of a shader link are in units, converted
         /// here; the padding is rounded up to whole DIP. The other uniforms follow like SET_UNIFORMS.
         /// </summary>
-        private void WriteShaderLink(Node node, ShaderLink shader)
+        private void WriteShaderEffect(Node node, ShaderEffect shader)
         {
             var sink = _sink;
             var pad = shader.Padding;

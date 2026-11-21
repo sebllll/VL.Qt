@@ -22,7 +22,7 @@ namespace VL.Qt.Tests
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
         }
 
-        private static ShaderLink Link(Effect? e) => (ShaderLink)e!;
+        private static ShaderEffect Link(Effect? e) => (ShaderEffect)e!;
 
         // The nodes describe the effect in units; the reconciler converts (EffectDiff). The expectations are written in DIP.
         private static float Unit(float dip) => SpaceMapping.Default.FromQt(dip);

@@ -116,7 +116,7 @@ namespace VL.Qt.Tests
             var layout = LoadChainLayout(node.Template);
 
             Assert.That(layout.Messages.Where(m => m.Type == MessageType.Error).Select(m => m.Text), Is.Empty);
-            Assert.That(ShaderLinkDescription.Inputs(layout).Select(p => p.Name), Is.EqualTo(node.Pins));
+            Assert.That(ShaderEffectDescription.Inputs(layout).Select(p => p.Name), Is.EqualTo(node.Pins));
             Assert.That(layout.Pins.Select(p => p.UniformName), Has.None.AnyOf("texelSize", "dpr", "passIndex", "elementRect", "weight"),
                 "VL.Qt sets these itself, they get no pin");
             Assert.That(layout.Passes, Is.EqualTo(node.TwoPass ? 2 : 1));
@@ -126,10 +126,10 @@ namespace VL.Qt.Tests
         public void Template_LinkUsesTheTemplateOfTheNode((string Template, string[] Pins, bool TwoPass) node)
         {
             ShaderReflectNativeTests.LinkNative();
-            using var instance = new ShaderLinkNodeInstance(_client, LoadChainLayout(node.Template));
+            using var instance = new ShaderEffectInstance(_client, LoadChainLayout(node.Template));
             instance.Update();
 
-            var link = (ShaderLink)instance.Outputs.First().Value!;
+            var link = (ShaderEffect)instance.Outputs.First().Value!;
             Assert.That(link.Template, Is.EqualTo(node.TwoPass ? Protocol.EffectTemplate.TwoPass : Protocol.EffectTemplate.Single));
         }
 
@@ -143,10 +143,10 @@ namespace VL.Qt.Tests
         public void Template_PaddingAtTheDefaults(string template, float dip)
         {
             ShaderReflectNativeTests.LinkNative();
-            using var instance = new ShaderLinkNodeInstance(_client, LoadChainLayout(template));
+            using var instance = new ShaderEffectInstance(_client, LoadChainLayout(template));
             instance.Update();
 
-            var padding = ((ShaderLink)instance.Outputs.First().Value!).Padding;
+            var padding = ((ShaderEffect)instance.Outputs.First().Value!).Padding;
             Assert.That(padding, Is.EqualTo(new RectangleF(dip, dip, dip, dip)).Using<RectangleF>(static (a, b) =>
                 MathF.Abs(a.X - b.X) < 1e-4f && MathF.Abs(a.Y - b.Y) < 1e-4f && MathF.Abs(a.Width - b.Width) < 1e-4f && MathF.Abs(a.Height - b.Height) < 1e-4f));
         }

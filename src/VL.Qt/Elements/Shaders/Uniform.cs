@@ -4,9 +4,9 @@ using VL.Qt.Wire;
 namespace VL.Qt.Elements
 {
     /// <summary>
-    /// One named shader input of a ShaderEffect: a member of the shader's uniform block or a sampler2D. Created by the
+    /// One named shader input of a Shader: a member of the shader's uniform block or a sampler2D. Created by the
     /// nodes of category Qt.Elements.Uniform (Float, Int, Bool, Vector2/3/4, Color, Matrix, Texture, Image).
-    /// The name must match the shader (case sensitive); a wrong name or type shows as warning at the ShaderEffect.
+    /// The name must match the shader (case sensitive); a wrong name or type shows as warning at the Shader.
     /// </summary>
     public sealed record Uniform
     {
@@ -34,7 +34,7 @@ namespace VL.Qt.Elements
         /// </summary>
         internal bool IsLength { get; private init; }
 
-        /// <summary>Texture: the element rendered as texture (becomes a hidden child of the ShaderEffect).</summary>
+        /// <summary>Texture: the element rendered as texture (becomes a hidden child of the Shader).</summary>
         internal Element? Texture { get; private init; }
 
         /// <summary>Image: the image resource sampled as texture.</summary>

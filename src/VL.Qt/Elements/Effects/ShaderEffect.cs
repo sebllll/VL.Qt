@@ -9,9 +9,9 @@ namespace VL.Qt.Elements
     /// "Effect chain", passes: docs/effects-and-shaders.md). Ends a MultiEffect run in <see cref="Effect.Segment"/>.
     /// QtNative sets texelSize, dpr, weight, elementRect, source and the template's inputs itself; <see cref="Uniforms"/> must not use them.
     /// </summary>
-    internal abstract class ShaderLink : Effect
+    internal abstract class ShaderEffect : Effect
     {
-        protected ShaderLink(Effect? previous, ushort template, ImmutableArray<ulong> shaderIds, Spread<Uniform>? uniforms,
+        protected ShaderEffect(Effect? previous, ushort template, ImmutableArray<ulong> shaderIds, Spread<Uniform>? uniforms,
             RectangleF padding, float strength)
             : base(previous)
         {
@@ -28,7 +28,7 @@ namespace VL.Qt.Elements
         /// <summary>Shader resource ids (stage fragment) owned by the node, by role: Single/TwoPass [fragment], Pyramid [prefilter, composite]; 0 = not loaded.</summary>
         public ImmutableArray<ulong> ShaderIds { get; }
 
-        /// <summary>Uniform values by name, like <see cref="ShaderEffect.Uniforms"/>.</summary>
+        /// <summary>Uniform values by name, like <see cref="Shader.Uniforms"/>.</summary>
         public Spread<Uniform> Uniforms { get; }
 
         /// <summary>Extra effect area in units: x = left, y = top, width = right, height = bottom.</summary>

@@ -3,7 +3,7 @@
 namespace VL.Qt.Elements
 {
     /// <summary>Blur link (MultiEffect blur, blurMax, blurMultiplier).</summary>
-    internal sealed class BlurEffect : Effect, IManualPadding
+    internal sealed class BlurEffect : Effect, IEffectPadding
     {
         public BlurEffect(Effect? previous, float amount, int max, float multiplier, bool autoPadding = true, RectangleF padding = default)
             : base(previous)

@@ -9,13 +9,13 @@ namespace VL.Qt.Elements
     /// an <see cref="Input"/> element as sampler2D "source". Uniforms are matched by name through the shader's
     /// reflection (protocol.h "ShaderEffect").
     /// </summary>
-    public sealed class ShaderEffect : Element
+    public sealed class Shader : Element
     {
         private readonly Element? _input;
         private readonly Spread<Uniform> _uniforms = Spread<Uniform>.Empty;
         private readonly ImmutableArray<Element> _children = ImmutableArray<Element>.Empty;
 
-        public ShaderEffect() : base(ElementType.ShaderEffect) { }
+        public Shader() : base(ElementType.Shader) { }
 
         /// <summary>On (default): with an Input the implicit size (size of the input) applies; without Input Size counts anyway.</summary>
         public bool AutoSize { get; init; } = true;

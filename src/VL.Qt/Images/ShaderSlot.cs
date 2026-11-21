@@ -3,7 +3,7 @@
 namespace VL.Qt
 {
     /// <summary>
-    /// One shader stage of a ShaderEffect node: owns the shader resource for the current path or GLSL code. A new source creates
+    /// One shader stage of a Shader node: owns the shader resource for the current path or GLSL code. A new source creates
     /// a new resource and queues the release of the old one (QtNative keeps drawing the old shader until the new one is
     /// Ready, the element switches ids first, see <see cref="ResourceClient.Release"/>); the same source never reloads.
     /// Loading is asynchronous, nothing here waits. Main thread only.

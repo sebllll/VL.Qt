@@ -45,7 +45,7 @@ namespace VL.Qt.Nodes
         private static readonly string[] s_shaders = { "blend" };
 
         private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
-            new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.Single, ids,
+            new BuiltinShaderEffect(previous, Protocol.EffectTemplate.Single, ids,
                 new[]
                 {
                     Uniform.Int("mode", (int)p.Mode),
@@ -54,7 +54,7 @@ namespace VL.Qt.Nodes
                 }.ToSpread(),
                 default);
 
-        private readonly BuiltinShaderLink<Props> _link;
+        private readonly ShaderEffectBuilder<Props> _link;
 
         public BlendNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
@@ -62,9 +62,9 @@ namespace VL.Qt.Nodes
         }
 
         internal BlendNode(ResourceClient? client, NodeErrors? errors = null)
-            => _link = new BuiltinShaderLink<Props>(client, s_shaders, s_create, errors);
+            => _link = new ShaderEffectBuilder<Props>(client, s_shaders, s_create, errors);
 
-        internal BuiltinShaderLink<Props> Core => _link;
+        internal ShaderEffectBuilder<Props> Core => _link;
 
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>

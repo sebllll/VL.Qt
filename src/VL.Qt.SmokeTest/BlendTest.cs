@@ -7,7 +7,7 @@ using VL.Qt;
 using static Pixels;
 
 // builtin:blend (effects package 05): one pass, the layer blended over the input with a mode (W3C separable modes).
-// A 5 x 3 grid of 140 x 100 DIP cells on 0x20 grey, each a ShaderEffect with Input = opaque base rectangle and a layer
+// A 5 x 3 grid of 140 x 100 DIP cells on 0x20 grey, each a Shader with Input = opaque base rectangle and a layer
 // rectangle as layer (both fill the cell). Every cell is sampled in its center and compared with the reference
 // formula below (tolerance +-2/255, the mode runs in the shader on straight colors).
 //   cells 0..12: the 13 modes, opaque base (0.8, 0.4, 0.2) and opaque layer (0.3, 0.6, 0.9), opacity 1.
@@ -58,7 +58,7 @@ public static class BlendTest
 
     private static void Run(Scenario s)
     {
-        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "Shader needs a QRhi scenegraph");
         Directory.CreateDirectory(s.OutDir);
 
         Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var blend);
