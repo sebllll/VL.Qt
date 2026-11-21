@@ -208,6 +208,35 @@ qt_add_resources(vlqt "vlqt_style"
         style/VLQt/Switch.qml
         style/VLQt/SpinBox.qml
         style/VLQt/TextField.qml)
+# Built-in QML: the QML of the element types (qml/elements), the effect chain stages (qml/effects), the input handlers
+# (qml/handlers) and the perf overlay (qml/perf), loaded as qrc:/vlqt/qml/<folder>/<File>.qml (TypeDef::qmlUrl, effects/effect_chain.cpp,
+# scene/handlers.cpp, diagnostics/perf_monitor.cpp). Files of elements and handlers end in "Element": a file Button.qml with
+# Button {} would instantiate itself (QML resolves a type from the file's own folder first). windeployqt and
+# tools/deploy-linux.sh scan qml/ for the Qt modules these files import. A new file = a line below.
+qt_add_resources(vlqt "vlqt_qml"
+    PREFIX "/vlqt"
+    FILES
+        qml/elements/ButtonElement.qml
+        qml/elements/CheckBoxElement.qml
+        qml/elements/ColumnElement.qml
+        qml/elements/RectangleElement.qml
+        qml/elements/RowElement.qml
+        qml/elements/SliderElement.qml
+        qml/elements/SpinBoxElement.qml
+        qml/elements/SwitchElement.qml
+        qml/elements/TextElement.qml
+        qml/elements/TextFieldElement.qml
+        qml/elements/VideoElement.qml
+        qml/effects/ChainRoot.qml
+        qml/effects/MultiStage.qml
+        qml/effects/PassStage.qml
+        qml/handlers/DragHandlerElement.qml
+        qml/handlers/HoverHandlerElement.qml
+        qml/handlers/PinchHandlerElement.qml
+        qml/handlers/PointHandlerElement.qml
+        qml/handlers/TapHandlerElement.qml
+        qml/handlers/WheelHandlerElement.qml
+        qml/perf/perf_overlay.qml)
 # Default window icon: PNGs in several sizes (scaled from docs/icon/icon.png) embedded as
 # :/vlqt/icon/default-<size>.png, so it also shows in an export without a file next to it. Artwork replaceable: same
 # file names; a new size = file in icon/ plus a line below and in window/window.cpp (defaultIcon).
@@ -243,7 +272,7 @@ target_link_libraries(vlqt PRIVATE Qt6::ShaderTools Qt6::ShaderToolsPrivate)
 # QuickShapes: Shape/ShapePath for Line, Polyline, Polygon, Path. QuickShapesPrivate: QQuickShape/QQuickShapePath
 # (qquickshape_p.h) built from C++ with typed setters (makeShape in elements/type_shape.cpp); ShapePathElement (elements/shape_path_element.h)
 # subclasses the private QQuickCurve of QuickPrivate (qquickpath_p.h). Private API, limited compatibility guarantees:
-# check on Qt updates. Qt6QuickShapes and qml/QtQuick/Shapes are deployed next to QtNative (qml/deploy.qml).
+# check on Qt updates. Qt6QuickShapes and qml/QtQuick/Shapes are deployed next to QtNative (imported by qml/deploy.qml).
 target_link_libraries(vlqt PRIVATE Qt6::QuickShapes Qt6::QuickShapesPrivate)
 if(WIN32)
     target_sources(vlqt PRIVATE
@@ -327,12 +356,14 @@ add_custom_target(vlqt_shaders ALL DEPENDS ${_shader_outs})
 
 if(WIN32) # Qt deploy (Linux: tools/deploy-linux.sh)
 # Deploy Qt DLLs, plugins/ and qml/ next to QtNative (LGPL: dynamic, unmodified).
-# qml/ holds only deploy.qml: windeployqt collects the QML modules it imports.
-# Own custom command (not POST_BUILD) so it also re-runs when deploy.qml changes; the stamp lives in
+# windeployqt scans the source folder qml/ and collects the QML modules its files import (qml/deploy.qml lists the ones
+# no file imports).
+# Own custom command (not POST_BUILD) so it also re-runs when a .qml file changes; the stamp lives in
 # the build dir, build-native.ps1 deletes it to force a deploy (e.g. when qml/QtQuick/Effects is missing).
 get_target_property(_qmake Qt6::qmake IMPORTED_LOCATION)
 get_filename_component(_qtbin "${_qmake}" DIRECTORY)
 set(_deploy_stamp "${CMAKE_CURRENT_BINARY_DIR}/windeployqt.stamp")
+file(GLOB_RECURSE _qml_files CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/qml/*.qml")
 add_custom_command(OUTPUT "${_deploy_stamp}"
     COMMAND "${_qtbin}/windeployqt.exe" --release
         --qmldir "${CMAKE_CURRENT_SOURCE_DIR}/qml"
@@ -343,7 +374,7 @@ add_custom_command(OUTPUT "${_deploy_stamp}"
         --no-compiler-runtime
         "$<TARGET_FILE:vlqt>"
     COMMAND "${CMAKE_COMMAND}" -E touch "${_deploy_stamp}"
-    DEPENDS vlqt "${CMAKE_CURRENT_SOURCE_DIR}/qml/deploy.qml"
+    DEPENDS vlqt ${_qml_files}
     COMMENT "windeployqt -> ${VLQT_OUT_DIR}"
     VERBATIM)
 add_custom_target(vlqt_deploy ALL DEPENDS "${_deploy_stamp}")

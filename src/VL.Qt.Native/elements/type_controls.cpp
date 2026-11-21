@@ -14,13 +14,7 @@ namespace {
 // vlqtClicks and sent as EVENT_CLICK by the poll for every bound Button (input handlers report their own clicks)
 // (Elements::takeClicks). AUTO_SIZE on (default): implicit size from text + padding, else the SIZE.
 
-constexpr const char* kButtonQml =
-    "import QtQuick\n"
-    "import QtQuick.Controls\n"
-    "Button {\n"
-    "  property int vlqtClicks: 0\n"
-    "  onClicked: ++vlqtClicks\n"
-    "}\n";
+constexpr const char* kButtonQml = "qrc:/vlqt/qml/elements/ButtonElement.qml";
 
 std::vector<PropDef> buttonProps()
 {
@@ -32,8 +26,8 @@ std::vector<PropDef> buttonProps()
 }
 
 // ---------------------------------------------------------------------------------------------
-// Value inputs (SpinBox; CheckBox, Switch, Slider, TextField). Generic user-value channel: the QML
-// snippet declares
+// Value inputs (SpinBox; CheckBox, Switch, Slider, TextField). Generic user-value channel: the element's
+// QML (qml/elements/*Element.qml) declares
 //   property int vlqtUserCount   user changes since the last poll (reset to 0 by Elements::takeUserValue)
 //   property <T> vlqtUserValue   value of the last user change, T = int | real | bool | string (= EVENT_VALUE value type)
 // and sets both in the handler of the control's user-only signal (SpinBox valueModified, CheckBox/Switch toggled,
@@ -46,21 +40,7 @@ std::vector<PropDef> buttonProps()
 // Enter or focus loss (valueModified); +/-, arrow keys and wheel commit at once. Qt clamps the value to [from, to]
 // without a signal (C# clamps its own copy). AUTO_SIZE on (default): implicit size, else the SIZE.
 
-constexpr const char* kSpinBoxQml =
-    "import QtQuick\n"
-    "import QtQuick.Controls\n"
-    "SpinBox {\n"
-    "  from: -2147483648\n"
-    "  to: 2147483647\n"
-    "  editable: true\n"
-    "  wheelEnabled: true\n"
-    "  locale: Qt.locale(\"C\")\n"
-    "  textFromValue: function(v, l) { return v.toString() }\n"
-    "  valueFromText: function(t, l) { var v = parseInt(t, 10); return isNaN(v) ? value : v }\n"
-    "  property int vlqtUserCount: 0\n"
-    "  property int vlqtUserValue: 0\n"
-    "  onValueModified: { vlqtUserValue = value; ++vlqtUserCount }\n"
-    "}\n";
+constexpr const char* kSpinBoxQml = "qrc:/vlqt/qml/elements/SpinBoxElement.qml";
 
 std::vector<PropDef> spinBoxProps()
 {
@@ -79,19 +59,8 @@ std::vector<PropDef> spinBoxProps()
 // indicator is centred in a larger SIZE. toggled = user only (click, Space); SET VALUE (checked) never fires it.
 // Tristate and dragging the Switch handle are not exposed; a drag that flips the Switch also sends toggled.
 
-// The two toggles differ only in the QML type (a macro: the text stays one literal with static storage).
-#define VLQT_TOGGLE_QML(Type)                                        \
-    "import QtQuick\n"                                               \
-    "import QtQuick.Controls\n" Type " {\n"                          \
-    "  spacing: 0\n"                                                 \
-    "  property int vlqtUserCount: 0\n"                              \
-    "  property bool vlqtUserValue: false\n"                         \
-    "  onToggled: { vlqtUserValue = checked; ++vlqtUserCount }\n"    \
-    "}\n"
-
-constexpr const char* kCheckBoxQml = VLQT_TOGGLE_QML("CheckBox");
-constexpr const char* kSwitchQml = VLQT_TOGGLE_QML("Switch");
-#undef VLQT_TOGGLE_QML
+constexpr const char* kCheckBoxQml = "qrc:/vlqt/qml/elements/CheckBoxElement.qml";
+constexpr const char* kSwitchQml = "qrc:/vlqt/qml/elements/SwitchElement.qml";
 
 std::vector<PropDef> toggleProps()
 {
@@ -106,16 +75,7 @@ std::vector<PropDef> toggleProps()
 // polls give one EVENT_VALUE with the last value. snapMode SnapAlways: with STEP > 0 a drag lands on from + k * step like
 // keys and wheel; STEP 0 stays continuous. Wheel on (like SpinBox). ORIENTATION Qt::Horizontal 1 | Qt::Vertical 2.
 
-constexpr const char* kSliderQml =
-    "import QtQuick\n"
-    "import QtQuick.Controls\n"
-    "Slider {\n"
-    "  wheelEnabled: true\n"
-    "  snapMode: Slider.SnapAlways\n"
-    "  property int vlqtUserCount: 0\n"
-    "  property real vlqtUserValue: 0\n"
-    "  onMoved: { vlqtUserValue = value; ++vlqtUserCount }\n"
-    "}\n";
+constexpr const char* kSliderQml = "qrc:/vlqt/qml/elements/SliderElement.qml";
 
 std::vector<PropDef> sliderProps()
 {
@@ -134,15 +94,7 @@ std::vector<PropDef> sliderProps()
 // and would otherwise echo the value C# set (no echo, like SpinBox). SET VALUE writes text and vlqtCommitted together,
 // so a SET while the user types replaces the edit and counts as the new reference. EDITABLE = !readOnly.
 
-constexpr const char* kTextFieldQml =
-    "import QtQuick\n"
-    "import QtQuick.Controls\n"
-    "TextField {\n"
-    "  property string vlqtCommitted: \"\"\n"
-    "  property int vlqtUserCount: 0\n"
-    "  property string vlqtUserValue: \"\"\n"
-    "  onEditingFinished: { if (text !== vlqtCommitted) { vlqtCommitted = text; vlqtUserValue = text; ++vlqtUserCount } }\n"
-    "}\n";
+constexpr const char* kTextFieldQml = "qrc:/vlqt/qml/elements/TextFieldElement.qml";
 
 // SET VALUE of TextField: text + vlqtCommitted (by name; only on SET, not per frame).
 bool setTextFieldValue(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)

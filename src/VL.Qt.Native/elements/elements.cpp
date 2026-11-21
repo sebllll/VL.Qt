@@ -62,12 +62,11 @@ QQuickItem* Elements::create(const TypeDef& type, std::string& err)
     QQuickItem* item = nullptr;
     if (type.make) {
         item = type.make();
-    } else if (!type.qml) {
+    } else if (!type.qmlUrl) {
         item = new QQuickItem();
     } else {
         if (!cache.component) {
-            cache.component = new QQmlComponent(engine);
-            cache.component->setData(QByteArray(type.qml), QUrl(QStringLiteral("vlqt_type_%1.qml").arg(type.id)));
+            cache.component = new QQmlComponent(engine, QUrl(QString::fromLatin1(type.qmlUrl)));
         }
         QQmlComponent* comp = cache.component;
         QObject* obj = comp->isError() ? nullptr : comp->create();

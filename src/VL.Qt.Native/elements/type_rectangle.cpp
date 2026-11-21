@@ -5,10 +5,9 @@ namespace vlqt {
 namespace {
 
 // ---------------------------------------------------------------------------------------------
-// Rectangle. border.width 0 matches the C# default StrokeWidth 0: Qt's default width is 1 and
-// draws a border as soon as border.color is set, so a lone SET border color must not show one.
+// Rectangle (qml/elements/RectangleElement.qml).
 
-constexpr const char* kRectangleQml = "import QtQuick\nRectangle { border.width: 0 }\n";
+constexpr const char* kRectangleQml = "qrc:/vlqt/qml/elements/RectangleElement.qml";
 
 std::vector<PropDef> rectangleProps()
 {

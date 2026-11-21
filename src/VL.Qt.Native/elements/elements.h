@@ -1,6 +1,6 @@
 /* elements/elements.h - the elements of one window (class Elements): creates the items and sets their properties.
  *
- * Every element type is an entry of the type table (element_types.h, one type file each): type id, QML one-liner or
+ * Every element type is an entry of the type table (element_types.h, one type file each): type id, QML file or
  * C++ factory, property table. QML properties are resolved once per type and engine to a QMetaProperty (on the first
  * item), never looked up by name per frame; grouped ones ("border.color") go through the group object, QFont fields
  * through a read-modify-write (type_text.cpp). A new element property is a table entry only, no new export.

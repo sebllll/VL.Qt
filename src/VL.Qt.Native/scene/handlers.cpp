@@ -21,21 +21,13 @@ namespace {
 
 Q_LOGGING_CATEGORY(lcEvents, "vlqt.events")
 
-constexpr const char* kHoverQml = "import QtQuick\nHoverHandler {}\n";
-// ReleaseWithinBounds: exclusive grab on press (button semantics, the topmost tap handler wins), tap when released
-// inside even after moving out and back.
-constexpr const char* kTapQml = "import QtQuick\nTapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds }\n";
-// Passive grab: the press goes on to the handlers below (a Tap handler under a Point handler still taps).
-constexpr const char* kPointQml = "import QtQuick\nPointHandler {}\n";
-// target null: the handler moves/scales nothing, it only reports. The wheel event (QQuickWheelEvent) is no public C++
-// API, so the notches are summed up in QML and taken by Handlers::takeWheel.
-constexpr const char* kWheelQml = "import QtQuick\nWheelHandler {\n    target: null\n    property point vlqtDelta\n"
-                                  "    onWheel: (event) => vlqtDelta = Qt.point(vlqtDelta.x + event.angleDelta.x / 120,"
-                                  " vlqtDelta.y + event.angleDelta.y / 120)\n}\n";
-// target null: the handler moves nothing itself, DragState writes the drag offset of the item.
-constexpr const char* kDragQml = "import QtQuick\nDragHandler { target: null }\n";
-// target null: the handler scales/rotates/moves nothing, PinchState reports its values.
-constexpr const char* kPinchQml = "import QtQuick\nPinchHandler { target: null }\n";
+// The handler QML files (qml/handlers/*Element.qml) hold the comments on how each handler is set up.
+constexpr const char* kHoverUrl = "qrc:/vlqt/qml/handlers/HoverHandlerElement.qml";
+constexpr const char* kTapUrl = "qrc:/vlqt/qml/handlers/TapHandlerElement.qml";
+constexpr const char* kPointUrl = "qrc:/vlqt/qml/handlers/PointHandlerElement.qml";
+constexpr const char* kWheelUrl = "qrc:/vlqt/qml/handlers/WheelHandlerElement.qml";
+constexpr const char* kDragUrl = "qrc:/vlqt/qml/handlers/DragHandlerElement.qml";
+constexpr const char* kPinchUrl = "qrc:/vlqt/qml/handlers/PinchHandlerElement.qml";
 // EVENT_TOUCH_POINTS: at most this many points (a count of fingers, not a length limit).
 constexpr int kMaxTouchPoints = 64;
 
@@ -299,12 +291,10 @@ Handlers::~Handlers()
         delete c;
 }
 
-QObject* Handlers::create(QQmlComponent*& comp, const char* qml, const char* url, QQuickItem* item)
+QObject* Handlers::create(QQmlComponent*& comp, const char* url, QQuickItem* item)
 {
-    if (!comp) {
-        comp = new QQmlComponent(engine);
-        comp->setData(QByteArray(qml), QUrl(QString::fromLatin1(url)));
-    }
+    if (!comp)
+        comp = new QQmlComponent(engine, QUrl(QString::fromLatin1(url)));
     // beginCreate + data.append + completeCreate: HoverHandler registers hover at its parent item in
     // componentComplete, so the parent must be set before (a plain create() leaves it without hover).
     QObject* obj = comp->isError() ? nullptr : comp->beginCreate(engine->rootContext());
@@ -325,31 +315,31 @@ QObject* Handlers::createHandler(quint16 type, QQuickItem* item)
     QObject* obj = nullptr;
     switch (type) {
     case VLQT_ELEMENT_TYPE_HOVER_HANDLER:
-        obj = create(component(HandlerComponent::Hover), kHoverQml, "vlqt_hoverhandler.qml", item);
+        obj = create(component(HandlerComponent::Hover), kHoverUrl, item);
         if (obj && !props.hovered.isValid())
             props.hovered = metaProperty(obj, "hovered");
         break;
     case VLQT_ELEMENT_TYPE_TAP_HANDLER:
-        obj = create(component(HandlerComponent::Tap), kTapQml, "vlqt_taphandler.qml", item);
+        obj = create(component(HandlerComponent::Tap), kTapUrl, item);
         if (obj && !props.pressed.isValid())
             props.pressed = metaProperty(obj, "pressed");
         break;
     case VLQT_ELEMENT_TYPE_POINT_HANDLER:
-        obj = create(component(HandlerComponent::Point), kPointQml, "vlqt_pointhandler.qml", item);
+        obj = create(component(HandlerComponent::Point), kPointUrl, item);
         break;
     case VLQT_ELEMENT_TYPE_WHEEL_HANDLER:
-        obj = create(component(HandlerComponent::Wheel), kWheelQml, "vlqt_wheelhandler.qml", item);
+        obj = create(component(HandlerComponent::Wheel), kWheelUrl, item);
         if (obj && !props.wheelDelta.isValid())
             props.wheelDelta = metaProperty(obj, "vlqtDelta");
         break;
     case VLQT_ELEMENT_TYPE_DRAG_HANDLER:
-        obj = create(component(HandlerComponent::Drag), kDragQml, "vlqt_draghandler.qml", item);
+        obj = create(component(HandlerComponent::Drag), kDragUrl, item);
         break;
     case VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER:
         obj = new TouchPointsHandler(item); // no QML type: own C++ handler (scene/touch_handler.h)
         break;
     case VLQT_ELEMENT_TYPE_PINCH_HANDLER:
-        obj = create(component(HandlerComponent::Pinch), kPinchQml, "vlqt_pinchhandler.qml", item);
+        obj = create(component(HandlerComponent::Pinch), kPinchUrl, item);
         break;
     default:
         return nullptr;
@@ -365,7 +355,7 @@ QObject* Handlers::createHandler(quint16 type, QQuickItem* item)
 
 QObject* Handlers::createHover(QQuickItem* item, qint32 devices)
 {
-    QObject* obj = create(component(HandlerComponent::Hover), kHoverQml, "vlqt_hoverhandler.qml", item);
+    QObject* obj = create(component(HandlerComponent::Hover), kHoverUrl, item);
     if (!obj)
         return nullptr;
     if (!props.hovered.isValid())

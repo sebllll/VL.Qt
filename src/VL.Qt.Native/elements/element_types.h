@@ -88,9 +88,9 @@ enum class AutoSize : quint8 {
 struct TypeDef {
     quint16 id;              // VLQT_ELEMENT_TYPE_*
     const char* name;        // the type's name in logs and error texts, and (lower case) on the perf page
-    const char* qml;         // QML one-liner (nullptr = plain QQuickItem, no component)
+    const char* qmlUrl;      // qrc:/vlqt/qml/elements/<Name>Element.qml (nullptr = plain QQuickItem, no component)
     std::vector<PropDef> props; // type-specific (ids >= 256); common ones (1..255) apply to every type
-    QQuickItem* (*make)() = nullptr; // C++ item instead of QML (Image: QtImageItem); qml is ignored then
+    QQuickItem* (*make)() = nullptr; // C++ item instead of QML (Image: QtImageItem); qmlUrl is ignored then
     AutoSize autoSize = AutoSize::None;
     bool layout = false;     // Row/Column: a Qt positioner that owns x/y of its children (TransformState::inLayout)
     bool container = false;  // Group, Row, Column: its children are elements that the debug overlay measures
