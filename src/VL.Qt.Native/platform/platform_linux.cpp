@@ -1,5 +1,5 @@
 // Linux implementation of platform.h. Private Qt API (setFrameless): QWindowPrivate, QHighDpi, QPlatformWindow; check
-// on Qt updates.
+// on Qt updates (list: elements/elements.h).
 #include "platform/platform.h"
 #include "app/app.h"
 #include "app/log.h"

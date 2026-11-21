@@ -1,4 +1,5 @@
 // Test device of vlqt_test_device_lost (test_device.h), Windows only.
+// Private Qt API: QSGRenderLoop (dropWindowRhisOn); check on Qt updates (list: elements/elements.h).
 #include "test_device.h"
 
 #include "../app/last_error.h"

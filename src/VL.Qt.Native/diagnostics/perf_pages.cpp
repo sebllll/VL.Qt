@@ -1,3 +1,4 @@
+// Private Qt API: QUnifiedTimer::runningAnimationCount (perf page); check on Qt updates (list: elements/elements.h).
 #include "diagnostics/perf_pages.h"
 #include "diagnostics/perf_items.h"
 #include "scene/scene.h"

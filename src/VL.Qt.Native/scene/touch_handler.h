@@ -12,9 +12,11 @@
 #include <QtCore/QSizeF>
 #include <QtCore/QtTypes>
 
-// QT-UPDATE: Qt private API (Qt6::QuickPrivate; accepted because Qt has no public API for these handlers). Check on every Qt update: header path,
-// QQuickPointerDeviceHandler / QQuickPointerHandler virtuals (wantsEventPoint, handlePointerEventImpl, onGrabChanged),
-// setPassiveGrab, parentContains. A failing build or SmokeTest touch-points shows a break.
+// QT-UPDATE: Qt private API (Qt6::QuickPrivate; accepted because Qt has no public API for these handlers;
+// list: elements/elements.h).
+// Check on every Qt update: header path, QQuickPointerDeviceHandler / QQuickPointerHandler
+// virtuals (wantsEventPoint, handlePointerEventImpl, onGrabChanged), setPassiveGrab, parentContains. A failing build
+// or SmokeTest touch-points shows a break.
 #include <QtQuick/private/qquickpointerdevicehandler_p.h>
 
 #include <map>

@@ -1,6 +1,6 @@
 // Input at the host frame start: vlqt_app_deliver_input delivers the input Qt has queued, without rendering. Qt GUI
 // thread. Private Qt API: QWindowSystemInterface (qpa) and the delayed touch of a window's delivery agent, check on Qt
-// updates.
+// updates (list: elements/elements.h).
 #include "app/app.h"
 #include "app/exports.h"
 #include "app/render_gate.h"

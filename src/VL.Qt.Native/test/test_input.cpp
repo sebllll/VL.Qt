@@ -1,4 +1,5 @@
 // Test exports of vlqt_test.h: synthetic mouse, touch, wheel and key input into on-screen windows (SmokeTest).
+// Private Qt API: QWindowSystemInterface (qpa), QHighDpi; check on Qt updates (list: elements/elements.h).
 #include "../vlqt_test.h"
 #include "../app/exports.h"
 #include "offscreen/offscreen.h"

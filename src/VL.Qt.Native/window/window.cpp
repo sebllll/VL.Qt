@@ -34,13 +34,8 @@ using vlqt::log::emitLog;
 
 namespace vlqt {
 
-// Initial geometry, Qt logical pixels (DIP), applied before the first show so the window never
-// appears at Qt's default position. Same rules as VL.Skia's SkiaRenderer.SetBounds, but via QScreen (platform
-// neutral, no user32): a window rect that intersects no screen, and the NaN sentinel, are centered on the primary
-// screen's working area; size < 1 = 600x400. The position is the outer top-left: setFramePosition marks it frame
-// inclusive, the platform plugin adds the frame when it creates the native window (Windows: from the window style,
-// xcb: NorthWest gravity), so the frame size need not be known yet. Wayland ignores client positions.
-// embedded placeholder (CMakeLists.txt, :/vlqt/icon), several sizes so Windows picks title bar / taskbar / Alt-Tab sharp.
+// The embedded placeholder icon (CMakeLists.txt, :/vlqt/icon), several sizes so Windows picks title bar / taskbar /
+// Alt-Tab sharp.
 const QIcon& defaultIcon()
 {
     static const QIcon icon = [] {
@@ -52,6 +47,12 @@ const QIcon& defaultIcon()
     return icon;
 }
 
+// Initial geometry, Qt logical pixels (DIP), applied before the first show so the window never
+// appears at Qt's default position. Same rules as VL.Skia's SkiaRenderer.SetBounds, but via QScreen (platform
+// neutral, no user32): a window rect that intersects no screen, and the NaN sentinel, are centered on the primary
+// screen's working area; size < 1 = 600x400. The position is the outer top-left: setFramePosition marks it frame
+// inclusive, the platform plugin adds the frame when it creates the native window (Windows: from the window style,
+// xcb: NorthWest gravity), so the frame size need not be known yet. Wayland ignores client positions.
 void placeWindow(QQuickWindow* win, float x, float y, int width, int height)
 {
     if (width < 1 || height < 1) {
@@ -134,8 +135,8 @@ int clampWindowSamples(int requested, QQuickWindow* win)
     return vlqt::device::clampSamples(requested, vlqt::device::windowSwapChainFormat(), win->rhi());
 }
 
-// ... and, once w->window, w->engine and the window's own event filters exist: GPU timings and pipeline cache, the
-// shared D3D11 device, the scene (apply/poll) and the perf monitor (its event filter, installed last, runs first).
+// The setup of a window that needs the window, its engine and its own event filters: GPU timings and pipeline cache,
+// the shared D3D11 device, the scene (apply/poll) and the perf monitor (its event filter, installed last, runs first).
 void initShared(SceneHandle* w)
 {
     // GPU timings for the perf overlay; must be set before the scenegraph initializes.

@@ -1,3 +1,4 @@
+// Private Qt API: QSGPlainTexture (around the QRhiTexture wrapping a shared texture); check on Qt updates (list: elements/elements.h).
 #include "qtimageitem.h"
 
 #include "device.h"

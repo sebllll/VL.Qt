@@ -1,5 +1,6 @@
 // The change count of a scene (vlqt_scene_get_change_count): frames whose render synced a change of the scene, for
-// windows and offscreen scenes. Private Qt API in scene_change.cpp: the dirty item list of a window.
+// windows and offscreen scenes. Private Qt API in scene_change.cpp: the dirty item list of a window
+// (list: elements/elements.h).
 #pragma once
 
 #include <QtCore/QObject>

@@ -1,3 +1,4 @@
+// Private Qt API: QQuickShaderEffectSource (the layer's texture source); check on Qt updates (list: elements/elements.h).
 #include "effects/effect_chain_item.h"
 
 #include "effects/effect_chain.h"

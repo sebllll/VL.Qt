@@ -1,3 +1,4 @@
+// Private Qt API: QQuickItemPrivate and QQuickWindowPrivate (the dirty item list); check on Qt updates (list: elements/elements.h).
 #include "app/scene_change.h"
 
 #include <QtQuick/QQuickItem>

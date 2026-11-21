@@ -95,9 +95,10 @@ VLQT_API int         vlqt_app_get_abi_version(void);
 /* Starts Qt on the calling thread, which is the Qt GUI thread ("main thread") from then on. log may be NULL; it is set
  * once (idempotent: a second call changes nothing). */
 VLQT_API int         vlqt_app_init(const char* nativeDir, vlqt_log_fn log);
-/* Pipeline cache: call before the first window. Sets load + save file of the QQuickGraphicsConfiguration of
- * every window created afterwards (driver compiled pipelines survive restarts). utf8Path NULL or empty = off (the
- * default). A cache of another GPU/driver is dropped by Qt; a file that cannot be written only logs a warning. 0. */
+/* Pipeline cache: sets load + save file of the QQuickGraphicsConfiguration of every window created afterwards
+ * (driver compiled pipelines survive restarts). utf8Path NULL or empty = off (the default). A call after the first
+ * window has no effect on the windows that exist. A cache of another GPU/driver is dropped by Qt; a file that cannot
+ * be written only logs a warning. Always 0. */
 VLQT_API int         vlqt_app_set_pipeline_cache(const char* utf8Path);
 /* One pump: resources, posted and window events, rendering. Only the given windows (those of one vvvv app) may render
  * in this pump; update requests of other windows stay pending until their own app's pump. windows NULL = all windows

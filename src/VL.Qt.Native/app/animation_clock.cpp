@@ -1,3 +1,4 @@
+// Private Qt API: QAbstractAnimationTimer, QUnifiedTimer (keep-alive); check on Qt updates (list: elements/elements.h).
 #include "app/animation_clock.h"
 #include "app/exports.h"
 #include "vlqt.h"

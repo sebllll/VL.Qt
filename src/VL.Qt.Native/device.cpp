@@ -1,3 +1,4 @@
+// Private Qt API: QQuickWindowPrivate::renderControl (which windows are on the shared device); check on Qt updates (list: elements/elements.h).
 #include "device.h"
 
 #include <QtCore/QElapsedTimer>

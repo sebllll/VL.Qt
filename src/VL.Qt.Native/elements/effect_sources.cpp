@@ -1,3 +1,4 @@
+// Private Qt API: QQuickShaderEffectSource (the frame proxy of a Group); check on Qt updates (list: elements/elements.h).
 #include "elements/elements.h"
 #include "elements/group_item.h"
 #include "effects/shader_item.h"
