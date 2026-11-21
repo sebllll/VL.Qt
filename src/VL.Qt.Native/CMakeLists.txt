@@ -58,8 +58,12 @@ target_sources(vlqt PRIVATE
     # effects/ and user_qml/
     effectchain.cpp
     effectchain.h
+    effects/layer_requests.cpp
+    effects/layer_requests.h
     effects/shader_item.cpp
     effects/shader_item.h
+    effects/shader_material.cpp
+    effects/shader_material.h
     qmlitem.cpp
     qmlitem.h
 
