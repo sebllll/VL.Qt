@@ -235,7 +235,7 @@ void DebugOverlay::drawNode(const ElementEntry& n)
     const qreal w = item->width(), h = item->height();
     // Frame = actual size: (0, 0, w, h) = SIZE, or the Auto Size result; for an auto-sized Group with children in
     // negative coordinates it starts there. Everything else is drawn relative to it.
-    const QRectF frame = itemFrame(*n.xf, item);
+    const QRectF frame = itemBounds(*n.xf, item);
     const bool container = isContainer(n.type);
 
     // Children extent (tracked, visible, non-empty children incl. their x/y and TRANSFORM; like the Group frame, not

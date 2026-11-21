@@ -859,7 +859,7 @@ int Elements::setEffectChain(ElementEntry& node, const EffectChainDesc& chain, c
         if (node.type == VLQT_ELEMENT_TYPE_GROUP)
             ec->setBuiltHandler([group = static_cast<GroupItem*>(node.item)](QQuickItem* first) { // the chain is a child of the group: never outlives it
                 group->effectHolder = first;
-                group->syncEffectFrame();
+                group->syncEffectBounds();
             });
     }
     std::vector<QPointer<QQuickItem>> retired;

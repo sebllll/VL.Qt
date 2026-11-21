@@ -5,7 +5,7 @@
 
 #include <QtQml/QQmlProperty>
 #include <QtQuick/QQuickItem>
-#include <QtQuick/private/qquickshadereffectsource_p.h> // Group frame proxy
+#include <QtQuick/private/qquickshadereffectsource_p.h> // group bounds proxy
 
 #include <algorithm>
 
@@ -26,8 +26,8 @@ bool Elements::setEffectSource(ElementEntry& effect, const ResolvedProp& rp, QQu
     QQuickItem* old = effect.effectSource;
     if (old == source)
         return true;
-    // A Group goes through its frame proxy: the layer would cover only (0, 0, width, height), not the part of the
-    // frame left of / above the origin. Its own layer (Effect pin) stays untouched.
+    // A Group goes through its bounds proxy: the layer would cover only (0, 0, width, height), not the part of the
+    // group bounds left of / above the origin. Its own layer (Effect pin) stays untouched.
     QQuickItem* input = isGroup(source) ? acquireGroupProxy(source) : source;
     if (!writeQml(effect.item, rp, QVariant::fromValue(input), err)) {
         if (input != source)
@@ -74,7 +74,7 @@ QQuickItem* Elements::acquireGroupProxy(QQuickItem* item)
     if (group->proxy)
         return group->proxy;
     // A ShaderEffectSource renders its source item (also a hidden one: it refs it, refFromEffectItem) into its own
-    // texture with sourceRect = the frame (like the snapshot's frameTarget). Hidden itself, so it never draws on
+    // texture with sourceRect = the group bounds (like the snapshot's frameTarget). Hidden itself, so it never draws on
     // screen; it still gets updatePaintNode and its texture is rendered by the consuming ShaderItem's preprocess
     // without an extra refFromEffectItem on the proxy (checked by grab in the smoke test group-shader-source, also
     // live changes). Under the root, never under the Group (it would be part of its own texture) or an element (layout,
@@ -89,7 +89,7 @@ QQuickItem* Elements::acquireGroupProxy(QQuickItem* item)
     proxy->setParentItem(proxyParent);
     proxy->setSourceItem(group);
     group->proxy = proxy;
-    group->syncEffectFrame();
+    group->syncEffectBounds();
     // A destroyed Group (DESTROY of a texture element, RESET) retires its proxy: the effects still sample it this frame.
     group->proxyRetire = QObject::connect(group, &QObject::destroyed, proxy, [this, proxy] { frameDelete.emplace_back(proxy); });
     return proxy;

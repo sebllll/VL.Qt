@@ -14,7 +14,7 @@
  * objectName is overlayObjectName (app/scene_change.h): its repaints are no scene change.
  *
  * Legend (no labels; one color per meaning, the line style carries the mode):
- *   cyan frame      = actual size (itemFrame: SIZE, or the Auto Size result); solid = fixed SIZE, dashed = Auto Size on
+ *   cyan frame      = actual size (itemBounds: SIZE, or the Auto Size result); solid = fixed SIZE, dashed = Auto Size on
  *   orange frame    = implicit size, i.e. what Auto Size gives (Group: extent of children + origin, may start negative);
  *                     only where it differs from the actual size (Auto Size on: never), types with AUTO_SIZE and Text
  *   blue dotted     = children extent (Group/Row/Column: visible, non-empty children incl. TRANSFORM), only where it

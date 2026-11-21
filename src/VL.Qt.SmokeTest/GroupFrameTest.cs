@@ -222,27 +222,7 @@ public static class GroupFrameTest
         var buf = new byte[1 << 16];
         (float W, float H)? measured = null;
         (float X, float Y, float W, float H)? bounds = null;
-        void Poll()
-        {
-            int n = NativeCalls.Poll(w, buf);
-            var b = buf.AsSpan(0, Math.Max(n, 0));
-            int off = 0;
-            while (off + 12 <= b.Length)
-            {
-                ushort ev = System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(b[off..]);
-                int len = (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..]);
-                if (len < 4 || off + 8 + len > b.Length)
-                    break;
-                uint handle = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 8)..]);
-                var p = b.Slice(off + 12, len - 4).ToArray();
-                float F(int i) => BitConverter.ToSingle(p, 4 * i);
-                if (handle == hg && ev == Protocol.EventId.Measured && p.Length >= 8)
-                    measured = (F(0), F(1));
-                else if (handle == hg && ev == Protocol.EventId.SceneBounds && p.Length >= 16)
-                    bounds = (F(0), F(1), F(2), F(3));
-                off += (8 + len + 3) & ~3;
-            }
-        }
+        void Poll() => ReadFeedback(w, buf, hg, ref measured, ref bounds);
         void Apply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
@@ -293,5 +273,95 @@ public static class GroupFrameTest
         Apply("destroy");
         s.Pump(2);
         Native.vlqt_scene_destroy(w);
+    }
+
+    /// <summary>NELM-01: a child Group counts with its own group bounds in the bounds of its parent Group.</summary>
+    [Test, Category("group-frame-nested")]
+    public static void GroupFrameNested() => Scenario.Run(RunNested);
+
+    // NELM-01: outer Group > inner Group > orange 100 x 100 rectangle at (-50, 0). Outer Group at (200, 150) DIP, anchor
+    // top left, Auto Size; the inner one at its origin. 1) Inner auto-sized: its bounds are (-50, 0, 100, 100), so the
+    // outer ones start at x = -50, SCENE_BOUNDS (150, 150, 100, 100). The rectangle to x = -60 moves only the origin of
+    // the inner bounds (the inner Group keeps its x/y and size): the outer follows to (140, 150, 100, 100).
+    // 2) Inner Auto Size off, Size 200 x 100, anchor Center: its bounds are (-100, -50, 200, 100) around its origin, the
+    // outer SCENE_BOUNDS (100, 100, 200, 100).
+    private static void RunNested(Scenario s)
+    {
+        const uint outer = 1, inner = 2, r = 3, ho = 101;
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt nested group frame test");
+        s.Check(w != SceneHandle.Null, "window_create");
+        Native.vlqt_window_show(w);
+        var cmd = new CommandWriter();
+        var buf = new byte[1 << 16];
+        (float W, float H)? measured = null;
+        (float X, float Y, float W, float H)? bounds = null;
+        void Apply(string what)
+        {
+            var rc = Native.Apply(w, cmd.EndFrame());
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            cmd.Reset();
+        }
+        void Expect(float x, float y, float width, float height, string what)
+        {
+            s.Pump(4);
+            ReadFeedback(w, buf, ho, ref measured, ref bounds);
+            var ok = bounds is { } b && Math.Abs(b.X - x) <= 0.5f && Math.Abs(b.Y - y) <= 0.5f
+                && Math.Abs(b.W - width) <= 0.5f && Math.Abs(b.H - height) <= 0.5f;
+            s.Check(ok, $"{what}: outer SCENE_BOUNDS ({x}, {y}, {width}, {height}) ({bounds})");
+        }
+
+        cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
+        cmd.Create(outer, Protocol.ElementType.Group);
+        cmd.SetI32(outer, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
+        cmd.SetMat4(outer, Protocol.PropertyId.Transform, Matrix.Translation(200, 150, 0));
+        cmd.Reparent(outer, 0, 0);
+        cmd.Bind(outer, ho);
+        cmd.Create(inner, Protocol.ElementType.Group);
+        cmd.SetI32(inner, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
+        cmd.Reparent(inner, outer, 0);
+        cmd.Create(r, Protocol.ElementType.Rectangle);
+        cmd.SetPlace(r, -50, 0, 100, 100);
+        cmd.SetColor(r, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
+        cmd.Reparent(r, inner, 0);
+        Apply("outer Group > inner Group > rectangle");
+        Expect(150, 150, 100, 100, "inner auto-sized, rectangle at x = -50");
+
+        cmd.SetMat4(r, Protocol.PropertyId.Transform, Matrix.Translation(-60, 0, 0));
+        Apply("rectangle to x = -60");
+        Expect(140, 150, 100, 100, "only the origin of the inner bounds moved");
+
+        cmd.SetVec2(inner, Protocol.PropertyId.Size, 200, 100);
+        cmd.SetI32(inner, Protocol.PropertyId.Anchor, GeometryExtensions.AlignCenter);
+        cmd.SetBool(inner, Protocol.PropertyId.AutoSize, false);
+        Apply("inner Auto Size off, Size 200 x 100, anchor Center");
+        Expect(100, 100, 200, 100, "inner Auto Size off, anchor Center");
+
+        cmd.Destroy(outer);
+        Apply("destroy");
+        s.Pump(2);
+        Native.vlqt_scene_destroy(w);
+    }
+
+    // Reads the MEASURED and SCENE_BOUNDS events of the feedback handle from one poll; values of other handles are skipped.
+    private static void ReadFeedback(SceneHandle w, byte[] buf, uint feedback, ref (float W, float H)? measured, ref (float X, float Y, float W, float H)? bounds)
+    {
+        int n = NativeCalls.Poll(w, buf);
+        var b = buf.AsSpan(0, Math.Max(n, 0));
+        int off = 0;
+        while (off + 12 <= b.Length)
+        {
+            ushort ev = System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(b[off..]);
+            int len = (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 4)..]);
+            if (len < 4 || off + 8 + len > b.Length)
+                break;
+            uint handle = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 8)..]);
+            var p = b.Slice(off + 12, len - 4).ToArray();
+            float F(int i) => BitConverter.ToSingle(p, 4 * i);
+            if (handle == feedback && ev == Protocol.EventId.Measured && p.Length >= 8)
+                measured = (F(0), F(1));
+            else if (handle == feedback && ev == Protocol.EventId.SceneBounds && p.Length >= 16)
+                bounds = (F(0), F(1), F(2), F(3));
+            off += (8 + len + 3) & ~3;
+        }
     }
 }

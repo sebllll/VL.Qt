@@ -191,7 +191,7 @@ public:
     /* Number of live nodes with DEBUG on (set by the DEBUG setter, decremented by the Scene when such a node goes);
      * the Scene shows the debug overlay while it is > 0 or the window-wide switch is on. */
     int debugCount = 0;
-    /* Parent of the Group frame proxies: the Scene's root (untracked children do not count for REPARENT). */
+    /* Parent of the group bounds proxies: the Scene's root (untracked children do not count for REPARENT). */
     QQuickItem* proxyParent = nullptr;
 
 private:
@@ -209,8 +209,8 @@ private:
     QObject* createTransform(std::string& err);
     /* Attaches the Matrix4x4 to item.transform once (node.xf must exist) and writes the current matrix. */
     bool writeTransform(ElementEntry& node, std::string& err);
-    /* Group as texture: one hidden QQuickShaderEffectSource per Group (sourceRect = frame, follows it, see
-     * GroupItem::syncEffectFrame), shared by the Input and texture uniforms of all effects, refcounted; the last release
+    /* Group as texture: one hidden QQuickShaderEffectSource per Group (sourceRect = group bounds, follows them, see
+     * GroupItem::syncEffectBounds), shared by the Input and texture uniforms of all effects, refcounted; the last release
      * deletes it after the next frame (frameDelete), a destroyed Group retires it as well. */
     QQuickItem* acquireGroupProxy(QQuickItem* group);
     void releaseGroupProxy(QQuickItem* group);
