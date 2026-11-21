@@ -303,7 +303,7 @@
             <Pin Id="NjUlWc4HBSdOrHI5ga52Oc" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="997,280,66,19" Id="oDMVtKi4gWUKbJMAXxOuDe">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LoadImage" />
             </p:NodeReference>

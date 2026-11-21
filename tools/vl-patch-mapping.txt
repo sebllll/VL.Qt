@@ -31,3 +31,25 @@ W4-16 | category | QtImage       | VL.Qt       | Qt.Images
 W4-16 | category | QtImage       | Qt          | Qt.Images
 W4-16 | category | QtImageState  | VL.Qt       | Qt.Images
 W4-16 | category | QtImageState  | Qt          | Qt.Images
+
+# W4-17: categories by what the user looks for. The five nodes of Qt.Effects.MultiEffect join Qt.Effects, one row each
+# (a * row into the parent category would also claim Qt.Effects.MultiEffect.MultiEffect, and the versions of a node
+# could no longer be told apart); the image and file nodes of the root go to Qt.Images; ShaderEffect, Sampler and the
+# uniform nodes (subcategory Uniform) to Qt.Elements.Shaders, QmlElement to Qt.Elements.Qml; QtTexture and
+# ToTexturePixels to the Stride categories of their tasks.
+W4-17 | category | Blur                 | Qt.Effects.MultiEffect | Qt.Effects
+W4-17 | category | ColorAdjust          | Qt.Effects.MultiEffect | Qt.Effects
+W4-17 | category | Colorize             | Qt.Effects.MultiEffect | Qt.Effects
+W4-17 | category | DropShadow           | Qt.Effects.MultiEffect | Qt.Effects
+W4-17 | category | Mask                 | Qt.Effects.MultiEffect | Qt.Effects
+W4-17 | category | LoadImage            | Qt                     | Qt.Images
+W4-17 | category | ToQtImage            | Qt                     | Qt.Images
+W4-17 | category | VideoSourceToQtImage | Qt                     | Qt.Images
+W4-17 | category | Snapshot             | Qt                     | Qt.Images
+W4-17 | category | FileWriter           | Qt                     | Qt.Images
+W4-17 | category | ShaderEffect         | Qt.Elements            | Qt.Elements.Shaders
+W4-17 | category | QmlElement           | Qt.Elements            | Qt.Elements.Qml
+W4-17 | category | *                    | Qt.Elements.Uniform    | Qt.Elements.Shaders.Uniform
+W4-17 | category | Sampler              | Qt.Elements.Uniform    | Qt.Elements.Shaders
+W4-17 | category | QtTexture            | Qt                     | Stride.Textures.Source
+W4-17 | category | ToTexturePixels      | Qt                     | Stride.Input

@@ -33,7 +33,7 @@ namespace VL.Qt.Qml
         public const string FolderName = "qml";
 
         /// <summary>Category of a generated node without @category.</summary>
-        public const string DefaultCategory = Categories.Elements + ".Qml";
+        public const string DefaultCategory = Categories.Qml;
 
         private const string extension = ".qml";
 

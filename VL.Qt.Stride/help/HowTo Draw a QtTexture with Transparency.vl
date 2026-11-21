@@ -229,7 +229,7 @@
             </p:ValueBoxSettings>
           </Pad>
           <Node Bounds="100,520,105,19" Id="7nT31Ez6DiEovjckiPYuJo">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.Stride.dll">
+            <p:NodeReference LastCategoryFullName="Stride.Textures.Source" LastDependency="VL.Qt.Stride.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="QtTexture" />
             </p:NodeReference>

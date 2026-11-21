@@ -19,11 +19,6 @@ namespace vlqt::res {
 
 namespace {
 
-// Counts content changes of Ready resources (first Ready, replacement swap); see contentEpoch.
-std::atomic<uint64_t> s_contentEpoch{0};
-// Counts transitions to Failed; see failureEpoch.
-std::atomic<uint64_t> s_failureEpoch{0};
-
 constexpr uint32_t maxSlots = 1u << 20;      // ~1M live resources; more is a leak in the host
 
 bool validState(int s) { return s >= int(State::Pending) && s <= int(State::Released); }
@@ -271,7 +266,7 @@ int Manager::finishExternal(uint64_t id, std::shared_ptr<Content> work, int64_t 
         s->bytes = bytes;
         s->sinceMs = steadyMs();
         pushInfo(id, *s);
-        s_contentEpoch++;
+        noteChanged(id);
         qCDebug(lcRes, "%s: snapshot replaced", idText(id).constData());
         return okRc;
     }
@@ -284,7 +279,7 @@ int Manager::finishExternal(uint64_t id, std::shared_ptr<Content> work, int64_t 
     s->bytes = bytes;
     pushInfo(id, *s);
     transition(id, *s, State::Decoding, State::Ready);
-    s_contentEpoch++;
+    noteChanged(id);
     return okRc;
 }
 
@@ -428,6 +423,10 @@ void Manager::beginFrame()
         }
     }
     m_usedLastFrame = m_budget - left;
+    // The ids changed since the last pump (also between pumps: wait, snapshot results) are this frame's; swap keeps both
+    // capacities, so no allocation once the lists have grown to the busiest frame.
+    m_changed.clear();
+    m_changed.swap(m_changedPending);
 }
 
 void Manager::overview(std::vector<OverviewRow>& rows, OverviewTotals& out)
@@ -574,7 +573,7 @@ bool Manager::transition(uint64_t id, Slot& s, State from, State to, bool restar
     s.state = to;
     s.sinceMs = steadyMs();
     if (to == State::Failed)
-        s_failureEpoch++;
+        noteChanged(id);
     qCDebug(lcRes, "%s: %s -> %s", idText(id).constData(), stateName(from), stateName(to));
     if (to != State::Released)
         pushState(id, s);
@@ -651,12 +650,12 @@ int64_t Manager::uploadStep(uint64_t id, Slot& s, int64_t budget, UploadStatus& 
             s.replacementUploading = false;
             s.sinceMs = steadyMs(); // still Ready, but the age on the F5 page counts from the new content
             pushInfo(id, s);
-            s_contentEpoch++;
+            noteChanged(id);
             qCDebug(lcRes, "%s: content replaced", idText(id).constData());
         } else {
             pushInfo(id, s);
             transition(id, s, State::Uploading, State::Ready);
-            s_contentEpoch++;
+            noteChanged(id);
         }
         startQueued(id, s);
     }
@@ -780,6 +779,12 @@ void Manager::free(uint64_t id, Slot& s)
     m_free.push_back(indexOf(id));
 }
 
+void Manager::noteChanged(uint64_t id)
+{
+    if (m_changedPending.empty() || m_changedPending.back() != id) // the same id twice in a row: once is enough
+        m_changedPending.push_back(id);
+}
+
 void Manager::pushState(uint64_t id, const Slot& s)
 {
     if (s.hostRefs == 0)
@@ -804,7 +809,11 @@ Manager& manager()
 
 Manager* existingManager() { return s_manager.load(); }
 
-uint64_t contentEpoch() { return s_contentEpoch.load(std::memory_order_relaxed); }
-uint64_t failureEpoch() { return s_failureEpoch.load(std::memory_order_relaxed); }
+const std::vector<uint64_t>& changedThisFrame()
+{
+    static const std::vector<uint64_t> none;
+    const Manager* m = existingManager();
+    return m ? m->changedThisFrame() : none;
+}
 
 } // namespace vlqt::res

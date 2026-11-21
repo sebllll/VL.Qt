@@ -12,7 +12,7 @@ namespace VL.Qt.Nodes
     /// the content of one QtImage. Frames are copied from CPU memory; the output keeps the same QtImage while only its
     /// content changes.
     /// </summary>
-    [ProcessNode(Name = "VideoSourceToQtImage", Category = Categories.Qt)]
+    [ProcessNode(Name = "VideoSourceToQtImage", Category = Categories.Images)]
     public sealed class VideoSourceToQtImageNode : IDisposable
     {
         private readonly ResourceClient _client;

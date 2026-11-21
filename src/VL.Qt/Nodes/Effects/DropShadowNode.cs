@@ -10,11 +10,11 @@ namespace VL.Qt.Nodes
     /// Draws a soft shadow behind the element (Qt MultiEffect shadow). Connect Output to the Effect pin of an element, or
     /// chain it with other effect nodes; the order of the nodes
     /// does not matter within a run.
-    /// Neighboring MultiEffect nodes are merged into one layer with one shader, Qt's fixed order applies inside it; a
-    /// shader effect (e.g. Glow) ends the run, between runs the patch order applies.
+    /// Blur, DropShadow, ColorAdjust, Colorize and Mask next to each other in a chain are merged into one layer with one
+    /// shader, Qt's fixed order applies inside it; a shader effect (e.g. Glow) ends the run, between runs the patch order applies.
     /// The shadow does not change the element's size or layout.
     /// </summary>
-    [ProcessNode(Name = "DropShadow", Category = Categories.MultiEffect)]
+    [ProcessNode(Name = "DropShadow", Category = Categories.Effects)]
     public sealed class DropShadowNode
     {
         internal readonly record struct Props(Color4 Color, Vector2 Offset, float Blur, float Scale, bool AutoPadding = true, RectangleF Padding = default);
