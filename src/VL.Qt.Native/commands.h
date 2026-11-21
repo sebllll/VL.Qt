@@ -27,7 +27,9 @@ class DebugOverlay;
 class PreviousFrameLayer;
 
 /* One scene per window: id table, bindings, event queue. Root id 0 = an item filling contentItem. */
-struct Scene {
+class Scene
+{
+public:
     Scene(QQuickWindow* window, QQmlEngine* engine);
     ~Scene();
     Scene(const Scene&) = delete;
@@ -88,9 +90,9 @@ struct Scene {
     QQuickWindow* window;
     QQmlEngine* engine;
     QQuickItem* root;
-    std::unordered_map<quint32, Node> nodes;
+    std::unordered_map<quint32, ElementEntry> nodes;
     std::unordered_map<const QQuickItem*, quint32> ids; // reverse map for recursive DESTROY
-    std::unordered_map<quint32, HandlerNode> handlerNodes; // input handlers, same id space as nodes, events.h
+    std::unordered_map<quint32, HandlerEntry> handlerNodes; // input handlers, same id space as nodes, events.h
     QByteArray events;
     Elements elements; // component + property caches of this window's engine
     Handlers handlers; // QML components of the input handlers, events.h
@@ -136,10 +138,10 @@ private:
     /* root under window's content item, size follow, window-geometry watch (constructor, moveToWindow). */
     void attachRoot();
     void destroySubtree(QQuickItem* item);
-    void destroyHandlersOf(Node& node);
+    void destroyHandlersOf(ElementEntry& node);
     /* Detaches mask from the link of host's chain that uses it (DESTROY of the mask); the mask stays parked hidden
      * under the root until REPARENT or DESTROY. Masks are attached by SET_EFFECT_CHAIN (protocol.h "Effect chain"). */
-    void detachMask(Node& host, QQuickItem* mask);
+    void detachMask(ElementEntry& host, QQuickItem* mask);
     void deleteRetired();
     DebugOverlay* debug = nullptr; // child of contentItem, deleted in ~Scene
     std::unique_ptr<PreviousFrameLayer> feedback; // Clear off only

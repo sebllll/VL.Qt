@@ -56,7 +56,7 @@ void pushFlag(Scene& scene, quint16 ev, quint32 handle, bool on)
 
 /* The sink loses the handler (new handle, DESTROY): flags that were 1 go back to 0, wheel motion ends with (0, 0).
    Forgets the sent state, so a new sink gets the current state with the next poll. */
-void resetSent(Scene& scene, HandlerNode& hn)
+void resetSent(Scene& scene, HandlerEntry& hn)
 {
     if (hn.feedbackId != 0) {
         if (hn.sentHover)
@@ -116,7 +116,7 @@ bool applyAccepted(QObject* obj, quint16 prop, qint32 v)
 /* Point handler with ACCEPTED_BUTTONS 0: an internal HoverHandler makes the mouse (and touchpad cursor) of
    ACCEPTED_DEVICES active while it is over the item; the PointHandler itself then only takes touch and pen. Creates,
    updates or removes it after a change of the item, the buttons or the devices. */
-void syncPointHover(Scene& scene, HandlerNode& hn, QQuickItem* item)
+void syncPointHover(Scene& scene, HandlerEntry& hn, QQuickItem* item)
 {
     if (hn.type != VLQT_ELEMENT_TYPE_POINT_HANDLER || !hn.object)
         return;
@@ -139,7 +139,7 @@ void syncPointHover(Scene& scene, HandlerNode& hn, QQuickItem* item)
    grabs exclusively. A Tap handler attached after a Point handler took the left press first (exclusive grab, button
    semantics) and the Point handler stayed inactive. So the Point handlers of the item are attached again after any
    other handler: they take their passive grab first, the Tap handler still grabs exclusively and taps. */
-void raisePointHandlers(Scene& scene, const Node& owner, quint32 except)
+void raisePointHandlers(Scene& scene, const ElementEntry& owner, quint32 except)
 {
     for (quint32 id : owner.handlers) {
         auto it = scene.handlerNodes.find(id);
@@ -190,7 +190,7 @@ void DragState::onActiveChanged()
     auto nit = hit == scene_.handlerNodes.end() ? scene_.nodes.end() : scene_.nodes.find(hit->second.owner);
     if (nit == scene_.nodes.end())
         return;
-    const Node& node = nit->second;
+    const ElementEntry& node = nit->second;
     // Several drag handlers at one item share its one offset: each starts from the offset as it is now.
     start_[0] = node.xf ? node.xf->dx : 0.f;
     start_[1] = node.xf ? node.xf->dy : 0.f;
@@ -209,8 +209,8 @@ void DragState::onTranslationChanged()
     auto nit = hit == scene_.handlerNodes.end() ? scene_.nodes.end() : scene_.nodes.find(hit->second.owner);
     if (nit == scene_.nodes.end())
         return;
-    HandlerNode& hn = hit->second;
-    Node& node = nit->second;
+    HandlerEntry& hn = hit->second;
+    ElementEntry& node = nit->second;
 
     // activeTranslation is the centroid's movement in scene (window) coordinates; the offset lives in the parent's
     // space (applied after the item's own TRANSFORM), so map the vector into the parent.
@@ -357,7 +357,7 @@ bool Handlers::takeWheel(QObject* wheel, float out[2])
     return true;
 }
 
-void bindNode(Scene& scene, Node& node, quint32 handle)
+void bindNode(Scene& scene, ElementEntry& node, quint32 handle)
 {
     if (node.feedbackId != handle) {
         node.sent = SentState{}; // new sink (or unbind): the next poll sends the current values again
@@ -369,7 +369,7 @@ void bindNode(Scene& scene, Node& node, quint32 handle)
     node.feedbackId = handle;
 }
 
-void updateTextMask(Node& node)
+void updateTextMask(ElementEntry& node)
 {
     const bool want = node.type == VLQT_ELEMENT_TYPE_TEXT && !node.handlers.empty();
     if (want && !node.mask) {
@@ -389,7 +389,7 @@ bool isHandlerType(quint16 type)
         || type == VLQT_ELEMENT_TYPE_PINCH_HANDLER;
 }
 
-int reparentHandler(Scene& scene, HandlerNode& handler, quint32 handlerId, quint32 parentId, std::string& err)
+int reparentHandler(Scene& scene, HandlerEntry& handler, quint32 handlerId, quint32 parentId, std::string& err)
 {
     if (handler.owner != 0) {
         err = "input handler " + std::to_string(handlerId) + " is already attached to " + std::to_string(handler.owner)
@@ -410,7 +410,7 @@ int reparentHandler(Scene& scene, HandlerNode& handler, quint32 handlerId, quint
         err = "unknown parent id " + std::to_string(parentId);
         return ApplyUnknownId;
     }
-    Node& owner = pit->second;
+    ElementEntry& owner = pit->second;
     QObject* obj = scene.handlers.createHandler(handler.type, owner.item);
     if (!obj) {
         err = "input handler of type " + std::to_string(handler.type) + " could not be created (see log)";
@@ -465,7 +465,7 @@ int reparentHandler(Scene& scene, HandlerNode& handler, quint32 handlerId, quint
     return ApplyOk;
 }
 
-int setHandler(Scene& scene, HandlerNode& handler, quint16 prop, const Value& v, std::string& err)
+int setHandler(Scene& scene, HandlerEntry& handler, quint16 prop, const Value& v, std::string& err)
 {
     // 768 (REPORT_POSITION, Hover position) is reserved since #320: unknown like any other id.
     const quint16 t = handler.type;
@@ -547,7 +547,7 @@ int setHandler(Scene& scene, HandlerNode& handler, quint16 prop, const Value& v,
     return ApplyOk;
 }
 
-void bindHandler(Scene& scene, HandlerNode& handler, quint32 handle)
+void bindHandler(Scene& scene, HandlerEntry& handler, quint32 handle)
 {
     if (handle == handler.feedbackId)
         return;
@@ -569,7 +569,7 @@ void destroyHandler(Scene& scene, quint32 handlerId)
     auto it = scene.handlerNodes.find(handlerId);
     if (it == scene.handlerNodes.end())
         return;
-    HandlerNode& handler = it->second;
+    HandlerEntry& handler = it->second;
     resetSent(scene, handler);
     auto oit = scene.nodes.find(handler.owner);
     if (oit != scene.nodes.end()) {
@@ -586,7 +586,7 @@ void destroyHandler(Scene& scene, quint32 handlerId)
 
 namespace {
 
-void pushPointer(Scene& scene, HandlerNode& hn, QObject* source)
+void pushPointer(Scene& scene, HandlerEntry& hn, QObject* source)
 {
     float p[2];
     if (scene.handlers.pointerPosition(source, p) && (!hn.hasPointer || p[0] != hn.sentPointer[0] || p[1] != hn.sentPointer[1])) {
@@ -597,7 +597,7 @@ void pushPointer(Scene& scene, HandlerNode& hn, QObject* source)
     }
 }
 
-void collectHover(Scene& scene, HandlerNode& hn)
+void collectHover(Scene& scene, HandlerEntry& hn)
 {
     const bool hovered = scene.handlers.isHovered(hn.object);
     if (hovered != hn.sentHover) {
@@ -606,7 +606,7 @@ void collectHover(Scene& scene, HandlerNode& hn)
     }
 }
 
-void collectTap(Scene& scene, HandlerNode& hn)
+void collectTap(Scene& scene, HandlerEntry& hn)
 {
     TapState& ts = *hn.tap;
     const bool pressed = scene.handlers.isPressed(hn.object) && !ts.cancelled;
@@ -631,7 +631,7 @@ void collectTap(Scene& scene, HandlerNode& hn)
     }
 }
 
-void collectPoint(Scene& scene, HandlerNode& hn)
+void collectPoint(Scene& scene, HandlerEntry& hn)
 {
     // A pressed point (touch, pen, accepted mouse button) wins over the hovering mouse (ACCEPTED_BUTTONS 0).
     const bool pressed = scene.handlers.isActive(hn.object);
@@ -647,7 +647,7 @@ void collectPoint(Scene& scene, HandlerNode& hn)
         hn.hasPointer = false; // active again: the next poll sends the position right away
 }
 
-void collectWheel(Scene& scene, HandlerNode& hn)
+void collectWheel(Scene& scene, HandlerEntry& hn)
 {
     float d[2] = {};
     if (scene.handlers.takeWheel(hn.object, d)) {
@@ -659,7 +659,7 @@ void collectWheel(Scene& scene, HandlerNode& hn)
     }
 }
 
-void collectDrag(Scene& scene, HandlerNode& hn)
+void collectDrag(Scene& scene, HandlerEntry& hn)
 {
     const bool active = scene.handlers.isActive(hn.object);
     if (active != hn.sentActive) {
@@ -675,7 +675,7 @@ void collectDrag(Scene& scene, HandlerNode& hn)
     }
 }
 
-void collectTouchPoints(Scene& scene, HandlerNode& hn)
+void collectTouchPoints(Scene& scene, HandlerEntry& hn)
 {
     const auto& points = hn.points->points();
     const quint32 count = quint32(std::min<size_t>(points.size(), kMaxTouchPoints));
@@ -700,7 +700,7 @@ void collectTouchPoints(Scene& scene, HandlerNode& hn)
     scene.pushEvent(VLQT_EVENT_TOUCH_POINTS, hn.feedbackId, payload.constData(), payload.size());
 }
 
-void collectPinch(Scene& scene, HandlerNode& hn)
+void collectPinch(Scene& scene, HandlerEntry& hn)
 {
     const PinchState& ps = *hn.pinch;
     // Gesture start: ACTIVE 1, then the values; end: the last values (if not sent yet), then ACTIVE 0 ((e)).
@@ -725,7 +725,7 @@ void collectPinch(Scene& scene, HandlerNode& hn)
 void collectHandlers(Scene& scene)
 {
     for (auto& kv : scene.handlerNodes) {
-        HandlerNode& hn = kv.second;
+        HandlerEntry& hn = kv.second;
         if (hn.feedbackId == 0 || !hn.object)
             continue;
         switch (hn.type) {
@@ -796,7 +796,7 @@ void pad4(QByteArray& b)
         b.append('\0');
 }
 
-void collectQml(Scene& scene, Node& n)
+void collectQml(Scene& scene, ElementEntry& n)
 {
     auto* item = static_cast<QmlItem*>(n.item);
     if (!item->hasEvents())
@@ -846,7 +846,7 @@ void collectQml(Scene& scene, Node& n)
 namespace {
 
 /* EVENT_MEASURED / EVENT_SCENE_BOUNDS of one bound node, each only on change. */
-void measureGeometry(Scene& scene, Node& n)
+void measureGeometry(Scene& scene, ElementEntry& n)
 {
     SentState& s = n.sent;
     const QQuickItem* item = n.item;
@@ -893,7 +893,7 @@ void collectGeometry(Scene& scene)
             QQuickItem* item = stack.back();
             stack.pop_back();
             if (const auto idIt = scene.ids.find(item); idIt != scene.ids.end()) {
-                Node& n = scene.nodes.find(idIt->second)->second;
+                ElementEntry& n = scene.nodes.find(idIt->second)->second;
                 if (n.measuredStamp == stamp)
                     continue; // visited with its subtree already
                 n.measuredStamp = stamp;
@@ -922,7 +922,7 @@ void markGeometry(TransformState& s)
     s.scene->measureQueue.push_back(s.id);
 }
 
-void watchGeometry(Scene& scene, quint32 id, Node& node)
+void watchGeometry(Scene& scene, quint32 id, ElementEntry& node)
 {
     TransformState& s = *node.xf;
     s.scene = &scene;
@@ -939,7 +939,7 @@ void watchGeometry(Scene& scene, quint32 id, Node& node)
     listPolled(scene, node);
 }
 
-void listPolled(Scene& scene, Node& node)
+void listPolled(Scene& scene, ElementEntry& node)
 {
     if (node.pollListed || (!node.polled && !node.effectChain))
         return;
@@ -967,7 +967,7 @@ void collectMeasurements(Scene& scene)
             continue;
         }
         ++i;
-        Node& n = it->second;
+        ElementEntry& n = it->second;
         n.polledStamp = scene.pollStamp;
         if (n.type == VLQT_ELEMENT_TYPE_QML)
             collectQml(scene, n); // QML root changes and signals

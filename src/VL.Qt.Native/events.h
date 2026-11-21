@@ -32,7 +32,7 @@
  * type, rejected properties) arrive as EVENT_ERROR like those of Image/Video.
  * Elements have no pointer handlers of their own: without an attached input handler an item is transparent for input.
  *
- * Input handlers (protocol.h head comment) are protocol objects of their own (HandlerNode): CREATE reserves
+ * Input handlers (protocol.h head comment) are protocol objects of their own (HandlerEntry): CREATE reserves
  * the id, REPARENT creates the QML handler at the element item (appended to its data, like `Item { HoverHandler {} }`)
  * and applies the properties set before, BIND routes its events to a sink handle, DESTROY of the handler or
  * of its element removes it. Several handlers per item are fine (each reports to its own sink). Events, only while
@@ -128,8 +128,8 @@ namespace vlqt {
 
 class PinchState;
 class TouchPointsHandler;
-struct Node;
-struct Scene;
+struct ElementEntry;
+class Scene;
 struct Value;
 
 inline constexpr float kInf = std::numeric_limits<float>::infinity();
@@ -201,11 +201,11 @@ private:
     quint32 id_;
     float start_[2] = {};    // drag offset of the item when the drag started (re-based to 0 after a SET TRANSFORM)
     float raw_[2] = {};      // last activeTranslation in parent space (axis applied, before limits)
-    quint32 epoch_ = 0;      // Node::transformEpoch at the start / last re-base
+    quint32 epoch_ = 0;      // ElementEntry::transformEpoch at the start / last re-base
 };
 
 /* Input handler object: CREATE reserves the id, REPARENT attaches the QML handler to an element item. */
-struct HandlerNode {
+struct HandlerEntry {
     quint16 type = 0;            // VLQT_ELEMENT_TYPE_*_HANDLER
     quint32 owner = 0;           // element id the handler is attached to, 0 = not attached yet
     QObject* object = nullptr;   // QML handler (QObject child of the owner's item), nullptr until the REPARENT
@@ -272,16 +272,16 @@ private:
 };
 
 /* BIND of an element: stores the handle; a different handle resets the sent state. Flags are ignored. */
-void bindNode(Scene& scene, Node& node, quint32 handle);
+void bindNode(Scene& scene, ElementEntry& node, quint32 handle);
 
 /* Text items: TextMask as containmentMask while the item has at least one input handler. */
-void updateTextMask(Node& node);
+void updateTextMask(ElementEntry& node);
 
 bool isHandlerType(quint16 type);
 /* Handler ops, called by the Scene for ids of its handler table. Return an ApplyResult (+ err). */
-int reparentHandler(Scene& scene, HandlerNode& handler, quint32 handlerId, quint32 parentId, std::string& err);
-int setHandler(Scene& scene, HandlerNode& handler, quint16 prop, const Value& v, std::string& err);
-void bindHandler(Scene& scene, HandlerNode& handler, quint32 handle);
+int reparentHandler(Scene& scene, HandlerEntry& handler, quint32 handlerId, quint32 parentId, std::string& err);
+int setHandler(Scene& scene, HandlerEntry& handler, quint16 prop, const Value& v, std::string& err);
+void bindHandler(Scene& scene, HandlerEntry& handler, quint32 handle);
 /* Removes the handler (QML object, owner list, table entry); resets the sent state of its sink (EVENT_HOVER 0 ...). */
 void destroyHandler(Scene& scene, quint32 handlerId);
 
@@ -291,10 +291,10 @@ void destroyHandler(Scene& scene, quint32 handlerId);
 void collectMeasurements(Scene& scene);
 /* Measure on change: connects the geometry signals of a new node's item to markGeometry (elements.h) and marks
  * it once. Called by Scene::create after Elements::initGeometry. */
-void watchGeometry(Scene& scene, quint32 id, Node& node);
-/* Adds the node to the ones whose media/error/clicks/user value the poll reads (Node::polled or an effect chain), once.
+void watchGeometry(Scene& scene, quint32 id, ElementEntry& node);
+/* Adds the node to the ones whose media/error/clicks/user value the poll reads (ElementEntry::polled or an effect chain), once.
  * Called by watchGeometry and after SET_EFFECT_CHAIN. */
-void listPolled(Scene& scene, Node& node);
+void listPolled(Scene& scene, ElementEntry& node);
 
 /* Connects the window's geometry/state signals to Scene::geometryDirty (called by the Scene ctor). */
 void watchWindowGeometry(Scene& scene);

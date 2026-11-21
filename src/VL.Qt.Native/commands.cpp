@@ -476,7 +476,7 @@ int Scene::create(quint32 id, quint16 type, std::string& err)
     }
     if (isHandlerType(type)) {
         // Only the id, type and properties: the QML handler needs its parent item before completeCreate (REPARENT).
-        HandlerNode h;
+        HandlerEntry h;
         h.type = type;
         handlerNodes[id] = h;
         return ApplyOk;
@@ -489,7 +489,7 @@ int Scene::create(quint32 id, quint16 type, std::string& err)
     QQuickItem* item = elements.create(*ti, err);
     if (!item)
         return ApplyInvalid;
-    Node& node = nodes[id] = Node{item, type, 0, 0, nullptr};
+    ElementEntry& node = nodes[id] = ElementEntry{item, type, 0, 0, nullptr};
     elements.initGeometry(node); // anchor placement, follows size changes
     node.polled = elements.pollsState(type);
     ids[item] = id;
@@ -504,7 +504,7 @@ void Scene::destroySubtree(QQuickItem* item)
         if (ids.count(c))
             destroySubtree(c);
     auto it = ids.find(item);
-    Node& node = nodes[it->second];
+    ElementEntry& node = nodes[it->second];
     destroyHandlersOf(node); // before the item goes: handler QML objects, ids free again
     // stop the player and drop its source first, so the decoder and audio threads end before the item goes.
     // then the audio tap, while the player still exists (audio_tap.h releaseVideo).
@@ -562,7 +562,7 @@ void Scene::destroySubtree(QQuickItem* item)
     retired.push_back(item);
 }
 
-void Scene::detachMask(Node& host, QQuickItem* mask)
+void Scene::detachMask(ElementEntry& host, QQuickItem* mask)
 {
     elements.detachEffectMask(host, mask);
     auto it = ids.find(mask);
@@ -570,7 +570,7 @@ void Scene::detachMask(Node& host, QQuickItem* mask)
         nodes[it->second].maskHost = nullptr; // stays maskHidden (parked) until REPARENT or DESTROY
 }
 
-void Scene::destroyHandlersOf(Node& node)
+void Scene::destroyHandlersOf(ElementEntry& node)
 {
     const std::vector<quint32> handlerIds = node.handlers; // destroyHandler edits the list
     for (quint32 h : handlerIds)
@@ -1170,13 +1170,13 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
         return ApplyBadLength;
     }
     // Masks (protocol.h "Effect chain", one per MULTI run): all checked before anything changes.
-    Node& host = it->second;
+    ElementEntry& host = it->second;
     std::vector<QQuickItem*> masks(chain.links.size(), nullptr);
     for (size_t l = 0; l < chain.links.size(); ++l)
         for (const EffectMultiEntry& e : chain.links[l].multi) {
             if (e.prop != VLQT_MULTI_EFFECT_KEY_MASK_SOURCE || e.value.ref == VLQT_ROOT_ID)
                 continue;
-            const Node& mask = nodes[e.value.ref]; // existence checked above (knownRef)
+            const ElementEntry& mask = nodes[e.value.ref]; // existence checked above (knownRef)
             const std::string at = "link #" + std::to_string(l) + ": mask " + std::to_string(e.value.ref);
             for (QQuickItem* a = host.item; a; a = a->parentItem())
                 if (a == mask.item) {
@@ -1213,7 +1213,7 @@ int Scene::setEffectChain(const unsigned char* p, int plen, std::string& err)
         for (EffectUniform& u : link.uniforms) {
             if (u.value.type != VLQT_VALUE_TYPE_REF || u.value.ref == VLQT_ROOT_ID)
                 continue;
-            Node& tex = nodes[u.value.ref]; // existence checked above (knownRef)
+            ElementEntry& tex = nodes[u.value.ref]; // existence checked above (knownRef)
             bool ancestor = false;
             for (QQuickItem* a = host.item; a; a = a->parentItem())
                 ancestor = ancestor || a == tex.item;

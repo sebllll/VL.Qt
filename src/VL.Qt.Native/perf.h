@@ -17,7 +17,7 @@
 
 class QQmlEngine;
 class QQuickWindow;
-namespace vlqt { struct Scene; }
+namespace vlqt { class Scene; }
 
 namespace vlqt {
 // objectName of the F5 overlay item: its changes are no scene change (vlqt_scene_get_change_count).
