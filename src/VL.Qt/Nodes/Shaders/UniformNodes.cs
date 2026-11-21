@@ -3,6 +3,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Images;
 
 namespace VL.Qt.Nodes
 {

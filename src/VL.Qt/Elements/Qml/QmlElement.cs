@@ -5,7 +5,7 @@
     /// patch sets properties of the root by name (<see cref="Properties"/>), QtNative reports the property changes and the
     /// signals of the root back into <see cref="Element.Feedback"/>.
     /// </summary>
-    public sealed class QmlElement : Element
+    internal sealed class QmlElement : Element
     {
         public QmlElement() : base(ElementType.Qml) { }
 

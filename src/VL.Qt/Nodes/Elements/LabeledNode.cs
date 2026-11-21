@@ -10,15 +10,6 @@ using VL.Qt.Elements;
 
 namespace VL.Qt.Nodes
 {
-    /// <summary>Where <see cref="LabeledNode"/> puts the label relative to the element.</summary>
-    public enum LabelPosition
-    {
-        /// <summary>Label to the left of the element, vertically centered.</summary>
-        Left,
-        /// <summary>Label above the element, left aligned.</summary>
-        Top,
-    }
-
     /// <summary>
     /// Gives any element a text label: a Row (label left) or Column (label above) of a Text and the element.
     /// Set the same Label Width on several Labeled nodes and their elements line up. The look of the label

@@ -10,24 +10,6 @@ using VL.Qt.Wire;
 
 namespace VL.Qt.Nodes
 {
-    /// <summary>How <see cref="BlendNode"/> combines the layer with the element (W3C Compositing and Blending, separable modes).</summary>
-    public enum BlendMode
-    {
-        Normal,
-        Multiply,
-        Screen,
-        Overlay,
-        Add,
-        Subtract,
-        Difference,
-        Darken,
-        Lighten,
-        SoftLight,
-        HardLight,
-        ColorDodge,
-        ColorBurn,
-    }
-
     /// <summary>
     /// Blends a layer (an element) over the element with a blend mode like Multiply, Screen, Overlay, Add, Difference or Soft
     /// Light. The element, with the effect nodes before this one, is the base. The layer is stretched over the element's own

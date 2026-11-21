@@ -9,7 +9,7 @@ namespace VL.Qt.Elements
     /// (with <see cref="Closed"/>) or <see cref="Path"/>; a set <see cref="Path"/> wins. Points and lengths are in units
     /// in the parent space, <see cref="Element.Transform"/> acts around the origin.
     /// </summary>
-    public sealed class Shape : Element
+    internal sealed class Shape : Element
     {
         public Shape() : base(ElementType.Shape) { }
 

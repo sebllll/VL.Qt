@@ -168,7 +168,7 @@
             </p:TypeAnnotation>
           </Pad>
           <Pad Id="S3S56UbjL58N1WCyUZmJx8" Comment="Weight" Bounds="216,471,77,15" ShowValueBox="true" isIOBox="true" Value="Bold">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="FontWeight" />
             </p:TypeAnnotation>
           </Pad>

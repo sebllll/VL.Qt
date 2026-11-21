@@ -5,6 +5,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Lib.Basics.Imaging;
 using VL.Qt.Elements;
+using VL.Qt.Images;
 using VL.Qt.Interop;
 using VL.Qt.Reconciliation;
 
@@ -18,7 +19,7 @@ namespace VL.Qt.Nodes
     /// animated element is a new instance every frame at the same place and keeps its last image until the next one is done.
     /// Elements that contain a Video give only text: grabbing a running hardware-decoded video costs the frame 25–57 ms.
     /// </summary>
-    [ProcessNode(Name = "TooltipPreview", Category = Categories.Qt), Smell(SymbolSmell.Advanced)]
+    [ProcessNode(Name = "TooltipPreview", Category = Categories.Qt), Smell(SymbolSmell.Hidden)]
     public sealed class ElementTooltipPreview : IDisposable
     {
         /// <summary>Longest edge of the preview in pixels.</summary>

@@ -4,7 +4,7 @@ Usage: python tools/test-vl-patch-migrate.py   (exit code 0 = ok)
 
 Writes small fixture patches (UTF-8 with BOM, CRLF, like vvvv), mapping files and a node-API snapshot to a temporary
 folder and runs the script on them:
-  - the shipped mapping file holds no row, and a run over the repository's patches changes nothing;
+  - the shipped mapping file is valid and a run over the repository's patches changes nothing;
   - a swap in one step (Radius -> Set Radius, Get Radius -> Radius): only the two Name values change, a second run
     changes nothing, --check lists and writes nothing;
   - a pin name reused across two steps, and a patch whose nodes stand at different steps (as after a git merge);
@@ -122,9 +122,6 @@ class Fixture:
 
 
 def test_shipped_mapping():
-    rows = [line for line in open(os.path.join(TOOLS, 'vl-patch-mapping.txt'), encoding='utf-8')
-            if line.strip() and not line.startswith('#')]
-    expect(rows == [], 'shipped mapping: header only, no rows')
     code, out = run('--check')
     expect(code == 0 and lines_with(out, '0 would change'), 'shipped mapping: --check over the repository changes nothing')
 

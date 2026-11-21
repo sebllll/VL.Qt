@@ -22,6 +22,7 @@ struct LayerEntry
 {
     std::vector<LayerUser> users;
     bool mip = false;
+    QMetaObject::Connection destroyed; // erases the entry with the element; goes with the entry
 };
 std::unordered_map<QQuickItem*, LayerEntry> s_layers; // main thread
 
@@ -44,6 +45,7 @@ void settleLayer(QQuickItem* item)
         mip = mip || u.mip;
     if (e.users.empty()) {
         writeLayer(item, false);
+        QObject::disconnect(e.destroyed);
         s_layers.erase(it);
     } else if (mip != e.mip) {
         e.mip = mip;
@@ -68,7 +70,7 @@ void LayerRequests::request(QQuickItem* item, const ShaderItem* owner, bool mip)
 {
     auto [it, added] = s_layers.try_emplace(item);
     if (added)
-        QObject::connect(item, &QObject::destroyed, [item] { s_layers.erase(item); });
+        it->second.destroyed = QObject::connect(item, &QObject::destroyed, [item] { s_layers.erase(item); });
     auto& users = it->second.users;
     const auto u = std::find_if(users.begin(), users.end(), [&](const LayerUser& x) { return x.owner == owner; });
     if (u == users.end())

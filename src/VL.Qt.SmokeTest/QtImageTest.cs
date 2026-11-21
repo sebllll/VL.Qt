@@ -12,6 +12,7 @@ using VL.Lib.Mathematics;
 using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
+using VL.Qt.Images;
 using VL.Qt.Interop;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
