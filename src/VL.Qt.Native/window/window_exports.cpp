@@ -285,8 +285,8 @@ VLQT_API int vlqt_scene_poll(vlqt_scene* p, unsigned char* out, int cap, int* wr
         SceneHandle& w = *asSceneHandle(p);
         // No render in this pump (Wayland: UpdateRequest only on the compositor's frame callback; not exposed,
         // e.g. minimized): Qt has not polished, layouts would report stale geometry. An offscreen scene has no gate and
-        // polishes on every poll (NAPP-15).
-        if (!w.gate || !w.gate->rendered())
+        // polishes on every poll (NAPP-15). Not for the retry after a too-small buffer: the scene only drains then.
+        if (!w.scene->eventsCollected && (!w.gate || !w.gate->rendered()))
             w.scene->polish();
         return w.scene->poll(out, cap, written, required);
     });
