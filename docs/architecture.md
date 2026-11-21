@@ -50,6 +50,18 @@ QtNative lives as long as the process: unloading it (`FreeLibrary`, `dlclose`) i
 - **What C# ends:** every window and offscreen scene it created (`vlqt_scene_destroy`; a window not destroyed stays open until the process ends), every font it added (`vlqt_font_release`), and the resource workers once nothing is referenced (`vlqt_res_shutdown`).
 - **At unload** (`DllMain` on Windows, an ELF destructor on Linux, both in `platform/`): the log callback into .NET is cut, because at process exit the CLR is gone before Qt's static destructors log. At process exit on Windows the Qt message handler of QtNative stays (the DLL stays mapped); on `FreeLibrary`, and always on Linux (a destructor cannot tell `dlclose` from exit), Qt's default handler replaces it. Exported apps on Linux end with `_exit` (`ExportedApp.cs`) and run no destructors.
 
+## Threads
+
+QtNative runs on the thread that calls `vlqt_app_init`, the Qt GUI thread (in vvvv its main thread). Every export of `vlqt.h` belongs to it, except six that run on any thread: `vlqt_app_get_abi_version`, `vlqt_last_error`, `vlqt_image_write_file` (FileWriter tasks), `vlqt_shader_reflect` (shader node factory), `vlqt_audio_tap_read` (VL.Audio's audio thread) and `vlqt_audio_tap_now_ns`. Each export states its thread by the helper of `app/exports.h` its body runs in (`guarded` for any thread, `guardedGui`, `withScene`, `withWindow`, `withOffscreen` for the GUI thread); on another thread a GUI-thread export does nothing and returns `VLQT_ERR_WRONG_THREAD`. There is no mutex in the app and window code; what other threads touch:
+
+| State | Threads | Why it is safe |
+|---|---|---|
+| Log callback (`app/log.cpp`) | set by `vlqt_app_init`, called from any thread (Qt messages of render threads and workers) | atomic pointer; the C# callback is thread-safe |
+| Last error (`app/last_error.cpp`) | any thread | one text per thread |
+| Pump state (`RenderGate`, the window lists of `vlqt_app_process_events_for`) | GUI thread | a nested pump (a host callback inside `processEvents`) is refused with `VLQT_ERR_UNSUPPORTED` |
+| Change counter of a scene (`app/scene_change.cpp`) | its sync hook runs on the scene's render thread in the threaded mode | the GUI thread waits in the blocking sync job of the batch; a counter shares no state with another |
+| Resources, offscreen render threads | own workers and render threads | their own locks and queues (`resources/`, `render_thread.cpp`) |
+
 ## Rendering
 
 1. Each `QQuickWindow` renders directly into its own swap chain: Direct3D 11 on Windows (one device shared by all windows and images), OpenGL on Linux

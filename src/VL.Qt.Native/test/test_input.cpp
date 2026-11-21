@@ -1,7 +1,8 @@
-// Test exports of vlqt_test.h: synthetic mouse, touch, wheel and key input into on-screen windows (SmokeTest).
+// Test exports of vlqt_test.h: synthetic mouse, touch, wheel and key input into on-screen windows (SmokeTest). Qt GUI
+// thread; VLQT_ERR_UNSUPPORTED on an offscreen scene, which takes input through vlqt_offscreen_send_*.
 #include "../vlqt_test.h"
 #include "../app/exports.h"
-#include "offscreen/offscreen.h"
+#include "offscreen/offscreen.h" // sendTouch
 #include "../protocol.h"
 #include "test_hooks.h"
 #include "platform/platform.h"
@@ -21,7 +22,8 @@
 #include <string>
 
 using vlqt::fail;
-using vlqt::guarded;
+using vlqt::SceneHandle;
+using vlqt::withWindow;
 
 namespace {
 
@@ -78,12 +80,6 @@ QWindow* testKeyTarget(QQuickWindow* window)
     return window;
 }
 
-// The test input exports on an offscreen scene: a scene takes input through vlqt_offscreen_send_*.
-int notOnScene(const char* function)
-{
-    return fail(VLQT_ERR_UNSUPPORTED, std::string(function) + ": not supported on an offscreen scene");
-}
-
 // One touchscreen for vlqt_test_send_touch / _queue_touch, registered once (child of the app, recreated with it).
 const QPointingDevice* testTouchDevice()
 {
@@ -110,13 +106,12 @@ const QPointingDevice* testMouseDevice()
     return s_device;
 }
 
-// Synthetic input state of a scene handle (not null), created by its first test input.
-vlqt::test::TestInput& inputOf(vlqt_scene* p)
+// Synthetic input state of a scene handle, created by its first test input.
+vlqt::test::TestInput& inputOf(SceneHandle& h)
 {
-    std::unique_ptr<vlqt::test::TestInput>& slot = *vlqt::test::input(p);
-    if (!slot)
-        slot = std::make_unique<vlqt::test::TestInput>();
-    return *slot;
+    if (!h.testInput)
+        h.testInput = std::make_unique<vlqt::test::TestInput>();
+    return *h.testInput;
 }
 
 } // namespace
@@ -135,13 +130,9 @@ extern "C" {
 
 VLQT_API int vlqt_test_send_mouse(vlqt_scene* p, int type, float x, float y)
 {
-    return guarded([&]() -> int {
-        if (!p)
-            return fail(VLQT_ERR_NULL_HANDLE, "test_send_mouse: null window");
-        if (vlqt::offscreen::stateOf(p))
-            return notOnScene("test_send_mouse");
-        QQuickWindow* window = vlqt::offscreen::quickWindow(p);
-        vlqt::test::TestInput& in = inputOf(p);
+    return withWindow(p, "vlqt_test_send_mouse", VLQT_ERR_UNSUPPORTED, [&](SceneHandle& h) -> int {
+        QQuickWindow* window = h.window.get();
+        vlqt::test::TestInput& in = inputOf(h);
         if (type == VLQT_MOUSE_LEAVE) {
             QEvent ev(QEvent::Leave);
             QCoreApplication::sendEvent(window, &ev);
@@ -179,13 +170,9 @@ VLQT_API int vlqt_test_send_mouse(vlqt_scene* p, int type, float x, float y)
 
 VLQT_API int vlqt_test_send_wheel(vlqt_scene* p, float x, float y, int dx, int dy)
 {
-    return guarded([&]() -> int {
-        if (!p)
-            return fail(VLQT_ERR_NULL_HANDLE, "test_send_wheel: null window");
-        if (vlqt::offscreen::stateOf(p))
-            return notOnScene("test_send_wheel");
-        QQuickWindow* window = vlqt::offscreen::quickWindow(p);
-        vlqt::test::TestInput& in = inputOf(p);
+    return withWindow(p, "vlqt_test_send_wheel", VLQT_ERR_UNSUPPORTED, [&](SceneHandle& h) -> int {
+        QQuickWindow* window = h.window.get();
+        vlqt::test::TestInput& in = inputOf(h);
         const QPointF local(x, y);
         QWheelEvent ev(local, window->mapToGlobal(local), QPoint(), QPoint(dx, dy), in.buttons, Qt::NoModifier,
             Qt::NoScrollPhase, false);
@@ -199,12 +186,8 @@ VLQT_API int vlqt_test_send_wheel(vlqt_scene* p, float x, float y, int dx, int d
 
 VLQT_API int vlqt_test_send_touch(vlqt_scene* p, int type, int id, float x, float y)
 {
-    return guarded([&]() -> int {
-        if (!p)
-            return fail(VLQT_ERR_NULL_HANDLE, "test_send_touch: null window");
-        if (vlqt::offscreen::stateOf(p))
-            return notOnScene("test_send_touch");
-        vlqt::test::TestInput& in = inputOf(p);
+    return withWindow(p, "vlqt_test_send_touch", VLQT_ERR_UNSUPPORTED, [&](SceneHandle& h) -> int {
+        vlqt::test::TestInput& in = inputOf(h);
         QEventPoint::State state;
         switch (type) {
         case VLQT_TOUCH_PRESS: state = QEventPoint::State::Pressed; break;
@@ -216,7 +199,7 @@ VLQT_API int vlqt_test_send_touch(vlqt_scene* p, int type, int id, float x, floa
         if (!in.clock.isValid())
             in.clock.start();
         const ulong ts = ulong(in.clock.elapsed()) + 1; // monotonic (TapHandler compares timestamps)
-        return vlqt::offscreen::sendTouch(vlqt::offscreen::quickWindow(p), testTouchDevice(), in.touch, state, id,
+        return vlqt::offscreen::sendTouch(h.window.get(), testTouchDevice(), in.touch, state, id,
                    QPointF(x, y), ts, Qt::NoModifier, "test_send_touch")
             ? VLQT_OK
             : VLQT_ERR_BAD_ARGUMENT;
@@ -225,13 +208,9 @@ VLQT_API int vlqt_test_send_touch(vlqt_scene* p, int type, int id, float x, floa
 
 VLQT_API int vlqt_test_queue_mouse(vlqt_scene* p, int type, float x, float y)
 {
-    return guarded([&]() -> int {
-        if (!p)
-            return fail(VLQT_ERR_NULL_HANDLE, "test_queue_mouse: null window");
-        if (vlqt::offscreen::stateOf(p))
-            return notOnScene("test_queue_mouse");
-        QQuickWindow* window = vlqt::offscreen::quickWindow(p);
-        vlqt::test::TestInput& in = inputOf(p);
+    return withWindow(p, "vlqt_test_queue_mouse", VLQT_ERR_UNSUPPORTED, [&](SceneHandle& h) -> int {
+        QQuickWindow* window = h.window.get();
+        vlqt::test::TestInput& in = inputOf(h);
         QEvent::Type t;
         Qt::MouseButton button = Qt::NoButton;
         Qt::MouseButtons buttons = in.queuedButtons;
@@ -256,13 +235,9 @@ VLQT_API int vlqt_test_queue_mouse(vlqt_scene* p, int type, float x, float y)
 
 VLQT_API int vlqt_test_queue_touch(vlqt_scene* p, int type, int id, float x, float y)
 {
-    return guarded([&]() -> int {
-        if (!p)
-            return fail(VLQT_ERR_NULL_HANDLE, "test_queue_touch: null window");
-        if (vlqt::offscreen::stateOf(p))
-            return notOnScene("test_queue_touch");
-        QQuickWindow* window = vlqt::offscreen::quickWindow(p);
-        vlqt::test::TestInput& in = inputOf(p);
+    return withWindow(p, "vlqt_test_queue_touch", VLQT_ERR_UNSUPPORTED, [&](SceneHandle& h) -> int {
+        QQuickWindow* window = h.window.get();
+        vlqt::test::TestInput& in = inputOf(h);
         auto& active = in.queuedTouch;
         auto it = std::find_if(active.begin(), active.end(), [id](const auto& a) { return a.first == id; });
         const bool known = it != active.end();
@@ -306,25 +281,17 @@ VLQT_API int vlqt_test_queue_touch(vlqt_scene* p, int type, int id, float x, flo
 
 VLQT_API int vlqt_test_send_key(vlqt_scene* p, int key, int modifiers)
 {
-    return guarded([&]() -> int {
-        if (!p)
-            return fail(VLQT_ERR_NULL_HANDLE, "test_send_key: null window");
-        if (vlqt::offscreen::stateOf(p))
-            return notOnScene("test_send_key");
+    return withWindow(p, "vlqt_test_send_key", VLQT_ERR_UNSUPPORTED, [&](SceneHandle& h) -> int {
         QKeyEvent ev(QEvent::KeyPress, key, Qt::KeyboardModifiers(modifiers));
-        QCoreApplication::sendEvent(testKeyTarget(vlqt::offscreen::quickWindow(p)), &ev);
+        QCoreApplication::sendEvent(testKeyTarget(h.window.get()), &ev);
         return 0;
     });
 }
 
 VLQT_API int vlqt_test_send_key_text(vlqt_scene* p, int key, int modifiers, const char* text)
 {
-    return guarded([&]() -> int {
-        if (!p)
-            return fail(VLQT_ERR_NULL_HANDLE, "test_send_key_text: null window");
-        if (vlqt::offscreen::stateOf(p))
-            return notOnScene("test_send_key_text");
-        QQuickWindow* window = vlqt::offscreen::quickWindow(p);
+    return withWindow(p, "vlqt_test_send_key_text", VLQT_ERR_UNSUPPORTED, [&](SceneHandle& h) -> int {
+        QQuickWindow* window = h.window.get();
         const QString t = text ? QString::fromUtf8(text) : QString();
         QKeyEvent press(QEvent::KeyPress, key, Qt::KeyboardModifiers(modifiers), t);
         QCoreApplication::sendEvent(testKeyTarget(window), &press);

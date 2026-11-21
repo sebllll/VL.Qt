@@ -17,7 +17,7 @@
 
 using vlqt::fail;
 using vlqt::g_app;
-using vlqt::guarded;
+using vlqt::guardedGui;
 using vlqt::RenderGate;
 
 namespace {
@@ -45,9 +45,9 @@ extern "C" {
 
 VLQT_API int vlqt_app_deliver_input(void)
 {
-    return guarded([&]() -> int {
+    return guardedGui("vlqt_app_deliver_input", [&]() -> int {
         if (!g_app)
-            return fail(VLQT_ERR_NOT_INITIALIZED, "deliver_input: app not initialized");
+            return fail(VLQT_ERR_NOT_INITIALIZED, "vlqt_app_deliver_input: app not initialized");
         // From inside the pump (a host callback in processEvents) the pump itself delivers.
         if (RenderGate::inPump())
             return 0;

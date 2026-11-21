@@ -11,7 +11,7 @@
 namespace {
 
 using vlqt::fail;
-using vlqt::guarded;
+using vlqt::guardedGui;
 
 // Animation time comes from vvvv (IFrameClock), not from a wall clock (decisions/user-qml.md, timing.md).
 // QUnifiedTimer (Qt 6, qabstractanimation.cpp) computes its time as driverStartTime + driver->elapsed() while the driver
@@ -66,9 +66,9 @@ extern "C" {
 
 VLQT_API int vlqt_app_advance_animations(double seconds)
 {
-    return guarded([&]() -> int {
+    return guardedGui("vlqt_app_advance_animations", [&]() -> int {
         if (!g_driver)
-            return fail(VLQT_ERR_NOT_INITIALIZED, "driver_advance: app not initialized");
+            return fail(VLQT_ERR_NOT_INITIALIZED, "vlqt_app_advance_animations: app not initialized");
         // An animation started since the last tick (in the apply, e.g. a QML Behavior retargeted by a property set every
         // frame) enters the running list of QAnimationTimer only through a queued startAnimations() call. Without this the
         // call ran in processEvents after the tick, so an animation restarted every frame was never advanced and stood
