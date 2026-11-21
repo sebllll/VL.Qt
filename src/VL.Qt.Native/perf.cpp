@@ -24,9 +24,6 @@
 #include <vector>
 
 #ifdef Q_OS_WIN
-#ifndef NOMINMAX
-#define NOMINMAX // windows.h via dxgi: no min/max macros (std::max below)
-#endif
 #include <dxgi1_5.h>
 #endif
 

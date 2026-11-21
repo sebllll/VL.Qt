@@ -36,14 +36,11 @@
 
 #include <QtQuick/private/qquickwindow_p.h>
 
-#ifndef NOMINMAX
-#define NOMINMAX // std::max
-#endif
 #include <d3d11_4.h>
 #include <windows.h>
 #include <wrl/client.h>
 
-#include "linear_pass.h" // after NOMINMAX: it includes d3d11.h, and with it windows.h
+#include "linear_pass.h"
 #endif
 
 namespace vlqt::offscreen {
