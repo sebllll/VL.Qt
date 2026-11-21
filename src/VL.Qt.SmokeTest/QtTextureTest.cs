@@ -480,7 +480,7 @@ public static partial class QtTextureTest
         hr = (int)NativeTest.vlqt_test_d3d11_create_shared_texture(device, 8, 8, R32G32B32A32Float, out var wide, out var wideHandle);
         if (Check(hr == 0, "R32G32B32A32_FLOAT: create " + hr))
         {
-            Check(NativeCalls.ReadTexture(wide, new byte[8 * 8 * 16], out _, out _, out _) == (int)Native.Result.BadArgument, "unsupported readback format = bad argument");
+            Check(NativeCalls.ReadTexture(wide, new byte[8 * 8 * 16], out _, out _, out _) == (int)Native.Result.Unsupported, "unsupported readback format = Unsupported");
             NativeTest.vlqt_test_close_handle(wideHandle);
             NativeTest.vlqt_test_com_release(wide);
         }
