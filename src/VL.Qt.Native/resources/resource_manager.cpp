@@ -1,11 +1,14 @@
 #include "resources/resource_manager.h"
 
+#include "app/app.h"
 #include "app/exports.h"
 #include "device.h"
 #include "protocol.h"
 #include "vlqt.h"
 
 #include <QtCore/QByteArray>
+#include <QtCore/QThread>
+#include <QtGui/QGuiApplication>
 
 #include <algorithm>
 #include <chrono>
@@ -43,11 +46,26 @@ bool allowed(State from, State to, bool external, bool restart)
 // Created at the first use and never deleted (like g_app): workers may still run while the process ends.
 std::atomic<Manager*> s_manager{nullptr};
 
+// A call from another thread was logged (onMainThread logs only the first one).
+std::atomic<bool> s_wrongThreadLogged{false};
+
 } // namespace
+
+bool Manager::onMainThread(const char* what) const
+{
+    // Qt's GUI thread once vlqt_app_init ran; before it the thread that made the manager.
+    if (g_app ? QThread::currentThread() == g_app->thread() : std::this_thread::get_id() == m_creator)
+        return true;
+    if (!s_wrongThreadLogged.exchange(true))
+        qCCritical(lcRes, "%s: called on another thread than the main thread, refused (the resource table is main "
+                          "thread only; only the first such call is logged)", what);
+    return false;
+}
 
 int Manager::create(int kind, uint64_t* outId)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("create"))
+        return wrongThreadRc;
     if (!outId) {
         qCWarning(lcRes, "create: null outId");
         return badValueRc;
@@ -96,7 +114,8 @@ int Manager::create(int kind, uint64_t* outId)
 
 int Manager::release(uint64_t id)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("release"))
+        return wrongThreadRc;
     Slot* s = find(id, "release");
     if (!s)
         return staleIdRc;
@@ -114,7 +133,8 @@ int Manager::release(uint64_t id)
 
 int Manager::setBudget(int bytes)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("set_budget"))
+        return wrongThreadRc;
     if (bytes <= 0) {
         qCWarning(lcRes, "set_budget: %d bytes rejected (must be > 0)", bytes);
         return badValueRc;
@@ -128,13 +148,15 @@ int Manager::poll(unsigned char* out, int cap, int* written, int* required)
 {
     if (const int rc = beginBuffer(out, cap, written, required); rc != okRc)
         return rc;
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("poll"))
+        return wrongThreadRc;
     return m_events.poll(out, cap, written, required);
 }
 
 int Manager::start(uint64_t id, std::shared_ptr<Content> work, int kind)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("start"))
+        return wrongThreadRc;
     Slot* s = find(id, "start");
     if (!s)
         return staleIdRc;
@@ -159,21 +181,24 @@ int Manager::start(uint64_t id, std::shared_ptr<Content> work, int kind)
 
 std::shared_ptr<Content> Manager::readyContent(uint64_t id, int kind)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("ready content"))
+        return nullptr;
     Slot* s = find(id, nullptr);
     return s && s->kind == kind && s->state == State::Ready ? s->work : nullptr;
 }
 
 bool Manager::isFailed(uint64_t id)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("is failed"))
+        return false;
     Slot* s = find(id, nullptr);
     return s && s->state == State::Failed;
 }
 
 int Manager::kindOfId(uint64_t id, const char* what)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread(what ? what : "kind of id"))
+        return wrongThreadRc;
     Slot* s = find(id, what);
     if (!s)
         return staleIdRc;
@@ -187,7 +212,8 @@ int Manager::kindOfId(uint64_t id, const char* what)
 
 int Manager::beginExternal(uint64_t id, int kind)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("snapshot"))
+        return wrongThreadRc;
     Slot* s = find(id, "snapshot");
     if (!s)
         return staleIdRc;
@@ -219,7 +245,8 @@ int Manager::beginExternal(uint64_t id, int kind)
 
 int Manager::finishExternal(uint64_t id, std::shared_ptr<Content> work, int64_t bytes, const std::string& error)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("snapshot result"))
+        return wrongThreadRc;
     Slot* s = find(id, nullptr);
     if (!s || s->hostRefs == 0 || s->freeQueued) { // released during the grab: drop the result
         if (s && work)
@@ -258,7 +285,8 @@ int Manager::finishExternal(uint64_t id, std::shared_ptr<Content> work, int64_t 
 
 int Manager::wait(uint64_t id, int timeoutMs)
 {
-    std::unique_lock lock(m_mutex);
+    if (!onMainThread("wait"))
+        return wrongThreadRc;
     Slot* s = find(id, "wait");
     if (!s)
         return staleIdRc;
@@ -271,38 +299,32 @@ int Manager::wait(uint64_t id, int timeoutMs)
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(std::max(0, timeoutMs));
     if (decoding(*s)) {
         // Still queued: run the decode here (completely, the timeout applies only to waiting for a worker).
-        // Already in a worker: wait for exactly its result.
+        // Already in a worker: wait for exactly its result. Only this thread changes the table, so s stays valid.
         Job job{};
-        if (m_pool.takeQueued(id, job)) {
-            lock.unlock();
-            Result r{id, runDecode(job)};
-            lock.lock();
-            m_pool.putResult(std::move(r));
-        }
         Result r;
-        if (!m_pool.waitFor(lock, id, deadline, r)) {
-            s = find(id, nullptr);
+        if (m_pool.takeQueued(id, job)) {
+            r = {id, runDecode(job)};
+        } else if (!m_pool.waitFor(id, deadline, r)) {
             qCWarning(lcRes, "wait: %s timed out after %d ms (%s)", idText(id).constData(), timeoutMs,
-                s ? stateName(s->state) : "gone");
-            return s ? int(s->state) : staleIdRc;
+                stateName(s->state));
+            return int(s->state);
         }
         handleResult(r);
     }
-    s = find(id, nullptr); // the table may have changed while unlocked
-    if (!s) {
-        qCWarning(lcRes, "wait: %s released while waiting", idText(id).constData());
-        return staleIdRc;
-    }
     if (uploading(*s) && !s->freeQueued) {
         m_uploads.erase(std::remove(m_uploads.begin(), m_uploads.end(), id), m_uploads.end());
-        uploadStep(id, *s, -1);
+        UploadStatus status;
+        uploadStep(id, *s, -1, status);
+        if (uploading(*s)) // waits (removed device): back into the queue
+            m_uploads.push_front(id);
     }
     return int(s->state);
 }
 
 int Manager::list(vlqt_res_info* out, int cap)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("list"))
+        return wrongThreadRc;
     int n = 0;
     for (size_t i = 1; i < m_slots.size(); i++) {
         const Slot& s = m_slots[i];
@@ -317,18 +339,14 @@ int Manager::list(vlqt_res_info* out, int cap)
 
 void Manager::shutdown()
 {
-    std::vector<std::thread> threads;
-    {
-        std::lock_guard lock(m_mutex);
-        threads = m_pool.stop();
-        for (Slot& s : m_slots)
-            for (Content* w : {s.work.get(), s.replacement.get()})
-                if (s.used && w)
-                    w->cancel = true;
-    }
-    m_pool.join(threads);
+    if (!onMainThread("shutdown"))
+        return;
+    for (Slot& s : m_slots)
+        for (Content* w : {s.work.get(), s.replacement.get()})
+            if (s.used && w)
+                w->cancel = true;
+    const int joined = m_pool.shutdown();
 
-    std::lock_guard lock(m_mutex);
     int open = 0;
     for (size_t i = 1; i < m_slots.size(); i++) {
         Slot& s = m_slots[i];
@@ -341,9 +359,8 @@ void Manager::shutdown()
     }
     if (open > 0)
         qCWarning(lcRes, "shutdown: %d resource(s) still referenced (not released by the host or an element)", open);
-    if (!threads.empty() || open > 0)
-        qCInfo(lcRes, "shutdown: %d worker(s) joined, %d resource(s) freed", int(threads.size()), open);
-    m_pool.reset();
+    if (joined > 0 || open > 0)
+        qCInfo(lcRes, "shutdown: %d worker(s) joined, %d resource(s) freed", joined, open);
     m_uploads.clear();
     m_toFree.clear();
     m_events.clear();
@@ -351,7 +368,8 @@ void Manager::shutdown()
 
 int Manager::acquire(uint64_t id)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("acquire"))
+        return wrongThreadRc;
     Slot* s = find(id, "acquire");
     if (!s)
         return staleIdRc;
@@ -365,7 +383,8 @@ int Manager::acquire(uint64_t id)
 
 int Manager::releaseElement(uint64_t id)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("release element"))
+        return wrongThreadRc;
     Slot* s = find(id, "release element");
     if (!s)
         return staleIdRc;
@@ -380,22 +399,28 @@ int Manager::releaseElement(uint64_t id)
 
 void Manager::beginFrame()
 {
-    std::lock_guard lock(m_mutex);
     Result r;
     while (m_pool.popResult(r))
         handleResult(r);
     int64_t left = m_budget;
-    while (!m_uploads.empty() && left > 0) {
+    size_t waited = 0; // resources in a row that only waited: a whole pass of them ends the frame
+    while (!m_uploads.empty() && left > 0 && waited < m_uploads.size()) {
         const uint64_t id = m_uploads.front();
-        Slot* s = find(id, nullptr);
-        if (!s || !uploading(*s) || s->freeQueued) { // released meanwhile: endFrame frees it
-            m_uploads.pop_front();
-            continue;
-        }
-        left -= uploadStep(id, *s, left);
-        if (uploading(*s)) // budget used up, the rest in the next frame (queued content starts in a worker)
-            break;
         m_uploads.pop_front();
+        Slot* s = find(id, nullptr);
+        if (!s || !uploading(*s) || s->freeQueued) // released meanwhile: endFrame frees it
+            continue;
+        UploadStatus status;
+        left -= uploadStep(id, *s, left, status);
+        if (!uploading(*s)) { // Ready, Failed, or queued content started in a worker
+            waited = 0;
+        } else if (status == UploadStatus::Waiting) { // e.g. its copy task runs: the next one goes first
+            m_uploads.push_back(id);
+            waited++;
+        } else { // budget used up: the rest first in the next frame
+            m_uploads.push_front(id);
+            break;
+        }
     }
     m_usedLastFrame = m_budget - left;
     // The ids changed since the last pump (also between pumps: wait, snapshot results) are this frame's; swap keeps both
@@ -406,16 +431,17 @@ void Manager::beginFrame()
 
 void Manager::overview(std::vector<OverviewRow>& rows, OverviewTotals& out)
 {
-    std::lock_guard lock(m_mutex);
-    const int64_t now = steadyMs();
     rows.clear();
+    out = {};
+    if (!onMainThread("overview"))
+        return;
+    const int64_t now = steadyMs();
     for (size_t i = 1; i < m_slots.size(); i++) {
         const Slot& s = m_slots[i];
         if (s.used)
             rows.push_back({makeId(uint32_t(i), s.generation), kindOf(s.kind)->name(), s.state, s.bytes, s.hostRefs, s.elementRefs,
                 now - s.sinceMs});
     }
-    out = {};
     out.budget = m_budget;
     out.usedLastFrame = m_usedLastFrame;
     for (const uint64_t id : m_uploads) {
@@ -433,7 +459,6 @@ void Manager::overview(std::vector<OverviewRow>& rows, OverviewTotals& out)
 
 void Manager::endFrame()
 {
-    std::lock_guard lock(m_mutex);
     if (m_toFree.empty())
         return;
     size_t keep = 0;
@@ -452,7 +477,6 @@ void Manager::endFrame()
 
 void Manager::deviceLost()
 {
-    std::lock_guard lock(m_mutex);
     for (Slot& s : m_slots) {
         if (!s.used)
             continue;
@@ -466,7 +490,6 @@ void Manager::deviceLost()
 
 void Manager::deviceRestored()
 {
-    std::lock_guard lock(m_mutex);
     int restarted = 0;
     for (size_t i = 1; i < m_slots.size(); i++) {
         Slot& s = m_slots[i];
@@ -511,7 +534,8 @@ void Manager::deviceRestored()
 
 int Manager::testTransition(uint64_t id, int from, int to)
 {
-    std::lock_guard lock(m_mutex);
+    if (!onMainThread("test transition"))
+        return wrongThreadRc;
     Slot* s = find(id, "test transition");
     if (!s)
         return staleIdRc;
@@ -603,13 +627,13 @@ void Manager::handleResult(const Result& r)
     }
 }
 
-int64_t Manager::uploadStep(uint64_t id, Slot& s, int64_t budget)
+int64_t Manager::uploadStep(uint64_t id, Slot& s, int64_t budget, UploadStatus& status)
 {
     Kind* kind = kindOf(s.kind);
     const bool replacing = s.replacement != nullptr;
-    bool done = false;
+    status = UploadStatus::Progress;
     std::string error;
-    const int64_t used = std::max<int64_t>(0, kind->upload(replacing ? *s.replacement : *s.work, budget, done, error));
+    const int64_t used = std::max<int64_t>(0, kind->upload(replacing ? *s.replacement : *s.work, budget, status, error));
     (replacing ? s.replacementBytes : s.bytes) += used;
     if (!error.empty()) {
         if (replacing)
@@ -617,7 +641,7 @@ int64_t Manager::uploadStep(uint64_t id, Slot& s, int64_t budget)
         else
             fail(id, s, error);
         startQueued(id, s);
-    } else if (done) {
+    } else if (status == UploadStatus::Done) {
         if (replacing) { // swap: the old content is visible up to here
             kind->destroy(*s.work);
             s.work = std::move(s.replacement);

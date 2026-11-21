@@ -1,8 +1,10 @@
 /* resource_manager.h - the manager of the resource table: slots, state machine, reference counts, replacement,
  * external content, uploads and device loss.
  *
- * One manager per process for every resource kind. Every entry point runs on the main thread; m_mutex guards the table
- * and, shared with it, the queues of the worker pool. Design notes: docs/design/resources.md.
+ * One manager per process for every resource kind. Main thread only: the table, the events, the upload queue and the
+ * free list have no lock, and every entry point refuses another thread (onMainThread). Workers see only the Content they
+ * were given and the queues of the pool (resource_workers.h), which has the only mutex. Design notes:
+ * docs/design/resources.md.
  */
 #pragma once
 
@@ -14,8 +16,8 @@
 #include <cstdint>
 #include <deque>
 #include <memory>
-#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace vlqt::res {
@@ -35,7 +37,7 @@ struct Slot
     bool warned = false;                  // a WARNING record was sent (at most one per resource)
     int64_t replacementBytes = 0;         // uploaded bytes of the replacement
     int hostRefs = 0, elementRefs = 0;
-    bool inWorker = false;     // a job of this resource is queued or running in a worker
+    bool inWorker = false;     // a job of this resource is queued or running in a worker (set and cleared on the main thread)
     bool freeQueued = false;   // in toFree: both refs are zero, freed at a frame end
     int64_t bytes = 0;         // uploaded bytes
     int64_t sinceMs = 0;       // steadyMs() of the last state change (F5 Resources page)
@@ -44,7 +46,7 @@ struct Slot
 class Manager
 {
 public:
-    // --- API (main thread; m_mutex guards everything) ---
+    // --- API (main thread; another thread gets wrongThreadRc, nullptr or false, logged once) ---
     int create(int kind, uint64_t* outId);
     int release(uint64_t id);
     int setBudget(int bytes);
@@ -61,9 +63,11 @@ public:
     int acquire(uint64_t id);
     int releaseElement(uint64_t id);
 
-    // --- Frame hooks ---
+    // --- Frame hooks (the pump, main thread) ---
+    // Takes the worker results, then uploads within the budget: a resource that waits (UploadStatus::Waiting) moves to
+    // the back and the next one goes; stops when the budget is used or a whole pass only waited.
     void beginFrame();
-    // F5 Resources page: live resources and the upload totals under one lock; rows keeps its capacity.
+    // F5 Resources page: live resources and the upload totals; rows keeps its capacity.
     void overview(std::vector<OverviewRow>& rows, OverviewTotals& out);
     void endFrame();
     // Ids that got new Ready content or became Failed up to the last beginFrame; valid until the next one (main thread).
@@ -80,15 +84,18 @@ public:
     int testTransition(uint64_t id, int from, int to);
 
 private:
+    // True on the main thread; else logs once (qCCritical, what = API name) and returns false.
+    bool onMainThread(const char* what) const;
+
     // Slot of a live id or nullptr; what = API name for the warning (nullptr = internal lookup, silent).
     Slot* find(uint64_t id, const char* what);
     bool transition(uint64_t id, Slot& s, State from, State to, bool restart = false);
     void fail(uint64_t id, Slot& s, const std::string& error);
     void handleResult(const Result& r);
 
-    // One upload call within budget (< 0 = no limit); returns the bytes used. Leaves Ready, Failed or Uploading
-    // (or Decoding when queued content started).
-    int64_t uploadStep(uint64_t id, Slot& s, int64_t budget);
+    // One upload call within budget (< 0 = no limit); returns the bytes used and what the kind reported. Leaves Ready,
+    // Failed or Uploading (or Decoding when queued content started).
+    int64_t uploadStep(uint64_t id, Slot& s, int64_t budget, UploadStatus& status);
 
     void pushInfo(uint64_t id, const Slot& s);
 
@@ -115,11 +122,11 @@ private:
     // Main thread, never while a worker holds the Content.
     void free(uint64_t id, Slot& s);
     void pushState(uint64_t id, const Slot& s);
-    // Records a content change or a failure for the next beginFrame (under m_mutex).
+    // Records a content change or a failure for the next beginFrame.
     void noteChanged(uint64_t id);
 
-    std::mutex m_mutex; // guards everything below and the queues of m_pool
-    WorkerPool m_pool{m_mutex};
+    // Main thread only, no lock: everything below except the queues inside m_pool.
+    WorkerPool m_pool;
     ResourceEventQueue m_events;
     std::vector<Slot> m_slots;
     std::vector<uint32_t> m_free;
@@ -127,8 +134,9 @@ private:
     std::vector<uint64_t> m_toFree;
     int64_t m_budget = defaultBudget;
     int64_t m_usedLastFrame = 0; // upload bytes of the last beginFrame
-    std::vector<uint64_t> m_changedPending; // changes since the last beginFrame (m_mutex)
+    std::vector<uint64_t> m_changedPending; // changes since the last beginFrame
     std::vector<uint64_t> m_changed;        // what the last beginFrame published, read by changedThisFrame
+    std::thread::id m_creator = std::this_thread::get_id(); // the main thread until vlqt_app_init (onMainThread)
 };
 
 // The one manager, created at the first use and never deleted (like g_app): workers may still run while the process ends.

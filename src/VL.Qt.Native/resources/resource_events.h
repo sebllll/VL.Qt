@@ -1,7 +1,7 @@
 /* resource_events.h - the status queue of the resource manager (vlqt_res_poll).
  *
  * Records have the header of the window poll: u16 event, u16 flags (0), u32 length, u64 id, payload (4-byte
- * aligned, length = 8 + payload bytes). Not thread safe: the manager's mutex guards it.
+ * aligned, length = 8 + payload bytes). Main thread only, like the rest of the manager (no lock).
  */
 #pragma once
 

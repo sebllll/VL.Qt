@@ -65,6 +65,14 @@ struct Info
     uint32_t width = 0, height = 0, format = 0;
 };
 
+// What one Kind::upload call left behind.
+enum class UploadStatus
+{
+    Progress, // uploaded a part, the budget is used up: the rest in the next frame
+    Waiting,  // could do nothing now (a copy task runs, the device is removed): other uploads go first
+    Done      // the upload is complete
+};
+
 // One resource kind (VLQT_RESOURCE_KIND_*). Stateless, registered once; the per resource data lives in its Content.
 class Kind
 {
@@ -74,10 +82,10 @@ public:
     // Worker thread, pure data only. Returns an empty string on success, else the error text (cancel: any text,
     // the result is dropped anyway).
     virtual std::string decode(Content& work) = 0;
-    // Main thread: uploads at most budget bytes (budget < 0 = no limit, vlqt_res_wait). Returns the bytes used,
-    // sets done when the upload is complete, error on failure. May be called several times (stripes). A removed
-    // device is no error: return 0 with done false, the rebuild (device lost) restarts the upload.
-    virtual int64_t upload(Content& work, int64_t budget, bool& done, std::string& error) = 0;
+    // Main thread: uploads at most budget bytes (budget < 0 = no limit, vlqt_res_wait). Returns the bytes used and sets
+    // status (UploadStatus), error on failure. May be called several times (stripes). A removed device is no error:
+    // return 0 with Waiting, the rebuild (device lost) restarts the upload.
+    virtual int64_t upload(Content& work, int64_t budget, UploadStatus& status, std::string& error) = 0;
     // Main thread: frees everything of the resource (GPU objects too). Called once, also after Failed.
     virtual void destroy(Content& work) { (void)work; }
     // Main thread, before Ready: values of the INFO event.
@@ -106,5 +114,6 @@ constexpr int errorRc = VLQT_ERR_INTERNAL;      // internal error, details in th
 constexpr int badValueRc = VLQT_ERR_BAD_ARGUMENT; // argument out of range / transition rejected
 constexpr int staleIdRc = VLQT_ERR_UNKNOWN_ID;  // unknown, stale or already released id
 constexpr int noDataRc = VLQT_ERR_NO_DATA;      // nothing to read yet (no snapshot, no preview, not Ready)
+constexpr int wrongThreadRc = VLQT_ERR_WRONG_THREAD; // the manager is main thread only
 
 } // namespace vlqt::res
