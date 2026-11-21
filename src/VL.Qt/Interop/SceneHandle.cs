@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace VL.Qt
+namespace VL.Qt.Interop
 {
     /// <summary>
     /// Handle of a native scene (<c>vlqt_scene*</c> of vlqt.h): a window or an offscreen scene. Blittable, so it passes to

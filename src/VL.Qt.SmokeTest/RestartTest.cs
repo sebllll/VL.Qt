@@ -1,6 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 using System.Runtime.InteropServices;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 

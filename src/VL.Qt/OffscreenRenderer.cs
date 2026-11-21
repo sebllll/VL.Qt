@@ -4,6 +4,7 @@ using Stride.Core.Mathematics;
 using VL.Lib.IO;
 using VL.Lib.IO.Notifications;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 
 namespace VL.Qt

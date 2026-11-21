@@ -10,6 +10,7 @@ using VL.Lang;
 using VL.Lang.PublicAPI;
 using VL.Lib.Animation;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 
 [assembly: ImportAsIs]

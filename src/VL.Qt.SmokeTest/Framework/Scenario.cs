@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using NUnit.Framework;
 using VL.Qt;
+using VL.Qt.Interop;
 
 /// <summary>
 /// Context of one running scenario: soft checks, warnings, the frame pump, grabs and the Qt log. Replaces the delegates

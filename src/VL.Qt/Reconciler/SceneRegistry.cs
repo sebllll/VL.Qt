@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using VL.Core;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 
 namespace VL.Qt
 {

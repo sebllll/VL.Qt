@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 

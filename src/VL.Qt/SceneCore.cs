@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Reflection;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 
 namespace VL.Qt
@@ -197,8 +198,8 @@ namespace VL.Qt
             {
                 var reason = e.Reason;
                 // a plugin under a path beyond MAX_PATH is reported as "not found" although it is there.
-                if (reason.Contains("plugin", StringComparison.Ordinal) && reason.Contains("not found", StringComparison.Ordinal) && Native.PathsTooLong)
-                    reason += ". " + Native.PathTooLongHint;
+                if (reason.Contains("plugin", StringComparison.Ordinal) && reason.Contains("not found", StringComparison.Ordinal) && QtTreePathCheck.PathsTooLong)
+                    reason += ". " + QtTreePathCheck.PathTooLongHint;
                 return $"Qt rejected {ConstantName(typeof(Protocol.Op), e.op) ?? "command " + e.op}: {reason}";
             }
             return $"Qt rejected {ConstantName(typeof(Protocol.PropertyId), e.prop) ?? "property " + e.prop}: {e.Reason}";

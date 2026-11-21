@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using NUnit.Framework;
 using VL.Qt;
+using VL.Qt.Interop;
 using VL.Qt.Styles;
 
 /// <summary>

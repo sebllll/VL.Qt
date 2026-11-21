@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using NUnit.Framework;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Tests

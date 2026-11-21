@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using VL.Core;
 using VL.Lib.Animation;
+using VL.Qt.Interop;
 using VL.Qt.Wire;
 
 namespace VL.Qt
@@ -283,19 +284,19 @@ namespace VL.Qt
         private QtApp()
         {
             _threadId = Environment.CurrentManagedThreadId;
-            Native.EnsureLoaded();
+            QtNativeLibrary.EnsureLoaded();
             CheckAbi();
-            if (Native.PathsTooLong)
+            if (QtTreePathCheck.PathsTooLong)
             {
                 Logger?.LogWarning("VL.Qt: the Qt files are installed under a path that is too long for Windows (MAX_PATH {MaxPath}): "
                     + "{Length} characters for {Path}. Qt cannot load plugins from there and reports them as \"not found\". "
                     + "Move the package or exported app to a shorter path (base path {NativeDir}, {BaseLength} characters).",
-                    Native.maxPath, Native.LongestPath.Length, Native.LongestPath.Path, Native.NativeDir, Native.NativeDir.Length);
+                    QtTreePathCheck.windowsMaxPath, QtTreePathCheck.LongestPath.Length, QtTreePathCheck.LongestPath.Path, QtNativeLibrary.Directory, QtNativeLibrary.Directory.Length);
             }
             Native.Result initResult;
             unsafe
             {
-                initResult = Native.vlqt_app_init(Native.NativeDir, QtLog.Fn);
+                initResult = Native.vlqt_app_init(QtNativeLibrary.Directory, QtLog.Fn);
             }
             if (initResult != Native.Result.Ok)
                 throw new InvalidOperationException("VL.Qt: vlqt_app_init failed: " + Native.LastError());
@@ -308,13 +309,13 @@ namespace VL.Qt
         private static void CheckAbi()
         {
             var actual = Native.ReadAbiVersion();
-            var message = AbiCheck.Describe(actual, Protocol.AbiVersion, Native.LibraryPath);
+            var message = AbiCheck.Describe(actual, Protocol.AbiVersion, QtNativeLibrary.LibraryPath);
             if (message is null)
                 return;
             if (!s_abiMismatchLogged)
             {
                 s_abiMismatchLogged = true;
-                Logger?.LogError(AbiCheck.Template, Native.LibraryPath, AbiCheck.ActualText(actual), Protocol.AbiVersion);
+                Logger?.LogError(AbiCheck.Template, QtNativeLibrary.LibraryPath, AbiCheck.ActualText(actual), Protocol.AbiVersion);
             }
             throw new AbiMismatchException(message);
         }
