@@ -67,20 +67,14 @@ uchar unitToByte(float v)
 // Upload path (measured in #360 and #390, numbers in the PRs): files -> worker path (empty textures in the worker,
 // the pixels through a mapped staging texture filled by a copy task, then a GPU copy: < 1 ms per 4K on the main
 // thread; stripes instead: the first write into a new 4K texture costs ~9 ms on the main thread, ~1 ms per 8 MB after
-// it, 20 x 4K: 22 % hitches), pixels -> stripes in the frame budget (set_pixels per frame). VLQT_IMG_UPLOAD=
-// stripes|worker forces one path (A/B). Mipmaps take the worker path too: the texture gets its mip chain in the
-// worker (GENERATE_MIPS), the main thread copies level 0 and records GenerateMips, without an offscreen frame (whose
-// endOffscreenFrame waited actively for the GPU: 2.2 ms per frame in the profile Images). upload: vlqt_image_upload of
-// the image; AUTO keeps the choice above.
-// TODO: Remove the environment variable when the pin Upload sets the mode (E10, W4-54).
+// it, 20 x 4K: 22 % hitches), pixels -> stripes in the frame budget (set_pixels per frame). Mipmaps take the worker
+// path too: the texture gets its mip chain in the worker (GENERATE_MIPS), the main thread copies level 0 and records
+// GenerateMips, without an offscreen frame (whose endOffscreenFrame waited actively for the GPU: 2.2 ms per frame in the
+// profile Images). upload: vlqt_image_upload of the image (the pin Upload of the image nodes, for A/B measurements);
+// AUTO is the choice above.
 [[maybe_unused]] bool workerUpload(bool file, int upload)
 {
-    if (upload == VLQT_IMAGE_UPLOAD_WORKER)
-        return true;
-    if (upload == VLQT_IMAGE_UPLOAD_MAIN_THREAD)
-        return false;
-    static const QByteArray s_mode = qgetenv("VLQT_IMG_UPLOAD");
-    return s_mode == "worker" || (s_mode != "stripes" && file);
+    return upload == VLQT_IMAGE_UPLOAD_WORKER || (upload == VLQT_IMAGE_UPLOAD_AUTO && file);
 }
 
 bool validUpload(int upload)

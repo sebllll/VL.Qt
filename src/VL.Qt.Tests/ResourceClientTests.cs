@@ -40,6 +40,8 @@ namespace VL.Qt.Tests
         /// <summary>Flags of the LoadImage calls and desc.flags of the SetPixels calls.</summary>
         public readonly List<uint> LoadFlags = new();
         public readonly List<int> PixelFlags = new();
+        /// <summary>The upload argument (<see cref="Protocol.ImageUpload"/>) of every LoadImage and SetPixels call.</summary>
+        public readonly List<int> Uploads = new();
         /// <summary>Records written into the queue when Wait is called (QtNative's synchronous decode + upload).</summary>
         public Action<ulong>? OnWait;
         public Native.vlqt_res_info[] Listed = Array.Empty<Native.vlqt_res_info>();
@@ -90,10 +92,11 @@ namespace VL.Qt.Tests
             return Protocol.ResourceState.Ready;
         }
 
-        public Native.Result LoadImage(ulong id, string utf8Path, uint flags)
+        public Native.Result LoadImage(ulong id, string utf8Path, uint flags, int upload)
         {
             Calls.Add($"load {id:X} {utf8Path} {flags}");
             LoadFlags.Add(flags);
+            Uploads.Add(upload);
             return LoadRc;
         }
 
@@ -109,10 +112,11 @@ namespace VL.Qt.Tests
             return LoadRc;
         }
 
-        public Native.Result SetPixels(ulong id, in Native.vlqt_pixel_desc desc, ReadOnlySpan<byte> data)
+        public Native.Result SetPixels(ulong id, in Native.vlqt_pixel_desc desc, ReadOnlySpan<byte> data, int upload)
         {
             Calls.Add($"pixels {id:X} {desc.width}x{desc.height} row {desc.row_bytes} fmt {desc.format} pm {desc.premultiplied} len {data.Length}");
             PixelFlags.Add(desc.flags);
+            Uploads.Add(upload);
             return Native.Result.Ok;
         }
 
@@ -667,6 +671,39 @@ namespace VL.Qt.Tests
             var image = node.Update(new TestImage(2, 2, PixelFormat.Unknown), out var error);
             Assert.That(image!.State, Is.EqualTo(QtImageState.Failed));
             Assert.That(error, Does.Contain("not supported"));
+        }
+
+        [Test]
+        public void LoadImage_Upload_PassedToQtNative_ChangeReloads()
+        {
+            _api.OnWait = id => _api.Ready(id, 100, 50);
+            using var node = new LoadImageNode(_client);
+            var a = node.Update(P("C:/a.png"), false, out _);
+            Assert.That(_api.Uploads, Is.EqualTo(new[] { Protocol.ImageUpload.Auto }), "default Auto");
+            Assert.That(node.Update(P("C:/a.png"), false, out _, ImageUpload.Worker), Is.Not.SameAs(a), "new mode = reload");
+            Assert.That(node.Update(P("C:/a.png"), false, out _, ImageUpload.Worker), Is.Not.Null);
+            Assert.That(_api.Uploads, Is.EqualTo(new[] { Protocol.ImageUpload.Auto, Protocol.ImageUpload.Worker }), "unchanged mode: no reload");
+        }
+
+        [Test]
+        public void LoadImageAsync_Upload_PassedToQtNative_ChangeReloads()
+        {
+            using var node = new LoadImageAsyncNode(_client);
+            node.Update(P("C:/a.png"), false, true, out _, out _, out _, ImageUpload.MainThread);
+            node.Update(P("C:/a.png"), false, true, out _, out _, out _, ImageUpload.MainThread);
+            node.Update(P("C:/a.png"), false, true, out _, out _, out _);
+            Assert.That(_api.Uploads, Is.EqualTo(new[] { Protocol.ImageUpload.MainThread, Protocol.ImageUpload.Auto }));
+        }
+
+        [Test]
+        public void ToQtImage_Upload_PassedToQtNative_ChangeUploadsAgain()
+        {
+            using var node = new ToQtImageNode(_client);
+            var input = new TestImage(4, 2, PixelFormat.B8G8R8A8);
+            var a = node.Update(input, out _);
+            node.Update(input, out _, ImageUpload.Worker);
+            Assert.That(node.Update(input, out _, ImageUpload.Worker), Is.SameAs(a), "same input: same QtImage");
+            Assert.That(_api.Uploads, Is.EqualTo(new[] { Protocol.ImageUpload.Auto, Protocol.ImageUpload.Worker }), "a new mode uploads the same input again, once");
         }
 
         [Test]
