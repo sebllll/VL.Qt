@@ -16,8 +16,7 @@ namespace {
 
 Q_LOGGING_CATEGORY(lcRenderThread, "vlqt.offscreen")
 
-int s_requested = -1;  // setThreadCount, -1 = not set
-int s_count = -1;      // the pool size in use, -1 = not fixed yet (no assign)
+int s_count = -1;      // the pool size for new scenes, -1 = not chosen yet (no setThreadCount, no assign)
 int s_next = 0;        // round robin
 std::vector<RenderThread*> s_pool; // created at the first use, never deleted (render_thread.h)
 
@@ -63,17 +62,21 @@ void RenderThread::logError(std::exception_ptr error)
 int setThreadCount(int count)
 {
     if (count < 0 || count > maxThreads)
-        return fail(VLQT_ERR_BAD_ARGUMENT, "offscreen set_threaded: thread count out of range 0 ... 16");
-    if (s_count >= 0 && count != s_count)
-        return fail(VLQT_ERR_UNSUPPORTED, "offscreen set_threaded: only before the first offscreen scene (the thread count is fixed)");
-    s_requested = count;
+        return fail(VLQT_ERR_BAD_ARGUMENT, "offscreen set_render_threads: thread count out of range 0 ... 16");
+    if (count != s_count) {
+        if (count == 0)
+            qCInfo(lcRenderThread, "offscreen scenes created from now on render on the main thread");
+        else
+            qCInfo(lcRenderThread, "offscreen scenes created from now on render on %d Qt render thread(s)", count);
+    }
+    s_count = count;
     return VLQT_OK;
 }
 
 RenderThread* assign()
 {
     if (s_count < 0) {
-        s_count = s_requested >= 0 ? s_requested : fromEnvironment();
+        s_count = fromEnvironment();
         if (s_count == 0)
             qCInfo(lcRenderThread, "offscreen scenes render on the main thread");
         else

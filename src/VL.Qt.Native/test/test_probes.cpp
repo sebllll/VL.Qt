@@ -81,7 +81,7 @@ bool glxCoversWindow(QOpenGLContext* ctx, QQuickWindow* window)
 
 extern "C" {
 
-VLQT_API int vlqt_test_window_grab(void* p, const char* pngPath)
+VLQT_API int vlqt_test_window_grab(vlqt_scene* p, const char* pngPath)
 {
     return guarded([&]() -> int {
         if (!p)
@@ -126,17 +126,17 @@ VLQT_API int vlqt_test_perf_eval(const vlqt_perf_sample* samples, const double* 
     });
 }
 
-VLQT_API int vlqt_test_perf_host_eval(const vlqt_host_frame* frames, int n, vlqt_host_stats* out)
+VLQT_API int vlqt_test_perf_host_eval(const vlqt_host_pump* pumps, int n, vlqt_host_pump_stats* out)
 {
     return guarded([&]() -> int {
-        if (!out || n < 0 || (n > 0 && !frames))
+        if (!out || n < 0 || (n > 0 && !pumps))
             return fail(VLQT_ERR_BAD_ARGUMENT, "test_perf_host_eval: null or negative argument");
-        perfHostStats(frames, n, out);
+        perfHostStats(pumps, n, out);
         return 0;
     });
 }
 
-VLQT_API int vlqt_test_handler_count(void* p, unsigned int id)
+VLQT_API int vlqt_test_handler_count(vlqt_scene* p, unsigned int id)
 {
     return guarded([&]() -> int {
         if (!p)
@@ -153,7 +153,7 @@ VLQT_API int vlqt_test_handler_count(void* p, unsigned int id)
     });
 }
 
-VLQT_API int vlqt_test_perf_spike(void* p, int phase, float ms)
+VLQT_API int vlqt_test_perf_spike(vlqt_scene* p, int phase, float ms)
 {
     return guarded([&]() -> int {
         if (!p)
@@ -163,7 +163,7 @@ VLQT_API int vlqt_test_perf_spike(void* p, int phase, float ms)
     });
 }
 
-VLQT_API int vlqt_test_perf_text(void* p, int page, char* out, int cap, int* written, int* required)
+VLQT_API int vlqt_test_perf_text(vlqt_scene* p, int page, char* out, int cap, int* written, int* required)
 {
     return guarded([&]() -> int {
         if (const int rc = vlqt::beginBuffer(out, cap, written, required); rc != VLQT_OK)
@@ -175,7 +175,7 @@ VLQT_API int vlqt_test_perf_text(void* p, int page, char* out, int cap, int* wri
     });
 }
 
-VLQT_API int vlqt_test_device_info(void* p, void** device, void** rhi)
+VLQT_API int vlqt_test_device_info(vlqt_scene* p, void** device, void** rhi)
 {
     return guarded([&]() -> int {
         QRhi* r = p ? vlqt::offscreen::quickWindow(p)->rhi() : vlqt::device::uploadRhi();
@@ -248,7 +248,7 @@ VLQT_API int vlqt_test_font_refs(unsigned long long handle)
     return guarded([&] { return vlqt::test::fontRefs(handle); });
 }
 
-VLQT_API int vlqt_test_offscreen_state(void* scene, unsigned long long* readFence, unsigned long long* writeFence,
+VLQT_API int vlqt_test_offscreen_state(vlqt_scene* scene, unsigned long long* readFence, unsigned long long* writeFence,
                                        long long* renders)
 {
     return guarded([&] { return vlqt::offscreen::testState(scene, readFence, writeFence, renders); });

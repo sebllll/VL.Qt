@@ -1,6 +1,6 @@
-/* audio_tap.h - resource kind VLQT_RES_KIND_AUDIO_TAP: the sound of a Video element as float samples for
+/* audio_tap.h - resource kind VLQT_RESOURCE_KIND_AUDIO_TAP: the sound of a Video element as float samples for
  * VL.Audio. The contract (lifetime, clock, discontinuities, reader rules) is in protocol.h "Audio tap"; the C API in
- * vlqt.h (vlqt_res_audio_tap_init, vlqt_res_read_audio, vlqt_now_ns).
+ * vlqt.h (vlqt_audio_tap_init, vlqt_audio_tap_read, vlqt_audio_tap_now_ns).
  *
  * A tap is external content of the resource manager (resources.h beginExternal / finishExternal): init makes it Ready
  * at once, there is no worker and no upload. Besides the manager's table the taps live in a registry of this file
@@ -43,7 +43,7 @@ struct Segment
     uint64_t startFrame = 0; // absolute frame index of the first frame (ring position = startFrame % capacity)
     int frames = 0;
     uint32_t discontinuity = 0; // segment number; consecutive records with the same number form one segment
-    long long emitNs = 0;       // vlqt_now_ns at audioBufferReceived
+    long long emitNs = 0;       // vlqt_audio_tap_now_ns at audioBufferReceived
     long long mediaUs = 0;      // QAudioBuffer::startTime
     double rate = 1;            // playback rate of the player at the signal
 };
@@ -101,13 +101,13 @@ Kind* kind();
 // --- C API backends (vlqt.h) ---
 // Main thread: format of a Pending tap, Pending -> Decoding -> Ready. 0 / -7 / -9.
 int init(uint64_t id, int channels, int sampleRate);
-// Any thread, allocation free. Returns frames copied/dropped, -7 or -9 (vlqt.h vlqt_res_read_audio).
+// Any thread, allocation free. Returns frames copied/dropped, -7 or -9 (vlqt.h vlqt_audio_tap_read).
 int read(uint64_t id, float* dst, int maxFrames, int channels, vlqt_audio_tap_state* state);
 // std::chrono::steady_clock in ns.
 long long nowNs();
 
 // --- Video element (elements.cpp videoProps), main thread ---
-// Setter of VLQT_PROP_AUDIO_TAP (u64): attaches the tap to the element's player and turns Qt's own output off, 0
+// Setter of VLQT_PROPERTY_AUDIO_TAP (u64): attaches the tap to the element's player and turns Qt's own output off, 0
 // detaches and restores it (protocol.h "Audio tap"). false + err: not a Ready tap (ApplyBadValue).
 bool setVideoTap(Elements& els, Node& node, const ResolvedProp& rp, const Value& v, std::string& err);
 // Before a Video item is deleted (DESTROY, scene teardown), with its player still alive: detaches the tap and

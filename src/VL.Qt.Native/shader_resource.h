@@ -1,7 +1,7 @@
-/* shader_resource.h - resource kind VLQT_RES_KIND_SHADER (effects package 03; runtime bake).
+/* shader_resource.h - resource kind VLQT_RESOURCE_KIND_SHADER (effects package 03; runtime bake).
  *
- * One shader of one stage for the ShaderEffect item (protocol.h "ShaderEffect", vlqt.h vlqt_res_load_shader /
- * vlqt_res_load_shader_source).
+ * One shader of one stage for the ShaderEffect item (protocol.h "ShaderEffect", vlqt.h vlqt_shader_load /
+ * vlqt_shader_load_source).
  *   load:   main thread: checks the arguments, resolves "builtin:<name>" against <QtNative dir>/shaders/<name>.frag.qsb
  *           (stage FRAGMENT) or <name>.vert.qsb (stage VERTEX) and notes the shader language the process backend needs
  *           (QQuickWindow::graphicsApi: D3D11 HLSL/DXBC, OpenGL GLSL, Vulkan SPIR-V, Metal MSL).
@@ -11,12 +11,12 @@
  *           time), results (shader or error text) in a process wide cache per stage + backend + SHA-1 of the source
  *           (64 entries), a hit does not bake. Both then check stage, a variant for the backend and the parts of
  *           the reflection the ShaderEffect item relies on (at most one uniform block, qt_Matrix / qt_Opacity types).
- *           Every problem ends in Failed with RES_EV_ERROR; bake errors one line per glslang message,
+ *           Every problem ends in Failed with RESOURCE_EVENT_ERROR; bake errors one line per glslang message,
  *           "fragment code, line <n>: <text>".
  *           A uniform or sampler named like a GLSL builtin (`length`, ...) is renamed in the GLSL code but not in
- *           the reflection, so the OpenGL backend never sets it: RES_EV_WARNING. Checked on the GLSL variant of
+ *           the reflection, so the OpenGL backend never sets it: RESOURCE_EVENT_WARNING. Checked on the GLSL variant of
  *           a .qsb, or for a source on another backend on an extra GLSL 150 translation (cached with the bake).
- *   upload: nothing (no GPU object, RES_EV_INFO all 0); each ShaderEffect item builds its pipeline from the QShader.
+ *   upload: nothing (no GPU object, RESOURCE_EVENT_INFO all 0); each ShaderEffect item builds its pipeline from the QShader.
  * Device lost: CPU data only, nothing to restore. A new load on a Ready id keeps the old shader until the new one is
  * Ready (resources.h, replacement). Main thread only, except decode (like image_resource.h).
  */
@@ -65,10 +65,10 @@ private:
 // The kind for the manager (resources.cpp kindOf).
 Kind* kind();
 
-// vlqt_res_load_shader: utf8Path = .qsb file or "builtin:<name>", stage = VLQT_SHADER_STAGE_*. 0 / -7 / -9.
+// vlqt_shader_load: utf8Path = .qsb file or "builtin:<name>", stage = VLQT_SHADER_STAGE_*. 0 / -7 / -9.
 int load(uint64_t id, const char* utf8Path, int stage);
 
-// vlqt_res_load_shader_source: utf8Source = full Qt GLSL, baked in the worker (QShaderBaker), cached per hash.
+// vlqt_shader_load_source: utf8Source = full Qt GLSL, baked in the worker (QShaderBaker), cached per hash.
 // 0 / -7 / -9.
 int loadSource(uint64_t id, const char* utf8Source, int stage);
 

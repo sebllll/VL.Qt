@@ -429,7 +429,7 @@ int init(uint64_t id, int channels, int sampleRate)
         qCWarning(lcTap, "audio tap %llx: already initialised", static_cast<unsigned long long>(id));
         return badValueRc;
     }
-    const int rc = beginExternal(id, VLQT_RES_KIND_AUDIO_TAP);
+    const int rc = beginExternal(id, VLQT_RESOURCE_KIND_AUDIO_TAP);
     if (rc != okRc)
         return rc;
     auto tap = std::make_shared<TapWork>();
@@ -494,7 +494,7 @@ bool setVideoTap(Elements&, Node& node, const ResolvedProp&, const Value& v, std
             a->detach(true);
         return true;
     }
-    const auto work = std::static_pointer_cast<TapWork>(readyWork(v.u, VLQT_RES_KIND_AUDIO_TAP));
+    const auto work = std::static_pointer_cast<TapWork>(readyWork(v.u, VLQT_RESOURCE_KIND_AUDIO_TAP));
     if (!work) {
         err = "not a Ready audio tap";
         return false;

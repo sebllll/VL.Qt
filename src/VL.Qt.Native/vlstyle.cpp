@@ -90,12 +90,12 @@ int VlStyle::slotOf(quint16 field)
 quint16 VlStyle::valueTypeOf(int slot)
 {
     if (isColorSlot(slot))
-        return VLQT_VT_COLOR;
+        return VLQT_VALUE_TYPE_COLOR;
     if (slot == FontFamily)
-        return VLQT_VT_STRING;
+        return VLQT_VALUE_TYPE_STRING;
     if (slot == FontWeight)
-        return VLQT_VT_I32;
-    return VLQT_VT_F32;
+        return VLQT_VALUE_TYPE_I32;
+    return VLQT_VALUE_TYPE_F32;
 }
 
 void VlStyle::clear()
@@ -112,20 +112,20 @@ void VlStyle::setCell(int slot, int state, const Value& v)
 {
     Cell& c = _cells[size_t(slot)][size_t(state)];
     switch (v.type) {
-    case VLQT_VT_COLOR:
-    case VLQT_VT_F32: {
-        const size_t n = v.type == VLQT_VT_COLOR ? 4 : 1;
+    case VLQT_VALUE_TYPE_COLOR:
+    case VLQT_VALUE_TYPE_F32: {
+        const size_t n = v.type == VLQT_VALUE_TYPE_COLOR ? 4 : 1;
         if (c.set && std::memcmp(c.f, v.f, n * sizeof(float)) == 0)
             return;
         std::memcpy(c.f, v.f, n * sizeof(float));
         break;
     }
-    case VLQT_VT_I32:
+    case VLQT_VALUE_TYPE_I32:
         if (c.set && c.i == v.i)
             return;
         c.i = v.i;
         break;
-    case VLQT_VT_STRING: {
+    case VLQT_VALUE_TYPE_STRING: {
         if (c.set && c.s.toUtf8() == v.utf8) // only while the command is applied, not per frame
             return;
         c.s = QString::fromUtf8(v.utf8);
@@ -349,10 +349,10 @@ int applySetStyle(QQuickItem* item, const unsigned char* p, int plen, std::strin
             }
             qint64 size = 0;
             switch (v.type) {
-            case VLQT_VT_COLOR: size = 16; break;
-            case VLQT_VT_F32: size = 4; break;
-            case VLQT_VT_I32: size = 4; break;
-            case VLQT_VT_STRING:
+            case VLQT_VALUE_TYPE_COLOR: size = 16; break;
+            case VLQT_VALUE_TYPE_F32: size = 4; break;
+            case VLQT_VALUE_TYPE_I32: size = 4; break;
+            case VLQT_VALUE_TYPE_STRING:
                 size = 4;
                 if (plen - off - 4 >= 4)
                     size += rd<quint32>(vp);
@@ -366,10 +366,10 @@ int applySetStyle(QQuickItem* item, const unsigned char* p, int plen, std::strin
             }
             if (pass == 1) {
                 switch (v.type) {
-                case VLQT_VT_COLOR: std::memcpy(v.f, vp, 16); break;
-                case VLQT_VT_F32: std::memcpy(v.f, vp, 4); break;
-                case VLQT_VT_I32: v.i = rd<qint32>(vp); break;
-                case VLQT_VT_STRING:
+                case VLQT_VALUE_TYPE_COLOR: std::memcpy(v.f, vp, 16); break;
+                case VLQT_VALUE_TYPE_F32: std::memcpy(v.f, vp, 4); break;
+                case VLQT_VALUE_TYPE_I32: v.i = rd<qint32>(vp); break;
+                case VLQT_VALUE_TYPE_STRING:
                     v.utf8 = QByteArray::fromRawData(reinterpret_cast<const char*>(vp + 4), qsizetype(size - 4));
                     break;
                 default: break;

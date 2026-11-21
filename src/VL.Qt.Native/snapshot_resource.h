@@ -1,9 +1,9 @@
-/* snapshot_resource.h - resource kind VLQT_RES_KIND_SNAPSHOT (images package 06).
+/* snapshot_resource.h - resource kind VLQT_RESOURCE_KIND_SNAPSHOT (images package 06).
  *
- * vlqt_res_snapshot grabs one element of a window with QQuickItem::grabToImage (never grabWindow): asynchronous, the
+ * vlqt_snapshot_start grabs one element of a window with QQuickItem::grabToImage (never grabWindow): asynchronous, the
  * window renders the item into an offscreen texture in its next render and reads it back; QQuickItemGrabResult::ready
  * arrives on the main thread in that or a later pump. The result is a CPU copy (QImage ARGB32_Premultiplied = BGRA8
- * premultiplied in memory), no texture and no upload budget. vlqt_res_read_pixels copies it out.
+ * premultiplied in memory), no texture and no upload budget. vlqt_snapshot_read copies it out.
  *
  * Content comes through the manager's external path (resources.h beginExternal / finishExternal): Pending/Failed ->
  * Decoding (grab in flight) -> Ready | Failed; a grab on a Ready id keeps the old pixels readable until the new ones
@@ -41,7 +41,7 @@ struct SnapshotWork final : Work
 Kind* kind();
 
 // --- C API backends (vlqt.h), main thread ---
-// Element elementId (0 = the window root) of scene. 0 / -7 / -9; element errors end in Failed (RES_EV_ERROR).
+// Element elementId (0 = the window root) of scene. 0 / -7 / -9; element errors end in Failed (RESOURCE_EVENT_ERROR).
 int start(uint64_t id, Scene& scene, unsigned elementId, float scale);
 // Like start, with the scale chosen from the element's frame: longest edge <= maxEdgePx, scale <= 1 (DIP * scale,
 // independent of the DPR). 0 / -7 (maxEdgePx <= 0) / -9.

@@ -1,4 +1,4 @@
-/* shadereffectitem.h - the ShaderEffect element (effects package 03, protocol.h "ShaderEffect").
+/* shader_item.h - the ShaderEffect element (effects package 03, protocol.h "ShaderEffect").
  *
  * Own QQuickItem with a QSGGeometryNode + QSGMaterial/QSGMaterialShader instead of QML's ShaderEffect: the uniforms
  * of SET_UNIFORMS are mapped by name through the reflection of the shaders (QShaderDescription of the .qsb).
@@ -7,7 +7,7 @@
  * reference on the shown id and on the one it waits for; the old shader stays until the new one is Ready. If the
  * wanted id (or a replacement on the shown id) fails, the slot keeps drawing its last Ready content (live
  * editing never goes black; the content pointer stays, the reference on shown too); a Failed shader without an
- * earlier Ready one in that slot draws nothing (its error goes by RES_EV_ERROR). Without a vertex shader Qt's default
+ * earlier Ready one in that slot draws nothing (its error goes by RESOURCE_EVENT_ERROR). Without a vertex shader Qt's default
  * ShaderEffect vertex shader (embedded in Qt Quick) is used. Pipelines: one QSGMaterialType per shader pair (content
  * compared), so the renderer's shader cache never mixes programs.
  *
@@ -31,7 +31,7 @@
  * neither declares) and devicePixelRatioChanged (the pass sizes follow dpr).
  *
  * Errors: content problems (unknown name, wrong type, arrays, reserved names, blocks of both stages differing) are
- * joined into vlqtError (one line each), which Elements::readError sends as EV_ERROR of the element.
+ * joined into vlqtError (one line each), which Elements::readError sends as EVENT_ERROR of the element.
  *
  * Threads: everything is collected on the GUI thread; updatePaintNode (GUI blocked) copies it into the material; the
  * material shader reads only the material. Values only: no allocation per frame (buffers are sized on a layout change).
@@ -65,15 +65,15 @@ class ShaderResource;
 }
 struct ImageTexture;
 
-class ShaderEffectItem : public QQuickItem // not final: registered as QML type of the effect chain (qmlRegisterType derives)
+class ShaderItem : public QQuickItem // not final: registered as QML type of the effect chain (qmlRegisterType derives)
 {
     Q_OBJECT
     Q_PROPERTY(QQuickItem* source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(QString vlqtError READ error NOTIFY errorChanged)
 
 public:
-    explicit ShaderEffectItem(QQuickItem* parent = nullptr);
-    ~ShaderEffectItem() override;
+    explicit ShaderItem(QQuickItem* parent = nullptr);
+    ~ShaderItem() override;
 
     QQuickItem* source() const { return m_source; }
     void setSource(QQuickItem* source);
@@ -107,7 +107,7 @@ public:
     void forEachRef(F&& f) const
     {
         for (const Uniform& u : m_uniforms)
-            if (u.type == VLQT_VT_REF && u.ref)
+            if (u.type == VLQT_VALUE_TYPE_REF && u.ref)
                 f(u.ref.data());
     }
 
@@ -139,7 +139,7 @@ private:
     struct Uniform
     {
         QByteArray name;
-        quint16 type = 0;               // VLQT_VT_*
+        quint16 type = 0;               // VLQT_VALUE_TYPE_*
         float f[16] = {};               // f32, vec*, color (premultiplied), mat4
         qint32 i[2] = {};               // i32, ivec2, bool (0/1)
         QPointer<QQuickItem> ref;       // REF
@@ -168,7 +168,7 @@ private:
     void updateImplicitSize();
     QSGTexture* samplerTexture(Sampler& s);
     void watchProvider(QSGTextureProvider* p);
-    quint64 samplerState(const Sampler& s) const; // VLQT_VT_SAMPLER entry of the sampler (present bit set), 0 = none
+    quint64 samplerState(const Sampler& s) const; // VLQT_VALUE_TYPE_SAMPLER entry of the sampler (present bit set), 0 = none
     QQuickItem* samplerElement(const Sampler& s) const; // element whose layer the sampler reads (Group: its proxy), null for images
 
     ShaderSlot m_frag, m_vert;

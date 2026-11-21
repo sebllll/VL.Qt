@@ -6,7 +6,7 @@
  * are current) from the items of the scene, mapped per point with mapToScene (rotated/scaled items stay exact).
  * Always on top of the scene, not clipped by any parent; rendered wherever the scene is (window, grab, texture).
  *
- * Shown for every element with VLQT_PROP_DEBUG and for all elements while vlqt_window_set_debug is on. Without
+ * Shown for every element with VLQT_PROPERTY_DEBUG and for all elements while vlqt_scene_set_debug is on. Without
  * either the overlay is hidden and costs nothing per frame (no update, no geometry); it is created on first use.
  *
  * Legend (no labels; one color per meaning, the line style carries the mode):
@@ -46,7 +46,7 @@ public:
     bool active() const { return m_active; }
     /* Repaint with the current scene (after commands were applied). No-op while inactive. */
     void refresh();
-    /* Draw every element (window-wide switch) instead of only those with VLQT_PROP_DEBUG. */
+    /* Draw every element (window-wide switch) instead of only those with VLQT_PROPERTY_DEBUG. */
     void setAll(bool on) { m_all = on; }
 
     bool contains(const QPointF&) const override { return false; }

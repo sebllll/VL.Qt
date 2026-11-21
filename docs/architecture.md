@@ -25,9 +25,9 @@ per vvvv frame:
   0. frame start (clock tick): vlqt_app_deliver_input(): Qt delivers the queued input without rendering,
      each renderer polls it into its feedback
   1. Reconciler.Update(element tree)
-  2. vlqt_driver_advance(clock.Time)
-  3. vlqt_app_process_events(): Qt handles input and renders each changed window (at most once)
-  4. events are polled back (vlqt_window_poll)
+  2. vlqt_app_advance_animations(clock.Time)
+  3. vlqt_app_process_events_for(): Qt handles input and renders each changed window (at most once)
+  4. events are polled back (vlqt_scene_poll)
 ```
 
 - **Deterministic:** same tree and time, same output
@@ -39,13 +39,13 @@ per vvvv frame:
 
 - **CommandWriter (C#):** per frame `Reset()`, `Set…()`, `EndFrame()`, then a `ReadOnlySpan<byte>` goes to QtNative
 - **Protocol:** shared type, property and event IDs in `protocol.h` / `Protocol.cs`; `ProtocolDriftTests`, `NativeLayoutTests` and `ApiDriftTests` in `VL.Qt.Tests` detect mismatches (constants, fixed wire sizes, struct layouts, exports against `[DllImport]`s). `VLQT_ABI_VERSION` / `Protocol.AbiVersion` number the protocol and the C ABI together: `QtApp` reads `vlqt_app_get_abi_version()` before the first window and refuses a `vlqt.dll` with another number or without the export (no window, one log error naming both versions and the path, every Renderer node fails with that message)
-- **QtNative:** owns the `QGuiApplication` (one per process); per window a `QQuickWindow` and a `QQmlEngine`; exposed via P/Invoke (`vlqt_window_create`, `vlqt_window_apply`, `vlqt_window_poll`, ...)
+- **QtNative:** owns the `QGuiApplication` (one per process); per window a `QQuickWindow` and a `QQmlEngine`; exposed via P/Invoke (`vlqt_window_create`, `vlqt_scene_apply`, `vlqt_scene_poll`, ...)
 - **Reconciler (C#):** tracks live Qt objects by ID and calls the command sink (`Create`, `Destroy`, `Reparent`, `Set*`) for each difference
 
 ## Rendering
 
 1. Each `QQuickWindow` renders directly into its own swap chain: Direct3D 11 on Windows (one device shared by all windows and images), OpenGL on Linux
-2. No `exec()` and no render thread: Qt's `basic` render loop, pumped once per vvvv frame (`vlqt_app_process_events`); each window renders at most once per pump
+2. No `exec()` and no render thread: Qt's `basic` render loop, pumped once per vvvv frame (`vlqt_app_process_events_for`); each window renders at most once per pump
 3. VSync on by default to avoid tearing, but vvvv's frame clock still controls timing: a frame may wait up to one refresh interval inside the pump (at the start of the frame, F5 segment "vsync wait"). The Renderer's `VSync` pin off gives swap interval 0 (never blocks, tearing allowed). See [Timing](decisions/timing.md)
 4. Clear off (the `Clear` pin of `Renderer` and `QtTexture`) keeps the previous frame through a feedback layer, see [Feedback layer](#feedback-layer-clear-off)
 5. Texture output to Stride is a separate path, see [Texture output for Stride](#texture-output-for-stride)
@@ -69,7 +69,7 @@ Details and rejected alternatives: [Render texture](decisions/render-texture.md)
 ## Events
 
 1. Qt writes events (hover, tap, pointer move) into a buffer
-2. Each frame `vlqt_window_poll()` returns them
+2. Each frame `vlqt_scene_poll()` returns them
 3. `EventReader` parses the buffer
 4. `FeedbackRouter` maps feedback ids to `ElementFeedback` slots
 5. The channels of the interaction nodes (e.g. Hover: Is Hovered, Position; Button: Is Clicked) and the element outputs (Measured Size, Scene Bounds) update
@@ -84,7 +84,7 @@ The same element instance can hang at several places of the tree; each place get
 
 ## User QML
 
-`QmlElement` (`src/VL.Qt/Elements/Qml*.cs`, native side `src/VL.Qt.Native/qmlitem.{h,cpp}`) is the one place where Qt Quick content that VL.Qt did not build enters the tree. It follows the same path as every element (CREATE, properties, apply) with two additions: `SET_QML_PROPERTIES` sends the entries of the `Properties` dictionary by name (diffed in C#, converted through `QVariant` in QtNative), and the events `EV_QML_PROPERTY` / `EV_QML_SIGNAL` carry the declared properties and signals of the file's root back to the node's feedback. The node also owns the file watcher for hot reload (it bumps `QML_RELOAD`). The file is compiled on the per-window `QQmlEngine` from a `file:` URL, the instance lives as a child of the element's item. See [QML files as elements](user-qml.md) and [decisions/user-qml.md](decisions/user-qml.md).
+`QmlElement` (`src/VL.Qt/Elements/Qml*.cs`, native side `src/VL.Qt.Native/qmlitem.{h,cpp}`) is the one place where Qt Quick content that VL.Qt did not build enters the tree. It follows the same path as every element (CREATE, properties, apply) with two additions: `SET_QML_PROPERTIES` sends the entries of the `Properties` dictionary by name (diffed in C#, converted through `QVariant` in QtNative), and the events `EVENT_QML_PROPERTY` / `EVENT_QML_SIGNAL` carry the declared properties and signals of the file's root back to the node's feedback. The node also owns the file watcher for hot reload (it bumps `QML_RELOAD`). The file is compiled on the per-window `QQmlEngine` from a `file:` URL, the instance lives as a child of the element's item. See [QML files as elements](user-qml.md) and [decisions/user-qml.md](decisions/user-qml.md).
 
 ## Performance
 

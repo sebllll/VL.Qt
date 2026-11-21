@@ -1,6 +1,6 @@
-/* image_resource.h - resource kind VLQT_RES_KIND_IMAGE (images package 03).
+/* image_resource.h - resource kind VLQT_RESOURCE_KIND_IMAGE (images package 03).
  *
- * An image comes from a file (vlqt_res_load_image) or from pixels of C# (vlqt_res_set_pixels) and ends up as a
+ * An image comes from a file (vlqt_image_load) or from pixels of C# (vlqt_image_set_pixels) and ends up as a
  * texture on the process device (device.h): an ID3D11Texture2D created by the upload QRhi, independent of windows.
  *
  *   load:   QImageReader (setAutoTransform for the EXIF rotation) + conversion to 8 bit premultiplied, in a worker.
@@ -14,7 +14,9 @@
  *           QRhi per resource and pump. Ready only when every stripe is there. Mipmaps: on the worker path the
  *           texture is created with its mip chain, the main thread copies level 0 and records GenerateMips (no
  *           offscreen frame, no wait); on the stripes path generateMips follows the last stripe.
- *           VLQT_IMG_UPLOAD=stripes|worker forces one path (measurements in #360).
+ *           The upload argument of vlqt_image_load / vlqt_image_set_pixels (vlqt_image_upload) forces one path;
+ *           with AUTO the environment variable VLQT_IMG_UPLOAD=stripes|worker still does (measurements in #360) until
+ *           the pin Upload replaces it (E10).
  *
  * Source kept for the re-upload after a device loss (package 10): the path for files (no CPU copy after the
  * upload, restore decodes the file again), the converted CPU copy for pixels (restore only uploads it again). A Work
@@ -63,23 +65,24 @@ public:
 
 private:
     friend class ImageKind;
-    friend int load(uint64_t, const char*, unsigned);
-    friend int setPixels(uint64_t, const vlqt_pixel_desc*, const void*, int);
+    friend int load(uint64_t, const char*, unsigned, int);
+    friend int setPixels(uint64_t, const vlqt_pixel_desc*, const void*, int, int);
     friend int readPreview(uint64_t, unsigned char*, int, vlqt_pixel_desc*, int*, int*);
     friend int testRead(uint64_t, unsigned char*, int, int*, int*, int*, int*);
 
     // input
     QString m_path;              // file source (empty for pixels)
-    unsigned m_flags = 0;        // VLQT_IMG_*
+    unsigned m_flags = 0;        // VLQT_IMAGE_LOAD_*
+    int m_upload = 0;            // vlqt_image_upload, VLQT_IMAGE_UPLOAD_AUTO = the path of the source
     QByteArray m_raw;            // pixels: tightly packed copy (row = width * bpp)
     int m_rawWidth = 0, m_rawHeight = 0, m_rawFormat = 0;
     bool m_rawPremultiplied = false;
-    void* m_device = nullptr;    // ID3D11Device* for VLQT_IMG_UPLOAD=worker, read on the main thread at start
+    void* m_device = nullptr;    // ID3D11Device* for the worker upload path, read on the main thread at start
     unsigned m_generation = 0;   // device::generation() of m_device
 
     // decode result (worker)
     QImage m_image;              // RGBA8888_Premultiplied or ARGB32_Premultiplied (BGRA in memory)
-    QImage m_preview;            // ARGB32_Premultiplied, longest edge <= 256 (VLQT_IMG_PREVIEW), survives m_image's drop
+    QImage m_preview;            // ARGB32_Premultiplied, longest edge <= 256 (VLQT_IMAGE_LOAD_PREVIEW), survives m_image's drop
     bool m_bgra = false;
     QSize m_size;
     std::string m_warning;
@@ -98,9 +101,10 @@ private:
 Kind* kind();
 
 // --- C API backends (vlqt.h), main thread ---
-int load(uint64_t id, const char* utf8Path, unsigned flags);
-int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int len);
-// vlqt_res_read_preview: the preview the worker made for VLQT_IMG_PREVIEW, read only on a Ready resource.
+// upload: vlqt_image_upload (protocol.h); another value is VLQT_ERR_BAD_ARGUMENT.
+int load(uint64_t id, const char* utf8Path, unsigned flags, int upload);
+int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int len, int upload);
+// vlqt_image_read_preview: the preview the worker made for VLQT_IMAGE_LOAD_PREVIEW, read only on a Ready resource.
 int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc, int* written, int* required);
 
 // Current content of a Ready image resource, nullptr otherwise (also during the first load). Package 04 takes an

@@ -7,9 +7,9 @@
  *    entry is set again or the file is reloaded),
  *  - watches the properties and signals declared in the root (QmlWatcher in qmlitem.cpp) and keeps their changes as wire
  *    records for the poll (events.cpp collectQml): the last value of each changed property, every emitted signal
- *    (cap kQmlMaxSignalsPerPoll). A change caused by the patch's own set is not recorded (no echo, like EV_VALUE).
+ *    (cap kQmlMaxSignalsPerPoll). A change caused by the patch's own set is not recorded (no echo, like EVENT_VALUE).
  *  - reports problems as the QML property vlqtError (load/compile/type errors with file:line, rejected properties), which
- *    the poll sends as EV_ERROR like for Image and Video (Elements::readError).
+ *    the poll sends as EVENT_ERROR like for Image and Video (Elements::readError).
  * Size: Auto Size on = the item takes the root's width/height (its implicit size, or a width/height the QML declares),
  * off = the item's size is written to the root.
  */
@@ -37,7 +37,7 @@ class QmlWatcher;
 /* Cap of signals kept per poll (protocol.h "QmlElement"); more are dropped and reported once. */
 constexpr int kQmlMaxSignalsPerPoll = 256;
 
-/* One record of the back channel, values already in wire form (VLQT_VT_*, bytes like SET: i32, f32, bool u8, string u32
+/* One record of the back channel, values already in wire form (VLQT_VALUE_TYPE_*, bytes like SET: i32, f32, bool u8, string u32
  * length + UTF-8, color/rectf/vecN as f32), not yet padded. */
 struct QmlWireValue {
     quint16 type = 0;
@@ -82,7 +82,7 @@ public:
      * the cap since the last call. */
     bool hasEvents() const;
     void takeEvents(std::vector<QmlPropertyEvent>& properties, std::vector<QmlSignalEvent>& signalEvents, bool& dropped);
-    /* "signals dropped" is part of vlqtError for one poll: the poll calls these around its EV_ERROR check. */
+    /* "signals dropped" is part of vlqtError for one poll: the poll calls these around its EVENT_ERROR check. */
     void noteDropped();
     void clearDropNotice();
 

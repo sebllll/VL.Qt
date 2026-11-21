@@ -86,7 +86,7 @@ Per second and window: `fps` (swaps/s), `present` and `pump` p50/p99 in ms (from
 TEARING SUMMARY win=0 windows=2 interval=1 fullscreen=0 fps=59.9 present_p50=0.36 present_p99=0.73 pump_p50=0.70 pump_p99=1.24 hostpump_p50=0.76 hostpump_p99=1.33 refresh=60.0 display=ok
 ```
 
-`pump` is the whole `vlqt_app_process_events`, so it is the same for every window of one run. On Windows the display is kept awake during the run (`SetThreadExecutionState`) and a locked session is detected (`display=ok|locked|unknown`). `TEARING WARNING` lines say when the numbers cannot be trusted: fps about 0, refresh `n/a`, or a locked session. The exit code is 0 after a completed run, 2 for bad arguments.
+`pump` is the whole `vlqt_app_process_events_for`, so it is the same for every window of one run. On Windows the display is kept awake during the run (`SetThreadExecutionState`) and a locked session is detected (`display=ok|locked|unknown`). `TEARING WARNING` lines say when the numbers cannot be trusted: fps about 0, refresh `n/a`, or a locked session. The exit code is 0 after a completed run, 2 for bad arguments.
 
 For the Linux runtime see [Linux](linux.md#building-the-linux-runtime-from-source).
 

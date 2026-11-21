@@ -120,7 +120,7 @@ struct Grab
 
 std::vector<std::unique_ptr<Grab>> s_grabs;
 
-// The grab of an id ends without content: Failed with RES_EV_ERROR (nothing if the id was released).
+// The grab of an id ends without content: Failed with RESOURCE_EVENT_ERROR (nothing if the id was released).
 void failGrab(Grab& g, const std::string& error)
 {
     g.current = false;
@@ -249,7 +249,7 @@ namespace {
 // (longest edge <= maxEdgePx, never above 1 pixel per DIP). The arguments are checked by the callers.
 int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int maxEdgePx)
 {
-    const int rc = beginExternal(id, VLQT_RES_KIND_SNAPSHOT);
+    const int rc = beginExternal(id, VLQT_RESOURCE_KIND_SNAPSHOT);
     if (rc != okRc)
         return rc;
     for (auto& g : s_grabs) // only the newest grab of the id counts
@@ -363,11 +363,11 @@ int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out, int* writt
     const int k = kindOfId(id, "read_pixels");
     if (k < 0)
         return k;
-    if (k != VLQT_RES_KIND_SNAPSHOT) {
+    if (k != VLQT_RESOURCE_KIND_SNAPSHOT) {
         qCWarning(lcSnap, "read_pixels: %s is not a snapshot resource", idText(id).constData());
         return badValueRc;
     }
-    const auto work = std::static_pointer_cast<SnapshotWork>(readyWork(id, VLQT_RES_KIND_SNAPSHOT));
+    const auto work = std::static_pointer_cast<SnapshotWork>(readyWork(id, VLQT_RESOURCE_KIND_SNAPSHOT));
     if (!work || work->image.isNull())
         return noDataRc; // no finished snapshot yet (or Failed)
     const QImage& img = work->image;

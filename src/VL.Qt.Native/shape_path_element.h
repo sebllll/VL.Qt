@@ -1,5 +1,5 @@
 #pragma once
-// VlPathElement: the one path element of a SHAPE's ShapePath (makeShape in elements.cpp). Takes a point list
+// ShapePathElement: the one path element of a SHAPE's ShapePath (makeShape in elements.cpp). Takes a point list
 // (POINTS + CLOSED: polyline or polygon) or a verb/point array (PATH) and builds the QPainterPath in addToPath, like
 // Qt's own PathPolyline. A closed point list ends with closeSubpath (a real join at the start point, no cap). The
 // latest of POINTS and PATH wins: each replaces the other.
@@ -10,11 +10,11 @@
 
 namespace vlqt {
 
-class VlPathElement : public QQuickCurve
+class ShapePathElement : public QQuickCurve
 {
     Q_OBJECT
 public:
-    explicit VlPathElement(QObject* parent = nullptr) : QQuickCurve(parent) {}
+    explicit ShapePathElement(QObject* parent = nullptr) : QQuickCurve(parent) {}
 
     // Point list of count (x, y) f32 pairs, copied. xy points into the command buffer and may be unaligned (read with
     // memcpy, see Value in elements.h).

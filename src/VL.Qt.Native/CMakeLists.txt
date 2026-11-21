@@ -17,7 +17,7 @@ cmake_path(NORMAL_PATH VLQT_OUT_DIR)
 find_package(Qt6 6.12 REQUIRED COMPONENTS Gui GuiPrivate Qml Quick QuickPrivate QuickControls2 Multimedia ShaderTools ShaderToolsPrivate QuickShapes QuickShapesPrivate)
 qt_standard_project_setup()
 
-add_library(vlqt SHARED vlqt.cpp vlqt.h device.cpp device.h perf.cpp perf.h commands.cpp commands.h effectchain.cpp effectchain.h elements.cpp elements.h events.cpp events.h touch.cpp touch.h debug.cpp debug.h feedback.cpp feedback.h resources.cpp resources.h image_resource.cpp image_resource.h qtimageitem.cpp qtimageitem.h snapshot_resource.cpp snapshot_resource.h image_writer.cpp image_writer.h audio_tap.cpp audio_tap.h shader_resource.cpp shader_resource.h shadereffectitem.cpp shadereffectitem.h qmlitem.cpp qmlitem.h vlstyle.cpp vlstyle.h offscreen.cpp offscreen.h render_thread.cpp render_thread.h pathelement.cpp pathelement.h protocol.h app/last_error.cpp app/last_error.h app/exports.h)
+add_library(vlqt SHARED vlqt.cpp vlqt.h device.cpp device.h perf.cpp perf.h commands.cpp commands.h effectchain.cpp effectchain.h elements.cpp elements.h events.cpp events.h touch.cpp touch.h debug.cpp debug.h previous_frame_layer.cpp previous_frame_layer.h resources.cpp resources.h image_resource.cpp image_resource.h qtimageitem.cpp qtimageitem.h snapshot_resource.cpp snapshot_resource.h image_writer.cpp image_writer.h audio_tap.cpp audio_tap.h shader_resource.cpp shader_resource.h shader_item.cpp shader_item.h qmlitem.cpp qmlitem.h vlstyle.cpp vlstyle.h offscreen.cpp offscreen.h render_thread.cpp render_thread.h shape_path_element.cpp shape_path_element.h protocol.h app/last_error.cpp app/last_error.h app/exports.h)
 # Test exports of vlqt_test.h, in every build (F1): only the SmokeTest and the unit tests call them.
 target_sources(vlqt PRIVATE vlqt_test.h test/test_hooks.h test/test_input.cpp test/test_probes.cpp test/test_resource_kind.cpp)
 target_compile_definitions(vlqt PRIVATE VLQT_BUILD)
@@ -68,7 +68,7 @@ target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick 
 # limited compatibility guarantees: check on Qt updates). Qt6ShaderTools is deployed next to QtNative.
 target_link_libraries(vlqt PRIVATE Qt6::ShaderTools Qt6::ShaderToolsPrivate)
 # QuickShapes: Shape/ShapePath for Line, Polyline, Polygon, Path. QuickShapesPrivate: QQuickShape/QQuickShapePath
-# (qquickshape_p.h) built from C++ with typed setters (makeShape in elements.cpp); VlPathElement (pathelement.h)
+# (qquickshape_p.h) built from C++ with typed setters (makeShape in elements.cpp); ShapePathElement (shape_path_element.h)
 # subclasses the private QQuickCurve of QuickPrivate (qquickpath_p.h). Private API, limited compatibility guarantees:
 # check on Qt updates. Qt6QuickShapes and qml/QtQuick/Shapes are deployed next to QtNative (qml/deploy.qml).
 target_link_libraries(vlqt PRIVATE Qt6::QuickShapes Qt6::QuickShapesPrivate)

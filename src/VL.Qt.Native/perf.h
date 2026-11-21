@@ -20,7 +20,7 @@ class QQuickWindow;
 namespace vlqt { struct Scene; }
 
 namespace vlqt {
-// objectName of the F5 overlay item: its changes are no scene change (vlqt_window_change_count).
+// objectName of the F5 overlay item: its changes are no scene change (vlqt_scene_get_change_count).
 inline constexpr char perfOverlayName[] = "vlqt-perf-overlay";
 }
 
@@ -28,9 +28,9 @@ inline constexpr char perfOverlayName[] = "vlqt-perf-overlay";
 // adapter (CpuDevice, e.g. WARP) or a Mesa software rasterizer (llvmpipe, softpipe). Valid after sceneGraphInitialized.
 QString softwareRendererName(QQuickWindow* window);
 
-// Timings of one pump (vlqt_app_process_events), in ms. NaN = no frame in this pump.
+// Timings of one pump (vlqt_app_process_events_for), in ms. 0 = no value in this pump (no frame, no GPU timestamp).
 struct PerfSample {
-    float frame = 0;   // interval between the last two frameSwapped
+    float frameInterval = 0; // interval between the last two frameSwapped (time between two frames, not a duration)
     float pump = 0;    // whole processEvents
     float sync = 0;    // beforeSynchronizing -> afterSynchronizing
     float render = 0;  // beforeRendering -> afterRendering (CPU, command recording)
@@ -42,8 +42,8 @@ struct PerfSample {
     float events = 0;
     // beforeFrameBegin -> beforeSynchronizing (QRhi::beginFrame; D3D11 waits there for the refresh with VSync).
     float vsync = 0;
-    // what the host (C#) measured around this pump, reported after it (vlqt_window_report_host_frame).
-    vlqt_host_frame host{};
+    // what the host (C#) measured around this pump, reported after it (vlqt_scene_report_host_pump).
+    vlqt_host_pump host{};
     bool hostReported = false;
 };
 
@@ -84,15 +84,15 @@ void perfStats(const PerfSample* samples, int n, const PerfCounters& counters, d
 // The same computation on given samples with timestamps (vlqt_test_perf_eval).
 void perfEval(const vlqt_perf_sample* samples, const double* tMs, int n, double budgetMs, vlqt_perf_stats* out);
 
-// averages/maxima/rates of n host frames (PerfMonitor::hostStats and vlqt_test_perf_host_eval). No allocation.
-void perfHostStats(const vlqt_host_frame* frames, int n, vlqt_host_stats* out);
+// averages/maxima/rates of n host pumps (PerfMonitor::hostStats and vlqt_test_perf_host_eval). No allocation.
+void perfHostStats(const vlqt_host_pump* frames, int n, vlqt_host_pump_stats* out);
 
 // Per-window measurement, overlay (F2 perfmeter, F5 stats pages) and key handling.
 // Keys (window focused, no other modifiers): F2 meter on/off; F5 Summary -> Timeline -> Scene -> System -> Resources -> off;
 // Shift+F5 hides/shows the stats keeping the page; F6 (only while the stats are visible) freezes the overlay; F7 (same)
 // hides/shows the host segments (vvvv, GC, apply) of the timeline, process-wide.
 // The last page is remembered process-wide (new windows open on it).
-// vlqt_window_set_overlay / get_overlay flags: bit0 meter, bit1 stats, bit3 freeze, bits 4..6 = page + 1
+// vlqt_scene_set_overlay / get_overlay flags: bit0 meter, bit1 stats, bit3 freeze, bits 4..6 = page + 1
 // (set: 0 = keep the remembered page).
 class PerfMonitor : public QObject
 {
@@ -109,7 +109,7 @@ public:
     PerfMonitor(QQuickWindow* window, QQmlEngine* engine);
     ~PerfMonitor() override;
 
-    // Called by vlqt_app_process_events after each pump for every window.
+    // Called by vlqt_app_process_events_for after each pump for every window.
     static void endPumpAll(float pumpMs);
     // vlqt_app_process_events_for, only for the windows of that pump.
     void endPump(float pumpMs);
@@ -190,10 +190,10 @@ private:
 
 public:
     // host values (apply/reconcile, ops, .NET GC) of the last completed pump. false = no pump yet.
-    bool reportHostFrame(const vlqt_host_frame& f);
-    // Last reported host frame (false = none in the ring) and averages/rates over the summary range (~1 s).
-    bool lastHostFrame(vlqt_host_frame* out) const;
-    void hostStats(vlqt_host_stats* out) const;
+    bool reportHostPump(const vlqt_host_pump& f);
+    // Last reported host pump (false = none in the ring) and averages/rates over the summary range (~1 s).
+    bool lastHostPump(vlqt_host_pump* out) const;
+    void hostStats(vlqt_host_pump_stats* out) const;
 };
 
 void registerPerfTypes();

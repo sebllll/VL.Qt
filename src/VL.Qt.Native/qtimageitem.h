@@ -18,7 +18,7 @@
  *
  * Fill modes as QML Image (values of Image.fillMode, centered): Stretch, PreserveAspectFit, PreserveAspectCrop and
  * Tile (one image node per tile, at most kMaxTiles). smooth (QQuickItem) picks linear or nearest filtering, linear
- * also uses the mipmaps of a resource loaded with VLQT_IMG_MIPMAPS. Implicit size = image size.
+ * also uses the mipmaps of a resource loaded with VLQT_IMAGE_LOAD_MIPMAPS. Implicit size = image size.
  */
 #pragma once
 

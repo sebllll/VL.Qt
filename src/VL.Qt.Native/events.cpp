@@ -38,7 +38,7 @@ constexpr const char* kWheelQml = "import QtQuick\nWheelHandler {\n    target: n
 constexpr const char* kDragQml = "import QtQuick\nDragHandler { target: null }\n";
 // target null: the handler scales/rotates/moves nothing, PinchState reports its values.
 constexpr const char* kPinchQml = "import QtQuick\nPinchHandler { target: null }\n";
-// EV_TOUCH_POINTS: at most this many points (u16 record length; 8 + 4 + 64 * 24 bytes).
+// EVENT_TOUCH_POINTS: at most this many points (u16 record length; 8 + 4 + 64 * 24 bytes).
 constexpr int kMaxTouchPoints = 64;
 
 QMetaProperty metaProperty(const QObject* o, const char* name)
@@ -58,20 +58,20 @@ void pushFlag(Scene& scene, quint16 ev, quint32 handle, bool on)
    Forgets the sent state, so a new sink gets the current state with the next poll. */
 void resetSent(Scene& scene, HandlerNode& hn)
 {
-    if (hn.sink != 0) {
+    if (hn.feedbackId != 0) {
         if (hn.sentHover)
-            pushFlag(scene, VLQT_EV_HOVER, hn.sink, false);
+            pushFlag(scene, VLQT_EVENT_HOVER, hn.feedbackId, false);
         if (hn.sentPress)
-            pushFlag(scene, VLQT_EV_PRESS, hn.sink, false);
+            pushFlag(scene, VLQT_EVENT_PRESS, hn.feedbackId, false);
         if (hn.sentActive)
-            pushFlag(scene, VLQT_EV_ACTIVE, hn.sink, false);
+            pushFlag(scene, VLQT_EVENT_ACTIVE, hn.feedbackId, false);
         if (hn.sentWheel) {
             const float zero[2] = {};
-            scene.pushEvent(VLQT_EV_WHEEL, hn.sink, 0, zero, quint16(sizeof zero));
+            scene.pushEvent(VLQT_EVENT_WHEEL, hn.feedbackId, 0, zero, quint16(sizeof zero));
         }
         if (hn.sentTouch.size() > 4) { // points were sent: the old sink sees them go
             const quint32 zero = 0;
-            scene.pushEvent(VLQT_EV_TOUCH_POINTS, hn.sink, 0, &zero, quint16(sizeof zero));
+            scene.pushEvent(VLQT_EVENT_TOUCH_POINTS, hn.feedbackId, 0, &zero, quint16(sizeof zero));
         }
     }
     hn.sentTouch.clear();
@@ -83,7 +83,7 @@ void resetSent(Scene& scene, HandlerNode& hn)
 
 bool supportsButtons(quint16 type)
 {
-    return type == VLQT_TYPE_TAP_HANDLER || type == VLQT_TYPE_POINT_HANDLER || type == VLQT_TYPE_DRAG_HANDLER;
+    return type == VLQT_ELEMENT_TYPE_TAP_HANDLER || type == VLQT_ELEMENT_TYPE_POINT_HANDLER || type == VLQT_ELEMENT_TYPE_DRAG_HANDLER;
 }
 
 /* DRAG_AXIS on the QML handler: xAxis/yAxis.enabled. Qt then also ignores a drag that runs more than 45 degrees off
@@ -98,14 +98,14 @@ void applyDragAxis(QObject* obj, qint32 axis)
 
 bool supportsDevices(quint16 type)
 {
-    return supportsButtons(type) || type == VLQT_TYPE_WHEEL_HANDLER || type == VLQT_TYPE_TOUCH_POINTS_HANDLER
-        || type == VLQT_TYPE_PINCH_HANDLER;
+    return supportsButtons(type) || type == VLQT_ELEMENT_TYPE_WHEEL_HANDLER || type == VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER
+        || type == VLQT_ELEMENT_TYPE_PINCH_HANDLER;
 }
 
 /* ACCEPTED_BUTTONS / ACCEPTED_DEVICES on the QML handler (QFlags properties need their exact type in the QVariant). */
 bool applyAccepted(QObject* obj, quint16 prop, qint32 v)
 {
-    const bool ok = prop == VLQT_PROP_ACCEPTED_BUTTONS
+    const bool ok = prop == VLQT_PROPERTY_ACCEPTED_BUTTONS
         ? obj->setProperty("acceptedButtons", QVariant::fromValue(Qt::MouseButtons(v)))
         : obj->setProperty("acceptedDevices", QVariant::fromValue(QInputDevice::DeviceTypes(v)));
     if (!ok)
@@ -118,7 +118,7 @@ bool applyAccepted(QObject* obj, quint16 prop, qint32 v)
    updates or removes it after a change of the item, the buttons or the devices. */
 void syncPointHover(Scene& scene, HandlerNode& hn, QQuickItem* item)
 {
-    if (hn.type != VLQT_TYPE_POINT_HANDLER || !hn.object)
+    if (hn.type != VLQT_ELEMENT_TYPE_POINT_HANDLER || !hn.object)
         return;
     constexpr qint32 cursorDevices = qint32(QInputDevice::DeviceType::Mouse) | qint32(QInputDevice::DeviceType::TouchPad);
     const qint32 devices = (hn.acceptedDevices ? *hn.acceptedDevices : qint32(QInputDevice::DeviceType::AllDevices))
@@ -130,7 +130,7 @@ void syncPointHover(Scene& scene, HandlerNode& hn, QQuickItem* item)
     } else if (!hn.hover) {
         hn.hover = scene.handlers.createHover(item, devices);
     } else {
-        applyAccepted(hn.hover, VLQT_PROP_ACCEPTED_DEVICES, devices);
+        applyAccepted(hn.hover, VLQT_PROPERTY_ACCEPTED_DEVICES, devices);
     }
 }
 
@@ -143,7 +143,7 @@ void raisePointHandlers(Scene& scene, const Node& owner, quint32 except)
 {
     for (quint32 id : owner.handlers) {
         auto it = scene.handlerNodes.find(id);
-        if (id == except || it == scene.handlerNodes.end() || it->second.type != VLQT_TYPE_POINT_HANDLER || !it->second.object)
+        if (id == except || it == scene.handlerNodes.end() || it->second.type != VLQT_ELEMENT_TYPE_POINT_HANDLER || !it->second.object)
             continue;
         QObject* obj = it->second.object;
         // QQuickPointerHandler::parent (setParentItem): remove from the item, add again in front of the list.
@@ -278,31 +278,31 @@ QObject* Handlers::createHandler(quint16 type, QQuickItem* item)
 {
     QObject* obj = nullptr;
     switch (type) {
-    case VLQT_TYPE_HOVER_HANDLER:
+    case VLQT_ELEMENT_TYPE_HOVER_HANDLER:
         obj = create(comps[0], kHoverQml, "vlqt_hoverhandler.qml", item);
         if (obj && !props.hovered.isValid())
             props.hovered = metaProperty(obj, "hovered");
         break;
-    case VLQT_TYPE_TAP_HANDLER:
+    case VLQT_ELEMENT_TYPE_TAP_HANDLER:
         obj = create(comps[1], kTapQml, "vlqt_taphandler.qml", item);
         if (obj && !props.pressed.isValid())
             props.pressed = metaProperty(obj, "pressed");
         break;
-    case VLQT_TYPE_POINT_HANDLER:
+    case VLQT_ELEMENT_TYPE_POINT_HANDLER:
         obj = create(comps[2], kPointQml, "vlqt_pointhandler.qml", item);
         break;
-    case VLQT_TYPE_WHEEL_HANDLER:
+    case VLQT_ELEMENT_TYPE_WHEEL_HANDLER:
         obj = create(comps[3], kWheelQml, "vlqt_wheelhandler.qml", item);
         if (obj && !props.wheelDelta.isValid())
             props.wheelDelta = metaProperty(obj, "vlqtDelta");
         break;
-    case VLQT_TYPE_DRAG_HANDLER:
+    case VLQT_ELEMENT_TYPE_DRAG_HANDLER:
         obj = create(comps[4], kDragQml, "vlqt_draghandler.qml", item);
         break;
-    case VLQT_TYPE_TOUCH_POINTS_HANDLER:
+    case VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER:
         obj = new TouchPointsHandler(item); // no QML type: own C++ handler (touch.h)
         break;
-    case VLQT_TYPE_PINCH_HANDLER:
+    case VLQT_ELEMENT_TYPE_PINCH_HANDLER:
         obj = create(comps[5], kPinchQml, "vlqt_pinchhandler.qml", item);
         break;
     default:
@@ -312,7 +312,7 @@ QObject* Handlers::createHandler(quint16 type, QQuickItem* item)
     if (obj && !props.active.isValid())
         props.active = metaProperty(obj, "active");
     if (obj && !props.point.isValid()
-        && (type == VLQT_TYPE_HOVER_HANDLER || type == VLQT_TYPE_POINT_HANDLER || type == VLQT_TYPE_WHEEL_HANDLER))
+        && (type == VLQT_ELEMENT_TYPE_HOVER_HANDLER || type == VLQT_ELEMENT_TYPE_POINT_HANDLER || type == VLQT_ELEMENT_TYPE_WHEEL_HANDLER))
         props.point = metaProperty(obj, "point");
     return obj;
 }
@@ -326,7 +326,7 @@ QObject* Handlers::createHover(QQuickItem* item, qint32 devices)
         props.hovered = metaProperty(obj, "hovered");
     if (!props.point.isValid())
         props.point = metaProperty(obj, "point");
-    applyAccepted(obj, VLQT_PROP_ACCEPTED_DEVICES, devices);
+    applyAccepted(obj, VLQT_PROPERTY_ACCEPTED_DEVICES, devices);
     return obj;
 }
 
@@ -359,19 +359,19 @@ bool Handlers::takeWheel(QObject* wheel, float out[2])
 
 void bindNode(Scene& scene, Node& node, quint32 handle)
 {
-    if (node.sink != handle) {
+    if (node.feedbackId != handle) {
         node.sent = SentState{}; // new sink (or unbind): the next poll sends the current values again
         markGeometry(*node.xf);  // ... measured once more, unchanged or not
         scene.elements.takeClicks(node); // Button clicks not yet polled belonged to the old sink
         QVariant dropped;
         scene.elements.takeUserValue(node, dropped); // same for a user change of a value input
     }
-    node.sink = handle;
+    node.feedbackId = handle;
 }
 
 void updateTextMask(Node& node)
 {
-    const bool want = node.type == VLQT_TYPE_TEXT && !node.handlers.empty();
+    const bool want = node.type == VLQT_ELEMENT_TYPE_TEXT && !node.handlers.empty();
     if (want && !node.mask) {
         node.mask = new TextMask(node.item);
         node.item->setContainmentMask(node.mask);
@@ -384,9 +384,9 @@ void updateTextMask(Node& node)
 
 bool isHandlerType(quint16 type)
 {
-    return type == VLQT_TYPE_HOVER_HANDLER || type == VLQT_TYPE_TAP_HANDLER || type == VLQT_TYPE_POINT_HANDLER
-        || type == VLQT_TYPE_WHEEL_HANDLER || type == VLQT_TYPE_DRAG_HANDLER || type == VLQT_TYPE_TOUCH_POINTS_HANDLER
-        || type == VLQT_TYPE_PINCH_HANDLER;
+    return type == VLQT_ELEMENT_TYPE_HOVER_HANDLER || type == VLQT_ELEMENT_TYPE_TAP_HANDLER || type == VLQT_ELEMENT_TYPE_POINT_HANDLER
+        || type == VLQT_ELEMENT_TYPE_WHEEL_HANDLER || type == VLQT_ELEMENT_TYPE_DRAG_HANDLER || type == VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER
+        || type == VLQT_ELEMENT_TYPE_PINCH_HANDLER;
 }
 
 int reparentHandler(Scene& scene, HandlerNode& handler, quint32 handlerId, quint32 parentId, std::string& err)
@@ -418,26 +418,26 @@ int reparentHandler(Scene& scene, HandlerNode& handler, quint32 handlerId, quint
     }
     // Properties stored before the REPARENT.
     if (handler.acceptedButtons)
-        applyAccepted(obj, VLQT_PROP_ACCEPTED_BUTTONS, *handler.acceptedButtons);
+        applyAccepted(obj, VLQT_PROPERTY_ACCEPTED_BUTTONS, *handler.acceptedButtons);
     if (handler.acceptedDevices)
-        applyAccepted(obj, VLQT_PROP_ACCEPTED_DEVICES, *handler.acceptedDevices);
-    if (handler.type == VLQT_TYPE_TAP_HANDLER) {
+        applyAccepted(obj, VLQT_PROPERTY_ACCEPTED_DEVICES, *handler.acceptedDevices);
+    if (handler.type == VLQT_ELEMENT_TYPE_TAP_HANDLER) {
         handler.tap = new TapState(obj);
         QObject::connect(obj, SIGNAL(tapped(QEventPoint, Qt::MouseButton)), handler.tap, SLOT(onTapped()));
         QObject::connect(obj, SIGNAL(longPressed()), handler.tap, SLOT(onLongPressed()));
         QObject::connect(obj, SIGNAL(pressedChanged()), handler.tap, SLOT(onPressedChanged()));
     }
-    if (handler.type == VLQT_TYPE_DRAG_HANDLER) {
+    if (handler.type == VLQT_ELEMENT_TYPE_DRAG_HANDLER) {
         applyDragAxis(obj, handler.dragAxis);
         handler.drag = new DragState(obj, scene, handlerId);
         QObject::connect(obj, SIGNAL(activeChanged()), handler.drag, SLOT(onActiveChanged()));
         QObject::connect(obj, SIGNAL(translationChanged(QVector2D)), handler.drag, SLOT(onTranslationChanged()));
     }
-    if (handler.type == VLQT_TYPE_TOUCH_POINTS_HANDLER) {
+    if (handler.type == VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER) {
         handler.points = static_cast<TouchPointsHandler*>(obj);
         handler.points->setOcclusion(handler.occlusion);
     }
-    if (handler.type == VLQT_TYPE_PINCH_HANDLER) {
+    if (handler.type == VLQT_ELEMENT_TYPE_PINCH_HANDLER) {
         if (handler.minimumPointCount)
             obj->setProperty("minimumPointCount", *handler.minimumPointCount);
         if (handler.maximumPointCount)
@@ -446,7 +446,7 @@ int reparentHandler(Scene& scene, HandlerNode& handler, quint32 handlerId, quint
         handler.points = new TouchPointsHandler(owner.item);
         handler.points->setOcclusion(false);
         if (handler.acceptedDevices)
-            applyAccepted(handler.points, VLQT_PROP_ACCEPTED_DEVICES, *handler.acceptedDevices);
+            applyAccepted(handler.points, VLQT_PROPERTY_ACCEPTED_DEVICES, *handler.acceptedDevices);
         handler.pinch = new PinchState(obj, handler.points);
         QObject::connect(obj, SIGNAL(activeChanged()), handler.pinch, SLOT(onActiveChanged()));
         QObject::connect(obj, SIGNAL(scaleChanged(qreal)), handler.pinch, SLOT(onValuesChanged()));
@@ -458,7 +458,7 @@ int reparentHandler(Scene& scene, HandlerNode& handler, quint32 handlerId, quint
     handler.object = obj;
     handler.owner = parentId;
     syncPointHover(scene, handler, owner.item);
-    if (handler.type != VLQT_TYPE_POINT_HANDLER)
+    if (handler.type != VLQT_ELEMENT_TYPE_POINT_HANDLER)
         raisePointHandlers(scene, owner, handlerId);
     owner.handlers.push_back(handlerId);
     updateTextMask(owner);
@@ -469,29 +469,29 @@ int setHandler(Scene& scene, HandlerNode& handler, quint16 prop, const Value& v,
 {
     // 768 (REPORT_POSITION, Hover position) is reserved since #320: unknown like any other id.
     const quint16 t = handler.type;
-    const bool drag = t == VLQT_TYPE_DRAG_HANDLER;
-    const bool pinch = t == VLQT_TYPE_PINCH_HANDLER;
-    const bool known = (prop == VLQT_PROP_ACCEPTED_BUTTONS && supportsButtons(t))
-        || (prop == VLQT_PROP_ACCEPTED_DEVICES && supportsDevices(t))
-        || (drag && (prop == VLQT_PROP_MOVES_ELEMENT || prop == VLQT_PROP_DRAG_AXIS || prop == VLQT_PROP_DRAG_LIMITS))
-        || (pinch && (prop == VLQT_PROP_MINIMUM_POINT_COUNT || prop == VLQT_PROP_MAXIMUM_POINT_COUNT))
-        || (prop == VLQT_PROP_OCCLUSION && t == VLQT_TYPE_TOUCH_POINTS_HANDLER);
+    const bool drag = t == VLQT_ELEMENT_TYPE_DRAG_HANDLER;
+    const bool pinch = t == VLQT_ELEMENT_TYPE_PINCH_HANDLER;
+    const bool known = (prop == VLQT_PROPERTY_ACCEPTED_BUTTONS && supportsButtons(t))
+        || (prop == VLQT_PROPERTY_ACCEPTED_DEVICES && supportsDevices(t))
+        || (drag && (prop == VLQT_PROPERTY_MOVES_ELEMENT || prop == VLQT_PROPERTY_DRAG_AXIS || prop == VLQT_PROPERTY_DRAG_LIMITS))
+        || (pinch && (prop == VLQT_PROPERTY_MINIMUM_POINT_COUNT || prop == VLQT_PROPERTY_MAXIMUM_POINT_COUNT))
+        || (prop == VLQT_PROPERTY_OCCLUSION && t == VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER);
     if (!known) {
         err = "property " + std::to_string(prop) + " is not supported by input handler type " + std::to_string(t);
         return ApplyUnknownProperty;
     }
-    const quint16 expected = prop == VLQT_PROP_MOVES_ELEMENT || prop == VLQT_PROP_OCCLUSION ? quint16(VLQT_VT_BOOL)
-        : prop == VLQT_PROP_DRAG_LIMITS ? quint16(VLQT_VT_RECTF) : quint16(VLQT_VT_I32);
+    const quint16 expected = prop == VLQT_PROPERTY_MOVES_ELEMENT || prop == VLQT_PROPERTY_OCCLUSION ? quint16(VLQT_VALUE_TYPE_BOOL)
+        : prop == VLQT_PROPERTY_DRAG_LIMITS ? quint16(VLQT_VALUE_TYPE_RECTF) : quint16(VLQT_VALUE_TYPE_I32);
     if (v.type != expected) {
         err = "property " + std::to_string(prop) + " expects value type " + std::to_string(int(expected)) + ", got "
             + std::to_string(v.type);
         return ApplyBadValue;
     }
     switch (prop) {
-    case VLQT_PROP_MOVES_ELEMENT:
+    case VLQT_PROPERTY_MOVES_ELEMENT:
         handler.movesElement = v.b; // the current offset stays; off: the next drags only report
         return ApplyOk;
-    case VLQT_PROP_DRAG_AXIS:
+    case VLQT_PROPERTY_DRAG_AXIS:
         if (v.i < 0 || v.i > 2) {
             err = "drag axis " + std::to_string(v.i) + " is not 0 (both), 1 (x) or 2 (y)";
             return ApplyBadValue;
@@ -500,7 +500,7 @@ int setHandler(Scene& scene, HandlerNode& handler, quint16 prop, const Value& v,
         if (handler.object)
             applyDragAxis(handler.object, v.i);
         return ApplyOk;
-    case VLQT_PROP_DRAG_LIMITS:
+    case VLQT_PROPERTY_DRAG_LIMITS:
         // rectf slots: minX, minY, maxX, maxY (not x, y, w, h). NaN fails both comparisons.
         if (!(v.f[0] <= v.f[2]) || !(v.f[1] <= v.f[3])) {
             err = "drag limits need minimum <= maximum on both axes";
@@ -509,19 +509,19 @@ int setHandler(Scene& scene, HandlerNode& handler, quint16 prop, const Value& v,
         for (int i = 0; i < 4; ++i)
             handler.dragLimits[i] = v.f[i];
         return ApplyOk; // applies from the next movement on
-    case VLQT_PROP_OCCLUSION:
+    case VLQT_PROPERTY_OCCLUSION:
         handler.occlusion = v.b;
         if (handler.points)
             handler.points->setOcclusion(v.b); // from the next press on
         return ApplyOk;
-    case VLQT_PROP_MINIMUM_POINT_COUNT:
-    case VLQT_PROP_MAXIMUM_POINT_COUNT: {
+    case VLQT_PROPERTY_MINIMUM_POINT_COUNT:
+    case VLQT_PROPERTY_MAXIMUM_POINT_COUNT: {
         // Not checked against each other: the host sets them one by one (Qt never activates while min > max).
         if (v.i < 2) {
             err = "point count " + std::to_string(v.i) + " of a pinch handler is less than 2";
             return ApplyBadValue;
         }
-        const bool min = prop == VLQT_PROP_MINIMUM_POINT_COUNT;
+        const bool min = prop == VLQT_PROPERTY_MINIMUM_POINT_COUNT;
         (min ? handler.minimumPointCount : handler.maximumPointCount) = v.i;
         if (handler.object && !handler.object->setProperty(min ? "minimumPointCount" : "maximumPointCount", v.i)) {
             err = "property " + std::to_string(prop) + " could not be set to " + std::to_string(v.i);
@@ -534,7 +534,7 @@ int setHandler(Scene& scene, HandlerNode& handler, quint16 prop, const Value& v,
     default:
         break;
     }
-    (prop == VLQT_PROP_ACCEPTED_BUTTONS ? handler.acceptedButtons : handler.acceptedDevices) = v.i;
+    (prop == VLQT_PROPERTY_ACCEPTED_BUTTONS ? handler.acceptedButtons : handler.acceptedDevices) = v.i;
     if (handler.object && !applyAccepted(handler.object, prop, v.i)) {
         err = "property " + std::to_string(prop) + " could not be set to " + std::to_string(v.i);
         return ApplyBadValue;
@@ -549,19 +549,19 @@ int setHandler(Scene& scene, HandlerNode& handler, quint16 prop, const Value& v,
 
 void bindHandler(Scene& scene, HandlerNode& handler, quint32 handle)
 {
-    if (handle == handler.sink)
+    if (handle == handler.feedbackId)
         return;
     resetSent(scene, handler);
     // What happened for the old sink stays there: a running press is cancelled, unpolled taps and motion are dropped.
     if (handler.tap)
         handler.tap->cancel(scene.handlers.isPressed(handler.object));
     float drop[2];
-    if (handler.type == VLQT_TYPE_WHEEL_HANDLER && handler.object)
+    if (handler.type == VLQT_ELEMENT_TYPE_WHEEL_HANDLER && handler.object)
         scene.handlers.takeWheel(handler.object, drop);
     // The last drag belonged to the old sink; a running one goes on for the new sink.
     if (handler.drag && !scene.handlers.isActive(handler.object))
         handler.drag->delta[0] = handler.drag->delta[1] = 0;
-    handler.sink = handle;
+    handler.feedbackId = handle;
 }
 
 void destroyHandler(Scene& scene, quint32 handlerId)
@@ -593,7 +593,7 @@ void pushPointer(Scene& scene, HandlerNode& hn, QObject* source)
         hn.sentPointer[0] = p[0];
         hn.sentPointer[1] = p[1];
         hn.hasPointer = true;
-        scene.pushEvent(VLQT_EV_POINTER, hn.sink, 0, p, quint16(sizeof p));
+        scene.pushEvent(VLQT_EVENT_POINTER, hn.feedbackId, 0, p, quint16(sizeof p));
     }
 }
 
@@ -602,7 +602,7 @@ void collectHover(Scene& scene, HandlerNode& hn)
     const bool hovered = scene.handlers.isHovered(hn.object);
     if (hovered != hn.sentHover) {
         hn.sentHover = hovered;
-        pushFlag(scene, VLQT_EV_HOVER, hn.sink, hovered);
+        pushFlag(scene, VLQT_EVENT_HOVER, hn.feedbackId, hovered);
     }
 }
 
@@ -612,22 +612,22 @@ void collectTap(Scene& scene, HandlerNode& hn)
     const bool pressed = scene.handlers.isPressed(hn.object) && !ts.cancelled;
     if (pressed != hn.sentPress) {
         hn.sentPress = pressed;
-        pushFlag(scene, VLQT_EV_PRESS, hn.sink, pressed);
+        pushFlag(scene, VLQT_EVENT_PRESS, hn.feedbackId, pressed);
     }
     if (ts.taps) {
         const quint32 c = ts.taps;
         ts.taps = 0;
-        scene.pushEvent(VLQT_EV_CLICK, hn.sink, 0, &c, quint16(sizeof c));
+        scene.pushEvent(VLQT_EVENT_CLICK, hn.feedbackId, 0, &c, quint16(sizeof c));
     }
     // Never 0: the count of the last tap stays until the next tap (a sink change starts at 0 = nothing sent).
     if (ts.tapCount != 0 && ts.tapCount != hn.sentTapCount) {
         hn.sentTapCount = ts.tapCount;
-        scene.pushEvent(VLQT_EV_TAP_COUNT, hn.sink, 0, &ts.tapCount, quint16(sizeof ts.tapCount));
+        scene.pushEvent(VLQT_EVENT_TAP_COUNT, hn.feedbackId, 0, &ts.tapCount, quint16(sizeof ts.tapCount));
     }
     if (ts.longPresses) {
         const quint32 c = ts.longPresses;
         ts.longPresses = 0;
-        scene.pushEvent(VLQT_EV_LONG_PRESS, hn.sink, 0, &c, quint16(sizeof c));
+        scene.pushEvent(VLQT_EVENT_LONG_PRESS, hn.feedbackId, 0, &c, quint16(sizeof c));
     }
 }
 
@@ -639,7 +639,7 @@ void collectPoint(Scene& scene, HandlerNode& hn)
     const bool active = pressed || hovered;
     if (active != hn.sentActive) {
         hn.sentActive = active;
-        pushFlag(scene, VLQT_EV_ACTIVE, hn.sink, active);
+        pushFlag(scene, VLQT_EVENT_ACTIVE, hn.feedbackId, active);
     }
     if (active)
         pushPointer(scene, hn, pressed ? hn.object : hn.hover);
@@ -652,10 +652,10 @@ void collectWheel(Scene& scene, HandlerNode& hn)
     float d[2] = {};
     if (scene.handlers.takeWheel(hn.object, d)) {
         hn.sentWheel = true;
-        scene.pushEvent(VLQT_EV_WHEEL, hn.sink, 0, d, quint16(sizeof d));
+        scene.pushEvent(VLQT_EVENT_WHEEL, hn.feedbackId, 0, d, quint16(sizeof d));
     } else if (hn.sentWheel) {
         hn.sentWheel = false; // once (0, 0) after motion
-        scene.pushEvent(VLQT_EV_WHEEL, hn.sink, 0, d, quint16(sizeof d));
+        scene.pushEvent(VLQT_EVENT_WHEEL, hn.feedbackId, 0, d, quint16(sizeof d));
     }
 }
 
@@ -664,14 +664,14 @@ void collectDrag(Scene& scene, HandlerNode& hn)
     const bool active = scene.handlers.isActive(hn.object);
     if (active != hn.sentActive) {
         hn.sentActive = active;
-        pushFlag(scene, VLQT_EV_ACTIVE, hn.sink, active);
+        pushFlag(scene, VLQT_EVENT_ACTIVE, hn.feedbackId, active);
     }
     const float* d = hn.drag->delta;
     if (d[0] != hn.sentDrag[0] || d[1] != hn.sentDrag[1] || (hn.drag->drags != hn.sentDrags && (d[0] != 0 || d[1] != 0))) {
         hn.sentDrag[0] = d[0];
         hn.sentDrag[1] = d[1];
         hn.sentDrags = hn.drag->drags;
-        scene.pushEvent(VLQT_EV_DRAG, hn.sink, 0, d, quint16(2 * sizeof(float)));
+        scene.pushEvent(VLQT_EVENT_DRAG, hn.feedbackId, 0, d, quint16(2 * sizeof(float)));
     }
 }
 
@@ -697,7 +697,7 @@ void collectTouchPoints(Scene& scene, HandlerNode& hn)
     if (payload == hn.sentTouch)
         return;
     hn.sentTouch = payload;
-    scene.pushEvent(VLQT_EV_TOUCH_POINTS, hn.sink, 0, payload.constData(), quint16(payload.size()));
+    scene.pushEvent(VLQT_EVENT_TOUCH_POINTS, hn.feedbackId, 0, payload.constData(), quint16(payload.size()));
 }
 
 void collectPinch(Scene& scene, HandlerNode& hn)
@@ -705,7 +705,7 @@ void collectPinch(Scene& scene, HandlerNode& hn)
     const PinchState& ps = *hn.pinch;
     // Gesture start: ACTIVE 1, then the values; end: the last values (if not sent yet), then ACTIVE 0 ((e)).
     if (ps.running && !hn.sentActive)
-        pushFlag(scene, VLQT_EV_ACTIVE, hn.sink, true);
+        pushFlag(scene, VLQT_EVENT_ACTIVE, hn.feedbackId, true);
     const float* v = ps.value;
     bool changed = false;
     for (int i = 0; i < 6; ++i)
@@ -714,10 +714,10 @@ void collectPinch(Scene& scene, HandlerNode& hn)
         for (int i = 0; i < 6; ++i)
             hn.sentPinch[i] = v[i];
         hn.sentGestures = ps.gestures;
-        scene.pushEvent(VLQT_EV_PINCH, hn.sink, 0, v, quint16(6 * sizeof(float)));
+        scene.pushEvent(VLQT_EVENT_PINCH, hn.feedbackId, 0, v, quint16(6 * sizeof(float)));
     }
     if (!ps.running && hn.sentActive)
-        pushFlag(scene, VLQT_EV_ACTIVE, hn.sink, false);
+        pushFlag(scene, VLQT_EVENT_ACTIVE, hn.feedbackId, false);
     hn.sentActive = ps.running;
 }
 
@@ -726,22 +726,22 @@ void collectHandlers(Scene& scene)
 {
     for (auto& kv : scene.handlerNodes) {
         HandlerNode& hn = kv.second;
-        if (hn.sink == 0 || !hn.object)
+        if (hn.feedbackId == 0 || !hn.object)
             continue;
         switch (hn.type) {
-        case VLQT_TYPE_HOVER_HANDLER: collectHover(scene, hn); break;
-        case VLQT_TYPE_TAP_HANDLER: collectTap(scene, hn); break;
-        case VLQT_TYPE_POINT_HANDLER: collectPoint(scene, hn); break;
-        case VLQT_TYPE_WHEEL_HANDLER: collectWheel(scene, hn); break;
-        case VLQT_TYPE_DRAG_HANDLER: collectDrag(scene, hn); break;
-        case VLQT_TYPE_TOUCH_POINTS_HANDLER: collectTouchPoints(scene, hn); break;
-        case VLQT_TYPE_PINCH_HANDLER: collectPinch(scene, hn); break;
+        case VLQT_ELEMENT_TYPE_HOVER_HANDLER: collectHover(scene, hn); break;
+        case VLQT_ELEMENT_TYPE_TAP_HANDLER: collectTap(scene, hn); break;
+        case VLQT_ELEMENT_TYPE_POINT_HANDLER: collectPoint(scene, hn); break;
+        case VLQT_ELEMENT_TYPE_WHEEL_HANDLER: collectWheel(scene, hn); break;
+        case VLQT_ELEMENT_TYPE_DRAG_HANDLER: collectDrag(scene, hn); break;
+        case VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER: collectTouchPoints(scene, hn); break;
+        case VLQT_ELEMENT_TYPE_PINCH_HANDLER: collectPinch(scene, hn); break;
         default: break;
         }
     }
 }
 
-/* EV_VALUE: u16 value type, u16 0, value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8). The
+/* EVENT_VALUE: u16 value type, u16 0, value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8). The
  * value type follows the QML type of vlqtUserValue (int, real, bool, string); others are not sent. Strings are capped
  * at kMaxValueString bytes on a UTF-8 character boundary (the record length is u16). Only on user changes, so the
  * string copy does not allocate per frame. */
@@ -751,22 +751,22 @@ void pushValue(Scene& scene, quint32 sink, const QVariant& v)
 {
     quint16 vt = 0;
     switch (v.typeId()) {
-    case QMetaType::Int: vt = VLQT_VT_I32; break;
+    case QMetaType::Int: vt = VLQT_VALUE_TYPE_I32; break;
     case QMetaType::Double:
-    case QMetaType::Float: vt = VLQT_VT_F32; break;
-    case QMetaType::Bool: vt = VLQT_VT_BOOL; break;
-    case QMetaType::QString: vt = VLQT_VT_STRING; break;
+    case QMetaType::Float: vt = VLQT_VALUE_TYPE_F32; break;
+    case QMetaType::Bool: vt = VLQT_VALUE_TYPE_BOOL; break;
+    case QMetaType::QString: vt = VLQT_VALUE_TYPE_STRING; break;
     default: return;
     }
-    if (vt != VLQT_VT_STRING) {
+    if (vt != VLQT_VALUE_TYPE_STRING) {
         unsigned char buf[8] = {};
         std::memcpy(buf, &vt, 2);
         quint16 len = 4;
-        if (vt == VLQT_VT_I32) {
+        if (vt == VLQT_VALUE_TYPE_I32) {
             const qint32 i = v.toInt();
             std::memcpy(buf + 4, &i, 4);
             len += 4;
-        } else if (vt == VLQT_VT_F32) {
+        } else if (vt == VLQT_VALUE_TYPE_F32) {
             const float f = float(v.toDouble());
             std::memcpy(buf + 4, &f, 4);
             len += 4;
@@ -774,7 +774,7 @@ void pushValue(Scene& scene, quint32 sink, const QVariant& v)
             buf[4] = v.toBool() ? 1 : 0;
             len += 1;
         }
-        scene.pushEvent(VLQT_EV_VALUE, sink, 0, buf, len);
+        scene.pushEvent(VLQT_EVENT_VALUE, sink, 0, buf, len);
         return;
     }
     const QByteArray utf8 = v.toString().toUtf8();
@@ -791,11 +791,11 @@ void pushValue(Scene& scene, quint32 sink, const QVariant& v)
     std::memcpy(payload.data() + 2, &zero, 2);
     std::memcpy(payload.data() + 4, &n32, 4);
     std::memcpy(payload.data() + 8, utf8.constData(), size_t(n));
-    scene.pushEvent(VLQT_EV_VALUE, sink, 0, payload.constData(), quint16(payload.size()));
+    scene.pushEvent(VLQT_EVENT_VALUE, sink, 0, payload.constData(), quint16(payload.size()));
 }
 
-/* QmlElement (protocol.h "QmlElement"): the changes of the root since the last poll as EV_QML_PROPERTY (one per
- * changed property, its last value) and EV_QML_SIGNAL (every emitted signal, in order). Records are 4-byte aligned inside
+/* QmlElement (protocol.h "QmlElement"): the changes of the root since the last poll as EVENT_QML_PROPERTY (one per
+ * changed property, its last value) and EVENT_QML_SIGNAL (every emitted signal, in order). Records are 4-byte aligned inside
  * (name, value, argument), the poll record is padded by pushEvent; one that would not fit the u16 length is skipped.
  * Taken (and dropped) also without a sink so that nothing piles up; "signals dropped" is shown by QmlItem::error. */
 constexpr int kMaxEventPayload = 65000;
@@ -817,7 +817,7 @@ void collectQml(Scene& scene, Node& n)
     signalEvents.clear();
     bool dropped = false;
     item->takeEvents(props, signalEvents, dropped);
-    if (n.sink == 0)
+    if (n.feedbackId == 0)
         return;
     if (dropped)
         item->noteDropped();
@@ -831,7 +831,7 @@ void collectQml(Scene& scene, Node& n)
         pad4(payload);
         payload.append(e.value.bytes);
         if (payload.size() <= kMaxEventPayload)
-            scene.pushEvent(VLQT_EV_QML_PROPERTY, n.sink, 0, payload.constData(), quint16(payload.size()));
+            scene.pushEvent(VLQT_EVENT_QML_PROPERTY, n.feedbackId, 0, payload.constData(), quint16(payload.size()));
     }
     for (const QmlSignalEvent& e : signalEvents) {
         payload.clear();
@@ -849,7 +849,7 @@ void collectQml(Scene& scene, Node& n)
             pad4(payload);
         }
         if (payload.size() <= kMaxEventPayload)
-            scene.pushEvent(VLQT_EV_QML_SIGNAL, n.sink, 0, payload.constData(), quint16(payload.size()));
+            scene.pushEvent(VLQT_EVENT_QML_SIGNAL, n.feedbackId, 0, payload.constData(), quint16(payload.size()));
     }
 }
 
@@ -857,7 +857,7 @@ void collectQml(Scene& scene, Node& n)
 
 namespace {
 
-/* EV_MEASURED / EV_SCENE_BOUNDS of one bound node, each only on change. */
+/* EVENT_MEASURED / EVENT_SCENE_BOUNDS of one bound node, each only on change. */
 void measureGeometry(Scene& scene, Node& n)
 {
     SentState& s = n.sent;
@@ -868,7 +868,7 @@ void measureGeometry(Scene& scene, Node& n)
         s.measured[0] = m[0];
         s.measured[1] = m[1];
         s.hasMeasured = true;
-        scene.pushEvent(VLQT_EV_MEASURED, n.sink, 0, m, quint16(sizeof m));
+        scene.pushEvent(VLQT_EVENT_MEASURED, n.feedbackId, 0, m, quint16(sizeof m));
     }
 
     // Item geometry (frame, #469: an auto-sized Group may start in negative coordinates), not boundingRect():
@@ -880,7 +880,7 @@ void measureGeometry(Scene& scene, Node& n)
         for (int i = 0; i < 4; ++i)
             s.bounds[i] = b[i];
         s.hasBounds = true;
-        scene.pushEvent(VLQT_EV_SCENE_BOUNDS, n.sink, 0, b, quint16(sizeof b));
+        scene.pushEvent(VLQT_EVENT_SCENE_BOUNDS, n.feedbackId, 0, b, quint16(sizeof b));
     }
 }
 
@@ -909,7 +909,7 @@ void collectGeometry(Scene& scene)
                 if (n.measuredStamp == stamp)
                     continue; // visited with its subtree already
                 n.measuredStamp = stamp;
-                if (n.sink != 0)
+                if (n.feedbackId != 0)
                     measureGeometry(scene, n);
                 if (n.effectChain)
                     for (const EffectChain::Link& l : n.effectChain->links)
@@ -969,7 +969,7 @@ void collectMeasurements(Scene& scene)
     std::vector<quint32>& ids = scene.pollIds;
     for (size_t i = 0; i < ids.size();) {
         const auto it = scene.nodes.find(ids[i]);
-        // A chain gone with its error still shown stays one more poll: it sends the cleared EV_ERROR.
+        // A chain gone with its error still shown stays one more poll: it sends the cleared EVENT_ERROR.
         if (it == scene.nodes.end() || it->second.polledStamp == scene.pollStamp
             || (!it->second.polled && !it->second.effectChain && it->second.sent.error.isEmpty())) {
             if (it != scene.nodes.end() && it->second.polledStamp != scene.pollStamp)
@@ -981,9 +981,9 @@ void collectMeasurements(Scene& scene)
         ++i;
         Node& n = it->second;
         n.polledStamp = scene.pollStamp;
-        if (n.type == VLQT_TYPE_QML)
+        if (n.type == VLQT_ELEMENT_TYPE_QML)
             collectQml(scene, n); // QML root changes and signals
-        if (n.sink == 0)
+        if (n.feedbackId == 0)
             continue;
         SentState& s = n.sent;
         float md[2];
@@ -991,7 +991,7 @@ void collectMeasurements(Scene& scene)
             s.media[0] = md[0];
             s.media[1] = md[1];
             s.hasMedia = true;
-            scene.pushEvent(VLQT_EV_MEDIA, n.sink, 0, md, quint16(sizeof md));
+            scene.pushEvent(VLQT_EVENT_MEDIA, n.feedbackId, 0, md, quint16(sizeof md));
         }
 
         // Error text: only on change; empty = cleared. Capped (record length is u16).
@@ -999,19 +999,19 @@ void collectMeasurements(Scene& scene)
         if (error != s.error) {
             s.error = error;
             const QByteArray utf8 = error.toUtf8();
-            scene.pushEvent(VLQT_EV_ERROR, n.sink, 0, utf8.constData(), quint16(qMin<qsizetype>(utf8.size(), 4096)));
+            scene.pushEvent(VLQT_EVENT_ERROR, n.feedbackId, 0, utf8.constData(), quint16(qMin<qsizetype>(utf8.size(), 4096)));
         }
-        if (n.type == VLQT_TYPE_QML)
+        if (n.type == VLQT_ELEMENT_TYPE_QML)
             static_cast<QmlItem*>(n.item)->clearDropNotice(); // "signals dropped" is shown for one poll
 
         // Button: clicked signals, always on (Bang output).
         if (const quint32 bc = scene.elements.takeClicks(n))
-            scene.pushEvent(VLQT_EV_CLICK, n.sink, 0, &bc, quint16(sizeof bc));
+            scene.pushEvent(VLQT_EVENT_CLICK, n.feedbackId, 0, &bc, quint16(sizeof bc));
 
-        // Value inputs: the value of the last user change, captured at the signal (protocol.h EV_VALUE).
+        // Value inputs: the value of the last user change, captured at the signal (protocol.h EVENT_VALUE).
         QVariant uv;
         if (scene.elements.takeUserValue(n, uv))
-            pushValue(scene, n.sink, uv);
+            pushValue(scene, n.feedbackId, uv);
     }
     collectHandlers(scene);
 }
@@ -1033,7 +1033,7 @@ void watchWindowGeometry(Scene& scene)
 void collectWindowGeometry(Scene& scene)
 {
     QQuickWindow* w = scene.window;
-    // Same convention as vlqt_window_create_at: outer top-left (frame position), client size, DIP.
+    // Same convention as vlqt_window_create: outer top-left (frame position), client size, DIP.
     // Fullscreen has no frame, but Qt (Windows) keeps reporting the old frame margins: client position.
     const Qt::WindowStates st = w->windowStates();
     const QPoint pos = st.testFlag(Qt::WindowFullScreen) ? w->position() : w->framePosition();
@@ -1044,13 +1044,13 @@ void collectWindowGeometry(Scene& scene)
     const QPoint client = w->position();
     struct { float x, y, w, h; quint32 flags; float cx, cy; } g{
         float(pos.x()), float(pos.y()), float(w->width()), float(w->height()),
-        (st.testFlag(Qt::WindowMinimized) ? quint32(VLQT_WINDOW_MINIMIZED) : 0u)
-            | (st.testFlag(Qt::WindowMaximized) ? quint32(VLQT_WINDOW_MAXIMIZED) : 0u)
-            | (st.testFlag(Qt::WindowFullScreen) ? quint32(VLQT_WINDOW_FULLSCREEN) : 0u)
-            | (w->isVisible() ? quint32(VLQT_WINDOW_VISIBLE) : 0u),
+        (st.testFlag(Qt::WindowMinimized) ? quint32(VLQT_WINDOW_STATE_MINIMIZED) : 0u)
+            | (st.testFlag(Qt::WindowMaximized) ? quint32(VLQT_WINDOW_STATE_MAXIMIZED) : 0u)
+            | (st.testFlag(Qt::WindowFullScreen) ? quint32(VLQT_WINDOW_STATE_FULLSCREEN) : 0u)
+            | (w->isVisible() ? quint32(VLQT_WINDOW_STATE_VISIBLE) : 0u),
         float(client.x()), float(client.y())};
-    static_assert(sizeof g == 28, "EV_WINDOW_GEOMETRY payload");
-    scene.pushEvent(VLQT_EV_WINDOW_GEOMETRY, 0, 0, &g, quint16(sizeof g));
+    static_assert(sizeof g == 28, "EVENT_WINDOW_GEOMETRY payload");
+    scene.pushEvent(VLQT_EVENT_WINDOW_GEOMETRY, 0, 0, &g, quint16(sizeof g));
 }
 
 } // namespace vlqt

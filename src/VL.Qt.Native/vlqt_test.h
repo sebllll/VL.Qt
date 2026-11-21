@@ -45,9 +45,9 @@ enum vlqt_device_lost {
     VLQT_DEVICE_LOST_HANG = 2
 };
 
-/* Resource kind of vlqt_res_create (int) for vlqt_test_res_start; the product kinds are vlqt_res_kind (protocol.h). */
-enum vlqt_test_res_kind {
-    VLQT_RES_KIND_TEST = 1 /* decode sleeps n ms in a worker, upload uses n bytes of budget (vlqt_test_res_start) */
+/* Resource kind of vlqt_res_create (int) for vlqt_test_res_start; the product kinds are vlqt_resource_kind (protocol.h). */
+enum vlqt_test_resource_kind {
+    VLQT_RESOURCE_KIND_TEST = 1 /* decode sleeps n ms in a worker, upload uses n bytes of budget (vlqt_test_res_start) */
 };
 
 /* --- Synthetic input (test/test_input.cpp) ---
@@ -58,51 +58,51 @@ enum vlqt_test_res_kind {
 /* Sends a QMouseEvent (VLQT_MOUSE_MOVE with the buttons held, PRESS/RELEASE = left button, *_RIGHT = right button) or a
  * QEvent::Leave (VLQT_MOUSE_LEAVE, x/y ignored) to the window via QCoreApplication::sendEvent; x/y in window logical
  * pixels. Delivered synchronously, no processEvents needed. 0, VLQT_ERR_BAD_ARGUMENT unknown type. */
-VLQT_API int   vlqt_test_send_mouse(void* w, int type, float x, float y);
+VLQT_API int   vlqt_test_send_mouse(vlqt_scene* window, int type, float x, float y);
 /* Synthetic touch input. type = vlqt_touch for touch point id, x/y in window logical pixels. QtNative keeps the active
  * points per window and sends the complete QTouchEvent (TouchBegin/Update/End, every active point with its state,
  * others stationary) from one test touchscreen (QPointingDevice, registered once) via QCoreApplication::sendEvent:
  * synchronous, not spontaneous (passes VLQT_TEST_SYNTHETIC_INPUT). Several ids = multitouch. 0, VLQT_ERR_BAD_ARGUMENT
  * unknown type, PRESS of an active id or MOVE/RELEASE of an inactive one. */
-VLQT_API int   vlqt_test_send_touch(void* w, int type, int id, float x, float y);
+VLQT_API int   vlqt_test_send_touch(vlqt_scene* window, int type, int id, float x, float y);
 /* Like vlqt_test_send_mouse / vlqt_test_send_touch (PRESS, MOVE, RELEASE), but queued like platform input
  * (QWindowSystemInterface, asynchronous): delivered by vlqt_app_deliver_input or the next pump. The events come from
  * test devices and pass VLQT_TEST_SYNTHETIC_INPUT. 0, VLQT_ERR_BAD_ARGUMENT unknown type or touch id state. */
-VLQT_API int   vlqt_test_queue_mouse(void* w, int type, float x, float y);
-VLQT_API int   vlqt_test_queue_touch(void* w, int type, int id, float x, float y);
+VLQT_API int   vlqt_test_queue_mouse(vlqt_scene* window, int type, float x, float y);
+VLQT_API int   vlqt_test_queue_touch(vlqt_scene* window, int type, int id, float x, float y);
 /* Synthetic wheel input: a QWheelEvent at x/y (window logical pixels) with angleDelta (dx, dy) in eighths of a degree
  * (120 = one notch) via QCoreApplication::sendEvent (synchronous, not spontaneous: passes VLQT_TEST_SYNTHETIC_INPUT).
  * 0. */
-VLQT_API int   vlqt_test_send_wheel(void* w, float x, float y, int dx, int dy);
+VLQT_API int   vlqt_test_send_wheel(vlqt_scene* window, float x, float y, int dx, int dy);
 /* Sends a key press (Qt::Key, Qt::KeyboardModifiers) to the window, e.g. F5 page cycling. 0. */
-VLQT_API int   vlqt_test_send_key(void* w, int key, int modifiers);
+VLQT_API int   vlqt_test_send_key(vlqt_scene* window, int key, int modifiers);
 /* Key press + release with text (UTF-8, may be null/empty) to the window's focus item, e.g. typing digits into a
  * SpinBox (key Qt::Key_1, text "1") or Enter (Qt::Key_Return, "\r"). 0. */
-VLQT_API int   vlqt_test_send_key_text(void* w, int key, int modifiers, const char* text);
+VLQT_API int   vlqt_test_send_key_text(vlqt_scene* window, int key, int modifiers, const char* text);
 
 /* --- Probes (test/test_probes.cpp) --- */
 
 /* Grabs the window's frame (QQuickWindow::grabWindow) into a PNG file. 0, VLQT_ERR_NULL_HANDLE, VLQT_ERR_NO_DATA no
  * image, VLQT_ERR_IO not saved, VLQT_ERR_UNSUPPORTED on an offscreen scene. */
-VLQT_API int   vlqt_test_window_grab(void* w, const char* pngPath);
+VLQT_API int   vlqt_test_window_grab(vlqt_scene* window, const char* pngPath);
 /* The vlqt_perf_stats computation on n given samples with timestamps t_ms (ascending, ms; "now" = t_ms[n-1]) and a
  * fixed budget. 0, VLQT_ERR_BAD_ARGUMENT null/negative argument. */
 VLQT_API int   vlqt_test_perf_eval(const vlqt_perf_sample* samples, const double* t_ms, int n, double budget_ms, vlqt_perf_stats* out);
-/* The vlqt_host_stats computation on n given host frames. 0, VLQT_ERR_BAD_ARGUMENT null/negative argument. */
-VLQT_API int   vlqt_test_perf_host_eval(const vlqt_host_frame* frames, int n, vlqt_host_stats* out);
+/* The vlqt_host_pump_stats computation on n given host pumps. 0, VLQT_ERR_BAD_ARGUMENT null/negative argument. */
+VLQT_API int   vlqt_test_perf_host_eval(const vlqt_host_pump* pumps, int n, vlqt_host_pump_stats* out);
 /* Number of pointer handlers (QQuickPointerHandler children) of item id (input handlers); VLQT_ERR_NULL_HANDLE,
  * VLQT_ERR_UNKNOWN_OBJECT. */
-VLQT_API int   vlqt_test_handler_count(void* w, unsigned int id);
+VLQT_API int   vlqt_test_handler_count(vlqt_scene* window, unsigned int id);
 /* Busy-waits ms inside one phase of the window's next rendered frame (0 events, 1 sync, 2 render, 3 present, 4 vsync
  * wait) to check that the F5 timeline attributes a spike. 0, VLQT_ERR_NULL_HANDLE. */
-VLQT_API int   vlqt_test_perf_spike(void* w, int phase, float ms);
+VLQT_API int   vlqt_test_perf_spike(vlqt_scene* window, int phase, float ms);
 /* Plain UTF-8 text of an F5 page (0 Summary, 1 Timeline, 2 Scene, 3 System, 4 Resources; others empty), built on
  * demand, overlay state unchanged: a buffer export (vlqt.h). VLQT_ERR_NULL_HANDLE. */
-VLQT_API int   vlqt_test_perf_text(void* w, int page, char* out, int cap, int* written, int* required);
+VLQT_API int   vlqt_test_perf_text(vlqt_scene* window, int page, char* out, int cap, int* written, int* required);
 /* QRhi of the window and its native device (ID3D11Device* on D3D11, else null). Null window = the upload QRhi on the
  * shared device (creates the device if there is none yet). 0, VLQT_ERR_NO_DATA no QRhi (scenegraph not initialized
  * yet, or no shared device). */
-VLQT_API int   vlqt_test_device_info(void* w, void** device, void** rhi);
+VLQT_API int   vlqt_test_device_info(vlqt_scene* window, void** device, void** rhi);
 /* LUID of the adapter of the shared device (LowPart | HighPart << 32), 0 if there is none yet (never creates it), on
  * Linux and for another graphics API. For vlqt_test_d3d11_create_device of the testkit (testkit/testkit.h). */
 VLQT_API unsigned long long vlqt_test_device_luid(void);
@@ -124,16 +124,16 @@ VLQT_API int   vlqt_test_font_refs(unsigned long long handle);
 /* Last values signalled on the two fences of a bound offscreen scene (see vlqt_offscreen_render_batch) and the number
  * of renders into its texture since bind: an unchanged scene leaves all three unchanged. Out pointers may be NULL.
  * 0, VLQT_ERR_NULL_HANDLE, VLQT_ERR_UNBOUND. */
-VLQT_API int   vlqt_test_offscreen_state(void* scene, unsigned long long* readFence, unsigned long long* writeFence,
+VLQT_API int   vlqt_test_offscreen_state(vlqt_scene* scene, unsigned long long* readFence, unsigned long long* writeFence,
                                          long long* renders);
 
 /* --- Test resource kind (test/test_resource_kind.cpp) --- */
 
-/* Starts a Pending VLQT_RES_KIND_TEST resource: decode sleeps decodeMs in a worker (cancellable), upload uses
+/* Starts a Pending VLQT_RESOURCE_KIND_TEST resource: decode sleeps decodeMs in a worker (cancellable), upload uses
  * uploadBytes of budget in stripes. flags bit0 = decode fails, bit1 = upload fails. 0, VLQT_ERR_BAD_ARGUMENT,
  * VLQT_ERR_UNKNOWN_ID. */
 VLQT_API int   vlqt_test_res_start(unsigned long long id, int decodeMs, long long uploadBytes, int flags);
-/* The state machine's transition (VLQT_RES_STATE_*), 0 = done, VLQT_ERR_BAD_ARGUMENT = rejected (logged),
+/* The state machine's transition (VLQT_RESOURCE_STATE_*), 0 = done, VLQT_ERR_BAD_ARGUMENT = rejected (logged),
  * VLQT_ERR_UNKNOWN_ID. */
 VLQT_API int   vlqt_test_res_transition(unsigned long long id, int from, int to);
 /* Element reference +1 (delta 1) or -1 (delta -1), like an element of package 04. 0, VLQT_ERR_BAD_ARGUMENT,

@@ -423,7 +423,7 @@ int load(uint64_t id, const char* utf8Path, int stage)
     w->m_stage = stage;
     w->m_source = backendSource();
     qCDebug(lcShader, "load %s shader %s", stageName(stage), qPrintable(path));
-    return start(id, std::move(w), VLQT_RES_KIND_SHADER);
+    return start(id, std::move(w), VLQT_RESOURCE_KIND_SHADER);
 }
 
 int loadSource(uint64_t id, const char* utf8Source, int stage)
@@ -443,7 +443,7 @@ int loadSource(uint64_t id, const char* utf8Source, int stage)
     w->m_source = backendSource();
     w->m_targets = bakeTargets(w->m_source);
     qCDebug(lcShader, "load %s (%lld bytes)", qPrintable(w->m_path), static_cast<long long>(w->m_code.size()));
-    return start(id, std::move(w), VLQT_RES_KIND_SHADER);
+    return start(id, std::move(w), VLQT_RESOURCE_KIND_SHADER);
 }
 
 namespace {
@@ -521,7 +521,7 @@ int reflect(const char* utf8Source, int stage, char* buf, int bufLen, int* writt
 
 std::shared_ptr<ShaderResource> ready(uint64_t id)
 {
-    return std::static_pointer_cast<ShaderResource>(readyWork(id, VLQT_RES_KIND_SHADER));
+    return std::static_pointer_cast<ShaderResource>(readyWork(id, VLQT_RESOURCE_KIND_SHADER));
 }
 
 const QShader& defaultVertexShader()

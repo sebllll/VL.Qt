@@ -342,7 +342,7 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
         const double now = nowMs();
         m_pending.present += float(now - m_tRenderEnd);
         if (m_tLastSwap >= 0)
-            m_pending.frame = float(now - m_tLastSwap);
+            m_pending.frameInterval = float(now - m_tLastSwap);
         m_tLastSwap = now;
         m_pending.swaps++;
     }, Qt::DirectConnection);
@@ -359,8 +359,8 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
             m_done.swaps += m_pending.swaps;
             if (m_pending.gpu > 0)
                 m_done.gpu = m_pending.gpu;
-            if (m_pending.frame > 0)
-                m_done.frame = m_pending.frame;
+            if (m_pending.frameInterval > 0)
+                m_done.frameInterval = m_pending.frameInterval;
         }
         m_pending = PerfSample{};
     }, Qt::DirectConnection);
@@ -422,9 +422,9 @@ void PerfMonitor::summary(vlqt_perf* out) const
         swaps += s.swaps;
         if (s.swaps == 0)
             continue;
-        if (s.frame > 0) {
-            out->frame_ms += s.frame;
-            out->frame_ms_max = std::max(out->frame_ms_max, double(s.frame));
+        if (s.frameInterval > 0) {
+            out->frame_ms += s.frameInterval;
+            out->frame_ms_max = std::max(out->frame_ms_max, double(s.frameInterval));
             frames++;
         }
         out->sync_ms += s.sync / s.swaps;
@@ -493,7 +493,7 @@ void PerfCounters::add(const PerfSample& s, double tMs, double budgetMs)
     }
     const bool over = s.pump > budgetMs;
     // after idle pumps (on-demand rendering) the interval spans the idle time, not a missed refresh.
-    const bool longFrame = s.swaps > 0 && m_prevSwap && s.frame > 1.5 * budgetMs;
+    const bool longFrame = s.swaps > 0 && m_prevSwap && s.frameInterval > 1.5 * budgetMs;
     m_prevSwap = s.swaps > 0;
     for (Counts* c : {&m_total, &m_buckets[b]}) {
         c->pumps++;
@@ -536,7 +536,7 @@ double percentile(const float* v, int n, double p)
 
 bool consecutiveFrame(const PerfSample* samples, int i)
 {
-    return samples[i].swaps > 0 && samples[i].frame > 0 && i > 0 && samples[i - 1].swaps > 0;
+    return samples[i].swaps > 0 && samples[i].frameInterval > 0 && i > 0 && samples[i - 1].swaps > 0;
 }
 
 void perfStats(const PerfSample* samples, int n, const PerfCounters& counters, double nowMs, double budgetMs,
@@ -551,7 +551,7 @@ void perfStats(const PerfSample* samples, int n, const PerfCounters& counters, d
         const PerfSample& s = samples[i];
         pump[np++] = s.pump;
         if (consecutiveFrame(samples, i))
-            frame[nf++] = s.frame;
+            frame[nf++] = s.frameInterval;
     }
     std::sort(pump.begin(), pump.begin() + np);
     std::sort(frame.begin(), frame.begin() + nf);
@@ -588,7 +588,7 @@ void perfEval(const vlqt_perf_sample* samples, const double* tMs, int n, double 
     for (int i = 0; i < n; i++) {
         const vlqt_perf_sample& v = samples[i];
         PerfSample s;
-        s.frame = v.frame;
+        s.frameInterval = v.frame_interval;
         s.pump = v.pump;
         s.sync = v.sync;
         s.render = v.render;
@@ -606,14 +606,14 @@ void perfEval(const vlqt_perf_sample* samples, const double* tMs, int n, double 
 
 // #245 ---------------------------------------------------------------------------------------------------------------
 
-void perfHostStats(const vlqt_host_frame* frames, int n, vlqt_host_stats* out)
+void perfHostStats(const vlqt_host_pump* frames, int n, vlqt_host_pump_stats* out)
 {
-    *out = vlqt_host_stats{};
+    *out = vlqt_host_pump_stats{};
     if (n <= 0)
         return;
     double interval = 0, gc0 = 0, gc1 = 0, gc2 = 0, pause = 0;
     for (int i = 0; i < n; i++) {
-        const vlqt_host_frame& f = frames[i];
+        const vlqt_host_pump& f = frames[i];
         out->apply_ms += f.apply;
         out->apply_ms_max = std::max(out->apply_ms_max, double(f.apply));
         out->reconcile_ms += f.reconcile;
@@ -651,7 +651,7 @@ void perfHostStats(const vlqt_host_frame* frames, int n, vlqt_host_stats* out)
     }
 }
 
-bool PerfMonitor::reportHostFrame(const vlqt_host_frame& f)
+bool PerfMonitor::reportHostPump(const vlqt_host_pump& f)
 {
     if (m_count == 0)
         return false;
@@ -661,7 +661,7 @@ bool PerfMonitor::reportHostFrame(const vlqt_host_frame& f)
     return true;
 }
 
-bool PerfMonitor::lastHostFrame(vlqt_host_frame* out) const
+bool PerfMonitor::lastHostPump(vlqt_host_pump* out) const
 {
     if (m_count == 0 || !sample(m_count - 1).hostReported)
         return false;
@@ -669,9 +669,9 @@ bool PerfMonitor::lastHostFrame(vlqt_host_frame* out) const
     return true;
 }
 
-void PerfMonitor::hostStats(vlqt_host_stats* out) const
+void PerfMonitor::hostStats(vlqt_host_pump_stats* out) const
 {
-    std::array<vlqt_host_frame, kSummaryPumps> frames;
+    std::array<vlqt_host_pump, kSummaryPumps> frames;
     int n = 0;
     for (int i = std::max(0, m_count - kSummaryPumps); i < m_count; i++)
         if (sample(i).hostReported)
@@ -842,7 +842,7 @@ void PerfMonitor::updateOverlay()
     if (m_flags & Meter) {
         vlqt_perf p;
         summary(&p);
-        vlqt_host_stats hs;
+        vlqt_host_pump_stats hs;
         hostStats(&hs);
         auto f = [](double v, int prec = 2) { return QString::number(v, 'f', prec); };
         auto opt = [&f](double v) { return v > 0 ? f(v, 1) : QStringLiteral("-"); };
@@ -909,8 +909,8 @@ QString PerfMonitor::summaryPage(QString* body) const
         swaps += s.swaps;
         for (int ph = 0; ph < PhaseCount; ph++)
             phSum[ph] += phaseMs(s, ph);
-        if (s.swaps > 0 && s.frame > 0) { frameSum += s.frame; frames++; }
-        if (consecutiveFrame(ring.data(), i)) { rowSum += s.frame; rowFrames++; }
+        if (s.swaps > 0 && s.frameInterval > 0) { frameSum += s.frameInterval; frames++; }
+        if (consecutiveFrame(ring.data(), i)) { rowSum += s.frameInterval; rowFrames++; }
         if (s.gpu > 0) { gpuSum += s.gpu; gpus++; }
         idle += s.swaps == 0;
     }
@@ -927,7 +927,7 @@ QString PerfMonitor::summaryPage(QString* body) const
     if (onDemand)
         h.c(kGrey, QStringLiteral(" (on demand, %1 % idle)").arg(qRound(100.0 * idle / na)));
     h.t(QStringLiteral("   budget %1 ms (%2 Hz)").arg(num(budget, 0), num(1000.0 / budget, 0, 0)));
-    vlqt_host_stats hs; // C# side (live, also while frozen); only when the host reports it
+    vlqt_host_pump_stats hs; // C# side (live, also while frozen); only when the host reports it
     hostStats(&hs);
     const bool vvvv = hs.samples > 0 && hs.vvvv_ms_max > 0; // 0 = unknown (older host)
     if (frameAvg > 0 && !onDemand) {
@@ -1041,14 +1041,14 @@ namespace {
 const char* typeName(quint16 type)
 {
     switch (type) {
-    case VLQT_TYPE_ITEM: return "group";
-    case VLQT_TYPE_RECTANGLE: return "rect";
-    case VLQT_TYPE_TEXT: return "text";
-    case VLQT_TYPE_IMAGE: return "image";
-    case VLQT_TYPE_ROW: return "row";
-    case VLQT_TYPE_COLUMN: return "column";
-    case VLQT_TYPE_SHADER_EFFECT: return "shader";
-    case VLQT_TYPE_VIDEO: return "video";
+    case VLQT_ELEMENT_TYPE_GROUP: return "group";
+    case VLQT_ELEMENT_TYPE_RECTANGLE: return "rect";
+    case VLQT_ELEMENT_TYPE_TEXT: return "text";
+    case VLQT_ELEMENT_TYPE_IMAGE: return "image";
+    case VLQT_ELEMENT_TYPE_ROW: return "row";
+    case VLQT_ELEMENT_TYPE_COLUMN: return "column";
+    case VLQT_ELEMENT_TYPE_SHADER: return "shader";
+    case VLQT_ELEMENT_TYPE_VIDEO: return "video";
     default: return "other";
     }
 }
@@ -1106,15 +1106,15 @@ QString PerfMonitor::scenePage() const
     const QUnifiedTimer* timer = QUnifiedTimer::instance(false);
     h.br().t(lab("animations", L)).t(QString::number(timer ? qlonglong(timer->runningAnimationCount()) : 0).rightJustified(8))
         .c(kGrey, "  running (process)");
-    // Ops per apply: commands the host applied to this window per pump (host frames, ~1 s).
-    vlqt_host_stats hs;
+    // Ops per apply: commands the host applied to this window per pump (host pumps, ~1 s).
+    vlqt_host_pump_stats hs;
     hostStats(&hs);
-    vlqt_host_frame last;
+    vlqt_host_pump last;
     h.br().t(lab("ops/apply", L));
-    if (hs.samples > 0 && lastHostFrame(&last))
+    if (hs.samples > 0 && lastHostPump(&last))
         h.t(num(hs.ops, 8, 1)).c(kGrey, QStringLiteral("  avg   max %1  last %2").arg(num(hs.ops_max, 0, 0)).arg(last.ops));
     else
-        h.t(kNa.rightJustified(8)).c(kGrey, "  no host frames reported");
+        h.t(kNa.rightJustified(8)).c(kGrey, "  no host pumps reported");
 
     // QRhi statistics (feasibility): GPU memory only from the D3D12/Vulkan
     // allocators; draw calls/batches are not exposed by Qt Quick.
@@ -1366,7 +1366,7 @@ const GraphSeries kGraphSeries[] = {
     {qRgb(255, 110, 180), "#ff6eb4", [](const PerfSample& s) { return s.hostReported ? s.host.vvvv : 0.f; }},
     {qRgb(255, 160, 40), "#ffa028", [](const PerfSample& s) { return s.pump; }},
     {qRgb(80, 220, 120), "#50dc78", [](const PerfSample& s) { return s.gpu; }},
-    {qRgb(255, 255, 255), "#ffffff", [](const PerfSample& s) { return s.frame; }},
+    {qRgb(255, 255, 255), "#ffffff", [](const PerfSample& s) { return s.frameInterval; }},
 };
 constexpr int kGraphSeriesCount = int(std::size(kGraphSeries));
 
@@ -1376,7 +1376,7 @@ float graphYMax(const PerfMonitor* m)
     float yMax = 33.4f;
     for (int i = 0; i < (m ? m->count() : 0); i++) {
         const PerfSample& s = m->sample(i);
-        yMax = std::max({yMax, s.frame, s.pump, s.gpu, s.hostReported ? s.host.vvvv : 0.f});
+        yMax = std::max({yMax, s.frameInterval, s.pump, s.gpu, s.hostReported ? s.host.vvvv : 0.f});
     }
     return std::min(yMax * 1.1f, 1000.f / 15); // spikes above 66 ms clip at the top
 }
