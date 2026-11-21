@@ -7,7 +7,6 @@
 #include <QtCore/QSize>
 #include <QtCore/qnamespace.h>
 
-class PerfMonitor;
 class QQmlEngine;
 class QQuickWindow;
 struct vlqt_scene;
@@ -16,6 +15,7 @@ namespace vlqt {
 
 class Scene;
 class CloseFilter;
+class PerfMonitor;
 class UpdateGate;
 
 struct OffscreenScene;

@@ -10,7 +10,7 @@
 #include "platform/platform.h"
 #include "window/scene_handle.h"
 #include "device.h"
-#include "perf.h"
+#include "diagnostics/perf.h"
 #include "protocol.h"
 #include "qtimageitem.h"
 #include "resources/resources.h"
@@ -63,6 +63,8 @@ using vlqt::g_pipelineCachePath;
 using vlqt::guarded;
 using vlqt::UpdateGate;
 using vlqt::log::emitLog;
+using vlqt::PerfMonitor;
+using vlqt::registerPerfTypes;
 
 extern "C" {
 

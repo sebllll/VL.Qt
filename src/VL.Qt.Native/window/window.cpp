@@ -9,7 +9,7 @@
 #include "scene/scene.h"
 #include "device.h"
 #include "offscreen/offscreen.h"
-#include "perf.h"
+#include "diagnostics/perf.h"
 #include "protocol.h"
 
 #include <QtCore/QCoreApplication>

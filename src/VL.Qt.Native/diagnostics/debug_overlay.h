@@ -1,4 +1,4 @@
-/* debug.h - debug overlay of a window.
+/* debug_overlay.h - debug overlay of a window.
  *
  * One item per window, child of contentItem next to the user root (like the perf overlay), so it takes no part in
  * layout, childrenRect, implicit/Measured Size, REPARENT indices or effect layers. enabled=false, no mouse buttons,
