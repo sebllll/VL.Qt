@@ -2,7 +2,7 @@
 
 #include "effects/layer_requests.h"
 #include "effects/shader_material.h"
-#include "elements.h"
+#include "elements/elements.h"
 #include "image_resource.h"
 #include "protocol.h"
 #include "qtimageitem.h"

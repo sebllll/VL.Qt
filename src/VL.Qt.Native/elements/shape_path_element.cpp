@@ -1,4 +1,4 @@
-#include "shape_path_element.h"
+#include "elements/shape_path_element.h"
 #include "protocol.h"
 
 #include <cstring>

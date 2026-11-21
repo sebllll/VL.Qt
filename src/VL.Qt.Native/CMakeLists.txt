@@ -84,10 +84,10 @@ target_sources(vlqt PRIVATE
 
     # elements/
     elements/element_entry.h
-    elements.cpp
-    elements.h
-    shape_path_element.cpp
-    shape_path_element.h
+    elements/elements.cpp
+    elements/elements.h
+    elements/shape_path_element.cpp
+    elements/shape_path_element.h
 
     # effects/ and user_qml/
     effectchain.cpp

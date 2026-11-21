@@ -1,7 +1,7 @@
-#include "elements.h"
+#include "elements/elements.h"
 #include "audio_tap.h"
 #include "effectchain.h"
-#include "shape_path_element.h"
+#include "elements/shape_path_element.h"
 
 #include "qtimageitem.h"
 #include "qmlitem.h"

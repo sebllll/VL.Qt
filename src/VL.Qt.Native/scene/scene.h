@@ -4,7 +4,7 @@
  * property adds entries, no new exports. */
 #pragma once
 
-#include "elements.h"
+#include "elements/elements.h"
 #include "scene/clear_state.h"
 #include "scene/commands.h"
 #include "scene/event_queue.h"
