@@ -7,10 +7,10 @@
  * table entry only, no new export.
  *
  * Hot setters call the typed setters of Qt's private classes (QtQuick/private, QtQuickShapes/private): still LGPL, but
- * private API, so check them on every Qt update. In use here: QQuickItemPrivate (group_item.cpp), QQuickRectangle
- * (type_rectangle.cpp), QQuickText (type_text.cpp), QQuickMatrix4x4 (geometry.cpp), QQuickShaderEffectSource (group_item.cpp,
- * effect_sources.cpp), QQuickShape, QQuickShapePath and QQuickShapeTrim (type_shape.cpp), QQuickCurve and
- * QQuickPathData (shape_path_element.h). The animation clock (app/animation_clock.cpp) uses QUnifiedTimer and
+ * private API, so check them on every Qt update. In use here: QQuickItemPrivate and QQuickShaderEffectSource
+ * (group_item.cpp), QQuickRectangle (type_rectangle.cpp), QQuickText (type_text.cpp), QQuickMatrix4x4 (geometry.cpp),
+ * QQuickShape, QQuickShapePath and QQuickShapeTrim (type_shape.cpp), QQuickCurve and QQuickPathData
+ * (shape_path_element.h). The animation clock (app/animation_clock.cpp) uses QUnifiedTimer and
  * QAbstractAnimationTimer of QtCore/private for its keep-alive timer; if that class changes, an endless
  * QAbstractAnimation subclass (duration() == -1, empty updateCurrentTime), started once and never paused, keeps the
  * driver running as well, but counts as one running animation (the perf overlay must subtract it). QMetaObjectPrivate
@@ -140,15 +140,18 @@ public:
      * resolved once the first item of the type exists (Elements::create). */
     bool pollsState(quint16 type) const;
 
-    /* Number of live nodes with DEBUG on (set by the DEBUG setter, decremented by the Scene when such a node goes);
-     * the Scene shows the debug overlay while it is > 0 or the window-wide switch is on. */
-    int debugCount = 0;
+    /* DEBUG of a node: the one place that counts the live nodes with DEBUG on. Called by the DEBUG setter and with false
+     * by the Scene when the node goes. */
+    void setDebug(ElementEntry& node, bool on);
+    /* Some live node has DEBUG on: the Scene shows the debug overlay then (or while the window-wide switch is on). */
+    bool anyDebug() const { return debugCount > 0; }
     /* Parent of the group bounds proxies: the Scene's root (untracked children do not count for REPARENT). */
     QQuickItem* proxyParent = nullptr;
 
 private:
     struct TypeCache {
-        QQmlComponent* component = nullptr;
+        // Compiled QML only: its items are deleted by the Scene before, the engine goes after the Scene.
+        std::unique_ptr<QQmlComponent> component;
         bool resolved = false;
         std::unordered_map<quint16, ResolvedProp> props; // only successfully resolved QML properties
         std::unordered_set<quint16> warned;              // unknown property ids already logged
@@ -161,9 +164,8 @@ private:
     void resolve(const TypeDef& type, TypeCache& cache, QQuickItem* first);
     /* Attaches the Matrix4x4 to item.transform once (node.xf must exist) and writes the current matrix. */
     void writeTransform(ElementEntry& node);
-    /* Group as texture: one hidden QQuickShaderEffectSource per Group (sourceRect = group bounds, follows them, see
-     * GroupItem::syncEffectBounds), shared by the Input and texture uniforms of all effects, refcounted; the last release
-     * deletes it after the next frame (frameDelete), a destroyed Group retires it as well. */
+    /* Group as texture: the Group's proxy (GroupItem::acquireProxy) under proxyParent, shared by the Input and texture
+     * uniforms of all effects; a retired proxy (last release, destroyed Group) is deleted after the next frame (frameDelete). */
     QQuickItem* acquireGroupProxy(QQuickItem* group);
     void releaseGroupProxy(QQuickItem* group);
 
@@ -181,6 +183,7 @@ private:
     std::unordered_set<const QQuickItem*> maskLayers;   // mask frames attached to a link (their layer stays on)
     std::vector<QPointer<QQuickItem>> frameDelete;      // detached mask frames, Group proxies, retired chain stages: deleted after the next frame
     std::unique_ptr<EffectComponents> effectComponents; // chain items, compiled on first use
+    int debugCount = 0; // live nodes with DEBUG on (setDebug)
 };
 
 } // namespace vlqt

@@ -104,7 +104,7 @@ const QQuickItem* Scene::debugOverlay() const { return debug; }
 
 void Scene::updateDebug()
 {
-    const bool on = debugAll || elements.debugCount > 0;
+    const bool on = debugAll || elements.anyDebug();
     if (!on && !debug)
         return; // never used: nothing to do, no per-frame cost
     if (!debug)
@@ -193,8 +193,7 @@ void Scene::destroySubtree(QQuickItem* item)
         for (auto& kv : nodes)
             if (kv.second.effectSource == item)
                 elements.clearEffectSource(kv.second);
-    if (node.debug)
-        --elements.debugCount;
+    elements.setDebug(node, false); // leaves the count of DEBUG nodes
     node.xf->scene = nullptr; // its connections may outlive the node (retired item): no more queue entries
     nodes.erase(it->second);
     ids.erase(it);

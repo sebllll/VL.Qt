@@ -49,12 +49,7 @@ int floatComponents(quint16 valueType)
 
 Elements::Elements(QQmlEngine* e) : engine(e) {}
 
-Elements::~Elements()
-{
-    // Items are deleted by the Scene before; components only hold compiled QML.
-    for (auto& kv : types)
-        delete kv.second.component;
-}
+Elements::~Elements() = default;
 
 QQuickItem* Elements::create(const TypeDef& type, std::string& err)
 {
@@ -65,10 +60,9 @@ QQuickItem* Elements::create(const TypeDef& type, std::string& err)
     } else if (!type.qmlUrl) {
         item = new QQuickItem();
     } else {
-        if (!cache.component) {
-            cache.component = new QQmlComponent(engine, QUrl(QString::fromLatin1(type.qmlUrl)));
-        }
-        QQmlComponent* comp = cache.component;
+        if (!cache.component)
+            cache.component = std::make_unique<QQmlComponent>(engine, QUrl(QString::fromLatin1(type.qmlUrl)));
+        QQmlComponent* comp = cache.component.get();
         QObject* obj = comp->isError() ? nullptr : comp->create();
         item = qobject_cast<QQuickItem*>(obj);
         if (!item) {
@@ -81,6 +75,13 @@ QQuickItem* Elements::create(const TypeDef& type, std::string& err)
     if (!cache.resolved)
         resolve(type, cache, item);
     return item;
+}
+
+void Elements::setDebug(ElementEntry& node, bool on)
+{
+    if (node.debug != on)
+        debugCount += on ? 1 : -1;
+    node.debug = on;
 }
 
 bool Elements::readMedia(const ElementEntry& node, float out[2]) const
