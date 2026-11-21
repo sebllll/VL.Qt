@@ -32,8 +32,8 @@ public static class StyleCommandsTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt style commands test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt style commands test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         void CheckApply(string what)
@@ -45,10 +45,10 @@ public static class StyleCommandsTest
         // Button 200 x 60 at (100, 100); the probe (110, 110) lies in the frame, away from the text.
         cmd.Reset();
         cmd.ClearColor(BgGray, BgGray, BgGray, 1);
-        cmd.Create(Btn, Protocol.Type.Button);
-        cmd.SetBool(Btn, Protocol.Prop.AutoSize, false);
+        cmd.Create(Btn, Protocol.ElementType.Button);
+        cmd.SetBool(Btn, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(Btn, 100, 100, 200, 60);
-        cmd.SetString(Btn, Protocol.Prop.Text, "WWWWWW");
+        cmd.SetString(Btn, Protocol.PropertyId.Text, "WWWWWW");
         cmd.Reparent(Btn, 0, 0);
         CheckApply("create button");
         // The pointer stays away from the button (no hover state).
@@ -158,6 +158,6 @@ public static class StyleCommandsTest
         cmd.Destroy(Btn);
         CheckApply("destroy button");
         s.Pump(3);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 }

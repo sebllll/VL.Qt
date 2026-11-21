@@ -141,7 +141,7 @@ namespace VL.Qt.Tests
             return result;
         }
 
-        // Top-level consts -> UPPER_SNAKE, nested class consts -> GROUP_UPPER_SNAKE.
+        // Top-level consts -> UPPER_SNAKE, nested class consts -> GROUP_UPPER_SNAKE (the group name per CGroupName).
         private static Dictionary<string, long> ReflectMirror(Type root)
         {
             var result = new Dictionary<string, long>();
@@ -152,8 +152,48 @@ namespace VL.Qt.Tests
             }
             Add(root, "");
             foreach (var nested in root.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic))
-                Add(nested, ToUpperSnake(nested.Name) + "_"); // WindowMode -> WINDOW_MODE_
+                Add(nested, CGroupName(nested.Name) + "_"); // WindowMode -> WINDOW_MODE_, EventId -> EVENT_
             return result;
+        }
+
+        // The naming rule of the head comment of protocol.h: a group name that ends in Id or Flags drops that word in C.
+        private static string CGroupName(string group)
+        {
+            foreach (var suffix in new[] { "Id", "Flags" })
+            {
+                if (group.Length > suffix.Length && group.EndsWith(suffix, StringComparison.Ordinal))
+                    return ToUpperSnake(group[..^suffix.Length]);
+            }
+            return ToUpperSnake(group);
+        }
+
+        /// <summary>A group name ending in Id or Flags drops that word in C (EventId -> VLQT_EVENT_*, ImageLoadFlags -> VLQT_IMAGE_LOAD_*).</summary>
+        [Test]
+        public void MirrorGroupNamesFollowTheIdAndFlagsRule()
+        {
+            // Sample mirror, so the self-test does not depend on the state of the real files.
+            var sample = ReflectMirror(typeof(SampleMirror));
+            Assert.That(sample, Is.EquivalentTo(new Dictionary<string, long>
+            {
+                ["PLAIN"] = 1,
+                ["EVENT_HOVER"] = 3,
+                ["RESOURCE_EVENT_STATE"] = 1,
+                ["IMAGE_LOAD_MIPMAPS"] = 1,
+                ["WINDOW_MODE_BORDERLESS"] = 1,
+                ["GRID_CELL"] = 2,
+            }));
+        }
+
+        private static class SampleMirror
+        {
+            public const int Plain = 1;
+
+            internal static class EventId { public const int Hover = 3; }
+            internal static class ResourceEventId { public const int State = 1; }
+            internal static class ImageLoadFlags { public const int Mipmaps = 1; }
+            internal static class WindowMode { public const int Borderless = 1; }
+            // "id" in lower case is no word of its own.
+            internal static class Grid { public const int Cell = 2; }
         }
 
         private static List<string> Compare(string headerName, string mirrorName, Dictionary<string, long> header, Dictionary<string, long> mirror)

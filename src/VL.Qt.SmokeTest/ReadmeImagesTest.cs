@@ -52,16 +52,16 @@ public static class ReadmeImagesTest
 
         ulong Builtin(string name)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-            Native.vlqt_res_load_shader(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
-            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"readme-images: shader builtin:{name} Ready");
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+            Native.vlqt_shader_load(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResourceState.Ready, $"readme-images: shader builtin:{name} Ready");
             return id;
         }
         ulong Baked(string code, string what)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-            Native.vlqt_res_load_shader_source(id, code, Protocol.ShaderStage.Fragment);
-            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResState.Ready, $"readme-images: {what} baked, Ready");
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+            Native.vlqt_shader_load_source(id, code, Protocol.ShaderStage.Fragment);
+            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResourceState.Ready, $"readme-images: {what} baked, Ready");
             return id;
         }
         var glowPre = Builtin("glow_prefilter");
@@ -87,25 +87,25 @@ public static class ReadmeImagesTest
         static void Blur(CommandWriter c, float s)
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
-            c.EffectF32(Protocol.Prop.EffectBlur, 0.22f);
-            c.EffectI32(Protocol.Prop.EffectBlurMax, (int)MathF.Round(16 * s));
+            c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.EffectF32(Protocol.MultiEffectKey.Blur, 0.22f);
+            c.EffectI32(Protocol.MultiEffectKey.BlurMax, (int)MathF.Round(16 * s));
             c.EndLink();
         }
         static void Shadow(CommandWriter c, float s)
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.Prop.EffectShadowEnabled, true);
-            c.EffectColor(Protocol.Prop.EffectShadowColor, 1, 0.55f, 0.2f, 0.9f);
-            c.EffectF32(Protocol.Prop.EffectShadowHorizontalOffset, 16 * s);
-            c.EffectF32(Protocol.Prop.EffectShadowVerticalOffset, 16 * s);
-            c.EffectF32(Protocol.Prop.EffectShadowBlur, 0.15f);
+            c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.EffectColor(Protocol.MultiEffectKey.ShadowColor, 1, 0.55f, 0.2f, 0.9f);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 16 * s);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 16 * s);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowBlur, 0.15f);
             c.EndLink();
         }
         void Split(CommandWriter c, float s)
         {
             var p = splitPad * s;
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [split], p, p, p, p, 0);
+            c.BeginEffectChainLink(Protocol.EffectTemplate.Single, [split], p, p, p, p, 0);
             c.UniformF32("amount", 0.022f);
             c.UniformVec2("direction", 1, 0);
             c.UniformColor("tint", 1, 1, 1, 1);
@@ -117,38 +117,38 @@ public static class ReadmeImagesTest
         void Cell(string kind, string label, float ox, float oy, float s, uint order)
         {
             uint ground = next++, text = next++, labelId = next++, map = next++;
-            cmd.Create(ground, Protocol.Type.Rectangle);
+            cmd.Create(ground, Protocol.ElementType.Rectangle);
             cmd.SetPlace(ground, ox + 5 * s, oy + 5 * s, (CellW - 10) * s, (CellH - 10) * s);
-            cmd.SetColor(ground, Protocol.Prop.Color, 0.105f, 0.115f, 0.14f, 1);
-            cmd.SetF32(ground, Protocol.Prop.Radius, 10 * s);
+            cmd.SetColor(ground, Protocol.PropertyId.Color, 0.105f, 0.115f, 0.14f, 1);
+            cmd.SetF32(ground, Protocol.PropertyId.Radius, 10 * s);
             cmd.Reparent(ground, 0, order * 3);
 
-            cmd.Create(labelId, Protocol.Type.Text);
+            cmd.Create(labelId, Protocol.ElementType.Text);
             cmd.SetPlace(labelId, ox + 22 * s, oy + (CellH - 42) * s, (CellW - 44) * s, 26 * s);
-            cmd.SetString(labelId, Protocol.Prop.Text, label);
-            cmd.SetString(labelId, Protocol.Prop.FontFamily, family);
-            cmd.SetF32(labelId, Protocol.Prop.FontSize, 15 * s);
-            cmd.SetColor(labelId, Protocol.Prop.Color, 0.52f, 0.57f, 0.66f, 1);
-            cmd.SetI32(labelId, Protocol.Prop.HorizontalAlignment, 1);
-            cmd.SetI32(labelId, Protocol.Prop.VerticalAlignment, 128);
+            cmd.SetString(labelId, Protocol.PropertyId.Text, label);
+            cmd.SetString(labelId, Protocol.PropertyId.FontFamily, family);
+            cmd.SetF32(labelId, Protocol.PropertyId.FontSize, 15 * s);
+            cmd.SetColor(labelId, Protocol.PropertyId.Color, 0.52f, 0.57f, 0.66f, 1);
+            cmd.SetI32(labelId, Protocol.PropertyId.HorizontalAlignment, 1);
+            cmd.SetI32(labelId, Protocol.PropertyId.VerticalAlignment, 128);
             cmd.Reparent(labelId, 0, order * 3 + 1);
 
-            cmd.Create(text, Protocol.Type.Text);
+            cmd.Create(text, Protocol.ElementType.Text);
             cmd.SetPlace(text, ox + (CellW - TextW) / 2 * s, oy + 28 * s, TextW * s, TextH * s);
-            cmd.SetString(text, Protocol.Prop.Text, "VL.Qt");
-            cmd.SetString(text, Protocol.Prop.FontFamily, family);
-            cmd.SetF32(text, Protocol.Prop.FontSize, FontSize * s);
-            cmd.SetI32(text, Protocol.Prop.FontWeight, 700);
-            cmd.SetI32(text, Protocol.Prop.HorizontalAlignment, 4);
-            cmd.SetI32(text, Protocol.Prop.VerticalAlignment, 128);
-            cmd.SetColor(text, Protocol.Prop.Color, 0.94f, 0.93f, 0.9f, 1);
+            cmd.SetString(text, Protocol.PropertyId.Text, "VL.Qt");
+            cmd.SetString(text, Protocol.PropertyId.FontFamily, family);
+            cmd.SetF32(text, Protocol.PropertyId.FontSize, FontSize * s);
+            cmd.SetI32(text, Protocol.PropertyId.FontWeight, 700);
+            cmd.SetI32(text, Protocol.PropertyId.HorizontalAlignment, 4);
+            cmd.SetI32(text, Protocol.PropertyId.VerticalAlignment, 128);
+            cmd.SetColor(text, Protocol.PropertyId.Color, 0.94f, 0.93f, 0.9f, 1);
             cmd.Reparent(text, 0, order * 3 + 2);
 
             void Pyramid(ulong pre, ulong comp, float radius, Action<CommandWriter, float> uniforms)
             {
                 var p = MathF.Ceiling(1.5f * radius * s);
                 cmd.BeginEffectChain(text);
-                cmd.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [pre, comp], p, p, p, p, radius * s);
+                cmd.BeginEffectChainLink(Protocol.EffectTemplate.Pyramid, [pre, comp], p, p, p, p, radius * s);
                 uniforms(cmd, p);
                 cmd.EndLink();
                 cmd.EndEffectChain();
@@ -172,7 +172,7 @@ public static class ReadmeImagesTest
                     });
                     break;
                 case "innershadow":
-                    cmd.SetColor(text, Protocol.Prop.Color, 1, 0.66f, 0.3f, 1);
+                    cmd.SetColor(text, Protocol.PropertyId.Color, 1, 0.66f, 0.3f, 1);
                     Pyramid(isPre, isComp, 9, (c, p) =>
                     {
                         c.UniformVec2("offset", 0, 7 * s / (TextH * s + 2 * p));
@@ -186,7 +186,7 @@ public static class ReadmeImagesTest
                     const float L = 14;
                     var pad = (L / 2 + L / 64) * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [directional], pad, 0, pad, 0, 0);
+                    cmd.BeginEffectChainLink(Protocol.EffectTemplate.TwoPass, [directional], pad, 0, pad, 0, 0);
                     cmd.UniformF32("angle", 0);
                     cmd.UniformF32("blurLength", L * s);
                     cmd.EndLink();
@@ -198,7 +198,7 @@ public static class ReadmeImagesTest
                     const float L = 40;
                     var pad = L * 0.6f * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [zoom], pad, pad, pad, pad, 0);
+                    cmd.BeginEffectChainLink(Protocol.EffectTemplate.TwoPass, [zoom], pad, pad, pad, pad, 0);
                     cmd.UniformVec2("center", 0.5f, 0.5f);
                     cmd.UniformF32("blurLength", L * s);
                     cmd.EndLink();
@@ -209,7 +209,7 @@ public static class ReadmeImagesTest
                 {
                     var pad = 30 * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [radial], pad, pad, pad, pad, 0);
+                    cmd.BeginEffectChainLink(Protocol.EffectTemplate.TwoPass, [radial], pad, pad, pad, pad, 0);
                     cmd.UniformVec2("center", 0.5f, 0.5f);
                     cmd.UniformF32("angle", 8);
                     cmd.EndLink();
@@ -218,11 +218,11 @@ public static class ReadmeImagesTest
                 }
                 case "displace":
                     // The map is never reparented: it only serves as texture of the link.
-                    cmd.Create(map, Protocol.Type.ShaderEffect);
-                    cmd.SetU64(map, Protocol.Prop.FragmentShader, waveMap);
+                    cmd.Create(map, Protocol.ElementType.Shader);
+                    cmd.SetU64(map, Protocol.PropertyId.FragmentShader, waveMap);
                     cmd.SetPlace(map, 0, 0, TextW * s, TextH * s);
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
+                    cmd.BeginEffectChainLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
                     cmd.UniformF32("displacement", 7 * s);
                     cmd.UniformRef("map", map);
                     cmd.EndLink();
@@ -235,8 +235,8 @@ public static class ReadmeImagesTest
         {
             cmd.Reset();
             next = 1;
-            var w = Native.vlqt_window_create((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme images");
-            s.Check(w != IntPtr.Zero, $"readme-images {name}: window_create");
+            var w = NativeCalls.CreateWindow((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme images");
+            s.Check(w != SceneHandle.Null, $"readme-images {name}: window_create");
             Native.vlqt_window_show(w);
             s.Pump(4);
             cmd.ClearColor(Bg, Bg, Bg, 1);
@@ -259,7 +259,7 @@ public static class ReadmeImagesTest
                 s.Check(ink > 0.02, $"readme-images {name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
             }
             ImageCompare.Check(s, "readme-images_" + name, grabPath, width);
-            Native.vlqt_window_destroy(w);
+            Native.vlqt_scene_destroy(w);
         }
 
         const string forward = "Blur → RGBSplit → DropShadow", reverse = "DropShadow → RGBSplit → Blur";

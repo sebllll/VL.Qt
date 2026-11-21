@@ -9,7 +9,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 
 // Fullscreen pin without vvvv: WindowRenderer.SetMode(Fullscreen) live and on create (before show).
-// On → EV_WINDOW_GEOMETRY reports VLQT_WINDOW_FULLSCREEN and (Windows) the rect of the window's monitor in DIP;
+// On → EVENT_WINDOW_GEOMETRY reports VLQT_WINDOW_FULLSCREEN and (Windows) the rect of the window's monitor in DIP;
 // off → the geometry from before. Save Bounds (BoundsSaver) writes nothing during or after the round trip.
 // A second monitor (Windows) is tested if present, otherwise skipped with INFO.
 [TestFixture, NonParallelizable]
@@ -81,7 +81,7 @@ public static class FullscreenTest
                 g = Settle(r, title);
             }
             s.Check(Native.vlqt_window_get_mode(r.Window) == Protocol.WindowMode.Fullscreen, $"{label}: requested mode = Fullscreen");
-            s.Check(g is { } f && f.IsFullscreen && f.IsVisible, $"{label}: EV_WINDOW_GEOMETRY reports Fullscreen ({g?.States}{(onCreate ? ", on create" : "")})");
+            s.Check(g is { } f && f.IsFullscreen && f.IsVisible, $"{label}: EVENT_WINDOW_GEOMETRY reports Fullscreen ({g?.States}{(onCreate ? ", on create" : "")})");
             var hwnd = OperatingSystem.IsWindows() ? FindWindow(null, title) : IntPtr.Zero;
             if (expectedScreen?.Invoke(hwnd) is { } screen)
                 s.Check(g is { } f1 && Close(f1.Bounds, screen), $"{label}: fullscreen rect = monitor ({g?.Bounds} vs {screen})");

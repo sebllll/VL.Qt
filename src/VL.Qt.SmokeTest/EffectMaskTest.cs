@@ -80,18 +80,18 @@ public static class EffectMaskTest
         public void Write(CommandWriter c)
         {
             if (Mask != 0)
-                c.EffectRef(Protocol.Prop.EffectMaskSource, Mask);
+                c.EffectRef(Protocol.MultiEffectKey.MaskSource, Mask);
             if (Inverted)
-                c.EffectBool(Protocol.Prop.EffectMaskInverted, true);
+                c.EffectBool(Protocol.MultiEffectKey.MaskInverted, true);
             if (Blur)
             {
-                c.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
-                c.EffectF32(Protocol.Prop.EffectBlur, 0.1f);
+                c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+                c.EffectF32(Protocol.MultiEffectKey.Blur, 0.1f);
             }
             if (Padding)
             {
-                c.EffectBool(Protocol.Prop.EffectAutoPadding, false);
-                c.EffectRect(Protocol.Prop.EffectPaddingRect, 200, 0, 0, 0);
+                c.EffectBool(Protocol.MultiEffectKey.AutoPadding, false);
+                c.EffectRect(Protocol.MultiEffectKey.PaddingRect, 200, 0, 0, 0);
             }
         }
     }
@@ -101,8 +101,8 @@ public static class EffectMaskTest
     private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "MultiEffect is a ShaderEffect");
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt effect mask test");
-        s.Check(w != IntPtr.Zero, "effect-mask: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt effect mask test");
+        s.Check(w != SceneHandle.Null, "effect-mask: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         void CheckApply(string what)
@@ -125,16 +125,16 @@ public static class EffectMaskTest
         // 400x200, created without REPARENT (like the reconciler), attached to R.
         cmd.Reset();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        cmd.Create(Row, Protocol.Type.Row);
+        cmd.Create(Row, Protocol.ElementType.Row);
         cmd.SetPlace(Row, 50, 50, 0, 0);
         cmd.Reparent(Row, 0, 0);
-        cmd.Create(R, Protocol.Type.Rectangle);
+        cmd.Create(R, Protocol.ElementType.Rectangle);
         cmd.SetPlace(R, 0, 0, 400, 200);
-        cmd.SetColor(R, Protocol.Prop.Color, 1, 0, 0, 1);
+        cmd.SetColor(R, Protocol.PropertyId.Color, 1, 0, 0, 1);
         cmd.Reparent(R, Row, 0);
-        cmd.Create(B, Protocol.Type.Rectangle);
+        cmd.Create(B, Protocol.ElementType.Rectangle);
         cmd.SetPlace(B, 0, 0, 100, 200);
-        cmd.SetColor(B, Protocol.Prop.Color, 0, 1, 0, 1);
+        cmd.SetColor(B, Protocol.PropertyId.Color, 0, 1, 0, 1);
         cmd.Reparent(B, Row, 1);
         CheckApply("scene");
         s.Pump(5);
@@ -142,11 +142,11 @@ public static class EffectMaskTest
         using (var plain = s.Grab(w, "effect_mask_plain.png"))
             bColor = Px(plain, 500, 150);
 
-        cmd.Create(T, Protocol.Type.Text);
+        cmd.Create(T, Protocol.ElementType.Text);
         cmd.SetPlace(T, 0, 0, 400, 200);
-        cmd.SetString(T, Protocol.Prop.Text, "MASK");
-        cmd.SetF32(T, Protocol.Prop.FontSize, 120);
-        cmd.SetColor(T, Protocol.Prop.Color, 1, 1, 1, 1);
+        cmd.SetString(T, Protocol.PropertyId.Text, "MASK");
+        cmd.SetF32(T, Protocol.PropertyId.FontSize, 120);
+        cmd.SetColor(T, Protocol.PropertyId.Color, 1, 1, 1, 1);
         r.Mask = T;
         Fx(R, r);
         CheckApply("attach text mask");
@@ -202,18 +202,18 @@ public static class EffectMaskTest
         // Sibling rule (Task 3c): the mask lies in the coordinates of the element's parent like a sibling, with its
         // own Bounds and Transform. Group P at (20, 20) (Row at Opacity 0): text X as a sibling in P, the same text X2 as mask
         // of the red rectangle Q in P -> the lit pixels (R > 128: white text resp. red through the mask) coincide.
-        cmd.SetF32(Row, Protocol.Prop.Opacity, 0);
-        cmd.Create(P, Protocol.Type.Item);
-        cmd.SetBool(P, Protocol.Prop.AutoSize, false);
+        cmd.SetF32(Row, Protocol.PropertyId.Opacity, 0);
+        cmd.Create(P, Protocol.ElementType.Group);
+        cmd.SetBool(P, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(P, 20, 20, 760, 560);
         cmd.Reparent(P, 0, 0);
         foreach (var t in new[] { X, X2 })
         {
-            cmd.Create(t, Protocol.Type.Text);
-            cmd.SetString(t, Protocol.Prop.Text, "AB");
-            cmd.SetF32(t, Protocol.Prop.FontSize, 90);
+            cmd.Create(t, Protocol.ElementType.Text);
+            cmd.SetString(t, Protocol.PropertyId.Text, "AB");
+            cmd.SetF32(t, Protocol.PropertyId.FontSize, 90);
             cmd.SetPlace(t, 280, 180, 200, 110);
-            cmd.SetColor(t, Protocol.Prop.Color, 1, 1, 1, 1);
+            cmd.SetColor(t, Protocol.PropertyId.Color, 1, 1, 1, 1);
         }
         cmd.Reparent(X, P, 0);
         CheckApply("sibling text");
@@ -223,10 +223,10 @@ public static class EffectMaskTest
             sib0 = Lit(a);
 
         // (a) the same text as mask over a big red rectangle Q (sibling X hidden).
-        cmd.SetF32(X, Protocol.Prop.Opacity, 0);
-        cmd.Create(Q, Protocol.Type.Rectangle);
+        cmd.SetF32(X, Protocol.PropertyId.Opacity, 0);
+        cmd.Create(Q, Protocol.ElementType.Rectangle);
         cmd.SetPlace(Q, 120, 100, 560, 360);
-        cmd.SetColor(Q, Protocol.Prop.Color, 1, 0, 0, 1);
+        cmd.SetColor(Q, Protocol.PropertyId.Color, 1, 0, 0, 1);
         cmd.Reparent(Q, P, 1);
         q.Mask = X2;
         Fx(Q, q);
@@ -250,8 +250,8 @@ public static class EffectMaskTest
         var xf = Matrix.Scaling(1.5f) * Matrix.Translation(40, 30, 0);
         cmd.SetPlaceXf(X, 280, 180, 200, 110, xf);
         cmd.SetPlaceXf(X2, 280, 180, 200, 110, xf);
-        cmd.SetF32(X, Protocol.Prop.Opacity, 1);
-        cmd.SetF32(Q, Protocol.Prop.Opacity, 0);
+        cmd.SetF32(X, Protocol.PropertyId.Opacity, 1);
+        cmd.SetF32(Q, Protocol.PropertyId.Opacity, 0);
         CheckApply("transform on the texts");
         s.Pump(5);
         bool[] sib1;
@@ -259,8 +259,8 @@ public static class EffectMaskTest
             sib1 = Lit(a);
         var moved = IoU(sib0, sib1);
         s.Check(moved < 0.5, $"effect-mask: transformed sibling differs from the plain one (IoU {moved:F2})");
-        cmd.SetF32(X, Protocol.Prop.Opacity, 0);
-        cmd.SetF32(Q, Protocol.Prop.Opacity, 1);
+        cmd.SetF32(X, Protocol.PropertyId.Opacity, 0);
+        cmd.SetF32(Q, Protocol.PropertyId.Opacity, 1);
         CheckApply("mask with transform");
         s.Pump(5);
         Same("effect_mask_sibling_xf_masked.png", sib1, "mask with own Transform covers the transformed sibling's pixels");
@@ -308,17 +308,17 @@ public static class EffectMaskTest
         Fx(Q, q);
         cmd.Destroy(P);
         cmd.Destroy(X2);
-        cmd.SetF32(Row, Protocol.Prop.Opacity, 1);
+        cmd.SetF32(Row, Protocol.PropertyId.Opacity, 1);
         CheckApply("detach + destroy sibling scene");
 
         // Unstretched: mask M2 100x50 at (100, 50) with a white 50x50 square on its left half -> red only on R's
         // 100..150 x 50..100, background elsewhere (also on the rest of M2).
-        cmd.Create(M2, Protocol.Type.Item);
-        cmd.SetBool(M2, Protocol.Prop.AutoSize, false);
+        cmd.Create(M2, Protocol.ElementType.Group);
+        cmd.SetBool(M2, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(M2, 100, 50, 100, 50);
-        cmd.Create(M2Rect, Protocol.Type.Rectangle);
+        cmd.Create(M2Rect, Protocol.ElementType.Rectangle);
         cmd.SetPlace(M2Rect, 0, 0, 50, 50);
-        cmd.SetColor(M2Rect, Protocol.Prop.Color, 1, 1, 1, 1);
+        cmd.SetColor(M2Rect, Protocol.PropertyId.Color, 1, 1, 1, 1);
         cmd.Reparent(M2Rect, M2, 0);
         r.Mask = M2;
         Fx(R, r);
@@ -377,9 +377,9 @@ public static class EffectMaskTest
         Fx(R, new FxRun { Mask = Row });
         var rcAnc = Rc();
         s.Check(rcParent == Native.Result.Invalid && rcSelf == Native.Result.Invalid && rcAnc == Native.Result.Invalid, $"effect-mask: parented/self/ancestor -> Invalid ({rcParent}, {rcSelf}, {rcAnc})");
-        cmd.Create(T2, Protocol.Type.Text);
-        cmd.SetString(T2, Protocol.Prop.Text, "Q");
-        cmd.SetF32(T2, Protocol.Prop.FontSize, 120);
+        cmd.Create(T2, Protocol.ElementType.Text);
+        cmd.SetString(T2, Protocol.PropertyId.Text, "Q");
+        cmd.SetF32(T2, Protocol.PropertyId.FontSize, 120);
         cmd.SetPlace(T2, 0, 0, 400, 200);
         r.Mask = T2;
         Fx(R, r);
@@ -387,9 +387,9 @@ public static class EffectMaskTest
         cmd.Chain(R, r.Write, r.Write);
         var rcTwoRuns = Rc();
         s.Check(rcTwoRuns == Native.Result.Invalid, $"effect-mask: same mask in two runs -> Invalid ({rcTwoRuns})");
-        cmd.Create(R2, Protocol.Type.Rectangle);
+        cmd.Create(R2, Protocol.ElementType.Rectangle);
         cmd.SetPlace(R2, 50, 350, 100, 100);
-        cmd.SetColor(R2, Protocol.Prop.Color, 0, 0, 1, 1);
+        cmd.SetColor(R2, Protocol.PropertyId.Color, 0, 0, 1, 1);
         cmd.Reparent(R2, 0, 1);
         CheckApply("R2");
         Fx(R2, new FxRun { Mask = T2 });
@@ -408,11 +408,11 @@ public static class EffectMaskTest
         cmd.Destroy(T2);
         var rcGone = Rc();
         s.Check(rcGone == Native.Result.UnknownObject, $"effect-mask: mask went with its element ({rcGone})");
-        cmd.Create(T2, Protocol.Type.Text);
+        cmd.Create(T2, Protocol.ElementType.Text);
         CheckApply("mask id free again");
 
         // Attached mask at RESET and window destroy.
-        cmd.SetString(T2, Protocol.Prop.Text, "Q");
+        cmd.SetString(T2, Protocol.PropertyId.Text, "Q");
         cmd.SetPlace(T2, 0, 0, 100, 100);
         Fx(R2, new FxRun { Mask = T2 });
         CheckApply("attach before RESET");
@@ -420,14 +420,14 @@ public static class EffectMaskTest
         cmd.ResetScene();
         CheckApply("RESET with attached mask");
         s.Pump(2);
-        cmd.Create(R2, Protocol.Type.Rectangle);
+        cmd.Create(R2, Protocol.ElementType.Rectangle);
         cmd.SetPlace(R2, 50, 350, 100, 100);
         cmd.Reparent(R2, 0, 0);
-        cmd.Create(T2, Protocol.Type.Text);
-        cmd.SetString(T2, Protocol.Prop.Text, "Q");
+        cmd.Create(T2, Protocol.ElementType.Text);
+        cmd.SetString(T2, Protocol.PropertyId.Text, "Q");
         Fx(R2, new FxRun { Mask = T2 });
         CheckApply("attach before window destroy");
         s.Pump(2);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 }

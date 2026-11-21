@@ -71,27 +71,27 @@ public static class ReadmeGalleryTest
         uint Rect(float x, float y, float w, float h, uint rgb, float radius = 0, uint parent = 0)
         {
             var id = next++;
-            cmd.Create(id, Protocol.Type.Rectangle);
+            cmd.Create(id, Protocol.ElementType.Rectangle);
             cmd.SetPlace(id, x, y, w, h);
             var c = C(rgb);
-            cmd.SetColor(id, Protocol.Prop.Color, c.R, c.G, c.B, 1);
-            if (radius > 0) cmd.SetF32(id, Protocol.Prop.Radius, radius);
+            cmd.SetColor(id, Protocol.PropertyId.Color, c.R, c.G, c.B, 1);
+            if (radius > 0) cmd.SetF32(id, Protocol.PropertyId.Radius, radius);
             cmd.Reparent(id, parent, order++);
             return id;
         }
         uint Label(string text, float x, float y, float w, float h, float size, uint rgb, int weight = 400, int align = 1, bool reparent = true, uint parent = 0)
         {
             var id = next++;
-            cmd.Create(id, Protocol.Type.Text);
+            cmd.Create(id, Protocol.ElementType.Text);
             cmd.SetPlace(id, x, y, w, h);
-            cmd.SetString(id, Protocol.Prop.Text, text);
-            cmd.SetString(id, Protocol.Prop.FontFamily, family);
-            cmd.SetF32(id, Protocol.Prop.FontSize, size);
-            cmd.SetI32(id, Protocol.Prop.FontWeight, weight);
-            cmd.SetI32(id, Protocol.Prop.HorizontalAlignment, align);
-            cmd.SetI32(id, Protocol.Prop.VerticalAlignment, 128);
+            cmd.SetString(id, Protocol.PropertyId.Text, text);
+            cmd.SetString(id, Protocol.PropertyId.FontFamily, family);
+            cmd.SetF32(id, Protocol.PropertyId.FontSize, size);
+            cmd.SetI32(id, Protocol.PropertyId.FontWeight, weight);
+            cmd.SetI32(id, Protocol.PropertyId.HorizontalAlignment, align);
+            cmd.SetI32(id, Protocol.PropertyId.VerticalAlignment, 128);
             var c = C(rgb);
-            cmd.SetColor(id, Protocol.Prop.Color, c.R, c.G, c.B, 1);
+            cmd.SetColor(id, Protocol.PropertyId.Color, c.R, c.G, c.B, 1);
             if (reparent) cmd.Reparent(id, parent, order++);
             return id;
         }
@@ -99,11 +99,11 @@ public static class ReadmeGalleryTest
         {
             var id = next++;
             cmd.Create(id, type);
-            cmd.SetBool(id, Protocol.Prop.AutoSize, false);
+            cmd.SetBool(id, Protocol.PropertyId.AutoSize, false);
             cmd.SetPlace(id, x, y, w, h);
-            cmd.SetF32(id, Protocol.Prop.Spacing, spacing);
-            cmd.SetF32(id, Protocol.Prop.Padding, padding);
-            if (align != 0) cmd.SetI32(id, Protocol.Prop.ChildAlignment, align);
+            cmd.SetF32(id, Protocol.PropertyId.Spacing, spacing);
+            cmd.SetF32(id, Protocol.PropertyId.Padding, padding);
+            if (align != 0) cmd.SetI32(id, Protocol.PropertyId.ChildAlignment, align);
             cmd.Reparent(id, parent, order++);
             return id;
         }
@@ -113,8 +113,8 @@ public static class ReadmeGalleryTest
             cmd.Reset();
             next = 1;
             order = 0;
-            var w = Native.vlqt_window_create((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme gallery");
-            s.Check(w != IntPtr.Zero, $"readme-gallery {name}: window_create");
+            var w = NativeCalls.CreateWindow((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme gallery");
+            s.Check(w != SceneHandle.Null, $"readme-gallery {name}: window_create");
             Native.vlqt_window_show(w);
             s.Pump(4);
             cmd.ClearColor(Bg, Bg, Bg, 1);
@@ -130,7 +130,7 @@ public static class ReadmeGalleryTest
                 s.Check(ink > 0.02, $"readme-gallery {name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
             }
             ImageCompare.Check(s, "readme-gallery_" + name, grabPath, width);
-            Native.vlqt_window_destroy(w);
+            Native.vlqt_scene_destroy(w);
             s.Pump(1);
         }
 
@@ -145,28 +145,28 @@ public static class ReadmeGalleryTest
                 cmd.Create(id, type);
                 StyleWriter.Write(cmd, id, style ?? baseStyle, null);
                 cmd.SetPlace(id, ox + x, y, w, h);
-                if (!enabled) cmd.SetBool(id, Protocol.Prop.Enabled, false);
+                if (!enabled) cmd.SetBool(id, Protocol.PropertyId.Enabled, false);
                 cmd.Reparent(id, 0, order++);
                 return id;
             }
-            var b = Add(Protocol.Type.Button, 20, 50);
-            cmd.SetString(b, Protocol.Prop.Text, "Button");
-            b = Add(Protocol.Type.Button, 110, 50, enabled: false);
-            cmd.SetString(b, Protocol.Prop.Text, "Disabled");
-            var c = Add(Protocol.Type.CheckBox, 215, 52);
-            cmd.SetBool(c, Protocol.Prop.Value, true);
-            c = Add(Protocol.Type.Switch, 255, 50);
-            cmd.SetBool(c, Protocol.Prop.Value, true);
-            c = Add(Protocol.Type.Switch, 320, 50);
-            cmd.SetBool(c, Protocol.Prop.Value, false);
-            var slider = Add(Protocol.Type.Slider, 20, 110, 360, 30);
-            cmd.SetF32(slider, Protocol.Prop.Value, 0.35f);
-            var t = Add(Protocol.Type.TextField, 20, 170);
-            cmd.SetString(t, Protocol.Prop.Value, "Some text");
-            var n = Add(Protocol.Type.SpinBox, 250, 170);
-            cmd.SetI32(n, Protocol.Prop.Value, 42);
-            cmd.SetI32(n, Protocol.Prop.Minimum, 0);
-            cmd.SetI32(n, Protocol.Prop.Maximum, 100);
+            var b = Add(Protocol.ElementType.Button, 20, 50);
+            cmd.SetString(b, Protocol.PropertyId.Text, "Button");
+            b = Add(Protocol.ElementType.Button, 110, 50, enabled: false);
+            cmd.SetString(b, Protocol.PropertyId.Text, "Disabled");
+            var c = Add(Protocol.ElementType.CheckBox, 215, 52);
+            cmd.SetBool(c, Protocol.PropertyId.Value, true);
+            c = Add(Protocol.ElementType.Switch, 255, 50);
+            cmd.SetBool(c, Protocol.PropertyId.Value, true);
+            c = Add(Protocol.ElementType.Switch, 320, 50);
+            cmd.SetBool(c, Protocol.PropertyId.Value, false);
+            var slider = Add(Protocol.ElementType.Slider, 20, 110, 360, 30);
+            cmd.SetF32(slider, Protocol.PropertyId.Value, 0.35f);
+            var t = Add(Protocol.ElementType.TextField, 20, 170);
+            cmd.SetString(t, Protocol.PropertyId.Value, "Some text");
+            var n = Add(Protocol.ElementType.SpinBox, 250, 170);
+            cmd.SetI32(n, Protocol.PropertyId.Value, 42);
+            cmd.SetI32(n, Protocol.PropertyId.Minimum, 0);
+            cmd.SetI32(n, Protocol.PropertyId.Maximum, 100);
         }
         Render("styles", 820, 820, 250, () =>
         {
@@ -183,19 +183,19 @@ public static class ReadmeGalleryTest
                 Rect(i * 280, 0, panelW, 250, 0x1E2128, 10);
             // Column, children centered
             Label("Column", 14, 8, 232, 26, 15, 0x8591A8);
-            var col = Container(Protocol.Type.Column, 0, 40, panelW, 200, 10, 14, 0x4);
+            var col = Container(Protocol.ElementType.Column, 0, 40, panelW, 200, 10, 14, 0x4);
             foreach (var (w, rgb) in new[] { (120f, orange), (180f, cyan), (80f, pink) })
                 Rect(0, 0, w, 44, rgb, 6, col);
             // Row, children at the bottom
             Label("Row", 294, 8, 232, 26, 15, 0x8591A8);
-            var row = Container(Protocol.Type.Row, 280, 40, panelW, 200, 10, 14, 0x40);
+            var row = Container(Protocol.ElementType.Row, 280, 40, panelW, 200, 10, 14, 0x40);
             foreach (var (h, rgb) in new[] { (60f, orange), (120f, cyan), (90f, pink), (150f, green) })
                 Rect(0, 0, 44, h, rgb, 6, row);
             // Nested: Column with a Text, a Row and a Text
             Label("Nested", 574, 8, 232, 26, 15, 0x8591A8);
-            var outer = Container(Protocol.Type.Column, 560, 40, panelW, 200, 8, 14, 0);
+            var outer = Container(Protocol.ElementType.Column, 560, 40, panelW, 200, 8, 14, 0);
             Label("Title", 0, 0, 200, 34, 24, 0xF0EDE6, 700, 1, true, outer);
-            var inner = Container(Protocol.Type.Row, 0, 0, 232, 60, 8, 0, 0, outer);
+            var inner = Container(Protocol.ElementType.Row, 0, 0, 232, 60, 8, 0, 0, outer);
             foreach (var rgb in new[] { orange, cyan, pink, green })
                 Rect(0, 0, 50, 50, rgb, 25, inner);
             Label("Spacing and Padding", 0, 0, 232, 40, 13, 0x8591A8, 400, 1, true, outer);
@@ -215,11 +215,11 @@ public static class ReadmeGalleryTest
                     var x = i * 200;
                     Rect(x, 0, 190, 230, 0x1E2128, 10);
                     var id = next++;
-                    cmd.Create(id, Protocol.Type.Image);
+                    cmd.Create(id, Protocol.ElementType.Image);
                     cmd.SetPlace(id, x + 20, 20, 150, 150);
-                    cmd.SetU64(id, Protocol.Prop.Image, stripes);
-                    if (modes[i].Item2 != 0) cmd.SetI32(id, Protocol.Prop.FillMode, modes[i].Item2);
-                    cmd.SetBool(id, Protocol.Prop.Smooth, false);
+                    cmd.SetU64(id, Protocol.PropertyId.Image, stripes);
+                    if (modes[i].Item2 != 0) cmd.SetI32(id, Protocol.PropertyId.FillMode, modes[i].Item2);
+                    cmd.SetBool(id, Protocol.PropertyId.Smooth, false);
                     cmd.Reparent(id, 0, order++);
                     Label(modes[i].Item1, x + 10, 185, 170, 30, 14, 0x8591A8, 400, 4);
                 }
@@ -229,27 +229,27 @@ public static class ReadmeGalleryTest
         // --- effects-basic.png: 3 x 2 cells of 410 x 230
         static void Blur(CommandWriter c)
         {
-            c.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
-            c.EffectF32(Protocol.Prop.EffectBlur, 0.3f);
-            c.EffectI32(Protocol.Prop.EffectBlurMax, 24);
+            c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.EffectF32(Protocol.MultiEffectKey.Blur, 0.3f);
+            c.EffectI32(Protocol.MultiEffectKey.BlurMax, 24);
         }
         static void Shadow(CommandWriter c)
         {
-            c.EffectBool(Protocol.Prop.EffectShadowEnabled, true);
-            c.EffectColor(Protocol.Prop.EffectShadowColor, 0, 0, 0, 0.9f);
-            c.EffectF32(Protocol.Prop.EffectShadowHorizontalOffset, 10);
-            c.EffectF32(Protocol.Prop.EffectShadowVerticalOffset, 12);
-            c.EffectF32(Protocol.Prop.EffectShadowBlur, 0.45f);
+            c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.EffectColor(Protocol.MultiEffectKey.ShadowColor, 0, 0, 0, 0.9f);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 10);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 12);
+            c.EffectF32(Protocol.MultiEffectKey.ShadowBlur, 0.45f);
         }
         static void Adjust(CommandWriter c)
         {
-            c.EffectF32(Protocol.Prop.EffectSaturation, -1);
-            c.EffectF32(Protocol.Prop.EffectContrast, 0.25f);
+            c.EffectF32(Protocol.MultiEffectKey.Saturation, -1);
+            c.EffectF32(Protocol.MultiEffectKey.Contrast, 0.25f);
         }
         static void Colorize(CommandWriter c)
         {
-            c.EffectF32(Protocol.Prop.EffectColorization, 0.75f);
-            c.EffectColor(Protocol.Prop.EffectColorizationColor, 0.2f, 0.45f, 1, 1);
+            c.EffectF32(Protocol.MultiEffectKey.Colorization, 0.75f);
+            c.EffectColor(Protocol.MultiEffectKey.ColorizationColor, 0.2f, 0.45f, 1, 1);
         }
         Render("effects-basic", 820, 1230, 460, () =>
         {
@@ -263,10 +263,10 @@ public static class ReadmeGalleryTest
                 {
                     var masked = Rect(ox + 55, oy + 45, 300, 110, cyan, 12);
                     var mask = Label("VL.Qt", ox + 55, oy + 45, 300, 110, 90, 0xFFFFFF, 700, 4, reparent: false);
-                    cmd.Chain(masked, c => c.EffectRef(Protocol.Prop.EffectMaskSource, mask));
+                    cmd.Chain(masked, c => c.EffectRef(Protocol.MultiEffectKey.MaskSource, mask));
                     continue;
                 }
-                var target = Container(Protocol.Type.Row, ox + 75, oy + 55, 260, 100, 10, 0, 0);
+                var target = Container(Protocol.ElementType.Row, ox + 75, oy + 55, 260, 100, 10, 0, 0);
                 foreach (var rgb in new[] { orange, cyan, pink })
                     Rect(0, 0, 80, 80, rgb, 14, target);
                 switch (i)

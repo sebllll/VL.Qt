@@ -46,8 +46,8 @@ public static class StyleTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt style test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt style test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
@@ -68,12 +68,12 @@ public static class StyleTest
         // Button 200 x 60 at (100, 100), fixed size; the probe point (110, 110) lies in the frame, away from the text.
         cmd.Reset();
         cmd.ClearColor(BgGray, BgGray, BgGray, 1);
-        cmd.Create(Btn, Protocol.Type.Button);
-        cmd.SetBool(Btn, Protocol.Prop.AutoSize, false);
+        cmd.Create(Btn, Protocol.ElementType.Button);
+        cmd.SetBool(Btn, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(Btn, 100, 100, 200, 60);
-        cmd.SetString(Btn, Protocol.Prop.Text, "WWWWWW");
+        cmd.SetString(Btn, Protocol.PropertyId.Text, "WWWWWW");
         cmd.Reparent(Btn, 0, 0);
-        cmd.Create(Rect, Protocol.Type.Rectangle);
+        cmd.Create(Rect, Protocol.ElementType.Rectangle);
         cmd.SetPlace(Rect, 500, 100, 100, 100);
         cmd.Reparent(Rect, 0, 1);
         CheckApply("create button + rectangle");
@@ -149,7 +149,7 @@ public static class StyleTest
         cmd.Destroy(Btn);
         cmd.Destroy(Rect);
         CheckApply("destroy");
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
 
         Gallery(s);
@@ -178,8 +178,8 @@ public static class StyleTest
         const uint groupFrame = 0xC04000, groupIndicator = 0x00C0C0, groupFill = 0xC0C000, ownFrame = 0x2040E0;
         const uint frame2 = 0x8000C0, indicator2 = 0xE000E0, fill2 = 0x00A000;
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt style inherit");
-        s.Check(w != IntPtr.Zero, "inherit window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt style inherit");
+        s.Check(w != SceneHandle.Null, "inherit window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -243,7 +243,7 @@ public static class StyleTest
         using (var a = s.Grab(w, "style-inherit2.png"))
             Probes(a, frame2, indicator2, fill2, "group style changed");
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
     }
 
@@ -254,8 +254,8 @@ public static class StyleTest
     {
         const uint groupFrame = 0xC04000, groupFill = 0xC0C000, ownFrame = 0x2040E0;
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt style nodeset");
-        s.Check(w != IntPtr.Zero, "nodeset window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt style nodeset");
+        s.Check(w != SceneHandle.Null, "nodeset window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -299,15 +299,15 @@ public static class StyleTest
             s.Check(Near(Px(a, 218, 252), 0x101010) && Near(Px(a, 218, 298), 0x101010), $"SpinBox + button stays inside the rounded corners ({Px(a, 218, 252)}, {Px(a, 218, 298)})");
         }
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
     }
 
     // All controls with the base style in a grid on a dark background; hover on the first button. For Sebastian's visual check.
     private static void Gallery(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt style gallery");
-        s.Check(w != IntPtr.Zero, "gallery window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt style gallery");
+        s.Check(w != SceneHandle.Null, "gallery window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         uint next = 1;
@@ -318,7 +318,7 @@ public static class StyleTest
             BaseStyle.Write(cmd, id);
             cmd.SetPlace(id, x, y, width, height); // 0 = implicit size
             if (!enabled)
-                cmd.SetBool(id, Protocol.Prop.Enabled, false);
+                cmd.SetBool(id, Protocol.PropertyId.Enabled, false);
             cmd.Reparent(id, 0, id);
             return id;
         }
@@ -328,51 +328,51 @@ public static class StyleTest
         const float c0 = 30, c1 = 230, c2 = 430, c3 = 630;
         float y = 30;
         // Row 1: Button (hovered), Button, Button disabled, SpinBox.
-        var hover = Add(Protocol.Type.Button, c0, y, 0, 0);
-        cmd.SetString(hover, Protocol.Prop.Text, "Hovered");
-        var b = Add(Protocol.Type.Button, c1, y, 0, 0);
-        cmd.SetString(b, Protocol.Prop.Text, "Button");
-        b = Add(Protocol.Type.Button, c2, y, 0, 0, enabled: false);
-        cmd.SetString(b, Protocol.Prop.Text, "Disabled");
-        var spin = Add(Protocol.Type.SpinBox, c3, y, 0, 0);
-        cmd.SetI32(spin, Protocol.Prop.Value, 42);
-        cmd.SetI32(spin, Protocol.Prop.Minimum, 0);
-        cmd.SetI32(spin, Protocol.Prop.Maximum, 100);
+        var hover = Add(Protocol.ElementType.Button, c0, y, 0, 0);
+        cmd.SetString(hover, Protocol.PropertyId.Text, "Hovered");
+        var b = Add(Protocol.ElementType.Button, c1, y, 0, 0);
+        cmd.SetString(b, Protocol.PropertyId.Text, "Button");
+        b = Add(Protocol.ElementType.Button, c2, y, 0, 0, enabled: false);
+        cmd.SetString(b, Protocol.PropertyId.Text, "Disabled");
+        var spin = Add(Protocol.ElementType.SpinBox, c3, y, 0, 0);
+        cmd.SetI32(spin, Protocol.PropertyId.Value, 42);
+        cmd.SetI32(spin, Protocol.PropertyId.Minimum, 0);
+        cmd.SetI32(spin, Protocol.PropertyId.Maximum, 100);
         y += 70;
         // Row 2: CheckBox off / on / disabled, Switch off / on / disabled, SpinBox disabled.
-        var c = Add(Protocol.Type.CheckBox, c0, y, 0, 0);
-        cmd.SetBool(c, Protocol.Prop.Value, false);
-        c = Add(Protocol.Type.CheckBox, c0 + 60, y, 0, 0);
-        cmd.SetBool(c, Protocol.Prop.Value, true);
-        c = Add(Protocol.Type.CheckBox, c0 + 120, y, 0, 0, enabled: false);
-        cmd.SetBool(c, Protocol.Prop.Value, true);
-        c = Add(Protocol.Type.Switch, c1 + 30, y, 0, 0);
-        cmd.SetBool(c, Protocol.Prop.Value, false);
-        c = Add(Protocol.Type.Switch, c1 + 120, y, 0, 0);
-        cmd.SetBool(c, Protocol.Prop.Value, true);
-        c = Add(Protocol.Type.Switch, c1 + 210, y, 0, 0, enabled: false);
-        cmd.SetBool(c, Protocol.Prop.Value, true);
-        spin = Add(Protocol.Type.SpinBox, c3, y, 0, 0, enabled: false);
-        cmd.SetI32(spin, Protocol.Prop.Value, 7);
-        cmd.SetI32(spin, Protocol.Prop.Minimum, 0);
-        cmd.SetI32(spin, Protocol.Prop.Maximum, 100);
+        var c = Add(Protocol.ElementType.CheckBox, c0, y, 0, 0);
+        cmd.SetBool(c, Protocol.PropertyId.Value, false);
+        c = Add(Protocol.ElementType.CheckBox, c0 + 60, y, 0, 0);
+        cmd.SetBool(c, Protocol.PropertyId.Value, true);
+        c = Add(Protocol.ElementType.CheckBox, c0 + 120, y, 0, 0, enabled: false);
+        cmd.SetBool(c, Protocol.PropertyId.Value, true);
+        c = Add(Protocol.ElementType.Switch, c1 + 30, y, 0, 0);
+        cmd.SetBool(c, Protocol.PropertyId.Value, false);
+        c = Add(Protocol.ElementType.Switch, c1 + 120, y, 0, 0);
+        cmd.SetBool(c, Protocol.PropertyId.Value, true);
+        c = Add(Protocol.ElementType.Switch, c1 + 210, y, 0, 0, enabled: false);
+        cmd.SetBool(c, Protocol.PropertyId.Value, true);
+        spin = Add(Protocol.ElementType.SpinBox, c3, y, 0, 0, enabled: false);
+        cmd.SetI32(spin, Protocol.PropertyId.Value, 7);
+        cmd.SetI32(spin, Protocol.PropertyId.Minimum, 0);
+        cmd.SetI32(spin, Protocol.PropertyId.Maximum, 100);
         y += 70;
         // Row 3: Slider horizontal 0.3, disabled, vertical (own column).
-        var sl = Add(Protocol.Type.Slider, c0, y, 300, 30);
-        cmd.SetF32(sl, Protocol.Prop.Value, 0.3f);
-        sl = Add(Protocol.Type.Slider, c0, y + 50, 300, 30, enabled: false);
-        cmd.SetF32(sl, Protocol.Prop.Value, 0.3f);
-        sl = Add(Protocol.Type.Slider, c3 + 40, y, 30, 200);
-        cmd.SetI32(sl, Protocol.Prop.Orientation, 2);
-        cmd.SetF32(sl, Protocol.Prop.Value, 0.3f);
+        var sl = Add(Protocol.ElementType.Slider, c0, y, 300, 30);
+        cmd.SetF32(sl, Protocol.PropertyId.Value, 0.3f);
+        sl = Add(Protocol.ElementType.Slider, c0, y + 50, 300, 30, enabled: false);
+        cmd.SetF32(sl, Protocol.PropertyId.Value, 0.3f);
+        sl = Add(Protocol.ElementType.Slider, c3 + 40, y, 30, 200);
+        cmd.SetI32(sl, Protocol.PropertyId.Orientation, 2);
+        cmd.SetF32(sl, Protocol.PropertyId.Value, 0.3f);
         y += 130;
         // Row 4: TextField with text, with placeholder, disabled.
-        var t = Add(Protocol.Type.TextField, c0, y, 0, 0);
-        cmd.SetString(t, Protocol.Prop.Value, "Some text");
-        t = Add(Protocol.Type.TextField, c0 + 220, y, 0, 0);
-        cmd.SetString(t, Protocol.Prop.Placeholder, "Placeholder");
-        t = Add(Protocol.Type.TextField, c0 + 440, y, 0, 0, enabled: false);
-        cmd.SetString(t, Protocol.Prop.Value, "Disabled");
+        var t = Add(Protocol.ElementType.TextField, c0, y, 0, 0);
+        cmd.SetString(t, Protocol.PropertyId.Value, "Some text");
+        t = Add(Protocol.ElementType.TextField, c0 + 220, y, 0, 0);
+        cmd.SetString(t, Protocol.PropertyId.Placeholder, "Placeholder");
+        t = Add(Protocol.ElementType.TextField, c0 + 440, y, 0, 0, enabled: false);
+        cmd.SetString(t, Protocol.PropertyId.Value, "Disabled");
         var rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"gallery apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         cmd.Reset();
@@ -381,7 +381,7 @@ public static class StyleTest
         var path = Path.Combine(s.OutDir, "style-gallery.png");
         using (var a = s.Grab(w, path))
             s.Check(a.Width > 0 && File.Exists(path), $"gallery written to {path}");
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
     }
 }

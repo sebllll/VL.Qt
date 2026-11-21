@@ -30,7 +30,7 @@ public static class EffectChainTest
 
     private const int ScenePage = 2;
 
-    internal static (int layers, int effects) Counts(IntPtr w)
+    internal static (int layers, int effects) Counts(SceneHandle w)
     {
         var text = NativeCalls.PerfPageText(w, ScenePage);
         var fx = Regex.Match(text, @"effects\s+(\d+)\s+effect layers, (\d+) MultiEffect items");
@@ -67,8 +67,8 @@ public static class EffectChainTest
     private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "MultiEffect is a ShaderEffect");
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt effect chain test");
-        s.Check(w != IntPtr.Zero, "effect-chain: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt effect chain test");
+        s.Check(w != SceneHandle.Null, "effect-chain: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -258,7 +258,7 @@ public static class EffectChainTest
         cmd.Reset();
         rec.Clear();
         Native.Apply(w, cmd.EndFrame());
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
     }
 

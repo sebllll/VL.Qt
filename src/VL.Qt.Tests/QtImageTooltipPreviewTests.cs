@@ -40,7 +40,7 @@ namespace VL.Qt.Tests
         {
             var r = _client.CreateImage();
             _client.Load(r, "C:/a.png", true);
-            Assert.That(_api.LoadFlags, Is.EqualTo(new[] { Protocol.Img.Mipmaps | Protocol.Img.Preview }));
+            Assert.That(_api.LoadFlags, Is.EqualTo(new[] { Protocol.ImageLoadFlags.Mipmaps | Protocol.ImageLoadFlags.Preview }));
         }
 
         [Test]
@@ -50,7 +50,7 @@ namespace VL.Qt.Tests
             var r = client.CreateImage();
             client.Load(r, "C:/a.png", true);
             client.Load(r, "C:/b.png", false);
-            Assert.That(_api.LoadFlags, Is.EqualTo(new[] { Protocol.Img.Mipmaps, 0u }));
+            Assert.That(_api.LoadFlags, Is.EqualTo(new[] { Protocol.ImageLoadFlags.Mipmaps, 0u }));
         }
 
         [Test]
@@ -59,7 +59,7 @@ namespace VL.Qt.Tests
             var client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null, previews);
             var r = client.CreateImage();
             Assert.That(client.SetPixels(r, 2, 2, 8, PixelFormat.B8G8R8A8, true, new byte[16]), Is.True);
-            Assert.That(_api.PixelFlags, Is.EqualTo(new[] { previews ? (int)Protocol.Img.Preview : 0 }));
+            Assert.That(_api.PixelFlags, Is.EqualTo(new[] { previews ? (int)Protocol.ImageLoadFlags.Preview : 0 }));
         }
 
         [Test]

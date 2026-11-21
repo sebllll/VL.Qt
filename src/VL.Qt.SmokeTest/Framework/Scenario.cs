@@ -125,7 +125,7 @@ internal sealed class Scenario
     public void Pump(int frames = 1) => QtHost.Pump(frames);
 
     /// <summary>Grabs the window to a PNG (a relative path goes to <see cref="OutDir"/>) and loads it; the caller disposes it.</summary>
-    public Bitmap Grab(IntPtr window, string path)
+    public Bitmap Grab(SceneHandle window, string path)
     {
         if (!Path.IsPathRooted(path))
             path = Path.Combine(OutDir, path);

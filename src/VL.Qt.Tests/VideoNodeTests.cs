@@ -7,12 +7,12 @@ using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
-using P = VL.Qt.Wire.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.PropertyId;
 using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Video element + node: defaults, property diff, clamping, EV_MEDIA back channel.</summary>
+    /// <summary>Video element + node: defaults, property diff, clamping, EVENT_MEDIA back channel.</summary>
     public class VideoNodeTests
     {
         private static readonly IDisposable NoWarning = new Nop();
@@ -40,7 +40,7 @@ namespace VL.Qt.Tests
         {
             var t = System.Text.Encoding.UTF8.GetBytes(text);
             var b = new byte[(12 + t.Length + 3) & ~3];
-            BinaryPrimitives.WriteUInt16LittleEndian(b, Protocol.Ev.Error);
+            BinaryPrimitives.WriteUInt16LittleEndian(b, Protocol.EventId.Error);
             BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(2), (ushort)(8 + t.Length));
             BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), handle);
             t.CopyTo(b, 12);
@@ -50,7 +50,7 @@ namespace VL.Qt.Tests
         private static byte[] MediaRecord(uint handle, float position, float duration)
         {
             var b = new byte[20];
-            BinaryPrimitives.WriteUInt16LittleEndian(b, Protocol.Ev.Media);
+            BinaryPrimitives.WriteUInt16LittleEndian(b, Protocol.EventId.Media);
             BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(2), 16);
             BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(4), handle);
             BinaryPrimitives.WriteSingleLittleEndian(b.AsSpan(12), position);
@@ -63,7 +63,7 @@ namespace VL.Qt.Tests
         {
             var v = new Video();
             Assert.That(v.Type, Is.EqualTo(ElementType.Video));
-            Assert.That((ushort)v.Type, Is.EqualTo(Protocol.Type.Video));
+            Assert.That((ushort)v.Type, Is.EqualTo(Protocol.ElementType.Video));
             Assert.That(v.Playing, Is.False);
             Assert.That(v.Loop, Is.False);
             Assert.That(v.KeepLastFrame, Is.False);

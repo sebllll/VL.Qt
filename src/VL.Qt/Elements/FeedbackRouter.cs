@@ -16,7 +16,7 @@ namespace VL.Qt.Elements
     /// poll buffer of the window into the bound slots.
     /// <para>
     /// Ids are counted up and not reused (wrap-around skips 0 and live ids): events QtNative still
-    /// sends for a released id (e.g. EV_HOVER 0 / EV_PRESS 0 after an unbind, 1 frame later) are dropped
+    /// sends for a released id (e.g. EVENT_HOVER 0 / EVENT_PRESS 0 after an unbind, 1 frame later) are dropped
     /// instead of landing in another slot. Releasing resets hover/press of the slot right away
     /// (docs/decisions/events.md); this also holds for the ids of input handlers (a removed Hover node's
     /// channel falls back to not hovered). Lives with the reconciler (one per window), so a restarted app (F8/F5)
@@ -160,7 +160,7 @@ namespace VL.Qt.Elements
 
         /// <summary>Events that report the state of an element (only the primary occurrence writes them).</summary>
         private static bool IsState(ushort ev)
-            => ev == Protocol.Ev.Measured || ev == Protocol.Ev.SceneBounds || ev == Protocol.Ev.Media || ev == Protocol.Ev.Error;
+            => ev == Protocol.EventId.Measured || ev == Protocol.EventId.SceneBounds || ev == Protocol.EventId.Media || ev == Protocol.EventId.Error;
 
         private static bool Target(FeedbackSlot slot, uint offset, out int index)
         {
@@ -175,7 +175,7 @@ namespace VL.Qt.Elements
         private const int touchPointSize = 24;
         private const int maxTouchPoints = 64;
 
-        /// <summary>EV_TOUCH_POINTS: u32 count, then per point id, x, y, pressure, w, h. Sent on change only, so allocating is fine.</summary>
+        /// <summary>EVENT_TOUCH_POINTS: u32 count, then per point id, x, y, pressure, w, h. Sent on change only, so allocating is fine.</summary>
         private static bool ApplyTouchPoints(ReadOnlySpan<byte> payload, FeedbackState state, in SpaceMapping mapping)
         {
             if (payload.Length < 4)
@@ -208,7 +208,7 @@ namespace VL.Qt.Elements
         }
 
         /// <summary>
-        /// EV_VALUE: u16 value type, u16 0, then the value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8).
+        /// EVENT_VALUE: u16 value type, u16 0, then the value encoded like SET (i32, f32, bool u8, string u32 len + UTF-8).
         /// Sent only after a user change, so allocating the string is fine. Keeps the last change until it is taken.
         /// </summary>
         private static bool ApplyValue(ReadOnlySpan<byte> payload, ElementFeedback feedback, int index)
@@ -221,16 +221,16 @@ namespace VL.Qt.Elements
             string? str = null;
             switch (type)
             {
-                case Protocol.Vt.I32:
-                case Protocol.Vt.F32:
+                case Protocol.ValueType.I32:
+                case Protocol.ValueType.F32:
                     if (v.Length < 4) return false;
                     bits = System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(v);
                     break;
-                case Protocol.Vt.Bool:
+                case Protocol.ValueType.Bool:
                     if (v.Length < 1) return false;
                     bits = v[0] != 0 ? 1 : 0;
                     break;
-                case Protocol.Vt.String:
+                case Protocol.ValueType.String:
                     if (v.Length < 4) return false;
                     uint n = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(v);
                     if (n > (uint)(v.Length - 4)) return false;
@@ -253,58 +253,58 @@ namespace VL.Qt.Elements
             int len = r.Payload.Length;
             switch (r.Event)
             {
-                case Protocol.Ev.Measured:
+                case Protocol.EventId.Measured:
                     if (len < 8) return false;
                     feedback[index].MeasuredSize = mapping.FromQt(new Vector2(r.ReadF32(0), r.ReadF32(4)));
                     return true;
-                case Protocol.Ev.SceneBounds:
+                case Protocol.EventId.SceneBounds:
                     if (len < 16) return false;
                     feedback[index].SceneBounds = mapping.FromQt(new RectangleF(r.ReadF32(0), r.ReadF32(4), r.ReadF32(8), r.ReadF32(12)));
                     return true;
-                case Protocol.Ev.Hover:
+                case Protocol.EventId.Hover:
                     if (len < 1) return false;
                     feedback[index].IsHovered = r.Payload[0] != 0;
                     return true;
-                case Protocol.Ev.Press:
+                case Protocol.EventId.Press:
                     if (len < 1) return false;
                     feedback[index].IsPressed = r.Payload[0] != 0;
                     return true;
-                case Protocol.Ev.Click:
+                case Protocol.EventId.Click:
                     if (len < 4) return false;
                     int delta = (int)Math.Min(r.ReadU32(0), int.MaxValue);
                     if (delta == 0) return true;
                     var c = feedback[index];
                     c.PendingClicks = (int)Math.Min((long)c.PendingClicks + delta, int.MaxValue);
                     return true;
-                case Protocol.Ev.TapCount:
+                case Protocol.EventId.TapCount:
                     if (len < 4) return false;
                     feedback[index].TapCount = (int)Math.Min(r.ReadU32(0), int.MaxValue);
                     return true;
-                case Protocol.Ev.LongPress:
+                case Protocol.EventId.LongPress:
                     if (len < 4) return false;
                     int presses = (int)Math.Min(r.ReadU32(0), int.MaxValue);
                     if (presses == 0) return true;
                     var lp = feedback[index];
                     lp.PendingLongPresses = (int)Math.Min((long)lp.PendingLongPresses + presses, int.MaxValue);
                     return true;
-                case Protocol.Ev.Active:
+                case Protocol.EventId.Active:
                     if (len < 1) return false;
                     feedback[index].IsActive = r.Payload[0] != 0;
                     return true;
-                case Protocol.Ev.Wheel:
+                case Protocol.EventId.Wheel:
                     if (len < 8) return false;
                     var wh = feedback[index]; // notches, not converted (not a length)
                     wh.PendingWheel += new Vector2(r.ReadF32(0), r.ReadF32(4));
                     return true;
-                case Protocol.Ev.Drag:
+                case Protocol.EventId.Drag:
                     if (len < 8) return false;
                     var dr = feedback[index];
                     dr.DragDelta = mapping.FromQt(new Vector2(r.ReadF32(0), r.ReadF32(4)));
                     unchecked { dr.DragUpdates++; }
                     return true;
-                case Protocol.Ev.TouchPoints:
+                case Protocol.EventId.TouchPoints:
                     return ApplyTouchPoints(r.Payload, feedback[index], mapping);
-                case Protocol.Ev.Pinch:
+                case Protocol.EventId.Pinch:
                     if (len < 24) return false;
                     var pi = feedback[index]; // scale: factor, rotation: degrees -> cycles, translation and pivot: pixels -> units
                     pi.PinchScale = r.ReadF32(0);
@@ -313,27 +313,27 @@ namespace VL.Qt.Elements
                     pi.PinchPivot = mapping.FromQt(new Vector2(r.ReadF32(16), r.ReadF32(20)));
                     unchecked { pi.PinchUpdates++; }
                     return true;
-                case Protocol.Ev.Pointer:
+                case Protocol.EventId.Pointer:
                     if (len < 8) return false;
                     feedback[index].PointerPosition = mapping.FromQt(new Vector2(r.ReadF32(0), r.ReadF32(4)));
                     return true;
-                case Protocol.Ev.Media:
+                case Protocol.EventId.Media:
                     if (len < 8) return false;
                     var m = feedback[index]; // seconds, not converted
                     m.MediaPosition = r.ReadF32(0);
                     m.MediaDuration = r.ReadF32(4);
                     return true;
-                case Protocol.Ev.Value:
+                case Protocol.EventId.Value:
                     return ApplyValue(r.Payload, feedback, index);
-                case Protocol.Ev.QmlProperty:
+                case Protocol.EventId.QmlProperty:
                     if (!QmlEvents.TryDecodeProperty(r.Payload, out var qmlName, out var qmlValue)) return false;
                     feedback.SetQmlProperty(index, qmlName, qmlValue);
                     return true;
-                case Protocol.Ev.QmlSignal:
+                case Protocol.EventId.QmlSignal:
                     if (!QmlEvents.TryDecodeSignal(r.Payload, out var qmlSignal)) return false;
                     feedback.AddQmlSignal(index, qmlSignal);
                     return true;
-                case Protocol.Ev.Error:
+                case Protocol.EventId.Error:
                     // Sent only on change (allocation is fine); empty = cleared.
                     feedback[index].Error = len == 0 ? null : Encoding.UTF8.GetString(r.Payload);
                     return true;

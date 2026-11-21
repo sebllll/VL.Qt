@@ -54,8 +54,8 @@ namespace VL.Qt.Tests
         [Test]
         public void ElementType_MatchesProtocolIds()
         {
-            Assert.That((ushort)ElementType.Item, Is.EqualTo(Protocol.Type.Item));
-            Assert.That((ushort)ElementType.Rectangle, Is.EqualTo(Protocol.Type.Rectangle));
+            Assert.That((ushort)ElementType.Item, Is.EqualTo(Protocol.ElementType.Group));
+            Assert.That((ushort)ElementType.Rectangle, Is.EqualTo(Protocol.ElementType.Rectangle));
         }
 
         [Test]

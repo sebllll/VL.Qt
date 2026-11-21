@@ -49,12 +49,12 @@ public static class ReferenceScenesTest
         uint Rect(float x, float y, float w, float h, uint rgb, float radius = 0, uint parent = 0, float opacity = 1)
         {
             var id = next++;
-            cmd.Create(id, Protocol.Type.Rectangle);
+            cmd.Create(id, Protocol.ElementType.Rectangle);
             cmd.SetPlace(id, x, y, w, h);
             var (r, g, b) = C(rgb);
-            cmd.SetColor(id, Protocol.Prop.Color, r, g, b, 1);
-            if (radius > 0) cmd.SetF32(id, Protocol.Prop.Radius, radius);
-            if (opacity != 1) cmd.SetF32(id, Protocol.Prop.Opacity, opacity);
+            cmd.SetColor(id, Protocol.PropertyId.Color, r, g, b, 1);
+            if (radius > 0) cmd.SetF32(id, Protocol.PropertyId.Radius, radius);
+            if (opacity != 1) cmd.SetF32(id, Protocol.PropertyId.Opacity, opacity);
             cmd.Reparent(id, parent, order++);
             return id;
         }
@@ -62,22 +62,22 @@ public static class ReferenceScenesTest
         {
             var id = next++;
             cmd.Create(id, type);
-            cmd.SetBool(id, Protocol.Prop.AutoSize, false);
+            cmd.SetBool(id, Protocol.PropertyId.AutoSize, false);
             cmd.SetPlace(id, x, y, w, h);
-            cmd.SetF32(id, Protocol.Prop.Spacing, spacing);
-            cmd.SetF32(id, Protocol.Prop.Padding, padding);
-            if (align != 0) cmd.SetI32(id, Protocol.Prop.ChildAlignment, align);
+            cmd.SetF32(id, Protocol.PropertyId.Spacing, spacing);
+            cmd.SetF32(id, Protocol.PropertyId.Padding, padding);
+            if (align != 0) cmd.SetI32(id, Protocol.PropertyId.ChildAlignment, align);
             cmd.Reparent(id, parent, order++);
             return id;
         }
         uint NewShape(float x, float y, uint rgbStroke, float strokeWidth)
         {
             var id = next++;
-            cmd.Create(id, Protocol.Type.Shape);
+            cmd.Create(id, Protocol.ElementType.Shape);
             cmd.SetPlace(id, x, y, 0, 0);
             var (r, g, b) = C(rgbStroke);
-            cmd.SetColor(id, Protocol.Prop.ShapeStrokeColor, r, g, b, 1);
-            cmd.SetF32(id, Protocol.Prop.ShapeStrokeWidth, strokeWidth);
+            cmd.SetColor(id, Protocol.PropertyId.ShapeStrokeColor, r, g, b, 1);
+            cmd.SetF32(id, Protocol.PropertyId.ShapeStrokeWidth, strokeWidth);
             cmd.Reparent(id, 0, order++);
             return id;
         }
@@ -87,8 +87,8 @@ public static class ReferenceScenesTest
             cmd.Reset();
             next = 1;
             order = 0;
-            var w = Native.vlqt_window_create(Width, Height, "VL.Qt reference scene");
-            s.Check(w != IntPtr.Zero, $"reference-{name}: window_create");
+            var w = NativeCalls.CreateWindow(Width, Height, "VL.Qt reference scene");
+            s.Check(w != SceneHandle.Null, $"reference-{name}: window_create");
             Native.vlqt_window_show(w);
             s.Pump(4);
             cmd.ClearColor(Bg, Bg, Bg, 1);
@@ -104,26 +104,26 @@ public static class ReferenceScenesTest
                 s.Check(ink > 0.02, $"reference-{name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
             }
             ImageCompare.Check(s, "reference-" + name, grabPath, Width);
-            Native.vlqt_window_destroy(w);
+            Native.vlqt_scene_destroy(w);
             s.Pump(1);
         }
 
         Render("layout", () =>
         {
             Rect(0, 0, 130, 300, Panel, 10);
-            var col = Container(Protocol.Type.Column, 0, 0, 130, 300, 8, 12, 0x4);
+            var col = Container(Protocol.ElementType.Column, 0, 0, 130, 300, 8, 12, 0x4);
             foreach (var (w, rgb) in new[] { (60f, Orange), (100f, Cyan), (40f, Pink), (80f, Green) })
                 Rect(0, 0, w, 52, rgb, 8, col);
             Rect(140, 0, 260, 140, Panel, 10);
-            var rowBottom = Container(Protocol.Type.Row, 140, 0, 260, 140, 10, 12, 0x40);
+            var rowBottom = Container(Protocol.ElementType.Row, 140, 0, 260, 140, 10, 12, 0x40);
             foreach (var (h, rgb) in new[] { (40f, Orange), (90f, Cyan), (60f, Pink), (110f, Green) })
                 Rect(0, 0, 40, h, rgb, 6, rowBottom);
             Rect(140, 150, 260, 150, Panel, 10);
-            var outer = Container(Protocol.Type.Column, 140, 150, 260, 150, 6, 10, 0);
-            var inner1 = Container(Protocol.Type.Row, 0, 0, 240, 60, 6, 0, 0, outer);
+            var outer = Container(Protocol.ElementType.Column, 140, 150, 260, 150, 6, 10, 0);
+            var inner1 = Container(Protocol.ElementType.Row, 0, 0, 240, 60, 6, 0, 0, outer);
             foreach (var rgb in new[] { Orange, Cyan, Pink })
                 Rect(0, 0, 70, 60, rgb, 30, inner1);
-            var inner2 = Container(Protocol.Type.Row, 0, 0, 240, 60, 20, 0, 0, outer);
+            var inner2 = Container(Protocol.ElementType.Row, 0, 0, 240, 60, 20, 0, 0, outer);
             foreach (var rgb in new[] { Green, Pink })
                 Rect(0, 0, 100, 60, rgb, 4, inner2);
         });
@@ -133,23 +133,23 @@ public static class ReferenceScenesTest
             Rect(0, 0, 400, 300, Panel);
             // Closed polygon: fill, thick miter stroke.
             var poly = NewShape(30, 30, Orange, 12);
-            cmd.SetF32Array(poly, Protocol.Prop.ShapePoints, [0, 0, 150, 20, 120, 110, 10, 90]);
-            cmd.SetBool(poly, Protocol.Prop.ShapeClosed, true);
-            cmd.SetColor(poly, Protocol.Prop.ShapeFill, 0.15f, 0.5f, 0.8f, 1);
-            cmd.SetI32(poly, Protocol.Prop.ShapeJoin, 0);
+            cmd.SetF32Array(poly, Protocol.PropertyId.ShapePoints, [0, 0, 150, 20, 120, 110, 10, 90]);
+            cmd.SetBool(poly, Protocol.PropertyId.ShapeClosed, true);
+            cmd.SetColor(poly, Protocol.PropertyId.ShapeFill, 0.15f, 0.5f, 0.8f, 1);
+            cmd.SetI32(poly, Protocol.PropertyId.ShapeJoin, 0);
             // Dashed polyline, 2 on / 1 off in stroke widths.
             var dash = NewShape(220, 40, Cyan, 8);
-            cmd.SetF32Array(dash, Protocol.Prop.ShapePoints, [0, 0, 80, 60, 150, 0]);
-            cmd.SetF32Array(dash, Protocol.Prop.ShapeDash, [2, 1]);
+            cmd.SetF32Array(dash, Protocol.PropertyId.ShapePoints, [0, 0, 80, 60, 150, 0]);
+            cmd.SetF32Array(dash, Protocol.PropertyId.ShapeDash, [2, 1]);
             // Cubic S-curve, round caps, dash with offset.
             var cubic = NewShape(30, 170, Green, 10);
-            cmd.SetPath(cubic, Protocol.Prop.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Cubic], [0, 100, 0, 0, 340, 100, 340, 0]);
-            cmd.SetI32(cubic, Protocol.Prop.ShapeCap, 1);
-            cmd.SetF32Array(cubic, Protocol.Prop.ShapeDash, [3, 2]);
-            cmd.SetF32(cubic, Protocol.Prop.ShapeDashOffset, 1);
+            cmd.SetPath(cubic, Protocol.PropertyId.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Cubic], [0, 100, 0, 0, 340, 100, 340, 0]);
+            cmd.SetI32(cubic, Protocol.PropertyId.ShapeCap, 1);
+            cmd.SetF32Array(cubic, Protocol.PropertyId.ShapeDash, [3, 2]);
+            cmd.SetF32(cubic, Protocol.PropertyId.ShapeDashOffset, 1);
             // Solid stroke for the contrast.
             var line = NewShape(30, 280, Pink, 6);
-            cmd.SetF32Array(line, Protocol.Prop.ShapePoints, [0, 0, 340, 0]);
+            cmd.SetF32Array(line, Protocol.PropertyId.ShapePoints, [0, 0, 340, 0]);
         });
 
         // Base style and a style with changed colors; the font is the bundled one in both.
@@ -178,14 +178,14 @@ public static class ReferenceScenesTest
                     cmd.Reparent(id, 0, order++);
                     return id;
                 }
-                cmd.SetString(Add(Protocol.Type.Button, 15, 20), Protocol.Prop.Text, "Button");
-                var b = Add(Protocol.Type.Button, 15, 70);
-                cmd.SetString(b, Protocol.Prop.Text, "Off");
-                cmd.SetBool(b, Protocol.Prop.Enabled, false);
-                cmd.SetBool(Add(Protocol.Type.CheckBox, 120, 24), Protocol.Prop.Value, true);
-                cmd.SetBool(Add(Protocol.Type.Switch, 120, 74), Protocol.Prop.Value, true);
-                cmd.SetF32(Add(Protocol.Type.Slider, 15, 140, 165, 30), Protocol.Prop.Value, 0.65f);
-                cmd.SetF32(Add(Protocol.Type.Slider, 15, 190, 165, 30), Protocol.Prop.Value, 0.2f);
+                cmd.SetString(Add(Protocol.ElementType.Button, 15, 20), Protocol.PropertyId.Text, "Button");
+                var b = Add(Protocol.ElementType.Button, 15, 70);
+                cmd.SetString(b, Protocol.PropertyId.Text, "Off");
+                cmd.SetBool(b, Protocol.PropertyId.Enabled, false);
+                cmd.SetBool(Add(Protocol.ElementType.CheckBox, 120, 24), Protocol.PropertyId.Value, true);
+                cmd.SetBool(Add(Protocol.ElementType.Switch, 120, 74), Protocol.PropertyId.Value, true);
+                cmd.SetF32(Add(Protocol.ElementType.Slider, 15, 140, 165, 30), Protocol.PropertyId.Value, 0.65f);
+                cmd.SetF32(Add(Protocol.ElementType.Slider, 15, 190, 165, 30), Protocol.PropertyId.Value, 0.2f);
             }
             Column(0, baseStyle);
             Column(205, custom);
@@ -203,11 +203,11 @@ public static class ReferenceScenesTest
                     var y = i * 75;
                     Rect(0, y, 400, 70, Panel, 8);
                     var id = next++;
-                    cmd.Create(id, Protocol.Type.Image);
+                    cmd.Create(id, Protocol.ElementType.Image);
                     cmd.SetPlace(id, 20, y + 8, 360, 54);
-                    cmd.SetU64(id, Protocol.Prop.Image, stripes);
-                    cmd.SetI32(id, Protocol.Prop.FillMode, i);
-                    cmd.SetBool(id, Protocol.Prop.Smooth, true);
+                    cmd.SetU64(id, Protocol.PropertyId.Image, stripes);
+                    cmd.SetI32(id, Protocol.PropertyId.FillMode, i);
+                    cmd.SetBool(id, Protocol.PropertyId.Smooth, true);
                     cmd.Reparent(id, 0, order++);
                 }
             });
@@ -220,10 +220,10 @@ public static class ReferenceScenesTest
             {
                 Rect(x, 20, 120, 120, Panel, 10);
                 var g = next++;
-                cmd.Create(g, Protocol.Type.Item);
+                cmd.Create(g, Protocol.ElementType.Group);
                 cmd.SetPlace(g, x + 10, 30, 100, 100);
-                if (opacity != 1) cmd.SetF32(g, Protocol.Prop.Opacity, opacity);
-                if (clip) cmd.SetBool(g, Protocol.Prop.Clip, true);
+                if (opacity != 1) cmd.SetF32(g, Protocol.PropertyId.Opacity, opacity);
+                if (clip) cmd.SetBool(g, Protocol.PropertyId.Clip, true);
                 cmd.Reparent(g, 0, order++);
                 var a = Rect(0, 0, 80, 80, Orange, 12, g);
                 cmd.SetPlace(a, -20, 10, 80, 80);

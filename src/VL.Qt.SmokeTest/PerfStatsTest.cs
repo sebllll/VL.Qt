@@ -4,7 +4,7 @@ using VL.Qt;
 
 /// <summary>
 /// percentiles and counters of vlqt_perf_stats on known samples (vlqt_perf_eval), plus the live window API
-/// (vlqt_window_get_perf_sample / vlqt_window_get_perf_stats).
+/// (vlqt_scene_get_perf_sample / vlqt_scene_get_perf_stats).
 /// </summary>
 [TestFixture, NonParallelizable]
 public static class PerfStatsTest
@@ -23,7 +23,7 @@ public static class PerfStatsTest
         for (int i = 0; i < 100; i++)
         {
             var swaps = i % 10 == 0 ? 0 : i % 10 == 5 ? 2 : 1;
-            samples[i] = new Native.vlqt_perf_sample { pump = i + 1, frame = swaps > 0 ? i + 1 : 0, swaps = swaps };
+            samples[i] = new Native.vlqt_perf_sample { pump = i + 1, frame_interval = swaps > 0 ? i + 1 : 0, swaps = swaps };
             t[i] = i * 200.0;
         }
         var rc = NativeTest.vlqt_test_perf_eval(samples, t, samples.Length, budget, out var st);
@@ -50,7 +50,7 @@ public static class PerfStatsTest
         {
             var animated = i >= 64;
             var swaps = animated || i % 8 == 7 ? 1 : 0;
-            samples[i] = new Native.vlqt_perf_sample { pump = 0.2f, frame = swaps == 0 ? 0 : animated ? 16 : 128, swaps = swaps };
+            samples[i] = new Native.vlqt_perf_sample { pump = 0.2f, frame_interval = swaps == 0 ? 0 : animated ? 16 : 128, swaps = swaps };
             t[i] = i * 16.0;
         }
         rc = NativeTest.vlqt_test_perf_eval(samples, t, samples.Length, budget, out st);
@@ -60,7 +60,7 @@ public static class PerfStatsTest
         // Ring limit: 300 samples -> percentiles over the last 240 (pump 60..299), counters over all.
         samples = new Native.vlqt_perf_sample[300];
         t = new double[300];
-        for (int i = 0; i < 300; i++) { samples[i] = new Native.vlqt_perf_sample { pump = i, frame = 16, swaps = 1 }; t[i] = i * 16.0; }
+        for (int i = 0; i < 300; i++) { samples[i] = new Native.vlqt_perf_sample { pump = i, frame_interval = 16, swaps = 1 }; t[i] = i * 16.0; }
         rc = NativeTest.vlqt_test_perf_eval(samples, t, samples.Length, budget, out st);
         s.Check(rc == 0 && st.samples == 240 && st.pumps == 300 && st.pump_p50 == 179 && st.pump_max == 299 && st.frame_p99 == 16 && st.long_frames == 0,
             $"perfstats: ring of 240 (samples {st.samples}, pumps {st.pumps}, p50 {st.pump_p50}, max {st.pump_max}, frame p99 {st.frame_p99})");
@@ -68,25 +68,25 @@ public static class PerfStatsTest
         s.Check(rc == 0 && st.samples == 0 && st.pumps == 0 && st.pump_max == 0, "perfstats: no samples -> zeros");
 
         // Live window: last sample and stats after a few pumps.
-        var w = Native.vlqt_window_create(320, 240, "VL.Qt perfstats");
-        rc = Native.vlqt_window_get_perf_sample(w, out var ls);
+        var w = NativeCalls.CreateWindow(320, 240, "VL.Qt perfstats");
+        rc = Native.vlqt_scene_get_perf_sample(w, out var ls);
         s.Check(rc == Native.Result.NoData, $"perfstats: no sample before the first pump (rc {rc})");
         Native.vlqt_window_show(w);
         s.Pump(20);
-        rc = Native.vlqt_window_get_perf_sample(w, out ls);
+        rc = Native.vlqt_scene_get_perf_sample(w, out ls);
         var phases = ls.events + ls.vsync + ls.sync + ls.render + ls.present;
         s.Check(rc == 0 && ls.pump > 0 && ls.events >= 0 && phases >= ls.pump - 0.01f,
             $"perfstats: last sample, events = pump - frame phases (rc {rc}, pump {ls.pump:F2}, events {ls.events:F2}, sync {ls.sync:F2}, render {ls.render:F2}, present {ls.present:F2}, vsync {ls.vsync:F2}, swaps {ls.swaps})");
-        rc = Native.vlqt_window_get_perf_stats(w, out st);
+        rc = Native.vlqt_scene_get_perf_stats(w, out st);
         s.Check(rc == 0 && st.budget_ms >= 1 && st.budget_ms <= 1000.0 / 23 && st.pumps >= 20 && st.samples >= 20 && st.pump_max >= st.pump_p50,
             $"perfstats: window stats (rc {rc}, budget {st.budget_ms:F2} ms, pumps {st.pumps}, samples {st.samples}, pump p50 {st.pump_p50:F2} max {st.pump_max:F2})");
-        s.Check(Native.vlqt_window_get_perf_sample(IntPtr.Zero, out _) == Native.Result.NullHandle && Native.vlqt_window_get_perf_stats(IntPtr.Zero, out _) == Native.Result.NullHandle,
+        s.Check(Native.vlqt_scene_get_perf_sample(SceneHandle.Null, out _) == Native.Result.NullHandle && Native.vlqt_scene_get_perf_stats(SceneHandle.Null, out _) == Native.Result.NullHandle,
             "perfstats: null window -> NullHandle");
 
         // host frames. Eval: 4 frames of 250 ms, apply 1..4, ops 10..40, alloc 100..400, gen0 1 each, gen2 once.
-        var hf = new Native.vlqt_host_frame[4];
+        var hf = new Native.vlqt_host_pump[4];
         for (int i = 0; i < 4; i++)
-            hf[i] = new Native.vlqt_host_frame { apply = i + 1, reconcile = 2 * (i + 1), host = 5, interval = 250, gc_pause = 0.5f,
+            hf[i] = new Native.vlqt_host_pump { apply = i + 1, reconcile = 2 * (i + 1), host = 5, interval = 250, gc_pause = 0.5f,
                 ops = 10 * (i + 1), gc0 = 1, gc2 = i == 3 ? 1 : 0, alloc_bytes = 100 * (i + 1),
                 vvvv = 2 * (i + 1), wait = i == 2 ? 10 : 1 }; // vvvv 2..8, wait 1,1,10,1
         rc = NativeTest.vlqt_test_perf_host_eval(hf, 4, out var hs);
@@ -99,26 +99,26 @@ public static class PerfStatsTest
         s.Check(rc == 0 && hs.samples == 0 && hs.gc0_per_s == 0, "perfstats: host eval, no frames -> zeros");
 
         // Live: report after a pump, read back; the next pump without a report has none.
-        var f = new Native.vlqt_host_frame { apply = 0.5f, host = 3, interval = 16, ops = 7, gc0 = 1, alloc_bytes = 1234, vvvv = 10.5f, wait = 2.25f };
-        rc = Native.vlqt_window_report_host_frame(w, f);
-        var rc2 = Native.vlqt_window_get_host_frame(w, out var back);
-        Native.vlqt_window_get_host_stats(w, out hs);
+        var f = new Native.vlqt_host_pump { apply = 0.5f, host = 3, interval = 16, ops = 7, gc0 = 1, alloc_bytes = 1234, vvvv = 10.5f, wait = 2.25f };
+        rc = Native.vlqt_scene_report_host_pump(w, f);
+        var rc2 = Native.vlqt_scene_get_host_pump(w, out var back);
+        Native.vlqt_scene_get_host_pump_stats(w, out hs);
         var ps = PerfStats.From(default, default, hs);
         s.Check(rc == 0 && rc2 == 0 && back.ops == 7 && back.alloc_bytes == 1234 && back.apply == 0.5f && hs.samples == 1 && hs.ops == 7
               && Math.Abs(hs.gc0_per_s - 62.5) < 1e-6 && back.vvvv == 10.5f && back.wait == 2.25f
               && hs.vvvv_ms == 10.5 && hs.vvvv_ms_max == 10.5 && hs.wait_ms == 2.25 && ps.VvvvMs == 10.5f && ps.VvvvMsMax == 10.5f && ps.WaitMs == 2.25f,
             $"perfstats: host frame report/read back (rc {rc}/{rc2}, ops {back.ops}, alloc {back.alloc_bytes}, stats n {hs.samples}, gen0/s {hs.gc0_per_s}, vvvv {back.vvvv}/{hs.vvvv_ms}/{ps.VvvvMs}, wait {back.wait}/{hs.wait_ms})");
         s.Pump(1);
-        rc = Native.vlqt_window_get_host_frame(w, out _);
+        rc = Native.vlqt_scene_get_host_pump(w, out _);
         s.Check(rc == Native.Result.NoData, $"perfstats: next pump without report -> NoData (rc {rc})");
-        s.Check(Native.vlqt_window_report_host_frame(IntPtr.Zero, f) == Native.Result.NullHandle && Native.vlqt_window_get_host_frame(IntPtr.Zero, out _) == Native.Result.NullHandle
-              && Native.vlqt_window_get_host_stats(IntPtr.Zero, out _) == Native.Result.NullHandle,
+        s.Check(Native.vlqt_scene_report_host_pump(SceneHandle.Null, f) == Native.Result.NullHandle && Native.vlqt_scene_get_host_pump(SceneHandle.Null, out _) == Native.Result.NullHandle
+              && Native.vlqt_scene_get_host_pump_stats(SceneHandle.Null, out _) == Native.Result.NullHandle,
             "perfstats: host API, null window -> NullHandle");
-        var w2 = Native.vlqt_window_create(64, 64, "VL.Qt perfstats 2");
-        s.Check(Native.vlqt_window_report_host_frame(w2, f) == Native.Result.NoData, "perfstats: host report before the first pump -> NoData");
-        Native.vlqt_window_destroy(w2);
+        var w2 = NativeCalls.CreateWindow(64, 64, "VL.Qt perfstats 2");
+        s.Check(Native.vlqt_scene_report_host_pump(w2, f) == Native.Result.NoData, "perfstats: host report before the first pump -> NoData");
+        Native.vlqt_scene_destroy(w2);
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
     }
 }

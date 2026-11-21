@@ -73,7 +73,7 @@ namespace VL.Qt.Tests
 
         private void Show()
         {
-            _reconciler.Window = new IntPtr(1);
+            _reconciler.Window = new SceneHandle(1);
             _reconciler.Update(_element, Space.DIPTopLeft);
         }
 

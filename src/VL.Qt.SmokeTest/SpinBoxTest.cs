@@ -7,7 +7,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 
 // SpinBox (package 1a): QtQuick.Controls SpinBox (style Basic) as value input. Raw protocol against QtNative:
-// implicit size (AUTO_SIZE), EV_VALUE i32 only after user changes (+/- click, wheel, typed text on Enter and on focus
+// implicit size (AUTO_SIZE), EVENT_VALUE i32 only after user changes (+/- click, wheel, typed text on Enter and on focus
 // loss), never for SET VALUE/MINIMUM/MAXIMUM, the captured user value survives a stale SET before the poll, several
 // changes in one frame = one event with the last value, full int range, Editable/Enabled false, rebind drops a change
 // not polled. Input comes from the TEST exports vlqt_test_send_mouse / _wheel / _key_text.
@@ -48,8 +48,8 @@ public static class SpinBoxTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt spinbox test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt spinbox test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
@@ -80,27 +80,27 @@ public static class SpinBoxTest
             foreach (var c in s)
                 Key(c, 0, c.ToString()); // '0'..'9' and '-' are their Qt key codes
         }
-        static List<Rec> Values(List<Rec> recs, uint handle) => recs.FindAll(r => r.Event == Protocol.Ev.Value && r.Handle == handle);
+        static List<Rec> Values(List<Rec> recs, uint handle) => recs.FindAll(r => r.Event == Protocol.EventId.Value && r.Handle == handle);
         static string S(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
         void ExpectValue(List<Rec> recs, int expected, string what)
         {
             var v = Values(recs, H);
-            s.Check(v.Count == 1 && v[0].ValueType == Protocol.Vt.I32 && v[0].Payload.Length == 8 && v[0].I32 == expected,
-                $"{what} -> one EV_VALUE i32 {expected} ({S(recs)})");
+            s.Check(v.Count == 1 && v[0].ValueType == Protocol.ValueType.I32 && v[0].Payload.Length == 8 && v[0].I32 == expected,
+                $"{what} -> one EVENT_VALUE i32 {expected} ({S(recs)})");
         }
-        void ExpectNone(List<Rec> recs, string what) => s.Check(Values(recs, H).Count == 0, $"{what} -> no EV_VALUE ({S(recs)})");
+        void ExpectNone(List<Rec> recs, string what) => s.Check(Values(recs, H).Count == 0, $"{what} -> no EVENT_VALUE ({S(recs)})");
 
         // Created with a large range and a value, bound without flags; AUTO_SIZE default on -> implicit size; SET no echo.
         cmd.Reset();
-        cmd.Create(S1, Protocol.Type.SpinBox);
+        cmd.Create(S1, Protocol.ElementType.SpinBox);
         VL.Qt.Styles.BaseStyle.Write(cmd, S1); // like the Reconciler
         cmd.SetPlace(S1, 100, 100, 0, 0);
-        cmd.SetI32(S1, Protocol.Prop.Minimum, -2_000_000_000);
-        cmd.SetI32(S1, Protocol.Prop.Maximum, 2_000_000_000);
-        cmd.SetI32(S1, Protocol.Prop.Value, 5);
-        cmd.SetI32(S1, Protocol.Prop.Step, 1);
-        cmd.SetBool(S1, Protocol.Prop.Editable, true);
-        cmd.SetBool(S1, Protocol.Prop.Enabled, true);
+        cmd.SetI32(S1, Protocol.PropertyId.Minimum, -2_000_000_000);
+        cmd.SetI32(S1, Protocol.PropertyId.Maximum, 2_000_000_000);
+        cmd.SetI32(S1, Protocol.PropertyId.Value, 5);
+        cmd.SetI32(S1, Protocol.PropertyId.Step, 1);
+        cmd.SetBool(S1, Protocol.PropertyId.Editable, true);
+        cmd.SetBool(S1, Protocol.PropertyId.Enabled, true);
         cmd.Reparent(S1, 0, 0);
         cmd.Bind(S1, H, 0);
         CheckApply("spinbox create + range/value/step/editable/enabled");
@@ -108,16 +108,16 @@ public static class SpinBoxTest
         s.Pump(2);
         var recs = Frame();
         recs.AddRange(Frame());
-        var m = recs.FindLast(r => r.Event == Protocol.Ev.Measured && r.Handle == H);
+        var m = recs.FindLast(r => r.Event == Protocol.EventId.Measured && r.Handle == H);
         s.Check(m.Payload != null && m.F(0) >= StyleMin && m.F(1) >= StyleMin, $"implicit size ({S(recs)})");
         ExpectNone(recs, "SET VALUE/MINIMUM/MAXIMUM on creation");
 
         // Fixed Bounds from here (AUTO_SIZE off): text left, down and up buttons right.
-        cmd.SetBool(S1, Protocol.Prop.AutoSize, false);
+        cmd.SetBool(S1, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(S1, 100, 100, 240, 40);
-        cmd.Create(S2, Protocol.Type.SpinBox);
+        cmd.Create(S2, Protocol.ElementType.SpinBox);
         VL.Qt.Styles.BaseStyle.Write(cmd, S2); // like the Reconciler
-        cmd.SetBool(S2, Protocol.Prop.AutoSize, false);
+        cmd.SetBool(S2, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(S2, 100, 200, 240, 40);
         cmd.Reparent(S2, 0, 1);
         cmd.Bind(S2, H2, 0);
@@ -138,7 +138,7 @@ public static class SpinBoxTest
         ExpectValue(Frame(), 4, "two clicks - in one frame");
 
         // SET VALUE -> no echo.
-        cmd.SetI32(S1, Protocol.Prop.Value, 100);
+        cmd.SetI32(S1, Protocol.PropertyId.Value, 100);
         CheckApply("set value 100");
         recs = Frame();
         recs.AddRange(Frame());
@@ -150,7 +150,7 @@ public static class SpinBoxTest
         ExpectValue(Frame(), 101, "wheel up");
 
         // Step 1000: + -> 1101.
-        cmd.SetI32(S1, Protocol.Prop.Step, 1000);
+        cmd.SetI32(S1, Protocol.PropertyId.Step, 1000);
         CheckApply("set step 1000");
         Click(upX, y1);
         ExpectValue(Frame(), 1101, "click + with step 1000");
@@ -172,38 +172,38 @@ public static class SpinBoxTest
 
         // User wins over a stale SET between change and poll: the captured user value still arrives.
         Click(upX, y1); // step 1000 -> 1123
-        cmd.SetI32(S1, Protocol.Prop.Value, 123);
+        cmd.SetI32(S1, Protocol.PropertyId.Value, 123);
         CheckApply("stale set value after the user change");
         ExpectValue(Frame(), 1123, "user change + stale SET before the poll");
         ExpectNone(Frame(), "stale SET itself");
 
         // Full int range: + at int.MaxValue - 1 -> MaxValue, again -> nothing (no change); same at the minimum.
-        cmd.SetI32(S1, Protocol.Prop.Step, 1);
-        cmd.SetI32(S1, Protocol.Prop.Minimum, int.MinValue);
-        cmd.SetI32(S1, Protocol.Prop.Maximum, int.MaxValue);
-        cmd.SetI32(S1, Protocol.Prop.Value, int.MaxValue - 1);
+        cmd.SetI32(S1, Protocol.PropertyId.Step, 1);
+        cmd.SetI32(S1, Protocol.PropertyId.Minimum, int.MinValue);
+        cmd.SetI32(S1, Protocol.PropertyId.Maximum, int.MaxValue);
+        cmd.SetI32(S1, Protocol.PropertyId.Value, int.MaxValue - 1);
         CheckApply("full int range");
         ExpectNone(Frame(), "SET full int range");
         Click(upX, y1);
         ExpectValue(Frame(), int.MaxValue, "+ to int.MaxValue");
         Click(upX, y1);
         ExpectNone(Frame(), "+ at int.MaxValue");
-        cmd.SetI32(S1, Protocol.Prop.Value, int.MinValue + 1);
+        cmd.SetI32(S1, Protocol.PropertyId.Value, int.MinValue + 1);
         CheckApply("value int.MinValue + 1");
         Click(downX, y1);
         ExpectValue(Frame(), int.MinValue, "- to int.MinValue");
 
         // SET MAXIMUM below the value: Qt clamps without an event (no echo).
-        cmd.SetI32(S1, Protocol.Prop.Value, 50);
-        cmd.SetI32(S1, Protocol.Prop.Maximum, 10);
+        cmd.SetI32(S1, Protocol.PropertyId.Value, 50);
+        cmd.SetI32(S1, Protocol.PropertyId.Maximum, 10);
         CheckApply("maximum below the value");
         ExpectNone(Frame(), "clamp by SET MAXIMUM");
         Click(downX, y1);
         ExpectValue(Frame(), 9, "- after the clamp to 10");
 
         // Editable false: typing + Enter changes nothing; +/- still work.
-        cmd.SetBool(S1, Protocol.Prop.Editable, false);
-        cmd.SetI32(S1, Protocol.Prop.Maximum, 1000);
+        cmd.SetBool(S1, Protocol.PropertyId.Editable, false);
+        cmd.SetI32(S1, Protocol.PropertyId.Maximum, 1000);
         CheckApply("editable false");
         Click(textX, y1);
         Type("77");
@@ -213,14 +213,14 @@ public static class SpinBoxTest
         ExpectValue(Frame(), 10, "+ with Editable false");
 
         // Enabled false: + and wheel change nothing.
-        cmd.SetBool(S1, Protocol.Prop.Enabled, false);
+        cmd.SetBool(S1, Protocol.PropertyId.Enabled, false);
         CheckApply("enabled false");
         Click(upX, y1);
         s.Check(NativeTest.vlqt_test_send_wheel(w, textX, y1, 0, 120) == 0, "send_wheel disabled");
         ExpectNone(Frame(), "+ and wheel with Enabled false");
 
         // A new feedback id drops a change not polled yet (like Button clicks).
-        cmd.SetBool(S1, Protocol.Prop.Enabled, true);
+        cmd.SetBool(S1, Protocol.PropertyId.Enabled, true);
         CheckApply("enabled true");
         Click(upX, y1);
         cmd.Bind(S1, H3, 0);
@@ -235,7 +235,7 @@ public static class SpinBoxTest
         cmd.Destroy(S1);
         cmd.Destroy(S2);
         CheckApply("spinbox destroy");
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
     }
 

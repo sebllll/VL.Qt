@@ -25,7 +25,7 @@ namespace VL.Qt.Tests
                 pumps = 1000, over_budget = 3, long_frames = 2, idle = 10, multi_swap = 1,
                 recent_pumps = 600, recent_over_budget = 1, recent_long_frames = 1, recent_idle = 4, recent_multi_swap = 0,
             };
-            var host = new Native.vlqt_host_stats
+            var host = new Native.vlqt_host_pump_stats
             {
                 apply_ms = 0.25, apply_ms_max = 0.5, reconcile_ms = 0.75, reconcile_ms_max = 1.5,
                 ops = 42, gc0_per_s = 2, gc1_per_s = 0.5, gc2_per_s = 0, gc_pause_ms_per_s = 1.25, alloc_bytes = 4096, samples = 60,

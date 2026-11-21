@@ -44,8 +44,8 @@ public static partial class QtTextureTest
     {
         int expected = ExpectedThreads;
         int other = expected == 0 ? 1 : 0;
-        bool same = Native.vlqt_offscreen_set_threaded(expected) == Native.Result.Ok;
-        bool differs = Native.vlqt_offscreen_set_threaded(other) == Native.Result.Unsupported;
+        bool same = Native.vlqt_offscreen_set_render_threads(expected) == Native.Result.Ok;
+        bool differs = Native.vlqt_offscreen_set_render_threads(other) == Native.Result.Unsupported;
         s.Check(same && differs, $"mode: offscreen scenes render on {(expected == 0 ? "the main thread" : $"{expected} Qt render thread(s)")} ({(same ? "count in use accepted" : "count in use refused")}, {(differs ? "other refused" : "other accepted")})");
         s.Info($"mode: {(expected == 0 ? "main thread" : $"{expected} Qt render thread(s)")} (VLQT_OFFSCREEN_THREAD={Environment.GetEnvironmentVariable("VLQT_OFFSCREEN_THREAD") ?? "unset"})");
     }
@@ -78,7 +78,7 @@ public static partial class QtTextureTest
         for (int run = 0; run < runs && !skipped; run++)
         {
             var scene = NewScene(w, h, (0, 0, 0, 0), new[] { new Box(0, 0, w, h, colours[0].Item1, colours[0].Item2, colours[0].Item3, 1) }, s, $"warp run {run}");
-            if (scene == IntPtr.Zero)
+            if (scene == SceneHandle.Null)
             {
                 failedRuns++;
                 continue;
@@ -113,7 +113,7 @@ public static partial class QtTextureTest
                 }
             }
             Native.vlqt_offscreen_unbind(scene);
-            Native.vlqt_window_destroy(scene);
+            Native.vlqt_scene_destroy(scene);
             NativeTest.vlqt_test_com_release(tex);
         }
         if (!skipped)
@@ -123,13 +123,13 @@ public static partial class QtTextureTest
             // QtNative moves back to the hardware adapter, as later parts of the suite expect.
             s.Pump(2);
             var scene = RectScene(w, h, s, "warp: back on the hardware adapter");
-            int rc = scene == IntPtr.Zero ? (int)Native.Result.NullHandle : (int)Native.vlqt_offscreen_bind(scene, hw, hwHandle, w, h, B8G8R8A8Unorm, 1, out _);
+            int rc = scene == SceneHandle.Null ? (int)Native.Result.NullHandle : (int)Native.vlqt_offscreen_bind(scene, hw, hwHandle, w, h, B8G8R8A8Unorm, 1, out _);
             int rendered = rc == 0 ? Native.OffscreenRenderBatch(hwCtx, new[] { scene }, 0) : rc;
             check(rendered == 1 && Centre(hwTex, w, h) == "255,0,0,255", $"warp: QtNative moved back to the hardware adapter and renders (bind {rc}, rendered {rendered}) {ErrIf(rendered < 1)}");
-            if (scene != IntPtr.Zero)
+            if (scene != SceneHandle.Null)
             {
                 Native.vlqt_offscreen_unbind(scene);
-                Native.vlqt_window_destroy(scene);
+                Native.vlqt_scene_destroy(scene);
             }
             s.Pump(2);
         }
@@ -160,7 +160,7 @@ public static partial class QtTextureTest
         for (int round = 0; round < rounds && hung == 0; round++)
         {
             var scene = RectScene(w, h, s, "never-signalled");
-            if (scene == IntPtr.Zero || !NewTarget(device, w, h, B8G8R8A8Typeless, out var tex, out var handle))
+            if (scene == SceneHandle.Null || !NewTarget(device, w, h, B8G8R8A8Typeless, out var tex, out var handle))
             {
                 check(false, "never-signalled: setup " + Native.LastError());
                 break;
@@ -184,7 +184,7 @@ public static partial class QtTextureTest
                 {
                     s.Info($"never-signalled: skipped ({lost}, needs VLQT_TEST_D3D11ON12=1: -Only qttexture)");
                     Native.vlqt_offscreen_unbind(scene);
-                    Native.vlqt_window_destroy(scene);
+                    Native.vlqt_scene_destroy(scene);
                     NativeTest.vlqt_test_com_release(tex);
                     NativeTest.vlqt_test_d3d11_release_device(device, context);
                     return;
@@ -218,7 +218,7 @@ public static partial class QtTextureTest
                 s.Info($"never-signalled round {round}: unexpected centre {c}");
             }
             Native.vlqt_offscreen_unbind(scene);
-            Native.vlqt_window_destroy(scene);
+            Native.vlqt_scene_destroy(scene);
             NativeTest.vlqt_test_com_release(tex);
             s.Pump(2);
         }
@@ -243,9 +243,9 @@ public static partial class QtTextureTest
         if (!check(NativeTest.CreateDevice(0, out var device, out var context) == 0, "window loss: create device"))
             return;
         var scene = RectScene(64, 48, s, "window loss");
-        var win = Native.vlqt_window_create(w, h, "VL.Qt QtTexture window and device loss");
+        var win = NativeCalls.CreateWindow(w, h, "VL.Qt QtTexture window and device loss");
         NewTarget(device, 64, 48, B8G8R8A8Typeless, out var tex, out var handle);
-        if (scene == IntPtr.Zero || win == IntPtr.Zero || tex == IntPtr.Zero)
+        if (scene == SceneHandle.Null || win == SceneHandle.Null || tex == IntPtr.Zero)
         {
             check(false, "window loss: setup " + Native.LastError());
             NativeTest.vlqt_test_d3d11_release_device(device, context);
@@ -254,9 +254,9 @@ public static partial class QtTextureTest
         var cmd = new CommandWriter();
         cmd.Reset();
         cmd.ClearColor(0.125f, 0.25f, 0.5f, 1);
-        cmd.Create(1, Protocol.Type.Rectangle);
+        cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetPlace(1, 20, 20, 100, 60);
-        cmd.SetColor(1, Protocol.Prop.Color, 1, 0.5f, 0, 1);
+        cmd.SetColor(1, Protocol.PropertyId.Color, 1, 0.5f, 0, 1);
         cmd.Reparent(1, 0, 0);
         check(Native.Apply(win, cmd.EndFrame()) == 0, "window loss: apply to the window");
         Native.vlqt_window_show(win);
@@ -319,8 +319,8 @@ public static partial class QtTextureTest
             check(WindowPixels("qttexture_windowloss_after.png") == "ok", "window loss: the window renders again after the loss");
         }
         Native.vlqt_offscreen_unbind(scene);
-        Native.vlqt_window_destroy(scene);
-        Native.vlqt_window_destroy(win);
+        Native.vlqt_scene_destroy(scene);
+        Native.vlqt_scene_destroy(win);
         NativeTest.vlqt_test_com_release(tex);
         s.Pump(2);
         check(NativeTest.vlqt_test_d3d11_release_device(device, context) == 0, "window loss: device freed");

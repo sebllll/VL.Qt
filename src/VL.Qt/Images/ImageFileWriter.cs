@@ -28,7 +28,7 @@ namespace VL.Qt
             _write = write ?? throw new ArgumentNullException(nameof(write));
         }
 
-        /// <summary>A writer that encodes through QtNative (vlqt_image_write).</summary>
+        /// <summary>A writer that encodes through QtNative (vlqt_image_write_file).</summary>
         public static ImageFileWriter CreateNative() => new(WriteNative);
 
         /// <summary>True while a write runs or waits.</summary>
@@ -148,7 +148,7 @@ namespace VL.Qt
                     format = format,
                     premultiplied = info.IsPremultipliedAlpha ? 1 : 0,
                 };
-                var rc = Native.ImageWrite(in desc, data.Bytes.Span, fullPath, quality, out var error);
+                var rc = Native.ImageWriteFile(in desc, data.Bytes.Span, fullPath, quality, out var error);
                 if (rc == Native.Result.Ok)
                     return string.Empty;
                 return error.Length > 0 ? error : $"Writing '{fullPath}' failed ({rc})";

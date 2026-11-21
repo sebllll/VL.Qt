@@ -36,8 +36,8 @@ public static class AnchorTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt anchor test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt anchor test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -205,21 +205,21 @@ public static class AnchorTest
         }
         const uint Raw = 900;
         cmd.Reset();
-        cmd.Create(Raw, Protocol.Type.Rectangle);
-        cmd.SetI32(Raw, Protocol.Prop.Anchor, 0x42);
+        cmd.Create(Raw, Protocol.ElementType.Rectangle);
+        cmd.SetI32(Raw, Protocol.PropertyId.Anchor, 0x42);
         Expect(0, "ANCHOR BottomRight on a Rectangle");
-        cmd.SetI32(Raw, Protocol.Prop.Anchor, 0x03);
+        cmd.SetI32(Raw, Protocol.PropertyId.Anchor, 0x03);
         Expect(Native.Result.BadArgument, "ANCHOR Left|Right without vertical flag");
-        cmd.SetI32(Raw, Protocol.Prop.Anchor, 0x84 | 0x100);
+        cmd.SetI32(Raw, Protocol.PropertyId.Anchor, 0x84 | 0x100);
         Expect(Native.Result.BadArgument, "ANCHOR with a flag outside left/right/hcenter/top/bottom/vcenter");
-        cmd.SetF32(Raw, Protocol.Prop.Anchor, 0.5f);
+        cmd.SetF32(Raw, Protocol.PropertyId.Anchor, 0.5f);
         Expect(Native.Result.BadArgument, "ANCHOR as f32");
-        cmd.SetF32(Raw, Protocol.Prop.Size, 1);
+        cmd.SetF32(Raw, Protocol.PropertyId.Size, 1);
         Expect(Native.Result.BadArgument, "SIZE as f32 (vec2 only)");
         cmd.Destroy(Raw);
         Expect(0, "destroy");
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
     }
 }

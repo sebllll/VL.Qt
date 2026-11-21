@@ -8,11 +8,11 @@ using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
-using P = VL.Qt.Wire.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.PropertyId;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>TextInput node: description, property diff, value channel (string), null/empty handling, EV_VALUE.</summary>
+    /// <summary>TextInput node: description, property diff, value channel (string), null/empty handling, EVENT_VALUE.</summary>
     public class TextInputNodeTests
     {
         private static readonly Vector2 DefaultSize = new(2, 0.4f);
@@ -63,7 +63,7 @@ namespace VL.Qt.Tests
         {
             var t = Update(out string value, out bool bang);
             Assert.That(t.Type, Is.EqualTo(ElementType.TextField));
-            Assert.That((ushort)ElementType.TextField, Is.EqualTo(Protocol.Type.TextField));
+            Assert.That((ushort)ElementType.TextField, Is.EqualTo(Protocol.ElementType.TextField));
             Assert.That((t.Value, t.Placeholder, t.Editable, t.Enabled, t.AutoSize), Is.EqualTo(("", "", true, true, true)));
             Assert.That((value, bang), Is.EqualTo(("", false)));
             Assert.That(t.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));

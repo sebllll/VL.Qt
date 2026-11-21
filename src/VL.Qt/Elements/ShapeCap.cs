@@ -1,6 +1,6 @@
 ﻿namespace VL.Qt.Elements
 {
-    /// <summary>How the open ends of a stroke are drawn. Values are the protocol values of <see cref="Protocol.Prop.ShapeCap"/>.</summary>
+    /// <summary>How the open ends of a stroke are drawn. Values are the protocol values of <see cref="Protocol.PropertyId.ShapeCap"/>.</summary>
     public enum ShapeCap
     {
         /// <summary>The stroke ends exactly at the end point (Skia Butt).</summary>

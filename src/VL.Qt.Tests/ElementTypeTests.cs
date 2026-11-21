@@ -53,8 +53,8 @@ namespace VL.Qt.Tests
             Assert.That(new Column().Type, Is.EqualTo(ElementType.Column));
             Assert.That(new Shape().Type, Is.EqualTo(ElementType.Shape));
             Assert.That((ushort)ElementType.Shape, Is.EqualTo(26));
-            Assert.That((ushort)ElementType.Rectangle, Is.EqualTo(Protocol.Type.Rectangle));
-            Assert.That((ushort)ElementType.ShaderEffect, Is.EqualTo(Protocol.Type.ShaderEffect));
+            Assert.That((ushort)ElementType.Rectangle, Is.EqualTo(Protocol.ElementType.Rectangle));
+            Assert.That((ushort)ElementType.ShaderEffect, Is.EqualTo(Protocol.ElementType.Shader));
         }
 
         [Test]

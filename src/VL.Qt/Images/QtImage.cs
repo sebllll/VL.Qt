@@ -67,7 +67,7 @@ namespace VL.Qt
         /// <summary>Counts finished loads (Ready or Failed, also replacements): changes whenever the content may be new.</summary>
         public int Version { get; private set; }
 
-        /// <summary>RES_EV_WARNING text (e.g. 16 bit reduced to 8 bit), empty = none. At most one per resource.</summary>
+        /// <summary>RESOURCE_EVENT_WARNING text (e.g. 16 bit reduced to 8 bit), empty = none. At most one per resource.</summary>
         public string Warning { get; private set; } = string.Empty;
 
         /// <summary>Release was requested (queued or done); no further native calls for this id.</summary>
@@ -102,8 +102,8 @@ namespace VL.Qt
         {
             var next = state switch
             {
-                Protocol.ResState.Ready => QtImageState.Ready,
-                Protocol.ResState.Failed => QtImageState.Failed,
+                Protocol.ResourceState.Ready => QtImageState.Ready,
+                Protocol.ResourceState.Failed => QtImageState.Failed,
                 _ => QtImageState.Loading,
             };
             State = next;

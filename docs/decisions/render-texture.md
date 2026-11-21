@@ -115,11 +115,11 @@ Laid down as stubs that build; later tasks fill them without changing the signat
 - `vlqt_key_event` / `Protocol.KeyEvent`: `PRESS 1`, `RELEASE 2`.
 
 **vlqt.h / offscreen.cpp** (task 2 pointer and wheel, task 3 key, text, focus; codes of `vlqt_result`, vlqt.h):
-- `int vlqt_offscreen_send_pointer(void* scene, int device, int type, int id, float x, float y, int buttons, int modifiers)`: mouse ignores `id`, `buttons` = `Qt::MouseButtons` held after the event; touch uses `id`, pen ignores it (one point), both ignore `buttons`; `modifiers` = `Qt::KeyboardModifiers`.
-- `int vlqt_offscreen_send_wheel(void* scene, float x, float y, int dx, int dy, int modifiers)`: angle delta in eighths of a degree.
-- `int vlqt_offscreen_send_key(void* scene, int type, int key, int modifiers, int autoRepeat)`: `Qt::Key`, no text.
-- `int vlqt_offscreen_send_text(void* scene, const char* utf8, int length)`: typed text to the focus item.
-- `int vlqt_offscreen_set_focus(void* scene, int focused)`: FocusIn / FocusOut, no-op if unchanged.
+- `int vlqt_offscreen_send_pointer(vlqt_scene* scene, int device, int type, int id, float x, float y, int buttons, int modifiers)`: mouse ignores `id`, `buttons` = `Qt::MouseButtons` held after the event; touch uses `id`, pen ignores it (one point), both ignore `buttons`; `modifiers` = `Qt::KeyboardModifiers`.
+- `int vlqt_offscreen_send_wheel(vlqt_scene* scene, float x, float y, int dx, int dy, int modifiers)`: angle delta in eighths of a degree.
+- `int vlqt_offscreen_send_key(vlqt_scene* scene, int type, int key, int modifiers, int autoRepeat)`: `Qt::Key`, no text.
+- `int vlqt_offscreen_send_text(vlqt_scene* scene, const char* utf8, int length)`: typed text to the focus item.
+- `int vlqt_offscreen_set_focus(vlqt_scene* scene, int focused)`: FocusIn / FocusOut, no-op if unchanged.
 - Native focus rule inside `send_pointer`: PRESS inside 0 … size focuses, outside unfocuses; key/text of an unfocused scene dropped (OK). `FocusRelease` (#374, `vlqt.cpp`) installed on scenes. The `vlqt_test_send_*` functions may stay `UNSUPPORTED` on scenes.
 
 **Native.cs** (mirrors): `vlqt_offscreen_send_pointer`, `vlqt_offscreen_send_wheel`, `vlqt_offscreen_send_key`, `vlqt_offscreen_set_focus` (public externs), `Native.OffscreenSendText(IntPtr scene, ReadOnlySpan<byte> utf8)` (wraps the private `vlqt_offscreen_send_text`, no allocation).

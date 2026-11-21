@@ -43,9 +43,9 @@ public static class BlendChainTest
         Directory.CreateDirectory(s.OutDir);
         ulong Shader(string name)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-            Native.vlqt_res_load_shader(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
-            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"chain: shader builtin:{name} Ready");
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+            Native.vlqt_shader_load(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResourceState.Ready, $"chain: shader builtin:{name} Ready");
             return id;
         }
         var blend = Shader("blend");
@@ -54,14 +54,14 @@ public static class BlendChainTest
         static void Blur(CommandWriter c)
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
-            c.EffectF32(Protocol.Prop.EffectBlur, 1f);
-            c.EffectI32(Protocol.Prop.EffectBlurMax, 32);
+            c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.EffectF32(Protocol.MultiEffectKey.Blur, 1f);
+            c.EffectI32(Protocol.MultiEffectKey.BlurMax, 32);
             c.EndLink();
         }
         void Blend(CommandWriter c)
         {
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [blend], 0, 0, 0, 0, 0);
+            c.BeginEffectChainLink(Protocol.EffectTemplate.Single, [blend], 0, 0, 0, 0, 0);
             c.UniformI32("mode", 0);
             c.UniformF32("layerOpacity", 1);
             c.UniformRef("layer", Layer);
@@ -69,7 +69,7 @@ public static class BlendChainTest
         }
         void Displace(CommandWriter c)
         {
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
+            c.BeginEffectChainLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
             c.UniformF32("displacement", 20);
             c.UniformRef("map", Map);
             c.EndLink();
@@ -89,8 +89,8 @@ public static class BlendChainTest
         // One window, the scene, the chain; probes see the grab.
         void Case(string name, Action<CommandWriter>[] links, Action<Bitmap> probes, Action<CommandWriter>[][]? prior = null)
         {
-            var w = Native.vlqt_window_create(800, 600, "VL.Qt blend chain test " + name);
-            s.Check(w != IntPtr.Zero, $"chain: {name}: window_create");
+            var w = NativeCalls.CreateWindow(800, 600, "VL.Qt blend chain test " + name);
+            s.Check(w != SceneHandle.Null, $"chain: {name}: window_create");
             Native.vlqt_window_show(w);
             s.Pump(4);
             var cmd = new CommandWriter();
@@ -101,16 +101,16 @@ public static class BlendChainTest
                 cmd.Reset();
             }
             cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            cmd.Create(R, Protocol.Type.Rectangle);
+            cmd.Create(R, Protocol.ElementType.Rectangle);
             cmd.SetPlace(R, RX, RY, RW, RH);
-            cmd.SetColor(R, Protocol.Prop.Color, 1, 0.5f, 0.1f, 1);
+            cmd.SetColor(R, Protocol.PropertyId.Color, 1, 0.5f, 0.1f, 1);
             cmd.Reparent(R, 0, 0);
-            cmd.Create(Layer, Protocol.Type.Rectangle);
+            cmd.Create(Layer, Protocol.ElementType.Rectangle);
             cmd.SetPlace(Layer, 0, 0, RW, RH);
-            cmd.SetColor(Layer, Protocol.Prop.Color, 0, 0.4f, 1, 1);
-            cmd.Create(Map, Protocol.Type.Rectangle);
+            cmd.SetColor(Layer, Protocol.PropertyId.Color, 0, 0.4f, 1, 1);
+            cmd.Create(Map, Protocol.ElementType.Rectangle);
             cmd.SetPlace(Map, 0, 0, RW, RH);
-            cmd.SetColor(Map, Protocol.Prop.Color, 1, 0.5f, 0, 1);
+            cmd.SetColor(Map, Protocol.PropertyId.Color, 1, 0.5f, 0, 1);
             var first = true;
             foreach (var step in (prior ?? []).Append(links))
             {
@@ -131,7 +131,7 @@ public static class BlendChainTest
             cmd.Destroy(Map);
             Apply("destroy");
             s.Pump(3);
-            Native.vlqt_window_destroy(w);
+            Native.vlqt_scene_destroy(w);
             s.Pump(2);
         }
 

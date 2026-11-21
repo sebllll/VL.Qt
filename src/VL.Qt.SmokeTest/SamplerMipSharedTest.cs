@@ -41,13 +41,13 @@ public static class SamplerMipSharedTest
     private static void Run(Scenario s)
     {
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
-        Native.vlqt_res_create(Protocol.ResKind.Shader, out var shader);
-        var rc = Native.vlqt_res_load_shader_source(shader, Shader, Protocol.ShaderStage.Fragment);
-        var st = rc == 0 ? Native.vlqt_res_wait(shader, 20000) : Protocol.ResState.Failed;
-        s.Check(st == Protocol.ResState.Ready, $"two sampler shader bakes -> Ready ({st}, rc {rc})");
+        Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var shader);
+        var rc = Native.vlqt_shader_load_source(shader, Shader, Protocol.ShaderStage.Fragment);
+        var st = rc == 0 ? Native.vlqt_res_wait(shader, 20000) : Protocol.ResourceState.Failed;
+        s.Check(st == Protocol.ResourceState.Ready, $"two sampler shader bakes -> Ready ({st}, rc {rc})");
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt sampler mip shared test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt sampler mip shared test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         void Apply(string what)
@@ -68,18 +68,18 @@ public static class SamplerMipSharedTest
         {
             uint fx = next++, g = next++;
             cells[i] = (fx, g);
-            cmd.Create(fx, Protocol.Type.ShaderEffect);
+            cmd.Create(fx, Protocol.ElementType.Shader);
             cmd.SetPlace(fx, 15 + i * 155, 20, CellW, CellH);
-            cmd.SetU64(fx, Protocol.Prop.FragmentShader, shader);
+            cmd.SetU64(fx, Protocol.PropertyId.FragmentShader, shader);
             cmd.Reparent(fx, 0, (uint)i);
             // 80 stripes of 2 DIP, red / blue
-            cmd.Create(g, Protocol.Type.Item);
-            cmd.SetI32(g, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
+            cmd.Create(g, Protocol.ElementType.Group);
+            cmd.SetI32(g, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
             for (uint k = 0; k < 80; k++)
             {
                 uint r = next++;
-                cmd.Create(r, Protocol.Type.Rectangle);
-                cmd.SetColor(r, Protocol.Prop.Color, k % 2 == 0 ? 1 : 0, 0, k % 2 == 0 ? 0 : 1, 1);
+                cmd.Create(r, Protocol.ElementType.Rectangle);
+                cmd.SetColor(r, Protocol.PropertyId.Color, k % 2 == 0 ? 1 : 0, 0, k % 2 == 0 ? 0 : 1, 1);
                 cmd.SetPlace(r, k * 2, 0, 2, CellH);
                 cmd.Reparent(r, g, k);
             }
@@ -142,7 +142,7 @@ public static class SamplerMipSharedTest
             cmd.Destroy(fx);
         Apply("destroy");
         s.Pump(4);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         Native.vlqt_res_release(shader);
     }
 }

@@ -21,8 +21,8 @@ public static class WindowIconTest
     private static void Run(Scenario s)
     {
         const string title = "VL.Qt window icon test";
-        var w = Native.vlqt_window_create(400, 300, title);
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(400, 300, title);
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         s.Pump(10);
 
@@ -69,9 +69,9 @@ public static class WindowIconTest
         rc = Native.vlqt_window_set_icon(w, "");
         s.Check(rc == 0, $"empty path -> default, 0 ({rc})");
 
-        s.Check(Native.vlqt_window_set_icon(IntPtr.Zero, png) == Native.Result.NullHandle, "null window -> NullHandle");
+        s.Check(Native.vlqt_window_set_icon(SceneHandle.Null, png) == Native.Result.NullHandle, "null window -> NullHandle");
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         File.Delete(png);
         File.Delete(broken);
     }

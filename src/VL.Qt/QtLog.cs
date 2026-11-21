@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 
@@ -25,9 +26,6 @@ namespace VL.Qt
         /// <summary>Category for uncategorized Qt messages (Qt's "default" category).</summary>
         internal const string DefaultQtCategory = "Qt";
         private const int MaxPending = 256;
-
-        // Delegate must stay reachable for the lifetime of the process (native keeps the pointer).
-        internal static readonly Native.LogFn Fn = OnLog;
 
         private static readonly object s_syncRoot = new();
         private static readonly Queue<(LogLevel Level, string Category, string Message)> s_pending = new();
@@ -76,12 +74,16 @@ namespace VL.Qt
         internal static string ToCategory(string? qtCategory)
             => string.IsNullOrEmpty(qtCategory) || qtCategory == "default" ? DefaultQtCategory : qtCategory;
 
-        private static void OnLog(int level, IntPtr category, IntPtr message)
+        /// <summary>The log callback of vlqt_app_init: a static function pointer, so nothing needs to be kept alive.</summary>
+        internal static unsafe delegate* unmanaged[Cdecl]<int, byte*, byte*, void> Fn => &OnLog;
+
+        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+        private static unsafe void OnLog(int level, byte* category, byte* message)
         {
-            // Called from native code: no exception may escape (it would cross the native frames and end the process).
+            // Called from native code on any thread: no exception may escape (it would cross the native frames and end the process).
             try
             {
-                Receive(level, Marshal.PtrToStringUTF8(category), Marshal.PtrToStringUTF8(message) ?? string.Empty);
+                Receive(level, Marshal.PtrToStringUTF8((IntPtr)category), Marshal.PtrToStringUTF8((IntPtr)message) ?? string.Empty);
             }
             catch (Exception)
             {

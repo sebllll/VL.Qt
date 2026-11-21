@@ -29,7 +29,7 @@ namespace VL.Qt
             {
                 try
                 {
-                    Native.vlqt_set_pipeline_cache(Path.Combine(AppContext.BaseDirectory, "QtPipelineCache.bin"));
+                    Native.vlqt_app_set_pipeline_cache(Path.Combine(AppContext.BaseDirectory, "QtPipelineCache.bin"));
                 }
                 catch (Exception e)
                 {

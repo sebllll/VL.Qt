@@ -109,7 +109,7 @@ struct EffectComponents {
  * chain pass) samples the input; TWO_PASS = fx (hidden, own layer) with passIndex = 0, fx2 samples fx
  * with passIndex = 1, same table otherwise. PYRAMID (doc 21 "Blur-Pyramide"): fx = composite (draws, source = input,
  * glow/shadow = U1 or D1), the passes D1 (prefilter, source = input) .. Dn (pyramid_down) and U(n-1) .. U1 (pyramid_up,
- * base = Dk) are hidden ShaderEffectItems with a layer under the stage, sized p_k / dpr (p_0 = stage x dpr, p_k =
+ * base = Dk) are hidden ShaderItems with a layer under the stage, sized p_k / dpr (p_0 = stage x dpr, p_k =
  * ceil(p_(k-1) / 2), n: steps until the smaller side is under 4 px). The step count follows the stage size and dpr only
  * (layoutPyramid on a size / dpr change; passes beyond n stay in the pool, unsampled, until the stage goes); the radius
  * writes the weights only. Values only on the same structure (kind and template): no new item.

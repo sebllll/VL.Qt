@@ -28,15 +28,15 @@ public static class ImagePreviewTest
 
         ulong Create()
         {
-            var rc = Native.vlqt_res_create(Protocol.ResKind.Image, out var id);
+            var rc = Native.vlqt_res_create(Protocol.ResourceKind.Image, out var id);
             if (rc != 0) s.Check(false, $"create ({rc})");
             return id;
         }
         ulong Load(string path, uint flags)
         {
             var id = Create();
-            s.Check(Native.vlqt_res_load_image(id, path, flags) == 0, $"load {Path.GetFileName(path)} flags {flags}");
-            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResState.Ready, $"{Path.GetFileName(path)} Ready");
+            s.Check(Native.vlqt_image_load(id, path, flags) == 0, $"load {Path.GetFileName(path)} flags {flags}");
+            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResourceState.Ready, $"{Path.GetFileName(path)} Ready");
             return id;
         }
         // rc, size and the first pixel (BGRA) of the preview.
@@ -58,13 +58,13 @@ public static class ImagePreviewTest
         var dummy = new byte[16];
 
         // Files: with the flag 4000x2000 -> 256x128 (aspect kept), 100x80 stays, without the flag -7.
-        var a = Load(big, Protocol.Img.Preview);
+        var a = Load(big, Protocol.ImageLoadFlags.Preview);
         if (Is(a, 256, 128, "4000x2000 file"))
         {
             var (_, _, _, px) = Read(a);
             s.Check(px[0] == 0 && px[1] == 0 && px[2] == 255 && px[3] == 255, $"first stripe red, BGRA {px[0]},{px[1]},{px[2]},{px[3]}");
         }
-        var b = Load(small, Protocol.Img.Preview);
+        var b = Load(small, Protocol.ImageLoadFlags.Preview);
         Is(b, 100, 80, "100x80 file not upscaled");
         var c = Load(big, 0);
         s.Check(NativeCalls.ReadPreview(c, Span<byte>.Empty, out _) == (int)Native.Result.NoData, "without the flag -> NoData");
@@ -79,7 +79,7 @@ public static class ImagePreviewTest
         s.Check(NativeCalls.ReadPreview(0xdeadbeefUL << 8, Span<byte>.Empty, out _) == (int)Native.Result.UnknownId, "unknown id -> UnknownId");
         var pending = Create();
         s.Check(NativeCalls.ReadPreview(pending, Span<byte>.Empty, out _) == (int)Native.Result.NoData, "Pending resource -> NoData");
-        s.Check(Native.vlqt_res_create(TestProtocol.ResKind.Test, out var testId) == Native.Result.Ok && NativeCalls.ReadPreview(testId, Span<byte>.Empty, out _) == (int)Native.Result.BadArgument, "test resource (wrong kind) -> BadArgument");
+        s.Check(Native.vlqt_res_create(TestProtocol.ResourceKind.Test, out var testId) == Native.Result.Ok && NativeCalls.ReadPreview(testId, Span<byte>.Empty, out _) == (int)Native.Result.BadArgument, "test resource (wrong kind) -> BadArgument");
         Native.vlqt_res_release(testId);
         Native.vlqt_res_release(pending);
 
@@ -90,12 +90,12 @@ public static class ImagePreviewTest
         ulong Pixels(uint flags)
         {
             var id = Create();
-            var rc = Native.ResSetPixels(id, new Native.vlqt_pixel_desc { width = pw, height = ph, format = 9, premultiplied = 1, flags = (int)flags }, data);
+            var rc = Native.ImageSetPixels(id, new Native.vlqt_pixel_desc { width = pw, height = ph, format = 9, premultiplied = 1, flags = (int)flags }, data);
             s.Check(rc == 0, $"set_pixels flags {flags} ({rc})");
-            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResState.Ready, $"pixels flags {flags} Ready");
+            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResourceState.Ready, $"pixels flags {flags} Ready");
             return id;
         }
-        var p1 = Pixels(Protocol.Img.Preview);
+        var p1 = Pixels(Protocol.ImageLoadFlags.Preview);
         if (Is(p1, 256, 128, "4000x2000 pixels"))
         {
             var (_, _, _, px) = Read(p1);
@@ -105,12 +105,12 @@ public static class ImagePreviewTest
         s.Check(NativeCalls.ReadPreview(p0, Span<byte>.Empty, out _) == (int)Native.Result.NoData, "set_pixels without the flag -> NoData");
 
         // Replacement of a Ready resource: the preview belongs to the visible content until the swap.
-        s.Check(Native.vlqt_res_load_image(a, small, Protocol.Img.Preview) == 0, "replacement started");
+        s.Check(Native.vlqt_image_load(a, small, Protocol.ImageLoadFlags.Preview) == 0, "replacement started");
         Is(a, 256, 128, "replacement in flight: old preview");
         var t = Stopwatch.StartNew();
         while (Read(a).w == 256 && t.ElapsedMilliseconds < 10000) s.Pump(1);
         Is(a, 100, 80, "replacement swapped: new preview");
-        s.Check(Native.vlqt_res_load_image(a, big, 0) == 0, "replacement without the flag started");
+        s.Check(Native.vlqt_image_load(a, big, 0) == 0, "replacement without the flag started");
         t.Restart();
         while (Read(a).rc != (int)Native.Result.NoData && t.ElapsedMilliseconds < 10000) s.Pump(1);
         s.Check(NativeCalls.ReadPreview(a, Span<byte>.Empty, out _) == (int)Native.Result.NoData, "replaced content without the flag -> NoData");

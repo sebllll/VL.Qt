@@ -54,7 +54,7 @@ public static class QtTexturePerfTest
         var env = Environment.GetEnvironmentVariable("VLQT_OFFSCREEN_THREAD");
         if (!string.IsNullOrEmpty(env) && int.TryParse(env, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n >= 0)
             threads = n;
-        var rc = Native.vlqt_offscreen_set_threaded(threads);
+        var rc = Native.vlqt_offscreen_set_render_threads(threads);
         s.Check(rc == 0, $"qttextureperf: set_threaded({threads}) before the first scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         if (rc != 0)
             return;
@@ -117,7 +117,7 @@ public static class QtTexturePerfTest
     {
         int count = config.Scenes, rects = config.Rects, texts = config.Texts;
         string mode = threads == 0 ? "main" : $"thread{threads}";
-        var scenes = new IntPtr[count];
+        var scenes = new SceneHandle[count];
         var textures = new IntPtr[count];
         var cmd = new CommandWriter();
         for (int k = 0; k < count; k++)
@@ -126,25 +126,25 @@ public static class QtTexturePerfTest
             cmd.Reset();
             cmd.ClearColor(0, 0, 0, 0);
             // id 1: marker (frame number in red); 2..: rounded rectangles; then texts.
-            cmd.Create(1, Protocol.Type.Rectangle);
+            cmd.Create(1, Protocol.ElementType.Rectangle);
             cmd.SetPlace(1, 0, 0, MarkerSize, MarkerSize);
             cmd.Reparent(1, 0, 0);
             for (int i = 0; i < rects; i++)
             {
                 uint id = (uint)(2 + i);
-                cmd.Create(id, Protocol.Type.Rectangle);
+                cmd.Create(id, Protocol.ElementType.Rectangle);
                 cmd.SetPlace(id, 40 + (i * 37) % (W - 80), 40 + (i * 53) % (H - 80), 30, 20);
-                cmd.SetF32(id, Protocol.Prop.Radius, 6);
-                cmd.SetColor(id, Protocol.Prop.Color, (i % 7) / 7f, (i % 5) / 5f, (i % 3) / 3f, 0.8f);
+                cmd.SetF32(id, Protocol.PropertyId.Radius, 6);
+                cmd.SetColor(id, Protocol.PropertyId.Color, (i % 7) / 7f, (i % 5) / 5f, (i % 3) / 3f, 0.8f);
                 cmd.Reparent(id, 0, (uint)(1 + i));
             }
             for (int i = 0; i < texts; i++)
             {
                 uint id = (uint)(2 + rects + i);
-                cmd.Create(id, Protocol.Type.Text);
+                cmd.Create(id, Protocol.ElementType.Text);
                 cmd.SetPlace(id, (i * 97) % (W - 200), (i * 31) % (H - 30), 200, 30);
-                cmd.SetString(id, Protocol.Prop.Text, $"Text {i}");
-                cmd.SetF32(id, Protocol.Prop.FontSize, 16);
+                cmd.SetString(id, Protocol.PropertyId.Text, $"Text {i}");
+                cmd.SetF32(id, Protocol.PropertyId.FontSize, 16);
                 cmd.Reparent(id, 0, (uint)(1 + rects + i));
             }
             s.Check(Native.Apply(scenes[k], cmd.EndFrame()) == 0, $"qttextureperf {config.Name}: apply scene {k}");
@@ -169,23 +169,23 @@ public static class QtTexturePerfTest
         var snapLatency = new List<int>();
         var snapPixels = new byte[MarkerSize * MarkerSize * 4];
         int snapMisses = 0, snapRequested = 0, snapBad = 0, snapRequestFrame = -1;
-        s.Check(Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var snap) == 0, $"qttextureperf {mode} {config.Name}: snapshot resource");
+        s.Check(Native.vlqt_res_create(Protocol.ResourceKind.Snapshot, out var snap) == 0, $"qttextureperf {mode} {config.Name}: snapshot resource");
         var snapErrors = new List<string>();
         // Records the pending snapshot if it has finished (Ready or Failed) by frame f, and checks its pixels.
         void SnapshotDone(int f)
         {
             int state = Native.vlqt_res_wait(snap, 0);
-            if (state is not (Protocol.ResState.Ready or Protocol.ResState.Failed))
+            if (state is not (Protocol.ResourceState.Ready or Protocol.ResourceState.Failed))
                 return;
             snapLatency.Add(f - snapRequestFrame);
             int got = NativeCalls.ReadSnapshot(snap, snapPixels, out var desc);
             int r = snapPixels[(MarkerSize / 2 * MarkerSize + MarkerSize / 2) * 4 + 2], a = snapPixels[(MarkerSize / 2 * MarkerSize + MarkerSize / 2) * 4 + 3];
             bool markerSince = Enumerable.Range(snapRequestFrame, f - snapRequestFrame + 1).Any(g => r == g % 251 + 1);
-            if (state != Protocol.ResState.Ready || got != snapPixels.Length || desc.width != MarkerSize || desc.height != MarkerSize || a != 255 || !markerSince)
+            if (state != Protocol.ResourceState.Ready || got != snapPixels.Length || desc.width != MarkerSize || desc.height != MarkerSize || a != 255 || !markerSince)
             {
                 snapBad++;
                 if (snapErrors.Count < 3)
-                    snapErrors.Add($"frame {snapRequestFrame}->{f}: state {state}, {got} bytes {desc.width}x{desc.height}, red {r} alpha {a} {(state == Protocol.ResState.Failed ? QtTextureTest.SnapshotError(snap) : "")}");
+                    snapErrors.Add($"frame {snapRequestFrame}->{f}: state {state}, {got} bytes {desc.width}x{desc.height}, red {r} alpha {a} {(state == Protocol.ResourceState.Failed ? QtTextureTest.SnapshotError(snap) : "")}");
             }
             snapRequestFrame = -1;
         }
@@ -204,17 +204,17 @@ public static class QtTexturePerfTest
             for (int k = 0; k < count; k++)
             {
                 cmd.Reset();
-                cmd.SetColor(1, Protocol.Prop.Color, marker / 255f, 0, 0, 1);
+                cmd.SetColor(1, Protocol.PropertyId.Color, marker / 255f, 0, 0, 1);
                 for (int i = 0; i < Math.Min(50, rects); i++)
                 {
                     uint id = (uint)(2 + (f * 50 + i) % rects);
-                    cmd.SetColor(id, Protocol.Prop.Color, ((f + i) % 11) / 11f, (i % 5) / 5f, (f % 3) / 3f, 0.8f);
+                    cmd.SetColor(id, Protocol.PropertyId.Color, ((f + i) % 11) / 11f, (i % 5) / 5f, (f % 3) / 3f, 0.8f);
                 }
                 for (int i = 0; i < Math.Min(10, texts); i++)
-                    cmd.SetString((uint)(2 + rects + (f + i) % texts), Protocol.Prop.Text, $"Frame {f} #{i}");
+                    cmd.SetString((uint)(2 + rects + (f + i) % texts), Protocol.PropertyId.Text, $"Frame {f} #{i}");
                 Native.Apply(scenes[k], cmd.EndFrame());
             }
-            if (snapPhase && f < end && f % 10 == 0 && snapRequestFrame < 0 && Native.vlqt_res_snapshot(snap, scenes[0], 1, 1) == 0)
+            if (snapPhase && f < end && f % 10 == 0 && snapRequestFrame < 0 && Native.vlqt_snapshot_start(snap, scenes[0], 1, 1) == 0)
             {
                 snapRequestFrame = f;
                 snapRequested++;
@@ -258,7 +258,7 @@ public static class QtTexturePerfTest
             }
         }
         // Perf sample of scene 0 (what PerfStats shows): with a render thread the last frames finished before the poll.
-        string perf = Native.vlqt_window_get_perf_sample(scenes[0], out var p) == 0 ? $"; scene 0 perf sample: sync {p.sync:F2}, render {p.render:F2} ms" : "";
+        string perf = Native.vlqt_scene_get_perf_sample(scenes[0], out var p) == 0 ? $"; scene 0 perf sample: sync {p.sync:F2}, render {p.render:F2} ms" : "";
         double perTexture = Median(batch) / count;
         Console.WriteLine(
             $"INFO qttextureperf {mode} {config.Name} ({rects} rects + {texts} texts): main-thread render_batch {Median(batch):F3} ms/frame (p95 {P95(batch):F3}) = {perTexture:F3} ms per QtTexture; "
@@ -277,7 +277,7 @@ public static class QtTexturePerfTest
         for (int k = 0; k < count; k++)
         {
             Native.vlqt_offscreen_unbind(scenes[k]);
-            Native.vlqt_window_destroy(scenes[k]);
+            Native.vlqt_scene_destroy(scenes[k]);
             NativeTest.vlqt_test_com_release(textures[k]);
         }
         return perTexture;

@@ -25,16 +25,16 @@ namespace VL.Qt.Elements
         {
             switch (value)
             {
-                case float f: result = new QmlValue(Protocol.Vt.F32, f, 0, 0, 0, 0, null); return true;
-                case double d: result = new QmlValue(Protocol.Vt.F32, (float)d, 0, 0, 0, 0, null); return true;
-                case int i: result = new QmlValue(Protocol.Vt.I32, 0, 0, 0, 0, i, null); return true;
-                case bool b: result = new QmlValue(Protocol.Vt.Bool, 0, 0, 0, 0, b ? 1 : 0, null); return true;
-                case string s when s.Length <= MaxStringChars: result = new QmlValue(Protocol.Vt.String, 0, 0, 0, 0, 0, s); return true;
-                case Color4 c: result = new QmlValue(Protocol.Vt.Color, c.R, c.G, c.B, c.A, 0, null); return true;
-                case Vector2 v2: result = new QmlValue(Protocol.Vt.Vec2, v2.X, v2.Y, 0, 0, 0, null); return true;
-                case Vector3 v3: result = new QmlValue(Protocol.Vt.Vec3, v3.X, v3.Y, v3.Z, 0, 0, null); return true;
-                case Vector4 v4: result = new QmlValue(Protocol.Vt.Vec4, v4.X, v4.Y, v4.Z, v4.W, 0, null); return true;
-                case RectangleF r: result = new QmlValue(Protocol.Vt.Rectf, r.X, r.Y, r.Width, r.Height, 0, null); return true;
+                case float f: result = new QmlValue(Protocol.ValueType.F32, f, 0, 0, 0, 0, null); return true;
+                case double d: result = new QmlValue(Protocol.ValueType.F32, (float)d, 0, 0, 0, 0, null); return true;
+                case int i: result = new QmlValue(Protocol.ValueType.I32, 0, 0, 0, 0, i, null); return true;
+                case bool b: result = new QmlValue(Protocol.ValueType.Bool, 0, 0, 0, 0, b ? 1 : 0, null); return true;
+                case string s when s.Length <= MaxStringChars: result = new QmlValue(Protocol.ValueType.String, 0, 0, 0, 0, 0, s); return true;
+                case Color4 c: result = new QmlValue(Protocol.ValueType.Color, c.R, c.G, c.B, c.A, 0, null); return true;
+                case Vector2 v2: result = new QmlValue(Protocol.ValueType.Vec2, v2.X, v2.Y, 0, 0, 0, null); return true;
+                case Vector3 v3: result = new QmlValue(Protocol.ValueType.Vec3, v3.X, v3.Y, v3.Z, 0, 0, null); return true;
+                case Vector4 v4: result = new QmlValue(Protocol.ValueType.Vec4, v4.X, v4.Y, v4.Z, v4.W, 0, null); return true;
+                case RectangleF r: result = new QmlValue(Protocol.ValueType.Rectf, r.X, r.Y, r.Width, r.Height, 0, null); return true;
                 default: result = default; return false;
             }
         }

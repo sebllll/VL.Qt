@@ -71,10 +71,10 @@ public static class ShaderErrorsTest
         // Loads the text and waits; the events of the load are in the first poll after the wait.
         ulong Load(string code, out int state, out double ms)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
             var sw = Stopwatch.StartNew();
-            var rc = Native.vlqt_res_load_shader_source(id, code, Protocol.ShaderStage.Fragment);
-            state = rc == 0 ? Native.vlqt_res_wait(id, 20000) : Protocol.ResState.Failed;
+            var rc = Native.vlqt_shader_load_source(id, code, Protocol.ShaderStage.Fragment);
+            state = rc == 0 ? Native.vlqt_res_wait(id, 20000) : Protocol.ResourceState.Failed;
             ms = sw.Elapsed.TotalMilliseconds;
             Poll();
             return id;
@@ -84,8 +84,8 @@ public static class ShaderErrorsTest
         // --- broken source: one line per glslang error with a line number ---
         var first = Load(BrokenSource, out var state1, out var bakeMs);
         ids.Add(first);
-        s.Check(state1 == Protocol.ResState.Failed, $"broken source -> Failed ({state1})");
-        var errors1 = Of(first, Protocol.ResEv.Error).ToList();
+        s.Check(state1 == Protocol.ResourceState.Failed, $"broken source -> Failed ({state1})");
+        var errors1 = Of(first, Protocol.ResourceEventId.Error).ToList();
         s.Check(errors1.Count == 1, $"one error event for the resource ({errors1.Count})");
         var text1 = errors1.Count > 0 ? errors1[^1].Text : "";
         var lines1 = text1.Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -101,8 +101,8 @@ public static class ShaderErrorsTest
         // --- the same source again: cache hit, same event in the first poll after the wait, no bake ---
         var second = Load(BrokenSource, out var state2, out var cachedMs);
         ids.Add(second);
-        s.Check(state2 == Protocol.ResState.Failed, $"the same source again -> Failed ({state2})");
-        var errors2 = Of(second, Protocol.ResEv.Error).ToList();
+        s.Check(state2 == Protocol.ResourceState.Failed, $"the same source again -> Failed ({state2})");
+        var errors2 = Of(second, Protocol.ResourceEventId.Error).ToList();
         s.Check(errors2.Count == 1 && errors2[0].Text == text1, $"the same error event within one pump, same text ({errors2.Count} events)");
         // Timing is a hint (shared GPU/CPU machine), the events above are the check.
         if (cachedMs >= bakeMs * 0.6 && cachedMs >= 30)
@@ -113,26 +113,26 @@ public static class ShaderErrorsTest
         // A source that differs by one character is another key: it bakes again and gives its own text.
         var third = Load(BrokenSource.Replace("foo", "fox"), out var state3, out _);
         ids.Add(third);
-        var text3 = Of(third, Protocol.ResEv.Error).LastOrDefault()?.Text ?? "";
-        s.Check(state3 == Protocol.ResState.Failed && text3.Contains("fox") && !text3.Contains("foo"), $"a changed source is not taken from the cache ('{text3.Replace("\n", " | ")}')");
+        var text3 = Of(third, Protocol.ResourceEventId.Error).LastOrDefault()?.Text ?? "";
+        s.Check(state3 == Protocol.ResourceState.Failed && text3.Contains("fox") && !text3.Contains("foo"), $"a changed source is not taken from the cache ('{text3.Replace("\n", " | ")}')");
 
         // --- the rename warning: Ready, with a warning that names the uniform; the cache hit keeps the warning ---
         var named = Load(WithLength, out var stateNamed, out _);
         ids.Add(named);
-        var warnings = Of(named, Protocol.ResEv.Warning).ToList();
-        s.Check(stateNamed == Protocol.ResState.Ready, $"uniform 'length' -> Ready ({stateNamed})");
+        var warnings = Of(named, Protocol.ResourceEventId.Warning).ToList();
+        s.Check(stateNamed == Protocol.ResourceState.Ready, $"uniform 'length' -> Ready ({stateNamed})");
         s.Check(warnings.Count == 1 && warnings[0].Text.Contains("'length'"), $"one rename warning that names 'length' ('{string.Join(" | ", warnings.Select(x => x.Text))}')");
-        s.Check(!Of(named, Protocol.ResEv.Error).Any(), "no error event for the renamed uniform");
+        s.Check(!Of(named, Protocol.ResourceEventId.Error).Any(), "no error event for the renamed uniform");
         var namedAgain = Load(WithLength, out var stateAgain, out _);
         ids.Add(namedAgain);
-        var warningsAgain = Of(namedAgain, Protocol.ResEv.Warning).ToList();
-        s.Check(stateAgain == Protocol.ResState.Ready && warningsAgain.Count == 1 && warningsAgain[0].Text == warnings.FirstOrDefault()?.Text,
+        var warningsAgain = Of(namedAgain, Protocol.ResourceEventId.Warning).ToList();
+        s.Check(stateAgain == Protocol.ResourceState.Ready && warningsAgain.Count == 1 && warningsAgain[0].Text == warnings.FirstOrDefault()?.Text,
             $"the cache hit gives the same warning again ({warningsAgain.Count} events)");
 
         // An ordinary source gives no warning.
         var plain = Load(WithLength.Replace("length", "amount"), out var statePlain, out _);
         ids.Add(plain);
-        s.Check(statePlain == Protocol.ResState.Ready && !Of(plain, Protocol.ResEv.Warning).Any() && !Of(plain, Protocol.ResEv.Error).Any(),
+        s.Check(statePlain == Protocol.ResourceState.Ready && !Of(plain, Protocol.ResourceEventId.Warning).Any() && !Of(plain, Protocol.ResourceEventId.Error).Any(),
             $"an ordinary uniform name gives no warning and no error ({statePlain})");
 
         foreach (var id in ids)

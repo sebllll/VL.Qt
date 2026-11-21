@@ -9,7 +9,7 @@ using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
-using P = VL.Qt.Wire.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
@@ -36,9 +36,9 @@ namespace VL.Qt.Tests
             var payload = 8 + (8 + 4) + (8 + 4) + (8 + 12);
             var expected =
                 U16(Protocol.Op.SetUniforms) + U16(payload) + U32(5) + U16(3) + U16(Protocol.UniformSet.Clear)
-                + U16(Protocol.Vt.F32) + U16(1) + "7400" + "0000" + F32(1.5f)
-                + U16(Protocol.Vt.Bool) + U16(2) + "6F6E" + "0000" + "01000000"
-                + U16(Protocol.Vt.Vec3) + U16(4) + "61626364" + F32(1) + F32(2) + F32(3);
+                + U16(Protocol.ValueType.F32) + U16(1) + "7400" + "0000" + F32(1.5f)
+                + U16(Protocol.ValueType.Bool) + U16(2) + "6F6E" + "0000" + "01000000"
+                + U16(Protocol.ValueType.Vec3) + U16(4) + "61626364" + F32(1) + F32(2) + F32(3);
             Assert.That(Convert.ToHexString(w.Written), Is.EqualTo(expected));
             Assert.That(w.Count, Is.EqualTo(1));
         }
@@ -53,8 +53,8 @@ namespace VL.Qt.Tests
             w.EndUniforms();
             var expected =
                 U16(Protocol.Op.SetUniforms) + U16(8 + (8 + 4) + (8 + 8)) + U32(1) + U16(2) + U16(0)
-                + U16(Protocol.Vt.Ref) + U16(2) + "C3A9" + "0000" + U32(9)
-                + U16(Protocol.Vt.U64) + U16(3) + "696D67" + "00" + Convert.ToHexString(BitConverter.GetBytes(0x0000000700000003UL));
+                + U16(Protocol.ValueType.Ref) + U16(2) + "C3A9" + "0000" + U32(9)
+                + U16(Protocol.ValueType.U64) + U16(3) + "696D67" + "00" + Convert.ToHexString(BitConverter.GetBytes(0x0000000700000003UL));
             Assert.That(Convert.ToHexString(w.Written), Is.EqualTo(expected));
         }
 
@@ -76,7 +76,7 @@ namespace VL.Qt.Tests
             var w = new CommandWriter();
             w.SetIvec2(3, P.MeshResolution, 4, -2);
             Assert.That(Convert.ToHexString(w.Written), Is.EqualTo(
-                U16(Protocol.Op.Set) + U16(16) + U32(3) + U16(P.MeshResolution) + U16(Protocol.Vt.Ivec2)
+                U16(Protocol.Op.Set) + U16(16) + U32(3) + U16(P.MeshResolution) + U16(Protocol.ValueType.Ivec2)
                 + Convert.ToHexString(BitConverter.GetBytes(4)) + Convert.ToHexString(BitConverter.GetBytes(-2))));
         }
 
@@ -324,13 +324,13 @@ namespace VL.Qt.Tests
             var e = Update("broken.qsb", out var error);
             Assert.That(error, Is.Empty, "loading is not an error");
             _api.Error(e.FragmentShaderId, "not a .qsb file");
-            _api.State(e.FragmentShaderId, Protocol.ResState.Failed);
+            _api.State(e.FragmentShaderId, Protocol.ResourceState.Failed);
             Pump();
             Update("broken.qsb", out error);
             Assert.That(error, Is.EqualTo("Fragment shader: not a .qsb file"));
 
             var e2 = Update("good.qsb", out error);
-            _api.State(e2.FragmentShaderId, Protocol.ResState.Ready);
+            _api.State(e2.FragmentShaderId, Protocol.ResourceState.Ready);
             Pump();
             Update("good.qsb", out error);
             Assert.That(error, Is.Empty);
@@ -428,7 +428,7 @@ namespace VL.Qt.Tests
         {
             CreateNode();
             var e1 = UpdateCode("a", null, null, out _);
-            _api.State(e1.FragmentShaderId, Protocol.ResState.Ready);
+            _api.State(e1.FragmentShaderId, Protocol.ResourceState.Ready);
             Pump();
             var e2 = UpdateCode("bb", null, null, out _);
             Assert.That(e2.FragmentShaderId, Is.Not.EqualTo(e1.FragmentShaderId));
@@ -474,7 +474,7 @@ namespace VL.Qt.Tests
             Assert.That(_api.Calls.Count, Is.EqualTo(calls), "no new bake while the first runs");
             Assert.That(e3.FragmentShaderId, Is.EqualTo(e1.FragmentShaderId));
 
-            _api.State(e1.FragmentShaderId, Protocol.ResState.Ready);
+            _api.State(e1.FragmentShaderId, Protocol.ResourceState.Ready);
             Pump();
             var e4 = UpdateCode("abc", null, null, out _);
             Assert.That(_api.Calls.Count(c => c.StartsWith("source")), Is.EqualTo(2));

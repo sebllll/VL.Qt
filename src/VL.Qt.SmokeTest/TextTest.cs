@@ -43,8 +43,8 @@ public static class TextTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt text test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt text test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
@@ -55,11 +55,11 @@ public static class TextTest
         }
         void Text(uint id, string text, float x, float y, float width, float height, float size)
         {
-            cmd.Create(id, Protocol.Type.Text);
+            cmd.Create(id, Protocol.ElementType.Text);
             cmd.SetPlace(id, x, y, width, height);
-            cmd.SetString(id, Protocol.Prop.Text, text);
-            cmd.SetF32(id, Protocol.Prop.FontSize, size);
-            cmd.SetColor(id, Protocol.Prop.Color, 1, 1, 1, 1);
+            cmd.SetString(id, Protocol.PropertyId.Text, text);
+            cmd.SetF32(id, Protocol.PropertyId.FontSize, size);
+            cmd.SetColor(id, Protocol.PropertyId.Color, 1, 1, 1, 1);
             cmd.Reparent(id, 0, 1000);
         }
 
@@ -67,16 +67,16 @@ public static class TextTest
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         Text(Plain, "Hello", 20, 20, 360, 60, 40);
         Text(Right, "Hi", 420, 20, 360, 60, 40);
-        cmd.SetI32(Right, Protocol.Prop.HorizontalAlignment, 0x2);
-        cmd.SetColor(Right, Protocol.Prop.Color, 1, 0, 0, 1);
+        cmd.SetI32(Right, Protocol.PropertyId.HorizontalAlignment, 0x2);
+        cmd.SetColor(Right, Protocol.PropertyId.Color, 1, 0, 0, 1);
         Text(Bottom, "Hi", 20, 100, 360, 160, 40);
-        cmd.SetI32(Bottom, Protocol.Prop.VerticalAlignment, 0x40);
+        cmd.SetI32(Bottom, Protocol.PropertyId.VerticalAlignment, 0x40);
         Text(Wrapped, Long, 420, 100, 200, 240, 30);
-        cmd.SetI32(Wrapped, Protocol.Prop.WrapMode, 1);
+        cmd.SetI32(Wrapped, Protocol.PropertyId.WrapMode, 1);
         Text(Elided, Long, 20, 300, 200, 40, 30);
-        cmd.SetI32(Elided, Protocol.Prop.Elide, 1);
+        cmd.SetI32(Elided, Protocol.PropertyId.Elide, 1);
         Text(Fit, "FIT", 20, 380, 150, 50, 200);
-        cmd.SetI32(Fit, Protocol.Prop.FontSizeMode, 3);
+        cmd.SetI32(Fit, Protocol.PropertyId.FontSizeMode, 3);
         CheckApply("text scene");
         s.Pump(3);
 
@@ -114,11 +114,11 @@ public static class TextTest
 
         // Updates: font read-modify-write keeps the other font fields.
         cmd.Reset();
-        cmd.SetI32(Plain, Protocol.Prop.FontWeight, 900);
-        cmd.SetBool(Plain, Protocol.Prop.FontItalic, true);
-        cmd.SetF32(Right, Protocol.Prop.LetterSpacing, 20);
-        cmd.SetF32(Wrapped, Protocol.Prop.LineHeight, 1.6f);
-        cmd.SetString(Elided, Protocol.Prop.FontFamily, "Courier New");
+        cmd.SetI32(Plain, Protocol.PropertyId.FontWeight, 900);
+        cmd.SetBool(Plain, Protocol.PropertyId.FontItalic, true);
+        cmd.SetF32(Right, Protocol.PropertyId.LetterSpacing, 20);
+        cmd.SetF32(Wrapped, Protocol.PropertyId.LineHeight, 1.6f);
+        cmd.SetString(Elided, Protocol.PropertyId.FontFamily, "Courier New");
         CheckApply("text update");
         s.Pump(3);
         using (var a = s.Grab(w, "05_text_update.png"))
@@ -136,8 +136,8 @@ public static class TextTest
 
         // Empty family = default font again; text change.
         cmd.Reset();
-        cmd.SetString(Elided, Protocol.Prop.FontFamily, "");
-        cmd.SetString(Plain, Protocol.Prop.Text, "Hello VL.Qt");
+        cmd.SetString(Elided, Protocol.PropertyId.FontFamily, "");
+        cmd.SetString(Plain, Protocol.PropertyId.Text, "Hello VL.Qt");
         CheckApply("text reset family + new text");
         s.Pump(2);
         using (var a = s.Grab(w, "05_text_update2.png"))
@@ -148,19 +148,19 @@ public static class TextTest
 
         // Errors: invalid enum / size -> BadArgument, Rectangle-only property -> UnknownProperty, no crash.
         cmd.Reset();
-        cmd.SetI32(Right, Protocol.Prop.HorizontalAlignment, 3);
+        cmd.SetI32(Right, Protocol.PropertyId.HorizontalAlignment, 3);
         var rc = Apply();
         s.Check(rc == Native.Result.BadArgument, $"invalid alignment -> BadArgument ({rc}: {Native.LastError()})");
         cmd.Reset();
-        cmd.SetF32(Plain, Protocol.Prop.FontSize, 0);
+        cmd.SetF32(Plain, Protocol.PropertyId.FontSize, 0);
         rc = Apply();
         s.Check(rc == Native.Result.BadArgument, $"font size 0 -> BadArgument ({rc}: {Native.LastError()})");
         cmd.Reset();
-        cmd.SetF32(Plain, Protocol.Prop.Radius, 1);
+        cmd.SetF32(Plain, Protocol.PropertyId.Radius, 1);
         rc = Apply();
         s.Check(rc == Native.Result.UnknownProperty, $"radius on text -> UnknownProperty ({rc}: {Native.LastError()})");
         cmd.Reset();
-        cmd.SetF32(Plain, Protocol.Prop.FontWeight, 700);
+        cmd.SetF32(Plain, Protocol.PropertyId.FontWeight, 700);
         rc = Apply();
         s.Check(rc == Native.Result.BadArgument, $"weight as f32 -> BadArgument ({rc}: {Native.LastError()})");
 
@@ -181,6 +181,6 @@ public static class TextTest
                 $"text renders real glyphs, no tofu (\"iiiiiiii\" {narrow.MaxX - narrow.MinX} px wide, \"WWWWWWWW\" {wide.MaxX - wide.MinX} px)");
         }
 
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 }

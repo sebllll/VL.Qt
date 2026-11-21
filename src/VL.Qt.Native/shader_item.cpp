@@ -40,7 +40,7 @@ std::unordered_set<ShaderItem*> s_items; // main thread
 uint64_t s_contentEpoch = 0, s_failureEpoch = 0;
 
 // Layer requests of the samplers: a mip filter other than None needs the layer of the sampled element rendered with
-// mipmaps. Several ShaderEffectItems can sample one element, so the layer has mipmaps while any of them asks.
+// mipmaps. Several ShaderItems can sample one element, so the layer has mipmaps while any of them asks.
 struct LayerUser
 {
     const ShaderItem* owner;

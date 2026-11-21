@@ -41,13 +41,13 @@ namespace VL.Qt.Elements
         /// </summary>
         public Vector2 DragDelta { get; set; }
 
-        /// <summary>Drag handler: number of EV_DRAG received, so a value equal to the last one (new drag) is still seen as new.</summary>
+        /// <summary>Drag handler: number of EVENT_DRAG received, so a value equal to the last one (new drag) is still seen as new.</summary>
         public int DragUpdates { get; set; }
 
         /// <summary>Touch Points handler: points currently pressed in the item, sorted by id, in units. Empty when none.</summary>
         public Spread<TouchPoint> TouchPoints { get; set; } = Spread<TouchPoint>.Empty;
 
-        /// <summary>Touch Points handler: number of EV_TOUCH_POINTS received (changes with every event).</summary>
+        /// <summary>Touch Points handler: number of EVENT_TOUCH_POINTS received (changes with every event).</summary>
         public int TouchUpdates { get; set; }
 
         /// <summary>Pinch handler: scale factor of the running (or last) gesture, 1 before the first one.</summary>
@@ -62,22 +62,22 @@ namespace VL.Qt.Elements
         /// <summary>Pinch handler: pivot of scale and rotation (the fingers' centroid when the gesture began) in units, parent space.</summary>
         public Vector2 PinchPivot { get; set; }
 
-        /// <summary>Pinch handler: number of EV_PINCH received, so an equal value (new gesture) is still seen as new.</summary>
+        /// <summary>Pinch handler: number of EVENT_PINCH received, so an equal value (new gesture) is still seen as new.</summary>
         public int PinchUpdates { get; set; }
 
         /// <summary>
-        /// Value input: the last user change (EV_VALUE) not yet taken by <see cref="ElementFeedback.TakeValue{T}"/>.
+        /// Value input: the last user change (EVENT_VALUE) not yet taken by <see cref="ElementFeedback.TakeValue{T}"/>.
         /// Several changes between two takes keep the last one.
         /// </summary>
         internal bool HasPendingValue { get; set; }
 
-        /// <summary>Value type of <see cref="PendingValue"/> (<see cref="Protocol.Vt"/>).</summary>
+        /// <summary>Value type of <see cref="PendingValue"/> (<see cref="Protocol.ValueType"/>).</summary>
         internal ushort PendingValueType { get; set; }
 
-        /// <summary>Pending user value for <see cref="Protocol.Vt.I32"/>, <see cref="Protocol.Vt.F32"/> and <see cref="Protocol.Vt.Bool"/> (the bits of the value).</summary>
+        /// <summary>Pending user value for <see cref="Protocol.ValueType.I32"/>, <see cref="Protocol.ValueType.F32"/> and <see cref="Protocol.ValueType.Bool"/> (the bits of the value).</summary>
         internal int PendingValue { get; set; }
 
-        /// <summary>Pending user value for <see cref="Protocol.Vt.String"/>.</summary>
+        /// <summary>Pending user value for <see cref="Protocol.ValueType.String"/>.</summary>
         internal string? PendingString { get; set; }
 
         /// <summary>QmlElement: last value of each root property that QML changed, by name; null until the first change. Cleared by <see cref="ElementFeedback.ResetQml"/>.</summary>
@@ -168,7 +168,7 @@ namespace VL.Qt.Elements
         }
 
         /// <summary>
-        /// Value input: takes the last user change (EV_VALUE) since the last call, and resets it. Returns
+        /// Value input: takes the last user change (EVENT_VALUE) since the last call, and resets it. Returns
         /// false if there is none or its value type does not match <typeparamref name="T"/> (int = i32, float = f32,
         /// bool, string); a mismatching change is dropped. Call once per Update. No allocation.
         /// </summary>
@@ -183,18 +183,18 @@ namespace VL.Qt.Elements
             s.PendingString = null;
             switch (s.PendingValueType)
             {
-                case Protocol.Vt.I32 when typeof(T) == typeof(int):
+                case Protocol.ValueType.I32 when typeof(T) == typeof(int):
                     value = Unsafe.As<int, T>(ref bits);
                     return true;
-                case Protocol.Vt.F32 when typeof(T) == typeof(float):
+                case Protocol.ValueType.F32 when typeof(T) == typeof(float):
                     float f = BitConverter.Int32BitsToSingle(bits);
                     value = Unsafe.As<float, T>(ref f);
                     return true;
-                case Protocol.Vt.Bool when typeof(T) == typeof(bool):
+                case Protocol.ValueType.Bool when typeof(T) == typeof(bool):
                     bool b = bits != 0;
                     value = Unsafe.As<bool, T>(ref b);
                     return true;
-                case Protocol.Vt.String when typeof(T) == typeof(string):
+                case Protocol.ValueType.String when typeof(T) == typeof(string):
                     str ??= string.Empty;
                     value = Unsafe.As<string, T>(ref str);
                     return true;
@@ -212,7 +212,7 @@ namespace VL.Qt.Elements
         /// <summary>QmlElement: number of property changes (and resets) so far; differs from the last call when <see cref="QmlPropertyValues"/> has something new.</summary>
         internal int QmlPropertyUpdates(int index = 0) => TryGet(index, out var s) ? s.QmlPropertyUpdates : 0;
 
-        /// <summary>Stores a property change reported by QML (EV_QML_PROPERTY): the last value per name counts.</summary>
+        /// <summary>Stores a property change reported by QML (EVENT_QML_PROPERTY): the last value per name counts.</summary>
         internal void SetQmlProperty(int index, string name, object value)
         {
             var s = this[index];
@@ -220,7 +220,7 @@ namespace VL.Qt.Elements
             unchecked { s.QmlPropertyUpdates++; }
         }
 
-        /// <summary>Queues a signal of the QML root (EV_QML_SIGNAL); dropped beyond <see cref="MaxPendingQmlSignals"/> (nobody takes them).</summary>
+        /// <summary>Queues a signal of the QML root (EVENT_QML_SIGNAL); dropped beyond <see cref="MaxPendingQmlSignals"/> (nobody takes them).</summary>
         internal void AddQmlSignal(int index, QmlSignal signal)
         {
             var s = this[index];
@@ -280,7 +280,7 @@ namespace VL.Qt.Elements
         /// <summary>Drag handler: translation of the running (or last) drag in units.</summary>
         public Vector2 DragDelta(int index = 0) => TryGet(index, out var s) ? s.DragDelta : default;
 
-        /// <summary>Drag handler: number of drag updates received so far (changes with every EV_DRAG).</summary>
+        /// <summary>Drag handler: number of drag updates received so far (changes with every EVENT_DRAG).</summary>
         public int DragUpdates(int index = 0) => TryGet(index, out var s) ? s.DragUpdates : 0;
 
         /// <summary>Touch Points handler: the points pressed in the item right now. The same instance until the next event.</summary>

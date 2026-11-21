@@ -21,7 +21,7 @@ namespace VL.Qt.Tests
     /// </summary>
     public class InteractionTests
     {
-        private const string hover = nameof(Protocol.Type.HoverHandler);     // 32
+        private const string hover = nameof(Protocol.ElementType.HoverHandler);     // 32
 
         private RecordingSink _sink = null!;
         private IdAllocator _ids = null!;
@@ -143,7 +143,7 @@ namespace VL.Qt.Tests
             Frame(G(R(chain), R(chain, radius: 0.1f)));
 
             // Group 1, first rectangle 2 + its handler 3, second rectangle 4 without handler.
-            Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Item", "CREATE 2 Rectangle", $"CREATE 3 {hover}", "CREATE 4 Rectangle" }));
+            Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Group", "CREATE 2 Rectangle", $"CREATE 3 {hover}", "CREATE 4 Rectangle" }));
             Assert.That(Commands, Does.Contain("REPARENT 3 2 0"));
             Assert.That(a.Warning, Is.EqualTo(SceneRegistry.InteractionDuplicateWarning));
             Assert.That(_rec.FeedbackRouter.Count, Is.EqualTo(1));
@@ -417,11 +417,11 @@ namespace VL.Qt.Tests
 
         // --- Click, Point, Wheel nodes (pkg 05) ---
 
-        private const string tap = nameof(Protocol.Type.TapHandler);       // 33
-        private const string point = nameof(Protocol.Type.PointHandler);   // 34
-        private const string wheel = nameof(Protocol.Type.WheelHandler);   // 35
-        private const string acceptedButtons = nameof(Protocol.Prop.AcceptedButtons); // 769
-        private const string acceptedDevices = nameof(Protocol.Prop.AcceptedDevices); // 770
+        private const string tap = nameof(Protocol.ElementType.TapHandler);       // 33
+        private const string point = nameof(Protocol.ElementType.PointHandler);   // 34
+        private const string wheel = nameof(Protocol.ElementType.WheelHandler);   // 35
+        private const string acceptedButtons = nameof(Protocol.PropertyId.AcceptedButtons); // 769
+        private const string acceptedDevices = nameof(Protocol.PropertyId.AcceptedDevices); // 770
 
         private static ClickInteraction C(ElementFeedback feedback, Interaction? previous = null, PointerButtons buttons = PointerButtons.Left, PointerDevices devices = PointerDevices.All)
             => new(previous, new FeedbackSlot(feedback, 0), buttons, devices);
@@ -476,7 +476,7 @@ namespace VL.Qt.Tests
             using var node = new ClickNode(_ => new Removal());
             var a = node.Update(null, null, null, null, null, PointerButtons.Left, PointerDevices.All);
             Assert.That(node.Update(null, null, null, null, null, PointerButtons.Left, PointerDevices.All), Is.SameAs(a));
-            Assert.That(a.HandlerType, Is.EqualTo(Protocol.Type.TapHandler));
+            Assert.That(a.HandlerType, Is.EqualTo(Protocol.ElementType.TapHandler));
             var b = node.Update(null, null, null, null, null, PointerButtons.Right, PointerDevices.All);
             Assert.That(b, Is.Not.SameAs(a));
             Assert.That(((ClickInteraction)b).Buttons, Is.EqualTo(PointerButtons.Right));
@@ -824,7 +824,7 @@ namespace VL.Qt.Tests
 
         // --- Drag node (pkg 12) ---
 
-        private const string drag = nameof(Protocol.Type.DragHandler); // 38
+        private const string drag = nameof(Protocol.ElementType.DragHandler); // 38
 
         private static DragInteraction D(ElementFeedback feedback, bool moves = true, DragAxis axis = DragAxis.Both, DragLimits? limits = null,
             PointerButtons buttons = PointerButtons.Left, PointerDevices devices = PointerDevices.All)

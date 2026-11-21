@@ -48,7 +48,7 @@ public static partial class HandlerTest
     {
         private readonly byte[] _buf = new byte[1 << 16];
         private readonly Scenario _s;
-        public readonly IntPtr W;
+        public readonly SceneHandle W;
         public readonly List<Rec> Feedback = new(); // since the last Clear (one measurement)
         public readonly List<Rec> All = new();   // the whole run (pairs, duplicates)
         public bool Destroyed;
@@ -56,12 +56,12 @@ public static partial class HandlerTest
         public LatencyWindow(Scenario s, string title)
         {
             _s = s;
-            W = Native.vlqt_window_create(800, 600, title);
-            s.Check(W != IntPtr.Zero, $"input-latency: window_create {title}");
+            W = NativeCalls.CreateWindow(800, 600, title);
+            s.Check(W != SceneHandle.Null, $"input-latency: window_create {title}");
             Native.vlqt_window_show(W);
         }
 
-        public IntPtr Window => Destroyed ? IntPtr.Zero : W;
+        public SceneHandle Window => Destroyed ? SceneHandle.Null : W;
         public void ApplyCommands() { }
         public void AfterEvents() => Poll();
         public void PollInput() => Poll();
@@ -81,7 +81,7 @@ public static partial class HandlerTest
         public void Destroy()
         {
             Destroyed = true;
-            Native.vlqt_window_destroy(W);
+            Native.vlqt_scene_destroy(W);
         }
     }
 
@@ -115,10 +115,10 @@ public static partial class HandlerTest
         var w = new LatencyWindow(s, $"VL.Qt input-latency {tag}");
         const uint A = 1, TA = 10, TP = 11, STA = 41, STP = 42;
         var cmd = new CommandWriter();
-        cmd.Create(A, Protocol.Type.Rectangle);
+        cmd.Create(A, Protocol.ElementType.Rectangle);
         cmd.SetPlace(A, 100, 100, 300, 300);
         cmd.Reparent(A, 0, 0);
-        foreach (var (id, type, feedbackId) in new[] { (TA, Protocol.Type.TapHandler, STA), (TP, Protocol.Type.TouchPointsHandler, STP) })
+        foreach (var (id, type, feedbackId) in new[] { (TA, Protocol.ElementType.TapHandler, STA), (TP, Protocol.ElementType.TouchPointsHandler, STP) })
         {
             cmd.Create(id, type);
             cmd.Reparent(id, A, 0);
@@ -153,8 +153,8 @@ public static partial class HandlerTest
 
         var lat = new int[5];
         lat[0] = Latency(() => { Mouse(TestProtocol.Mouse.Move, 200, 200); Mouse(TestProtocol.Mouse.Press, 200, 200); },
-            s => HasFlag(s, Protocol.Ev.Press, STA, true));
-        lat[1] = Latency(() => Mouse(TestProtocol.Mouse.Release, 200, 200), s => HasU32(s, Protocol.Ev.Click, STA, 1));
+            s => HasFlag(s, Protocol.EventId.Press, STA, true));
+        lat[1] = Latency(() => Mouse(TestProtocol.Mouse.Release, 200, 200), s => HasU32(s, Protocol.EventId.Click, STA, 1));
         Frame(clock);
         var mouse = new List<Rec>(w.All);
         lat[2] = Latency(() => { Touch(TestProtocol.Touch.Press, 1, 150, 150); Touch(TestProtocol.Touch.Press, 2, 250, 200); },
@@ -167,9 +167,9 @@ public static partial class HandlerTest
 
         // The mouse click: one press/release pair and one click (the grab of the Tap handler held from press to release);
         // the touch points: the last state has no point left (none lost or stuck).
-        int presses = mouse.FindAll(r => r.Event == Protocol.Ev.Press && r.Handle == STA && r.Flag).Count;
-        int releases = mouse.FindAll(r => r.Event == Protocol.Ev.Press && r.Handle == STA && !r.Flag).Count;
-        int clicks = mouse.FindAll(r => r.Event == Protocol.Ev.Click && r.Handle == STA).Count;
+        int presses = mouse.FindAll(r => r.Event == Protocol.EventId.Press && r.Handle == STA && r.Flag).Count;
+        int releases = mouse.FindAll(r => r.Event == Protocol.EventId.Press && r.Handle == STA && !r.Flag).Count;
+        int clicks = mouse.FindAll(r => r.Event == Protocol.EventId.Click && r.Handle == STA).Count;
         s.Check(presses == 1 && releases == 1 && clicks == 1,
             $"input-latency {tag}: mouse press/release pair and one click (press {presses}, release {releases}, click {clicks}; {Dump(mouse)})");
         s.Check(LastTouch(w.All, STP) is { Length: 0 }, $"input-latency {tag}: all touch points released ({Pts(w.All, STP)})");
@@ -216,7 +216,7 @@ public static partial class HandlerTest
         s.Check(NativeTest.vlqt_test_queue_mouse(born.W, TestProtocol.Mouse.Move, 30, 30) == 0, "input-latency: queue_mouse for C");
         clock.Tick();
         Frame(clock);
-        var src = Native.vlqt_window_get_perf_sample(born.W, out var first);
+        var src = Native.vlqt_scene_get_perf_sample(born.W, out var first);
         s.Check(src == 0 && first.swaps <= 1 && (first.swaps == 1 || !OperatingSystem.IsWindows()),
             $"input-latency: new window rendered once in its first pump, not in the delivery (rc {src}, swaps {first.swaps})");
 
@@ -231,6 +231,6 @@ public static partial class HandlerTest
         a.Destroy();
         born.Destroy();
         pump.Dispose();
-        Native.vlqt_app_process_events();
+        Native.vlqt_app_process_events_for(null, 0);
     }
 }

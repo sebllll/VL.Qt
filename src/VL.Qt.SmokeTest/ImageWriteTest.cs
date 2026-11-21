@@ -5,7 +5,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 
 /// <summary>
-/// (FileWriter, native layer): vlqt_image_write. A small BGRA8 premultiplied image with opaque and half-transparent
+/// (FileWriter, native layer): vlqt_image_write_file. A small BGRA8 premultiplied image with opaque and half-transparent
 /// pixels as PNG into a not-yet-existing subfolder, read back through the image resource path (size, alpha and
 /// un-premultiplied colors within +-2), straight RGBA8 with row padding, JPG and BMP (alpha over black), overwrite, and
 /// the error codes: unknown extension -2, bad arguments -1, folder that cannot be created -3. Needs no window.
@@ -44,11 +44,11 @@ public static class ImageWriteTest
         static byte[] Load(string path, out int rw, out int rh)
         {
             rw = rh = 0;
-            if (Native.vlqt_res_create(Protocol.ResKind.Image, out var id) != 0) return [];
+            if (Native.vlqt_res_create(Protocol.ResourceKind.Image, out var id) != 0) return [];
             try
             {
-                Native.vlqt_res_load_image(id, path, 0);
-                if (Native.vlqt_res_wait(id, 5000) != Protocol.ResState.Ready) return [];
+                Native.vlqt_image_load(id, path, 0);
+                if (Native.vlqt_res_wait(id, 5000) != Protocol.ResourceState.Ready) return [];
                 var rc = NativeCalls.ReadPixels(id, Span<byte>.Empty, out rw, out rh, out var required);
                 if (rc != (int)Native.Result.BufferTooSmall) return [];
                 var px = new byte[required];
@@ -67,7 +67,7 @@ public static class ImageWriteTest
 
         // PNG into a subfolder that does not exist yet.
         var png = Path.Combine(dir, "new", "sub folder", "image.png");
-        var rc = Native.ImageWrite(desc, bgraPm, png, -1, out var error);
+        var rc = Native.ImageWriteFile(desc, bgraPm, png, -1, out var error);
         s.Check(rc == Native.Result.Ok && error.Length == 0 && File.Exists(png), $"PNG written into new folders ({rc} {error})");
         var px = Load(png, out var rw, out var rh);
         s.Check(rw == W && rh == H, $"PNG reads back as {rw}x{rh}");
@@ -79,7 +79,7 @@ public static class ImageWriteTest
         for (int y = 0; y < H; y++)
             Array.Copy(rgbaStraight, y * W * 4, padded, y * (W * 4 + 8), W * 4);
         var rgbaDesc = desc with { row_bytes = W * 4 + 8, format = 7, premultiplied = 0 };
-        rc = Native.ImageWrite(rgbaDesc, padded, png, -1, out error);
+        rc = Native.ImageWriteFile(rgbaDesc, padded, png, -1, out error);
         px = Load(png, out rw, out rh);
         s.Check(rc == Native.Result.Ok && rw == W && Colour(px, 1, 1, R, G, B, 255, 2) && Colour(px, W - 2, 1, R, G, B, A, 2), $"straight RGBA8 with padding overwrites the file ({rc} {error})");
 
@@ -87,39 +87,39 @@ public static class ImageWriteTest
         foreach (var q in new[] { -1, 90 })
         {
             var jpg = Path.Combine(dir, $"image_q{q}.JPG");
-            rc = Native.ImageWrite(desc, bgraPm, jpg, q, out error);
+            rc = Native.ImageWriteFile(desc, bgraPm, jpg, q, out error);
             px = Load(jpg, out rw, out rh);
             s.Check(rc == Native.Result.Ok && File.Exists(jpg) && new FileInfo(jpg).Length > 0, $"JPG quality {q} written ({rc} {error})");
             s.Check(rw == W && Colour(px, 1, 1, R, G, B, 255, 12) && Colour(px, W - 2, 1, Pm(R, A), Pm(G, A), Pm(B, A), 255, 12),
                 $"JPG quality {q} opaque, half-transparent over black");
         }
         var bmp = Path.Combine(dir, "image.bmp");
-        rc = Native.ImageWrite(desc, bgraPm, bmp, -1, out error);
+        rc = Native.ImageWriteFile(desc, bgraPm, bmp, -1, out error);
         px = Load(bmp, out rw, out rh);
         s.Check(rc == Native.Result.Ok && Colour(px, W - 2, 1, Pm(R, A), Pm(G, A), Pm(B, A), 255, 1), $"BMP over black ({rc} {error})");
 
         // Errors.
         var xyz = Path.Combine(dir, "image.xyz");
-        rc = Native.ImageWrite(desc, bgraPm, xyz, -1, out error);
+        rc = Native.ImageWriteFile(desc, bgraPm, xyz, -1, out error);
         s.Check(rc == Native.Result.Unsupported && error.Length > 0 && !File.Exists(xyz), $"unknown extension -> Unsupported with message ({rc}: {error})");
-        rc = Native.ImageWrite(desc, bgraPm, Path.Combine(dir, "noextension"), -1, out error);
+        rc = Native.ImageWriteFile(desc, bgraPm, Path.Combine(dir, "noextension"), -1, out error);
         s.Check(rc == Native.Result.Unsupported && error.Length > 0, $"no extension -> Unsupported ({rc}: {error})");
         var bad = Path.Combine(dir, "bad.png");
-        rc = Native.ImageWrite(desc with { width = 0 }, bgraPm, bad, -1, out error);
+        rc = Native.ImageWriteFile(desc with { width = 0 }, bgraPm, bad, -1, out error);
         s.Check(rc == Native.Result.BadArgument && error.Length > 0, $"width 0 -> BadArgument with message ({rc}: {error})");
-        rc = Native.ImageWrite(desc, bgraPm.AsSpan(0, bgraPm.Length - 1), bad, -1, out error);
+        rc = Native.ImageWriteFile(desc, bgraPm.AsSpan(0, bgraPm.Length - 1), bad, -1, out error);
         s.Check(rc == Native.Result.BadArgument && error.Length > 0, $"data too short -> BadArgument ({rc}: {error})");
-        rc = Native.ImageWrite(desc with { row_bytes = W * 4 - 1 }, bgraPm, bad, -1, out error);
+        rc = Native.ImageWriteFile(desc with { row_bytes = W * 4 - 1 }, bgraPm, bad, -1, out error);
         s.Check(rc == Native.Result.BadArgument, $"row_bytes too small -> BadArgument ({rc}: {error})");
-        rc = Native.ImageWrite(desc with { format = 0 }, bgraPm, bad, -1, out error);
+        rc = Native.ImageWriteFile(desc with { format = 0 }, bgraPm, bad, -1, out error);
         s.Check(rc == Native.Result.BadArgument && error.Length > 0, $"unsupported pixel format -> BadArgument ({rc}: {error})");
-        rc = Native.ImageWrite(desc, bgraPm, "", -1, out error);
+        rc = Native.ImageWriteFile(desc, bgraPm, "", -1, out error);
         s.Check(rc == Native.Result.BadArgument, $"empty path -> BadArgument ({rc}: {error})");
         s.Check(!File.Exists(bad), "bad arguments write no file");
         // A folder cannot be created below a file.
         var blocker = Path.Combine(dir, "blocker");
         File.WriteAllText(blocker, "x");
-        rc = Native.ImageWrite(desc, bgraPm, Path.Combine(blocker, "sub", "image.png"), -1, out error);
+        rc = Native.ImageWriteFile(desc, bgraPm, Path.Combine(blocker, "sub", "image.png"), -1, out error);
         s.Check(rc == Native.Result.Io && error.Length > 0, $"folder below a file -> Io with message ({rc}: {error})");
     }
 }

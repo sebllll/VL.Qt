@@ -20,8 +20,8 @@ namespace VL.Qt.Tests
             yield return Case<Native.vlqt_perf_sample>(36, "vsync", 32);
             yield return Case<Native.vlqt_perf_stats>(160, "recent_multi_swap", 152);
             yield return Case<Native.vlqt_apply_error>(24, "reason", 16);
-            yield return Case<Native.vlqt_host_frame>(56, "wait", 52);
-            yield return Case<Native.vlqt_host_stats>(152, "wait_ms_max", 144);
+            yield return Case<Native.vlqt_host_pump>(56, "wait", 52);
+            yield return Case<Native.vlqt_host_pump_stats>(152, "wait_ms_max", 144);
             yield return Case<Native.vlqt_res_info>(32, "element_refs", 28);
             yield return Case<Native.vlqt_pixel_desc>(24, "flags", 20);
             yield return Case<Native.vlqt_audio_tap_state>(96, "_reserved0", 88); // reserved[2] in vlqt.h
@@ -47,12 +47,23 @@ namespace VL.Qt.Tests
             Assert.That(Unsafe.SizeOf<Native.vlqt_perf_sample>(), Is.EqualTo(36));
             Assert.That(Unsafe.SizeOf<Native.vlqt_perf_stats>(), Is.EqualTo(160));
             Assert.That(Unsafe.SizeOf<Native.vlqt_apply_error>(), Is.EqualTo(24));
-            Assert.That(Unsafe.SizeOf<Native.vlqt_host_frame>(), Is.EqualTo(56));
-            Assert.That(Unsafe.SizeOf<Native.vlqt_host_stats>(), Is.EqualTo(152));
+            Assert.That(Unsafe.SizeOf<Native.vlqt_host_pump>(), Is.EqualTo(56));
+            Assert.That(Unsafe.SizeOf<Native.vlqt_host_pump_stats>(), Is.EqualTo(152));
             Assert.That(Unsafe.SizeOf<Native.vlqt_res_info>(), Is.EqualTo(32));
             Assert.That(Unsafe.SizeOf<Native.vlqt_pixel_desc>(), Is.EqualTo(24));
             Assert.That(Unsafe.SizeOf<Native.vlqt_audio_tap_state>(), Is.EqualTo(96));
             Assert.That(Unsafe.SizeOf<Native.vlqt_scene_metrics>(), Is.EqualTo(12));
+        }
+
+        /// <summary>The handle of a scene (vlqt_scene*) is blittable and as big as a pointer, so it passes and returns like one.</summary>
+        [Test]
+        public void SceneHandleIsAPointer()
+        {
+            Assert.That(RuntimeHelpers.IsReferenceOrContainsReferences<SceneHandle>(), Is.False);
+            Assert.That(Unsafe.SizeOf<SceneHandle>(), Is.EqualTo(IntPtr.Size));
+            Assert.That(Marshal.SizeOf<SceneHandle>(), Is.EqualTo(IntPtr.Size));
+            Assert.That(default(SceneHandle).IsNull, Is.True);
+            Assert.That(new SceneHandle(1).IsNull, Is.False);
         }
     }
 }

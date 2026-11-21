@@ -40,7 +40,7 @@ namespace VL.Qt.Tests
             ShaderReflectNativeTests.LinkNative();
             var r = new OffscreenRenderer(new SceneRegistry(), 64, 32);
             Assert.That(r.IsBound, Is.False);
-            if (r.Scene == IntPtr.Zero)
+            if (r.Scene == SceneHandle.Null)
             {
                 // No scene (stub, or QtNative not started): the error says so, nothing throws.
                 Assert.That(r.Error, Is.Not.Empty);
@@ -55,7 +55,7 @@ namespace VL.Qt.Tests
             }
             r.Unbind();
             r.Dispose();
-            Assert.That(r.Scene, Is.EqualTo(IntPtr.Zero));
+            Assert.That(r.Scene, Is.EqualTo(SceneHandle.Null));
             Assert.That(r.IsBound, Is.False);
             Assert.That(r.Bind(IntPtr.Zero, IntPtr.Zero, new Int2(64, 32), 28), Is.EqualTo(Native.Result.NullHandle));
             r.Dispose(); // twice is fine

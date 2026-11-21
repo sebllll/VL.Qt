@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -18,7 +19,6 @@ internal static class QtHost
     // Separate from s_syncRoot: the log callback takes that one on the Qt thread while EnsureStarted waits for the init.
     private static readonly object s_startLock = new();
     private static readonly StringBuilder s_log = new();
-    private static readonly Native.LogFn s_logFn = OnLog;
     private static BlockingCollection<Action>? s_queue;
     private static Thread? s_thread;
     private static double s_time;
@@ -67,15 +67,24 @@ internal static class QtHost
             return start < s_log.Length ? s_log.ToString(start, s_log.Length - start) : "";
     }
 
-    private static void OnLog(int level, IntPtr category, IntPtr message)
+    // The log callback of vlqt_app_init: a static function pointer, called by QtNative on any thread, must not throw.
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static unsafe void OnLog(int level, byte* category, byte* message)
     {
-        var line = $"[{level}] {Marshal.PtrToStringUTF8(category)}: {Marshal.PtrToStringUTF8(message)}";
-        lock (s_syncRoot)
-            s_log.AppendLine(line);
-        if (line.Contains("qt.scenegraph.general: Loading backend software"))
-            QuickSoftware = true;
-        if (line.Contains("qt.rhi.general: OpenGL VENDOR:") && line.Contains("Mesa"))
-            MesaGl = line[(line.IndexOf("RENDERER:") is var r and >= 0 ? r : 0)..];
+        try
+        {
+            var line = $"[{level}] {Marshal.PtrToStringUTF8((IntPtr)category)}: {Marshal.PtrToStringUTF8((IntPtr)message)}";
+            lock (s_syncRoot)
+                s_log.AppendLine(line);
+            if (line.Contains("qt.scenegraph.general: Loading backend software"))
+                QuickSoftware = true;
+            if (line.Contains("qt.rhi.general: OpenGL VENDOR:") && line.Contains("Mesa"))
+                MesaGl = line[(line.IndexOf("RENDERER:") is var r and >= 0 ? r : 0)..];
+        }
+        catch (Exception)
+        {
+            // A log line must never end the process.
+        }
     }
 
     /// <summary>True on the thread that owns Qt.</summary>
@@ -137,12 +146,14 @@ internal static class QtHost
             SetEnv("QSG_RHI_DEBUG_LAYER", "1");
             _putenv_s("QSG_RHI_DEBUG_LAYER", "1");
         }
-        InitResult = Native.vlqt_app_init(Native.NativeDir, s_logFn);
+        InitResult = AppInit();
         InitError = InitResult == 0 ? "" : Native.LastError();
     }
 
     /// <summary>Second vlqt_app_init: must be a no-op returning 0 (core-app check).</summary>
-    public static Native.Result InitAgain() => Native.vlqt_app_init(Native.NativeDir, s_logFn);
+    public static Native.Result InitAgain() => AppInit();
+
+    private static unsafe Native.Result AppInit() => Native.vlqt_app_init(Native.NativeDir, &OnLog);
 
     /// <summary>Runs <paramref name="work"/> on the Qt thread and waits up to <paramref name="timeout"/>; false on timeout.</summary>
     public static bool Invoke(Action work, TimeSpan timeout)
@@ -177,7 +188,7 @@ internal static class QtHost
     }
 
     /// <summary>
-    /// Frame clock of <see cref="Pump"/> in seconds. A scenario that drives vlqt_driver_advance itself (clock jumps) sets it
+    /// Frame clock of <see cref="Pump"/> in seconds. A scenario that drives vlqt_app_advance_animations itself (clock jumps) sets it
     /// to the latest time it used, so the clock of later scenarios never goes back.
     /// </summary>
     public static double Time
@@ -192,8 +203,8 @@ internal static class QtHost
         for (int i = 0; i < frames; i++)
         {
             s_time += 1.0 / 60.0;
-            Native.vlqt_driver_advance(s_time);
-            Native.vlqt_app_process_events();
+            Native.vlqt_app_advance_animations(s_time);
+            Native.vlqt_app_process_events_for(null, 0);
         }
     }
 

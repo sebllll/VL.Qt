@@ -50,7 +50,7 @@ public static class ReplayTest
     /// Applies the frames one by one to a window, pumping between frames; every error is reported with its frame number.
     /// Returns the number of failed frames.
     /// </summary>
-    public static int Apply(IntPtr w, List<byte[]> frames, Action<int> pump, Action<string> report, Action<int>? afterFrame = null)
+    internal static int Apply(SceneHandle w, List<byte[]> frames, Action<int> pump, Action<string> report, Action<int>? afterFrame = null)
     {
         int errors = 0;
         for (int i = 0; i < frames.Count; i++)
@@ -78,7 +78,7 @@ public static class ReplayTest
     // then the native PerfSample phases of that pump.
     private static readonly string[] s_phases = { "apply", "advance", "events", "sync", "render", "present" };
 
-    private static int RunPaced(List<byte[]> frames, int loops, Action<int> pump, out IntPtr last)
+    private static int RunPaced(List<byte[]> frames, int loops, Action<int> pump, out SceneHandle last)
     {
         const double SpikeMs = 8.0;
         const double PresentSlowMs = 4.0;
@@ -93,16 +93,16 @@ public static class ReplayTest
         double pumpSum = 0, pumpMax = 0, applySum = 0, applyMax = 0, steadySum = 0, steadyMax = 0, lateMax = 0;
         long steadyN = 0;
         var steadyAll = new List<double>(); // for the median (overlay cost)
-        IntPtr w = IntPtr.Zero;
+        SceneHandle w = SceneHandle.Null;
         var gc0 = GC.CollectionCount(0); var gc1 = GC.CollectionCount(1); var gc2 = GC.CollectionCount(2);
         var gcPause = GC.GetTotalPauseDuration();
         var deadline = Stopwatch.GetTimestamp();
         for (int round = 0; round < loops; round++)
         {
-            if (w != IntPtr.Zero) { Native.vlqt_window_destroy(w); pump(5); }
-            w = Native.vlqt_window_create(800, 600, "VL.Qt replay");
+            if (w != SceneHandle.Null) { Native.vlqt_scene_destroy(w); pump(5); }
+            w = NativeCalls.CreateWindow(800, 600, "VL.Qt replay");
             Native.vlqt_window_show(w);
-            if (s_overlay != 0) Native.vlqt_window_set_overlay(w, s_overlay);
+            if (s_overlay != 0) Native.vlqt_scene_set_overlay(w, s_overlay);
             for (int i = 0; i < frames.Count; i++, frameNo++)
             {
                 deadline += period;
@@ -127,7 +127,7 @@ public static class ReplayTest
                 var steady = i >= WarmupFrames;
                 if (steady) { steadyN++; steadySum += total; steadyAll.Add(total); if (total > steadyMax) steadyMax = total; }
                 // Phases of this pump from the native sample.
-                var hasSample = Native.vlqt_window_get_perf_sample(w, out var ps) == 0;
+                var hasSample = Native.vlqt_scene_get_perf_sample(w, out var ps) == 0;
                 if (steady && hasSample)
                 {
                     sampled++;
@@ -141,7 +141,7 @@ public static class ReplayTest
                     Console.WriteLine($"REPLAY spike round {round} frame {i}: {total:F1} ms (apply {apply:F1}, advance+processEvents {pm:F1}); GC so far gen0 {GC.CollectionCount(0) - gc0}, gen1 {GC.CollectionCount(1) - gc1}, gen2 {GC.CollectionCount(2) - gc2}{(steady ? "" : " [warmup]")}");
                     if (hasSample)
                     {
-                        Console.WriteLine($"REPLAY spike phases: native pump {ps.pump:F1} = events {ps.events:F1} + sync {ps.sync:F1} + render {ps.render:F1} + present {ps.present:F1}; gpu {ps.gpu:F1}, swaps {ps.swaps}, frame {ps.frame:F1}");
+                        Console.WriteLine($"REPLAY spike phases: native pump {ps.pump:F1} = events {ps.events:F1} + sync {ps.sync:F1} + render {ps.render:F1} + present {ps.present:F1}; gpu {ps.gpu:F1}, swaps {ps.swaps}, frame {ps.frame_interval:F1}");
                         if (steady)
                         {
                             ReadOnlySpan<double> phase = [apply, Math.Max(0, pm - ps.pump), ps.events, ps.sync, ps.render, ps.present];
@@ -156,7 +156,7 @@ public static class ReplayTest
                         }
                     }
                 }
-                if (i % 60 == 59 && Native.vlqt_window_get_perf(w, out var p) == 0)
+                if (i % 60 == 59 && Native.vlqt_scene_get_perf(w, out var p) == 0)
                     Console.WriteLine($"REPLAY round {round} frame {i}: swaps/pump {p.swaps_per_pump:F2}, frame {p.frame_ms:F2} ms (max {p.frame_ms_max:F2}), sync {p.sync_ms:F2} render {p.render_ms:F2} present {p.present_ms:F2}, native pump avg {p.pump_ms:F2} max {p.pump_ms_max:F2}");
             }
         }
@@ -180,9 +180,9 @@ public static class ReplayTest
         if (sampled > 0)
             Console.WriteLine($"REPLAY present steady: max {presentMax:F2} ms, > {PresentSlowMs:F0} ms in {presentSlow} of {sampled} pumps");
         Console.WriteLine($"REPLAY paced GC: gen0 +{GC.CollectionCount(0) - gc0}, gen1 +{GC.CollectionCount(1) - gc1}, gen2 +{GC.CollectionCount(2) - gc2}, pause {(GC.GetTotalPauseDuration() - gcPause).TotalMilliseconds:F1} ms");
-        if (Native.vlqt_window_get_perf(w, out var fp) == 0)
+        if (Native.vlqt_scene_get_perf(w, out var fp) == 0)
             Console.WriteLine($"REPLAY paced last window ring (60 pumps): sync {fp.sync_ms:F2}, render {fp.render_ms:F2}, present {fp.present_ms:F2}, native pump avg {fp.pump_ms:F2} max {fp.pump_ms_max:F2}, swaps/pump {fp.swaps_per_pump:F2}");
-        if (Native.vlqt_window_get_perf_stats(w, out var st) == 0)
+        if (Native.vlqt_scene_get_perf_stats(w, out var st) == 0)
             Console.WriteLine($"REPLAY paced last window stats (budget {st.budget_ms:F2} ms): pump p50/p95/p99/max {st.pump_p50:F2}/{st.pump_p95:F2}/{st.pump_p99:F2}/{st.pump_max:F2}, frame {st.frame_p50:F2}/{st.frame_p95:F2}/{st.frame_p99:F2}/{st.frame_max:F2}; over budget {st.over_budget}, long frames {st.long_frames}, idle {st.idle}, multi swap {st.multi_swap} of {st.pumps} pumps");
         last = w;
         return errors;
@@ -230,7 +230,7 @@ public static class ReplayTest
         // "--paced": vvvv-like pacing (60 fps, Win32 message loop between pumps), prints swaps per pump.
         // "--loop N" (with --paced): plays the trace N times in a row (fresh window per round) to catch rare spikes.
         var paced = Array.IndexOf(args, "--paced") >= 0;
-        // "--overlay F" (with --paced): vlqt_window_set_overlay flags per window, e.g. 18 = F5 Summary, 34 = Timeline,
+        // "--overlay F" (with --paced): vlqt_scene_set_overlay flags per window, e.g. 18 = F5 Summary, 34 = Timeline,
         // to measure the overlay's pump cost against 0.
         var oi = Array.IndexOf(args, "--overlay");
         if (oi >= 0 && (oi + 1 >= args.Length || !int.TryParse(args[oi + 1], out s_overlay)))
@@ -241,12 +241,12 @@ public static class ReplayTest
         { Console.WriteLine("REPLAY FAILED: --loop expects N >= 1"); return 2; }
 
         int errors;
-        IntPtr w;
+        SceneHandle w;
         if (paced) errors = RunPaced(frames, loops, pump, out w);
         else
         {
-            w = Native.vlqt_window_create(800, 600, "VL.Qt replay");
-            if (w == IntPtr.Zero) { Console.WriteLine("REPLAY FAILED: window_create " + Native.LastError()); return 1; }
+            w = NativeCalls.CreateWindow(800, 600, "VL.Qt replay");
+            if (w == SceneHandle.Null) { Console.WriteLine("REPLAY FAILED: window_create " + Native.LastError()); return 1; }
             Native.vlqt_window_show(w);
             errors = Apply(w, frames, pump, m => Console.WriteLine("REPLAY ERROR " + m));
         }
@@ -254,7 +254,7 @@ public static class ReplayTest
         var png = Path.Combine(outDir, "replay.png");
         if (NativeTest.vlqt_test_window_grab(w, png) == 0) Console.WriteLine("REPLAY grab " + png);
         else { errors++; Console.WriteLine("REPLAY ERROR grab: " + Native.LastError()); }
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         Console.WriteLine(errors == 0 ? "REPLAY OK" : $"REPLAY FAILED ({errors} errors)");
         return errors == 0 ? 0 : 1;
     }
@@ -295,17 +295,17 @@ public static class ReplayTest
         c.ClearColor(0.1f, 0.1f, 0.12f, 1);
         for (uint i = 0; i < rects; i++)
         {
-            c.Create(1 + i, Protocol.Type.Rectangle);
-            c.SetColor(1 + i, Protocol.Prop.Color, (i % 7) / 7f, (i % 5) / 5f, (i % 3) / 3f, 0.5f);
-            c.SetF32(1 + i, Protocol.Prop.Radius, 12);
+            c.Create(1 + i, Protocol.ElementType.Rectangle);
+            c.SetColor(1 + i, Protocol.PropertyId.Color, (i % 7) / 7f, (i % 5) / 5f, (i % 3) / 3f, 0.5f);
+            c.SetF32(1 + i, Protocol.PropertyId.Radius, 12);
             c.Reparent(1 + i, 0, i);
         }
         for (uint t = 0; t < Texts; t++)
         {
             var id = (uint)(1 + rects + t);
-            c.Create(id, Protocol.Type.Text);
-            c.SetF32(id, Protocol.Prop.FontSize, 28);
-            c.SetColor(id, Protocol.Prop.Color, 1, 1, 1, 1);
+            c.Create(id, Protocol.ElementType.Text);
+            c.SetF32(id, Protocol.PropertyId.FontSize, 28);
+            c.SetColor(id, Protocol.PropertyId.Color, 1, 1, 1, 1);
             c.Reparent(id, 0, (uint)rects + t);
         }
         frames.Add(c.EndFrame().ToArray());
@@ -322,7 +322,7 @@ public static class ReplayTest
             {
                 var id = (uint)(1 + rects + t);
                 c.SetPlace(id, 20, 20 + t * 70, 760, 60);
-                c.SetString(id, Protocol.Prop.Text, $"frame {f} · line {t} · {time:F3} s");
+                c.SetString(id, Protocol.PropertyId.Text, $"frame {f} · line {t} · {time:F3} s");
             }
             frames.Add(c.EndFrame().ToArray());
             c.Reset();
@@ -336,18 +336,18 @@ public static class ReplayTest
         var c = new CommandWriter();
         var frames = new List<byte[]>();
         c.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        c.Create(1, Protocol.Type.Rectangle);
+        c.Create(1, Protocol.ElementType.Rectangle);
         c.SetPlace(1, 1 * U, 1 * U, 3 * U, 2 * U);
-        c.SetColor(1, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+        c.SetColor(1, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
         c.Reparent(1, 0, 0);
         frames.Add(c.EndFrame().ToArray());
         c.Reset(); // empty frame
         frames.Add(c.EndFrame().ToArray());
-        c.Create(2, Protocol.Type.Item);
+        c.Create(2, Protocol.ElementType.Group);
         c.SetPlace(2, 4 * U, 3 * U, 3 * U, 2 * U);
         c.Reparent(2, 0, 0);
         c.SetPlace(1, 0.5f * U, 0.5f * U, 1 * U, 1 * U);
-        c.SetColor(1, Protocol.Prop.Color, 0, 0, 1, 1);
+        c.SetColor(1, Protocol.PropertyId.Color, 0, 0, 1, 1);
         c.Reparent(1, 2, 0);
         frames.Add(c.EndFrame().ToArray());
         return frames;
@@ -375,12 +375,12 @@ public static class ReplayTest
     {
         var frames = TestRectScenario();
 
-        var live = Native.vlqt_window_create(800, 600, "VL.Qt replay live");
+        var live = NativeCalls.CreateWindow(800, 600, "VL.Qt replay live");
         Native.vlqt_window_show(live);
         int liveErrors = Apply(live, frames, s.Pump, _ => { });
         s.Pump(5);
         using var liveGrab = s.Grab(live, "replay_live.png");
-        Native.vlqt_window_destroy(live);
+        Native.vlqt_scene_destroy(live);
         s.Check(liveErrors == 0, "replay: live scenario applies without errors");
 
         var tracePath = Path.Combine(s.OutDir, "replay-testrect.bin");
@@ -389,13 +389,13 @@ public static class ReplayTest
         s.Check(read.Count == frames.Count && read[0].AsSpan().SequenceEqual(frames[0]) && read[2].AsSpan().SequenceEqual(frames[2]),
             $"replay: trace roundtrip ({read.Count} frames)");
 
-        var rw = Native.vlqt_window_create(800, 600, "VL.Qt replay");
+        var rw = NativeCalls.CreateWindow(800, 600, "VL.Qt replay");
         Native.vlqt_window_show(rw);
         var msgs = new List<string>();
         int errors = Apply(rw, read, s.Pump, msgs.Add);
         s.Pump(5);
         using var replayGrab = s.Grab(rw, "replay_replay.png");
-        Native.vlqt_window_destroy(rw);
+        Native.vlqt_scene_destroy(rw);
         s.Check(errors == 0, "replay: trace applies without errors");
         s.Check(SamePixels(liveGrab, replayGrab), "replay: grab identical to live scenario");
 
@@ -403,11 +403,11 @@ public static class ReplayTest
         var bad = new CommandWriter();
         bad.SetPlace(777, 0, 0, 1, 1);
         var broken = new List<byte[]> { frames[0], bad.EndFrame().ToArray(), frames[2] };
-        var bw = Native.vlqt_window_create(800, 600, "VL.Qt replay broken");
+        var bw = NativeCalls.CreateWindow(800, 600, "VL.Qt replay broken");
         Native.vlqt_window_show(bw);
         msgs.Clear();
         int badErrors = Apply(bw, broken, s.Pump, msgs.Add);
-        Native.vlqt_window_destroy(bw);
+        Native.vlqt_scene_destroy(bw);
         s.Check(badErrors == 1 && msgs.Count == 1 && msgs[0].StartsWith("frame 1:") && msgs[0].Contains("777"),
             $"replay: error reported with frame number ({string.Join("; ", msgs)})");
 

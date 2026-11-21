@@ -309,10 +309,10 @@ public static partial class QtTextureTest
         // The test windows drop OS input (VLQT_TEST_SYNTHETIC_INPUT, read at window creation): this one must not.
         var synthetic = Environment.GetEnvironmentVariable("VLQT_TEST_SYNTHETIC_INPUT");
         Environment.SetEnvironmentVariable("VLQT_TEST_SYNTHETIC_INPUT", null);
-        var w = Native.vlqt_window_create(400, 300, title);
+        var w = NativeCalls.CreateWindow(400, 300, title);
         Environment.SetEnvironmentVariable("VLQT_TEST_SYNTHETIC_INPUT", synthetic);
-        s.Check(w != IntPtr.Zero, "wheel reference: window_create");
-        if (w == IntPtr.Zero)
+        s.Check(w != SceneHandle.Null, "wheel reference: window_create");
+        if (w == SceneHandle.Null)
             return;
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
@@ -362,7 +362,7 @@ public static partial class QtTextureTest
         rec.Update(null, Space.DIPTopLeft);
         if (cmd.Length > 0)
             Native.Apply(w, cmd.EndFrame());
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
 #endif
     }

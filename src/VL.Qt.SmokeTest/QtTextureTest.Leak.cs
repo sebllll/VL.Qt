@@ -65,7 +65,7 @@ public static partial class QtTextureTest
         }
         if (!check(NativeTest.CreateDevice(0, out var device, out var context) == 0, "leak: create test device"))
             return;
-        IntPtr QtDevice() => NativeTest.vlqt_test_device_info(IntPtr.Zero, out var d, out _) == 0 ? d : IntPtr.Zero;
+        IntPtr QtDevice() => NativeTest.vlqt_test_device_info(SceneHandle.Null, out var d, out _) == 0 ? d : IntPtr.Zero;
         Dictionary<string, int>? Live() => OperatingSystem.IsWindows() ? D3DDebugLayer.LiveObjects(QtDevice()) : null;
         int QtRefs() => QtDevice() is var d && d != IntPtr.Zero ? NativeTest.vlqt_test_com_ref_count(d) : -1;
 
@@ -83,7 +83,7 @@ public static partial class QtTextureTest
             int w1 = 16 + i * 7 % 48, h1 = 12 + i * 5 % 40;
             int w2 = 20 + i * 11 % 60, h2 = 14 + i * 3 % 50;
             var scene = Native.vlqt_offscreen_create(w1, h1);
-            if (scene == IntPtr.Zero)
+            if (scene == SceneHandle.Null)
             {
                 Fail("offscreen_create", 0);
                 return false;
@@ -91,9 +91,9 @@ public static partial class QtTextureTest
             var cmd = new CommandWriter();
             cmd.Reset();
             cmd.ClearColor(0, 0, 0, 0);
-            cmd.Create(1, Protocol.Type.Rectangle);
+            cmd.Create(1, Protocol.ElementType.Rectangle);
             cmd.SetPlace(1, 2, 2, 12, 8);
-            cmd.SetColor(1, Protocol.Prop.Color, 1, 0, 0, 1);
+            cmd.SetColor(1, Protocol.PropertyId.Color, 1, 0, 0, 1);
             cmd.Reparent(1, 0, 0);
             bool ok = Native.Apply(scene, cmd.EndFrame()) == 0;
             IntPtr tex1 = IntPtr.Zero, tex2 = IntPtr.Zero;
@@ -139,7 +139,7 @@ public static partial class QtTextureTest
                 NativeTest.vlqt_test_com_release(tex1);
             if (tex2 != IntPtr.Zero)
                 NativeTest.vlqt_test_com_release(tex2);
-            Native.vlqt_window_destroy(scene);
+            Native.vlqt_scene_destroy(scene);
             return ok;
         }
 
@@ -233,7 +233,7 @@ public static partial class QtTextureTest
         }
 
         // 3. Device loss of QtNative's device with scenes bound (needs VLQT_TEST_D3D11ON12=1: -Only qttexture).
-        var scenes = new IntPtr[3];
+        var scenes = new SceneHandle[3];
         var textures = new IntPtr[3];
         bool lossRan = false;
         int lossRefsFirst = 0, lossRefsLast = 0;
@@ -246,9 +246,9 @@ public static partial class QtTextureTest
                 var cmd = new CommandWriter();
                 cmd.Reset();
                 cmd.ClearColor(0, 0, 0, 0);
-                cmd.Create(1, Protocol.Type.Rectangle);
+                cmd.Create(1, Protocol.ElementType.Rectangle);
                 cmd.SetPlace(1, 2, 2, 16, 12);
-                cmd.SetColor(1, Protocol.Prop.Color, 0, 1, 0, 1);
+                cmd.SetColor(1, Protocol.PropertyId.Color, 0, 1, 0, 1);
                 cmd.Reparent(1, 0, 0);
                 Native.Apply(scenes[k], cmd.EndFrame());
                 NewTarget(device, 32, 24, f.Texture, out textures[k], out var handle);
@@ -267,7 +267,7 @@ public static partial class QtTextureTest
                 for (int k = 0; k < 3; k++)
                 {
                     Native.vlqt_offscreen_unbind(scenes[k]);
-                    Native.vlqt_window_destroy(scenes[k]);
+                    Native.vlqt_scene_destroy(scenes[k]);
                     NativeTest.vlqt_test_com_release(textures[k]);
                 }
                 break;
@@ -302,7 +302,7 @@ public static partial class QtTextureTest
             for (int k = 0; k < 3; k++)
             {
                 Native.vlqt_offscreen_unbind(scenes[k]);
-                Native.vlqt_window_destroy(scenes[k]);
+                Native.vlqt_scene_destroy(scenes[k]);
                 NativeTest.vlqt_test_com_release(textures[k]);
             }
             s.Pump(2);

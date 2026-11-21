@@ -125,17 +125,17 @@ public static class BlurMaskTest
 
         ulong LoadImage(string path)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Image, out var id);
-            Native.vlqt_res_load_image(id, path, 0);
-            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResState.Ready, $"image {Path.GetFileName(path)} Ready");
+            Native.vlqt_res_create(Protocol.ResourceKind.Image, out var id);
+            Native.vlqt_image_load(id, path, 0);
+            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResourceState.Ready, $"image {Path.GetFileName(path)} Ready");
             return id;
         }
         var code = File.ReadAllText(shaderFile);
-        Native.vlqt_res_create(Protocol.ResKind.Shader, out var shader);
-        var rcShader = Native.vlqt_res_load_shader_source(shader, code, Protocol.ShaderStage.Fragment);
-        var sShader = rcShader == 0 ? Native.vlqt_res_wait(shader, 20000) : Protocol.ResState.Failed;
-        s.Check(sShader == Protocol.ResState.Ready, $"blur_mask.frag bakes -> Ready ({sShader}, rc {rcShader})");
-        if (sShader != Protocol.ResState.Ready) return;
+        Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var shader);
+        var rcShader = Native.vlqt_shader_load_source(shader, code, Protocol.ShaderStage.Fragment);
+        var sShader = rcShader == 0 ? Native.vlqt_res_wait(shader, 20000) : Protocol.ResourceState.Failed;
+        s.Check(sShader == Protocol.ResourceState.Ready, $"blur_mask.frag bakes -> Ready ({sShader}, rc {rcShader})");
+        if (sShader != Protocol.ResourceState.Ready) return;
 
         var imgStripes = LoadImage(stripes);
         var imgMaskSplit = LoadImage(maskSplit);
@@ -143,7 +143,7 @@ public static class BlurMaskTest
 
         var cmd = new CommandWriter();
         int built = 0; // 0 nothing, 1 blur scene (Pass2 owns Pass1 and Img), 2 reference (Img)
-        IntPtr w = IntPtr.Zero;
+        SceneHandle w = SceneHandle.Null;
         void Apply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
@@ -158,11 +158,11 @@ public static class BlurMaskTest
         }
         void Pass(uint id, uint child, float ew, float eh, ulong mask, float radius, float pxw, float pxh, float dx, float dy)
         {
-            cmd.Create(id, Protocol.Type.ShaderEffect);
+            cmd.Create(id, Protocol.ElementType.Shader);
             cmd.SetPlace(id, 0, 0, ew, eh);
-            cmd.SetU64(id, Protocol.Prop.FragmentShader, shader);
+            cmd.SetU64(id, Protocol.PropertyId.FragmentShader, shader);
             cmd.Reparent(child, id, 0);
-            cmd.SetRef(id, Protocol.Prop.Source, child);
+            cmd.SetRef(id, Protocol.PropertyId.Source, child);
             cmd.BeginUniforms(id, Protocol.UniformSet.Clear);
             cmd.UniformF32("radius", radius);
             cmd.UniformVec2("size", pxw, pxh);
@@ -175,9 +175,9 @@ public static class BlurMaskTest
         {
             cmd.Reset();
             Teardown();
-            cmd.Create(Img, Protocol.Type.Image);
-            cmd.SetU64(Img, Protocol.Prop.Image, image);
-            cmd.SetI32(Img, Protocol.Prop.FillMode, 0);
+            cmd.Create(Img, Protocol.ElementType.Image);
+            cmd.SetU64(Img, Protocol.PropertyId.Image, image);
+            cmd.SetI32(Img, Protocol.PropertyId.FillMode, 0);
             cmd.SetPlace(Img, 0, 0, ew, eh);
             if (blur)
             {
@@ -187,9 +187,9 @@ public static class BlurMaskTest
                 cmd.Reparent(Pass2, 0, 1000);
             }
             else cmd.Reparent(Img, 0, 1000);
-            cmd.Create(Dot, Protocol.Type.Rectangle);
+            cmd.Create(Dot, Protocol.ElementType.Rectangle);
             cmd.SetPlace(Dot, 0, 0, 4, 4);
-            cmd.SetColor(Dot, Protocol.Prop.Color, 1, 0, 0, 1);
+            cmd.SetColor(Dot, Protocol.PropertyId.Color, 1, 0, 0, 1);
             cmd.Reparent(Dot, 0, 2000);
             Apply("build");
             built = blur ? 1 : 2;
@@ -206,8 +206,8 @@ public static class BlurMaskTest
         }
 
         // ---------------- (1) correctness ----------------
-        w = Native.vlqt_window_create(800, 600, "VL.Qt blur mask test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        w = NativeCalls.CreateWindow(800, 600, "VL.Qt blur mask test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         s.Pump(4);
         float dpr;
@@ -250,7 +250,7 @@ public static class BlurMaskTest
         Apply("destroy");
         built = 0;
         s.Pump(3);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(2);
 
         // ---------------- (2) performance ----------------
@@ -261,7 +261,7 @@ public static class BlurMaskTest
         {
             float ew = pw / dpr, eh = ph / dpr;
             var content = LoadImage(Content(pw, ph));
-            w = Native.vlqt_window_create((int)MathF.Round(ew), (int)MathF.Round(eh), "VL.Qt blur mask perf " + name);
+            w = NativeCalls.CreateWindow((int)MathF.Round(ew), (int)MathF.Round(eh), "VL.Qt blur mask perf " + name);
             Native.vlqt_window_show(w);
             s.Pump(4);
             using (var probe = s.Grab(w, "blur-mask_probe.png"))
@@ -284,7 +284,7 @@ public static class BlurMaskTest
                     s.Pump(1);
                     var ms = sw.Elapsed.TotalMilliseconds;
                     if (i < Warmup) continue;
-                    if (Native.vlqt_window_get_perf_sample(w, out var sample) == 0 && sample.swaps > 0)
+                    if (Native.vlqt_scene_get_perf_sample(w, out var sample) == 0 && sample.swaps > 0)
                     {
                         wall.Add(ms); cpu.Add(sample.sync + sample.render); gpu.Add(sample.gpu);
                     }
@@ -303,7 +303,7 @@ public static class BlurMaskTest
             Apply("destroy");
             built = 0;
             s.Pump(3);
-            Native.vlqt_window_destroy(w);
+            Native.vlqt_scene_destroy(w);
             Native.vlqt_res_release(content);
             s.Pump(2);
         }

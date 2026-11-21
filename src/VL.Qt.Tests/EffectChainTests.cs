@@ -52,21 +52,21 @@ namespace VL.Qt.Tests
             {
                 w.BeginEffectChain(3);
                 w.BeginMultiLink();
-                w.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
-                w.EffectF32(Protocol.Prop.EffectBlur, 0.5f);
+                w.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+                w.EffectF32(Protocol.MultiEffectKey.Blur, 0.5f);
                 w.EndLink();
-                w.BeginShaderLink(Protocol.EffectTemplate.TwoPass, new ulong[] { 5 }, 1, 2, 3, 4, 0);
+                w.BeginEffectChainLink(Protocol.EffectTemplate.TwoPass, new ulong[] { 5 }, 1, 2, 3, 4, 0);
                 w.UniformF32("angle", 45);
                 w.EndLink();
                 w.EndEffectChain();
             });
-            var multi = U16(Protocol.EffectLink.Multi) + U16(2) + U32(16)
-                + U16(Protocol.Prop.EffectBlurEnabled) + U16(Protocol.Vt.Bool) + "01000000"
-                + U16(Protocol.Prop.EffectBlur) + U16(Protocol.Vt.F32) + F32(0.5f);
-            var shader = U16(Protocol.EffectLink.Shader) + U16(1) + U32(52)
+            var multi = U16(Protocol.EffectChainLink.Multi) + U16(2) + U32(16)
+                + U16(Protocol.MultiEffectKey.BlurEnabled) + U16(Protocol.ValueType.Bool) + "01000000"
+                + U16(Protocol.MultiEffectKey.Blur) + U16(Protocol.ValueType.F32) + F32(0.5f);
+            var shader = U16(Protocol.EffectChainLink.Shader) + U16(1) + U32(52)
                 + U16(Protocol.EffectTemplate.TwoPass) + U16(1) + U64(5)
                 + F32(1) + F32(2) + F32(3) + F32(4) + F32(0) + U16(0) + U16(0)
-                + U16(Protocol.Vt.F32) + U16(5) + Ascii("angle") + "000000" + F32(45);
+                + U16(Protocol.ValueType.F32) + U16(5) + Ascii("angle") + "000000" + F32(45);
             Assert.That(hex, Is.EqualTo(U16(Protocol.Op.SetEffectChain) + U16(92) + U32(3) + U16(2) + U16(0) + multi + shader));
         }
 
@@ -76,11 +76,11 @@ namespace VL.Qt.Tests
             var hex = Write(w =>
             {
                 w.BeginEffectChain(1);
-                w.BeginShaderLink(Protocol.EffectTemplate.Pyramid, new ulong[] { 11, 12 }, 0, 0, 0, 0, 32);
+                w.BeginEffectChainLink(Protocol.EffectTemplate.Pyramid, new ulong[] { 11, 12 }, 0, 0, 0, 0, 32);
                 w.EndLink();
                 w.EndEffectChain();
             });
-            var shader = U16(Protocol.EffectLink.Shader) + U16(0) + U32(44)
+            var shader = U16(Protocol.EffectChainLink.Shader) + U16(0) + U32(44)
                 + U16(Protocol.EffectTemplate.Pyramid) + U16(2) + U64(11) + U64(12)
                 + F32(0) + F32(0) + F32(0) + F32(0) + F32(32) + U16(0) + U16(0);
             Assert.That(hex, Is.EqualTo(U16(Protocol.Op.SetEffectChain) + U16(60) + U32(1) + U16(1) + U16(0) + shader));
@@ -92,7 +92,7 @@ namespace VL.Qt.Tests
             var w = new CommandWriter();
             Assert.Throws<InvalidOperationException>(() => w.BeginMultiLink());
             w.BeginEffectChain(1);
-            Assert.Throws<InvalidOperationException>(() => w.EffectF32(Protocol.Prop.EffectBlur, 1));
+            Assert.Throws<InvalidOperationException>(() => w.EffectF32(Protocol.MultiEffectKey.Blur, 1));
             Assert.Throws<InvalidOperationException>(() => w.UniformF32("x", 1));
             w.BeginMultiLink();
             Assert.Throws<InvalidOperationException>(() => w.UniformF32("x", 1));

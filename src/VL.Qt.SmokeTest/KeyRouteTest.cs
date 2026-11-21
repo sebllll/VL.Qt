@@ -71,8 +71,8 @@ public static class KeyRouteTest
                 s.Skip($"{what}: the test window is not in the foreground (another window holds it)");
         }
         const string title = "VL.Qt key route test";
-        var w = Native.vlqt_window_create(600, 400, title);
-        Check(w != IntPtr.Zero, "key route window_create");
+        var w = NativeCalls.CreateWindow(600, 400, title);
+        Check(w != SceneHandle.Null, "key route window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
@@ -94,20 +94,20 @@ public static class KeyRouteTest
             NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Press, x, y);
             NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Release, x, y);
         }
-        static List<Rec> Values(List<Rec> recs, uint handle) => recs.FindAll(r => r.Event == Protocol.Ev.Value && r.Handle == handle);
+        static List<Rec> Values(List<Rec> recs, uint handle) => recs.FindAll(r => r.Event == Protocol.EventId.Value && r.Handle == handle);
         static string S(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
 
         cmd.Reset();
-        cmd.Create(T, Protocol.Type.TextField);
+        cmd.Create(T, Protocol.ElementType.TextField);
         VL.Qt.Styles.BaseStyle.Write(cmd, T); // like the Reconciler
-        cmd.SetBool(T, Protocol.Prop.AutoSize, false);
+        cmd.SetBool(T, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(T, 50, 50, 300, 40);
-        cmd.SetString(T, Protocol.Prop.Value, "");
+        cmd.SetString(T, Protocol.PropertyId.Value, "");
         cmd.Reparent(T, 0, 0);
         cmd.Bind(T, HT, 0);
-        cmd.Create(S1, Protocol.Type.SpinBox);
+        cmd.Create(S1, Protocol.ElementType.SpinBox);
         VL.Qt.Styles.BaseStyle.Write(cmd, S1); // like the Reconciler
-        cmd.SetBool(S1, Protocol.Prop.AutoSize, false);
+        cmd.SetBool(S1, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(S1, 50, 150, 240, 40);
         cmd.Reparent(S1, 0, 1);
         cmd.Bind(S1, HS, 0);
@@ -143,23 +143,23 @@ public static class KeyRouteTest
         Frame();
         TypeDigits("42");
         var recs = Frame();
-        Check(Values(recs, HT).Count == 0, $"key route textfield typing without Enter -> no EV_VALUE ({S(recs)})");
+        Check(Values(recs, HT).Count == 0, $"key route textfield typing without Enter -> no EVENT_VALUE ({S(recs)})");
         PostKey(VK_RETURN);
         recs = Frame();
         var v = Values(recs, HT);
-        Check(v.Count == 1 && v[0].ValueType == Protocol.Vt.String && v[0].Str == "42", $"key route textfield Enter (WinForms loop) -> \"42\" ({S(recs)})");
+        Check(v.Count == 1 && v[0].ValueType == Protocol.ValueType.String && v[0].Str == "42", $"key route textfield Enter (WinForms loop) -> \"42\" ({S(recs)})");
         TypeDigits("7");
         PostKey(VK_RETURN, extended: true);
         recs = Frame();
         v = Values(recs, HT);
-        Check(v.Count == 1 && v[0].ValueType == Protocol.Vt.String && v[0].Str == "427", $"key route textfield numpad Enter -> \"427\" ({S(recs)})");
+        Check(v.Count == 1 && v[0].ValueType == Protocol.ValueType.String && v[0].Str == "427", $"key route textfield numpad Enter -> \"427\" ({S(recs)})");
         // An arrow key moves the cursor in the field instead of the dialog focus: 4 2 7 -> left -> 4 2 9 7.
         PostKey(VK_LEFT);
         TypeDigits("9");
         PostKey(VK_RETURN);
         recs = Frame();
         v = Values(recs, HT);
-        Check(v.Count == 1 && v[0].ValueType == Protocol.Vt.String && v[0].Str == "4297", $"key route textfield arrow left + Enter -> \"4297\" ({S(recs)})");
+        Check(v.Count == 1 && v[0].ValueType == Protocol.ValueType.String && v[0].Str == "4297", $"key route textfield arrow left + Enter -> \"4297\" ({S(recs)})");
 
         // SpinBox (Input (Int)): typed digits + Enter -> valueModified.
         Click(170, 170); // text area between the indicators
@@ -169,12 +169,12 @@ public static class KeyRouteTest
         PostKey(VK_RETURN);
         recs = Frame();
         var sv = Values(recs, HS);
-        Check(sv.Count == 1 && sv[0].ValueType == Protocol.Vt.I32 && sv[0].I32 == 5, $"key route spinbox Enter (WinForms loop) -> 5 ({S(recs)})");
+        Check(sv.Count == 1 && sv[0].ValueType == Protocol.ValueType.I32 && sv[0].I32 == 5, $"key route spinbox Enter (WinForms loop) -> 5 ({S(recs)})");
         TypeDigits("3");
         PostKey(VK_RETURN, extended: true);
         recs = Frame();
         sv = Values(recs, HS);
-        Check(sv.Count == 1 && sv[0].ValueType == Protocol.Vt.I32 && sv[0].I32 == 53, $"key route spinbox numpad Enter -> 53 ({S(recs)})");
+        Check(sv.Count == 1 && sv[0].ValueType == Protocol.ValueType.I32 && sv[0].I32 == 53, $"key route spinbox numpad Enter -> 53 ({S(recs)})");
 
         RunFocus(Check, w, cmd, CheckApply, Frame, PostKey, TypeDigits, Click);
 
@@ -182,18 +182,18 @@ public static class KeyRouteTest
         cmd.Destroy(S1);
         cmd.Destroy(R);
         CheckApply("destroy");
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
     }
 
-    // Esc discards the edit and releases the focus (no EV_VALUE), a press outside the focused element (mouse,
+    // Esc discards the edit and releases the focus (no EVENT_VALUE), a press outside the focused element (mouse,
     // touch, also on an element with a Tap handler, which still clicks) releases it and commits, Enter keeps it.
     // "Focus gone" shows as: typing + Enter afterwards sends nothing. Starts with TextField "4297", SpinBox 53.
-    private static void RunFocus(Action<bool, string> check, IntPtr w, CommandWriter cmd, Action<string> apply, Func<List<Rec>> frame,
+    private static void RunFocus(Action<bool, string> check, SceneHandle w, CommandWriter cmd, Action<string> apply, Func<List<Rec>> frame,
         Action<int, bool> postKey, Action<string> type, Action<float, float> click)
     {
         const int VK_ESCAPE = 0x1B, VK_END = 0x23;
-        static List<Rec> Values(List<Rec> recs, uint handle) => recs.FindAll(r => r.Event == Protocol.Ev.Value && r.Handle == handle);
+        static List<Rec> Values(List<Rec> recs, uint handle) => recs.FindAll(r => r.Event == Protocol.EventId.Value && r.Handle == handle);
         static string S(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
         void Key(int vk) => postKey(vk, false);
         // Qt queues the posted keys and delivers them in its pump, the test presses are sent at once: pump first, so
@@ -223,14 +223,14 @@ public static class KeyRouteTest
             recs = S(r);
             return Values(r, handle).Count == 0;
         }
-        bool Text(List<Rec> r, string expected) => Values(r, HT) is { Count: 1 } v && v[0].ValueType == Protocol.Vt.String && v[0].Str == expected;
-        bool Int(List<Rec> r, int expected) => Values(r, HS) is { Count: 1 } v && v[0].ValueType == Protocol.Vt.I32 && v[0].I32 == expected;
+        bool Text(List<Rec> r, string expected) => Values(r, HT) is { Count: 1 } v && v[0].ValueType == Protocol.ValueType.String && v[0].Str == expected;
+        bool Int(List<Rec> r, int expected) => Values(r, HS) is { Count: 1 } v && v[0].ValueType == Protocol.ValueType.I32 && v[0].I32 == expected;
 
         // A rectangle with a Tap handler (Click) in an empty corner.
-        cmd.Create(R, Protocol.Type.Rectangle);
+        cmd.Create(R, Protocol.ElementType.Rectangle);
         cmd.SetPlace(R, 380, 250, 180, 100);
         cmd.Reparent(R, 0, 2);
-        cmd.Create(RT, Protocol.Type.TapHandler);
+        cmd.Create(RT, Protocol.ElementType.TapHandler);
         cmd.Reparent(RT, R, 0);
         cmd.Bind(RT, HR, 0);
         apply("tap rect");
@@ -247,21 +247,21 @@ public static class KeyRouteTest
         recs = frame();
         check(Text(recs, "429712"), $"textfield Enter keeps the focus, next Enter commits \"429712\" ({S(recs)})");
 
-        // Esc: discard, no EV_VALUE, focus gone; the text is back to the committed one.
+        // Esc: discard, no EVENT_VALUE, focus gone; the text is back to the committed one.
         type("99");
         Key(VK_ESCAPE);
         recs = frame();
-        check(Values(recs, HT).Count == 0, $"textfield Esc -> no EV_VALUE ({S(recs)})");
+        check(Values(recs, HT).Count == 0, $"textfield Esc -> no EVENT_VALUE ({S(recs)})");
         check(FocusGone(HT, out var fr), $"textfield Esc releases the focus ({fr})");
         Focus(200, 70);
         type("3");
         Key(VK_RETURN);
         recs = frame();
         check(Text(recs, "4297123"), $"textfield Esc restored the committed text, \"4297123\" ({S(recs)})");
-        // Esc without an edit: still no EV_VALUE.
+        // Esc without an edit: still no EVENT_VALUE.
         Key(VK_ESCAPE);
         recs = frame();
-        check(Values(recs, HT).Count == 0, $"textfield Esc without an edit -> no EV_VALUE ({S(recs)})");
+        check(Values(recs, HT).Count == 0, $"textfield Esc without an edit -> no EVENT_VALUE ({S(recs)})");
 
         // Mouse press into the empty window: commit (focus loss) + focus gone.
         Focus(200, 70);
@@ -292,14 +292,14 @@ public static class KeyRouteTest
         Click(470, 300);
         recs = frame();
         check(Text(recs, "42971234578"), $"textfield click on a Tap handler commits ({S(recs)})");
-        check(recs.Exists(r => r.Event == Protocol.Ev.Click && r.Handle == HR), $"click on a Tap handler still clicks ({S(recs)})");
+        check(recs.Exists(r => r.Event == Protocol.EventId.Click && r.Handle == HR), $"click on a Tap handler still clicks ({S(recs)})");
         check(FocusGone(HT, out fr), $"textfield click on a Tap handler releases the focus ({fr})");
         // Same with touch.
         Focus(200, 70);
         type("9");
         Tap(470, 300);
         recs = frame();
-        check(Text(recs, "429712345789") && recs.Exists(r => r.Event == Protocol.Ev.Click && r.Handle == HR),
+        check(Text(recs, "429712345789") && recs.Exists(r => r.Event == Protocol.EventId.Click && r.Handle == HR),
             $"textfield touch tap on a Tap handler commits and clicks ({S(recs)})");
         check(FocusGone(HT, out fr), $"textfield touch tap on a Tap handler releases the focus ({fr})");
 
@@ -308,7 +308,7 @@ public static class KeyRouteTest
         type("9");
         Key(VK_ESCAPE);
         recs = frame();
-        check(Values(recs, HS).Count == 0, $"spinbox Esc -> no EV_VALUE ({S(recs)})");
+        check(Values(recs, HS).Count == 0, $"spinbox Esc -> no EVENT_VALUE ({S(recs)})");
         check(FocusGone(HS, out fr), $"spinbox Esc releases the focus ({fr})");
         Focus(170, 170);
         type("1");
@@ -324,7 +324,7 @@ public static class KeyRouteTest
         type("4");
         Key(VK_ESCAPE);
         frame();
-        cmd.SetI32(S1, Protocol.Prop.Value, 7);
+        cmd.SetI32(S1, Protocol.PropertyId.Value, 7);
         apply("spinbox set 7");
         frame();
         Focus(170, 170);

@@ -187,7 +187,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
             var first = uniforms.Update();
             Assert.That(first.Select(u => u.Name), Is.EqualTo(new[] { "amount", "size", "tint" }));
             Assert.That(first[0].Numbers.M11, Is.EqualTo(0.5f));
-            Assert.That(first[2].ValueType, Is.EqualTo(Protocol.Vt.Color));
+            Assert.That(first[2].ValueType, Is.EqualTo(Protocol.ValueType.Color));
             Assert.That(first[2].Numbers.M14, Is.EqualTo(1f), "@color without @default is white");
             Assert.That(uniforms.Update(), Is.SameAs(first), "nothing changed");
 

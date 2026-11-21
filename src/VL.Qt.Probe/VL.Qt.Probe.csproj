@@ -7,6 +7,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
+    <!-- vlqt_app_init takes a function pointer (the log callback). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NativeRid Condition="'$(NativeRid)' == '' And $([MSBuild]::IsOSPlatform('Windows')) And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">win-arm64</NativeRid>
     <NativeRid Condition="'$(NativeRid)' == '' And $([MSBuild]::IsOSPlatform('Windows'))">win-x64</NativeRid>
     <NativeRid Condition="'$(NativeRid)' == '' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">linux-arm64</NativeRid>

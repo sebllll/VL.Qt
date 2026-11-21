@@ -10,11 +10,11 @@ using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
-using P = VL.Qt.Wire.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.PropertyId;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Input (Int) node: description, property diff, the value channel (pull, user wins, clamp) and EV_VALUE.</summary>
+    /// <summary>Input (Int) node: description, property diff, the value channel (pull, user wins, clamp) and EVENT_VALUE.</summary>
     public class InputIntNodeTests
     {
         private static readonly Vector2 DefaultSize = new(1.4f, 0.4f);
@@ -69,7 +69,7 @@ namespace VL.Qt.Tests
         {
             var s = Update(out int value, out bool bang);
             Assert.That(s.Type, Is.EqualTo(ElementType.SpinBox));
-            Assert.That((ushort)ElementType.SpinBox, Is.EqualTo(Protocol.Type.SpinBox));
+            Assert.That((ushort)ElementType.SpinBox, Is.EqualTo(Protocol.ElementType.SpinBox));
             Assert.That((s.Value, s.Minimum, s.Maximum, s.Step, s.Editable, s.Enabled, s.AutoSize),
                 Is.EqualTo((0, int.MinValue, int.MaxValue, 1, true, true, true)));
             Assert.That((value, bang), Is.EqualTo((0, false)));
@@ -118,7 +118,7 @@ namespace VL.Qt.Tests
             UserChanges(5);
             var cmds = Frame(out int value, out bool bang, ch);
             Assert.That((value, bang, ch.Value, ch.LatestAuthor), Is.EqualTo((5, true, 5, "Qt")));
-            // Diffed against the last sent value (1): one SET with the user's value, a no-op in Qt (no EV_VALUE), that
+            // Diffed against the last sent value (1): one SET with the user's value, a no-op in Qt (no EVENT_VALUE), that
             // repairs a stale SET applied after the change.
             Assert.That(cmds, Is.EqualTo(new[] { SetValue(5) }));
 

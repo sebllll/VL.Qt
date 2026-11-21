@@ -45,8 +45,8 @@ public static class ReconcilerTest
 
     private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt reconciler test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt reconciler test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
@@ -123,12 +123,12 @@ public static class ReconcilerTest
             s.Check(IsBg(Px(a, 150, 135)) && IsBg(Px(a, 240, 205)), "scene empty after Clear");
 
         Perf(w, s);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
     }
 
     // Steady state through the real QtNative: 1000 rectangles, one color change per frame.
     // Limits are generous; the measured values go to the log.
-    private static void Perf(IntPtr w, Scenario s)
+    private static void Perf(SceneHandle w, Scenario s)
     {
         const int N = 1000, Frames = 1000;
         var cmd = new CommandWriter();

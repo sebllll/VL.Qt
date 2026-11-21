@@ -5,7 +5,7 @@ using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Styles;
 using VL.Qt.Wire;
-using P = VL.Qt.Wire.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.PropertyId;
 
 namespace VL.Qt
 {
@@ -188,51 +188,51 @@ namespace VL.Qt
             sink.BeginMultiLink();
 
             if (p.BlurEnabled != n.BlurEnabled)
-                sink.EffectBool(P.EffectBlurEnabled, n.BlurEnabled);
+                sink.EffectBool(Protocol.MultiEffectKey.BlurEnabled, n.BlurEnabled);
             if (p.Blur != n.Blur)
-                sink.EffectF32(P.EffectBlur, n.Blur);
+                sink.EffectF32(Protocol.MultiEffectKey.Blur, n.Blur);
             if (p.BlurMax != n.BlurMax)
-                sink.EffectI32(P.EffectBlurMax, n.BlurMax);
+                sink.EffectI32(Protocol.MultiEffectKey.BlurMax, n.BlurMax);
             if (p.BlurMultiplier != n.BlurMultiplier)
-                sink.EffectF32(P.EffectBlurMultiplier, n.BlurMultiplier);
+                sink.EffectF32(Protocol.MultiEffectKey.BlurMultiplier, n.BlurMultiplier);
 
             if (p.ShadowEnabled != n.ShadowEnabled)
-                sink.EffectBool(P.EffectShadowEnabled, n.ShadowEnabled);
+                sink.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, n.ShadowEnabled);
             if (p.ShadowColor != n.ShadowColor)
             {
                 var c = n.ShadowColor;
-                sink.EffectColor(P.EffectShadowColor, c.R, c.G, c.B, c.A);
+                sink.EffectColor(Protocol.MultiEffectKey.ShadowColor, c.R, c.G, c.B, c.A);
             }
             if (p.ShadowOffset.X != n.ShadowOffset.X)
-                sink.EffectF32(P.EffectShadowHorizontalOffset, _mapping.ToQt(n.ShadowOffset.X));
+                sink.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, _mapping.ToQt(n.ShadowOffset.X));
             if (p.ShadowOffset.Y != n.ShadowOffset.Y)
-                sink.EffectF32(P.EffectShadowVerticalOffset, _mapping.ToQt(n.ShadowOffset.Y));
+                sink.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, _mapping.ToQt(n.ShadowOffset.Y));
             if (p.ShadowBlur != n.ShadowBlur)
-                sink.EffectF32(P.EffectShadowBlur, n.ShadowBlur);
+                sink.EffectF32(Protocol.MultiEffectKey.ShadowBlur, n.ShadowBlur);
             if (p.ShadowScale != n.ShadowScale)
-                sink.EffectF32(P.EffectShadowScale, n.ShadowScale);
+                sink.EffectF32(Protocol.MultiEffectKey.ShadowScale, n.ShadowScale);
 
             if (p.Brightness != n.Brightness)
-                sink.EffectF32(P.EffectBrightness, n.Brightness);
+                sink.EffectF32(Protocol.MultiEffectKey.Brightness, n.Brightness);
             if (p.Contrast != n.Contrast)
-                sink.EffectF32(P.EffectContrast, n.Contrast);
+                sink.EffectF32(Protocol.MultiEffectKey.Contrast, n.Contrast);
             if (p.Saturation != n.Saturation)
-                sink.EffectF32(P.EffectSaturation, n.Saturation);
+                sink.EffectF32(Protocol.MultiEffectKey.Saturation, n.Saturation);
 
             if (p.Colorization != n.Colorization)
-                sink.EffectF32(P.EffectColorization, n.Colorization);
+                sink.EffectF32(Protocol.MultiEffectKey.Colorization, n.Colorization);
             if (p.ColorizationColor != n.ColorizationColor)
             {
                 var c = n.ColorizationColor;
-                sink.EffectColor(P.EffectColorizationColor, c.R, c.G, c.B, c.A);
+                sink.EffectColor(Protocol.MultiEffectKey.ColorizationColor, c.R, c.G, c.B, c.A);
             }
 
             if (p.AutoPadding != n.AutoPadding)
-                sink.EffectBool(P.EffectAutoPadding, n.AutoPadding);
+                sink.EffectBool(Protocol.MultiEffectKey.AutoPadding, n.AutoPadding);
             if (p.PaddingRect != n.PaddingRect)
             {
                 var r = n.PaddingRect;
-                sink.EffectRect(P.EffectPaddingRect, _mapping.ToQt(r.X), _mapping.ToQt(r.Y), _mapping.ToQt(r.Width), _mapping.ToQt(r.Height));
+                sink.EffectRect(Protocol.MultiEffectKey.PaddingRect, _mapping.ToQt(r.X), _mapping.ToQt(r.Y), _mapping.ToQt(r.Width), _mapping.ToQt(r.Height));
             }
 
             if (n.MaskSource is { } mask)
@@ -240,18 +240,18 @@ namespace VL.Qt
                 // A placeholder (the mask is a video shown elsewhere) has no object: no mask until a retry finds one.
                 var maskId = EffectObjectId(node, mask);
                 if (maskId != 0)
-                    sink.EffectRef(P.EffectMaskSource, maskId);
+                    sink.EffectRef(Protocol.MultiEffectKey.MaskSource, maskId);
             }
             if (p.MaskThresholdMin != n.MaskThresholdMin)
-                sink.EffectF32(P.EffectMaskThresholdMin, n.MaskThresholdMin);
+                sink.EffectF32(Protocol.MultiEffectKey.MaskThresholdMin, n.MaskThresholdMin);
             if (p.MaskSpreadAtMin != n.MaskSpreadAtMin)
-                sink.EffectF32(P.EffectMaskSpreadAtMin, n.MaskSpreadAtMin);
+                sink.EffectF32(Protocol.MultiEffectKey.MaskSpreadAtMin, n.MaskSpreadAtMin);
             if (p.MaskThresholdMax != n.MaskThresholdMax)
-                sink.EffectF32(P.EffectMaskThresholdMax, n.MaskThresholdMax);
+                sink.EffectF32(Protocol.MultiEffectKey.MaskThresholdMax, n.MaskThresholdMax);
             if (p.MaskSpreadAtMax != n.MaskSpreadAtMax)
-                sink.EffectF32(P.EffectMaskSpreadAtMax, n.MaskSpreadAtMax);
+                sink.EffectF32(Protocol.MultiEffectKey.MaskSpreadAtMax, n.MaskSpreadAtMax);
             if (p.MaskInverted != n.MaskInverted)
-                sink.EffectBool(P.EffectMaskInverted, n.MaskInverted);
+                sink.EffectBool(Protocol.MultiEffectKey.MaskInverted, n.MaskInverted);
         }
 
         /// <summary>
@@ -266,7 +266,7 @@ namespace VL.Qt
             var padY = EffectPadding.Ceil(_mapping.ToQt(pad.Y));
             var padW = EffectPadding.Ceil(_mapping.ToQt(pad.Width));
             var padH = EffectPadding.Ceil(_mapping.ToQt(pad.Height));
-            sink.BeginShaderLink(shader.Template, shader.ShaderIds.AsSpan(), padX, padY, padW, padH, _mapping.ToQt(shader.Strength));
+            sink.BeginEffectChainLink(shader.Template, shader.ShaderIds.AsSpan(), padX, padY, padW, padH, _mapping.ToQt(shader.Strength));
             foreach (var u in shader.Uniforms)
             {
                 if (u is null || !UniformWriter.IsValidName(u.Name))
@@ -276,7 +276,7 @@ namespace VL.Qt
                     handle = EffectObjectId(node, texture);
                 else if (u.Image is { } image)
                     handle = image.Id;
-                if (u.ValueType != Protocol.Vt.Sampler)
+                if (u.ValueType != Protocol.ValueType.Sampler)
                     UniformWriter.WriteEntry(sink, u.Name, new UniformValue(u.ValueType, u.IsLength ? ScaleLength(u.Numbers, _mapping.UnitScale) : u.Numbers, u.Integer, handle));
                 if (u.Sampler is { } sampler)
                     sink.UniformSampler(u.Name, sampler.Pack());

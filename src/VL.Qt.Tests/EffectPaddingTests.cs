@@ -3,7 +3,8 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
-using P = VL.Qt.Wire.Protocol.Prop;
+using K = VL.Qt.Wire.Protocol.MultiEffectKey;
+using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
@@ -61,8 +62,8 @@ namespace VL.Qt.Tests
             var rec = new Reconciler(sink, new IdAllocator(), new SceneRegistry());
             rec.Update(new Rectangle { Effect = Blur(null, false, new RectangleF(1, 2, 3, 4)) }, Space.DIPTopLeft);
             var chain = sink.OfOp("CHAIN").Single();
-            Assert.That(chain, Does.Contain($" {nameof(P.EffectAutoPadding)}=bool(0)"));
-            Assert.That(chain, Does.Contain($" {nameof(P.EffectPaddingRect)}=rect(100,200,300,400)"), "units to DIP");
+            Assert.That(chain, Does.Contain($" {nameof(K.AutoPadding)}=bool(0)"));
+            Assert.That(chain, Does.Contain($" {nameof(K.PaddingRect)}=rect(100,200,300,400)"), "units to DIP");
             Assert.That(sink.OfOp("SET").Count(), Is.EqualTo(0));
         }
     }

@@ -31,20 +31,20 @@ namespace VL.Qt.Tests
                 return this;
             }
 
-            public Poll Measured(uint h, float w, float hgt) => Add(Protocol.Ev.Measured, h, F(w, hgt));
-            public Poll Bounds(uint h, float x, float y, float w, float hgt) => Add(Protocol.Ev.SceneBounds, h, F(x, y, w, hgt));
-            public Poll Hover(uint h, bool v) => Add(Protocol.Ev.Hover, h, new[] { (byte)(v ? 1 : 0) });
-            public Poll Press(uint h, bool v) => Add(Protocol.Ev.Press, h, new[] { (byte)(v ? 1 : 0) });
-            public Poll Click(uint h, uint delta) { var p = new byte[4]; BinaryPrimitives.WriteUInt32LittleEndian(p, delta); return Add(Protocol.Ev.Click, h, p); }
-            public Poll TapCount(uint h, uint count) { var p = new byte[4]; BinaryPrimitives.WriteUInt32LittleEndian(p, count); return Add(Protocol.Ev.TapCount, h, p); }
-            public Poll LongPress(uint h, uint count) { var p = new byte[4]; BinaryPrimitives.WriteUInt32LittleEndian(p, count); return Add(Protocol.Ev.LongPress, h, p); }
-            public Poll Active(uint h, bool v) => Add(Protocol.Ev.Active, h, new[] { (byte)(v ? 1 : 0) });
-            public Poll Wheel(uint h, float x, float y) => Add(Protocol.Ev.Wheel, h, F(x, y));
-            public Poll Pointer(uint h, float x, float y) => Add(Protocol.Ev.Pointer, h, F(x, y));
-            public Poll Drag(uint h, float x, float y) => Add(Protocol.Ev.Drag, h, F(x, y));
-            public Poll Pinch(uint h, float scale, float degrees, float tx, float ty, float px = 0, float py = 0) => Add(Protocol.Ev.Pinch, h, F(scale, degrees, tx, ty, px, py));
+            public Poll Measured(uint h, float w, float hgt) => Add(Protocol.EventId.Measured, h, F(w, hgt));
+            public Poll Bounds(uint h, float x, float y, float w, float hgt) => Add(Protocol.EventId.SceneBounds, h, F(x, y, w, hgt));
+            public Poll Hover(uint h, bool v) => Add(Protocol.EventId.Hover, h, new[] { (byte)(v ? 1 : 0) });
+            public Poll Press(uint h, bool v) => Add(Protocol.EventId.Press, h, new[] { (byte)(v ? 1 : 0) });
+            public Poll Click(uint h, uint delta) { var p = new byte[4]; BinaryPrimitives.WriteUInt32LittleEndian(p, delta); return Add(Protocol.EventId.Click, h, p); }
+            public Poll TapCount(uint h, uint count) { var p = new byte[4]; BinaryPrimitives.WriteUInt32LittleEndian(p, count); return Add(Protocol.EventId.TapCount, h, p); }
+            public Poll LongPress(uint h, uint count) { var p = new byte[4]; BinaryPrimitives.WriteUInt32LittleEndian(p, count); return Add(Protocol.EventId.LongPress, h, p); }
+            public Poll Active(uint h, bool v) => Add(Protocol.EventId.Active, h, new[] { (byte)(v ? 1 : 0) });
+            public Poll Wheel(uint h, float x, float y) => Add(Protocol.EventId.Wheel, h, F(x, y));
+            public Poll Pointer(uint h, float x, float y) => Add(Protocol.EventId.Pointer, h, F(x, y));
+            public Poll Drag(uint h, float x, float y) => Add(Protocol.EventId.Drag, h, F(x, y));
+            public Poll Pinch(uint h, float scale, float degrees, float tx, float ty, float px = 0, float py = 0) => Add(Protocol.EventId.Pinch, h, F(scale, degrees, tx, ty, px, py));
 
-            /// <summary>EV_TOUCH_POINTS with points (id, x, y, pressure, w, h).</summary>
+            /// <summary>EVENT_TOUCH_POINTS with points (id, x, y, pressure, w, h).</summary>
             public Poll TouchPoints(uint h, params (uint Id, float X, float Y, float Pressure, float W, float H)[] points)
             {
                 var p = new byte[4 + 24 * points.Length];
@@ -55,19 +55,19 @@ namespace VL.Qt.Tests
                     BinaryPrimitives.WriteUInt32LittleEndian(s, points[i].Id);
                     F(points[i].X, points[i].Y, points[i].Pressure, points[i].W, points[i].H).CopyTo(s[4..]);
                 }
-                return Add(Protocol.Ev.TouchPoints, h, p);
+                return Add(Protocol.EventId.TouchPoints, h, p);
             }
 
-            /// <summary>EV_VALUE: u16 value type, u16 0, then <paramref name="value"/> encoded like SET.</summary>
+            /// <summary>EVENT_VALUE: u16 value type, u16 0, then <paramref name="value"/> encoded like SET.</summary>
             public Poll Value(uint h, ushort type, byte[] value)
             {
                 var p = new byte[4 + value.Length];
                 BinaryPrimitives.WriteUInt16LittleEndian(p, type);
                 value.CopyTo(p, 4);
-                return Add(Protocol.Ev.Value, h, p);
+                return Add(Protocol.EventId.Value, h, p);
             }
 
-            public Poll ValueI32(uint h, int v) { var b = new byte[4]; BinaryPrimitives.WriteInt32LittleEndian(b, v); return Value(h, Protocol.Vt.I32, b); }
+            public Poll ValueI32(uint h, int v) { var b = new byte[4]; BinaryPrimitives.WriteInt32LittleEndian(b, v); return Value(h, Protocol.ValueType.I32, b); }
 
             public Poll ValueString(uint h, string v)
             {
@@ -75,10 +75,10 @@ namespace VL.Qt.Tests
                 var b = new byte[4 + utf8.Length];
                 BinaryPrimitives.WriteUInt32LittleEndian(b, (uint)utf8.Length);
                 utf8.CopyTo(b, 4);
-                return Value(h, Protocol.Vt.String, b);
+                return Value(h, Protocol.ValueType.String, b);
             }
 
-            public Poll Error(uint h, string text) => Add(Protocol.Ev.Error, h, System.Text.Encoding.UTF8.GetBytes(text));
+            public Poll Error(uint h, string text) => Add(Protocol.EventId.Error, h, System.Text.Encoding.UTF8.GetBytes(text));
 
             public byte[] Bytes => _b.ToArray();
 
@@ -131,9 +131,9 @@ namespace VL.Qt.Tests
             Assert.That(i, Is.EqualTo(-7), "last change wins");
             Assert.That(feedback.TakeValue<int>(out _), Is.False, "taken");
 
-            reg.Dispatch(new Poll().Value(h, Protocol.Vt.F32, BitConverter.GetBytes(0.25f)).Bytes);
+            reg.Dispatch(new Poll().Value(h, Protocol.ValueType.F32, BitConverter.GetBytes(0.25f)).Bytes);
             Assert.That(feedback.TakeValue<float>(out float f) && f == 0.25f, Is.True);
-            reg.Dispatch(new Poll().Value(h, Protocol.Vt.Bool, new byte[] { 1 }).Bytes);
+            reg.Dispatch(new Poll().Value(h, Protocol.ValueType.Bool, new byte[] { 1 }).Bytes);
             Assert.That(feedback.TakeValue<bool>(out bool b) && b, Is.True);
             reg.Dispatch(new Poll().ValueString(h, "ä b").Bytes);
             Assert.That(feedback.TakeValue<string>(out string? str), Is.True);
@@ -143,8 +143,8 @@ namespace VL.Qt.Tests
             Assert.That(feedback.TakeValue<float>(out _), Is.False, "type mismatch is dropped");
             Assert.That(feedback.TakeValue<int>(out _), Is.False);
 
-            var res = reg.Dispatch(new Poll().Value(h, Protocol.Vt.I32, new byte[2]).Value(h, Protocol.Vt.Color, new byte[16])
-                .Value(h, Protocol.Vt.String, new byte[] { 9, 0, 0, 0, 65 }).Bytes);
+            var res = reg.Dispatch(new Poll().Value(h, Protocol.ValueType.I32, new byte[2]).Value(h, Protocol.ValueType.Color, new byte[16])
+                .Value(h, Protocol.ValueType.String, new byte[] { 9, 0, 0, 0, 65 }).Bytes);
             Assert.That((res.Applied, res.Ignored), Is.EqualTo((0, 3)), "short payload, unknown type, string longer than the payload");
         }
 
@@ -184,10 +184,10 @@ namespace VL.Qt.Tests
             var res = reg.Dispatch(new Poll()
                 .Hover(h + 1, true)                                     // unknown handle
                 .Hover(0, true)                                         // handle 0
-                .Add(Protocol.Ev.Hover, h, new byte[] { 1 }, index: FeedbackRouter.MaxIndexOffset + 1) // index too large
-                .Add(Protocol.Ev.Hover, h, new byte[] { 1 }, index: uint.MaxValue)
+                .Add(Protocol.EventId.Hover, h, new byte[] { 1 }, index: FeedbackRouter.MaxIndexOffset + 1) // index too large
+                .Add(Protocol.EventId.Hover, h, new byte[] { 1 }, index: uint.MaxValue)
                 .Add(99, h, new byte[] { 1 })                           // unknown event
-                .Add(Protocol.Ev.Measured, h, new byte[4])              // payload too short
+                .Add(Protocol.EventId.Measured, h, new byte[4])              // payload too short
                 .Bytes);
 
             Assert.That(res, Is.EqualTo(new DispatchResult(0, 6, null)));
@@ -285,7 +285,7 @@ namespace VL.Qt.Tests
 
             uint hb = reg.Acquire(new FeedbackSlot(b, 0));
             Assert.That(hb, Is.Not.EqualTo(ha));
-            // QtNative's late EV_HOVER/EV_PRESS for the old handle (and a stale click) reach nobody.
+            // QtNative's late EVENT_HOVER/EVENT_PRESS for the old handle (and a stale click) reach nobody.
             var res = reg.Dispatch(new Poll().Hover(ha, true).Click(ha, 1).Bytes);
             Assert.That(res.Ignored, Is.EqualTo(2));
             Assert.That(a.IsHovered() || b.IsHovered() || a.TakeClicks(0) > 0 || b.TakeClicks(0) > 0, Is.False);
@@ -351,7 +351,7 @@ namespace VL.Qt.Tests
             Assert.That(feedback.TakeWheel(), Is.EqualTo(Vector2.Zero));
 
             // Too short payloads are ignored.
-            res = reg.Dispatch(new Poll().Add(Protocol.Ev.Wheel, h, new byte[4]).Add(Protocol.Ev.TapCount, h, new byte[2]).Add(Protocol.Ev.Active, h, new byte[0]).Bytes);
+            res = reg.Dispatch(new Poll().Add(Protocol.EventId.Wheel, h, new byte[4]).Add(Protocol.EventId.TapCount, h, new byte[2]).Add(Protocol.EventId.Active, h, new byte[0]).Bytes);
             Assert.That(res.Applied, Is.Zero);
             Assert.That(res.Ignored, Is.EqualTo(3));
         }
@@ -369,7 +369,7 @@ namespace VL.Qt.Tests
             Assert.That(feedback.DragDelta(), Is.EqualTo(new Vector2(1, -0.5f)), "pixels -> units");
             Assert.That(feedback.DragUpdates(), Is.EqualTo(2), "equal values count too");
 
-            res = reg.Dispatch(new Poll().Add(Protocol.Ev.Drag, h, new byte[4]).Bytes);
+            res = reg.Dispatch(new Poll().Add(Protocol.EventId.Drag, h, new byte[4]).Bytes);
             Assert.That(res.Ignored, Is.EqualTo(1), "too short");
 
             reg.Release(h);
@@ -399,9 +399,9 @@ namespace VL.Qt.Tests
             Assert.That(feedback.TouchUpdates(), Is.EqualTo(2), "empty again: no change");
 
             // Too short / too many points are ignored.
-            res = reg.Dispatch(new Poll().Add(Protocol.Ev.TouchPoints, h, new byte[3])
-                .Add(Protocol.Ev.TouchPoints, h, new byte[] { 2, 0, 0, 0, 1, 2, 3, 4 })
-                .Add(Protocol.Ev.TouchPoints, h, new byte[] { 65, 0, 0, 0 }).Bytes);
+            res = reg.Dispatch(new Poll().Add(Protocol.EventId.TouchPoints, h, new byte[3])
+                .Add(Protocol.EventId.TouchPoints, h, new byte[] { 2, 0, 0, 0, 1, 2, 3, 4 })
+                .Add(Protocol.EventId.TouchPoints, h, new byte[] { 65, 0, 0, 0 }).Bytes);
             Assert.That(res.Applied, Is.Zero);
             Assert.That(res.Ignored, Is.EqualTo(3));
 
@@ -429,7 +429,7 @@ namespace VL.Qt.Tests
 
             reg.Dispatch(new Poll().Active(h, false).Bytes);
             Assert.That(feedback.PinchScale(), Is.EqualTo(1.5f), "the last value stays");
-            Assert.That(reg.Dispatch(new Poll().Add(Protocol.Ev.Pinch, h, new byte[16]).Bytes).Ignored, Is.EqualTo(1), "too short");
+            Assert.That(reg.Dispatch(new Poll().Add(Protocol.EventId.Pinch, h, new byte[16]).Bytes).Ignored, Is.EqualTo(1), "too short");
         }
 
         [Test]
@@ -494,8 +494,8 @@ namespace VL.Qt.Tests
             var feedback = new ElementFeedback();
             uint h = reg.Acquire(new FeedbackSlot(feedback, 2));
             var res = reg.Dispatch(new Poll()
-                .Add(Protocol.Ev.Hover, h, new byte[] { 1 }, index: 1)
-                .Add(Protocol.Ev.Measured, h, new byte[8], index: FeedbackRouter.MaxIndexOffset)
+                .Add(Protocol.EventId.Hover, h, new byte[] { 1 }, index: 1)
+                .Add(Protocol.EventId.Measured, h, new byte[8], index: FeedbackRouter.MaxIndexOffset)
                 .Bytes);
 
             Assert.That(res, Is.EqualTo(new DispatchResult(2, 0, null)));

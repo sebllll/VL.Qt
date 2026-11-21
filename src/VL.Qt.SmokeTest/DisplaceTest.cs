@@ -42,18 +42,18 @@ public static class DisplaceTest
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         Directory.CreateDirectory(s.OutDir);
 
-        Native.vlqt_res_create(Protocol.ResKind.Shader, out var displace);
-        var rcLoad = Native.vlqt_res_load_shader(displace, "builtin:displace", Protocol.ShaderStage.Fragment);
+        Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var displace);
+        var rcLoad = Native.vlqt_shader_load(displace, "builtin:displace", Protocol.ShaderStage.Fragment);
         var sLoad = Native.vlqt_res_wait(displace, 10000);
-        s.Check(rcLoad == 0 && sLoad == Protocol.ResState.Ready, $"builtin:displace loads -> Ready ({sLoad}, rc {rcLoad})");
-        Native.vlqt_res_create(Protocol.ResKind.Shader, out var wave);
-        var rcWave = Native.vlqt_res_load_shader_source(wave, WaveMap, Protocol.ShaderStage.Fragment);
-        var sWave = rcWave == 0 ? Native.vlqt_res_wait(wave, 20000) : Protocol.ResState.Failed;
-        s.Check(sWave == Protocol.ResState.Ready, $"wave map shader bakes -> Ready ({sWave}, rc {rcWave})");
-        if (sLoad != Protocol.ResState.Ready || sWave != Protocol.ResState.Ready) return;
+        s.Check(rcLoad == 0 && sLoad == Protocol.ResourceState.Ready, $"builtin:displace loads -> Ready ({sLoad}, rc {rcLoad})");
+        Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var wave);
+        var rcWave = Native.vlqt_shader_load_source(wave, WaveMap, Protocol.ShaderStage.Fragment);
+        var sWave = rcWave == 0 ? Native.vlqt_res_wait(wave, 20000) : Protocol.ResourceState.Failed;
+        s.Check(sWave == Protocol.ResourceState.Ready, $"wave map shader bakes -> Ready ({sWave}, rc {rcWave})");
+        if (sLoad != Protocol.ResourceState.Ready || sWave != Protocol.ResourceState.Ready) return;
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt displace test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt displace test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         s.Pump(4);
         float dpr;
@@ -68,14 +68,14 @@ public static class DisplaceTest
         }
         void Hal(uint id, uint parent, uint index)
         {
-            cmd.Create(id, Protocol.Type.Text);
+            cmd.Create(id, Protocol.ElementType.Text);
             cmd.SetPlace(id, 0, 0, CellW, CellH);
-            cmd.SetString(id, Protocol.Prop.Text, "HAL");
-            cmd.SetF32(id, Protocol.Prop.FontSize, 64);
-            cmd.SetI32(id, Protocol.Prop.FontWeight, 900);
-            cmd.SetColor(id, Protocol.Prop.Color, 1, 1, 1, 1);
-            cmd.SetI32(id, Protocol.Prop.HorizontalAlignment, 4);
-            cmd.SetI32(id, Protocol.Prop.VerticalAlignment, 128);
+            cmd.SetString(id, Protocol.PropertyId.Text, "HAL");
+            cmd.SetF32(id, Protocol.PropertyId.FontSize, 64);
+            cmd.SetI32(id, Protocol.PropertyId.FontWeight, 900);
+            cmd.SetColor(id, Protocol.PropertyId.Color, 1, 1, 1, 1);
+            cmd.SetI32(id, Protocol.PropertyId.HorizontalAlignment, 4);
+            cmd.SetI32(id, Protocol.PropertyId.VerticalAlignment, 128);
             cmd.Reparent(id, parent, index);
         }
         uint next = 10;
@@ -84,21 +84,21 @@ public static class DisplaceTest
         {
             var (x, y) = Cell(cx, cy);
             uint fx = next++, text = next++, map = next++;
-            cmd.Create(fx, Protocol.Type.ShaderEffect);
+            cmd.Create(fx, Protocol.ElementType.Shader);
             cmd.SetPlace(fx, x, y, CellW, CellH);
-            cmd.SetU64(fx, Protocol.Prop.FragmentShader, displace);
+            cmd.SetU64(fx, Protocol.PropertyId.FragmentShader, displace);
             cmd.Reparent(fx, 0, (uint)(cy * 3 + cx));
             Hal(text, fx, 0);
-            cmd.SetRef(fx, Protocol.Prop.Source, text);
+            cmd.SetRef(fx, Protocol.PropertyId.Source, text);
             if (waveMap)
             {
-                cmd.Create(map, Protocol.Type.ShaderEffect);
-                cmd.SetU64(map, Protocol.Prop.FragmentShader, wave);
+                cmd.Create(map, Protocol.ElementType.Shader);
+                cmd.SetU64(map, Protocol.PropertyId.FragmentShader, wave);
             }
             else
             {
-                cmd.Create(map, Protocol.Type.Rectangle);
-                cmd.SetColor(map, Protocol.Prop.Color, mr, mg, 0, ma);
+                cmd.Create(map, Protocol.ElementType.Rectangle);
+                cmd.SetColor(map, Protocol.PropertyId.Color, mr, mg, 0, ma);
             }
             cmd.SetPlace(map, 0, 0, CellW, CellH);
             cmd.Reparent(map, fx, 1);
@@ -209,7 +209,7 @@ public static class DisplaceTest
         cmd.Destroy(Ref);
         Apply("destroy");
         s.Pump(3);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         Native.vlqt_res_release(displace);
         Native.vlqt_res_release(wave);
         s.Pump(2);

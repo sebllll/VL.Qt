@@ -143,7 +143,7 @@ namespace VL.Qt
         /// <summary>Placeholder for an interaction that is active at another handler.</summary>
         public bool IsIgnored => Id == 0;
 
-        /// <summary>CREATE type (<see cref="Protocol.Type"/>, from 32).</summary>
+        /// <summary>CREATE type (<see cref="Protocol.ElementType"/>, from 32).</summary>
         public ushort Type { get; }
 
         /// <summary>Feedback of the interaction node; identifies the handler within the element's chain.</summary>

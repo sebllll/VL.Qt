@@ -260,7 +260,7 @@ namespace VL.Qt.Tests
             Assert.That(Out(instance, 1).Value, Is.EqualTo(0.25f));
             Assert.That(Out(instance, 2).Value, Is.EqualTo(4));
 
-            Dispatch(NewPoll().Add(Protocol.Ev.QmlProperty, _handle, QmlWire.Property("progress", Protocol.Vt.F32, QmlWire.F(0.75f))));
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("progress", Protocol.ValueType.F32, QmlWire.F(0.75f))));
             Frame(instance);
             Assert.That(Out(instance, 1).Value, Is.EqualTo(0.75f));
             Assert.That(Out(instance, 2).Value, Is.EqualTo(4), "untouched: still the default");
@@ -271,11 +271,11 @@ namespace VL.Qt.Tests
         {
             var instance = Create(new[] { Prop("progress", QmlValueKind.Real, 0.25f), Prop("title", QmlValueKind.String, "hi") });
             Frame(instance);
-            Dispatch(NewPoll().Add(Protocol.Ev.QmlProperty, _handle, QmlWire.Property("progress", Protocol.Vt.I32, QmlWire.I32(3))));
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("progress", Protocol.ValueType.I32, QmlWire.I32(3))));
             Frame(instance);
             Assert.That(Out(instance, 1).Value, Is.EqualTo(3f), "int from QML for a real pin");
 
-            Dispatch(NewPoll().Add(Protocol.Ev.QmlProperty, _handle, QmlWire.Property("title", Protocol.Vt.I32, QmlWire.I32(3))));
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("title", Protocol.ValueType.I32, QmlWire.I32(3))));
             Frame(instance);
             Assert.That(Out(instance, 2).Value, Is.EqualTo("hi"), "an int does not fit a string: the default");
         }
@@ -285,7 +285,7 @@ namespace VL.Qt.Tests
         {
             var instance = Create(new[] { Prop("progress", QmlValueKind.Real, 0.25f) });
             Frame(instance);
-            Dispatch(NewPoll().Add(Protocol.Ev.QmlProperty, _handle, QmlWire.Property("progress", Protocol.Vt.F32, QmlWire.F(0.75f))));
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("progress", Protocol.ValueType.F32, QmlWire.F(0.75f))));
             Frame(instance);
             Assert.That(Out(instance, 1).Value, Is.EqualTo(0.75f));
 
@@ -299,7 +299,7 @@ namespace VL.Qt.Tests
         {
             var instance = Create(new[] { Prop("value", QmlValueKind.Vector2D, flags: QmlPropertyFlags.ReadOnly) });
             Frame(instance);
-            Dispatch(NewPoll().Add(Protocol.Ev.QmlProperty, _handle, QmlWire.Property("value", Protocol.Vt.Vec2, QmlWire.F(1, 2))));
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("value", Protocol.ValueType.Vec2, QmlWire.F(1, 2))));
             Frame(instance);
             Assert.That(Out(instance, 1).Value, Is.EqualTo(new Vector2(1, 2)));
         }
@@ -312,7 +312,7 @@ namespace VL.Qt.Tests
             var instance = Create(signals: new[] { Signal("fired"), Signal("other") });
             Frame(instance);
             Assert.That(Out(instance, 1).Value, Is.EqualTo(false));
-            Dispatch(NewPoll().Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("fired")).Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("fired")));
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("fired")).Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("fired")));
             Frame(instance);
             Assert.That(Out(instance, 1).Value, Is.EqualTo(true));
             Assert.That(Out(instance, 2).Value, Is.EqualTo(false));
@@ -328,9 +328,9 @@ namespace VL.Qt.Tests
             Assert.That(Out(instance, 1).Value, Is.InstanceOf<Spread<int>>());
             Assert.That(Out(instance, 2).Value, Is.InstanceOf<Spread<float>>());
             Dispatch(NewPoll()
-                .Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("picked", (Protocol.Vt.I32, QmlWire.I32(1))))
-                .Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("scaled", (Protocol.Vt.I32, QmlWire.I32(2))))
-                .Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("picked", (Protocol.Vt.I32, QmlWire.I32(3)))));
+                .Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("picked", (Protocol.ValueType.I32, QmlWire.I32(1))))
+                .Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("scaled", (Protocol.ValueType.I32, QmlWire.I32(2))))
+                .Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("picked", (Protocol.ValueType.I32, QmlWire.I32(3)))));
             Frame(instance);
             Assert.That(((Spread<int>)Out(instance, 1).Value!).ToArray(), Is.EqualTo(new[] { 1, 3 }));
             Assert.That(((Spread<float>)Out(instance, 2).Value!).ToArray(), Is.EqualTo(new[] { 2f }), "int coerced to the real pin");
@@ -345,8 +345,8 @@ namespace VL.Qt.Tests
             var instance = Create(signals: new[] { Signal("picked", new QmlSignalArg("n", "int", QmlValueKind.Int)) });
             Frame(instance);
             Dispatch(NewPoll()
-                .Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("picked", (Protocol.Vt.String, QmlWire.Str("x"))))
-                .Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("picked", (Protocol.Vt.I32, QmlWire.I32(5)))));
+                .Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("picked", (Protocol.ValueType.String, QmlWire.Str("x"))))
+                .Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("picked", (Protocol.ValueType.I32, QmlWire.I32(5)))));
             Frame(instance);
             Assert.That(((Spread<int>)Out(instance, 1).Value!).ToArray(), Is.EqualTo(new[] { 5 }));
         }
@@ -356,7 +356,7 @@ namespace VL.Qt.Tests
         {
             var instance = Create(signals: new[] { Signal("changed", new QmlSignalArg("v", "var", null)) });
             Frame(instance);
-            Dispatch(NewPoll().Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("changed", (Protocol.Vt.String, QmlWire.Str("x")))));
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("changed", (Protocol.ValueType.String, QmlWire.Str("x")))));
             Frame(instance);
             Assert.That(((Spread<object>)Out(instance, 1).Value!).ToArray(), Is.EqualTo(new object[] { "x" }));
         }
@@ -370,7 +370,7 @@ namespace VL.Qt.Tests
                 Signal("rest", new QmlSignalArg("a", "real", QmlValueKind.Real), new QmlSignalArg("b", "real", QmlValueKind.Real)),
             });
             Frame(instance);
-            Dispatch(NewPoll().Add(Protocol.Ev.QmlSignal, _handle, QmlWire.Signal("moved", (Protocol.Vt.F32, QmlWire.F(1)), (Protocol.Vt.F32, QmlWire.F(2)))));
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("moved", (Protocol.ValueType.F32, QmlWire.F(1)), (Protocol.ValueType.F32, QmlWire.F(2)))));
             Frame(instance);
             var moved = (Spread<QmlSignal>)Out(instance, 1).Value!;
             Assert.That(moved.Count, Is.EqualTo(1));

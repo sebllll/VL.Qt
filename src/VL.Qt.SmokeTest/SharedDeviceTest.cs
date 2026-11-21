@@ -33,15 +33,15 @@ public static class SharedDeviceTest
         var shared = Environment.GetEnvironmentVariable("VLQT_SHARED_DEVICE") != "0";
         var cmd = new CommandWriter();
 
-        IntPtr Open(string title, float x, int swapInterval)
+        SceneHandle Open(string title, float x, int swapInterval)
         {
-            var w = Native.vlqt_window_create_at(x, 100, 400, 300, title, swapInterval);
-            s.Check(w != IntPtr.Zero, $"create {title} " + (w == IntPtr.Zero ? Native.LastError() : ""));
+            var w = Native.vlqt_window_create(x, 100, 400, 300, title, swapInterval);
+            s.Check(w != SceneHandle.Null, $"create {title} " + (w == SceneHandle.Null ? Native.LastError() : ""));
             cmd.Reset();
             cmd.ClearColor(0.1f, 0.1f, 0.1f, 1);
-            cmd.Create(Rect, Protocol.Type.Rectangle);
+            cmd.Create(Rect, Protocol.ElementType.Rectangle);
             cmd.SetPlace(Rect, 20, 20, 100, 60);
-            cmd.SetColor(Rect, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+            cmd.SetColor(Rect, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
             cmd.Reparent(Rect, 0, 0);
             s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"apply {title}");
             Native.vlqt_window_show(w);
@@ -49,7 +49,7 @@ public static class SharedDeviceTest
         }
 
         int frame = 0;
-        void Animate(IntPtr w)
+        void Animate(SceneHandle w)
         {
             cmd.Reset();
             cmd.SetPlace(Rect, 20 + frame % 200, 20, 100, 60);
@@ -57,7 +57,7 @@ public static class SharedDeviceTest
         }
 
         // The window's QRhi exists after the first expose/render.
-        (IntPtr dev, IntPtr rhi) Info(IntPtr w)
+        (IntPtr dev, IntPtr rhi) Info(SceneHandle w)
         {
             for (int i = 0; i < 60; i++)
             {
@@ -76,7 +76,7 @@ public static class SharedDeviceTest
         if (shared)
         {
             s.Check(devA == devB, $"both windows on the same ID3D11Device ({devA:X} / {devB:X})");
-            var urc = NativeTest.vlqt_test_device_info(IntPtr.Zero, out var devU, out var rhiU);
+            var urc = NativeTest.vlqt_test_device_info(SceneHandle.Null, out var devU, out var rhiU);
             s.Check(urc == 0 && rhiU != IntPtr.Zero && devU == devA, $"upload QRhi on the same device ({urc}, {devU:X})");
         }
         else
@@ -87,7 +87,7 @@ public static class SharedDeviceTest
         // Close and reopen one window twice: the shared device stays.
         for (int round = 1; round <= 2; round++)
         {
-            Native.vlqt_window_destroy(b);
+            Native.vlqt_scene_destroy(b);
             s.Pump(2);
             b = Open($"VL.Qt shared device B{round}", 500, 0);
             var (dev, rhi) = Info(b);
@@ -96,11 +96,11 @@ public static class SharedDeviceTest
 
         // GPU timestamps per window (F5 overlay): both windows render every pump.
         for (int i = 0; i < 30; i++) { frame++; Animate(a); Animate(b); s.Pump(1); }
-        Native.vlqt_window_get_perf(a, out var pa);
-        Native.vlqt_window_get_perf(b, out var pb);
+        Native.vlqt_scene_get_perf(a, out var pa);
+        Native.vlqt_scene_get_perf(b, out var pb);
         s.Check(pa.gpu_ms > 0 && pb.gpu_ms > 0, $"GPU timestamps in both windows ({pa.gpu_ms:F3} / {pb.gpu_ms:F3} ms)");
-        Native.vlqt_window_destroy(a);
-        Native.vlqt_window_destroy(b);
+        Native.vlqt_scene_destroy(a);
+        Native.vlqt_scene_destroy(b);
         s.Pump(2);
 
         // several VSync windows do not halve the frame rate. Pumped like the vvvv main loop: paced at the refresh rate,
@@ -108,10 +108,10 @@ public static class SharedDeviceTest
         // there; a pump that dispatches nothing renders a request only one pump later). With VSync 1 not every pump has to
         // render, so the intervals between this window's renders are measured here (the stats count consecutive frames).
         // The windows of the last round stay open: process end with open windows (teardown order, device never released).
-        var vsyncWindows = new List<IntPtr>();
+        var vsyncWindows = new List<SceneHandle>();
         foreach (var count in new[] { 2, 3 })
         {
-            foreach (var w in vsyncWindows) Native.vlqt_window_destroy(w);
+            foreach (var w in vsyncWindows) Native.vlqt_scene_destroy(w);
             vsyncWindows.Clear();
             s.Pump(2);
             for (int i = 0; i < count; i++)
@@ -126,10 +126,10 @@ public static class SharedDeviceTest
     // an Adreno X1-45 next to a second SmokeTest: 49..52 fps, while the median interval stays at one refresh), so they are
     // perf limits (PerfLimits: factor, warn-only) and measured again, up to 3 rounds, only while a limit is exceeded.
     // animate: moves the content of every window, so each pump has a change to render.
-    private static void MeasureVSync(List<IntPtr> windows, Scenario s, bool shared, Action animate)
+    private static void MeasureVSync(List<SceneHandle> windows, Scenario s, bool shared, Action animate)
     {
         var n = windows.Count;
-        Native.vlqt_window_get_perf_stats(windows[0], out var st);
+        Native.vlqt_scene_get_perf_stats(windows[0], out var st);
         var budget = st.budget_ms > 0 ? st.budget_ms : 1000.0 / 60;
         var refreshHz = 1000.0 / budget;
         var (minFps, p99, p50) = (0.0, double.MaxValue, double.MaxValue);
@@ -148,7 +148,7 @@ public static class SharedDeviceTest
 
     // One measurement: 1 s warm-up, 5 s measured. Returns the fps of the slowest window, the host pump p99 and the largest
     // median render interval of the windows (ms).
-    private static (double MinFps, double HostP99, double MaxP50) MeasureVSyncRound(List<IntPtr> windows, Scenario s, bool shared, Action animate, double budget)
+    private static (double MinFps, double HostP99, double MaxP50) MeasureVSyncRound(List<SceneHandle> windows, Scenario s, bool shared, Action animate, double budget)
     {
         var n = windows.Count;
         var renders = new List<double>[n];
@@ -174,7 +174,7 @@ public static class SharedDeviceTest
             pumps++;
             hostPump.Add(hostMs);
             for (int i = 0; i < n; i++)
-                if (Native.vlqt_window_get_perf_sample(windows[i], out var ps) == 0 && ps.swaps > 0) renders[i].Add(t);
+                if (Native.vlqt_scene_get_perf_sample(windows[i], out var ps) == 0 && ps.swaps > 0) renders[i].Add(t);
         }
         var measured = seconds - 1;
         double P(List<double> v, double q)

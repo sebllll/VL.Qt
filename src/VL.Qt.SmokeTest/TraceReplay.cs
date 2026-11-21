@@ -66,9 +66,9 @@ public static class TraceReplay
             return;
         frames = Prepare(s, traces, name, frames, "trace-" + name, checkMapped: true, out _);
 
-        var w = Native.vlqt_window_create(Width, Height, "VL.Qt trace " + name);
-        s.Check(w != IntPtr.Zero, $"trace-{name}: window_create");
-        if (w == IntPtr.Zero)
+        var w = NativeCalls.CreateWindow(Width, Height, "VL.Qt trace " + name);
+        s.Check(w != SceneHandle.Null, $"trace-{name}: window_create");
+        if (w == SceneHandle.Null)
             return;
         Native.vlqt_window_show(w);
         s.Pump(4);
@@ -97,7 +97,7 @@ public static class TraceReplay
             s.Check(ink > 0.005, $"trace-{name}: picture not empty (ink {ink:P1})");
         }
         ImageCompare.Check(s, "trace-" + name, grabPath, Width);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         s.Pump(1);
     }
 
@@ -132,9 +132,9 @@ public static class TraceReplay
                 continue;
             }
             var stage = path.EndsWith(".vert", StringComparison.OrdinalIgnoreCase) ? Protocol.ShaderStage.Vertex : Protocol.ShaderStage.Fragment;
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-            Native.vlqt_res_load_shader_source(id, File.ReadAllText(path), stage);
-            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResState.Ready, $"{label}: shader {rel} baked, Ready");
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+            Native.vlqt_shader_load_source(id, File.ReadAllText(path), stage);
+            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResourceState.Ready, $"{label}: shader {rel} baked, Ready");
             shaders.Add(id);
         }
         resources = new List<ulong>(images);
@@ -158,7 +158,7 @@ public static class TraceReplay
     }
 
     /// <summary>
-    /// Makes a trace portable: image ids (Prop.Image) and shader ids (Prop.FragmentShader / VertexShader, shader links of
+    /// Makes a trace portable: image ids (PropertyId.Image) and shader ids (Prop.FragmentShader / VertexShader, shader links of
     /// SET_EFFECT_CHAIN) become, in order of first appearance, the ids of the resources created here; strings that point
     /// into the help/Qt folder of the recording machine (QmlElement source) point into <paramref name="helpQtDir"/>. Walks
     /// the commands (u16 op, u16 payload length, payload, padded to 4). An id without a resource becomes 0 (counted).
@@ -204,7 +204,7 @@ public static class TraceReplay
                     {
                         var kind = BitConverter.ToUInt16(copy, at);
                         var body = (int)BitConverter.ToUInt32(copy, at + 4);
-                        if (kind == Protocol.EffectLink.Shader && body >= 4)
+                        if (kind == Protocol.EffectChainLink.Shader && body >= 4)
                         {
                             var count = BitConverter.ToUInt16(copy, at + 10);
                             for (var k = 0; k < count && 4 + (k + 1) * 8 <= body; k++)
@@ -222,14 +222,14 @@ public static class TraceReplay
                 {
                     var prop = BitConverter.ToUInt16(cmd.Slice(8));
                     var vt = BitConverter.ToUInt16(cmd.Slice(10));
-                    if (vt == Protocol.Vt.U64 && (prop == Protocol.Prop.FragmentShader || prop == Protocol.Prop.VertexShader))
+                    if (vt == Protocol.ValueType.U64 && (prop == Protocol.PropertyId.FragmentShader || prop == Protocol.PropertyId.VertexShader))
                     {
                         var copy = cmd.ToArray();
                         BitConverter.TryWriteBytes(copy.AsSpan(12), MapShader(BitConverter.ToUInt64(copy, 12)));
                         o.AddRange(copy);
                         continue;
                     }
-                    if (vt == Protocol.Vt.U64 && prop == Protocol.Prop.Image)
+                    if (vt == Protocol.ValueType.U64 && prop == Protocol.PropertyId.Image)
                     {
                         var id = BitConverter.ToUInt64(cmd.Slice(12));
                         var copy = cmd.ToArray();
@@ -244,7 +244,7 @@ public static class TraceReplay
                         o.AddRange(copy);
                         continue;
                     }
-                    if (vt == Protocol.Vt.String)
+                    if (vt == Protocol.ValueType.String)
                     {
                         var text = System.Text.Encoding.UTF8.GetString(cmd.Slice(16, (int)BitConverter.ToUInt32(cmd.Slice(12))));
                         var marker = "help" + (text.Contains('\\') ? "\\Qt\\" : "/Qt/");

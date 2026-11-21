@@ -16,7 +16,7 @@ using static Pixels;
 //   row 1  (texture uniform = Image element red | green | blue, uv * 2): Clamp, Wrap, Mirror, no sampler (= Clamp).
 //   row 2  (Input = Group of 80 two DIP wide red / blue stripes, uv * 14 = minified, Wrap): without mips the pixels alias,
 //          with MipFilter Linear every pixel is the purple mean (the layer of the Group proxy is rendered with mipmaps).
-// Live: Point -> Linear by a diff entry, back by CLEAR, a sampler state for a name the shader does not have (EV_ERROR),
+// Live: Point -> Linear by a diff entry, back by CLEAR, a sampler state for a name the shader does not have (EVENT_ERROR),
 // an out of range state (apply error -7). Raw commands (DIP). Grabs: <outDir>/sampler_*.png.
 [TestFixture, NonParallelizable]
 public static class SamplerTest
@@ -52,20 +52,20 @@ public static class SamplerTest
 
         ulong LoadShader(string name)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-            var rc = Native.vlqt_res_load_shader_source(id, Shader(name), Protocol.ShaderStage.Fragment);
-            var st = rc == 0 ? Native.vlqt_res_wait(id, 20000) : Protocol.ResState.Failed;
-            s.Check(st == Protocol.ResState.Ready, $"shader sampling '{name}' bakes -> Ready ({st}, rc {rc})");
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+            var rc = Native.vlqt_shader_load_source(id, Shader(name), Protocol.ShaderStage.Fragment);
+            var st = rc == 0 ? Native.vlqt_res_wait(id, 20000) : Protocol.ResourceState.Failed;
+            s.Check(st == Protocol.ResourceState.Ready, $"shader sampling '{name}' bakes -> Ready ({st}, rc {rc})");
             return id;
         }
         var onSource = LoadShader("source");
         var onOverlay = LoadShader("overlay");
-        Native.vlqt_res_create(Protocol.ResKind.Image, out var stripes);
-        Native.vlqt_res_load_image(stripes, stripesPath, 0);
-        s.Check(Native.vlqt_res_wait(stripes, 10000) == Protocol.ResState.Ready, "stripes image Ready");
+        Native.vlqt_res_create(Protocol.ResourceKind.Image, out var stripes);
+        Native.vlqt_image_load(stripes, stripesPath, 0);
+        s.Check(Native.vlqt_res_wait(stripes, 10000) == Protocol.ResourceState.Ready, "stripes image Ready");
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt sampler test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt sampler test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var evBuf = new byte[1 << 16];
@@ -82,7 +82,7 @@ public static class SamplerTest
             for (int at = 0; at < n;)
             {
                 ushort ev = BitConverter.ToUInt16(evBuf, at), len = BitConverter.ToUInt16(evBuf, at + 2);
-                if (ev == Protocol.Ev.Error)
+                if (ev == Protocol.EventId.Error)
                     errors[BitConverter.ToUInt32(evBuf, at + 4)] = Encoding.UTF8.GetString(evBuf, at + 12, len - 8);
                 at += (4 + len + 3) & ~3;
             }
@@ -97,14 +97,14 @@ public static class SamplerTest
                 cmd.Destroy(fx);
             ApplyRc();
             s.Pump(4);
-            Native.vlqt_window_destroy(w);
+            Native.vlqt_scene_destroy(w);
             foreach (var id in new[] { onSource, onOverlay, stripes }) Native.vlqt_res_release(id);
         }
         uint next = 10, rootIndex = 0;
         void Rect(uint id, float x, float y, float rw, float rh, float r, float g, float b, uint parent, uint index)
         {
-            cmd.Create(id, Protocol.Type.Rectangle);
-            cmd.SetColor(id, Protocol.Prop.Color, r, g, b, 1);
+            cmd.Create(id, Protocol.ElementType.Rectangle);
+            cmd.SetColor(id, Protocol.PropertyId.Color, r, g, b, 1);
             cmd.SetPlace(id, x, y, rw, rh);
             cmd.Reparent(id, parent, index);
         }
@@ -113,9 +113,9 @@ public static class SamplerTest
             var (x, y) = Cell(cx, cy);
             uint fx = next++;
             effects.Add(fx);
-            cmd.Create(fx, Protocol.Type.ShaderEffect);
+            cmd.Create(fx, Protocol.ElementType.Shader);
             cmd.SetPlace(fx, x, y, CellW, CellH);
-            cmd.SetU64(fx, Protocol.Prop.FragmentShader, shader);
+            cmd.SetU64(fx, Protocol.PropertyId.FragmentShader, shader);
             cmd.Reparent(fx, 0, rootIndex++);
             return fx;
         }
@@ -134,33 +134,33 @@ public static class SamplerTest
         uint RedBlueGroup(uint fx)
         {
             uint g = next++;
-            cmd.Create(g, Protocol.Type.Item);
-            cmd.SetI32(g, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
+            cmd.Create(g, Protocol.ElementType.Group);
+            cmd.SetI32(g, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
             Rect(next++, 0, 0, 80, CellH, 1, 0, 0, g, 0);
             Rect(next++, 80, 0, 80, CellH, 0, 0, 1, g, 1);
             cmd.Reparent(g, fx, 0);
-            cmd.SetRef(fx, Protocol.Prop.Source, g);
+            cmd.SetRef(fx, Protocol.PropertyId.Source, g);
             return g;
         }
         uint StripeGroup(uint fx)
         {
             uint g = next++;
-            cmd.Create(g, Protocol.Type.Item);
-            cmd.SetI32(g, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
+            cmd.Create(g, Protocol.ElementType.Group);
+            cmd.SetI32(g, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
             for (uint i = 0; i < 80; i++)
             {
                 Rect(next++, i * 2, 0, 2, CellH, i % 2 == 0 ? 1 : 0, 0, i % 2 == 0 ? 0 : 1, g, i);
             }
             cmd.Reparent(g, fx, 0);
-            cmd.SetRef(fx, Protocol.Prop.Source, g);
+            cmd.SetRef(fx, Protocol.PropertyId.Source, g);
             return g;
         }
         uint StripesImage(uint fx)
         {
             uint img = next++;
-            cmd.Create(img, Protocol.Type.Image);
-            cmd.SetU64(img, Protocol.Prop.Image, stripes);
-            cmd.SetI32(img, Protocol.Prop.FillMode, 0);
+            cmd.Create(img, Protocol.ElementType.Image);
+            cmd.SetU64(img, Protocol.PropertyId.Image, stripes);
+            cmd.SetI32(img, Protocol.PropertyId.FillMode, 0);
             cmd.SetPlace(img, 0, 0, CellW, CellH);
             cmd.Reparent(img, fx, 0);
             return img;
@@ -182,7 +182,7 @@ public static class SamplerTest
         uint plain = NewEffect(3, 0, onSource, 0.5f, 0.5f, 1f);
         uint plainIn = next++;
         Rect(plainIn, 0, 0, CellW, CellH, 1, 0, 0, plain, 0);
-        cmd.SetRef(plain, Protocol.Prop.Source, plainIn);
+        cmd.SetRef(plain, Protocol.PropertyId.Source, plainIn);
         Uniforms(plain, Protocol.UniformSet.Clear, 0.5f, 0.5f, 1f, "source", S(0, 2, 0, 0));
         // row 1: wrap of an element texture (uv * 2: 0..2 across the cell)
         uint[] wrap = new uint[4];
@@ -278,7 +278,7 @@ public static class SamplerTest
         Apply("sampler state of an unknown name");
         s.Pump(4);
         var err = Err(1);
-        s.Check(err.Contains("nope") && err.Contains("sampler2D"), $"unknown sampler name -> EV_ERROR ({err})");
+        s.Check(err.Contains("nope") && err.Contains("sampler2D"), $"unknown sampler name -> EVENT_ERROR ({err})");
         cmd.Reset();
         cmd.BeginUniforms(edge[0], Protocol.UniformSet.Clear);
         cmd.UniformSampler("source", S(0, 3, 0, 0));

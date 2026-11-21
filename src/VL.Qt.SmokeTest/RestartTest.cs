@@ -49,14 +49,14 @@ public static class RestartTest
         "// round " + round + "\n";
 
     // A window with one ShaderEffect on shader text <paramref name="shader"/> (Ready or still baking).
-    private static IntPtr Scene(CommandWriter cmd, ulong shader, bool thickness)
+    private static SceneHandle Scene(CommandWriter cmd, ulong shader, bool thickness)
     {
-        var w = Native.vlqt_window_create(400, 300, "VL.Qt shader restart test");
+        var w = NativeCalls.CreateWindow(400, 300, "VL.Qt shader restart test");
         Native.vlqt_window_show(w);
         cmd.Reset();
-        cmd.Create(Effect, Protocol.Type.ShaderEffect);
+        cmd.Create(Effect, Protocol.ElementType.Shader);
         cmd.SetPlace(Effect, 0, 0, 400, 300);
-        cmd.SetU64(Effect, Protocol.Prop.FragmentShader, shader);
+        cmd.SetU64(Effect, Protocol.PropertyId.FragmentShader, shader);
         cmd.BeginUniforms(Effect, Protocol.UniformSet.Clear);
         cmd.UniformF32("time", 0.25f);
         if (thickness)
@@ -69,8 +69,8 @@ public static class RestartTest
 
     private static ulong Load(bool thickness, int round)
     {
-        Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-        Native.vlqt_res_load_shader_source(id, Source(thickness, round), Protocol.ShaderStage.Fragment);
+        Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+        Native.vlqt_shader_load_source(id, Source(thickness, round), Protocol.ShaderStage.Fragment);
         return id;
     }
 
@@ -89,7 +89,7 @@ public static class RestartTest
     private static void RunReentrant(Scenario s)
     {
         var cmd = new CommandWriter();
-        var current = IntPtr.Zero;
+        var current = SceneHandle.Null;
         var shader = 0UL;
         var restarts = 0;
         var round = 0;
@@ -99,7 +99,7 @@ public static class RestartTest
             if (msg != wmApp)
                 return CallWindowProcW(previous, hwnd, msg, wParam, lParam);
             // The restart: old scene gone, the next one built at once (its shader text still bakes).
-            Native.vlqt_window_destroy(current);
+            Native.vlqt_scene_destroy(current);
             Native.vlqt_res_release(shader);
             shader = Load(true, 1000 + round);
             current = Scene(cmd, shader, true);
@@ -114,7 +114,7 @@ public static class RestartTest
 
         shader = Load(false, 1000);
         current = Scene(cmd, shader, false);
-        var windows = new IntPtr[1];
+        var windows = new SceneHandle[1];
         for (round = 0; round < rounds; round++)
         {
             windows[0] = current;
@@ -126,7 +126,7 @@ public static class RestartTest
         s.Check(restarts == rounds, $"{restarts} of {rounds} restarts ran inside the pump");
         s.Check(true, "window destroyed inside vlqt_app_process_events_for, no crash");
 
-        Native.vlqt_window_destroy(current);
+        Native.vlqt_scene_destroy(current);
         Native.vlqt_res_release(shader);
         SetWindowLongPtrW(hwnd, gwlpWndProc, previous);
         DestroyWindow(hwnd);
@@ -141,14 +141,14 @@ public static class RestartTest
         for (int round = 0; round < rounds; round++)
         {
             var a = Load(false, round);
-            s.Check(Native.vlqt_res_wait(a, 20000) == Protocol.ResState.Ready, $"round {round}: text A Ready");
+            s.Check(Native.vlqt_res_wait(a, 20000) == Protocol.ResourceState.Ready, $"round {round}: text A Ready");
             var w = Scene(cmd, a, false);
             s.Pump(2);
 
             // Live edit: text B with one more uniform, set while it bakes.
             var b = Load(true, round);
             cmd.Reset();
-            cmd.SetU64(Effect, Protocol.Prop.FragmentShader, b);
+            cmd.SetU64(Effect, Protocol.PropertyId.FragmentShader, b);
             cmd.BeginUniforms(Effect, Protocol.UniformSet.Clear);
             cmd.UniformF32("time", 0.25f);
             cmd.UniformF32("thickness", 0.5f);
@@ -164,10 +164,10 @@ public static class RestartTest
                     Native.Apply(w, cmd.EndFrame());
                     Native.vlqt_res_release(a);
                     Native.vlqt_res_release(b);
-                    Native.vlqt_window_destroy(w);
+                    Native.vlqt_scene_destroy(w);
                     break;
                 case 1:
-                    Native.vlqt_window_destroy(w);
+                    Native.vlqt_scene_destroy(w);
                     Native.vlqt_res_release(b);
                     Native.vlqt_res_release(a);
                     break;
@@ -177,7 +177,7 @@ public static class RestartTest
                     cmd.Reset();
                     cmd.Destroy(Effect);
                     Native.Apply(w, cmd.EndFrame());
-                    Native.vlqt_window_destroy(w);
+                    Native.vlqt_scene_destroy(w);
                     break;
             }
             Native.vlqt_res_shutdown();

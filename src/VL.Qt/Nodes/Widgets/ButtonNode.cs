@@ -89,7 +89,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            // Clicks come from Qt clicked (EV_CLICK for every bound Button).
+            // Clicks come from Qt clicked (EVENT_CLICK for every bound Button).
             bang = _node.TakeClicks(isClicked) > 0;
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),

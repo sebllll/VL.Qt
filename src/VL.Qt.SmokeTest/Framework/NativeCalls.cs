@@ -10,9 +10,13 @@ internal static class NativeCalls
 {
     private static int Count(Native.Result rc, int written) => rc == Native.Result.Ok ? written : (int)rc;
 
-    public static int Poll(IntPtr w, Span<byte> buffer) => Poll(w, buffer, out _);
+    /// <summary>A hidden window of the client size, centered on the primary screen, Present never waits.</summary>
+    public static SceneHandle CreateWindow(int width, int height, string title)
+        => Native.vlqt_window_create(float.NaN, float.NaN, width, height, title, 0);
 
-    public static int Poll(IntPtr w, Span<byte> buffer, out int required)
+    public static int Poll(SceneHandle w, Span<byte> buffer) => Poll(w, buffer, out _);
+
+    public static int Poll(SceneHandle w, Span<byte> buffer, out int required)
     {
         var rc = Native.Poll(w, buffer, out var written, out required);
         return Count(rc, written);
@@ -30,7 +34,7 @@ internal static class NativeCalls
 
     public static int ReadSnapshot(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int required)
     {
-        var rc = Native.ResReadSnapshot(id, buffer, out desc, out var written, out required);
+        var rc = Native.SnapshotRead(id, buffer, out desc, out var written, out required);
         return Count(rc, written);
     }
 
@@ -38,7 +42,7 @@ internal static class NativeCalls
 
     public static int ReadPreview(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int required)
     {
-        var rc = Native.ResReadPreview(id, buffer, out desc, out var written, out required);
+        var rc = Native.ImageReadPreview(id, buffer, out desc, out var written, out required);
         return Count(rc, written);
     }
 
@@ -60,14 +64,14 @@ internal static class NativeCalls
     }
 
     /// <summary>Text of an F5 page with its NUL (<c>buffer</c> null with cap 0 asks for the size).</summary>
-    public static int PerfText(IntPtr w, int page, byte[]? buffer, int cap, out int required)
+    public static int PerfText(SceneHandle w, int page, byte[]? buffer, int cap, out int required)
     {
         var rc = NativeTest.vlqt_test_perf_text(w, page, buffer, cap, out var written, out required);
         return Count(rc, written);
     }
 
     /// <summary>The plain text of an F5 page without its NUL (the content may grow between the size query and the read: asks again).</summary>
-    public static string PerfPageText(IntPtr w, int page)
+    public static string PerfPageText(SceneHandle w, int page)
     {
         for (int attempt = 0; attempt < 3; attempt++)
         {

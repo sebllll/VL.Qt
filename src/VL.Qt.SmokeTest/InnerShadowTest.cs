@@ -105,9 +105,9 @@ public static class InnerShadowTest
         Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "ShaderEffect needs a QRhi scenegraph");
         ulong Shader(string path)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-            Native.vlqt_res_load_shader(id, path, Protocol.ShaderStage.Fragment);
-            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"shader {path} Ready");
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+            Native.vlqt_shader_load(id, path, Protocol.ShaderStage.Fragment);
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResourceState.Ready, $"shader {path} Ready");
             return id;
         }
         var prefilter = Shader("builtin:innershadow_prefilter");
@@ -115,8 +115,8 @@ public static class InnerShadowTest
         var up = Shader("builtin:pyramid_up");
         var composite = Shader("builtin:innershadow_composite");
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt innershadow test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt innershadow test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         s.Pump(4);
         float dpr;
@@ -145,18 +145,18 @@ public static class InnerShadowTest
             for (int at = 0; at < len;)
             {
                 ushort ev = BitConverter.ToUInt16(evBuf, at), l = BitConverter.ToUInt16(evBuf, at + 2);
-                if (ev == Protocol.Ev.Error)
+                if (ev == Protocol.EventId.Error)
                     errors.Add($"{BitConverter.ToUInt32(evBuf, at + 4)}: {Encoding.UTF8.GetString(evBuf, at + 12, l - 8)}");
                 at += (4 + l + 3) & ~3;
             }
         }
         void Pass(uint id, int k, ulong shader, uint source)
         {
-            cmd.Create(id, Protocol.Type.ShaderEffect);
+            cmd.Create(id, Protocol.ElementType.Shader);
             cmd.SetPlace(id, 0, 0, px[k].W / dpr, px[k].H / dpr);
-            cmd.SetBool(id, Protocol.Prop.AutoSize, false); // SIZE counts: with Input the size would follow the Input (full size)
-            cmd.SetU64(id, Protocol.Prop.FragmentShader, shader);
-            cmd.SetRef(id, Protocol.Prop.Source, source);
+            cmd.SetBool(id, Protocol.PropertyId.AutoSize, false); // SIZE counts: with Input the size would follow the Input (full size)
+            cmd.SetU64(id, Protocol.PropertyId.FragmentShader, shader);
+            cmd.SetRef(id, Protocol.PropertyId.Source, source);
             cmd.Bind(id, id, 0);
         }
         uint UpOrDown(int k) => k == n ? Down + (uint)k : Up + (uint)k; // the top of the chain at step k
@@ -187,26 +187,26 @@ public static class InnerShadowTest
         }
         void Show(bool text)
         {
-            cmd.SetF32(Rect, Protocol.Prop.Opacity, text ? 0 : 1);
-            cmd.SetF32(Txt, Protocol.Prop.Opacity, text ? 1 : 0);
+            cmd.SetF32(Rect, Protocol.PropertyId.Opacity, text ? 0 : 1);
+            cmd.SetF32(Txt, Protocol.PropertyId.Opacity, text ? 1 : 0);
         }
 
         cmd.Reset();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-        cmd.Create(Src, Protocol.Type.Rectangle);
-        cmd.SetColor(Src, Protocol.Prop.Color, 0, 0, 0, 0);
+        cmd.Create(Src, Protocol.ElementType.Rectangle);
+        cmd.SetColor(Src, Protocol.PropertyId.Color, 0, 0, 0, 0);
         cmd.SetPlace(Src, 0, 0, 800, 600);
-        cmd.Create(Rect, Protocol.Type.Rectangle);
-        cmd.SetColor(Rect, Protocol.Prop.Color, 1, 0.6f, 0, 1);
+        cmd.Create(Rect, Protocol.ElementType.Rectangle);
+        cmd.SetColor(Rect, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
         cmd.SetPlace(Rect, Left, Top, Right - Left, Bottom - Top);
-        cmd.Create(Txt, Protocol.Type.Text);
+        cmd.Create(Txt, Protocol.ElementType.Text);
         cmd.SetPlace(Txt, 200, 200, 400, 200);
-        cmd.SetString(Txt, Protocol.Prop.Text, "Hg");
-        cmd.SetF32(Txt, Protocol.Prop.FontSize, 160);
-        cmd.SetI32(Txt, Protocol.Prop.FontWeight, 900);
-        cmd.SetColor(Txt, Protocol.Prop.Color, 1, 1, 1, 1);
-        cmd.SetI32(Txt, Protocol.Prop.HorizontalAlignment, 4);
-        cmd.SetI32(Txt, Protocol.Prop.VerticalAlignment, 128);
+        cmd.SetString(Txt, Protocol.PropertyId.Text, "Hg");
+        cmd.SetF32(Txt, Protocol.PropertyId.FontSize, 160);
+        cmd.SetI32(Txt, Protocol.PropertyId.FontWeight, 900);
+        cmd.SetColor(Txt, Protocol.PropertyId.Color, 1, 1, 1, 1);
+        cmd.SetI32(Txt, Protocol.PropertyId.HorizontalAlignment, 4);
+        cmd.SetI32(Txt, Protocol.PropertyId.VerticalAlignment, 128);
         cmd.Reparent(Rect, Src, 0);
         cmd.Reparent(Txt, Src, 1);
         // Down chain: Down+1 = prefilter of the element, Down+k from Down+k-1.
@@ -232,10 +232,10 @@ public static class InnerShadowTest
             cmd.UniformRef("base", Down + (uint)k);
             cmd.EndUniforms();
         }
-        cmd.Create(Fx, Protocol.Type.ShaderEffect);
+        cmd.Create(Fx, Protocol.ElementType.Shader);
         cmd.SetPlace(Fx, 0, 0, 800, 600);
-        cmd.SetU64(Fx, Protocol.Prop.FragmentShader, composite);
-        cmd.SetRef(Fx, Protocol.Prop.Source, Src);
+        cmd.SetU64(Fx, Protocol.PropertyId.FragmentShader, composite);
+        cmd.SetRef(Fx, Protocol.PropertyId.Source, Src);
         cmd.Bind(Fx, Fx, 0);
         // Tree (ownership only, the effects draw their children through layers): Fx -> Src, top of the up chain ->
         // ... -> Down+n -> ... -> Down+1.
@@ -360,13 +360,13 @@ public static class InnerShadowTest
         }
 
         DrainErrors();
-        s.Check(errors.Count == 0, $"no EV_ERROR from the passes ({string.Join("; ", errors)})");
+        s.Check(errors.Count == 0, $"no EVENT_ERROR from the passes ({string.Join("; ", errors)})");
 
         cmd.Reset();
         cmd.Destroy(Fx);
         CheckApply("destroy");
         s.Pump(3);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         foreach (var id in new[] { prefilter, down, up, composite }) Native.vlqt_res_release(id);
         s.Pump(2);
     }

@@ -51,8 +51,8 @@ public static class SpaceTest
     {
         var scene = new SceneRegistry();
         var r = new WindowRenderer(scene, "VL.Qt space test", new RectangleF(100, 100, 800, 600));
-        s.Check(r.Window != IntPtr.Zero, "window created " + r.Error);
-        if (r.Window == IntPtr.Zero)
+        s.Check(r.Window != SceneHandle.Null, "window created " + r.Error);
+        if (r.Window == SceneHandle.Null)
             return;
 
         using var point = new PointNode(_ => new NoMessage());
@@ -96,7 +96,7 @@ public static class SpaceTest
 
         (float W, float H, float Dpr) Metrics()
         {
-            Native.vlqt_window_get_scene_metrics(r.Window, out var m);
+            Native.vlqt_scene_get_metrics(r.Window, out var m);
             return (m.width, m.height, m.dpr);
         }
 
@@ -197,7 +197,7 @@ public static class SpaceTest
         space = Space.DIPTopLeft;
         Frame();
         uint redId = r.Reconciler.Root!.Children[0].Id;
-        r.Commands.SetF32(redId, Protocol.Prop.Color, 1f); // wrong value type for a color property → -7
+        r.Commands.SetF32(redId, Protocol.PropertyId.Color, 1f); // wrong value type for a color property → -7
         space = Space.DIP;
         r.Update(Root(), space, Bg, true, true, "VL.Qt space test");
         r.ApplyCommands();

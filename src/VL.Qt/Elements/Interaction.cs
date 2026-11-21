@@ -30,7 +30,7 @@ namespace VL.Qt.Elements
         /// <summary>Receives the handler's events (one slot of the interaction node's feedback); key of the handler.</summary>
         public FeedbackSlot Feedback { get; }
 
-        /// <summary>CREATE type of the handler (<see cref="Protocol.Type"/>, from 32).</summary>
+        /// <summary>CREATE type of the handler (<see cref="Protocol.ElementType"/>, from 32).</summary>
         internal ushort HandlerType { get; }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace VL.Qt.Elements
     internal sealed class HoverInteraction : Interaction
     {
         public HoverInteraction(Interaction? previous, FeedbackSlot feedback)
-            : base(Protocol.Type.HoverHandler, previous, feedback)
+            : base(Protocol.ElementType.HoverHandler, previous, feedback)
         {
         }
 
@@ -99,7 +99,7 @@ namespace VL.Qt.Elements
     internal sealed class ClickInteraction : Interaction
     {
         public ClickInteraction(Interaction? previous, FeedbackSlot feedback, PointerButtons buttons, PointerDevices devices)
-            : base(Protocol.Type.TapHandler, previous, feedback)
+            : base(Protocol.ElementType.TapHandler, previous, feedback)
         {
             Buttons = buttons;
             Devices = devices;
@@ -117,7 +117,7 @@ namespace VL.Qt.Elements
     internal sealed class PointInteraction : Interaction
     {
         public PointInteraction(Interaction? previous, FeedbackSlot feedback, PointerButtons buttons, PointerDevices devices)
-            : base(Protocol.Type.PointHandler, previous, feedback)
+            : base(Protocol.ElementType.PointHandler, previous, feedback)
         {
             Buttons = buttons;
             Devices = devices;
@@ -135,7 +135,7 @@ namespace VL.Qt.Elements
     internal sealed class WheelInteraction : Interaction
     {
         public WheelInteraction(Interaction? previous, FeedbackSlot feedback, PointerDevices devices)
-            : base(Protocol.Type.WheelHandler, previous, feedback)
+            : base(Protocol.ElementType.WheelHandler, previous, feedback)
             => Devices = devices;
 
         public PointerDevices Devices { get; }
@@ -145,7 +145,7 @@ namespace VL.Qt.Elements
                 previous is WheelInteraction p ? p.Devices : PointerMasks.DefaultDevices, writeButtons: false);
     }
 
-    /// <summary>Axes along which a Drag node moves the element (values of VLQT_PROP_DRAG_AXIS).</summary>
+    /// <summary>Axes along which a Drag node moves the element (values of VLQT_PROPERTY_DRAG_AXIS).</summary>
     public enum DragAxis
     {
         /// <summary>Free movement in both directions.</summary>
@@ -165,7 +165,7 @@ namespace VL.Qt.Elements
     {
         public DragInteraction(Interaction? previous, FeedbackSlot feedback, bool movesElement, DragAxis axis, DragLimits limits,
             PointerButtons buttons, PointerDevices devices)
-            : base(Protocol.Type.DragHandler, previous, feedback)
+            : base(Protocol.ElementType.DragHandler, previous, feedback)
         {
             MovesElement = movesElement;
             Axis = axis;
@@ -187,18 +187,18 @@ namespace VL.Qt.Elements
         {
             var p = previous as DragInteraction;
             if (MovesElement != (p?.MovesElement ?? true))
-                sink.SetBool(id, Protocol.Prop.MovesElement, MovesElement);
+                sink.SetBool(id, Protocol.PropertyId.MovesElement, MovesElement);
             if (Axis != (p?.Axis ?? DragAxis.Both))
-                sink.SetI32(id, Protocol.Prop.DragAxis, (int)Axis);
+                sink.SetI32(id, Protocol.PropertyId.DragAxis, (int)Axis);
             if (Limits != (p?.Limits ?? DragLimits.None))
-                sink.SetRect(id, Protocol.Prop.DragLimits, mapping.ToQt(Limits.MinX), mapping.ToQt(Limits.MinY), mapping.ToQt(Limits.MaxX), mapping.ToQt(Limits.MaxY));
+                sink.SetRect(id, Protocol.PropertyId.DragLimits, mapping.ToQt(Limits.MinX), mapping.ToQt(Limits.MinY), mapping.ToQt(Limits.MaxX), mapping.ToQt(Limits.MaxY));
             PointerProps.Write(sink, id, Buttons, Devices, p?.Buttons ?? PointerMasks.DefaultButtons,
                 p?.Devices ?? PointerMasks.DefaultDevices, writeButtons: true);
         }
     }
 
     /// <summary>
-    /// Limits of a drag offset in units (written as the rectf slots of VLQT_PROP_DRAG_LIMITS in logical pixels), ±infinity = none. Exact
+    /// Limits of a drag offset in units (written as the rectf slots of VLQT_PROPERTY_DRAG_LIMITS in logical pixels), ±infinity = none. Exact
     /// float equality (unlike Stride's vectors, whose near-equality fails for infinity).
     /// </summary>
     internal readonly record struct DragLimits(float MinX, float MinY, float MaxX, float MaxY)
@@ -210,7 +210,7 @@ namespace VL.Qt.Elements
     internal sealed class TouchPointsInteraction : Interaction
     {
         public TouchPointsInteraction(Interaction? previous, FeedbackSlot feedback, bool occlusion, PointerDevices devices)
-            : base(Protocol.Type.TouchPointsHandler, previous, feedback)
+            : base(Protocol.ElementType.TouchPointsHandler, previous, feedback)
         {
             Occlusion = occlusion;
             Devices = devices;
@@ -223,7 +223,7 @@ namespace VL.Qt.Elements
         {
             var p = previous as TouchPointsInteraction;
             if (Occlusion != (p?.Occlusion ?? true))
-                sink.SetBool(id, Protocol.Prop.Occlusion, Occlusion);
+                sink.SetBool(id, Protocol.PropertyId.Occlusion, Occlusion);
             PointerProps.Write(sink, id, PointerMasks.DefaultButtons, Devices, PointerMasks.DefaultButtons,
                 p?.Devices ?? PointerMasks.DefaultDevices, writeButtons: false);
         }
@@ -238,7 +238,7 @@ namespace VL.Qt.Elements
         internal const int DefaultPointCount = 2;
 
         public PinchInteraction(Interaction? previous, FeedbackSlot feedback, int minimumPointCount, int maximumPointCount, PointerDevices devices)
-            : base(Protocol.Type.PinchHandler, previous, feedback)
+            : base(Protocol.ElementType.PinchHandler, previous, feedback)
         {
             MinimumPointCount = minimumPointCount;
             MaximumPointCount = maximumPointCount;
@@ -253,9 +253,9 @@ namespace VL.Qt.Elements
         {
             var p = previous as PinchInteraction;
             if (MinimumPointCount != (p?.MinimumPointCount ?? DefaultPointCount))
-                sink.SetI32(id, Protocol.Prop.MinimumPointCount, MinimumPointCount);
+                sink.SetI32(id, Protocol.PropertyId.MinimumPointCount, MinimumPointCount);
             if (MaximumPointCount != (p?.MaximumPointCount ?? DefaultPointCount))
-                sink.SetI32(id, Protocol.Prop.MaximumPointCount, MaximumPointCount);
+                sink.SetI32(id, Protocol.PropertyId.MaximumPointCount, MaximumPointCount);
             PointerProps.Write(sink, id, PointerMasks.DefaultButtons, Devices, PointerMasks.DefaultButtons,
                 p?.Devices ?? PointerMasks.DefaultDevices, writeButtons: false);
         }
@@ -268,9 +268,9 @@ namespace VL.Qt.Elements
             PointerButtons oldButtons, PointerDevices oldDevices, bool writeButtons)
         {
             if (writeButtons && buttons != oldButtons)
-                sink.SetI32(id, Protocol.Prop.AcceptedButtons, (int)buttons);
+                sink.SetI32(id, Protocol.PropertyId.AcceptedButtons, (int)buttons);
             if (devices != oldDevices)
-                sink.SetI32(id, Protocol.Prop.AcceptedDevices, PointerMasks.ToQt(devices));
+                sink.SetI32(id, Protocol.PropertyId.AcceptedDevices, PointerMasks.ToQt(devices));
         }
     }
 }

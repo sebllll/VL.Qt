@@ -8,7 +8,7 @@ namespace VL.Qt.Qml
 {
     /// <summary>
     /// QML value types that get a pin. The wire form is <see cref="QmlValue"/> of the QmlElement, so every
-    /// kind maps to one CLR pin type and one <c>Protocol.Vt</c> value type.
+    /// kind maps to one CLR pin type and one <c>Protocol.ValueType</c> value type.
     /// </summary>
     internal enum QmlValueKind
     {
@@ -91,23 +91,23 @@ namespace VL.Qt.Qml
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
 
-        /// <summary>Wire value type (<c>Protocol.Vt</c>) of this kind, the one <see cref="QmlValue.TryConvert"/> produces for its CLR type.</summary>
+        /// <summary>Wire value type (<c>Protocol.ValueType</c>) of this kind, the one <see cref="QmlValue.TryConvert"/> produces for its CLR type.</summary>
         public static ushort WireType(QmlValueKind kind) => kind switch
         {
-            QmlValueKind.Real => Protocol.Vt.F32,
-            QmlValueKind.Int => Protocol.Vt.I32,
-            QmlValueKind.Bool => Protocol.Vt.Bool,
-            QmlValueKind.String => Protocol.Vt.String,
-            QmlValueKind.Color => Protocol.Vt.Color,
-            QmlValueKind.Vector2D => Protocol.Vt.Vec2,
-            QmlValueKind.Vector3D => Protocol.Vt.Vec3,
-            QmlValueKind.Vector4D => Protocol.Vt.Vec4,
-            QmlValueKind.Rect => Protocol.Vt.Rectf,
+            QmlValueKind.Real => Protocol.ValueType.F32,
+            QmlValueKind.Int => Protocol.ValueType.I32,
+            QmlValueKind.Bool => Protocol.ValueType.Bool,
+            QmlValueKind.String => Protocol.ValueType.String,
+            QmlValueKind.Color => Protocol.ValueType.Color,
+            QmlValueKind.Vector2D => Protocol.ValueType.Vec2,
+            QmlValueKind.Vector3D => Protocol.ValueType.Vec3,
+            QmlValueKind.Vector4D => Protocol.ValueType.Vec4,
+            QmlValueKind.Rect => Protocol.ValueType.Rectf,
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
 
         /// <summary>
-        /// Returns true if <paramref name="value"/> (a value from QtNative: EV_QML_PROPERTY or a signal argument) fits a pin of
+        /// Returns true if <paramref name="value"/> (a value from QtNative: EVENT_QML_PROPERTY or a signal argument) fits a pin of
         /// <paramref name="kind"/>; <paramref name="result"/> is then of <see cref="ClrType"/>. Converts the cases QML mixes
         /// (int ↔ float for a number), refuses everything else (e.g. a string for a color).
         /// </summary>

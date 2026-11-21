@@ -37,13 +37,13 @@ public static class ImageShareTest
         // 4 stripes red | green | blue | white (vlqt_test_write_image), 4K for the loads that take a few frames.
         var p4k = Path.Combine(dir, "p4k.png");
         s.Check(NativeTest.vlqt_test_write_image(p4k, 3840, 2160, 90) == 0, "4K test image written");
-        var gpu = NativeTest.vlqt_test_device_info(IntPtr.Zero, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
+        var gpu = NativeTest.vlqt_test_device_info(SceneHandle.Null, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
         s.Info($"texture path: {(gpu ? "shared device (wrapper per window)" : "CPU copy (texture per window)")}");
 
         var cmd = new CommandWriter();
-        var w1 = Native.vlqt_window_create_at(40, 40, 400, 300, "VL.Qt image share 1", 0);
-        var w2 = Native.vlqt_window_create_at(460, 40, 400, 300, "VL.Qt image share 2", 0);
-        s.Check(w1 != IntPtr.Zero && w2 != IntPtr.Zero, "two windows");
+        var w1 = Native.vlqt_window_create(40, 40, 400, 300, "VL.Qt image share 1", 0);
+        var w2 = Native.vlqt_window_create(460, 40, 400, 300, "VL.Qt image share 2", 0);
+        s.Check(w1 != SceneHandle.Null && w2 != SceneHandle.Null, "two windows");
         Native.vlqt_window_show(w1);
         Native.vlqt_window_show(w2);
 
@@ -63,10 +63,10 @@ public static class ImageShareTest
             for (uint i = 0; i < Elements; i++)
             {
                 var id = 1 + i;
-                cmd.Create(id, Protocol.Type.Image);
+                cmd.Create(id, Protocol.ElementType.Image);
                 cmd.SetPlace(id, i % 10 * 40, i / 10 * 30, 39, 29);
-                cmd.SetBool(id, Protocol.Prop.Smooth, false);
-                cmd.SetU64(id, Protocol.Prop.Image, stripes);
+                cmd.SetBool(id, Protocol.PropertyId.Smooth, false);
+                cmd.SetU64(id, Protocol.PropertyId.Image, stripes);
                 cmd.Reparent(id, 0, 100000);
             }
             var rc = Native.Apply(w, cmd.EndFrame());
@@ -87,18 +87,18 @@ public static class ImageShareTest
 
         // 2. Switch element 1 of window 1 to a 4K resource that is still loading: the stripes stay until it is Ready.
         Color P1(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 400, y * a.Height / 300);
-        Native.vlqt_res_create(Protocol.ResKind.Image, out var big);
-        Native.vlqt_res_load_image(big, p4k, 0);
+        Native.vlqt_res_create(Protocol.ResourceKind.Image, out var big);
+        Native.vlqt_image_load(big, p4k, 0);
         cmd.Reset();
-        cmd.SetU64(1, Protocol.Prop.Image, big);
+        cmd.SetU64(1, Protocol.PropertyId.Image, big);
         s.Check(Native.Apply(w1, cmd.EndFrame()) == 0, "SET image to a loading resource");
         s.Pump(1);
-        if (Native.vlqt_res_wait(big, 0) != Protocol.ResState.Ready)
+        if (Native.vlqt_res_wait(big, 0) != Protocol.ResourceState.Ready)
             using (var a = s.Grab(w1, Path.Combine(dir, "switch_loading.png")))
                 s.Check(ImageTest.IsRed(P1(a, 5, 15)) && ImageTest.IsBlue(P1(a, 34, 15)), $"old image stays while the new one loads ({P1(a, 34, 15)})");
         else
             s.Skip("old image while loading: the 4K load was already Ready");
-        s.Check(Native.vlqt_res_wait(big, 20000) == Protocol.ResState.Ready, "4K resource Ready");
+        s.Check(Native.vlqt_res_wait(big, 20000) == Protocol.ResourceState.Ready, "4K resource Ready");
         s.Pump(2);
         using (var a = s.Grab(w1, Path.Combine(dir, "switch_ready.png")))
         {
@@ -109,10 +109,10 @@ public static class ImageShareTest
             $"element references moved ({Info(stripes).element_refs}, {Info(big).element_refs})");
 
         // 3. Replacement of the same id (stripes -> 4K content) in all elements of window 2: no empty frame.
-        Native.vlqt_res_load_image(stripes, p4k, 0);
+        Native.vlqt_image_load(stripes, p4k, 0);
         var emptyFrames = 0;
         var sw = Stopwatch.StartNew();
-        while (Native.vlqt_res_wait(stripes, 0) == Protocol.ResState.Ready && sw.ElapsedMilliseconds < 20000)
+        while (Native.vlqt_res_wait(stripes, 0) == Protocol.ResourceState.Ready && sw.ElapsedMilliseconds < 20000)
         {
             s.Pump(1);
             using (var a = s.Grab(w2, Path.Combine(dir, "replace.png")))
@@ -130,10 +130,10 @@ public static class ImageShareTest
         }
 
         // 4. Destroy an element while its resource loads, release the resource: no crash, nothing left.
-        Native.vlqt_res_create(Protocol.ResKind.Image, out var loading);
-        Native.vlqt_res_load_image(loading, p4k, 0);
+        Native.vlqt_res_create(Protocol.ResourceKind.Image, out var loading);
+        Native.vlqt_image_load(loading, p4k, 0);
         cmd.Reset();
-        cmd.SetU64(2, Protocol.Prop.Image, loading);
+        cmd.SetU64(2, Protocol.PropertyId.Image, loading);
         Native.Apply(w1, cmd.EndFrame());
         cmd.Reset();
         cmd.Destroy(2);
@@ -147,10 +147,10 @@ public static class ImageShareTest
         s.Check(Info(loading).id == 0, "resource freed after the element and host references are gone");
 
         // 5. Mipmaps: the 4K image into a 40x30 element, smooth.
-        var mips = ImageTest.Load(p4k, s.Check, "4K with mipmaps", Protocol.Img.Mipmaps);
+        var mips = ImageTest.Load(p4k, s.Check, "4K with mipmaps", Protocol.ImageLoadFlags.Mipmaps);
         cmd.Reset();
-        cmd.SetU64(3, Protocol.Prop.Image, mips);
-        cmd.SetBool(3, Protocol.Prop.Smooth, true);
+        cmd.SetU64(3, Protocol.PropertyId.Image, mips);
+        cmd.SetBool(3, Protocol.PropertyId.Smooth, true);
         s.Check(Native.Apply(w1, cmd.EndFrame()) == 0, "mipmapped resource set");
         s.Pump(2);
         using (var a = s.Grab(w1, Path.Combine(dir, "mipmaps.png")))
@@ -162,8 +162,8 @@ public static class ImageShareTest
         else
             RunPerf();
 
-        Native.vlqt_window_destroy(w1);
-        Native.vlqt_window_destroy(w2);
+        Native.vlqt_scene_destroy(w1);
+        Native.vlqt_scene_destroy(w2);
         foreach (var id in new[] { stripes, big, mips }) Native.vlqt_res_release(id);
         s.Pump(2);
         var left = new Native.vlqt_res_info[16];
@@ -171,8 +171,8 @@ public static class ImageShareTest
 
         void RunPerf()
         {
-            var ids = Enumerable.Range(0, 50).Select(_ => { Native.vlqt_res_create(Protocol.ResKind.Image, out var id); Native.vlqt_res_load_image(id, p4k, 0); return id; }).ToList();
-            var ready = ids.All(id => Native.vlqt_res_wait(id, 60000) == Protocol.ResState.Ready);
+            var ids = Enumerable.Range(0, 50).Select(_ => { Native.vlqt_res_create(Protocol.ResourceKind.Image, out var id); Native.vlqt_image_load(id, p4k, 0); return id; }).ToList();
+            var ready = ids.All(id => Native.vlqt_res_wait(id, 60000) == Protocol.ResourceState.Ready);
             s.Check(ready, "x 4K preloaded");
             const double period = 1000.0 / 60;
             var clock = Stopwatch.StartNew();
@@ -187,7 +187,7 @@ public static class ImageShareTest
                 cmd.Reset();
                 cmd.SetPlace(4, i % 360, 30, 39, 29); // something moves in both runs
                 if (switching)
-                    cmd.SetU64(1, Protocol.Prop.Image, ids[i % ids.Count]);
+                    cmd.SetU64(1, Protocol.PropertyId.Image, ids[i % ids.Count]);
                 var t = Stopwatch.GetTimestamp();
                 Native.Apply(w1, cmd.EndFrame());
                 if (switching)
@@ -211,7 +211,7 @@ public static class ImageShareTest
             PerfLimits.Below(s, setMedian, 0.1, "apply with SET image (switch between preloaded 4K), median ms");
             PerfLimits.Below(s, Rate(switching), Math.Max(Rate(background) * 3, 5), "hitch rate while switching 50 x 4K per frame in the range of the background, %");
             cmd.Reset();
-            cmd.SetU64(1, Protocol.Prop.Image, big);
+            cmd.SetU64(1, Protocol.PropertyId.Image, big);
             Native.Apply(w1, cmd.EndFrame());
             foreach (var id in ids) Native.vlqt_res_release(id);
             s.Pump(2);

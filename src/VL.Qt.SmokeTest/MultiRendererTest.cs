@@ -62,7 +62,7 @@ public static class MultiRendererTest
         var registry = new SceneRegistry();
         var window = new WindowRenderer(registry, "VL.Qt multi renderer test", new RectangleF(0, 0, WindowW, WindowH));
         var offscreen = new OffscreenRenderer(registry, TexW, TexH);
-        check(window.Window != IntPtr.Zero && offscreen.Scene != IntPtr.Zero, $"renderers created ({window.Error}{offscreen.Error})");
+        check(window.Window != SceneHandle.Null && offscreen.Scene != SceneHandle.Null, $"renderers created ({window.Error}{offscreen.Error})");
         var rc = offscreen.Bind(device, handle, new Int2(TexW, TexH), B8G8R8A8Unorm);
         NativeTest.vlqt_test_close_handle(handle);
         check(rc == Native.Result.Ok && offscreen.IsBound, $"offscreen bind ({rc}) {offscreen.Error}");

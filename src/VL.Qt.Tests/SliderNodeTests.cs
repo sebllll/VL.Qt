@@ -10,7 +10,7 @@ using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
-using P = VL.Qt.Wire.Protocol.Prop;
+using P = VL.Qt.Wire.Protocol.PropertyId;
 
 namespace VL.Qt.Tests
 {
@@ -58,7 +58,7 @@ namespace VL.Qt.Tests
         private string[] Frame(IChannel<float>? channel = null, Optional<float> min = default, Optional<float> max = default)
             => Frame(out _, out _, channel, min, max);
 
-        private void UserChanges(float value) => _registry.Dispatch(new FeedbackRouterTests.Poll().Value(_handle, Protocol.Vt.F32, BitConverter.GetBytes(value)).Bytes);
+        private void UserChanges(float value) => _registry.Dispatch(new FeedbackRouterTests.Poll().Value(_handle, Protocol.ValueType.F32, BitConverter.GetBytes(value)).Bytes);
 
         private static string SetValue(float v) => $"SET 1 Value f32({v.ToString("R", System.Globalization.CultureInfo.InvariantCulture)})";
 
@@ -67,7 +67,7 @@ namespace VL.Qt.Tests
         {
             var s = Update(out float value, out bool bang);
             Assert.That(s.Type, Is.EqualTo(ElementType.Slider));
-            Assert.That((ushort)ElementType.Slider, Is.EqualTo(Protocol.Type.Slider));
+            Assert.That((ushort)ElementType.Slider, Is.EqualTo(Protocol.ElementType.Slider));
             Assert.That((s.Value, s.Minimum, s.Maximum, s.Step, s.Orientation, s.Enabled, s.AutoSize),
                 Is.EqualTo((0f, 0f, 1f, 0f, SliderOrientation.Horizontal, true, true)));
             Assert.That((value, bang), Is.EqualTo((0f, false)));

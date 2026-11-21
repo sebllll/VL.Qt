@@ -48,16 +48,16 @@ public static class GroupShaderSourceTest
         if (dualQsb == null) return;
         ulong Shader(string path)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-            Native.vlqt_res_load_shader(id, path, Protocol.ShaderStage.Fragment);
-            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"shader {path} Ready");
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+            Native.vlqt_shader_load(id, path, Protocol.ShaderStage.Fragment);
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResourceState.Ready, $"shader {path} Ready");
             return id;
         }
         var wave = Shader("builtin:wave");
         var dual = Shader(dualQsb);
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt group shader source test");
-        s.Check(w != IntPtr.Zero, "window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt group shader source test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         void CheckApply(string what)
@@ -67,22 +67,22 @@ public static class GroupShaderSourceTest
         }
         void Rect(uint id, float x, float y, float rw, float rh, float r, float g, float b, uint parent, uint index)
         {
-            cmd.Create(id, Protocol.Type.Rectangle);
-            cmd.SetColor(id, Protocol.Prop.Color, r, g, b, 1);
+            cmd.Create(id, Protocol.ElementType.Rectangle);
+            cmd.SetColor(id, Protocol.PropertyId.Color, r, g, b, 1);
             cmd.SetPlace(id, x, y, rw, rh);
             cmd.Reparent(id, parent, index);
         }
         // Group with its children, reparented under the effect at index (hidden there, drawn through the proxy).
         void Group(uint g, uint orange, uint blue, uint text, uint parent, uint index)
         {
-            cmd.Create(g, Protocol.Type.Item);
-            cmd.SetI32(g, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
+            cmd.Create(g, Protocol.ElementType.Group);
+            cmd.SetI32(g, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
             Rect(orange, -40, -30, 100, 100, 1, 0.6f, 0, g, 0);
             Rect(blue, 60, 20, 100, 80, 0.2f, 0.4f, 1, g, 1);
-            cmd.Create(text, Protocol.Type.Text);
-            cmd.SetString(text, Protocol.Prop.Text, "Hg");
-            cmd.SetI32(text, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
-            cmd.SetMat4(text, Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation(70, 40, 0));
+            cmd.Create(text, Protocol.ElementType.Text);
+            cmd.SetString(text, Protocol.PropertyId.Text, "Hg");
+            cmd.SetI32(text, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
+            cmd.SetMat4(text, Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation(70, 40, 0));
             cmd.Reparent(text, g, 2);
             cmd.Reparent(g, parent, index);
         }
@@ -90,24 +90,24 @@ public static class GroupShaderSourceTest
         cmd.Reset();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // A) Group as Input (Auto Size on: the effect takes the frame size; the SIZE 10 x 10 must not count).
-        cmd.Create(FxA, Protocol.Type.ShaderEffect);
+        cmd.Create(FxA, Protocol.ElementType.Shader);
         cmd.SetPlace(FxA, 50, 50, 10, 10);
-        cmd.SetU64(FxA, Protocol.Prop.FragmentShader, wave);
+        cmd.SetU64(FxA, Protocol.PropertyId.FragmentShader, wave);
         cmd.Reparent(FxA, 0, 0);
         Group(GA, OrangeA, BlueA, TextA, FxA, 0);
-        cmd.SetRef(FxA, Protocol.Prop.Source, GA);
+        cmd.SetRef(FxA, Protocol.PropertyId.Source, GA);
         cmd.BeginUniforms(FxA, Protocol.UniformSet.Clear);
         cmd.UniformF32("time", 0);
         cmd.UniformF32("amplitude", 0);
         cmd.UniformF32("frequency", 2);
         cmd.EndUniforms();
         // B) Group as texture uniform over a yellow Input of the frame size.
-        cmd.Create(FxB, Protocol.Type.ShaderEffect);
+        cmd.Create(FxB, Protocol.ElementType.Shader);
         cmd.SetPlace(FxB, 450, 50, 200, 130);
-        cmd.SetU64(FxB, Protocol.Prop.FragmentShader, dual);
+        cmd.SetU64(FxB, Protocol.PropertyId.FragmentShader, dual);
         cmd.Reparent(FxB, 0, 1);
         Rect(InB, 0, 0, 200, 130, 1, 1, 0, FxB, 0);
-        cmd.SetRef(FxB, Protocol.Prop.Source, InB);
+        cmd.SetRef(FxB, Protocol.PropertyId.Source, InB);
         Group(GB, OrangeB, BlueB, TextB, FxB, 1);
         cmd.BeginUniforms(FxB, Protocol.UniformSet.Clear);
         cmd.UniformF32("amount", 1);
@@ -132,8 +132,8 @@ public static class GroupShaderSourceTest
 
         // C) live: orange moves further left; the frame (220 x 130) and the effect size follow without a new SOURCE.
         cmd.Reset();
-        cmd.SetMat4(OrangeA, Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation(-60, -30, 0));
-        cmd.SetMat4(OrangeB, Protocol.Prop.Transform, Stride.Core.Mathematics.Matrix.Translation(-60, -30, 0));
+        cmd.SetMat4(OrangeA, Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation(-60, -30, 0));
+        cmd.SetMat4(OrangeB, Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation(-60, -30, 0));
         CheckApply("move orange");
         s.Pump(5);
         using (var a = s.Grab(w, "486_group_source_moved.png"))
@@ -147,12 +147,12 @@ public static class GroupShaderSourceTest
 
         // D) switching away and destroying: Input off, then the Groups go (uniform still pointing at GB); no crash, no error.
         cmd.Reset();
-        cmd.SetRef(FxA, Protocol.Prop.Source, 0);
+        cmd.SetRef(FxA, Protocol.PropertyId.Source, 0);
         cmd.Destroy(GB);
         CheckApply("source off, texture group destroyed");
         s.Pump(3);
         cmd.Reset();
-        cmd.SetRef(FxA, Protocol.Prop.Source, GA);
+        cmd.SetRef(FxA, Protocol.PropertyId.Source, GA);
         CheckApply("source again");
         s.Pump(3);
         using (var a = s.Grab(w, "486_group_source_again.png"))
@@ -163,14 +163,14 @@ public static class GroupShaderSourceTest
 
         // E) empty Group (frame 0 x 0) as Input and as texture uniform: draws nothing, no crash; a child added later shows up.
         cmd.Reset();
-        cmd.Create(FxE, Protocol.Type.ShaderEffect);
+        cmd.Create(FxE, Protocol.ElementType.Shader);
         cmd.SetPlace(FxE, 50, 350, 10, 10);
-        cmd.SetU64(FxE, Protocol.Prop.FragmentShader, dual);
+        cmd.SetU64(FxE, Protocol.PropertyId.FragmentShader, dual);
         cmd.Reparent(FxE, 0, 2);
-        cmd.Create(GE, Protocol.Type.Item);
-        cmd.SetI32(GE, Protocol.Prop.Anchor, GeometryExtensions.AlignTopLeft);
+        cmd.Create(GE, Protocol.ElementType.Group);
+        cmd.SetI32(GE, Protocol.PropertyId.Anchor, GeometryExtensions.AlignTopLeft);
         cmd.Reparent(GE, FxE, 0);
-        cmd.SetRef(FxE, Protocol.Prop.Source, GE);
+        cmd.SetRef(FxE, Protocol.PropertyId.Source, GE);
         cmd.BeginUniforms(FxE, Protocol.UniformSet.Clear);
         cmd.UniformF32("amount", 0);
         cmd.UniformRef("overlay", GE);
@@ -193,7 +193,7 @@ public static class GroupShaderSourceTest
         cmd.Destroy(FxE);
         CheckApply("destroy");
         s.Pump(3);
-        Native.vlqt_window_destroy(w);
+        Native.vlqt_scene_destroy(w);
         Native.vlqt_res_release(wave);
         Native.vlqt_res_release(dual);
         s.Pump(2);
