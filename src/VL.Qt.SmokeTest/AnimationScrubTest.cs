@@ -7,17 +7,16 @@ using VL.Qt.Elements;
 using VL.Qt.Interop;
 using VL.Qt.Wire;
 
-// NAPP-10 (b): QML animations follow vlqt_app_advance_animations. docs/architecture.md promises "same tree and time, same output"
-// and scrubbing; QUnifiedTimer advances animations only by positive deltas, so a clock that jumps back may not rewind them.
+// NAPP-10: QML animations follow vlqt_app_advance_animations forward, a clock that jumps back does not rewind them
+// (docs/architecture.md, "Timing and animation"): QUnifiedTimer advances animations only by positive deltas.
 // A QmlElement animates v from 0 to 100 in 10 s (10 per second of the frame clock). The clock runs 2 s, jumps back by 1 s
-// and runs forward again by 0.5 s: with scrubbing v goes back by about 10 and then rises again. Seen (W1-15): v keeps its
-// value at the jump and then rises with every positive delta from there (it does not wait until the clock passes 2 s).
+// and runs forward again by 0.5 s: v keeps its value at the jump and then rises with every positive delta from there (it
+// does not wait until the clock passes 2 s), about 5 more after the 0.5 s. A time that is not finite is refused.
 [TestFixture, NonParallelizable]
 public static class AnimationScrubTest
 {
-    /// <summary>NAPP-10: a backward jump of the frame clock rewinds a QML animation.</summary>
+    /// <summary>NAPP-10: a backward jump of the frame clock does not rewind a QML animation; a non-finite time is refused.</summary>
     [Test, Category("animation-scrub")]
-    [Ignore("NAPP-10: a backward jump of vlqt_app_advance_animations does not rewind QML animations, they keep their value and go on forward from it (fails: v 20.17 after the jump back to 1 s, 25.17 at 1.5 s)")]
     public static void AnimationScrub() => Scenario.Run(Run);
 
     private const uint Q = 10, HQ = 110;
@@ -109,8 +108,16 @@ public static class AnimationScrubTest
         var vForward = v;
         s.Info($"0.5 s forward again (clock at 1.5 s): v = {vForward}");
 
-        s.Check(Math.Abs(vBack - (v2 - 10)) < 3, $"the jump back by 1 s rewinds v by about 10 ({v2} -> {vBack})");
-        s.Check(Math.Abs(vForward - (v2 - 5)) < 3, $"0.5 s forward after the jump: v follows the clock ({vForward}, expected about {v2 - 5})");
+        s.Check(Math.Abs(vBack - v2) < 3, $"the jump back by 1 s does not rewind v, it holds its value ({v2} -> {vBack})");
+        s.Check(Math.Abs(vForward - (v2 + 5)) < 3, $"0.5 s forward after the jump: v goes on from its value ({vForward}, expected about {v2 + 5})");
+
+        // A time of a broken clock is refused before it reaches Qt (cast of NaN / infinity to milliseconds is undefined).
+        foreach (var bad in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity, 1e300 })
+        {
+            var rcBad = Native.vlqt_app_advance_animations(bad);
+            s.Check(rcBad == Native.Result.BadArgument, $"vlqt_app_advance_animations({bad}) is refused with BAD_ARGUMENT ({rcBad})");
+        }
+        s.Check(Native.vlqt_app_advance_animations(time) == Native.Result.Ok, "the clock still advances after a refused time");
 
         cmd.Reset();
         cmd.Destroy(Q);
