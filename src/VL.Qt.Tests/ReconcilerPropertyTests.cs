@@ -109,6 +109,29 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void Visible_SentOnlyOnChange_PerElementNotRecursive()
+        {
+            Frame(G(new Rectangle()));
+            Frame(G(new Rectangle { Visible = false }));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 2 Visible bool(0)" }), "child only, not the Group");
+            Frame(G(new Rectangle { Visible = false }));
+            Assert.That(_sink.Count, Is.EqualTo(0), "unchanged: nothing sent");
+            Frame(G(new Rectangle()));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 2 Visible bool(1)" }));
+        }
+
+        [Test]
+        public void Visible_OnCreatedElement_SentOnlyWhenOff()
+        {
+            Frame(G(new Rectangle(), new Rectangle { Visible = false }));
+            Assert.That(_sink.Commands.Where(c => c.Contains("Visible")), Is.EqualTo(new[] { $"SET 3 Visible bool(0)" }),
+                "default true: nothing sent for the first child");
+            var set = _sink.Commands.ToList().IndexOf("SET 3 Visible bool(0)");
+            var reparent = _sink.Commands.ToList().FindIndex(c => c.StartsWith("REPARENT 3 "));
+            Assert.That(set, Is.LessThan(reparent), "sent before REPARENT, like every property of a new element");
+        }
+
+        [Test]
         public void RebuiltWithSameValues_ZeroSets()
         {
             Frame(BuildScene());
@@ -119,19 +142,19 @@ namespace VL.Qt.Tests
 
         private static IEnumerable<TestCaseData> SingleChanges()
         {
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(fill: 0.5f)), $"SET 2 Color color(0.5,0,0,1)").SetName("Rectangle.Fill");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(opacity: 0.25f)), $"SET 2 Opacity f32(0.25)").SetName("Opacity");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(width: 2)), $"SET 2 Size vec2(200,200)").SetName("Size");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(text: "World")), $"SET 4 Text string(World)").SetName("Text.Content");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(spacing: 0.25f)), $"SET 3 Spacing f32(25)").SetName("Column.Spacing");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(blending: true)), $"SET 7 Blending bool(1)").SetName("Shader.Blending");
+            yield return new TestCaseData(new Func<IElement>(() => BuildScene(fill: 0.5f)), $"SET 2 Color color(0.5,0,0,1)").SetName("Rectangle.Fill");
+            yield return new TestCaseData(new Func<IElement>(() => BuildScene(opacity: 0.25f)), $"SET 2 Opacity f32(0.25)").SetName("Opacity");
+            yield return new TestCaseData(new Func<IElement>(() => BuildScene(width: 2)), $"SET 2 Size vec2(200,200)").SetName("Size");
+            yield return new TestCaseData(new Func<IElement>(() => BuildScene(text: "World")), $"SET 4 Text string(World)").SetName("Text.Content");
+            yield return new TestCaseData(new Func<IElement>(() => BuildScene(spacing: 0.25f)), $"SET 3 Spacing f32(25)").SetName("Column.Spacing");
+            yield return new TestCaseData(new Func<IElement>(() => BuildScene(blending: true)), $"SET 7 Blending bool(1)").SetName("Shader.Blending");
         }
 
         [TestCaseSource(nameof(SingleChanges))]
-        public void OnePropertyChanged_ExactlyOneSet(Func<Element> changed, string expected)
+        public void OnePropertyChanged_ExactlyOneSet(Func<IElement> changed, string expected)
         {
             Frame(BuildScene());
-            Frame(changed());
+            Frame((Element)changed());
             Assert.That(_sink.Commands, Is.EqualTo(new[] { expected }));
         }
 

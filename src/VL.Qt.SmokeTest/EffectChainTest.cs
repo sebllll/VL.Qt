@@ -105,13 +105,13 @@ public static class EffectChainTest
         }
 
         Element Text(TextNode n, string s, RectangleF bounds, float size, Effect? effect)
-            => n.Update(bounds.Sz(), bounds.Tr(), RectangleAnchor.TopLeft, s, "", size, FontWeight.Normal, false, new Color4(1, 1, 1, 1),
+            => (Element)n.Update(bounds.Sz(), bounds.Tr(), RectangleAnchor.TopLeft, s, "", size, FontWeight.Normal, false, new Color4(1, 1, 1, 1),
                 TextHorizontalAlignment.Left, VerticalAlignment.Top, TextWrap.NoWrap, TextElide.None, 1, 0, TextAutofit.Fixed,
-                1, false, false, null, effect, out _, out _);
+                1, false, false, null, effect, true, out _, out _);
 
         Element Rect(RectangleNode n, Color4 fill, RectangleF bounds, Effect? effect, out RectangleF sceneBounds)
-            => n.Update(bounds.Sz(), bounds.Tr(), RectangleAnchor.TopLeft, fill, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
-                null, effect, out _, out sceneBounds);
+            => (Element)n.Update(bounds.Sz(), bounds.Tr(), RectangleAnchor.TopLeft, fill, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
+                null, effect, true, out _, out sceneBounds);
 
         // Effect pin <- DropShadow <- Blur <- ColorAdjust, or the reverse order of the same three links.
         Effect Chain(bool shadowFirst)
@@ -184,8 +184,8 @@ public static class EffectChainTest
         {
             var a = Rect(rectA, blue, new RectangleF(0, 0, 2, 1.5f), fx, out ab);
             var b = Rect(rectB, red, new RectangleF(0, 0, 1, 1.5f), null, out bb);
-            return row.Update(Spread.Create<IElement?>(a, b), new Vector2(0, 0), true, Matrix.Translation(0.5f, 0.5f, 0), RectangleAnchor.TopLeft,
-                0.1f, 0, VerticalAlignment.Top, 1, false, false, null, null, out _, out rb);
+            return (Element)row.Update(Spread.Create<IElement?>(a, b), new Vector2(0, 0), true, Matrix.Translation(0.5f, 0.5f, 0), RectangleAnchor.TopLeft,
+                0.1f, 0, VerticalAlignment.Top, 1, false, false, null, null, true, out _, out rb);
         }
         // Row layout is checked on the image (the sceneBounds outputs only fill from QtNative events): extent of blue (A) and red (B) on y = 100.
         (int blue, int red) Extent(Bitmap a)

@@ -10,7 +10,9 @@ namespace VL.Qt.Styles
     /// <para>
     /// Build is called once per frame while the widget is part of a scene, after the patch was updated in that frame.
     /// Return the same element instance as long as nothing changed (element nodes do this by themselves), so the scene
-    /// stays untouched. An exception is shown at the container node and the element of the last successful call stays.
+    /// stays untouched. A returned stylable is built in turn with the same style, so a widget may hand over to another;
+    /// one that returns itself or a cycle shows nothing. An exception is shown at the container node (at the Renderer
+    /// for a widget linked to it) and the element of the last successful call stays.
     /// </para>
     /// </summary>
     [Category("Qt.Style")]
@@ -18,6 +20,6 @@ namespace VL.Qt.Styles
     {
         /// <summary>Returns the element to show for the resolved style; null shows nothing.</summary>
         /// <param name="style">Resolved style at this position: every field is set (unset fields come from the base style).</param>
-        Element? Build(Style style);
+        IElement? Build(Style style);
     }
 }

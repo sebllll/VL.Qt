@@ -22,32 +22,23 @@ namespace VL.Qt.Nodes
         // The image is compared by reference: a new QtImage is a new image.
         internal readonly record struct Props(QtImage? Image, ImageFillMode FillMode, bool Smooth);
 
-        private readonly ElementNode<Image, Props> _node;
+        private readonly ElementNodeCore<Image, Props> _node;
 
         public ImageNode(NodeContext nodeContext)
-            => _node = new ElementNode<Image, Props>(nodeContext, Create);
+            => _node = new ElementNodeCore<Image, Props>(nodeContext, s_create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal ImageNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<Image, Props>(addWarning, Create);
+            => _node = new ElementNodeCore<Image, Props>(addWarning, s_create);
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, Image> Create = static (c, p, slot) => new Image
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Image> s_create = static (c, p, slot) => new Image(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
-                Feedback = slot,
                 Source = p.Image,
                 FillMode = p.FillMode,
                 Smooth = p.Smooth,
             };
 
-        internal ElementNode<Image, Props> Core => _node;
+        internal ElementNodeCore<Image, Props> Core => _node;
 
         /// <summary>Describes the image. A new description is only created when an input changes.</summary>
         /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor.</param>
@@ -61,11 +52,12 @@ namespace VL.Qt.Nodes
         /// <param name="debug">Debug overlay for this element only (not its children; the Renderer's Debug shows all). Does not affect layout or hit-testing. Cyan frame = actual size (solid: Size, dashed: Auto Size on), orange = implicit size, i.e. what Auto Size would give (only where it differs), blue dotted = children extent, translucent red = children outside the frame (overflow), translucent green = padding and hatched violet = Row/Column spacing (both inside the frame), magenta cross = origin, yellow diamond = anchor. Text: green line = baseline, dashed green = ascent, dashed red = descent.</param>
         /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
         /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
+        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
         /// <param name="measuredSize">Natural size of the image reported by Qt, in units (0, 0 until loaded; last frame).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         // Pin defaults: see RectangleNode. Image default = null (no image).
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [DefaultValue("1, 1")] Vector2 size,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
@@ -77,14 +69,14 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            var element = _node.Describe(
-                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(image, fillMode, smooth));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+            return _node.Describe(
+                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
+                new Props(image, fillMode, smooth),
+                out measuredSize, out sceneBounds);
         }
 
         public void Dispose() => _node.Dispose();

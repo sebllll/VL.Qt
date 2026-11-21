@@ -56,14 +56,14 @@ public static class ClipVideoPerfTest
         Element Rect(bool clip, bool stroke, bool fx)
         {
             var origin = Matrix.Translation(3, 2, 0);
-            return rect.Update(new Vector2(2, 1.5f), origin, RectangleAnchor.TopLeft, new Color4(1, 0.6f, 0, 1), 0.3f,
-                new Color4(0, 0, 1, 1), stroke ? 0.08f : 0, 1, clip, false, null, Shadow(fx), out _, out _);
+            return (Element)rect.Update(new Vector2(2, 1.5f), origin, RectangleAnchor.TopLeft, new Color4(1, 0.6f, 0, 1), 0.3f,
+                new Color4(0, 0, 1, 1), stroke ? 0.08f : 0, 1, clip, false, null, Shadow(fx), true, out _, out _);
         }
         Element Circle(bool clip, bool stroke, bool fx)
         {
             var origin = Matrix.Translation(3, 2, 0);
-            return circle.Update(0.9f, origin, RectangleAnchor.TopLeft, new Color4(1, 0.6f, 0, 1),
-                new Color4(0, 0, 1, 1), stroke ? 0.08f : 0, 1, clip, false, null, Shadow(fx), out _, out _);
+            return (Element)circle.Update(0.9f, origin, RectangleAnchor.TopLeft, new Color4(1, 0.6f, 0, 1),
+                new Color4(0, 0, 1, 1), stroke ? 0.08f : 0, 1, clip, false, null, Shadow(fx), true, out _, out _);
         }
 
         Bitmap Frame(Element root, string name)

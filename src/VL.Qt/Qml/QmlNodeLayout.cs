@@ -23,7 +23,7 @@ namespace VL.Qt.Qml
     /// <see cref="QmlTypes.ClrType"/>, default <see cref="QmlPropertyDecl.Default"/>;</item>
     /// <item>Properties: Dictionary&lt;string, object&gt;, default null, optional (plan B for what has no pin);</item>
     /// <item>Size (Vector2, 1, 1), Auto Size (bool, true, optional), Transform (Matrix, identity), Anchor (RectangleAnchor, TopLeft, optional),
-    /// Opacity (float, 1, optional), Clip (bool, optional), Debug (bool, optional), Interaction (optional), Effect (optional): exactly as QmlElement.</item>
+    /// Opacity (float, 1, optional), Clip (bool, optional), Debug (bool, optional), Interaction (optional), Effect (optional), Enabled (bool, true, optional): exactly as QmlElement.</item>
     /// </list>
     /// <para>Outputs, in this order:</para>
     /// <list type="number">
@@ -55,12 +55,12 @@ namespace VL.Qt.Qml
 
         /// <summary>Pin names of the common inputs, in pin order (after the property inputs and Properties).</summary>
         public static readonly ImmutableArray<string> CommonInputNames = ImmutableArray.Create(
-            "Size", "Auto Size", "Transform", "Anchor", "Opacity", "Clip", "Debug", "Interaction", "Effect");
+            "Size", "Auto Size", "Transform", "Anchor", "Opacity", "Clip", "Debug", "Interaction", "Effect", "Enabled");
 
         /// <summary>Pin names a property or signal pin must not take: the common pins of both sides and Properties.</summary>
         public static readonly ImmutableHashSet<string> ReservedPinNames = ImmutableHashSet.Create(
             StringComparer.OrdinalIgnoreCase,
-            PropertiesPinName, "Size", "Auto Size", "Transform", "Anchor", "Opacity", "Clip", "Debug", "Interaction", "Effect",
+            PropertiesPinName, "Size", "Auto Size", "Transform", "Anchor", "Opacity", "Clip", "Debug", "Interaction", "Effect", "Enabled",
             "Output", "Measured Size", "Scene Bounds", "Error");
 
         // Help texts like QmlElementNode.Update.
@@ -79,9 +79,10 @@ namespace VL.Qt.Qml
             new FilePinDescription("Debug", typeof(bool), false, "Debug overlay for this element only.", isVisible: false),
             new FilePinDescription("Interaction", typeof(Interaction), null, "Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.", isVisible: false),
             new FilePinDescription("Effect", typeof(Effect), null, "Chain of effect nodes (Blur, DropShadow, …), drawn as one effect layer on the element.", isVisible: false),
+            new FilePinDescription("Enabled", typeof(bool), true, "False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.", isVisible: false),
         };
 
-        private static readonly IVLPinDescription s_output = new FilePinDescription("Output", typeof(Element), null, null);
+        private static readonly IVLPinDescription s_output = new FilePinDescription("Output", typeof(IElement), null, null);
 
         private static readonly IVLPinDescription[] s_trailingOutputs =
         {

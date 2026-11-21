@@ -12,7 +12,7 @@ namespace VL.Qt.Nodes
     /// <summary>
     /// Shared core of the nodes Line, Polyline and Polygon (package 03): the element specific inputs (<see cref="Props"/>), the
     /// description of the <see cref="Shape"/> (<see cref="Create"/>). The public node classes are thin shells
-    /// that pass their pins to <see cref="Describe"/>; Polygon passes Closed = true, Line the points of <see cref="LinePoints"/>.
+    /// that pass their pins to <see cref="Describe"/>; Polygon passes Closed = true, Line its two points.
     /// The points live in the parent space: the node has no Anchor and no Size pin, it reports
     /// (max(0, maxX), max(0, maxY)) of the points as Size and uses the Anchor TopLeft.
     /// </summary>
@@ -42,17 +42,9 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>Builds the element; the Size covers all points.</summary>
-        internal static readonly Func<CommonInputs, Props, FeedbackSlot, Shape> Create = static (c, p, slot) => new Shape
+        internal static readonly Func<CommonInputs, Props, FeedbackSlot, Shape> Create = static (c, p, slot) => new Shape(
+            c with { Size = p.Path is { } path ? Shape.ExtentOf(path) : Shape.ExtentOf(p.Points), Anchor = RectangleAnchor.TopLeft }, slot)
         {
-            Size = p.Path is { } path ? Shape.ExtentOf(path) : Shape.ExtentOf(p.Points),
-            Transform = c.Transform,
-            Anchor = RectangleAnchor.TopLeft,
-            Opacity = c.Opacity,
-            Clip = c.Clip,
-            Debug = c.Debug,
-            Interaction = c.Interaction,
-            Effect = c.Effect,
-            Feedback = slot,
             Points = p.Points,
             Path = p.Path,
             Closed = p.Closed,
@@ -70,48 +62,27 @@ namespace VL.Qt.Nodes
             FillRule = p.FillRule,
         };
 
-        private readonly ElementNode<Shape, Props> _node;
-        private Spread<Vector2> _line = Spread<Vector2>.Empty;
-        private Vector2 _lineFrom, _lineTo;
+        private readonly ElementNodeCore<Shape, Props> _node;
 
         public ShapeNodeCore(NodeContext nodeContext)
         {
-            _node = new ElementNode<Shape, Props>(nodeContext, Create);
+            _node = new ElementNodeCore<Shape, Props>(nodeContext, Create);
         }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal ShapeNodeCore(Func<string, IDisposable> addWarning)
         {
-            _node = new ElementNode<Shape, Props>(addWarning, Create);
+            _node = new ElementNodeCore<Shape, Props>(addWarning, Create);
         }
 
-        internal ElementNode<Shape, Props> Core => _node;
-
-        /// <summary>
-        /// Returns the points of a two-point line: the same instance as long as <paramref name="from"/> and <paramref name="to"/> stay the
-        /// same, so an unchanged Line allocates nothing per frame.
-        /// </summary>
-        public Spread<Vector2> LinePoints(Vector2 from, Vector2 to)
-        {
-            if (_line.Count == 0 || _lineFrom != from || _lineTo != to)
-            {
-                _line = new[] { from, to }.ToSpread();
-                _lineFrom = from;
-                _lineTo = to;
-            }
-            return _line;
-        }
+        internal ElementNodeCore<Shape, Props> Core => _node;
 
         /// <summary>
         /// Describes the shape (a new description only when an input changes), updates the node warnings (feedback)
         /// and reads the outputs. Call once per Update.
         /// </summary>
         public Shape Describe(in CommonInputs common, in Props props, out Vector2 measuredSize, out RectangleF sceneBounds)
-        {
-            var element = _node.Describe(common, props);
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
-        }
+            => _node.Describe(common, props, out measuredSize, out sceneBounds);
 
         public void Dispose()
         {

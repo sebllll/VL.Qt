@@ -77,7 +77,7 @@ private:
  * composed with the frozen one), so a changing finger count does not jump. The values describe
  * p' = pivot + translation + scale * R(rotation) * (p - pivot) in the parent's space, with the centroid of the first
  * activation as the pivot: applied like that, the content follows the fingers. QObject child of the QML PinchHandler
- * (deleted with it). */
+ * (deleted with it, before the point counter: HandlerObjects::release, scene/handlers.h). */
 class PinchState : public QObject
 {
     Q_OBJECT

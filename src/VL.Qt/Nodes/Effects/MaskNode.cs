@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
+using VL.Core;
 using VL.Core.Import;
 using VL.Model;
 using VL.Qt.Elements;
@@ -18,13 +20,28 @@ namespace VL.Qt.Nodes
     /// shader, Qt's fixed order applies inside it; a shader effect (e.g. Glow) ends the run, between runs the patch order applies.
     /// </summary>
     [ProcessNode(Name = "Mask", Category = Categories.Effects)]
-    public sealed class MaskNode
+    public sealed class MaskNode : IDisposable
     {
         internal readonly record struct Props(Element? Mask, float ThresholdMin, float SpreadAtMin, float ThresholdMax,
             float SpreadAtMax, bool Inverted);
 
         private readonly EffectNode<Props> _node = new(static (previous, p)
             => new MaskEffect(previous, p.Mask, p.ThresholdMin, p.SpreadAtMin, p.ThresholdMax, p.SpreadAtMax, p.Inverted));
+
+        private readonly NodeErrors? _messages;
+        private readonly ElementInput _mask;
+
+        public MaskNode(NodeContext nodeContext)
+            : this(new NodeErrors(nodeContext))
+        {
+        }
+
+        /// <param name="messages">Store of the node; null shows nothing (tests).</param>
+        internal MaskNode(NodeErrors? messages = null)
+        {
+            _messages = messages;
+            _mask = new ElementInput(messages, "Mask");
+        }
 
         internal EffectNode<Props> Core => _node;
 
@@ -39,12 +56,18 @@ namespace VL.Qt.Nodes
         [return: Pin(Name = "Output")]
         public Effect Update(
             Effect? input,
-            Element? mask,
+            IElement? mask,
             [Pin(Visibility = PinVisibility.Optional)] float thresholdMin,
             [Pin(Visibility = PinVisibility.Optional)] float spreadAtMin,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float thresholdMax,
             [Pin(Visibility = PinVisibility.Optional)] float spreadAtMax,
             bool inverted)
-            => _node.Describe(input, new Props(mask, thresholdMin, spreadAtMin, thresholdMax, spreadAtMax, inverted));
+            => _node.Describe(input, new Props(_mask.Update(mask), thresholdMin, spreadAtMin, thresholdMax, spreadAtMax, inverted));
+
+        public void Dispose()
+        {
+            _mask.Dispose();
+            _messages?.Dispose();
+        }
     }
 }

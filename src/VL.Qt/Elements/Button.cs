@@ -1,4 +1,6 @@
-﻿namespace VL.Qt.Elements
+﻿using VL.Qt.Nodes;
+
+namespace VL.Qt.Elements
 {
     /// <summary>
     /// Push button (QtQuick.Controls Button, style Basic). Clicks come from Qt's <c>clicked</c> signal into
@@ -8,6 +10,7 @@
     internal sealed class Button : Element
     {
         public Button() : base(ElementType.Button) { }
+        internal Button(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Button, common, feedback) { }
 
         /// <summary>On (default): Size is ignored and the implicit size applies (text + padding of the style). Off: Size counts.</summary>
         public bool AutoSize { get; init; } = true;

@@ -55,6 +55,21 @@ A command is one opcode of the command buffer that `vlqt_scene_apply` decodes. A
 
 An input-handler property is one row in `kHandlerProps` (`scene/handlers.cpp`: the handler types that take it and its value type) and its case in `setHandler`.
 
+## Element nodes
+
+An element node is a public `[ProcessNode]` class that holds an `ElementNodeCore<TElement, TProps>` (`src/VL.Qt/Nodes/ElementNodeCore.cs`) as a field. Its `Update` packs the common pins into `CommonInputs` (`Nodes/CommonInputs.cs`) and its own pins into a `readonly record struct Props`, and returns `Describe(common, props, out measuredSize, out sceneBounds)`. The core returns the previous description as long as both values are equal, so an unchanged node hands the reconciler the same instance, which it skips. It also shows the warnings and errors the feedback reports at the node and reads the outputs.
+
+### Adding an element node
+
+Copy `src/VL.Qt/Nodes/Elements/RectangleNode.cs`, the template, and change only the element-specific part:
+
+1. The element class in `src/VL.Qt/Elements/` (internal, sealed, `init` properties), with the one-line constructor that takes the common part: `internal Rectangle(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Rectangle, common, feedback) { }`. A new element type also needs its `ElementType`, its reconciler properties and its QtNative item; see "Adding a command".
+2. `Props`: one field per element-specific pin. A spread is compared by content (see `ShapeNodeCore.Props.Equals`), since vvvv often hands a new spread with equal content each frame.
+3. `Create`: a static lambda without captures that sets only the element-specific properties, `static (c, p, slot) => new Rectangle(c, slot) { Fill = p.Color, … }`. It is `private static readonly … s_create`, or `internal static readonly … Create` when another node shares it (Circle uses Rectangle's, the Spectral nodes those of Group, Row and Column). A node that fixes a common value states it with `with`: `c with { Anchor = RectangleAnchor.TopLeft }`.
+4. The pins of `Update`, with defaults and docs (AGENTS.md "Nodes"); a children pin goes through `ChildrenInput`, a single element pin through `ElementInput`.
+5. A help patch `help/Qt/HowTo ….vl`, its line in `help/Help.xml`, then `python tools/vl-patch-check.py` (its pin catalog reads the new node from the C# sources) and `tools/vvvvc.ps1 -File` on the patch.
+6. Regenerate `src/VL.Qt.Tests/Api/node-api.txt` (`VLQT_UPDATE_SNAPSHOT=1`) and add a test that two `Update`s with equal inputs return the same instance.
+
 ## Lifetime
 
 QtNative lives as long as the process: unloading it (`FreeLibrary`, `dlclose`) is not supported, and .NET never unloads a native library.

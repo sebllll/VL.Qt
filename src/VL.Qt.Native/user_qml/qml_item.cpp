@@ -260,7 +260,7 @@ void QmlItem::rebuild(bool clearCache)
         QQmlEngine::setObjectOwnership(item, QQmlEngine::CppOwnership);
         m_root = item;
         m_watcher = new QmlWatcher(this, item);
-        for (const QString& name : std::as_const(m_order))
+        for (const QByteArray& name : std::as_const(m_order))
             applyProperty(name, m_values.value(name), &component);
     }
     if (obj)
@@ -288,15 +288,22 @@ void QmlItem::rebuild(bool clearCache)
     finish();
 }
 
-void QmlItem::setRootProperty(const QString& name, const QVariant& value)
+void QmlItem::setRootProperty(QByteArrayView name, const QVariant& value)
 {
-    if (!m_values.contains(name))
-        m_order.push_back(name);
-    m_values.insert(name, value);
-    m_propErrors.remove(name);
+    // Called for every property of every SET_QML_PROPERTIES: a known name allocates nothing here.
+    auto it = m_values.find(name);
+    if (it == m_values.end()) {
+        it = m_values.insert(QByteArray(name.data(), name.size()), value);
+        m_order.push_back(it.key());
+    } else {
+        it.value() = value;
+    }
+    if (!m_propErrors.isEmpty())
+        m_errorTextStale = m_propErrors.remove(QString::fromUtf8(name)) > 0 || m_errorTextStale;
     if (m_root)
-        applyProperty(name, value);
-    updateErrorText();
+        applyProperty(it.key(), value);
+    if (m_errorTextStale)
+        updateErrorText();
 }
 
 void QmlItem::rejectRootProperty(const QString& name, const QString& message)
@@ -308,18 +315,22 @@ void QmlItem::rejectRootProperty(const QString& name, const QString& message)
 void QmlItem::setPropertyError(const QString& name, const QString& message)
 {
     m_propErrors.insert(name, message);
+    m_errorTextStale = true;
 }
 
-void QmlItem::applyProperty(const QString& name, const QVariant& value, QQmlComponent* creating)
+void QmlItem::applyProperty(const QByteArray& utf8Name, const QVariant& value, QQmlComponent* creating)
 {
     const QMetaObject* mo = m_root->metaObject();
-    const int index = mo->indexOfProperty(name.toUtf8().constData());
+    const int index = mo->indexOfProperty(utf8Name.constData());
+    // Only the error paths and the initial properties need the name as a QString.
+    auto nameString = [&] { return QString::fromUtf8(utf8Name); };
     if (index < 0) {
-        setPropertyError(name, QStringLiteral("the root has no such property"));
+        setPropertyError(nameString(), QStringLiteral("the root has no such property"));
         return;
     }
     const QMetaProperty p = mo->property(index);
     if (!p.isWritable()) {
+        const QString name = nameString();
         setPropertyError(name, QStringLiteral("property '%1' is read-only").arg(name));
         return;
     }
@@ -339,6 +350,7 @@ void QmlItem::applyProperty(const QString& name, const QVariant& value, QQmlComp
     }
     // var properties and enums take the value as it is, everything else goes through QVariant's conversion.
     if (!p.isEnumType() && target.id() != QMetaType::QVariant && v.metaType() != target && !v.convert(target)) {
+        const QString name = nameString();
         setPropertyError(name, QStringLiteral("a %1 value cannot be converted to the type '%2' of property '%3'")
                                    .arg(QString::fromLatin1(value.typeName()), QString::fromLatin1(p.typeName()), name));
         return;
@@ -350,13 +362,15 @@ void QmlItem::applyProperty(const QString& name, const QVariant& value, QQmlComp
     // While the root is created Qt wants the values through the component (this is what satisfies a required property).
     bool ok = true;
     if (creating)
-        creating->setInitialProperties(m_root, QVariantMap{{name, v}});
+        creating->setInitialProperties(m_root, QVariantMap{{nameString(), v}});
     else
         ok = p.write(m_root, v);
     if (m_watcher)
         m_watcher->suppress(-1);
-    if (!ok)
+    if (!ok) {
+        const QString name = nameString();
         setPropertyError(name, QStringLiteral("writing property '%1' failed").arg(name));
+    }
 }
 
 void QmlItem::updateErrorText()
@@ -369,6 +383,7 @@ void QmlItem::updateErrorText()
     if (m_dropNotice)
         lines << QStringLiteral("signals dropped (more than %1 in one poll)").arg(kQmlMaxSignalsPerPoll);
     m_errorText = lines.join(u'\n');
+    m_errorTextStale = false;
 }
 
 bool QmlItem::hasEvents() const { return m_watcher && m_watcher->hasEvents(); }
