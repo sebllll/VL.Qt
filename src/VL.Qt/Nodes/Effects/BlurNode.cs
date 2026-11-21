@@ -10,10 +10,10 @@ namespace VL.Qt.Nodes
     /// Blurs the element (Qt MultiEffect blur). Connect Output to the Effect pin of an element, or chain it with other
     /// effect nodes; the order of the nodes
     /// does not matter within a run.
-    /// Neighboring MultiEffect nodes are merged into one layer with one shader, Qt's fixed order applies inside it; a
-    /// shader effect (e.g. Glow) ends the run, between runs the patch order applies.
+    /// Blur, DropShadow, ColorAdjust, Colorize and Mask next to each other in a chain are merged into one layer with one
+    /// shader, Qt's fixed order applies inside it; a shader effect (e.g. Glow) ends the run, between runs the patch order applies.
     /// </summary>
-    [ProcessNode(Name = "Blur", Category = Categories.MultiEffect)]
+    [ProcessNode(Name = "Blur", Category = Categories.Effects)]
     public sealed class BlurNode
     {
         internal readonly record struct Props(float Amount, int Max, float Multiplier, bool AutoPadding = true, RectangleF Padding = default);

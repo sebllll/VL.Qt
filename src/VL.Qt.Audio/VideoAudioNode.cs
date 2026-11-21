@@ -8,10 +8,9 @@ using VL.Core.Import;
 using VL.Lib.Mathematics;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Images;
 using VL.Qt.Nodes;
 using Path = VL.Lib.IO.Path;
-
-[assembly: ImportAsIs]
 
 namespace VL.Qt.Audio
 {

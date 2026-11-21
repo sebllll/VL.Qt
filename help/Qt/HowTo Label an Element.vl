@@ -403,7 +403,7 @@
             </p:TypeAnnotation>
           </Pad>
           <Pad Id="AIxIQlfNiosN7FssUEs9yt" Comment="Label Position" Bounds="588,480,48,15" ShowValueBox="true" isIOBox="true" Value="Top">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Nodes" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="LabelPosition" />
             </p:TypeAnnotation>
           </Pad>

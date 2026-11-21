@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using VL.Qt.Wire;
 
-namespace VL.Qt
+namespace VL.Qt.Images
 {
     /// <summary>Loading state of a <see cref="QtImage"/>.</summary>
     public enum QtImageState

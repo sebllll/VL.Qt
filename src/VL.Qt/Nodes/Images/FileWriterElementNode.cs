@@ -3,6 +3,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Images;
 using VL.Qt.Reconciliation;
 using Path = VL.Lib.IO.Path;
 
@@ -13,7 +14,7 @@ namespace VL.Qt.Nodes
     /// extension of File Path. Snapshot and FileWriter in one node; the element has to be shown in a renderer.
     /// Asynchronous: Is Done comes at least one frame after Write.
     /// </summary>
-    [ProcessNode(Name = "FileWriter (Element)", Category = Categories.Qt)]
+    [ProcessNode(Name = "FileWriter (Element)", Category = Categories.Images)]
     public sealed class FileWriterElementNode : IDisposable
     {
         private readonly SnapshotGrab _grab;

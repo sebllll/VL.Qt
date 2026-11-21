@@ -7,6 +7,7 @@
 #include "image_resource.h"
 #include "protocol.h"
 #include "qtimageitem.h"
+#include "resources/change_watch.h"
 #include "resources/resources.h"
 #include "shader_resource.h"
 
@@ -24,7 +25,6 @@
 
 #include <algorithm>
 #include <cstring>
-#include <unordered_set>
 
 Q_LOGGING_CATEGORY(lcShaderItem, "VL.Qt.ShaderEffect")
 
@@ -34,8 +34,7 @@ namespace {
 
 constexpr int kMaxMesh = 1024;     // MESH_RESOLUTION per axis (vertex count stays below ~1M)
 
-std::unordered_set<ShaderItem*> s_items; // main thread
-uint64_t s_contentEpoch = 0, s_failureEpoch = 0;
+res::ChangeWatch<ShaderItem> s_watch; // items by the shader and image ids they wait for, main thread
 
 std::string idText(uint64_t id)
 {
@@ -154,13 +153,12 @@ bool reserved(const QByteArray& name)
 ShaderItem::ShaderItem(QQuickItem* parent) : QQuickItem(parent)
 {
     setFlag(ItemHasContents, true);
-    s_items.insert(this);
 }
 
 ShaderItem::~ShaderItem()
 {
-    s_items.erase(this);
     for (ShaderSlot* s : {&m_frag, &m_vert}) {
+        s_watch.remove(s->want, this);
         if (s->want && s->want != s->shown)
             res::releaseElement(s->want);
         if (s->shown)
@@ -172,7 +170,6 @@ ShaderItem::~ShaderItem()
             LayerRequests::releaseQueued(held.data(), this);
     for (Uniform& u : m_uniforms)
         releaseUniform(u);
-    delete m_transparent;
 }
 
 void ShaderItem::setSource(QQuickItem* source)
@@ -218,7 +215,9 @@ bool ShaderItem::setShader(int stage, uint64_t id, std::string& err)
     }
     if (s.want && s.want != s.shown)
         res::releaseElement(s.want); // never shown: the one before stays
+    s_watch.remove(s.want, this);
     s.want = id;
+    s_watch.add(id, this);
     s.failed = false;
     if (!id) {
         if (s.shown)
@@ -326,19 +325,15 @@ void ShaderItem::advanceAll()
 
 void ShaderItem::afterResourceFrame()
 {
-    const uint64_t content = res::contentEpoch(), failure = res::failureEpoch();
-    if (content == s_contentEpoch && failure == s_failureEpoch)
-        return;
-    s_contentEpoch = content;
-    s_failureEpoch = failure;
-    for (ShaderItem* item : s_items)
-        item->advanceAll();
+    s_watch.forChanged([](ShaderItem* item) { item->advanceAll(); });
 }
 
 void ShaderItem::releaseUniform(Uniform& u)
 {
-    if (u.image)
+    if (u.image) {
+        s_watch.remove(u.image, this);
         res::releaseElement(u.image);
+    }
     u.image = 0;
     u.imageContent.reset();
     u.imageTexture.reset();
@@ -430,13 +425,16 @@ bool ShaderItem::setUniform(const char* name, int nameLen, quint16 vt, const uns
         uint64_t id;
         std::memcpy(&id, value, 8);
         if (id != u.image) {
-            if (u.image)
+            if (u.image) {
+                s_watch.remove(u.image, this);
                 res::releaseElement(u.image);
+            }
             u.image = 0;
             u.imageContent.reset();
             u.imageTexture.reset();
             if (id && res::kindOfId(id, nullptr) == VLQT_RESOURCE_KIND_IMAGE && res::acquire(id) == res::okRc) {
                 u.image = id;
+                s_watch.add(id, this);
                 u.imageContent = res::image::ready(id);
             }
             u.badImage = id && !u.image;
@@ -665,7 +663,8 @@ void ShaderItem::watchProvider(QSGTextureProvider* p)
         m_watched.end());
     m_watched.emplace_back(p);
     connect(p, &QSGTextureProvider::textureChanged, this, &QQuickItem::update, Qt::QueuedConnection);
-    // A provider that goes (layer off, element deleted) must not stay in the material: refresh at the next sync.
+    // A provider that goes (layer off, element deleted) must not stay in the material: refresh at the next sync. Direct
+    // connection, relies on the basic loop (docs/design/render-loop.md, "Places that rely on the basic loop").
     connect(p, &QObject::destroyed, this, &QQuickItem::update);
 }
 
@@ -696,8 +695,9 @@ void ShaderItem::refreshLayerRequests(bool force)
     if (!m_layersDirty && !force)
         return;
     m_layersDirty = false;
-    // Items this item asks something from now (an image has no layer: its mipmaps come from its load).
-    std::vector<QQuickItem*>& now = m_layerNow;
+    // Elements this item asks something from now, the mip flags of all samplers on one element ORed (an image has no
+    // layer: its mipmaps come from its load).
+    auto& now = m_layerNow;
     now.clear();
     for (const Sampler& s : m_samplers) {
         const quint64 st = samplerState(s);
@@ -705,15 +705,25 @@ void ShaderItem::refreshLayerRequests(bool force)
         if (!item)
             continue;
         const bool mip = ((st >> 8) & 0xff) != 0;
-        if (!mip && std::find_if(m_layerItems.begin(), m_layerItems.end(), [&](const auto& p) { return p == item; }) == m_layerItems.end())
-            continue; // defaults need no request (and no write to the layer)
-        LayerRequests::request(item, this, mip);
-        now.push_back(item);
+        const auto e = std::find_if(now.begin(), now.end(), [&](const auto& x) { return x.first == item; });
+        if (e == now.end())
+            now.emplace_back(item, mip);
+        else
+            e->second = e->second || mip;
     }
-    for (const auto& held : m_layerItems)
-        if (held && std::find(now.begin(), now.end(), held.data()) == now.end())
-            LayerRequests::release(held, this);
-    m_layerItems.assign(now.begin(), now.end());
+    const auto held = [&](QQuickItem* item) {
+        return std::find_if(m_layerItems.begin(), m_layerItems.end(), [&](const auto& p) { return p == item; }) != m_layerItems.end();
+    };
+    // Defaults need no request (and no write to the layer), unless the element already holds one.
+    now.erase(std::remove_if(now.begin(), now.end(), [&](const auto& x) { return !x.second && !held(x.first); }), now.end());
+    for (const auto& [item, mip] : now)
+        LayerRequests::request(item, this, mip);
+    for (const auto& p : m_layerItems)
+        if (p && std::find_if(now.begin(), now.end(), [&](const auto& x) { return x.first == p.data(); }) == now.end())
+            LayerRequests::release(p, this);
+    m_layerItems.clear();
+    for (const auto& x : now)
+        m_layerItems.emplace_back(x.first);
 }
 
 QSGTexture* ShaderItem::samplerTexture(Sampler& s)
@@ -745,8 +755,6 @@ void ShaderItem::invalidateSceneGraph()
 {
     for (Uniform& u : m_uniforms)
         u.imageTexture.reset();
-    delete m_transparent;
-    m_transparent = nullptr;
 }
 
 void ShaderItem::releaseResources()
@@ -777,17 +785,17 @@ QSGNode* ShaderItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
         delete old;
         return nullptr;
     }
-    if (!m_transparent) {
-        QImage img(1, 1, QImage::Format_RGBA8888_Premultiplied);
-        img.fill(Qt::transparent);
-        m_transparent = window()->createTextureFromImage(img, QQuickWindow::TextureHasAlphaChannel);
-    }
 
     auto* node = static_cast<EffectNode*>(old);
     QSGNode::DirtyState dirty = QSGNode::DirtyMaterial;
     if (!node) {
         node = new EffectNode;
         m_shaderChanged = true;
+    }
+    if (!node->transparent) {
+        QImage img(1, 1, QImage::Format_RGBA8888_Premultiplied);
+        img.fill(Qt::transparent);
+        node->transparent.reset(window()->createTextureFromImage(img, QQuickWindow::TextureHasAlphaChannel));
     }
     EffectMaterial& mat = node->mat();
 
@@ -814,7 +822,7 @@ QSGNode* ShaderItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
     mat.sourceBinding = -1;
     for (Sampler& s : m_samplers) {
         QSGTexture* t = samplerTexture(s);
-        mat.tex[size_t(s.binding)] = t ? t : m_transparent;
+        mat.tex[size_t(s.binding)] = t ? t : node->transparent.get();
         mat.state[size_t(s.binding)] = samplerState(s);
         if (s.binding == m_texelBinding)
             mat.sourceBinding = s.binding;

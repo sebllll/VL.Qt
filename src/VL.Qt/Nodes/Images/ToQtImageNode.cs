@@ -2,6 +2,7 @@
 using VL.Core;
 using VL.Core.Import;
 using VL.Lib.Basics.Imaging;
+using VL.Qt.Images;
 
 namespace VL.Qt.Nodes
 {
@@ -10,7 +11,7 @@ namespace VL.Qt.Nodes
     /// Uploads only when a new image arrives (or every frame for volatile images); the pixels are copied at once, the
     /// GPU upload follows within the frame budget, the previous content stays visible until it is complete.
     /// </summary>
-    [ProcessNode(Name = "ToQtImage", Category = Categories.Qt)]
+    [ProcessNode(Name = "ToQtImage", Category = Categories.Images)]
     public sealed class ToQtImageNode : IDisposable
     {
         private readonly ResourceClient _client;

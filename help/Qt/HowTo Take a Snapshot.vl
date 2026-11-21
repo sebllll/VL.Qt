@@ -181,7 +181,7 @@
             <Pin Id="ASpJmDiRMgcPR6kWo8nhr9" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="447,850,100,19" Id="LVtgeACV4QWdLofebkC6Ho">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Snapshot" />
             </p:NodeReference>

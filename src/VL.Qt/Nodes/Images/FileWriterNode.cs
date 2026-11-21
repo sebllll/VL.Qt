@@ -11,7 +11,7 @@ namespace VL.Qt.Nodes
     /// Writes an image (e.g. the Image of Snapshot) to a file on Write: PNG, JPG, BMP, ... by the extension of File Path.
     /// Asynchronous: the file is encoded and written on a worker thread, Is Done comes in a later frame.
     /// </summary>
-    [ProcessNode(Name = "FileWriter", Category = Categories.Qt)]
+    [ProcessNode(Name = "FileWriter", Category = Categories.Images)]
     public sealed class FileWriterNode : IDisposable
     {
         /// <summary>Error at the node when Write is hit without a File Path.</summary>

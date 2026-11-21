@@ -92,8 +92,8 @@ def test_catalog():
 def test_stride_catalog():
     catalog = pc.load_catalog()
     tex = catalog.get('QtTexture')
-    expect(tex is not None and tex['category'] == 'Qt' and tex['source'] == 'src/VL.Qt.Stride/QtTextureNode.cs',
-           'stride: QtTexture is read from src/VL.Qt.Stride, category Qt')
+    expect(tex is not None and tex['category'] == 'Stride.Textures.Source' and tex['source'] == 'src/VL.Qt.Stride/QtTextureNode.cs',
+           'stride: QtTexture is read from src/VL.Qt.Stride, category Stride.Textures.Source')
     if tex is None:
         return
     expect(pc.find_pin(tex, 'Size')['default'] == '1920, 1080', 'stride: Size default from [DefaultValue(typeof(Int2), ...)]')
@@ -105,9 +105,9 @@ def test_stride_catalog():
 
 
 def test_stride_patch(tmp):
-    canvas = (node('T', 'QtTexture', 'Qt', [('TInput', 'Input', 'InputPin', ''), ('TSize', 'Size', 'InputPin', ''),
-                                            ('TFormat', 'Format', 'InputPin', ''), ('TEnabled', 'Enabled', 'InputPin', ' IsHidden="true"'),
-                                            ('TOutput', 'Output', 'OutputPin', ''), ('TError', 'Error', 'OutputPin', '')])
+    canvas = (node('T', 'QtTexture', 'Stride.Textures.Source', [('TInput', 'Input', 'InputPin', ''), ('TSize', 'Size', 'InputPin', ''),
+                                                                ('TFormat', 'Format', 'InputPin', ''), ('TEnabled', 'Enabled', 'InputPin', ' IsHidden="true"'),
+                                                                ('TOutput', 'Output', 'OutputPin', ''), ('TError', 'Error', 'OutputPin', '')])
               + pad('PSize', '1280, 720', 'Size') + pad('PFormat', 'B8G8R8A8_UNorm_SRgb', 'Format') + pad('POut', None, 'Output'))
     links = [('PSize', 'TSize'), ('PFormat', 'TFormat'), ('TOutput', 'POut')]
     path = os.path.join(tmp, 'stride.vl')

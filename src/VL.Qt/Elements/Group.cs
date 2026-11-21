@@ -4,7 +4,7 @@ using VL.Lib.Mathematics;
 namespace VL.Qt.Elements
 {
     /// <summary>Plain container (Qt Item). Draws nothing itself. With the default anchor TopLeft a pure transform container like the Skia group.</summary>
-    public sealed class Group : Element
+    internal sealed class Group : Element
     {
         private readonly ImmutableArray<Element> children = ImmutableArray<Element>.Empty;
 

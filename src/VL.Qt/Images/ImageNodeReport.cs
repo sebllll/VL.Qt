@@ -1,4 +1,5 @@
 ﻿using System;
+using VL.Qt.Images;
 
 namespace VL.Qt
 {

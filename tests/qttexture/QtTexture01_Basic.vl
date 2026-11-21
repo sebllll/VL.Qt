@@ -67,7 +67,7 @@
             </p:TypeAnnotation>
           </Pad>
           <Node Bounds="100,695,125,19" Id="a0LNEUauQjWH75naHAxmFP">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.Stride.dll">
+            <p:NodeReference LastCategoryFullName="Stride.Textures.Source" LastDependency="VL.Qt.Stride.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="QtTexture" />
             </p:NodeReference>
@@ -127,7 +127,7 @@
             </p:TypeAnnotation>
           </Pad>
           <Pad Id="LWvVEyOFunsOQBI0Aee9dn" Comment="Space" Bounds="142,495,87,15" ShowValueBox="true" isIOBox="true" Value="DIPTopLeft">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="Space" />
             </p:TypeAnnotation>
           </Pad>

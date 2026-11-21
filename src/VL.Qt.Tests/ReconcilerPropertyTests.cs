@@ -7,6 +7,7 @@ using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.Images;
 using VL.Qt.Paths;
 using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
