@@ -1,0 +1,424 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.IO;
+using System.Linq;
+using System.Text;
+using static VL.Qt.Qml.QmlLexer;
+
+namespace VL.Qt.Qml
+{
+    /// <summary>
+    /// The parser behind <see cref="QmlDeclarations"/>: scans the members of the root object at depth 1 of the tokens of
+    /// <see cref="QmlLexer"/>. A member ends at a <c>;</c>, at the closing bracket that empties the nesting, or at a line break that
+    /// does not continue the expression (a line that ends with or starts with an operator continues it).
+    /// </summary>
+    internal static class QmlDeclarationParser
+    {
+        // ---- entry points --------------------------------------------------------------------------------------------------
+
+        public static QmlFileHead ParseHead(string source)
+        {
+            var lexed = Lex(source, true);
+            var warnings = new List<QmlParseMessage>();
+            return QmlHeadReader.Read(lexed.Comments, QmlHeadReader.HeadEndLine(lexed.Tokens), warnings);
+        }
+
+        public static QmlDeclarations Parse(string source, Func<string, string?> readSibling, ImmutableList<string> chain, bool isSibling)
+        {
+            var lexed = Lex(source, false);
+            var tokens = lexed.Tokens;
+            var headWarnings = new List<QmlParseMessage>();
+            var head = QmlHeadReader.Read(lexed.Comments, QmlHeadReader.HeadEndLine(tokens), headWarnings);
+            if (isSibling)
+                headWarnings.Clear();
+
+            QmlDeclarations Fail(string? rootType, int line, string text)
+                => new(rootType, head, ImmutableArray<QmlPropertyDecl>.Empty, ImmutableArray<QmlSignalDecl>.Empty,
+                    ImmutableArray.Create(new QmlParseMessage(line, QmlMessageSeverity.Error, text)));
+
+            if (lexed.Error != null)
+                return Fail(null, lexed.ErrorLine, lexed.Error);
+
+            // Root object: [imports and pragmas] Type { ... }
+            var i = QmlHeadReader.SkipHeader(tokens);
+            if (i >= tokens.Count || tokens[i].Kind != TokenKind.Ident)
+                return Fail(null, i < tokens.Count ? tokens[i].Line : 0, "no root object found (expected 'Type {' after the imports)");
+            var rootLine = tokens[i].Line;
+            var rootType = tokens[i].Text;
+            var k = i + 1;
+            while (k + 1 < tokens.Count && tokens[k].IsPunct('.') && tokens[k + 1].Kind == TokenKind.Ident)
+            {
+                rootType += "." + tokens[k + 1].Text;
+                k += 2;
+            }
+            if (k >= tokens.Count || !tokens[k].IsPunct('{'))
+                return Fail(rootType, rootLine, $"no root object found ('{rootType}' is not followed by '{{')");
+            var rootOpen = tokens[k];
+            k++;
+
+            // Declarations of a sibling root type come first.
+            var properties = new List<QmlPropertyDecl>();
+            var signals = new List<QmlSignalDecl>();
+            var messages = new List<QmlParseMessage>();
+            if (!rootType.Contains('.') && char.IsUpper(rootType[0]))
+                Inherit(rootType, rootLine, readSibling, chain, properties, signals, messages);
+            messages.AddRange(headWarnings);
+
+            var ownLine = OwnLineComments(lexed.Comments);
+            var stack = new Stack<(char Open, int Line)>();
+            var inherited = new HashSet<string>(properties.Select(static p => p.Name), StringComparer.Ordinal);
+            var rootEnd = -1;
+            while (true)
+            {
+                if (k >= tokens.Count)
+                    return Fail(rootType, rootOpen.Line, "missing '}': the '{' of the root object is never closed");
+                if (tokens[k].IsPunct('}'))
+                {
+                    rootEnd = k;
+                    break;
+                }
+
+                var end = ScanMember(tokens, k, stack, out var error, out var errorLine);
+                if (error != null)
+                    return Fail(rootType, errorLine, error);
+                ReadMember(tokens, k, end, ownLine, inherited, properties, signals, messages);
+                k = end;
+            }
+
+            if (rootEnd + 1 < tokens.Count)
+                return Fail(rootType, tokens[rootEnd + 1].Line, "unexpected content after the root object");
+
+            return new QmlDeclarations(rootType, head, properties.ToImmutableArray(), signals.ToImmutableArray(), messages.ToImmutableArray());
+        }
+
+        private static void Inherit(
+            string rootType,
+            int rootLine,
+            Func<string, string?> readSibling,
+            ImmutableList<string> chain,
+            List<QmlPropertyDecl> properties,
+            List<QmlSignalDecl> signals,
+            List<QmlParseMessage> messages)
+        {
+            var file = rootType + ".qml";
+            if (chain.Contains(rootType))
+            {
+                messages.Add(new QmlParseMessage(rootLine, QmlMessageSeverity.Warning,
+                    $"root type '{rootType}' is part of a cycle of sibling root types ({string.Join(" -> ", chain.Append(rootType))}), "
+                    + "its declarations are skipped"));
+                return;
+            }
+
+            string? sibling;
+            try
+            {
+                sibling = readSibling(rootType);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                messages.Add(new QmlParseMessage(rootLine, QmlMessageSeverity.Warning, $"cannot read {file}: {e.Message}"));
+                return;
+            }
+            if (sibling == null)
+                return;
+
+            var parsed = Parse(sibling, readSibling, chain.Add(rootType), true);
+            // A sibling that does not parse is not an error of this file: its declarations are missing, that is all.
+            foreach (var m in parsed.Messages)
+            {
+                var severity = m.Severity == QmlMessageSeverity.Error ? QmlMessageSeverity.Warning : m.Severity;
+                messages.Add(m with { Severity = severity, File = m.File ?? file });
+            }
+            foreach (var p in parsed.Properties)
+                properties.Add(p with { DeclaredIn = p.DeclaredIn ?? file });
+            foreach (var s in parsed.Signals)
+                signals.Add(s with { DeclaredIn = s.DeclaredIn ?? file });
+        }
+
+        // ---- members -------------------------------------------------------------------------------------------------------
+
+        private static Dictionary<int, string> OwnLineComments(List<Comment> comments)
+        {
+            var map = new Dictionary<int, string>();
+            foreach (var c in comments)
+                if (c.OwnLine)
+                    map[c.Line] = c.Text.TrimStart('/').Trim();
+            return map;
+        }
+
+        // The "//" lines directly above a declaration (no blank line, no code in between); an empty "//" ends the block.
+        private static string? SummaryAbove(Dictionary<int, string> ownLine, int line)
+        {
+            List<string>? lines = null;
+            for (var l = line - 1; ownLine.TryGetValue(l, out var text) && text.Length > 0; l--)
+                (lines ??= new List<string>()).Add(text);
+            if (lines == null)
+                return null;
+            lines.Reverse();
+            return string.Join(' ', lines);
+        }
+
+        // Returns the index after the member that starts at s (the first token of a statement inside the root object), -1 on error.
+        private static int ScanMember(List<Token> t, int s, Stack<(char Open, int Line)> stack, out string? error, out int errorLine)
+        {
+            error = null;
+            errorLine = 0;
+            stack.Clear();
+            var prev = default(Token);
+            var prevClosedBrace = false;
+            for (var j = s; j < t.Count; j++)
+            {
+                var tok = t[j];
+                if (stack.Count == 0 && j > s)
+                {
+                    if (tok.IsPunct('}') || prev.IsPunct(';'))
+                        return j;
+                    var newLine = tok.Line > prev.Line;
+                    if (newLine && !Continues(prev, tok))
+                        return j;
+                    // "Item { } Item { }" on one line: a name after a closed block starts the next member.
+                    if (!newLine && prevClosedBrace && tok.Kind == TokenKind.Ident && !Continues(prev, tok))
+                        return j;
+                }
+
+                prevClosedBrace = false;
+                if (tok.Kind == TokenKind.Punct)
+                {
+                    var c = tok.Text[0];
+                    if (c is '(' or '[' or '{')
+                        stack.Push((c, tok.Line));
+                    else if (c is ')' or ']' or '}')
+                    {
+                        if (stack.Count == 0)
+                        {
+                            error = $"unexpected '{c}'";
+                            errorLine = tok.Line;
+                            return -1;
+                        }
+                        var (open, openLine) = stack.Pop();
+                        if (!(open == '(' && c == ')' || open == '[' && c == ']' || open == '{' && c == '}'))
+                        {
+                            error = $"'{c}' does not match the '{open}' on line {openLine}";
+                            errorLine = tok.Line;
+                            return -1;
+                        }
+                        prevClosedBrace = c == '}' && stack.Count == 0;
+                    }
+                }
+                prev = tok;
+            }
+
+            if (stack.Count > 0)
+            {
+                var (open, openLine) = stack.Peek();
+                error = $"unexpected end of file: the '{open}' on line {openLine} is never closed";
+                errorLine = openLine;
+                return -1;
+            }
+            return t.Count;
+        }
+
+        // The expression goes on after the line break between prev and next (an operator ends or starts the line).
+        private static bool Continues(Token prev, Token next)
+        {
+            if (next.Kind == TokenKind.Punct && "{([.?:+-*/%&|^<>=,".Contains(next.Text[0]))
+                return true;
+            if (next.Kind == TokenKind.Ident && next.Text is "else" or "catch" or "finally" or "instanceof" or "in")
+                return true;
+            return prev.Kind == TokenKind.Punct && "+-*/%&|^<>=!?:,.([".Contains(prev.Text[0]);
+        }
+
+        private static void ReadMember(
+            List<Token> t,
+            int s,
+            int e,
+            Dictionary<int, string> ownLine,
+            HashSet<string> inherited,
+            List<QmlPropertyDecl> properties,
+            List<QmlSignalDecl> signals,
+            List<QmlParseMessage> messages)
+        {
+            var line = t[s].Line;
+            var flags = QmlPropertyFlags.None;
+            var k = s;
+            for (; k < e && t[k].Kind == TokenKind.Ident; k++)
+            {
+                if (t[k].Text == "default") flags |= QmlPropertyFlags.Default;
+                else if (t[k].Text == "required") flags |= QmlPropertyFlags.Required;
+                else if (t[k].Text == "readonly") flags |= QmlPropertyFlags.ReadOnly;
+                else break;
+            }
+
+            if (k < e && t[k].IsIdent("property"))
+                ReadProperty(t, s, k, e, flags, SummaryAbove(ownLine, line), properties, messages);
+            else if (t[s].IsIdent("signal") && s + 1 < e && t[s + 1].Kind == TokenKind.Ident && !(s + 2 < e && t[s + 2].IsPunct(':')))
+                ReadSignal(t, s, e, SummaryAbove(ownLine, line), signals);
+            else if (t[s].Kind == TokenKind.Ident && s + 1 < e && t[s + 1].IsPunct(':') && inherited.Contains(t[s].Text))
+                Reassign(t, s, e, properties);
+        }
+
+        private static int TrimSemicolons(List<Token> t, int start, int end)
+        {
+            while (end > start && t[end - 1].IsPunct(';'))
+                end--;
+            return end;
+        }
+
+        private static void ReadProperty(
+            List<Token> t,
+            int s,
+            int propertyIndex,
+            int e,
+            QmlPropertyFlags flags,
+            string? summary,
+            List<QmlPropertyDecl> properties,
+            List<QmlParseMessage> messages)
+        {
+            var line = t[s].Line;
+            var m = propertyIndex + 1;
+            if (m >= e || t[m].Kind != TokenKind.Ident)
+            {
+                messages.Add(new QmlParseMessage(line, QmlMessageSeverity.Warning, "incomplete property declaration is skipped"));
+                return;
+            }
+
+            string type;
+            if (t[m].Text == "list" && m + 1 < e && t[m + 1].IsPunct('<'))
+            {
+                var sb = new StringBuilder("list");
+                m++;
+                while (m < e && !t[m].IsPunct('>'))
+                    sb.Append(t[m++].Text);
+                sb.Append('>');
+                m++;
+                type = sb.ToString();
+            }
+            else
+            {
+                type = t[m++].Text;
+                while (m + 1 < e && t[m].IsPunct('.') && t[m + 1].Kind == TokenKind.Ident)
+                {
+                    type += "." + t[m + 1].Text;
+                    m += 2;
+                }
+            }
+
+            if (m >= e || t[m].Kind != TokenKind.Ident)
+            {
+                messages.Add(new QmlParseMessage(line, QmlMessageSeverity.Warning, "incomplete property declaration is skipped"));
+                return;
+            }
+            var name = t[m++].Text;
+
+            if (!QmlTypes.TryMap(type, out var kind))
+            {
+                messages.Add(new QmlParseMessage(line, QmlMessageSeverity.Info, $"property '{name}' of type '{type}'"));
+                return;
+            }
+
+            var initializer = QmlInitializer.None;
+            var value = QmlTypes.TypeDefault(kind);
+            if (m < e && t[m].IsPunct(':'))
+            {
+                var end = TrimSemicolons(t, m + 1, e);
+                if (end > m + 1)
+                    (initializer, value) = QmlLiteral.Evaluate(kind, t, m + 1, end);
+            }
+
+            var decl = new QmlPropertyDecl(name, type, kind, flags, initializer, value, summary, line);
+            var index = properties.FindIndex(p => p.Name == name);
+            if (index >= 0)
+                properties[index] = decl;
+            else
+                properties.Add(decl);
+        }
+
+        // "name: value" in the root of a derived file replaces the initializer of an inherited property.
+        private static void Reassign(List<Token> t, int s, int e, List<QmlPropertyDecl> properties)
+        {
+            var name = t[s].Text;
+            var index = properties.FindIndex(p => p.Name == name);
+            if (index < 0)
+                return;
+            var end = TrimSemicolons(t, s + 2, e);
+            if (end <= s + 2)
+                return;
+            var (initializer, value) = QmlLiteral.Evaluate(properties[index].Kind, t, s + 2, end);
+            properties[index] = properties[index] with { Initializer = initializer, Default = value };
+        }
+
+        private static void ReadSignal(List<Token> t, int s, int e, string? summary, List<QmlSignalDecl> signals)
+        {
+            var name = t[s + 1].Text;
+            var args = ImmutableArray.CreateBuilder<QmlSignalArg>();
+            var m = s + 2;
+            if (m < e && t[m].IsPunct('('))
+            {
+                m++;
+                var from = m;
+                var depth = 0;
+                for (; m < e; m++)
+                {
+                    if (t[m].IsPunct('('))
+                        depth++;
+                    else if (t[m].IsPunct(')'))
+                    {
+                        if (depth == 0)
+                            break;
+                        depth--;
+                    }
+                    else if (t[m].IsPunct('<'))
+                        depth++;
+                    else if (t[m].IsPunct('>'))
+                        depth--;
+                    else if (t[m].IsPunct(',') && depth == 0)
+                    {
+                        AddArg(from, m);
+                        from = m + 1;
+                    }
+                }
+                AddArg(from, m);
+            }
+
+            var decl = new QmlSignalDecl(name, args.ToImmutable(), summary, t[s].Line);
+            var index = signals.FindIndex(x => x.Name == name);
+            if (index >= 0)
+                signals[index] = decl;
+            else
+                signals.Add(decl);
+
+            void AddArg(int from, int to)
+            {
+                if (to <= from)
+                    return;
+                string argName;
+                string argType;
+                if (to - from >= 3 && t[from + 1].IsPunct(':'))
+                {
+                    argName = t[from].Text;
+                    argType = Concat(from + 2, to);
+                }
+                else if (to - from >= 2)
+                {
+                    argName = t[to - 1].Text;
+                    argType = Concat(from, to - 1);
+                }
+                else
+                {
+                    argName = $"arg{args.Count + 1}";
+                    argType = t[from].Text;
+                }
+                args.Add(new QmlSignalArg(argName, argType, QmlTypes.TryMap(argType, out var kind) ? kind : null));
+            }
+
+            string Concat(int from, int to)
+            {
+                var sb = new StringBuilder();
+                for (var j = from; j < to; j++)
+                    sb.Append(t[j].Text);
+                return sb.ToString();
+            }
+        }
+    }
+}
