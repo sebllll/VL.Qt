@@ -14,8 +14,8 @@ class QQuickItem;
 
 namespace vlqt {
 
-class EffectChain;     // effectchain.h
-struct TransformState; // elements.h
+class EffectChain;     // effects/effect_chain.h
+struct TransformState; // elements/geometry.h
 
 /* State of one created element (owned by the Scene's id table). */
 struct ElementEntry {
@@ -32,10 +32,10 @@ struct ElementEntry {
     EffectChain* effectChain = nullptr; // SET_EFFECT_CHAIN: QObject child of item, null = no chain (layer off)
     QQuickItem* maskHost = nullptr;     // this node is attached as mask of a link of that element's chain (nullptr = not)
     bool maskHidden = false;            // attached, or detached and parked hidden under the root until REPARENT/DESTROY
-    bool autoSize = true;        // AUTO_SIZE (containers + Button, see applySize in elements.cpp)
+    bool autoSize = true;        // AUTO_SIZE (containers + Button, see applySize in geometry.cpp)
     float size[2] = {0, 0};      // last SIZE (w, h), so AUTO_SIZE can re-apply it
     quint32 transformEpoch = 0;  // counts SET TRANSFORM: a running drag re-bases its offset on 0 after one
-    bool debug = false;          // DEBUG: drawn by the window's debug overlay (debug.h), counted in Elements::debugCount
+    bool debug = false;          // DEBUG: drawn by the window's debug overlay (diagnostics/debug_overlay.h), counted in Elements::debugCount
     bool polled = false;         // Elements::pollsState: the poll reads media/error/clicks/user value of this type
     bool pollListed = false;     // its id is in MeasureState::pollIds (listPolled, scene/measure.h)
     quint32 measuredStamp = 0;   // MeasureState::measureStamp of the last poll that visited it (one visit per poll)

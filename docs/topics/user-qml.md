@@ -28,5 +28,5 @@ An element node like `QmlElement (File)` that loads a `.qml` file as a child of 
 ## Relevant files
 
 - `docs/architecture.md`, `docs/decisions/qtnative-deployment.md`
-- `src/VL.Qt.Native/elements.cpp`, `protocol.h`, `src/VL.Qt/Wire/Protocol.cs`
+- `src/VL.Qt.Native/elements/type_qml.cpp`, `protocol.h`, `src/VL.Qt/Wire/Protocol.cs`
 - `src/VL.Qt/ShaderNodeFactory*` (dynamic node set from files at runtime)

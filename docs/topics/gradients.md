@@ -14,5 +14,5 @@ Handover from the brainstorm on lines, paths and splines ([../decisions/paths.md
 - Protocol value type for stops; strokes with gradients too?
 
 ## Relevant files
-- `src/VL.Qt/Elements/Rectangle.cs`, `src/VL.Qt.Native/elements.cpp`, `src/VL.Qt.Native/protocol.h`
+- `src/VL.Qt/Elements/Rectangle.cs`, `src/VL.Qt.Native/elements/type_rectangle.cpp`, `src/VL.Qt.Native/protocol.h`
 - Qt: `C:\Qt\6.12.0\<arch>\qml\QtQuick\Shapes\plugins.qmltypes`

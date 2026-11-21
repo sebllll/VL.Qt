@@ -21,7 +21,7 @@
  * enabled), U64 = image resource (shared texture cache of qtimageitem.h). A sampler without texture samples a 1x1
  * transparent texture. Dynamic textures (layers) are updated in the node's preprocess like Qt's ShaderEffect does.
  *
- * Chain pass (setChainPass, effect chain, effectchain.cpp): the item is a pass of a SHADER link. QtNative sets
+ * Chain pass (setChainPass, effect chain, effects/effect_chain.cpp): the item is a pass of a SHADER link. QtNative sets
  * texelSize (vec2, 1 / pixel size of the source texture, read from the texture itself, also after the layer resized it in
  * preprocess) and dpr (float, effectiveDevicePixelRatio) when the fragment shader declares them; while the fragment slot has
  * no Ready content (id 0, loading, Failed without an earlier Ready one) Qt's default ShaderEffect fragment shader passes
@@ -88,7 +88,7 @@ public:
     // Chain pass: texelSize from the first of these samplers the fragment shader declares (none: source).
     void setTexelSamplers(std::vector<QByteArray> names);
     // Names of the table that are not reported as unknown when the shaders do not declare them.
-    void setOptionalUniforms(std::vector<QByteArray> names);
+    void setOptionalUniforms(const std::vector<QByteArray>& names);
     // The shown shaders declare a uniform or sampler of that name (false while passing through or not drawable).
     bool declares(const QByteArray& name) const;
     // A Ready fragment shader is shown (not the pass-through of a chain pass).
@@ -96,8 +96,9 @@ public:
 
     // SET_UNIFORMS (validated by the Scene): begin, one call per entry, end.
     void beginUniforms(bool clear);
-    // value points at the wire value (layout like SET); ref = resolved element for REF (nullptr = none).
-    void setUniform(const char* name, int nameLen, quint16 valueType, const unsigned char* value, QQuickItem* ref);
+    // value points at the wire value (layout like SET); ref = resolved element for REF (nullptr = none). Returns true if
+    // the entry is new or its value (or sampler state) differs from the stored one; endUniforms repaints only then.
+    bool setUniform(const char* name, int nameLen, quint16 valueType, const unsigned char* value, QQuickItem* ref);
     void endUniforms();
     // Layer mipmaps the samplers ask for, on the elements they read; also after the Groups got their proxy.
     void refreshLayerRequests(bool force = false);
@@ -178,8 +179,10 @@ private:
 
     std::vector<Uniform> m_uniforms;
     bool m_structureChanged = false;
+    bool m_uniformsChanged = false; // a setUniform since the last endUniforms changed something
     std::vector<std::pair<QByteArray, quint64>> m_samplerStates; // SAMPLER entries by sampler2D name, bit 63 = present
     std::vector<QPointer<QQuickItem>> m_layerItems; // elements this item holds a layer request on (layer mipmap)
+    std::vector<QQuickItem*> m_layerNow;            // refreshLayerRequests scratch (capacity survives)
     bool m_layersDirty = false;
     bool m_refsChanged = false;
 
