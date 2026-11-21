@@ -166,6 +166,7 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
     // their new sources, so nothing refers to them any more (see destroySubtree).
     deleteRetired();
     appliedSincePoll = true; // also a failed apply may have applied its first commands
+    lastApplyError = ApplyError{};
     // QML files are compiled once all commands of the frame have set their properties (also after a failed apply).
     struct BuildQml {
         Elements& elements;
@@ -173,9 +174,9 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
     } buildQml{elements};
     if (len < 0 || (len > 0 && !buf)) {
         err = "invalid buffer (null or negative length)";
+        lastApplyError = ApplyError{ApplyBadLength, 0, 0, 0, 0, "invalid buffer (null or negative length)"};
         return ApplyBadLength;
     }
-    lastApplyError = ApplyError{};
     int off = 0, index = 0;
     while (off < len) {
         quint16 op = 0;
@@ -434,8 +435,8 @@ int Scene::setStyle(const unsigned char* p, int plen, std::string& err)
 
 int Scene::setUniforms(const unsigned char* p, int plen, std::string& err)
 {
-    // Interface stub (task 1): validates the command completely (wire format: protocol.h head comment), applies
-    // nothing yet. Task 3 hands the entries to the ShaderEffect item (table by name, CLEAR = full send).
+    // Validates all entries first (wire format: protocol.h "SET_UNIFORMS"), then hands them to the ShaderItem;
+    // unknown names or wrong types become the element's error text (ShaderItem::rebuild).
     if (plen < VLQT_LIST_FIELDS_SIZE) {
         err = "payloadLen " + std::to_string(plen) + " too short for SET_UNIFORMS (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
