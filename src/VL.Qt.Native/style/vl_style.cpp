@@ -44,7 +44,7 @@ qreal VlStyleTrack::radius() const { return m_style->number(VlStyle::Slot::Track
 namespace {
 
 // Protocol field id of each slot, in the order of VlStyle::Slot.
-constexpr auto s_fieldOfSlot = std::to_array<quint16>({
+constexpr std::array<quint16, size_t(VlStyle::Slot::Count)> s_fieldOfSlot = {{
     VLQT_STYLE_FIELD_FRAME_COLOR, VLQT_STYLE_FIELD_BORDER_COLOR, VLQT_STYLE_FIELD_TEXT_COLOR,
     VLQT_STYLE_FIELD_INDICATOR_COLOR, VLQT_STYLE_FIELD_TRACK_COLOR, VLQT_STYLE_FIELD_TRACK_FILL_COLOR,
     VLQT_STYLE_FIELD_FRAME_RADIUS, VLQT_STYLE_FIELD_FRAME_BORDER_WIDTH, VLQT_STYLE_FIELD_FRAME_PADDING_X,
@@ -52,8 +52,16 @@ constexpr auto s_fieldOfSlot = std::to_array<quint16>({
     VLQT_STYLE_FIELD_TEXT_FONT_FAMILY, VLQT_STYLE_FIELD_TEXT_FONT_SIZE, VLQT_STYLE_FIELD_TEXT_FONT_WEIGHT,
     VLQT_STYLE_FIELD_INDICATOR_SIZE, VLQT_STYLE_FIELD_INDICATOR_RADIUS, VLQT_STYLE_FIELD_INDICATOR_BORDER_WIDTH,
     VLQT_STYLE_FIELD_TRACK_THICKNESS, VLQT_STYLE_FIELD_TRACK_RADIUS,
-});
-static_assert(s_fieldOfSlot.size() == size_t(VlStyle::Slot::Count), "one protocol field id per slot");
+}};
+// A list shorter than the slots would leave zeros (0 is no field id); a longer one does not compile.
+constexpr bool fieldOfSlotComplete()
+{
+    for (quint16 f : s_fieldOfSlot)
+        if (f == 0)
+            return false;
+    return true;
+}
+static_assert(fieldOfSlotComplete(), "one protocol field id per slot");
 
 bool isColorSlot(VlStyle::Slot slot) { return slot <= VlStyle::Slot::TrackFillColor; }
 
