@@ -167,6 +167,11 @@ int Scene::apply(const unsigned char* buf, int len, std::string& err)
     deleteRetired();
     appliedSincePoll = true; // also a failed apply may have applied its first commands
     lastApplyError = ApplyError{};
+    // QML files are compiled once all commands of the frame have set their properties (also after a failed apply).
+    struct BuildQml {
+        Elements& elements;
+        ~BuildQml() { elements.buildQml(); }
+    } buildQml{elements};
     if (len < 0 || (len > 0 && !buf)) {
         err = "invalid buffer (null or negative length)";
         lastApplyError = ApplyError{ApplyBadLength, 0, 0, 0, 0, "invalid buffer (null or negative length)"};
