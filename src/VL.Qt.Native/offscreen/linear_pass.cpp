@@ -1,4 +1,4 @@
-#include "linear_pass.h"
+#include "offscreen/linear_pass.h"
 
 #ifdef _WIN32
 #include <d3dcompiler.h>

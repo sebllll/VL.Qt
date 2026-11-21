@@ -52,7 +52,7 @@ public:
     /* Set by apply, cleared by poll: the next polish must run. */
     bool appliedSincePoll = true;
 
-    /* Debug overlay (debug.h): window-wide switch (vlqt_scene_set_debug) and the refresh after commands. The
+    /* Debug overlay (diagnostics/debug_overlay.h): window-wide switch (vlqt_scene_set_debug) and the refresh after commands. The
      * overlay is created on first use and shown while debugAll is on or any node has DEBUG (Elements::debugCount). */
     void setDebugAll(bool on);
     void updateDebug();

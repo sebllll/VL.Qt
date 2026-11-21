@@ -1,4 +1,4 @@
-#include "offscreen_glx.h"
+#include "offscreen/offscreen_glx.h"
 
 #include <dlfcn.h>
 #include <X11/Xlib.h>

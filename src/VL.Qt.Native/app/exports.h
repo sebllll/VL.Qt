@@ -1,5 +1,6 @@
 // The conventions of the exports (vlqt.h, top comment): the exception guard and the buffer answer. Shared by the export
-// files (app/, window/, diagnostics/, resources/), offscreen.cpp, the backends that fill caller buffers and the test exports (test/test_*.cpp).
+// files (app/, window/, diagnostics/, resources/), offscreen/offscreen_exports.cpp, the backends that fill caller buffers
+// and the test exports (test/test_*.cpp).
 #pragma once
 
 #include "../vlqt.h"

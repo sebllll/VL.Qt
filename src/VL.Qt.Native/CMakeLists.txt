@@ -155,15 +155,25 @@ target_sources(vlqt PRIVATE
     render_thread.h
 
     # offscreen/
-    offscreen.cpp
-    offscreen.h
+    offscreen/offscreen.h
+    offscreen/offscreen_scene.cpp
+    offscreen/offscreen_scene.h
+    offscreen/offscreen_input.cpp
+    offscreen/offscreen_exports.cpp
 
-    # diagnostics/
-    perf.cpp
-    perf.h
-    debug.cpp
-    debug.h
+    # diagnostics/: perf monitor (statistics, hooks, pages, graph and timeline items) and debug overlay
+    diagnostics/debug_overlay.cpp
+    diagnostics/debug_overlay.h
+    diagnostics/perf.h
     diagnostics/perf_exports.cpp
+    diagnostics/perf_items.cpp
+    diagnostics/perf_items.h
+    diagnostics/perf_monitor.cpp
+    diagnostics/perf_monitor.h
+    diagnostics/perf_pages.cpp
+    diagnostics/perf_pages.h
+    diagnostics/perf_stats.cpp
+    diagnostics/perf_stats.h
 
     # test/: the test exports of vlqt_test.h are in every build; only the SmokeTest and the unit tests call them
     test/test_hooks.h
@@ -230,9 +240,12 @@ if(WIN32)
     target_sources(vlqt PRIVATE
         # platform/: dialog keys for vvvv's message loop, DllMain
         platform/platform_win.cpp
-        # offscreen/: linear_pass converts QtTexture into SRGB and float textures; d3dcompiler_47.dll ships with Windows 10 and up
-        linear_pass.cpp
-        linear_pass.h
+        # offscreen/: the D3D11 binding and the frames of a scene; linear_pass converts QtTexture into SRGB and float textures;
+        # d3dcompiler_47.dll ships with Windows 10 and up
+        offscreen/offscreen_binding.cpp
+        offscreen/offscreen_render.cpp
+        offscreen/linear_pass.cpp
+        offscreen/linear_pass.h
         # test/: D3D11On12 test device of vlqt_test_device_lost; d3d12.dll is loaded at run time, not linked
         test/test_device.cpp
         test/test_device.h)
@@ -244,8 +257,8 @@ else()
         platform/platform_linux.cpp
         # offscreen/: X geometry of the offscreen platform's GLX drawable for window grabs. Uses the X11 headers that Qt's
         # OpenGL dependency brings (libgl-dev); libX11/libGL are looked up at run time, not linked.
-        offscreen_glx.cpp
-        offscreen_glx.h)
+        offscreen/offscreen_glx.cpp
+        offscreen/offscreen_glx.h)
 endif()
 set_target_properties(vlqt PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${VLQT_OUT_DIR}"   # vlqt.dll

@@ -7,7 +7,6 @@
 #include <QtCore/QSize>
 #include <QtCore/qnamespace.h>
 
-class PerfMonitor;
 class QQmlEngine;
 class QQuickWindow;
 struct vlqt_scene;
@@ -16,18 +15,17 @@ namespace vlqt {
 
 class Scene;
 class CloseFilter;
+class PerfMonitor;
 class UpdateGate;
 
-namespace offscreen {
-struct State;
-}
+struct OffscreenScene;
 
-// A window handle (void* of the vlqt_window_* exports): a window, or an offscreen scene (offscreen.cpp) whose
+// A window handle (void* of the vlqt_window_* exports): a window, or an offscreen scene (offscreen/offscreen_scene.h) whose
 // QQuickWindow is driven by a QQuickRenderControl. Both share engine, scene, gate and perf; a scene has only the
 // FocusRelease input filter (closeFilter etc. stay null) and its own part in offscreen.
 struct SceneHandle {
     QQuickWindow* window = nullptr;
-    vlqt::offscreen::State* offscreen = nullptr; // offscreen scene: render control and binding; null for a window
+    vlqt::OffscreenScene* offscreen = nullptr; // offscreen scene: render control and binding; null for a window
     CloseFilter* closeFilter = nullptr;
     QQmlEngine* engine = nullptr;
     vlqt::Scene* scene = nullptr; // apply/poll

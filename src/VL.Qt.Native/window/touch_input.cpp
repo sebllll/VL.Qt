@@ -1,6 +1,6 @@
-// Injected touch of offscreen scenes and of the test exports (sendTouch, cancelTouch, declared in offscreen.h). Qt GUI
+// Injected touch of offscreen scenes and of the test exports (sendTouch, cancelTouch, declared in offscreen/offscreen.h). Qt GUI
 // thread. Private Qt API: QMutableEventPoint and QPointingDevicePrivate, check on Qt updates.
-#include "offscreen.h"
+#include "offscreen/offscreen.h"
 #include "app/last_error.h"
 
 #include <QtCore/QCoreApplication>

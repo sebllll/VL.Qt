@@ -4,7 +4,7 @@
 // (None, Bool, Status, ...) that clash with Qt's headers.
 namespace vlqt::glx {
 
-// W1-21: Qt's offscreen platform renders every surface of a GL context into one hidden X window of the context (created
+// Qt's offscreen platform renders every surface of a GL context into one hidden X window of the context (created
 // 100 x 100) and resizes that window in makeCurrent (QOffscreenX11GLXContext::makeCurrent); its swapBuffers does
 // nothing. Mesa's software winsys (drisw: llvmpipe under WSL, no DRM device) reads the X window's size when the drawable
 // is first validated and again only after it is invalidated, which a bind does not do (dri_bind_context invalidates for

@@ -237,7 +237,7 @@ src/VL.Qt.Native/           # QtNative (C++)
   device.h/cpp              # shared D3D11 device, device loss
   resources/                # resource manager (resources.h, resource_*.h/cpp), pixel formats
   *_resource.h/cpp          # images, shaders, snapshots
-  perf.h/cpp                # perf counters/overlays
+  diagnostics/              # perf monitor (perf_*), F2/F5 overlays, debug overlay
 src/VL.Qt.Tests/            # C# unit tests
 src/VL.Qt.SmokeTest/        # native smoke + perf tests
 src/VL.Qt.Probe/            # one Qt window from C# without vvvv

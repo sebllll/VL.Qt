@@ -1,6 +1,6 @@
 // Internal seam between the product files and the test exports of vlqt_test.h (test/test_*.cpp). Not part of the C ABI.
 // Product files call into the tests only at the places marked "test hook:"; the window handle parts the tests read come
-// from window/window.cpp and app/fonts.cpp below and from offscreen.h (quickWindow, stateOf).
+// from window/window.cpp and app/fonts.cpp below and from offscreen/offscreen.h (quickWindow, stateOf).
 #pragma once
 
 #include <QtCore/QElapsedTimer>
@@ -10,11 +10,11 @@
 #include <utility>
 #include <vector>
 
-class PerfMonitor;
 class QQuickWindow;
 struct vlqt_scene;
 
 namespace vlqt {
+class PerfMonitor;
 class Scene;
 }
 

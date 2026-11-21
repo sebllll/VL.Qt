@@ -1,5 +1,5 @@
 #include "window/focus_release.h"
-#include "offscreen.h"
+#include "offscreen/offscreen.h"
 
 #include <QtCore/QEvent>
 #include <QtCore/QVariant>

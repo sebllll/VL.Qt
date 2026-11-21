@@ -1,7 +1,7 @@
 #include "scene/scene.h"
 #include "app/exports.h"
 #include "audio_tap.h"
-#include "debug.h"
+#include "diagnostics/debug_overlay.h"
 
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>

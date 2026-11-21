@@ -8,8 +8,8 @@
 #include "test/test_hooks.h"
 #include "scene/scene.h"
 #include "device.h"
-#include "offscreen.h"
-#include "perf.h"
+#include "offscreen/offscreen.h"
+#include "diagnostics/perf.h"
 #include "protocol.h"
 
 #include <QtCore/QCoreApplication>
@@ -110,7 +110,7 @@ void installWindowFilters(SceneHandle* w, QQuickWindow* win)
     win->installEventFilter(w->closeFilter);
     w->gate = new UpdateGate(win);
     win->installEventFilter(w->gate);
-    vlqt::device::lockFrames(win); // windows only: a scene's render thread locks itself (offscreen.cpp)
+    vlqt::device::lockFrames(win); // windows only: a scene's render thread locks itself (offscreen/offscreen_render.cpp)
     win->installEventFilter(new FullscreenKeys(win, asHandle(w)));
     win->installEventFilter(new FocusRelease(win));
     vlqt::test::installInputFilter(win); // test hook: VLQT_TEST_SYNTHETIC_INPUT (test/test_input.cpp)
@@ -330,10 +330,10 @@ void replaceWindow(SceneHandle* w, const QSurfaceFormat& f)
 
 } // namespace vlqt
 
-// Offscreen scenes: the scene handle part, declared in offscreen.h.
+// Offscreen scenes: the scene handle part, declared in offscreen/offscreen.h.
 namespace vlqt::offscreen {
 
-vlqt_scene* createHandle(QQuickWindow* window, State* state)
+vlqt_scene* createHandle(QQuickWindow* window, OffscreenScene* state)
 {
     auto* w = new SceneHandle();
     w->offscreen = state;
@@ -350,7 +350,7 @@ vlqt_scene* createHandle(QQuickWindow* window, State* state)
     return asHandle(w);
 }
 
-State* stateOf(vlqt_scene* handle)
+OffscreenScene* stateOf(vlqt_scene* handle)
 {
     return handle ? asWindow(handle)->offscreen : nullptr;
 }
