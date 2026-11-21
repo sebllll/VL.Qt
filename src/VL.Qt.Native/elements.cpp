@@ -5,7 +5,7 @@
 
 #include "qtimageitem.h"
 #include "qmlitem.h"
-#include "shader_item.h"
+#include "effects/shader_item.h"
 
 #include <QtCore/QFileInfo>
 #include <QtCore/QLoggingCategory>
@@ -328,7 +328,7 @@ bool setImageResource(Elements&, ElementEntry& n, const ResolvedProp&, const Val
     return static_cast<QtImageItem*>(n.item)->setResource(v.u, err);
 }
 
-// ShaderEffect (protocol.h "ShaderEffect"): ShaderItem (shader_item.h), own QQuickItem with a
+// ShaderEffect (protocol.h "ShaderEffect"): ShaderItem (effects/shader_item.h), own QQuickItem with a
 // QSGMaterialShader. SOURCE goes through the effect source bookkeeping (layer, hidden, cleared before deletion).
 QQuickItem* makeShaderEffect() { return new ShaderItem(); }
 

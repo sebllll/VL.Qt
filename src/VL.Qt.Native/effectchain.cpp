@@ -1,7 +1,7 @@
 #include "effectchain.h"
 
 #include "shader_resource.h"
-#include "shader_item.h"
+#include "effects/shader_item.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QUrl>

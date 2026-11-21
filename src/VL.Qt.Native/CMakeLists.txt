@@ -67,8 +67,12 @@ target_sources(vlqt PRIVATE
     # effects/ and user_qml/
     effectchain.cpp
     effectchain.h
-    shader_item.cpp
-    shader_item.h
+    effects/layer_requests.cpp
+    effects/layer_requests.h
+    effects/shader_item.cpp
+    effects/shader_item.h
+    effects/shader_material.cpp
+    effects/shader_material.h
     qmlitem.cpp
     qmlitem.h
 
@@ -77,8 +81,18 @@ target_sources(vlqt PRIVATE
     vlstyle.h
 
     # resources/
-    resources.cpp
-    resources.h
+    resources/pixel_format.cpp
+    resources/pixel_format.h
+    resources/resource_events.cpp
+    resources/resource_events.h
+    resources/resource_kind.h
+    resources/resource_manager.cpp
+    resources/resource_manager.h
+    resources/resource_registry.cpp
+    resources/resource_workers.cpp
+    resources/resource_workers.h
+    resources/resources.cpp
+    resources/resources.h
     image_resource.cpp
     image_resource.h
     qtimageitem.cpp

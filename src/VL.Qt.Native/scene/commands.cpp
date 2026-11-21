@@ -1,8 +1,8 @@
 #include "scene/commands.h"
 #include "effectchain.h"
+#include "effects/shader_item.h"
 #include "qmlitem.h"
 #include "scene/scene.h"
-#include "shader_item.h"
 #include "vlstyle.h"
 
 #include <QtCore/QRectF>
