@@ -6,7 +6,7 @@ namespace VL.Qt.Elements
     /// Video from a file (Qt MediaPlayer + VideoOutput, FFmpeg backend). Plays a file with Qt's own clock; position and
     /// duration come back through the feedback, 0 until the media is loaded.
     /// </summary>
-    public sealed class Video : Element
+    internal sealed class Video : Element
     {
         public Video() : base(ElementType.Video) { }
 

@@ -113,7 +113,7 @@ See [Images](images.md).
 
 ## Effects
 
-- `HowTo Chain Effects` — Blur, DropShadow, ColorAdjust and a shader (RGBSplit) on the Effect pin: one layer per run of MultiEffect nodes, a shader node splits the run, order matters
+- `HowTo Chain Effects` — Blur, DropShadow, ColorAdjust and a shader (RGBSplit) on the Effect pin: one layer per run of merged effects, a shader node splits the run, order matters
 - `HowTo Mask an Element` — any element (e.g. Text) as alpha mask, Inverted
 - `HowTo Add a Glow` — Glow and InnerShadow
 - `HowTo Blur An Element` — DirectionalBlur, ZoomBlur, RadialBlur

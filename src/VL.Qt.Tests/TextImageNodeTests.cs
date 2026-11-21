@@ -4,6 +4,7 @@ using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Lib.Reactive;
 using VL.Qt.Elements;
+using VL.Qt.Images;
 using VL.Qt.Nodes;
 using Image = VL.Qt.Elements.Image;
 

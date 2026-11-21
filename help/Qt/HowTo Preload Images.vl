@@ -240,7 +240,7 @@
             <Pin Id="nUjTUTQlppCpmFbysuL73s" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="Qn9HicSyOYsPDL2fujnzJQ" Comment="Fill Mode" Bounds="155,860,62,15" ShowValueBox="true" isIOBox="true" Value="Fit">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="ImageFillMode" />
             </p:TypeAnnotation>
           </Pad>

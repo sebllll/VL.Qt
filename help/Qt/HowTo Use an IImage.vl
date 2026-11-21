@@ -50,7 +50,7 @@
             </p:TypeAnnotation>
           </Pad>
           <Node Bounds="363,364,66,19" Id="7nNduIIJ7NU7mxmMkmnOiJ">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="ToQtImage" />
             </p:NodeReference>
@@ -142,7 +142,7 @@
             <Pin Id="a5S6tKCzKLgTd107FepnW1" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="Hhq1btI3WbAOIYl2MOvGab" Comment="Fill Mode" Bounds="496,545,62,15" ShowValueBox="true" isIOBox="true" Value="Fit">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="ImageFillMode" />
             </p:TypeAnnotation>
           </Pad>

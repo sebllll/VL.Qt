@@ -4,7 +4,7 @@
     /// Switch without text (QtQuick.Controls Switch, style Basic). The Toggle node with look Switch.
     /// User changes come from Qt's <c>toggled</c> as EVENT_VALUE (bool) into <see cref="Element.Feedback"/>; SET VALUE is never echoed.
     /// </summary>
-    public sealed class Switch : Element
+    internal sealed class Switch : Element
     {
         public Switch() : base(ElementType.Switch) { }
 

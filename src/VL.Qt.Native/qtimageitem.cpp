@@ -2,6 +2,7 @@
 
 #include "device.h"
 #include "image_resource.h"
+#include "resources/change_watch.h"
 #include "resources/resources.h"
 
 #include <QtCore/QLoggingCategory>
@@ -12,7 +13,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <unordered_set>
 #include <vector>
 
 #ifdef Q_OS_WIN
@@ -50,8 +50,7 @@ namespace {
 constexpr int kMaxTiles = 4096; // Tile: one image node per tile
 
 std::vector<std::weak_ptr<ImageTexture>> s_textures; // main thread
-std::unordered_set<QtImageItem*> s_items;            // every live item, main thread
-uint64_t s_epoch = 0;                                // res::contentEpoch seen by afterResourceFrame
+res::ChangeWatch<QtImageItem> s_watch;              // items by the id they wait for, main thread
 
 std::shared_ptr<ImageTexture> createTexture(QQuickWindow* window, const std::shared_ptr<res::image::ImageResource>& content)
 {
@@ -60,7 +59,7 @@ std::shared_ptr<ImageTexture> createTexture(QQuickWindow* window, const std::sha
     t->content = content;
     QRhi* rhi = window->rhi();
     // Content of an older device generation (device lost): its texture is gone, the replacement follows (the
-    // item gets it through contentEpoch). Never wrap it, never fall back to the CPU copy.
+    // item gets it through res::changedThisFrame). Never wrap it, never fall back to the CPU copy.
     if (content->generation() != device::generation())
         return nullptr;
     if (QRhiTexture* src = content->texture()) {
@@ -186,12 +185,11 @@ QtImageItem::QtImageItem(QQuickItem* parent) : QQuickItem(parent)
 {
     setFlag(ItemHasContents, true);
     connect(this, &QQuickItem::smoothChanged, this, &QQuickItem::update);
-    s_items.insert(this);
 }
 
 QtImageItem::~QtImageItem()
 {
-    s_items.erase(this);
+    s_watch.remove(m_wantId, this);
     if (m_wantId && m_wantId != m_shownId)
         res::releaseElement(m_wantId);
     if (m_shownId)
@@ -217,7 +215,9 @@ bool QtImageItem::setResource(uint64_t id, std::string& err)
     }
     if (m_wantId && m_wantId != m_shownId)
         res::releaseElement(m_wantId); // never shown: the one before stays
+    s_watch.remove(m_wantId, this);
     m_wantId = id;
+    s_watch.add(id, this);
     if (!id) {
         if (m_shownId)
             res::releaseElement(m_shownId);
@@ -246,13 +246,7 @@ void QtImageItem::advance()
 
 void QtImageItem::afterResourceFrame()
 {
-    const uint64_t epoch = res::contentEpoch();
-    if (epoch == s_epoch)
-        return;
-    s_epoch = epoch;
-    for (QtImageItem* item : s_items)
-        if (item->m_wantId)
-            item->advance();
+    s_watch.forChanged([](QtImageItem* item) { item->advance(); });
 }
 
 void QtImageItem::invalidateSceneGraph()

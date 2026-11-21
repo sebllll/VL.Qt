@@ -3,7 +3,7 @@
 namespace VL.Qt.Elements
 {
     /// <summary>Plain text, one style per element (Qt Text). Lengths in units.</summary>
-    public sealed class Text : Element
+    internal sealed class Text : Element
     {
         /// <summary>12 DIP: Qt's Windows default font (Segoe UI 9 pt at 96 dpi).</summary>
         public const float DefaultFontSize = 0.12f;

@@ -210,7 +210,7 @@ More: [Shaders](docs/effects-and-shaders.md#shaders) (annotations, the [Sampler 
 
 ## Stride texture
 
-`QtTexture` (category `Qt`, package `VL.Qt.Stride`) works like `Renderer [Qt]`, but opens no window: it renders the element tree offscreen and outputs a Stride `Texture` that you draw, mix or feed to TextureFX like any other texture. **Windows only and experimental** (the pins may still change).
+`QtTexture` (category `Stride.Textures.Source`, package `VL.Qt.Stride`) works like `Renderer [Qt]`, but opens no window: it renders the element tree offscreen and outputs a Stride `Texture` that you draw, mix or feed to TextureFX like any other texture. **Windows only and experimental** (the pins may still change).
 
 - **Pins:** `Input` (element tree), `Size` (pixels, default 1920×1080; 1 DIP = 1 pixel), `Space` (default `DIPTopLeft`; the device pixel ratio is 1, so `PixelTopLeft` is the same), `Clear Color` (default transparent, so the texture has an alpha channel), `Clear` (default on; off keeps the previous frame: trails and feedback, where the alpha of `Clear Color` is the fade strength per frame, 0 = no fade, which is the default here, see the help patch `HowTo Draw Trails`), `Format` (default `B8G8R8A8_UNorm_SRgb`; 8-bit RGBA/BGRA or `R16G16B16A16_Float`; SRgb and Float hold linear premultiplied values, UNorm the gamma-space values of a Qt window), `Enabled`, `Debug`; outputs `Output` (`Texture`) and `Error`.
 - **GPU only:** no readback to the CPU. Qt renders on its own D3D11 device into a texture shared with Stride's device; shared fences make Stride wait on the GPU until Qt has written. The texture is ready in the same frame, the scene is rendered only when it changed, and several `QtTexture` nodes do not block each other.

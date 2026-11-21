@@ -1,11 +1,12 @@
 ﻿using Stride.Core.Mathematics;
+using VL.Qt.Images;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Elements
 {
     /// <summary>
     /// One named shader input of a Shader: a member of the shader's uniform block or a sampler2D. Created by the
-    /// nodes of category Qt.Elements.Uniform (Float, Int, Bool, Vector2/3/4, Color, Matrix, Texture, Image).
+    /// nodes of category Qt.Elements.Shaders.Uniform (Float, Int, Bool, Vector2/3/4, Color, Matrix, Texture, Image).
     /// The name must match the shader (case sensitive); a wrong name or type shows as warning at the Shader.
     /// </summary>
     public sealed record Uniform

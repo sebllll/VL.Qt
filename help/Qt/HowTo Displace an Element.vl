@@ -44,10 +44,12 @@
             </p:ValueBoxSettings>
           </Pad>
           <Node Bounds="305,561,125,19" Id="KubJEyBJWcVSnLrzGv37Ox">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
@@ -192,7 +194,7 @@
             </p:TypeAnnotation>
           </Pad>
           <Node Bounds="240,770,34,19" Id="CeW3IjEebvFPKLqThHid3C">
-            <p:NodeReference LastCategoryFullName="Qt.Effects.MultiEffect" LastDependency="VL.Qt.vl">
+            <p:NodeReference LastCategoryFullName="Qt.Effects" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Blur" />
             </p:NodeReference>
@@ -236,7 +238,7 @@
             <Pin Id="PEGnpfYidvlM2Tf7cXROpl" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
           <Node Bounds="128,341,66,19" Id="TLVpHEey4FpN7eJqX9zorN">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.vl">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LoadImage" />
             </p:NodeReference>

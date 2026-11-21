@@ -99,6 +99,9 @@ public:
     void preprocess() override;
     int meshX = 0, meshY = 0;
     float w = -1, h = -1;
+    // 1x1 transparent for samplers without a texture: made at the node's first sync, freed with the node by the scene
+    // graph, so the material never points to a texture the GUI side deleted (docs/design/render-loop.md, "Item code").
+    std::unique_ptr<QSGTexture> transparent;
 };
 
 } // namespace vlqt

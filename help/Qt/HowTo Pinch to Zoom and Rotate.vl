@@ -214,7 +214,7 @@
             <Pin Id="NyA35KvYWfTzTqxXbjh4q8" Name="Output" Kind="StateOutputPin" />
           </Node>
           <Node Bounds="162,1090,66,19" Id="gx238lH3hb863wBabDIlSm">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LoadImage" />
             </p:NodeReference>

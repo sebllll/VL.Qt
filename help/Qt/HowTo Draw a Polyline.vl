@@ -253,12 +253,12 @@
             <Pin Id="y63q4SiohuN9nfKuRgwuHu" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
           <Pad Id="EoFCefFhxlSRSiuqEbV73e" Comment="Join" Bounds="422,490,62,15" ShowValueBox="true" isIOBox="true" Value="Round">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="ShapeJoin" />
             </p:TypeAnnotation>
           </Pad>
           <Pad Id="uQzFFiCS2pCr5QxYuhLY5T" Comment="Cap" Bounds="402,460,62,15" ShowValueBox="true" isIOBox="true" Value="Round">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="ShapeCap" />
             </p:TypeAnnotation>
           </Pad>

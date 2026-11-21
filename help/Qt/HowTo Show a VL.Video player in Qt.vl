@@ -85,7 +85,7 @@
             <Pin Id="D57LIzzop8HP9sOQoJVtAM" Name="Use Linear Texture Format" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="336,500,122,19" Id="6YprnB78mTz9u6ggdt1WMG">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="VideoSourceToQtImage" />
             </p:NodeReference>
@@ -180,7 +180,7 @@
             <Pin Id="kbxCu1UbmOtPzJS28gJJ0r" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="EK7nHp7ofFMMjmcg6AL82L" Comment="Fill Mode" Bounds="162,570,62,15" ShowValueBox="true" isIOBox="true" Value="Fit">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="ImageFillMode" />
             </p:TypeAnnotation>
           </Pad>

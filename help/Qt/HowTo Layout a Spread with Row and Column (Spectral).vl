@@ -349,7 +349,7 @@
             </p:TypeAnnotation>
           </Pad>
           <Pad Id="p6fMr92gSZ9TD4wYvoJt19" Comment="Child Alignment" Bounds="197,666,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="VerticalAlignment" />
             </p:TypeAnnotation>
           </Pad>
@@ -373,7 +373,7 @@
             <Pin Id="edevhsASGxabE6vJDd1nsr" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="74YLRZg2G8H78ZO6OCpwXG" Comment="Child Alignment" Bounds="524,675,93,15" ShowValueBox="true" isIOBox="true" Value="Center">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="HorizontalAlignment" />
             </p:TypeAnnotation>
           </Pad>

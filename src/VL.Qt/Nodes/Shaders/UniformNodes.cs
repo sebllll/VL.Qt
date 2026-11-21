@@ -3,16 +3,17 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Images;
 
 namespace VL.Qt.Nodes
 {
     /// <summary>
     /// Uniform values for the ShaderEffect: one node per value type, collect them into a spread for its
     /// Uniforms pin. The name must match the uniform block member or sampler2D in the shader (case sensitive).
-    /// Advanced, like ShaderEffect: shader files in a qtshaders/ folder become nodes with one pin per uniform. The Sampler node stays visible, shader nodes and effects use it too.
+    /// Advanced, like ShaderEffect: shader files in a qtshaders/ folder become nodes with one pin per uniform.
     /// </summary>
     [SkipCategory]
-    [Category(Categories.Elements + ".Uniform")]
+    [Category(Categories.Shaders + ".Uniform")]
     public static class UniformNodes
     {
         /// <summary>float uniform.</summary>
@@ -76,27 +77,5 @@ namespace VL.Qt.Nodes
         /// <param name="sampler">How the shader reads the image (filter, wrap, mip filter), from the Sampler node. Nothing = as the image is.</param>
         [Smell(SymbolSmell.Advanced)]
         public static Uniform Image(string name, QtImage? image, [Pin(Visibility = PinVisibility.Optional)] Sampler? sampler = null) => Uniform.FromImage(name, image, sampler);
-
-        /// <summary>
-        /// How a shader reads a texture: filter, wrap (address), mipmaps. Connect the output to
-        /// the Sampler pin of a texture input (Input Sampler of ShaderEffect, Texture, Image, Layer of Blend, Map of Displace,
-        /// image pins of shader nodes). The defaults are Qt's: Linear, Clamp, no mipmaps. Without a Sampler an element's layer is read Nearest and Clamp.
-        /// </summary>
-        /// <param name="filter">Minification and magnification: Linear (smooth) or Point (nearest texel, hard pixels).</param>
-        /// <param name="mipFilter">Mipmap level selection. Linear or Point also renders the sampled element's layer with mipmaps (an image needs mipmaps from LoadImage). Avoids aliasing when minified and lets a shader sample a blurred version with a texture bias.</param>
-        /// <param name="addressU">What lies outside 0..1 in x: Clamp (edge texel), Wrap (tiles) or Mirror (tiles, every second mirrored).</param>
-        /// <param name="addressV">What lies outside 0..1 in y.</param>
-        public static Sampler Sampler(
-            SamplerFilter filter = SamplerFilter.Linear,
-            [Pin(Visibility = PinVisibility.Optional)] SamplerMipFilter mipFilter = SamplerMipFilter.None,
-            SamplerAddress addressU = SamplerAddress.Clamp,
-            SamplerAddress addressV = SamplerAddress.Clamp)
-            => new()
-            {
-                Filter = filter,
-                MipFilter = mipFilter,
-                AddressU = addressU,
-                AddressV = addressV,
-            };
     }
 }
