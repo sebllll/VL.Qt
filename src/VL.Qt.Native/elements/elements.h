@@ -41,6 +41,7 @@ Q_DECLARE_LOGGING_CATEGORY(lcElements)
 
 namespace vlqt {
 
+class QmlItem;          // qmlitem.h
 struct EffectChainDesc;  // effects/effect_chain_desc.h
 struct EffectComponents; // effects/effect_chain.h
 class EffectChain;       // effects/effect_chain.h
@@ -89,6 +90,12 @@ public:
     bool isEffectSource(const QQuickItem* item) const { return sourceRefs.count(item) != 0; }
     /* Disables the layer of former sources, deferred by one frame. Called by the Scene before apply/poll. */
     void flushLayerOff();
+
+    /* QML SOURCE / RELOAD: a QmlItem is compiled and created when the apply is done (Scene::apply), not when the command
+     * comes, so that the SET_QML_PROPERTIES of the same frame are known at creation (required properties). The Scene calls
+     * buildQml at the end of every apply, also a failed one. */
+    void queueQmlBuild(QmlItem* item);
+    void buildQml();
 
     /* SET_EFFECT_CHAIN (protocol.h "Effect chain"): replaces the node's chain with the validated description
      * (links in application order, empty = layer off and chain gone, releaseEffectLayer). masks: mask item per link
@@ -161,6 +168,7 @@ private:
     QQmlComponent* matrixComponent = nullptr;
     std::unordered_map<const QQuickItem*, int> sourceRefs; // item -> number of effects using it as source
     std::vector<QPointer<QQuickItem>> layerOff; // former effect sources, layer disabled after the next frame
+    std::vector<QPointer<QQuickItem>> qmlBuilds; // QmlItems whose Source or Reload changed in this apply
     /* Mask frame of mask for node (protocol.h mask rule, setEffectChain); nullptr + err on failure. */
     QQuickItem* createMaskFrame(ElementEntry& node, QQuickItem* mask, QObject*& xf, std::string& err);
     /* Mask back next to frame, hidden; frame layer off + deleted after the next frame. */

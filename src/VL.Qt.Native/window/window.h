@@ -2,6 +2,8 @@
 // (borderless, fullscreen) and the window swap for a new MSAA count. Qt GUI thread. The exports are in window_exports.cpp.
 #pragma once
 
+#include <memory>
+
 class QIcon;
 class QQmlEngine;
 class QQuickWindow;
@@ -16,7 +18,7 @@ const QIcon& defaultIcon();
 // Initial geometry of a window before its first show (DIP; the rules are at the definition).
 void placeWindow(QQuickWindow* win, float x, float y, int width, int height);
 // QML engine with QtNative's imports.
-QQmlEngine* newEngine();
+std::unique_ptr<QQmlEngine> newEngine();
 // Event filters and frame lock of an on-screen window.
 void installWindowFilters(SceneHandle* w, QQuickWindow* win);
 // MSAA count of a window's swap chain for requested, clamped by the device (device::clampSamples).

@@ -1,8 +1,11 @@
 /* qmlitem.h - the QmlElement (protocol.h "QmlElement"): loads a user .qml file into the element tree.
  *
  * QmlItem is an item that holds the instance of the file's root (a QQuickItem) as its only child item. It
- *  - compiles the file from a file: URL on the engine of the scene (relative imports resolve), rebuilds the instance on
- *    QML_RELOAD (component cache of the engine cleared first) and applies every property set so far again,
+ *  - compiles the file from a file: URL on the engine of the scene (relative imports resolve) at the end of the frame that
+ *    changed QML_SOURCE or QML_RELOAD (build()), creates the root with the properties set so far as initial properties
+ *    (a `required property` has its value at creation; the watcher below is connected before the file's bindings run), rebuilds the instance on QML_RELOAD (component cache of the engine
+ *    cleared first) and when the file on disk changed since the last compile of the engine, and applies every property
+ *    set so far again,
  *  - sets properties of the root by name (SET_QML_PROPERTIES, QVariant conversion, errors stay with the name until the
  *    entry is set again or the file is reloaded),
  *  - watches the properties and signals declared in the root (QmlWatcher in qmlitem.cpp) and keeps their changes as wire
@@ -27,6 +30,7 @@
 #include <utility>
 #include <vector>
 
+class QQmlComponent;
 class QQmlEngine;
 class QQuickWindow;
 
@@ -63,11 +67,15 @@ public:
     explicit QmlItem(QQuickItem* parent = nullptr);
     ~QmlItem() override;
 
-    /* QML_SOURCE: absolute path, empty = nothing loaded. Same path again: nothing. */
+    /* QML_SOURCE: absolute path, empty = nothing loaded. Same path again: nothing. The instance is built by build(), not here. */
     void setSource(QQmlEngine* engine, const QString& path);
-    /* QML_RELOAD: a counter value different from the last one (initially 0, the C# default that is never sent) rebuilds the
-     * instance with a cleared component cache when a file is loaded; without a file the value is only recorded. */
+    /* QML_RELOAD: a counter value different from the last one (initially 0, the C# default that is never sent) asks build()
+     * for a new instance with a cleared component cache when a file is loaded; without a file the value is only recorded. */
     void setReload(qint32 counter);
+    /* A source or reload change waits for build(). The Scene calls it when the commands of a frame are applied, so that the
+     * properties of the frame are known when the root is created (createWithInitialProperties: required properties). */
+    bool buildPending() const { return m_buildPending; }
+    void build();
     /* AUTO_SIZE (see the head comment). */
     void setAutoSize(bool on);
     /* SET_QML_PROPERTIES: remembers the value (re-applied after a reload) and writes it to the root if one is loaded. A
@@ -93,7 +101,8 @@ private:
     void teardown();
     void retire(QQuickItem* old);
     void flushRetired();
-    void applyProperty(const QString& name, const QVariant& value);
+    /* Writes the value to the root; creating = the component whose root is not completed yet (initial property). */
+    void applyProperty(const QString& name, const QVariant& value, QQmlComponent* creating = nullptr);
     void setPropertyError(const QString& name, const QString& message);
     void syncSize();
     void syncImplicit();
@@ -102,6 +111,8 @@ private:
 
     QQmlEngine* m_engine = nullptr;
     QString m_path;
+    bool m_buildPending = false;
+    bool m_clearCache = false;      // the pending build comes from QML_RELOAD
     qint32 m_reload = 0;           // last QML_RELOAD counter applied (or recorded while nothing was loaded)
     QQuickItem* m_root = nullptr;   // the instance, child item, CppOwnership, deleted by this item
     QmlWatcher* m_watcher = nullptr;
