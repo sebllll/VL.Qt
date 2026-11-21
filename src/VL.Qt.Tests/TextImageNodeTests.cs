@@ -36,12 +36,12 @@ namespace VL.Qt.Tests
             VerticalAlignment v = VerticalAlignment.Top, TextWrap wrap = TextWrap.NoWrap, TextElide elide = TextElide.None,
             float lineHeight = 1, float letterSpacing = 0, TextAutofit autofit = TextAutofit.Fixed, Vector2? size = null,
             Interaction? interaction = null)
-            => _text.Update(size ?? DefaultSize, default, RectangleAnchor.Center, text, family, fontSize, weight, italic,
+            => (Element)_text.Update(size ?? DefaultSize, default, RectangleAnchor.Center, text, family, fontSize, weight, italic,
                 color ?? Color4.White, h, v, wrap, elide, lineHeight, letterSpacing, autofit, 1, false, false,
-                interaction, null, out _, out _);
+                interaction, null, true, out _, out _);
 
         private Element UpdateImage(QtImage? image = null, ImageFillMode fill = ImageFillMode.Stretch, bool smooth = true)
-            => _image.Update(DefaultSize, default, RectangleAnchor.Center, image, fill, smooth, 1, false, false, null, null, out _, out _);
+            => (Element)_image.Update(DefaultSize, default, RectangleAnchor.Center, image, fill, smooth, 1, false, false, null, null, true, out _, out _);
 
         private static QtImage NewImage(ulong id) => new(new ImageResource(id));
 
@@ -63,7 +63,7 @@ namespace VL.Qt.Tests
         {
             var e = (Text)_text.Update(DefaultSize, default, RectangleAnchor.Center, null!, null!, 0.12f, FontWeight.Normal, false,
                 Color4.White, TextHorizontalAlignment.Left, VerticalAlignment.Top, TextWrap.NoWrap, TextElide.None, 1, 0,
-                TextAutofit.Fixed, 1, false, false, null, null, out _, out _);
+                TextAutofit.Fixed, 1, false, false, null, null, true, out _, out _);
             Assert.That(e.Content, Is.EqualTo(""));
             Assert.That(e.FontFamily, Is.EqualTo(""));
         }
@@ -117,7 +117,7 @@ namespace VL.Qt.Tests
             _text.Core.Feedback[0].MeasuredSize = new Vector2(0.5f, 0.15f);
             _text.Update(DefaultSize, default, RectangleAnchor.Center, "Text", "", 0.12f, FontWeight.Normal, false, Color4.White,
                 TextHorizontalAlignment.Left, VerticalAlignment.Top, TextWrap.NoWrap, TextElide.None, 1, 0, TextAutofit.Fixed, 1,
-                false, false, null, null, out var measured, out _);
+                false, false, null, null, true, out var measured, out _);
             Assert.That(measured, Is.EqualTo(new Vector2(0.5f, 0.15f)));
         }
 
@@ -142,7 +142,7 @@ namespace VL.Qt.Tests
             Assert.That(UpdateImage(NewImage(1)), Is.Not.SameAs(a), "another QtImage (same resource) = new image");
 
             void Call() => _image.Update(DefaultSize, default, RectangleAnchor.Center, image, ImageFillMode.Stretch, true, 1,
-                false, false, null, null, out _, out _);
+                false, false, null, null, true, out _, out _);
             for (int k = 0; k < 100; k++) Call();
             Assert.That(Allocations.Fewest(Call), Is.EqualTo(0));
         }

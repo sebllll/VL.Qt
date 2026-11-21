@@ -1,3 +1,4 @@
+// Private Qt API: QQuickItemPrivate::explicitVisible, QQuickShaderEffectSource (frame proxy); check on Qt updates (list: elements/elements.h).
 #include "elements/group_item.h"
 #include "elements/element_types.h"
 #include "elements/geometry.h"
@@ -119,8 +120,8 @@ QQuickItem* makeGroup() { return new GroupItem(); }
 
 void setGroupAutoSize(QQuickItem* item, bool on)
 {
-    if (auto* g = dynamic_cast<GroupItem*>(item))
-        g->setAutoSize(on);
+    if (isGroup(item))
+        static_cast<GroupItem*>(item)->setAutoSize(on);
 }
 
 // A child's matrix changed: its parent Group recomputes the frame (no-op for other parents).

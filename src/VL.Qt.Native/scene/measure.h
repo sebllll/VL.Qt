@@ -40,6 +40,9 @@
  *                   cx/cy = client top-left (QWindow::position, DIP), for the Client Bounds output. */
 #pragma once
 
+#include "user_qml/qml_wire.h"
+
+#include <QtCore/QByteArray>
 #include <QtCore/QObject>
 #include <QtCore/QPoint>
 #include <QtCore/QString>
@@ -84,6 +87,11 @@ struct MeasureState {
      * nodes drop out in the next poll. pollStamp skips a second entry of a reused id. */
     std::vector<quint32> pollIds;
     quint32 pollStamp = 0;
+    /* Scratch of collectQml (one QmlElement at a time): the taken events and the payload being built. Members so that
+     * their capacity is reused from poll to poll (clear() of a vector and resize(0) of a QByteArray keep it). */
+    std::vector<QmlPropertyEvent> qmlProperties;
+    std::vector<QmlSignalEvent> qmlSignals;
+    QByteArray qmlPayload;
 };
 
 /* BIND of an element: stores the handle; a different handle resets the sent state. Flags are ignored. */

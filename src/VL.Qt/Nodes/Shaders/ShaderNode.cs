@@ -32,8 +32,9 @@ namespace VL.Qt.Nodes
             Element? Input, ulong FragmentShaderId, ulong VertexShaderId, Spread<Uniform>? Uniforms, bool Blending,
             Int2 MeshResolution, bool AutoSize, Sampler? InputSampler);
 
-        private readonly ElementNode<Shader, Props> _node;
+        private readonly ElementNodeCore<Shader, Props> _node;
         private readonly ShaderSlot _fragment, _vertex;
+        private readonly ElementInput _input;
         private readonly NodeErrors? _errors;
         private Spread<Uniform>? _checkedUniforms;
         private string _uniformProblems = string.Empty, _shownUniformProblems = string.Empty;
@@ -42,7 +43,8 @@ namespace VL.Qt.Nodes
         public ShaderNode(NodeContext nodeContext)
         {
             var client = ResourceClient.ForApp(nodeContext.AppHost);
-            _node = new ElementNode<Shader, Props>(nodeContext, Create);
+            _node = new ElementNodeCore<Shader, Props>(nodeContext, s_create);
+            _input = new ElementInput(_node.Messages);
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
             _errors = new NodeErrors(nodeContext);
@@ -57,22 +59,14 @@ namespace VL.Qt.Nodes
         /// <summary>For tests: a client on a fake resource API; warnings go to <paramref name="addWarning"/>, nothing is logged.</summary>
         internal ShaderNode(ResourceClient? client, Func<string, IDisposable> addWarning)
         {
-            _node = new ElementNode<Shader, Props>(addWarning, Create);
+            _node = new ElementNodeCore<Shader, Props>(addWarning, s_create);
+            _input = new ElementInput(_node.Messages);
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
         }
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, Shader> Create = static (c, p, slot) => new Shader
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Shader> s_create = static (c, p, slot) => new Shader(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
-                Feedback = slot,
                 Input = p.Input,
                 InputSampler = p.InputSampler,
                 FragmentShaderId = p.FragmentShaderId,
@@ -83,7 +77,7 @@ namespace VL.Qt.Nodes
                 AutoSize = p.AutoSize,
             };
 
-        internal ElementNode<Shader, Props> Core => _node;
+        internal ElementNodeCore<Shader, Props> Core => _node;
 
         /// <summary>Describes the shader effect. A new description is only created when an input changes.</summary>
         /// <param name="input">Element sampled as sampler2D "source" (hidden itself, only the effect output is drawn). Unconnected = generative shader.</param>
@@ -104,12 +98,13 @@ namespace VL.Qt.Nodes
         /// <param name="debug">Debug overlay for this element only (not its children; the Renderer's Debug shows all).</param>
         /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
         /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
+        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
         /// <param name="measuredSize">Implicit size reported by Qt, in units (last frame).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         /// <param name="error">Shader load errors and uniform problems (unknown name, wrong type), empty if none.</param>
         [return: Pin(Name = "Output")]
-        public Element Update(
-            Element? input,
+        public IElement Update(
+            IElement? input,
             [Pin(Visibility = PinVisibility.Optional)] Sampler? inputSampler,
             [DefaultValue(ShaderTemplates.Fragment)] string? fragmentCode,
             Path? fragmentShader,
@@ -127,6 +122,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds,
             out string error)
@@ -140,9 +136,9 @@ namespace VL.Qt.Nodes
                 _uniformProblems = CheckUniforms(uniforms);
             }
             var element = _node.Describe(
-                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(input, fragmentId, vertexId, uniforms, blending, mesh, autoSize, inputSampler));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
+                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
+                new Props(_input.Update(input), fragmentId, vertexId, uniforms, blending, mesh, autoSize, inputSampler),
+                out measuredSize, out sceneBounds);
             error = UpdateError();
             return element;
         }
@@ -193,6 +189,7 @@ namespace VL.Qt.Nodes
             _fragment.Dispose();
             _vertex.Dispose();
             _errors?.Dispose();
+            _input.Dispose();
             _node.Dispose();
         }
     }

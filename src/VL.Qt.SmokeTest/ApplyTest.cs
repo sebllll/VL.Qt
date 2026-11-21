@@ -365,7 +365,12 @@ public static class ApplyTest
         var ev = new byte[128];
         var needRc = NativeCalls.Poll(w, Span<byte>.Empty, out var need);
         s.Check(needRc == (int)Native.Result.BufferTooSmall && need == 20 + 28 + 40, $"poll: cap 0 -> buffer too small, required {need} ({needRc})");
+        // The poll collects once: a change between the too-small call and its retry is not collected into the retry,
+        // so the retry returns exactly the required size and the change arrives with the next poll (NCMD-04).
+        s.Check(Apply(b.Clear().Size(1, 123, 45)) == 0, "poll: size change of the bound item between the two calls");
         s.Check(NativeCalls.Poll(w, ev) == 20 + 28 + 40, "poll: measured + scene bounds of the bound item + window geometry");
+        var later = NativeCalls.Poll(w, ev);
+        s.Check(later > 0 && later <= 20 + 28, $"poll: the change made between the two calls is delivered by the next poll ({later})");
         s.Check(NativeCalls.Poll(w, ev) == 0, "poll: 0 bytes (nothing changed)");
         s.Check(NativeCalls.Poll(SceneHandle.Null, ev) == (int)Native.Result.NullHandle, "poll: null window -> NullHandle");
 

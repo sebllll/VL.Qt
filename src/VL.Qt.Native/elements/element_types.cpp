@@ -1,3 +1,4 @@
+// Private Qt API: QQuickRectangle, QQuickText (typed color setters); check on Qt updates (list: elements/elements.h).
 #include "elements/element_types.h"
 
 #include <QtCore/QRectF>

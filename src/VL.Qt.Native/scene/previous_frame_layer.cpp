@@ -1,3 +1,4 @@
+// Private Qt API: QQuickShaderEffectSource (the recursive layer); check on Qt updates (list: elements/elements.h).
 #include "scene/previous_frame_layer.h"
 
 #include <QtCore/QObject>

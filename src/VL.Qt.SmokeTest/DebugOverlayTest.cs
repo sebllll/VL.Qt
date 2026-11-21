@@ -2,8 +2,10 @@
 using NUnit.Framework;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Threading;
 using Stride.Core.Mathematics;
 using VL.Qt.Interop;
 using VL.Qt.Wire;
@@ -14,7 +16,8 @@ using static Pixels;
 // Debug overlay: VLQT_PROPERTY_DEBUG per element and vlqt_scene_set_debug for the whole window. The overlay is drawn
 // by QtNative on top of the scene (frame cyan, origin magenta, anchor yellow, overflow red, implicit orange, ...). Checks: layout, Measured Size,
 // Scene Bounds (Auto Size included) and hit-testing are identical with and without debug; the overlay appears in the
-// grab and disappears again. Grabs: <OutDir>/30_debug_off.png, 30_debug_overlay.png, 30_debug_element.png.
+// grab and disappears again; its repaints are no scene change, and it follows a layout change without an apply (NDIAG-09).
+// Grabs: <OutDir>/30_debug_off.png, 30_debug_overlay.png, 30_debug_element.png, 30_debug_follow_*.png.
 [TestFixture, NonParallelizable]
 public static class DebugOverlayTest
 {
@@ -22,6 +25,17 @@ public static class DebugOverlayTest
     private static uint Child(uint parent, uint i) => 10 + parent * 10 + i;
     private const uint HHover = 100; // element feedback of the green column child
     private const uint HoverId = 900, HHoverHandler = 101; // its Hover handler and that handler's feedback
+    private const uint FollowCol = 40, FollowQml = 41; // Column whose child grows by a QML timer, without a command
+
+    // 40x40, grows to 200 wide after 1 s of wall time: the Column re-lays out without an apply.
+    private const string GrowQml =
+        "import QtQuick\n\n" +
+        "Rectangle {\n" +
+        "    implicitWidth: 40\n" +
+        "    implicitHeight: 40\n" +
+        "    color: \"#808080\"\n" +
+        "    Timer { interval: 1000; running: true; onTriggered: parent.implicitWidth = 200 }\n" +
+        "}\n";
 
     private readonly record struct Rec(ushort Event, uint Handle, byte[] Payload);
 
@@ -184,10 +198,12 @@ public static class DebugOverlayTest
             s.Check(!Near(a, 450, 330, IsCyan) && !Near(a, 300, 60, IsCyan) && !Near(a, 60, 30, IsCyan), "debug: other elements and children not drawn (not recursive)");
         }
 
-        // Window-wide: everything.
+        // Window-wide: everything. The overlay repaints, the scene does not change: the change count stays.
+        long changes = Native.vlqt_scene_get_change_count(w);
         s.Check(Native.vlqt_scene_set_debug(w, 1) == 0 && Native.vlqt_scene_get_debug(w) == 1, "debug: set_debug(1)");
         s.Check(Native.vlqt_scene_set_debug(SceneHandle.Null, 1) == Native.Result.NullHandle, "debug: set_debug(null) -1");
         recs = Frame(2);
+        s.Check(Native.vlqt_scene_get_change_count(w) == changes, $"debug: overlay repaint is no scene change ({changes} -> {Native.vlqt_scene_get_change_count(w)})");
         s.Check(!recs.Exists(r => r.Event is Protocol.EventId.Measured or Protocol.EventId.SceneBounds),
             $"debug: window debug changes no measurement ({recs.Count} records)");
         var hoverOn = Hover();
@@ -214,6 +230,45 @@ public static class DebugOverlayTest
         s.Check(recs.Exists(r => r.Event == Protocol.EventId.Measured && r.Handle == Col), "debug: measured still reported with debug on");
         cmd.SetPlace(Child(Col, 2), 0, 0, 140, 40);
         CheckApply("resize child back");
+        Frame(2);
+
+        // Layout change without an apply: a QML child grows by a timer, the Column re-lays out, the frame follows.
+        var dir = Path.Combine(s.OutDir, "debug");
+        Directory.CreateDirectory(dir);
+        var growFile = Path.Combine(dir, "Grow.qml");
+        File.WriteAllText(growFile, GrowQml);
+        cmd.Create(FollowCol, Protocol.ElementType.Column);
+        cmd.SetPlace(FollowCol, 450, 480, 0, 0);
+        cmd.Reparent(FollowCol, 0, 1000);
+        cmd.Create(FollowQml, Protocol.ElementType.Qml);
+        cmd.SetString(FollowQml, Protocol.PropertyId.QmlSource, growFile);
+        cmd.SetBool(FollowQml, Protocol.PropertyId.AutoSize, true);
+        cmd.Reparent(FollowQml, FollowCol, 1000);
+        cmd.Bind(FollowCol, FollowCol);
+        var grown = Stopwatch.StartNew();
+        CheckApply("growing column");
+        Frame(3);
+        using (var a = s.Grab(w, "30_debug_follow_before.png"))
+        {
+            if (grown.ElapsedMilliseconds < 900)
+                s.Check(Near(a, 490, 500, IsCyan) && !Near(a, 650, 500, IsCyan), $"debug: frame of the column before it grows ({Px(a, 490, 500)}, {Px(a, 650, 500)})");
+            else
+                s.Info($"debug: frame before the growth not checked ({grown.ElapsedMilliseconds} ms passed)");
+        }
+        bool relaid = false;
+        while (!relaid && grown.ElapsedMilliseconds < 5000)
+        {
+            Thread.Sleep(20);
+            // Only after the timer: a Measured of a late QML load is no growth.
+            relaid = Frame(1).Exists(r => r.Event == Protocol.EventId.Measured && r.Handle == FollowCol) && grown.ElapsedMilliseconds >= 1000;
+        }
+        s.Check(relaid, $"debug: column re-laid out without an apply ({grown.ElapsedMilliseconds} ms)");
+        Frame(2);
+        using (var a = s.Grab(w, "30_debug_follow_after.png"))
+            s.Check(Near(a, 650, 500, IsCyan) && !Near(a, 490, 500, IsCyan), $"debug: frame follows the new layout without an apply ({Px(a, 650, 500)}, {Px(a, 490, 500)})");
+        cmd.Destroy(FollowQml);
+        cmd.Destroy(FollowCol);
+        CheckApply("destroy growing column");
         Frame(2);
 
         // Off again: overlay gone, measurements identical to the baseline.

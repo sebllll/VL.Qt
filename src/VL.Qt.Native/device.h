@@ -61,6 +61,9 @@ void* nativeDevice(QRhi* rhi);
 // has one); null = the upload QRhi; without any QRhi (Linux before the first expose) the list 1/2/4/8. Qt's own clamp
 // only logs a warning, so callers clamp here and report the result. Main thread.
 int clampSamples(int requested, int dxgiFormat, QRhi* rhi);
+// Format of a window's swap chain for clampSamples: DXGI_FORMAT_R8G8B8A8_UNORM (Qt's SDR swap chain on D3D11), 0 on
+// other platforms.
+int windowSwapChainFormat();
 
 // Twice per pump (start and end): releases retired devices, notices a removed shared device (warning with
 // GetDeviceRemovedReason) and rebuilds. Cheap, allocates nothing while the device is fine.

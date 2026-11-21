@@ -2,6 +2,7 @@
 #include "app/app.h"
 #include "app/exports.h"
 #include "app/log.h"
+#include "platform/platform.h"
 #include "test/test_hooks.h"
 #include "vlqt.h"
 
@@ -11,7 +12,6 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QSet>
 #include <QtCore/QStringList>
-#include <QtCore/QThread>
 #include <QtGui/QFont>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QFontInfo>
@@ -24,6 +24,7 @@
 using vlqt::fail;
 using vlqt::g_app;
 using vlqt::guarded;
+using vlqt::guardedGui;
 using vlqt::log::emitLog;
 
 Q_LOGGING_CATEGORY(lcFont, "vlqt.font")
@@ -34,7 +35,7 @@ namespace {
 // Thread: QFontDatabase app fonts and every text layout belong to the Qt GUI thread, which is the vvvv main thread
 // (vlqt_app_init, basic render loop, no render thread). Adding there means the next layout in the same pump already
 // sees the family, so no queue to another thread is needed; calls from other threads are rejected.
-// Key: canonical path + size + last-modified time. Qt reads the file when it is registered; a later change on disk is
+// Key: path key (canonical path, case-folded on Windows: platform::pathKey) + size + last-modified time. Qt reads the file when it is registered; a later change on disk is
 // not watched, but the next add after a change (path edit, app restart) registers the new version as its own entry.
 // A deleted file keeps working until its entry is removed.
 // Removal: refs 0 only marks the entry; fontsEndFrame removes it at the end of the pump if nobody took it again, so a
@@ -119,19 +120,15 @@ VLQT_API int vlqt_font_add(const char* utf8Path, unsigned long long* outHandle, 
         if (const int rc = vlqt::beginBuffer(families, familiesCap, written, required); rc != VLQT_OK)
             return rc;
         if (!g_app)
-            return fail(VLQT_ERR_NOT_INITIALIZED, "font_add: app not initialized");
-        if (QThread::currentThread() != g_app->thread())
-            return fail(VLQT_ERR_WRONG_THREAD, "font_add: not on the Qt GUI thread (the vvvv main thread)");
+            return fail(VLQT_ERR_NOT_INITIALIZED, "vlqt_font_add: app not initialized");
+        if (const int rc = vlqt::checkGuiThread("vlqt_font_add"); rc != VLQT_OK)
+            return rc;
         if (!utf8Path || !outHandle)
-            return fail(VLQT_ERR_BAD_ARGUMENT, "font_add: null argument");
+            return fail(VLQT_ERR_BAD_ARGUMENT, "vlqt_font_add: null argument");
         const QFileInfo info(QString::fromUtf8(utf8Path));
         if (!info.isFile())
             return fail(VLQT_ERR_IO, QStringLiteral("font file not found: %1").arg(info.filePath()));
-        QString key = info.canonicalFilePath();
-#ifdef _WIN32
-        key = key.toLower(); // NTFS paths are case-insensitive
-#endif
-        key += QStringLiteral("|%1|%2").arg(info.size()).arg(info.lastModified().toMSecsSinceEpoch());
+        const QString key = vlqt::platform::pathKey(info) + QStringLiteral("|%1|%2").arg(info.size()).arg(info.lastModified().toMSecsSinceEpoch());
         unsigned long long handle = 0;
         FontEntry* entry = nullptr;
         for (auto& [h, e] : g_fonts)
@@ -171,12 +168,10 @@ VLQT_API int vlqt_font_add(const char* utf8Path, unsigned long long* outHandle, 
 
 VLQT_API int vlqt_font_release(unsigned long long handle)
 {
-    return guarded([&]() -> int {
-        if (g_app && QThread::currentThread() != g_app->thread())
-            return fail(VLQT_ERR_WRONG_THREAD, "font_release: not on the Qt GUI thread (the vvvv main thread)");
+    return guardedGui("vlqt_font_release", [&]() -> int {
         FontEntry* e = findFont(handle);
         if (!e || e->refs <= 0)
-            return fail(VLQT_ERR_UNKNOWN_ID, "font_release: unknown handle " + std::to_string(handle));
+            return fail(VLQT_ERR_UNKNOWN_ID, "vlqt_font_release: unknown handle " + std::to_string(handle));
         e->refs--; // removed at the end of the pump if still 0 (fontsEndFrame)
         return VLQT_OK;
     });

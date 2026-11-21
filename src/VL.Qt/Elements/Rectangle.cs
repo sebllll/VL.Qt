@@ -1,4 +1,5 @@
 ﻿using Stride.Core.Mathematics;
+using VL.Qt.Nodes;
 
 namespace VL.Qt.Elements
 {
@@ -6,6 +7,7 @@ namespace VL.Qt.Elements
     internal sealed class Rectangle : Element
     {
         public Rectangle() : base(ElementType.Rectangle) { }
+        internal Rectangle(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Rectangle, common, feedback) { }
 
         /// <summary>Qt default: white.</summary>
         public Color4 Fill { get; init; } = Color4.White;

@@ -1,8 +1,11 @@
+// Private Qt API: QQuickMatrix4x4 (setMatrix without QVariant); check on Qt updates (list: elements/elements.h).
 #include "elements/geometry.h"
+#include "effects/shader_item.h"
 #include "elements/elements.h"
 #include "elements/group_item.h"
 #include "user_qml/qml_item.h"
 
+#include <QtCore/Qt>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQml/QQmlListReference>
@@ -72,10 +75,10 @@ bool setTransform(Elements& els, ElementEntry& n, const ResolvedProp&, const Val
 // Outside Row/Column it places the item (x/y = -anchor) and is the pivot of TRANSFORM, inside only the pivot.
 bool setAnchor(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
-    const int h = v.i & 0x0F, vert = v.i & 0xF0;
-    const float fx = h == 0x1 ? 0.f : h == 0x2 ? 1.f : h == 0x4 ? 0.5f : -1.f;
-    const float fy = vert == 0x20 ? 0.f : vert == 0x40 ? 1.f : vert == 0x80 ? 0.5f : -1.f;
-    if (fx < 0 || fy < 0 || (v.i & ~0xFF)) {
+    const int h = v.i & Qt::AlignHorizontal_Mask, vert = v.i & Qt::AlignVertical_Mask;
+    const float fx = h == Qt::AlignLeft ? 0.f : h == Qt::AlignRight ? 1.f : h == Qt::AlignHCenter ? 0.5f : -1.f;
+    const float fy = vert == Qt::AlignTop ? 0.f : vert == Qt::AlignBottom ? 1.f : vert == Qt::AlignVCenter ? 0.5f : -1.f;
+    if (fx < 0 || fy < 0 || (v.i & ~(Qt::AlignHorizontal_Mask | Qt::AlignVertical_Mask))) {
         err = "anchor must be one horizontal and one vertical Qt::AlignmentFlag";
         return false;
     }
@@ -91,6 +94,16 @@ bool setDebug(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& 
     n.debug = v.b;
     return true;
 }
+// VISIBLE (Enabled pin): off takes the item out of the scene (not drawn, no input, no space in Row/Column). An item that
+// QtNative hides itself (a child of a SHADER, drawn through its layer; a parked mask or chain texture) stays hidden:
+// the value is only remembered, Scene::reparent applies it when the item comes back into the tree.
+bool setVisible(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
+{
+    n.enabled = v.b;
+    if (!n.maskHidden && !qobject_cast<const ShaderItem*>(n.item->parentItem()))
+        n.item->setVisible(v.b);
+    return true;
+}
 
 } // namespace
 
@@ -103,6 +116,7 @@ const std::vector<PropDef>& commonProps()
         {VLQT_PROPERTY_CLIP, VLQT_VALUE_TYPE_BOOL, setClip, nullptr},
         {VLQT_PROPERTY_ANCHOR, VLQT_VALUE_TYPE_I32, setAnchor, nullptr},
         {VLQT_PROPERTY_DEBUG, VLQT_VALUE_TYPE_BOOL, setDebug, nullptr},
+        {VLQT_PROPERTY_VISIBLE, VLQT_VALUE_TYPE_BOOL, setVisible, nullptr},
     };
     return t;
 }
@@ -240,7 +254,7 @@ void Elements::initGeometry(ElementEntry& node)
 {
     node.xf = std::make_shared<TransformState>();
     // Default ANCHOR AlignLeft|AlignTop for all elements (fx = fy = 0, TransformState default).
-    auto* group = dynamic_cast<GroupItem*>(node.item);
+    auto* group = node.type == VLQT_ELEMENT_TYPE_GROUP ? static_cast<GroupItem*>(node.item) : nullptr;
     placeItem(*node.xf, node.item);
     // Placement and the anchor of TRANSFORM follow every size change (Auto Size, layout, text, children extent), not
     // only the SIZE sent by C#. Connected at creation, i.e. before the mask frame's connections (createMaskFrame), so
@@ -263,8 +277,6 @@ void Elements::initGeometry(ElementEntry& node)
 
 bool Elements::placeAfterReparent(ElementEntry& node, std::string& err)
 {
-    if (!node.xf)
-        return true;
     // Into a Row/Column with a translation still folded into x/y (placeItem): the layout owns x/y now, the
     // translation moves to the Matrix4x4.
     if (!node.transform && !node.xf->base.isIdentity() && inPositioner(node.item))
@@ -326,8 +338,8 @@ bool Elements::setAnchor(ElementEntry& node, float fx, float fy, std::string& er
     node.xf->fx = fx;
     node.xf->fy = fy;
     placeItem(*node.xf, node.item);
-    if (auto* group = dynamic_cast<GroupItem*>(node.item))
-        group->syncEffectFrame(); // Auto Size off: the frame moves with the anchor
+    if (node.type == VLQT_ELEMENT_TYPE_GROUP)
+        static_cast<GroupItem*>(node.item)->syncEffectFrame(); // Auto Size off: the frame moves with the anchor
     if (node.transform)
         setMatrixValue(node.transform, pivoted(*node.xf, node.item));
     updateMaskFrame(node);

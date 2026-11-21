@@ -49,9 +49,11 @@ void emitLog(int level, const char* category, const QByteArray& msg)
         std::fprintf(stderr, "[%s] %s\n", cat, msg.constData());
 }
 
-void detach()
+void detach(bool libraryUnload)
 {
     g_log = nullptr;
+    if (libraryUnload)
+        qInstallMessageHandler(nullptr);
 }
 
 } // namespace vlqt::log

@@ -19,6 +19,8 @@ Press these keys in a Qt window (no modifiers). Both overlays are drawn by QtNat
 | F6 | Freeze the stats (only while the stats are visible, otherwise F6 goes to the scene) |
 | F7 | Timeline: show/hide the host segments (vvvv, GC, apply), only while the stats are visible |
 
+The keys belong to QtNative: the scene never sees them. A patch that needs F2, F5, F6 or F7 itself (a text field, its own shortcut) switches them off with the optional `Enable Keyboard Shortcuts` pin of `Renderer [Qt]` (default on); the keys then reach the elements and an open overlay stays as it is.
+
 The Qt phases of a frame are events, vsync wait, sync, render and present. "vsync wait" is the start of the frame (`QRhi::beginFrame`): with the Renderer's `VSync` pin on (the default) Direct3D 11 waits there for the display refresh, not in Present; with `VSync` off it waits there only when the GPU is behind. The wait and the present are not counted as Qt work. The System page also shows "allow tearing yes/no" and "refresh N Hz". Several VSync windows keep the refresh rate on Windows as long as the host dispatches window messages between the pumps (vvvv does); see the [timing decision](decisions/timing.md).
 
 The same numbers are available in a patch: `Renderer [Qt]` has an optional `Perf` output (`PerfStats`), see `help/Qt/HowTo Read Performance.vl`. `PerfStats (Split)` exposes the frame, pump, sync, render, present and GPU timings; `Split Vsync` the vsync wait, `Split Percentiles`, `Split Counters`, `Split Host` (vvvv, wait, apply, reconcile, ops) and `Split Gc` read the further fields.
@@ -59,12 +61,12 @@ The legend is also in the `Debug` pin's tooltip. See `help/Qt/HowTo Debug Overla
 
 ## Logging and errors
 
-All messages of VL.Qt go to the vvvv **Log window**, nothing goes to the console. If Qt rejects a property of an element, the element node turns orange with the message; QtNative errors appear on the Renderer's `Error` output.
+All messages of VL.Qt go to the vvvv **Log window**, nothing goes to the console. If Qt rejects a property of an element, the element node turns orange with the message; QtNative errors mark the Renderer node.
 
 - **Qt and QtNative:** every `qDebug`/`qInfo`/`qWarning`/`qCritical`/`qFatal`, including QML/JS warnings (e.g. a binding error or a Video that cannot open its file). Levels map Debug → Debug, Info → Information, Warning → Warning, Critical → Error, Fatal → Critical. The log category is the Qt logging category verbatim (`qml`, `js`, `qt.rhi.general`, `vlqt.gpu`, ...), uncategorized messages use `Qt`. Qt's own filter rules (`QT_LOGGING_RULES`) apply before that.
 - **VL.Qt itself:** process-wide messages (pump, `[vlqt.stats]`, slow-frame warnings) use the category `VL.Qt`; the Renderer logs with its own node logger, so the Log window links to the node.
 - **Resources:** the resource manager, the image, snapshot, shader and audio-tap kinds log under `VL.Qt.Resources` (ids as `#index.generation`; state changes on debug level, `QT_LOGGING_RULES=VL.Qt.Resources.debug=true`). The Image element logs under `VL.Qt.Image.Item`.
-- **Errors at the node:** if Qt rejects a property of an element (e.g. a QML error), the element node shows an orange warning ("Qt rejected <Property>: ..."), logged as Warning; it clears with the next successful apply. Other QtNative errors (window creation, apply without an element, poll) appear on the Renderer's `Error` output and once in the log. Exceptions in the per-frame pump are logged, shown on `Error` and at the Renderer node (red) until that phase succeeds again. Exceptions in a node's Update are reported by vvvv itself (node turns red, entry in the Log window).
+- **Errors at the node:** if Qt rejects a property of an element (e.g. a QML error), the element node shows an orange warning ("Qt rejected <Property>: ..."), logged as Warning; it clears with the next successful apply. Other QtNative errors (window creation, apply without an element, poll) mark the Renderer node (red) and go once to the log. Exceptions in the per-frame pump are logged and shown at the Renderer node (red) until that phase succeeds again. A node shows all its messages at once, errors first, one line each: a second problem does not hide the first one. Exceptions in a node's Update are reported by vvvv itself (node turns red, entry in the Log window).
 - **Into a file:** add a logging provider as shown in the VL.CoreLib help `System/Logging/HowTo Configure logging providers` (e.g. AddFile/Serilog). VL.Qt writes no log files of its own.
 - **stderr:** Qt/QtNative messages from Critical (= Error) upwards always also go to stderr, so exports without a log provider still show them. Set `VLQT_LOG_STDERR=1` before the process starts to mirror all levels.
 

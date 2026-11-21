@@ -18,7 +18,7 @@ Images are GPU resources (`QtImage`), separate from the `Image [Qt]` element tha
 
 - **Mipmaps** (pin on the loaders) make images smoother when drawn much smaller, at +33 % GPU memory.
 - **Frame budget:** uploads are spread so that loading does not stall the frame. Load a spread of files ahead with `LoadImage (Async)` (see `HowTo Preload Images`).
-- **Errors** show at the node's `Error` output; a failed image draws nothing.
+- **Errors** go to the log. A failed load or upload (`LoadImage`, `LoadImage (Async)`, `ToQtImage`, `VideoSourceToQtImage`) also marks the node until an input changes, and the failed image draws nothing; a failed `Snapshot` or `FileWriter` is only logged (`FileWriter` has `Success` next to `Is Done`).
 - **F5 → Resources** lists all live images with state, size, references and age, failed or stuck ones first, plus upload queue and budget.
 - **Device loss:** after a GPU reset all windows and images are rebuilt; the output comes back by itself (see [GPU device loss](diagnostics.md#gpu-device-loss)).
 

@@ -103,7 +103,7 @@ public static class ReplayTest
             if (w != SceneHandle.Null) { Native.vlqt_scene_destroy(w); pump(5); }
             w = NativeCalls.CreateWindow(800, 600, "VL.Qt replay");
             Native.vlqt_window_show(w);
-            if (s_overlay != 0) Native.vlqt_scene_set_overlay(w, s_overlay);
+            if (s_overlay != 0) NativeTest.vlqt_test_set_overlay(w, s_overlay);
             for (int i = 0; i < frames.Count; i++, frameNo++)
             {
                 deadline += period;
@@ -231,7 +231,7 @@ public static class ReplayTest
         // "--paced": vvvv-like pacing (60 fps, Win32 message loop between pumps), prints swaps per pump.
         // "--loop N" (with --paced): plays the trace N times in a row (fresh window per round) to catch rare spikes.
         var paced = Array.IndexOf(args, "--paced") >= 0;
-        // "--overlay F" (with --paced): vlqt_scene_set_overlay flags per window, e.g. 18 = F5 Summary, 34 = Timeline,
+        // "--overlay F" (with --paced): vlqt_test_set_overlay flags per window, e.g. 18 = F5 Summary, 34 = Timeline,
         // to measure the overlay's pump cost against 0.
         var oi = Array.IndexOf(args, "--overlay");
         if (oi >= 0 && (oi + 1 >= args.Length || !int.TryParse(args[oi + 1], out s_overlay)))

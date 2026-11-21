@@ -77,6 +77,9 @@ namespace VL.Qt
         /// <summary>Number of pointer handlers (input handlers) of item id, or a negative <see cref="Native.Result"/>.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_handler_count(SceneHandle w, uint id);
+        /// <summary>Sets the perf overlay of the window like the keys do (flags as <see cref="Native.vlqt_scene_get_overlay"/>).</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Native.Result vlqt_test_set_overlay(SceneHandle w, int flags);
         /// <summary>Busy-waits ms inside one phase (0 events, 1 sync, 2 render, 3 present, 4 vsync wait) of the next rendered frame.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Native.Result vlqt_test_perf_spike(SceneHandle w, int phase, float ms);

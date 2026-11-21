@@ -16,36 +16,34 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Snapshot", Category = Categories.Images)]
     public sealed class SnapshotNode : IDisposable
     {
-        /// <summary>Error at the node when Grab is hit for an element that no renderer shows.</summary>
+        /// <summary>Error logged when Grab is hit for an element that no renderer shows.</summary>
         internal const string NotShownError = "Element is not shown in a renderer";
 
         private readonly SnapshotGrab _grab;
-        private readonly ImageNodeReport _report;
+        private readonly ResourceNodeReport _report;
         private IImage? _image;
         private string _error = string.Empty;
 
         public SnapshotNode(NodeContext nodeContext)
+            : this(ResourceClient.ForApp(nodeContext.AppHost), OccurrenceRegistry.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
         {
-            _grab = new SnapshotGrab(ResourceClient.ForApp(nodeContext.AppHost), OccurrenceRegistry.ForApp(nodeContext.AppHost));
-            _report = new ImageNodeReport(new NodeErrors(nodeContext));
         }
 
-        /// <summary>For tests: a client on a fake API and an own scene registry, nothing is reported.</summary>
-        internal SnapshotNode(ResourceClient client, OccurrenceRegistry scene)
+        /// <summary>For tests: a client on a fake API and an own scene registry; null <paramref name="messages"/> reports nothing.</summary>
+        internal SnapshotNode(ResourceClient client, OccurrenceRegistry scene, NodeErrors? messages = null)
         {
             _grab = new SnapshotGrab(client, scene);
-            _report = new ImageNodeReport(null);
+            _report = new ResourceNodeReport(messages, lasting: false);
         }
 
         /// <summary>Starts a snapshot of Element on Grab; Image keeps the last finished one.</summary>
         /// <param name="element">Element or Group to grab; it has to be shown in a renderer.</param>
         /// <param name="scale">Pixels per DIP: pixel size = element size in DIP * Scale, independent of the screen's DPI scaling (deterministic for export).</param>
         /// <param name="grab">Starts a new snapshot (the previous image stays until it is done).</param>
-        /// <param name="isReady">True in the frame a new image arrived, typically one frame after Grab.</param>
-        /// <param name="error">Why the last snapshot failed, empty otherwise.</param>
+        /// <param name="isReady">True in the frame a new image arrived, typically one frame after Grab. A failed snapshot sets no Is Ready and is logged.</param>
         /// <returns>The last finished snapshot as BGRA8 premultiplied (own copy, not volatile); null before the first one.</returns>
         [return: Pin(Name = "Image")]
-        public IImage? Update(Element? element, out bool isReady, out string error, float scale = 1, bool grab = false)
+        public IImage? Update(IElement? element, out bool isReady, float scale = 1, bool grab = false)
         {
             if (grab)
                 // Every attempt starts clean: an error of an earlier attempt (e.g. not shown yet at the start) does not stay.
@@ -59,7 +57,7 @@ namespace VL.Qt.Nodes
                     isReady = true;
                 }
             }
-            error = _error.Length > 0 ? _error : _grab.Resource is { State: QtImageState.Failed } failed ? failed.Error : string.Empty;
+            var error = _error.Length > 0 ? _error : _grab.Resource is { State: QtImageState.Failed } failed ? failed.Error : string.Empty;
             _report.Update(_grab.Resource, error);
             return _image;
         }
@@ -91,10 +89,15 @@ namespace VL.Qt.Nodes
         /// <summary>The snapshot resource, null until the first <see cref="Start"/> got that far.</summary>
         public ImageResource? Resource { get; private set; }
 
-        /// <summary>Starts a snapshot of <paramref name="element"/>; returns the error at once (not shown, refused by QtNative), empty on success.</summary>
-        public string Start(Element? element, float scale)
+        /// <summary>
+        /// Starts a snapshot of <paramref name="element"/> (a stylable: the element of its last Build); returns the error at
+        /// once (foreign IElement, not shown, refused by QtNative), empty on success.
+        /// </summary>
+        public string Start(IElement? element, float scale)
         {
-            if (element is null || !_scene.TryLocate(element, out var window, out var elementId))
+            if (ElementConversion.IsForeign(element))
+                return ElementConversion.ForeignWarning(element!.GetType());
+            if (ElementConversion.Shown(ElementConversion.ToElement(element)) is not { } shown || !_scene.TryLocate(shown, out var window, out var elementId))
                 return SnapshotNode.NotShownError;
             try
             {

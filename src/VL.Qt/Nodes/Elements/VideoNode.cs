@@ -24,27 +24,18 @@ namespace VL.Qt.Nodes
         // Shared with Video (VL.Audio) in VL.Qt.Audio: it sets AudioTap, this node never does.
         internal readonly record struct Props(string Path, bool Play, bool Loop, bool KeepLastFrame, float Rate, float Volume, VideoFillMode FillMode, ulong AudioTap = 0);
 
-        private readonly ElementNode<Video, Props> _node;
+        private readonly ElementNodeCore<Video, Props> _node;
 
         public VideoNode(NodeContext nodeContext)
-            => _node = new ElementNode<Video, Props>(nodeContext, Create);
+            => _node = new ElementNodeCore<Video, Props>(nodeContext, Create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal VideoNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<Video, Props>(addWarning, Create);
+            => _node = new ElementNodeCore<Video, Props>(addWarning, Create);
 
         /// <summary>Builds the element from the inputs; also used by Video (VL.Audio) in VL.Qt.Audio.</summary>
-        internal static readonly Func<CommonInputs, Props, FeedbackSlot, Video> Create = static (c, p, slot) => new Video
+        internal static readonly Func<CommonInputs, Props, FeedbackSlot, Video> Create = static (c, p, slot) => new Video(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
-                Feedback = slot,
                 Path = p.Path.Length == 0 ? Path.Default : new Path(p.Path),
                 Playing = p.Play,
                 Loop = p.Loop,
@@ -55,7 +46,7 @@ namespace VL.Qt.Nodes
                 AudioTap = p.AudioTap,
             };
 
-        internal ElementNode<Video, Props> Core => _node;
+        internal ElementNodeCore<Video, Props> Core => _node;
 
         /// <summary>Describes the video. A new description is only created when an input changes.</summary>
         /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor. Size 0 = not drawn.</param>
@@ -73,13 +64,14 @@ namespace VL.Qt.Nodes
         /// <param name="debug">Debug overlay for this element only (not its children; the Renderer's Debug shows all). Does not affect layout or hit-testing. Cyan frame = actual size (solid: Size, dashed: Auto Size on), orange = implicit size, i.e. what Auto Size would give (only where it differs), blue dotted = children extent, translucent red = children outside the frame (overflow), translucent green = padding and hatched violet = Row/Column spacing (both inside the frame), magenta cross = origin, yellow diamond = anchor. Text: green line = baseline, dashed green = ascent, dashed red = descent.</param>
         /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
         /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
+        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
         /// <param name="position">Playback position in seconds (0 until loaded; last frame).</param>
         /// <param name="duration">Duration of the media in seconds (0 until loaded or without a file; last frame).</param>
         /// <param name="measuredSize">Natural size of the video, in units (0, 0 until the first frame; last frame).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         // Pin defaults: see RectangleNode (text form, typeof(T) defaults are ignored by vvvvc).
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [DefaultValue("1.6, 0.9")] Vector2 size,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
@@ -95,15 +87,16 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             out float position,
             out float duration,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
             var element = _node.Describe(
-                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, volume, fillMode));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
+                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
+                new Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, volume, fillMode),
+                out measuredSize, out sceneBounds);
             position = _node.Feedback.MediaPosition();
             duration = _node.Feedback.MediaDuration();
             return element;

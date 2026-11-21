@@ -43,9 +43,12 @@ public:
     /* Applies all commands; stops at the first bad one (earlier ones stay applied). err names index + reason. */
     int apply(const unsigned char* buf, int len, std::string& err);
     /* Queues changed measured values of bound items (scene/measure.h) and the events of the bound input handlers
-     * (scene/handlers.h), then copies queued events into out and clears the queue: a buffer export (vlqt.h); on
-     * VLQT_ERR_BUFFER_TOO_SMALL the events stay queued. */
+     * (scene/handlers.h), then copies queued events into out and clears the queue: a buffer export (vlqt.h). On
+     * VLQT_ERR_BUFFER_TOO_SMALL the events stay queued and eventsCollected stays set: the next poll only drains
+     * (no collecting, no polish), so *required of the failed call is what the retry needs. */
     int poll(unsigned char* out, int cap, int* written, int* required);
+    /* True between a poll that collected and the drain that succeeded. */
+    bool eventsCollected = false;
     /* Runs pending polish (layouts/positioners) of all scene items without a render, so poll measures current
      * geometry also when Qt did not render this pump. Skipped when nothing changed since the last poll:
      * no apply, no marked geometry, no window geometry change and no polish request pending in the window. */
@@ -82,6 +85,9 @@ public:
 private:
     // Structural ops (scene/scene.cpp).
     int create(quint32 id, quint16 type, std::string& err);
+    /* The one creation point of an ElementEntry (scene/scene.cpp create): item and type, the geometry state (xf, never
+     * null in the table) and the poll flag. The caller inserts it into nodes and ids and calls watchGeometry. */
+    ElementEntry makeEntry(QQuickItem* item, quint16 type);
     int destroy(quint32 id, std::string& err);
     int reparent(quint32 id, quint32 parent, quint32 index, std::string& err);
     void reset();

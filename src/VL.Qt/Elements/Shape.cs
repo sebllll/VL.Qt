@@ -1,5 +1,6 @@
 ﻿using Stride.Core.Mathematics;
 using VL.Lib.Collections;
+using VL.Qt.Nodes;
 using VL.Qt.Paths;
 
 namespace VL.Qt.Elements
@@ -12,6 +13,7 @@ namespace VL.Qt.Elements
     internal sealed class Shape : Element
     {
         public Shape() : base(ElementType.Shape) { }
+        internal Shape(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Shape, common, feedback) { }
 
         private Spread<Vector2> _points = Spread<Vector2>.Empty;
         private Spread<float> _dash = Spread<float>.Empty;

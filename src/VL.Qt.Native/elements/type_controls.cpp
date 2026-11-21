@@ -81,25 +81,19 @@ std::vector<PropDef> spinBoxProps()
 // indicator is centred in a larger SIZE. toggled = user only (click, Space); SET VALUE (checked) never fires it.
 // Tristate and dragging the Switch handle are not exposed; a drag that flips the Switch also sends toggled.
 
-constexpr const char* kCheckBoxQml =
-    "import QtQuick\n"
-    "import QtQuick.Controls\n"
-    "CheckBox {\n"
-    "  spacing: 0\n"
-    "  property int vlqtUserCount: 0\n"
-    "  property bool vlqtUserValue: false\n"
-    "  onToggled: { vlqtUserValue = checked; ++vlqtUserCount }\n"
-    "}\n";
+// The two toggles differ only in the QML type (a macro: the text stays one literal with static storage).
+#define VLQT_TOGGLE_QML(Type)                                        \
+    "import QtQuick\n"                                               \
+    "import QtQuick.Controls\n" Type " {\n"                          \
+    "  spacing: 0\n"                                                 \
+    "  property int vlqtUserCount: 0\n"                              \
+    "  property bool vlqtUserValue: false\n"                         \
+    "  onToggled: { vlqtUserValue = checked; ++vlqtUserCount }\n"    \
+    "}\n"
 
-constexpr const char* kSwitchQml =
-    "import QtQuick\n"
-    "import QtQuick.Controls\n"
-    "Switch {\n"
-    "  spacing: 0\n"
-    "  property int vlqtUserCount: 0\n"
-    "  property bool vlqtUserValue: false\n"
-    "  onToggled: { vlqtUserValue = checked; ++vlqtUserCount }\n"
-    "}\n";
+constexpr const char* kCheckBoxQml = VLQT_TOGGLE_QML("CheckBox");
+constexpr const char* kSwitchQml = VLQT_TOGGLE_QML("Switch");
+#undef VLQT_TOGGLE_QML
 
 std::vector<PropDef> toggleProps()
 {

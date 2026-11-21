@@ -1,23 +1,16 @@
 // Internal seam between the product files and the test exports of vlqt_test.h (test/test_*.cpp). Not part of the C ABI.
-// Product files call into the tests only at the places marked "test hook:"; the window handle parts the tests read come
-// from window/window.cpp and app/fonts.cpp below and from offscreen/offscreen.h (quickWindow, stateOf).
+// Product files call into the tests only at the places marked "test hook:". The test exports reach a scene handle
+// through withScene / withWindow (app/exports.h) and the font references through fontRefs below.
 #pragma once
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QPointF>
 #include <QtCore/qnamespace.h>
 
-#include <memory>
 #include <utility>
 #include <vector>
 
 class QQuickWindow;
-struct vlqt_scene;
-
-namespace vlqt {
-class PerfMonitor;
-class Scene;
-}
 
 namespace vlqt::test {
 
@@ -31,11 +24,6 @@ struct TestInput
     std::vector<std::pair<int, QPointF>> queuedTouch; // vlqt_test_queue_touch: active points (id, window DIP)
 };
 
-// --- window/window.cpp: parts of a scene handle (a window or an offscreen scene); null for a null handle ---
-Scene* scene(vlqt_scene* handle);
-PerfMonitor* perf(vlqt_scene* handle);
-// The handle's slot for its test input state, empty until test/test_input.cpp fills it.
-std::unique_ptr<TestInput>* input(vlqt_scene* handle);
 // app/fonts.cpp: references of a font handle of vlqt_font_add, 0 = removal pending (end of pump), -9 = removed or unknown.
 int fontRefs(unsigned long long handle);
 

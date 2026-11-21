@@ -1,3 +1,4 @@
+// Private Qt API: QAbstractAnimationTimer, QUnifiedTimer (keep-alive); check on Qt updates (list: elements/elements.h).
 #include "app/animation_clock.h"
 #include "app/exports.h"
 #include "vlqt.h"
@@ -13,7 +14,7 @@
 namespace {
 
 using vlqt::fail;
-using vlqt::guarded;
+using vlqt::guardedGui;
 
 // Animation time comes from vvvv (IFrameClock), not from a wall clock (decisions/user-qml.md, timing.md).
 // QUnifiedTimer (Qt 6, qabstractanimation.cpp) computes its time as driverStartTime + driver->elapsed() while the driver
@@ -88,7 +89,7 @@ extern "C" {
 
 VLQT_API int vlqt_app_advance_animations(double seconds)
 {
-    return guarded([&]() -> int { return vlqt::clock::advance(seconds); });
+    return guardedGui("vlqt_app_advance_animations", [&]() -> int { return vlqt::clock::advance(seconds); });
 }
 
 } // extern "C"

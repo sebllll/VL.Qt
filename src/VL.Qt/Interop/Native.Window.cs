@@ -52,5 +52,9 @@ namespace VL.Qt.Interop
         /// <summary>Sample count of the window's swap chain, or the count it will be created with; 0 = offscreen scene, <see cref="Result.NullHandle"/> = null window.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_get_samples(SceneHandle w);
+
+        /// <summary>Takes the diagnostic keys (F2, F5, Shift+F5, F6, F7) of the window (on != 0, default) or lets them reach the scene (0); kept when the window is replaced.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Result vlqt_window_set_keys(SceneHandle w, int on);
     }
 }
