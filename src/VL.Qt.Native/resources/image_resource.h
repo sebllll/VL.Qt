@@ -27,6 +27,10 @@
  *
  * A new load/set_pixels on the same id replaces the content: the old texture stays until the new one is complete
  * (docs/design/resources.md, replacement), so elements never show an empty frame.
+ *
+ * Content replaced every frame (a video through set_pixels) reuses what the frame before left: the texture comes from
+ * the pool of gpu_texture.h once no window shows it any more, the raw buffer of set_pixels from a small pool of buffers
+ * of the same size (image_kind.cpp). Both pools let go of what nobody took for about a second (endFrame).
  */
 #pragma once
 
@@ -47,6 +51,7 @@ struct vlqt_pixel_desc;
 namespace vlqt::res::image {
 
 class D3D11Upload;
+class GpuTexture;
 
 // One image (the Content of the kind). The fields are owned by the manager's threads as docs/design/resources.md
 // describes: input fields are set before start, the decode fields by the worker, the texture fields only on the main
@@ -59,10 +64,12 @@ public:
     ~ImageContent() override;
 
     // --- for elements (package 04) and shader items, main thread, on a Ready resource ---
-    // Texture on the process device, nullptr without a shared device (then image() holds the pixels).
-    QRhiTexture* texture() const { return m_texture; }
+    // Texture on the process device (upload QRhi), nullptr without a shared device (then image() holds the pixels).
+    QRhiTexture* texture() const;
     // Native texture object (ID3D11Texture2D* for D3D11), nullptr like texture().
     void* nativeTexture() const;
+    // The shared texture behind texture() (gpu_texture.h), held by the window wrappers; nullptr like texture().
+    const std::shared_ptr<GpuTexture>& gpuTexture() const { return m_gpu; }
     QSize size() const { return m_size; }
     // VL PixelFormat of the texture: 7 = R8G8B8A8, 9 = B8G8R8A8; always premultiplied, 8 bit.
     uint32_t format() const { return m_bgra ? 9u : 7u; }
@@ -82,7 +89,7 @@ private:
     QString m_path;              // file source (empty for pixels)
     unsigned m_flags = 0;        // VLQT_IMAGE_LOAD_*
     int m_upload = 0;            // vlqt_image_upload, VLQT_IMAGE_UPLOAD_AUTO = the path of the source
-    QByteArray m_raw;            // pixels: tightly packed copy (row = width * bpp)
+    QByteArray m_raw;            // pixels: tightly packed copy (row = width * bpp), from and back to the buffer pool
     int m_rawWidth = 0, m_rawHeight = 0, m_rawFormat = 0;
     bool m_rawPremultiplied = false;
     void* m_device = nullptr;    // ID3D11Device* for the worker upload path, read on the main thread at start
@@ -97,7 +104,7 @@ private:
     std::unique_ptr<D3D11Upload> m_d3d11; // worker upload path: textures made in the worker (Windows only)
 
     // upload (main thread)
-    QRhiTexture* m_texture = nullptr;
+    std::shared_ptr<GpuTexture> m_gpu; // from the texture pool (gpu_texture.h)
     int m_uploadedRows = 0;
 };
 
@@ -110,6 +117,9 @@ int load(uint64_t id, const char* utf8Path, unsigned flags, int upload);
 int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int len, int upload);
 // vlqt_image_read_preview: the preview the worker made for VLQT_IMAGE_LOAD_PREVIEW, read only on a Ready resource.
 int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc, int* written, int* required);
+
+// Once per pump after the uploads (res::endFrame), main thread: frees pooled textures and buffers nobody took for a while.
+void endFrame();
 
 // Current content of a Ready image resource, nullptr otherwise (also during the first load). Package 04 takes an
 // element reference (res::acquire) for as long as it draws it.

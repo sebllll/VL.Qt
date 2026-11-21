@@ -41,6 +41,8 @@ A resource has one host reference (C#, dropped by `vlqt_res_release`) and elemen
 
 `start` on a Ready resource decodes and uploads a second content next to the current one. The state stays Ready (no STATE record). When the new upload is complete the current content is swapped (the old one is destroyed) and a new INFO record is sent. A failed replacement makes the resource Failed. `start` on a Failed resource starts over (Failed -> Decoding). `start` while a decode or upload runs keeps only the newest content and starts it afterwards.
 
+Content replaced every frame (a video through `vlqt_image_set_pixels`) costs no new GPU texture and no new raw buffer per frame: the image kind fills again a texture of the same size, format and flags that no content and no window wrapper holds any more (texture pool, `resources/gpu_texture.h`), and takes the raw buffer of an earlier frame of the same size (`resources/image_kind.cpp`). Both pools keep at most a few free entries and free those nobody took for about a second (`image::endFrame`), and the texture pool forgets everything on a device loss.
+
 ### External content
 
 A snapshot (`snapshot_resource.h`) is made on the main thread (`beginExternal` / `finishExternal`) without a worker and without an upload, so Decoding -> Ready is allowed for that kind only. `vlqt_res_wait` does not block on it. An audio tap is Ready at its init.

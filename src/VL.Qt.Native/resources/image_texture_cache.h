@@ -1,15 +1,17 @@
 /* image_texture_cache.h - the texture of an image resource (image_resource.h) in a window, for the Image element
  * (qt_image_item.h) and the image samplers of the Shader item (effects/shader_item.h).
  *
- * One texture per window, QRhi and content, shared by every item of that window. The cache holds weak references:
- * an entry lives as long as an item holds it, and the items drop theirs in releaseResources/invalidateSceneGraph,
- * before the window's QRhi goes. The QRhi is part of the key because Qt replaces a window's QRhi after a device loss
- * while the QQuickWindow stays: a texture of another QRhi than window->rhi() is never returned.
+ * One texture per window, QRhi and source, shared by every item of that window. The source is the shared texture
+ * (GpuTexture, gpu_texture.h) on the shared device, else the content. The cache holds weak references: an entry lives
+ * as long as an item holds it, and the items drop theirs in releaseResources/invalidateSceneGraph, before the window's
+ * QRhi goes. The QRhi is part of the key because Qt replaces a window's QRhi after a device loss while the QQuickWindow
+ * stays: a texture of another QRhi than window->rhi() is never returned.
  *   - shared device (Windows/D3D11): a QRhiTexture of the window's QRhi created from the resource's native texture
- *     (createFrom, same format and mip flags), no copy. The native texture gets an own reference (AddRef) for as long
- *     as the wrapper lives, so a resource freed or replaced meanwhile never leaves a dangling texture.
+ *     (createFrom, same format and mip flags), no copy. The entry holds the GpuTexture (and with it a reference on the
+ *     native texture) for as long as the wrapper lives: a resource freed or replaced meanwhile never leaves a dangling
+ *     texture, and the pool fills the texture again only after every window let its wrapper go.
  *   - no shared device (Linux, VLQT_SHARED_DEVICE=0) or no QRhi (software backend): createTextureFromImage of the
- *     resource's CPU copy, once per window.
+ *     resource's CPU copy, once per window; the entry holds the content, whose pixels the texture may still read.
  *
  * Device lost: content of an older device generation (ImageContent::generation) gets no texture until its
  * replacement is Ready; neither does a window on the shared device that still renders with its old QRhi right after
@@ -31,6 +33,7 @@ class QThread;
 namespace vlqt {
 
 namespace res::image {
+class GpuTexture;
 class ImageContent;
 }
 
@@ -39,10 +42,11 @@ struct ImageTexture
 {
     QQuickWindow* window = nullptr;
     QRhi* rhi = nullptr; // window->rhi() when made: a wrapper belongs to it
-    std::shared_ptr<res::image::ImageContent> content; // keeps the address unique while the entry lives
+    const void* source = nullptr; // the GpuTexture (shared device) or the content (CPU copy); held below, so unique
+    std::shared_ptr<res::image::GpuTexture> gpu;       // shared device: the texture the wrapper reads, released after it
+    std::shared_ptr<res::image::ImageContent> content; // CPU copy: its pixels, released after the texture
     QSGTexture* texture = nullptr;
     bool mipmaps = false;
-    void* native = nullptr; // own reference on the native texture (shared device), released after the wrapper
     QThread* thread = nullptr; // the window's render thread (made in updatePaintNode), frees it
 
     ImageTexture() = default;
@@ -50,7 +54,7 @@ struct ImageTexture
     ImageTexture& operator=(const ImageTexture&) = delete;
     ~ImageTexture();
 
-    // Returns true if this texture draws content in window now (same window, its current QRhi, same content).
+    // Returns true if this texture draws content in window now (same window, its current QRhi, same source).
     bool fits(const QQuickWindow* w, const std::shared_ptr<res::image::ImageContent>& c) const;
 };
 

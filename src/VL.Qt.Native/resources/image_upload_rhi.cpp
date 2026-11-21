@@ -2,6 +2,7 @@
 // (main-thread path) or wrapped around the texture of the worker path (image_upload_d3d11.h).
 
 #include "resources/image_kind.h"
+#include "resources/gpu_texture.h"
 #include "resources/image_upload_d3d11.h"
 
 #include "device/device.h"
@@ -43,6 +44,7 @@ int64_t ImageKind::uploadNow(ImageContent& r, int64_t budget, UploadStatus& stat
     QElapsedTimer timer;
     timer.start();
     qint64 createNs = 0;
+    bool reused = false;
 #ifdef Q_OS_WIN
     // Within the budget (vlqt_res_wait: -1, or a small image) the copy runs here, like a stripe would, else in a task.
     if (r.m_d3d11 && r.m_d3d11->filling()
@@ -51,25 +53,33 @@ int64_t ImageKind::uploadNow(ImageContent& r, int64_t budget, UploadStatus& stat
         return 0;
     }
 #endif
-    if (!r.m_texture) {
+    if (!r.m_gpu) {
         // Worker texture: it has its mip chain already (the same level count as QRhi's mipLevelsForSize), the
         // flag lets QRhi and the windows' wrappers (resources/image_texture_cache.cpp) see all levels.
         QRhiTexture::Flags flags;
         if (r.m_flags & VLQT_IMAGE_LOAD_MIPMAPS)
             flags = r.m_d3d11 ? QRhiTexture::MipMapped : QRhiTexture::MipMapped | QRhiTexture::UsedWithGenerateMips;
-        r.m_texture = rhi->newTexture(format, r.m_size, 1, flags);
 #ifdef Q_OS_WIN
-        const bool ok = r.m_d3d11 ? r.m_texture->createFrom({quint64(r.m_d3d11->texture()), 0}) : r.m_texture->create();
-#else
-        const bool ok = r.m_texture->create();
+        if (r.m_d3d11) {
+            // The worker made the texture: a wrapper around it joins the pool.
+            QRhiTexture* wrapper = rhi->newTexture(format, r.m_size, 1, flags);
+            if (wrapper->createFrom({quint64(r.m_d3d11->texture()), 0}))
+                r.m_gpu = texture_pool::adopt(wrapper);
+            else
+                delete wrapper;
+        }
 #endif
-        if (!ok) {
+        // Stripes: a texture of the same size no window shows any more (content replaced every frame), else a new one.
+        if (!r.m_d3d11)
+            r.m_gpu = texture_pool::take(rhi, format, r.m_size, flags, reused);
+        if (!r.m_gpu) {
             error = "texture " + std::to_string(r.m_size.width()) + "x" + std::to_string(r.m_size.height())
                   + " could not be created";
             return 0;
         }
         createNs = timer.nsecsElapsed();
     }
+    QRhiTexture* texture = r.m_gpu->rhiTexture();
     if (r.m_d3d11) { // complete already
         status = UploadStatus::Done;
         finishUpload(r);
@@ -94,15 +104,15 @@ int64_t ImageKind::uploadNow(ImageContent& r, int64_t budget, UploadStatus& stat
         sub.setDataStride(quint32(bpl));
         sub.setSourceSize(QSize(r.m_size.width(), rows));
         sub.setDestinationTopLeft(QPoint(0, r.m_uploadedRows));
-        batch->uploadTexture(r.m_texture, QRhiTextureUploadDescription({0, 0, sub}));
+        batch->uploadTexture(texture, QRhiTextureUploadDescription({0, 0, sub}));
         r.m_uploadedRows += rows;
-        if (r.m_uploadedRows == h && (r.m_texture->flags() & QRhiTexture::MipMapped))
-            batch->generateMips(r.m_texture);
+        if (r.m_uploadedRows == h && (texture->flags() & QRhiTexture::MipMapped))
+            batch->generateMips(texture);
         cb->resourceUpdate(batch);
         rhi->endOffscreenFrame();
     }
-    qCDebug(lcRes, "upload %dx%d rows %d-%d: %.2f ms (create %.2f ms)", r.m_size.width(), h, r.m_uploadedRows - rows,
-        r.m_uploadedRows, timer.nsecsElapsed() / 1e6, createNs / 1e6);
+    qCDebug(lcRes, "upload %dx%d rows %d-%d: %.2f ms (%s %.2f ms)", r.m_size.width(), h, r.m_uploadedRows - rows,
+        r.m_uploadedRows, timer.nsecsElapsed() / 1e6, reused ? "pooled texture" : "create", createNs / 1e6);
     status = r.m_uploadedRows == h ? UploadStatus::Done : UploadStatus::Progress;
     if (status == UploadStatus::Done)
         finishUpload(r);
@@ -117,12 +127,9 @@ void ImageKind::finishUpload(ImageContent& r)
 
 void ImageKind::releaseGpu(ImageContent& r)
 {
-    // The wrapper first: it does not own the texture of the worker path.
-    if (r.m_texture) {
-        r.m_texture->destroy();
-        delete r.m_texture;
-        r.m_texture = nullptr;
-    }
+    // Back to the pool (gpu_texture.h): it is filled again or freed once no window wrapper holds it any more. It holds
+    // an own reference on the native texture, so the order against the worker path does not matter.
+    r.m_gpu.reset();
     r.m_d3d11.reset();
     r.m_uploadedRows = 0;
 }

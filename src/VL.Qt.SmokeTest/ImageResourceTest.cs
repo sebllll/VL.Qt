@@ -280,6 +280,24 @@ public static class ImageResourceTest
             $"replacement: new content {nw} wide after the upload, state stayed Ready without a STATE record");
         Native.vlqt_res_release(rep);
 
+        // 3a. Same-size replacements (content replaced every frame): the next content fills the texture of the one before
+        // again (texture pool) and takes its raw buffer (buffer pool, > 1 MB); straight and premultiplied in turn. Each
+        // replacement reads back its own colour, never the one before.
+        var same = Create();
+        var sameOk = true;
+        var colors = new (byte r, byte g, byte b)[] { (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (0, 255, 255), (255, 0, 255) };
+        for (int i = 0; i < colors.Length; i++)
+        {
+            var (cr, cg, cb) = colors[i];
+            Native.ImageSetPixels(same, new Native.vlqt_pixel_desc { width = 640, height = 480, format = 7, premultiplied = i & 1 }, Solid(640, 480, cr, cg, cb));
+            Native.vlqt_res_wait(same, 5000);
+            Frame();
+            var px = Read(same, out var sameW, out _);
+            sameOk &= sameW == 640 && Near(px, sameW, 10, 10, cr, cg, cb, 0) && Near(px, sameW, 639, 479, cr, cg, cb, 0);
+        }
+        s.Check(sameOk && Last(same) == Protocol.ResourceState.Ready, $"same-size replacements x {colors.Length}: each reads back its own colour (pooled texture and buffer)");
+        Native.vlqt_res_release(same);
+
         // 3b. Upload modes (the pin Upload of the image nodes): each path forced on pixels and on a file, same content as Auto.
         var reference = Read(fileIds[0], out _, out _);
         foreach (var (mode, label) in new[] { (Protocol.ImageUpload.MainThread, "main thread"), (Protocol.ImageUpload.Worker, "worker") })

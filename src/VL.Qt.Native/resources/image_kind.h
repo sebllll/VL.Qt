@@ -27,7 +27,8 @@ public:
     static int load(uint64_t id, const char* utf8Path, unsigned flags, int upload);
     static int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int len, int upload);
 
-    // Main thread: frees the textures and the worker path; also ~ImageContent.
+    // Gives the texture back to the pool (gpu_texture.h) and frees the worker path. Main thread, or the thread of the last
+    // holder in ~ImageContent: the texture is only a reference there.
     static void releaseGpu(ImageContent& r);
 
 private:

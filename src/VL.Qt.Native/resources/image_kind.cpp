@@ -2,6 +2,7 @@
 // image_upload_rhi.cpp, the worker path in image_upload_d3d11.cpp.
 
 #include "resources/image_kind.h"
+#include "resources/gpu_texture.h"
 #include "resources/image_upload_d3d11.h"
 #include "resources/pixel_format.h"
 
@@ -15,7 +16,10 @@
 #include <rhi/qrhi.h>
 
 #include <algorithm>
+#include <array>
 #include <cstring>
+#include <mutex>
+#include <vector>
 
 namespace vlqt::res::image {
 
@@ -82,18 +86,104 @@ bool validUpload(int upload)
     return upload == VLQT_IMAGE_UPLOAD_AUTO || upload == VLQT_IMAGE_UPLOAD_MAIN_THREAD || upload == VLQT_IMAGE_UPLOAD_WORKER;
 }
 
+/* Raw buffers of set_pixels, kept for the next set_pixels of the same size: a 1080p frame is 8 MB that the main thread
+ * would otherwise allocate and fault in per frame (W1-17: 1.7 ms of set_pixels at 1080p). Taken on the main thread
+ * (setPixels), given back by the worker (convertPixels, when the converted copy replaces the raw one) or by the last
+ * holder of a content (~ImageContent, any thread): hence the mutex. Only buffers no other QByteArray shares are kept
+ * (a restored content shares the raw copy of the old one). The buffers themselves are freed outside the lock. */
+class BufferPool
+{
+public:
+    // A free buffer of exactly size bytes, else an empty one.
+    QByteArray take(qsizetype size)
+    {
+        if (size < minBytes)
+            return {};
+        std::lock_guard lock(m_mutex);
+        for (auto it = m_free.begin(); it != m_free.end(); ++it) {
+            if (it->buffer.size() == size) {
+                QByteArray b = std::move(it->buffer);
+                m_free.erase(it);
+                return b;
+            }
+        }
+        return {};
+    }
+
+    void give(QByteArray&& buffer)
+    {
+        QByteArray b = std::move(buffer);
+        if (b.size() < minBytes || !b.isDetached())
+            return;
+        QByteArray evicted; // the oldest one when the pool is full, freed after the lock
+        std::lock_guard lock(m_mutex);
+        if (m_free.size() >= maxBuffers) {
+            evicted = std::move(m_free.front().buffer);
+            m_free.erase(m_free.begin());
+        }
+        m_free.push_back({std::move(b), m_frame});
+    }
+
+    // Main thread, once per pump: frees the buffers nobody took for about a second.
+    void endFrame()
+    {
+        std::array<QByteArray, maxBuffers> idle; // freed after the lock
+        size_t n = 0;
+        std::lock_guard lock(m_mutex);
+        m_frame++;
+        for (auto it = m_free.begin(); it != m_free.end();) {
+            if (m_frame - it->since > idleFrames) {
+                idle[n++] = std::move(it->buffer);
+                it = m_free.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+
+private:
+    static constexpr qsizetype minBytes = 1 << 20; // smaller buffers are cheap to allocate
+    static constexpr size_t maxBuffers = 4;         // current, replacement, waiting and one an item still holds
+    static constexpr int64_t idleFrames = 60;       // ~1 s at 60 Hz
+
+    struct Entry
+    {
+        QByteArray buffer;
+        int64_t since = 0; // m_frame when given back
+    };
+    std::mutex m_mutex;
+    std::vector<Entry> m_free; // at most maxBuffers, oldest first
+    int64_t m_frame = 0;
+};
+
+// Made at the first use and never deleted: a content may die at process end, after the statics.
+BufferPool& buffers()
+{
+    static auto* s_buffers = new BufferPool();
+    return *s_buffers;
+}
+
 } // namespace
 
 ImageContent::ImageContent() = default;
 
+// Main thread for content on the shared device; the CPU copy of a window wrapper (image_texture_cache.h) may go on a
+// render thread. Nothing here needs the main thread: the texture is only a reference while the pool holds it.
 ImageContent::~ImageContent()
 {
     ImageKind::releaseGpu(*this);
+    m_image = QImage(); // may point into m_raw
+    buffers().give(std::move(m_raw));
+}
+
+QRhiTexture* ImageContent::texture() const
+{
+    return m_gpu ? m_gpu->rhiTexture() : nullptr;
 }
 
 void* ImageContent::nativeTexture() const
 {
-    return m_texture ? reinterpret_cast<void*>(m_texture->nativeTexture().object) : nullptr;
+    return m_gpu && m_gpu->rhiTexture() ? m_gpu->native() : nullptr;
 }
 
 std::string ImageKind::decode(Content& work)
@@ -322,7 +412,7 @@ std::string ImageKind::convertPixels(ImageContent& r)
     if (img.isNull())
         return "conversion of pixel format " + std::to_string(fmt) + " failed (out of memory?)";
     if (!keepRaw)
-        r.m_raw = QByteArray(); // the converted image is the CPU copy now
+        buffers().give(std::move(r.m_raw)); // the converted image is the CPU copy now
     r.m_image = std::move(img);
     return {};
 }
@@ -364,14 +454,16 @@ int ImageKind::setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* d
     // Unknown formats are copied not at all and fail in the decode (Failed with text, like a broken file).
     const int bpp = bytesPerPixel(desc->format);
     if (bpp > 0) {
-        const qsizetype row = qsizetype(desc->width) * bpp;
-        const qsizetype stride = desc->row_bytes > 0 ? desc->row_bytes : row;
-        if (stride < row || qsizetype(len) < stride * (desc->height - 1) + row) {
+        if (!holdsPixels(len, desc->width, desc->height, desc->row_bytes, desc->format)) {
             qCWarning(lcRes, "set_pixels: %d bytes do not hold %dx%d pixels of format %d with %d row bytes", len,
                 desc->width, desc->height, desc->format, desc->row_bytes);
             return badValueRc;
         }
-        r->m_raw.resize(row * desc->height);
+        const qsizetype row = qsizetype(desc->width) * bpp;
+        const qsizetype stride = desc->row_bytes > 0 ? desc->row_bytes : row;
+        r->m_raw = buffers().take(row * desc->height);
+        if (r->m_raw.isEmpty())
+            r->m_raw = QByteArray(row * desc->height, Qt::Uninitialized);
         const auto* src = static_cast<const char*>(data);
         if (stride == row) {
             std::memcpy(r->m_raw.data(), src, size_t(row) * desc->height);
@@ -397,6 +489,12 @@ int load(uint64_t id, const char* utf8Path, unsigned flags, int upload)
 int setPixels(uint64_t id, const vlqt_pixel_desc* desc, const void* data, int len, int upload)
 {
     return ImageKind::setPixels(id, desc, data, len, upload);
+}
+
+void endFrame()
+{
+    buffers().endFrame();
+    texture_pool::endFrame();
 }
 
 std::shared_ptr<ImageContent> ready(uint64_t id)

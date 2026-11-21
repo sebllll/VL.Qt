@@ -150,6 +150,8 @@ target_sources(vlqt PRIVATE
     resources/qt_image_item.h
     resources/audio_tap.cpp
     resources/audio_tap.h
+    resources/gpu_texture.cpp
+    resources/gpu_texture.h
     resources/image_kind.cpp
     resources/image_kind.h
     resources/image_resource.h
