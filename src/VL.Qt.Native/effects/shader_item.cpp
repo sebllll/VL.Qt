@@ -2,10 +2,12 @@
 
 #include "effects/layer_requests.h"
 #include "effects/shader_material.h"
-#include "elements.h"
+#include "elements/elements.h"
+#include "elements/group_item.h"
 #include "image_resource.h"
 #include "protocol.h"
 #include "qtimageitem.h"
+#include "resources/change_watch.h"
 #include "resources/resources.h"
 #include "shader_resource.h"
 
@@ -23,7 +25,6 @@
 
 #include <algorithm>
 #include <cstring>
-#include <unordered_set>
 
 Q_LOGGING_CATEGORY(lcShaderItem, "VL.Qt.ShaderEffect")
 
@@ -33,8 +34,7 @@ namespace {
 
 constexpr int kMaxMesh = 1024;     // MESH_RESOLUTION per axis (vertex count stays below ~1M)
 
-std::unordered_set<ShaderItem*> s_items; // main thread
-uint64_t s_contentEpoch = 0, s_failureEpoch = 0;
+res::ChangeWatch<ShaderItem> s_watch; // items by the shader and image ids they wait for, main thread
 
 std::string idText(uint64_t id)
 {
@@ -51,6 +51,15 @@ int valueBytes(quint16 vt)
     case VLQT_VALUE_TYPE_MAT4: return 64;
     default: return 0;
     }
+}
+
+// Copies bytes into a stored value; true if they differ from it.
+bool assign(void* dst, const void* src, size_t n)
+{
+    if (std::memcmp(dst, src, n) == 0)
+        return false;
+    std::memcpy(dst, src, n);
+    return true;
 }
 
 const char* valueTypeName(quint16 vt)
@@ -144,13 +153,12 @@ bool reserved(const QByteArray& name)
 ShaderItem::ShaderItem(QQuickItem* parent) : QQuickItem(parent)
 {
     setFlag(ItemHasContents, true);
-    s_items.insert(this);
 }
 
 ShaderItem::~ShaderItem()
 {
-    s_items.erase(this);
     for (ShaderSlot* s : {&m_frag, &m_vert}) {
+        s_watch.remove(s->want, this);
         if (s->want && s->want != s->shown)
             res::releaseElement(s->want);
         if (s->shown)
@@ -162,7 +170,6 @@ ShaderItem::~ShaderItem()
             LayerRequests::releaseQueued(held.data(), this);
     for (Uniform& u : m_uniforms)
         releaseUniform(u);
-    delete m_transparent;
 }
 
 void ShaderItem::setSource(QQuickItem* source)
@@ -208,7 +215,9 @@ bool ShaderItem::setShader(int stage, uint64_t id, std::string& err)
     }
     if (s.want && s.want != s.shown)
         res::releaseElement(s.want); // never shown: the one before stays
+    s_watch.remove(s.want, this);
     s.want = id;
+    s_watch.add(id, this);
     s.failed = false;
     if (!id) {
         if (s.shown)
@@ -239,11 +248,11 @@ void ShaderItem::setTexelSamplers(std::vector<QByteArray> names)
     update();
 }
 
-void ShaderItem::setOptionalUniforms(std::vector<QByteArray> names)
+void ShaderItem::setOptionalUniforms(const std::vector<QByteArray>& names)
 {
     if (names == m_optional)
         return;
-    m_optional = std::move(names);
+    m_optional = names;
     rebuild();
 }
 
@@ -316,19 +325,15 @@ void ShaderItem::advanceAll()
 
 void ShaderItem::afterResourceFrame()
 {
-    const uint64_t content = res::contentEpoch(), failure = res::failureEpoch();
-    if (content == s_contentEpoch && failure == s_failureEpoch)
-        return;
-    s_contentEpoch = content;
-    s_failureEpoch = failure;
-    for (ShaderItem* item : s_items)
-        item->advanceAll();
+    s_watch.forChanged([](ShaderItem* item) { item->advanceAll(); });
 }
 
 void ShaderItem::releaseUniform(Uniform& u)
 {
-    if (u.image)
+    if (u.image) {
+        s_watch.remove(u.image, this);
         res::releaseElement(u.image);
+    }
     u.image = 0;
     u.imageContent.reset();
     u.imageTexture.reset();
@@ -345,9 +350,10 @@ void ShaderItem::beginUniforms(bool clear)
     m_samplerStates.clear();
     m_layersDirty = true;
     m_structureChanged = true;
+    m_uniformsChanged = true;
 }
 
-void ShaderItem::setUniform(const char* name, int nameLen, quint16 vt, const unsigned char* value, QQuickItem* ref)
+bool ShaderItem::setUniform(const char* name, int nameLen, quint16 vt, const unsigned char* value, QQuickItem* ref)
 {
     const QByteArrayView key(name, nameLen);
     if (vt == VLQT_VALUE_TYPE_SAMPLER) { // own table: the texture of the same name keeps its entry
@@ -360,42 +366,51 @@ void ShaderItem::setUniform(const char* name, int nameLen, quint16 vt, const uns
             m_structureChanged = true; // rebuild checks that the shader has this sampler
         } else if (sit->second != st) {
             sit->second = st;
+        } else {
+            return false;
         }
-        m_layersDirty = true;
-        return;
+        m_layersDirty = true; // the layer requests follow the sampler states
+        m_uniformsChanged = true;
+        return true;
     }
+    bool changed = false;
     auto it = std::find_if(m_uniforms.begin(), m_uniforms.end(), [&](const Uniform& u) { return u.name == key; });
     if (it == m_uniforms.end()) {
         m_uniforms.emplace_back();
         it = std::prev(m_uniforms.end());
         it->name = key.toByteArray();
-        m_structureChanged = true;
+        m_structureChanged = changed = true;
     }
     Uniform& u = *it;
     if (u.type != vt) {
         releaseUniform(u);
         u.type = vt;
-        m_structureChanged = true;
+        m_structureChanged = changed = true;
     }
     switch (vt) {
     case VLQT_VALUE_TYPE_F32: case VLQT_VALUE_TYPE_VEC2: case VLQT_VALUE_TYPE_VEC3: case VLQT_VALUE_TYPE_VEC4: case VLQT_VALUE_TYPE_MAT4:
-        std::memcpy(u.f, value, size_t(valueBytes(vt)));
+        changed = assign(u.f, value, size_t(valueBytes(vt))) || changed;
         break;
-    case VLQT_VALUE_TYPE_COLOR: // straight on the wire, premultiplied like QML's ShaderEffect
-        std::memcpy(u.f, value, 16);
-        u.f[0] *= u.f[3];
-        u.f[1] *= u.f[3];
-        u.f[2] *= u.f[3];
+    case VLQT_VALUE_TYPE_COLOR: { // straight on the wire, premultiplied like QML's ShaderEffect
+        float c[4];
+        std::memcpy(c, value, 16);
+        c[0] *= c[3];
+        c[1] *= c[3];
+        c[2] *= c[3];
+        changed = assign(u.f, c, 16) || changed;
         break;
+    }
     case VLQT_VALUE_TYPE_I32:
-        std::memcpy(u.i, value, 4);
+        changed = assign(u.i, value, 4) || changed;
         break;
     case VLQT_VALUE_TYPE_IVEC2:
-        std::memcpy(u.i, value, 8);
+        changed = assign(u.i, value, 8) || changed;
         break;
-    case VLQT_VALUE_TYPE_BOOL:
-        u.i[0] = value[0] != 0 ? 1 : 0;
+    case VLQT_VALUE_TYPE_BOOL: {
+        const qint32 b = value[0] != 0 ? 1 : 0;
+        changed = assign(u.i, &b, 4) || changed;
         break;
+    }
     case VLQT_VALUE_TYPE_REF:
         if (u.ref != ref) {
             u.ref = ref;
@@ -403,30 +418,35 @@ void ShaderItem::setUniform(const char* name, int nameLen, quint16 vt, const uns
             // goes through its frame proxy instead (Elements::syncTextureGroups after endUniforms).
             if (ref && !isGroup(ref))
                 QQmlProperty(ref, QStringLiteral("layer.enabled")).write(true);
-            m_structureChanged = true;
+            m_structureChanged = changed = true;
         }
         break;
     case VLQT_VALUE_TYPE_U64: {
         uint64_t id;
         std::memcpy(&id, value, 8);
         if (id != u.image) {
-            if (u.image)
+            if (u.image) {
+                s_watch.remove(u.image, this);
                 res::releaseElement(u.image);
+            }
             u.image = 0;
             u.imageContent.reset();
             u.imageTexture.reset();
             if (id && res::kindOfId(id, nullptr) == VLQT_RESOURCE_KIND_IMAGE && res::acquire(id) == res::okRc) {
                 u.image = id;
+                s_watch.add(id, this);
                 u.imageContent = res::image::ready(id);
             }
             u.badImage = id && !u.image;
-            m_structureChanged = true;
+            m_structureChanged = changed = true;
         }
         break;
     }
     default:
         break;
     }
+    m_uniformsChanged = m_uniformsChanged || changed;
+    return changed;
 }
 
 void ShaderItem::endUniforms()
@@ -438,7 +458,9 @@ void ShaderItem::endUniforms()
         rebuild();
     }
     refreshLayerRequests();
-    update();
+    // A repeated send of the same values repaints nothing.
+    if (std::exchange(m_uniformsChanged, false))
+        update();
 }
 
 void ShaderItem::rebuild()
@@ -641,7 +663,8 @@ void ShaderItem::watchProvider(QSGTextureProvider* p)
         m_watched.end());
     m_watched.emplace_back(p);
     connect(p, &QSGTextureProvider::textureChanged, this, &QQuickItem::update, Qt::QueuedConnection);
-    // A provider that goes (layer off, element deleted) must not stay in the material: refresh at the next sync.
+    // A provider that goes (layer off, element deleted) must not stay in the material: refresh at the next sync. Direct
+    // connection, relies on the basic loop (docs/design/render-loop.md, "Places that rely on the basic loop").
     connect(p, &QObject::destroyed, this, &QQuickItem::update);
 }
 
@@ -672,23 +695,35 @@ void ShaderItem::refreshLayerRequests(bool force)
     if (!m_layersDirty && !force)
         return;
     m_layersDirty = false;
-    // Items this item asks something from now (an image has no layer: its mipmaps come from its load).
-    std::vector<QQuickItem*> now;
+    // Elements this item asks something from now, the mip flags of all samplers on one element ORed (an image has no
+    // layer: its mipmaps come from its load).
+    auto& now = m_layerNow;
+    now.clear();
     for (const Sampler& s : m_samplers) {
         const quint64 st = samplerState(s);
         QQuickItem* item = st ? samplerElement(s) : nullptr;
         if (!item)
             continue;
         const bool mip = ((st >> 8) & 0xff) != 0;
-        if (!mip && std::find_if(m_layerItems.begin(), m_layerItems.end(), [&](const auto& p) { return p == item; }) == m_layerItems.end())
-            continue; // defaults need no request (and no write to the layer)
-        LayerRequests::request(item, this, mip);
-        now.push_back(item);
+        const auto e = std::find_if(now.begin(), now.end(), [&](const auto& x) { return x.first == item; });
+        if (e == now.end())
+            now.emplace_back(item, mip);
+        else
+            e->second = e->second || mip;
     }
-    for (const auto& held : m_layerItems)
-        if (held && std::find(now.begin(), now.end(), held.data()) == now.end())
-            LayerRequests::release(held, this);
-    m_layerItems.assign(now.begin(), now.end());
+    const auto held = [&](QQuickItem* item) {
+        return std::find_if(m_layerItems.begin(), m_layerItems.end(), [&](const auto& p) { return p == item; }) != m_layerItems.end();
+    };
+    // Defaults need no request (and no write to the layer), unless the element already holds one.
+    now.erase(std::remove_if(now.begin(), now.end(), [&](const auto& x) { return !x.second && !held(x.first); }), now.end());
+    for (const auto& [item, mip] : now)
+        LayerRequests::request(item, this, mip);
+    for (const auto& p : m_layerItems)
+        if (p && std::find_if(now.begin(), now.end(), [&](const auto& x) { return x.first == p.data(); }) == now.end())
+            LayerRequests::release(p, this);
+    m_layerItems.clear();
+    for (const auto& x : now)
+        m_layerItems.emplace_back(x.first);
 }
 
 QSGTexture* ShaderItem::samplerTexture(Sampler& s)
@@ -720,8 +755,6 @@ void ShaderItem::invalidateSceneGraph()
 {
     for (Uniform& u : m_uniforms)
         u.imageTexture.reset();
-    delete m_transparent;
-    m_transparent = nullptr;
 }
 
 void ShaderItem::releaseResources()
@@ -752,17 +785,17 @@ QSGNode* ShaderItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
         delete old;
         return nullptr;
     }
-    if (!m_transparent) {
-        QImage img(1, 1, QImage::Format_RGBA8888_Premultiplied);
-        img.fill(Qt::transparent);
-        m_transparent = window()->createTextureFromImage(img, QQuickWindow::TextureHasAlphaChannel);
-    }
 
     auto* node = static_cast<EffectNode*>(old);
     QSGNode::DirtyState dirty = QSGNode::DirtyMaterial;
     if (!node) {
         node = new EffectNode;
         m_shaderChanged = true;
+    }
+    if (!node->transparent) {
+        QImage img(1, 1, QImage::Format_RGBA8888_Premultiplied);
+        img.fill(Qt::transparent);
+        node->transparent.reset(window()->createTextureFromImage(img, QQuickWindow::TextureHasAlphaChannel));
     }
     EffectMaterial& mat = node->mat();
 
@@ -789,7 +822,7 @@ QSGNode* ShaderItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
     mat.sourceBinding = -1;
     for (Sampler& s : m_samplers) {
         QSGTexture* t = samplerTexture(s);
-        mat.tex[size_t(s.binding)] = t ? t : m_transparent;
+        mat.tex[size_t(s.binding)] = t ? t : node->transparent.get();
         mat.state[size_t(s.binding)] = samplerState(s);
         if (s.binding == m_texelBinding)
             mat.sourceBinding = s.binding;

@@ -107,7 +107,10 @@
  *     ELEMENT's own rectangle in UV of the pass area, 0 = not set; a texture element that must sit on the element, not on
  *     the area grown by earlier links, maps itself with it: Blend layer, Displace map), passIndex, PYRAMID base, glow,
  *     shadow. Texture uniforms: REF = an element object of its own that the host never REPARENTs (like a mask, see
- *     below; QtNative parks it hidden and renders it as layer; unknown id -4), U64 = image resource id.
+ *     below; QtNative parks it hidden and renders it as layer; unknown id -4; REPARENT of it while a chain samples it
+ *     is -8, once no chain does it shows it again), U64 = image resource id.
+ *   A rejected SET_EFFECT_CHAIN changes nothing: wire format, ids and masks are checked before a mask or texture is
+ *   parked.
  *     Shader id 0 or not Ready yet: the link passes its input through unchanged; a Failed id keeps the last Ready
  *     shader of that link (like ShaderEffect). Padding grows from link to link (each link's effect area = its
  *     input's plus its padding).

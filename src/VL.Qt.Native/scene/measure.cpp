@@ -1,13 +1,13 @@
 #include "scene/measure.h"
-#include "effectchain.h"
-#include "qmlitem.h"
+#include "effects/effect_chain.h"
+#include "user_qml/qml_item.h"
 #include "scene/scene.h"
+#include "wire.h"
 
 #include <QtCore/QByteArray>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 
-#include <cstring>
 #include <vector>
 
 namespace vlqt {
@@ -27,34 +27,19 @@ void pushValue(Scene& scene, quint32 sink, const QVariant& v)
     case QMetaType::QString: vt = VLQT_VALUE_TYPE_STRING; break;
     default: return;
     }
-    if (vt != VLQT_VALUE_TYPE_STRING) {
-        unsigned char buf[8] = {};
-        std::memcpy(buf, &vt, 2);
-        qsizetype len = 4;
-        if (vt == VLQT_VALUE_TYPE_I32) {
-            const qint32 i = v.toInt();
-            std::memcpy(buf + 4, &i, 4);
-            len += 4;
-        } else if (vt == VLQT_VALUE_TYPE_F32) {
-            const float f = float(v.toDouble());
-            std::memcpy(buf + 4, &f, 4);
-            len += 4;
-        } else {
-            buf[4] = v.toBool() ? 1 : 0;
-            len += 1;
-        }
-        scene.events.push(VLQT_EVENT_VALUE, sink, buf, len);
-        return;
+    QByteArray payload;
+    WireWriter w(payload);
+    w.u16(vt).u16(0);
+    switch (vt) {
+    case VLQT_VALUE_TYPE_I32: w.i32(v.toInt()); break;
+    case VLQT_VALUE_TYPE_F32: w.f32(float(v.toDouble())); break;
+    case VLQT_VALUE_TYPE_BOOL: w.u8(v.toBool() ? 1 : 0); break;
+    default: {
+        const QByteArray utf8 = v.toString().toUtf8();
+        w.u32(quint32(utf8.size())).bytes(utf8);
+        break;
     }
-    const QByteArray utf8 = v.toString().toUtf8();
-    const qsizetype n = utf8.size();
-    QByteArray payload(8 + n, Qt::Uninitialized);
-    const quint16 zero = 0;
-    const quint32 n32 = quint32(n);
-    std::memcpy(payload.data(), &vt, 2);
-    std::memcpy(payload.data() + 2, &zero, 2);
-    std::memcpy(payload.data() + 4, &n32, 4);
-    std::memcpy(payload.data() + 8, utf8.constData(), size_t(n));
+    }
     scene.events.push(VLQT_EVENT_VALUE, sink, payload.constData(), payload.size());
 }
 
@@ -62,12 +47,6 @@ void pushValue(Scene& scene, quint32 sink, const QVariant& v)
  * changed property, its last value) and EVENT_QML_SIGNAL (every emitted signal, in order). Records are 4-byte aligned inside
  * (name, value, argument), the poll record is padded by EventQueue::push.
  * Taken (and dropped) also without a sink so that nothing piles up; "signals dropped" is shown by QmlItem::error. */
-void pad4(QByteArray& b)
-{
-    while (b.size() % 4)
-        b.append('\0');
-}
-
 void collectQml(Scene& scene, ElementEntry& n)
 {
     auto* item = static_cast<QmlItem*>(n.item);
@@ -84,31 +63,17 @@ void collectQml(Scene& scene, ElementEntry& n)
     if (dropped)
         item->noteDropped();
     QByteArray payload;
+    WireWriter w(payload);
     for (const QmlPropertyEvent& e : props) {
         payload.clear();
-        const quint16 nameLen = quint16(e.name.size());
-        payload.append(reinterpret_cast<const char*>(&nameLen), 2);
-        payload.append(reinterpret_cast<const char*>(&e.value.type), 2);
-        payload.append(e.name);
-        pad4(payload);
-        payload.append(e.value.bytes);
+        w.u16(quint16(e.name.size())).u16(e.value.type).bytes(e.name).align().bytes(e.value.bytes);
         scene.events.push(VLQT_EVENT_QML_PROPERTY, n.feedbackId, payload.constData(), payload.size());
     }
     for (const QmlSignalEvent& e : signalEvents) {
         payload.clear();
-        const quint16 nameLen = quint16(e.name.size());
-        const quint16 argCount = quint16(e.args.size());
-        const quint16 zero = 0;
-        payload.append(reinterpret_cast<const char*>(&nameLen), 2);
-        payload.append(reinterpret_cast<const char*>(&argCount), 2);
-        payload.append(e.name);
-        pad4(payload);
-        for (const QmlWireValue& a : e.args) {
-            payload.append(reinterpret_cast<const char*>(&a.type), 2);
-            payload.append(reinterpret_cast<const char*>(&zero), 2);
-            payload.append(a.bytes);
-            pad4(payload);
-        }
+        w.u16(quint16(e.name.size())).u16(quint16(e.args.size())).bytes(e.name).align();
+        for (const QmlWireValue& a : e.args)
+            w.u16(a.type).u16(0).bytes(a.bytes).align();
         scene.events.push(VLQT_EVENT_QML_SIGNAL, n.feedbackId, payload.constData(), payload.size());
     }
 }
@@ -167,10 +132,10 @@ void collectGeometry(Scene& scene)
                 n.measuredStamp = stamp;
                 if (n.feedbackId != 0)
                     measureGeometry(scene, n);
-                if (n.effectChain)
-                    for (const EffectChain::Link& l : n.effectChain->links)
-                        if (l.mask)
-                            stack.push_back(l.mask);
+                if (const EffectChain* ec = n.effectChain)
+                    for (size_t i = 0; i < ec->linkCount(); ++i)
+                        if (QQuickItem* mask = ec->link(i).multi.mask)
+                            stack.push_back(mask);
             }
             const QList<QQuickItem*> children = item->childItems(); // shared copy; const: no detach, no allocation
             for (QQuickItem* c : children)

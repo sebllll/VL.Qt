@@ -30,9 +30,11 @@ per vvvv frame:
   4. events are polled back (vlqt_scene_poll)
 ```
 
-- **Deterministic:** same tree and time, same output
-- **Scrubbing and pause:** no Qt timers or system clocks interfere
+- **Deterministic:** same tree and time, same output for everything vvvv computes from the time
+- **Pause:** no Qt timers or system clocks interfere; when the clock stands, QML animations stand
+- **Scrubbing:** only values from vvvv scrub. QML animations follow the clock forward and hold with it, but Qt never rewinds one: after the clock has jumped back, a running animation keeps its value and goes on forward from it with the next positive time steps
 - **Multiple windows:** the same clock drives all renderers
+- **Input:** `vlqt_app_advance_animations` refuses a time that is NaN, infinite or out of range (`VLQT_ERR_BAD_ARGUMENT`)
 - **Exception:** a QML `Timer` in a user file (`QmlElement`) runs on wall time. QML animations follow the clock.
 
 ## C# ↔ C++ interop
@@ -41,6 +43,17 @@ per vvvv frame:
 - **Protocol:** shared type, property and event IDs in `protocol.h` / `Protocol.cs`; `ProtocolDriftTests`, `NativeLayoutTests` and `ApiDriftTests` in `VL.Qt.Tests` detect mismatches (constants, fixed wire sizes, struct layouts, exports against `[DllImport]`s). `VLQT_ABI_VERSION` / `Protocol.AbiVersion` number the protocol and the C ABI together: `QtApp` reads `vlqt_app_get_abi_version()` before the first window and refuses a `vlqt.dll` with another number or without the export (no window, one log error naming both versions and the path, every Renderer node fails with that message)
 - **QtNative:** owns the `QGuiApplication` (one per process); per window a `QQuickWindow` and a `QQmlEngine`; exposed via P/Invoke (`vlqt_window_create`, `vlqt_scene_apply`, `vlqt_scene_poll`, ...), declared in `src/VL.Qt/Interop/` (`Native.*.cs` one file per group of `vlqt.h`, `QtNativeLibrary.cs` finds and loads `vlqt.dll`)
 - **Reconciler (C#):** tracks live Qt objects by ID and calls the command sink (`Create`, `Destroy`, `Reparent`, `Set*`) for each difference
+
+### Adding a command
+
+A command is one opcode of the command buffer that `vlqt_scene_apply` decodes. A new one touches:
+
+1. `src/VL.Qt.Native/protocol.h`: the opcode in `VLQT_OP_*`, its payload layout in the head comment and, for a fixed payload, its size constant.
+2. `src/VL.Qt/Wire/Protocol.cs`: the same opcode in `Protocol.Op` (and the size), plus the writer method in `Wire/CommandWriter.cs`.
+3. `src/VL.Qt.Native/scene/commands.cpp`: one row in the op table (`Scene::findOp`: name for the error text, whether the payload starts with an id and a property, exact or minimum payload length, decoder) and its decoder `Scene::op<Name>`, declared in `scene/scene.h`. `Scene::apply` checks the length against the row and reports the id of a failing command from it; the decoder reads the payload through `WireReader` (`wire.h`) and checks only what goes beyond the row.
+4. The drift tests and the version bump of the protocol change ([development.md](development.md), "Change the protocol").
+
+An input-handler property is one row in `kHandlerProps` (`scene/handlers.cpp`: the handler types that take it and its value type) and its case in `setHandler`.
 
 ## Rendering
 
@@ -84,7 +97,7 @@ The same element instance can hang at several places of the tree; each place get
 
 ## User QML
 
-`QmlElement` (`src/VL.Qt/Elements/Qml/`, native side `src/VL.Qt.Native/qmlitem.{h,cpp}`) is the one place where Qt Quick content that VL.Qt did not build enters the tree. It follows the same path as every element (CREATE, properties, apply) with two additions: `SET_QML_PROPERTIES` sends the entries of the `Properties` dictionary by name (diffed in C#, converted through `QVariant` in QtNative), and the events `EVENT_QML_PROPERTY` / `EVENT_QML_SIGNAL` carry the declared properties and signals of the file's root back to the node's feedback. The node also owns the file watcher for hot reload (it bumps `QML_RELOAD`). The file is compiled on the per-window `QQmlEngine` from a `file:` URL, the instance lives as a child of the element's item. See [QML files as elements](user-qml.md) and [decisions/user-qml.md](decisions/user-qml.md).
+`QmlElement` (`src/VL.Qt/Elements/Qml/`, native side `src/VL.Qt.Native/user_qml/`) is the one place where Qt Quick content that VL.Qt did not build enters the tree. It follows the same path as every element (CREATE, properties, apply) with two additions: `SET_QML_PROPERTIES` sends the entries of the `Properties` dictionary by name (diffed in C#, converted through `QVariant` in QtNative), and the events `EVENT_QML_PROPERTY` / `EVENT_QML_SIGNAL` carry the declared properties and signals of the file's root back to the node's feedback. The node also owns the file watcher for hot reload (it bumps `QML_RELOAD`). The file is compiled on the per-window `QQmlEngine` from a `file:` URL, the instance lives as a child of the element's item. See [QML files as elements](user-qml.md) and [decisions/user-qml.md](decisions/user-qml.md).
 
 ## Performance
 

@@ -299,11 +299,13 @@ public static class QmlTest
             p.Vec3("v3", 1, 2, 3);
             p.Vec4("v4", 4, 3, 2, 1);
             p.Rect("box", 10, 20, 30, 40);
+            p.Vec2("pt", 3, -4);
+            p.Vec2("sz", 640, 480);
         });
         CheckApply("SET_QML_PROPERTIES all value types");
         recs = Poll();
         var back = recs.Where(r => r.Event == Protocol.EventId.QmlProperty && r.Handle == HT).Select(r => { QmlEvents.TryDecodeProperty(r.Payload, out var n, out var v); return (n, v); }).ToDictionary(x => x.n, x => x.v);
-        s.Check(back.Count == 9 && back.Keys.All(k => k.EndsWith("Out")), $"the nine bound copies come back and nothing else ({string.Join(",", back.Keys)})");
+        s.Check(back.Count == 11 && back.Keys.All(k => k.EndsWith("Out")), $"the eleven bound copies come back and nothing else ({string.Join(",", back.Keys)})");
         s.Check(back.TryGetValue("rOut", out var rOut) && Close(rOut, 0.25f), $"real round trip ({(back.TryGetValue("rOut", out var rv) ? rv : "none")})");
         s.Check(back.TryGetValue("iOut", out var iOut) && iOut is 7, $"int round trip ({(back.TryGetValue("iOut", out var iv) ? iv : "none")})");
         s.Check(back.TryGetValue("bOut", out var bOut) && bOut is true, "bool round trip");
@@ -313,7 +315,10 @@ public static class QmlTest
         s.Check(back.TryGetValue("v3Out", out var v3Out) && v3Out is Vector3 vv3 && vv3 == new Vector3(1, 2, 3), "vector3d round trip");
         s.Check(back.TryGetValue("v4Out", out var v4Out) && v4Out is Vector4 vv4 && vv4 == new Vector4(4, 3, 2, 1), "vector4d round trip");
         s.Check(back.TryGetValue("boxOut", out var boxOut) && boxOut is RectangleF rr && rr == new RectangleF(10, 20, 30, 40), $"rect round trip ({(back.TryGetValue("boxOut", out var bv) ? bv : "none")})");
-        s.Check(Err(HT) == "", $"no error for the nine values ('{Err(HT)}')");
+        s.Check(back.TryGetValue("ptOut", out var ptOut) && ptOut is Vector2 vpt && vpt == new Vector2(3, -4), $"point round trip: a Vector2 into a point property, back as Vector2 ({(back.TryGetValue("ptOut", out var pv) ? pv : "none")})");
+        s.Check(back.TryGetValue("szOut", out var szOut) && szOut is Vector2 vsz && vsz == new Vector2(640, 480), $"size round trip ({(back.TryGetValue("szOut", out var zv) ? zv : "none")})");
+        s.Check(Signals(recs, HT) is [{ Name: "located" } located] && located.Arguments.Count == 1 && located.Arguments[0] is Vector2 la && la == new Vector2(3, -4), $"a signal argument of the type point arrives as Vector2 ({S(recs)})");
+        s.Check(Err(HT) == "", $"no error for the eleven values ('{Err(HT)}')");
 
         // QVariant converts what it can: a float into an int property, an int into a real property, a bool into a real.
         SetProps(T, p => { p.F32("i", 3f); p.I32("r", 4); });

@@ -27,7 +27,7 @@ $remove = @(
     @{ P = 'qml\*\*\*\plugins.qmltypes';  R = 'same as above, nested modules (QtQuick\Controls\Basic, ...).' }
     @{ P = 'qml\*\*\*\*\plugins.qmltypes'; R = 'same as above, nested modules (QtQuick\Controls\Basic\impl).' }
 )
-# Qt Quick Controls (Button, #213): only Basic is deployed: our own style VLQt (embedded in vlqt) uses it as fallback and uses Basic.impl (QQuickStyle::setStyle in vlqt.cpp). windeployqt
+# Qt Quick Controls (Button, #213): only Basic is deployed: our own style VLQt (embedded in vlqt) uses it as fallback and uses Basic.impl (QQuickStyle::setStyle in app/app.cpp). windeployqt
 # deploys every style that QtQuick/Controls/qmldir lists as optional import; those imports are only resolved for the
 # selected style, so the others can go. Milestone "styles & theming" (#298) decides about further styles.
 foreach ($style in 'Fusion', 'Imagine', 'Material', 'Universal', 'FluentWinUI3', 'Windows', 'Native', 'macOS', 'iOS') {

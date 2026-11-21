@@ -8,7 +8,7 @@
  * in logical pixels, and Video items additionally
  *   EVENT_MEDIA        (f32 position, f32 duration)  seconds, 0 until the media is loaded
  * only when the value changed since the last record sent for the same handle. Items with an error state (QML
- * property vlqtError, see elements.cpp: Image could not be loaded, Video player error) additionally report
+ * property vlqtError, see elements/type_video.cpp: Video player error) additionally report
  *   EVENT_ERROR        (UTF-8 text, no terminator)  on change; empty = error cleared. Nothing is sent while there
  *                   is no error (initial state = no error)
  * Measure on change: MEASURED / SCENE_BOUNDS are read only for items whose geometry changed since the last
@@ -25,10 +25,10 @@
  * Value inputs (SpinBox; CheckBox, Switch, Slider, TextField) additionally report user changes as
  *   EVENT_VALUE (u16 valueType, u16 0, value like SET)  after a user change since the last poll, with the value of the
  *                   last one, captured when Qt's user-only signal fired (SpinBox valueModified); never for SET (no
- *                   echo). A new handle drops a change not polled yet. Schema and guarantees: protocol.h, elements.cpp.
+ *                   echo). A new handle drops a change not polled yet. Schema and guarantees: protocol.h, elements/type_controls.cpp.
  * QmlElement items additionally report the changes of the properties and signals declared in the root of their QML
  * file: EVENT_QML_PROPERTY (the last value of each changed property, never for the patch's own SET_QML_PROPERTIES) and
- * EVENT_QML_SIGNAL (every emitted signal, cap 256 per poll, QmlItem in qmlitem.h), formats in protocol.h; their errors (load,
+ * EVENT_QML_SIGNAL (every emitted signal, cap 256 per poll, QmlItem in user_qml/qml_item.h), formats in protocol.h; their errors (load,
  * type, rejected properties) arrive as EVENT_ERROR like those of Image/Video.
  * Window-level (feedbackId 0, not a sink), queued by the poll after a move/resize/state change
  * (QWindow x/y/width/height/windowState/screen/visible changed) and once after creation:

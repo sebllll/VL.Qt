@@ -66,6 +66,8 @@ public:
     // F5 Resources page: live resources and the upload totals under one lock; rows keeps its capacity.
     void overview(std::vector<OverviewRow>& rows, OverviewTotals& out);
     void endFrame();
+    // Ids that got new Ready content or became Failed up to the last beginFrame; valid until the next one (main thread).
+    const std::vector<uint64_t>& changedThisFrame() const { return m_changed; }
 
     // --- Device lost (device.h listener, main thread inside device::rebuild) ---
     // Frees every object of the old device; Contents a worker holds are restarted when their result comes back.
@@ -113,6 +115,8 @@ private:
     // Main thread, never while a worker holds the Content.
     void free(uint64_t id, Slot& s);
     void pushState(uint64_t id, const Slot& s);
+    // Records a content change or a failure for the next beginFrame (under m_mutex).
+    void noteChanged(uint64_t id);
 
     std::mutex m_mutex; // guards everything below and the queues of m_pool
     WorkerPool m_pool{m_mutex};
@@ -123,6 +127,8 @@ private:
     std::vector<uint64_t> m_toFree;
     int64_t m_budget = defaultBudget;
     int64_t m_usedLastFrame = 0; // upload bytes of the last beginFrame
+    std::vector<uint64_t> m_changedPending; // changes since the last beginFrame (m_mutex)
+    std::vector<uint64_t> m_changed;        // what the last beginFrame published, read by changedThisFrame
 };
 
 // The one manager, created at the first use and never deleted (like g_app): workers may still run while the process ends.

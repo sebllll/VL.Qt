@@ -33,11 +33,12 @@ The same types go both ways:
 | `string` | `string` |
 | `Color4` | `color` |
 | `Vector2`, `Vector3`, `Vector4` | `vector2d`, `vector3d`, `vector4d` |
+| `Vector2` | `point` (x, y), `size` (width, height) |
 | `RectangleF` | `rect` |
 
 - A value of another type, or `null`, is not sent: the node shows an error line and ignores the value.
 - Qt converts to the type of the QML property. A `float` set on an `int` property works, a string that is no number for a `real` property does not: error line, value ignored.
-- Back to the patch the same types arrive (integers outside the `int` range are clamped, a `url` arrives as a `string`, a `rect` as `RectangleF`). A signal argument of any other QML type (a list, an object) arrives as its string form. A property of such a type is not reported: `Error` shows one line for it.
+- Back to the patch the same types arrive (integers outside the `int` range are clamped, a `url` arrives as a `string`, a `rect` as `RectangleF`, a `point` as `Vector2(x, y)`, a `size` as `Vector2(width, height)`). A signal argument of any other QML type (a list, an object) arrives as its string form. A property of such a type is not reported: `Error` shows one line for it.
 
 ## What comes back
 
@@ -69,7 +70,7 @@ The patch's own `Properties` entry is not reported back: setting `value` from th
 
 ## Hot reload
 
-The node watches the **folder of the file** for changes of the file itself, of any `*.qml` next to it and of `qmldir` (components the file imports by relative path). On a change QtNative clears the component cache for the file, builds a new instance and sends all property values again. The outputs start empty again (`Properties`, `Signals`), `Error` is empty when the new version compiles. Saving the file while vvvv runs is all it takes.
+The node watches the **folder of the file** for changes of the file itself, of any `*.qml` next to it and of `qmldir` (components the file imports by relative path). On a change QtNative clears the component cache for the file, builds a new instance and sends all property values again. A new element of a file that changed on disk since QtNative last compiled it also reads the file again, not the cached component, so a node rebuilt after a declaration change never shows the old version. The outputs start empty again (`Properties`, `Signals`), `Error` is empty when the new version compiles. Saving the file while vvvv runs is all it takes.
 
 Limits:
 
@@ -117,7 +118,7 @@ Only the declarations of the **root object** count (nested objects and functions
 | `signal name(type a)` | no | `Spread<T>`: the values of the emissions of this frame |
 | `signal name(type a, type b, …)` | no | `Spread<QmlSignal>`: one entry per emission, `Name` and `Arguments` |
 
-The types and their vvvv counterparts are those of [Value types](#value-types): `real`/`double` → `float`, `int`, `bool`, `string`, `color` → `Color4`, `vector2d/3d/4d` → `Vector2/3/4`, `rect` → `RectangleF`. A signal argument of a type without a pin type (`var`, a list, an object) makes the pin a `Spread<object>`, the value arrives as its string form (or whatever supported type it has). Both argument spellings work: `signal moved(real x, real y)` and `signal moved(x: real, y: real)`; an argument without a name is called `arg1`, `arg2`, …
+The types and their vvvv counterparts are those of [Value types](#value-types): `real`/`double` → `float`, `int`, `bool`, `string`, `color` → `Color4`, `vector2d/3d/4d` → `Vector2/3/4`, `point` and `size` → `Vector2`, `rect` → `RectangleF`. A signal argument of a type without a pin type (`var`, a list, an object) makes the pin a `Spread<object>`, the value arrives as its string form (or whatever supported type it has). Both argument spellings work: `signal moved(real x, real y)` and `signal moved(x: real, y: real)`; an argument without a name is called `arg1`, `arg2`, …
 
 The input and the output of one property have **the same name** ("Accent Color" in and out), vvvv tells them apart by their kind. The output starts with the declared default, shows the last value QML changed, and goes back to the default after a reload of the file. A signal output is false/empty in every frame without an emission.
 
@@ -125,11 +126,11 @@ Not given a pin: `property alias`, `var`, `list<…>`, object types (`Item`, `Re
 
 ### Defaults, and when a value is sent
 
-- A **literal initializer** is the default of the pin: numbers (also hex and with a sign; an `int` needs a whole number, a `real` takes an integer too), `true`/`false`, strings (`"…"` or `'…'`), colours as `"#rgb"` / `"#rrggbb"` / `"#aarrggbb"` or a colour name, and `Qt.rgba`, `Qt.rgb`, `Qt.vector2d/3d/4d`, `Qt.rect` with numeric literal arguments. Colour names (`"tomato"`, case does not matter) come from Stride's colour table, with the `grey` spellings of the `gray` names, `transparent` and `rebeccapurple` added; an unknown name or hex form is not a literal. `Qt.rgba`/`Qt.rgb` take 0 to 1 per channel, a value outside that range makes it a binding.
+- A **literal initializer** is the default of the pin: numbers (also hex and with a sign; an `int` needs a whole number, a `real` takes an integer too), `true`/`false`, strings (`"…"` or `'…'`), colours as `"#rgb"` / `"#rrggbb"` / `"#aarrggbb"` or a colour name, and `Qt.rgba`, `Qt.rgb`, `Qt.vector2d/3d/4d`, `Qt.point`, `Qt.size`, `Qt.rect` with numeric literal arguments. Colour names (`"tomato"`, case does not matter) come from Stride's colour table, with the `grey` spellings of the `gray` names, `transparent` and `rebeccapurple` added; an unknown name or hex form is not a literal. `Qt.rgba`/`Qt.rgb` take 0 to 1 per channel, a value outside that range makes it a binding.
 - A **binding** (`property real half: width / 2`), any other expression (also a literal of another type), or **no initializer** gives the default of the type (0, `false`, empty string, transparent black, …).
 - **Binding rule:** the patch sends a value only **after it differs from the declared default**; from then on every change is sent, also back to the default. Until then the pin is silent, so a binding or an initial value in the file stays alive and is not overwritten by the pin's default. Consequence: a pin that still shows its default does not "hold" that value in QML, it leaves the file in charge.
 - A value is never "reset": setting a pin back to the default sends the default, it does not restore a binding.
-- A `required property` is sent from the first frame on (but see [Limitations](#limitations-of-the-generated-nodes)).
+- A `required property` is sent from the first frame on: QtNative creates the root with the values of that frame as initial properties, so the file loads and the value is there from its first evaluation.
 
 ### Pin names and help
 
@@ -191,7 +192,6 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 
 ### Limitations of the generated nodes
 
-- **`required property`** fails at creation: QtNative creates the root first and sets the properties afterwards, and Qt refuses a `required property` without a value at that point, although the pin always sends. Give the property a default value instead. Fixing it needs initial properties at creation in QtNative and is not part of #107.
 - **No experimental mark:** `QmlElement` carries `SymbolSmell.Experimental`, but vvvv's node building API has no smell for factory nodes. The generated nodes are experimental all the same.
 - **No pin** for `alias`, `var`, `list<…>`, object types and value types such as `url` or `font` (info message at the node, use `Properties`).
 - Only the **root object** is read, and only a sibling file of the same folder as root type (not an import from another folder or module).

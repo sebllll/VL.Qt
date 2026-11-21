@@ -81,7 +81,7 @@ modules="$("$QT_DIR/libexec/qmlimportscanner" -rootPath "$ROOT/src/VL.Qt.Native/
 for m in json.load(sys.stdin):
     if m.get("type") == "module" and m.get("relativePath"): print(m["relativePath"])')"
 [ -n "$modules" ] || fail "qmlimportscanner found no QML modules"
-# Qt Quick Controls (Button, #213): only Basic is deployed: our own style VLQt (embedded in vlqt) uses it as fallback and uses Basic.impl (QQuickStyle::setStyle in vlqt.cpp). The other styles
+# Qt Quick Controls (Button, #213): only Basic is deployed: our own style VLQt (embedded in vlqt) uses it as fallback and uses Basic.impl (QQuickStyle::setStyle in app/app.cpp). The other styles
 # (optional imports of QtQuick/Controls/qmldir) and what only they import (NativeStyle, Layouts) are not deployed, so
 # their libs stay out of the NEEDED closure too. Same list as trim-deploy.ps1 / trim-linux.sh; #298 decides about more.
 skip_re='^QtQuick/(Controls/(Fusion|Imagine|Material|Universal|FluentWinUI3|Windows|macOS|iOS|Native)(/.*)?|NativeStyle|Layouts)$'
@@ -106,7 +106,7 @@ while :; do
     [ "$added" = 1 ] || break
 done
 
-# --- fallback font (#427): QtNative registers it only when fontconfig finds no system font (vlqt.cpp, ensureFonts).
+# --- fallback font (#427): QtNative registers it only when fontconfig finds no system font (platform/platform_linux.cpp, ensureFonts).
 install -D -m 644 "$ROOT/src/VL.Qt.Native/fonts/DejaVuSans.ttf" "$NATIVE/fonts/DejaVuSans.ttf"
 install -D -m 644 "$ROOT/LICENSES/DejaVu-Fonts.txt" "$NATIVE/fonts/DejaVu-Fonts-LICENSE.txt"
 

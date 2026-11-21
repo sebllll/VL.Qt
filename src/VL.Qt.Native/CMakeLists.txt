@@ -32,12 +32,38 @@ target_sources(vlqt PRIVATE
     vlqt.h
     vlqt_test.h
     protocol.h
+    wire.h
 
-    # app/: exports, last error; vlqt.cpp holds the app and window exports until they are split
+    # app/: start and pump, exports and last error, log, animation clock, render gate, input delivery, app fonts
+    app/animation_clock.cpp
+    app/animation_clock.h
+    app/app.cpp
+    app/app.h
     app/exports.h
+    app/fonts.cpp
+    app/fonts.h
+    app/input_delivery.cpp
     app/last_error.cpp
     app/last_error.h
-    vlqt.cpp
+    app/log.cpp
+    app/log.h
+    app/render_gate.cpp
+    app/render_gate.h
+    app/thread_name.h
+
+    # platform/: platform.h here, the sources of one platform in the if(WIN32) block below
+    platform/platform.h
+
+    # window/: the scene handle, windows and their filters, focus release, injected touch
+    window/focus_release.cpp
+    window/focus_release.h
+    window/scene_handle.h
+    window/touch_input.cpp
+    window/window.cpp
+    window/window.h
+    window/window_exports.cpp
+    window/window_filters.cpp
+    window/window_filters.h
 
     # scene/: object table, command decoder, event queue, measurement, input handlers, previous-frame layer
     scene/clear_state.cpp
@@ -57,24 +83,47 @@ target_sources(vlqt PRIVATE
     scene/touch_handler.cpp
     scene/touch_handler.h
 
-    # elements/
+    # elements/: element types and their properties, geometry, Group frame, effect sources
+    elements/effect_sources.cpp
     elements/element_entry.h
-    elements.cpp
-    elements.h
-    shape_path_element.cpp
-    shape_path_element.h
+    elements/element_types.cpp
+    elements/element_types.h
+    elements/elements.cpp
+    elements/elements.h
+    elements/geometry.cpp
+    elements/geometry.h
+    elements/group_item.cpp
+    elements/group_item.h
+    elements/shape_path_element.cpp
+    elements/shape_path_element.h
+    elements/type_controls.cpp
+    elements/type_image.cpp
+    elements/type_layout.cpp
+    elements/type_qml.cpp
+    elements/type_rectangle.cpp
+    elements/type_shader.cpp
+    elements/type_shape.cpp
+    elements/type_text.cpp
+    elements/type_video.cpp
 
     # effects/ and user_qml/
-    effectchain.cpp
-    effectchain.h
+    effects/effect_chain.cpp
+    effects/effect_chain.h
+    effects/effect_chain_desc.h
+    effects/effect_chain_item.cpp
+    effects/effect_chain_item.h
     effects/layer_requests.cpp
     effects/layer_requests.h
     effects/shader_item.cpp
     effects/shader_item.h
     effects/shader_material.cpp
     effects/shader_material.h
-    qmlitem.cpp
-    qmlitem.h
+    user_qml/qml_item.cpp
+    user_qml/qml_item.h
+    user_qml/qml_watcher.cpp
+    user_qml/qml_watcher.h
+    user_qml/qml_wire.cpp
+    user_qml/qml_wire.h
 
     # style/
     vlstyle.cpp
@@ -82,9 +131,11 @@ target_sources(vlqt PRIVATE
 
     # resources/
     resources/pixel_format.cpp
+    resources/change_watch.h
     resources/pixel_format.h
     resources/resource_events.cpp
     resources/resource_events.h
+    resources/resource_exports.cpp
     resources/resource_kind.h
     resources/resource_manager.cpp
     resources/resource_manager.h
@@ -113,14 +164,25 @@ target_sources(vlqt PRIVATE
     render_thread.h
 
     # offscreen/
-    offscreen.cpp
-    offscreen.h
+    offscreen/offscreen.h
+    offscreen/offscreen_scene.cpp
+    offscreen/offscreen_scene.h
+    offscreen/offscreen_input.cpp
+    offscreen/offscreen_exports.cpp
 
-    # diagnostics/
-    perf.cpp
-    perf.h
-    debug.cpp
-    debug.h
+    # diagnostics/: perf monitor (statistics, hooks, pages, graph and timeline items) and debug overlay
+    diagnostics/debug_overlay.cpp
+    diagnostics/debug_overlay.h
+    diagnostics/perf.h
+    diagnostics/perf_exports.cpp
+    diagnostics/perf_items.cpp
+    diagnostics/perf_items.h
+    diagnostics/perf_monitor.cpp
+    diagnostics/perf_monitor.h
+    diagnostics/perf_pages.cpp
+    diagnostics/perf_pages.h
+    diagnostics/perf_stats.cpp
+    diagnostics/perf_stats.h
 
     # test/: the test exports of vlqt_test.h are in every build; only the SmokeTest and the unit tests call them
     test/test_hooks.h
@@ -148,7 +210,7 @@ qt_add_resources(vlqt "vlqt_style"
         style/VLQt/TextField.qml)
 # Default window icon: PNGs in several sizes (scaled from docs/icon/icon.png) embedded as
 # :/vlqt/icon/default-<size>.png, so it also shows in an export without a file next to it. Artwork replaceable: same
-# file names; a new size = file in icon/ plus a line below and in vlqt.cpp (defaultIcon).
+# file names; a new size = file in icon/ plus a line below and in window/window.cpp (defaultIcon).
 qt_add_resources(vlqt "vlqt_icon"
     PREFIX "/vlqt/icon"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}/icon"
@@ -179,15 +241,20 @@ target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick 
 # limited compatibility guarantees: check on Qt updates). Qt6ShaderTools is deployed next to QtNative.
 target_link_libraries(vlqt PRIVATE Qt6::ShaderTools Qt6::ShaderToolsPrivate)
 # QuickShapes: Shape/ShapePath for Line, Polyline, Polygon, Path. QuickShapesPrivate: QQuickShape/QQuickShapePath
-# (qquickshape_p.h) built from C++ with typed setters (makeShape in elements.cpp); ShapePathElement (shape_path_element.h)
+# (qquickshape_p.h) built from C++ with typed setters (makeShape in elements/type_shape.cpp); ShapePathElement (elements/shape_path_element.h)
 # subclasses the private QQuickCurve of QuickPrivate (qquickpath_p.h). Private API, limited compatibility guarantees:
 # check on Qt updates. Qt6QuickShapes and qml/QtQuick/Shapes are deployed next to QtNative (qml/deploy.qml).
 target_link_libraries(vlqt PRIVATE Qt6::QuickShapes Qt6::QuickShapesPrivate)
 if(WIN32)
     target_sources(vlqt PRIVATE
-        # offscreen/: linear_pass converts QtTexture into SRGB and float textures; d3dcompiler_47.dll ships with Windows 10 and up
-        linear_pass.cpp
-        linear_pass.h
+        # platform/: dialog keys for vvvv's message loop, DllMain
+        platform/platform_win.cpp
+        # offscreen/: the D3D11 binding and the frames of a scene; linear_pass converts QtTexture into SRGB and float textures;
+        # d3dcompiler_47.dll ships with Windows 10 and up
+        offscreen/offscreen_binding.cpp
+        offscreen/offscreen_render.cpp
+        offscreen/linear_pass.cpp
+        offscreen/linear_pass.h
         # test/: D3D11On12 test device of vlqt_test_device_lost; d3d12.dll is loaded at run time, not linked
         test/test_device.cpp
         test/test_device.h)
@@ -195,10 +262,12 @@ if(WIN32)
     target_link_libraries(vlqt PRIVATE d3d11 dxgi d3dcompiler)
 else()
     target_sources(vlqt PRIVATE
+        # platform/: WSLg GPU default and probe, display check, fallback font, unload hook
+        platform/platform_linux.cpp
         # offscreen/: X geometry of the offscreen platform's GLX drawable for window grabs. Uses the X11 headers that Qt's
         # OpenGL dependency brings (libgl-dev); libX11/libGL are looked up at run time, not linked.
-        offscreen_glx.cpp
-        offscreen_glx.h)
+        offscreen/offscreen_glx.cpp
+        offscreen/offscreen_glx.h)
 endif()
 set_target_properties(vlqt PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${VLQT_OUT_DIR}"   # vlqt.dll
