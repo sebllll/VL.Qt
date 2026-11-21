@@ -684,7 +684,7 @@ enum vlqt_image_upload {
  * element unknown in the window, window not exposed (offscreen scene: not bound), element or window destroyed during
  * the grab, grab refused. */
 
-/* Audio tap (VLQT_RESOURCE_KIND_AUDIO_TAP, audio_tap.h): the sound of a Video element as interleaved float samples for
+/* Audio tap (VLQT_RESOURCE_KIND_AUDIO_TAP, resources/audio_tap.h): the sound of a Video element as interleaved float samples for
  * VL.Audio (Video (VL.Audio) in VL.Qt.Audio). Contract between QtNative and C#:
  *
  * Lifetime. C# creates the resource (vlqt_res_create) and fixes its format once with vlqt_audio_tap_init
@@ -701,8 +701,10 @@ enum vlqt_image_upload {
  * AudioOutput (Video [VL.Qt] never sets the prop and is unchanged). C# swaps from one tap to the next without a 0 in
  * between, so Qt never plays a burst. The tap hangs on the player of the item, never on the QQuickWindow (the window
  * is replaced on an MSAA change; items move with it). The element holds an element reference on the tap. One
- * player per tap: a second element with the same tap id is ignored with a warning (rc 0) until the first one detaches.
- * Bad ids (unknown, wrong kind, not Ready) -> ApplyBadValue, Qt's output stays as it was.
+ * player per tap: a second element with a tap id another element writes into is muted (no Qt output, no tap) and the
+ * prop is refused (ApplyBadValue); it stays muted until its prop changes (0 restores Qt's output). Bad ids (unknown,
+ * wrong kind, not Ready) -> ApplyBadValue, Qt's output stays as it was. At most 64 taps live at once: init refuses
+ * more (VLQT_ERR_BAD_ARGUMENT).
  *
  * Clock. All times are ns of one monotonic clock, vlqt_audio_tap_now_ns(): std::chrono::steady_clock. On Windows that is the
  * QueryPerformanceCounter, so it equals Stopwatch.GetTimestamp() converted to ns (ticks / f * 1e9 + ticks % f * 1e9 / f,
@@ -722,8 +724,8 @@ enum vlqt_image_upload {
  * not fit is dropped, overrun_frames += its frames), attach of the tap. NOT on a loop wrap: Qt's audio startTime keeps
  * counting across passes (pass * container duration + position) without a gap.
  *
- * Reader (C#, audio thread, T5). vlqt_audio_tap_read (vlqt.h) is allocation free, never blocks on the main thread and
- * may be called from any thread; one reader per tap. One call delivers frames of one segment only (it stops at a
+ * Reader (C#, audio thread, T5). vlqt_audio_tap_read (vlqt.h) takes no lock, allocates nothing, never frees a tap and
+ * never blocks on the main thread; any thread, one reader per tap at a time (the ring has one reader). One call delivers frames of one segment only (it stops at a
  * segment boundary). dst != NULL: copies and consumes up to maxFrames frames; dst == NULL: consumes (drops) up to
  * maxFrames frames without copying, this is how C# drops samples to catch up; maxFrames == 0: state only. The state
  * describes the first frame the call delivered or dropped (or the next one in the ring when it moved none). Resampling,

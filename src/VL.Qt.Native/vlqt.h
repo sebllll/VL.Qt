@@ -596,14 +596,14 @@ typedef struct vlqt_audio_tap_state {
     int reserved[2];                     /* 0 */
 } vlqt_audio_tap_state;
 
-/* Audio taps (audio_tap.h, protocol.h "Audio tap"). Main thread (else VLQT_ERR_WRONG_THREAD): fixes the format of a Pending
+/* Audio taps (resources/audio_tap.h, protocol.h "Audio tap"). Main thread (else VLQT_ERR_WRONG_THREAD): fixes the format of a Pending
  * VLQT_RESOURCE_KIND_AUDIO_TAP resource (interleaved float, channels 1..VLQT_AUDIO_TAP_MAX_CHANNELS, sampleRate
  * VLQT_AUDIO_TAP_MIN_SAMPLE_RATE..MAX) and makes it Ready at once (RESOURCE_EVENT_INFO w = channels, h = sampleRate,
  * bytes = ring). Once per tap: a new sample rate needs a new tap. 0, VLQT_ERR_BAD_ARGUMENT (wrong kind, bad format,
- * already initialised), VLQT_ERR_UNKNOWN_ID. */
+ * already initialised, 64 taps already initialised and not freed), VLQT_ERR_UNKNOWN_ID. */
 VLQT_API int vlqt_audio_tap_init(unsigned long long id, int channels, int sampleRate);
-/* Reads the tap: any thread (VL.Audio's audio thread), no allocation, never waits for the main thread; one reader per
- * tap. dst != NULL: copies up to maxFrames frames (maxFrames * channels floats, interleaved) of one segment into dst
+/* Reads the tap: any thread (VL.Audio's audio thread), one reader per tap at a time; no lock, no allocation, never
+ * waits for the main thread. dst != NULL: copies up to maxFrames frames (maxFrames * channels floats, interleaved) of one segment into dst
  * and consumes them; dst == NULL: drops up to maxFrames frames of one segment (catching up); maxFrames == 0: state
  * only. channels must equal the tap's (guards dst). state (may be NULL) is filled on every return >= 0 and on
  * VLQT_ERR_BAD_ARGUMENT for a tap not yet initialised. Returns the frames copied/dropped (0 = none available),

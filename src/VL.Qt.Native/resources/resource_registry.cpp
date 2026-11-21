@@ -1,9 +1,9 @@
 // The registry of the resource kinds: the only file that includes every kind.
 #include "resources/resource_kind.h"
 
-#include "audio_tap.h"
 #include "image_resource.h"
 #include "protocol.h"
+#include "resources/audio_tap.h"
 #include "resources/resources.h"
 #include "shader_resource.h"
 #include "snapshot_resource.h"
