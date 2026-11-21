@@ -3,6 +3,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Images;
 using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Nodes

@@ -5,6 +5,7 @@ using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Lib.Collections;
 using VL.Qt.Elements;
+using VL.Qt.Images;
 
 namespace VL.Qt.Shaders
 {

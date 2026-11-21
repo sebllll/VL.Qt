@@ -5,7 +5,7 @@
     /// <see cref="Element.Feedback"/> (release over the button; AutoRepeat repeats while held).
     /// Lengths in units.
     /// </summary>
-    public sealed class Button : Element
+    internal sealed class Button : Element
     {
         public Button() : base(ElementType.Button) { }
 

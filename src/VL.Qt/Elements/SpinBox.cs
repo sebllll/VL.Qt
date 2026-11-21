@@ -5,7 +5,7 @@
     /// as EVENT_VALUE into <see cref="Element.Feedback"/>; SET VALUE is never echoed. Defaults match QtNative (full int range,
     /// not Qt's 0–99). Lengths in units.
     /// </summary>
-    public sealed class SpinBox : Element
+    internal sealed class SpinBox : Element
     {
         public SpinBox() : base(ElementType.SpinBox) { }
 

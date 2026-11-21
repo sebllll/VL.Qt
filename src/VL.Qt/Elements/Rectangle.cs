@@ -3,7 +3,7 @@
 namespace VL.Qt.Elements
 {
     /// <summary>Filled rectangle with optional rounded corners and stroke (Qt Rectangle). Lengths in units.</summary>
-    public sealed class Rectangle : Element
+    internal sealed class Rectangle : Element
     {
         public Rectangle() : base(ElementType.Rectangle) { }
 

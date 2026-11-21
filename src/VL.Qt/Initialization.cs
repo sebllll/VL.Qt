@@ -3,6 +3,7 @@ using System.IO;
 using Microsoft.Extensions.Logging;
 using VL.Core;
 using VL.Core.CompilerServices;
+using VL.Core.Import;
 using VL.Qt.Interop;
 
 [assembly: AssemblyInitializer(typeof(VL.Qt.Initialization))]
@@ -10,7 +11,8 @@ using VL.Qt.Interop;
 namespace VL.Qt
 {
     // Public sealed like all initializers of VL.StandardLibs (the runtime uses Default; e.g. VL.IO.Redis has one under
-    // ImportAsIs as well).
+    // ImportAsIs as well); hidden from the node browser.
+    [Smell(SymbolSmell.Hidden)]
     public sealed class Initialization : AssemblyInitializer<Initialization>
     {
         public override void Configure(AppHost appHost)

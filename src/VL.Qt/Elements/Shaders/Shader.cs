@@ -9,7 +9,7 @@ namespace VL.Qt.Elements
     /// an <see cref="Input"/> element as sampler2D "source". Uniforms are matched by name through the shader's
     /// reflection (protocol.h "ShaderEffect").
     /// </summary>
-    public sealed class Shader : Element
+    internal sealed class Shader : Element
     {
         private readonly Element? _input;
         private readonly Spread<Uniform> _uniforms = Spread<Uniform>.Empty;
