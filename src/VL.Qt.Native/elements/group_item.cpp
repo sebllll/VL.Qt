@@ -120,8 +120,8 @@ QQuickItem* makeGroup() { return new GroupItem(); }
 
 void setGroupAutoSize(QQuickItem* item, bool on)
 {
-    if (auto* g = dynamic_cast<GroupItem*>(item))
-        g->setAutoSize(on);
+    if (isGroup(item))
+        static_cast<GroupItem*>(item)->setAutoSize(on);
 }
 
 // A child's matrix changed: its parent Group recomputes the frame (no-op for other parents).

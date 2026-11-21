@@ -863,8 +863,8 @@ int Elements::setEffectChain(ElementEntry& node, const EffectChainDesc& chain, c
     EffectChain* ec = node.effectChain;
     if (!ec) {
         ec = node.effectChain = new EffectChain(*effectComponents, node.item); // dies with the item at the latest
-        if (auto* group = dynamic_cast<GroupItem*>(node.item))
-            ec->setBuiltHandler([group](QQuickItem* first) { // the chain is a child of the group: never outlives it
+        if (node.type == VLQT_ELEMENT_TYPE_GROUP)
+            ec->setBuiltHandler([group = static_cast<GroupItem*>(node.item)](QQuickItem* first) { // the chain is a child of the group: never outlives it
                 group->effectHolder = first;
                 group->syncEffectFrame();
             });
@@ -917,8 +917,8 @@ void Elements::releaseEffectLayer(ElementEntry& node)
     if ((!isEffectSource(node.item) || isGroup(node.item)) && !isMaskLayer(node.item))
         setLayerEnabled(node.item, false);
     QQmlProperty(node.item, QStringLiteral("layer.effect")).write(QVariant::fromValue<QQmlComponent*>(nullptr));
-    if (auto* group = dynamic_cast<GroupItem*>(node.item))
-        group->effectHolder = nullptr;
+    if (node.type == VLQT_ELEMENT_TYPE_GROUP)
+        static_cast<GroupItem*>(node.item)->effectHolder = nullptr;
     node.effectChain = nullptr;
     delete ec;
 }
@@ -1019,7 +1019,7 @@ void Elements::updateMaskFrame(ElementEntry& node)
     // TRANSFORM around the anchor + drag offset). Its inverse brings parent coordinates (the mask's) into the element's (the effect area's).
     QMatrix4x4 m;
     m.translate(float(node.item->x()), float(node.item->y()));
-    if (node.transform && node.xf)
+    if (node.transform)
         m *= pivoted(*node.xf, node.item);
     const QMatrix4x4 inv = m.inverted();
     for (size_t i = 0; i < ec->linkCount(); ++i)

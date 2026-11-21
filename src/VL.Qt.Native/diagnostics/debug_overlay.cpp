@@ -235,7 +235,7 @@ void DebugOverlay::drawNode(const ElementEntry& n)
     const qreal w = item->width(), h = item->height();
     // Frame = actual size: (0, 0, w, h) = SIZE, or the Auto Size result; for an auto-sized Group with children in
     // negative coordinates it starts there. Everything else is drawn relative to it.
-    const QRectF frame = n.xf ? itemFrame(*n.xf, item) : QRectF(0, 0, w, h);
+    const QRectF frame = itemFrame(*n.xf, item);
     const bool container = isContainer(n.type);
 
     // Children extent (tracked, visible, non-empty children incl. their x/y and TRANSFORM; like the Group frame, not
@@ -309,7 +309,7 @@ void DebugOverlay::drawNode(const ElementEntry& n)
     const QPointF o = p.map(0, 0);
     p.segment(o - QPointF(5, 0), o + QPointF(5, 0), kOrigin, 1.5f);
     p.segment(o - QPointF(0, 5), o + QPointF(0, 5), kOrigin, 1.5f);
-    const QPointF a = n.xf ? anchorPoint(*n.xf, item) : QPointF(w / 2, h / 2); // xf exists from CREATE on
+    const QPointF a = anchorPoint(*n.xf, item);
     const QPointF pv = p.map(a.x(), a.y());
     p.quad(pv + QPointF(0, -4), pv + QPointF(4, 0), pv + QPointF(0, 4), pv + QPointF(-4, 0), kAnchor);
 }
