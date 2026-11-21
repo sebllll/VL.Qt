@@ -17,6 +17,7 @@ using static Pixels;
 // there is no Visible pin any more. Opacity 0 = not drawn (Qt blocks the subtree in the scene graph, also the
 // effect layer: QQuickItemLayer gives the MultiEffect the item's opacity), but the element keeps its place in a Row
 // and keeps receiving input (invisible hit areas). Row: A (blue) | B (red, Opacity 0, Blur effect, Hover) | C (green).
+// Then Enabled off on B (Qt's visible): not drawn, no input and no space in the Row, C moves up; on again: back.
 // Grabs: <outDir>/opacity_zero*.png.
 [TestFixture, NonParallelizable]
 public static class OpacityZeroTest
@@ -44,22 +45,23 @@ public static class OpacityZeroTest
         var blur = new BlurNode();
         var hovered = Channel.Create(false);
         float opacityB = 0;
+        bool enabledB = true;
         bool clear = true;
 
-        Element Rect(RectangleNode n, Color4 fill, float opacity, Interaction? interaction, Effect? effect)
+        Element Rect(RectangleNode n, Color4 fill, float opacity, Interaction? interaction, Effect? effect, bool enabled = true)
             => (Element)n.Update(new Vector2(2, 2), Matrix.Identity, RectangleAnchor.TopLeft, fill, 0, new Color4(0, 0, 0, 1), 0, opacity, false, false,
-                interaction, effect, out _, out _);
+                interaction, effect, enabled, out _, out _);
 
         // One vvvv frame: nodes update (pull the state of the last pump), reconcile + apply, Qt pumps, poll + dispatch.
         void Frame()
         {
             var chain = hover.Update(null, hovered);
             var a = Rect(rectA, new Color4(0, 0, 1, 1), 1, null, null);
-            var b = Rect(rectB, new Color4(1, 0, 0, 1), opacityB, chain, blur.Update(null, 0.6f, 16, 0, true, default));
+            var b = Rect(rectB, new Color4(1, 0, 0, 1), opacityB, chain, blur.Update(null, 0.6f, 16, 0, true, default), enabledB);
             var c = Rect(rectC, new Color4(0, 1, 0, 1), 1, null, null);
             // Row at (50, 100) DIP, spacing 0.5: A 50..250, B 300..500, C 550..750 (y 100..300).
             var e = row.Update(Spread.Create<IElement?>(a, b, c), new Vector2(0, 0), true, Matrix.Translation(0.5f, 1, 0), RectangleAnchor.TopLeft,
-                0.5f, 0, VerticalAlignment.Top, 1, false, false, null, null, out _, out _);
+                0.5f, 0, VerticalAlignment.Top, 1, false, false, null, null, true, out _, out _);
             cmd.Reset();
             if (clear)
             {
@@ -109,6 +111,29 @@ public static class OpacityZeroTest
         using (var img = s.Grab(w, "opacity_zero_back.png"))
             s.NeedsRhi(Px(img, 400, 200).R > 150,
                 $"opacity-zero: B drawn again with Opacity 1 ({Px(img, 400, 200)})", "MultiEffect needs a QRhi scenegraph");
+
+        // Enabled off: B and its effect layer are gone, C takes B's place (Row skips the invisible item), no input.
+        enabledB = false;
+        Frames(4);
+        using (var img = s.Grab(w, "opacity_zero_disabled.png"))
+        {
+            s.Check(Near(Px(img, 150, 200), 0, 0, 255), $"opacity-zero: A drawn with B disabled ({Px(img, 150, 200)})");
+            s.Check(Near(Px(img, 400, 200), 0, 255, 0) && IsBg(Px(img, 290, 200)),
+                $"opacity-zero: B disabled not drawn, C moved up into its place ({Px(img, 400, 200)}, {Px(img, 290, 200)})");
+            s.Check(IsBg(Px(img, 650, 200)), $"opacity-zero: C's old place empty ({Px(img, 650, 200)})");
+        }
+        Mouse(TestProtocol.Mouse.Move, 400, 200);
+        Frames(2);
+        s.Check(!hovered.Value, "opacity-zero: B disabled receives no input");
+        Mouse(TestProtocol.Mouse.Move, 700, 500);
+        Frames(2);
+
+        // Enabled on again: B back in the Row, C back at its place.
+        enabledB = true;
+        Frames(4);
+        using (var img = s.Grab(w, "opacity_zero_enabled.png"))
+            s.Check(Near(Px(img, 650, 200), 0, 255, 0) && !Near(Px(img, 400, 200), 0, 255, 0),
+                $"opacity-zero: B enabled again, C back after it ({Px(img, 650, 200)}, {Px(img, 400, 200)})");
 
         cmd.Reset();
         rec.Update(null, Space.DIPTopLeft);

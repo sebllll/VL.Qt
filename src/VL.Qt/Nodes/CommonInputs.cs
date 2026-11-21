@@ -14,7 +14,7 @@ namespace VL.Qt.Nodes
         private readonly Matrix _transform;
 
         public CommonInputs(Vector2 size, Matrix transform, RectangleAnchor anchor, float opacity, bool clip, bool debug, Interaction? interaction,
-            Effect? effect)
+            Effect? effect, bool enabled = true)
         {
             Size = size;
             Transform = transform;
@@ -24,6 +24,7 @@ namespace VL.Qt.Nodes
             Debug = debug;
             Interaction = interaction;
             Effect = effect;
+            Enabled = enabled;
         }
 
         public Vector2 Size { get; init; }
@@ -41,6 +42,9 @@ namespace VL.Qt.Nodes
 
         /// <summary>Chain of the Effect pin (plan effects/01); compared by reference like <see cref="Interaction"/>.</summary>
         public Effect? Effect { get; init; }
+
+        /// <summary>The Enabled pin (last input of every element node): false takes the element out of the scene, see <see cref="Element.Visible"/>.</summary>
+        public bool Enabled { get; init; }
 
         /// <summary>
         /// An all-zero matrix (default(Matrix), e.g. a pin without a VL default) is treated as Identity: it would

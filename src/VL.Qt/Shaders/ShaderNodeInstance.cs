@@ -32,6 +32,7 @@ namespace VL.Qt.Shaders
         private readonly ValuePin<bool> _debug = new(false);
         private readonly ValuePin<Interaction?> _interaction = new(null);
         private readonly ValuePin<Effect?> _effectChain = new(null);
+        private readonly ValuePin<bool> _enabled = new(true);
         private readonly ValuePin<IElement?> _output = new(null);
         private readonly ValuePin<Vector2> _measuredSize = new(Vector2.Zero);
         private readonly ValuePin<RectangleF> _sceneBounds = new(RectangleF.Empty);
@@ -79,6 +80,7 @@ namespace VL.Qt.Shaders
                 yield return _debug;
                 yield return _interaction;
                 yield return _effectChain;
+                yield return _enabled;
             }
         }
 
@@ -108,6 +110,7 @@ namespace VL.Qt.Shaders
                 _debug.Value,
                 _interaction.Value,
                 _effectChain.Value,
+                _enabled.Value,
                 out var measuredSize,
                 out var sceneBounds,
                 out var error);

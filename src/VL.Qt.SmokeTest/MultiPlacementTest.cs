@@ -55,7 +55,7 @@ public static class MultiPlacementTest
         void Frame()
         {
             var rect = rectNode.Update(new Vector2(1, 1), Matrix.Translation(0, 0, 0), RectangleAnchor.TopLeft, new Color4(1, 0, 0, 1), 0,
-                new Color4(0, 0, 0, 1), 0, 1, false, false, null, null, out _, out _);
+                new Color4(0, 0, 0, 1), 0, 1, false, false, null, null, true, out _, out _);
             var button = buttonNode.Update(new Vector2(1, 0.4f), true, Matrix.Translation(0, 1.5f, 0), RectangleAnchor.TopLeft, "Click", true, false,
                 null, 1, false, false, null, null, null, out var bang, out var m, out var sb);
             if (bang) clicks++;
@@ -63,11 +63,11 @@ public static class MultiPlacementTest
             sceneBounds = sb;
             var children = Spread.Create<IElement?>(rect, button);
             var a = groupA.Update(children, new Vector2(0, 0), true, Matrix.Translation(1, 1, 0), RectangleAnchor.TopLeft, 1, false, false,
-                null, null, null, out _, out _);
+                null, null, null, true, out _, out _);
             var b = groupB.Update(children, new Vector2(0, 0), true, Matrix.Translation(4, 3, 0), RectangleAnchor.TopLeft, 1, false, false,
-                null, null, null, out _, out _);
+                null, null, null, true, out _, out _);
             var e = root.Update(both ? Spread.Create<IElement?>(a, b) : Spread.Create<IElement?>(b), default, true, Matrix.Identity,
-                RectangleAnchor.TopLeft, 1, false, false, null, null, null, out _, out _);
+                RectangleAnchor.TopLeft, 1, false, false, null, null, null, true, out _, out _);
             cmd.Reset();
             cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
             rec.Update((Element)e, Space.DIPTopLeft);

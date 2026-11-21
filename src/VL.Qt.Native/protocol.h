@@ -255,7 +255,7 @@
 /* One number for the command protocol (this file) and the C ABI (vlqt.h, vlqt_test.h): vlqt_app_get_abi_version() returns it, VL.Qt.dll
  * compares it with Protocol.AbiVersion before the first window or resource and refuses a vlqt.dll with another one.
  * Bump it on EVERY change to a constant, a struct layout or an exported signature (also additions); mirror it in Protocol.cs. */
-#define VLQT_ABI_VERSION 20
+#define VLQT_ABI_VERSION 21
 #define VLQT_COMMAND_ALIGN 4
 #define VLQT_HEADER_SIZE 8 /* command, poll record and resource record: u16 op/event, u16 flags (0), u32 len */
 #define VLQT_MAX_COMMAND_PAYLOAD 67108864 /* sanity cap of payloadLen (64 MB); above it the apply fails with VLQT_ERR_BAD_LENGTH */
@@ -376,7 +376,9 @@ enum vlqt_property {
     VLQT_PROPERTY_SIZE = 1,       /* vec2 (w, h), see "Geometry" above (was BOUNDS rectf) */
     VLQT_PROPERTY_TRANSFORM = 2,
     VLQT_PROPERTY_OPACITY = 3,
-    /* 4 free: was VISIBLE, removed in #474 (Opacity 0 = not drawn, input stays; visibility is QtNative's) */
+    VLQT_PROPERTY_VISIBLE = 4,    /* bool, the Enabled pin (default true): false takes the item out of the scene (QQuickItem::visible:
+                                   not drawn, no input, no space in Row/Column). QtNative still hides children of a SHADER and
+                                   parked masks and chain textures itself; for those the value is only remembered. */
     VLQT_PROPERTY_CLIP = 5,
     VLQT_PROPERTY_ANCHOR = 6,     /* i32 Qt::Alignment, see "Geometry" above (was PIVOT) */
     VLQT_PROPERTY_DEBUG = 7, /* bool: draw this element in the window's debug overlay (not recursive) */

@@ -34,7 +34,7 @@ namespace VL.Qt.Tests
         private Element Update(out float position, out float duration, string? path = null, bool play = true, bool loop = true, bool keepLast = true,
             float rate = 1, float volume = 1, VideoFillMode fill = VideoFillMode.Fit)
             => (Element)_node.Update(new Vector2(1.6f, 0.9f), default, RectangleAnchor.Center, path is null ? Path.Default : new Path(path),
-                play, loop, keepLast, rate, volume, fill, 1, false, false, null, null, out position, out duration,
+                play, loop, keepLast, rate, volume, fill, 1, false, false, null, null, true, out position, out duration,
                 out _, out _);
 
         private static byte[] ErrorRecord(uint handle, string text)
@@ -98,7 +98,7 @@ namespace VL.Qt.Tests
             var path = new Path("c:/b.mp4");
             for (int i = 0; i < 1000; i++)
                 _node.Update(new Vector2(1.6f, 0.9f), default, RectangleAnchor.Center, path, true, true, true, 1, 1, VideoFillMode.Fit,
-                    1, false, false, null, null, out _, out _, out _, out _);
+                    1, false, false, null, null, true, out _, out _, out _, out _);
             Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.LessThan(100));
         }
 

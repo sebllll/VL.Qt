@@ -32,6 +32,7 @@ namespace VL.Qt.Shaders
             new FilePinDescription("Debug", typeof(bool), false, "Debug overlay for this element only.", isVisible: false),
             new FilePinDescription("Interaction", typeof(Interaction), null, "Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.", isVisible: false),
             new FilePinDescription("Effect", typeof(Effect), null, "Chain of effect nodes (Blur, DropShadow, …), drawn as one effect layer on the element.", isVisible: false),
+            new FilePinDescription("Enabled", typeof(bool), true, "False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.", isVisible: false),
         };
 
         private static readonly IVLPinDescription[] s_outputs =

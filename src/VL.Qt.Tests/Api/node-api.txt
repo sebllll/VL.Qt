@@ -461,12 +461,13 @@ VL.Qt | VL.Qt.Nodes.CircleNode | ctor | pin Node Context | in VL.Core.NodeContex
 VL.Qt | VL.Qt.Nodes.CircleNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.CircleNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.CircleNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.CircleNode | method Update | order Radius, Transform, Anchor, Color, Stroke Color, Stroke Width, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.CircleNode | method Update | order Radius, Transform, Anchor, Color, Stroke Color, Stroke Width, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.CircleNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.CircleNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.CircleNode | method Update | pin Color | in Stride.Core.Mathematics.Color4 = 1, 1, 1, 1 | (color)
 VL.Qt | VL.Qt.Nodes.CircleNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.CircleNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.CircleNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.CircleNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.CircleNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
 VL.Qt | VL.Qt.Nodes.CircleNode | method Update | pin Opacity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (opacity)
@@ -527,13 +528,14 @@ VL.Qt | VL.Qt.Nodes.ColumnNode | ctor | pin Node Context | in VL.Core.NodeContex
 VL.Qt | VL.Qt.Nodes.ColumnNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.ColumnNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | order Input, Size, Auto Size, Transform, Anchor, Spacing, Padding, Child Alignment, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | order Input, Size, Auto Size, Transform, Anchor, Spacing, Padding, Child Alignment, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
 VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | pin Child Alignment | in VL.Qt.Elements.HorizontalAlignment = Left | Pin(Visibility = PinVisibility.Optional) | (childAlignment)
 VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | pin Input | in VL.Lib.Collections.Spread<VL.Qt.Elements.IElement> | Pin(Name = "Input", PinGroupKind = PinGroupKind.Collection, PinGroupDefaultCount = 2) | (children)
 VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.ColumnNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
@@ -552,7 +554,7 @@ VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | ctor | pin Node Context | in VL.Core.No
 VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | order Children, Size, Auto Size, Transform, Anchor, Spacing, Padding, Child Alignment, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | order Children, Size, Auto Size, Transform, Anchor, Spacing, Padding, Child Alignment, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
 VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | pin Child Alignment | in VL.Qt.Elements.HorizontalAlignment = Left | Pin(Visibility = PinVisibility.Optional) | (childAlignment)
@@ -560,6 +562,7 @@ VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | pin Children | in Syste
 VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
 VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | method Update | pin Opacity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (opacity)
@@ -716,12 +719,13 @@ VL.Qt | VL.Qt.Nodes.GroupNode | ctor | pin Node Context | in VL.Core.NodeContext
 VL.Qt | VL.Qt.Nodes.GroupNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.GroupNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.GroupNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.GroupNode | method Update | order Input, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Style, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.GroupNode | method Update | order Input, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Style, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.GroupNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.GroupNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
 VL.Qt | VL.Qt.Nodes.GroupNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.GroupNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.GroupNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.GroupNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.GroupNode | method Update | pin Input | in VL.Lib.Collections.Spread<VL.Qt.Elements.IElement> | Pin(Name = "Input", PinGroupKind = PinGroupKind.Collection, PinGroupDefaultCount = 2) | (children)
 VL.Qt | VL.Qt.Nodes.GroupNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.GroupNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
@@ -739,13 +743,14 @@ VL.Qt | VL.Qt.Nodes.GroupSpectralNode | ctor | pin Node Context | in VL.Core.Nod
 VL.Qt | VL.Qt.Nodes.GroupSpectralNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | order Children, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Style, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | order Children, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Style, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
 VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | pin Children | in System.Collections.Generic.IEnumerable<VL.Qt.Elements.IElement> | (children)
 VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
 VL.Qt | VL.Qt.Nodes.GroupSpectralNode | method Update | pin Opacity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (opacity)
@@ -774,11 +779,12 @@ VL.Qt | VL.Qt.Nodes.ImageNode | ctor | pin Node Context | in VL.Core.NodeContext
 VL.Qt | VL.Qt.Nodes.ImageNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.ImageNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.ImageNode | method Update | order Size, Transform, Anchor, Image, Fill Mode, Smooth, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.ImageNode | method Update | order Size, Transform, Anchor, Image, Fill Mode, Smooth, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Fill Mode | in VL.Qt.Elements.ImageFillMode = Stretch | (fillMode)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Image | in VL.Qt.Images.QtImage | (image)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
@@ -843,10 +849,11 @@ VL.Qt | VL.Qt.Nodes.LabeledNode | ctor | pin Node Context | in VL.Core.NodeConte
 VL.Qt | VL.Qt.Nodes.LabeledNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | order Element, Text, Label Width, Label Position, Spacing, Transform, Anchor, Label Height, Opacity, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | order Element, Text, Label Width, Label Position, Spacing, Transform, Anchor, Label Height, Opacity, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Element | in VL.Qt.Elements.IElement | (element)
+VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Label Height | in float = 0.2 | Pin(Visibility = PinVisibility.Optional) | (labelHeight)
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Label Position | in VL.Qt.Elements.LabelPosition = Left | (labelPosition)
@@ -866,13 +873,14 @@ VL.Qt | VL.Qt.Nodes.LineNode | ctor | pin Node Context | in VL.Core.NodeContext 
 VL.Qt | VL.Qt.Nodes.LineNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.LineNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.LineNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.LineNode | method Update | order From, To, Transform, Stroke Color, Stroke Width, Cap, Dash, Dash Offset, Trim Start, Trim End, Trim Offset, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.LineNode | method Update | order From, To, Transform, Stroke Color, Stroke Width, Cap, Dash, Dash Offset, Trim Start, Trim End, Trim Offset, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.LineNode | method Update | pin Cap | in VL.Qt.Elements.ShapeCap = Flat | Pin(Visibility = PinVisibility.Optional) | (cap)
 VL.Qt | VL.Qt.Nodes.LineNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.LineNode | method Update | pin Dash Offset | in float = 0 | Pin(Name = "Dash Offset", Visibility = PinVisibility.Optional) | (dashOffset)
 VL.Qt | VL.Qt.Nodes.LineNode | method Update | pin Dash | in VL.Lib.Collections.Spread<float> | Pin(Visibility = PinVisibility.Optional) | (dash)
 VL.Qt | VL.Qt.Nodes.LineNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.LineNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.LineNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.LineNode | method Update | pin From | in Stride.Core.Mathematics.Vector2 = 0.5, 0.5 | (from)
 VL.Qt | VL.Qt.Nodes.LineNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.LineNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
@@ -981,13 +989,14 @@ VL.Qt | VL.Qt.Nodes.PathNode | ctor | pin Node Context | in VL.Core.NodeContext 
 VL.Qt | VL.Qt.Nodes.PathNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.PathNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.PathNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.PathNode | method Update | order Path, Transform, Fill, Stroke Color, Stroke Width, Cap, Join, Miter Limit, Dash, Dash Offset, Trim Start, Trim End, Trim Offset, Fill Rule, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.PathNode | method Update | order Path, Transform, Fill, Stroke Color, Stroke Width, Cap, Join, Miter Limit, Dash, Dash Offset, Trim Start, Trim End, Trim Offset, Fill Rule, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.PathNode | method Update | pin Cap | in VL.Qt.Elements.ShapeCap = Flat | Pin(Visibility = PinVisibility.Optional) | (cap)
 VL.Qt | VL.Qt.Nodes.PathNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.PathNode | method Update | pin Dash Offset | in float = 0 | Pin(Name = "Dash Offset", Visibility = PinVisibility.Optional) | (dashOffset)
 VL.Qt | VL.Qt.Nodes.PathNode | method Update | pin Dash | in VL.Lib.Collections.Spread<float> | Pin(Visibility = PinVisibility.Optional) | (dash)
 VL.Qt | VL.Qt.Nodes.PathNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.PathNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.PathNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.PathNode | method Update | pin Fill Rule | in VL.Qt.Elements.ShapeFillRule = NonZero | Pin(Name = "Fill Rule", Visibility = PinVisibility.Optional) | (fillRule)
 VL.Qt | VL.Qt.Nodes.PathNode | method Update | pin Fill | in Stride.Core.Mathematics.Color4 = 0, 0, 0, 0 | (fill)
 VL.Qt | VL.Qt.Nodes.PathNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
@@ -1046,12 +1055,13 @@ VL.Qt | VL.Qt.Nodes.PolygonNode | ctor | pin Node Context | in VL.Core.NodeConte
 VL.Qt | VL.Qt.Nodes.PolygonNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.PolygonNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.PolygonNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.PolygonNode | method Update | order Points, Transform, Fill, Stroke Color, Stroke Width, Join, Miter Limit, Dash, Dash Offset, Fill Rule, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.PolygonNode | method Update | order Points, Transform, Fill, Stroke Color, Stroke Width, Join, Miter Limit, Dash, Dash Offset, Fill Rule, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.PolygonNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.PolygonNode | method Update | pin Dash Offset | in float = 0 | Pin(Name = "Dash Offset", Visibility = PinVisibility.Optional) | (dashOffset)
 VL.Qt | VL.Qt.Nodes.PolygonNode | method Update | pin Dash | in VL.Lib.Collections.Spread<float> | Pin(Visibility = PinVisibility.Optional) | (dash)
 VL.Qt | VL.Qt.Nodes.PolygonNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.PolygonNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.PolygonNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.PolygonNode | method Update | pin Fill Rule | in VL.Qt.Elements.ShapeFillRule = NonZero | Pin(Name = "Fill Rule", Visibility = PinVisibility.Optional) | (fillRule)
 VL.Qt | VL.Qt.Nodes.PolygonNode | method Update | pin Fill | in Stride.Core.Mathematics.Color4 = 1, 1, 1, 1 | (fill)
 VL.Qt | VL.Qt.Nodes.PolygonNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
@@ -1073,7 +1083,7 @@ VL.Qt | VL.Qt.Nodes.PolylineNode | ctor | pin Node Context | in VL.Core.NodeCont
 VL.Qt | VL.Qt.Nodes.PolylineNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | order Points, Closed, Transform, Stroke Color, Stroke Width, Cap, Join, Miter Limit, Dash, Dash Offset, Trim Start, Trim End, Trim Offset, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | order Points, Closed, Transform, Stroke Color, Stroke Width, Cap, Join, Miter Limit, Dash, Dash Offset, Trim Start, Trim End, Trim Offset, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Cap | in VL.Qt.Elements.ShapeCap = Flat | Pin(Visibility = PinVisibility.Optional) | (cap)
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Closed | in bool = false | (closed)
@@ -1081,6 +1091,7 @@ VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Dash Offset | in float = 
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Dash | in VL.Lib.Collections.Spread<float> | Pin(Visibility = PinVisibility.Optional) | (dash)
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Join | in VL.Qt.Elements.ShapeJoin = Miter | Pin(Visibility = PinVisibility.Optional) | (join)
 VL.Qt | VL.Qt.Nodes.PolylineNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
@@ -1104,12 +1115,13 @@ VL.Qt | VL.Qt.Nodes.QmlElementNode | ctor | pin Node Context | in VL.Core.NodeCo
 VL.Qt | VL.Qt.Nodes.QmlElementNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | order File, Properties, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Properties, Signals, Measured Size, Scene Bounds, Error, Output
+VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | order File, Properties, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Enabled, Properties, Signals, Measured Size, Scene Bounds, Error, Output
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Error | out string | (error)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin File | in VL.Lib.IO.Path | (file)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
@@ -1173,12 +1185,13 @@ VL.Qt | VL.Qt.Nodes.RectangleNode | ctor | pin Node Context | in VL.Core.NodeCon
 VL.Qt | VL.Qt.Nodes.RectangleNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.RectangleNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | order Size, Transform, Anchor, Color, Radius, Stroke Color, Stroke Width, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | order Size, Transform, Anchor, Color, Radius, Stroke Color, Stroke Width, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | pin Color | in Stride.Core.Mathematics.Color4 = 1, 1, 1, 1 | (color)
 VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
 VL.Qt | VL.Qt.Nodes.RectangleNode | method Update | pin Opacity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (opacity)
@@ -1226,13 +1239,14 @@ VL.Qt | VL.Qt.Nodes.RowNode | ctor | pin Node Context | in VL.Core.NodeContext |
 VL.Qt | VL.Qt.Nodes.RowNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.RowNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.RowNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.RowNode | method Update | order Input, Size, Auto Size, Transform, Anchor, Spacing, Padding, Child Alignment, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.RowNode | method Update | order Input, Size, Auto Size, Transform, Anchor, Spacing, Padding, Child Alignment, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.RowNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.RowNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
 VL.Qt | VL.Qt.Nodes.RowNode | method Update | pin Child Alignment | in VL.Qt.Elements.VerticalAlignment = Top | Pin(Visibility = PinVisibility.Optional) | (childAlignment)
 VL.Qt | VL.Qt.Nodes.RowNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.RowNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.RowNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.RowNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.RowNode | method Update | pin Input | in VL.Lib.Collections.Spread<VL.Qt.Elements.IElement> | Pin(Name = "Input", PinGroupKind = PinGroupKind.Collection, PinGroupDefaultCount = 2) | (children)
 VL.Qt | VL.Qt.Nodes.RowNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.RowNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
@@ -1251,7 +1265,7 @@ VL.Qt | VL.Qt.Nodes.RowSpectralNode | ctor | pin Node Context | in VL.Core.NodeC
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | order Children, Size, Auto Size, Transform, Anchor, Spacing, Padding, Child Alignment, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | order Children, Size, Auto Size, Transform, Anchor, Spacing, Padding, Child Alignment, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Child Alignment | in VL.Qt.Elements.VerticalAlignment = Top | Pin(Visibility = PinVisibility.Optional) | (childAlignment)
@@ -1259,6 +1273,7 @@ VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Children | in System.C
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
 VL.Qt | VL.Qt.Nodes.RowSpectralNode | method Update | pin Opacity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (opacity)
@@ -1287,13 +1302,14 @@ VL.Qt | VL.Qt.Nodes.ShaderNode | ctor | pin Node Context | in VL.Core.NodeContex
 VL.Qt | VL.Qt.Nodes.ShaderNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.ShaderNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | order Input, Input Sampler, Fragment Code, Fragment Shader, Vertex Code, Vertex Shader, Uniforms, Blending, Mesh Resolution, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Error, Output
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | order Input, Input Sampler, Fragment Code, Fragment Shader, Vertex Code, Vertex Shader, Uniforms, Blending, Mesh Resolution, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Error, Output
 VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
 VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Blending | in bool = true | Pin(Visibility = PinVisibility.Optional) | (blending)
 VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Error | out string | (error)
 VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Fragment Code | in string = "#version 440\n// Fragment shader for the ShaderEffect node: full Qt GLSL (Vulkan style, like Qt's qsb tool takes it).\n// Edit the text and the effect updates while you type; errors show at the Error pin, the last\n// working version keeps drawing meanwhile.\n\n// Position inside the element, 0..1 (x to the right, y down).\nlayout(location = 0) in vec2 qt_TexCoord0;\nlayout(location = 0) out vec4 fragColor;\n\n// All uniforms live in this one block. It must start with qt_Matrix and qt_Opacity.\n// Below them add your own: a uniform gets its value from a Uniform node (Qt.Elements) with\n// the same name and type; without such a node the value is 0.\nlayout(std140, binding = 0) uniform buf {\n    mat4 qt_Matrix;\n    float qt_Opacity;\n    float time;   // seconds, drive it with a Float uniform named \"time\"\n    vec4 color;   // tint, drive it with a Color uniform named \"color\"\n};\n\n// The element at the Input pin (without Input it is transparent).\nlayout(binding = 1) uniform sampler2D source;\n\nvoid main()\n{\n    vec2 uv = qt_TexCoord0;\n\n    // Moving gradient, visible even without Input and without uniforms.\n    float wave = 0.5 + 0.5 * sin((uv.x + uv.y) * 6.0 + time * 2.0);\n    vec4 gradient = vec4(uv, wave, 1.0) * wave;\n\n    // Sample the input (premultiplied alpha). Warp the lookup for a ripple.\n    vec2 warped = uv + 0.02 * vec2(sin(uv.y * 20.0 + time), cos(uv.x * 20.0 + time));\n    vec4 src = texture(source, warped);\n\n    // Input on top of the gradient, tinted by color (premultiplied, so scale all channels; alpha 0 = no tint).\n    vec4 result = src + gradient * (1.0 - src.a);\n    fragColor = result * (color + step(color.a, 0.0)) * qt_Opacity;\n}" | (fragmentCode)
 VL.Qt | VL.Qt.Nodes.ShaderNode | method Update | pin Fragment Shader | in VL.Lib.IO.Path | (fragmentShader)
@@ -1410,7 +1426,7 @@ VL.Qt | VL.Qt.Nodes.TextNode | ctor | pin Node Context | in VL.Core.NodeContext 
 VL.Qt | VL.Qt.Nodes.TextNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.TextNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.TextNode | method Update | order Size, Transform, Anchor, Text, Font Family, Font Size, Weight, Italic, Color, Horizontal Alignment, Vertical Alignment, Wrap, Elide, Line Height, Letter Spacing, Autofit, Opacity, Clip, Debug, Interaction, Effect, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.TextNode | method Update | order Size, Transform, Anchor, Text, Font Family, Font Size, Weight, Italic, Color, Horizontal Alignment, Vertical Alignment, Wrap, Elide, Line Height, Letter Spacing, Autofit, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Autofit | in VL.Qt.Elements.TextAutofit = Fixed | Pin(Visibility = PinVisibility.Optional) | (autofit)
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
@@ -1418,6 +1434,7 @@ VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Color | in Stride.Core.Mathem
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Elide | in VL.Qt.Elements.TextElide = None | Pin(Visibility = PinVisibility.Optional) | (elide)
+VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Font Family | in string | (fontFamily)
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Font Size | in float = 0.12 | (fontSize)
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Horizontal Alignment | in VL.Qt.Elements.TextHorizontalAlignment = Left | Pin(Visibility = PinVisibility.Optional) | (horizontalAlignment)
@@ -1560,12 +1577,13 @@ VL.Qt | VL.Qt.Nodes.VideoNode | ctor | pin Node Context | in VL.Core.NodeContext
 VL.Qt | VL.Qt.Nodes.VideoNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.VideoNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.VideoNode | method Update | order Size, Transform, Anchor, Path, Play, Loop, Keep Last Frame, Rate, Volume, Fill Mode, Opacity, Clip, Debug, Interaction, Effect, Position, Duration, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.VideoNode | method Update | order Size, Transform, Anchor, Path, Play, Loop, Keep Last Frame, Rate, Volume, Fill Mode, Opacity, Clip, Debug, Interaction, Effect, Enabled, Position, Duration, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Duration | out float | (duration)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Fill Mode | in VL.Qt.Elements.VideoFillMode = Fit | (fillMode)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Keep Last Frame | in bool = true | Pin(Visibility = PinVisibility.Optional) | (keepLastFrame)
@@ -2227,7 +2245,7 @@ VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | ctor | pin Node Context | in VL.Core.
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | implements System.IDisposable
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Dispose | void
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | VL.Qt.Elements.IElement
-VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | order Size, Transform, Anchor, Path, Play, Loop, Keep Last Frame, Rate, Volume, Audio Offset, Fill Mode, Opacity, Clip, Debug, Interaction, Effect, Audio, Position, Duration, Sync Error, Measured Size, Scene Bounds, Output
+VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | order Size, Transform, Anchor, Path, Play, Loop, Keep Last Frame, Rate, Volume, Audio Offset, Fill Mode, Opacity, Clip, Debug, Interaction, Effect, Enabled, Audio, Position, Duration, Sync Error, Measured Size, Scene Bounds, Output
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Audio Offset | in float = 0 | Pin(Visibility = PinVisibility.Optional) | (audioOffset)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Audio | out System.Collections.Generic.IReadOnlyList<VL.Audio.AudioSignal> | (audio)
@@ -2235,6 +2253,7 @@ VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Clip | in bool | 
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Duration | out float | (duration)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
+VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Fill Mode | in VL.Qt.Elements.VideoFillMode = Fit | (fillMode)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Keep Last Frame | in bool = true | Pin(Visibility = PinVisibility.Optional) | (keepLastFrame)
@@ -2316,7 +2335,7 @@ VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | type sealed class
 VL.Qt.Stride | assembly | attr ImportAsIs(Namespace = "VL.Qt.Stride", Category = "Qt")
 factory Qml | default category Qt.Elements.Qml
 factory Qml | node Snapshot (Variant) | category Qt.Elements.Qml
-factory Qml | node Snapshot (Variant) | order Level, Accent, Label, Active, Derived, Properties, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Output, Level, Accent, Label, Active, Count, Derived, Clicked, Moved, Measured Size, Scene Bounds, Error
+factory Qml | node Snapshot (Variant) | order Level, Accent, Label, Active, Derived, Properties, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Enabled, Output, Level, Accent, Label, Active, Count, Derived, Clicked, Moved, Measured Size, Scene Bounds, Error
 factory Qml | node Snapshot (Variant) | pin Accent | in Stride.Core.Mathematics.Color4 = 1, 0, 0, 1 | visible
 factory Qml | node Snapshot (Variant) | pin Accent | out Stride.Core.Mathematics.Color4 = 1, 0, 0, 1 | optional
 factory Qml | node Snapshot (Variant) | pin Active | in bool = false | visible
@@ -2330,6 +2349,7 @@ factory Qml | node Snapshot (Variant) | pin Debug | in bool = false | optional
 factory Qml | node Snapshot (Variant) | pin Derived | in float = 0 | visible
 factory Qml | node Snapshot (Variant) | pin Derived | out float = 0 | visible
 factory Qml | node Snapshot (Variant) | pin Effect | in VL.Qt.Elements.Effect | optional
+factory Qml | node Snapshot (Variant) | pin Enabled | in bool = true | optional
 factory Qml | node Snapshot (Variant) | pin Error | out string = "" | visible
 factory Qml | node Snapshot (Variant) | pin Interaction | in VL.Qt.Elements.Interaction | optional
 factory Qml | node Snapshot (Variant) | pin Label | in string = "x" | visible
@@ -2346,13 +2366,14 @@ factory Qml | node Snapshot (Variant) | pin Size | in Stride.Core.Mathematics.Ve
 factory Qml | node Snapshot (Variant) | pin Transform | in Stride.Core.Mathematics.Matrix = 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 | visible
 factory Shader | default category Qt.Elements.Shaders
 factory Shader | node Plain | category Qt.Elements.Shaders
-factory Shader | node Plain | order Blending, Mesh Resolution, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Output, Measured Size, Scene Bounds, Error
+factory Shader | node Plain | order Blending, Mesh Resolution, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Enabled, Output, Measured Size, Scene Bounds, Error
 factory Shader | node Plain | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | optional
 factory Shader | node Plain | pin Auto Size | in bool = true | optional
 factory Shader | node Plain | pin Blending | in bool = true | visible
 factory Shader | node Plain | pin Clip | in bool = false | optional
 factory Shader | node Plain | pin Debug | in bool = false | optional
 factory Shader | node Plain | pin Effect | in VL.Qt.Elements.Effect | optional
+factory Shader | node Plain | pin Enabled | in bool = true | optional
 factory Shader | node Plain | pin Error | out string = "" | visible
 factory Shader | node Plain | pin Interaction | in VL.Qt.Elements.Interaction | optional
 factory Shader | node Plain | pin Measured Size | out Stride.Core.Mathematics.Vector2 = 0, 0 | optional
@@ -2363,7 +2384,7 @@ factory Shader | node Plain | pin Scene Bounds | out Stride.Core.Mathematics.Rec
 factory Shader | node Plain | pin Size | in Stride.Core.Mathematics.Vector2 = 1, 1 | visible
 factory Shader | node Plain | pin Transform | in Stride.Core.Mathematics.Matrix = 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 | visible
 factory Shader | node Snapshot (Variant) | category Qt.Test
-factory Shader | node Snapshot (Variant) | order Input, Input Sampler, Mask, Mask Sampler, Amount, Offset, Tint, Blending, Mesh Resolution, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Output, Measured Size, Scene Bounds, Error
+factory Shader | node Snapshot (Variant) | order Input, Input Sampler, Mask, Mask Sampler, Amount, Offset, Tint, Blending, Mesh Resolution, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Enabled, Output, Measured Size, Scene Bounds, Error
 factory Shader | node Snapshot (Variant) | pin Amount | in float = 0.5 | visible
 factory Shader | node Snapshot (Variant) | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | optional
 factory Shader | node Snapshot (Variant) | pin Auto Size | in bool = true | optional
@@ -2371,6 +2392,7 @@ factory Shader | node Snapshot (Variant) | pin Blending | in bool = true | visib
 factory Shader | node Snapshot (Variant) | pin Clip | in bool = false | optional
 factory Shader | node Snapshot (Variant) | pin Debug | in bool = false | optional
 factory Shader | node Snapshot (Variant) | pin Effect | in VL.Qt.Elements.Effect | optional
+factory Shader | node Snapshot (Variant) | pin Enabled | in bool = true | optional
 factory Shader | node Snapshot (Variant) | pin Error | out string = "" | visible
 factory Shader | node Snapshot (Variant) | pin Input Sampler | in VL.Qt.Elements.Sampler | optional
 factory Shader | node Snapshot (Variant) | pin Input | in VL.Qt.Elements.IElement | visible

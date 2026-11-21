@@ -328,9 +328,9 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
             return ApplyInvalid;
     }
     it->second.maskHidden = false; // a detached mask comes back into the tree
-    // Visibility is QtNative's alone (there is no VISIBLE property): children of a ShaderEffect (Input, texture
-    // elements) are drawn only through their layers, every other element is shown (Opacity 0 = not drawn, input stays).
-    item->setVisible(!underShaderEffect); // no-op when the explicit value is unchanged
+    // Children of a ShaderEffect (Input, texture elements) are drawn only through their layers; every other element is
+    // shown unless its Enabled pin (VISIBLE) is off (Opacity 0 = not drawn, input stays).
+    item->setVisible(!underShaderEffect && it->second.enabled); // no-op when the explicit value is unchanged
 
     // Stacking order: index = position among the element siblings (clamped). Untracked items do not count: the
     // root of an effect chain (a sibling, kept right after its item by Qt), retired items, QML internals.

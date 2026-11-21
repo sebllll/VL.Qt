@@ -109,6 +109,29 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void Visible_SentOnlyOnChange_PerElementNotRecursive()
+        {
+            Frame(G(new Rectangle()));
+            Frame(G(new Rectangle { Visible = false }));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 2 Visible bool(0)" }), "child only, not the Group");
+            Frame(G(new Rectangle { Visible = false }));
+            Assert.That(_sink.Count, Is.EqualTo(0), "unchanged: nothing sent");
+            Frame(G(new Rectangle()));
+            Assert.That(_sink.Commands, Is.EqualTo(new[] { $"SET 2 Visible bool(1)" }));
+        }
+
+        [Test]
+        public void Visible_OnCreatedElement_SentOnlyWhenOff()
+        {
+            Frame(G(new Rectangle(), new Rectangle { Visible = false }));
+            Assert.That(_sink.Commands.Where(c => c.Contains("Visible")), Is.EqualTo(new[] { $"SET 3 Visible bool(0)" }),
+                "default true: nothing sent for the first child");
+            var set = _sink.Commands.ToList().IndexOf("SET 3 Visible bool(0)");
+            var reparent = _sink.Commands.ToList().FindIndex(c => c.StartsWith("REPARENT 3 "));
+            Assert.That(set, Is.LessThan(reparent), "sent before REPARENT, like every property of a new element");
+        }
+
+        [Test]
         public void RebuiltWithSameValues_ZeroSets()
         {
             Frame(BuildScene());
