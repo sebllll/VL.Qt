@@ -1,15 +1,15 @@
-/* qmlitem.h - the QmlElement (protocol.h "QmlElement"): loads a user .qml file into the element tree.
+/* user_qml/qml_item.h - the QmlElement (protocol.h "QmlElement"): loads a user .qml file into the element tree.
  *
  * QmlItem is an item that holds the instance of the file's root (a QQuickItem) as its only child item. It
  *  - compiles the file from a file: URL on the engine of the scene (relative imports resolve) at the end of the frame that
  *    changed QML_SOURCE or QML_RELOAD (build()), creates the root with the properties set so far as initial properties
- *    (a `required property` has its value at creation; the watcher below is connected before the file's bindings run), rebuilds the instance on QML_RELOAD (component cache of the engine
- *    cleared first) and when the file on disk changed since the last compile of the engine, and applies every property
+ *    (a `required property` has its value at creation; the watcher below is connected before the file's bindings run),
+ *    rebuilds the instance on QML_RELOAD (component cache of the engine cleared first) and when the file on disk changed since the last compile of the engine, and applies every property
  *    set so far again,
  *  - sets properties of the root by name (SET_QML_PROPERTIES, QVariant conversion, errors stay with the name until the
  *    entry is set again or the file is reloaded),
- *  - watches the properties and signals declared in the root (QmlWatcher in qmlitem.cpp) and keeps their changes as wire
- *    records for the poll (scene/measure.cpp collectQml): the last value of each changed property, every emitted signal
+ *  - watches the properties and signals declared in the root (QmlWatcher, user_qml/qml_watcher.h; the wire form is
+ *    user_qml/qml_wire.h) and keeps their changes as wire records for the poll (scene/measure.cpp collectQml): the last value of each changed property, every emitted signal
  *    (cap kQmlMaxSignalsPerPoll). A change caused by the patch's own set is not recorded (no echo, like EVENT_VALUE).
  *  - reports problems as the QML property vlqtError (load/compile/type errors with file:line, rejected properties), which
  *    the poll sends as EVENT_ERROR like for Image and Video (Elements::readError).
@@ -18,7 +18,8 @@
  */
 #pragma once
 
-#include <QtCore/QByteArray>
+#include "user_qml/qml_watcher.h"
+
 #include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QMap>
@@ -35,29 +36,6 @@ class QQmlEngine;
 class QQuickWindow;
 
 namespace vlqt {
-
-class QmlWatcher;
-
-/* Cap of signals kept per poll (protocol.h "QmlElement"); more are dropped and reported once. */
-constexpr int kQmlMaxSignalsPerPoll = 256;
-
-/* One record of the back channel, values already in wire form (VLQT_VALUE_TYPE_*, bytes like SET: i32, f32, bool u8, string u32
- * length + UTF-8, color/rectf/vecN as f32), not yet padded. */
-struct QmlWireValue {
-    quint16 type = 0;
-    QByteArray bytes;
-};
-struct QmlPropertyEvent {
-    QByteArray name; // UTF-8
-    QmlWireValue value;
-};
-struct QmlSignalEvent {
-    QByteArray name; // UTF-8
-    std::vector<QmlWireValue> args;
-};
-
-/* QVariant (property value or signal argument) to wire form. false = type not supported. */
-bool toWireValue(const QVariant& v, QmlWireValue& out);
 
 class QmlItem : public QQuickItem
 {

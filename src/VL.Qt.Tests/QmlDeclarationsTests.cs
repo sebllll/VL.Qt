@@ -87,12 +87,12 @@ namespace VL.Qt.Tests
             var d = Parse(File.ReadAllText(Path.Combine(RepoRoot(), "src", "VL.Qt.SmokeTest", "assets", "QmlTypes.qml")));
 
             Assert.That(d.Messages, Is.Empty);
-            Assert.That(d.Properties, Has.Length.EqualTo(18));
+            Assert.That(d.Properties, Has.Length.EqualTo(22));
             var kinds = new Dictionary<string, QmlValueKind>
             {
                 ["r"] = QmlValueKind.Real, ["i"] = QmlValueKind.Int, ["b"] = QmlValueKind.Bool, ["s"] = QmlValueKind.String,
                 ["c"] = QmlValueKind.Color, ["v2"] = QmlValueKind.Vector2D, ["v3"] = QmlValueKind.Vector3D, ["v4"] = QmlValueKind.Vector4D,
-                ["box"] = QmlValueKind.Rect,
+                ["box"] = QmlValueKind.Rect, ["pt"] = QmlValueKind.Point, ["sz"] = QmlValueKind.Size,
             };
             foreach (var (name, kind) in kinds)
             {
@@ -109,9 +109,12 @@ namespace VL.Qt.Tests
             Assert.That(Prop(d, "v3").Default, Is.EqualTo(Vector3.Zero));
             Assert.That(Prop(d, "v4").Default, Is.EqualTo(Vector4.Zero));
             Assert.That(Prop(d, "box").Default, Is.EqualTo(new RectangleF(0, 0, 0, 0)));
+            Assert.That(Prop(d, "pt").Default, Is.EqualTo(Vector2.Zero));
+            Assert.That(Prop(d, "sz").Default, Is.EqualTo(Vector2.Zero));
             Assert.That(Prop(d, "b").Default, Is.EqualTo(false));
             Assert.That(Prop(d, "s").Default, Is.EqualTo(string.Empty));
-            Assert.That(d.Signals, Is.Empty);
+            Assert.That(d.Signals.Select(x => x.Name), Is.EqualTo(new[] { "located" }));
+            Assert.That(d.Signals[0].Args, Is.EqualTo(new[] { new QmlSignalArg("p", "point", QmlValueKind.Point) }));
         }
 
         // ---- literals ---------------------------------------------------------------------------------------------------------
@@ -137,6 +140,9 @@ namespace VL.Qt.Tests
                     property vector3d m: Qt.vector3d(1, 2, 3)
                     property vector4d n: Qt.vector4d(1, 2, 3, 4)
                     property rect o: Qt.rect(1, 2, 30, 40)
+                    property point pt: Qt.point(1.5, -2)
+                    property size sz: Qt.size(30, 40)
+                    property point wrong: Qt.size(1, 2)
                     property color p: "Transparent"
                     property color q: "darkgrey"
                     property real r: 5;
@@ -144,7 +150,7 @@ namespace VL.Qt.Tests
                 """);
 
             Assert.That(d.Messages, Is.Empty);
-            Assert.That(d.Properties.All(p => p.Initializer == QmlInitializer.Literal), Is.True, string.Join(",", d.Properties.Where(p => p.Initializer != QmlInitializer.Literal).Select(p => p.Name)));
+            Assert.That(d.Properties.Where(p => p.Initializer != QmlInitializer.Literal).Select(p => p.Name), Is.EqualTo(new[] { "wrong" }));
             Assert.That(Prop(d, "a").Default, Is.EqualTo(-2.5f));
             Assert.That(Prop(d, "b").Default, Is.EqualTo(1000f));
             Assert.That(Prop(d, "c").Default, Is.EqualTo(16));
@@ -161,6 +167,9 @@ namespace VL.Qt.Tests
             Assert.That(Prop(d, "m").Default, Is.EqualTo(new Vector3(1, 2, 3)));
             Assert.That(Prop(d, "n").Default, Is.EqualTo(new Vector4(1, 2, 3, 4)));
             Assert.That(Prop(d, "o").Default, Is.EqualTo(new RectangleF(1, 2, 30, 40)));
+            Assert.That(Prop(d, "pt").Default, Is.EqualTo(new Vector2(1.5f, -2)));
+            Assert.That(Prop(d, "sz").Default, Is.EqualTo(new Vector2(30, 40)));
+            Assert.That(Prop(d, "wrong").Default, Is.EqualTo(Vector2.Zero)); // a size is no point: a binding
             AssertColor(new Color4(0f, 0f, 0f, 0f), Prop(d, "p").Default);
             Assert.That(((Color4)Prop(d, "q").Default).R, Is.EqualTo(169 / 255f).Within(1e-4));
             Assert.That(Prop(d, "r").Default, Is.EqualTo(5f));
