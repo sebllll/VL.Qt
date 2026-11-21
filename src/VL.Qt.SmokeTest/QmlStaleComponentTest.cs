@@ -18,7 +18,6 @@ public static class QmlStaleComponentTest
 {
     /// <summary>QML-06: a new item of a file changed on disk gets the new file, not the cached component.</summary>
     [Test, Category("qml-stale-component")]
-    [Ignore("QML-06: a new item with reload 0 gets the cached component of a file that changed on disk (fails: item 2 is red, extra unknown)")]
     public static void QmlStaleComponent() => Scenario.Run(Run);
 
     private const uint Q1 = 10, Q2 = 20, H1 = 110, H2 = 120;

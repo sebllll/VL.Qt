@@ -69,7 +69,7 @@ The patch's own `Properties` entry is not reported back: setting `value` from th
 
 ## Hot reload
 
-The node watches the **folder of the file** for changes of the file itself, of any `*.qml` next to it and of `qmldir` (components the file imports by relative path). On a change QtNative clears the component cache for the file, builds a new instance and sends all property values again. The outputs start empty again (`Properties`, `Signals`), `Error` is empty when the new version compiles. Saving the file while vvvv runs is all it takes.
+The node watches the **folder of the file** for changes of the file itself, of any `*.qml` next to it and of `qmldir` (components the file imports by relative path). On a change QtNative clears the component cache for the file, builds a new instance and sends all property values again. A new element of a file that changed on disk since QtNative last compiled it also reads the file again, not the cached component, so a node rebuilt after a declaration change never shows the old version. The outputs start empty again (`Properties`, `Signals`), `Error` is empty when the new version compiles. Saving the file while vvvv runs is all it takes.
 
 Limits:
 
@@ -129,7 +129,7 @@ Not given a pin: `property alias`, `var`, `list<…>`, object types (`Item`, `Re
 - A **binding** (`property real half: width / 2`), any other expression (also a literal of another type), or **no initializer** gives the default of the type (0, `false`, empty string, transparent black, …).
 - **Binding rule:** the patch sends a value only **after it differs from the declared default**; from then on every change is sent, also back to the default. Until then the pin is silent, so a binding or an initial value in the file stays alive and is not overwritten by the pin's default. Consequence: a pin that still shows its default does not "hold" that value in QML, it leaves the file in charge.
 - A value is never "reset": setting a pin back to the default sends the default, it does not restore a binding.
-- A `required property` is sent from the first frame on (but see [Limitations](#limitations-of-the-generated-nodes)).
+- A `required property` is sent from the first frame on: QtNative creates the root with the values of that frame as initial properties, so the file loads and the value is there from its first evaluation.
 
 ### Pin names and help
 
@@ -191,7 +191,6 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 
 ### Limitations of the generated nodes
 
-- **`required property`** fails at creation: QtNative creates the root first and sets the properties afterwards, and Qt refuses a `required property` without a value at that point, although the pin always sends. Give the property a default value instead. Fixing it needs initial properties at creation in QtNative and is not part of #107.
 - **No experimental mark:** `QmlElement` carries `SymbolSmell.Experimental`, but vvvv's node building API has no smell for factory nodes. The generated nodes are experimental all the same.
 - **No pin** for `alias`, `var`, `list<…>`, object types and value types such as `url` or `font` (info message at the node, use `Properties`).
 - Only the **root object** is read, and only a sibling file of the same folder as root type (not an import from another folder or module).
