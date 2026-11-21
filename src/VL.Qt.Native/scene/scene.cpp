@@ -69,7 +69,7 @@ Scene::~Scene()
         kv.second.item->setParentItem(nullptr);
     for (auto& kv : nodes)
         delete kv.second.item; // attached input handlers are QObject children of their items
-    handlerNodes.clear();
+    handlerNodes.clear(); // their QPointers read null now: HandlerObjects deletes nothing twice
     deleteRetired(); // destroyed former effect sources of the last frame (not in nodes any more)
     nodes.clear();
     ids.clear();
@@ -123,9 +123,7 @@ int Scene::create(quint32 id, quint16 type, std::string& err)
     }
     if (isHandlerType(type)) {
         // Only the id, type and properties: the QML handler needs its parent item before completeCreate (REPARENT).
-        HandlerEntry h;
-        h.type = type;
-        handlerNodes[id] = h;
+        handlerNodes[id].type = type; // in place: HandlerEntry owns its Qt objects and is not copyable
         return ApplyOk;
     }
     const TypeDef* ti = findType(type);
