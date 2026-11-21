@@ -6,16 +6,19 @@
  *           (stage FRAGMENT) or <name>.vert.qsb (stage VERTEX) and notes the shader language the process backend needs
  *           (QQuickWindow::graphicsApi: D3D11 HLSL/DXBC, OpenGL GLSL, Vulkan SPIR-V, Metal MSL).
  *   loadSource: main thread: checks the arguments, copies the GLSL and notes the bake targets for that language only
- *           (D3D HLSL 50, OpenGL GLSL 330/150/120 or ES 300/100, Vulkan SPIR-V 100, Metal MSL 12; unknown: several).
+ *           (D3D HLSL 50, OpenGL GLSL 330/150/120 or ES 300/100, Vulkan SPIR-V 100, Metal MSL 12; unknown: several),
+ *           plus GLSL 150 on a backend other than OpenGL (for the rename check below).
  *   decode: worker: .qsb: reads the file, QShader::fromSerialized. Source: QShaderBaker (own instance, one bake at a
  *           time), results (shader or error text) in a process wide cache per stage + backend + SHA-1 of the source
  *           (64 entries), a hit does not bake. Both then check stage, a variant for the backend and the parts of
- *           the reflection the ShaderEffect item relies on (at most one uniform block, qt_Matrix / qt_Opacity types).
+ *           the reflection the ShaderEffect item relies on (at most one uniform block, at binding 0, qt_Matrix /
+ *           qt_Opacity types).
  *           Every problem ends in Failed with RESOURCE_EVENT_ERROR; bake errors one line per glslang message,
- *           "fragment code, line <n>: <text>".
+ *           "fragment code, line <n>: <text>". A source that SPIRV-Cross cannot translate to the GLSL 150 of that
+ *           extra target fails the bake on D3D, Vulkan and Metal too.
  *           A uniform or sampler named like a GLSL builtin (`length`, ...) is renamed in the GLSL code but not in
  *           the reflection, so the OpenGL backend never sets it: RESOURCE_EVENT_WARNING. Checked on the GLSL variant of
- *           a .qsb, or for a source on another backend on an extra GLSL 150 translation (cached with the bake).
+ *           the .qsb or of the bake (cached with it).
  *   upload: nothing (no GPU object, RESOURCE_EVENT_INFO all 0); each ShaderEffect item builds its pipeline from the QShader.
  * Device lost: CPU data only, nothing to restore. A new load on a Ready id keeps the old shader until the new one is
  * Ready (docs/design/resources.md, replacement). Main thread only, except decode (like image_resource.h).
@@ -72,15 +75,17 @@ int load(uint64_t id, const char* utf8Path, int stage);
 // 0 / -7 / -9.
 int loadSource(uint64_t id, const char* utf8Source, int stage);
 
-// vlqt_shader_reflect: synchronous SPIR-V bake under s_bakeMutex + QShaderDescription as text (format in
-// vlqt.h). Returns the required length without terminator, -7 on bad arguments. Any thread.
+// vlqt_shader_reflect: SPIR-V bake under s_bakeMutex + QShaderDescription as text (format in vlqt.h), on the calling
+// thread, but the text of a source seen before comes from the bake cache (stage + SHA-1, a separate entry from the
+// runtime bake). Returns the required length without terminator, -7 on bad arguments. Any thread.
 int reflect(const char* utf8Source, int stage, char* buf, int bufLen, int* written, int* required);
 
 // Current content of a Ready shader resource, nullptr otherwise (also during the first load or after Failed).
 std::shared_ptr<ShaderResource> ready(uint64_t id);
 
-// Qt's default ShaderEffect vertex shader (qt_Vertex, qt_MultiTexCoord0 -> qt_TexCoord0, block qt_Matrix +
-// qt_Opacity), embedded in Qt Quick's resources; read once on first use. Invalid QShader if Qt does not have it.
-const QShader& defaultVertexShader();
+// Qt's default ShaderEffect shader of a stage (VLQT_SHADER_STAGE_*), embedded in Qt Quick's resources; read once per
+// stage on first use. Vertex: qt_Vertex, qt_MultiTexCoord0 -> qt_TexCoord0, block qt_Matrix + qt_Opacity. Fragment:
+// source * qt_Opacity. Invalid QShader (and one warning) if Qt does not have it.
+const QShader& qtDefaultShader(int stage);
 
 } // namespace vlqt::res::shader

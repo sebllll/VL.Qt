@@ -11,8 +11,6 @@
 #include "resources/resources.h"
 #include "shader_resource.h"
 
-#include <QtCore/QDirIterator>
-#include <QtCore/QFile>
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QImage>
 #include <QtQml/QQmlProperty>
@@ -111,34 +109,6 @@ bool accepts(QShaderDescription::VariableType t, quint16 vt)
     case QShaderDescription::Mat4: return vt == VLQT_VALUE_TYPE_MAT4;
     default: return false;
     }
-}
-
-// Qt Quick's own ShaderEffect default fragment shader (source * qt_Opacity): pass-through of a chain pass while its
-// shader is not Ready. Same lookup as res::shader::defaultVertexShader.
-const QShader& defaultFragmentShader()
-{
-    static const QShader s = [] {
-        const QString known = QStringLiteral(":/qt-project.org/scenegraph/shaders_ng/shadereffect.frag.qsb");
-        QString path = QFile::exists(known) ? known : QString();
-        if (path.isEmpty()) {
-            QDirIterator it(QStringLiteral(":/qt-project.org"), QDirIterator::Subdirectories);
-            while (it.hasNext()) {
-                const QString p = it.next();
-                if (p.endsWith(QStringLiteral("/shadereffect.frag.qsb"))) {
-                    path = p;
-                    break;
-                }
-            }
-        }
-        QFile f(path);
-        QShader r;
-        if (!path.isEmpty() && f.open(QIODevice::ReadOnly))
-            r = QShader::fromSerialized(f.readAll());
-        if (!r.isValid())
-            qCWarning(lcShaderItem, "Qt's default ShaderEffect fragment shader not found: effect chain links without a Ready shader draw nothing");
-        return r;
-    }();
-    return s;
 }
 
 bool reserved(const QByteArray& name)
@@ -486,8 +456,8 @@ void ShaderItem::rebuild()
         vert = nullptr;
     }
     const bool passThrough = m_chain && !frag; // chain pass without a Ready shader: the input unchanged
-    m_fs = frag ? frag->shader() : (passThrough ? defaultFragmentShader() : QShader());
-    m_vs = vert ? vert->shader() : (m_vert.want ? QShader() : res::shader::defaultVertexShader());
+    m_fs = frag ? frag->shader() : (passThrough ? res::shader::qtDefaultShader(VLQT_SHADER_STAGE_FRAGMENT) : QShader());
+    m_vs = vert ? vert->shader() : (m_vert.want ? QShader() : res::shader::qtDefaultShader(VLQT_SHADER_STAGE_VERTEX));
     m_drawable = m_fs.isValid() && m_vs.isValid();
 
     if (m_drawable) {
