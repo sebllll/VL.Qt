@@ -1,7 +1,6 @@
 #include "elements/geometry.h"
 #include "elements/elements.h"
 #include "elements/group_item.h"
-#include "user_qml/qml_item.h"
 
 #include <QtCore/Qt>
 #include <QtQuick/QQuickItem>
@@ -12,14 +11,11 @@ namespace vlqt {
 // ---------------------------------------------------------------------------------------------
 // Common properties (ids 1..255): C++ QQuickItem API, no QML lookup.
 
-// Other types (Rectangle, Text, Image) always take SIZE, also 0 (not drawn, not clickable).
-// Button and the value inputs take part in AUTO_SIZE like the containers (implicit size = content + style padding).
+// Types without the autoSize trait (Rectangle, Text, Image) always take SIZE, also 0 (not drawn, not clickable).
 void applySize(ElementEntry& n)
 {
-    if (n.type == VLQT_ELEMENT_TYPE_GROUP)
-        setGroupAutoSize(n.item, n.autoSize); // origin of the bounds: extent with Auto Size, anchor-placed SIZE without
-    if (n.type == VLQT_ELEMENT_TYPE_QML)
-        static_cast<QmlItem*>(n.item)->setAutoSize(n.autoSize); // root = implicit size of the QML, or this item's SIZE
+    if (n.def->applyAutoSize)
+        n.def->applyAutoSize(n.item, n.autoSize);
     if (isAutoSized(n)) {
         n.item->resetWidth();
         n.item->resetHeight();
@@ -41,9 +37,7 @@ bool setSize(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, st
     return true;
 }
 
-} // namespace
-
-// AUTO_SIZE (containers only, default on): SIZE is ignored and the implicit size applies (Row/Column:
+// AUTO_SIZE (types with the autoSize trait, default on): SIZE is ignored and the implicit size applies (Row/Column:
 // content + padding, Group: extent of the children). Off: SIZE counts, 0 stays 0.
 bool setAutoSize(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
@@ -51,8 +45,6 @@ bool setAutoSize(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v
     applySize(n);
     return true;
 }
-
-namespace {
 
 bool setTransform(Elements& els, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
@@ -151,13 +143,6 @@ void placeItem(const TransformState& s, QQuickItem* item)
 
 } // namespace
 
-// Row/Column are the Qt positioners: they lay their children out and write x/y again on every size change.
-// W4-39: replaced by the type-table trait `layout`.
-bool isLayoutType(quint16 type)
-{
-    return type == VLQT_ELEMENT_TYPE_ROW || type == VLQT_ELEMENT_TYPE_COLUMN;
-}
-
 QQuickMatrix4x4* attachMatrix(QQuickItem* item)
 {
     auto* t = new QQuickMatrix4x4(item); // child of the item: deleted together with it
@@ -183,11 +168,17 @@ void writeMatrix(const TransformState& s, QQuickItem* item)
 
 bool takesAutoSize(const ElementEntry& n)
 {
-    return n.type == VLQT_ELEMENT_TYPE_GROUP || n.type == VLQT_ELEMENT_TYPE_ROW || n.type == VLQT_ELEMENT_TYPE_COLUMN
-        || n.type == VLQT_ELEMENT_TYPE_BUTTON || n.type == VLQT_ELEMENT_TYPE_SPIN_BOX
-        || n.type == VLQT_ELEMENT_TYPE_CHECK_BOX || n.type == VLQT_ELEMENT_TYPE_SWITCH || n.type == VLQT_ELEMENT_TYPE_SLIDER
-        || n.type == VLQT_ELEMENT_TYPE_TEXT_FIELD || n.type == VLQT_ELEMENT_TYPE_QML
-        || (n.type == VLQT_ELEMENT_TYPE_SHADER && n.effectSource); // implicit size = Input; without Input the SIZE
+    switch (n.def->autoSize) {
+    case AutoSize::Always: return true;
+    case AutoSize::WithInput: return n.effectSource != nullptr;
+    default: return false;
+    }
+}
+
+const PropDef& autoSizeProp()
+{
+    static const PropDef p{VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr};
+    return p;
 }
 
 QRectF itemBounds(const TransformState& s, const QQuickItem* item)

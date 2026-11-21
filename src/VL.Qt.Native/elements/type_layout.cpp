@@ -1,6 +1,8 @@
 #include "elements/element_types.h"
 #include "elements/geometry.h"
 
+#include <utility>
+
 namespace vlqt {
 
 namespace {
@@ -52,7 +54,6 @@ std::vector<PropDef> columnProps()
         {VLQT_PROPERTY_PADDING, VLQT_VALUE_TYPE_F32, setQmlReal, "padding"},
         // Qt::AlignLeft/Right/HCenter (= C# HorizontalAlignment)
         {VLQT_PROPERTY_CHILD_ALIGNMENT, VLQT_VALUE_TYPE_I32, setQmlEnum<Qt::AlignLeft, Qt::AlignRight, Qt::AlignHCenter>, "childAlignment"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -63,20 +64,28 @@ std::vector<PropDef> rowProps()
         {VLQT_PROPERTY_PADDING, VLQT_VALUE_TYPE_F32, setQmlReal, "padding"},
         // Qt::AlignTop/Bottom/VCenter (= C# VerticalAlignment)
         {VLQT_PROPERTY_CHILD_ALIGNMENT, VLQT_VALUE_TYPE_I32, setQmlEnum<Qt::AlignTop, Qt::AlignBottom, Qt::AlignVCenter>, "childAlignment"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
+}
+
+TypeDef positioner(quint16 id, const char* name, const char* qml, std::vector<PropDef> props)
+{
+    TypeDef t{id, name, qml, std::move(props)};
+    t.autoSize = AutoSize::Always; // implicit size = content + padding
+    t.layout = true;
+    t.container = true;
+    return t;
 }
 
 } // namespace
 
 TypeDef rowType()
 {
-    return {VLQT_ELEMENT_TYPE_ROW, "ROW", kRowQml, rowProps()};
+    return positioner(VLQT_ELEMENT_TYPE_ROW, "ROW", kRowQml, rowProps());
 }
 
 TypeDef columnType()
 {
-    return {VLQT_ELEMENT_TYPE_COLUMN, "COLUMN", kColumnQml, columnProps()};
+    return positioner(VLQT_ELEMENT_TYPE_COLUMN, "COLUMN", kColumnQml, columnProps());
 }
 
 } // namespace vlqt

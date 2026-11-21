@@ -17,6 +17,7 @@ namespace vlqt {
 
 class EffectChain;     // effects/effect_chain.h
 struct TransformState; // elements/geometry.h
+struct TypeDef;        // elements/element_types.h
 
 /* State of one created element (owned by the Scene's id table). A plain record: made only by Scene::makeEntry (one
  * creation point, scene/scene.cpp), which fills `xf` before the entry enters the table. Every field has a default
@@ -24,6 +25,7 @@ struct TransformState; // elements/geometry.h
 struct ElementEntry {
     QQuickItem* item = nullptr;
     quint16 type = 0;
+    const TypeDef* def = nullptr;      // the entry of the type table for `type`; never null for an entry in Scene::nodes (Scene::makeEntry)
     quint32 feedbackId = 0;            // BIND feedbackId (0 = unbound), see scene/measure.h
     QQuickMatrix4x4* transform = nullptr; // Matrix4x4, appended to item.transform on the first TRANSFORM or drag offset
     std::shared_ptr<TransformState> xf; // TRANSFORM + ANCHOR as sent; never null for an entry in Scene::nodes (set by Scene::makeEntry via Elements::initGeometry), so no check

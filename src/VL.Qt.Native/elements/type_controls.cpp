@@ -28,7 +28,6 @@ std::vector<PropDef> buttonProps()
         {VLQT_PROPERTY_TEXT, VLQT_VALUE_TYPE_STRING, setQmlString, "text"},
         {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
         {VLQT_PROPERTY_AUTO_REPEAT, VLQT_VALUE_TYPE_BOOL, setQmlBool, "autoRepeat"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -72,7 +71,6 @@ std::vector<PropDef> spinBoxProps()
         {VLQT_PROPERTY_STEP, VLQT_VALUE_TYPE_I32, setQmlInt, "stepSize"},
         {VLQT_PROPERTY_EDITABLE, VLQT_VALUE_TYPE_BOOL, setQmlBool, "editable"},
         {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -100,7 +98,6 @@ std::vector<PropDef> toggleProps()
     return {
         {VLQT_PROPERTY_VALUE, VLQT_VALUE_TYPE_BOOL, setQmlBool, "checked"},
         {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -129,7 +126,6 @@ std::vector<PropDef> sliderProps()
         {VLQT_PROPERTY_STEP, VLQT_VALUE_TYPE_F32, setQmlReal, "stepSize"},
         {VLQT_PROPERTY_ORIENTATION, VLQT_VALUE_TYPE_I32, setQmlEnum<Qt::Horizontal, Qt::Vertical>, "orientation"},
         {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -170,40 +166,48 @@ std::vector<PropDef> textFieldProps()
         {VLQT_PROPERTY_PLACEHOLDER, VLQT_VALUE_TYPE_STRING, setQmlString, "placeholderText"},
         {VLQT_PROPERTY_EDITABLE, VLQT_VALUE_TYPE_BOOL, setQmlBoolNot, "readOnly"},
         {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
+}
+
+// What the Controls share: the implicit size (text + style padding) and SET_STYLE.
+TypeDef control(quint16 id, const char* name, const char* qml, std::vector<PropDef> props)
+{
+    TypeDef t{id, name, qml, std::move(props)};
+    t.autoSize = AutoSize::Always;
+    t.styled = true;
+    return t;
 }
 
 } // namespace
 
 TypeDef buttonType()
 {
-    return {VLQT_ELEMENT_TYPE_BUTTON, "BUTTON", kButtonQml, buttonProps()};
+    return control(VLQT_ELEMENT_TYPE_BUTTON, "BUTTON", kButtonQml, buttonProps());
 }
 
 TypeDef spinBoxType()
 {
-    return {VLQT_ELEMENT_TYPE_SPIN_BOX, "SPIN_BOX", kSpinBoxQml, spinBoxProps()};
+    return control(VLQT_ELEMENT_TYPE_SPIN_BOX, "SPIN_BOX", kSpinBoxQml, spinBoxProps());
 }
 
 TypeDef checkBoxType()
 {
-    return {VLQT_ELEMENT_TYPE_CHECK_BOX, "CHECK_BOX", kCheckBoxQml, toggleProps()};
+    return control(VLQT_ELEMENT_TYPE_CHECK_BOX, "CHECK_BOX", kCheckBoxQml, toggleProps());
 }
 
 TypeDef switchType()
 {
-    return {VLQT_ELEMENT_TYPE_SWITCH, "SWITCH", kSwitchQml, toggleProps()};
+    return control(VLQT_ELEMENT_TYPE_SWITCH, "SWITCH", kSwitchQml, toggleProps());
 }
 
 TypeDef sliderType()
 {
-    return {VLQT_ELEMENT_TYPE_SLIDER, "SLIDER", kSliderQml, sliderProps()};
+    return control(VLQT_ELEMENT_TYPE_SLIDER, "SLIDER", kSliderQml, sliderProps());
 }
 
 TypeDef textFieldType()
 {
-    return {VLQT_ELEMENT_TYPE_TEXT_FIELD, "TEXT_FIELD", kTextFieldQml, textFieldProps()};
+    return control(VLQT_ELEMENT_TYPE_TEXT_FIELD, "TEXT_FIELD", kTextFieldQml, textFieldProps());
 }
 
 } // namespace vlqt

@@ -33,7 +33,6 @@ std::vector<PropDef> qmlProps()
     return {
         {VLQT_PROPERTY_QML_SOURCE, VLQT_VALUE_TYPE_STRING, setQmlSource, nullptr},
         {VLQT_PROPERTY_QML_RELOAD, VLQT_VALUE_TYPE_I32, setQmlReload, nullptr},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -57,7 +56,11 @@ void Elements::buildQml()
 
 TypeDef qmlType()
 {
-    return {VLQT_ELEMENT_TYPE_QML, "QML", nullptr, qmlProps(), makeQml};
+    TypeDef t{VLQT_ELEMENT_TYPE_QML, "QML", nullptr, qmlProps(), makeQml};
+    t.autoSize = AutoSize::Always;
+    // root = implicit size of the QML, or this item's SIZE
+    t.applyAutoSize = [](QQuickItem* item, bool on) { static_cast<QmlItem*>(item)->setAutoSize(on); };
+    return t;
 }
 
 } // namespace vlqt

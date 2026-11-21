@@ -152,7 +152,11 @@ QQuickItem* groupTextureSource(const QQuickItem* item)
 // Group (C#) = GroupItem: implicit size and group bounds from the children incl. their transform.
 TypeDef groupType()
 {
-    return {VLQT_ELEMENT_TYPE_GROUP, "GROUP", nullptr, {{VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr}}, makeGroup};
+    TypeDef t{VLQT_ELEMENT_TYPE_GROUP, "GROUP", nullptr, {}, makeGroup};
+    t.autoSize = AutoSize::Always;
+    t.container = true;
+    t.applyAutoSize = setGroupAutoSize; // origin of the bounds: extent with Auto Size, anchor-placed SIZE without
+    return t;
 }
 
 } // namespace vlqt

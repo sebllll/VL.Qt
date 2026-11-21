@@ -75,12 +75,28 @@ struct PropDef {
     const char* qmlName;     // "color", "border.color" (group.sub), "font" (QFont, see modifyFont); nullptr = C++ API
 };
 
+/* Whether an element type takes AUTO_SIZE (implicit size instead of SIZE). The property itself is not in `props`:
+ * Elements::set offers it for every type but None. */
+enum class AutoSize : quint8 {
+    None,      // always SIZE (Rectangle, Text, Image, Video, Shape)
+    Always,    // containers, Button, value inputs, QML: the implicit size applies while AUTO_SIZE is on
+    WithInput  // Shader (ShaderEffect): the implicit size is the Input's, so only while it has one; otherwise SIZE
+};
+
+/* Everything QtNative needs to know about an element type: one entry per type, defined in its type file. A new type is
+ * an entry plus a line in typeTable(); nothing else asks for the type's id. */
 struct TypeDef {
     quint16 id;              // VLQT_ELEMENT_TYPE_*
-    const char* name;
+    const char* name;        // the type's name in logs and error texts, and (lower case) on the perf page
     const char* qml;         // QML one-liner (nullptr = plain QQuickItem, no component)
     std::vector<PropDef> props; // type-specific (ids >= 256); common ones (1..255) apply to every type
     QQuickItem* (*make)() = nullptr; // C++ item instead of QML (Image: QtImageItem); qml is ignored then
+    AutoSize autoSize = AutoSize::None;
+    bool layout = false;     // Row/Column: a Qt positioner that owns x/y of its children (TransformState::inLayout)
+    bool container = false;  // Group, Row, Column: its children are elements that the debug overlay measures
+    bool styled = false;     // Controls: takes SET_STYLE
+    void (*applyAutoSize)(QQuickItem* item, bool on) = nullptr; // the type's own part of applySize: kind of bounds (Group, QML)
+    void (*beforeDestroy)(QQuickItem* item) = nullptr;          // Video: stop the player, release the audio tap; called by the Scene
 };
 
 const TypeDef* findType(quint16 type);
