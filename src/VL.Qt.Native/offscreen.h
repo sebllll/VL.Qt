@@ -3,8 +3,8 @@
 // vlqt_offscreen_* exports in vlqt.h; design: docs/decisions/render-texture.md. Called on the main thread only; the
 // scene graph and QRhi of a scene may live on a render thread (render_thread.h, offscreen.cpp).
 //
-// A scene is a scene handle (vlqt_scene*, struct Window of vlqt.cpp) whose QQuickWindow is driven by a QQuickRenderControl:
-// vlqt.cpp owns the parts every handle shares (engine, scene, gate, perf, graphics configuration), this part owns the
+// A scene is a scene handle (vlqt_scene*, vlqt::SceneHandle of window/scene_handle.h) whose QQuickWindow is driven by a
+// QQuickRenderControl: window/window.cpp creates the parts every handle shares (engine, scene, gate, perf, graphics configuration), this part owns the
 // render control and the binding.
 #pragma once
 
@@ -23,7 +23,7 @@ namespace vlqt::offscreen {
 // The offscreen part of a window handle (offscreen.cpp).
 struct State;
 
-// --- vlqt.cpp ---
+// --- window/: window.cpp (createHandle, stateOf, quickWindow), focus_release.cpp, touch_input.cpp ---
 
 // Window handle of a new scene around window, a QQuickWindow of state's render control: QML engine, scene (apply,
 // poll), change count, perf monitor and graphics configuration on the shared device (device::attach), the

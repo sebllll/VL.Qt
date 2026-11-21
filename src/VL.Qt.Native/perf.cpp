@@ -373,7 +373,7 @@ void PerfMonitor::detectRenderer()
     s_softwareWarned = true;
     qCWarning(lcGpu, "SOFTWARE RENDERING: Qt Quick renders on the CPU (%s), not on the GPU. Expect low fps. "
         "WSLg: GALLIUM_DRIVER=d3d12 selects the host GPU via Mesa d3d12.", qPrintable(m_software));
-    // no extra stderr line; exports see it via a logging provider or VLQT_LOG_STDERR (vlqt.cpp emitLog).
+    // no extra stderr line; exports see it via a logging provider or VLQT_LOG_STDERR (app/log.cpp emitLog).
 }
 
 PerfMonitor::~PerfMonitor()
@@ -792,7 +792,7 @@ void PerfMonitor::ensureOverlay()
     if (QQuickWindow::sceneGraphBackend() == QLatin1String("software")
         || (ri && ri->graphicsApi() == QSGRendererInterface::Software))
         item->setProperty("layered", false);
-    item->setObjectName(QLatin1String(vlqt::perfOverlayName)); // not counted as a scene change (vlqt.cpp UpdateGate)
+    item->setObjectName(QLatin1String(vlqt::perfOverlayName)); // not counted as a scene change (app/render_gate.cpp)
     item->setParentItem(m_window->contentItem());
     item->setZ(1e9); // above the user root
     auto* graph = item->findChild<PerfGraph*>(QStringLiteral("graph"));

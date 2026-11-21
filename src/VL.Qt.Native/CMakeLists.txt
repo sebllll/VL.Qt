@@ -33,12 +33,36 @@ target_sources(vlqt PRIVATE
     vlqt_test.h
     protocol.h
 
-    # app/: exports, last error; vlqt.cpp holds the app and window exports until they are split
+    # app/: start and pump, exports and last error, log, animation clock, render gate, input delivery, app fonts
+    app/animation_clock.cpp
+    app/animation_clock.h
+    app/app.cpp
+    app/app.h
     app/exports.h
+    app/fonts.cpp
+    app/fonts.h
+    app/input_delivery.cpp
     app/last_error.cpp
     app/last_error.h
+    app/log.cpp
+    app/log.h
+    app/render_gate.cpp
+    app/render_gate.h
     app/thread_name.h
-    vlqt.cpp
+
+    # platform/: platform.h here, the sources of one platform in the if(WIN32) block below
+    platform/platform.h
+
+    # window/: the scene handle, windows and their filters, focus release, injected touch
+    window/focus_release.cpp
+    window/focus_release.h
+    window/scene_handle.h
+    window/touch_input.cpp
+    window/window.cpp
+    window/window.h
+    window/window_exports.cpp
+    window/window_filters.cpp
+    window/window_filters.h
 
     # scene/: commands, events, input, previous-frame layer
     commands.cpp
@@ -83,6 +107,7 @@ target_sources(vlqt PRIVATE
     shader_resource.h
     audio_tap.cpp
     audio_tap.h
+    resources/resource_exports.cpp
 
     # device/
     device.cpp
@@ -99,6 +124,7 @@ target_sources(vlqt PRIVATE
     perf.h
     debug.cpp
     debug.h
+    diagnostics/perf_exports.cpp
 
     # test/: the test exports of vlqt_test.h are in every build; only the SmokeTest and the unit tests call them
     test/test_hooks.h
@@ -126,7 +152,7 @@ qt_add_resources(vlqt "vlqt_style"
         style/VLQt/TextField.qml)
 # Default window icon: PNGs in several sizes (scaled from docs/icon/icon.png) embedded as
 # :/vlqt/icon/default-<size>.png, so it also shows in an export without a file next to it. Artwork replaceable: same
-# file names; a new size = file in icon/ plus a line below and in vlqt.cpp (defaultIcon).
+# file names; a new size = file in icon/ plus a line below and in window/window.cpp (defaultIcon).
 qt_add_resources(vlqt "vlqt_icon"
     PREFIX "/vlqt/icon"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}/icon"
@@ -163,6 +189,8 @@ target_link_libraries(vlqt PRIVATE Qt6::ShaderTools Qt6::ShaderToolsPrivate)
 target_link_libraries(vlqt PRIVATE Qt6::QuickShapes Qt6::QuickShapesPrivate)
 if(WIN32)
     target_sources(vlqt PRIVATE
+        # platform/: dialog keys for vvvv's message loop, DllMain
+        platform/platform_win.cpp
         # offscreen/: linear_pass converts QtTexture into SRGB and float textures; d3dcompiler_47.dll ships with Windows 10 and up
         linear_pass.cpp
         linear_pass.h
@@ -173,6 +201,8 @@ if(WIN32)
     target_link_libraries(vlqt PRIVATE d3d11 dxgi d3dcompiler)
 else()
     target_sources(vlqt PRIVATE
+        # platform/: WSLg GPU default and probe, display check, fallback font, unload hook
+        platform/platform_linux.cpp
         # offscreen/: X geometry of the offscreen platform's GLX drawable for window grabs. Uses the X11 headers that Qt's
         # OpenGL dependency brings (libgl-dev); libX11/libGL are looked up at run time, not linked.
         offscreen_glx.cpp

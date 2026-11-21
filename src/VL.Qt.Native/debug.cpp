@@ -59,7 +59,7 @@ struct Painter {
         (area ? fills : lines).push_back(x);
     }
     // Device pixel grid (scene units): a line of whole device pixels whose edges lie on pixel boundaries. Without it a
-    // 1 px line on an integer coordinate straddles two pixels and the 4x MSAA resolve (vlqt.cpp) halves it into both
+    // 1 px line on an integer coordinate straddles two pixels and the 4x MSAA resolve (window/window_exports.cpp) halves it into both
     // at DPR 1 (frame + padding mixed to (37,144,124) on CI).
     qreal snapEdge(qreal v) const { return std::round(v * dpr) / dpr; }
     qreal snapCenter(qreal v, qreal widthPx) const { return (std::round(v * dpr - widthPx / 2) + widthPx / 2) / dpr; }

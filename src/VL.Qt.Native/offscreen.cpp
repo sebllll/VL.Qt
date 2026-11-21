@@ -71,7 +71,7 @@ namespace vlqt::offscreen {
 struct State
 {
     QQuickRenderControl* renderControl = nullptr;
-    QQuickWindow* window = nullptr; // the scene's window, owned by the handle (vlqt.cpp)
+    QQuickWindow* window = nullptr; // the scene's window, owned by the handle (window/scene_handle.h)
     // The scene wants a frame: sceneChanged (items changed: polish, sync, render) or renderRequested (render only,
     // e.g. QQuickWindow::update() in vlqt_scene_apply); bind sets it too. render_batch renders a bound scene only
     // while it is set, so an unchanged scene costs nothing.
