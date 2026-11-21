@@ -328,32 +328,7 @@ vlqt_scene* createHandle(QQuickWindow* window, OffscreenScene* state)
 
 OffscreenScene* stateOf(vlqt_scene* handle)
 {
-    return handle ? asWindow(handle)->offscreen.get() : nullptr;
-}
-
-QQuickWindow* quickWindow(vlqt_scene* handle)
-{
-    return handle ? asWindow(handle)->window.get() : nullptr;
+    return handle ? asSceneHandle(handle)->offscreen.get() : nullptr;
 }
 
 } // namespace vlqt::offscreen
-
-// test hooks: the parts of a scene handle the test exports read (test/test_hooks.h).
-namespace vlqt::test {
-
-Scene* scene(vlqt_scene* handle)
-{
-    return handle ? asWindow(handle)->scene.get() : nullptr;
-}
-
-PerfMonitor* perf(vlqt_scene* handle)
-{
-    return handle ? asWindow(handle)->perf.get() : nullptr;
-}
-
-std::unique_ptr<TestInput>* input(vlqt_scene* handle)
-{
-    return handle ? &asWindow(handle)->testInput : nullptr;
-}
-
-} // namespace vlqt::test

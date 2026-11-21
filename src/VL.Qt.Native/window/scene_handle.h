@@ -71,15 +71,16 @@ struct SceneHandle {
     std::optional<FullscreenRestore> fullscreenRestore; // set while fullscreen
 };
 
-// The C handle: a vlqt_scene* points to a SceneHandle.
-inline SceneHandle* asWindow(vlqt_scene* handle)
+// The C handle: a vlqt_scene* points to a SceneHandle, of a window or of an offscreen scene. Exports reach it through
+// withScene / withWindow / withOffscreen (app/exports.h), which check it and the thread.
+inline SceneHandle* asSceneHandle(vlqt_scene* handle)
 {
     return reinterpret_cast<SceneHandle*>(handle);
 }
 
-inline vlqt_scene* asHandle(SceneHandle* window)
+inline vlqt_scene* asHandle(SceneHandle* scene)
 {
-    return reinterpret_cast<vlqt_scene*>(window);
+    return reinterpret_cast<vlqt_scene*>(scene);
 }
 
 } // namespace vlqt

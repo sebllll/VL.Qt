@@ -29,6 +29,13 @@
  * Exceptions never cross the ABI: an exception inside QtNative returns VLQT_ERR_INTERNAL (NULL for a pointer) with its
  * text in vlqt_last_error.
  *
+ * Threads. Every export runs on the Qt GUI thread, the thread that called vlqt_app_init ("main thread" in this file; the
+ * vvvv main thread), except the six marked "any thread": vlqt_app_get_abi_version, vlqt_last_error,
+ * vlqt_image_write_file, vlqt_shader_reflect, vlqt_audio_tap_read and vlqt_audio_tap_now_ns. On another thread a
+ * main-thread export does nothing and returns VLQT_ERR_WRONG_THREAD (NULL for a pointer; a void export only sets
+ * vlqt_last_error). A null handle is VLQT_ERR_NULL_HANDLE on every thread. Before vlqt_app_init the main thread is not
+ * known yet and every thread passes the check.
+ *
  * Startup: Qt may abort the process at vlqt_app_init when no platform plugin can be loaded (qFatal); the log then has
  * the reason. */
 #pragma once
@@ -81,7 +88,7 @@ typedef enum vlqt_result {
 /* A window or an offscreen scene (see "Handles" at the top). Opaque. */
 typedef struct vlqt_scene vlqt_scene;
 
-/* ===== app ===== */
+/* ===== app: main thread, except vlqt_app_get_abi_version and vlqt_last_error ===== */
 
 /* Log callback of vlqt_app_init: a plain cdecl function the host keeps alive for the life of the process (from .NET a
  * static [UnmanagedCallersOnly] method, no delegate). Called on any thread (Qt messages of render threads and workers
@@ -90,10 +97,10 @@ typedef struct vlqt_scene vlqt_scene;
 typedef void (*vlqt_log_fn)(int level, const char* category, const char* message);
 
 /* ABI version of this library (VLQT_ABI_VERSION, protocol.h): protocol constants, struct layouts and signatures of this
- * header. Needs no vlqt_app_init; the host reads it first and refuses a library with another number. */
+ * header. Needs no vlqt_app_init; the host reads it first and refuses a library with another number. Any thread. */
 VLQT_API int         vlqt_app_get_abi_version(void);
 /* Starts Qt on the calling thread, which is the Qt GUI thread ("main thread") from then on. log may be NULL; it is set
- * once (idempotent: a second call changes nothing). */
+ * once (idempotent: a second call changes nothing; from another thread it is VLQT_ERR_WRONG_THREAD). */
 VLQT_API int         vlqt_app_init(const char* nativeDir, vlqt_log_fn log);
 /* Pipeline cache: sets load + save file of the QQuickGraphicsConfiguration of every window created afterwards
  * (driver compiled pipelines survive restarts). utf8Path NULL or empty = off (the default). A call after the first
@@ -102,7 +109,8 @@ VLQT_API int         vlqt_app_init(const char* nativeDir, vlqt_log_fn log);
 VLQT_API int         vlqt_app_set_pipeline_cache(const char* utf8Path);
 /* One pump: resources, posted and window events, rendering. Only the given windows (those of one vvvv app) may render
  * in this pump; update requests of other windows stay pending until their own app's pump. windows NULL = all windows
- * (count ignored). 0, VLQT_ERR_NOT_INITIALIZED. */
+ * (count ignored). 0, VLQT_ERR_NOT_INITIALIZED, VLQT_ERR_UNSUPPORTED when called inside the pump (from a host callback
+ * that processEvents dispatched): the nested call does nothing, the outer pump goes on (a warning is logged once). */
 VLQT_API int         vlqt_app_process_events_for(vlqt_scene* const* windows, int count);
 /* delivers the window system events Qt has queued (input of all windows, also geometry and close) without
  * rendering: update requests stay pending and an Expose is deferred, both render in the next pump. Call at the start
@@ -115,7 +123,7 @@ VLQT_API int         vlqt_app_advance_animations(double seconds);
 /* Text of the last failing call on the calling thread (top of this file). Any thread. */
 VLQT_API const char* vlqt_last_error(void);
 
-/* ===== scene: a window or an offscreen scene ===== */
+/* ===== scene: a window or an offscreen scene; main thread ===== */
 
 /* Averages/maxima over the last ~1 s of pumps, all times in ms. */
 typedef struct vlqt_perf {
@@ -255,7 +263,8 @@ VLQT_API int       vlqt_scene_get_host_pump(vlqt_scene* scene, vlqt_host_pump* o
 /* Averages/maxima/rates over the last ~1 s (see vlqt_host_pump_stats). */
 VLQT_API int       vlqt_scene_get_host_pump_stats(vlqt_scene* scene, vlqt_host_pump_stats* out);
 
-/* ===== window: only windows; on an offscreen scene a no-op or VLQT_ERR_UNSUPPORTED as each function says ===== */
+/* ===== window: only windows; on an offscreen scene a no-op or VLQT_ERR_UNSUPPORTED as each function says; main
+ * thread ===== */
 
 /* Creates the window (hidden; vlqt_window_show shows it). NULL = error (vlqt_last_error). Geometry in Qt logical pixels
  * (DIP), the convention of the Renderer's Bounds pin and of EVENT_WINDOW_GEOMETRY (round trip stable):
@@ -469,7 +478,7 @@ VLQT_API int vlqt_res_list(vlqt_res_info* out, int cap);
  * vlqt_last_error. */
 VLQT_API void vlqt_res_shutdown(void);
 
-/* ===== image ===== */
+/* ===== image: main thread, except vlqt_image_write_file ===== */
 
 /* Pixels of vlqt_image_set_pixels and vlqt_image_write_file. */
 typedef struct vlqt_pixel_desc {
@@ -512,7 +521,7 @@ VLQT_API int vlqt_image_read_preview(unsigned long long id, unsigned char* dst, 
 VLQT_API int vlqt_image_write_file(const vlqt_pixel_desc* desc, const void* data, int len, const char* utf8Path,
                                    int quality);
 
-/* ===== shader ===== */
+/* ===== shader: main thread, except vlqt_shader_reflect ===== */
 
 /* Shader resources (shader_resource.h, protocol.h "ShaderEffect"): start or replace the content of a
  * VLQT_RESOURCE_KIND_SHADER resource. utf8Path: a .qsb file or "builtin:<name>" (shaders/<name>.frag|.vert.qsb next to
@@ -541,7 +550,7 @@ VLQT_API int vlqt_shader_load_source(unsigned long long id, const char* utf8Sour
  *           sampler2D, anything else "other". */
 VLQT_API int vlqt_shader_reflect(const char* utf8Source, int stage, char* buf, int bufLen, int* written, int* required);
 
-/* ===== snapshot ===== */
+/* ===== snapshot: main thread ===== */
 
 /* Snapshot resources (protocol.h): main thread. Starts grabbing element elementId of scene (scale > 0:
  * pixel size = item size in DIP * scale, ignoring the screen's device pixel ratio) into a VLQT_RESOURCE_KIND_SNAPSHOT
@@ -570,7 +579,7 @@ VLQT_API int vlqt_snapshot_start_fit(unsigned long long id, vlqt_scene* scene, u
 VLQT_API int vlqt_snapshot_read(unsigned long long id, void* dst, int cap, vlqt_pixel_desc* out, int* written,
                                 int* required);
 
-/* ===== audio tap ===== */
+/* ===== audio tap: main thread, except vlqt_audio_tap_read and vlqt_audio_tap_now_ns ===== */
 
 /* State of an audio tap, filled by vlqt_audio_tap_read (protocol.h "Audio tap"). 96 bytes, mirrored in Native.cs.
  * Times in ns of vlqt_audio_tap_now_ns, media times in us on Qt's audio startTime axis (keeps counting across loop
@@ -612,7 +621,7 @@ VLQT_API int vlqt_audio_tap_read(unsigned long long id, float* dst, int maxFrame
  * Linux: CLOCK_MONOTONIC). Any thread, no Qt needed. */
 VLQT_API long long vlqt_audio_tap_now_ns(void);
 
-/* ===== font ===== */
+/* ===== font: main thread ===== */
 
 /* App fonts (LoadFont node): font files for Text/Style FontFamily without installing them. Qt GUI thread only (the
  * vvvv main thread, after vlqt_app_init); other threads get VLQT_ERR_WRONG_THREAD. One QFontDatabase registration per

@@ -19,10 +19,10 @@ public static class LastErrorTest
     [Test, Category("core-abi")]
     public static void LastErrorPerThread() => Scenario.RunLocal(s =>
     {
-        // A failing call on this thread: apply on a null window.
+        // A failing call on this thread: apply on a null handle.
         var rc = Native.Apply(SceneHandle.Null, new byte[16]);
         var mine = Native.LastError();
-        s.Check(rc == Native.Result.NullHandle && mine.Contains("null window"), $"apply on a null window fails with its message (rc {rc}, '{mine}')");
+        s.Check(rc == Native.Result.NullHandle && mine.Contains("null handle"), $"apply on a null handle fails with its message (rc {rc}, '{mine}')");
 
         // vlqt_font_add on another thread fails too (NotInitialized without a Qt app in this process, WrongThread with one).
         var workerRc = Native.Result.Ok;
@@ -49,7 +49,7 @@ public static class LastErrorTest
 
         // Both threads at once: every failure is followed by its own text, never the other thread's.
         var (mismatchesHere, mismatchesWorker) = Race(
-            () => (Native.Apply(SceneHandle.Null, new byte[16]) == Native.Result.NullHandle, Native.LastError().Contains("null window")),
+            () => (Native.Apply(SceneHandle.Null, new byte[16]) == Native.Result.NullHandle, Native.LastError().Contains("null handle")),
             () => (Native.FontAdd("no-such-font.ttf", out _, out _) is Native.Result.NotInitialized or Native.Result.WrongThread, Native.LastError().Contains("font_add")));
         s.Check(mismatchesHere == 0 && mismatchesWorker == 0,
             $"{rounds} failures on each of two threads: own message every time (this thread {mismatchesHere} mismatches, worker {mismatchesWorker})");
@@ -65,7 +65,7 @@ public static class LastErrorTest
         s.Check(QtHost.IsQtThread, "the scenario runs on the Qt thread");
         var rc = Native.Apply(SceneHandle.Null, new byte[16]);
         var mine = Native.LastError();
-        s.Check(rc == Native.Result.NullHandle && mine.Contains("null window"), $"apply on a null window fails with its message (rc {rc}, '{mine}')");
+        s.Check(rc == Native.Result.NullHandle && mine.Contains("null handle"), $"apply on a null handle fails with its message (rc {rc}, '{mine}')");
 
         var workerRc = Native.Result.Ok;
         var workerMessage = "";
@@ -82,7 +82,7 @@ public static class LastErrorTest
         s.Check(after == mine, $"the Qt thread still reads its own message after the worker failed ('{after}', expected '{mine}')");
 
         var (mismatchesQt, mismatchesWorker) = Race(
-            () => (Native.Apply(SceneHandle.Null, new byte[16]) == Native.Result.NullHandle, Native.LastError().Contains("null window")),
+            () => (Native.Apply(SceneHandle.Null, new byte[16]) == Native.Result.NullHandle, Native.LastError().Contains("null handle")),
             () => (Native.FontAdd("no-such-font.ttf", out _, out _) == Native.Result.WrongThread, Native.LastError().Contains("not on the Qt GUI thread")));
         s.Check(mismatchesQt == 0 && mismatchesWorker == 0,
             $"{rounds} failures on the Qt thread and on a worker at once: own message every time (Qt thread {mismatchesQt} mismatches, worker {mismatchesWorker})");

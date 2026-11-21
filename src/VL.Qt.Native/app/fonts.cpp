@@ -12,7 +12,6 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QSet>
 #include <QtCore/QStringList>
-#include <QtCore/QThread>
 #include <QtGui/QFont>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QFontInfo>
@@ -25,6 +24,7 @@
 using vlqt::fail;
 using vlqt::g_app;
 using vlqt::guarded;
+using vlqt::guardedGui;
 using vlqt::log::emitLog;
 
 Q_LOGGING_CATEGORY(lcFont, "vlqt.font")
@@ -120,11 +120,11 @@ VLQT_API int vlqt_font_add(const char* utf8Path, unsigned long long* outHandle, 
         if (const int rc = vlqt::beginBuffer(families, familiesCap, written, required); rc != VLQT_OK)
             return rc;
         if (!g_app)
-            return fail(VLQT_ERR_NOT_INITIALIZED, "font_add: app not initialized");
-        if (QThread::currentThread() != g_app->thread())
-            return fail(VLQT_ERR_WRONG_THREAD, "font_add: not on the Qt GUI thread (the vvvv main thread)");
+            return fail(VLQT_ERR_NOT_INITIALIZED, "vlqt_font_add: app not initialized");
+        if (const int rc = vlqt::checkGuiThread("vlqt_font_add"); rc != VLQT_OK)
+            return rc;
         if (!utf8Path || !outHandle)
-            return fail(VLQT_ERR_BAD_ARGUMENT, "font_add: null argument");
+            return fail(VLQT_ERR_BAD_ARGUMENT, "vlqt_font_add: null argument");
         const QFileInfo info(QString::fromUtf8(utf8Path));
         if (!info.isFile())
             return fail(VLQT_ERR_IO, QStringLiteral("font file not found: %1").arg(info.filePath()));
@@ -168,12 +168,10 @@ VLQT_API int vlqt_font_add(const char* utf8Path, unsigned long long* outHandle, 
 
 VLQT_API int vlqt_font_release(unsigned long long handle)
 {
-    return guarded([&]() -> int {
-        if (g_app && QThread::currentThread() != g_app->thread())
-            return fail(VLQT_ERR_WRONG_THREAD, "font_release: not on the Qt GUI thread (the vvvv main thread)");
+    return guardedGui("vlqt_font_release", [&]() -> int {
         FontEntry* e = findFont(handle);
         if (!e || e->refs <= 0)
-            return fail(VLQT_ERR_UNKNOWN_ID, "font_release: unknown handle " + std::to_string(handle));
+            return fail(VLQT_ERR_UNKNOWN_ID, "vlqt_font_release: unknown handle " + std::to_string(handle));
         e->refs--; // removed at the end of the pump if still 0 (fontsEndFrame)
         return VLQT_OK;
     });
