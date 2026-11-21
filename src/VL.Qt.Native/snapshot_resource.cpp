@@ -1,5 +1,6 @@
 #include "snapshot_resource.h"
 
+#include "app/exports.h"
 #include "commands.h"
 #include "offscreen.h"
 #include "protocol.h"
@@ -355,8 +356,10 @@ int startFit(uint64_t id, Scene& scene, unsigned elementId, int maxEdgePx)
     return startImpl(id, scene, elementId, 1.0, maxEdgePx);
 }
 
-int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out)
+int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out, int* written, int* required)
 {
+    if (const int rc = beginBuffer(dst, cap, written, required); rc != okRc)
+        return rc;
     const int k = kindOfId(id, "read_pixels");
     if (k < 0)
         return k;
@@ -366,22 +369,22 @@ int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out)
     }
     const auto work = std::static_pointer_cast<SnapshotWork>(readyWork(id, VLQT_RES_KIND_SNAPSHOT));
     if (!work || work->image.isNull())
-        return badValueRc; // no finished snapshot yet (or Failed)
+        return noDataRc; // no finished snapshot yet (or Failed)
     const QImage& img = work->image;
     const int rowBytes = img.width() * 4;
-    const int64_t required = int64_t(rowBytes) * img.height();
+    const int64_t size = int64_t(rowBytes) * img.height();
     if (out)
         *out = {img.width(), img.height(), rowBytes, 9, 1};
-    if (!dst || cap < required)
-        return -int(required);
+    if (const int rc = bufferFits(size, cap, written, required); rc != okRc)
+        return rc;
     auto* d = static_cast<unsigned char*>(dst);
     if (img.bytesPerLine() == rowBytes) {
-        std::memcpy(d, img.constBits(), size_t(required));
+        std::memcpy(d, img.constBits(), size_t(size));
     } else {
         for (int y = 0; y < img.height(); y++)
             std::memcpy(d + size_t(y) * rowBytes, img.constScanLine(y), size_t(rowBytes));
     }
-    return int(required);
+    return okRc;
 }
 
 void stats(Stats& out)

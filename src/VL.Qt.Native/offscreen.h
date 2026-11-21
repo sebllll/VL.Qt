@@ -11,7 +11,6 @@
 #include <QtCore/QPointF>
 #include <QtGui/QEventPoint>
 
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -33,8 +32,6 @@ void* createHandle(QQuickWindow* window, State* state);
 // The offscreen part of handle; nullptr for a null handle or a window.
 State* stateOf(void* handle);
 QQuickWindow* quickWindow(void* handle);
-// vlqt_last_error.
-void setError(const std::string& message);
 // Clears the focus of the outermost focused item below window's root, so the active focus goes to the root: a running
 // edit commits as on any focus loss. Shared by the FocusRelease filter and the scene's focus loss.
 void releaseFocus(QQuickWindow* window);
@@ -66,7 +63,7 @@ bool isScene(const QQuickWindow* window);
 bool requestFrame(const QQuickWindow* window);
 
 // test hook: backend of vlqt_test_offscreen_state (test/test_probes.cpp): fence values and render count of a bound scene.
-// Out pointers may be null. Returns a vlqt_offscreen_result code (protocol.h).
+// Out pointers may be null. Returns VLQT_OK, VLQT_ERR_NULL_HANDLE or VLQT_ERR_UNBOUND (vlqt_last_error set).
 int testState(void* scene, unsigned long long* readFence, unsigned long long* writeFence, long long* renders);
 
 } // namespace vlqt::offscreen

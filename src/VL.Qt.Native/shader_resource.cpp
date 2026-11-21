@@ -1,5 +1,6 @@
 #include "shader_resource.h"
 
+#include "app/exports.h"
 #include "protocol.h"
 
 #include <QtCore/QCryptographicHash>
@@ -475,11 +476,14 @@ const char* glslTypeName(QShaderDescription::VariableType t)
 
 } // namespace
 
-int reflect(const char* utf8Source, int stage, char* buf, int bufLen)
+int reflect(const char* utf8Source, int stage, char* buf, int bufLen, int* written, int* required)
 {
-    if (!utf8Source || !*utf8Source || bufLen < 0 || (!buf && bufLen > 0)
-        || (stage != VLQT_SHADER_STAGE_VERTEX && stage != VLQT_SHADER_STAGE_FRAGMENT))
-        return badValueRc;
+    if (const int rc = beginBuffer(buf, bufLen, written, required); rc != okRc)
+        return rc;
+    if (!utf8Source || !*utf8Source)
+        return fail(badValueRc, "shader_reflect: empty source");
+    if (stage != VLQT_SHADER_STAGE_VERTEX && stage != VLQT_SHADER_STAGE_FRAGMENT)
+        return fail(badValueRc, "shader_reflect: unknown stage " + std::to_string(stage));
     const bool vertex = stage == VLQT_SHADER_STAGE_VERTEX;
 
     std::string text;
@@ -512,10 +516,7 @@ int reflect(const char* utf8Source, int stage, char* buf, int bufLen)
                 text += "\nsampler " + smp.name.toStdString() + ' ' + std::to_string(smp.binding);
         }
     }
-    const int needed = static_cast<int>(text.size());
-    if (bufLen > 0)
-        memcpy(buf, text.data(), static_cast<size_t>(std::min(needed, bufLen)));
-    return needed;
+    return copyText(text.data(), static_cast<int>(text.size()), buf, bufLen, written, required);
 }
 
 std::shared_ptr<ShaderResource> ready(uint64_t id)

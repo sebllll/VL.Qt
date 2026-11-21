@@ -1,7 +1,7 @@
 // Test exports of vlqt_test.h: the resource kind VLQT_RES_KIND_TEST (decode sleeps, upload consumes budget in stripes)
 // and direct access to the state machine and the element references of the resource manager (resources.h).
 #include "../vlqt_test.h"
-#include "../last_error.h"
+#include "../app/exports.h"
 #include "../resources.h"
 
 #include <QtCore/QLoggingCategory>
@@ -100,7 +100,7 @@ VLQT_API int vlqt_test_res_element_ref(unsigned long long id, int delta)
             return vlqt::res::acquire(id);
         if (delta == -1)
             return vlqt::res::releaseElement(id);
-        return vlqt::res::badValueRc;
+        return vlqt::fail(VLQT_ERR_BAD_ARGUMENT, "test_res_element_ref: delta " + std::to_string(delta) + " is not 1 or -1");
     });
 }
 

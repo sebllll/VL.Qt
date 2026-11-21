@@ -40,8 +40,8 @@ int dropWindowRhisOn(const std::vector<void*>& devices);
 // Releases the references of on12 and empties it; returns the references left on the D3D12 device (> 0 = leak).
 unsigned long release(On12& on12);
 
-// Removes dev12 (ID3D12Device5::RemoveDevice): the D3D11 device on top is lost from now on. 0, -2 without
-// ID3D12Device5.
+// Removes dev12 (ID3D12Device5::RemoveDevice): the D3D11 device on top is lost from now on. 0, VLQT_ERR_UNSUPPORTED
+// without ID3D12Device5 (vlqt_last_error set).
 int removeDevice(ID3D12Device* dev12);
 
 } // namespace vlqt::device::test

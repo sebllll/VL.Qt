@@ -1,4 +1,5 @@
 #include "offscreen.h"
+#include "app/exports.h"
 #include "protocol.h"
 #include "render_thread.h"
 #include "vlqt.h"
@@ -163,12 +164,12 @@ public:
 void* create(int width, int height)
 {
     if (!qGuiApp) {
-        setError("offscreen scene: app not initialized");
+        vlqt::setLastError("offscreen scene: app not initialized");
         return nullptr;
     }
     // The fences and the opened texture (bind) are D3D11 objects on QtNative's shared device.
     if (QQuickWindow::graphicsApi() != QSGRendererInterface::Direct3D11) {
-        setError("offscreen scene: needs Direct3D 11 (Windows)");
+        vlqt::setLastError("offscreen scene: needs Direct3D 11 (Windows)");
         return nullptr;
     }
     auto* state = new State();
@@ -181,7 +182,7 @@ void* create(int width, int height)
     // device::attach marks a window that got the shared device; without it initialize would create a device of its own.
     if (!window->property("_vlqt_shared_device").toBool()) {
         vlqt_window_destroy(handle);
-        setError("offscreen scene: QtNative has no shared D3D11 device (VLQT_SHARED_DEVICE=0 or creation failed, see the log)");
+        vlqt::setLastError("offscreen scene: QtNative has no shared D3D11 device (VLQT_SHARED_DEVICE=0 or creation failed, see the log)");
         return nullptr;
     }
     // From here on the scene graph and the QRhi belong to the render thread (prepareThread before initialize).
@@ -193,7 +194,7 @@ void* create(int width, int height)
     onRenderThread(state, [state, &initialized] { initialized = state->renderControl->initialize(); });
     if (!initialized) {
         vlqt_window_destroy(handle);
-        setError("offscreen scene: QQuickRenderControl::initialize failed (see the log)");
+        vlqt::setLastError("offscreen scene: QQuickRenderControl::initialize failed (see the log)");
         return nullptr;
     }
     QObject::connect(state->renderControl, &QQuickRenderControl::sceneChanged, state->renderControl,
@@ -230,8 +231,7 @@ int fail(int code, const char* what, HRESULT hr = S_OK)
         std::snprintf(text, sizeof text, "offscreen: %s", what);
     else
         std::snprintf(text, sizeof text, "offscreen: %s (HRESULT 0x%08lX)", what, static_cast<unsigned long>(hr));
-    setError(text);
-    return code;
+    return vlqt::fail(code, text);
 }
 
 ID3D11Device* qtDevice(const State* s)
@@ -309,8 +309,8 @@ int matchAdapter(State* s, unsigned long long foreignLuid)
     const bool otherBound = std::any_of(s_scenes.begin(), s_scenes.end(), [s](const State* o) { return o != s && o->bound; });
     if (!otherBound && vlqt::device::canMove()) {
         if (vlqt::device::moveTo(foreignLuid))
-            return VLQT_OFFSCREEN_OK;
-        return fail(VLQT_OFFSCREEN_DEVICE_LOST, "bind: moving QtNative's device to the foreign adapter failed (see the log)");
+            return VLQT_OK;
+        return fail(VLQT_ERR_DEVICE_LOST, "bind: moving QtNative's device to the foreign adapter failed (see the log)");
     }
     static bool warned = false;
     if (!warned) {
@@ -319,7 +319,7 @@ int matchAdapter(State* s, unsigned long long foreignLuid)
             "which a Qt window or another offscreen scene already uses. Use one adapter for both (this warning appears once)",
             foreignLuid, vlqt::device::adapterLuid());
     }
-    return fail(VLQT_OFFSCREEN_ADAPTER_MISMATCH, "bind: the foreign device is on another adapter than QtNative's device, "
+    return fail(VLQT_ERR_ADAPTER_MISMATCH, "bind: the foreign device is on another adapter than QtNative's device, "
         "which a Qt window or another offscreen scene already uses");
 }
 
@@ -346,16 +346,16 @@ int createFence(ID3D11Device5* qt, ID3D11Device5* foreign, ComPtr<ID3D11Fence>& 
 {
     HRESULT hr = qt->CreateFence(0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(qtFence.GetAddressOf()));
     if (FAILED(hr))
-        return fail(VLQT_OFFSCREEN_FENCE_FAILED, "bind: CreateFence failed", hr);
+        return fail(VLQT_ERR_FENCE_FAILED, "bind: CreateFence failed", hr);
     HANDLE handle = nullptr;
     hr = qtFence->CreateSharedHandle(nullptr, GENERIC_ALL, nullptr, &handle);
     if (FAILED(hr))
-        return fail(VLQT_OFFSCREEN_FENCE_FAILED, "bind: ID3D11Fence::CreateSharedHandle failed", hr);
+        return fail(VLQT_ERR_FENCE_FAILED, "bind: ID3D11Fence::CreateSharedHandle failed", hr);
     hr = foreign->OpenSharedFence(handle, IID_PPV_ARGS(foreignFence.GetAddressOf()));
     CloseHandle(handle);
     if (FAILED(hr))
-        return fail(VLQT_OFFSCREEN_FENCE_FAILED, "bind: OpenSharedFence on the foreign device failed", hr);
-    return VLQT_OFFSCREEN_OK;
+        return fail(VLQT_ERR_FENCE_FAILED, "bind: OpenSharedFence on the foreign device failed", hr);
+    return VLQT_OK;
 }
 
 // True if device runs on a software adapter: the software flag, or the Microsoft Basic Render Driver (WARP, vendor
@@ -381,47 +381,47 @@ int bind(State* s, void* device, void* ntHandle, int width, int height, int form
 {
     onRenderThread(s, [s] { unbind(s); });
     if (!device || !ntHandle)
-        return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "bind: null device or handle");
+        return fail(VLQT_ERR_BAD_ARGUMENT, "bind: null device or handle");
     if (width < 1 || height < 1 || width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION || height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION)
-        return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "bind: size out of range");
+        return fail(VLQT_ERR_BAD_ARGUMENT, "bind: size out of range");
     if (!formatFits(format, static_cast<DXGI_FORMAT>(format)))
-        return fail(VLQT_OFFSCREEN_FORMAT_UNSUPPORTED, "bind: format is not R8G8B8A8_UNORM(_SRGB), B8G8R8A8_UNORM(_SRGB) or R16G16B16A16_FLOAT");
+        return fail(VLQT_ERR_FORMAT_UNSUPPORTED, "bind: format is not R8G8B8A8_UNORM(_SRGB), B8G8R8A8_UNORM(_SRGB) or R16G16B16A16_FLOAT");
     auto* foreign = static_cast<ID3D11Device*>(device);
     const unsigned long long foreignLuid = vlqt::device::adapterLuidOf(foreign);
     if (!foreignLuid)
-        return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "bind: device is no D3D11 device with a DXGI adapter");
+        return fail(VLQT_ERR_BAD_ARGUMENT, "bind: device is no D3D11 device with a DXGI adapter");
     // A failed initialize after a device rebuild (deviceRestored) is retried here.
     if (!s->window->rhi() && s->window->property("_vlqt_shared_device").toBool())
         onRenderThread(s, [s] { s->renderControl->initialize(); });
     ID3D11Device* qt = qtDevice(s);
     if (!qt)
-        return fail(VLQT_OFFSCREEN_DEVICE_LOST, "bind: the scene has no QtNative device");
+        return fail(VLQT_ERR_DEVICE_LOST, "bind: the scene has no QtNative device");
     if (FAILED(qt->GetDeviceRemovedReason()))
-        return fail(VLQT_OFFSCREEN_DEVICE_LOST, "bind: QtNative's device is lost", qt->GetDeviceRemovedReason());
+        return fail(VLQT_ERR_DEVICE_LOST, "bind: QtNative's device is lost", qt->GetDeviceRemovedReason());
     if (vlqt::device::adapterLuidOf(qt) != foreignLuid) {
-        if (int rc = matchAdapter(s, foreignLuid); rc != VLQT_OFFSCREEN_OK)
+        if (int rc = matchAdapter(s, foreignLuid); rc != VLQT_OK)
             return rc;
         qt = qtDevice(s); // the scene's QRhi is on the moved device now
         if (!qt)
-            return fail(VLQT_OFFSCREEN_DEVICE_LOST, "bind: the scene has no QtNative device after the move");
+            return fail(VLQT_ERR_DEVICE_LOST, "bind: the scene has no QtNative device after the move");
     }
 
     ComPtr<ID3D11Device1> qt1;
     HRESULT hr = qt->QueryInterface(IID_PPV_ARGS(qt1.GetAddressOf()));
     if (FAILED(hr))
-        return fail(VLQT_OFFSCREEN_OPEN_FAILED, "bind: QtNative's device has no ID3D11Device1", hr);
+        return fail(VLQT_ERR_OPEN_FAILED, "bind: QtNative's device has no ID3D11Device1", hr);
     ComPtr<ID3D11Texture2D> texture;
     hr = qt1->OpenSharedResource1(static_cast<HANDLE>(ntHandle), IID_PPV_ARGS(texture.GetAddressOf()));
     if (FAILED(hr))
-        return fail(VLQT_OFFSCREEN_OPEN_FAILED, "bind: OpenSharedResource1 failed", hr);
+        return fail(VLQT_ERR_OPEN_FAILED, "bind: OpenSharedResource1 failed", hr);
     D3D11_TEXTURE2D_DESC desc;
     texture->GetDesc(&desc);
     if (!(desc.BindFlags & D3D11_BIND_RENDER_TARGET) || desc.ArraySize != 1 || desc.SampleDesc.Count != 1)
-        return fail(VLQT_OFFSCREEN_OPEN_FAILED, "bind: the texture is no single-sampled render target");
+        return fail(VLQT_ERR_OPEN_FAILED, "bind: the texture is no single-sampled render target");
     if (desc.Width != UINT(width) || desc.Height != UINT(height))
-        return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "bind: width/height are not the texture's size");
+        return fail(VLQT_ERR_BAD_ARGUMENT, "bind: width/height are not the texture's size");
     if (!formatFits(format, desc.Format))
-        return fail(VLQT_OFFSCREEN_FORMAT_UNSUPPORTED, "bind: format does not fit the texture's format");
+        return fail(VLQT_ERR_FORMAT_UNSUPPORTED, "bind: format does not fit the texture's format");
 
     ComPtr<ID3D11Device5> qt5;
     ComPtr<ID3D11Device5> foreign5;
@@ -434,11 +434,11 @@ int bind(State* s, void* device, void* ntHandle, int width, int height, int form
     if (FAILED(qt->QueryInterface(IID_PPV_ARGS(qt5.GetAddressOf())))
         || FAILED(foreign->QueryInterface(IID_PPV_ARGS(foreign5.GetAddressOf())))
         || FAILED(qtImmediate.As(&qtContext)) || FAILED(foreignImmediate.As(&foreignContext)))
-        return fail(VLQT_OFFSCREEN_FENCE_FAILED, "bind: no ID3D11Device5 / ID3D11DeviceContext4 (Windows 10 1703 or newer)");
+        return fail(VLQT_ERR_FENCE_FAILED, "bind: no ID3D11Device5 / ID3D11DeviceContext4 (Windows 10 1703 or newer)");
     ComPtr<ID3D11Fence> qtRead, foreignRead, qtWrite, foreignWrite;
-    if (int rc = createFence(qt5.Get(), foreign5.Get(), qtRead, foreignRead); rc != VLQT_OFFSCREEN_OK)
+    if (int rc = createFence(qt5.Get(), foreign5.Get(), qtRead, foreignRead); rc != VLQT_OK)
         return rc;
-    if (int rc = createFence(qt5.Get(), foreign5.Get(), qtWrite, foreignWrite); rc != VLQT_OFFSCREEN_OK)
+    if (int rc = createFence(qt5.Get(), foreign5.Get(), qtWrite, foreignWrite); rc != VLQT_OK)
         return rc;
 
     vlqt::linear_pass::Pass linearPass;
@@ -446,7 +446,7 @@ int bind(State* s, void* device, void* ntHandle, int width, int height, int form
         const char* what = "";
         if (HRESULT hr = vlqt::linear_pass::create(qt, texture.Get(), DXGI_FORMAT(format), UINT(width), UINT(height), linearPass, what);
             FAILED(hr))
-            return fail(VLQT_OFFSCREEN_OPEN_FAILED, what, hr);
+            return fail(VLQT_ERR_OPEN_FAILED, what, hr);
     }
 
     // MSAA: Qt renders into a multisample colour and depth-stencil texture of its own and resolves into the
@@ -482,7 +482,7 @@ int bind(State* s, void* device, void* ntHandle, int width, int height, int form
     s->dirty = true;
     if (usedSamples)
         *usedSamples = used;
-    return VLQT_OFFSCREEN_OK;
+    return VLQT_OK;
 }
 
 // One frame of a bound, dirty scene, ordered against the foreign context by the fences (vlqt.h).
@@ -641,7 +641,7 @@ void renderThreaded(const std::vector<State*>& scenes, ID3D11DeviceContext4* for
 int renderBatch(void* context, void* const* scenes, int count, double driverSeconds)
 {
     if (!qGuiApp || QQuickWindow::graphicsApi() != QSGRendererInterface::Direct3D11)
-        return fail(VLQT_OFFSCREEN_NOT_SUPPORTED, "render_batch: needs Direct3D 11 and an initialized app");
+        return fail(VLQT_ERR_UNSUPPORTED, "render_batch: needs Direct3D 11 and an initialized app");
     vlqt_driver_advance(driverSeconds);
     ComPtr<ID3D11DeviceContext4> foreign;
     int rendered = 0;
@@ -654,12 +654,12 @@ int renderBatch(void* context, void* const* scenes, int count, double driverSeco
         if (!foreign) {
             HRESULT hr = static_cast<ID3D11DeviceContext*>(context)->QueryInterface(IID_PPV_ARGS(foreign.GetAddressOf()));
             if (FAILED(hr))
-                return fail(VLQT_OFFSCREEN_BAD_ARGUMENT, "render_batch: context is no ID3D11DeviceContext4", hr);
+                return fail(VLQT_ERR_BAD_ARGUMENT, "render_batch: context is no ID3D11DeviceContext4", hr);
         }
         // Lost but not rebuilt yet: the next pump (device::checkLost) rebuilds and unbinds every scene.
         ID3D11Device* qt = qtDevice(s);
         if (!qt || FAILED(qt->GetDeviceRemovedReason()))
-            return fail(VLQT_OFFSCREEN_DEVICE_LOST, "render_batch: QtNative's device is lost");
+            return fail(VLQT_ERR_DEVICE_LOST, "render_batch: QtNative's device is lost");
         if (s->thread)
             threaded.push_back(s);
         else
@@ -725,19 +725,19 @@ int testState(void* scene, unsigned long long* readFence, unsigned long long* wr
 {
     State* s = stateOf(scene);
     if (!s)
-        return VLQT_OFFSCREEN_NULL_SCENE;
+        return vlqt::fail(VLQT_ERR_NULL_HANDLE, "test_offscreen_state: null handle or not an offscreen scene");
     // The renders posted by the last batch are counted.
     if (s->thread)
         s->thread->drain();
     if (!s->bound)
-        return VLQT_OFFSCREEN_UNBOUND;
+        return vlqt::fail(VLQT_ERR_UNBOUND, "test_offscreen_state: the scene is not bound");
     if (readFence)
         *readFence = s->readValue;
     if (writeFence)
         *writeFence = s->writeValue;
     if (renders)
         *renders = s->renders;
-    return VLQT_OFFSCREEN_OK;
+    return VLQT_OK;
 }
 
 } // namespace vlqt::offscreen
@@ -746,17 +746,15 @@ using namespace vlqt::offscreen;
 
 namespace {
 
-template <class F>
-int guardedCode(F&& f)
+using vlqt::guarded;
+
+// The offscreen part of handle for the export function; nullptr with vlqt_last_error set for a null handle or a window.
+State* sceneOrFail(void* handle, const char* function)
 {
-    try {
-        return f();
-    } catch (const std::exception& e) {
-        setError(std::string("exception: ") + e.what());
-    } catch (...) {
-        setError("unknown exception");
-    }
-    return VLQT_OFFSCREEN_BAD_ARGUMENT;
+    State* s = stateOf(handle);
+    if (!s)
+        vlqt::setLastError(std::string(function) + ": null handle or not an offscreen scene");
+    return s;
 }
 
 // --- Input (vlqt.h, render-texture.md "Input") ---
@@ -765,8 +763,7 @@ int guardedCode(F&& f)
 
 int badArgument(const std::string& what)
 {
-    setError("offscreen " + what);
-    return VLQT_OFFSCREEN_BAD_ARGUMENT;
+    return vlqt::fail(VLQT_ERR_BAD_ARGUMENT, "offscreen " + what);
 }
 
 // Registered once per scene: QWindowSystemInterface lists it for Qt Quick (handler acceptedDevices); deleted with the
@@ -854,12 +851,12 @@ int sendMousePointer(State* s, int type, QPointF pos, Qt::MouseButtons buttons, 
     case VLQT_POINTER_MOVE:
         s->buttons = buttons;
         sendMouse(s, QEvent::MouseMove, pos, Qt::NoButton, buttons, modifiers, ts, mouseOf(s));
-        return VLQT_OFFSCREEN_OK;
+        return VLQT_OK;
     case VLQT_POINTER_LEAVE: {
         // Hover ends; Qt Quick clears its hover state.
         QEvent ev(QEvent::Leave);
         QCoreApplication::sendEvent(s->window, &ev);
-        return VLQT_OFFSCREEN_OK;
+        return VLQT_OK;
     }
     case VLQT_POINTER_PRESS:
     case VLQT_POINTER_RELEASE: {
@@ -880,7 +877,7 @@ int sendMousePointer(State* s, int type, QPointF pos, Qt::MouseButtons buttons, 
             else
                 sendMouse(s, QEvent::MouseButtonRelease, pos, button, held, modifiers, ts, mouseOf(s));
         }
-        return VLQT_OFFSCREEN_OK;
+        return VLQT_OK;
     }
     default:
         return badArgument("send_pointer: mouse event type " + std::to_string(type) + " unknown");
@@ -898,14 +895,14 @@ int sendTouchPointer(State* s, int type, int id, QPointF pos, Qt::KeyboardModifi
     case VLQT_POINTER_RELEASE: state = QEventPoint::State::Released; break;
     case VLQT_POINTER_CANCEL:
         cancelTouch(s->window, device, active, ts, modifiers);
-        return VLQT_OFFSCREEN_OK;
+        return VLQT_OK;
     default:
         // LEAVE: a touch has no hover.
         return badArgument("send_pointer: touch event type " + std::to_string(type) + " unknown");
     }
     return sendTouch(s->window, device, active, state, id, pos, ts, modifiers, "offscreen send_pointer")
-        ? VLQT_OFFSCREEN_OK
-        : VLQT_OFFSCREEN_BAD_ARGUMENT;
+        ? VLQT_OK
+        : VLQT_ERR_BAD_ARGUMENT;
 }
 
 // A pen as QGuiApplication delivers one from Qt's Windows plugin: a QTabletEvent from the stylus (pointer handlers with
@@ -942,7 +939,7 @@ int sendPenPointer(State* s, int type, QPointF pos, Qt::KeyboardModifiers modifi
         // The hovering pen left: as the mouse.
         QEvent ev(QEvent::Leave);
         QCoreApplication::sendEvent(s->window, &ev);
-        return VLQT_OFFSCREEN_OK;
+        return VLQT_OK;
     }
     case VLQT_POINTER_CANCEL: {
         // No tablet cancel in Qt: the grabs of the pen point (tablet and synthesized mouse) are dropped, no release.
@@ -953,7 +950,7 @@ int sendPenPointer(State* s, int type, QPointF pos, Qt::KeyboardModifiers modifi
             ev.clearPassiveGrabbers(ev.point(0));
             s->penDown = false;
         }
-        return VLQT_OFFSCREEN_OK;
+        return VLQT_OK;
     }
     default:
         return badArgument("send_pointer: pen event type " + std::to_string(type) + " unknown");
@@ -970,7 +967,7 @@ int sendPenPointer(State* s, int type, QPointF pos, Qt::KeyboardModifiers modifi
         else
             sendMouse(s, mouse, pos, button, buttons, modifiers, ts, pen);
     }
-    return VLQT_OFFSCREEN_OK;
+    return VLQT_OK;
 }
 
 // FocusIn / FocusOut to the scene's window, as the Qt render control examples do: QQuickWindow gives its content item
@@ -1020,7 +1017,7 @@ int sendWheel(State* s, QPointF pos, int dx, int dy, int modifiers)
         Qt::NoScrollPhase, false, Qt::MouseEventNotSynthesized, mouseOf(s));
     ev.setTimestamp(timestamp(s));
     QCoreApplication::sendEvent(w, &ev);
-    return VLQT_OFFSCREEN_OK;
+    return VLQT_OK;
 }
 
 int sendKey(State* s, int type, int key, int modifiers, bool autoRepeat)
@@ -1028,11 +1025,11 @@ int sendKey(State* s, int type, int key, int modifiers, bool autoRepeat)
     if (type != VLQT_KEY_EVENT_PRESS && type != VLQT_KEY_EVENT_RELEASE)
         return badArgument("send_key: type " + std::to_string(type) + " unknown");
     if (!s->focused)
-        return VLQT_OFFSCREEN_OK; // dropped, like keys of a window without focus
+        return VLQT_OK; // dropped, like keys of a window without focus
     QKeyEvent ev(type == VLQT_KEY_EVENT_PRESS ? QEvent::KeyPress : QEvent::KeyRelease, key, Qt::KeyboardModifiers(modifiers),
         QString(), autoRepeat);
     QCoreApplication::sendEvent(s->window, &ev);
-    return VLQT_OFFSCREEN_OK;
+    return VLQT_OK;
 }
 
 // Like vlqt_test_send_key_text: a key press/release with the text and Qt::Key_unknown. An item that ignores it but
@@ -1042,7 +1039,7 @@ int sendText(State* s, const char* utf8, int length)
     if (length < 0 || (!utf8 && length > 0))
         return badArgument("send_text: null text or negative length");
     if (length == 0 || !s->focused)
-        return VLQT_OFFSCREEN_OK;
+        return VLQT_OK;
     const QString text = QString::fromUtf8(utf8, length);
     QKeyEvent press(QEvent::KeyPress, Qt::Key_unknown, Qt::NoModifier, text);
     QCoreApplication::sendEvent(s->window, &press);
@@ -1054,7 +1051,7 @@ int sendText(State* s, const char* utf8, int length)
         commit.setCommitString(text);
         QCoreApplication::sendEvent(s->window, &commit);
     }
-    return VLQT_OFFSCREEN_OK;
+    return VLQT_OK;
 }
 
 } // namespace
@@ -1063,129 +1060,129 @@ extern "C" {
 
 VLQT_API void* vlqt_offscreen_create(int width, int height)
 {
-    try {
-        return create(width, height);
-    } catch (const std::exception& e) {
-        setError(std::string("exception: ") + e.what());
-    } catch (...) {
-        setError("unknown exception");
-    }
-    return nullptr;
+    void* handle = nullptr;
+    guarded([&]() -> int {
+        handle = create(width, height); // sets vlqt_last_error on nullptr
+        return handle ? VLQT_OK : VLQT_ERR_INTERNAL;
+    });
+    return handle;
 }
 
 VLQT_API int vlqt_offscreen_bind(void* scene, void* device, void* ntHandle, int width, int height, int format, int samples,
     int* usedSamples)
 {
-    if (usedSamples)
-        *usedSamples = 0;
-    State* state = stateOf(scene);
-    if (!state)
-        return VLQT_OFFSCREEN_NULL_SCENE;
+    return guarded([&]() -> int {
+        if (usedSamples)
+            *usedSamples = 0;
+        State* state = sceneOrFail(scene, "offscreen bind");
+        if (!state)
+            return VLQT_ERR_NULL_HANDLE;
 #ifdef _WIN32
-    return guardedCode([&] {
-        int rc = bind(state, device, ntHandle, width, height, format, samples, usedSamples);
-        if (rc != VLQT_OFFSCREEN_OK)
-            onRenderThread(state, [state] { unbind(state); });
-        return rc;
-    });
+        // bind unbinds first and takes the new binding only after every check: a failure leaves the scene unbound.
+        return bind(state, device, ntHandle, width, height, format, samples, usedSamples);
 #else
-    (void)device;
-    (void)ntHandle;
-    (void)width;
-    (void)height;
-    (void)format;
-    (void)samples;
-    setError("offscreen bind: needs Direct3D 11 (Windows)");
-    return VLQT_OFFSCREEN_NOT_SUPPORTED;
+        (void)device;
+        (void)ntHandle;
+        (void)width;
+        (void)height;
+        (void)format;
+        (void)samples;
+        return vlqt::fail(VLQT_ERR_UNSUPPORTED, "offscreen bind: needs Direct3D 11 (Windows)");
 #endif
+    });
 }
 
 VLQT_API int vlqt_offscreen_unbind(void* scene)
 {
-    State* state = stateOf(scene);
-    if (!state)
-        return VLQT_OFFSCREEN_NULL_SCENE;
-    return guardedCode([&] {
+    return guarded([&]() -> int {
+        State* state = sceneOrFail(scene, "offscreen unbind");
+        if (!state)
+            return VLQT_ERR_NULL_HANDLE;
 #ifdef _WIN32
         onRenderThread(state, [state] { unbind(state); });
 #endif
-        return VLQT_OFFSCREEN_OK;
+        return VLQT_OK;
     });
 }
 
 VLQT_API int vlqt_offscreen_set_threaded(int threadCount)
 {
-    const char* error = nullptr;
-    const int rc = vlqt::render_thread::setThreadCount(threadCount, &error);
-    if (error)
-        setError(error);
-    return rc;
+    return guarded([&] { return vlqt::render_thread::setThreadCount(threadCount); });
 }
 
 VLQT_API int vlqt_offscreen_is_bound(void* scene)
 {
-    State* state = stateOf(scene);
-    if (!state)
-        return VLQT_OFFSCREEN_NULL_SCENE;
-    return state->bound ? 1 : 0;
+    return guarded([&]() -> int {
+        State* state = sceneOrFail(scene, "offscreen is_bound");
+        if (!state)
+            return VLQT_ERR_NULL_HANDLE;
+        return state->bound ? 1 : 0;
+    });
 }
 
 VLQT_API int vlqt_offscreen_render_batch(void* context, void* const* scenes, int count, double driverSeconds)
 {
-    if (!context || count < 0 || (!scenes && count > 0)) {
-        setError("offscreen render_batch: null context, null scenes or negative count");
-        return VLQT_OFFSCREEN_BAD_ARGUMENT;
-    }
+    return guarded([&]() -> int {
+        if (!context || count < 0 || (!scenes && count > 0))
+            return vlqt::fail(VLQT_ERR_BAD_ARGUMENT, "offscreen render_batch: null context, null scenes or negative count");
 #ifdef _WIN32
-    return guardedCode([&] { return renderBatch(context, scenes, count, driverSeconds); });
+        return renderBatch(context, scenes, count, driverSeconds);
 #else
-    (void)driverSeconds;
-    setError("offscreen render_batch: needs Direct3D 11 (Windows)");
-    return VLQT_OFFSCREEN_NOT_SUPPORTED;
+        (void)driverSeconds;
+        return vlqt::fail(VLQT_ERR_UNSUPPORTED, "offscreen render_batch: needs Direct3D 11 (Windows)");
 #endif
+    });
 }
 
 VLQT_API int vlqt_offscreen_send_pointer(void* scene, int device, int type, int id, float x, float y, int buttons,
                                          int modifiers)
 {
-    State* state = stateOf(scene);
-    if (!state)
-        return VLQT_OFFSCREEN_NULL_SCENE;
-    return guardedCode([&] { return sendPointer(state, device, type, id, QPointF(x, y), buttons, modifiers); });
+    return guarded([&]() -> int {
+        State* state = sceneOrFail(scene, "offscreen send_pointer");
+        if (!state)
+            return VLQT_ERR_NULL_HANDLE;
+        return sendPointer(state, device, type, id, QPointF(x, y), buttons, modifiers);
+    });
 }
 
 VLQT_API int vlqt_offscreen_send_wheel(void* scene, float x, float y, int dx, int dy, int modifiers)
 {
-    State* state = stateOf(scene);
-    if (!state)
-        return VLQT_OFFSCREEN_NULL_SCENE;
-    return guardedCode([&] { return sendWheel(state, QPointF(x, y), dx, dy, modifiers); });
+    return guarded([&]() -> int {
+        State* state = sceneOrFail(scene, "offscreen send_wheel");
+        if (!state)
+            return VLQT_ERR_NULL_HANDLE;
+        return sendWheel(state, QPointF(x, y), dx, dy, modifiers);
+    });
 }
 
 VLQT_API int vlqt_offscreen_send_key(void* scene, int type, int key, int modifiers, int autoRepeat)
 {
-    State* state = stateOf(scene);
-    if (!state)
-        return VLQT_OFFSCREEN_NULL_SCENE;
-    return guardedCode([&] { return sendKey(state, type, key, modifiers, autoRepeat != 0); });
+    return guarded([&]() -> int {
+        State* state = sceneOrFail(scene, "offscreen send_key");
+        if (!state)
+            return VLQT_ERR_NULL_HANDLE;
+        return sendKey(state, type, key, modifiers, autoRepeat != 0);
+    });
 }
 
 VLQT_API int vlqt_offscreen_send_text(void* scene, const char* utf8, int length)
 {
-    State* state = stateOf(scene);
-    if (!state)
-        return VLQT_OFFSCREEN_NULL_SCENE;
-    return guardedCode([&] { return sendText(state, utf8, length); });
+    return guarded([&]() -> int {
+        State* state = sceneOrFail(scene, "offscreen send_text");
+        if (!state)
+            return VLQT_ERR_NULL_HANDLE;
+        return sendText(state, utf8, length);
+    });
 }
 
 VLQT_API int vlqt_offscreen_set_focus(void* scene, int focused)
 {
-    State* state = stateOf(scene);
-    if (!state)
-        return VLQT_OFFSCREEN_NULL_SCENE;
-    return guardedCode([&] {
+    return guarded([&]() -> int {
+        State* state = sceneOrFail(scene, "offscreen set_focus");
+        if (!state)
+            return VLQT_ERR_NULL_HANDLE;
         setFocus(state, focused != 0, Qt::ActiveWindowFocusReason);
-        return VLQT_OFFSCREEN_OK;
+        return VLQT_OK;
     });
 }
 

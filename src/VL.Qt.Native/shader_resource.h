@@ -74,7 +74,7 @@ int loadSource(uint64_t id, const char* utf8Source, int stage);
 
 // vlqt_shader_reflect: synchronous SPIR-V bake under s_bakeMutex + QShaderDescription as text (format in
 // vlqt.h). Returns the required length without terminator, -7 on bad arguments. Any thread.
-int reflect(const char* utf8Source, int stage, char* buf, int bufLen);
+int reflect(const char* utf8Source, int stage, char* buf, int bufLen, int* written, int* required);
 
 // Current content of a Ready shader resource, nullptr otherwise (also during the first load or after Failed).
 std::shared_ptr<ShaderResource> ready(uint64_t id);

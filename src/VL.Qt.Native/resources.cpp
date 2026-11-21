@@ -1,5 +1,6 @@
 #include "resources.h"
 
+#include "app/exports.h"
 #include "audio_tap.h"
 #include "device.h"
 #include "image_resource.h"
@@ -204,17 +205,15 @@ public:
         return okRc;
     }
 
-    int poll(unsigned char* out, int cap)
+    int poll(unsigned char* out, int cap, int* written, int* required)
     {
+        if (const int rc = beginBuffer(out, cap, written, required); rc != okRc)
+            return rc;
         std::lock_guard lock(m_mutex);
-        const int n = int(m_events.size());
-        if (n == 0)
-            return 0;
-        if (!out || cap < n)
-            return -n;
-        std::memcpy(out, m_events.constData(), size_t(n));
-        m_events.resize(0);
-        return n;
+        const int rc = copyOut(m_events.constData(), int(m_events.size()), out, cap, written, required);
+        if (rc == okRc)
+            m_events.resize(0);
+        return rc;
     }
 
     int start(uint64_t id, std::shared_ptr<Work> work, int kind)
@@ -1017,7 +1016,7 @@ const char* stateName(State s)
 int create(int kind, uint64_t* outId) { return manager().create(kind, outId); }
 int release(uint64_t id) { return manager().release(id); }
 int setBudget(int bytes) { return manager().setBudget(bytes); }
-int poll(unsigned char* out, int cap) { return manager().poll(out, cap); }
+int poll(unsigned char* out, int cap, int* written, int* required) { return manager().poll(out, cap, written, required); }
 int wait(uint64_t id, int timeoutMs) { return manager().wait(id, timeoutMs); }
 int list(void* out, int cap) { return manager().list(static_cast<vlqt_res_info*>(out), std::max(0, cap)); }
 int start(uint64_t id, std::shared_ptr<Work> work, int kind) { return manager().start(id, std::move(work), kind); }

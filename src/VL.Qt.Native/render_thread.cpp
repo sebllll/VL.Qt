@@ -1,7 +1,8 @@
 #include "render_thread.h"
 
-#include "protocol.h"
+#include "app/last_error.h"
 #include "threadname.h"
+#include "vlqt.h"
 
 #include <QtCore/QLoggingCategory>
 
@@ -59,18 +60,14 @@ void RenderThread::logError(std::exception_ptr error)
     }
 }
 
-int setThreadCount(int count, const char** error)
+int setThreadCount(int count)
 {
-    if (count < 0 || count > maxThreads) {
-        *error = "offscreen set_threaded: thread count out of range 0 ... 16";
-        return VLQT_OFFSCREEN_BAD_ARGUMENT;
-    }
-    if (s_count >= 0 && count != s_count) {
-        *error = "offscreen set_threaded: only before the first offscreen scene (the thread count is fixed)";
-        return VLQT_OFFSCREEN_NOT_SUPPORTED;
-    }
+    if (count < 0 || count > maxThreads)
+        return fail(VLQT_ERR_BAD_ARGUMENT, "offscreen set_threaded: thread count out of range 0 ... 16");
+    if (s_count >= 0 && count != s_count)
+        return fail(VLQT_ERR_UNSUPPORTED, "offscreen set_threaded: only before the first offscreen scene (the thread count is fixed)");
     s_requested = count;
-    return VLQT_OFFSCREEN_OK;
+    return VLQT_OK;
 }
 
 RenderThread* assign()
