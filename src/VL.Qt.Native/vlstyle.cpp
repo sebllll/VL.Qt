@@ -2,6 +2,7 @@
 #include "app/fonts.h"
 
 #include "protocol.h"
+#include "wire.h"
 
 #include <QtQuick/QQuickItem>
 
@@ -56,16 +57,6 @@ constexpr quint16 s_fieldOfSlot[VlStyle::SlotCount] = {
 };
 
 bool isColorSlot(int slot) { return slot <= VlStyle::TrackFillColor; }
-
-template <class T>
-T rd(const unsigned char* p)
-{
-    T v;
-    std::memcpy(&v, p, sizeof(T));
-    return v;
-}
-
-constexpr int align4(int n) { return (n + 3) & ~3; }
 
 } // namespace
 
@@ -301,8 +292,10 @@ int applySetStyle(QQuickItem* item, const unsigned char* p, int plen, std::strin
         err = "payloadLen " + std::to_string(plen) + " too short for SET_STYLE (>= " + std::to_string(VLQT_LIST_FIELDS_SIZE) + ")";
         return ApplyBadLength;
     }
-    const int count = rd<quint16>(p + 4);
-    const quint16 flags = rd<quint16>(p + 6);
+    WireReader head(p, plen);
+    head.u32(); // id, the caller has looked it up
+    const int count = head.u16();
+    const quint16 flags = head.u16();
     if (flags & ~quint16(VLQT_STYLE_SET_CLEAR)) {
         err = "unknown SET_STYLE flags " + std::to_string(flags);
         return ApplyUnknownProperty;
@@ -319,18 +312,18 @@ int applySetStyle(QQuickItem* item, const unsigned char* p, int plen, std::strin
             if (flags & VLQT_STYLE_SET_CLEAR)
                 style->clear();
         }
-        int off = VLQT_LIST_FIELDS_SIZE;
+        WireReader r = head;
         for (int e = 0; e < count; ++e) {
+            const int off = r.offset();
             auto at = [&] { return "entry " + std::to_string(e) + " (offset " + std::to_string(off) + ")"; };
-            if (plen - off < VLQT_ENTRY_HEADER_SIZE) {
-                err = at() + ": truncated (" + std::to_string(plen - off) + " bytes left)";
+            if (r.remaining() < VLQT_ENTRY_HEADER_SIZE) {
+                err = at() + ": truncated (" + std::to_string(r.remaining()) + " bytes left)";
                 return ApplyBadLength;
             }
-            const quint16 field = rd<quint16>(p + off);
-            const int state = p[off + 2];
+            const quint16 field = r.u16();
+            const int state = r.u8();
             Value v;
-            v.type = p[off + 3];
-            const unsigned char* vp = p + off + VLQT_ENTRY_HEADER_SIZE;
+            v.type = r.u8();
             const int slot = VlStyle::slotOf(field);
             if (slot < 0) {
                 err = at() + ": unknown style field " + std::to_string(field);
@@ -351,37 +344,34 @@ int applySetStyle(QQuickItem* item, const unsigned char* p, int plen, std::strin
             case VLQT_VALUE_TYPE_COLOR: size = 16; break;
             case VLQT_VALUE_TYPE_F32: size = 4; break;
             case VLQT_VALUE_TYPE_I32: size = 4; break;
-            case VLQT_VALUE_TYPE_STRING:
-                size = 4;
-                if (plen - off - 4 >= 4)
-                    size += rd<quint32>(vp);
-                break;
+            case VLQT_VALUE_TYPE_STRING: size = 4 + qint64(r.peek<quint32>()); break; // peek: 0 when the length is cut off
             default: break;
             }
-            const qint64 left = plen - off - VLQT_ENTRY_HEADER_SIZE;
-            if (size < 0 || size > left) {
-                err = at() + ": value needs " + std::to_string(size) + " bytes, " + std::to_string(left) + " left";
+            if (size > r.remaining()) {
+                err = at() + ": value needs " + std::to_string(size) + " bytes, " + std::to_string(r.remaining()) + " left";
                 return ApplyBadLength;
             }
+            WireReader value = r.sub(size);
             if (pass == 1) {
                 switch (v.type) {
-                case VLQT_VALUE_TYPE_COLOR: std::memcpy(v.f, vp, 16); break;
-                case VLQT_VALUE_TYPE_F32: std::memcpy(v.f, vp, 4); break;
-                case VLQT_VALUE_TYPE_I32: v.i = rd<qint32>(vp); break;
-                case VLQT_VALUE_TYPE_STRING:
-                    v.utf8 = QByteArray::fromRawData(reinterpret_cast<const char*>(vp + 4), qsizetype(size - 4));
+                case VLQT_VALUE_TYPE_COLOR: value.copy(v.f, 16); break;
+                case VLQT_VALUE_TYPE_F32: value.copy(v.f, 4); break;
+                case VLQT_VALUE_TYPE_I32: v.i = value.i32(); break;
+                case VLQT_VALUE_TYPE_STRING: {
+                    const quint32 n = value.u32();
+                    v.utf8 = QByteArray::fromRawData(reinterpret_cast<const char*>(value.bytes(n)), qsizetype(n));
                     break;
+                }
                 default: break;
                 }
                 style->setCell(slot, state, v);
             }
-            off += align4(VLQT_ENTRY_HEADER_SIZE + int(size));
+            r.align();
         }
         // payloadLen excludes the padding of the last entry (like every command); the padded end is accepted too.
-        const int end = count > 0 ? off : VLQT_LIST_FIELDS_SIZE;
-        if (pass == 0 && plen != end && !(count > 0 && plen < end && align4(plen) == end)) {
+        if (pass == 0 && r.remaining() != 0) {
             err = "payloadLen " + std::to_string(plen) + " does not match " + std::to_string(count)
-                + " entries (" + std::to_string(end) + " bytes incl. padding)";
+                + " entries (" + std::to_string(align4(r.offset())) + " bytes incl. padding)";
             return ApplyBadLength;
         }
     }

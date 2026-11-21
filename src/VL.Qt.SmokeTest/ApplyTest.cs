@@ -5,6 +5,8 @@ using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
@@ -237,6 +239,9 @@ public static class ApplyTest
         Case("path: too few points", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Cubic }, 2), Native.Result.BadArgument, "the verbs take 4");
         Case("path: too many points", set, Pay.PathSet(shape, new[] { Protocol.Verb.Move, Protocol.Verb.Line }, 3), Native.Result.BadArgument, "the verbs take 2");
         Case("path: counts past the payload", set, new Pay().U32(shape).U16(Protocol.PropertyId.ShapePath).U16(Protocol.ValueType.Path).U32(0xFFFFFFFF).U32(0xFFFFFFFF), Native.Result.BadLength, "value length");
+        Case("string: length past the payload", set, new Pay().U32(shape).U16(Protocol.PropertyId.ShapePath).U16(Protocol.ValueType.String).U32(0xFFFFFFFF).Bytes(1, 2, 3, 4), Native.Result.BadLength, "value length");
+        Case("string: without its length field", set, new Pay().U32(shape).U16(Protocol.PropertyId.ShapePath).U16(Protocol.ValueType.String).Bytes(1, 2), Native.Result.BadLength, "value length");
+        Case("f32 array: count past the payload", set, new Pay().U32(shape).U16(Protocol.PropertyId.ShapePath).U16(Protocol.ValueType.F32Array).U32(0x40000000).Zeros(8), Native.Result.BadLength, "value length");
 
         // Rejected commands changed nothing: the elements still take a valid command.
         rc = Native.Apply(w, b.Clear().Cmd(uni, Pay.Head(fx, 1).F4Entry(F, "a", 1).ToArray()).Span);
@@ -327,10 +332,26 @@ public static class ApplyTest
         s.Check(Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.id == 9 && ae.prop == Protocol.PropertyId.Color, $"apply error id: -6 -> {ae.id}/{ae.prop}");
         Err("clear color, no id", b.Clear().Raw(Protocol.Op.SetClearColor, 4, 4), Native.Result.BadLength, "expected 16");
         s.Check(Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.id == 0 && ae.op == Protocol.Op.SetClearColor, $"apply error id: CLEAR_COLOR -> id {ae.id}");
+        // The op table checks the minimum length of a variable payload; id and property still come from the row (W4-33).
+        var shortSet = new byte[6];
+        BinaryPrimitives.WriteUInt32LittleEndian(shortSet, 9);
+        BinaryPrimitives.WriteUInt16LittleEndian(shortSet.AsSpan(4), Protocol.PropertyId.Color);
+        Err("SET shorter than its fields", b.Clear().Cmd(Protocol.Op.Set, shortSet), Native.Result.BadLength, "(op 4 SET, id 9, offset 0)");
+        s.Check(Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.id == 9 && ae.op == Protocol.Op.Set && ae.prop == Protocol.PropertyId.Color
+            && ae.Reason == $"payloadLen 6 too short for SET (>= {Protocol.SetFieldsSize})", $"apply error id: short SET -> {ae.id}/{ae.prop} \"{ae.Reason}\"");
         s.Check(Apply(b.Clear().Destroy(9)) == 0 && Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.rc == 0 && ae.id == 0 && ae.Reason.Length == 0,
             "apply error id: cleared by a successful apply");
         s.Check(Native.vlqt_scene_get_apply_error(SceneHandle.Null, out _) == Native.Result.NullHandle, "apply error id: null window -> NullHandle");
         s.Check(Apply(b.Clear()) == 0, "apply: empty buffer ok");
+
+        // An invalid buffer resets the apply error too: it must not report the apply before it (here: rc -2, command 0).
+        Err("clear color, no id again", b.Clear().Raw(Protocol.Op.SetClearColor, 4, 4), Native.Result.BadLength, "expected 16");
+        var nullBuf = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.NullRef<byte>(), 4);
+        rc = Native.Apply(w, nullBuf);
+        s.Check(rc == Native.Result.BadLength && Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.rc == (int)Native.Result.BadLength
+            && ae.command == 0 && ae.id == 0 && ae.op == 0 && ae.Reason.Contains("invalid buffer"),
+            $"apply error id: null buffer after a failed apply -> rc {ae.rc} command {ae.command} op {ae.op} \"{ae.Reason}\" ({rc})");
+        s.Check(Apply(b.Clear()) == 0 && Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.rc == 0, "apply error id: empty buffer clears the error");
 
         // Earlier commands of a failing buffer stay applied.
         rc = Apply(b.Clear().Color(4, 1, 1, 0).Place(777, 0, 0, 1, 1).Color(4, 1, 0, 1));

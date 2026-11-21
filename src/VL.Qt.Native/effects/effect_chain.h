@@ -143,6 +143,8 @@ public:
     /* layer.effect component (registers the root type once). nullptr + err on a QML error. */
     QQmlComponent* rootComponent(std::string& err);
     QQuickItem* root() const { return m_root; }
+    /* true if a SHADER link samples item as a texture uniform (REF; the Scene parked it, protocol.h "Effect chain"). */
+    bool samples(const QQuickItem* item) const;
     /* Content problems of the links (EVENT_ERROR text: one line each, "link N: ..."), empty = none. */
     const QString& error() const { return m_error; }
 

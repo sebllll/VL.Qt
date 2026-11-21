@@ -1,6 +1,6 @@
-/* scene/commands.h - decoder of the command buffer (vlqt_scene_apply): Scene::apply and the members of Scene that decode
- * a payload (SET, SET_STYLE, SET_UNIFORMS, SET_EFFECT_CHAIN, SET_QML_PROPERTIES) are in scene/commands.cpp, the
- * structural ops in scene/scene.cpp. The wire format is in protocol.h. */
+/* scene/commands.h - decoder of the command buffer (vlqt_scene_apply): Scene::apply, the op table (one row per opcode)
+ * and the decoder of each op are in scene/commands.cpp, the structural ops they call in scene/scene.cpp. The wire format
+ * is in protocol.h. */
 #pragma once
 
 #include <QtCore/QtTypes>
