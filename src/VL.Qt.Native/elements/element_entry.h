@@ -17,13 +17,15 @@ namespace vlqt {
 class EffectChain;     // effects/effect_chain.h
 struct TransformState; // elements/geometry.h
 
-/* State of one created element (owned by the Scene's id table). */
+/* State of one created element (owned by the Scene's id table). A plain record: made only by Scene::makeEntry (one
+ * creation point, scene/scene.cpp), which fills `xf` before the entry enters the table. Every field has a default
+ * initializer: a new field needs no change at the creation point. */
 struct ElementEntry {
     QQuickItem* item = nullptr;
     quint16 type = 0;
     quint32 feedbackId = 0;            // BIND feedbackId (0 = unbound), see scene/measure.h
     QObject* transform = nullptr; // QML Matrix4x4, appended to item.transform on the first TRANSFORM or drag offset
-    std::shared_ptr<TransformState> xf; // TRANSFORM + ANCHOR as sent (Elements::initGeometry, right after CREATE)
+    std::shared_ptr<TransformState> xf; // TRANSFORM + ANCHOR as sent; never null for an entry in Scene::nodes (set by Scene::makeEntry via Elements::initGeometry), so no check
     SentState sent;              // last EVENT_MEASURED / EVENT_SCENE_BOUNDS sent for sink
     QQuickItem* effectSource = nullptr; // SHADER: current source item (see Elements::clearEffectSource)
     std::vector<QPointer<QQuickItem>> textureGroups; // SHADER: Groups of texture uniforms, one proxy reference each

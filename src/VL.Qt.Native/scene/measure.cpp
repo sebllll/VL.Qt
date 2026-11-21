@@ -95,7 +95,7 @@ void measureGeometry(Scene& scene, ElementEntry& n)
     // Item geometry (frame: an auto-sized Group may start in negative coordinates), not boundingRect():
     // QQuickText overrides that with the painted text rect.
     // In the coordinates of the window root: its origin is the origin of the Space (the root may sit at the centre).
-    const QRectF r = item->mapRectToItem(scene.root, n.xf ? itemFrame(*n.xf, item) : QRectF(0, 0, item->width(), item->height()));
+    const QRectF r = item->mapRectToItem(scene.root, itemFrame(*n.xf, item));
     const float b[4] = {float(r.x()), float(r.y()), float(r.width()), float(r.height())};
     if (!s.hasBounds || b[0] != s.bounds[0] || b[1] != s.bounds[1] || b[2] != s.bounds[2] || b[3] != s.bounds[3]) {
         for (int i = 0; i < 4; ++i)

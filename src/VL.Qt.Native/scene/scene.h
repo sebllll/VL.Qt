@@ -82,6 +82,9 @@ public:
 private:
     // Structural ops (scene/scene.cpp).
     int create(quint32 id, quint16 type, std::string& err);
+    /* The one creation point of an ElementEntry (scene/scene.cpp create): item and type, the geometry state (xf, never
+     * null in the table) and the poll flag. The caller inserts it into nodes and ids and calls watchGeometry. */
+    ElementEntry makeEntry(QQuickItem* item, quint16 type);
     int destroy(quint32 id, std::string& err);
     int reparent(quint32 id, quint32 parent, quint32 index, std::string& err);
     void reset();

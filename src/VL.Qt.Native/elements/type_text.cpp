@@ -79,8 +79,8 @@ std::vector<PropDef> textProps()
         {VLQT_PROPERTY_FONT_ITALIC, VLQT_VALUE_TYPE_BOOL, setFontItalic, "font"},
         {VLQT_PROPERTY_COLOR, VLQT_VALUE_TYPE_COLOR, setQmlColor, "color"},
         // Qt::AlignLeft/Right/HCenter/Justify, Qt::AlignTop/Bottom/VCenter
-        {VLQT_PROPERTY_HORIZONTAL_ALIGNMENT, VLQT_VALUE_TYPE_I32, setQmlEnum<0x1, 0x2, 0x4, 0x8>, "horizontalAlignment"},
-        {VLQT_PROPERTY_VERTICAL_ALIGNMENT, VLQT_VALUE_TYPE_I32, setQmlEnum<0x20, 0x40, 0x80>, "verticalAlignment"},
+        {VLQT_PROPERTY_HORIZONTAL_ALIGNMENT, VLQT_VALUE_TYPE_I32, setQmlEnum<Qt::AlignLeft, Qt::AlignRight, Qt::AlignHCenter, Qt::AlignJustify>, "horizontalAlignment"},
+        {VLQT_PROPERTY_VERTICAL_ALIGNMENT, VLQT_VALUE_TYPE_I32, setQmlEnum<Qt::AlignTop, Qt::AlignBottom, Qt::AlignVCenter>, "verticalAlignment"},
         // Text.NoWrap/WordWrap/WrapAnywhere/Wrap
         {VLQT_PROPERTY_WRAP_MODE, VLQT_VALUE_TYPE_I32, setQmlEnum<0, 1, 3, 4>, "wrapMode"},
         // Text.ElideLeft/Right/Middle/None
