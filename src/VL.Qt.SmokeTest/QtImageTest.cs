@@ -78,13 +78,15 @@ public static class QtImageTest
         }
 
         // 1) LoadImage: synchronous, Ready with its size after the first Update.
-        var load = new LoadImageNode(client);
-        var image = load.Update(new VlPath(asset), false, out var error);
-        s.Check(image is { State: QtImageState.Ready, Width: 30, Height: 10 } && error.Length == 0,
-            $"LoadImage ready at once ({image}, error '{error}')");
-        var missing = new LoadImageNode(client);
-        var failed = missing.Update(new VlPath(Path.Combine(s.OutDir, "missing_362.png")), false, out var missingError);
-        s.Check(failed is { State: QtImageState.Failed } && missingError.Length > 0, $"LoadImage missing file fails ('{missingError}')");
+        var loadLog = new NodeLog();
+        var load = new LoadImageNode(client, loadLog.Errors);
+        var image = load.Update(new VlPath(asset), false);
+        s.Check(image is { State: QtImageState.Ready, Width: 30, Height: 10 } && loadLog.Shown is null,
+            $"LoadImage ready at once ({image}, message '{loadLog.Shown}')");
+        var missingLog = new NodeLog();
+        var missing = new LoadImageNode(client, missingLog.Errors);
+        var failed = missing.Update(new VlPath(Path.Combine(s.OutDir, "missing_362.png")), false);
+        s.Check(failed is { State: QtImageState.Failed } && missingLog.Shown is { Length: > 0 }, $"LoadImage missing file fails and marks the node ('{missingLog.Shown}')");
 
         // 2) One QtImage in 100 Image nodes (10 x 10 cells of 0.6 x 0.2 units) through the Reconciler.
         var w = NativeCalls.CreateWindow(800, 600, "VL.Qt QtImage test");
@@ -93,7 +95,8 @@ public static class QtImageTest
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
         var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(_ => throw new InvalidOperationException("unexpected warning"))).ToArray();
-        var toQt = new ToQtImageNode(client);
+        var toQtLog = new NodeLog();
+        var toQt = new ToQtImageNode(client, toQtLog.Errors);
 
         void Frame(QtImage? shared, QtImage? extra, bool clear = false)
         {
@@ -113,10 +116,10 @@ public static class QtImageTest
         }
 
         // 3) ToQtImage: solid blue BGRA, upload within the budget of the next pump.
-        var blue = toQt.Update(new SolidImage(16, 16, 255, 0, 0), out var toQtError);
+        var blue = toQt.Update(new SolidImage(16, 16, 255, 0, 0));
         Frame(image, blue, clear: true);
         Pump(3);
-        s.Check(blue is { State: QtImageState.Ready, Width: 16, Height: 16 } && toQtError.Length == 0, $"ToQtImage ready ({blue}, '{toQtError}')");
+        s.Check(blue is { State: QtImageState.Ready, Width: 16, Height: 16 } && toQtLog.Shown is null, $"ToQtImage ready ({blue}, '{toQtLog.Shown}')");
         using (var a = s.Grab(w, "362_qtimage.png"))
         {
             // Cell (i % 10, i / 10) at x = 70 * col, y = 30 * row DIP, 60 x 20: stripes red | green | blue (20 DIP each).
@@ -132,7 +135,7 @@ public static class QtImageTest
         }
 
         // 4) ToQtImage with a new instance: new QtImage, same resource, content replaced (red).
-        var red = toQt.Update(new SolidImage(16, 16, 0, 0, 255), out _);
+        var red = toQt.Update(new SolidImage(16, 16, 0, 0, 255));
         s.Check(red != blue && red?.Id == blue?.Id, "ToQtImage new input = new QtImage on the same resource");
         Frame(image, red);
         Pump(3);
@@ -143,7 +146,7 @@ public static class QtImageTest
         var async = new LoadImageAsyncNode(client);
         QtImage? fired = null;
         var loadedCount = 0;
-        var first = async.Update(new VlPath(asset), false, true, out var isLoaded, out _, out var onLoaded);
+        var first = async.Update(new VlPath(asset), false, true, out var isLoaded, out var onLoaded);
         using var subscription = onLoaded.Subscribe(i => { fired = i; loadedCount++; });
         // Wait by time, not by pump count: the decode runs in a worker, so how many pumps it takes depends on CPU load and
         // on the worker queue. Keep pumping so the result can be delivered; yield so the worker gets the CPU.
@@ -153,7 +156,7 @@ public static class QtImageTest
         {
             Pump(1);
             asyncPumps++;
-            async.Update(new VlPath(asset), false, true, out isLoaded, out _, out _);
+            async.Update(new VlPath(asset), false, true, out isLoaded, out _);
             if (!isLoaded)
                 Thread.Sleep(1);
         }

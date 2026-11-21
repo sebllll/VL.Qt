@@ -44,7 +44,7 @@ namespace VL.Qt.Nodes
         {
             var client = ResourceClient.ForApp(nodeContext.AppHost);
             _node = new ElementNodeCore<Shader, Props>(nodeContext, s_create);
-            _input = new ElementInput(_node.AddWarning);
+            _input = new ElementInput(_node.Messages);
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
             _errors = new NodeErrors(nodeContext);
@@ -60,7 +60,7 @@ namespace VL.Qt.Nodes
         internal ShaderNode(ResourceClient? client, Func<string, IDisposable> addWarning)
         {
             _node = new ElementNodeCore<Shader, Props>(addWarning, s_create);
-            _input = new ElementInput(addWarning);
+            _input = new ElementInput(_node.Messages);
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
         }

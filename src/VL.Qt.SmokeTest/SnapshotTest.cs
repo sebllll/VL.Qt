@@ -143,19 +143,22 @@ public static class SnapshotTest
         Frame(root, clear: true);
         Pump(3);
 
-        var node = new SnapshotNode(client, scene);
+        var log = new NodeLog();
+        var node = new SnapshotNode(client, scene, log.Errors);
         var latencies = new List<int>();
 
-        // Grab on the node, pump until Is Ready / Error; returns the image (or null) and the frames it took.
+        // Grab on the node, pump until Is Ready or a logged error; returns the image (or null), what was logged and the frames it took.
         IImage? Snap(SnapshotNode n, Element? element, float scale, out string error, out int frames)
         {
-            var image = n.Update(element, out var ready, out error, scale, true);
+            var image = n.Update(element, out var ready, scale, true);
+            error = log.Take();
             frames = 0;
             while (!ready && error.Length == 0 && frames < 120)
             {
                 Pump(1);
                 frames++;
-                image = n.Update(element, out ready, out error, scale);
+                image = n.Update(element, out ready, scale);
+                error = log.Take();
             }
             return ready ? image : null;
         }
@@ -238,7 +241,7 @@ public static class SnapshotTest
             var (b, g, r, a) = At(img2, 100, 100, 600);
             s.Check(a == 255 && Near(r, 255, 2) && Near(g, 153, 2) && Near(b, 0, 2), $"Scale 2 rectangle pixel is orange (B{b} G{g} R{r} A{a})");
         }
-        s.Check(ReferenceEquals(node.Update(group, out _, out _, 2, false), img2), "Image stays the last finished snapshot");
+        s.Check(ReferenceEquals(node.Update(group, out _, 2, false), img2), "Image stays the last finished snapshot");
 
         // 2) Latency (frames from Grab to Is Ready); repeat a few times for the range.
         for (int i = 0; i < 8; i++)
@@ -257,15 +260,15 @@ public static class SnapshotTest
         try
         {
             looseImage = Snap(node, loose, 1, out looseError, out _);
-            Snap(node, null, 1, out var nullError, out _);
-            s.Check(nullError == SnapshotNode.NotShownError, $"no Element = '{nullError}'");
+            var nullImage = Snap(node, null, 1, out var nullError, out _);
+            s.Check(nullImage is null && nullError.Length == 0, $"no Element: no image, the same error is not logged again ('{nullError}')");
         }
         catch (Exception e)
         {
             thrown = e;
         }
         s.Check(thrown is null, $"element in no renderer does not throw ({thrown?.Message})");
-        s.Check(looseImage is null && looseError == SnapshotNode.NotShownError, $"element in no renderer: Error '{looseError}'");
+        s.Check(looseImage is null && looseError == SnapshotNode.NotShownError, $"element in no renderer: logged '{looseError}'");
         // The node recovers with a shown element.
         var again = Snap(node, group, 1, out var errAgain, out _);
         s.Check(again is not null && errAgain.Length == 0, $"grab of a shown element after the error works ('{errAgain}')");
@@ -328,7 +331,7 @@ public static class SnapshotTest
         s.Check(!events.Any(e => e.Id == rel), $"release during the grab: no record afterwards ({events.Count(e => e.Id == rel)})");
         s.Check(Native.vlqt_res_wait(rel, 0) == (int)Native.Result.UnknownId, "released snapshot id is stale");
         var viaNode = new SnapshotNode(client, scene);
-        viaNode.Update(group, out _, out _, 1, true);
+        viaNode.Update(group, out _, 1, true);
         var liveBefore = client.LiveCount;
         viaNode.Dispose();
         Pump(6);
@@ -399,7 +402,7 @@ public static class SnapshotTest
                 Frame(new Group { Anchor = RectangleAnchor.TopLeft, Children = [group, m] });
                 if (snapshots)
                 {
-                    perfNode.Update(group, out var ready, out _, 1, i % 10 == 0);
+                    perfNode.Update(group, out var ready, 1, i % 10 == 0);
                     if (ready) done++;
                 }
                 Pump(1);

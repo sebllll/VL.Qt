@@ -28,14 +28,14 @@ namespace VL.Qt.Nodes
         public ColumnNode(NodeContext nodeContext)
         {
             _node = new ElementNodeCore<Column, Props>(nodeContext, Create);
-            _children = new ChildrenInput(_node.AddWarning);
+            _children = new ChildrenInput(_node.Messages);
         }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal ColumnNode(Func<string, IDisposable> addWarning)
         {
             _node = new ElementNodeCore<Column, Props>(addWarning, Create);
-            _children = new ChildrenInput(_node.AddWarning);
+            _children = new ChildrenInput(_node.Messages);
         }
 
         internal static readonly Func<CommonInputs, Props, FeedbackSlot, Column> Create = static (c, p, slot) => new Column(c, slot)

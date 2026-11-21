@@ -25,8 +25,8 @@ namespace VL.Qt.Nodes
         private object? _lastInput;
         private ImmutableArray<Element> _current = ImmutableArray<Element>.Empty;
 
-        /// <param name="addWarning">Shows a warning at the node, the result removes it; null shows nothing.</param>
-        public ChildrenInput(Func<string, IDisposable>? addWarning = null) => _warning = new ElementInput(addWarning);
+        /// <param name="messages">Store of the node; null shows nothing.</param>
+        public ChildrenInput(NodeErrors? messages = null) => _warning = new ElementInput(messages, "Children");
 
         /// <summary>Warning about a foreign child currently shown at the node, null if none.</summary>
         public string? Warning => _warning.Warning;

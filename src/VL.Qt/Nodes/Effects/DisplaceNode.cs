@@ -43,14 +43,14 @@ namespace VL.Qt.Nodes
         private readonly ElementInput _map;
 
         public DisplaceNode(NodeContext nodeContext)
-            : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext), ElementInput.WarningsOf(nodeContext))
+            : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
         {
         }
 
-        internal DisplaceNode(ResourceClient? client, NodeErrors? errors = null, Func<string, IDisposable>? addWarning = null)
+        internal DisplaceNode(ResourceClient? client, NodeErrors? errors = null)
         {
             _link = new ShaderEffectBuilder<Props>(client, s_shaders, s_create, errors);
-            _map = new ElementInput(addWarning);
+            _map = new ElementInput(errors, "Map");
         }
 
         internal ShaderEffectBuilder<Props> Core => _link;

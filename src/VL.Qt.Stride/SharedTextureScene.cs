@@ -43,7 +43,7 @@ namespace VL.Qt.Stride
         public SharedTextureScene(NodeContext nodeContext)
         {
             _errors = new NodeErrors(nodeContext);
-            _element = new ElementInput(ElementInput.WarningsOf(nodeContext));
+            _element = new ElementInput(_errors);
             _renderer = QtTextureRenderer.ForApp(nodeContext.AppHost);
             _scene = new OffscreenScene(OccurrenceRegistry.ForApp(nodeContext.AppHost), 1920, 1080);
             _input = new NotificationQueue(_scene.Input.Notify);

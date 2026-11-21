@@ -26,14 +26,14 @@ namespace VL.Qt.Nodes
         public ColumnSpectralNode(NodeContext nodeContext)
         {
             _node = new ElementNodeCore<Column, ColumnNode.Props>(nodeContext, ColumnNode.Create);
-            _children = new ChildrenInput(_node.AddWarning);
+            _children = new ChildrenInput(_node.Messages);
         }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal ColumnSpectralNode(Func<string, IDisposable> addWarning)
         {
             _node = new ElementNodeCore<Column, ColumnNode.Props>(addWarning, ColumnNode.Create);
-            _children = new ChildrenInput(_node.AddWarning);
+            _children = new ChildrenInput(_node.Messages);
         }
 
         /// <summary>Describes the column. A new description is only created when an input changes.</summary>
