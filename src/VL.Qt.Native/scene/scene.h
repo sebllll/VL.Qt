@@ -10,6 +10,7 @@
 #include "scene/event_queue.h"
 #include "scene/handlers.h"
 #include "scene/measure.h"
+#include "wire.h"
 
 #include <QtCore/QtTypes>
 
@@ -84,15 +85,31 @@ private:
     int destroy(quint32 id, std::string& err);
     int reparent(quint32 id, quint32 parent, quint32 index, std::string& err);
     void reset();
-    // Payload decoders (scene/commands.cpp).
-    int set(const unsigned char* p, int len, std::string& err);
-    int setStyle(const unsigned char* p, int len, std::string& err); // SET_STYLE (vlstyle.h)
-    int setUniforms(const unsigned char* p, int len, std::string& err); // SET_UNIFORMS (ShaderEffect)
-    int setEffectChain(const unsigned char* p, int len, std::string& err); // SET_EFFECT_CHAIN, effects/effect_chain_desc.h
-    int setQmlProperties(const unsigned char* p, int len, std::string& err); // SET_QML_PROPERTIES (QmlElement)
+    // Command decoder (scene/commands.cpp): the op table has one row per opcode (Op, looked up by findOp) and names one
+    // decoder per row, which gets the payload of the command with its length checked against the row.
+    struct Op;
+    static const Op* findOp(quint16 op); // nullptr = unknown opcode
+    /* The element of id; nullptr with rc and err set for the window root and input handlers ("has no <what>") or an
+     * unknown id. */
+    ElementEntry* findElement(quint32 id, const char* what, int& rc, std::string& err);
+    int opCreate(WireReader& payload, std::string& err);
+    int opDestroy(WireReader& payload, std::string& err);
+    int opReparent(WireReader& payload, std::string& err);
+    int opSet(WireReader& payload, std::string& err); // elements or input handlers (scene/handlers.h)
+    int opBind(WireReader& payload, std::string& err);
+    int opSetClearColor(WireReader& payload, std::string& err);
+    int opReset(WireReader& payload, std::string& err);
+    int opSetStyle(WireReader& payload, std::string& err); // vlstyle.h
+    int opSetClear(WireReader& payload, std::string& err);
+    int opSetSpace(WireReader& payload, std::string& err);
+    int opSetUniforms(WireReader& payload, std::string& err); // ShaderEffect
+    int opSetEffectChain(WireReader& payload, std::string& err); // effects/effect_chain_desc.h
+    int opSetQmlProperties(WireReader& payload, std::string& err); // QmlElement
     /* root under window's content item, size follow, window-geometry watch (constructor, moveToWindow). */
     void attachRoot();
     void destroySubtree(QQuickItem* item);
+    /* A Video: stops the player and releases its audio tap before the item is deleted; other types: nothing. */
+    void releaseVideo(ElementEntry& node);
     void destroyHandlersOf(ElementEntry& node);
     /* Detaches mask from the link of host's chain that uses it (DESTROY of the mask); the mask stays parked hidden
      * under the root until REPARENT or DESTROY. Masks are attached by SET_EFFECT_CHAIN (protocol.h "Effect chain"). */
@@ -102,6 +119,7 @@ private:
     ClearState clearState; // Clear pin, clear colour and the previous-frame layer of Clear off
     quint32 sceneSpace = VLQT_SPACE_DIP_TOP_LEFT; // Space pin state
     std::vector<QQuickItem*> retired; // destroyed former effect sources, deleted after the next frame
+    std::vector<NamedEntry> entryScratch; // the checked entries of the SET_UNIFORMS / SET_QML_PROPERTIES being applied
 };
 
 } // namespace vlqt

@@ -32,6 +32,7 @@ target_sources(vlqt PRIVATE
     vlqt.h
     vlqt_test.h
     protocol.h
+    wire.h
 
     # app/: start and pump, exports and last error, log, animation clock, render gate, input delivery, app fonts
     app/animation_clock.cpp
