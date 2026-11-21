@@ -9,6 +9,7 @@ using VL.Lib.Animation;
 using VL.Lib.Basics.Imaging;
 using VL.Lib.Basics.Resources;
 using VL.Lib.Basics.Video;
+using VL.Qt.Images;
 using VL.Qt.Nodes;
 
 namespace VL.Qt.Tests

@@ -53,7 +53,7 @@
             <Pin Id="E2kmeZmEyXZvaNTlcG0o0L" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="caNuFVt5UcmVYr5DqyIGb0" Comment="Devices" Bounds="390,319,140,15" ShowValueBox="true" isIOBox="true" Value="Mouse, TouchScreen, Pen">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="PointerDevices" />
             </p:TypeAnnotation>
           </Pad>

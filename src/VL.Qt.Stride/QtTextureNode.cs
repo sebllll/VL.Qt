@@ -10,8 +10,6 @@ using VL.Lib.IO.Notifications;
 using VL.Model;
 using VL.Qt.Elements;
 
-[assembly: ImportAsIs]
-
 namespace VL.Qt.Stride
 {
     /// <summary>

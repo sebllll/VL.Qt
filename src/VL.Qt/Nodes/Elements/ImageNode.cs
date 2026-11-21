@@ -7,6 +7,7 @@ using VL.Lib.Mathematics;
 using VL.Lib.Reactive;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Images;
 using Image = VL.Qt.Elements.Image;
 
 namespace VL.Qt.Nodes

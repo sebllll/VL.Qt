@@ -620,7 +620,7 @@
             </p:ValueBoxSettings>
           </Pad>
           <Pad Id="C2vQZgvBL9sLuo6fYAHuET" Comment="Axis" Bounds="618,886,78,15" ShowValueBox="true" isIOBox="true" Value="Horizontal">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="DragAxis" />
             </p:TypeAnnotation>
           </Pad>

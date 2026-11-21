@@ -3,7 +3,7 @@
 namespace VL.Qt.Elements
 {
     /// <summary>Stacks its children vertically. Only the size of a child is used, Transform acts around the child's Anchor. Lengths in units.</summary>
-    public sealed class Column : Element
+    internal sealed class Column : Element
     {
         private readonly ImmutableArray<Element> children = ImmutableArray<Element>.Empty;
 

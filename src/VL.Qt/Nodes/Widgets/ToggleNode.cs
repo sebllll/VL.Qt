@@ -11,13 +11,6 @@ using VL.Qt.Styles;
 
 namespace VL.Qt.Nodes
 {
-    /// <summary>Look of the <see cref="ToggleNode"/>.</summary>
-    public enum ToggleLook
-    {
-        Checkbox,
-        Switch,
-    }
-
     /// <summary>
     /// Toggle without text, as check box or switch (QtQuick.Controls CheckBox/Switch, style Basic). Connect to Renderer [Qt] or a Group.
     /// A click or Space flips the value. The value goes into Channel (author "Qt") and to Value; Bang reports a change by the user.

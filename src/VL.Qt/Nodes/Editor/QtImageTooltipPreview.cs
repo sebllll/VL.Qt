@@ -1,6 +1,7 @@
 ﻿using VL.Core;
 using VL.Core.Import;
 using VL.Lib.Basics.Imaging;
+using VL.Qt.Images;
 
 namespace VL.Qt.Nodes
 {
@@ -8,7 +9,7 @@ namespace VL.Qt.Nodes
     /// Preview of a QtImage for the tooltip of the vvvv editor (VL.Qt.HDE.vl): the small copy (at most 256 px) the decode
     /// worker made while loading, without touching the GPU. Only images loaded while the editor runs have one.
     /// </summary>
-    [ProcessNode(Name = "TooltipPreview", Category = Categories.Qt), Smell(SymbolSmell.Advanced)]
+    [ProcessNode(Name = "TooltipPreview", Category = Categories.Qt), Smell(SymbolSmell.Hidden)]
     public sealed class QtImageTooltipPreview
     {
         private readonly ResourceClient _client;

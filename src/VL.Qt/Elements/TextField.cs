@@ -5,7 +5,7 @@
     /// <c>editingFinished</c> (Enter or focus loss, only if the text changed) as EVENT_VALUE (string) into
     /// <see cref="Element.Feedback"/>; SET VALUE is never echoed.
     /// </summary>
-    public sealed class TextField : Element
+    internal sealed class TextField : Element
     {
         public TextField() : base(ElementType.TextField) { }
 
