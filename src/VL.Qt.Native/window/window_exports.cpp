@@ -6,7 +6,6 @@
 #include "app/exports.h"
 #include "app/render_gate.h"
 #include "scene/scene.h"
-#include "offscreen/offscreen.h"
 #include "diagnostics/perf.h"
 #include "protocol.h"
 #include "vlqt.h"
@@ -20,6 +19,7 @@
 #include <QtQuick/QQuickWindow>
 #include <rhi/qrhi.h> // vlqt_window_get_samples: QRhiSwapChain
 
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -47,9 +47,9 @@ VLQT_API vlqt_scene* vlqt_window_create(float x, float y, int width, int height,
     guarded([&]() -> int {
         if (!g_app)
             return fail(VLQT_ERR_NOT_INITIALIZED, "window_create: app not initialized");
-        auto* w = new SceneHandle();
+        auto w = std::make_unique<SceneHandle>();
         w->engine = newEngine();
-        w->window = new QQuickWindow();
+        w->window = std::make_unique<QQuickWindow>();
         // Swap interval is read from the requested format when the swap chain is created (first show), so it cannot
         // change afterwards. 0 = Present never waits (default), >0 = VSync.
         // Start from the window's own format: QQuickWindow adds depth 24 + stencil 8 to the default format. Without
@@ -59,15 +59,15 @@ VLQT_API vlqt_scene* vlqt_window_create(float x, float y, int width, int height,
         winFmt.setSwapInterval(swapInterval > 0 ? 1 : 0);
         // MSAA: 4 by default, the look of every window before the count became a choice; also fixed per
         // QQuickWindow (vlqt_window_set_samples replaces the window).
-        winFmt.setSamples(clampWindowSamples(4, w->window));
+        winFmt.setSamples(clampWindowSamples(4, w->window.get()));
         w->window->setFormat(winFmt);
-        placeWindow(w->window, x, y, width, height);
+        placeWindow(w->window.get(), x, y, width, height);
         w->window->setTitle(QString::fromUtf8(title ? title : ""));
         w->window->setIcon(defaultIcon());
         w->window->setColor(Qt::black);
-        installWindowFilters(w, w->window);
-        initShared(w);
-        result = w;
+        installWindowFilters(w.get(), w->window.get());
+        initShared(w.get());
+        result = w.release();
         return 0;
     });
     return asHandle(result);
@@ -79,16 +79,7 @@ VLQT_API void vlqt_scene_destroy(vlqt_scene* p)
         auto* w = asWindow(p);
         if (!w)
             return 0;
-        // A scene unbinds first: its render target and opened texture belong to the QRhi of its render control.
-        if (w->offscreen)
-            vlqt::offscreen::release(w->offscreen);
-        delete w->perf;
-        delete w->scene;
-        delete w->window;
-        delete w->engine;
-        if (w->offscreen)
-            vlqt::offscreen::destroy(w->offscreen); // after its QQuickWindow: the render control and its QRhi
-        delete w;
+        delete w; // the order of its parts: window/scene_handle.h
         QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         return 0;
     });
@@ -97,7 +88,7 @@ VLQT_API void vlqt_scene_destroy(vlqt_scene* p)
 VLQT_API void vlqt_window_show(vlqt_scene* p)
 {
     guarded([&]() -> int {
-        if (auto* w = asWindow(p); w && !w->offscreen) {
+        if (auto* w = asWindow(p); w && !w->isOffscreen()) {
             if (w->mode & VLQT_WINDOW_MODE_FULLSCREEN)
                 w->window->showFullScreen(); // show() = showNormal() would drop the state set before show
             else
@@ -113,7 +104,7 @@ VLQT_API int vlqt_window_set_icon(vlqt_scene* p, const char* utf8Path)
         auto* w = asWindow(p);
         if (!w)
             return fail(VLQT_ERR_NULL_HANDLE, "null window");
-        if (w->offscreen)
+        if (w->isOffscreen())
             return 0;
         const QString path = QString::fromUtf8(utf8Path ? utf8Path : "");
         if (path.isEmpty()) {
@@ -140,7 +131,7 @@ VLQT_API int vlqt_window_set_title(vlqt_scene* p, const char* title)
         auto* w = asWindow(p);
         if (!w)
             return fail(VLQT_ERR_NULL_HANDLE, "null window");
-        if (!w->offscreen)
+        if (!w->isOffscreen())
             w->window->setTitle(QString::fromUtf8(title ? title : ""));
         return 0;
     });
@@ -152,7 +143,7 @@ VLQT_API int vlqt_window_resize(vlqt_scene* p, int width, int height)
         auto* w = asWindow(p);
         if (!w)
             return fail(VLQT_ERR_NULL_HANDLE, "null window");
-        if (w->offscreen)
+        if (w->isOffscreen())
             return fail(VLQT_ERR_UNSUPPORTED, "resize: an offscreen scene takes its size from vlqt_offscreen_bind");
         w->window->resize(width, height);
         return 0;
@@ -162,7 +153,7 @@ VLQT_API int vlqt_window_resize(vlqt_scene* p, int width, int height)
 VLQT_API void vlqt_window_hide(vlqt_scene* p)
 {
     guarded([&]() -> int {
-        if (auto* w = asWindow(p); w && !w->offscreen)
+        if (auto* w = asWindow(p); w && !w->isOffscreen())
             w->window->hide();
         return 0;
     });
@@ -187,7 +178,7 @@ VLQT_API int vlqt_window_is_visible(vlqt_scene* p)
         auto* w = asWindow(p);
         if (!w)
             return fail(VLQT_ERR_NULL_HANDLE, "is_visible: null window");
-        return !w->offscreen && w->window->isVisible() ? 1 : 0;
+        return !w->isOffscreen() && w->window->isVisible() ? 1 : 0;
     });
 }
 
@@ -219,7 +210,7 @@ VLQT_API int vlqt_window_set_mode(vlqt_scene* p, unsigned int mask, unsigned int
         auto* w = asWindow(p);
         if (!w)
             return fail(VLQT_ERR_NULL_HANDLE, "null window");
-        if (w->offscreen)
+        if (w->isOffscreen())
             return 0;
         mask &= VLQT_WINDOW_MODE_BORDERLESS | VLQT_WINDOW_MODE_FULLSCREEN;
         const unsigned changed = (w->mode ^ value) & mask;
@@ -238,9 +229,9 @@ VLQT_API int vlqt_window_set_samples(vlqt_scene* p, int requested)
         auto* w = asWindow(p);
         if (!w)
             return fail(VLQT_ERR_NULL_HANDLE, "null window");
-        if (w->offscreen)
+        if (w->isOffscreen())
             return fail(VLQT_ERR_UNSUPPORTED, "set_samples: an offscreen scene takes its sample count from vlqt_offscreen_bind");
-        const int samples = clampWindowSamples(requested, w->window);
+        const int samples = clampWindowSamples(requested, w->window.get());
         QSurfaceFormat f = w->window->requestedFormat();
         if (qMax(1, f.samples()) == samples)
             return samples;
@@ -260,7 +251,7 @@ VLQT_API int vlqt_window_get_samples(vlqt_scene* p)
         auto* w = asWindow(p);
         if (!w)
             return fail(VLQT_ERR_NULL_HANDLE, "samples: null window");
-        if (w->offscreen)
+        if (w->isOffscreen())
             return 0;
         if (const QRhiSwapChain* sc = w->window->swapChain())
             return sc->sampleCount();
@@ -290,7 +281,7 @@ VLQT_API int vlqt_scene_get_metrics(vlqt_scene* p, vlqt_scene_metrics* out)
         const QQuickItem* root = w->scene->root;
         out->width = float(root->width());
         out->height = float(root->height());
-        out->dpr = w->offscreen ? 1.f : float(w->window->effectiveDevicePixelRatio());
+        out->dpr = w->isOffscreen() ? 1.f : float(w->window->effectiveDevicePixelRatio());
         return VLQT_OK;
     });
 }
