@@ -34,6 +34,7 @@ namespace VL.Qt.Nodes
 
         private readonly ElementNode<Shader, Props> _node;
         private readonly ShaderSlot _fragment, _vertex;
+        private readonly ElementInput _input;
         private readonly NodeErrors? _errors;
         private Spread<Uniform>? _checkedUniforms;
         private string _uniformProblems = string.Empty, _shownUniformProblems = string.Empty;
@@ -43,6 +44,7 @@ namespace VL.Qt.Nodes
         {
             var client = ResourceClient.ForApp(nodeContext.AppHost);
             _node = new ElementNode<Shader, Props>(nodeContext, Create);
+            _input = new ElementInput(_node.AddWarning);
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
             _errors = new NodeErrors(nodeContext);
@@ -58,6 +60,7 @@ namespace VL.Qt.Nodes
         internal ShaderNode(ResourceClient? client, Func<string, IDisposable> addWarning)
         {
             _node = new ElementNode<Shader, Props>(addWarning, Create);
+            _input = new ElementInput(addWarning);
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
         }
@@ -108,8 +111,8 @@ namespace VL.Qt.Nodes
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         /// <param name="error">Shader load errors and uniform problems (unknown name, wrong type), empty if none.</param>
         [return: Pin(Name = "Output")]
-        public Element Update(
-            Element? input,
+        public IElement Update(
+            IElement? input,
             [Pin(Visibility = PinVisibility.Optional)] Sampler? inputSampler,
             [DefaultValue(ShaderTemplates.Fragment)] string? fragmentCode,
             Path? fragmentShader,
@@ -141,7 +144,7 @@ namespace VL.Qt.Nodes
             }
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(input, fragmentId, vertexId, uniforms, blending, mesh, autoSize, inputSampler));
+                new Props(_input.Update(input), fragmentId, vertexId, uniforms, blending, mesh, autoSize, inputSampler));
             _node.ReadOutputs(out measuredSize, out sceneBounds);
             error = UpdateError();
             return element;
@@ -193,6 +196,7 @@ namespace VL.Qt.Nodes
             _fragment.Dispose();
             _vertex.Dispose();
             _errors?.Dispose();
+            _input.Dispose();
             _node.Dispose();
         }
     }

@@ -98,7 +98,7 @@ namespace VL.Qt.Nodes
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         /// <param name="error">Compile, load and type errors of the QML file (with file and line), properties that could not be set; empty = OK.</param>
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             Path? file,
             Dictionary<string, object>? properties,
             [DefaultValue("1, 1")] Vector2 size,

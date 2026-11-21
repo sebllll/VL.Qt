@@ -49,7 +49,7 @@ namespace VL.Qt.Qml
         private readonly ValuePin<Interaction?> _interaction = new(null);
         private readonly ValuePin<Effect?> _effect = new(null);
 
-        private readonly ValuePin<Element?> _output = new(null);
+        private readonly ValuePin<IElement?> _output = new(null);
         private readonly ValuePin<Vector2> _measuredSize = new(Vector2.Zero);
         private readonly ValuePin<RectangleF> _sceneBounds = new(RectangleF.Empty);
         private readonly ValuePin<string> _error = new(string.Empty);

@@ -64,7 +64,7 @@ namespace VL.Qt.Audio
         /// <returns>The video element.</returns>
         // Pin defaults: see RectangleNode (text form, typeof(T) defaults are ignored by vvvvc).
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [DefaultValue("1.6, 0.9")] Vector2 size,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,

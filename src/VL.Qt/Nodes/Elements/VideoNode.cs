@@ -79,7 +79,7 @@ namespace VL.Qt.Nodes
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         // Pin defaults: see RectangleNode (text form, typeof(T) defaults are ignored by vvvvc).
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [DefaultValue("1.6, 0.9")] Vector2 size,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,

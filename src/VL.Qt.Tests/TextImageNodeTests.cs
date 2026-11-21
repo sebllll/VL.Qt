@@ -36,12 +36,12 @@ namespace VL.Qt.Tests
             VerticalAlignment v = VerticalAlignment.Top, TextWrap wrap = TextWrap.NoWrap, TextElide elide = TextElide.None,
             float lineHeight = 1, float letterSpacing = 0, TextAutofit autofit = TextAutofit.Fixed, Vector2? size = null,
             Interaction? interaction = null)
-            => _text.Update(size ?? DefaultSize, default, RectangleAnchor.Center, text, family, fontSize, weight, italic,
+            => (Element)_text.Update(size ?? DefaultSize, default, RectangleAnchor.Center, text, family, fontSize, weight, italic,
                 color ?? Color4.White, h, v, wrap, elide, lineHeight, letterSpacing, autofit, 1, false, false,
                 interaction, null, out _, out _);
 
         private Element UpdateImage(QtImage? image = null, ImageFillMode fill = ImageFillMode.Stretch, bool smooth = true)
-            => _image.Update(DefaultSize, default, RectangleAnchor.Center, image, fill, smooth, 1, false, false, null, null, out _, out _);
+            => (Element)_image.Update(DefaultSize, default, RectangleAnchor.Center, image, fill, smooth, 1, false, false, null, null, out _, out _);
 
         private static QtImage NewImage(ulong id) => new(new ImageResource(id));
 

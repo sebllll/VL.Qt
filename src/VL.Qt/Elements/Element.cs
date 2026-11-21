@@ -8,9 +8,9 @@ namespace VL.Qt.Elements
 {
     /// <summary>
     /// Immutable description of one UI element. Create a new instance only when an input changes
-    /// (the reconciler uses reference equality as a shortcut). Subclasses should be sealed.
+    /// (the reconciler uses reference equality as a shortcut). Pins carry it as <see cref="IElement"/>.
     /// </summary>
-    public abstract class Element : IElement
+    internal abstract class Element : IElement
     {
         private protected Element(ElementType type) => Type = type;
 

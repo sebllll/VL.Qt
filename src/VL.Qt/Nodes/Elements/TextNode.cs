@@ -86,7 +86,7 @@ namespace VL.Qt.Nodes
         // Pin defaults: see RectangleNode (string-valued [DefaultValue] for Color4/Vector2). Default text color is
         // white (readable on the Renderer's #202020 clear color), Size 100 x 100 DIP.
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [DefaultValue("1, 1")] Vector2 size,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,

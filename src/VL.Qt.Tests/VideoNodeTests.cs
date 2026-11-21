@@ -33,7 +33,7 @@ namespace VL.Qt.Tests
 
         private Element Update(out float position, out float duration, string? path = null, bool play = true, bool loop = true, bool keepLast = true,
             float rate = 1, float volume = 1, VideoFillMode fill = VideoFillMode.Fit)
-            => _node.Update(new Vector2(1.6f, 0.9f), default, RectangleAnchor.Center, path is null ? Path.Default : new Path(path),
+            => (Element)_node.Update(new Vector2(1.6f, 0.9f), default, RectangleAnchor.Center, path is null ? Path.Default : new Path(path),
                 play, loop, keepLast, rate, volume, fill, 1, false, false, null, null, out position, out duration,
                 out _, out _);
 

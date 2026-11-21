@@ -70,7 +70,7 @@ public static class MultiPlacementTest
                 RectangleAnchor.TopLeft, 1, false, false, null, null, null, out _, out _);
             cmd.Reset();
             cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            rec.Update(e, Space.DIPTopLeft);
+            rec.Update((Element)e, Space.DIPTopLeft);
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             s.Pump(1);

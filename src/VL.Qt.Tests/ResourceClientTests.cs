@@ -693,7 +693,7 @@ namespace VL.Qt.Tests
             var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(_ => NoWarning.Instance)).ToArray();
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
-            var children = nodes.Select((n, i) => n.Update(new Vector2(1, 1), default, RectangleAnchor.Center, image,
+            var children = nodes.Select((n, i) => (Element)n.Update(new Vector2(1, 1), default, RectangleAnchor.Center, image,
                 ImageFillMode.Stretch, true, 1, false, false, null, null, out _, out _)).ToArray();
             rec.Update(new Group { Children = System.Collections.Immutable.ImmutableArray.Create(children) }, Space.DIPTopLeft);
             Assert.That(sink.OfOp("SET").Count(c => c.EndsWith($"u64({r.Id})")), Is.EqualTo(100));

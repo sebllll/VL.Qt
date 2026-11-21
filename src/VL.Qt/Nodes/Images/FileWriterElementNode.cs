@@ -50,7 +50,7 @@ namespace VL.Qt.Nodes
         /// <param name="quality">0..100 for lossy formats (JPG, WebP); ignored for PNG and BMP.</param>
         /// <param name="write">Grabs the element and writes it (a write while one runs waits, only the newest one).</param>
         public void Update(
-            Element? element,
+            IElement? element,
             Path filePath,
             out bool isDone,
             out string error,

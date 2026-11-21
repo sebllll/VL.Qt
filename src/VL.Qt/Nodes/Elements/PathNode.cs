@@ -51,7 +51,7 @@ namespace VL.Qt.Nodes
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         /// <returns>The element for Renderer [Qt] or a Group.</returns>
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             QtPath? path,
             Matrix transform,
             [DefaultValue("0, 0, 0, 0")] Color4 fill,

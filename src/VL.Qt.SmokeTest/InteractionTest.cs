@@ -83,7 +83,7 @@ public static partial class InteractionTest
             var e = rect.Update(new Vector2(2, 1), Matrix.Translation(1, 1, 0), RectangleAnchor.TopLeft, new Color4(0.2f, 0.4f, 0.8f, 1), 0,
                 new Color4(0, 0, 0, 1), 0, 1, false, false, attach ? chain : null, null, out _, out _);
             cmd.Reset();
-            rec.Update(e, Space.DIPTopLeft);
+            rec.Update((Element)e, Space.DIPTopLeft);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
@@ -167,12 +167,12 @@ public static partial class InteractionTest
         var bounds = new RectangleF(1, 1, 2, 1);
         var factories = new (string Name, Func<Interaction?, Element> Make)[]
         {
-            ("Text", i => text.Update(bounds.Sz(), bounds.Tr(), RectangleAnchor.TopLeft, "Hover", "", 1f, FontWeight.Normal, false,
+            ("Text", i => (Element)text.Update(bounds.Sz(), bounds.Tr(), RectangleAnchor.TopLeft, "Hover", "", 1f, FontWeight.Normal, false,
                 new Color4(1, 1, 1, 1), TextHorizontalAlignment.Left, VerticalAlignment.Top, TextWrap.NoWrap, TextElide.None, 1, 0,
                 TextAutofit.Fixed, 1, false, false, i, null, out _, out _)),
-            ("Group", i => group.Update(Spread.Create<IElement?>(new Rectangle { Size = new Vector2(2, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0) }), bounds.Sz(), false, bounds.Tr(),
+            ("Group", i => (Element)group.Update(Spread.Create<IElement?>(new Rectangle { Size = new Vector2(2, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0) }), bounds.Sz(), false, bounds.Tr(),
                 RectangleAnchor.TopLeft, 1, false, false, i, null, null, out _, out _)),
-            ("Button", i => button.Update(bounds.Sz(), false, bounds.Tr(), RectangleAnchor.TopLeft, "Hover", true, false, null, 1,
+            ("Button", i => (Element)button.Update(bounds.Sz(), false, bounds.Tr(), RectangleAnchor.TopLeft, "Hover", true, false, null, 1,
                 false, false, i, null, null, out _, out _, out _)),
         };
 

@@ -119,19 +119,19 @@ namespace VL.Qt.Tests
 
         private static IEnumerable<TestCaseData> SingleChanges()
         {
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(fill: 0.5f)), $"SET 2 Color color(0.5,0,0,1)").SetName("Rectangle.Fill");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(opacity: 0.25f)), $"SET 2 Opacity f32(0.25)").SetName("Opacity");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(width: 2)), $"SET 2 Size vec2(200,200)").SetName("Size");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(text: "World")), $"SET 4 Text string(World)").SetName("Text.Content");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(spacing: 0.25f)), $"SET 3 Spacing f32(25)").SetName("Column.Spacing");
-            yield return new TestCaseData(new Func<Element>(() => BuildScene(blending: true)), $"SET 7 Blending bool(1)").SetName("Shader.Blending");
+            yield return new TestCaseData(new Func<IElement>(() => BuildScene(fill: 0.5f)), $"SET 2 Color color(0.5,0,0,1)").SetName("Rectangle.Fill");
+            yield return new TestCaseData(new Func<IElement>(() => BuildScene(opacity: 0.25f)), $"SET 2 Opacity f32(0.25)").SetName("Opacity");
+            yield return new TestCaseData(new Func<IElement>(() => BuildScene(width: 2)), $"SET 2 Size vec2(200,200)").SetName("Size");
+            yield return new TestCaseData(new Func<IElement>(() => BuildScene(text: "World")), $"SET 4 Text string(World)").SetName("Text.Content");
+            yield return new TestCaseData(new Func<IElement>(() => BuildScene(spacing: 0.25f)), $"SET 3 Spacing f32(25)").SetName("Column.Spacing");
+            yield return new TestCaseData(new Func<IElement>(() => BuildScene(blending: true)), $"SET 7 Blending bool(1)").SetName("Shader.Blending");
         }
 
         [TestCaseSource(nameof(SingleChanges))]
-        public void OnePropertyChanged_ExactlyOneSet(Func<Element> changed, string expected)
+        public void OnePropertyChanged_ExactlyOneSet(Func<IElement> changed, string expected)
         {
             Frame(BuildScene());
-            Frame(changed());
+            Frame((Element)changed());
             Assert.That(_sink.Commands, Is.EqualTo(new[] { expected }));
         }
 

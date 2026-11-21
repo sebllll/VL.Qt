@@ -24,14 +24,20 @@ namespace VL.Qt.Nodes
         internal readonly record struct Props(ImmutableArray<Element> Children, float Spacing, float Padding, VerticalAlignment ChildAlignment, bool AutoSize);
 
         private readonly ElementNode<Row, Props> _node;
-        private readonly ChildrenInput _children = new();
+        private readonly ChildrenInput _children;
 
         public RowNode(NodeContext nodeContext)
-            => _node = new ElementNode<Row, Props>(nodeContext, Create);
+        {
+            _node = new ElementNode<Row, Props>(nodeContext, Create);
+            _children = new ChildrenInput(_node.AddWarning);
+        }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal RowNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<Row, Props>(addWarning, Create);
+        {
+            _node = new ElementNode<Row, Props>(addWarning, Create);
+            _children = new ChildrenInput(_node.AddWarning);
+        }
 
         private static readonly Func<CommonInputs, Props, FeedbackSlot, Row> Create = static (c, p, slot) => new Row
             {
@@ -71,7 +77,7 @@ namespace VL.Qt.Nodes
         /// <param name="measuredSize">Implicit size reported by Qt (content + padding), in units (last frame).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [Pin(Name = "Input", PinGroupKind = PinGroupKind.Collection, PinGroupDefaultCount = 2)] Spread<IElement?> children,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
@@ -103,6 +109,10 @@ namespace VL.Qt.Nodes
             return element;
         }
 
-        public void Dispose() => _node.Dispose();
+        public void Dispose()
+        {
+            _children.Dispose();
+            _node.Dispose();
+        }
     }
 }

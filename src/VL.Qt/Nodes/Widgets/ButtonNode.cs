@@ -70,7 +70,7 @@ namespace VL.Qt.Nodes
         /// <param name="measuredSize">Implicit size reported by Qt (text + padding of the style), in units.</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [DefaultValue("1, 0.4")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
             Matrix transform,

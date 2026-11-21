@@ -45,7 +45,7 @@ namespace VL.Qt.Nodes
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         // Pin defaults: see RectangleNode (string-valued [DefaultValue] for Vector2/Color4).
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [DefaultValue(0.5f)] float radius,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
