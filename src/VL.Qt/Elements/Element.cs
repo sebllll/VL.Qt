@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
+using VL.Qt.Nodes;
 using VL.Qt.Styles;
 
 namespace VL.Qt.Elements
@@ -13,6 +14,21 @@ namespace VL.Qt.Elements
     internal abstract class Element : IElement
     {
         private protected Element(ElementType type) => Type = type;
+
+        /// <summary>Takes the common inputs of an element node and the feedback slot of the node (the element node constructor of every concrete element).</summary>
+        private protected Element(ElementType type, in CommonInputs common, FeedbackSlot feedback)
+        {
+            Type = type;
+            Size = common.Size;
+            Transform = common.Transform;
+            Anchor = common.Anchor;
+            Opacity = common.Opacity;
+            Clip = common.Clip;
+            Debug = common.Debug;
+            Interaction = common.Interaction;
+            Effect = common.Effect;
+            Feedback = feedback;
+        }
 
         internal ElementType Type { get; }
         /// <summary>Item size in units (containers/widgets: only with Auto Size off). Position comes from <see cref="Transform"/>.</summary>

@@ -18,16 +18,16 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Circle", Category = Categories.Elements)]
     public sealed class CircleNode : IDisposable
     {
-        private readonly ElementNode<Rectangle, RectangleNode.Props> _node;
+        private readonly ElementNodeCore<Rectangle, RectangleNode.Props> _node;
 
         public CircleNode(NodeContext nodeContext)
-            => _node = new ElementNode<Rectangle, RectangleNode.Props>(nodeContext, RectangleNode.Create);
+            => _node = new ElementNodeCore<Rectangle, RectangleNode.Props>(nodeContext, RectangleNode.Create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal CircleNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<Rectangle, RectangleNode.Props>(addWarning, RectangleNode.Create);
+            => _node = new ElementNodeCore<Rectangle, RectangleNode.Props>(addWarning, RectangleNode.Create);
 
-        internal ElementNode<Rectangle, RectangleNode.Props> Core => _node;
+        internal ElementNodeCore<Rectangle, RectangleNode.Props> Core => _node;
 
         /// <summary>Describes the circle. A new description is only created when an input changes.</summary>
         /// <param name="radius">Radius; the circle takes 2 × Radius in width and height. 0 = not drawn. The position comes from Transform and Anchor (default TopLeft: the corner of the bounding square; Center: the circle's center at the origin).</param>
@@ -61,11 +61,10 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
             var r = Math.Max(radius, 0f);
-            var element = _node.Describe(
+            return _node.Describe(
                 new CommonInputs(new Vector2(2 * r, 2 * r), transform, anchor, opacity, clip, debug, interaction, effect),
-                new RectangleNode.Props(color, r, strokeColor, strokeWidth));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+                new RectangleNode.Props(color, r, strokeColor, strokeWidth),
+                out measuredSize, out sceneBounds);
         }
 
         public void Dispose() => _node.Dispose();

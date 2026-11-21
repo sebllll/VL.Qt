@@ -1,4 +1,5 @@
 ﻿using Stride.Core.Mathematics;
+using VL.Qt.Nodes;
 
 namespace VL.Qt.Elements
 {
@@ -9,6 +10,7 @@ namespace VL.Qt.Elements
         public const float DefaultFontSize = 0.12f;
 
         public Text() : base(ElementType.Text) { }
+        internal Text(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Text, common, feedback) { }
 
         public string Content { get; init; } = string.Empty;
         /// <summary>Empty = Qt/system default family.</summary>

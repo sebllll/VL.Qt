@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.ComponentModel;
 using Stride.Core.Mathematics;
 using VL.Core;
@@ -21,14 +20,21 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Column (Spectral)", Category = Categories.Elements)]
     public sealed class ColumnSpectralNode : IDisposable
     {
-        private readonly ColumnNode _inner;
+        private readonly ElementNodeCore<Column, ColumnNode.Props> _node;
+        private readonly ChildrenInput _children;
 
-        public ColumnSpectralNode(NodeContext nodeContext) => _inner = new ColumnNode(nodeContext);
+        public ColumnSpectralNode(NodeContext nodeContext)
+        {
+            _node = new ElementNodeCore<Column, ColumnNode.Props>(nodeContext, ColumnNode.Create);
+            _children = new ChildrenInput(_node.AddWarning);
+        }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal ColumnSpectralNode(Func<string, IDisposable> addWarning) => _inner = new ColumnNode(addWarning);
-
-        internal ColumnNode Inner => _inner;
+        internal ColumnSpectralNode(Func<string, IDisposable> addWarning)
+        {
+            _node = new ElementNodeCore<Column, ColumnNode.Props>(addWarning, ColumnNode.Create);
+            _children = new ChildrenInput(_node.AddWarning);
+        }
 
         /// <summary>Describes the column. A new description is only created when an input changes.</summary>
         /// <param name="children">Spread (or any sequence) of child elements, e.g. a Spread of Element or of a self-made widget, top to bottom; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
@@ -64,9 +70,16 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            return _inner.Describe(children, size, autoSize, transform, anchor, spacing, padding, childAlignment, opacity, clip, debug, interaction, effect, out measuredSize, out sceneBounds);
+            return _node.Describe(
+                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
+                new ColumnNode.Props(_children.Update(children), spacing, padding, childAlignment, autoSize),
+                out measuredSize, out sceneBounds);
         }
 
-        public void Dispose() => _inner.Dispose();
+        public void Dispose()
+        {
+            _children.Dispose();
+            _node.Dispose();
+        }
     }
 }

@@ -20,7 +20,7 @@ namespace VL.Qt.Nodes
     /// Elements that contain a Video give only text: grabbing a running hardware-decoded video costs the frame 25–57 ms.
     /// </summary>
     [ProcessNode(Name = "TooltipPreview", Category = Categories.Qt), Smell(SymbolSmell.Hidden)]
-    public sealed class ElementTooltipPreview : IDisposable
+    public sealed class ElementTooltipPreviewNode : IDisposable
     {
         /// <summary>Longest edge of the preview in pixels.</summary>
         internal const int maxEdgePx = 256;
@@ -53,14 +53,14 @@ namespace VL.Qt.Nodes
         private bool _settled;
         private string _error = string.Empty;
 
-        public ElementTooltipPreview(NodeContext nodeContext)
+        public ElementTooltipPreviewNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), OccurrenceRegistry.ForApp(nodeContext.AppHost),
                   static window => Native.vlqt_scene_get_change_count(window), static () => Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency)
         {
         }
 
         /// <summary>For tests: a client on a fake API, an own scene registry, and injected change counter and clock.</summary>
-        internal ElementTooltipPreview(ResourceClient client, OccurrenceRegistry scene, Func<SceneHandle, long> changeCount, Func<double> clockSeconds)
+        internal ElementTooltipPreviewNode(ResourceClient client, OccurrenceRegistry scene, Func<SceneHandle, long> changeCount, Func<double> clockSeconds)
         {
             _client = client;
             _scene = scene;

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using Stride.Core.Mathematics;
@@ -23,33 +22,24 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(ImmutableArray<Element> Children, float Spacing, float Padding, VerticalAlignment ChildAlignment, bool AutoSize);
 
-        private readonly ElementNode<Row, Props> _node;
+        private readonly ElementNodeCore<Row, Props> _node;
         private readonly ChildrenInput _children;
 
         public RowNode(NodeContext nodeContext)
         {
-            _node = new ElementNode<Row, Props>(nodeContext, Create);
+            _node = new ElementNodeCore<Row, Props>(nodeContext, Create);
             _children = new ChildrenInput(_node.AddWarning);
         }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal RowNode(Func<string, IDisposable> addWarning)
         {
-            _node = new ElementNode<Row, Props>(addWarning, Create);
+            _node = new ElementNodeCore<Row, Props>(addWarning, Create);
             _children = new ChildrenInput(_node.AddWarning);
         }
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, Row> Create = static (c, p, slot) => new Row
+        internal static readonly Func<CommonInputs, Props, FeedbackSlot, Row> Create = static (c, p, slot) => new Row(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
-                Feedback = slot,
                 Children = p.Children,
                 Spacing = p.Spacing,
                 Padding = p.Padding,
@@ -57,7 +47,7 @@ namespace VL.Qt.Nodes
                 AutoSize = p.AutoSize,
             };
 
-        internal ElementNode<Row, Props> Core => _node;
+        internal ElementNodeCore<Row, Props> Core => _node;
         internal ChildrenInput Children => _children;
 
         /// <summary>Describes the row. A new description is only created when an input changes.</summary>
@@ -93,20 +83,11 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
-            => Describe(children, size, autoSize, transform, anchor, spacing, padding, childAlignment, opacity, clip, debug, interaction, effect, out measuredSize, out sceneBounds);
-
-        /// <summary>Update with the children as any sequence (also used by the Spectral node).</summary>
-        internal Element Describe(
-            IEnumerable<IElement?>? children, Vector2 size, bool autoSize, Matrix transform,
-            RectangleAnchor anchor, float spacing, float padding, VerticalAlignment childAlignment,
-            float opacity, bool clip, bool debug, Interaction? interaction, Effect? effect,
-            out Vector2 measuredSize, out RectangleF sceneBounds)
         {
-            var element = _node.Describe(
+            return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(_children.Update(children), spacing, padding, childAlignment, autoSize));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+                new Props(_children.Update(children), spacing, padding, childAlignment, autoSize),
+                out measuredSize, out sceneBounds);
         }
 
         public void Dispose()

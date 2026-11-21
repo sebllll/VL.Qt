@@ -649,19 +649,19 @@ VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Output | out VL.Qt.Elem
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Padding | in Stride.Core.Mathematics.RectangleF | Pin(Visibility = PinVisibility.Optional) | (padding)
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Scale | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (scale)
 VL.Qt | VL.Qt.Nodes.DropShadowNode | type sealed class
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | attr ProcessNode(Name = "TooltipPreview", Category = "Qt")
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | attr Smell(SymbolSmell.Hidden)
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | ctor | new
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | ctor | order Node Context
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | implements System.IDisposable
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | method Dispose | void
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | method Update | VL.Lib.Basics.Imaging.IImage
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | method Update | order Element, Text, Image
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | method Update | pin Element | in VL.Qt.Elements.IElement | (element)
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | method Update | pin Image | out VL.Lib.Basics.Imaging.IImage | Pin(Name = "Image") | (return)
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | method Update | pin Text | out string | (text)
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | type sealed class
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | attr ProcessNode(Name = "TooltipPreview", Category = "Qt")
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | attr Smell(SymbolSmell.Hidden)
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | ctor | new
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | ctor | order Node Context
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | implements System.IDisposable
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | method Dispose | void
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | method Update | VL.Lib.Basics.Imaging.IImage
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | method Update | order Element, Text, Image
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | method Update | pin Element | in VL.Qt.Elements.IElement | (element)
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | method Update | pin Image | out VL.Lib.Basics.Imaging.IImage | Pin(Name = "Image") | (return)
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | method Update | pin Text | out string | (text)
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreviewNode | type sealed class
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | attr ProcessNode(Name = "FileWriter (Element)", Category = "Qt.Images")
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | ctor | new
 VL.Qt | VL.Qt.Nodes.FileWriterElementNode | ctor | order Node Context
@@ -1126,17 +1126,17 @@ VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Signals | out VL.Lib.Co
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Size | in Stride.Core.Mathematics.Vector2 = 1, 1 | (size)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Transform | in Stride.Core.Mathematics.Matrix | (transform)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | type sealed class
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | attr ProcessNode(Name = "TooltipPreview", Category = "Qt")
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | attr Smell(SymbolSmell.Hidden)
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | ctor | new
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | ctor | order Node Context
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | method Update | VL.Lib.Basics.Imaging.IImage
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | method Update | order Image, Text, Image
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | method Update | pin Image | in VL.Qt.Images.QtImage | (image)
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | method Update | pin Image | out VL.Lib.Basics.Imaging.IImage | Pin(Name = "Image") | (return)
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | method Update | pin Text | out string | (text)
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | type sealed class
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreviewNode | attr ProcessNode(Name = "TooltipPreview", Category = "Qt")
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreviewNode | attr Smell(SymbolSmell.Hidden)
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreviewNode | ctor | new
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreviewNode | ctor | order Node Context
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreviewNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreviewNode | method Update | VL.Lib.Basics.Imaging.IImage
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreviewNode | method Update | order Image, Text, Image
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreviewNode | method Update | pin Image | in VL.Qt.Images.QtImage | (image)
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreviewNode | method Update | pin Image | out VL.Lib.Basics.Imaging.IImage | Pin(Name = "Image") | (return)
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreviewNode | method Update | pin Text | out string | (text)
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreviewNode | type sealed class
 VL.Qt | VL.Qt.Nodes.QuadToNode | attr ProcessNode(Name = "QuadTo", Category = "Qt.Paths")
 VL.Qt | VL.Qt.Nodes.QuadToNode | ctor | new
 VL.Qt | VL.Qt.Nodes.QuadToNode | method Update | VL.Qt.Paths.QtPath

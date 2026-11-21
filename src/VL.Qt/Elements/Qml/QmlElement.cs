@@ -1,4 +1,6 @@
-﻿namespace VL.Qt.Elements
+﻿using VL.Qt.Nodes;
+
+namespace VL.Qt.Elements
 {
     /// <summary>
     /// Loads a user .qml file into the element tree (protocol.h "QmlElement"). The root of the file must be an Item. The
@@ -8,6 +10,7 @@
     internal sealed class QmlElement : Element
     {
         public QmlElement() : base(ElementType.Qml) { }
+        internal QmlElement(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Qml, common, feedback) { }
 
         /// <summary>On (default): the element takes the implicit size of the QML root. Off: Size sets width and height of the root.</summary>
         public bool AutoSize { get; init; } = true;

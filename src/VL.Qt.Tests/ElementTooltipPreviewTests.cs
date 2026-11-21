@@ -18,7 +18,7 @@ namespace VL.Qt.Tests
         private ResourceClient _client = null!;
         private OccurrenceRegistry _scene = null!;
         private Reconciler _reconciler = null!;
-        private ElementTooltipPreview _node = null!;
+        private ElementTooltipPreviewNode _node = null!;
         private Rectangle _element = null!;
         private long _changes;
         private double _clock;
@@ -33,7 +33,7 @@ namespace VL.Qt.Tests
             _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene);
             _changes = 0;
             _clock = 100;
-            _node = new ElementTooltipPreview(_client, _scene, _ => _changes, () => _clock);
+            _node = new ElementTooltipPreviewNode(_client, _scene, _ => _changes, () => _clock);
             _element = new Rectangle { Size = new Vector2(10, 10) };
         }
 
@@ -277,7 +277,7 @@ namespace VL.Qt.Tests
             _clock += 1;
             var image = Update(out var text, next); // not reconciled yet
             Assert.That(image, Is.Null);
-            Assert.That(text, Does.EndWith(ElementTooltipPreview.NotShownSuffix));
+            Assert.That(text, Does.EndWith(ElementTooltipPreviewNode.NotShownSuffix));
             Assert.That(Grabs, Is.EqualTo(1));
 
             Show(next);
@@ -362,7 +362,7 @@ namespace VL.Qt.Tests
                 _changes++;
                 var image = Update(out var text, tree);
                 Assert.That(image, Is.Null);
-                Assert.That(text, Does.EndWith(ElementTooltipPreview.ContainsVideoSuffix));
+                Assert.That(text, Does.EndWith(ElementTooltipPreviewNode.ContainsVideoSuffix));
                 Assert.That(text, Does.Contain("contains video, no preview"));
             }
             Assert.That(_api.Calls, Is.Empty, "no resource, no grab");
@@ -408,7 +408,7 @@ namespace VL.Qt.Tests
             _changes++;
             var image = Update(out var text, tree);
             Assert.That(image, Is.Null);
-            Assert.That(text, Does.EndWith(ElementTooltipPreview.ContainsVideoSuffix));
+            Assert.That(text, Does.EndWith(ElementTooltipPreviewNode.ContainsVideoSuffix));
             Assert.That(Grabs, Is.EqualTo(1), "only the first grab");
         }
 
@@ -417,7 +417,7 @@ namespace VL.Qt.Tests
         {
             var tree = VideoTree();
             Assert.That(Update(out var text, tree), Is.Null);
-            Assert.That(text, Does.EndWith(ElementTooltipPreview.NotShownSuffix));
+            Assert.That(text, Does.EndWith(ElementTooltipPreviewNode.NotShownSuffix));
         }
 
         [Test]

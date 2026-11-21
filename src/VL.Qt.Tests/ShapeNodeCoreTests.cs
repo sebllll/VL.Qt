@@ -128,17 +128,22 @@ namespace VL.Qt.Tests
         [Test]
         public void LinePoints_SameInstanceUntilChanged()
         {
-            var a = _core.LinePoints(new Vector2(0.5f, 0.5f), new Vector2(2.5f, 1.5f));
-            Assert.That(_core.LinePoints(new Vector2(0.5f, 0.5f), new Vector2(2.5f, 1.5f)), Is.SameAs(a));
-            Assert.That(a.Count, Is.EqualTo(2));
+            using var line = new LineNode(_ => new Removal(this));
+            Shape Line(Vector2 to, float strokeWidth = 0.05f)
+                => (Shape)line.Update(new Vector2(0.5f, 0.5f), to, Matrix.Identity, Color4.White, strokeWidth, ShapeCap.Flat, Spread<float>.Empty,
+                    0, 0, 1, 0, 1, false, false, null, null, out _, out _);
 
-            var b = _core.LinePoints(new Vector2(0.5f, 0.5f), new Vector2(3, 1.5f));
-            Assert.That(b, Is.Not.SameAs(a));
-            Assert.That(b[1], Is.EqualTo(new Vector2(3, 1.5f)));
+            var a = Line(new Vector2(2.5f, 1.5f));
+            Assert.That(a.Points.Count, Is.EqualTo(2));
+            // A new element (other stroke width) with the same end points reuses the points spread.
+            var a2 = Line(new Vector2(2.5f, 1.5f), 0.1f);
+            Assert.That(a2, Is.Not.SameAs(a));
+            Assert.That(a2.Points, Is.SameAs(a.Points));
 
-            var shape = Describe(PropsOf(b));
-            Assert.That(shape.Size, Is.EqualTo(new Vector2(3, 1.5f)));
-            Assert.That(shape.Points.Count, Is.EqualTo(2));
+            var b = Line(new Vector2(3, 1.5f));
+            Assert.That(b.Points, Is.Not.SameAs(a.Points));
+            Assert.That(b.Points[1], Is.EqualTo(new Vector2(3, 1.5f)));
+            Assert.That(b.Size, Is.EqualTo(new Vector2(3, 1.5f)));
         }
 
         [Test]

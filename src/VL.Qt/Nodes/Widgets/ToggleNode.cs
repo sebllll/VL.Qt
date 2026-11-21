@@ -22,51 +22,33 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(bool Value, ToggleLook Look, bool Enabled, bool AutoSize, Style? Style);
 
-        private readonly ElementNode<Element, Props> _node;
+        private readonly ElementNodeCore<Element, Props> _node;
         private readonly ValueChannel<bool> _value = new(false);
 
         public ToggleNode(NodeContext nodeContext)
-            => _node = new ElementNode<Element, Props>(nodeContext, Create);
+            => _node = new ElementNodeCore<Element, Props>(nodeContext, s_create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal ToggleNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<Element, Props>(addWarning, Create);
+            => _node = new ElementNodeCore<Element, Props>(addWarning, s_create);
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, Element> Create = static (c, p, slot) => p.Look == ToggleLook.Switch
-            ? new Switch
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Element> s_create = static (c, p, slot) => p.Look == ToggleLook.Switch
+            ? new Switch(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
                 Style = p.Style,
-                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Value = p.Value,
                 Enabled = p.Enabled,
             }
-            : new CheckBox
+            : new CheckBox(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
                 Style = p.Style,
-                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Value = p.Value,
                 Enabled = p.Enabled,
             };
 
-        internal ElementNode<Element, Props> Core => _node;
+        internal ElementNodeCore<Element, Props> Core => _node;
 
         /// <summary>Describes the toggle. A new description is only created when an input or the value changes.</summary>
         /// <param name="size">Size of the element (width, height), only with Auto Size off. The position comes from Transform and Anchor.</param>
@@ -108,11 +90,10 @@ namespace VL.Qt.Nodes
         {
             value = _value.Update(channel, _node.Feedback);
             bang = _value.Bang;
-            var element = _node.Describe(
+            return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(value, look, enabled, autoSize, style));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+                new Props(value, look, enabled, autoSize, style),
+                out measuredSize, out sceneBounds);
         }
 
         public void Dispose() => _node.Dispose();

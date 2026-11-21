@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using Stride.Core.Mathematics;
@@ -23,39 +22,30 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(ImmutableArray<Element> Children, bool AutoSize, Style? Style);
 
-        private readonly ElementNode<Group, Props> _node;
+        private readonly ElementNodeCore<Group, Props> _node;
         private readonly ChildrenInput _children;
 
         public GroupNode(NodeContext nodeContext)
         {
-            _node = new ElementNode<Group, Props>(nodeContext, Create);
+            _node = new ElementNodeCore<Group, Props>(nodeContext, Create);
             _children = new ChildrenInput(_node.AddWarning);
         }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal GroupNode(Func<string, IDisposable> addWarning)
         {
-            _node = new ElementNode<Group, Props>(addWarning, Create);
+            _node = new ElementNodeCore<Group, Props>(addWarning, Create);
             _children = new ChildrenInput(_node.AddWarning);
         }
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, Group> Create = static (c, p, slot) => new Group
+        internal static readonly Func<CommonInputs, Props, FeedbackSlot, Group> Create = static (c, p, slot) => new Group(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
                 Style = p.Style,
-                Feedback = slot,
                 Children = p.Children,
                 AutoSize = p.AutoSize,
             };
 
-        internal ElementNode<Group, Props> Core => _node;
+        internal ElementNodeCore<Group, Props> Core => _node;
         internal ChildrenInput Children => _children;
 
         /// <summary>Describes the group. A new description is only created when an input changes.</summary>
@@ -87,19 +77,11 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] Style? style,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
-            => Describe(children, size, autoSize, transform, anchor, opacity, clip, debug, interaction, effect, style, out measuredSize, out sceneBounds);
-
-        /// <summary>Update with the children as any sequence (also used by the Spectral node).</summary>
-        internal Element Describe(
-            IEnumerable<IElement?>? children, Vector2 size, bool autoSize, Matrix transform,
-            RectangleAnchor anchor, float opacity, bool clip, bool debug, Interaction? interaction,
-            Effect? effect, Style? style, out Vector2 measuredSize, out RectangleF sceneBounds)
         {
-            var element = _node.Describe(
+            return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(_children.Update(children), autoSize, style));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+                new Props(_children.Update(children), autoSize, style),
+                out measuredSize, out sceneBounds);
         }
 
         public void Dispose()

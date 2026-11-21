@@ -18,12 +18,12 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Labeled", Category = Categories.Elements)]
     public sealed class LabeledNode : IDisposable
     {
-        internal readonly record struct TextProps(string Content, float Width, float Height);
+        internal readonly record struct TextProps(string Content);
         internal readonly record struct LayoutProps(ImmutableArray<Element> Children, float Spacing);
 
-        private readonly ElementNode<Text, TextProps> _text;
-        private readonly ElementNode<Row, LayoutProps> _row;
-        private readonly ElementNode<Column, LayoutProps> _column;
+        private readonly ElementNodeCore<Text, TextProps> _text;
+        private readonly ElementNodeCore<Row, LayoutProps> _row;
+        private readonly ElementNodeCore<Column, LayoutProps> _column;
         private readonly ElementInput _element;
         private Element? _lastElement;
         private Text? _lastText;
@@ -31,56 +31,41 @@ namespace VL.Qt.Nodes
 
         public LabeledNode(NodeContext nodeContext)
         {
-            _text = new ElementNode<Text, TextProps>(nodeContext, CreateText);
-            _row = new ElementNode<Row, LayoutProps>(nodeContext, CreateRow);
-            _column = new ElementNode<Column, LayoutProps>(nodeContext, CreateColumn);
+            _text = new ElementNodeCore<Text, TextProps>(nodeContext, s_createText);
+            _row = new ElementNodeCore<Row, LayoutProps>(nodeContext, s_createRow);
+            _column = new ElementNodeCore<Column, LayoutProps>(nodeContext, s_createColumn);
             _element = new ElementInput(_text.AddWarning);
         }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal LabeledNode(Func<string, IDisposable> addWarning)
         {
-            _text = new ElementNode<Text, TextProps>(addWarning, CreateText);
-            _row = new ElementNode<Row, LayoutProps>(addWarning, CreateRow);
-            _column = new ElementNode<Column, LayoutProps>(addWarning, CreateColumn);
+            _text = new ElementNodeCore<Text, TextProps>(addWarning, s_createText);
+            _row = new ElementNodeCore<Row, LayoutProps>(addWarning, s_createRow);
+            _column = new ElementNodeCore<Column, LayoutProps>(addWarning, s_createColumn);
             _element = new ElementInput(addWarning);
         }
 
-        // The label box is Width x Height: the text is aligned left and vertically centered in it, so it stays
-        // centered next to elements that are taller than the text.
-        private static readonly Func<CommonInputs, TextProps, FeedbackSlot, Text> CreateText = static (c, p, slot) => new Text
+        // The label box is Label Width x Label Height (the Size of s_label): the text is aligned left and vertically
+        // centered in it, so it stays centered next to elements that are taller than the text.
+        private static readonly CommonInputs s_label = new(default, Matrix.Identity, RectangleAnchor.TopLeft, 1, false, false, null, null);
+
+        private static readonly Func<CommonInputs, TextProps, FeedbackSlot, Text> s_createText = static (c, p, slot) => new Text(c, slot)
             {
-                Size = new Vector2(p.Width, p.Height),
-                Anchor = RectangleAnchor.TopLeft,
-                Feedback = slot,
                 Content = p.Content,
                 Color = Color4.White,
                 VAlign = VerticalAlignment.Center,
             };
 
-        private static readonly Func<CommonInputs, LayoutProps, FeedbackSlot, Row> CreateRow = static (c, p, slot) => new Row
+        private static readonly Func<CommonInputs, LayoutProps, FeedbackSlot, Row> s_createRow = static (c, p, slot) => new Row(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
-                Feedback = slot,
                 Children = p.Children,
                 Spacing = p.Spacing,
                 ChildAlignment = VerticalAlignment.Center,
             };
 
-        private static readonly Func<CommonInputs, LayoutProps, FeedbackSlot, Column> CreateColumn = static (c, p, slot) => new Column
+        private static readonly Func<CommonInputs, LayoutProps, FeedbackSlot, Column> s_createColumn = static (c, p, slot) => new Column(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
-                Feedback = slot,
                 Children = p.Children,
                 Spacing = p.Spacing,
                 ChildAlignment = HorizontalAlignment.Left,
@@ -118,8 +103,9 @@ namespace VL.Qt.Nodes
         {
             var shown = _element.Update(element);
             var label = _text.Describe(
-                new CommonInputs(default, Matrix.Identity, RectangleAnchor.TopLeft, 1, false, false, null, null),
-                new TextProps(text ?? string.Empty, labelWidth, labelHeight));
+                s_label with { Size = new Vector2(labelWidth, labelHeight) },
+                new TextProps(text ?? string.Empty),
+                out _, out _);
             if (!ReferenceEquals(label, _lastText) || !ReferenceEquals(shown, _lastElement))
             {
                 _lastText = label;
@@ -129,17 +115,12 @@ namespace VL.Qt.Nodes
                     : ImmutableArray.Create(label, shown);
             }
 
+            // Labeled has no Clip and no Debug pin (yet): the layout never clips and draws no debug overlay.
             var common = new CommonInputs(default, transform, anchor, opacity, false, false, interaction, effect);
             var props = new LayoutProps(_children, spacing);
-            if (labelPosition == LabelPosition.Top)
-            {
-                var column = _column.Describe(common, props);
-                _column.ReadOutputs(out measuredSize, out sceneBounds);
-                return column;
-            }
-            var row = _row.Describe(common, props);
-            _row.ReadOutputs(out measuredSize, out sceneBounds);
-            return row;
+            return labelPosition == LabelPosition.Top
+                ? _column.Describe(common, props, out measuredSize, out sceneBounds)
+                : _row.Describe(common, props, out measuredSize, out sceneBounds);
         }
 
         public void Dispose()

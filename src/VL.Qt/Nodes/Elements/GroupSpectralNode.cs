@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.ComponentModel;
 using Stride.Core.Mathematics;
 using VL.Core;
@@ -21,14 +20,21 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Group (Spectral)", Category = Categories.Elements)]
     public sealed class GroupSpectralNode : IDisposable
     {
-        private readonly GroupNode _inner;
+        private readonly ElementNodeCore<Group, GroupNode.Props> _node;
+        private readonly ChildrenInput _children;
 
-        public GroupSpectralNode(NodeContext nodeContext) => _inner = new GroupNode(nodeContext);
+        public GroupSpectralNode(NodeContext nodeContext)
+        {
+            _node = new ElementNodeCore<Group, GroupNode.Props>(nodeContext, GroupNode.Create);
+            _children = new ChildrenInput(_node.AddWarning);
+        }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal GroupSpectralNode(Func<string, IDisposable> addWarning) => _inner = new GroupNode(addWarning);
-
-        internal GroupNode Inner => _inner;
+        internal GroupSpectralNode(Func<string, IDisposable> addWarning)
+        {
+            _node = new ElementNodeCore<Group, GroupNode.Props>(addWarning, GroupNode.Create);
+            _children = new ChildrenInput(_node.AddWarning);
+        }
 
         /// <summary>Describes the group. A new description is only created when an input changes.</summary>
         /// <param name="children">Spread (or any sequence) of child elements, e.g. a Spread of Element or of a self-made widget; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
@@ -60,9 +66,16 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            return _inner.Describe(children, size, autoSize, transform, anchor, opacity, clip, debug, interaction, effect, style, out measuredSize, out sceneBounds);
+            return _node.Describe(
+                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
+                new GroupNode.Props(_children.Update(children), autoSize, style),
+                out measuredSize, out sceneBounds);
         }
 
-        public void Dispose() => _inner.Dispose();
+        public void Dispose()
+        {
+            _children.Dispose();
+            _node.Dispose();
+        }
     }
 }

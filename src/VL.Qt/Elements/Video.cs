@@ -1,4 +1,5 @@
 ﻿using VL.Lib.IO;
+using VL.Qt.Nodes;
 
 namespace VL.Qt.Elements
 {
@@ -9,6 +10,7 @@ namespace VL.Qt.Elements
     internal sealed class Video : Element
     {
         public Video() : base(ElementType.Video) { }
+        internal Video(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Video, common, feedback) { }
 
         public Path Path { get; init; } = Path.Default;
         /// <summary>Plays while true, pauses (keeps the current frame) while false. Qt default: paused.</summary>
