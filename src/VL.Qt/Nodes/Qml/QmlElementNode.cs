@@ -83,6 +83,7 @@ namespace VL.Qt.Nodes
         /// <param name="debug">Debug overlay for this element only. Does not affect layout or hit-testing. Cyan frame = actual size (solid: Size, dashed: Auto Size on), orange = implicit size, i.e. what Auto Size would give (only where it differs), magenta cross = origin, yellow diamond = anchor.</param>
         /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
         /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
+        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
         /// <param name="changedProperties">Last value of each root property that QML changed (a change the patch caused with Properties is not reported back). A new dictionary instance whenever something changed; reset when the file is reloaded.</param>
         /// <param name="signals">Signals of the QML root emitted since the last frame, in order. Each has its name and its arguments.</param>
         /// <param name="measuredSize">Implicit size of the QML root reported by Qt, in units.</param>
@@ -101,6 +102,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             [Pin(Name = "Properties")] out Dictionary<string, object> changedProperties,
             out Spread<QmlSignal> signals,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
@@ -120,7 +122,7 @@ namespace VL.Qt.Nodes
 
             _properties = QmlProperties.Update(_properties, properties);
             var element = _node.Describe(
-                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
+                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
                 new Props(source, _reload, _properties, autoSize),
                 out measuredSize, out sceneBounds);
 

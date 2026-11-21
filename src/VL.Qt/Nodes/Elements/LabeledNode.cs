@@ -88,6 +88,7 @@ namespace VL.Qt.Nodes
         /// <param name="opacity">Opacity of label and element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
         /// <param name="interaction">Chain of interaction nodes (Hover, Click, …) for label and element together. Without interaction the label row is transparent for input; the element keeps its own Interaction.</param>
         /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
+        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
         /// <param name="measuredSize">Implicit size reported by Qt (label + spacing + element), in units (last frame).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         [return: Pin(Name = "Output")]
@@ -103,6 +104,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float opacity,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
@@ -121,7 +123,7 @@ namespace VL.Qt.Nodes
             }
 
             // Labeled has no Clip and no Debug pin (yet): the layout never clips and draws no debug overlay.
-            var common = new CommonInputs(default, transform, anchor, opacity, false, false, interaction, effect);
+            var common = new CommonInputs(default, transform, anchor, opacity, false, false, interaction, effect, enabled);
             var props = new LayoutProps(_children, spacing);
             // Only the active layout is described: the other one must not keep a message it showed before the switch.
             if (labelPosition == LabelPosition.Top)

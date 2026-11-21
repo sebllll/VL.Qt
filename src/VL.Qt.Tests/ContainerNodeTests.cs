@@ -26,17 +26,17 @@ namespace VL.Qt.Tests
 
         private static Element Group(GroupNode n, Spread<IElement?> children, float opacity = 1, bool autoSize = true)
             => (Element)n.Update(children, default, autoSize, default, RectangleAnchor.Center, opacity, false, false,
-                null, null, null, out _, out _);
+                null, null, null, true, out _, out _);
 
         private static Element Column(ColumnNode n, Spread<IElement?> children, float spacing = 0, float padding = 0,
             HorizontalAlignment align = HorizontalAlignment.Left, bool autoSize = true)
             => (Element)n.Update(children, default, autoSize, default, RectangleAnchor.Center, spacing, padding, align, 1, false, false,
-                null, null, out _, out _);
+                null, null, true, out _, out _);
 
         private static Element Row(RowNode n, Spread<IElement?> children, float spacing = 0, float padding = 0,
             VerticalAlignment align = VerticalAlignment.Top, bool autoSize = true)
             => (Element)n.Update(children, default, autoSize, default, RectangleAnchor.Center, spacing, padding, align, 1, false, false,
-                null, null, out _, out _);
+                null, null, true, out _, out _);
 
         [Test]
         public void Group_UnconnectedInputsSkipped_DefaultsAndFeedback()
@@ -140,7 +140,7 @@ namespace VL.Qt.Tests
             {
                 var children = rects.Select((r, i) => (Element?)r.Update(new Vector2(1, 0.5f), default,
                     RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false,
-                    null, null, out _, out _)).ToArray();
+                    null, null, true, out _, out _)).ToArray();
                 var e = Column(column, S(children), spacing: spacing, align: HorizontalAlignment.Center);
                 sink.Clear();
                 rec.Update(e, Space.DIPTopLeft);

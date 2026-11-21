@@ -55,6 +55,7 @@ namespace VL.Qt.Audio
         /// <param name="debug">Debug overlay for this element only (not its children; the Renderer's Debug shows all). Does not affect layout or hit-testing.</param>
         /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
         /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Without effect the element has no layer.</param>
+        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
         /// <param name="audio">The sound of the video, one signal per channel (stereo), at the sample rate of the VL.Audio engine. Silent without a file, without an audio track and while paused.</param>
         /// <param name="position">Playback position in seconds (0 until loaded; last frame).</param>
         /// <param name="duration">Duration of the media in seconds (0 until loaded or without a file; last frame).</param>
@@ -81,6 +82,7 @@ namespace VL.Qt.Audio
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             out IReadOnlyList<AudioSignal> audio,
             out float position,
             out float duration,
@@ -96,7 +98,7 @@ namespace VL.Qt.Audio
             // Volume goes to the signal; Qt's own output is off while a tap is set. Without a tap (refused) the element is
             // muted, so the sound never comes out of two places.
             var element = _node.Describe(
-                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
+                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
                 new VideoNode.Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, _tap is null ? 0f : 1f, fillMode, _tap?.Id ?? 0),
                 out measuredSize, out sceneBounds);
             position = _node.Feedback.MediaPosition();

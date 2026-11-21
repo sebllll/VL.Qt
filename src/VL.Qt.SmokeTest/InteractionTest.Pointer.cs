@@ -47,7 +47,7 @@ public static partial class InteractionTest
         public void Frame()
         {
             var e = _rect.Update(Bounds.Sz(), Bounds.Tr(), RectangleAnchor.TopLeft, new Color4(0.2f, 0.4f, 0.8f, 1), 0,
-                new Color4(0, 0, 0, 1), 0, 1, false, false, Chain(), null, out _, out SceneBounds);
+                new Color4(0, 0, 0, 1), 0, 1, false, false, Chain(), null, true, out _, out SceneBounds);
             _cmd.Reset();
             _rec.Update((Element)e, Space.DIPTopLeft);
             if (_cmd.Length > 0)

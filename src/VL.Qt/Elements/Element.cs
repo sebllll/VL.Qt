@@ -25,6 +25,7 @@ namespace VL.Qt.Elements
             Opacity = common.Opacity;
             Clip = common.Clip;
             Debug = common.Debug;
+            Visible = common.Enabled;
             Interaction = common.Interaction;
             Effect = common.Effect;
             Feedback = feedback;
@@ -47,6 +48,12 @@ namespace VL.Qt.Elements
 
         /// <summary>Draws the debug overlay for this element only (not recursive).</summary>
         public bool Debug { get; init; }
+
+        /// <summary>
+        /// The Enabled pin: false takes the element out of the scene (Qt's visible: not drawn, no input, no space in
+        /// Row/Column). Named after the Qt property because the widgets already have an <c>Enabled</c> of their own (greyed out).
+        /// </summary>
+        public bool Visible { get; init; } = true;
         internal FeedbackSlot Feedback { get; init; }
 
         /// <summary>

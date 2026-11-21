@@ -47,7 +47,7 @@ namespace VL.Qt.Shaders
         public static readonly ImmutableHashSet<string> ReservedPinNames = ImmutableHashSet.Create(
             StringComparer.OrdinalIgnoreCase,
             "Input", "Blending", "Mesh Resolution", "Size", "Auto Size", "Transform", "Anchor", "Opacity", "Clip", "Debug",
-            "Interaction", "Effect", "Output", "Measured Size", "Scene Bounds", "Error");
+            "Interaction", "Effect", "Enabled", "Output", "Measured Size", "Scene Bounds", "Error");
 
         // Used only when the shader does not compile: keeps the Input pin (and its link) through a typo.
         private static readonly Regex s_sourceSampler = new(@"\buniform\s+sampler2D\s+source\b", RegexOptions.CultureInvariant);

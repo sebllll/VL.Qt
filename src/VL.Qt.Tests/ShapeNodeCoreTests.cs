@@ -131,7 +131,7 @@ namespace VL.Qt.Tests
             using var line = new LineNode(_ => new Removal(this));
             Shape Line(Vector2 to, float strokeWidth = 0.05f)
                 => (Shape)line.Update(new Vector2(0.5f, 0.5f), to, Matrix.Identity, Color4.White, strokeWidth, ShapeCap.Flat, Spread<float>.Empty,
-                    0, 0, 1, 0, 1, false, false, null, null, out _, out _);
+                    0, 0, 1, 0, 1, false, false, null, null, true, out _, out _);
 
             var a = Line(new Vector2(2.5f, 1.5f));
             Assert.That(a.Points.Count, Is.EqualTo(2));

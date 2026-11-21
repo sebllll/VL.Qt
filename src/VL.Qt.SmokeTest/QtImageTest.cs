@@ -103,7 +103,7 @@ public static class QtImageTest
             var children = ImmutableArray.CreateBuilder<Element>(101);
             for (int i = 0; i < nodes.Length; i++)
                 children.Add((Element)nodes[i].Update(new Vector2(0.6f, 0.2f), Matrix.Translation(i % 10 * 0.7f, i / 10 * 0.3f, 0), RectangleAnchor.TopLeft,
-                    shared, ImageFillMode.Stretch, false, 1, false, false, null, null, out _, out _));
+                    shared, ImageFillMode.Stretch, false, 1, false, false, null, null, true, out _, out _));
             children.Add(new VL.Qt.Elements.Image { Size = new Vector2(1, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 3.2f, 0), Source = extra, Smooth = false });
             cmd.Reset();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);

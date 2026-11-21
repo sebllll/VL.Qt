@@ -29,7 +29,7 @@ namespace VL.Qt.Tests
         private static Element Path(PathNode n, QtPath? path, out Vector2 size)
         {
             var e = n.Update(path, default, new Color4(0, 0, 0, 0), Color4.White, 0.05f, ShapeCap.Flat, ShapeJoin.Miter, 4, Spread<float>.Empty,
-                0, 0, 1, 0, ShapeFillRule.NonZero, 1, false, false, null, null, out size, out _);
+                0, 0, 1, 0, ShapeFillRule.NonZero, 1, false, false, null, null, true, out size, out _);
             return (Element)e;
         }
 

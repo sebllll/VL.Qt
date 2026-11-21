@@ -331,7 +331,7 @@ namespace VL.Qt.Tests
             void Run()
             {
                 var chain = hoverNode.Update(null, hovered);
-                var e = rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false, chain, null, out _, out _);
+                var e = rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false, chain, null, true, out _, out _);
                 writer.Reset();
                 rec.Update((Element)e, Space.DIPTopLeft);
                 writer.EndFrame();
@@ -407,7 +407,7 @@ namespace VL.Qt.Tests
             using var rect = new RectangleNode(_ => new Removal());
             using var hoverNode = new HoverNode(_ => new Removal());
             Element Run(Interaction? i) => (Element)rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0,
-                Color4.Black, 0, 1, false, false, i, null, out _, out _);
+                Color4.Black, 0, 1, false, false, i, null, true, out _, out _);
 
             var chain = hoverNode.Update(null, null);
             var e1 = Run(chain);
@@ -975,7 +975,7 @@ namespace VL.Qt.Tests
                 chain = wheelNode.Update(chain, delta, wheelValue, PointerDevices.All);
                 chain = dragNode.Update(chain, dragging, dragDelta, true, DragAxis.Horizontal, new Vector2(-1, 0), new Vector2(1, 0),
                     PointerButtons.Left, PointerDevices.All);
-                var e = rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false, chain, null, out _, out _);
+                var e = rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false, chain, null, true, out _, out _);
                 writer.Reset();
                 rec.Update((Element)e, Space.DIPTopLeft);
                 writer.EndFrame();
