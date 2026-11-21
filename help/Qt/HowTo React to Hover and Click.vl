@@ -407,7 +407,7 @@
           </Node>
           <Pad Id="SMLTNIePOcbN5xXm15WYGT" Comment="" Bounds="589,244,35,28" ShowValueBox="true" isIOBox="true" />
           <Pad Id="B9SHYNiZoSOOar6psYT271" Comment="Buttons" Bounds="561,294,67,15" ShowValueBox="true" isIOBox="true" Value="Right">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="PointerButtons" />
             </p:TypeAnnotation>
           </Pad>

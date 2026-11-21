@@ -1,6 +1,6 @@
 #include "scene/measure.h"
 #include "effects/effect_chain.h"
-#include "qmlitem.h"
+#include "user_qml/qml_item.h"
 #include "scene/scene.h"
 
 #include <QtCore/QByteArray>

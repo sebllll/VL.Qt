@@ -1,7 +1,7 @@
 ﻿namespace VL.Qt.Elements
 {
     /// <summary>Reference from an element description to one slot of a feedback. Default = no feedback.</summary>
-    public readonly record struct FeedbackSlot(ElementFeedback? Feedback, int Index)
+    internal readonly record struct FeedbackSlot(ElementFeedback? Feedback, int Index)
     {
         public bool IsNone => Feedback is null;
 

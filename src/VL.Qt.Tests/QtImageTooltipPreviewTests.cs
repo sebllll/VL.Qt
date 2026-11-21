@@ -1,6 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 using VL.Lib.Basics.Imaging;
+using VL.Qt.Images;
 using VL.Qt.Nodes;
 using VL.Qt.Wire;
 

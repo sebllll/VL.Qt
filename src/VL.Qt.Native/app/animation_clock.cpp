@@ -8,6 +8,8 @@
 // QAbstractAnimationTimer / QUnifiedTimer: the keep-alive timer of the vvvv animation clock (VlqtAnimationDriver).
 #include <QtCore/private/qabstractanimation_p.h>
 
+#include <cmath>
+
 namespace {
 
 using vlqt::fail;
@@ -24,6 +26,7 @@ class VlqtAnimationDriver : public QAnimationDriver
 {
 public:
     qint64 elapsed() const override { return m_ms - m_startMs; }
+    // seconds is finite and in range (vlqt::clock::advance): the cast to qint64 is undefined behaviour otherwise.
     void setTime(double seconds) { m_ms = qint64(seconds * 1000.0); }
 protected:
     void start() override
@@ -35,6 +38,7 @@ private:
     qint64 m_ms = 0;
     qint64 m_startMs = 0;
 };
+// The driver and the keep-alive timer live as long as the process, like the QGuiApplication: never deleted.
 VlqtAnimationDriver* g_driver = nullptr;
 
 // An animation timer that is always registered and never paused: QUnifiedTimer then never stops the driver (no
@@ -60,24 +64,31 @@ void install()
     QUnifiedTimer::startAnimationTimer(new VlqtKeepAlive());
 }
 
+int advance(double seconds)
+{
+    if (!g_driver)
+        return fail(VLQT_ERR_NOT_INITIALIZED, "advance_animations: app not initialized");
+    // A NaN, an infinite or a huge time of a broken clock would overflow the conversion to milliseconds.
+    const double ms = seconds * 1000.0;
+    if (!std::isfinite(ms) || std::fabs(ms) >= 9.0e18)
+        return fail(VLQT_ERR_BAD_ARGUMENT, "advance_animations: seconds is not a finite time");
+    // An animation started since the last tick (in the apply, e.g. a QML Behavior retargeted by a property set every
+    // frame) enters the running list of QAnimationTimer only through a queued startAnimations() call. Without this the
+    // call ran in processEvents after the tick, so an animation restarted every frame was never advanced and stood
+    // still. Delivering the queued calls first gives it this tick, like Qt's own loop does before a vsync tick.
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    g_driver->setTime(seconds);
+    g_driver->advance();
+    return VLQT_OK;
+}
+
 } // namespace vlqt::clock
 
 extern "C" {
 
 VLQT_API int vlqt_app_advance_animations(double seconds)
 {
-    return guarded([&]() -> int {
-        if (!g_driver)
-            return fail(VLQT_ERR_NOT_INITIALIZED, "driver_advance: app not initialized");
-        // An animation started since the last tick (in the apply, e.g. a QML Behavior retargeted by a property set every
-        // frame) enters the running list of QAnimationTimer only through a queued startAnimations() call. Without this the
-        // call ran in processEvents after the tick, so an animation restarted every frame was never advanced and stood
-        // still. Delivering the queued calls first gives it this tick, like Qt's own loop does before a vsync tick.
-        QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
-        g_driver->setTime(seconds);
-        g_driver->advance();
-        return 0;
-    });
+    return guarded([&]() -> int { return vlqt::clock::advance(seconds); });
 }
 
 } // extern "C"

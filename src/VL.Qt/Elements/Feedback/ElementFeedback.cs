@@ -12,7 +12,7 @@ namespace VL.Qt.Elements
     /// <see cref="FeedbackState"/> per feedback slot. Plain data: filled from the events of Qt one frame after Qt produced
     /// them, read by the element node. No reference to Qt or native objects. Main thread only.
     /// </summary>
-    public sealed class ElementFeedback
+    internal sealed class ElementFeedback
     {
         private readonly List<FeedbackState> _states = new();
 

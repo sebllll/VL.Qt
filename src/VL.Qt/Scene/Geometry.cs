@@ -8,7 +8,7 @@ namespace VL.Qt
     /// element's own size. Lengths between units and Qt logical pixels depend on the <see cref="Space"/> and the scene
     /// and live in <see cref="SpaceMapping"/>.
     /// </summary>
-    public static class Geometry
+    internal static class Geometry
     {
         /// <summary>
         /// Anchor as sent with <c>ANCHOR</c> (i32, Qt::Alignment: AlignLeft 0x1 / AlignRight 0x2 / AlignHCenter 0x4 |

@@ -176,12 +176,12 @@
             </p:TypeAnnotation>
           </Pad>
           <Pad Id="KxzKbrx5tk1PnZtXad2Nr3" Comment="Filter" Bounds="312,411,58,15" ShowValueBox="true" isIOBox="true">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="SamplerFilter" />
             </p:TypeAnnotation>
           </Pad>
           <Pad Id="VpsAhvIBM65NaEkLMAA8JW" Comment="Address " Bounds="456,411,59,15" ShowValueBox="true" isIOBox="true" Value="Clamp">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="SamplerAddress" />
             </p:TypeAnnotation>
           </Pad>

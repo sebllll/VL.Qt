@@ -194,10 +194,25 @@ def load_mapping(path):
 
 # ---- node-API snapshot ---------------------------------------------------------------------------------------------
 
+def import_category(attribute, ns):
+    """Category of the types of namespace ns under [assembly: ImportAsIs(Namespace, Category)], computed as VL.Core does
+    (ImportAsIsAttribute.GetCategory); None for a namespace the attribute does not import."""
+    root, cat = attribute
+    if root and not (ns == root or ns.startswith(root + '.')):
+        return None
+    rest = ns[len(root) + 1:] if root else ns
+    return '.'.join(x for x in (cat, rest) if x)
+
+
 def load_api(path):
     """Node name -> pin names (process nodes, generated nodes, operations) and the categories of the snapshot."""
     lines = [line.rstrip('\n').split(' | ') for line in open(path, encoding='utf-8')]
-    nodes, cats, process = {}, set(), {}
+    nodes, cats, process, imports = {}, set(), {}, {}
+    for f in lines:
+        if len(f) >= 3 and f[1] == 'assembly' and f[2].startswith('attr ImportAsIs'):
+            ns = re.search(r'Namespace\s*=\s*"([^"]*)"', f[2])
+            cat = re.search(r'Category\s*=\s*"([^"]*)"', f[2])
+            imports[f[0]] = (ns.group(1) if ns else '', cat.group(1) if cat else '')
     for f in lines:
         if len(f) >= 3 and f[2].startswith('attr ProcessNode('):
             name = re.search(r'Name\s*=\s*"([^"]+)"', f[2])
@@ -219,8 +234,11 @@ def load_api(path):
             continue
         typ = f[1]
         if f[2].startswith('type '):
-            cats.add(typ.rpartition('.')[0])
-            cats.add(typ)
+            ns, _, name = typ.rpartition('.')
+            cat = import_category(imports.get(f[0], ('', '')), ns)
+            if cat is not None:
+                cats.add(cat)
+                cats.add(f'{cat}.{name}' if cat else name)
         if typ in process:
             if (f[2] == 'ctor' or f[2] == 'method Update') and len(f) >= 4:
                 pins = nodes.setdefault(process[typ], set())

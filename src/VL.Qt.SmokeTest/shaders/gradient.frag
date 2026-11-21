@@ -1,5 +1,5 @@
 #version 440
-// Generative animated gradient (builtin:gradient), no Input needed.
+// Generative animated gradient, no Input needed. SmokeTest fixture (ShaderEffectTest), loaded as text, not shipped.
 // Uniform block (std140): qt_Matrix 0, qt_Opacity 64, time 68, color 80 (vec4 aligned to 16), size 96.
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;

@@ -3,6 +3,7 @@ using VL.Core;
 using VL.Core.Import;
 using VL.Lib.Animation;
 using VL.Lib.Basics.Video;
+using VL.Qt.Images;
 
 namespace VL.Qt.Nodes
 {

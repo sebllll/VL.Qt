@@ -1,24 +1,20 @@
 VL.Qt | Stride.Core.AssemblyProcessedAttribute | ctor | new
 VL.Qt | Stride.Core.AssemblyProcessedAttribute | type class : System.Attribute
 VL.Qt | Stride.Core.DataSerializers.VL_QtSerializerFactory | type static class
-VL.Qt | VL.Qt.Elements.Button | ctor | new
-VL.Qt | VL.Qt.Elements.Button | property AutoRepeat | bool { get; init }
-VL.Qt | VL.Qt.Elements.Button | property AutoSize | bool { get; init }
-VL.Qt | VL.Qt.Elements.Button | property Enabled | bool { get; init }
-VL.Qt | VL.Qt.Elements.Button | property Text | string { get; init }
-VL.Qt | VL.Qt.Elements.Button | type sealed class : VL.Qt.Elements.Element
-VL.Qt | VL.Qt.Elements.CheckBox | ctor | new
-VL.Qt | VL.Qt.Elements.CheckBox | property AutoSize | bool { get; init }
-VL.Qt | VL.Qt.Elements.CheckBox | property Enabled | bool { get; init }
-VL.Qt | VL.Qt.Elements.CheckBox | property Value | bool { get; init }
-VL.Qt | VL.Qt.Elements.CheckBox | type sealed class : VL.Qt.Elements.Element
-VL.Qt | VL.Qt.Elements.Column | ctor | new
-VL.Qt | VL.Qt.Elements.Column | property AutoSize | bool { get; init }
-VL.Qt | VL.Qt.Elements.Column | property ChildAlignment | VL.Qt.Elements.HorizontalAlignment { get; init }
-VL.Qt | VL.Qt.Elements.Column | property Children | override System.Collections.Immutable.ImmutableArray<VL.Qt.Elements.Element> { get; init }
-VL.Qt | VL.Qt.Elements.Column | property Padding | float { get; init }
-VL.Qt | VL.Qt.Elements.Column | property Spacing | float { get; init }
-VL.Qt | VL.Qt.Elements.Column | type sealed class : VL.Qt.Elements.Element
+VL.Qt | VL.Qt.Elements.BlendMode | member Add = 4
+VL.Qt | VL.Qt.Elements.BlendMode | member ColorBurn = 12
+VL.Qt | VL.Qt.Elements.BlendMode | member ColorDodge = 11
+VL.Qt | VL.Qt.Elements.BlendMode | member Darken = 7
+VL.Qt | VL.Qt.Elements.BlendMode | member Difference = 6
+VL.Qt | VL.Qt.Elements.BlendMode | member HardLight = 10
+VL.Qt | VL.Qt.Elements.BlendMode | member Lighten = 8
+VL.Qt | VL.Qt.Elements.BlendMode | member Multiply = 1
+VL.Qt | VL.Qt.Elements.BlendMode | member Normal = 0
+VL.Qt | VL.Qt.Elements.BlendMode | member Overlay = 3
+VL.Qt | VL.Qt.Elements.BlendMode | member Screen = 2
+VL.Qt | VL.Qt.Elements.BlendMode | member SoftLight = 9
+VL.Qt | VL.Qt.Elements.BlendMode | member Subtract = 5
+VL.Qt | VL.Qt.Elements.BlendMode | type enum
 VL.Qt | VL.Qt.Elements.DragAxis | member Both = 0
 VL.Qt | VL.Qt.Elements.DragAxis | member Horizontal = 1
 VL.Qt | VL.Qt.Elements.DragAxis | member Vertical = 2
@@ -31,199 +27,12 @@ VL.Qt | VL.Qt.Elements.Element | property Children | virtual System.Collections.
 VL.Qt | VL.Qt.Elements.Element | property Clip | bool { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Debug | bool { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Effect | VL.Qt.Elements.Effect { get; init }
-VL.Qt | VL.Qt.Elements.Element | property Feedback | VL.Qt.Elements.FeedbackSlot { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Interaction | VL.Qt.Elements.Interaction { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Opacity | float { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Size | Stride.Core.Mathematics.Vector2 { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Style | VL.Qt.Styles.Style { get; init }
 VL.Qt | VL.Qt.Elements.Element | property Transform | Stride.Core.Mathematics.Matrix { get; init }
-VL.Qt | VL.Qt.Elements.Element | property Type | VL.Qt.Elements.ElementType { get }
 VL.Qt | VL.Qt.Elements.Element | type abstract class
-VL.Qt | VL.Qt.Elements.ElementFeedback | ctor | new
-VL.Qt | VL.Qt.Elements.ElementFeedback | method DragDelta | Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.ElementFeedback | method DragDelta | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method DragDelta | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method DragDelta | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method DragUpdates | int
-VL.Qt | VL.Qt.Elements.ElementFeedback | method DragUpdates | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method DragUpdates | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method DragUpdates | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method IsActive | bool
-VL.Qt | VL.Qt.Elements.ElementFeedback | method IsActive | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method IsActive | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method IsActive | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method IsHovered | bool
-VL.Qt | VL.Qt.Elements.ElementFeedback | method IsHovered | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method IsHovered | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method IsHovered | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method IsPressed | bool
-VL.Qt | VL.Qt.Elements.ElementFeedback | method IsPressed | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method IsPressed | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method IsPressed | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method MeasuredSize | Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.ElementFeedback | method MeasuredSize | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method MeasuredSize | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method MeasuredSize | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaDuration | float
-VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaDuration | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaDuration | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaDuration | pin Output | out float | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaPosition | float
-VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaPosition | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaPosition | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method MediaPosition | pin Output | out float | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchPivot | Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchPivot | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchPivot | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchPivot | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchRotation | float
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchRotation | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchRotation | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchRotation | pin Output | out float | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchScale | float
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchScale | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchScale | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchScale | pin Output | out float | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchTranslation | Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchTranslation | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchTranslation | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchTranslation | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchUpdates | int
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchUpdates | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchUpdates | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PinchUpdates | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PointerPosition | Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PointerPosition | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PointerPosition | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method PointerPosition | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method Resize | order Count
-VL.Qt | VL.Qt.Elements.ElementFeedback | method Resize | pin Count | in int | (count)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method Resize | void
-VL.Qt | VL.Qt.Elements.ElementFeedback | method SceneBounds | Stride.Core.Mathematics.RectangleF
-VL.Qt | VL.Qt.Elements.ElementFeedback | method SceneBounds | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method SceneBounds | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method SceneBounds | pin Output | out Stride.Core.Mathematics.RectangleF | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeClicks | int
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeClicks | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeClicks | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeClicks | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeLongPresses | int
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeLongPresses | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeLongPresses | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeLongPresses | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeValue<T> | bool
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeValue<T> | order Value, Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeValue<T> | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeValue<T> | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeValue<T> | pin Value | out T | (value)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeWheel | Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeWheel | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeWheel | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TakeWheel | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TapCount | int
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TapCount | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TapCount | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TapCount | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchPoints | VL.Lib.Collections.Spread<VL.Qt.Elements.TouchPoint>
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchPoints | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchPoints | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchPoints | pin Output | out VL.Lib.Collections.Spread<VL.Qt.Elements.TouchPoint> | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchUpdates | int
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchUpdates | order Index, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchUpdates | pin Index | in int = 0 | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TouchUpdates | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TryGet | bool
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TryGet | order Index, State, Output
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TryGet | pin Index | in int | (index)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TryGet | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.ElementFeedback | method TryGet | pin State | out VL.Qt.Elements.FeedbackState | (state)
-VL.Qt | VL.Qt.Elements.ElementFeedback | property Count | int { get }
-VL.Qt | VL.Qt.Elements.ElementFeedback | property Error | string { get }
-VL.Qt | VL.Qt.Elements.ElementFeedback | property Item[int] | VL.Qt.Elements.FeedbackState { get }
-VL.Qt | VL.Qt.Elements.ElementFeedback | property Warning | string { get }
-VL.Qt | VL.Qt.Elements.ElementFeedback | type sealed class
-VL.Qt | VL.Qt.Elements.ElementType | member Button = 10
-VL.Qt | VL.Qt.Elements.ElementType | member CheckBox = 12
-VL.Qt | VL.Qt.Elements.ElementType | member Column = 7
-VL.Qt | VL.Qt.Elements.ElementType | member Image = 5
-VL.Qt | VL.Qt.Elements.ElementType | member Item = 1
-VL.Qt | VL.Qt.Elements.ElementType | member Qml = 25
-VL.Qt | VL.Qt.Elements.ElementType | member Rectangle = 3
-VL.Qt | VL.Qt.Elements.ElementType | member Row = 6
-VL.Qt | VL.Qt.Elements.ElementType | member Shader = 24
-VL.Qt | VL.Qt.Elements.ElementType | member Shape = 26
-VL.Qt | VL.Qt.Elements.ElementType | member Slider = 14
-VL.Qt | VL.Qt.Elements.ElementType | member SpinBox = 11
-VL.Qt | VL.Qt.Elements.ElementType | member Switch = 13
-VL.Qt | VL.Qt.Elements.ElementType | member Text = 4
-VL.Qt | VL.Qt.Elements.ElementType | member TextField = 15
-VL.Qt | VL.Qt.Elements.ElementType | member Video = 9
-VL.Qt | VL.Qt.Elements.ElementType | type enum
-VL.Qt | VL.Qt.Elements.FeedbackSlot | ctor | new
-VL.Qt | VL.Qt.Elements.FeedbackSlot | ctor | order Feedback, Index
-VL.Qt | VL.Qt.Elements.FeedbackSlot | ctor | pin Feedback | in VL.Qt.Elements.ElementFeedback | (Feedback)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | ctor | pin Index | in int | (Index)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | implements System.IEquatable<VL.Qt.Elements.FeedbackSlot>
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method Deconstruct | order Feedback, Index
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method Deconstruct | pin Feedback | out VL.Qt.Elements.ElementFeedback | (Feedback)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method Deconstruct | pin Index | out int | (Index)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method Deconstruct | void
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(VL.Qt.Elements.FeedbackSlot) | bool
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(VL.Qt.Elements.FeedbackSlot) | order Other, Output
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(VL.Qt.Elements.FeedbackSlot) | pin Other | in VL.Qt.Elements.FeedbackSlot | (other)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(VL.Qt.Elements.FeedbackSlot) | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(object) | order Obj, Output
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(object) | override bool
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(object) | pin Obj | in object | (obj)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method Equals(object) | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method GetHashCode | order Output
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method GetHashCode | override int
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method GetHashCode | pin Output | out int | (return)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method ToString | order Output
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method ToString | override string
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method ToString | pin Output | out string | (return)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Equality | order Left, Right, Output
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Equality | pin Left | in VL.Qt.Elements.FeedbackSlot | (left)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Equality | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Equality | pin Right | in VL.Qt.Elements.FeedbackSlot | (right)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Equality | static bool
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Inequality | order Left, Right, Output
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Inequality | pin Left | in VL.Qt.Elements.FeedbackSlot | (left)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Inequality | pin Output | out bool | (return)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Inequality | pin Right | in VL.Qt.Elements.FeedbackSlot | (right)
-VL.Qt | VL.Qt.Elements.FeedbackSlot | method op_Inequality | static bool
-VL.Qt | VL.Qt.Elements.FeedbackSlot | property Feedback | VL.Qt.Elements.ElementFeedback { get; init }
-VL.Qt | VL.Qt.Elements.FeedbackSlot | property Index | int { get; init }
-VL.Qt | VL.Qt.Elements.FeedbackSlot | property IsNone | bool { get }
-VL.Qt | VL.Qt.Elements.FeedbackSlot | property State | VL.Qt.Elements.FeedbackState { get }
-VL.Qt | VL.Qt.Elements.FeedbackSlot | type struct
-VL.Qt | VL.Qt.Elements.FeedbackState | ctor | new
-VL.Qt | VL.Qt.Elements.FeedbackState | property ApplyError | string { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property BuildError | string { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property DragDelta | Stride.Core.Mathematics.Vector2 { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property DragUpdates | int { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property Error | string { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property IsActive | bool { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property IsHovered | bool { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property IsPressed | bool { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property MeasuredSize | Stride.Core.Mathematics.Vector2 { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property MediaDuration | float { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property MediaPosition | float { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property PendingClicks | int { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property PendingLongPresses | int { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property PendingWheel | Stride.Core.Mathematics.Vector2 { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property PinchPivot | Stride.Core.Mathematics.Vector2 { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property PinchRotation | float { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property PinchScale | float { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property PinchTranslation | Stride.Core.Mathematics.Vector2 { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property PinchUpdates | int { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property PointerPosition | Stride.Core.Mathematics.Vector2 { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property SceneBounds | Stride.Core.Mathematics.RectangleF { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property TapCount | int { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property TouchPoints | VL.Lib.Collections.Spread<VL.Qt.Elements.TouchPoint> { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property TouchUpdates | int { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | property Warning | string { get; set }
-VL.Qt | VL.Qt.Elements.FeedbackState | type sealed class
 VL.Qt | VL.Qt.Elements.FontWeight | member Black = 900
 VL.Qt | VL.Qt.Elements.FontWeight | member Bold = 700
 VL.Qt | VL.Qt.Elements.FontWeight | member DemiBold = 600
@@ -234,28 +43,21 @@ VL.Qt | VL.Qt.Elements.FontWeight | member Medium = 500
 VL.Qt | VL.Qt.Elements.FontWeight | member Normal = 400
 VL.Qt | VL.Qt.Elements.FontWeight | member Thin = 100
 VL.Qt | VL.Qt.Elements.FontWeight | type enum
-VL.Qt | VL.Qt.Elements.Group | ctor | new
-VL.Qt | VL.Qt.Elements.Group | property AutoSize | bool { get; init }
-VL.Qt | VL.Qt.Elements.Group | property Children | override System.Collections.Immutable.ImmutableArray<VL.Qt.Elements.Element> { get; init }
-VL.Qt | VL.Qt.Elements.Group | type sealed class : VL.Qt.Elements.Element
 VL.Qt | VL.Qt.Elements.HorizontalAlignment | member Center = 4
 VL.Qt | VL.Qt.Elements.HorizontalAlignment | member Left = 1
 VL.Qt | VL.Qt.Elements.HorizontalAlignment | member Right = 2
 VL.Qt | VL.Qt.Elements.HorizontalAlignment | type enum
 VL.Qt | VL.Qt.Elements.IElement | type interface
-VL.Qt | VL.Qt.Elements.Image | ctor | new
-VL.Qt | VL.Qt.Elements.Image | property FillMode | VL.Qt.Elements.ImageFillMode { get; init }
-VL.Qt | VL.Qt.Elements.Image | property Smooth | bool { get; init }
-VL.Qt | VL.Qt.Elements.Image | property Source | VL.Qt.QtImage { get; init }
-VL.Qt | VL.Qt.Elements.Image | type sealed class : VL.Qt.Elements.Element
 VL.Qt | VL.Qt.Elements.ImageFillMode | member Crop = 2
 VL.Qt | VL.Qt.Elements.ImageFillMode | member Fit = 1
 VL.Qt | VL.Qt.Elements.ImageFillMode | member Stretch = 0
 VL.Qt | VL.Qt.Elements.ImageFillMode | member Tile = 3
 VL.Qt | VL.Qt.Elements.ImageFillMode | type enum
-VL.Qt | VL.Qt.Elements.Interaction | property Feedback | VL.Qt.Elements.FeedbackSlot { get }
 VL.Qt | VL.Qt.Elements.Interaction | property Previous | VL.Qt.Elements.Interaction { get }
 VL.Qt | VL.Qt.Elements.Interaction | type abstract class
+VL.Qt | VL.Qt.Elements.LabelPosition | member Left = 0
+VL.Qt | VL.Qt.Elements.LabelPosition | member Top = 1
+VL.Qt | VL.Qt.Elements.LabelPosition | type enum
 VL.Qt | VL.Qt.Elements.PointerButtons | attr Flags
 VL.Qt | VL.Qt.Elements.PointerButtons | member Back = 8
 VL.Qt | VL.Qt.Elements.PointerButtons | member Forward = 16
@@ -272,10 +74,6 @@ VL.Qt | VL.Qt.Elements.PointerDevices | member Pen = 56
 VL.Qt | VL.Qt.Elements.PointerDevices | member TouchPad = 4
 VL.Qt | VL.Qt.Elements.PointerDevices | member TouchScreen = 2
 VL.Qt | VL.Qt.Elements.PointerDevices | type enum
-VL.Qt | VL.Qt.Elements.QmlElement | ctor | new
-VL.Qt | VL.Qt.Elements.QmlElement | property AutoSize | bool { get; init }
-VL.Qt | VL.Qt.Elements.QmlElement | property Source | string { get; init }
-VL.Qt | VL.Qt.Elements.QmlElement | type sealed class : VL.Qt.Elements.Element
 VL.Qt | VL.Qt.Elements.QmlSignal | ctor | new
 VL.Qt | VL.Qt.Elements.QmlSignal | ctor | order Name, Arguments
 VL.Qt | VL.Qt.Elements.QmlSignal | ctor | pin Arguments | in VL.Lib.Collections.Spread<object> | (Arguments)
@@ -312,19 +110,6 @@ VL.Qt | VL.Qt.Elements.QmlSignal | method op_Inequality | static bool
 VL.Qt | VL.Qt.Elements.QmlSignal | property Arguments | VL.Lib.Collections.Spread<object> { get; init }
 VL.Qt | VL.Qt.Elements.QmlSignal | property Name | string { get; init }
 VL.Qt | VL.Qt.Elements.QmlSignal | type sealed class
-VL.Qt | VL.Qt.Elements.Rectangle | ctor | new
-VL.Qt | VL.Qt.Elements.Rectangle | property Fill | Stride.Core.Mathematics.Color4 { get; init }
-VL.Qt | VL.Qt.Elements.Rectangle | property Radius | float { get; init }
-VL.Qt | VL.Qt.Elements.Rectangle | property StrokeColor | Stride.Core.Mathematics.Color4 { get; init }
-VL.Qt | VL.Qt.Elements.Rectangle | property StrokeWidth | float { get; init }
-VL.Qt | VL.Qt.Elements.Rectangle | type sealed class : VL.Qt.Elements.Element
-VL.Qt | VL.Qt.Elements.Row | ctor | new
-VL.Qt | VL.Qt.Elements.Row | property AutoSize | bool { get; init }
-VL.Qt | VL.Qt.Elements.Row | property ChildAlignment | VL.Qt.Elements.VerticalAlignment { get; init }
-VL.Qt | VL.Qt.Elements.Row | property Children | override System.Collections.Immutable.ImmutableArray<VL.Qt.Elements.Element> { get; init }
-VL.Qt | VL.Qt.Elements.Row | property Padding | float { get; init }
-VL.Qt | VL.Qt.Elements.Row | property Spacing | float { get; init }
-VL.Qt | VL.Qt.Elements.Row | type sealed class : VL.Qt.Elements.Element
 VL.Qt | VL.Qt.Elements.Sampler | ctor | new
 VL.Qt | VL.Qt.Elements.Sampler | implements System.IEquatable<VL.Qt.Elements.Sampler>
 VL.Qt | VL.Qt.Elements.Sampler | method Equals(VL.Qt.Elements.Sampler) | bool
@@ -367,40 +152,6 @@ VL.Qt | VL.Qt.Elements.SamplerMipFilter | member Linear = 2
 VL.Qt | VL.Qt.Elements.SamplerMipFilter | member None = 0
 VL.Qt | VL.Qt.Elements.SamplerMipFilter | member Point = 1
 VL.Qt | VL.Qt.Elements.SamplerMipFilter | type enum
-VL.Qt | VL.Qt.Elements.Shader | ctor | new
-VL.Qt | VL.Qt.Elements.Shader | property AutoSize | bool { get; init }
-VL.Qt | VL.Qt.Elements.Shader | property Blending | bool { get; init }
-VL.Qt | VL.Qt.Elements.Shader | property Children | override System.Collections.Immutable.ImmutableArray<VL.Qt.Elements.Element> { get }
-VL.Qt | VL.Qt.Elements.Shader | property Input | VL.Qt.Elements.Element { get; init }
-VL.Qt | VL.Qt.Elements.Shader | property InputSampler | VL.Qt.Elements.Sampler { get; init }
-VL.Qt | VL.Qt.Elements.Shader | property MeshResolution | Stride.Core.Mathematics.Int2 { get; init }
-VL.Qt | VL.Qt.Elements.Shader | property Uniforms | VL.Lib.Collections.Spread<VL.Qt.Elements.Uniform> { get; init }
-VL.Qt | VL.Qt.Elements.Shader | type sealed class : VL.Qt.Elements.Element
-VL.Qt | VL.Qt.Elements.Shape | ctor | new
-VL.Qt | VL.Qt.Elements.Shape | method ExtentOf(VL.Lib.Collections.Spread<Stride.Core.Mathematics.Vector2>) | order Points, Output
-VL.Qt | VL.Qt.Elements.Shape | method ExtentOf(VL.Lib.Collections.Spread<Stride.Core.Mathematics.Vector2>) | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.Shape | method ExtentOf(VL.Lib.Collections.Spread<Stride.Core.Mathematics.Vector2>) | pin Points | in VL.Lib.Collections.Spread<Stride.Core.Mathematics.Vector2> | (points)
-VL.Qt | VL.Qt.Elements.Shape | method ExtentOf(VL.Lib.Collections.Spread<Stride.Core.Mathematics.Vector2>) | static Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.Shape | method ExtentOf(VL.Qt.Paths.QtPath) | order Path, Output
-VL.Qt | VL.Qt.Elements.Shape | method ExtentOf(VL.Qt.Paths.QtPath) | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Elements.Shape | method ExtentOf(VL.Qt.Paths.QtPath) | pin Path | in VL.Qt.Paths.QtPath | (path)
-VL.Qt | VL.Qt.Elements.Shape | method ExtentOf(VL.Qt.Paths.QtPath) | static Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Elements.Shape | property Cap | VL.Qt.Elements.ShapeCap { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property Closed | bool { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property Dash | VL.Lib.Collections.Spread<float> { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property DashOffset | float { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property Fill | Stride.Core.Mathematics.Color4 { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property FillRule | VL.Qt.Elements.ShapeFillRule { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property Join | VL.Qt.Elements.ShapeJoin { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property MiterLimit | float { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property Path | VL.Qt.Paths.QtPath { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property Points | VL.Lib.Collections.Spread<Stride.Core.Mathematics.Vector2> { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property StrokeColor | Stride.Core.Mathematics.Color4 { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property StrokeWidth | float { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property TrimEnd | float { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property TrimOffset | float { get; init }
-VL.Qt | VL.Qt.Elements.Shape | property TrimStart | float { get; init }
-VL.Qt | VL.Qt.Elements.Shape | type sealed class : VL.Qt.Elements.Element
 VL.Qt | VL.Qt.Elements.ShapeCap | member Flat = 0
 VL.Qt | VL.Qt.Elements.ShapeCap | member Round = 2
 VL.Qt | VL.Qt.Elements.ShapeCap | member Square = 1
@@ -412,48 +163,9 @@ VL.Qt | VL.Qt.Elements.ShapeJoin | member Bevel = 1
 VL.Qt | VL.Qt.Elements.ShapeJoin | member Miter = 0
 VL.Qt | VL.Qt.Elements.ShapeJoin | member Round = 2
 VL.Qt | VL.Qt.Elements.ShapeJoin | type enum
-VL.Qt | VL.Qt.Elements.Slider | ctor | new
-VL.Qt | VL.Qt.Elements.Slider | property AutoSize | bool { get; init }
-VL.Qt | VL.Qt.Elements.Slider | property Enabled | bool { get; init }
-VL.Qt | VL.Qt.Elements.Slider | property Maximum | float { get; init }
-VL.Qt | VL.Qt.Elements.Slider | property Minimum | float { get; init }
-VL.Qt | VL.Qt.Elements.Slider | property Orientation | VL.Qt.Elements.SliderOrientation { get; init }
-VL.Qt | VL.Qt.Elements.Slider | property Step | float { get; init }
-VL.Qt | VL.Qt.Elements.Slider | property Value | float { get; init }
-VL.Qt | VL.Qt.Elements.Slider | type sealed class : VL.Qt.Elements.Element
 VL.Qt | VL.Qt.Elements.SliderOrientation | member Horizontal = 1
 VL.Qt | VL.Qt.Elements.SliderOrientation | member Vertical = 2
 VL.Qt | VL.Qt.Elements.SliderOrientation | type enum
-VL.Qt | VL.Qt.Elements.SpinBox | ctor | new
-VL.Qt | VL.Qt.Elements.SpinBox | property AutoSize | bool { get; init }
-VL.Qt | VL.Qt.Elements.SpinBox | property Editable | bool { get; init }
-VL.Qt | VL.Qt.Elements.SpinBox | property Enabled | bool { get; init }
-VL.Qt | VL.Qt.Elements.SpinBox | property Maximum | int { get; init }
-VL.Qt | VL.Qt.Elements.SpinBox | property Minimum | int { get; init }
-VL.Qt | VL.Qt.Elements.SpinBox | property Step | int { get; init }
-VL.Qt | VL.Qt.Elements.SpinBox | property Value | int { get; init }
-VL.Qt | VL.Qt.Elements.SpinBox | type sealed class : VL.Qt.Elements.Element
-VL.Qt | VL.Qt.Elements.Switch | ctor | new
-VL.Qt | VL.Qt.Elements.Switch | property AutoSize | bool { get; init }
-VL.Qt | VL.Qt.Elements.Switch | property Enabled | bool { get; init }
-VL.Qt | VL.Qt.Elements.Switch | property Value | bool { get; init }
-VL.Qt | VL.Qt.Elements.Switch | type sealed class : VL.Qt.Elements.Element
-VL.Qt | VL.Qt.Elements.Text | ctor | new
-VL.Qt | VL.Qt.Elements.Text | field DefaultFontSize | const float = 0.12
-VL.Qt | VL.Qt.Elements.Text | property Autofit | VL.Qt.Elements.TextAutofit { get; init }
-VL.Qt | VL.Qt.Elements.Text | property Color | Stride.Core.Mathematics.Color4 { get; init }
-VL.Qt | VL.Qt.Elements.Text | property Content | string { get; init }
-VL.Qt | VL.Qt.Elements.Text | property Elide | VL.Qt.Elements.TextElide { get; init }
-VL.Qt | VL.Qt.Elements.Text | property FontFamily | string { get; init }
-VL.Qt | VL.Qt.Elements.Text | property FontSize | float { get; init }
-VL.Qt | VL.Qt.Elements.Text | property HAlign | VL.Qt.Elements.TextHorizontalAlignment { get; init }
-VL.Qt | VL.Qt.Elements.Text | property Italic | bool { get; init }
-VL.Qt | VL.Qt.Elements.Text | property LetterSpacing | float { get; init }
-VL.Qt | VL.Qt.Elements.Text | property LineHeight | float { get; init }
-VL.Qt | VL.Qt.Elements.Text | property VAlign | VL.Qt.Elements.VerticalAlignment { get; init }
-VL.Qt | VL.Qt.Elements.Text | property Weight | VL.Qt.Elements.FontWeight { get; init }
-VL.Qt | VL.Qt.Elements.Text | property Wrap | VL.Qt.Elements.TextWrap { get; init }
-VL.Qt | VL.Qt.Elements.Text | type sealed class : VL.Qt.Elements.Element
 VL.Qt | VL.Qt.Elements.TextAutofit | member Fit = 3
 VL.Qt | VL.Qt.Elements.TextAutofit | member Fixed = 0
 VL.Qt | VL.Qt.Elements.TextAutofit | member HorizontalFit = 1
@@ -464,13 +176,6 @@ VL.Qt | VL.Qt.Elements.TextElide | member Middle = 2
 VL.Qt | VL.Qt.Elements.TextElide | member None = 3
 VL.Qt | VL.Qt.Elements.TextElide | member Right = 1
 VL.Qt | VL.Qt.Elements.TextElide | type enum
-VL.Qt | VL.Qt.Elements.TextField | ctor | new
-VL.Qt | VL.Qt.Elements.TextField | property AutoSize | bool { get; init }
-VL.Qt | VL.Qt.Elements.TextField | property Editable | bool { get; init }
-VL.Qt | VL.Qt.Elements.TextField | property Enabled | bool { get; init }
-VL.Qt | VL.Qt.Elements.TextField | property Placeholder | string { get; init }
-VL.Qt | VL.Qt.Elements.TextField | property Value | string { get; init }
-VL.Qt | VL.Qt.Elements.TextField | type sealed class : VL.Qt.Elements.Element
 VL.Qt | VL.Qt.Elements.TextHorizontalAlignment | member Center = 4
 VL.Qt | VL.Qt.Elements.TextHorizontalAlignment | member Justify = 8
 VL.Qt | VL.Qt.Elements.TextHorizontalAlignment | member Left = 1
@@ -481,6 +186,9 @@ VL.Qt | VL.Qt.Elements.TextWrap | member WordWrap = 1
 VL.Qt | VL.Qt.Elements.TextWrap | member Wrap = 4
 VL.Qt | VL.Qt.Elements.TextWrap | member WrapAnywhere = 3
 VL.Qt | VL.Qt.Elements.TextWrap | type enum
+VL.Qt | VL.Qt.Elements.ToggleLook | member Checkbox = 0
+VL.Qt | VL.Qt.Elements.ToggleLook | member Switch = 1
+VL.Qt | VL.Qt.Elements.ToggleLook | type enum
 VL.Qt | VL.Qt.Elements.TouchPoint | ctor | new
 VL.Qt | VL.Qt.Elements.TouchPoint | ctor | order Id, Position, Pressure, Size
 VL.Qt | VL.Qt.Elements.TouchPoint | ctor | pin Id | in int | (Id)
@@ -554,38 +262,23 @@ VL.Qt | VL.Qt.Elements.VerticalAlignment | member Bottom = 64
 VL.Qt | VL.Qt.Elements.VerticalAlignment | member Center = 128
 VL.Qt | VL.Qt.Elements.VerticalAlignment | member Top = 32
 VL.Qt | VL.Qt.Elements.VerticalAlignment | type enum
-VL.Qt | VL.Qt.Elements.Video | ctor | new
-VL.Qt | VL.Qt.Elements.Video | field MinRate | const float = 0.01
-VL.Qt | VL.Qt.Elements.Video | method ClampRate | order Rate, Output
-VL.Qt | VL.Qt.Elements.Video | method ClampRate | pin Output | out float | (return)
-VL.Qt | VL.Qt.Elements.Video | method ClampRate | pin Rate | in float | (rate)
-VL.Qt | VL.Qt.Elements.Video | method ClampRate | static float
-VL.Qt | VL.Qt.Elements.Video | method ClampVolume | order Volume, Output
-VL.Qt | VL.Qt.Elements.Video | method ClampVolume | pin Output | out float | (return)
-VL.Qt | VL.Qt.Elements.Video | method ClampVolume | pin Volume | in float | (volume)
-VL.Qt | VL.Qt.Elements.Video | method ClampVolume | static float
-VL.Qt | VL.Qt.Elements.Video | property FillMode | VL.Qt.Elements.VideoFillMode { get; init }
-VL.Qt | VL.Qt.Elements.Video | property KeepLastFrame | bool { get; init }
-VL.Qt | VL.Qt.Elements.Video | property Loop | bool { get; init }
-VL.Qt | VL.Qt.Elements.Video | property Path | VL.Lib.IO.Path { get; init }
-VL.Qt | VL.Qt.Elements.Video | property Playing | bool { get; init }
-VL.Qt | VL.Qt.Elements.Video | property Rate | float { get; init }
-VL.Qt | VL.Qt.Elements.Video | property Volume | float { get; init }
-VL.Qt | VL.Qt.Elements.Video | type sealed class : VL.Qt.Elements.Element
 VL.Qt | VL.Qt.Elements.VideoFillMode | member Crop = 2
 VL.Qt | VL.Qt.Elements.VideoFillMode | member Fit = 1
 VL.Qt | VL.Qt.Elements.VideoFillMode | member Stretch = 0
 VL.Qt | VL.Qt.Elements.VideoFillMode | type enum
-VL.Qt | VL.Qt.Geometry | method AnchorOffset | order Size, Anchor, Output
-VL.Qt | VL.Qt.Geometry | method AnchorOffset | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor | (anchor)
-VL.Qt | VL.Qt.Geometry | method AnchorOffset | pin Output | out Stride.Core.Mathematics.Vector2 | (return)
-VL.Qt | VL.Qt.Geometry | method AnchorOffset | pin Size | in Stride.Core.Mathematics.Vector2 | (size)
-VL.Qt | VL.Qt.Geometry | method AnchorOffset | static Stride.Core.Mathematics.Vector2
-VL.Qt | VL.Qt.Geometry | method ToQtAlignment | order Anchor, Output
-VL.Qt | VL.Qt.Geometry | method ToQtAlignment | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor | (anchor)
-VL.Qt | VL.Qt.Geometry | method ToQtAlignment | pin Output | out int | (return)
-VL.Qt | VL.Qt.Geometry | method ToQtAlignment | static int
-VL.Qt | VL.Qt.Geometry | type static class
+VL.Qt | VL.Qt.Images.QtImage | method ToString | order Output
+VL.Qt | VL.Qt.Images.QtImage | method ToString | override string
+VL.Qt | VL.Qt.Images.QtImage | method ToString | pin Output | out string | (return)
+VL.Qt | VL.Qt.Images.QtImage | property Error | string { get }
+VL.Qt | VL.Qt.Images.QtImage | property Height | int { get }
+VL.Qt | VL.Qt.Images.QtImage | property State | VL.Qt.Images.QtImageState { get }
+VL.Qt | VL.Qt.Images.QtImage | property Width | int { get }
+VL.Qt | VL.Qt.Images.QtImage | type sealed class
+VL.Qt | VL.Qt.Images.QtImageState | member Failed = 2
+VL.Qt | VL.Qt.Images.QtImageState | member Loading = 0
+VL.Qt | VL.Qt.Images.QtImageState | member Ready = 1
+VL.Qt | VL.Qt.Images.QtImageState | type enum
+VL.Qt | VL.Qt.Initialization | attr Smell(SymbolSmell.Hidden)
 VL.Qt | VL.Qt.Initialization | ctor | new
 VL.Qt | VL.Qt.Initialization | method Configure | order App Host
 VL.Qt | VL.Qt.Initialization | method Configure | override void
@@ -719,20 +412,6 @@ VL.Qt | VL.Qt.Nodes.BezierHandlesNode | method Update | pin Input | in VL.Qt.Pat
 VL.Qt | VL.Qt.Nodes.BezierHandlesNode | method Update | pin Out Handles | in VL.Lib.Collections.Spread<Stride.Core.Mathematics.Vector2> | (outHandles)
 VL.Qt | VL.Qt.Nodes.BezierHandlesNode | method Update | pin Output | out VL.Qt.Paths.QtPath | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.BezierHandlesNode | type sealed class
-VL.Qt | VL.Qt.Nodes.BlendMode | member Add = 4
-VL.Qt | VL.Qt.Nodes.BlendMode | member ColorBurn = 12
-VL.Qt | VL.Qt.Nodes.BlendMode | member ColorDodge = 11
-VL.Qt | VL.Qt.Nodes.BlendMode | member Darken = 7
-VL.Qt | VL.Qt.Nodes.BlendMode | member Difference = 6
-VL.Qt | VL.Qt.Nodes.BlendMode | member HardLight = 10
-VL.Qt | VL.Qt.Nodes.BlendMode | member Lighten = 8
-VL.Qt | VL.Qt.Nodes.BlendMode | member Multiply = 1
-VL.Qt | VL.Qt.Nodes.BlendMode | member Normal = 0
-VL.Qt | VL.Qt.Nodes.BlendMode | member Overlay = 3
-VL.Qt | VL.Qt.Nodes.BlendMode | member Screen = 2
-VL.Qt | VL.Qt.Nodes.BlendMode | member SoftLight = 9
-VL.Qt | VL.Qt.Nodes.BlendMode | member Subtract = 5
-VL.Qt | VL.Qt.Nodes.BlendMode | type enum
 VL.Qt | VL.Qt.Nodes.BlendNode | attr ProcessNode(Name = "Blend", Category = "Qt.Effects")
 VL.Qt | VL.Qt.Nodes.BlendNode | ctor | new
 VL.Qt | VL.Qt.Nodes.BlendNode | ctor | order Node Context
@@ -744,7 +423,7 @@ VL.Qt | VL.Qt.Nodes.BlendNode | method Update | order Input, Layer, Layer Sample
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Input | in VL.Qt.Elements.Effect | (input)
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Layer Sampler | in VL.Qt.Elements.Sampler | Pin(Visibility = PinVisibility.Optional) | (layerSampler)
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Layer | in VL.Qt.Elements.Element | (layer)
-VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Mode | in VL.Qt.Nodes.BlendMode | (mode)
+VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Mode | in VL.Qt.Elements.BlendMode | (mode)
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Opacity | in float = 1 | (opacity)
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Output | out VL.Qt.Elements.Effect | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.BlendNode | type sealed class
@@ -983,7 +662,7 @@ VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Padding | in Stride.Cor
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Scale | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (scale)
 VL.Qt | VL.Qt.Nodes.DropShadowNode | type sealed class
 VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | attr ProcessNode(Name = "TooltipPreview", Category = "Qt")
-VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | attr Smell(SymbolSmell.Hidden)
 VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | ctor | new
 VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.ElementTooltipPreview | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
@@ -1113,7 +792,7 @@ VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Clip | in bool | Pin(Visibil
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Fill Mode | in VL.Qt.Elements.ImageFillMode = Stretch | (fillMode)
-VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Image | in VL.Qt.QtImage | (image)
+VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Image | in VL.Qt.Images.QtImage | (image)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Opacity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (opacity)
@@ -1169,9 +848,6 @@ VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Style | in VL.Qt.Styles.S
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Transform | in Stride.Core.Mathematics.Matrix | (transform)
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Value | out int | (value)
 VL.Qt | VL.Qt.Nodes.InputIntNode | type sealed class
-VL.Qt | VL.Qt.Nodes.LabelPosition | member Left = 0
-VL.Qt | VL.Qt.Nodes.LabelPosition | member Top = 1
-VL.Qt | VL.Qt.Nodes.LabelPosition | type enum
 VL.Qt | VL.Qt.Nodes.LabeledNode | attr ProcessNode(Name = "Labeled", Category = "Qt.Elements")
 VL.Qt | VL.Qt.Nodes.LabeledNode | ctor | new
 VL.Qt | VL.Qt.Nodes.LabeledNode | ctor | order Node Context
@@ -1185,7 +861,7 @@ VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Effect | in VL.Qt.Elements
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Element | in VL.Qt.Elements.Element | (element)
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Label Height | in float = 0.2 | Pin(Visibility = PinVisibility.Optional) | (labelHeight)
-VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Label Position | in VL.Qt.Nodes.LabelPosition = Left | (labelPosition)
+VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Label Position | in VL.Qt.Elements.LabelPosition = Left | (labelPosition)
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Label Width | in float = 1.5 | (labelWidth)
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
 VL.Qt | VL.Qt.Nodes.LabeledNode | method Update | pin Opacity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (opacity)
@@ -1257,14 +933,14 @@ VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Dispose | void
-VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | VL.Qt.QtImage
+VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | VL.Qt.Images.QtImage
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | order Path, Mipmaps, Keep Previous, Is Loaded, Error, On Loaded, Image
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | pin Error | out string | (error)
-VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | pin Image | out VL.Qt.QtImage | Pin(Name = "Image") | (return)
+VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | pin Image | out VL.Qt.Images.QtImage | Pin(Name = "Image") | (return)
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | pin Is Loaded | out bool | (isLoaded)
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | pin Keep Previous | in bool = true | (keepPrevious)
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | pin Mipmaps | in bool | (mipmaps)
-VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | pin On Loaded | out System.IObservable<VL.Qt.QtImage> | Pin(Visibility = PinVisibility.Optional) | (onLoaded)
+VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | pin On Loaded | out System.IObservable<VL.Qt.Images.QtImage> | Pin(Visibility = PinVisibility.Optional) | (onLoaded)
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | method Update | pin Path | in VL.Lib.IO.Path | (path)
 VL.Qt | VL.Qt.Nodes.LoadImageAsyncNode | type sealed class
 VL.Qt | VL.Qt.Nodes.LoadImageNode | attr ProcessNode(Name = "LoadImage", Category = "Qt")
@@ -1273,10 +949,10 @@ VL.Qt | VL.Qt.Nodes.LoadImageNode | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.LoadImageNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt | VL.Qt.Nodes.LoadImageNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.LoadImageNode | method Dispose | void
-VL.Qt | VL.Qt.Nodes.LoadImageNode | method Update | VL.Qt.QtImage
+VL.Qt | VL.Qt.Nodes.LoadImageNode | method Update | VL.Qt.Images.QtImage
 VL.Qt | VL.Qt.Nodes.LoadImageNode | method Update | order Path, Mipmaps, Error, Image
 VL.Qt | VL.Qt.Nodes.LoadImageNode | method Update | pin Error | out string | (error)
-VL.Qt | VL.Qt.Nodes.LoadImageNode | method Update | pin Image | out VL.Qt.QtImage | Pin(Name = "Image") | (return)
+VL.Qt | VL.Qt.Nodes.LoadImageNode | method Update | pin Image | out VL.Qt.Images.QtImage | Pin(Name = "Image") | (return)
 VL.Qt | VL.Qt.Nodes.LoadImageNode | method Update | pin Mipmaps | in bool | (mipmaps)
 VL.Qt | VL.Qt.Nodes.LoadImageNode | method Update | pin Path | in VL.Lib.IO.Path | (path)
 VL.Qt | VL.Qt.Nodes.LoadImageNode | type sealed class
@@ -1459,13 +1135,13 @@ VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Size | in Stride.Core.M
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Transform | in Stride.Core.Mathematics.Matrix | (transform)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | type sealed class
 VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | attr ProcessNode(Name = "TooltipPreview", Category = "Qt")
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | attr Smell(SymbolSmell.Hidden)
 VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | ctor | new
 VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | method Update | VL.Lib.Basics.Imaging.IImage
 VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | method Update | order Image, Text, Image
-VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | method Update | pin Image | in VL.Qt.QtImage | (image)
+VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | method Update | pin Image | in VL.Qt.Images.QtImage | (image)
 VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | method Update | pin Image | out VL.Lib.Basics.Imaging.IImage | Pin(Name = "Image") | (return)
 VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | method Update | pin Text | out string | (text)
 VL.Qt | VL.Qt.Nodes.QtImageTooltipPreview | type sealed class
@@ -1769,15 +1445,12 @@ VL.Qt | VL.Qt.Nodes.ToQtImageNode | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.ToQtImageNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt | VL.Qt.Nodes.ToQtImageNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.ToQtImageNode | method Dispose | void
-VL.Qt | VL.Qt.Nodes.ToQtImageNode | method Update | VL.Qt.QtImage
+VL.Qt | VL.Qt.Nodes.ToQtImageNode | method Update | VL.Qt.Images.QtImage
 VL.Qt | VL.Qt.Nodes.ToQtImageNode | method Update | order Input, Error, Image
 VL.Qt | VL.Qt.Nodes.ToQtImageNode | method Update | pin Error | out string | (error)
-VL.Qt | VL.Qt.Nodes.ToQtImageNode | method Update | pin Image | out VL.Qt.QtImage | Pin(Name = "Image") | (return)
+VL.Qt | VL.Qt.Nodes.ToQtImageNode | method Update | pin Image | out VL.Qt.Images.QtImage | Pin(Name = "Image") | (return)
 VL.Qt | VL.Qt.Nodes.ToQtImageNode | method Update | pin Input | in VL.Lib.Basics.Imaging.IImage | (input)
 VL.Qt | VL.Qt.Nodes.ToQtImageNode | type sealed class
-VL.Qt | VL.Qt.Nodes.ToggleLook | member Checkbox = 0
-VL.Qt | VL.Qt.Nodes.ToggleLook | member Switch = 1
-VL.Qt | VL.Qt.Nodes.ToggleLook | type enum
 VL.Qt | VL.Qt.Nodes.ToggleNode | attr ProcessNode(Name = "Toggle", Category = "Qt.Widgets")
 VL.Qt | VL.Qt.Nodes.ToggleNode | ctor | new
 VL.Qt | VL.Qt.Nodes.ToggleNode | ctor | order Node Context
@@ -1795,7 +1468,7 @@ VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Debug | in bool | Pin(Visib
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
-VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Look | in VL.Qt.Nodes.ToggleLook = Checkbox | (look)
+VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Look | in VL.Qt.Elements.ToggleLook = Checkbox | (look)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Opacity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (opacity)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Output | out VL.Qt.Elements.Element | Pin(Name = "Output") | (return)
@@ -1841,7 +1514,7 @@ VL.Qt | VL.Qt.Nodes.UniformNodes | method Float | pin Value | in float | (value)
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Float | static VL.Qt.Elements.Uniform
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Image | attr Smell(SymbolSmell.Advanced)
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Image | order Name, Image, Sampler, Output
-VL.Qt | VL.Qt.Nodes.UniformNodes | method Image | pin Image | in VL.Qt.QtImage | (image)
+VL.Qt | VL.Qt.Nodes.UniformNodes | method Image | pin Image | in VL.Qt.Images.QtImage | (image)
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Image | pin Name | in string | (name)
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Image | pin Output | out VL.Qt.Elements.Uniform | (return)
 VL.Qt | VL.Qt.Nodes.UniformNodes | method Image | pin Sampler | in VL.Qt.Elements.Sampler = null | Pin(Visibility = PinVisibility.Optional) | (sampler)
@@ -1926,12 +1599,12 @@ VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | ctor | order Node Context
 VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | method Dispose | void
-VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | method Update | VL.Qt.QtImage
+VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | method Update | VL.Qt.Images.QtImage
 VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | method Update | order Input, Fallback, Error, Prefer Push, Output
 VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | method Update | pin Error | out string | (error)
-VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | method Update | pin Fallback | in VL.Qt.QtImage | (fallback)
+VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | method Update | pin Fallback | in VL.Qt.Images.QtImage | (fallback)
 VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | method Update | pin Input | in VL.Lib.Basics.Video.IVideoSource | (input)
-VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | method Update | pin Output | out VL.Qt.QtImage | Pin(Name = "Output") | (return)
+VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | method Update | pin Output | out VL.Qt.Images.QtImage | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | method Update | pin Prefer Push | in bool = true | (preferPush)
 VL.Qt | VL.Qt.Nodes.VideoSourceToQtImageNode | type sealed class
 VL.Qt | VL.Qt.Nodes.WheelNode | attr ProcessNode(Name = "Wheel", Category = "Qt.Interaction")
@@ -2128,18 +1801,6 @@ VL.Qt | VL.Qt.PerfStats | property VvvvMsMax | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property WaitMs | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property WaitMsMax | float { get; init }
 VL.Qt | VL.Qt.PerfStats | type sealed class
-VL.Qt | VL.Qt.QtImage | method ToString | order Output
-VL.Qt | VL.Qt.QtImage | method ToString | override string
-VL.Qt | VL.Qt.QtImage | method ToString | pin Output | out string | (return)
-VL.Qt | VL.Qt.QtImage | property Error | string { get }
-VL.Qt | VL.Qt.QtImage | property Height | int { get }
-VL.Qt | VL.Qt.QtImage | property State | VL.Qt.QtImageState { get }
-VL.Qt | VL.Qt.QtImage | property Width | int { get }
-VL.Qt | VL.Qt.QtImage | type sealed class
-VL.Qt | VL.Qt.QtImageState | member Failed = 2
-VL.Qt | VL.Qt.QtImageState | member Loading = 0
-VL.Qt | VL.Qt.QtImageState | member Ready = 1
-VL.Qt | VL.Qt.QtImageState | type enum
 VL.Qt | VL.Qt.Space | member DIP = 1
 VL.Qt | VL.Qt.Space | member DIPTopLeft = 2
 VL.Qt | VL.Qt.Space | member Normalized = 0
@@ -2570,7 +2231,7 @@ VL.Qt | VL.Qt.Styles.TrackNodes | method Track | static VL.Qt.Styles.Style
 VL.Qt | VL.Qt.Styles.TrackNodes | type static class
 VL.Qt | VL.Qt.WindowSettings | type sealed class
 VL.Qt | assembly | attr AssemblyInitializer(typeof(VL.Qt.Initialization))
-VL.Qt | assembly | attr ImportAsIs
+VL.Qt | assembly | attr ImportAsIs(Namespace = "VL.Qt", Category = "Qt")
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | attr ProcessNode(Name = "Video (VL.Audio)", Category = "Qt.Elements")
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | ctor | new
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | ctor | order Node Context
@@ -2603,7 +2264,7 @@ VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Sync Error | out 
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Transform | in Stride.Core.Mathematics.Matrix | (transform)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Volume | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (volume)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | type sealed class
-VL.Qt.Audio | assembly | attr ImportAsIs
+VL.Qt.Audio | assembly | attr ImportAsIs(Namespace = "VL.Qt.Audio", Category = "Qt")
 VL.Qt.Stride | Stride.Core.AssemblyProcessedAttribute | ctor | new
 VL.Qt.Stride | Stride.Core.AssemblyProcessedAttribute | type class : System.Attribute
 VL.Qt.Stride | Stride.Core.DataSerializers.VL_Qt_StrideSerializerFactory | type static class
@@ -2664,7 +2325,7 @@ VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | method Update | pin Texture Si
 VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | method Update | pin View | in Stride.Core.Mathematics.Matrix | (view)
 VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | method Update | pin World | in Stride.Core.Mathematics.Matrix | (world)
 VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | type sealed class
-VL.Qt.Stride | assembly | attr ImportAsIs
+VL.Qt.Stride | assembly | attr ImportAsIs(Namespace = "VL.Qt.Stride", Category = "Qt")
 factory Qml | default category Qt.Elements.Qml
 factory Qml | node Snapshot (Variant) | category Qt.Elements.Qml
 factory Qml | node Snapshot (Variant) | order Level, Accent, Label, Active, Derived, Properties, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Output, Level, Accent, Label, Active, Count, Derived, Clicked, Moved, Measured Size, Scene Bounds, Error
@@ -2727,7 +2388,7 @@ factory Shader | node Snapshot (Variant) | pin Input Sampler | in VL.Qt.Elements
 factory Shader | node Snapshot (Variant) | pin Input | in VL.Qt.Elements.Element | visible
 factory Shader | node Snapshot (Variant) | pin Interaction | in VL.Qt.Elements.Interaction | optional
 factory Shader | node Snapshot (Variant) | pin Mask Sampler | in VL.Qt.Elements.Sampler | optional
-factory Shader | node Snapshot (Variant) | pin Mask | in VL.Qt.QtImage | visible
+factory Shader | node Snapshot (Variant) | pin Mask | in VL.Qt.Images.QtImage | visible
 factory Shader | node Snapshot (Variant) | pin Measured Size | out Stride.Core.Mathematics.Vector2 = 0, 0 | optional
 factory Shader | node Snapshot (Variant) | pin Mesh Resolution | in Stride.Core.Mathematics.Int2 = 1, 1 | optional
 factory Shader | node Snapshot (Variant) | pin Offset | in Stride.Core.Mathematics.Vector2 = 0, 0 | visible

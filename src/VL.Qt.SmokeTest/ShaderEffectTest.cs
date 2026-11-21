@@ -9,8 +9,9 @@ using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 
-// Shader (effects package 03, task 5): shipped shaders builtin:wave / builtin:gradient, a fixture shader with a
-// second sampler (shaders/dual.frag.qsb: Texture uniform = element, Image uniform = image resource), mesh resolution,
+// Shader (effects package 03, task 5): the shipped shader builtin:wave, the generative shaders/gradient.frag baked from
+// its text (vlqt_shader_load_source), a fixture shader with a second sampler (shaders/dual.frag.qsb: Texture uniform =
+// element, Image uniform = image resource), mesh resolution,
 // broken / missing shader paths, unknown uniform name / wrong type -> EVENT_ERROR and its correction.
 // Raw commands (DIP). Grabs go to <outDir>/shader-effect_*.png.
 [TestFixture, NonParallelizable]
@@ -96,11 +97,17 @@ public static class ShaderEffectTest
         ulong Shader(string path, out int state) => Load(path, Protocol.ResourceKind.Shader, Protocol.ShaderStage.Fragment, out state);
 
         var wave = Shader("builtin:wave", out var sWave);
-        var gradient = Shader("builtin:gradient", out var sGrad);
+        var gradientFile = FindFile("src", "VL.Qt.SmokeTest", "shaders", "gradient.frag");
+        s.Check(gradientFile != null, $"gradient.frag found ({gradientFile})");
+        if (gradientFile == null) return;
+        // Baked at run time from the text: not part of the shipped built-in set.
+        Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var gradient);
+        var rcGrad = Native.vlqt_shader_load_source(gradient, File.ReadAllText(gradientFile), Protocol.ShaderStage.Fragment);
+        var sGrad = rcGrad == 0 ? Native.vlqt_res_wait(gradient, 20000) : Protocol.ResourceState.Failed;
         var dual = Shader(dualQsb, out var sDual);
         var image = Load(stripes, Protocol.ResourceKind.Image, 0, out var sImage);
         s.Check(sWave == Protocol.ResourceState.Ready && sGrad == Protocol.ResourceState.Ready && sDual == Protocol.ResourceState.Ready && sImage == Protocol.ResourceState.Ready,
-            $"shaders builtin:wave/gradient + fixture + image Ready ({sWave}, {sGrad}, {sDual}, {sImage}; {ResError(wave)}{ResError(gradient)}{ResError(dual)})");
+            $"shaders builtin:wave, gradient.frag (text) + fixture + image Ready ({sWave}, {sGrad}, {sDual}, {sImage}; {ResError(wave)}{ResError(gradient)}{ResError(dual)})");
 
         // Broken: missing file, not a .qsb (GLSL text), wrong stage (fragment .qsb loaded as vertex shader).
         var missing = Shader(Path.Combine(s.OutDir, "does-not-exist.frag.qsb"), out var sMissing);

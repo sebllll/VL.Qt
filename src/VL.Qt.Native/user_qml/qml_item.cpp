@@ -1,48 +1,28 @@
-#include "qmlitem.h"
+#include "user_qml/qml_item.h"
 
-#include "protocol.h"
+#include "user_qml/qml_watcher.h"
 
-#include <QtCore/QDebug>
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
-#include <QtCore/QMetaMethod>
 #include <QtCore/QMetaObject>
 #include <QtCore/QMetaProperty>
-#include <QtCore/QRectF>
+#include <QtCore/QPoint>
+#include <QtCore/QPointF>
+#include <QtCore/QSize>
+#include <QtCore/QSizeF>
 #include <QtCore/QUrl>
-#include <QtGui/QColor>
 #include <QtGui/QVector2D>
-#include <QtGui/QVector3D>
-#include <QtGui/QVector4D>
-#include <QtQml/QJSValue>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQml/QQmlError>
 #include <QtQuick/QQuickWindow>
 
-#include <algorithm>
 #include <memory>
-#include <cstring>
 
 namespace vlqt {
 
 namespace {
-
-template <class T>
-void append(QByteArray& out, const T& v)
-{
-    out.append(reinterpret_cast<const char*>(&v), qsizetype(sizeof v));
-}
-
-void appendFloats(QByteArray& out, std::initializer_list<float> values)
-{
-    for (float f : values)
-        append(out, f);
-}
-
-// Native class behind a QML type: QML-generated meta objects are named "<Class>_QML_<n>" / "<Name>_QMLTYPE_<n>".
-bool isQmlGenerated(const QMetaObject* mo) { return mo && QByteArray(mo->className()).contains("_QML"); }
 
 // "path:line:col: description" per error, local files as plain native paths (QQmlComponent::errorString gives file: URLs).
 QString errorLines(const QQmlComponent& component)
@@ -99,256 +79,6 @@ QString nativeClassName(const QObject* obj)
 }
 
 } // namespace
-
-bool toWireValue(const QVariant& in, QmlWireValue& out)
-{
-    QVariant v = in;
-    if (v.metaType() == QMetaType::fromType<QJSValue>())
-        v = v.value<QJSValue>().toVariant();
-    out.bytes.clear();
-    switch (v.typeId()) {
-    case QMetaType::Bool:
-        out.type = VLQT_VALUE_TYPE_BOOL;
-        out.bytes.append(char(v.toBool() ? 1 : 0));
-        return true;
-    case QMetaType::Int:
-    case QMetaType::UInt:
-    case QMetaType::Short:
-    case QMetaType::UShort:
-    case QMetaType::Long:
-    case QMetaType::ULong:
-    case QMetaType::LongLong:
-    case QMetaType::ULongLong:
-    case QMetaType::Char:
-    case QMetaType::SChar:
-    case QMetaType::UChar: {
-        out.type = VLQT_VALUE_TYPE_I32;
-        const qint32 i = qint32(std::clamp<qint64>(v.toLongLong(), INT32_MIN, INT32_MAX));
-        append(out.bytes, i);
-        return true;
-    }
-    case QMetaType::Double:
-    case QMetaType::Float:
-        out.type = VLQT_VALUE_TYPE_F32;
-        append(out.bytes, float(v.toDouble()));
-        return true;
-    case QMetaType::QString:
-    case QMetaType::QUrl: {
-        out.type = VLQT_VALUE_TYPE_STRING;
-        const QByteArray utf8 = v.toString().toUtf8();
-        append(out.bytes, quint32(utf8.size()));
-        out.bytes.append(utf8);
-        return true;
-    }
-    case QMetaType::QColor: {
-        const QColor c = v.value<QColor>();
-        out.type = VLQT_VALUE_TYPE_COLOR;
-        appendFloats(out.bytes, {float(c.redF()), float(c.greenF()), float(c.blueF()), float(c.alphaF())});
-        return true;
-    }
-    case QMetaType::QVector2D: {
-        const QVector2D q = v.value<QVector2D>();
-        out.type = VLQT_VALUE_TYPE_VEC2;
-        appendFloats(out.bytes, {q.x(), q.y()});
-        return true;
-    }
-    case QMetaType::QVector3D: {
-        const QVector3D q = v.value<QVector3D>();
-        out.type = VLQT_VALUE_TYPE_VEC3;
-        appendFloats(out.bytes, {q.x(), q.y(), q.z()});
-        return true;
-    }
-    case QMetaType::QVector4D: {
-        const QVector4D q = v.value<QVector4D>();
-        out.type = VLQT_VALUE_TYPE_VEC4;
-        appendFloats(out.bytes, {q.x(), q.y(), q.z(), q.w()});
-        return true;
-    }
-    case QMetaType::QRectF:
-    case QMetaType::QRect: {
-        const QRectF r = v.toRectF();
-        out.type = VLQT_VALUE_TYPE_RECTF;
-        appendFloats(out.bytes, {float(r.x()), float(r.y()), float(r.width()), float(r.height())});
-        return true;
-    }
-    default:
-        return false;
-    }
-}
-
-namespace {
-
-// String form of a signal argument that has no wire type (protocol.h: "sent as their string form").
-QString stringForm(const QVariant& v)
-{
-    if (v.canConvert<QString>() && !v.toString().isNull())
-        return v.toString();
-    QString s;
-    QDebug(&s).noquote().nospace() << v;
-    return s;
-}
-
-QmlWireValue wireOrString(const QVariant& in)
-{
-    QmlWireValue w;
-    if (toWireValue(in, w))
-        return w;
-    toWireValue(stringForm(in.metaType() == QMetaType::fromType<QJSValue>() ? in.value<QJSValue>().toVariant() : in), w);
-    return w;
-}
-
-} // namespace
-
-// ---------------------------------------------------------------------------------------------
-// QmlWatcher: connects the notify signals of the declared properties and the declared signals of the root to itself
-// without a slot per signal: the connections carry raw ids (QMetaObject::connect with an index, no receiver meta
-// method), the dispatch is the override of qt_metacall. Deliberately no Q_OBJECT (moc would generate its own
-// qt_metacall). Property k = id kPropBase + k, signal j = id kSignalBase + j.
-
-class QmlWatcher final : public QObject
-{
-public:
-    static constexpr int kPropBase = 1000;
-    static constexpr int kSignalBase = 30000; // ids are stored as ushort by Qt's connections: all below 65536
-
-    struct Prop {
-        QMetaProperty prop;
-        QByteArray name;
-        bool dirty = false;
-        bool unsupported = false; // last value had no wire type (reported once through the owner's errors)
-    };
-    struct Sig {
-        QMetaMethod method;
-        QByteArray name;
-    };
-
-    QmlWatcher(QmlItem* owner, QQuickItem* root) : m_owner(owner), m_root(root)
-    {
-        const QMetaObject* mo = root->metaObject();
-        // Declared in the user file: the QML-generated classes of the chain (a QML type derived from another QML type
-        // counts with all its QML ancestors), not those of the native base (Item, Rectangle, ...).
-        QList<const QMetaObject*> chain;
-        for (const QMetaObject* m = mo; m && isQmlGenerated(m); m = m->superClass())
-            chain.push_back(m);
-        for (const QMetaObject* m : chain) {
-            for (int i = m->propertyOffset(); i < m->propertyCount(); ++i) {
-                const QMetaProperty p = m->property(i);
-                if (!p.isValid() || !p.hasNotifySignal())
-                    continue;
-                const int k = int(m_props.size());
-                Prop e;
-                e.prop = p;
-                e.name = p.name();
-                m_props.push_back(e);
-                m_propOfIndex.insert(i, k);
-                QMetaObject::connect(root, p.notifySignalIndex(), this, kPropBase + k, Qt::DirectConnection);
-            }
-        }
-        for (const QMetaObject* m : chain) {
-            for (int i = m->methodOffset(); i < m->methodCount(); ++i) {
-                const QMetaMethod mm = m->method(i);
-                if (mm.methodType() != QMetaMethod::Signal || (mm.attributes() & QMetaMethod::Cloned))
-                    continue;
-                bool isNotify = false;
-                for (const Prop& p : m_props)
-                    if (p.prop.notifySignalIndex() == mm.methodIndex())
-                        isNotify = true;
-                if (isNotify)
-                    continue;
-                const int j = int(m_sigs.size());
-                m_sigs.push_back(Sig{mm, mm.name()});
-                QMetaObject::connect(root, mm.methodIndex(), this, kSignalBase + j, Qt::DirectConnection);
-            }
-        }
-    }
-
-    // Index into the table of the declared property with this index on the root's meta object, -1 if not watched.
-    int watchedIndex(int propertyIndex) const { return m_propOfIndex.value(propertyIndex, -1); }
-    void suppress(int k) { m_suppress = k; }
-
-    bool hasEvents() const { return !m_dirty.empty() || !m_signals.empty() || m_dropped; }
-
-    void take(std::vector<QmlPropertyEvent>& properties, std::vector<QmlSignalEvent>& signalEvents, bool& dropped)
-    {
-        dropped = m_dropped;
-        m_dropped = false;
-        for (int k : m_dirty) {
-            Prop& p = m_props[size_t(k)];
-            p.dirty = false;
-            QmlWireValue w;
-            const QVariant value = p.prop.read(m_root);
-            if (toWireValue(value, w)) {
-                p.unsupported = false;
-                properties.push_back(QmlPropertyEvent{p.name, std::move(w)});
-            } else if (!p.unsupported) {
-                p.unsupported = true;
-                m_owner->rejectRootProperty(QString::fromUtf8(p.name),
-                                            QStringLiteral("type '%1' cannot be sent to the patch").arg(QString::fromLatin1(value.typeName())));
-            }
-        }
-        m_dirty.clear();
-        for (QmlSignalEvent& s : m_signals)
-            signalEvents.push_back(std::move(s));
-        m_signals.clear();
-    }
-
-    int qt_metacall(QMetaObject::Call call, int id, void** argv) override
-    {
-        if (call != QMetaObject::InvokeMetaMethod || id < kPropBase)
-            return QObject::qt_metacall(call, id, argv);
-        if (id >= kSignalBase)
-            onSignal(id - kSignalBase, argv);
-        else
-            onProperty(id - kPropBase);
-        return -1;
-    }
-
-private:
-    void onProperty(int k)
-    {
-        if (k < 0 || size_t(k) >= m_props.size() || k == m_suppress) // no echo of the patch's own set
-            return;
-        Prop& p = m_props[size_t(k)];
-        if (!p.dirty) {
-            p.dirty = true;
-            m_dirty.push_back(k);
-        }
-    }
-
-    void onSignal(int j, void** argv)
-    {
-        if (j < 0 || size_t(j) >= m_sigs.size())
-            return;
-        if (m_signals.size() >= size_t(kQmlMaxSignalsPerPoll)) {
-            m_dropped = true;
-            return;
-        }
-        const Sig& s = m_sigs[size_t(j)];
-        QmlSignalEvent e;
-        e.name = s.name;
-        const int n = s.method.parameterCount();
-        for (int i = 0; i < n; ++i) {
-            const QMetaType t = s.method.parameterMetaType(i);
-            QVariant v;
-            if (t == QMetaType::fromType<QVariant>())
-                v = *static_cast<const QVariant*>(argv[i + 1]);
-            else
-                v = QVariant(t, argv[i + 1]);
-            e.args.push_back(wireOrString(v));
-        }
-        m_signals.push_back(std::move(e));
-    }
-
-    QmlItem* m_owner;
-    QQuickItem* m_root;
-    std::vector<Prop> m_props;
-    std::vector<Sig> m_sigs;
-    QHash<int, int> m_propOfIndex;
-    std::vector<int> m_dirty;
-    std::vector<QmlSignalEvent> m_signals;
-    bool m_dropped = false;
-    int m_suppress = -1;
-};
 
 // ---------------------------------------------------------------------------------------------
 
@@ -595,6 +325,18 @@ void QmlItem::applyProperty(const QString& name, const QVariant& value, QQmlComp
     }
     QVariant v = value;
     const QMetaType target = p.metaType();
+    // The patch sends point and size as a Vector2 (VEC2); QVariant has no conversion from it.
+    if (v.metaType() == QMetaType::fromType<QVector2D>()) {
+        const QVector2D q = v.value<QVector2D>();
+        if (target == QMetaType::fromType<QPointF>())
+            v = QPointF(q.x(), q.y());
+        else if (target == QMetaType::fromType<QPoint>())
+            v = QPointF(q.x(), q.y()).toPoint();
+        else if (target == QMetaType::fromType<QSizeF>())
+            v = QSizeF(q.x(), q.y());
+        else if (target == QMetaType::fromType<QSize>())
+            v = QSizeF(q.x(), q.y()).toSize();
+    }
     // var properties and enums take the value as it is, everything else goes through QVariant's conversion.
     if (!p.isEnumType() && target.id() != QMetaType::QVariant && v.metaType() != target && !v.convert(target)) {
         setPropertyError(name, QStringLiteral("a %1 value cannot be converted to the type '%2' of property '%3'")

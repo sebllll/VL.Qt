@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using VL.Core;
 using VL.Lib.Basics.Imaging;
+using VL.Qt.Images;
 using VL.Qt.Interop;
 using VL.Qt.Wire;
 

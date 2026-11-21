@@ -28,7 +28,7 @@ namespace VL.Qt.Elements
         public Interaction? Previous { get; }
 
         /// <summary>Receives the handler's events (one slot of the interaction node's feedback); key of the handler.</summary>
-        public FeedbackSlot Feedback { get; }
+        internal FeedbackSlot Feedback { get; }
 
         /// <summary>CREATE type of the handler (<see cref="Protocol.ElementType"/>, from 32).</summary>
         internal ushort HandlerType { get; }

@@ -12,9 +12,9 @@ namespace VL.Qt.Elements
     /// </summary>
     public abstract class Element : IElement
     {
-        protected Element(ElementType type) => Type = type;
+        private protected Element(ElementType type) => Type = type;
 
-        public ElementType Type { get; }
+        internal ElementType Type { get; }
         /// <summary>Item size in units (containers/widgets: only with Auto Size off). Position comes from <see cref="Transform"/>.</summary>
         public Vector2 Size { get; init; }
 
@@ -31,7 +31,7 @@ namespace VL.Qt.Elements
 
         /// <summary>Draws the debug overlay for this element only (not recursive).</summary>
         public bool Debug { get; init; }
-        public FeedbackSlot Feedback { get; init; }
+        internal FeedbackSlot Feedback { get; init; }
 
         /// <summary>
         /// Chain of interaction descriptions (Hover, Click, …); each link becomes an input handler at the item.
