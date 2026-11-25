@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using Stride.Core.Mathematics;
 using VL.Core.Import;
+using VL.Model;
 using VL.Qt.Elements;
 
 namespace VL.Qt.Nodes
@@ -25,11 +26,13 @@ namespace VL.Qt.Nodes
         /// <param name="input">Effect chain to extend (other effect nodes).</param>
         /// <param name="color">Tint color.</param>
         /// <param name="amount">Strength of the tint, 0..1 (0 = off).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
         [return: Pin(Name = "Output")]
-        public Effect Update(
+        public Effect? Update(
             Effect? input,
             [DefaultValue("1, 0, 0, 1")] Color4 color,
-            [DefaultValue(1f)] float amount)
-            => _node.Describe(input, new Props(color, amount));
+            [DefaultValue(1f)] float amount,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
+            => apply ? _node.Describe(input, new Props(color, amount)) : input;
     }
 }

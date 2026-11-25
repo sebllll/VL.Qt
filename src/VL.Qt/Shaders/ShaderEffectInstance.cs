@@ -33,6 +33,7 @@ namespace VL.Qt.Shaders
         private RectangleF _padding;
         private float _paddingSource = float.NaN;
         private readonly ValuePin<Effect?> _input = new(null);
+        private readonly ValuePin<bool> _apply = new(true);
         private readonly ValuePin<Effect?> _output = new(null);
 
         public ShaderEffectInstance(NodeContext nodeContext, ShaderNodeLayout layout)
@@ -76,6 +77,7 @@ namespace VL.Qt.Shaders
                 yield return _input;
                 foreach (var pin in _uniforms.Pins)
                     yield return pin;
+                yield return _apply;
             }
         }
 
@@ -88,7 +90,8 @@ namespace VL.Qt.Shaders
         {
             var uniforms = _uniforms.Update();
             UpdatePadding();
-            _output.Value = _builder.Describe(_input.Value, new Props(uniforms, _padding));
+            // Off passes the chain on; the uniform pins are still read so their change tracking stays current.
+            _output.Value = _apply.Value ? _builder.Describe(_input.Value, new Props(uniforms, _padding)) : _input.Value;
         }
 
         /// <summary>

@@ -49,13 +49,15 @@ namespace VL.Qt.Nodes
         /// <param name="center">Center of the rotation, 0..1 of the element area (0.5, 0.5 = middle).</param>
         /// <param name="angle">Total rotation of the blur in cycles (1 = full turn, 0 = no blur).</param>
         /// <param name="padding">Extra area around the element in DIP so the arcs have room: about half the angle in radians (Angle times 2π) times the distance of the farthest point from Center.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             [DefaultValue("0.5, 0.5")] Vector2 center,
             [DefaultValue(0.05f)] float angle,
-            [Pin(Visibility = PinVisibility.Optional), DefaultValue(30f)] float padding)
-            => _link.Describe(input, new Props(center, angle, padding));
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(30f)] float padding,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
+            => apply ? _link.Describe(input, new Props(center, angle, padding)) : input;
 
         public void Dispose() => _link.Dispose();
     }

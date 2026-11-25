@@ -71,11 +71,11 @@ namespace VL.Qt.Tests
         // Pins of the effect chain node (Input first, the sampler pin of an image second, shown only when needed).
         private static readonly (string Template, string[] Pins, bool TwoPass)[] s_nodes =
         {
-            ("ExampleBlend", new[] { "Input", "Layer", "Layer Sampler", "Mode", "Layer Opacity" }, false),
-            ("ExampleDisplace", new[] { "Input", "Map", "Map Sampler", "Displacement" }, false),
-            ("ExampleDirectionalBlur", new[] { "Input", "Angle", "Blur Length" }, true),
-            ("ExampleZoomBlur", new[] { "Input", "Center", "Blur Length" }, true),
-            ("ExampleRadialBlur", new[] { "Input", "Center", "Angle" }, true),
+            ("ExampleBlend", new[] { "Input", "Layer", "Layer Sampler", "Mode", "Layer Opacity", "Apply" }, false),
+            ("ExampleDisplace", new[] { "Input", "Map", "Map Sampler", "Displacement", "Apply" }, false),
+            ("ExampleDirectionalBlur", new[] { "Input", "Angle", "Blur Length", "Apply" }, true),
+            ("ExampleZoomBlur", new[] { "Input", "Center", "Blur Length", "Apply" }, true),
+            ("ExampleRadialBlur", new[] { "Input", "Center", "Angle", "Apply" }, true),
         };
 
         private string _dir = null!;

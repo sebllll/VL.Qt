@@ -52,12 +52,14 @@ namespace VL.Qt.Nodes
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
         /// <param name="angle">Direction of the blur in cycles (1 = full turn): 0 = horizontal, 0.25 = vertical, increases clockwise on screen.</param>
         /// <param name="length">Length of the blur line in DIP (total, 0 = no blur).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             float angle,
-            [DefaultValue(10f)] float length)
-            => _link.Describe(input, new Props(angle, length));
+            [DefaultValue(10f)] float length,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
+            => apply ? _link.Describe(input, new Props(angle, length)) : input;
 
         public void Dispose() => _link.Dispose();
     }

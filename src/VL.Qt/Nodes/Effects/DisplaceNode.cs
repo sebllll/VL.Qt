@@ -60,15 +60,17 @@ namespace VL.Qt.Nodes
         /// <param name="map">Element used as displacement map (e.g. a ShaderEffect with noise). Unconnected: no effect.</param>
         /// <param name="mapSampler">How the map is read (filter, wrap, mipmaps), from the Sampler node. Outside the element the map continues as its Address says (Clamp: its edge). Unconnected: as the map is.</param>
         /// <param name="displacement">Largest shift in DIP (a map value of 0 or 1 moves the pixels by this).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             IElement? map,
             [Pin(Visibility = PinVisibility.Optional)] Sampler? mapSampler,
-            [DefaultValue(10f)] float displacement)
+            [DefaultValue(10f)] float displacement,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
         {
             var element = _map.Update(map);
-            return element is null ? input : _link.Describe(input, new Props(element, mapSampler, displacement));
+            return !apply || element is null ? input : _link.Describe(input, new Props(element, mapSampler, displacement));
         }
 
         public void Dispose()

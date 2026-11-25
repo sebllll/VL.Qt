@@ -53,16 +53,21 @@ namespace VL.Qt.Nodes
         /// <param name="thresholdMax">Mask alpha above this hides the element, 0..1 (1 = off).</param>
         /// <param name="spreadAtMax">Softness of the edge at Threshold Max, 0..1.</param>
         /// <param name="inverted">Shows the element where the mask is transparent.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
         [return: Pin(Name = "Output")]
-        public Effect Update(
+        public Effect? Update(
             Effect? input,
             IElement? mask,
             [Pin(Visibility = PinVisibility.Optional)] float thresholdMin,
             [Pin(Visibility = PinVisibility.Optional)] float spreadAtMin,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float thresholdMax,
             [Pin(Visibility = PinVisibility.Optional)] float spreadAtMax,
-            bool inverted)
-            => _node.Describe(input, new Props(_mask.Update(mask), thresholdMin, spreadAtMin, thresholdMax, spreadAtMax, inverted));
+            bool inverted,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
+        {
+            var element = _mask.Update(mask);
+            return apply ? _node.Describe(input, new Props(element, thresholdMin, spreadAtMin, thresholdMax, spreadAtMax, inverted)) : input;
+        }
 
         public void Dispose()
         {

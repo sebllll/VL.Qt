@@ -58,16 +58,18 @@ namespace VL.Qt.Nodes
         /// <param name="layerSampler">How the layer is read (filter, mipmaps), from the Sampler node. The address has no effect here: outside the element the layer is transparent. Unconnected: as the layer is.</param>
         /// <param name="blendMode">How the layer and the base are combined.</param>
         /// <param name="opacity">Strength of the layer, 0 = base only, 1 = full blend.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             IElement? layer,
             [Pin(Visibility = PinVisibility.Optional)] Sampler? layerSampler,
             BlendMode blendMode,
-            [DefaultValue(1f)] float opacity)
+            [DefaultValue(1f)] float opacity,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
         {
             var element = _layer.Update(layer);
-            return element is null ? input : _link.Describe(input, new Props(element, layerSampler, blendMode, opacity));
+            return !apply || element is null ? input : _link.Describe(input, new Props(element, layerSampler, blendMode, opacity));
         }
 
         public void Dispose()
