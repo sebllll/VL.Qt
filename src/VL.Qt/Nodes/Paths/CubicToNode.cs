@@ -28,7 +28,7 @@ namespace VL.Qt.Nodes
             QtPath? input,
             [Pin(Name = "Control Point 1")] Vector2 controlPoint1,
             [Pin(Name = "Control Point 2")] Vector2 controlPoint2,
-            [Pin(Name = "EndPoint")] Vector2 endPoint)
+            Vector2 endPoint)
             => _memo.Get(input, new Props(controlPoint1, controlPoint2, endPoint), s_create);
     }
 
@@ -60,7 +60,7 @@ namespace VL.Qt.Nodes
             QtPath? input,
             [Pin(Name = "Control Point 1")] Vector2 controlPoint1,
             [Pin(Name = "Control Point 2")] Vector2 controlPoint2,
-            [Pin(Name = "EndPoint")] Vector2 endPoint)
+            Vector2 endPoint)
             => _memo.Get(input, new Props(controlPoint1, controlPoint2, endPoint), s_create);
     }
 }

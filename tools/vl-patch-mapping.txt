@@ -185,3 +185,11 @@ W4-107 | pin | Drag            | Maximum               | Max
 W4-107 | pin | Pinch           | Is Active             | Is Pinching
 W4-107 | pin | Pinch           | Minimum Point Count   | Min Point Count
 W4-107 | pin | Pinch           | Maximum Point Count   | Max Point Count
+# W4-109: one name for one meaning on the path builders (C12 b, A7): Direction (Skia's AddOval/AddRect spelling) on all
+# four shape nodes, End Point (Skia's QuadTo spelling) on both CubicTo nodes, Closed as on Spline/Bezier/Polyline.
+# AddCircle keeps Skia's pin order Center, Direction, Radius (D18: Skia's AddCircle has this order).
+W4-109 | pin | AddCircle          | Dir      | Direction
+W4-109 | pin | AddRoundRect      | Dir      | Direction
+W4-109 | pin | CubicTo           | EndPoint | End Point
+W4-109 | pin | CubicTo (Relative)| EndPoint | End Point
+W4-109 | pin | AddPoly           | Close    | Closed

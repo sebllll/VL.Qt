@@ -20,11 +20,11 @@ namespace VL.Qt.Nodes
         /// <summary>Returns the path with a circle that starts at the right of its center.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
         /// <param name="center">The center of the circle in units.</param>
-        /// <param name="dir">The direction in which the contour runs.</param>
+        /// <param name="direction">The direction in which the contour runs.</param>
         /// <param name="radius">The radius of the circle in units.</param>
         /// <returns>The path with the contour added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
-        public QtPath Update(QtPath? input, Vector2 center, [Pin(Name = "Dir")] PathDirection dir, [DefaultValue(0.5f)] float radius)
-            => _memo.Get(input, new Props(center, dir, radius), s_create);
+        public QtPath Update(QtPath? input, Vector2 center, PathDirection direction, [DefaultValue(0.5f)] float radius)
+            => _memo.Get(input, new Props(center, direction, radius), s_create);
     }
 }

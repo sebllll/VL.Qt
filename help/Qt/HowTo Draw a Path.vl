@@ -209,7 +209,7 @@
             <Pin Id="pIoOb0oJNXAxua94Qy5s4B" Name="Input" Kind="InputPin" />
             <Pin Id="4A7cO4p9hiMeVe9cDlYFtV" Name="Control Point 1" Kind="InputPin" />
             <Pin Id="3D7goJRTLcmA06bRQnZ0Rn" Name="Control Point 2" Kind="InputPin" />
-            <Pin Id="unBBse64zeEgs4NBSJzz6n" Name="EndPoint" Kind="InputPin" />
+            <Pin Id="unBBse64zeEgs4NBSJzz6n" Name="End Point" Kind="InputPin" />
             <Pin Id="iPiXn98ARk1QYt0D9QDiZv" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="NHNUwPq6KSV8pplmfte9zR" Comment="Cap" Bounds="502,644,62,15" ShowValueBox="true" isIOBox="true" Value="Round">
@@ -291,7 +291,7 @@
             </p:NodeReference>
             <Pin Id="1FCyjto9rez7HlWT9kdCPb" Name="Input" Kind="InputPin" />
             <Pin Id="DmUkrzxrjSeCOBCgVcGCrq" Name="Center" Kind="InputPin" DefaultValue="0.8, 0.8" />
-            <Pin Id="3GcA5nByVzzVBGwrnUHCqO" Name="Dir" Kind="InputPin" />
+            <Pin Id="3GcA5nByVzzVBGwrnUHCqO" Name="Direction" Kind="InputPin" />
             <Pin Id="eGGTzQX4iEZGssKUjTDcoU" Name="Radius" Kind="InputPin" DefaultValue="0.5" />
             <Pin Id="zmQnGYMOTOe1ulNWjHeO1A" Name="Output" Kind="OutputPin" />
           </Node>
@@ -378,7 +378,7 @@
             </p:NodeReference>
             <Pin Id="iPuVHPN4v7ws6hH9YcrKgb" Name="Input" Kind="InputPin" />
             <Pin Id="DojtJu7KWfEJ8Rr4oeKz1V" Name="Center" Kind="InputPin" DefaultValue="0.8, 0.8" />
-            <Pin Id="CzC6InWpZZyCAwA1mvbIeW" Name="Dir" Kind="InputPin" />
+            <Pin Id="CzC6InWpZZyCAwA1mvbIeW" Name="Direction" Kind="InputPin" />
             <Pin Id="nVQGZ2mWH2mu303IkAVKD5" Name="Radius" Kind="InputPin" DefaultValue="0.5" />
             <Pin Id="n67TwrwAZBYZ5AHaTROpZ7" Name="Output" Kind="OutputPin" />
           </Node>

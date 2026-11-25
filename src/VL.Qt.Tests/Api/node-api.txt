@@ -383,9 +383,9 @@ VL.Qt | VL.Qt.Nodes.AddArcNode | type sealed class
 VL.Qt | VL.Qt.Nodes.AddCircleNode | attr ProcessNode(Name = "AddCircle", Category = "Qt.Paths")
 VL.Qt | VL.Qt.Nodes.AddCircleNode | ctor | new
 VL.Qt | VL.Qt.Nodes.AddCircleNode | method Update | VL.Qt.Paths.QtPath
-VL.Qt | VL.Qt.Nodes.AddCircleNode | method Update | order Input, Center, Dir, Radius, Output
+VL.Qt | VL.Qt.Nodes.AddCircleNode | method Update | order Input, Center, Direction, Radius, Output
 VL.Qt | VL.Qt.Nodes.AddCircleNode | method Update | pin Center | in Stride.Core.Mathematics.Vector2 | (center)
-VL.Qt | VL.Qt.Nodes.AddCircleNode | method Update | pin Dir | in VL.Qt.Paths.PathDirection | Pin(Name = "Dir") | (dir)
+VL.Qt | VL.Qt.Nodes.AddCircleNode | method Update | pin Direction | in VL.Qt.Paths.PathDirection | (direction)
 VL.Qt | VL.Qt.Nodes.AddCircleNode | method Update | pin Input | in VL.Qt.Paths.QtPath | (input)
 VL.Qt | VL.Qt.Nodes.AddCircleNode | method Update | pin Output | out VL.Qt.Paths.QtPath | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.AddCircleNode | method Update | pin Radius | in float = 0.5 | (radius)
@@ -411,8 +411,8 @@ VL.Qt | VL.Qt.Nodes.AddPathNode | type sealed class
 VL.Qt | VL.Qt.Nodes.AddPolyNode | attr ProcessNode(Name = "AddPoly", Category = "Qt.Paths")
 VL.Qt | VL.Qt.Nodes.AddPolyNode | ctor | new
 VL.Qt | VL.Qt.Nodes.AddPolyNode | method Update | VL.Qt.Paths.QtPath
-VL.Qt | VL.Qt.Nodes.AddPolyNode | method Update | order Input, Points, Close, Output
-VL.Qt | VL.Qt.Nodes.AddPolyNode | method Update | pin Close | in bool | (close)
+VL.Qt | VL.Qt.Nodes.AddPolyNode | method Update | order Input, Points, Closed, Output
+VL.Qt | VL.Qt.Nodes.AddPolyNode | method Update | pin Closed | in bool | (closed)
 VL.Qt | VL.Qt.Nodes.AddPolyNode | method Update | pin Input | in VL.Qt.Paths.QtPath | (input)
 VL.Qt | VL.Qt.Nodes.AddPolyNode | method Update | pin Output | out VL.Qt.Paths.QtPath | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.AddPolyNode | method Update | pin Points | in VL.Lib.Collections.Spread<Stride.Core.Mathematics.Vector2> | (points)
@@ -429,8 +429,8 @@ VL.Qt | VL.Qt.Nodes.AddRectNode | type sealed class
 VL.Qt | VL.Qt.Nodes.AddRoundRectNode | attr ProcessNode(Name = "AddRoundRect", Category = "Qt.Paths")
 VL.Qt | VL.Qt.Nodes.AddRoundRectNode | ctor | new
 VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | VL.Qt.Paths.QtPath
-VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | order Input, Rectangle, Radius, Dir, Output
-VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | pin Dir | in VL.Qt.Paths.PathDirection | Pin(Name = "Dir") | (dir)
+VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | order Input, Rectangle, Radius, Direction, Output
+VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | pin Direction | in VL.Qt.Paths.PathDirection | (direction)
 VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | pin Input | in VL.Qt.Paths.QtPath | (input)
 VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | pin Output | out VL.Qt.Paths.QtPath | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | pin Radius | in Stride.Core.Mathematics.Vector2 = 0.1, 0.1 | (radius)
@@ -675,20 +675,20 @@ VL.Qt | VL.Qt.Nodes.ColumnSpectralNode | type sealed class
 VL.Qt | VL.Qt.Nodes.CubicToNode | attr ProcessNode(Name = "CubicTo", Category = "Qt.Paths")
 VL.Qt | VL.Qt.Nodes.CubicToNode | ctor | new
 VL.Qt | VL.Qt.Nodes.CubicToNode | method Update | VL.Qt.Paths.QtPath
-VL.Qt | VL.Qt.Nodes.CubicToNode | method Update | order Input, Control Point 1, Control Point 2, EndPoint, Output
+VL.Qt | VL.Qt.Nodes.CubicToNode | method Update | order Input, Control Point 1, Control Point 2, End Point, Output
 VL.Qt | VL.Qt.Nodes.CubicToNode | method Update | pin Control Point 1 | in Stride.Core.Mathematics.Vector2 | Pin(Name = "Control Point 1") | (controlPoint1)
 VL.Qt | VL.Qt.Nodes.CubicToNode | method Update | pin Control Point 2 | in Stride.Core.Mathematics.Vector2 | Pin(Name = "Control Point 2") | (controlPoint2)
-VL.Qt | VL.Qt.Nodes.CubicToNode | method Update | pin EndPoint | in Stride.Core.Mathematics.Vector2 | Pin(Name = "EndPoint") | (endPoint)
+VL.Qt | VL.Qt.Nodes.CubicToNode | method Update | pin End Point | in Stride.Core.Mathematics.Vector2 | (endPoint)
 VL.Qt | VL.Qt.Nodes.CubicToNode | method Update | pin Input | in VL.Qt.Paths.QtPath | (input)
 VL.Qt | VL.Qt.Nodes.CubicToNode | method Update | pin Output | out VL.Qt.Paths.QtPath | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.CubicToNode | type sealed class
 VL.Qt | VL.Qt.Nodes.CubicToRelativeNode | attr ProcessNode(Name = "CubicTo (Relative)", Category = "Qt.Paths")
 VL.Qt | VL.Qt.Nodes.CubicToRelativeNode | ctor | new
 VL.Qt | VL.Qt.Nodes.CubicToRelativeNode | method Update | VL.Qt.Paths.QtPath
-VL.Qt | VL.Qt.Nodes.CubicToRelativeNode | method Update | order Input, Control Point 1, Control Point 2, EndPoint, Output
+VL.Qt | VL.Qt.Nodes.CubicToRelativeNode | method Update | order Input, Control Point 1, Control Point 2, End Point, Output
 VL.Qt | VL.Qt.Nodes.CubicToRelativeNode | method Update | pin Control Point 1 | in Stride.Core.Mathematics.Vector2 | Pin(Name = "Control Point 1") | (controlPoint1)
 VL.Qt | VL.Qt.Nodes.CubicToRelativeNode | method Update | pin Control Point 2 | in Stride.Core.Mathematics.Vector2 | Pin(Name = "Control Point 2") | (controlPoint2)
-VL.Qt | VL.Qt.Nodes.CubicToRelativeNode | method Update | pin EndPoint | in Stride.Core.Mathematics.Vector2 | Pin(Name = "EndPoint") | (endPoint)
+VL.Qt | VL.Qt.Nodes.CubicToRelativeNode | method Update | pin End Point | in Stride.Core.Mathematics.Vector2 | (endPoint)
 VL.Qt | VL.Qt.Nodes.CubicToRelativeNode | method Update | pin Input | in VL.Qt.Paths.QtPath | (input)
 VL.Qt | VL.Qt.Nodes.CubicToRelativeNode | method Update | pin Output | out VL.Qt.Paths.QtPath | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.CubicToRelativeNode | type sealed class

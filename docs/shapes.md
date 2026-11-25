@@ -54,15 +54,15 @@ The optional pins (`Cap`, `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Trim St
 |---|---|
 | `MoveTo`, `LineTo` | `Point` |
 | `QuadTo` | `Control Point`, `End Point` |
-| `CubicTo` | `Control Point 1`, `Control Point 2`, `EndPoint` |
+| `CubicTo` | `Control Point 1`, `Control Point 2`, `End Point` |
 | `Close` | none |
 | `ArcTo` (tangent) | `Corner`, `Destination Point`, `Corner Radius` |
 | `ArcTo` (oval) | `Bounds`, `Start Angle`, `Sweep Angle`, `Force Move To` |
 | `ArcTo` (SVG) | `Radius`, `X Axis Rotate`, `Large Arc`, `Sweep`, `Destination Point` |
-| `AddRect`, `AddRoundRect`, `AddOval`, `AddCircle`, `AddArc`, `AddPoly`, `AddPath` | the shape (`Rectangle`, `Radius`, `Bounds`, `Center`, `Points`, `Other`, …) and, as in Skia, `Direction` (`PathDirection`) or `Mode` (`PathAddMode`) |
+| `AddRect`, `AddRoundRect`, `AddOval`, `AddCircle`, `AddArc`, `AddPoly`, `AddPath` | the shape (`Rectangle`, `Radius`, `Bounds`, `Center`, `Points`, `Other`, …) and, `Direction` (`PathDirection`) or `Mode` (`PathAddMode`) |
 
 - `MoveTo`, `LineTo`, `QuadTo` and `CubicTo` have a `(Relative)` variant that takes its points relative to the current point; of `ArcTo` only the SVG form has one. `Close` and the `Add…` nodes have none (as in Skia).
-- `AddPath` appends another path; `AddPoly` takes a `Spread<Vector2>` and an optional close.
+- `AddPath` appends another path; `AddPoly` takes a `Spread<Vector2>` and an optional `Closed`.
 
 **Skia correspondence.** The nodes in `Qt.Paths` have the names and pins of `Skia.Paths`, so Skia patches carry over. Differences:
 
