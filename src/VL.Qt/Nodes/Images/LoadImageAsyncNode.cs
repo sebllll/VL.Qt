@@ -19,12 +19,12 @@ namespace VL.Qt.Nodes
         private readonly ResourceClient _client;
         private readonly ResourceNodeReport _report;
         private readonly Subject<QtImage> _onLoaded = new();
-        private readonly Action<ImageResource> _onSettled;
+        private readonly Action<QtResource> _onSettled;
         private string? _path;
         private bool _mipmaps;
         private ImageUpload _upload;
         // Current = at the output; pending = loading while the current one stays (Keep Previous).
-        private ImageResource? _current, _pending;
+        private QtResource? _current, _pending;
         private QtImage? _currentImage, _pendingImage;
         private string _error = string.Empty;
 
@@ -84,7 +84,7 @@ namespace VL.Qt.Nodes
             // The switch is decided before the create: with Keep Previous off the old image goes even if QtNative refuses the new one.
             if (!keepPrevious)
                 ReleaseCurrent();
-            ImageResource resource;
+            QtResource resource;
             try
             {
                 resource = _client.CreateImage();
@@ -130,7 +130,7 @@ namespace VL.Qt.Nodes
         }
 
         // Main thread, in the pump or a synchronous failure of Load.
-        private void OnSettled(ImageResource resource)
+        private void OnSettled(QtResource resource)
         {
             if (resource.State != QtImageState.Ready)
                 return;

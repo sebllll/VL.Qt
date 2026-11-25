@@ -38,7 +38,7 @@ namespace VL.Qt.Nodes
         private readonly OccurrenceRegistry _scene;
         private readonly Func<SceneHandle, long> _changeCount;
         private readonly Func<double> _clockSeconds;
-        private ImageResource? _resource;
+        private QtResource? _resource;
         private IImage? _image;
         private Element? _lastElement;      // the instance of the last grab (a new instance at the same place counts as a change)
         private Element? _videoChecked;     // the instance whose tree was searched for a Video

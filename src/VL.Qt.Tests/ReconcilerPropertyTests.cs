@@ -60,7 +60,7 @@ namespace VL.Qt.Tests
                             VAlign = VerticalAlignment.Center, Wrap = TextWrap.Wrap, Elide = TextElide.Right,
                             LineHeight = 1.5f, LetterSpacing = 0.01f, Autofit = TextAutofit.Fit, Size = new Vector2(1, 0.5f),
                         },
-                        new Image { Source = new QtImage(new ImageResource(0x1_0000_0005UL)), FillMode = FillMode.Crop, Smooth = false }),
+                        new Image { Source = new QtImage(new QtResource(0x1_0000_0005UL)), FillMode = FillMode.Crop, Smooth = false }),
                 },
                 new Row { Spacing = 0.2f, Padding = 0.1f, ChildAlignment = VerticalAlignment.Center },
                 new Shader

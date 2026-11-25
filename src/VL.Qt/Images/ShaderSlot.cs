@@ -38,7 +38,7 @@ namespace VL.Qt
         private readonly string _label;
         private string? _source;
         private bool _isCode;
-        private ImageResource? _resource;
+        private QtResource? _resource;
         private string _createError = string.Empty;
 
         /// <param name="client">Creates and releases the shader resources, may be null: then <see cref="Id"/> stays 0 and <see cref="Error"/> reports it.</param>
@@ -55,7 +55,7 @@ namespace VL.Qt
         public ulong Id => _resource?.Id ?? 0;
 
         /// <summary>The resource, null without path (tests, status).</summary>
-        public ImageResource? Resource => _resource;
+        public QtResource? Resource => _resource;
 
         /// <summary>
         /// Why the shader is not (fully) usable ("Fragment shader: ..."): the load error, or for a Ready shader the warning of

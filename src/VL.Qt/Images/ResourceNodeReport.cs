@@ -30,7 +30,7 @@ namespace VL.Qt
         }
 
         /// <summary>Reports the current error (empty if none) and the warning of <paramref name="resource"/>. Main thread, once per Update; no allocation while nothing changes.</summary>
-        public void Update(ImageResource? resource, string error)
+        public void Update(QtResource? resource, string error)
         {
             if (_lasting)
                 _error.Set(error);

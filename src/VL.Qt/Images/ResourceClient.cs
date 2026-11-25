@@ -16,7 +16,7 @@ namespace VL.Qt
     /// <list type="bullet">
     /// <item>Creates image resources and starts loads/pixel uploads for the nodes (LoadImage, LoadImage (Async), ToQtImage).</item>
     /// <item>Empties the status queue (vlqt_res_poll) once per pump on the main thread and updates the
-    /// <see cref="ImageResource"/>s; completes their tasks and calls <see cref="ImageResource.Settled"/> there.</item>
+    /// <see cref="QtResource"/>s; completes their tasks and calls <see cref="QtResource.Settled"/> there.</item>
     /// <item>Release queue: a node's Dispose only queues the id (any thread); vlqt_res_release runs in the next pump, after
     /// the commands of that pump are applied (an element switching away from the image acquires the new one first).
     /// Without a running pump (app stopped) the release runs at once on the main thread.</item>
@@ -36,15 +36,15 @@ namespace VL.Qt
         private readonly IResourceApi _api;
         private readonly int _threadId;
         private readonly Func<ILogger?> _logger;
-        private readonly Dictionary<ulong, ImageResource> _live = new();
+        private readonly Dictionary<ulong, QtResource> _live = new();
         private readonly object _syncRoot = new();
-        private readonly List<ImageResource> _releases = new();
-        private ImageResource[] _flushing = new ImageResource[8];
+        private readonly List<QtResource> _releases = new();
+        private QtResource[] _flushing = new QtResource[8];
         private byte[] _buffer = new byte[4096];
         private Native.vlqt_res_info[] _list = new Native.vlqt_res_info[64];
         private bool _pumping;
         // Resources whose load ended in the records just applied; settled after the last record (see Poll).
-        private readonly List<ImageResource> _toSettle = new();
+        private readonly List<QtResource> _toSettle = new();
         private bool _settling;
 
         public ResourceClient(IResourceApi api, int threadId, Func<ILogger?> logger, bool previews = false)
@@ -91,23 +91,23 @@ namespace VL.Qt
         }
 
         /// <summary>New image resource (Loading, no content yet). Throws if QtNative refuses (logged by the node).</summary>
-        public ImageResource CreateImage() => Create(Protocol.ResourceKind.Image);
+        public QtResource CreateImage() => Create(Protocol.ResourceKind.Image);
 
         /// <summary>
-        /// New shader resource (Loading, no content yet); <see cref="ImageResource"/> is the generic resource view
+        /// New shader resource (Loading, no content yet); <see cref="QtResource"/> is the generic resource view
         /// (id, state, error) also for shaders. Throws if QtNative refuses (reported by the node).
         /// </summary>
-        public ImageResource CreateShader() => Create(Protocol.ResourceKind.Shader);
+        public QtResource CreateShader() => Create(Protocol.ResourceKind.Shader);
 
         /// <summary>New snapshot resource: no content until the first <see cref="Snapshot"/> is done. Throws if QtNative refuses.</summary>
-        public ImageResource CreateSnapshot() => Create(Protocol.ResourceKind.Snapshot);
+        public QtResource CreateSnapshot() => Create(Protocol.ResourceKind.Snapshot);
 
         /// <summary>
         /// New audio tap (protocol.h "Audio tap") with a fixed format (float, channels, sampleRate): Ready at once,
         /// its id goes to <see cref="Elements.Video"/>.AudioTap. A new sample rate needs a new tap; release the old one
         /// with <see cref="Release"/> after the Video switched to the new id. Throws if QtNative refuses.
         /// </summary>
-        public ImageResource CreateAudioTap(int channels, int sampleRate)
+        public QtResource CreateAudioTap(int channels, int sampleRate)
         {
             var resource = Create(Protocol.ResourceKind.AudioTap);
             var rc = _api.AudioTapInit(resource.Id, channels, sampleRate);
@@ -119,21 +119,21 @@ namespace VL.Qt
             return resource;
         }
 
-        private ImageResource Create(int kind)
+        private QtResource Create(int kind)
         {
             var rc = _api.Create(kind, out var id);
             if (rc != Native.Result.Ok)
                 throw new InvalidOperationException($"vlqt_res_create failed ({rc})");
-            var resource = new ImageResource(id);
+            var resource = new QtResource(id);
             _live.Add(id, resource);
             return resource;
         }
 
         /// <summary>
-        /// Every refused start ends here: fails the resource and settles it, so <see cref="ImageResource.Settled"/> fires and
+        /// Every refused start ends here: fails the resource and settles it, so <see cref="QtResource.Settled"/> fires and
         /// the version changes whatever the reason. Returns false.
         /// </summary>
-        private bool Refuse(ImageResource resource, string error)
+        private bool Refuse(QtResource resource, string error)
         {
             resource.Fail(error);
             Settle(resource);
@@ -141,7 +141,7 @@ namespace VL.Qt
         }
 
         /// <summary><see cref="System.IO.Path.GetFullPath(string)"/>; refuses the resource if the path is invalid.</summary>
-        private bool TryGetFullPath(ImageResource resource, string path, out string fullPath)
+        private bool TryGetFullPath(QtResource resource, string path, out string fullPath)
         {
             try
             {
@@ -161,7 +161,7 @@ namespace VL.Qt
         /// with VL.Qt, see <see cref="ShaderSlot.TryGetBuiltinShader"/>) is passed as <c>builtin:&lt;name&gt;</c>, any other path is made absolute here. Returns false and fails the resource if
         /// the path is invalid or QtNative refuses.
         /// </summary>
-        public bool LoadShader(ImageResource resource, string path, int stage)
+        public bool LoadShader(QtResource resource, string path, int stage)
         {
             if (resource.IsReleased)
                 return false;
@@ -180,7 +180,7 @@ namespace VL.Qt
         /// <paramref name="resource"/> (asynchronous, bake errors arrive as status records). Returns false and fails
         /// the resource if QtNative refuses.
         /// </summary>
-        public bool LoadShaderSource(ImageResource resource, string source, int stage)
+        public bool LoadShaderSource(QtResource resource, string source, int stage)
         {
             if (resource.IsReleased)
                 return false;
@@ -191,10 +191,10 @@ namespace VL.Qt
 
         /// <summary>
         /// Starts grabbing element <paramref name="elementId"/> of <paramref name="window"/> into <paramref name="resource"/>
-        /// (asynchronous, <see cref="ImageResource.Settled"/> fires in a later pump). Returns false and fails the resource
+        /// (asynchronous, <see cref="QtResource.Settled"/> fires in a later pump). Returns false and fails the resource
         /// if QtNative refuses.
         /// </summary>
-        public bool Snapshot(ImageResource resource, SceneHandle window, uint elementId, float scale)
+        public bool Snapshot(QtResource resource, SceneHandle window, uint elementId, float scale)
         {
             if (resource.IsReleased)
                 return false;
@@ -207,7 +207,7 @@ namespace VL.Qt
         /// Like <see cref="Snapshot"/>, but QtNative picks the scale so that the longest edge is at most
         /// <paramref name="maxEdgePx"/> pixels and never above the DIP size (tooltip previews).
         /// </summary>
-        public bool SnapshotFit(ImageResource resource, SceneHandle window, uint elementId, int maxEdgePx)
+        public bool SnapshotFit(QtResource resource, SceneHandle window, uint elementId, int maxEdgePx)
         {
             if (resource.IsReleased)
                 return false;
@@ -220,7 +220,7 @@ namespace VL.Qt
         /// Starts loading <paramref name="path"/> (made absolute here) into <paramref name="resource"/>, uploaded the way
         /// <paramref name="upload"/> says. Returns false and fails the resource if the path is invalid or QtNative refuses.
         /// </summary>
-        public bool Load(ImageResource resource, string path, bool mipmaps, ImageUpload upload = ImageUpload.Auto)
+        public bool Load(QtResource resource, string path, bool mipmaps, ImageUpload upload = ImageUpload.Auto)
         {
             if (resource.IsReleased || !TryGetFullPath(resource, path, out var fullPath))
                 return false;
@@ -235,7 +235,7 @@ namespace VL.Qt
         /// way <paramref name="upload"/> says. Returns false and fails the resource if the format is not supported or
         /// QtNative refuses.
         /// </summary>
-        public bool SetPixels(ImageResource resource, int width, int height, int rowBytes, PixelFormat format, bool premultiplied, ReadOnlySpan<byte> data,
+        public bool SetPixels(QtResource resource, int width, int height, int rowBytes, PixelFormat format, bool premultiplied, ReadOnlySpan<byte> data,
             ImageUpload upload = ImageUpload.Auto)
         {
             if (resource.IsReleased)
@@ -261,7 +261,7 @@ namespace VL.Qt
         /// Blocks until <paramref name="resource"/> is Ready or Failed (decode on this thread if no worker took it yet,
         /// upload at once), then applies the status queue so size and state are current.
         /// </summary>
-        public void Wait(ImageResource resource, int timeoutMs = waitTimeoutMs)
+        public void Wait(QtResource resource, int timeoutMs = waitTimeoutMs)
         {
             if (resource.IsReleased || resource.State == QtImageState.Failed)
                 return;
@@ -275,7 +275,7 @@ namespace VL.Qt
         /// Copies the pixels of the last finished snapshot into a new <see cref="IImage"/> (BGRA8 premultiplied, own memory,
         /// not volatile). Null if there is none yet or the read failed (logged).
         /// </summary>
-        public IImage? ReadSnapshot(ImageResource resource)
+        public IImage? ReadSnapshot(QtResource resource)
         {
             if (resource.IsReleased)
                 return null;
@@ -288,7 +288,7 @@ namespace VL.Qt
         /// Copies the tooltip preview of a Ready image (made by the worker for <see cref="Protocol.ImageLoadFlags.Preview"/>, at most
         /// 256 px) into a new <see cref="IImage"/> (BGRA8 premultiplied, own memory). Null if there is none.
         /// </summary>
-        public IImage? ReadPreview(ImageResource resource)
+        public IImage? ReadPreview(QtResource resource)
         {
             if (resource.IsReleased)
                 return null;
@@ -334,7 +334,7 @@ namespace VL.Qt
         /// Queues the release of <paramref name="resource"/> (idempotent, any thread). vlqt_res_release runs in the next
         /// pump, or at once when no pump runs and this is the main thread.
         /// </summary>
-        public void Release(ImageResource? resource)
+        public void Release(QtResource? resource)
         {
             if (resource is null)
                 return;
@@ -382,7 +382,7 @@ namespace VL.Qt
                 if (count == 0)
                     return;
                 if (_flushing.Length < count)
-                    _flushing = new ImageResource[Math.Max(count, _flushing.Length * 2)];
+                    _flushing = new QtResource[Math.Max(count, _flushing.Length * 2)];
                 _releases.CopyTo(_flushing);
                 _releases.Clear();
             }
@@ -424,7 +424,7 @@ namespace VL.Qt
 
         /// <summary>
         /// Applies all queued status records (main thread), then settles the resources that finished. The records are parsed
-        /// in place in <see cref="_buffer"/>; user code (<see cref="ImageResource.Settled"/>, the On Loaded observable) runs only
+        /// in place in <see cref="_buffer"/>; user code (<see cref="QtResource.Settled"/>, the On Loaded observable) runs only
         /// after the last record, so it may poll again (a synchronous load waits) without overwriting the batch.
         /// </summary>
         internal void Poll()
@@ -485,7 +485,7 @@ namespace VL.Qt
             }
         }
 
-        private void Dispatch(ImageResource resource, ushort ev, ReadOnlySpan<byte> payload)
+        private void Dispatch(QtResource resource, ushort ev, ReadOnlySpan<byte> payload)
         {
             switch (ev)
             {
@@ -512,7 +512,7 @@ namespace VL.Qt
             }
         }
 
-        private void Settle(ImageResource resource)
+        private void Settle(QtResource resource)
         {
             resource.CompleteSettled();
             try
