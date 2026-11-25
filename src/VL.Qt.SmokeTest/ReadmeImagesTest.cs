@@ -79,7 +79,7 @@ public static class ReadmeImagesTest
         if (splitFile == null) return;
         var splitCode = File.ReadAllText(splitFile);
         var split = Baked(splitCode, "RGBSplit.frag");
-        s.Check(Regex.IsMatch(splitCode, @"//\s*@padding\s+amount"), "readme-images: RGBSplit.frag takes its padding from the uniform amount");
+        s.Check(Regex.IsMatch(splitCode, @"//\s*@padding\s+amount\b"), "readme-images: RGBSplit.frag takes its padding from the uniform amount");
         const float splitAmount = 8; // DIP, the distance of the shifted copies (also the padding, as in the file head)
 
         var cmd = new CommandWriter();

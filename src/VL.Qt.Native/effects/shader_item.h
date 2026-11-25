@@ -64,12 +64,16 @@ class QSGTextureProvider;
 namespace vlqt {
 
 // Uniform names VL.Qt sets itself: THE one list (the C# mirror is VL.Qt.Shaders.ReservedUniforms, ReservedUniformsDriftTests
-// compares the three arrays below). An entry of that name from C# is an error line; shader files get no pin for them.
-// - item: every ShaderEffect (qt_Matrix and qt_Opacity from the render state, source = Input; texelSize, dpr and
-//   viewSize written into the uniform block if the shader declares them);
+// compares the four arrays below). An entry of that name from C# is an error line; shader files get no pin for them.
+// - item: every ShaderEffect (qt_Matrix and qt_Opacity from the render state, source = Input); a table entry of that
+//   name is an error line;
+// - item automatic: written into the uniform block of every ShaderEffect whose shader declares them. C# sends no entry
+//   of that name (an error at the node); a raw table entry of that name wins over the automatic value (the SmokeTest
+//   passes of the glow and inner shadow pyramids set texelSize themselves);
 // - chain automatic: written by the effect chain into the passes of a SHADER link if the shader declares them;
 // - chain reserved: names of the Blur-Pyramide textures, no uniform of a shader link may have them.
-inline constexpr std::string_view kItemReservedUniforms[] = {"qt_Matrix", "qt_Opacity", "source", "texelSize", "dpr", "viewSize"};
+inline constexpr std::string_view kItemReservedUniforms[] = {"qt_Matrix", "qt_Opacity", "source"};
+inline constexpr std::string_view kItemAutomaticUniforms[] = {"texelSize", "dpr", "viewSize"};
 inline constexpr std::string_view kChainAutomaticUniforms[] = {"weight", "elementRect", "passIndex"};
 inline constexpr std::string_view kChainReservedUniforms[] = {"base", "glow", "shadow"};
 

@@ -33,7 +33,8 @@ namespace VL.Qt.Reconciliation
             next.Clear();
             foreach (var u in effect.Uniforms)
             {
-                if (u is null || !Protocol.IsValidName(u.Name))
+                // Reserved names are an error at the node (ShaderNode); QtNative sets the automatic ones itself.
+                if (u is null || !Protocol.IsValidName(u.Name) || ReservedUniforms.ItemAutomatic.Contains(u.Name))
                     continue;
                 if (u.ValueType != Protocol.ValueType.Sampler)
                     next[UniformKey.Of(u)] = Resolve(u, effect, children);

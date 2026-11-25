@@ -163,7 +163,7 @@ namespace VL.Qt.Nodes
             return string.Join('\n', lines);
         }
 
-        /// <summary>One line per uniform of a reserved name (<see cref="ReservedUniforms.Item"/>): QtNative would ignore it with an error line.</summary>
+        /// <summary>One line per uniform of a reserved name (<see cref="ReservedUniforms.IsItemReserved"/>): shown as an error, the entry is not sent.</summary>
         internal static string CheckReserved(Spread<Uniform>? uniforms)
         {
             if (uniforms is null || uniforms.Count == 0)

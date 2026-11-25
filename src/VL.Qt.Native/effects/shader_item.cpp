@@ -126,6 +126,7 @@ bool isItemReservedUniform(std::string_view name)
 bool isChainReservedUniform(std::string_view name)
 {
     return isItemReservedUniform(name)
+        || contains(std::begin(kItemAutomaticUniforms), std::end(kItemAutomaticUniforms), name)
         || contains(std::begin(kChainAutomaticUniforms), std::end(kChainAutomaticUniforms), name)
         || contains(std::begin(kChainReservedUniforms), std::end(kChainReservedUniforms), name);
 }
@@ -616,6 +617,15 @@ void ShaderItem::rebuild()
             const int size = valueBytes(u.type);
             if (mit->offset + size <= m_ubufSize)
                 m_writes.push_back({mit->offset, size, k});
+        }
+        // A table entry of the same name wins over an automatic uniform.
+        for (const Write& wr : m_writes) {
+            if (wr.offset == m_texelOffset)
+                m_texelOffset = -1;
+            if (wr.offset == m_dprOffset)
+                m_dprOffset = -1;
+            if (wr.offset == m_viewSizeOffset)
+                m_viewSizeOffset = -1;
         }
         // Sampler states of names the shader does not have: same leniency as for uniforms while a shader still bakes.
         for (const auto& st : m_samplerStates) {
