@@ -27,17 +27,10 @@ namespace VL.Qt.Reconciliation
             }
             sink.EndEffectChain();
 
-            if (effect.Objects is { } objects)
-            {
-                var ids = effect.SentIds ??= new List<uint>(objects.Count);
-                ids.Clear();
-                for (int i = 0; i < objects.Count; i++)
-                    ids.Add(objects[i].Id);
-            }
-            else
-            {
-                effect.SentIds = null;
-            }
+            var objects = effect.Objects;
+            effect.SentIds.Clear();
+            for (int i = 0; i < objects.Count; i++)
+                effect.SentIds.Add(objects[i].Id);
         }
 
         /// <summary>Writes the values of one run that differ from Qt's defaults (a run is applied whole in QtNative).</summary>

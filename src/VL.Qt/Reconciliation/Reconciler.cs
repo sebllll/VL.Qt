@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using VL.Qt.Elements;
@@ -98,6 +99,8 @@ namespace VL.Qt.Reconciliation
         private readonly PrimaryOccurrences _primaries;
         private readonly HandlerReconciler _handlers;
         private readonly PropertyDiff _properties;
+        // Warnings of the last Segment; used up before the objects of the chain are reconciled, so one list serves every chain.
+        private readonly List<string> _effectWarnings = new();
         private ItemMirror? _root;
         private PassInfo _pass = new(0, false, false, SpaceMapping.Default);
         private bool _hasMapping;
@@ -220,11 +223,8 @@ namespace VL.Qt.Reconciliation
                 ClearMessages(child);
             if (item.Effect is { } effect)
             {
-                if (effect.Objects is { } objects)
-                {
-                    foreach (var o in objects)
-                        ClearMessages(o);
-                }
+                foreach (var o in effect.Objects)
+                    ClearMessages(o);
                 if (effect.Warning is not null)
                     SetEffectWarning(effect, item.Element?.Feedback ?? default, null);
             }
@@ -556,12 +556,10 @@ namespace VL.Qt.Reconciliation
                 Forget(children[i]);
             if (item.Effect is { } effect)
             {
-                if (effect.Objects is { } objects)
-                {
-                    for (int i = 0; i < objects.Count; i++)
-                        Forget(objects[i]);
-                    effect.Objects = null;
-                }
+                var objects = effect.Objects;
+                for (int i = 0; i < objects.Count; i++)
+                    Forget(objects[i]);
+                objects.Clear();
                 if (effect.Warning is not null)
                     SetEffectWarning(effect, item.Element?.Feedback ?? default, null);
             }
@@ -602,38 +600,52 @@ namespace VL.Qt.Reconciliation
         /// <summary>The chain instance changed: segments it, reconciles the objects, sends it and destroys the objects it no longer uses.</summary>
         private void ChangeEffectChain(ItemMirror item, EffectChainMirror effect, Element next, Effect? chain, Style inherited)
         {
-            var links = Effect.Segment(chain, out var warnings);
+            Effect.Segment(chain, effect.Links, _effectWarnings);
             effect.Chain = chain;
-            effect.Links = links;
-            SetEffectWarning(effect, next.Feedback, warnings.IsEmpty ? null : string.Join(" ", warnings));
+            SetEffectWarning(effect, next.Feedback, _effectWarnings.Count == 0 ? null : string.Join(" ", _effectWarnings));
 
-            var elements = CollectEffectElements(links);
+            var elements = effect.Elements;
+            CollectEffectElements(effect.Links, elements);
             var old = effect.Objects;
-            var used = old is { Count: > 0 } ? new bool[old.Count] : null;
-            var matches = new ItemMirror?[elements.Count];
-            if (used is not null)
+            if (elements.Count == 0 && old.Count == 0)
             {
-                // The same element keeps its object; leftovers of the same type are updated in place.
-                for (int i = 0; i < elements.Count; i++)
-                    matches[i] = TakeObject(old!, used, elements[i], sameElement: true);
-                for (int i = 0; i < elements.Count; i++)
-                    matches[i] ??= TakeObject(old!, used, elements[i], sameElement: false);
+                EffectChainWriter.Send(_sink, item.Id, effect, _pass.Mapping);
+                return;
             }
 
-            var objects = new List<ItemMirror>(elements.Count);
-            for (int i = 0; i < elements.Count; i++)
-                objects.Add(Reconcile(matches[i], elements[i], new Position(item, default, 0, inherited, Attached: true)));
-            effect.Elements = objects.Count > 0 ? elements : null;
-            effect.Objects = objects.Count > 0 ? objects : null;
-
-            EffectChainWriter.Send(_sink, item.Id, effect, _pass.Mapping);
-
-            // The chain no longer refers to the objects it did not reuse.
-            if (used is not null)
+            // Rented, not kept on the reconciler: reconciling an object can change the chain of that object itself.
+            var used = old.Count > 0 ? ArrayPool<bool>.Shared.Rent(old.Count) : null;
+            var matches = elements.Count > 0 ? ArrayPool<ItemMirror?>.Shared.Rent(elements.Count) : null;
+            try
             {
-                for (int i = 0; i < old!.Count; i++)
-                    if (!used[i])
+                if (used is not null)
+                {
+                    // The same element keeps its object; leftovers of the same type are updated in place.
+                    for (int i = 0; i < elements.Count; i++)
+                        matches![i] = TakeObject(old, used, elements[i], sameElement: true);
+                    for (int i = 0; i < elements.Count; i++)
+                        matches![i] ??= TakeObject(old, used, elements[i], sameElement: false);
+                }
+
+                var objects = effect.SpareObjects;
+                for (int i = 0; i < elements.Count; i++)
+                    objects.Add(Reconcile(matches![i], elements[i], new Position(item, default, 0, inherited, Attached: true)));
+                effect.ReplaceObjects(objects);
+
+                EffectChainWriter.Send(_sink, item.Id, effect, _pass.Mapping);
+
+                // The chain no longer refers to the objects it did not reuse.
+                for (int i = 0; i < old.Count; i++)
+                    if (!used![i])
                         DestroySubtree(old[i]);
+                old.Clear();
+            }
+            finally
+            {
+                if (used is not null)
+                    ArrayPool<bool>.Shared.Return(used, clearArray: true);
+                if (matches is not null)
+                    ArrayPool<ItemMirror?>.Shared.Return(matches, clearArray: true);
             }
         }
 
@@ -644,15 +656,14 @@ namespace VL.Qt.Reconciliation
         /// </summary>
         private bool RetryEffectObjects(ItemMirror item, EffectChainMirror effect, Style inherited)
         {
-            if (effect.Objects is not { } objects || effect.Elements is not { } elements)
-                return false;
-
+            var objects = effect.Objects;
+            var elements = effect.Elements;
             var resend = false;
             for (int i = 0; i < objects.Count; i++)
             {
                 var o = Reconcile(objects[i], elements[i], new Position(item, default, 0, inherited, Attached: true));
                 objects[i] = o;
-                if (o.Id != effect.SentIds![i])
+                if (o.Id != effect.SentIds[i])
                     resend = true;
             }
             if (resend)
@@ -678,10 +689,10 @@ namespace VL.Qt.Reconciliation
             return null;
         }
 
-        /// <summary>The elements the links refer to (mask sources and uniform textures), each once by reference, in chain order.</summary>
-        private static List<Element> CollectEffectElements(ImmutableArray<EffectChainLink> links)
+        /// <summary>Fills <paramref name="elements"/> with the elements the links refer to (mask sources and uniform textures), each once by reference, in chain order.</summary>
+        private static void CollectEffectElements(List<EffectChainLink> links, List<Element> elements)
         {
-            var elements = new List<Element>();
+            elements.Clear();
             foreach (var link in links)
             {
                 if (link.Shader is { } shader)
@@ -695,7 +706,6 @@ namespace VL.Qt.Reconciliation
                     AddOnce(elements, mask);
                 }
             }
-            return elements;
         }
 
         private static void AddOnce(List<Element> elements, Element element)

@@ -105,7 +105,7 @@ namespace VL.Qt.Tests
         [Test]
         public void SegmentOfNoChainIsEmpty()
         {
-            Assert.That(Effect.Segment(null, out var warnings), Is.Empty);
+            Assert.That(EffectSegments.Of(null, out var warnings), Is.Empty);
             Assert.That(warnings, Is.Empty);
         }
 
@@ -113,7 +113,7 @@ namespace VL.Qt.Tests
         public void SegmentWithoutShaderIsOneRun()
         {
             var chain = new ColorAdjustEffect(new BlurEffect(null, 0.3f, 32, 0), 0.1f, 0, 0);
-            var links = Effect.Segment(chain, out var warnings);
+            var links = EffectSegments.Of(chain, out var warnings);
             Assert.That(links.Length, Is.EqualTo(1));
             Assert.That(links[0].IsShader, Is.False);
             Assert.That(links[0].Multi, Is.EqualTo(EffectDesc.Default with { BlurEnabled = true, Blur = 0.3f, Brightness = 0.1f }));
@@ -127,7 +127,7 @@ namespace VL.Qt.Tests
             var blur = new BlurEffect(null, 0.3f, 32, 0);
             var shader = new TestShaderEffect(blur);
             var chain = new DropShadowEffect(shader, Color4.Black, new Vector2(2, 2), 1, 1);
-            var links = Effect.Segment(chain, out var warnings);
+            var links = EffectSegments.Of(chain, out var warnings);
             Assert.That(links.Select(l => l.IsShader), Is.EqualTo(new[] { false, true, false }));
             Assert.That(links[0].Multi.BlurEnabled && !links[0].Multi.ShadowEnabled, Is.True);
             Assert.That(links[1].Shader, Is.SameAs(shader));
@@ -142,7 +142,7 @@ namespace VL.Qt.Tests
             Effect chain = new BlurEffect(new BlurEffect(null, 0.1f, 32, 0), 0.2f, 32, 0);
             chain = new TestShaderEffect(chain, Protocol.EffectTemplate.TwoPass);
             chain = new BlurEffect(new BlurEffect(chain, 0.3f, 32, 0), 0.4f, 32, 0);
-            var links = Effect.Segment(chain, out var warnings);
+            var links = EffectSegments.Of(chain, out var warnings);
             Assert.That(links.Length, Is.EqualTo(3));
             Assert.That(links[0].Multi.Blur, Is.EqualTo(0.2f));
             Assert.That(links[1].Shader!.Template, Is.EqualTo(Protocol.EffectTemplate.TwoPass));
@@ -154,7 +154,7 @@ namespace VL.Qt.Tests
         public void AdjacentShadersHaveNoRunBetween()
         {
             var chain = new TestShaderEffect(new TestShaderEffect(null));
-            var links = Effect.Segment(chain, out _);
+            var links = EffectSegments.Of(chain, out _);
             Assert.That(links.Select(l => l.IsShader), Is.EqualTo(new[] { true, true }));
             Assert.That(links[1].Shader, Is.SameAs(chain));
         }

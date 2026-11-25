@@ -287,13 +287,13 @@ namespace VL.Qt.Tests
 
         // --- REC-16 ---
 
-        [Test, Ignore("REC-08: UniformWriter builds a Dictionary and key strings per visit (456 B/frame measured)")]
+        [Test]
         public void Shader_ThreeUniforms_OneAnimated_NoAllocations() => AssertNoAllocation(ShaderAnimatedUniform());
 
         [Test, Category("Perf")]
         public void Shader_ThreeUniforms_OneAnimated_Fast() => AssertFast(ShaderAnimatedUniform());
 
-        [Test, Ignore("REC-09: ChangeEffectChain allocates Segment, lists and arrays when the chain instance changes (1472 B/frame measured)")]
+        [Test]
         public void EffectChain_Animated_NoAllocations() => AssertNoAllocation(AnimatedEffectChain());
 
         [Test, Category("Perf")]

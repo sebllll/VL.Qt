@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
 
@@ -13,9 +12,6 @@ namespace VL.Qt.Reconciliation
     /// </summary>
     internal static class UniformWriter
     {
-        /// <summary>Suffix of the table key of a sampler entry: a texture and its sampler share a name, so they need two keys.</summary>
-        private const char SamplerKey = '\u0001';
-
         /// <summary>The state of <paramref name="sampler"/> as the wire carries it (protocol.h "Sampler"): bytes filter, mip filter, address U, address V.</summary>
         public static ulong PackSampler(Sampler sampler)
             => (ulong)sampler.Filter
@@ -24,79 +20,63 @@ namespace VL.Qt.Reconciliation
                 | (ulong)sampler.AddressV << 24;
 
         /// <summary>
-        /// Sends the difference between the uniforms of <paramref name="effect"/> and <paramref name="sent"/> (null = nothing
-        /// sent yet) and returns the table QtNative holds afterwards. <paramref name="children"/> are the mirrors of the
-        /// effect's children (same order as <see cref="Element.ChildItems"/>); a texture whose mirror is a placeholder (a video
-        /// shown elsewhere) is sent as 0 = none.
+        /// Sends the difference between the uniforms of <paramref name="effect"/> and what <paramref name="mirror"/> says was
+        /// sent. <paramref name="children"/> are the mirrors of the effect's children (same order as <see cref="Element.ChildItems"/>);
+        /// a texture whose mirror is a placeholder (a video shown elsewhere) is sent as 0 = none. The new table is built in
+        /// <see cref="ShaderMirror.Scratch"/> and replaces <see cref="ShaderMirror.Sent"/> only when something was sent, so a visit allocates nothing.
         /// </summary>
-        public static Dictionary<string, UniformValue>? Write(
-            ICommandSink sink, uint id, Shader effect, IReadOnlyList<ItemMirror> children, Dictionary<string, UniformValue>? sent)
+        public static void Write(ICommandSink sink, uint id, ShaderMirror mirror, Shader effect, IReadOnlyList<ItemMirror> children)
         {
-            Dictionary<string, UniformValue>? next = null;
+            var sent = mirror.Sent;
+            var next = mirror.Scratch;
+            next.Clear();
             foreach (var u in effect.Uniforms)
             {
                 if (u is null || !Protocol.IsValidName(u.Name))
                     continue;
-                next ??= new Dictionary<string, UniformValue>(StringComparer.Ordinal);
                 if (u.ValueType != Protocol.ValueType.Sampler)
-                    next[u.Name] = Resolve(u, effect, children);
+                    next[new UniformKey(u.Name, false)] = Resolve(u, effect, children);
                 if (u.Sampler is { } sampler)
-                    next[u.Name + SamplerKey] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(sampler));
+                    next[new UniformKey(u.Name, true)] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(sampler));
             }
             if (effect.InputSampler is { } inputSampler)
-            {
-                next ??= new Dictionary<string, UniformValue>(StringComparer.Ordinal);
-                next["source" + SamplerKey] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(inputSampler));
-            }
+                next[new UniformKey("source", true)] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(inputSampler));
 
-            bool clear = false;
-            if (sent is not null)
+            var clear = false;
+            foreach (var key in sent.Keys)
             {
-                foreach (var name in sent.Keys)
+                if (!next.ContainsKey(key))
                 {
-                    if (next is null || !next.ContainsKey(name))
-                    {
-                        clear = true;
-                        break;
-                    }
+                    clear = true;
+                    break;
                 }
             }
 
-            if (next is null)
-            {
-                if (clear)
-                    Send(sink, id, Protocol.UniformSet.Clear, null, null);
-                return null;
-            }
-
-            if (!clear && sent is not null && Equal(sent, next))
-                return sent;
+            if (!clear && Equal(sent, next))
+                return;
 
             Send(sink, id, clear ? Protocol.UniformSet.Clear : (ushort)0, next, clear ? null : sent);
-            return next;
+            mirror.Commit();
         }
 
-        private static bool Equal(Dictionary<string, UniformValue> a, Dictionary<string, UniformValue> b)
+        private static bool Equal(Dictionary<UniformKey, UniformValue> a, Dictionary<UniformKey, UniformValue> b)
         {
             if (a.Count != b.Count)
                 return false;
-            foreach (var (name, value) in b)
-                if (!a.TryGetValue(name, out var other) || other != value)
+            foreach (var (key, value) in b)
+                if (!a.TryGetValue(key, out var other) || other != value)
                     return false;
             return true;
         }
 
-        private static void Send(ICommandSink sink, uint id, ushort flags, Dictionary<string, UniformValue>? next, Dictionary<string, UniformValue>? skipEqualTo)
+        private static void Send(ICommandSink sink, uint id, ushort flags, Dictionary<UniformKey, UniformValue> next, Dictionary<UniformKey, UniformValue>? skipEqualTo)
         {
             sink.BeginUniforms(id, flags);
-            if (next is not null)
+            foreach (var (key, value) in next)
             {
-                foreach (var (name, value) in next)
-                {
-                    if (skipEqualTo is not null && skipEqualTo.TryGetValue(name, out var old) && old == value)
-                        continue;
-                    WriteEntry(sink, name, value);
-                }
+                if (skipEqualTo is not null && skipEqualTo.TryGetValue(key, out var old) && old == value)
+                    continue;
+                WriteEntry(sink, key.Name, value);
             }
             sink.EndUniforms();
         }
@@ -138,7 +118,7 @@ namespace VL.Qt.Reconciliation
                 case Protocol.ValueType.Mat4: sink.UniformMat4(name, in m); break;
                 case Protocol.ValueType.Ref: sink.UniformRef(name, (uint)v.Handle); break;
                 case Protocol.ValueType.U64: sink.UniformU64(name, v.Handle); break;
-                case Protocol.ValueType.Sampler: sink.UniformSampler(name.TrimEnd(SamplerKey), v.Handle); break;
+                case Protocol.ValueType.Sampler: sink.UniformSampler(name, v.Handle); break;
             }
         }
     }

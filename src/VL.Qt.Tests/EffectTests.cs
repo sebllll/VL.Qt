@@ -39,7 +39,7 @@ namespace VL.Qt.Tests
         // A chain of merged effects only: one MultiEffect run.
         private static EffectDesc SingleRun(Effect chain, out ImmutableArray<string> warnings)
         {
-            var links = Effect.Segment(chain, out warnings);
+            var links = EffectSegments.Of(chain, out warnings);
             Assert.That(links.Length, Is.EqualTo(1));
             return links[0].Multi;
         }

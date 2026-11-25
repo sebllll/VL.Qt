@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using Stride.Core.Mathematics;
 
 namespace VL.Qt.Elements
@@ -30,56 +29,47 @@ namespace VL.Qt.Elements
         /// Splits <paramref name="chain"/> into the links of SET_EFFECT_CHAIN in application order: the start of the chain
         /// (<see cref="Previous"/> == null) first, the link at the Effect pin last. Consecutive merged effects form one
         /// MultiEffect run (a kind counts once, the link nearest to the Effect pin wins); every <see cref="ShaderEffect"/> is
-        /// a link of its own and ends a run. Empty for no chain. <paramref name="warnings"/> has at most one duplicate warning per run.
+        /// a link of its own and ends a run. <paramref name="links"/> and <paramref name="warnings"/> are cleared and refilled
+        /// (the caller keeps them, so a changed chain allocates nothing); no chain gives no links. <paramref name="warnings"/>
+        /// has at most one duplicate warning per run, in application order.
         /// </summary>
-        internal static ImmutableArray<EffectChainLink> Segment(Effect? chain, out ImmutableArray<string> warnings)
+        internal static void Segment(Effect? chain, List<EffectChainLink> links, List<string> warnings)
         {
-            warnings = ImmutableArray<string>.Empty;
-            if (chain is null)
-                return ImmutableArray<EffectChainLink>.Empty;
-            var links = new List<Effect>();
-            for (var e = chain; e is not null; e = e.Previous)
-                links.Add(e);
-            links.Reverse(); // application order
-            var result = ImmutableArray.CreateBuilder<EffectChainLink>();
-            ImmutableArray<string>.Builder? warningList = null;
-            var runStart = 0;
-            for (var i = 0; i <= links.Count; i++)
+            links.Clear();
+            warnings.Clear();
+            // Walks from the Effect pin to the start: a run is the stretch up to the next shader, nearest to the pin first, as FoldRun wants it.
+            for (var e = chain; e is not null;)
             {
-                if (i < links.Count && links[i] is not ShaderEffect)
-                    continue;
-                if (i > runStart)
+                if (e is ShaderEffect shader)
                 {
-                    // FoldRun expects the run nearest-to-the-pin first.
-                    var run = links.GetRange(runStart, i - runStart);
-                    run.Reverse();
-                    result.Add(new EffectChainLink(FoldRun(run, out var warning), null));
-                    if (warning is not null)
-                        (warningList ??= ImmutableArray.CreateBuilder<string>()).Add(warning);
+                    links.Add(new EffectChainLink(default, shader));
+                    e = e.Previous;
+                    continue;
                 }
-                if (i < links.Count)
-                    result.Add(new EffectChainLink(default, (ShaderEffect)links[i]));
-                runStart = i + 1;
+                links.Add(new EffectChainLink(FoldRun(e, out e, out var warning), null));
+                if (warning is not null)
+                    warnings.Add(warning);
             }
-            if (warningList is not null)
-                warnings = warningList.ToImmutable();
-            return result.ToImmutable();
+            links.Reverse();
+            warnings.Reverse();
         }
 
         /// <summary>
-        /// Folds the merged effects of one run, given nearest to the Effect pin first (that one wins for a duplicate kind).
+        /// Folds the merged effects of the run that starts at <paramref name="nearest"/> (the one nearest to the Effect pin wins for
+        /// a duplicate kind) and ends before the next <see cref="ShaderEffect"/>, which is <paramref name="rest"/> (null at the start of the chain).
         /// Effect area: Qt's automatic padding unless an <see cref="IEffectPadding"/> link has Auto Padding off; then the
         /// side-wise maximum of the Padding of those links.
         /// </summary>
-        private static EffectDesc FoldRun(List<Effect> nearestFirst, out string? warning)
+        private static EffectDesc FoldRun(Effect nearest, out Effect? rest, out string? warning)
         {
             warning = null;
             var desc = EffectDesc.Default;
             var seen = EffectKind.None;
             var hasManual = false;
             var manualPadding = RectangleF.Empty;
-            foreach (var e in nearestFirst)
+            for (rest = nearest; rest is not null and not ShaderEffect; rest = rest.Previous)
             {
+                var e = rest;
                 if ((seen & e.Kind) != 0)
                 {
                     warning ??= $"{e.Kind} is used more than once in the effect chain; only the one nearest to the element counts.";
