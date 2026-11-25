@@ -28,7 +28,7 @@ namespace VL.Qt.Nodes
         {
             var length = Math.Max(p.Length, 0f);
             var half = length / 2 + length / 64;
-            var a = MathF.PI / 180f * p.Angle;
+            var a = 2 * MathF.PI * p.Angle;
             var padX = half * MathF.Abs(MathF.Cos(a));
             var padY = half * MathF.Abs(MathF.Sin(a));
             return new BuiltinShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
@@ -50,7 +50,7 @@ namespace VL.Qt.Nodes
 
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
-        /// <param name="angle">Direction of the blur in degrees: 0 = horizontal, increases clockwise on screen.</param>
+        /// <param name="angle">Direction of the blur in cycles (1 = full turn): 0 = horizontal, 0.25 = vertical, increases clockwise on screen.</param>
         /// <param name="length">Length of the blur line in units of the renderer's space (total, 0 = no blur).</param>
         [return: Pin(Name = "Output")]
         public Effect? Update(

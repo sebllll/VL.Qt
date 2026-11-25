@@ -15,7 +15,7 @@ Every element has an `Effect` pin. Chain the nodes of `Qt.Effects` to it, like t
 | `InnerShadow` | shadow inside the element, like CSS `inset` |
 | `DirectionalBlur` | motion blur along a line (`Angle`, `Length`) |
 | `ZoomBlur` | streaks along rays from `Center` |
-| `RadialBlur` | arcs around `Center` (`Angle` in degrees) |
+| `RadialBlur` | arcs around `Center` (`Angle` in cycles) |
 | `Displace` | shifts the pixels by a displacement map, any element as `Map` |
 | `Blend` | blends any element as `Layer` over the base with a `Mode` (Multiply, Screen, Overlay, Add, Subtract, Difference, Darken, Lighten, Soft Light, Hard Light, Color Dodge, Color Burn) |
 

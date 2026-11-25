@@ -29,7 +29,7 @@ layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
 
-    // @summary Direction of the blur in degrees: 0 = horizontal, increases clockwise on screen.
+    // @summary Direction of the blur in cycles (1 = full turn): 0 = horizontal, increases clockwise on screen.
     // @default 0
     float angle;
 
@@ -89,7 +89,7 @@ void main()
         return;
     }
     int n = sampleCount(len);
-    float a = radians(angle);
+    float a = 6.28318530718 * angle;
     vec2 step = vec2(cos(a), sin(a)) * len * texelSize;
     vec4 sum = vec4(0.0);
     for (int i = 0; i < n; ++i) {
