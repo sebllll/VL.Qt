@@ -198,7 +198,7 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="UIslBoAW4HOKaCHYD5EDoO" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="aq11520iwvUZHGGcy81dvd" Name="Children" Kind="InputPin" />
+            <Pin Id="aq11520iwvUZHGGcy81dvd" Name="Input" Kind="InputPin" />
             <Pin Id="covb8enk997lEB1UFUQ987" Name="Output" Kind="OutputPin" />
             <Pin Id="PeLxfvTx2PZWdpDUHe8Wsq" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="Pi9YABoQmLiNFouk36Dudf" Name="Auto Size" Kind="InputPin" IsHidden="true" />
@@ -230,7 +230,7 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="IYWLebmv6i43dkszAC7m2b" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="SdzBH2QtXFgyZEvSDWd71d" Name="Children" Kind="InputPin" />
+            <Pin Id="SdzBH2QtXFgyZEvSDWd71d" Name="Input" Kind="InputPin" />
             <Pin Id="4cJpliS69k31IwAPt0QVn3" Name="Output" Kind="OutputPin" />
             <Pin Id="x1tgaPrPpAf8Oopt5KacGP" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="Og2mNrCf6zBP8LOLLYP0Fh" Name="Auto Size" Kind="InputPin" IsHidden="true" />
@@ -267,7 +267,7 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="08krMGIGqSQqNBYUJknFF0" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="VOJIEmd9utL99XbgNEiLx2" Name="Children" Kind="InputPin" />
+            <Pin Id="VOJIEmd9utL99XbgNEiLx2" Name="Input" Kind="InputPin" />
             <Pin Id="405stDaI71punuiyuUxMJv" Name="Output" Kind="OutputPin" />
             <Pin Id="VTvsQtKJy7tdJM7HhAvUt9" Name="Size" Kind="InputPin" />
             <Pin Id="Cm22SPafr3GNFbVBADZO4O" Name="Auto Size" Kind="InputPin" IsHidden="true" />
