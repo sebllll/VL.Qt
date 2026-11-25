@@ -1092,6 +1092,14 @@ VL.Qt | VL.Qt.Nodes.MaskNode | method Update | pin Spread At Min | in float | Pi
 VL.Qt | VL.Qt.Nodes.MaskNode | method Update | pin Threshold Max | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (thresholdMax)
 VL.Qt | VL.Qt.Nodes.MaskNode | method Update | pin Threshold Min | in float | Pin(Visibility = PinVisibility.Optional) | (thresholdMin)
 VL.Qt | VL.Qt.Nodes.MaskNode | type sealed class
+VL.Qt | VL.Qt.Nodes.MergeNode | attr ProcessNode(Name = "Merge", Category = "Qt.Style")
+VL.Qt | VL.Qt.Nodes.MergeNode | ctor | new
+VL.Qt | VL.Qt.Nodes.MergeNode | method Update | VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Nodes.MergeNode | method Update | order Input, Input2, Output
+VL.Qt | VL.Qt.Nodes.MergeNode | method Update | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Nodes.MergeNode | method Update | pin Input2 | in VL.Qt.Styles.Style | (input2)
+VL.Qt | VL.Qt.Nodes.MergeNode | method Update | pin Output | out VL.Qt.Styles.Style | Pin(Name = "Output") | (return)
+VL.Qt | VL.Qt.Nodes.MergeNode | type sealed class
 VL.Qt | VL.Qt.Nodes.MoveToNode | attr ProcessNode(Name = "MoveTo", Category = "Qt.Paths")
 VL.Qt | VL.Qt.Nodes.MoveToNode | ctor | new
 VL.Qt | VL.Qt.Nodes.MoveToNode | method Update | VL.Qt.Paths.QtPath
@@ -1423,6 +1431,66 @@ VL.Qt | VL.Qt.Nodes.SamplerNodes | method Sampler | pin Mip Filter | in VL.Qt.El
 VL.Qt | VL.Qt.Nodes.SamplerNodes | method Sampler | pin Output | out VL.Qt.Elements.Sampler | (return)
 VL.Qt | VL.Qt.Nodes.SamplerNodes | method Sampler | static VL.Qt.Elements.Sampler
 VL.Qt | VL.Qt.Nodes.SamplerNodes | type static class
+VL.Qt | VL.Qt.Nodes.SetColorsNode | attr ProcessNode(Name = "SetColors", Category = "Qt.Style")
+VL.Qt | VL.Qt.Nodes.SetColorsNode | ctor | new
+VL.Qt | VL.Qt.Nodes.SetColorsNode | method Update | VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Nodes.SetColorsNode | method Update | order Input, Frame, Border, Text, Indicator, Track, Track Fill, States, Output
+VL.Qt | VL.Qt.Nodes.SetColorsNode | method Update | pin Border | in VL.Core.Optional<Stride.Core.Mathematics.Color4> | (border)
+VL.Qt | VL.Qt.Nodes.SetColorsNode | method Update | pin Frame | in VL.Core.Optional<Stride.Core.Mathematics.Color4> | (frame)
+VL.Qt | VL.Qt.Nodes.SetColorsNode | method Update | pin Indicator | in VL.Core.Optional<Stride.Core.Mathematics.Color4> | (indicator)
+VL.Qt | VL.Qt.Nodes.SetColorsNode | method Update | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Nodes.SetColorsNode | method Update | pin Output | out VL.Qt.Styles.Style | Pin(Name = "Output") | (return)
+VL.Qt | VL.Qt.Nodes.SetColorsNode | method Update | pin States | in VL.Qt.Styles.StyleStates = All | (states)
+VL.Qt | VL.Qt.Nodes.SetColorsNode | method Update | pin Text | in VL.Core.Optional<Stride.Core.Mathematics.Color4> | (text)
+VL.Qt | VL.Qt.Nodes.SetColorsNode | method Update | pin Track Fill | in VL.Core.Optional<Stride.Core.Mathematics.Color4> | (trackFill)
+VL.Qt | VL.Qt.Nodes.SetColorsNode | method Update | pin Track | in VL.Core.Optional<Stride.Core.Mathematics.Color4> | (track)
+VL.Qt | VL.Qt.Nodes.SetColorsNode | type sealed class
+VL.Qt | VL.Qt.Nodes.SetFrameNode | attr ProcessNode(Name = "SetFrame", Category = "Qt.Style.Frame")
+VL.Qt | VL.Qt.Nodes.SetFrameNode | ctor | new
+VL.Qt | VL.Qt.Nodes.SetFrameNode | method Update | VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Nodes.SetFrameNode | method Update | order Input, Radius, Border Width, Padding X, Padding Y, Min Width, Min Height, States, Output
+VL.Qt | VL.Qt.Nodes.SetFrameNode | method Update | pin Border Width | in VL.Core.Optional<float> | (borderWidth)
+VL.Qt | VL.Qt.Nodes.SetFrameNode | method Update | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Nodes.SetFrameNode | method Update | pin Min Height | in VL.Core.Optional<float> | (minHeight)
+VL.Qt | VL.Qt.Nodes.SetFrameNode | method Update | pin Min Width | in VL.Core.Optional<float> | (minWidth)
+VL.Qt | VL.Qt.Nodes.SetFrameNode | method Update | pin Output | out VL.Qt.Styles.Style | Pin(Name = "Output") | (return)
+VL.Qt | VL.Qt.Nodes.SetFrameNode | method Update | pin Padding X | in VL.Core.Optional<float> | (paddingX)
+VL.Qt | VL.Qt.Nodes.SetFrameNode | method Update | pin Padding Y | in VL.Core.Optional<float> | (paddingY)
+VL.Qt | VL.Qt.Nodes.SetFrameNode | method Update | pin Radius | in VL.Core.Optional<float> | (radius)
+VL.Qt | VL.Qt.Nodes.SetFrameNode | method Update | pin States | in VL.Qt.Styles.StyleStates = All | (states)
+VL.Qt | VL.Qt.Nodes.SetFrameNode | type sealed class
+VL.Qt | VL.Qt.Nodes.SetIndicatorNode | attr ProcessNode(Name = "SetIndicator", Category = "Qt.Style.Indicator")
+VL.Qt | VL.Qt.Nodes.SetIndicatorNode | ctor | new
+VL.Qt | VL.Qt.Nodes.SetIndicatorNode | method Update | VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Nodes.SetIndicatorNode | method Update | order Input, Size, Radius, Border Width, States, Output
+VL.Qt | VL.Qt.Nodes.SetIndicatorNode | method Update | pin Border Width | in VL.Core.Optional<float> | (borderWidth)
+VL.Qt | VL.Qt.Nodes.SetIndicatorNode | method Update | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Nodes.SetIndicatorNode | method Update | pin Output | out VL.Qt.Styles.Style | Pin(Name = "Output") | (return)
+VL.Qt | VL.Qt.Nodes.SetIndicatorNode | method Update | pin Radius | in VL.Core.Optional<float> | (radius)
+VL.Qt | VL.Qt.Nodes.SetIndicatorNode | method Update | pin Size | in VL.Core.Optional<float> | (size)
+VL.Qt | VL.Qt.Nodes.SetIndicatorNode | method Update | pin States | in VL.Qt.Styles.StyleStates = All | (states)
+VL.Qt | VL.Qt.Nodes.SetIndicatorNode | type sealed class
+VL.Qt | VL.Qt.Nodes.SetTextNode | attr ProcessNode(Name = "SetText", Category = "Qt.Style.Text")
+VL.Qt | VL.Qt.Nodes.SetTextNode | ctor | new
+VL.Qt | VL.Qt.Nodes.SetTextNode | method Update | VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Nodes.SetTextNode | method Update | order Input, Font Family, Font Size, Font Weight, States, Output
+VL.Qt | VL.Qt.Nodes.SetTextNode | method Update | pin Font Family | in VL.Core.Optional<string> | (fontFamily)
+VL.Qt | VL.Qt.Nodes.SetTextNode | method Update | pin Font Size | in VL.Core.Optional<float> | (fontSize)
+VL.Qt | VL.Qt.Nodes.SetTextNode | method Update | pin Font Weight | in VL.Core.Optional<int> | (fontWeight)
+VL.Qt | VL.Qt.Nodes.SetTextNode | method Update | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Nodes.SetTextNode | method Update | pin Output | out VL.Qt.Styles.Style | Pin(Name = "Output") | (return)
+VL.Qt | VL.Qt.Nodes.SetTextNode | method Update | pin States | in VL.Qt.Styles.StyleStates = All | (states)
+VL.Qt | VL.Qt.Nodes.SetTextNode | type sealed class
+VL.Qt | VL.Qt.Nodes.SetTrackNode | attr ProcessNode(Name = "SetTrack", Category = "Qt.Style.Track")
+VL.Qt | VL.Qt.Nodes.SetTrackNode | ctor | new
+VL.Qt | VL.Qt.Nodes.SetTrackNode | method Update | VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Nodes.SetTrackNode | method Update | order Input, Thickness, Radius, States, Output
+VL.Qt | VL.Qt.Nodes.SetTrackNode | method Update | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Nodes.SetTrackNode | method Update | pin Output | out VL.Qt.Styles.Style | Pin(Name = "Output") | (return)
+VL.Qt | VL.Qt.Nodes.SetTrackNode | method Update | pin Radius | in VL.Core.Optional<float> | (radius)
+VL.Qt | VL.Qt.Nodes.SetTrackNode | method Update | pin States | in VL.Qt.Styles.StyleStates = All | (states)
+VL.Qt | VL.Qt.Nodes.SetTrackNode | method Update | pin Thickness | in VL.Core.Optional<float> | (thickness)
+VL.Qt | VL.Qt.Nodes.SetTrackNode | type sealed class
 VL.Qt | VL.Qt.Nodes.ShaderNode | attr ProcessNode(Name = "ShaderEffect", Category = "Qt.Elements.Shaders")
 VL.Qt | VL.Qt.Nodes.ShaderNode | attr Smell(SymbolSmell.Advanced)
 VL.Qt | VL.Qt.Nodes.ShaderNode | ctor | new
@@ -1957,130 +2025,119 @@ VL.Qt | VL.Qt.Space | type enum
 VL.Qt | VL.Qt.Styles.FrameNodes | attr Category("Qt.Style.Frame")
 VL.Qt | VL.Qt.Styles.FrameNodes | attr SkipCategory
 VL.Qt | VL.Qt.Styles.FrameNodes | method BorderColor | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method BorderColor | order Input, Border Color, State, Output
-VL.Qt | VL.Qt.Styles.FrameNodes | method BorderColor | pin Border Color | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (borderColor)
+VL.Qt | VL.Qt.Styles.FrameNodes | method BorderColor | order Input, State, Output
 VL.Qt | VL.Qt.Styles.FrameNodes | method BorderColor | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method BorderColor | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method BorderColor | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method BorderColor | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method BorderColor | pin Output | out Stride.Core.Mathematics.Color4 | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method BorderColor | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.FrameNodes | method BorderColor | static Stride.Core.Mathematics.Color4
 VL.Qt | VL.Qt.Styles.FrameNodes | method BorderWidth | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method BorderWidth | order Input, Border Width, State, Output
-VL.Qt | VL.Qt.Styles.FrameNodes | method BorderWidth | pin Border Width | in VL.Core.Optional<float> = null | (borderWidth)
+VL.Qt | VL.Qt.Styles.FrameNodes | method BorderWidth | order Input, State, Output
 VL.Qt | VL.Qt.Styles.FrameNodes | method BorderWidth | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method BorderWidth | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method BorderWidth | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method BorderWidth | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method BorderWidth | pin Output | out float | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method BorderWidth | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.FrameNodes | method BorderWidth | static float
 VL.Qt | VL.Qt.Styles.FrameNodes | method Color | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Color | order Input, Color, State, Output
-VL.Qt | VL.Qt.Styles.FrameNodes | method Color | pin Color | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (color)
+VL.Qt | VL.Qt.Styles.FrameNodes | method Color | order Input, State, Output
 VL.Qt | VL.Qt.Styles.FrameNodes | method Color | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Color | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Color | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Color | static VL.Qt.Styles.Style
-VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | order Input, Radius, Border Width, Padding X, Padding Y, Min Width, Min Height, State, Output
-VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Border Width | in VL.Core.Optional<float> = null | (borderWidth)
+VL.Qt | VL.Qt.Styles.FrameNodes | method Color | pin Output | out Stride.Core.Mathematics.Color4 | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method Color | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.FrameNodes | method Color | static Stride.Core.Mathematics.Color4
+VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | order Input, State, Radius, Border Width, Padding X, Padding Y, Min Width, Min Height
+VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Border Width | out float | (borderWidth)
 VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Min Height | in VL.Core.Optional<float> = null | (minHeight)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Min Width | in VL.Core.Optional<float> = null | (minWidth)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Padding X | in VL.Core.Optional<float> = null | (paddingX)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Padding Y | in VL.Core.Optional<float> = null | (paddingY)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Radius | in VL.Core.Optional<float> = null | (radius)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | static VL.Qt.Styles.Style
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetBorderColor | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetBorderColor | order Input, State, Output
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetBorderColor | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetBorderColor | pin Output | out Stride.Core.Mathematics.Color4 | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetBorderColor | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetBorderColor | static Stride.Core.Mathematics.Color4
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetBorderWidth | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetBorderWidth | order Input, State, Output
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetBorderWidth | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetBorderWidth | pin Output | out float | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetBorderWidth | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetBorderWidth | static float
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetColor | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetColor | order Input, State, Output
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetColor | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetColor | pin Output | out Stride.Core.Mathematics.Color4 | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetColor | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetColor | static Stride.Core.Mathematics.Color4
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetFrame | order Input, State, Radius, Border Width, Padding X, Padding Y, Min Width, Min Height
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetFrame | pin Border Width | out float | (borderWidth)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetFrame | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetFrame | pin Min Height | out float | (minHeight)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetFrame | pin Min Width | out float | (minWidth)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetFrame | pin Padding X | out float | (paddingX)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetFrame | pin Padding Y | out float | (paddingY)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetFrame | pin Radius | out float | (radius)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetFrame | pin State | in VL.Qt.Styles.StyleState | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetFrame | static void
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetMinHeight | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetMinHeight | order Input, State, Output
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetMinHeight | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetMinHeight | pin Output | out float | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetMinHeight | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetMinHeight | static float
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetMinWidth | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetMinWidth | order Input, State, Output
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetMinWidth | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetMinWidth | pin Output | out float | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetMinWidth | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetMinWidth | static float
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetPaddingX | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetPaddingX | order Input, State, Output
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetPaddingX | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetPaddingX | pin Output | out float | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetPaddingX | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetPaddingX | static float
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetPaddingY | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetPaddingY | order Input, State, Output
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetPaddingY | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetPaddingY | pin Output | out float | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetPaddingY | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetPaddingY | static float
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetRadius | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetRadius | order Input, State, Output
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetRadius | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetRadius | pin Output | out float | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetRadius | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method GetRadius | static float
+VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Min Height | out float | (minHeight)
+VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Min Width | out float | (minWidth)
+VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Padding X | out float | (paddingX)
+VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Padding Y | out float | (paddingY)
+VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin Radius | out float | (radius)
+VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | pin State | in VL.Qt.Styles.StyleState | (state)
+VL.Qt | VL.Qt.Styles.FrameNodes | method Frame | static void
 VL.Qt | VL.Qt.Styles.FrameNodes | method MinHeight | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method MinHeight | order Input, Min Height, State, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method MinHeight | order Input, State, Output
 VL.Qt | VL.Qt.Styles.FrameNodes | method MinHeight | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method MinHeight | pin Min Height | in VL.Core.Optional<float> = null | (minHeight)
-VL.Qt | VL.Qt.Styles.FrameNodes | method MinHeight | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method MinHeight | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method MinHeight | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method MinHeight | pin Output | out float | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method MinHeight | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.FrameNodes | method MinHeight | static float
 VL.Qt | VL.Qt.Styles.FrameNodes | method MinWidth | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method MinWidth | order Input, Min Width, State, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method MinWidth | order Input, State, Output
 VL.Qt | VL.Qt.Styles.FrameNodes | method MinWidth | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method MinWidth | pin Min Width | in VL.Core.Optional<float> = null | (minWidth)
-VL.Qt | VL.Qt.Styles.FrameNodes | method MinWidth | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method MinWidth | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method MinWidth | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method MinWidth | pin Output | out float | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method MinWidth | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.FrameNodes | method MinWidth | static float
 VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingX | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingX | order Input, Padding X, State, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingX | order Input, State, Output
 VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingX | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingX | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingX | pin Padding X | in VL.Core.Optional<float> = null | (paddingX)
-VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingX | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingX | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingX | pin Output | out float | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingX | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingX | static float
 VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingY | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingY | order Input, Padding Y, State, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingY | order Input, State, Output
 VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingY | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingY | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingY | pin Padding Y | in VL.Core.Optional<float> = null | (paddingY)
-VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingY | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingY | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingY | pin Output | out float | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingY | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.FrameNodes | method PaddingY | static float
 VL.Qt | VL.Qt.Styles.FrameNodes | method Radius | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Radius | order Input, Radius, State, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method Radius | order Input, State, Output
 VL.Qt | VL.Qt.Styles.FrameNodes | method Radius | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Radius | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Radius | pin Radius | in VL.Core.Optional<float> = null | (radius)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Radius | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.FrameNodes | method Radius | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method Radius | pin Output | out float | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method Radius | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.FrameNodes | method Radius | static float
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderColor | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderColor | order Input, Border Color, States, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderColor | pin Border Color | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (borderColor)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderColor | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderColor | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderColor | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderColor | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderWidth | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderWidth | order Input, Border Width, States, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderWidth | pin Border Width | in VL.Core.Optional<float> = null | (borderWidth)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderWidth | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderWidth | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderWidth | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetBorderWidth | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetColor | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetColor | order Input, Color, States, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetColor | pin Color | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (color)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetColor | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetColor | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetColor | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetColor | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinHeight | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinHeight | order Input, Min Height, States, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinHeight | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinHeight | pin Min Height | in VL.Core.Optional<float> = null | (minHeight)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinHeight | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinHeight | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinHeight | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinWidth | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinWidth | order Input, Min Width, States, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinWidth | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinWidth | pin Min Width | in VL.Core.Optional<float> = null | (minWidth)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinWidth | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinWidth | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetMinWidth | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingX | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingX | order Input, Padding X, States, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingX | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingX | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingX | pin Padding X | in VL.Core.Optional<float> = null | (paddingX)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingX | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingX | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingY | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingY | order Input, Padding Y, States, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingY | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingY | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingY | pin Padding Y | in VL.Core.Optional<float> = null | (paddingY)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingY | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetPaddingY | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetRadius | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetRadius | order Input, Radius, States, Output
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetRadius | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetRadius | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetRadius | pin Radius | in VL.Core.Optional<float> = null | (radius)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetRadius | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.FrameNodes | method SetRadius | static VL.Qt.Styles.Style
 VL.Qt | VL.Qt.Styles.FrameNodes | type static class
 VL.Qt | VL.Qt.Styles.IStylable | attr Category("Qt.Style")
 VL.Qt | VL.Qt.Styles.IStylable | implements VL.Qt.Elements.IElement
@@ -2092,72 +2149,64 @@ VL.Qt | VL.Qt.Styles.IStylable | type interface
 VL.Qt | VL.Qt.Styles.IndicatorNodes | attr Category("Qt.Style.Indicator")
 VL.Qt | VL.Qt.Styles.IndicatorNodes | attr SkipCategory
 VL.Qt | VL.Qt.Styles.IndicatorNodes | method BorderWidth | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method BorderWidth | order Input, Border Width, State, Output
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method BorderWidth | pin Border Width | in VL.Core.Optional<float> = null | (borderWidth)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method BorderWidth | order Input, State, Output
 VL.Qt | VL.Qt.Styles.IndicatorNodes | method BorderWidth | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method BorderWidth | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method BorderWidth | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method BorderWidth | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method BorderWidth | pin Output | out float | (return)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method BorderWidth | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method BorderWidth | static float
 VL.Qt | VL.Qt.Styles.IndicatorNodes | method Color | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Color | order Input, Color, State, Output
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Color | pin Color | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (color)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Color | order Input, State, Output
 VL.Qt | VL.Qt.Styles.IndicatorNodes | method Color | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Color | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Color | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Color | static VL.Qt.Styles.Style
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetBorderWidth | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetBorderWidth | order Input, State, Output
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetBorderWidth | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetBorderWidth | pin Output | out float | (return)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetBorderWidth | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetBorderWidth | static float
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetColor | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetColor | order Input, State, Output
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetColor | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetColor | pin Output | out Stride.Core.Mathematics.Color4 | (return)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetColor | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetColor | static Stride.Core.Mathematics.Color4
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetIndicator | order Input, State, Size, Radius, Border Width
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetIndicator | pin Border Width | out float | (borderWidth)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetIndicator | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetIndicator | pin Radius | out float | (radius)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetIndicator | pin Size | out float | (size)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetIndicator | pin State | in VL.Qt.Styles.StyleState | (state)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetIndicator | static void
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetRadius | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetRadius | order Input, State, Output
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetRadius | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetRadius | pin Output | out float | (return)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetRadius | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetRadius | static float
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetSize | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetSize | order Input, State, Output
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetSize | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetSize | pin Output | out float | (return)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetSize | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method GetSize | static float
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | order Input, Size, Radius, Border Width, State, Output
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | pin Border Width | in VL.Core.Optional<float> = null | (borderWidth)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Color | pin Output | out Stride.Core.Mathematics.Color4 | (return)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Color | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Color | static Stride.Core.Mathematics.Color4
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | order Input, State, Size, Radius, Border Width
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | pin Border Width | out float | (borderWidth)
 VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | pin Radius | in VL.Core.Optional<float> = null | (radius)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | pin Size | in VL.Core.Optional<float> = null | (size)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | pin Radius | out float | (radius)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | pin Size | out float | (size)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | pin State | in VL.Qt.Styles.StyleState | (state)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Indicator | static void
 VL.Qt | VL.Qt.Styles.IndicatorNodes | method Radius | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Radius | order Input, Radius, State, Output
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Radius | order Input, State, Output
 VL.Qt | VL.Qt.Styles.IndicatorNodes | method Radius | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Radius | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Radius | pin Radius | in VL.Core.Optional<float> = null | (radius)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Radius | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Radius | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Radius | pin Output | out float | (return)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Radius | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Radius | static float
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetBorderWidth | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetBorderWidth | order Input, Border Width, States, Output
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetBorderWidth | pin Border Width | in VL.Core.Optional<float> = null | (borderWidth)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetBorderWidth | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetBorderWidth | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetBorderWidth | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetBorderWidth | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetColor | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetColor | order Input, Color, States, Output
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetColor | pin Color | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (color)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetColor | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetColor | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetColor | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetColor | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetRadius | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetRadius | order Input, Radius, States, Output
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetRadius | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetRadius | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetRadius | pin Radius | in VL.Core.Optional<float> = null | (radius)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetRadius | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetRadius | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetSize | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetSize | order Input, Size, States, Output
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetSize | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetSize | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetSize | pin Size | in VL.Core.Optional<float> = null | (size)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetSize | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method SetSize | static VL.Qt.Styles.Style
 VL.Qt | VL.Qt.Styles.IndicatorNodes | method Size | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Size | order Input, Size, State, Output
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Size | order Input, State, Output
 VL.Qt | VL.Qt.Styles.IndicatorNodes | method Size | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Size | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Size | pin Size | in VL.Core.Optional<float> = null | (size)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Size | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.IndicatorNodes | method Size | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Size | pin Output | out float | (return)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Size | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.IndicatorNodes | method Size | static float
 VL.Qt | VL.Qt.Styles.IndicatorNodes | type static class
 VL.Qt | VL.Qt.Styles.Style | attr Category("Qt.Style")
 VL.Qt | VL.Qt.Styles.Style | implements System.IEquatable<VL.Qt.Styles.Style>
@@ -2188,32 +2237,16 @@ VL.Qt | VL.Qt.Styles.Style | method op_Inequality | static bool
 VL.Qt | VL.Qt.Styles.Style | type sealed class
 VL.Qt | VL.Qt.Styles.StyleNodes | attr Category("Qt.Style")
 VL.Qt | VL.Qt.Styles.StyleNodes | attr SkipCategory
-VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | order Input, Frame, Border, Text, Indicator, Track, Track Fill, State, Output
-VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Border | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (border)
-VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Frame | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (frame)
-VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Indicator | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (indicator)
+VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | order Input, State, Frame, Border, Text, Indicator, Track, Track Fill
+VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Border | out Stride.Core.Mathematics.Color4 | (border)
+VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Frame | out Stride.Core.Mathematics.Color4 | (frame)
+VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Indicator | out Stride.Core.Mathematics.Color4 | (indicator)
 VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Text | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (text)
-VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Track Fill | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (trackFill)
-VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Track | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (track)
-VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | static VL.Qt.Styles.Style
-VL.Qt | VL.Qt.Styles.StyleNodes | method GetColors | order Input, State, Frame, Border, Text, Indicator, Track, Track Fill
-VL.Qt | VL.Qt.Styles.StyleNodes | method GetColors | pin Border | out Stride.Core.Mathematics.Color4 | (border)
-VL.Qt | VL.Qt.Styles.StyleNodes | method GetColors | pin Frame | out Stride.Core.Mathematics.Color4 | (frame)
-VL.Qt | VL.Qt.Styles.StyleNodes | method GetColors | pin Indicator | out Stride.Core.Mathematics.Color4 | (indicator)
-VL.Qt | VL.Qt.Styles.StyleNodes | method GetColors | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.StyleNodes | method GetColors | pin State | in VL.Qt.Styles.StyleState | (state)
-VL.Qt | VL.Qt.Styles.StyleNodes | method GetColors | pin Text | out Stride.Core.Mathematics.Color4 | (text)
-VL.Qt | VL.Qt.Styles.StyleNodes | method GetColors | pin Track Fill | out Stride.Core.Mathematics.Color4 | (trackFill)
-VL.Qt | VL.Qt.Styles.StyleNodes | method GetColors | pin Track | out Stride.Core.Mathematics.Color4 | (track)
-VL.Qt | VL.Qt.Styles.StyleNodes | method GetColors | static void
-VL.Qt | VL.Qt.Styles.StyleNodes | method Merge | order Input, Input2, Output
-VL.Qt | VL.Qt.Styles.StyleNodes | method Merge | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.StyleNodes | method Merge | pin Input2 | in VL.Qt.Styles.Style | (input2)
-VL.Qt | VL.Qt.Styles.StyleNodes | method Merge | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.StyleNodes | method Merge | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin State | in VL.Qt.Styles.StyleState | (state)
+VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Text | out Stride.Core.Mathematics.Color4 | (text)
+VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Track Fill | out Stride.Core.Mathematics.Color4 | (trackFill)
+VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | pin Track | out Stride.Core.Mathematics.Color4 | (track)
+VL.Qt | VL.Qt.Styles.StyleNodes | method Colors | static void
 VL.Qt | VL.Qt.Styles.StyleNodes | method ResolveState | order Is Hovered, Is Pressed, Is Disabled, Is Checked, Output
 VL.Qt | VL.Qt.Styles.StyleNodes | method ResolveState | pin Is Checked | in bool | (isChecked)
 VL.Qt | VL.Qt.Styles.StyleNodes | method ResolveState | pin Is Disabled | in bool | (isDisabled)
@@ -2242,140 +2275,125 @@ VL.Qt | VL.Qt.Styles.StyleStates | type enum
 VL.Qt | VL.Qt.Styles.TextNodes | attr Category("Qt.Style.Text")
 VL.Qt | VL.Qt.Styles.TextNodes | attr SkipCategory
 VL.Qt | VL.Qt.Styles.TextNodes | method Color | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TextNodes | method Color | order Input, Color, State, Output
-VL.Qt | VL.Qt.Styles.TextNodes | method Color | pin Color | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (color)
+VL.Qt | VL.Qt.Styles.TextNodes | method Color | order Input, State, Output
 VL.Qt | VL.Qt.Styles.TextNodes | method Color | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TextNodes | method Color | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.TextNodes | method Color | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.TextNodes | method Color | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TextNodes | method Color | pin Output | out Stride.Core.Mathematics.Color4 | (return)
+VL.Qt | VL.Qt.Styles.TextNodes | method Color | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.TextNodes | method Color | static Stride.Core.Mathematics.Color4
 VL.Qt | VL.Qt.Styles.TextNodes | method FontFamily | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TextNodes | method FontFamily | order Input, Font Family, State, Output
-VL.Qt | VL.Qt.Styles.TextNodes | method FontFamily | pin Font Family | in VL.Core.Optional<string> = null | (fontFamily)
+VL.Qt | VL.Qt.Styles.TextNodes | method FontFamily | order Input, State, Output
 VL.Qt | VL.Qt.Styles.TextNodes | method FontFamily | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TextNodes | method FontFamily | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.TextNodes | method FontFamily | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.TextNodes | method FontFamily | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TextNodes | method FontFamily | pin Output | out string | (return)
+VL.Qt | VL.Qt.Styles.TextNodes | method FontFamily | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.TextNodes | method FontFamily | static string
 VL.Qt | VL.Qt.Styles.TextNodes | method FontSize | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TextNodes | method FontSize | order Input, Font Size, State, Output
-VL.Qt | VL.Qt.Styles.TextNodes | method FontSize | pin Font Size | in VL.Core.Optional<float> = null | (fontSize)
+VL.Qt | VL.Qt.Styles.TextNodes | method FontSize | order Input, State, Output
 VL.Qt | VL.Qt.Styles.TextNodes | method FontSize | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TextNodes | method FontSize | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.TextNodes | method FontSize | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.TextNodes | method FontSize | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TextNodes | method FontSize | pin Output | out float | (return)
+VL.Qt | VL.Qt.Styles.TextNodes | method FontSize | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.TextNodes | method FontSize | static float
 VL.Qt | VL.Qt.Styles.TextNodes | method FontWeight | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TextNodes | method FontWeight | order Input, Font Weight, State, Output
-VL.Qt | VL.Qt.Styles.TextNodes | method FontWeight | pin Font Weight | in VL.Core.Optional<int> = null | (fontWeight)
+VL.Qt | VL.Qt.Styles.TextNodes | method FontWeight | order Input, State, Output
 VL.Qt | VL.Qt.Styles.TextNodes | method FontWeight | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TextNodes | method FontWeight | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.TextNodes | method FontWeight | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.TextNodes | method FontWeight | static VL.Qt.Styles.Style
-VL.Qt | VL.Qt.Styles.TextNodes | method GetColor | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetColor | order Input, State, Output
-VL.Qt | VL.Qt.Styles.TextNodes | method GetColor | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetColor | pin Output | out Stride.Core.Mathematics.Color4 | (return)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetColor | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetColor | static Stride.Core.Mathematics.Color4
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontFamily | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontFamily | order Input, State, Output
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontFamily | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontFamily | pin Output | out string | (return)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontFamily | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontFamily | static string
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontSize | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontSize | order Input, State, Output
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontSize | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontSize | pin Output | out float | (return)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontSize | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontSize | static float
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontWeight | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontWeight | order Input, State, Output
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontWeight | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontWeight | pin Output | out int | (return)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontWeight | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetFontWeight | static int
-VL.Qt | VL.Qt.Styles.TextNodes | method GetText | order Input, State, Font Family, Font Size, Font Weight
-VL.Qt | VL.Qt.Styles.TextNodes | method GetText | pin Font Family | out string | (fontFamily)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetText | pin Font Size | out float | (fontSize)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetText | pin Font Weight | out int | (fontWeight)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetText | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetText | pin State | in VL.Qt.Styles.StyleState | (state)
-VL.Qt | VL.Qt.Styles.TextNodes | method GetText | static void
-VL.Qt | VL.Qt.Styles.TextNodes | method Text | order Input, Font Family, Font Size, Font Weight, State, Output
-VL.Qt | VL.Qt.Styles.TextNodes | method Text | pin Font Family | in VL.Core.Optional<string> = null | (fontFamily)
-VL.Qt | VL.Qt.Styles.TextNodes | method Text | pin Font Size | in VL.Core.Optional<float> = null | (fontSize)
-VL.Qt | VL.Qt.Styles.TextNodes | method Text | pin Font Weight | in VL.Core.Optional<int> = null | (fontWeight)
+VL.Qt | VL.Qt.Styles.TextNodes | method FontWeight | pin Output | out int | (return)
+VL.Qt | VL.Qt.Styles.TextNodes | method FontWeight | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.TextNodes | method FontWeight | static int
+VL.Qt | VL.Qt.Styles.TextNodes | method SetColor | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetColor | order Input, Color, States, Output
+VL.Qt | VL.Qt.Styles.TextNodes | method SetColor | pin Color | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (color)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetColor | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetColor | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetColor | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetColor | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontFamily | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontFamily | order Input, Font Family, States, Output
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontFamily | pin Font Family | in VL.Core.Optional<string> = null | (fontFamily)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontFamily | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontFamily | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontFamily | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontFamily | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontSize | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontSize | order Input, Font Size, States, Output
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontSize | pin Font Size | in VL.Core.Optional<float> = null | (fontSize)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontSize | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontSize | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontSize | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontSize | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontWeight | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontWeight | order Input, Font Weight, States, Output
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontWeight | pin Font Weight | in VL.Core.Optional<int> = null | (fontWeight)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontWeight | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontWeight | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontWeight | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.TextNodes | method SetFontWeight | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TextNodes | method Text | order Input, State, Font Family, Font Size, Font Weight
+VL.Qt | VL.Qt.Styles.TextNodes | method Text | pin Font Family | out string | (fontFamily)
+VL.Qt | VL.Qt.Styles.TextNodes | method Text | pin Font Size | out float | (fontSize)
+VL.Qt | VL.Qt.Styles.TextNodes | method Text | pin Font Weight | out int | (fontWeight)
 VL.Qt | VL.Qt.Styles.TextNodes | method Text | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TextNodes | method Text | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.TextNodes | method Text | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.TextNodes | method Text | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TextNodes | method Text | pin State | in VL.Qt.Styles.StyleState | (state)
+VL.Qt | VL.Qt.Styles.TextNodes | method Text | static void
 VL.Qt | VL.Qt.Styles.TextNodes | type static class
 VL.Qt | VL.Qt.Styles.TrackNodes | attr Category("Qt.Style.Track")
 VL.Qt | VL.Qt.Styles.TrackNodes | attr SkipCategory
 VL.Qt | VL.Qt.Styles.TrackNodes | method Color | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Color | order Input, Color, State, Output
-VL.Qt | VL.Qt.Styles.TrackNodes | method Color | pin Color | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (color)
+VL.Qt | VL.Qt.Styles.TrackNodes | method Color | order Input, State, Output
 VL.Qt | VL.Qt.Styles.TrackNodes | method Color | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Color | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Color | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Color | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TrackNodes | method Color | pin Output | out Stride.Core.Mathematics.Color4 | (return)
+VL.Qt | VL.Qt.Styles.TrackNodes | method Color | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.TrackNodes | method Color | static Stride.Core.Mathematics.Color4
 VL.Qt | VL.Qt.Styles.TrackNodes | method FillColor | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TrackNodes | method FillColor | order Input, Fill Color, State, Output
-VL.Qt | VL.Qt.Styles.TrackNodes | method FillColor | pin Fill Color | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (fillColor)
+VL.Qt | VL.Qt.Styles.TrackNodes | method FillColor | order Input, State, Output
 VL.Qt | VL.Qt.Styles.TrackNodes | method FillColor | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TrackNodes | method FillColor | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.TrackNodes | method FillColor | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.TrackNodes | method FillColor | static VL.Qt.Styles.Style
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetColor | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetColor | order Input, State, Output
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetColor | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetColor | pin Output | out Stride.Core.Mathematics.Color4 | (return)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetColor | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetColor | static Stride.Core.Mathematics.Color4
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetFillColor | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetFillColor | order Input, State, Output
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetFillColor | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetFillColor | pin Output | out Stride.Core.Mathematics.Color4 | (return)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetFillColor | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetFillColor | static Stride.Core.Mathematics.Color4
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetRadius | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetRadius | order Input, State, Output
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetRadius | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetRadius | pin Output | out float | (return)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetRadius | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetRadius | static float
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetThickness | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetThickness | order Input, State, Output
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetThickness | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetThickness | pin Output | out float | (return)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetThickness | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetThickness | static float
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetTrack | order Input, State, Thickness, Radius
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetTrack | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetTrack | pin Radius | out float | (radius)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetTrack | pin State | in VL.Qt.Styles.StyleState | (state)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetTrack | pin Thickness | out float | (thickness)
-VL.Qt | VL.Qt.Styles.TrackNodes | method GetTrack | static void
+VL.Qt | VL.Qt.Styles.TrackNodes | method FillColor | pin Output | out Stride.Core.Mathematics.Color4 | (return)
+VL.Qt | VL.Qt.Styles.TrackNodes | method FillColor | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.TrackNodes | method FillColor | static Stride.Core.Mathematics.Color4
 VL.Qt | VL.Qt.Styles.TrackNodes | method Radius | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Radius | order Input, Radius, State, Output
+VL.Qt | VL.Qt.Styles.TrackNodes | method Radius | order Input, State, Output
 VL.Qt | VL.Qt.Styles.TrackNodes | method Radius | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Radius | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Radius | pin Radius | in VL.Core.Optional<float> = null | (radius)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Radius | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Radius | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TrackNodes | method Radius | pin Output | out float | (return)
+VL.Qt | VL.Qt.Styles.TrackNodes | method Radius | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.TrackNodes | method Radius | static float
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetColor | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetColor | order Input, Color, States, Output
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetColor | pin Color | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (color)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetColor | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetColor | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetColor | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetColor | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetFillColor | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetFillColor | order Input, Fill Color, States, Output
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetFillColor | pin Fill Color | in VL.Core.Optional<Stride.Core.Mathematics.Color4> = null | (fillColor)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetFillColor | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetFillColor | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetFillColor | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetFillColor | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetRadius | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetRadius | order Input, Radius, States, Output
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetRadius | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetRadius | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetRadius | pin Radius | in VL.Core.Optional<float> = null | (radius)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetRadius | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetRadius | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetThickness | attr Smell(SymbolSmell.Advanced)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetThickness | order Input, Thickness, States, Output
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetThickness | pin Input | in VL.Qt.Styles.Style | (input)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetThickness | pin Output | out VL.Qt.Styles.Style | (return)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetThickness | pin States | in VL.Qt.Styles.StyleStates = StyleStates.All | (states)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetThickness | pin Thickness | in VL.Core.Optional<float> = null | (thickness)
+VL.Qt | VL.Qt.Styles.TrackNodes | method SetThickness | static VL.Qt.Styles.Style
 VL.Qt | VL.Qt.Styles.TrackNodes | method Thickness | attr Smell(SymbolSmell.Advanced)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Thickness | order Input, Thickness, State, Output
+VL.Qt | VL.Qt.Styles.TrackNodes | method Thickness | order Input, State, Output
 VL.Qt | VL.Qt.Styles.TrackNodes | method Thickness | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Thickness | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Thickness | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Thickness | pin Thickness | in VL.Core.Optional<float> = null | (thickness)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Thickness | static VL.Qt.Styles.Style
-VL.Qt | VL.Qt.Styles.TrackNodes | method Track | order Input, Thickness, Radius, State, Output
+VL.Qt | VL.Qt.Styles.TrackNodes | method Thickness | pin Output | out float | (return)
+VL.Qt | VL.Qt.Styles.TrackNodes | method Thickness | pin State | in VL.Qt.Styles.StyleState = StyleState.Normal | (state)
+VL.Qt | VL.Qt.Styles.TrackNodes | method Thickness | static float
+VL.Qt | VL.Qt.Styles.TrackNodes | method Track | order Input, State, Thickness, Radius
 VL.Qt | VL.Qt.Styles.TrackNodes | method Track | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Track | pin Output | out VL.Qt.Styles.Style | (return)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Track | pin Radius | in VL.Core.Optional<float> = null | (radius)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Track | pin State | in VL.Qt.Styles.StyleStates = StyleStates.All | (state)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Track | pin Thickness | in VL.Core.Optional<float> = null | (thickness)
-VL.Qt | VL.Qt.Styles.TrackNodes | method Track | static VL.Qt.Styles.Style
+VL.Qt | VL.Qt.Styles.TrackNodes | method Track | pin Radius | out float | (radius)
+VL.Qt | VL.Qt.Styles.TrackNodes | method Track | pin State | in VL.Qt.Styles.StyleState | (state)
+VL.Qt | VL.Qt.Styles.TrackNodes | method Track | pin Thickness | out float | (thickness)
+VL.Qt | VL.Qt.Styles.TrackNodes | method Track | static void
 VL.Qt | VL.Qt.Styles.TrackNodes | type static class
 VL.Qt | VL.Qt.WindowSettings | type sealed class
 VL.Qt | assembly | attr AssemblyInitializer(typeof(VL.Qt.Initialization))

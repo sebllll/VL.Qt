@@ -9,6 +9,7 @@ using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
+using VL.Qt.Nodes;
 using VL.Qt.Styles;
 using VL.Qt.Wire;
 using Color = System.Drawing.Color;
@@ -250,7 +251,7 @@ public static class StyleTest
     }
 
     // Styles S5: the same inheritance, but the styles are built only with the nodeset methods. Group style: Colors
-    // (frame, track fill) + Frame radius; the second Button overrides only the frame color with FrameNodes.Color.
+    // (frame, track fill) + Frame radius; the second Button overrides only the frame color with FrameNodes.SetColor.
     // Image <outDir>/style-nodeset.png.
     private static void Nodeset(Scenario s)
     {
@@ -262,10 +263,9 @@ public static class StyleTest
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
 
-        var groupStyle = FrameNodes.Frame(
-            StyleNodes.Colors(null, frame: new(Rgb(groupFrame)), trackFill: new(Rgb(groupFill))),
-            radius: new(14f));
-        var ownStyle = FrameNodes.Color(null, new(Rgb(ownFrame)));
+        var groupColors = new SetColorsNode().Update(null, new(Rgb(groupFrame)), default, default, default, default, new(Rgb(groupFill)), StyleStates.All);
+        var groupStyle = new SetFrameNode().Update(groupColors, new(14f), default, default, default, default, default, StyleStates.All);
+        var ownStyle = FrameNodes.SetColor(null, new(Rgb(ownFrame)));
 
         var root = new Group
         { Anchor = RectangleAnchor.TopLeft,
@@ -295,7 +295,7 @@ public static class StyleTest
         {
             s.Check(File.Exists(path), $"nodeset image written to {path}");
             s.Check(Near(Px(a, 40, 24), groupFrame), $"Button inherits the frame color from Colors ({Px(a, 40, 24)})");
-            s.Check(Near(Px(a, 260, 24), ownFrame), $"Button with FrameNodes.Color keeps its own frame color ({Px(a, 260, 24)})");
+            s.Check(Near(Px(a, 260, 24), ownFrame), $"Button with FrameNodes.SetColor keeps its own frame color ({Px(a, 260, 24)})");
             s.Check(Near(Px(a, 80, 195), groupFill), $"Slider fill = Colors TrackFill ({Px(a, 80, 195)})");
             // frame radius 14: the + button follows the rounded outer corners (corner pixel = background, not button color).
             s.Check(Near(Px(a, 218, 252), 0x101010) && Near(Px(a, 218, 298), 0x101010), $"SpinBox + button stays inside the rounded corners ({Px(a, 218, 252)}, {Px(a, 218, 298)})");
