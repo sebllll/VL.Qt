@@ -2249,6 +2249,7 @@ VL.Qt | VL.Qt.WindowSettings | type sealed class
 VL.Qt | assembly | attr AssemblyInitializer(typeof(VL.Qt.Initialization))
 VL.Qt | assembly | attr ImportAsIs(Namespace = "VL.Qt", Category = "Qt")
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | attr ProcessNode(Name = "Video (VL.Audio)", Category = "Qt.Elements")
+VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | attr Smell(SymbolSmell.Experimental)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | ctor | new
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | ctor | order Node Context
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)

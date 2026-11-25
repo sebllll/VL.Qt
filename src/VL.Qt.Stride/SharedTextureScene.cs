@@ -34,7 +34,8 @@ namespace VL.Qt.Stride
         private MultisampleCount _samples;
         private string _textureError = "", _batchError = "";
         // _created: the texture state matches the inputs seen last (also when it is an error); _hasContent: the scene was
-        // bound to the current texture once, so it holds content; 
+        // bound to the current texture once, so it holds content; _scheduled: the scene is in the batch of QtTextureRenderer
+        // until the draw takes it out.
         private bool _created, _hasContent, _scheduled, _enabled, _disposed;
         private const string SamplesPhase = "Multisample Count";
         private const string BuildPhase = "Build";

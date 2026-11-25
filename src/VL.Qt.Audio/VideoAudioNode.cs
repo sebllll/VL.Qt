@@ -5,6 +5,7 @@ using Stride.Core.Mathematics;
 using VL.Audio;
 using VL.Core;
 using VL.Core.Import;
+using VL.Lang;
 using VL.Lib.Mathematics;
 using VL.Model;
 using VL.Qt.Elements;
@@ -17,9 +18,11 @@ namespace VL.Qt.Audio
     /// <summary>
     /// Video from a file whose sound goes to VL.Audio instead of Qt's own output. Same picture and pins as Video
     /// [Qt.Elements]; the sound comes out at Audio, one signal per channel, synchronized to the picture. Connect Output to
-    /// Renderer [Qt] or a Group and Audio to AudioOut. Windows only.
+    /// Renderer [Qt] or a Group and Audio to AudioOut. Windows only. Experimental until the end-to-end latency has been
+    /// checked in vvvv on Windows x64.
     /// </summary>
     [ProcessNode(Name = "Video (VL.Audio)", Category = Categories.Elements)]
+    [Smell(SymbolSmell.Experimental)]
     public sealed class VideoAudioNode : IDisposable
     {
         private readonly ElementNodeCore<Video, VideoNode.Props> _node;
@@ -28,7 +31,8 @@ namespace VL.Qt.Audio
         private readonly NodeErrors _errors;
         private ImageResource? _tap;
         private int _tapSampleRate;
-        private int _failedSampleRate; // a refused rate is not retried every frame
+        // A sample rate QtNative refused (not retried every frame); 0 = none (the engine never reports a valid rate of 0).
+        private int _failedSampleRate;
 
         public VideoAudioNode(NodeContext nodeContext)
         {
@@ -114,6 +118,10 @@ namespace VL.Qt.Audio
         private void UpdateTap()
         {
             var sampleRate = _signal.EngineSampleRate;
+            // The engine is not running (no driver yet, or stopped): no tap, and the node never asks QtNative for 0 Hz. The
+            // tap of a running engine stays until its rate changes.
+            if (sampleRate <= 0)
+                return;
             if ((_tap is not null && sampleRate == _tapSampleRate) || sampleRate == _failedSampleRate)
                 return;
             ImageResource tap;
