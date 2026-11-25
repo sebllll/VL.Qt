@@ -202,6 +202,23 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void MaskWithAChainOfItsOwn_NewInstancesEveryFrame_KeepTheirObjects()
+        {
+            // The object of a mask is reconciled while its parent's lists are in use: both chains change instance every frame.
+            var inner = new Text { Content = "inner" };
+            var mask = new Rectangle { Effect = Mask(null, inner) };
+            Frame(new Rectangle { Effect = Mask(null, mask) });
+            for (var i = 0; i < 3; i++)
+            {
+                mask = new Rectangle { Effect = Blur(Mask(null, inner)) };
+                Frame(new Rectangle { Effect = Blur(Mask(null, mask)) });
+                Assert.That(_sink.OfOp("CREATE").Count(), Is.EqualTo(0), $"frame {i}");
+                Assert.That(_sink.OfOp("DESTROY").Count(), Is.EqualTo(0), $"frame {i}");
+                Assert.That(Chains, Has.Length.EqualTo(2), $"frame {i}");
+            }
+        }
+
+        [Test]
         public void ShaderTextureUniform_IsObjectOfItsOwn()
         {
             var map = new Rectangle();

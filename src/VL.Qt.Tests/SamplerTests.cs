@@ -61,14 +61,15 @@ namespace VL.Qt.Tests
                 InputSampler = new Sampler { Filter = SamplerFilter.Point },
                 Uniforms = new[] { Uniform.FromImage("lut", null, new Sampler { AddressU = SamplerAddress.Wrap }) }.ToSpread(),
             };
-            var sent = UniformWriter.Write(sink, 5, effect, Array.Empty<ItemMirror>(), null);
+            var mirror = new ShaderMirror();
+            UniformWriter.Write(sink, 5, mirror, effect, Array.Empty<ItemMirror>());
             var first = sink.Commands.Single(c => c.StartsWith("UNIFORMS", StringComparison.Ordinal));
             Assert.That(first, Does.Contain("lut=u64(0)"));
             Assert.That(first, Does.Contain("lut=sampler(10000)"));
             Assert.That(first, Does.Contain("source=sampler(1)"));
 
             sink.Clear();
-            Assert.That(UniformWriter.Write(sink, 5, effect, Array.Empty<ItemMirror>(), sent), Is.SameAs(sent));
+            UniformWriter.Write(sink, 5, mirror, effect, Array.Empty<ItemMirror>());
             Assert.That(sink.Count, Is.EqualTo(0), "unchanged: nothing sent");
 
             var changed = new Shader
@@ -76,14 +77,14 @@ namespace VL.Qt.Tests
                 InputSampler = new Sampler { Filter = SamplerFilter.Point },
                 Uniforms = new[] { Uniform.FromImage("lut", null, new Sampler { AddressU = SamplerAddress.Mirror }) }.ToSpread(),
             };
-            sent = UniformWriter.Write(sink, 5, changed, Array.Empty<ItemMirror>(), sent);
+            UniformWriter.Write(sink, 5, mirror, changed, Array.Empty<ItemMirror>());
             var diff = sink.Commands.Single(c => c.StartsWith("UNIFORMS", StringComparison.Ordinal));
             Assert.That(diff, Does.Contain("lut=sampler(20000)"));
             Assert.That(diff, Does.Not.Contain("source="), "only the changed sampler");
 
             sink.Clear();
             var removed = new Shader { Uniforms = new[] { Uniform.FromImage("lut", null) }.ToSpread() };
-            UniformWriter.Write(sink, 5, removed, Array.Empty<ItemMirror>(), sent);
+            UniformWriter.Write(sink, 5, mirror, removed, Array.Empty<ItemMirror>());
             var clear = sink.Commands.Single(c => c.StartsWith("UNIFORMS", StringComparison.Ordinal));
             Assert.That(clear, Does.StartWith("UNIFORMS 5 1"), "a removed sampler needs the full table with CLEAR");
             Assert.That(clear, Does.Not.Contain("sampler("));
@@ -94,7 +95,7 @@ namespace VL.Qt.Tests
         {
             var sink = new RecordingSink();
             var effect = new Shader { Uniforms = new[] { Uniform.FromSampler("lut", new Sampler()) }.ToSpread() };
-            UniformWriter.Write(sink, 5, effect, Array.Empty<ItemMirror>(), null);
+            UniformWriter.Write(sink, 5, new ShaderMirror(), effect, Array.Empty<ItemMirror>());
             var cmd = sink.Commands.Single(c => c.StartsWith("UNIFORMS", StringComparison.Ordinal));
             Assert.That(cmd, Does.Contain("lut=sampler(0)"));
             Assert.That(cmd, Does.Not.Contain("u64"));

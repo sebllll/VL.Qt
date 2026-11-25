@@ -20,7 +20,7 @@ namespace VL.Qt.Tests
             => new(previous, Color4.Black, new Vector2(0.1f, 0.2f), 1, 1, auto, padding);
 
         // A chain of merged effects only: its one MultiEffect run.
-        private static EffectDesc SingleRun(Effect chain) => Effect.Segment(chain, out _)[0].Multi;
+        private static EffectDesc SingleRun(Effect chain) => EffectSegments.Of(chain, out _)[0].Multi;
 
         [Test]
         public void Run_Default_IsAutoPadding()

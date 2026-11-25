@@ -537,7 +537,7 @@ namespace VL.Qt.Reconciliation
                 shader.Source = source;
                 _sink.SetRef(item.Id, P.Source, source?.Id ?? IdAllocator.Root);
             }
-            shader.SentUniforms = UniformWriter.Write(_sink, item.Id, next, kids, shader.SentUniforms);
+            UniformWriter.Write(_sink, item.Id, shader, next, kids);
         }
 
         /// <summary>Exact component-wise equality (any change, however small, is sent).</summary>
