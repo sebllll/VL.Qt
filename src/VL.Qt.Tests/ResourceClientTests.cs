@@ -468,7 +468,7 @@ namespace VL.Qt.Tests
         [TestCase(PixelFormat.R16G16B16A16F, 12)]
         [TestCase((PixelFormat)99, 0)]
         public void FormatMapping_VlPixelFormat_ToQtNativeNumbers(PixelFormat format, int expected)
-            => Assert.That(ResourceClient.ToQtNativeFormat(format), Is.EqualTo(expected));
+            => Assert.That(PixelFormats.ToQtNative(format), Is.EqualTo(expected));
 
         [Test]
         public void SetPixels_UnknownFormat_FailsWithoutNativeCall()

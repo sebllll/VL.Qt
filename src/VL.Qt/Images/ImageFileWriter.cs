@@ -135,7 +135,7 @@ namespace VL.Qt
             try
             {
                 var info = image.Info;
-                var format = ResourceClient.ToQtNativeFormat(info.Format);
+                var format = PixelFormats.ToQtNative(info.Format);
                 if (format == 0)
                     return $"Pixel format {info.Format} is not supported";
                 // QtNative resolves a relative path against its own working directory, which is not the patch's.

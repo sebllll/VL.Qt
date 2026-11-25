@@ -290,7 +290,7 @@ namespace VL.Qt.Tests
         [TestCase("rel/wave.qsb", false, "rel/wave.qsb")]
         public void TryGetBuiltinShader_RecognizesResolvedPaths(string path, bool expected, string normalized)
         {
-            Assert.That(ResourceClient.TryGetBuiltinShader(path, out var builtin), Is.EqualTo(expected));
+            Assert.That(ShaderSlot.TryGetBuiltinShader(path, out var builtin), Is.EqualTo(expected));
             Assert.That(builtin, Is.EqualTo(normalized));
         }
 

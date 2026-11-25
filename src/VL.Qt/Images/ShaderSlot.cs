@@ -11,6 +11,28 @@ namespace VL.Qt
     /// </summary>
     internal sealed class ShaderSlot : IDisposable
     {
+        /// <summary>Path prefix of a shader shipped with VL.Qt, resolved by QtNative (vlqt_shader_load).</summary>
+        internal const string builtinShaderPrefix = "builtin:";
+
+        /// <summary>
+        /// Recognizes <c>builtin:&lt;name&gt;</c>, also after vvvv resolved a Path value against the document directory
+        /// (<c>C:\doc\dir\builtin:wave</c>): then the last path segment carries the prefix.
+        /// </summary>
+        internal static bool TryGetBuiltinShader(string path, out string builtin)
+        {
+            var segment = path.AsSpan();
+            var i = path.LastIndexOfAny(new[] { '\\', '/' });
+            if (i >= 0)
+                segment = segment.Slice(i + 1);
+            if (segment.StartsWith(builtinShaderPrefix, StringComparison.Ordinal))
+            {
+                builtin = segment.ToString();
+                return true;
+            }
+            builtin = path;
+            return false;
+        }
+
         private readonly ResourceClient? _client;
         private readonly int _stage;
         private readonly string _label;

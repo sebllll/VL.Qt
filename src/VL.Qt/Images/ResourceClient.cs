@@ -11,48 +11,6 @@ using VL.Qt.Wire;
 
 namespace VL.Qt
 {
-    /// <summary>The resource C-API of QtNative (vlqt_res_*); a fake in unit tests, which have no Qt.</summary>
-    internal interface IResourceApi
-    {
-        Native.Result Create(int kind, out ulong id);
-        Native.Result Release(ulong id);
-        Native.Result Poll(Span<byte> buffer, out int written, out int required);
-        /// <summary>The state of the resource (<see cref="Protocol.ResourceState"/>) or a negative <see cref="Native.Result"/>.</summary>
-        int Wait(ulong id, int timeoutMs);
-        /// <summary>upload: <see cref="Protocol.ImageUpload"/>.</summary>
-        Native.Result LoadImage(ulong id, string utf8Path, uint flags, int upload);
-        Native.Result LoadShader(ulong id, string utf8Path, int stage);
-        Native.Result LoadShaderSource(ulong id, string source, int stage);
-        /// <summary>upload: <see cref="Protocol.ImageUpload"/>.</summary>
-        Native.Result SetPixels(ulong id, in Native.vlqt_pixel_desc desc, ReadOnlySpan<byte> data, int upload);
-        int List(Span<Native.vlqt_res_info> buffer);
-        void Shutdown();
-        Native.Result Snapshot(ulong id, SceneHandle window, uint elementId, float scale);
-        Native.Result ReadSnapshot(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int written, out int required);
-        Native.Result SnapshotFit(ulong id, SceneHandle window, uint elementId, int maxEdgePx);
-        Native.Result ReadPreview(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int written, out int required);
-        Native.Result AudioTapInit(ulong id, int channels, int sampleRate);
-    }
-
-    internal sealed class NativeResourceApi : IResourceApi
-    {
-        public Native.Result Create(int kind, out ulong id) => Native.vlqt_res_create(kind, out id);
-        public Native.Result Release(ulong id) => Native.vlqt_res_release(id);
-        public Native.Result Poll(Span<byte> buffer, out int written, out int required) => Native.ResPoll(buffer, out written, out required);
-        public int Wait(ulong id, int timeoutMs) => Native.vlqt_res_wait(id, timeoutMs);
-        public Native.Result LoadImage(ulong id, string utf8Path, uint flags, int upload) => Native.vlqt_image_load(id, utf8Path, flags, upload);
-        public Native.Result LoadShader(ulong id, string utf8Path, int stage) => Native.vlqt_shader_load(id, utf8Path, stage);
-        public Native.Result LoadShaderSource(ulong id, string source, int stage) => Native.vlqt_shader_load_source(id, source, stage);
-        public Native.Result SetPixels(ulong id, in Native.vlqt_pixel_desc desc, ReadOnlySpan<byte> data, int upload) => Native.ImageSetPixels(id, in desc, data, upload);
-        public int List(Span<Native.vlqt_res_info> buffer) => Native.ResList(buffer);
-        public void Shutdown() => Native.vlqt_res_shutdown();
-        public Native.Result Snapshot(ulong id, SceneHandle window, uint elementId, float scale) => Native.vlqt_snapshot_start(id, window, elementId, scale);
-        public Native.Result ReadSnapshot(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int written, out int required) => Native.SnapshotRead(id, buffer, out desc, out written, out required);
-        public Native.Result SnapshotFit(ulong id, SceneHandle window, uint elementId, int maxEdgePx) => Native.vlqt_snapshot_start_fit(id, window, elementId, maxEdgePx);
-        public Native.Result ReadPreview(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int written, out int required) => Native.ImageReadPreview(id, buffer, out desc, out written, out required);
-        public Native.Result AudioTapInit(ulong id, int channels, int sampleRate) => Native.vlqt_audio_tap_init(id, channels, sampleRate);
-    }
-
     /// <summary>
     /// C# side of QtNative's resource manager, one per <see cref="QtApp"/>:
     /// <list type="bullet">
@@ -74,9 +32,6 @@ namespace VL.Qt
 
         /// <summary>Longest edge of the tooltip preview QtNative makes.</summary>
         private const int previewMaxEdge = 256;
-
-        /// <summary>Path prefix of a shader shipped with VL.Qt, resolved by QtNative (vlqt_shader_load).</summary>
-        internal const string builtinShaderPrefix = "builtin:";
 
         private readonly IResourceApi _api;
         private readonly int _threadId;
@@ -157,29 +112,11 @@ namespace VL.Qt
             return resource;
         }
 
-        /// <summary>
-        /// Recognizes <c>builtin:&lt;name&gt;</c>, also after vvvv resolved a Path value against the document directory
-        /// (<c>C:\doc\dir\builtin:wave</c>): then the last path segment carries the prefix.
-        /// </summary>
-        internal static bool TryGetBuiltinShader(string path, out string builtin)
-        {
-            var segment = path.AsSpan();
-            var i = path.LastIndexOfAny(new[] { '\\', '/' });
-            if (i >= 0)
-                segment = segment.Slice(i + 1);
-            if (segment.StartsWith(builtinShaderPrefix, StringComparison.Ordinal))
-            {
-                builtin = segment.ToString();
-                return true;
-            }
-            builtin = path;
-            return false;
-        }
 
         /// <summary>
         /// Starts loading the .qsb <paramref name="path"/> of <paramref name="stage"/> (<see cref="Protocol.ShaderStage"/>) into
         /// <paramref name="resource"/> (asynchronous, errors arrive as status records). <c>builtin:&lt;name&gt;</c> (a shader shipped
-        /// with VL.Qt, see <see cref="TryGetBuiltinShader"/>) is passed as <c>builtin:&lt;name&gt;</c>, any other path is made absolute here. Returns false and fails the resource if
+        /// with VL.Qt, see <see cref="ShaderSlot.TryGetBuiltinShader"/>) is passed as <c>builtin:&lt;name&gt;</c>, any other path is made absolute here. Returns false and fails the resource if
         /// the path is invalid or QtNative refuses.
         /// </summary>
         public bool LoadShader(ImageResource resource, string path, int stage)
@@ -187,7 +124,7 @@ namespace VL.Qt
             if (resource.IsReleased)
                 return false;
             var fullPath = path;
-            if (TryGetBuiltinShader(path, out var builtin))
+            if (ShaderSlot.TryGetBuiltinShader(path, out var builtin))
                 fullPath = builtin;
             else
             {
@@ -437,7 +374,7 @@ namespace VL.Qt
         {
             if (resource.IsReleased)
                 return false;
-            var qtNativeFormat = ToQtNativeFormat(format);
+            var qtNativeFormat = PixelFormats.ToQtNative(format);
             if (qtNativeFormat == 0)
             {
                 resource.Fail($"Pixel format {format} is not supported");
@@ -463,27 +400,6 @@ namespace VL.Qt
             }
             return true;
         }
-
-        /// <summary>
-        /// VL <see cref="PixelFormat"/> → format number of vlqt_image_set_pixels (protocol.h: the VL numbers, append-only).
-        /// 0 = not supported (Unknown or a format newer than QtNative's table).
-        /// </summary>
-        internal static int ToQtNativeFormat(PixelFormat format) => format switch
-        {
-            PixelFormat.R8 => 1,
-            PixelFormat.R16 => 2,
-            PixelFormat.R32F => 3,
-            PixelFormat.R8G8B8 => 4,
-            PixelFormat.B8G8R8 => 5,
-            PixelFormat.R8G8B8X8 => 6,
-            PixelFormat.R8G8B8A8 => 7,
-            PixelFormat.B8G8R8X8 => 8,
-            PixelFormat.B8G8R8A8 => 9,
-            PixelFormat.R32G32B32A32F => 10,
-            PixelFormat.R32G32F => 11,
-            PixelFormat.R16G16B16A16F => 12,
-            _ => 0,
-        };
 
         /// <summary>
         /// Queues the release of <paramref name="resource"/> (idempotent, any thread). vlqt_res_release runs in the next
