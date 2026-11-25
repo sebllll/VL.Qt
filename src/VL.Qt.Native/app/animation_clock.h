@@ -3,10 +3,10 @@
 // QUnifiedTimer (the keep-alive timer), check on Qt updates (the list of the private classes is the head comment of
 // elements/elements.h).
 //
-// The clock moves forward and holds. Qt advances an animation by every positive time difference (QUnifiedTimer,
-// qabstractanimation.cpp) and never rewinds one: after the clock has jumped back, a running QML animation keeps its value
-// and goes on forward from it with the next positive differences, it does not wait for the old time (checked by the
-// SmokeTest AnimationScrub). Only values that vvvv computes from the time are scrubbable.
+// The clock moves forward and holds. The driver ignores a time below the current one (several apps and offscreen renders
+// share it), and Qt never rewinds an animation: after the clock has jumped back, a running QML animation holds its value
+// until the clock passes the old time again (checked by the SmokeTest AnimationScrub). Only values that vvvv computes
+// from the time are scrubbable.
 #pragma once
 
 namespace vlqt::clock {

@@ -214,5 +214,20 @@ namespace VL.Qt.Tests
             pump.Dispose();
             Assert.That(clock.HasTickObservers, Is.False);
         }
+
+        [Test]
+        public void DriverTime_LaterAdvanceByAnotherCaller_PumpDoesNotMoveItBack()
+        {
+            // An offscreen render advances the driver to t + 0.05 through the owner; a pump of another app at t + 0.03 must keep it.
+            var driver = DriverTime.Start;
+            Assert.That(double.IsNaN(driver.Seconds), Is.True);
+            Assert.That(driver.TryAdvance(100), Is.True);
+            Assert.That(driver.TryAdvance(100.05), Is.True);
+            Assert.That(driver.TryAdvance(100.03), Is.False, "an earlier time is not applied");
+            Assert.That(driver.Seconds, Is.EqualTo(100.05));
+            Assert.That(driver.TryAdvance(100.05), Is.False, "the same time is not advanced twice");
+            Assert.That(driver.TryAdvance(100.08), Is.True);
+            Assert.That(driver.Seconds, Is.EqualTo(100.08));
+        }
     }
 }

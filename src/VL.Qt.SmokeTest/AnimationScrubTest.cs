@@ -7,15 +7,15 @@ using VL.Qt.Elements;
 using VL.Qt.Interop;
 using VL.Qt.Wire;
 
-// NAPP-10: QML animations follow vlqt_app_advance_animations forward, a clock that jumps back does not rewind them
-// (docs/architecture.md, "Timing and animation"): QUnifiedTimer advances animations only by positive deltas.
+// NAPP-10 / W4-84: QML animations follow vlqt_app_advance_animations forward; the driver ignores a time below the current
+// one (docs/architecture.md, "Timing and animation").
 // A QmlElement animates v from 0 to 100 in 10 s (10 per second of the frame clock). The clock runs 2 s, jumps back by 1 s
-// and runs forward again by 0.5 s: v keeps its value at the jump and then rises with every positive delta from there (it
-// does not wait until the clock passes 2 s), about 5 more after the 0.5 s. A time that is not finite is refused.
+// and runs forward again: v holds its value at the jump and while the clock is below 2 s (at 1.5 s still held), and goes on
+// forward once the clock passes the old 2 s (0.5 s later: about 5 more). A time that is not finite is refused.
 [TestFixture, NonParallelizable]
 public static class AnimationScrubTest
 {
-    /// <summary>NAPP-10: a backward jump of the frame clock does not rewind a QML animation; a non-finite time is refused.</summary>
+    /// <summary>NAPP-10: a backward jump of the frame clock is ignored by the driver, a QML animation holds; a non-finite time is refused.</summary>
     [Test, Category("animation-scrub")]
     public static void AnimationScrub() => Scenario.Run(Run);
 
@@ -106,10 +106,15 @@ public static class AnimationScrubTest
 
         RunTo(start + 1.5, false);
         var vForward = v;
-        s.Info($"0.5 s forward again (clock at 1.5 s): v = {vForward}");
+        s.Info($"0.5 s forward again (clock at 1.5 s, still below the old 2 s): v = {vForward}");
 
-        s.Check(Math.Abs(vBack - v2) < 3, $"the jump back by 1 s does not rewind v, it holds its value ({v2} -> {vBack})");
-        s.Check(Math.Abs(vForward - (v2 + 5)) < 3, $"0.5 s forward after the jump: v goes on from its value ({vForward}, expected about {v2 + 5})");
+        RunTo(start + 2.5, false);
+        var vPast = v;
+        s.Info($"clock at 2.5 s, 0.5 s past the old time: v = {vPast}");
+
+        s.Check(Math.Abs(vBack - v2) < 3, $"the jump back by 1 s is ignored, v holds its value ({v2} -> {vBack})");
+        s.Check(Math.Abs(vForward - v2) < 3, $"at 1.5 s the clock is still below the old 2 s: v is still held ({vForward}, expected about {v2})");
+        s.Check(Math.Abs(vPast - (v2 + 5)) < 3, $"0.5 s past the old time v goes on forward ({vPast}, expected about {v2 + 5})");
 
         // A time of a broken clock is refused before it reaches Qt (cast of NaN / infinity to milliseconds is undefined).
         foreach (var bad in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity, 1e300 })

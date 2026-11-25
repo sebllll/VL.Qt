@@ -98,7 +98,7 @@ namespace VL.Qt.Stride
 
                 var device = _game.GraphicsDevice;
                 var context = device is null ? IntPtr.Zero : StrideInterop.GetNativeImmediateContext(device);
-                var batchError = OffscreenScene.RenderBatchError(context, new ReadOnlySpan<SceneHandle>(_batch, 0, count), DriverSeconds());
+                var batchError = OffscreenScene.RenderBatchError(context, new ReadOnlySpan<SceneHandle>(_batch, 0, count), _app.AdvanceDriver(_clock.Time.Seconds));
                 for (int i = 0; i < count; i++)
                     _scheduled[i].AfterRender(batchError);
             }
@@ -111,16 +111,6 @@ namespace VL.Qt.Stride
                 Array.Clear(_batch, 0, count);
                 _scheduled.Clear();
             }
-        }
-
-        // The process-wide animation driver must never run backwards (QtApp.PumpFrame): the frame time of this
-        // app, or the time the pump already set if that is later (pump offset after an app restart). With the pump at
-        // GetFrameFinished after the draw start this is the current frame's time.
-        private double DriverSeconds()
-        {
-            var seconds = _clock.Time.Seconds;
-            var driver = _app.DriverSeconds;
-            return double.IsNaN(driver) || seconds > driver ? seconds : driver;
         }
 
         public void Dispose()
