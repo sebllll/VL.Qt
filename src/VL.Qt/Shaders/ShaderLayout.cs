@@ -24,24 +24,20 @@ namespace VL.Qt.Shaders
         string FragmentSource,
         string? VertexSource)
     {
-        /// <summary>Pin names a uniform pin must not take (the Input pin, the Apply pin of the effect chain node and the fixed Shader pins).</summary>
-        public static readonly ImmutableHashSet<string> ReservedPinNames = ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
-            "Input", "Blending", "Mesh Resolution", "Size", "Auto Size", "Transform", "Anchor", "Opacity", "Clip", "Debug",
-            "Interaction", "Effect", "Enabled", "Apply", "Output", "Measured Size", "Scene Bounds", "Error");
-
         /// <summary>The layout of the shader node of <paramref name="file"/>, made from its loaded <paramref name="source"/>.</summary>
         public static ShaderLayout From(ShaderSource source, ShaderFile file)
         {
             var errors = new List<string>();
             var warnings = new List<string>();
             var pins = Common(source, file, errors, warnings, out var hasInput);
-            return new ShaderLayout(hasInput, pins, ToMessages(errors, warnings), source.FragmentAnnotations.Summary, source.FragmentSource, source.VertexSource);
+            // Input and Input Sampler are pins of the node only with an Input.
+            var reserved = hasInput ? ShaderElementPins.Names : ShaderElementPins.Names.Remove(ShaderElementPins.Input.Name).Remove(ShaderElementPins.InputSampler.Name);
+            return new ShaderLayout(hasInput, UniquePinNames(pins, reserved, warnings), ToMessages(errors, warnings), source.FragmentAnnotations.Summary, source.FragmentSource, source.VertexSource);
         }
 
         /// <summary>
-        /// The errors, warnings and unique pins that the shader node and the effect chain node of a file have in common (the
-        /// effect chain node starts from them).
+        /// The errors, warnings and pins that the shader node and the effect chain node of a file have in common: the pins with
+        /// the names of the file, which each node makes unique against its own fixed pins.
         /// </summary>
         internal static ImmutableArray<ShaderPin> Common(ShaderSource source, ShaderFile file, List<string> errors, List<string> warnings, out bool hasInput)
         {
@@ -55,24 +51,31 @@ namespace VL.Qt.Shaders
 
             foreach (var w in source.PinModel.Warnings)
                 warnings.Add(w.ToString());
-            return UniquePinNames(source.PinModel.Pins, hasInput, warnings);
+            return source.PinModel.Pins;
         }
 
-        /// <summary>A uniform whose pin name is taken (by a fixed pin, Input or another uniform) gets a number: "Size 2".</summary>
-        internal static ImmutableArray<ShaderPin> UniquePinNames(ImmutableArray<ShaderPin> pins, bool hasInput, List<string> warnings)
+        /// <summary>
+        /// A uniform whose pin name is taken (by <paramref name="reserved"/>, the fixed pins of the node, or by another pin) gets a
+        /// number: "Size 2". The name of a sampler pin follows the final name of its image pin ("{image} Sampler").
+        /// </summary>
+        internal static ImmutableArray<ShaderPin> UniquePinNames(ImmutableArray<ShaderPin> pins, ImmutableHashSet<string> reserved, List<string> warnings)
         {
-            var used = new HashSet<string>(ReservedPinNames, StringComparer.OrdinalIgnoreCase);
-            if (!hasInput)
-                used.Remove("Input");
+            var used = new HashSet<string>(reserved, StringComparer.OrdinalIgnoreCase);
             var result = ImmutableArray.CreateBuilder<ShaderPin>(pins.Length);
+            string? imageName = null;
             foreach (var pin in pins)
             {
-                var name = pin.Name;
+                var wanted = pin.Type == ShaderPinType.Sampler && imageName != null ? imageName + " Sampler" : pin.Name;
+                var name = wanted;
                 for (var i = 2; !used.Add(name); i++)
-                    name = $"{pin.Name} {i}";
+                    name = $"{wanted} {i}";
+                if (pin.Type == ShaderPinType.Image)
+                    imageName = name;
                 if (name != pin.Name)
                 {
-                    warnings.Add($"uniform '{pin.UniformName}' shows as pin '{name}', '{pin.Name}' is taken");
+                    // The sampler pin of a renamed image pin follows it: the message is about the image pin.
+                    if (pin.Type != ShaderPinType.Sampler || name != wanted)
+                        warnings.Add($"uniform '{pin.UniformName}' shows as pin '{name}', '{wanted}' is taken");
                     result.Add(pin with { Name = name });
                 }
                 else

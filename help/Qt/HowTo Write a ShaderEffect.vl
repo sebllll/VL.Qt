@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="q0MQbJhwYBlga7aqN9GVeO" Bounds="85,85,572,133" ShowValueBox="true" isIOBox="true" Value="ShaderEffect [Qt]&#xD;&#xA;- Input: element the shader reads as sampler2D &quot;source&quot;, unconnected = generative&#xD;&#xA;- Fragment Code: GLSL text in the patch (default is a commented template)&#xD;&#xA;- Fragment Shader: Path to a baked .qsb, or builtin:wave&#xD;&#xA;- Uniforms: spread of nodes from Qt.Elements.Uniform&#xD;&#xA;- Auto Size (default on), Error">
+          <Pad Id="q0MQbJhwYBlga7aqN9GVeO" Bounds="85,85,572,133" ShowValueBox="true" isIOBox="true" Value="ShaderEffect [Qt]&#xD;&#xA;- Input: element the shader reads as sampler2D &quot;source&quot;, unconnected = generative&#xD;&#xA;- Fragment Code: GLSL text in the patch (default is a commented template)&#xD;&#xA;- Fragment Shader: Path to a baked .qsb, or builtin:wave&#xD;&#xA;- Uniforms: spread of nodes from Qt.Elements.Uniform&#xD;&#xA;- Auto Size (default on)">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GT7uBkJDVdVgrgRVXuTFjj" Bounds="85,1239,830,366" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The Input is not drawn itself, only the effect output is. Bounds, Transform and Opacity belong on the ShaderEffect, not on its Input; Auto Size takes the size of the Input.&#xD;&#xA;- Fragment Code is baked in the background while you edit; if it has an error, the last working version keeps drawing. It needs no tools: VL.Qt bakes the text itself (Qt Shader Tools).&#xD;&#xA;- Fragment Shader wins over Fragment Code if set. A broken path draws nothing. Vertex Code / Vertex Shader (optional pins) work the same way.&#xD;&#xA;- Uniforms: values by name from the nodes in Qt.Elements.Uniform (Float, Int, Bool, Vector2/3/4, Color, Matrix, Texture, Image), collected in a spread.&#xD;&#xA;- Error shows a GLSL error with its line number, a missing file, a broken .qsb or an unknown / wrongly typed uniform.&#xD;&#xA;- Shader language is GLSL 440, baked with Qt's qsb tool (Qt host tools, not part of VL.Qt): qsb --glsl &quot;100es,120,150&quot; --hlsl 50 --msl 12 -o x.frag.qsb x.frag. qsb is only needed for shaders you bake yourself or ship precompiled.&#xD;&#xA;- Uniform block: layout(std140, binding = 0), qt_Matrix (mat4) and qt_Opacity (float) first, then your members. Member names must match the Uniform node names (case sensitive).&#xD;&#xA;- The Input is layout(binding = 1) uniform sampler2D source; texture coordinates come in as qt_TexCoord0, the result goes to vec4 fragColor (location 0).&#xD;&#xA;- The Input is premultiplied, so the output must be premultiplied too (rgb * alpha). Color uniforms arrive premultiplied as well (rgb * a); Vector4 is passed unchanged.&#xD;&#xA;- shaders/tint.frag next to this patch is the source of the tint example, shaders/tint.frag.qsb is the baked file the node loads.&#xD;&#xA;- builtin:wave needs an Input (uniforms time, amplitude, frequency).&#xD;&#xA;- Shader files in a qtshaders folder next to the patch become nodes with their own pins, no Uniform nodes needed: see HowTo Create Shader Nodes from Files.">
+          <Pad Id="GT7uBkJDVdVgrgRVXuTFjj" Bounds="85,1239,830,366" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The Input is not drawn itself, only the effect output is. Bounds, Transform and Opacity belong on the ShaderEffect, not on its Input; Auto Size takes the size of the Input.&#xD;&#xA;- Fragment Code is baked in the background while you edit; if it has an error, the last working version keeps drawing. It needs no tools: VL.Qt bakes the text itself (Qt Shader Tools).&#xD;&#xA;- Fragment Shader wins over Fragment Code if set. A broken path draws nothing. Vertex Code / Vertex Shader (optional pins) work the same way.&#xD;&#xA;- Uniforms: values by name from the nodes in Qt.Elements.Uniform (Float, Int, Bool, Vector2/3/4, Color, Matrix, Texture, Image), collected in a spread.&#xD;&#xA;- A GLSL error with its line number, a missing file, a broken .qsb or an unknown / wrongly typed uniform shows at the node and in the log.&#xD;&#xA;- Shader language is GLSL 440, baked with Qt's qsb tool (Qt host tools, not part of VL.Qt): qsb --glsl &quot;100es,120,150&quot; --hlsl 50 --msl 12 -o x.frag.qsb x.frag. qsb is only needed for shaders you bake yourself or ship precompiled.&#xD;&#xA;- Uniform block: layout(std140, binding = 0), qt_Matrix (mat4) and qt_Opacity (float) first, then your members. Member names must match the Uniform node names (case sensitive).&#xD;&#xA;- The Input is layout(binding = 1) uniform sampler2D source; texture coordinates come in as qt_TexCoord0, the result goes to vec4 fragColor (location 0).&#xD;&#xA;- The Input is premultiplied, so the output must be premultiplied too (rgb * alpha). Color uniforms arrive premultiplied as well (rgb * a); Vector4 is passed unchanged.&#xD;&#xA;- shaders/tint.frag next to this patch is the source of the tint example, shaders/tint.frag.qsb is the baked file the node loads.&#xD;&#xA;- builtin:wave needs an Input (uniforms time, amplitude, frequency).&#xD;&#xA;- Shader files in a qtshaders folder next to the patch become nodes with their own pins, no Uniform nodes needed: see HowTo Create Shader Nodes from Files.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -551,23 +551,8 @@
             <Pin Id="au3bBUVsvzqedxDwdExFrE" Name="Output" Kind="OutputPin" />
             <Pin Id="oGKxKNm5VnzQDgZxIMLeaI" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="3usD5YO4sdiSobXs3kPFRq" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="mFeXQkbxYn6skyFfIjGNE8" Name="Error" Kind="OutputPin" />
             <Pin Id="tqx9cK1OvjxAzTQ5Juw0sc" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="jq7XOP6An6u5V3Zu7yJGh1" Comment="Error" Bounds="1242,921,300,43" ShowValueBox="true" isIOBox="true" Value="">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
-              <Choice Kind="TypeFlag" Name="String" />
-            </p:TypeAnnotation>
-          </Pad>
-          <Pad Id="w2ZtbgzCcaD3RKDczXBDOO" Bounds="1242,969,300,30" ShowValueBox="true" isIOBox="true" Value="Errors (with line number) show up here. The last working version keeps drawing.">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="TypeFlag" Name="String" />
-            </p:TypeAnnotation>
-            <p:ValueBoxSettings>
-              <p:fontsize p:Type="Int32">7</p:fontsize>
-              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
-            </p:ValueBoxSettings>
-          </Pad>
           <Pad Id="qKyQKYNqnecM9ZRgLsj87P" Bounds="1660,288,560,60" ShowValueBox="true" isIOBox="true" Value="4  A Group as source: Text and Rectangle form one input. The Rectangle sits at a negative position (left of and above the Group origin). A Group renders as a whole, its full frame including that part, into the shader.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
@@ -819,7 +804,6 @@
         <Link Id="WJeUXOt81IVB8mepCWTOz6" Ids="TsDZ5sUO7EvybTwyb1m7vF,y8pp6K3RSBv8tQ8vSNV11t" />
         <Link Id="qxR3K3LtVNnJV8NkU01a1R" Ids="wSlWoYdczkcFEpF46JqFyn,VkB4Qg6EbA35klF2jsGZma" />
         <Link Id="zJvEHjW3NlQxj3CQFIfkUE" Ids="au3bBUVsvzqedxDwdExFrE,2EkdcbWZKbPQnxoeRIYU6L" />
-        <Link Id="rAzLgPnSXowiIAeEOr1otI" Ids="mFeXQkbxYn6skyFfIjGNE8,jq7XOP6An6u5V3Zu7yJGh1" />
       </Patch>
     </Node>
   </Patch>

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using VL.Core.Diagnostics;
@@ -28,16 +29,19 @@ namespace VL.Qt.Shaders
         ushort Template,
         ShaderPadding Padding)
     {
+        /// <summary>Pin names a uniform pin must not take: the Input pin (the chain), the Apply pin and the Output.</summary>
+        public static readonly ImmutableHashSet<string> ReservedPinNames = ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, "Input", "Apply", "Output");
+
         /// <summary>The layout for the effect chain node of <paramref name="file"/>, made from its loaded <paramref name="source"/>.</summary>
         public static ShaderEffectLayout From(ShaderSource source, ShaderFile file)
         {
             var errors = new List<string>();
             var warnings = new List<string>();
-            var elementPins = ShaderLayout.Common(source, file, errors, warnings, out var hasInput);
+            var allPins = ShaderLayout.Common(source, file, errors, warnings, out var hasInput);
             var compiled = errors.Count == 0;
 
-            var pins = ImmutableArray.CreateBuilder<ShaderPin>(elementPins.Length);
-            foreach (var pin in elementPins)
+            var wanted = ImmutableArray.CreateBuilder<ShaderPin>(allPins.Length);
+            foreach (var pin in allPins)
             {
                 if (ReservedUniforms.ChainAutomatic.Contains(pin.UniformName))
                     continue;
@@ -48,8 +52,9 @@ namespace VL.Qt.Shaders
                         errors.Add(text);
                 }
                 else
-                    pins.Add(pin);
+                    wanted.Add(pin);
             }
+            var pins = ShaderLayout.UniquePinNames(wanted.ToImmutable(), ReservedPinNames, warnings);
             if (source.VertexSource != null)
                 warnings.Add("the vertex shader (.vert) is not used by an effect chain link");
 
@@ -78,7 +83,7 @@ namespace VL.Qt.Shaders
             }
 
             var template = annotations.Passes == 2 ? Protocol.EffectTemplate.TwoPass : Protocol.EffectTemplate.Single;
-            return new ShaderEffectLayout(pins.ToImmutable(), ShaderLayout.ToMessages(errors, warnings), annotations.Summary, source.FragmentSource, template, padding);
+            return new ShaderEffectLayout(pins, ShaderLayout.ToMessages(errors, warnings), annotations.Summary, source.FragmentSource, template, padding);
         }
     }
 }

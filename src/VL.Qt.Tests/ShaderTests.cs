@@ -255,12 +255,24 @@ namespace VL.Qt.Tests
             _api = new FakeResourceApi();
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
             _client.SetPumping(true);
-            _node = new ShaderNode(_client, static _ => new Noop());
+            _shown = string.Empty;
+            _node = new ShaderNode(_client, text =>
+            {
+                _shown = text;
+                return new Hide(() => _shown = string.Empty);
+            });
         }
 
-        private sealed class Noop : IDisposable
+        // The text shown at the node (errors first, one line each): what the Error output carried before.
+        private string _shown = string.Empty;
+
+        private sealed class Hide : IDisposable
         {
-            public void Dispose() { }
+            private readonly Action _hide;
+
+            public Hide(Action hide) => _hide = hide;
+
+            public void Dispose() => _hide();
         }
 
         private void Pump()
@@ -276,7 +288,8 @@ namespace VL.Qt.Tests
             var element = _node.Update(null, null, null, fragment is null ? null : new Path(fragment), null, vertex is null ? null : new Path(vertex), uniforms, true,
                 default, true, new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, 1f, false, false, null, null,
                 true,
-                out _, out _, out error);
+                out _, out _);
+            error = _shown;
             return (Shader)element;
         }
 
@@ -433,7 +446,8 @@ namespace VL.Qt.Tests
             var element = _node.Update(null, null, fragmentCode, fragmentPath is null ? null : new Path(fragmentPath), vertexCode, null, null, true,
                 default, true, new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, 1f, false, false, null, null,
                 true,
-                out _, out _, out error);
+                out _, out _);
+            error = _shown;
             return (Shader)element;
         }
 

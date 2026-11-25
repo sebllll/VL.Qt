@@ -195,7 +195,7 @@ More: [Effects](docs/effects-and-shaders.md#effects) (all nodes, mask and paddin
 
 Own fragment shaders are written in Qt's GLSL (version 440). There are two ways to use them:
 
-- **ShaderEffect element:** the shader code goes into the `Fragment Code` string pin (or `Fragment Shader` points to a pre-baked `.qsb` file). VL.Qt bakes it in a worker; while a new version is baking or has errors, the last working one keeps drawing, and compile errors show at the `Error` output with their line number. An element or Group on `Input` becomes the `source` texture.
+- **ShaderEffect element:** the shader code goes into the `Fragment Code` string pin (or `Fragment Shader` points to a pre-baked `.qsb` file). VL.Qt bakes it in a worker; while a new version is baking or has errors, the last working one keeps drawing, and compile errors show at the node and in the log with their line number. An element or Group on `Input` becomes the `source` texture.
 - **Shader nodes from files:** every `.frag` file in a folder named `qtshaders` next to the patch becomes a node with one pin per uniform. A middle click on the node opens the file; edit and save, and the node updates while vvvv runs. A `sampler2D source` makes the shader a filter that also works in the effect chain; without it, it is a generator.
 
 <img src="docs/images/shader-nodes-from-files.png" width="820" alt="Help patch 'HowTo Create Shader Nodes from Files': two shader nodes generated from .frag files, the Qt window and the shader source in VS Code">
