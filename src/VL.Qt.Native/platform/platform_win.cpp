@@ -59,6 +59,11 @@ bool testSyntheticInputOnly()
     return GetEnvironmentVariableW(L"VLQT_TEST_SYNTHETIC_INPUT", v, 4) == 1 && v[0] == L'1';
 }
 
+// The D3D11 swap chain presents every frame.
+void endFramesLikePresent(QQuickWindow&)
+{
+}
+
 // QWindow::setGeometry does not work right after setFlags (Qt still has the old frame margins and a stale cached
 // geometry; frame on: the new style only takes effect later, the outer rect stays = old client rect). So the outer
 // rect for the unchanged client rect is computed from the new style (AdjustWindowRectExForDpi, includes the invisible
