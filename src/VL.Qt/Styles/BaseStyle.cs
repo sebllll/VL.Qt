@@ -66,9 +66,6 @@ namespace VL.Qt.Styles
         /// <summary>The base style as a <see cref="Style"/> (all fields set at Normal), root of the resolution.</summary>
         public static Style Default => s_default;
 
-        /// <summary>Whether elements of this protocol type are widgets that take a style (Button ... TextField).</summary>
-        public static bool AppliesTo(ushort type) => type is >= Protocol.ElementType.Button and <= Protocol.ElementType.TextField;
-
         /// <summary>Writes the complete base style of element <paramref name="id"/> as one SET_STYLE (with CLEAR).</summary>
         public static void Write(ICommandSink sink, uint id) => StyleWriter.Write(sink, id, Default, null);
     }
