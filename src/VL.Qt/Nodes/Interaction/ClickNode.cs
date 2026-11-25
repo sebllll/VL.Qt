@@ -67,8 +67,8 @@ namespace VL.Qt.Nodes
             else
                 _pressed = null;
 
-            InteractionNode<Props>.WriteEvents(isClicked, feedback.TakeClicks());
-            InteractionNode<Props>.WriteEvents(longPressed, feedback.TakeLongPresses());
+            ClickChannel.Write(isClicked, feedback.TakeClicks());
+            ClickChannel.Write(longPressed, feedback.TakeLongPresses());
 
             // 0 = no tap yet for this feedback (new node, new handler, released handle): not written, the channel keeps
             // the count of the last click until the next one.

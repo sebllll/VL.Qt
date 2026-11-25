@@ -63,7 +63,7 @@ namespace VL.Qt.Nodes
                 if (wheel != default || _lastDelta != default)
                 {
                     _lastDelta = wheel;
-                    delta.SetValueAndAuthor(wheel, InteractionNode<Props>.Author);
+                    delta.SetValueAndAuthor(wheel, ChannelAuthors.QtChannelAuthor);
                 }
             }
             else
@@ -71,7 +71,7 @@ namespace VL.Qt.Nodes
 
             // Value: adds the motion to whatever the channel holds now (set/reset from outside is kept); nothing without motion.
             if (wheel != default && value.IsValid())
-                value.SetValueAndAuthor(value.Value + wheel, InteractionNode<Props>.Author);
+                value.SetValueAndAuthor(value.Value + wheel, ChannelAuthors.QtChannelAuthor);
 
             return output;
         }

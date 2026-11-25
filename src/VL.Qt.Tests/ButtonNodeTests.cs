@@ -13,7 +13,7 @@ using P = VL.Qt.Wire.Protocol.PropertyId;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Button node: description, property diff, Bang and the IsClicked channel without Interactive.</summary>
+    /// <summary>Button node: description, property diff, Bang and the On Click channel without Interactive.</summary>
     public class ButtonNodeTests
     {
         private static readonly Vector2 DefaultSize = new(1, 0.4f);
@@ -30,8 +30,8 @@ namespace VL.Qt.Tests
 
         // Pin defaults as declared on Update.
         private Button Update(out bool bang, string text = "Button", bool enabled = true, bool autoRepeat = false, bool autoSize = true,
-            IChannel<Unit>? isClicked = null, Interaction? interaction = null)
-            => (Button)_node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, text, enabled, autoRepeat, isClicked,
+            IChannel<Unit>? onClick = null, Interaction? interaction = null)
+            => (Button)_node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, onClick, text, enabled, autoRepeat,
                 1, false, false, interaction, null, null, out bang, out _, out _);
 
         private Button Update(string text = "Button", bool enabled = true, bool autoRepeat = false, bool autoSize = true)
@@ -96,18 +96,18 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void IsClicked_OneValuePerClick()
+        public void OnClick_OneValuePerClick()
         {
             var clicked = Channel.Create(Unit.Default);
             int clicks = 0;
             using var c = clicked.Subscribe(_ => clicks++);
             clicks = 0; // ignore the replay on subscribe
 
-            var b = Update(out _, isClicked: clicked);
+            var b = Update(out _, onClick: clicked);
             Assert.That(b.Interaction, Is.Null, "clicks come from Qt clicked, no handler");
 
             _node.Core.Feedback[0].PendingClicks = 3;
-            Update(out bool bang, isClicked: clicked);
+            Update(out bool bang, onClick: clicked);
             Assert.That(clicks, Is.EqualTo(3));
             Assert.That(bang, Is.True);
             Assert.That(clicked.LatestAuthor, Is.EqualTo("Qt"));
@@ -127,8 +127,8 @@ namespace VL.Qt.Tests
         public void UnchangedInputs_NoAllocation()
         {
             var clicked = Channel.Create(Unit.Default);
-            for (int i = 0; i < 100; i++) Update(out _, isClicked: clicked);
-            Assert.That(Allocations.Fewest(() => Update(out _, isClicked: clicked)), Is.EqualTo(0));
+            for (int i = 0; i < 100; i++) Update(out _, onClick: clicked);
+            Assert.That(Allocations.Fewest(() => Update(out _, onClick: clicked)), Is.EqualTo(0));
         }
     }
 }

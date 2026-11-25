@@ -19,15 +19,12 @@ namespace VL.Qt.Nodes
     /// handler property Qt rejected) as persistent node warning, logged (<see cref="NodeErrors"/>).</item>
     /// </list>
     /// The public node pulls the feedback state into its channels in its Update (<see cref="Write{T}"/>: only on change,
-    /// author <see cref="Author"/>). No static state. Main thread only.
+    /// author <see cref="ChannelAuthors.QtChannelAuthor"/>). No static state. Main thread only.
     /// </summary>
     /// <typeparam name="TProps">Node specific inputs that go to QtNative; a readonly record struct (value equality, no allocation).</typeparam>
     internal sealed class InteractionNode<TProps> : IDisposable
         where TProps : struct, IEquatable<TProps>
     {
-        /// <summary>Author of every value written by Qt (<see cref="IChannel{T}.SetValueAndAuthor"/>).</summary>
-        public const string Author = "Qt";
-
         private const string errorPhase = "Qt";
 
         private readonly Func<string, IDisposable> _addWarning;
@@ -91,7 +88,7 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>
-        /// Writes <paramref name="value"/> into <paramref name="channel"/> with author <see cref="Author"/> if it differs
+        /// Writes <paramref name="value"/> into <paramref name="channel"/> with author <see cref="ChannelAuthors.QtChannelAuthor"/> if it differs
         /// from the value last written there (or the channel is another one than last time). Pull, no subscription.
         /// </summary>
         public static void Write<T>(IChannel<T> channel, ref IChannel<T>? last, ref T lastValue, T value)
@@ -101,19 +98,7 @@ namespace VL.Qt.Nodes
                 return;
             last = channel;
             lastValue = value;
-            channel.EnsureValue(value, author: Author);
-        }
-
-        /// <summary>
-        /// Writes one <see cref="Unit"/> per event (click, long press) into <paramref name="channel"/> with author
-        /// <see cref="Author"/>. Without a channel the events are dropped (the caller took them from the feedback).
-        /// </summary>
-        public static void WriteEvents(IChannel<Unit>? channel, int count)
-        {
-            if (!channel.IsValid())
-                return;
-            for (int i = 0; i < count; i++)
-                channel.SetValueAndAuthor(Unit.Default, Author);
+            channel.EnsureValue(value, author: ChannelAuthors.QtChannelAuthor);
         }
 
         private void UpdateWarning()

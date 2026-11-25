@@ -122,7 +122,7 @@ Details and rejected alternatives: [Render texture](decisions/render-texture.md)
 2. Each frame `vlqt_scene_poll()` returns them
 3. `EventReader` parses the buffer
 4. `FeedbackRouter` maps feedback ids to `ElementFeedback` slots
-5. The channels of the interaction nodes (e.g. Hover: Is Hovered, Position; Button: Is Clicked) and the element outputs (Measured Size, Scene Bounds) update
+5. The channels of the interaction nodes (e.g. Hover: Is Hovered, Position; Button: On Click) and the element outputs (Measured Size, Scene Bounds) update
 
 Input reaches the patch in the frame after it arrived, not one later: at the frame start (`IFrameClock` tick) QtNative delivers the window system events Qt has queued since the last pump (`vlqt_app_deliver_input`), and every renderer polls before the node updates. Nothing renders there: update requests stay with the render gate, an Expose waits for the pump, and touch moves that Qt Quick holds back until the next render are handed over. The poll at the frame end still collects what the pump itself produces (layout: Measured Size, Scene Bounds; input that arrived during the frame), which the patch reads in the next frame.
 

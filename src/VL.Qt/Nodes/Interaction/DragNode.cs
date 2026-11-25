@@ -94,13 +94,13 @@ namespace VL.Qt.Nodes
             {
                 _delta = delta;
                 _lastDragUpdates = updates;
-                delta.EnsureValue(feedback.DragDelta(), author: InteractionNode<Props>.Author);
+                delta.EnsureValue(feedback.DragDelta(), author: ChannelAuthors.QtChannelAuthor);
             }
             else if (updates != _lastDragUpdates)
             {
                 // Every EVENT_DRAG counts, also one equal to the last value (a new drag with the same movement).
                 _lastDragUpdates = updates;
-                delta.SetValueAndAuthor(feedback.DragDelta(), InteractionNode<Props>.Author);
+                delta.SetValueAndAuthor(feedback.DragDelta(), ChannelAuthors.QtChannelAuthor);
             }
 
             return output;

@@ -121,7 +121,7 @@ namespace VL.Qt.Nodes
             last = channel;
             lastUpdates = updates;
             if (updates != 0)
-                channel.SetValueAndAuthor(value, InteractionNode<Props>.Author);
+                channel.SetValueAndAuthor(value, ChannelAuthors.QtChannelAuthor);
         }
 
         private void SetInputError(string? error)

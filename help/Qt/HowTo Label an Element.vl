@@ -304,7 +304,7 @@
             <Pin Id="NIovZwhnA2BtczBDGWoUsx" Name="Output" Kind="OutputPin" />
             <Pin Id="Q7tdsgBqTXuNZFd3XFI4O7" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="COtxTJz3stfPoqFTn7zgi9" Name="Auto Repeat" Kind="InputPin" IsHidden="true" />
-            <Pin Id="IC5UJVROKYNP0AgDg3u0DL" Name="Is Clicked" Kind="InputPin" />
+            <Pin Id="IC5UJVROKYNP0AgDg3u0DL" Name="On Click" Kind="InputPin" />
             <Pin Id="CN8YyKzKxBtPOgwzjRlcmX" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="EGkEV0giHjDOWlqlWtRYqA" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="QQXh1RCnvQjMYmKI3YGkh6" Name="Debug" Kind="InputPin" IsHidden="true" />

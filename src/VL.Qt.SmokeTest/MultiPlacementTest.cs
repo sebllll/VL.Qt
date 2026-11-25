@@ -56,8 +56,8 @@ public static class MultiPlacementTest
         {
             var rect = rectNode.Update(new Vector2(1, 1), Matrix.Translation(0, 0, 0), RectangleAnchor.TopLeft, new Color4(1, 0, 0, 1), 0,
                 new Color4(0, 0, 0, 1), 0, 1, false, false, null, null, true, out _, out _);
-            var button = buttonNode.Update(new Vector2(1, 0.4f), true, Matrix.Translation(0, 1.5f, 0), RectangleAnchor.TopLeft, "Click", true, false,
-                null, 1, false, false, null, null, null, out var bang, out var m, out var sb);
+            var button = buttonNode.Update(new Vector2(1, 0.4f), true, Matrix.Translation(0, 1.5f, 0), RectangleAnchor.TopLeft, null, "Click", true, false,
+                1, false, false, null, null, null, out var bang, out var m, out var sb);
             if (bang) clicks++;
             measured = m;
             sceneBounds = sb;

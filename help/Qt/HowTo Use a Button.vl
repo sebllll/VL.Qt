@@ -38,7 +38,7 @@
             <Pin Id="sNvk4e7QCLrVqxJMvordAR" Name="Text" Kind="InputPin" />
             <Pin Id="Pgk3E4JLUNWNoRaR9OAJA5" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="rpozIacv69r8FUQhZQx96n" Name="Auto Repeat" Kind="InputPin" />
-            <Pin Id="dJtdDW6KaZBOQ7wjLaVrps" Name="Is Clicked" Kind="InputPin" />
+            <Pin Id="dJtdDW6KaZBOQ7wjLaVrps" Name="On Click" Kind="InputPin" />
             <Pin Id="txnc9ZI0yaTbAj2ulcZ45y" Name="Output" Kind="OutputPin" />
             <Pin Id="hWHxHOQP1eJd01YZwFS0OU" Name="Bang" Kind="OutputPin" />
             <Pin Id="eZsdYzEqM1PM4Sp57KCpFW" Name="Opacity" Kind="InputPin" />
