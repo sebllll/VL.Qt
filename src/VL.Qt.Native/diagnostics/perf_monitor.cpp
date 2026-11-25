@@ -351,7 +351,10 @@ void PerfMonitor::ensureOverlay()
     if (isSoftwareBackend(m_window))
         item->setProperty("layered", false);
     // Monospaced: Consolas where it exists (Windows), else the system fixed font (the columns are aligned with spaces).
-    item->setProperty("fontFamilies", QStringList{QStringLiteral("Consolas"), QFontDatabase::systemFont(QFontDatabase::FixedFont).family()});
+    // One family: the overlay's QML has no font.families ("Cannot assign to non-existent property").
+    static const QString fixedFamily = QFontDatabase::hasFamily(QStringLiteral("Consolas"))
+        ? QStringLiteral("Consolas") : QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
+    item->setProperty("fontFamily", fixedFamily);
     item->setObjectName(QLatin1String(vlqt::overlayObjectName)); // not counted as a scene change (app/scene_change.h)
     item->setParentItem(m_window->contentItem());
     item->setZ(1e9); // above the user root
